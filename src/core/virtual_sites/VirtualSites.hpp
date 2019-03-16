@@ -69,7 +69,7 @@ public:
   virtual bool need_ghost_comm_before_vel_update() const = 0;
   /** Is a ghost comm needed before the back_transfer */
   virtual bool need_ghost_comm_before_back_transfer() const = 0;
-  virtual ~VirtualSites() {}
+  virtual ~VirtualSites() = default;
 
 private:
   bool m_have_velocity;

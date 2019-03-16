@@ -61,9 +61,10 @@ public:
    * \param agrid      lattice spacing
    * \param offset     lattice offset
    * \param halo_size  halo size
-   * \param dim        lattice dimensions
    */
-  int init(double *agrid, double *offset, int halo_size, size_t dim);
+  int init(double *agrid, double *offset, int halo_size, size_t dim,
+           const Vector3d &local_box, const Vector3d &myright,
+           const Vector3d &box_length);
 
   /** Map a spatial position to the surrounding lattice sites.
    *
@@ -83,7 +84,8 @@ public:
    */
   void map_position_to_lattice(const Vector3d &pos,
                                Vector<std::size_t, 8> &node_index,
-                               Vector6d &delta) const;
+                               Vector6d &delta, const Vector3d &myLeft,
+                               const Vector3d &local_box) const;
   /********************** Inline Functions **********************/
 
   /** Map a global lattice site to the node grid.
@@ -95,7 +97,7 @@ public:
    * \param  ind     global coordinates of the lattice site
    * \return         index of the node for the lattice site
    */
-  int map_lattice_to_node(Vector3i &ind) const;
+  int map_lattice_to_node(Vector3i &ind, const Vector3i &local_node_grid) const;
 
   /********************** static Functions **********************/
 

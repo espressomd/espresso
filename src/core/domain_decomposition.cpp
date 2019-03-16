@@ -275,7 +275,8 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
 /** Create communicators for cell structure domain decomposition. (see \ref
  *  GhostCommunicator)
  */
-void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
+void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
+                     const Vector3i &grid) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
@@ -285,7 +286,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
     for (lr = 0; lr < 2; lr++) {
       /* No communication for border of non periodic direction */
       if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
-        if (node_grid[dir] == 1)
+        if (grid[dir] == 1)
           num++;
         else
           num += 2;
@@ -316,7 +317,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
        communication, simply by taking the lr loop only over one
        value */
     for (lr = 0; lr < 2; lr++) {
-      if (node_grid[dir] == 1) {
+      if (grid[dir] == 1) {
         /* just copy cells on a single node */
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
           comm->comm[cnt].type = GHOST_LOCL;
@@ -461,14 +462,14 @@ void dd_assign_prefetches(GhostCommunicator *comm) {
  *  GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
  *  dd_prepare_comm.
  */
-void dd_update_communicators_w_boxl() {
+void dd_update_communicators_w_boxl(const Vector3i &grid) {
   int cnt = 0;
 
   /* direction loop: x, y, z */
   for (int dir = 0; dir < 3; dir++) {
     /* lr loop: left right */
     for (int lr = 0; lr < 2; lr++) {
-      if (node_grid[dir] == 1) {
+      if (grid[dir] == 1) {
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
@@ -508,11 +509,11 @@ void dd_update_communicators_w_boxl() {
  * created list of interacting neighbor cells is used by the Verlet
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
-void dd_init_cell_interactions() {
+void dd_init_cell_interactions(const Vector3i &grid) {
   int m, n, o, p, q, r, ind1, ind2;
 
   for (int i = 0; i < 3; i++) {
-    if (dd.fully_connected[i] == true and node_grid[i] != 1) {
+    if (dd.fully_connected[i] == true and grid[i] != 1) {
       runtimeErrorMsg()
           << "Node grid not compatible with fully_connected property";
     }
@@ -597,7 +598,7 @@ Cell *dd_save_position_to_cell(const Vector3d &pos) {
 /* Public Functions */
 /************************************************************/
 
-void dd_on_geometry_change(int flags) {
+void dd_on_geometry_change(int flags, const Vector3i &grid) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
@@ -612,7 +613,7 @@ void dd_on_geometry_change(int flags) {
         fprintf(stderr, "%d: dd_on_geometry_change full redo\n", this_node));
 
     /* Reset min num cells to default */
-    min_num_cells = calc_processor_min_num_cells();
+    min_num_cells = calc_processor_min_num_cells(grid);
 
     cells_re_init(CELL_STRUCTURE_CURRENT);
     return;
@@ -647,7 +648,7 @@ void dd_on_geometry_change(int flags) {
   if (!(flags & CELL_FLAG_FAST) && max_range > 0) {
     int i;
     for (i = 0; i < 3; i++) {
-      int poss_size = (int)floor(local_box_l[i] / max_range);
+      auto poss_size = (int)floor(local_box_l[i] / max_range);
       if (poss_size > dd.cell_grid[i])
         break;
     }
@@ -658,11 +659,11 @@ void dd_on_geometry_change(int flags) {
       return;
     }
   }
-  dd_update_communicators_w_boxl();
+  dd_update_communicators_w_boxl(grid);
 }
 
 /************************************************************/
-void dd_topology_init(CellPList *old) {
+void dd_topology_init(CellPList *old, const Vector3i &grid) {
   int c, p;
   int exchange_data, update_data;
 
@@ -672,7 +673,7 @@ void dd_topology_init(CellPList *old) {
 
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
      but may be set to a larger value by the user for performance reasons. */
-  min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells());
+  min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
@@ -684,15 +685,16 @@ void dd_topology_init(CellPList *old) {
   dd_mark_cells();
 
   /* create communicators */
-  dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
+  dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM, grid);
 
   exchange_data =
       (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
   update_data = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
 
-  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data);
-  dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
-  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data, grid);
+  dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data, grid);
+  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE,
+                  grid);
 
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
@@ -702,7 +704,7 @@ void dd_topology_init(CellPList *old) {
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
-  dd_init_cell_interactions();
+  dd_init_cell_interactions(grid);
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {
@@ -805,14 +807,14 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
   }
 }
 
-void exchange_neighbors(ParticleList *pl) {
+void exchange_neighbors(ParticleList *pl, const Vector3i &grid) {
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
-    if (node_grid[dir] == 1) {
+    if (grid[dir] == 1) {
       continue;
       /* In this (common) case left and right neighbors are
          the same, and we need only one communication */
-    } else if (node_grid[dir] == 2) {
+    } else if (grid[dir] == 2) {
       ParticleList send_buf, recv_buf;
       move_left_or_right(*pl, send_buf, send_buf, dir);
 
@@ -849,14 +851,15 @@ void exchange_neighbors(ParticleList *pl) {
 }
 } // namespace
 
-void dd_exchange_and_sort_particles(int global, ParticleList *pl) {
+void dd_exchange_and_sort_particles(int global, ParticleList *pl,
+                                    const Vector3i &grid) {
   if (global) {
     /* Worst case we need node_grid - 1 rounds per direction.
      * This correctly implies that if there is only one node,
      * no action should be taken. */
-    int rounds_left = node_grid[0] + node_grid[1] + node_grid[2] - 3;
+    int rounds_left = grid[0] + grid[1] + grid[2] - 3;
     for (; rounds_left > 0; rounds_left--) {
-      exchange_neighbors(pl);
+      exchange_neighbors(pl, grid);
 
       auto left_over =
           boost::mpi::all_reduce(comm_cart, pl->n, std::plus<int>());
@@ -866,13 +869,13 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl) {
       }
     }
   } else {
-    exchange_neighbors(pl);
+    exchange_neighbors(pl, grid);
   }
 }
 
 /*************************************************/
 
-int calc_processor_min_num_cells() {
+int calc_processor_min_num_cells(const Vector3i &grid) {
   int i, min = 1;
   /* the minimal number of cells can be lower if there are at least two nodes
      serving a direction,
@@ -881,7 +884,7 @@ int calc_processor_min_num_cells() {
      only one processor for a direction, there have to be at least two cells for
      this direction. */
   for (i = 0; i < 3; i++)
-    if (node_grid[i] == 1)
+    if (grid[i] == 1)
       min *= 2;
   return min;
 }

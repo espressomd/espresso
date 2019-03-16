@@ -26,8 +26,8 @@
 #ifdef DIPOLAR_BARNES_HUT
 
 #include <cstdio>
+#include <ctime>
 #include <iostream>
-#include <time.h>
 
 typedef float dds_float;
 

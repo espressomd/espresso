@@ -160,7 +160,8 @@ void lb_init() {
   }
 
   /* initialize the local lattice domain */
-  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0);
+  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0,
+                                   local_box_l, my_right, box_l);
 
   if (check_runtime_errors() || init_status != ES_OK)
     return;
@@ -263,7 +264,8 @@ void lb_reinit_parameters() {
 }
 
 /* Halo communication for push scheme */
-static void halo_push_communication(LB_Fluid &lbfluid) {
+static void halo_push_communication(LB_Fluid &lbfluid,
+                                    const Vector3i &local_node_grid) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
@@ -299,7 +301,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[0] > 1) {
+  if (local_node_grid[0] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -340,7 +342,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[0] > 1) {
+  if (local_node_grid[0] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -389,7 +391,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  if (node_grid[1] > 1) {
+  if (local_node_grid[1] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -432,7 +434,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  if (node_grid[1] > 1) {
+  if (local_node_grid[1] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -481,7 +483,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[2] > 1) {
+  if (local_node_grid[2] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -522,7 +524,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  if (node_grid[2] > 1) {
+  if (local_node_grid[2] > 1) {
     MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
                  MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
   } else {
@@ -632,7 +634,8 @@ void lb_prepare_communication() {
    * datatypes */
 
   /* prepare the communication for a single velocity */
-  prepare_halo_communication(&comm, &lblattice, FIELDTYPE_DOUBLE, MPI_DOUBLE);
+  prepare_halo_communication(&comm, &lblattice, FIELDTYPE_DOUBLE, MPI_DOUBLE,
+                             node_grid);
 
   update_halo_comm.num = comm.num;
   update_halo_comm.halo_info =
@@ -668,9 +671,6 @@ void lb_prepare_communication() {
 
   release_halo_communication(&comm);
 }
-
-/** Release fluid and communication. */
-void lb_release() { release_halo_communication(&update_halo_comm); }
 
 /***********************************************************************/
 /** \name Mapping between hydrodynamic fields and particle populations */
@@ -916,9 +916,8 @@ inline void lb_collide_stream() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
-  for (auto it = LBBoundaries::lbboundaries.begin();
-       it != LBBoundaries::lbboundaries.end(); ++it) {
-    (**it).reset_force();
+  for (auto &lbboundarie : LBBoundaries::lbboundaries) {
+    (*lbboundarie).reset_force();
   }
 #endif // LB_BOUNDARIES
 
@@ -975,7 +974,7 @@ inline void lb_collide_stream() {
   }
 
   /* exchange halo regions */
-  halo_push_communication(lbfluid_post);
+  halo_push_communication(lbfluid_post, node_grid);
 
 #ifdef LB_BOUNDARIES
   /* boundary conditions for links */
@@ -1005,7 +1004,7 @@ inline void lb_collide_stream() {
  *  monitor the time since the last lattice update.
  */
 void lattice_boltzmann_update() {
-  int factor = (int)round(lbpar.tau / time_step);
+  auto factor = (int)round(lbpar.tau / time_step);
 
   fluidstep += 1;
   if (fluidstep >= factor) {

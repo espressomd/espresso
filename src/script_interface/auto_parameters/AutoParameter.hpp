@@ -82,11 +82,11 @@ struct AutoParameter {
    *                 is deduced from the type of the reference.
    */
   template <typename T, class O>
-  AutoParameter(std::string const &name, std::shared_ptr<O> &obj,
+  AutoParameter(std::string name, std::shared_ptr<O> &obj,
                 void (O::*setter)(T const &), T const &(O::*getter)() const,
                 VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([&obj, setter](Variant const &v) {
           (obj.get()->*setter)(get_value<T>(v));
         }),
@@ -96,11 +96,11 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(std::string const &name, std::shared_ptr<O> &obj,
+  AutoParameter(std::string name, std::shared_ptr<O> &obj,
                 void (O::*setter)(T const &), T (O::*getter)() const,
                 VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([&obj, setter](Variant const &v) {
           (obj.get()->*setter)(get_value<T>(v));
         }),
@@ -117,11 +117,11 @@ struct AutoParameter {
    *                 is deduced from the type of the reference.
    */
   template <typename T, class O>
-  AutoParameter(std::string const &name, std::shared_ptr<O> &obj,
+  AutoParameter(std::string name, std::shared_ptr<O> &obj,
                 T const &(O::*getter)() const,
                 VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
@@ -129,10 +129,10 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(std::string const &name, std::shared_ptr<O> &obj,
+  AutoParameter(std::string name, std::shared_ptr<O> &obj,
                 T (O::*getter)() const, VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
@@ -140,10 +140,10 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(std::string const &name, std::shared_ptr<O> &obj, T O::*getter,
+  AutoParameter(std::string name, std::shared_ptr<O> &obj, T O::*getter,
                 VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
@@ -151,10 +151,10 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(std::string const &name, std::shared_ptr<O> &obj,
+  AutoParameter(std::string name, std::shared_ptr<O> &obj,
                 T &(O::*getter_setter)(), VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([&obj, getter_setter](Variant const &v) {
           (obj.get()->*getter_setter)() = get_value<T>(v);
         }),
@@ -171,10 +171,10 @@ struct AutoParameter {
    *                is deduced from the type of the reference.
    */
   template <typename T>
-  AutoParameter(std::string const &name, T &binding,
+  AutoParameter(std::string name, T &binding,
                 VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([&binding](Variant const &v) { binding = get_value<T>(v); }),
         get([&binding]() { return Variant{binding}; }) {}
 
@@ -182,10 +182,10 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(std::string const &name, std::shared_ptr<T> &binding,
+  AutoParameter(std::string name, std::shared_ptr<T> &binding,
                 VariantType type = infer_type<std::shared_ptr<T>>(),
                 size_t length = infer_length<std::shared_ptr<T>>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([&binding](Variant const &v) {
           binding = get_value<std::shared_ptr<T>>(v);
         }),
@@ -195,10 +195,10 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(std::string const &name, T const &binding,
+  AutoParameter(std::string name, T const &binding,
                 VariantType type = infer_type<T>(),
                 size_t length = infer_length<T>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([](Variant const &) { throw WriteError{}; }),
         get([&binding]() -> Variant { return binding; }) {}
 
@@ -206,10 +206,10 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(std::string const &name, std::shared_ptr<T> const &binding,
+  AutoParameter(std::string name, std::shared_ptr<T> const &binding,
                 VariantType type = infer_type<std::shared_ptr<T>>(),
                 size_t length = infer_length<std::shared_ptr<T>>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([](Variant const &) { throw WriteError{}; }),
         get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
@@ -231,11 +231,11 @@ struct AutoParameter {
             /* Try to guess the type from the return type of the getter */
             typename R = typename decltype(
                 Utils::make_function(std::declval<G>()))::result_type>
-  AutoParameter(std::string const &name, F const &set, G const &get,
+  AutoParameter(std::string name, F const &set, G const &get,
                 VariantType type = infer_type<R>(),
                 size_t length = infer_length<R>())
-      : name(name), type(type), length(length), set(Utils::make_function(set)),
-        get(Utils::make_function(get)) {}
+      : name(std::move(name)), type(type), length(length),
+        set(Utils::make_function(set)), get(Utils::make_function(get)) {}
 
   /**
    * @brief Read-only parameter with a user-provided getter.
@@ -245,10 +245,10 @@ struct AutoParameter {
             /* Try to guess the type from the return type of the getter */
             typename R = typename decltype(
                 Utils::make_function(std::declval<G>()))::result_type>
-  AutoParameter(std::string const &name, ReadOnly, G const &get,
+  AutoParameter(std::string name, ReadOnly, G const &get,
                 VariantType type = infer_type<R>(),
                 size_t length = infer_length<R>())
-      : name(name), type(type), length(length),
+      : name(std::move(name)), type(type), length(length),
         set([](Variant const &) { throw WriteError{}; }),
         get(Utils::make_function(get)) {}
 

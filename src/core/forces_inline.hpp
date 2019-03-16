@@ -649,7 +649,7 @@ inline void add_bonded_force(Particle *p1) {
         // First build neighbor list. This includes all nodes around the central
         // node.
         const int numNeighbors = iaparams->num;
-        Particle **neighbors = new Particle *[numNeighbors];
+        auto **neighbors = new Particle *[numNeighbors];
         // Three are already there
         neighbors[0] = p2;
         neighbors[1] = p3;

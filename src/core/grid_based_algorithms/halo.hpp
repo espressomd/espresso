@@ -148,7 +148,8 @@ void halo_free_fieldtype(Fieldtype *ftype);
  * @param datatype   MPI datatype for the lattice data (Input)
  */
 void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
-                                Fieldtype fieldtype, MPI_Datatype datatype);
+                                Fieldtype fieldtype, MPI_Datatype datatype,
+                                const Vector3i &local_node_grid);
 
 /** Frees datastructures associated with a halo communicator
  * @param hc halo communicator to be released

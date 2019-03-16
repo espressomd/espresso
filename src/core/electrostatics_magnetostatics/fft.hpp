@@ -64,7 +64,7 @@
  */
 int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft);
+             fft_data_struct &fft, const Vector3i &grid);
 
 /** Perform an in-place forward 3D FFT.
  *  \warning The content of \a data is overwritten.
