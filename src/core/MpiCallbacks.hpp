@@ -298,9 +298,10 @@ private:
    */
   void remove(int id) {
     m_callbacks.erase(
-        boost::remove_if(
-            m_callbacks, [ptr = m_callback_map[id]](
-                             auto const &e) { return e.get() == ptr; }),
+        boost::remove_if(m_callbacks,
+                         [ptr = m_callback_map[id]](auto const &e) {
+                           return e.get() == ptr;
+                         }),
         m_callbacks.end());
     m_callback_map.remove(id);
   }

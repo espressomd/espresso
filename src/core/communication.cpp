@@ -990,7 +990,7 @@ void mpi_loop() {
     mpiCallbacks().loop();
 }
 
-  /*********************** other stuff ****************/
+/*********************** other stuff ****************/
 
 #ifdef CUDA
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices() {
