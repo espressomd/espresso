@@ -30,7 +30,6 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-//#include "initialize.hpp"
 #include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"

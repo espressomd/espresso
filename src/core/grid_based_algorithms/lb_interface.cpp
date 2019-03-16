@@ -25,7 +25,7 @@ void mpi_send_fluid(int node, int index, double rho, Vector3d const &j,
                     Vector6d const &pi) {
   if (node == this_node) {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
-  } else {
+  } else if (0 == this_node) {
     mpi_call(mpi_send_fluid, node, index, rho, j, pi);
   }
 }
