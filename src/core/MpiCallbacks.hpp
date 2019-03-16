@@ -29,6 +29,7 @@
 
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/range/algorithm/remove_if.hpp>
 
 #include <functional>
 #include <initializer_list>
@@ -214,7 +215,6 @@ public:
   MpiCallbacks &operator=(MpiCallbacks const &) = delete;
 
 private:
-  friend class RegisterCallback;
   static auto &static_callbacks() {
     static std::vector<
         std::pair<void (*)(), std::unique_ptr<detail::callback_concept_t>>>
@@ -228,10 +228,10 @@ public:
                         bool abort_on_exit = true)
       : m_abort_on_exit(abort_on_exit), m_comm(comm) {
     /** Add a dummy at id 0 for loop abort. */
-    m_callbacks.add(detail::make_model([]() {}));
+    m_callback_map.add(nullptr);
 
     for (auto &kv : static_callbacks()) {
-      m_func_ptr_to_id[kv.first] = m_callbacks.add(std::move(kv.second));
+      m_func_ptr_to_id[kv.first] = m_callback_map.add(kv.second.get());
     }
   }
 
@@ -255,13 +255,13 @@ private:
    * @return A handle with which the callback can be called.
    **/
   template <typename F> auto add(F &&f) {
-    auto model = detail::make_model(std::forward<F>(f));
-    return m_callbacks.add(std::move(model));
+    m_callbacks.emplace_back(detail::make_model(std::forward<F>(f)));
+    return m_callback_map.add(m_callbacks.back().get());
   }
 
 public:
   /**
-   * @brief Add a new static callback.
+   * @brief Add a new callback.
    *
    * Add a new callback to the system. This is a collective
    * function that must be run on all nodes.
@@ -269,8 +269,22 @@ public:
    * @param fp Pointer to the static callback function to add.
    **/
   template <class... Args> void add(void (*fp)(Args...)) {
-    const int id = m_callbacks.add(detail::make_model(fp));
+    m_callbacks.emplace_back(detail::make_model(fp));
+    const int id = m_callback_map.add(m_callbacks.back().get());
     m_func_ptr_to_id[reinterpret_cast<void (*)()>(fp)] = id;
+  }
+
+  /**
+   * @brief Add a new callback.
+   *
+   * Add a new callback to the system. This is a collective
+   * function that must be run on all nodes.
+   *
+   * @param fp Pointer to the static callback function to add.
+   **/
+  template <class... Args> static void add_static(void (*fp)(Args...)) {
+    static_callbacks().emplace_back(reinterpret_cast<void (*)()>(fp),
+                                    detail::make_model(fp));
   }
 
 private:
@@ -282,7 +296,14 @@ private:
    *
    * @param id Identifier of the callback to remove.
    */
-  void remove(int id) { m_callbacks.remove(id); }
+  void remove(int id) {
+    m_callbacks.erase(
+        boost::remove_if(
+            m_callbacks, [ptr = m_callback_map[id]](
+                             auto const &e) { return e.get() == ptr; }),
+        m_callbacks.end());
+    m_callback_map.remove(id);
+  }
 
 private:
   /**
@@ -304,7 +325,7 @@ private:
     }
 
     /** Check if callback exists */
-    if (m_callbacks.find(id) == m_callbacks.end()) {
+    if (m_callback_map.find(id) == m_callback_map.end()) {
       throw std::out_of_range("Callback does not exists.");
     }
 
@@ -367,7 +388,7 @@ public:
         break;
       } else {
         /** Call the callback */
-        m_callbacks[request]->operator()(ia);
+        m_callback_map[request]->operator()(ia);
       }
     }
   }
@@ -401,15 +422,16 @@ private:
    */
   boost::mpi::communicator &m_comm;
 
+  std::vector<std::unique_ptr<detail::callback_concept_t>> m_callbacks;
+
   /**
    * Internal storage for the callback functions.
    */
-  Utils::NumeratedContainer<std::unique_ptr<detail::callback_concept_t>>
-      m_callbacks;
+  Utils::NumeratedContainer<detail::callback_concept_t *> m_callback_map;
 
   /**
    * Mapping of function pointers to ids, so static callbacks can be
-   * called by their pointer for backward compatibility.
+   * called by their pointer.
    */
   std::unordered_map<void (*)(), int> m_func_ptr_to_id;
 };
@@ -428,9 +450,7 @@ public:
   RegisterCallback() = delete;
 
   template <class... Args> explicit RegisterCallback(void (*cb)(Args...)) {
-    auto &cbs = MpiCallbacks::static_callbacks();
-
-    cbs.emplace_back(reinterpret_cast<void (*)()>(cb), detail::make_model(cb));
+    MpiCallbacks::add_static(cb);
   }
 };
 } /* namespace Communication */
