@@ -124,8 +124,6 @@ int n_nodes = -1;
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_bcast_lb_params_slave)                                                \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
-  CB(mpi_send_fluid_slave)                                                     \
-  CB(mpi_recv_fluid_slave)                                                     \
   CB(mpi_iccp3m_iteration_slave)                                               \
   CB(mpi_bcast_max_mu_slave)                                                   \
   CB(mpi_kill_particle_motion_slave)                                           \
@@ -765,67 +763,6 @@ void mpi_send_exclusion(int part1, int part2, int _delete) {
   mpi_send_exclusion_slave(part1, part2, _delete);
 }
 #endif
-
-/************** REQ_SET_FLUID **************/
-void mpi_send_fluid(int node, int index, double rho, Vector3d const &j,
-                    Vector6d const &pi) {
-#ifdef LB
-  if (node == this_node) {
-    lb_calc_n_from_rho_j_pi(index, rho, j, pi);
-  } else {
-    double data[10] = {rho,   j[0],  j[1],  j[2],  pi[0],
-                       pi[1], pi[2], pi[3], pi[4], pi[5]};
-    mpi_call(mpi_send_fluid_slave, node, index);
-    MPI_Send(data, 10, MPI_DOUBLE, node, SOME_TAG, comm_cart);
-  }
-#endif
-}
-
-void mpi_send_fluid_slave(int node, int index) {
-#ifdef LB
-  if (node == this_node) {
-    double data[10];
-    MPI_Recv(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    Vector3d j = {{data[1], data[2], data[3]}};
-    Vector6d pi = {{data[4], data[5], data[6], data[7], data[8], data[9]}};
-    lb_calc_n_from_rho_j_pi(index, data[0], j, pi);
-  }
-#endif
-}
-
-/************** REQ_GET_FLUID **************/
-void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
-#ifdef LB
-  if (node == this_node) {
-    lb_calc_local_fields(index, rho, j, pi);
-  } else {
-    double data[10];
-    mpi_call(mpi_recv_fluid_slave, node, index);
-    MPI_Recv(data, 10, MPI_DOUBLE, node, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
-    *rho = data[0];
-    j[0] = data[1];
-    j[1] = data[2];
-    j[2] = data[3];
-    pi[0] = data[4];
-    pi[1] = data[5];
-    pi[2] = data[6];
-    pi[3] = data[7];
-    pi[4] = data[8];
-    pi[5] = data[9];
-  }
-#endif
-}
-
-void mpi_recv_fluid_slave(int node, int index) {
-#ifdef LB
-  if (node == this_node) {
-    double data[10];
-    lb_calc_local_fields(index, &data[0], &data[1], &data[4]);
-    MPI_Send(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-  }
-#endif
-}
 
 #ifdef LB_BOUNDARIES
 void mpi_recv_fluid_boundary_flag_slave(int node, int index) {

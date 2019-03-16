@@ -11,6 +11,67 @@
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 
+/* LB CPU callback interface */
+#ifdef LB
+namespace {
+/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
+ *  @param node   processor to send to
+ *  @param index  index of the lattice site
+ *  @param rho    local fluid density
+ *  @param j      local fluid velocity
+ *  @param pi     local fluid pressure
+ */
+void mpi_send_fluid(int node, int index, double rho, Vector3d const &j,
+                    Vector6d const &pi) {
+  if (node == this_node) {
+    lb_calc_n_from_rho_j_pi(index, rho, j, pi);
+  } else {
+    mpi_call(mpi_send_fluid, node, index, rho, j, pi);
+  }
+}
+
+REGISTER_CALLBACK(mpi_send_fluid)
+
+void mpi_recv_fluid_slave(int node, int index) {
+  if (node == this_node) {
+    double data[10];
+    lb_calc_local_fields(index, &data[0], &data[1], &data[4]);
+    MPI_Send(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+  }
+}
+
+REGISTER_CALLBACK(mpi_recv_fluid_slave)
+
+/** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
+ *  @param node   processor to send to
+ *  @param index  index of the lattice site
+ *  @param rho    local fluid density
+ *  @param j      local fluid velocity
+ *  @param pi     local fluid pressure
+ */
+void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
+  if (node == this_node) {
+    lb_calc_local_fields(index, rho, j, pi);
+  } else {
+    double data[10];
+    mpi_call(mpi_recv_fluid_slave, node, index);
+    MPI_Recv(data, 10, MPI_DOUBLE, node, SOME_TAG, comm_cart,
+             MPI_STATUS_IGNORE);
+    *rho = data[0];
+    j[0] = data[1];
+    j[1] = data[2];
+    j[2] = data[3];
+    pi[0] = data[4];
+    pi[1] = data[5];
+    pi[2] = data[6];
+    pi[3] = data[7];
+    pi[4] = data[8];
+    pi[5] = data[9];
+  }
+}
+} // namespace
+#endif
+
 #if defined(LB) || defined(LB_GPU)
 
 void lb_lbfluid_update() {
