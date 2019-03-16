@@ -39,8 +39,9 @@
 struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,
                                       0, 0,       0,       nullptr};
 
-void halo_create_fieldtype(int count, int *lengths, int *disps, int extent,
-                           Fieldtype *newtype) {
+void halo_create_fieldtype(int count, int const *const lengths,
+                           int const *const disps, int extent,
+                           Fieldtype *const newtype) {
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
 
   ntype->subtype = nullptr;
@@ -66,7 +67,7 @@ void halo_create_fieldtype(int count, int *lengths, int *disps, int extent,
 }
 
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
-                              Fieldtype oldtype, Fieldtype *newtype) {
+                              Fieldtype oldtype, Fieldtype *const newtype) {
   int i;
 
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
@@ -91,7 +92,7 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip,
 }
 
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
-                               Fieldtype oldtype, Fieldtype *newtype) {
+                               Fieldtype oldtype, Fieldtype *const newtype) {
   int i;
 
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
@@ -115,7 +116,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
   }
 }
 
-void halo_free_fieldtype(Fieldtype *ftype) {
+void halo_free_fieldtype(Fieldtype *const ftype) {
   if ((*ftype)->count > 0) {
     free((*ftype)->lengths);
     (*ftype)->lengths = nullptr;
@@ -124,7 +125,7 @@ void halo_free_fieldtype(Fieldtype *ftype) {
 }
 
 /** Set halo region to a given value
- * @param dest pointer to the halo buffer (Input)
+ * @param[out] dest pointer to the halo buffer
  * @param value integer value to write into the halo buffer
  * @param type halo field layout description
  */
@@ -210,7 +211,8 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
   }
 }
 
-void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
+void prepare_halo_communication(HaloCommunicator *const hc,
+                                Lattice const *const lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype,
                                 const Vector3i &local_node_grid) {
   int k, n, dir, lr, cnt, num = 0;
@@ -306,7 +308,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
   }
 }
 
-void release_halo_communication(HaloCommunicator *hc) {
+void release_halo_communication(HaloCommunicator *const hc) {
   int n;
 
   for (n = 0; n < hc->num; n++) {
@@ -316,7 +318,7 @@ void release_halo_communication(HaloCommunicator *hc) {
   free(hc->halo_info);
 }
 
-void halo_communication(HaloCommunicator *hc, char *base) {
+void halo_communication(HaloCommunicator const *const hc, char *const base) {
   int s_node, r_node;
 
   Fieldtype fieldtype;

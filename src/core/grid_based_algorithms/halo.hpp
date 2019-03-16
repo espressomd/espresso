@@ -103,55 +103,57 @@ typedef struct {
 } HaloCommunicator;
 
 /** Creates a fieldtype describing the data layout
- *  @param count   number of subtypes (Input)
- *  @param lengths array of lengths of the subtypes (Input)
- *  @param disps   array of displacements the subtypes (Input)
- *  @param extent  extent of the whole new fieldtype (Input)
- *  @param newtype newly created fieldtype (Input/Output)
+ *  @param      count   number of subtypes
+ *  @param[in]  lengths array of lengths of the subtypes
+ *  @param[in]  disps   array of displacements the subtypes
+ *  @param      extent  extent of the whole new fieldtype
+ *  @param[out] newtype newly created fieldtype
  */
-void halo_create_fieldtype(int count, int *lengths, int *disps, int extent,
-                           Fieldtype *newtype);
+void halo_create_fieldtype(int count, int const *const lengths,
+                           int const *const disps, int extent,
+                           Fieldtype *const newtype);
 
 /** Creates a field vector layout
- *  @param vblocks number of vector blocks(Input)
- *  @param vstride size of strides in field vector (Input)
- *  @param vskip   displacements of strides in field vector (Input)
- *  @param oldtype fieldtype the vector is composed of (Input)
- *  @param newtype newly created fieldtype (Input/Output)
+ *  @param vblocks       number of vector blocks
+ *  @param vstride       size of strides in field vector
+ *  @param vskip         displacements of strides in field vector
+ *  @param oldtype       fieldtype the vector is composed of
+ *  @param[out] newtype  newly created fieldtype
  */
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
-                              Fieldtype oldtype, Fieldtype *newtype);
+                              Fieldtype oldtype, Fieldtype *const newtype);
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
-                               Fieldtype oldtype, Fieldtype *newtype);
+                               Fieldtype oldtype, Fieldtype *const newtype);
 
 /** Frees a fieldtype
- *  @param ftype pointer to the type to be freed (Input)
+ *  @param ftype pointer to the type to be freed
  */
-void halo_free_fieldtype(Fieldtype *ftype);
+void halo_free_fieldtype(Fieldtype *const ftype);
 
 /** Preparation of the halo parallelization scheme. Sets up the
  *  necessary datastructures for \ref halo_communication
- *  @param hc         halo communicator being created (Input/Output)
- *  @param lattice    lattice the communication is created for (Input)
- *  @param fieldtype  field layout of the lattice data (Input)
- *  @param datatype   MPI datatype for the lattice data (Input)
+ *  @param[in,out] hc       halo communicator being created
+ *  @param[in]     lattice  lattice the communication is created for
+ *  @param fieldtype        field layout of the lattice data
+ *  @param datatype         MPI datatype for the lattice data
  *  @param local_node_grid  Number of nodes in each spatial dimension
  */
-void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
+void prepare_halo_communication(HaloCommunicator *const hc,
+                                Lattice const *const lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype,
                                 const Vector3i &local_node_grid);
 
 /** Frees datastructures associated with a halo communicator
- *  @param hc halo communicator to be released
+ *  @param[in,out] hc  halo communicator to be released
  */
-void release_halo_communication(HaloCommunicator *hc);
+void release_halo_communication(HaloCommunicator *const hc);
 
 /** Perform communication according to the parallelization scheme
  *  described by the halo communicator
- *  @param hc halo communicator describing the parallelization scheme
- *  @param base base plane of local node
+ *  @param[in]  hc    halo communicator describing the parallelization scheme
+ *  @param[in]  base  base plane of local node
  */
-void halo_communication(HaloCommunicator *hc, char *base);
+void halo_communication(HaloCommunicator const *const hc, char *const base);
 
 #endif /* LATTICE */
 
