@@ -40,7 +40,6 @@
 #include "constraints/ShapeBasedConstraint.hpp"
 #include "debug.hpp"
 #include "global.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "polymer.hpp"
 #include "random.hpp"

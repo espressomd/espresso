@@ -105,8 +105,7 @@ void force_calc() {
 #endif
   init_forces();
 
-  for (ActorList::iterator actor = forceActors.begin();
-       actor != forceActors.end(); ++actor) {
+  for (auto actor = forceActors.begin(); actor != forceActors.end(); ++actor) {
     (*actor)->computeForces(espressoSystemInterface);
 #ifdef ROTATION
     (*actor)->computeTorques(espressoSystemInterface);
@@ -248,9 +247,9 @@ void calc_long_range_forces() {
     break;
   }
 
-/* If enabled, calculate electrostatics contribution from electrokinetics
- * species. */
-#ifdef EK_ELECTROSTATIC_COUPLING
+#ifdef ELECTROKINETICS
+  /* If enabled, calculate electrostatics contribution from electrokinetics
+   * species. */
   ek_calculate_electrostatic_coupling();
 #endif
 

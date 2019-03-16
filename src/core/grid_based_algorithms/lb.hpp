@@ -31,6 +31,7 @@
 #include "config.hpp"
 
 #include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
 
 void mpi_set_lb_fluid_counter(int high, int low);
 
@@ -46,23 +47,6 @@ void mpi_set_lb_fluid_counter(int high, int low);
 #include "utils/Counter.hpp"
 #include "utils/Span.hpp"
 
-/** \name Parameter fields for Lattice Boltzmann
- * The numbers are referenced in \ref mpi_bcast_lb_params
- * to determine what actions have to take place upon change
- * of the respective parameter.
- */
-/*@{*/
-#define LBPAR_DENSITY 0   /**< fluid density */
-#define LBPAR_VISCOSITY 1 /**< fluid kinematic viscosity */
-#define LBPAR_AGRID 2     /**< grid constant for fluid lattice */
-#define LBPAR_TAU 3       /**< time step for fluid propagation */
-/** friction coefficient for viscous coupling between particles and fluid */
-#define LBPAR_FRICTION 4
-#define LBPAR_EXTFORCE 5 /**< external force density acting on the fluid */
-#define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
-#define LBPAR_KT 7       /**< thermal energy */
-
-/*@}*/
 /** Some general remarks:
  *  This file implements the LB D3Q19 method to Espresso. The LB_Model
  *  construction is preserved for historical reasons and might be removed
@@ -247,7 +231,6 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              Vector3d const &j, Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &p);
 #endif
 
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
@@ -268,8 +251,6 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index);
  * @param j       local fluid speed
  * @param pi      local fluid pressure
  */
-void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                          double *pi);
 
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,

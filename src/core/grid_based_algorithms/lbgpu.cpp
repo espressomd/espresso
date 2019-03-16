@@ -28,6 +28,7 @@
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
@@ -37,7 +38,6 @@
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "statistics.hpp"
-#include "thermostat.hpp"
 #include "utils.hpp"
 
 #include <cmath>
@@ -126,7 +126,7 @@ bool ek_initialized = false;
 /** %Lattice Boltzmann update gpu called from integrate.cpp */
 void lattice_boltzmann_update_gpu() {
 
-  int factor = (int)round(lbpar_gpu.tau / time_step);
+  auto factor = (int)round(lbpar_gpu.tau / time_step);
 
   fluidstep += 1;
 

@@ -355,7 +355,7 @@ static void set_params_safe(const std::string &method,
     coulomb.method = COULOMB_SCAFACOS;
   }
 #endif
-  scafacos->set_common_parameters(box_l, per, n_part);
+  scafacos->set_common_parameters(box_l.data(), per, n_part);
 
   on_coulomb_change();
 
@@ -444,7 +444,7 @@ void update_system_params() {
   int tmp;
   MPI_Allreduce(&n_part, &tmp, 1, MPI_INT, MPI_MAX, comm_cart);
   n_part = tmp;
-  scafacos->set_common_parameters(box_l, per, n_part);
+  scafacos->set_common_parameters(box_l.data(), per, n_part);
 }
 
 } // namespace Scafacos

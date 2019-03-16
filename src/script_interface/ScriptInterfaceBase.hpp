@@ -64,7 +64,7 @@ public:
   ScriptInterfaceBase(ScriptInterfaceBase &&) = delete;
   ScriptInterfaceBase &operator=(ScriptInterfaceBase const &) = delete;
   ScriptInterfaceBase &operator=(ScriptInterfaceBase &&) = delete;
-  virtual ~ScriptInterfaceBase() = default;
+  ~ScriptInterfaceBase() override = default;
 
   static std::weak_ptr<ScriptInterfaceBase> &get_instance(ObjectId id);
 

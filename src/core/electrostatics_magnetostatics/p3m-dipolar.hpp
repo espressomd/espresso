@@ -137,7 +137,7 @@ void dp3m_init(void);
 void dp3m_scaleby_box_l();
 
 /** Sanity checks */
-bool dp3m_sanity_checks();
+bool dp3m_sanity_checks(const Vector3i &grid);
 
 /** Assign the physical dipoles using the tabulated assignment function.
  *  If Dstore_ca_frac is true, then the charge fractions are buffered in
@@ -219,7 +219,7 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
 /** Calculate real space contribution of p3m dipolar pair forces and torques.
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
-inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double *d,
+inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
                                   double dist2, double dist, double force[3]) {
   if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
     return 0.;

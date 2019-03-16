@@ -2630,6 +2630,21 @@ IF TABULATED == 1:
             """
             self._params = {'min': -1., 'max': -1., 'energy': [], 'force': []}
 
+        def validate_params(self):
+            """Check that parameters are valid.
+
+            """
+            pi = 3.14159265358979
+            phi = [self._params["min"], self._params["max"]]
+            if self._params["type"] == "angle" and max(phi) > 0 and (
+                    abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - pi) > 1e-5):
+                raise ValueError("Tabulated angle expects forces/energies "
+                                 "within the range [0, pi], got " + str(phi))
+            if self._params["type"] == "dihedral" and max(phi) > 0 and (
+                    abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - 2 * pi) > 1e-5):
+                raise ValueError("Tabulated dihedral expects forces/energies "
+                                 "within the range [0, 2*pi], got " + str(phi))
+
         def _get_params_from_es_core(self):
             make_bond_type_exist(self._bond_id)
             res = \
@@ -2657,7 +2672,7 @@ IF TABULATED == 1:
                 type_num = 3
             else:
                 raise ValueError(
-                    "Tabulated type needs to be distance, angle, or diherdal")
+                    "Tabulated type needs to be distance, angle, or dihedral")
 
             res = tabulated_bonded_set_params(
                 self._bond_id, < TabulatedBondedInteraction > type_num,

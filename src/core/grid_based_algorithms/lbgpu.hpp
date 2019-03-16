@@ -37,23 +37,6 @@
  * thus making the code more efficient. */
 #define LBQ 19
 
-/** \name Parameter fields for lattice Boltzmann
- *  The numbers are referenced in \ref mpi_bcast_lb_params
- *  to determine what actions have to take place upon change
- *  of the respective parameter. */
-/*@{*/
-#define LBPAR_DENSITY 0   /**< fluid density */
-#define LBPAR_VISCOSITY 1 /**< fluid kinematic viscosity */
-#define LBPAR_AGRID 2     /**< grid constant for fluid lattice */
-#define LBPAR_TAU 3       /**< time step for fluid propagation */
-#define LBPAR_FRICTION                                                         \
-  4 /**< friction coefficient for viscous coupling between particles and fluid \
-     */
-#define LBPAR_EXTFORCE 5 /**< external force acting on the fluid */
-#define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
-#define LBPAR_BOUNDARY 7 /**< boundary parameters */
-/*@}*/
-
 #if defined(LB_DOUBLE_PREC) || defined(EK_DOUBLE_PREC)
 typedef double lbForceFloat;
 #else

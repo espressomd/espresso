@@ -222,7 +222,7 @@ void p3m_shrink_wrap_charge_grid(int n_charges);
  *
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
-inline double p3m_add_pair_force(double chgfac, double *d, double dist2,
+inline double p3m_add_pair_force(double chgfac, double const *d, double dist2,
                                  double dist, double force[3]) {
   if (dist < p3m.params.r_cut) {
     if (dist > 0.0) { // Vincent
