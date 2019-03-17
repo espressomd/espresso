@@ -44,7 +44,6 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.Cylinder`
     - :class:`espressomd.shapes.Ellipsoid`
     - :class:`espressomd.shapes.HollowCone`
-    - :class:`espressomd.shapes.Maze`
     - :class:`espressomd.shapes.Rhomboid`
     - :class:`espressomd.shapes.SimplePore`
     - :class:`espressomd.shapes.Slitpore`
@@ -293,27 +292,6 @@ The direction ``direction`` determines the force direction, ``-1`` for inward an
 creates a rhomboid defined by one corner located at ``[5.0, 5.0, 5.0]`` and three
 adjacent edges, defined by the three vectors connecting the corner with its three neighboring corners, ``(1,1,0)`` , ``(0,0,1)`` and ``(0,1,0)``.
 
-
-:class:`espressomd.shapes.Maze`
-    Spherical cavities on a regular grid that are connected by tubes.
-
-The resulting surface is ``nsphere`` spheres of radius ``sphrad`` along each dimension, connected by cylinders of radius ``cylrad``.
-The sphere grid have simple cubic symmetry.
-The spheres are distributed evenly by dividing the boxl by ``nsphere``.
-Dimension of the maze can be controlled by ``dim``: 0 for one dimensional, 1 for two dimensional and 2 for three dimensional maze.
-
-
-.. figure:: figures/shape-maze.png
-   :alt: Example constraint with a ``Maze`` shape.
-   :align: center
-   :height: 6.00000cm
-
-Pictured is an example constraint with a ``Maze`` shape created with ::
-
-    maze = Maze(cylrad=2, dim=2, nsphere=5, sphrad=6)
-    system.constraints.add(shape=maze, particle_type=0, penetrable=1)
-
-
 :class:`espressomd.shapes.SimplePore`
     Two parallel infinite planes, connected by a cylindrical orifice. The cylinder is connected to the
     planes by torus segments with an adjustable radius.
@@ -398,6 +376,7 @@ The parameter ``channel_width`` specifies the distance between the top and the p
 The parameter ``pore_length`` specifies the distance between the bottom and the plateau edge.
 The parameter ``pore_width`` specifies the distance between the two plateau edges, it is the space between the left and right walls of the pore region.
 The parameter ``pore_mouth`` specifies the location (z-coordinate) of the pore opening (center). It is always centered in the x-direction.
+The parameter ``dividing_plane`` specifies the location (z-coordinate) of the middle between the two walls.
 
 All the edges  are smoothed via the parameters ``upper_smoothing_radius`` (for the concave corner at the edge of the plateau region) and ``lower_smoothing_radius`` (for the convex corner at the bottom of the pore region).
 The meaning of the geometrical parameters can be inferred from the schematic in Fig. :ref:`slitpore <figure-slitpore>`.
@@ -411,12 +390,15 @@ The meaning of the geometrical parameters can be inferred from the schematic in 
 
 Pictured is an example constraint with a ``Slitpore`` shape created with ::
 
-    slitpore = Slitpore(channel_width=30,
-                        lower_smoothing_radius=3,
-                        upper_smoothing_radius=3,
-                        pore_length=40,
-                        pore_mouth=60,
-                        pore_width=10)
+
+    slitpore = Slitpore(channel_width=15,
+                        lower_smoothing_radius=1.5,
+                        upper_smoothing_radius=2,
+                        pore_length=20,
+                        pore_mouth=30,
+                        pore_width=5,
+                        dividing_plane=40)
+
     system.constraints.add(shape=slitpore, particle_type=0, penetrable=1)
 
 

@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref errorhandling.hpp.
-*/
+ *  Implementation of \ref errorhandling.hpp.
+ */
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
@@ -39,7 +39,7 @@ namespace ErrorHandling {
 
 /* Forward declarations */
 
-void mpi_gather_runtime_errors_slave(int node, int parm);
+void mpi_gather_runtime_errors_slave(int, int);
 
 namespace {
 /** RuntimeErrorCollector instance.
@@ -52,7 +52,6 @@ unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 Communication::MpiCallbacks *m_callbacks = nullptr;
 } // namespace
 
-/** Initialize the error collection system. */
 void init_error_handling(Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;
 
@@ -106,7 +105,7 @@ vector<RuntimeError> mpi_gather_runtime_errors() {
   return runtimeErrorCollector->gather();
 }
 
-void mpi_gather_runtime_errors_slave(int node, int parm) {
+void mpi_gather_runtime_errors_slave(int, int) {
   runtimeErrorCollector->gatherSlave();
 }
 
@@ -114,7 +113,7 @@ void mpi_gather_runtime_errors_slave(int node, int parm) {
 
 void errexit() {
   ErrorHandling::m_callbacks->comm().abort(1);
-  exit(1);
+  std::abort();
 }
 
 int check_runtime_errors() {

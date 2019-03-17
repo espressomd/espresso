@@ -393,7 +393,6 @@ void Correlator::update() {
 
   highest_level_to_compress = -1;
   i = 0;
-  j = 1;
   // Lets find out how far we have to go back in the hierarchy to make space for
   // the new value
   while (1) {
@@ -490,8 +489,8 @@ int Correlator::finalize() {
   // move
   // something
   int i, j;
-  int ll = 0;      // current lowest level
-  int vals_ll = 0; // number of values remaining in the lowest level
+  int ll;      // current lowest level
+  int vals_ll; // number of values remaining in the lowest level
   int highest_level_to_compress;
   unsigned int index_new, index_old, index_res;
 
@@ -513,7 +512,6 @@ int Correlator::finalize() {
       }
 
       i = ll + 1; // lowest level, for which we have to check for compression
-      j = 1;
       // Lets find out how far we have to go back in the hierarchy to make space
       // for the new value
       while (highest_level_to_compress > -1) {

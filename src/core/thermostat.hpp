@@ -32,7 +32,7 @@
 #include "random.hpp"
 #include "rotation.hpp"
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 #include <cmath>
 
@@ -45,7 +45,6 @@
 #define THERMO_DPD 2
 #define THERMO_NPT_ISO 4
 #define THERMO_LB 8
-#define THERMO_GHMC 32
 /*@}*/
 
 namespace Thermostat {
@@ -86,11 +85,6 @@ extern double nptiso_gamma0;
 /** Friction coefficient for nptiso-thermostat's inline-function
  * friction_thermV_nptiso */
 extern double nptiso_gammav;
-
-/** Number of NVE-MD steps in GHMC Cycle*/
-extern int ghmc_nmd;
-/** Phi parameter for GHMC partial momentum update step */
-extern double ghmc_phi;
 
 /************************************************
  * functions

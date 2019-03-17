@@ -36,7 +36,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../RuntimeErrorCollector.hpp"
+#include "RuntimeErrorCollector.hpp"
 
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);

@@ -16,14 +16,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/* vim: set ts=8 sts=2 sw=2 et: */
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <limits>
-#include <math.h>
 #include <sstream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <string>
 
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
@@ -326,15 +325,11 @@ int pdb_parse(char *pdb_filename, char *itp_filename, double scale) {
    */
 
   /* BEGIN DEPLOY */
-  galloc((void **)&pdb_charge_lattice, ek_parameters.dim_x *
-                                           ek_parameters.dim_y *
-                                           ek_parameters.dim_z * sizeof(float));
-  galloc((void **)&pdb_boundary_lattice, ek_parameters.dim_x *
-                                             ek_parameters.dim_y *
-                                             ek_parameters.dim_z * sizeof(int));
-  for (unsigned int i = 0;
-       i < ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
-       i++) {
+  const size_t size =
+      ek_parameters.dim_x * ek_parameters.dim_y * ek_parameters.dim_z;
+  galloc((void **)&pdb_charge_lattice, size * sizeof(float));
+  galloc((void **)&pdb_boundary_lattice, size * sizeof(int));
+  for (size_t i = 0; i < size; i++) {
     pdb_charge_lattice[i] = 0.0;
     pdb_boundary_lattice[i] = 0;
   }

@@ -21,7 +21,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/utils/keys.hpp"
+#include "utils/keys.hpp"
 
 #include <algorithm>
 #include <map>

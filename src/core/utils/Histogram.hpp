@@ -20,13 +20,15 @@
 #ifndef UTILS_HISTOGRAM_HPP
 #define UTILS_HISTOGRAM_HPP
 
-#include "constants.hpp"
-
 #include <algorithm>
 #include <cmath>
 #include <functional>
 #include <numeric>
 #include <vector>
+
+#include "Span.hpp"
+#include "constants.hpp"
+#include "utils/index.hpp"
 
 namespace Utils {
 
@@ -35,47 +37,10 @@ inline size_t calculate_bin_index(double value, double bin_size,
   return std::floor((value - offset) / bin_size);
 }
 
-template <size_t Dims>
-inline size_t ravel_index(std::vector<size_t> unravelled_indices,
-                          std::array<size_t, Dims> n_bins) {
-  // index calculation: using the following formula for N dimensions:
-  //   ind = ind_{N-1} + sum_{j=0}^{N-2} (ind_j * prod_{k=j+1}^{N-1} n_k)
-  size_t res = unravelled_indices.back();
-  for (size_t j = 0; j < unravelled_indices.size() - 1; ++j) {
-    res += unravelled_indices[j] * std::accumulate(n_bins.begin() + j + 1,
-                                                   n_bins.end(), 1,
-                                                   std::multiplies<size_t>());
-  }
-  return res;
-}
-
-/**
- * \brief Returns the unraveled index of the provided flat index.
- *        Therefore is the inversion of flattening an ndims dimensional index.
- * \param len_dims an int array of length ndims containing the lengths of the
- * dimensions. (Input)
- * \param ndims int denoting the number of dimensions. (Input)
- * \param flattened_index an int denoting the flat index. (Input)
- * \param unravelled_index_out an int array with length ndims where the unflat
- * indices are written to. (Output)
- */
-inline void unravel_index(const int *const len_dims, const int ndims,
-                          const int flattened_index,
-                          int *unravelled_index_out) {
-  // idea taken from
-  // http://codinghighway.com/2014/02/22/c-multi-dimensional-arrays-part-2-flattened-to-unflattened-index/
-  std::vector<int> mul(ndims);
-  mul[ndims - 1] = 1;
-  for (int j = ndims - 2; j >= 0; j--)
-    mul[j] = mul[j + 1] * len_dims[j + 1];
-  for (int j = 0; j < ndims; j++)
-    unravelled_index_out[j] = (flattened_index / mul[j]) % len_dims[j];
-}
-
 /**
  * \brief Calculate the bin sizes.
- * \param limits: contains min/max values for each dimension.
- * \param n_bins: number of bins for each dimension.
+ * \param limits  contains min/max values for each dimension.
+ * \param n_bins  number of bins for each dimension.
  * \return The bin sizes for each dimension.
  */
 template <typename T, size_t Dims>
@@ -91,11 +56,11 @@ calc_bin_sizes(std::array<std::pair<T, T>, Dims> const &limits,
 
 /*
  * \brief Check if data is within limits.
- * \param data: data value to check.
- * \param limits: the min/max values.
+ * \param data  data value to check.
+ * \param limits  the min/max values.
  */
 template <typename T, size_t Dims>
-inline bool check_limits(std::vector<T> const &data,
+inline bool check_limits(Span<const T> data,
                          std::array<std::pair<T, T>, Dims> limits) {
   if (data.size() != limits.size()) {
     throw std::invalid_argument("Dimension of data and limits not the same!");
@@ -117,8 +82,8 @@ public:
   std::vector<size_t> get_tot_count() const;
   std::array<std::pair<T, T>, Dims> get_limits() const;
   std::array<T, Dims> get_bin_sizes() const;
-  void update(std::vector<T> const &data);
-  void update(std::vector<T> const &data, std::vector<T> const &weights);
+  void update(Span<const T> data);
+  void update(Span<const T> data, Span<const T> weights);
   void normalize();
 
 private:
@@ -137,21 +102,23 @@ protected:
   size_t m_n_dims_data;
   // Track the number of total hits per bin entry.
   std::vector<size_t> m_tot_count;
+  std::vector<T> m_ones;
 };
 
 /**
  * \brief Histogram constructor.
- * \param n_bins: the number of bins in each histogram dimension.
- * \param n_dims_data: the number of dimensions the data has (e.g. 3 for
+ * \param n_bins  the number of bins in each histogram dimension.
+ * \param n_dims_data  the number of dimensions the data has (e.g. 3 for
  *        vector field).
- * \param limits: the minimum/maximum data values to consider for the
+ * \param limits  the minimum/maximum data values to consider for the
  *        histogram.
  */
 template <typename T, size_t Dims>
 Histogram<T, Dims>::Histogram(std::array<size_t, Dims> n_bins,
                               size_t n_dims_data,
                               std::array<std::pair<T, T>, Dims> limits)
-    : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data) {
+    : m_n_bins(n_bins), m_limits(limits), m_n_dims_data(n_dims_data),
+      m_ones(n_dims_data, T{1.}) {
   if (n_bins.size() != limits.size()) {
     throw std::invalid_argument("Argument for number of bins and limits do "
                                 "not have same number of dimensions!");
@@ -166,36 +133,34 @@ Histogram<T, Dims>::Histogram(std::array<size_t, Dims> n_bins,
 
 /**
  * \brief Add data to the histogram.
- * \param data: vector of single data value with type T.
+ * \param data  vector of single data value with type T.
  *              The size of the given vector has to match the number
  *              of dimensions of the histogram.
  */
 template <typename T, size_t Dims>
-void Histogram<T, Dims>::update(std::vector<T> const &data) {
+void Histogram<T, Dims>::update(Span<const T> data) {
   if (check_limits(data, m_limits)) {
-    std::vector<T> weights(m_n_dims_data, static_cast<T>(1.0));
-    update(data, weights);
+    update(data, m_ones);
   }
 }
 
 /**
  * \brief Add data to the histogram.
- * \param data: vector of single data value with type T.
+ * \param data  vector of single data value with type T.
  *              The size of the given vector has to match the number
  *              of dimensions of the histogram.
- * \param weights: m_n_dims_data dimensional weights.
+ * \param weights  m_n_dims_data dimensional weights.
  */
 template <typename T, size_t Dims>
-void Histogram<T, Dims>::update(std::vector<T> const &data,
-                                std::vector<T> const &weights) {
+void Histogram<T, Dims>::update(Span<const T> data, Span<const T> weights) {
   if (check_limits(data, m_limits)) {
-    std::vector<size_t> index;
+    Array<size_t, Dims> index;
     for (size_t dim = 0; dim < m_n_bins.size(); ++dim) {
-      index.push_back(calculate_bin_index(data[dim], m_bin_sizes[dim],
-                                          m_limits[dim].first));
+      index[dim] =
+          calculate_bin_index(data[dim], m_bin_sizes[dim], m_limits[dim].first);
     }
-    size_t flat_index =
-        m_n_dims_data * ::Utils::ravel_index<Dims>(index, m_n_bins);
+    auto const flat_index =
+        m_n_dims_data * ::Utils::ravel_index(index, m_n_bins);
     if (weights.size() != m_n_dims_data)
       throw std::invalid_argument("Wrong dimensions of given weights!");
     for (size_t ind = 0; ind < m_n_dims_data; ++ind) {
@@ -275,16 +240,17 @@ public:
 
 private:
   void do_normalize() override {
-    int unravelled_index[4];
+    std::array<std::size_t, 4> unravelled_index;
     int r_bin;
     double min_r, r_bin_size, phi_bin_size, z_bin_size, bin_volume;
-    // Ugly vector cast due to "unravel_index" function.
-    std::array<size_t, Dims> len_bins_u = get_n_bins();
-    std::vector<int> len_bins(len_bins_u.begin(), len_bins_u.end());
-    len_bins.push_back(m_n_dims_data);
+    auto const dims = get_n_bins();
+    std::array<std::size_t, 4> extended_dims;
+    std::copy(dims.begin(), dims.end(), extended_dims.begin());
+    extended_dims[3] = m_n_dims_data;
     for (size_t ind = 0; ind < m_hist.size(); ind += m_n_dims_data) {
       // Get the unraveled indices and calculate the bin volume.
-      ::Utils::unravel_index(len_bins.data(), 4, ind, unravelled_index);
+      ::Utils::unravel_index(extended_dims.begin(), extended_dims.end(),
+                             unravelled_index.begin(), ind);
       r_bin = unravelled_index[0];
       min_r = get_limits()[0].first;
       r_bin_size = get_bin_sizes()[0];

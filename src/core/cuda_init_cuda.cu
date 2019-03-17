@@ -32,8 +32,8 @@
 
 /** \name minimally required compute capability. */
 /*@{*/
-static const int computeCapabilityMinMajor = 1;
-static const int computeCapabilityMinMinor = 1;
+static const int computeCapabilityMinMajor = 3;
+static const int computeCapabilityMinMinor = 0;
 /*@}*/
 
 const char *cuda_error;

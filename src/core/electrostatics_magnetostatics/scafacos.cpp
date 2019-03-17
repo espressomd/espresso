@@ -32,6 +32,7 @@
 #include <memory>
 #include <numeric>
 
+#include "Scafacos.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -40,9 +41,13 @@
 #include "initialize.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "scafacos/Scafacos.hpp"
 #include "tuning.hpp"
 #include "utils.hpp"
+
+#if defined(SCAFACOS_DIPOLES) && !defined(FCS_ENABLE_DIPOLES)
+#error                                                                         \
+    "SCAFACOS_DIPOLES requires dipoles support in scafacos library (FCS_ENABLE_DIPOLES)."
+#endif
 
 /** This file contains the c-like interface for Scafacos */
 
@@ -350,7 +355,7 @@ static void set_params_safe(const std::string &method,
     coulomb.method = COULOMB_SCAFACOS;
   }
 #endif
-  scafacos->set_common_parameters(box_l, per, n_part);
+  scafacos->set_common_parameters(box_l.data(), per, n_part);
 
   on_coulomb_change();
 
@@ -385,7 +390,7 @@ void set_parameters(const std::string &method, const std::string &params,
                     bool dipolar_ia) {
   mpi_call(mpi_scafacos_set_parameters_slave, method.size(), params.size());
 
-  /** This requires C++11, otherwise this is undefined because std::string was
+  /* This requires C++11, otherwise this is undefined because std::string was
    * not required to have continuous memory before. */
   /* const_cast is ok, this code runs only on rank 0 where the mpi call does not
    * modify the buffer */
@@ -439,7 +444,7 @@ void update_system_params() {
   int tmp;
   MPI_Allreduce(&n_part, &tmp, 1, MPI_INT, MPI_MAX, comm_cart);
   n_part = tmp;
-  scafacos->set_common_parameters(box_l, per, n_part);
+  scafacos->set_common_parameters(box_l.data(), per, n_part);
 }
 
 } // namespace Scafacos
@@ -466,14 +471,14 @@ void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
 #endif /* SCAFACOS */
 }
 
-void mpi_scafacos_free_slave(int a, int b) {
+void mpi_scafacos_free_slave(int, int) {
 #if defined(SCAFACOS)
   using namespace Scafacos;
   free_handle();
 #endif
 }
 
-void mpi_scafacos_set_r_cut_and_tune_slave(int a, int b) {
+void mpi_scafacos_set_r_cut_and_tune_slave(int, int) {
 #if defined(SCAFACOS)
   using namespace Scafacos;
   double r_cut;

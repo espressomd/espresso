@@ -20,8 +20,9 @@
 */
 
 #include "Ellipsoid.hpp"
-#include "errorhandling.hpp"
-#include "utils.hpp"
+
+#include "utils/math/sqr.hpp"
+
 #include <cmath>
 
 namespace Shapes {
@@ -47,11 +48,6 @@ void Ellipsoid::calculate_dist(const Vector3d &pos, double *dist,
     l -= newton_term(ppos_e, l0);
     eps = std::abs(l - l0);
     step++;
-  }
-
-  if (step == 100) {
-    runtimeWarning("Maximum number of Newton steps exceeded while calculating "
-                   "distance to Ellipsoid.");
   }
 
   /* calculate dist and vec */

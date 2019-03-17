@@ -50,6 +50,10 @@ struct is_instance_of<Template<T...>, Template> : public std::true_type {};
 template <bool P, typename T = void>
 using enable_if_t = typename std::enable_if<P, T>::type;
 
+template <typename T> using decay_t = typename std::decay<T>::type;
+
+template <class T> using add_const_t = typename std::add_const<T>::type;
+
 } // namespace Utils
 
 #endif

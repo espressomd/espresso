@@ -35,10 +35,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "particle_data.hpp"
 #include "random.hpp"
 
-#include "utils/Histogram.hpp"
+#include "utils/index.hpp"
 
+#include <cstdio>
 #include <fstream>
-#include <stdio.h>
 
 namespace ReactionEnsemble {
 /**
@@ -230,7 +230,7 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
         value = value * 1.0 / (Ni0 + i);
       }
     } else {
-      int abs_nu_i = static_cast<int>(-1.0 * nu_i);
+      auto abs_nu_i = static_cast<int>(-1.0 * nu_i);
       for (int i = 0; i < abs_nu_i; i++) {
         value = value * (Ni0 - i);
       }
@@ -438,6 +438,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
    */
 
   SingleReaction &current_reaction = reactions[reaction_id];
+  current_reaction.tried_moves += 1;
   bool reaction_is_accepted = false;
   particle_inserted_too_close_to_another_one = false;
   int old_state_index = -1; // for Wang-Landau algorithm
@@ -502,13 +503,13 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
 
     // delete hidden reactant_particles (remark: don't delete changed particles)
     // extract ids of to be deleted particles
-    int len_hidden_particles_properties =
+    auto len_hidden_particles_properties =
         static_cast<int>(hidden_particles_properties.size());
     std::vector<int> to_be_deleted_hidden_ids(len_hidden_particles_properties);
     std::vector<int> to_be_deleted_hidden_types(
         len_hidden_particles_properties);
     for (int i = 0; i < len_hidden_particles_properties; i++) {
-      int p_id = static_cast<int>(hidden_particles_properties[i].p_id);
+      auto p_id = static_cast<int>(hidden_particles_properties[i].p_id);
       to_be_deleted_hidden_ids[i] = p_id;
       to_be_deleted_hidden_types[i] = hidden_particles_properties[i].type;
       set_particle_type(p_id,
@@ -520,6 +521,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     for (int i = 0; i < len_hidden_particles_properties; i++) {
       delete_particle(to_be_deleted_hidden_ids[i]); // delete particle
     }
+    current_reaction.accepted_moves += 1;
     reaction_is_accepted = true;
   } else {
     // reject
@@ -561,13 +563,11 @@ int ReactionAlgorithm::calculate_nu_bar(
  * Replaces a particle with the given particle id to be of a certain type. This
  * especially means that the particle type and the particle charge are changed.
  */
-int ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
-  int err_code_type = set_particle_type(p_id, desired_type);
-  int err_code_q = 0.0;
+void ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
+  set_particle_type(p_id, desired_type);
 #ifdef ELECTROSTATICS
-  err_code_q = set_particle_q(p_id, charges_of_types[desired_type]);
+  set_particle_q(p_id, charges_of_types[desired_type]);
 #endif
-  return (err_code_q bitor err_code_type);
 }
 
 /**
@@ -575,7 +575,7 @@ int ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
  * interaction. Additional hiding from interactions would need to be implemented
  * here.
  */
-int ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
+void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
 /**
  *remove_charge and put type to a non existing one --> no interactions anymore
  *it is as if the particle was non existing (currently only type-based
@@ -592,8 +592,7 @@ int ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
   set_particle_q(p_id, 0.0);
 #endif
   // set type
-  int err_code_type = set_particle_type(p_id, non_interacting_type);
-  return err_code_type;
+  set_particle_type(p_id, non_interacting_type);
 }
 
 int ReactionAlgorithm::delete_particle(int p_id) {
@@ -1108,11 +1107,11 @@ void WangLandauReactionEnsemble::invalidate_bins() {
   int empty_bins_in_memory = 0;
   for (int flattened_index = 0; flattened_index < wang_landau_potential.size();
        flattened_index++) {
-    // unravel index
-    std::vector<int> unraveled_index(collective_variables.size());
-    Utils::unravel_index(nr_subindices_of_collective_variable.data(),
-                         collective_variables.size(), flattened_index,
-                         unraveled_index.data());
+    std::vector<int> unraveled_index(
+        nr_subindices_of_collective_variable.size());
+    Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                         nr_subindices_of_collective_variable.end(),
+                         unraveled_index.begin(), flattened_index);
     // use unraveled index
     int EnergyCollectiveVariable_index = 0;
     if (collective_variables.size() > 1)
@@ -1435,10 +1434,11 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
                // multidimensional Wang-Landau potential are printed out, since
                // the range [E_min(nbar), E_max(nbar)] for each nbar may be a
                // different one
-        std::vector<int> unraveled_index(collective_variables.size());
-        Utils::unravel_index(nr_subindices_of_collective_variable.data(),
-                             collective_variables.size(), flattened_index,
-                             unraveled_index.data());
+        std::vector<int> unraveled_index(
+            nr_subindices_of_collective_variable.size());
+        Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                             nr_subindices_of_collective_variable.end(),
+                             unraveled_index.begin(), flattened_index);
         // use unraveled index
         for (int i = 0; i < collective_variables.size(); i++) {
           fprintf(pFile, "%f ",
@@ -1501,10 +1501,11 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
     for (int flattened_index = 0;
          flattened_index < wang_landau_potential.size(); flattened_index++) {
       // unravel index
-      std::vector<int> unraveled_index(collective_variables.size());
-      Utils::unravel_index(nr_subindices_of_collective_variable.data(),
-                           collective_variables.size(), flattened_index,
-                           unraveled_index.data());
+      std::vector<int> unraveled_index(
+          nr_subindices_of_collective_variable.size());
+      Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                           nr_subindices_of_collective_variable.end(),
+                           unraveled_index.begin(), flattened_index);
       // use unraveled index
       for (int i = 0; i < collective_variables.size(); i++) {
         fprintf(pFile, "%f ",
@@ -1528,11 +1529,11 @@ int WangLandauReactionEnsemble::
     get_flattened_index_wang_landau_without_energy_collective_variable(
         int flattened_index_with_EnergyCollectiveVariable,
         int CV_index_energy_observable) {
-  // unravel index
-  std::vector<int> unraveled_index(collective_variables.size());
-  Utils::unravel_index(
-      nr_subindices_of_collective_variable.data(), collective_variables.size(),
-      flattened_index_with_EnergyCollectiveVariable, unraveled_index.data());
+  std::vector<int> unraveled_index(nr_subindices_of_collective_variable.size());
+  Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                       nr_subindices_of_collective_variable.end(),
+                       unraveled_index.begin(),
+                       flattened_index_with_EnergyCollectiveVariable);
   // use unraveled index
   const int nr_collective_variables =
       collective_variables.size() -

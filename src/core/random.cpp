@@ -71,7 +71,7 @@ int get_state_size_of_generator() {
 
 /** Communication */
 
-void mpi_random_seed_slave(int pnode, int cnt) {
+void mpi_random_seed_slave(int, int) {
   int this_seed;
   user_has_seeded = true;
 

@@ -19,6 +19,7 @@
 include "myconfig.pxi"
 from libcpp cimport bool
 from interactions cimport ImmersedBoundaries
+from utils cimport Vector3i
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
@@ -35,6 +36,7 @@ cdef extern from "global.hpp":
     int FIELD_THERMO_VIRTUAL
     int FIELD_TEMPERATURE
     int FIELD_LANGEVIN_GAMMA
+    int FIELD_SWIMMING_PARTICLES_EXIST
     IF ROTATION:
         int FIELD_LANGEVIN_GAMMA_ROTATION
     IF NPT:
@@ -56,9 +58,6 @@ cdef extern from "integrate.hpp":
     extern double skin
     extern bool set_py_interrupt
 
-cdef extern from "lattice.hpp":
-    extern int lattice_switch
-
 cdef extern from "domain_decomposition.hpp":
     ctypedef struct  DomainDecomposition:
         int cell_grid[3]
@@ -69,7 +68,7 @@ cdef extern from "domain_decomposition.hpp":
     extern int max_num_cells
     extern int min_num_cells
     extern double max_skin
-    int calc_processor_min_num_cells()
+    int calc_processor_min_num_cells(const Vector3i & grid)
 
 
 cdef extern from "particle_data.hpp":
@@ -100,18 +99,6 @@ cdef extern from "dpd.hpp":
     extern int dpd_twf
 
 
-IF LB:
-    cdef extern from "grid_based_algorithms/lb.hpp":
-        ctypedef struct LB_Parameters:
-            double tau
-        extern LB_Parameters lbpar
-
-IF LB_GPU:
-    cdef extern from "grid_based_algorithms/lbgpu.hpp":
-        ctypedef struct LB_parameters_gpu:
-            double tau
-        extern LB_parameters_gpu lbpar_gpu
-
 cdef extern from "cells.hpp":
     extern double max_range
     ctypedef struct CellStructure:
@@ -130,13 +117,6 @@ cdef extern from "rattle.hpp":
 cdef extern from "tuning.hpp":
     extern int timing_samples
 
-
-cdef extern from "grid.hpp":
-    double box_l[3]
-    double local_box_l[3]
-    extern int node_grid[3]
-    extern int periodic
-    extern double min_box_l
 
 cdef extern from "npt.hpp":
     ctypedef struct nptiso_struct:

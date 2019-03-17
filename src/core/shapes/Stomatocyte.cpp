@@ -35,11 +35,10 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
 
   int number;
 
-  double mu, T0, T1, T1p, T2, T3, T3sqrt, T3p, T4sqrt, T4, a, b, c, d, e, rad0,
-      rad1, rad2, rad3, pt0x, pt0y, pt1x, pt1y, pt2x, pt2y, pt3x, pt3y, dst0,
-      dst1, dst2, dst3, t0, t1, t2, t3, t4, ttota, distance, mindist, time0,
-      time1, xd, yd, zd, xp, yp, zp, xpp, ypp, normal_x_3D, normal_y_3D,
-      normal_z_3D;
+  double mu, T0, T1, T1p, T2, T3, T3sqrt, T3p, T4, a, b, c, d, e, rad0, rad1,
+      rad2, rad3, pt0x, pt0y, pt1x, pt1y, pt2x, pt2y, pt3x, pt3y, dst0, dst1,
+      dst2, dst3, t0, t1, t2, t3, t4, ttota, distance, mindist, time0, time1,
+      xd, yd, zd, xp, yp, zp, xpp, ypp, normal_x_3D, normal_y_3D, normal_z_3D;
 
   Vector3d closest_pos({-1.0, -1.0, -1.0});
 
@@ -137,14 +136,6 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
           2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d)))));
 
   T3 = 3.0 * M_PI / 4.0 - T3p;
-
-  T4sqrt = -sqr(b) * sqr(c) *
-           (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
-            2 * a * (b + 2 * c + d)) *
-           (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) - 2 * a * (b + 2 * c + d) +
-            2 * b * (4 * c + d));
-
-  T4sqrt = std::max(T4sqrt, 0.0);
 
   T4 = acos((b * (-a + b + 2 * c + d) *
                  (sqr(a) + 2 * sqr(b) + 9 * sqr(c) + 4 * c * d + sqr(d) +

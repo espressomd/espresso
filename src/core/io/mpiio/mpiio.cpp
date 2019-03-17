@@ -61,8 +61,8 @@
 
 #include <mpi.h>
 
+#include <cerrno>
 #include <cstring>
-#include <errno.h>
 #include <string>
 #include <sys/stat.h>
 #include <unistd.h>

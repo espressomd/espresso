@@ -21,10 +21,10 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "script_interface/Variant.hpp"
+#include "Variant.hpp"
 using namespace ScriptInterface;
 
-#include "script_interface/get_value.hpp"
+#include "get_value.hpp"
 
 /* Check that the enum and the types are in order. */
 BOOST_AUTO_TEST_CASE(variant_types) {

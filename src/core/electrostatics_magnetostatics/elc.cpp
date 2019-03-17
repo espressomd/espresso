@@ -58,7 +58,7 @@
 static double ux, ux2, uy, uy2, uz, height_inverse;
 /*@}*/
 
-ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0};
+ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0.0};
 
 /****************************************
  * LOCAL ARRAYS
@@ -1168,20 +1168,18 @@ int ELC_tune(double error) {
 int ELC_sanity_checks() {
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
     runtimeErrorMsg() << "ELC requires periodicity 1 1 1";
-    return 1;
+    return ES_ERROR;
   }
   /* The product of the two dielectric contrasts should be < 1 for ELC to
-     work.
-     This is not the case for
-     two parallel boundaries, which can only be treated by the constant
-     potential code */
+     work. This is not the case for two parallel boundaries, which can only
+     be treated by the constant potential code */
   if (elc_params.dielectric_contrast_on &&
       (fabs(1.0 - elc_params.delta_mid_top * elc_params.delta_mid_bot) <
        ROUND_ERROR_PREC) &&
       !elc_params.const_pot) {
     runtimeErrorMsg() << "ELC with two parallel metallic boundaries requires "
                          "the const_pot option";
-    return 1;
+    return ES_ERROR;
   }
 
   // ELC with non-neutral systems and no fully metallic boundaries does not work
@@ -1189,10 +1187,10 @@ int ELC_sanity_checks() {
       p3m.square_sum_q > ROUND_ERROR_PREC) {
     runtimeErrorMsg() << "ELC does not work for non-neutral systems and "
                          "non-metallic dielectric contrast.";
-    return 1;
+    return ES_ERROR;
   }
 
-  return 0;
+  return ES_OK;
 }
 
 void ELC_init() {

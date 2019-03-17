@@ -26,7 +26,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "script_interface/None.hpp"
+#include "None.hpp"
 using ScriptInterface::None;
 
 BOOST_AUTO_TEST_CASE(constructor_bool) {

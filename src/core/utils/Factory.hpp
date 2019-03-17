@@ -41,17 +41,17 @@ namespace Utils {
  * from the base type (`T`) by name.
  * One registry per base type (`T`). To get a new one,
  * use new type ( `struct NewT : public T {};` ).
- * To add a new type it has to be given a name an a function
- * of type `Factory<T>::builder_type` to create an instance has to be provided.
+ * To add a new type it has to be given a name an a function of type
+ * `%Factory<T>::%builder_type` to create an instance has to be provided.
  * The class contains a default implementation for the creation
- * function (`Factory<T>::builder<Derived>`) which just calls
+ * function (`%Factory<T>::%builder<Derived>`) which just calls
  * new to create an instance. A user provided function could
  * be used to use a non-default constructor, or to allocate memory
  * for the instance in a specific way, e.g. by placing all new instances
  * in a vector.
  *
  * Example usage:
- *
+ * @code{.cpp}
  *     struct A {};
  *     struct B : public A {};
  *     struct C : public A {
@@ -63,7 +63,7 @@ namespace Utils {
  *     Factory<A>::register_new<B>("b");
  *     // Register C as 'c' with user_defined builder:
  *     Factory<A>::register_new("c", []() -> typename Factory<A>::pointer_type {
- * return new C(5); });
+ *         return new C(5); });
  *
  *     // Create a B
  *     auto b = Factory<A>::make("b");
@@ -72,6 +72,7 @@ namespace Utils {
  *     // Create a C
  *     auto c = Factory<A>::make("c");
  *     assert(dynamic_cast<C *>(c.get())->m_c == 5);
+ * @endcode
  */
 template <
     /** The base type of the instances created by this factory */

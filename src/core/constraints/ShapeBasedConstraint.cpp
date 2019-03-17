@@ -56,7 +56,8 @@ double ShapeBasedConstraint::min_dist() {
 }
 
 ParticleForce ShapeBasedConstraint::force(const Particle &p,
-                                          const Vector3d &folded_pos) {
+                                          const Vector3d &folded_pos,
+                                          double t) {
 
   double dist = 0.;
   Vector3d dist_vec, force, torque1, torque2, outer_normal_vec;
@@ -89,7 +90,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
       if ((!m_only_positive) && (dist < 0)) {
         auto const dist2 = dist * dist;
         calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec.data(),
-                                   -1.0 * dist, dist * dist, force.data(),
+                                   -1.0 * dist, dist2, force.data(),
                                    torque1.data(), torque2.data());
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
@@ -117,7 +118,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
 }
 
 void ShapeBasedConstraint::add_energy(const Particle &p,
-                                      const Vector3d &folded_pos,
+                                      const Vector3d &folded_pos, double t,
                                       Observable_stat &energy) const {
   double dist;
   IA_parameters *ia_params;

@@ -29,11 +29,9 @@
 #include "dpd.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "errorhandling.hpp"
-#include "grid.hpp"
 #include "initialize.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
@@ -64,16 +62,16 @@
 #include "pressure.hpp"
 #include "rattle.hpp"
 #include "reaction_field.hpp"
-#include "thermostat.hpp"
-#include "utils.hpp"
-#include "utils/serialization/IA_parameters.hpp"
+#include "serialization/IA_parameters.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/range/algorithm/fill.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
+
 #include <cstdlib>
 #include <cstring>
 
@@ -97,8 +95,8 @@ Coulomb_parameters coulomb = {
 #endif
 
 #ifdef ELECTROSTATICS
-Debye_hueckel_params dh_params = {0.0, 0.0};
-Reaction_field_params rf_params = {0.0, 0.0};
+Debye_hueckel_params dh_params{};
+Reaction_field_params rf_params{};
 
 /** Induced field (for const. potential feature) **/
 double field_induced;
@@ -304,8 +302,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef SOFT_SPHERE
-      if (max_cut_current < data->soft_cut)
-        max_cut_current = data->soft_cut;
+      if (max_cut_current < (data->soft_cut + data->soft_offset))
+        max_cut_current = (data->soft_cut + data->soft_offset);
 #endif
 
 #ifdef AFFINITY
@@ -360,6 +358,11 @@ static void recalc_maximal_cutoff_nonbonded() {
       if (max_cut_current < data->REACTION_range)
         max_cut_current = data->REACTION_range;
 #endif
+#ifdef THOLE
+      // If THOLE is active, use p3m cutoff
+      if (data->THOLE_scaling_coeff != 0)
+        max_cut_current = std::max(max_cut_current, p3m.params.r_cut);
+#endif
 
       IA_parameters *data_sym = get_ia_param(j, i);
 
@@ -413,6 +416,11 @@ void realloc_ia_params(int nsize) {
   std::swap(ia_params, new_params);
 }
 
+void reset_ia_params() {
+  boost::fill(ia_params, IA_parameters{});
+  mpi_bcast_all_ia_params();
+}
+
 bool is_new_particle_type(int type) {
   if ((type + 1) <= max_seen_particle_type)
     return false;
@@ -428,19 +436,6 @@ void make_particle_type_exist(int type) {
 void make_particle_type_exist_local(int type) {
   if (is_new_particle_type(type))
     realloc_ia_params(type + 1);
-}
-
-void make_bond_type_exist(int type) {
-  int i, ns = type + 1;
-  const auto old_size = bonded_ia_params.size();
-  if (ns <= bonded_ia_params.size()) {
-    return;
-  }
-  /* else allocate new memory */
-  bonded_ia_params.resize(ns);
-  /* set bond types not used as undefined */
-  for (i = old_size; i < ns; i++)
-    bonded_ia_params[i].type = BONDED_IA_NONE;
 }
 
 int interactions_sanity_checks() {
@@ -478,7 +473,7 @@ int interactions_sanity_checks() {
     if (mdlc_sanity_checks())
       state = 0; // fall through
   case DIPOLAR_P3M:
-    if (dp3m_sanity_checks())
+    if (dp3m_sanity_checks(node_grid))
       state = 0;
     break;
   case DIPOLAR_MDLC_DS:
