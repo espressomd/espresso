@@ -185,8 +185,9 @@ void dp3m_deactivate(void);
  *  The function is based on routines of the program HE_Q.cpp for charges
  *  written by M. Deserno.
  *
- *  @param[out]  log
- *  @return @ref ES_OK or @ref ES_ERROR
+ *  @param[out]  log  log output
+ *  @retval ES_OK
+ *  @retval ES_ERROR
  */
 int dp3m_adaptive_tune(char **log);
 
@@ -349,6 +350,8 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
   }
   return 0.0;
 }
+
+/*@}*/
 
 #endif /* DP3M */
 #endif /* _P3M_DIPOLES_H */

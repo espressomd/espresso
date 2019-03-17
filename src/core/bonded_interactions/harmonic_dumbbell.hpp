@@ -34,7 +34,11 @@
 
 #ifdef ROTATION
 
-/// set the parameters for the harmonic potential
+/** set the parameters for the harmonic potential
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
                                  double r_cut);
 

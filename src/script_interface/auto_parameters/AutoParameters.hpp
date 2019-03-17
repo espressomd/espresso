@@ -90,15 +90,16 @@ class AutoParameters : public Base {
   static_assert(std::is_base_of<ScriptInterfaceBase, Base>::value, "");
 
 public:
-  /* Exceptions */
+  /** @brief Exception thrown when accessing an unknown parameter */
   struct UnknownParameter : public std::runtime_error {
     UnknownParameter(std::string const &name)
-        : runtime_error("Parameter " + name + " is read-only.") {}
+        : runtime_error("Unknown parameter '" + name + "'.") {}
   };
 
+  /** @brief Exception thrown when writing to a read-only parameter */
   struct WriteError : public std::runtime_error {
     WriteError(std::string const &name)
-        : runtime_error("Unknown parameter '" + name + "'.") {}
+        : runtime_error("Parameter " + name + " is read-only.") {}
   };
 
 protected:
