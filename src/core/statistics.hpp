@@ -68,7 +68,7 @@ double mindist(PartCfg &, IntList const &set1, IntList const &set2);
  *  @return List of ids close to @p pos.
  */
 IntList nbhood(PartCfg &partCfg, double pos[3], double r_catch,
-               int planedims[3]);
+               int const planedims[3]);
 
 /** Calculate minimal distance to point.
  *  @param pos  point
@@ -104,9 +104,10 @@ void analyze_append(PartCfg &partCfg);
  *  @param low      particles closer than @p r_min
  *  @param dist     Array to store the result (size: @p r_bins).
  */
-void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types,
-                            int n_p2, double r_min, double r_max, int r_bins,
-                            int log_flag, double *low, double *dist);
+void calc_part_distribution(PartCfg &, int const *p1_types, int n_p1,
+                            int const *p2_types, int n_p2, double r_min,
+                            double r_max, int r_bins, int log_flag, double *low,
+                            double *dist);
 
 /** Calculate the radial distribution function.
  *
@@ -127,10 +128,11 @@ void calc_part_distribution(PartCfg &, int *p1_types, int n_p1, int *p2_types,
  *  @param r_bins   Number of bins.
  *  @param rdf      Array to store the result (size: @p r_bins).
  */
-void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
-              int n_p2, double r_min, double r_max, int r_bins, double *rdf);
-void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
-              std::vector<int> &p2_types, double r_min, double r_max,
+void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
+              int const *p2_types, int n_p2, double r_min, double r_max,
+              int r_bins, double *rdf);
+void calc_rdf(PartCfg &partCfg, std::vector<int> const &p1_types,
+              std::vector<int> const &p2_types, double r_min, double r_max,
               int r_bins, std::vector<double> &rdf);
 
 /** Calculate the radial distribution function averaged over last @p n_conf
@@ -154,11 +156,11 @@ void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
  *  @param rdf      Array to store the result (size: @p r_bins).
  *  @param n_conf   Number of configurations from the last stored configuration.
  */
-void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
-                 int n_p2, double r_min, double r_max, int r_bins, double *rdf,
-                 int n_conf);
-void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
-                 std::vector<int> &p2_types, double r_min, double r_max,
+void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
+                 int const *p2_types, int n_p2, double r_min, double r_max,
+                 int r_bins, double *rdf, int n_conf);
+void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
+                 std::vector<int> const &p2_types, double r_min, double r_max,
                  int r_bins, std::vector<double> &rdf, int n_conf);
 
 /** Calculate the spherically averaged structure factor.
@@ -179,10 +181,11 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
  *  @param order     the maximum wave vector length in 2PI/L
  *  @param sf        array containing the result (size: 2*order^2).
  */
-void calc_structurefactor(PartCfg &, int *p_types, int n_types, int order,
+void calc_structurefactor(PartCfg &, int const *p_types, int n_types, int order,
                           double **sf);
 
-std::vector<std::vector<double>> modify_stucturefactor(int order, double *sf);
+std::vector<std::vector<double>> modify_stucturefactor(int order,
+                                                       double const *sf);
 
 /** Calculates the density profile in dir direction */
 void density_profile_av(int n_conf, int n_bin, double density, int dir,

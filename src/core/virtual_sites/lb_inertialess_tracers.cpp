@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 void CoupleIBMParticleToFluid(Particle *p);
 void ParticleVelocitiesFromLB_CPU();
 bool IsHalo(const int indexCheck);
-void GetIBMInterpolatedVelocity(double *p, double *const v,
+void GetIBMInterpolatedVelocity(double const *p, double *const v,
                                 double *const forceAdded);
 
 // ***** Internal variables ******

@@ -301,8 +301,8 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
     dist[i] /= (double)cnt;
 }
 
-void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
-              std::vector<int> &p2_types, double r_min, double r_max,
+void calc_rdf(PartCfg &partCfg, std::vector<int> const &p1_types,
+              std::vector<int> const &p2_types, double r_min, double r_max,
               int r_bins, std::vector<double> &rdf) {
   calc_rdf(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
            p2_types.size(), r_min, r_max, r_bins, &rdf[0]);
@@ -363,8 +363,8 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
   }
 }
 
-void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
-                 std::vector<int> &p2_types, double r_min, double r_max,
+void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
+                 std::vector<int> const &p2_types, double r_min, double r_max,
                  int r_bins, std::vector<double> &rdf, int n_conf) {
   calc_rdf_av(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
               p2_types.size(), r_min, r_max, r_bins, &rdf[0], n_conf);
