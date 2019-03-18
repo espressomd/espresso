@@ -31,8 +31,8 @@
 #include "communication.hpp"
 #include "debug.hpp"
 
-#include "utils/memory.hpp"
 #include "utils.hpp"
+#include "utils/memory.hpp"
 
 #include <cstring>
 #include <fftw3.h>
@@ -179,8 +179,8 @@ void fft_unpack_block(double *in, double *out, int start[3], int size[3],
  ************************************************/
 
 boost::optional<std::vector<int>>
-fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2, int *node_list1, int *node_list2, int *pos,
-                     int *my_pos) {
+fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2,
+                     int *node_list1, int *node_list2, int *pos, int *my_pos) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];

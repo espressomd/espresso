@@ -160,8 +160,8 @@ void fft_common_pre_init(fft_data_struct *fft);
  * (Output). \param my_pos      position of this_node in  grid2.
  * \return Size of the communication group (Output of course!).  */
 boost::optional<std::vector<int>>
-fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2, int *node_list1, int *node_list2, int *pos,
-                     int *my_pos);
+fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2,
+                     int *node_list1, int *node_list2, int *pos, int *my_pos);
 
 /** Calculate the local fft mesh.  Calculate the local mesh (loc_mesh)
  *  of a node at position (n_pos) in a node grid (n_grid) for a global

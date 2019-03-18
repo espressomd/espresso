@@ -66,7 +66,7 @@
  ************************************************/
 
 struct p3m_data_struct {
-    p3m_data_struct();
+  p3m_data_struct();
 
   P3MParameters params;
 

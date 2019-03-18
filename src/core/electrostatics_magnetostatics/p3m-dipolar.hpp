@@ -47,7 +47,7 @@
 #include "utils/math/AS_erfc_part.hpp"
 
 struct dp3m_data_struct {
-    dp3m_data_struct();
+  dp3m_data_struct();
 
   P3MParameters params;
 

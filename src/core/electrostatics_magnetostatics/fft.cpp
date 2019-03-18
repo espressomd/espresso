@@ -114,17 +114,19 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   for (i = 1; i < 4; i++) {
     auto group = fft_find_comm_groups(
             {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-            {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i], n_pos[i], my_pos[i]);
+            {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+            n_pos[i], my_pos[i]);
     if (not group) {
       /* try permutation */
       j = n_grid[i][(fft.plan[i].row_dir + 1) % 3];
       n_grid[i][(fft.plan[i].row_dir + 1) % 3] =
-              n_grid[i][(fft.plan[i].row_dir + 2) % 3];
+          n_grid[i][(fft.plan[i].row_dir + 2) % 3];
       n_grid[i][(fft.plan[i].row_dir + 2) % 3] = j;
 
       group = fft_find_comm_groups(
-              {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-              {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i], n_pos[i], my_pos[i]);
+          {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+          n_pos[i], my_pos[i]);
 
       assert(group);
     }
