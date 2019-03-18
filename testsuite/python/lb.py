@@ -19,7 +19,6 @@ from __future__ import print_function
 import itertools
 import unittest as ut
 import numpy as np
-import sys
 
 import espressomd
 import espressomd.lb
