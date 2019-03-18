@@ -76,7 +76,11 @@ int MpiCallbacks::add(func_ptr_type fp) {
 
 void MpiCallbacks::remove(const int id) { m_callbacks.remove(id); }
 
-void MpiCallbacks::abort_loop() const { call(LOOP_ABORT, 0, 0); }
+void MpiCallbacks::abort_loop() const {
+  try {
+    call(LOOP_ABORT, 0, 0);
+  } catch(...) {}
+}
 
 void MpiCallbacks::loop() const {
   for (;;) {

@@ -148,7 +148,7 @@ void init_random_seed(int seed) {
       seed}; // come up with "sane" initialization to avoid too many zeros in
              // the internal state of the Mersenne twister
   generator.seed(seeder);
-  generator.discard(1e6); // discard the first 1e6 random numbers to warm up the
+  generator.discard(1'000'000); // discard the first 1e6 random numbers to warm up the
                           // Mersenne-Twister PRNG
 }
 
