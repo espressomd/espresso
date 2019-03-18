@@ -1,25 +1,15 @@
+if(NOT DEFINED TEST_NP)
+  include(ProcessorCount)
+  ProcessorCount(NP)
+  math(EXPR TEST_NP "${NP}/2 + 1")
+endif()
+
 set(TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER ${CMAKE_CURRENT_BINARY_DIR}/test_importlib_wrapper.py)
 configure_file(importlib_wrapper.py ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py)
 configure_file(test_importlib_wrapper.py ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
 
-if(WITH_CUDA)
-  find_program(nvidia_smi "nvidia-smi")
-  if(nvidia_smi)
-    execute_process(COMMAND ${nvidia_smi} "--query-gpu=index" "--format=csv,noheader"
-                    RESULT_VARIABLE NVIDIA_SMI_RETVAL
-                    OUTPUT_VARIABLE NVIDIA_SMI_STDOUT
-                    ERROR_QUIET)
-    if(NVIDIA_SMI_RETVAL EQUAL 0 AND NVIDIA_SMI_STDOUT MATCHES "^[0-9]+\n")
-      set(GPU_AVAILABLE TRUE)
-    endif()
-  endif()
-endif()
-
 macro(PYTHON_SCRIPTS_TEST)
-  cmake_parse_arguments(TEST "GPU" "FILE;SUFFIX" "DEPENDENCIES" ${ARGN})
-  if(TEST_GPU AND NOT GPU_AVAILABLE)
-    return()  # exit the parent scope
-  endif()
+  cmake_parse_arguments(TEST "" "FILE;SUFFIX" "DEPENDENCIES;LABELS" ${ARGN})
   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
   if(TEST_SUFFIX)
     set(TEST_NAME "${TEST_NAME}_with_${TEST_SUFFIX}")
@@ -31,7 +21,8 @@ macro(PYTHON_SCRIPTS_TEST)
   endforeach(dependency)
   add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE_CONFIGURED})
   set_tests_properties(${TEST_NAME} PROPERTIES FIXTURES_REQUIRED IMPORTLIB_WRAPPER)
-  if(TEST_GPU)
+  set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
+  if("gpu" IN_LIST TEST_LABELS)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)
   endif()
 endmacro(PYTHON_SCRIPTS_TEST)

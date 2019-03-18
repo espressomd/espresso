@@ -57,6 +57,8 @@ function end {
 [ -z "$make_check" ] && make_check="true"
 [ -z "$check_odd_only" ] && check_odd_only="false"
 [ -z "$check_gpu_only" ] && check_gpu_only="false"
+[ -z "$check_tutorials" ] && check_tutorials="false"
+[ -z "$check_samples" ] && check_samples="false"
 [ -z "$python_version" ] && python_version="2"
 [ -z "$with_cuda" ] && with_cuda="true"
 [ -z "$build_type" ] && build_type="Debug"
@@ -254,6 +256,12 @@ if $make_check; then
         done
     fi
     make -j${build_procs} check_unit_tests $make_params || exit 1
+    if $check_tutorials; then
+        make -j${build_procs} check_tutorials $make_params || exit 1
+    fi
+    if $check_samples; then
+        make -j${build_procs} check_samples $make_params || exit 1
+    fi
     make check_cmake_install $make_params || exit 1
 
     end "TEST"

@@ -168,6 +168,18 @@ cuda-maxset:
     - linux
     - cuda
 
+cuda-tutorials:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  script:
+    - export myconfig=maxset with_coverage=false python_version=3 check_tutorials=true check_samples=true test_timeout=1200
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+    - tutorials
+
 empty:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
