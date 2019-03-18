@@ -333,6 +333,8 @@ void energy_n(int &n_dipolar) {
   case DIPOLAR_SCAFACOS:
     n_dipolar = 2;
     break;
+  default:
+    break;
   }
 }
 
@@ -380,6 +382,8 @@ void bcast_params(const boost::mpi::communicator &comm) {
     break;
 #endif
   case DIPOLAR_SCAFACOS:
+    break;
+  default:
     break;
   }
 }
