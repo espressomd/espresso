@@ -68,8 +68,8 @@ void p3m_p3m_print_send_mesh(p3m_send_mesh sm) {
   }
 }
 
-void p3m_add_block(double *in, double *out, int start[3], int size[3],
-                   int dim[3]) {
+void p3m_add_block(double const *in, double *out, int const start[3],
+                   int const size[3], int const dim[3]) {
   /* fast,mid and slow changing indices */
   int f, m, s;
   /* linear index of in grid, linear index of out grid */

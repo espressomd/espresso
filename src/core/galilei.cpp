@@ -110,7 +110,7 @@ void local_system_CMS_velocity(double *sdata) {
 }
 
 /* Remove the CMS velocity */
-void local_galilei_transform(double *sdata) {
+void local_galilei_transform(double const *const sdata) {
   for (auto &p : local_cells.particles()) {
     p.m.v[0] -= sdata[0];
     p.m.v[1] -= sdata[1];

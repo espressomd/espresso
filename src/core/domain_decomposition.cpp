@@ -246,7 +246,8 @@ void dd_mark_cells() {
  *  \param lc          lower left corner of the subgrid.
  *  \param hc          high up corner of the subgrid.
  */
-int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
+int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
+                            int const hc[3]) {
   int i, m, n, o, c = 0;
   /* sanity check */
   for (i = 0; i < 3; i++) {

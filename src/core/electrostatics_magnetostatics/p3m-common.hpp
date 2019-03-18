@@ -209,8 +209,8 @@ void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
  *  \param size        Dimensions of the block
  *  \param dim         Dimensions of the output grid.
  */
-void p3m_add_block(double *in, double *out, int start[3], int size[3],
-                   int dim[3]);
+void p3m_add_block(double const *in, double *out, int const start[3],
+                   int const size[3], int const dim[3]);
 
 /** One of the aliasing sums used by \ref p3m_k_space_error.
  *  Fortunately the one which is most important (because it converges

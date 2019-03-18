@@ -201,20 +201,21 @@ inline void clear_vec(double *pdc, int size) {
     pdc[i] = 0;
 }
 
-inline void copy_vec(double *pdc_d, double *pdc_s, int size) {
+inline void copy_vec(double *pdc_d, double const *pdc_s, int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s[i];
 }
 
-inline void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size) {
+inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
+                    int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
 
-inline void addscale_vec(double *pdc_d, double scale, double *pdc_s1,
-                         double *pdc_s2, int size) {
+inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
+                         double const *pdc_s2, int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];

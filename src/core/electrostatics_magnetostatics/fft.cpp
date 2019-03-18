@@ -58,7 +58,7 @@ static void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
 static void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
                                double *in, double *out, fft_data_struct &fft);
 
-int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
+int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
              fft_data_struct &fft, const Vector3i &grid) {
   int i, j;

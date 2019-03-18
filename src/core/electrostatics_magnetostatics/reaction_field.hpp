@@ -59,7 +59,7 @@ int rf_set_params(double kappa, double epsilon1, double epsilon2, double r_cut);
 
 inline void add_rf_coulomb_pair_force_no_cutoff(const Particle *const p1,
                                                 const Particle *const p2,
-                                                double d[3], double dist,
+                                                double const d[3], double dist,
                                                 double force[3]) {
   int j;
   double fac;
