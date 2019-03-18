@@ -246,5 +246,4 @@ void calc_long_range_forces_iccp3m() {
   Coulomb::calc_long_range_force();
 #endif
 }
-
 #endif

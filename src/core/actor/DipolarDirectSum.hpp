@@ -60,7 +60,7 @@ public:
       std::cerr << "DipolarDirectSum needs access to dipoles on GPU!"
                 << std::endl;
   };
-  void computeForces(SystemInterface &s) {
+  void computeForces(SystemInterface &s) override {
     dds_float box[3];
     int per[3];
     for (int i = 0; i < 3; i++) {
@@ -71,7 +71,7 @@ public:
                                           s.dipGpuBegin(), s.fGpuBegin(),
                                           s.torqueGpuBegin(), box, per);
   };
-  void computeEnergy(SystemInterface &s) {
+  void computeEnergy(SystemInterface &s) override {
     dds_float box[3];
     int per[3];
     for (int i = 0; i < 3; i++) {

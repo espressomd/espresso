@@ -33,8 +33,6 @@
     top of each other don't interact by chance. */
 #define INACTIVE_CUTOFF -1.0
 
-/*@}*/
-
 /* Data Types */
 /************************************************************/
 
@@ -62,9 +60,12 @@ struct IA_parameters {
 #endif
 
 #ifdef WCA
+  /** \name WCA potential */
+  /*@{*/
   double WCA_eps = 0.0;
   double WCA_sig = 0.0;
   double WCA_cut = INACTIVE_CUTOFF;
+  /*@}*/
 #endif
 
   /** flag that tells whether there is any short-ranged interaction,
@@ -274,8 +275,11 @@ struct IA_parameters {
 #endif
 
 #ifdef THOLE
+  /** \name Thole potential */
+  /*@{*/
   double THOLE_scaling_coeff;
   double THOLE_q1q2;
+  /*@}*/
 #endif
 
 #ifdef SWIMMER_REACTIONS
@@ -305,7 +309,8 @@ extern double max_cut_nonbonded;
     (through ghosts).  */
 extern double min_global_cut;
 
-/************************************************
+/*****************
+*******************************
  * exported functions
  ************************************************/
 

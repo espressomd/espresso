@@ -21,6 +21,7 @@ from cython.operator cimport dereference
 include "myconfig.pxi"
 from espressomd cimport actors
 from . import actors
+cimport grid
 cimport globals
 import numpy as np
 IF SCAFACOS == 1:
@@ -551,7 +552,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             set_prefactor(self._params["prefactor"])
             default_params = self.default_params()
 
-            self.thisptr.set_params(globals.box_l[2], coulomb.prefactor, self._params[
+            self.thisptr.set_params(grid.box_l[2], coulomb.prefactor, self._params[
                                     "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _tune(self):

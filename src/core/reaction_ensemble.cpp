@@ -37,8 +37,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "utils/index.hpp"
 
+#include <cstdio>
 #include <fstream>
-#include <stdio.h>
 
 namespace ReactionEnsemble {
 /**
@@ -230,7 +230,7 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
         value = value * 1.0 / (Ni0 + i);
       }
     } else {
-      int abs_nu_i = static_cast<int>(-1.0 * nu_i);
+      auto abs_nu_i = static_cast<int>(-1.0 * nu_i);
       for (int i = 0; i < abs_nu_i; i++) {
         value = value * (Ni0 - i);
       }
@@ -503,13 +503,13 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
 
     // delete hidden reactant_particles (remark: don't delete changed particles)
     // extract ids of to be deleted particles
-    int len_hidden_particles_properties =
+    auto len_hidden_particles_properties =
         static_cast<int>(hidden_particles_properties.size());
     std::vector<int> to_be_deleted_hidden_ids(len_hidden_particles_properties);
     std::vector<int> to_be_deleted_hidden_types(
         len_hidden_particles_properties);
     for (int i = 0; i < len_hidden_particles_properties; i++) {
-      int p_id = static_cast<int>(hidden_particles_properties[i].p_id);
+      auto p_id = static_cast<int>(hidden_particles_properties[i].p_id);
       to_be_deleted_hidden_ids[i] = p_id;
       to_be_deleted_hidden_types[i] = hidden_particles_properties[i].type;
       set_particle_type(p_id,

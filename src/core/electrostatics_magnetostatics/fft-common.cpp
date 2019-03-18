@@ -53,8 +53,9 @@ void fft_common_pre_init(fft_data_struct *fft) {
   fft->data_buf = nullptr;
 }
 
-void fft_pack_block(double *in, double *out, int start[3], int size[3],
-                    int dim[3], int element) {
+void fft_pack_block(double const *const in, double *const out,
+                    int const start[3], int const size[3], int const dim[3],
+                    int element) {
   /* mid and slow changing indices */
   int m, s;
   /* linear index of in grid, linear index of out grid */
@@ -82,8 +83,9 @@ void fft_pack_block(double *in, double *out, int start[3], int size[3],
   }
 }
 
-void fft_pack_block_permute1(double *in, double *out, int start[3], int size[3],
-                             int dim[3], int element) {
+void fft_pack_block_permute1(double const *const in, double *const out,
+                             int const start[3], int const size[3],
+                             int const dim[3], int element) {
   /* slow,mid and fast changing indices for input  grid */
   int s, m, f, e;
   /* linear index of in grid, linear index of out grid */
@@ -112,8 +114,9 @@ void fft_pack_block_permute1(double *in, double *out, int start[3], int size[3],
   }
 }
 
-void fft_pack_block_permute2(double *in, double *out, int start[3], int size[3],
-                             int dim[3], int element) {
+void fft_pack_block_permute2(double const *const in, double *const out,
+                             int const start[3], int const size[3],
+                             int const dim[3], int element) {
   /* slow,mid and fast changing indices for input  grid */
   int s, m, f, e;
   /* linear index of in grid, linear index of out grid */
@@ -145,8 +148,9 @@ void fft_pack_block_permute2(double *in, double *out, int start[3], int size[3],
   }
 }
 
-void fft_unpack_block(double *in, double *out, int start[3], int size[3],
-                      int dim[3], int element) {
+void fft_unpack_block(double const *const in, double *const out,
+                      int const start[3], int const size[3], int const dim[3],
+                      int element) {
   /* mid and slow changing indices */
   int m, s;
   /* linear index of in grid, linear index of out grid */
@@ -269,8 +273,9 @@ fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2,
   return group;
 }
 
-int fft_calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3],
-                        double mesh_off[3], int loc_mesh[3], int start[3]) {
+int fft_calc_local_mesh(int const n_pos[3], int const n_grid[3],
+                        int const mesh[3], double const mesh_off[3],
+                        int loc_mesh[3], int start[3]) {
   int i, last[3], size = 1;
 
   for (i = 0; i < 3; i++) {
@@ -292,8 +297,10 @@ int fft_calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3],
   return size;
 }
 
-int fft_calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3],
-                        int mesh[3], double mesh_off[3], int block[6]) {
+int fft_calc_send_block(int const pos1[3], int const grid1[3],
+                        int const pos2[3], int const grid2[3],
+                        int const mesh[3], double const mesh_off[3],
+                        int block[6]) {
   int i, size = 1;
   int mesh1[3], first1[3], last1[3];
   int mesh2[3], first2[3], last2[3];

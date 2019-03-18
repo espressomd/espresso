@@ -60,7 +60,7 @@ public:
     allocBHmemCopy(s.npart_gpu(), &m_bh_data);
   };
 
-  void computeForces(SystemInterface &s) {
+  void computeForces(SystemInterface &s) override {
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
@@ -74,7 +74,7 @@ public:
       errexit();
     }
   };
-  void computeEnergy(SystemInterface &s) {
+  void computeEnergy(SystemInterface &s) override {
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
@@ -93,7 +93,9 @@ protected:
   float k;
   float m_epssq;
   float m_itolsq;
-  BHData m_bh_data = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  BHData m_bh_data = {0,       0,       0,       nullptr, nullptr,
+                      nullptr, nullptr, nullptr, nullptr, nullptr,
+                      nullptr, nullptr, nullptr};
 };
 
 void activate_dipolar_barnes_hut(float epssq, float itolsq);

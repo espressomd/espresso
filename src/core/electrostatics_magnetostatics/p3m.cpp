@@ -153,7 +153,7 @@ static void p3m_spread_force_grid(double *mesh);
 static void p3m_realloc_ca_fields(int newsize);
 #endif
 
-static bool p3m_sanity_checks_system(void);
+static bool p3m_sanity_checks_system(const Vector3i &grid);
 
 /** Checks for correctness for charges in P3M of the cao_cut,
  *  necessary when the box length changes
@@ -368,9 +368,9 @@ void p3m_init() {
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
                       (void *)p3m.rs_mesh));
 
-    int ca_mesh_size =
-        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
-                 p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft);
+    int ca_mesh_size = fft_init(
+        &p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
+        p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft, node_grid);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
@@ -1414,7 +1414,7 @@ static double p3m_get_accuracy(const int mesh[3], int cao, double r_cut_iL,
 #ifdef CUDA
   if (coulomb.method == COULOMB_P3M_GPU)
     ks_err = p3m_k_space_error_gpu(coulomb.prefactor, mesh, cao, p3m.sum_qpart,
-                                   p3m.sum_q2, alpha_L, box_l);
+                                   p3m.sum_q2, alpha_L, box_l.data());
   else
 #endif
     ks_err = p3m_k_space_error(coulomb.prefactor, mesh, cao, p3m.sum_qpart,
@@ -1797,7 +1797,7 @@ int p3m_adaptive_tune(char **log) {
     }
   }
 
-  if (p3m_sanity_checks_system()) {
+  if (p3m_sanity_checks_system(node_grid)) {
     return ES_ERROR;
   }
 
@@ -2211,7 +2211,7 @@ bool p3m_sanity_checks_boxl() {
  *
  * @return false if ok, true on error.
  */
-bool p3m_sanity_checks_system() {
+bool p3m_sanity_checks_system(const Vector3i &grid) {
   bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
@@ -2225,7 +2225,7 @@ bool p3m_sanity_checks_system() {
     ret = true;
   }
 
-  if (node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+  if (grid[0] < grid[1] || grid[1] < grid[2]) {
     runtimeErrorMsg() << "P3M_init: node grid must be sorted, largest first";
     ret = true;
   }
@@ -2244,7 +2244,7 @@ bool p3m_sanity_checks_system() {
 bool p3m_sanity_checks() {
   bool ret = false;
 
-  if (p3m_sanity_checks_system())
+  if (p3m_sanity_checks_system(node_grid))
     ret = true;
 
   if (p3m_sanity_checks_boxl())

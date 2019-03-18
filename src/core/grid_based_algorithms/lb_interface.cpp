@@ -722,7 +722,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
 void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
-    float *host_checkpoint_vd =
+    auto *host_checkpoint_vd =
         (float *)Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
     lb_save_checkpoint_GPU(host_checkpoint_vd);
     if (!binary) {
@@ -811,14 +811,17 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       for (int n = 0; n < 3; n++) {
         res = fscanf(cpfile, "%i", &saved_gridsize[n]);
         if (res == EOF) {
+          fclose(cpfile);
           throw std::runtime_error(err_msg + "EOF found.");
         } else if (res != 1) {
+          fclose(cpfile);
           throw std::runtime_error(err_msg + "incorrectly formatted data.");
         }
       }
       if (saved_gridsize[0] != lbpar_gpu.dim_x ||
           saved_gridsize[1] != lbpar_gpu.dim_y ||
           saved_gridsize[2] != lbpar_gpu.dim_z) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
                                  std::to_string(saved_gridsize[0]) + ' ' +
                                  std::to_string(saved_gridsize[1]) + ' ' +
@@ -831,18 +834,22 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         res = fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
         if (res == EOF) {
+          fclose(cpfile);
           throw std::runtime_error(err_msg + "EOF found.");
         } else if (res != 1) {
+          fclose(cpfile);
           throw std::runtime_error(err_msg + "incorrectly formatted data.");
         }
       }
     } else {
       int saved_gridsize[3];
       if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       } else if (saved_gridsize[0] != lbpar_gpu.dim_x ||
                  saved_gridsize[1] != lbpar_gpu.dim_y ||
                  saved_gridsize[2] != lbpar_gpu.dim_z) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
                                  std::to_string(saved_gridsize[0]) + ' ' +
                                  std::to_string(saved_gridsize[1]) + ' ' +
@@ -855,6 +862,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       if (fread(host_checkpoint_vd.data(), sizeof(float),
                 19 * int(lbpar_gpu.number_of_nodes),
                 cpfile) != (unsigned int)(19 * lbpar_gpu.number_of_nodes)) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     }
@@ -869,6 +877,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       res = fgetc(cpfile);
     }
     if (res != EOF) {
+      fclose(cpfile);
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
     fclose(cpfile);
@@ -892,17 +901,21 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       res = fscanf(cpfile, "%i %i %i\n", &saved_gridsize[0], &saved_gridsize[1],
                    &saved_gridsize[2]);
       if (res == EOF) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "EOF found.");
       } else if (res != 3) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     } else {
       if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     }
     if (saved_gridsize[0] != gridsize[0] || saved_gridsize[1] != gridsize[1] ||
         saved_gridsize[2] != gridsize[2]) {
+      fclose(cpfile);
       throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
                                std::to_string(saved_gridsize[0]) + ' ' +
                                std::to_string(saved_gridsize[1]) + ' ' +
@@ -927,12 +940,15 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
                          &pop[12], &pop[13], &pop[14], &pop[15], &pop[16],
                          &pop[17], &pop[18]);
             if (res == EOF) {
+              fclose(cpfile);
               throw std::runtime_error(err_msg + "EOF found.");
             } else if (res != 19) {
+              fclose(cpfile);
               throw std::runtime_error(err_msg + "incorrectly formatted data.");
             }
           } else {
             if (fread(pop.data(), sizeof(double), 19, cpfile) != 19) {
+              fclose(cpfile);
               throw std::runtime_error(err_msg + "incorrectly formatted data.");
             }
           }
@@ -951,6 +967,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       res = fgetc(cpfile);
     }
     if (res != EOF) {
+      fclose(cpfile);
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
     fclose(cpfile);
@@ -1004,7 +1021,7 @@ double lb_lbnode_get_density(const Vector3i &ind) {
     double pi[6];
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_recv_fluid(node, index, &rho, j, pi);
@@ -1040,7 +1057,7 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     Vector3d j;
     Vector6d pi;
 
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1099,7 +1116,7 @@ const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
     Vector6d pi{};
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1128,7 +1145,7 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
     int node;
     auto ind_shifted = ind;
 
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     int p_boundary;
@@ -1161,7 +1178,7 @@ const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
     int node;
     auto ind_shifted = ind;
 
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     Vector19d p_pop;
@@ -1192,7 +1209,7 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
     Vector6d pi;
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1224,7 +1241,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
     Vector6d pi;
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1253,7 +1270,7 @@ void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &p_pop) {
     int node;
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
+    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
@@ -1268,10 +1285,6 @@ const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 #endif
 
 ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
-
-int lb_lbfluid_get_lattice_switch_cython() {
-  return static_cast<int>(lattice_switch);
-}
 
 void lb_lbfluid_on_lb_params_change(LBParam field) {
   switch (field) {

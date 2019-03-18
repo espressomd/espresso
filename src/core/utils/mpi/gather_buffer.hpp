@@ -90,8 +90,6 @@ int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
           part in the beginning. On the slaves the local buffer.
  * @param comm The MPI communicator.
  * @param root The rank where the data should be gathered.
- * @return On rank root, the total number of elements in the buffer,
- *         on the other ranks 0.
  */
 template <typename T>
 void gather_buffer(std::vector<T> &buffer, boost::mpi::communicator comm,
@@ -115,7 +113,8 @@ void gather_buffer(std::vector<T> &buffer, boost::mpi::communicator comm,
     /* Send local size */
     detail::size_and_offset(n_elem, comm, root);
     /* Send data */
-    gatherv(comm, buffer.data(), n_elem, static_cast<T *>(nullptr), 0, 0, root);
+    gatherv(comm, buffer.data(), n_elem, static_cast<T *>(nullptr), nullptr,
+            nullptr, root);
   }
 }
 } // namespace Mpi

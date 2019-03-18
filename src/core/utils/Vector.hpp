@@ -31,43 +31,58 @@
 
 #include "utils/Array.hpp"
 
-template <typename Scalar, std::size_t n>
-class Vector : public Utils::Array<Scalar, n> {
+template <typename T, std::size_t N> class Vector : public Utils::Array<T, N> {
+  using Base = Utils::Array<T, N>;
+
 public:
-  using Utils::Array<Scalar, n>::at;
-  using Utils::Array<Scalar, n>::operator[];
-  using Utils::Array<Scalar, n>::front;
-  using Utils::Array<Scalar, n>::back;
-  using Utils::Array<Scalar, n>::data;
-  using Utils::Array<Scalar, n>::begin;
-  using Utils::Array<Scalar, n>::cbegin;
-  using Utils::Array<Scalar, n>::end;
-  using Utils::Array<Scalar, n>::cend;
-  using Utils::Array<Scalar, n>::empty;
-  using Utils::Array<Scalar, n>::size;
-  using Utils::Array<Scalar, n>::max_size;
-  using Utils::Array<Scalar, n>::fill;
-  using Utils::Array<Scalar, n>::broadcast;
+  using Utils::Array<T, N>::at;
+  using Utils::Array<T, N>::operator[];
+  using Utils::Array<T, N>::front;
+  using Utils::Array<T, N>::back;
+  using Utils::Array<T, N>::data;
+  using Utils::Array<T, N>::begin;
+  using Utils::Array<T, N>::cbegin;
+  using Utils::Array<T, N>::end;
+  using Utils::Array<T, N>::cend;
+  using Utils::Array<T, N>::empty;
+  using Utils::Array<T, N>::size;
+  using Utils::Array<T, N>::max_size;
+  using Utils::Array<T, N>::fill;
+  using Utils::Array<T, N>::broadcast;
   Vector() = default;
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
 
   void swap(Vector &rhs) { std::swap_ranges(begin(), end(), rhs.begin()); }
 
-  template <typename Container>
-  explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
-
-  explicit Vector(Scalar const (&v)[n]) {
-    std::copy_n(std::begin(v), n, begin());
+private:
+  constexpr void copy_init(T const *first, T const *last) {
+    auto it = begin();
+    while (first != last) {
+      *it++ = *first++;
+    }
   }
 
-  Vector(std::initializer_list<Scalar> v)
-      : Vector(std::begin(v), std::end(v)) {}
+public:
+  template <typename Container>
+  explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
+  explicit constexpr Vector(T const (&v)[N]) : Base() {
+    copy_init(std::begin(v), std::end(v));
+  }
+
+  constexpr Vector(std::initializer_list<T> v) : Base() {
+    if (N != v.size()) {
+      throw std::length_error(
+          "Construction of Vector from Container of wrong length.");
+    }
+
+    copy_init(v.begin(), v.end());
+  }
 
   template <typename InputIterator>
   Vector(InputIterator first, InputIterator last) {
-    if (std::distance(first, last) == n) {
-      std::copy_n(first, n, begin());
+    if (std::distance(first, last) == N) {
+      std::copy_n(first, N, begin());
     } else {
       throw std::length_error(
           "Construction of Vector from Container of wrong length.");
@@ -78,54 +93,37 @@ public:
    * @brief Create a vector that has all entries set to
    *         one value.
    */
-  static Vector<Scalar, n> broadcast(const Scalar &s) {
-    Vector<Scalar, n> ret;
+  static Vector<T, N> broadcast(T const &s) {
+    Vector<T, N> ret;
     std::fill(ret.begin(), ret.end(), s);
 
     return ret;
   }
 
-  std::vector<Scalar> as_vector() const {
-    return std::vector<Scalar>(begin(), end());
-  }
+  std::vector<T> as_vector() const { return std::vector<T>(begin(), end()); }
 
-  operator std::vector<Scalar>() const { return as_vector(); }
+  operator std::vector<T>() const { return as_vector(); }
 
-  inline Scalar dot(const Vector<Scalar, n> &b) const { return *this * b; }
+  inline T norm2() const { return (*this) * (*this); }
+  inline T norm() const { return std::sqrt(norm2()); }
 
-  inline Scalar norm2() const { return (*this) * (*this); }
-  inline Scalar norm() const { return sqrt(norm2()); }
+  /*
+   * @brief Normalize the vector.
+   *
+   * Normalize the vector by its length,
+   * if not zero, otherwise the vector is unchanged.
+   */
 
-  inline Vector &normalize(void) {
-    const auto N = norm();
-    if (N > Scalar(0)) {
-      for (int i = 0; i < n; i++)
-        this->operator[](i) /= N;
+  inline Vector &normalize() {
+    auto const l = norm();
+    if (l > T(0)) {
+      for (int i = 0; i < N; i++)
+        this->operator[](i) /= l;
     }
 
     return *this;
   }
-
-  static void cross(const Vector<Scalar, 3> &a, const Vector<Scalar, 3> &b,
-                    Vector<Scalar, 3> &c) {
-    c[0] = a[1] * b[2] - a[2] * b[1];
-    c[1] = a[2] * b[0] - a[0] * b[2];
-    c[2] = a[0] * b[1] - a[1] * b[0];
-  }
-
-  static Vector<Scalar, 3> cross(const Vector<Scalar, 3> &a,
-                                 const Vector<Scalar, 3> &b) {
-    Vector<Scalar, 3> c;
-    cross(a, b, c);
-    return c;
-  }
-
-  inline Vector<Scalar, 3> cross(const Vector<Scalar, 3> &a) const {
-    return cross(*this, a);
-  }
 };
-
-// Useful typedefs
 
 template <size_t N> using VectorXd = Vector<double, N>;
 using Vector2d = VectorXd<2>;
@@ -154,7 +152,7 @@ Vector<T, N> &binary_op_assign(Vector<T, N> &a, Vector<T, N> const &b, Op op) {
 }
 
 template <size_t N, typename T, typename Op>
-bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
+constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
   for (int i = 0; i < a.size(); i++) {
     /* Short circuit */
     if (!static_cast<bool>(op(a[i], b[i]))) {
@@ -167,32 +165,32 @@ bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
 } // namespace detail
 
 template <size_t N, typename T>
-bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::less<T>());
 }
 
 template <size_t N, typename T>
-bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::greater<T>());
 }
 
 template <size_t N, typename T>
-bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::less_equal<T>());
 }
 
 template <size_t N, typename T>
-bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::greater_equal<T>());
 }
 
 template <size_t N, typename T>
-bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
   return detail::all_of(a, b, std::equal_to<T>());
 }
 
 template <size_t N, typename T>
-bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
+constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return not(a == b);
 }
 
@@ -285,6 +283,12 @@ template <size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
                  [](T const &v) { return sqrt(v); });
 
   return ret;
+}
+
+template <class T>
+Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
+  return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+          a[0] * b[1] - a[1] * b[0]};
 }
 
 /**

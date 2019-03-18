@@ -40,10 +40,7 @@ static void add_lj_interaction(
     std::vector<PdbLJInteraction> interactions, const double rel_cutoff) {
   for (std::vector<PdbLJInteraction>::const_iterator it = interactions.begin();
        it != interactions.end(); ++it) {
-    for (std::set<PdbParser::itp_atomtype,
-                  PdbParser::itp_atomtype_compare>::const_iterator jt =
-             types.begin();
-         jt != types.end(); ++jt) {
+    for (auto jt = types.begin(); jt != types.end(); ++jt) {
       const double epsilon_ij = sqrt(it->epsilon * jt->epsilon);
       const double sigma_ij = 0.5 * (it->sigma + 10. * jt->sigma);
       const double cutoff_ij = rel_cutoff * sigma_ij;
@@ -67,14 +64,8 @@ static void add_lj_interaction(
 static void add_lj_internal(
     std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare> &types,
     const double rel_cutoff, bool only_diagonal) {
-  for (std::set<PdbParser::itp_atomtype,
-                PdbParser::itp_atomtype_compare>::const_iterator it =
-           types.begin();
-       it != types.end(); ++it) {
-    for (std::set<PdbParser::itp_atomtype,
-                  PdbParser::itp_atomtype_compare>::const_iterator jt =
-             types.begin();
-         jt != types.end(); ++jt) {
+  for (auto it = types.begin(); it != types.end(); ++it) {
+    for (auto jt = types.begin(); jt != types.end(); ++jt) {
       if (it->espresso_id > jt->espresso_id)
         continue;
       if (only_diagonal && (it->espresso_id != jt->espresso_id))
@@ -157,9 +148,7 @@ add_particles(PdbParser::PdbParser &parser, int first_id, int default_type,
         PdbParser::itp_atomtype itp_atomtype =
             parser.itp_atomtypes[entry->second.type];
         /* See if we have seen that type before */
-        std::set<PdbParser::itp_atomtype,
-                 PdbParser::itp_atomtype_compare>::iterator type_iterator =
-            seen_types.find(itp_atomtype);
+        auto type_iterator = seen_types.find(itp_atomtype);
         if (type_iterator == seen_types.end()) {
           itp_atomtype.espresso_id = last_type++;
           type_iterator = seen_types.insert(itp_atomtype).first;

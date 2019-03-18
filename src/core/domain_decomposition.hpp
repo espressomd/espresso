@@ -120,11 +120,12 @@ extern int min_num_cells;
 /** adjust the domain decomposition to a change in the geometry.
  *  Tries to speed up things if possible.
  *
- *  @param flags a combination of \ref CELL_FLAG_FAST and \ref
- *  CELL_FLAG_GRIDCHANGED, see documentation of \ref
- *  cells_on_geometry_change.
+ *  @param flags  A combination of \ref CELL_FLAG_FAST and \ref
+ *                CELL_FLAG_GRIDCHANGED, see documentation of \ref
+ *                cells_on_geometry_change.
+ *  @param grid   Number of nodes in each spatial dimension.
  */
-void dd_on_geometry_change(int flags);
+void dd_on_geometry_change(int flags, const Vector3i &grid);
 
 /** Initialize the topology. The argument is a list of cell pointers,
  *  containing particles that have to be sorted into new cells. The
@@ -132,10 +133,11 @@ void dd_on_geometry_change(int flags);
  *  when particle data or cell structure has changed and the cell
  *  structure has to be reinitialized. This also includes setting up
  *  the cell_structure array.
- *  @param cl List of cell pointers with particles to be stored in the
- *  new cell system.
+ *  @param cl    List of cell pointers with particles to be stored in the
+ *               new cell system.
+ *  @param grid  Number of nodes in each spatial dimension.
  */
-void dd_topology_init(CellPList *cl);
+void dd_topology_init(CellPList *cl, const Vector3i &grid);
 
 /** Called when the current cell structure is invalidated because for
  *  example the box length has changed. This procedure may NOT destroy
@@ -151,15 +153,17 @@ void dd_topology_release();
  *  are stored in the cell structure.
  *
  *  @param global Use DD_GLOBAL_EXCHANGE for global exchange and
- *  DD_NEIGHBOR_EXCHANGE for neighbor exchange (recommended for use within
- *  Molecular dynamics, or any other integration scheme using only local
- *  particle moves)
- *  @param pl List of particles
+ *      DD_NEIGHBOR_EXCHANGE for neighbor exchange (recommended for use within
+ *      Molecular dynamics, or any other integration scheme using only local
+ *      particle moves)
+ *  @param pl     List of particles
+ *  @param grid   Number of nodes in each spatial dimension
  */
-void dd_exchange_and_sort_particles(int global, ParticleList *pl);
+void dd_exchange_and_sort_particles(int global, ParticleList *pl,
+                                    const Vector3i &grid);
 
 /** calculate physical (processor) minimal number of cells */
-int calc_processor_min_num_cells();
+int calc_processor_min_num_cells(const Vector3i &grid);
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
  *  all cells which are inside a rectangular subgrid of the 3D cell
