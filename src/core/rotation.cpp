@@ -314,7 +314,7 @@ void convert_torques_propagate_omega() {
 
       auto const diff = p.swim.v_center - p.swim.v_source;
 
-      const Vector3d cross = Vector3d::cross(diff, dip);
+      const Vector3d cross = vector_product(diff, dip);
       const double l_diff = diff.norm();
       const double l_cross = cross.norm();
 

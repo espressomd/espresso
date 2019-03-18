@@ -175,12 +175,12 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   int i, count;
   double p1[3], massi;
-  std::vector<double> com(3);
   count = 0;
 
   for (i = 0; i < 9; i++)
     MofImatrix[i] = 0.;
-  com = centerofmass(partCfg, type);
+
+  auto const com = centerofmass(partCfg, type);
   for (auto const &p : partCfg) {
     if (type == p.p.type) {
       count++;
@@ -633,19 +633,19 @@ int calc_cylindrical_average(
 
         // Find the height of the particle above the axis (height) and
         // the distance from the center point (dist)
-        auto const hat = direction.cross(diff);
+        auto const hat = vector_product(direction, diff);
         auto const height = hat.norm();
-        auto const dist = direction.dot(diff) / norm_direction;
+        auto const dist = direction * diff / norm_direction;
 
         // Determine the components of the velocity parallel and
         // perpendicular to the direction vector
         double v_radial;
         if (height == 0)
-          v_radial = vel.cross(direction).norm() / norm_direction;
+          v_radial = vector_product(vel, direction).norm() / norm_direction;
         else
-          v_radial = vel.dot(hat) / height;
+          v_radial = vel * hat / height;
 
-        auto const v_axial = vel.dot(direction) / norm_direction;
+        auto const v_axial = vel * direction / norm_direction;
 
         // Work out relevant indices for x and y
         index_radial = static_cast<int>(floor(height / binwd_radial));

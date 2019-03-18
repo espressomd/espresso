@@ -12,7 +12,7 @@ inline Vector3d get_n_triangle(const Vector3d &P1, const Vector3d &P2,
   auto const u = P2 - P1;
   auto const v = P3 - P1;
 
-  return u.cross(v);
+  return vector_product(u, v);
 }
 
 /** Computes the area of triangle between vectors P1,P2,P3,
