@@ -22,6 +22,9 @@ Dipole_parameters dipole = {
     DIPOLAR_NONE,
 };
 
+// Real space cutoff of long range methods
+double dipolar_cutoff;
+
 namespace Dipole {
 
 void pressure_n(int &n_dipolar) {
@@ -109,21 +112,21 @@ void nonbonded_sanity_check(int &state) {
 #endif
 }
 
-void cutoff(double &ret, const double box_l[3]) {
+double cutoff(const double box_l[3]) {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     // fall through
   case DIPOLAR_P3M: {
     /* do not use precalculated r_cut here, might not be set yet */
-    ret = dp3m.params.r_cut_iL * box_l[0];
+    return dp3m.params.r_cut_iL * box_l[0];
   }
 #endif /*ifdef DP3M */
     // Note: Dipolar calculation via scafacos
     // There doesn't seem to be short range delegation for dipolar methods
     // in Scafacos, so no cutoff is contributed
   default:
-    break;
+    return 0;
   }
 }
 

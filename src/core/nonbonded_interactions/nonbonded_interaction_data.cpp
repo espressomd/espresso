@@ -100,10 +100,6 @@ double max_cut_global;
     of dipolar and Coulomb methods */
 double max_cut_global_without_coulomb_and_dipolar;
 
-// Real space cutoff of long range methods
-double coulomb_cutoff;
-double dipolar_cutoff;
-
 /*****************************************
  * function prototypes
  *****************************************/
@@ -142,29 +138,6 @@ void ia_params_set_state(std::string const &state) {
   mpi_bcast_all_ia_params();
 }
 
-double calc_electrostatics_cutoff() {
-// Electrostatics cutoff
-#ifdef ELECTROSTATICS
-  /* Cutoff for the real space electrostatics.
-     Note that the box length may have changed,
-     but the method not yet reinitialized.
-   */
-  double ret = 0.;
-  Coulomb::cutoff(ret, box_l);
-  return ret;
-#endif /*ifdef ELECTROSTATICS */
-  return 0;
-}
-
-double calc_dipolar_cutoff() {
-#ifdef DIPOLES
-  double ret = 0;
-  Dipole::cutoff(ret, box_l);
-  return ret;
-#endif
-  return 0;
-}
-
 static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
   /* user defined minimal global cut. This makes sure that data of
    pairs of particles with a distance smaller than this are always
@@ -177,10 +150,16 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
   max_cut_global_without_coulomb_and_dipolar = max_cut_global;
 
   // Electrostatics and magnetostatics
-  coulomb_cutoff = calc_electrostatics_cutoff();
+
+  /* Coulomb::Cutoff:
+     Cutoff for the real space electrostatics.
+     Note that the box length may have changed,
+     but the method not yet reinitialized.
+   */
+  coulomb_cutoff = Coulomb::cutoff(box_l);
   max_cut_global = std::max(max_cut_global, coulomb_cutoff);
 
-  dipolar_cutoff = calc_dipolar_cutoff();
+  dipolar_cutoff = Dipole::cutoff(box_l);
   max_cut_global = std::max(max_cut_global, dipolar_cutoff);
 }
 
@@ -404,13 +383,3 @@ int interactions_sanity_checks() {
 
   return state;
 }
-
-#ifdef ELECTROSTATICS
-
-/********************************************************************************/
-/*                                 electrostatics */
-/********************************************************************************/
-
-/* =========================================================
-   ========================================================= */
-#endif /*ifdef ELECTROSTATICS */

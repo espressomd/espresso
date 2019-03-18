@@ -284,8 +284,7 @@ inside the loops
 
 */
 
-dp3m_data_struct::dp3m_data_struct()
-{
+dp3m_data_struct::dp3m_data_struct() {
   params.epsilon = P3M_EPSILON_MAGNETIC;
 
   /* local_mesh is uninitialized */

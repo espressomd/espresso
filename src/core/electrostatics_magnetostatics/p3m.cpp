@@ -258,7 +258,7 @@ template <int cao>
 void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
 
 p3m_data_struct::p3m_data_struct() {
-    /* local_mesh is uninitialized */
+  /* local_mesh is uninitialized */
   /* sm is uninitialized */
 
   rs_mesh = nullptr;
@@ -267,8 +267,8 @@ p3m_data_struct::p3m_data_struct() {
   sum_q2 = 0.0;
   square_sum_q = 0.0;
 
-  for (auto &e: int_caf) {
-      e = nullptr;
+  for (auto &e : int_caf) {
+    e = nullptr;
   }
 
   pos_shift = 0.0;

@@ -18,6 +18,9 @@
 
 Coulomb_parameters coulomb;
 
+// Real space cutoff
+double coulomb_cutoff;
+
 namespace Coulomb {
 
 void pressure_n(int &n_coulomb) {
@@ -96,33 +99,28 @@ void sanity_checks(int &state) {
   }
 }
 
-void cutoff(double &ret, const double box_l[3]) {
+double cutoff(const double box_l[3]) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    ret = std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);
-    break;
+    return std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);
   case COULOMB_MMM2D:
-    ret = layer_h - skin;
-    break;
+    return layer_h - skin;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     /* do not use precalculated r_cut here, might not be set yet */
-    ret = p3m.params.r_cut_iL * box_l[0];
-    break;
+    return p3m.params.r_cut_iL * box_l[0];
 #endif
   case COULOMB_DH:
-    ret = dh_params.r_cut;
-    break;
+    return dh_params.r_cut;
   case COULOMB_RF:
-    ret = rf_params.r_cut;
-    break;
+    return rf_params.r_cut;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    ret = Scafacos::get_r_cut();
+    return Scafacos::get_r_cut();
 #endif
   default:
-    break;
+    return 0;
   }
 }
 

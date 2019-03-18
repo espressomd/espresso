@@ -53,13 +53,15 @@ struct Dipole_parameters {
 /** Structure containing the Dipole parameters. */
 extern Dipole_parameters dipole;
 
+extern double dipolar_cutoff;
+
 namespace Dipole {
 void pressure_n(int &n_dipolar);
 void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor);
 
 void nonbonded_sanity_check(int &state);
-void cutoff(double &ret, const double box_l[3]);
+double cutoff(const double box_l[3]);
 
 void integrate_sanity_check();
 void on_observable_calc();

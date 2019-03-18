@@ -47,13 +47,15 @@ struct Coulomb_parameters {
 /** Structure containing the Coulomb parameters. */
 extern Coulomb_parameters coulomb;
 
+extern double coulomb_cutoff;
+
 namespace Coulomb {
 void pressure_n(int &n_coulomb);
 void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor);
 
 void sanity_checks(int &state);
-void cutoff(double &ret, const double box_l[3]);
+double cutoff(const double box_l[3]);
 void deactivate();
 
 void integrate_sanity_check();

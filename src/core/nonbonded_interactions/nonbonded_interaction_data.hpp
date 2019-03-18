@@ -299,10 +299,6 @@ extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded interactions).
  */
 extern double max_cut_nonbonded;
-/** Cutoff of Coulomb real space part */
-extern double coulomb_cutoff;
-/** Cutoff of dipolar real space part */
-extern double dipolar_cutoff;
 
 /** Minimal global interaction cutoff. Particles with a distance
     smaller than this are guaranteed to be available on the same node
@@ -373,9 +369,6 @@ inline int checkIfInteraction(IA_parameters *data) {
 inline int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
-
-#ifdef DIPOLES
-#endif
 
 #include "utils/math/sqr.hpp"
 

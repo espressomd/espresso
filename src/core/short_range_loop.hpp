@@ -24,7 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "collision.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <profiler/profiler.hpp>
