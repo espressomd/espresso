@@ -155,10 +155,14 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
      Note that the box length may have changed,
      but the method not yet reinitialized.
    */
+#ifdef ELECTROSTATICS
   coulomb_cutoff = Coulomb::cutoff(box_l);
+#endif
   max_cut_global = std::max(max_cut_global, coulomb_cutoff);
 
+#ifdef DIPOLES
   dipolar_cutoff = Dipole::cutoff(box_l);
+#endif
   max_cut_global = std::max(max_cut_global, dipolar_cutoff);
 }
 
