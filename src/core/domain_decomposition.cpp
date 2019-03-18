@@ -60,13 +60,6 @@ double max_skin = 0.0;
 /************************************************************/
 /*@{*/
 
-/** Convenient replace for loops over all cells. */
-
-/** Convenient replace for loops over Local cells. */
-
-/** Convenient replace for inner cell check. usage: if(DD_IS_LOCAL_CELL(m,n,o))
- * {...} */
-
 /** Calculate cell grid dimensions, cell sizes and number of cells.
  *  Calculates the cell grid, based on \ref local_box_l and \ref
  *  max_range. If the number of cells is larger than \ref
@@ -199,12 +192,11 @@ void dd_create_cell_grid() {
  *  \ref DomainDecomposition::ghost_cell_grid.
  */
 void dd_mark_cells() {
-  int m, n, o, cnt_c = 0, cnt_l = 0, cnt_g = 0;
+  int cnt_c = 0, cnt_l = 0, cnt_g = 0;
 
-  for (o = 0; o < dd.ghost_cell_grid[2]; o++)
-    for (n = 0; n < dd.ghost_cell_grid[1]; n++)
-      for (m = 0; m < dd.ghost_cell_grid[0]; m++) {
-
+  for (int o = 0; o < dd.ghost_cell_grid[2]; o++)
+    for (int n = 0; n < dd.ghost_cell_grid[1]; n++)
+      for (int m = 0; m < dd.ghost_cell_grid[0]; m++) {
         if ((m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&
              n < dd.ghost_cell_grid[1] - 1 && o > 0 &&
              o < dd.ghost_cell_grid[2] - 1))
@@ -224,9 +216,8 @@ void dd_mark_cells() {
  *  \param hc          high up corner of the subgrid.
  */
 int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
-  int i, m, n, o, c = 0;
   /* sanity check */
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     if (lc[i] < 0 || lc[i] >= dd.ghost_cell_grid[i])
       return 0;
     if (hc[i] < 0 || hc[i] >= dd.ghost_cell_grid[i])
@@ -235,14 +226,14 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
       return 0;
   }
 
-  for (o = lc[0]; o <= hc[0]; o++)
-    for (n = lc[1]; n <= hc[1]; n++)
-      for (m = lc[2]; m <= hc[2]; m++) {
-        i = get_linear_index(o, n, m,
+  int c = 0;
+  for (int o = lc[0]; o <= hc[0]; o++)
+    for (int n = lc[1]; n <= hc[1]; n++)
+      for (int m = lc[2]; m <= hc[2]; m++) {
+        auto const i = get_linear_index(o, n, m,
                              {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
                               dd.ghost_cell_grid[2]});
-        CELL_TRACE(fprintf(stderr, "%d: dd_fill_comm_cell_list: add cell %d\n",
-                           this_node, i));
+
         part_lists[c] = &cells[i];
         c++;
       }

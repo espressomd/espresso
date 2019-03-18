@@ -67,12 +67,11 @@
 #include "Cell.hpp"
 #include "ParticleRange.hpp"
 
-/** \name Cell Structure */
-/*@{*/
-/** Flag indicating that there is no cell system yet. Only at the
- * VERY beginning of the code startup.
- */
+/** Cell Structure */
 enum {
+  /** Flag indicating that there is no cell system yet. Only at the
+   *  VERY beginning of the code startup.
+   */
   CELL_STRUCTURE_NONEYET = -1,
   /** Flag indicating that the current cell structure will be used further on */
   CELL_STRUCTURE_CURRENT = 0,
