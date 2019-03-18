@@ -56,9 +56,9 @@
 
 /** Macro that tests for a coordinate being periodic or not. */
 #ifdef PARTIAL_PERIODIC
-#define PERIODIC(coord) (periodic & (1L << coord))
+#define PERIODIC(coord) (periodic & (1L << (coord)))
 #else
-#define PERIODIC(coord) 1
+#define PERIODIC(coord) (1)
 #endif
 
 /** \name Exported Variables */

@@ -72,15 +72,18 @@
 /** Flag indicating that there is no cell system yet. Only at the
  * VERY beginning of the code startup.
  */
-#define CELL_STRUCTURE_NONEYET -1
+enum {
+ CELL_STRUCTURE_NONEYET = -1,
 /** Flag indicating that the current cell structure will be used further on */
-#define CELL_STRUCTURE_CURRENT 0
+ CELL_STRUCTURE_CURRENT = 0,
 /** cell structure domain decomposition */
-#define CELL_STRUCTURE_DOMDEC 1
+ CELL_STRUCTURE_DOMDEC = 1,
 /** cell structure n square */
-#define CELL_STRUCTURE_NSQUARE 2
+ CELL_STRUCTURE_NSQUARE = 2,
 /** cell structure layered */
-#define CELL_STRUCTURE_LAYERED 3
+ CELL_STRUCTURE_LAYERED = 3
+}; 
+
 /*@}*/
 
 /** \name Flags for exchange_and_sort_particles: whether to do a global
