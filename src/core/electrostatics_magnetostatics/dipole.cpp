@@ -27,17 +27,16 @@ Dipole_parameters dipole = {
 };
 
 namespace Dipole {
-int pressure_n() {
-return 0;
-}
+int pressure_n() { return 0; }
 
 void calc_pressure_long_range() {
   switch (dipole.method) {
-      case DIPOLAR_NONE:
-          return;
+  case DIPOLAR_NONE:
+    return;
   default:
-      runtimeWarningMsg() << "WARNING: pressure calculated, but pressure not implemented.\n";
-        return;
+    runtimeWarningMsg()
+        << "WARNING: pressure calculated, but pressure not implemented.\n";
+    return;
   }
 }
 
@@ -231,7 +230,7 @@ void calc_energy_long_range(Observable_stat &energy) {
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
     break;
   case DIPOLAR_DS_GPU:
-      break;
+    break;
 #ifdef DIPOLAR_BARNES_HUT
   case DIPOLAR_BH_GPU:
     // Do nothing, it's an actor.
@@ -245,7 +244,8 @@ void calc_energy_long_range(Observable_stat &energy) {
   case DIPOLAR_NONE:
     break;
   default:
-    runtimeErrorMsg() << "energy calculation not implemented for dipolar method.";
+    runtimeErrorMsg()
+        << "energy calculation not implemented for dipolar method.";
     break;
   }
 }

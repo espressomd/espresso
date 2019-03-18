@@ -1414,7 +1414,8 @@ void ELC_p3m_charge_assign_image() {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1, const Particle *p2,
+void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
+                                                  const Particle *p2,
                                                   double *force1,
                                                   double *force2) {
   double dist, dist2, d[3];

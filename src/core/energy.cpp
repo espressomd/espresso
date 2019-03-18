@@ -51,7 +51,7 @@ void init_energies(Observable_stat *stat) {
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
 #ifdef ELECTROSTATICS
-    auto const n_coulomb = Coulomb::energy_n();
+  auto const n_coulomb = Coulomb::energy_n();
 #endif
 #ifdef DIPOLES
   Dipole::energy_n(n_dipolar);

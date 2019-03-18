@@ -343,7 +343,8 @@ void calc_energy_long_range(Observable_stat &energy) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_P3M_GPU:
-      runtimeWarningMsg() << "long range energy calculation not implemented for GPU P3M";
+    runtimeWarningMsg()
+        << "long range energy calculation not implemented for GPU P3M";
     break;
   case COULOMB_P3M:
     p3m_charge_assign();
@@ -484,7 +485,8 @@ void bcast_coulomb_params() {
     MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, comm_cart);
     break;
   case COULOMB_RF:
-      MPI_Bcast(&rf_params , sizeof(Reaction_field_params), MPI_BYTE, 0, comm_cart);
+    MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,
+              comm_cart);
     break;
   }
 }
@@ -502,7 +504,7 @@ int set_prefactor(double prefactor) {
 }
 
 /** @brief Deactivates the current Coulomb method
-*/
+ */
 void deactivate_method() {
   coulomb.prefactor = 0;
 

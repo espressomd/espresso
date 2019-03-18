@@ -78,8 +78,8 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double *d,
                               Observable_stat &virials,
                               Observable_stat &p_tensor) {
   switch (coulomb.method) {
-      case COULOMB_NONE:
-          break;
+  case COULOMB_NONE:
+    break;
 #ifdef P3M
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
