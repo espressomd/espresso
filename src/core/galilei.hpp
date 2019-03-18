@@ -33,7 +33,7 @@ void local_kill_particle_motion(int);
 void local_kill_particle_forces(int);
 void local_system_CMS(double *);
 void local_system_CMS_velocity(double *);
-void local_galilei_transform(double *);
+void local_galilei_transform(double const *);
 
 typedef struct {
 

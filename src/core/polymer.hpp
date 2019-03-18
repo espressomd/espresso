@@ -102,9 +102,10 @@ int constraint_collision(double *p1, double *p2);
  *  If val_cM \< 1e-10, the charge is assumed to be zero, and type_cM = type_nM.
  */
 int polymerC(PartCfg &, int N_P, int MPC, double bond_length, int part_id,
-             double *posed, int mode, double shield, int max_try, double val_cM,
-             int cM_dist, int type_nM, int type_cM, int type_FENE, double angle,
-             double angle2, double *posed2, int constr);
+             double const *posed, int mode, double shield, int max_try,
+             double val_cM, int cM_dist, int type_nM, int type_cM,
+             int type_FENE, double angle, double angle2, double const *posed2,
+             int constr);
 
 /** C implementation of 'counterions \<N_CI\> [options]'.
  *  @param  N_CI        = number of counterions to create

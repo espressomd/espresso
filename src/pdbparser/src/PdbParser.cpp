@@ -27,7 +27,7 @@ using namespace std;
 namespace PdbParser {
 
 BoundingBox PdbParser::calc_bounding_box() const {
-  BoundingBox bb;
+  BoundingBox bb{};
 
   bb.llx = std::numeric_limits<float>::max();
   bb.lly = std::numeric_limits<float>::max();

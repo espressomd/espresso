@@ -53,7 +53,7 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
 /** Calculate Lennard-Jones force between particle p1 and p2 */
 inline void add_ljgen_pair_force(const Particle *const p1,
                                  const Particle *const p2,
-                                 IA_parameters *ia_params, double d[3],
+                                 IA_parameters *ia_params, double const d[3],
                                  double dist, double force[3]) {
   if ((dist < ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
     int j;
