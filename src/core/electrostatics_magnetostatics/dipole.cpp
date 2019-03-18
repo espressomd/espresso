@@ -51,42 +51,11 @@ void pressure_n(int &n_dipolar) {
 void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor) {
   switch (dipole.method) {
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but DAWAANR pressure not implemented\n");
-    break;
-  case DIPOLAR_MDLC_DS:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but DLC pressure not implemented\n");
-    break;
-  case DIPOLAR_DS:
-    fprintf(stderr, "WARNING: pressure calculated, but  MAGNETIC DIRECT SUM "
-                    "pressure not implemented\n");
-    break;
-
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but DLC pressure not implemented\n");
-    break;
-  case DIPOLAR_P3M: {
-    int k;
-    dp3m_dipole_assign();
-    virials.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
-
-    for (k = 0; k < 3; k++)
-      p_tensor.coulomb[9 + k * 3 + k] = virials.dipolar[1] / 3.;
-    fprintf(stderr, "WARNING: stress tensor calculated, but dipolar P3M stress "
-                    "tensor not implemented\n");
-    fprintf(stderr, "WARNING: things have been added to the coulomb virial and "
-                    "p_tensor arrays !!!!!!!\n");
-
-    break;
-  }
-#endif
+      case DIPOLAR_NONE:
+          return;
   default:
-    break;
+      runtimeWarningMsg() << "WARNING: pressure calculated, but pressure not implemented.\n";
+        return;
   }
 }
 
