@@ -15,6 +15,7 @@ double dipolar_cutoff;
 
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 
