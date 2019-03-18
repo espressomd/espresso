@@ -55,7 +55,6 @@ LB_PARAMETERS = {
     'visc': VISC,
     'bulk_visc': BULK_VISC,
     'tau': TAU,
-    'fric': 1.0,
     'dens': 1.0,
     'gamma_odd': 1.0,
     'gamma_even': 1.0
@@ -109,7 +108,7 @@ class LBStreamingCommon(object):
 
 
 @ut.skipIf(
-    not espressomd.has_features('LB') or espressomd.has_features('SHANCHEN'),
+    not espressomd.has_features('LB'),
           "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, LBStreamingCommon):
 
@@ -121,7 +120,7 @@ class LBCPU(ut.TestCase, LBStreamingCommon):
 
 @ut.skipIf(
     not espressomd.has_features(
-        'LB_GPU') or espressomd.has_features('SHANCHEN'),
+        'LB_GPU'),
            "Skipping test due to missing features.")
 class LBGPU(ut.TestCase, LBStreamingCommon):
 

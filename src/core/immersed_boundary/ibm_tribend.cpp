@@ -231,8 +231,8 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
 
       // Get normals on triangle; pointing outwards by definition of indices
       // sequence
-      auto const n1l = dx1.cross(dx2);
-      auto const n2l = -dx1.cross(dx3);
+      auto const n1l = vector_product(dx1, dx2);
+      auto const n2l = -vector_product(dx1, dx3);
 
       auto const n1 = n1l / n1l.norm();
       auto const n2 = n2l / n2l.norm();
@@ -244,7 +244,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
 
       theta0 = acos(sc);
 
-      auto const desc = dx1 * n1.cross(n2);
+      auto const desc = dx1 * vector_product(n1, n2);
       if (desc < 0)
         theta0 = 2.0 * PI - theta0;
 

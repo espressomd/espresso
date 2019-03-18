@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "config.hpp"
 #include "initialize.hpp"
 #include "ScriptInterface.hpp"
-
 #include "CylindricalLBProfileObservable.hpp"
 #include "CylindricalPidProfileObservable.hpp"
 #include "LBProfileObservable.hpp"
@@ -81,30 +81,39 @@ void initialize() {
   //    register_new("Observables::ParticleVelocities");
 
   REGISTER(StressTensor);
-  REGISTER(LBFluidStress);
   REGISTER_PID_OBS(ParticlePositions);
   REGISTER_PID_OBS(ParticleVelocities);
   REGISTER_PID_OBS(ParticleForces);
   REGISTER_PID_OBS(ParticleBodyVelocities);
+#ifdef ROTATION
   REGISTER_PID_OBS(ParticleAngularVelocities);
   REGISTER_PID_OBS(ParticleBodyAngularVelocities);
+#endif
   REGISTER_PID_OBS(Current);
+#ifdef ELECTROSTATICS
   REGISTER_PID_OBS(DipoleMoment);
+#endif
+#ifdef DIPOLES
   REGISTER_PID_OBS(MagneticDipoleMoment);
+#endif
   REGISTER_PID_OBS(ComPosition);
   REGISTER_PID_OBS(ComVelocity);
   REGISTER_PID_OBS(ComForce);
   REGISTER_PID_PROFILE_OBS(DensityProfile);
   REGISTER_PID_PROFILE_OBS(ForceDensityProfile);
   REGISTER_PID_PROFILE_OBS(FluxDensityProfile);
-  REGISTER_LB_OBS(LBVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalDensityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
+
+#if (defined(LB) || defined(LB_GPU)) 
+  REGISTER(LBFluidStress);
   REGISTER_CYLPID_PROFILE_OBS(
       CylindricalLBFluxDensityProfileAtParticlePositions);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalLBVelocityProfileAtParticlePositions);
   REGISTER_CYLLB_OBS(CylindricalLBVelocityProfile);
+  REGISTER_LB_OBS(LBVelocityProfile);
+#endif
 
 #undef REGISTER
 #undef REGISTER_PID_OBS

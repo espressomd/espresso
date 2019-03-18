@@ -1,26 +1,33 @@
 import numpy as np
 
-from globals cimport box_l
+cimport grid
 from globals cimport time_step
 from globals cimport mpi_set_time_step
 from globals cimport min_global_cut
-from globals cimport periodic
+from grid cimport periodic
 from globals cimport sim_time
 from globals cimport timing_samples
 from globals cimport forcecap_set
 from globals cimport forcecap_get
 from espressomd.utils import array_locked, is_valid_type
+from utils cimport Vector3d
 
 cdef class Globals(object):
     property box_l:
         def __set__(self, _box_l):
-            global box_l
-            box_l = _box_l
+            cdef Vector3d temp_box_l
+            if len(_box_l) != 3:
+                raise ValueError("Box length must be of length 3")
+            for i in range(3):
+                if _box_l[i] <= 0:
+                    raise ValueError(
+                        "Box length must be > 0  in all directions")
+                temp_box_l[i] = _box_l[i]
+            grid.box_l = temp_box_l
             mpi_bcast_parameter(FIELD_BOXL)
 
         def __get__(self):
-            global box_l
-            return array_locked(np.array([box_l[0], box_l[1], box_l[2]]))
+            return array_locked(np.array([grid.box_l[0], grid.box_l[1], grid.box_l[2]]))
 
     property time_step:
         def __set__(self, time_step):

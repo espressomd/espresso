@@ -50,6 +50,7 @@
 #include "errorhandling.hpp"
 #include "utils.hpp"
 #include "utils/Span.hpp"
+#include "utils/Vector.hpp"
 
 #include <limits>
 
@@ -65,23 +66,23 @@
 /*@{*/
 
 /** The number of nodes in each spatial dimension. */
-extern int node_grid[3];
+extern Vector3i node_grid;
 /** position of node in node grid */
-extern int node_pos[3];
+extern Vector3i node_pos;
 /** the six nearest neighbors of a node in the node grid. */
-extern int node_neighbors[6];
+extern Vector<int, 6> node_neighbors;
 /** where to fold particles that leave local box in direction i. */
-extern int boundary[6];
+extern Vector<int, 6> boundary;
 /** Flags for all three dimensions whether pbc are applied (default).
     The first three bits give the periodicity */
 extern int periodic;
 
 /** Simulation box dimensions. */
-extern double box_l[3];
+extern Vector3d box_l;
 /** Half the box dimensions. Used for get_mi_vector. */
-extern double half_box_l[3];
+extern Vector3d half_box_l;
 /** 1 / box dimensions. */
-extern double box_l_i[3];
+extern Vector3d box_l_i;
 /** Smallest simulation box dimension (\ref box_l).
     Remark: with PARTIAL_PERIODIC, only the periodic directions
     are taken into account! */
@@ -93,9 +94,9 @@ extern Vector3d local_box_l;
     are taken into account! */
 extern double min_local_box_l;
 /** Left (bottom, front) corner of this nodes local box. */
-extern double my_left[3];
+extern Vector3d my_left;
 /** Right (top, back) corner of this nodes local box. */
-extern double my_right[3];
+extern Vector3d my_right;
 
 /*@}*/
 
@@ -213,7 +214,7 @@ Vector3d get_mi_vector(T const &a, U const &b) {
     i. e. a previously folded position will be folded correctly.
 */
 template <size_t N, typename T1, typename T2>
-void fold_coordinate(Vector<N, T1> &pos, Vector<N, T2> &image_box, int dir) {
+void fold_coordinate(Vector<T1, N> &pos, Vector<T2, N> &image_box, int dir) {
   if (PERIODIC(dir)) {
     std::tie(pos[dir], image_box[dir]) =
         Algorithm::periodic_fold(pos[dir], image_box[dir], box_l[dir]);
@@ -236,7 +237,7 @@ void fold_coordinate(Vector<N, T1> &pos, Vector<N, T2> &image_box, int dir) {
     i. e. a previously folded position will be folded correctly.
 */
 template <size_t N, typename T1, typename T2>
-void fold_position(Vector<N, T1> &pos, Vector<N, T2> &image_box) {
+void fold_position(Vector<T1, N> &pos, Vector<T2, N> &image_box) {
   for (int i = 0; i < 3; i++)
     fold_coordinate(pos, image_box, i);
 }

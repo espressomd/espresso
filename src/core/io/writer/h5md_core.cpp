@@ -21,6 +21,8 @@
 
 #include "h5md_core.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "grid.hpp"
+#include "integrate.hpp"
 #include <vector>
 
 namespace Writer {
@@ -100,7 +102,7 @@ void File::InitFile() {
   m_backup_filename = m_filename + ".bak";
   // use a separate mpi communicator if we want to write out ordered data. This
   // is in order to avoid  blocking by collective functions
-  if (m_write_ordered == true)
+  if (m_write_ordered)
     MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm);
   else
     m_hdf5_comm = MPI_COMM_WORLD;
@@ -341,7 +343,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   /* store folded particle positions. */
   if (write_pos) {
     Vector3d p = current_particle.r.p;
-    Vector<3, int> i = current_particle.l.i;
+    Vector3i i = current_particle.l.i;
     fold_position(p, i);
 
     pos[0][particle_index][0] = p[0];
@@ -420,7 +422,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   step[0][0][0] = (int)std::round(sim_time / time_step);
   int_array_3d bond(boost::extents[0][0][0]);
 
-  if (m_write_ordered == true) {
+  if (m_write_ordered) {
     if (this_node == 0) {
       /* Fetch bond info */
       partCfg.update_bonds();
@@ -486,7 +488,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
     int nbonds_local = bond.shape()[1];
     int nbonds_total = nbonds_local;
     int prefix_bonds = 0;
-    if (m_write_ordered != true) {
+    if (!m_write_ordered) {
       MPI_Exscan(&nbonds_local, &prefix_bonds, 1, MPI_INT, MPI_SUM,
                  m_hdf5_comm);
       MPI_Allreduce(&nbonds_local, &nbonds_total, 1, MPI_INT, MPI_SUM,
@@ -544,7 +546,7 @@ void File::ExtendDataset(const std::string &path,
   auto &dataset = datasets[path];
   /* Get the current dimensions of the dataspace. */
   hid_t ds = H5Dget_space(dataset.hid());
-  hsize_t rank = H5Sget_simple_extent_ndims(ds);
+  auto rank = static_cast<hsize_t>(H5Sget_simple_extent_ndims(ds));
   std::vector<hsize_t> dims(rank), maxdims(rank);
   H5Sget_simple_extent_dims(ds, dims.data(), maxdims.data());
   H5Sclose(ds);
@@ -569,7 +571,7 @@ void File::WriteDataset(T &data, const std::string &path,
   ExtendDataset(path, change_extent);
   auto &dataset = datasets[path];
   hid_t ds = H5Dget_space(dataset.hid());
-  hsize_t rank = H5Sget_simple_extent_ndims(ds);
+  auto rank = static_cast<hsize_t>(H5Sget_simple_extent_ndims(ds));
   std::vector<hsize_t> maxdims(rank);
   for (int i = 0; i < rank; i++) {
     maxdims[i] = H5S_UNLIMITED;
@@ -596,7 +598,7 @@ void File::WriteScript(std::string const &filename) {
   auto filelen = scriptfile.tellg();
   scriptfile.seekg(0);
   std::vector<char> buffer;
-  buffer.reserve(filelen);
+  buffer.reserve(static_cast<unsigned long>(filelen));
   buffer.assign(std::istreambuf_iterator<char>(scriptfile),
                 std::istreambuf_iterator<char>());
 
@@ -605,13 +607,14 @@ void File::WriteScript(std::string const &filename) {
       H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
   dtype = H5Tcopy(H5T_C_S1);
-  H5Tset_size(dtype, filelen * sizeof(char));
+  H5Tset_size(dtype, static_cast<size_t>(filelen * sizeof(char)));
 
   space = H5Screate_simple(1, dims, nullptr);
   /* Create the dataset. */
   hid_t link_crt_plist = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_create_intermediate_group(
-      link_crt_plist, true); // Set flag for intermediate group creation
+      link_crt_plist, static_cast<unsigned int>(
+                          true)); // Set flag for intermediate group creation
   dset = H5Dcreate(file_id, "parameters/files/script", dtype, space,
                    link_crt_plist, H5P_DEFAULT, H5P_DEFAULT);
   /* Write data from buffer to dataset. */
@@ -624,7 +627,7 @@ void File::WriteScript(std::string const &filename) {
 }
 
 void File::Flush() {
-  if (m_write_ordered == true) {
+  if (m_write_ordered) {
     if (this_node == 0)
       H5Fflush(m_h5md_file.hid(), H5F_SCOPE_GLOBAL);
   } else
@@ -648,18 +651,5 @@ bool File::check_for_H5MD_structure(std::string const &filename) {
   return true;
 }
 
-/* Constructor */
-File::File() {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
-}
-
-/* Destructor */
-File::~File() {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
-}
 } /* namespace H5md */
 } /* namespace Writer */

@@ -52,7 +52,6 @@ unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 Communication::MpiCallbacks *m_callbacks = nullptr;
 } // namespace
 
-/** Initialize the error collection system. */
 void init_error_handling(Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;
 
@@ -114,7 +113,7 @@ void mpi_gather_runtime_errors_slave(int, int) {
 
 void errexit() {
   ErrorHandling::m_callbacks->comm().abort(1);
-  exit(1);
+  std::abort();
 }
 
 int check_runtime_errors() {

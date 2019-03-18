@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/interpolation/bspline_3d_gradient.hpp"
 #include "utils/math/tensor_product.hpp"
 
-#include "gradient_type.hpp"
+#include "jacobian_type.hpp"
 #include "utils/Vector.hpp"
 
 /* Turn off range checks if release build. */
@@ -58,8 +58,8 @@ void deep_copy(boost::multi_array<T, 3> &dst,
  */
 template <typename T, size_t codim> class Interpolated {
 public:
-  using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
-  using gradient_type = detail::gradient_type<T, codim>;
+  using value_type = typename decay_to_scalar<Vector<T, codim>>::type;
+  using jacobian_type = detail::jacobian_type<T, codim>;
   using storage_type = boost::multi_array<value_type, 3>;
 
 private:
@@ -98,7 +98,7 @@ public:
   /*
    * @brief Evaluate f at pos with the field value as argument.
    */
-  value_type operator()(const Vector3d &pos) const {
+  value_type operator()(const Vector3d &pos, double = {}) const {
     using Utils::Interpolation::bspline_3d_accumulate;
     return bspline_3d_accumulate<2>(
         pos,
@@ -107,14 +107,14 @@ public:
   }
 
   /*
-   * @brief Evaluate f at pos with the gradient field value as argument.
+   * @brief Evaluate f at pos with the jacobian field value as argument.
    */
-  gradient_type gradient(const Vector3d &pos) const {
+  jacobian_type jacobian(const Vector3d &pos, double = {}) const {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
     return bspline_3d_gradient_accumulate<2>(
         pos,
         [this](const std::array<int, 3> &ind) { return m_global_field(ind); },
-        m_grid_spacing, m_origin, gradient_type{});
+        m_grid_spacing, m_origin, jacobian_type{});
   }
 
   bool fits_in_box(const Vector3d &box) const {

@@ -108,6 +108,8 @@ foreach(cython_file ${cython_SRC})
   endif()
 endforeach()
 
+target_link_libraries(profiler PRIVATE Profiler)
+
 foreach(auxfile ${cython_AUX})
   get_filename_component(filename ${auxfile} NAME)
   file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${auxfile})

@@ -2,25 +2,21 @@
 #define OBSERVABLES_LB_FLUID_STRESS_HPP
 
 #include "Observable.hpp"
-#include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 
 #include <vector>
 
 namespace Observables {
-
+#if (defined(LB) || defined(LB_GPU))
 class LBFluidStress : public Observable {
 public:
   int n_values() const override { return 6; }
   std::vector<double> operator()(PartCfg &) const override {
-    std::vector<double> res(n_values(), 0.0);
 
-#if defined(LB_GPU) || defined(LB)
-    lb_lbfluid_get_stress(res.data());
-#endif
-
-    return res;
+    return lb_lbfluid_get_stress();
   }
 };
+#endif
 
 } // Namespace Observables
 
