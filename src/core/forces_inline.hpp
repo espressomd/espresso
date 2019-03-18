@@ -520,10 +520,6 @@ inline void add_bonded_force(Particle *p1) {
 #if defined(OIF_LOCAL_FORCES)
     double force4[3] = {0., 0., 0.};
 #endif
-#ifdef ROTATION
-    double torque1[3] = {0., 0., 0.};
-    double torque2[3] = {0., 0., 0.};
-#endif
     int type_num = p1->bl.e[i++];
     auto iaparams = &bonded_ia_params[type_num];
     int type = iaparams->type;
@@ -684,10 +680,6 @@ inline void add_bonded_force(Particle *p1) {
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] -= force[j];
-#ifdef ROTATION
-          p1->f.torque[j] += torque1[j];
-          p2->f.torque[j] += torque2[j];
-#endif
         }
       }
       break;
