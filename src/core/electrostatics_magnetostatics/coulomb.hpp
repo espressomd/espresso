@@ -3,6 +3,8 @@
 
 #include "config.hpp"
 
+extern double coulomb_cutoff;
+
 #ifdef ELECTROSTATICS
 #include "Observable_stat.hpp"
 
@@ -46,8 +48,6 @@ struct Coulomb_parameters {
 
 /** Structure containing the Coulomb parameters. */
 extern Coulomb_parameters coulomb;
-
-extern double coulomb_cutoff;
 
 namespace Coulomb {
 void pressure_n(int &n_coulomb);

@@ -1,6 +1,9 @@
 
 #include "electrostatics_magnetostatics/dipole.hpp"
 
+// Real space cutoff of long range methods
+double dipolar_cutoff;
+
 #ifdef DIPOLES
 
 #include "actor/DipolarBarnesHut.hpp"
@@ -21,9 +24,6 @@ Dipole_parameters dipole = {
     0.0,
     DIPOLAR_NONE,
 };
-
-// Real space cutoff of long range methods
-double dipolar_cutoff;
 
 namespace Dipole {
 

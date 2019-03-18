@@ -3,6 +3,8 @@
 
 #include "config.hpp"
 
+extern double dipolar_cutoff;
+
 #ifdef DIPOLES
 
 #include "Observable_stat.hpp"
@@ -52,8 +54,6 @@ struct Dipole_parameters {
 
 /** Structure containing the Dipole parameters. */
 extern Dipole_parameters dipole;
-
-extern double dipolar_cutoff;
 
 namespace Dipole {
 void pressure_n(int &n_dipolar);
