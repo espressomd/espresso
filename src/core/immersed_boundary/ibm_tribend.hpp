@@ -38,7 +38,8 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
 int IBM_Tribend_ResetParams(const int bond_type, const double kb);
 
 // This function calculates and adds the actual force
-void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3, Particle *p4, const Bonded_ia_parameters &iaparams);
+void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
+                           Particle *p4, const Bonded_ia_parameters &iaparams);
 
 #endif
 

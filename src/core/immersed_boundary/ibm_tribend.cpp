@@ -32,7 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Calculate the bending force and add it to the particles
  **************/
 
-void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3, Particle *p4, const Bonded_ia_parameters &iaparams) {
+void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
+                           Particle *p4, const Bonded_ia_parameters &iaparams) {
   assert(p1);
   assert(p2);
   assert(p3);
