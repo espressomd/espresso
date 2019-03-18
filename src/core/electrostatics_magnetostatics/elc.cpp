@@ -1413,14 +1413,11 @@ void ELC_p3m_charge_assign_image() {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
-                                                  double force1[3],
-                                                  double force2[3]) {
+void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1, const Particle *p2,
+                                                  double *force1,
+                                                  double *force2) {
   double dist, dist2, d[3];
   double pos[3], q;
-  double tp2;
-
-  tp2 = p2->r.p[2];
 
   if (p1->r.p[2] < elc_params.space_layer) {
     q = elc_params.delta_mid_bot * p1->p.q * p2->p.q;
@@ -1444,22 +1441,22 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
     p3m_add_pair_force(q, d, dist2, dist, force2);
   }
 
-  if (tp2 < elc_params.space_layer) {
+  if (p2->r.p[2] < elc_params.space_layer) {
     q = elc_params.delta_mid_bot * p1->p.q * p2->p.q;
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
-    pos[2] = -tp2;
+    pos[2] = -p2->r.p[2];
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
     p3m_add_pair_force(q, d, dist2, dist, force1);
   }
 
-  if (tp2 > (elc_params.h - elc_params.space_layer)) {
+  if (p2->r.p[2] > (elc_params.h - elc_params.space_layer)) {
     q = elc_params.delta_mid_top * p1->p.q * p2->p.q;
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
-    pos[2] = 2 * elc_params.h - tp2;
+    pos[2] = 2 * elc_params.h - p2->r.p[2];
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);

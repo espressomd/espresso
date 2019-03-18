@@ -174,7 +174,7 @@ int p3m_adaptive_tune(char **log);
 /** Initialize all structures, parameters and arrays needed for the
  *  P3M algorithm for charge-charge interactions.
  */
-void p3m_init(void);
+void p3m_init();
 
 /** Update @ref p3m_parameter_struct::alpha "alpha" and
  *  @ref p3m_parameter_struct::r_cut "r_cut" if @ref box_l changed
