@@ -727,7 +727,7 @@ void set_particle_torque_lab(int part, const Vector3d &torque_lab);
  *  @param part the particle.
  *  @param dip its new dipole orientation.
  */
-void set_particle_dip(int part, double *dip);
+void set_particle_dip(int part, double const *dip);
 
 /** Call only on the master node: set particle dipole moment (absolute value).
  *  @param part the particle.

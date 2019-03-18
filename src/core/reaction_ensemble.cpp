@@ -1145,7 +1145,7 @@ void WangLandauReactionEnsemble::invalidate_bins() {
  * Finds the minimum non negative value in the provided double array and returns
  * this value.
  */
-double find_minimum_non_negative_value(double *list, int len) {
+double find_minimum_non_negative_value(double const *const list, int len) {
   double minimum = list[0];
   for (int i = 0; i < len; i++) {
     if (minimum < 0)
@@ -1160,7 +1160,7 @@ double find_minimum_non_negative_value(double *list, int len) {
 /**
  * Finds the maximum in a double array and returns it.
  */
-double find_maximum(double *list, int len) {
+double find_maximum(double const *const list, int len) {
   double maximum = list[0];
   for (int i = 0; i < len; i++) {
     if (list[i] > maximum)
