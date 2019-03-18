@@ -202,7 +202,8 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   MofImatrix[7] = MofImatrix[5];
 }
 
-IntList nbhood(PartCfg &partCfg, double pt[3], double r, int planedims[3]) {
+IntList nbhood(PartCfg &partCfg, double pt[3], double r,
+               int const planedims[3]) {
   IntList ids;
   Vector3d d;
 
@@ -238,9 +239,9 @@ double distto(PartCfg &partCfg, double p[3], int pid) {
   return std::sqrt(mindist);
 }
 
-void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
-                            int *p2_types, int n_p2, double r_min, double r_max,
-                            int r_bins, int log_flag, double *low,
+void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
+                            int const *p2_types, int n_p2, double r_min,
+                            double r_max, int r_bins, int log_flag, double *low,
                             double *dist) {
   int t1, t2, ind, cnt = 0;
   double inv_bin_width = 0.0;
@@ -307,8 +308,9 @@ void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
            p2_types.size(), r_min, r_max, r_bins, &rdf[0]);
 }
 
-void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
-              int n_p2, double r_min, double r_max, int r_bins, double *rdf) {
+void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
+              int const *p2_types, int n_p2, double r_min, double r_max,
+              int r_bins, double *rdf) {
   long int cnt = 0;
   int i, t1, t2, ind;
   int mixed_flag = 0;
@@ -368,9 +370,9 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
               p2_types.size(), r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
-void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
-                 int n_p2, double r_min, double r_max, int r_bins, double *rdf,
-                 int n_conf) {
+void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
+                 int const *p2_types, int n_p2, double r_min, double r_max,
+                 int r_bins, double *rdf, int n_conf) {
   long int cnt = 0;
   int cnt_conf = 1;
   int mixed_flag = 0;
@@ -449,7 +451,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
   free(rdf_tmp);
 }
 
-void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
+void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
                           int order, double **_ff) {
   int i, j, k, n, qi, t, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
@@ -506,7 +508,8 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
   }
 }
 
-std::vector<std::vector<double>> modify_stucturefactor(int order, double *sf) {
+std::vector<std::vector<double>> modify_stucturefactor(int order,
+                                                       double const *sf) {
   int length = 0;
 
   for (int i = 0; i < order * order; i++) {
@@ -709,7 +712,7 @@ void analyze_append(PartCfg &partCfg) {
   n_configs++;
 }
 
-void analyze_configs(double *tmp_config, int count) {
+void analyze_configs(double const *tmp_config, int count) {
   int i;
   n_part_conf = count;
   configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));

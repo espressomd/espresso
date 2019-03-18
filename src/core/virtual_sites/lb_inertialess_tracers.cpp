@@ -209,7 +209,7 @@ Very similar to the velocity interpolation done in standard Espresso, except
 that we add the f/2 contribution - only for CPU
 *******************/
 
-void GetIBMInterpolatedVelocity(double *p, double *const v,
+void GetIBMInterpolatedVelocity(double const *p, double *const v,
                                 double *const forceAdded) {
   Lattice::index_t index;
   double local_rho, local_j[3], interpolated_u[3];

@@ -1128,7 +1128,7 @@ void p3m_calc_differential_operator() {
 namespace {
 
 template <int cao>
-inline double perform_aliasing_sums_force(int n[3], double numerator[3]) {
+inline double perform_aliasing_sums_force(int const n[3], double numerator[3]) {
   using Utils::int_pow;
 
   int i;
@@ -1259,7 +1259,7 @@ void p3m_calc_influence_function_force() {
 
 namespace {
 
-template <int cao> inline double perform_aliasing_sums_energy(int n[3]) {
+template <int cao> inline double perform_aliasing_sums_energy(int const n[3]) {
   using Utils::int_pow;
   double numerator = 0.0, denominator = 0.0;
   /* lots of temporary variables... */
