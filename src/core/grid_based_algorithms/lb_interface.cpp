@@ -811,14 +811,17 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       for (int n = 0; n < 3; n++) {
         res = fscanf(cpfile, "%i", &saved_gridsize[n]);
         if (res == EOF) {
+          fclose(cpfile);
           throw std::runtime_error(err_msg + "EOF found.");
         } else if (res != 1) {
+          fclose(cpfile);
           throw std::runtime_error(err_msg + "incorrectly formatted data.");
         }
       }
       if (saved_gridsize[0] != lbpar_gpu.dim_x ||
           saved_gridsize[1] != lbpar_gpu.dim_y ||
           saved_gridsize[2] != lbpar_gpu.dim_z) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
                                  std::to_string(saved_gridsize[0]) + ' ' +
                                  std::to_string(saved_gridsize[1]) + ' ' +
@@ -831,18 +834,22 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
         res = fscanf(cpfile, "%f", &host_checkpoint_vd[n]);
         if (res == EOF) {
+          fclose(cpfile);
           throw std::runtime_error(err_msg + "EOF found.");
         } else if (res != 1) {
+          fclose(cpfile);
           throw std::runtime_error(err_msg + "incorrectly formatted data.");
         }
       }
     } else {
       int saved_gridsize[3];
       if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       } else if (saved_gridsize[0] != lbpar_gpu.dim_x ||
                  saved_gridsize[1] != lbpar_gpu.dim_y ||
                  saved_gridsize[2] != lbpar_gpu.dim_z) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
                                  std::to_string(saved_gridsize[0]) + ' ' +
                                  std::to_string(saved_gridsize[1]) + ' ' +
@@ -855,6 +862,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       if (fread(host_checkpoint_vd.data(), sizeof(float),
                 19 * int(lbpar_gpu.number_of_nodes),
                 cpfile) != (unsigned int)(19 * lbpar_gpu.number_of_nodes)) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     }
@@ -869,6 +877,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       res = fgetc(cpfile);
     }
     if (res != EOF) {
+      fclose(cpfile);
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
     fclose(cpfile);
@@ -892,17 +901,21 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       res = fscanf(cpfile, "%i %i %i\n", &saved_gridsize[0], &saved_gridsize[1],
                    &saved_gridsize[2]);
       if (res == EOF) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "EOF found.");
       } else if (res != 3) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     } else {
       if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
+        fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
     }
     if (saved_gridsize[0] != gridsize[0] || saved_gridsize[1] != gridsize[1] ||
         saved_gridsize[2] != gridsize[2]) {
+      fclose(cpfile);
       throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
                                std::to_string(saved_gridsize[0]) + ' ' +
                                std::to_string(saved_gridsize[1]) + ' ' +
@@ -927,12 +940,15 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
                          &pop[12], &pop[13], &pop[14], &pop[15], &pop[16],
                          &pop[17], &pop[18]);
             if (res == EOF) {
+              fclose(cpfile);
               throw std::runtime_error(err_msg + "EOF found.");
             } else if (res != 19) {
+              fclose(cpfile);
               throw std::runtime_error(err_msg + "incorrectly formatted data.");
             }
           } else {
             if (fread(pop.data(), sizeof(double), 19, cpfile) != 19) {
+              fclose(cpfile);
               throw std::runtime_error(err_msg + "incorrectly formatted data.");
             }
           }
@@ -951,6 +967,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       res = fgetc(cpfile);
     }
     if (res != EOF) {
+      fclose(cpfile);
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
     fclose(cpfile);

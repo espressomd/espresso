@@ -170,7 +170,7 @@ class ParticleCache {
   Utils::Parallel::Callback update_bonds_cb;
 
   /** Functor to get a particle range */
-  GetParticles parts;
+  GetParticles m_parts;
   /** Functor which is applied to the
       particles before they are gathered,
       e.g. position folding */
@@ -185,7 +185,7 @@ class ParticleCache {
   std::vector<int> m_update_bonds() {
     std::vector<int> local_bonds;
 
-    for (auto const &p : parts()) {
+    for (auto const &p : m_parts()) {
       local_bonds.push_back(p.identity());
 
       auto const &bonds = p.bonds();
@@ -233,7 +233,7 @@ class ParticleCache {
   void m_update() {
     remote_parts.clear();
 
-    for (auto const &p : parts()) {
+    for (auto const &p : m_parts()) {
       typename map_type::iterator it;
       /* Add the particle to the map */
       std::tie(it, std::ignore) = remote_parts.emplace(p.flat_copy());
@@ -268,7 +268,7 @@ public:
       : m_cb(cb), m_valid(false), m_valid_bonds(false),
         update_cb(cb, [this](int, int) { this->m_update(); }),
         update_bonds_cb(cb, [this](int, int) { this->m_update_bonds(); }),
-        parts(parts), m_op(std::forward<UnaryOp>(op)) {}
+        m_parts(parts), m_op(std::forward<UnaryOp>(op)) {}
   /* Because the this ptr is captured by the callback lambdas,
    * this class can be neither copied nor moved. */
   ParticleCache(ParticleCache const &) = delete;
