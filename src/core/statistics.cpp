@@ -91,9 +91,6 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
   return std::sqrt(mindist2);
 }
 
-/** Calculate momentum of all particles in the local domain
- * @param result Result for this processor (Output)
- */
 void predict_momentum_particles(double *result) {
   double momentum[3] = {0.0, 0.0, 0.0};
 
@@ -108,11 +105,6 @@ void predict_momentum_particles(double *result) {
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-/** Calculate total momentum of the system (particles & LB fluid)
- * inputs are bools to include particles and fluid in the linear momentum
- * calculation
- * @return Result for this processor (Output)
- */
 Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
   Vector3d linear_momentum{};
   if (include_particles) {

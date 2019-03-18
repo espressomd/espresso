@@ -854,7 +854,7 @@ void exchange_neighbors(ParticleList *pl, const Vector3i &grid) {
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
                                     const Vector3i &grid) {
   if (global) {
-    /* Worst case we need node_grid - 1 rounds per direction.
+    /* Worst case we need grid - 1 rounds per direction.
      * This correctly implies that if there is only one node,
      * no action should be taken. */
     int rounds_left = grid[0] + grid[1] + grid[2] - 3;

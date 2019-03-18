@@ -71,9 +71,9 @@ namespace {
  * @brief A generic particle update.
  *
  * Here the sub-struct struture of Particle is
- * used: the specification of the data memeber to update
- * consists of to parts, the pointer to the subsutruct @p s
- * and a pointer to a member of that substruct @m.
+ * used: the specification of the data member to update
+ * consists of two parts, the pointer to the substruct @p s
+ * and a pointer to a member of that substruct @p m.
  *
  * @tparam S Substruct type of Particle
  * @tparam s Pointer to a member of Particle
@@ -451,28 +451,18 @@ Particle **local_particles = nullptr;
  * local functions
  ************************************************/
 
-/** Remove bond from particle if possible */
 int try_delete_bond(Particle *part, const int *bond);
 
-/** Remove exclusion from particle if possible */
 void try_delete_exclusion(Particle *part, int part2);
 
-/** Insert an exclusion if not already set */
 void try_add_exclusion(Particle *part, int part2);
 
-/** Automatically add the next \<distance\> neighbors in each molecule to the
-   exclusion list. This uses the bond topology obtained directly from the
-   particles, since only this contains the full topology, in contrast to \ref
-   topology::topology. To easily setup the bonds, all data should be on a single
-   node, therefore the \ref partCfg array is used. With large amounts of
-   particles, you should avoid this function and setup exclusions manually. */
 void auto_exclusion(int distance);
 
 /************************************************
  * particle initialization functions
  ************************************************/
 
-/** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part) { part->~Particle(); }
 
 void mpi_who_has_slave(int, int) {

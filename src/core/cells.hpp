@@ -94,6 +94,8 @@
 /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
 #define CELL_NEIGHBOR_EXCHANGE 0
 
+/*@}*/
+
 namespace Cells {
 enum Resort : unsigned {
   RESORT_NONE = 0u,
