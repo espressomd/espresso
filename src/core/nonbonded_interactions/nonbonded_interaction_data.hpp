@@ -31,7 +31,7 @@
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */
-    constexpr double INACTIVE_CUTOFF = -1.;
+constexpr double INACTIVE_CUTOFF = -1.;
 
 /** \name Type codes for the type of Coulomb interaction
     Enumeration of implemented methods for the electrostatic

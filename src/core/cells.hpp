@@ -73,16 +73,16 @@
  * VERY beginning of the code startup.
  */
 enum {
- CELL_STRUCTURE_NONEYET = -1,
-/** Flag indicating that the current cell structure will be used further on */
- CELL_STRUCTURE_CURRENT = 0,
-/** cell structure domain decomposition */
- CELL_STRUCTURE_DOMDEC = 1,
-/** cell structure n square */
- CELL_STRUCTURE_NSQUARE = 2,
-/** cell structure layered */
- CELL_STRUCTURE_LAYERED = 3
-}; 
+  CELL_STRUCTURE_NONEYET = -1,
+  /** Flag indicating that the current cell structure will be used further on */
+  CELL_STRUCTURE_CURRENT = 0,
+  /** cell structure domain decomposition */
+  CELL_STRUCTURE_DOMDEC = 1,
+  /** cell structure n square */
+  CELL_STRUCTURE_NSQUARE = 2,
+  /** cell structure layered */
+  CELL_STRUCTURE_LAYERED = 3
+};
 
 /*@}*/
 

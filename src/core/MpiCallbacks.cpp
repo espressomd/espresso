@@ -79,7 +79,8 @@ void MpiCallbacks::remove(const int id) { m_callbacks.remove(id); }
 void MpiCallbacks::abort_loop() const {
   try {
     call(LOOP_ABORT, 0, 0);
-  } catch(...) {}
+  } catch (...) {
+  }
 }
 
 void MpiCallbacks::loop() const {

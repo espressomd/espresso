@@ -1826,8 +1826,8 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
   /* the initial step sets a timing mark. If there is no valid r_cut, we can
      only try
      to increase cao to increase the obtainable precision of the far formula. */
-  double tmp_time;-
-  do {
+  double tmp_time;
+  -do {
     tmp_time = dp3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                             &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out if the force evaluation is not working */
@@ -1855,7 +1855,9 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
                               "doesn't give precision, step up\n"));
     cao++;
     final_dir = 1;
-  } while (cao <= cao_max);
+  }
+  while (cao <= cao_max)
+    ;
   /* with this mesh, the required accuracy cannot be obtained. */
   if (cao > cao_max)
     return -P3M_TUNE_CAO_TOO_LARGE;

@@ -47,12 +47,12 @@
  ************************************************/
 
 enum {
-/// ok code for \ref place_particle
- ES_PART_OK = 0,
-/// error code for \ref place_particle
- ES_PART_ERROR = -1,
-/// ok code for \ref place_particle, particle is new
- ES_PART_CREATED = 1
+  /// ok code for \ref place_particle
+  ES_PART_OK = 0,
+  /// error code for \ref place_particle
+  ES_PART_ERROR = -1,
+  /// ok code for \ref place_particle, particle is new
+  ES_PART_CREATED = 1
 };
 
 #ifdef EXTERNAL_FORCES
