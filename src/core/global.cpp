@@ -54,9 +54,9 @@ typedef struct {
   enum class Type { INT = 0, DOUBLE = 1, BOOL = 2 };
   /** Physical address of the variable. */
   void *data;
-  /** Type of the variable, either \ref TYPE_INT or \ref TYPE_DOUBLE.*/
+  /** Type of the variable. */
   Type type;
-  /** Dimension of the variable. Limited to \ref MAX_DIMENSION */
+  /** Dimension of the variable. Typically in the range 1-3. */
   int dimension;
   /** Name of the variable, mainly used for the front end and debugging */
   const char *name;

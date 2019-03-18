@@ -648,7 +648,7 @@ void dd_on_geometry_change(int flags, const Vector3i &grid) {
   if (!(flags & CELL_FLAG_FAST) && max_range > 0) {
     int i;
     for (i = 0; i < 3; i++) {
-      int poss_size = (int)floor(local_box_l[i] / max_range);
+      auto poss_size = (int)floor(local_box_l[i] / max_range);
       if (poss_size > dd.cell_grid[i])
         break;
     }
@@ -854,7 +854,7 @@ void exchange_neighbors(ParticleList *pl, const Vector3i &grid) {
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
                                     const Vector3i &grid) {
   if (global) {
-    /* Worst case we need node_grid - 1 rounds per direction.
+    /* Worst case we need grid - 1 rounds per direction.
      * This correctly implies that if there is only one node,
      * no action should be taken. */
     int rounds_left = grid[0] + grid[1] + grid[2] - 3;

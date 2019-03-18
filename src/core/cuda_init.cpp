@@ -22,10 +22,10 @@
 #include "config.hpp"
 #include "utils.hpp"
 
+#include <cstring>
 #include <iterator>
 #include <mpi.h>
 #include <set>
-#include <string.h>
 
 #ifdef CUDA
 
@@ -58,7 +58,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
   std::vector<EspressoGpuDevice> devices;
   /* Global unique device list (only relevant on master) */
   std::vector<EspressoGpuDevice> g_devices;
-  int *n_gpu_array = 0;
+  int *n_gpu_array = nullptr;
 
   MPI_Get_processor_name(proc_name, &proc_name_len);
 
@@ -107,8 +107,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
     /* Send number of devices to master */
     MPI_Gather(&n_gpus, 1, MPI_INT, n_gpu_array, 1, MPI_INT, 0, MPI_COMM_WORLD);
     /* Send devices to maser */
-    for (std::vector<EspressoGpuDevice>::iterator device = devices.begin();
-         device != devices.end(); ++device) {
+    for (auto device = devices.begin(); device != devices.end(); ++device) {
       MPI_Send(&(*device), sizeof(EspressoGpuDevice), MPI_BYTE, 0, 0,
                MPI_COMM_WORLD);
     }

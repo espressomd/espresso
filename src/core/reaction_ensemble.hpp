@@ -58,7 +58,7 @@ struct CollectiveVariable {
   virtual double determine_current_state() = 0; // use pure virtual, otherwise
                                                 // this will be used in vector
                                                 // of collective variables
-  virtual ~CollectiveVariable() {}
+  virtual ~CollectiveVariable() = default;
 };
 
 class WangLandauReactionEnsemble;
@@ -109,8 +109,8 @@ private:
 class ReactionAlgorithm {
 
 public:
-  ReactionAlgorithm(){};
-  virtual ~ReactionAlgorithm(){};
+  ReactionAlgorithm() = default;
+  virtual ~ReactionAlgorithm() = default;
 
   std::vector<SingleReaction> reactions;
   std::map<int, double> charges_of_types;

@@ -30,7 +30,7 @@ class Shape {
 public:
   virtual void calculate_dist(const Vector3d &pos, double *dist,
                               double *vec) const = 0;
-  virtual ~Shape() {}
+  virtual ~Shape() = default;
 };
 
 } /* namespace Shapes */

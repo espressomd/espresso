@@ -338,4 +338,6 @@ int iccp3m_sanity_check() {
   return 0;
 }
 
+/*@}*/
+
 #endif

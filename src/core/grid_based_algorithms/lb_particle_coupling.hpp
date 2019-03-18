@@ -30,7 +30,7 @@ void lb_lbcoupling_activate();
 void lb_lbcoupling_deactivate();
 
 struct LB_Particle_Coupling {
-  Utils::Counter<uint64_t> rng_counter_coupling;
+  Utils::Counter<uint64_t> rng_counter_coupling{};
   /*
    * @brief Friction constant for the particle coupling.
    */

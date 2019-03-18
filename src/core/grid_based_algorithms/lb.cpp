@@ -666,9 +666,6 @@ void lb_prepare_communication() {
   release_halo_communication(&comm);
 }
 
-/** Release fluid and communication. */
-void lb_release() { release_halo_communication(&update_halo_comm); }
-
 /***********************************************************************/
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
@@ -913,9 +910,8 @@ inline void lb_collide_stream() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
-  for (auto it = LBBoundaries::lbboundaries.begin();
-       it != LBBoundaries::lbboundaries.end(); ++it) {
-    (**it).reset_force();
+  for (auto &lbboundarie : LBBoundaries::lbboundaries) {
+    (*lbboundarie).reset_force();
   }
 #endif // LB_BOUNDARIES
 
@@ -1002,7 +998,7 @@ inline void lb_collide_stream() {
  *  monitor the time since the last lattice update.
  */
 void lattice_boltzmann_update() {
-  int factor = (int)round(lbpar.tau / time_step);
+  auto factor = (int)round(lbpar.tau / time_step);
 
   fluidstep += 1;
   if (fluidstep >= factor) {

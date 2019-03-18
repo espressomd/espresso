@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace ClusterAnalysis {
 
-/** @brief Represents a single cluster of particles */
 /** @brief Holds the result and parameters of a cluster analysis */
 class ClusterStructure {
 public:

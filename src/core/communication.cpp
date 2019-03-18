@@ -202,7 +202,7 @@ void mpi_init() {
 #ifdef OPEN_MPI
   openmpi_fix_vader();
 
-  void *handle = 0;
+  void *handle = nullptr;
   int mode = RTLD_NOW | RTLD_GLOBAL;
 #ifdef RTLD_NOLOAD
   mode |= RTLD_NOLOAD;

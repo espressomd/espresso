@@ -100,8 +100,8 @@ void add_md_force(Vector3d const &pos, Vector3d const &force) {
  *
  *  Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
  *
- * @param p          The coupled particle (Input).
- * @param f_random   Additional force to be included.
+ * @param[in,out] p         The coupled particle.
+ * @param[in]     f_random  Additional force to be included.
  *
  * @return The viscous coupling force plus f_random.
  */

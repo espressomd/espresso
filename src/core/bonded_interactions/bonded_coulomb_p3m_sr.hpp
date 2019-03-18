@@ -39,7 +39,11 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-/// set the parameters for the bonded_coulomb potential
+/** set the parameters for the bonded_coulomb potential
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2);
 
 /** Computes the BONDED_COULOMB_P3M_SR pair force.
