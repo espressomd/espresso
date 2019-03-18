@@ -181,7 +181,7 @@ void calc_long_range_virials() {
 
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  Dipole::calc_pressure_long_range(virials, p_tensor);
+  Dipole::calc_pressure_long_range();
 #endif /*ifdef DIPOLES */
 }
 
@@ -199,7 +199,7 @@ void init_virials(Observable_stat *stat) {
   Coulomb::pressure_n(n_coulomb);
 #endif
 #ifdef DIPOLES
-  Dipole::pressure_n(n_dipolar);
+  Dipole::pressure_n();
 #endif
 #ifdef VIRTUAL_SITES
   n_vs = virtual_sites()->n_pressure_contribs();
@@ -226,7 +226,7 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
 void init_p_tensor(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
   // bonded, nonbonded, Coulomb, dipolar, rigid bodies
-  int n_pre, n_non_bonded, n_coulomb(0), n_dipolar(0), n_vs(0);
+  int n_pre, n_non_bonded, n_coulomb(0), n_vs(0);
 
   n_pre = 1;
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
@@ -235,7 +235,7 @@ void init_p_tensor(Observable_stat *stat) {
   Coulomb::pressure_n(n_coulomb);
 #endif
 #ifdef DIPOLES
-  Dipole::pressure_n(n_dipolar);
+  auto const n_dipolar = Dipole::pressure_n();
 #endif
 #ifdef VIRTUAL_SITES
   n_vs = virtual_sites()->n_pressure_contribs();

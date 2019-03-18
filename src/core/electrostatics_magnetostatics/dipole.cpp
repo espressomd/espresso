@@ -27,29 +27,11 @@ Dipole_parameters dipole = {
 };
 
 namespace Dipole {
-
-void pressure_n(int &n_dipolar) {
-  switch (dipole.method) {
-  case DIPOLAR_NONE:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_DS:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_P3M:
-    n_dipolar = 2;
-    break;
-  default:
-    n_dipolar = 0;
-    break;
-  }
+int pressure_n() {
+return 0;
 }
 
-void calc_pressure_long_range(Observable_stat &virials,
-                              Observable_stat &p_tensor) {
+void calc_pressure_long_range() {
   switch (dipole.method) {
       case DIPOLAR_NONE:
           return;
@@ -82,7 +64,7 @@ void nonbonded_sanity_check(int &state) {
 #endif
 }
 
-double cutoff(const Vector3d box_l) {
+double cutoff(const Vector3d &box_l) {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -92,9 +74,6 @@ double cutoff(const Vector3d box_l) {
     return dp3m.params.r_cut_iL * box_l[0];
   }
 #endif /*ifdef DP3M */
-    // Note: Dipolar calculation via scafacos
-    // There doesn't seem to be short range delegation for dipolar methods
-    // in Scafacos, so no cutoff is contributed
   default:
     return 0;
   }
@@ -252,8 +231,7 @@ void calc_energy_long_range(Observable_stat &energy) {
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
     break;
   case DIPOLAR_DS_GPU:
-    // Do nothing, it's an actor.
-    break;
+      break;
 #ifdef DIPOLAR_BARNES_HUT
   case DIPOLAR_BH_GPU:
     // Do nothing, it's an actor.
@@ -267,7 +245,7 @@ void calc_energy_long_range(Observable_stat &energy) {
   case DIPOLAR_NONE:
     break;
   default:
-    runtimeErrorMsg() << "unknown dipolar method";
+    runtimeErrorMsg() << "energy calculation not implemented for dipolar method.";
     break;
   }
 }
