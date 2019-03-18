@@ -83,7 +83,6 @@ enum {
   CELL_STRUCTURE_LAYERED = 3
 };
 
-/*@}*/
 
 /** \name Flags for exchange_and_sort_particles: whether to do a global
  *  exchange or assume that particles did not move much (faster, used
