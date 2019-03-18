@@ -311,8 +311,8 @@ extern double min_global_cut;
 
 /*****************
 *******************************
- * exported functions
- ************************************************/
+* exported functions
+************************************************/
 
 /** get interaction parameters between particle sorts i and j */
 inline IA_parameters *get_ia_param(int i, int j) {
