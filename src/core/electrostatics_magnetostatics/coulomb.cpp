@@ -99,7 +99,7 @@ void sanity_checks(int &state) {
   }
 }
 
-double cutoff(const Vector3d box_l) {
+double cutoff(const Vector3d &box_l) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -179,8 +179,6 @@ void on_observable_calc() {
   case COULOMB_ELC_P3M:
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    EVENT_TRACE(
-        fprintf(stderr, "%d: p3m_count_charged_particles\n", this_node));
     p3m_count_charged_particles();
     break;
 #endif
@@ -317,7 +315,6 @@ void calc_long_range_force() {
 #endif
 #ifdef P3M
   case COULOMB_P3M:
-    FORCE_TRACE(printf("%d: Computing P3M forces.\n", this_node));
     p3m_charge_assign();
 #ifdef NPT
     if (integ_switch == INTEG_METHOD_NPT_ISO)
@@ -346,10 +343,7 @@ void calc_energy_long_range(Observable_stat &energy) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_P3M_GPU:
-    printf(
-        "long range energy calculation not implemented for GPU P3M\n"); // TODO
-    // make
-    // right
+      runtimeWarningMsg() << "long range energy calculation not implemented for GPU P3M";
     break;
   case COULOMB_P3M:
     p3m_charge_assign();
@@ -395,23 +389,19 @@ void calc_energy_long_range(Observable_stat &energy) {
   }
 }
 
-void energy_n(int &n_coulomb) {
+int energy_n() {
   switch (coulomb.method) {
   case COULOMB_NONE:
-    n_coulomb = 0;
-    break;
+    return 0;
   case COULOMB_ELC_P3M:
-    n_coulomb = 3;
-    break;
+    return 3;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    n_coulomb = 2;
-    break;
+    return 2;
   case COULOMB_SCAFACOS:
-    n_coulomb = 2;
-    break;
+    return 2;
   default:
-    n_coulomb = 1;
+    return 1;
   }
 }
 
@@ -472,7 +462,6 @@ int elc_sanity_check() {
 void bcast_coulomb_params() {
   switch (coulomb.method) {
   case COULOMB_NONE:
-    // fall through, scafacos has internal parameter propagation
   case COULOMB_SCAFACOS:
     break;
 #ifdef P3M
@@ -495,12 +484,8 @@ void bcast_coulomb_params() {
     MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, comm_cart);
     break;
   case COULOMB_RF:
-  default:
-    fprintf(stderr,
-            "%d: INTERNAL ERROR: cannot bcast coulomb params for "
-            "unknown method %d\n",
-            this_node, coulomb.method);
-    errexit();
+      MPI_Bcast(&rf_params , sizeof(Reaction_field_params), MPI_BYTE, 0, comm_cart);
+    break;
   }
 }
 
@@ -517,7 +502,6 @@ int set_prefactor(double prefactor) {
 }
 
 /** @brief Deactivates the current Coulomb method
-    This was part of coulomb_set_bjerrum()
 */
 void deactivate_method() {
   coulomb.prefactor = 0;
@@ -528,6 +512,5 @@ void deactivate_method() {
   coulomb.method = COULOMB_NONE;
   mpi_bcast_coulomb_params();
 }
-
 } // namespace Coulomb
 #endif // ELECTROSTATICS

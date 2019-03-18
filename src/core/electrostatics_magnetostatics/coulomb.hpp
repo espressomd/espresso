@@ -56,7 +56,7 @@ void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor);
 
 void sanity_checks(int &state);
-double cutoff(const Vector3d box_l);
+double cutoff(const Vector3d &box_l);
 void deactivate();
 
 void integrate_sanity_check();
@@ -69,7 +69,7 @@ void init();
 void calc_long_range_force();
 
 void calc_energy_long_range(Observable_stat &energy);
-void energy_n(int &n_coulomb);
+int energy_n();
 
 int iccp3m_sanity_check();
 
