@@ -2,6 +2,7 @@
 #define ESPRESSO_COULOMB_HPP
 
 #include "config.hpp"
+#include "utils/Vector.hpp"
 
 extern double coulomb_cutoff;
 
@@ -55,7 +56,7 @@ void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor);
 
 void sanity_checks(int &state);
-double cutoff(const double box_l[3]);
+double cutoff(const Vector3d box_l);
 void deactivate();
 
 void integrate_sanity_check();

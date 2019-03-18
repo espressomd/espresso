@@ -96,7 +96,7 @@ void nonbonded_sanity_check(int &state) {
     if (mdlc_sanity_checks())
       state = 0; // fall through
   case DIPOLAR_P3M:
-    if (dp3m_sanity_checks())
+    if (dp3m_sanity_checks(node_grid))
       state = 0;
     break;
   case DIPOLAR_MDLC_DS:
@@ -112,7 +112,7 @@ void nonbonded_sanity_check(int &state) {
 #endif
 }
 
-double cutoff(const double box_l[3]) {
+double cutoff(const Vector3d box_l) {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:

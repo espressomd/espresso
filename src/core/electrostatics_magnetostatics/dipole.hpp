@@ -2,6 +2,7 @@
 #define ESPRESSO_DIPOLE_HPP
 
 #include "config.hpp"
+#include "utils/Vector.hpp"
 
 extern double dipolar_cutoff;
 
@@ -61,7 +62,7 @@ void calc_pressure_long_range(Observable_stat &virials,
                               Observable_stat &p_tensor);
 
 void nonbonded_sanity_check(int &state);
-double cutoff(const double box_l[3]);
+double cutoff(const Vector3d box_l);
 
 void integrate_sanity_check();
 void on_observable_calc();

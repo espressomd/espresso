@@ -99,7 +99,7 @@ void sanity_checks(int &state) {
   }
 }
 
-double cutoff(const double box_l[3]) {
+double cutoff(const Vector3d box_l) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
