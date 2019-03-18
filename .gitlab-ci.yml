@@ -178,7 +178,6 @@ cuda-tutorials:
     - docker
     - linux
     - cuda
-    - tutorials
 
 empty:
   stage: build
