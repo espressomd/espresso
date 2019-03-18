@@ -31,8 +31,6 @@
 #include "grid.hpp"
 #include "utils.hpp"
 
-#define ANGLE_NOT_DEFINED -100
-
 /** set dihedral parameters
  *
  *  @retval ES_OK on success

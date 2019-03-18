@@ -369,10 +369,10 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // three_particle_angle_resolution steps and by adding the id
   // of the bond for zero degrees.
   int bond_id =
-      floor(phi / M_PI *
+      static_cast<int>(floor(phi / M_PI *
                 (collision_params.three_particle_angle_resolution - 1) +
             0.5) +
-      collision_params.bond_three_particles;
+      collision_params.bond_three_particles);
 
   // Create the bond
 
