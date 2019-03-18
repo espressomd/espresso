@@ -230,7 +230,8 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
   for (int o = lc[0]; o <= hc[0]; o++)
     for (int n = lc[1]; n <= hc[1]; n++)
       for (int m = lc[2]; m <= hc[2]; m++) {
-        auto const i = get_linear_index(o, n, m,
+        auto const i =
+            get_linear_index(o, n, m,
                              {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
                               dd.ghost_cell_grid[2]});
 

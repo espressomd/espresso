@@ -1855,9 +1855,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
                               "doesn't give precision, step up\n"));
     cao++;
     final_dir = 1;
-  }
-  while (cao <= cao_max)
-    ;
+  } while (cao <= cao_max);
   /* with this mesh, the required accuracy cannot be obtained. */
   if (cao > cao_max)
     return -P3M_TUNE_CAO_TOO_LARGE;
