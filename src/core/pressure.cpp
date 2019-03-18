@@ -236,6 +236,8 @@ void init_p_tensor(Observable_stat *stat) {
 #endif
 #ifdef DIPOLES
   auto const n_dipolar = Dipole::pressure_n();
+#else
+  auto const n_dipolar = 0;
 #endif
 #ifdef VIRTUAL_SITES
   n_vs = virtual_sites()->n_pressure_contribs();

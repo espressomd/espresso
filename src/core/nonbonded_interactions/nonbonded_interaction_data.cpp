@@ -169,14 +169,7 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
 static void recalc_maximal_cutoff_nonbonded() {
   int i, j;
 
-  CELL_TRACE(
-      fprintf(stderr, "%d: recalc_maximal_cutoff_nonbonded\n", this_node));
-
   recalc_global_maximal_nonbonded_and_long_range_cutoff();
-
-  CELL_TRACE(fprintf(
-      stderr, "%d: recalc_maximal_cutoff_nonbonded: max_cut_global = %f\n",
-      this_node, max_cut_global));
 
   max_cut_nonbonded = max_cut_global;
 
@@ -309,9 +302,6 @@ static void recalc_maximal_cutoff_nonbonded() {
 
       if (max_cut_current > max_cut_nonbonded)
         max_cut_nonbonded = max_cut_current;
-
-      CELL_TRACE(fprintf(stderr, "%d: pair %d,%d max_cut total %f\n", this_node,
-                         i, j, data->max_cut));
     }
 }
 

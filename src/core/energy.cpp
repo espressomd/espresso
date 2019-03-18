@@ -52,6 +52,8 @@ void init_energies(Observable_stat *stat) {
 
 #ifdef ELECTROSTATICS
   auto const n_coulomb = Coulomb::energy_n();
+#else
+  int const n_coulomb = 0;
 #endif
 #ifdef DIPOLES
   Dipole::energy_n(n_dipolar);
