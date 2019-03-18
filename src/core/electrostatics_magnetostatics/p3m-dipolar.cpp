@@ -1827,7 +1827,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
      only try
      to increase cao to increase the obtainable precision of the far formula. */
   double tmp_time;
-  -do {
+  do {
     tmp_time = dp3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                             &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out if the force evaluation is not working */
