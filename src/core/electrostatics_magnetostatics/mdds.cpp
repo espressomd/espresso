@@ -79,7 +79,7 @@ auto pair_force(Vector3d const &d, Vector3d const &m1, Vector3d const &m2)
 
   auto const f = (a + b) * d + 3.0 * (pe3 * m1 + pe2 * m2) / r5;
   auto const r3 = r2 * r;
-  auto const t = -m1.cross(m2) / r3 + 3.0 * pe3 * m1.cross(d) / r5;
+  auto const t = -vector_product(m1, m2) / r3 + 3.0 * pe3 * vector_product(m1, d) / r5;
 
   return {f, t};
 }
@@ -317,7 +317,7 @@ void mdds_forces(const ParticleRange &particles,
       (*q)->f.f -= coulomb.Dprefactor * fij.f;
       /* Conservation of angular momentum mandates that
        * 0 = t_i + r_ij x F_ij + t_j */
-      (*q)->f.torque += coulomb.Dprefactor * (-fij.torque + fij.f.cross(d));
+      (*q)->f.torque += coulomb.Dprefactor * (-fij.torque + vector_product(fij.f, d));
     }
 
     (*p)->f.f += coulomb.Dprefactor * fi.f;
