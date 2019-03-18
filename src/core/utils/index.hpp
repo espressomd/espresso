@@ -1,10 +1,8 @@
 #ifndef UTILS_INDEX_HPP
 #define UTILS_INDEX_HPP
 
-#include <array>
 #include <iterator>
 #include <numeric>
-#include <vector>
 
 namespace Utils {
 

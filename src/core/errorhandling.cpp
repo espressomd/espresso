@@ -52,7 +52,6 @@ unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 Communication::MpiCallbacks *m_callbacks = nullptr;
 } // namespace
 
-/** Initialize the error collection system. */
 void init_error_handling(Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;
 

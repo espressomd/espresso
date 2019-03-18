@@ -40,7 +40,7 @@ int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
 
 inline void add_ljcos_pair_force(const Particle *const p1,
                                  const Particle *const p2,
-                                 IA_parameters *ia_params, double d[3],
+                                 IA_parameters *ia_params, double const d[3],
                                  double dist, double force[3]) {
   if ((dist < ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
     double r_off = dist - ia_params->LJCOS_offset;

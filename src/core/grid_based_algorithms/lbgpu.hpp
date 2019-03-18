@@ -37,23 +37,6 @@
  * thus making the code more efficient. */
 #define LBQ 19
 
-/** \name Parameter fields for lattice Boltzmann
- *  The numbers are referenced in \ref mpi_bcast_lb_params
- *  to determine what actions have to take place upon change
- *  of the respective parameter. */
-/*@{*/
-#define LBPAR_DENSITY 0   /**< fluid density */
-#define LBPAR_VISCOSITY 1 /**< fluid kinematic viscosity */
-#define LBPAR_AGRID 2     /**< grid constant for fluid lattice */
-#define LBPAR_TAU 3       /**< time step for fluid propagation */
-#define LBPAR_FRICTION                                                         \
-  4 /**< friction coefficient for viscous coupling between particles and fluid \
-     */
-#define LBPAR_EXTFORCE 5 /**< external force acting on the fluid */
-#define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
-#define LBPAR_BOUNDARY 7 /**< boundary parameters */
-/*@}*/
-
 #if defined(LB_DOUBLE_PREC) || defined(EK_DOUBLE_PREC)
 typedef double lbForceFloat;
 #else
@@ -266,7 +249,7 @@ void lb_lbfluid_remove_total_momentum();
 void lb_lbfluid_fluid_add_momentum(float momentum[3]);
 void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
                                      int include_lbfluid);
-void lb_lbfluid_particles_add_momentum(float velocity[3]);
+void lb_lbfluid_particles_add_momentum(float const velocity[3]);
 
 void lb_lbfluid_set_population(const Vector3i &, float[LBQ]);
 void lb_lbfluid_get_population(const Vector3i &, float[LBQ]);
@@ -283,7 +266,7 @@ uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
-/*@{*/
+/*@}*/
 extern Utils::Counter<uint64_t> rng_counter_fluid_gpu;
 #endif /* LB_GPU */
 

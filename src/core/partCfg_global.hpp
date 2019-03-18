@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * @brief Particles' current configuration.
  *
  * Particle coordinates are unfolded.
- * For documentation see @class ParticleCache
+ * For documentation see @ref ParticleCache
  */
 PartCfg &partCfg(std::unique_ptr<PartCfg> init = std::unique_ptr<PartCfg>{});
 

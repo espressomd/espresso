@@ -54,9 +54,9 @@ typedef struct {
   enum class Type { INT = 0, DOUBLE = 1, BOOL = 2 };
   /** Physical address of the variable. */
   void *data;
-  /** Type of the variable, either \ref TYPE_INT or \ref TYPE_DOUBLE.*/
+  /** Type of the variable. */
   Type type;
-  /** Dimension of the variable. Limited to \ref MAX_DIMENSION */
+  /** Dimension of the variable. Typically in the range 1-3. */
   int dimension;
   /** Name of the variable, mainly used for the front end and debugging */
   const char *name;
@@ -69,7 +69,8 @@ typedef struct {
 
 const std::unordered_map<int, Datafield> fields{
     {FIELD_BOXL,
-     {box_l, Datafield::Type::DOUBLE, 3, "box_l"}}, /* 0  from grid.cpp */
+     {box_l.data(), Datafield::Type::DOUBLE, 3,
+      "box_l"}}, /* 0  from grid.cpp */
     {FIELD_CELLGRID,
      {dd.cell_grid, Datafield::Type::INT, 3,
       "cell_grid"}}, /* 1  from cells.cpp */
@@ -101,7 +102,8 @@ const std::unordered_map<int, Datafield> fields{
      {&n_rigidbonds, Datafield::Type::INT, 1,
       "n_rigidbonds"}}, /* 19 from rattle.cpp */
     {FIELD_NODEGRID,
-     {node_grid, Datafield::Type::INT, 3, "node_grid"}}, /* 20 from grid.cpp */
+     {node_grid.data(), Datafield::Type::INT, 3,
+      "node_grid"}}, /* 20 from grid.cpp */
     {FIELD_NPTISO_G0,
      {&nptiso_gamma0, Datafield::Type::DOUBLE, 1,
       "nptiso_gamma0"}}, /* 21 from thermostat.cpp */

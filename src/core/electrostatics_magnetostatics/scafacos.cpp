@@ -355,7 +355,7 @@ static void set_params_safe(const std::string &method,
     coulomb.method = COULOMB_SCAFACOS;
   }
 #endif
-  scafacos->set_common_parameters(box_l, per, n_part);
+  scafacos->set_common_parameters(box_l.data(), per, n_part);
 
   on_coulomb_change();
 
@@ -390,7 +390,7 @@ void set_parameters(const std::string &method, const std::string &params,
                     bool dipolar_ia) {
   mpi_call(mpi_scafacos_set_parameters_slave, method.size(), params.size());
 
-  /** This requires C++11, otherwise this is undefined because std::string was
+  /* This requires C++11, otherwise this is undefined because std::string was
    * not required to have continuous memory before. */
   /* const_cast is ok, this code runs only on rank 0 where the mpi call does not
    * modify the buffer */
@@ -444,7 +444,7 @@ void update_system_params() {
   int tmp;
   MPI_Allreduce(&n_part, &tmp, 1, MPI_INT, MPI_MAX, comm_cart);
   n_part = tmp;
-  scafacos->set_common_parameters(box_l, per, n_part);
+  scafacos->set_common_parameters(box_l.data(), per, n_part);
 }
 
 } // namespace Scafacos

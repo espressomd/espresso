@@ -103,8 +103,8 @@ void gatherv(const boost::mpi::communicator &comm, const T *in_values,
                          displ.data(), root, boost::mpi::is_mpi_datatype<T>());
 
   } else {
-    detail::gatherv_impl(comm, in_values, in_size, out_values, 0, 0, root,
-                         boost::mpi::is_mpi_datatype<T>());
+    detail::gatherv_impl(comm, in_values, in_size, out_values, nullptr, nullptr,
+                         root, boost::mpi::is_mpi_datatype<T>());
   }
 }
 
@@ -113,7 +113,8 @@ void gatherv(const boost::mpi::communicator &comm, const T *in_values,
              int in_size, int root) {
   assert(comm.rank() != root &&
          "This overload can not be called on the root rank.");
-  gatherv(comm, in_values, in_size, static_cast<T *>(nullptr), 0, 0, root);
+  gatherv(comm, in_values, in_size, static_cast<T *>(nullptr), nullptr, nullptr,
+          root);
 }
 
 } // namespace Mpi

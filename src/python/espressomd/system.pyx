@@ -24,6 +24,7 @@ from globals cimport *
 import numpy as np
 import collections
 
+from grid cimport box_l
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -36,6 +37,7 @@ from .utils cimport numeric_limits
 if LB or LB_GPU:
     from .lb cimport lb_lbfluid_get_tau
     from .lb cimport lb_lbfluid_get_lattice_switch
+    from .lb cimport NONE
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
@@ -189,15 +191,7 @@ cdef class System(object):
         """
 
         def __set__(self, _box_l):
-            if len(_box_l) != 3:
-                raise ValueError("Box length must be of length 3")
-            for i in range(3):
-                if _box_l[i] <= 0:
-                    raise ValueError(
-                        "Box length must be > 0 in all directions")
-                box_l[i] = _box_l[i]
-
-            self.globals.box_l = box_l
+            self.globals.box_l = _box_l
 
         def __get__(self):
             return self.globals.box_l
@@ -273,7 +267,7 @@ cdef class System(object):
                 raise ValueError("Time Step must be positive")
             IF LB or LB_GPU:
                 cdef double tau
-                if lb_lbfluid_get_lattice_switch() != 0:
+                if lb_lbfluid_get_lattice_switch() != NONE:
                     tau = lb_lbfluid_get_tau()
                     if (tau >= 0.0 and
                             tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):

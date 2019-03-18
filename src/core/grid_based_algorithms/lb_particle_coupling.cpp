@@ -13,7 +13,8 @@
 #include "lb_interpolation.hpp"
 #include "lb_particle_coupling.hpp"
 #include "lbgpu.hpp"
-#include "thermostat.hpp"
+#include "random.hpp"
+
 #include "utils/Counter.hpp"
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
@@ -30,7 +31,7 @@ void lb_lbcoupling_activate() {
 }
 
 void lb_lbcoupling_deactivate() {
-  if (lattice_switch != LATTICE_OFF && this_node == 0 && n_part) {
+  if (lattice_switch != ActiveLB::NONE && this_node == 0 && n_part) {
     runtimeWarning("Recalculating forces, so the LB coupling forces are not "
                    "included in the particle force the first time step. This "
                    "only matters if it happens frequently during "
@@ -53,11 +54,11 @@ uint64_t lb_coupling_get_rng_state_cpu() {
 }
 
 uint64_t lb_lbcoupling_get_rng_state() {
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lb_coupling_get_rng_state_cpu();
 #endif
-  } else if (lattice_switch & LATTICE_LB_GPU) {
+  } else if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return lb_coupling_get_rng_state_gpu();
 #endif
@@ -66,13 +67,13 @@ uint64_t lb_lbcoupling_get_rng_state() {
 }
 
 void lb_lbcoupling_set_rng_state(uint64_t counter) {
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lb_particle_coupling.rng_counter_coupling =
         Utils::Counter<uint64_t>(counter);
     mpi_bcast_lb_particle_coupling();
 #endif
-  } else if (lattice_switch & LATTICE_LB_GPU) {
+  } else if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_coupling_set_rng_state_gpu(counter);
 #endif
@@ -99,8 +100,8 @@ void add_md_force(Vector3d const &pos, Vector3d const &force) {
  *
  *  Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
  *
- * @param p          The coupled particle (Input).
- * @param f_random   Additional force to be included.
+ * @param[in,out] p         The coupled particle.
+ * @param[in]     f_random  Additional force to be included.
  *
  * @return The viscous coupling force plus f_random.
  */
@@ -173,7 +174,7 @@ void add_swimmer_force(Particle &p) {
 
 void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     if (lb_particle_coupling.couple_to_md && this_node == 0) {
       switch (lb_lbinterpolation_get_interpolation_order()) {
@@ -188,7 +189,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
       }
     }
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     if (lb_particle_coupling.couple_to_md) {
       switch (lb_lbinterpolation_get_interpolation_order()) {
@@ -232,8 +233,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 
         /* local cells */
         for (auto &p : local_cells.particles()) {
-          if (!p.p.is_virtual or thermo_virtual or
-              (p.p.is_virtual && couple_virtual)) {
+          if (!p.p.is_virtual or couple_virtual) {
             auto const force = lb_viscous_coupling(
                 &p, noise_amplitude * f_random(p.identity()));
             /* add force to the particle */
@@ -249,7 +249,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
           /* for ghost particles we have to check if they lie
            * in the range of the local lattice nodes */
           if (in_local_domain(p.r.p)) {
-            if (!p.p.is_virtual || thermo_virtual) {
+            if (!p.p.is_virtual || couple_virtual) {
               lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
 #ifdef ENGINE
               add_swimmer_force(p);

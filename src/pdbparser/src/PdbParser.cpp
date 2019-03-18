@@ -16,7 +16,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/* vim: set ts=8 sts=2 sw=2 et: */
 
 #include "PdbParser.hpp"
 
@@ -28,7 +27,7 @@ using namespace std;
 namespace PdbParser {
 
 BoundingBox PdbParser::calc_bounding_box() const {
-  BoundingBox bb;
+  BoundingBox bb{};
 
   bb.llx = std::numeric_limits<float>::max();
   bb.lly = std::numeric_limits<float>::max();
@@ -37,8 +36,7 @@ BoundingBox PdbParser::calc_bounding_box() const {
   bb.ury = -std::numeric_limits<float>::max();
   bb.urz = -std::numeric_limits<float>::max();
 
-  for (std::vector<pdb_atom>::const_iterator it = pdb_atoms.begin();
-       it != pdb_atoms.end(); ++it) {
+  for (auto it = pdb_atoms.begin(); it != pdb_atoms.end(); ++it) {
     bb.llx = std::min(it->x, bb.llx);
     bb.lly = std::min(it->y, bb.lly);
     bb.llz = std::min(it->z, bb.llz);

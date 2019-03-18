@@ -65,9 +65,9 @@ namespace ErrorHandling {
 void register_sigint_handler();
 
 /**
- * @brief Init error handling system.
+ * @brief Initialize the error collection system.
  *
- * @param cb Callbacks system the error handler should be on.
+ * @param callbacks Callbacks system the error handler should be on.
  */
 void init_error_handling(Communication::MpiCallbacks &callbacks);
 

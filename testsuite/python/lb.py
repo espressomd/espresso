@@ -19,6 +19,7 @@ from __future__ import print_function
 import itertools
 import unittest as ut
 import numpy as np
+import sys
 
 import espressomd
 import espressomd.lb
@@ -205,6 +206,7 @@ class TestLB(object):
         local_box_l aren't integer multiples of agrid.
         """
         self.system.actors.clear()
+        print("Testing LB error messages:", file=sys.stderr)
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -213,6 +215,7 @@ class TestLB(object):
             ext_force_density=[0, 0, 0])
         with self.assertRaises(Exception):
             self.system.actors.add(self.lbf)
+        print("End of LB error messages", file=sys.stderr)
 
     @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
                "Features not available, skipping test!")

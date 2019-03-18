@@ -33,8 +33,6 @@
     top of each other don't interact by chance. */
 #define INACTIVE_CUTOFF -1.0
 
-/*@}*/
-
 /** \name Type codes for the type of Coulomb interaction
     Enumeration of implemented methods for the electrostatic
     interaction.
@@ -44,31 +42,26 @@
 
 #ifdef ELECTROSTATICS
 enum CoulombMethod {
-  COULOMB_NONE,      //< Coulomb interaction switched off (NONE)
-  COULOMB_DH,        //< Coulomb method is Debye-Hueckel
-  COULOMB_P3M,       //< Coulomb method is P3M
-  COULOMB_MMM1D,     //< Coulomb method is one-dimensional MMM
-  COULOMB_MMM2D,     //< Coulomb method is two-dimensional MMM
-  COULOMB_ELC_P3M,   //< Coulomb method is P3M plus ELC
-  COULOMB_RF,        //< Coulomb method is Reaction-Field
-  COULOMB_INTER_RF,  //< Coulomb method is Reaction-Field BUT as interaction
-  COULOMB_P3M_GPU,   //< Coulomb method is P3M with GPU based long range part
-                     // calculation
-  COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
-  COULOMB_EK,        //< Coulomb method is electrokinetics
-  COULOMB_SCAFACOS,  //< Coulomb method is scafacos
+  COULOMB_NONE,      ///< Coulomb interaction switched off
+  COULOMB_DH,        ///< Coulomb method is Debye-Hueckel
+  COULOMB_P3M,       ///< Coulomb method is P3M
+  COULOMB_MMM1D,     ///< Coulomb method is one-dimensional MMM
+  COULOMB_MMM2D,     ///< Coulomb method is two-dimensional MMM
+  COULOMB_ELC_P3M,   ///< Coulomb method is P3M plus ELC
+  COULOMB_RF,        ///< Coulomb method is Reaction-Field
+  COULOMB_INTER_RF,  ///< Coulomb method is Reaction-Field BUT as interaction
+  COULOMB_P3M_GPU,   ///< Coulomb method is P3M with GPU-based long-range part
+                     ///  calculation
+  COULOMB_MMM1D_GPU, ///< Coulomb method is one-dimensional MMM running on GPU
+  COULOMB_EK,        ///< Coulomb method is electrokinetics
+  COULOMB_SCAFACOS,  ///< Coulomb method is scafacos
 };
 
 #endif
 /*@}*/
 
 #ifdef DIPOLES
-/** \name Type codes for the type of dipolar interaction
-  Enumeration of implemented methods for the magnetostatic
-  interaction.
- */
-/************************************************************/
-/*@{*/
+/** @brief Implemented methods for the magnetostatic interaction. */
 enum DipolarInteraction {
   /** dipolar interaction switched off (NONE). */
   DIPOLAR_NONE = 0,
@@ -118,9 +111,12 @@ struct IA_parameters {
 #endif
 
 #ifdef WCA
+  /** \name WCA potential */
+  /*@{*/
   double WCA_eps = 0.0;
   double WCA_sig = 0.0;
   double WCA_cut = INACTIVE_CUTOFF;
+  /*@}*/
 #endif
 
   /** flag that tells whether there is any short-ranged interaction,
@@ -334,8 +330,11 @@ struct IA_parameters {
 #endif
 
 #ifdef THOLE
+  /** \name Thole potential */
+  /*@{*/
   double THOLE_scaling_coeff;
   double THOLE_q1q2;
+  /*@}*/
 #endif
 
 #ifdef SWIMMER_REACTIONS
@@ -350,12 +349,11 @@ extern std::vector<IA_parameters> ia_params;
 /** \name Compounds for Coulomb interactions */
 /*@{*/
 
-/** field containing the interaction parameters for
- *  the Coulomb  interaction.  */
+/** @brief Parameters for the Coulomb interaction. */
 struct Coulomb_parameters {
 
 #ifdef ELECTROSTATICS
-  /** bjerrum length times temperature. */
+  /** Bjerrum length times temperature. */
   double prefactor;
 
   /** Method to treat Coulomb interaction. */
@@ -376,6 +374,7 @@ extern double field_induced;
 extern double field_applied;
 
 #endif
+/*@}*/
 
 /************************************************
  * exported variables
