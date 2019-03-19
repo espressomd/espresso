@@ -91,22 +91,26 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    if (q1q2)
+    if (q1q2) {
       p3m_add_pair_force(q1q2, d, dist2, dist, force);
+    }
     break;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    if (q1q2)
+    if (q1q2) {
       p3m_add_pair_force(q1q2, d, dist2, dist, force);
+    }
     break;
 #endif /* P3M */
   case COULOMB_MMM1D:
-    if (q1q2)
+    if (q1q2) {
       add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force);
+    }
     break;
   case COULOMB_MMM2D:
-    if (q1q2)
+    if (q1q2) {
       add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force);
+    }
     break;
   default:
     break;
@@ -132,8 +136,9 @@ void iccp3m_alloc_lists() {
 }
 
 int iccp3m_iteration() {
-  if (iccp3m_cfg.n_ic == 0)
+  if (iccp3m_cfg.n_ic == 0) {
     return 0;
+  }
 
   iccp3m_sanity_check();
 
@@ -219,8 +224,9 @@ int iccp3m_iteration() {
 
     MPI_Allreduce(&diff, &globalmax, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
 
-    if (globalmax < iccp3m_cfg.convergence)
+    if (globalmax < iccp3m_cfg.convergence) {
       break;
+    }
     if (diff > 1e89) {
       return iccp3m_cfg.citeration++;
     }

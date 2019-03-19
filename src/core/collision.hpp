@@ -120,46 +120,52 @@ inline bool glue_to_surface_criterion(const Particle *const p1,
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(const Particle *const p1, const Particle *const p2,
                              const double &dist_betw_part) {
-  if (dist_betw_part > collision_params.distance)
+  if (dist_betw_part > collision_params.distance) {
     return;
+  }
 
   // If we are in the glue to surface mode, check that the particles
   // are of the right type
-  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
-    if (!glue_to_surface_criterion(p1, p2))
+  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
+    if (!glue_to_surface_criterion(p1, p2)) {
       return;
+    }
 
 #ifdef VIRTUAL_SITES_RELATIVE
-  // Ignore virtual particles
-  if ((p1->p.is_virtual) || (p2->p.is_virtual))
-    return;
+    // Ignore virtual particles
+    if ((p1->p.is_virtual) || (p2->p.is_virtual)) {
+      return;
+    }
 #endif
 
-  // Check, if there's already a bond between the particles
-  if (pair_bond_exists_on(p1, p2, collision_params.bond_centers))
-    return;
+    // Check, if there's already a bond between the particles
+    if (pair_bond_exists_on(p1, p2, collision_params.bond_centers)) {
+      return;
+    }
 
-  if (pair_bond_exists_on(p2, p1, collision_params.bond_centers))
-    return;
+    if (pair_bond_exists_on(p2, p1, collision_params.bond_centers)) {
+      return;
+    }
 
-  /* If we're still here, there is no previous bond between the particles,
-     we have a new collision */
+    /* If we're still here, there is no previous bond between the particles,
+       we have a new collision */
 
-  // do not create bond between ghost particles
-  if (p1->l.ghost && p2->l.ghost) {
-    return;
+    // do not create bond between ghost particles
+    if (p1->l.ghost && p2->l.ghost) {
+      return;
+    }
+    queue_collision(p1->p.identity, p2->p.identity);
   }
-  queue_collision(p1->p.identity, p2->p.identity);
-}
 
 #endif
 
-inline double collision_detection_cutoff() {
+  inline double collision_detection_cutoff() {
 #ifdef COLLISION_DETECTION
-  if (collision_params.mode)
-    return collision_params.distance;
+    if (collision_params.mode) {
+      return collision_params.distance;
+    }
 #endif
-  return 0.;
-}
+    return 0.;
+  }
 
 #endif

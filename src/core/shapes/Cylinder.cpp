@@ -73,8 +73,9 @@ void Cylinder::calculate_dist(const Vector3d &pos, double *dist,
   std::tie(dr, dz) = dist_half_pore(r, std::abs(z));
 
   double side = -1;
-  if (std::abs(z) >= m_half_length || r >= m_rad) /* outside */
+  if (std::abs(z) >= m_half_length || r >= m_rad) { /* outside */
     side = 1;
+  }
 
   if (z <= 0.0) {
     dz *= -1;

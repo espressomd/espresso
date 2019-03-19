@@ -28,8 +28,9 @@
 #ifdef ELECTROSTATICS
 
 int bonded_coulomb_set_params(int bond_type, double prefactor) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   make_bond_type_exist(bond_type);
 

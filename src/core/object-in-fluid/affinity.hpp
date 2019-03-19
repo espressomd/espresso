@@ -52,8 +52,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
   if (ia_params->affinity_type > 10) {
     aff_type_extracted = ia_params->affinity_type % 10;
     period_for_output = ia_params->affinity_type - aff_type_extracted;
-  } else
+  } else {
     aff_type_extracted = ia_params->affinity_type;
+  }
   if (aff_type_extracted == 1) {
     /************************
      *
@@ -99,18 +100,20 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           Vector3d unfolded_pos = unfolded_position(p1);
           // printf("folded positions: %f %f
           // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
-          for (j = 0; j < 3; j++)
+          for (j = 0; j < 3; j++) {
             vec[j] =
                 p1->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
-                                 // but with affinity_r0 and not by len!!!
+          }
+          // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
           len = sqrt(len2);
           if (len > ia_params->affinity_r0) {
             fac = ia_params->affinity_kappa * (len - ia_params->affinity_r0);
             // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
-          } else
+          } else {
             fac = 0.0;
+          }
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
@@ -119,8 +122,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // Decision whether I should break the bond: if the bond length is
           // greater than maxBond, it breaks.
           if (len > ia_params->affinity_maxBond) {
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = -1;
+            }
           }
         } else if (dist <
                    ia_params
@@ -129,8 +133,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                         // lets talk about creating a bond
           // This implementation creates bond always
           Vector3d unfolded_pos = unfolded_position(p1);
-          for (j = 0; j < 3; j++)
+          for (j = 0; j < 3; j++) {
             p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+          }
         }
       }
     }
@@ -186,18 +191,20 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           int img[3];
           /* fold the coordinates of the particle */
           Vector3d unfolded_pos = unfolded_position(p1);
-          for (j = 0; j < 3; j++)
+          for (j = 0; j < 3; j++) {
             vec[j] =
                 p1->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
-                                 // but with affinity_r0 and not by len!!!
+          }
+          // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
           len = sqrt(len2);
           if (len > ia_params->affinity_r0) {
             fac = ia_params->affinity_kappa * (len - ia_params->affinity_r0);
             // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
-          } else
+          } else {
             fac = 0.0;
+          }
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
@@ -224,16 +231,18 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                              // for setting detachment force F_d
             double decide = d_random();
             if (decide < Poff) {
-              for (j = 0; j < 3; j++)
+              for (j = 0; j < 3; j++) {
                 p1->p.bond_site[j] = -1;
+              }
             }
           } else {
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = -1;
+            }
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
-          if (period_for_output > 0)
+          if (period_for_output > 0) {
             if (((int)floor(sim_time / time_step) % period_for_output == 0) &&
                 (len > ia_params->affinity_r0)) {
               FILE *fp;
@@ -248,6 +257,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
+          }
         } else if (dist <
                    ia_params
                        ->affinity_r0) { // Bond does not exist, we are inside
@@ -267,8 +277,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             // printf("folded positions: %f %f
             // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]); printf("d: %f
             // %f %f\n",d[0],d[1],d[2]);
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+            }
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -325,19 +336,21 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           int img[3];
           /* fold the coordinates of the particle */
           Vector3d unfolded_pos = unfolded_position(p1);
-          for (j = 0; j < 3; j++)
+          for (j = 0; j < 3; j++) {
             vec[j] =
                 p1->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
-                                 // but with affinity_r0 and not by len!!!
+          }
+          // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
           len = sqrt(len2);
           if (len > ia_params->affinity_r0) {
             fac = ia_params->affinity_kappa * (len - ia_params->affinity_r0) /
                   len;
             // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
-          } else
+          } else {
             fac = 0.0;
+          }
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j];
@@ -353,13 +366,15 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           if (len < ia_params->affinity_maxBond) {
             double decide = d_random();
             if (decide < Poff) {
-              for (j = 0; j < 3; j++)
+              for (j = 0; j < 3; j++) {
                 p1->p.bond_site[j] = -1;
+              }
             }
 
           } else {
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = -1;
+            }
             // printf("breaking: out of cut");
           }
         } else if (dist <
@@ -381,8 +396,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             // printf("folded positions: %f %f
             // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]); printf("d: %f
             // %f %f\n",d[0],d[1],d[2]);
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+            }
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -441,11 +457,12 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           int img[3];
           /* fold the coordinates of the particle */
           Vector3d unfolded_pos = unfolded_position(p1);
-          for (j = 0; j < 3; j++)
+          for (j = 0; j < 3; j++) {
             vec[j] =
                 p1->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
-                                 // but with affinity_r0 and not by len!!!
+          }
+          // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
           len = sqrt(len2);
           fac = ia_params->affinity_kappa * len;
@@ -473,17 +490,19 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                              // for setting detachment force F_d
             double decide = d_random();
             if (decide < Poff) {
-              for (j = 0; j < 3; j++)
+              for (j = 0; j < 3; j++) {
                 p1->p.bond_site[j] = -1;
+              }
             }
 
           } else {
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = -1;
+            }
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
-          if (period_for_output > 0)
+          if (period_for_output > 0) {
             if ((int)floor(sim_time / time_step) % period_for_output == 0) {
               FILE *fp;
               double tmpPon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
@@ -497,6 +516,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
+          }
         } else if (dist <
                    ia_params
                        ->affinity_r0) { // Bond does not exist, we are inside
@@ -513,8 +533,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             int img[3];
             /* fold the coordinates of the particle */
             Vector3d unfolded_pos = unfolded_position(p1);
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+            }
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -574,19 +595,21 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           int img[3];
           /* fold the coordinates of the particle */
           Vector3d unfolded_pos = unfolded_position(p1);
-          for (j = 0; j < 3; j++)
+          for (j = 0; j < 3; j++) {
             vec[j] =
                 p1->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
-                                 // but with affinity_r0 and not by len!!!
+          }
+          // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
           len = sqrt(len2);
           if (len > 0.75 * (ia_params->affinity_r0)) {
             fac = ia_params->affinity_kappa *
                   (len - 0.75 * (ia_params->affinity_r0));
             // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
-          } else
+          } else {
             fac = 0.0;
+          }
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
@@ -612,17 +635,19 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                              // for setting detachment force F_d
             double decide = d_random();
             if (decide < Poff) {
-              for (j = 0; j < 3; j++)
+              for (j = 0; j < 3; j++) {
                 p1->p.bond_site[j] = -1;
+              }
             }
 
           } else {
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = -1;
+            }
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
-          if (period_for_output > 0)
+          if (period_for_output > 0) {
             if (((int)floor(sim_time / time_step) % period_for_output == 0) &&
                 (len > ia_params->affinity_r0)) {
               FILE *fp;
@@ -637,6 +662,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
+          }
         } else if (dist <
                    ia_params
                        ->affinity_r0) { // Bond does not exist, we are inside
@@ -656,8 +682,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             // printf("folded positions: %f %f
             // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]); printf("d: %f
             // %f %f\n",d[0],d[1],d[2]);
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+            }
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -719,19 +746,21 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           Vector3d unfolded_pos = unfolded_position(p1);
           // printf("folded positions: %f %f
           // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]);
-          for (j = 0; j < 3; j++)
+          for (j = 0; j < 3; j++) {
             vec[j] =
                 p1->p.bond_site[j] -
                 unfolded_pos[j]; // Shouldn't be the vec vector normalized? Yes,
-                                 // but with affinity_r0 and not by len!!!
+          }
+          // but with affinity_r0 and not by len!!!
           len2 = sqrlen(vec);
           len = sqrt(len2);
           if (len > 1.0 * (ia_params->affinity_r0)) {
             fac = ia_params->affinity_kappa *
                   (len - 1.0 * (ia_params->affinity_r0));
             // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
-          } else
+          } else {
             fac = 0.0;
+          }
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
@@ -757,17 +786,19 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                              // for setting detachment force F_d
             double decide = d_random();
             if (decide < Poff) {
-              for (j = 0; j < 3; j++)
+              for (j = 0; j < 3; j++) {
                 p1->p.bond_site[j] = -1;
+              }
             }
 
           } else {
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = -1;
+            }
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
-          if (period_for_output > 0)
+          if (period_for_output > 0) {
             if (((int)floor(sim_time / time_step) % period_for_output == 0) &&
                 (len > ia_params->affinity_r0)) {
               FILE *fp;
@@ -782,6 +813,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
+          }
         } else if (dist <
                    ia_params
                        ->affinity_r0) { // Bond does not exist, we are inside
@@ -799,8 +831,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
             // printf("folded positions: %f %f
             // %f\n",folded_pos[0],folded_pos[1],folded_pos[2]); printf("d: %f
             // %f %f\n",d[0],d[1],d[2]);
-            for (j = 0; j < 3; j++)
+            for (j = 0; j < 3; j++) {
               p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+            }
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);

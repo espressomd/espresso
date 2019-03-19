@@ -46,9 +46,9 @@ template <typename T> inline T sinc(T d) {
 
   const auto PId = boost::math::constants::pi<T>() * d;
 
-  if (std::abs(d) > epsi)
+  if (std::abs(d) > epsi) {
     return std::sin(PId) / PId;
-  else {
+  } else {
     /** Coefficients of the Taylor expansion of sinc */
     const constexpr T c2 = -0.1666666666667e-0;
     const constexpr T c4 = 0.8333333333333e-2;

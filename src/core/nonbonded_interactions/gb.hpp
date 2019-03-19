@@ -46,8 +46,9 @@ add_gb_pair_force(const Particle *const p1, const Particle *const p2,
                   double force[3], double torque1[3], double torque2[3])
 
 {
-  if (!(dist < ia_params->GB_cut))
+  if (!(dist < ia_params->GB_cut)) {
     return;
+  }
 
   double a, b, c, X, Xcut, Brack, BrackCut, Bra12, Bra12Cut, u1x, u1y, u1z, u2x,
       u2y, u2z, E, E1, E2, Sigma, Brhi1, Brhi2, Plus1, Minus1, Plus2, Minus2,
@@ -168,8 +169,9 @@ inline double gb_pair_energy(const Particle *p1, const Particle *p2,
   using Utils::int_pow;
   using Utils::sqr;
 
-  if (!(dist < ia_params->GB_cut))
+  if (!(dist < ia_params->GB_cut)) {
     return 0.0;
+  }
 
   auto const e0 = ia_params->GB_eps;
   auto const s0 = ia_params->GB_sig;

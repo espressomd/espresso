@@ -193,12 +193,14 @@ void on_integration_start() {
   }
 
 #ifdef ELECTROSTATICS
-  if (!Utils::Mpi::all_compare(comm_cart, coulomb.method))
+  if (!Utils::Mpi::all_compare(comm_cart, coulomb.method)) {
     runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
+  }
 #endif
 #ifdef DIPOLES
-  if (!Utils::Mpi::all_compare(comm_cart, coulomb.Dmethod))
+  if (!Utils::Mpi::all_compare(comm_cart, coulomb.Dmethod)) {
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
+  }
 #endif
   check_global_consistency();
 #endif /* ADDITIONAL_CHECKS */
@@ -572,8 +574,9 @@ void on_parameter_change(int field) {
     break;
 #ifdef NPT
   case FIELD_INTEG_SWITCH:
-    if (integ_switch != INTEG_METHOD_NPT_ISO)
+    if (integ_switch != INTEG_METHOD_NPT_ISO) {
       nptiso.invalidate_p_vel = 1;
+    }
     break;
 #endif
   case FIELD_THERMO_SWITCH:
@@ -621,18 +624,21 @@ void on_ghost_flags_change() {
 
 /* DPD and LB need also ghost velocities */
 #ifdef LB
-  if (lattice_switch == ActiveLB::CPU)
+  if (lattice_switch == ActiveLB::CPU) {
     ghosts_have_v = 1;
+  }
 #endif
 #ifdef BOND_CONSTRAINT
-  if (n_rigidbonds)
+  if (n_rigidbonds) {
     ghosts_have_v = 1;
+  }
 #endif
 #ifdef DPD
   // maybe we have to add a new global to differ between compile in and actual
   // use.
-  if (thermo_switch & THERMO_DPD)
+  if (thermo_switch & THERMO_DPD) {
     ghosts_have_v = 1;
+  }
 #endif
 #ifdef VIRTUAL_SITES
   // If they have velocities, VIRUTAL_SITES need v to update v of virtual sites

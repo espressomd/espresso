@@ -87,8 +87,9 @@ bool PdbParser::parse_itp_file(const string &filename) {
     try {
       buf = char(file.get());
       /* Skip leading whitespace */
-      if (std::isspace(buf[0]))
+      if (std::isspace(buf[0])) {
         continue;
+      }
 
       /* Comment, ignore rest of line */
       if (buf[0] == ';') {
@@ -100,8 +101,9 @@ bool PdbParser::parse_itp_file(const string &filename) {
       if (buf == "[") {
         std::getline(file, buf);
         pos = buf.find_first_not_of(" \t[");
-        if (pos == std::string::npos)
+        if (pos == std::string::npos) {
           continue;
+        }
 
         std::string section = buf.substr(pos, std::string::npos);
         pos = section.find_first_of(']');

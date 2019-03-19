@@ -54,8 +54,10 @@ inline int calc_harmonic_pair_force(Particle const *p1, Particle const *p2,
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
-  if ((iaparams->p.harmonic.r_cut > 0.0) && (dist > iaparams->p.harmonic.r_cut))
+  if ((iaparams->p.harmonic.r_cut > 0.0) &&
+      (dist > iaparams->p.harmonic.r_cut)) {
     return 1;
+  }
 
   auto const dr = dist - iaparams->p.harmonic.r;
   auto fac = -iaparams->p.harmonic.k * dr;
@@ -65,8 +67,9 @@ inline int calc_harmonic_pair_force(Particle const *p1, Particle const *p2,
     fac = 0;
   }
 
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++) {
     force[i] = fac * dx[i];
+  }
 
   return 0;
 }
@@ -86,8 +89,10 @@ inline int harmonic_pair_energy(Particle const *p1, Particle const *p2,
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
-  if ((iaparams->p.harmonic.r_cut > 0.0) && (dist > iaparams->p.harmonic.r_cut))
+  if ((iaparams->p.harmonic.r_cut > 0.0) &&
+      (dist > iaparams->p.harmonic.r_cut)) {
     return 1;
+  }
 
   *_energy =
       0.5 * iaparams->p.harmonic.k * Utils::sqr(dist - iaparams->p.harmonic.r);

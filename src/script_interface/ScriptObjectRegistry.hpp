@@ -56,8 +56,9 @@ public:
       std::vector<Variant> ret;
       ret.reserve(m_elements.size());
 
-      for (auto const &e : m_elements)
+      for (auto const &e : m_elements) {
         ret.emplace_back(e->id());
+      }
 
       return ret;
     }

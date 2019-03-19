@@ -78,13 +78,15 @@ inline void calc_dihedral_angle(Particle const *p1, Particle const *p2,
 
   *cosphi = scalar(aXb, bXc);
 
-  if (fabs(fabs(*cosphi) - 1) < TINY_SIN_VALUE)
+  if (fabs(fabs(*cosphi) - 1) < TINY_SIN_VALUE) {
     *cosphi = std::round(*cosphi);
+  }
 
   /* Calculate dihedral angle */
   *phi = acos(*cosphi);
-  if (scalar(aXb, c) < 0.0)
+  if (scalar(aXb, c) < 0.0) {
     *phi = (2.0 * PI) - *phi;
+  }
 }
 
 /** calculate dihedral force between particles p1, p2 p3 and p4

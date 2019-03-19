@@ -148,12 +148,14 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   double last_dist = 0;
   for (auto const idx : particle_indices) {
     subcluster_ids.push_back(particles[idx]);
-    if (distances[idx] < last_dist + dr)
+    if (distances[idx] < last_dist + dr) {
       continue;
+    }
 
     last_dist = distances[idx];
-    if (subcluster_ids.size() == 1)
+    if (subcluster_ids.size() == 1) {
       continue;
+    }
     double current_rg = radius_of_gyration_subcluster(subcluster_ids);
     log_pcounts.push_back(log(subcluster_ids.size()));
     log_diameters.push_back(log(current_rg * 2.0));

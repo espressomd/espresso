@@ -155,15 +155,18 @@ void thermo_init() {
   if (thermo_switch == THERMO_OFF) {
     return;
   }
-  if (thermo_switch & THERMO_LANGEVIN)
+  if (thermo_switch & THERMO_LANGEVIN) {
     thermo_init_langevin();
+  }
 #ifdef DPD
-  if (thermo_switch & THERMO_DPD)
+  if (thermo_switch & THERMO_DPD) {
     dpd_init();
+  }
 #endif
 #ifdef NPT
-  if (thermo_switch & THERMO_NPT_ISO)
+  if (thermo_switch & THERMO_NPT_ISO) {
     thermo_init_npt_isotropic();
+  }
 #endif
 }
 

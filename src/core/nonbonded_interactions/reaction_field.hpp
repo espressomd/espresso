@@ -69,8 +69,9 @@ inline void add_rf_coulomb_pair_force_no_cutoff(const Particle *const p1,
         rf_params.B / (rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
   fac *= coulomb.prefactor * p1->p.q * p2->p.q;
 
-  for (j = 0; j < 3; j++)
+  for (j = 0; j < 3; j++) {
     force[j] += fac * d[j];
+  }
 
   ONEPART_TRACE(if (p1->p.identity == check_id)
                     fprintf(stderr,

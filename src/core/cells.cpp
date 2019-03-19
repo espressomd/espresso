@@ -85,8 +85,9 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
 
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
-    if (dist2 < cutoff2)
+    if (dist2 < cutoff2) {
       ret.emplace_back(p1.p.identity, p2.p.identity);
+    }
   };
 
   switch (cell_structure.type) {
@@ -123,8 +124,9 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
 
   /* Sort pairs */
   for (auto &pair : ret) {
-    if (pair.first > pair.second)
+    if (pair.first > pair.second) {
       std::swap(pair.first, pair.second);
+    }
   }
 
   return ret;
@@ -409,9 +411,10 @@ void cells_resort_particles(int global_flag) {
 void cells_on_geometry_change(int flags) {
   if (max_cut > 0.0) {
     max_range = max_cut + skin;
-  } else
+  } else {
     /* if no interactions yet, we also don't need a skin */
     max_range = 0.0;
+  }
 
   CELL_TRACE(fprintf(stderr, "%d: on_geometry_change with max range %f\n",
                      this_node, max_range));
@@ -455,9 +458,10 @@ void cells_update_ghosts() {
     /* Communication step:  number of ghosts and ghost information */
     cells_resort_particles(global);
 
-  } else
+  } else {
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  }
 }
 
 Cell *find_current_cell(const Particle &p) {

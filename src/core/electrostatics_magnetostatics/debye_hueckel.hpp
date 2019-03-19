@@ -72,8 +72,9 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2,
       /* pure Coulomb case: */
       fac = coulomb.prefactor * p1->p.q * p2->p.q / (dist * dist * dist);
     }
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       force[j] += fac * d[j];
+    }
 
     ONEPART_TRACE(if (p1->p.identity == check_id)
                       fprintf(stderr,
@@ -92,11 +93,12 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2,
 
 inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist) {
   if (dist < dh_params.r_cut) {
-    if (dh_params.kappa > 0.0)
+    if (dh_params.kappa > 0.0) {
       return coulomb.prefactor * p1->p.q * p2->p.q *
              exp(-dh_params.kappa * dist) / dist;
-    else
+    } else {
       return coulomb.prefactor * p1->p.q * p2->p.q / dist;
+    }
   }
   return 0.0;
 }

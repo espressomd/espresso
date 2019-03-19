@@ -241,8 +241,9 @@ inline double p3m_add_pair_force(double chgfac, double const *d, double dist2,
                      2.0 * p3m.params.alpha * wupii * exp(-adist * adist)) /
                     dist2;
 #endif
-      for (int j = 0; j < 3; j++)
+      for (int j = 0; j < 3; j++) {
         force[j] += fac2 * d[j];
+      }
       ESR_TRACE(
           fprintf(stderr, "%d: RSE: Pair dist=%.3f: force (%.3e,%.3e,%.3e)\n",
                   this_node, dist, fac2 * d[0], fac2 * d[1], fac2 * d[2]));

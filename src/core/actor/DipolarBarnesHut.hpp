@@ -44,17 +44,20 @@ public:
     m_epssq = epssq;
     m_itolsq = itolsq;
     setBHPrecision(&m_epssq, &m_itolsq);
-    if (!s.requestFGpu())
+    if (!s.requestFGpu()) {
       std::cerr << "DipolarBarnesHut needs access to forces on GPU!"
                 << std::endl;
+    }
 
-    if (!s.requestRGpu())
+    if (!s.requestRGpu()) {
       std::cerr << "DipolarBarnesHut needs access to positions on GPU!"
                 << std::endl;
+    }
 
-    if (!s.requestDipGpu())
+    if (!s.requestDipGpu()) {
       std::cerr << "DipolarBarnesHut needs access to dipoles on GPU!"
                 << std::endl;
+    }
 
     allocBHmemCopy(s.npart_gpu(), &m_bh_data);
   };

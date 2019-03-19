@@ -247,15 +247,16 @@ static void recalc_maximal_cutoff_nonbonded() {
 
   max_cut_nonbonded = max_cut_global;
 
-  for (i = 0; i < max_seen_particle_type; i++)
+  for (i = 0; i < max_seen_particle_type; i++) {
     for (j = i; j < max_seen_particle_type; j++) {
       double max_cut_current = INACTIVE_CUTOFF;
 
       IA_parameters *data = get_ia_param(i, j);
 
 #ifdef LENNARD_JONES
-      if (max_cut_current < (data->LJ_cut + data->LJ_offset))
+      if (max_cut_current < (data->LJ_cut + data->LJ_offset)) {
         max_cut_current = (data->LJ_cut + data->LJ_offset);
+      }
 #endif
 
 #ifdef WCA
@@ -268,73 +269,86 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
-      if (max_cut_current < (data->LJGEN_cut + data->LJGEN_offset))
+      if (max_cut_current < (data->LJGEN_cut + data->LJGEN_offset)) {
         max_cut_current = (data->LJGEN_cut + data->LJGEN_offset);
+      }
 #endif
 
 #ifdef SMOOTH_STEP
-      if (max_cut_current < data->SmSt_cut)
+      if (max_cut_current < data->SmSt_cut) {
         max_cut_current = data->SmSt_cut;
+      }
 #endif
 
 #ifdef HERTZIAN
-      if (max_cut_current < data->Hertzian_sig)
+      if (max_cut_current < data->Hertzian_sig) {
         max_cut_current = data->Hertzian_sig;
+      }
 #endif
 
 #ifdef GAUSSIAN
-      if (max_cut_current < data->Gaussian_cut)
+      if (max_cut_current < data->Gaussian_cut) {
         max_cut_current = data->Gaussian_cut;
+      }
 #endif
 
 #ifdef BMHTF_NACL
-      if (max_cut_current < data->BMHTF_cut)
+      if (max_cut_current < data->BMHTF_cut) {
         max_cut_current = data->BMHTF_cut;
+      }
 #endif
 
 #ifdef MORSE
-      if (max_cut_current < data->MORSE_cut)
+      if (max_cut_current < data->MORSE_cut) {
         max_cut_current = data->MORSE_cut;
+      }
 #endif
 
 #ifdef BUCKINGHAM
-      if (max_cut_current < data->BUCK_cut)
+      if (max_cut_current < data->BUCK_cut) {
         max_cut_current = data->BUCK_cut;
+      }
 #endif
 
 #ifdef SOFT_SPHERE
-      if (max_cut_current < (data->soft_cut + data->soft_offset))
+      if (max_cut_current < (data->soft_cut + data->soft_offset)) {
         max_cut_current = (data->soft_cut + data->soft_offset);
+      }
 #endif
 
 #ifdef AFFINITY
-      if (max_cut_current < data->affinity_cut)
+      if (max_cut_current < data->affinity_cut) {
         max_cut_current = data->affinity_cut;
+      }
 #endif
 
 #ifdef MEMBRANE_COLLISION
-      if (max_cut_current < data->membrane_cut)
+      if (max_cut_current < data->membrane_cut) {
         max_cut_current = data->membrane_cut;
+      }
 #endif
 
 #ifdef HAT
-      if (max_cut_current < data->HAT_r)
+      if (max_cut_current < data->HAT_r) {
         max_cut_current = data->HAT_r;
+      }
 #endif
 
 #ifdef LJCOS
       {
         double max_cut_tmp = data->LJCOS_cut + data->LJCOS_offset;
-        if (max_cut_current < max_cut_tmp)
+        if (max_cut_current < max_cut_tmp) {
           max_cut_current = max_cut_tmp;
+        }
       }
 #endif
 
 #ifdef LJCOS2
       {
         double max_cut_tmp = data->LJCOS2_cut + data->LJCOS2_offset;
-        if (max_cut_current < max_cut_tmp)
+        if (max_cut_current < max_cut_tmp) {
           max_cut_current = max_cut_tmp;
+        }
       }
 #endif
 
@@ -347,8 +361,9 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef GAY_BERNE
-      if (max_cut_current < data->GB_cut)
+      if (max_cut_current < data->GB_cut) {
         max_cut_current = data->GB_cut;
+      }
 #endif
 
 #ifdef TABULATED
@@ -356,8 +371,9 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef SWIMMER_REACTIONS
-      if (max_cut_current < data->REACTION_range)
+      if (max_cut_current < data->REACTION_range) {
         max_cut_current = data->REACTION_range;
+      }
 #endif
 #ifdef THOLE
       // If THOLE is active, use p3m cutoff
@@ -374,12 +390,14 @@ static void recalc_maximal_cutoff_nonbonded() {
 
       data_sym->max_cut = data->max_cut = max_cut_current;
 
-      if (max_cut_current > max_cut_nonbonded)
+      if (max_cut_current > max_cut_nonbonded) {
         max_cut_nonbonded = max_cut_current;
+      }
 
       CELL_TRACE(fprintf(stderr, "%d: pair %d,%d max_cut total %f\n", this_node,
                          i, j, data->max_cut));
     }
+  }
 }
 
 void recalc_maximal_cutoff() {
@@ -388,10 +406,11 @@ void recalc_maximal_cutoff() {
 
   /* make max_cut the maximal cutoff of both bonded and non-bonded
      interactions */
-  if (max_cut_nonbonded > max_cut_bonded)
+  if (max_cut_nonbonded > max_cut_bonded) {
     max_cut = max_cut_nonbonded;
-  else
+  } else {
     max_cut = max_cut_bonded;
+  }
 }
 
 /** This function increases the LOCAL ia_params field for non-bonded
@@ -401,17 +420,19 @@ void recalc_maximal_cutoff() {
     make_particle_type_exist for that.
 */
 void realloc_ia_params(int nsize) {
-  if (nsize <= max_seen_particle_type)
+  if (nsize <= max_seen_particle_type) {
     return;
+  }
 
   auto new_params = std::vector<IA_parameters>(nsize * nsize);
 
   /* if there is an old field, move entries */
-  for (int i = 0; i < max_seen_particle_type; i++)
+  for (int i = 0; i < max_seen_particle_type; i++) {
     for (int j = 0; j < max_seen_particle_type; j++) {
       new_params[i * nsize + j] =
           std::move(ia_params[i * max_seen_particle_type + j]);
     }
+  }
 
   max_seen_particle_type = nsize;
   std::swap(ia_params, new_params);
@@ -423,20 +444,23 @@ void reset_ia_params() {
 }
 
 bool is_new_particle_type(int type) {
-  if ((type + 1) <= max_seen_particle_type)
+  if ((type + 1) <= max_seen_particle_type) {
     return false;
-  else
+  } else {
     return true;
+  }
 }
 
 void make_particle_type_exist(int type) {
-  if (is_new_particle_type(type))
+  if (is_new_particle_type(type)) {
     mpi_bcast_max_seen_particle_type(type + 1);
+  }
 }
 
 void make_particle_type_exist_local(int type) {
-  if (is_new_particle_type(type))
+  if (is_new_particle_type(type)) {
     realloc_ia_params(type + 1);
+  }
 }
 
 int interactions_sanity_checks() {
@@ -446,21 +470,25 @@ int interactions_sanity_checks() {
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_MMM1D:
-    if (MMM1D_sanity_checks())
+    if (MMM1D_sanity_checks()) {
       state = 0;
+    }
     break;
   case COULOMB_MMM2D:
-    if (MMM2D_sanity_checks())
+    if (MMM2D_sanity_checks()) {
       state = 0;
+    }
     break;
 #ifdef P3M
   case COULOMB_ELC_P3M:
-    if (ELC_sanity_checks())
+    if (ELC_sanity_checks()) {
       state = 0; // fall through
+    }
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    if (p3m_sanity_checks())
+    if (p3m_sanity_checks()) {
       state = 0;
+    }
     break;
 #endif
   default:
@@ -471,18 +499,22 @@ int interactions_sanity_checks() {
 #if defined(DIPOLES) and defined(DP3M)
   switch (coulomb.Dmethod) {
   case DIPOLAR_MDLC_P3M:
-    if (mdlc_sanity_checks())
+    if (mdlc_sanity_checks()) {
       state = 0; // fall through
+    }
   case DIPOLAR_P3M:
-    if (dp3m_sanity_checks(node_grid))
+    if (dp3m_sanity_checks(node_grid)) {
       state = 0;
+    }
     break;
   case DIPOLAR_MDLC_DS:
-    if (mdlc_sanity_checks())
+    if (mdlc_sanity_checks()) {
       state = 0; // fall through
+    }
   case DIPOLAR_DS:
-    if (magnetic_dipolar_direct_sum_sanity_checks())
+    if (magnetic_dipolar_direct_sum_sanity_checks()) {
       state = 0;
+    }
     break;
   default:
     break;
@@ -582,8 +614,9 @@ int dipolar_set_Dprefactor(double prefactor) {
 #endif /* ifdef  DIPOLES */
 
 int virtual_set_params(int bond_type) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   make_bond_type_exist(bond_type);
 

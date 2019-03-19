@@ -72,8 +72,9 @@ double meta_val_xi = 0.;
 Vector3d meta_apply_direction;
 
 void meta_init() {
-  if (meta_switch == META_OFF)
+  if (meta_switch == META_OFF) {
     return;
+  }
 
   /* Initialize arrays if they're empty. These get freed upon calling the Tcl
    * parser */
@@ -103,8 +104,9 @@ void meta_init() {
 void meta_perform() {
   Vector3d ppos1, ppos2;
 
-  if (meta_switch == META_OFF)
+  if (meta_switch == META_OFF) {
     return;
+  }
 
   int img1[3], img2[3], flag1 = 0, flag2 = 0;
   Particle *p1 = nullptr, *p2 = nullptr;
@@ -192,10 +194,12 @@ void meta_perform() {
   } else {
     // within the RC interval
     auto i = (int)std::round((meta_val_xi - meta_xi_min) / meta_xi_step);
-    if (i < 0)
+    if (i < 0) {
       i = 0;
-    if (i >= meta_xi_num_bins)
+    }
+    if (i >= meta_xi_num_bins) {
       i = meta_xi_num_bins - 1;
+    }
     factor = meta_acc_force[i];
   }
 
@@ -212,8 +216,9 @@ double calculate_lucy(double xi, double xi_0) {
   if (dist <= meta_bias_width) {
     return meta_bias_height * (1 + 2 * dist / meta_bias_width) *
            pow(1 - dist / meta_bias_width, 2);
-  } else
+  } else {
     return 0.;
+  }
 }
 
 /** Calculate derivative of Lucy function */
@@ -224,11 +229,13 @@ double calculate_deriv_lucy(double xi, double xi_0) {
         -2 * meta_bias_height / meta_bias_width *
         (pow(1 - dist / meta_bias_width, 2) -
          (1 + 2 * dist / meta_bias_width) * (1 - dist / meta_bias_width));
-    if (xi < xi_0)
+    if (xi < xi_0) {
       result *= -1.;
+    }
     return result;
-  } else
+  } else {
     return 0.;
+  }
 }
 
 #endif

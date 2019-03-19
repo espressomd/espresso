@@ -124,11 +124,12 @@ void lb_init_boundaries() {
         charged_boundaries = 1;
       }
 
-      for (int n = 0; n < int(ek_parameters.number_of_species); n++)
+      for (int n = 0; n < int(ek_parameters.number_of_species); n++) {
         if (ek_parameters.valency[n] != 0.0) {
           wallcharge_species = n;
           break;
         }
+      }
 
       ek_gather_wallcharge_species_density(host_wallcharge_species_density,
                                            wallcharge_species);
@@ -224,11 +225,12 @@ void lb_init_boundaries() {
                                            ek_parameters.dim_x * z +
                                        ek_parameters.dim_x * y + x];
               }
-              if (node_charged)
+              if (node_charged) {
                 host_wallcharge_species_density[ek_parameters.dim_y *
                                                     ek_parameters.dim_x * z +
                                                 ek_parameters.dim_x * y + x] =
                     node_wallcharge / ek_parameters.valency[wallcharge_species];
+              }
             }
           }
 #endif
@@ -282,8 +284,9 @@ void lb_init_boundaries() {
       lbfields.at(n).boundary = 0;
     }
 
-    if (lblattice.halo_grid_volume == 0)
+    if (lblattice.halo_grid_volume == 0) {
       return;
+    }
 
     for (int z = 0; z < lblattice.grid[2] + 2; z++) {
       for (int y = 0; y < lblattice.grid[1] + 2; y++) {
@@ -333,13 +336,15 @@ int lbboundary_get_force(void *lbb, double *f) {
 
   int no = 0;
   for (auto it = lbboundaries.begin(); it != lbboundaries.end(); ++it, ++no) {
-    if (&(**it) == lbb)
+    if (&(**it) == lbb) {
       break;
+    }
   }
-  if (no == lbboundaries.size())
+  if (no == lbboundaries.size()) {
     throw std::runtime_error("You probably tried to get the force of an "
                              "lbboundary that was not added to "
                              "system.lbboundaries.");
+  }
 
   std::vector<double> forces(3 * lbboundaries.size());
 

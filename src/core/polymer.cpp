@@ -61,8 +61,9 @@ int mindist3(PartCfg &partCfg, int part_id, double r_catch, int *ids) {
 
   for (auto const &p : partCfg) {
     if (p != part) {
-      if (get_mi_vector(part.r.p, p.r.p).norm2() < r_catch2)
+      if (get_mi_vector(part.r.p, p.r.p).norm2() < r_catch2) {
         ids[caught++] = p.p.identity;
+      }
     }
   }
 
@@ -80,8 +81,9 @@ double mindist4(PartCfg &partCfg, double pos[3]) {
         return std::min(mindist, get_mi_vector(pos, p.r.p).norm2());
       });
 
-  if (mindist < std::numeric_limits<double>::infinity())
+  if (mindist < std::numeric_limits<double>::infinity()) {
     return std::sqrt(mindist);
+  }
   return -1.0;
 }
 
@@ -89,8 +91,9 @@ double buf_mindist4(double const pos[3], int n_add, double const *const add) {
   double mindist = 30000.0, dx, dy, dz;
   int i;
 
-  if (n_add == 0)
+  if (n_add == 0) {
     return (std::min(std::min(box_l[0], box_l[1]), box_l[2]));
+  }
   for (i = 0; i < n_add; i++) {
     dx = pos[0] - add[3 * i + 0];
     dx -= std::round(dx / box_l[0]) * box_l[0];
@@ -101,15 +104,18 @@ double buf_mindist4(double const pos[3], int n_add, double const *const add) {
     mindist =
         std::min(mindist, Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
   }
-  if (mindist < 30000.0)
+  if (mindist < 30000.0) {
     return (sqrt(mindist));
+  }
   return (-1.0);
 }
 
 int collision(PartCfg &partCfg, double pos[3], double shield, int n_add,
               double *add) {
-  if (mindist4(partCfg, pos) > shield && buf_mindist4(pos, n_add, add) > shield)
+  if (mindist4(partCfg, pos) > shield &&
+      buf_mindist4(pos, n_add, add) > shield) {
     return (0);
+  }
   return (1);
 }
 
@@ -127,8 +133,9 @@ int constraint_collision(double *p1, double *p2) {
       cs->calc_dist(folded_pos1, &d1, v);
       cs->calc_dist(folded_pos2, &d2, v);
 
-      if (d1 * d2 < 0.0)
+      if (d1 * d2 < 0.0) {
         return 1;
+      }
     }
   }
   return 0;
@@ -157,8 +164,9 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
 
   cnt1 = cnt2 = max_cnt = 0;
   for (p = 0; p < N_P; p++) {
-    if (p > 0)
+    if (p > 0) {
       posed = nullptr;
+    }
 
     for (cnt2 = 0; cnt2 < max_try; cnt2++) {
       /* place start monomer */
@@ -173,8 +181,10 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
           pos[0] = box_l[0] * d_random();
           pos[1] = box_l[1] * d_random();
           pos[2] = box_l[2] * d_random();
-          if ((mode == 1) || (collision(partCfg, pos, shield, 0, nullptr) == 0))
+          if ((mode == 1) ||
+              (collision(partCfg, pos, shield, 0, nullptr) == 0)) {
             break;
+          }
           POLY_TRACE(printf("s"); fflush(nullptr));
         }
         if (cnt1 >= max_try) {
@@ -220,8 +230,9 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
               constraint_collision(pos, poly.data() + 3 * (n - 1)) == 0) {
 
             if (mode == 1 ||
-                collision(partCfg, pos, shield, n, poly.data()) == 0)
+                collision(partCfg, pos, shield, n, poly.data()) == 0) {
               break;
+            }
             if (mode == 0) {
               cnt1 = -1;
               break;
@@ -258,10 +269,11 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
                           with resulting plane perpendicular on the xy-plane */
             poy[0] = 2 * poz[0] - pos[0];
             poy[1] = 2 * poz[1] - pos[1];
-            if (pos[2] == poz[2])
+            if (pos[2] == poz[2]) {
               poy[2] = poz[2] + 1;
-            else
+            } else {
               poy[2] = poz[2];
+            }
           } else {
             /* save 3rd last monomer */
             pox[0] = poy[0];
@@ -333,8 +345,9 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
           if (constr == 0 ||
               constraint_collision(pos, poly.data() + 3 * (n - 1)) == 0) {
             if (mode == 1 ||
-                collision(partCfg, pos, shield, n, poly.data()) == 0)
+                collision(partCfg, pos, shield, n, poly.data()) == 0) {
               break;
+            }
             if (mode == 0) {
               cnt1 = -2;
               break;
@@ -362,15 +375,17 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
 
         POLY_TRACE(printf("M"); fflush(nullptr));
       }
-      if (n > 0)
+      if (n > 0) {
         break;
+      }
     } /* cnt2 */
     POLY_TRACE(printf(" %d/%d->%d \n", cnt1, cnt2, max_cnt));
     if (cnt2 >= max_try) {
       return (-2);
-    } else
+    } else {
 
       max_cnt = std::max(max_cnt, std::max(cnt1, cnt2));
+    }
 
     /* actually creating current polymer in ESPResSo */
     for (n = 0; n < MPC; n++) {
@@ -378,8 +393,9 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
       pos[0] = poly[3 * n];
       pos[1] = poly[3 * n + 1];
       pos[2] = poly[3 * n + 2];
-      if (place_particle(part_id, pos) == ES_PART_ERROR)
+      if (place_particle(part_id, pos) == ES_PART_ERROR) {
         return -3;
+      }
 
       set_particle_q(part_id, ((n % cM_dist == 0) ? val_cM : 0.0));
       set_particle_type(part_id, ((n % cM_dist == 0) ? type_cM : type_nM));
@@ -411,14 +427,17 @@ int counterionsC(PartCfg &partCfg, int N_CI, int part_id, int mode,
       pos[0] = box_l[0] * d_random();
       pos[1] = box_l[1] * d_random();
       pos[2] = box_l[2] * d_random();
-      if ((mode != 0) || (collision(partCfg, pos, shield, 0, nullptr) == 0))
+      if ((mode != 0) || (collision(partCfg, pos, shield, 0, nullptr) == 0)) {
         break;
+      }
       POLY_TRACE(printf("c"); fflush(nullptr));
     }
-    if (cnt1 >= max_try)
+    if (cnt1 >= max_try) {
       return (-1);
-    if (place_particle(part_id, pos) == ES_PART_ERROR)
+    }
+    if (place_particle(part_id, pos) == ES_PART_ERROR) {
       return (-3);
+    }
     set_particle_q(part_id, val_CI);
     set_particle_type(part_id, type_CI);
 
@@ -428,8 +447,9 @@ int counterionsC(PartCfg &partCfg, int N_CI, int part_id, int mode,
     POLY_TRACE(printf("C"); fflush(nullptr));
   }
   POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
-  if (cnt1 >= max_try)
+  if (cnt1 >= max_try) {
     return (-1);
+  }
 
   return (std::max(max_cnt, cnt1));
 }
@@ -457,8 +477,9 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
       dnodes[i][j] *= a / 4.;
       pos[j] = dnodes[i][j];
     }
-    if (place_particle(part_id, pos) == ES_PART_ERROR)
+    if (place_particle(part_id, pos) == ES_PART_ERROR) {
       set_particle_q(part_id, val_nodes);
+    }
     set_particle_type(part_id, type_node);
 
     part_id++;
@@ -467,10 +488,12 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
   /* place intermediate monomers on chains connecting the nodes */
   for (i = 0; i < 2 * 8; i++) {
     for (k = 1; k <= MPC; k++) {
-      for (j = 0; j < 3; j++)
+      for (j = 0; j < 3; j++) {
         pos[j] = dnodes[dchain[i][0]][j] + k * dchain[i][2 + j] * off;
-      if (place_particle(part_id, pos) == ES_PART_ERROR)
+      }
+      if (place_particle(part_id, pos) == ES_PART_ERROR) {
         return (-3);
+      }
       set_particle_q(part_id, (k % cM_dist == 0) ? val_cM : 0.0);
       set_particle_type(part_id, (k % cM_dist == 0) ? type_cM : type_nM);
 
@@ -493,8 +516,9 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
   }
 
   /* place counterions (if any) */
-  if (N_CI > 0)
+  if (N_CI > 0) {
     counterionsC(partCfg, N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
+  }
 
   return (0);
 }
@@ -536,10 +560,11 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
   } */
 
   /* shift coordinates to not be centered around zero but rather be positive */
-  if (ico_a > ico_g)
+  if (ico_a > ico_g) {
     shift = ico_a;
-  else
+  } else {
     shift = ico_g;
+  }
 
   /* create fullerene & soccer-ball */
   part_id = 0;
@@ -547,117 +572,134 @@ int icosaederC(PartCfg &partCfg, double ico_a, int MPC, int N_CI, double val_cM,
     for (j = 0; j < 5; j++) {
       /* place chains along the 5 edges around each of the 12 icosaeder's
        * vertices */
-      if (j < 4)
-        for (l = 0; l < 3; l++)
+      if (j < 4) {
+        for (l = 0; l < 3; l++) {
           vec[l] =
               (ico_coord[ico_NN[i][j + 1]][l] - ico_coord[ico_NN[i][j]][l]) /
               3.;
-      else
-        for (l = 0; l < 3; l++)
+        }
+      } else {
+        for (l = 0; l < 3; l++) {
           vec[l] =
               (ico_coord[ico_NN[i][0]][l] - ico_coord[ico_NN[i][4]][l]) / 3.;
-      vec_l =
-          sqrt(Utils::sqr(vec[0]) + Utils::sqr(vec[1]) + Utils::sqr(vec[2]));
-      for (l = 0; l < 3; l++)
-        e_vec[l] = vec[l] / vec_l;
-
-      ico_ind[i][j] = part_id;
-      bond_length = vec_l / (1. * MPC);
-      for (l = 0; l < 3; l++)
-        pos[l] = ico_coord[i][l] +
-                 (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l]) / 3.;
-      for (k = 0; k < MPC; k++) {
-        for (l = 0; l < 3; l++)
-          pos_shift[l] = pos[l] + shift;
-        if (place_particle(part_id, pos_shift) == ES_PART_ERROR)
-          return (-3);
-        set_particle_q(part_id, val_cM);
-        set_particle_type(part_id, type_cM);
-
-        bond[0] = type_bond;
-        if (k > 0) {
-          bond[1] = part_id - 1;
-          add_particle_bond(part_id, bond);
         }
-        part_id++;
-        for (l = 0; l < 3; l++)
-          pos[l] += bond_length * e_vec[l];
-      }
-
-      /* place chains along the 5 edges on the middle third of the connection
-       * between two NN vertices */
-      if (i < ico_NN[i][j]) {
-        for (l = 0; l < 3; l++)
-          vec[l] = (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l]) / 3.;
         vec_l =
             sqrt(Utils::sqr(vec[0]) + Utils::sqr(vec[1]) + Utils::sqr(vec[2]));
-        for (l = 0; l < 3; l++)
+        for (l = 0; l < 3; l++) {
           e_vec[l] = vec[l] / vec_l;
+        }
 
-        ico_ind[i][j + 5] = part_id;
+        ico_ind[i][j] = part_id;
         bond_length = vec_l / (1. * MPC);
-        for (l = 0; l < 3; l++)
+        for (l = 0; l < 3; l++) {
           pos[l] = ico_coord[i][l] +
-                   (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l]) / 3. +
-                   bond_length * e_vec[l];
-        for (k = 1; k < MPC; k++) {
-          for (l = 0; l < 3; l++)
+                   (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l]) / 3.;
+        }
+        for (k = 0; k < MPC; k++) {
+          for (l = 0; l < 3; l++) {
             pos_shift[l] = pos[l] + shift;
-          if (place_particle(part_id, pos_shift) == ES_ERROR)
+          }
+          if (place_particle(part_id, pos_shift) == ES_PART_ERROR) {
             return (-3);
-          set_particle_q(part_id, 0.0);
-          set_particle_type(part_id, type_nM);
+          }
+          set_particle_q(part_id, val_cM);
+          set_particle_type(part_id, type_cM);
 
           bond[0] = type_bond;
-          if (k > 1) {
+          if (k > 0) {
             bond[1] = part_id - 1;
-            add_particle_bond(part_id, bond);
-          } else {
-            bond[1] = ico_ind[i][j];
             add_particle_bond(part_id, bond);
           }
           part_id++;
-          for (l = 0; l < 3; l++)
+          for (l = 0; l < 3; l++) {
             pos[l] += bond_length * e_vec[l];
+          }
+        }
+
+        /* place chains along the 5 edges on the middle third of the connection
+         * between two NN vertices */
+        if (i < ico_NN[i][j]) {
+          for (l = 0; l < 3; l++) {
+            vec[l] = (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l]) / 3.;
+          }
+          vec_l = sqrt(Utils::sqr(vec[0]) + Utils::sqr(vec[1]) +
+                       Utils::sqr(vec[2]));
+          for (l = 0; l < 3; l++) {
+            e_vec[l] = vec[l] / vec_l;
+          }
+
+          ico_ind[i][j + 5] = part_id;
+          bond_length = vec_l / (1. * MPC);
+          for (l = 0; l < 3; l++) {
+            pos[l] = ico_coord[i][l] +
+                     (ico_coord[ico_NN[i][j]][l] - ico_coord[i][l]) / 3. +
+                     bond_length * e_vec[l];
+          }
+          for (k = 1; k < MPC; k++) {
+            for (l = 0; l < 3; l++) {
+              pos_shift[l] = pos[l] + shift;
+            }
+            if (place_particle(part_id, pos_shift) == ES_ERROR) {
+              return (-3);
+            }
+            set_particle_q(part_id, 0.0);
+            set_particle_type(part_id, type_nM);
+
+            bond[0] = type_bond;
+            if (k > 1) {
+              bond[1] = part_id - 1;
+              add_particle_bond(part_id, bond);
+            } else {
+              bond[1] = ico_ind[i][j];
+              add_particle_bond(part_id, bond);
+            }
+            part_id++;
+            for (l = 0; l < 3; l++) {
+              pos[l] += bond_length * e_vec[l];
+            }
+          }
         }
       }
-    }
 
-    for (j = 0; j < 5; j++) {
-      /* add bonds between the edges around the vertices */
-      bond[0] = type_bond;
-      //      if(j>0) bond[1] = ico_ind[i][j-1] + (MPC-1); else bond[1] =
-      //      ico_ind[i][4] + (MPC-1);
-      if (j > 0)
-        bond[1] = ico_ind[i][j - 1] + (MPC - 1);
-      else if (MPC > 0)
-        bond[1] = ico_ind[i][4] + (MPC - 1);
-      else
-        bond[1] = ico_ind[i][4];
-
-      add_particle_bond(ico_ind[i][j], bond);
-
-      /* connect loose edges around vertices with chains along the middle third
-       * already created earlier */
-      if (i > ico_NN[i][j]) {
+      for (j = 0; j < 5; j++) {
+        /* add bonds between the edges around the vertices */
         bond[0] = type_bond;
-        for (l = 0; l < 5; l++)
-          if (ico_NN[ico_NN[i][j]][l] == i)
-            break;
-        if (l == 5) {
-          fprintf(stderr, "INTERNAL ERROR: Couldn't find my neighbouring edge "
-                          "upon creating the icosaeder!\n");
-          errexit();
+        //      if(j>0) bond[1] = ico_ind[i][j-1] + (MPC-1); else bond[1] =
+        //      ico_ind[i][4] + (MPC-1);
+        if (j > 0) {
+          bond[1] = ico_ind[i][j - 1] + (MPC - 1);
+        } else if (MPC > 0) {
+          bond[1] = ico_ind[i][4] + (MPC - 1);
+        } else {
+          bond[1] = ico_ind[i][4];
         }
-        bond[1] = ico_ind[ico_NN[i][j]][l + 5] + (MPC - 2);
+
         add_particle_bond(ico_ind[i][j], bond);
+
+        /* connect loose edges around vertices with chains along the middle
+         * third already created earlier */
+        if (i > ico_NN[i][j]) {
+          bond[0] = type_bond;
+          for (l = 0; l < 5; l++) {
+            if (ico_NN[ico_NN[i][j]][l] == i) {
+              break;
+            }
+            if (l == 5) {
+              fprintf(stderr,
+                      "INTERNAL ERROR: Couldn't find my neighbouring edge "
+                      "upon creating the icosaeder!\n");
+              errexit();
+            }
+            bond[1] = ico_ind[ico_NN[i][j]][l + 5] + (MPC - 2);
+            add_particle_bond(ico_ind[i][j], bond);
+          }
+        }
       }
+
+      /* place counterions (if any) */
+      if (N_CI > 0) {
+        counterionsC(partCfg, N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
+      }
+
+      return (0);
     }
-  }
-
-  /* place counterions (if any) */
-  if (N_CI > 0)
-    counterionsC(partCfg, N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
-
-  return (0);
-}

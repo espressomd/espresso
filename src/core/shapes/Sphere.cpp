@@ -42,14 +42,16 @@ void Sphere::calculate_dist(const Vector3d &pos, double *dist,
     /* apply force towards inside the sphere */
     *dist = m_rad - c_dist;
     fac = *dist / c_dist;
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; i++) {
       vec[i] *= fac;
+    }
   } else {
     /* apply force towards outside the sphere */
     *dist = c_dist - m_rad;
     fac = *dist / c_dist;
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; i++) {
       vec[i] *= -fac;
+    }
   }
   return;
 }

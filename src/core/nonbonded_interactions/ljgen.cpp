@@ -49,8 +49,9 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
 ) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data)
+  if (!data) {
     return ES_ERROR;
+  }
 
   data->LJGEN_eps = eps;
   data->LJGEN_sig = sig;
@@ -62,10 +63,12 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
   data->LJGEN_b1 = b1;
   data->LJGEN_b2 = b2;
 #ifdef LJGEN_SOFTCORE
-  if (lambda >= 0.0 && lambda <= 1.0)
+  if (lambda >= 0.0 && lambda <= 1.0) {
     data->LJGEN_lambda = lambda;
-  if (softrad >= 0.0)
+  }
+  if (softrad >= 0.0) {
     data->LJGEN_softrad = softrad;
+  }
 #endif
 
   /* broadcast interaction parameters */

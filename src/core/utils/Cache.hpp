@@ -59,8 +59,9 @@ private:
    * time.
    */
   void drop_random_element() {
-    if (m_cache.empty())
+    if (m_cache.empty()) {
       return;
+    }
 
     auto const bucket_count = m_cache.bucket_count();
 
@@ -113,8 +114,9 @@ public:
     /* If there already is a value for k, overwriting it
      * will not increase the size, so we don't have to
      * make room. */
-    if ((m_cache.size() >= m_max_size) && !has(k))
+    if ((m_cache.size() >= m_max_size) && !has(k)) {
       drop_random_element();
+    }
 
     typename map_type::const_iterator it;
     std::tie(it, std::ignore) = m_cache.emplace(k, std::forward<ValueRef>(v));

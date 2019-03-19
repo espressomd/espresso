@@ -222,8 +222,9 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
  */
 inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
                                   double dist2, double dist, double force[3]) {
-  if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
+  if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.)) {
     return 0.;
+  }
 
   double coeff, exp_adist2;
   const Vector3d dip1 = p1->calc_dip();
@@ -252,19 +253,21 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
     double dist2i = 1 / dist2;
     exp_adist2 = exp(-adist * adist);
 
-    if (dp3m.params.accuracy > 5e-06)
+    if (dp3m.params.accuracy > 5e-06) {
       B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
-    else
+    } else {
       B_r = (erfc(adist) / dist + coeff * exp_adist2) * dist2i;
+    }
 
     C_r = (3 * B_r + 2 * alpsq * coeff * exp_adist2) * dist2i;
     D_r = (5 * C_r + 4 * coeff * alpsq * alpsq * exp_adist2) * dist2i;
 
     // Calculate real-space forces
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       force[j] += coulomb.Dprefactor *
                   ((mimj * d[j] + dip1[j] * mjr + dip2[j] * mir) * C_r -
                    mir * mjr * D_r * d[j]);
+    }
 
 #ifdef ROTATION
     // Calculate vector multiplications for vectors mi, mj, rij
@@ -334,10 +337,11 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2,
     dist2i = 1 / dist2;
     exp_adist2 = exp(-adist * adist);
 
-    if (dp3m.params.accuracy > 5e-06)
+    if (dp3m.params.accuracy > 5e-06) {
       B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
-    else
+    } else {
       B_r = (erfc(adist) / dist + coeff * exp_adist2) * dist2i;
+    }
 
     C_r = (3 * B_r + 2 * alpsq * coeff * exp_adist2) * dist2i;
 

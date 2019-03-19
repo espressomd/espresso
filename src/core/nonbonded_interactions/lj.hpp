@@ -52,8 +52,9 @@ inline void add_lj_pair_force(const Particle *const p1,
     double frac6 = frac2 * frac2 * frac2;
     double fac =
         48.0 * ia_params->LJ_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       force[j] += fac * d[j];
+    }
 
 #ifdef LJ_WARN_WHEN_CLOSE
     if (fac * dist > 1000)

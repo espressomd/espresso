@@ -82,30 +82,36 @@ void print_bond_len();
   of the particles*/
 void save_old_pos() {
   auto save_pos = [](Particle &p) {
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       p.r.p_old[j] = p.r.p[j];
+    }
   };
 
-  for (auto &p : local_cells.particles())
+  for (auto &p : local_cells.particles()) {
     save_pos(p);
+  }
 
-  for (auto &p : ghost_cells.particles())
+  for (auto &p : ghost_cells.particles()) {
     save_pos(p);
+  }
 }
 
 /**Initialize the correction vector. The correction vector is stored in f.f of
  * particle structure. */
 void init_correction_vector() {
   auto reset_force = [](Particle &p) {
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       p.f.f[j] = 0.0;
+    }
   };
 
-  for (auto &p : local_cells.particles())
+  for (auto &p : local_cells.particles()) {
     reset_force(p);
+  }
 
-  for (auto &p : ghost_cells.particles())
+  for (auto &p : ghost_cells.particles()) {
     reset_force(p);
+  }
 }
 
 /**Compute positional corrections*/
@@ -146,9 +152,10 @@ void compute_pos_corr_vec(int *repeat_) {
           /*Increase the 'repeat' flag by one */
           *repeat_ = *repeat_ + 1;
         }
-      } else
+      } else {
         /* skip bond partners of nonrigid bond */
         k += ia_params->num;
+      }
     } // while loop
   }   // for i loop
 }
@@ -177,10 +184,11 @@ void correct_pos_shake() {
     app_pos_correction();
     /**Ghost Positions Update*/
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    if (this_node == 0)
+    if (this_node == 0) {
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-    else
+    } else {
       MPI_Reduce(&repeat_, nullptr, 1, MPI_INT, MPI_SUM, 0, comm_cart);
+    }
     MPI_Bcast(&repeat, 1, MPI_INT, 0, comm_cart);
 
     cnt++;
@@ -206,11 +214,13 @@ void transfer_force_init_vel() {
     }
   };
 
-  for (auto &p : local_cells.particles())
+  for (auto &p : local_cells.particles()) {
     copy_reset(p);
+  }
 
-  for (auto &p : ghost_cells.particles())
+  for (auto &p : ghost_cells.particles()) {
     copy_reset(p);
+  }
 }
 
 /** Velocity correction vectors are computed*/
@@ -248,8 +258,9 @@ void compute_vel_corr_vec(int *repeat_) {
 
           *repeat_ = *repeat_ + 1;
         }
-      } else
+      } else {
         k += ia_params->num;
+      }
     } // while loop
   }   // for i loop
 }
@@ -268,15 +279,18 @@ void apply_vel_corr() {
 /**Put back the forces from r.p_old to f.f*/
 void revert_force() {
   auto revert = [](Particle &p) {
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       p.f.f[j] = p.r.p_old[j];
+    }
   };
 
-  for (auto &p : local_cells.particles())
+  for (auto &p : local_cells.particles()) {
     revert(p);
+  }
 
-  for (auto &p : ghost_cells.particles())
+  for (auto &p : ghost_cells.particles()) {
     revert(p);
+  }
 }
 
 void correct_vel_shake() {
@@ -292,10 +306,11 @@ void correct_vel_shake() {
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
     apply_vel_corr();
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    if (this_node == 0)
+    if (this_node == 0) {
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-    else
+    } else {
       MPI_Reduce(&repeat_, nullptr, 1, MPI_INT, MPI_SUM, 0, comm_cart);
+    }
 
     MPI_Bcast(&repeat, 1, MPI_INT, 0, comm_cart);
     cnt++;
@@ -316,8 +331,9 @@ void correct_vel_shake() {
  *   setting parameters
  *****************************************************************************/
 int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   make_bond_type_exist(bond_type);
 

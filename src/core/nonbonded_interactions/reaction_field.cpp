@@ -37,14 +37,17 @@ int rf_set_params(double kappa, double epsilon1, double epsilon2,
                  epsilon2 * kappa * kappa * r_cut * r_cut) /
                 ((epsilon1 + 2 * epsilon2) * (1 + kappa * r_cut) +
                  epsilon2 * kappa * kappa * r_cut * r_cut);
-  if (rf_params.epsilon1 < 0.0)
+  if (rf_params.epsilon1 < 0.0) {
     return -1;
+  }
 
-  if (rf_params.epsilon2 < 0.0)
+  if (rf_params.epsilon2 < 0.0) {
     return -1;
+  }
 
-  if (rf_params.r_cut < 0.0)
+  if (rf_params.r_cut < 0.0) {
     return -2;
+  }
 
   mpi_bcast_coulomb_params();
 
@@ -56,8 +59,9 @@ int rf_set_params(double kappa, double epsilon1, double epsilon2,
 int interrf_set_params(int part_type_a, int part_type_b, int rf_on) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data)
+  if (!data) {
     return ES_ERROR;
+  }
 
   data->rf_on = rf_on;
 

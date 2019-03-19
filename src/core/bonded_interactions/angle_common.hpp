@@ -41,10 +41,12 @@ calc_vectors_and_cosine(Vector3d const &r_mid, Vector3d const &r_left,
   /* cosine of the angle between vec1 and vec2 */
   auto cosine = vec1 * vec2;
   if (sanitize_cosine) {
-    if (cosine > TINY_COS_VALUE)
+    if (cosine > TINY_COS_VALUE) {
       cosine = TINY_COS_VALUE;
-    if (cosine < -TINY_COS_VALUE)
+    }
+    if (cosine < -TINY_COS_VALUE) {
       cosine = -TINY_COS_VALUE;
+    }
   }
   return std::make_tuple(vec1, vec2, d1i, d2i, cosine);
 }
@@ -99,10 +101,12 @@ calc_angle_generic_3body_forces(Vector3d const &r_mid, Vector3d const &r_left,
   auto const vec31_len = sqrt(vec31_sqr);
   auto cos_phi = (vec21 * vec31) / (vec21_len * vec31_len);
   if (sanitize_cosine) {
-    if (cos_phi > TINY_COS_VALUE)
+    if (cos_phi > TINY_COS_VALUE) {
       cos_phi = TINY_COS_VALUE;
-    if (cos_phi < -TINY_COS_VALUE)
+    }
+    if (cos_phi < -TINY_COS_VALUE) {
       cos_phi = -TINY_COS_VALUE;
+    }
   }
   auto sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
   /* force factor */

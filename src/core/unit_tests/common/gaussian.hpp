@@ -37,14 +37,15 @@ inline boost::multi_array<double, 3> gaussian_field(int size, Vector3d h,
                                                     Vector3d origin,
                                                     Vector3d x0, double sigma) {
   boost::multi_array<double, 3> data(Vector3i{10, 10, 10});
-  for (int i = 0; i < 10; i++)
-    for (int j = 0; j < 10; j++)
+  for (int i = 0; i < 10; i++) {
+    for (int j = 0; j < 10; j++) {
       for (int k = 0; k < 10; k++) {
         auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
         data[i][j][k] = gaussian(x, x0, sigma);
       }
+    }
 
-  return data;
-}
+    return data;
+  }
 
 #endif

@@ -149,8 +149,9 @@ inline void friction_thermo_langevin(Particle *p) {
   Thermostat::GammaType langevin_pref1_temp, langevin_pref2_temp;
 
   if (p->p.is_virtual && !thermo_virtual) {
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       p->f.f[j] = 0;
+    }
 
     return;
   }
@@ -179,24 +180,26 @@ inline void friction_thermo_langevin(Particle *p) {
   if (p->p.gamma >= Thermostat::GammaType{}) {
     langevin_pref1_temp = -p->p.gamma;
     // Is a particle-specific temperature also specified?
-    if (p->p.T >= 0.)
+    if (p->p.T >= 0.) {
       langevin_pref2_temp =
           sqrt(langevin_temp_coeff * p->p.T * p->p.gamma / time_step);
-    else
+    } else {
       // Default temperature but particle-specific gamma
       langevin_pref2_temp =
           sqrt(langevin_temp_coeff * temperature * p->p.gamma / time_step);
+    }
 
   } // particle specific gamma
   else {
     langevin_pref1_temp = -langevin_gamma;
     // No particle-specific gamma, but is there particle-specific temperature
-    if (p->p.T >= 0.)
+    if (p->p.T >= 0.) {
       langevin_pref2_temp =
           sqrt(langevin_temp_coeff * p->p.T * langevin_gamma / time_step);
-    else
+    } else {
       // Default values for both
       langevin_pref2_temp = langevin_pref2;
+    }
   }
 
 #endif /* LANGEVIN_PER_PARTICLE */
@@ -215,9 +218,9 @@ inline void friction_thermo_langevin(Particle *p) {
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     // If individual coordinates are fixed, set force to 0.
-    if ((p->p.ext_flag & COORD_FIXED(j)))
+    if ((p->p.ext_flag & COORD_FIXED(j))) {
       p->f.f[j] = 0;
-    else
+    } else
 #endif
     {
 // Apply the force
@@ -295,24 +298,26 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
   if (p->p.gamma_rot >= Thermostat::GammaType{}) {
     langevin_pref1_temp = p->p.gamma_rot;
     // Is a particle-specific temperature also specified?
-    if (p->p.T >= 0.)
+    if (p->p.T >= 0.) {
       langevin_pref2_temp =
           sqrt(langevin_temp_coeff * p->p.T * p->p.gamma_rot / time_step);
-    else
+    } else {
       // Default temperature but particle-specific gamma
       langevin_pref2_temp =
           sqrt(langevin_temp_coeff * temperature * p->p.gamma_rot / time_step);
+    }
 
   } // particle specific gamma
   else {
     langevin_pref1_temp = langevin_gamma_rotation;
     // No particle-specific gamma, but is there particle-specific temperature
-    if (p->p.T >= 0.)
+    if (p->p.T >= 0.) {
       langevin_pref2_temp = sqrt(langevin_temp_coeff * p->p.T *
                                  langevin_gamma_rotation / time_step);
-    else
+    } else {
       // Default values for both
       langevin_pref2_temp = langevin_pref2_rotation;
+    }
   }
 #endif /* LANGEVIN_PER_PARTICLE */
 

@@ -78,10 +78,12 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
   // Point P4 lies in the halfspace given by normal iff n_x*P4_x + n_y*P4_y +
   // n_z*P4_z + d >= 0
   tmp11 = -(normal1[0] * P1[0] + normal1[1] * P1[1] + normal1[2] * P1[2]);
-  if (normal1[0] * P4[0] + normal1[1] * P4[1] + normal1[2] * P4[2] + tmp11 < 0)
+  if (normal1[0] * P4[0] + normal1[1] * P4[1] + normal1[2] * P4[2] + tmp11 <
+      0) {
     return 2 * M_PI - phi;
-  else
+  } else {
     return phi;
+  }
 }
 } // namespace Utils
 

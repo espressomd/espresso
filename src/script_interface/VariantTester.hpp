@@ -58,8 +58,9 @@ public:
     if (method == "check_parameter_type") {
       auto const type = boost::get<std::string>(par.at("type"));
 
-      if (type == "none")
+      if (type == "none") {
         return is_none(par.at("value"));
+      }
 
       if (type == "bool") {
         return is_bool(par.at("value"));
@@ -103,10 +104,11 @@ public:
 
 private:
   Variant make_recursive_variant(int i, int max_level) const {
-    if (i < max_level)
+    if (i < max_level) {
       return std::vector<Variant>{i, make_recursive_variant(i + 1, max_level)};
-    else
+    } else {
       return std::string("end");
+    }
   }
 };
 } // namespace Testing

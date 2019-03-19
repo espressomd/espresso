@@ -68,7 +68,7 @@ bool steepest_descent_step(void) {
     for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
       // Skip, if coordinate is fixed
-      if (!(p.p.ext_flag & COORD_FIXED(j)))
+      if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #endif
 #ifdef VIRTUAL_SITES
         // Skip positional increments of virtual particles
@@ -80,9 +80,10 @@ bool steepest_descent_step(void) {
 
           // Positional increment
           dp = params->gamma * p.f.f[j];
-          if (fabs(dp) > params->max_displacement)
+          if (fabs(dp) > params->max_displacement) {
             // Crop to maximum allowed by user
             dp = sgn<double>(dp) * params->max_displacement;
+          }
           dp2 += Utils::sqr(dp);
 
           // Move particle
@@ -90,6 +91,7 @@ bool steepest_descent_step(void) {
           MINIMIZE_ENERGY_TRACE(printf("part %d dim %d dp %e gamma*f %e\n", i,
                                        j, dp, params->gamma * p.f.f[j]));
         }
+      }
     }
 #ifdef ROTATION
     {
@@ -135,8 +137,9 @@ bool steepest_descent_step(void) {
 
 void minimize_energy_init(const double f_max, const double gamma,
                           const int max_steps, const double max_displacement) {
-  if (!params)
+  if (!params) {
     params = new MinimizeEnergyParameters;
+  }
 
   params->f_max = f_max;
   params->gamma = gamma;
@@ -145,8 +148,9 @@ void minimize_energy_init(const double f_max, const double gamma,
 }
 
 bool minimize_energy(void) {
-  if (!params)
+  if (!params) {
     params = new MinimizeEnergyParameters;
+  }
 
   MPI_Bcast(params, sizeof(MinimizeEnergyParameters), MPI_BYTE, 0, comm_cart);
   int integ_switch_old = integ_switch;

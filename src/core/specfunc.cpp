@@ -280,8 +280,9 @@ double hzeta(double s, double q) {
   int j, k;
   double pmax, scp, pcp, ans;
 
-  if ((s > max_bits && q < 1.0) || (s > 0.5 * max_bits && q < 0.25))
+  if ((s > max_bits && q < 1.0) || (s > 0.5 * max_bits && q < 0.25)) {
     return pow(q, -s);
+  }
   if (s > 0.5 * max_bits && q < 1.0) {
     double p1 = pow(q, -s);
     double p2 = pow(q / (1.0 + q), s);
@@ -296,8 +297,9 @@ double hzeta(double s, double q) {
   pcp = pmax / (kmax + q);
   ans = pmax * ((kmax + q) / (s - 1.0) + 0.5);
 
-  for (k = 0; k < kmax; k++)
+  for (k = 0; k < kmax; k++) {
     ans += pow(k + q, -s);
+  }
 
   for (j = 0; j <= jmax; j++) {
     double delta = hzeta_c[j + 1] * scp * pcp;
@@ -311,8 +313,9 @@ double hzeta(double s, double q) {
 
 double I0(double x) {
   double c, y = fabs(x);
-  if (y <= 3.0)
+  if (y <= 3.0) {
     return evaluateAsChebychevSeriesAt(&bi0_cs, y * y / 4.5 - 1.0);
+  }
 
   c = (y <= 8.0) ? evaluateAsChebychevSeriesAt(&ai0_cs, (48.0 / y - 11.0) / 5.0)
                  : evaluateAsChebychevSeriesAt(&ai02_cs, 16.0 / y - 1.0);
@@ -340,8 +343,9 @@ double I1(double x) {
   c = (y <= 8.0) ? evaluateAsChebychevSeriesAt(&ai1_cs, (48.0 / y - 11.0) / 5.0)
                  : evaluateAsChebychevSeriesAt(&ai12_cs, 16.0 / y - 1.0);
   c = c / sqrt(y);
-  if (x < 0)
+  if (x < 0) {
     c = -c;
+  }
   return exp(y) * c;
 }
 

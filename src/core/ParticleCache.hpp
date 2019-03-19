@@ -102,8 +102,9 @@ public:
 
     /* The first range has no more elements, so we can
        just copy the rest of range 2. */
-    for (; first2 != last2; ++first2)
+    for (; first2 != last2; ++first2) {
       ret.emplace_hint(ret.end(), *first2);
+    }
 
     return ret;
   }
@@ -298,8 +299,9 @@ public:
   value_iterator begin() {
     assert(m_cb.comm().rank() == 0);
 
-    if (!m_valid)
+    if (!m_valid) {
       update();
+    }
 
     return value_iterator(remote_parts.begin());
   }
@@ -314,8 +316,9 @@ public:
   value_iterator end() {
     assert(m_cb.comm().rank() == 0);
 
-    if (!m_valid)
+    if (!m_valid) {
       update();
+    }
 
     return value_iterator(remote_parts.end());
   }
@@ -372,8 +375,9 @@ public:
    * Complexity: 2*N*(1 - 0.5^(log(p) + 1))
    */
   void update() {
-    if (m_valid)
+    if (m_valid) {
       return;
+    }
 
     update_cb();
 
@@ -390,8 +394,9 @@ public:
   size_t size() {
     assert(m_cb.comm().rank() == 0);
 
-    if (!m_valid)
+    if (!m_valid) {
       update();
+    }
 
     return remote_parts.size();
   }
@@ -404,8 +409,9 @@ public:
   bool empty() {
     assert(m_cb.comm().rank() == 0);
 
-    if (!m_valid)
+    if (!m_valid) {
       update();
+    }
 
     return remote_parts.empty();
   }
@@ -422,8 +428,9 @@ public:
   Particle const &operator[](int id) {
     assert(m_cb.comm().rank() == 0);
 
-    if (!m_valid)
+    if (!m_valid) {
       update();
+    }
 
     /* Fetch the particle using the index. Here
        begin()[] with the position is used to

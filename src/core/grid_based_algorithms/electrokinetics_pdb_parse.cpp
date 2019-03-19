@@ -77,8 +77,9 @@ unsigned int pdb_rhoindex_cartesian2linear(unsigned int x, unsigned int y,
 
 int print_charge_field(char *filename) {
   FILE *fp;
-  if ((fp = fopen(filename, "w")) == nullptr)
+  if ((fp = fopen(filename, "w")) == nullptr) {
     return pdb_ERROR;
+  }
 
   if (fp == nullptr) {
     return 1;
@@ -115,8 +116,9 @@ LOOKUP_TABLE default\n",
 
 int print_boundary_lattice(char *filename) {
   FILE *fp;
-  if ((fp = fopen(filename, "w")) == nullptr)
+  if ((fp = fopen(filename, "w")) == nullptr) {
     return pdb_ERROR;
+  }
 
   if (fp == nullptr) {
     return 1;
@@ -335,8 +337,9 @@ int pdb_parse(char *pdb_filename, char *itp_filename, double scale) {
   }
 
   PdbParser::PdbParser parser;
-  if (!parser.parse_file(pdb_filename, itp_filename))
+  if (!parser.parse_file(pdb_filename, itp_filename)) {
     return pdb_ERROR;
+  }
 
   return populate_lattice(parser, scale);
 }

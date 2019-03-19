@@ -64,9 +64,10 @@ private:
 };
 
 inline void Accumulator::operator()(const std::vector<double> &data) {
-  if (data.size() != m_acc_data.size())
+  if (data.size() != m_acc_data.size()) {
     throw std::runtime_error(
         "The given data size does not fit the initialized size!");
+  }
   ++m_n;
   if (m_n == 1) {
     std::transform(data.begin(), data.end(), m_acc_data.begin(),

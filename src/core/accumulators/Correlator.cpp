@@ -204,8 +204,9 @@ int Correlator::get_correlation_time(double *correlation_time) {
     C_tau = 1 * m_dt;
     ok_flag = 0;
     for (unsigned k = 1; k < m_n_result - 1; k++) {
-      if (n_sweeps[k] == 0)
+      if (n_sweeps[k] == 0) {
         break;
+      }
       C_tau += (result[k][j] / (double)n_sweeps[k] -
                 A_accumulated_average[j] * B_accumulated_average[j] / n_data /
                     n_data) /
@@ -235,8 +236,9 @@ void Correlator::initialize() {
 
   if (m_tau_lin == 1) { // use the default
     m_tau_lin = (int)ceil(m_tau_max / m_dt);
-    if (m_tau_lin % 2)
+    if (m_tau_lin % 2) {
       m_tau_lin += 1;
+    }
   }
 
   if (m_tau_lin < 2) {
@@ -262,8 +264,9 @@ void Correlator::initialize() {
   dim_A = 0;
   dim_B = 0;
 
-  if (A_obs)
+  if (A_obs) {
     dim_A = A_obs->n_values();
+  }
   if (!B_obs) {
     B_obs = A_obs;
   }
@@ -301,8 +304,9 @@ void Correlator::initialize() {
     m_correlation_args[2] = m_correlation_args[2] * m_correlation_args[2];
     fprintf(stderr, "args2: %f %f %f\n", m_correlation_args[0],
             m_correlation_args[1], m_correlation_args[2]);
-    if (dim_A % 3)
+    if (dim_A % 3) {
       throw std::runtime_error(init_errors[18]);
+    }
     m_dim_corr = dim_A / 3;
     corr_operation = &fcs_acf;
   } else if (corr_operation_name == "scalar_product") {
@@ -356,9 +360,10 @@ void Correlator::initialize() {
   result.resize(std::array<int, 2>{{m_n_result, m_dim_corr}});
 
   for (i = 0; i < m_n_result; i++) {
-    for (j = 0; j < m_dim_corr; j++)
+    for (j = 0; j < m_dim_corr; j++) {
       // and initialize the values
       result[i][j] = 0;
+    }
   }
 
   newest = std::vector<unsigned int>(hierarchy_depth, m_tau_lin);
@@ -368,11 +373,12 @@ void Correlator::initialize() {
     tau[i] = i;
   }
 
-  for (j = 1; j < hierarchy_depth; j++)
+  for (j = 1; j < hierarchy_depth; j++) {
     for (k = 0; k < m_tau_lin / 2; k++) {
       tau[m_tau_lin + 1 + (j - 1) * m_tau_lin / 2 + k] =
           (k + (m_tau_lin / 2) + 1) * (1 << j);
     }
+  }
 }
 
 void Correlator::update() {
@@ -401,10 +407,12 @@ void Correlator::update() {
       if (i < (int(hierarchy_depth) - 1) && n_vals[i] > m_tau_lin) {
         highest_level_to_compress += 1;
         i++;
-      } else
+      } else {
         break;
-    } else
+      }
+    } else {
       break;
+    }
   }
 
   // Now we know we must make space on the levels 0..highest_level_to_compress
@@ -498,10 +506,11 @@ int Correlator::finalize() {
   finalized = 1;
 
   for (ll = 0; ll < hierarchy_depth - 1; ll++) {
-    if (n_vals[ll] > m_tau_lin + 1)
+    if (n_vals[ll] > m_tau_lin + 1) {
       vals_ll = m_tau_lin + n_vals[ll] % 2;
-    else
+    } else {
       vals_ll = n_vals[ll];
+    }
 
     while (vals_ll) {
       // Check, if we will want to push the value from the lowest level

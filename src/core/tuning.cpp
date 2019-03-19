@@ -46,15 +46,17 @@ double time_force_calc(int default_samples) {
   int i;
   Utils::Statistics::RunningAverage<double> running_average;
 
-  if (mpi_integrate(0, 0))
+  if (mpi_integrate(0, 0)) {
     return -1;
+  }
 
   /* perform force calculation test */
   for (i = 0; i < rds; i++) {
     const double tick = MPI_Wtime();
 
-    if (mpi_integrate(0, -1))
+    if (mpi_integrate(0, -1)) {
       return -1;
+    }
 
     const double tock = MPI_Wtime();
     running_average.add_sample((tock - tick));
@@ -81,13 +83,15 @@ double time_force_calc(int default_samples) {
  * @return Time per integration in ms.
  */
 static double time_calc(int rds) {
-  if (mpi_integrate(0, 0))
+  if (mpi_integrate(0, 0)) {
     return -1;
+  }
 
   /* perform force calculation test */
   const double tick = MPI_Wtime();
-  if (mpi_integrate(rds, -1))
+  if (mpi_integrate(rds, -1)) {
     return -1;
+  }
   const double tock = MPI_Wtime();
 
   /* MPI returns s, return value should be in ms. */

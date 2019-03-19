@@ -88,20 +88,22 @@ int convert_director_to_quat(const Vector3d &d, Vector4d &quat) {
     // If dipole points along z axis:
     if (d_xy == 0) {
       // We need to distinguish between (0,0,d_z) and (0,0,d_z)
-      if (d[2] > 0)
+      if (d[2] > 0) {
         theta2 = 0;
-      else
+      } else {
         theta2 = PI / 2.;
+      }
       phi2 = 0;
     } else {
       // Here, we take care of all other directions
       // Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi - PI/2),
       // where theta and phi - angles are in spherical coordinates
       theta2 = 0.5 * acos(d[2] / dm);
-      if (d[1] < 0)
+      if (d[1] < 0) {
         phi2 = -0.5 * acos(d[0] / d_xy) - PI * 0.25;
-      else
+      } else {
         phi2 = 0.5 * acos(d[0] / d_xy) - PI * 0.25;
+      }
     }
 
     // Calculate the quaternion from the angles
@@ -166,24 +168,27 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
   /* Calculate the angular acceleration. */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 5.*/
-  if (p->p.rotation & ROTATION_X)
+  if (p->p.rotation & ROTATION_X) {
     Wd[0] = (p->f.torque[0] + p->m.omega[1] * p->m.omega[2] *
                                   (p->p.rinertia[1] - p->p.rinertia[2])) /
             p->p.rinertia[0];
-  else
+  } else {
     Wd[0] = 0.0;
-  if (p->p.rotation & ROTATION_Y)
+  }
+  if (p->p.rotation & ROTATION_Y) {
     Wd[1] = (p->f.torque[1] + p->m.omega[2] * p->m.omega[0] *
                                   (p->p.rinertia[2] - p->p.rinertia[0])) /
             p->p.rinertia[1];
-  else
+  } else {
     Wd[1] = 0.0;
-  if (p->p.rotation & ROTATION_Z)
+  }
+  if (p->p.rotation & ROTATION_Z) {
     Wd[2] = (p->f.torque[2] + p->m.omega[0] * p->m.omega[1] *
                                   (p->p.rinertia[0] - p->p.rinertia[1])) /
             p->p.rinertia[2];
-  else
+  } else {
     Wd[2] = 0.0;
+  }
 
   auto const S1 = Qd[0] * Qd[0] + Qd[1] * Qd[1] + Qd[2] * Qd[2] + Qd[3] * Qd[3];
 
@@ -218,16 +223,20 @@ void propagate_omega_quat_particle(Particle *p) {
 
   double Qd[4], Qdd[4], S[3], Wd[3];
   // If rotation for the particle is disabled entirely, return early.
-  if (!p->p.rotation)
+  if (!p->p.rotation) {
     return;
+  }
 
   // Clear rotational velocity for blocked rotation axes.
-  if (!(p->p.rotation & ROTATION_X))
+  if (!(p->p.rotation & ROTATION_X)) {
     p->m.omega[0] = 0;
-  if (!(p->p.rotation & ROTATION_Y))
+  }
+  if (!(p->p.rotation & ROTATION_Y)) {
     p->m.omega[1] = 0;
-  if (!(p->p.rotation & ROTATION_Z))
+  }
+  if (!(p->p.rotation & ROTATION_Z)) {
     p->m.omega[2] = 0;
+  }
 
   define_Qdd(p, Qd, Qdd, S, Wd);
 
@@ -277,14 +286,17 @@ inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
     p.f.torque = t;
   }
 
-  if (!(p.p.rotation & ROTATION_X))
+  if (!(p.p.rotation & ROTATION_X)) {
     p.f.torque[0] = 0;
+  }
 
-  if (!(p.p.rotation & ROTATION_Y))
+  if (!(p.p.rotation & ROTATION_Y)) {
     p.f.torque[1] = 0;
+  }
 
-  if (!(p.p.rotation & ROTATION_Z))
+  if (!(p.p.rotation & ROTATION_Z)) {
     p.f.torque[2] = 0;
+  }
 }
 
 /** convert the torques to the body-fixed frames and propagate angular
@@ -302,8 +314,9 @@ void convert_torques_propagate_omega() {
 
   for (auto &p : local_cells.particles()) {
     // Skip particle if rotation is turned off entirely for it.
-    if (!p.p.rotation)
+    if (!p.p.rotation) {
       continue;
+    }
 
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
 
@@ -370,8 +383,9 @@ void convert_initial_torques() {
 
   INTEG_TRACE(fprintf(stderr, "%d: convert_initial_torques:\n", this_node));
   for (auto &p : local_cells.particles()) {
-    if (!p.p.rotation)
+    if (!p.p.rotation) {
       continue;
+    }
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
   }
 }
@@ -410,21 +424,26 @@ void local_rotate_particle(Particle &p, const Vector3d &axis_space_frame,
   Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
 
   // Rotation turned off entirely?
-  if (!p.p.rotation)
+  if (!p.p.rotation) {
     return;
+  }
 
   // Per coordinate fixing
-  if (!(p.p.rotation & ROTATION_X))
+  if (!(p.p.rotation & ROTATION_X)) {
     axis[0] = 0;
-  if (!(p.p.rotation & ROTATION_Y))
+  }
+  if (!(p.p.rotation & ROTATION_Y)) {
     axis[1] = 0;
-  if (!(p.p.rotation & ROTATION_Z))
+  }
+  if (!(p.p.rotation & ROTATION_Z)) {
     axis[2] = 0;
+  }
   // Re-normalize rotation axis
   double l = axis.norm();
   // Check, if the rotation axis is nonzero
-  if (l < std::numeric_limits<double>::epsilon())
+  if (l < std::numeric_limits<double>::epsilon()) {
     return;
+  }
 
   axis /= l;
 
@@ -441,8 +460,9 @@ void local_rotate_particle(Particle &p, const Vector3d &axis_space_frame,
   // Rotate the particle
   double qn[4]; // Resulting quaternion
   multiply_quaternions(p.r.quat, q, qn);
-  for (int k = 0; k < 4; k++)
+  for (int k = 0; k < 4; k++) {
     p.r.quat[k] = qn[k];
+  }
 }
 
 #endif

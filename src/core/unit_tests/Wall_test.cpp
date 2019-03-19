@@ -29,8 +29,8 @@
 #include "shapes/Wall.hpp"
 
 bool check_distance_function(const Shapes::Shape &s) {
-  for (int i = 0; i < 100; i++)
-    for (int j = 0; j < 100; j++)
+  for (int i = 0; i < 100; i++) {
+    for (int j = 0; j < 100; j++) {
       for (int k = 0; k < 100; k++) {
         Vector3d pos = {i * 0.1, j * 0.1, k * 0.1};
         double dist[3];
@@ -45,24 +45,26 @@ bool check_distance_function(const Shapes::Shape &s) {
         }
 
         /* check if the returned closest point really is on the surface */
-        for (int dim = 0; dim < 3; dim++)
+        for (int dim = 0; dim < 3; dim++) {
           pos[dim] -= dist[dim];
+        }
 
         s.calculate_dist(pos, &d, dist);
         if (std::abs(d) > 1e-12) {
           return false;
         }
       }
+    }
 
-  return true;
-}
+    return true;
+  }
 
-BOOST_AUTO_TEST_CASE(dist_function) {
-  Shapes::Wall w;
-  w.set_normal(Vector3d{3., 5., 7.});
-  w.d() = 0.2;
+  BOOST_AUTO_TEST_CASE(dist_function) {
+    Shapes::Wall w;
+    w.set_normal(Vector3d{3., 5., 7.});
+    w.d() = 0.2;
 
-  BOOST_CHECK(check_distance_function(w));
-}
+    BOOST_CHECK(check_distance_function(w));
+  }
 
-/* @todo  Functional unit test of the distance function */
+  /* @todo  Functional unit test of the distance function */

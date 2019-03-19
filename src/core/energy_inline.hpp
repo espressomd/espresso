@@ -196,10 +196,11 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 #endif
 
 #ifdef EXCLUSIONS
-  if (do_nonbonded(p1, p2))
+  if (do_nonbonded(p1, p2)) {
 #endif
     *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
+  }
 
 #ifdef ELECTROSTATICS
   if (coulomb.method != COULOMB_NONE) {
@@ -212,8 +213,9 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
       break;
     case COULOMB_ELC_P3M:
       ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
-      if (elc_params.dielectric_contrast_on)
+      if (elc_params.dielectric_contrast_on) {
         ret += 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2);
+      }
       break;
 #endif
 #ifdef SCAFACOS
@@ -312,8 +314,9 @@ inline void add_bonded_energy(Particle *p1) {
       }
     }
     /* similar to the force, we prepare the center-center vector */
-    if (n_partners == 1)
+    if (n_partners == 1) {
       get_mi_vector(dx, p1->r.p, p2->r.p);
+    }
 
     if (n_partners == 1) {
       switch (type) {
@@ -355,8 +358,9 @@ inline void add_bonded_energy(Particle *p1) {
 #endif
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
-        if (iaparams->num == 1)
+        if (iaparams->num == 1) {
           bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
+        }
         break;
 #endif
 #ifdef UMBRELLA
@@ -387,8 +391,9 @@ inline void add_bonded_energy(Particle *p1) {
         break;
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
-        if (iaparams->num == 2)
+        if (iaparams->num == 2) {
           bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
+        }
         break;
 #endif
       default:
@@ -404,8 +409,9 @@ inline void add_bonded_energy(Particle *p1) {
         break;
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
-        if (iaparams->num == 3)
+        if (iaparams->num == 3) {
           bond_broken = tab_dihedral_energy(p1, p2, p3, p4, iaparams, &ret);
+        }
         break;
 #endif
       default:
@@ -448,8 +454,9 @@ inline void add_bonded_energy(Particle *p1) {
  */
 inline void add_kinetic_energy(Particle *p1) {
 #ifdef VIRTUAL_SITES
-  if (p1->p.is_virtual)
+  if (p1->p.is_virtual) {
     return;
+  }
 #endif
 
   /* kinetic energy */

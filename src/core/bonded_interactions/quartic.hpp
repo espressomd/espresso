@@ -60,16 +60,18 @@ inline int calc_quartic_pair_force(Particle const *p1, Particle const *p2,
 
   // printf("Quartic dist2 %e, dist %e\n", dist2, dist);
 
-  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut))
+  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
     return 1;
+  }
 
   dr = dist - iaparams->p.quartic.r;
 
   fac = (iaparams->p.quartic.k0 * dr + iaparams->p.quartic.k1 * dr * dr * dr) /
         dist;
 
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     force[i] = -fac * dx[i];
+  }
 
   //  printf("Quartic (%d-%d), dist %e, dx %e %e %e, dr %e, f %e %e %e\n",
   //  p1->p.identity, p2->p.identity, dist, dx[0], dx[1], dx[2], dr, force[0],
@@ -105,8 +107,9 @@ inline int quartic_pair_energy(Particle const *p1, Particle const *p2,
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 
-  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut))
+  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
     return 1;
+  }
 
   double dr2 = Utils::sqr(dist - iaparams->p.quartic.r);
 

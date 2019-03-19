@@ -135,44 +135,45 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_vec_integration_test_odd) {
   auto const sigma = Vector2d{2., 3.};
 
   boost::multi_array<Vector2d, 3> data(Vector3i{10, 10, 10});
-  for (int i = 0; i < 10; i++)
-    for (int j = 0; j < 10; j++)
+  for (int i = 0; i < 10; i++) {
+    for (int j = 0; j < 10; j++) {
       for (int k = 0; k < 10; k++) {
         auto const &h = grid_spacing;
         auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
         data[i][j][k] = {gaussian(x, x0[0], sigma[0]),
                          gaussian(x, x0[1], sigma[1])};
       }
+    }
 
-  auto const p = Vector3d{-.4, 3.14, 0.1};
-  auto const interpolated_value = bspline_3d_gradient_accumulate<order>(
-      p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, Vector<Vector3d, 2>{});
+    auto const p = Vector3d{-.4, 3.14, 0.1};
+    auto const interpolated_value = bspline_3d_gradient_accumulate<order>(
+        p, [&data](const std::array<int, 3> &ind) { return data(ind); },
+        grid_spacing, origin, Vector<Vector3d, 2>{});
 
-  const Vector<Vector3d, 2> exact_value = {del_gaussian(p, x0[0], sigma[0]),
-                                           del_gaussian(p, x0[1], sigma[1])};
+    const Vector<Vector3d, 2> exact_value = {del_gaussian(p, x0[0], sigma[0]),
+                                             del_gaussian(p, x0[1], sigma[1])};
 
-  BOOST_CHECK_SMALL((interpolated_value[0] - exact_value[0]).norm(), 1.e-2);
-  BOOST_CHECK_SMALL((interpolated_value[1] - exact_value[1]).norm(), 1.e-4);
-}
+    BOOST_CHECK_SMALL((interpolated_value[0] - exact_value[0]).norm(), 1.e-2);
+    BOOST_CHECK_SMALL((interpolated_value[1] - exact_value[1]).norm(), 1.e-4);
+  }
 
-BOOST_AUTO_TEST_CASE(interpolation_gradient_integration_test_even) {
-  constexpr int order = 6;
-  const Vector3d grid_spacing = {.1, .2, .3};
-  const Vector3d origin = {-1., 2., -1.4};
-  const int n_nodes = 10;
+  BOOST_AUTO_TEST_CASE(interpolation_gradient_integration_test_even) {
+    constexpr int order = 6;
+    const Vector3d grid_spacing = {.1, .2, .3};
+    const Vector3d origin = {-1., 2., -1.4};
+    const int n_nodes = 10;
 
-  auto const x0 = origin + 0.57 * n_nodes * grid_spacing;
-  auto const sigma = 4.;
+    auto const x0 = origin + 0.57 * n_nodes * grid_spacing;
+    auto const sigma = 4.;
 
-  auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+    auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
 
-  auto const p = Vector3d{-.4, 3.14, 0.1};
-  auto const interpolated_value = bspline_3d_gradient_accumulate<order>(
-      p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, Vector3d{});
+    auto const p = Vector3d{-.4, 3.14, 0.1};
+    auto const interpolated_value = bspline_3d_gradient_accumulate<order>(
+        p, [&data](const std::array<int, 3> &ind) { return data(ind); },
+        grid_spacing, origin, Vector3d{});
 
-  auto const exact_value = del_gaussian(p, x0, sigma);
+    auto const exact_value = del_gaussian(p, x0, sigma);
 
-  BOOST_CHECK_SMALL((interpolated_value - exact_value).norm(), 1.e-4);
-}
+    BOOST_CHECK_SMALL((interpolated_value - exact_value).norm(), 1.e-4);
+  }

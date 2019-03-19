@@ -524,7 +524,7 @@ if(WITH_CLANG_TIDY)
     set(
       CMAKE_CXX_CLANG_TIDY
       "${CLANG_TIDY_EXE}"
-      "-checks=*,clang-analyzer-alpha.*,-misc-unused-*,-android-*,-fuchsia-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses, -clang-analyzer-security.FloatLoopCounter, -clang-analyzer-optin.mpi.MPI-Checker,-boost-use-to-string,-hicpp-*, modernize-use-nullptr, modernize-use-auto, modernize-pass-by-value, modernize-avoid-c-arrays, modernize-use-equals-default, modernize-deprecated-headers, readability-non-const-parameter"
+      "-checks=*,clang-analyzer-alpha.*,-misc-unused-*,-android-*,-fuchsia-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses, -clang-analyzer-security.FloatLoopCounter, -clang-analyzer-optin.mpi.MPI-Checker,-boost-use-to-string,-hicpp-*, modernize-use-nullptr, modernize-use-auto, modernize-pass-by-value, modernize-avoid-c-arrays, modernize-use-equals-default, modernize-deprecated-headers, readability-non-const-parameter, readability-braces-around-statements"
       "-header-filter=.*"
       "-warnings-as-errors=*")
   endif()

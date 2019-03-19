@@ -44,9 +44,10 @@ public:
   void construct(VariantMap const &params) override {
     set_from_args(m_obs, params, "obs");
 
-    if (m_obs)
+    if (m_obs) {
       m_accumulator = std::make_shared<::Accumulators::MeanVarianceCalculator>(
           m_obs->observable(), get_value_or<int>(params, "delta_N", 1));
+    }
   }
 
   std::shared_ptr<::Accumulators::MeanVarianceCalculator>
@@ -64,11 +65,13 @@ public:
     if (method == "update") {
       mean_variance_calculator()->update();
     }
-    if (method == "get_mean")
+    if (method == "get_mean") {
       return mean_variance_calculator()->get_mean();
+    }
 
-    if (method == "get_variance")
+    if (method == "get_variance") {
       return mean_variance_calculator()->get_variance();
+    }
     return {};
   }
 

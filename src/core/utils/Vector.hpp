@@ -117,8 +117,9 @@ public:
   inline Vector &normalize() {
     auto const l = norm();
     if (l > T(0)) {
-      for (int i = 0; i < N; i++)
+      for (int i = 0; i < N; i++) {
         this->operator[](i) /= l;
+      }
     }
 
     return *this;

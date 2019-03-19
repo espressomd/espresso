@@ -471,8 +471,9 @@ void mpi_who_has_slave(int, int) {
 
   n_part = cells_get_n_particles();
   MPI_Gather(&n_part, 1, MPI_INT, nullptr, 0, MPI_INT, 0, comm_cart);
-  if (n_part == 0)
+  if (n_part == 0) {
     return;
+  }
 
   sendbuf = Utils::realloc(sendbuf, sizeof(int) * n_part);
 
@@ -500,8 +501,9 @@ void mpi_who_has() {
     COMM_TRACE(
         fprintf(stderr, "node %d reports %d particles\n", pnode, sizes[pnode]));
     if (pnode == this_node) {
-      for (auto const &p : local_cells.particles())
+      for (auto const &p : local_cells.particles()) {
         particle_node[p.p.identity] = this_node;
+      }
 
     } else if (sizes[pnode] > 0) {
       if (pdata_s < sizes[pnode]) {
@@ -510,8 +512,9 @@ void mpi_who_has() {
       }
       MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
-      for (int i = 0; i < sizes[pnode]; i++)
+      for (int i = 0; i < sizes[pnode]; i++) {
         particle_node[pdata[i]] = pnode;
+      }
     }
   }
   free(pdata);
@@ -526,11 +529,13 @@ void build_particle_node() { mpi_who_has(); }
  *  @brief Get the mpi rank which owns the particle with id.
  */
 int get_particle_node(int id) {
-  if ((id < 0) or (id > max_seen_particle))
+  if ((id < 0) or (id > max_seen_particle)) {
     throw std::runtime_error("Invalid particle id!");
+  }
 
-  if (particle_node.empty())
+  if (particle_node.empty()) {
     build_particle_node();
+  }
 
   auto const needle = particle_node.find(id);
 
@@ -561,8 +566,9 @@ void realloc_local_particles(int part) {
                                      sizeof(Particle *) * max_local_particles);
 
     /* Set new memory to 0 */
-    for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
+    for (int i = (max_seen_particle + 1); i < max_local_particles; i++) {
       local_particles[i] = nullptr;
+    }
   }
 }
 
@@ -581,27 +587,31 @@ int realloc_particlelist(ParticleList *l, int size) {
                      this_node, (void *)l, l->n, l->max, size));
 
   if (size < l->max) {
-    if (size == 0)
+    if (size == 0) {
       /* to be able to free an array again */
       l->max = 0;
-    else
+    } else {
       /* shrink not as fast, just lose half, rounded up */
       l->max =
           PART_INCREMENT *
           (((l->max + size + 1) / 2 + PART_INCREMENT - 1) / PART_INCREMENT);
-  } else
+    }
+  } else {
     /* round up */
     l->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
-  if (l->max != old_max)
+  }
+  if (l->max != old_max) {
     l->part = Utils::realloc(l->part, sizeof(Particle) * l->max);
+  }
   return l->part != old_start;
 }
 
 void update_local_particles(ParticleList *pl) {
   Particle *p = pl->part;
   int n = pl->n, i;
-  for (i = 0; i < n; i++)
+  for (i = 0; i < n; i++) {
     local_particles[p[i].p.identity] = &p[i];
+  }
 }
 
 void append_unindexed_particle(ParticleList *l, Particle &&part) {
@@ -615,10 +625,11 @@ Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
 
   assert(p->p.identity <= max_seen_particle);
 
-  if (re)
+  if (re) {
     update_local_particles(l);
-  else
+  } else {
     local_particles[p->p.identity] = p;
+  }
   return p;
 }
 
@@ -794,8 +805,9 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
 
 void prefetch_particle_data(std::vector<int> ids) {
   /* Nothing to do on a single node. */
-  if (comm_cart.size() == 1)
+  if (comm_cart.size() == 1) {
     return;
+  }
 
   /* Remove local, already cached and non-existent particles from the list. */
   ids.erase(std::remove_if(ids.begin(), ids.end(),
@@ -811,8 +823,9 @@ void prefetch_particle_data(std::vector<int> ids) {
             ids.end());
 
   /* Don't prefetch more particles than fit the cache. */
-  if (ids.size() > particle_fetch_cache.max_size())
+  if (ids.size() > particle_fetch_cache.max_size()) {
     ids.resize(particle_fetch_cache.max_size());
+  }
 
   /* Fetch the particles... */
   auto parts = mpi_get_particles(ids);
@@ -1196,12 +1209,14 @@ Particle *local_place_particle(int part, const double p[3], int _new) {
     pt = new (&cell->part[cell->n - 1]) Particle;
 
     pt->p.identity = part;
-    if (rl)
+    if (rl) {
       update_local_particles(cell);
-    else
+    } else {
       local_particles[pt->p.identity] = pt;
-  } else
+    }
+  } else {
     pt = local_particles[part];
+  }
 
   PART_TRACE(fprintf(
       stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
@@ -1231,17 +1246,18 @@ void local_remove_all_particles() {
     cell = local_cells.cell[c];
     p = cell->part;
     np = cell->n;
-    for (i = 0; i < np; i++)
+    for (i = 0; i < np; i++) {
       free_particle(&p[i]);
+    }
     cell->n = 0;
   }
 }
 
 void local_rescale_particles(int dir, double scale) {
   for (auto &p : local_cells.particles()) {
-    if (dir < 3)
+    if (dir < 3) {
       p.r.p[dir] *= scale;
-    else {
+    } else {
       p.r.p *= scale;
     }
   }
@@ -1278,15 +1294,16 @@ int try_delete_bond(Particle *part, const int *bond) {
     partners = bonded_ia_params[type].num;
 
     // If the bond type does not match the one, we want to delete, skip
-    if (type != bond[0])
+    if (type != bond[0]) {
       i += 1 + partners;
-    else {
+    } else {
       // Go over the bond partners
       for (j = 1; j <= partners; j++) {
         // Leave the loop early, if the bond to delete and the bond with in the
         // particle don't match
-        if (bond[j] != bl->e[i + j])
+        if (bond[j] != bl->e[i + j]) {
           break;
+        }
       }
       // If we did not exit from the loop early, all parameters matched
       // and we go on with deleting
@@ -1309,341 +1326,365 @@ void remove_all_bonds_to(int identity) {
 
     for (i = 0; i < bl->n;) {
       partners = bonded_ia_params[bl->e[i]].num;
-      for (j = 1; j <= partners; j++)
-        if (bl->e[i + j] == identity)
+      for (j = 1; j <= partners; j++) {
+        if (bl->e[i + j] == identity) {
           break;
-      if (j <= partners) {
-        bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
-      } else
-        i += 1 + partners;
-    }
-    if (i != bl->n) {
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: bond information corrupt for "
-              "particle %d, exiting...\n",
-              this_node, p.p.identity);
-      errexit();
-    }
-  }
-}
-
-#ifdef EXCLUSIONS
-void local_change_exclusion(int part1, int part2, int _delete) {
-  if (part1 == -1 && part2 == -1) {
-    for (auto &p : local_cells.particles()) {
-      p.el.clear();
-    }
-
-    return;
-  }
-
-  /* part1, if here */
-  auto part = local_particles[part1];
-  if (part) {
-    if (_delete)
-      try_delete_exclusion(part, part2);
-    else
-      try_add_exclusion(part, part2);
-  }
-
-  /* part2, if here */
-  part = local_particles[part2];
-  if (part) {
-    if (_delete)
-      try_delete_exclusion(part, part1);
-    else
-      try_add_exclusion(part, part1);
-  }
-}
-
-void try_add_exclusion(Particle *part, int part2) {
-  for (int i = 0; i < part->el.n; i++)
-    if (part->el.e[i] == part2)
-      return;
-
-  part->el.push_back(part2);
-}
-
-void try_delete_exclusion(Particle *part, int part2) {
-  IntList &el = part->el;
-
-  if (!el.empty()) {
-    el.erase(std::remove(el.begin(), el.end(), part2), el.end());
-  };
-}
-#endif
-
-void send_particles(ParticleList *particles, int node) {
-  PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,
-                     particles->n, node));
-
-  comm_cart.send(node, REQ_SNDRCV_PART, *particles);
-
-  /* remove particles from this nodes local list and free data */
-  for (int pc = 0; pc < particles->n; pc++) {
-    local_particles[particles->part[pc].p.identity] = nullptr;
-    free_particle(&particles->part[pc]);
-  }
-
-  realloc_particlelist(particles, particles->n = 0);
-}
-
-void recv_particles(ParticleList *particles, int node) {
-  PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
-  comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
-
-  update_local_particles(particles);
-}
-
-#ifdef EXCLUSIONS
-
-namespace {
-/* keep a unique list for particle i. Particle j is only added if it is not i
-   and not already in the list. */
-void add_partner(IntList *il, int i, int j, int distance) {
-  int k;
-  if (j == i)
-    return;
-  for (k = 0; k < il->n; k += 2)
-    if (il->e[k] == j)
-      return;
-
-  il->push_back(j);
-  il->push_back(distance);
-}
-} // namespace
-
-int change_exclusion(int part1, int part2, int _delete) {
-  if (particle_exists(part1) && particle_exists(part2)) {
-    mpi_send_exclusion(part1, part2, _delete);
-    return ES_OK;
-  } else {
-    return ES_ERROR;
-  }
-}
-
-void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
-
-void auto_exclusions(int distance) {
-  int count, p, i, j, p1, p2, p3, dist1, dist2;
-  Bonded_ia_parameters *ia_params;
-
-  /* partners is a list containing the currently found excluded particles for
-     each particle, and their distance, as a interleaved list */
-  std::unordered_map<int, IntList> partners;
-
-  /* We need bond information */
-  partCfg().update_bonds();
-
-  /* determine initial connectivity */
-  for (auto const &part1 : partCfg()) {
-    p1 = part1.p.identity;
-    for (i = 0; i < part1.bl.n;) {
-      ia_params = &bonded_ia_params[part1.bl.e[i++]];
-      if (ia_params->num == 1) {
-        p2 = part1.bl.e[i++];
-        /* you never know what the user does, may bond a particle to itself...?
-         */
-        if (p2 != p1) {
-          add_partner(&partners[p1], p1, p2, 1);
-          add_partner(&partners[p2], p2, p1, 1);
         }
-      } else
-        i += ia_params->num;
-    }
-  }
-
-  /* calculate transient connectivity. For each of the current neighbors,
-     also exclude their close enough neighbors.
-  */
-  for (count = 1; count < distance; count++) {
-    for (p1 = 0; p1 <= max_seen_particle; p1++) {
-      for (i = 0; i < partners[p1].n; i += 2) {
-        p2 = partners[p1].e[i];
-        dist1 = partners[p1].e[i + 1];
-        if (dist1 > distance)
-          continue;
-        /* loop over all partners of the partner */
-        for (j = 0; j < partners[p2].n; j += 2) {
-          p3 = partners[p2].e[j];
-          dist2 = dist1 + partners[p2].e[j + 1];
-          if (dist2 > distance)
-            continue;
-          add_partner(&partners[p1], p1, p3, dist2);
-          add_partner(&partners[p3], p3, p1, dist2);
+        if (j <= partners) {
+          bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
+        } else {
+          i += 1 + partners;
         }
+      }
+      if (i != bl->n) {
+        fprintf(stderr,
+                "%d: INTERNAL ERROR: bond information corrupt for "
+                "particle %d, exiting...\n",
+                this_node, p.p.identity);
+        errexit();
       }
     }
   }
 
-  /* setup the exclusions and clear the arrays. We do not setup the exclusions
-     up there, since on_part_change clears the partCfg, so that we would have to
-     restore it continuously. Of course this could be optimized by bundling the
-     exclusions, but this is only done once and the overhead is as much as for
-     setting the bonds, which the user apparently accepted.
-  */
-  for (p = 0; p <= max_seen_particle; p++) {
-    for (j = 0; j < partners[p].n; j++)
-      if (p < partners[p].e[j])
-        change_exclusion(p, partners[p].e[j], 0);
+#ifdef EXCLUSIONS
+  void local_change_exclusion(int part1, int part2, int _delete) {
+    if (part1 == -1 && part2 == -1) {
+      for (auto &p : local_cells.particles()) {
+        p.el.clear();
+      }
+
+      return;
+    }
+
+    /* part1, if here */
+    auto part = local_particles[part1];
+    if (part) {
+      if (_delete) {
+        try_delete_exclusion(part, part2);
+      } else {
+        try_add_exclusion(part, part2);
+      }
+    }
+
+    /* part2, if here */
+    part = local_particles[part2];
+    if (part) {
+      if (_delete) {
+        try_delete_exclusion(part, part1);
+      } else {
+        try_add_exclusion(part, part1);
+      }
+    }
   }
-}
+
+  void try_add_exclusion(Particle * part, int part2) {
+    for (int i = 0; i < part->el.n; i++) {
+      if (part->el.e[i] == part2) {
+        return;
+      }
+
+      part->el.push_back(part2);
+    }
+
+    void try_delete_exclusion(Particle * part, int part2) {
+      IntList &el = part->el;
+
+      if (!el.empty()) {
+        el.erase(std::remove(el.begin(), el.end(), part2), el.end());
+      };
+    }
+#endif
+
+    void send_particles(ParticleList * particles, int node) {
+      PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,
+                         particles->n, node));
+
+      comm_cart.send(node, REQ_SNDRCV_PART, *particles);
+
+      /* remove particles from this nodes local list and free data */
+      for (int pc = 0; pc < particles->n; pc++) {
+        local_particles[particles->part[pc].p.identity] = nullptr;
+        free_particle(&particles->part[pc]);
+      }
+
+      realloc_particlelist(particles, particles->n = 0);
+    }
+
+    void recv_particles(ParticleList * particles, int node) {
+      PART_TRACE(
+          fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
+      comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
+
+      update_local_particles(particles);
+    }
+
+#ifdef EXCLUSIONS
+
+    namespace {
+    /* keep a unique list for particle i. Particle j is only added if it is not
+       i and not already in the list. */
+    void add_partner(IntList *il, int i, int j, int distance) {
+      int k;
+      if (j == i) {
+        return;
+      }
+      for (k = 0; k < il->n; k += 2) {
+        if (il->e[k] == j) {
+          return;
+        }
+
+        il->push_back(j);
+        il->push_back(distance);
+      }
+    } // namespace
+
+    int change_exclusion(int part1, int part2, int _delete) {
+      if (particle_exists(part1) && particle_exists(part2)) {
+        mpi_send_exclusion(part1, part2, _delete);
+        return ES_OK;
+      } else {
+        return ES_ERROR;
+      }
+    }
+
+    void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
+
+    void auto_exclusions(int distance) {
+      int count, p, i, j, p1, p2, p3, dist1, dist2;
+      Bonded_ia_parameters *ia_params;
+
+      /* partners is a list containing the currently found excluded particles
+         for each particle, and their distance, as a interleaved list */
+      std::unordered_map<int, IntList> partners;
+
+      /* We need bond information */
+      partCfg().update_bonds();
+
+      /* determine initial connectivity */
+      for (auto const &part1 : partCfg()) {
+        p1 = part1.p.identity;
+        for (i = 0; i < part1.bl.n;) {
+          ia_params = &bonded_ia_params[part1.bl.e[i++]];
+          if (ia_params->num == 1) {
+            p2 = part1.bl.e[i++];
+            /* you never know what the user does, may bond a particle to
+             * itself...?
+             */
+            if (p2 != p1) {
+              add_partner(&partners[p1], p1, p2, 1);
+              add_partner(&partners[p2], p2, p1, 1);
+            }
+          } else {
+            i += ia_params->num;
+          }
+        }
+      }
+
+      /* calculate transient connectivity. For each of the current neighbors,
+         also exclude their close enough neighbors.
+      */
+      for (count = 1; count < distance; count++) {
+        for (p1 = 0; p1 <= max_seen_particle; p1++) {
+          for (i = 0; i < partners[p1].n; i += 2) {
+            p2 = partners[p1].e[i];
+            dist1 = partners[p1].e[i + 1];
+            if (dist1 > distance) {
+              continue;
+            }
+            /* loop over all partners of the partner */
+            for (j = 0; j < partners[p2].n; j += 2) {
+              p3 = partners[p2].e[j];
+              dist2 = dist1 + partners[p2].e[j + 1];
+              if (dist2 > distance) {
+                continue;
+              }
+              add_partner(&partners[p1], p1, p3, dist2);
+              add_partner(&partners[p3], p3, p1, dist2);
+            }
+          }
+        }
+      }
+
+      /* setup the exclusions and clear the arrays. We do not setup the
+         exclusions up there, since on_part_change clears the partCfg, so that
+         we would have to restore it continuously. Of course this could be
+         optimized by bundling the exclusions, but this is only done once and
+         the overhead is as much as for setting the bonds, which the user
+         apparently accepted.
+      */
+      for (p = 0; p <= max_seen_particle; p++) {
+        for (j = 0; j < partners[p].n; j++) {
+          if (p < partners[p].e[j]) {
+            change_exclusion(p, partners[p].e[j], 0);
+          }
+        }
+      }
 
 #endif
 
-void init_type_map(int type) {
-  type_list_enable = true;
-  if (type < 0)
-    throw std::runtime_error("Types may not be negative");
+      void init_type_map(int type) {
+        type_list_enable = true;
+        if (type < 0) {
+          throw std::runtime_error("Types may not be negative");
+        }
 
-  // fill particle map
-  if (particle_type_map.count(type) == 0)
-    particle_type_map[type] = std::unordered_set<int>();
+        // fill particle map
+        if (particle_type_map.count(type) == 0) {
+          particle_type_map[type] = std::unordered_set<int>();
+        }
 
-  for (auto const &p : partCfg()) {
-    if (p.p.type == type)
-      particle_type_map.at(type).insert(p.p.identity);
-  }
-}
+        for (auto const &p : partCfg()) {
+          if (p.p.type == type) {
+            particle_type_map.at(type).insert(p.p.identity);
+          }
+        }
+      }
 
-void remove_id_from_map(int part_id, int type) {
-  if (particle_type_map.find(type) != particle_type_map.end())
-    particle_type_map.at(type).erase(part_id);
-}
+      void remove_id_from_map(int part_id, int type) {
+        if (particle_type_map.find(type) != particle_type_map.end()) {
+          particle_type_map.at(type).erase(part_id);
+        }
+      }
 
-int get_random_p_id(int type) {
-  if (particle_type_map.at(type).size() == 0)
-    throw std::runtime_error("No particles of given type could be found");
-  int rand_index = i_random(particle_type_map.at(type).size());
-  return *std::next(particle_type_map[type].begin(), rand_index);
-}
+      int get_random_p_id(int type) {
+        if (particle_type_map.at(type).size() == 0) {
+          throw std::runtime_error("No particles of given type could be found");
+        }
+        int rand_index = i_random(particle_type_map.at(type).size());
+        return *std::next(particle_type_map[type].begin(), rand_index);
+      }
 
-void add_id_to_type_map(int part_id, int type) {
-  if (particle_type_map.find(type) != particle_type_map.end())
-    particle_type_map.at(type).insert(part_id);
-}
+      void add_id_to_type_map(int part_id, int type) {
+        if (particle_type_map.find(type) != particle_type_map.end()) {
+          particle_type_map.at(type).insert(part_id);
+        }
+      }
 
-int number_of_particles_with_type(int type) {
-  return static_cast<int>(particle_type_map.at(type).size());
-}
+      int number_of_particles_with_type(int type) {
+        return static_cast<int>(particle_type_map.at(type).size());
+      }
 
-// The following functions are used by the python interface to obtain
-// properties of a particle, which are only compiled in in some configurations
-// This is needed, because cython does not support conditional compilation
-// within a ctypedef definition
+      // The following functions are used by the python interface to obtain
+      // properties of a particle, which are only compiled in in some
+      // configurations This is needed, because cython does not support
+      // conditional compilation within a ctypedef definition
 
 #ifdef ROTATION
-void pointer_to_omega_body(Particle const *p, double const *&res) {
-  res = p->m.omega.data();
-}
+      void pointer_to_omega_body(Particle const *p, double const *&res) {
+        res = p->m.omega.data();
+      }
 
-void pointer_to_quat(Particle const *p, double const *&res) {
-  res = p->r.quat.data();
-}
+      void pointer_to_quat(Particle const *p, double const *&res) {
+        res = p->r.quat.data();
+      }
 
 #endif
 
-void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
+      void pointer_to_q(Particle const *p, double const *&res) {
+        res = &(p->p.q);
+      }
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, int const *&res) {
-  res = &(p->p.is_virtual);
-}
+      void pointer_to_virtual(Particle const *p, int const *&res) {
+        res = &(p->p.is_virtual);
+      }
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void pointer_to_vs_quat(Particle const *p, double const *&res) {
-  res = (p->p.vs_relative.quat.data());
-}
+      void pointer_to_vs_quat(Particle const *p, double const *&res) {
+        res = (p->p.vs_relative.quat.data());
+      }
 
-void pointer_to_vs_relative(Particle const *p, int const *&res1,
-                            double const *&res2, double const *&res3) {
-  res1 = &(p->p.vs_relative.to_particle_id);
-  res2 = &(p->p.vs_relative.distance);
-  res3 = p->p.vs_relative.rel_orientation.data();
-}
+      void pointer_to_vs_relative(Particle const *p, int const *&res1,
+                                  double const *&res2, double const *&res3) {
+        res1 = &(p->p.vs_relative.to_particle_id);
+        res2 = &(p->p.vs_relative.distance);
+        res3 = p->p.vs_relative.rel_orientation.data();
+      }
 #endif
 
 #ifdef DIPOLES
 
-void pointer_to_dipm(Particle const *p, double const *&res) {
-  res = &(p->p.dipm);
-}
+      void pointer_to_dipm(Particle const *p, double const *&res) {
+        res = &(p->p.dipm);
+      }
 #endif
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle const *p, int const *&res1,
-                          double const *&res2) {
-  res1 = &(p->p.ext_flag);
-  res2 = p->p.ext_force.data();
-}
+      void pointer_to_ext_force(Particle const *p, int const *&res1,
+                                double const *&res2) {
+        res1 = &(p->p.ext_flag);
+        res2 = p->p.ext_force.data();
+      }
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle const *p, int const *&res1,
-                           double const *&res2) {
-  res1 = &(p->p.ext_flag);
-  res2 = p->p.ext_torque.data();
-}
+      void pointer_to_ext_torque(Particle const *p, int const *&res1,
+                                 double const *&res2) {
+        res1 = &(p->p.ext_flag);
+        res2 = p->p.ext_torque.data();
+      }
 #endif
-void pointer_to_fix(Particle const *p, int const *&res) {
-  res = &(p->p.ext_flag);
-}
+      void pointer_to_fix(Particle const *p, int const *&res) {
+        res = &(p->p.ext_flag);
+      }
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
-void pointer_to_gamma(Particle const *p, double const *&res) {
+      void pointer_to_gamma(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
-  res = &(p->p.gamma);
+        res = &(p->p.gamma);
 #else
-  res = p->p.gamma.data(); // array [3]
+        res = p->p.gamma.data(); // array [3]
 #endif // PARTICLE_ANISTROPY
-}
+      }
 
 #ifdef ROTATION
-void pointer_to_gamma_rot(Particle const *p, double const *&res) {
+      void pointer_to_gamma_rot(Particle const *p, double const *&res) {
 #ifndef PARTICLE_ANISOTROPY
-  res = &(p->p.gamma_rot);
+        res = &(p->p.gamma_rot);
 #else
-  res = p->p.gamma_rot.data(); // array [3]
+        res = p->p.gamma_rot.data(); // array [3]
 #endif // ROTATIONAL_INERTIA
-}
+      }
 #endif // ROTATION
 
-void pointer_to_temperature(Particle const *p, double const *&res) {
-  res = &(p->p.T);
-}
+      void pointer_to_temperature(Particle const *p, double const *&res) {
+        res = &(p->p.T);
+      }
 #endif // LANGEVIN_PER_PARTICLE
 
-void pointer_to_rotation(Particle const *p, int const *&res) {
-  res = &(p->p.rotation);
-}
+      void pointer_to_rotation(Particle const *p, int const *&res) {
+        res = &(p->p.rotation);
+      }
 
 #ifdef ENGINE
-void pointer_to_swimming(Particle const *p,
-                         ParticleParametersSwimming const *&swim) {
-  swim = &(p->swim);
-}
+      void pointer_to_swimming(Particle const *p,
+                               ParticleParametersSwimming const *&swim) {
+        swim = &(p->swim);
+      }
 #endif
 
 #ifdef ROTATIONAL_INERTIA
-void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
-  res = p->p.rinertia.data();
-}
+      void pointer_to_rotational_inertia(Particle const *p,
+                                         double const *&res) {
+        res = p->p.rinertia.data();
+      }
 #endif
 
 #ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res) {
-  res = p->p.bond_site.data();
-}
+      void pointer_to_bond_site(Particle const *p, double const *&res) {
+        res = p->p.bond_site.data();
+      }
 #endif
 
 #ifdef MEMBRANE_COLLISION
-void pointer_to_out_direction(const Particle *p, const double *&res) {
-  res = p->p.out_direction.data();
-}
+      void pointer_to_out_direction(const Particle *p, const double *&res) {
+        res = p->p.out_direction.data();
+      }
 #endif
 
-bool particle_exists(int part_id) {
-  if (particle_node.empty())
-    build_particle_node();
-  return particle_node.count(part_id);
-}
+      bool particle_exists(int part_id) {
+        if (particle_node.empty()) {
+          build_particle_node();
+        }
+        return particle_node.count(part_id);
+      }

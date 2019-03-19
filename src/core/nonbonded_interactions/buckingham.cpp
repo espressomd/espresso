@@ -32,8 +32,9 @@ int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
                           double shift) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data)
+  if (!data) {
     return ES_ERROR;
+  }
 
   data->BUCK_A = A;
   data->BUCK_B = B;

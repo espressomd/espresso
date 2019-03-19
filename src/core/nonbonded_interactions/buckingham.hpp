@@ -106,13 +106,14 @@ inline double buck_pair_energy(const Particle *p1, const Particle *p2,
   if ((dist < ia_params->BUCK_cut)) {
     /* case: resulting force/energy greater than discont and
              less than cutoff (true Buckingham region) */
-    if (dist > ia_params->BUCK_discont)
+    if (dist > ia_params->BUCK_discont) {
       return buck_energy_r(ia_params->BUCK_A, ia_params->BUCK_B,
                            ia_params->BUCK_C, ia_params->BUCK_D,
                            ia_params->BUCK_shift, dist);
-    else
+    } else {
       /* resulting force/energy in the linear region*/
       return (ia_params->BUCK_F1 + ia_params->BUCK_F2 * dist);
+    }
   }
   return 0.0;
 }

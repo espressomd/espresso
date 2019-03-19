@@ -327,64 +327,66 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
     auto const sigma = Vector2d{2., 3.};
 
     boost::multi_array<Vector2d, 3> data(Vector3i{n_nodes, n_nodes, n_nodes});
-    for (int i = 0; i < n_nodes; i++)
-      for (int j = 0; j < n_nodes; j++)
+    for (int i = 0; i < n_nodes; i++) {
+      for (int j = 0; j < n_nodes; j++) {
         for (int k = 0; k < n_nodes; k++) {
           auto const &h = grid_spacing;
           auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
           data[i][j][k] = {gaussian(x, x0[0], sigma[0]),
                            gaussian(x, x0[1], sigma[1])};
         }
+      }
 
-    Field field(data, grid_spacing, origin);
+      Field field(data, grid_spacing, origin);
 
-    auto const p = Vector3d{-.4, 3.14, 0.1};
+      auto const p = Vector3d{-.4, 3.14, 0.1};
 
-    auto const field_value = field(p);
+      auto const field_value = field(p);
 
-    auto const interpolated_value = bspline_3d_accumulate<2>(
-        p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-        grid_spacing, origin, Vector2d{});
+      auto const interpolated_value = bspline_3d_accumulate<2>(
+          p, [&data](const std::array<int, 3> &ind) { return data(ind); },
+          grid_spacing, origin, Vector2d{});
 
-    BOOST_CHECK_SMALL((interpolated_value - field_value).norm(),
-                      std::numeric_limits<double>::epsilon());
-  }
+      BOOST_CHECK_SMALL((interpolated_value - field_value).norm(),
+                        std::numeric_limits<double>::epsilon());
+    }
 
-  /* jacobian value */
-  {
-    using Utils::Interpolation::bspline_3d_gradient_accumulate;
+    /* jacobian value */
+    {
+      using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
-    const Vector3d grid_spacing = {.1, .2, .3};
-    const Vector3d origin = {-1., 2., -1.4};
-    const int n_nodes = 10;
+      const Vector3d grid_spacing = {.1, .2, .3};
+      const Vector3d origin = {-1., 2., -1.4};
+      const int n_nodes = 10;
 
-    auto const a = origin + 0.37 * n_nodes * grid_spacing;
-    Vector3d x0[2] = {0.12 * a, -3. * a};
-    auto const sigma = Vector2d{2., 3.};
+      auto const a = origin + 0.37 * n_nodes * grid_spacing;
+      Vector3d x0[2] = {0.12 * a, -3. * a};
+      auto const sigma = Vector2d{2., 3.};
 
-    boost::multi_array<Vector2d, 3> data(Vector3i{n_nodes, n_nodes, n_nodes});
-    for (int i = 0; i < n_nodes; i++)
-      for (int j = 0; j < n_nodes; j++)
-        for (int k = 0; k < n_nodes; k++) {
-          auto const &h = grid_spacing;
-          auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
-          data[i][j][k] = {gaussian(x, x0[0], sigma[0]),
-                           gaussian(x, x0[1], sigma[1])};
+      boost::multi_array<Vector2d, 3> data(Vector3i{n_nodes, n_nodes, n_nodes});
+      for (int i = 0; i < n_nodes; i++) {
+        for (int j = 0; j < n_nodes; j++) {
+          for (int k = 0; k < n_nodes; k++) {
+            auto const &h = grid_spacing;
+            auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
+            data[i][j][k] = {gaussian(x, x0[0], sigma[0]),
+                             gaussian(x, x0[1], sigma[1])};
+          }
         }
 
-    Field field(data, grid_spacing, origin);
+        Field field(data, grid_spacing, origin);
 
-    auto const p = Vector3d{-.4, 3.14, 0.1};
+        auto const p = Vector3d{-.4, 3.14, 0.1};
 
-    auto const field_value = field.jacobian(p);
+        auto const field_value = field.jacobian(p);
 
-    auto const interpolated_value = bspline_3d_gradient_accumulate<2>(
-        p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-        grid_spacing, origin, Field::jacobian_type{});
+        auto const interpolated_value = bspline_3d_gradient_accumulate<2>(
+            p, [&data](const std::array<int, 3> &ind) { return data(ind); },
+            grid_spacing, origin, Field::jacobian_type{});
 
-    BOOST_CHECK_SMALL((interpolated_value[0] - field_value[0]).norm(),
-                      std::numeric_limits<double>::epsilon());
-    BOOST_CHECK_SMALL((interpolated_value[1] - field_value[1]).norm(),
-                      std::numeric_limits<double>::epsilon());
-  }
-}
+        BOOST_CHECK_SMALL((interpolated_value[0] - field_value[0]).norm(),
+                          std::numeric_limits<double>::epsilon());
+        BOOST_CHECK_SMALL((interpolated_value[1] - field_value[1]).norm(),
+                          std::numeric_limits<double>::epsilon());
+      }
+    }

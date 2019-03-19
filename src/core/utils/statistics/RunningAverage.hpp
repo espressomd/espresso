@@ -62,17 +62,19 @@ public:
 
   /** Average of the samples */
   Scalar avg() const {
-    if (m_n > 0)
+    if (m_n > 0) {
       return m_new_avg;
-    else
+    } else {
       return 0.0;
+    }
   }
   /** Variance of the samples */
   Scalar var() const {
-    if (m_n > 1)
+    if (m_n > 1) {
       return m_new_var / m_n;
-    else
+    } else {
       return 0.0;
+    }
   }
 
   /** Standard deviation of the samples */

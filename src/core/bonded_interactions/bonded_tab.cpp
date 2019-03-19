@@ -27,8 +27,9 @@ int tabulated_bonded_set_params(int bond_type,
                                 TabulatedBondedInteraction tab_type, double min,
                                 double max, std::vector<double> const &energy,
                                 std::vector<double> const &force) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   assert(max >= min);
   assert((max == min) || force.size() > 1);

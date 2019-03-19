@@ -102,8 +102,9 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
         fac = sigmoid_force_r(ia_params->membrane_a, ia_params->membrane_n,
                               r_off) /
               dist;
-        for (j = 0; j < 3; j++)
+        for (j = 0; j < 3; j++) {
           force[j] -= fac * dir[j] / ndir;
+        }
       }
     }
   }

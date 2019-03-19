@@ -52,8 +52,9 @@ public:
                Predicate const &pred)
       : m_it(it), m_end(end), m_p(pred) {
     /* increment until the first element that is not skipped. */
-    if ((m_it != m_end) && m_p(*m_it))
+    if ((m_it != m_end) && m_p(*m_it)) {
       increment();
+    }
   }
 
 private:
@@ -61,8 +62,9 @@ private:
 
   void increment() {
     /* Never increment past the end */
-    if (m_it == m_end)
+    if (m_it == m_end) {
       return;
+    }
 
     do {
       ++m_it;

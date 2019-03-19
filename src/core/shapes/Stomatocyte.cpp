@@ -253,8 +253,9 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
     break;
   case 4:
     if ((a - b + c - 2.0 * sqrt(2.0) * c - sqrt((b - c) * (b + 5.0 * c)) -
-         dist_2D[0] - dist_2D[1]) > 0)
+         dist_2D[0] - dist_2D[1]) > 0) {
       distance = mindist;
+    }
     break;
   }
 
@@ -304,10 +305,11 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
     matrix[6] = 0.0;
     matrix[7] = 0.0;
 
-    if (zd > 0)
+    if (zd > 0) {
       matrix[8] = 1.0;
-    else
+    } else {
       matrix[8] = -1.0;
+    }
   }
 
   // Next we determine the 3D vector between the center

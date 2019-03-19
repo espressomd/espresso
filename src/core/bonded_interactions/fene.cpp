@@ -27,8 +27,9 @@
 #include "communication.hpp"
 
 int fene_set_params(int bond_type, double k, double drmax, double r0) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   make_bond_type_exist(bond_type);
 

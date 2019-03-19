@@ -66,8 +66,9 @@ bool Ellipsoid::inside_ellipsoid(const Vector3d &ppos) const {
   if (Utils::sqr(ppos[0] / m_semiaxes[0]) +
           Utils::sqr(ppos[1] / m_semiaxes[1]) +
           Utils::sqr(ppos[2] / m_semiaxes[2]) <=
-      1)
+      1) {
     is_inside = true;
+  }
 
   return is_inside;
 }

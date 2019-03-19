@@ -161,11 +161,13 @@ int MMM1D_sanity_checks() {
 }
 
 void MMM1D_init() {
-  if (MMM1D_sanity_checks())
+  if (MMM1D_sanity_checks()) {
     return;
+  }
 
-  if (mmm1d_params.far_switch_radius_2 >= Utils::sqr(box_l[2]))
+  if (mmm1d_params.far_switch_radius_2 >= Utils::sqr(box_l[2])) {
     mmm1d_params.far_switch_radius_2 = 0.8 * Utils::sqr(box_l[2]);
+  }
 
   uz = 1 / box_l[2];
   L2 = box_l[2] * box_l[2];
@@ -209,8 +211,9 @@ void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
       sz += r2n * mpo;
       sr += deriv * r2nm1 * mpe;
 
-      if (fabs(deriv * r2nm1 * mpe) < mmm1d_params.maxPWerror)
+      if (fabs(deriv * r2nm1 * mpe) < mmm1d_params.maxPWerror) {
         break;
+      }
 
       r2nm1 = r2n;
     }
@@ -254,8 +257,9 @@ void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
     int bp;
 
     for (bp = 1; bp < MAXIMAL_B_CUT; bp++) {
-      if (bessel_radii[bp - 1] < rxy)
+      if (bessel_radii[bp - 1] < rxy) {
         break;
+      }
 
       double fq = C_2PI * bp, k0, k1;
 #ifdef BESSEL_MACHINE_PREC
@@ -277,8 +281,9 @@ void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
     F[2] = coulomb.prefactor * sz;
   }
 
-  for (dim = 0; dim < 3; dim++)
+  for (dim = 0; dim < 3; dim++) {
     force[dim] += chpref * F[dim];
+  }
 }
 
 double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double const d[3],
@@ -287,8 +292,9 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double const d[3],
   double rxy2, rxy2_d, z_d;
   double E;
 
-  if (chpref == 0)
+  if (chpref == 0) {
     return 0;
+  }
 
   rxy2 = d[0] * d[0] + d[1] * d[1];
   rxy2_d = rxy2 * uz2;
@@ -307,8 +313,9 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double const d[3],
       double add = mod_psi_even(n, z_d) * r2n;
       E -= add;
 
-      if (fabs(add) < mmm1d_params.maxPWerror)
+      if (fabs(add) < mmm1d_params.maxPWerror) {
         break;
+      }
 
       r2n *= rxy2_d;
     }
@@ -334,8 +341,9 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double const d[3],
        log term, so add them close together */
     E = -0.25 * log(rxy2_d) + 0.5 * (M_LN2 - C_GAMMA);
     for (bp = 1; bp < MAXIMAL_B_CUT; bp++) {
-      if (bessel_radii[bp - 1] < rxy)
+      if (bessel_radii[bp - 1] < rxy) {
         break;
+      }
 
       double fq = C_2PI * bp;
       E += K0(fq * rxy_d) * cos(fq * z_d);
@@ -347,8 +355,9 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double const d[3],
 }
 
 int mmm1d_tune(char **log) {
-  if (MMM1D_sanity_checks())
+  if (MMM1D_sanity_checks()) {
     return ES_ERROR;
+  }
   char buffer[32 + 2 * ES_DOUBLE_SPACE + ES_INTEGER_SPACE];
   double int_time, min_time = 1e200, min_rad = -1;
   double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */
@@ -375,8 +384,9 @@ int mmm1d_tune(char **log) {
       int_time = time_force_calc(TEST_INTEGRATIONS);
 
       /* exit on errors */
-      if (int_time < 0)
+      if (int_time < 0) {
         return ES_ERROR;
+      }
 
       sprintf(buffer, "r= %f t= %f ms\n", switch_radius, int_time);
       *log = strcat_alloc(*log, buffer);
@@ -386,8 +396,9 @@ int mmm1d_tune(char **log) {
         min_rad = switch_radius;
       }
       /* stop if all hope is vain... */
-      else if (int_time > 2 * min_time)
+      else if (int_time > 2 * min_time) {
         break;
+      }
     }
     switch_radius = min_rad;
     mmm1d_params.far_switch_radius_2 = Utils::sqr(switch_radius);

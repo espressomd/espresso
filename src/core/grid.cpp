@@ -197,8 +197,9 @@ int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
   int i, row_dir = -1;
   /* trivial case */
   if (g3d[2] == 1) {
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; i++) {
       mult[i] = 1;
+    }
     return 2;
   }
   if (g2d[0] % g3d[0] == 0) {
@@ -233,8 +234,9 @@ int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
       g2d[0] = 1;
     }
   }
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     mult[i] = g2d[i] / g3d[i];
+  }
   return row_dir;
 }
 
@@ -242,16 +244,18 @@ void rescale_boxl(int dir, double d_new) {
   double scale = (dir - 3) ? d_new / box_l[dir] : d_new / box_l[0];
   if (scale < 1.) {
     mpi_rescale_particles(dir, scale);
-    if (dir < 3)
+    if (dir < 3) {
       box_l[dir] = d_new;
-    else
+    } else {
       box_l[0] = box_l[1] = box_l[2] = d_new;
+    }
     mpi_bcast_parameter(FIELD_BOXL);
   } else if (scale > 1.) {
-    if (dir < 3)
+    if (dir < 3) {
       box_l[dir] = d_new;
-    else
+    } else {
       box_l[0] = box_l[1] = box_l[2] = d_new;
+    }
     mpi_bcast_parameter(FIELD_BOXL);
     mpi_rescale_particles(dir, scale);
   }

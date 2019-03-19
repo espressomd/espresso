@@ -52,8 +52,9 @@ operator()(PartCfg &partCfg) const {
                lb_lbfluid_get_lattice_speed();
       });
 #endif
-  for (auto &p : folded_positions)
+  for (auto &p : folded_positions) {
     p -= center;
+  }
   for (int ind = 0; ind < ids().size(); ++ind) {
     histogram.update(Utils::transform_pos_to_cylinder_coordinates(
                          folded_positions[ind], axis),

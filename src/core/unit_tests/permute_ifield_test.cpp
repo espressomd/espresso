@@ -39,7 +39,8 @@ BOOST_AUTO_TEST_CASE(check_permu) {
     std::array<int, 11> h(f);
     Utils::permute_ifield(h.data(), h.size(), i);
 
-    for (int j = 0; j < 11; j++)
+    for (int j = 0; j < 11; j++) {
       BOOST_CHECK(h[j] == ((i + j + 11) % 11));
+    }
   }
 }

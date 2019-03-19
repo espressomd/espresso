@@ -267,8 +267,9 @@ void p3m_pre_init(void) {
   p3m.sum_q2 = 0.0;
   p3m.square_sum_q = 0.0;
 
-  for (int i = 0; i < 7; i++)
+  for (int i = 0; i < 7; i++) {
     p3m.int_caf[i] = nullptr;
+  }
   p3m.pos_shift = 0.0;
   p3m.meshift_x = nullptr;
   p3m.meshift_y = nullptr;
@@ -304,8 +305,9 @@ void p3m_free() {
   free(p3m.recv_grid);
   free(p3m.rs_mesh);
   free(p3m.ks_mesh);
-  for (i = 0; i < p3m.params.cao; i++)
+  for (i = 0; i < p3m.params.cao; i++) {
     free(p3m.int_caf[i]);
+  }
 }
 
 void p3m_set_prefactor() {
@@ -380,8 +382,9 @@ void p3m_init() {
     /* fix box length dependent constants */
     p3m_scaleby_box_l();
 
-    if (p3m.params.inter > 0)
+    if (p3m.params.inter > 0) {
       p3m_interpolate_charge_assignment_function();
+    }
 
     /* position offset for calc. of first meshpoint */
     p3m.pos_shift =
@@ -408,19 +411,22 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
     p3m.params.mesh[2] = mesh[2];
   }
 
-  if (cao >= 0)
+  if (cao >= 0) {
     p3m.params.cao = cao;
+  }
 
   if (alpha >= 0) {
     p3m.params.alpha = alpha;
     p3m.params.alpha_L = alpha * box_l[0];
   }
 
-  if (accuracy >= 0)
+  if (accuracy >= 0) {
     p3m.params.accuracy = accuracy;
+  }
 
-  if (n_interpol != -1)
+  if (n_interpol != -1) {
     p3m.params.inter = n_interpol;
+  }
 }
 
 /*@}*/
@@ -428,17 +434,21 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
 int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
                    double accuracy) {
   if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M &&
-      coulomb.method != COULOMB_P3M_GPU)
+      coulomb.method != COULOMB_P3M_GPU) {
     coulomb.method = COULOMB_P3M;
+  }
 
-  if (r_cut < 0)
+  if (r_cut < 0) {
     return -1;
+  }
 
-  if ((mesh[0] < 0) || (mesh[1] < 0) || (mesh[2] < 0))
+  if ((mesh[0] < 0) || (mesh[1] < 0) || (mesh[2] < 0)) {
     return -2;
+  }
 
-  if (cao < 1 || cao > 7 || cao > mesh[0] || cao > mesh[1] || cao > mesh[2])
+  if (cao < 1 || cao > 7 || cao > mesh[0] || cao > mesh[1] || cao > mesh[2]) {
     return -3;
+  }
 
   p3m.params.r_cut = r_cut;
   p3m.params.r_cut_iL = r_cut * box_l_i[0];
@@ -450,13 +460,15 @@ int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
   if (alpha > 0) {
     p3m.params.alpha = alpha;
     p3m.params.alpha_L = alpha * box_l[0];
-  } else if (alpha != -1.0)
+  } else if (alpha != -1.0) {
     return -4;
+  }
 
-  if (accuracy >= 0)
+  if (accuracy >= 0) {
     p3m.params.accuracy = accuracy;
-  else if (accuracy != -1.0)
+  } else if (accuracy != -1.0) {
     return -5;
+  }
 
   mpi_bcast_coulomb_params();
 
@@ -464,8 +476,9 @@ int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
 }
 
 int p3m_set_mesh_offset(double x, double y, double z) {
-  if (x < 0.0 || x > 1.0 || y < 0.0 || y > 1.0 || z < 0.0 || z > 1.0)
+  if (x < 0.0 || x > 1.0 || y < 0.0 || y > 1.0 || z < 0.0 || z > 1.0) {
     return ES_ERROR;
+  }
 
   p3m.params.mesh_off[0] = x;
   p3m.params.mesh_off[1] = y;
@@ -485,8 +498,9 @@ int p3m_set_eps(double eps) {
 }
 
 int p3m_set_ninterpol(int n) {
-  if (n < 0)
+  if (n < 0) {
     return ES_ERROR;
+  }
 
   p3m.params.inter = n;
 
@@ -500,8 +514,9 @@ void p3m_interpolate_charge_assignment_function() {
   int i;
   long j;
 
-  if (p3m.params.inter == 0)
+  if (p3m.params.inter == 0) {
     return;
+  }
 
   P3M_TRACE(fprintf(
       stderr,
@@ -516,9 +531,10 @@ void p3m_interpolate_charge_assignment_function() {
         p3m.int_caf[i], sizeof(double) * (2 * p3m.params.inter + 1));
 
     /* loop over all interpolation points */
-    for (j = -p3m.params.inter; j <= p3m.params.inter; j++)
+    for (j = -p3m.params.inter; j <= p3m.params.inter; j++) {
       p3m.int_caf[i][j + p3m.params.inter] =
           p3m_caf(i, j * dInterpol, p3m.params.cao);
+    }
   }
 }
 
@@ -554,8 +570,9 @@ template <int cao> void p3m_do_charge_assign() {
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
-  for (int i = 0; i < p3m.local_mesh.size; i++)
+  for (int i = 0; i < p3m.local_mesh.size; i++) {
     p3m.rs_mesh[i] = 0.0;
+  }
 
   for (auto &p : local_cells.particles()) {
     if (p.p.q != 0.0) {
@@ -607,8 +624,9 @@ void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
   int q_ind = 0;
 #ifdef P3M_STORE_CA_FRAC
   // make sure we have enough space
-  if (cp_cnt >= p3m.ca_num)
+  if (cp_cnt >= p3m.ca_num) {
     p3m_realloc_ca_fields(cp_cnt + 1);
+  }
   // do it here, since p3m_realloc_ca_fields may change the address of
   // p3m.ca_frac
   double *cur_ca_frac = p3m.ca_frac + cao * cao * cao * cp_cnt;
@@ -624,12 +642,13 @@ void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
     /* 3d-array index of nearest mesh point */
     q_ind = (d == 0) ? nmp : nmp + p3m.local_mesh.dim[d] * q_ind;
 
-    if (!inter)
+    if (!inter) {
       /* distance to nearest mesh point */
       dist[d] = (pos - nmp) - 0.5;
-    else
+    } else {
       /* distance to nearest mesh point for interpolation */
       arg[d] = (int)((pos - nmp) * p3m.params.inter2);
+    }
 
 #ifdef ADDITIONAL_CHECKS
     if (pos < -skin * p3m.params.ai[d]) {
@@ -648,8 +667,9 @@ void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
   }
 
 #ifdef P3M_STORE_CA_FRAC
-  if (cp_cnt >= 0)
+  if (cp_cnt >= 0) {
     p3m.ca_fmp[cp_cnt] = q_ind;
+  }
 #endif
 
   if (!inter) {
@@ -662,8 +682,9 @@ void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
           p3m.rs_mesh[q_ind] += cur_ca_frac_val;
 #ifdef P3M_STORE_CA_FRAC
           /* store current ca frac */
-          if (cp_cnt >= 0)
+          if (cp_cnt >= 0) {
             *(cur_ca_frac++) = cur_ca_frac_val;
+          }
 #endif
           q_ind++;
         }
@@ -681,8 +702,9 @@ void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
           p3m.rs_mesh[q_ind] += cur_ca_frac_val;
 #ifdef P3M_STORE_CA_FRAC
           /* store current ca frac */
-          if (cp_cnt >= 0)
+          if (cp_cnt >= 0) {
             *(cur_ca_frac++) = cur_ca_frac_val;
+          }
 #endif
           q_ind++;
         }
@@ -696,8 +718,9 @@ void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
 #ifdef P3M_STORE_CA_FRAC
 void p3m_shrink_wrap_charge_grid(int n_charges) {
   /* we do not really want to export these */
-  if (n_charges < p3m.ca_num)
+  if (n_charges < p3m.ca_num) {
     p3m_realloc_ca_fields(n_charges);
+  }
 }
 #endif
 
@@ -873,12 +896,13 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
 
     /* Force component loop */
     for (d = 0; d < 3; d++) {
-      if (d == KX)
+      if (d == KX) {
         d_operator = p3m.d_op[RX];
-      else if (d == KY)
+      } else if (d == KY) {
         d_operator = p3m.d_op[RY];
-      else if (d == KZ)
+      } else if (d == KZ) {
         d_operator = p3m.d_op[RZ];
+      }
 
       /* direction in k-space: */
       d_rs = (d + p3m.ks_pnum) % 3;
@@ -947,29 +971,34 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   double lcl_dm[3], gbl_dm[3];
   double en;
 
-  for (int j = 0; j < 3; j++)
+  for (int j = 0; j < 3; j++) {
     lcl_dm[j] = 0;
+  }
 
   for (auto const &p : local_cells.particles()) {
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       /* dipole moment with unfolded coordinates */
       lcl_dm[j] += p.p.q * (p.r.p[j] + p.l.i[j] * box_l[j]);
+    }
   }
 
   MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
 
-  if (energy_flag)
+  if (energy_flag) {
     en =
         0.5 * pref *
         (Utils::sqr(gbl_dm[0]) + Utils::sqr(gbl_dm[1]) + Utils::sqr(gbl_dm[2]));
-  else
+  } else {
     en = 0;
+  }
   if (force_flag) {
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       gbl_dm[j] *= pref;
+    }
     for (auto &p : local_cells.particles()) {
-      for (int j = 0; j < 3; j++)
+      for (int j = 0; j < 3; j++) {
         p.f.f[j] -= gbl_dm[j] * p.p.q;
+      }
     }
     return en;
   }
@@ -987,26 +1016,30 @@ void p3m_gather_fft_grid(double *themesh) {
 
   /* direction loop */
   for (s_dir = 0; s_dir < 6; s_dir++) {
-    if (s_dir % 2 == 0)
+    if (s_dir % 2 == 0) {
       r_dir = s_dir + 1;
-    else
+    } else {
       r_dir = s_dir - 1;
+    }
     /* pack send block */
-    if (p3m.sm.s_size[s_dir] > 0)
+    if (p3m.sm.s_size[s_dir] > 0) {
       fft_pack_block(themesh, p3m.send_grid, p3m.sm.s_ld[s_dir],
                      p3m.sm.s_dim[s_dir], p3m.local_mesh.dim, 1);
+    }
 
     /* communication */
     if (node_neighbors[s_dir] != this_node) {
       for (evenodd = 0; evenodd < 2; evenodd++) {
         if ((node_pos[s_dir / 2] + evenodd) % 2 == 0) {
-          if (p3m.sm.s_size[s_dir] > 0)
+          if (p3m.sm.s_size[s_dir] > 0) {
             MPI_Send(p3m.send_grid, p3m.sm.s_size[s_dir], MPI_DOUBLE,
                      node_neighbors[s_dir], REQ_P3M_GATHER, comm_cart);
+          }
         } else {
-          if (p3m.sm.r_size[r_dir] > 0)
+          if (p3m.sm.r_size[r_dir] > 0) {
             MPI_Recv(p3m.recv_grid, p3m.sm.r_size[r_dir], MPI_DOUBLE,
                      node_neighbors[r_dir], REQ_P3M_GATHER, comm_cart, &status);
+          }
         }
       }
     } else {
@@ -1030,25 +1063,29 @@ void p3m_spread_force_grid(double *themesh) {
 
   /* direction loop */
   for (s_dir = 5; s_dir >= 0; s_dir--) {
-    if (s_dir % 2 == 0)
+    if (s_dir % 2 == 0) {
       r_dir = s_dir + 1;
-    else
+    } else {
       r_dir = s_dir - 1;
+    }
     /* pack send block */
-    if (p3m.sm.s_size[s_dir] > 0)
+    if (p3m.sm.s_size[s_dir] > 0) {
       fft_pack_block(themesh, p3m.send_grid, p3m.sm.r_ld[r_dir],
                      p3m.sm.r_dim[r_dir], p3m.local_mesh.dim, 1);
+    }
     /* communication */
     if (node_neighbors[r_dir] != this_node) {
       for (evenodd = 0; evenodd < 2; evenodd++) {
         if ((node_pos[r_dir / 2] + evenodd) % 2 == 0) {
-          if (p3m.sm.r_size[r_dir] > 0)
+          if (p3m.sm.r_size[r_dir] > 0) {
             MPI_Send(p3m.send_grid, p3m.sm.r_size[r_dir], MPI_DOUBLE,
                      node_neighbors[r_dir], REQ_P3M_SPREAD, comm_cart);
+          }
         } else {
-          if (p3m.sm.s_size[s_dir] > 0)
+          if (p3m.sm.s_size[s_dir] > 0) {
             MPI_Recv(p3m.recv_grid, p3m.sm.s_size[s_dir], MPI_DOUBLE,
                      node_neighbors[s_dir], REQ_P3M_SPREAD, comm_cart, &status);
+          }
         }
       }
     } else {
@@ -1067,10 +1104,12 @@ void p3m_spread_force_grid(double *themesh) {
 #ifdef P3M_STORE_CA_FRAC
 void p3m_realloc_ca_fields(int newsize) {
   newsize = ((newsize + CA_INCREMENT - 1) / CA_INCREMENT) * CA_INCREMENT;
-  if (newsize == p3m.ca_num)
+  if (newsize == p3m.ca_num) {
     return;
-  if (newsize < CA_INCREMENT)
+  }
+  if (newsize < CA_INCREMENT) {
     newsize = CA_INCREMENT;
+  }
 
   P3M_TRACE(fprintf(stderr,
                     "%d: p3m_realloc_ca_fields: old_size=%d -> new_size=%d\n",
@@ -1137,8 +1176,9 @@ inline double perform_aliasing_sums_force(int const n[3], double numerator[3]) {
   double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
   double limit = 30;
 
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     numerator[i] = 0.0;
+  }
 
   f1 = Utils::sqr(PI / (p3m.params.alpha));
 
@@ -1219,8 +1259,9 @@ template <int cao> void calc_influence_function_force() {
 
           if (fak2 == 0) {
             fak3 = 0;
-          } else
+          } else {
             fak3 = fak1 / (fak2 * Utils::sqr(denominator));
+          }
 
           p3m.g_force[ind] = 2 * fak3 / (PI);
         }
@@ -1310,8 +1351,9 @@ template <int cao> void calc_influence_function_energy() {
 
   /* Skip influence function calculation in tuning mode,
      the results need not be correct for timing. */
-  if (p3m.params.tuning)
+  if (p3m.params.tuning) {
     return;
+  }
 
   ind = 0;
 
@@ -1328,8 +1370,9 @@ template <int cao> void calc_influence_function_energy() {
           p3m.g_energy[ind] = 0.0;
         }
 
-        else
+        else {
           p3m.g_energy[ind] = perform_aliasing_sums_energy<cao>(n) / PI;
+        }
       }
     }
   }
@@ -1410,13 +1453,14 @@ static double p3m_get_accuracy(const int mesh[3], int cao, double r_cut_iL,
   rs_err = p3m_real_space_error(coulomb.prefactor, r_cut_iL, p3m.sum_qpart,
                                 p3m.sum_q2, alpha_L);
 #ifdef CUDA
-  if (coulomb.method == COULOMB_P3M_GPU)
+  if (coulomb.method == COULOMB_P3M_GPU) {
     ks_err = p3m_k_space_error_gpu(coulomb.prefactor, mesh, cao, p3m.sum_qpart,
                                    p3m.sum_q2, alpha_L, box_l.data());
-  else
+  } else {
 #endif
     ks_err = p3m_k_space_error(coulomb.prefactor, mesh, cao, p3m.sum_qpart,
                                p3m.sum_q2, alpha_L);
+  }
 
   *_rs_err = rs_err;
   *_ks_err = ks_err;
@@ -1444,8 +1488,9 @@ static double p3m_mcr_time(const int mesh[3], int cao, double r_cut_iL,
 
   /* broadcast p3m parameters for test run */
   if (coulomb.method != COULOMB_P3M && coulomb.method != COULOMB_ELC_P3M &&
-      coulomb.method != COULOMB_P3M_GPU)
+      coulomb.method != COULOMB_P3M_GPU) {
     coulomb.method = COULOMB_P3M;
+  }
 
   p3m.params.r_cut = r_cut_iL * box_l[0];
   p3m.params.r_cut_iL = r_cut_iL;
@@ -1533,15 +1578,17 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
                       r_cut_iL_max));
     r_cut_iL = 0.5 * (r_cut_iL_min + r_cut_iL_max);
 
-    if (r_cut_iL_max - r_cut_iL_min < P3M_RCUT_PREC)
+    if (r_cut_iL_max - r_cut_iL_min < P3M_RCUT_PREC) {
       break;
+    }
 
     /* bisection */
     if ((p3m_get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err) >
-         p3m.params.accuracy))
+         p3m.params.accuracy)) {
       r_cut_iL_min = r_cut_iL;
-    else
+    } else {
       r_cut_iL_max = r_cut_iL;
+    }
   }
 
   /* final result is always the upper interval boundary, since only there
@@ -1568,8 +1615,9 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
   /* check whether this radius is too large, so that we would use less cells
    * than allowed */
   n_cells = 1;
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     n_cells *= (int)(floor(local_box_l[i] / (r_cut_iL * box_l[0] + skin)));
+  }
   if (n_cells < min_num_cells) {
     P3M_TRACE(fprintf(
         stderr,
@@ -1646,8 +1694,9 @@ static double p3m_m_time(char **log, const int mesh[3], int cao_min,
     tmp_time = p3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                            &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out if the force evaluation is not working */
-    if (tmp_time == -P3M_TUNE_FAIL)
+    if (tmp_time == -P3M_TUNE_FAIL) {
       return tmp_time;
+    }
     /* cao is too large for this grid, but still the accuracy cannot be
      * achieved, give up */
     if (tmp_time == -P3M_TUNE_CAO_TOO_LARGE) {
@@ -1671,16 +1720,18 @@ static double p3m_m_time(char **log, const int mesh[3], int cao_min,
     final_dir = 1;
   } while (cao <= cao_max);
   /* with this mesh, the required accuracy cannot be obtained. */
-  if (cao > cao_max)
+  if (cao > cao_max) {
     return -P3M_TUNE_CAO_TOO_LARGE;
+  }
 
   /* at the boundaries, only the opposite direction can be used for
    * optimisation
    */
-  if (cao == cao_min)
+  if (cao == cao_min) {
     final_dir = 1;
-  else if (cao == cao_max)
+  } else if (cao == cao_max) {
     final_dir = -1;
+  }
 
   P3M_TRACE(
       fprintf(stderr, "p3m_m_time: final constraints dir %d\n", final_dir));
@@ -1694,12 +1745,14 @@ static double p3m_m_time(char **log, const int mesh[3], int cao_min,
           p3m_mc_time(log, mesh, cao + final_dir, r_cut_iL_min, r_cut_iL_max,
                       &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
       /* bail out on errors, as usual */
-      if (tmp_time == -P3M_TUNE_FAIL)
+      if (tmp_time == -P3M_TUNE_FAIL) {
         return tmp_time;
+      }
       /* in this direction, we cannot optimise, since we get into precision
        * trouble */
-      if (tmp_time < 0)
+      if (tmp_time < 0) {
         continue;
+      }
 
       if (tmp_time < best_time) {
         best_time = tmp_time;
@@ -1721,14 +1774,14 @@ static double p3m_m_time(char **log, const int mesh[3], int cao_min,
        * even
        * worse */
       if ((dir_times[0] >= 0 && dir_times[0] < best_time + P3M_TIME_GRAN) &&
-          (dir_times[2] < 0 || dir_times[2] > dir_times[0]))
+          (dir_times[2] < 0 || dir_times[2] > dir_times[0])) {
         final_dir = -1;
-      /* same for up */
-      else if ((dir_times[2] >= 0 &&
-                dir_times[2] < best_time + P3M_TIME_GRAN) &&
-               (dir_times[0] < 0 || dir_times[0] > dir_times[2]))
+        /* same for up */
+      } else if ((dir_times[2] >= 0 &&
+                  dir_times[2] < best_time + P3M_TIME_GRAN) &&
+                 (dir_times[0] < 0 || dir_times[0] > dir_times[2])) {
         final_dir = 1;
-      else {
+      } else {
         /* really no chance for optimisation */
         P3M_TRACE(fprintf(
             stderr, "p3m_m_time: mesh=(%d, %d, %d) final cao=%d time=%f\n",
@@ -1752,11 +1805,13 @@ static double p3m_m_time(char **log, const int mesh[3], int cao_min,
     tmp_time = p3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                            &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
     /* bail out on errors, as usual */
-    if (tmp_time == -P3M_TUNE_FAIL)
+    if (tmp_time == -P3M_TUNE_FAIL) {
       return tmp_time;
+    }
     /* if we cannot meet the precision anymore, give up */
-    if (tmp_time < 0)
+    if (tmp_time < 0) {
       break;
+    }
 
     if (tmp_time < best_time) {
       best_time = tmp_time;
@@ -1766,8 +1821,9 @@ static double p3m_m_time(char **log, const int mesh[3], int cao_min,
       *_cao = cao;
     }
     /* no hope of further optimisation */
-    else if (tmp_time > best_time + P3M_TIME_GRAN)
+    else if (tmp_time > best_time + P3M_TIME_GRAN) {
       break;
+    }
   }
   P3M_TRACE(fprintf(
       stderr, "p3m_m_time: mesh=(%d, %d, %d) final cao=%d r_cut=%f time=%f\n",
@@ -1845,10 +1901,12 @@ int p3m_adaptive_tune(char **log) {
         p3m.params.mesh[0] / box_l[0];
     p3m.params.mesh[1] = lround(mesh_density * box_l[1]);
     p3m.params.mesh[2] = lround(mesh_density * box_l[2]);
-    if (p3m.params.mesh[1] % 2 == 1)
+    if (p3m.params.mesh[1] % 2 == 1) {
       p3m.params.mesh[1]++; // Make sure that the mesh is even in all directions
-    if (p3m.params.mesh[2] % 2 == 1)
+    }
+    if (p3m.params.mesh[2] % 2 == 1) {
       p3m.params.mesh[2]++;
+    }
 
     sprintf(b, "fixed mesh %d %d %d\n", p3m.params.mesh[0], p3m.params.mesh[1],
             p3m.params.mesh[2]);
@@ -1907,12 +1965,15 @@ int p3m_adaptive_tune(char **log) {
       tmp_mesh[2] = p3m.params.mesh[2];
     }
 
-    if (tmp_mesh[0] % 2) // Make sure that the mesh is even in all directions
+    if (tmp_mesh[0] % 2) { // Make sure that the mesh is even in all directions
       tmp_mesh[0]++;
-    if (tmp_mesh[1] % 2)
+    }
+    if (tmp_mesh[1] % 2) {
       tmp_mesh[1]++;
-    if (tmp_mesh[2] % 2)
+    }
+    if (tmp_mesh[2] % 2) {
       tmp_mesh[2]++;
+    }
 
     tmp_time =
         p3m_m_time(log, tmp_mesh, cao_min, cao_max, &tmp_cao, r_cut_iL_min,
@@ -1921,13 +1982,15 @@ int p3m_adaptive_tune(char **log) {
     P3M_TRACE(fprintf(stderr, "delta_accuracy: %lf tune time: %lf\n",
                       p3m.params.accuracy - tmp_accuracy, tmp_time));
     /* this mesh does not work at all */
-    if (tmp_time < 0.0)
+    if (tmp_time < 0.0) {
       continue;
+    }
 
     /* the optimum r_cut for this mesh is the upper limit for higher meshes,
        everything else is slower */
-    if (coulomb.method == COULOMB_P3M)
+    if (coulomb.method == COULOMB_P3M) {
       r_cut_iL_max = tmp_r_cut_iL;
+    }
 
     /* new optimum */
     if (tmp_time < time_best) {
@@ -2051,8 +2114,9 @@ double p3m_k_space_error(double prefac, const int mesh[3], int cao,
           double d = alias1 - Utils::sqr(alias2 / cs) / n2;
           /* at high precisions, d can become negative due to extinction;
              also, don't take values that have no significant digits left*/
-          if (d > 0 && (fabs(d / alias1) > ROUND_ERROR_PREC))
+          if (d > 0 && (fabs(d / alias1) > ROUND_ERROR_PREC)) {
             he_q += d;
+          }
         }
       }
     }
@@ -2100,373 +2164,401 @@ void p3m_calc_local_ca_mesh() {
   /* total skin size */
   double full_skin[3];
 
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     full_skin[i] = p3m.params.cao_cut[i] + skin + p3m.params.additional_mesh[i];
+  }
 
   /* inner left down grid point (global index) */
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     p3m.local_mesh.in_ld[i] =
         (int)ceil(my_left[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
+  }
   /* inner up right grid point (global index) */
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     p3m.local_mesh.in_ur[i] =
         (int)floor(my_right[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
+  }
 
   /* correct roundof errors at boundary */
   for (i = 0; i < 3; i++) {
     if ((my_right[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
             p3m.local_mesh.in_ur[i] <
-        ROUND_ERROR_PREC)
+        ROUND_ERROR_PREC) {
       p3m.local_mesh.in_ur[i]--;
+    }
     if (1.0 + (my_left[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
             p3m.local_mesh.in_ld[i] <
-        ROUND_ERROR_PREC)
+        ROUND_ERROR_PREC) {
       p3m.local_mesh.in_ld[i]--;
+    }
   }
   /* inner grid dimensions */
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     p3m.local_mesh.inner[i] =
         p3m.local_mesh.in_ur[i] - p3m.local_mesh.in_ld[i] + 1;
+  }
   /* index of left down grid point in global mesh */
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     p3m.local_mesh.ld_ind[i] =
         (int)ceil((my_left[i] - full_skin[i]) * p3m.params.ai[i] -
                   p3m.params.mesh_off[i]);
+  }
   /* left down margin */
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     p3m.local_mesh.margin[i * 2] =
         p3m.local_mesh.in_ld[i] - p3m.local_mesh.ld_ind[i];
+  }
   /* up right grid point */
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     ind[i] = (int)floor((my_right[i] + full_skin[i]) * p3m.params.ai[i] -
                         p3m.params.mesh_off[i]);
+  }
   /* correct roundof errors at up right boundary */
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     if (((my_right[i] + full_skin[i]) * p3m.params.ai[i] -
          p3m.params.mesh_off[i]) -
             ind[i] ==
-        0)
+        0) {
       ind[i]--;
-  /* up right margin */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.margin[(i * 2) + 1] = ind[i] - p3m.local_mesh.in_ur[i];
-
-  /* grid dimension */
-  p3m.local_mesh.size = 1;
-  for (i = 0; i < 3; i++) {
-    p3m.local_mesh.dim[i] = ind[i] - p3m.local_mesh.ld_ind[i] + 1;
-    p3m.local_mesh.size *= p3m.local_mesh.dim[i];
-  }
-  /* reduce inner grid indices from global to local */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ld[i] = p3m.local_mesh.margin[i * 2];
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ur[i] =
-        p3m.local_mesh.margin[i * 2] + p3m.local_mesh.inner[i];
-
-  p3m.local_mesh.q_2_off = p3m.local_mesh.dim[2] - p3m.params.cao;
-  p3m.local_mesh.q_21_off =
-      p3m.local_mesh.dim[2] * (p3m.local_mesh.dim[1] - p3m.params.cao);
-}
-
-void p3m_calc_lm_ld_pos() {
-  int i;
-  /* spatial position of left down mesh point */
-  for (i = 0; i < 3; i++) {
-    p3m.local_mesh.ld_pos[i] =
-        (p3m.local_mesh.ld_ind[i] + p3m.params.mesh_off[i]) * p3m.params.a[i];
-  }
-}
-
-void p3m_init_a_ai_cao_cut() {
-  int i;
-  for (i = 0; i < 3; i++) {
-    p3m.params.ai[i] = (double)p3m.params.mesh[i] / box_l[i];
-    p3m.params.a[i] = 1.0 / p3m.params.ai[i];
-    p3m.params.cao_cut[i] = 0.5 * p3m.params.a[i] * p3m.params.cao;
-  }
-}
-
-bool p3m_sanity_checks_boxl() {
-  int i;
-  bool ret = false;
-  for (i = 0; i < 3; i++) {
-    /* check k-space cutoff */
-    if (p3m.params.cao_cut[i] >= 0.5 * box_l[i]) {
-      runtimeErrorMsg() << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
-                        << " is larger than half of box dimension " << box_l[i];
-      ret = true;
     }
-    if (p3m.params.cao_cut[i] >= local_box_l[i]) {
-      runtimeErrorMsg() << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
-                        << " is larger than local box dimension "
-                        << local_box_l[i];
-      ret = true;
+    /* up right margin */
+    for (i = 0; i < 3; i++) {
+      p3m.local_mesh.margin[(i * 2) + 1] = ind[i] - p3m.local_mesh.in_ur[i];
+    }
+
+    /* grid dimension */
+    p3m.local_mesh.size = 1;
+    for (i = 0; i < 3; i++) {
+      p3m.local_mesh.dim[i] = ind[i] - p3m.local_mesh.ld_ind[i] + 1;
+      p3m.local_mesh.size *= p3m.local_mesh.dim[i];
+    }
+    /* reduce inner grid indices from global to local */
+    for (i = 0; i < 3; i++) {
+      p3m.local_mesh.in_ld[i] = p3m.local_mesh.margin[i * 2];
+    }
+    for (i = 0; i < 3; i++) {
+      p3m.local_mesh.in_ur[i] =
+          p3m.local_mesh.margin[i * 2] + p3m.local_mesh.inner[i];
+    }
+
+    p3m.local_mesh.q_2_off = p3m.local_mesh.dim[2] - p3m.params.cao;
+    p3m.local_mesh.q_21_off =
+        p3m.local_mesh.dim[2] * (p3m.local_mesh.dim[1] - p3m.params.cao);
+  }
+
+  void p3m_calc_lm_ld_pos() {
+    int i;
+    /* spatial position of left down mesh point */
+    for (i = 0; i < 3; i++) {
+      p3m.local_mesh.ld_pos[i] =
+          (p3m.local_mesh.ld_ind[i] + p3m.params.mesh_off[i]) * p3m.params.a[i];
     }
   }
 
-  return ret;
-}
-
-/**
- * @brief General sanity checks independent of p3m parameters.
- *
- * @return false if ok, true on error.
- */
-bool p3m_sanity_checks_system(const Vector3i &grid) {
-  bool ret = false;
-
-  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
-    runtimeErrorMsg() << "P3M requires periodicity 1 1 1";
-    ret = true;
-  }
-
-  if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
-    runtimeErrorMsg()
-        << "P3M at present requires the domain decomposition cell system";
-    ret = true;
-  }
-
-  if (grid[0] < grid[1] || grid[1] < grid[2]) {
-    runtimeErrorMsg() << "P3M_init: node grid must be sorted, largest first";
-    ret = true;
-  }
-
-  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    if (!((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
-          (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
-      runtimeErrorMsg() << "P3M_init: Nonmetallic epsilon requires cubic box";
-      ret = true;
+  void p3m_init_a_ai_cao_cut() {
+    int i;
+    for (i = 0; i < 3; i++) {
+      p3m.params.ai[i] = (double)p3m.params.mesh[i] / box_l[i];
+      p3m.params.a[i] = 1.0 / p3m.params.ai[i];
+      p3m.params.cao_cut[i] = 0.5 * p3m.params.a[i] * p3m.params.cao;
     }
   }
 
-  return ret;
-}
-
-bool p3m_sanity_checks() {
-  bool ret = false;
-
-  if (p3m_sanity_checks_system(node_grid))
-    ret = true;
-
-  if (p3m_sanity_checks_boxl())
-    ret = true;
-
-  if (p3m.params.mesh[0] == 0) {
-    runtimeErrorMsg() << "P3M_init: mesh size is not yet set";
-    ret = true;
-  }
-  if (p3m.params.cao == 0) {
-    runtimeErrorMsg() << "P3M_init: cao is not yet set";
-    ret = true;
-  }
-  if (p3m.params.alpha < 0.0) {
-    runtimeErrorMsg() << "P3M_init: alpha must be >0";
-    ret = true;
-  }
-
-  return ret;
-}
-
-void p3m_calc_send_mesh() {
-  int i, j, evenodd;
-  int done[3] = {0, 0, 0};
-  MPI_Status status;
-  /* send grids */
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
-      /* left */
-      p3m.sm.s_ld[i * 2][j] = 0 + done[j] * p3m.local_mesh.margin[j * 2];
-      if (j == i)
-        p3m.sm.s_ur[i * 2][j] = p3m.local_mesh.margin[j * 2];
-      else
-        p3m.sm.s_ur[i * 2][j] = p3m.local_mesh.dim[j] -
-                                done[j] * p3m.local_mesh.margin[(j * 2) + 1];
-      /* right */
-      if (j == i)
-        p3m.sm.s_ld[(i * 2) + 1][j] = p3m.local_mesh.in_ur[j];
-      else
-        p3m.sm.s_ld[(i * 2) + 1][j] =
-            0 + done[j] * p3m.local_mesh.margin[j * 2];
-      p3m.sm.s_ur[(i * 2) + 1][j] =
-          p3m.local_mesh.dim[j] - done[j] * p3m.local_mesh.margin[(j * 2) + 1];
-    }
-    done[i] = 1;
-  }
-  p3m.sm.max = 0;
-  for (i = 0; i < 6; i++) {
-    p3m.sm.s_size[i] = 1;
-    for (j = 0; j < 3; j++) {
-      p3m.sm.s_dim[i][j] = p3m.sm.s_ur[i][j] - p3m.sm.s_ld[i][j];
-      p3m.sm.s_size[i] *= p3m.sm.s_dim[i][j];
-    }
-    if (p3m.sm.s_size[i] > p3m.sm.max)
-      p3m.sm.max = p3m.sm.s_size[i];
-  }
-  /* communication */
-  for (i = 0; i < 6; i++) {
-    if (i % 2 == 0)
-      j = i + 1;
-    else
-      j = i - 1;
-    if (node_neighbors[i] != this_node) {
-      /* two step communication: first all even positions than all odd */
-      for (evenodd = 0; evenodd < 2; evenodd++) {
-        if ((node_pos[i / 2] + evenodd) % 2 == 0)
-          MPI_Send(&(p3m.local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i],
-                   REQ_P3M_INIT, comm_cart);
-        else
-          MPI_Recv(&(p3m.local_mesh.r_margin[j]), 1, MPI_INT, node_neighbors[j],
-                   REQ_P3M_INIT, comm_cart, &status);
+  bool p3m_sanity_checks_boxl() {
+    int i;
+    bool ret = false;
+    for (i = 0; i < 3; i++) {
+      /* check k-space cutoff */
+      if (p3m.params.cao_cut[i] >= 0.5 * box_l[i]) {
+        runtimeErrorMsg() << "P3M_init: k-space cutoff "
+                          << p3m.params.cao_cut[i]
+                          << " is larger than half of box dimension "
+                          << box_l[i];
+        ret = true;
       }
-    } else {
-      p3m.local_mesh.r_margin[j] = p3m.local_mesh.margin[i];
-    }
-  }
-  /* recv grids */
-  for (i = 0; i < 3; i++)
-    for (j = 0; j < 3; j++) {
-      if (j == i) {
-        p3m.sm.r_ld[i * 2][j] =
-            p3m.sm.s_ld[i * 2][j] + p3m.local_mesh.margin[2 * j];
-        p3m.sm.r_ur[i * 2][j] =
-            p3m.sm.s_ur[i * 2][j] + p3m.local_mesh.r_margin[2 * j];
-        p3m.sm.r_ld[(i * 2) + 1][j] =
-            p3m.sm.s_ld[(i * 2) + 1][j] - p3m.local_mesh.r_margin[(2 * j) + 1];
-        p3m.sm.r_ur[(i * 2) + 1][j] =
-            p3m.sm.s_ur[(i * 2) + 1][j] - p3m.local_mesh.margin[(2 * j) + 1];
-      } else {
-        p3m.sm.r_ld[i * 2][j] = p3m.sm.s_ld[i * 2][j];
-        p3m.sm.r_ur[i * 2][j] = p3m.sm.s_ur[i * 2][j];
-        p3m.sm.r_ld[(i * 2) + 1][j] = p3m.sm.s_ld[(i * 2) + 1][j];
-        p3m.sm.r_ur[(i * 2) + 1][j] = p3m.sm.s_ur[(i * 2) + 1][j];
+      if (p3m.params.cao_cut[i] >= local_box_l[i]) {
+        runtimeErrorMsg() << "P3M_init: k-space cutoff "
+                          << p3m.params.cao_cut[i]
+                          << " is larger than local box dimension "
+                          << local_box_l[i];
+        ret = true;
       }
     }
-  for (i = 0; i < 6; i++) {
-    p3m.sm.r_size[i] = 1;
-    for (j = 0; j < 3; j++) {
-      p3m.sm.r_dim[i][j] = p3m.sm.r_ur[i][j] - p3m.sm.r_ld[i][j];
-      p3m.sm.r_size[i] *= p3m.sm.r_dim[i][j];
-    }
-    if (p3m.sm.r_size[i] > p3m.sm.max)
-      p3m.sm.max = p3m.sm.r_size[i];
-  }
-}
 
-void p3m_scaleby_box_l() {
-  if (coulomb.prefactor < 0.0) {
-    runtimeErrorMsg() << "The Coulomb prefactor has to be >=0";
-    return;
+    return ret;
   }
 
-  p3m.params.r_cut = p3m.params.r_cut_iL * box_l[0];
-  p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
-  p3m_init_a_ai_cao_cut();
-  p3m_calc_lm_ld_pos();
-  p3m_sanity_checks_boxl();
-  p3m_calc_influence_function_force();
-  p3m_calc_influence_function_energy();
-}
-
-void p3m_calc_kspace_stress(double *stress) {
   /**
-   * Calculates the long range electrostatics part of the stress tensor. This is
-   * part Pi_{dir, alpha,beta} in the paper by Essmann et al "A smooth particle
-   * mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995);
-   * doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper
-   * is not present here since M is the empty set in our simulations.
+   * @brief General sanity checks independent of p3m parameters.
+   *
+   * @return false if ok, true on error.
    */
-  if (p3m.sum_q2 > 0) {
-    double *node_k_space_stress;
-    double *k_space_stress;
-    double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz;
+  bool p3m_sanity_checks_system(const Vector3i &grid) {
+    bool ret = false;
 
-    int j[3], i, ind = 0;
-    // ordering after Fourier transform
-    node_k_space_stress = (double *)Utils::malloc(9 * sizeof(double));
-    k_space_stress = (double *)Utils::malloc(9 * sizeof(double));
-
-    for (i = 0; i < 9; i++) {
-      node_k_space_stress[i] = 0.0;
-      k_space_stress[i] = 0.0;
+    if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
+      runtimeErrorMsg() << "P3M requires periodicity 1 1 1";
+      ret = true;
     }
 
-    p3m_gather_fft_grid(p3m.rs_mesh);
-    fft_perform_forw(p3m.rs_mesh, p3m.fft);
-    force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
+    if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
+      runtimeErrorMsg()
+          << "P3M at present requires the domain decomposition cell system";
+      ret = true;
+    }
 
-    for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
-      for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
-        for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
-          kx = 2.0 * PI * p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
-               box_l[RX];
-          ky = 2.0 * PI * p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
-               box_l[RY];
-          kz = 2.0 * PI * p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
-               box_l[RZ];
-          sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
-          if (sqk == 0) {
-            node_k_space_energy = 0.0;
-            vterm = 0.0;
+    if (grid[0] < grid[1] || grid[1] < grid[2]) {
+      runtimeErrorMsg() << "P3M_init: node grid must be sorted, largest first";
+      ret = true;
+    }
+
+    if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+      if (!((p3m.params.mesh[0] == p3m.params.mesh[1]) &&
+            (p3m.params.mesh[1] == p3m.params.mesh[2]))) {
+        runtimeErrorMsg() << "P3M_init: Nonmetallic epsilon requires cubic box";
+        ret = true;
+      }
+    }
+
+    return ret;
+  }
+
+  bool p3m_sanity_checks() {
+    bool ret = false;
+
+    if (p3m_sanity_checks_system(node_grid)) {
+      ret = true;
+    }
+
+    if (p3m_sanity_checks_boxl()) {
+      ret = true;
+    }
+
+    if (p3m.params.mesh[0] == 0) {
+      runtimeErrorMsg() << "P3M_init: mesh size is not yet set";
+      ret = true;
+    }
+    if (p3m.params.cao == 0) {
+      runtimeErrorMsg() << "P3M_init: cao is not yet set";
+      ret = true;
+    }
+    if (p3m.params.alpha < 0.0) {
+      runtimeErrorMsg() << "P3M_init: alpha must be >0";
+      ret = true;
+    }
+
+    return ret;
+  }
+
+  void p3m_calc_send_mesh() {
+    int i, j, evenodd;
+    int done[3] = {0, 0, 0};
+    MPI_Status status;
+    /* send grids */
+    for (i = 0; i < 3; i++) {
+      for (j = 0; j < 3; j++) {
+        /* left */
+        p3m.sm.s_ld[i * 2][j] = 0 + done[j] * p3m.local_mesh.margin[j * 2];
+        if (j == i) {
+          p3m.sm.s_ur[i * 2][j] = p3m.local_mesh.margin[j * 2];
+        } else {
+          p3m.sm.s_ur[i * 2][j] = p3m.local_mesh.dim[j] -
+                                  done[j] * p3m.local_mesh.margin[(j * 2) + 1];
+        }
+        /* right */
+        if (j == i) {
+          p3m.sm.s_ld[(i * 2) + 1][j] = p3m.local_mesh.in_ur[j];
+        } else {
+          p3m.sm.s_ld[(i * 2) + 1][j] =
+              0 + done[j] * p3m.local_mesh.margin[j * 2];
+        }
+        p3m.sm.s_ur[(i * 2) + 1][j] =
+            p3m.local_mesh.dim[j] -
+            done[j] * p3m.local_mesh.margin[(j * 2) + 1];
+      }
+      done[i] = 1;
+    }
+    p3m.sm.max = 0;
+    for (i = 0; i < 6; i++) {
+      p3m.sm.s_size[i] = 1;
+      for (j = 0; j < 3; j++) {
+        p3m.sm.s_dim[i][j] = p3m.sm.s_ur[i][j] - p3m.sm.s_ld[i][j];
+        p3m.sm.s_size[i] *= p3m.sm.s_dim[i][j];
+      }
+      if (p3m.sm.s_size[i] > p3m.sm.max) {
+        p3m.sm.max = p3m.sm.s_size[i];
+      }
+    }
+    /* communication */
+    for (i = 0; i < 6; i++) {
+      if (i % 2 == 0) {
+        j = i + 1;
+      } else {
+        j = i - 1;
+      }
+      if (node_neighbors[i] != this_node) {
+        /* two step communication: first all even positions than all odd */
+        for (evenodd = 0; evenodd < 2; evenodd++) {
+          if ((node_pos[i / 2] + evenodd) % 2 == 0) {
+            MPI_Send(&(p3m.local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i],
+                     REQ_P3M_INIT, comm_cart);
           } else {
-            vterm = -2.0 * (1 / sqk + Utils::sqr(1.0 / 2.0 / p3m.params.alpha));
-            node_k_space_energy =
-                p3m.g_energy[ind] * (Utils::sqr(p3m.rs_mesh[2 * ind]) +
-                                     Utils::sqr(p3m.rs_mesh[2 * ind + 1]));
+            MPI_Recv(&(p3m.local_mesh.r_margin[j]), 1, MPI_INT,
+                     node_neighbors[j], REQ_P3M_INIT, comm_cart, &status);
           }
-          ind++;
-          node_k_space_stress[0] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(kx)); /* sigma_xx */
-          node_k_space_stress[1] +=
-              node_k_space_energy * (vterm * kx * ky); /* sigma_xy */
-          node_k_space_stress[2] +=
-              node_k_space_energy * (vterm * kx * kz); /* sigma_xz */
-
-          node_k_space_stress[3] +=
-              node_k_space_energy * (vterm * kx * ky); /* sigma_yx */
-          node_k_space_stress[4] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(ky)); /* sigma_yy */
-          node_k_space_stress[5] +=
-              node_k_space_energy * (vterm * ky * kz); /* sigma_yz */
-
-          node_k_space_stress[6] +=
-              node_k_space_energy * (vterm * kx * kz); /* sigma_zx */
-          node_k_space_stress[7] +=
-              node_k_space_energy * (vterm * ky * kz); /* sigma_zy */
-          node_k_space_stress[8] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(kz)); /* sigma_zz */
+        }
+      } else {
+        p3m.local_mesh.r_margin[j] = p3m.local_mesh.margin[i];
+      }
+    }
+    /* recv grids */
+    for (i = 0; i < 3; i++) {
+      for (j = 0; j < 3; j++) {
+        if (j == i) {
+          p3m.sm.r_ld[i * 2][j] =
+              p3m.sm.s_ld[i * 2][j] + p3m.local_mesh.margin[2 * j];
+          p3m.sm.r_ur[i * 2][j] =
+              p3m.sm.s_ur[i * 2][j] + p3m.local_mesh.r_margin[2 * j];
+          p3m.sm.r_ld[(i * 2) + 1][j] = p3m.sm.s_ld[(i * 2) + 1][j] -
+                                        p3m.local_mesh.r_margin[(2 * j) + 1];
+          p3m.sm.r_ur[(i * 2) + 1][j] =
+              p3m.sm.s_ur[(i * 2) + 1][j] - p3m.local_mesh.margin[(2 * j) + 1];
+        } else {
+          p3m.sm.r_ld[i * 2][j] = p3m.sm.s_ld[i * 2][j];
+          p3m.sm.r_ur[i * 2][j] = p3m.sm.s_ur[i * 2][j];
+          p3m.sm.r_ld[(i * 2) + 1][j] = p3m.sm.s_ld[(i * 2) + 1][j];
+          p3m.sm.r_ur[(i * 2) + 1][j] = p3m.sm.s_ur[(i * 2) + 1][j];
         }
       }
     }
-
-    MPI_Reduce(node_k_space_stress, k_space_stress, 9, MPI_DOUBLE, MPI_SUM, 0,
-               comm_cart);
-    if (this_node == 0) {
-      for (i = 0; i < 9; i++) {
-        stress[i] = k_space_stress[i] * force_prefac;
+    for (i = 0; i < 6; i++) {
+      p3m.sm.r_size[i] = 1;
+      for (j = 0; j < 3; j++) {
+        p3m.sm.r_dim[i][j] = p3m.sm.r_ur[i][j] - p3m.sm.r_ld[i][j];
+        p3m.sm.r_size[i] *= p3m.sm.r_dim[i][j];
+      }
+      if (p3m.sm.r_size[i] > p3m.sm.max) {
+        p3m.sm.max = p3m.sm.r_size[i];
       }
     }
-    free(node_k_space_stress);
-    free(k_space_stress);
   }
-}
 
-/** Debug function to print p3m parameters */
-void p3m_p3m_print_struct(p3m_parameter_struct ps) {
-  fprintf(stderr, "%d: p3m_parameter_struct:\n", this_node);
-  fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f\n", ps.alpha_L, ps.r_cut_iL);
-  fprintf(stderr, "   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n", ps.mesh[0],
-          ps.mesh[1], ps.mesh[2], ps.mesh_off[0], ps.mesh_off[1],
-          ps.mesh_off[2]);
-  fprintf(stderr, "   cao=%d, inter=%d, epsilon=%f\n", ps.cao, ps.inter,
-          ps.epsilon);
-  fprintf(stderr, "   cao_cut=(%f,%f,%f)\n", ps.cao_cut[0], ps.cao_cut[1],
-          ps.cao_cut[2]);
-  fprintf(stderr, "   a=(%f,%f,%f), ai=(%f,%f,%f)\n", ps.a[0], ps.a[1], ps.a[2],
-          ps.ai[0], ps.ai[1], ps.ai[2]);
-}
+  void p3m_scaleby_box_l() {
+    if (coulomb.prefactor < 0.0) {
+      runtimeErrorMsg() << "The Coulomb prefactor has to be >=0";
+      return;
+    }
+
+    p3m.params.r_cut = p3m.params.r_cut_iL * box_l[0];
+    p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
+    p3m_init_a_ai_cao_cut();
+    p3m_calc_lm_ld_pos();
+    p3m_sanity_checks_boxl();
+    p3m_calc_influence_function_force();
+    p3m_calc_influence_function_energy();
+  }
+
+  void p3m_calc_kspace_stress(double *stress) {
+    /**
+     * Calculates the long range electrostatics part of the stress tensor. This
+     * is part Pi_{dir, alpha,beta} in the paper by Essmann et al "A smooth
+     * particle mesh Ewald method", The Journal of Chemical Physics 103, 8577
+     * (1995); doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the
+     * Essmann paper is not present here since M is the empty set in our
+     * simulations.
+     */
+    if (p3m.sum_q2 > 0) {
+      double *node_k_space_stress;
+      double *k_space_stress;
+      double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz;
+
+      int j[3], i, ind = 0;
+      // ordering after Fourier transform
+      node_k_space_stress = (double *)Utils::malloc(9 * sizeof(double));
+      k_space_stress = (double *)Utils::malloc(9 * sizeof(double));
+
+      for (i = 0; i < 9; i++) {
+        node_k_space_stress[i] = 0.0;
+        k_space_stress[i] = 0.0;
+      }
+
+      p3m_gather_fft_grid(p3m.rs_mesh);
+      fft_perform_forw(p3m.rs_mesh, p3m.fft);
+      force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
+
+      for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
+        for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
+          for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
+            kx = 2.0 * PI * p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
+                 box_l[RX];
+            ky = 2.0 * PI * p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
+                 box_l[RY];
+            kz = 2.0 * PI * p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
+                 box_l[RZ];
+            sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
+            if (sqk == 0) {
+              node_k_space_energy = 0.0;
+              vterm = 0.0;
+            } else {
+              vterm =
+                  -2.0 * (1 / sqk + Utils::sqr(1.0 / 2.0 / p3m.params.alpha));
+              node_k_space_energy =
+                  p3m.g_energy[ind] * (Utils::sqr(p3m.rs_mesh[2 * ind]) +
+                                       Utils::sqr(p3m.rs_mesh[2 * ind + 1]));
+            }
+            ind++;
+            node_k_space_stress[0] +=
+                node_k_space_energy *
+                (1.0 + vterm * Utils::sqr(kx)); /* sigma_xx */
+            node_k_space_stress[1] +=
+                node_k_space_energy * (vterm * kx * ky); /* sigma_xy */
+            node_k_space_stress[2] +=
+                node_k_space_energy * (vterm * kx * kz); /* sigma_xz */
+
+            node_k_space_stress[3] +=
+                node_k_space_energy * (vterm * kx * ky); /* sigma_yx */
+            node_k_space_stress[4] +=
+                node_k_space_energy *
+                (1.0 + vterm * Utils::sqr(ky)); /* sigma_yy */
+            node_k_space_stress[5] +=
+                node_k_space_energy * (vterm * ky * kz); /* sigma_yz */
+
+            node_k_space_stress[6] +=
+                node_k_space_energy * (vterm * kx * kz); /* sigma_zx */
+            node_k_space_stress[7] +=
+                node_k_space_energy * (vterm * ky * kz); /* sigma_zy */
+            node_k_space_stress[8] +=
+                node_k_space_energy *
+                (1.0 + vterm * Utils::sqr(kz)); /* sigma_zz */
+          }
+        }
+      }
+
+      MPI_Reduce(node_k_space_stress, k_space_stress, 9, MPI_DOUBLE, MPI_SUM, 0,
+                 comm_cart);
+      if (this_node == 0) {
+        for (i = 0; i < 9; i++) {
+          stress[i] = k_space_stress[i] * force_prefac;
+        }
+      }
+      free(node_k_space_stress);
+      free(k_space_stress);
+    }
+  }
+
+  /** Debug function to print p3m parameters */
+  void p3m_p3m_print_struct(p3m_parameter_struct ps) {
+    fprintf(stderr, "%d: p3m_parameter_struct:\n", this_node);
+    fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f\n", ps.alpha_L, ps.r_cut_iL);
+    fprintf(stderr, "   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n",
+            ps.mesh[0], ps.mesh[1], ps.mesh[2], ps.mesh_off[0], ps.mesh_off[1],
+            ps.mesh_off[2]);
+    fprintf(stderr, "   cao=%d, inter=%d, epsilon=%f\n", ps.cao, ps.inter,
+            ps.epsilon);
+    fprintf(stderr, "   cao_cut=(%f,%f,%f)\n", ps.cao_cut[0], ps.cao_cut[1],
+            ps.cao_cut[2]);
+    fprintf(stderr, "   a=(%f,%f,%f), ai=(%f,%f,%f)\n", ps.a[0], ps.a[1],
+            ps.a[2], ps.ai[0], ps.ai[1], ps.ai[2]);
+  }
 
 #endif /* of P3M */

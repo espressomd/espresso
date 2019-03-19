@@ -54,8 +54,9 @@ static void preparePolygammaEven(int n, double binom, Polynom &series) {
     for (order = 1;; order += 1) {
       x_order = 2 * order;
       coeff = -2 * hzeta(x_order + 1, 2);
-      if (fabs(maxx * coeff) * (4.0 / 3.0) < ROUND_ERROR_PREC)
+      if (fabs(maxx * coeff) * (4.0 / 3.0) < ROUND_ERROR_PREC) {
         break;
+      }
       series.push_back(coeff);
 
       maxx *= 0.25;
@@ -70,8 +71,9 @@ static void preparePolygammaEven(int n, double binom, Polynom &series) {
       x_order = 2 * order;
       coeff = pref * hzeta(1 + deriv + x_order, 2);
       if ((fabs(maxx * coeff) * (4.0 / 3.0) < ROUND_ERROR_PREC) &&
-          (x_order > deriv))
+          (x_order > deriv)) {
         break;
+      }
       series.push_back(-binom * coeff);
 
       maxx *= 0.25;
@@ -96,8 +98,9 @@ static void preparePolygammaOdd(int n, double binom, Polynom &series) {
     x_order = 2 * order + 1;
     coeff = pref * hzeta(1 + deriv + x_order, 2);
     if ((fabs(maxx * coeff) * (4.0 / 3.0) < ROUND_ERROR_PREC) &&
-        (x_order > deriv))
+        (x_order > deriv)) {
       break;
+    }
 
     series.push_back(-binom * coeff);
     maxx *= 0.25;
@@ -116,8 +119,9 @@ void create_mod_psi_up_to(int new_n) {
     modPsi.resize(2 * n_modPsi);
 
     binom = 1.0;
-    for (n = 0; n < old; n++)
+    for (n = 0; n < old; n++) {
       binom *= (-0.5 - n) / (double)(n + 1);
+    }
 
     for (; n < n_modPsi; n++) {
       preparePolygammaEven(n, binom, modPsi[2 * n]);

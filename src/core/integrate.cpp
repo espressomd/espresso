@@ -228,8 +228,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
-  if (check_runtime_errors())
+  if (check_runtime_errors()) {
     return;
+  }
 
   /* Verlet list criterion */
   skin2 = Utils::sqr(0.5 * skin);
@@ -283,8 +284,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
 
-  if (check_runtime_errors())
+  if (check_runtime_errors()) {
     return;
+  }
 
   n_verlet_updates = 0;
 
@@ -299,8 +301,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
-    if (n_rigidbonds)
+    if (n_rigidbonds) {
       save_old_pos();
+    }
 
 #endif
 
@@ -317,8 +320,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
       /* Propagate time: t = t+dt */
       sim_time += time_step;
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-      if (steepest_descent_step())
+      if (steepest_descent_step()) {
         break;
+      }
     } else {
       propagate_vel_pos();
 
@@ -341,8 +345,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
        v(t+0.5*dt) ) */
 
 #if defined(LB) || defined(LB_GPU)
-    if (n_part > 0)
+    if (n_part > 0) {
       lb_lbcoupling_activate();
+    }
 #endif
 
     // Communication step: distribute ghost positions
@@ -395,8 +400,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 
 #ifdef NPT
-    if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))
+    if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO)) {
       nptiso.p_inst_av += nptiso.p_inst;
+    }
 #endif
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -405,8 +411,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
     }
 
-    if (check_runtime_errors())
+    if (check_runtime_errors()) {
       break;
+    }
 
     // Check if SIGINT has been caught.
     if (ctrl_C == 1) {
@@ -434,10 +441,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
   /* verlet list statistics */
-  if (n_verlet_updates > 0)
+  if (n_verlet_updates > 0) {
     verlet_reuse = n_steps / (double)n_verlet_updates;
-  else
+  } else {
     verlet_reuse = 0;
+  }
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -445,8 +453,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);
-    if (this_node == 0)
+    if (this_node == 0) {
       nptiso.p_inst_av /= 1.0 * n_steps;
+    }
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
@@ -473,8 +482,9 @@ void propagate_vel_finalize_p_inst() {
         this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
 #ifdef VIRTUAL_SITES
     // Virtual sites are not propagated during integration
-    if (p.p.is_virtual)
+    if (p.p.is_virtual) {
       continue;
+    }
 #endif
     for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -486,10 +496,11 @@ void propagate_vel_finalize_p_inst() {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
           p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] +
                       friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
-        } else
+        } else {
 #endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+        }
 #ifdef EXTERNAL_FORCES
       }
 #endif
@@ -569,8 +580,9 @@ void propagate_press_box_pos_and_rescale_npt() {
     /* propagate positions while rescaling positions and velocities */
     for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-      if (p.p.is_virtual)
+      if (p.p.is_virtual) {
         continue;
+      }
 #endif
       for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -634,8 +646,9 @@ void propagate_vel() {
 
 // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
-    if (p.p.is_virtual)
+    if (p.p.is_virtual) {
       continue;
+    }
 #endif
     for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -648,10 +661,11 @@ void propagate_vel() {
           p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass +
                       friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
-        } else
+        } else {
 #endif
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+        }
       }
 
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
@@ -667,16 +681,17 @@ void propagate_vel() {
 
 void propagate_pos() {
   INTEG_TRACE(fprintf(stderr, "%d: propagate_pos:\n", this_node));
-  if (integ_switch == INTEG_METHOD_NPT_ISO)
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
     /* Special propagator for NPT ISOTROPIC */
     /* Propagate pressure, box_length (2 times) and positions, rescale
        positions and velocities and check Verlet list criterion (only NPT) */
     propagate_press_box_pos_and_rescale_npt();
-  else {
+  } else {
     for (auto &p : local_cells.particles()) {
 #ifdef VIRTUAL_SITES
-      if (p.p.is_virtual)
+      if (p.p.is_virtual) {
         continue;
+      }
 #endif
       for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -689,8 +704,9 @@ void propagate_pos() {
         }
       }
       /* Verlet criterion check */
-      if (distance2(p.r.p, p.l.p_old) > skin2)
+      if (distance2(p.r.p, p.l.p_old) > skin2) {
         set_resort_particles(Cells::RESORT_LOCAL);
+      }
     }
   }
   announce_resort_particles();
@@ -711,8 +727,9 @@ void propagate_vel_pos() {
 
 // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
-    if (p.p.is_virtual)
+    if (p.p.is_virtual) {
       continue;
+    }
 #endif
     for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -739,8 +756,9 @@ void propagate_vel_pos() {
     if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
             Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
             Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
-        skin2)
+        skin2) {
       set_resort_particles(Cells::RESORT_LOCAL);
+    }
   }
 
   announce_resort_particles();
@@ -752,16 +770,18 @@ void propagate_vel_pos() {
 
 void force_and_velocity_display() {
 #ifdef ADDITIONAL_CHECKS
-  if (db_max_force > skin2)
+  if (db_max_force > skin2) {
     fprintf(stderr, "%d: max_force=%e, part=%d f=(%e,%e,%e)\n", this_node,
             sqrt(db_max_force), db_maxf_id, local_particles[db_maxf_id]->f.f[0],
             local_particles[db_maxf_id]->f.f[1],
             local_particles[db_maxf_id]->f.f[2]);
-  if (db_max_vel > skin2)
+  }
+  if (db_max_vel > skin2) {
     fprintf(stderr, "%d: max_vel=%e, part=%d v=(%e,%e,%e)\n", this_node,
             sqrt(db_max_vel), db_maxv_id, local_particles[db_maxv_id]->m.v[0],
             local_particles[db_maxv_id]->m.v[1],
             local_particles[db_maxv_id]->m.v[2]);
+  }
 #endif
 }
 
@@ -801,18 +821,21 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
   /* perform integration */
   if (!Accumulators::auto_update_enabled()) {
-    if (mpi_integrate(n_steps, reuse_forces))
+    if (mpi_integrate(n_steps, reuse_forces)) {
       return ES_ERROR;
+    }
   } else {
     for (int i = 0; i < n_steps; i++) {
-      if (mpi_integrate(1, reuse_forces))
+      if (mpi_integrate(1, reuse_forces)) {
         return ES_ERROR;
+      }
       reuse_forces = 1;
       Accumulators::auto_update();
     }
     if (n_steps == 0) {
-      if (mpi_integrate(0, reuse_forces))
+      if (mpi_integrate(0, reuse_forces)) {
         return ES_ERROR;
+      }
     }
   }
   return ES_OK;

@@ -58,15 +58,17 @@ calc_harmonic_dumbbell_pair_force(Particle *p1, Particle const *p2,
   double dist = sqrt(dist2);
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
-      (dist > iaparams->p.harmonic_dumbbell.r_cut))
+      (dist > iaparams->p.harmonic_dumbbell.r_cut)) {
     return 1;
+  }
 
   auto const dr = dist - iaparams->p.harmonic_dumbbell.r;
   auto const normalizer = (dist > ROUND_ERROR_PREC) ? 1. / dist : 0.0;
   auto const fac = -iaparams->p.harmonic_dumbbell.k1 * dr * normalizer;
 
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++) {
     force[i] = fac * dx[i];
+  }
 
   auto const dhat = Vector3d{dx[0], dx[1], dx[2]} * normalizer;
   auto const da = vector_product(dhat, p1->r.calc_director());
@@ -90,8 +92,9 @@ inline int harmonic_dumbbell_pair_energy(Particle const *p1, Particle const *p2,
   double dist = sqrt(dist2);
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
-      (dist > iaparams->p.harmonic_dumbbell.r_cut))
+      (dist > iaparams->p.harmonic_dumbbell.r_cut)) {
     return 1;
+  }
 
   double dhat[3];
   dhat[0] = dx[0] / dist;

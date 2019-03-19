@@ -253,8 +253,9 @@ void integrate_reaction_swap() {
   // process is biased.  To rectify this issue we set up a vector
   // which goes through the cells in a randomized manner.
   std::vector<int> rand_cells(local_cells.n);
-  for (int i = 0; i < local_cells.n; i++)
+  for (int i = 0; i < local_cells.n; i++) {
     rand_cells[i] = i;
+  }
   std::shuffle(rand_cells.begin(), rand_cells.end(), rng);
 
   if (reaction.ct_rate > 0.0) {
@@ -276,8 +277,9 @@ void integrate_reaction_swap() {
       // reaction procedure
       catalyzers.clear();
       for (int i = 0; i < np; i++) {
-        if (p_local[i].p.type == reaction.catalyzer_type)
+        if (p_local[i].p.type == reaction.catalyzer_type) {
           catalyzers.push_back(i);
+        }
       }
       std::shuffle(catalyzers.begin(), catalyzers.end(), rng);
 
@@ -314,8 +316,9 @@ void integrate_reaction_swap() {
 #endif // ELECTROSTATICS
               }
               if (p_neigh[i].p.type == reaction.product_type &&
-                  !in_lower_half_space(p_local[*id], p_neigh[i]))
+                  !in_lower_half_space(p_local[*id], p_neigh[i])) {
                 products.push_back(i);
+              }
 #ifdef ELECTROSTATICS
               product_q = p_neigh[i].p.q;
 #endif // ELECTROSTATICS
@@ -347,8 +350,9 @@ void integrate_reaction_swap() {
               // ...tag as many products as there will be reactions
               // at random
               std::shuffle(products.begin(), products.end(), rng);
-              for (int p = 0; p < n_reactions; p++)
+              for (int p = 0; p < n_reactions; p++) {
                 p_neigh[products[p]].p.catalyzer_count = 1;
+              }
             } else {
               // Same as above, but for the case that the number of
               // reactants is greater than the number of products
@@ -361,8 +365,9 @@ void integrate_reaction_swap() {
               }
 
               std::shuffle(reactants.begin(), reactants.end(), rng);
-              for (int p = 0; p < n_reactions; p++)
+              for (int p = 0; p < n_reactions; p++) {
                 p_neigh[reactants[p]].p.catalyzer_count = 1;
+              }
             }
           }
         }
@@ -404,11 +409,12 @@ void integrate_reaction_swap() {
 
 void integrate_reaction() {
 #ifdef ROTATION
-  if (reaction.swap)
+  if (reaction.swap) {
     integrate_reaction_swap();
-  else
+  } else {
 #endif // ROTATION
     integrate_reaction_noswap();
+  }
 }
 
 #endif

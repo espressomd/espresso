@@ -196,34 +196,39 @@ static void prepare_scy_cache() {
 
 inline void clear_vec(double *pdc, int size) {
   int i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < size; i++) {
     pdc[i] = 0;
+  }
 }
 
 inline void copy_vec(double *pdc_d, double const *pdc_s, int size) {
   int i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < size; i++) {
     pdc_d[i] = pdc_s[i];
+  }
 }
 
 inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
                     int size) {
   int i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < size; i++) {
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
+  }
 }
 
 inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
                          double const *pdc_s2, int size) {
   int i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < size; i++) {
     pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
+  }
 }
 
 inline void scale_vec(double scale, double *pdc, int size) {
   int i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < size; i++) {
     pdc[i] *= scale;
+  }
 }
 
 inline double *block(double *p, int index, int size) {
@@ -506,8 +511,9 @@ static double z_energy() {
   }
   distribute(size);
 
-  if (this_node == 0)
+  if (this_node == 0) {
     eng -= pref * (gblcblk[1] * gblcblk[2] - gblcblk[0] * gblcblk[3]);
+  }
 
   return eng;
 }
@@ -522,10 +528,12 @@ static void add_z_force() {
       clear_vec(gblcblk, size);
       /* just counter the 2 pi |z| contribution stemming from P3M */
       for (auto &p : local_cells.particles()) {
-        if (p.r.p[2] < elc_params.space_layer)
+        if (p.r.p[2] < elc_params.space_layer) {
           gblcblk[0] -= elc_params.delta_mid_bot * p.p.q;
-        if (p.r.p[2] > (elc_params.h - elc_params.space_layer))
+        }
+        if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
           gblcblk[0] += elc_params.delta_mid_top * p.p.q;
+        }
       }
     } else {
       double delta = elc_params.delta_mid_top * elc_params.delta_mid_bot;
@@ -1139,8 +1147,9 @@ int ELC_tune(double error) {
     lz = elc_params.h + elc_params.space_layer;
   }
 
-  if (h < 0)
+  if (h < 0) {
     return ES_ERROR;
+  }
 
   elc_params.far_cut = min_inv_boxl;
   do {
@@ -1154,8 +1163,9 @@ int ELC_tune(double error) {
 
     elc_params.far_cut += min_inv_boxl;
   } while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
-  if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
+  if (elc_params.far_cut >= MAXIMAL_FAR_CUT) {
     return ES_ERROR;
+  }
   elc_params.far_cut -= min_inv_boxl;
   elc_params.far_cut2 = Utils::sqr(elc_params.far_cut);
 
@@ -1209,14 +1219,16 @@ void ELC_init() {
     // and make sure the space layer is not bigger than half the actual
     // simulation box,
     // to avoid overlaps
-    if (maxsl > .5 * elc_params.h)
+    if (maxsl > .5 * elc_params.h) {
       maxsl = .5 * elc_params.h;
+    }
     if (elc_params.space_layer > maxsl) {
       if (maxsl <= 0) {
         runtimeErrorMsg() << "P3M real space cutoff too large for ELC w/ "
                              "dielectric contrast";
-      } else
+      } else {
         elc_params.space_layer = maxsl;
+      }
     }
 
     // set the space_box
@@ -1366,8 +1378,9 @@ void ELC_p3m_charge_assign_both() {
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
-  for (int i = 0; i < p3m.local_mesh.size; i++)
+  for (int i = 0; i < p3m.local_mesh.size; i++) {
     p3m.rs_mesh[i] = 0.0;
+  }
 
   for (auto &p : local_cells.particles()) {
     if (p.p.q != 0.0) {
@@ -1400,8 +1413,9 @@ void ELC_p3m_charge_assign_both() {
 void ELC_p3m_charge_assign_image() {
   Vector3d pos;
   /* prepare local FFT mesh */
-  for (int i = 0; i < p3m.local_mesh.size; i++)
+  for (int i = 0; i < p3m.local_mesh.size; i++) {
     p3m.rs_mesh[i] = 0.0;
+  }
 
   for (auto &p : local_cells.particles()) {
     if (p.p.q != 0.0) {

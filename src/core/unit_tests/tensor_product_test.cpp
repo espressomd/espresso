@@ -44,10 +44,11 @@ BOOST_AUTO_TEST_CASE(square) {
   auto prod = tensor_product(x, y);
 
   /* Check values */
-  for (std::size_t i = 0; i < x.size(); i++)
+  for (std::size_t i = 0; i < x.size(); i++) {
     for (std::size_t j = 0; j < y.size(); j++) {
       BOOST_CHECK(prod[i][j] == x[i] * y[j]);
     }
+  }
 }
 
 BOOST_AUTO_TEST_CASE(non_square) {
@@ -63,10 +64,11 @@ BOOST_AUTO_TEST_CASE(non_square) {
   auto prod = tensor_product(x, y);
 
   /* Check values */
-  for (std::size_t i = 0; i < x.size(); i++)
+  for (std::size_t i = 0; i < x.size(); i++) {
     for (std::size_t j = 0; j < y.size(); j++) {
       BOOST_CHECK(prod[i][j] == x[i] * y[j]);
     }
+  }
 }
 
 BOOST_AUTO_TEST_CASE(left_scalar) {

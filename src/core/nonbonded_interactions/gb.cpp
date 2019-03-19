@@ -32,8 +32,9 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double mu, double nu) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data)
+  if (!data) {
     return ES_ERROR;
+  }
 
   data->GB_eps = eps;
   data->GB_sig = sig;

@@ -64,8 +64,9 @@ inline int calc_bonded_coulomb_pair_force(Particle const *p1,
   fac =
       iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / (dist * dist2);
 
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     force[i] = fac * dx[i];
+  }
   ONEPART_TRACE(if (p1->p.identity == check_id)
                     fprintf(stderr,
                             "%d: OPT: BONDED_COULOMB f = (%.3e,%.3e,%.3e) with "

@@ -59,8 +59,9 @@ inline void add_hat_pair_force(const Particle *const p1,
   if (dist > 0. && dist < ia_params->HAT_r) {
     auto const fac =
         hat_force_r(ia_params->HAT_Fmax, ia_params->HAT_r, dist) / dist;
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       force[j] += fac * d[j];
+    }
   }
 }
 

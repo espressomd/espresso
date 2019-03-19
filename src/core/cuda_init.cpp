@@ -37,10 +37,11 @@ struct CompareDevices {
                   const EspressoGpuDevice &b) const {
     const int name_comp = strncmp(a.proc_name, b.proc_name, 63);
     /* Both devs are from the same node, order by id */
-    if (name_comp == 0)
+    if (name_comp == 0) {
       return a.id < b.id;
-    else
+    } else {
       return name_comp < 0;
+    }
   }
 };
 
@@ -63,8 +64,9 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
   MPI_Get_processor_name(proc_name, &proc_name_len);
 
   /* Truncate to 63 chars to fit struct. */
-  if (strlen(proc_name) > 63)
+  if (strlen(proc_name) > 63) {
     proc_name[63] = 0;
+  }
 
   for (int i = 0; i < n_gpus; ++i) {
     /* Check if device has at least minimum compute capability */

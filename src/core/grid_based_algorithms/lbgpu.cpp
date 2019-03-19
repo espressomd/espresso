@@ -273,8 +273,9 @@ void lb_init_gpu() {
 int lb_lbnode_set_extforce_density_GPU(int const ind[3], double const f[3]) {
   if (ind[0] < 0 || ind[0] >= int(lbpar_gpu.dim_x) || ind[1] < 0 ||
       ind[1] >= int(lbpar_gpu.dim_y) || ind[2] < 0 ||
-      ind[2] >= int(lbpar_gpu.dim_z))
+      ind[2] >= int(lbpar_gpu.dim_z)) {
     return ES_ERROR;
+  }
 
   unsigned int index = ind[0] + ind[1] * lbpar_gpu.dim_x +
                        ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
@@ -295,8 +296,9 @@ int lb_lbnode_set_extforce_density_GPU(int const ind[3], double const f[3]) {
   host_extern_node_force_densities[n_extern_node_force_densities].index = index;
   n_extern_node_force_densities++;
 
-  if (lbpar_gpu.external_force_density == 0)
+  if (lbpar_gpu.external_force_density == 0) {
     lbpar_gpu.external_force_density = 1;
+  }
 
   lb_init_extern_nodeforcedensities_GPU(n_extern_node_force_densities,
                                         host_extern_node_force_densities,

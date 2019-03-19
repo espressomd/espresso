@@ -416,9 +416,9 @@ inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
 inline bool pair_bond_enum_exists_between(const Particle *const p1,
                                           const Particle *const p2,
                                           BondedInteraction bond) {
-  if (p1 == p2)
+  if (p1 == p2) {
     return false;
-  else {
+  } else {
     // Check if particles have bonds (bl.n > 0) and search for the bond of
     // interest with are_bonded(). Could be saved on both sides (and both could
     // have other bonds), so we need to check both.

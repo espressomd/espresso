@@ -61,8 +61,9 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
           sin(M_PI * (r_off - ia_params->LJCOS2_rchange) / ia_params->LJCOS2_w);
     }
 
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       force[j] += fac * d[j];
+    }
 
 #ifdef LJ_WARN_WHEN_CLOSE
     if (fac * dist > 1000)

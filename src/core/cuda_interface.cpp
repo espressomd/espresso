@@ -235,10 +235,12 @@ on mpi.h. */
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host) {
   energy.bonded[0] += energy_host.bonded;
   energy.non_bonded[0] += energy_host.non_bonded;
-  if (energy.n_coulomb >= 1)
+  if (energy.n_coulomb >= 1) {
     energy.coulomb[0] += energy_host.coulomb;
-  if (energy.n_dipolar >= 2)
+  }
+  if (energy.n_dipolar >= 2) {
     energy.dipolar[1] += energy_host.dipolar;
+  }
 }
 
 #endif /* ifdef CUDA */

@@ -177,8 +177,9 @@ void rescale_boxl(int dir, double d_new);
 template <typename T> T get_mi_coord(T a, T b, int dir) {
   auto dx = a - b;
 
-  if (PERIODIC(dir) && std::fabs(dx) > half_box_l[dir])
+  if (PERIODIC(dir) && std::fabs(dx) > half_box_l[dir]) {
     dx -= std::round(dx * box_l_i[dir]) * box_l[dir];
+  }
 
   return dx;
 }
@@ -238,8 +239,9 @@ void fold_coordinate(Vector<T1, N> &pos, Vector<T2, N> &image_box, int dir) {
 */
 template <size_t N, typename T1, typename T2>
 void fold_position(Vector<T1, N> &pos, Vector<T2, N> &image_box) {
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++) {
     fold_coordinate(pos, image_box, i);
+  }
 }
 
 inline Vector3d folded_position(const Vector3d &p) {

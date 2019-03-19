@@ -32,8 +32,9 @@ int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
   double shift, dist2, pw6;
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data)
+  if (!data) {
     return ES_ERROR;
+  }
 
   dist2 = cut * cut;
   pw6 = dist2 * dist2 * dist2;

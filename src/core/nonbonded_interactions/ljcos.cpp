@@ -30,8 +30,9 @@ int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
   double facsq;
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data)
+  if (!data) {
     return ES_ERROR;
+  }
 
   data->LJCOS_eps = eps;
   data->LJCOS_sig = sig;

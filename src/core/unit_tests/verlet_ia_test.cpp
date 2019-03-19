@@ -32,11 +32,12 @@ void check_pairs(int n_part, std::vector<std::pair<int, int>> const &pairs) {
   BOOST_CHECK(pairs.size() == (n_part * (n_part - 1) / 2));
 
   auto it = pairs.begin();
-  for (int i = 0; i < n_part; i++)
+  for (int i = 0; i < n_part; i++) {
     for (int j = i + 1; j < n_part; j++) {
       BOOST_CHECK((it->first == i) && (it->second == j));
       ++it;
     }
+  }
 }
 
 /* Dummy distance */
@@ -64,8 +65,9 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
     std::vector<Cell *> neighbors;
 
     for (auto &n : cells) {
-      if (&c != &n)
+      if (&c != &n) {
         neighbors.push_back(&n);
+      }
     }
 
     c.m_neighbors = Neighbors<Cell *>(neighbors, {});

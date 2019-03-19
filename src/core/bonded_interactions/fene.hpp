@@ -55,8 +55,9 @@ inline int calc_fene_pair_force(Particle const *p1, Particle const *p2,
   const double len = sqrt(len2);
   const double dr = len - iaparams->p.fene.r0;
 
-  if (dr >= iaparams->p.fene.drmax)
+  if (dr >= iaparams->p.fene.drmax) {
     return 1;
+  }
 
   double fac =
       -iaparams->p.fene.k * dr / ((1.0 - dr * dr * iaparams->p.fene.drmax2i));
@@ -66,8 +67,9 @@ inline int calc_fene_pair_force(Particle const *p1, Particle const *p2,
     fac = 0.0;
   }
 
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++) {
     force[i] = fac * dx[i];
+  }
 
   return 0;
 }

@@ -38,11 +38,12 @@ void check_pairs(int n_values, std::vector<std::pair<int, int>> &pairs) {
 
   /* Check that all were visited in order */
   auto it = pairs.begin();
-  for (int i = 0; i < n_values; i++)
+  for (int i = 0; i < n_values; i++) {
     for (int j = i + 1; j < n_values; j++) {
       BOOST_CHECK((it->first == i) && (it->second == j));
       ++it;
     }
+  }
 }
 
 BOOST_AUTO_TEST_CASE(basic_check) {

@@ -31,15 +31,17 @@
 class EspressoSystemInterface : public SystemInterface {
 public:
   static EspressoSystemInterface &Instance() {
-    if (!m_instance)
+    if (!m_instance) {
       m_instance = new EspressoSystemInterface;
+    }
 
     return *m_instance;
   };
 
   static EspressoSystemInterface *_Instance() {
-    if (!m_instance)
+    if (!m_instance) {
       m_instance = new EspressoSystemInterface;
+    }
 
     return m_instance;
   };
@@ -55,8 +57,9 @@ public:
     m_needsRGpu = hasRGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
-    if (m_gpu)
+    if (m_gpu) {
       enableParticleCommunication();
+    }
     return m_needsRGpu;
   };
 #ifdef DIPOLES
@@ -67,8 +70,9 @@ public:
     m_needsDipGpu = hasDipGpu();
     m_splitParticleStructGpu |= m_needsRGpu;
     m_gpu |= m_needsRGpu;
-    if (m_gpu)
+    if (m_gpu) {
       enableParticleCommunication();
+    }
     return m_needsDipGpu;
   };
 #endif
@@ -79,8 +83,9 @@ public:
     m_needsVGpu = hasVGpu();
     m_splitParticleStructGpu |= m_needsVGpu;
     m_gpu |= m_needsVGpu;
-    if (m_gpu)
+    if (m_gpu) {
       enableParticleCommunication();
+    }
     return m_needsVGpu;
   };
 
@@ -91,8 +96,9 @@ public:
     m_needsQGpu = hasQGpu();
     m_splitParticleStructGpu |= m_needsQGpu;
     m_gpu |= m_needsQGpu;
-    if (m_gpu)
+    if (m_gpu) {
       enableParticleCommunication();
+    }
     return m_needsQGpu;
   };
 
@@ -103,16 +109,18 @@ public:
     m_needsDirectorGpu = hasDirectorGpu();
     m_splitParticleStructGpu |= m_needsDirectorGpu;
     m_gpu |= m_needsDirectorGpu;
-    if (m_gpu)
+    if (m_gpu) {
       enableParticleCommunication();
+    }
     return m_needsDirectorGpu;
   };
 
   bool requestParticleStructGpu() {
     m_needsParticleStructGpu = true;
     m_gpu |= m_needsParticleStructGpu;
-    if (m_gpu)
+    if (m_gpu) {
       enableParticleCommunication();
+    }
     return true;
   };
 
@@ -131,8 +139,9 @@ public:
   bool requestFGpu() override {
     m_needsFGpu = hasFGpu();
     m_gpu |= m_needsFGpu;
-    if (m_gpu)
+    if (m_gpu) {
       enableParticleCommunication();
+    }
     return m_needsFGpu;
   };
 
@@ -141,8 +150,9 @@ public:
   bool requestTorqueGpu() override {
     m_needsTorqueGpu = hasTorqueGpu();
     m_gpu |= m_needsTorqueGpu;
-    if (m_gpu)
+    if (m_gpu) {
       enableParticleCommunication();
+    }
     return m_needsTorqueGpu;
   };
 #endif

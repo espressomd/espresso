@@ -48,8 +48,9 @@ inline void add_gaussian_pair_force(const Particle *const p1,
     fac = ia_params->Gaussian_eps / pow(ia_params->Gaussian_sig, 2) *
           exp(-0.5 * Utils::sqr(dist / ia_params->Gaussian_sig));
 
-    for (j = 0; j < 3; j++)
+    for (j = 0; j < 3; j++) {
       force[j] += fac * d[j];
+    }
   }
 }
 

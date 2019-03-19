@@ -139,8 +139,9 @@ BOOST_AUTO_TEST_CASE(range_put) {
     std::vector<int> keys = {1, 2, 3, 4, 5};
     std::vector<int> vals = {6, 7, 8, 9, 10};
 
-    for (int i = 12; i > 0; i--)
+    for (int i = 12; i > 0; i--) {
       cache.put(i, i);
+    }
 
     cache.put(keys.begin(), keys.end(), vals.begin());
 

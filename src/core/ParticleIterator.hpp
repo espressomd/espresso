@@ -42,8 +42,9 @@ private:
 
   friend typename base_type::difference_type
   distance(ParticleIterator const &begin, ParticleIterator const &end) {
-    if (begin == end)
+    if (begin == end) {
       return 0;
+    }
 
     /* Remaining parts in this cell */
     auto dist = ((*begin.m_cell)->n - begin.m_part_id);
@@ -77,8 +78,9 @@ private:
     } else {
       m_part_id = 0;
 
-      if (m_cell != m_end)
+      if (m_cell != m_end) {
         ++m_cell;
+      }
 
       /* Find next cell with particles */
       while ((m_cell != m_end) && ((*m_cell)->n == 0)) {

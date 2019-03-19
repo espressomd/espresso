@@ -59,10 +59,11 @@ public:
 
   void construct(VariantMap const &args) override {
     set_from_args(m_obs1, args, "obs1");
-    if (args.count("obs2"))
+    if (args.count("obs2")) {
       set_from_args(m_obs2, args, "obs2");
-    else
+    } else {
       m_obs2 = m_obs1;
+    }
 
     m_correlator = std::make_shared<CoreCorr>(
         get_value<int>(args, "tau_lin"), get_value<double>(args, "tau_max"),
@@ -80,12 +81,15 @@ public:
 
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
-    if (method == "update")
+    if (method == "update") {
       correlator()->update();
-    if (method == "finalize")
+    }
+    if (method == "finalize") {
       correlator()->finalize();
-    if (method == "get_correlation")
+    }
+    if (method == "get_correlation") {
       return correlator()->get_correlation();
+    }
 
     return {};
   }

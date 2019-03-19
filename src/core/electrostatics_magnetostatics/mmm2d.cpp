@@ -334,38 +334,43 @@ static void prepare_scy_cache() {
 /** pdc = 0 */
 inline void clear_vec(double *pdc, int size) {
   int i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < size; i++) {
     pdc[i] = 0;
+  }
 }
 
 /** pdc_d = pdc_s */
 inline void copy_vec(double *pdc_d, double const *pdc_s, int size) {
   int i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < size; i++) {
     pdc_d[i] = pdc_s[i];
+  }
 }
 
 /** pdc_d = pdc_s1 + pdc_s2 */
 inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
                     int size) {
   int i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < size; i++) {
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
+  }
 }
 
 /** pdc_d = scale*pdc_s1 + pdc_s2 */
 inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
                          double const *pdc_s2, int size) {
   int i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < size; i++) {
     pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
+  }
 }
 
 /** pdc_d = scale*pdc */
 inline void scale_vec(double scale, double *pdc, int size) {
   int i;
-  for (i = 0; i < size; i++)
+  for (i = 0; i < size; i++) {
     pdc[i] *= scale;
+  }
 }
 
 /* block indexing - has to fit to the PQ block definitions above.
@@ -388,16 +393,18 @@ inline double *abventry(double *p, int index, int e_size) {
 /* dealing with the image contributions from far outside the simulation box */
 
 void clear_image_contributions(int e_size) {
-  if (this_node == 0)
+  if (this_node == 0) {
     /* the gblcblk contains all contributions from layers deeper than one layer
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
     clear_vec(blwentry(gblcblk, 0, e_size), e_size);
+  }
 
-  if (this_node == n_nodes - 1)
+  if (this_node == n_nodes - 1) {
     /* same for the top node */
     clear_vec(abventry(gblcblk, n_layers - 1, e_size), e_size);
+  }
 }
 
 void gather_image_contributions(int e_size) {
@@ -406,16 +413,18 @@ void gather_image_contributions(int e_size) {
   /* collect the image charge contributions with at least a layer distance */
   MPI_Allreduce(lclimge, recvbuf, 2 * e_size, MPI_DOUBLE, MPI_SUM, comm_cart);
 
-  if (this_node == 0)
+  if (this_node == 0) {
     /* the gblcblk contains all contributions from layers deeper than one layer
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
     copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
+  }
 
-  if (this_node == n_nodes - 1)
+  if (this_node == n_nodes - 1) {
     /* same for the top node */
     copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size, e_size);
+  }
 }
 
 /* the data transfer routine for the lclcblks itself */
@@ -431,10 +440,11 @@ void distribute(int e_size, double fac) {
     /* up */
     if (node == this_node) {
       /* calculate sums of cells below */
-      for (c = 1; c < n_layers; c++)
+      for (c = 1; c < n_layers; c++) {
         addscale_vec(blwentry(gblcblk, c, e_size), fac,
                      blwentry(gblcblk, c - 1, e_size),
                      blwentry(lclcblk, c - 1, e_size), e_size);
+      }
 
       /* calculate my ghost contribution only if a node above exists */
       if (node + 1 < n_nodes) {
@@ -452,10 +462,11 @@ void distribute(int e_size, double fac) {
     /* down */
     if (inv_node == this_node) {
       /* calculate sums of all cells above */
-      for (c = n_layers + 1; c > 2; c--)
+      for (c = n_layers + 1; c > 2; c--) {
         addscale_vec(abventry(gblcblk, c - 3, e_size), fac,
                      abventry(gblcblk, c - 2, e_size),
                      abventry(lclcblk, c, e_size), e_size);
+      }
 
       /* calculate my ghost contribution only if a node below exists */
       if (inv_node - 1 >= 0) {
@@ -607,14 +618,16 @@ static void setup_z_energy() {
   Particle *part;
   int e_size = 2, size = 4;
 
-  if (this_node == 0)
+  if (this_node == 0) {
     /* the lowest lclcblk does not contain anything, since there are no charges
        below the simulation box, at least for this term. */
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+  }
 
-  if (this_node == n_nodes - 1)
+  if (this_node == n_nodes - 1) {
     /* same for the top node */
     clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+  }
 
   /* calculate local cellblks. partblks don't make sense */
   for (c = 1; c <= n_layers; c++) {
@@ -686,8 +699,9 @@ static void setup(int p, double omega, double fac, int n_sccache,
   double *lclimgebot = nullptr, *lclimgetop = nullptr;
   int e_size = 2, size = 4;
 
-  if (mmm2d_params.dielectric_contrast_on)
+  if (mmm2d_params.dielectric_contrast_on) {
     clear_vec(lclimge, size);
+  }
 
   if (this_node == 0) {
     /* on the lowest node, clear the lclcblk below, which only contains the
@@ -733,13 +747,14 @@ static void setup(int p, double omega, double fac, int n_sccache,
 
           lclimgebot[POQESP] += part[i].p.q * sccache[o + ic].s * e;
           lclimgebot[POQECP] += part[i].p.q * sccache[o + ic].c * e;
-        } else
+        } else {
           /* There are image charges at -(z) and -(2h-z) etc. layer_h included
            * due to the shift in z */
           e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
+        }
 
         if (c == n_layers && this_node == n_nodes - 1) {
           /* There are image charges at (3h-z) and (h+z) from the top layer etc.
@@ -756,13 +771,14 @@ static void setup(int p, double omega, double fac, int n_sccache,
 
           lclimgetop[POQESM] += part[i].p.q * sccache[o + ic].s * e;
           lclimgetop[POQECM] += part[i].p.q * sccache[o + ic].c * e;
-        } else
+        } else {
           /* There are image charges at (h-z) and (h+z) from the top layer etc.
              layer_h included due to the shift in z */
           e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_bot) *
                    fac_delta_mid_top;
+        }
 
         lclimge[POQESP] += part[i].p.q * sccache[o + ic].s * e_di_l;
         lclimge[POQECP] += part[i].p.q * sccache[o + ic].c * e_di_l;
@@ -781,10 +797,12 @@ static void setup(int p, double omega, double fac, int n_sccache,
 
   if (mmm2d_params.dielectric_contrast_on) {
     scale_vec(pref, lclimge, size);
-    if (this_node == 0)
+    if (this_node == 0) {
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
-    if (this_node == n_nodes - 1)
+    }
+    if (this_node == n_nodes - 1) {
       scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
+    }
   }
 }
 
@@ -895,8 +913,9 @@ static void setup_PQ(int p, int q, double omega, double fac) {
   double *lclimgebot = nullptr, *lclimgetop = nullptr;
   int e_size = 4, size = 8;
 
-  if (mmm2d_params.dielectric_contrast_on)
+  if (mmm2d_params.dielectric_contrast_on) {
     clear_vec(lclimge, size);
+  }
 
   if (this_node == 0) {
     lclimgebot = block(lclcblk, 0, size);
@@ -955,11 +974,12 @@ static void setup_PQ(int p, int q, double omega, double fac) {
               scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
           lclimgebot[PQECCP] +=
               scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
-        } else
+        } else {
           e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
+        }
 
         if (c == n_layers && this_node == n_nodes - 1) {
           e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
@@ -978,11 +998,12 @@ static void setup_PQ(int p, int q, double omega, double fac) {
               scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
           lclimgetop[PQECCM] +=
               scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
-        } else
+        } else {
           e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_bot) *
                    fac_delta_mid_top;
+        }
 
         lclimge[PQESSP] +=
             scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_l;
@@ -1015,10 +1036,12 @@ static void setup_PQ(int p, int q, double omega, double fac) {
   if (mmm2d_params.dielectric_contrast_on) {
     scale_vec(pref, lclimge, size);
 
-    if (this_node == 0)
+    if (this_node == 0) {
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
-    if (this_node == n_nodes - 1)
+    }
+    if (this_node == n_nodes - 1) {
       scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
+    }
   }
 }
 
@@ -1120,10 +1143,11 @@ static void add_force_contribution(int p, int q) {
       omega = C_2PI * ux * p;
       fac = exp(-omega * layer_h);
       setup_P(p, omega, fac);
-      if (mmm2d_params.dielectric_contrast_on)
+      if (mmm2d_params.dielectric_contrast_on) {
         gather_image_contributions(2);
-      else
+      } else {
         clear_image_contributions(2);
+      }
       distribute(2, fac);
       add_P_force();
       checkpoint("************distri p", p, 0, 2);
@@ -1132,10 +1156,11 @@ static void add_force_contribution(int p, int q) {
     omega = C_2PI * uy * q;
     fac = exp(-omega * layer_h);
     setup_Q(q, omega, fac);
-    if (mmm2d_params.dielectric_contrast_on)
+    if (mmm2d_params.dielectric_contrast_on) {
       gather_image_contributions(2);
-    else
+    } else {
       clear_image_contributions(2);
+    }
     distribute(2, fac);
     add_Q_force();
     checkpoint("************distri q", 0, q, 2);
@@ -1143,10 +1168,11 @@ static void add_force_contribution(int p, int q) {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
     fac = exp(-omega * layer_h);
     setup_PQ(p, q, omega, fac);
-    if (mmm2d_params.dielectric_contrast_on)
+    if (mmm2d_params.dielectric_contrast_on) {
       gather_image_contributions(4);
-    else
+    } else {
       clear_image_contributions(4);
+    }
     distribute(4, fac);
     add_PQ_force(p, q, omega);
     checkpoint("************distri pq", p, q, 4);
@@ -1168,10 +1194,11 @@ static double energy_contribution(int p, int q) {
       omega = C_2PI * ux * p;
       fac = exp(-omega * layer_h);
       setup_P(p, omega, fac);
-      if (mmm2d_params.dielectric_contrast_on)
+      if (mmm2d_params.dielectric_contrast_on) {
         gather_image_contributions(2);
-      else
+      } else {
         clear_image_contributions(2);
+      }
       distribute(2, fac);
       eng = P_energy(omega);
       checkpoint("************distri p", p, 0, 2);
@@ -1180,10 +1207,11 @@ static double energy_contribution(int p, int q) {
     omega = C_2PI * uy * q;
     fac = exp(-omega * layer_h);
     setup_Q(q, omega, fac);
-    if (mmm2d_params.dielectric_contrast_on)
+    if (mmm2d_params.dielectric_contrast_on) {
       gather_image_contributions(2);
-    else
+    } else {
       clear_image_contributions(2);
+    }
     distribute(2, fac);
     eng = Q_energy(omega);
     checkpoint("************distri q", 0, q, 2);
@@ -1191,10 +1219,11 @@ static double energy_contribution(int p, int q) {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
     fac = exp(-omega * layer_h);
     setup_PQ(p, q, omega, fac);
-    if (mmm2d_params.dielectric_contrast_on)
+    if (mmm2d_params.dielectric_contrast_on) {
       gather_image_contributions(4);
-    else
+    } else {
       clear_image_contributions(4);
+    }
     distribute(4, fac);
     eng = PQ_energy(omega);
     checkpoint("************distri pq", p, q, 4);
@@ -1209,8 +1238,9 @@ double MMM2D_add_far(int f, int e) {
   // It's not really far...
   auto eng = e ? self_energy : 0;
 
-  if (mmm2d_params.far_cut == 0.0)
+  if (mmm2d_params.far_cut == 0.0) {
     return 0.5 * eng;
+  }
 
   auto undone = std::vector<int>(n_scxcache + 1);
 
@@ -1222,17 +1252,19 @@ double MMM2D_add_far(int f, int e) {
 
   /* up to which q vector we have to work */
   for (p = 0; p <= n_scxcache; p++) {
-    if (p == 0)
+    if (p == 0) {
       q = n_scycache;
-    else {
+    } else {
       q2 = mmm2d_params.far_cut2 - Utils::sqr(ux * (p - 1));
-      if (q2 > 0)
+      if (q2 > 0) {
         q = 1 + (int)ceil(box_l[1] * sqrt(q2));
-      else
+      } else {
         q = 1;
+      }
       /* just to be on the safe side... */
-      if (q > n_scycache)
+      if (q > n_scycache) {
         q = n_scycache;
+      }
     }
     undone[p] = q;
   }
@@ -1242,12 +1274,15 @@ double MMM2D_add_far(int f, int e) {
   for (R = mmm2d_params.far_cut; R > 0; R -= dR) {
     for (p = n_scxcache; p >= 0; p--) {
       for (q = undone[p]; q >= 0; q--) {
-        if (ux2 * Utils::sqr(p) + uy2 * Utils::sqr(q) < Utils::sqr(R))
+        if (ux2 * Utils::sqr(p) + uy2 * Utils::sqr(q) < Utils::sqr(R)) {
           break;
-        if (f)
+        }
+        if (f) {
           add_force_contribution(p, q);
-        if (e)
+        }
+        if (e) {
           eng += energy_contribution(p, q);
+        }
       }
       undone[p] = q;
     }
@@ -1259,10 +1294,12 @@ double MMM2D_add_far(int f, int e) {
     // fprintf(stderr, "left over %d\n", q);
     for (; q >= 0; q--) {
       // printf("xxxxx %d %d\n", p, q);
-      if (f)
+      if (f) {
         add_force_contribution(p, q);
-      if (e)
+      }
+      if (e) {
         eng += energy_contribution(p, q);
+      }
     }
   }
 
@@ -1280,8 +1317,9 @@ static int MMM2D_tune_far(double error) {
     // min_far);
     mmm2d_params.far_cut += min_inv_boxl;
   } while (err > error && mmm2d_params.far_cut * layer_h < MAXIMAL_FAR_CUT);
-  if (mmm2d_params.far_cut * layer_h >= MAXIMAL_FAR_CUT)
+  if (mmm2d_params.far_cut * layer_h >= MAXIMAL_FAR_CUT) {
     return ERROR_FARC;
+  }
   // fprintf(stderr, "far cutoff %g %g %g\n", mmm2d_params.far_cut, err,
   // min_far);
   mmm2d_params.far_cut -= min_inv_boxl;
@@ -1301,12 +1339,15 @@ static int MMM2D_tune_near(double error) {
   double L, sum;
 
   /* yes, it's y only... */
-  if (max_near > box_l[1] / 2)
+  if (max_near > box_l[1] / 2) {
     return ERROR_LARGE;
-  if (min_far < 0)
+  }
+  if (min_far < 0) {
     return ERROR_SMALL;
-  if (ux * box_l[1] >= 3 / M_SQRT2)
+  }
+  if (ux * box_l[1] >= 3 / M_SQRT2) {
     return ERROR_BOXL;
+  }
 
   /* error is split into three parts:
      one part for Bessel, one for complex
@@ -1321,28 +1362,32 @@ static int MMM2D_tune_near(double error) {
   do {
     L = M_PI * ux * (P - 1);
     sum = 0;
-    for (p = 1; p <= P; p++)
+    for (p = 1; p <= P; p++) {
       sum += p * exp(-exponent * p);
+    }
     err =
         pref * K1(box_l[1] * L) * (T * ((L + uy) / M_PI * box_l[0] - 1) + sum);
     P++;
   } while (err > part_error && (P - 1) < MAXIMAL_B_CUT);
   P--;
-  if (P == MAXIMAL_B_CUT)
+  if (P == MAXIMAL_B_CUT) {
     return ERROR_BESSEL;
+  }
 
   // fprintf(stderr, "bessel cutoff %d %g\n", P, err);
 
   besselCutoff.resize(P);
-  for (p = 1; p < P; p++)
+  for (p = 1; p < P; p++) {
     besselCutoff[p - 1] = (int)floor(((double)P) / (2 * p)) + 1;
+  }
 
   /* complex sum, determine cutoffs (dist dependent) */
   T = log(part_error / (16 * M_SQRT2) * box_l[0] * box_l[1]);
   // for 0, the sum is exactly zero, so do not calculate anything
   complexCutoff[0] = 0;
-  for (i = 1; i <= COMPLEX_STEP; i++)
+  for (i = 1; i <= COMPLEX_STEP; i++) {
     complexCutoff[i] = (int)ceil(T / log(i / COMPLEX_FAC));
+  }
   prepareBernoulliNumbers(complexCutoff[COMPLEX_STEP]);
 
   /* polygamma, determine order */
@@ -1356,8 +1401,9 @@ static int MMM2D_tune_near(double error) {
     uxrho2m2max *= uxrhomax2;
     n++;
   } while (err > 0.1 * part_error && n < MAXIMAL_POLYGAMMA);
-  if (n == MAXIMAL_POLYGAMMA)
+  if (n == MAXIMAL_POLYGAMMA) {
     return ERROR_POLY;
+  }
   // fprintf(stderr, "polygamma cutoff %d %g\n", n, err);
 
   return 0;
@@ -1380,21 +1426,24 @@ static void prepareBernoulliNumbers(int bon_order) {
       -2.0000000000000000017, 2.0000000000000000004,  -2.0000000000000000001,
       2.0000000000000000000};
 
-  if (bon_order < 2)
+  if (bon_order < 2) {
     bon_order = 2;
+  }
 
   bon.resize(bon_order);
 
   /* the ux is multiplied in to Bessel, complex and psi at once, not here,
      and we use uy*(z + iy), so the uy is also treated below */
-  for (l = 1; (l <= bon_order) && (l < 34); l++)
+  for (l = 1; (l <= bon_order) && (l < 34); l++) {
     bon[l - 1] = 2 * uy * bon_table[l];
+  }
 
   for (; l <= bon_order; l++) {
-    if (l & 1)
+    if (l & 1) {
       bon[l - 1] = 4.0 * uy;
-    else
+    } else {
       bon[l - 1] = -4.0 * uy;
+    }
   }
 }
 
@@ -1529,16 +1578,18 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double const d[3],
       F[2] += 2 * n * ux2 * uxrho_2nm2 * mpe * d[2];
 
       /* y < rho => ux2*uxrho_2nm2*d[1] < ux*uxrho_2n */
-      if (fabs(2 * n * ux * uxrho_2n * mpe) < part_error)
+      if (fabs(2 * n * ux * uxrho_2n * mpe) < part_error) {
         break;
+      }
 
       uxrho_2nm2 = uxrho_2n;
     }
     // fprintf(stderr, "    psi force %f %f %f %d\n", F[0], F[1], F[2], n);
   }
 
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     F[i] *= ux;
+  }
 
   /* explicitly added potentials r_{-1,0} and r_{1,0} */
   {
@@ -1565,8 +1616,9 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double const d[3],
     // fprintf(stderr, "explicit force %f %f %f\n", F[0], F[1], F[2]);
   }
 
-  for (i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++) {
     force[i] += pref * F[i];
+  }
 }
 
 inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
@@ -1657,8 +1709,9 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
     for (n = 1; n < n_modPsi; n++) {
       add = uxrho_2n * mod_psi_even(n, uxx);
       eng -= add;
-      if (fabs(add) < part_error)
+      if (fabs(add) < part_error) {
         break;
+      }
       uxrho_2n *= uxrho2;
     }
     // fprintf(stderr, "    psi energy %f %d\n", eng, n);
@@ -1745,8 +1798,9 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
 
   MMM2D_setup_constants();
 
-  if ((err = MMM2D_tune_near(maxPWerror)))
+  if ((err = MMM2D_tune_near(maxPWerror))) {
     return err;
+  }
 
   /* if we cannot do the far formula, force off */
   if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
@@ -1759,11 +1813,12 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
   } else {
     mmm2d_params.far_cut = far_cut;
     mmm2d_params.far_cut2 = Utils::sqr(far_cut);
-    if (mmm2d_params.far_cut > 0)
+    if (mmm2d_params.far_cut > 0) {
       mmm2d_params.far_calculated = 0;
-    else {
-      if ((err = MMM2D_tune_far(maxPWerror)))
+    } else {
+      if ((err = MMM2D_tune_far(maxPWerror))) {
         return err;
+      }
       mmm2d_params.far_calculated = 1;
     }
   }
@@ -1800,8 +1855,9 @@ int MMM2D_sanity_checks() {
 void MMM2D_init() {
   int err;
 
-  if (MMM2D_sanity_checks())
+  if (MMM2D_sanity_checks()) {
     return;
+  }
 
   MMM2D_setup_constants();
   if ((err = MMM2D_tune_near(mmm2d_params.maxPWerror))) {
@@ -1855,8 +1911,9 @@ void MMM2D_dielectric_layers_force_contribution() {
   double force[3] = {0, 0, 0};
   double pref = coulomb.prefactor * C_2PI * ux * uy;
 
-  if (!mmm2d_params.dielectric_contrast_on)
+  if (!mmm2d_params.dielectric_contrast_on) {
     return;
+  }
 
   // First and last layer near field force contribution
   if (this_node == 0) {
@@ -1930,8 +1987,9 @@ double MMM2D_dielectric_layers_energy_contribution() {
   double eng = 0.0;
   double pref = coulomb.prefactor * C_2PI * ux * uy;
 
-  if (!mmm2d_params.dielectric_contrast_on)
+  if (!mmm2d_params.dielectric_contrast_on) {
     return 0.0;
+  }
 
   if (this_node == 0) {
     c = 1;

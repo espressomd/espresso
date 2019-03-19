@@ -51,15 +51,20 @@ static std::vector<hsize_t> create_dims(hsize_t dim, hsize_t size) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-  if (dim == 3)
-    return std::vector<hsize_t>{size, size, dim};
-  if (dim == 2)
-    return std::vector<hsize_t>{size, size};
-  if (dim == 1)
+  if (dim == 3) {
+    return std
+  }
+  ::vector<hsize_t>{size, size, dim};
+  if (dim == 2) {
+    return std
+  }
+  ::vector<hsize_t>{size, size};
+  if (dim == 1) {
     return std::vector<hsize_t>{size};
-  else
+  } else {
     throw std::runtime_error(
         "H5MD Error: datastets with this dimension are not implemented\n");
+  }
 }
 
 // Correct Chunking is important for the IO performance!
@@ -68,29 +73,39 @@ std::vector<hsize_t> File::create_chunk_dims(hsize_t dim, hsize_t size,
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-  if (dim == 3)
-    return std::vector<hsize_t>{chunk_size, size, dim};
-  if (dim == 2)
-    return std::vector<hsize_t>{chunk_size, size};
-  if (dim == 1)
+  if (dim == 3) {
+    return std
+  }
+  ::vector<hsize_t>{chunk_size, size, dim};
+  if (dim == 2) {
+    return std
+  }
+  ::vector<hsize_t>{chunk_size, size};
+  if (dim == 1) {
     return std::vector<hsize_t>{size};
-  else
+  } else {
     throw std::runtime_error(
         "H5MD Error: datastets with this dimension are not implemented\n");
+  }
 }
 static std::vector<hsize_t> create_maxdims(hsize_t dim) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-  if (dim == 3)
-    return std::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
-  if (dim == 2)
-    return std::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED};
-  if (dim == 1)
+  if (dim == 3) {
+    return std
+  }
+  ::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
+  if (dim == 2) {
+    return std
+  }
+  ::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED};
+  if (dim == 1) {
     return std::vector<hsize_t>{H5S_UNLIMITED};
-  else
+  } else {
     throw std::runtime_error(
         "H5MD Error: datastets with this dimension are not implemented\n");
+  }
 }
 
 /* Initialize the file related variables after parameters have been set. */
@@ -102,12 +117,14 @@ void File::InitFile() {
   m_backup_filename = m_filename + ".bak";
   // use a separate mpi communicator if we want to write out ordered data. This
   // is in order to avoid  blocking by collective functions
-  if (m_write_ordered)
+  if (m_write_ordered) {
     MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm);
-  else
+  } else {
     m_hdf5_comm = MPI_COMM_WORLD;
-  if (m_write_ordered == true && this_node != 0)
+  }
+  if (m_write_ordered == true && this_node != 0) {
     return;
+  }
 
   if (n_part <= 0) {
     throw std::runtime_error("Please first set up particles before "
@@ -124,8 +141,9 @@ void File::InitFile() {
   bool backup_file_exists = boost::filesystem::exists(m_backup_filename);
   /* Perform a barrier synchronization. Otherwise one process might already
    * create the file while another still checks for its existence. */
-  if (m_write_ordered == false)
+  if (m_write_ordered == false) {
     MPI_Barrier(m_hdf5_comm);
+  }
   if (file_exists) {
     if (check_for_H5MD_structure(m_filename)) {
       /*
@@ -134,16 +152,18 @@ void File::InitFile() {
        * just be deleted if the simulation crashes at some point and we
        * still have a valid trajectory, we can start from.
        */
-      if (this_node == 0)
+      if (this_node == 0) {
         backup_file(m_filename, m_backup_filename);
+      }
       load_file(m_filename);
       m_already_wrote_bonds = true;
     } else {
       throw incompatible_h5mdfile();
     }
   } else {
-    if (backup_file_exists)
+    if (backup_file_exists) {
       throw left_backupfile();
+    }
     create_new_file(m_filename);
   }
 }
@@ -208,14 +228,15 @@ void File::create_datasets(bool only_load) {
       auto chunk_dims = create_chunk_dims(descr.dim, chunk_size, 1);
       auto maxdims = create_maxdims(descr.dim);
       auto storage = h5xx::policy::storage::chunked(chunk_dims);
-      if (descr.type.get_type_id() == H5T_NATIVE_INT)
+      if (descr.type.get_type_id() == H5T_NATIVE_INT) {
         storage.set(h5xx::policy::storage::fill_value(static_cast<int>(-10)));
-      else if (descr.type.get_type_id() == H5T_NATIVE_DOUBLE)
+      } else if (descr.type.get_type_id() == H5T_NATIVE_DOUBLE) {
         storage.set(
             h5xx::policy::storage::fill_value(static_cast<double>(-10)));
-      else
+      } else {
         throw std::runtime_error(
             "H5MD writing dataset of this type is not implemented\n");
+      }
       auto dataspace = h5xx::dataspace(dims, maxdims);
       hid_t lcpl_id = H5Pcreate(H5P_LINK_CREATE);
       H5Pset_create_intermediate_group(lcpl_id, 1);
@@ -223,8 +244,9 @@ void File::create_datasets(bool only_load) {
                                      storage, lcpl_id, H5P_DEFAULT);
     }
   }
-  if (!only_load)
+  if (!only_load) {
     create_links_for_time_and_step_datasets();
+  }
 }
 
 void File::create_links_for_time_and_step_datasets() {
@@ -279,8 +301,9 @@ void File::create_new_file(const std::string &filename) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-  if (this_node == 0)
+  if (this_node == 0) {
     this->WriteScript(filename);
+  }
   MPI_Barrier(m_hdf5_comm);
   /* Create a new h5xx file object. */
   m_h5md_file =
@@ -315,8 +338,9 @@ void File::Close() {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
-  if (this_node == 0)
+  if (this_node == 0) {
     boost::filesystem::remove(m_backup_filename);
+  }
 }
 
 void File::fill_arrays_for_h5md_write_with_particle_property(
@@ -336,10 +360,12 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   bool write_charge = write_dat & W_CHARGE;
 
   id[0][particle_index][0] = current_particle.p.identity;
-  if (write_species)
+  if (write_species) {
     typ[0][particle_index][0] = current_particle.p.type;
-  if (write_mass)
+  }
+  if (write_mass) {
     mass[0][particle_index][0] = current_particle.p.mass;
+  }
   /* store folded particle positions. */
   if (write_pos) {
     Vector3d p = current_particle.r.p;
@@ -394,12 +420,13 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
   int num_particles_to_be_written = 0;
-  if (m_write_ordered == true && this_node == 0)
+  if (m_write_ordered == true && this_node == 0) {
     num_particles_to_be_written = n_part;
-  else if (m_write_ordered == true && this_node != 0)
+  } else if (m_write_ordered == true && this_node != 0) {
     return;
-  else if (m_write_ordered == false)
+  } else if (m_write_ordered == false) {
     num_particles_to_be_written = cells_get_n_particles();
+  }
 
   bool write_species = write_dat & W_TYPE;
   bool write_pos = write_dat & W_POS;
@@ -628,10 +655,12 @@ void File::WriteScript(std::string const &filename) {
 
 void File::Flush() {
   if (m_write_ordered) {
-    if (this_node == 0)
+    if (this_node == 0) {
       H5Fflush(m_h5md_file.hid(), H5F_SCOPE_GLOBAL);
-  } else
+    }
+  } else {
     H5Fflush(m_h5md_file.hid(), H5F_SCOPE_GLOBAL);
+  }
 }
 
 bool File::check_for_H5MD_structure(std::string const &filename) {
@@ -640,16 +669,18 @@ bool File::check_for_H5MD_structure(std::string const &filename) {
 #endif
   h5xx::file h5mdfile(filename, h5xx::file::in);
 
-  for (const auto &gnam : group_names)
-    if (!h5xx::exists_group(h5mdfile, gnam))
+  for (const auto &gnam : group_names) {
+    if (!h5xx::exists_group(h5mdfile, gnam)) {
       return false;
+    }
 
-  for (const auto &ddesc : dataset_descriptors)
-    if (!h5xx::exists_dataset(h5mdfile, ddesc.path))
-      return false;
+    for (const auto &ddesc : dataset_descriptors) {
+      if (!h5xx::exists_dataset(h5mdfile, ddesc.path)) {
+        return false;
+      }
 
-  return true;
-}
+      return true;
+    }
 
-} /* namespace H5md */
+  } /* namespace H5md */
 } /* namespace Writer */

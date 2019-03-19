@@ -63,9 +63,10 @@ operator()(PartCfg &partCfg) const {
   auto hist_tmp = histogram.get_histogram();
   auto tot_count = histogram.get_tot_count();
   for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {
-    if (tot_count[ind] == 0 and not allow_empty_bins)
+    if (tot_count[ind] == 0 and not allow_empty_bins) {
       throw std::runtime_error("Decrease sampling delta(s), bin without hit "
                                "found!");
+    }
     if (tot_count[ind] > 0) {
       hist_tmp[ind] /= tot_count[ind];
     }

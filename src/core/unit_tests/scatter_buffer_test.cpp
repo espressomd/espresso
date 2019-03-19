@@ -52,8 +52,9 @@ void check_pointer(mpi::communicator comm, int root) {
 
     Utils::Mpi::scatter_buffer(buf.data(), comm.rank(), comm, root);
   } else {
-    for (int i = 0; i < comm.rank(); i++)
+    for (int i = 0; i < comm.rank(); i++) {
       buf.push_back(-1);
+    }
 
     Utils::Mpi::scatter_buffer(buf.data(), comm.rank(), comm, root);
 

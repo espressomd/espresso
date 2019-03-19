@@ -50,8 +50,9 @@ inline void add_ljcos_pair_force(const Particle *const p1,
                    ia_params->LJCOS_eps *
                    (sin(ia_params->LJCOS_alfa * Utils::sqr(r_off) +
                         ia_params->LJCOS_beta));
-      for (int j = 0; j < 3; j++)
+      for (int j = 0; j < 3; j++) {
         force[j] += fac * d[j];
+      }
     }
     /* Lennard-Jones part of the potential. */
     else if (dist > 0) {
@@ -60,8 +61,9 @@ inline void add_ljcos_pair_force(const Particle *const p1,
       double fac =
           48.0 * ia_params->LJCOS_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
 
-      for (int j = 0; j < 3; j++)
+      for (int j = 0; j < 3; j++) {
         force[j] += fac * d[j];
+      }
 
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)

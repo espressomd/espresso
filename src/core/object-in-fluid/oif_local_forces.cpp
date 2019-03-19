@@ -32,8 +32,9 @@ int oif_local_forces_set_params(int bond_type, double r0, double ks,
                                 double kslin, double phi0, double kb,
                                 double A01, double A02, double kal,
                                 double kvisc) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   make_bond_type_exist(bond_type);
 

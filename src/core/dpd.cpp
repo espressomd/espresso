@@ -133,8 +133,9 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     // DPD part
     // friction force prefactor
     double vel12_dot_d12 = 0.0;
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
+    }
     auto const friction =
         ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor

@@ -56,10 +56,11 @@ public:
     /* Find a vector orthogonal to e_z, since {1,0,0} and
        {0,1,0} are independent, e_z can not be parallel to both
        of them. Then we can do Gram-Schmidt */
-    if ((Vector3d{1., 0., 0} * e_z) < 1.)
+    if ((Vector3d{1., 0., 0} * e_z) < 1.) {
       e_r_axis = Vector3d{1., 0., 0} - (e_z * Vector3d{1., 0., 0}) * e_z;
-    else
+    } else {
       e_r_axis = Vector3d{0., 1., 0} - (e_z * Vector3d{0., 1., 0}) * e_z;
+    }
 
     e_r_axis.normalize();
   }

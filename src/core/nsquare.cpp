@@ -82,170 +82,178 @@ void nsq_topology_init(CellPList *old) {
 
   realloc_cellplist(&ghost_cells, ghost_cells.n = n_nodes - 1);
   int c = 0;
-  for (int n = 0; n < n_nodes; n++)
-    if (n != this_node)
-      ghost_cells.cell[c++] = &cells[n];
-
-  std::vector<Cell *> red_neighbors;
-  std::vector<Cell *> black_neighbors;
-
-  /* distribute force calculation work  */
   for (int n = 0; n < n_nodes; n++) {
-    auto const diff = n - this_node;
-    /* simple load balancing formula. Basically diff % n, where n >= n_nodes, n
-       odd.
-       The node itself is also left out, as it is treated differently */
-    if (diff == 0) {
-      continue;
+    if (n != this_node) {
+      ghost_cells.cell[c++] = &cells[n];
     }
 
-    if (((diff > 0 && (diff % 2) == 0) || (diff < 0 && ((-diff) % 2) == 1))) {
-      CELL_TRACE(
-          fprintf(stderr, "%d: doing interactions with %d\n", this_node, n));
-      red_neighbors.push_back(&cells.at(n));
-    } else {
-      black_neighbors.push_back(&cells.at(n));
-    }
-  }
+    std::vector<Cell *> red_neighbors;
+    std::vector<Cell *> black_neighbors;
 
-  local->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
-
-  /* create communicators */
-  nsq_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
-  nsq_prepare_comm(&cell_structure.exchange_ghosts_comm,
-                   GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-  nsq_prepare_comm(&cell_structure.update_ghost_pos_comm, GHOSTTRANS_POSITION);
-  nsq_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
-
-  /* here we just decide what to transfer where */
-  if (n_nodes > 1) {
+    /* distribute force calculation work  */
     for (int n = 0; n < n_nodes; n++) {
-      /* use the prefetched send buffers. Node 0 transmits first and never
-       * prefetches. */
-      if (this_node == 0 || this_node != n) {
-        cell_structure.ghost_cells_comm.comm[n].type = GHOST_BCST;
-        cell_structure.exchange_ghosts_comm.comm[n].type = GHOST_BCST;
-        cell_structure.update_ghost_pos_comm.comm[n].type = GHOST_BCST;
+      auto const diff = n - this_node;
+      /* simple load balancing formula. Basically diff % n, where n >= n_nodes,
+         n odd. The node itself is also left out, as it is treated differently
+       */
+      if (diff == 0) {
+        continue;
+      }
+
+      if (((diff > 0 && (diff % 2) == 0) || (diff < 0 && ((-diff) % 2) == 1))) {
+        CELL_TRACE(
+            fprintf(stderr, "%d: doing interactions with %d\n", this_node, n));
+        red_neighbors.push_back(&cells.at(n));
       } else {
-        cell_structure.ghost_cells_comm.comm[n].type =
-            GHOST_BCST | GHOST_PREFETCH;
-        cell_structure.exchange_ghosts_comm.comm[n].type =
-            GHOST_BCST | GHOST_PREFETCH;
-        cell_structure.update_ghost_pos_comm.comm[n].type =
-            GHOST_BCST | GHOST_PREFETCH;
+        black_neighbors.push_back(&cells.at(n));
       }
-      cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
     }
-    /* first round: all nodes except the first one prefetch their send data */
-    if (this_node != 0) {
-      cell_structure.ghost_cells_comm.comm[0].type |= GHOST_PREFETCH;
-      cell_structure.exchange_ghosts_comm.comm[0].type |= GHOST_PREFETCH;
-      cell_structure.update_ghost_pos_comm.comm[0].type |= GHOST_PREFETCH;
+
+    local->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
+
+    /* create communicators */
+    nsq_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
+    nsq_prepare_comm(&cell_structure.exchange_ghosts_comm,
+                     GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
+    nsq_prepare_comm(&cell_structure.update_ghost_pos_comm,
+                     GHOSTTRANS_POSITION);
+    nsq_prepare_comm(&cell_structure.collect_ghost_force_comm,
+                     GHOSTTRANS_FORCE);
+
+    /* here we just decide what to transfer where */
+    if (n_nodes > 1) {
+      for (int n = 0; n < n_nodes; n++) {
+        /* use the prefetched send buffers. Node 0 transmits first and never
+         * prefetches. */
+        if (this_node == 0 || this_node != n) {
+          cell_structure.ghost_cells_comm.comm[n].type = GHOST_BCST;
+          cell_structure.exchange_ghosts_comm.comm[n].type = GHOST_BCST;
+          cell_structure.update_ghost_pos_comm.comm[n].type = GHOST_BCST;
+        } else {
+          cell_structure.ghost_cells_comm.comm[n].type =
+              GHOST_BCST | GHOST_PREFETCH;
+          cell_structure.exchange_ghosts_comm.comm[n].type =
+              GHOST_BCST | GHOST_PREFETCH;
+          cell_structure.update_ghost_pos_comm.comm[n].type =
+              GHOST_BCST | GHOST_PREFETCH;
+        }
+        cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
+      }
+      /* first round: all nodes except the first one prefetch their send data */
+      if (this_node != 0) {
+        cell_structure.ghost_cells_comm.comm[0].type |= GHOST_PREFETCH;
+        cell_structure.exchange_ghosts_comm.comm[0].type |= GHOST_PREFETCH;
+        cell_structure.update_ghost_pos_comm.comm[0].type |= GHOST_PREFETCH;
+      }
     }
+
+    /* copy particles */
+    for (int c = 0; c < old->n; c++) {
+      auto part = old->cell[c]->part;
+      auto np = old->cell[c]->n;
+      for (int p = 0; p < np; p++) {
+        append_unindexed_particle(local, std::move(part[p]));
+      }
+    }
+    update_local_particles(local);
   }
 
-  /* copy particles */
-  for (int c = 0; c < old->n; c++) {
-    auto part = old->cell[c]->part;
-    auto np = old->cell[c]->n;
-    for (int p = 0; p < np; p++)
-      append_unindexed_particle(local, std::move(part[p]));
-  }
-  update_local_particles(local);
-}
+  void nsq_balance_particles(int global_flag) {
+    int i, n, surplus, s_node, tmp, lack, l_node, transfer;
 
-void nsq_balance_particles(int global_flag) {
-  int i, n, surplus, s_node, tmp, lack, l_node, transfer;
-
-  /* we don't have the concept of neighbors, and therefore don't need that.
-     However, if global particle changes happen, we might want to rebalance. */
-  if (global_flag != CELL_GLOBAL_EXCHANGE)
-    return;
-
-  int pp = cells_get_n_particles();
-  auto *ppnode = (int *)Utils::malloc(n_nodes * sizeof(int));
-  /* minimal difference between node shares */
-  int minshare = n_part / n_nodes;
-  int maxshare = minshare + 1;
-
-  CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: load %d-%d\n",
-                     this_node, minshare, maxshare));
-
-  MPI_Allgather(&pp, 1, MPI_INT, ppnode, 1, MPI_INT, comm_cart);
-  for (;;) {
-    /* find node with most excessive particles */
-    surplus = -1;
-    s_node = -1;
-    for (n = 0; n < n_nodes; n++) {
-      tmp = ppnode[n] - minshare;
-      CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: node %d has %d\n",
-                         this_node, n, ppnode[n]));
-      if (tmp > surplus) {
-        surplus = tmp;
-        s_node = n;
-      }
-    }
-    CELL_TRACE(fprintf(stderr,
-                       "%d: nsq_balance_particles: excess %d on node %d\n",
-                       this_node, surplus, s_node));
-
-    /* find node with most lacking particles */
-    lack = -1;
-    l_node = -1;
-    for (n = 0; n < n_nodes; n++) {
-      tmp = maxshare - ppnode[n];
-      if (tmp > lack) {
-        lack = tmp;
-        l_node = n;
-      }
-    }
-    CELL_TRACE(fprintf(stderr,
-                       "%d: nsq_balance_particles: lack %d on node %d\n",
-                       this_node, lack, l_node));
-
-    /* should not happen: minshare or maxshare wrong or more likely,
-       the algorithm */
-    if (s_node == -1 || l_node == -1) {
-      fprintf(stderr, "%d: Particle load balancing failed\n", this_node);
-      break;
+    /* we don't have the concept of neighbors, and therefore don't need that.
+       However, if global particle changes happen, we might want to rebalance.
+     */
+    if (global_flag != CELL_GLOBAL_EXCHANGE) {
+      return;
     }
 
-    /* exit if all nodes load is withing min and max share */
-    if (lack <= 1 && surplus <= 1)
-      break;
+    int pp = cells_get_n_particles();
+    auto *ppnode = (int *)Utils::malloc(n_nodes * sizeof(int));
+    /* minimal difference between node shares */
+    int minshare = n_part / n_nodes;
+    int maxshare = minshare + 1;
 
-    transfer = lack < surplus ? lack : surplus;
+    CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: load %d-%d\n",
+                       this_node, minshare, maxshare));
 
-    if (s_node == this_node) {
-      ParticleList send_buf;
-      init_particlelist(&send_buf);
-      realloc_particlelist(&send_buf, send_buf.n = transfer);
-      for (i = 0; i < transfer; i++) {
-        send_buf.part[i] = std::move(local->part[--local->n]);
+    MPI_Allgather(&pp, 1, MPI_INT, ppnode, 1, MPI_INT, comm_cart);
+    for (;;) {
+      /* find node with most excessive particles */
+      surplus = -1;
+      s_node = -1;
+      for (n = 0; n < n_nodes; n++) {
+        tmp = ppnode[n] - minshare;
+        CELL_TRACE(fprintf(stderr,
+                           "%d: nsq_balance_particles: node %d has %d\n",
+                           this_node, n, ppnode[n]));
+        if (tmp > surplus) {
+          surplus = tmp;
+          s_node = n;
+        }
       }
-      realloc_particlelist(local, local->n);
-      update_local_particles(local);
+      CELL_TRACE(fprintf(stderr,
+                         "%d: nsq_balance_particles: excess %d on node %d\n",
+                         this_node, surplus, s_node));
 
-      send_particles(&send_buf, l_node);
+      /* find node with most lacking particles */
+      lack = -1;
+      l_node = -1;
+      for (n = 0; n < n_nodes; n++) {
+        tmp = maxshare - ppnode[n];
+        if (tmp > lack) {
+          lack = tmp;
+          l_node = n;
+        }
+      }
+      CELL_TRACE(fprintf(stderr,
+                         "%d: nsq_balance_particles: lack %d on node %d\n",
+                         this_node, lack, l_node));
+
+      /* should not happen: minshare or maxshare wrong or more likely,
+         the algorithm */
+      if (s_node == -1 || l_node == -1) {
+        fprintf(stderr, "%d: Particle load balancing failed\n", this_node);
+        break;
+      }
+
+      /* exit if all nodes load is withing min and max share */
+      if (lack <= 1 && surplus <= 1) {
+        break;
+      }
+
+      transfer = lack < surplus ? lack : surplus;
+
+      if (s_node == this_node) {
+        ParticleList send_buf;
+        init_particlelist(&send_buf);
+        realloc_particlelist(&send_buf, send_buf.n = transfer);
+        for (i = 0; i < transfer; i++) {
+          send_buf.part[i] = std::move(local->part[--local->n]);
+        }
+        realloc_particlelist(local, local->n);
+        update_local_particles(local);
+
+        send_particles(&send_buf, l_node);
 
 #ifdef ADDITIONAL_CHECKS
-      check_particle_consistency();
+        check_particle_consistency();
 #endif
 
-    } else if (l_node == this_node) {
-      ParticleList recv_buf{};
+      } else if (l_node == this_node) {
+        ParticleList recv_buf{};
 
-      recv_particles(&recv_buf, s_node);
-      for (int i = 0; i < recv_buf.n; i++) {
-        append_indexed_particle(local, std::move(recv_buf.part[i]));
+        recv_particles(&recv_buf, s_node);
+        for (int i = 0; i < recv_buf.n; i++) {
+          append_indexed_particle(local, std::move(recv_buf.part[i]));
+        }
+
+        realloc_particlelist(&recv_buf, 0);
       }
-
-      realloc_particlelist(&recv_buf, 0);
+      ppnode[s_node] -= transfer;
+      ppnode[l_node] += transfer;
     }
-    ppnode[s_node] -= transfer;
-    ppnode[l_node] += transfer;
-  }
-  CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: done\n", this_node));
+    CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: done\n", this_node));
 
-  free(ppnode);
-}
+    free(ppnode);
+  }

@@ -66,10 +66,12 @@ static void add_lj_internal(
     const double rel_cutoff, bool only_diagonal) {
   for (auto it = types.begin(); it != types.end(); ++it) {
     for (auto jt = types.begin(); jt != types.end(); ++jt) {
-      if (it->espresso_id > jt->espresso_id)
+      if (it->espresso_id > jt->espresso_id) {
         continue;
-      if (only_diagonal && (it->espresso_id != jt->espresso_id))
+      }
+      if (only_diagonal && (it->espresso_id != jt->espresso_id)) {
         continue;
+      }
       const double epsilon_ij = sqrtf(it->epsilon * jt->epsilon);
       const double sigma_ij = 0.5 * (10. * it->sigma + 10. * jt->sigma);
       const double cutoff_ij = rel_cutoff * sigma_ij;
@@ -190,12 +192,14 @@ int pdb_add_particles_from_file(char *pdb_file, int first_id, int type,
                                 bool lj_diagonal) {
   int n_part;
   PdbParser::PdbParser parser;
-  if (!parser.parse_pdb_file(pdb_file))
+  if (!parser.parse_pdb_file(pdb_file)) {
     return 0;
+  }
 
   if (itp_file) {
-    if (!parser.parse_itp_file(itp_file))
+    if (!parser.parse_itp_file(itp_file)) {
       return 0;
+    }
   }
 
 #ifdef READPDB_DEBUG
@@ -231,8 +235,9 @@ int pdb_add_particles_from_file(char *pdb_file, int first_id, int type,
 
 #ifdef LENNARD_JONES
   add_lj_interaction(seen_types, ljInteractions, lj_rel_cutoff);
-  if (lj_internal || lj_diagonal)
+  if (lj_internal || lj_diagonal) {
     add_lj_internal(seen_types, lj_rel_cutoff, lj_diagonal);
+  }
 #endif
 
   return n_part;

@@ -64,8 +64,9 @@ inline void add_soft_pair_force(const Particle *const p1,
     r_off = dist - ia_params->soft_offset;
     if (r_off > 0.0) {
       fac = soft_force_r(ia_params->soft_a, ia_params->soft_n, r_off) / dist;
-      for (j = 0; j < 3; j++)
+      for (j = 0; j < 3; j++) {
         force[j] += fac * d[j];
+      }
 
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)

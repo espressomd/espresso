@@ -45,8 +45,9 @@ public:
                      return ::Vector3d{{partCfg[id].m.v[0], partCfg[id].m.v[1],
                                         partCfg[id].m.v[2]}};
                    });
-    for (auto &p : folded_positions)
+    for (auto &p : folded_positions) {
       p -= center;
+    }
     // Write data to the histogram
     for (size_t ind = 0; ind < folded_positions.size(); ++ind) {
       histogram.update(Utils::transform_pos_to_cylinder_coordinates(

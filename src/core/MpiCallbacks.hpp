@@ -204,8 +204,9 @@ public:
     }
 
     ~CallbackHandle() {
-      if (m_cb)
+      if (m_cb) {
         m_cb->remove(m_id);
+      }
     }
   };
 

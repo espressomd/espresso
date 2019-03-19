@@ -80,8 +80,9 @@ inline int calc_tab_bond_force(Particle const *p1, Particle const *p2,
   if (dist < tab_pot->cutoff()) {
     auto const fac = tab_pot->force(dist) / dist;
 
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       force[j] += fac * dx[j];
+    }
 
     return 0;
   } else {

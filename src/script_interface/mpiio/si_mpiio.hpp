@@ -51,10 +51,11 @@ public:
                  field_value(typ, Mpiio::MPIIO_OUT_TYP) |
                  field_value(bond, Mpiio::MPIIO_OUT_BND);
 
-    if (name == "write")
+    if (name == "write") {
       Mpiio::mpi_mpiio_common_write(pref.c_str(), v);
-    else if (name == "read")
+    } else if (name == "read") {
       Mpiio::mpi_mpiio_common_read(pref.c_str(), v);
+    }
 
     return {};
   }

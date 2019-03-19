@@ -107,13 +107,14 @@ void set_velocities(ParticleRange particles,
                     IBM_CUDA_ParticleDataOutput *buffer) {
   int i = 0;
   for (auto &part : particles) {
-    if (part.p.is_virtual)
-      for (int j = 0; j < 3; j++)
+    if (part.p.is_virtual) {
+      for (int j = 0; j < 3; j++) {
         part.m.v[j] = buffer[i].v[j];
+      }
 
-    i++;
+      i++;
+    }
   }
-}
 } // namespace
 
 void IBM_cuda_mpi_send_velocities(ParticleRange particles) {

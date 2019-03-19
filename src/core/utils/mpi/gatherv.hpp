@@ -33,8 +33,9 @@ template <typename T>
 void gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
                   int in_size, T *out_values, const int *sizes,
                   const int *displs, int root, boost::mpl::true_) {
-  if (in_values == nullptr)
+  if (in_values == nullptr) {
     return;
+  }
 
   MPI_Datatype type = boost::mpi::get_mpi_datatype<T>(*in_values);
 
@@ -61,8 +62,9 @@ void gatherv_impl(const boost::mpi::communicator &comm, const T *in_values,
 
     std::vector<boost::mpi::request> req;
     for (int i = 0; i < n_nodes; i++) {
-      if (i == root)
+      if (i == root) {
         continue;
+      }
 
       req.emplace_back(comm.irecv(i, 42, out_values + displs[i], sizes[i]));
     }

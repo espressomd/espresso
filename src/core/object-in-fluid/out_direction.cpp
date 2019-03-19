@@ -30,8 +30,9 @@
 
 // set out_direction parameters
 int oif_out_direction_set_params(int bond_type) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   make_bond_type_exist(bond_type);
 

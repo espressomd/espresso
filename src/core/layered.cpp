@@ -88,8 +88,9 @@ void layered_get_mi_vector(double res[3], double const a[3],
 
   for (i = 0; i < 2; i++) {
     res[i] = a[i] - b[i];
-    if (PERIODIC(i))
+    if (PERIODIC(i)) {
       res[i] -= std::round(res[i] * box_l_i[i]) * box_l[i];
+    }
   }
   res[2] = a[2] - b[2];
 }
@@ -98,16 +99,18 @@ Cell *layered_position_to_cell(const Vector3d &pos) {
   int cpos =
       static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
   if (cpos < 1) {
-    if (!LAYERED_BTM_NEIGHBOR)
+    if (!LAYERED_BTM_NEIGHBOR) {
       cpos = 1;
-    else
+    } else {
       return nullptr;
+    }
   } else if (cpos > n_layers) {
     /* not periodic, but at top */
-    if (!LAYERED_TOP_NEIGHBOR)
+    if (!LAYERED_TOP_NEIGHBOR) {
       cpos = n_layers;
-    else
+    } else {
       return nullptr;
+    }
   }
   return &(cells[cpos]);
 }
@@ -129,10 +132,12 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
     /* how many communications to do: up even/odd, down even/odd */
     n = 4;
     /* one communication missing if not periodic but on border */
-    if (!LAYERED_TOP_NEIGHBOR)
+    if (!LAYERED_TOP_NEIGHBOR) {
       n -= 2;
-    if (!LAYERED_BTM_NEIGHBOR)
+    }
+    if (!LAYERED_BTM_NEIGHBOR) {
       n -= 2;
+    }
 
     prepare_comm(comm, data_parts, n);
 
@@ -153,8 +158,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       if (this_node % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comm->comm[c].type = GHOST_SEND;
         /* round 1 uses prefetched data and stores delayed data */
-        if (c == 1)
+        if (c == 1) {
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        }
         comm->comm[c].node = btm;
         if (data_parts == GHOSTTRANS_FORCE) {
           comm->comm[c].part_lists[0] = &cells[0];
@@ -169,8 +175,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
               (data_parts & GHOSTTRANS_POSITION)) {
             comm->data_parts |= GHOSTTRANS_POSSHFTD;
             comm->comm[c].shift[2] = box_l[2];
-          } else
+          } else {
             comm->comm[c].shift[2] = 0;
+          }
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n",
                              this_node, btm, comm->comm[c].shift[2]));
         }
@@ -181,8 +188,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       if (top % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comm->comm[c].type = GHOST_RECV;
         /* round 0 prefetch send for round 1 and delay recvd data processing */
-        if (c == 0)
+        if (c == 0) {
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        }
         comm->comm[c].node = top;
         if (data_parts == GHOSTTRANS_FORCE) {
           comm->comm[c].part_lists[0] = &cells[n_layers];
@@ -205,8 +213,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         comm->comm[c].type = GHOST_SEND;
         /* round 1 use prefetched data from round 0.
            But this time there may already have been two transfers downwards */
-        if (c % 2 == 1)
+        if (c % 2 == 1) {
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        }
         comm->comm[c].node = top;
         if (data_parts == GHOSTTRANS_FORCE) {
           comm->comm[c].part_lists[0] = &cells[n_layers + 1];
@@ -221,8 +230,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
               (data_parts & GHOSTTRANS_POSITION)) {
             comm->data_parts |= GHOSTTRANS_POSSHFTD;
             comm->comm[c].shift[2] = -box_l[2];
-          } else
+          } else {
             comm->comm[c].shift[2] = 0;
+          }
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f topl\n",
                              this_node, top, comm->comm[c].shift[2]));
         }
@@ -234,8 +244,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         comm->comm[c].type = GHOST_RECV;
         /* round 0 prefetch. But this time there may already have been two
          * transfers downwards */
-        if (c % 2 == 0)
+        if (c % 2 == 0) {
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        }
         comm->comm[c].node = btm;
         if (data_parts == GHOSTTRANS_FORCE) {
           comm->comm[c].part_lists[0] = &cells[1];
@@ -276,8 +287,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         comm->comm[c].part_lists[0] = &cells[1];
         comm->comm[c].part_lists[1] = &cells[n_layers + 1];
         /* here it is periodic */
-        if (data_parts & GHOSTTRANS_POSITION)
+        if (data_parts & GHOSTTRANS_POSITION) {
           comm->data_parts |= GHOSTTRANS_POSSHFTD;
+        }
         comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
         comm->comm[c].shift[2] = box_l[2];
       }
@@ -292,8 +304,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         comm->comm[c].part_lists[0] = &cells[n_layers];
         comm->comm[c].part_lists[1] = &cells[0];
         /* here it is periodic */
-        if (data_parts & GHOSTTRANS_POSITION)
+        if (data_parts & GHOSTTRANS_POSITION) {
           comm->data_parts |= GHOSTTRANS_POSSHFTD;
+        }
         comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
         comm->comm[c].shift[2] = -box_l[2];
       }
@@ -329,29 +342,36 @@ void layered_topology_init(CellPList *old, Vector3i &grid) {
                           << " larger than local box length " << local_box_l[2];
         n_layers = 1;
       }
-      if (n_layers > max_num_cells - 2)
+      if (n_layers > max_num_cells - 2) {
         n_layers = std::max(max_num_cells - 2, 0);
-    } else
+      }
+    } else {
       n_layers = 1;
+    }
   }
   MPI_Bcast(&n_layers, 1, MPI_INT, 0, comm_cart);
 
   /* check whether node is top and/or bottom */
   layered_flags = 0;
-  if (this_node == 0)
+  if (this_node == 0) {
     layered_flags |= LAYERED_BOTTOM;
-  if (this_node == n_nodes - 1)
+  }
+  if (this_node == n_nodes - 1) {
     layered_flags |= LAYERED_TOP;
+  }
 
-  if (PERIODIC(2))
+  if (PERIODIC(2)) {
     layered_flags |= LAYERED_PERIODIC;
+  }
 
   top = this_node + 1;
-  if ((top == n_nodes) && (layered_flags & LAYERED_PERIODIC))
+  if ((top == n_nodes) && (layered_flags & LAYERED_PERIODIC)) {
     top = 0;
+  }
   btm = this_node - 1;
-  if ((btm == -1) && (layered_flags & LAYERED_PERIODIC))
+  if ((btm == -1) && (layered_flags & LAYERED_PERIODIC)) {
     btm = n_nodes - 1;
+  }
 
   layer_h = local_box_l[2] / (double)(n_layers);
   layer_h_i = 1 / layer_h;
@@ -396,13 +416,15 @@ void layered_topology_init(CellPList *old, Vector3i &grid) {
       Cell *nc = layered_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
-      if (nc == nullptr)
+      if (nc == nullptr) {
         nc = local_cells.cell[0];
+      }
       append_unindexed_particle(nc, std::move(part[p]));
     }
   }
-  for (c = 1; c <= n_layers; c++)
+  for (c = 1; c <= n_layers; c++) {
     update_local_particles(&cells[c]);
+  }
 
   CELL_TRACE(fprintf(stderr, "%d: layered_topology_init done\n", this_node));
 }
@@ -425,11 +447,13 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node above\n",
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(up, pl, p);
-    } else
+    } else {
       move_indexed_particle(layered_position_to_cell(pl->part[p].r.p), pl, p);
+    }
     /* same particle again, as this is now a new one */
-    if (p < pl->n)
+    if (p < pl->n) {
       p--;
+    }
   }
   CELL_TRACE(fprintf(stderr, "%d: left over %d\n", this_node, pl->n));
 }
@@ -454,15 +478,17 @@ void layered_exchange_and_sort_particles(int global_flag,
       CELL_TRACE(fprintf(stderr, "%d: send part %d down\n", this_node,
                          part->p.identity));
       move_indexed_particle(&send_buf_dn, displaced_parts, p);
-      if (p < displaced_parts->n)
+      if (p < displaced_parts->n) {
         p--;
+      }
     } else if (n_nodes != 1 && LAYERED_TOP_NEIGHBOR &&
                (get_mi_coord(part->r.p[2], my_right[2], 2) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: send part %d up\n", this_node,
                          part->p.identity));
       move_indexed_particle(&send_buf_up, displaced_parts, p);
-      if (p < displaced_parts->n)
+      if (p < displaced_parts->n) {
         p--;
+      }
     }
   }
 
@@ -531,8 +557,9 @@ void layered_exchange_and_sort_particles(int global_flag,
 
     if (global_flag == CELL_GLOBAL_EXCHANGE) {
       MPI_Allreduce(&flag, &redo, 1, MPI_INT, MPI_MAX, comm_cart);
-      if (!redo)
+      if (!redo) {
         break;
+      }
       CELL_TRACE(fprintf(stderr, "%d: another exchange round\n", this_node));
     } else {
       if (flag) {
@@ -541,10 +568,12 @@ void layered_exchange_and_sort_particles(int global_flag,
 
         /* sort left over particles into border cells */
         CELL_TRACE(fprintf(stderr, "%d: emergency sort\n", this_node));
-        while (send_buf_up.n > 0)
+        while (send_buf_up.n > 0) {
           move_indexed_particle(&cells[1], &send_buf_up, 0);
-        while (send_buf_dn.n > 0)
+        }
+        while (send_buf_dn.n > 0) {
           move_indexed_particle(&cells[n_layers], &send_buf_dn, 0);
+        }
       }
       break;
     }

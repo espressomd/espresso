@@ -38,8 +38,9 @@ inline void add_wca_pair_force(const Particle *const p1,
     auto const frac6 = frac2 * frac2 * frac2;
     auto const fac =
         48.0 * ia_params->WCA_eps * frac6 * (frac6 - 0.5) / (dist * dist);
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       force[j] += fac * d[j];
+    }
   }
 }
 

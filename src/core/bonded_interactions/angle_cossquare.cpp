@@ -27,8 +27,9 @@
 #include "communication.hpp"
 
 int angle_cossquare_set_params(int bond_type, double bend, double phi0) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   make_bond_type_exist(bond_type);
 

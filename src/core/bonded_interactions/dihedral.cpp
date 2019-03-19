@@ -25,8 +25,9 @@
 #include "dihedral.hpp"
 
 int dihedral_set_params(int bond_type, int mult, double bend, double phase) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   make_bond_type_exist(bond_type);
 

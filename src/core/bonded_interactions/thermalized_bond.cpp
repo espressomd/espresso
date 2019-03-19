@@ -33,8 +33,9 @@ int n_thermalized_bonds = 0;
 int thermalized_bond_set_params(int bond_type, double temp_com,
                                 double gamma_com, double temp_distance,
                                 double gamma_distance, double r_cut) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   make_bond_type_exist(bond_type);
 

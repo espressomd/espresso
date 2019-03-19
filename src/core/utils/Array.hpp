@@ -43,14 +43,16 @@ template <typename T, std::size_t N> struct Array {
   detail::Storage<T, N> m_storage;
 
   DEVICE_QUALIFIER constexpr reference at(size_type i) {
-    if (i >= N)
+    if (i >= N) {
       throw std::out_of_range("Array access out of bounds.");
+    }
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr const_reference at(size_type i) const {
-    if (i >= N)
+    if (i >= N) {
       throw std::out_of_range("Array access out of bounds.");
+    }
     return m_storage.m_data[i];
   }
 
@@ -113,8 +115,9 @@ template <typename T, std::size_t N> struct Array {
   DEVICE_QUALIFIER constexpr size_type max_size() const noexcept { return N; }
 
   DEVICE_QUALIFIER void fill(const value_type &value) {
-    for (size_type i = 0; i < size(); ++i)
+    for (size_type i = 0; i < size(); ++i) {
       m_storage.m_data[i] = value;
+    }
   }
 
   DEVICE_QUALIFIER static constexpr Array<T, N>

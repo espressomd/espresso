@@ -32,8 +32,9 @@ template <typename T, size_t codim> struct matrix_vector_impl {
                               Vector<T, 3> const &v) const {
     Vector<T, codim> ret;
 
-    for (int i = 0; i < codim; i++)
+    for (int i = 0; i < codim; i++) {
       ret[i] = A[i] * v;
+    }
 
     return ret;
   }

@@ -48,17 +48,20 @@ public:
 
     k = coulomb.Dprefactor;
 
-    if (!s.requestFGpu())
+    if (!s.requestFGpu()) {
       std::cerr << "DipolarDirectSum needs access to forces on GPU!"
                 << std::endl;
+    }
 
-    if (!s.requestRGpu())
+    if (!s.requestRGpu()) {
       std::cerr << "DipolarDirectSum needs access to positions on GPU!"
                 << std::endl;
+    }
 
-    if (!s.requestDipGpu())
+    if (!s.requestDipGpu()) {
       std::cerr << "DipolarDirectSum needs access to dipoles on GPU!"
                 << std::endl;
+    }
   };
   void computeForces(SystemInterface &s) override {
     dds_float box[3];

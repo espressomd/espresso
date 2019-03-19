@@ -40,8 +40,9 @@ BOOST_AUTO_TEST_CASE(link_cell) {
     std::vector<Cell *> neighbors;
 
     for (auto &n : cells) {
-      if (&c != &n)
+      if (&c != &n) {
         neighbors.push_back(&n);
+      }
     }
 
     c.m_neighbors = Neighbors<Cell *>(neighbors, {});
@@ -66,8 +67,9 @@ BOOST_AUTO_TEST_CASE(link_cell) {
         /* Check that the "distance function" has been called with the correct
          * arguments */
         BOOST_CHECK((d.first == p1.p.identity) && (d.second == p2.p.identity));
-        if (p1.p.identity <= p2.p.identity)
+        if (p1.p.identity <= p2.p.identity) {
           lc_pairs.emplace_back(p1.p.identity, p2.p.identity);
+        }
       },
       [](Particle const &p1, Particle const &p2) {
         return std::make_pair(p1.p.identity, p2.p.identity);
@@ -81,11 +83,12 @@ BOOST_AUTO_TEST_CASE(link_cell) {
   BOOST_CHECK(lc_pairs.size() == (n_part * (n_part - 1) / 2));
 
   auto it = lc_pairs.begin();
-  for (int i = 0; i < n_part; i++)
+  for (int i = 0; i < n_part; i++) {
     for (int j = i + 1; j < n_part; j++) {
       BOOST_CHECK((it->first == i) && (it->second == j));
       ++it;
     }
+  }
 
   for (auto &c : cells) {
     delete[] c.part;

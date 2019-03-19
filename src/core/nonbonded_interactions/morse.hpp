@@ -51,8 +51,9 @@ inline void add_morse_pair_force(const Particle *const p1,
     double fac = -ia_params->MORSE_eps * 2.0 * ia_params->MORSE_alpha *
                  (add2 - add1) / dist;
 
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 3; j++) {
       force[j] += fac * d[j];
+    }
 #ifdef MORSE_WARN_WHEN_CLOSE
     if (fac * dist > 1000)
       fprintf(stderr, "%d: Morse-Warning: Pair (%d-%d) force=%f dist=%f\n",

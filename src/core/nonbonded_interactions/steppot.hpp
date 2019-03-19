@@ -42,8 +42,9 @@ inline void add_SmSt_pair_force(const Particle *const p1,
                                 const Particle *const p2,
                                 IA_parameters *ia_params, double const d[3],
                                 double dist, double dist2, double force[3]) {
-  if (dist >= ia_params->SmSt_cut)
+  if (dist >= ia_params->SmSt_cut) {
     return;
+  }
 
   int j;
   double frac, fracP, er;
@@ -55,16 +56,18 @@ inline void add_SmSt_pair_force(const Particle *const p1,
                                                 Utils::sqr(1.0 + er)) /
                dist2;
 
-  for (j = 0; j < 3; j++)
+  for (j = 0; j < 3; j++) {
     force[j] += fac * d[j];
+  }
 }
 
 /** calculate smooth step potential energy between particle p1 and p2. */
 inline double SmSt_pair_energy(const Particle *p1, const Particle *p2,
                                const IA_parameters *ia_params,
                                const double d[3], double dist, double dist2) {
-  if (dist >= ia_params->SmSt_cut)
+  if (dist >= ia_params->SmSt_cut) {
     return 0.0;
+  }
 
   double frac, fracP, er;
 

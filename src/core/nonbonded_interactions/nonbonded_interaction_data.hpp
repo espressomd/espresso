@@ -513,31 +513,37 @@ public:
   bool operator()(const Particle &p1, const Particle &p2,
                   Distance const &dist) const {
     auto const &dist2 = dist.dist2;
-    if (dist2 > m_eff_max_cut2)
+    if (dist2 > m_eff_max_cut2) {
       return false;
+    }
 
 // Within real space cutoff of electrostatics and both charged
 #ifdef ELECTROSTATICS
-    if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0))
+    if ((dist2 <= m_eff_coulomb_cut2) && (p1.p.q != 0) && (p2.p.q != 0)) {
       return true;
+    }
 #endif
 
 // Within dipolar cutoff and both carry magnetic moments
 #ifdef DIPOLES
-    if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0))
+    if ((dist2 <= m_eff_dipolar_cut2) && (p1.p.dipm != 0) && (p2.p.dipm != 0)) {
       return true;
+    }
 #endif
 
 // Collision detection
 #ifdef COLLISION_DETECTION
-    if (dist2 <= m_collision_cut2)
+    if (dist2 <= m_collision_cut2) {
       return true;
+    }
 #endif
 
     // Within short-range distance (incl dpd and the like)
     auto const max_cut = get_ia_param(p1.p.type, p2.p.type)->max_cut;
-    if ((max_cut != INACTIVE_CUTOFF) && (dist2 <= Utils::sqr(max_cut + m_skin)))
+    if ((max_cut != INACTIVE_CUTOFF) &&
+        (dist2 <= Utils::sqr(max_cut + m_skin))) {
       return true;
+    }
 
     return false;
   }

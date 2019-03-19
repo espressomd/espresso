@@ -31,17 +31,21 @@
 void VirtualSitesRelative::update(bool recalc_positions) const {
 
   for (auto &p : local_cells.particles()) {
-    if (!p.p.is_virtual)
+    if (!p.p.is_virtual) {
       continue;
+    }
 
-    if (recalc_positions)
+    if (recalc_positions) {
       update_pos(p);
+    }
 
-    if (get_have_velocity())
+    if (get_have_velocity()) {
       update_vel(p);
+    }
 
-    if (get_have_quaternion())
+    if (get_have_quaternion()) {
       update_virtual_particle_quaternion(p);
+    }
   }
 }
 
@@ -110,10 +114,12 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
         p.r.p[i] = new_pos[i] + box_l[i];
       } else if (tmp < -box_l[i] / 2.) {
         p.r.p[i] = new_pos[i] - box_l[i];
-      } else
+      } else {
         p.r.p[i] = new_pos[i];
-    } else
+      }
+    } else {
       p.r.p[i] = new_pos[i];
+    }
     // Has the vs moved by more than a skin
     if (fabs(old - p.r.p[i]) > skin) {
       runtimeErrorMsg() << "Virtual site " << p.p.identity
@@ -199,8 +205,9 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
   // calculations) Iterate over all the particles in the local cells
 
   for (auto &p : local_cells.particles()) {
-    if (!p.p.is_virtual)
+    if (!p.p.is_virtual) {
       continue;
+    }
 
     update_pos(p);
 
@@ -214,14 +221,15 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     get_mi_vector(d, p_real->r.p, p.r.p);
 
     // Stress tensor contribution
-    for (int k = 0; k < 3; k++)
-      for (int l = 0; l < 3; l++)
+    for (int k = 0; k < 3; k++) {
+      for (int l = 0; l < 3; l++) {
         stress_tensor[k * 3 + l] += p.f.f[k] * d[l];
+      }
 
-    // Pressure = 1/3 trace of stress tensor
-    // but the 1/3 is applied somewhere else.
-    *pressure += (p.f.f[0] * d[0] + p.f.f[1] * d[1] + p.f.f[2] * d[2]);
+      // Pressure = 1/3 trace of stress tensor
+      // but the 1/3 is applied somewhere else.
+      *pressure += (p.f.f[0] * d[0] + p.f.f[1] * d[1] + p.f.f[2] * d[2]);
+    }
   }
-}
 
 #endif

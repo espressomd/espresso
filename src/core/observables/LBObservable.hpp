@@ -33,8 +33,10 @@ public:
   bool allow_empty_bins = false;
   void calculate_sample_positions() {
     m_sample_positions.clear();
-    if (sampling_delta_x == 0 or sampling_delta_y == 0 or sampling_delta_z == 0)
+    if (sampling_delta_x == 0 or sampling_delta_y == 0 or
+        sampling_delta_z == 0) {
       throw std::runtime_error("Parameter delta_x/y/z must not be zero!");
+    }
     const auto n_samples_x = static_cast<size_t>(
         std::rint((box_l[0] - sampling_offset_x) / sampling_delta_x));
     const auto n_samples_y = static_cast<size_t>(

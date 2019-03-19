@@ -194,8 +194,9 @@ bool validate_collision_parameters() {
                            "sites needs to be >=0";
       return false;
     }
-    if (this_node == 0)
+    if (this_node == 0) {
       make_particle_type_exist(collision_params.vs_particle_type);
+    }
   }
 
   if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
@@ -204,32 +205,36 @@ bool validate_collision_parameters() {
                            "sites needs to be >=0";
       return false;
     }
-    if (this_node == 0)
+    if (this_node == 0) {
       make_particle_type_exist(collision_params.vs_particle_type);
+    }
 
     if (collision_params.part_type_to_be_glued < 0) {
       runtimeErrorMsg()
           << "Collision detection particle type to be glued needs to be >=0";
       return false;
     }
-    if (this_node == 0)
+    if (this_node == 0) {
       make_particle_type_exist(collision_params.part_type_to_be_glued);
+    }
 
     if (collision_params.part_type_to_attach_vs_to < 0) {
       runtimeErrorMsg() << "Collision detection particle type to attach the "
                            "virtual site to  needs to be >=0";
       return false;
     }
-    if (this_node == 0)
+    if (this_node == 0) {
       make_particle_type_exist(collision_params.part_type_to_attach_vs_to);
+    }
 
     if (collision_params.part_type_after_glueing < 0) {
       runtimeErrorMsg()
           << "Collision detection particle type after glueing needs to be >=0";
       return false;
     }
-    if (this_node == 0)
+    if (this_node == 0) {
       make_particle_type_exist(collision_params.part_type_after_glueing);
+    }
   }
 
   recalc_forces = 1;
@@ -268,10 +273,11 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
   for (int i = 0; i < 3; i++) {
     pos[i] = p2.r.p[i] + vec21[i] * c;
   }
-  if (p1.p.type == collision_params.part_type_to_attach_vs_to)
+  if (p1.p.type == collision_params.part_type_to_attach_vs_to) {
     return p1;
-  else
+  } else {
     return p2;
+  }
 }
 
 void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
@@ -292,12 +298,14 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // If p1 and p2 are not closer or equal to the cutoff distance, skip
   // p1:
   get_mi_vector(vec21, p.r.p, p1.r.p);
-  if (sqrt(sqrlen(vec21)) > collision_params.distance)
+  if (sqrt(sqrlen(vec21)) > collision_params.distance) {
     return;
+  }
   // p2:
   get_mi_vector(vec21, p.r.p, p2.r.p);
-  if (sqrt(sqrlen(vec21)) > collision_params.distance)
+  if (sqrt(sqrlen(vec21)) > collision_params.distance) {
     return;
+  }
 
   // Check, if there already is a three-particle bond centered on p
   // with p1 and p2 as partners. If so, skip this triplet.
@@ -322,8 +330,9 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
           if (((p.bl.e[b + 1] == p1.p.identity) &&
                (p.bl.e[b + 2] == p2.p.identity)) ||
               ((p.bl.e[b + 1] == p2.p.identity) &&
-               (p.bl.e[b + 2] == p1.p.identity)))
+               (p.bl.e[b + 2] == p1.p.identity))) {
             return;
+          }
         } // if bond type
       }   // if size==2
 
@@ -342,25 +351,29 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // Normalize
   double dist2 = sqrlen(vec1);
   double d1i = 1.0 / sqrt(dist2);
-  for (int j = 0; j < 3; j++)
+  for (int j = 0; j < 3; j++) {
     vec1[j] *= d1i;
+  }
 
   /* vector from p to p2 */
   get_mi_vector(vec2, p.r.p, p2.r.p);
   // normalize
   dist2 = sqrlen(vec2);
   double d2i = 1.0 / sqrt(dist2);
-  for (int j = 0; j < 3; j++)
+  for (int j = 0; j < 3; j++) {
     vec2[j] *= d2i;
+  }
 
   /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
 
   // Handle case where cosine is nearly 1 or nearly -1
-  if (cosine > TINY_COS_VALUE)
+  if (cosine > TINY_COS_VALUE) {
     cosine = TINY_COS_VALUE;
-  if (cosine < -TINY_COS_VALUE)
+  }
+  if (cosine < -TINY_COS_VALUE) {
     cosine = -TINY_COS_VALUE;
+  }
 
   // Bond angle
   double phi = acos(cosine);
@@ -408,18 +421,21 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
     // Create bond between the virtual particles
     const int bondG[] = {collision_params.bond_vs, current_vs_pid - 2};
     // Only add bond if vs was created on this node
-    if (local_particles[current_vs_pid - 1])
+    if (local_particles[current_vs_pid - 1]) {
       local_add_particle_bond(get_part(current_vs_pid - 1), bondG);
+    }
     break;
   }
   case 2: {
     // Create 1st bond between the virtual particles
     const int bondG[] = {collision_params.bond_vs, c.pp1, c.pp2};
     // Only add bond if vs was created on this node
-    if (local_particles[current_vs_pid - 1])
+    if (local_particles[current_vs_pid - 1]) {
       local_add_particle_bond(get_part(current_vs_pid - 1), bondG);
-    if (local_particles[current_vs_pid - 2])
+    }
+    if (local_particles[current_vs_pid - 2]) {
       local_add_particle_bond(get_part(current_vs_pid - 2), bondG);
+    }
     break;
   }
   }
@@ -503,10 +519,12 @@ void three_particle_binding_domain_decomposition(
       auto cell1 = find_current_cell(p1);
       auto cell2 = find_current_cell(p2);
 
-      if (cell1)
+      if (cell1) {
         three_particle_binding_do_search(cell1, p1, p2);
-      if (cell2 && cell1 != cell2)
+      }
+      if (cell2 && cell1 != cell2) {
         three_particle_binding_do_search(cell2, p1, p2);
+      }
 
     } // If local particles exist
   }   // Loop over total collisions
@@ -583,14 +601,16 @@ void handle_collisions() {
         added_particle(current_vs_pid);
         current_vs_pid++;
         if (collision_params.mode == COLLISION_MODE_GLUE_TO_SURF) {
-          if (p1)
+          if (p1) {
             if (p1->p.type == collision_params.part_type_to_be_glued) {
               p1->p.type = collision_params.part_type_after_glueing;
             }
-          if (p2)
+          }
+          if (p2) {
             if (p2->p.type == collision_params.part_type_to_be_glued) {
               p2->p.type = collision_params.part_type_after_glueing;
             }
+          }
         } // mode glue to surface
 
       } else { // We consider the pair because one particle

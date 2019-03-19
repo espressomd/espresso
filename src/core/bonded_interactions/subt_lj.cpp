@@ -28,8 +28,9 @@
 #include "communication.hpp"
 
 int subt_lj_set_params(int bond_type) {
-  if (bond_type < 0)
+  if (bond_type < 0) {
     return ES_ERROR;
+  }
 
   make_bond_type_exist(bond_type);
 

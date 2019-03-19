@@ -47,8 +47,9 @@ double ShapeBasedConstraint::min_dist() {
           double vec[3], dist;
           m_shape->calculate_dist(folded_position(p), &dist, vec);
           return std::min(min, dist);
-        } else
+        } else {
           return min;
+        }
       });
   boost::mpi::reduce(comm_cart, local_mindist, global_mindist,
                      boost::mpi::minimum<double>(), 0);
@@ -143,7 +144,8 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
                         << " violated by particle " << p.p.identity;
     }
   }
-  if (part_rep.p.type >= 0)
+  if (part_rep.p.type >= 0) {
     *obsstat_nonbonded(&energy, p.p.type, part_rep.p.type) += nonbonded_en;
+  }
 }
 } // namespace Constraints

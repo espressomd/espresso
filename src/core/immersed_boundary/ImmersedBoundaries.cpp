@@ -91,10 +91,12 @@ int ImmersedBoundaries::volume_conservation_reset_params(const int bond_type,
                                                          const double volRef) {
 
   // Check if bond exists and is of correct type
-  if (bond_type >= bonded_ia_params.size())
+  if (bond_type >= bonded_ia_params.size()) {
     return ES_ERROR;
-  if (bonded_ia_params[bond_type].type != BONDED_IA_IBM_VOLUME_CONSERVATION)
+  }
+  if (bonded_ia_params[bond_type].type != BONDED_IA_IBM_VOLUME_CONSERVATION) {
     return ES_ERROR;
+  }
 
   // Specific stuff
   // We need to set this here, since it is not re-calculated at the restarting
@@ -178,9 +180,9 @@ void ImmersedBoundaries::calc_volumes() {
         const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
         const int type = iaparams.type;
         if (type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
-          if (p1.p.is_virtual)
+          if (p1.p.is_virtual) {
             softID = iaparams.p.ibmVolConsParameters.softID;
-          else {
+          } else {
             printf("Error. Encountered non-virtual particle with "
                    "VOLUME_CONSERVATION_IBM\n");
             std::abort();
@@ -270,8 +272,9 @@ void ImmersedBoundaries::calc_volumes() {
     }
   }
 
-  for (int i = 0; i < MaxNumIBM; i++)
+  for (int i = 0; i < MaxNumIBM; i++) {
     VolumesCurrent[i] = 0;
+  }
 
   // Sum up and communicate
   MPI_Allreduce(&(tempVol.front()), &(VolumesCurrent.front()), MaxNumIBM,

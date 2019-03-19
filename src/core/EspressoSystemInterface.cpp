@@ -36,8 +36,9 @@ void EspressoSystemInterface::gatherParticles() {
       copy_part_data_to_gpu(local_cells.particles());
       reallocDeviceMemory(
           gpu_get_global_particle_vars_pointer_host()->number_of_particles);
-      if (m_splitParticleStructGpu && (this_node == 0))
+      if (m_splitParticleStructGpu && (this_node == 0)) {
         split_particle_struct();
+      }
     }
   }
 #endif

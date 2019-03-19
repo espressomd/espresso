@@ -140,8 +140,9 @@ void halo_dtset(char *dest, int value, Fieldtype type) {
 
   for (int i = 0; i < vblocks; i++) {
     for (int j = 0; j < vstride; j++) {
-      for (int k = 0; k < count; k++)
+      for (int k = 0; k < count; k++) {
         memset(dest + disps[k], value, lens[k]);
+      }
     }
     dest += vskip * extent;
   }

@@ -38,8 +38,9 @@ inline double evaluateAsTaylorSeriesAt(Polynom *series, double x) {
   int cnt = series->n - 1;
   double *c = series->e;
   double r = c[cnt];
-  while (--cnt >= 0)
+  while (--cnt >= 0) {
     r = r * x + c[cnt];
+  }
   return r;
 }
 

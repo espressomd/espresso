@@ -79,8 +79,9 @@ inline void add_ljgen_pair_force(const Particle *const p1,
                     ia_params->LJGEN_b2 * ia_params->LJGEN_a2 *
                         pow(frac, ia_params->LJGEN_a2)) /
                  (r_off * dist);
-    for (j = 0; j < 3; j++)
+    for (j = 0; j < 3; j++) {
       force[j] += fac * d[j];
+    }
 
 #ifdef LJ_WARN_WHEN_CLOSE
     if (fac * dist > 1000)

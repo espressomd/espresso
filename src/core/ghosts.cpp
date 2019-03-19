@@ -86,20 +86,22 @@ void free_comm(GhostCommunicator *comm) {
   int n;
   GHOST_TRACE(fprintf(stderr, "%d: free_comm: %p has %d ghost communications\n",
                       this_node, (void *)comm, comm->num));
-  for (n = 0; n < comm->num; n++)
+  for (n = 0; n < comm->num; n++) {
     free(comm->comm[n].part_lists);
+  }
   free(comm->comm);
 }
 
 int calc_transmit_size(GhostCommunication *gc, int data_parts) {
   int n_buffer_new;
 
-  if (data_parts & GHOSTTRANS_PARTNUM)
+  if (data_parts & GHOSTTRANS_PARTNUM) {
     n_buffer_new = sizeof(int) * gc->n_part_lists;
-  else {
+  } else {
     int count = 0;
-    for (int p = 0; p < gc->n_part_lists; p++)
+    for (int p = 0; p < gc->n_part_lists; p++) {
       count += gc->part_lists[p]->n;
+    }
 
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -112,22 +114,27 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
 #endif
       }
     }
-    if (data_parts & GHOSTTRANS_POSITION)
+    if (data_parts & GHOSTTRANS_POSITION) {
       n_buffer_new += sizeof(ParticlePosition);
-    if (data_parts & GHOSTTRANS_MOMENTUM)
+    }
+    if (data_parts & GHOSTTRANS_MOMENTUM) {
       n_buffer_new += sizeof(ParticleMomentum);
-    if (data_parts & GHOSTTRANS_FORCE)
+    }
+    if (data_parts & GHOSTTRANS_FORCE) {
       n_buffer_new += sizeof(ParticleForce);
+    }
 
 #ifdef ENGINE
-    if (data_parts & GHOSTTRANS_SWIMMING)
+    if (data_parts & GHOSTTRANS_SWIMMING) {
       n_buffer_new += sizeof(ParticleParametersSwimming);
+    }
 #endif
     n_buffer_new *= count;
   }
   // also sending length of bond buffer
-  if (data_parts & GHOSTTRANS_PROPRTS)
+  if (data_parts & GHOSTTRANS_PROPRTS) {
     n_buffer_new += sizeof(int);
+  }
   return n_buffer_new;
 }
 
@@ -183,8 +190,9 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
           auto *pp = reinterpret_cast<ParticlePosition *>(insert);
           int i;
           *pp = pt->r;
-          for (i = 0; i < 3; i++)
+          for (i = 0; i < 3; i++) {
             pp->p[i] += gc->shift[i];
+          }
           insert += sizeof(ParticlePosition);
         } else if (data_parts & GHOSTTRANS_POSITION) {
           memcpy(insert, &pt->r, sizeof(ParticlePosition));
@@ -411,19 +419,23 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
           /* ok, this is not nice, but perhaps fast */
           int i;
           pt2->r = pt1->r;
-          for (i = 0; i < 3; i++)
+          for (i = 0; i < 3; i++) {
             pt2->r.p[i] += gc->shift[i];
-        } else if (data_parts & GHOSTTRANS_POSITION)
+          }
+        } else if (data_parts & GHOSTTRANS_POSITION) {
           pt2->r = pt1->r;
+        }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           pt2->m = pt1->m;
         }
-        if (data_parts & GHOSTTRANS_FORCE)
+        if (data_parts & GHOSTTRANS_FORCE) {
           pt2->f += pt1->f;
+        }
 
 #ifdef ENGINE
-        if (data_parts & GHOSTTRANS_SWIMMING)
+        if (data_parts & GHOSTTRANS_SWIMMING) {
           pt2->swim = pt1->swim;
+        }
 #endif
       }
     }
@@ -441,8 +453,9 @@ void reduce_forces_sum(void *add, void *to, int const *const len,
     errexit();
   }
 
-  for (i = 0; i < clen; i++)
+  for (i = 0; i < clen; i++) {
     cto[i] += cadd[i];
+  }
 }
 
 static int is_send_op(int comm_type, int node) {
@@ -465,8 +478,9 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   int n, n2;
   /* if ghosts should have uptodate velocities, they have to be updated like
      positions (except for shifting...) */
-  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
+  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION)) {
     data_parts |= GHOSTTRANS_MOMENTUM;
+  }
 
   GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node,
                       (void *)gc, data_parts));
@@ -484,15 +498,15 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
                         gc->comm[n].shift[0], gc->comm[n].shift[1],
                         gc->comm[n].shift[2]));
 
-    if (comm_type == GHOST_LOCL)
+    if (comm_type == GHOST_LOCL) {
       cell_cell_transfer(gcn, data_parts);
-    else {
+    } else {
       /* prepare send buffer if necessary */
       if (is_send_op(comm_type, node)) {
         /* ok, we send this step, prepare send buffer if not yet done */
-        if (!prefetch)
+        if (!prefetch) {
           prepare_send_buffer(gcn, data_parts);
-        else {
+        } else {
           GHOST_TRACE(fprintf(stderr,
                               "%d: ghost_comm using prefetched data for "
                               "operation %d, sending to %d\n",
@@ -529,8 +543,9 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
       }
 
       /* recv buffer for recv and multinode operations to this node */
-      if (is_recv_op(comm_type, node))
+      if (is_recv_op(comm_type, node)) {
         prepare_recv_buffer(gcn, data_parts);
+      }
 
       /* transfer data */
       switch (comm_type) {
@@ -606,15 +621,16 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         GHOST_TRACE(fprintf(stderr, "%d: ghost_comm reduce to %d (%d bytes)\n",
                             this_node, node, n_s_buffer));
 
-        if (node == this_node)
+        if (node == this_node) {
           MPI_Reduce(reinterpret_cast<double *>(s_buffer),
                      reinterpret_cast<double *>(r_buffer),
                      n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
                      comm_cart);
-        else
+        } else {
           MPI_Reduce(reinterpret_cast<double *>(s_buffer), nullptr,
                      n_s_buffer / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
                      comm_cart);
+        }
       } break;
       }
       GHOST_TRACE(fprintf(stderr, "%d: ghost_comm done\n", this_node));
@@ -625,10 +641,11 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         if (!poststore) {
           /* forces have to be added, the rest overwritten. Exception is RDCE,
              where the addition is integrated into the communication. */
-          if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
+          if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE) {
             add_forces_from_recv_buffer(gcn);
-          else
+          } else {
             put_recv_buffer(gcn, data_parts);
+          }
         } else {
           GHOST_TRACE(fprintf(
               stderr, "%d: ghost_comm delaying operation %d, recv from %d\n",
@@ -659,10 +676,11 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
               }
 #endif
               /* as above */
-              if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
+              if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE) {
                 add_forces_from_recv_buffer(gcn2);
-              else
+              } else {
                 put_recv_buffer(gcn2, data_parts);
+              }
               break;
             }
           }
@@ -684,8 +702,9 @@ void invalidate_ghosts() {
       /* Particle is stored as ghost in the local_particles array,
          if the pointer stored there belongs to a ghost cell
          particle array. */
-      if (&(part[p]) == local_particles[part[p].p.identity])
+      if (&(part[p]) == local_particles[part[p].p.identity]) {
         local_particles[part[p].p.identity] = nullptr;
+      }
       free_particle(part + p);
     }
     ghost_cells.cell[c]->n = 0;

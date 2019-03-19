@@ -148,8 +148,9 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
   // Iterate over all cells
   for (auto it = parts.begin(), end = parts.end(); it != end; ++it) {
     // If the particle has no dipole moment, ignore it
-    if (it->p.dipm == 0.0)
+    if (it->p.dipm == 0.0) {
       continue;
+    }
 
     const Vector3d dip1 = it->calc_dip();
     auto jt = it;
@@ -157,8 +158,9 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
     ++jt;
     for (; jt != end; ++jt) {
       // If the particle has no dipole moment, ignore it
-      if (jt->p.dipm == 0.0)
+      if (jt->p.dipm == 0.0) {
         continue;
+      }
       // Calculate energy and/or force between the particles
       u += calc_dipole_dipole_ia(&(*it), dip1, &(*jt), force_flag);
     }

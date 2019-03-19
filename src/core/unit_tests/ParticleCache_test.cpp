@@ -72,10 +72,11 @@ void check_merge(unsigned size, unsigned split) {
 
   for (int i = 0; i < size; i++) {
     auto val = value_type{dist(mersenne_engine)};
-    if (i % split)
+    if (i % split) {
       u.insert(val);
-    else
+    } else {
       v.insert(val);
+    }
   }
 
   auto merge = detail::Merge<boost::container::flat_set<int>, std::less<int>>{};
@@ -123,8 +124,9 @@ BOOST_AUTO_TEST_CASE(update) {
     for (int i = 0; i < size * n_part; i++) {
       BOOST_CHECK(i == part_cfg[i].identity());
     }
-  } else
+  } else {
     cb.loop();
+  }
 }
 
 BOOST_AUTO_TEST_CASE(update_with_bonds) {

@@ -31,14 +31,15 @@ namespace Writer {
 
 Variant H5mdScript::call_method(const std::string &name,
                                 const VariantMap &parameters) {
-  if (name == "init_file")
+  if (name == "init_file") {
     m_h5md->InitFile();
-  else if (name == "write")
+  } else if (name == "write") {
     m_h5md->Write(m_h5md->what(), partCfg());
-  else if (name == "flush")
+  } else if (name == "flush") {
     m_h5md->Flush();
-  else if (name == "close")
+  } else if (name == "close") {
     m_h5md->Close();
+  }
   return {};
 }
 

@@ -55,8 +55,9 @@ void SpheroCylinder::calculate_dist(const Vector3d &pos, double *dist,
     if (z_abs >= m_half_length) {
       /* Closest feature: hemisphere */
       double dir = 1;
-      if (z < 0)
+      if (z < 0) {
         dir = -1;
+      }
       Vector3d c_dist_cap = pos - (m_center + dir * e_z * m_half_length);
       *dist = c_dist_cap.norm() - m_rad;
       c_dist_cap.normalize();
@@ -79,8 +80,9 @@ void SpheroCylinder::calculate_dist(const Vector3d &pos, double *dist,
     } else {
       /* Closest feature: hemisphere */
       double dir = 1;
-      if (z < 0)
+      if (z < 0) {
         dir = -1;
+      }
       Vector3d c_dist_cap = -(pos - (m_center + dir * e_z * m_half_length));
       *dist = m_rad - c_dist_cap.norm();
       c_dist_cap.normalize();

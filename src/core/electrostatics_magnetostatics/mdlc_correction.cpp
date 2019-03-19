@@ -591,8 +591,9 @@ int mdlc_tune(double error) {
                          will be equal or less than for this one */
 
   h = dlc_params.h;
-  if (h < 0)
+  if (h < 0) {
     return ES_ERROR;
+  }
 
   if (h > lz) {
     fprintf(stderr,

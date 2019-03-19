@@ -67,10 +67,11 @@ public:
   Variant call_method(const std::string &name, const VariantMap &) override {
     if (name == "get_force") {
       // The get force method uses mpi callbacks on lb cpu
-      if (this_node == 0)
+      if (this_node == 0) {
         return m_lbboundary->get_force();
-      else
+      } else {
         return none;
+      }
     }
     return none;
   }

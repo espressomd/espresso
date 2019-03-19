@@ -33,8 +33,9 @@
 int hat_set_params(int part_type_a, int part_type_b, double Fmax, double r) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data)
+  if (!data) {
     return ES_ERROR;
+  }
 
   data->HAT_Fmax = Fmax;
   data->HAT_r = r;

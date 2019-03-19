@@ -182,14 +182,17 @@ int mpi_check_runtime_errors();
  *  so we set btl_vader_single_copy_mechanism = none.
  */
 static void openmpi_fix_vader() {
-  if (OMPI_MAJOR_VERSION < 2 || OMPI_MAJOR_VERSION > 3)
+  if (OMPI_MAJOR_VERSION < 2 || OMPI_MAJOR_VERSION > 3) {
     return;
+  }
   if (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION == 1 &&
-      OMPI_RELEASE_VERSION >= 3)
+      OMPI_RELEASE_VERSION >= 3) {
     return;
+  }
   if (OMPI_MAJOR_VERSION == 3 &&
-      (OMPI_MINOR_VERSION > 0 || OMPI_RELEASE_VERSION > 0))
+      (OMPI_MINOR_VERSION > 0 || OMPI_RELEASE_VERSION > 0)) {
     return;
+  }
 
   std::string varname = "btl_vader_single_copy_mechanism";
   std::string varval = "none";
@@ -216,8 +219,9 @@ void mpi_init() {
   Dl_info _openmpi_info;
   dladdr(_openmpi_symbol, &_openmpi_info);
 
-  if (!handle)
+  if (!handle) {
     handle = dlopen(_openmpi_info.dli_fname, mode);
+  }
 
   if (!handle) {
     fprintf(stderr,
@@ -279,10 +283,11 @@ void mpi_call(SlaveCallback cb, int node, int param) {
 void mpi_place_particle(int pnode, int part, double p[3]) {
   mpi_call(mpi_place_particle_slave, pnode, part);
 
-  if (pnode == this_node)
+  if (pnode == this_node) {
     local_place_particle(part, p, 0);
-  else
+  } else {
     MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
 
   set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
@@ -304,10 +309,11 @@ void mpi_place_new_particle(int pnode, int part, double p[3]) {
   mpi_call(mpi_place_new_particle_slave, pnode, part);
   added_particle(part);
 
-  if (pnode == this_node)
+  if (pnode == this_node) {
     local_place_particle(part, p, 1);
-  else
+  } else {
     MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  }
 
   on_particle_change();
 }
@@ -336,8 +342,9 @@ Particle mpi_recv_part(int pnode, int part) {
 }
 
 void mpi_recv_part_slave(int pnode, int part) {
-  if (pnode != this_node)
+  if (pnode != this_node) {
     return;
+  }
 
   assert(local_particles[part]);
   comm_cart.send(0, SOME_TAG, *local_particles[part]);
@@ -353,12 +360,14 @@ void mpi_remove_particle_slave(int pnode, int part) {
   if (part != -1) {
     n_part--;
 
-    if (pnode == this_node)
+    if (pnode == this_node) {
       local_remove_particle(part);
+    }
 
     remove_all_bonds_to(part);
-  } else
+  } else {
     local_remove_all_particles();
+  }
 
   on_particle_change();
 }
@@ -986,8 +995,9 @@ void mpi_setup_reaction_slave(int, int) {
 /*********************** MAIN LOOP for slaves ****************/
 
 void mpi_loop() {
-  if (this_node != 0)
+  if (this_node != 0) {
     mpiCallbacks().loop();
+  }
 }
 
 /*********************** other stuff ****************/

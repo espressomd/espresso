@@ -36,8 +36,9 @@ void ClusterStructure::clear() {
 }
 
 inline bool ClusterStructure::part_of_cluster(const Particle &p) {
-  if (cluster_id.find(p.p.identity) == cluster_id.end())
+  if (cluster_id.find(p.p.identity) == cluster_id.end()) {
     return false;
+  }
   return true;
 }
 

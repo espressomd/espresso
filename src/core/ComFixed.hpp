@@ -77,8 +77,9 @@ public:
   void apply(boost::mpi::communicator const &comm,
              ParticleRange &particles) const {
     /* Bail out early if there is nothing to do. */
-    if (m_type_index.empty())
+    if (m_type_index.empty()) {
       return;
+    }
 
     auto const local_forces = local_type_forces(particles);
     auto const local_masses = local_type_masses(particles);

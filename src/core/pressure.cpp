@@ -106,8 +106,9 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   int n, i;
   double volume = box_l[0] * box_l[1] * box_l[2];
 
-  if (!interactions_sanity_checks())
+  if (!interactions_sanity_checks()) {
     return;
+  }
 
   init_virials(&virials);
 
@@ -142,21 +143,26 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
       virials.virtual_sites, p_tensor.virtual_sites);
 #endif
 
-  for (n = 1; n < virials.data.n; n++)
+  for (n = 1; n < virials.data.n; n++) {
     virials.data.e[n] /= 3.0 * volume;
+  }
 
-  for (i = 0; i < 9; i++)
+  for (i = 0; i < 9; i++) {
     p_tensor.data.e[i] /= (volume * time_step * time_step);
+  }
 
-  for (i = 9; i < p_tensor.data.n; i++)
+  for (i = 9; i < p_tensor.data.n; i++) {
     p_tensor.data.e[i] /= volume;
+  }
 
   /* Intra- and Inter- part of nonbonded interaction */
-  for (n = 0; n < virials_non_bonded.data_nb.n; n++)
+  for (n = 0; n < virials_non_bonded.data_nb.n; n++) {
     virials_non_bonded.data_nb.e[n] /= 3.0 * volume;
+  }
 
-  for (i = 0; i < p_tensor_non_bonded.data_nb.n; i++)
+  for (i = 0; i < p_tensor_non_bonded.data_nb.n; i++) {
     p_tensor_non_bonded.data_nb.e[i] /= volume;
+  }
 
   /* gather data */
   MPI_Reduce(virials.data.e, result, virials.data.n, MPI_DOUBLE, MPI_SUM, 0,
@@ -237,8 +243,9 @@ void calc_long_range_virials() {
     dp3m_dipole_assign();
     virials.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
 
-    for (k = 0; k < 3; k++)
+    for (k = 0; k < 3; k++) {
       p_tensor.coulomb[9 + k * 3 + k] = virials.dipolar[1] / 3.;
+    }
     fprintf(stderr, "WARNING: stress tensor calculated, but dipolar P3M stress "
                     "tensor not implemented\n");
     fprintf(stderr, "WARNING: things have been added to the coulomb virial and "
@@ -376,14 +383,15 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb) {
 
 /************************************************************/
 void master_pressure_calc(int v_comp) {
-  if (v_comp)
+  if (v_comp) {
     mpi_gather_stats(3, total_pressure.data.e, total_p_tensor.data.e,
                      total_pressure_non_bonded.data_nb.e,
                      total_p_tensor_non_bonded.data_nb.e);
-  else
+  } else {
     mpi_gather_stats(2, total_pressure.data.e, total_p_tensor.data.e,
                      total_pressure_non_bonded.data_nb.e,
                      total_p_tensor_non_bonded.data_nb.e);
+  }
 
   total_pressure.init_status = 1 + v_comp;
   total_p_tensor.init_status = 1 + v_comp;
@@ -407,25 +415,30 @@ int observable_compute_stress_tensor(int v_comp, double *A) {
 
     if (v_comp && (integ_switch == INTEG_METHOD_NPT_ISO) &&
         !(nptiso.invalidate_p_vel)) {
-      if (total_pressure.init_status == 0)
+      if (total_pressure.init_status == 0) {
         master_pressure_calc(0);
+      }
       p_tensor.data.e[0] = 0.0;
       MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0,
                  MPI_COMM_WORLD);
-      for (i = 0; i < 3; i++)
-        if (nptiso.geometry & nptiso.nptgeom_dir[i])
+      for (i = 0; i < 3; i++) {
+        if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
           p_tensor.data.e[0] += p_vel[i];
-      p_tensor.data.e[0] /= (nptiso.dimension * nptiso.volume);
-      total_pressure.init_status = 1 + v_comp;
-    } else
-      master_pressure_calc(v_comp);
-  }
+        }
+        p_tensor.data.e[0] /= (nptiso.dimension * nptiso.volume);
+        total_pressure.init_status = 1 + v_comp;
+      }
+      else {
+        master_pressure_calc(v_comp);
+      }
+    }
 
-  for (j = 0; j < 9; j++) {
-    value = total_p_tensor.data.e[j];
-    for (i = 1; i < total_p_tensor.data.n / 9; i++)
-      value += total_p_tensor.data.e[9 * i + j];
-    A[j] = value;
+    for (j = 0; j < 9; j++) {
+      value = total_p_tensor.data.e[j];
+      for (i = 1; i < total_p_tensor.data.n / 9; i++) {
+        value += total_p_tensor.data.e[9 * i + j];
+      }
+      A[j] = value;
+    }
+    return 0;
   }
-  return 0;
-}

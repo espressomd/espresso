@@ -67,8 +67,9 @@ inline bool check_limits(Span<const T> data,
   }
   bool within_range = true;
   for (size_t i = 0; i < data.size(); ++i) {
-    if (data[i] < limits[i].first or data[i] >= limits[i].second)
+    if (data[i] < limits[i].first or data[i] >= limits[i].second) {
       within_range = false;
+    }
   }
   return within_range;
 }
@@ -161,8 +162,9 @@ void Histogram<T, Dims>::update(Span<const T> data, Span<const T> weights) {
     }
     auto const flat_index =
         m_n_dims_data * ::Utils::ravel_index(index, m_n_bins);
-    if (weights.size() != m_n_dims_data)
+    if (weights.size() != m_n_dims_data) {
       throw std::invalid_argument("Wrong dimensions of given weights!");
+    }
     for (size_t ind = 0; ind < m_n_dims_data; ++ind) {
       m_hist[flat_index + ind] += weights[ind];
       m_tot_count[flat_index + ind] += 1;

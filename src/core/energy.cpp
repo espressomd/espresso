@@ -117,8 +117,9 @@ void master_energy_calc() {
 /************************************************************/
 
 void energy_calc(double *result) {
-  if (!interactions_sanity_checks())
+  if (!interactions_sanity_checks()) {
     return;
+  }
 
   init_energies(&energy);
 
@@ -129,8 +130,10 @@ void energy_calc(double *result) {
   EspressoSystemInterface::Instance().update();
 
   // Compute the energies from the energyActors
-  for (auto actor = energyActors.begin(); actor != energyActors.end(); ++actor)
+  for (auto actor = energyActors.begin(); actor != energyActors.end();
+       ++actor) {
     (*actor)->computeEnergy(espressoSystemInterface);
+  }
 
   on_observable_calc();
 
@@ -182,9 +185,9 @@ void calc_long_range_energies() {
     // assign the original charges first
     // they may not have been assigned yet
     p3m_charge_assign();
-    if (!elc_params.dielectric_contrast_on)
+    if (!elc_params.dielectric_contrast_on) {
       energy.coulomb[1] = p3m_calc_kspace_forces(0, 1);
-    else {
+    } else {
       energy.coulomb[1] = 0.5 * p3m_calc_kspace_forces(0, 1);
       energy.coulomb[1] += 0.5 * ELC_P3M_dielectric_layers_energy_self();
 

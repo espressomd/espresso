@@ -52,8 +52,9 @@ void init_forces() {
 
 #ifdef NPT
   /* reset virial part of instantaneous pressure */
-  if (integ_switch == INTEG_METHOD_NPT_ISO)
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
+  }
 #endif
 
   /* initialize forces with Langevin thermostat forces
@@ -139,8 +140,9 @@ void force_calc() {
     area_volume[1] = 0.0;
     for (int i = 0; i < max_oif_objects; i++) {
       calc_oif_global(area_volume, i);
-      if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100)
+      if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100) {
         break;
+      }
       add_oif_global_forces(area_volume, i);
     }
   }
@@ -198,13 +200,15 @@ void calc_long_range_forces() {
       ELC_P3M_modify_p3m_sums_both();
       ELC_p3m_charge_assign_both();
       ELC_P3M_self_forces();
-    } else
+    } else {
       p3m_charge_assign();
+    }
 
     p3m_calc_kspace_forces(1, 0);
 
-    if (elc_params.dielectric_contrast_on)
+    if (elc_params.dielectric_contrast_on) {
       ELC_P3M_restore_p3m_sums();
+    }
 
     ELC_add_force();
 
@@ -226,11 +230,12 @@ void calc_long_range_forces() {
     FORCE_TRACE(printf("%d: Computing P3M forces.\n", this_node));
     p3m_charge_assign();
 #ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO)
+    if (integ_switch == INTEG_METHOD_NPT_ISO) {
       nptiso.p_vir[0] += p3m_calc_kspace_forces(1, 1);
-    else
+    } else {
 #endif
       p3m_calc_kspace_forces(1, 0);
+    }
     break;
 #endif
   case COULOMB_MMM2D:
@@ -268,9 +273,10 @@ void calc_long_range_forces() {
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
       nptiso.p_vir[0] += dp3m_calc_kspace_forces(1, 1);
       fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
-    } else
+    } else {
 #endif
       dp3m_calc_kspace_forces(1, 0);
+    }
 
     break;
 #endif

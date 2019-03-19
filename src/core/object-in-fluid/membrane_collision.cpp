@@ -32,8 +32,9 @@ int membrane_collision_set_params(int part_type_a, int part_type_b, double a,
                                   double n, double cut, double offset) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  if (!data)
+  if (!data) {
     return ES_ERROR;
+  }
 
   data->membrane_a = a;
   data->membrane_n = n;

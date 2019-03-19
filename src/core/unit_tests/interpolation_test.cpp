@@ -153,116 +153,120 @@ BOOST_AUTO_TEST_CASE(interpolation_points_3) {
   std::array<int, 3> lower_left = {{-6, 2, -4}};
 
   auto it = int_points.begin();
-  for (int i = 0; i < 3; i++)
-    for (int j = 0; j < 3; j++)
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
       for (int k = 0; k < 3; k++) {
         auto const expected = std::array<int, 3>{
             {lower_left[0] + i, lower_left[1] + j, lower_left[2] + k}};
         BOOST_CHECK(*it == expected);
         ++it;
       }
-}
+    }
+  }
 
-BOOST_AUTO_TEST_CASE(interpolation_points_2) {
-  std::vector<std::array<int, 3>> int_points;
+  BOOST_AUTO_TEST_CASE(interpolation_points_2) {
+    std::vector<std::array<int, 3>> int_points;
 
-  auto save_ind = [&int_points](const std::array<int, 3> &ind, double w) {
-    int_points.push_back(ind);
-  };
+    auto save_ind = [&int_points](const std::array<int, 3> &ind, double w) {
+      int_points.push_back(ind);
+    };
 
-  bspline_3d<2>({5., 6., 7.}, save_ind, /* grid spacing */ {1., 2., 3.},
-                /* offset */ {10., 0., 15.});
+    bspline_3d<2>({5., 6., 7.}, save_ind, /* grid spacing */ {1., 2., 3.},
+                  /* offset */ {10., 0., 15.});
 
-  /* pos - offset = {-5., 6., -8} */
-  /* shifted pos = {-4.5, 6.5, -7.5} */
-  /* nmp = {-4, 4, -2 } @ pos {-4., 8., -6.} */
-  /* ll = nmp - order / 2 (= 1) = {-5, 3, -3} */
-  std::array<int, 3> lower_left = {{-5, 3, -3}};
+    /* pos - offset = {-5., 6., -8} */
+    /* shifted pos = {-4.5, 6.5, -7.5} */
+    /* nmp = {-4, 4, -2 } @ pos {-4., 8., -6.} */
+    /* ll = nmp - order / 2 (= 1) = {-5, 3, -3} */
+    std::array<int, 3> lower_left = {{-5, 3, -3}};
 
-  auto it = int_points.begin();
-  for (int i = 0; i < 2; i++)
-    for (int j = 0; j < 2; j++)
-      for (int k = 0; k < 2; k++) {
-        auto const expected = std::array<int, 3>{
-            {lower_left[0] + i, lower_left[1] + j, lower_left[2] + k}};
-        BOOST_CHECK(*it == expected);
-        ++it;
+    auto it = int_points.begin();
+    for (int i = 0; i < 2; i++) {
+      for (int j = 0; j < 2; j++) {
+        for (int k = 0; k < 2; k++) {
+          auto const expected = std::array<int, 3>{
+              {lower_left[0] + i, lower_left[1] + j, lower_left[2] + k}};
+          BOOST_CHECK(*it == expected);
+          ++it;
+        }
       }
-}
+    }
 
-BOOST_AUTO_TEST_CASE(interpolation_weights_2) {
-  auto check_weight = [](const std::array<int, 3> &ind, double w) {
-    auto const expected = Utils::bspline<2>(ind[0], 0.1 - 0.5) *
-                          Utils::bspline<2>(ind[1], 0.2 - 0.5) *
-                          Utils::bspline<2>(ind[2], 0.3 - 0.5);
-    BOOST_CHECK_CLOSE(w, expected, 1e-12);
-  };
+    BOOST_AUTO_TEST_CASE(interpolation_weights_2) {
+      auto check_weight = [](const std::array<int, 3> &ind, double w) {
+        auto const expected = Utils::bspline<2>(ind[0], 0.1 - 0.5) *
+                              Utils::bspline<2>(ind[1], 0.2 - 0.5) *
+                              Utils::bspline<2>(ind[2], 0.3 - 0.5);
+        BOOST_CHECK_CLOSE(w, expected, 1e-12);
+      };
 
-  bspline_3d<2>({.1, .2, .3}, check_weight,
-                /* grid spacing */ {1., 1., 1.},
-                /* offset */ {0., 0., 0.});
-}
+      bspline_3d<2>({.1, .2, .3}, check_weight,
+                    /* grid spacing */ {1., 1., 1.},
+                    /* offset */ {0., 0., 0.});
+    }
 
-BOOST_AUTO_TEST_CASE(interpolation_weights_3) {
-  auto check_weight = [](const std::array<int, 3> &ind, double w) {
-    auto const expected = Utils::bspline<3>(ind[0], 0.1) *
-                          Utils::bspline<3>(ind[1], 0.2) *
-                          Utils::bspline<3>(ind[2], 0.3);
-    BOOST_CHECK_CLOSE(w, expected, 1e-12);
-  };
+    BOOST_AUTO_TEST_CASE(interpolation_weights_3) {
+      auto check_weight = [](const std::array<int, 3> &ind, double w) {
+        auto const expected = Utils::bspline<3>(ind[0], 0.1) *
+                              Utils::bspline<3>(ind[1], 0.2) *
+                              Utils::bspline<3>(ind[2], 0.3);
+        BOOST_CHECK_CLOSE(w, expected, 1e-12);
+      };
 
-  bspline_3d<3>({1.1, 1.2, 1.3}, check_weight,
-                /* grid spacing */ {1., 1., 1.},
-                /* offset */ {0., 0., 0.});
-}
+      bspline_3d<3>({1.1, 1.2, 1.3}, check_weight,
+                    /* grid spacing */ {1., 1., 1.},
+                    /* offset */ {0., 0., 0.});
+    }
 
-BOOST_AUTO_TEST_CASE(interpolation_accumulate) {
-  auto const w_acc = bspline_3d_accumulate<7>(
-      {1.1, 1.2, 1.3}, [](const std::array<int, 3> &) { return 2.; },
-      /* grid spacing */ {1., 1., 1.},
-      /* offset */ {0., 0., 0.}, 0.0);
+    BOOST_AUTO_TEST_CASE(interpolation_accumulate) {
+      auto const w_acc = bspline_3d_accumulate<7>(
+          {1.1, 1.2, 1.3}, [](const std::array<int, 3> &) { return 2.; },
+          /* grid spacing */ {1., 1., 1.},
+          /* offset */ {0., 0., 0.}, 0.0);
 
-  BOOST_CHECK_CLOSE(w_acc, 2., 1e-12);
-}
+      BOOST_CHECK_CLOSE(w_acc, 2., 1e-12);
+    }
 
-BOOST_AUTO_TEST_CASE(interpolation_integration_test_odd) {
-  constexpr int order = 5;
-  const Vector3d grid_spacing = {.1, .2, .3};
-  const Vector3d origin = {-1., 2., -1.4};
-  const int n_nodes = 10;
+    BOOST_AUTO_TEST_CASE(interpolation_integration_test_odd) {
+      constexpr int order = 5;
+      const Vector3d grid_spacing = {.1, .2, .3};
+      const Vector3d origin = {-1., 2., -1.4};
+      const int n_nodes = 10;
 
-  auto const x0 = origin + 0.57 * 10. * grid_spacing;
-  auto const sigma = 4.;
+      auto const x0 = origin + 0.57 * 10. * grid_spacing;
+      auto const sigma = 4.;
 
-  auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+      auto const data =
+          gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
 
-  auto const p = Vector3d{-.4, 3.14, 0.1};
-  auto const interpolated_value = bspline_3d_accumulate<order>(
-      p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, 0.0);
+      auto const p = Vector3d{-.4, 3.14, 0.1};
+      auto const interpolated_value = bspline_3d_accumulate<order>(
+          p, [&data](const std::array<int, 3> &ind) { return data(ind); },
+          grid_spacing, origin, 0.0);
 
-  auto const exact_value = gaussian(p, x0, sigma);
+      auto const exact_value = gaussian(p, x0, sigma);
 
-  BOOST_CHECK_CLOSE(interpolated_value, exact_value, 1.);
-}
+      BOOST_CHECK_CLOSE(interpolated_value, exact_value, 1.);
+    }
 
-BOOST_AUTO_TEST_CASE(interpolation_integration_test_even) {
-  constexpr int order = 6;
-  const Vector3d grid_spacing = {.1, .2, .3};
-  const Vector3d origin = {-1., 2., -1.4};
-  const int n_nodes = 10;
+    BOOST_AUTO_TEST_CASE(interpolation_integration_test_even) {
+      constexpr int order = 6;
+      const Vector3d grid_spacing = {.1, .2, .3};
+      const Vector3d origin = {-1., 2., -1.4};
+      const int n_nodes = 10;
 
-  auto const x0 = origin + 0.57 * 10. * grid_spacing;
-  auto const sigma = 4.;
+      auto const x0 = origin + 0.57 * 10. * grid_spacing;
+      auto const sigma = 4.;
 
-  auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+      auto const data =
+          gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
 
-  auto const p = Vector3d{-.4, 3.14, 0.1};
-  auto const interpolated_value = bspline_3d_accumulate<order>(
-      p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, 0.0);
+      auto const p = Vector3d{-.4, 3.14, 0.1};
+      auto const interpolated_value = bspline_3d_accumulate<order>(
+          p, [&data](const std::array<int, 3> &ind) { return data(ind); },
+          grid_spacing, origin, 0.0);
 
-  auto const exact_value = gaussian(p, x0, sigma);
+      auto const exact_value = gaussian(p, x0, sigma);
 
-  BOOST_CHECK_CLOSE(interpolated_value, exact_value, 1.);
-}
+      BOOST_CHECK_CLOSE(interpolated_value, exact_value, 1.);
+    }
