@@ -21,7 +21,7 @@
 /** \file
  *  Hook procedures.
  *
- *  Implemetation of initialize.hpp.
+ *  Implemetation of event.hpp.
  */
 #include "event.hpp"
 
@@ -61,6 +61,10 @@
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+
+#ifdef SCAFACOS
+#include "electrostatics_magnetostatics/scafacos.hpp"
+#endif
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;

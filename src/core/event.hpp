@@ -35,7 +35,7 @@
  *  depend on particle properties or the box size, should react to
  *  such changes in the corresponding hook procedure.
  *
- *  Implementation in initialize.cpp.
+ *  Implementation in event.cpp.
  */
 
 /** \name Hook procedures

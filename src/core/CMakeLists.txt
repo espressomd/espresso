@@ -18,12 +18,12 @@ set(EspressoCore_SRC
   global.cpp
   grid.cpp
   immersed_boundaries.cpp
-        event.cpp
+  event.cpp
   integrate.cpp
   layered.cpp
   metadynamics.cpp
   minimize_energy.cpp
-        npt.cpp
+  npt.cpp
   nsquare.cpp
   partCfg_global.cpp
   particle_data.cpp
