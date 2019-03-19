@@ -182,9 +182,11 @@ void fft_unpack_block(double const *const in, double *const out,
  * private functions
  ************************************************/
 
-boost::optional<std::vector<int>>
-fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2,
-                     const int *node_list1, int *node_list2, int *pos, int *my_pos) {
+boost::optional<std::vector<int>> fft_find_comm_groups(const Vector3i &grid1,
+                                                       const Vector3i &grid2,
+                                                       const int *node_list1,
+                                                       int *node_list2,
+                                                       int *pos, int *my_pos) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];
