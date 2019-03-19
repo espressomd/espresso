@@ -359,7 +359,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M: {
-    if (q1q2) {
+    if (q1q2 != 0.) {
       p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
 
       // forces from the virtual charges
@@ -373,7 +373,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   case COULOMB_P3M_GPU:
   case COULOMB_P3M: {
 #ifdef NPT
-    if (q1q2) {
+    if (q1q2 != 0) {
       double eng = p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
       if (integ_switch == INTEG_METHOD_NPT_ISO)
         nptiso.p_vir[0] += eng;
@@ -386,16 +386,16 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 #endif
   case COULOMB_MMM1D:
-    if (q1q2)
+    if (q1q2 != 0)
       add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
     break;
   case COULOMB_MMM2D:
-    if (q1q2)
+    if (q1q2 != 0)
       add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    if (q1q2) {
+    if (q1q2 != 0) {
       Scafacos::add_pair_force(p1, p2, d, dist, force.data());
     }
     break;

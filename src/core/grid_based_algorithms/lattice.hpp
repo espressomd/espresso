@@ -66,7 +66,7 @@ public:
    *  \param myright     right (top, back) corner of the local box
    *  \param box_length  lengths of the local box
    */
-  int init(double *agrid, double *offset, int halo_size, size_t dim,
+  int init(double *agrid, double const *offset, int halo_size, size_t dim,
            const Vector3d &local_box, const Vector3d &myright,
            const Vector3d &box_length);
 

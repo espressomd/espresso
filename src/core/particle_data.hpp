@@ -46,12 +46,14 @@
  * defines
  ************************************************/
 
-/// ok code for \ref place_particle
-#define ES_PART_OK 0
-/// error code for \ref place_particle
-#define ES_PART_ERROR -1
-/// ok code for \ref place_particle, particle is new
-#define ES_PART_CREATED 1
+enum {
+  /// ok code for \ref place_particle
+  ES_PART_OK = 0,
+  /// error code for \ref place_particle
+  ES_PART_ERROR = -1,
+  /// ok code for \ref place_particle, particle is new
+  ES_PART_CREATED = 1
+};
 
 #ifdef EXTERNAL_FORCES
 /** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
@@ -60,7 +62,7 @@
 #define PARTICLE_EXT_FORCE 1
 /** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
  *  coord. */
-#define COORD_FIXED(coord) (2L << coord)
+#define COORD_FIXED(coord) (2L << (coord))
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
  *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
@@ -725,7 +727,7 @@ void set_particle_torque_lab(int part, const Vector3d &torque_lab);
  *  @param part the particle.
  *  @param dip its new dipole orientation.
  */
-void set_particle_dip(int part, double *dip);
+void set_particle_dip(int part, double const *dip);
 
 /** Call only on the master node: set particle dipole moment (absolute value).
  *  @param part the particle.

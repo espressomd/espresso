@@ -911,7 +911,7 @@ void set_particle_dipm(int part, double dipm) {
   mpi_update_particle_property<double, &ParticleProperties::dipm>(part, dipm);
 }
 
-void set_particle_dip(int part, double *dip) {
+void set_particle_dip(int part, double const *const dip) {
   Vector4d quat;
   double dipm;
   std::tie(quat, dipm) =

@@ -238,7 +238,10 @@ public:
   ~MpiCallbacks() {
     /* Release the clients on exit */
     if (m_abort_on_exit && (m_comm.rank() == 0)) {
+	    try {
       abort_loop();
+	    } catch(...) {
+	    }
     }
   }
 
