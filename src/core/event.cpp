@@ -23,7 +23,8 @@
  *
  *  Implemetation of initialize.hpp.
  */
-#include "initialize.hpp"
+#include "event.hpp"
+
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"

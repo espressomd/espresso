@@ -23,7 +23,7 @@
  */
 
 #include "cells.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "pressure_inline.hpp"
