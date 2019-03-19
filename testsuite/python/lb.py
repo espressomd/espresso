@@ -189,7 +189,6 @@ class TestLB(object):
                     stress += self.lbf[i, j, k].pi
 
         stress /= system.volume() / agrid**3
-        print(system.volume()/agrid**3)
 
         obs = LBFluidStress()
         obs_stress = obs.calculate()

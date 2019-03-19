@@ -359,7 +359,7 @@ IF LB or LB_GPU:
 
         property pi:
             def __get__(self):
-                cdef Vector6d pi = python_lbnode_get_pi(self.node)
+                cdef Vector6d pi = lb_lbnode_get_pi(self.node)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],
                                               [pi[1], pi[2], pi[4]],
                                               [pi[3], pi[4], pi[5]]]))
@@ -369,7 +369,7 @@ IF LB or LB_GPU:
 
         property pi_neq:
             def __get__(self):
-                cdef Vector6d pi = python_lbnode_get_pi_neq(self.node)
+                cdef Vector6d pi = lb_lbnode_get_pi_neq(self.node)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],
                                               [pi[1], pi[2], pi[4]],
                                               [pi[3], pi[4], pi[5]]]))

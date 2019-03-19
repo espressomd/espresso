@@ -20,6 +20,7 @@ import numpy as np
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
+from espressomd.observables import LBFluidStress
 
 """
 Check the Lattice Boltzmann lid driven shear flow in a slab system
@@ -31,9 +32,9 @@ by comparing to the analytical solution.
 AGRID = 0.5
 VISC = 1.4
 DENS = 2.3
-TIME_STEP = 0.01
+TIME_STEP = 0.013
 H = 30.
-SHEAR_RATE = 0.3
+SHEAR_RATE = 0.2
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -108,7 +109,7 @@ class LBShearCommon(object):
         t0 = self.system.time
         sample_points = int(H / AGRID)
 
-        for i in range(10):
+        for i in range(150):
             self.system.integrator.run(100)
 
             v_measured = np.zeros(sample_points)
@@ -126,6 +127,14 @@ class LBShearCommon(object):
 
             rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
             self.assertLess(rmsd, 1.e-4 * AGRID / TIME_STEP)
+            print(self.lbf[5,5,5].pi[2,0])
+
+        print(type(self.lbf),LBFluidStress().calculate())
+        node_stress =self.lbf[5,5,5].pi
+        p_eq =DENS*AGRID**2/TIME_STEP**2/3.
+        p_xz=SHEAR_RATE * VISC
+        np.testing.assert_allclose(node_stress,
+                ((p_eq, 0, p_xz),(0,p_eq,0),(p_xz,0,p_eq)))
 
 
 @ut.skipIf(not espressomd.has_features(

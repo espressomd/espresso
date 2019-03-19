@@ -1122,7 +1122,7 @@ const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
 
     mpi_recv_fluid(node, index, &rho, j, pi.data());
     // unit conversion
-    p_pi = pi / lbpar.tau / lbpar.tau / lbpar.agrid;
+    p_pi = pi *lbpar.rho * lbpar.agrid *lbpar.agrid *lbpar.agrid /lbpar.tau /lbpar.tau/lbpar.tau;
 #endif // LB
   }
   return p_pi;

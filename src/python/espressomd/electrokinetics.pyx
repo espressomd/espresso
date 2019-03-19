@@ -3,7 +3,7 @@ include "myconfig.pxi"
 IF LB_GPU:
     from .lb cimport HydrodynamicInteraction
     from .lb cimport lb_lbfluid_print_vtk_boundary
-    from .lb cimport python_lbnode_get_pi
+    from .lb cimport lb_lbnode_get_pi
     from .lb cimport lb_lbnode_is_index_valid
 from . import utils
 from .utils cimport Vector6d
@@ -354,7 +354,7 @@ IF ELECTROKINETICS:
         property pressure:
             def __get__(self):
                 cdef Vector6d pi
-                pi = python_lbnode_get_pi(self.node)
+                pi = lb_lbnode_get_pi(self.node)
                 return np.array([[pi[0], pi[1], pi[3]],
                                  [pi[1], pi[2], pi[4]],
                                  [pi[3], pi[4], pi[5]]])
