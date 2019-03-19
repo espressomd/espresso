@@ -23,11 +23,13 @@
 #ifndef UTILS_MATH_AC_ERF_PART_HPP
 #define UTILS_MATH_AC_ERF_PART_HPP
 
+#include "utils/attributes.hpp"
+
 namespace Utils {
 /** approximates \f$ \exp(d^2) \mathrm{erfc}(d)\f$ by applying a formula from:
     Abramowitz/Stegun: Handbook of Mathematical Functions, Dover
     (9. ed.), chapter 7 */
-template <typename T> T AS_erfc_part(T d) {
+template <typename T> FUNCTION_ATTRIBUTE_CONST constexpr T AS_erfc_part(T d) {
   T const constexpr a1 = 0.254829592;
   T const constexpr a2 = -0.284496736;
   T const constexpr a3 = 1.421413741;

@@ -23,6 +23,8 @@
 #ifndef UTILS_MATH_SINC_HPP
 #define UTILS_MATH_SINC_HPP
 
+#include "utils/attributes.hpp"
+
 #include <boost/math/constants/constants.hpp>
 
 #include <cmath>
@@ -41,7 +43,7 @@ namespace Utils {
  * also save time, since it reduces the number of function calls to
  * sin().
  */
-template <typename T> inline T sinc(T d) {
+template <typename T> FUNCTION_ATTRIBUTE_CONST constexpr T sinc(T d) {
   const constexpr T epsi = 0.1;
 
   const auto PId = boost::math::constants::pi<T>() * d;

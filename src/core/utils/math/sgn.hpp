@@ -23,9 +23,13 @@
 #ifndef UTILS_MATH_SGN_HPP
 #define UTILS_MATH_SGN_HPP
 
+#include "utils/attributes.hpp"
+
 namespace Utils {
 /** @brief Calculate signum of val. */
-template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
+template <typename T> FUNCTION_ATTRIBUTE_CONST constexpr int sgn(T val) {
+  return (T(0) < val) - (val < T(0));
+}
 } // namespace Utils
 
 #endif
