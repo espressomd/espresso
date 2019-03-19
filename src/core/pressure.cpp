@@ -25,7 +25,7 @@
 #include "cells.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "pressure_inline.hpp"

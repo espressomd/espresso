@@ -31,10 +31,10 @@
 #include "domain_decomposition.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
+#include "event.hpp"
 #include "fft.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "tuning.hpp"
@@ -1800,7 +1800,9 @@ int p3m_adaptive_tune(char **log) {
   }
 
   /* preparation */
-  mpi_bcast_event(P3M_COUNT_CHARGES);
+  mpi_call(p3m_count_charged_particles);
+  p3m_count_charged_particles();
+
   /* Print Status */
   sprintf(b, "P3M tune parameters: Accuracy goal = %.5e prefactor = %.5e\n",
           p3m.params.accuracy, coulomb.prefactor);
@@ -2017,6 +2019,8 @@ void p3m_count_charged_particles() {
       stderr, "%d: p3m.sum_qpart: %d, p3m.sum_q2: %lf, total_charge %lf\n",
       this_node, p3m.sum_qpart, p3m.sum_q2, sqrt(p3m.square_sum_q)));
 }
+
+REGISTER_CALLBACK(p3m_count_charged_particles)
 
 double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                             double sum_q2, double alpha_L) {

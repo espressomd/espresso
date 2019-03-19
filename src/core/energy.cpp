@@ -29,8 +29,8 @@
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy_inline.hpp"
+#include "event.hpp"
 #include "forces.hpp"
-#include "initialize.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"

@@ -33,7 +33,7 @@
 #include "serialization/ParticleList.hpp"
 #include "utils/mpi/sendrecv.hpp"
 
-#include "initialize.hpp"
+#include "event.hpp"
 
 #include <boost/mpi/collectives.hpp>
 
