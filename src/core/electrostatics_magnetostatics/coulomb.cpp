@@ -488,6 +488,8 @@ void bcast_coulomb_params() {
     MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,
               comm_cart);
     break;
+  default:
+    break;
   }
 }
 
