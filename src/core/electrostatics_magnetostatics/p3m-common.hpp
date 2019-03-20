@@ -162,11 +162,11 @@ struct p3m_parameter_struct {
   /** epsilon of the "surrounding dielectric". */
   double epsilon = P3M_EPSILON;
   /** cutoff for charge assignment. */
-  double cao_cut[3] = {0,0,0};
+  double cao_cut[3] = {0, 0, 0};
   /** mesh constant. */
-  double a[3] = {0,0,0};
+  double a[3] = {0, 0, 0};
   /** inverse mesh constant. */
-  double ai[3] = {0,0,0};
+  double ai[3] = {0, 0, 0};
   /** unscaled @ref p3m_parameter_struct::alpha_L "alpha_L" for use with fast
    *  inline functions only */
   double alpha = 0.;
@@ -180,7 +180,7 @@ struct p3m_parameter_struct {
   int cao3 = 0;
   /** additional points around the charge assignment mesh, for method like
    *  dielectric ELC creating virtual charges. */
-  double additional_mesh[3] = {0,0,0};
+  double additional_mesh[3] = {0, 0, 0};
 };
 
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
