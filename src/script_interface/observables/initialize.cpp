@@ -17,9 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.hpp"
 #include "initialize.hpp"
-#include "ScriptInterface.hpp"
 #include "CylindricalLBProfileObservable.hpp"
 #include "CylindricalPidProfileObservable.hpp"
 #include "LBProfileObservable.hpp"
@@ -27,6 +25,8 @@
 #include "PidObservable.hpp"
 #include "PidProfileObservable.hpp"
 #include "ProfileObservable.hpp"
+#include "ScriptInterface.hpp"
+#include "config.hpp"
 
 #include "core/observables/ComForce.hpp"
 #include "core/observables/ComPosition.hpp"
@@ -106,7 +106,7 @@ void initialize() {
   REGISTER_CYLPID_PROFILE_OBS(CylindricalVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
 
-#if (defined(LB) || defined(LB_GPU)) 
+#if (defined(LB) || defined(LB_GPU))
   REGISTER(LBFluidStress);
   REGISTER_CYLPID_PROFILE_OBS(
       CylindricalLBFluxDensityProfileAtParticlePositions);

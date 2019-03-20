@@ -269,13 +269,6 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter);
 /*@}*/
 extern Utils::Counter<uint64_t> rng_counter_fluid_gpu;
 
-
-/** @brief Equilibrium stress for the gpu LB */
-inline
-double lbgpu_eq_stress() {
- return  lbpar_gpu.rho * lbpar_gpu.agrid * lbpar_gpu.agrid /
-          lbpar_gpu.tau / lbpar_gpu.tau / 3.;
-}
 #endif /* LB_GPU */
 
 #endif /* LB_GPU_H */

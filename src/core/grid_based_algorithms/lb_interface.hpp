@@ -188,7 +188,7 @@ const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind);
 /** calculates the average stress of all nodes by iterating
  * over all nodes and deviding by the number_of_nodes.
  */
-const Vector6d lb_lbfluid_get_stress(); 
+const Vector6d lb_lbfluid_get_stress();
 
 /**
  * @brief Get the LB fluid boundary bool for a single node.

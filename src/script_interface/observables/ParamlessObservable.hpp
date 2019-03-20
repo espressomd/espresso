@@ -26,8 +26,8 @@
 
 #include <memory>
 
-#include "config.hpp"
 #include "Observable.hpp"
+#include "config.hpp"
 #include "core/observables/LBFluidStress.hpp"
 #include "core/observables/Observable.hpp"
 #include "core/observables/StressTensor.hpp"
@@ -49,8 +49,8 @@ namespace Observables {
   };
 
 NEW_PARAMLESS_OBSERVABLE(StressTensor)
-#if (defined(LB) || defined(LB_GPU)) 
-  NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
+#if (defined(LB) || defined(LB_GPU))
+NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
 #endif
 
 } /* namespace Observables */

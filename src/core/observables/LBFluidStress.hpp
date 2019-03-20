@@ -13,7 +13,9 @@ public:
   int n_values() const override { return 6; }
   std::vector<double> operator()(PartCfg &) const override {
 
-    return lb_lbfluid_get_stress();
+    auto const unit_conversion =
+        1. / (lb_lbfluid_get_agrid() * pow(lb_lbfluid_get_tau(), 2));
+    return lb_lbfluid_get_stress() * unit_conversion;
   }
 };
 #endif

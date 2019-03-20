@@ -24,6 +24,7 @@ import espressomd
 import espressomd.lb
 from tests_common import abspath
 from espressomd.observables import LBFluidStress
+import sys
 
 
 class TestLB(object):
@@ -179,7 +180,7 @@ class TestLB(object):
             tau=system.time_step,
             kT=1, ext_force_density=[0, 0, 0], seed=1)
         system.actors.add(self.lbf)
-        system.thermostat.set_lb(LB_fluid=self.lbf,seed=1)
+        system.thermostat.set_lb(LB_fluid=self.lbf, seed=1)
         system.integrator.run(10)
         stress = np.zeros((3, 3))
         agrid = self.params["agrid"]
@@ -189,7 +190,6 @@ class TestLB(object):
                     stress += self.lbf[i, j, k].pi
 
         stress /= system.volume() / agrid**3
-        print(system.volume()/agrid**3)
 
         obs = LBFluidStress()
         obs_stress = obs.calculate()
@@ -197,7 +197,7 @@ class TestLB(object):
                                [obs_stress[1], obs_stress[
                                 2], obs_stress[4]],
                                [obs_stress[3], obs_stress[4], obs_stress[5]]])
-        print( stress/obs_stress)
+        print(stress / obs_stress)
         np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
 
     def test_lb_node_set_get(self):

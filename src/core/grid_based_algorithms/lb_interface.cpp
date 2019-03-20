@@ -1071,18 +1071,10 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
 }
 
 const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
-  double p0 = 0;
   Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
 
-  if (lattice_switch == ActiveLB::GPU) {
-#ifdef LB_GPU
-    p0 += lbpar_gpu.rho / lbpar_gpu.agrid / lbpar_gpu.tau / lbpar_gpu.tau / 3.;
-#endif // LB_GPU
-  } else {
-#ifdef LB
-    p0 = lbpar.rho / lbpar.agrid / lbpar.tau / lbpar.tau / 3.;
-#endif // LB
-  }
+  // Add equilibrium stress to the diagonal (in LB units)
+  double p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
 
   p_pi[0] += p0;
   p_pi[2] += p0;
@@ -1121,8 +1113,7 @@ const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
                              lblattice.halo_grid);
 
     mpi_recv_fluid(node, index, &rho, j, pi.data());
-    // unit conversion
-    p_pi = pi / lbpar.tau / lbpar.tau / lbpar.agrid;
+    p_pi = pi;
 #endif // LB
   }
   return p_pi;
@@ -1132,7 +1123,7 @@ const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
  * over all nodes and deviding by the number_of_nodes.
  */
 const Vector6d lb_lbfluid_get_stress() {
-  Vector6d p{0,0,0,0,0,0};
+  Vector6d p{0, 0, 0, 0, 0, 0};
 
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
@@ -1141,22 +1132,24 @@ const Vector6d lb_lbfluid_get_stress() {
     lb_get_values_GPU(host_values.data());
     std::for_each(host_values.begin(), host_values.end(),
                   [&p](LB_rho_v_pi_gpu &v) {
-                      for (int i=0;i<6;i++) p[i] += v.pi[i];
+                    for (int i = 0; i < 6; i++)
+                      p[i] += v.pi[i];
                   });
 
     // Normalize
     p *= (1. / lbpar_gpu.number_of_nodes);
 
-    // Add equilibrium stress;
-    const double p0 = lbgpu_eq_stress();
+    // Add equilibrium stress to the diagonal (in LB units)
+    double p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
+
     p[0] += p0;
     p[2] += p0;
     p[5] += p0;
 
 #endif
-  } else 
+  } else
 #ifdef LB
-  if (lattice_switch == ActiveLB::CPU) {
+      if (lattice_switch == ActiveLB::CPU) {
     int number_of_nodes = lblattice.global_grid[0] * lblattice.global_grid[1] *
                           lblattice.global_grid[2];
 
@@ -1164,20 +1157,19 @@ const Vector6d lb_lbfluid_get_stress() {
       for (int j = 0; j < lblattice.global_grid[1]; j++) {
         for (int k = 0; k < lblattice.global_grid[2]; k++) {
           const Vector3i node{{i, j, k}};
-          p+=lb_lbnode_get_pi(node);
+          p += lb_lbnode_get_pi(node);
         }
       }
     }
 
-   p *= 1. / number_of_nodes;
-   } else
+    p *= 1. / number_of_nodes;
+  } else
 #endif
   {
     throw std::runtime_error("LB method called on inactive LB");
   }
   return p;
 }
-
 
 int lb_lbnode_get_boundary(const Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
