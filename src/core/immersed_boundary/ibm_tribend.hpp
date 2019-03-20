@@ -26,9 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
-// DEBUG stuff
-extern double maxBendingForce, maxBendingDist, maxX;
-
 // This function is used to set the parameters
 // Also calculates and stores the reference state
 int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
@@ -41,9 +38,8 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
 int IBM_Tribend_ResetParams(const int bond_type, const double kb);
 
 // This function calculates and adds the actual force
-void IBM_Tribend_CalcForce(Particle *p1, const int numPartners,
-                           Particle **const partners,
-                           const Bonded_ia_parameters &iaparams);
+void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
+                           Particle *p4, const Bonded_ia_parameters &iaparams);
 
 #endif
 
