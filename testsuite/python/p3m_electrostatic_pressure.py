@@ -116,7 +116,12 @@ class VirialPressureConsistency(ut.TestCase):
     def test_p3m_pressure(self):
         pressures_via_virial = []
         pressures_via_volume_scaling = []
-        p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3, mesh=16, cao=6, r_cut=1.4941e-01*self.system.box_l[0])
+        p3m = electrostatics.P3M(
+            prefactor=2.0,
+            accuracy=1e-3,
+            mesh=16,
+            cao=6,
+            r_cut=1.4941e-01 * self.system.box_l[0])
         self.system.actors.add(p3m)
         print("Tune skin: {}".format(self.system.cell_system.tune_skin(
                                      min_skin=0.0, max_skin=2.5, tol=0.05, int_steps=100)))
