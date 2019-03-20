@@ -4,14 +4,12 @@
 #include <cinttypes>
 #include <utility>
 
-#include "constexpr.hpp"
-
 namespace Utils {
-CXX14_CONSTEXPR inline uint64_t u32_to_u64(uint32_t high, uint64_t low) {
+constexpr inline uint64_t u32_to_u64(uint32_t high, uint64_t low) {
   return (static_cast<uint64_t>(high) << 32) | static_cast<uint64_t>(low);
 }
 
-CXX14_CONSTEXPR inline std::pair<uint32_t, uint32_t> u64_to_u32(uint64_t in) {
+constexpr inline std::pair<uint32_t, uint32_t> u64_to_u32(uint64_t in) {
   return {static_cast<uint32_t>(in >> 32), static_cast<uint32_t>(in)};
 }
 
