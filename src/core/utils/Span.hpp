@@ -25,7 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <type_traits>
 
-#include "constexpr.hpp"
 #include "type_traits.hpp"
 
 namespace Utils {
@@ -97,11 +96,11 @@ public:
   constexpr reverse_iterator rbegin() const { return reverse_iterator(end()); }
   constexpr reverse_iterator rend() const { return reverse_iterator(begin()); }
 
-  CXX14_CONSTEXPR reference operator[](size_type i) const {
+  constexpr reference operator[](size_type i) const {
     return assert(i < size()), m_ptr[i];
   }
 
-  CXX14_CONSTEXPR reference at(size_type i) const {
+  constexpr reference at(size_type i) const {
     return (i < size()) ? m_ptr[i]
                         : throw std::out_of_range("span access out of bounds."),
            m_ptr[i];
