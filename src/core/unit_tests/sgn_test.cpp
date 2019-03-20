@@ -26,6 +26,9 @@
 #include "utils/math/sgn.hpp"
 using Utils::sgn;
 
+/* Check that it can be used in constexpr context */
+static_assert(sgn(1), "");
+
 BOOST_AUTO_TEST_CASE(pos) { BOOST_CHECK(1 == sgn(89)); }
 BOOST_AUTO_TEST_CASE(nul) { BOOST_CHECK(0 == sgn(0)); }
 BOOST_AUTO_TEST_CASE(neg) { BOOST_CHECK(-1 == sgn(-89)); }
