@@ -7,7 +7,7 @@
 #define DEVICE_QUALIFIER
 #endif
 
-#ifdef __CUDACC__
+#ifndef __CUDACC__
 #define DEVICE_ASSERT(A) assert((A))
 #else
 #define DEVICE_ASSERT(A) void((A))
