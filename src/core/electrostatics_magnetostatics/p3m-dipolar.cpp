@@ -285,7 +285,6 @@ inside the loops
 */
 
 void dp3m_pre_init(void) {
-  p3m_common_parameter_pre_init(&dp3m.params);
   dp3m.params.epsilon = P3M_EPSILON_MAGNETIC;
 
   /* dp3m.local_mesh is uninitialized */
@@ -372,15 +371,6 @@ void dp3m_init() {
     dp3m_calc_local_ca_mesh();
 
     dp3m_calc_send_mesh();
-    P3M_TRACE(p3m_p3m_print_local_mesh(dp3m.local_mesh));
-
-    /* DEBUG */
-    for (n = 0; n < n_nodes; n++) {
-      /* MPI_Barrier(comm_cart); */
-      if (n == this_node) {
-        P3M_TRACE(p3m_p3m_print_send_mesh(dp3m.sm));
-      }
-    }
 
     dp3m.send_grid =
         Utils::realloc(dp3m.send_grid, sizeof(double) * dp3m.sm.max);
@@ -430,17 +420,6 @@ void dp3m_init() {
 
     P3M_TRACE(fprintf(stderr, "%d: p3m initialized\n", this_node));
   }
-}
-
-void dp3m_free_dipoles() {
-  for (int i = 0; i < 3; i++)
-    free(dp3m.rs_mesh_dip[i]);
-  free(dp3m.ca_frac);
-  free(dp3m.ca_fmp);
-  free(dp3m.send_grid);
-  free(dp3m.recv_grid);
-  free(dp3m.rs_mesh);
-  free(dp3m.ks_mesh);
 }
 
 double dp3m_average_dipolar_self_energy(double box_l, int mesh) {

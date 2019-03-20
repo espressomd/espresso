@@ -257,7 +257,6 @@ template <int cao>
 void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
 
 void p3m_pre_init(void) {
-  p3m_common_parameter_pre_init(&p3m.params);
   /* p3m.local_mesh is uninitialized */
   /* p3m.sm is uninitialized */
 
@@ -291,32 +290,6 @@ void p3m_pre_init(void) {
   p3m.recv_grid = nullptr;
 
   fft_common_pre_init(&p3m.fft);
-}
-
-void p3m_free() {
-  int i;
-/* free memory */
-#ifdef P3M_STORE_CA_FRAC
-  free(p3m.ca_frac);
-  free(p3m.ca_fmp);
-#endif
-  free(p3m.send_grid);
-  free(p3m.recv_grid);
-  free(p3m.rs_mesh);
-  free(p3m.ks_mesh);
-  for (i = 0; i < p3m.params.cao; i++)
-    free(p3m.int_caf[i]);
-}
-
-void p3m_set_prefactor() {
-  p3m.params.alpha = 0.0;
-  p3m.params.alpha_L = 0.0;
-  p3m.params.r_cut = 0.0;
-  p3m.params.r_cut_iL = 0.0;
-  p3m.params.mesh[0] = 0;
-  p3m.params.mesh[1] = 0;
-  p3m.params.mesh[2] = 0;
-  p3m.params.cao = 0;
 }
 
 void p3m_init() {
@@ -357,8 +330,6 @@ void p3m_init() {
     p3m_calc_local_ca_mesh();
 
     p3m_calc_send_mesh();
-    P3M_TRACE(p3m_p3m_print_local_mesh(p3m.local_mesh));
-    P3M_TRACE(p3m_p3m_print_send_mesh(p3m.sm));
     p3m.send_grid = Utils::realloc(p3m.send_grid, sizeof(double) * p3m.sm.max);
     p3m.recv_grid = Utils::realloc(p3m.recv_grid, sizeof(double) * p3m.sm.max);
 
