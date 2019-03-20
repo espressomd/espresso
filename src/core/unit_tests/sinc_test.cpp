@@ -26,6 +26,9 @@
 #include "utils/math/sinc.hpp"
 using Utils::sinc;
 
+/* Check that it can be used in constexpr context */
+static_assert((sinc(0.), true), "");
+
 BOOST_AUTO_TEST_CASE(zero) { BOOST_CHECK(1.0 == sinc(0.0)); }
 
 BOOST_AUTO_TEST_CASE(approx) {
