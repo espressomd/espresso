@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
-if "@TEST_GPU@" in ("TRUE", "ON", "1"):
+if "gpu" in "@TEST_LABELS@".split(";"):
     kwargs = {"n_int_steps": 50, "script_suffix": "gpu", "n_ionpairs": 100,
               "cmd_arguments": ["--path", "./bmimpf6_bulk/gpu/", "--gpu"]}
 else:

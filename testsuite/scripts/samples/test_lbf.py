@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
-implementation = "gpu" if "@TEST_GPU@" in ("TRUE", "ON", "1") else "cpu"
+implementation = "gpu" if "gpu" in "@TEST_LABELS@".split(";") else "cpu"
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@SAMPLES_DIR@/lbf.py", cmd_arguments=["--" + implementation],
     script_suffix=implementation)

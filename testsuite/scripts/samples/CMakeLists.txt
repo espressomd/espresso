@@ -6,7 +6,7 @@ endfunction(SAMPLE_TEST)
 # configure Python module importlib_wrapper.py
 add_test(test_importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
 set_tests_properties(test_importlib_wrapper PROPERTIES FIXTURES_SETUP IMPORTLIB_WRAPPER)
-set(tutorials_tests ${tutorials_tests} ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER} PARENT_SCOPE)
+set(samples_tests ${samples_tests} ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER} PARENT_SCOPE)
 configure_file(../importlib_wrapper.py ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py)
 
 # create a local copy of the samples
