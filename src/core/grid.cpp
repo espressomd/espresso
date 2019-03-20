@@ -193,7 +193,7 @@ void calc_2d_grid(int n, int grid[3]) {
   }
 }
 
-int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]) {
+int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
   int i, row_dir = -1;
   /* trivial case */
   if (g3d[2] == 1) {

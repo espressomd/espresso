@@ -33,7 +33,7 @@
 #include "serialization/ParticleList.hpp"
 #include "utils/mpi/sendrecv.hpp"
 
-#include "initialize.hpp"
+#include "event.hpp"
 
 #include <boost/mpi/collectives.hpp>
 
@@ -41,16 +41,6 @@
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
 Cell *dd_save_position_to_cell(const Vector3d &pos);
-
-/************************************************/
-/** \name Defines */
-/************************************************/
-/*@{*/
-
-/** half the number of cell neighbors in 3 Dimensions. */
-#define CELLS_MAX_NEIGHBORS 14
-
-/*@}*/
 
 /************************************************/
 /** \name Variables */
@@ -69,30 +59,6 @@ double max_skin = 0.0;
 /** \name Private Functions */
 /************************************************************/
 /*@{*/
-
-/** Convenient replace for loops over all cells. */
-#define DD_CELLS_LOOP(m, n, o)                                                 \
-  for (o = 0; o < dd.ghost_cell_grid[2]; o++)                                  \
-    for (n = 0; n < dd.ghost_cell_grid[1]; n++)                                \
-      for (m = 0; m < dd.ghost_cell_grid[0]; m++)
-
-/** Convenient replace for loops over Local cells. */
-#define DD_LOCAL_CELLS_LOOP(m, n, o)                                           \
-  for (o = 1; o < dd.cell_grid[2] + 1; o++)                                    \
-    for (n = 1; n < dd.cell_grid[1] + 1; n++)                                  \
-      for (m = 1; m < dd.cell_grid[0] + 1; m++)
-
-/** Convenient replace for inner cell check. usage: if(DD_IS_LOCAL_CELL(m,n,o))
- * {...} */
-#define DD_IS_LOCAL_CELL(m, n, o)                                              \
-  (m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&                          \
-   n < dd.ghost_cell_grid[1] - 1 && o > 0 && o < dd.ghost_cell_grid[2] - 1)
-
-/** Convenient replace for ghost cell check. usage: if(DD_IS_GHOST_CELL(m,n,o))
- * {...} */
-#define DD_IS_GHOST_CELL(m, n, o)                                              \
-  (m == 0 || m == dd.ghost_cell_grid[0] - 1 || n == 0 ||                       \
-   n >= dd.ghost_cell_grid[1] - 1 || o == 0 || o == dd.ghost_cell_grid[2] - 1)
 
 /** Calculate cell grid dimensions, cell sizes and number of cells.
  *  Calculates the cell grid, based on \ref local_box_l and \ref
@@ -226,15 +192,18 @@ void dd_create_cell_grid() {
  *  \ref DomainDecomposition::ghost_cell_grid.
  */
 void dd_mark_cells() {
-  int m, n, o, cnt_c = 0, cnt_l = 0, cnt_g = 0;
+  int cnt_c = 0, cnt_l = 0, cnt_g = 0;
 
-  DD_CELLS_LOOP(m, n, o) {
-
-    if (DD_IS_LOCAL_CELL(m, n, o))
-      local_cells.cell[cnt_l++] = &cells[cnt_c++];
-    else
-      ghost_cells.cell[cnt_g++] = &cells[cnt_c++];
-  }
+  for (int o = 0; o < dd.ghost_cell_grid[2]; o++)
+    for (int n = 0; n < dd.ghost_cell_grid[1]; n++)
+      for (int m = 0; m < dd.ghost_cell_grid[0]; m++) {
+        if ((m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&
+             n < dd.ghost_cell_grid[1] - 1 && o > 0 &&
+             o < dd.ghost_cell_grid[2] - 1))
+          local_cells.cell[cnt_l++] = &cells[cnt_c++];
+        else
+          ghost_cells.cell[cnt_g++] = &cells[cnt_c++];
+      }
 }
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
@@ -246,10 +215,10 @@ void dd_mark_cells() {
  *  \param lc          lower left corner of the subgrid.
  *  \param hc          high up corner of the subgrid.
  */
-int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
-  int i, m, n, o, c = 0;
+int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
+                            int const hc[3]) {
   /* sanity check */
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     if (lc[i] < 0 || lc[i] >= dd.ghost_cell_grid[i])
       return 0;
     if (hc[i] < 0 || hc[i] >= dd.ghost_cell_grid[i])
@@ -258,14 +227,15 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
       return 0;
   }
 
-  for (o = lc[0]; o <= hc[0]; o++)
-    for (n = lc[1]; n <= hc[1]; n++)
-      for (m = lc[2]; m <= hc[2]; m++) {
-        i = get_linear_index(o, n, m,
+  int c = 0;
+  for (int o = lc[0]; o <= hc[0]; o++)
+    for (int n = lc[1]; n <= hc[1]; n++)
+      for (int m = lc[2]; m <= hc[2]; m++) {
+        auto const i =
+            get_linear_index(o, n, m,
                              {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
                               dd.ghost_cell_grid[2]});
-        CELL_TRACE(fprintf(stderr, "%d: dd_fill_comm_cell_list: add cell %d\n",
-                           this_node, i));
+
         part_lists[c] = &cells[i];
         c++;
       }
@@ -520,40 +490,44 @@ void dd_init_cell_interactions(const Vector3i &grid) {
   }
 
   /* loop all local cells */
-  DD_LOCAL_CELLS_LOOP(m, n, o) {
+  for (o = 1; o < dd.cell_grid[2] + 1; o++)
+    for (n = 1; n < dd.cell_grid[1] + 1; n++)
+      for (m = 1; m < dd.cell_grid[0] + 1; m++) {
 
-    ind1 = get_linear_index(
-        m, n, o,
-        {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]});
+        ind1 = get_linear_index(m, n, o,
+                                {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
+                                 dd.ghost_cell_grid[2]});
 
-    std::vector<Cell *> red_neighbors;
-    std::vector<Cell *> black_neighbors;
+        std::vector<Cell *> red_neighbors;
+        std::vector<Cell *> black_neighbors;
 
-    /* loop all neighbor cells */
-    int lower_index[3] = {m - 1, n - 1, o - 1};
-    int upper_index[3] = {m + 1, n + 1, o + 1};
+        /* loop all neighbor cells */
+        int lower_index[3] = {m - 1, n - 1, o - 1};
+        int upper_index[3] = {m + 1, n + 1, o + 1};
 
-    for (int i = 0; i < 3; i++) {
-      if (dd.fully_connected[i] == true) {
-        lower_index[i] = 0;
-        upper_index[i] = dd.ghost_cell_grid[i] - 1;
-      }
-    }
-
-    for (p = lower_index[2]; p <= upper_index[2]; p++)
-      for (q = lower_index[1]; q <= upper_index[1]; q++)
-        for (r = lower_index[0]; r <= upper_index[0]; r++) {
-          ind2 = get_linear_index(r, q, p,
-                                  {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
-                                   dd.ghost_cell_grid[2]});
-          if (ind2 > ind1) {
-            red_neighbors.push_back(&cells[ind2]);
-          } else {
-            black_neighbors.push_back(&cells[ind2]);
+        for (int i = 0; i < 3; i++) {
+          if (dd.fully_connected[i] == true) {
+            lower_index[i] = 0;
+            upper_index[i] = dd.ghost_cell_grid[i] - 1;
           }
         }
-    cells[ind1].m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
-  }
+
+        for (p = lower_index[2]; p <= upper_index[2]; p++)
+          for (q = lower_index[1]; q <= upper_index[1]; q++)
+            for (r = lower_index[0]; r <= upper_index[0]; r++) {
+              ind2 = get_linear_index(r, q, p,
+                                      {dd.ghost_cell_grid[0],
+                                       dd.ghost_cell_grid[1],
+                                       dd.ghost_cell_grid[2]});
+              if (ind2 > ind1) {
+                red_neighbors.push_back(&cells[ind2]);
+              } else {
+                black_neighbors.push_back(&cells[ind2]);
+              }
+            }
+        cells[ind1].m_neighbors =
+            Neighbors<Cell *>(red_neighbors, black_neighbors);
+      }
 }
 
 /*************************************************/

@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CORE_INITIALIZE_HPP
-#define CORE_INITIALIZE_HPP
+#ifndef CORE_EVENT_HPP
+#define CORE_EVENT_HPP
 /** \file
  *  This file contains the hook procedures. These are the ones with names
  *  on_* and are called whenever something is changed in Espresso which
@@ -80,9 +80,6 @@ void on_short_range_ia_change();
 /** called every time a constraint is changed. */
 void on_constraint_change();
 
-/** called whenever the cutoff has potentially changed. */
-void on_max_cut_change();
-
 /** called every time the box length has changed. This routine
  *  is relatively fast, and changing the box length every time step
  *  as for example necessary for NpT is more or less ok.
@@ -104,17 +101,12 @@ void on_temperature_change();
  */
 void on_parameter_change(int parameter);
 
-/** called every time the number of particle types has changed (increased) */
-void on_max_seen_particle_type_change();
-
 /** call this if you want to change ghost flags, e.g. whether ghosts
  *  have velocities or not. This is a opt-in process, i.e. all
  *  features are turned off and have to be reactivated if necessary
  *  inside this procedure.
  */
 void on_ghost_flags_change();
-
-void on_lbboundary_change();
 
 /** called every time the walls for the lb fluid are changed */
 void on_lbboundary_change();

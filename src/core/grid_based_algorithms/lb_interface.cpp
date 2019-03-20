@@ -1,18 +1,170 @@
-#include <fstream>
-
+#include "lb_interface.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "electrokinetics.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "lb.hpp"
-#include "lb_interface.hpp"
 #include "lbgpu.hpp"
+
+#include <fstream>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 
-#if defined(LB) || defined(LB_GPU)
+/* LB CPU callback interface */
+#ifdef LB
+namespace {
+/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
+ *  @param node   processor to send to
+ *  @param index  index of the lattice site
+ *  @param rho    local fluid density
+ *  @param j      local fluid velocity
+ *  @param pi     local fluid pressure
+ */
+void mpi_send_fluid(int node, int index, double rho, Vector3d const &j,
+                    Vector6d const &pi) {
+  if (node == this_node) {
+    lb_calc_n_from_rho_j_pi(index, rho, j, pi);
+  } else if (0 == this_node) {
+    mpi_call(mpi_send_fluid, node, index, rho, j, pi);
+  }
+}
 
+REGISTER_CALLBACK(mpi_send_fluid)
+
+void mpi_recv_fluid_slave(int node, int index) {
+  if (node == this_node) {
+    double data[10];
+    lb_calc_local_fields(index, &data[0], &data[1], &data[4]);
+    MPI_Send(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+  }
+}
+
+REGISTER_CALLBACK(mpi_recv_fluid_slave)
+
+/** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
+ *  @param node   processor to send to
+ *  @param index  index of the lattice site
+ *  @param rho    local fluid density
+ *  @param j      local fluid velocity
+ *  @param pi     local fluid pressure
+ */
+void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
+  if (node == this_node) {
+    lb_calc_local_fields(index, rho, j, pi);
+  } else {
+    double data[10];
+    mpi_call(mpi_recv_fluid_slave, node, index);
+    MPI_Recv(data, 10, MPI_DOUBLE, node, SOME_TAG, comm_cart,
+             MPI_STATUS_IGNORE);
+    *rho = data[0];
+    j[0] = data[1];
+    j[1] = data[2];
+    j[2] = data[3];
+    pi[0] = data[4];
+    pi[1] = data[5];
+    pi[2] = data[6];
+    pi[3] = data[7];
+    pi[4] = data[8];
+    pi[5] = data[9];
+  }
+}
+
+void mpi_send_fluid_populations_slave(int node, int index) {
+  if (node == this_node) {
+    Vector19d populations;
+    MPI_Recv(populations.data(), 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
+             MPI_STATUS_IGNORE);
+    lb_set_populations(index, populations);
+  }
+}
+
+REGISTER_CALLBACK(mpi_send_fluid_populations_slave)
+
+/** Issue REQ_SEND_FLUID_POPULATIONS: Send a single lattice site to a processor.
+ *  @param node   processor to send to
+ *  @param index  index of the lattice site
+ *  @param pop    local fluid population
+ */
+void mpi_send_fluid_populations(int node, int index, const Vector19d &pop) {
+  if (node == this_node) {
+    lb_set_populations(index, pop);
+  } else {
+    mpi_call(mpi_send_fluid_populations_slave, node, index);
+    MPI_Send(pop.data(), 19, MPI_DOUBLE, node, SOME_TAG, comm_cart);
+  }
+}
+
+void mpi_bcast_lb_params_slave(LBParam field, const LB_Parameters &params_) {
+  lbpar = params_;
+  lb_lbfluid_on_lb_params_change(field);
+}
+
+REGISTER_CALLBACK(mpi_bcast_lb_params_slave)
+
+/** @brief Broadcast a parameter for lattice Boltzmann.
+ *  @param[in] field  References the parameter field to be broadcasted.
+ *                    The references are defined in lb.hpp
+ */
+void mpi_bcast_lb_params(LBParam field) {
+  mpi_call(mpi_bcast_lb_params_slave, field, lbpar);
+  lb_lbfluid_on_lb_params_change(field);
+}
+
+void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
+  if (node == this_node) {
+    int data;
+    lb_local_fields_get_boundary_flag(index, &data);
+    MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, comm_cart);
+  }
+}
+
+REGISTER_CALLBACK(mpi_recv_fluid_boundary_flag_slave)
+
+/** Issue REQ_LB_GET_BOUNDARY_FLAG: Receive a single lattice sites boundary
+ *  flag from a processor.
+ *  @param node      processor to send to
+ *  @param index     index of the lattice site
+ *  @param boundary  local boundary flag
+ */
+void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
+  if (node == this_node) {
+    lb_local_fields_get_boundary_flag(index, boundary);
+  } else {
+    int data = 0;
+    mpi_call(mpi_recv_fluid_boundary_flag_slave, node, index);
+    MPI_Recv(&data, 1, MPI_INT, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+    *boundary = data;
+  }
+}
+
+void mpi_recv_fluid_populations_slave(int node, int index) {
+  if (node == this_node) {
+    double data[19];
+    lb_get_populations(index, data);
+    MPI_Send(data, 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
+  }
+}
+
+REGISTER_CALLBACK(mpi_recv_fluid_populations_slave)
+
+/** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
+ *  @param node   processor to send to
+ *  @param index  index of the lattice site
+ *  @param pop    local fluid population
+ */
+void mpi_recv_fluid_populations(int node, int index, double *pop) {
+  if (node == this_node) {
+    lb_get_populations(index, pop);
+  } else {
+    mpi_call(mpi_recv_fluid_populations_slave, node, index);
+    MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
+  }
+}
+} // namespace
+#endif
+
+#if defined(LB) || defined(LB_GPU)
 void lb_lbfluid_update() {
   if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB

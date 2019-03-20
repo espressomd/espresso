@@ -42,7 +42,7 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
 
 inline void
 add_gb_pair_force(const Particle *const p1, const Particle *const p2,
-                  IA_parameters *ia_params, double d[3], double dist,
+                  IA_parameters *ia_params, double const d[3], double dist,
                   double force[3], double torque1[3], double torque2[3])
 
 {

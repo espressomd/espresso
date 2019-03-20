@@ -56,9 +56,9 @@
 
 /** Macro that tests for a coordinate being periodic or not. */
 #ifdef PARTIAL_PERIODIC
-#define PERIODIC(coord) (periodic & (1L << coord))
+#define PERIODIC(coord) (periodic & (1L << (coord)))
 #else
-#define PERIODIC(coord) 1
+#define PERIODIC(coord) (1)
 #endif
 
 /** \name Exported Variables */
@@ -168,7 +168,7 @@ void calc_2d_grid(int n, int grid[3]);
  *  \param mult     factors between 3d and 2d grid dimensions
  *  \return         index of the row direction [0,1,2].
  */
-int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]);
+int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]);
 
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales
  * the particles accordingly */

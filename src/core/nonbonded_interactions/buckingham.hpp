@@ -53,7 +53,7 @@ inline double buck_energy_r(double A, double B, double C, double D,
     it to their force. */
 inline void add_buck_pair_force(const Particle *const p1,
                                 const Particle *const p2,
-                                IA_parameters *ia_params, double d[3],
+                                IA_parameters *ia_params, double const d[3],
                                 double dist, double force[3]) {
   if ((dist < ia_params->BUCK_cut)) {
     /* case: resulting force/energy greater than discontinuity and

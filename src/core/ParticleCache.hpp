@@ -42,7 +42,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "MpiCallbacks.hpp"
 #include "utils/NoOp.hpp"
 #include "utils/mpi/gather_buffer.hpp"
-#include "utils/parallel/Callback.hpp"
 #include "utils/serialization/flat_set.hpp"
 
 namespace detail {
@@ -166,8 +165,8 @@ class ParticleCache {
   /** State */
   bool m_valid, m_valid_bonds;
 
-  Utils::Parallel::Callback update_cb;
-  Utils::Parallel::Callback update_bonds_cb;
+  Communication::CallbackHandle<> update_cb;
+  Communication::CallbackHandle<> update_bonds_cb;
 
   /** Functor to get a particle range */
   GetParticles m_parts;
@@ -266,9 +265,9 @@ public:
   ParticleCache(Communication::MpiCallbacks &cb, GetParticles parts,
                 UnaryOp &&op = UnaryOp{})
       : m_cb(cb), m_valid(false), m_valid_bonds(false),
-        update_cb(cb, [this](int, int) { this->m_update(); }),
-        update_bonds_cb(cb, [this](int, int) { this->m_update_bonds(); }),
-        m_parts(parts), m_op(std::forward<UnaryOp>(op)) {}
+        update_cb(&cb, [this]() { m_update(); }),
+        update_bonds_cb(&cb, [this]() { m_update_bonds(); }), m_parts(parts),
+        m_op(std::forward<UnaryOp>(op)) {}
   /* Because the this ptr is captured by the callback lambdas,
    * this class can be neither copied nor moved. */
   ParticleCache(ParticleCache const &) = delete;
@@ -357,7 +356,7 @@ public:
     update();
 
     if (!m_valid_bonds) {
-      update_bonds_cb.call();
+      update_bonds_cb();
       m_recv_bonds();
       m_valid_bonds = true;
     }
@@ -376,7 +375,7 @@ public:
     if (m_valid)
       return;
 
-    update_cb.call();
+    update_cb();
 
     m_update();
     m_update_index();

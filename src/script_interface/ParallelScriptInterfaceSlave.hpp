@@ -26,10 +26,7 @@
 #include "utils/parallel/ParallelObject.hpp"
 
 namespace ScriptInterface {
-
-class ParallelScriptInterfaceSlaveBase {};
-
-class ParallelScriptInterfaceSlave : private ParallelScriptInterfaceSlaveBase {
+class ParallelScriptInterfaceSlave {
 public:
   enum class CallbackAction {
     NEW,
@@ -58,10 +55,17 @@ private:
     }
   }
 
+  static void translate_id(VariantMap &map) {
+    for (auto &e : map) {
+      translate_id(e.second);
+    }
+  }
+
   VariantMap bcast_variant_map() const;
 
 private:
-  void mpi_slave(int action, int);
+  Communication::CallbackHandle<CallbackAction> m_callback_id;
+  void mpi_slave(CallbackAction action);
 };
 } /* namespace ScriptInterface */
 

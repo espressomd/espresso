@@ -30,9 +30,9 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
+#include "event.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
@@ -911,7 +911,7 @@ void set_particle_dipm(int part, double dipm) {
   mpi_update_particle_property<double, &ParticleProperties::dipm>(part, dipm);
 }
 
-void set_particle_dip(int part, double *dip) {
+void set_particle_dip(int part, double const *const dip) {
   Vector4d quat;
   double dipm;
   std::tie(quat, dipm) =
