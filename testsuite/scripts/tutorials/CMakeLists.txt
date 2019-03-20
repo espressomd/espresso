@@ -1,11 +1,11 @@
 function(TUTORIAL_TEST)
-  PYTHON_SCRIPTS_TEST(${ARGV})  # forward arguments
+  PYTHON_SCRIPTS_TEST(${ARGV} TYPE tutorial)  # forward arguments
   set(tutorials_tests ${tutorials_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
 endfunction(TUTORIAL_TEST)
 
 # configure Python module importlib_wrapper.py
-add_test(test_importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
-set_tests_properties(test_importlib_wrapper PROPERTIES FIXTURES_SETUP IMPORTLIB_WRAPPER)
+add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
+set_tests_properties(importlib_wrapper PROPERTIES FIXTURES_SETUP IMPORTLIB_WRAPPER)
 set(tutorials_tests ${tutorials_tests} ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER} PARENT_SCOPE)
 configure_file(../importlib_wrapper.py ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py)
 

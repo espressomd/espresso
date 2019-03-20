@@ -304,8 +304,8 @@ Configure tests in :file:`/testsuite/scripts/samples/CMakeLists.txt` or
 .. code-block:: cmake
 
    sample_test(FILE <mytest.py>
-               [GPU]
-               [SUFFIX <suffix>]
+               [LABELS "<label1>[; ...]"]
+               [SUFFIX "<suffix>"]
                [DEPENDENCIES <../dependency1.py>[, ...]])
 
 for samples, or ``tutorial_test()`` for tutorials and their bonus scripts.
@@ -321,7 +321,7 @@ and the GPU implementation once (if a GPU is available):
 .. code-block:: cmake
 
    sample_test(FILE test_lbf.py SUFFIX cpu)
-   sample_test(FILE test_lbf.py SUFFIX gpu GPU)
+   sample_test(FILE test_lbf.py SUFFIX gpu LABELS "gpu")
 
 where ``SUFFIX`` is used to create a file :file:`test_lbf_with_cpu.py` and a
 file :file:`test_lbf_with_cpu`. In general, ``SUFFIX`` is used to generate
@@ -341,8 +341,8 @@ Sequentiality can be enforced with fixtures:
 
    sample_test(FILE test_save_checkpoint.py)
    sample_test(FILE test_load_checkpoint.py)
-   set_tests_properties(test_save_checkpoint PROPERTIES FIXTURES_SETUP    saved_checkpoint)
-   set_tests_properties(test_load_checkpoint PROPERTIES FIXTURES_REQUIRED saved_checkpoint)
+   set_tests_properties(sample_save_checkpoint PROPERTIES FIXTURES_SETUP    saved_checkpoint)
+   set_tests_properties(sample_load_checkpoint PROPERTIES FIXTURES_REQUIRED saved_checkpoint)
 
 
 .. _Installation tests:
