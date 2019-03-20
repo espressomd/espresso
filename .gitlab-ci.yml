@@ -168,7 +168,7 @@ cuda-maxset:
     - linux
     - cuda
 
-cuda-tutorials:
+tutorials-samples:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
   script:
