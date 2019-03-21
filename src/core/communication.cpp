@@ -60,6 +60,11 @@
 #include "swimmer_reaction.hpp"
 #include "virtual_sites.hpp"
 
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/icc.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
+
 #include "serialization/IA_parameters.hpp"
 #include "serialization/Particle.hpp"
 #include "serialization/ParticleParametersSwimming.hpp"
@@ -72,14 +77,6 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
-
-#include "electrostatics_magnetostatics/p3m.hpp"
-
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
-#include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 
 using namespace std;
 
