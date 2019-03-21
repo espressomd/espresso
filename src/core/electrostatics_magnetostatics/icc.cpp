@@ -39,10 +39,8 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
-#include "debug.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include "global.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
@@ -57,10 +55,6 @@ iccp3m_struct iccp3m_cfg;
 /* functions that are used in icc* to compute the electric field acting on the
  * induced charges, excluding forces other than the electrostatic ones */
 void init_forces_iccp3m();
-void calc_long_range_forces_iccp3m();
-
-inline void init_local_particle_force_iccp3m(Particle *part);
-inline void init_ghost_force_iccp3m(Particle *part);
 
 /** Calculation of the electrostatic forces between source charges (= real
  * charges) and wall charges. For each electrostatic method the proper functions
@@ -75,27 +69,11 @@ void force_calc_iccp3m();
 inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
                                              double d[3], double dist,
                                              double dist2) {
-  /* IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);*/
   Vector3d force{};
-
-  FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
-                      p1->p.identity, p2->p.identity, dist));
-
-  /***********************************************/
-  /* long range electrostatics                   */
-  /***********************************************/
-
-  /* real space Coulomb */
   Coulomb::calc_pair_force(p1, p2, d, dist, dist2, force);
 
-  /***********************************************/
-  /* add total nonbonded forces to particle      */
-  /***********************************************/
-  for (int j = 0; j < 3; j++) {
-    p1->f.f[j] += force[j];
-    p2->f.f[j] -= force[j];
-  }
-  /***********************************************/
+  p1->f.f += force;
+  p2->f.f -= force;
 }
 
 void iccp3m_alloc_lists() {
@@ -197,9 +175,6 @@ int iccp3m_iteration() {
 
     if (globalmax < iccp3m_cfg.convergence)
       break;
-    if (diff > 1e89) {
-      return iccp3m_cfg.citeration++;
-    }
   } /* iteration */
 
   if (globalmax > iccp3m_cfg.convergence) {
@@ -221,7 +196,7 @@ void force_calc_iccp3m() {
                                      sqrt(d.dist2), d.dist2);
   });
 
-  calc_long_range_forces_iccp3m();
+    Coulomb::calc_long_range_force();
 }
 
 void init_forces_iccp3m() {
@@ -234,16 +209,4 @@ void init_forces_iccp3m() {
   }
 }
 
-void calc_long_range_forces_iccp3m() {
-#ifdef ELECTROSTATICS
-  /* calculate k-space part of electrostatic interaction. */
-  if (!(coulomb.method == COULOMB_ELC_P3M ||
-        coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_P3M ||
-        coulomb.method == COULOMB_MMM2D || coulomb.method == COULOMB_MMM1D)) {
-    runtimeErrorMsg() << "ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
-  }
-
-  Coulomb::calc_long_range_force();
-#endif
-}
 #endif
