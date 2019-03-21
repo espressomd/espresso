@@ -41,7 +41,7 @@ namespace Utils {
  * also save time, since it reduces the number of function calls to
  * sin().
  */
-template <typename T> inline T sinc(T d) {
+template <typename T> T sinc(T d) {
   const constexpr T epsi = 0.1;
 
   const auto PId = boost::math::constants::pi<T>() * d;
