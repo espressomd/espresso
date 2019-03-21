@@ -99,7 +99,7 @@ template <class CoreObs>
 class CylindricalProfileObservableInterface
     : public CylindricalProfileObservable {
 public:
-  CylindricalProfileObservableInterface() : m_observable(new T()) {}
+  CylindricalProfileObservableInterface() : m_observable(new CoreObs()) {}
 
   std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;
