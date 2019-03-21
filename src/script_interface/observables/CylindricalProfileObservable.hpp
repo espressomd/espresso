@@ -91,24 +91,31 @@ public:
   cylindrical_profile_observable() const = 0;
 };
 
-#define NEW_CYLINDRICAL_PROFILE_OBSERVABLE(obs_name)                           \
-  class obs_name : public CylindricalProfileObservable {                       \
-  public:                                                                      \
-    obs_name() : m_observable(new ::Observables::obs_name()){};                \
-                                                                               \
-    std::shared_ptr<::Observables::Observable> observable() const override {   \
-      return m_observable;                                                     \
-    }                                                                          \
-                                                                               \
-    std::shared_ptr<::Observables::CylindricalProfileObservable>               \
-    cylindrical_profile_observable() const override {                          \
-      return m_observable;                                                     \
-    }                                                                          \
-                                                                               \
-  private:                                                                     \
-    std::shared_ptr<::Observables::obs_name> m_observable;                     \
-  };
+/** Cython interface for cylindrical profile observables.
+ *  Create new interfaces with @ref NEW_CYLINDRICAL_PROFILE_OBSERVABLE.
+ *  @tparam CoreObs The core class exposed in Cython by this class.
+ */
+template <class CoreObs>
+class CylindricalProfileObservableInterface
+    : public CylindricalProfileObservable {
+public:
+  CylindricalProfileObservableInterface() : m_observable(new T()) {}
 
+  std::shared_ptr<::Observables::Observable> observable() const override {
+    return m_observable;
+  }
+
+  std::shared_ptr<::Observables::CylindricalProfileObservable>
+  cylindrical_profile_observable() const override {
+    return m_observable;
+  }
+
+private:
+  std::shared_ptr<CoreObs> m_observable;
+};
+
+#define NEW_CYLINDRICAL_PROFILE_OBSERVABLE(name)                               \
+  using name = CylindricalProfileObservableInterface<::Observables::name>;
 NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalDensityProfile)
 NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalVelocityProfile)
 NEW_CYLINDRICAL_PROFILE_OBSERVABLE(CylindricalFluxDensityProfile)

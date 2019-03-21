@@ -327,14 +327,4 @@ std::vector<int> mpi_resort_particles(int global_flag);
 
 /*@}*/
 
-/** \name Event codes for \ref mpi_bcast_event
- *  These codes are used by \ref mpi_bcast_event to notify certain changes
- *  of doing something now.
- */
-/*@{*/
-#define P3M_COUNT_CHARGES 0
-#define CHECK_PARTICLES 2
-#define P3M_COUNT_DIPOLES 5
-/*@}*/
-
 #endif
