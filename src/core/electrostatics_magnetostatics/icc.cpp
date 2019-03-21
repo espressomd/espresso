@@ -196,7 +196,7 @@ void force_calc_iccp3m() {
                                      sqrt(d.dist2), d.dist2);
   });
 
-    Coulomb::calc_long_range_force();
+  Coulomb::calc_long_range_force();
 }
 
 void init_forces_iccp3m() {
