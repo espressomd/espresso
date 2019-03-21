@@ -2,7 +2,8 @@
 #define ESPRESSO_TUPLE_HPP
 
 /**
- * @file Algorithms for tuple-like inhomogenous containers.
+ * @file
+ * Algorithms for tuple-like inhomogenous containers.
  */
 
 namespace Utils {
@@ -19,8 +20,8 @@ constexpr decltype(auto) apply_impl(F &&f, Tuple &&t,
  *
  * Like std::apply.
  *
- * @tparam F Callable with tuple elements as agruments
- * @tparam Tuple Has to comform to the tuple interface
+ * @tparam F Callable with tuple elements as arguments
+ * @tparam Tuple Has to conform to the tuple interface
  * @param f
  * @param t
  * @return Whatever @p f returns.
