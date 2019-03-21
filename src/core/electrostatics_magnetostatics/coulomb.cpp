@@ -341,7 +341,7 @@ void calc_long_range_force() {
 
   /* Add fields from EK if enabled */
 #ifdef ELECTROKINETICS
-  if(this_node == 0) {
+  if (this_node == 0) {
     ek_calculate_electrostatic_coupling();
   }
 #endif

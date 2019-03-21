@@ -2131,8 +2131,8 @@ void ek_calculate_electrostatic_coupling() {
     return;
 
   int blocks_per_grid_x = (lbpar_gpu.number_of_particles +
-                       threads_per_block * blocks_per_grid_y - 1) /
-                      (threads_per_block * blocks_per_grid_y);
+                           threads_per_block * blocks_per_grid_y - 1) /
+                          (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(ek_spread_particle_force, dim_grid, threads_per_block,
