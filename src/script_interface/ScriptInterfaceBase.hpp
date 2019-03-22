@@ -38,17 +38,16 @@ typedef std::map<std::string, Parameter> ParameterMap;
 /**
  * @brief Make a Variant from argument.
  *
- * This is a convenience function, so that
- * rather involved constructors from
- * boost::variant are not needed in the
- * script interfaces.
+ * This is a convenience function, so that rather involved constructors from
+ * boost::variant are not needed in the script interfaces.
  */
 template <typename T> Variant make_variant(const T &x) { return Variant(x); }
 
 /**
- * @brief Base class for generic script interface.
+ * @brief Base class for generic script interfaces.
  *
- * @todo Add extensive documentation.
+ * See section @ref script_interface_howto for detailed instructions on how to
+ * create derived classes.
  *
  */
 class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
@@ -158,8 +157,7 @@ public:
    * @brief Set multiple parameters.
    *
    * The default implementation calls the implementation of set_parameter for
-   * every
-   * element of the map.
+   * every element of the map.
    *
    * @param parameters Parameters to set.
    */
@@ -172,8 +170,7 @@ public:
   /**
    * @brief Call a method on the object.
    *
-   * If not overridden by the implementation,
-   * this does nothing.
+   * If not overridden by the implementation, this does nothing.
    */
   virtual Variant call_method(const std::string &, const VariantMap &) {
     return true;
@@ -208,11 +205,10 @@ public:
   template <typename T> std::shared_ptr<T> static make_shared() {
     std::shared_ptr<T> sp = std::make_shared<T>();
 
-    /* Id of the newly created instance */
+    /* id of the newly created instance */
     const auto id = sp->id();
 
-    /* Now get a reference to the corresponding weak_ptr in ObjectId and
-       update
+    /* get a reference to the corresponding weak_ptr in ObjectId and update
        it with our shared ptr, so that everybody uses the same ref count.
     */
     sp->get_instance(id) = std::static_pointer_cast<ScriptInterfaceBase>(sp);
@@ -234,10 +230,10 @@ protected:
  * @brief Tries to extract a value with the type of MEMBER_NAME from the
  * Variant.
  *
- * This will fail at compile time if the type of MEMBER_NAME is not one of the
- * possible types of Variant, and at runtime if the current type of the
- * variant is not that of MEMBER_NAME. remove_reference ensures that this also
- * works with member access by reference for example as returned by a
+ * This will fail at compile time if the type of @p MEMBER_NAME is not one of
+ * the possible types of Variant, and at runtime if the current type of the
+ * variant is not that of MEMBER_NAME. @c remove_reference ensures that this
+ * also works with member access by reference, for example as returned by a
  * function.
  */
 #define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
