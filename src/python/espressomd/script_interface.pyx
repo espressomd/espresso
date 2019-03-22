@@ -106,7 +106,6 @@ cdef class PScriptInterface(object):
         return out_params
 
     def set_params(self, **kwargs):
-        cdef ParameterType type
         cdef map[string, Variant] parameters = self._sanitize_params(kwargs)
 
         self.sip.get().set_parameters(parameters)

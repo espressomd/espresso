@@ -25,26 +25,8 @@ from libcpp.memory cimport weak_ptr
 from libcpp cimport bool
 
 cdef extern from "Parameter.hpp" namespace "ScriptInterface":
-    cdef cppclass ParameterType:
-        bool operator == (const ParameterType & a, const ParameterType & b)
-
-cdef extern from "Parameter.hpp" namespace "ScriptInterface::ParameterType":
-    cdef ParameterType NONE
-    cdef ParameterType BOOL
-    cdef ParameterType INT
-    cdef ParameterType DOUBLE
-    cdef ParameterType STRING
-    cdef ParameterType INT_VECTOR
-    cdef ParameterType DOUBLE_VECTOR
-    cdef ParameterType OBJECTID
-    cdef ParameterType VECTOR
-    cdef ParameterType VECTOR3D
-
-cdef extern from "Parameter.hpp" namespace "ScriptInterface":
-    cdef cppclass Parameter:
-        ParameterType type()
-        int n_elements()
-        bool required()
+  cdef cppclass Parameter:
+    pass
 
 cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     void initialize()
