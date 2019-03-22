@@ -177,10 +177,7 @@ bool LbWalberla::set_node_velocity_at_boundary(const Vector3i node,
       (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
   walberla::boundary::BoundaryUID uid =
       boundary_handling->getBoundaryUID(UBB_flag);
-//  boundary_handling->getBoundaryCondition<UBB_t>(uid).registerCell(
-//      boundary_handling->getNearBoundaryFlag(), (*bc).cell[0], (*bc).cell[1],
-//      (*bc).cell[2], velocity);
-  boundary_handling->forceBoundary(UBB_flag, node[0], node[1], node[2],velocity);
+  boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1], bc->cell[2],velocity);
   return true;
 }
 
@@ -196,8 +193,8 @@ boost::optional<Vector3d> LbWalberla::get_node_velocity_at_boundary(const Vector
   walberla::boundary::BoundaryUID uid =
       boundary_handling->getBoundaryUID(UBB_flag);
   
-//  if (!boundary_handling->isBoundary((*bc).cell))
-//    return res;
+  if (!boundary_handling->isBoundary((*bc).cell))
+    return res;
 
   Vector3d v=to_vector3d(
       boundary_handling->getBoundaryCondition<UBB_t>(uid).getValue(
