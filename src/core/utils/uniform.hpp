@@ -21,13 +21,11 @@
 #include <cinttypes>
 #include <limits>
 
-#include "constexpr.hpp"
-
 namespace Utils {
 /**
  * @brief Unifomly map unsigned integer to double.
  */
-CXX14_CONSTEXPR inline double uniform(uint64_t in) {
+constexpr inline double uniform(uint64_t in) {
   auto constexpr const max = std::numeric_limits<uint64_t>::max();
   auto constexpr const fac = 1. / (max + 1.);
 

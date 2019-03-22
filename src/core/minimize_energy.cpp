@@ -22,7 +22,7 @@
 #include "minimize_energy.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
@@ -45,7 +45,7 @@ struct MinimizeEnergyParameters {
   double max_displacement;
 };
 
-static MinimizeEnergyParameters *params = 0;
+static MinimizeEnergyParameters *params = nullptr;
 
 /* Signum of val */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }

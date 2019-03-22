@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <type_traits>
 
-#include "constexpr.hpp"
+#include "device_qualifier.hpp"
 #include "type_traits.hpp"
 
 namespace Utils {
@@ -72,49 +72,59 @@ private:
       typename std::enable_if<detail::has_data<T, U>::value, U>::type;
 
 public:
+  DEVICE_QUALIFIER
   Span() = default;
+  DEVICE_QUALIFIER
   Span(const Span &) = default;
+  DEVICE_QUALIFIER
   Span &operator=(const Span &) = default;
 
+  DEVICE_QUALIFIER
   constexpr Span(pointer array, size_type length)
       : m_ptr(array), m_size(length) {}
-  template <size_t N> constexpr Span(T (&a)[N]) noexcept : Span(a, N) {}
+  template <size_t N>
+  DEVICE_QUALIFIER constexpr Span(T (&a)[N]) noexcept : Span(a, N) {}
 
   template <typename C, typename = enable_if_mutable_t<C>,
             typename = enable_if_has_data_t<C>>
-  explicit Span(C &c) noexcept : Span(c.data(), c.size()) {}
+  DEVICE_QUALIFIER explicit Span(C &c) noexcept : Span(c.data(), c.size()) {}
   template <typename C, typename = enable_if_const_t<C>,
             typename = enable_if_has_data_t<C>>
-  Span(const C &c) noexcept : Span(c.data(), c.size()) {}
+  DEVICE_QUALIFIER Span(const C &c) noexcept : Span(c.data(), c.size()) {}
 
-  constexpr size_type size() const { return m_size; }
-  constexpr bool empty() const { return size() == 0; }
+  DEVICE_QUALIFIER constexpr size_type size() const { return m_size; }
+  DEVICE_QUALIFIER constexpr bool empty() const { return size() == 0; }
 
-  constexpr iterator begin() const { return m_ptr; }
-  constexpr const_iterator cbegin() const { return m_ptr; }
-  constexpr iterator end() const { return m_ptr + m_size; }
-  constexpr const_iterator cend() const { return m_ptr + m_size; }
+  DEVICE_QUALIFIER constexpr iterator begin() const { return m_ptr; }
+  DEVICE_QUALIFIER constexpr const_iterator cbegin() const { return m_ptr; }
+  DEVICE_QUALIFIER constexpr iterator end() const { return m_ptr + m_size; }
+  DEVICE_QUALIFIER constexpr const_iterator cend() const {
+    return m_ptr + m_size;
+  }
   constexpr reverse_iterator rbegin() const { return reverse_iterator(end()); }
   constexpr reverse_iterator rend() const { return reverse_iterator(begin()); }
 
-  CXX14_CONSTEXPR reference operator[](size_type i) const {
-    return assert(i < size()), m_ptr[i];
+  DEVICE_QUALIFIER constexpr reference operator[](size_type i) const {
+    return DEVICE_ASSERT(i < size()), m_ptr[i];
   }
 
-  CXX14_CONSTEXPR reference at(size_type i) const {
+  constexpr reference at(size_type i) const {
     return (i < size()) ? m_ptr[i]
                         : throw std::out_of_range("span access out of bounds."),
            m_ptr[i];
   }
 
-  constexpr pointer data() const { return m_ptr; }
+  DEVICE_QUALIFIER constexpr pointer data() const { return m_ptr; }
 };
 
-template <typename T> Span<T> make_span(T *p, size_t N) {
+template <typename T>
+DEVICE_QUALIFIER constexpr Span<T> make_span(T *p, size_t N) {
   return Span<T>(p, N);
 }
 
-template <typename T> Span<add_const_t<T>> make_const_span(T *p, size_t N) {
+template <typename T>
+DEVICE_QUALIFIER constexpr Span<add_const_t<T>> make_const_span(T *p,
+                                                                size_t N) {
   return Span<add_const_t<T>>(p, N);
 }
 } // namespace Utils

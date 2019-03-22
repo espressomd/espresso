@@ -32,8 +32,8 @@
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/cos2.hpp"
@@ -474,7 +474,7 @@ int interactions_sanity_checks() {
     if (mdlc_sanity_checks())
       state = 0; // fall through
   case DIPOLAR_P3M:
-    if (dp3m_sanity_checks())
+    if (dp3m_sanity_checks(node_grid))
       state = 0;
     break;
   case DIPOLAR_MDLC_DS:

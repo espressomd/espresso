@@ -339,22 +339,23 @@ inline void clear_vec(double *pdc, int size) {
 }
 
 /** pdc_d = pdc_s */
-inline void copy_vec(double *pdc_d, double *pdc_s, int size) {
+inline void copy_vec(double *pdc_d, double const *pdc_s, int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s[i];
 }
 
 /** pdc_d = pdc_s1 + pdc_s2 */
-inline void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size) {
+inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
+                    int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
 
 /** pdc_d = scale*pdc_s1 + pdc_s2 */
-inline void addscale_vec(double *pdc_d, double scale, double *pdc_s1,
-                         double *pdc_s2, int size) {
+inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
+                         double const *pdc_s2, int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
@@ -1397,8 +1398,8 @@ static void prepareBernoulliNumbers(int bon_order) {
   }
 }
 
-void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
-                                  double dl, double force[3]) {
+void add_mmm2d_coulomb_pair_force(double charge_factor, double const d[3],
+                                  double dl2, double dl, double force[3]) {
   double F[3];
   double pref = coulomb.prefactor * charge_factor;
   double z2 = d[2] * d[2];
@@ -1568,7 +1569,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
     force[i] += pref * F[i];
 }
 
-inline double calc_mmm2d_copy_pair_energy(double d[3]) {
+inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
   double eng;
   double z2 = d[2] * d[2];
   double rho2 = d[1] * d[1] + z2;

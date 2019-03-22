@@ -35,13 +35,13 @@
 #include "domain_decomposition.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
-#include "initialize.hpp"
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -610,7 +610,7 @@ void propagate_press_box_pos_and_rescale_npt() {
         }
       }
     }
-    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(box_l.data(), 3, MPI_DOUBLE, 0, comm_cart);
 
     /* fast box length update */
     grid_changed_box_l();

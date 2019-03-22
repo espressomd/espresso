@@ -23,6 +23,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 #include <string>
+#include <utility>
 
 namespace ErrorHandling {
 
@@ -37,10 +38,11 @@ struct RuntimeError {
    */
   enum class ErrorLevel { DEBUG, INFO, WARNING, ERROR };
   RuntimeError() = default;
-  RuntimeError(ErrorLevel level, int who, const std::string &what,
-               const std::string &function, const std::string &file, int line)
-      : m_level(level), m_who(who), m_what(what), m_function(function),
-        m_file(file), m_line(line) {}
+  RuntimeError(ErrorLevel level, int who, std::string what,
+               std::string function, std::string file, int line)
+      : m_level(level), m_who(who), m_what(std::move(what)),
+        m_function(std::move(function)), m_file(std::move(file)), m_line(line) {
+  }
 
   /** The error level */
   ErrorLevel level() const { return m_level; }

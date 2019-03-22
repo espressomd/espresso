@@ -31,10 +31,10 @@
 #include "domain_decomposition.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
+#include "event.hpp"
 #include "fft.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "tuning.hpp"
@@ -152,7 +152,7 @@ static void p3m_spread_force_grid(double *mesh);
 static void p3m_realloc_ca_fields(int newsize);
 #endif
 
-static bool p3m_sanity_checks_system(void);
+static bool p3m_sanity_checks_system(const Vector3i &grid);
 
 /** Checks for correctness for charges in P3M of the cao_cut,
  *  necessary when the box length changes
@@ -366,9 +366,9 @@ void p3m_init() {
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
                       (void *)p3m.rs_mesh));
 
-    int ca_mesh_size =
-        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
-                 p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft);
+    int ca_mesh_size = fft_init(
+        &p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
+        p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft, node_grid);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
@@ -1128,7 +1128,7 @@ void p3m_calc_differential_operator() {
 namespace {
 
 template <int cao>
-inline double perform_aliasing_sums_force(int n[3], double numerator[3]) {
+inline double perform_aliasing_sums_force(int const n[3], double numerator[3]) {
   using Utils::int_pow;
 
   int i;
@@ -1259,7 +1259,7 @@ void p3m_calc_influence_function_force() {
 
 namespace {
 
-template <int cao> inline double perform_aliasing_sums_energy(int n[3]) {
+template <int cao> inline double perform_aliasing_sums_energy(int const n[3]) {
   using Utils::int_pow;
   double numerator = 0.0, denominator = 0.0;
   /* lots of temporary variables... */
@@ -1412,7 +1412,7 @@ static double p3m_get_accuracy(const int mesh[3], int cao, double r_cut_iL,
 #ifdef CUDA
   if (coulomb.method == COULOMB_P3M_GPU)
     ks_err = p3m_k_space_error_gpu(coulomb.prefactor, mesh, cao, p3m.sum_qpart,
-                                   p3m.sum_q2, alpha_L, box_l);
+                                   p3m.sum_q2, alpha_L, box_l.data());
   else
 #endif
     ks_err = p3m_k_space_error(coulomb.prefactor, mesh, cao, p3m.sum_qpart,
@@ -1795,12 +1795,14 @@ int p3m_adaptive_tune(char **log) {
     }
   }
 
-  if (p3m_sanity_checks_system()) {
+  if (p3m_sanity_checks_system(node_grid)) {
     return ES_ERROR;
   }
 
   /* preparation */
-  mpi_bcast_event(P3M_COUNT_CHARGES);
+  mpi_call(p3m_count_charged_particles);
+  p3m_count_charged_particles();
+
   /* Print Status */
   sprintf(b, "P3M tune parameters: Accuracy goal = %.5e prefactor = %.5e\n",
           p3m.params.accuracy, coulomb.prefactor);
@@ -2018,6 +2020,8 @@ void p3m_count_charged_particles() {
       this_node, p3m.sum_qpart, p3m.sum_q2, sqrt(p3m.square_sum_q)));
 }
 
+REGISTER_CALLBACK(p3m_count_charged_particles)
+
 double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                             double sum_q2, double alpha_L) {
   return (2.0 * prefac * sum_q2 * exp(-Utils::sqr(r_cut_iL * alpha_L))) /
@@ -2209,7 +2213,7 @@ bool p3m_sanity_checks_boxl() {
  *
  * @return false if ok, true on error.
  */
-bool p3m_sanity_checks_system() {
+bool p3m_sanity_checks_system(const Vector3i &grid) {
   bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
@@ -2223,7 +2227,7 @@ bool p3m_sanity_checks_system() {
     ret = true;
   }
 
-  if (node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+  if (grid[0] < grid[1] || grid[1] < grid[2]) {
     runtimeErrorMsg() << "P3M_init: node grid must be sorted, largest first";
     ret = true;
   }
@@ -2242,7 +2246,7 @@ bool p3m_sanity_checks_system() {
 bool p3m_sanity_checks() {
   bool ret = false;
 
-  if (p3m_sanity_checks_system())
+  if (p3m_sanity_checks_system(node_grid))
     ret = true;
 
   if (p3m_sanity_checks_boxl())

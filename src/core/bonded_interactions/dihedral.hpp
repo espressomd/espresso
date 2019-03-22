@@ -31,9 +31,11 @@
 #include "grid.hpp"
 #include "utils.hpp"
 
-#define ANGLE_NOT_DEFINED -100
-
-/// set dihedral parameters
+/** set dihedral parameters
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int dihedral_set_params(int bond_type, int mult, double bend, double phase);
 
 /** Calculates the dihedral angle between particle quadruple p1, p2,

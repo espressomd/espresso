@@ -28,7 +28,7 @@ from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from globals cimport max_seen_particle, time_step, box_l, n_part, n_rigidbonds, max_seen_particle_type, swimming_particles_exist, FIELD_SWIMMING_PARTICLES_EXIST, mpi_bcast_parameter
+from globals cimport max_seen_particle, time_step, n_part, n_rigidbonds, max_seen_particle_type, swimming_particles_exist, FIELD_SWIMMING_PARTICLES_EXIST, mpi_bcast_parameter
 import collections
 import functools
 import types

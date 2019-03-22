@@ -143,5 +143,3 @@ static constexpr const double c_sound_sq = 1. / 3.;
 #undef GCC_EXTERN_STATEMENT
 
 #endif /* D3Q19_H */
-
-/*@}*/

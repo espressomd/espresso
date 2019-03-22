@@ -18,13 +18,12 @@ set(EspressoCore_SRC
   global.cpp
   grid.cpp
   immersed_boundaries.cpp
-  initialize.cpp
+        event.cpp
   integrate.cpp
   layered.cpp
   metadynamics.cpp
   minimize_energy.cpp
-  MpiCallbacks.cpp
-  npt.cpp
+        npt.cpp
   nsquare.cpp
   partCfg_global.cpp
   particle_data.cpp
@@ -45,7 +44,6 @@ set(EspressoCore_SRC
   swimmer_reaction.cpp
   SystemInterface.cpp
   thermostat.cpp
-  topology.cpp
   tuning.cpp
   virtual_sites.cpp
   accumulators/Correlator.cpp

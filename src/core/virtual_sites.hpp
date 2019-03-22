@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define VIRTUAL_SITES_HPP
 
 #include "config.hpp"
+#include <serialization/Particle.hpp>
 
 #ifdef VIRTUAL_SITES
 #include "virtual_sites/VirtualSites.hpp"
@@ -37,7 +38,7 @@ int vs_relate_to(int part_num, int relate_to);
 // virtual particle will follow the given real particle Local version, expects
 // both particles to be accessible through local_particles and only executes the
 // changes on the virtual site locally
-int local_vs_relate_to(int part_num, int relate_to);
+int local_vs_relate_to(Particle *p_current, const Particle *p_relate_to);
 
 #endif
 #endif

@@ -32,6 +32,8 @@
 #include "utils/Array.hpp"
 
 template <typename T, std::size_t N> class Vector : public Utils::Array<T, N> {
+  using Base = Utils::Array<T, N>;
+
 public:
   using Utils::Array<T, N>::at;
   using Utils::Array<T, N>::operator[];
@@ -54,7 +56,7 @@ public:
   void swap(Vector &rhs) { std::swap_ranges(begin(), end(), rhs.begin()); }
 
 private:
-  constexpr void copy_init(const T *first, const T *last) {
+  constexpr void copy_init(T const *first, T const *last) {
     auto it = begin();
     while (first != last) {
       *it++ = *first++;
@@ -63,12 +65,12 @@ private:
 
 public:
   template <typename Container>
-  explicit constexpr Vector(Container &&v)
-      : Vector(std::begin(v), std::end(v)) {}
-  explicit constexpr Vector(T const (&v)[N]) {
+  explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
+  explicit constexpr Vector(T const (&v)[N]) : Base() {
     copy_init(std::begin(v), std::end(v));
   }
-  constexpr Vector(std::initializer_list<T> v) {
+
+  constexpr Vector(std::initializer_list<T> v) : Base() {
     if (N != v.size()) {
       throw std::length_error(
           "Construction of Vector from Container of wrong length.");
@@ -91,7 +93,7 @@ public:
    * @brief Create a vector that has all entries set to
    *         one value.
    */
-  static Vector<T, N> broadcast(const T &s) {
+  static Vector<T, N> broadcast(T const &s) {
     Vector<T, N> ret;
     std::fill(ret.begin(), ret.end(), s);
 
@@ -113,7 +115,7 @@ public:
    */
 
   inline Vector &normalize() {
-    const auto l = norm();
+    auto const l = norm();
     if (l > T(0)) {
       for (int i = 0; i < N; i++)
         this->operator[](i) /= l;
@@ -122,8 +124,6 @@ public:
     return *this;
   }
 };
-
-// Useful typedefs
 
 template <size_t N> using VectorXd = Vector<double, N>;
 using Vector2d = VectorXd<2>;
@@ -286,7 +286,7 @@ template <size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
 }
 
 template <class T>
-Vector<T, 3> vector_product(const Vector<T, 3> &a, const Vector<T, 3> &b) {
+Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
   return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
           a[0] * b[1] - a[1] * b[0]};
 }

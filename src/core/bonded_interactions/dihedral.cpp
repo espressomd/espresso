@@ -24,7 +24,6 @@
  */
 #include "dihedral.hpp"
 
-/// set dihedral parameters
 int dihedral_set_params(int bond_type, int mult, double bend, double phase) {
   if (bond_type < 0)
     return ES_ERROR;

@@ -35,8 +35,7 @@
  */
 void check_particle_consistency();
 
-/** check the consistency of the cells and particle_node. Called from
- *  mpi_bcast_event(CHECK_PARTICLES)
+/** check the consistency of the cells and particle_node.
  */
 void check_particles();
 

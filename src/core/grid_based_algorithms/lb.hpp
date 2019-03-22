@@ -33,8 +33,6 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 
-void mpi_set_lb_fluid_counter(int high, int low);
-
 #ifdef LB
 
 #include <array>
@@ -155,6 +153,11 @@ struct LB_Parameters {
   Vector19d phi;
   // Thermal energy
   double kT;
+
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &rho &viscosity &bulk_viscosity &agrid &tau &ext_force_density &gamma_odd
+        &gamma_even &gamma_shear &gamma_bulk &is_TRT &phi &kT;
+  }
 };
 
 /** The DnQm model to be used. */
@@ -231,7 +234,6 @@ void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
                              Vector3d const &j, Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-Vector3d lb_lbfluid_get_interpolated_force(const Vector3d &p);
 #endif
 
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
@@ -243,17 +245,6 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
  *  @retval Array containing the modes.
  */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index);
-
-/** Calculate the local fluid fields.
- * The calculation is implemented explicitly for the special case of D3Q19.
- *
- * @param index   Index of the local lattice site.
- * @param rho     local fluid density
- * @param j       local fluid speed
- * @param pi      local fluid pressure
- */
-void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                          double *pi);
 
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,

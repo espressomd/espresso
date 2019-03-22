@@ -103,7 +103,6 @@ LB_parameters_gpu lbpar_gpu = {
 LB_rho_v_pi_gpu *host_values = nullptr;
 
 static int max_ran = 1000000;
-/*@}*/
 // static double tau;
 
 /** measures the MD time since the last fluid update */
@@ -126,7 +125,7 @@ bool ek_initialized = false;
 /** %Lattice Boltzmann update gpu called from integrate.cpp */
 void lattice_boltzmann_update_gpu() {
 
-  int factor = (int)round(lbpar_gpu.tau / time_step);
+  auto factor = (int)round(lbpar_gpu.tau / time_step);
 
   fluidstep += 1;
 
@@ -271,9 +270,7 @@ void lb_init_gpu() {
   LB_TRACE(printf("Initializing fluid on GPU successful\n"));
 }
 
-/*@}*/
-
-int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]) {
+int lb_lbnode_set_extforce_density_GPU(int const ind[3], double const f[3]) {
   if (ind[0] < 0 || ind[0] >= int(lbpar_gpu.dim_x) || ind[1] < 0 ||
       ind[1] >= int(lbpar_gpu.dim_y) || ind[2] < 0 ||
       ind[2] >= int(lbpar_gpu.dim_z))
@@ -325,7 +322,7 @@ void lb_GPU_sanity_checks() {
   }
 }
 
-void lb_lbfluid_particles_add_momentum(float momentum[3]) {
+void lb_lbfluid_particles_add_momentum(float const momentum[3]) {
   auto &parts = partCfg();
   auto const n_part = parts.size();
 
