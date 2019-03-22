@@ -98,10 +98,6 @@ BOOST_AUTO_TEST_CASE(make_from_args_test) {
 }
 
 BOOST_AUTO_TEST_CASE(make_shared_from_args_test) {
-  // class Unrelated {};
-  // Variant v;
-  // auto s = infer_type<Unrelated>();
-
   struct C {
     int i;
 
