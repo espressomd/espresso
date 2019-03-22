@@ -161,7 +161,8 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
             for y in range(int(self.system.box_l[1] + 1)):
                 for z in range(int(self.system.box_l[2] + 1)):
                     v_tmp.append(
-                        self.lbf.get_interpolated_fluid_velocity_at_positions(np.array([[x, y * AGRID, z * AGRID],]), True)[0][2]
+                        self.lbf.get_interpolated_fluid_velocity_at_positions(
+                            np.array([[x, y * AGRID, z * AGRID], ]), True)[0][2]
                     )
             velocities[cnt, 1] = np.mean(np.array(v_tmp))
             velocities[cnt, 0] = x
