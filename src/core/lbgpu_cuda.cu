@@ -4826,6 +4826,24 @@ struct two_point_interpolation {
   }
 };
 
+struct three_point_interpolation {
+  LB_nodes_gpu current_nodes_gpu;
+  LB_rho_v_gpu *d_v_gpu;
+  three_point_interpolation(LB_nodes_gpu _current_nodes_gpu,
+                          LB_rho_v_gpu *_d_v_gpu)
+      : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu){};
+  __device__ float3 operator()(const float3 &position) const {
+    unsigned int node_index[27];
+    float delta[27];
+    float u[3];
+    float mode[19 * LB_COMPONENTS];
+    float _position[3] = {position.x, position.y, position.z};
+    interpolation_three_point_coupling(current_nodes_gpu, _position, node_index,
+                                     d_v_gpu, delta, u);
+    return make_float3(u[0], u[1], u[2]);
+  }
+};
+
 void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
                                                        double *velocities,
                                                        int length) {
@@ -4840,7 +4858,7 @@ void lb_lbfluid_get_interpolated_velocity_at_positions(double const *positions,
   thrust::device_vector<float3> velocities_device(length);
   thrust::transform(positions_device.begin(), positions_device.end(),
                     velocities_device.begin(),
-                    two_point_interpolation(*current_nodes, device_rho_v));
+                    three_point_interpolation(*current_nodes, device_rho_v));
   thrust::host_vector<float3> velocities_host = velocities_device;
   int index = 0;
   for (auto v : velocities_host) {
