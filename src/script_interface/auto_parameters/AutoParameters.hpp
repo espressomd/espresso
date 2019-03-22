@@ -123,7 +123,7 @@ public:
     for (auto const &p : m_parameters) {
       valid_params.emplace(std::make_pair(
           p.first,
-          ScriptInterface::Parameter{p.second.type, p.second.length, true}));
+          ScriptInterface::Parameter{}));
     }
 
     return valid_params;

@@ -45,7 +45,7 @@ public:
   }
 
   ParameterMap valid_parameters() const override {
-    return {{"ids", {ParameterType::INT_VECTOR, true}}};
+    return {{"ids", {}}};
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {

@@ -20,57 +20,14 @@
 #ifndef SCRIPT_INTERFACE_PARAMETERS_HPP
 #define SCRIPT_INTERFACE_PARAMETERS_HPP
 
-#include "Variant.hpp"
-
 namespace ScriptInterface {
-
-/**
- * Possible parameter type. Corresponds to the template parameters of type
- * Variant.
- */
-using ParameterType = VariantType;
-
 /**
  * @brief Script interface parameter.
  *
  * Description of a Parameter that can be accessed from
  * the script side.
  */
-class Parameter {
-public:
-  enum { ARBITRARY_LENGTH = 0 };
-  Parameter()
-      : m_type(ParameterType::BOOL), m_n_elements(0), m_required(false) {}
-
-  Parameter(ParameterType type, bool required)
-      : m_type(type), m_required(required) {
-    m_n_elements = ARBITRARY_LENGTH;
-  }
-
-  Parameter(ParameterType type, size_t n_elements, bool required)
-      : m_type(type), m_n_elements(n_elements), m_required(required) {}
-
-  /**
-   * The required type of the parameter.
-   */
-  ParameterType type() const { return m_type; }
-
-  /**
-   * The required number of elements of this parameter,
-   * if it is a vector type. Otherwise it is ignored.
-   */
-  size_t n_elements() const { return m_n_elements; }
-
-  /**
-   * Whether the parameter is required.
-   */
-  bool required() const { return m_required; }
-
-private:
-  ParameterType m_type;
-  size_t m_n_elements;
-  bool m_required;
-};
+class Parameter {};
 
 } /* namespace ScriptInterface */
 
