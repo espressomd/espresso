@@ -45,19 +45,6 @@ BOOST_AUTO_TEST_CASE(variant_types) {
               Variant(std::vector<Variant>{}).which());
 }
 
-BOOST_AUTO_TEST_CASE(infer_type_test) {
-  static_assert(infer_type<None>() == VariantType::NONE, "");
-  static_assert(infer_type<bool>() == VariantType::BOOL, "");
-  static_assert(infer_type<int>() == VariantType::INT, "");
-  static_assert(infer_type<double>() == VariantType::DOUBLE, "");
-  static_assert(infer_type<ObjectId>() == VariantType::OBJECTID, "");
-  static_assert(infer_type<std::string>() == VariantType::STRING, "");
-  static_assert(infer_type<std::vector<int>>() == VariantType::INT_VECTOR, "");
-  static_assert(infer_type<std::vector<double>>() == VariantType::DOUBLE_VECTOR,
-                "");
-  static_assert(infer_type<std::vector<Variant>>() == VariantType::VECTOR, "");
-}
-
 BOOST_AUTO_TEST_CASE(is_a) {
   BOOST_CHECK(is_type<None>(Variant(None{})));
   BOOST_CHECK(is_type<bool>(Variant(bool{})));
