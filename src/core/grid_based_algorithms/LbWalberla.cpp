@@ -48,7 +48,29 @@ int argc = 0;
   char **argv = NULL;
   static mpi::Environment m_env = mpi::Environment(argc, argv);
 }
+namespace {
+std::unique_ptr<LbWalberla> lb_walberla_instance=nullptr;
+}
 
+const LbWalberla* lb_walberla() {
+  if (!lb_walberla_instance){
+    throw std::runtime_error(
+      "Attempted access to uninitialized LbWalberla instance." 
+    );
+  }
+  return lb_walberla_instance.get();
+}
+
+void init_lb_walberla(double viscosity, double agrid,
+                       const Vector3d &box_dimensions,
+                       const Vector3i &node_grid, double skin) {
+  lb_walberla_instance=std::make_unique<LbWalberla>(
+      LbWalberla{viscosity, agrid, box_dimensions, node_grid, skin});
+}
+
+void destruct_lb_walberla() {
+  lb_walberla_instance.reset(nullptr);
+}
 
 inline Vector3d to_vector3d(const Vector3<real_t> v) {
   return Vector3d{v[0], v[1], v[2]};
@@ -303,6 +325,8 @@ bool LbWalberla::pos_in_local_domain(const Vector3d& pos) const {
   auto block = m_blocks->getBlock(real_c(pos[0]),real_c(pos[1]),real_c(pos[2]));
   return (block != nullptr);
 }
+
+
 
 
 #endif 
