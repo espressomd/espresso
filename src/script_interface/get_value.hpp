@@ -24,9 +24,19 @@
 #include "Variant.hpp"
 
 #include <boost/range/algorithm/transform.hpp>
+#include <boost/core/demangle.hpp>
 
 namespace ScriptInterface {
 namespace detail {
+    /**
+     * @brief Get a human-readable name for a type.
+     *
+     * Uses boost to demangle the name, for details
+     * see documentation for boost::core::demangle.
+     *
+     * @tparam T type
+     * @return name
+     */
     template<class T>
     std::string type_label() {
         return boost::core::demangle(typeid(T).name());
@@ -45,7 +55,7 @@ namespace detail {
  * Allows
  * T -> T,
  * floating point -> floating point and
- * intergral -> floating point
+ * integral -> floating point
  */
         template <class To, class From>
         using allow_conversion =
@@ -195,8 +205,7 @@ template <typename T> T get_value(Variant const &v) {
     try {
         return detail::get_value_helper<T>{}(v);
     } catch(const boost::bad_get&) {
-        throw std::runtime_error("Provided argument of type " + detail::type_label(v) + " is not"
-                                                                                        "convertible to " + detail::type_label<T>());
+        throw std::runtime_error("Provided argument of type " + detail::type_label(v) + " is not convertible to " + detail::type_label<T>());
     }
 }
 
@@ -210,11 +219,6 @@ template <typename T>
 T get_value(VariantMap const &vals, std::string const &name) {
   try {
     return get_value<T>(vals.at(name));
-  } catch (boost::bad_get const &) {
-    throw std::runtime_error(std::string("Argument '") + name +
-                             "' has wrong type: Is a " +
-                             get_type_label(vals.at(name)) + " expected a " +
-                             get_type_label(infer_type<T>()));
   } catch (std::out_of_range const &) {
     throw std::out_of_range("Parameter '" + name + "' is missing.");
   }

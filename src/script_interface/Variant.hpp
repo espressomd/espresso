@@ -151,17 +151,7 @@ template <typename T> constexpr VariantType infer_type() {
   return detail::infer_type_helper<T>::value;
 }
 
-/**
- * @brief Get a string representation of the current type of a variant.
- */
-std::string get_type_label(Variant const &);
-
-/**
- * @brief Get a string representation of VariantType.
- */
-std::string get_type_label(VariantType);
-
-namespace detail {
+    namespace detail {
     template<class T>
     struct is_type_visitor : boost::static_visitor<bool> {
         template<class U>
@@ -171,6 +161,13 @@ namespace detail {
     };
 }
 
+/**
+ * @brief Check is a Variant holds a specific type.
+ *
+ * @tparam T type to check for
+ * @param v Variant to check in
+ * @return true, if v holds a T.
+ */
 template<class T>
 bool is_type(Variant const &v) {
     return boost::apply_visitor(detail::is_type_visitor<T>{}, v);
@@ -180,25 +177,7 @@ inline bool is_none(Variant const& v) {
     return is_type<None>(v);
 }
 
-/**
- * @brief Combine doubles/ints into respective vectors.
- *
- * This function checks recursively for vectors of variants
- * that are all doubles or ints, and if so combines them into
- * a single double/int vectors. So if you have a variant with
- * types { { INT, INT, INT }, STRING, {DOUBLE, DOUBLE}},
- * this would be reduced to { INT_VECTOR, STRING, DOUBLE_VECTOR }.
- *
- * @param v The variant to transform.
- */
-void transform_vectors(Variant &v);
-
-/**
- * @brief Recursively print the type of a variant.
- */
-std::string print_variant_types(Variant const &v);
-
-template <typename T, typename U>
+    template <typename T, typename U>
 std::vector<Variant> pack_pair(const std::pair<T, U> &pair) {
   return {{pair.first, pair.second}};
 }
