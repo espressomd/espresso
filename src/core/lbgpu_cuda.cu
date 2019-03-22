@@ -4645,7 +4645,7 @@ void lb_gpu_get_boundary_forces(double *forces) {
 }
 
 struct lb_lbfluid_mass_of_particle {
-  __device__ float operator()(CUDA_particle_data particle) const {
+  __host__ __device__ float operator()(CUDA_particle_data particle) const {
 #ifdef MASS
     return particle.mass;
 #else
