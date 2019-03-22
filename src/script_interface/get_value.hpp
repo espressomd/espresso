@@ -27,6 +27,46 @@
 
 namespace ScriptInterface {
 namespace detail {
+    template<class T>
+    std::string type_label() {
+        return boost::core::demangle(typeid(T).name());
+    }
+
+    struct type_label_visitor : boost::static_visitor<std::string> {
+        template<class T>
+        std::string operator()(const T&) const { return boost::core::demangle(typeid(T).name()); }
+    };
+
+    inline std::string type_label(const Variant & v) {
+        return boost::apply_visitor(type_label_visitor{}, v);
+    }
+
+/*
+ * Allows
+ * T -> T,
+ * floating point -> floating point and
+ * intergral -> floating point
+ */
+        template <class To, class From>
+        using allow_conversion =
+        std::integral_constant<bool, std::is_same<To, From>::value || ( std::is_convertible<To, From>::value && std::is_floating_point<To>::value &&
+                                     std::is_arithmetic<From>::value)>;
+
+    template<class To>
+    struct conversion_visitor : boost::static_visitor<To> {
+        template<class From>
+                std::enable_if_t<allow_conversion<To, From>::value, To>
+                operator()(const From& value) const {
+            return value;
+        }
+
+        template<class From>
+        std::enable_if_t<!allow_conversion<To, From>::value, To>
+        operator()(const From&) const {
+            throw boost::bad_get{};
+        }
+    };
+
 /**
  * @brief Implementation of get_value.
  *
@@ -34,34 +74,12 @@ namespace detail {
  * is not allowed.
  */
 template <typename T, typename = void> struct get_value_helper {
-  T operator()(Variant const &v) const { return boost::get<T>(v); }
+  T operator()(Variant const &v) const { return boost::apply_visitor(detail::conversion_visitor<T>{}, v); }
 };
-
-/*
- * Allows
- * floating point -> floating point and
- * intergral -> floating point
- */
-template <class To, class From>
-using allow_conversion =
-    std::integral_constant<bool, std::is_floating_point<To>::value &&
-                                     std::is_arithmetic<From>::value>;
 
 template <class T, size_t N>
 struct vector_conversion_visitor : boost::static_visitor<Vector<T, N>> {
   Vector<T, N> operator()(Vector<T, N> const &v) const { return v; }
-
-  template <typename U>
-  auto operator()(std::vector<U> const &iv) const
-      -> std::enable_if_t<std::is_same<T, U>::value ||
-                              allow_conversion<T, U>::value,
-                          Vector<T, N>> {
-    if (N != iv.size()) {
-      throw boost::bad_get{};
-    }
-
-    return {iv.begin(), iv.end()};
-  }
 
   /* We try do unpack variant vectors and check if they
    * are convertible element by element. */
@@ -72,7 +90,7 @@ struct vector_conversion_visitor : boost::static_visitor<Vector<T, N>> {
 
     Vector<T,N> ret;
     boost::transform(vv, ret.begin(), [](const Variant& v) {
-      return boost::get<T>(v);
+      return get_value_helper<T>{}(v);
     });
 
     return ret;
@@ -99,23 +117,14 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
 
   /* Standard case, correct type */
   std::vector<T> operator()(std::vector<T> const &v) const { return v; }
-  /* Variant is an empty vector<Variant> -> return empty vector<T> instead,
-   *  else throw wrong type. */
   std::vector<T> operator()(std::vector<Variant> const &vv) const {
-    if (vv.empty()) {
-      return {};
-    } else {
-      throw boost::bad_get{};
-    }
-  }
+      std::vector<T> ret(vv.size());
 
-  template <typename U>
-  auto operator()(std::vector<U> const &iv) const
-      -> std::enable_if_t<allow_conversion<T, U>::value, std::vector<T>> {
-    std::vector<T> ret(iv.size());
-    std::copy(iv.begin(), iv.end(), ret.begin());
+        boost::transform(vv, ret.begin(), [](const Variant& v) {
+            return get_value_helper<T>{}(v);
+        });
 
-    return ret;
+        return ret;
   }
 };
 
@@ -183,7 +192,12 @@ struct get_value_helper<
  * be converted.
  */
 template <typename T> T get_value(Variant const &v) {
-  return detail::get_value_helper<T>{}(v);
+    try {
+        return detail::get_value_helper<T>{}(v);
+    } catch(const boost::bad_get&) {
+        throw std::runtime_error("Provided argument of type " + detail::type_label(v) + " is not"
+                                                                                        "convertible to " + detail::type_label<T>());
+    }
 }
 
 /**

@@ -53,9 +53,7 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
         Variant(const Variant & )
         Variant & operator = (const Variant &)
         int which()
-    void transform_vectors(Variant &)
-    string get_type_label(const Variant &)
-    string get_type_label(ParameterType)
+
     bool is_type[T](const Variant &)
     bool is_none(const Variant &)
 

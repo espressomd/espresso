@@ -129,8 +129,8 @@ cdef class PScriptInterface(object):
         elif hasattr(value, '__iter__') and not(type(value) == str):
             for e in value:
                 vec.push_back(self.python_object_to_variant(e))
+            print("converting", value, "to vector[Variant]")
             v = make_variant[vector[Variant]](vec)
-            transform_vectors(v)
             return v
         elif type(value) == str:
             return make_variant[string](to_char_pointer(value))

@@ -30,14 +30,7 @@ namespace ScriptInterface {
 static const char *VariantLabels[] = {
     "NONE",       "BOOL",          "INT",      "DOUBLE", "STRING",
     "INT_VECTOR", "DOUBLE_VECTOR", "OBJECTID", "VECTOR", "VECTOR3D"};
-
-namespace {
-struct typename_visitor : boost::static_visitor<const char *> {
-  const char *operator()(const None &) const { return "NONE"; }
-  const char *operator()(const bool &) const { return "BOOL"; }
-};
-} // namespace
-
+  
 std::string get_type_label(Variant const &v) {
   return std::string(VariantLabels[v.which()]);
 }
@@ -59,31 +52,6 @@ std::vector<T> to_vector(std::vector<Variant> const &variant_vector) {
   return ret;
 }
 } /* namespace */
-
-void transform_vectors(Variant &v) {
-  if (is_type<std::vector<Variant>>(v)) {
-    auto &variant_vector = boost::get<std::vector<Variant>>(v);
-
-    /* only int, transform to vector<int> */
-    if (std::all_of(variant_vector.begin(), variant_vector.end(),
-                    is_type<int>)) {
-      v = to_vector<int>(variant_vector);
-      return;
-    }
-
-    /* only double, transform to vector<double> */
-    if (std::all_of(variant_vector.begin(), variant_vector.end(),
-                    is_type<double>)) {
-      v = to_vector<double>(variant_vector);
-      return;
-    }
-
-    /* v is a mixed vector, recurse into the elements. */
-    for (auto &it : variant_vector) {
-      transform_vectors(it);
-    }
-  }
-}
 
 std::string print_variant_types(Variant const &v) {
   if (is_type<std::vector<Variant>>(v)) {

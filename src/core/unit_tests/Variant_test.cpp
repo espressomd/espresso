@@ -66,35 +66,6 @@ BOOST_AUTO_TEST_CASE(is_a) {
 
 BOOST_AUTO_TEST_CASE(none_is_default) { BOOST_CHECK(is_type<None>(Variant{})); }
 
-BOOST_AUTO_TEST_CASE(transform_vectors_test) {
-  std::vector<Variant> vv;
-
-  vv.emplace_back(std::vector<Variant>{{1, 2, 3}});
-  vv.emplace_back(std::vector<Variant>{
-      std::string("test"), std::vector<Variant>{1.1, 1.2, 1.3, 1.4}});
-
-  /* v = {{INT, INT, INT}, {STRING, {DOUBLE, DOUBLE, DOUBLE, DOUBLE}}} */
-  auto v = Variant(vv);
-
-  transform_vectors(v);
-  /* v should now be { INT_VECTOR, { STRING, DOUBLE_VECTOR}} */
-  BOOST_CHECK(is_type<std::vector<Variant>>(v));
-
-  BOOST_CHECK(boost::get<std::vector<Variant>>(v).size() == 2);
-  /* First vector should be transformed to an INT_VECTOR */
-  BOOST_CHECK(is_type<std::vector<int>>(boost::get<std::vector<Variant>>(v)[0]));
-  /* The nested vector should be unchanged because it is mixed. */
-  BOOST_CHECK(is_type<std::vector<Variant>>(boost::get<std::vector<Variant>>(v)[1]));
-
-  auto const &inner_vv =
-      boost::get<std::vector<Variant>>(boost::get<std::vector<Variant>>(v)[1]);
-  BOOST_CHECK(inner_vv.size() == 2);
-  /* The string should be unchanged */
-  BOOST_CHECK(is_type<std::string>(inner_vv[0]));
-  /* The vector<Variant> should now be a DOUBLE_VECTOR */
-  BOOST_CHECK(is_type<std::vector<double>>(inner_vv[1]));
-}
-
 BOOST_AUTO_TEST_CASE(make_from_args_test) {
   struct C {
     int i;
