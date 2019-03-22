@@ -36,12 +36,11 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "event.hpp"
 #include "forces.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
-#include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
@@ -315,7 +314,7 @@ void convert_torques_propagate_omega() {
 
       auto const diff = p.swim.v_center - p.swim.v_source;
 
-      const Vector3d cross = Vector3d::cross(diff, dip);
+      const Vector3d cross = vector_product(diff, dip);
       const double l_diff = diff.norm();
       const double l_cross = cross.norm();
 

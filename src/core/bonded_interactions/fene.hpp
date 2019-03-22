@@ -32,7 +32,11 @@
 
 /************************************************************/
 
-/// set the parameters for the fene potential
+/** set the parameters for the fene potential
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int fene_set_params(int bond_type, double k, double drmax, double r0);
 
 /** Computes the FENE bond length force.

@@ -24,8 +24,8 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
@@ -368,11 +368,11 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // We find the bond id by dividing the range from 0 to pi in
   // three_particle_angle_resolution steps and by adding the id
   // of the bond for zero degrees.
-  int bond_id =
+  auto const bond_id = static_cast<int>(
       floor(phi / M_PI *
                 (collision_params.three_particle_angle_resolution - 1) +
             0.5) +
-      collision_params.bond_three_particles;
+      collision_params.bond_three_particles);
 
   // Create the bond
 

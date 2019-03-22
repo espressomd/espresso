@@ -36,7 +36,11 @@ extern int n_thermalized_bonds;
 #include "random.hpp"
 #include "utils.hpp"
 
-// Set the parameters for the thermalized bond
+/** Set the parameters of a thermalized bond
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int thermalized_bond_set_params(int bond_type, double temp_com,
                                 double gamma_com, double temp_distance,
                                 double gamma_distance, double r_cut);

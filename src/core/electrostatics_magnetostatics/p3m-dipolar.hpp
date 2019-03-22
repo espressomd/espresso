@@ -137,7 +137,7 @@ void dp3m_init(void);
 void dp3m_scaleby_box_l();
 
 /** Sanity checks */
-bool dp3m_sanity_checks();
+bool dp3m_sanity_checks(const Vector3i &grid);
 
 /** Assign the physical dipoles using the tabulated assignment function.
  *  If Dstore_ca_frac is true, then the charge fractions are buffered in
@@ -185,8 +185,9 @@ void dp3m_deactivate(void);
  *  The function is based on routines of the program HE_Q.cpp for charges
  *  written by M. Deserno.
  *
- *  @param[out]  log
- *  @return @ref ES_OK or @ref ES_ERROR
+ *  @param[out]  log  log output
+ *  @retval ES_OK
+ *  @retval ES_ERROR
  */
 int dp3m_adaptive_tune(char **log);
 
@@ -301,8 +302,9 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
 }
 
 /** Calculate real space contribution of dipolar pair energy. */
-inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
-                               double dist2, double dist) {
+inline double dp3m_pair_energy(Particle *p1, Particle *p2,
+                               double const *const d, double dist2,
+                               double dist) {
   const Vector3d dip1 = p1->calc_dip();
   const Vector3d dip2 = p2->calc_dip();
   double /* fac1,*/ adist, erfc_part_ri, coeff, exp_adist2, dist2i;
@@ -349,6 +351,8 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
   }
   return 0.0;
 }
+
+/*@}*/
 
 #endif /* DP3M */
 #endif /* _P3M_DIPOLES_H */

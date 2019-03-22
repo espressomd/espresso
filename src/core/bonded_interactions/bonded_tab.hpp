@@ -25,7 +25,6 @@
  *  Routines to calculate the  energy and/or  force
  *  for a particle pair or bonds via interpolating from lookup tables.
  *  \ref forces.cpp
- *  Needs feature TABULATED compiled in (see \ref config.hpp).
  */
 
 #include "config.hpp"
@@ -38,32 +37,8 @@
 #include "particle_data.hpp"
 #include <tuple>
 
-/** Non-Bonded tabulated potentials:
- *  Reads tabulated parameters and force and energy tables from a file.
- *  ia_params and force/energy tables are then communicated to each node
- *
- *  @param part_type_a  %Particle type for which the interaction is defined
- *  @param part_type_b  %Particle type for which the interaction is defined
- *  @param min          @copybrief TabulatedPotential::minval
- *  @param max          @copybrief TabulatedPotential::maxval
- *  @param energy       @copybrief TabulatedPotential::energy_tab
- *  @param force        @copybrief TabulatedPotential::force_tab
- *
- *  @retval 0 on success
- *  @retval 1 on particle type mismatches
- *  @retval 2 file name too long
- *  @retval 3 cannot open the file
- *  @retval 4 file too short
- *  @retval 5 file broken, cannot parse numbers
- *  @retval 6 number of points of existing potential changed
- */
-int tabulated_set_params(int part_type_a, int part_type_b, double min,
-                         double max, std::vector<double> const &energy,
-                         std::vector<double> const &force);
-
-/** Bonded tabulated potentials: Reads tabulated parameters and force
- *  and energy tables from a file.  ia_params and force/energy tables
- *  are then communicated to each node.
+/** Set the parameters of a bonded tabulated potential.
+ *  ia_params and force/energy tables are communicated to each node.
  *
  *  @param bond_type    Bond type for which the interaction is defined
  *  @param tab_type     Table type
@@ -72,13 +47,8 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
  *  @param energy       @copybrief TabulatedPotential::energy_tab
  *  @param force        @copybrief TabulatedPotential::force_tab
  *
- *  @retval 0 on success
- *  @retval 1 if wrong bond type
- *  @retval 2 currently unused
- *  @retval 3 cannot open the file
- *  @retval 4 file too short
- *  @retval 5 file broken, cannot parse numbers
- *  @retval 6 parameter out of bounds
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
  */
 int tabulated_bonded_set_params(int bond_type,
                                 TabulatedBondedInteraction tab_type, double min,
@@ -92,7 +62,6 @@ int tabulated_bonded_set_params(int bond_type,
  *  The force acts in the direction of the connecting vector between the
  *  particles. For distances smaller than the tabulated range it uses a linear
  *  extrapolation based on the first two tabulated force values.
- *  Needs feature TABULATED compiled in (see \ref config.hpp).
  *
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
@@ -125,7 +94,6 @@ inline int calc_tab_bond_force(Particle const *p1, Particle const *p2,
  *  For distances smaller than the tabulated range it uses a quadratic
  *  extrapolation based on the first two tabulated force values and the first
  *  tabulated energy value.
- *  Needs feature TABULATED compiled in (see \ref config.hpp).
  *
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
@@ -157,7 +125,6 @@ inline int tab_bond_energy(Particle const *p1, Particle const *p2,
  *  forces. The forces are scaled with the inverse length of the
  *  connecting vectors. It is assumed that the potential is tabulated
  *  for all angles between 0 and Pi.
- *  Needs feature TABULATED compiled in (see \ref config.hpp).
  *
  *  @param[in]  p_mid     Second/middle particle.
  *  @param[in]  p_left    First/left particle.
@@ -214,7 +181,6 @@ inline void calc_angle_3body_tabulated_forces(
 /** Compute the three-body angle interaction energy.
  *  It is assumed that the potential is tabulated
  *  for all angles between 0 and Pi.
- *  Needs feature TABULATED compiled in (see \ref config.hpp).
  *
  *  @param[in]  p_mid     Second/middle particle.
  *  @param[in]  p_left    First/left particle.
@@ -242,7 +208,6 @@ inline int tab_angle_energy(Particle const *p_mid, Particle const *p_left,
 
 /** Compute the four-body dihedral interaction force.
  *  This function is not tested yet.
- *  Needs feature TABULATED compiled in (see \ref config.hpp).
  *
  *  @param[in]  p2        Second particle.
  *  @param[in]  p1        First particle.
@@ -306,7 +271,6 @@ inline int calc_tab_dihedral_force(Particle const *p2, Particle const *p1,
 
 /** Compute the four-body dihedral interaction energy.
  *  This function is not tested yet.
- *  Needs feature TABULATED compiled in (see \ref config.hpp).
  *
  *  @param[in]  p2        Second particle.
  *  @param[in]  p1        First particle.

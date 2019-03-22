@@ -33,11 +33,7 @@
 #include "grid.hpp"
 #include <tuple>
 
-/** set parameters for the angle potential.
-
-    \todo The type of the angle potential
-    is chosen via config.hpp and cannot be changed at runtime.
-*/
+/** set parameters for the angle potential. */
 int angle_cossquare_set_params(int bond_type, double bend, double phi0);
 
 /************************************************************/

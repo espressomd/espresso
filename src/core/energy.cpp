@@ -29,8 +29,8 @@
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy_inline.hpp"
+#include "event.hpp"
 #include "forces.hpp"
-#include "initialize.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"
@@ -129,8 +129,7 @@ void energy_calc(double *result) {
   EspressoSystemInterface::Instance().update();
 
   // Compute the energies from the energyActors
-  for (ActorList::iterator actor = energyActors.begin();
-       actor != energyActors.end(); ++actor)
+  for (auto actor = energyActors.begin(); actor != energyActors.end(); ++actor)
     (*actor)->computeEnergy(espressoSystemInterface);
 
   on_observable_calc();

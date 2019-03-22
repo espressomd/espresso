@@ -346,7 +346,7 @@ void dp3m_init() {
   } else {
     P3M_TRACE(fprintf(stderr, "%d: dp3m_init:\n", this_node));
 
-    if (dp3m_sanity_checks())
+    if (dp3m_sanity_checks(node_grid))
       return;
 
     P3M_TRACE(fprintf(stderr, "%d: dp3m_init: starting\n", this_node));
@@ -402,9 +402,10 @@ void dp3m_init() {
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node,
                       (void *)dp3m.rs_mesh));
 
-    int ca_mesh_size = fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim,
-                                dp3m.local_mesh.margin, dp3m.params.mesh,
-                                dp3m.params.mesh_off, &dp3m.ks_pnum, dp3m.fft);
+    int ca_mesh_size =
+        fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
+                 dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
+                 dp3m.fft, node_grid);
     dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     for (n = 0; n < 3; n++)
@@ -1810,7 +1811,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
                           int *_cao, double r_cut_iL_min, double r_cut_iL_max,
                           double *_r_cut_iL, double *_alpha_L,
                           double *_accuracy) {
-  double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L = 0.0,
+  double best_time = -1, tmp_r_cut_iL = -1., tmp_alpha_L = 0.0,
          tmp_accuracy = 0.0;
   /* in which direction improvement is possible. Initially, we don't know it
    * yet.
@@ -1825,6 +1826,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
   /* the initial step sets a timing mark. If there is no valid r_cut, we can
      only try
      to increase cao to increase the obtainable precision of the far formula. */
+  double tmp_time;
   do {
     tmp_time = dp3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                             &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
@@ -1987,7 +1989,8 @@ int dp3m_adaptive_tune(char **logger) {
   P3M_TRACE(fprintf(stderr, "%d: dp3m_adaptive_tune\n", this_node));
 
   /* preparation */
-  mpi_bcast_event(P3M_COUNT_DIPOLES);
+  mpi_call(dp3m_count_magnetic_particles);
+  dp3m_count_magnetic_particles();
 
   /* Print Status */
   sprintf(b,
@@ -2144,6 +2147,8 @@ void dp3m_count_magnetic_particles() {
   dp3m.sum_mu2 = tot_sums[0];
   dp3m.sum_dip_part = (int)(tot_sums[1] + 0.1);
 }
+
+REGISTER_CALLBACK(dp3m_count_magnetic_particles)
 
 /*****************************************************************************/
 
@@ -2422,7 +2427,7 @@ bool dp3m_sanity_checks_boxl() {
 
 /*****************************************************************************/
 
-bool dp3m_sanity_checks() {
+bool dp3m_sanity_checks(const Vector3i &grid) {
   bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
@@ -2462,7 +2467,7 @@ bool dp3m_sanity_checks() {
     runtimeErrorMsg() << "dipolar P3M_init: cao is not yet set";
     ret = true;
   }
-  if (node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+  if (grid[0] < grid[1] || grid[1] < grid[2]) {
     runtimeErrorMsg()
         << "dipolar P3M_init: node grid must be sorted, largest first";
     ret = true;

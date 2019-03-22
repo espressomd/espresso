@@ -26,9 +26,9 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
 #include "utils.hpp"
@@ -264,8 +264,7 @@ void integrate_reaction_swap() {
     on_observable_calc();
 
     // Iterate over all the local cells
-    for (std::vector<int>::iterator c = rand_cells.begin();
-         c != rand_cells.end(); c++) {
+    for (auto c = rand_cells.begin(); c != rand_cells.end(); c++) {
       // Take into account only those cell neighborhoods for which
       // the central cell contains a catalyzer particle
       cell = local_cells.cell[*c];
@@ -289,8 +288,7 @@ void integrate_reaction_swap() {
         np = cell->n;
 
         // We loop over all the catalyzer particles
-        for (std::vector<int>::iterator id = catalyzers.begin();
-             id != catalyzers.end(); id++) {
+        for (auto id = catalyzers.begin(); id != catalyzers.end(); id++) {
           reactants.clear();
           products.clear();
 
@@ -335,8 +333,7 @@ void integrate_reaction_swap() {
             // If there are more products than reactants...
             if (reactants.size() <= products.size()) {
               // ...iterate the reactant...
-              for (std::vector<int>::iterator rt = reactants.begin();
-                   rt < reactants.end(); rt++) {
+              for (auto rt = reactants.begin(); rt < reactants.end(); rt++) {
                 // ...draw a random number number and compare to the
                 // reaction rate...
                 rand = d_random();
@@ -355,8 +352,7 @@ void integrate_reaction_swap() {
             } else {
               // Same as above, but for the case that the number of
               // reactants is greater than the number of products
-              for (std::vector<int>::iterator pt = products.begin();
-                   pt < products.end(); pt++) {
+              for (auto pt = products.begin(); pt < products.end(); pt++) {
                 rand = d_random();
                 if (rand > ct_ratexp) {
                   p_neigh[*pt].p.catalyzer_count = 1;
@@ -375,8 +371,7 @@ void integrate_reaction_swap() {
 
     // Apply the changes to the tagged particles.  Therefore, again
     // loop over all cells
-    for (std::vector<int>::iterator c = rand_cells.begin();
-         c != rand_cells.end(); c++) {
+    for (auto c = rand_cells.begin(); c != rand_cells.end(); c++) {
       cell = local_cells.cell[*c];
       p_local = cell->part;
       np = cell->n;

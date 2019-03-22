@@ -35,7 +35,11 @@
 #include "nonbonded_interactions/lj.hpp"
 #include "utils.hpp"
 
-/// set the parameters for the subtract LJ potential
+/** set the parameters for the subtract LJ potential
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int subt_lj_set_params(int bond_type);
 
 /** Computes the negative of the LENNARD-JONES pair forces

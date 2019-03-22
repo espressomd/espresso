@@ -28,7 +28,7 @@ int tabulated_bonded_set_params(int bond_type,
                                 double max, std::vector<double> const &energy,
                                 std::vector<double> const &force) {
   if (bond_type < 0)
-    return 1;
+    return ES_ERROR;
 
   assert(max >= min);
   assert((max == min) || force.size() > 1);
