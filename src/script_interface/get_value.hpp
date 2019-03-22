@@ -23,6 +23,8 @@
 #include "ScriptInterfaceBase.hpp"
 #include "Variant.hpp"
 
+#include <boost/range/algorithm/transform.hpp>
+
 namespace ScriptInterface {
 namespace detail {
 /**
@@ -59,6 +61,21 @@ struct vector_conversion_visitor : boost::static_visitor<Vector<T, N>> {
     }
 
     return {iv.begin(), iv.end()};
+  }
+
+  /* We try do unpack variant vectors and check if they
+   * are convertible element by element. */
+  auto operator()(std::vector<Variant> const& vv) const {
+    if (N != vv.size()) {
+      throw boost::bad_get{};
+    }
+
+    Vector<T,N> ret;
+    boost::transform(vv, ret.begin(), [](const Variant& v) {
+      return boost::get<T>(v);
+    });
+
+    return ret;
   }
 
   template <typename U> Vector<T, N> operator()(U const &) const {
