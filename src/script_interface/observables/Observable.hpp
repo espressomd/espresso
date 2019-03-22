@@ -33,11 +33,9 @@
 namespace ScriptInterface {
 namespace Observables {
 
-typedef ::Observables::Observable CoreObs;
-
 class Observable : public ScriptInterfaceBase {
 public:
-  virtual std::shared_ptr<CoreObs> observable() const = 0;
+  virtual std::shared_ptr<::Observables::Observable> observable() const = 0;
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "calculate") {
