@@ -49,26 +49,7 @@ typedef boost::make_recursive_variant<
     None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
     ObjectId, std::vector<boost::recursive_variant_>, Vector3d>::type Variant;
 
-/**
- * @brief Human readable names for the types in the variant.
- *
- * This should be in the same order as the corresponding types in the definition
- * of Variant. (e.g. Variant(bool{}).which() == VariantType::BOOL).
- */
-enum class VariantType {
-  NONE = 0,
-  BOOL,
-  INT,
-  DOUBLE,
-  STRING,
-  INT_VECTOR,
-  DOUBLE_VECTOR,
-  OBJECTID,
-  VECTOR,
-  VECTOR3D
-};
-
-typedef std::map<std::string, Variant> VariantMap;
+    typedef std::map<std::string, Variant> VariantMap;
 
     namespace detail {
     template<class T>

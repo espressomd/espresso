@@ -26,24 +26,6 @@ using namespace ScriptInterface;
 
 #include "get_value.hpp"
 
-/* Check that the enum and the types are in order. */
-BOOST_AUTO_TEST_CASE(variant_types) {
-  BOOST_CHECK(static_cast<int>(VariantType::NONE) == Variant(None{}).which());
-  BOOST_CHECK(static_cast<int>(VariantType::BOOL) == Variant(bool{}).which());
-  BOOST_CHECK(static_cast<int>(VariantType::INT) == Variant(int{}).which());
-  BOOST_CHECK(static_cast<int>(VariantType::DOUBLE) ==
-              Variant(double{}).which());
-  BOOST_CHECK(static_cast<int>(VariantType::STRING) ==
-              Variant(std::string{}).which());
-  BOOST_CHECK(static_cast<int>(VariantType::INT_VECTOR) ==
-              Variant(std::vector<int>{}).which());
-  BOOST_CHECK(static_cast<double>(VariantType::DOUBLE_VECTOR) ==
-              Variant(std::vector<double>{}).which());
-  BOOST_CHECK(static_cast<int>(VariantType::OBJECTID) ==
-              Variant(ObjectId{}).which());
-  BOOST_CHECK(static_cast<int>(VariantType::VECTOR) ==
-              Variant(std::vector<Variant>{}).which());
-}
 
 BOOST_AUTO_TEST_CASE(is_a) {
   BOOST_CHECK(is_type<None>(Variant(None{})));
