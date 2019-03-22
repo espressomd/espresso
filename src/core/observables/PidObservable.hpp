@@ -26,7 +26,7 @@
 
 namespace Observables {
 
-/** Particles-based observable.
+/** %Particle-based observable.
  *
  *  Base class for observables extracting raw data from particle subsets and
  *  returning either the data or a statistic derived from it.
