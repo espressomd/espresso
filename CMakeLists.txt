@@ -557,10 +557,12 @@ if (WITH_WALBERLA)
       WALBERLA_BUILD_TUTORIALS=off
       WALBERLA_BUILD_SHOWCASES=off
       WALBERLA_BUILD_DOC=off
+      CMAKE_POSITION_INDEPENDENT_CODE=on
       )
   set(WALBERLA 1)
   include(${CMAKE_BINARY_DIR}/external/walberla/_external_targets.cmake)
   set(WALBERLA_LIBS walberla::core walberla::domain_decomposition walberla::blockforest walberla::boundary walberla::core walberla::domain_decomposition walberla::field walberla::lbm walberla::timeloop walberla::vtk stdc++fs)
+  set(WALBERLA 1)
 endif(WITH_WALBERLA)
 
 #######################################################################

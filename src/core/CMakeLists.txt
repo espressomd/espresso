@@ -201,6 +201,8 @@ endif(WITH_UNIT_TESTS)
 
 IF(WALBERLA)
 target_link_libraries(EspressoCore PUBLIC ${WALBERLA_LIBS})
+target_include_directories(EspressoCore PUBLIC ${CMAKE_SOURCE_DIR}/libs/walberla/src/src)
+target_include_directories(EspressoCore PUBLIC ${CMAKE_BINARY_DIR}/external/walberla/src)
 endif(WALBERLA)
 
 add_subdirectory(grid_based_algorithms)
