@@ -43,7 +43,6 @@ cdef class PScriptInterface(object):
 
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip):
         self.sip = sip
-        self.parameters = self.sip.get().valid_parameters()
 
     def set_sip_via_oid(self, PObjectId id):
         """Set the shared_ptr to the script object in the core via the object id"""
@@ -55,12 +54,7 @@ cdef class PScriptInterface(object):
             raise Exception("Could not get sip for given_id")
 
     def _valid_parameters(self):
-        parameters = []
-
-        for p in self.sip.get().valid_parameters():
-            parameters.append(to_str(p.first))
-
-        return parameters
+        return [to_str(p.to_string()) for p in self.sip.get().valid_parameters()]
 
     def id(self):
         oid = PObjectId()
@@ -94,14 +88,7 @@ cdef class PScriptInterface(object):
         cdef Variant v
 
         for pname in in_params:
-            name = to_char_pointer(pname)
-
-            try:
-                self.parameters.at(name)
-            except:
-                raise ValueError("Unknown parameter %s" % name)
-
-            out_params[name] = self.python_object_to_variant(in_params[pname])
+            out_params[to_char_pointer(pname)] = self.python_object_to_variant(in_params[pname])
 
         return out_params
 
@@ -149,23 +136,23 @@ cdef class PScriptInterface(object):
         if is_none(value) :
             return None
         if is_type[bool](value) :
-            return get[bool](value)
+            return get_value[bool](value)
         if is_type[int](value) :
-            return get[int](value)
+            return get_value[int](value)
         if is_type[double](value) :
-            return get[double](value)
+            return get_value[double](value)
         if is_type[string](value) :
-            return to_str(get[string](value))
+            return to_str(get_value[string](value))
         if is_type[vector[int]](value) :
-            return get[vector[int]](value)
+            return get_value[vector[int]](value)
         if is_type[vector[double]](value):
-            return get[vector[double]](value)
+            return get_value[vector[double]](value)
         if is_type[Vector3d](value) :
-            return make_array_locked(get[Vector3d](value))
+            return make_array_locked(get_value[Vector3d](value))
         if is_type[ObjectId](value) :
             # Get the id and build a corresponding object
             try:
-                oid = get[ObjectId](value)
+                oid = get_value[ObjectId](value)
                 ptr = get_instance(oid).lock()
                 if ptr != shared_ptr[ScriptInterfaceBase]():
                     so_name = to_str(ptr.get().name())
@@ -188,7 +175,7 @@ cdef class PScriptInterface(object):
             except:
                 return None
         if is_type[vector[Variant]](value) :
-            vec = get[vector[Variant]](value)
+            vec = get_value[vector[Variant]](value)
             res = []
 
             for i in vec:

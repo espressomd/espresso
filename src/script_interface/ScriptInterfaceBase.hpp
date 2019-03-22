@@ -26,15 +26,11 @@
 
 #include "utils/serialization/array.hpp"
 
-#include "Parameter.hpp"
+#include <boost/utility/string_view.hpp>
+
 #include "Variant.hpp"
 
 namespace ScriptInterface {
-/**
- * Convenience typedefs.
- */
-typedef std::map<std::string, Parameter> ParameterMap;
-
 /**
  * @brief Make a Variant from argument.
  *
@@ -122,7 +118,7 @@ public:
     VariantMap values;
 
     for (auto const &p : valid_parameters()) {
-      values[p.first] = get_parameter(p.first);
+      values[p.to_string()] = get_parameter(p.to_string());
     }
 
     return values;
@@ -135,7 +131,11 @@ public:
    *
    * @return Expected parameters.
    */
-  virtual ParameterMap valid_parameters() const { return {}; }
+  virtual const std::vector<boost::string_view> & valid_parameters() const {
+    static std::vector<boost::string_view> valid_params;
+
+    return valid_params;
+  }
 
   /**
    * @brief Get single parameter.
@@ -229,23 +229,5 @@ public:
 protected:
   virtual void set_state(Variant const &state);
 };
-
-/**
- * @brief Tries to extract a value with the type of MEMBER_NAME from the
- * Variant.
- *
- * This will fail at compile time if the type of MEMBER_NAME is not one of the
- * possible types of Variant, and at runtime if the current type of the
- * variant is not that of MEMBER_NAME. remove_reference ensures that this also
- * works with member access by reference for example as returned by a
- * function.
- */
-#define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
-  if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME =                                                              \
-        get_value<std::remove_reference<decltype(MEMBER_NAME)>::type>(value);  \
-  }
-
 } /* namespace ScriptInterface */
-
 #endif

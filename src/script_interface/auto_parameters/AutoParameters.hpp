@@ -19,11 +19,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 #define SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 
-#include <unordered_map>
-#include <vector>
-
 #include "AutoParameter.hpp"
 #include "ScriptInterfaceBase.hpp"
+
+#include <unordered_map>
+#include <vector>
 
 namespace ScriptInterface {
 
@@ -92,19 +92,19 @@ class AutoParameters : public Base {
 public:
   /** @brief Exception thrown when accessing an unknown parameter */
   struct UnknownParameter : public std::runtime_error {
-    UnknownParameter(std::string const &name)
+    explicit UnknownParameter(std::string const &name)
         : runtime_error("Unknown parameter '" + name + "'.") {}
   };
 
   /** @brief Exception thrown when writing to a read-only parameter */
   struct WriteError : public std::runtime_error {
-    WriteError(std::string const &name)
+    explicit WriteError(std::string const &name)
         : runtime_error("Parameter " + name + " is read-only.") {}
   };
 
 protected:
   AutoParameters() = default;
-  AutoParameters(std::vector<AutoParameter> &&params) {
+  explicit AutoParameters(std::vector<AutoParameter> &&params) {
     add_parameters(std::move(params));
   }
 
@@ -117,16 +117,15 @@ protected:
 
 public:
   /* ScriptInterfaceBase implementation */
-  ParameterMap valid_parameters() const final {
-    ParameterMap valid_params;
+  const std::vector<boost::string_view>& valid_parameters() const final {
+    static std::vector<boost::string_view> valid_params;
+    valid_params.clear();
 
     for (auto const &p : m_parameters) {
-      valid_params.emplace(std::make_pair(
-          p.first,
-          ScriptInterface::Parameter{}));
+      valid_params.push_back(p.first);
     }
 
-    return valid_params;
+      return valid_params;
   }
 
   Variant get_parameter(const std::string &name) const final {
@@ -148,7 +147,6 @@ public:
   }
 
 private:
-
   std::unordered_map<std::string, AutoParameter> m_parameters;
 };
 } // namespace ScriptInterface

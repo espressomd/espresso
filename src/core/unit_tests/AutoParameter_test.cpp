@@ -22,12 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "auto_parameters/AutoParameter.hpp"
 
-BOOST_AUTO_TEST_CASE(infer_length) {
-  using ScriptInterface::infer_length;
-  static_assert(infer_length<Vector<int, 11>>() == 11, "");
-  static_assert(infer_length<int>() == 0, "");
-}
-
 BOOST_AUTO_TEST_CASE(direct_binding) {
   using namespace ScriptInterface;
   int i{19};

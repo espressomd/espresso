@@ -24,9 +24,7 @@ from libcpp.memory cimport shared_ptr
 from libcpp.memory cimport weak_ptr
 from libcpp cimport bool
 
-cdef extern from "Parameter.hpp" namespace "ScriptInterface":
-  cdef cppclass Parameter:
-    pass
+from boost cimport string_view
 
 cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     void initialize()
@@ -39,8 +37,8 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     bool is_type[T](const Variant &)
     bool is_none(const Variant &)
 
-cdef extern from "ScriptInterface.hpp" namespace "boost":
-    const T &get[T](const Variant &) except +
+cdef extern from "get_value.hpp" namespace "ScriptInterface":
+    T get_value[T](const Variant T)
 
 cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectId:
@@ -53,7 +51,7 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
         const string name()
         void construct(map[string, Variant]) except +
         map[string, Variant] get_parameters() except +
-        map[string, Parameter] valid_parameters() except +
+        vector[string_view] valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
         void set_parameters(map[string, Variant] & parameters) except +
@@ -78,7 +76,6 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfa
 
 cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
-    cdef map[string, Parameter] parameters
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
     cdef variant_to_python_object(self, Variant value) except +
     cdef Variant python_object_to_variant(self, value)
