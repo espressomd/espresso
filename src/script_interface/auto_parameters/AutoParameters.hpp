@@ -111,7 +111,7 @@ protected:
   void add_parameters(std::vector<AutoParameter> &&params) {
     for (auto const &p : params) {
       m_parameters.emplace(
-          std::make_pair(p.name, Parameter{p.type, p.length, p.set, p.get}));
+          std::make_pair(p.name, p));
     }
   }
 
@@ -148,14 +148,8 @@ public:
   }
 
 private:
-  struct Parameter {
-    VariantType type;
-    size_t length;
-    std::function<void(Variant const &)> set;
-    std::function<Variant()> get;
-  };
 
-  std::unordered_map<std::string, Parameter> m_parameters;
+  std::unordered_map<std::string, AutoParameter> m_parameters;
 };
 } // namespace ScriptInterface
 

@@ -29,34 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/make_function.hpp"
 
 namespace ScriptInterface {
-
-namespace detail {
-/* Base case */
-template <typename T> struct infer_length_helper {
-  static constexpr size_t value{0};
-};
-
-/* Specialization for Vectors */
-template <size_t N, typename T> struct infer_length_helper<Vector<T, N>> {
-  static constexpr size_t value{N};
-};
-
-template <size_t N, size_t M, typename T>
-struct infer_length_helper<Vector<Vector<T, N>, M>> {
-  static constexpr size_t value{N * M};
-};
-} // namespace detail
-
-/**
- * @brief Infer supposed length of the parameter.
- *
- * This currently only works for fixed-sized vectors,
- * where the length is encoded in the type.
- */
-template <typename T> constexpr size_t infer_length() {
-  return detail::infer_length_helper<T>::value;
-}
-
 /**
  * @brief Description and getter/setter for a parameter.
  *
@@ -83,10 +55,8 @@ struct AutoParameter {
    */
   template <typename T, class O>
   AutoParameter(std::string name, std::shared_ptr<O> &obj,
-                void (O::*setter)(T const &), T const &(O::*getter)() const,
-                VariantType type = infer_type<T>(),
-                size_t length = infer_length<T>())
-      : name(std::move(name)), type(type), length(length),
+                void (O::*setter)(T const &), T const &(O::*getter)() const)
+      : name(std::move(name)),
         set([&obj, setter](Variant const &v) {
           (obj.get()->*setter)(get_value<T>(v));
         }),
@@ -97,10 +67,8 @@ struct AutoParameter {
    */
   template <typename T, class O>
   AutoParameter(std::string name, std::shared_ptr<O> &obj,
-                void (O::*setter)(T const &), T (O::*getter)() const,
-                VariantType type = infer_type<T>(),
-                size_t length = infer_length<T>())
-      : name(std::move(name)), type(type), length(length),
+                void (O::*setter)(T const &), T (O::*getter)() const)
+      : name(std::move(name)),
         set([&obj, setter](Variant const &v) {
           (obj.get()->*setter)(get_value<T>(v));
         }),
@@ -118,11 +86,8 @@ struct AutoParameter {
    */
   template <typename T, class O>
   AutoParameter(std::string name, std::shared_ptr<O> &obj,
-                T const &(O::*getter)() const,
-                VariantType type = infer_type<T>(),
-                size_t length = infer_length<T>())
-      : name(std::move(name)), type(type), length(length),
-        set([](Variant const &) { throw WriteError{}; }),
+                T const &(O::*getter)())
+      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
   /** @brief Read-only parameter that is bound to an object.
@@ -130,9 +95,8 @@ struct AutoParameter {
    */
   template <typename T, class O>
   AutoParameter(std::string name, std::shared_ptr<O> &obj,
-                T (O::*getter)() const, VariantType type = infer_type<T>(),
-                size_t length = infer_length<T>())
-      : name(std::move(name)), type(type), length(length),
+                T (O::*getter)() const)
+      : name(std::move(name)),
         set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
@@ -140,10 +104,8 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(std::string name, std::shared_ptr<O> &obj, T O::*getter,
-                VariantType type = infer_type<T>(),
-                size_t length = infer_length<T>())
-      : name(std::move(name)), type(type), length(length),
+  AutoParameter(std::string name, std::shared_ptr<O> &obj, T O::*getter)
+      : name(std::move(name)),
         set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
@@ -152,9 +114,8 @@ struct AutoParameter {
    */
   template <typename T, class O>
   AutoParameter(std::string name, std::shared_ptr<O> &obj,
-                T &(O::*getter_setter)(), VariantType type = infer_type<T>(),
-                size_t length = infer_length<T>())
-      : name(std::move(name)), type(type), length(length),
+                T &(O::*getter_setter)())
+      : name(std::move(name)),
         set([&obj, getter_setter](Variant const &v) {
           (obj.get()->*getter_setter)() = get_value<T>(v);
         }),
@@ -171,10 +132,8 @@ struct AutoParameter {
    *                is deduced from the type of the reference.
    */
   template <typename T>
-  AutoParameter(std::string name, T &binding,
-                VariantType type = infer_type<T>(),
-                size_t length = infer_length<T>())
-      : name(std::move(name)), type(type), length(length),
+  AutoParameter(std::string name, T &binding)
+      : name(std::move(name)),
         set([&binding](Variant const &v) { binding = get_value<T>(v); }),
         get([&binding]() { return Variant{binding}; }) {}
 
@@ -182,10 +141,8 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(std::string name, std::shared_ptr<T> &binding,
-                VariantType type = infer_type<std::shared_ptr<T>>(),
-                size_t length = infer_length<std::shared_ptr<T>>())
-      : name(std::move(name)), type(type), length(length),
+  AutoParameter(std::string name, std::shared_ptr<T> &binding)
+      : name(std::move(name)),
         set([&binding](Variant const &v) {
           binding = get_value<std::shared_ptr<T>>(v);
         }),
@@ -195,10 +152,8 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(std::string name, T const &binding,
-                VariantType type = infer_type<T>(),
-                size_t length = infer_length<T>())
-      : name(std::move(name)), type(type), length(length),
+  AutoParameter(std::string name, T const &binding)
+      : name(std::move(name)),
         set([](Variant const &) { throw WriteError{}; }),
         get([&binding]() -> Variant { return binding; }) {}
 
@@ -206,10 +161,8 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(std::string name, std::shared_ptr<T> const &binding,
-                VariantType type = infer_type<std::shared_ptr<T>>(),
-                size_t length = infer_length<std::shared_ptr<T>>())
-      : name(std::move(name)), type(type), length(length),
+  AutoParameter(std::string name, std::shared_ptr<T> const &binding)
+      : name(std::move(name)),
         set([](Variant const &) { throw WriteError{}; }),
         get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
@@ -231,10 +184,8 @@ struct AutoParameter {
             /* Try to guess the type from the return type of the getter */
             typename R = typename decltype(
                 Utils::make_function(std::declval<G>()))::result_type>
-  AutoParameter(std::string name, F const &set, G const &get,
-                VariantType type = infer_type<R>(),
-                size_t length = infer_length<R>())
-      : name(std::move(name)), type(type), length(length),
+  AutoParameter(std::string name, F const &set, G const &get)
+      : name(std::move(name)),
         set(Utils::make_function(set)), get(Utils::make_function(get)) {}
 
   /**
@@ -245,19 +196,13 @@ struct AutoParameter {
             /* Try to guess the type from the return type of the getter */
             typename R = typename decltype(
                 Utils::make_function(std::declval<G>()))::result_type>
-  AutoParameter(std::string name, ReadOnly, G const &get,
-                VariantType type = infer_type<R>(),
-                size_t length = infer_length<R>())
-      : name(std::move(name)), type(type), length(length),
+  AutoParameter(std::string name, ReadOnly, G const &get)
+      : name(std::move(name)),
         set([](Variant const &) { throw WriteError{}; }),
         get(Utils::make_function(get)) {}
 
   /** The interface name. */
   const std::string name;
-  /** The expected type. */
-  VariantType type;
-  /** The expected length. */
-  size_t length;
 
   /**
    * @brief Set the parameter.
