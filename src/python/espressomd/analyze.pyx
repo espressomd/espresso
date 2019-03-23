@@ -998,19 +998,19 @@ class Analysis(object):
             raise ValueError("r_bins has to be greater than zero!")
 
         cdef double low
-        cdef double * distribution = < double * > malloc(sizeof(double) * r_bins)
+        cdef vector[double] distribution
+        distribution.resize(r_bins)
+
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
         c_analyze.calc_part_distribution(
             c_analyze.partCfg(
                 ), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
-                                         r_min, r_max, r_bins, log_flag, & low, distribution)
+                                         r_min, r_max, r_bins, log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(
-            distribution, r_bins)
-
-        free(distribution)
+            distribution.data(), r_bins)
 
         if int_flag:
             np_distribution[0] += low

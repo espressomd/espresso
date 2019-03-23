@@ -25,8 +25,6 @@ from libcpp.vector cimport vector  # import std::vector as vector
 
 cdef extern from "stdlib.h":
     void free(void * ptr)
-    void * malloc(size_t size)
-    void * realloc(void * ptr, size_t size)
 
 cdef extern from "utils/List.hpp" namespace "Utils":
     cppclass List[T]:
@@ -38,6 +36,7 @@ cdef extern from "utils/List.hpp" namespace "Utils":
         void resize(size_t)
         void push_back(size_t)
 
+        T* data()
         size_t size()
 
         T* e

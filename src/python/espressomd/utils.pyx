@@ -23,11 +23,6 @@ import numpy as np
 from cpython.version cimport PY_MAJOR_VERSION
 from libcpp.vector cimport vector
 
-cdef extern from "stdlib.h":
-    void free(void * ptr)
-    void * malloc(size_t size)
-    void * realloc(void * ptr, size_t size)
-
 cdef np.ndarray create_nparray_from_int_list(const List[int] & il):
     """
     Returns a numpy array from an int list struct which is provided as argument.
