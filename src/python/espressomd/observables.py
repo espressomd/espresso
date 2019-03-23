@@ -347,6 +347,51 @@ class ParticleVelocities(Observable):
 
 
 @script_interface_register
+class ParticleDistances(Observable):
+
+    """Calculates the distances between particles with given ids along a
+    polymer chain.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
+    _so_name = "Observables::ParticleDistances"
+
+
+@script_interface_register
+class ParticleAngles(Observable):
+
+    """Calculates the angles between particles with given ids along a
+    polymer chain.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
+    _so_name = "Observables::ParticleAngles"
+
+
+@script_interface_register
+class ParticleDihedrals(Observable):
+
+    """Calculates the dihedrals between particles with given ids along a
+    polymer chain.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
+    _so_name = "Observables::ParticleDihedrals"
+
+
+@script_interface_register
 class StressTensor(Observable):
     _so_name = "Observables::StressTensor"
 
