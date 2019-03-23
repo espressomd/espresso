@@ -25,19 +25,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/AutoObjectId.hpp"
 #include "utils/Vector.hpp"
 
-#include <boost/serialization/map.hpp>
+#include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
-#include <boost/utility/string_view.hpp>
-
-#include <map>
 
 namespace ScriptInterface {
 class ScriptInterfaceBase;
 using ObjectId = Utils::ObjectId<ScriptInterfaceBase>;
-
 /**
  * @brief None-"literal".
  */
@@ -46,11 +42,11 @@ constexpr const None none{};
 /**
  * @brief Possible types for parameters.
  */
-typedef boost::make_recursive_variant<
+ using Variant = boost::make_recursive_variant<
     None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
-    ObjectId, std::vector<boost::recursive_variant_>, Vector3d>::type Variant;
+    ObjectId, std::vector<boost::recursive_variant_>, Vector3d>::type;
 
-    typedef std::map<std::string, Variant> VariantMap;
+    using VariantMap = std::unordered_map<std::string, Variant>;
 
     namespace detail {
     template<class T>

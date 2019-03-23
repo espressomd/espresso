@@ -18,6 +18,7 @@
 
 
 from libcpp.map cimport map
+from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp.memory cimport shared_ptr
@@ -36,6 +37,7 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
 
     bool is_type[T](const Variant &)
     bool is_none(const Variant &)
+    ctypedef unordered_map[string, Variant] VariantMap
 
 cdef extern from "get_value.hpp" namespace "ScriptInterface":
     T get_value[T](const Variant T)
@@ -49,13 +51,13 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
 
     cdef cppclass ScriptInterfaceBase:
         const string name()
-        void construct(map[string, Variant]) except +
-        map[string, Variant] get_parameters() except +
+        void construct(const VariantMap &) except +
+        VariantMap get_parameters() except +
         vector[string_view] valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
-        void set_parameters(map[string, Variant] & parameters) except +
-        Variant call_method(const string & name, const map[string, Variant] & parameters) except +
+        void set_parameters(const VariantMap & parameters) except +
+        Variant call_method(const string & name, const VariantMap & parameters) except +
         ObjectId id() except +
         void set_state(map[string, Variant]) except +
         map[string, Variant] get_state() except +
@@ -79,4 +81,4 @@ cdef class PScriptInterface:
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
     cdef variant_to_python_object(self, Variant value) except +
     cdef Variant python_object_to_variant(self, value)
-    cdef map[string, Variant] _sanitize_params(self, in_params) except *
+    cdef VariantMap _sanitize_params(self, in_params) except *

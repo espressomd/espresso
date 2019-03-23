@@ -15,7 +15,6 @@ cdef class PObjectId(object):
 cdef class PScriptInterface(object):
     def __init__(self, name=None, policy="GLOBAL", oid=None, **kwargs):
         cdef CreationPolicy policy_
-        cdef map[string, Variant] ctor_args
 
         if policy == "GLOBAL":
             policy_ = GLOBAL
@@ -28,9 +27,7 @@ cdef class PScriptInterface(object):
             self.set_sip_via_oid(oid)
         else:
             self.set_sip(make_shared(to_char_pointer(name), policy_))
-
-            ctor_args = self._sanitize_params(kwargs)
-            self.sip.get().construct(ctor_args)
+            self.sip.get().construct(self._sanitize_params(kwargs))
 
     def __richcmp__(a, b, op):
         if op == 2:
@@ -62,7 +59,7 @@ cdef class PScriptInterface(object):
         return oid
 
     def call_method(self, method, **kwargs):
-        cdef map[string, Variant] parameters
+        cdef VariantMap parameters
 
         for name in kwargs:
             parameters[to_char_pointer(name)] = self.python_object_to_variant(
@@ -83,8 +80,8 @@ cdef class PScriptInterface(object):
         cdef shared_ptr[ScriptInterfaceBase] so_ptr = ScriptInterfaceBase.unserialize(state)
         self.set_sip(so_ptr)
 
-    cdef map[string, Variant] _sanitize_params(self, in_params) except *:
-        cdef map[string, Variant] out_params
+    cdef VariantMap _sanitize_params(self, in_params) except *:
+        cdef VariantMap out_params
         cdef Variant v
 
         for pname in in_params:
@@ -93,9 +90,7 @@ cdef class PScriptInterface(object):
         return out_params
 
     def set_params(self, **kwargs):
-        cdef map[string, Variant] parameters = self._sanitize_params(kwargs)
-
-        self.sip.get().set_parameters(parameters)
+        self.sip.get().set_parameters(self._sanitize_params(kwargs))
 
     cdef Variant python_object_to_variant(self, value):
         cdef Variant v
@@ -115,9 +110,8 @@ cdef class PScriptInterface(object):
         elif hasattr(value, '__iter__') and not(type(value) == str):
             for e in value:
                 vec.push_back(self.python_object_to_variant(e))
-            print("converting", value, "to vector[Variant]")
-            v = make_variant[vector[Variant]](vec)
-            return v
+
+            return make_variant[vector[Variant]](vec)
         elif type(value) == str:
             return make_variant[string](to_char_pointer(value))
         elif type(value) == type(True):
@@ -190,14 +184,13 @@ cdef class PScriptInterface(object):
         return self.variant_to_python_object(value)
 
     def get_params(self):
-        cdef map[string, Variant] params = self.sip.get().get_parameters()
         odict = {}
-        for pair in params:
+
+        for pair in self.sip.get().get_parameters():
             odict[to_str(pair.first)] = self.variant_to_python_object(
                 pair.second)
 
         return odict
-
 
 def _unpickle_so_class(so_name, state):
     cdef shared_ptr[ScriptInterfaceBase] sip = ScriptInterfaceBase.unserialize(state)
