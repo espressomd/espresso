@@ -56,8 +56,7 @@ struct AutoParameter {
   template <typename T, class O>
   AutoParameter(std::string name, std::shared_ptr<O> &obj,
                 void (O::*setter)(T const &), T const &(O::*getter)() const)
-      : name(std::move(name)),
-        set([&obj, setter](Variant const &v) {
+      : name(std::move(name)), set([&obj, setter](Variant const &v) {
           (obj.get()->*setter)(get_value<T>(v));
         }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
@@ -68,8 +67,7 @@ struct AutoParameter {
   template <typename T, class O>
   AutoParameter(std::string name, std::shared_ptr<O> &obj,
                 void (O::*setter)(T const &), T (O::*getter)() const)
-      : name(std::move(name)),
-        set([&obj, setter](Variant const &v) {
+      : name(std::move(name)), set([&obj, setter](Variant const &v) {
           (obj.get()->*setter)(get_value<T>(v));
         }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
@@ -96,8 +94,7 @@ struct AutoParameter {
   template <typename T, class O>
   AutoParameter(std::string name, std::shared_ptr<O> &obj,
                 T (O::*getter)() const)
-      : name(std::move(name)),
-        set([](Variant const &) { throw WriteError{}; }),
+      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
   /** @brief Read-only parameter that is bound to an object.
@@ -105,8 +102,7 @@ struct AutoParameter {
    */
   template <typename T, class O>
   AutoParameter(std::string name, std::shared_ptr<O> &obj, T O::*getter)
-      : name(std::move(name)),
-        set([](Variant const &) { throw WriteError{}; }),
+      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
   /** @brief Read-write parameter that is bound to an object.
@@ -115,8 +111,7 @@ struct AutoParameter {
   template <typename T, class O>
   AutoParameter(std::string name, std::shared_ptr<O> &obj,
                 T &(O::*getter_setter)())
-      : name(std::move(name)),
-        set([&obj, getter_setter](Variant const &v) {
+      : name(std::move(name)), set([&obj, getter_setter](Variant const &v) {
           (obj.get()->*getter_setter)() = get_value<T>(v);
         }),
         get([&obj, getter_setter]() { return (obj.get()->*getter_setter)(); }) {
@@ -142,8 +137,7 @@ struct AutoParameter {
    */
   template <typename T>
   AutoParameter(std::string name, std::shared_ptr<T> &binding)
-      : name(std::move(name)),
-        set([&binding](Variant const &v) {
+      : name(std::move(name)), set([&binding](Variant const &v) {
           binding = get_value<std::shared_ptr<T>>(v);
         }),
         get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
@@ -153,8 +147,7 @@ struct AutoParameter {
    */
   template <typename T>
   AutoParameter(std::string name, T const &binding)
-      : name(std::move(name)),
-        set([](Variant const &) { throw WriteError{}; }),
+      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
         get([&binding]() -> Variant { return binding; }) {}
 
   /** @brief Read-only parameter that is bound to an object.
@@ -162,8 +155,7 @@ struct AutoParameter {
    */
   template <typename T>
   AutoParameter(std::string name, std::shared_ptr<T> const &binding)
-      : name(std::move(name)),
-        set([](Variant const &) { throw WriteError{}; }),
+      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
         get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
   /**
@@ -185,8 +177,8 @@ struct AutoParameter {
             typename R = typename decltype(
                 Utils::make_function(std::declval<G>()))::result_type>
   AutoParameter(std::string name, F const &set, G const &get)
-      : name(std::move(name)),
-        set(Utils::make_function(set)), get(Utils::make_function(get)) {}
+      : name(std::move(name)), set(Utils::make_function(set)),
+        get(Utils::make_function(get)) {}
 
   /**
    * @brief Read-only parameter with a user-provided getter.
@@ -197,8 +189,7 @@ struct AutoParameter {
             typename R = typename decltype(
                 Utils::make_function(std::declval<G>()))::result_type>
   AutoParameter(std::string name, ReadOnly, G const &get)
-      : name(std::move(name)),
-        set([](Variant const &) { throw WriteError{}; }),
+      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
         get(Utils::make_function(get)) {}
 
   /** The interface name. */

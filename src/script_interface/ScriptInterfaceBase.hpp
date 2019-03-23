@@ -131,7 +131,7 @@ public:
    *
    * @return Expected parameters.
    */
-  virtual const std::vector<boost::string_view> & valid_parameters() const {
+  virtual const std::vector<boost::string_view> &valid_parameters() const {
     static std::vector<boost::string_view> valid_params;
 
     return valid_params;

@@ -56,9 +56,8 @@ public:
   void construct(VariantMap const &params) override;
   const std::string name() const { return m_p->name(); }
   void set_parameter(const std::string &name, const Variant &value) override;
-  void
-  set_parameters(const VariantMap &parameters) override;
-  const std::vector<boost::string_view> & valid_parameters() const override {
+  void set_parameters(const VariantMap &parameters) override;
+  const std::vector<boost::string_view> &valid_parameters() const override {
     return m_p->valid_parameters();
   }
 

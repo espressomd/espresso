@@ -39,8 +39,9 @@ public:
   Variant operator()(ObjectId const &oid) const {
     auto so_ptr = get_value<std::shared_ptr<ScriptInterfaceBase>>(oid);
     if (so_ptr) {
-      return std::vector<Variant>{
-          {so_ptr->name(), static_cast<int>(so_ptr->policy()), so_ptr->get_state()}};
+      return std::vector<Variant>{{so_ptr->name(),
+                                   static_cast<int>(so_ptr->policy()),
+                                   so_ptr->get_state()}};
     } else {
       return std::vector<Variant>{None{}};
     }

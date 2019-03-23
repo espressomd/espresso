@@ -52,14 +52,31 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   }
 
   /* Not needed for testing */
-  const vector<boost::string_view> & valid_parameters() const override { return {}; }
+  const vector<boost::string_view> &valid_parameters() const override {
+    return {};
+  }
 
   void set_parameter(const string &name, const Variant &value) override {
-    if (name == "bool_opt") { bool_opt = get_value<std::remove_reference<decltype(bool_opt)>::type>(value); };
-    if (name == "integer") { integer = get_value<std::remove_reference<decltype(integer)>::type>(value); };
-    if (name == "bool_req") { bool_req = get_value<std::remove_reference<decltype(bool_req)>::type>(value); };
-    if (name == "vec_double") { vec_double = get_value<std::remove_reference<decltype(vec_double)>::type>(value); };
-    if (name == "vec_int") { vec_int = get_value<std::remove_reference<decltype(vec_int)>::type>(value); };
+    if (name == "bool_opt") {
+      bool_opt =
+          get_value<std::remove_reference<decltype(bool_opt)>::type>(value);
+    };
+    if (name == "integer") {
+      integer =
+          get_value<std::remove_reference<decltype(integer)>::type>(value);
+    };
+    if (name == "bool_req") {
+      bool_req =
+          get_value<std::remove_reference<decltype(bool_req)>::type>(value);
+    };
+    if (name == "vec_double") {
+      vec_double =
+          get_value<std::remove_reference<decltype(vec_double)>::type>(value);
+    };
+    if (name == "vec_int") {
+      vec_int =
+          get_value<std::remove_reference<decltype(vec_int)>::type>(value);
+    };
   }
 
   Variant call_method(const std::string &name,

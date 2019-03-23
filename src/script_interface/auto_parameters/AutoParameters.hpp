@@ -110,14 +110,13 @@ protected:
 
   void add_parameters(std::vector<AutoParameter> &&params) {
     for (auto const &p : params) {
-      m_parameters.emplace(
-          std::make_pair(p.name, p));
+      m_parameters.emplace(std::make_pair(p.name, p));
     }
   }
 
 public:
   /* ScriptInterfaceBase implementation */
-  const std::vector<boost::string_view>& valid_parameters() const final {
+  const std::vector<boost::string_view> &valid_parameters() const final {
     static std::vector<boost::string_view> valid_params;
     valid_params.clear();
 
@@ -125,7 +124,7 @@ public:
       valid_params.push_back(p.first);
     }
 
-      return valid_params;
+    return valid_params;
   }
 
   Variant get_parameter(const std::string &name) const final {

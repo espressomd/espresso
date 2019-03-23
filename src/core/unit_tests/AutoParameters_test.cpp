@@ -38,7 +38,7 @@ struct A : AutoParameters<A> {
 BOOST_AUTO_TEST_CASE(basic) {
   A a{0, 42};
 
-  auto const& valid_parameters = a.valid_parameters();
+  auto const &valid_parameters = a.valid_parameters();
 
   BOOST_CHECK(valid_parameters.size() == 2);
   BOOST_CHECK(boost::find(valid_parameters, "i") != valid_parameters.end());

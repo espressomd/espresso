@@ -44,8 +44,9 @@ public:
     return {{"ids", m_observable->ids()}};
   }
 
-  const std::vector<boost::string_view> & valid_parameters() const override {
-    static auto const m_valid_parameters = std::vector<boost::string_view>({"ids"});
+  const std::vector<boost::string_view> &valid_parameters() const override {
+    static auto const m_valid_parameters =
+        std::vector<boost::string_view>({"ids"});
     return m_valid_parameters;
   }
 
@@ -55,7 +56,7 @@ public:
     }
   }
 
-    std::shared_ptr<::Observables::Observable> observable() const override {
+  std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;
   }
 

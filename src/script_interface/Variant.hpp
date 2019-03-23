@@ -25,9 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/AutoObjectId.hpp"
 #include "utils/Vector.hpp"
 
-#include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -42,21 +42,19 @@ constexpr const None none{};
 /**
  * @brief Possible types for parameters.
  */
- using Variant = boost::make_recursive_variant<
+using Variant = boost::make_recursive_variant<
     None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
     ObjectId, std::vector<boost::recursive_variant_>, Vector3d>::type;
 
-    using VariantMap = std::unordered_map<std::string, Variant>;
+using VariantMap = std::unordered_map<std::string, Variant>;
 
-    namespace detail {
-    template<class T>
-    struct is_type_visitor : boost::static_visitor<bool> {
-        template<class U>
-                constexpr bool operator()(const U &) const {
-                    return std::is_same<T, U>::value;
-                }
-    };
-}
+namespace detail {
+template <class T> struct is_type_visitor : boost::static_visitor<bool> {
+  template <class U> constexpr bool operator()(const U &) const {
+    return std::is_same<T, U>::value;
+  }
+};
+} // namespace detail
 
 /**
  * @brief Check is a Variant holds a specific type.
@@ -65,16 +63,13 @@ constexpr const None none{};
  * @param v Variant to check in
  * @return true, if v holds a T.
  */
-template<class T>
-bool is_type(Variant const &v) {
-    return boost::apply_visitor(detail::is_type_visitor<T>{}, v);
+template <class T> bool is_type(Variant const &v) {
+  return boost::apply_visitor(detail::is_type_visitor<T>{}, v);
 }
 
-inline bool is_none(Variant const& v) {
-    return is_type<None>(v);
-}
+inline bool is_none(Variant const &v) { return is_type<None>(v); }
 
-    template <typename T, typename U>
+template <typename T, typename U>
 std::vector<Variant> pack_pair(const std::pair<T, U> &pair) {
   return {{pair.first, pair.second}};
 }

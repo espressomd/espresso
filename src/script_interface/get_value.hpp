@@ -23,33 +23,33 @@
 #include "ScriptInterfaceBase.hpp"
 #include "Variant.hpp"
 
-#include <boost/range/algorithm/transform.hpp>
 #include <boost/core/demangle.hpp>
+#include <boost/range/algorithm/transform.hpp>
 
 namespace ScriptInterface {
 namespace detail {
-    /**
-     * @brief Get a human-readable name for a type.
-     *
-     * Uses boost to demangle the name, for details
-     * see documentation for boost::core::demangle.
-     *
-     * @tparam T type
-     * @return name
-     */
-    template<class T>
-    std::string type_label() {
-        return boost::core::demangle(typeid(T).name());
-    }
+/**
+ * @brief Get a human-readable name for a type.
+ *
+ * Uses boost to demangle the name, for details
+ * see documentation for boost::core::demangle.
+ *
+ * @tparam T type
+ * @return name
+ */
+template <class T> std::string type_label() {
+  return boost::core::demangle(typeid(T).name());
+}
 
-    struct type_label_visitor : boost::static_visitor<std::string> {
-        template<class T>
-        std::string operator()(const T&) const { return boost::core::demangle(typeid(T).name()); }
-    };
+struct type_label_visitor : boost::static_visitor<std::string> {
+  template <class T> std::string operator()(const T &) const {
+    return boost::core::demangle(typeid(T).name());
+  }
+};
 
-    inline std::string type_label(const Variant & v) {
-        return boost::apply_visitor(type_label_visitor{}, v);
-    }
+inline std::string type_label(const Variant &v) {
+  return boost::apply_visitor(type_label_visitor{}, v);
+}
 
 /*
  * Allows
@@ -57,25 +57,26 @@ namespace detail {
  * floating point -> floating point and
  * integral -> floating point
  */
-        template <class To, class From>
-        using allow_conversion =
-        std::integral_constant<bool, std::is_same<To, From>::value || ( std::is_convertible<To, From>::value && std::is_floating_point<To>::value &&
-                                     std::is_arithmetic<From>::value)>;
+template <class To, class From>
+using allow_conversion =
+    std::integral_constant<bool, std::is_same<To, From>::value ||
+                                     (std::is_convertible<To, From>::value &&
+                                      std::is_floating_point<To>::value &&
+                                      std::is_arithmetic<From>::value)>;
 
-    template<class To>
-    struct conversion_visitor : boost::static_visitor<To> {
-        template<class From>
-                std::enable_if_t<allow_conversion<To, From>::value, To>
-                operator()(const From& value) const {
-            return value;
-        }
+template <class To> struct conversion_visitor : boost::static_visitor<To> {
+  template <class From>
+  std::enable_if_t<allow_conversion<To, From>::value, To>
+  operator()(const From &value) const {
+    return value;
+  }
 
-        template<class From>
-        std::enable_if_t<!allow_conversion<To, From>::value, To>
-        operator()(const From&) const {
-            throw boost::bad_get{};
-        }
-    };
+  template <class From>
+  std::enable_if_t<!allow_conversion<To, From>::value, To>
+  operator()(const From &) const {
+    throw boost::bad_get{};
+  }
+};
 
 /**
  * @brief Implementation of get_value.
@@ -84,7 +85,9 @@ namespace detail {
  * is not allowed.
  */
 template <typename T, typename = void> struct get_value_helper {
-  T operator()(Variant const &v) const { return boost::apply_visitor(detail::conversion_visitor<T>{}, v); }
+  T operator()(Variant const &v) const {
+    return boost::apply_visitor(detail::conversion_visitor<T>{}, v);
+  }
 };
 
 template <class T, size_t N>
@@ -93,15 +96,14 @@ struct vector_conversion_visitor : boost::static_visitor<Vector<T, N>> {
 
   /* We try do unpack variant vectors and check if they
    * are convertible element by element. */
-  auto operator()(std::vector<Variant> const& vv) const {
+  auto operator()(std::vector<Variant> const &vv) const {
     if (N != vv.size()) {
       throw boost::bad_get{};
     }
 
-    Vector<T,N> ret;
-    boost::transform(vv, ret.begin(), [](const Variant& v) {
-      return get_value_helper<T>{}(v);
-    });
+    Vector<T, N> ret;
+    boost::transform(vv, ret.begin(),
+                     [](const Variant &v) { return get_value_helper<T>{}(v); });
 
     return ret;
   }
@@ -128,13 +130,12 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
   /* Standard case, correct type */
   std::vector<T> operator()(std::vector<T> const &v) const { return v; }
   std::vector<T> operator()(std::vector<Variant> const &vv) const {
-      std::vector<T> ret(vv.size());
+    std::vector<T> ret(vv.size());
 
-        boost::transform(vv, ret.begin(), [](const Variant& v) {
-            return get_value_helper<T>{}(v);
-        });
+    boost::transform(vv, ret.begin(),
+                     [](const Variant &v) { return get_value_helper<T>{}(v); });
 
-        return ret;
+    return ret;
   }
 };
 
@@ -202,11 +203,13 @@ struct get_value_helper<
  * be converted.
  */
 template <typename T> T get_value(Variant const &v) {
-    try {
-        return detail::get_value_helper<T>{}(v);
-    } catch(const boost::bad_get&) {
-        throw std::runtime_error("Provided argument of type " + detail::type_label(v) + " is not convertible to " + detail::type_label<T>());
-    }
+  try {
+    return detail::get_value_helper<T>{}(v);
+  } catch (const boost::bad_get &) {
+    throw std::runtime_error("Provided argument of type " +
+                             detail::type_label(v) + " is not convertible to " +
+                             detail::type_label<T>());
+  }
 }
 
 /**
