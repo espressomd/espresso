@@ -20,7 +20,7 @@ from __future__ import print_function, absolute_import
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport Vector3d, int_list, Span
+from espressomd.utils cimport Vector3d, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
@@ -61,8 +61,8 @@ cdef extern from "particle_data.hpp":
         particle_momentum m
         particle_force f
         particle_local l
-        int_list bl
-        int_list exclusions() except +
+        List[int] bl
+        List[int] exclusions() except +
         Vector3d calc_dip()
 
     IF ENGINE:

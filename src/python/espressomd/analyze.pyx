@@ -88,8 +88,8 @@ class Analysis(object):
 
         """
 
-        cdef int_list set1
-        cdef int_list set2
+        cdef List[int] set1
+        cdef List[int] set2
 
         if p1 == 'default' and p2 == 'default':
             pass
@@ -242,7 +242,7 @@ class Analysis(object):
         """
 
         cdef int planedims[3]
-        cdef int_list ids
+        cdef List[int] ids
         cdef double c_pos[3]
 
         check_type_or_throw_except(
@@ -269,7 +269,7 @@ class Analysis(object):
 
         ids = c_analyze.nbhood(c_analyze.partCfg(), c_pos, r_catch, planedims)
 
-        return create_nparray_from_int_list( & ids)
+        return create_nparray_from_int_list(ids)
 
     def cylindrical_average(self, center=None, axis=None,
                             length=None, radius=None,

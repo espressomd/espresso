@@ -1114,7 +1114,7 @@ cdef class ParticleHandle(object):
 
             def __get__(self):
                 self.update_particle_data()
-                cdef int_list exclusions = self.particle_data.exclusions()
+                cdef List[int] exclusions = self.particle_data.exclusions()
 
                 py_partners = []
                 for i in range(exclusions.n):
@@ -1349,8 +1349,8 @@ cdef class ParticleHandle(object):
         if self._id in bond[1:]:
             raise Exception(
                 "Bond partners {} include the particle {} itself.".format(bond[1:], self._id))
-        
-        add_particle_bond(self._id, make_const_span(bond_info, len(bond)))
+
+        add_particle_bond(self._id, make_const_span[int](bond_info, len(bond)))
 
     def delete_verified_bond(self, bond):
         """
@@ -1374,7 +1374,7 @@ cdef class ParticleHandle(object):
         for i in range(1, len(bond)):
             bond_info[i] = bond[i]
 
-        delete_particle_bond(self._id, make_const_span(bond_info, len(bond)))
+        delete_particle_bond(self._id, make_const_span[int](bond_info, len(bond)))
 
     def check_bond_or_throw_exception(self, bond):
         """

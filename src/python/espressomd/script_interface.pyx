@@ -221,14 +221,15 @@ class ScriptInterfaceHelper(PScriptInterface):
         return self.__dict__.keys() + self._valid_parameters()
 
     def __getattr__(self, attr):
-        if attr in self._valid_parameters():
-            return self.get_parameter(to_char_pointer(attr))
-        else:
-            try:
-                return self.__dict__[attr]
-            except KeyError:
-                raise AttributeError(
-                    "Class " + self.__class__.__name__ + " does not have an attribute " + attr)
+        for param in self.sip.valid_parameters():
+            if param == to_char_pointer(attr):
+                return self.get_parameter()
+
+        try:
+            return self.__dict__[attr]
+        except KeyError:
+            raise AttributeError(
+                "Class " + self.__class__.__name__ + " does not have an attribute " + attr)
 
     def __setattr__(self, attr, value):
         if attr in self._valid_parameters():

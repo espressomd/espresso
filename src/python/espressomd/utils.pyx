@@ -28,34 +28,21 @@ cdef extern from "stdlib.h":
     void * malloc(size_t size)
     void * realloc(void * ptr, size_t size)
 
-cdef np.ndarray create_nparray_from_int_list(int_list * il):
+cdef np.ndarray create_nparray_from_int_list(const List[int] & il):
     """
     Returns a numpy array from an int list struct which is provided as argument.
 
     Parameters
     ----------
-    int_list : int_list* which is to be converted
+    List[int] : List[int]* which is to be converted
 
     """
-    numpyArray = np.zeros(il.n)
-    for i in range(il.n):
-        numpyArray[i] = il.e[i]
+    numpyArray = np.zeros(il.size())
+    for i in range(il.size()):
+        numpyArray[i] = il[i]
     return numpyArray
 
-cdef np.ndarray create_nparray_from_double_list(double_list * dl):
-    """
-    Returns a numpy array from an double list struct which is provided as argument.
-    Parameters
-    ----------
-    dl : double_list* which is to be converted
-
-    """
-    numpyArray = np.zeros(dl.n)
-    for i in range(dl.n):
-        numpyArray[i] = dl.e[i]
-    return numpyArray
-
-cdef int_list create_int_list_from_python_object(obj):
+cdef List[int] create_int_list_from_python_object(obj):
     """
     Returns a int list pointer from a python object which supports subscripts.
 
@@ -64,11 +51,11 @@ cdef int_list create_int_list_from_python_object(obj):
     obj : python object which supports subscripts
 
     """
-    cdef int_list il
+    cdef List[int] il
     il.resize(len(obj))
 
     for i in range(len(obj)):
-        il.e[i] = obj[i]
+        il[i] = obj[i]
 
     return il
 
