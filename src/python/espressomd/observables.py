@@ -393,11 +393,11 @@ class ParticleDihedrals(Observable):
 
 @script_interface_register
 class StressTensor(Observable):
-    _so_name = "Observables::StressTensor"
 
     """Calculates the total stress tensor. See :ref:`stress tensor`)
 
     """
+    _so_name = "Observables::StressTensor"
 
 
 @script_interface_register

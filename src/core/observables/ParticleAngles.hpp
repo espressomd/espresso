@@ -28,8 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Observables {
 
 /** Calculate bond angles between particles in a polymer.
- *  For \f$n\f$ bonded particles, return the \f$n-2\f$ angles along the chain,
- *  in radians.
+ *  For @f$ n @f$ bonded particles, return the @f$ n-2 @f$ angles along the
+ *  chain, in radians.
  */
 class ParticleAngles : public PidObservable {
 public:

@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Observables {
 
 /** Calculate distances between particles in a polymer.
- *  For \f$n\f$ bonded particles, return the \f$n-1\f$ distances separating
+ *  For @f$ n @f$ bonded particles, return the @f$ n-1 @f$ distances separating
  *  them.
  */
 class ParticleDistances : public PidObservable {
