@@ -32,7 +32,6 @@ public:
     NEW,
     CONSTRUCT,
     SET_PARAMETER,
-    SET_PARAMETERS,
     CALL_METHOD,
     DELETE
   };

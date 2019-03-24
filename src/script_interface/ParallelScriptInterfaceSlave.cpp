@@ -80,13 +80,6 @@ void ParallelScriptInterfaceSlave::mpi_slave(CallbackAction action) {
     m_p->set_parameter(d.first, d.second);
     break;
   }
-  case CallbackAction::SET_PARAMETERS: {
-    auto parameters = bcast_variant_map();
-
-    m_p->set_parameters(parameters);
-
-    break;
-  }
   case CallbackAction::CALL_METHOD: {
     /* Name of the method and parameters */
     std::pair<std::string, VariantMap> d;

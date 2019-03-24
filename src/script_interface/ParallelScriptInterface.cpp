@@ -96,18 +96,6 @@ void ParallelScriptInterface::set_parameter(const std::string &name,
   collect_garbage();
 }
 
-void ParallelScriptInterface::set_parameters(const VariantMap &parameters) {
-  call(CallbackAction::SET_PARAMETERS);
-
-  auto p = unwrap_variant_map(parameters);
-
-  boost::mpi::broadcast(m_cb->comm(), p, 0);
-
-  m_p->set_parameters(p);
-
-  collect_garbage();
-}
-
 Variant ParallelScriptInterface::call_method(const std::string &name,
                                              const VariantMap &parameters) {
   call(CallbackAction::CALL_METHOD);
