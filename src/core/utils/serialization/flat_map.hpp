@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CORE_UTILS_SERIALIZATION_FLAT_MAP_HPP
 
 #include <boost/container/flat_map.hpp>
+#include <boost/serialization/split_free.hpp>
 
 namespace boost {
 namespace serialization {
