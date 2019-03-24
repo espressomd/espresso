@@ -38,6 +38,9 @@ cdef class PScriptInterface(object):
     def _ref_count(self):
         return self.sip.use_count()
 
+    def _valid_parameters(self):
+        return [to_str(p.to_string()) for p in self.sip.get().valid_parameters()]
+
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip):
         self.sip = sip
 
@@ -49,9 +52,6 @@ cdef class PScriptInterface(object):
             self.set_sip(ptr)
         except:
             raise Exception("Could not get sip for given_id")
-
-    def _valid_parameters(self):
-        return [to_str(p.to_string()) for p in self.sip.get().valid_parameters()]
 
     def id(self):
         oid = PObjectId()
@@ -90,7 +90,9 @@ cdef class PScriptInterface(object):
         return out_params
 
     def set_params(self, **kwargs):
-        self.sip.get().set_parameters(self._sanitize_params(kwargs))
+        for name, value in kwargs.items():
+            self.sip.get().set_parameter(to_char_pointer(name),
+                                         self.python_object_to_variant(value))
 
     cdef Variant python_object_to_variant(self, value):
         cdef Variant v
@@ -110,7 +112,6 @@ cdef class PScriptInterface(object):
         elif hasattr(value, '__iter__') and not(type(value) == str):
             for e in value:
                 vec.push_back(self.python_object_to_variant(e))
-
             return make_variant[vector[Variant]](vec)
         elif type(value) == str:
             return make_variant[string](to_char_pointer(value))
@@ -141,7 +142,7 @@ cdef class PScriptInterface(object):
             return get_value[vector[int]](value)
         if is_type[vector[double]](value):
             return get_value[vector[double]](value)
-        if is_type[Vector3d](value) :
+        if is_type[Vector3d](value):
             return make_array_locked(get_value[Vector3d](value))
         if is_type[ObjectId](value) :
             # Get the id and build a corresponding object
@@ -221,15 +222,14 @@ class ScriptInterfaceHelper(PScriptInterface):
         return self.__dict__.keys() + self._valid_parameters()
 
     def __getattr__(self, attr):
-        for param in self.sip.valid_parameters():
-            if param == to_char_pointer(attr):
-                return self.get_parameter()
+        if attr in self._valid_parameters():
+            return self.get_parameter(attr)
 
-        try:
+        if attr in self.__dict__:
             return self.__dict__[attr]
-        except KeyError:
-            raise AttributeError(
-                "Class " + self.__class__.__name__ + " does not have an attribute " + attr)
+
+        raise AttributeError(
+            "Class " + self.__class__.__name__ + " does not have an attribute " + attr)
 
     def __setattr__(self, attr, value):
         if attr in self._valid_parameters():

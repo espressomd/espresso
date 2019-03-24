@@ -56,7 +56,6 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
         vector[string_view] valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
-        void set_parameters(const VariantMap & parameters) except +
         Variant call_method(const string & name, const VariantMap & parameters) except +
         ObjectId id() except +
         void set_state(map[string, Variant]) except +

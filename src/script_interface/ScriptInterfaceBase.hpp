@@ -100,7 +100,7 @@ public:
    * is called before construct (only name() and valid_parameters()),
    * and it is only called once.
    *
-   * The default implementation just calls set_parameters.
+   * The default implementation just calls set_parameter for every parameter.
    *
    * @param params The parameters to the constructor. Only parameters that
    *               are valid for a default-constructed object are valid.
@@ -155,21 +155,7 @@ public:
    * @param name Name of the parameter
    * @param value Set parameter to this value.
    */
-  virtual void set_parameter(const std::string &name, const Variant &value){};
-  /**
-   * @brief Set multiple parameters.
-   *
-   * The default implementation calls the implementation of set_parameter for
-   * every
-   * element of the map.
-   *
-   * @param parameters Parameters to set.
-   */
-  virtual void set_parameters(const VariantMap &parameters) {
-    for (auto const &it : parameters) {
-      set_parameter(it.first, it.second);
-    }
-  }
+  virtual void set_parameter(const std::string &, const Variant &) {}
 
   /**
    * @brief Call a method on the object.
@@ -178,7 +164,7 @@ public:
    * this does nothing.
    */
   virtual Variant call_method(const std::string &, const VariantMap &) {
-    return true;
+    return none;
   }
 
   /**

@@ -39,8 +39,8 @@ namespace Testing {
  * @brief Mock to test ScriptInterface.
  */
 struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
-  map<string, Variant> get_parameters() const override {
-    map<string, Variant> ret;
+  VariantMap get_parameters() const override {
+    VariantMap ret;
 
     ret["bool_opt"] = bool_opt;
     ret["integer"] = integer;
@@ -53,7 +53,8 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
 
   /* Not needed for testing */
   const vector<boost::string_view> &valid_parameters() const override {
-    return {};
+    static std::vector<boost::string_view> params{};
+    return params;
   }
 
   void set_parameter(const string &name, const Variant &value) override {
@@ -82,14 +83,12 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   Variant call_method(const std::string &name,
                       const VariantMap &params) override {
     if (name == "test_method") {
-      method_called = true;
     }
 
     return true;
   }
 
-  bool method_called{false};
-  bool bool_opt, bool_req;
+    bool bool_opt, bool_req;
   int integer;
   vector<double> vec_double;
   vector<int> vec_int;

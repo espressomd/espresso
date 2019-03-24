@@ -71,7 +71,7 @@ public:
     using boost::get;
     switch (val.size()) {
     case 1: /* Normal value */
-      return val[1];
+      return val[0];
     case 3: /* Object value */
     {
       auto so_ptr = ScriptInterfaceBase::make_shared(
