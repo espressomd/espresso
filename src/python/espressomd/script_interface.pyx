@@ -178,7 +178,7 @@ cdef class PScriptInterface(object):
 
             return res
 
-        raise Exception("Unknown type")
+        raise TypeError("Unknown type")
 
     def get_parameter(self, name):
         cdef Variant value = self.sip.get().get_parameter(to_char_pointer(name))
