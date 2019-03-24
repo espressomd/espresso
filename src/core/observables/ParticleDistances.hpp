@@ -35,7 +35,8 @@ public:
   std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0, end = n_values(); i < end; i++) {
-      res[i] = (partCfg[ids()[i]].r.p - partCfg[ids()[i + 1]].r.p).norm();
+      auto v = get_mi_vector(partCfg[ids()[i]].r.p, partCfg[ids()[i + 1]].r.p);
+      res[i] = v.norm();
     }
     return res;
   }

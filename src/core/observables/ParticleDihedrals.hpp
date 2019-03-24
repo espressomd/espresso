@@ -35,17 +35,18 @@ class ParticleDihedrals : public PidObservable {
 public:
   std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
-    auto r1 = (partCfg[ids()[1]].r.p - partCfg[ids()[0]].r.p);
-    auto r2 = (partCfg[ids()[2]].r.p - partCfg[ids()[1]].r.p);
-    auto c1 = vector_product(r1, r2);
+    auto v1 = get_mi_vector(partCfg[ids()[1]].r.p, partCfg[ids()[0]].r.p);
+    auto v2 = get_mi_vector(partCfg[ids()[2]].r.p, partCfg[ids()[1]].r.p);
+    auto c1 = vector_product(v1, v2);
     for (int i = 0, end = n_values(); i < end; i++) {
-      auto r3 = (partCfg[ids()[i + 3]].r.p - partCfg[ids()[i + 2]].r.p);
-      auto c2 = vector_product(r2, r3);
+      auto v3 =
+          get_mi_vector(partCfg[ids()[i + 3]].r.p, partCfg[ids()[i + 2]].r.p);
+      auto c2 = vector_product(v2, v3);
       /* the 2-argument arctangent returns an angle in the range [-pi, pi] that
        * allows for an unambiguous determination of the 4th particle position */
-      res[i] = atan2(vector_product(c1, c2) * r2 / r2.norm(), c1 * c2);
-      r1 = std::move(r2);
-      r2 = std::move(r3);
+      res[i] = atan2((vector_product(c1, c2) * v2) / v2.norm(), c1 * c2);
+      v1 = std::move(v2);
+      v2 = std::move(v3);
       c1 = std::move(c2);
     }
     return res;

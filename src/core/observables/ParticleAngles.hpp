@@ -35,12 +35,13 @@ class ParticleAngles : public PidObservable {
 public:
   std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
-    auto r1 = (partCfg[ids()[1]].r.p - partCfg[ids()[0]].r.p);
-    auto n1 = r1.norm();
+    auto v1 = get_mi_vector(partCfg[ids()[1]].r.p, partCfg[ids()[0]].r.p);
+    auto n1 = v1.norm();
     for (int i = 0, end = n_values(); i < end; i++) {
-      auto r2 = (partCfg[ids()[i + 2]].r.p - partCfg[ids()[i + 1]].r.p);
-      auto n2 = r2.norm();
-      auto cosine = (r1 * r2) / (n1 * n2);
+      auto v2 =
+          get_mi_vector(partCfg[ids()[i + 2]].r.p, partCfg[ids()[i + 1]].r.p);
+      auto n2 = v2.norm();
+      auto cosine = (v1 * v2) / (n1 * n2);
       // sanitize cosine value
       if (cosine > TINY_COS_VALUE)
         cosine = TINY_COS_VALUE;
@@ -52,7 +53,7 @@ public:
        * than on a vector of doubles
        */
       res[i] = acos(-cosine);
-      r1 = std::move(r2);
+      v1 = std::move(v2);
       n1 = n2;
     }
     return res;
