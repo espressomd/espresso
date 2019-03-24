@@ -260,36 +260,6 @@ std::shared_ptr<T> make_shared_from_args(VariantMap const &vals,
       get_value<Types>(vals, std::forward<ArgNames>(args))...);
 }
 
-/**
- * @brief Call a function with parameters fetched from a VariantMap.
- *
- * If not provided the types of the arguments are deduced from the
- * function signature.
- *
- * (In R (T::*m)(Args...), m is a pointer to member function of a T,
- * returning R and taking Args as parameters.)
- */
-template <typename T, typename R, typename... Args, typename... ArgNames>
-auto call_with_args(T &this_, R (T::*m)(Args...), VariantMap const &vals,
-                    ArgNames &&... args) -> R {
-  return (this_.*m)(get_value<Args>(vals, std::forward<ArgNames>(args))...);
-}
-
-/**
- * @brief Call a function with parameters fetched from a VariantMap.
- *
- * If not provided the types of the arguments are deduced from the
- * function signature.
- *
- * (In R (*m)(Args...), m is a function pointer,
- * returning R and taking Args as parameters.)
- */
-template <typename R, typename... Args, typename... ArgNames>
-auto call_with_args(R (*m)(Args...), VariantMap const &vals,
-                    ArgNames &&... args) -> R {
-  return (*m)(get_value<Args>(vals, std::forward<ArgNames>(args))...);
-}
-
 template <typename T>
 void set_from_args(T &dst, VariantMap const &vals, const char *name) {
   dst = get_value<T>(vals, name);
