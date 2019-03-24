@@ -30,32 +30,32 @@ cdef extern from "utils/List.hpp" namespace "Utils":
     cppclass List[T]:
         List()
         List(size_t)
-        List(size_t, const T &)
+        List(size_t, const T & )
 
         T & operator[](size_t)
         void resize(size_t)
         void push_back(size_t)
 
-        T* data()
+        T * data()
         size_t size()
 
-        T* e
+        T * e
         size_t n
 
 cdef extern from "utils/Span.hpp" namespace "Utils":
     cppclass Span[T]:
         Span()
-        Span(T*, size_t)
+        Span(T *, size_t)
 
-        T &operator[](size_t)
+        T & operator[](size_t)
 
-        T *begin()
-        T *end()
+        T * begin()
+        T * end()
 
-        T *data()
+        T * data()
         size_t size()
 
-    Span[const T] make_const_span[T](T * , size_t)
+    Span[const T] make_const_span[T](T *, size_t)
 
 cdef List[int] create_int_list_from_python_object(obj)
 cdef np.ndarray create_nparray_from_int_list(const List[int] & il)

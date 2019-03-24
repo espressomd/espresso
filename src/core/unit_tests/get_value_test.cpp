@@ -24,8 +24,8 @@
 #include "get_value.hpp"
 
 BOOST_AUTO_TEST_CASE(default_case) {
-  using ScriptInterface::Variant;
   using ScriptInterface::get_value;
+  using ScriptInterface::Variant;
 
   auto const s = std::string{"Abc"};
   auto const v = Variant(s);
@@ -34,9 +34,9 @@ BOOST_AUTO_TEST_CASE(default_case) {
 }
 
 BOOST_AUTO_TEST_CASE(conversions) {
+  using ScriptInterface::get_value;
   using ScriptInterface::Variant;
   using ScriptInterface::detail::allow_conversion;
-  using ScriptInterface::get_value;
 
   static_assert(allow_conversion<int, int>::value, "");
   static_assert(allow_conversion<double, int>::value, "");
@@ -47,8 +47,8 @@ BOOST_AUTO_TEST_CASE(conversions) {
 }
 
 BOOST_AUTO_TEST_CASE(static_vector) {
-  using ScriptInterface::Variant;
   using ScriptInterface::get_value;
+  using ScriptInterface::Variant;
 
   /* From same type */
   {
@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(static_vector) {
 }
 
 BOOST_AUTO_TEST_CASE(heap_vector) {
-  using ScriptInterface::Variant;
   using ScriptInterface::get_value;
+  using ScriptInterface::Variant;
 
   /* From same type */
   {
@@ -85,10 +85,10 @@ BOOST_AUTO_TEST_CASE(heap_vector) {
 }
 
 BOOST_AUTO_TEST_CASE(get_value_from_map) {
-  using ScriptInterface::Variant;
-  using ScriptInterface::VariantMap;
   using ScriptInterface::get_value;
   using ScriptInterface::get_value_or;
+  using ScriptInterface::Variant;
+  using ScriptInterface::VariantMap;
 
   VariantMap map{{"a", 13}, {"e", 3.1}, {"f", "s"}};
 

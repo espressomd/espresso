@@ -1374,7 +1374,8 @@ cdef class ParticleHandle(object):
         for i in range(1, len(bond)):
             bond_info[i] = bond[i]
 
-        delete_particle_bond(self._id, make_const_span[int](bond_info, len(bond)))
+        delete_particle_bond(
+            self._id, make_const_span[int](bond_info, len(bond)))
 
     def check_bond_or_throw_exception(self, bond):
         """

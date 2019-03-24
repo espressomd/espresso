@@ -85,7 +85,8 @@ cdef class PScriptInterface(object):
         cdef Variant v
 
         for pname in in_params:
-            out_params[to_char_pointer(pname)] = self.python_object_to_variant(in_params[pname])
+            out_params[to_char_pointer(pname)] = self.python_object_to_variant(
+                in_params[pname])
 
         return out_params
 
@@ -124,27 +125,27 @@ cdef class PScriptInterface(object):
         else:
             raise TypeError("Unknown type for conversion to Variant")
 
-    cdef variant_to_python_object(self, const Variant &value) except +:
+    cdef variant_to_python_object(self, const Variant & value) except +:
         cdef ObjectId oid
         cdef vector[Variant] vec
         cdef shared_ptr[ScriptInterfaceBase] ptr
-        if is_none(value) :
+        if is_none(value):
             return None
-        if is_type[bool](value) :
+        if is_type[bool](value):
             return get_value[bool](value)
-        if is_type[int](value) :
+        if is_type[int](value):
             return get_value[int](value)
-        if is_type[double](value) :
+        if is_type[double](value):
             return get_value[double](value)
-        if is_type[string](value) :
+        if is_type[string](value):
             return to_str(get_value[string](value))
-        if is_type[vector[int]](value) :
+        if is_type[vector[int]](value):
             return get_value[vector[int]](value)
         if is_type[vector[double]](value):
             return get_value[vector[double]](value)
         if is_type[Vector3d](value):
             return make_array_locked(get_value[Vector3d](value))
-        if is_type[ObjectId](value) :
+        if is_type[ObjectId](value):
             # Get the id and build a corresponding object
             try:
                 oid = get_value[ObjectId](value)
@@ -169,7 +170,7 @@ cdef class PScriptInterface(object):
                     return None
             except:
                 return None
-        if is_type[vector[Variant]](value) :
+        if is_type[vector[Variant]](value):
             vec = get_value[vector[Variant]](value)
             res = []
 
@@ -192,6 +193,7 @@ cdef class PScriptInterface(object):
                 pair.second)
 
         return odict
+
 
 def _unpickle_so_class(so_name, state):
     cdef shared_ptr[ScriptInterfaceBase] sip = ScriptInterfaceBase.unserialize(state)

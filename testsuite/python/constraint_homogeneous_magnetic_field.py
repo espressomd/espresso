@@ -53,7 +53,9 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
     def test_default_value(self):
         H_field_default = np.array([1.0, 0.0, 0.0])
         H_constraint = espressomd.constraints.HomogeneousMagneticField()
-        np.testing.assert_almost_equal(np.copy(H_constraint.H), H_field_default)
+        np.testing.assert_almost_equal(
+            np.copy(H_constraint.H),
+            H_field_default)
 
     @ut.skipIf(not espressomd.has_features(["DIPOLES"]),
                "Features DIPOLES not available, skipping test!")

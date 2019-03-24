@@ -88,7 +88,7 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
     return true;
   }
 
-    bool bool_opt, bool_req;
+  bool bool_opt, bool_req;
   int integer;
   vector<double> vec_double;
   vector<int> vec_int;

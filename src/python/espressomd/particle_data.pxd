@@ -111,7 +111,7 @@ cdef extern from "particle_data.hpp":
 
     IF LB_ELECTROHYDRODYNAMICS:
         void set_particle_mu_E(int part, double mu_E[3])
-        void get_particle_mu_E(int part, double ( & mu_E)[3])
+        void get_particle_mu_E(int part, double (& mu_E)[3])
 
     void set_particle_type(int part, int type)
 
@@ -237,8 +237,7 @@ cdef class _ParticleSliceImpl:
     cdef int _chunk_size
 
 cdef extern from "grid.hpp":
-    Vector3d folded_position(const particle *)
-    Vector3d unfolded_position(const particle *)
-    cdef void fold_position(double *, int*)
+    Vector3d folded_position(const particle * )
+    Vector3d unfolded_position(const particle * )
+    cdef void fold_position(double * , int*)
     void unfold_position(double pos[3], int image_box[3])
-

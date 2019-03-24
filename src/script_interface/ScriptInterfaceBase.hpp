@@ -106,9 +106,9 @@ public:
    *               are valid for a default-constructed object are valid.
    */
   virtual void construct(VariantMap const &params) {
-      for(auto const&p : params) {
-          set_parameter(p.first, p.second);
-      }
+    for (auto const &p : params) {
+      set_parameter(p.first, p.second);
+    }
   }
 
 public:

@@ -33,8 +33,6 @@ struct A : AutoParameters<A> {
   const int j;
 };
 
-#include "utils/print.hpp"
-
 BOOST_AUTO_TEST_CASE(basic) {
   A a{0, 42};
 
