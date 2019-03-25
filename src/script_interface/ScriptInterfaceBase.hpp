@@ -120,7 +120,7 @@ public:
     VariantMap values;
 
     for (auto const &p : valid_parameters()) {
-      values[p.to_string()] = get_parameter(p.to_string());
+      values[p.data()] = get_parameter(p.data());
     }
 
     return values;

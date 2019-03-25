@@ -29,3 +29,4 @@ cdef extern from "boost/utility/string_ref.hpp" namespace "boost":
         bool operator != (const string_ref &)
 
         string to_string()
+        const char *data()
