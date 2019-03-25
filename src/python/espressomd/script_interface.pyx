@@ -84,9 +84,14 @@ cdef class PScriptInterface(object):
         cdef VariantMap out_params
         cdef Variant v
 
+        valid_params = self._valid_parameters()
+
         for pname in in_params:
-            out_params[to_char_pointer(pname)] = self.python_object_to_variant(
-                in_params[pname])
+            if pname in valid_params:
+                out_params[to_char_pointer(pname)] = self.python_object_to_variant(
+                    in_params[pname])
+            else:
+                raise RuntimeError("Unknown parameter '{}'".format(pname))
 
         return out_params
 
