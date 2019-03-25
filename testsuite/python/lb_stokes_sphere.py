@@ -114,7 +114,10 @@ class Stokes(object):
             rtol=0.06,
             atol=stokes_force * 0.06)
         self.system.integrator.run(300)
-        np.testing.assert_allclose(np.copy(sphere.get_force()), force, atol=0.02)
+        np.testing.assert_allclose(
+            np.copy(sphere.get_force()),
+            force,
+            atol=0.02)
 
 
 @ut.skipIf(not espressomd.has_features(
