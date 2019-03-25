@@ -1,3 +1,4 @@
+
 /*
   Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
@@ -45,9 +46,7 @@ public:
   }
 
   Utils::Span<const boost::string_ref> valid_parameters() const override {
-    static const boost::string_ref m_valid_parameters[] = {"ids"};
-
-    return m_valid_parameters;
+    return std::array<boost::string_ref, 1>{"ids"};
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
