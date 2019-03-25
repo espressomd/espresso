@@ -27,6 +27,21 @@
 #include "grid.hpp"
 #include <tuple>
 
+/** Compute the cosine of the angle between three particles.
+ *
+ *  Also return all intermediate quantities: normalized vectors
+ *  @f$ \vec{r_{ji}} @f$ (from particle @f$ i @f$ to particle @f$ j @f$)
+ *  and @f$ \vec{r_{kj}} @f$, and their normalization constants.
+ *
+ *  @param[in]  r_mid            Position of second/middle particle.
+ *  @param[in]  r_left           Position of first/left particle.
+ *  @param[in]  r_right          Position of third/right particle.
+ *  @param[in]  sanitize_cosine  Sanitize the cosine of the angle.
+ *  @return @f$ \vec{r_{ji}} @f$, @f$ \vec{r_{kj}} @f$,
+ *          @f$ \left\|\vec{r_{ji}}\right\|^{-1} @f$,
+ *          @f$ \left\|\vec{r_{kj}}\right\|^{-1} @f$,
+ *          @f$ \cos(\theta_{ijk}) @f$
+ */
 inline std::tuple<Vector3d, Vector3d, double, double, double>
 calc_vectors_and_cosine(Vector3d const &r_mid, Vector3d const &r_left,
                         Vector3d const &r_right, bool sanitize_cosine = false) {
@@ -50,18 +65,24 @@ calc_vectors_and_cosine(Vector3d const &r_mid, Vector3d const &r_left,
 }
 
 /** Compute a three-body angle interaction force.
+ *
+ *  See the details in @ref bondedIA_angle_force. The @f$ K(\theta_{ijk}) @f$
+ *  term is provided as a lambda function in @p forceFactor.
+ *
  *  @param[in]  r_mid            Position of second/middle particle.
  *  @param[in]  r_left           Position of first/left particle.
  *  @param[in]  r_right          Position of third/right particle.
- *  @param[in]  forceFactor      Angle bending constant.
+ *  @param[in]  forceFactor      Angle force term.
  *  @param[in]  sanitize_cosine  Sanitize the cosine of the angle.
- *  @param[out] force1           Force on particle 1.
- *  @param[out] force2           Force on particle 2.
+ *  @param[out] f_mid            Force on the second/middle particle.
+ *  @param[out] f_left           Force on the first/left particle.
+ *  tparam      ForceFactor      Function evaluating the angle force term
+ *                               for a given angle.
  */
 template <typename ForceFactor>
 void calc_angle_generic_force(Vector3d const &r_mid, Vector3d const &r_left,
                               Vector3d const &r_right, ForceFactor forceFactor,
-                              double force1[3], double force2[3],
+                              double f_mid[3], double f_left[3],
                               bool sanitize_cosine) {
   Vector3d vec1, vec2;
   double d1i, d2i, cosine;
@@ -69,22 +90,28 @@ void calc_angle_generic_force(Vector3d const &r_mid, Vector3d const &r_left,
       calc_vectors_and_cosine(r_mid, r_left, r_right, sanitize_cosine);
   /* force factor */
   auto const fac = forceFactor(cosine);
-  /* force calculation */
+  /* force calculation on particles 1 and 3 */
   auto const f1 = fac * (cosine * vec1 - vec2) * d1i;
-  auto const f2 = fac * (cosine * vec2 - vec1) * d2i;
+  auto const f3 = fac * (cosine * vec2 - vec1) * d2i;
   for (int j = 0; j < 3; j++) {
-    force1[j] = (f1 - f2)[j];
-    force2[j] = -f1[j];
+    f_mid[j] = (f1 - f3)[j];
+    f_left[j] = -f1[j];
   }
 }
 
 /** Compute the forces of a three-body bonded potential.
- *  @param[in]  r_mid        Position of second/middle particle.
- *  @param[in]  r_left       Position of first/left particle.
- *  @param[in]  r_right      Position of third/right particle.
- *  @param[in]  forceFactor  Angle bending constant.
+ *
+ *  See the details in @ref bondedIA_angle_force. The @f$ K(\theta_{ijk}) @f$
+ *  term is provided as a lambda function in @p forceFactor.
+ *
+ *  @param[in]  r_mid            Position of second/middle particle.
+ *  @param[in]  r_left           Position of first/left particle.
+ *  @param[in]  r_right          Position of third/right particle.
+ *  @param[in]  forceFactor      Angle force term.
  *  @param[in]  sanitize_cosine  Sanitize the cosine of the angle.
- *  @return Forces on particles 1, 2 and 3.
+ *  tparam      ForceFactor      Function evaluating the angle force term
+ *                               for a given angle.
+ *  @return Forces on the second, first and third particles, in that order.
  */
 template <typename ForceFactor>
 std::tuple<Vector3d, Vector3d, Vector3d>
@@ -111,10 +138,10 @@ calc_angle_generic_3body_forces(Vector3d const &r_mid, Vector3d const &r_left,
   auto const fj = vec31 / (vec21_len * vec31_len) - cos_phi * vec21 / vec21_sqr;
   auto const fk = vec21 / (vec21_len * vec31_len) - cos_phi * vec31 / vec31_sqr;
   // note that F1 = -(F2 + F3) in analytical case
-  auto force1 = -fac * (fj + fk);
-  auto force2 = fac * fj;
-  auto force3 = fac * fk;
-  return std::make_tuple(force1, force2, force3);
+  auto force_mid = -fac * (fj + fk);
+  auto force_left = fac * fj;
+  auto force_right = fac * fk;
+  return std::make_tuple(force_mid, force_left, force_right);
 }
 
 #endif /* ANGLE_COMMON_H */

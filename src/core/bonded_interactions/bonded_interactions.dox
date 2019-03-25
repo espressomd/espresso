@@ -1,0 +1,294 @@
+/*
+  Copyright (C) 2019 The ESPResSo project
+
+  This file is part of ESPResSo.
+
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/** @page bondedIA Bonded interactions
+ * 
+ *  @section bondedIA_bond_angles Bond angle potentials
+ * 
+ *  @subsection bondedIA_angle_force General expressions for the forces
+ * 
+ *  This section uses the particle force expressions derived in
+ *  Swope, Ferguson *J. Comput. Chem.* **1992**, *13*(5): 585-594,
+ *  doi:[10.1002/jcc.540130508](https://doi.org/10.1002/jcc.540130508).
+ *
+ *  The force acting on particle @f$ i @f$ is given by the chain rule in
+ *  equation 6:
+ *
+ *  @f{equation}{
+ *      \label{eq:Swope-eq-6}
+ *      \vec{F_i}
+ *          = \nabla_i U(\theta_{ijk})
+ *          = \left(
+ *                  \frac{\mathrm{d}U(\theta_{ijk})}{\mathrm{d}\theta_{ijk}}
+ *            \right)
+ *            \left(
+ *                  \frac{\mathrm{d}\theta_{ijk}}{\mathrm{d}\cos(\theta_{ijk})}
+ *            \right)
+ *            \left(
+ *                  \nabla_i \cos(\theta_{ijk})
+ *            \right)
+ *  @f}
+ *
+ *  with
+ *
+ *  @f[
+ *      \left(
+ *            \frac{\mathrm{d}\theta_{ijk}}{\mathrm{d}\cos(\theta_{ijk})}
+ *      \right)
+ *          = \left(
+ *                  \frac{-1}{\sin(\theta_{ijk})}
+ *            \right)
+ *  @f]
+ *
+ *  and @f$ \theta_{ijk} @f$ the angle formed by the three particles,
+ *  @f$ U(\theta_{ijk}) @f$ the bond angle potential, @f$ \vec{r_{ij}} @f$
+ *  the vector from particle @f$ j @f$ to particle @f$ i @f$ and
+ *  @f$ \nabla_i @f$ the gradient in the direction @f$ \vec{r_{ij}} @f$.
+ *
+ *  The expression for @f$ \cos(\theta_{ijk}) @f$ is given by equation 4:
+ *
+ *  @f{equation}{
+ *      \label{eq:Swope-eq-4}
+ *      \cos(\theta_{ijk})
+ *          = \frac{\vec{r_{ij}}\cdot\vec{r_{kj}}}
+ *                 {\left\|\vec{r_{ij}}\right\|\left\|\vec{r_{kj}}\right\|}
+ *  @f}
+ *
+ *  The expression for its gradient is given by equation 9:
+ *
+ *  @f{equation}{
+ *      \label{eq:Swope-eq-9}
+ *      \nabla_i \cos(\theta_{ijk})
+ *          = \vec{e_x}\frac{\partial\cos(\theta_{ijk})}{\partial x_{ij}}
+ *          + \vec{e_y}\frac{\partial\cos(\theta_{ijk})}{\partial y_{ij}}
+ *          + \vec{e_z}\frac{\partial\cos(\theta_{ijk})}{\partial z_{ij}}
+ *  @f}
+ *
+ *  with @f$ \left(\vec{e_x}, \vec{e_y}, \vec{e_z}\right) @f$ the unit vectors
+ *  of the reference coordinate system and
+ *  @f$ \vec{r_{ij}} = \left(x_{ij}, y_{ij}, z_{ij}\right) @f$.
+ *
+ *  Applying the quotient rule:
+ *
+ *  @f[
+ *      \frac{\partial\cos(\theta_{ijk})}{\partial x_{ij}}
+ *          = \frac{\partial}{\partial x_{ij}}
+ *            \left(
+ *                  \frac{\vec{r_{ij}}\cdot\vec{r_{kj}}}
+ *                       {\left\|\vec{r_{ij}}\right\|\left\|\vec{r_{kj}}\right\|}
+ *            \right)
+ *          = \frac{\left\|\vec{r_{ij}}\right\|\left\|\vec{r_{kj}}\right\|
+ *                  \partial \left(\vec{r_{ij}}\cdot\vec{r_{kj}}\right)
+ *                /\, \partial x_{ij}
+ *                - \vec{r_{ij}}\cdot\vec{r_{kj}}\cdot
+ *                  \partial
+ *                  \left(
+ *                       \left\|\vec{r_{ij}}\right\|\left\|\vec{r_{kj}}\right\|
+ *                  \right)
+ *                /\, \partial x_{ij}}
+ *                 {\left\|\vec{r_{ij}}\right\|^2\left\|\vec{r_{kj}}\right\|^2}
+ *            
+ *  @f]
+ *
+ *  with
+ *
+ *  @f[
+ *      \frac{\partial \left(\vec{r_{ij}}\cdot\vec{r_{kj}}\right)}
+ *           {\partial x_{ij}}
+ *          = \frac{\partial \left(x_{ij} \cdot x_{kj} + y_{ij} \cdot y_{kj} + z_{ij} \cdot z_{kj}\right)}
+ *           {\partial x_{ij}}
+ *          = x_{kj}
+ *  @f]
+ *
+ *  and
+ *
+ *  @f[
+ *      \frac{\partial \left(\left\|\vec{r_{ij}}\right\|\left\|\vec{r_{kj}}\right\|\right)}
+ *           {\partial x_{ij}}
+ *          = \left\|\vec{r_{kj}}\right\|
+ *            \frac{\partial}{\partial x_{ij}}
+ *            \sqrt{x_{ij}^2 + y_{ij}^2 + z_{ij}^2}
+ *          = \left\|\vec{r_{kj}}\right\|
+ *            \frac{0.5 \cdot 2 \cdot x_{ij}}
+ *                 {\sqrt{x_{ij}^2 + y_{ij}^2 + z_{ij}^2}}
+ *          = x_{ij}
+ *            \frac{\left\|\vec{r_{kj}}\right\|}
+ *                 {\left\|\vec{r_{ij}}\right\|}
+ *  @f]
+ *
+ *  leading to equation 12:
+ *
+ *  @f{align*}{
+ *      \label{eq:Swope-eq-12}
+ *      \frac{\partial\cos(\theta_{ijk})}{\partial x_{ij}}
+ *         &= \frac{\left\|\vec{r_{ij}}\right\|\left\|\vec{r_{kj}}\right\|x_{kj}
+ *                  - \vec{r_{ij}}\cdot\vec{r_{kj}}\cdot x_{ij}
+ *                    \left\|\vec{r_{kj}}\right\|\left\|\vec{r_{ij}}\right\|^{-1}}
+ *                 {\left\|\vec{r_{ij}}\right\|^2\left\|\vec{r_{kj}}\right\|^2}
+ *      \\
+ *         &= \frac{x_{kj}}
+ *                 {\left\|\vec{r_{ij}}\right\|\left\|\vec{r_{kj}}\right\|}
+ *          - \frac{\vec{r_{ij}}\cdot\vec{r_{kj}}\cdot x_{ij}}
+ *                 {\left\|\vec{r_{ij}}\right\|^3\left\|\vec{r_{kj}}\right\|}
+ *      \\
+ *         &= \frac{1}{\left\|\vec{r_{ij}}\right\|}
+ *                 \left(
+ *                    \frac{x_{kj}}{\left\|\vec{r_{kj}}\right\|}
+ *                  - \frac{x_{ij}}{\left\|\vec{r_{ij}}\right\|}
+ *                    \cos(\theta_{ijk})
+ *                 \right)
+ *  @f}
+ *
+ *  Applying these steps to equations 9-11 leads to the force equations
+ *  for all three particles:
+ *
+ *  @f{align*}{
+ *      \label{eq:Swope-eqs-9-final}
+ *      \vec{F_i}
+ *          &= K(\theta_{ijk})
+ *                 \frac{1}{\left\|\vec{r_{ij}}\right\|}
+ *                 \left(
+ *                    \frac{\vec{r_{kj}}}{\left\|\vec{r_{kj}}\right\|}
+ *                  - \frac{\vec{r_{ij}}}{\left\|\vec{r_{ij}}\right\|}
+ *                    \cos(\theta_{ijk})
+ *                 \right)
+ *      \\
+ *      \label{eq:Swope-eqs-10-final}
+ *      \vec{F_k}
+ *          &= K(\theta_{ijk})
+ *                 \frac{1}{\left\lVert\vec{r_{kj}}\right\rVert}
+ *                 \left(
+ *                    \frac{\vec{r_{ij}}}{\left\|\vec{r_{ij}}\right\|}
+ *                  - \frac{\vec{r_{kj}}}{\left\|\vec{r_{kj}}\right\|}
+ *                    \cos(\theta_{ijk})
+ *                 \right)
+ *      \\
+ *      \label{eq:Swope-eqs-11-final}
+ *      \vec{F_j} &= -\left(\vec{F_i} + \vec{F_k}\right)
+ *  @f}
+ *
+ *  with @f$ K(\theta_{ijk}) @f$ the angle force term, which depends on the
+ *  expression used for the angle potential.
+ *
+ *
+ *  @subsection bondedIA_angle_potentials Available potentials
+ *
+ *
+ *  @subsubsection bondedIA_angle_harmonic Harmonic angle potential
+ *
+ *  The harmonic angle potential takes the form:
+ *
+ *  @f{equation}{
+ *      \label{eq:harmonic-angle-pot}
+ *      U(\theta_{ijk})
+ *          = \frac{1}{2}k_{ijk}\left[\theta_{ijk} - \theta_{ijk}^0\right]^2
+ *  @f}
+ *
+ *  with @f$ \theta_{ijk} @f$ the angle formed by the three particles,
+ *  @f$ \theta_{ijk}^0 @f$ the equilibrium angle and @f$ k_{ijk} @f$
+ *  the bond angle force constant.
+ *
+ *  The derivative with respect to the angle is:
+ *
+ *  @f[
+ *      \frac{\mathrm{d}U(\theta_{ijk})}{\mathrm{d}\theta_{ijk}}
+ *          = k_{ijk}\left[\theta_{ijk} - \theta_{ijk}^0\right]
+ *  @f]
+ *
+ *  resulting in the following angle force term:
+ *
+ *  @f{equation}{
+ *      \label{eq:harmonic-angle-pot-angle-term}
+ *      K(\theta_{ijk})
+ *          = -k_{ijk}\frac{\theta_{ijk} - \theta_{ijk}^0}
+ *                         {\sin(\theta_{ijk})}
+ *  @f}
+ *
+ *  which can lead to numerical instability at @f$ \theta_{ijk} = 0 @f$ and
+ *  @f$ \theta_{ijk} = \pi @f$.
+ *
+ *
+ *  @subsubsection bondedIA_angle_cossquare Harmonic cosine potential
+ *
+ *  The harmonic cosine potential takes the form:
+ *
+ *  @f{equation}{
+ *      \label{eq:harmonic-cosine-pot}
+ *      U(\theta_{ijk})
+ *          = \frac{1}{2}
+ *            k_{ijk}\left[\cos(\theta_{ijk}) - \cos(\theta_{ijk}^0)\right]^2
+ *  @f}
+ *
+ *  with @f$ \theta_{ijk} @f$ the angle formed by the three particles,
+ *  @f$ \theta_{ijk}^0 @f$ the equilibrium angle and @f$ k_{ijk} @f$
+ *  the bond angle force constant.
+ *
+ *  The derivative with respect to the angle is:
+ *
+ *  @f[
+ *      \frac{\mathrm{d}U(\theta_{ijk})}{\mathrm{d}\theta_{ijk}}
+ *          = -k_{ijk}\sin(\theta_{ijk})
+ *            \left[\cos(\theta_{ijk}) - \cos(\theta_{ijk}^0)\right]
+ *  @f]
+ *
+ *  resulting in the following angle force term:
+ *
+ *  @f{equation}{
+ *      \label{eq:harmonic-cosine-pot-angle-term}
+ *      K(\theta_{ijk})
+ *          = k_{ijk}\left[\cos(\theta_{ijk}) - \cos(\theta_{ijk}^0)\right]
+ *  @f}
+ *
+ *  which does not suffer from numerical instability.
+ *
+ *
+ *  @subsubsection bondedIA_angle_cosine Cosine potential
+ *
+ *  The cosine potential takes the form:
+ *
+ *  @f{equation}{
+ *      \label{eq:cosine-pot}
+ *      U(\theta_{ijk})
+ *          = k_{ijk}\left[1 - \cos(\theta_{ijk} - \theta_{ijk}^0)\right]
+ *  @f}
+ *
+ *  with @f$ \theta_{ijk} @f$ the angle formed by the three particles,
+ *  @f$ \theta_{ijk}^0 @f$ the equilibrium angle and @f$ k_{ijk} @f$
+ *  the bond angle force constant.
+ *
+ *  The derivative with respect to the angle is:
+ *
+ *  @f[
+ *      \frac{\mathrm{d}U(\theta_{ijk})}{\mathrm{d}\theta_{ijk}}
+ *          = k_{ijk}\sin(\theta_{ijk} - \theta_{ijk}^0)
+ *  @f]
+ *
+ *  resulting in the following angle force term:
+ *
+ *  @f{equation}{
+ *      \label{eq:cosine-pot-angle-term}
+ *      K(\theta_{ijk})
+ *          = -k_{ijk}\frac{\sin(\theta_{ijk} - \theta_{ijk}^0)}
+ *                         {\sin(\theta_{ijk})}
+ *  @f}
+ *
+ *  which can lead to numerical instability at @f$ \theta_{ijk} = 0 @f$ and
+ *  @f$ \theta_{ijk} = \pi @f$.
+ *
+ */
