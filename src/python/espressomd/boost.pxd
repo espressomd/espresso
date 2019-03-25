@@ -19,13 +19,13 @@
 from libcpp.string cimport string
 from libcpp cimport bool
 
-cdef extern from "boost/utility/string_view.hpp" namespace "boost":
-    cdef cppclass string_view:
-      string_view()
-      string_view(const char *)
-      string_view(const string &)
+cdef extern from "boost/utility/string_ref.hpp" namespace "boost":
+    cdef cppclass string_ref:
+      string_ref()
+      string_ref(const char *)
+      string_ref(const string &)
 
-      bool operator==(const string_view &)
-      bool operator!=(const string_view &)
+      bool operator==(const string_ref &)
+      bool operator!=(const string_ref &)
 
       string to_string()

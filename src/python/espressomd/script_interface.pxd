@@ -25,7 +25,7 @@ from libcpp.memory cimport shared_ptr
 from libcpp.memory cimport weak_ptr
 from libcpp cimport bool
 
-from boost cimport string_view
+from boost cimport string_ref
 
 cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     void initialize()
@@ -53,7 +53,7 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
         const string name()
         void construct(const VariantMap &) except +
         VariantMap get_parameters() except +
-        vector[string_view] valid_parameters() except +
+        vector[string_ref] valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
         Variant call_method(const string & name, const VariantMap & parameters) except +

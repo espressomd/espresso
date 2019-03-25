@@ -44,9 +44,9 @@ public:
     return {{"ids", m_observable->ids()}};
   }
 
-  const std::vector<boost::string_view> &valid_parameters() const override {
+  const std::vector<boost::string_ref> &valid_parameters() const override {
     static auto const m_valid_parameters =
-        std::vector<boost::string_view>({"ids"});
+        std::vector<boost::string_ref>({"ids"});
     return m_valid_parameters;
   }
 

@@ -26,7 +26,7 @@
 
 #include "utils/serialization/array.hpp"
 
-#include <boost/utility/string_view.hpp>
+#include <boost/utility/string_ref.hpp>
 
 #include "Variant.hpp"
 
@@ -133,8 +133,8 @@ public:
    *
    * @return Expected parameters.
    */
-  virtual const std::vector<boost::string_view> &valid_parameters() const {
-    static std::vector<boost::string_view> valid_params;
+  virtual const std::vector<boost::string_ref> &valid_parameters() const {
+    static std::vector<boost::string_ref> valid_params;
 
     return valid_params;
   }

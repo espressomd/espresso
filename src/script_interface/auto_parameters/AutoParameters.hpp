@@ -116,8 +116,8 @@ protected:
 
 public:
   /* ScriptInterfaceBase implementation */
-  const std::vector<boost::string_view> &valid_parameters() const final {
-    static std::vector<boost::string_view> valid_params;
+  const std::vector<boost::string_ref> &valid_parameters() const final {
+    static std::vector<boost::string_ref> valid_params;
     valid_params.clear();
 
     for (auto const &p : m_parameters) {
