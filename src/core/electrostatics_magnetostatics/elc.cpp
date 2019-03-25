@@ -593,12 +593,12 @@ static void setup_P(int p, double omega) {
   for (auto &p : local_cells.particles()) {
     double e = exp(omega * p.r.p[2]);
 
-    partblk[size * ic + POQESM] = p.p.q * scxcache[o + ic].s / e;
-    partblk[size * ic + POQESP] = p.p.q * scxcache[o + ic].s * e;
-    partblk[size * ic + POQECM] = p.p.q * scxcache[o + ic].c / e;
-    partblk[size * ic + POQECP] = p.p.q * scxcache[o + ic].c * e;
+    partblk[size * ic + POQESM] = scxcache[o + ic].s / e;
+    partblk[size * ic + POQESP] = scxcache[o + ic].s * e;
+    partblk[size * ic + POQECM] = scxcache[o + ic].c / e;
+    partblk[size * ic + POQECP] = scxcache[o + ic].c * e;
 
-    add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
+    addscale_vec(gblcblk, p.p.q, block(partblk, ic, size), gblcblk, size);
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
@@ -699,12 +699,12 @@ static void setup_Q(int q, double omega) {
   for (auto &p : local_cells.particles()) {
     double e = exp(omega * p.r.p[2]);
 
-    partblk[size * ic + POQESM] = p.p.q * scycache[o + ic].s / e;
-    partblk[size * ic + POQESP] = p.p.q * scycache[o + ic].s * e;
-    partblk[size * ic + POQECM] = p.p.q * scycache[o + ic].c / e;
-    partblk[size * ic + POQECP] = p.p.q * scycache[o + ic].c * e;
+    partblk[size * ic + POQESM] = scycache[o + ic].s / e;
+    partblk[size * ic + POQESP] = scycache[o + ic].s * e;
+    partblk[size * ic + POQECM] = scycache[o + ic].c / e;
+    partblk[size * ic + POQECP] = scycache[o + ic].c * e;
 
-    add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
+    addscale_vec(gblcblk, p.p.q, block(partblk, ic, size), gblcblk, size);
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
@@ -782,19 +782,18 @@ static void setup_Q(int q, double omega) {
 }
 
 static void add_P_force() {
-  int ic;
   int size = 4;
 
-  ic = 0;
+  int ic = 0;
   for (auto &p : local_cells.particles()) {
-    p.f.f[0] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
-                partblk[size * ic + POQECM] * gblcblk[POQESP] +
-                partblk[size * ic + POQESP] * gblcblk[POQECM] -
-                partblk[size * ic + POQECP] * gblcblk[POQESM];
-    p.f.f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                partblk[size * ic + POQESM] * gblcblk[POQESP] -
-                partblk[size * ic + POQECP] * gblcblk[POQECM] -
-                partblk[size * ic + POQESP] * gblcblk[POQESM];
+    p.f.f[0] += p.p.q * (partblk[size * ic + POQESM] * gblcblk[POQECP] -
+                         partblk[size * ic + POQECM] * gblcblk[POQESP] +
+                         partblk[size * ic + POQESP] * gblcblk[POQECM] -
+                         partblk[size * ic + POQECP] * gblcblk[POQESM]);
+    p.f.f[2] += p.p.q * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
+                         partblk[size * ic + POQESM] * gblcblk[POQESP] -
+                         partblk[size * ic + POQECP] * gblcblk[POQECM] -
+                         partblk[size * ic + POQESP] * gblcblk[POQESM]);
     ic++;
   }
 }
@@ -804,11 +803,14 @@ static double P_energy(double omega) {
   double eng = 0;
   double pref = 1 / omega;
 
-  for (unsigned ic = 0; ic < n_localpart; ic++) {
-    eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                   partblk[size * ic + POQESM] * gblcblk[POQESP] +
-                   partblk[size * ic + POQECP] * gblcblk[POQECM] +
-                   partblk[size * ic + POQESP] * gblcblk[POQESM]);
+
+  int ic = 0;
+  for (auto &p : local_cells.particles()) {
+    eng += pref * p.p.q * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
+                           partblk[size * ic + POQESM] * gblcblk[POQESP] +
+                           partblk[size * ic + POQECP] * gblcblk[POQECM] +
+                           partblk[size * ic + POQESP] * gblcblk[POQESM]);
+    ic++;
   }
 
   return eng;
@@ -820,14 +822,14 @@ static void add_Q_force() {
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
-    p.f.f[1] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
-                partblk[size * ic + POQECM] * gblcblk[POQESP] +
-                partblk[size * ic + POQESP] * gblcblk[POQECM] -
-                partblk[size * ic + POQECP] * gblcblk[POQESM];
-    p.f.f[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                partblk[size * ic + POQESM] * gblcblk[POQESP] -
-                partblk[size * ic + POQECP] * gblcblk[POQECM] -
-                partblk[size * ic + POQESP] * gblcblk[POQESM];
+    p.f.f[1] += p.p.q * (partblk[size * ic + POQESM] * gblcblk[POQECP] -
+                         partblk[size * ic + POQECM] * gblcblk[POQESP] +
+                         partblk[size * ic + POQESP] * gblcblk[POQECM] -
+                         partblk[size * ic + POQECP] * gblcblk[POQESM]);
+    p.f.f[2] += p.p.q * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
+                         partblk[size * ic + POQESM] * gblcblk[POQESP] -
+                         partblk[size * ic + POQECP] * gblcblk[POQECM] -
+                         partblk[size * ic + POQESP] * gblcblk[POQESM]);
     ic++;
   }
 }
@@ -837,11 +839,13 @@ static double Q_energy(double omega) {
   double eng = 0;
   double pref = 1 / omega;
 
-  for (unsigned ic = 0; ic < n_localpart; ic++) {
-    eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                   partblk[size * ic + POQESM] * gblcblk[POQESP] +
-                   partblk[size * ic + POQECP] * gblcblk[POQECM] +
-                   partblk[size * ic + POQESP] * gblcblk[POQESM]);
+  int ic = 0;
+  for (auto &p : local_cells.particles()) {
+    eng += pref * p.p.q * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
+                           partblk[size * ic + POQESM] * gblcblk[POQESP] +
+                           partblk[size * ic + POQECP] * gblcblk[POQECM] +
+                           partblk[size * ic + POQESP] * gblcblk[POQESM]);
+    ic++;
   }
   return eng;
 }
@@ -876,24 +880,24 @@ static void setup_PQ(int p, int q, double omega) {
     double e = exp(omega * p.r.p[2]);
 
     partblk[size * ic + PQESSM] =
-        scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q / e;
+        scxcache[ox + ic].s * scycache[oy + ic].s / e;
     partblk[size * ic + PQESCM] =
-        scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q / e;
+        scxcache[ox + ic].s * scycache[oy + ic].c / e;
     partblk[size * ic + PQECSM] =
-        scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q / e;
+        scxcache[ox + ic].c * scycache[oy + ic].s / e;
     partblk[size * ic + PQECCM] =
-        scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q / e;
+        scxcache[ox + ic].c * scycache[oy + ic].c / e;
 
     partblk[size * ic + PQESSP] =
-        scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e;
+        scxcache[ox + ic].s * scycache[oy + ic].s * e;
     partblk[size * ic + PQESCP] =
-        scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e;
+        scxcache[ox + ic].s * scycache[oy + ic].c * e;
     partblk[size * ic + PQECSP] =
-        scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e;
+        scxcache[ox + ic].c * scycache[oy + ic].s * e;
     partblk[size * ic + PQECCP] =
-        scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e;
+        scxcache[ox + ic].c * scycache[oy + ic].c * e;
 
-    add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
+    addscale_vec(gblcblk, p.p.q, block(partblk, ic, size), gblcblk, size);
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
@@ -988,30 +992,30 @@ static void add_PQ_force(int p, int q, double omega) {
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
-    p.f.f[0] += pref_x * (partblk[size * ic + PQESCM] * gblcblk[PQECCP] +
-                          partblk[size * ic + PQESSM] * gblcblk[PQECSP] -
-                          partblk[size * ic + PQECCM] * gblcblk[PQESCP] -
-                          partblk[size * ic + PQECSM] * gblcblk[PQESSP] +
-                          partblk[size * ic + PQESCP] * gblcblk[PQECCM] +
-                          partblk[size * ic + PQESSP] * gblcblk[PQECSM] -
-                          partblk[size * ic + PQECCP] * gblcblk[PQESCM] -
-                          partblk[size * ic + PQECSP] * gblcblk[PQESSM]);
-    p.f.f[1] += pref_y * (partblk[size * ic + PQECSM] * gblcblk[PQECCP] +
-                          partblk[size * ic + PQESSM] * gblcblk[PQESCP] -
-                          partblk[size * ic + PQECCM] * gblcblk[PQECSP] -
-                          partblk[size * ic + PQESCM] * gblcblk[PQESSP] +
-                          partblk[size * ic + PQECSP] * gblcblk[PQECCM] +
-                          partblk[size * ic + PQESSP] * gblcblk[PQESCM] -
-                          partblk[size * ic + PQECCP] * gblcblk[PQECSM] -
-                          partblk[size * ic + PQESCP] * gblcblk[PQESSM]);
-    p.f.f[2] += (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
-                 partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
-                 partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
-                 partblk[size * ic + PQESSM] * gblcblk[PQESSP] -
-                 partblk[size * ic + PQECCP] * gblcblk[PQECCM] -
-                 partblk[size * ic + PQECSP] * gblcblk[PQECSM] -
-                 partblk[size * ic + PQESCP] * gblcblk[PQESCM] -
-                 partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
+    p.f.f[0] += pref_x * p.p.q * (partblk[size * ic + PQESCM] * gblcblk[PQECCP] +
+                                  partblk[size * ic + PQESSM] * gblcblk[PQECSP] -
+                                  partblk[size * ic + PQECCM] * gblcblk[PQESCP] -
+                                  partblk[size * ic + PQECSM] * gblcblk[PQESSP] +
+                                  partblk[size * ic + PQESCP] * gblcblk[PQECCM] +
+                                  partblk[size * ic + PQESSP] * gblcblk[PQECSM] -
+                                  partblk[size * ic + PQECCP] * gblcblk[PQESCM] -
+                                  partblk[size * ic + PQECSP] * gblcblk[PQESSM]);
+    p.f.f[1] += pref_y * p.p.q * (partblk[size * ic + PQECSM] * gblcblk[PQECCP] +
+                                  partblk[size * ic + PQESSM] * gblcblk[PQESCP] -
+                                  partblk[size * ic + PQECCM] * gblcblk[PQECSP] -
+                                  partblk[size * ic + PQESCM] * gblcblk[PQESSP] +
+                                  partblk[size * ic + PQECSP] * gblcblk[PQECCM] +
+                                  partblk[size * ic + PQESSP] * gblcblk[PQESCM] -
+                                  partblk[size * ic + PQECCP] * gblcblk[PQECSM] -
+                                  partblk[size * ic + PQESCP] * gblcblk[PQESSM]);
+    p.f.f[2] += p.p.q * (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
+                         partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
+                         partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
+                         partblk[size * ic + PQESSM] * gblcblk[PQESSP] -
+                         partblk[size * ic + PQECCP] * gblcblk[PQECCM] -
+                         partblk[size * ic + PQECSP] * gblcblk[PQECSM] -
+                         partblk[size * ic + PQESCP] * gblcblk[PQESCM] -
+                         partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
     ic++;
   }
 }
@@ -1021,15 +1025,17 @@ static double PQ_energy(double omega) {
   double eng = 0;
   double pref = 1 / omega;
 
-  for (unsigned ic = 0; ic < n_localpart; ic++) {
-    eng += pref * (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
-                   partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
-                   partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
-                   partblk[size * ic + PQESSM] * gblcblk[PQESSP] +
-                   partblk[size * ic + PQECCP] * gblcblk[PQECCM] +
-                   partblk[size * ic + PQECSP] * gblcblk[PQECSM] +
-                   partblk[size * ic + PQESCP] * gblcblk[PQESCM] +
-                   partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
+  int ic = 0;
+  for (auto &p : local_cells.particles()) {
+    eng += pref * p.p.q * (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
+                           partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
+                           partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
+                           partblk[size * ic + PQESSM] * gblcblk[PQESSP] +
+                           partblk[size * ic + PQECCP] * gblcblk[PQECCM] +
+                           partblk[size * ic + PQECSP] * gblcblk[PQECSM] +
+                           partblk[size * ic + PQESCP] * gblcblk[PQESCM] +
+                           partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
+    ic++;
   }
   return eng;
 }
