@@ -54,9 +54,9 @@ struct AutoParameter {
    *                 is deduced from the type of the reference.
    */
   template <typename T, class O>
-  AutoParameter(std::string name, std::shared_ptr<O> &obj,
+  AutoParameter(const char * name, std::shared_ptr<O> &obj,
                 void (O::*setter)(T const &), T const &(O::*getter)() const)
-      : name(std::move(name)), set([&obj, setter](Variant const &v) {
+      : name(name), set([&obj, setter](Variant const &v) {
           (obj.get()->*setter)(get_value<T>(v));
         }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
@@ -65,9 +65,9 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(std::string name, std::shared_ptr<O> &obj,
+  AutoParameter(const char * name, std::shared_ptr<O> &obj,
                 void (O::*setter)(T const &), T (O::*getter)() const)
-      : name(std::move(name)), set([&obj, setter](Variant const &v) {
+      : name(name), set([&obj, setter](Variant const &v) {
           (obj.get()->*setter)(get_value<T>(v));
         }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
@@ -83,35 +83,35 @@ struct AutoParameter {
    *                 is deduced from the type of the reference.
    */
   template <typename T, class O>
-  AutoParameter(std::string name, std::shared_ptr<O> &obj,
+  AutoParameter(const char * name, std::shared_ptr<O> &obj,
                 T const &(O::*getter)())
-      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
+      : name(name), set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
   /** @brief Read-only parameter that is bound to an object.
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(std::string name, std::shared_ptr<O> &obj,
+  AutoParameter(const char * name, std::shared_ptr<O> &obj,
                 T (O::*getter)() const)
-      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
+      : name(name), set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
   /** @brief Read-only parameter that is bound to an object.
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(std::string name, std::shared_ptr<O> &obj, T O::*getter)
-      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
+  AutoParameter(const char * name, std::shared_ptr<O> &obj, T O::*getter)
+      : name(name), set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
   /** @brief Read-write parameter that is bound to an object.
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(std::string name, std::shared_ptr<O> &obj,
+  AutoParameter(const char * name, std::shared_ptr<O> &obj,
                 T &(O::*getter_setter)())
-      : name(std::move(name)), set([&obj, getter_setter](Variant const &v) {
+      : name(name), set([&obj, getter_setter](Variant const &v) {
           (obj.get()->*getter_setter)() = get_value<T>(v);
         }),
         get([&obj, getter_setter]() { return (obj.get()->*getter_setter)(); }) {
@@ -127,8 +127,8 @@ struct AutoParameter {
    *                is deduced from the type of the reference.
    */
   template <typename T>
-  AutoParameter(std::string name, T &binding)
-      : name(std::move(name)),
+  AutoParameter(const char * name, T &binding)
+      : name(name),
         set([&binding](Variant const &v) { binding = get_value<T>(v); }),
         get([&binding]() { return Variant{binding}; }) {}
 
@@ -136,8 +136,8 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(std::string name, std::shared_ptr<T> &binding)
-      : name(std::move(name)), set([&binding](Variant const &v) {
+  AutoParameter(const char * name, std::shared_ptr<T> &binding)
+      : name(name), set([&binding](Variant const &v) {
           binding = get_value<std::shared_ptr<T>>(v);
         }),
         get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
@@ -146,16 +146,16 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(std::string name, T const &binding)
-      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
+  AutoParameter(const char * name, T const &binding)
+      : name(name), set([](Variant const &) { throw WriteError{}; }),
         get([&binding]() -> Variant { return binding; }) {}
 
   /** @brief Read-only parameter that is bound to an object.
    *  @overload
    */
   template <typename T>
-  AutoParameter(std::string name, std::shared_ptr<T> const &binding)
-      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
+  AutoParameter(const char * name, std::shared_ptr<T> const &binding)
+      : name(name), set([](Variant const &) { throw WriteError{}; }),
         get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
   /**
@@ -176,8 +176,8 @@ struct AutoParameter {
             /* Try to guess the type from the return type of the getter */
             typename R = typename decltype(
                 Utils::make_function(std::declval<G>()))::result_type>
-  AutoParameter(std::string name, F const &set, G const &get)
-      : name(std::move(name)), set(Utils::make_function(set)),
+  AutoParameter(const char * name, F const &set, G const &get)
+      : name(name), set(Utils::make_function(set)),
         get(Utils::make_function(get)) {}
 
   /**
@@ -188,8 +188,8 @@ struct AutoParameter {
             /* Try to guess the type from the return type of the getter */
             typename R = typename decltype(
                 Utils::make_function(std::declval<G>()))::result_type>
-  AutoParameter(std::string name, ReadOnly, G const &get)
-      : name(std::move(name)), set([](Variant const &) { throw WriteError{}; }),
+  AutoParameter(const char * name, ReadOnly, G const &get)
+      : name(name), set([](Variant const &) { throw WriteError{}; }),
         get(Utils::make_function(get)) {}
 
   /** The interface name. */
