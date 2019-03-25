@@ -24,10 +24,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "None.hpp"
 #include "utils/AutoObjectId.hpp"
 #include "utils/Vector.hpp"
+#include "utils/serialization/unordered_map.hpp"
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
-#include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 

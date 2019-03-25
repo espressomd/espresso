@@ -20,6 +20,7 @@
 #include "ParallelScriptInterface.hpp"
 
 #include <boost/mpi/collectives.hpp>
+#include <boost/serialization/utility.hpp>
 
 #include "ParallelScriptInterfaceSlave.hpp"
 #include "utils/parallel/ParallelObject.hpp"
