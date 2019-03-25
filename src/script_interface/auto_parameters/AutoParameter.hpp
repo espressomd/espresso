@@ -54,7 +54,7 @@ struct AutoParameter {
    *                 is deduced from the type of the reference.
    */
   template <typename T, class O>
-  AutoParameter(const char * name, std::shared_ptr<O> &obj,
+  AutoParameter(const char *name, std::shared_ptr<O> &obj,
                 void (O::*setter)(T const &), T const &(O::*getter)() const)
       : name(name), set([&obj, setter](Variant const &v) {
           (obj.get()->*setter)(get_value<T>(v));
@@ -65,7 +65,7 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(const char * name, std::shared_ptr<O> &obj,
+  AutoParameter(const char *name, std::shared_ptr<O> &obj,
                 void (O::*setter)(T const &), T (O::*getter)() const)
       : name(name), set([&obj, setter](Variant const &v) {
           (obj.get()->*setter)(get_value<T>(v));
@@ -83,7 +83,7 @@ struct AutoParameter {
    *                 is deduced from the type of the reference.
    */
   template <typename T, class O>
-  AutoParameter(const char * name, std::shared_ptr<O> &obj,
+  AutoParameter(const char *name, std::shared_ptr<O> &obj,
                 T const &(O::*getter)())
       : name(name), set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
@@ -92,7 +92,7 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(const char * name, std::shared_ptr<O> &obj,
+  AutoParameter(const char *name, std::shared_ptr<O> &obj,
                 T (O::*getter)() const)
       : name(name), set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
@@ -101,7 +101,7 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(const char * name, std::shared_ptr<O> &obj, T O::*getter)
+  AutoParameter(const char *name, std::shared_ptr<O> &obj, T O::*getter)
       : name(name), set([](Variant const &) { throw WriteError{}; }),
         get([&obj, getter]() { return (obj.get()->*getter)(); }) {}
 
@@ -109,7 +109,7 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T, class O>
-  AutoParameter(const char * name, std::shared_ptr<O> &obj,
+  AutoParameter(const char *name, std::shared_ptr<O> &obj,
                 T &(O::*getter_setter)())
       : name(name), set([&obj, getter_setter](Variant const &v) {
           (obj.get()->*getter_setter)() = get_value<T>(v);
@@ -127,7 +127,7 @@ struct AutoParameter {
    *                is deduced from the type of the reference.
    */
   template <typename T>
-  AutoParameter(const char * name, T &binding)
+  AutoParameter(const char *name, T &binding)
       : name(name),
         set([&binding](Variant const &v) { binding = get_value<T>(v); }),
         get([&binding]() { return Variant{binding}; }) {}
@@ -136,7 +136,7 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(const char * name, std::shared_ptr<T> &binding)
+  AutoParameter(const char *name, std::shared_ptr<T> &binding)
       : name(name), set([&binding](Variant const &v) {
           binding = get_value<std::shared_ptr<T>>(v);
         }),
@@ -146,7 +146,7 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(const char * name, T const &binding)
+  AutoParameter(const char *name, T const &binding)
       : name(name), set([](Variant const &) { throw WriteError{}; }),
         get([&binding]() -> Variant { return binding; }) {}
 
@@ -154,7 +154,7 @@ struct AutoParameter {
    *  @overload
    */
   template <typename T>
-  AutoParameter(const char * name, std::shared_ptr<T> const &binding)
+  AutoParameter(const char *name, std::shared_ptr<T> const &binding)
       : name(name), set([](Variant const &) { throw WriteError{}; }),
         get([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
@@ -176,7 +176,7 @@ struct AutoParameter {
             /* Try to guess the type from the return type of the getter */
             typename R = typename decltype(
                 Utils::make_function(std::declval<G>()))::result_type>
-  AutoParameter(const char * name, F const &set, G const &get)
+  AutoParameter(const char *name, F const &set, G const &get)
       : name(name), set(Utils::make_function(set)),
         get(Utils::make_function(get)) {}
 
@@ -188,7 +188,7 @@ struct AutoParameter {
             /* Try to guess the type from the return type of the getter */
             typename R = typename decltype(
                 Utils::make_function(std::declval<G>()))::result_type>
-  AutoParameter(const char * name, ReadOnly, G const &get)
+  AutoParameter(const char *name, ReadOnly, G const &get)
       : name(name), set([](Variant const &) { throw WriteError{}; }),
         get(Utils::make_function(get)) {}
 
