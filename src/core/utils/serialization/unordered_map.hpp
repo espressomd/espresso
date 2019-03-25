@@ -27,8 +27,7 @@ namespace boost {
 namespace serialization {
 
 template <typename Archive, typename K, typename V>
-void load(Archive &ar, std::unordered_map<K, V> &v,
-          const unsigned int) {
+void load(Archive &ar, std::unordered_map<K, V> &v, const unsigned int) {
   using value_type = typename std::unordered_map<K, V>::value_type;
   typename std::unordered_map<K, V>::size_type count;
 
@@ -44,8 +43,7 @@ void load(Archive &ar, std::unordered_map<K, V> &v,
 }
 
 template <typename Archive, typename K, typename V>
-void save(Archive &ar, std::unordered_map<K, V> const &v,
-          const unsigned int) {
+void save(Archive &ar, std::unordered_map<K, V> const &v, const unsigned int) {
   typename std::unordered_map<K, V>::size_type count(v.size());
 
   ar << count;
