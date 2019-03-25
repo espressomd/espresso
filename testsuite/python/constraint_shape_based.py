@@ -510,7 +510,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             system.integrator.run(recalc_forces=True, steps=0)
             self.assertEqual(slitpore_constraint.min_dist(), ref_mindist)
             numpy.testing.assert_almost_equal(
-                slitpore_constraint.total_force(), ref_force, 10)
+                np.copy(slitpore_constraint.total_force()), ref_force, 10)
 
         # Reset
         system.non_bonded_inter[0, 1].generic_lennard_jones.set_params(
