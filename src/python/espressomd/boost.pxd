@@ -22,11 +22,11 @@ from libcpp cimport bool
 cdef extern from "boost/utility/string_ref.hpp" namespace "boost":
     cdef cppclass string_ref:
         string_ref()
-        string_ref(const char *)
-        string_ref(const string &)
+        string_ref(const char * )
+        string_ref(const string & )
 
-        bool operator == (const string_ref &)
-        bool operator != (const string_ref &)
+        bool operator == (const string_ref & )
+        bool operator != (const string_ref & )
 
         string to_string()
-        const char *data()
+        const char * data()
