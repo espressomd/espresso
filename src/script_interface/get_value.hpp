@@ -23,27 +23,15 @@
 #include "ScriptInterfaceBase.hpp"
 #include "Variant.hpp"
 
-#include <boost/core/demangle.hpp>
+#include "utils/demangle.hpp"
+
 #include <boost/range/algorithm/transform.hpp>
 
 namespace ScriptInterface {
 namespace detail {
-/**
- * @brief Get a human-readable name for a type.
- *
- * Uses boost to demangle the name, for details
- * see documentation for boost::core::demangle.
- *
- * @tparam T type
- * @return name
- */
-template <class T> std::string type_label() {
-  return boost::core::demangle(typeid(T).name());
-}
-
 struct type_label_visitor : boost::static_visitor<std::string> {
   template <class T> std::string operator()(const T &) const {
-    return boost::core::demangle(typeid(T).name());
+    return Utils::demangle<T>();
   }
 };
 
@@ -208,7 +196,7 @@ template <typename T> T get_value(Variant const &v) {
   } catch (const boost::bad_get &) {
     throw std::runtime_error("Provided argument of type " +
                              detail::type_label(v) + " is not convertible to " +
-                             detail::type_label<T>());
+                             Utils::demangle<T>());
   }
 }
 
