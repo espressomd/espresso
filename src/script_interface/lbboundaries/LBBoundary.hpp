@@ -51,16 +51,14 @@ public:
     add_parameters(
         {{"charge_density",
           [this](Variant const &value) {
-            m_lbboundary->set_charge_density(boost::get<double>(value));
+            m_lbboundary->set_charge_density(get_value<double>(value));
           },
-          [this]() { return m_lbboundary->charge_density(); },
-          VariantType::DOUBLE, 0},
+          [this]() { return m_lbboundary->charge_density(); }},
          {"net_charge",
           [this](Variant const &value) {
-            m_lbboundary->set_net_charge(boost::get<double>(value));
+            m_lbboundary->set_net_charge(get_value<double>(value));
           },
-          [this]() { return m_lbboundary->net_charge(); }, VariantType::DOUBLE,
-          0}});
+          [this]() { return m_lbboundary->net_charge(); }}});
 #endif
   }
 
