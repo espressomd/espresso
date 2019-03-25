@@ -46,7 +46,8 @@ public:
   }
 
   Utils::Span<const boost::string_ref> valid_parameters() const override {
-    return std::array<boost::string_ref, 1>{"ids"};
+    static std::array<const boost::string_ref, 1> params{"ids"};
+    return params;
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
