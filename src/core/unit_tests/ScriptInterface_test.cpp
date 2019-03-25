@@ -52,9 +52,8 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   }
 
   /* Not needed for testing */
-  const vector<boost::string_ref> &valid_parameters() const override {
-    static std::vector<boost::string_ref> params{};
-    return params;
+  Utils::Span<const boost::string_ref> valid_parameters() const override {
+    return {};
   }
 
   void set_parameter(const string &name, const Variant &value) override {

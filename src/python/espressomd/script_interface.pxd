@@ -27,6 +27,8 @@ from libcpp cimport bool
 
 from boost cimport string_ref
 
+from utils cimport Span
+
 cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     void initialize()
     cdef cppclass Variant:
@@ -53,7 +55,7 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
         const string name()
         void construct(const VariantMap &) except +
         VariantMap get_parameters() except +
-        vector[string_ref] valid_parameters() except +
+        Span[const string_ref] valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
         Variant call_method(const string & name, const VariantMap & parameters) except +

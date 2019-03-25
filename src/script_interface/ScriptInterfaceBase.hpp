@@ -24,7 +24,7 @@
 #include <memory>
 #include <type_traits>
 
-#include "utils/serialization/array.hpp"
+#include "utils/Span.hpp"
 
 #include <boost/utility/string_ref.hpp>
 
@@ -133,10 +133,8 @@ public:
    *
    * @return Expected parameters.
    */
-  virtual const std::vector<boost::string_ref> &valid_parameters() const {
-    static std::vector<boost::string_ref> valid_params;
-
-    return valid_params;
+  virtual Utils::Span<const boost::string_ref> valid_parameters() const {
+    return {};
   }
 
   /**

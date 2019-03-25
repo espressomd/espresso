@@ -116,7 +116,7 @@ protected:
 
 public:
   /* ScriptInterfaceBase implementation */
-  const std::vector<boost::string_ref> &valid_parameters() const final {
+  Utils::Span<const boost::string_ref> valid_parameters() const final {
     static std::vector<boost::string_ref> valid_params;
     valid_params.clear();
 
