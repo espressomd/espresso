@@ -16,8 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CORE_UTILS_SERIALIZATION_FLAT_MAP_HPP
-#define CORE_UTILS_SERIALIZATION_FLAT_MAP_HPP
+#ifndef CORE_UTILS_SERIALIZATION_UNORDERED_MAP_HPP
+#define CORE_UTILS_SERIALIZATION_UNORDERED_MAP_HPP
 
 #include <boost/serialization/split_free.hpp>
 
