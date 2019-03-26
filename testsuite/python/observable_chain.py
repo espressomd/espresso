@@ -163,9 +163,10 @@ class Observables(ut.TestCase):
                     # place particles and keep list of unfolded positions
                     pos = place_particles(bond_length, 3 * [offset])
                     # rotate the 1st particle
-                    p[0].pos = pos[0] = rotate_particle(*pos[0:4,:][::-1], phi)
+                    p[0].pos = pos[0] = rotate_particle(*pos[0:4,:][::-1],
+                                                        phi=phi)
                     # rotate the 5th particle
-                    p[4].pos = pos[4] = rotate_particle(*pos[1:5,:], phi)
+                    p[4].pos = pos[4] = rotate_particle(*pos[1:5,:], phi=phi)
                     # expected values
                     dih1 = calculate_dihedral(*pos[0:4,:][::-1])
                     dih2 = calculate_dihedral(*pos[1:5,:])
