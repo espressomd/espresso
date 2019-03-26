@@ -130,8 +130,8 @@ class LBShearCommon(object):
                 ind = np.array(ind, dtype=int)
                 v_measured = self.lbf[ind[0], ind[1], ind[2]].velocity
                 np.testing.assert_allclose(
-                    v_measured,
-                    v_expected[j] * shear_direction, atol=3E-3)
+                    np.copy(v_measured),
+                    np.copy(v_expected[j]) * shear_direction, atol=3E-3)
 
         # Test stedy state stress tensor on a node
         p_eq = DENS * AGRID**2 / TIME_STEP**2 / 3
@@ -140,7 +140,7 @@ class LBShearCommon(object):
             np.outer(shear_plane_normal, shear_direction)
            + np.outer(shear_direction, shear_plane_normal))
         for node_s in (2, 3, 4), (3, 4, 2), (5, 4, 3):
-            node_stress = self.lbf[5, 5, 5].pi
+            node_stress = np.copy(self.lbf[5, 5, 5].pi)
             np.testing.assert_allclose(node_stress,
                                        p_expected, atol=1E-5, rtol=5E-3)
 
