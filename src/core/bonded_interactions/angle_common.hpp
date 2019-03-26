@@ -131,9 +131,8 @@ calc_angle_generic_3body_forces(Vector3d const &r_mid, Vector3d const &r_left,
     if (cos_phi < -TINY_COS_VALUE)
       cos_phi = -TINY_COS_VALUE;
   }
-  auto sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
   /* force factor */
-  auto const fac = forceFactor(cos_phi, sin_phi);
+  auto const fac = forceFactor(cos_phi);
   /* force calculation */
   auto const fj = vec31 / (vec21_len * vec31_len) - cos_phi * vec21 / vec21_sqr;
   auto const fk = vec21 / (vec21_len * vec31_len) - cos_phi * vec31 / vec31_sqr;

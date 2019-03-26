@@ -81,7 +81,8 @@ inline void calc_angle_harmonic_3body_forces(
     Bonded_ia_parameters const *iaparams, Vector3d &f_mid, Vector3d &f_left,
     Vector3d &f_right) {
 
-  auto forceFactor = [&iaparams](double const cos_phi, double const sin_phi) {
+  auto forceFactor = [&iaparams](double const cos_phi) {
+    auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
     auto const phi = acos(cos_phi);
     auto const phi0 = iaparams->p.angle_harmonic.phi0;
     auto const K = iaparams->p.angle_harmonic.bend;

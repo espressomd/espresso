@@ -83,7 +83,8 @@ inline void calc_angle_cosine_3body_forces(Particle const *p_mid,
                                            Vector3d &f_mid, Vector3d &f_left,
                                            Vector3d &f_right) {
 
-  auto forceFactor = [&iaparams](double const cos_phi, double const sin_phi) {
+  auto forceFactor = [&iaparams](double const cos_phi) {
+    auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
     auto const K = iaparams->p.angle_cosine.bend;
     auto const sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
     auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;

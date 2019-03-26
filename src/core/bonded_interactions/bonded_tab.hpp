@@ -163,7 +163,8 @@ inline void calc_angle_3body_tabulated_forces(
     Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
     Vector3d &force3) {
 
-  auto forceFactor = [&iaparams](double const cos_phi, double const sin_phi) {
+  auto forceFactor = [&iaparams](double const cos_phi) {
+    auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
 #ifdef TABANGLEMINUS
     auto const phi = acos(-cos_phi);
 #else
