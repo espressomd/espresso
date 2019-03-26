@@ -32,7 +32,7 @@ by comparing to the analytical solution.
 
 AGRID = .25
 EXT_FORCE = .1
-VISC = .7
+VISC = 2.7
 DENS = 1.7
 TIME_STEP = 0.1
 LB_PARAMS = {'agrid': AGRID,
@@ -65,7 +65,7 @@ class LBPoiseuilleCommon(object):
 
     """Base class of the test that holds the test logic."""
     lbf = None
-    system = espressomd.System(box_l=[12.0, 3.0, 3.0])
+    system = espressomd.System(box_l=[9.0, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
@@ -91,11 +91,13 @@ class LBPoiseuilleCommon(object):
                        int((self.system.box_l[2] / AGRID) / 2)]
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
+        self.system.time=0
         while diff > 0.005:
             self.system.integrator.run(100)
             new_val = self.lbf[mid_indices].velocity[2]
             diff = abs(new_val - old_val)
             old_val = new_val
+        print(self.system.time)
 
     def test_profile(self):
         """
@@ -121,7 +123,7 @@ class LBPoiseuilleCommon(object):
                                      EXT_FORCE,
                                      VISC * DENS)
         rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
-        self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
+        self.assertLess(rmsd, 0.015 * AGRID / TIME_STEP)
 
 
 @ut.skipIf(not espressomd.has_features(
