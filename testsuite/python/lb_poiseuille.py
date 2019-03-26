@@ -91,7 +91,7 @@ class LBPoiseuilleCommon(object):
                        int((self.system.box_l[2] / AGRID) / 2)]
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
-        self.system.time=0
+        self.system.time = 0
         while diff > 0.005:
             self.system.integrator.run(100)
             new_val = self.lbf[mid_indices].velocity[2]

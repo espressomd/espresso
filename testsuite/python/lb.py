@@ -70,7 +70,7 @@ class TestLB(object):
         self.system.actors.clear()
         self.system.part.clear()
         self.n_col_part = 100
-        np.random.seed=1
+        np.random.seed = 1
         self.system.part.add(pos=np.random.random(
             (self.n_col_part, 3)) * self.params["box_l"])
         if espressomd.has_features("MASS"):
