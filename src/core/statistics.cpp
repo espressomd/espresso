@@ -27,10 +27,9 @@
 #include "statistics.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
+#include "event.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
-#include "initialize.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
@@ -38,8 +37,6 @@
 #include "pressure.hpp"
 #include "short_range_loop.hpp"
 #include "statistics_chain.hpp"
-#include "statistics_cluster.hpp"
-#include "statistics_fluid.hpp"
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
 #include "utils/list_contains.hpp"
@@ -94,118 +91,6 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
   return std::sqrt(mindist2);
 }
 
-void merge_aggregate_lists(int *head_list, int *agg_id_list, int p1molid,
-                           int p2molid, int *link_list) {
-  int target1, target2, head_p1;
-  /* merge list containing p2molid into list containing p1molid*/
-  target1 = head_list[agg_id_list[p2molid]];
-  head_list[agg_id_list[p2molid]] = -2;
-  head_p1 = head_list[agg_id_list[p1molid]];
-  head_list[agg_id_list[p1molid]] = target1;
-  agg_id_list[target1] = agg_id_list[p1molid];
-  target2 = link_list[target1];
-  while (target2 != -1) {
-    target1 = target2;
-    target2 = link_list[target1];
-    agg_id_list[target1] = agg_id_list[p1molid];
-  }
-  agg_id_list[target1] = agg_id_list[p1molid];
-  link_list[target1] = head_p1;
-}
-
-int aggregation(double dist_criteria2, int min_contact, int s_mol_id,
-                int f_mol_id, int *head_list, int *link_list, int *agg_id_list,
-                int *agg_num, int *agg_size, int *agg_max, int *agg_min,
-                int *agg_avg, int *agg_std, int charge) {
-  int target1;
-  int *contact_num, ind;
-
-  if (min_contact > 1) {
-    contact_num =
-        (int *)Utils::malloc(topology.size() * topology.size() * sizeof(int));
-    for (int i = 0; i < topology.size() * topology.size(); i++)
-      contact_num[i] = 0;
-  } else {
-    contact_num = (int *)0; /* Just to keep the compiler happy */
-  }
-
-  on_observable_calc();
-
-  for (int i = s_mol_id; i <= f_mol_id; i++) {
-    head_list[i] = i;
-    link_list[i] = -1;
-    agg_id_list[i] = i;
-    agg_size[i] = 0;
-  }
-
-  // Calculate pair contributions if max_cut is >0. No single particle
-  // contributions apply here
-  if (max_cut > 0)
-    short_range_loop(
-        Utils::NoOp{}, [&](Particle &p1, Particle &p2, Distance &d) {
-          auto p1molid = p1.p.mol_id;
-          auto p2molid = p2.p.mol_id;
-          if (((p1molid <= f_mol_id) && (p1molid >= s_mol_id)) &&
-              ((p2molid <= f_mol_id) && (p2molid >= s_mol_id))) {
-            if (agg_id_list[p1molid] != agg_id_list[p2molid]) {
-#ifdef ELECTROSTATICS
-              if (charge && (p1.p.q * p2.p.q >= 0)) {
-                return;
-              }
-#endif
-              if (d.dist2 < dist_criteria2) {
-                if (p1molid > p2molid) {
-                  ind = p1molid * topology.size() + p2molid;
-                } else {
-                  ind = p2molid * topology.size() + p1molid;
-                }
-                if (min_contact > 1) {
-                  contact_num[ind]++;
-                  if (contact_num[ind] >= min_contact) {
-                    merge_aggregate_lists(head_list, agg_id_list, p1molid,
-                                          p2molid, link_list);
-                  }
-                } else {
-                  merge_aggregate_lists(head_list, agg_id_list, p1molid,
-                                        p2molid, link_list);
-                }
-              }
-            }
-          }
-        });
-
-  /* count number of aggregates
-     find aggregate size
-     find max and find min size, and std */
-  for (int i = s_mol_id; i <= f_mol_id; i++) {
-    if (head_list[i] != -2) {
-      (*agg_num)++;
-      agg_size[*agg_num - 1]++;
-      target1 = head_list[i];
-      while (link_list[target1] != -1) {
-        target1 = link_list[target1];
-        agg_size[*agg_num - 1]++;
-      }
-    }
-  }
-
-  for (int i = 0; i < *agg_num; i++) {
-    *agg_avg += agg_size[i];
-    *agg_std += agg_size[i] * agg_size[i];
-    if (*agg_min > agg_size[i]) {
-      *agg_min = agg_size[i];
-    }
-    if (*agg_max < agg_size[i]) {
-      *agg_max = agg_size[i];
-    }
-  }
-
-  return 0;
-}
-
-/** Calculate momentum of all particles in the local domain
- * @param result Result for this processor (Output)
- */
 void predict_momentum_particles(double *result) {
   double momentum[3] = {0.0, 0.0, 0.0};
 
@@ -220,42 +105,23 @@ void predict_momentum_particles(double *result) {
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-/** Calculate total momentum of the system (particles & LB fluid)
- * inputs are bools to include particles and fluid in the linear momentum
- * calculation
- * @return Result for this processor (Output)
- */
-std::vector<double> calc_linear_momentum(int include_particles,
-                                         int include_lbfluid) {
-  double momentum_particles[3] = {0., 0., 0.};
-  std::vector<double> linear_momentum(3, 0.0);
+Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
+  Vector3d linear_momentum{};
   if (include_particles) {
-    mpi_gather_stats(4, momentum_particles, nullptr, nullptr, nullptr);
-    linear_momentum[0] += momentum_particles[0];
-    linear_momentum[1] += momentum_particles[1];
-    linear_momentum[2] += momentum_particles[2];
+    Vector3d momentum_particles{};
+    mpi_gather_stats(4, momentum_particles.data(), nullptr, nullptr, nullptr);
+    linear_momentum += momentum_particles;
   }
   if (include_lbfluid) {
-    double momentum_fluid[3] = {0., 0., 0.};
-#ifdef LB
-    if (lattice_switch & LATTICE_LB) {
-      mpi_gather_stats(6, momentum_fluid, nullptr, nullptr, nullptr);
-    }
+#if defined(LB) or defined(LB_GPU)
+    linear_momentum += lb_lbfluid_calc_fluid_momentum();
 #endif
-#ifdef LB_GPU
-    if (lattice_switch & LATTICE_LB_GPU) {
-      lb_calc_fluid_momentum_GPU(momentum_fluid);
-    }
-#endif
-    linear_momentum[0] += momentum_fluid[0];
-    linear_momentum[1] += momentum_fluid[1];
-    linear_momentum[2] += momentum_fluid[2];
   }
   return linear_momentum;
 }
 
-std::vector<double> centerofmass(PartCfg &partCfg, int type) {
-  std::vector<double> com(3);
+Vector3d centerofmass(PartCfg &partCfg, int type) {
+  Vector3d com{};
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
@@ -271,9 +137,9 @@ std::vector<double> centerofmass(PartCfg &partCfg, int type) {
   return com;
 }
 
-std::vector<double> centerofmass_vel(PartCfg &partCfg, int type) {
+Vector3d centerofmass_vel(PartCfg &partCfg, int type) {
   /*center of mass velocity scaled with time_step*/
-  std::vector<double> com_vel(3);
+  Vector3d com_vel{};
   int count = 0;
 
   for (auto const &p : partCfg) {
@@ -309,12 +175,12 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   int i, count;
   double p1[3], massi;
-  std::vector<double> com(3);
   count = 0;
 
   for (i = 0; i < 9; i++)
     MofImatrix[i] = 0.;
-  com = centerofmass(partCfg, type);
+
+  auto const com = centerofmass(partCfg, type);
   for (auto const &p : partCfg) {
     if (type == p.p.type) {
       count++;
@@ -336,7 +202,8 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   MofImatrix[7] = MofImatrix[5];
 }
 
-IntList nbhood(PartCfg &partCfg, double pt[3], double r, int planedims[3]) {
+IntList nbhood(PartCfg &partCfg, double pt[3], double r,
+               int const planedims[3]) {
   IntList ids;
   Vector3d d;
 
@@ -372,9 +239,9 @@ double distto(PartCfg &partCfg, double p[3], int pid) {
   return std::sqrt(mindist);
 }
 
-void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
-                            int *p2_types, int n_p2, double r_min, double r_max,
-                            int r_bins, int log_flag, double *low,
+void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
+                            int const *p2_types, int n_p2, double r_min,
+                            double r_max, int r_bins, int log_flag, double *low,
                             double *dist) {
   int t1, t2, ind, cnt = 0;
   double inv_bin_width = 0.0;
@@ -434,15 +301,16 @@ void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
     dist[i] /= (double)cnt;
 }
 
-void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
-              std::vector<int> &p2_types, double r_min, double r_max,
+void calc_rdf(PartCfg &partCfg, std::vector<int> const &p1_types,
+              std::vector<int> const &p2_types, double r_min, double r_max,
               int r_bins, std::vector<double> &rdf) {
   calc_rdf(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
            p2_types.size(), r_min, r_max, r_bins, &rdf[0]);
 }
 
-void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
-              int n_p2, double r_min, double r_max, int r_bins, double *rdf) {
+void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
+              int const *p2_types, int n_p2, double r_min, double r_max,
+              int r_bins, double *rdf) {
   long int cnt = 0;
   int i, t1, t2, ind;
   int mixed_flag = 0;
@@ -495,16 +363,16 @@ void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
   }
 }
 
-void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
-                 std::vector<int> &p2_types, double r_min, double r_max,
+void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
+                 std::vector<int> const &p2_types, double r_min, double r_max,
                  int r_bins, std::vector<double> &rdf, int n_conf) {
   calc_rdf_av(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
               p2_types.size(), r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
-void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
-                 int n_p2, double r_min, double r_max, int r_bins, double *rdf,
-                 int n_conf) {
+void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
+                 int const *p2_types, int n_p2, double r_min, double r_max,
+                 int r_bins, double *rdf, int n_conf) {
   long int cnt = 0;
   int cnt_conf = 1;
   int mixed_flag = 0;
@@ -583,7 +451,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
   free(rdf_tmp);
 }
 
-void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
+void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
                           int order, double **_ff) {
   int i, j, k, n, qi, t, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
@@ -640,7 +508,8 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
   }
 }
 
-std::vector<std::vector<double>> modify_stucturefactor(int order, double *sf) {
+std::vector<std::vector<double>> modify_stucturefactor(int order,
+                                                       double const *sf) {
   int length = 0;
 
   for (int i = 0; i < order * order; i++) {
@@ -767,19 +636,19 @@ int calc_cylindrical_average(
 
         // Find the height of the particle above the axis (height) and
         // the distance from the center point (dist)
-        auto const hat = direction.cross(diff);
+        auto const hat = vector_product(direction, diff);
         auto const height = hat.norm();
-        auto const dist = direction.dot(diff) / norm_direction;
+        auto const dist = direction * diff / norm_direction;
 
         // Determine the components of the velocity parallel and
         // perpendicular to the direction vector
         double v_radial;
         if (height == 0)
-          v_radial = vel.cross(direction).norm() / norm_direction;
+          v_radial = vector_product(vel, direction).norm() / norm_direction;
         else
-          v_radial = vel.dot(hat) / height;
+          v_radial = vel * hat / height;
 
-        auto const v_axial = vel.dot(direction) / norm_direction;
+        auto const v_axial = vel * direction / norm_direction;
 
         // Work out relevant indices for x and y
         index_radial = static_cast<int>(floor(height / binwd_radial));
@@ -824,59 +693,6 @@ int calc_cylindrical_average(
   return ES_OK;
 }
 
-int calc_vanhove(PartCfg &partCfg, int ptype, double rmin, double rmax,
-                 int rbins, int tmax, double *msd, double **vanhove) {
-  int c1, c3, c3_max, ind;
-  double bin_width, inv_bin_width;
-  std::vector<int> ids;
-
-  for (auto const &p : partCfg) {
-    if (p.p.type == ptype) {
-      ids.push_back(p.p.identity);
-    }
-  }
-
-  if (ids.empty()) {
-    return 0;
-  }
-
-  /* preparation */
-  bin_width = (rmax - rmin) / (double)rbins;
-  inv_bin_width = 1.0 / bin_width;
-
-  /* calculate msd and store distribution in vanhove */
-  for (c1 = 0; c1 < n_configs; c1++) {
-    c3_max = (c1 + tmax + 1) > n_configs ? n_configs : c1 + tmax + 1;
-    for (c3 = (c1 + 1); c3 < c3_max; c3++) {
-      for (auto const &id : ids) {
-        Vector3d p1, p2;
-        p1[0] = configs[c1][3 * id];
-        p1[1] = configs[c1][3 * id + 1];
-        p1[2] = configs[c1][3 * id + 2];
-        p2[0] = configs[c3][3 * id];
-        p2[1] = configs[c3][3 * id + 1];
-        p2[2] = configs[c3][3 * id + 2];
-        auto const dist = (p1 - p2).norm();
-        if (dist > rmin && dist < rmax) {
-          ind = (int)((dist - rmin) * inv_bin_width);
-          vanhove[(c3 - c1 - 1)][ind]++;
-        }
-        msd[(c3 - c1 - 1)] += dist * dist;
-      }
-    }
-  }
-
-  /* normalize */
-  for (c1 = 0; c1 < (tmax); c1++) {
-    for (int i = 0; i < rbins; i++) {
-      vanhove[c1][i] /= (double)(n_configs - c1 - 1) * ids.size();
-    }
-    msd[c1] /= (double)(n_configs - c1 - 1) * ids.size();
-  }
-
-  return ids.size();
-}
-
 /****************************************************************************************
  *                                 config storage functions
  ****************************************************************************************/
@@ -896,51 +712,7 @@ void analyze_append(PartCfg &partCfg) {
   n_configs++;
 }
 
-void analyze_push(PartCfg &partCfg) {
-  n_part_conf = partCfg.size();
-  free(configs[0]);
-  for (int i = 0; i < n_configs - 1; i++) {
-    configs[i] = configs[i + 1];
-  }
-  configs[n_configs - 1] =
-      (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
-
-  int i = 0;
-  for (auto const &p : partCfg) {
-    configs[n_configs - 1][3 * i + 0] = p.r.p[0];
-    configs[n_configs - 1][3 * i + 1] = p.r.p[1];
-    configs[n_configs - 1][3 * i + 2] = p.r.p[2];
-
-    i++;
-  }
-}
-
-void analyze_replace(PartCfg &partCfg, int ind) {
-  n_part_conf = partCfg.size();
-
-  int i = 0;
-  for (auto const &p : partCfg) {
-    configs[ind][3 * i + 0] = p.r.p[0];
-    configs[ind][3 * i + 1] = p.r.p[1];
-    configs[ind][3 * i + 2] = p.r.p[2];
-
-    i++;
-  }
-}
-
-void analyze_remove(int ind) {
-  int i;
-  free(configs[ind]);
-  for (i = ind; i < n_configs - 1; i++) {
-    configs[i] = configs[i + 1];
-  }
-  n_configs--;
-  configs = Utils::realloc(configs, n_configs * sizeof(double *));
-  if (n_configs == 0)
-    n_part_conf = 0;
-}
-
-void analyze_configs(double *tmp_config, int count) {
+void analyze_configs(double const *tmp_config, int count) {
   int i;
   n_part_conf = count;
   configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
@@ -952,22 +724,6 @@ void analyze_configs(double *tmp_config, int count) {
     configs[n_configs][3 * i + 2] = tmp_config[3 * i + 2];
   }
   n_configs++;
-}
-
-void analyze_activate(PartCfg &partCfg, int ind) {
-  int i;
-  double pos[3];
-  n_part_conf = partCfg.size();
-
-  for (i = 0; i < n_part_conf; i++) {
-    pos[0] = configs[ind][3 * i];
-    pos[1] = configs[ind][3 * i + 1];
-    pos[2] = configs[ind][3 * i + 2];
-    if (place_particle(i, pos) == ES_ERROR) {
-      runtimeErrorMsg() << "failed upon replacing particle " << i
-                        << "  in Espresso";
-    }
-  }
 }
 
 /****************************************************************************************

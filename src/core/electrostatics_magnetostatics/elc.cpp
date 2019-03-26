@@ -24,10 +24,8 @@
  * electrostatics_magnetostatics/elc.hpp
  * "electrostatics_magnetostatics/elc.hpp".
  */
-#include "electrostatics_magnetostatics/elc.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "mmm-common.hpp"
 #include "elc_mmm2d_common.hpp"
@@ -37,6 +35,10 @@
 #include "utils.hpp"
 #include <cmath>
 #include <mpi.h>
+
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 
 #ifdef P3M
 
@@ -94,7 +96,6 @@ static int n_scycache;
 /** \name sin/cos storage */
 /*@{*/
 static void prepare_scx_cache();
-
 static void prepare_scy_cache();
 /*@}*/
 /** \name common code */
@@ -104,7 +105,6 @@ static void distribute(int size);
 /** \name p=0 per frequency code */
 /*@{*/
 static void setup_P(int p, double omega);
-
 static void add_P_force();
 
 static double dir_energy(double omega);
@@ -112,23 +112,16 @@ static double dir_energy(double omega);
 /** \name q=0 per frequency code */
 /*@{*/
 static void setup_Q(int q, double omega);
-
 static void add_Q_force();
 /*@}*/
 /** \name p,q <> 0 per frequency code */
 /*@{*/
 static void setup_PQ(int p, int q, double omega);
-
 static void add_PQ_force(int p, int q, double omega);
-
 static double PQ_energy(double omega);
-
 static void add_dipole_force();
-
 static double dipole_energy();
-
 static double z_energy();
-
 static void add_z_force();
 /*@}*/
 
@@ -272,9 +265,9 @@ static void add_dipole_force() {
 
   // Const. potential contribution
   if (elc_params.const_pot) {
-    field_induced = gblcblk[1];
-    field_applied = elc_params.pot_diff * height_inverse;
-    field_tot -= field_applied + field_induced;
+    coulomb.field_induced = gblcblk[1];
+    coulomb.field_applied = elc_params.pot_diff * height_inverse;
+    field_tot -= coulomb.field_applied + coulomb.field_induced;
   }
 
   for (auto &p : local_cells.particles()) {
@@ -315,7 +308,7 @@ static double dipole_energy() {
         gblcblk[1] += elc_params.delta_mid_bot * p.p.q;
         gblcblk[3] += elc_params.delta_mid_bot * p.p.q * (-p.r.p[2] - shift);
         gblcblk[5] +=
-                elc_params.delta_mid_bot * p.p.q * (Utils::sqr(-p.r.p[2] - shift));
+            elc_params.delta_mid_bot * p.p.q * (Utils::sqr(-p.r.p[2] - shift));
       }
       if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
         gblcblk[1] += elc_params.delta_mid_top * p.p.q;
@@ -364,8 +357,8 @@ inline double image_sum_b(double q, double z) {
   double shift = 0.5 * box_l[2];
   double fac = elc_params.delta_mid_top * elc_params.delta_mid_bot;
   double image_sum =
-          (q / (1.0 - fac) * (z - 2.0 * fac * box_l[2] / (1.0 - fac))) -
-          q * shift / (1 - fac);
+      (q / (1.0 - fac) * (z - 2.0 * fac * box_l[2] / (1.0 - fac))) -
+      q * shift / (1 - fac);
   return image_sum;
 }
 
@@ -373,8 +366,8 @@ inline double image_sum_t(double q, double z) {
   double shift = 0.5 * box_l[2];
   double fac = elc_params.delta_mid_top * elc_params.delta_mid_bot;
   double image_sum =
-          (q / (1.0 - fac) * (z + 2.0 * fac * box_l[2] / (1.0 - fac))) -
-          q * shift / (1 - fac);
+      (q / (1.0 - fac) * (z + 2.0 * fac * box_l[2] / (1.0 - fac))) -
+      q * shift / (1 - fac);
   return image_sum;
 }
 
@@ -418,31 +411,31 @@ static double z_energy() {
           if (p.r.p[2] < elc_params.space_layer) {
             gblcblk[2] += fac_delta * (elc_params.delta_mid_bot + 1) * p.p.q;
             gblcblk[3] +=
-                    p.p.q * (image_sum_b(elc_params.delta_mid_bot * delta,
-                                         -(2 * elc_params.h + p.r.p[2])) +
-                             image_sum_b(delta, -(2 * elc_params.h - p.r.p[2])));
+                p.p.q * (image_sum_b(elc_params.delta_mid_bot * delta,
+                                     -(2 * elc_params.h + p.r.p[2])) +
+                         image_sum_b(delta, -(2 * elc_params.h - p.r.p[2])));
           } else {
             gblcblk[2] +=
-                    fac_delta_mid_bot * (1 + elc_params.delta_mid_top) * p.p.q;
+                fac_delta_mid_bot * (1 + elc_params.delta_mid_top) * p.p.q;
             gblcblk[3] +=
-                    p.p.q * (image_sum_b(elc_params.delta_mid_bot, -p.r.p[2]) +
-                             image_sum_b(delta, -(2 * elc_params.h - p.r.p[2])));
+                p.p.q * (image_sum_b(elc_params.delta_mid_bot, -p.r.p[2]) +
+                         image_sum_b(delta, -(2 * elc_params.h - p.r.p[2])));
           }
           if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
             // note the minus sign here which is required due to |z_i-z_j|
             gblcblk[2] -= fac_delta * (elc_params.delta_mid_top + 1) * p.p.q;
             gblcblk[3] -=
-                    p.p.q * (image_sum_t(elc_params.delta_mid_top * delta,
-                                         4 * elc_params.h - p.r.p[2]) +
-                             image_sum_t(delta, 2 * elc_params.h + p.r.p[2]));
+                p.p.q * (image_sum_t(elc_params.delta_mid_top * delta,
+                                     4 * elc_params.h - p.r.p[2]) +
+                         image_sum_t(delta, 2 * elc_params.h + p.r.p[2]));
           } else {
             // note the minus sign here which is required due to |z_i-z_j|
             gblcblk[2] -=
-                    fac_delta_mid_top * (1 + elc_params.delta_mid_bot) * p.p.q;
+                fac_delta_mid_top * (1 + elc_params.delta_mid_bot) * p.p.q;
             gblcblk[3] -=
-                    p.p.q * (image_sum_t(elc_params.delta_mid_top,
-                                         2 * elc_params.h - p.r.p[2]) +
-                             image_sum_t(delta, 2 * elc_params.h + p.r.p[2]));
+                p.p.q * (image_sum_t(elc_params.delta_mid_top,
+                                     2 * elc_params.h - p.r.p[2]) +
+                         image_sum_t(delta, 2 * elc_params.h + p.r.p[2]));
           }
         }
       }
@@ -483,7 +476,7 @@ static void add_z_force() {
           gblcblk[0] += fac_delta * (elc_params.delta_mid_bot + 1) * p.p.q;
         } else {
           gblcblk[0] +=
-                  fac_delta_mid_bot * (1 + elc_params.delta_mid_top) * p.p.q;
+              fac_delta_mid_bot * (1 + elc_params.delta_mid_top) * p.p.q;
         }
 
         if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -492,7 +485,7 @@ static void add_z_force() {
         } else {
           // note the minus sign here which is required due to |z_i-z_j|
           gblcblk[0] -=
-                  fac_delta_mid_top * (1 + elc_params.delta_mid_bot) * p.p.q;
+              fac_delta_mid_top * (1 + elc_params.delta_mid_bot) * p.p.q;
         }
       }
     }
@@ -514,7 +507,7 @@ static void add_z_force() {
 static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
   int ic, o = (p - 1) * n_localpart;
   double pref =
-          -coulomb.prefactor * 4 * M_PI * ux * uy / (expm1(omega * box_l[2]));
+      -coulomb.prefactor * 4 * M_PI * ux * uy / (expm1(omega * box_l[2]));
   double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
   int size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
@@ -523,7 +516,7 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
 
   if (elc_params.dielectric_contrast_on) {
     double fac_elc =
-            1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
+        1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
                        exp(-omega * 2 * elc_params.h));
     fac_delta_mid_bot = elc_params.delta_mid_bot * fac_elc;
     fac_delta_mid_top = elc_params.delta_mid_top * fac_elc;
@@ -652,7 +645,6 @@ static double dir_energy(const double omega) {
   return eng;
 }
 
-
 /*****************************************************************/
 /* PQ particle blocks */
 /*****************************************************************/
@@ -660,7 +652,7 @@ static double dir_energy(const double omega) {
 static void setup_PQ(int p, int q, double omega) {
   int ic, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
   double pref =
-          -coulomb.prefactor * 8 * M_PI * ux * uy / (expm1(omega * box_l[2]));
+      -coulomb.prefactor * 8 * M_PI * ux * uy / (expm1(omega * box_l[2]));
   double pref_di = coulomb.prefactor * 8 * M_PI * ux * uy;
   int size = 8;
   double lclimgebot[8], lclimgetop[8], lclimge[8];
@@ -668,7 +660,7 @@ static void setup_PQ(int p, int q, double omega) {
   double scale = 1;
   if (elc_params.dielectric_contrast_on) {
     double fac_elc =
-            1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
+        1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
                        exp(-omega * 2 * elc_params.h));
     fac_delta_mid_bot = elc_params.delta_mid_bot * fac_elc;
     fac_delta_mid_top = elc_params.delta_mid_top * fac_elc;
@@ -823,7 +815,7 @@ void ELC_add_force() {
 
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
     for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
-                elc_params.far_cut2 &&
+                    elc_params.far_cut2 &&
                 q <= n_scycache;
          q++) {
       omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
@@ -864,7 +856,7 @@ double ELC_energy() {
   }
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
     for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
-                elc_params.far_cut2 &&
+                    elc_params.far_cut2 &&
                 q <= n_scycache;
          q++) {
       omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
@@ -894,10 +886,10 @@ int ELC_tune(double error) {
   elc_params.far_cut = min_inv_boxl;
   do {
     err =
-            0.5 * (exp(2 * M_PI * elc_params.far_cut * h) / (lz - h) *
+        0.5 * (exp(2 * M_PI * elc_params.far_cut * h) / (lz - h) *
                    (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz - h)) /
                    (expm1(2 * M_PI * elc_params.far_cut * lz)) +
-                   exp(-2 * M_PI * elc_params.far_cut * h) / (lz + h) *
+               exp(-2 * M_PI * elc_params.far_cut * h) / (lz + h) *
                    (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz + h)) /
                    (expm1(2 * M_PI * elc_params.far_cut * lz)));
 
@@ -918,20 +910,18 @@ int ELC_tune(double error) {
 int ELC_sanity_checks() {
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
     runtimeErrorMsg() << "ELC requires periodicity 1 1 1";
-    return 1;
+    return ES_ERROR;
   }
   /* The product of the two dielectric contrasts should be < 1 for ELC to
-     work.
-     This is not the case for
-     two parallel boundaries, which can only be treated by the constant
-     potential code */
+     work. This is not the case for two parallel boundaries, which can only
+     be treated by the constant potential code */
   if (elc_params.dielectric_contrast_on &&
       (fabs(1.0 - elc_params.delta_mid_top * elc_params.delta_mid_bot) <
        ROUND_ERROR_PREC) &&
       !elc_params.const_pot) {
     runtimeErrorMsg() << "ELC with two parallel metallic boundaries requires "
                          "the const_pot option";
-    return 1;
+    return ES_ERROR;
   }
 
   // ELC with non-neutral systems and no fully metallic boundaries does not work
@@ -939,10 +929,10 @@ int ELC_sanity_checks() {
       p3m.square_sum_q > ROUND_ERROR_PREC) {
     runtimeErrorMsg() << "ELC does not work for non-neutral systems and "
                          "non-metallic dielectric contrast.";
-    return 1;
+    return ES_ERROR;
   }
 
-  return 0;
+  return ES_OK;
 }
 
 void ELC_init() {
@@ -974,7 +964,7 @@ void ELC_init() {
     elc_params.space_box = elc_params.gap_size - 2 * elc_params.space_layer;
     // reset minimal_dist for tuning
     elc_params.minimal_dist =
-            std::min(elc_params.space_box, elc_params.space_layer);
+        std::min(elc_params.space_box, elc_params.space_layer);
   }
 
   if (elc_params.far_calculated && (coulomb.method == COULOMB_ELC_P3M &&
@@ -1027,7 +1017,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
     elc_params.space_box = gap_size - 2 * elc_params.space_layer;
     // reset minimal_dist for tuning
     elc_params.minimal_dist =
-            std::min(elc_params.space_box, elc_params.space_layer);
+        std::min(elc_params.space_box, elc_params.space_layer);
 
     // Constant potential parameter setup
     if (const_pot) {
@@ -1047,21 +1037,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
   ELC_setup_constants();
 
-  switch (coulomb.method) {
-    case COULOMB_P3M_GPU: {
-      runtimeErrorMsg()
-              << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
-      return ES_ERROR;
-    }
-    case COULOMB_ELC_P3M:
-
-    case COULOMB_P3M:
-      p3m.params.epsilon = P3M_EPSILON_METALLIC;
-      coulomb.method = COULOMB_ELC_P3M;
-      break;
-    default:
-      return ES_ERROR;
-  }
+  Coulomb::elc_sanity_check();
 
   elc_params.far_cut = far_cut;
   if (far_cut != -1) {
@@ -1176,14 +1152,12 @@ void ELC_p3m_charge_assign_image() {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
-                                                  double force1[3],
-                                                  double force2[3]) {
+void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
+                                                  const Particle *p2,
+                                                  double *force1,
+                                                  double *force2) {
   double dist, dist2, d[3];
   double pos[3], q;
-  double tp2;
-
-  tp2 = p2->r.p[2];
 
   if (p1->r.p[2] < elc_params.space_layer) {
     q = elc_params.delta_mid_bot * p1->p.q * p2->p.q;
@@ -1207,22 +1181,22 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
     p3m_add_pair_force(q, d, dist2, dist, force2);
   }
 
-  if (tp2 < elc_params.space_layer) {
+  if (p2->r.p[2] < elc_params.space_layer) {
     q = elc_params.delta_mid_bot * p1->p.q * p2->p.q;
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
-    pos[2] = -tp2;
+    pos[2] = -p2->r.p[2];
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
     p3m_add_pair_force(q, d, dist2, dist, force1);
   }
 
-  if (tp2 > (elc_params.h - elc_params.space_layer)) {
+  if (p2->r.p[2] > (elc_params.h - elc_params.space_layer)) {
     q = elc_params.delta_mid_top * p1->p.q * p2->p.q;
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
-    pos[2] = 2 * elc_params.h - tp2;
+    pos[2] = 2 * elc_params.h - p2->r.p[2];
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
@@ -1360,7 +1334,7 @@ void ELC_P3M_modify_p3m_sums_both() {
   }
 
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
-  p3m.sum_qpart = (int) (tot_sums[0] + 0.1);
+  p3m.sum_qpart = (int)(tot_sums[0] + 0.1);
   p3m.sum_q2 = tot_sums[1];
   p3m.square_sum_q = Utils::sqr(tot_sums[2]);
 }
@@ -1393,7 +1367,7 @@ void ELC_P3M_modify_p3m_sums_image() {
 
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
 
-  p3m.sum_qpart = (int) (tot_sums[0] + 0.1);
+  p3m.sum_qpart = (int)(tot_sums[0] + 0.1);
   p3m.sum_q2 = tot_sums[1];
   p3m.square_sum_q = Utils::sqr(tot_sums[2]);
 }
@@ -1418,7 +1392,7 @@ void ELC_P3M_restore_p3m_sums() {
 
   MPI_Allreduce(node_sums, tot_sums, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
 
-  p3m.sum_qpart = (int) (tot_sums[0] + 0.1);
+  p3m.sum_qpart = (int)(tot_sums[0] + 0.1);
   p3m.sum_q2 = tot_sums[1];
   p3m.square_sum_q = Utils::sqr(tot_sums[2]);
 }

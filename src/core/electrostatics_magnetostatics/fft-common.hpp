@@ -26,6 +26,7 @@
 #if defined(P3M) || defined(DP3M)
 #include "utils/Vector.hpp"
 
+#include <boost/optional.hpp>
 #include <fftw3.h>
 
 /************************************************
@@ -60,13 +61,12 @@ typedef struct {
   /** size of new mesh (number of mesh points). */
   int new_size;
 
-  /** number of nodes which have to communicate with each other. */
-  int g_size;
   /** group of nodes which have to communicate with each other. */
-  int *group;
+  std::vector<int> group;
 
   /** packing function for send blocks. */
-  void (*pack_function)(double *, double *, int *, int *, int *, int);
+  void (*pack_function)(double const *const, double *const, int const *,
+                        int const *, int const *, int);
   /** Send block specification. 6 integers for each node: start[3], size[3]. */
   int *send_block;
   /** Send block communication sizes. */
@@ -89,18 +89,21 @@ typedef struct {
   void (*fft_function)(fftw_plan);
 
   /** packing function for send blocks. */
-  void (*pack_function)(double *, double *, int *, int *, int *, int);
+  void (*pack_function)(double const *const, double *const, int const *,
+                        int const *, int const *, int);
 } fft_back_plan;
 
+/** Information about the three one dimensional FFTs and how the nodes
+ *  have to communicate inbetween.
+ *
+ *  @note FFT numbering starts with 1 for technical reasons (because we have 4
+ *        node grids, the index 0 is used for the real space charge assignment
+ *        grid).
+ */
 typedef struct {
-  /** Information about the three one dimensional FFTs and how the nodes
-   *  have to communicate in between.
-   *
-   * NOTE: FFT numbering starts with 1 for technical reasons (because we
-   *       have 4 node grids, the index 0 is used for the real space
-   *       charge assignment grid).  */
+  /** Information for forward FFTs. */
   fft_forw_plan plan[4];
-  /** Information for Back FFTs (see fft.plan). */
+  /** Information for backward FFTs. */
   fft_back_plan back[4];
 
   /** Whether FFT is initialized or not. */
@@ -124,20 +127,22 @@ typedef struct {
  * DEFINES
  ************************************************/
 
-/* MPI tags for the fft communications: */
+/** @name MPI tags for FFT communication */
+/*@{*/
 /** Tag for communication in fft_init() */
 #define REQ_FFT_INIT 300
 /** Tag for communication in forw_grid_comm() */
 #define REQ_FFT_FORW 301
 /** Tag for communication in back_grid_comm() */
 #define REQ_FFT_BACK 302
+/*@}*/
 /* Tag for wisdom file I/O */
 #define FFTW_FAILURE 0
 
 /** Initialize FFT data structure. */
 void fft_common_pre_init(fft_data_struct *fft);
 
-/** This ugly function does the bookkeeping which nodes have to
+/** This ugly function does the bookkeeping: which nodes have to
  *  communicate to each other, when you change the node grid.
  *  Changing the domain decomposition requires communication. This
  *  function finds (hopefully) the best way to do this. As input it
@@ -160,25 +165,28 @@ void fft_common_pre_init(fft_data_struct *fft);
  * node  (Output). \param pos        positions of the nodes in in grid2
  * (Output). \param my_pos      position of this_node in  grid2.
  * \return Size of the communication group (Output of course!).  */
-int fft_find_comm_groups(const Vector3i &grid1, const Vector3i &grid2,
-                         int *node_list1, int *node_list2, int *group, int *pos,
-                         int *my_pos);
+boost::optional<std::vector<int>> fft_find_comm_groups(const Vector3i &grid1,
+                                                       const Vector3i &grid2,
+                                                       const int *node_list1,
+                                                       int *node_list2,
+                                                       int *pos, int *my_pos);
 
 /** Calculate the local fft mesh.  Calculate the local mesh (loc_mesh)
  *  of a node at position (n_pos) in a node grid (n_grid) for a global
  *  mesh of size (mesh) and a mesh offset (mesh_off (in mesh units))
  *  and store also the first point (start) of the local mesh.
  *
- * \return size     number of mesh points in local mesh.
- * \param  n_pos    Position of the node in n_grid.
- * \param  n_grid   node grid.
- * \param  mesh     global mesh dimensions.
- * \param  mesh_off global mesh offset (see \ref p3m_data_struct).
- * \param  loc_mesh local mesh dimension (output).
- * \param  start    first point of local mesh in global mesh (output).
+ * \param[in]  n_pos    Position of the node in n_grid.
+ * \param[in]  n_grid   node grid.
+ * \param[in]  mesh     global mesh dimensions.
+ * \param[in]  mesh_off global mesh offset (see \ref p3m_data_struct).
+ * \param[out] loc_mesh local mesh dimension.
+ * \param[out] start    first point of local mesh in global mesh.
+ * \return Number of mesh points in local mesh.
  */
-int fft_calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3],
-                        double mesh_off[3], int loc_mesh[3], int start[3]);
+int fft_calc_local_mesh(int const n_pos[3], int const n_grid[3],
+                        int const mesh[3], double const mesh_off[3],
+                        int loc_mesh[3], int start[3]);
 
 /** Calculate a send (or recv.) block for grid communication during a
  *  decomposition change.  Calculate the send block specification
@@ -195,17 +203,19 @@ int fft_calc_local_mesh(int n_pos[3], int n_grid[3], int mesh[3],
  * you intend to receive the data from in the actual node grid. <br> grid2 -
  * actual node grid.  <br>
  *
- *  \return          size of the send block.
- *  \param  pos1     Position of send node in grid1.
- *  \param  grid1    node grid 1.
- *  \param  pos2     Position of recv node in grid2.
- *  \param  grid2    node grid 2.
- *  \param  mesh     global mesh dimensions.
- *  \param  mesh_off global mesh offset (see \ref p3m_data_struct).
- *  \param  block    send block specification.
+ *  \param[in]  pos1     Position of send node in grid1.
+ *  \param[in]  grid1    node grid 1.
+ *  \param[in]  pos2     Position of recv node in grid2.
+ *  \param[in]  grid2    node grid 2.
+ *  \param[in]  mesh     global mesh dimensions.
+ *  \param[in]  mesh_off global mesh offset (see \ref p3m_data_struct).
+ *  \param[out] block    send block specification.
+ *  \return Size of the send block.
  */
-int fft_calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3],
-                        int mesh[3], double mesh_off[3], int block[6]);
+int fft_calc_send_block(int const pos1[3], int const grid1[3],
+                        int const pos2[3], int const grid2[3],
+                        int const mesh[3], double const mesh_off[3],
+                        int block[6]);
 
 /** pack a block (size[3] starting at start[3]) of an input 3d-grid
  *  with dimension dim[3] into an output 3d-block with dimension size[3].
@@ -216,15 +226,16 @@ int fft_calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3],
  *    element (i0 (slow), i1 (mid), i2 (fast)) has the linear index
  *    li = i2 + size[2] * (i1 + (size[1]*i0))
  *
- *  \param in      pointer to input 3d-grid.
- *  \param out     pointer to output 3d-grid (block).
- *  \param start   start index of the block in the in-grid.
- *  \param size    size of the block (=dimension of the out-grid).
- *  \param dim     size of the in-grid.
- *  \param element size of a grid element (e.g. 1 for Real, 2 for Complex).
+ *  \param[in]  in      pointer to input 3d-grid.
+ *  \param[out] out     pointer to output 3d-grid (block).
+ *  \param[in]  start   start index of the block in the in-grid.
+ *  \param[in]  size    size of the block (=dimension of the out-grid).
+ *  \param[in]  dim     size of the in-grid.
+ *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block(double *in, double *out, int start[3], int size[3],
-                    int dim[3], int element);
+void fft_pack_block(double const *const in, double *const out,
+                    int const start[3], int const size[3], int const dim[3],
+                    int element);
 
 /** pack a block with dimensions (size[0] * size[1] * aize[2]) starting
  *  at start[3] of an input 3d-grid with dimension dim[3] into an
@@ -242,15 +253,16 @@ void fft_pack_block(double *in, double *out, int start[3], int size[3],
  *
  * For index definition see \ref fft_pack_block.
  *
- *  \param in      pointer to input 3d-grid.
- *  \param out     pointer to output 3d-grid (block).
- *  \param start   start index of the block in the in-grid.
- *  \param size    size of the block (=dimension of the out-grid).
- *  \param dim     size of the in-grid.
- *  \param element size of a grid element (e.g. 1 for Real, 2 for Complex).
+ *  \param[in]  in      pointer to input 3d-grid.
+ *  \param[out] out     pointer to output 3d-grid (block).
+ *  \param[in]  start   start index of the block in the in-grid.
+ *  \param[in]  size    size of the block (=dimension of the out-grid).
+ *  \param[in]  dim     size of the in-grid.
+ *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block_permute1(double *in, double *out, int start[3], int size[3],
-                             int dim[3], int element);
+void fft_pack_block_permute1(double const *const in, double *const out,
+                             int const start[3], int const size[3],
+                             int const dim[3], int element);
 
 /** pack a block with dimensions (size[0] * size[1] * aize[2]) starting
  *  at start[3] of an input 3d-grid with dimension dim[3] into an
@@ -268,46 +280,32 @@ void fft_pack_block_permute1(double *in, double *out, int start[3], int size[3],
  *
  * For index definition see \ref fft_pack_block.
  *
- *  \param in      pointer to input 3d-grid.
- *  \param out     pointer to output 3d-grid (block).
- *  \param start   start index of the block in the in-grid.
- *  \param size    size of the block (=dimension of the out-grid).
- *  \param dim     size of the in-grid.
- *  \param element size of a grid element (e.g. 1 for Real, 2 for Complex).
+ *  \param[in]  in      pointer to input 3d-grid.
+ *  \param[out] out     pointer to output 3d-grid (block).
+ *  \param[in]  start   start index of the block in the in-grid.
+ *  \param[in]  size    size of the block (=dimension of the out-grid).
+ *  \param[in]  dim     size of the in-grid.
+ *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block_permute2(double *in, double *out, int start[3], int size[3],
-                             int dim[3], int element);
+void fft_pack_block_permute2(double const *const in, double *const out,
+                             int const start[3], int const size[3],
+                             int const dim[3], int element);
 
 /** unpack a 3d-grid input block (size[3]) into an output 3d-grid
  *  with dimension dim[3] at start position start[3].
  *
  *  see also \ref fft_pack_block.
  *
- *  \param in      pointer to input 3d-grid.
- *  \param out     pointer to output 3d-grid (block).
- *  \param start   start index of the block in the in-grid.
- *  \param size    size of the block (=dimension of the out-grid).
- *  \param dim     size of the in-grid.
- *  \param element size of a grid element (e.g. 1 for Real, 2 for Complex).
+ *  \param[in]  in      pointer to input 3d-grid.
+ *  \param[out] out     pointer to output 3d-grid (block).
+ *  \param[in]  start   start index of the block in the in-grid.
+ *  \param[in]  size    size of the block (=dimension of the out-grid).
+ *  \param[in]  dim     size of the in-grid.
+ *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_unpack_block(double *in, double *out, int start[3], int size[3],
-                      int dim[3], int element);
-
-/** Debug function to print global fft mesh.
- *  Print a globally distributed mesh contained in data. Element size is
- *  element.
- * \param plan     fft/communication plan (see \ref fft_forw_plan).
- * \param data     mesh data.
- * \param element  element size.
- * \param num      element index to print.
- */
-void fft_print_global_fft_mesh(fft_forw_plan plan, double *data, int element,
-                               int num);
-
-/** Debug function to print fft_forw_plan structure.
- * \param pl fft/communication plan (see \ref fft_forw_plan).
- */
-void fft_print_fft_plan(fft_forw_plan pl);
+void fft_unpack_block(double const *const in, double *const out,
+                      int const start[3], int const size[3], int const dim[3],
+                      int element);
 
 #endif /* defined(P3M) || defined(DP3M) */
 #endif /* _FFT_COMMON_H */

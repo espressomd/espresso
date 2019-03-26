@@ -26,27 +26,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cells.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
-#include "halo.hpp"
 #include "integrate.hpp"
+#include "lb_inertialess_tracers_cuda_interface.hpp"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
-#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
 // ****** Functions for internal use ********
 
 void CoupleIBMParticleToFluid(Particle *p);
 void ParticleVelocitiesFromLB_CPU();
 bool IsHalo(const int indexCheck);
-void GetIBMInterpolatedVelocity(double *p, double *const v,
+void GetIBMInterpolatedVelocity(double const *p, double *const v,
                                 double *const forceAdded);
 
 // ***** Internal variables ******
 
 bool *isHaloCache = nullptr;
-
-// ******** Variables from other espresso files *****
-extern HaloCommunicator update_halo_comm;
 
 /****************
   IBM_ForcesIntoFluid_CPU
@@ -58,13 +55,6 @@ updating the lbfields structure
 *****************/
 
 void IBM_ForcesIntoFluid_CPU() {
-
-  // Halo has already been sent. Check for safety
-  if (lbpar.resend_halo) {
-    printf("Error. Halo should already be sent!\n");
-    exit(1);
-  }
-
   // Update the forces on the ghost particles
   ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
 
@@ -129,10 +119,10 @@ Interpolates LB velocity at the particle positions and propagates the particles
 
 void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
-  if (lattice_switch & LATTICE_LB)
+  if (lattice_switch == ActiveLB::CPU)
     ParticleVelocitiesFromLB_CPU();
 #ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU)
+  if (lattice_switch == ActiveLB::GPU)
     ParticleVelocitiesFromLB_GPU(particles);
 #endif
 
@@ -186,9 +176,10 @@ void CoupleIBMParticleToFluid(Particle *p) {
   delta_j[2] = p->f.f[2] * lbpar.tau * lbpar.tau / lbpar.agrid;
 
   // Get indices and weights of affected nodes using discrete delta function
-  Lattice::index_t node_index[8];
-  double delta[6];
-  lblattice.map_position_to_lattice(p->r.p, node_index, delta);
+  Vector<std::size_t, 8> node_index{};
+  Vector6d delta{};
+  lblattice.map_position_to_lattice(p->r.p, node_index, delta, my_left,
+                                    local_box_l);
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {
@@ -197,7 +188,7 @@ void CoupleIBMParticleToFluid(Particle *p) {
         // Do not put force into a halo node
         if (!IsHalo(node_index[(z * 2 + y) * 2 + x])) {
           // Add force into the lbfields structure
-          double *local_f =
+          auto &local_f =
               lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
           local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
@@ -218,14 +209,12 @@ Very similar to the velocity interpolation done in standard Espresso, except
 that we add the f/2 contribution - only for CPU
 *******************/
 
-void GetIBMInterpolatedVelocity(double *p, double *const v,
+void GetIBMInterpolatedVelocity(double const *p, double *const v,
                                 double *const forceAdded) {
-  Lattice::index_t node_index[8], index;
-  double delta[6];
+  Lattice::index_t index;
   double local_rho, local_j[3], interpolated_u[3];
   double modes[19];
   int x, y, z;
-  double *f;
 
   double lbboundary_mindist, distvec[3];
   Vector3d pos;
@@ -243,7 +232,10 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
 
   /* determine elementary lattice cell surrounding the particle
    and the relative position of the particle in this cell */
-  lblattice.map_position_to_lattice(pos, node_index, delta);
+  Vector<std::size_t, 8> node_index{};
+  Vector6d delta{};
+  lblattice.map_position_to_lattice(pos, node_index, delta, my_left,
+                                    local_box_l);
 
   /* calculate fluid velocity at particle's position
    this is done by linear interpolation
@@ -257,31 +249,30 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
       for (x = 0; x < 2; x++) {
 
         index = node_index[(z * 2 + y) * 2 + x];
-        f = lbfields[index].force_density_buf;
+        const auto &f = lbfields[index].force_density_buf;
 
 // This can be done easier without copying the code twice
 // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
-          local_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
+          local_rho = lbpar.rho;
           local_j[0] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
+              lbpar.rho *
               (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
                   .velocity()[0];
           local_j[1] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
+              lbpar.rho *
               (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
                   .velocity()[1];
           local_j[2] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
+              lbpar.rho *
               (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
                   .velocity()[2];
         } else
 #endif
         {
-          lb_calc_modes(index, modes);
-          local_rho =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
+          auto const modes = lb_calc_modes(index);
+          local_rho = lbpar.rho + modes[0];
 
           // Add the +f/2 contribution!!
           // Guo et al. PRE 2002
@@ -375,12 +366,6 @@ structure
 *****************/
 
 void ParticleVelocitiesFromLB_CPU() {
-  // Exchange halo. This is necessary because we have done LB collide-stream
-  if (lbpar.resend_halo) {
-    halo_communication(&update_halo_comm, (char *)lbfluid[0].data());
-    lbpar.resend_halo = 0;
-  }
-
   // Loop over particles in local cells
   // Here all contributions are included: velocity, external force and particle
   // force

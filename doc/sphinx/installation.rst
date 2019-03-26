@@ -40,7 +40,7 @@ CMake
     The build system is based on CMake
 
 C++ Compiler
-    C++11 capable C++ compiler (e.g., Gcc 4.8.1 or later)
+    C++14 capable C++ compiler (e.g., gcc 5 or later)
 
 Boost
     A number of advanced C++ features used by ESPResSo is provided by Boost.
@@ -126,7 +126,7 @@ following commands:
       doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
     sudo port select --set cython cython27
     sudo port select --set python python27
-    sudo port selet --set pip pip27
+    sudo port select --set pip pip27
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.
@@ -343,8 +343,6 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``INTER_RF``
-
 -  ``MMM1D_GPU``
 
 -  ``_P3M_GPU_FLOAT``
@@ -471,8 +469,6 @@ Fluid dynamics and fluid structure interaction
 
 -  ``LB_BOUNDARIES_GPU``
 
--  ``SHANCHEN`` (experimental) Enables the Shan Chen bicomponent fluid code on the GPU.
-
 -  ``AFFINITY``
 
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
@@ -481,8 +477,6 @@ Fluid dynamics and fluid structure interaction
 -  ``ELECTROKINETICS``
 
 -  ``EK_BOUNDARIES``
-
--  ``EK_ELECTROSTATIC_COUPLING``
 
 -  ``EK_DEBUG``
 
@@ -620,8 +614,6 @@ looking directly at the code.
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
 
 -  ``FFT_DEBUG`` Output from the unified FFT code.
-
--  ``MAGGS_DEBUG``
 
 -  ``RANDOM_DEBUG``
 

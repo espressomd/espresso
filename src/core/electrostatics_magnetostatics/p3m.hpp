@@ -57,7 +57,6 @@
 
 #include "debug.hpp"
 #include "fft.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
 
 #include "utils/math/AS_erfc_part.hpp"
@@ -66,8 +65,10 @@
  * data types
  ************************************************/
 
-typedef struct {
-  p3m_parameter_struct params;
+struct p3m_data_struct {
+  p3m_data_struct();
+
+  P3MParameters params;
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
@@ -122,12 +123,10 @@ typedef struct {
   double *recv_grid;
 
   fft_data_struct fft;
-} p3m_data_struct;
+};
 
 /** P3M parameters. */
 extern p3m_data_struct p3m;
-
-void p3m_pre_init(void);
 
 /** Tune P3M parameters to desired accuracy.
  *
@@ -166,15 +165,16 @@ void p3m_pre_init(void);
  *  The function is based on routines of the program HE_Q.cpp written by M.
  *  Deserno.
  *
- *  @param[out]  log
- *  @return @ref ES_OK or @ref ES_ERROR
+ *  @param[out]  log  log output
+ *  @retval ES_OK
+ *  @retval ES_ERROR
  */
 int p3m_adaptive_tune(char **log);
 
 /** Initialize all structures, parameters and arrays needed for the
  *  P3M algorithm for charge-charge interactions.
  */
-void p3m_init(void);
+void p3m_init();
 
 /** Update @ref p3m_parameter_struct::alpha "alpha" and
  *  @ref p3m_parameter_struct::r_cut "r_cut" if @ref box_l changed
@@ -198,8 +198,8 @@ bool p3m_sanity_checks();
 void p3m_count_charged_particles();
 
 /** Assign the physical charges using the tabulated charge assignment function.
- *  If @ref STORE_CA_FRAC is true, then the charge fractions are buffered in
- *  @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
+ *  If @ref P3M_STORE_CA_FRAC is true, then the charge fractions are buffered
+ *  in @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
  *  "ca_frac".
  */
 void p3m_charge_assign();
@@ -222,19 +222,19 @@ void p3m_shrink_wrap_charge_grid(int n_charges);
  *
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
-inline double p3m_add_pair_force(double chgfac, double *d, double dist2,
+inline double p3m_add_pair_force(double chgfac, double const *d, double dist2,
                                  double dist, double force[3]) {
   if (dist < p3m.params.r_cut) {
     if (dist > 0.0) { // Vincent
       double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
       double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-      double fac1 = coulomb.prefactor * chgfac * exp(-adist * adist);
+      double fac1 = chgfac * exp(-adist * adist);
       double fac2 =
           fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * wupii) / dist2;
 #else
       erfc_part_ri = erfc(adist) / dist;
-      double fac1 = coulomb.prefactor * chgfac;
+      double fac1 = cchgfac;
       double fac2 = fac1 *
                     (erfc_part_ri +
                      2.0 * p3m.params.alpha * wupii * exp(-adist * adist)) /
@@ -279,10 +279,8 @@ int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
 
 /** Set mesh offset
  *
- *  Set x, y, z components of @ref p3m_parameter_struct::mesh_off "mesh off"
- *  @param[in]  x
- *  @param[in]  y
- *  @param[in]  z
+ *  @param[in]  x , y , z  Components of @ref p3m_parameter_struct::mesh_off
+ *                         "mesh_off"
  */
 int p3m_set_mesh_offset(double x, double y, double z);
 
@@ -304,10 +302,10 @@ inline double p3m_pair_energy(double chgfac, double dist) {
     double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    return coulomb.prefactor * chgfac * erfc_part_ri * exp(-adist * adist);
+    return chgfac * erfc_part_ri * exp(-adist * adist);
 #else
     double erfc_part_ri = erfc(adist) / dist;
-    return coulomb.prefactor * chgfac * erfc_part_ri;
+    return chgfac * erfc_part_ri;
 #endif
   }
   return 0.0;

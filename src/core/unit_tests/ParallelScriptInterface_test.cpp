@@ -36,7 +36,7 @@ using namespace ScriptInterface;
 
 struct TestClass : public ScriptInterfaceBase {
   TestClass() { constructed = true; }
-  ~TestClass() { destructed = true; }
+  ~TestClass() override { destructed = true; }
 
   void set_parameter(const std::string &name, const Variant &value) override {
     last_parameter = make_pair(name, value);

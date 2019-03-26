@@ -89,7 +89,7 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
 
   // angles between these vectors; calculated directly via the products
   const double cosPhi = (vec1 * vec2) / (lp * l);
-  auto const vecpro = vec1.cross(vec2);
+  auto const vecpro = vector_product(vec1, vec2);
   const double sinPhi = vecpro.norm() / (l * lp);
 
   // Check for sanity

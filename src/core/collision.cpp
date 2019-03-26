@@ -24,8 +24,8 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
@@ -368,11 +368,11 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // We find the bond id by dividing the range from 0 to pi in
   // three_particle_angle_resolution steps and by adding the id
   // of the bond for zero degrees.
-  int bond_id =
+  auto const bond_id = static_cast<int>(
       floor(phi / M_PI *
                 (collision_params.three_particle_angle_resolution - 1) +
             0.5) +
-      collision_params.bond_three_particles;
+      collision_params.bond_three_particles);
 
   // Create the bond
 
@@ -384,7 +384,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void place_vs_and_relate_to_particle(const int current_vs_pid,
-                                     const Vector3d &pos, const int relate_to,
+                                     const Vector3d &pos, int relate_to,
                                      const Vector3d &initial_pos) {
 
   // The virtual site is placed at initial_pos which will be in the local
@@ -392,13 +392,13 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   // A resort occurs after vs-based collisions anyway, which will move the vs
   // into the right cell.
   added_particle(current_vs_pid);
-  local_place_particle(current_vs_pid, initial_pos.data(), 1);
-  local_particles[current_vs_pid]->r.p = pos;
-  local_vs_relate_to(current_vs_pid, relate_to);
+  auto p_vs = local_place_particle(current_vs_pid, initial_pos.data(), 1);
+  p_vs->r.p = pos;
 
-  (local_particles[max_seen_particle])->p.is_virtual = 1;
-  (local_particles[max_seen_particle])->p.type =
-      collision_params.vs_particle_type;
+  local_vs_relate_to(p_vs, &get_part(relate_to));
+
+  p_vs->p.is_virtual = 1;
+  p_vs->p.type = collision_params.vs_particle_type;
 }
 
 void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
@@ -613,35 +613,28 @@ void handle_collisions() {
           // Positions of the virtual sites
           bind_at_point_of_collision_calc_vs_pos(p1, p2, pos1, pos2);
 
+          auto handle_particle = [&](Particle *p, Vector3d const &pos) {
+            if (not p->l.ghost) {
+              place_vs_and_relate_to_particle(current_vs_pid, pos,
+                                              p->identity(), initial_pos);
+              // Particle storage locations may have changed due to
+              // added particle
+              p1 = local_particles[c.pp1];
+              p2 = local_particles[c.pp2];
+            } else {
+              added_particle(current_vs_pid);
+            }
+          };
+
           // place virtual sites on the node where the base particle is not a
           // ghost
-          if (!p1->l.ghost) {
-            place_vs_and_relate_to_particle(current_vs_pid, pos1, c.pp1,
-                                            initial_pos);
-            // Particle storage locations may have changed due to
-            // added particle
-            p1 = local_particles[c.pp1];
-            p2 = local_particles[c.pp2];
-          } else // update the books
-            added_particle(current_vs_pid);
-
+          handle_particle(p1, pos1);
           // Increment counter
           current_vs_pid++;
 
-          // Same for particle 2
-          if (!p2->l.ghost) {
-            place_vs_and_relate_to_particle(current_vs_pid, pos2, c.pp2,
-                                            initial_pos);
-            // Particle storage locations may have changed due to
-            // added particle
-            p1 = local_particles[c.pp1];
-            p2 = local_particles[c.pp2];
-          } else // update the books
-            added_particle(current_vs_pid);
-
+          handle_particle(p2, pos2);
           // Increment counter
           current_vs_pid++;
-
           // Create bonds between the vs.
 
           bind_at_poc_create_bond_between_vs(current_vs_pid, c);
@@ -687,7 +680,7 @@ void handle_collisions() {
           // Vs placement happens on the node that has p1
           if (!attach_vs_to.l.ghost) {
             place_vs_and_relate_to_particle(
-                current_vs_pid, pos, attach_vs_to.p.identity, initial_pos);
+                current_vs_pid, pos, attach_vs_to.identity(), initial_pos);
             // Particle storage locations may have changed due to
             // added particle
             p1 = local_particles[c.pp1];

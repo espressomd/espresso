@@ -40,7 +40,6 @@
 #include "constraints/ShapeBasedConstraint.hpp"
 #include "debug.hpp"
 #include "global.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
@@ -86,7 +85,7 @@ double mindist4(PartCfg &partCfg, double pos[3]) {
   return -1.0;
 }
 
-double buf_mindist4(double pos[3], int n_add, double *add) {
+double buf_mindist4(double const pos[3], int n_add, double const *const add) {
   double mindist = 30000.0, dx, dy, dz;
   int i;
 
@@ -136,9 +135,9 @@ int constraint_collision(double *p1, double *p2) {
 }
 
 int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
-             int part_id, double *posed, int mode, double shield, int max_try,
-             double val_cM, int cM_dist, int type_nM, int type_cM,
-             int type_bond, double angle, double angle2, double *posed2,
+             int part_id, double const *posed, int mode, double shield,
+             int max_try, double val_cM, int cM_dist, int type_nM, int type_cM,
+             int type_bond, double angle, double angle2, double const *posed2,
              int constr) {
   int p, n, cnt1, cnt2, max_cnt, bond_size, i;
   double phi, zz, rr;

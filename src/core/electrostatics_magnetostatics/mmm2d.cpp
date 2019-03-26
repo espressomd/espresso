@@ -27,6 +27,7 @@
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
@@ -42,16 +43,16 @@
 
 #ifdef ELECTROSTATICS
 char const *mmm2d_errors[] = {
-        "ok",
-        "Layer height too large for MMM2D near formula, increase n_layers",
-        "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and "
-        "y",
-        "Could find not reasonable Bessel cutoff. Please decrease n_layers or the "
-        "error bound",
-        "Could find not reasonable Polygamma cutoff. Consider exchanging x and y",
-        "Far cutoff too large, decrease the error bound",
-        "Layer height too small for MMM2D far formula, decrease n_layers or skin",
-        "IC requires layered cellsystem with more than 3 layers",
+    "ok",
+    "Layer height too large for MMM2D near formula, increase n_layers",
+    "box_l[1]/box_l[0] too large for MMM2D near formula, please exchange x and "
+    "y",
+    "Could find not reasonable Bessel cutoff. Please decrease n_layers or the "
+    "error bound",
+    "Could find not reasonable Polygamma cutoff. Consider exchanging x and y",
+    "Far cutoff too large, decrease the error bound",
+    "Layer height too small for MMM2D far formula, decrease n_layers or skin",
+    "IC requires layered cellsystem with more than 3 layers",
 };
 
 /** if you define this, the Besselfunctions are calculated up
@@ -204,36 +205,25 @@ void MMM2D_self_energy();
 
 /** sin/cos storage */
 static void prepare_scx_cache();
-
 static void prepare_scy_cache();
-
 /** clear the image contributions if there is no dielectric contrast and no
  * image charges */
 static void clear_image_contributions(int size);
-
 /** gather the informations for the far away image charges */
 static void gather_image_contributions(int size);
-
 /** spread the top/bottom sums */
 static void distribute(int size, double fac);
-
 /** 2 pi |z| code */
 static void setup_z_force();
-
 static void setup_z_energy();
-
 static void add_z_force();
-
 static double z_energy();
-
 /** p=0 per frequency code */
 static void setup_P(int p, double omega, double fac);
-
 static void add_P_force();
 
 /** q=0 per frequency code */
 static void setup_Q(int q, double omega, double fac);
-
 static void add_Q_force();
 
 /** P- and Q- energy calculation */
@@ -241,9 +231,7 @@ static double dir_energy(double omega);
 
 /** p,q <> 0 per frequency code */
 static void setup_PQ(int p, int q, double omega, double fac);
-
 static void add_PQ_force(int p, int q, double omega);
-
 static double PQ_energy(double omega);
 
 /** cutoff error setup. Returns error code */
@@ -256,21 +244,21 @@ void MMM2D_setup_constants() {
   elc_mmm2d_common_init_invBoxl();
 
   switch (cell_structure.type) {
-    case CELL_STRUCTURE_NSQUARE:
-      max_near = box_l[2];
-      /* not used */
-      min_far = 0.0;
-      break;
-    case CELL_STRUCTURE_LAYERED:
-      max_near = 2 * layer_h + skin;
-      min_far = layer_h - skin;
-      break;
-    default:
-      fprintf(
-              stderr,
-              "%d: INTERNAL ERROR: MMM2D setup for cell structure it should reject\n",
-              this_node);
-      errexit();
+  case CELL_STRUCTURE_NSQUARE:
+    max_near = box_l[2];
+    /* not used */
+    min_far = 0.0;
+    break;
+  case CELL_STRUCTURE_LAYERED:
+    max_near = 2 * layer_h + skin;
+    min_far = layer_h - skin;
+    break;
+  default:
+    fprintf(
+        stderr,
+        "%d: INTERNAL ERROR: MMM2D setup for cell structure it should reject\n",
+        this_node);
+    errexit();
   }
 }
 
@@ -280,7 +268,7 @@ void MMM2D_setup_constants() {
 
 static SCCache sc(double arg) { return {sin(arg), cos(arg)}; }
 
-template<size_t dir>
+template <size_t dir>
 static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
                              int n_sccache) {
   for (int freq = 1; freq <= n_sccache; freq++) {
@@ -313,7 +301,7 @@ static void prepare_scy_cache() {
 /*****************************************************************/
 
 /* block indexing - has to fit to the PQ block definitions above.
-   size gives the full size of the data elc_mmm2d_common_block,
+   size gives the full size of the data block,
    e_size is the size of only the top or bottom half, i.e. half of size.
 */
 
@@ -522,9 +510,10 @@ static void add_z_force() {
 
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 
-    field_induced = gbl_dm_z * coulomb.prefactor * 4 * M_PI * ux * uy * uz;
-    field_applied = mmm2d_params.pot_diff * uz;
-    field_tot = field_induced + field_applied;
+    coulomb.field_induced =
+        gbl_dm_z * coulomb.prefactor * 4 * M_PI * ux * uy * uz;
+    coulomb.field_applied = mmm2d_params.pot_diff * uz;
+    field_tot = coulomb.field_induced + coulomb.field_applied;
   }
 
   for (int c = 1; c <= n_layers; c++) {
@@ -759,7 +748,6 @@ static void add_force() {
 }
 
 static void add_P_force() { add_force<0>(); }
-
 static void add_Q_force() { add_force<1>(); }
 
 static double dir_energy(double omega) {
@@ -841,13 +829,13 @@ static void setup_PQ(int p, int q, double omega, double fac) {
           e = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
 
           lclimgebot[PQESSP] +=
-                  scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
           lclimgebot[PQESCP] +=
-                  scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
           lclimgebot[PQECSP] +=
-                  scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
           lclimgebot[PQECCP] +=
-                  scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
         } else
           e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
@@ -864,13 +852,13 @@ static void setup_PQ(int p, int q, double omega, double fac) {
               mmm2d_params.delta_mid_top;
 
           lclimgetop[PQESSM] +=
-                  scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
           lclimgetop[PQESCM] +=
-                  scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
           lclimgetop[PQECSM] +=
-                  scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
           lclimgetop[PQECCM] +=
-                  scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
         } else
           e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
@@ -878,22 +866,22 @@ static void setup_PQ(int p, int q, double omega, double fac) {
                    fac_delta_mid_top;
 
         lclimge[PQESSP] +=
-                scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_l;
+            scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_l;
         lclimge[PQESCP] +=
-                scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di_l;
+            scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di_l;
         lclimge[PQECSP] +=
-                scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di_l;
+            scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di_l;
         lclimge[PQECCP] +=
-                scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_l;
+            scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_l;
 
         lclimge[PQESSM] +=
-                scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_h;
+            scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_h;
         lclimge[PQESCM] +=
-                scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di_h;
+            scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di_h;
         lclimge[PQECSM] +=
-                scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di_h;
+            scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di_h;
         lclimge[PQECCM] +=
-                scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_h;
+            scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_h;
       }
 
       elc_mmm2d_common_addscale_vec(llclcblk, part[i].p.q, elc_mmm2d_common_block(partblk, ic, size), llclcblk, size);
@@ -1095,7 +1083,7 @@ double MMM2D_add_far(int f, int e) {
     else {
       q2 = mmm2d_params.far_cut2 - Utils::sqr(ux * (p - 1));
       if (q2 > 0)
-        q = 1 + (int) ceil(box_l[1] * sqrt(q2));
+        q = 1 + (int)ceil(box_l[1] * sqrt(q2));
       else
         q = 1;
       /* just to be on the safe side... */
@@ -1192,7 +1180,7 @@ static int MMM2D_tune_near(double error) {
     for (p = 1; p <= P; p++)
       sum += p * exp(-exponent * p);
     err =
-            pref * K1(box_l[1] * L) * (T * ((L + uy) / M_PI * box_l[0] - 1) + sum);
+        pref * K1(box_l[1] * L) * (T * ((L + uy) / M_PI * box_l[0] - 1) + sum);
     P++;
   } while (err > part_error && (P - 1) < MAXIMAL_B_CUT);
   P--;
@@ -1203,14 +1191,14 @@ static int MMM2D_tune_near(double error) {
 
   besselCutoff.resize(P);
   for (p = 1; p < P; p++)
-    besselCutoff[p - 1] = (int) floor(((double) P) / (2 * p)) + 1;
+    besselCutoff[p - 1] = (int)floor(((double)P) / (2 * p)) + 1;
 
   /* complex sum, determine cutoffs (dist dependent) */
   T = log(part_error / (16 * M_SQRT2) * box_l[0] * box_l[1]);
   // for 0, the sum is exactly zero, so do not calculate anything
   complexCutoff[0] = 0;
   for (i = 1; i <= COMPLEX_STEP; i++)
-    complexCutoff[i] = (int) ceil(T / log(i / COMPLEX_FAC));
+    complexCutoff[i] = (int)ceil(T / log(i / COMPLEX_FAC));
   prepareBernoulliNumbers(complexCutoff[COMPLEX_STEP]);
 
   /* polygamma, determine order */
@@ -1235,18 +1223,18 @@ static void prepareBernoulliNumbers(int bon_order) {
   int l;
   /* BernoulliB[2 n]/(2 n)!(2 Pi)^(2n) up to order 33 */
   static double bon_table[34] = {
-          1.0000000000000000000, 3.2898681336964528729, -2.1646464674222763830,
-          2.0346861239688982794, -2.0081547123958886788, 2.0019891502556361707,
-          -2.0004921731066160966, 2.0001224962701174097, -2.0000305645188173037,
-          2.0000076345865299997, -2.0000019079240677456, 2.0000004769010054555,
-          -2.0000001192163781025, 2.0000000298031096567, -2.0000000074506680496,
-          2.0000000018626548648, -2.0000000004656623667, 2.0000000001164154418,
-          -2.0000000000291038438, 2.0000000000072759591, -2.0000000000018189896,
-          2.0000000000004547474, -2.0000000000001136868, 2.0000000000000284217,
-          -2.0000000000000071054, 2.0000000000000017764, -2.0000000000000004441,
-          2.0000000000000001110, -2.0000000000000000278, 2.0000000000000000069,
-          -2.0000000000000000017, 2.0000000000000000004, -2.0000000000000000001,
-          2.0000000000000000000};
+      1.0000000000000000000,  3.2898681336964528729,  -2.1646464674222763830,
+      2.0346861239688982794,  -2.0081547123958886788, 2.0019891502556361707,
+      -2.0004921731066160966, 2.0001224962701174097,  -2.0000305645188173037,
+      2.0000076345865299997,  -2.0000019079240677456, 2.0000004769010054555,
+      -2.0000001192163781025, 2.0000000298031096567,  -2.0000000074506680496,
+      2.0000000018626548648,  -2.0000000004656623667, 2.0000000001164154418,
+      -2.0000000000291038438, 2.0000000000072759591,  -2.0000000000018189896,
+      2.0000000000004547474,  -2.0000000000001136868, 2.0000000000000284217,
+      -2.0000000000000071054, 2.0000000000000017764,  -2.0000000000000004441,
+      2.0000000000000001110,  -2.0000000000000000278, 2.0000000000000000069,
+      -2.0000000000000000017, 2.0000000000000000004,  -2.0000000000000000001,
+      2.0000000000000000000};
 
   if (bon_order < 2)
     bon_order = 2;
@@ -1266,10 +1254,9 @@ static void prepareBernoulliNumbers(int bon_order) {
   }
 }
 
-void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
+void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl2,
                                   double dl, double force[3]) {
   double F[3];
-  double pref = coulomb.prefactor * charge_factor;
   double z2 = d[2] * d[2];
   double rho2 = d[1] * d[1] + z2;
   int i;
@@ -1350,7 +1337,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
     zet2_r = zeta_r * zeta_r - zeta_i * zeta_i;
     zet2_i = 2 * zeta_r * zeta_i;
 
-    end = (int) ceil(COMPLEX_FAC * uy2 * rho2);
+    end = (int)ceil(COMPLEX_FAC * uy2 * rho2);
     if (end > COMPLEX_STEP) {
       end = COMPLEX_STEP;
       fprintf(stderr, "MMM2D: some particles left the assumed slab, precision "
@@ -1358,7 +1345,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
     }
     if (end < 0) {
       runtimeErrorMsg()
-              << "MMM2D: distance was negative, coordinates probably out of range";
+          << "MMM2D: distance was negative, coordinates probably out of range";
       end = 0;
     }
     end = complexCutoff[end];
@@ -1437,7 +1424,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
     force[i] += pref * F[i];
 }
 
-inline double calc_mmm2d_copy_pair_energy(double d[3]) {
+inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
   double eng;
   double z2 = d[2] * d[2];
   double rho2 = d[1] * d[1] + z2;
@@ -1492,7 +1479,7 @@ inline double calc_mmm2d_copy_pair_energy(double d[3]) {
     ztn_r = zet2_r;
     ztn_i = zet2_i;
 
-    end = (int) ceil(COMPLEX_FAC * uy2 * rho2);
+    end = (int)ceil(COMPLEX_FAC * uy2 * rho2);
     if (end > COMPLEX_STEP) {
       end = COMPLEX_STEP;
       fprintf(stderr, "MMM2D: some particles left the assumed slab, precision "
@@ -1543,14 +1530,12 @@ inline double calc_mmm2d_copy_pair_energy(double d[3]) {
     cx = d[0] - box_l[0];
     rinv = sqrt(1.0 / (cx * cx + rho2));
     eng += rinv;
-
-    // fprintf(stderr, "explicit energy %f %f %f %f\n", d[0], d[1], d[2], eng);
   }
 
   return eng;
 }
 
-double mmm2d_coulomb_pair_energy(double charge_factor, double dv[3], double d2,
+double mmm2d_coulomb_pair_energy(double charge_factor, double dv[3], double,
                                  double d) {
   double eng, pref = coulomb.prefactor * charge_factor;
   if (pref != 0.0) {
@@ -1571,7 +1556,7 @@ void MMM2D_self_energy() {
   auto parts = local_cells.particles();
   self_energy = std::accumulate(parts.begin(), parts.end(), 0.0,
                                 [seng](double sum, Particle const &p) {
-                                    return sum + seng * Utils::sqr(p.p.q);
+                                  return sum + seng * Utils::sqr(p.p.q);
                                 });
 }
 
@@ -1653,7 +1638,7 @@ int MMM2D_sanity_checks() {
   if (cell_structure.type != CELL_STRUCTURE_LAYERED &&
       cell_structure.type != CELL_STRUCTURE_NSQUARE) {
     runtimeErrorMsg()
-            << "MMM2D at present requires layered (or n-square) cellsystem";
+        << "MMM2D at present requires layered (or n-square) cellsystem";
     return 1;
   }
 
@@ -1700,8 +1685,8 @@ void MMM2D_on_resort_particles() {
   /* if we need MMM2D far formula, allocate caches */
   if (cell_structure.type == CELL_STRUCTURE_LAYERED) {
     n_localpart = cells_get_n_particles();
-    n_scxcache = (int) (ceil(mmm2d_params.far_cut / ux) + 1);
-    n_scycache = (int) (ceil(mmm2d_params.far_cut / uy) + 1);
+    n_scxcache = (int)(ceil(mmm2d_params.far_cut / ux) + 1);
+    n_scycache = (int)(ceil(mmm2d_params.far_cut / uy) + 1);
     scxcache.resize(n_scxcache * n_localpart);
     scycache.resize(n_scycache * n_localpart);
 

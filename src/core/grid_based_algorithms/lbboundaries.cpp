@@ -28,13 +28,15 @@
 #include "config.hpp"
 
 #include "communication.hpp"
+#include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
+#include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
-#include "initialize.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
 #include <algorithm>
@@ -86,11 +88,15 @@ void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #if defined(LB_GPU) && defined(LB_BOUNDARIES_GPU)
+    if (this_node != 0) {
+      return;
+    }
+
     int number_of_boundnodes = 0;
-    int *host_boundary_node_list = (int *)Utils::malloc(sizeof(int));
-    int *host_boundary_index_list = (int *)Utils::malloc(sizeof(int));
+    auto *host_boundary_node_list = (int *)Utils::malloc(sizeof(int));
+    auto *host_boundary_index_list = (int *)Utils::malloc(sizeof(int));
     size_t size_of_index;
     int boundary_number =
         -1; // the number the boundary will actually belong to.
@@ -231,7 +237,7 @@ void lb_init_boundaries() {
     }
 
     /**call of cuda fkt*/
-    float *boundary_velocity =
+    auto *boundary_velocity =
         (float *)Utils::malloc(3 * (lbboundaries.size() + 1) * sizeof(float));
     int n = 0;
     for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end();
@@ -262,18 +268,18 @@ void lb_init_boundaries() {
 #endif
 
 #endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB) && defined(LB_BOUNDARIES)
-    int node_domain_position[3], offset[3];
+    Vector3i node_domain_position, offset;
     int the_boundary = -1;
-    map_node_array(this_node, node_domain_position);
-
+    map_node_array(this_node, node_domain_position.data());
+    const auto lblattice = lb_lbfluid_get_lattice();
     offset[0] = node_domain_position[0] * lblattice.grid[0];
     offset[1] = node_domain_position[1] * lblattice.grid[1];
     offset[2] = node_domain_position[2] * lblattice.grid[2];
 
     for (int n = 0; n < lblattice.halo_grid_volume; n++) {
-      lbfields[n].boundary = 0;
+      lbfields.at(n).boundary = 0;
     }
 
     if (lblattice.halo_grid_volume == 0)
@@ -303,13 +309,13 @@ void lb_init_boundaries() {
           }
 
           if (dist <= 0 && the_boundary >= 0 &&
-              LBBoundaries::lbboundaries.size() > 0) {
+              not LBBoundaries::lbboundaries.empty()) {
             auto const index = get_linear_index(x, y, z, lblattice.halo_grid);
             auto &node = lbfields[index];
             node.boundary = the_boundary + 1;
             node.slip_velocity =
                 LBBoundaries::lbboundaries[the_boundary]->velocity() *
-                (lbpar.tau / lbpar.agrid);
+                (lb_lbfluid_get_tau() / lb_lbfluid_get_agrid());
           } else {
             lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
                 0;
@@ -337,7 +343,7 @@ int lbboundary_get_force(void *lbb, double *f) {
 
   std::vector<double> forces(3 * lbboundaries.size());
 
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
     lb_gpu_get_boundary_forces(forces.data());
 
@@ -350,16 +356,15 @@ int lbboundary_get_force(void *lbb, double *f) {
   } else {
 #if defined(LB_BOUNDARIES) && defined(LB)
     mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
-
-    f[0] = forces[3 * no + 0] * lbpar.agrid /
-           (lbpar.tau * lbpar.tau *
-            lbpar.rho); // lbpar.tau; TODO this makes the units wrong and
-    f[1] = forces[3 * no + 1] * lbpar.agrid /
-           (lbpar.tau * lbpar.tau *
-            lbpar.rho); // lbpar.tau; the result correct. But it's 3.13AM
-    f[2] = forces[3 * no + 2] * lbpar.agrid /
-           (lbpar.tau * lbpar.tau *
-            lbpar.rho); // lbpar.tau; on a Saturday at the ICP. Someone fix.
+    const auto rho = lb_lbfluid_get_density();
+    const auto agrid = lb_lbfluid_get_agrid();
+    const auto tau = lb_lbfluid_get_tau();
+    f[0] = forces[3 * no + 0] * rho * agrid /
+           (tau * tau); // lbpar.tau; TODO this makes the units wrong and
+    f[1] = forces[3 * no + 1] * rho * agrid /
+           (tau * tau); // lbpar.tau; the result correct. But it's 3.13AM
+    f[2] = forces[3 * no + 2] * rho * agrid /
+           (tau * tau); // lbpar.tau; on a Saturday at the ICP. Someone fix.
 #else
     return ES_ERROR;
 #endif
@@ -371,90 +376,4 @@ int lbboundary_get_force(void *lbb, double *f) {
 
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 
-#ifdef LB_BOUNDARIES
-
-void lb_bounce_back(LB_Fluid &lbfluid) {
-
-#ifdef D3Q19
-#ifndef PULL
-  int k, i, l;
-  int yperiod = lblattice.halo_grid[0];
-  int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
-  int next[19];
-  int x, y, z;
-  double population_shift;
-  double modes[19];
-  next[0] = 0;                     // ( 0, 0, 0) =
-  next[1] = 1;                     // ( 1, 0, 0) +
-  next[2] = -1;                    // (-1, 0, 0)
-  next[3] = yperiod;               // ( 0, 1, 0) +
-  next[4] = -yperiod;              // ( 0,-1, 0)
-  next[5] = zperiod;               // ( 0, 0, 1) +
-  next[6] = -zperiod;              // ( 0, 0,-1)
-  next[7] = (1 + yperiod);         // ( 1, 1, 0) +
-  next[8] = -(1 + yperiod);        // (-1,-1, 0)
-  next[9] = (1 - yperiod);         // ( 1,-1, 0)
-  next[10] = -(1 - yperiod);       // (-1, 1, 0) +
-  next[11] = (1 + zperiod);        // ( 1, 0, 1) +
-  next[12] = -(1 + zperiod);       // (-1, 0,-1)
-  next[13] = (1 - zperiod);        // ( 1, 0,-1)
-  next[14] = -(1 - zperiod);       // (-1, 0, 1) +
-  next[15] = (yperiod + zperiod);  // ( 0, 1, 1) +
-  next[16] = -(yperiod + zperiod); // ( 0,-1,-1)
-  next[17] = (yperiod - zperiod);  // ( 0, 1,-1)
-  next[18] = -(yperiod - zperiod); // ( 0,-1, 1) +
-  int reverse[] = {0, 2,  1,  4,  3,  6,  5,  8,  7, 10,
-                   9, 12, 11, 14, 13, 16, 15, 18, 17};
-
-  /* bottom-up sweep */
-  //  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++)
-  for (z = 0; z < lblattice.grid[2] + 2; z++) {
-    for (y = 0; y < lblattice.grid[1] + 2; y++) {
-      for (x = 0; x < lblattice.grid[0] + 2; x++) {
-        k = get_linear_index(x, y, z, lblattice.halo_grid);
-
-        if (lbfields[k].boundary) {
-          lb_calc_modes(k, modes);
-
-          for (i = 0; i < 19; i++) {
-            population_shift = 0;
-            for (l = 0; l < 3; l++) {
-              population_shift -= lbpar.agrid * lbpar.agrid * lbpar.agrid *
-                                  lbpar.rho * 2 * lbmodel.c[i][l] *
-                                  lbmodel.w[i] * lbfields[k].slip_velocity[l] /
-                                  lbmodel.c_sound_sq;
-            }
-
-            if (x - lbmodel.c[i][0] > 0 &&
-                x - lbmodel.c[i][0] < lblattice.grid[0] + 1 &&
-                y - lbmodel.c[i][1] > 0 &&
-                y - lbmodel.c[i][1] < lblattice.grid[1] + 1 &&
-                z - lbmodel.c[i][2] > 0 &&
-                z - lbmodel.c[i][2] < lblattice.grid[2] + 1) {
-              if (!lbfields[k - next[i]].boundary) {
-                for (l = 0; l < 3; l++) {
-                  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
-                      .force()[l] += // TODO
-                      (2 * lbfluid[i][k] + population_shift) * lbmodel.c[i][l];
-                }
-                lbfluid[reverse[i]][k - next[i]] =
-                    lbfluid[i][k] + population_shift;
-              } else {
-                lbfluid[reverse[i]][k - next[i]] = lbfluid[i][k] = 0.0;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-#else
-#error Bounce back boundary conditions are only implemented for PUSH scheme!
-#endif
-#else
-#error Bounce back boundary conditions are only implemented for D3Q19!
-#endif
-}
-
-#endif
 } // namespace LBBoundaries

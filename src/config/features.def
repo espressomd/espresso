@@ -34,11 +34,9 @@ ROTATIONAL_INERTIA              implies ROTATION
 /* Electrostatics */
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
-INTER_RF                        implies ELECTROSTATICS
 MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
 EWALD_GPU                       requires CUDA and ELECTROSTATICS
 _P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
-
 
 /* Magnetostatics */
 DIPOLES                         implies ROTATION
@@ -71,13 +69,9 @@ ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 ELECTROKINETICS                 requires CUDA
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   requires CUDA
-EK_ELECTROSTATIC_COUPLING       implies ELECTROKINETICS, LB_GPU, ELECTROSTATICS
-EK_ELECTROSTATIC_COUPLING       requires CUDA and FFTW
 EK_DEBUG                        requires ELECTROKINETICS
 EK_DOUBLE_PREC                  requires ELECTROKINETICS
 LATTICE                         equals LB or LB_GPU
-SHANCHEN                        implies LB_GPU
-SHANCHEN                        requires not ELECTROKINETICS and EXPERIMENTAL_FEATURES
 
 
 /* Interaction features */
@@ -111,12 +105,10 @@ OIF_GLOBAL_FORCES
 AFFINITY
 MEMBRANE_COLLISION
 
-BOND_ANGLE                      requires not BOND_ANGLE_OLD
 
 /* Immersed-Boundary Bayreuth version */
 IMMERSED_BOUNDARY
 IMMERSED_BOUNDARY               requires VIRTUAL_SITES
-IMMERSED_BOUNDARY               requires not SHANCHEN
 SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
@@ -165,7 +157,6 @@ GHOST_FORCE_DEBUG
 STAT_DEBUG
 POLY_DEBUG
 PTENSOR_DEBUG
-MAGGS_DEBUG
 LB_DEBUG
 VIRTUAL_SITES_DEBUG
 CUDA_DEBUG

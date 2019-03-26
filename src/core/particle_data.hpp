@@ -46,19 +46,14 @@
  * defines
  ************************************************/
 
-/// ok code for \ref place_particle
-#define ES_PART_OK 0
-/// error code for \ref place_particle
-#define ES_PART_ERROR -1
-/// ok code for \ref place_particle, particle is new
-#define ES_PART_CREATED 1
-
-/** bonds_flag "bonds_flag" value for updating particle config without bonding
- *  information
- */
-/** bonds_flag "bonds_flag" value for updating particle config with bonding
- *  information
- */
+enum {
+  /// ok code for \ref place_particle
+  ES_PART_OK = 0,
+  /// error code for \ref place_particle
+  ES_PART_ERROR = -1,
+  /// ok code for \ref place_particle, particle is new
+  ES_PART_CREATED = 1
+};
 
 #ifdef EXTERNAL_FORCES
 /** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
@@ -67,7 +62,7 @@
 #define PARTICLE_EXT_FORCE 1
 /** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
  *  coord. */
-#define COORD_FIXED(coord) (2L << coord)
+#define COORD_FIXED(coord) (2L << (coord))
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
  *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
@@ -108,16 +103,11 @@ struct ParticleProperties {
   constexpr static double mass{1.0};
 #endif /* MASS */
 
-#ifdef SHANCHEN
-  std::array<double, 2 *LB_COMPONENTS> solvation =
-      std::array<double, 2 * LB_COMPONENTS>{};
-#endif
-
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
   Vector3d rinertia = {1., 1., 1.};
 #else
-  static const constexpr double rinertia[3] = {1., 1., 1.};
+  static constexpr Vector3d rinertia = {1., 1., 1.};
 #endif
 
 #ifdef AFFINITY
@@ -167,9 +157,9 @@ struct ParticleProperties {
     int to_particle_id = 0;
     double distance = 0;
     // Store relative position of the virtual site.
-    Vector<4, double> rel_orientation = {0., 0., 0., 0.};
+    Vector4d rel_orientation = {0., 0., 0., 0.};
     // Store the orientation of the virtual particle in the body fixed frame.
-    Vector<4, double> quat = {0., 0., 0., 0.};
+    Vector4d quat = {0., 0., 0., 0.};
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &to_particle_id;
@@ -233,7 +223,7 @@ struct ParticlePosition {
 
 #ifdef ROTATION
   /** quaternions to define particle orientation */
-  Vector<4, double> quat = {1., 0., 0., 0.};
+  Vector4d quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
   inline const Vector3d calc_director() const {
     return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
@@ -246,11 +236,6 @@ struct ParticlePosition {
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
   Vector3d p_old = {0., 0., 0.};
-#endif
-
-#ifdef SHANCHEN
-  std::array<double, LB_COMPONENTS> composition =
-      std::array<double, LB_COMPONENTS>{};
 #endif
 };
 
@@ -292,13 +277,14 @@ struct ParticleMomentum {
 
 #ifdef ROTATION
   /** angular velocity
-      ALWAYS IN PARTICLE FIXEXD, I.E., CO-ROTATING COORDINATE SYSTEM */
+      ALWAYS IN PARTICLE FIXED, I.E., CO-ROTATING COORDINATE SYSTEM */
   Vector3d omega = {0., 0., 0.};
 #endif
 };
 
 /** Information on a particle that is needed only on the
-    node the particle belongs to */
+ *  node the particle belongs to
+ */
 struct ParticleLocal {
   /** position in the last time step before last Verlet list update. */
   Vector3d p_old = {0, 0, 0};
@@ -308,14 +294,6 @@ struct ParticleLocal {
   /** check whether a particle is a ghost or not */
   int ghost = 0;
 };
-
-#ifdef LB
-/** Data related to the lattice Boltzmann hydrodynamic coupling */
-struct ParticleLatticeCoupling {
-  /** fluctuating part of the coupling force */
-  Vector3d f_random;
-};
-#endif
 
 struct ParticleParametersSwimming {
 // ifdef inside because we need this type for some MPI prototypes
@@ -374,9 +352,6 @@ struct Particle {
     ret.m = m;
     ret.f = f;
     ret.l = l;
-#ifdef LB
-    ret.lc = lc;
-#endif
 #ifdef ENGINE
     ret.swim = swim;
 #endif
@@ -397,10 +372,7 @@ struct Particle {
   ParticleForce f;
   ///
   ParticleLocal l;
-///
-#ifdef LB
-  ParticleLatticeCoupling lc;
-#endif
+
   /** Bonded interactions list
    *
    *  The format is pretty simple: just the bond type, and then the particle
@@ -474,7 +446,7 @@ void MPI_Send(Particle const *, Size, Ts...) {
 
 /** List of particles. The particle array is resized using a sophisticated
  *  (we hope) algorithm to avoid unnecessary resizes.
- *  Access using \ref realloc_particlelist, \ref got_particle, ...
+ *  Access using \ref realloc_particlelist, ...
  */
 struct ParticleList {
   ParticleList() : part{nullptr}, n{0}, max{0} {}
@@ -578,13 +550,13 @@ Particle extract_indexed_particle(ParticleList *sl, int i);
 /************************************************/
 
 /** Update the entries in \ref local_particles for all particles in the list pl.
-    @param pl the list to put in.
-*/
+ *  @param pl the list to put in.
+ */
 void update_local_particles(ParticleList *pl);
 
 /** Invalidate \ref particle_node. This has to be done
-    at the beginning of the integration.
-*/
+ *  at the beginning of the integration.
+ */
 void clear_particle_node();
 
 /** Realloc \ref local_particles. */
@@ -614,180 +586,161 @@ void prefetch_particle_data(std::vector<int> ids);
 void invalidate_fetch_cache();
 
 /** Call only on the master node.
-    Move a particle to a new position.
-    If it does not exist, it is created.
-    @param part the identity of the particle to move
-    @param p    its new position
-    @return ES_PART_OK if particle existed, ES_PART_CREATED
-    if created and ES_PART_ERROR if id is illegal
-*/
+ *  Move a particle to a new position.
+ *  If it does not exist, it is created.
+ *  @param part the identity of the particle to move
+ *  @param p    its new position
+ *  @retval ES_PART_OK if particle existed
+ *  @retval ES_PART_CREATED if created
+ *  @retval ES_PART_ERROR if id is illegal
+ */
 int place_particle(int part, double p[3]);
 
 /** Call only on the master node: set particle velocity.
-    @param part the particle.
-    @param v its new velocity.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param v its new velocity.
+ */
 void set_particle_v(int part, double *v);
 
 #ifdef ENGINE
 /** Call only on the master node: set particle velocity.
-    @param part the particle.
-    @param swim struct containing swimming parameters
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param swim struct containing swimming parameters
+ */
 void set_particle_swimming(int part, ParticleParametersSwimming swim);
 #endif
 
 /** Call only on the master node: set particle force.
-    @param part the particle.
-    @param F its new force.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param F its new force.
+ */
 void set_particle_f(int part, const Vector3d &F);
 
 /** Call only on the master node: set particle mass.
-    @param part the particle.
-    @param mass its new mass.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param mass its new mass.
+ */
 void set_particle_mass(int part, double mass);
 
 /** Call only on the master node: set particle solvation free energy.
-    @param part the particle.
-    @param solvation its new solvation free energy.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param solvation its new solvation free energy.
+ */
 void set_particle_solvation(int part, double *solvation);
 
 #ifdef ROTATIONAL_INERTIA
 /** Call only on the master node: set particle rotational inertia.
-    @param part the particle.
-    @param rinertia its new inertia.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param rinertia its new inertia.
+ */
 void set_particle_rotational_inertia(int part, double *rinertia);
 #endif
 
 /** Call only on the master node: Specifies whether a particle's rotational
-    degrees of freedom are integrated or not. If set to zero, the content of
-    the torque and omega variables are meaningless
-    @param part the particle.
-    @param rot the degrees of freedom flag.
-    @return ES_OK if particle existed
-*/
+ *  degrees of freedom are integrated or not. If set to zero, the content of
+ *  the torque and omega variables are meaningless
+ *  @param part the particle.
+ *  @param rot the degrees of freedom flag.
+ */
 void set_particle_rotation(int part, int rot);
 
 /** @brief rotate a particle around an axis
-
-   @param part particle id
-   @param axis rotation axis
-   @param angle rotation angle
-*/
+ *
+ *  @param part particle id
+ *  @param axis rotation axis
+ *  @param angle rotation angle
+ */
 void rotate_particle(int part, const Vector3d &axis, double angle);
 
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
-    @param part the particle.
-    @param bond_site its new site of the affinity bond.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param bond_site its new site of the affinity bond.
+ */
 void set_particle_affinity(int part, double *bond_site);
 #endif
 
 #ifdef MEMBRANE_COLLISION
 /** Call only on the master node: set particle out_direction.
- @param part the particle.
- @param out_direction its new outward direction with respect to membrane.
- @return ES_OK if particle existed
+ *  @param part the particle.
+ *  @param out_direction its new outward direction with respect to membrane.
  */
 void set_particle_out_direction(int part, double *out_direction);
 #endif
 
 /** Call only on the master node: set particle charge.
-    @param part the particle.
-    @param q its new charge.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param q its new charge.
+ */
 void set_particle_q(int part, double q);
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 /** Call only on the master node: set particle electrophoretic mobility.
-    @param part the particle.
-    @param mu_E its new mobility.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param mu_E its new mobility.
+ */
 void set_particle_mu_E(int part, double *mu_E);
 void get_particle_mu_E(int part, double (&mu_E)[3]);
 #endif
 
 /** Call only on the master node: set particle type.
-    @param p_id the particle.
-    @param type its new type.
-    @return ES_OK if particle existed
-*/
+ *  @param p_id the particle.
+ *  @param type its new type.
+ */
 void set_particle_type(int p_id, int type);
 
 /** Call only on the master node: set particle's molecule id.
-    @param part the particle.
-    @param mid  its new mol id.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param mid  its new mol id.
+ */
 void set_particle_mol_id(int part, int mid);
 
 #ifdef ROTATION
 /** Call only on the master node: set particle orientation using quaternions.
-    @param part the particle.
-    @param quat its new value for quaternions.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param quat its new value for quaternions.
+ */
 void set_particle_quat(int part, double *quat);
 
 /** Call only on the master node: set particle angular velocity from lab frame.
-    @param part the particle.
-    @param omega_lab its new angular velocity.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param omega_lab its new angular velocity.
+ */
 void set_particle_omega_lab(int part, const Vector3d &omega_lab);
 
 /** Call only on the master node: set particle angular velocity in body frame.
-    @param part the particle.
-    @param omega its new angular velocity.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param omega its new angular velocity.
+ */
 void set_particle_omega_body(int part, const Vector3d &omega);
 
 /** Call only on the master node: set particle torque from lab frame.
-    @param part the particle.
-    @param torque_lab its new torque.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param torque_lab its new torque.
+ */
 void set_particle_torque_lab(int part, const Vector3d &torque_lab);
 
 #endif
 
 #ifdef DIPOLES
 /** Call only on the master node: set particle dipole orientation.
-    @param part the particle.
-    @param dip its new dipole orientation.
-    @return ES_OK if particle existed
-*/
-void set_particle_dip(int part, double *dip);
+ *  @param part the particle.
+ *  @param dip its new dipole orientation.
+ */
+void set_particle_dip(int part, double const *dip);
 
 /** Call only on the master node: set particle dipole moment (absolute value).
-    @param part the particle.
-    @param dipm its new dipole moment.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param dipm its new dipole moment.
+ */
 void set_particle_dipm(int part, double dipm);
 #endif
 
 #ifdef VIRTUAL_SITES
 /** Call only on the master node: set particle dipole moment (absolute value).
-    @param part the particle.
-    @param is_virtual its new is_virtual.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param is_virtual its new is_virtual.
+ */
 void set_particle_virtual(int part, int is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -798,17 +751,15 @@ void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
 
 #ifdef LANGEVIN_PER_PARTICLE
 /** Call only on the master node: set particle temperature.
-    @param part the particle.
-    @param T its new temperature.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param T its new temperature.
+ */
 void set_particle_temperature(int part, double T);
 
 /** Call only on the master node: set particle frictional coefficient.
-    @param part the particle.
-    @param gamma its new frictional coefficient.
-    @return ES_OK if particle existed
-*/
+ *  @param part the particle.
+ *  @param gamma its new frictional coefficient.
+ */
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma(int part, double gamma);
 #else
@@ -826,144 +777,144 @@ void set_particle_gamma_rot(int part, Vector3d gamma_rot);
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 /** Call only on the master node: set particle external torque.
-    @param part  the particle.
-    @param flag  new value for ext_flag.
-    @param torque new value for ext_torque.
-    @return ES_OK if particle existed
-*/
+ *  @param part  the particle.
+ *  @param torque new value for ext_torque.
+ */
 void set_particle_ext_torque(int part, const Vector3d &torque);
 #endif
 /** Call only on the master node: set particle external force.
-    @param part  the particle.
-    @param flag  new value for ext_flag.
-    @param force new value for ext_force.
-    @return ES_OK if particle existed
-*/
+ *  @param part  the particle.
+ *  @param force new value for ext_force.
+ */
 void set_particle_ext_force(int part, const Vector3d &force);
 /** Call only on the master node: set coordinate axes for which the particles
-   motion is fixed.
-    @param part  the particle.
-    @param flag new value for flagged coordinate axes to be fixed
-    @return ES_OK if particle existed
-*/
+ *  motion is fixed.
+ *  @param part  the particle.
+ *  @param flag new value for flagged coordinate axes to be fixed
+ */
 void set_particle_fix(int part, int flag);
 #endif
 
 /** Call only on the master node: remove bond from particle.
-    @param part     identity of principal atom of the bond.
-    @param bond     field containing the bond type number and the
-    identity of all bond partners (secondary atoms of the bond).
-*/
+ *  @param part     identity of principal atom of the bond.
+ *  @param bond     field containing the bond type number and the identity
+ *                  of all bond partners (secondary atoms of the bond).
+ */
 void delete_particle_bond(int part, Utils::Span<const int> bond);
 
 /** Call only on the master node: remove all bonds from particle.
-    @param part     identity of principal atom of the bond.
-*/
+ *  @param part     identity of principal atom of the bond.
+ */
 void delete_particle_bonds(int part);
 
 /** Call only on the master node: Add bond to particle.
-    @param part     identity of principal atom of the bond.
-    @param bond     field containing the bond type number and the
-    identity of all bond partners (secondary atoms of the bond).
-*/
+ *  @param part     identity of principal atom of the bond.
+ *  @param bond     field containing the bond type number and the
+ *  identity of all bond partners (secondary atoms of the bond).
+ */
 void add_particle_bond(int part, Utils::Span<const int> bond);
 
 #ifdef EXCLUSIONS
 /** Call only on the master node: change particle constraints.
-    @param part     identity of particle for which the exclusion is set.
-    @param part2    identity of particle for which the exclusion is set. If -1,
-   delete all exclusions.
-    @param _delete   if true, do not add the exclusion, rather delete it if
-   found
-    @return ES_OK on success or ES_ERROR if no success
-    (e. g. particles do not exist / did not have exclusion set)
-*/
+ *  @param part     identity of particle for which the exclusion is set.
+ *  @param part2    identity of particle for which the exclusion is set.
+ *                  If -1, delete all exclusions.
+ *  @param _delete  if true, do not add the exclusion, rather delete it if
+ *                  found
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on failure (e.g. particles do not exist / did not have
+ *          exclusion set)
+ */
 int change_exclusion(int part, int part2, int _delete);
 
 /** remove all exclusions. */
 void remove_all_exclusions();
 #endif
 
-/** remove particle with a given identity. Also removes all bonds to the
-   particle.
-    @param part     identity of the particle to remove
-    @return ES_OK on success or ES_ERROR if particle does not exist
-*/
+/** Remove particle with a given identity. Also removes all bonds to the
+ *  particle.
+ *  @param part     identity of the particle to remove
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR if particle does not exist
+ */
 int remove_particle(int part);
 
-/** remove all particles.
- */
+/** Remove all particles. */
 void remove_all_particles();
 
-/** for all local particles, remove bonds incorporating the specified
-    particle.
-    @param part     identity of the particle to free from bonds
-*/
+/** For all local particles, remove bonds incorporating the specified particle.
+ *  @param part     identity of the particle to free from bonds
+ */
 void remove_all_bonds_to(int part);
 
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
-    Move a particle to a new position.
-    If it does not exist, it is created. the position must
-    be on the local node!
-    @param part the identity of the particle to move
-    @param p    its new position
-    @param _new  if true, the particle is allocated, else has to exists already
-*/
-void local_place_particle(int part, const double p[3], int _new);
+ *  Move a particle to a new position. If it does not exist, it is created.
+ *  The position must be on the local node!
+ *
+ *  @param part the identity of the particle to move
+ *  @param p    its new position
+ *  @param _new  if true, the particle is allocated, else has to exists already
+ *
+ *  @return Pointer to the particle.
+ */
+Particle *local_place_particle(int part, const double p[3], int _new);
 
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
-    Called if on a different node a new particle was added.
-    @param part the identity of the particle added
-*/
+ *  Called if on a different node a new particle was added.
+ *  @param part the identity of the particle added
+ */
 void added_particle(int part);
 
 /** Used for example by \ref mpi_send_exclusion.
-    Locally add a exclusion to a particle.
-    @param part1 the identity of the first exclusion partner
-    @param part2 the identity of the second exclusion partner
-    @param _delete if true, delete the exclusion instead of add
-*/
+ *  Locally add a exclusion to a particle.
+ *  @param part1 the identity of the first exclusion partner
+ *  @param part2 the identity of the second exclusion partner
+ *  @param _delete if true, delete the exclusion instead of add
+ */
 void local_change_exclusion(int part1, int part2, int _delete);
 
 /** Used by \ref mpi_remove_particle, should not be used elsewhere.
-    Remove a particle on this node.
-    @param part the identity of the particle to remove
-*/
+ *  Remove a particle on this node.
+ *  @param part the identity of the particle to remove
+ */
 void local_remove_particle(int part);
 
 /** Used by \ref mpi_remove_particle, should not be used elsewhere.
-    Locally remove all particles.
+ *  Locally remove all particles.
  */
 void local_remove_all_particles();
 
 /** Used by \ref mpi_rescale_particles, should not be used elsewhere.
-    Locally rescale all particles on current node.
-    @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
-    @param scale factor by which to rescale (>1: stretch, <1: contract)
-*/
+ *  Locally rescale all particles on current node.
+ *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
+ *  @param scale factor by which to rescale (>1: stretch, <1: contract)
+ */
 void local_rescale_particles(int dir, double scale);
 
-/** @briefn Add bond to local particle.
-    @param part     identity of principal atom of the bond.
-    @param bond     field containing the bond type number and the
-    identity of all bond partners (secondary atoms of the bond).
-*/
+/** @brief Add bond to local particle.
+ *  @param p     identity of principal atom of the bond.
+ *  @param bond  field containing the bond type number and the identity
+ *               of all bond partners (secondary atoms of the bond).
+ */
 void local_add_particle_bond(Particle &p, Utils::Span<const int> bond);
 
-/** Synchronous send of a particle buffer to another node. The other node
-    MUST call \ref recv_particles when this is called. The particles data
-    is freed. */
+/** Synchronous send of a particle buffer to another node.
+ *  The other node MUST call \ref recv_particles when this is called.
+ *  The particles data is freed.
+ */
 void send_particles(ParticleList *particles, int node);
 
-/** Synchronous receive of a particle buffer from another node. The other node
-    MUST call \ref send_particles when this is called. Particles needs to
-   initialized,
-    it is reallocated to the correct size and the content is overwritten. */
+/** Synchronous receive of a particle buffer from another node.
+ *  The other node MUST call \ref send_particles when this is called.
+ *  Particles needs to initialized, it is reallocated to the correct
+ *  size and the content is overwritten.
+ */
 void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
-/** Determines if the non bonded interactions between p1 and p2 should be
- * calculated */
+/** Determine if the non-bonded interactions between @p p1 and @p p2 should be
+ *  calculated.
+ */
 inline bool do_nonbonded(Particle const *p1, Particle const *p2) {
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
      symmetric, so this is sufficient. */
@@ -982,14 +933,12 @@ void try_delete_exclusion(Particle *part, int part2);
 void try_add_exclusion(Particle *part, int part2);
 
 /** Automatically add the next \<distance\> neighbors in each molecule to the
- exclusion list.
- This uses the bond topology obtained directly from the particles, since only
- this contains
- the full topology, in contrast to \ref topology::topology. To easily setup the
- bonds, all data
- should be on a single node, therefore the \ref partCfg array is used. With
- large amounts
- of particles, you should avoid this function and setup exclusions manually. */
+ *  exclusion list.
+ *  This uses the bond topology obtained directly from the particles.
+ *  To easily setup the bonds, all data should be on a single node,
+ *  therefore the \ref partCfg array is used. With large amounts of
+ *  particles, you should avoid this function and setup exclusions manually.
+ */
 void auto_exclusions(int distance);
 
 void init_type_map(int type);

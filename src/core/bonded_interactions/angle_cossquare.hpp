@@ -28,171 +28,81 @@
 
 #include "bonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
-#ifdef BOND_ANGLE
+#include "angle_common.hpp"
 #include "grid.hpp"
+#include <tuple>
 
-/** set parameters for the angle potential.
-
-    \todo The type of the angle potential
-    is chosen via config.hpp and cannot be changed at runtime.
-*/
+/** set parameters for the angle potential. */
 int angle_cossquare_set_params(int bond_type, double bend, double phi0);
 
 /************************************************************/
 
-/** Computes the three body angle interaction force and adds this
-    force to the particle forces.
-    @param p_mid     Pointer to second/middle particle.
-    @param p_left    Pointer to first/left particle.
-    @param p_right   Pointer to third/right particle.
-    @param iaparams  bond type number of the angle interaction.
-    @param force1 returns force of particle 1
-    @param force2 returns force of particle 2
-    @return 0
-*/
-inline int calc_angle_cossquare_force(Particle *p_mid, Particle *p_left,
-                                      Particle *p_right,
-                                      Bonded_ia_parameters *iaparams,
+/** Compute the three-body angle interaction force.
+ *  @param[in]  p_mid     Second/middle particle.
+ *  @param[in]  p_left    First/left particle.
+ *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  iaparams  Bonded parameters for the angle interaction.
+ *  @param[out] force1    Force on particle 1.
+ *  @param[out] force2    Force on particle 2.
+ *  @retval 0
+ */
+inline int calc_angle_cossquare_force(Particle const *p_mid,
+                                      Particle const *p_left,
+                                      Particle const *p_right,
+                                      Bonded_ia_parameters const *iaparams,
                                       double force1[3], double force2[3]) {
-  double cosine, vec1[3], vec2[3], d1i, d2i, dist2, fac;
-  int j;
 
-  /* vector from p_left to p_mid */
-  get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
-  dist2 = sqrlen(vec1);
-  d1i = 1.0 / sqrt(dist2);
-  for (j = 0; j < 3; j++)
-    vec1[j] *= d1i;
-  /* vector from p_mid to p_right */
-  get_mi_vector(vec2, p_right->r.p, p_mid->r.p);
-  dist2 = sqrlen(vec2);
-  d2i = 1.0 / sqrt(dist2);
-  for (j = 0; j < 3; j++)
-    vec2[j] *= d2i;
-  /* scalar product of vec1 and vec2 */
-  cosine = scalar(vec1, vec2);
-  fac = iaparams->p.angle_cossquare.bend;
+  auto forceFactor = [&iaparams](double const cos_phi) {
+    auto const K = iaparams->p.angle_cossquare.bend;
+    auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
+    return K * (cos_phi0 + cos_phi);
+  };
 
-  fac *= iaparams->p.angle_cossquare.cos_phi0 + cosine;
+  calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor,
+                           force1, force2, false);
 
-  for (j = 0; j < 3; j++) {
-    double f1 = fac * (cosine * vec1[j] - vec2[j]) * d1i;
-    double f2 = fac * (cosine * vec2[j] - vec1[j]) * d2i;
-
-    force1[j] = (f1 - f2);
-    force2[j] = -f1;
-  }
   return 0;
 }
 
 /* The force on each particle due to a three-body bonded potential
    is computed. */
-inline void calc_angle_cossquare_3body_forces(Particle *p_mid, Particle *p_left,
-                                              Particle *p_right,
-                                              Bonded_ia_parameters *iaparams,
-                                              double force1[3],
-                                              double force2[3],
-                                              double force3[3]) {
+inline void calc_angle_cossquare_3body_forces(
+    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
+    Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
+    Vector3d &force3) {
 
-  int j;
-  double pot_dep;
-  double cos_phi;
-  double sin_phi;
-  double vec31[3];
-  double vec21[3];
-  double vec12[3]; // espresso convention
-  double vec21_sqr;
-  double vec31_sqr;
-  double vec21_magn;
-  double vec31_magn;
-  double fj[3];
-  double fk[3];
-  double fac;
-
-  get_mi_vector(vec12, p_mid->r.p, p_left->r.p);
-  for (j = 0; j < 3; j++)
-    vec21[j] = -vec12[j];
-
-  get_mi_vector(vec31, p_right->r.p, p_mid->r.p);
-  vec21_sqr = sqrlen(vec21);
-  vec21_magn = sqrt(vec21_sqr);
-  vec31_sqr = sqrlen(vec31);
-  vec31_magn = sqrt(vec31_sqr);
-  cos_phi = scalar(vec21, vec31) / (vec21_magn * vec31_magn);
-  sin_phi = sqrt(1.0 - Utils::sqr(cos_phi));
-
-  /* uncomment this block if interested in the angle
-  if(cos_phi < -1.0) cos_phi = -TINY_COS_VALUE;
-  if(cos_phi >  1.0) cos_phi =  TINY_COS_VALUE;
-  phi = acos(cos_phi);
-  */
-  {
-    double K, cos_phi0;
-    K = iaparams->p.angle_cossquare.bend;
-    cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-
+  auto forceFactor = [&iaparams](double const cos_phi, double const sin_phi) {
+    auto const K = iaparams->p.angle_cossquare.bend;
+    auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
     // potential dependent term [dU/dphi = K * (sin_phi * cos_phi0 - cos_phi *
     // sin_phi)]
-    pot_dep = K * (sin_phi * cos_phi0 - cos_phi * sin_phi);
-  }
+    return K * (sin_phi * cos_phi0 - cos_phi * sin_phi) / sin_phi;
+  };
 
-  fac = pot_dep / sin_phi;
-
-  for (j = 0; j < 3; j++) {
-    fj[j] =
-        vec31[j] / (vec21_magn * vec31_magn) - cos_phi * vec21[j] / vec21_sqr;
-    fk[j] =
-        vec21[j] / (vec21_magn * vec31_magn) - cos_phi * vec31[j] / vec31_sqr;
-  }
-
-  // note that F1 = -(F2 + F3)
-  for (j = 0; j < 3; j++) {
-    force1[j] = force1[j] - fac * (fj[j] + fk[j]);
-    force2[j] = force2[j] + fac * fj[j];
-    force3[j] = force3[j] + fac * fk[j];
-  }
+  std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
+      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor, false);
 }
 
-/** Computes the three body angle interaction energy.
-    @param p_mid        Pointer to first particle.
-    @param p_left        Pointer to second/middle particle.
-    @param p_right        Pointer to third particle.
-    @param iaparams  bond type number of the angle interaction.
-    @param _energy   return energy pointer.
-    @return 0.
-*/
-inline int angle_cossquare_energy(Particle *p_mid, Particle *p_left,
-                                  Particle *p_right,
-                                  Bonded_ia_parameters *iaparams,
+/** Computes the three-body angle interaction energy.
+ *  @param[in]  p_mid     Second/middle particle.
+ *  @param[in]  p_left    First/left particle.
+ *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  iaparams  Bonded parameters for the angle interaction.
+ *  @param[out] _energy   Energy.
+ *  @retval 0
+ */
+inline int angle_cossquare_energy(Particle const *p_mid, Particle const *p_left,
+                                  Particle const *p_right,
+                                  Bonded_ia_parameters const *iaparams,
                                   double *_energy) {
-  double cosine, vec1[3], vec2[3], d1i, d2i, dist2;
-  int j;
-
-  /* vector from p_mid to p_left */
-  get_mi_vector(vec1, p_mid->r.p, p_left->r.p);
-  dist2 = sqrlen(vec1);
-  d1i = 1.0 / sqrt(dist2);
-  for (j = 0; j < 3; j++)
-    vec1[j] *= d1i;
-  /* vector from p_right to p_mid */
-  get_mi_vector(vec2, p_right->r.p, p_mid->r.p);
-  dist2 = sqrlen(vec2);
-  d2i = 1.0 / sqrt(dist2);
-  for (j = 0; j < 3; j++)
-    vec2[j] *= d2i;
-  /* scalar product of vec1 and vec2 */
-  cosine = scalar(vec1, vec2);
-  if (cosine > TINY_COS_VALUE)
-    cosine = TINY_COS_VALUE;
-  if (cosine < -TINY_COS_VALUE)
-    cosine = -TINY_COS_VALUE;
-  /* bond angle energy */
-  *_energy = 0.5 * iaparams->p.angle_cossquare.bend *
-             Utils::sqr(cosine + iaparams->p.angle_cossquare.cos_phi0);
+  auto const vectors =
+      calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
+  auto const cos_phi = std::get<4>(vectors);
+  auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
+  auto const K = iaparams->p.angle_cossquare.bend;
+  *_energy = 0.5 * K * Utils::sqr(cos_phi + cos_phi0);
   return 0;
 }
 
-#endif /* BOND_ANGLE */
 #endif /* ANGLE_COSSQUARE_H */

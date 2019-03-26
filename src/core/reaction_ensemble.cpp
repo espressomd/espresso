@@ -35,10 +35,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "particle_data.hpp"
 #include "random.hpp"
 
-#include "utils/Histogram.hpp"
+#include "utils/index.hpp"
 
+#include <cstdio>
 #include <fstream>
-#include <stdio.h>
 
 namespace ReactionEnsemble {
 /**
@@ -230,7 +230,7 @@ double factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(int Ni0, int nu_i) {
         value = value * 1.0 / (Ni0 + i);
       }
     } else {
-      int abs_nu_i = static_cast<int>(-1.0 * nu_i);
+      auto abs_nu_i = static_cast<int>(-1.0 * nu_i);
       for (int i = 0; i < abs_nu_i; i++) {
         value = value * (Ni0 - i);
       }
@@ -503,13 +503,13 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
 
     // delete hidden reactant_particles (remark: don't delete changed particles)
     // extract ids of to be deleted particles
-    int len_hidden_particles_properties =
+    auto len_hidden_particles_properties =
         static_cast<int>(hidden_particles_properties.size());
     std::vector<int> to_be_deleted_hidden_ids(len_hidden_particles_properties);
     std::vector<int> to_be_deleted_hidden_types(
         len_hidden_particles_properties);
     for (int i = 0; i < len_hidden_particles_properties; i++) {
-      int p_id = static_cast<int>(hidden_particles_properties[i].p_id);
+      auto p_id = static_cast<int>(hidden_particles_properties[i].p_id);
       to_be_deleted_hidden_ids[i] = p_id;
       to_be_deleted_hidden_types[i] = hidden_particles_properties[i].type;
       set_particle_type(p_id,
@@ -1107,11 +1107,11 @@ void WangLandauReactionEnsemble::invalidate_bins() {
   int empty_bins_in_memory = 0;
   for (int flattened_index = 0; flattened_index < wang_landau_potential.size();
        flattened_index++) {
-    // unravel index
-    std::vector<int> unraveled_index(collective_variables.size());
-    Utils::unravel_index(nr_subindices_of_collective_variable.data(),
-                         collective_variables.size(), flattened_index,
-                         unraveled_index.data());
+    std::vector<int> unraveled_index(
+        nr_subindices_of_collective_variable.size());
+    Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                         nr_subindices_of_collective_variable.end(),
+                         unraveled_index.begin(), flattened_index);
     // use unraveled index
     int EnergyCollectiveVariable_index = 0;
     if (collective_variables.size() > 1)
@@ -1145,7 +1145,7 @@ void WangLandauReactionEnsemble::invalidate_bins() {
  * Finds the minimum non negative value in the provided double array and returns
  * this value.
  */
-double find_minimum_non_negative_value(double *list, int len) {
+double find_minimum_non_negative_value(double const *const list, int len) {
   double minimum = list[0];
   for (int i = 0; i < len; i++) {
     if (minimum < 0)
@@ -1160,7 +1160,7 @@ double find_minimum_non_negative_value(double *list, int len) {
 /**
  * Finds the maximum in a double array and returns it.
  */
-double find_maximum(double *list, int len) {
+double find_maximum(double const *const list, int len) {
   double maximum = list[0];
   for (int i = 0; i < len; i++) {
     if (list[i] > maximum)
@@ -1434,10 +1434,11 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
                // multidimensional Wang-Landau potential are printed out, since
                // the range [E_min(nbar), E_max(nbar)] for each nbar may be a
                // different one
-        std::vector<int> unraveled_index(collective_variables.size());
-        Utils::unravel_index(nr_subindices_of_collective_variable.data(),
-                             collective_variables.size(), flattened_index,
-                             unraveled_index.data());
+        std::vector<int> unraveled_index(
+            nr_subindices_of_collective_variable.size());
+        Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                             nr_subindices_of_collective_variable.end(),
+                             unraveled_index.begin(), flattened_index);
         // use unraveled index
         for (int i = 0; i < collective_variables.size(); i++) {
           fprintf(pFile, "%f ",
@@ -1500,10 +1501,11 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
     for (int flattened_index = 0;
          flattened_index < wang_landau_potential.size(); flattened_index++) {
       // unravel index
-      std::vector<int> unraveled_index(collective_variables.size());
-      Utils::unravel_index(nr_subindices_of_collective_variable.data(),
-                           collective_variables.size(), flattened_index,
-                           unraveled_index.data());
+      std::vector<int> unraveled_index(
+          nr_subindices_of_collective_variable.size());
+      Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                           nr_subindices_of_collective_variable.end(),
+                           unraveled_index.begin(), flattened_index);
       // use unraveled index
       for (int i = 0; i < collective_variables.size(); i++) {
         fprintf(pFile, "%f ",
@@ -1527,11 +1529,11 @@ int WangLandauReactionEnsemble::
     get_flattened_index_wang_landau_without_energy_collective_variable(
         int flattened_index_with_EnergyCollectiveVariable,
         int CV_index_energy_observable) {
-  // unravel index
-  std::vector<int> unraveled_index(collective_variables.size());
-  Utils::unravel_index(
-      nr_subindices_of_collective_variable.data(), collective_variables.size(),
-      flattened_index_with_EnergyCollectiveVariable, unraveled_index.data());
+  std::vector<int> unraveled_index(nr_subindices_of_collective_variable.size());
+  Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                       nr_subindices_of_collective_variable.end(),
+                       unraveled_index.begin(),
+                       flattened_index_with_EnergyCollectiveVariable);
   // use unraveled index
   const int nr_collective_variables =
       collective_variables.size() -

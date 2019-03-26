@@ -22,9 +22,7 @@ import numpy as np
 import unittest as ut
 
 
-@ut.skipIf(not espressomd.has_features(["BOND_ANGLE"]),
-           "Features not available, skipping test!")
-class InteractionsNonBondedTest(ut.TestCase):
+class InteractionsAngleBondTest(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     box_l = 10.
 
@@ -43,6 +41,12 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.part.add(id=1, pos=self.start_pos + self.rel_pos, type=0)
         self.system.part.add(id=2, pos=self.start_pos + self.rel_pos, type=0)
 
+        # Add a pair bond to make sure that doesn't cause trouble
+        harmonic_bond = espressomd.interactions.HarmonicBond(k=0, r_0=0)
+        self.system.bonded_inter.add(harmonic_bond)
+        self.harmonic_bond = harmonic_bond
+        self.system.part[1].add_bond((harmonic_bond, 0))
+
     def tearDown(self):
         self.system.part.clear()
 
@@ -59,11 +63,75 @@ class InteractionsNonBondedTest(ut.TestCase):
     def angle_harmonic_potential(self, phi, bend=1.0, phi0=np.pi):
         return 0.5 * bend * np.power(phi - phi0, 2)
 
+    def angle_harmonic_force(self, phi, bend=1.0, phi0=np.pi):
+        return -bend * (phi - phi0)
+
     def angle_cosine_potential(self, phi, bend=1.0, phi0=np.pi):
         return bend * (1 - np.cos(phi - phi0))
 
+    def angle_cosine_force(self, phi, bend=1.0, phi0=np.pi):
+        return bend * np.sin(phi - phi0)
+
     def angle_cos_squared_potential(self, phi, bend=1.0, phi0=np.pi):
         return 0.5 * bend * (np.cos(phi) - np.cos(phi0))**2
+
+    def angle_cos_squared_force(self, phi, bend=1.0, phi0=np.pi):
+        return bend * (np.cos(phi) - np.cos(phi0)) * np.sin(phi)
+
+    def run_test(self, bond_instance, force_func, energy_func):
+        self.system.bonded_inter.add(bond_instance)
+        self.system.part[0].add_bond((bond_instance, 1, 2))
+        # Add an extra (strengh 0) pair bond, which should change nothing
+        self.system.part[0].add_bond((self.harmonic_bond, 1))
+
+        N = 111
+        d_phi = np.pi / N
+        for i in range(1, N):
+            self.system.part[2].pos = self.start_pos + \
+                self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            # Calculate energies
+            E_sim = self.system.analysis.energy()["bonded"]
+            E_ref = energy_func(i * d_phi)
+            # Check that energies match
+            np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
+
+            f_ref = force_func(i * d_phi)
+
+            for p in self.system.part[[1, 2]]:
+                # Check that force is tangential
+                dot_prod_tol = 1E-12
+                self.assertAlmostEqual(
+                    np.dot(p.f, self.system.distance_vec(self.system.part[0], p)), 0, delta=dot_prod_tol)
+                self.assertAlmostEqual(np.linalg.norm(p.f), np.abs(
+                    f_ref) / self.system.distance(self.system.part[0], p), delta=1E-12)
+
+            # Total force =0?
+            np.testing.assert_allclose(
+                np.sum(np.copy(self.system.part[0:3].f), 0), [0, 0, 0], atol=1E-12)
+
+            # No pressure (isotropic compression preserves angles)
+            self.assertAlmostEqual(
+                self.system.analysis.pressure()["bonded"], 0, delta=1E-12)
+            # Stress tensor trace=0 (isotropic compression preserves angles, 
+            # consistency with pressure)
+            self.assertAlmostEqual(
+                np.trace(self.system.analysis.stress_tensor()["bonded"]), 0, delta=1E-12)
+
+            # Pressure_ij =sum_p 1/V *F_i r_j
+            # with r position of particle p and F force on particle p.
+            # Then using F_p1=-F_p2 - F_p3 (no net force)
+            # and r_p2 =r_p1 +r_{p1,p2} and r_p3 =r_p1 +r_{p1,p3}
+            # P_ij =1/V (F_p2 r_{p1,p2} +#_p3 r_{p1,p3})
+            p_tensor_expected = \
+                np.outer(self.system.part[1].f, self.system.distance_vec(self.system.part[0], self.system.part[1])) \
+                + np.outer(self.system.part[2].f, self.system.distance_vec(
+                    self.system.part[0], self.system.part[2]))
+            p_tensor_expected /= self.system.volume()
+            np.testing.assert_allclose(
+                self.system.analysis.stress_tensor()["bonded"],
+                p_tensor_expected, atol=1E-12)
 
     def test_angle_harmonic(self):
         ah_bend = 1.
@@ -71,23 +139,10 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         angle_harmonic = espressomd.interactions.AngleHarmonic(
             bend=ah_bend, phi0=ah_phi0)
-        self.system.bonded_inter.add(angle_harmonic)
-        self.system.part[0].add_bond((angle_harmonic, 1, 2))
-
-        N = 111
-        d_phi = np.pi / N
-        for i in range(N):
-            self.system.part[2].pos = self.start_pos + \
-                self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()["bonded"]
-            E_ref = self.angle_harmonic_potential(
-                phi=i * d_phi, bend=ah_bend, phi0=ah_phi0)
-
-            # Check that energies match
-            np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
+        self.run_test(angle_harmonic,
+                      lambda phi: self.angle_harmonic_force(
+                      phi=phi, bend=ah_bend, phi0=ah_phi0),
+                      lambda phi: self.angle_harmonic_potential(phi=phi, bend=ah_bend, phi0=ah_phi0))
 
     # Test Angle Cosine Potential
     def test_angle_cosine(self):
@@ -96,23 +151,11 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         angle_cosine = espressomd.interactions.AngleCosine(
             bend=ac_bend, phi0=ac_phi0)
-        self.system.bonded_inter.add(angle_cosine)
-        self.system.part[0].add_bond((angle_cosine, 1, 2))
-
-        N = 111
-        d_phi = np.pi / N
-        for i in range(N):
-            self.system.part[2].pos = self.start_pos + \
-                self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()['bonded']
-            E_ref = self.angle_cosine_potential(
-                phi=i * d_phi, bend=ac_bend, phi0=ac_phi0)
-
-            # Check that energies match
-            np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
+        self.run_test(angle_cosine,
+                      lambda phi: self.angle_cosine_force(
+                      phi=phi, bend=ac_bend, phi0=ac_phi0),
+                      lambda phi: self.angle_cosine_potential(
+                      phi=phi, bend=ac_bend, phi0=ac_phi0))
 
     def test_angle_cos_squared(self):
         acs_bend = 1
@@ -120,24 +163,11 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         angle_cos_squared = espressomd.interactions.AngleCossquare(
             bend=acs_bend, phi0=acs_phi0)
-        self.system.bonded_inter.add(angle_cos_squared)
-        self.system.part[0].add_bond((angle_cos_squared, 1, 2))
-
-        N = 111
-        d_phi = np.pi / N
-        for i in range(N):
-            self.system.part[2].pos = self.start_pos + \
-                self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
-            self.system.integrator.run(recalc_forces=True, steps=0)
-
-            # Calculate energies
-            E_sim = self.system.analysis.energy()['bonded']
-            E_ref = self.angle_cos_squared_potential(
-                phi=i * d_phi, bend=acs_bend, phi0=acs_phi0)
-
-            # Check that energies match
-            np.testing.assert_almost_equal(E_sim, E_ref)
-
+        self.run_test(angle_cos_squared,
+                      lambda phi: self.angle_cos_squared_force(
+                      phi=phi, bend=acs_bend, phi0=acs_phi0),
+                      lambda phi: self.angle_cos_squared_potential(
+                      phi=phi, bend=acs_bend, phi0=acs_phi0))
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())

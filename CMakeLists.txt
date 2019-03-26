@@ -26,14 +26,18 @@ include(cmake/FindPythonModule.cmake)
 enable_language(CXX)
 
 set(PROJECT_VERSION "4.1-dev")
-string(REGEX REPLACE "^([1-9]+)\\.[0-9]+.*$" "\\1" SOVERSION "${PROJECT_VERSION}")
-if (NOT ${SOVERSION} MATCHES "^[1-9]+$")
+string(REGEX
+       REPLACE "^([1-9]+)\\.[0-9]+.*$"
+               "\\1"
+               SOVERSION
+               "${PROJECT_VERSION}")
+if(NOT ${SOVERSION} MATCHES "^[1-9]+$")
   message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
-endif (NOT ${SOVERSION} MATCHES "^[1-9]+$")
+endif(NOT ${SOVERSION} MATCHES "^[1-9]+$")
 
-######################################################################
+#
 # CMake internal vars
-######################################################################
+#
 
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -51,7 +55,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 
 set(WITH_PYTHON yes)
 
-option(WITH_GSL     "Build with GSL support" ON)
+option(WITH_GSL    "Build with GSL support"  ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
@@ -61,16 +65,22 @@ option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation marker
 if(CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
-if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+   OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   option(WITH_COVERAGE "Generate code coverage report" OFF)
   option(WITH_ASAN "Build with address sanitizer" OFF)
   option(WITH_UBSAN "Build with undefined behavior sanitizer" OFF)
 endif()
-if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE )
-  option(WITH_MSAN "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)" OFF)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE)
+  option(
+    WITH_MSAN
+    "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)"
+    OFF)
 endif()
 option(WARNINGS_ARE_ERRORS "Treat warnings as errors during compilation" OFF)
 option(WITH_CCACHE "Use ccache compiler invocation." OFF)
+option(WITH_PROFILER "Enable profiler annotations." OFF)
+set(TEST_TIMEOUT "300" CACHE STRING "Timeout in seconds for each testsuite test")
 
 if(WITH_CCACHE)
   find_program(CCACHE ccache)
@@ -78,7 +88,7 @@ if(WITH_CCACHE)
     message(STATUS "Found ccache ${CCACHE}")
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE} CACHE STRING "ccache executable")
   else()
-      message(FATAL_ERROR "ccache not found.")
+    message(FATAL_ERROR "ccache not found.")
   endif(CCACHE)
 endif(WITH_CCACHE)
 
@@ -88,50 +98,65 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # choose the name of the config file
 set(MYCONFIG_NAME "myconfig.hpp"
-  CACHE STRING "Default name of the local config file")
+    CACHE STRING "Default name of the local config file")
 
 # Check which config file to use
 include(MyConfig)
 
-######################################################################
+#
 # Pretty function
-######################################################################
+#
 
 include(CheckCXXSourceCompiles)
 
 set(__PRETTYFUNC__ __func__)
 foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
-   check_cxx_source_compiles("
+  check_cxx_source_compiles("
      #include <string>
      int main() { std::string(${func_name}); }
      " result${func_name})
-   if(result${func_name})
-     set(__PRETTYFUNC__ ${func_name})
-     break()
-   endif(result${func_name})
+  if(result${func_name})
+    set(__PRETTYFUNC__ ${func_name})
+    break()
+  endif(result${func_name})
 endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 
-######################################################################
+#
 # Libraries
-######################################################################
+#
 
-if (WITH_CUDA)
-  if (EXISTS "$ENV{NVCC}" AND NOT CUDA_NVCC_EXECUTABLE)
+if(WITH_CUDA)
+  if(EXISTS "$ENV{NVCC}" AND NOT CUDA_NVCC_EXECUTABLE)
     set(CUDA_NVCC_EXECUTABLE $ENV{NVCC} CACHE FILEPATH "Path to CUDA compiler.")
   endif()
-  if (CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
+  if(CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
     message(STATUS "Found CUDA-capable host compiler: ${CUDA_NVCC_EXECUTABLE}")
-    if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" )
-        execute_process(COMMAND ${CUDA_NVCC_EXECUTABLE} ${CMAKE_CXX_FLAGS} --verbose
-                ERROR_VARIABLE CUDA_DIR)
-        string(REGEX REPLACE "^.*Found CUDA installation: ([^,]+).*\$" "\\1" CUDA_DIR "${CUDA_DIR}")
-        message(STATUS "Found CUDA installation: ${CUDA_DIR}")
+    set(CUDA 1)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+       OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+      execute_process(COMMAND ${CUDA_NVCC_EXECUTABLE} ${CMAKE_CXX_FLAGS}
+                              --verbose
+                      ERROR_VARIABLE CUDA_DIR_STRING)
+      string(REGEX
+             REPLACE "^.*Found CUDA installation: ([^,]+).*\$"
+                     "\\1"
+                     CUDA_DIR
+                     "${CUDA_DIR_STRING}")
+      string(REGEX
+             REPLACE "^.*Found CUDA installation: .* version ([0-9]+).*\$"
+                     "\\1"
+                     CUDA_VERSION
+                     "${CUDA_DIR_STRING}")
+      message(STATUS "Found CUDA version: ${CUDA_VERSION}")
+      message(STATUS "Found CUDA installation: ${CUDA_DIR}")
+      if(CUDA_VERSION VERSION_LESS 7.0)
+        message(FATAL_ERROR "CUDA version does not match requirements.")
+      endif()
     else()
         set(CUDA_DIR "/usr/local/cuda")
     endif()
     find_library(CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
     find_library(CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
-    set(CUDA 1)
 
     function(add_gpu_library)
       set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)
@@ -163,7 +188,7 @@ if (WITH_CUDA)
       find_package(HIP MODULE)
       message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
       set(CUDA 1)
-      list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier")
+      list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
 
       find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
 
@@ -189,7 +214,7 @@ if (WITH_CUDA)
         set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -Os -DNDEBUG")
         set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -G -O2")
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
-        list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+        list(APPEND CUDA_NVCC_FLAGS "-std=c++14")
         if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
           list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES")
         endif()
@@ -212,21 +237,30 @@ endif(WITH_CUDA)
 
 find_package(PythonInterp REQUIRED)
 
-if (WITH_PYTHON)
+if(WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
-  execute_process(COMMAND ${PYTHON_EXECUTABLE}
-                -c "import distutils.sysconfig as cg; print(cg.get_python_inc())"
-                OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND ${PYTHON_EXECUTABLE} -c
+            "import distutils.sysconfig as cg; print(cg.get_python_inc())"
+    OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
   find_package(NumPy REQUIRED)
   if(NOT PYTHON_INSTDIR)
-    execute_process(COMMAND ${PYTHON_EXECUTABLE} 
-                -c "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
-                OUTPUT_VARIABLE PYTHON_INSTDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(
+      COMMAND
+        ${PYTHON_EXECUTABLE} -c
+        "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
+      OUTPUT_VARIABLE PYTHON_INSTDIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif(NOT PYTHON_INSTDIR)
   if(PYTHON_VERSION_MAJOR EQUAL 2)
-    set(CYTHON_FLAGS "-2" CACHE STRING "Flags used by the Cython compiler during all build types.")
+    set(
+      CYTHON_FLAGS "-2"
+      CACHE STRING "Flags used by the Cython compiler during all build types.")
   else()
-    set(CYTHON_FLAGS "-3" CACHE STRING "Flags used by the Cython compiler during all build types.")
+    set(
+      CYTHON_FLAGS "-3"
+      CACHE STRING "Flags used by the Cython compiler during all build types.")
   endif()
 
   if(WARNINGS_ARE_ERRORS)
@@ -236,12 +270,14 @@ endif(WITH_PYTHON)
 
 
 find_package(FFTW3)
-if (FFTW3_FOUND)
+if(FFTW3_FOUND)
+  include_directories(SYSTEM ${FFTW3_INCLUDE_DIR})
+  list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
   set(FFTW 3)
 endif(FFTW3_FOUND)
 
 # If we build either interface turn on script interface
-if (WITH_PYTHON)
+if(WITH_PYTHON)
   set(WITH_SCRIPT_INTERFACE ON)
 endif()
 
@@ -260,18 +296,19 @@ if (WITH_HDF5)
   endif(HDF5_IS_PARALLEL)
 endif(WITH_HDF5)
 
-# Check for the h5xx submodule
-# and try to check it out if not found or update it if found.
+# Check for the h5xx submodule and try to check it out if not found or update it
+# if found.
 if(WITH_HDF5 AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
   # Try to find git
   find_package(Git)
   if(GIT_FOUND)
-    if (NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/h5xx/.git")
-      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init -- libs/h5xx
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/libs/h5xx/.git")
+      execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --
+                              libs/h5xx
+                      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     else()
       execute_process(COMMAND ${GIT_EXECUTABLE} submodule update -- libs/h5xx
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+                      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     endif()
   endif()
 endif()
@@ -286,7 +323,7 @@ endif(WITH_SCAFACOS)
 
 if(WITH_GSL)
   find_package(GSL)
-  if (GSL_FOUND)
+  if(GSL_FOUND)
     set(GSL 1)
   endif(GSL_FOUND)
 endif(WITH_GSL)
@@ -301,9 +338,9 @@ if(WITH_VALGRIND_INSTRUMENTATION)
   endif(VALGRIND_FOUND)
 endif(WITH_VALGRIND_INSTRUMENTATION)
 
-#######################################################################
+#
 # MPI
-#######################################################################
+#
 
 find_package(MPI REQUIRED)
 
@@ -334,8 +371,11 @@ endif()
 # Boost
 #######################################################################
 
-
-list(APPEND BOOST_COMPONENTS mpi serialization filesystem system)
+list(APPEND BOOST_COMPONENTS
+            mpi
+            serialization
+            filesystem
+            system)
 
 if(WITH_TESTS)
   list(APPEND BOOST_COMPONENTS unit_test_framework)
@@ -358,31 +398,32 @@ endif()
 find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
 
 if(Boost_VERSION VERSION_GREATER 106399 AND Boost_VERSION VERSION_LESS 106500)
-  # Boost 1.64 has incompatible Serialization and MPI modules, see https://svn.boost.org/trac10/ticket/12723 .
-  # Some distributions, like Fedora, have backported the patch.
-  FILE(READ "${Boost_INCLUDE_DIR}/boost/mpi/detail/mpi_datatype_primitive.hpp" boost_mpi_datatype_file)
+  # Boost 1.64 has incompatible Serialization and MPI modules, see
+  # https://svn.boost.org/trac10/ticket/12723 . Some distributions, like Fedora,
+  # have backported the patch.
+  file(READ "${Boost_INCLUDE_DIR}/boost/mpi/detail/mpi_datatype_primitive.hpp"
+            boost_mpi_datatype_file)
   if(boost_mpi_datatype_file MATCHES "boost::serialization::detail::get_data")
     message(FATAL_ERROR "Boost 1.64 is unsupported")
   endif()
 endif()
 
-#######################################################################
+#
 # Paths
-#######################################################################
+#
 
-if (NOT DEFINED BINDIR)
+if(NOT DEFINED BINDIR)
   set(BINDIR "bin")
 endif(NOT DEFINED BINDIR)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 
-
-#######################################################################
+#
 # Flags
-#######################################################################
+#
 
 # C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -391,11 +432,11 @@ set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 if(WARNINGS_ARE_ERRORS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-  if (NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
+  if(NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
   endif()
 endif(WARNINGS_ARE_ERRORS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces")
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
 endif()
@@ -407,10 +448,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # disable warnings from -Wextra
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-clobbered -Wno-cast-function-type")
 endif()
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0.0" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # disable warnings from -Wextra
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers")
-endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   # disable warnings from -Wextra
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd592")
@@ -419,10 +456,15 @@ if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID STREQ
   # G++ and Intel don't know this flag
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
 endif()
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments")
 endif()
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.5")
+if(NOT
+   CMAKE_CXX_COMPILER_ID
+   STREQUAL
+   "GNU"
+   OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.8.5")
   # older versions don't support -Wno-pedantic which we need in src/python
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
 endif()
@@ -438,37 +480,53 @@ endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
 
-if( WITH_ASAN AND WITH_MSAN )
-  message(FATAL_ERROR "Address sanitizer and memory sanitizer cannot be enabled simultaneously")
+if(WITH_ASAN AND WITH_MSAN)
+  message(
+    FATAL_ERROR
+      "Address sanitizer and memory sanitizer cannot be enabled simultaneously")
 endif()
-if( WITH_ASAN )
+if(WITH_ASAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
 endif()
-if( WITH_MSAN )
+if(WITH_MSAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=memory -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} -fsanitize=memory -fno-omit-frame-pointer")
 endif()
-if( WITH_UBSAN )
+if(WITH_UBSAN)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
 endif()
 
-#######################################################################
+#
 # Testing
 #######################################################################
 
-if( WITH_CLANG_TIDY )
-  string(REGEX REPLACE "^([1-9]+\\.[0-9]+).*$" "\\1" CLANG_MINOR_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
-  find_program(
-    CLANG_TIDY_EXE
-    NAMES "clang-tidy-${CLANG_MINOR_VERSION}" "clang-tidy"
-    DOC "Path to clang-tidy executable"
-    )
+if(WITH_CLANG_TIDY)
+  string(REGEX
+          REPLACE "^([1-9]+)\\.[0-9]+.*$"
+          "\\1"
+          CLANG_MAJOR_VERSION
+          "${CMAKE_CXX_COMPILER_VERSION}")
+  string(REGEX
+         REPLACE "^[1-9]+\\.([0-9]+).*$"
+                 "\\1"
+                 CLANG_MINOR_VERSION
+                 "${CMAKE_CXX_COMPILER_VERSION}")
+  find_program(CLANG_TIDY_EXE
+               NAMES "clang-tidy-${CLANG_MAJOR_VERSION}.${CLANG_MINOR_VERSION}" "clang-tidy-${CLANG_MAJOR_VERSION}" "clang-tidy"
+               DOC "Path to clang-tidy executable")
   if(NOT CLANG_TIDY_EXE)
     message(STATUS "clang-tidy not found.")
   else()
     message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*,-misc-unused-*,-android-*,-fuchsia-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses,-clang-analyzer-security.FloatLoopCounter,-clang-analyzer-optin.mpi.MPI-Checker,-boost-use-to-string,-hicpp-*" "-header-filter=.*" "-warnings-as-errors=*")
+    set(
+      CMAKE_CXX_CLANG_TIDY
+      "${CLANG_TIDY_EXE}"
+      "-checks=*,clang-analyzer-alpha.*,-misc-unused-*,-android-*,-fuchsia-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses, -clang-analyzer-security.FloatLoopCounter, -clang-analyzer-optin.mpi.MPI-Checker,-boost-use-to-string,-hicpp-*, modernize-use-nullptr, modernize-use-auto, modernize-pass-by-value, modernize-avoid-c-arrays, modernize-use-equals-default, modernize-deprecated-headers, readability-non-const-parameter"
+      "-header-filter=.*"
+      "-warnings-as-errors=*")
   endif()
 endif()
 
@@ -486,16 +544,17 @@ if(WITH_BENCHMARKS)
   add_subdirectory(maintainer/benchmarks)
 endif(WITH_BENCHMARKS)
 
-#######################################################################
+#
 # Subdirectories
-#######################################################################
+#
 
 add_subdirectory(doc)
 add_subdirectory(src)
-
-#######################################################################
+add_subdirectory(libs)
+add_subdirectory(config)
+#
 # Feature summary
-#######################################################################
+#
 
 include(FeatureSummary)
 feature_summary(WHAT ALL)

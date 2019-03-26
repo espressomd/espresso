@@ -30,8 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/range/iterator_range.hpp>
 
 /**
- * @brief Proxy class that gets a particle range from
- *        from the global local_particles.
+ * @brief Proxy class that gets a particle range from #local_particles.
  */
 class GetLocalParts {
   class SkipIfNullOrGhost {
@@ -63,5 +62,6 @@ public:
   }
 };
 
+/** @brief Cache of particles */
 using PartCfg = ParticleCache<GetLocalParts, PositionUnfolder>;
 #endif

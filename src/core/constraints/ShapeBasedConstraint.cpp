@@ -56,7 +56,8 @@ double ShapeBasedConstraint::min_dist() {
 }
 
 ParticleForce ShapeBasedConstraint::force(const Particle &p,
-                                          const Vector3d &folded_pos) {
+                                          const Vector3d &folded_pos,
+                                          double t) {
 
   double dist = 0.;
   Vector3d dist_vec, force, torque1, torque2, outer_normal_vec;
@@ -117,7 +118,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
 }
 
 void ShapeBasedConstraint::add_energy(const Particle &p,
-                                      const Vector3d &folded_pos,
+                                      const Vector3d &folded_pos, double t,
                                       Observable_stat &energy) const {
   double dist;
   IA_parameters *ia_params;
