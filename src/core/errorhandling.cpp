@@ -55,8 +55,8 @@ Communication::MpiCallbacks *m_callbacks = nullptr;
 void init_error_handling(Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;
 
-  runtimeErrorCollector = unique_ptr<RuntimeErrorCollector>(
-      new RuntimeErrorCollector(m_callbacks->comm()));
+  runtimeErrorCollector = std::make_unique<RuntimeErrorCollector>(
+      m_callbacks->comm());
 }
 
 void _runtimeWarning(const std::string &msg, const char *function,

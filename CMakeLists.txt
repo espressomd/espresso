@@ -545,6 +545,8 @@ if(WITH_CLANG_TIDY)
        -hicpp-*,\
        bugprone-*,\
        clang-analyzer-alpha.*,\
+       modernize-make-shared,\
+       modernize-make-unique,\
        modernize-loop-convert,\
        modernize-use-nullptr,\
        modernize-use-auto,\
