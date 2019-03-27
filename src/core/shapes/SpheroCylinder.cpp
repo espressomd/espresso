@@ -98,6 +98,5 @@ void SpheroCylinder::calculate_dist(const Vector3d &pos, double *dist,
     vec[i] = -dr * e_r[i];
   }
 
-  return;
-}
+  }
 } // namespace Shapes

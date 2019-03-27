@@ -567,7 +567,8 @@ if(WITH_CLANG_TIDY)
        readability-delete-null-pointer,\
        readability-deleted-default,\
        readability-else-after-return,\
-       readability-non-const-parameter"
+       readability-non-const-parameter,\
+       readability-redundant-control-flow"
       "-header-filter=.*"
       "-warnings-as-errors=*")
   endif()

@@ -169,8 +169,7 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
       }
     }
   }
-  return;
-}
+  }
 
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   int i, count;

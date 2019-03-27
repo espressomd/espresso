@@ -119,7 +119,5 @@ void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
   vec[1] = 0;
   vec[2] = (c22[1] - pos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
   return;
-
-  return;
 }
 } // namespace Shapes

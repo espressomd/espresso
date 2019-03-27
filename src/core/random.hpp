@@ -63,8 +63,7 @@ inline void check_user_has_seeded() {
     unseeded_error_thrown = true;
     unseeded_error();
   }
-  return;
-}
+  }
 
 /**
  * @brief Set seed of random number generators on each node.
