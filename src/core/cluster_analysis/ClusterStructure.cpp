@@ -57,7 +57,7 @@ void ClusterStructure::run_for_all_pairs() {
 void ClusterStructure::run_for_bonded_particles() {
   clear();
   partCfg().update_bonds();
-  for (const auto& p : partCfg()) {
+  for (const auto &p : partCfg()) {
     int j = 0;
     while (j < p.bl.n) {
       int bond_type = p.bl.e[j];
@@ -167,7 +167,7 @@ void ClusterStructure::merge_clusters() {
   }
 
   // Sort particles ids in the clusters
-  for (const auto& c : clusters) {
+  for (const auto &c : clusters) {
     std::sort(c.second->particles.begin(), c.second->particles.end());
   }
 }

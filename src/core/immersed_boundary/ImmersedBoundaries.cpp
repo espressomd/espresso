@@ -65,7 +65,7 @@ void ImmersedBoundaries::init_volume_conservation() {
 
     // Loop through all bonded interactions and check if we need to set the
     // reference volume
-    for (auto & bonded_ia_param : bonded_ia_params) {
+    for (auto &bonded_ia_param : bonded_ia_params) {
       if (bonded_ia_param.type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
         // This check is important because InitVolumeConservation may be called
         // accidentally during the integration. Then we must not reset the

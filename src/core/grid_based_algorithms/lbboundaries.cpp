@@ -107,14 +107,14 @@ void lb_init_boundaries() {
     int wallcharge_species = -1, charged_boundaries = 0;
     int node_charged = 0;
 
-    for (auto & lbboundarie : lbboundaries) {
+    for (auto &lbboundarie : lbboundaries) {
       (*lbboundarie).set_net_charge(0.0);
     }
 
     if (ek_initialized) {
       host_wallcharge_species_density = (ekfloat *)Utils::malloc(
           ek_parameters.number_of_nodes * sizeof(ekfloat));
-      for (auto & lbboundarie : lbboundaries) {
+      for (auto &lbboundarie : lbboundaries) {
         if ((*lbboundarie).charge_density() != 0.0) {
           charged_boundaries = 1;
           break;

@@ -267,7 +267,7 @@ void p3m_pre_init(void) {
   p3m.sum_q2 = 0.0;
   p3m.square_sum_q = 0.0;
 
-  for (auto & i : p3m.int_caf)
+  for (auto &i : p3m.int_caf)
     i = nullptr;
   p3m.pos_shift = 0.0;
   p3m.meshift_x = nullptr;
@@ -947,7 +947,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   double lcl_dm[3], gbl_dm[3];
   double en;
 
-  for (double & j : lcl_dm)
+  for (double &j : lcl_dm)
     j = 0;
 
   for (auto const &p : local_cells.particles()) {
@@ -965,7 +965,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   else
     en = 0;
   if (force_flag) {
-    for (double & j : gbl_dm)
+    for (double &j : gbl_dm)
       j *= pref;
     for (auto &p : local_cells.particles()) {
       for (int j = 0; j < 3; j++)

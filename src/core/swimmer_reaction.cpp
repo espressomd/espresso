@@ -264,7 +264,7 @@ void integrate_reaction_swap() {
     on_observable_calc();
 
     // Iterate over all the local cells
-    for (int & rand_cell : rand_cells) {
+    for (int &rand_cell : rand_cells) {
       // Take into account only those cell neighborhoods for which
       // the central cell contains a catalyzer particle
       cell = local_cells.cell[rand_cell];
@@ -282,13 +282,13 @@ void integrate_reaction_swap() {
       std::shuffle(catalyzers.begin(), catalyzers.end(), rng);
 
       // Loop cell neighbors
-      for (auto & n : cells) {
+      for (auto &n : cells) {
         cell = &n;
         p_neigh = cell->part;
         np = cell->n;
 
         // We loop over all the catalyzer particles
-        for (int & catalyzer : catalyzers) {
+        for (int &catalyzer : catalyzers) {
           reactants.clear();
           products.clear();
 
@@ -371,7 +371,7 @@ void integrate_reaction_swap() {
 
     // Apply the changes to the tagged particles.  Therefore, again
     // loop over all cells
-    for (int & rand_cell : rand_cells) {
+    for (int &rand_cell : rand_cells) {
       cell = local_cells.cell[rand_cell];
       p_local = cell->part;
       np = cell->n;

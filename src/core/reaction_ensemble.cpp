@@ -180,14 +180,13 @@ void ReactionAlgorithm::check_reaction_ensemble() {
   // check for the existence of default charges for all types that take part in
   // the reactions
 
-  for (const auto& current_reaction : reactions) {
+  for (const auto &current_reaction : reactions) {
     // check for reactants
     for (int reactant_type : current_reaction.reactant_types) {
       auto it = charges_of_types.find(reactant_type);
       if (it == charges_of_types.end()) {
-        std::string message =
-            std::string("Forgot to assign charge to type ") +
-            std::to_string(reactant_type);
+        std::string message = std::string("Forgot to assign charge to type ") +
+                              std::to_string(reactant_type);
         throw std::runtime_error(message);
       }
     }
@@ -349,7 +348,7 @@ void ReactionAlgorithm::restore_properties(
   // this function restores all properties of all particles provided in the
   // property list, the format of the property list is (p_id,charge,type)
   // repeated for each particle that occurs in that list
-  for (auto & i : property_list) {
+  for (auto &i : property_list) {
     int type = i.type;
 #ifdef ELECTROSTATICS
     // set charge
@@ -1061,9 +1060,10 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
   // calculate Delta in the degree of association so that EVERY reaction step is
   // driven.
   int total_number_of_corresponding_acid = 0;
-  for (int corresponding_acid_type : current_collective_variable.corresponding_acid_types) {
-    int num_of_current_type = number_of_particles_with_type(
-        corresponding_acid_type);
+  for (int corresponding_acid_type :
+       current_collective_variable.corresponding_acid_types) {
+    int num_of_current_type =
+        number_of_particles_with_type(corresponding_acid_type);
     total_number_of_corresponding_acid += num_of_current_type;
   }
   double delta = 1.0 / total_number_of_corresponding_acid;
@@ -1079,7 +1079,7 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
  */
 int WangLandauReactionEnsemble::get_num_needed_bins() {
   int needed_bins = 1;
-  for (const auto& current_collective_variable : collective_variables) {
+  for (const auto &current_collective_variable : collective_variables) {
     needed_bins = needed_bins * (int((current_collective_variable->CV_maximum -
                                       current_collective_variable->CV_minimum) /
                                      current_collective_variable->delta_CV) +
@@ -1307,10 +1307,10 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
     // since only the difference in the wang_landau potential is of interest.
     double minimum_wang_landau_potential = find_minimum_non_negative_value(
         wang_landau_potential.data(), wang_landau_potential.size());
-    for (double & i : wang_landau_potential) {
+    for (double &i : wang_landau_potential) {
       if (i >= 0) // check for whether we are in the
-                                         // valid range of the collective
-                                         // variable
+                  // valid range of the collective
+                  // variable
         i -= minimum_wang_landau_potential;
     }
     // write out preliminary Wang-Landau potential results

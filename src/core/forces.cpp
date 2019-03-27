@@ -105,7 +105,7 @@ void force_calc() {
 #endif
   init_forces();
 
-  for (auto & forceActor : forceActors) {
+  for (auto &forceActor : forceActors) {
     forceActor->computeForces(espressoSystemInterface);
 #ifdef ROTATION
     forceActor->computeTorques(espressoSystemInterface);

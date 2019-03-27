@@ -37,7 +37,7 @@
 #include "utils.hpp"
 
 void fft_common_pre_init(fft_data_struct *fft) {
-  for (auto & i : fft->plan) {
+  for (auto &i : fft->plan) {
     i.group = (int *)Utils::malloc(1 * n_nodes * sizeof(int));
     i.send_block = nullptr;
     i.send_size = nullptr;

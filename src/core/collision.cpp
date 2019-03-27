@@ -342,7 +342,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // Normalize
   double dist2 = sqrlen(vec1);
   double d1i = 1.0 / sqrt(dist2);
-  for (double & j : vec1)
+  for (double &j : vec1)
     j *= d1i;
 
   /* vector from p to p2 */
@@ -350,7 +350,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // normalize
   dist2 = sqrlen(vec2);
   double d2i = 1.0 / sqrt(dist2);
-  for (double & j : vec2)
+  for (double &j : vec2)
     j *= d2i;
 
   /* scalar product of vec1 and vec2 */
