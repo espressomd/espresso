@@ -560,6 +560,7 @@ if(WITH_CLANG_TIDY)
        modernize-use-equals-delete,\
        modernize-use-noexcept,\
        modernize-use-nullptr,\
+       modernize-use-override,\
        readability-non-const-parameter"
       "-header-filter=.*"
       "-warnings-as-errors=*")
