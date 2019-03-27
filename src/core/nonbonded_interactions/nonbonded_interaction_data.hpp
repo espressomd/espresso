@@ -536,10 +536,7 @@ public:
 
     // Within short-range distance (incl dpd and the like)
     auto const max_cut = get_ia_param(p1.p.type, p2.p.type)->max_cut;
-    if ((max_cut != INACTIVE_CUTOFF) && (dist2 <= Utils::sqr(max_cut + m_skin)))
-      return true;
-
-    return false;
+    return static_cast<bool>((max_cut != INACTIVE_CUTOFF) && (dist2 <= Utils::sqr(max_cut + m_skin)));
   }
 };
 #endif

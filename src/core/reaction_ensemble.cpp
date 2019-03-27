@@ -475,7 +475,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
                         p_ids_created_particles, hidden_particles_properties);
 
   double E_pot_new;
-  if (particle_inserted_too_close_to_another_one == true)
+  if (particle_inserted_too_close_to_another_one)
     E_pot_new = std::numeric_limits<double>::max();
   else
     E_pot_new = calculate_current_potential_energy_of_system();
@@ -846,7 +846,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   }
 
   double E_pot_new;
-  if (particle_inserted_too_close_to_another_one == true)
+  if (particle_inserted_too_close_to_another_one)
     E_pot_new = std::numeric_limits<double>::max();
   else
     E_pot_new = calculate_current_potential_energy_of_system();
@@ -1348,7 +1348,7 @@ bool WangLandauReactionEnsemble::can_refine_wang_landau_one_over_t() {
 
   return *(std::min_element(histogram.begin(), histogram.end())) >
              minimum_required_value ||
-         m_system_is_in_1_over_t_regime == true;
+         m_system_is_in_1_over_t_regime;
 }
 
 /**

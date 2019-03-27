@@ -106,7 +106,7 @@ void File::InitFile() {
     MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm);
   else
     m_hdf5_comm = MPI_COMM_WORLD;
-  if (m_write_ordered == true && this_node != 0)
+  if (m_write_ordered && this_node != 0)
     return;
 
   if (n_part <= 0) {
@@ -124,7 +124,7 @@ void File::InitFile() {
   bool backup_file_exists = boost::filesystem::exists(m_backup_filename);
   /* Perform a barrier synchronization. Otherwise one process might already
    * create the file while another still checks for its existence. */
-  if (m_write_ordered == false)
+  if (!m_write_ordered)
     MPI_Barrier(m_hdf5_comm);
   if (file_exists) {
     if (check_for_H5MD_structure(m_filename)) {
@@ -394,11 +394,11 @@ void File::Write(int write_dat, PartCfg &partCfg) {
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
   int num_particles_to_be_written = 0;
-  if (m_write_ordered == true && this_node == 0)
+  if (m_write_ordered && this_node == 0)
     num_particles_to_be_written = n_part;
-  else if (m_write_ordered == true && this_node != 0)
+  else if (m_write_ordered && this_node != 0)
     return;
-  else if (m_write_ordered == false)
+  else if (!m_write_ordered)
     num_particles_to_be_written = cells_get_n_particles();
 
   bool write_species = write_dat & W_TYPE;
