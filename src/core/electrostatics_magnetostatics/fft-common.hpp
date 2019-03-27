@@ -169,8 +169,8 @@ void fft_common_pre_init(fft_data_struct *fft);
  * \return Size of the communication group.
  */
 int fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
-                         int const *const node_list1, int *const node_list2,
-                         int *const group, int *const pos, int *const my_pos);
+                         int const *node_list1, int *node_list2,
+                         int *group, int *pos, int *my_pos);
 
 /** Calculate the local fft mesh.  Calculate the local mesh (loc_mesh)
  *  of a node at position (n_pos) in a node grid (n_grid) for a global
@@ -234,7 +234,7 @@ int fft_calc_send_block(int const pos1[3], int const grid1[3],
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block(double const *const in, double *const out,
+void fft_pack_block(double const *in, double *out,
                     int const start[3], int const size[3], int const dim[3],
                     int element);
 
@@ -261,7 +261,7 @@ void fft_pack_block(double const *const in, double *const out,
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block_permute1(double const *const in, double *const out,
+void fft_pack_block_permute1(double const *in, double *out,
                              int const start[3], int const size[3],
                              int const dim[3], int element);
 
@@ -288,7 +288,7 @@ void fft_pack_block_permute1(double const *const in, double *const out,
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block_permute2(double const *const in, double *const out,
+void fft_pack_block_permute2(double const *in, double *out,
                              int const start[3], int const size[3],
                              int const dim[3], int element);
 
@@ -304,7 +304,7 @@ void fft_pack_block_permute2(double const *const in, double *const out,
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_unpack_block(double const *const in, double *const out,
+void fft_unpack_block(double const *in, double *out,
                       int const start[3], int const size[3], int const dim[3],
                       int element);
 
@@ -316,7 +316,7 @@ void fft_unpack_block(double const *const in, double *const out,
  * \param     element  element size.
  * \param     num      element index to print.
  */
-void fft_print_global_fft_mesh(fft_forw_plan plan, double const *const data,
+void fft_print_global_fft_mesh(fft_forw_plan plan, double const *data,
                                int element, int num);
 
 /** Debug function to print fft_forw_plan structure.

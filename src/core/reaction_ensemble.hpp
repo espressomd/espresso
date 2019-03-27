@@ -150,7 +150,7 @@ public:
 
   bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type,
-                                               const bool use_wang_landau);
+                                               bool use_wang_landau);
 
   bool particle_inserted_too_close_to_another_one;
 
@@ -174,7 +174,7 @@ protected:
       std::vector<int> &p_ids_created_particles,
       std::vector<StoredParticleProperty> &hidden_particles_properties);
   void restore_properties(std::vector<StoredParticleProperty> &property_list,
-                          const int number_of_saved_properties);
+                          int number_of_saved_properties);
 
 private:
   std::map<int, int> save_old_particle_numbers(int reaction_id);

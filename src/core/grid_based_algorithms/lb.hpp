@@ -230,7 +230,7 @@ void lb_sanity_checks();
     @param j local fluid speed
     @param pi local fluid pressure
 */
-void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
+void lb_calc_n_from_rho_j_pi(Lattice::index_t index, double rho,
                              Vector3d const &j, Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
