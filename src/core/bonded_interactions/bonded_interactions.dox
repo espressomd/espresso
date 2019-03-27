@@ -27,13 +27,12 @@
  *  Swope, Ferguson *J. Comput. Chem.* **1992**, *13*(5): 585-594,
  *  doi:[10.1002/jcc.540130508](https://doi.org/10.1002/jcc.540130508).
  *
- *  The force acting on particle @f$ i @f$ is given by the chain rule in
- *  equation 6:
+ *  The gradient of the potential at particle @f$ i @f$ is given by the chain
+ *  rule in equation 6:
  *
  *  @f{equation}{
  *      \label{eq:Swope-eq-6}
- *      \vec{F_i}
- *          = \nabla_i U(\theta_{ijk})
+ *      \nabla_i U(\theta_{ijk})
  *          = \left(
  *                  \frac{\mathrm{d}U(\theta_{ijk})}{\mathrm{d}\theta_{ijk}}
  *            \right)
@@ -159,9 +158,8 @@
  *  for all three particles:
  *
  *  @f{align*}{
- *      \label{eq:Swope-eqs-9-final}
  *      \vec{F_i}
- *          &= K(\theta_{ijk})
+ *          &= - K(\theta_{ijk})
  *                 \frac{1}{\left\|\vec{r_{ij}}\right\|}
  *                 \left(
  *                    \frac{\vec{r_{kj}}}{\left\|\vec{r_{kj}}\right\|}
@@ -169,9 +167,8 @@
  *                    \cos(\theta_{ijk})
  *                 \right)
  *      \\
- *      \label{eq:Swope-eqs-10-final}
  *      \vec{F_k}
- *          &= K(\theta_{ijk})
+ *          &= - K(\theta_{ijk})
  *                 \frac{1}{\left\lVert\vec{r_{kj}}\right\rVert}
  *                 \left(
  *                    \frac{\vec{r_{ij}}}{\left\|\vec{r_{ij}}\right\|}
@@ -179,12 +176,13 @@
  *                    \cos(\theta_{ijk})
  *                 \right)
  *      \\
- *      \label{eq:Swope-eqs-11-final}
  *      \vec{F_j} &= -\left(\vec{F_i} + \vec{F_k}\right)
  *  @f}
  *
  *  with @f$ K(\theta_{ijk}) @f$ the angle force term, which depends on the
- *  expression used for the angle potential.
+ *  expression used for the angle potential. Forces @f$ \vec{F_i} @f$ and
+ *  @f$ \vec{F_k} @f$ are perpendicular to the vectors @f$ \vec{r_{ij}} @f$
+ *  resp. @f$ \vec{r_{kj}} @f$.
  *
  *
  *  @subsection bondedIA_angle_potentials Available potentials
@@ -286,6 +284,24 @@
  *      K(\theta_{ijk})
  *          = -k_{ijk}\frac{\sin(\theta_{ijk} - \theta_{ijk}^0)}
  *                         {\sin(\theta_{ijk})}
+ *  @f}
+ *
+ *  which can lead to numerical instability at @f$ \theta_{ijk} = 0 @f$ and
+ *  @f$ \theta_{ijk} = \pi @f$.
+ *
+ *
+ *  @subsubsection bondedIA_angle_tab Tabulated potential
+ *
+ *  The tabulated potential and its derivative with respect to the angle are
+ *  provided by the user. The angle force term takes the form:
+ *
+ *  @f{equation}{
+ *      \label{eq:tabulated-pot-angle-term}
+ *      K(\theta_{ijk})
+ *          = \frac{-1}{\sin(\theta_{ijk})}
+ *            \left(
+ *                  \frac{\mathrm{d}U(\theta_{ijk})}{\mathrm{d}\theta_{ijk}}
+ *            \right)
  *  @f}
  *
  *  which can lead to numerical instability at @f$ \theta_{ijk} = 0 @f$ and
