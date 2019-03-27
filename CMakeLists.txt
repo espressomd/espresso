@@ -524,55 +524,7 @@ if(WITH_CLANG_TIDY)
     set(
       CMAKE_CXX_CLANG_TIDY
       "${CLANG_TIDY_EXE}"
-      "-checks=*,\
-       -misc-unused-*,\
-       -android-*,\
-       -fuchsia-*,\
-       -google-*,\
-       -llvm-*,\
-       -modernize-*,\
-       -readability-*,\
-       -cppcoreguidelines-*,\
-       -clang-analyzer-deadcode*,\
-       -cert-*,\
-       -clang-analyzer-core.NullDereference,\
-       -clang-analyzer-core.DivideZero,\
-       -misc-misplaced-widening-cast,\
-       -misc-macro-parentheses,\
-       -clang-analyzer-security.FloatLoopCounter,\
-       -clang-analyzer-optin.mpi.MPI-Checker,\
-       -boost-use-to-string,\
-       -hicpp-*,\
-       bugprone-*,\
-       clang-analyzer-alpha.*,\
-       modernize-avoid-c-arrays,\
-       modernize-deprecated-headers,\
-       modernize-make-shared,\
-       modernize-make-unique,\
-       modernize-return-braced-init-list,\
-       modernize-redundant-void-arg,\
-       modernize-loop-convert,\
-       modernize-pass-by-value,\
-       modernize-use-auto,\
-       modernize-use-bool-literals,\
-       modernize-use-emplace,\
-       modernize-use-equals-default,\
-       modernize-use-equals-delete,\
-       modernize-use-noexcept,\
-       modernize-use-nullptr,\
-       modernize-use-override,\
-       modernize-use-transparent-functors,\
-       readability-avoid-const-params-in-decls,\
-       readability-container-size-empty,\
-       readability-delete-null-pointer,\
-       readability-deleted-default,\
-       readability-else-after-return,\
-       readability-non-const-parameter,\
-       readability-redundant-control-flow,\
-       readability-simplify-boolean-expr,\
-       readability-simplify-subscript-expr"
-      "-header-filter=.*"
-      "-warnings-as-errors=*")
+    )
   endif()
 endif()
 
