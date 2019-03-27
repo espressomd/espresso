@@ -425,8 +425,8 @@ void reset_ia_params() {
 bool is_new_particle_type(int type) {
   if ((type + 1) <= max_seen_particle_type)
     return false;
-  
-    return true;
+
+  return true;
 }
 
 void make_particle_type_exist(int type) {

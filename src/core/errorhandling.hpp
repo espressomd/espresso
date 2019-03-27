@@ -89,8 +89,7 @@ void _runtimeError(const std::ostringstream &msg, const char *function,
                    const char *file, int line);
 
 RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
-                                         const std::string &file,
-                                         int line,
+                                         const std::string &file, int line,
                                          const std::string &function);
 
 #define runtimeWarning(msg)                                                    \

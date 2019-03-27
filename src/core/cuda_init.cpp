@@ -39,8 +39,8 @@ struct CompareDevices {
     /* Both devs are from the same node, order by id */
     if (name_comp == 0)
       return a.id < b.id;
-    
-      return name_comp < 0;
+
+    return name_comp < 0;
   }
 };
 

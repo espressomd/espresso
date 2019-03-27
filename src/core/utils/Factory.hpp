@@ -107,9 +107,8 @@ public:
 
     if (m_map[name]) {
       return pointer_type(m_map[name]());
-    } 
-      throw std::out_of_range("Invalid function pointer");
-    
+    }
+    throw std::out_of_range("Invalid function pointer");
   }
 
   /**

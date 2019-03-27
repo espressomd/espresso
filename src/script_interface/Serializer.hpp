@@ -42,9 +42,8 @@ public:
       return std::vector<Variant>{{so_ptr->name(),
                                    static_cast<int>(so_ptr->policy()),
                                    so_ptr->get_state()}};
-    } 
-      return std::vector<Variant>{None{}};
-    
+    }
+    return std::vector<Variant>{None{}};
   }
 };
 

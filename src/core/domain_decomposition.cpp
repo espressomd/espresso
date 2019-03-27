@@ -788,7 +788,8 @@ void exchange_neighbors(ParticleList *pl, const Vector3i &grid) {
       continue;
       /* In this (common) case left and right neighbors are
          the same, and we need only one communication */
-    } if (grid[dir] == 2) {
+    }
+    if (grid[dir] == 2) {
       ParticleList send_buf, recv_buf;
       move_left_or_right(*pl, send_buf, send_buf, dir);
 
@@ -835,8 +836,7 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
     for (; rounds_left > 0; rounds_left--) {
       exchange_neighbors(pl, grid);
 
-      auto left_over =
-          boost::mpi::all_reduce(comm_cart, pl->n, std::plus<>());
+      auto left_over = boost::mpi::all_reduce(comm_cart, pl->n, std::plus<>());
 
       if (left_over == 0) {
         break;

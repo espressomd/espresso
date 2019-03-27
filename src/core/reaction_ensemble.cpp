@@ -1398,9 +1398,8 @@ bool WangLandauReactionEnsemble::
   if (wang_landau_parameter < final_wang_landau_parameter) {
     printf("Achieved desired number of refinements\n");
     return true;
-  } 
-    return false;
-  
+  }
+  return false;
 }
 
 /**
@@ -1413,35 +1412,34 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
   pFile = fopen(full_path_to_output_filename.c_str(), "w");
   if (pFile == nullptr) {
     throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
-  } 
-    for (int flattened_index = 0;
-         flattened_index < wang_landau_potential.size(); flattened_index++) {
-      // unravel index
-      if (std::abs(wang_landau_potential[flattened_index] - double_fill_value) >
-          1) { // only output data if they are not equal to
-               // double_fill_value. This if ensures
-               // that for the energy observable not allowed energies (energies
-               // in the interval [global_E_min, global_E_max]) in the
-               // multidimensional Wang-Landau potential are printed out, since
-               // the range [E_min(nbar), E_max(nbar)] for each nbar may be a
-               // different one
-        std::vector<int> unraveled_index(
-            nr_subindices_of_collective_variable.size());
-        Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
-                             nr_subindices_of_collective_variable.end(),
-                             unraveled_index.begin(), flattened_index);
-        // use unraveled index
-        for (int i = 0; i < collective_variables.size(); i++) {
-          fprintf(pFile, "%f ",
-                  unraveled_index[i] * collective_variables[i]->delta_CV +
-                      collective_variables[i]->CV_minimum);
-        }
-        fprintf(pFile, "%f \n", wang_landau_potential[flattened_index]);
+  }
+  for (int flattened_index = 0; flattened_index < wang_landau_potential.size();
+       flattened_index++) {
+    // unravel index
+    if (std::abs(wang_landau_potential[flattened_index] - double_fill_value) >
+        1) { // only output data if they are not equal to
+             // double_fill_value. This if ensures
+             // that for the energy observable not allowed energies (energies
+             // in the interval [global_E_min, global_E_max]) in the
+             // multidimensional Wang-Landau potential are printed out, since
+             // the range [E_min(nbar), E_max(nbar)] for each nbar may be a
+             // different one
+      std::vector<int> unraveled_index(
+          nr_subindices_of_collective_variable.size());
+      Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                           nr_subindices_of_collective_variable.end(),
+                           unraveled_index.begin(), flattened_index);
+      // use unraveled index
+      for (int i = 0; i < collective_variables.size(); i++) {
+        fprintf(pFile, "%f ",
+                unraveled_index[i] * collective_variables[i]->delta_CV +
+                    collective_variables[i]->CV_minimum);
       }
+      fprintf(pFile, "%f \n", wang_landau_potential[flattened_index]);
     }
-    fflush(pFile);
-    fclose(pFile);
-  
+  }
+  fflush(pFile);
+  fclose(pFile);
 }
 
 /**
@@ -1486,30 +1484,28 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
   pFile = fopen(full_path_to_output_filename.c_str(), "w");
   if (pFile == nullptr) {
     throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
-  } 
-    fprintf(pFile, "#nbar E_min E_max\n");
+  }
+  fprintf(pFile, "#nbar E_min E_max\n");
 
-    for (int flattened_index = 0;
-         flattened_index < wang_landau_potential.size(); flattened_index++) {
-      // unravel index
-      std::vector<int> unraveled_index(
-          nr_subindices_of_collective_variable.size());
-      Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
-                           nr_subindices_of_collective_variable.end(),
-                           unraveled_index.begin(), flattened_index);
-      // use unraveled index
-      for (int i = 0; i < collective_variables.size(); i++) {
-        fprintf(pFile, "%f ",
-                unraveled_index[i] * collective_variables[i]->delta_CV +
-                    collective_variables[i]->CV_minimum);
-      }
-      fprintf(pFile, "%f %f \n",
-              minimum_energies_at_flat_index[flattened_index],
-              maximum_energies_at_flat_index[flattened_index]);
+  for (int flattened_index = 0; flattened_index < wang_landau_potential.size();
+       flattened_index++) {
+    // unravel index
+    std::vector<int> unraveled_index(
+        nr_subindices_of_collective_variable.size());
+    Utils::unravel_index(nr_subindices_of_collective_variable.begin(),
+                         nr_subindices_of_collective_variable.end(),
+                         unraveled_index.begin(), flattened_index);
+    // use unraveled index
+    for (int i = 0; i < collective_variables.size(); i++) {
+      fprintf(pFile, "%f ",
+              unraveled_index[i] * collective_variables[i]->delta_CV +
+                  collective_variables[i]->CV_minimum);
     }
-    fflush(pFile);
-    fclose(pFile);
-  
+    fprintf(pFile, "%f %f \n", minimum_energies_at_flat_index[flattened_index],
+            maximum_energies_at_flat_index[flattened_index]);
+  }
+  fflush(pFile);
+  fclose(pFile);
 }
 
 /**
@@ -1723,8 +1719,9 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
     // for optimizations this list could be determined during the initialization
     std::vector<int> list_of_reaction_ids_with_given_reactant_type;
-    while (list_of_reaction_ids_with_given_reactant_type.empty()) { // avoid selecting a (e.g. salt) particle which
-                // does not take part in a reaction
+    while (list_of_reaction_ids_with_given_reactant_type
+               .empty()) { // avoid selecting a (e.g. salt) particle which
+                           // does not take part in a reaction
       int random_p_id = get_random_valid_p_id(); // only used to determine which
                                                  // reaction is attempted.
       auto part = get_particle_data(random_p_id);

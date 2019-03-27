@@ -212,8 +212,8 @@ double calculate_lucy(double xi, double xi_0) {
   if (dist <= meta_bias_width) {
     return meta_bias_height * (1 + 2 * dist / meta_bias_width) *
            pow(1 - dist / meta_bias_width, 2);
-  } 
-    return 0.;
+  }
+  return 0.;
 }
 
 /** Calculate derivative of Lucy function */
@@ -227,8 +227,8 @@ double calculate_deriv_lucy(double xi, double xi_0) {
     if (xi < xi_0)
       result *= -1.;
     return result;
-  } 
-    return 0.;
+  }
+  return 0.;
 }
 
 #endif

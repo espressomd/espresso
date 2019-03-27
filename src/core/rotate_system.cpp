@@ -42,8 +42,7 @@ void local_rotate_system(double phi, double theta, double alpha) {
     local_mass += p.p.mass;
   }
 
-  auto const total_mass =
-      mpi::all_reduce(comm_cart, local_mass, std::plus<>());
+  auto const total_mass = mpi::all_reduce(comm_cart, local_mass, std::plus<>());
   auto const com =
       mpi::all_reduce(comm_cart, local_com, std::plus<>()) / total_mass;
 

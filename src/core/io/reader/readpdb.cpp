@@ -48,14 +48,13 @@ static void add_lj_interaction(
           -(pow(sigma_ij / cutoff_ij, 12) - pow(sigma_ij / cutoff_ij, 6));
       if ((epsilon_ij <= 0) || (sigma_ij <= 0)) {
         continue;
-      } 
-        READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e "
-                             "cut %e shift %e\n",
-                             it->other_type, jt->espresso_id, epsilon_ij,
-                             sigma_ij, cutoff_ij, shift_ij););
-        lennard_jones_set_params(it->other_type, type.espresso_id, epsilon_ij,
-                                 sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
-      
+      }
+      READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e "
+                           "cut %e shift %e\n",
+                           it->other_type, jt->espresso_id, epsilon_ij,
+                           sigma_ij, cutoff_ij, shift_ij););
+      lennard_jones_set_params(it->other_type, type.espresso_id, epsilon_ij,
+                               sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
     }
   }
 }
@@ -77,14 +76,13 @@ static void add_lj_internal(
           -pow(sigma_ij / cutoff_ij, 12) - pow(sigma_ij / cutoff_ij, 6);
       if ((epsilon_ij <= 0) || (sigma_ij <= 0)) {
         continue;
-      } 
-        READPDB_TRACE(printf("adding internal lj interaction types %d %d eps "
-                             "%e sig %e cut %e shift %e epsilon_i %e\n",
-                             it->espresso_id, jt->espresso_id, epsilon_ij,
-                             sigma_ij, cutoff_ij, shift_ij, it->epsilon););
-        lennard_jones_set_params(it->espresso_id, type.espresso_id, epsilon_ij,
-                                 sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
-      
+      }
+      READPDB_TRACE(printf("adding internal lj interaction types %d %d eps "
+                           "%e sig %e cut %e shift %e epsilon_i %e\n",
+                           it->espresso_id, jt->espresso_id, epsilon_ij,
+                           sigma_ij, cutoff_ij, shift_ij, it->epsilon););
+      lennard_jones_set_params(it->espresso_id, type.espresso_id, epsilon_ij,
+                               sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
     }
   }
 }

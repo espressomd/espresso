@@ -130,9 +130,8 @@ inline double ljgen_pair_energy(const Particle *p1, const Particle *p2,
            * (ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) -
               ia_params->LJGEN_b2 * pow(frac, ia_params->LJGEN_a2) +
               ia_params->LJGEN_shift);
-  } 
-    return 0.0;
-  
+  }
+  return 0.0;
 }
 
 #endif

@@ -538,9 +538,8 @@ int get_particle_node(int id) {
   if (needle == particle_node.end()) {
     throw std::runtime_error("Particle node for id " + std::to_string(id) +
                              " not found!");
-  } 
-    return needle->second;
-  
+  }
+  return needle->second;
 }
 
 void clear_particle_node() { particle_node.clear(); }
@@ -802,11 +801,10 @@ void prefetch_particle_data(std::vector<int> ids) {
                            [](int id) {
                              if (not particle_exists(id)) {
                                return true;
-                             } 
-                               auto const pnode = get_particle_node(id);
-                               return (pnode == this_node) ||
-                                      particle_fetch_cache.has(id);
-                             
+                             }
+                             auto const pnode = get_particle_node(id);
+                             return (pnode == this_node) ||
+                                    particle_fetch_cache.has(id);
                            }),
             ids.end());
 
@@ -1417,9 +1415,8 @@ int change_exclusion(int part1, int part2, int _delete) {
   if (particle_exists(part1) && particle_exists(part2)) {
     mpi_send_exclusion(part1, part2, _delete);
     return ES_OK;
-  } 
-    return ES_ERROR;
-  
+  }
+  return ES_ERROR;
 }
 
 void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }

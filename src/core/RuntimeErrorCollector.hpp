@@ -48,8 +48,7 @@ public:
 
   void error(const std::string &msg, const char *function, const char *file,
              int line);
-  void error(const char *msg, const char *function, const char *file,
-             int line);
+  void error(const char *msg, const char *function, const char *file, int line);
   void error(const std::ostringstream &mstr, const char *function,
              const char *file, int line);
 

@@ -84,9 +84,8 @@ inline int calc_tab_bond_force(Particle const *p1, Particle const *p2,
       force[j] += fac * dx[j];
 
     return 0;
-  } 
-    return 1;
-  
+  }
+  return 1;
 }
 
 /** Compute a tabulated bond length energy.
@@ -112,9 +111,8 @@ inline int tab_bond_energy(Particle const *p1, Particle const *p2,
   if (dist < tab_pot->cutoff()) {
     *_energy = tab_pot->energy(dist);
     return 0;
-  } 
-    return 1;
-  
+  }
+  return 1;
 }
 
 /** Compute the three-body angle interaction force.

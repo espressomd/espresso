@@ -115,9 +115,8 @@ void dpd_update_params(double pref_scale) {
 static double weight(int type, double r_cut, double dist_inv) {
   if (type == 0) {
     return dist_inv;
-  } 
-    return dist_inv - 1.0 / r_cut;
-  
+  }
+  return dist_inv - 1.0 / r_cut;
 }
 
 Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,

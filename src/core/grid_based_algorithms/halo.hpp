@@ -109,9 +109,8 @@ typedef struct {
  *  @param      extent  extent of the whole new fieldtype
  *  @param[out] newtype newly created fieldtype
  */
-void halo_create_fieldtype(int count, int const *lengths,
-                           int const *disps, int extent,
-                           Fieldtype *newtype);
+void halo_create_fieldtype(int count, int const *lengths, int const *disps,
+                           int extent, Fieldtype *newtype);
 
 /** Creates a field vector layout
  *  @param vblocks       number of vector blocks
@@ -138,8 +137,7 @@ void halo_free_fieldtype(Fieldtype *ftype);
  *  @param datatype         MPI datatype for the lattice data
  *  @param local_node_grid  Number of nodes in each spatial dimension
  */
-void prepare_halo_communication(HaloCommunicator *hc,
-                                Lattice const *lattice,
+void prepare_halo_communication(HaloCommunicator *hc, Lattice const *lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype,
                                 const Vector3i &local_node_grid);
 

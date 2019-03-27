@@ -72,9 +72,8 @@ inline double tabulated_pair_energy(Particle const *, Particle const *,
                                     const double d[3], double dist) {
   if (dist < ia_params->TAB.cutoff()) {
     return ia_params->TAB.energy(dist);
-  } 
-    return 0.0;
-  
+  }
+  return 0.0;
 }
 
 #endif

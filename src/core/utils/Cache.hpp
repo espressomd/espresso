@@ -167,9 +167,8 @@ public:
 
     if (m_cache.end() != needle) {
       return &(needle->second);
-    } 
-      return nullptr;
-    
+    }
+    return nullptr;
   }
 };
 } // namespace Utils

@@ -119,9 +119,8 @@ inline double friction_therm0_nptiso(double vj) {
   if (thermo_switch & THERMO_NPT_ISO) {
     if (nptiso_pref2 > 0.0) {
       return (nptiso_pref1 * vj + nptiso_pref2 * Thermostat::noise());
-    } 
-      return nptiso_pref1 * vj;
-    
+    }
+    return nptiso_pref1 * vj;
   }
   return 0.0;
 }
@@ -133,9 +132,8 @@ inline double friction_thermV_nptiso(double p_diff) {
   if (thermo_switch & THERMO_NPT_ISO) {
     if (nptiso_pref4 > 0.0) {
       return (nptiso_pref3 * p_diff + nptiso_pref4 * Thermostat::noise());
-    } 
-      return nptiso_pref3 * p_diff;
-    
+    }
+    return nptiso_pref3 * p_diff;
   }
   return 0.0;
 }
