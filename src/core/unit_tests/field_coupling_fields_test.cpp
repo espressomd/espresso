@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
   {
     Field field(5.);
 
-    BOOST_CHECK(field.jacobian({1., 2., 3.}).empty());
+    BOOST_CHECK((Vector3d{0.0, 0.0, 0.0} == field.jacobian({1., 2., 3.})));
   }
 }
 
