@@ -564,6 +564,7 @@ if(WITH_CLANG_TIDY)
        modernize-use-transparent-functors,\
        readability-avoid-const-params-in-decls,\
        readability-container-size-empty,\
+       readability-delete-null-pointer,\
        readability-non-const-parameter"
       "-header-filter=.*"
       "-warnings-as-errors=*")
