@@ -547,6 +547,8 @@ if(WITH_CLANG_TIDY)
        clang-analyzer-alpha.*,\
        modernize-make-shared,\
        modernize-make-unique,\
+       modernize-return-braced-init-list,\
+       modernize-use-bool-literals,\
        modernize-loop-convert,\
        modernize-use-nullptr,\
        modernize-use-auto,\

@@ -395,7 +395,7 @@ void Correlator::update() {
   i = 0;
   // Lets find out how far we have to go back in the hierarchy to make space for
   // the new value
-  while (1) {
+  while (true) {
     if (((t - ((m_tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
          0)) {
       if (i < (int(hierarchy_depth) - 1) && n_vals[i] > m_tau_lin) {
