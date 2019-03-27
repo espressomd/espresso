@@ -57,12 +57,12 @@ class LBThermostatCommon(object):
 
     def test_velocity_distribution(self):
         self.prepare()
-        self.system.integrator.run(200)
+        self.system.integrator.run(100)
         N = len(self.system.part)
         loops = 250
         v_stored = np.zeros((N * loops, 3))
         for i in range(loops):
-            self.system.integrator.run(15)
+            self.system.integrator.run(12)
             v_stored[i * N:(i + 1) * N, :] = self.system.part[:].v
         minmax = 5
         n_bins = 5
