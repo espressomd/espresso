@@ -1398,9 +1398,9 @@ bool WangLandauReactionEnsemble::
   if (wang_landau_parameter < final_wang_landau_parameter) {
     printf("Achieved desired number of refinements\n");
     return true;
-  } else {
+  } 
     return false;
-  }
+  
 }
 
 /**
@@ -1413,7 +1413,7 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
   pFile = fopen(full_path_to_output_filename.c_str(), "w");
   if (pFile == nullptr) {
     throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
-  } else {
+  } 
     for (int flattened_index = 0;
          flattened_index < wang_landau_potential.size(); flattened_index++) {
       // unravel index
@@ -1441,7 +1441,7 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
     }
     fflush(pFile);
     fclose(pFile);
-  }
+  
 }
 
 /**
@@ -1486,7 +1486,7 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
   pFile = fopen(full_path_to_output_filename.c_str(), "w");
   if (pFile == nullptr) {
     throw std::runtime_error("ERROR: Wang-Landau file could not be written\n");
-  } else {
+  } 
     fprintf(pFile, "#nbar E_min E_max\n");
 
     for (int flattened_index = 0;
@@ -1509,7 +1509,7 @@ void WangLandauReactionEnsemble::write_out_preliminary_energy_run_results(
     }
     fflush(pFile);
     fclose(pFile);
-  }
+  
 }
 
 /**

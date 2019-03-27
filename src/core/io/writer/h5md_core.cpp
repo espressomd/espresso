@@ -57,7 +57,7 @@ static std::vector<hsize_t> create_dims(hsize_t dim, hsize_t size) {
     return std::vector<hsize_t>{size, size};
   if (dim == 1)
     return std::vector<hsize_t>{size};
-  else
+  
     throw std::runtime_error(
         "H5MD Error: datastets with this dimension are not implemented\n");
 }
@@ -74,7 +74,7 @@ std::vector<hsize_t> File::create_chunk_dims(hsize_t dim, hsize_t size,
     return std::vector<hsize_t>{chunk_size, size};
   if (dim == 1)
     return std::vector<hsize_t>{size};
-  else
+  
     throw std::runtime_error(
         "H5MD Error: datastets with this dimension are not implemented\n");
 }
@@ -88,7 +88,7 @@ static std::vector<hsize_t> create_maxdims(hsize_t dim) {
     return std::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED};
   if (dim == 1)
     return std::vector<hsize_t>{H5S_UNLIMITED};
-  else
+  
     throw std::runtime_error(
         "H5MD Error: datastets with this dimension are not implemented\n");
 }

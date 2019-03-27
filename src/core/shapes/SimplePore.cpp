@@ -51,7 +51,7 @@ std::pair<double, double> SimplePore::dist_half_pore(double r, double z) const {
   if ((z <= c_z) && (r <= (c_z + c_r - z))) {
     /* Cylinder section, inner */
     return {m_rad - r, 0};
-  } else if (((z >= c_z) && (r >= c_r)) ||
+  } if (((z >= c_z) && (r >= c_r)) ||
              ((z <= c_z) && (r > (c_z + c_r - z)))) {
     /* Wall section and outer cylinder */
     return {0, m_half_length - z};

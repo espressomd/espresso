@@ -58,7 +58,7 @@ uint64_t lb_lbcoupling_get_rng_state() {
 #ifdef LB
     return lb_coupling_get_rng_state_cpu();
 #endif
-  } else if (lattice_switch == ActiveLB::GPU) {
+  } if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return lb_coupling_get_rng_state_gpu();
 #endif
@@ -226,9 +226,9 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
             return Vector3d{uniform(noise[0]), uniform(noise[1]),
                             uniform(noise[2])} -
                    Vector3d::broadcast(0.5);
-          } else {
+          } 
             return Vector3d{};
-          }
+          
         };
 
         /* local cells */

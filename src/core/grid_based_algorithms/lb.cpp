@@ -835,9 +835,9 @@ lb_thermalize_modes(Lattice::index_t index, const r123::Philox4x64::ctr_type &c,
              modes[16] + pref * lbpar.phi[16] * rng(12),
              modes[17] + pref * lbpar.phi[17] * rng(13),
              modes[18] + pref * lbpar.phi[18] * rng(14)}};
-  } else {
+  } 
     return modes;
-  }
+  
 }
 
 template <typename T>

@@ -42,9 +42,9 @@ public:
       return std::vector<Variant>{{so_ptr->name(),
                                    static_cast<int>(so_ptr->policy()),
                                    so_ptr->get_state()}};
-    } else {
+    } 
       return std::vector<Variant>{None{}};
-    }
+    
   }
 };
 

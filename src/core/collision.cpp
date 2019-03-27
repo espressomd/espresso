@@ -270,7 +270,7 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
   }
   if (p1.p.type == collision_params.part_type_to_attach_vs_to)
     return p1;
-  else
+  
     return p2;
 }
 

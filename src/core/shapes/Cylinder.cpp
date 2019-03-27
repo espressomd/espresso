@@ -33,7 +33,7 @@ std::pair<double, double> Cylinder::dist_half_pore(double r, double z) const {
     if (!m_open && z >= m_half_length && r < m_rad) {
       /* Closest feature: cap */
       return {0, -(z - m_half_length)};
-    } else if (z >= m_half_length && (m_open || r >= m_rad)) {
+    } if (z >= m_half_length && (m_open || r >= m_rad)) {
       /* Closest feature: ring */
       return {-(r - m_rad), -(z - m_half_length)};
     } else {
@@ -46,10 +46,10 @@ std::pair<double, double> Cylinder::dist_half_pore(double r, double z) const {
         r < (z - (m_half_length - m_rad))) {
       /* Closest feature: cap */
       return {0, m_half_length - z};
-    } else {
+    } 
       /* Closest feature: cylinder */
       return {m_rad - r, 0};
-    }
+    
   }
 }
 

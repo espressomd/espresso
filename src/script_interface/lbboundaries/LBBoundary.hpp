@@ -67,7 +67,7 @@ public:
       // The get force method uses mpi callbacks on lb cpu
       if (this_node == 0)
         return m_lbboundary->get_force();
-      else
+      
         return none;
     }
     return none;

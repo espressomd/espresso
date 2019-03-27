@@ -788,7 +788,7 @@ void exchange_neighbors(ParticleList *pl, const Vector3i &grid) {
       continue;
       /* In this (common) case left and right neighbors are
          the same, and we need only one communication */
-    } else if (grid[dir] == 2) {
+    } if (grid[dir] == 2) {
       ParticleList send_buf, recv_buf;
       move_left_or_right(*pl, send_buf, send_buf, dir);
 

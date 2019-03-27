@@ -82,7 +82,7 @@ int convert_director_to_quat(const Vector3d &d, Vector4d &quat) {
   // The vector needs to be != 0 to be converted into a quaternion
   if (dm < ROUND_ERROR_PREC) {
     return 1;
-  } else {
+  } 
     // Calculate angles
     d_xy = sqrt(d[0] * d[0] + d[1] * d[1]);
     // If dipole points along z axis:
@@ -109,7 +109,7 @@ int convert_director_to_quat(const Vector3d &d, Vector4d &quat) {
     quat[1] = -sin(theta2) * cos(phi2);
     quat[2] = -sin(theta2) * sin(phi2);
     quat[3] = cos(theta2) * sin(phi2);
-  }
+  
   return 0;
 }
 

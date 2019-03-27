@@ -46,7 +46,7 @@ private:
     auto const &val = m_scales.find(p.identity());
     if (val != m_scales.end())
       return val->second;
-    else
+    
       return m_default;
   }
 

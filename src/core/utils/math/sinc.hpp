@@ -48,7 +48,7 @@ template <typename T> T sinc(T d) {
 
   if (std::abs(d) > epsi)
     return std::sin(PId) / PId;
-  else {
+  
     /** Coefficients of the Taylor expansion of sinc */
     const constexpr T c2 = -0.1666666666667e-0;
     const constexpr T c4 = 0.8333333333333e-2;
@@ -57,7 +57,7 @@ template <typename T> T sinc(T d) {
 
     const auto PId2 = PId * PId;
     return T(1) + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));
-  }
+  
 }
 } // namespace Utils
 

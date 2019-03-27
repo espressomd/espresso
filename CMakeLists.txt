@@ -566,6 +566,7 @@ if(WITH_CLANG_TIDY)
        readability-container-size-empty,\
        readability-delete-null-pointer,\
        readability-deleted-default,\
+       readability-else-after-return,\
        readability-non-const-parameter"
       "-header-filter=.*"
       "-warnings-as-errors=*")

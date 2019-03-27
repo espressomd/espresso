@@ -66,10 +66,10 @@ void SpheroCylinder::calculate_dist(const Vector3d &pos, double *dist,
       }
       *dist *= m_direction;
       return;
-    } else {
+    } 
       /* Closest feature: cylinder */
       dr = -(r - m_rad);
-    }
+    
   } else {
     side = -1;
     /* Inside */

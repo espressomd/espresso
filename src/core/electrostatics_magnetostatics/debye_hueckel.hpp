@@ -95,7 +95,7 @@ inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist) {
     if (dh_params.kappa > 0.0)
       return coulomb.prefactor * p1->p.q * p2->p.q *
              exp(-dh_params.kappa * dist) / dist;
-    else
+    
       return coulomb.prefactor * p1->p.q * p2->p.q / dist;
   }
   return 0.0;

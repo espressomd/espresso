@@ -389,10 +389,10 @@ public:
       /** id == 0 is loop_abort. */
       if (request == LOOP_ABORT) {
         break;
-      } else {
+      } 
         /** Call the callback */
         m_callback_map[request]->operator()(ia);
-      }
+      
     }
   }
 

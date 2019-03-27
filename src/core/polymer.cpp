@@ -368,7 +368,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
     POLY_TRACE(printf(" %d/%d->%d \n", cnt1, cnt2, max_cnt));
     if (cnt2 >= max_try) {
       return (-2);
-    } else
+    } 
 
       max_cnt = std::max(max_cnt, std::max(cnt1, cnt2));
 

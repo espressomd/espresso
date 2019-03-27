@@ -47,7 +47,7 @@ double ShapeBasedConstraint::min_dist() {
           double vec[3], dist;
           m_shape->calculate_dist(folded_position(p), &dist, vec);
           return std::min(min, dist);
-        } else
+        } 
           return min;
       });
   boost::mpi::reduce(comm_cart, local_mindist, global_mindist,

@@ -68,14 +68,14 @@ int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
     gatherv(comm, buffer, 0, buffer, sizes.data(), displ.data(), root);
 
     return total_size;
-  } else {
+  } 
     detail::size_and_offset(n_elem, comm, root);
     /* Send data */
     gatherv(comm, buffer, n_elem, static_cast<T *>(nullptr), nullptr, nullptr,
             root);
 
     return 0;
-  }
+  
 }
 
 /**

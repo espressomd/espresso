@@ -273,7 +273,7 @@ uint64_t lb_lbfluid_get_rng_state() {
 #ifdef LB
     return lb_fluid_get_rng_state();
 #endif
-  } else if (lattice_switch == ActiveLB::GPU) {
+  } if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return lb_fluid_get_rng_state_gpu();
 #endif
@@ -316,7 +316,7 @@ double lb_lbfluid_get_density() {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.rho;
 #else
@@ -350,7 +350,7 @@ double lb_lbfluid_get_viscosity() {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.viscosity;
 #else
@@ -386,7 +386,7 @@ double lb_lbfluid_get_bulk_viscosity() {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.bulk_viscosity;
 #else
@@ -422,7 +422,7 @@ double lb_lbfluid_get_gamma_odd() {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.gamma_odd;
 #else
@@ -456,7 +456,7 @@ double lb_lbfluid_get_gamma_even() {
 #ifdef LB_GPU
     return lbpar_gpu.gamma_even;
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.gamma_even;
 #endif // LB
@@ -487,7 +487,7 @@ double lb_lbfluid_get_agrid() {
 #ifdef LB_GPU
     return lbpar_gpu.agrid;
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.agrid;
 #endif // LB
@@ -526,7 +526,7 @@ const Vector3d lb_lbfluid_get_ext_force_density() {
     return {{lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1],
              lbpar_gpu.ext_force_density[2]}};
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.ext_force_density;
 #endif // LB
@@ -557,7 +557,7 @@ double lb_lbfluid_get_tau() {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.tau;
 #else
@@ -599,7 +599,7 @@ double lb_lbfluid_get_kT() {
 #ifdef LB_GPU
     return static_cast<double>(lbpar_gpu.kT);
 #endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return lbpar.kT;
 #endif
@@ -965,7 +965,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
         if (res == EOF) {
           fclose(cpfile);
           throw std::runtime_error(err_msg + "EOF found.");
-        } else if (res != 1) {
+        } if (res != 1) {
           fclose(cpfile);
           throw std::runtime_error(err_msg + "incorrectly formatted data.");
         }
@@ -988,7 +988,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
         if (res == EOF) {
           fclose(cpfile);
           throw std::runtime_error(err_msg + "EOF found.");
-        } else if (res != 1) {
+        } if (res != 1) {
           fclose(cpfile);
           throw std::runtime_error(err_msg + "incorrectly formatted data.");
         }
@@ -998,7 +998,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
-      } else if (saved_gridsize[0] != lbpar_gpu.dim_x ||
+      } if (saved_gridsize[0] != lbpar_gpu.dim_x ||
                  saved_gridsize[1] != lbpar_gpu.dim_y ||
                  saved_gridsize[2] != lbpar_gpu.dim_z) {
         fclose(cpfile);
@@ -1055,7 +1055,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       if (res == EOF) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "EOF found.");
-      } else if (res != 3) {
+      } if (res != 3) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
@@ -1094,7 +1094,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
             if (res == EOF) {
               fclose(cpfile);
               throw std::runtime_error(err_msg + "EOF found.");
-            } else if (res != 19) {
+            } if (res != 19) {
               fclose(cpfile);
               throw std::runtime_error(err_msg + "incorrectly formatted data.");
             }
@@ -1141,7 +1141,7 @@ bool lb_lbnode_is_index_valid(const Vector3i &ind) {
                                static_cast<int>(lbpar_gpu.dim_y),
                                static_cast<int>(lbpar_gpu.dim_z)});
 #endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     return within_bounds(ind, lblattice.global_grid);
 #endif
@@ -1164,7 +1164,7 @@ double lb_lbnode_get_density(const Vector3i &ind) {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -1200,7 +1200,7 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     return {{host_print_values->v[0], host_print_values->v[1],
              host_print_values->v[2]}};
 #endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -1291,7 +1291,7 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;
@@ -1324,7 +1324,7 @@ const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
 #else
     return {};
 #endif // LB_GPU
-  } else if (lattice_switch == ActiveLB::CPU) {
+  } if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Lattice::index_t index;
     int node;

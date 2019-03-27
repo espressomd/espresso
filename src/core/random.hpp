@@ -159,9 +159,9 @@ inline double gaussian_random_cut() {
   if (fabs(random_number) > 2 * 1.042267973) {
     if (random_number > 0) {
       return 2 * 1.042267973;
-    } else {
+    } 
       return -2 * 1.042267973;
-    }
+    
   }
   return random_number;
 }

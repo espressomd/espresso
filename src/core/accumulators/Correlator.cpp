@@ -250,14 +250,14 @@ void Correlator::initialize() {
   if (m_tau_max <= m_dt) {
     throw std::runtime_error(init_errors[4]);
 
-  } else { // set hierarchy depth which can  accommodate at least m_tau_max
+  } // set hierarchy depth which can  accommodate at least m_tau_max
     if ((m_tau_max / m_dt) < m_tau_lin) {
       hierarchy_depth = 1;
     } else {
       hierarchy_depth = (unsigned int)ceil(
           1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0));
     }
-  }
+  
 
   dim_A = 0;
   dim_B = 0;
@@ -277,7 +277,7 @@ void Correlator::initialize() {
   // choose the correlation operation
   if (corr_operation_name.empty()) {
     throw std::runtime_error(init_errors[11]); // there is no reasonable default
-  } else if (corr_operation_name == "componentwise_product") {
+  } if (corr_operation_name == "componentwise_product") {
     m_dim_corr = dim_A;
     corr_operation = &componentwise_product;
     m_correlation_args = Vector3d{0, 0, 0};
