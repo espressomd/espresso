@@ -557,6 +557,7 @@ if(WITH_CLANG_TIDY)
        modernize-use-bool-literals,\
        modernize-use-emplace,\
        modernize-use-equals-default,\
+       modernize-use-equals-delete,\
        modernize-use-nullptr,\
        readability-non-const-parameter"
       "-header-filter=.*"
