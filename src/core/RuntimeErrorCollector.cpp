@@ -98,7 +98,7 @@ int RuntimeErrorCollector::count() const {
   int totalMessages;
   const int numMessages = m_errors.size();
 
-  all_reduce(m_comm, numMessages, totalMessages, std::plus<int>());
+  all_reduce(m_comm, numMessages, totalMessages, std::plus<>());
 
   return totalMessages;
 }
@@ -109,7 +109,7 @@ int RuntimeErrorCollector::count(RuntimeError::ErrorLevel level) {
       [level](const RuntimeError &e) { return e.level() >= level; });
   int totalMessages;
 
-  all_reduce(m_comm, numMessages, totalMessages, std::plus<int>());
+  all_reduce(m_comm, numMessages, totalMessages, std::plus<>());
 
   return totalMessages;
 }

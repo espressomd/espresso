@@ -93,7 +93,7 @@ std::vector<double> componentwise_product(std::vector<double> const &A,
   }
 
   std::transform(A.begin(), A.end(), B.begin(), C.begin(),
-                 std::multiplies<double>());
+                 std::multiplies<>());
 
   return C;
 }

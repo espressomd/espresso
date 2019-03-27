@@ -27,11 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Constraints {
 Vector3d ShapeBasedConstraint::total_force() const {
-  return all_reduce(comm_cart, m_local_force, std::plus<Vector3d>());
+  return all_reduce(comm_cart, m_local_force, std::plus<>());
 }
 
 double ShapeBasedConstraint::total_normal_force() const {
-  return all_reduce(comm_cart, m_outer_normal_force, std::plus<double>());
+  return all_reduce(comm_cart, m_outer_normal_force, std::plus<>());
 }
 
 double ShapeBasedConstraint::min_dist() {

@@ -49,10 +49,10 @@ namespace Testing {
 void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
   if (comm.rank() == 0) {
     bool total = true;
-    boost::mpi::reduce(comm, local_value, total, std::logical_and<bool>(), 0);
+    boost::mpi::reduce(comm, local_value, total, std::logical_and<>(), 0);
     BOOST_CHECK(total);
   } else {
-    boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
+    boost::mpi::reduce(comm, local_value, std::logical_and<>(), 0);
   }
 }
 } // namespace Testing

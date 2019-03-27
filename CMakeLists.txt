@@ -561,6 +561,7 @@ if(WITH_CLANG_TIDY)
        modernize-use-noexcept,\
        modernize-use-nullptr,\
        modernize-use-override,\
+       modernize-use-transparent-functors,\
        readability-non-const-parameter"
       "-header-filter=.*"
       "-warnings-as-errors=*")
