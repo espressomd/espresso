@@ -149,10 +149,10 @@ void ReactionAlgorithm::add_reaction(
                                          new_reaction.product_coefficients);
 
   // make espresso count the particle numbers which take part in the reactions
-  for (int i = 0; i < new_reaction.reactant_types.size(); ++i)
-    init_type_map(new_reaction.reactant_types[i]);
-  for (int i = 0; i < new_reaction.product_types.size(); ++i)
-    init_type_map(new_reaction.product_types[i]);
+  for (int reactant_type : new_reaction.reactant_types)
+    init_type_map(reactant_type);
+  for (int product_type : new_reaction.product_types)
+    init_type_map(product_type);
 
   init_type_map(non_interacting_type);
 
@@ -180,24 +180,23 @@ void ReactionAlgorithm::check_reaction_ensemble() {
   // check for the existence of default charges for all types that take part in
   // the reactions
 
-  for (int i = 0; i < reactions.size(); i++) {
-    SingleReaction current_reaction = reactions[i];
+  for (const auto& current_reaction : reactions) {
     // check for reactants
-    for (int j = 0; j < current_reaction.reactant_types.size(); j++) {
-      auto it = charges_of_types.find(current_reaction.reactant_types[j]);
+    for (int reactant_type : current_reaction.reactant_types) {
+      auto it = charges_of_types.find(reactant_type);
       if (it == charges_of_types.end()) {
         std::string message =
             std::string("Forgot to assign charge to type ") +
-            std::to_string(current_reaction.reactant_types[j]);
+            std::to_string(reactant_type);
         throw std::runtime_error(message);
       }
     }
     // check for products
-    for (int j = 0; j < current_reaction.product_types.size(); j++) {
-      auto it = charges_of_types.find(current_reaction.product_types[j]);
+    for (int product_type : current_reaction.product_types) {
+      auto it = charges_of_types.find(product_type);
       if (it == charges_of_types.end()) {
         std::string message = std::string("Forgot to assign charge to type ") +
-                              std::to_string(current_reaction.product_types[j]);
+                              std::to_string(product_type);
         throw std::runtime_error(message);
       }
     }
@@ -350,15 +349,15 @@ void ReactionAlgorithm::restore_properties(
   // this function restores all properties of all particles provided in the
   // property list, the format of the property list is (p_id,charge,type)
   // repeated for each particle that occurs in that list
-  for (int i = 0; i < property_list.size(); i++) {
-    int type = property_list[i].type;
+  for (auto & i : property_list) {
+    int type = i.type;
 #ifdef ELECTROSTATICS
     // set charge
-    double charge = property_list[i].charge;
-    set_particle_q(property_list[i].p_id, charge);
+    double charge = i.charge;
+    set_particle_q(i.p_id, charge);
 #endif
     // set type
-    set_particle_type(property_list[i].p_id, type);
+    set_particle_type(i.p_id, type);
   }
 }
 
@@ -385,14 +384,12 @@ std::map<int, int>
 ReactionAlgorithm::save_old_particle_numbers(int reaction_id) {
   std::map<int, int> old_particle_numbers;
   // reactants
-  for (int i = 0; i < reactions[reaction_id].reactant_types.size(); ++i) {
-    int type = reactions[reaction_id].reactant_types[i];
+  for (int type : reactions[reaction_id].reactant_types) {
     old_particle_numbers[type] = number_of_particles_with_type(type);
   }
 
   // products
-  for (int i = 0; i < reactions[reaction_id].product_types.size(); ++i) {
-    int type = reactions[reaction_id].product_types[i];
+  for (int type : reactions[reaction_id].product_types) {
     old_particle_numbers[type] = number_of_particles_with_type(type);
   }
   return old_particle_numbers;
@@ -528,8 +525,8 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     accepted_state = old_state_index;
     // reverse reaction
     // 1) delete created product particles
-    for (int i = 0; i < p_ids_created_particles.size(); i++) {
-      delete_particle(p_ids_created_particles[i]);
+    for (int p_ids_created_particle : p_ids_created_particles) {
+      delete_particle(p_ids_created_particle);
     }
     // 2)restore previously hidden reactant particles
     restore_properties(hidden_particles_properties, number_of_saved_properties);
@@ -550,11 +547,11 @@ int ReactionAlgorithm::calculate_nu_bar(
     std::vector<int> &product_coefficients) {
   // should only be used at when defining a new reaction
   int nu_bar = 0;
-  for (int i = 0; i < reactant_coefficients.size(); i++) {
-    nu_bar -= reactant_coefficients[i];
+  for (int reactant_coefficient : reactant_coefficients) {
+    nu_bar -= reactant_coefficient;
   }
-  for (int i = 0; i < product_coefficients.size(); i++) {
-    nu_bar += product_coefficients[i];
+  for (int product_coefficient : product_coefficients) {
+    nu_bar += product_coefficient;
   }
   return nu_bar;
 }
@@ -1064,13 +1061,9 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
   // calculate Delta in the degree of association so that EVERY reaction step is
   // driven.
   int total_number_of_corresponding_acid = 0;
-  for (int corresponding_type_i = 0;
-       corresponding_type_i <
-       current_collective_variable.corresponding_acid_types.size();
-       corresponding_type_i++) {
+  for (int corresponding_acid_type : current_collective_variable.corresponding_acid_types) {
     int num_of_current_type = number_of_particles_with_type(
-        current_collective_variable
-            .corresponding_acid_types[corresponding_type_i]);
+        corresponding_acid_type);
     total_number_of_corresponding_acid += num_of_current_type;
   }
   double delta = 1.0 / total_number_of_corresponding_acid;
@@ -1086,9 +1079,7 @@ double WangLandauReactionEnsemble::calculate_delta_degree_of_association(
  */
 int WangLandauReactionEnsemble::get_num_needed_bins() {
   int needed_bins = 1;
-  for (int CV_i = 0; CV_i < collective_variables.size(); CV_i++) {
-    std::shared_ptr<CollectiveVariable> current_collective_variable =
-        collective_variables[CV_i];
+  for (const auto& current_collective_variable : collective_variables) {
     needed_bins = needed_bins * (int((current_collective_variable->CV_maximum -
                                       current_collective_variable->CV_minimum) /
                                      current_collective_variable->delta_CV) +
@@ -1316,11 +1307,11 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
     // since only the difference in the wang_landau potential is of interest.
     double minimum_wang_landau_potential = find_minimum_non_negative_value(
         wang_landau_potential.data(), wang_landau_potential.size());
-    for (int i = 0; i < wang_landau_potential.size(); i++) {
-      if (wang_landau_potential[i] >= 0) // check for whether we are in the
+    for (double & i : wang_landau_potential) {
+      if (i >= 0) // check for whether we are in the
                                          // valid range of the collective
                                          // variable
-        wang_landau_potential[i] -= minimum_wang_landau_potential;
+        i -= minimum_wang_landau_potential;
     }
     // write out preliminary Wang-Landau potential results
     write_wang_landau_results_to_file(output_filename);
@@ -1621,8 +1612,8 @@ int WangLandauReactionEnsemble::write_wang_landau_checkpoint(
   outfile.close();
   // write Wang-Landau potential
   outfile.open(std::string("checkpoint_wang_landau_potential_") + identifier);
-  for (int i = 0; i < wang_landau_potential.size(); i++) {
-    outfile << wang_landau_potential[i] << "\n";
+  for (double i : wang_landau_potential) {
+    outfile << i << "\n";
   }
   outfile.close();
   return 0;
@@ -1802,8 +1793,8 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles
-  for (int i = 0; i < p_ids_created_particles.size(); i++) {
-    delete_particle(p_ids_created_particles[i]);
+  for (int p_ids_created_particle : p_ids_created_particles) {
+    delete_particle(p_ids_created_particle);
   }
   // 2)restore previously hidden reactant particles
   restore_properties(hidden_particles_properties, number_of_saved_properties);

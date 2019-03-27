@@ -129,8 +129,8 @@ void energy_calc(double *result) {
   EspressoSystemInterface::Instance().update();
 
   // Compute the energies from the energyActors
-  for (auto actor = energyActors.begin(); actor != energyActors.end(); ++actor)
-    (*actor)->computeEnergy(espressoSystemInterface);
+  for (auto & energyActor : energyActors)
+    energyActor->computeEnergy(espressoSystemInterface);
 
   on_observable_calc();
 

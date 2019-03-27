@@ -299,8 +299,8 @@ void dp3m_pre_init(void) {
   dp3m.sum_dip_part = 0;
   dp3m.sum_mu2 = 0.0;
 
-  for (int i = 0; i < 7; i++)
-    dp3m.int_caf[i] = nullptr;
+  for (auto & i : dp3m.int_caf)
+    i = nullptr;
   dp3m.pos_shift = 0.0;
   dp3m.meshift = nullptr;
 
@@ -433,8 +433,8 @@ void dp3m_init() {
 }
 
 void dp3m_free_dipoles() {
-  for (int i = 0; i < 3; i++)
-    free(dp3m.rs_mesh_dip[i]);
+  for (auto & i : dp3m.rs_mesh_dip)
+    free(i);
   free(dp3m.ca_frac);
   free(dp3m.ca_fmp);
   free(dp3m.send_grid);
@@ -649,9 +649,9 @@ void dp3m_dipole_assign(void) {
   int cp_cnt = 0;
 
   /* prepare local FFT mesh */
-  for (int i = 0; i < 3; i++)
+  for (auto & i : dp3m.rs_mesh_dip)
     for (int j = 0; j < dp3m.local_mesh.size; j++)
-      dp3m.rs_mesh_dip[i][j] = 0.0;
+      i[j] = 0.0;
 
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {

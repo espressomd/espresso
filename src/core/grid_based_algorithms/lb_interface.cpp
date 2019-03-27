@@ -960,8 +960,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
     std::vector<float> host_checkpoint_vd(lbpar_gpu.number_of_nodes * 19);
     if (!binary) {
       int saved_gridsize[3];
-      for (int n = 0; n < 3; n++) {
-        res = fscanf(cpfile, "%i", &saved_gridsize[n]);
+      for (int & n : saved_gridsize) {
+        res = fscanf(cpfile, "%i", &n);
         if (res == EOF) {
           fclose(cpfile);
           throw std::runtime_error(err_msg + "EOF found.");

@@ -60,9 +60,9 @@ BOOST_AUTO_TEST_CASE(element_access) {
   auto a = Array<int, 5>{{5, 6, 7, 8, 9}};
 
   int c = 5;
-  for (Array<int, 5>::size_type i = 0; i < a.size(); ++i) {
-    BOOST_CHECK(a.at(i) == c);
-    BOOST_CHECK(a[i] == c);
+  for (int i : a) {
+    BOOST_CHECK(i == c);
+    BOOST_CHECK(i == c);
     ++c;
   }
 
@@ -72,8 +72,8 @@ BOOST_AUTO_TEST_CASE(element_access) {
 BOOST_AUTO_TEST_CASE(fill) {
   Array<int, 10> a{};
   a.fill(10);
-  for (Array<int, 10>::size_type i = 0; i < a.size(); ++i) {
-    BOOST_CHECK(a[i] == 10);
+  for (int i : a) {
+    BOOST_CHECK(i == 10);
   }
 }
 
