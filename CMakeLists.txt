@@ -545,18 +545,19 @@ if(WITH_CLANG_TIDY)
        -hicpp-*,\
        bugprone-*,\
        clang-analyzer-alpha.*,\
+       modernize-avoid-c-arrays,\
+       modernize-deprecated-headers,\
        modernize-make-shared,\
        modernize-make-unique,\
        modernize-return-braced-init-list,\
-       modernize-use-bool-literals,\
        modernize-redundant-void-arg,\
        modernize-loop-convert,\
-       modernize-use-nullptr,\
-       modernize-use-auto,\
        modernize-pass-by-value,\
-       modernize-avoid-c-arrays,\
+       modernize-use-auto,\
+       modernize-use-bool-literals,\
+       modernize-use-emplace,\
        modernize-use-equals-default,\
-       modernize-deprecated-headers,\
+       modernize-use-nullptr,\
        readability-non-const-parameter"
       "-header-filter=.*"
       "-warnings-as-errors=*")

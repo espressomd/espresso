@@ -142,7 +142,7 @@ void ClusterStructure::merge_clusters() {
     const int cid = find_id_for(it.second);
     // We note the list of changes here, so we don't modify the map
     // while iterating
-    to_be_changed.push_back({it.first, cid});
+    to_be_changed.emplace_back(it.first, cid);
     // Empty cluster object
     if (clusters.find(cid) == clusters.end()) {
       clusters[cid] = std::make_shared<Cluster>();
