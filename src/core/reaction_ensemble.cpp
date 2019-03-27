@@ -165,7 +165,7 @@ void ReactionAlgorithm::add_reaction(
  */
 void ReactionAlgorithm::check_reaction_ensemble() {
   /**checks the reaction_ensemble struct for valid parameters */
-  if (reactions.size() == 0) {
+  if (reactions.empty()) {
     throw std::runtime_error("Reaction system not initialized");
   }
 
@@ -697,7 +697,7 @@ std::vector<double> ReactionAlgorithm::
  */
 int ReactionAlgorithm::create_particle(int desired_type) {
   int p_id;
-  if (m_empty_p_ids_smaller_than_max_seen_particle.size() > 0) {
+  if (!m_empty_p_ids_smaller_than_max_seen_particle.empty()) {
     auto p_id_iter = std::min_element(
         std::begin(m_empty_p_ids_smaller_than_max_seen_particle),
         std::end(m_empty_p_ids_smaller_than_max_seen_particle));
@@ -1450,8 +1450,8 @@ void WangLandauReactionEnsemble::write_wang_landau_results_to_file(
  */
 int WangLandauReactionEnsemble::
     update_maximum_and_minimum_energies_at_current_state() {
-  if (minimum_energies_at_flat_index.size() == 0 ||
-      maximum_energies_at_flat_index.size() == 0) {
+  if (minimum_energies_at_flat_index.empty() ||
+      maximum_energies_at_flat_index.empty()) {
     minimum_energies_at_flat_index.resize(wang_landau_potential.size(),
                                           double_fill_value);
     maximum_energies_at_flat_index.resize(wang_landau_potential.size(),
@@ -1723,8 +1723,7 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
 
     // for optimizations this list could be determined during the initialization
     std::vector<int> list_of_reaction_ids_with_given_reactant_type;
-    while (list_of_reaction_ids_with_given_reactant_type.size() ==
-           0) { // avoid selecting a (e.g. salt) particle which
+    while (list_of_reaction_ids_with_given_reactant_type.empty()) { // avoid selecting a (e.g. salt) particle which
                 // does not take part in a reaction
       int random_p_id = get_random_valid_p_id(); // only used to determine which
                                                  // reaction is attempted.

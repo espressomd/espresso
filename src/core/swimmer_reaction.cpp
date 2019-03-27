@@ -323,7 +323,7 @@ void integrate_reaction_swap() {
           }
 
           // If reactants and products were found, perform the reaction
-          if (reactants.size() > 0 && products.size() > 0) {
+          if (!reactants.empty() && !products.empty()) {
             // There cannot be more reactions than the minimum of
             // the number of reactants and products.  Hence we need
             // to determine which number is smaller and also count

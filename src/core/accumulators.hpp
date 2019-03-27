@@ -34,7 +34,7 @@ extern std::vector<std::shared_ptr<Accumulators::AccumulatorBase>>
 void auto_update();
 
 inline bool auto_update_enabled() {
-  return auto_update_accumulators.size() > 0;
+  return !auto_update_accumulators.empty();
 }
 } // namespace Accumulators
 

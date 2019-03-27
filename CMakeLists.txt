@@ -563,6 +563,7 @@ if(WITH_CLANG_TIDY)
        modernize-use-override,\
        modernize-use-transparent-functors,\
        readability-avoid-const-params-in-decls,\
+       readability-container-size-empty,\
        readability-non-const-parameter"
       "-header-filter=.*"
       "-warnings-as-errors=*")

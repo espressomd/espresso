@@ -194,7 +194,7 @@ void lb_init_boundaries() {
           }
 #endif
           if (dist <= 0 && boundary_number >= 0 &&
-              (lbboundaries.size() > 0 || pdb_boundary_lattice)) {
+              (!lbboundaries.empty() || pdb_boundary_lattice)) {
             size_of_index = (number_of_boundnodes + 1) * sizeof(int);
             host_boundary_node_list =
                 Utils::realloc(host_boundary_node_list, size_of_index);

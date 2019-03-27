@@ -706,7 +706,7 @@ void handle_collisions() {
     // If any node had a collision, all nodes need to do on_particle_change
     // and resort
 
-    if (gathered_queue.size() > 0) {
+    if (!gathered_queue.empty()) {
       on_particle_change();
       announce_resort_particles();
       cells_update_ghosts();

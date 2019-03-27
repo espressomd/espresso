@@ -275,7 +275,7 @@ void Correlator::initialize() {
   }
 
   // choose the correlation operation
-  if (corr_operation_name == "") {
+  if (corr_operation_name.empty()) {
     throw std::runtime_error(init_errors[11]); // there is no reasonable default
   } else if (corr_operation_name == "componentwise_product") {
     m_dim_corr = dim_A;
@@ -314,7 +314,7 @@ void Correlator::initialize() {
   }
 
   // Choose the compression function
-  if (compressA_name == "") { // this is the default
+  if (compressA_name.empty()) { // this is the default
     compressA_name = "discard2";
     compressA = &compress_discard2;
   } else if (compressA_name == "discard2") {
@@ -327,7 +327,7 @@ void Correlator::initialize() {
     throw std::runtime_error(init_errors[12]);
   }
 
-  if (compressB_name == "") {
+  if (compressB_name.empty()) {
     compressB_name = compressA_name;
     compressB = compressA;
   } else if (compressB_name == "discard2") {
