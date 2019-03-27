@@ -133,7 +133,7 @@ string mpi_random_get_stat() {
   return res;
 }
 
-void init_random(void) {
+void init_random() {
   /** Set the initial seed */
   init_random_seed(1 + this_node);
 }

@@ -50,7 +50,7 @@ struct CompareDevices {
     be more than one on one node.
  */
 
-std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
+std::vector<EspressoGpuDevice> cuda_gather_gpus() {
   int n_gpus = cuda_get_n_gpus();
   char proc_name[MPI_MAX_PROCESSOR_NAME];
   int proc_name_len;

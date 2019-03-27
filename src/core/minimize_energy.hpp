@@ -22,9 +22,9 @@
 #ifndef __MINIMIZE_ENERGY_HPP
 #define __MINIMIZE_ENERGY_HPP
 
-bool minimize_energy(void);
+bool minimize_energy();
 void minimize_energy_init(const double f_max, const double gamma,
                           const int max_steps, const double max_displacement);
-bool steepest_descent_step(void);
+bool steepest_descent_step();
 
 #endif /* __MINIMIZE_ENERGY */

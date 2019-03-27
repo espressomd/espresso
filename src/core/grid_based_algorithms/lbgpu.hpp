@@ -229,7 +229,7 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);
-void lb_remove_fluid_momentum_GPU(void);
+void lb_remove_fluid_momentum_GPU();
 void lb_calc_fluid_temperature_GPU(double *host_temp);
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag);
 void lb_get_boundary_flags_GPU(unsigned int *host_bound_array);

@@ -549,6 +549,7 @@ if(WITH_CLANG_TIDY)
        modernize-make-unique,\
        modernize-return-braced-init-list,\
        modernize-use-bool-literals,\
+       modernize-redundant-void-arg,\
        modernize-loop-convert,\
        modernize-use-nullptr,\
        modernize-use-auto,\
