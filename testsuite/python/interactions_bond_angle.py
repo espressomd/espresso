@@ -107,13 +107,12 @@ class InteractionsAngleBondTest(ut.TestCase):
             phi_diff = i * d_phi - bond_instance.params['phi0']
             for p, sign in [[p1, -1], [p2, +1]]:
                 # Check that force is perpendicular
-                dot_prod_tol = 1E-12
                 self.assertAlmostEqual(
                     np.dot(p.f, self.system.distance_vec(p0, p)), 0,
-                    delta=dot_prod_tol, msg="The force is not perpendicular")
+                    delta=1E-12, msg="The force is not perpendicular")
                 # Check that force has correct magnitude
                 self.assertAlmostEqual(np.linalg.norm(p.f), np.abs(
-                    f_ref) / self.system.distance(p0, p), delta=1E-12)
+                    f_ref) / self.system.distance(p0, p), delta=1E-11)
                 # Check that force decreases the quantity abs(phi - phi0)
                 if np.abs(phi_diff) > 1E-12:  # sign undefined for phi = phi0
                     force_axis = np.cross(self.system.distance_vec(p, p0), p.f)
