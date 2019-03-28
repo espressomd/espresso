@@ -104,8 +104,8 @@ class InteractionsAngleBondTest(ut.TestCase):
             np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
 
             f_ref = force_func(i * d_phi)
-
-            for p in self.system.part[[1, 2]]:
+            phi_diff = i * d_phi - bond_instance.params['phi0']
+            for p, sign in [[p1, -1], [p2, +1]]:
                 # Check that force is perpendicular
                 dot_prod_tol = 1E-12
                 self.assertAlmostEqual(
@@ -114,6 +114,12 @@ class InteractionsAngleBondTest(ut.TestCase):
                 # Check that force has correct magnitude
                 self.assertAlmostEqual(np.linalg.norm(p.f), np.abs(
                     f_ref) / self.system.distance(p0, p), delta=1E-12)
+                # Check that force decreases the quantity abs(phi - phi0)
+                if np.abs(phi_diff) > 1E-12:  # sign undefined for phi = phi0
+                    force_axis = np.cross(self.system.distance_vec(p, p0), p.f)
+                    self.assertEqual(np.sign(phi_diff),
+                        np.sign(sign * np.dot(force_axis, self.axis)),
+                        msg="The force moves particles in the wrong direction")
 
             # Total force =0?
             np.testing.assert_allclose(
@@ -131,7 +137,7 @@ class InteractionsAngleBondTest(ut.TestCase):
             # with r position of particle p and F force on particle p.
             # Then using F_p1=-F_p2 - F_p3 (no net force)
             # and r_p2 =r_p1 +r_{p1,p2} and r_p3 =r_p1 +r_{p1,p3}
-            # P_ij =1/V (F_p2 r_{p1,p2} +#_p3 r_{p1,p3})
+            # P_ij =1/V (F_p2 r_{p1,p2} + F_p3 r_{p1,p3})
             p_tensor_expected = \
                 np.outer(p1.f, self.system.distance_vec(p0, p1)) \
                 + np.outer(p2.f, self.system.distance_vec(p0, p2))
@@ -149,9 +155,9 @@ class InteractionsAngleBondTest(ut.TestCase):
         self.run_test(angle_harmonic,
                       lambda phi: self.angle_harmonic_force(
                       phi=phi, bend=ah_bend, phi0=ah_phi0),
-                      lambda phi: self.angle_harmonic_potential(phi=phi, bend=ah_bend, phi0=ah_phi0))
+                      lambda phi: self.angle_harmonic_potential(
+                      phi=phi, bend=ah_bend, phi0=ah_phi0))
 
-    # Test Angle Cosine Potential
     def test_angle_cosine(self):
         ac_bend = 1
         ac_phi0 = 1
