@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
 #include "core/communication.hpp"
-#include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
 #include "core/grid_based_algorithms/lb_interface.hpp"
+#include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
 #include "shapes/Shape.hpp"
 
 namespace ScriptInterface {
@@ -73,8 +73,7 @@ public:
         const double unit_conversion =
             agrid * agrid * agrid * agrid / rho / tau / tau;
         return m_lbboundary->get_force() * unit_conversion;
-      }
-      else
+      } else
         return none;
     }
     return none;

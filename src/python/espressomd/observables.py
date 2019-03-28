@@ -245,6 +245,7 @@ class LBVelocityProfile(Observable):
 
 @script_interface_register
 class LBFluidStress(Observable):
+
     """Calculates the average stress of the LB fluid for all nodes.
 
     Parameters
