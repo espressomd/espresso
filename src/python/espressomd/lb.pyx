@@ -367,7 +367,7 @@ IF LB or LB_GPU:
             def __set__(self, value):
                 raise NotImplementedError
 
-        property pi_neq:
+        property stress_neq:
             def __get__(self):
                 cdef Vector6d pi = python_lbnode_get_pi_neq(self.node)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],
