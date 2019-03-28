@@ -31,6 +31,7 @@ class InteractionsAngleBondTest(ut.TestCase):
     axis /= np.linalg.norm(axis)
     rel_pos = np.cross(np.random.rand(3), axis)
     rel_pos /= np.linalg.norm(rel_pos)
+    N = 111  # number of angles to sample
 
     def setUp(self):
         self.system.box_l = [self.box_l] * 3
@@ -60,14 +61,14 @@ class InteractionsAngleBondTest(ut.TestCase):
         return vrot
 
     # Analytical expressions
-    # Forces aren't divided by sin(phi) to simplify the force magnitude check,
+    # Forces aren't divided by -sin(phi) to simplify the force magnitude check,
     # which only depends on the displacement vectors and potential gradient,
     # see "Bond angle potentials" in Doxygen
     def angle_harmonic_potential(self, phi, bend=1.0, phi0=np.pi):
         return 0.5 * bend * np.power(phi - phi0, 2)
 
     def angle_harmonic_force(self, phi, bend=1.0, phi0=np.pi):
-        return -bend * (phi - phi0)
+        return bend * (phi - phi0)
 
     def angle_cosine_potential(self, phi, bend=1.0, phi0=np.pi):
         return bend * (1 - np.cos(phi - phi0))
@@ -79,20 +80,20 @@ class InteractionsAngleBondTest(ut.TestCase):
         return 0.5 * bend * (np.cos(phi) - np.cos(phi0))**2
 
     def angle_cos_squared_force(self, phi, bend=1.0, phi0=np.pi):
-        return bend * (np.cos(phi) - np.cos(phi0)) * np.sin(phi)
+        return -bend * (np.cos(phi) - np.cos(phi0)) * np.sin(phi)
 
-    def run_test(self, bond_instance, force_func, energy_func):
+    def run_test(self, bond_instance, force_func, energy_func, phi0):
         self.system.bonded_inter.add(bond_instance)
-        self.system.part[0].add_bond((bond_instance, 1, 2))
-        # Add an extra (strength 0) pair bond, which should change nothing
-        self.system.part[0].add_bond((self.harmonic_bond, 1))
         p0 = self.system.part[0]
         p1 = self.system.part[1]
         p2 = self.system.part[2]
+        # Add bond angle
+        p0.add_bond((bond_instance, 1, 2))
+        # Add an extra (strength 0) pair bond, which should change nothing
+        p0.add_bond((self.harmonic_bond, 1))
 
-        N = 111
-        d_phi = np.pi / N
-        for i in range(1, N):  # avoid singularities at phi = 0 and phi = pi
+        d_phi = np.pi / self.N
+        for i in range(1, self.N):  # avoid corner cases at phi = 0 and phi = pi
             p2.pos = self.start_pos + \
                 self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
             self.system.integrator.run(recalc_forces=True, steps=0)
@@ -104,7 +105,7 @@ class InteractionsAngleBondTest(ut.TestCase):
             np.testing.assert_almost_equal(E_sim, E_ref, decimal=4)
 
             f_ref = force_func(i * d_phi)
-            phi_diff = i * d_phi - bond_instance.params['phi0']
+            phi_diff = i * d_phi - phi0
             for p, sign in [[p1, -1], [p2, +1]]:
                 # Check that force is perpendicular
                 self.assertAlmostEqual(
@@ -116,7 +117,8 @@ class InteractionsAngleBondTest(ut.TestCase):
                 # Check that force decreases the quantity abs(phi - phi0)
                 if np.abs(phi_diff) > 1E-12:  # sign undefined for phi = phi0
                     force_axis = np.cross(self.system.distance_vec(p, p0), p.f)
-                    self.assertEqual(np.sign(phi_diff),
+                    self.assertEqual(
+                        np.sign(phi_diff),
                         np.sign(sign * np.dot(force_axis, self.axis)),
                         msg="The force moves particles in the wrong direction")
 
@@ -145,6 +147,11 @@ class InteractionsAngleBondTest(ut.TestCase):
                 self.system.analysis.stress_tensor()["bonded"],
                 p_tensor_expected, atol=1E-12)
 
+        # Remove bonds
+        p0.delete_bond((bond_instance, 1, 2))
+        p0.delete_bond((self.harmonic_bond, 1))
+        p0.delete_bond((self.harmonic_bond, 2))
+
     def test_angle_harmonic(self):
         ah_bend = 1.
         ah_phi0 = 0.4327 * np.pi
@@ -155,7 +162,8 @@ class InteractionsAngleBondTest(ut.TestCase):
                       lambda phi: self.angle_harmonic_force(
                       phi=phi, bend=ah_bend, phi0=ah_phi0),
                       lambda phi: self.angle_harmonic_potential(
-                      phi=phi, bend=ah_bend, phi0=ah_phi0))
+                      phi=phi, bend=ah_bend, phi0=ah_phi0),
+                      ah_phi0)
 
     def test_angle_cosine(self):
         ac_bend = 1
@@ -167,7 +175,8 @@ class InteractionsAngleBondTest(ut.TestCase):
                       lambda phi: self.angle_cosine_force(
                       phi=phi, bend=ac_bend, phi0=ac_phi0),
                       lambda phi: self.angle_cosine_potential(
-                      phi=phi, bend=ac_bend, phi0=ac_phi0))
+                      phi=phi, bend=ac_bend, phi0=ac_phi0),
+                      ac_phi0)
 
     def test_angle_cos_squared(self):
         acs_bend = 1
@@ -179,7 +188,30 @@ class InteractionsAngleBondTest(ut.TestCase):
                       lambda phi: self.angle_cos_squared_force(
                       phi=phi, bend=acs_bend, phi0=acs_phi0),
                       lambda phi: self.angle_cos_squared_potential(
-                      phi=phi, bend=acs_bend, phi0=acs_phi0))
+                      phi=phi, bend=acs_bend, phi0=acs_phi0),
+                      acs_phi0)
+
+    @ut.skipIf(not espressomd.has_features("TABULATED"),
+               "Skipped because feature is disabled")
+    def test_angle_tabulated(self):
+        """Check that we can reproduce the three other potentials."""
+        at_bend = 1
+        at_phi0 = 1
+        phi = np.linspace(0, np.pi, num=self.N + 1, endpoint=True)
+        for fun_pot, fun_force in [
+                (self.angle_cosine_potential, self.angle_cosine_force),
+                (self.angle_harmonic_potential, self.angle_harmonic_force),
+                (self.angle_cos_squared_potential, self.angle_cos_squared_force)]:
+            angle_tabulated = espressomd.interactions.Tabulated(
+                type='angle', min=0, max=np.pi,
+                energy=fun_pot(phi=phi, bend=at_bend, phi0=at_phi0),
+                force=fun_force(phi=phi, bend=at_bend, phi0=at_phi0))
+            self.run_test(angle_tabulated,
+                          lambda phi: fun_force(
+                          phi=phi, bend=at_bend, phi0=at_phi0),
+                          lambda phi: fun_pot(
+                          phi=phi, bend=at_bend, phi0=at_phi0),
+                          at_phi0)
 
 if __name__ == '__main__':
     print("Features: ", espressomd.features())
