@@ -359,12 +359,10 @@ int lbboundary_get_force(void *lbb, double *f) {
     const auto rho = lb_lbfluid_get_density();
     const auto agrid = lb_lbfluid_get_agrid();
     const auto tau = lb_lbfluid_get_tau();
-    f[0] = forces[3 * no + 0] * rho * agrid /
-           (tau * tau); // lbpar.tau; TODO this makes the units wrong and
-    f[1] = forces[3 * no + 1] * rho * agrid /
-           (tau * tau); // lbpar.tau; the result correct. But it's 3.13AM
-    f[2] = forces[3 * no + 2] * rho * agrid /
-           (tau * tau); // lbpar.tau; on a Saturday at the ICP. Someone fix.
+    const double unit_conversion = agrid*agrid*agrid*agrid/rho/tau/tau;
+    f[0] = forces[3 * no + 0] *unit_conversion;
+    f[1] = forces[3 * no + 1] *unit_conversion; 
+    f[2] = forces[3 * no + 2] *unit_conversion;
 #else
     return ES_ERROR;
 #endif

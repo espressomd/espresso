@@ -33,28 +33,30 @@ import numpy as np
 import sys
 
 # Define the LB Parameters
-TIME_STEP = 0.4
-AGRID = 1.0
-KVISC = 5.0
-DENS = 1.0
+TIME_STEP = 0.2
+AGRID = 0.8 
+KVISC = 5 
+DENS = 1.3 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'tau': TIME_STEP}
+print(LB_PARAMS)
 # System setup
-radius = 5.4
-box_width = 36 
+radius = 7*AGRID 
+box_width = 120*AGRID
 real_width = box_width + 2 * AGRID
-box_length = 36
-v = [0, 0, 0.01]  # The boundary slip
-
+box_length = 120*AGRID
+c_s=np.sqrt(1./3.*AGRID**2/TIME_STEP**2)
+v = [0, 0, 0.05*c_s]  # The boundary slip
+print(v)
 
 class Stokes(object):
     lbf = None
     system = espressomd.System(box_l=[real_width, real_width, box_length])
     system.box_l = [real_width, real_width, box_length]
     system.time_step = TIME_STEP
-    system.cell_system.skin = 0.4
+    system.cell_system.skin = 0.01
 
     def test_stokes(self):
         self.system.actors.clear()
@@ -105,6 +107,9 @@ class Stokes(object):
         stokes_force = 6 * np.pi * KVISC * radius * size(v)
 
         # get force that is exerted on the sphere
+        for i in range(30):
+            print(sphere.get_force(),stokes_force)
+            self.system.integrator.run(200)
         force = np.copy(sphere.get_force())
         np.testing.assert_allclose(
             force,
