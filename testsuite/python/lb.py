@@ -165,6 +165,12 @@ class TestLB(object):
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
     def test_stress_tensor(self):
+        """
+        Checks agreement between the LBFluidStress observable and per-node
+        stress summed up over the entire fluid.
+
+        """
+       
         system = self.system
         system.actors.clear()
         system.part.clear()
