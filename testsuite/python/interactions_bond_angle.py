@@ -60,6 +60,9 @@ class InteractionsAngleBondTest(ut.TestCase):
         return vrot
 
     # Analytical expressions
+    # Forces aren't divided by sin(phi) to simplify the force magnitude check,
+    # which only depends on the displacement vectors and potential gradient,
+    # see "Bond angle potentials" in Doxygen
     def angle_harmonic_potential(self, phi, bend=1.0, phi0=np.pi):
         return 0.5 * bend * np.power(phi - phi0, 2)
 
@@ -81,13 +84,16 @@ class InteractionsAngleBondTest(ut.TestCase):
     def run_test(self, bond_instance, force_func, energy_func):
         self.system.bonded_inter.add(bond_instance)
         self.system.part[0].add_bond((bond_instance, 1, 2))
-        # Add an extra (strengh 0) pair bond, which should change nothing
+        # Add an extra (strength 0) pair bond, which should change nothing
         self.system.part[0].add_bond((self.harmonic_bond, 1))
+        p0 = self.system.part[0]
+        p1 = self.system.part[1]
+        p2 = self.system.part[2]
 
         N = 111
         d_phi = np.pi / N
-        for i in range(1, N):
-            self.system.part[2].pos = self.start_pos + \
+        for i in range(1, N):  # avoid singularities at phi = 0 and phi = pi
+            p2.pos = self.start_pos + \
                 self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
             self.system.integrator.run(recalc_forces=True, steps=0)
 
@@ -100,12 +106,14 @@ class InteractionsAngleBondTest(ut.TestCase):
             f_ref = force_func(i * d_phi)
 
             for p in self.system.part[[1, 2]]:
-                # Check that force is tangential
+                # Check that force is perpendicular
                 dot_prod_tol = 1E-12
                 self.assertAlmostEqual(
-                    np.dot(p.f, self.system.distance_vec(self.system.part[0], p)), 0, delta=dot_prod_tol)
+                    np.dot(p.f, self.system.distance_vec(p0, p)), 0,
+                    delta=dot_prod_tol, msg="The force is not perpendicular")
+                # Check that force has correct magnitude
                 self.assertAlmostEqual(np.linalg.norm(p.f), np.abs(
-                    f_ref) / self.system.distance(self.system.part[0], p), delta=1E-12)
+                    f_ref) / self.system.distance(p0, p), delta=1E-12)
 
             # Total force =0?
             np.testing.assert_allclose(
@@ -125,9 +133,8 @@ class InteractionsAngleBondTest(ut.TestCase):
             # and r_p2 =r_p1 +r_{p1,p2} and r_p3 =r_p1 +r_{p1,p3}
             # P_ij =1/V (F_p2 r_{p1,p2} +#_p3 r_{p1,p3})
             p_tensor_expected = \
-                np.outer(self.system.part[1].f, self.system.distance_vec(self.system.part[0], self.system.part[1])) \
-                + np.outer(self.system.part[2].f, self.system.distance_vec(
-                    self.system.part[0], self.system.part[2]))
+                np.outer(p1.f, self.system.distance_vec(p0, p1)) \
+                + np.outer(p2.f, self.system.distance_vec(p0, p2))
             p_tensor_expected /= self.system.volume()
             np.testing.assert_allclose(
                 self.system.analysis.stress_tensor()["bonded"],

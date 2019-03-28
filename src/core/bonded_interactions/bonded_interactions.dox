@@ -181,8 +181,24 @@
  *
  *  with @f$ K(\theta_{ijk}) @f$ the angle force term, which depends on the
  *  expression used for the angle potential. Forces @f$ \vec{F_i} @f$ and
- *  @f$ \vec{F_k} @f$ are perpendicular to the vectors @f$ \vec{r_{ij}} @f$
- *  resp. @f$ \vec{r_{kj}} @f$.
+ *  @f$ \vec{F_k} @f$ are perpendicular to the displacement vectors
+ *  @f$ \vec{r_{ij}} @f$ resp. @f$ \vec{r_{kj}} @f$ and their magnitude
+ *  are proportional to the potential gradient normalized by the displacement
+ *  vectors:
+ *
+ *  @f{align*}{
+ *      \left\|\vec{F_i}\right\|
+ *          &= \left(
+ *                  \frac{\mathrm{d}U(\theta_{ijk})}{\mathrm{d}\theta_{ijk}}
+ *             \right)
+ *             \frac{1}{\left\|\vec{r_{ij}}\right\|}
+ *      \\
+ *      \left\|\vec{F_k}\right\|
+ *          &= \left(
+ *                  \frac{\mathrm{d}U(\theta_{ijk})}{\mathrm{d}\theta_{ijk}}
+ *             \right)
+ *             \frac{1}{\left\|\vec{r_{kj}}\right\|}
+ *  @f}
  *
  *
  *  @subsection bondedIA_angle_potentials Available potentials
