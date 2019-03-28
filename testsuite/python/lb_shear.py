@@ -140,8 +140,8 @@ class LBShearCommon(object):
         p_expected += -VISC * DENS * SHEAR_VELOCITY / H * (
             np.outer(shear_plane_normal, shear_direction)
            + np.outer(shear_direction, shear_plane_normal))
-        for node_s in (2, 3, 4), (3, 4, 2), (5, 4, 3):
-            node_stress = np.copy(self.lbf[5, 5, 5].pi)
+        for n in (2, 3, 4), (3, 4, 2), (5, 4, 3):
+            node_stress = np.copy(self.lbf[n[0],n[1],n[2]].stress)
             np.testing.assert_allclose(node_stress,
                                        p_expected, atol=1E-5, rtol=5E-3)
 
