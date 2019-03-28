@@ -72,7 +72,7 @@ CheckOptions:
   - key:             modernize-use-nullptr.NullMacros
     value:           'NULL'
   - key:             modernize-use-transparent-functors.SafeMode
-    value:           '0'
+    value:           '1'
   - key:             readability-simplify-boolean-expr.ChainedConditionalAssignment
     value:           '0'
   - key:             readability-simplify-boolean-expr.ChainedConditionalReturn

@@ -89,9 +89,9 @@ public:
 
     /* Add contributions from all nodes and redistribute them to all. */
     boost::mpi::all_reduce(comm, local_forces.data(), local_forces.size(),
-                           forces.data(), std::plus<>{});
+                           forces.data(), std::plus<Vector3d>{});
     boost::mpi::all_reduce(comm, local_masses.data(), local_masses.size(),
-                           masses.data(), std::plus<>{});
+                           masses.data(), std::plus<double>{});
 
     for (auto &p : particles) {
       /* Check if type is of interest */

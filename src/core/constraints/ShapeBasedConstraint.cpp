@@ -31,7 +31,7 @@ Vector3d ShapeBasedConstraint::total_force() const {
 }
 
 double ShapeBasedConstraint::total_normal_force() const {
-  return all_reduce(comm_cart, m_outer_normal_force, std::plus<>());
+  return all_reduce(comm_cart, m_outer_normal_force, std::plus<double>());
 }
 
 double ShapeBasedConstraint::min_dist() {
