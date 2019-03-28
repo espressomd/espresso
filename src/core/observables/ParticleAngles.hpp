@@ -53,7 +53,7 @@ public:
        * than on a vector of doubles
        */
       res[i] = acos(-cosine);
-      v1 = std::move(v2);
+      v1 = v2;
       n1 = n2;
     }
     return res;

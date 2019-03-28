@@ -188,6 +188,7 @@ inline void calc_three_body_bonded_forces(Particle const *p_mid,
     default:
       runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
                         << p_mid->p.identity << " unknown\n";
+      f_mid = f_left = f_right = Vector3d{};
       return;
     }
     break;

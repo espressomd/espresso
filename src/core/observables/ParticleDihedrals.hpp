@@ -52,9 +52,9 @@ public:
       /* the 2-argument arctangent returns an angle in the range [-pi, pi] that
        * allows for an unambiguous determination of the 4th particle position */
       res[i] = atan2((vector_product(c1, c2) * v2) / v2.norm(), c1 * c2);
-      v1 = std::move(v2);
-      v2 = std::move(v3);
-      c1 = std::move(c2);
+      v1 = v2;
+      v2 = v3;
+      c1 = c2;
     }
     return res;
   }
