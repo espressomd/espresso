@@ -19,11 +19,12 @@ from __future__ import print_function
 import itertools
 import unittest as ut
 import numpy as np
-import sys
 
 import espressomd
 import espressomd.lb
 from tests_common import abspath
+from espressomd.observables import LBFluidStress
+import sys
 
 
 class TestLB(object):
@@ -162,6 +163,42 @@ class TestLB(object):
             np.mean(all_temp_fluid), self.params["temp"], delta=temp_prec_fluid)
         self.assertAlmostEqual(
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
+
+    def test_stress_tensor(self):
+        system = self.system
+        system.actors.clear()
+        system.part.clear()
+        self.n_col_part = 1000
+        system.part.add(pos=np.random.random(
+            (self.n_col_part, 3)) * self.params["box_l"], v=np.random.random((self.n_col_part, 3)))
+        system.thermostat.turn_off()
+
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=system.time_step,
+            kT=1, ext_force_density=[0, 0, 0], seed=1)
+        system.actors.add(self.lbf)
+        system.thermostat.set_lb(LB_fluid=self.lbf, seed=1)
+        system.integrator.run(10)
+        stress = np.zeros((3, 3))
+        agrid = self.params["agrid"]
+        for i in range(int(system.box_l[0] / agrid)):
+            for j in range(int(system.box_l[1] / agrid)):
+                for k in range(int(system.box_l[2] / agrid)):
+                    stress += self.lbf[i, j, k].pi
+
+        stress /= system.volume() / agrid**3
+
+        obs = LBFluidStress()
+        obs_stress = obs.calculate()
+        obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[3]],
+                               [obs_stress[1], obs_stress[
+                                2], obs_stress[4]],
+                               [obs_stress[3], obs_stress[4], obs_stress[5]]])
+        print(stress / obs_stress)
+        np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
 
     def test_lb_node_set_get(self):
         self.system.actors.clear()

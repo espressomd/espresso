@@ -149,7 +149,6 @@ void lb_init() {
     runtimeErrorMsg()
         << "Lattice Boltzmann agrid not set when initializing fluid";
   }
-
   if (check_runtime_errors())
     return;
 

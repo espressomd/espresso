@@ -861,12 +861,9 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index,
   to_index = to_index_x + para->dim_x * to_index_y +                           \
              para->dim_x * para->dim_y * to_index_z;                           \
   if (n_curr.boundary[to_index] == 0) {                                        \
-    boundary_force[0] += (2.0f * pop_to_bounce_back + shift) * c[0] /          \
-                         para->tau / para->tau / para->agrid;                  \
-    boundary_force[1] += (2.0f * pop_to_bounce_back + shift) * c[1] /          \
-                         para->tau / para->tau / para->agrid;                  \
-    boundary_force[2] += (2.0f * pop_to_bounce_back + shift) * c[2] /          \
-                         para->tau / para->tau / para->agrid;                  \
+    boundary_force[0] += (2.0f * pop_to_bounce_back + shift) * c[0];          \
+    boundary_force[1] += (2.0f * pop_to_bounce_back + shift) * c[1];           \
+    boundary_force[2] += (2.0f * pop_to_bounce_back + shift) * c[2];           \
     n_curr.vd[inverse * para->number_of_nodes + to_index] =                    \
         pop_to_bounce_back + shift;                                            \
   }
@@ -3013,7 +3010,7 @@ void lb_gpu_get_boundary_forces(double *forces) {
                  cudaMemcpyDeviceToHost));
 
   for (int i = 0; i < 3 * LBBoundaries::lbboundaries.size(); i++) {
-    forces[i] = (double)temp[i];
+    forces[i] = -(double)temp[i];
   }
   free(temp);
 #endif

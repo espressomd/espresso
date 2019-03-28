@@ -263,6 +263,16 @@ IF LB:
             self._set_lattice_switch()
             self._set_params_in_es_core()
 
+        property stress_fluid:
+            def __get__(self):
+                cdef Vector6d res
+                res = lb_lbfluid_get_stress() 
+                return array_locked((
+                    res[0], res[1], res[2], res[3], res[4], res[5]))
+
+            def __set__(self, value):
+                raise NotImplementedError
+
 IF LB_GPU:
     cdef class LBFluidGPU(HydrodynamicInteraction):
         """
@@ -308,9 +318,9 @@ IF LB_GPU:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 IF LB or LB_GPU:
