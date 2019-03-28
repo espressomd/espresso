@@ -193,7 +193,7 @@ class TestLB(object):
         for i in range(int(system.box_l[0] / agrid)):
             for j in range(int(system.box_l[1] / agrid)):
                 for k in range(int(system.box_l[2] / agrid)):
-                    stress += self.lbf[i, j, k].pi
+                    stress += self.lbf[i, j, k].stress
 
         stress /= system.volume() / agrid**3
 
