@@ -31,11 +31,11 @@ by comparing to the analytical solution.
 AGRID = 0.6
 VISC = 3.2
 DENS = 2.3
-TIME_STEP = 0.01
+TIME_STEP = 0.02
 # Box size will be H +2 AGRID to make room for walls.
-# The number of grid cells should be devisible by for and 3 in all directions
+# The number of grid cells should be devisible by four and 3 in all directions
 # for testing on multiple mpi nodes.
-H = 28 * AGRID 
+H = 24 * AGRID 
 W = 6 * AGRID  
 SHEAR_VELOCITY = 0.3
 
@@ -116,7 +116,7 @@ class LBShearCommon(object):
         t0 = self.system.time
         sample_points = int(H / AGRID - 1)
 
-        for i in range(15):
+        for i in range(6):
             self.system.integrator.run(100)
 
             v_expected = shear_flow(
