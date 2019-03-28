@@ -354,14 +354,9 @@ int lbboundary_get_force(void *lbb, double *f) {
 #if defined(LB_BOUNDARIES) && defined(LB)
     mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
   }
-  const auto rho = lb_lbfluid_get_density();
-  const auto agrid = lb_lbfluid_get_agrid();
-  const auto tau = lb_lbfluid_get_tau();
-  const double unit_conversion =
-      agrid * agrid * agrid * agrid / rho / tau / tau;
-  f[0] = forces[3 * no + 0] * unit_conversion;
-  f[1] = forces[3 * no + 1] * unit_conversion;
-  f[2] = forces[3 * no + 2] * unit_conversion;
+  f[0] = forces[3 * no + 0];
+  f[1] = forces[3 * no + 1];
+  f[2] = forces[3 * no + 2];
 #else
     return ES_ERROR;
 #endif
