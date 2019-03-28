@@ -35,21 +35,19 @@ import sys
 # Define the LB Parameters
 TIME_STEP = 0.4
 AGRID = 0.6 
-KVISC = 5 
+KVISC = 6 
 DENS = 2.3 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'tau': TIME_STEP}
-print(LB_PARAMS)
 # System setup
 radius = 8 * AGRID 
-box_width = 70 * AGRID
+box_width = 62 * AGRID
 real_width = box_width + 2 * AGRID
-box_length = 70 * AGRID
+box_length = 62 * AGRID
 c_s = np.sqrt(1. / 3. * AGRID**2 / TIME_STEP**2)
-v = [0, 0, 0.004 * c_s]  # The boundary slip
-print(v)
+v = [0, 0, 0.2 * c_s]  # The boundary slip
 
 
 class Stokes(object):
@@ -105,15 +103,14 @@ class Stokes(object):
 
         last_force = -1000.
         stokes_force = 6 * np.pi * KVISC * radius * size(v)
+        self.system.integrator.run(35)
         while True:
-            self.system.integrator.run(60)
+            self.system.integrator.run(10)
             force = np.linalg.norm(sphere.get_force())
-            print(force, last_force)
             if np.abs(last_force - force) < 0.01 * stokes_force:
                 break
             last_force = force
 
-        print(sphere.get_force(), stokes_force)
         force = np.copy(sphere.get_force())
         np.testing.assert_allclose(
             force,
