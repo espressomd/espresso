@@ -1302,9 +1302,6 @@ const Vector6d lb_lbfluid_get_stress() {
   } else
 #ifdef LB
       if (lattice_switch == ActiveLB::CPU) {
-    int number_of_nodes = lblattice.global_grid[0] * lblattice.global_grid[1] *
-                          lblattice.global_grid[2];
-
     for (int i = 0; i < lblattice.global_grid[0]; i++) {
       for (int j = 0; j < lblattice.global_grid[1]; j++) {
         for (int k = 0; k < lblattice.global_grid[2]; k++) {
@@ -1313,6 +1310,9 @@ const Vector6d lb_lbfluid_get_stress() {
         }
       }
     }
+
+    int number_of_nodes = lblattice.global_grid[0] * lblattice.global_grid[1] *
+                          lblattice.global_grid[2];
 
     p *= 1. / number_of_nodes;
   } else
