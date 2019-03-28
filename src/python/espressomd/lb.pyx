@@ -263,7 +263,7 @@ IF LB:
             self._set_lattice_switch()
             self._set_params_in_es_core()
 
-        property stress_fluid:
+        property stress:
             def __get__(self):
                 cdef Vector6d res
                 res = lb_lbfluid_get_stress() 
@@ -357,7 +357,7 @@ IF LB or LB_GPU:
             def __set__(self, value):
                 python_lbnode_set_density(self.node, value)
 
-        property pi:
+        property stress:
             def __get__(self):
                 cdef Vector6d pi = python_lbnode_get_pi(self.node)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],
