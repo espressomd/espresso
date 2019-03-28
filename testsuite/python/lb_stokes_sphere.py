@@ -43,13 +43,14 @@ LB_PARAMS = {'agrid': AGRID,
              'tau': TIME_STEP}
 print(LB_PARAMS)
 # System setup
-radius = 8*AGRID 
-box_width = 70*AGRID
+radius = 8 * AGRID 
+box_width = 70 * AGRID
 real_width = box_width + 2 * AGRID
-box_length = 70*AGRID
-c_s=np.sqrt(1./3.*AGRID**2/TIME_STEP**2)
-v = [0, 0, 0.004*c_s]  # The boundary slip
+box_length = 70 * AGRID
+c_s = np.sqrt(1. / 3. * AGRID**2 / TIME_STEP**2)
+v = [0, 0, 0.004 * c_s]  # The boundary slip
 print(v)
+
 
 class Stokes(object):
     lbf = None
@@ -102,18 +103,17 @@ class Stokes(object):
                 tmp += k * k
             return np.sqrt(tmp)
 
-        last_force=-1000.
+        last_force = -1000.
         stokes_force = 6 * np.pi * KVISC * radius * size(v)
         while True:
             self.system.integrator.run(60)
-            force=np.linalg.norm(sphere.get_force())
-            print(force,last_force)
-            if np.abs(last_force-force) <0.01*stokes_force:
+            force = np.linalg.norm(sphere.get_force())
+            print(force, last_force)
+            if np.abs(last_force - force) < 0.01 * stokes_force:
                 break
-            last_force=force
+            last_force = force
 
-
-        print(sphere.get_force(),stokes_force)
+        print(sphere.get_force(), stokes_force)
         force = np.copy(sphere.get_force())
         np.testing.assert_allclose(
             force,
@@ -122,6 +122,7 @@ class Stokes(object):
              stokes_force],
             rtol=0.03,
             atol=stokes_force * 0.03)
+
 
 @ut.skipIf(not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")

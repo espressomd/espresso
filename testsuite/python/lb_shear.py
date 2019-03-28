@@ -36,7 +36,7 @@ TIME_STEP = 0.01
 # The number of grid cells should be devisible by for and 3 in all directions
 # for testing on multiple mpi nodes.
 H = 28 * AGRID 
-W = 6*AGRID  
+W = 6 * AGRID  
 SHEAR_VELOCITY = 0.3
 
 LB_PARAMS = {'agrid': AGRID,
@@ -97,7 +97,7 @@ class LBShearCommon(object):
         self.system.lbboundaries.clear()
         self.system.actors.clear()
         self.system.box_l = np.max(
-            ((W,W,W), shear_plane_normal * (H + 2 * AGRID)), 0)
+            ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
 
         self.system.actors.add(self.lbf)
 
@@ -145,9 +145,12 @@ class LBShearCommon(object):
             np.testing.assert_allclose(node_stress,
                                        p_expected, atol=1E-5, rtol=5E-3)
 
-        np.testing.assert_allclose(np.copy(wall1.get_force()), -np.copy(wall2.get_force()),atol=1E-4)
+        np.testing.assert_allclose(
+            np.copy(wall1.get_force()),
+            -np.copy(wall2.get_force()),
+            atol=1E-4)
         np.testing.assert_allclose(np.copy(wall1.get_force()), 
-            shear_direction*SHEAR_VELOCITY/H*W**2*VISC,atol=1E-2)
+                                   shear_direction * SHEAR_VELOCITY / H * W**2 * VISC, atol=1E-2)
 
     def test(self):
         x = np.array((1, 0, 0), dtype=float)
