@@ -24,17 +24,13 @@
 #include <memory>
 #include <type_traits>
 
-#include "utils/serialization/array.hpp"
+#include "utils/Span.hpp"
 
-#include "Parameter.hpp"
+#include <boost/utility/string_ref.hpp>
+
 #include "Variant.hpp"
 
 namespace ScriptInterface {
-/**
- * Convenience typedefs.
- */
-typedef std::map<std::string, Parameter> ParameterMap;
-
 /**
  * @brief Make a Variant from argument.
  *
@@ -103,13 +99,15 @@ public:
    * is called before construct (only name() and valid_parameters()),
    * and it is only called once.
    *
-   * The default implementation just calls set_parameters.
+   * The default implementation just calls set_parameter for every parameter.
    *
    * @param params The parameters to the constructor. Only parameters that
    *               are valid for a default-constructed object are valid.
    */
   virtual void construct(VariantMap const &params) {
-    this->set_parameters(params);
+    for (auto const &p : params) {
+      set_parameter(p.first, p.second);
+    }
   }
 
 public:
@@ -121,7 +119,7 @@ public:
     VariantMap values;
 
     for (auto const &p : valid_parameters()) {
-      values[p.first] = get_parameter(p.first);
+      values[p.data()] = get_parameter(p.data());
     }
 
     return values;
@@ -134,7 +132,9 @@ public:
    *
    * @return Expected parameters.
    */
-  virtual ParameterMap valid_parameters() const { return {}; }
+  virtual Utils::Span<const boost::string_ref> valid_parameters() const {
+    return {};
+  }
 
   /**
    * @brief Get single parameter.
@@ -152,20 +152,7 @@ public:
    * @param name Name of the parameter
    * @param value Set parameter to this value.
    */
-  virtual void set_parameter(const std::string &name, const Variant &value){};
-  /**
-   * @brief Set multiple parameters.
-   *
-   * The default implementation calls the implementation of set_parameter for
-   * every element of the map.
-   *
-   * @param parameters Parameters to set.
-   */
-  virtual void set_parameters(const VariantMap &parameters) {
-    for (auto const &it : parameters) {
-      set_parameter(it.first, it.second);
-    }
-  }
+  virtual void set_parameter(const std::string &, const Variant &) {}
 
   /**
    * @brief Call a method on the object.
@@ -173,7 +160,7 @@ public:
    * If not overridden by the implementation, this does nothing.
    */
   virtual Variant call_method(const std::string &, const VariantMap &) {
-    return true;
+    return none;
   }
 
   /**
@@ -225,23 +212,5 @@ public:
 protected:
   virtual void set_state(Variant const &state);
 };
-
-/**
- * @brief Tries to extract a value with the type of MEMBER_NAME from the
- * Variant.
- *
- * This will fail at compile time if the type of @p MEMBER_NAME is not one of
- * the possible types of Variant, and at runtime if the current type of the
- * variant is not that of MEMBER_NAME. @c remove_reference ensures that this
- * also works with member access by reference, for example as returned by a
- * function.
- */
-#define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
-  if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME =                                                              \
-        get_value<std::remove_reference<decltype(MEMBER_NAME)>::type>(value);  \
-  }
-
 } /* namespace ScriptInterface */
-
 #endif

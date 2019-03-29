@@ -32,7 +32,6 @@ public:
     NEW,
     CONSTRUCT,
     SET_PARAMETER,
-    SET_PARAMETERS,
     CALL_METHOD,
     DELETE
   };
@@ -50,7 +49,7 @@ private:
   /* If the variant encapsulates an object id we translate the
      master id to a local one */
   static void translate_id(Variant &v) {
-    if (is_objectid(v)) {
+    if (is_type<ObjectId>(v)) {
       v = get_translation_table().at(boost::get<ObjectId>(v));
     }
   }
