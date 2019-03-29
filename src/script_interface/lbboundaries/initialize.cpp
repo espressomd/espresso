@@ -37,4 +37,3 @@ void initialize() {
 }
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */
-
