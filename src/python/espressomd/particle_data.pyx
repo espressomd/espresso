@@ -285,7 +285,7 @@ cdef class ParticleHandle(object):
         See Also
         --------
         add_bond() : Method to add bonds to a `Particle`
-        delete_bond() : Method to add bonds to a `Particle`
+        delete_bond() : Method to remove bonds from a `Particle`
 
         .. note::
            Bond ids have to be an integer >= 0.
