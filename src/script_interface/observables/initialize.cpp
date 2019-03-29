@@ -36,9 +36,12 @@
 #include "core/observables/DipoleMoment.hpp"
 #include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/MagneticDipoleMoment.hpp"
+#include "core/observables/ParticleAngles.hpp"
 #include "core/observables/ParticleAngularVelocities.hpp"
 #include "core/observables/ParticleBodyAngularVelocities.hpp"
 #include "core/observables/ParticleBodyVelocities.hpp"
+#include "core/observables/ParticleDihedrals.hpp"
+#include "core/observables/ParticleDistances.hpp"
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
@@ -93,6 +96,9 @@ void initialize() {
   REGISTER_PID_OBS(ComPosition);
   REGISTER_PID_OBS(ComVelocity);
   REGISTER_PID_OBS(ComForce);
+  REGISTER_PID_OBS(ParticleDistances);
+  REGISTER_PID_OBS(ParticleAngles);
+  REGISTER_PID_OBS(ParticleDihedrals);
   REGISTER_PID_PROFILE_OBS(DensityProfile);
   REGISTER_PID_PROFILE_OBS(ForceDensityProfile);
   REGISTER_PID_PROFILE_OBS(FluxDensityProfile);
