@@ -86,7 +86,6 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/scafacos.cpp
   electrostatics_magnetostatics/fft-common.cpp
   electrostatics_magnetostatics/fft.cpp
-  electrostatics_magnetostatics/elc_mmm2d_common.cpp
   electrostatics_magnetostatics/coulomb.cpp
   electrostatics_magnetostatics/dipole.cpp
   electrostatics_magnetostatics/reaction_field.cpp
