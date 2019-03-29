@@ -30,6 +30,14 @@ using Utils::Mpi::gatherv;
 
 namespace mpi = boost::mpi;
 
+/*
+ * Check that implementation behaves
+ * like MPI_Gatherv with an mpi datatype.
+ * To test this we gather the rank from
+ * every rank to one rank and then check
+ * that the value was written to the
+ * correct position in the output array.
+ */
 BOOST_AUTO_TEST_CASE(mpi_type) {
   mpi::communicator world;
   auto const rank = world.rank();
@@ -70,6 +78,14 @@ BOOST_AUTO_TEST_CASE(mpi_type) {
   }
 }
 
+/*
+ * Check that implementation behaves
+ * like MPI_Gatherv with an non-mpi datatype.
+ * To test this we gather a string containing the rank from
+ * every rank to one rank and then check
+ * that the value was written to the
+ * correct position in the output array.
+ */
 BOOST_AUTO_TEST_CASE(non_mpi_type) {
   mpi::communicator world;
   auto const rank = world.rank();
