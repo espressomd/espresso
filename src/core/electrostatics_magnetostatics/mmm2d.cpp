@@ -241,7 +241,7 @@ static int MMM2D_tune_far(double error);
 
 ///
 void MMM2D_setup_constants() {
-  elc_mmm2d_common_init_invBoxl();
+  init_invBoxl();
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
@@ -321,11 +321,11 @@ void clear_image_contributions(int e_size) {
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
-    elc_mmm2d_common_clear_vec(blwentry(gblcblk, 0, e_size), e_size);
+    elc_clear_vec(blwentry(gblcblk, 0, e_size), e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    elc_mmm2d_common_clear_vec(abventry(gblcblk, n_layers - 1, e_size), e_size);
+    elc_clear_vec(abventry(gblcblk, n_layers - 1, e_size), e_size);
 }
 
 void gather_image_contributions(int e_size) {
@@ -339,11 +339,11 @@ void gather_image_contributions(int e_size) {
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
-    elc_mmm2d_common_copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
+    elc_copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    elc_mmm2d_common_copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size, e_size);
+    elc_copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size, e_size);
 }
 
 /* the data transfer routine for the lclcblks itself */
@@ -360,44 +360,44 @@ void distribute(int e_size, double fac) {
     if (node == this_node) {
       /* calculate sums of cells below */
       for (c = 1; c < n_layers; c++)
-        elc_mmm2d_common_addscale_vec(blwentry(gblcblk, c, e_size), fac,
-                                      blwentry(gblcblk, c - 1, e_size),
-                                      blwentry(lclcblk, c - 1, e_size), e_size);
+        elc_addscale_vec(blwentry(gblcblk, c, e_size), fac,
+                         blwentry(gblcblk, c - 1, e_size),
+                         blwentry(lclcblk, c - 1, e_size), e_size);
 
       /* calculate my ghost contribution only if a node above exists */
       if (node + 1 < n_nodes) {
-        elc_mmm2d_common_addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size),
-                                      blwentry(lclcblk, n_layers - 1, e_size), e_size);
-        elc_mmm2d_common_copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
+        elc_addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size),
+                         blwentry(lclcblk, n_layers - 1, e_size), e_size);
+        elc_copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     } else if (node + 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, node, 0, comm_cart, &status);
-      elc_mmm2d_common_copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
-      elc_mmm2d_common_copy_vec(blwentry(lclcblk, 0, e_size), recvbuf + e_size, e_size);
+      elc_copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
+      elc_copy_vec(blwentry(lclcblk, 0, e_size), recvbuf + e_size, e_size);
     }
 
     /* down */
     if (inv_node == this_node) {
       /* calculate sums of all cells above */
       for (c = n_layers + 1; c > 2; c--)
-        elc_mmm2d_common_addscale_vec(abventry(gblcblk, c - 3, e_size), fac,
-                                      abventry(gblcblk, c - 2, e_size),
-                                      abventry(lclcblk, c, e_size), e_size);
+        elc_addscale_vec(abventry(gblcblk, c - 3, e_size), fac,
+                         abventry(gblcblk, c - 2, e_size),
+                         abventry(lclcblk, c, e_size), e_size);
 
       /* calculate my ghost contribution only if a node below exists */
       if (inv_node - 1 >= 0) {
-        elc_mmm2d_common_addscale_vec(sendbuf, fac, abventry(gblcblk, 0, e_size),
-                                      abventry(lclcblk, 2, e_size), e_size);
-        elc_mmm2d_common_copy_vec(sendbuf + e_size, abventry(lclcblk, 1, e_size), e_size);
+        elc_addscale_vec(sendbuf, fac, abventry(gblcblk, 0, e_size),
+                         abventry(lclcblk, 2, e_size), e_size);
+        elc_copy_vec(sendbuf + e_size, abventry(lclcblk, 1, e_size), e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, inv_node - 1, 0, comm_cart);
       }
     } else if (inv_node - 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, inv_node, 0, comm_cart,
                &status);
-      elc_mmm2d_common_copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf, e_size);
-      elc_mmm2d_common_copy_vec(abventry(lclcblk, n_layers + 1, e_size), recvbuf + e_size,
-                                e_size);
+      elc_copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf, e_size);
+      elc_copy_vec(abventry(lclcblk, n_layers + 1, e_size), recvbuf + e_size,
+                   e_size);
     }
   }
 }
@@ -474,11 +474,11 @@ static void setup_z_force() {
      article of Arnold, Kesselheim, Breitsprecher et al, 2013, for details. */
 
   if (this_node == 0) {
-    elc_mmm2d_common_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    elc_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
 
   if (this_node == n_nodes - 1) {
-    elc_mmm2d_common_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    elc_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
   /* calculate local cellblks. partblks don't make sense */
@@ -517,7 +517,7 @@ static void add_z_force() {
   }
 
   for (int c = 1; c <= n_layers; c++) {
-    othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
+    othcblk = elc_block(gblcblk, c - 1, size);
     add = othcblk[QQEQQP] - othcblk[QQEQQM];
     auto np = cells[c].n;
     auto part = cells[c].part;
@@ -539,26 +539,26 @@ static void setup_z_energy() {
   if (this_node == 0)
     /* the lowest lclcblk does not contain anything, since there are no charges
        below the simulation box, at least for this term. */
-    elc_mmm2d_common_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    elc_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    elc_mmm2d_common_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    elc_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
 
   /* calculate local cellblks. partblks don't make sense */
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    elc_mmm2d_common_clear_vec(blwentry(lclcblk, c, e_size), e_size);
+    elc_clear_vec(blwentry(lclcblk, c, e_size), e_size);
     for (i = 0; i < np; i++) {
       lclcblk[size * c + ABEQQP] += part[i].p.q;
       lclcblk[size * c + ABEQZP] += part[i].p.q * part[i].r.p[2];
     }
-    elc_mmm2d_common_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
+    elc_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
     /* just to be able to use the standard distribution. Here below
        and above terms are the same */
-    elc_mmm2d_common_copy_vec(abventry(lclcblk, c, e_size), blwentry(lclcblk, c, e_size),
-                              e_size);
+    elc_copy_vec(abventry(lclcblk, c, e_size), blwentry(lclcblk, c, e_size),
+                 e_size);
   }
 }
 
@@ -569,7 +569,7 @@ static double z_energy() {
   int size = 4;
   double eng = 0;
   for (c = 1; c <= n_layers; c++) {
-    othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
+    othcblk = elc_block(gblcblk, c - 1, size);
     np = cells[c].n;
     part = cells[c].part;
     for (i = 0; i < np; i++) {
@@ -615,19 +615,19 @@ static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sc
   int e_size = 2, size = 4;
 
   if (mmm2d_params.dielectric_contrast_on)
-    elc_mmm2d_common_clear_vec(lclimge, size);
+    elc_clear_vec(lclimge, size);
 
   if (this_node == 0) {
     /* on the lowest node, clear the lclcblk below, which only contains the
        images of the lowest layer
        if there is dielectric contrast, otherwise it is empty */
-    lclimgebot = elc_mmm2d_common_block(lclcblk, 0, size);
-    elc_mmm2d_common_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    lclimgebot = elc_block(lclcblk, 0, size);
+    elc_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
   if (this_node == n_nodes - 1) {
     /* same for the top node */
-    lclimgetop = elc_mmm2d_common_block(lclcblk, n_layers + 1, size);
-    elc_mmm2d_common_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    lclimgetop = elc_block(lclcblk, n_layers + 1, size);
+    elc_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
   layer_top = my_left[2] + layer_h;
@@ -635,14 +635,14 @@ static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sc
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    llclcblk = elc_mmm2d_common_block(lclcblk, c, size);
+    llclcblk = elc_block(lclcblk, c, size);
 
-    elc_mmm2d_common_clear_vec(llclcblk, size);
+    elc_clear_vec(llclcblk, size);
 
     for (i = 0; i < np; i++) {
       e = exp(omega * (part[i].r.p[2] - layer_top));
 
-      elc_mmm2d_common_setup(size * ic, e, o + ic, partblk, sccache);
+      elc_setup(size * ic, e, o + ic, partblk, sccache);
 
       /* take images due to different dielectric constants into account */
       if (mmm2d_params.dielectric_contrast_on) {
@@ -695,21 +695,21 @@ static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sc
         lclimge[POQECM] += part[i].p.q * sccache[o + ic].c * e_di_h;
       }
 
-      elc_mmm2d_common_addscale_vec(llclcblk, part[i].p.q, elc_mmm2d_common_block(partblk, ic, size), llclcblk, size);
+      elc_addscale_vec(llclcblk, part[i].p.q, elc_block(partblk, ic, size), llclcblk, size);
       ic++;
     }
-    elc_mmm2d_common_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
-    elc_mmm2d_common_scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
+    elc_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
+    elc_scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
 
     layer_top += layer_h;
   }
 
   if (mmm2d_params.dielectric_contrast_on) {
-    elc_mmm2d_common_scale_vec(pref, lclimge, size);
+    elc_scale_vec(pref, lclimge, size);
     if (this_node == 0)
-      elc_mmm2d_common_scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
+      elc_scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      elc_mmm2d_common_scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
+      elc_scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 }
 
@@ -733,11 +733,11 @@ static void add_force() {
   for (int c = 1; c <= n_layers; c++) {
     auto const np = cells[c].n;
     auto const part = cells[c].part;
-    auto const othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
+    auto const othcblk = elc_block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
-      part[i].f.f[dir] += part[i].p.q * elc_mmm2d_common_add_force_dir(size * ic, partblk, othcblk);
-      part[i].f.f[2] += part[i].p.q * elc_mmm2d_common_add_force_z(size * ic, partblk, othcblk);
+      part[i].f.f[dir] += part[i].p.q * elc_add_force_dir(size * ic, partblk, othcblk);
+      part[i].f.f[2] += part[i].p.q * elc_add_force_z(size * ic, partblk, othcblk);
 
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
                          this_node, part[i].p.identity, part[i].f.f[0],
@@ -763,9 +763,9 @@ static double dir_energy(double omega) {
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
+    othcblk = elc_block(gblcblk, c - 1, size);
     for (i = 0; i < np; i++) {
-      eng += pref * part[i].p.q * elc_mmm2d_common_dir_energy(size * ic, partblk, othcblk);
+      eng += pref * part[i].p.q * elc_dir_energy(size * ic, partblk, othcblk);
       ic++;
     }
   }
@@ -793,16 +793,16 @@ static void setup_PQ(int p, int q, double omega, double fac) {
   const int e_size = 4, size = 8;
 
   if (mmm2d_params.dielectric_contrast_on)
-    elc_mmm2d_common_clear_vec(lclimge, size);
+    elc_clear_vec(lclimge, size);
 
   if (this_node == 0) {
-    lclimgebot = elc_mmm2d_common_block(lclcblk, 0, size);
-    elc_mmm2d_common_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    lclimgebot = elc_block(lclcblk, 0, size);
+    elc_clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
 
   if (this_node == n_nodes - 1) {
-    lclimgetop = elc_mmm2d_common_block(lclcblk, n_layers + 1, size);
-    elc_mmm2d_common_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    lclimgetop = elc_block(lclcblk, n_layers + 1, size);
+    elc_clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
   layer_top = my_left[2] + layer_h;
@@ -810,14 +810,14 @@ static void setup_PQ(int p, int q, double omega, double fac) {
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    llclcblk = elc_mmm2d_common_block(lclcblk, c, size);
+    llclcblk = elc_block(lclcblk, c, size);
 
-    elc_mmm2d_common_clear_vec(llclcblk, size);
+    elc_clear_vec(llclcblk, size);
 
     for (i = 0; i < np; i++) {
       e = exp(omega * (part[i].r.p[2] - layer_top));
 
-      elc_mmm2d_common_PQ_setup(size * ic, ox + ic, oy + ic, e, partblk, scxcache, scycache);
+      elc_PQ_setup(size * ic, ox + ic, oy + ic, e, partblk, scxcache, scycache);
 
       if (mmm2d_params.dielectric_contrast_on) {
         if (c == 1 && this_node == 0) {
@@ -884,22 +884,22 @@ static void setup_PQ(int p, int q, double omega, double fac) {
             scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_h;
       }
 
-      elc_mmm2d_common_addscale_vec(llclcblk, part[i].p.q, elc_mmm2d_common_block(partblk, ic, size), llclcblk, size);
+      elc_addscale_vec(llclcblk, part[i].p.q, elc_block(partblk, ic, size), llclcblk, size);
       ic++;
     }
-    elc_mmm2d_common_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
-    elc_mmm2d_common_scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
+    elc_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
+    elc_scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
 
     layer_top += layer_h;
   }
 
   if (mmm2d_params.dielectric_contrast_on) {
-    elc_mmm2d_common_scale_vec(pref, lclimge, size);
+    elc_scale_vec(pref, lclimge, size);
 
     if (this_node == 0)
-      elc_mmm2d_common_scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
+      elc_scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      elc_mmm2d_common_scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
+      elc_scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 }
 
@@ -915,14 +915,14 @@ static void add_PQ_force(int p, int q, double omega) {
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
+    othcblk = elc_block(gblcblk, c - 1, size);
 
     for (i = 0; i < np; i++) {
       part[i].f.f[0] +=
-              pref_x * part[i].p.q * elc_mmm2d_common_add_PQ_force_x(size * ic, partblk, othcblk);
+              pref_x * part[i].p.q * elc_add_PQ_force_x(size * ic, partblk, othcblk);
       part[i].f.f[1] +=
-              pref_y * part[i].p.q * elc_mmm2d_common_add_PQ_force_y(size * ic, partblk, othcblk);
-      part[i].f.f[2] += part[i].p.q * elc_mmm2d_common_add_PQ_force_z(size * ic, partblk, othcblk);
+              pref_y * part[i].p.q * elc_add_PQ_force_y(size * ic, partblk, othcblk);
+      part[i].f.f[2] += part[i].p.q * elc_add_PQ_force_z(size * ic, partblk, othcblk);
 
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
                          this_node, part[i].p.identity, part[i].f.f[0],
@@ -943,10 +943,10 @@ static double PQ_energy(const double omega) {
   for (int c = 1; c <= n_layers; c++) {
     const int np = cells[c].n;
     part = cells[c].part;
-    const double *othcblk = elc_mmm2d_common_block(gblcblk, c - 1, size);
+    const double *othcblk = elc_block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
-      eng += pref * part[i].p.q * elc_mmm2d_common_PQ_energy(size * ic, partblk, othcblk);
+      eng += pref * part[i].p.q * elc_PQ_energy(size * ic, partblk, othcblk);
       ic++;
     }
   }

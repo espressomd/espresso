@@ -1,9 +1,6 @@
 #ifndef ESPRESSO_ELC_MMM2D_COMMON_HPP
 #define ESPRESSO_ELC_MMM2D_COMMON_HPP
 
-
-#include "cells.hpp" /* dont know why, but otherwise it wont compile */
-
 #include "grid.hpp"
 #include "utils.hpp"
 
@@ -43,7 +40,7 @@ typedef struct {
 
 /** calculating the inverse box dimensions*/
 /*@{*/
-static void elc_mmm2d_common_init_invBoxl() {
+static void init_invBoxl() {
   ux = 1 / box_l[0];
   ux2 = ux * ux;
   uy = 1 / box_l[1];
@@ -55,7 +52,7 @@ static void elc_mmm2d_common_init_invBoxl() {
 
 
 inline double
-elc_mmm2d_common_add_force_dir(int position, const double *partblk, const double *gblcblk) {
+elc_add_force_dir(int position, const double *partblk, const double *gblcblk) {
   return partblk[position + POQESM] * gblcblk[POQECP] -
          partblk[position + POQECM] * gblcblk[POQESP] +
          partblk[position + POQESP] * gblcblk[POQECM] -
@@ -63,23 +60,23 @@ elc_mmm2d_common_add_force_dir(int position, const double *partblk, const double
 }
 
 
-double helper_first(int position, const double *partblk, const double *gblcblk, bool sum);
+double sum_small(int position, const double *partblk, const double *gblcblk, bool sum);
 
-double helper_second(int position, const double *partblk, const double *gblcblk, bool sum);
+double sum_large(int position, const double *partblk, const double *gblcblk, bool sum);
 
 inline double
-elc_mmm2d_common_add_force_z(int position, const double *partblk, const double *gblcblk) {
-  return helper_first(position, partblk, gblcblk, false);
+elc_add_force_z(int position, const double *partblk, const double *gblcblk) {
+  return sum_small(position, partblk, gblcblk, false);
 }
 
 inline double
-elc_mmm2d_common_dir_energy(int position, const double *partblk, const double *gblcblk) {
-  return helper_first(position, partblk, gblcblk, true);
+elc_dir_energy(int position, const double *partblk, const double *gblcblk) {
+  return sum_small(position, partblk, gblcblk, true);
 }
 
 inline void
-elc_mmm2d_common_PQ_setup(int position, int xCacheOffset, int yCacheOffset, double factor, double *partblk,
-                          Utils::Span<const SCCache> scxcache, Utils::Span<const SCCache> scycache) {
+elc_PQ_setup(int position, int xCacheOffset, int yCacheOffset, double factor, double *partblk,
+             Utils::Span<const SCCache> scxcache, Utils::Span<const SCCache> scycache) {
   partblk[position + PQESSM] =
           scxcache[xCacheOffset].s * scycache[yCacheOffset].s / factor;
   partblk[position + PQESCM] =
@@ -100,7 +97,7 @@ elc_mmm2d_common_PQ_setup(int position, int xCacheOffset, int yCacheOffset, doub
 }
 
 inline double
-elc_mmm2d_common_add_PQ_force_x(int position, const double *partblk, const double *gblcblk) {
+elc_add_PQ_force_x(int position, const double *partblk, const double *gblcblk) {
   return partblk[position + PQESCM] * gblcblk[PQECCP] +
          partblk[position + PQESSM] * gblcblk[PQECSP] -
          partblk[position + PQECCM] * gblcblk[PQESCP] -
@@ -112,7 +109,7 @@ elc_mmm2d_common_add_PQ_force_x(int position, const double *partblk, const doubl
 }
 
 inline double
-elc_mmm2d_common_add_PQ_force_y(int position, const double *partblk, const double *gblcblk) {
+elc_add_PQ_force_y(int position, const double *partblk, const double *gblcblk) {
   return partblk[position + PQECSM] * gblcblk[PQECCP] +
          partblk[position + PQESSM] * gblcblk[PQESCP] -
          partblk[position + PQECCM] * gblcblk[PQECSP] -
@@ -124,18 +121,18 @@ elc_mmm2d_common_add_PQ_force_y(int position, const double *partblk, const doubl
 }
 
 inline double
-elc_mmm2d_common_add_PQ_force_z(int position, const double *partblk, const double *gblcblk) {
-  return helper_second(position, partblk, gblcblk, false);
+elc_add_PQ_force_z(int position, const double *partblk, const double *gblcblk) {
+  return sum_large(position, partblk, gblcblk, false);
 }
 
 inline double
-elc_mmm2d_common_PQ_energy(int position, const double *partblk, const double *gblcblk) {
-  return helper_second(position, partblk, gblcblk, true);
+elc_PQ_energy(int position, const double *partblk, const double *gblcblk) {
+  return sum_large(position, partblk, gblcblk, true);
 }
 
 inline void
-elc_mmm2d_common_setup(int position, double factor, int cacheOffset, double *partblk,
-                       Utils::Span<const SCCache> sccache) {
+elc_setup(int position, double factor, int cacheOffset, double *partblk,
+          Utils::Span<const SCCache> sccache) {
   partblk[position + POQESM] = sccache[cacheOffset].s / factor;
   partblk[position + POQESP] = sccache[cacheOffset].s * factor;
   partblk[position + POQECM] = sccache[cacheOffset].c / factor;
@@ -145,39 +142,39 @@ elc_mmm2d_common_setup(int position, double factor, int cacheOffset, double *par
 /* vector operations */
 
 /** pdc = 0 */
-inline void elc_mmm2d_common_clear_vec(double *pdc, int size) {
+inline void elc_clear_vec(double *pdc, int size) {
   for (int i = 0; i < size; i++)
     pdc[i] = 0;
 }
 
 /** pdc_d = pdc_s */
-inline void elc_mmm2d_common_copy_vec(double *pdc_d, double *pdc_s, int size) {
+inline void elc_copy_vec(double *pdc_d, double *pdc_s, int size) {
   for (int i = 0; i < size; i++)
     pdc_d[i] = pdc_s[i];
 }
 
 /** pdc_d = pdc_s1 + pdc_s2 */
-inline void elc_mmm2d_common_add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size) {
+inline void elc_add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size) {
   for (int i = 0; i < size; i++)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
 
 /** pdc_d = scale*pdc_s1 + pdc_s2 */
-inline void elc_mmm2d_common_addscale_vec(double *pdc_d, double scale, double *pdc_s1,
-                                          double *pdc_s2, int size) {
+inline void elc_addscale_vec(double *pdc_d, double scale, double *pdc_s1,
+                             double *pdc_s2, int size) {
   for (int i = 0; i < size; i++)
     pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
 }
 
 /** pdc_d = scale*pdc */
-inline void elc_mmm2d_common_scale_vec(double scale, double *pdc, int size) {
+inline void elc_scale_vec(double scale, double *pdc, int size) {
   for (int i = 0; i < size; i++)
     pdc[i] *= scale;
 }
 
 /* block indexing */
 
-inline double *elc_mmm2d_common_block(double *p, int index, int size) {
+inline double *elc_block(double *p, int index, int size) {
   return &p[index * size];
 }
 

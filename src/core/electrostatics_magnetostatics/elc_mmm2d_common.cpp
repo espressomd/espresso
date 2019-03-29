@@ -2,11 +2,10 @@
 #include "config.hpp"
 
 #include "elc_mmm2d_common.hpp"
-#include "utils.hpp"
 
 #ifdef ELECTROSTATICS
 
-double helper_first(int position, const double *partblk, const double *gblcblk, bool sum) {
+double sum_small(int position, const double *partblk, const double *gblcblk, bool sum) {
   double sum1 = partblk[position + POQECM] * gblcblk[POQECP] +
                 partblk[position + POQESM] * gblcblk[POQESP];
 
@@ -16,7 +15,7 @@ double helper_first(int position, const double *partblk, const double *gblcblk, 
   return sum ? sum1 + sum2 : sum1 - sum2;
 }
 
-double helper_second(int position, const double *partblk, const double *gblcblk, bool sum) {
+double sum_large(int position, const double *partblk, const double *gblcblk, bool sum) {
   double sum1 = partblk[position + PQESSM] * gblcblk[PQESSP] +
                 partblk[position + PQESCM] * gblcblk[PQESCP] +
                 partblk[position + PQECSM] * gblcblk[PQECSP] +
