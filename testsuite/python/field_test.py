@@ -194,7 +194,7 @@ class FieldTest(ut.TestCase):
                 np.copy(p.f), q_part * self.force(x), rtol=1e-5)
 
     def test_force_field(self):
-        h = np.array([.2, .2, .2])
+        h = np.array([.8, .8, .8])
         box = np.array([10., 10., 10.])
         scaling = 2.6
 
@@ -217,7 +217,7 @@ class FieldTest(ut.TestCase):
             np.testing.assert_allclose(scaling * f_val, np.copy(p.f))
 
     def test_flow_field(self):
-        h = np.array([.2, .2, .2])
+        h = np.array([.8, .8, .8])
         box = np.array([10., 10., 10.])
         gamma = 2.6
 
