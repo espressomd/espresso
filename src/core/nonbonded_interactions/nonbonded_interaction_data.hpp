@@ -31,7 +31,7 @@
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */
-#define INACTIVE_CUTOFF -1.0
+constexpr double INACTIVE_CUTOFF = -1.;
 
 /** \name Type codes for the type of Coulomb interaction
     Enumeration of implemented methods for the electrostatic
@@ -150,7 +150,7 @@ struct IA_parameters {
   double SmSt_sig = 0.0;
   double SmSt_cut = INACTIVE_CUTOFF;
   double SmSt_d = 0.0;
-  int SmSt_n = 0.0;
+  int SmSt_n = 0;
   double SmSt_k0 = 0.0;
 /*@}*/
 #endif
@@ -224,7 +224,7 @@ struct IA_parameters {
 #ifdef AFFINITY
   /** \name affinity potential */
   /*@{*/
-  int affinity_type = INACTIVE_CUTOFF;
+  int affinity_type = -1;
   double affinity_kappa = INACTIVE_CUTOFF;
   double affinity_r0 = INACTIVE_CUTOFF;
   double affinity_Kon = INACTIVE_CUTOFF;

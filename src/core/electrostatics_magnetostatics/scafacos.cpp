@@ -36,9 +36,9 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "tuning.hpp"
@@ -263,17 +263,14 @@ void set_r_cut_and_tune_local(double r_cut) {
   scafacos->tune(particles.charges, particles.positions);
 }
 
+REGISTER_CALLBACK(set_r_cut_and_tune_local)
+
 /** Determine runtime for a specific cutoff */
 double time_r_cut(double r_cut) {
-  assert(this_node == 0);
-  double t;
-
   /** Set cutoff to time */
-  mpi_call(mpi_scafacos_set_r_cut_and_tune_slave, 0, 0);
-  MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
-
+  mpi_call(set_r_cut_and_tune_local, r_cut);
   set_r_cut_and_tune_local(r_cut);
-  // mpi_bcast_coulomb_params();
+
   return time_force_calc(10);
 }
 
@@ -364,6 +361,8 @@ static void set_params_safe(const std::string &method,
   }
 }
 
+REGISTER_CALLBACK(set_params_safe)
+
 /** Bend result from scafacos back to original format */
 std::string get_method_and_parameters() {
   if (!scafacos) {
@@ -388,26 +387,8 @@ double get_r_cut() {
 
 void set_parameters(const std::string &method, const std::string &params,
                     bool dipolar_ia) {
-  mpi_call(mpi_scafacos_set_parameters_slave, method.size(), params.size());
-
-  /* This requires C++11, otherwise this is undefined because std::string was
-   * not required to have continuous memory before. */
-  /* const_cast is ok, this code runs only on rank 0 where the mpi call does not
-   * modify the buffer */
-  MPI_Bcast(const_cast<char *>(&(*method.begin())), method.size(), MPI_CHAR, 0,
-            comm_cart);
-  MPI_Bcast(const_cast<char *>(&(*params.begin())), params.size(), MPI_CHAR, 0,
-            comm_cart);
-
-#ifdef SCAFACOS_DIPOLES
-  bool d = dipolar_ia;
-  MPI_Bcast(&d, sizeof(bool), MPI_CHAR, 0, comm_cart);
-#endif
-
+  mpi_call(set_params_safe, method, params, dipolar_ia);
   set_params_safe(method, params, dipolar_ia);
-#ifdef SCAFACOS_DIPOLES
-  set_dipolar(d);
-#endif
 }
 
 bool dipolar() {
@@ -424,14 +405,15 @@ void set_dipolar(bool d) {
 }
 
 void free_handle() {
-
   if (this_node == 0)
-    mpi_call(mpi_scafacos_free_slave, 0, 0);
+    mpi_call(free_handle);
   if (scafacos) {
     delete scafacos;
     scafacos = 0;
   }
 }
+
+REGISTER_CALLBACK(free_handle)
 
 void update_system_params() {
   // If scafacos is not active, do nothing
@@ -449,40 +431,3 @@ void update_system_params() {
 
 } // namespace Scafacos
 #endif /* SCAFACOS */
-
-void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
-#if defined(SCAFACOS)
-  using namespace Scafacos;
-  std::string method;
-  std::string params;
-
-  method.resize(n_method);
-  params.resize(n_params);
-
-  /** This requires C++11, otherwise this is undefined because std::string was
-   * not required to have continuous memory before. */
-  MPI_Bcast(&(*method.begin()), n_method, MPI_CHAR, 0, comm_cart);
-  MPI_Bcast(&(*params.begin()), n_params, MPI_CHAR, 0, comm_cart);
-  bool dip = false;
-#ifdef SCAFACOS_DIPOLES
-  MPI_Bcast(&dip, sizeof(bool), MPI_CHAR, 0, comm_cart);
-#endif
-  set_params_safe(method, params, dip);
-#endif /* SCAFACOS */
-}
-
-void mpi_scafacos_free_slave(int, int) {
-#if defined(SCAFACOS)
-  using namespace Scafacos;
-  free_handle();
-#endif
-}
-
-void mpi_scafacos_set_r_cut_and_tune_slave(int, int) {
-#if defined(SCAFACOS)
-  using namespace Scafacos;
-  double r_cut;
-  MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
-  set_r_cut_and_tune_local(r_cut);
-#endif
-}
