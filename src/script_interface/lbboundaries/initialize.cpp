@@ -27,11 +27,14 @@ namespace ScriptInterface {
 namespace LBBoundaries {
 
 void initialize() {
+#if (defined(LB) || defined(LB_GPU))
   ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundaries>(
       "LBBoundaries::LBBoundaries");
 
   ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundary>(
       "LBBoundaries::LBBoundary");
+#endif
 }
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */
+

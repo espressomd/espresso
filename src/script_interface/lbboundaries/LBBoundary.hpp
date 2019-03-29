@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
 #include "shapes/Shape.hpp"
 
+#if (defined(LB) || defined(LB_GPU)) 
 namespace ScriptInterface {
 namespace LBBoundaries {
 class LBBoundary : public AutoParameters<LBBoundary> {
@@ -92,4 +93,5 @@ private:
 }; // class LBBoundary
 } // namespace LBBoundaries
 } /* namespace ScriptInterface */
+#endif
 #endif
