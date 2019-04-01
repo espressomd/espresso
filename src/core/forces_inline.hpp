@@ -501,16 +501,16 @@ inline void add_bonded_force(Particle *p1) {
     else if (n_partners == 2) {
       switch (type) {
       case BONDED_IA_ANGLE_HARMONIC:
-        bond_broken =
-            calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
+        bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force,
+                                                force2, force3);
         break;
       case BONDED_IA_ANGLE_COSINE:
-        bond_broken =
-            calc_angle_cosine_force(p1, p2, p3, iaparams, force, force2);
+        bond_broken = calc_angle_cosine_force(p1, p2, p3, iaparams, force,
+                                              force2, force3);
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
-        bond_broken =
-            calc_angle_cossquare_force(p1, p2, p3, iaparams, force, force2);
+        bond_broken = calc_angle_cossquare_force(p1, p2, p3, iaparams, force,
+                                                 force2, force3);
         break;
 #ifdef OIF_GLOBAL_FORCES
       case BONDED_IA_OIF_GLOBAL_FORCES:
@@ -521,7 +521,7 @@ inline void add_bonded_force(Particle *p1) {
       case BONDED_IA_TABULATED:
         if (iaparams->num == 2)
           bond_broken =
-              calc_tab_angle_force(p1, p2, p3, iaparams, force, force2);
+              calc_tab_angle_force(p1, p2, p3, iaparams, force, force2, force3);
         break;
 #endif
 #ifdef IMMERSED_BOUNDARY
@@ -612,7 +612,7 @@ inline void add_bonded_force(Particle *p1) {
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
-          p3->f.f[j] -= (force[j] + force2[j]);
+          p3->f.f[j] += force3[j];
         }
       }
       break;

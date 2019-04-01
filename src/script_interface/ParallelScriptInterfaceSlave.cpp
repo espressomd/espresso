@@ -19,12 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ParallelScriptInterfaceSlave.hpp"
 
 #include <boost/mpi/collectives.hpp>
-#include <boost/serialization/array.hpp>
-#include <boost/serialization/map.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/string.hpp>
-#include <boost/serialization/variant.hpp>
-#include <boost/serialization/vector.hpp>
+#include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
 
@@ -78,13 +73,6 @@ void ParallelScriptInterfaceSlave::mpi_slave(CallbackAction action) {
     */
     translate_id(d.second);
     m_p->set_parameter(d.first, d.second);
-    break;
-  }
-  case CallbackAction::SET_PARAMETERS: {
-    auto parameters = bcast_variant_map();
-
-    m_p->set_parameters(parameters);
-
     break;
   }
   case CallbackAction::CALL_METHOD: {

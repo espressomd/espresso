@@ -16,20 +16,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef CORE_UTILS_SERIALIZATION_FLAT_MAP_HPP
-#define CORE_UTILS_SERIALIZATION_FLAT_MAP_HPP
+#ifndef CORE_UTILS_SERIALIZATION_UNORDERED_MAP_HPP
+#define CORE_UTILS_SERIALIZATION_UNORDERED_MAP_HPP
 
-#include <boost/container/flat_map.hpp>
 #include <boost/serialization/split_free.hpp>
+
+#include <unordered_map>
 
 namespace boost {
 namespace serialization {
 
 template <typename Archive, typename K, typename V>
-void load(Archive &ar, boost::container::flat_map<K, V> &v,
-          const unsigned int) {
-  using value_type = typename boost::container::flat_map<K, V>::value_type;
-  typename boost::container::flat_map<K, V>::size_type count;
+void load(Archive &ar, std::unordered_map<K, V> &v, const unsigned int) {
+  using value_type = typename std::unordered_map<K, V>::value_type;
+  typename std::unordered_map<K, V>::size_type count;
 
   ar &count;
   v.reserve(count);
@@ -43,9 +43,8 @@ void load(Archive &ar, boost::container::flat_map<K, V> &v,
 }
 
 template <typename Archive, typename K, typename V>
-void save(Archive &ar, boost::container::flat_map<K, V> const &v,
-          const unsigned int) {
-  typename boost::container::flat_map<K, V>::size_type count(v.size());
+void save(Archive &ar, std::unordered_map<K, V> const &v, const unsigned int) {
+  typename std::unordered_map<K, V>::size_type count(v.size());
 
   ar << count;
 
@@ -55,7 +54,7 @@ void save(Archive &ar, boost::container::flat_map<K, V> const &v,
 }
 
 template <typename Archive, typename K, typename V>
-void serialize(Archive &ar, boost::container::flat_map<K, V> &v,
+void serialize(Archive &ar, std::unordered_map<K, V> &v,
                const unsigned int version) {
   split_free(ar, v, version);
 }

@@ -1,8 +1,7 @@
 /*
-  Copyright (C) 2016-2018 The ESPResSo project
+  Copyright (C) 2019 The ESPResSo project
 
   This file is part of ESPResSo.
-
 
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,28 +16,32 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef UTILS_DEMANGLE_HPP
+#define UTILS_DEMANGLE_HPP
 
-#ifndef OBSERVABLES_PIDOBSERVABLE_HPP
-#define OBSERVABLES_PIDOBSERVABLE_HPP
+#include <boost/version.hpp>
 
-#include "Observable.hpp"
-#include <vector>
-
-namespace Observables {
-
-/** %Particle-based observable.
- *
- *  Base class for observables extracting raw data from particle subsets and
- *  returning either the data or a statistic derived from it.
- */
-class PidObservable : virtual public Observable {
-  /** Identifiers of particles measured by this observable */
-  std::vector<int> m_ids;
-
-public:
-  std::vector<int> &ids() { return m_ids; }
-  std::vector<int> const &ids() const { return m_ids; }
-};
-
-} // Namespace Observables
+#if BOOST_VERSION >= 105600
+#include <boost/core/demangle.hpp>
 #endif
+
+namespace Utils {
+/**
+ * @brief Get a human-readable name for a type.
+ *
+ * Uses boost to demangle the name, for details
+ * see documentation for boost::core::demangle.
+ *
+ * @tparam T type
+ * @return name
+ */
+template <class T> std::string demangle() {
+#if BOOST_VERSION >= 105600
+  return boost::core::demangle(typeid(T).name());
+#else
+  return typeid(T).name();
+#endif
+}
+} // namespace Utils
+
+#endif // UTILS_DEMANGLE_HPP

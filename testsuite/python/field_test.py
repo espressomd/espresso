@@ -44,10 +44,11 @@ class FieldTest(ut.TestCase):
         self.system.part.clear()
 
     def test_gravity(self):
-        g_const = [1, 2, 3]
+        g_const = np.array([1, 2, 3])
         gravity = constraints.Gravity(g=g_const)
 
-        self.assertSequenceEqual(gravity.g, g_const)
+        np.testing.assert_almost_equal(g_const, np.copy(gravity.g))
+
         self.system.constraints.add(gravity)
 
         if espressomd.has_features("MASS"):
@@ -121,7 +122,7 @@ class FieldTest(ut.TestCase):
         gamma = 2.3
 
         flow_field = constraints.HomogeneousFlowField(u=u, gamma=gamma)
-        np.testing.assert_almost_equal(u, flow_field.u)
+        np.testing.assert_almost_equal(u, np.copy(flow_field.u))
 
         self.system.constraints.add(flow_field)
 
@@ -193,7 +194,7 @@ class FieldTest(ut.TestCase):
                 np.copy(p.f), q_part * self.force(x), rtol=1e-5)
 
     def test_force_field(self):
-        h = np.array([.2, .2, .2])
+        h = np.array([.8, .8, .8])
         box = np.array([10., 10., 10.])
         scaling = 2.6
 
@@ -216,7 +217,7 @@ class FieldTest(ut.TestCase):
             np.testing.assert_allclose(scaling * f_val, np.copy(p.f))
 
     def test_flow_field(self):
-        h = np.array([.2, .2, .2])
+        h = np.array([.8, .8, .8])
         box = np.array([10., 10., 10.])
         gamma = 2.6
 
