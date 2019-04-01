@@ -2,7 +2,6 @@
 #define ESPRESSO_ELC_MMM2D_COMMON_HPP
 
 #include "grid.hpp"
-#include "utils.hpp"
 
 #ifdef ELECTROSTATICS
 

@@ -29,7 +29,6 @@
 #include "errorhandling.hpp"
 #include "mmm-common.hpp"
 #include "elc_mmm2d_common.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "utils.hpp"
