@@ -105,14 +105,13 @@ inline void init_local_particle_force(Particle *part) {
   }
 
 #ifdef EXTERNAL_FORCES
-  if (part->p.ext_flag) {
     // If individual coordinates are fixed, set force to 0.
     for (int j = 0; j < 3; j++) 
-        if (COORD_FIXED(j))
+        if (part->p.ext_flag & COORD_FIXED(j))
             part->f.f[j] = 0;
     // Add external force
-    part->f.f += part->p.ext_force;
-  }
+    if (part->p.ext_flag & PARTICLE_EXT_FORCE)
+        part->f.f += part->p.ext_force;
 #endif
 
 #ifdef ROTATION
