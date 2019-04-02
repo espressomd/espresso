@@ -94,7 +94,22 @@ void check_forces() {
 void force_calc() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
+  // GPU methods can be launched before the forces on the particles are
+  // cleared in init_forces()
   espressoSystemInterface.update();
+#ifdef LB_GPU
+  if (lattice_switch == ActiveLB::GPU) {
+    lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
+  }
+#endif
+
+  for (ActorList::iterator actor = forceActors.begin();
+       actor != forceActors.end(); ++actor) {
+    (*actor)->computeForces(espressoSystemInterface);
+#ifdef ROTATION
+    (*actor)->computeTorques(espressoSystemInterface);
+#endif
+  }
 
 #ifdef COLLISION_DETECTION
   prepare_local_collision_queue();
@@ -105,14 +120,21 @@ void force_calc() {
 #endif
   init_forces();
 
-  for (auto actor = forceActors.begin(); actor != forceActors.end(); ++actor) {
-    (*actor)->computeForces(espressoSystemInterface);
-#ifdef ROTATION
-    (*actor)->computeTorques(espressoSystemInterface);
-#endif
-  }
-
   calc_long_range_forces();
+#ifdef LB
+  if (lattice_switch == ActiveLB::CPU) {
+#ifdef ENGINE
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_SWIMMING);
+#endif
+    lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
+  }
+#endif
+
+  // Do not launch GPU kernels after this
+#ifdef CUDA
+  copy_forces_from_GPU(local_cells.particles());
+#endif
 
   // Only calculate pair forces if the maximum cutoff is >0
   if (max_cut > 0) {
@@ -151,17 +173,13 @@ void force_calc() {
   immersed_boundaries.volume_conservation();
 #endif
 
-#if defined(LB_GPU) || defined(LB)
-  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
+#ifdef CUDA
+  distribute_gpu_forces(local_cells.particles());
 #endif
 
 #ifdef METADYNAMICS
   /* Metadynamics main function */
   meta_perform();
-#endif
-
-#ifdef CUDA
-  copy_forces_from_GPU(local_cells.particles());
 #endif
 
 // VIRTUAL_SITES distribute forces

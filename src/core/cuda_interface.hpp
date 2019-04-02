@@ -26,6 +26,12 @@
 #include "ParticleRange.hpp"
 #include "SystemInterface.hpp"
 
+#include "thrust/host_vector.h"
+#include "thrust/system/cuda/experimental/pinned_allocator.h"
+template <class T>
+using PinnedVectorHost = thrust::host_vector<
+    T, thrust::system::cuda::experimental::pinned_allocator<T>>;
+
 #ifdef ENGINE
 // velocities which need to be copied from the GPU to the CPU to calculate a
 // torque
@@ -122,6 +128,7 @@ typedef struct {
 } CUDA_global_part_vars;
 
 void copy_forces_from_GPU(ParticleRange particles);
+void distribute_gpu_forces(ParticleRange particles);
 void copy_energy_from_GPU();
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();
@@ -158,8 +165,8 @@ void copy_part_data_to_gpu(ParticleRange particles);
  * This is a collective call.
  */
 void cuda_mpi_send_forces(ParticleRange particles,
-                          std::vector<float> &host_forces,
-                          std::vector<float> &host_torques);
+                          PinnedVectorHost<float> &host_forces,
+                          PinnedVectorHost<float> &host_torques);
 void cuda_bcast_global_part_params();
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
@@ -169,6 +176,8 @@ void copy_v_cs_from_GPU(ParticleRange particles);
 void cuda_mpi_send_v_cs(ParticleRange particles,
                         std::vector<CUDA_v_cs> host_v_cs);
 #endif
+
+void free_cuda_buffers();
 
 #endif /* ifdef CUDA */
 
