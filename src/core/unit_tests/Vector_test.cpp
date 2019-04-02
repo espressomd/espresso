@@ -28,7 +28,10 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <boost/range/numeric.hpp>
+
 #include <algorithm>
+#include <complex>
 #include <numeric>
 #include <vector>
 
@@ -128,12 +131,19 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
   Vector3i v1{1, 2, 3};
   Vector3i v2{4, 5, 6};
 
-  BOOST_CHECK((v1 * v2) ==
-              std::inner_product(v1.begin(), v1.end(), v2.begin(), 0));
-
   BOOST_CHECK(((v1 + v2) == Vector3i{5, 7, 9}));
   BOOST_CHECK(((v1 - v2) == Vector3i{-3, -3, -3}));
   BOOST_CHECK(((-v1) == Vector3i{-1, -2, -3}));
+
+  /* Mixed types */
+  {
+    BOOST_CHECK((Vector3d{1., 2., 3.} * 4) ==
+                (Vector3d{1. * 4, 2. * 4, 3. * 4}));
+    BOOST_CHECK((Vector3d{1., 2., 3.} + Vector3i{11, 12, 13}) ==
+                (Vector3d{1. + 11, 2. + 12, 3. + 13}));
+    BOOST_CHECK((Vector3d{1., 2., 3.} - Vector3i{11, 12, 13}) ==
+                (Vector3d{1. - 11, 2. - 12, 3. - 13}));
+  }
 
   {
     auto v3 = v1;
@@ -207,4 +217,20 @@ BOOST_AUTO_TEST_CASE(vector_broadcast) {
 
   BOOST_CHECK_EQUAL(v[0], 1.4);
   BOOST_CHECK_EQUAL(v[1], 1.4);
+}
+
+BOOST_AUTO_TEST_CASE(scalar_product) {
+  static_assert(std::is_same<decltype(Vector3d{} * Vector3d{}), double>::value,
+                "");
+  static_assert(std::is_same<decltype(Vector3d{} * Vector3i{}), double>::value,
+                "");
+  static_assert(std::is_same<decltype(Vector<std::complex<float>, 2>{} * 3.f),
+                             Vector<std::complex<float>, 2>>::value,
+                "");
+
+  auto const v1 = Vector3d{1., 2., 3.};
+  auto const v2 = Vector3d{4.1, 5.2, 6.3};
+  auto const v3 = Vector3i{11, 12, 13};
+  BOOST_CHECK_EQUAL(v1 * v2, boost::inner_product(v1, v2, 0.));
+  BOOST_CHECK_EQUAL(v1 * v3, boost::inner_product(v1, v3, 0.));
 }
