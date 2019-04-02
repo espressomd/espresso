@@ -177,8 +177,7 @@ void lb_init_boundaries() {
             }
 #endif
           }
-          if (dist <= 0 && boundary_number >= 0 &&
-              (!lbboundaries.empty())) {
+          if (dist <= 0 && boundary_number >= 0 && (!lbboundaries.empty())) {
             size_of_index = (number_of_boundnodes + 1) * sizeof(int);
             host_boundary_node_list =
                 Utils::realloc(host_boundary_node_list, size_of_index);
@@ -198,7 +197,7 @@ void lb_init_boundaries() {
             ek_parameters.number_of_boundary_nodes = number_of_boundnodes;
 
             if (wallcharge_species != -1) {
-             if (node_charged)
+              if (node_charged)
                 host_wallcharge_species_density[ek_parameters.dim_y *
                                                     ek_parameters.dim_x * z +
                                                 ek_parameters.dim_x * y + x] =
