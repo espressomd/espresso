@@ -324,9 +324,9 @@ double lb_lbfluid_get_density() {
 #else
     return {};
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
 }
 
 void lb_lbfluid_set_viscosity(double p_visc) {
@@ -359,9 +359,9 @@ double lb_lbfluid_get_viscosity() {
 #else
     return {};
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
 }
 
 void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc) {
@@ -396,9 +396,9 @@ double lb_lbfluid_get_bulk_viscosity() {
 #else
     return {};
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
 }
 
 void lb_lbfluid_set_gamma_odd(double p_gamma_odd) {
@@ -433,9 +433,9 @@ double lb_lbfluid_get_gamma_odd() {
 #else
     return {};
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
 }
 
 void lb_lbfluid_set_gamma_even(double p_gamma_even) {
@@ -466,9 +466,9 @@ double lb_lbfluid_get_gamma_even() {
 #ifdef LB
     return lbpar.gamma_even;
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
   return {};
 }
 
@@ -498,9 +498,9 @@ double lb_lbfluid_get_agrid() {
 #ifdef LB
     return lbpar.agrid;
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
   return {};
 }
 
@@ -572,9 +572,9 @@ double lb_lbfluid_get_tau() {
 #else
     return {};
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
 }
 
 void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
@@ -1198,9 +1198,9 @@ double lb_lbnode_get_density(const Vector3i &ind) {
 #else
     return {};
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
 }
 
 const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
@@ -1234,9 +1234,9 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
     return j / rho;
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
   return {};
 }
 
@@ -1325,9 +1325,9 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
 #else
     return {};
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
 }
 
 const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
@@ -1359,9 +1359,9 @@ const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
 #else
     return {};
 #endif // LB
-  } else {
+  } 
     throw std::runtime_error("LB not activated.");
-  }
+  
 }
 
 void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {

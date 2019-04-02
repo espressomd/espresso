@@ -55,7 +55,7 @@ std::pair<double, double> SimplePore::dist_half_pore(double r, double z) const {
   if (((z >= c_z) && (r >= c_r)) || ((z <= c_z) && (r > (c_z + c_r - z)))) {
     /* Wall section and outer cylinder */
     return {0, m_half_length - z};
-  } else {
+  } 
     /* Smoothing area */
     /* Vector to center of torus segment */
     auto const dr = c_r - r;
@@ -66,7 +66,7 @@ std::pair<double, double> SimplePore::dist_half_pore(double r, double z) const {
     auto const fac = (d - m_smoothing_rad) / d;
 
     return {fac * dr, fac * dz};
-  }
+  
 }
 
 void SimplePore::calculate_dist(const Vector3d &pos, double *dist,
