@@ -65,15 +65,15 @@ void ImmersedBoundaries::init_volume_conservation() {
 
     // Loop through all bonded interactions and check if we need to set the
     // reference volume
-    for (int i = 0; i < bonded_ia_params.size(); i++) {
-      if (bonded_ia_params[i].type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
+    for (auto &bonded_ia_param : bonded_ia_params) {
+      if (bonded_ia_param.type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
         // This check is important because InitVolumeConservation may be called
         // accidentally during the integration. Then we must not reset the
         // reference
         BoundariesFound = true;
-        if (bonded_ia_params[i].p.ibmVolConsParameters.volRef == 0) {
-          const int softID = bonded_ia_params[i].p.ibmVolConsParameters.softID;
-          bonded_ia_params[i].p.ibmVolConsParameters.volRef =
+        if (bonded_ia_param.p.ibmVolConsParameters.volRef == 0) {
+          const int softID = bonded_ia_param.p.ibmVolConsParameters.softID;
+          bonded_ia_param.p.ibmVolConsParameters.volRef =
               VolumesCurrent[softID];
         }
       }

@@ -27,8 +27,6 @@ void vec_rotate(const T1 &axis, double alpha, const T2 &vector, T3 &result) {
   result[2] = (a[0] * a[2] * (1 - cosa) - a[1] * sina) * vector[0] +
               (a[1] * a[2] * (1 - cosa) + a[0] * sina) * vector[1] +
               (cosa + Utils::sqr(a[2]) * (1 - cosa)) * vector[2];
-
-  return;
 }
 
 /** rotates vector around axis by alpha */

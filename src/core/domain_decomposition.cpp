@@ -483,7 +483,7 @@ void dd_init_cell_interactions(const Vector3i &grid) {
   int m, n, o, p, q, r, ind1, ind2;
 
   for (int i = 0; i < 3; i++) {
-    if (dd.fully_connected[i] == true and grid[i] != 1) {
+    if (dd.fully_connected[i] and grid[i] != 1) {
       runtimeErrorMsg()
           << "Node grid not compatible with fully_connected property";
     }
@@ -506,7 +506,7 @@ void dd_init_cell_interactions(const Vector3i &grid) {
         int upper_index[3] = {m + 1, n + 1, o + 1};
 
         for (int i = 0; i < 3; i++) {
-          if (dd.fully_connected[i] == true) {
+          if (dd.fully_connected[i]) {
             lower_index[i] = 0;
             upper_index[i] = dd.ghost_cell_grid[i] - 1;
           }
@@ -788,7 +788,8 @@ void exchange_neighbors(ParticleList *pl, const Vector3i &grid) {
       continue;
       /* In this (common) case left and right neighbors are
          the same, and we need only one communication */
-    } else if (grid[dir] == 2) {
+    }
+    if (grid[dir] == 2) {
       ParticleList send_buf, recv_buf;
       move_left_or_right(*pl, send_buf, send_buf, dir);
 

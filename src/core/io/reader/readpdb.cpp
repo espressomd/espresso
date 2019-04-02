@@ -40,22 +40,21 @@ static void add_lj_interaction(
     std::vector<PdbLJInteraction> interactions, const double rel_cutoff) {
   for (std::vector<PdbLJInteraction>::const_iterator it = interactions.begin();
        it != interactions.end(); ++it) {
-    for (auto jt = types.begin(); jt != types.end(); ++jt) {
-      const double epsilon_ij = sqrt(it->epsilon * jt->epsilon);
-      const double sigma_ij = 0.5 * (it->sigma + 10. * jt->sigma);
+    for (auto type : types) {
+      const double epsilon_ij = sqrt(it->epsilon * type.epsilon);
+      const double sigma_ij = 0.5 * (it->sigma + 10. * type.sigma);
       const double cutoff_ij = rel_cutoff * sigma_ij;
       const double shift_ij =
           -(pow(sigma_ij / cutoff_ij, 12) - pow(sigma_ij / cutoff_ij, 6));
       if ((epsilon_ij <= 0) || (sigma_ij <= 0)) {
         continue;
-      } else {
-        READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e "
-                             "cut %e shift %e\n",
-                             it->other_type, jt->espresso_id, epsilon_ij,
-                             sigma_ij, cutoff_ij, shift_ij););
-        lennard_jones_set_params(it->other_type, jt->espresso_id, epsilon_ij,
-                                 sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
       }
+      READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e "
+                           "cut %e shift %e\n",
+                           it->other_type, jt->espresso_id, epsilon_ij,
+                           sigma_ij, cutoff_ij, shift_ij););
+      lennard_jones_set_params(it->other_type, type.espresso_id, epsilon_ij,
+                               sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
     }
   }
 }
@@ -65,26 +64,25 @@ static void add_lj_internal(
     std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare> &types,
     const double rel_cutoff, bool only_diagonal) {
   for (auto it = types.begin(); it != types.end(); ++it) {
-    for (auto jt = types.begin(); jt != types.end(); ++jt) {
-      if (it->espresso_id > jt->espresso_id)
+    for (auto type : types) {
+      if (it->espresso_id > type.espresso_id)
         continue;
-      if (only_diagonal && (it->espresso_id != jt->espresso_id))
+      if (only_diagonal && (it->espresso_id != type.espresso_id))
         continue;
-      const double epsilon_ij = sqrtf(it->epsilon * jt->epsilon);
-      const double sigma_ij = 0.5 * (10. * it->sigma + 10. * jt->sigma);
+      const double epsilon_ij = sqrtf(it->epsilon * type.epsilon);
+      const double sigma_ij = 0.5 * (10. * it->sigma + 10. * type.sigma);
       const double cutoff_ij = rel_cutoff * sigma_ij;
       const double shift_ij =
           -pow(sigma_ij / cutoff_ij, 12) - pow(sigma_ij / cutoff_ij, 6);
       if ((epsilon_ij <= 0) || (sigma_ij <= 0)) {
         continue;
-      } else {
-        READPDB_TRACE(printf("adding internal lj interaction types %d %d eps "
-                             "%e sig %e cut %e shift %e epsilon_i %e\n",
-                             it->espresso_id, jt->espresso_id, epsilon_ij,
-                             sigma_ij, cutoff_ij, shift_ij, it->epsilon););
-        lennard_jones_set_params(it->espresso_id, jt->espresso_id, epsilon_ij,
-                                 sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
       }
+      READPDB_TRACE(printf("adding internal lj interaction types %d %d eps "
+                           "%e sig %e cut %e shift %e epsilon_i %e\n",
+                           it->espresso_id, jt->espresso_id, epsilon_ij,
+                           sigma_ij, cutoff_ij, shift_ij, it->epsilon););
+      lennard_jones_set_params(it->espresso_id, type.espresso_id, epsilon_ij,
+                               sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
     }
   }
 }
