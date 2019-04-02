@@ -95,7 +95,6 @@ BOOST_AUTO_TEST_CASE(FieldBase_test) {
     int f = 2;
 
     auto base = Base<int, int>(c, f);
-    c = f = 0;
 
     BOOST_CHECK(1 == base.coupling());
     BOOST_CHECK(2 == base.field());
