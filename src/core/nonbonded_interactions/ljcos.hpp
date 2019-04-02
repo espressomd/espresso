@@ -91,9 +91,8 @@ inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
               1.);
     }
     /* this should not happen! */
-    
-      fprintf(stderr, "this is the distance, which is negative %.3e\n", r_off);
-    
+
+    fprintf(stderr, "this is the distance, which is negative %.3e\n", r_off);
   }
   return 0.0;
 }

@@ -51,5 +51,5 @@ void Sphere::calculate_dist(const Vector3d &pos, double *dist,
     for (i = 0; i < 3; i++)
       vec[i] *= -fac;
   }
-  }
+}
 } // namespace Shapes

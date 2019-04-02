@@ -65,8 +65,8 @@ void set_state(const string &s) {
  */
 int get_state_size_of_generator() {
   return std::mt19937::state_size; // this only works for the Mersenne twister
-                               // generator, other generators do not provide
-                               // this member variable
+                                   // generator, other generators do not provide
+                                   // this member variable
 }
 
 /** Communication */
