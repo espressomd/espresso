@@ -121,7 +121,7 @@ static void p3m_calc_send_mesh();
  *  Function called by @ref p3m_init() once and by @ref p3m_scaleby_box_l()
  *  whenever the @ref box_l changes.
  */
-static void p3m_init_a_ai_cao_cut(void);
+static void p3m_init_a_ai_cao_cut();
 
 /** Calculate the spatial position of the left down mesh point of the local
  *  mesh, to be stored in @ref p3m_local_mesh::ld_pos "ld_pos".
@@ -129,7 +129,7 @@ static void p3m_init_a_ai_cao_cut(void);
  *  Function called by @ref p3m_calc_local_ca_mesh() once and by
  *  @ref p3m_scaleby_box_l() whenever the @ref box_l changes.
  */
-static void p3m_calc_lm_ld_pos(void);
+static void p3m_calc_lm_ld_pos();
 
 /** Calculates the dipole term */
 static double p3m_calc_dipole_term(int force_flag, int energy_flag);
@@ -157,27 +157,27 @@ static bool p3m_sanity_checks_system(const Vector3i &grid);
 /** Checks for correctness for charges in P3M of the cao_cut,
  *  necessary when the box length changes
  */
-static bool p3m_sanity_checks_boxl(void);
+static bool p3m_sanity_checks_boxl();
 
 /** Calculates properties of the local FFT mesh for the charge assignment
  *  process.
  */
-static void p3m_calc_local_ca_mesh(void);
+static void p3m_calc_local_ca_mesh();
 
 /** Interpolate the P-th order charge assignment function from
  *  Hockney/Eastwood 5-189 (or 8-61). The following charge fractions
  *  are also tabulated in Deserno/Holm.
  */
-static void p3m_interpolate_charge_assignment_function(void);
+static void p3m_interpolate_charge_assignment_function();
 
 /** Shift the mesh points by mesh/2 */
-static void p3m_calc_meshift(void);
+static void p3m_calc_meshift();
 
 /** Calculate the Fourier transformed differential operator.
  *  Remark: This is done on the level of n-vectors and not k-vectors,
  *          i.e. the prefactor i*2*PI/L is missing!
  */
-static void p3m_calc_differential_operator(void);
+static void p3m_calc_differential_operator();
 
 /** Calculate the optimal influence function of Hockney and Eastwood.
  *  (optimised for force calculations)
@@ -189,12 +189,12 @@ static void p3m_calc_differential_operator(void);
  *  different convention for the prefactors, which is described in
  *  Deserno/Holm.
  */
-static void p3m_calc_influence_function_force(void);
+static void p3m_calc_influence_function_force();
 
 /** Calculate the influence function optimized for the energy and the
  *  self energy correction.
  */
-static void p3m_calc_influence_function_energy(void);
+static void p3m_calc_influence_function_energy();
 
 /** Calculate the aliasing sums for the optimal influence function.
  *
@@ -256,7 +256,7 @@ template <int cao> static void p3m_do_charge_assign();
 template <int cao>
 void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
 
-void p3m_pre_init(void) {
+void p3m_pre_init() {
   p3m_common_parameter_pre_init(&p3m.params);
   /* p3m.local_mesh is uninitialized */
   /* p3m.sm is uninitialized */
@@ -267,8 +267,8 @@ void p3m_pre_init(void) {
   p3m.sum_q2 = 0.0;
   p3m.square_sum_q = 0.0;
 
-  for (int i = 0; i < 7; i++)
-    p3m.int_caf[i] = nullptr;
+  for (auto &i : p3m.int_caf)
+    i = nullptr;
   p3m.pos_shift = 0.0;
   p3m.meshift_x = nullptr;
   p3m.meshift_y = nullptr;
@@ -947,8 +947,8 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   double lcl_dm[3], gbl_dm[3];
   double en;
 
-  for (int j = 0; j < 3; j++)
-    lcl_dm[j] = 0;
+  for (double &j : lcl_dm)
+    j = 0;
 
   for (auto const &p : local_cells.particles()) {
     for (int j = 0; j < 3; j++)
@@ -965,8 +965,8 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   else
     en = 0;
   if (force_flag) {
-    for (int j = 0; j < 3; j++)
-      gbl_dm[j] *= pref;
+    for (double &j : gbl_dm)
+      j *= pref;
     for (auto &p : local_cells.particles()) {
       for (int j = 0; j < 3; j++)
         p.f.f[j] -= gbl_dm[j] * p.p.q;
@@ -1082,7 +1082,7 @@ void p3m_realloc_ca_fields(int newsize) {
 }
 #endif
 
-void p3m_calc_meshift(void) {
+void p3m_calc_meshift() {
   int i;
 
   p3m.meshift_x =

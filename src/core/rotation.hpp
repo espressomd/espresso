@@ -89,7 +89,7 @@ inline std::pair<Vector4d, double> convert_dip_to_quat(const Vector3d &dip) {
 #endif
 
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
-void local_rotate_particle(Particle &p, const Vector3d &a, const double phi);
+void local_rotate_particle(Particle &p, const Vector3d &a, double phi);
 
 inline void normalize_quaternion(double *q) {
   double tmp = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);

@@ -110,9 +110,9 @@ inline double buck_pair_energy(const Particle *p1, const Particle *p2,
       return buck_energy_r(ia_params->BUCK_A, ia_params->BUCK_B,
                            ia_params->BUCK_C, ia_params->BUCK_D,
                            ia_params->BUCK_shift, dist);
-    else
-      /* resulting force/energy in the linear region*/
-      return (ia_params->BUCK_F1 + ia_params->BUCK_F2 * dist);
+
+    /* resulting force/energy in the linear region*/
+    return (ia_params->BUCK_F1 + ia_params->BUCK_F2 * dist);
   }
   return 0.0;
 }

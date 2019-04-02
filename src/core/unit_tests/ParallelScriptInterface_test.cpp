@@ -49,9 +49,8 @@ struct TestClass : public ScriptInterfaceBase {
   Variant get_parameter(std::string const &name) const override {
     if (name == "obj_param") {
       return obj_param->id();
-    } else {
-      return last_parameter.second;
     }
+    return last_parameter.second;
   }
 
   Variant call_method(const std::string &method,

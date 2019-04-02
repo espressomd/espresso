@@ -149,53 +149,55 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 #endif /*ifdef DIPOLES */
 }
 
-/* calc_three_body_bonded_forces is called by add_three_body_bonded_stress. This
-   routine is only entered for angular potentials. */
-inline void calc_three_body_bonded_forces(Particle *p1, Particle *p2,
-                                          Particle *p3,
-                                          Bonded_ia_parameters *iaparams,
-                                          Vector3d &force1, Vector3d &force2,
-                                          Vector3d &force3) {
-
-#ifdef TABULATED
-// char* errtxt;
-#endif
-
+/** Calculate bond angle forces.
+ *  This routine is only entered for angular potentials.
+ *  @param[in]  p_mid     Second/middle particle.
+ *  @param[in]  p_left    First/left particle.
+ *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  iaparams  Bonded parameters for the angle interaction.
+ *  @param[out] f_mid     Force on @p p_mid.
+ *  @param[out] f_left    Force on @p p_left.
+ *  @param[out] f_right   Force on @p p_right.
+ */
+inline void calc_three_body_bonded_forces(Particle const *p_mid,
+                                          Particle const *p_left,
+                                          Particle const *p_right,
+                                          Bonded_ia_parameters const *iaparams,
+                                          Vector3d &f_mid, Vector3d &f_left,
+                                          Vector3d &f_right) {
   switch (iaparams->type) {
   case BONDED_IA_ANGLE_HARMONIC:
-    // p1 is *p_mid, p2 is *p_left, p3 is *p_right
-    calc_angle_harmonic_3body_forces(p1, p2, p3, iaparams, force1, force2,
-                                     force3);
+    std::tie(f_mid, f_left, f_right) =
+        calc_angle_harmonic_3body_forces(p_mid, p_left, p_right, iaparams);
     break;
   case BONDED_IA_ANGLE_COSINE:
-    // p1 is *p_mid, p2 is *p_left, p3 is *p_right
-    calc_angle_cosine_3body_forces(p1, p2, p3, iaparams, force1, force2,
-                                   force3);
+    std::tie(f_mid, f_left, f_right) =
+        calc_angle_cosine_3body_forces(p_mid, p_left, p_right, iaparams);
     break;
   case BONDED_IA_ANGLE_COSSQUARE:
-    // p1 is *p_mid, p2 is *p_left, p3 is *p_right
-    calc_angle_cossquare_3body_forces(p1, p2, p3, iaparams, force1, force2,
-                                      force3);
+    std::tie(f_mid, f_left, f_right) =
+        calc_angle_cossquare_3body_forces(p_mid, p_left, p_right, iaparams);
     break;
 #ifdef TABULATED
   case BONDED_IA_TABULATED:
     switch (iaparams->p.tab.type) {
     case TAB_BOND_ANGLE:
-      // p1 is *p_mid, p2 is *p_left, p3 is *p_right
-      calc_angle_3body_tabulated_forces(p1, p2, p3, iaparams, force1, force2,
-                                        force3);
+      std::tie(f_mid, f_left, f_right) =
+          calc_angle_3body_tabulated_forces(p_mid, p_left, p_right, iaparams);
       break;
     default:
       runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
-                        << p1->p.identity << " unknown\n";
+                        << p_mid->p.identity << " unknown\n";
+      f_mid = f_left = f_right = Vector3d{};
       return;
     }
     break;
 #endif
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \
-            WARNING: Bond type %d , atom %d unhandled, Atom 2: %d\n",
-            iaparams->type, p1->p.identity, p2->p.identity);
+            WARNING: Bond type %d, atom %d unhandled, Atom 2: %d\n",
+            iaparams->type, p_mid->p.identity, p_left->p.identity);
+    f_mid = f_left = f_right = Vector3d{};
     break;
   }
 }
@@ -276,7 +278,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     auto const dx21 = -get_mi_vector(p1->r.p, p2->r.p);
     auto const dx31 = get_mi_vector(p3->r.p, p1->r.p);
 
-    Vector3d force1{}, force2{}, force3{};
+    Vector3d force1, force2, force3;
     calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2, force3);
     /* three-body bonded interactions contribute to the stress but not the
      * scalar pressure */
