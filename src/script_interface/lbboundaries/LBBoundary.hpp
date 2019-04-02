@@ -75,7 +75,7 @@ public:
             agrid * agrid * agrid * agrid / rho / tau / tau;
         return m_lbboundary->get_force() * unit_conversion;
       }
-        return none;
+      return none;
     }
     return none;
   }
