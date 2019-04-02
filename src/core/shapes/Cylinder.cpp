@@ -41,16 +41,15 @@ std::pair<double, double> Cylinder::dist_half_pore(double r, double z) const {
     /* Closest feature: cylinder */
     return {-(r - m_rad), 0};
 
-  } else {
-    /* Inside */
-    if (!m_open && z >= m_half_length - m_rad &&
-        r < (z - (m_half_length - m_rad))) {
-      /* Closest feature: cap */
-      return {0, m_half_length - z};
-    }
-    /* Closest feature: cylinder */
-    return {m_rad - r, 0};
   }
+  /* Inside */
+  if (!m_open && z >= m_half_length - m_rad &&
+      r < (z - (m_half_length - m_rad))) {
+    /* Closest feature: cap */
+    return {0, m_half_length - z};
+  }
+  /* Closest feature: cylinder */
+  return {m_rad - r, 0};
 }
 
 void Cylinder::calculate_dist(const Vector3d &pos, double *dist,

@@ -168,9 +168,8 @@ ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
     }
 
     return out_vec;
-  } else {
-    return value;
   }
+  return value;
 }
 
 Variant
