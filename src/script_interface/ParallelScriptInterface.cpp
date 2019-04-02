@@ -155,10 +155,10 @@ ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
 
     if (oid != ObjectId()) {
       return obj_map.at(oid)->id();
-    } else {
-      return oid;
     }
-  } else if (is_type<std::vector<Variant>>(value)) {
+    return oid;
+  }
+  if (is_type<std::vector<Variant>>(value)) {
     auto const &in_vec = boost::get<std::vector<Variant>>(value);
     std::vector<Variant> out_vec;
     out_vec.reserve(in_vec.size());
@@ -168,9 +168,8 @@ ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
     }
 
     return out_vec;
-  } else {
-    return value;
   }
+  return value;
 }
 
 Variant
@@ -189,16 +188,16 @@ ParallelScriptInterface::map_parallel_to_local_id(Variant const &value) {
 
     /* and return the id of the underlying object */
     return inner_id;
-  } else if (so_ptr == nullptr) {
+  }
+  if (so_ptr == nullptr) {
     /* Release the object */
     obj_map.erase(outer_id);
 
     /* Return None */
     return ObjectId();
-  } else {
-    throw std::runtime_error(
-        "Parameters passed to Parallel entities must also be parallel.");
   }
+  throw std::runtime_error(
+      "Parameters passed to Parallel entities must also be parallel.");
 }
 
 void ParallelScriptInterface::collect_garbage() {
