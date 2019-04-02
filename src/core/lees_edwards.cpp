@@ -87,7 +87,7 @@ double lees_edwards_get_velocity(double time) {
     return 0.0;
   }  
 }
-
+#ifdef LEES_EDWARDS
 void local_lees_edwards_image_reset() {
   for (auto &p : local_cells.particles()) {
     p.l.i[0] = 0;
@@ -96,3 +96,4 @@ void local_lees_edwards_image_reset() {
     p.p.lees_edwards_offset = 0;
     }
 }
+#endif

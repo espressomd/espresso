@@ -4,7 +4,7 @@
 #include "config.hpp"
 #include "cells.hpp"
 
-/** \file lees_erdwards.hpp
+/** \file lees_edwards.hpp
 *
 */
 
