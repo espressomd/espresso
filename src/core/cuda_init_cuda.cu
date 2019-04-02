@@ -38,7 +38,9 @@ static const int computeCapabilityMinMinor = 0;
 
 const char *cuda_error;
 
-void cuda_init() { cudaStreamCreate(&stream[0]); }
+void cuda_init() {
+  cuda_safe_mem(cudaStreamCreateWithFlags(&stream[0], cudaStreamDefault));
+}
 
 /// get the number of CUDA devices.
 int cuda_get_n_gpus() {
@@ -100,7 +102,7 @@ int cuda_get_device_props(const int dev, EspressoGpuDevice &d) {
 int cuda_set_device(int dev) {
   cudaSetDevice(dev);
   cudaStreamDestroy(stream[0]);
-  cudaError_t error = cudaStreamCreate(&stream[0]);
+  cudaError_t error = cudaStreamCreateWithFlags(&stream[0], cudaStreamDefault);
 
   if (error != cudaSuccess) {
     cuda_error = cudaGetErrorString(error);

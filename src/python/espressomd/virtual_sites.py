@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .__init__ import has_features
+from .features import has_features
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 if has_features("VIRTUAL_SITES"):
