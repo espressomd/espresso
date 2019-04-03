@@ -27,16 +27,18 @@ BOOST_AUTO_TEST_CASE(contains_test) {
   using Utils::contains;
 
   auto const search_value = 31;
-  int const true_rng[] = {9,10, search_value, 11};
-  int const false_rng[] = {1,2,3};
+  int const true_rng[] = {9, 10, search_value, 11};
+  int const false_rng[] = {1, 2, 3};
 
   /* iterator version */
   {
-    BOOST_CHECK(contains(std::begin(true_rng), std::end(true_rng), search_value));
-    BOOST_CHECK(not contains(std::begin(false_rng), std::end(false_rng), search_value));
+    BOOST_CHECK(
+        contains(std::begin(true_rng), std::end(true_rng), search_value));
+    BOOST_CHECK(
+        not contains(std::begin(false_rng), std::end(false_rng), search_value));
   }
 
-    /* range version */
+  /* range version */
   {
     BOOST_CHECK(contains(true_rng, search_value));
     BOOST_CHECK(not contains(false_rng, search_value));
