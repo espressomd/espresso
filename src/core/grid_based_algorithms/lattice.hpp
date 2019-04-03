@@ -107,26 +107,6 @@ public:
   int map_lattice_to_node(Vector3i &ind, const Vector3i &local_node_grid) const;
 
   /********************** static Functions **********************/
-
-  /** Map a spatial position to the surrounding lattice sites.
-   *
-   * This function takes a global spatial position and determines the
-   * surrounding elementary cell of the lattice for this position.
-   * The distance fraction in each direction is also calculated.
-   * <br><em>Remarks:</em>
-   * <ul>
-   * <li>The spatial position is given in global coordinates.</li>
-   * <li>The lattice sites of the elementary cell are returned as local
-   * indices</li>
-   * </ul>
-   * \param pos        spatial position (Input)
-   * \param ind        global index of the lower left lattice site (Output)
-   * \param delta      distance fraction of pos from the surrounding
-   *                   elementary cell, 6 directions (Output)
-   * \param tmp_agrid  lattice mesh distance
-   */
-  static void map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
-                                             Vector6d &delta, double tmp_agrid);
 };
 
 #endif /* CORE_LB_LATTICE_HPP */
