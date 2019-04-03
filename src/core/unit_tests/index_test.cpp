@@ -50,13 +50,14 @@ BOOST_AUTO_TEST_CASE(get_linear_index) {
 
   /* 3 ints version */
   {
-    auto const linear_index = get_linear_index(index[0], index[1], index[2], grid_size);
+    auto const linear_index =
+        get_linear_index(index[0], index[1], index[2], grid_size);
     BOOST_CHECK_EQUAL(linear_index, (5 + 4 * 7 + 2 * (7 * 5)));
   }
 
   /* Vector version */
   {
     BOOST_CHECK_EQUAL(get_linear_index(index[0], index[1], index[2], grid_size),
-        get_linear_index(index, grid_size));
+                      get_linear_index(index, grid_size));
   }
 }

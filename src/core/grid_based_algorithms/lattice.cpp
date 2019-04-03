@@ -32,8 +32,9 @@
 #include "utils/index.hpp"
 using Utils::get_linear_index;
 
-int Lattice::init(double *agrid, double const *offset, int halo_size, const Vector3d &local_box,
-                  const Vector3d &myright, const Vector3d &box_length) {
+int Lattice::init(double *agrid, double const *offset, int halo_size,
+                  const Vector3d &local_box, const Vector3d &myright,
+                  const Vector3d &box_length) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
