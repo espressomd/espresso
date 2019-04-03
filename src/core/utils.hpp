@@ -81,21 +81,6 @@ inline int get_linear_index(const Vector3i &ind, const Vector3i &adim) {
   return get_linear_index(ind[0], ind[1], ind[2], adim);
 }
 
-/** get the position (@p a,@p b,@p c) from the linear index in a 3D grid
- *  of dimensions @p adim.
- *
- * @param[in]  i          Linear index
- * @param[out] a , b , c  Position in 3D space
- * @param[in]  adim       Dimensions of the underlying grid
- */
-inline void get_grid_pos(int i, int *a, int *b, int *c, const Vector3i &adim) {
-  *a = i % adim[0];
-  i /= adim[0];
-  *b = i % adim[1];
-  i /= adim[1];
-  *c = i;
-}
-
 /*@}*/
 
 /*************************************************************/
