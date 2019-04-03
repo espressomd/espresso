@@ -61,7 +61,6 @@ public:
    *  \param agrid       lattice spacing
    *  \param offset      lattice offset
    *  \param halo_size   halo size
-   *  \param dim         lattice dimensions
    *  \param local_box   dimensions of the local box
    *  \param myright     right (top, back) corner of the local box
    *  \param box_length  lengths of the local box
@@ -92,7 +91,6 @@ public:
                                Vector<std::size_t, 8> &node_index,
                                Vector6d &delta, const Vector3d &myLeft,
                                const Vector3d &local_box) const;
-  /********************** Inline Functions **********************/
 
   /** Map a global lattice site to the node grid.
    *
@@ -105,8 +103,6 @@ public:
    *  \return index of the node for the lattice site
    */
   int map_lattice_to_node(Vector3i &ind, const Vector3i &local_node_grid) const;
-
-  /********************** static Functions **********************/
 };
 
 #endif /* CORE_LB_LATTICE_HPP */
