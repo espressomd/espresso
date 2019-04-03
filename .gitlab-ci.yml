@@ -384,3 +384,11 @@ status_failure:
   tags:
     - linux
   dependencies: []
+
+notify:
+  stage: result
+  script: bash maintainer/gh_create_issue.sh
+  when: on_failure
+  tags:
+    - linux
+  dependencies: []
