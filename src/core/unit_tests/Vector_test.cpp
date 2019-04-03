@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(default_constructor_test) {
 }
 
 BOOST_AUTO_TEST_CASE(range_constructor_test) {
-  std::vector<int> test_values{ TEST_NUMBERS };
+  std::vector<int> test_values{TEST_NUMBERS};
 
   const Vector<int, n_test_numbers> v(test_values);
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));

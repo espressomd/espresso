@@ -31,8 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * */
 namespace Utils {
-template<class InputIt, class T>
-bool contains(InputIt first, InputIt last, T const& value) {
+template <class InputIt, class T>
+bool contains(InputIt first, InputIt last, T const &value) {
   return std::any_of(first, last, [value](T const &e) { return e == value; });
 }
 
@@ -44,8 +44,8 @@ bool contains(InputIt first, InputIt last, T const& value) {
  * @return True iff range contains the value.
  *
  * */
-template<class Range, class T>
-bool contains(const Range &rng, T const& value) {
+template <class Range, class T>
+bool contains(const Range &rng, T const &value) {
   using std::begin;
   using std::end;
 
