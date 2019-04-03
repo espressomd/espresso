@@ -1226,7 +1226,7 @@ const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
   Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
 
   // Add equilibrium stress to the diagonal (in LB units)
-  double p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
+  double const p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
 
   p_pi[0] += p0;
   p_pi[2] += p0;
@@ -1264,8 +1264,7 @@ const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
-    mpi_recv_fluid(node, index, &rho, j, pi.data());
-    p_pi = pi;
+    mpi_recv_fluid(node, index, &rho, j, p_pi.data());
 #endif // LB
   }
   return p_pi;
@@ -1292,7 +1291,7 @@ const Vector6d lb_lbfluid_get_stress() {
     p *= (1. / lbpar_gpu.number_of_nodes);
 
     // Add equilibrium stress to the diagonal (in LB units)
-    double p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
+    double const p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
 
     p[0] += p0;
     p[2] += p0;
@@ -1311,8 +1310,9 @@ const Vector6d lb_lbfluid_get_stress() {
       }
     }
 
-    int number_of_nodes = lblattice.global_grid[0] * lblattice.global_grid[1] *
-                          lblattice.global_grid[2];
+    int const number_of_nodes = lblattice.global_grid[0] *
+                                lblattice.global_grid[1] *
+                                lblattice.global_grid[2];
 
     p *= 1. / number_of_nodes;
   } else
@@ -1431,18 +1431,19 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
 #ifdef LB
     Lattice::index_t index;
     int node;
-    double rho;
-    Vector3d j;
-    Vector6d pi;
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
-    /* transform to lattice units */
+    double rho;
+    Vector3d j;
+    Vector6d pi;
 
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
+
+    /* transform to lattice units */
     j = rho * u;
     mpi_send_fluid(node, index, rho, j, pi);
 #endif // LB
