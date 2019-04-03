@@ -64,8 +64,8 @@ private:
   }
 
 public:
-  template <typename Container>
-  explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
+  template <class Range>
+  explicit Vector(Range const &rng) : Vector(std::begin(rng), std::end(rng)) {}
   explicit constexpr Vector(T const (&v)[N]) : Base() {
     copy_init(std::begin(v), std::end(v));
   }
