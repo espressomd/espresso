@@ -389,6 +389,8 @@ notify:
   stage: result
   script: bash maintainer/gh_create_issue.sh
   when: on_failure
+  only:
+    - python
   tags:
     - linux
   dependencies: []
