@@ -48,6 +48,8 @@
 #include "utils/math/matrix_vector_product.hpp"
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
+#include "utils/index.hpp"
+using Utils::get_linear_index;
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>

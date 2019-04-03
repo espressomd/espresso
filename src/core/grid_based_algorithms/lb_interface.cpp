@@ -7,6 +7,9 @@
 #include "lb.hpp"
 #include "lbgpu.hpp"
 
+#include "utils/index.hpp"
+using Utils::get_linear_index;
+
 #include <fstream>
 
 ActiveLB lattice_switch = ActiveLB::NONE;

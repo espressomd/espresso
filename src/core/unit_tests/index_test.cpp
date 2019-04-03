@@ -41,3 +41,22 @@ BOOST_AUTO_TEST_CASE(unravel_index_test) {
                        ravelled_index);
   BOOST_CHECK((result == std::array<std::size_t, 4>{{12, 23, 5, 51}}));
 }
+
+BOOST_AUTO_TEST_CASE(get_linear_index) {
+  using Utils::get_linear_index;
+
+  auto const grid_size = Vector3i{7, 5, 3};
+  auto const index = Vector3i{5, 4, 2};
+
+  /* 3 ints version */
+  {
+    auto const linear_index = get_linear_index(index[0], index[1], index[2], grid_size);
+    BOOST_CHECK_EQUAL(linear_index, (5 + 4 * 7 + 2 * (7 * 5)));
+  }
+
+  /* Vector version */
+  {
+    BOOST_CHECK_EQUAL(get_linear_index(index[0], index[1], index[2], grid_size),
+        get_linear_index(index, grid_size));
+  }
+}

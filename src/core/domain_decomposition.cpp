@@ -32,6 +32,8 @@
 
 #include "serialization/ParticleList.hpp"
 #include "utils/mpi/sendrecv.hpp"
+#include "utils/index.hpp"
+using Utils::get_linear_index;
 
 #include "event.hpp"
 
