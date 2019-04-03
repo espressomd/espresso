@@ -34,6 +34,10 @@
 namespace ScriptInterface {
 namespace Observables {
 
+/** Base class for script interfaces to particle-based observables
+ *  @tparam CorePidObs Any core class derived from  @ref
+ *                     ::Observables::PidObservable "Observables::PidObservable"
+ */
 template <typename CorePidObs> class PidObservable : public Observable {
 public:
   static_assert(

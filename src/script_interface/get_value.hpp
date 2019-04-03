@@ -163,20 +163,18 @@ struct get_value_helper<
     auto const object_id = boost::get<ObjectId>(v);
     if (object_id == ObjectId()) {
       return nullptr;
-    } else {
-      auto so_ptr = ScriptInterfaceBase::get_instance(object_id).lock();
-      if (!so_ptr) {
-        throw std::runtime_error("Unknown Object.");
-      }
-
-      auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
-
-      if (t_ptr) {
-        return t_ptr;
-      } else {
-        throw std::runtime_error("Wrong type: " + so_ptr->name());
-      }
     }
+    auto so_ptr = ScriptInterfaceBase::get_instance(object_id).lock();
+    if (!so_ptr) {
+      throw std::runtime_error("Unknown Object.");
+    }
+
+    auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
+
+    if (t_ptr) {
+      return t_ptr;
+    }
+    throw std::runtime_error("Wrong type: " + so_ptr->name());
   }
 };
 } // namespace detail
@@ -224,9 +222,8 @@ T get_value_or(VariantMap const &vals, std::string const &name,
                T const &default_) {
   if (vals.count(name)) {
     return get_value<T>(vals.at(name));
-  } else {
-    return default_;
   }
+  return default_;
 }
 
 /**

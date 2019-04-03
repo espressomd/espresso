@@ -38,7 +38,6 @@
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
-#include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "utils/Array.hpp"
@@ -2565,7 +2564,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, nodes_a, nodes_b);
 
-  if (LBBoundaries::lbboundaries.size() == 0 && !pdb_boundary_lattice) {
+  if (LBBoundaries::lbboundaries.size() == 0) {
     cudaDeviceSynchronize();
     return;
   }
