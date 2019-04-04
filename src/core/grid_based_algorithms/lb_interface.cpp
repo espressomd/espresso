@@ -115,11 +115,13 @@ void mpi_bcast_lb_params(LBParam field) {
 }
 
 void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
+#ifdef LB_BOUNDARIES
   if (node == this_node) {
     int data;
     lb_local_fields_get_boundary_flag(index, &data);
     MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, comm_cart);
   }
+#endif
 }
 
 REGISTER_CALLBACK(mpi_recv_fluid_boundary_flag_slave)
@@ -131,6 +133,7 @@ REGISTER_CALLBACK(mpi_recv_fluid_boundary_flag_slave)
  *  @param boundary  local boundary flag
  */
 void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
+#ifdef LB_BOUNDARIES
   if (node == this_node) {
     lb_local_fields_get_boundary_flag(index, boundary);
   } else {
@@ -139,6 +142,7 @@ void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
     MPI_Recv(&data, 1, MPI_INT, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     *boundary = data;
   }
+#endif
 }
 
 void mpi_recv_fluid_populations_slave(int node, int index) {
