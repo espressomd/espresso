@@ -7,6 +7,7 @@ stages:
   - additional_checks
   - deploy
   - result
+  - cleanup
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -385,7 +386,18 @@ status_failure:
     - linux
   dependencies: []
 
-notify:
+notify_success:
+  stage: cleanup
+  script: bash maintainer/gh_close_issue.sh
+  when: on_success
+  only:
+    - python
+  tags:
+    - linux
+  dependencies:
+    - notify_failure
+
+notify_failure:
   stage: result
   script: bash maintainer/gh_create_issue.sh
   when: on_failure
@@ -393,4 +405,8 @@ notify:
     - python
   tags:
     - linux
+  artifacts:
+    paths:
+    - ${CI_PROJECT_DIR}/ISSUE_NUMBER.txt
+    expire_in: 1 week
   dependencies: []
