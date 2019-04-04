@@ -267,7 +267,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
 
     ///// Global memory writing related threads sync
     if (lps++ > THREADS2) {
-    // AMD-specific threads sync
+      // AMD-specific threads sync
 #if defined(__HIPCC__) and not defined(__CUDACC__)
       atomicInc((unsigned int *)bhpara->max_lps, 0);
 #else
@@ -275,7 +275,8 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
 #endif
     }
     //.. now wait for global memory updates. This impacts on race conditions and
-    // frameworks level optimizations. Further kernels contain a similar code fragment.
+    // frameworks level optimizations. Further kernels contain a similar code
+    // fragment.
     __threadfence();
 
     // The child with the index higher than nbodiesd (number of particles) means
@@ -502,7 +503,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
   missing = 0;
   iteration = 0;
   repeat_flag = 0;
-  __syncthreads();    // throttle
+  __syncthreads(); // throttle
   // threads sync related
   lps = 0;
   // Iterate over all cells (not particles) assigned to the thread:
@@ -596,8 +597,8 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
                 u[l] += bhpara->u[3 * ch + l];
               }
             } // m >= 0.0f
-          } // ch >= 0
-        } // missing_max
+          }   // ch >= 0
+        }     // missing_max
         // repeat until we are done or child is not ready
       }
 
@@ -616,7 +617,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
           bhpara->r[3 * k + l] = p[l] * m;
           bhpara->u[3 * k + l] = u[l];
         }
-        __threadfence();	// make sure data are visible before setting
+        __threadfence(); // make sure data are visible before setting
         //                    // mass
         bhpara->mass[k] = cm;
         __threadfence();
@@ -635,11 +636,11 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
       k += inc;
     }
     if ((k > bhpara->nnodes) && (repeat_flag)) {
-        repeat_flag = 0;
-        missing = 0;
-        k = bottom + threadIdx.x + blockIdx.x * blockDim.x;
+      repeat_flag = 0;
+      missing = 0;
+      k = bottom + threadIdx.x + blockIdx.x * blockDim.x;
     }
-  }                  // while
+  } // while
 }
 
 /******************************************************************************/
@@ -1208,8 +1209,10 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
   bh_data->nnodes = bh_data->nbodies * 8;
 
   int n_total_threads = 1024 * bh_data->blocks;
-  if (bh_data->nnodes < n_total_threads) bh_data->nnodes = n_total_threads;
-  else bh_data->nnodes = (bh_data->nnodes / n_total_threads) * n_total_threads;
+  if (bh_data->nnodes < n_total_threads)
+    bh_data->nnodes = n_total_threads;
+  else
+    bh_data->nnodes = (bh_data->nnodes / n_total_threads) * n_total_threads;
 
   if (bh_data->err != 0)
     cuda_safe_mem(cudaFree(bh_data->err));
