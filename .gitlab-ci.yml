@@ -387,13 +387,11 @@ status_failure:
   dependencies: []
 
 notify_success:
-  stage: cleanup
+  stage: result
   script: bash maintainer/gh_close_issue.sh
   when: on_success
   tags:
     - linux
-  dependencies:
-    - notify_failure
 
 notify_failure:
   stage: result
@@ -401,8 +399,3 @@ notify_failure:
   when: on_failure
   tags:
     - linux
-  artifacts:
-    paths:
-    - ${CI_PROJECT_DIR}/ISSUE_NUMBER.txt
-    expire_in: 1 week
-  dependencies: []

@@ -7,4 +7,4 @@ curl -s "https://api.github.com/repos/espressomd/espresso/issues" \
      -H "Content-Type: application/json" \
      -H "Authorization: token $GITHUB_TOKEN" \
      -X POST \
-     -d "{\"title\": \"CI build failed for merged PR\", \"body\": \"$URL\" }" | jq .number > ${CI_PROJECT_DIR}/ISSUE_NUMBER.txt
+     -d "{\"title\": \"CI build failed for merged PR\", \"body\": \"$URL\" }"
