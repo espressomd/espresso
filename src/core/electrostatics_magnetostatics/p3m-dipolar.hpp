@@ -131,7 +131,7 @@ int dp3m_set_eps(double eps);
 /** Initialize all structures, parameters and arrays needed for the
  *  P3M algorithm for dipole-dipole interactions.
  */
-void dp3m_init(void);
+void dp3m_init();
 
 /** @copydoc p3m_scaleby_box_l */
 void dp3m_scaleby_box_l();
@@ -143,10 +143,10 @@ bool dp3m_sanity_checks(const Vector3i &grid);
  *  If Dstore_ca_frac is true, then the charge fractions are buffered in
  *  Dcur_ca_fmp and Dcur_ca_frac.
  */
-void dp3m_dipole_assign(void);
+void dp3m_dipole_assign();
 
 /** Reset @ref dp3m core parameters */
-void dp3m_deactivate(void);
+void dp3m_deactivate();
 
 /** Tune dipolar P3M parameters to desired accuracy.
  *
@@ -302,8 +302,9 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
 }
 
 /** Calculate real space contribution of dipolar pair energy. */
-inline double dp3m_pair_energy(Particle *p1, Particle *p2, double *d,
-                               double dist2, double dist) {
+inline double dp3m_pair_energy(Particle *p1, Particle *p2,
+                               double const *const d, double dist2,
+                               double dist) {
   const Vector3d dip1 = p1->calc_dip();
   const Vector3d dip2 = p2->calc_dip();
   double /* fac1,*/ adist, erfc_part_ri, coeff, exp_adist2, dist2i;

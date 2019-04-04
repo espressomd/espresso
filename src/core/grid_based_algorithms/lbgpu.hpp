@@ -229,7 +229,7 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);
-void lb_remove_fluid_momentum_GPU(void);
+void lb_remove_fluid_momentum_GPU();
 void lb_calc_fluid_temperature_GPU(double *host_temp);
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag);
 void lb_get_boundary_flags_GPU(unsigned int *host_bound_array);
@@ -242,14 +242,14 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double *forces);
-void lb_save_checkpoint_GPU(float *const host_checkpoint_vd);
-void lb_load_checkpoint_GPU(float const *const host_checkpoint_vd);
+void lb_save_checkpoint_GPU(float *host_checkpoint_vd);
+void lb_load_checkpoint_GPU(float const *host_checkpoint_vd);
 
 void lb_lbfluid_remove_total_momentum();
 void lb_lbfluid_fluid_add_momentum(float momentum[3]);
 void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
                                      int include_lbfluid);
-void lb_lbfluid_particles_add_momentum(float velocity[3]);
+void lb_lbfluid_particles_add_momentum(float const velocity[3]);
 
 void lb_lbfluid_set_population(const Vector3i &, float[LBQ]);
 void lb_lbfluid_get_population(const Vector3i &, float[LBQ]);

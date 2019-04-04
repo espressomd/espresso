@@ -32,7 +32,8 @@
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "errorhandling.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
+#include "grid.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/cos2.hpp"
@@ -422,10 +423,7 @@ void reset_ia_params() {
 }
 
 bool is_new_particle_type(int type) {
-  if ((type + 1) <= max_seen_particle_type)
-    return false;
-  else
-    return true;
+  return (type + 1) > max_seen_particle_type;
 }
 
 void make_particle_type_exist(int type) {

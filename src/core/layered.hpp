@@ -48,6 +48,6 @@ void layered_exchange_and_sort_particles(int global_flag,
                                          ParticleList *displaced_parts);
 
 /// calculate the minimum image vector
-void layered_get_mi_vector(double res[3], double a[3], double b[3]);
+void layered_get_mi_vector(double res[3], double const a[3], double const b[3]);
 
 #endif

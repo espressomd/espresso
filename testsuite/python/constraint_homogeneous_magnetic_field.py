@@ -17,6 +17,7 @@
 from __future__ import division, print_function
 
 import unittest as ut
+import numpy as np
 
 import espressomd
 import numpy
@@ -38,21 +39,23 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
         self.S.constraints.clear()
 
     def test_setter_and_getter(self):
-        H_field1 = [0.0, 1.0, 0.0]
-        H_field2 = [3.533, 5.842, 0.127]
+        H_field1 = np.array([0.0, 1.0, 0.0])
+        H_field2 = np.array([3.533, 5.842, 0.127])
 
         H_constraint = espressomd.constraints.HomogeneousMagneticField(
             H=H_field1)
-        self.assertEqual(H_constraint.H, H_field1)
+
+        np.testing.assert_almost_equal(np.copy(H_constraint.H), H_field1)
 
         H_constraint.H = H_field2
-        for i in range(3):
-            self.assertAlmostEqual(H_constraint.H[i], H_field2[i])
+        np.testing.assert_almost_equal(np.copy(H_constraint.H), H_field2)
 
     def test_default_value(self):
-        H_field_default = [1.0, 0.0, 0.0]  # defined in C++ core
+        H_field_default = np.array([1.0, 0.0, 0.0])
         H_constraint = espressomd.constraints.HomogeneousMagneticField()
-        self.assertEqual(H_constraint.H, H_field_default)
+        np.testing.assert_almost_equal(
+            np.copy(H_constraint.H),
+            H_field_default)
 
     @ut.skipIf(not espressomd.has_features(["DIPOLES"]),
                "Features DIPOLES not available, skipping test!")

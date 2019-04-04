@@ -82,7 +82,8 @@ double layer_h = 0, layer_h_i = 0;
 
 static int btm, top;
 
-void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
+void layered_get_mi_vector(double res[3], double const a[3],
+                           double const b[3]) {
   int i;
 
   for (i = 0; i < 2; i++) {

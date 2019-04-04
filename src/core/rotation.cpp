@@ -36,11 +36,11 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "event.hpp"
 #include "forces.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
@@ -82,34 +82,34 @@ int convert_director_to_quat(const Vector3d &d, Vector4d &quat) {
   // The vector needs to be != 0 to be converted into a quaternion
   if (dm < ROUND_ERROR_PREC) {
     return 1;
-  } else {
-    // Calculate angles
-    d_xy = sqrt(d[0] * d[0] + d[1] * d[1]);
-    // If dipole points along z axis:
-    if (d_xy == 0) {
-      // We need to distinguish between (0,0,d_z) and (0,0,d_z)
-      if (d[2] > 0)
-        theta2 = 0;
-      else
-        theta2 = PI / 2.;
-      phi2 = 0;
-    } else {
-      // Here, we take care of all other directions
-      // Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi - PI/2),
-      // where theta and phi - angles are in spherical coordinates
-      theta2 = 0.5 * acos(d[2] / dm);
-      if (d[1] < 0)
-        phi2 = -0.5 * acos(d[0] / d_xy) - PI * 0.25;
-      else
-        phi2 = 0.5 * acos(d[0] / d_xy) - PI * 0.25;
-    }
-
-    // Calculate the quaternion from the angles
-    quat[0] = cos(theta2) * cos(phi2);
-    quat[1] = -sin(theta2) * cos(phi2);
-    quat[2] = -sin(theta2) * sin(phi2);
-    quat[3] = cos(theta2) * sin(phi2);
   }
+  // Calculate angles
+  d_xy = sqrt(d[0] * d[0] + d[1] * d[1]);
+  // If dipole points along z axis:
+  if (d_xy == 0) {
+    // We need to distinguish between (0,0,d_z) and (0,0,d_z)
+    if (d[2] > 0)
+      theta2 = 0;
+    else
+      theta2 = PI / 2.;
+    phi2 = 0;
+  } else {
+    // Here, we take care of all other directions
+    // Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi - PI/2),
+    // where theta and phi - angles are in spherical coordinates
+    theta2 = 0.5 * acos(d[2] / dm);
+    if (d[1] < 0)
+      phi2 = -0.5 * acos(d[0] / d_xy) - PI * 0.25;
+    else
+      phi2 = 0.5 * acos(d[0] / d_xy) - PI * 0.25;
+  }
+
+  // Calculate the quaternion from the angles
+  quat[0] = cos(theta2) * cos(phi2);
+  quat[1] = -sin(theta2) * cos(phi2);
+  quat[2] = -sin(theta2) * sin(phi2);
+  quat[3] = cos(theta2) * sin(phi2);
+
   return 0;
 }
 
@@ -314,7 +314,7 @@ void convert_torques_propagate_omega() {
 
       auto const diff = p.swim.v_center - p.swim.v_source;
 
-      const Vector3d cross = Vector3d::cross(diff, dip);
+      const Vector3d cross = vector_product(diff, dip);
       const double l_diff = diff.norm();
       const double l_cross = cross.norm();
 

@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(parser) {
   BOOST_CHECK(O_itp_atom.charge == -0.77f);
   const auto c_itp_atom = topology.itp_atoms[0];
   BOOST_CHECK(c_itp_atom.i == 0);
-  BOOST_CHECK(c_itp_atom.type == "");
+  BOOST_CHECK(c_itp_atom.type.empty());
   BOOST_CHECK(c_itp_atom.charge == 0.0f);
   // check pdb atoms
   const auto O_pdbatom = topology.pdb_atoms[0];

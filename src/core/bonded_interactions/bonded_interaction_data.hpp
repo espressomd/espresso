@@ -399,9 +399,8 @@ inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
     if (iaparams->type == (int)bond &&
         p_bond->bl.e[i + 1] == p_partner->p.identity) {
       return true;
-    } else {
-      i += iaparams->num + 1;
     }
+    i += iaparams->num + 1;
   }
   return false;
 }
@@ -418,13 +417,12 @@ inline bool pair_bond_enum_exists_between(const Particle *const p1,
                                           BondedInteraction bond) {
   if (p1 == p2)
     return false;
-  else {
-    // Check if particles have bonds (bl.n > 0) and search for the bond of
-    // interest with are_bonded(). Could be saved on both sides (and both could
-    // have other bonds), so we need to check both.
-    return (p1->bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) ||
-           (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
-  }
+
+  // Check if particles have bonds (bl.n > 0) and search for the bond of
+  // interest with are_bonded(). Could be saved on both sides (and both could
+  // have other bonds), so we need to check both.
+  return (p1->bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) ||
+         (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
 }
 
 void recalc_maximal_cutoff_bonded();

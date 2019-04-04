@@ -22,7 +22,7 @@
 #include "minimize_energy.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "utils.hpp"
@@ -50,7 +50,7 @@ static MinimizeEnergyParameters *params = nullptr;
 /* Signum of val */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
-bool steepest_descent_step(void) {
+bool steepest_descent_step() {
   // Maximal force encountered on node
   double f_max = -std::numeric_limits<double>::max();
   // and globally
@@ -144,7 +144,7 @@ void minimize_energy_init(const double f_max, const double gamma,
   params->max_displacement = max_displacement;
 }
 
-bool minimize_energy(void) {
+bool minimize_energy() {
   if (!params)
     params = new MinimizeEnergyParameters;
 

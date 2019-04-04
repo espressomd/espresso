@@ -27,7 +27,7 @@ using namespace std;
 namespace PdbParser {
 
 BoundingBox PdbParser::calc_bounding_box() const {
-  BoundingBox bb;
+  BoundingBox bb{};
 
   bb.llx = std::numeric_limits<float>::max();
   bb.lly = std::numeric_limits<float>::max();
@@ -36,13 +36,13 @@ BoundingBox PdbParser::calc_bounding_box() const {
   bb.ury = -std::numeric_limits<float>::max();
   bb.urz = -std::numeric_limits<float>::max();
 
-  for (auto it = pdb_atoms.begin(); it != pdb_atoms.end(); ++it) {
-    bb.llx = std::min(it->x, bb.llx);
-    bb.lly = std::min(it->y, bb.lly);
-    bb.llz = std::min(it->z, bb.llz);
-    bb.urx = std::max(it->x, bb.urx);
-    bb.ury = std::max(it->y, bb.ury);
-    bb.urz = std::max(it->z, bb.urz);
+  for (auto pdb_atom : pdb_atoms) {
+    bb.llx = std::min(pdb_atom.x, bb.llx);
+    bb.lly = std::min(pdb_atom.y, bb.lly);
+    bb.llz = std::min(pdb_atom.z, bb.llz);
+    bb.urx = std::max(pdb_atom.x, bb.urx);
+    bb.ury = std::max(pdb_atom.y, bb.ury);
+    bb.urz = std::max(pdb_atom.z, bb.urz);
   }
   return bb;
 }

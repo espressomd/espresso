@@ -24,8 +24,8 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
@@ -270,8 +270,8 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
   }
   if (p1.p.type == collision_params.part_type_to_attach_vs_to)
     return p1;
-  else
-    return p2;
+
+  return p2;
 }
 
 void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
@@ -342,16 +342,16 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // Normalize
   double dist2 = sqrlen(vec1);
   double d1i = 1.0 / sqrt(dist2);
-  for (int j = 0; j < 3; j++)
-    vec1[j] *= d1i;
+  for (double &j : vec1)
+    j *= d1i;
 
   /* vector from p to p2 */
   get_mi_vector(vec2, p.r.p, p2.r.p);
   // normalize
   dist2 = sqrlen(vec2);
   double d2i = 1.0 / sqrt(dist2);
-  for (int j = 0; j < 3; j++)
-    vec2[j] *= d2i;
+  for (double &j : vec2)
+    j *= d2i;
 
   /* scalar product of vec1 and vec2 */
   cosine = scalar(vec1, vec2);
@@ -368,11 +368,11 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // We find the bond id by dividing the range from 0 to pi in
   // three_particle_angle_resolution steps and by adding the id
   // of the bond for zero degrees.
-  int bond_id =
+  auto const bond_id = static_cast<int>(
       floor(phi / M_PI *
                 (collision_params.three_particle_angle_resolution - 1) +
             0.5) +
-      collision_params.bond_three_particles;
+      collision_params.bond_three_particles);
 
   // Create the bond
 
@@ -706,7 +706,7 @@ void handle_collisions() {
     // If any node had a collision, all nodes need to do on_particle_change
     // and resort
 
-    if (gathered_queue.size() > 0) {
+    if (!gathered_queue.empty()) {
       on_particle_change();
       announce_resort_particles();
       cells_update_ghosts();

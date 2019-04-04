@@ -108,7 +108,10 @@ typedef void(SlaveCallback)(int node, int param);
 void mpi_init();
 
 /* Call a slave function. */
-void mpi_call(SlaveCallback cb, int node, int param);
+template <class... Args, class... ArgRef>
+void mpi_call(void (*fp)(Args...), ArgRef &&... args) {
+  Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
+}
 
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
@@ -120,18 +123,6 @@ void mpi_loop();
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
                               std::array<int, 3> const &periodicity = {
                                   {1, 1, 1}});
-
-/** Issue REQ_EVENT: tells all clients of some system change.
- *  The events are:
- *  <ul>
- *  <li> PARTICLE_CHANGED
- *  <li> INTERACTION_CHANGED
- *  </ul>
- *  Then all nodes execute the respective on_* procedure from initialize.cpp.
- *  Note that not all of these codes are used. Since some actions (like placing
- *  a particle) include communication anyways, this is handled by the way.
- */
-void mpi_bcast_event(int event);
 
 /** Issue REQ_PLACE: move particle to a position on a node.
  *  Also calls \ref on_particle_change.
@@ -148,9 +139,6 @@ void mpi_place_particle(int node, int id, double pos[3]);
  *  \param pos   the particles position.
  */
 void mpi_place_new_particle(int node, int id, double pos[3]);
-
-#ifdef ROTATION
-#endif
 
 /** Issue REQ_SET_EXCLUSION: send exclusions.
  *  Also calls \ref on_particle_change.
@@ -188,7 +176,7 @@ int mpi_integrate(int n_steps, int reuse_forces);
 /** Issue REQ_MIN_ENERGY: start energy minimization.
  *  @return nonzero on error
  */
-int mpi_minimize_energy(void);
+int mpi_minimize_energy();
 
 void mpi_bcast_all_ia_params();
 
@@ -274,20 +262,13 @@ void mpi_bcast_cell_structure(int cs);
 /** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all
  *  nodes.
  */
-void mpi_bcast_nptiso_geom(void);
+void mpi_bcast_nptiso_geom();
 
 /** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
  *  in sync with the topology. Note that this only makes sense if you
  *  have a simple topology such that each particle can only belong to
  *  a single molecule */
-void mpi_update_mol_ids(void);
-
-/** Issue REQ_BCAST_LBPAR: Broadcast a parameter for lattice Boltzmann.
- *  @param[in] field  References the parameter field to be broadcasted.
- *                    The references are defined in lb.hpp
- *  @param[in] value  Dummy value
- */
-void mpi_bcast_lb_params(LBParam field, int value = -1);
+void mpi_update_mol_ids();
 
 void mpi_bcast_lb_particle_coupling();
 
@@ -295,33 +276,6 @@ Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();
-
-/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param rho    local fluid density
- *  @param j      local fluid velocity
- *  @param pi     local fluid pressure
- */
-void mpi_send_fluid(int node, int index, double rho, const Vector3d &j,
-                    const Vector6d &pi);
-
-/** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param rho    local fluid density
- *  @param j      local fluid velocity
- *  @param pi     local fluid pressure
- */
-void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi);
-
-/** Issue REQ_LB_GET_BOUNDARY_FLAG: Receive a single lattice sites boundary
- *  flag from a processor.
- *  @param node      processor to send to
- *  @param index     index of the lattice site
- *  @param boundary  local boundary flag
- */
-void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
 
 /** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
  *  @return nonzero on error
@@ -332,20 +286,6 @@ int mpi_iccp3m_iteration();
  *  @return nonzero on error
  */
 int mpi_iccp3m_init();
-
-/** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param pop    local fluid population
- */
-void mpi_recv_fluid_populations(int node, int index, double *pop);
-
-/** Issue REQ_SEND_FLUID_POPULATIONS: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param pop    local fluid population
- */
-void mpi_send_fluid_populations(int node, int index, const Vector19d &pop);
 
 /** Part of MDLC */
 void mpi_bcast_max_mu();
@@ -385,16 +325,6 @@ std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
  */
 std::vector<int> mpi_resort_particles(int global_flag);
 
-/*@}*/
-
-/** \name Event codes for \ref mpi_bcast_event
- *  These codes are used by \ref mpi_bcast_event to notify certain changes
- *  of doing something now.
- */
-/*@{*/
-#define P3M_COUNT_CHARGES 0
-#define CHECK_PARTICLES 2
-#define P3M_COUNT_DIPOLES 5
 /*@}*/
 
 #endif
