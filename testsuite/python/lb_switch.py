@@ -89,7 +89,7 @@ class LBSwitchActor(ut.TestCase):
 
     @ut.skipIf((not espressomd.gpu_available() or not espressomd.has_features(["LB_GPU"])
                 ),
-               "LB_GPU not available, skipping test.")
+               "LB_GPU not available or no gpu present, skipping test.")
     def test_GPU_LB(self):
         self.switch_test(GPU=True)
 

@@ -103,7 +103,7 @@ def bisection(params):
 
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["ELECTROKINETICS", "EK_BOUNDARIES"]),
-           "Features not available, skipping test!")
+           "Features or gpu not available, skipping test!")
 class ek_eof_one_species(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]

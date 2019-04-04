@@ -25,7 +25,7 @@ from tests_common import *
 
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["ELECTROSTATICS", "CUDA"]),
-           "Features not available, skipping test!")
+           "Features or gpu not available, skipping test!")
 class P3MGPU_test(ut.TestCase):
 
     def runTest(self):

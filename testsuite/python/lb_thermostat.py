@@ -89,7 +89,7 @@ class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
 
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['LB_GPU']), "Skipping test due to missing features.")
+    ['LB_GPU']), "Skipping test due to missing features or gpu.")
 class LBGPUThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the GPU implementation of the LB."""
