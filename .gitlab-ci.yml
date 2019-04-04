@@ -7,7 +7,6 @@ stages:
   - additional_checks
   - deploy
   - result
-  - cleanup
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
