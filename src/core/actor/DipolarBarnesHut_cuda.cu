@@ -589,7 +589,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
       } while ((m >= 0.0f) && (missing != 0));
     }
 
-    if (tries++ > THREADS3) {
+    if (lps++ > THREADS3) {
       *bhpara->max_lps = lps;
       __threadfence();
     }
