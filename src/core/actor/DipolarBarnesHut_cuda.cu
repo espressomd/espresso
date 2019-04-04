@@ -473,7 +473,8 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
 /******************************************************************************/
 
 __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
-  int i, j, k, l, ch, inc, missing, cnt, bottom, lps;
+  int i, j, k, l, im, ch, inc, missing, missing_max, cnt, bottom, lps;
+  int iteration, repeat_flag;
   // the node "mass" and its count respectively:
   float m, cm;
   // position of equivalent total dipole and its magnitude:
@@ -499,125 +500,145 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
 
   // Assume no missing children:
   missing = 0;
-  // Thread sync related
-  lps = 0;
+  iteration = 0;
+  repeat_flag = 0;
   __syncthreads();    // throttle
+  // threads sync related
+  lps = 0;
   // Iterate over all cells (not particles) assigned to the thread:
   while (k <= bhpara->nnodes) {
-    // iteration++;
-    if (missing == 0) {
-      // New cell, so initialize:
-      cm = 0.0f;
-      for (l = 0; l < 3; l++) {
-        p[l] = 0.0f;
-        u[l] = 0.0f;
-      }
-      cnt = 0;
-      j = 0;
-      for (i = 0; i < 8; i++) {
-        ch = bhpara->child[k * 8 + i];
-        if (ch >= 0) {
-          if (i != j) {
-            // Move children to front (needed later for a speed only).
-            // The child's octant change is incorrect from
-            // a tree organization perspective. However, the sum
-            // will be the same.
-            bhpara->child[k * 8 + i] = -1;
-            bhpara->child[k * 8 + j] = ch;
-          }
-          // Cache a missing children in the block shared memory:
-          child[missing * THREADS3 + threadIdx.x] = ch;
-          m = bhpara->mass[ch];
-          // Is a child the particle? Only particles have non-negative mass
-          // initialized originally. Another option: a cell which already
-          // aggregated masses of other cells and particles. "missing" means
-          // that a non-zero contribution of such kind is missing:
-          missing++;
-          if (m >= 0.0f) {
-            // child is ready
-            missing--;
-            // The child is a cell, not a body (ch >= nbodiesd).
-            // Also, the previous condition (m >= 0.0f) reveals
-            // that its' children total mass is already calculated.
-            // Hence, below command "countd[k] = cnt" is already executed by
-            // other threads/blocks and we can add this count
-            if (ch >= bhpara->nbodies) { // count bodies (needed later)
-              // As far as a child is a cell, its "countd" was already
-              // calculated.
-              cnt += bhpara->count[ch] - 1;
-            }
-            // add child's contribution
-            cm += m;
-            for (l = 0; l < 3; l++) {
-              p[l] += bhpara->r[3 * ch + l] * m;
-              u[l] += bhpara->u[3 * ch + l];
-            }
-          }
-          j++;
-        } // if (ch >= 0)
-      }
-      // Count of childs:
-      cnt += j;
-    }
-
-#if defined(__HIPCC__) and not defined(__CUDACC__)
-    __syncthreads();
-#endif
-
-    if (missing != 0) {
-      do {
-        // poll missing child
-        ch = child[(missing - 1) * THREADS3 + threadIdx.x];
-        m = bhpara->mass[ch];
-        // Is a child the particle? Only particles have non-negative mass
-        // initialized originally. Another option: a cell which already
-        // aggregated masses of other cells and particles.
-        if (m >= 0.0f) {
-          // child is now ready
-          missing--;
-          // The child is a cell, not a body (ch >= nbodiesd).
-          if (ch >= bhpara->nbodies) {
-            // count bodies (needed later)
-            cnt += bhpara->count[ch] - 1;
-          }
-          // add child's contribution
-          cm += m;
-          for (l = 0; l < 3; l++) {
-            p[l] += bhpara->r[3 * ch + l] * m;
-            u[l] += bhpara->u[3 * ch + l];
-          }
-        }
-        // repeat until we are done or child is not ready
-      } while ((m >= 0.0f) && (missing != 0));
-    }
-
     if (lps++ > THREADS3) {
       *bhpara->max_lps = lps;
       __threadfence();
     }
-
-    // (missing == 0) could be true and threads will move to next particles (k
-    // += inc) only if previous conditions (m >= 0.0f) will be true. It can
-    // happen only if cell will obtain the mass (only here below: "massd[k] =
-    // cm") or they will find the very last childs: particles. Before that:
-    // do/while loop will continue.
-    if (missing == 0) {
-      // all children are ready, so store computed information
-      bhpara->count[k] = cnt;
-      m = 1.0f / cm;
-      for (l = 0; l < 3; l++) {
-        bhpara->r[3 * k + l] = p[l] * m;
-        bhpara->u[3 * k + l] = u[l];
+    if (bhpara->mass[k] < 0.) {
+      iteration++;
+      if (missing == 0) {
+        // New cell, so initialize:
+        cm = 0.0f;
+        for (l = 0; l < 3; l++) {
+          p[l] = 0.0f;
+          u[l] = 0.0f;
+        }
+        cnt = 0;
+        j = 0;
+        for (i = 0; i < 8; i++) {
+          ch = bhpara->child[k * 8 + i];
+          if (ch >= 0) {
+            if (i != j) {
+              // Move children to front (needed later for a speed only).
+              // The child's octant change is incorrect from
+              // a tree organization perspective. However, the sum
+              // will be the same.
+              bhpara->child[k * 8 + i] = -1;
+              bhpara->child[k * 8 + j] = ch;
+            }
+            // Cache a missing children in the block shared memory:
+            child[missing * THREADS3 + threadIdx.x] = ch;
+            m = bhpara->mass[ch];
+            // Is a child the particle? Only particles have non-negative mass
+            // initialized originally. Another option: a cell which already
+            // aggregated masses of other cells and particles. "missing" means
+            // that a non-zero contribution of such kind is missing:
+            missing++;
+            if (m >= 0.0f) {
+              // child is ready
+              missing--;
+              // The child is a cell, not a body (ch >= nbodiesd).
+              // Also, the previous condition (m >= 0.0f) reveals
+              // that its' children total mass is already calculated.
+              // Hence, below command "countd[k] = cnt" is already executed by
+              // other threads/blocks and we can add this count
+              if (ch >= bhpara->nbodies) { // count bodies (needed later)
+                // As far as a child is a cell, its "countd" was already
+                // calculated.
+                cnt += bhpara->count[ch] - 1;
+              }
+              // add child's contribution
+              cm += m;
+              for (l = 0; l < 3; l++) {
+                p[l] += bhpara->r[3 * ch + l] * m;
+                u[l] += bhpara->u[3 * ch + l];
+              }
+            }
+            j++;
+          } // if (ch >= 0)
+        }
+        missing_max = missing;
+        // Count of childs:
+        cnt += j;
       }
-      __threadfence();	// make sure data are visible before setting
-      //                    // mass
-      bhpara->mass[k] = cm;
-      // threads sync related
-      __threadfence();
-      lps = 0;
-      k += inc; // move on to next cell
+
+      //__syncthreads();    // throttle
+
+      if (missing != 0) {
+        for (im = 0; im < missing_max; im++) {
+          // poll missing child
+          ch = child[im * THREADS3 + threadIdx.x];
+          if (ch >= 0) {
+            m = bhpara->mass[ch];
+            // Is a child the particle? Only particles have non-negative mass
+            // initialized originally. Another option: a cell which already
+            // aggregated masses of other cells and particles.
+            if (m >= 0.0f) {
+              // child is now ready
+              missing--;
+              child[im * THREADS3 + threadIdx.x] = -1;
+              // The child is a cell, not a body (ch >= nbodiesd).
+              if (ch >= bhpara->nbodies) {
+                // count bodies (needed later)
+                cnt += bhpara->count[ch] - 1;
+              }
+              // add child's contribution
+              cm += m;
+              for (l = 0; l < 3; l++) {
+                p[l] += bhpara->r[3 * ch + l] * m;
+                u[l] += bhpara->u[3 * ch + l];
+              }
+            } // m >= 0.0f
+          } // ch >= 0
+        } // missing_max
+        // repeat until we are done or child is not ready
+      }
+
+      //__syncthreads(); // throttle
+
+      // (missing == 0) could be true and threads will move to next particles (k
+      // += inc) only if previous conditions (m >= 0.0f) will be true. It can
+      // happen only if cell will obtain the mass (only here below: "massd[k] =
+      // cm") or they will find the very last childs: particles. Before that:
+      // do/while loop will continue.
+      if (missing == 0) {
+        // all children are ready, so store computed information
+        bhpara->count[k] = cnt;
+        m = 1.0f / cm;
+        for (l = 0; l < 3; l++) {
+          bhpara->r[3 * k + l] = p[l] * m;
+          bhpara->u[3 * k + l] = u[l];
+        }
+        __threadfence();	// make sure data are visible before setting
+        //                    // mass
+        bhpara->mass[k] = cm;
+        __threadfence();
+        k += inc;
+        iteration = 0;
+        lps = 0;
+      }
+      //__syncthreads(); // throttle
+      if (iteration > THREADS3 + 1) {
+        k += inc;
+        repeat_flag = 1;
+        iteration = 0;
+        missing = 0;
+      }
+    } else {
+      k += inc;
     }
-    //__syncthreads(); // throttle
+    if ((k > bhpara->nnodes) && (repeat_flag)) {
+        repeat_flag = 0;
+        missing = 0;
+        k = bottom + threadIdx.x + blockIdx.x * blockDim.x;
+    }
   }                  // while
 }
 
