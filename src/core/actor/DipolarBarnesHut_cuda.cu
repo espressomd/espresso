@@ -560,7 +560,9 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
       cnt += j;
     }
 
-    //__syncthreads();    // throttle
+#if defined(__HIPCC__) and not defined(__CUDACC__)
+    __syncthreads();
+#endif
 
     if (missing != 0) {
       do {
