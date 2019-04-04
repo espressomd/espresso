@@ -199,6 +199,9 @@ void calc_long_range_energies() {
       ELC_P3M_modify_p3m_sums_image();
 
       energy.coulomb[1] -= 0.5 * p3m_calc_kspace_forces(0, 1);
+
+      // restore modified sums 
+      ELC_P3M_restore_p3m_sums();
     }
     energy.coulomb[2] = ELC_energy();
     break;
