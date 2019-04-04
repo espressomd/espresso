@@ -19,12 +19,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef UTILS_LIST_CONTAINS_HPP
 #define UTILS_LIST_CONTAINS_HPP
 
-#include "List.hpp"
+#include <iterator>
 
+/** @brief Check whether an iterator range contains a value.
+ *
+ * @param first Beginning of the range
+ * @param last End of the range.
+ * @param value The value to search for.
+ *
+ * @return True iff range contains the value.
+ *
+ * */
 namespace Utils {
-/** @brief Check whether an @ref Utils::List contains the value c. */
-template <typename T> bool list_contains(List<T> const &l, T const &c) {
-  return std::any_of(l.begin(), l.end(), [c](T const &e) { return e == c; });
+template <class InputIt, class T>
+bool contains(InputIt first, InputIt last, T const &value) {
+  return std::any_of(first, last, [value](T const &e) { return e == value; });
+}
+
+/** @brief Check whether an range contains a value.
+ *
+ * @param rng The range to search in.
+ * @param value The value to search for.
+ *
+ * @return True iff range contains the value.
+ *
+ * */
+template <class Range, class T>
+bool contains(const Range &rng, T const &value) {
+  using std::begin;
+  using std::end;
+
+  return contains(begin(rng), end(rng), value);
 }
 } // namespace Utils
 
