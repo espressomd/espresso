@@ -106,7 +106,7 @@ class CoulombCloudWall(ut.TestCase):
             self.S.actors.add(
                 espressomd.electrostatics.P3M(
                     prefactor=3, r_cut=1.001, accuracy=1e-3,
-                                              mesh=64, cao=7, alpha=2.70746, tune=False, inter = 0))
+                                              mesh=64, cao=7, alpha=2.70746, tune=False, inter=0))
             self.S.integrator.run(0)
             self.compare("p3m", energy=True, prefactor=3)
 
