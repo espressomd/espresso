@@ -27,7 +27,9 @@ import espressomd
 import espressomd.magnetostatics
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["DIPOLAR_BARNES_HUT"]),
+@ut.skipIf(
+    not espressomd.gpu_available() or not espressomd.has_features(
+        ["DIPOLAR_BARNES_HUT"]),
            "Features or gpu not available, skipping test!")
 class BHGPUPerfTest(ut.TestCase):
     # Handle for espresso system

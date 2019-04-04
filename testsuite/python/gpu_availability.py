@@ -21,12 +21,14 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 
+
 class GPUAvailability(ut.TestCase):
+
     """Tests consistency of gpu availability reporting."""
 
     def test(self):
         if "CUDA" in espressomd.features():
-            system=espressomd.System(box_l=[1,1,1])
+            system = espressomd.System(box_l=[1, 1, 1])
             self.assertEqual(
                 system.cuda_init_handle.device_list != {},
                 espressomd.gpu_available())

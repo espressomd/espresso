@@ -81,4 +81,3 @@ IF CUDA:
 ELSE:
     def gpu_available():
         return False
-

@@ -121,7 +121,9 @@ class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
         self.system.actors.remove(self.lbf)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["LB_BOUNDARIES_GPU"]),
+@ut.skipIf(
+    not espressomd.gpu_available() or not espressomd.has_features(
+        ["LB_BOUNDARIES_GPU"]),
            "Features or not available, skipping test!")
 class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
     lbf = None

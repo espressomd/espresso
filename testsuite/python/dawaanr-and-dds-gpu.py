@@ -28,10 +28,11 @@ import espressomd.analyze
 import tests_common
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["DIPOLES",
-                                        "CUDA",
-                                        "PARTIAL_PERIODIC",
-                                        "ROTATION"]),
+@ut.skipIf(
+    not espressomd.gpu_available() or not espressomd.has_features(["DIPOLES",
+                                                                   "CUDA",
+                                                                   "PARTIAL_PERIODIC",
+                                                                   "ROTATION"]),
            "Features not available, skipping test!")
 class DDSGPUTest(ut.TestCase):
     # Handle for espresso system
