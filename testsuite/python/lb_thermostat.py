@@ -88,7 +88,7 @@ class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
     ['LB_GPU']), "Skipping test due to missing features.")
 class LBGPUThermostat(ut.TestCase, LBThermostatCommon):
 

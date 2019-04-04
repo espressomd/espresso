@@ -134,7 +134,7 @@ class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
@@ -144,7 +144,7 @@ class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
 

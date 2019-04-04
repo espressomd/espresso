@@ -28,7 +28,7 @@ import espressomd.analyze
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["DIPOLES",
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["DIPOLES",
                                         "CUDA",
                                         "PARTIAL_PERIODIC",
                                         "ROTATION"]),

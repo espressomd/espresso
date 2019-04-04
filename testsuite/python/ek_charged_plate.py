@@ -30,7 +30,7 @@ from ek_common import *
 #Build plates using two ek species.
 
 
-@ut.skipIf(
+@ut.skipIf(not espressomd.gpu_available() or 
     not espressomd.has_features(
         ["ELECTROKINETICS"]),
            "Features not available, skipping test!")

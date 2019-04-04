@@ -120,7 +120,7 @@ class Stokes(object):
             atol=0.02)
 
 
-@ut.skipIf(not espressomd.has_features(
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBGPUStokes(ut.TestCase, Stokes):
 

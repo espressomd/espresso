@@ -118,7 +118,7 @@ class LBCPU(ut.TestCase, LBStreamingCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
 
 
-@ut.skipIf(
+@ut.skipIf(not espressomd.gpu_available() or 
     not espressomd.has_features(
         'LB_GPU'),
            "Skipping test due to missing features.")

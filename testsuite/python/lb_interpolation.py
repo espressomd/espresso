@@ -96,7 +96,7 @@ class LBInterpolationCPU(ut.TestCase, LBInterpolation):
         self.system.actors.add(self.lbf)
 
 
-@ut.skipIf(not espressomd.has_features(['LB_GPU', 'LB_BOUNDARIES_GPU']), "Skipped, features missing.")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(['LB_GPU', 'LB_BOUNDARIES_GPU']), "Skipped, features missing.")
 class LBInterpolationGPU(ut.TestCase, LBInterpolation):
 
     def setUp(self):

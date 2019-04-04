@@ -73,3 +73,12 @@ cdef class CudaInitHandle(object):
         @device_list.setter
         def device_list(self, dict _dev_dict):
             raise Exception("cuda device list is read only")
+
+
+IF CUDA:
+    def gpu_available():
+        return cuda_get_n_gpus() > 0
+ELSE:
+    def gpu_available():
+        return False
+
