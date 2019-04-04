@@ -49,11 +49,11 @@ __constant__ float epssqd[1], itolsqd[1];
 // bottomd is a bottom Barnes-Hut node (the division octant cell) in a linear
 // array representation. maxdepthd is a largest length of the octree "branch"
 // till the "leaf".
-__device__ int bottomd, maxdepthd, blkcntd;
+__device__ volatile int bottomd, maxdepthd, blkcntd;
 // half edge of the BH box
-__device__ float radiusd;
+__device__ volatile float radiusd;
 // the struct containing all the device pointers
-__device__ __constant__ BHData bhpara[1];
+__device__ __constant__ volatile BHData bhpara[1];
 
 // The "half-convolution" multi-thread reduction.
 // The thread with a lower index will operate longer and
@@ -82,6 +82,7 @@ __global__ void initializationKernel() {
   ind = IND;
   if (ind == 0) {
     *bhpara->err = 0;
+    *bhpara->max_lps = 0;
     maxdepthd = 1;
     blkcntd = 0;
   }
@@ -209,7 +210,7 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
 
 __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
   //
-  int i, j, k, l, depth, localmaxdepth, skip, inc;
+  int i, j, k, l, depth, localmaxdepth, skip, inc, lps;
   float r;
   float pos[3];
   float p[3];
@@ -227,12 +228,18 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
   localmaxdepth = 1;
   // Skip the branch following and start from the root.
   skip = 1;
+  // Number of loops for the threads sync algorithm
+  lps = 0;
   // Increment to move among the bodies assigned to the given thread.
   // Hence, one should step over all other threads in GPU with
   // a quantity of blockDim.x * gridDim.x.
   inc = blockDim.x * gridDim.x;
   // Just a regular 1D GPU index
   i = threadIdx.x + blockIdx.x * blockDim.x;
+  // AMD-specific threads sync
+#if defined(__HIPCC__) and not defined(__CUDACC__)
+  __syncthreads();
+#endif
 
   // Iterate over all bodies assigned to thread.
   while (i < bhpara->nbodies) {
@@ -257,6 +264,20 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
     // Follow path to leaf cell. Should not happen at the first iteration of
     // this loop.
     ch = bhpara->child[n * 8 + j];
+
+    ///// Global memory writing related threads sync
+    if (lps++ > THREADS2) {
+    // AMD-specific threads sync
+#if defined(__HIPCC__) and not defined(__CUDACC__)
+      atomicInc((unsigned int *)bhpara->max_lps, 0);
+#else
+      *bhpara->max_lps = lps;
+#endif
+    }
+    //.. now wait for global memory updates. This impacts on race conditions and
+    // frameworks level optimizations. Further kernels contain a similar code fragment.
+    __threadfence();
+
     // The child with the index higher than nbodiesd (number of particles) means
     // that it is a octant cell, not a body.
     // Actually, we need nnodesd == 8 * nbodiesd nodes for the cells storage.
@@ -393,6 +414,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // present loop.
             n = cell;
             j = 0;
+            __threadfence();
             // Let's handle the particle position (p[l]) corresponding to the
             // given thread and block against new octant cell (pos[l]):
             for (l = 0; l < 3; l++)
@@ -431,12 +453,19 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
         // Hence, move on to the next body assigned to the given thread:
         i += inc;
         skip = 1;
+        lps = 0;
       }
     }
-    __syncthreads(); // throttle
+    // AMD-specific threads sync
+#if defined(__HIPCC__) and not defined(__CUDACC__)
+    __syncthreads();
+#endif
   }
   // Record maximum tree depth:
   atomicMax((int *)&maxdepthd, localmaxdepth);
+#if defined(__HIPCC__) and not defined(__CUDACC__)
+  __syncthreads();
+#endif
 }
 
 /******************************************************************************/
@@ -444,7 +473,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
 /******************************************************************************/
 
 __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
-  int i, j, k, l, ch, inc, missing, cnt, bottom;
+  int i, j, k, l, ch, inc, missing, cnt, bottom, lps;
   // the node "mass" and its count respectively:
   float m, cm;
   // position of equivalent total dipole and its magnitude:
@@ -470,7 +499,9 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
 
   // Assume no missing children:
   missing = 0;
-  //__syncthreads();    // throttle
+  // Thread sync related
+  lps = 0;
+  __syncthreads();    // throttle
   // Iterate over all cells (not particles) assigned to the thread:
   while (k <= bhpara->nnodes) {
     // iteration++;
@@ -558,6 +589,11 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
       } while ((m >= 0.0f) && (missing != 0));
     }
 
+    if (tries++ > THREADS3) {
+      *bhpara->max_lps = lps;
+      __threadfence();
+    }
+
     // (missing == 0) could be true and threads will move to next particles (k
     // += inc) only if previous conditions (m >= 0.0f) will be true. It can
     // happen only if cell will obtain the mass (only here below: "massd[k] =
@@ -571,12 +607,15 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
         bhpara->r[3 * k + l] = p[l] * m;
         bhpara->u[3 * k + l] = u[l];
       }
-      // __threadfence();	// make sure data are visible before setting
+      __threadfence();	// make sure data are visible before setting
       //                    // mass
       bhpara->mass[k] = cm;
+      // threads sync related
+      __threadfence();
+      lps = 0;
       k += inc; // move on to next cell
     }
-    __syncthreads(); // throttle
+    //__syncthreads(); // throttle
   }                  // while
 }
 
@@ -590,7 +629,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
 // same octant cells) together, and these grouped bodies are crucial to speed up
 // forceCalculationKernel and energyCalculationKernel
 __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
-  int i, k, ch, dec, start, bottom;
+  int i, k, ch, dec, start, bottom, lps;
 
   bottom = bottomd;
   dec = blockDim.x * gridDim.x;
@@ -600,10 +639,17 @@ __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
   // Particles should be sorted over all entities count in the tree array
   // representation made by treeBuildingKernel.
   k = bhpara->nnodes + 1 - dec + threadIdx.x + blockIdx.x * blockDim.x;
+  // threads sync related
+  lps = 0;
 
   // iterate over all cells assigned to thread
   while (k >= bottom) {
     start = bhpara->start[k];
+    // Threads sync related
+    if (lps++ > THREADS4) {
+      *bhpara->max_lps = lps;
+      __threadfence();
+    }
     // Let's start from the root which has only startd=0 defined
     // in boundingBoxKernel. All other bodies and cells have -1.
     if (start >= 0) {
@@ -626,8 +672,10 @@ __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
         }
       }
       k -= dec; // move on to next cell
+      // Threads sync related
+      lps = 0;
     }
-    __syncthreads(); // throttle
+    //__syncthreads(); // throttle
   }
 }
 
@@ -741,6 +789,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
             // Hence, let's go to the next octant in the next iteration only:
             pos[depth] = t + 1;
           }
+          __threadfence_block();
           // There is a child (octant cell) with a dipole moment uxd[3 * n + l]
           // and the center position bhpara->r[3 * n + l]:
           if (n >= 0) {
@@ -809,6 +858,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
                 // Let's start from it zero octant:
                 pos[depth] = 0;
               }
+              __threadfence_block();
             }
           } else {
             // Early out because all remaining children are also zero.
@@ -916,6 +966,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
             // I'm the first thread in the warp
             pos[depth] = t + 1;
           }
+          __threadfence_block();
           if (n >= 0) {
             tmp = 0.0f;
             for (l = 0; l < 3; l++) {
@@ -953,6 +1004,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
                 node[depth] = n;
                 pos[depth] = 0;
               }
+              __threadfence_block();
             }
           } else {
             depth = max(j, depth - 1); // early out because all remaining
@@ -1131,15 +1183,18 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
   // Each node corresponds to a split of the cubic box in 3D space to equal
   // cubic boxes hence, 8 nodes per particle is a theoretical octree limit:
   bh_data->nnodes = bh_data->nbodies * 8;
-  if (bh_data->nnodes < 1024 * bh_data->blocks)
-    bh_data->nnodes = 1024 * bh_data->blocks;
-  while ((bh_data->nnodes & (WARPSIZE - 1)) != 0)
-    bh_data->nnodes++;
-  bh_data->nnodes--;
+
+  int n_total_threads = 1024 * bh_data->blocks;
+  if (bh_data->nnodes < n_total_threads) bh_data->nnodes = n_total_threads;
+  else bh_data->nnodes = (bh_data->nnodes / n_total_threads) * n_total_threads;
 
   if (bh_data->err != 0)
     cuda_safe_mem(cudaFree(bh_data->err));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->err), sizeof(int)));
+
+  if (bh_data->max_lps != 0)
+    cuda_safe_mem(cudaFree(bh_data->max_lps));
+  cuda_safe_mem(cudaMalloc((void **)&(bh_data->max_lps), sizeof(int)));
 
   if (bh_data->child != 0)
     cuda_safe_mem(cudaFree(bh_data->child));
