@@ -33,6 +33,7 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
+#include "dpd.hpp"
 #include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
@@ -276,6 +277,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Langevin philox rng counter
+    if (n_steps > 0) {
+      if (thermo_switch & THERMO_LANGEVIN) {
+        langevin_rng_counter_increment();
+      } else if (thermo_switch & THERMO_DPD) {
+        dpd_rng_counter_increment();        
+      }
+    }
+
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {

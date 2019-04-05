@@ -33,18 +33,56 @@
 
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
+#include "random.hpp"
+
+#include "utils/uniform.hpp"
+#include <Random123/philox.h>
+
+/** philox functiontality: increment, get/set */
+void dpd_rng_counter_increment();
 
 void dpd_heat_up();
 void dpd_cool_down();
 void dpd_switch_off();
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
-                   int wf, double tgamma, double tr_c, int twf);
+                   int wf, double tgamma, double tr_c, int twf, uint64_t seed);
 void dpd_init();
 void dpd_update_params(double pref2_scale);
 
 Vector3d dpd_pair_force(const Particle *p1, const Particle *p2,
                         IA_parameters *ia_params, double *d, double dist,
                         double dist2);
+
+
+/** Return a random 3d vector with the philox thermostat.
+    Random numbers depend on
+    1. dpd_rng_counter (initialized by seed) which is increased on
+   integration
+    2. Salt (decorrelates different counter)
+    3. Particle ID (decorrelates particles, gets rid of seed-per-node)
+*/
+inline Vector3d v_noise(int particle_id) {
+
+  using rng_type = r123::Philox4x64;
+  using ctr_type = rng_type::ctr_type;
+  using key_type = rng_type::key_type;
+
+  ctr_type c{
+      {dpd_rng_counter.value(), static_cast<uint64_t>(RNGSalt::DPD)}};
+
+  auto f_random = [&c](int id) -> Vector3d {
+    key_type k{{static_cast<uint32_t>(id)}};
+
+    auto const noise = rng_type{}(c, k);
+
+    using Utils::uniform;
+    return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
+           Vector3d::broadcast(0.5);
+  };
+
+  return f_random(particle_id);
+}
+
 #endif
 
 #endif

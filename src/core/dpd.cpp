@@ -28,8 +28,19 @@
 #include "communication.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
-#include "random.hpp"
 #include "thermostat.hpp"
+#include "utils/u32_to_u64.hpp"
+
+void dpd_rng_counter_increment() {
+  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
+    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
+      auto data = get_ia_param(type_a, type_b);
+      if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
+        data->dpd_rng_counter.increment();
+      }
+    }
+  }
+}
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
@@ -42,7 +53,7 @@ void dpd_cool_down() {
 }
 
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
-                   int wf, double tgamma, double tr_c, int twf) {
+                   int wf, double tgamma, double tr_c, int twf, uint64_t seed) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
   data->dpd_gamma = gamma;
@@ -65,6 +76,9 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
     data->dpd_pref1 = 0.0;
     data->dpd_pref3 = 0.0;
   }
+
+  // Initialize the RNG
+  data->dpd_rng_counter = Utils::Counter<uint64_t>(seed);
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
