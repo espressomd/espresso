@@ -36,6 +36,7 @@
 #include "random.hpp"
 
 #include "utils/uniform.hpp"
+#include "utils/u32_to_u64.hpp"
 #include <Random123/philox.h>
 
 /** philox functiontality: increment, get/set */
@@ -59,28 +60,30 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     1. dpd_rng_counter (initialized by seed) which is increased on
    integration
     2. Salt (decorrelates different counter)
-    3. Particle ID (decorrelates particles, gets rid of seed-per-node)
+    3. Particle IDS (decorrelates particles, gets rid of seed-per-node)
 */
-inline Vector3d v_noise(int particle_id) {
+inline Vector4d v_noise(int pid1, int pid2, uint64_t counter_value) {
 
   using rng_type = r123::Philox4x64;
   using ctr_type = rng_type::ctr_type;
   using key_type = rng_type::key_type;
 
   ctr_type c{
-      {dpd_rng_counter.value(), static_cast<uint64_t>(RNGSalt::DPD)}};
+      {counter_value, static_cast<uint64_t>(RNGSalt::SALT_DPD)}};
 
-  auto f_random = [&c](int id) -> Vector3d {
-    key_type k{{static_cast<uint32_t>(id)}};
+  uint64_t merged_ids;
+  if (pid1 > pid2)  {
+    merged_ids = Utils::u32_to_u64(pid1, pid2);
+  } else {
+    merged_ids = Utils::u32_to_u64(pid2, pid1);
+  }
+  key_type k{merged_ids};
 
-    auto const noise = rng_type{}(c, k);
+  auto const noise = rng_type{}(c, k);
 
-    using Utils::uniform;
-    return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
-           Vector3d::broadcast(0.5);
-  };
-
-  return f_random(particle_id);
+  using Utils::uniform;
+  return Vector4d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2]), uniform(noise[3])} -
+         Vector4d::broadcast(0.5);
 }
 
 #endif

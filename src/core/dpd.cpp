@@ -29,14 +29,13 @@
 #include "global.hpp"
 #include "integrate.hpp"
 #include "thermostat.hpp"
-#include "utils/u32_to_u64.hpp"
 
 void dpd_rng_counter_increment() {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
       if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
-        data->dpd_rng_counter.increment();
+        data->dpd_rng_counter_value++;
       }
     }
   }
@@ -78,7 +77,8 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
   }
 
   // Initialize the RNG
-  data->dpd_rng_counter = Utils::Counter<uint64_t>(seed);
+  data->dpd_rng_counter_initial = seed;
+  data->dpd_rng_counter_value = seed;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -139,6 +139,8 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   Vector3d f{};
   auto const dist_inv = 1.0 / dist;
 
+  Vector4d noise4 = v_noise(p1->p.identity, p2->p.identity, ia_params->dpd_rng_counter_value);
+
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_pref1 > 0.0)) {
     auto const omega =
         weight(ia_params->dpd_wf, ia_params->dpd_r_cut, dist_inv);
@@ -153,7 +155,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     // random force prefactor
     double noise;
     if (ia_params->dpd_pref2 > 0.0) {
-      noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
+      noise = ia_params->dpd_pref2 * omega * noise4[0];
     } else {
       noise = 0.0;
     }
@@ -174,7 +176,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     for (int i = 0; i < 3; i++) {
       // noise vector
       if (ia_params->dpd_pref2 > 0.0) {
-        noise_vec[i] = d_random() - 0.5;
+        noise_vec[i] = noise4[i+1];
       } else {
         noise_vec[i] = 0.0;
       }

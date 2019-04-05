@@ -881,7 +881,8 @@ IF DPD:
                 "r_cut": ia_params.dpd_r_cut,
                 "trans_weight_function": ia_params.dpd_twf,
                 "trans_gamma": ia_params.dpd_tgamma,
-                "trans_r_cut": ia_params.dpd_tr_cut
+                "trans_r_cut": ia_params.dpd_tr_cut,
+                "seed": ia_params.dpd_rng_counter_initial,
             }
 
         def is_active(self):
@@ -906,6 +907,8 @@ IF DPD:
                 Friction coefficient of the orthogonal part
             trans_r_cut : :obj:`float`
                 Cutoff of the orthogonal part
+            seed : :obj:`int`, required
+                Initial counter value (or seed) of the philox RNG.
 
             """
             super(DPDInteraction, self).set_params(**kwargs)
@@ -917,7 +920,8 @@ IF DPD:
                               self._params["weight_function"],
                               self._params["trans_gamma"],
                               self._params["trans_r_cut"],
-                              self._params["trans_weight_function"]):
+                              self._params["trans_weight_function"],
+                              self._params["seed"]):
                 raise Exception("Could not set DPD parameters")
 
         def default_params(self):
@@ -927,7 +931,8 @@ IF DPD:
                 "r_cut": -1.0,
                 "trans_weight_function": 0,
                 "trans_gamma": 0.0,
-                "trans_r_cut": -1.0}
+                "trans_r_cut": -1.0,
+                "seed": -1.0}
 
         def type_name(self):
             return "DPD"
@@ -936,7 +941,7 @@ IF DPD:
             return self.default_params().keys()
 
         def required_keys(self):
-            return []
+            return ["seed"]
 
 # Smooth-step
 

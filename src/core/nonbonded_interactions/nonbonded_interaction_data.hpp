@@ -325,7 +325,8 @@ struct IA_parameters {
   double dpd_tr_cut = INACTIVE_CUTOFF;
   double dpd_pref3 = 0.0;
   double dpd_pref4 = 0.0;
-  Utils::Counter<uint64_t> dpd_rng_counter;
+  uint64_t dpd_rng_counter_initial;
+  uint64_t dpd_rng_counter_value;
 /*@}*/
 #endif
 

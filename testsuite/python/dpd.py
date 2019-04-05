@@ -76,7 +76,7 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.set_dpd(kT=kT)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.5,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5, seed=42)
         s.integrator.run(100)
         loops = 250
         v_stored = np.zeros((N*loops, 3))
@@ -101,13 +101,13 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.set_dpd(kT=kT)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.0,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.0)
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.0, seed=42)
         s.non_bonded_inter[1, 1].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.0,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.0)
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.0, seed=42)
         s.non_bonded_inter[0, 1].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.5,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5, seed=42)
         s.integrator.run(100)
         loops = 300
         v_stored = np.zeros((N*loops, 3))
@@ -131,7 +131,7 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.set_dpd(kT=kT)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.5,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5, seed=42)
         s.integrator.run(10)
 
         s.thermostat.turn_off()
@@ -173,7 +173,7 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.set_dpd(kT=kT)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.2,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.4)
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.4, seed=42)
 
         s.part.add(id=0, pos=[5, 5, 5], type= 0, v=[0, 0, 0])
         v = [.5, .8, .3]
@@ -221,7 +221,7 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.set_dpd(kT=kT)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=1, gamma=gamma, r_cut=1.2,
-            trans_weight_function=1, trans_gamma=gamma, trans_r_cut=1.4)
+            trans_weight_function=1, trans_gamma=gamma, trans_r_cut=1.4, seed=42)
 
         def omega(dist, r_cut):
             return (1. - dist / r_cut)
@@ -316,7 +316,7 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.set_dpd(kT=0.0)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=r_cut,
-            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=r_cut)
+            trans_weight_function=0, trans_gamma=gamma, trans_r_cut=r_cut, seed=42)
 
         s.integrator.run(0)
 
@@ -342,7 +342,7 @@ class DPDThermostat(ut.TestCase):
         s.thermostat.set_dpd(kT=0.0)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=1., r_cut=1.0,
-            trans_weight_function=0, trans_gamma=1., trans_r_cut=1.0)
+            trans_weight_function=0, trans_gamma=1., trans_r_cut=1.0, seed=42)
 
         p = s.part.add(pos=[0.5, 0, 0], type=0, v=[0, 0, 0])
 
