@@ -34,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SWIMMER_REACTIONS
 
 #define NPT
-#define GHMC
 
 #define LB
 #define LB_BOUNDARIES
@@ -67,8 +66,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OVERLAPPED
 #define THOLE
 
-#define BOND_ANGLE
-
 #define VIRTUAL_SITES_RELATIVE
 
 #define EXPERIMENTAL_FEATURES
@@ -99,7 +96,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define STAT_DEBUG
 #define POLY_DEBUG
 #define PTENSOR_DEBUG
-#define MAGGS_DEBUG
 #define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
 #define LE_DEBUG

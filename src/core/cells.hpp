@@ -63,26 +63,25 @@
 #include "ParticleIterator.hpp"
 #include "ghosts.hpp"
 #include "particle_data.hpp"
-#include "utils/Range.hpp"
 
 #include "Cell.hpp"
 #include "ParticleRange.hpp"
 
-/** \name Cell Structure */
-/*@{*/
-/** Flag indicating that there is no cell system yet. Only at the
- * VERY beginning of the code startup.
- */
-#define CELL_STRUCTURE_NONEYET -1
-/** Flag indicating that the current cell structure will be used further on */
-#define CELL_STRUCTURE_CURRENT 0
-/** cell structure domain decomposition */
-#define CELL_STRUCTURE_DOMDEC 1
-/** cell structure n square */
-#define CELL_STRUCTURE_NSQUARE 2
-/** cell structure layered */
-#define CELL_STRUCTURE_LAYERED 3
-/*@}*/
+/** Cell Structure */
+enum {
+  /** Flag indicating that there is no cell system yet. Only at the
+   *  VERY beginning of the code startup.
+   */
+  CELL_STRUCTURE_NONEYET = -1,
+  /** Flag indicating that the current cell structure will be used further on */
+  CELL_STRUCTURE_CURRENT = 0,
+  /** cell structure domain decomposition */
+  CELL_STRUCTURE_DOMDEC = 1,
+  /** cell structure n square */
+  CELL_STRUCTURE_NSQUARE = 2,
+  /** cell structure layered */
+  CELL_STRUCTURE_LAYERED = 3
+};
 
 /** \name Flags for exchange_and_sort_particles: whether to do a global
  *  exchange or assume that particles did not move much (faster, used
@@ -94,6 +93,8 @@
 #define CELL_GLOBAL_EXCHANGE 1
 /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
 #define CELL_NEIGHBOR_EXCHANGE 0
+
+/*@}*/
 
 namespace Cells {
 enum Resort : unsigned {
@@ -121,8 +122,8 @@ enum Resort : unsigned {
 /** List of cell pointers. */
 struct CellPList {
   ParticleRange particles() const {
-    return Utils::make_range(CellParticleIterator(cell, cell + n, 0),
-                             CellParticleIterator(cell + n, cell + n, 0));
+    return {CellParticleIterator(cell, cell + n, 0),
+            CellParticleIterator(cell + n, cell + n, 0)};
   }
 
   Cell **begin() { return cell; }

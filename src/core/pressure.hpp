@@ -62,19 +62,10 @@ void master_pressure_calc(int v_comp);
 void pressure_calc(double *result, double *result_t, double *result_nb,
                    double *result_t_nb, int v_comp);
 
-/** Implementation of analyse local_stress_tensor */
-int local_stress_tensor_calc(DoubleList *TensorInBin, int bins[3],
-                             int periodic[3], double range_start[3],
-                             double range[3]);
-
 /** Function to calculate stress tensor for the observables */
 int observable_compute_stress_tensor(int v_comp, double *A);
 
 void update_pressure(int v_comp);
-void update_stress_tensor(int v_comp);
-int analyze_local_stress_tensor(int *periodic, double *range_start,
-                                double *range, int *bins,
-                                DoubleList *local_stress_tensor);
 
 /*@}*/
 

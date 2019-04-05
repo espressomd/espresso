@@ -64,6 +64,52 @@ class LangevinThermostat(ut.TestCase):
         self.assertLessEqual(
             abs(single_component_maxwell(-10, 10, 4.) - 1.), 1E-4)
 
+    def test_langevin_seed(self):
+        """Test for RNG seed consistency."""
+        system = self.system
+        system.time_step = 0.01
+        system.part.clear()
+        system.part.add(pos=[0, 0, 0])
+        
+        kT = 1.1
+        gamma = 3.5
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
+        
+        #'integrate 0' does not increase the philoc counter and should give the same force
+        system.integrator.run(0)
+        force0 = np.copy(system.part[0].f)
+        system.integrator.run(0)
+        force1 = np.copy(system.part[0].f)
+        np.testing.assert_almost_equal(force0, force1)
+        
+        #'integrate 1' shoud give a different force
+        system.part.clear()
+        system.part.add(pos=[0, 0, 0])
+        system.integrator.run(1)
+        force2 = np.copy(system.part[0].f)
+        np.testing.assert_equal(np.any(np.not_equal(force1, force2)), True)
+        
+        #Different seed shoud give a different force
+        system.part.clear()
+        system.part.add(pos=[0, 0, 0])
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
+        system.integrator.run(1)
+        force3 = np.copy(system.part[0].f)
+        np.testing.assert_equal(np.any(np.not_equal(force2, force3)), True)
+        
+        #Same seed shoud give the same force
+        system.part.clear()
+        system.part.add(pos=[0, 0, 0])
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
+        system.integrator.run(1)
+        force4 = np.copy(system.part[0].f)
+        system.part.clear()
+        system.part.add(pos=[0, 0, 0])
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
+        system.integrator.run(1)
+        force5 = np.copy(system.part[0].f)
+        np.testing.assert_almost_equal(force4, force5)
+
     def test_global_langevin(self):
         """Test for global Langevin parameters."""
         N = 200
@@ -80,7 +126,7 @@ class LangevinThermostat(ut.TestCase):
 
         kT = 1.1
         gamma = 3.5
-        system.thermostat.set_langevin(kT=kT, gamma=gamma)
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
 
         # Warmup
         system.integrator.run(100)
@@ -91,9 +137,9 @@ class LangevinThermostat(ut.TestCase):
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
             system.integrator.run(1)
-            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
+            v_stored[i * N:(i + 1) * N,:] = system.part[:].v
             if espressomd.has_features("ROTATION"):
-                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
+                omega_stored[i * N:(i + 1) * N,:] = system.part[:].omega_body
 
         v_minmax = 5
         bins = 4
@@ -122,7 +168,7 @@ class LangevinThermostat(ut.TestCase):
         gamma = 3.2
         gamma2 = 4.3
         kT2 = 1.5
-        system.thermostat.set_langevin(kT=kT, gamma=gamma)
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         # Set different kT on 2nd half of particles
         system.part[int(N / 2):].temp = kT2
         # Set different gamma on half of the partiles (overlap over both kTs)
@@ -240,14 +286,14 @@ class LangevinThermostat(ut.TestCase):
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 # particle anisotropy and rotation
                 system.thermostat.set_langevin(
-                    kT=kT, gamma=gamma, gamma_rotation=gamma_rot_a)
+                    kT=kT, gamma=gamma, gamma_rotation=gamma_rot_a, seed=41)
             else:
                 # Rotation without particle anisotropy
                 system.thermostat.set_langevin(
-                    kT=kT, gamma=gamma, gamma_rotation=gamma_rot_i)
+                    kT=kT, gamma=gamma, gamma_rotation=gamma_rot_i, seed=41)
         else:
             # No rotation
-            system.thermostat.set_langevin(kT=kT, gamma=gamma)
+            system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
 
         system.cell_system.skin = 0.4
         system.integrator.run(100)
@@ -354,9 +400,9 @@ class LangevinThermostat(ut.TestCase):
         if espressomd.has_features("MASS"):
             system.part[0].mass = 3
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            system.thermostat.set_langevin(kT=0, gamma=gamma_t_a)
+            system.thermostat.set_langevin(kT=0, gamma=gamma_t_a, seed=41)
         else:
-            system.thermostat.set_langevin(kT=0, gamma=gamma_t_i)
+            system.thermostat.set_langevin(kT=0, gamma=gamma_t_i, seed=41)
 
         system.time = 0
         for i in range(100):
@@ -389,10 +435,10 @@ class LangevinThermostat(ut.TestCase):
             system.part[0].rinertia = 2, 2, 2
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
             system.thermostat.set_langevin(
-                kT=0, gamma=gamma_t_a, gamma_rotation=gamma_r_a)
+                kT=0, gamma=gamma_t_a, gamma_rotation=gamma_r_a, seed=41)
         else:
             system.thermostat.set_langevin(
-                kT=0, gamma=gamma_t_i, gamma_rotation=gamma_r_i)
+                kT=0, gamma=gamma_t_i, gamma_rotation=gamma_r_i, seed=41)
 
         system.time = 0
         for i in range(100):
@@ -419,7 +465,7 @@ class LangevinThermostat(ut.TestCase):
         physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
 
         system.thermostat.set_langevin(
-            kT=0, gamma=1, gamma_rotation=1., act_on_virtual=False)
+            kT=0, gamma=1, gamma_rotation=1., act_on_virtual=False, seed=41)
 
         system.integrator.run(0)
 
@@ -427,7 +473,7 @@ class LangevinThermostat(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
 
         system.thermostat.set_langevin(
-            kT=0, gamma=1, gamma_rotation=1., act_on_virtual=True)
+            kT=0, gamma=1, gamma_rotation=1., act_on_virtual=True, seed=41)
         system.integrator.run(0)
 
         np.testing.assert_almost_equal(np.copy(virtual.f), [-1, 0, 0])

@@ -25,13 +25,12 @@
 #include "EspressoSystemInterface.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy_inline.hpp"
+#include "event.hpp"
 #include "forces.hpp"
-#include "initialize.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"
@@ -130,9 +129,8 @@ void energy_calc(double *result) {
   EspressoSystemInterface::Instance().update();
 
   // Compute the energies from the energyActors
-  for (ActorList::iterator actor = energyActors.begin();
-       actor != energyActors.end(); ++actor)
-    (*actor)->computeEnergy(espressoSystemInterface);
+  for (auto &energyActor : energyActors)
+    energyActor->computeEnergy(espressoSystemInterface);
 
   on_observable_calc();
 
@@ -152,7 +150,7 @@ void energy_calc(double *result) {
   calc_long_range_energies();
 
   auto local_parts = local_cells.particles();
-  Constraints::constraints.add_energy(local_parts, energy);
+  Constraints::constraints.add_energy(local_parts, sim_time, energy);
 
 #ifdef CUDA
   copy_energy_from_GPU();
@@ -201,6 +199,9 @@ void calc_long_range_energies() {
       ELC_P3M_modify_p3m_sums_image();
 
       energy.coulomb[1] -= 0.5 * p3m_calc_kspace_forces(0, 1);
+
+      // restore modified sums
+      ELC_P3M_restore_p3m_sums();
     }
     energy.coulomb[2] = ELC_energy();
     break;
@@ -214,10 +215,6 @@ void calc_long_range_energies() {
   case COULOMB_MMM2D:
     *energy.coulomb += MMM2D_far_energy();
     *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
-    break;
-  /* calculate electric part of energy (only for MAGGS) */
-  case COULOMB_MAGGS:
-    *energy.coulomb += maggs_electric_energy();
     break;
   default:
     break;

@@ -66,7 +66,7 @@ class pressureViaVolumeScaling(object):
         return pressure
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS, LENNARD_JONES"]),
+@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "LENNARD_JONES"]),
            "Features not available, skipping test!")
 class VirialPressureConsistency(ut.TestCase):
 
@@ -111,7 +111,7 @@ class VirialPressureConsistency(ut.TestCase):
                 self.system.analysis.energy()["total"]))
             self.system.integrator.run(10)
         self.system.integrator.set_vv()
-        self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0)
+        self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0, seed=41)
 
     def test_p3m_pressure(self):
         pressures_via_virial = []

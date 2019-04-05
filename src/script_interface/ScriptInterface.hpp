@@ -32,6 +32,10 @@
 #include "initialize.hpp"
 #include "utils/Factory.hpp"
 
+/** @namespace ScriptInterface
+ *  @brief Interface to core functions for Python bindings.
+ *  See page @ref script_interface for detailed instructions.
+ */
 namespace ScriptInterface {
 template <typename T> static void register_new(std::string const &name) {
   static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "");

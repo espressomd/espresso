@@ -27,7 +27,7 @@
 
 #include "fft.hpp"
 
-#ifdef P3M
+#if defined(P3M) || defined(DP3M)
 #include "communication.hpp"
 #include "debug.hpp"
 #include "fft-common.hpp"
@@ -39,26 +39,28 @@ using Utils::permute_ifield;
 #include <fftw3.h>
 #include <mpi.h>
 
-/** communicate the grid data according to the given fft_forw_plan.
- * \param plan communication plan (see \ref fft_forw_plan).
+/** Communicate the grid data according to the given forward FFT plan.
+ * \param plan FFT communication plan.
  * \param in   input mesh.
  * \param out  output mesh.
+ * \param fft    FFT communication plan.
  */
 static void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
                                fft_data_struct &fft);
 
-/** communicate the grid data according to the given
- * fft_forw_plan/fft_bakc_plan. \param plan_f communication plan (see \ref
- * fft_forw_plan). \param plan_b additional back plan (see \ref fft_back_plan).
+/** Communicate the grid data according to the given backward FFT plan.
+ * \param plan_f Forward FFT plan.
+ * \param plan_b Backward FFT plan.
  * \param in     input mesh.
  * \param out    output mesh.
+ * \param fft    FFT communication plan.
  */
 static void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
                                double *in, double *out, fft_data_struct &fft);
 
-int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
+int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft) {
+             fft_data_struct &fft, const Vector3i &grid) {
   int i, j;
   /* helpers */
   int mult[3];
@@ -80,7 +82,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
   /* === node grids === */
   /* real space node grid (n_grid[0]) */
   for (i = 0; i < 3; i++) {
-    n_grid[0][i] = node_grid[i];
+    n_grid[0][i] = grid[i];
     my_pos[0][i] = node_pos[i];
   }
   for (i = 0; i < n_nodes; i++) {
@@ -247,7 +249,7 @@ int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
     errexit();
   }
 
-  fftw_complex *c_data = (fftw_complex *)(*data);
+  auto *c_data = (fftw_complex *)(*data);
 
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
   for (i = 1; i < 4; i++) {
@@ -305,8 +307,8 @@ void fft_perform_forw(double *data, fft_data_struct &fft) {
   /* ===== first direction  ===== */
   FFT_TRACE(fprintf(stderr, "%d: fft_perform_forw: dir 1:\n", this_node));
 
-  fftw_complex *c_data = (fftw_complex *)data;
-  fftw_complex *c_data_buf = (fftw_complex *)fft.data_buf;
+  auto *c_data = (fftw_complex *)data;
+  auto *c_data_buf = (fftw_complex *)fft.data_buf;
 
   /* communication to current dir row format (in is data) */
   fft_forw_grid_comm(fft.plan[1], data, fft.data_buf, fft);
@@ -352,8 +354,8 @@ void fft_perform_forw(double *data, fft_data_struct &fft) {
 void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft) {
   int i;
 
-  fftw_complex *c_data = (fftw_complex *)data;
-  fftw_complex *c_data_buf = (fftw_complex *)fft.data_buf;
+  auto *c_data = (fftw_complex *)data;
+  auto *c_data_buf = (fftw_complex *)fft.data_buf;
 
   /* ===== third direction  ===== */
   FFT_TRACE(fprintf(stderr, "%d: fft_perform_back: dir 3:\n", this_node));

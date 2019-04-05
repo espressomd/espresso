@@ -34,18 +34,15 @@
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "dpd.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
-#include "ghmc.hpp"
+#include "event.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
-#include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
-#include "initialize.hpp"
-#include "lattice.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -63,6 +60,8 @@
 #include "forces.hpp"
 #include "immersed_boundaries.hpp"
 #include "npt.hpp"
+
+#include <profiler/profiler.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -101,7 +100,7 @@ int db_maxf_id = 0, db_maxv_id = 0;
 
 bool set_py_interrupt = false;
 namespace {
-volatile static std::sig_atomic_t ctrl_C = 0;
+volatile std::sig_atomic_t ctrl_C = 0;
 }
 
 /** \name Private Functions */
@@ -217,6 +216,8 @@ void integrate_ensemble_init() {
 /************************************************************/
 
 void integrate_vv(int n_steps, int reuse_forces) {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -248,23 +249,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
       1: do not recalculate forces. Mostly when reading checkpoints with forces
    */
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
+    ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     thermo_heat_up();
 
-#ifdef LB
-    transfer_momentum = 0;
-    if (lattice_switch & LATTICE_LB && this_node == 0 && n_part)
-      runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                     "included in the particle force the first time step. This "
-                     "only matters if it happens frequently during "
-                     "sampling.\n");
-#endif
-#ifdef LB_GPU
-    transfer_momentum_gpu = 0;
-    if (lattice_switch & LATTICE_LB_GPU && this_node == 0 && n_part)
-      runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                     "included in the particle force the first time step. This "
-                     "only matters if it happens frequently during "
-                     "sampling.\n");
+#if defined(LB) || defined(LB_GPU)
+    lb_lbcoupling_deactivate();
 #endif
 
     // Communication step: distribute ghost positions
@@ -302,12 +291,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
       handle_collisions();
     }
 #endif
+    ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
-
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    ghmc_init();
-#endif
 
   if (check_runtime_errors())
     return;
@@ -319,20 +304,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
   /* Integration loop */
+  ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   for (int step = 0; step < n_steps; step++) {
+    ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
       save_old_pos();
 
-#endif
-
-#ifdef GHMC
-    if (thermo_switch & THERMO_GHMC) {
-      if (step % ghmc_nmd == 0)
-        ghmc_momentum_update();
-    }
 #endif
 
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
@@ -344,11 +324,17 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
       propagate_vel();
       propagate_pos();
+
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
       if (steepest_descent_step())
         break;
     } else {
       propagate_vel_pos();
+
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
     }
 
 #ifdef BOND_CONSTRAINT
@@ -361,21 +347,13 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
-
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
 
-#ifdef LB
-    transfer_momentum = (n_part > 0);
-#endif
-#ifdef LB_GPU
-    transfer_momentum_gpu = (n_part > 0);
+#if defined(LB) || defined(LB_GPU)
+    if (n_part > 0)
+      lb_lbcoupling_activate();
 #endif
 
     // Communication step: distribute ghost positions
@@ -388,6 +366,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Propagate langevin philox rng counter
+    if (n_steps > 0) {
+      langevin_rng_counter_increment();
+    }
+
     force_calc();
 
 #ifdef VIRTUAL_SITES
@@ -417,56 +401,22 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-#ifdef LB
-      if (lattice_switch & LATTICE_LB)
-        lattice_boltzmann_update();
-
-      if (check_runtime_errors())
-        break;
-#endif
-
-#ifdef LB_GPU
-      if (this_node == 0) {
-#ifdef ELECTROKINETICS
-        if (ek_initialized) {
-          ek_integrate();
-        } else {
-#endif
-          if (lattice_switch & LATTICE_LB_GPU)
-            lattice_boltzmann_update_gpu();
-#ifdef ELECTROKINETICS
-        }
-#endif
-      }
-#endif // LB_GPU
+#if defined(LB) || defined(LB_GPU)
+      lb_lbfluid_propagate();
+      lb_lbcoupling_propagate();
+#endif // LB || LB_GPU
 
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation();
 #endif
     }
 
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
-
 #ifdef NPT
     if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))
       nptiso.p_inst_av += nptiso.p_inst;
 #endif
 
-#ifdef GHMC
-    if (thermo_switch & THERMO_GHMC) {
-      if (step % ghmc_nmd == ghmc_nmd - 1)
-        ghmc_mc();
-    }
-#endif
-
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      /* Propagate time: t = t+dt */
-      sim_time += time_step;
-
 #ifdef COLLISION_DETECTION
       handle_collisions();
 #endif
@@ -487,6 +437,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
       break;
     }
   }
+  ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
   if (virtual_sites()->need_ghost_comm_before_vel_update()) {
@@ -516,22 +467,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
-
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    ghmc_close();
-#endif
 }
 
 /************************************************************/
-
-void rescale_velocities(double scale) {
-  for (auto &p : local_cells.particles()) {
-    p.m.v[0] *= scale;
-    p.m.v[1] *= scale;
-    p.m.v[2] *= scale;
-  }
-}
 
 /* Private functions */
 /************************************************************/
@@ -689,7 +627,7 @@ void propagate_press_box_pos_and_rescale_npt() {
         }
       }
     }
-    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(box_l.data(), 3, MPI_DOUBLE, 0, comm_cart);
 
     /* fast box length update */
     grid_changed_box_l();
