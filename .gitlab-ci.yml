@@ -385,7 +385,16 @@ status_failure:
     - linux
   dependencies: []
 
-notify:
+notify_success:
+  stage: result
+  script: bash maintainer/gh_close_issue.sh
+  when: on_success
+  only:
+    - python
+  tags:
+    - linux
+
+notify_failure:
   stage: result
   script: bash maintainer/gh_create_issue.sh
   when: on_failure
@@ -393,4 +402,3 @@ notify:
     - python
   tags:
     - linux
-  dependencies: []
