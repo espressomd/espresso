@@ -53,6 +53,6 @@ print("Tune skin")
 system.cell_system.tune_skin(0.1, 4.0, 1e-1, 1000)
 print(system.cell_system.get_state())
 
-system.thermostat.set_langevin(kT=1, gamma=1)
+system.thermostat.set_langevin(kT=1, gamma=1, seed=42)
 
 visualizer.run(1)

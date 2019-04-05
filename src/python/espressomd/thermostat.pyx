@@ -101,7 +101,7 @@ cdef class Thermostat(object):
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
                 self.set_langevin(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["rng_counter_langevin"])
+                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["seed"])
             if thmst["type"] == "LB":
                 self.set_lb(
                     act_on_virtual=thmst["act_on_virtual"],
@@ -127,7 +127,7 @@ cdef class Thermostat(object):
             lang_dict["type"] = "LANGEVIN"
             lang_dict["kT"] = temperature
             lang_dict["act_on_virtual"] = thermo_virtual
-            lang_dict["rng_counter_langevin"] = langevin_get_rng_state()
+            lang_dict["seed"] = int(langevin_get_rng_state())
             IF PARTICLE_ANISOTROPY:
                 lang_dict["gamma"] = [langevin_gamma[0],
                                       langevin_gamma[1],
@@ -230,7 +230,7 @@ cdef class Thermostat(object):
         act_on_virtual : :obj:`bool`, optional
                 If true the thermostat will act on virtual sites, default is off.
         seed : :obj:`int`, required
-                Initial counter value (or seed) of the philux RNG.
+                Initial counter value (or seed) of the philox RNG.
                 Required on first activation of the langevin thermostat.
 
         """
@@ -285,12 +285,14 @@ cdef class Thermostat(object):
                     raise ValueError(
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
 
-        #Seed is required the rng is not initialized
+        #Seed is required if the rng is not initialized
         if not seed and langevin_is_seed_required():
             raise ValueError(
-                "seed has to be given as keyword argument on first activation of the thermostat")
+                "A seed has to be given as keyword argument on first activation of the thermostat")
 
         if seed:
+            utils.check_type_or_throw_except(
+                seed, 1, int, "seed must be a positive integer")
             langevin_set_rng_state(seed)
 
         global temperature

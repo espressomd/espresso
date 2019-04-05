@@ -136,7 +136,7 @@ class CollisionDetection(ut.TestCase):
 
         # Check that nothing explodes, when the particles are moved.
         # In particular for parallel simulations
-        self.s.thermostat.set_langevin(kT=0, gamma=0.01)
+        self.s.thermostat.set_langevin(kT=0, gamma=0.01, seed=42)
         self.s.part[:].v = 0.05, 0.01, 0.15
         self.s.integrator.run(3000)
         self.verify_state_after_bind_at_poc(expected_np)
@@ -364,7 +364,7 @@ class CollisionDetection(ut.TestCase):
 
         # Check that nothing explodes, when the particles are moved.
         # In particular for parallel simulations
-        self.s.thermostat.set_langevin(kT=0, gamma=0.01)
+        self.s.thermostat.set_langevin(kT=0, gamma=0.01, seed=42)
         self.s.part[:].v = 0.05, 0.01, 0.15
         self.s.integrator.run(3000)
         self.verify_state_after_glue_to_surface(expected_np)

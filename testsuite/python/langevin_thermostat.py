@@ -465,7 +465,7 @@ class LangevinThermostat(ut.TestCase):
         physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
 
         system.thermostat.set_langevin(
-            kT=0, gamma=1, gamma_rotation=1., seed=41, act_on_virtual=False)
+            kT=0, gamma=1, gamma_rotation=1., act_on_virtual=False, seed=41)
 
         system.integrator.run(0)
 
@@ -473,7 +473,7 @@ class LangevinThermostat(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
 
         system.thermostat.set_langevin(
-            kT=0, gamma=1, gamma_rotation=1., act_on_virtual=True)
+            kT=0, gamma=1, gamma_rotation=1., act_on_virtual=True, seed=41)
         system.integrator.run(0)
 
         np.testing.assert_almost_equal(np.copy(virtual.f), [-1, 0, 0])

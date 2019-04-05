@@ -164,7 +164,7 @@ inline double friction_thermV_nptiso(double p_diff) {
     Random numbers depend on 
     1. langevin_rng_counter (initialized by seed) which is increased on integration
     2. Salt (decorrelates different counter)
-    3. Particle ID (decorrelates particles)
+    3. Particle ID (decorrelates particles, gets rid of seed-per-node)
 */
 inline Vector3d v_noise(int particle_id) {
 
@@ -256,14 +256,18 @@ inline void friction_thermo_langevin(Particle *p) {
   // lab-fixed reference frame.
   if (aniso_flag) 
     velocity = convert_vector_space_to_body(*p, velocity);
-#endif
-
-  // Do the actual thermostatting
-  p->f.f = langevin_pref_friction_buf * velocity + langevin_pref_noise_buf * v_noise(p->p.identity);
-
-#ifdef PARTICLE_ANISOTROPY
+  
+  // Do the actual (anisotropic) hermostatting 
+  Vector3d noise = v_noise(p->p.identity);
+  for (int j = 0; j < 3; j++) {
+    p->f.f[j] = langevin_pref_friction_buf[j] * velocity[j] + langevin_pref_noise_buf[j] * noise[j];
+  }
+  
   if (aniso_flag) 
     p->f.f = convert_vector_body_to_space(*p, p->f.f);
+#else
+  // Do the actual (isotropic) thermostatting
+  p->f.f = langevin_pref_friction_buf * velocity + langevin_pref_noise_buf * v_noise(p->p.identity);
 #endif // PARTICLE_ANISOTROPY
 
   // printf("%d: %e %e %e %e %e %e\n",p->p.identity,
