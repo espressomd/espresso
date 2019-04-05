@@ -77,16 +77,16 @@ class LangevinThermostat(ut.TestCase):
         
         #'integrate 0' does not increase the philoc counter and should give the same force
         system.integrator.run(0)
-        force0 = system.part[0].f
+        force0 = np.copy(system.part[0].f)
         system.integrator.run(0)
-        force1 = system.part[0].f
+        force1 = np.copy(system.part[0].f)
         np.testing.assert_almost_equal(force0, force1)
         
         #'integrate 1' shoud give a different force
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.integrator.run(1)
-        force2 = system.part[0].f
+        force2 = np.copy(system.part[0].f)
         np.testing.assert_equal(np.any(np.not_equal(force1, force2)), True)
         
         #Different seed shoud give a different force
@@ -94,7 +94,7 @@ class LangevinThermostat(ut.TestCase):
         system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(1)
-        force3 = system.part[0].f
+        force3 = np.copy(system.part[0].f)
         np.testing.assert_equal(np.any(np.not_equal(force2, force3)), True)
         
         #Same seed shoud give the same force
@@ -102,12 +102,12 @@ class LangevinThermostat(ut.TestCase):
         system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         system.integrator.run(1)
-        force4 = system.part[0].f
+        force4 = np.copy(system.part[0].f)
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         system.integrator.run(1)
-        force5 = system.part[0].f
+        force5 = np.copy(system.part[0].f)
         np.testing.assert_almost_equal(force4, force5)
 
     def test_global_langevin(self):
