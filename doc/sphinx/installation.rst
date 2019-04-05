@@ -40,7 +40,7 @@ CMake
     The build system is based on CMake
 
 C++ Compiler
-    C++11 capable C++ compiler (e.g., Gcc 4.8.1 or later)
+    C++14 capable C++ compiler (e.g., gcc 5 or later)
 
 Boost
     A number of advanced C++ features used by ESPResSo is provided by Boost.
@@ -479,8 +479,6 @@ Fluid dynamics and fluid structure interaction
 -  ``ELECTROKINETICS``
 
 -  ``EK_BOUNDARIES``
-
--  ``EK_ELECTROSTATIC_COUPLING``
 
 -  ``EK_DEBUG``
 

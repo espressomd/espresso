@@ -72,16 +72,13 @@ void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
       vec[2] =
           -(c11[1] - pos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
       return;
-    } else {
-      *dist = sqrt(Utils::sqr(c21[0] - pos[0]) + Utils::sqr(c21[1] - pos[2])) -
-              m_upper_smoothing_radius;
-      vec[0] =
-          -(c21[0] - pos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
-      vec[1] = 0;
-      vec[2] =
-          -(c21[1] - pos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
-      return;
     }
+    *dist = sqrt(Utils::sqr(c21[0] - pos[0]) + Utils::sqr(c21[1] - pos[2])) -
+            m_upper_smoothing_radius;
+    vec[0] = -(c21[0] - pos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
+    vec[1] = 0;
+    vec[2] = -(c21[1] - pos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
+    return;
   }
 
   if (pos[2] > c12[1]) {
@@ -91,12 +88,11 @@ void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
       vec[0] = *dist;
       vec[1] = vec[2] = 0;
       return;
-    } else {
-      *dist = (dividing_plane() + m_pore_width / 2) - pos[0];
-      vec[0] = -*dist;
-      vec[1] = vec[2] = 0;
-      return;
     }
+    *dist = (dividing_plane() + m_pore_width / 2) - pos[0];
+    vec[0] = -*dist;
+    vec[1] = vec[2] = 0;
+    return;
   }
 
   if (pos[0] > c12[0] && pos[0] < c22[0]) {
@@ -116,15 +112,11 @@ void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
     vec[1] = 0;
     vec[2] = (c12[1] - pos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     return;
-  } else {
-    *dist = -sqrt(Utils::sqr(c22[0] - pos[0]) + Utils::sqr(c22[1] - pos[2])) +
-            m_lower_smoothing_radius;
-    vec[0] = (c22[0] - pos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
-    vec[1] = 0;
-    vec[2] = (c22[1] - pos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
-    return;
   }
-
-  return;
+  *dist = -sqrt(Utils::sqr(c22[0] - pos[0]) + Utils::sqr(c22[1] - pos[2])) +
+          m_lower_smoothing_radius;
+  vec[0] = (c22[0] - pos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
+  vec[1] = 0;
+  vec[2] = (c22[1] - pos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
 }
 } // namespace Shapes

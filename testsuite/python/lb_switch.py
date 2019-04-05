@@ -50,7 +50,7 @@ class LBSwitchActor(ut.TestCase):
             lb_fluid_2 = espressomd.lb.LBFluid(**lb_fluid_params)
 
         system.actors.add(lb_fluid_1)
-        system.thermostat.set_lb(LB_fluid=lb_fluid_1, friction=friction_1)
+        system.thermostat.set_lb(LB_fluid=lb_fluid_1, gamma=friction_1)
 
         system.integrator.run(1)
 
@@ -69,7 +69,7 @@ class LBSwitchActor(ut.TestCase):
         np.testing.assert_allclose(np.copy(system.part[0].f), 0.0)
 
         system.actors.add(lb_fluid_2)
-        system.thermostat.set_lb(LB_fluid=lb_fluid_2, friction=friction_2)
+        system.thermostat.set_lb(LB_fluid=lb_fluid_2, gamma=friction_2)
 
         for p in product(range(5), range(5), range(5)):
             np.testing.assert_allclose(

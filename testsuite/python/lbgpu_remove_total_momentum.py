@@ -51,7 +51,7 @@ class RemoveTotalMomentumTest(ut.TestCase):
 
         lbf = espressomd.lb.LBFluidGPU(
             agrid=agrid, dens=dens, visc=visc, tau=dt)
-        s.thermostat.set_lb(LB_fluid=lbf, friction=fric)
+        s.thermostat.set_lb(LB_fluid=lbf, gamma=fric)
         s.actors.add(lbf)
 
         s.integrator.run(300)

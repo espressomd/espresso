@@ -142,7 +142,7 @@ class VirtualSitesTracersCommon(object):
         ## Perform integrat[ion
         last_angle = self.compute_angle()
         for i in range(6):
-            system.integrator.run(500)
+            system.integrator.run(430)
             angle = self.compute_angle()
             self.assertLess(angle, last_angle)
             last_angle = angle
@@ -184,13 +184,14 @@ class VirtualSitesTracersCommon(object):
         system.bonded_inter.add(triStrong)
         system.part[6].add_bond((triStrong, 7, 8))
         ## Perform integration
-        system.integrator.run(6000)
+        system.integrator.run(4500)
 
         # For the cpu variant, check particle velocities
         if isinstance(self.lbf, lb.LBFluid):  # as opposed to LBFluidGPU
             for p in system.part:
                 np.testing.assert_allclose(
-                    np.copy(p.v), self.lbf.get_interpolated_velocity(p.pos),
+                    np.copy(p.v), np.copy(
+                        self.lbf.get_interpolated_velocity(p.pos)),
                    atol=2E-2)
         # get new shapes
         dist1non = np.linalg.norm(
@@ -218,8 +219,8 @@ class VirtualSitesTracersCommon(object):
         # non-bonded should move apart by the flow (control group)
         # weakly-bonded should stretch somewhat
         # strongly-bonded should basically not stretch
-        self.assertGreater(dist1non, 2)
-        self.assertAlmostEqual(dist1weak, 1, delta=0.3)
+        self.assertGreater(dist1non, 1.5)
+        self.assertAlmostEqual(dist1weak, 1, delta=0.2)
         self.assertAlmostEqual(dist1strong, 1, delta=0.03)
 
         self.assertGreater(dist2non, 2)

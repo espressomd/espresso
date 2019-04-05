@@ -25,19 +25,14 @@ cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
 from . cimport cuda_init
-from .particle_data cimport make_array_locked
 from . import cuda_init
-from globals cimport *
 from copy import deepcopy
 from . import utils
-from espressomd.utils import array_locked, is_valid_type
+from .utils import array_locked, is_valid_type
+from .utils cimport make_array_locked
 
 # Actor class
 ####################################################
-cdef class HydrodynamicInteraction(Actor):
-    def _lb_init(self):
-        raise Exception(
-            "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
 
 def _construct(cls, params):
@@ -45,19 +40,16 @@ def _construct(cls, params):
     obj._params = params
     return obj
 
-# LBFluid main class
-####################################################
-IF LB_GPU or LB:
-    cdef class LBFluid(HydrodynamicInteraction):
-        """
-        Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
+cdef class HydrodynamicInteraction(Actor):
+    def _lb_init(self):
+        raise Exception(
+            "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
-        """
+    def __reduce__(self):
+        return _construct, (self.__class__, self._params), None
 
-        def __reduce__(self):
-            return _construct, (self.__class__, self._params), None
-
-        def __getitem__(self, key):
+    def __getitem__(self, key):
+        IF LB or LB_GPU:
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
                 if len(key) == 3:
                     return LBFluidRoutines(np.array(key))
@@ -65,50 +57,52 @@ IF LB_GPU or LB:
                 raise Exception(
                     "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," % key)
 
-        # validate the given parameters on actor initialization
-        ####################################################
-        def validate_params(self):
-            default_params = self.default_params()
+    # validate the given parameters on actor initialization
+    ####################################################
+    def validate_params(self):
+        default_params = self.default_params()
 
-            utils.check_type_or_throw_except(
-                self._params["kT"], 1, float, "kT must be a number")
-            if self._params["kT"] > 0. and not self._params["seed"]:
-                raise ValueError(
-                    "seed has to be given if temperature is not 0.")
+        utils.check_type_or_throw_except(
+            self._params["kT"], 1, float, "kT must be a number")
+        if self._params["kT"] > 0. and not self._params["seed"]:
+            raise ValueError(
+                "seed has to be given if temperature is not 0.")
 
-            if self._params["dens"] == default_params["dens"]:
-                raise Exception("LB_FLUID density not set")
-            else:
-                if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
-                    raise ValueError("Density must be one positive double")
+        if self._params["dens"] == default_params["dens"]:
+            raise Exception("LB_FLUID density not set")
+        else:
+            if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
+                raise ValueError("Density must be one positive double")
 
-        # list of valid keys for parameters
-        ####################################################
-        def valid_keys(self):
-            return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
+    # list of valid keys for parameters
+    ####################################################
+    def valid_keys(self):
+        return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
-        # list of essential keys required for the fluid
-        ####################################################
-        def required_keys(self):
-            return ["dens", "agrid", "visc", "tau"]
+    # list of essential keys required for the fluid
+    ####################################################
+    def required_keys(self):
+        return ["dens", "agrid", "visc", "tau"]
 
-        # list of default parameters
-        ####################################################
-        def default_params(self):
-            return {"agrid": -1.0,
-                    "dens": -1.0,
-                    "ext_force_density": [0.0, 0.0, 0.0],
-                    "visc": -1.0,
-                    "bulk_visc": -1.0,
-                    "tau": -1.0,
-                    "seed": None,
-                    "kT": 0.}
+    # list of default parameters
+    ####################################################
+    def default_params(self):
+        return {"agrid": -1.0,
+                "dens": -1.0,
+                "ext_force_density": [0.0, 0.0, 0.0],
+                "visc": -1.0,
+                "bulk_visc": -1.0,
+                "tau": -1.0,
+                "seed": None,
+                "kT": 0.}
 
-        # function that calls wrapper functions which set the parameters at C-Level
-        ####################################################
-        def _set_lattice_switch(self):
-            lb_lbfluid_set_lattice_switch(1)
+    # function that calls wrapper functions which set the parameters at C-Level
+    ####################################################
+    def _set_lattice_switch(self):
+        raise Exception(
+            "Subclasses of HydrodynamicInteraction must define the _set_lattice_switch() method.")
 
+    IF LB or LB_GPU:
         def _set_params_in_es_core(self):
             default_params = self.default_params()
 
@@ -119,28 +113,28 @@ IF LB_GPU or LB:
             lb_lbfluid_set_kT(self._params["kT"])
 
             python_lbfluid_set_density(
-    self._params["dens"],
-     self._params["agrid"])
+        self._params["dens"],
+        self._params["agrid"])
 
             lb_lbfluid_set_tau(self._params["tau"])
 
             python_lbfluid_set_viscosity(
-    self._params["visc"],
-     self._params["agrid"],
-     self._params["tau"])
+        self._params["visc"],
+        self._params["agrid"],
+        self._params["tau"])
 
             if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
                 python_lbfluid_set_bulk_viscosity(
-    self._params["bulk_visc"],
-     self._params["agrid"],
-     self._params["tau"])
+        self._params["bulk_visc"],
+        self._params["agrid"],
+        self._params["tau"])
 
             python_lbfluid_set_agrid(self._params["agrid"])
 
             python_lbfluid_set_ext_force_density(
-    self._params["ext_force_density"],
-     self._params["agrid"],
-     self._params["tau"])
+        self._params["ext_force_density"],
+        self._params["agrid"],
+        self._params["tau"])
 
             if "gamma_odd" in self._params:
                 python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
@@ -179,6 +173,22 @@ IF LB_GPU or LB:
 
             return self._params
 
+        def set_interpolation_order(self, interpolation_order):
+            """ Set the order for the fluid interpolation scheme.
+
+            Parameters
+            ----------
+            interpolation_order : :obj:`str`
+                ``linear`` refers to linear interpolation, ``quadratic`` to quadratic interpolation.
+
+            """
+            if (interpolation_order == "linear"):
+                lb_lbinterpolation_set_interpolation_order(linear)
+            elif (interpolation_order == "quadratic"):
+                lb_lbinterpolation_set_interpolation_order(quadratic)
+            else:
+                raise ValueError("Invalid parameter")
+
         def get_interpolated_velocity(self, pos):
             """Get LB fluid velocity at specified position.
 
@@ -194,16 +204,12 @@ IF LB_GPU or LB:
 
             """
             cdef Vector3d p
-            cdef double[3] v
 
             for i in range(3):
                 p[i] = pos[i]
+            cdef Vector3d v = lb_lbinterpolation_get_interpolated_velocity_global(p) * lb_lbfluid_get_lattice_speed()
+            return make_array_locked(v)
 
-            lb_lbfluid_get_interpolated_velocity_global(p, v)
-            return v
-
-        # input/output function wrappers for whole LB fields
-        ####################################################
         def print_vtk_velocity(self, path, bb1=None, bb2=None):
             cdef vector[int] bb1_vec
             cdef vector[int] bb2_vec
@@ -232,23 +238,33 @@ IF LB_GPU or LB:
         def load_checkpoint(self, path, binary):
             lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
-        # Activate Actor
-        ####################################################
+        def _activate_method(self):
+            raise Exception(
+    "Subclasses of HydrodynamicInteraction have to implement _activate_method.") 
+
+        def _deactivate_method(self):
+            lb_lbfluid_set_lattice_switch(NONE)
+
+
+# LBFluid main class
+####################################################
+IF LB:
+    cdef class LBFluid(HydrodynamicInteraction):
+        """
+        Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
+
+        """
+
+        def _set_lattice_switch(self):
+            lb_lbfluid_set_lattice_switch(CPU)
+
         def _activate_method(self):
             self.validate_params()
             self._set_lattice_switch()
             self._set_params_in_es_core()
-            utils.handle_errors("LB fluid activation")
-            IF LB:
-                return
-            ELSE:
-                raise Exception("LB not compiled in")
-
-        def _deactivate_method(self):
-            lb_lbfluid_set_lattice_switch(0)
 
 IF LB_GPU:
-    cdef class LBFluidGPU(LBFluid):
+    cdef class LBFluidGPU(HydrodynamicInteraction):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
 
@@ -258,20 +274,16 @@ IF LB_GPU:
             lb_lbfluid_remove_total_momentum()
 
         def _set_lattice_switch(self):
-            lb_lbfluid_set_lattice_switch(2)
+            lb_lbfluid_set_lattice_switch(GPU)
 
         def _activate_method(self):
             self.validate_params()
             self._set_lattice_switch()
             self._set_params_in_es_core()
-            IF LB_GPU:
-                return
-            ELSE:
-                raise Exception("LB_GPU not compiled in")
 
         @cython.boundscheck(False)
         @cython.wraparound(False)
-        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None):
+        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None, three_point=False):
             """Calculate the fluid velocity at given positions.
 
             Parameters
@@ -295,8 +307,11 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_get_interpolated_velocity_gpu( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
-            return velocities
+            if three_point:
+                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            else:
+                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            return velocities * lb_lbfluid_get_lattice_speed()
 
 IF LB or LB_GPU:
     cdef class LBFluidRoutines(object):
@@ -313,33 +328,28 @@ IF LB or LB_GPU:
 
         property velocity:
             def __get__(self):
-                cdef Vector3d double_return
-                double_return = lb_lbnode_get_u(self.node)
-                return make_array_locked(double_return)
+                return make_array_locked(python_lbnode_get_velocity(self.node))
 
             def __set__(self, value):
-                cdef Vector3d host_velocity
+                cdef Vector3d c_velocity
                 if all(is_valid_type(v, float) for v in value) and len(value) == 3:
-                    host_velocity[0] = value[0]
-                    host_velocity[1] = value[1]
-                    host_velocity[2] = value[2]
-                    lb_lbnode_set_u(self.node, host_velocity)
+                    c_velocity[0] = value[0]
+                    c_velocity[1] = value[1]
+                    c_velocity[2] = value[2]
+                    python_lbnode_set_velocity(self.node, c_velocity)
                 else:
                     raise ValueError(
                         "Velocity has to be of shape 3 and type float.")
         property density:
             def __get__(self):
-                cdef double double_return
-                double_return = lb_lbnode_get_density(self.node)
-                return array_locked(double_return)
+                return python_lbnode_get_density(self.node)
 
             def __set__(self, value):
-                raise NotImplementedError
+                python_lbnode_set_density(self.node, value)
 
         property pi:
             def __get__(self):
-                cdef Vector6d pi
-                pi = lb_lbnode_get_pi(self.node)
+                cdef Vector6d pi = python_lbnode_get_pi(self.node)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],
                                               [pi[1], pi[2], pi[4]],
                                               [pi[3], pi[4], pi[5]]]))
@@ -349,8 +359,7 @@ IF LB or LB_GPU:
 
         property pi_neq:
             def __get__(self):
-                cdef Vector6d pi
-                pi = lb_lbnode_get_pi_neq(self.node)
+                cdef Vector6d pi = python_lbnode_get_pi_neq(self.node)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],
                                               [pi[1], pi[2], pi[4]],
                                               [pi[3], pi[4], pi[5]]]))

@@ -188,7 +188,7 @@ if(WITH_CUDA)
       find_package(HIP MODULE)
       message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
       set(CUDA 1)
-      list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier")
+      list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
 
       find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
 
@@ -214,7 +214,7 @@ if(WITH_CUDA)
         set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -Os -DNDEBUG")
         set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -G -O2")
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
-        list(APPEND CUDA_NVCC_FLAGS "-std=c++11")
+        list(APPEND CUDA_NVCC_FLAGS "-std=c++14")
         if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
           list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES")
         endif()
@@ -436,7 +436,7 @@ if(WARNINGS_ARE_ERRORS)
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
   endif()
 endif(WARNINGS_ARE_ERRORS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces")
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
 endif()
@@ -447,10 +447,6 @@ endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # disable warnings from -Wextra
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-clobbered -Wno-cast-function-type")
-endif()
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0.0" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # disable warnings from -Wextra
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers")
 endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   # disable warnings from -Wextra
@@ -509,12 +505,17 @@ endif()
 
 if(WITH_CLANG_TIDY)
   string(REGEX
-         REPLACE "^([1-9]+\\.[0-9]+).*$"
+          REPLACE "^([1-9]+)\\.[0-9]+.*$"
+          "\\1"
+          CLANG_MAJOR_VERSION
+          "${CMAKE_CXX_COMPILER_VERSION}")
+  string(REGEX
+         REPLACE "^[1-9]+\\.([0-9]+).*$"
                  "\\1"
                  CLANG_MINOR_VERSION
                  "${CMAKE_CXX_COMPILER_VERSION}")
   find_program(CLANG_TIDY_EXE
-               NAMES "clang-tidy-${CLANG_MINOR_VERSION}" "clang-tidy"
+               NAMES "clang-tidy-${CLANG_MAJOR_VERSION}.${CLANG_MINOR_VERSION}" "clang-tidy-${CLANG_MAJOR_VERSION}" "clang-tidy"
                DOC "Path to clang-tidy executable")
   if(NOT CLANG_TIDY_EXE)
     message(STATUS "clang-tidy not found.")
@@ -523,9 +524,7 @@ if(WITH_CLANG_TIDY)
     set(
       CMAKE_CXX_CLANG_TIDY
       "${CLANG_TIDY_EXE}"
-      "-checks=*,-clang-analyzer-alpha.*,-misc-unused-*,-android-*,-fuchsia-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses,-clang-analyzer-security.FloatLoopCounter,-clang-analyzer-optin.mpi.MPI-Checker,-boost-use-to-string,-hicpp-*"
-      "-header-filter=.*"
-      "-warnings-as-errors=*")
+    )
   endif()
 endif()
 

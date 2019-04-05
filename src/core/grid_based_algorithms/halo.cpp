@@ -31,23 +31,17 @@
 
 #include "debug.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lattice.hpp"
 #include "halo.hpp"
-#include "lattice.hpp"
 #include "utils.hpp"
 
 /** Primitive fieldtypes and their initializers */
 struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,
                                       0, 0,       0,       nullptr};
 
-/** Creates a fieldtype describing the data layout
- *  @param count   number of subtypes (Input)
- *  @param lengths array of lengths of the subtypes (Input)
- *  @param disps   array of displacements the subtypes (Input)
- *  @param extent  extent of the whole new fieldtype (Input)
- *  @param newtype newly created fieldtype (Input/Output)
- */
-void halo_create_fieldtype(int count, int *lengths, int *disps, int extent,
-                           Fieldtype *newtype) {
+void halo_create_fieldtype(int count, int const *const lengths,
+                           int const *const disps, int extent,
+                           Fieldtype *const newtype) {
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
 
   ntype->subtype = nullptr;
@@ -72,15 +66,8 @@ void halo_create_fieldtype(int count, int *lengths, int *disps, int extent,
   }
 }
 
-/** Creates a field vector layout
- *  @param vblocks number of vector blocks(Input)
- *  @param vstride size of strides in field vector (Input)
- *  @param vskip   displacements of strides in field vector (Input)
- *  @param oldtype fieldtype the vector is composed of (Input)
- *  @param newtype newly created fieldtype (Input/Output)
- */
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
-                              Fieldtype oldtype, Fieldtype *newtype) {
+                              Fieldtype oldtype, Fieldtype *const newtype) {
   int i;
 
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
@@ -105,7 +92,7 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip,
 }
 
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
-                               Fieldtype oldtype, Fieldtype *newtype) {
+                               Fieldtype oldtype, Fieldtype *const newtype) {
   int i;
 
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
@@ -129,10 +116,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
   }
 }
 
-/** Frees a fieldtype
- * @param ftype pointer to the type to be freed (Input)
- */
-void halo_free_fieldtype(Fieldtype *ftype) {
+void halo_free_fieldtype(Fieldtype *const ftype) {
   if ((*ftype)->count > 0) {
     free((*ftype)->lengths);
     (*ftype)->lengths = nullptr;
@@ -141,7 +125,7 @@ void halo_free_fieldtype(Fieldtype *ftype) {
 }
 
 /** Set halo region to a given value
- * @param dest pointer to the halo buffer (Input)
+ * @param[out] dest pointer to the halo buffer
  * @param value integer value to write into the halo buffer
  * @param type halo field layout description
  */
@@ -227,15 +211,10 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
   }
 }
 
-/** Preparation of the halo parallelization scheme. Sets up the
- *  necessary datastructures for \ref halo_communication
- * @param hc         halo communicator being created (Input/Output)
- * @param lattice    lattice the communication is created for (Input)
- * @param fieldtype  field layout of the lattice data (Input)
- * @param datatype   MPI datatype for the lattice data (Input)
- */
-void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
-                                Fieldtype fieldtype, MPI_Datatype datatype) {
+void prepare_halo_communication(HaloCommunicator *const hc,
+                                Lattice const *const lattice,
+                                Fieldtype fieldtype, MPI_Datatype datatype,
+                                const Vector3i &local_node_grid) {
   int k, n, dir, lr, cnt, num = 0;
   const auto grid = lattice->grid;
   const auto period = lattice->halo_grid;
@@ -292,7 +271,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
 #ifdef PARTIAL_PERIODIC
       if (!PERIODIC(dir) &&
           (boundary[2 * dir + lr] != 0 || boundary[2 * dir + 1 - lr] != 0)) {
-        if (node_grid[dir] == 1) {
+        if (local_node_grid[dir] == 1) {
           hinfo->type = HALO_OPEN;
         } else if (lr == 0) {
           if (boundary[2 * dir + lr] == 1) {
@@ -310,7 +289,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
       } else
 #endif
       {
-        if (node_grid[dir] == 1) {
+        if (local_node_grid[dir] == 1) {
           hc->halo_info[cnt].type = HALO_LOCL;
         } else {
           hc->halo_info[cnt].type = HALO_SENDRECV;
@@ -329,10 +308,7 @@ void prepare_halo_communication(HaloCommunicator *hc, Lattice *lattice,
   }
 }
 
-/** Frees datastructures associated with a halo communicator
- * @param hc halo communicator to be released
- */
-void release_halo_communication(HaloCommunicator *hc) {
+void release_halo_communication(HaloCommunicator *const hc) {
   int n;
 
   for (n = 0; n < hc->num; n++) {
@@ -342,12 +318,7 @@ void release_halo_communication(HaloCommunicator *hc) {
   free(hc->halo_info);
 }
 
-/** Perform communication according to the parallelization scheme
- *  described by the halo communicator
- * @param hc halo communicator describing the parallelization scheme
- * @param base base plane of local node
- */
-void halo_communication(HaloCommunicator *hc, char *base) {
+void halo_communication(HaloCommunicator const *const hc, char *const base) {
   int s_node, r_node;
 
   Fieldtype fieldtype;

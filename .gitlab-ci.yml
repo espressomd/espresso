@@ -83,6 +83,16 @@ maxset-python3:
     - docker
     - linux
 
+no_rotation-python3:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
+  script:
+    - export myconfig=no_rotation with_coverage=true python_version=3
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
 nocheckmaxset:
   stage: build
   script:
@@ -196,7 +206,7 @@ rocm-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export with_cuda=false test_timeout=900
+    - export with_cuda=false test_timeout=900 check_skip_long=true
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
     - export myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
@@ -214,6 +224,9 @@ ubuntu:armhf:
 
 ubuntu:i386:
   <<: *arch_definition
+  only:
+    - branches
+    - tags
 
 ubuntu:ppc64le:
   <<: *arch_definition
@@ -277,11 +290,15 @@ check_sphinx:
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   dependencies:
-  - cuda-maxset
+    - cuda-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
     - make sphinx
+  artifacts:
+    paths:
+    - build/doc/sphinx
+    expire_in: 1 week
   tags:
     - docker
     - linux
@@ -289,13 +306,17 @@ check_sphinx:
 
 check_doxygen:
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   dependencies:
-  - cuda-maxset
+    - cuda-maxset
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
     - make doxygen
+  artifacts:
+    paths:
+    - build/doc/doxygen
+    expire_in: 1 week
   tags:
     - docker
     - linux
@@ -313,13 +334,12 @@ check_with_odd_no_of_processors:
     - linux
     - cuda
 
-deploy_documentation:
+
+.deploy_base:
   stage: deploy
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:8.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   only:
     - python
-  dependencies:
-    - cuda-maxset
   before_script:
     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
     - eval $(ssh-agent -s)
@@ -328,15 +348,26 @@ deploy_documentation:
     - echo "$SSH_PRIVATE_KEY" > ${HOME}/.ssh/espresso_rsa && chmod 600 ${HOME}/.ssh/espresso_rsa
     - echo "$SSH_PUBLIC_KEY" > ${HOME}/.ssh/espresso_rsa.pub && chmod 600 ${HOME}/.ssh/espresso_rsa.pub
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
-  script:
-    - cd ${CI_PROJECT_DIR}/build && find ./ -exec touch -c -t 203901010000 {} \; && make sphinx && make doxygen && cd doc/sphinx/html &&
-      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
-    - cd ../../doxygen/html &&
-      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
   tags:
     - docker
     - linux
     - cuda
+
+deploy_sphinx_documentation:
+  extends: .deploy_base
+  dependencies:
+    - check_sphinx
+  script:
+    - cd ${CI_PROJECT_DIR}/build/doc/sphinx/html && 
+      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
+
+deploy_doxygen_documentation:
+  extends: .deploy_base
+  dependencies:
+    - check_doxygen
+  script:
+    - cd ${CI_PROJECT_DIR}/build/doc/doxygen/html &&
+      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
 
 status_success:
   stage: result
@@ -353,3 +384,21 @@ status_failure:
   tags:
     - linux
   dependencies: []
+
+notify_success:
+  stage: result
+  script: bash maintainer/gh_close_issue.sh
+  when: on_success
+  only:
+    - python
+  tags:
+    - linux
+
+notify_failure:
+  stage: result
+  script: bash maintainer/gh_create_issue.sh
+  when: on_failure
+  only:
+    - python
+  tags:
+    - linux

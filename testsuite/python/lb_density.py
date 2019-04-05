@@ -43,7 +43,7 @@ class LBMassCommon(object):
 
     """Base class of the test that holds the test logic."""
     lbf = None
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[3.0, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
@@ -51,7 +51,7 @@ class LBMassCommon(object):
         self.system.set_random_state_PRNG()
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3, friction=2.0)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3, gamma=2.0)
 
     def test_mass_conservation(self):
         self.prepare()

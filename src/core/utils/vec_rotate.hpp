@@ -27,14 +27,11 @@ void vec_rotate(const T1 &axis, double alpha, const T2 &vector, T3 &result) {
   result[2] = (a[0] * a[2] * (1 - cosa) - a[1] * sina) * vector[0] +
               (a[1] * a[2] * (1 - cosa) + a[0] * sina) * vector[1] +
               (cosa + Utils::sqr(a[2]) * (1 - cosa)) * vector[2];
-
-  return;
 }
 
 /** rotates vector around axis by alpha */
-inline ::Vector<3, double> vec_rotate(::Vector<3, double> axis, double alpha,
-                                      ::Vector<3, double> vector) {
-  ::Vector<3, double> result;
+inline ::Vector3d vec_rotate(::Vector3d axis, double alpha, ::Vector3d vector) {
+  ::Vector3d result;
   vec_rotate(axis, alpha, vector, result);
   return result;
 }

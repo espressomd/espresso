@@ -24,13 +24,10 @@ from globals cimport *
 import numpy as np
 from . cimport utils
 from .lb cimport *
-IF LB:
-    from .lb import LBFluid
-IF LB_GPU:
-    from .lb import LBFluidGPU
 if LB or LB_GPU:
-    from .lb cimport lb_lbcoupling_set_friction
-    from .lb cimport lb_lbcoupling_get_friction
+    from .lb import HydrodynamicInteraction
+    from .lb cimport lb_lbcoupling_set_gamma
+    from .lb cimport lb_lbcoupling_get_gamma
 
 
 def AssertThermostatType(*allowedthermostats):
@@ -148,7 +145,7 @@ cdef class Thermostat(object):
         IF LB:
             if thermo_switch & THERMO_LB:
                 lb_dict = {}
-                lb_dict["friction"] = lb_lbcoupling_get_friction()
+                lb_dict["gamma"] = lb_lbcoupling_get_gamma()
                 lb_dict["type"] = "LB"
                 lb_dict["act_on_virtual"] = thermo_virtual
                 lb_dict["rng_counter_fluid"] = lb_lbcoupling_get_rng_state()
@@ -205,7 +202,7 @@ cdef class Thermostat(object):
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
         IF LB or LB_GPU:
-            lb_lbcoupling_set_friction(0.0)
+            lb_lbcoupling_set_gamma(0.0)
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
@@ -362,7 +359,7 @@ cdef class Thermostat(object):
             seed=None,
             act_on_virtual=True,
             LB_fluid=None,
-                friction=0.0):
+                gamma=0.0):
             """
             Sets the LB thermostat.
 
@@ -376,27 +373,20 @@ cdef class Thermostat(object):
                  if kT > 0.
             act_on_virtual : :obj:`bool`, optional
                 If true the thermostat will act on virtual sites, default is on.
+            gamma : :obj:`float`
+                Frictional coupling constant for the MD particle coupling.
 
             """
-            valid_LB_fluid = False
-            IF LB:
-                if isinstance(LB_fluid, LBFluid):
-                    valid_LB_fluid = True
-            IF LB_GPU:
-                if isinstance(LB_fluid, LBFluidGPU):
-                    valid_LB_fluid = True
-            if not valid_LB_fluid:
+            if not isinstance(LB_fluid, HydrodynamicInteraction):
                 raise ValueError(
                     "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
-            if lb_lbfluid_get_kT() > 0. and not seed:
-                raise ValueError(
-                    "seed has to be given as keyword arg")
-
-            if not seed:
-                seed = 0
-
-            lb_lbcoupling_set_rng_state(seed)
+            if lb_lbfluid_get_kT() > 0.:
+                if not seed:
+                    raise ValueError(
+                        "seed has to be given as keyword arg")
+                else:
+                    lb_lbcoupling_set_rng_state(seed)
 
             global thermo_switch
             thermo_switch = (thermo_switch or THERMO_LB)
@@ -405,7 +395,7 @@ cdef class Thermostat(object):
             global thermo_virtual
             thermo_virtual = act_on_virtual
             mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
-            lb_lbcoupling_set_friction(friction)
+            lb_lbcoupling_set_gamma(gamma)
             return True
 
     IF NPT:

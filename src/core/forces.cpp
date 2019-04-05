@@ -37,7 +37,6 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
-#include "lattice.hpp"
 #include "short_range_loop.hpp"
 
 #include <profiler/profiler.hpp>
@@ -106,11 +105,10 @@ void force_calc() {
 #endif
   init_forces();
 
-  for (ActorList::iterator actor = forceActors.begin();
-       actor != forceActors.end(); ++actor) {
-    (*actor)->computeForces(espressoSystemInterface);
+  for (auto &forceActor : forceActors) {
+    forceActor->computeForces(espressoSystemInterface);
 #ifdef ROTATION
-    (*actor)->computeTorques(espressoSystemInterface);
+    forceActor->computeTorques(espressoSystemInterface);
 #endif
   }
 
@@ -154,14 +152,6 @@ void force_calc() {
 #endif
 
 #if defined(LB_GPU) || defined(LB)
-#ifdef LB
-  if (lattice_switch & LATTICE_LB) {
-#ifdef ENGINE
-    ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_SWIMMING);
-#endif
-  }
-#endif
   lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
 #endif
 
@@ -257,9 +247,9 @@ void calc_long_range_forces() {
     break;
   }
 
-/* If enabled, calculate electrostatics contribution from electrokinetics
- * species. */
-#ifdef EK_ELECTROSTATIC_COUPLING
+#ifdef ELECTROKINETICS
+  /* If enabled, calculate electrostatics contribution from electrokinetics
+   * species. */
   ek_calculate_electrostatic_coupling();
 #endif
 

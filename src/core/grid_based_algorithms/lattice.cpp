@@ -24,48 +24,48 @@
  *
  */
 
-#include "lattice.hpp"
+#include "grid_based_algorithms/lattice.hpp"
 
 #include "debug.hpp"
 #include "grid.hpp"
 
-int lattice_switch = LATTICE_OFF;
-
-int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
+int Lattice::init(double *agrid, double const *offset, int halo_size,
+                  size_t dim, const Vector3d &local_box,
+                  const Vector3d &myright, const Vector3d &box_length) {
   /* determine the number of local lattice nodes */
+  auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
     this->agrid[d] = agrid[d];
-    this->global_grid[d] = (int)std::round(box_l[d] / agrid[d]);
+    this->global_grid[d] = (int)std::round(box_length[d] / agrid[d]);
     this->offset[d] = offset[d];
     this->local_index_offset[d] =
         (int)ceil((my_left[d] - this->offset[d]) / this->agrid[d]);
     this->local_offset[d] =
         this->offset[d] + this->local_index_offset[d] * this->agrid[d];
-    this->grid[d] =
-        (int)ceil((my_right[d] - this->local_offset[d] - ROUND_ERROR_PREC) /
-                  this->agrid[d]);
+    this->grid[d] = (int)ceil((myright[d] - this->local_offset[d] - epsilon) /
+                              this->agrid[d]);
   }
 
   // sanity checks
   for (int dir = 0; dir < 3; dir++) {
     // check if local_box_l is compatible with lattice spacing
-    if (fabs(local_box_l[dir] - this->grid[dir] * agrid[dir]) >
-        ROUND_ERROR_PREC * box_l[dir]) {
+    if (fabs(local_box[dir] - this->grid[dir] * agrid[dir]) >
+        epsilon * box_length[dir]) {
       runtimeErrorMsg() << "Lattice spacing agrid[" << dir << "]=" << agrid[dir]
                         << " is incompatible with local_box_l[" << dir
-                        << "]=" << local_box_l[dir] << " ( box_l[" << dir
-                        << "]=" << box_l[dir] << " node_grid[" << dir
-                        << "]=" << node_grid[dir] << " )";
+                        << "]=" << local_box[dir] << " ( box_l[" << dir
+                        << "]=" << box_length[dir] << " )";
+      return ES_ERROR;
     }
   }
 
   LATTICE_TRACE(fprintf(stderr,
                         "%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) "
                         "node_neighbors (%d,%d,%d,%d,%d,%d)\n",
-                        this_node, local_box_l[0], local_box_l[1],
-                        local_box_l[2], this->grid[0], this->grid[1],
-                        this->grid[2], node_neighbors[0], node_neighbors[1],
-                        node_neighbors[2], node_neighbors[3], node_neighbors[4],
+                        this_node, local_box[0], local_box[1], local_box[2],
+                        this->grid[0], this->grid[1], this->grid[2],
+                        node_neighbors[0], node_neighbors[1], node_neighbors[2],
+                        node_neighbors[3], node_neighbors[4],
                         node_neighbors[5]));
 
   this->halo_size = halo_size;
@@ -83,21 +83,23 @@ int Lattice::init(double *agrid, double *offset, int halo_size, size_t dim) {
 }
 
 void Lattice::map_position_to_lattice(const Vector3d &pos,
-                                      index_t node_index[8],
-                                      double delta[6]) const {
-  int ind[3];
+                                      Vector<std::size_t, 8> &node_index,
+                                      Vector6d &delta, const Vector3d &myLeft,
+                                      const Vector3d &local_box) const {
+  Vector3i ind{};
+  auto const epsilon = std::numeric_limits<double>::epsilon();
 
   /* determine the elementary lattice cell containing the particle
      and the relative position of the particle in this cell */
   for (int dir = 0; dir < 3; dir++) {
-    const double lpos = pos[dir] - my_left[dir];
-    const double rel = lpos / this->agrid[dir] + 0.5; // +1 for halo offset
-    ind[dir] = (int)floor(rel);
+    auto const lpos = pos[dir] - myLeft[dir];
+    auto const rel = lpos / this->agrid[dir] + 0.5; // +1 for halo offset
+    ind[dir] = static_cast<int>(floor(rel));
 
     /* surrounding elementary cell is not completely inside this box,
        adjust if this is due to round off errors */
     if (ind[dir] < 0) {
-      if (fabs(rel) < ROUND_ERROR_PREC) {
+      if (fabs(rel) < epsilon) {
         ind[dir] = 0; // TODO
       } else {
         fprintf(stderr,
@@ -106,7 +108,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
                 this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
       }
     } else if (ind[dir] > this->grid[dir]) {
-      if (lpos - local_box_l[dir] < ROUND_ERROR_PREC * local_box_l[dir])
+      if (lpos - local_box[dir] < epsilon * local_box[dir])
         ind[dir] = this->grid[dir];
       else
         fprintf(stderr,
@@ -118,8 +120,7 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
     delta[3 + dir] = rel - ind[dir]; // delta_x/a
     delta[dir] = 1.0 - delta[3 + dir];
   }
-
-  node_index[0] = get_linear_index(ind[0], ind[1], ind[2], this->halo_grid);
+  node_index[0] = get_linear_index(ind, this->halo_grid);
   node_index[1] = node_index[0] + 1;
   node_index[2] = node_index[0] + this->halo_grid[0];
   node_index[3] = node_index[0] + this->halo_grid[0] + 1;
@@ -131,44 +132,36 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
 
 /********************** static Functions **********************/
 
-void Lattice::map_position_to_lattice_global(Vector3d &pos, Vector3i &ind,
-                                             double delta[6],
+void Lattice::map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
+                                             Vector6d &delta,
                                              double tmp_agrid) {
-  // not sure why I don't have access to agrid here so I make a temp var and
-  // pass it to this function
-  int i;
-  double rel[3];
-  // fold the position onto the local box, note here ind is used as a dummy
-  // variable
-  for (i = 0; i < 3; i++) {
-    pos[i] = pos[i] - 0.5 * tmp_agrid;
-  }
+  Vector3d rel{};
+  Vector3d local_pos = pos;
+  local_pos = pos - Vector3d::broadcast(0.5 * tmp_agrid);
 
-  fold_position(pos, ind);
+  fold_position(local_pos, ind);
 
-  // convert the position into lower left grid point
-  for (i = 0; i < 3; i++) {
-    rel[i] = (pos[i]) / tmp_agrid;
-  }
-
-  // calculate the index of the position
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
+    // convert the position into lower left grid point
+    rel[i] = (local_pos[i]) / tmp_agrid;
+    // calculate the index of the position
     ind[i] = floor(rel[i]);
-  }
-
-  // calculate the linear interpolation weighting
-  for (i = 0; i < 3; i++) {
+    // calculate the linear interpolation weighting
     delta[3 + i] = rel[i] - ind[i];
     delta[i] = 1 - delta[3 + i];
   }
 }
 
-int Lattice::map_lattice_to_node(Vector3i &ind) const {
+int Lattice::map_lattice_to_node(Vector3i &ind,
+                                 const Vector3i &local_node_grid) const {
   /* determine coordinates in node_grid */
   Vector3i grid;
-  grid[0] = (int)floor(ind[0] * this->agrid[0] * box_l_i[0] * node_grid[0]);
-  grid[1] = (int)floor(ind[1] * this->agrid[1] * box_l_i[1] * node_grid[1]);
-  grid[2] = (int)floor(ind[2] * this->agrid[2] * box_l_i[2] * node_grid[2]);
+  grid[0] =
+      (int)floor(ind[0] * this->agrid[0] * box_l_i[0] * local_node_grid[0]);
+  grid[1] =
+      (int)floor(ind[1] * this->agrid[1] * box_l_i[1] * local_node_grid[1]);
+  grid[2] =
+      (int)floor(ind[2] * this->agrid[2] * box_l_i[2] * local_node_grid[2]);
 
   /* change from global to local lattice coordinates */
   ind[0] = ind[0] - grid[0] * this->grid[0] + this->halo_size;

@@ -46,7 +46,7 @@ class LBGPUViscous(ut.TestCase):
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
-            friction=self.friction)
+            gamma=self.friction)
         self.system.part.add(
             pos=[0.5 * self.agrid] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid

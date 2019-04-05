@@ -25,6 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Observables {
 
+/** Extract particle positions.
+ *  For \f$n\f$ particles, return \f$3 n\f$ positions ordered as
+ *  \f$(x_1, y_1, z_1, \dots, x_n, y_n, z_n)\f$.
+ */
 class ParticlePositions : public PidObservable {
 public:
   std::vector<double> operator()(PartCfg &partCfg) const override {
@@ -40,5 +44,4 @@ public:
 };
 
 } // Namespace Observables
-
 #endif

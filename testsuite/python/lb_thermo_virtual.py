@@ -55,7 +55,7 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
         s.thermostat.set_lb(
             LB_fluid=lb_fluid,
             act_on_virtual=False,
-            friction=1.0)
+            gamma=1.0)
 
         s.integrator.run(1)
 
@@ -71,7 +71,7 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
         lb_fluid = fluid_class(
             agrid=1.0, dens=1.0, visc=1.0, tau=1.0)
         s.actors.add(lb_fluid)
-        s.thermostat.set_lb(LB_fluid=lb_fluid, friction=1.0)
+        s.thermostat.set_lb(LB_fluid=lb_fluid, gamma=1.0)
         virtual.pos = physical.pos
         virtual.v = 1, 0, 0
         physical.v = 1, 0, 0

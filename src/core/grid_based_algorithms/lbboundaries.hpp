@@ -50,7 +50,6 @@ using LB_Fluid = std::array<Utils::Span<double>, 19>;
 
 extern std::vector<std::shared_ptr<LBBoundary>> lbboundaries;
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-/*@}*/
 
 /** Initializes the constrains in the system.
  *  This function determines the lattice sited which belong to boundaries

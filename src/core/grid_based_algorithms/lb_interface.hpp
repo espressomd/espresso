@@ -2,8 +2,15 @@
 #define CORE_LB_INTERFACE
 
 #include "config.hpp"
-#include "lattice.hpp"
+#include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
 #include "utils/Vector.hpp"
+
+/** @brief LB implementation currently active. */
+enum class ActiveLB { NONE, CPU, GPU };
+
+/** @brief Switch determining the type of lattice dynamics. */
+extern ActiveLB lattice_switch;
 
 #if defined(LB) || defined(LB_GPU)
 
@@ -42,34 +49,19 @@ uint64_t lb_lbfluid_get_rng_state();
 void lb_lbfluid_set_rng_state(uint64_t counter);
 
 /**
- * @brief Calculates the fluid velocity at a given position of the
- * lattice.
- * @note It can lead to undefined behaviour if the
- * position is not within the local lattice. */
-const Vector3d lb_lbfluid_get_interpolated_velocity(const Vector3d &p);
-
-/**
- * @brief Add a force density to the fluid at the given position.
- */
-void lb_lbfluid_add_force_density(const Vector3d &p,
-                                  const Vector3d &force_density);
-
-/**
  * @brief Return the instance of the Lattice within the LB method.
  */
 const Lattice &lb_lbfluid_get_lattice();
 
 /**
- * @brief Get the global variable lattice_switch which defines wether NONE, CPU
- * or GPU LB is active.
+ * @brief Get the global variable @ref lattice_switch.
  */
-int lb_lbfluid_get_lattice_switch();
+ActiveLB lb_lbfluid_get_lattice_switch();
 
 /**
- * @brief Set the global variable lattice_switch which defines wether NONE, CPU
- * or GPU LB is active.
+ * @brief Set the global variable @ref lattice_switch.
  */
-void lb_lbfluid_set_lattice_switch(int local_lattice_switch);
+void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 
 /**
  * @brief Set the LB time step.
@@ -109,8 +101,7 @@ void lb_lbfluid_set_agrid(double p_agrid);
 /**
  * @brief Set the external force density acting on the LB fluid.
  */
-void lb_lbfluid_set_ext_force_density(int component,
-                                      const Vector3d &force_density);
+void lb_lbfluid_set_ext_force_density(const Vector3d &force_density);
 
 /**
  * @brief Set the LB fluid thermal energy.
@@ -130,12 +121,12 @@ void lb_lbnode_set_density(const Vector3i &ind, double density);
 /**
  * @brief Set the LB fluid velocity for a single node.
  */
-void lb_lbnode_set_u(const Vector3i &ind, const Vector3d &u);
+void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u);
 
 /**
  * @brief Set the LB fluid populations for a single node.
  */
-void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &pop);
+void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &pop);
 
 /**
  * @brief Get the LB time step.
@@ -178,6 +169,11 @@ const Vector3d lb_lbfluid_get_ext_force_density();
 double lb_lbfluid_get_kT();
 
 /**
+ * @brief Get the lattice speed (agrid/tau).
+ */
+double lb_lbfluid_get_lattice_speed();
+
+/**
  * @brief Get the LB fluid density for a single node.
  */
 double lb_lbnode_get_density(const Vector3i &ind);
@@ -185,9 +181,9 @@ double lb_lbnode_get_density(const Vector3i &ind);
 /**
  * @brief Get the LB fluid velocity for a single node.
  */
-const Vector3d lb_lbnode_get_u(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind);
+const Vector3d lb_lbnode_get_velocity(const Vector3i &ind);
+const Vector6d lb_lbnode_get_pi(const Vector3i &ind);
+const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind);
 
 /**
  * @brief Get the LB fluid boundary bool for a single node.
@@ -197,7 +193,7 @@ int lb_lbnode_get_boundary(const Vector3i &ind);
 /**
  * @brief Get the LB fluid populations for a single node.
  */
-const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind);
+const Vector19d lb_lbnode_get_pop(const Vector3i &ind);
 
 /* IO routines */
 void lb_lbfluid_print_vtk_boundary(const std::string &filename);
@@ -216,13 +212,9 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
  */
 bool lb_lbnode_is_index_valid(const Vector3i &ind);
 
-/** Calculate the fluid velocity at a given position of the lattice.
- *  Note that it can lead to undefined behaviour if the
- *  position is not within the local lattice. This version of the function
- *  can be called without the position needing to be on the local processor.
- */
-int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v);
-void lb_lbfluid_on_lb_params_change(int field);
+void lb_lbfluid_on_lb_params_change(LBParam field);
+
+Vector3d lb_lbfluid_calc_fluid_momentum();
 #endif
 
 #endif
