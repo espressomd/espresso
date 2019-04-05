@@ -34,9 +34,9 @@
 
 #include "utils/Vector.hpp"
 
-#include <Random123/philox.h>
 #include "utils/Counter.hpp"
 #include "utils/uniform.hpp"
+#include <Random123/philox.h>
 
 #include <cmath>
 #include <tuple>
@@ -159,49 +159,49 @@ inline double friction_thermV_nptiso(double p_diff) {
 #endif
 
 /** Return a random 3d vector with the philox thermostat.
-    Random numbers depend on 
-    1. langevin_rng_counter (initialized by seed) which is increased on integration
+    Random numbers depend on
+    1. langevin_rng_counter (initialized by seed) which is increased on
+   integration
     2. Salt (decorrelates different counter)
     3. Particle ID (decorrelates particles, gets rid of seed-per-node)
 */
 inline Vector3d v_noise(int particle_id) {
 
-      using rng_type = r123::Philox4x64;
-      using ctr_type = rng_type::ctr_type;
-      using key_type = rng_type::key_type;
+  using rng_type = r123::Philox4x64;
+  using ctr_type = rng_type::ctr_type;
+  using key_type = rng_type::key_type;
 
-      ctr_type c{{langevin_rng_counter.value(),
-                  static_cast<uint64_t>(RNGSalt::LANGEVIN)}};
+  ctr_type c{
+      {langevin_rng_counter.value(), static_cast<uint64_t>(RNGSalt::LANGEVIN)}};
 
-      auto f_random = [&c](int id) -> Vector3d {
-        key_type k{{static_cast<uint32_t>(id)}};
+  auto f_random = [&c](int id) -> Vector3d {
+    key_type k{{static_cast<uint32_t>(id)}};
 
-        auto const noise = rng_type{}(c, k);
+    auto const noise = rng_type{}(c, k);
 
-        using Utils::uniform;
-        return Vector3d{uniform(noise[0]), uniform(noise[1]),
-                        uniform(noise[2])} -
-               Vector3d::broadcast(0.5);
-      };
-      
-      return f_random(particle_id);
+    using Utils::uniform;
+    return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
+           Vector3d::broadcast(0.5);
+  };
+
+  return f_random(particle_id);
 }
 
 /** Langevin thermostat core function.
     Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).
-    Collects the langevin parameters kt, gamma (different for LANGEVIN_PER_PARTICLE).
-    Applies the noise and friction term.
+    Collects the langevin parameters kt, gamma (different for
+   LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
 */
 
 inline void friction_thermo_langevin(Particle *p) {
 
-  //Eary exit for virtual particles without thermostat
+  // Eary exit for virtual particles without thermostat
   if (p->p.is_virtual && !thermo_virtual) {
-      p->f.f = Vector3d{};
+    p->f.f = Vector3d{};
     return;
   }
 
-  // Determine prefactors for the friction (pref1) and the noise (pref2) term 
+  // Determine prefactors for the friction (pref1) and the noise (pref2) term
   extern Thermostat::GammaType langevin_pref1;
   extern Thermostat::GammaType langevin_pref2;
   // first, set defaults
@@ -246,26 +246,29 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check
-  auto aniso_flag = (langevin_pref_friction_buf[0] != langevin_pref_friction_buf[1]) ||
-                    (langevin_pref_friction_buf[1] != langevin_pref_friction_buf[2]) ||
-                    (langevin_pref_noise_buf[0] != langevin_pref_noise_buf[1]) ||
-                    (langevin_pref_noise_buf[1] != langevin_pref_noise_buf[2]);
+  auto aniso_flag =
+      (langevin_pref_friction_buf[0] != langevin_pref_friction_buf[1]) ||
+      (langevin_pref_friction_buf[1] != langevin_pref_friction_buf[2]) ||
+      (langevin_pref_noise_buf[0] != langevin_pref_noise_buf[1]) ||
+      (langevin_pref_noise_buf[1] != langevin_pref_noise_buf[2]);
   // In case of anisotropic particle: body-fixed reference frame. Otherwise:
   // lab-fixed reference frame.
-  if (aniso_flag) 
+  if (aniso_flag)
     velocity = convert_vector_space_to_body(*p, velocity);
-  
-  // Do the actual (anisotropic) hermostatting 
+
+  // Do the actual (anisotropic) hermostatting
   Vector3d noise = v_noise(p->p.identity);
   for (int j = 0; j < 3; j++) {
-    p->f.f[j] = langevin_pref_friction_buf[j] * velocity[j] + langevin_pref_noise_buf[j] * noise[j];
+    p->f.f[j] = langevin_pref_friction_buf[j] * velocity[j] +
+                langevin_pref_noise_buf[j] * noise[j];
   }
-  
-  if (aniso_flag) 
+
+  if (aniso_flag)
     p->f.f = convert_vector_body_to_space(*p, p->f.f);
 #else
   // Do the actual (isotropic) thermostatting
-  p->f.f = langevin_pref_friction_buf * velocity + langevin_pref_noise_buf * v_noise(p->p.identity);
+  p->f.f = langevin_pref_friction_buf * velocity +
+           langevin_pref_noise_buf * v_noise(p->p.identity);
 #endif // PARTICLE_ANISOTROPY
 
   // printf("%d: %e %e %e %e %e %e\n",p->p.identity,
@@ -312,7 +315,7 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
     // No particle-specific gamma, but is there particle-specific temperature
     if (p->p.T >= 0.)
       langevin_pref_noise_buf = sqrt(langevin_temp_coeff * p->p.T *
-                                 langevin_gamma_rotation / time_step);
+                                     langevin_gamma_rotation / time_step);
     else
       // Default values for both
       langevin_pref_noise_buf = langevin_pref2_rotation;

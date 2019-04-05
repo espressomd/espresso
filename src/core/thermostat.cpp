@@ -28,8 +28,8 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "npt.hpp"
 
-#include <boost/mpi.hpp>
 #include "utils/u32_to_u64.hpp"
+#include <boost/mpi.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -56,7 +56,6 @@ Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }
 } // namespace
 
 /* LANGEVIN THERMOSTAT */
-
 
 /* Langevin friction coefficient gamma for translation. */
 GammaType langevin_gamma = sentinel(GammaType{});
@@ -90,23 +89,21 @@ void mpi_bcast_langevin_rng_counter_slave(int, int) {
 }
 
 void langevin_rng_counter_increment() {
-    if (thermo_switch & THERMO_LANGEVIN)
-        langevin_rng_counter.increment();
+  if (thermo_switch & THERMO_LANGEVIN)
+    langevin_rng_counter.increment();
 }
 
 bool langevin_is_seed_required() {
-    /* Seed is required if rng is not initialized (value == initial_value) */
-    return langevin_rng_counter.initial_value() == langevin_rng_counter.value();
+  /* Seed is required if rng is not initialized (value == initial_value) */
+  return langevin_rng_counter.initial_value() == langevin_rng_counter.value();
 }
 
 void langevin_set_rng_state(uint64_t counter) {
-    langevin_rng_counter = Utils::Counter<uint64_t>(counter);
-    mpi_bcast_langevin_rng_counter();
+  langevin_rng_counter = Utils::Counter<uint64_t>(counter);
+  mpi_bcast_langevin_rng_counter();
 }
 
-uint64_t langevin_get_rng_state() {
-  return langevin_rng_counter.value();
-}
+uint64_t langevin_get_rng_state() { return langevin_rng_counter.value(); }
 
 void thermo_init_langevin() {
   langevin_pref1 = -langevin_gamma;

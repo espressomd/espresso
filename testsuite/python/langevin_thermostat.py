@@ -69,7 +69,7 @@ class LangevinThermostat(ut.TestCase):
         system = self.system
         system.time_step = 0.01
         system.part.clear()
-        system.part.add(pos=[0,0,0])
+        system.part.add(pos=[0, 0, 0])
         
         kT = 1.1
         gamma = 3.5
@@ -84,27 +84,27 @@ class LangevinThermostat(ut.TestCase):
         
         #'integrate 1' shoud give a different force
         system.part.clear()
-        system.part.add(pos=[0,0,0])
+        system.part.add(pos=[0, 0, 0])
         system.integrator.run(1)
         force2 = system.part[0].f
-        np.testing.assert_equal(np.any(np.not_equal(force1,force2)), True)
+        np.testing.assert_equal(np.any(np.not_equal(force1, force2)), True)
         
         #Different seed shoud give a different force
         system.part.clear()
-        system.part.add(pos=[0,0,0])
+        system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(1)
         force3 = system.part[0].f
-        np.testing.assert_equal(np.any(np.not_equal(force2,force3)), True)
+        np.testing.assert_equal(np.any(np.not_equal(force2, force3)), True)
         
         #Same seed shoud give the same force
         system.part.clear()
-        system.part.add(pos=[0,0,0])
+        system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         system.integrator.run(1)
         force4 = system.part[0].f
         system.part.clear()
-        system.part.add(pos=[0,0,0])
+        system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         system.integrator.run(1)
         force5 = system.part[0].f
@@ -137,9 +137,9 @@ class LangevinThermostat(ut.TestCase):
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
             system.integrator.run(1)
-            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
+            v_stored[i * N:(i + 1) * N,:] = system.part[:].v
             if espressomd.has_features("ROTATION"):
-                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
+                omega_stored[i * N:(i + 1) * N,:] = system.part[:].omega_body
 
         v_minmax = 5
         bins = 4

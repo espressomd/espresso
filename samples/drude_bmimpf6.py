@@ -250,7 +250,10 @@ print("After:", system.analysis.energy()["total"])
 
 #THERMOSTAT
 if not args.drude:
-    system.thermostat.set_langevin(kT=temperature_com, gamma=gamma_com, seed=42)
+    system.thermostat.set_langevin(
+        kT=temperature_com,
+        gamma=gamma_com,
+     seed=42)
 
 #ELECTROSTATICS
 if args.gpup3m:

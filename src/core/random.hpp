@@ -107,7 +107,6 @@ void init_random_seed(int seed);
 
 } // namespace Random
 
-
 /**
  * @brief Draws a random real number from the uniform distribution in the range
  * [0,1)

@@ -292,7 +292,6 @@ int mpi_iccp3m_init();
 /** Part of MDLC */
 void mpi_bcast_max_mu();
 
-
 /** Galilei and other: set all particle velocities and rotational inertias to
  *                     zero.
  *                     set all forces and torques on the particles to zero
