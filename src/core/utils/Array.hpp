@@ -1,14 +1,10 @@
 #ifndef UTILS_ARRAY_HPP
 #define UTILS_ARRAY_HPP
 
+#include "device_qualifier.hpp"
+
 #include <boost/serialization/access.hpp>
 #include <cstddef>
-
-#if defined(__CUDACC__)
-#define DEVICE_QUALIFIER __host__ __device__
-#else
-#define DEVICE_QUALIFIER
-#endif
 
 namespace Utils {
 
@@ -135,5 +131,4 @@ private:
 };
 
 } // namespace Utils
-#undef DEVICE_QUALIFIER
 #endif

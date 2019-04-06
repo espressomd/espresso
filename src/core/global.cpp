@@ -27,9 +27,9 @@
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "initialize.hpp"
 #include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -239,13 +239,15 @@ void check_global_consistency() {
 
 /*************** REQ_BCAST_PAR ************/
 
-void mpi_bcast_parameter_slave(int, int i) {
+void mpi_bcast_parameter_slave(int i) {
   common_bcast_parameter(i);
   check_runtime_errors();
 }
 
+REGISTER_CALLBACK(mpi_bcast_parameter_slave)
+
 int mpi_bcast_parameter(int i) {
-  mpi_call(mpi_bcast_parameter_slave, -1, i);
+  Communication::mpiCallbacks().call(mpi_bcast_parameter_slave, i);
 
   common_bcast_parameter(i);
 

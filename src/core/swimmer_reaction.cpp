@@ -26,9 +26,9 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
 #include "utils.hpp"
@@ -264,10 +264,10 @@ void integrate_reaction_swap() {
     on_observable_calc();
 
     // Iterate over all the local cells
-    for (auto c = rand_cells.begin(); c != rand_cells.end(); c++) {
+    for (int &rand_cell : rand_cells) {
       // Take into account only those cell neighborhoods for which
       // the central cell contains a catalyzer particle
-      cell = local_cells.cell[*c];
+      cell = local_cells.cell[rand_cell];
       p_local = cell->part;
       np = cell->n;
 
@@ -282,20 +282,20 @@ void integrate_reaction_swap() {
       std::shuffle(catalyzers.begin(), catalyzers.end(), rng);
 
       // Loop cell neighbors
-      for (int n = 0; n < cells.size(); n++) {
-        cell = &cells[n];
+      for (auto &n : cells) {
+        cell = &n;
         p_neigh = cell->part;
         np = cell->n;
 
         // We loop over all the catalyzer particles
-        for (auto id = catalyzers.begin(); id != catalyzers.end(); id++) {
+        for (int &catalyzer : catalyzers) {
           reactants.clear();
           products.clear();
 
           // Particle list loop
           for (int i = 0; i < np; i++) {
             // Get the distance between a catalyst and another particle
-            get_mi_vector(vec21, p_local[*id].r.p, p_neigh[i].r.p);
+            get_mi_vector(vec21, p_local[catalyzer].r.p, p_neigh[i].r.p);
             dist2 = sqrlen(vec21);
 
             // Check if the distance is within the reaction range and
@@ -307,14 +307,14 @@ void integrate_reaction_swap() {
               // correct half space, append it to the lists of viable
               // reaction candidates
               if (p_neigh[i].p.type == reaction.reactant_type &&
-                  in_lower_half_space(p_local[*id], p_neigh[i])) {
+                  in_lower_half_space(p_local[catalyzer], p_neigh[i])) {
                 reactants.push_back(i);
 #ifdef ELECTROSTATICS
                 reactant_q = p_neigh[i].p.q;
 #endif // ELECTROSTATICS
               }
               if (p_neigh[i].p.type == reaction.product_type &&
-                  !in_lower_half_space(p_local[*id], p_neigh[i]))
+                  !in_lower_half_space(p_local[catalyzer], p_neigh[i]))
                 products.push_back(i);
 #ifdef ELECTROSTATICS
               product_q = p_neigh[i].p.q;
@@ -323,7 +323,7 @@ void integrate_reaction_swap() {
           }
 
           // If reactants and products were found, perform the reaction
-          if (reactants.size() > 0 && products.size() > 0) {
+          if (!reactants.empty() && !products.empty()) {
             // There cannot be more reactions than the minimum of
             // the number of reactants and products.  Hence we need
             // to determine which number is smaller and also count
@@ -371,8 +371,8 @@ void integrate_reaction_swap() {
 
     // Apply the changes to the tagged particles.  Therefore, again
     // loop over all cells
-    for (auto c = rand_cells.begin(); c != rand_cells.end(); c++) {
-      cell = local_cells.cell[*c];
+    for (int &rand_cell : rand_cells) {
+      cell = local_cells.cell[rand_cell];
       p_local = cell->part;
       np = cell->n;
       // Particle list loop

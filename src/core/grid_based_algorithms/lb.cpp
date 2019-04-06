@@ -258,7 +258,7 @@ void lb_reinit_parameters() {
         this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
         lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
   } else {
-    for (int i = 0; i < lbmodel.n_veloc; i++)
+    for (int i = 0; i < LB_Model<>::n_veloc; i++)
       lbpar.phi[i] = 0.0;
   }
 }
@@ -582,30 +582,24 @@ void lb_sanity_checks() {
 
 uint64_t lb_fluid_get_rng_state() { return rng_counter_fluid.value(); }
 
-void lb_fluid_set_rng_state(uint64_t counter) {
-  uint32_t high, low;
-  std::tie(high, low) = Utils::u64_to_u32(counter);
-  mpi_call(mpi_set_lb_fluid_counter, high, low);
-
+void mpi_set_lb_fluid_counter(uint64_t counter) {
   rng_counter_fluid = Utils::Counter<uint64_t>(counter);
 }
-#endif
 
-void mpi_set_lb_fluid_counter(int high, int low) {
-#ifdef LB
-  rng_counter_fluid = Utils::Counter<uint64_t>(Utils::u32_to_u64(
-      static_cast<uint32_t>(high), static_cast<uint32_t>(low)));
-#endif
+REGISTER_CALLBACK(mpi_set_lb_fluid_counter)
+
+void lb_fluid_set_rng_state(uint64_t counter) {
+  mpi_call(mpi_set_lb_fluid_counter, counter);
+  mpi_set_lb_fluid_counter(counter);
 }
 
-#ifdef LB
 /***********************************************************************/
 
 /** (Re-)allocate memory for the fluid and initialize pointers. */
 void lb_realloc_fluid() {
   LB_TRACE(printf("reallocating fluid\n"));
   const std::array<int, 2> size = {
-      {lbmodel.n_veloc, lblattice.halo_grid_volume}};
+      {LB_Model<>::n_veloc, lblattice.halo_grid_volume}};
 
   lbfluid_a.resize(size);
   lbfluid_b.resize(size);
@@ -659,12 +653,12 @@ void lb_prepare_communication() {
     MPI_Aint lower;
     MPI_Aint extent;
     MPI_Type_get_extent(MPI_DOUBLE, &lower, &extent);
-    MPI_Type_create_hvector(lbmodel.n_veloc, 1,
+    MPI_Type_create_hvector(LB_Model<>::n_veloc, 1,
                             lblattice.halo_grid_volume * extent,
                             comm.halo_info[i].datatype, &hinfo->datatype);
     MPI_Type_commit(&hinfo->datatype);
 
-    halo_create_field_hvector(lbmodel.n_veloc, 1,
+    halo_create_field_hvector(LB_Model<>::n_veloc, 1,
                               lblattice.halo_grid_volume * sizeof(double),
                               comm.halo_info[i].fieldtype, &hinfo->fieldtype);
   }
@@ -841,9 +835,8 @@ lb_thermalize_modes(Lattice::index_t index, const r123::Philox4x64::ctr_type &c,
              modes[16] + pref * lbpar.phi[16] * rng(12),
              modes[17] + pref * lbpar.phi[17] * rng(13),
              modes[18] + pref * lbpar.phi[18] * rng(14)}};
-  } else {
-    return modes;
   }
+  return modes;
 }
 
 template <typename T>
@@ -1040,7 +1033,7 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
  */
 void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   Lattice::index_t index;
-  int i, x, y, z, s_node, r_node, count = lbmodel.n_veloc;
+  int i, x, y, z, s_node, r_node, count = LB_Model<>::n_veloc;
   double *s_buffer, *r_buffer;
   MPI_Status status[2];
 
@@ -1051,7 +1044,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
     for (z = 0; z < lblattice.halo_grid[2]; ++z) {
       for (y = 0; y < lblattice.halo_grid[1]; ++y) {
         index = get_linear_index(0, y, z, lblattice.halo_grid);
-        for (i = 0; i < lbmodel.n_veloc; i++)
+        for (i = 0; i < LB_Model<>::n_veloc; i++)
           s_buffer[i] = lbfluid[i][index];
 
         s_node = node_neighbors[1];
@@ -1062,13 +1055,13 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
                        comm_cart, status);
           index =
               get_linear_index(lblattice.grid[0], y, z, lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
           index =
               get_linear_index(lblattice.grid[0], y, z, lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
             std::cerr << "buffers differ in dir=" << 0 << " at index=" << index
@@ -1078,7 +1071,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
 
         index =
             get_linear_index(lblattice.grid[0] + 1, y, z, lblattice.halo_grid);
-        for (i = 0; i < lbmodel.n_veloc; i++)
+        for (i = 0; i < LB_Model<>::n_veloc; i++)
           s_buffer[i] = lbfluid[i][index];
 
         s_node = node_neighbors[0];
@@ -1088,12 +1081,12 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
                        r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
                        comm_cart, status);
           index = get_linear_index(1, y, z, lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
           index = get_linear_index(1, y, z, lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
             std::cerr << "buffers differ in dir=0 at index=" << index
@@ -1108,7 +1101,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
     for (z = 0; z < lblattice.halo_grid[2]; ++z) {
       for (x = 0; x < lblattice.halo_grid[0]; ++x) {
         index = get_linear_index(x, 0, z, lblattice.halo_grid);
-        for (i = 0; i < lbmodel.n_veloc; i++)
+        for (i = 0; i < LB_Model<>::n_veloc; i++)
           s_buffer[i] = lbfluid[i][index];
 
         s_node = node_neighbors[3];
@@ -1119,13 +1112,13 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
                        comm_cart, status);
           index =
               get_linear_index(x, lblattice.grid[1], z, lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
           index =
               get_linear_index(x, lblattice.grid[1], z, lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
             std::cerr << "buffers differ in dir=1 at index=" << index
@@ -1136,7 +1129,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
       for (x = 0; x < lblattice.halo_grid[0]; ++x) {
         index =
             get_linear_index(x, lblattice.grid[1] + 1, z, lblattice.halo_grid);
-        for (i = 0; i < lbmodel.n_veloc; i++)
+        for (i = 0; i < LB_Model<>::n_veloc; i++)
           s_buffer[i] = lbfluid[i][index];
 
         s_node = node_neighbors[2];
@@ -1146,12 +1139,12 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
                        r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
                        comm_cart, status);
           index = get_linear_index(x, 1, z, lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
           index = get_linear_index(x, 1, z, lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
             std::cerr << "buffers differ in dir=1 at index=" << index
@@ -1166,7 +1159,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
     for (y = 0; y < lblattice.halo_grid[1]; ++y) {
       for (x = 0; x < lblattice.halo_grid[0]; ++x) {
         index = get_linear_index(x, y, 0, lblattice.halo_grid);
-        for (i = 0; i < lbmodel.n_veloc; i++)
+        for (i = 0; i < LB_Model<>::n_veloc; i++)
           s_buffer[i] = lbfluid[i][index];
 
         s_node = node_neighbors[5];
@@ -1177,13 +1170,13 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
                        comm_cart, status);
           index =
               get_linear_index(x, y, lblattice.grid[2], lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
           index =
               get_linear_index(x, y, lblattice.grid[2], lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
             std::cerr << "buffers differ in dir=2 at index=" << index
@@ -1197,7 +1190,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
       for (x = 0; x < lblattice.halo_grid[0]; ++x) {
         index =
             get_linear_index(x, y, lblattice.grid[2] + 1, lblattice.halo_grid);
-        for (i = 0; i < lbmodel.n_veloc; i++)
+        for (i = 0; i < LB_Model<>::n_veloc; i++)
           s_buffer[i] = lbfluid[i][index];
 
         s_node = node_neighbors[4];
@@ -1207,12 +1200,12 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
                        r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
                        comm_cart, status);
           index = get_linear_index(x, y, 1, lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
           index = get_linear_index(x, y, 1, lblattice.halo_grid);
-          for (i = 0; i < lbmodel.n_veloc; i++)
+          for (i = 0; i < LB_Model<>::n_veloc; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
             std::cerr << "buffers differ in dir=2 at index=" << index

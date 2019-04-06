@@ -30,9 +30,9 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
+#include "event.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
@@ -538,9 +538,8 @@ int get_particle_node(int id) {
   if (needle == particle_node.end()) {
     throw std::runtime_error("Particle node for id " + std::to_string(id) +
                              " not found!");
-  } else {
-    return needle->second;
   }
+  return needle->second;
 }
 
 void clear_particle_node() { particle_node.clear(); }
@@ -802,11 +801,10 @@ void prefetch_particle_data(std::vector<int> ids) {
                            [](int id) {
                              if (not particle_exists(id)) {
                                return true;
-                             } else {
-                               auto const pnode = get_particle_node(id);
-                               return (pnode == this_node) ||
-                                      particle_fetch_cache.has(id);
                              }
+                             auto const pnode = get_particle_node(id);
+                             return (pnode == this_node) ||
+                                    particle_fetch_cache.has(id);
                            }),
             ids.end());
 
@@ -879,7 +877,7 @@ void set_particle_rotational_inertia(int part, double *rinertia) {
       part, Vector3d(rinertia, rinertia + 3));
 }
 #else
-const constexpr double ParticleProperties::rinertia[3];
+constexpr Vector3d ParticleProperties::rinertia;
 #endif
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
@@ -911,7 +909,7 @@ void set_particle_dipm(int part, double dipm) {
   mpi_update_particle_property<double, &ParticleProperties::dipm>(part, dipm);
 }
 
-void set_particle_dip(int part, double *dip) {
+void set_particle_dip(int part, double const *const dip) {
   Vector4d quat;
   double dipm;
   std::tie(quat, dipm) =
@@ -1062,7 +1060,7 @@ void set_particle_gamma_rot(int part, Vector3d gamma_rot) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 void set_particle_ext_torque(int part, const Vector3d &torque) {
-  auto const flag = (torque != Vector3d{}) ? PARTICLE_EXT_TORQUE : 0;
+  auto const flag = (!torque.empty()) ? PARTICLE_EXT_TORQUE : 0;
   if (flag) {
     mpi_update_particle_property<Vector3d, &ParticleProperties::ext_torque>(
         part, torque);
@@ -1073,7 +1071,7 @@ void set_particle_ext_torque(int part, const Vector3d &torque) {
 #endif
 
 void set_particle_ext_force(int part, const Vector3d &force) {
-  auto const flag = (force != Vector3d{}) ? PARTICLE_EXT_FORCE : 0;
+  auto const flag = (!force.empty()) ? PARTICLE_EXT_FORCE : 0;
   if (flag) {
     mpi_update_particle_property<Vector3d, &ParticleProperties::ext_force>(
         part, force);
@@ -1417,9 +1415,8 @@ int change_exclusion(int part1, int part2, int _delete) {
   if (particle_exists(part1) && particle_exists(part2)) {
     mpi_send_exclusion(part1, part2, _delete);
     return ES_OK;
-  } else {
-    return ES_ERROR;
   }
+  return ES_ERROR;
 }
 
 void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
@@ -1512,7 +1509,7 @@ void remove_id_from_map(int part_id, int type) {
 }
 
 int get_random_p_id(int type) {
-  if (particle_type_map.at(type).size() == 0)
+  if (particle_type_map.at(type).empty())
     throw std::runtime_error("No particles of given type could be found");
   int rand_index = i_random(particle_type_map.at(type).size());
   return *std::next(particle_type_map[type].begin(), rand_index);

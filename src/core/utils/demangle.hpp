@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2014-2018 The ESPResSo project
+  Copyright (C) 2019 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -16,30 +16,32 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef UTILS_DEMANGLE_HPP
+#define UTILS_DEMANGLE_HPP
 
-#ifndef _ELECTROKINETICS_PDB_PARSE_HPP
-#define _ELECTROKINETICS_PDB_PARSE_HPP
+#include <boost/version.hpp>
 
-#include "grid_based_algorithms/electrokinetics.hpp"
+#if BOOST_VERSION >= 105600
+#include <boost/core/demangle.hpp>
+#endif
 
-#ifdef EK_BOUNDARIES
-
-extern float *pdb_charge_lattice;
-extern int *pdb_boundary_lattice;
-
-/* Returns 0/1 if reading the files was successful/unsuccessful */
-int pdb_parse(char *pdb_filename, char *itp_filename, double scale);
-
-int print_charge_field(char *filename);
-
-int print_boundary_lattice(char *filename);
-
-#else
-/* that is tested for in a number of places, make sure that pdb
-   appears disabled if not compiled in.
+namespace Utils {
+/**
+ * @brief Get a human-readable name for a type.
+ *
+ * Uses boost to demangle the name, for details
+ * see documentation for boost::core::demangle.
+ *
+ * @tparam T type
+ * @return name
  */
-#define pdb_boundary_lattice 0
-
+template <class T> std::string demangle() {
+#if BOOST_VERSION >= 105600
+  return boost::core::demangle(typeid(T).name());
+#else
+  return typeid(T).name();
 #endif
+}
+} // namespace Utils
 
-#endif
+#endif // UTILS_DEMANGLE_HPP

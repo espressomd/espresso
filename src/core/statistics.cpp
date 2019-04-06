@@ -27,9 +27,9 @@
 #include "statistics.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
+#include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "initialize.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
@@ -39,7 +39,7 @@
 #include "statistics_chain.hpp"
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
-#include "utils/list_contains.hpp"
+#include "utils/contains.hpp"
 #include "virtual_sites.hpp"
 
 #include <cstdlib>
@@ -73,9 +73,9 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
        bit 0: set1, bit1: set2
     */
     in_set = 0;
-    if (set1.empty() || list_contains(set1, jt->p.type))
+    if (set1.empty() || contains(set1, jt->p.type))
       in_set = 1;
-    if (set2.empty() || list_contains(set2, jt->p.type))
+    if (set2.empty() || contains(set2, jt->p.type))
       in_set |= 2;
     if (in_set == 0)
       continue;
@@ -83,8 +83,8 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
     for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
-      if (((in_set & 1) && (set2.empty() || list_contains(set2, it->p.type))) ||
-          ((in_set & 2) && (set1.empty() || list_contains(set1, it->p.type))))
+      if (((in_set & 1) && (set2.empty() || contains(set2, it->p.type))) ||
+          ((in_set & 2) && (set1.empty() || contains(set1, it->p.type))))
         mindist2 = std::min(mindist2, min_distance2(pt, it->r.p));
   }
 
@@ -169,18 +169,17 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
       }
     }
   }
-  return;
 }
 
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   int i, count;
   double p1[3], massi;
-  std::vector<double> com(3);
   count = 0;
 
   for (i = 0; i < 9; i++)
     MofImatrix[i] = 0.;
-  com = centerofmass(partCfg, type);
+
+  auto const com = centerofmass(partCfg, type);
   for (auto const &p : partCfg) {
     if (type == p.p.type) {
       count++;
@@ -202,7 +201,8 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   MofImatrix[7] = MofImatrix[5];
 }
 
-IntList nbhood(PartCfg &partCfg, double pt[3], double r, int planedims[3]) {
+IntList nbhood(PartCfg &partCfg, double pt[3], double r,
+               int const planedims[3]) {
   IntList ids;
   Vector3d d;
 
@@ -238,9 +238,9 @@ double distto(PartCfg &partCfg, double p[3], int pid) {
   return std::sqrt(mindist);
 }
 
-void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
-                            int *p2_types, int n_p2, double r_min, double r_max,
-                            int r_bins, int log_flag, double *low,
+void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
+                            int const *p2_types, int n_p2, double r_min,
+                            double r_max, int r_bins, int log_flag, double *low,
                             double *dist) {
   int t1, t2, ind, cnt = 0;
   double inv_bin_width = 0.0;
@@ -300,15 +300,16 @@ void calc_part_distribution(PartCfg &partCfg, int *p1_types, int n_p1,
     dist[i] /= (double)cnt;
 }
 
-void calc_rdf(PartCfg &partCfg, std::vector<int> &p1_types,
-              std::vector<int> &p2_types, double r_min, double r_max,
+void calc_rdf(PartCfg &partCfg, std::vector<int> const &p1_types,
+              std::vector<int> const &p2_types, double r_min, double r_max,
               int r_bins, std::vector<double> &rdf) {
   calc_rdf(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
            p2_types.size(), r_min, r_max, r_bins, &rdf[0]);
 }
 
-void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
-              int n_p2, double r_min, double r_max, int r_bins, double *rdf) {
+void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
+              int const *p2_types, int n_p2, double r_min, double r_max,
+              int r_bins, double *rdf) {
   long int cnt = 0;
   int i, t1, t2, ind;
   int mixed_flag = 0;
@@ -361,16 +362,16 @@ void calc_rdf(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
   }
 }
 
-void calc_rdf_av(PartCfg &partCfg, std::vector<int> &p1_types,
-                 std::vector<int> &p2_types, double r_min, double r_max,
+void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
+                 std::vector<int> const &p2_types, double r_min, double r_max,
                  int r_bins, std::vector<double> &rdf, int n_conf) {
   calc_rdf_av(partCfg, &p1_types[0], p1_types.size(), &p2_types[0],
               p2_types.size(), r_min, r_max, r_bins, &rdf[0], n_conf);
 }
 
-void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
-                 int n_p2, double r_min, double r_max, int r_bins, double *rdf,
-                 int n_conf) {
+void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
+                 int const *p2_types, int n_p2, double r_min, double r_max,
+                 int r_bins, double *rdf, int n_conf) {
   long int cnt = 0;
   int cnt_conf = 1;
   int mixed_flag = 0;
@@ -449,7 +450,7 @@ void calc_rdf_av(PartCfg &partCfg, int *p1_types, int n_p1, int *p2_types,
   free(rdf_tmp);
 }
 
-void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
+void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
                           int order, double **_ff) {
   int i, j, k, n, qi, t, order2;
   double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
@@ -506,7 +507,8 @@ void calc_structurefactor(PartCfg &partCfg, int *p_types, int n_types,
   }
 }
 
-std::vector<std::vector<double>> modify_stucturefactor(int order, double *sf) {
+std::vector<std::vector<double>> modify_stucturefactor(int order,
+                                                       double const *sf) {
   int length = 0;
 
   for (int i = 0; i < order * order; i++) {
@@ -633,19 +635,19 @@ int calc_cylindrical_average(
 
         // Find the height of the particle above the axis (height) and
         // the distance from the center point (dist)
-        auto const hat = direction.cross(diff);
+        auto const hat = vector_product(direction, diff);
         auto const height = hat.norm();
-        auto const dist = direction.dot(diff) / norm_direction;
+        auto const dist = direction * diff / norm_direction;
 
         // Determine the components of the velocity parallel and
         // perpendicular to the direction vector
         double v_radial;
         if (height == 0)
-          v_radial = vel.cross(direction).norm() / norm_direction;
+          v_radial = vector_product(vel, direction).norm() / norm_direction;
         else
-          v_radial = vel.dot(hat) / height;
+          v_radial = vel * hat / height;
 
-        auto const v_axial = vel.dot(direction) / norm_direction;
+        auto const v_axial = vel * direction / norm_direction;
 
         // Work out relevant indices for x and y
         index_radial = static_cast<int>(floor(height / binwd_radial));
@@ -709,7 +711,7 @@ void analyze_append(PartCfg &partCfg) {
   n_configs++;
 }
 
-void analyze_configs(double *tmp_config, int count) {
+void analyze_configs(double const *tmp_config, int count) {
   int i;
   n_part_conf = count;
   configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));

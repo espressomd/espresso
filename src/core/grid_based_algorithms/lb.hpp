@@ -33,8 +33,6 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 
-void mpi_set_lb_fluid_counter(int high, int low);
-
 #ifdef LB
 
 #include <array>
@@ -155,6 +153,11 @@ struct LB_Parameters {
   Vector19d phi;
   // Thermal energy
   double kT;
+
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &rho &viscosity &bulk_viscosity &agrid &tau &ext_force_density &gamma_odd
+        &gamma_even &gamma_shear &gamma_bulk &is_TRT &phi &kT;
+  }
 };
 
 /** The DnQm model to be used. */
@@ -227,7 +230,7 @@ void lb_sanity_checks();
     @param j local fluid speed
     @param pi local fluid pressure
 */
-void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
+void lb_calc_n_from_rho_j_pi(Lattice::index_t index, double rho,
                              Vector3d const &j, Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
@@ -251,13 +254,13 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 #endif
 
 inline void lb_get_populations(Lattice::index_t index, double *pop) {
-  for (int i = 0; i < lbmodel.n_veloc; ++i) {
+  for (int i = 0; i < LB_Model<>::n_veloc; ++i) {
     pop[i] = lbfluid[i][index] + lbmodel.coeff[i][0] * lbpar.rho;
   }
 }
 
 inline void lb_set_populations(Lattice::index_t index, const Vector19d &pop) {
-  for (int i = 0; i < lbmodel.n_veloc; ++i) {
+  for (int i = 0; i < LB_Model<>::n_veloc; ++i) {
     lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
   }
 }
