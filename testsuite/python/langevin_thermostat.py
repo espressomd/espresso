@@ -59,12 +59,12 @@ class LangevinThermostat(ut.TestCase):
                     bins[j], bins[j + 1], kT)
                 self.assertLessEqual(abs(found - expected), error_tol)
 
-    def test_aa_verify_single_component_maxwell(self):
+    def test_00_verify_single_component_maxwell(self):
         """Verifies the normalization of the analytical expression."""
         self.assertLessEqual(
             abs(single_component_maxwell(-10, 10, 4.) - 1.), 1E-4)
 
-    def test_langevin_seed(self):
+    def test_01__langevin_seed(self):
         """Test for RNG seed consistency."""
         system = self.system
         system.time_step = 0.01
@@ -115,7 +115,77 @@ class LangevinThermostat(ut.TestCase):
         force5 = np.copy(system.part[0].f)
         np.testing.assert_almost_equal(force4, force5)
 
-    def test_global_langevin(self):
+    def test_02__friction_trans(self):
+        """Tests the translational friction-only part of the thermostat."""
+
+        system = self.system
+        # Translation
+        gamma_t_i = 2
+        gamma_t_a = 0.5, 2, 1.5
+        v0 = 5.
+
+        system.time_step = 0.0005
+        system.part.clear()
+        system.part.add(pos=(0, 0, 0), v=(v0, v0, v0))
+        if espressomd.has_features("MASS"):
+            system.part[0].mass = 3
+        if espressomd.has_features("PARTICLE_ANISOTROPY"):
+            system.thermostat.set_langevin(kT=0, gamma=gamma_t_a, seed=41)
+        else:
+            system.thermostat.set_langevin(kT=0, gamma=gamma_t_i, seed=41)
+
+        system.time = 0
+        for i in range(100):
+            system.integrator.run(10)
+            for j in range(3):
+                if espressomd.has_features("PARTICLE_ANISOTROPY"):
+                    self.assertAlmostEqual(
+                        system.part[0].v[j], v0 * np.exp(-gamma_t_a[j] / system.part[0].mass * system.time), places=2)
+                else:
+                    self.assertAlmostEqual(
+                        system.part[0].v[j], v0 * np.exp(-gamma_t_i / system.part[0].mass * system.time), places=2)
+
+    @ut.skipIf(not espressomd.has_features("ROTATION"), "Skipped for lack of ROTATION")
+    def test_03__friction_rot(self):
+        """Tests the rotational friction-only part of the thermostat."""
+
+        system = self.system
+        # Translation
+        gamma_t_i = 2
+        gamma_t_a = 0.5, 2, 1.5
+        gamma_r_i = 3
+        gamma_r_a = 1.5, 0.7, 1.2
+        o0 = 5.
+
+        system.time_step = 0.0005
+        system.part.clear()
+        system.part.add(
+            pos=(0, 0, 0), omega_body=(o0, o0, o0), rotation=(1, 1, 1))
+        if espressomd.has_features("ROTATIONAL_INERTIA"):
+            system.part[0].rinertia = 2, 2, 2
+        if espressomd.has_features("PARTICLE_ANISOTROPY"):
+            system.thermostat.set_langevin(
+                kT=0, gamma=gamma_t_a, gamma_rotation=gamma_r_a, seed=41)
+        else:
+            system.thermostat.set_langevin(
+                kT=0, gamma=gamma_t_i, gamma_rotation=gamma_r_i, seed=41)
+
+        system.time = 0
+        for i in range(100):
+            system.integrator.run(10)
+            if espressomd.has_features("ROTATIONAL_INERTIA"):
+                rinertia = system.part[0].rinertia
+            else:
+                rinertia = (1, 1, 1)
+            for j in range(3):
+                if espressomd.has_features("PARTICLE_ANISOTROPY"):
+                    self.assertAlmostEqual(
+                        system.part[0].omega_body[j], o0 * np.exp(-gamma_r_a[j] / rinertia[j] * system.time), places=2)
+                else:
+                    self.assertAlmostEqual(
+                        system.part[0].omega_body[j], o0 * np.exp(-gamma_r_i / rinertia[j] * system.time), places=2)
+
+    def test_04__global_langevin(self):
         """Test for global Langevin parameters."""
         N = 200
         system = self.system
@@ -157,7 +227,7 @@ class LangevinThermostat(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features("LANGEVIN_PER_PARTICLE"),
                "Test requires LANGEVIN_PER_PARTICLE")
-    def test_langevin_per_particle(self):
+    def test_05__langevin_per_particle(self):
         """Test for Langevin particle. Covers all combinations of
            particle specific gamma and temp set or not set.
         """
@@ -226,7 +296,7 @@ class LangevinThermostat(ut.TestCase):
             if espressomd.has_features("ROTATIONAL_INERTIA"):
                 p.rinertia = 0.4, 0.4, 0.4
 
-    def test_diffusion(self):
+    def test_06__diffusion(self):
         """This tests rotational and translational diffusion coeff via green-kubo"""
         system = self.system
         system.part.clear()
@@ -390,78 +460,8 @@ class LangevinThermostat(ut.TestCase):
             ratio = I / (kT / gamma[coord - 1])
             self.assertAlmostEqual(ratio, 1., delta=0.07)
 
-    def test_00__friction_trans(self):
-        """Tests the translational friction-only part of the thermostat."""
-
-        system = self.system
-        # Translation
-        gamma_t_i = 2
-        gamma_t_a = 0.5, 2, 1.5
-        v0 = 5.
-
-        system.time_step = 0.0005
-        system.part.clear()
-        system.part.add(pos=(0, 0, 0), v=(v0, v0, v0))
-        if espressomd.has_features("MASS"):
-            system.part[0].mass = 3
-        if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            system.thermostat.set_langevin(kT=0, gamma=gamma_t_a, seed=41)
-        else:
-            system.thermostat.set_langevin(kT=0, gamma=gamma_t_i, seed=41)
-
-        system.time = 0
-        for i in range(100):
-            system.integrator.run(10)
-            for j in range(3):
-                if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                    self.assertAlmostEqual(
-                        system.part[0].v[j], v0 * np.exp(-gamma_t_a[j] / system.part[0].mass * system.time), places=2)
-                else:
-                    self.assertAlmostEqual(
-                        system.part[0].v[j], v0 * np.exp(-gamma_t_i / system.part[0].mass * system.time), places=2)
-
-    @ut.skipIf(not espressomd.has_features("ROTATION"), "Skipped for lack of ROTATION")
-    def test_00__friction_rot(self):
-        """Tests the rotational friction-only part of the thermostat."""
-
-        system = self.system
-        # Translation
-        gamma_t_i = 2
-        gamma_t_a = 0.5, 2, 1.5
-        gamma_r_i = 3
-        gamma_r_a = 1.5, 0.7, 1.2
-        o0 = 5.
-
-        system.time_step = 0.0005
-        system.part.clear()
-        system.part.add(
-            pos=(0, 0, 0), omega_body=(o0, o0, o0), rotation=(1, 1, 1))
-        if espressomd.has_features("ROTATIONAL_INERTIA"):
-            system.part[0].rinertia = 2, 2, 2
-        if espressomd.has_features("PARTICLE_ANISOTROPY"):
-            system.thermostat.set_langevin(
-                kT=0, gamma=gamma_t_a, gamma_rotation=gamma_r_a, seed=41)
-        else:
-            system.thermostat.set_langevin(
-                kT=0, gamma=gamma_t_i, gamma_rotation=gamma_r_i, seed=41)
-
-        system.time = 0
-        for i in range(100):
-            system.integrator.run(10)
-            if espressomd.has_features("ROTATIONAL_INERTIA"):
-                rinertia = system.part[0].rinertia
-            else:
-                rinertia = (1, 1, 1)
-            for j in range(3):
-                if espressomd.has_features("PARTICLE_ANISOTROPY"):
-                    self.assertAlmostEqual(
-                        system.part[0].omega_body[j], o0 * np.exp(-gamma_r_a[j] / rinertia[j] * system.time), places=2)
-                else:
-                    self.assertAlmostEqual(
-                        system.part[0].omega_body[j], o0 * np.exp(-gamma_r_i / rinertia[j] * system.time), places=2)
-
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES"), "Skipped for lack of VIRTUAL_SITES")
-    def test_virtual(self):
+    def test_07__virtual(self):
         system = self.system
         system.time_step = 0.01
         system.part.clear()

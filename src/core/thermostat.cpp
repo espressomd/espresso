@@ -93,13 +93,13 @@ void langevin_rng_counter_increment() {
 
 bool langevin_is_seed_required() {
   /* Seed is required if rng is not initialized (value == initial_value) */
-  printf("initial value %" PRIu64 "\n", langevin_rng_counter.initial_value());
-  printf("value %" PRIu64 "\n", langevin_rng_counter.value());
   return langevin_rng_counter.initial_value() == langevin_rng_counter.value();
 }
 
 void langevin_set_rng_state(uint64_t counter) {
   langevin_rng_counter = Utils::Counter<uint64_t>(counter);
+  /* Increment once that intitial_value() != value */
+  langevin_rng_counter.increment();
   mpi_bcast_langevin_rng_counter();
 }
 
