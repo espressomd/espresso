@@ -379,7 +379,7 @@ void calc_energy_long_range(Observable_stat &energy) {
       ELC_P3M_modify_p3m_sums_image();
 
       energy.coulomb[1] -= 0.5 * p3m_calc_kspace_forces(0, 1);
-      
+
       // restore modified sums
       ELC_P3M_restore_p3m_sums();
     }
