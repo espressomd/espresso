@@ -92,14 +92,11 @@ extern double nptiso_gamma0;
  * friction_thermV_nptiso */
 extern double nptiso_gammav;
 
-extern std::shared_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
+extern std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
 
 /************************************************
  * functions
  ************************************************/
-
-/** communication for the philox counter */
-void mpi_bcast_langevin_rng_counter(int, int);
 
 /** only require seed if rng is not initialized */
 bool langevin_is_seed_required();

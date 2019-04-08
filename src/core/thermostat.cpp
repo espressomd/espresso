@@ -80,10 +80,16 @@ double nptiso_pref3;
 double nptiso_pref4;
 #endif
 
-std::shared_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
+std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
 
-void mpi_bcast_langevin_rng_counter_slave(int, int) {
-  boost::mpi::broadcast(comm_cart, *langevin_rng_counter, 0);
+void mpi_bcast_langevin_rng_counter_slave(const uint64_t counter) {
+  langevin_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+}
+
+REGISTER_CALLBACK(mpi_bcast_langevin_rng_counter_slave)
+
+void mpi_bcast_langevin_rng_counter(const uint64_t counter) {
+  mpi_call(mpi_bcast_langevin_rng_counter_slave, counter);
 }
 
 void langevin_rng_counter_increment() {
@@ -92,13 +98,13 @@ void langevin_rng_counter_increment() {
 }
 
 bool langevin_is_seed_required() {
-  /* Seed is required if rng is not initialized (value == initial_value) */
+  /* Seed is required if rng is not initialized */
   return langevin_rng_counter == nullptr;
 }
 
-void langevin_set_rng_state(uint64_t counter) {
-  langevin_rng_counter = std::make_shared<Utils::Counter<uint64_t>>(counter);
-  mpi_bcast_langevin_rng_counter();
+void langevin_set_rng_state(const uint64_t counter) {
+  mpi_bcast_langevin_rng_counter(counter);
+  langevin_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
 }
 
 uint64_t langevin_get_rng_state() { return langevin_rng_counter->value(); }
