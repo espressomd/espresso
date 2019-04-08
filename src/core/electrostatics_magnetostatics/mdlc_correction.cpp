@@ -553,9 +553,8 @@ double add_mdlc_energy_corrections() {
     }
 
     return dip_DLC_energy;
-  } else {
-    return 0.0;
   }
+  return 0.0;
 }
 /* ***************************************************************** */
 

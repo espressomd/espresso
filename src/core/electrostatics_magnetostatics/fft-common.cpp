@@ -37,12 +37,15 @@
 #include <cstring>
 #include <fftw3.h>
 
+#include "utils/index.hpp"
+using Utils::get_linear_index;
+
 void fft_common_pre_init(fft_data_struct *fft) {
-  for (int i = 0; i < 4; i++) {
-    fft->plan[i].send_block = nullptr;
-    fft->plan[i].send_size = nullptr;
-    fft->plan[i].recv_block = nullptr;
-    fft->plan[i].recv_size = nullptr;
+  for (auto &i : fft->plan) {
+    i.send_block = nullptr;
+    i.send_size = nullptr;
+    i.recv_block = nullptr;
+    i.recv_size = nullptr;
   }
 
   fft->init_tag = 0;

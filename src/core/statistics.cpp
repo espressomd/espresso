@@ -39,7 +39,7 @@
 #include "statistics_chain.hpp"
 #include "utils.hpp"
 #include "utils/NoOp.hpp"
-#include "utils/list_contains.hpp"
+#include "utils/contains.hpp"
 #include "virtual_sites.hpp"
 
 #include <cstdlib>
@@ -73,9 +73,9 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
        bit 0: set1, bit1: set2
     */
     in_set = 0;
-    if (set1.empty() || list_contains(set1, jt->p.type))
+    if (set1.empty() || contains(set1, jt->p.type))
       in_set = 1;
-    if (set2.empty() || list_contains(set2, jt->p.type))
+    if (set2.empty() || contains(set2, jt->p.type))
       in_set |= 2;
     if (in_set == 0)
       continue;
@@ -83,8 +83,8 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
     for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
-      if (((in_set & 1) && (set2.empty() || list_contains(set2, it->p.type))) ||
-          ((in_set & 2) && (set1.empty() || list_contains(set1, it->p.type))))
+      if (((in_set & 1) && (set2.empty() || contains(set2, it->p.type))) ||
+          ((in_set & 2) && (set1.empty() || contains(set1, it->p.type))))
         mindist2 = std::min(mindist2, min_distance2(pt, it->r.p));
   }
 
@@ -169,7 +169,6 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
       }
     }
   }
-  return;
 }
 
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {

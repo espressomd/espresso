@@ -31,13 +31,15 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
-#include "grid_based_algorithms/electrokinetics_pdb_parse.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lbboundaries/LBBoundary.hpp"
+
+#include "utils/index.hpp"
+using Utils::get_linear_index;
 
 #include <algorithm>
 #include <limits>
@@ -107,21 +109,18 @@ void lb_init_boundaries() {
     int wallcharge_species = -1, charged_boundaries = 0;
     int node_charged = 0;
 
-    for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end(); ++lbb) {
-      (**lbb).set_net_charge(0.0);
+    for (auto &lbboundarie : lbboundaries) {
+      (*lbboundarie).set_net_charge(0.0);
     }
 
     if (ek_initialized) {
       host_wallcharge_species_density = (ekfloat *)Utils::malloc(
           ek_parameters.number_of_nodes * sizeof(ekfloat));
-      for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end(); ++lbb) {
-        if ((**lbb).charge_density() != 0.0) {
+      for (auto &lbboundarie : lbboundaries) {
+        if ((*lbboundarie).charge_density() != 0.0) {
           charged_boundaries = 1;
           break;
         }
-      }
-      if (pdb_charge_lattice) {
-        charged_boundaries = 1;
       }
 
       for (int n = 0; n < int(ek_parameters.number_of_species); n++)
@@ -181,20 +180,7 @@ void lb_init_boundaries() {
             }
 #endif
           }
-
-#ifdef EK_BOUNDARIES
-          if (pdb_boundary_lattice &&
-              pdb_boundary_lattice[ek_parameters.dim_y * ek_parameters.dim_x *
-                                       z +
-                                   ek_parameters.dim_x * y + x]) {
-            dist = -1;
-            boundary_number = lbboundaries.size(); // Makes sure that
-            // boundary_number is not used by
-            // a constraint
-          }
-#endif
-          if (dist <= 0 && boundary_number >= 0 &&
-              (lbboundaries.size() > 0 || pdb_boundary_lattice)) {
+          if (dist <= 0 && boundary_number >= 0 && (!lbboundaries.empty())) {
             size_of_index = (number_of_boundnodes + 1) * sizeof(int);
             host_boundary_node_list =
                 Utils::realloc(host_boundary_node_list, size_of_index);
@@ -214,16 +200,6 @@ void lb_init_boundaries() {
             ek_parameters.number_of_boundary_nodes = number_of_boundnodes;
 
             if (wallcharge_species != -1) {
-              if (pdb_charge_lattice &&
-                  pdb_charge_lattice[ek_parameters.dim_y * ek_parameters.dim_x *
-                                         z +
-                                     ek_parameters.dim_x * y + x] != 0.0f) {
-                node_charged = 1;
-                node_wallcharge +=
-                    pdb_charge_lattice[ek_parameters.dim_y *
-                                           ek_parameters.dim_x * z +
-                                       ek_parameters.dim_x * y + x];
-              }
               if (node_charged)
                 host_wallcharge_species_density[ek_parameters.dim_y *
                                                     ek_parameters.dim_x * z +

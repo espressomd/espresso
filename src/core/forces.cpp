@@ -106,10 +106,10 @@ void force_calc() {
 #endif
   init_forces();
 
-  for (auto actor = forceActors.begin(); actor != forceActors.end(); ++actor) {
-    (*actor)->computeForces(espressoSystemInterface);
+  for (auto &forceActor : forceActors) {
+    forceActor->computeForces(espressoSystemInterface);
 #ifdef ROTATION
-    (*actor)->computeTorques(espressoSystemInterface);
+    forceActor->computeTorques(espressoSystemInterface);
 #endif
   }
 

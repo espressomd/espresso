@@ -130,7 +130,7 @@ static void dp3m_init_a_ai_cao_cut();
 /** Checks for correctness for magnetic dipoles in P3M of the cao_cut,
  *  necessary when the box length changes
  */
-static bool dp3m_sanity_checks_boxl(void);
+static bool dp3m_sanity_checks_boxl();
 
 /** Calculate properties of the local FFT mesh for the
  *   charge assignment process.
@@ -432,8 +432,8 @@ void dp3m_init() {
 }
 
 void dp3m_free_dipoles() {
-  for (int i = 0; i < 3; i++)
-    free(dp3m.rs_mesh_dip[i]);
+  for (auto &i : dp3m.rs_mesh_dip)
+    free(i);
   free(dp3m.ca_frac);
   free(dp3m.ca_fmp);
   free(dp3m.send_grid);
@@ -643,14 +643,14 @@ void dp3m_interpolate_dipole_assignment_function() {
   }
 }
 
-void dp3m_dipole_assign(void) {
+void dp3m_dipole_assign() {
   /* magnetic particle counter, dipole fraction counter */
   int cp_cnt = 0;
 
   /* prepare local FFT mesh */
-  for (int i = 0; i < 3; i++)
+  for (auto &i : dp3m.rs_mesh_dip)
     for (int j = 0; j < dp3m.local_mesh.size; j++)
-      dp3m.rs_mesh_dip[i][j] = 0.0;
+      i[j] = 0.0;
 
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
@@ -1367,7 +1367,7 @@ void dp3m_realloc_ca_fields(int newsize) {
 
 /*****************************************************************************/
 
-void dp3m_calc_meshift(void) {
+void dp3m_calc_meshift() {
   int i;
   double dmesh;
   dmesh = (double)dp3m.params.mesh[0];

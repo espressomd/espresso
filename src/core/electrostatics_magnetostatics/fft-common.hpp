@@ -233,9 +233,8 @@ int fft_calc_send_block(int const pos1[3], int const grid1[3],
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block(double const *const in, double *const out,
-                    int const start[3], int const size[3], int const dim[3],
-                    int element);
+void fft_pack_block(double const *in, double *out, int const start[3],
+                    int const size[3], int const dim[3], int element);
 
 /** pack a block with dimensions (size[0] * size[1] * aize[2]) starting
  *  at start[3] of an input 3d-grid with dimension dim[3] into an
@@ -260,9 +259,8 @@ void fft_pack_block(double const *const in, double *const out,
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block_permute1(double const *const in, double *const out,
-                             int const start[3], int const size[3],
-                             int const dim[3], int element);
+void fft_pack_block_permute1(double const *in, double *out, int const start[3],
+                             int const size[3], int const dim[3], int element);
 
 /** pack a block with dimensions (size[0] * size[1] * aize[2]) starting
  *  at start[3] of an input 3d-grid with dimension dim[3] into an
@@ -287,9 +285,8 @@ void fft_pack_block_permute1(double const *const in, double *const out,
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block_permute2(double const *const in, double *const out,
-                             int const start[3], int const size[3],
-                             int const dim[3], int element);
+void fft_pack_block_permute2(double const *in, double *out, int const start[3],
+                             int const size[3], int const dim[3], int element);
 
 /** unpack a 3d-grid input block (size[3]) into an output 3d-grid
  *  with dimension dim[3] at start position start[3].
@@ -303,9 +300,8 @@ void fft_pack_block_permute2(double const *const in, double *const out,
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_unpack_block(double const *const in, double *const out,
-                      int const start[3], int const size[3], int const dim[3],
-                      int element);
+void fft_unpack_block(double const *in, double *out, int const start[3],
+                      int const size[3], int const dim[3], int element);
 
 #endif /* defined(P3M) || defined(DP3M) */
 #endif /* _FFT_COMMON_H */

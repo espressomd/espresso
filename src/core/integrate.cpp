@@ -101,7 +101,7 @@ int db_maxf_id = 0, db_maxv_id = 0;
 
 bool set_py_interrupt = false;
 namespace {
-volatile static std::sig_atomic_t ctrl_C = 0;
+volatile std::sig_atomic_t ctrl_C = 0;
 }
 
 /** \name Private Functions */

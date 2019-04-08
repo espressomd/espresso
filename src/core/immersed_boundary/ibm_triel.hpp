@@ -28,16 +28,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // This function is used to set the parameters
 // Also calculates and stores the reference state
-int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
-                        const int ind3, const double maxDist,
-                        const tElasticLaw elasticLaw, const double k1,
-                        const double k2);
+int IBM_Triel_SetParams(int bond_type, int ind1, int ind2, int ind3,
+                        double maxDist, tElasticLaw elasticLaw, double k1,
+                        double k2);
 // For reading checkpoints.
 // Idea: * parameters are set in the run-continue script
 //       * also reference shape is recomputed there
 //       * only pass two values here to check consistency
-int IBM_Triel_ResetParams(const int bond_type, const double k1,
-                          const double l0);
+int IBM_Triel_ResetParams(int bond_type, double k1, double l0);
 
 // This function calculates and adds the actual force
 int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
