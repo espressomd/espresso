@@ -30,7 +30,7 @@ public:
 
   int identity() const { return m_id; }
 
-  unsigned m_id;
+  int m_id;
 };
 
 class Position {

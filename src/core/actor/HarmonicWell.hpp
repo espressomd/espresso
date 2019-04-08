@@ -34,17 +34,17 @@ class HarmonicWell : public Actor {
 public:
   HarmonicWell(float x1, float x2, float x3, float _k, SystemInterface &s);
 
-  virtual void computeForces(SystemInterface &s) {
+  void computeForces(SystemInterface &s) override {
     HarmonicWell_kernel_wrapper(x, y, z, k, s.npart_gpu(), s.rGpuBegin(),
                                 s.fGpuBegin());
   };
 
-  virtual void computeEnergy(SystemInterface &s) {
+  void computeEnergy(SystemInterface &s) override {
     std::cerr << "HarmonicWell does not currently support energies"
               << std::endl;
   };
 
-  virtual ~HarmonicWell() {}
+  ~HarmonicWell() override = default;
 
 protected:
   float x, y, z;

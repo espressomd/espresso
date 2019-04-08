@@ -32,7 +32,8 @@ from .interactions import *
 from espressomd.interactions cimport *
 import numpy as np
 cimport numpy as np
-from globals cimport n_configs, min_box_l
+from globals cimport n_configs
+
 from collections import OrderedDict
 from .system import System
 from espressomd.utils import is_valid_type
@@ -87,8 +88,8 @@ class Analysis(object):
 
         """
 
-        cdef int_list set1
-        cdef int_list set2
+        cdef List[int] set1
+        cdef List[int] set2
 
         if p1 == 'default' and p2 == 'default':
             pass
@@ -241,7 +242,7 @@ class Analysis(object):
         """
 
         cdef int planedims[3]
-        cdef int_list ids
+        cdef List[int] ids
         cdef double c_pos[3]
 
         check_type_or_throw_except(
@@ -268,7 +269,7 @@ class Analysis(object):
 
         ids = c_analyze.nbhood(c_analyze.partCfg(), c_pos, r_catch, planedims)
 
-        return create_nparray_from_int_list( & ids)
+        return create_nparray_from_int_list(ids)
 
     def cylindrical_average(self, center=None, axis=None,
                             length=None, radius=None,
@@ -592,80 +593,6 @@ class Analysis(object):
                 p["virtual_sites"] = total_vs
 
         return p
-
-    def local_stress_tensor(self, periodicity=(1, 1, 1), range_start=(
-                            0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0),
-                            bins=(1, 1, 1)):
-        """local_stress_tensor(periodicity=(1, 1, 1), range_start=(0.0, 0.0, 0.0), stress_range=(1.0, 1.0, 1.0), bins=(1, 1, 1))
-        """
-        """
-        Computes local stress tensors in the system.
-
-        A cuboid is defined starting at the coordinate `range_start` and going
-        to the coordinate `range_start`+`stress_range`.  This cuboid in divided
-        into `bins[0]` in the x direction, `bins[1]` in the y direction and
-        `bins[2]` in the z direction such that the total number of bins is
-        `bins[0]*bins[1]*bins[2]`.  For each of these bins a stress tensor is
-        calculated using the Irving Kirkwood method.  That is, a given
-        interaction contributes towards the stress tensor in a bin proportional
-        to the fraction of the line connecting the two particles that is within
-        the bin.
-
-        If the P3M and MMM1D electrostatic methods are used, these interactions
-        are not included in the local stress tensor.  The DH and RF methods, in
-        contrast, are included.  Concerning bonded interactions only two body
-        interactions (FENE, Harmonic) are included (angular and dihedral are
-        not).  For all electrostatic interactions only the real space part is
-        included.
-
-        Care should be taken when using constraints of any kind, since these
-        are not accounted for in the local stress tensor calculations.
-
-
-        Parameters
-        ----------
-        periodicity : array_like :obj:`int`
-                      Coordinates of the centre of the cylinder.
-        range_start : array_like :obj:`float`
-                      The start coordinate of the cuboid.
-        stress_range : array_like :obj:`float`
-                       The range of the cuboid.
-        bins : array_like :obj:`int`
-               A list containing the number of bins for each direction.
-
-        """
-
-        cdef vector[double_list] local_stress_tensor
-        cdef int[3] c_periodicity, c_bins
-        cdef int lst_ind, t_ind
-        cdef double[3] c_range_start, c_stress_range
-
-        n_bins = 1
-        for i in range(3):
-            n_bins *= bins[i]
-            c_bins[i] = bins[i]
-            c_periodicity[i] = periodicity[i]
-            c_range_start[i] = range_start[i]
-            c_stress_range[i] = stress_range[i]
-
-        local_stress_tensor.resize(n_bins, double_list(9, 0.0))
-
-        if c_analyze.analyze_local_stress_tensor(c_periodicity, c_range_start, c_stress_range, c_bins, local_stress_tensor.data()):
-            handle_errors("Error while calculating local stress tensor")
-
-        stress_tensor = np.zeros((bins[0], bins[1], bins[2], 3, 3))
-
-        for i in range(bins[0]):
-            for j in range(bins[1]):
-                for k in range(bins[2]):
-                    for l in range(3):
-                        for m in range(3):
-                            lst_ind = i * bins[1] * bins[2] + j * bins[2] + k
-                            t_ind = l * 3 + m
-                            stress_tensor[i, j, k, l,
-                                          m] = local_stress_tensor[lst_ind][t_ind]
-
-        return stress_tensor
 
     #
     # Energy analysis
@@ -1071,19 +998,19 @@ class Analysis(object):
             raise ValueError("r_bins has to be greater than zero!")
 
         cdef double low
-        cdef double * distribution = < double * > malloc(sizeof(double) * r_bins)
+        cdef vector[double] distribution
+        distribution.resize(r_bins)
+
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
         c_analyze.calc_part_distribution(
             c_analyze.partCfg(
                 ), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
-                                         r_min, r_max, r_bins, log_flag, & low, distribution)
+                                         r_min, r_max, r_bins, log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(
-            distribution, r_bins)
-
-        free(distribution)
+            distribution.data(), r_bins)
 
         if int_flag:
             np_distribution[0] += low
@@ -1109,7 +1036,6 @@ class Analysis(object):
     #
 
     def angular_momentum(self, p_type=None):
-        print("p_type = ", p_type)
         check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
 

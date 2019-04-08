@@ -23,7 +23,7 @@
 #include <boost/mpi.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "core/utils/mpi/all_compare.hpp"
+#include "utils/mpi/all_compare.hpp"
 using Utils::Mpi::all_compare;
 
 namespace mpi = boost::mpi;

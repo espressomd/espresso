@@ -28,9 +28,8 @@ import tests_common
     not (
         espressomd.has_features(
             'LB') or espressomd.has_features(
-            'LB_GPU')) or espressomd.has_features(
-                'SHANCHEN'),
-           "Both LB and LB_GPU not compiled in or SHANCHEN activated, can not check functionality.")
+            'LB_GPU')),
+           "Both LB and LB_GPU not compiled in, can not check functionality.")
 class TestCylindricalLBObservable(ut.TestCase):
 
     """
@@ -61,10 +60,10 @@ class TestCylindricalLBObservable(ut.TestCase):
     def setUpClass(self):
         if espressomd.has_features('LB_GPU'):
             self.lbf_gpu = espressomd.lb.LBFluidGPU(
-                agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+                agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
         if espressomd.has_features('LB'):
             self.lbf_cpu = espressomd.lb.LBFluid(
-                agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+                agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
 
     def tearDown(self):
         del self.positions[:]

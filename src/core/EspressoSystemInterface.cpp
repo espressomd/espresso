@@ -23,7 +23,7 @@
 #include "particle_data.hpp"
 
 /* Initialize instance pointer */
-EspressoSystemInterface *EspressoSystemInterface::m_instance = 0;
+EspressoSystemInterface *EspressoSystemInterface::m_instance = nullptr;
 
 /********************************************************************************************/
 

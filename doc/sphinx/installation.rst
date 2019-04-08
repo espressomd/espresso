@@ -40,7 +40,7 @@ CMake
     The build system is based on CMake
 
 C++ Compiler
-    C++11 capable C++ compiler (e.g., Gcc 4.8.1 or later)
+    C++14 capable C++ compiler (e.g., gcc 5 or later)
 
 Boost
     A number of advanced C++ features used by ESPResSo is provided by Boost.
@@ -103,7 +103,7 @@ ROCm SDK to make use of GPU computation:
     wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
     echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
     sudo apt update
-    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand
+    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand hip-thrust
 
 .. _Installing Requirements on Mac OS X:
 
@@ -126,7 +126,7 @@ following commands:
       doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
     sudo port select --set cython cython27
     sudo port select --set python python27
-    sudo port selet --set pip pip27
+    sudo port select --set pip pip27
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.
@@ -434,11 +434,6 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
-..
-    -  ``NEMD`` Enables the non-equilbrium (shear) MD support.
-
-       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
-
 -  ``NPT`` Enables an on-the-fly NPT integration scheme.
 
    .. seealso:: :ref:`Isotropic NPT thermostat`
@@ -447,8 +442,6 @@ integrator or thermostat:
 -  ``MEMBRANE_COLLISION``
 
 -  ``REACTION_ENSEMBLE``
-
--  ``GHMC``
 
 -  ``MULTI_TIMESTEP`` (experimental)
 
@@ -478,8 +471,6 @@ Fluid dynamics and fluid structure interaction
 
 -  ``LB_BOUNDARIES_GPU``
 
--  ``SHANCHEN`` (experimental) Enables the Shan Chen bicomponent fluid code on the GPU.
-
 -  ``AFFINITY``
 
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
@@ -488,8 +479,6 @@ Fluid dynamics and fluid structure interaction
 -  ``ELECTROKINETICS``
 
 -  ``EK_BOUNDARIES``
-
--  ``EK_ELECTROSTATIC_COUPLING``
 
 -  ``EK_DEBUG``
 
@@ -627,8 +616,6 @@ looking directly at the code.
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
 
 -  ``FFT_DEBUG`` Output from the unified FFT code.
-
--  ``MAGGS_DEBUG``
 
 -  ``RANDOM_DEBUG``
 

@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref dpd.hpp "dpd.hpp"
+ *  Implementation of dpd.hpp.
  */
 #include "dpd.hpp"
 
@@ -115,13 +115,12 @@ void dpd_update_params(double pref_scale) {
 static double weight(int type, double r_cut, double dist_inv) {
   if (type == 0) {
     return dist_inv;
-  } else {
-    return dist_inv - 1.0 / r_cut;
   }
+  return dist_inv - 1.0 / r_cut;
 }
 
-Vector3d dpd_pair_force(const Particle *p1, const Particle *p2,
-                        IA_parameters *ia_params, double *d, double dist,
+Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
+                        IA_parameters *ia_params, double const *d, double dist,
                         double dist2) {
   Vector3d f{};
   auto const dist_inv = 1.0 / dist;

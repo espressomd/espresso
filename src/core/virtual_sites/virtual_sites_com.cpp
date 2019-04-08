@@ -26,7 +26,6 @@
 #include "forces.hpp"
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
-#include "topology.hpp"
 #include "virtual_sites.hpp"
 
 // forward declarations

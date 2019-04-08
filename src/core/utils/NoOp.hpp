@@ -26,7 +26,7 @@ namespace Utils {
  */
 class NoOp {
 public:
-  template <typename... Args> void operator()(Args...) const { return; }
+  template <typename... Args> void operator()(Args...) const {}
 };
 
 } // namespace Utils

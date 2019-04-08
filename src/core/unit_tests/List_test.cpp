@@ -33,8 +33,8 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include "core/utils/List.hpp"
-#include "core/utils/serialization/List.hpp"
+#include "utils/List.hpp"
+#include "utils/serialization/List.hpp"
 
 using List = Utils::List<int>;
 
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(constructors) {
   /* List::List() */
   {
     auto l = List();
-    BOOST_CHECK(l.size() == 0);
+    BOOST_CHECK(l.empty());
     BOOST_CHECK(l.empty());
     BOOST_CHECK(l.begin() == l.end());
     BOOST_CHECK(l.capacity() == 0);
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(resize) {
     BOOST_CHECK(l.size() == 42);
     BOOST_CHECK(l.capacity() == 42);
     l.resize(0);
-    BOOST_CHECK(l.size() == 0);
+    BOOST_CHECK(l.empty());
     BOOST_CHECK(l.capacity() == 0);
   }
 
@@ -403,7 +403,7 @@ BOOST_AUTO_TEST_CASE(erase) {
 
     auto r = l.erase(l.begin(), l.end());
     BOOST_CHECK(l.empty());
-    BOOST_CHECK(r = l.begin());
+    BOOST_CHECK(r == l.begin() - 1);
   }
 }
 

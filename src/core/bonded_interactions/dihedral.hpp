@@ -31,9 +31,11 @@
 #include "grid.hpp"
 #include "utils.hpp"
 
-#define ANGLE_NOT_DEFINED -100
-
-/// set dihedral parameters
+/** set dihedral parameters
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int dihedral_set_params(int bond_type, int mult, double bend, double phase);
 
 /** Calculates the dihedral angle between particle quadruple p1, p2,
@@ -43,11 +45,11 @@ Vectors a, b and c are the bond vectors between consecutive particles.
 If the a,b or b,c are parallel the dihedral angle is not defined in which
 case the routine returns phi=-1. Calling functions should check for that
 (Written by: Arijit Maitra) */
-inline void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3,
-                                Particle *p4, double a[3], double b[3],
-                                double c[3], double aXb[3], double *l_aXb,
-                                double bXc[3], double *l_bXc, double *cosphi,
-                                double *phi) {
+inline void calc_dihedral_angle(Particle const *p1, Particle const *p2,
+                                Particle const *p3, Particle const *p4,
+                                double a[3], double b[3], double c[3],
+                                double aXb[3], double *l_aXb, double bXc[3],
+                                double *l_bXc, double *cosphi, double *phi) {
   int i;
 
   get_mi_vector(a, p2->r.p, p1->r.p);
@@ -89,8 +91,9 @@ inline void calc_dihedral_angle(Particle *p1, Particle *p2, Particle *p3,
     Written by Arijit Maitra, adapted to new force interface by Hanjo,
     more general new dihedral form by Ana.
 */
-inline int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3,
-                               Particle *p4, Bonded_ia_parameters *iaparams,
+inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
+                               Particle const *p3, Particle const *p4,
+                               Bonded_ia_parameters const *iaparams,
                                double force2[3], double force1[3],
                                double force3[3]) {
   int i;
@@ -171,8 +174,9 @@ inline int calc_dihedral_force(Particle *p2, Particle *p1, Particle *p3,
 
 /** calculate dihedral energy between particles p1, p2 p3 and p4
     Written by Arijit Maitra, adapted to new force interface by Hanjo */
-inline int dihedral_energy(Particle *p1, Particle *p2, Particle *p3,
-                           Particle *p4, Bonded_ia_parameters *iaparams,
+inline int dihedral_energy(Particle const *p1, Particle const *p2,
+                           Particle const *p3, Particle const *p4,
+                           Bonded_ia_parameters const *iaparams,
                            double *_energy) {
   /* vectors for dihedral calculations. */
   double v12[3], v23[3], v34[3], v12Xv23[3], v23Xv34[3], l_v12Xv23, l_v23Xv34;

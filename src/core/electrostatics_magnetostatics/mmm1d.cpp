@@ -66,7 +66,7 @@ using Utils::strcat_alloc;
 static double uz, L2, uz2, prefuz2, prefL3_i;
 /*@}*/
 
-MMM1D_struct mmm1d_params = {0.05, 1e-5};
+MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
 /** From which distance a certain Bessel cutoff is valid. Can't be part of the
     params since these get broadcasted. */
 static double *bessel_radii;
@@ -178,7 +178,7 @@ void MMM1D_init() {
                            mmm1d_params.far_switch_radius_2);
 }
 
-void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
+void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
                                   double r, double force[3]) {
   int dim;
   double F[3];
@@ -281,7 +281,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
     force[dim] += chpref * F[dim];
 }
 
-double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3],
+double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double const d[3],
                                  double r2, double r) {
   double chpref = p1->p.q * p2->p.q;
   double rxy2, rxy2_d, z_d;

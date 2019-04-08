@@ -1,13 +1,13 @@
 def major():
     """Prints the major version of Espresso.
     """
-    return ESPRESSO_VERSION // 100000
+    return ESPRESSO_VERSION_MAJOR
 
 
 def minor():
     """Prints the minor version of Espresso.
     """
-    return (ESPRESSO_VERSION // 100) % 1000
+    return ESPRESSO_VERSION_MINOR
 
 
 def friendly():

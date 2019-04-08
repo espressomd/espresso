@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/utils/SkipIterator.hpp"
+#include "utils/SkipIterator.hpp"
 
 BOOST_AUTO_TEST_CASE(skip) {
   using Utils::make_skip_iterator;
