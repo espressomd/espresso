@@ -318,7 +318,7 @@ void dp3m_pre_init() {
 
   dp3m.energy_correction = 0.0;
 
-  fft_common_pre_init(&dp3m.fft);
+    fft_pre_init(&dp3m.fft);
 }
 
 void dp3m_deactivate() {

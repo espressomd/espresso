@@ -290,7 +290,7 @@ void p3m_pre_init() {
   p3m.send_grid = nullptr;
   p3m.recv_grid = nullptr;
 
-  fft_common_pre_init(&p3m.fft);
+    fft_pre_init(&p3m.fft);
 }
 
 void p3m_free() {

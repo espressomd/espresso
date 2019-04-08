@@ -37,7 +37,7 @@
  *  This includes the information about the redistribution of the 3D
  *  FFT *grid before the actual FFT.
  */
-typedef struct {
+struct fft_forw_plan {
   /** plan direction: 0 = Forward FFT, 1 = Backward FFT. */
   int dir;
   /** row direction of that FFT. */
@@ -78,10 +78,10 @@ typedef struct {
   int *recv_size;
   /** size of send block elements. */
   int element;
-} fft_forw_plan;
+};
 
 /** Additional information for backwards FFT.*/
-typedef struct {
+struct fft_back_plan {
   /** plan direction. (e.g. fftw macro)*/
   int dir;
   /** plan for fft. */
@@ -92,7 +92,7 @@ typedef struct {
   /** packing function for send blocks. */
   void (*pack_function)(double const *const, double *const, int const *,
                         int const *, int const *, int);
-} fft_back_plan;
+};
 
 /** Information about the three one dimensional FFTs and how the nodes
  *  have to communicate inbetween.
@@ -101,7 +101,7 @@ typedef struct {
  *        node grids, the index 0 is used for the real space charge assignment
  *        grid).
  */
-typedef struct {
+struct fft_data_struct {
   /** Information for forward FFTs. */
   fft_forw_plan plan[4];
   /** Information for backward FFTs. */
@@ -122,7 +122,7 @@ typedef struct {
   double *recv_buf;
   /** Buffer for receive data. */
   double *data_buf;
-} fft_data_struct;
+};
 
 /************************************************
  * DEFINES
@@ -141,7 +141,7 @@ typedef struct {
 #define FFTW_FAILURE 0
 
 /** Initialize FFT data structure. */
-void fft_common_pre_init(fft_data_struct *fft);
+void fft_pre_init(fft_data_struct *fft);
 
 /** This ugly function does the bookkeeping: which nodes have to
  *  communicate to each other, when you change the node grid.
@@ -303,17 +303,6 @@ void fft_pack_block_permute2(double const *in, double *out, int const start[3],
  */
 void fft_unpack_block(double const *in, double *out, int const start[3],
                       int const size[3], int const dim[3], int element);
-
-/** Debug function to print global fft mesh.
- *  Print a globally distributed mesh contained in data. Element size is
- *  element.
- * \param     plan     fft/communication plan.
- * \param[in] data     mesh data.
- * \param     element  element size.
- * \param     num      element index to print.
- */
-void fft_print_global_fft_mesh(fft_forw_plan plan, double const *data,
-                               int element, int num);
 
 /** Debug function to print fft_forw_plan structure.
  * \param pl fft/communication plan.

@@ -346,7 +346,6 @@ void fft_perform_forw(double *data, fft_data_struct &fft) {
   fft_forw_grid_comm(fft.plan[3], fft.data_buf, data, fft);
   /* perform FFT (in/out is data)*/
   fftw_execute_dft(fft.plan[3].our_fftw_plan, c_data, c_data);
-  // fft_print_global_fft_mesh(fft.plan[3],data,1,0);
 
   /* REMARK: Result has to be in data. */
 }

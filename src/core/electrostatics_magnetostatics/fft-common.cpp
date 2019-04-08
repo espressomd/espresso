@@ -36,7 +36,7 @@
 #include "debug.hpp"
 #include "utils.hpp"
 
-void fft_common_pre_init(fft_data_struct *fft) {
+void fft_pre_init(fft_data_struct *fft) {
   for (auto &i : fft->plan) {
     i.group = (int *)Utils::malloc(1 * n_nodes * sizeof(int));
     i.send_block = nullptr;
@@ -354,79 +354,6 @@ void fft_print_fft_plan(fft_forw_plan pl) {
   fprintf(stderr, "]\n");
 
   fflush(stderr);
-}
-
-void fft_print_global_fft_mesh(fft_forw_plan plan, double const *const data,
-                               int element, int num) {
-  int i0, i1, i2, b = 1;
-  int mesh, divide = 0, block1 = -1, start1;
-  int st[3], en[3], si[3];
-  int my = -1;
-  double tmp;
-
-  for (i1 = 0; i1 < 3; i1++) {
-    st[i1] = plan.start[i1];
-    en[i1] = plan.start[i1] + plan.new_mesh[i1];
-    si[i1] = plan.new_mesh[i1];
-  }
-
-  mesh = plan.new_mesh[2];
-  MPI_Barrier(comm_cart);
-  if (this_node == 0)
-    fprintf(stderr, "All: Print Global Mesh: (%d of %d elements)\n", num + 1,
-            element);
-  MPI_Barrier(comm_cart);
-  for (i0 = 0; i0 < n_nodes; i0++) {
-    MPI_Barrier(comm_cart);
-    if (i0 == this_node)
-      fprintf(stderr, "%d: range (%d,%d,%d)-(%d,%d,%d)\n", this_node, st[0],
-              st[1], st[2], en[0], en[1], en[2]);
-  }
-  MPI_Barrier(comm_cart);
-  while (divide == 0) {
-    if (b * mesh > 7) {
-      block1 = b;
-      divide = (int)ceil(mesh / (double)block1);
-    }
-    b++;
-  }
-
-  for (b = 0; b < divide; b++) {
-    start1 = b * block1;
-    for (i0 = mesh - 1; i0 >= 0; i0--) {
-      for (i1 = start1; i1 < std::min(start1 + block1, mesh); i1++) {
-        for (i2 = 0; i2 < mesh; i2++) {
-          if (i0 >= st[0] && i0 < en[0] && i1 >= st[1] && i1 < en[1] &&
-              i2 >= st[2] && i2 < en[2])
-            my = 1;
-          else
-            my = 0;
-          MPI_Barrier(comm_cart);
-          if (my == 1) {
-
-            tmp = data[num + (element *
-                              ((i2 - st[2]) +
-                               si[2] * ((i1 - st[1]) + si[1] * (i0 - st[0]))))];
-            if (fabs(tmp) > 1.0e-15) {
-              if (tmp < 0)
-                fprintf(stderr, "%1.2e", tmp);
-              else
-                fprintf(stderr, " %1.2e", tmp);
-            } else {
-              fprintf(stderr, " %1.2e", 0.0);
-            }
-          }
-          MPI_Barrier(comm_cart);
-        }
-        if (my == 1)
-          fprintf(stderr, " | ");
-      }
-      if (my == 1)
-        fprintf(stderr, "\n");
-    }
-    if (my == 1)
-      fprintf(stderr, "\n");
-  }
 }
 
 #endif /* defined(P3M) || defined(DP3M) */
