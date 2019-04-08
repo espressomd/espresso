@@ -28,14 +28,14 @@
 #include "fft.hpp"
 
 #if defined(P3M) || defined(DP3M)
-#include "communication.hpp"
 #include "debug.hpp"
-#include "fft-common.hpp"
+// #include "communication.hpp"
 
 #include "utils/math/permute_ifield.hpp"
 using Utils::permute_ifield;
 #include "utils/index.hpp"
 using Utils::get_linear_index;
+#include <utils/memory.hpp>
 
 #include <fftw3.h>
 #include <mpi.h>
@@ -77,12 +77,12 @@ using Utils::get_linear_index;
  * \param[out] group       Communication group (node identity list) for the
  *                         calling node.
  * \param[out] pos         Positions of the nodes in grid2
- * \param[out] my_pos      Position of comm_cart.rank() in grid2.
+ * \param[out] my_pos      Position of comm.rank() in grid2.
  * \return Size of the communication group.
  */
-int fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
-                         int const *node_list1, int *node_list2, int *group,
-                         int *pos, int *my_pos);
+int
+fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2, int const *const node_list1, int *const node_list2,
+                     int *const group, int *const pos, int *const my_pos, const boost::mpi::communicator &comm);
 
 /** Calculate the local fft mesh.  Calculate the local mesh (loc_mesh)
  *  of a node at position (n_pos) in a node grid (n_grid) for a global
@@ -279,7 +279,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
   int mult[3];
 
   int n_grid[4][3]; /* The four node grids. */
-  int my_pos[4][3]; /* The position of comm_cart.rank() in the node grids. */
+  int my_pos[4][3]; /* The position of comm.rank() in the node grids. */
   int *n_id[4];     /* linear node identity lists for the node grids. */
   int *n_pos[4];    /* positions of nodes in the node grids. */
 
@@ -329,9 +329,9 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
   for (i = 1; i < 4; i++) {
     fft.plan[i].g_size = fft_find_comm_groups(
-        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-        fft.plan[i].group, n_pos[i], my_pos[i]);
+            {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+            {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+            fft.plan[i].group, n_pos[i], my_pos[i], comm);
     if (fft.plan[i].g_size == -1) {
       /* try permutation */
       j = n_grid[i][(fft.plan[i].row_dir + 1) % 3];
@@ -339,9 +339,9 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
           n_grid[i][(fft.plan[i].row_dir + 2) % 3];
       n_grid[i][(fft.plan[i].row_dir + 2) % 3] = j;
       fft.plan[i].g_size = fft_find_comm_groups(
-          {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-          fft.plan[i].group, n_pos[i], my_pos[i]);
+              {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+              {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+              fft.plan[i].group, n_pos[i], my_pos[i], comm);
       if (fft.plan[i].g_size == -1) {
           throw std::runtime_error("INTERNAL ERROR: fft_find_comm_groups error");
       }
@@ -363,13 +363,13 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
     permute_ifield(fft.plan[i].start, 3, -(fft.plan[i].n_permute));
     fft.plan[i].n_ffts = fft.plan[i].new_mesh[0] * fft.plan[i].new_mesh[1];
 
-    /* FFT_TRACE( printf("%d: comm_group( ",comm_cart.rank() )); */
+    /* FFT_TRACE( printf("%d: comm_group( ",comm.rank() )); */
     /* FFT_TRACE( for(j=0; j< fft.plan[i].g_size; j++) printf("%d ")); */
     /* FFT_TRACE( printf(")\n")); */
 
     /* === send/recv block specifications === */
     for (j = 0; j < fft.plan[i].g_size; j++) {
-      /* send block: comm_cart.rank() to comm-group-node i (identity: node) */
+      /* send block: comm.rank() to comm-group-node i (identity: node) */
       int node = fft.plan[i].group[j];
       fft.plan[i].send_size[j] = fft_calc_send_block(
           my_pos[i - 1], n_grid[i - 1], &(n_pos[i][3 * node]), n_grid[i],
@@ -387,7 +387,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
         for (int k = 0; k < 3; k++)
           fft.plan[1].send_block[6 * j + k] += ca_mesh_margin[2 * k];
       }
-      /* recv block: comm_cart.rank() from comm-group-node i (identity: node) */
+      /* recv block: comm.rank() from comm-group-node i (identity: node) */
       fft.plan[i].recv_size[j] = fft_calc_send_block(
           my_pos[i], n_grid[i], &(n_pos[i - 1][3 * node]), n_grid[i - 1],
           global_mesh_dim, global_mesh_off, &(fft.plan[i].recv_block[6 * j]));
@@ -766,9 +766,9 @@ void fft_unpack_block(double const *const in, double *const out,
  * private functions
  ************************************************/
 
-int fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
-                         int const *const node_list1, int *const node_list2,
-                         int *const group, int *const pos, int *const my_pos) {
+int
+fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2, int const *const node_list1, int *const node_list2,
+                     int *const group, int *const pos, int *const my_pos, const boost::mpi::communicator &comm) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];
@@ -783,7 +783,7 @@ int fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
   int p1[3], p2[3];
   /* node identity */
   int n;
-  /* comm_cart.rank() position in the communication group. */
+  /* comm.rank() position in the communication group. */
   int c_pos = -1;
   /* flag for group identification */
   int my_group = 0;
@@ -831,7 +831,7 @@ int fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
           pos[3 * n + 2] = p2[2];
           if (my_group == 1)
             group[i] = n;
-          if (n == comm_cart.rank() && my_group == 0) {
+          if (n == comm.rank() && my_group == 0) {
             my_group = 1;
             c_pos = i;
             my_pos[0] = p2[0];
