@@ -37,6 +37,7 @@
 using Utils::permute_ifield;
 #include "utils/index.hpp"
 using Utils::get_linear_index;
+#include <utils/mpi/sendrecv.hpp>
 
 #include <fftw3.h>
 #include <mpi.h>
@@ -189,7 +190,7 @@ void fft_pack_block_permute2(double const *in, double *out, int const start[3],
  * \param out  output mesh.
  * \param fft    FFT communication plan.
  */
-static void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
+static void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
                                fft_data_struct &fft);
 
 /** Communicate the grid data according to the given backward FFT plan.
@@ -200,7 +201,7 @@ static void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
  * \param fft    FFT communication plan.
  */
 static void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
-                               double *in, double *out, fft_data_struct &fft);
+                               const double *in, double *out, fft_data_struct &fft);
 
 namespace {
 /** calculate 'best' mapping between a 2d and 3d grid.
@@ -563,27 +564,17 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft) {
   /* REMARK: Result has to be in data. */
 }
 
-void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
+void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
                         fft_data_struct &fft) {
-  int i;
-  MPI_Status status;
-  double *tmp_ptr;
-
-  for (i = 0; i < plan.g_size; i++) {
+  for (int i = 0; i < plan.g_size; i++) {
     plan.pack_function(in, fft.send_buf, &(plan.send_block[6 * i]),
                        &(plan.send_block[6 * i + 3]), plan.old_mesh,
                        plan.element);
 
-    if (plan.group[i] < this_node) { /* send first, receive second */
-      MPI_Send(fft.send_buf, plan.send_size[i], MPI_DOUBLE, plan.group[i],
-               REQ_FFT_FORW, comm_cart);
-      MPI_Recv(fft.recv_buf, plan.recv_size[i], MPI_DOUBLE, plan.group[i],
-               REQ_FFT_FORW, comm_cart, &status);
-    } else if (plan.group[i] > this_node) { /* receive first, send second */
-      MPI_Recv(fft.recv_buf, plan.recv_size[i], MPI_DOUBLE, plan.group[i],
-               REQ_FFT_FORW, comm_cart, &status);
-      MPI_Send(fft.send_buf, plan.send_size[i], MPI_DOUBLE, plan.group[i],
-               REQ_FFT_FORW, comm_cart);
+    if (plan.group[i] != this_node) {
+        MPI_Sendrecv(fft.send_buf, plan.send_size[i], MPI_DOUBLE, plan.group[i], REQ_FFT_FORW,
+                     fft.recv_buf, plan.recv_size[i], MPI_DOUBLE, plan.group[i],
+                     REQ_FFT_FORW, comm_cart, MPI_STATUS_IGNORE);
     } else { /* Self communication... */
       std::swap(fft.send_buf, fft.recv_buf);
     }
@@ -593,10 +584,8 @@ void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
   }
 }
 
-void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
+void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, const double *in,
                         double *out, fft_data_struct &fft) {
-  MPI_Status status;
-
   /* Back means: Use the send/receive stuff from the forward plan but
      replace the receive blocks by the send blocks and vice
      versa. Attention then also new_mesh and old_mesh are exchanged */
@@ -607,16 +596,9 @@ void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
                          &(plan_f.recv_block[6 * i + 3]), plan_f.new_mesh,
                          plan_f.element);
 
-    if (plan_f.group[i] < this_node) { /* send first, receive second */
-      MPI_Send(fft.send_buf, plan_f.recv_size[i], MPI_DOUBLE, plan_f.group[i],
-               REQ_FFT_BACK, comm_cart);
-      MPI_Recv(fft.recv_buf, plan_f.send_size[i], MPI_DOUBLE, plan_f.group[i],
-               REQ_FFT_BACK, comm_cart, &status);
-    } else if (plan_f.group[i] > this_node) { /* receive first, send second */
-      MPI_Recv(fft.recv_buf, plan_f.send_size[i], MPI_DOUBLE, plan_f.group[i],
-               REQ_FFT_BACK, comm_cart, &status);
-      MPI_Send(fft.send_buf, plan_f.recv_size[i], MPI_DOUBLE, plan_f.group[i],
-               REQ_FFT_BACK, comm_cart);
+    if (plan_f.group[i] != this_node) { /* send first, receive second */
+      MPI_Sendrecv(fft.send_buf, plan_f.recv_size[i], MPI_DOUBLE, plan_f.group[i], REQ_FFT_BACK,
+                   fft.recv_buf, plan_f.send_size[i], MPI_DOUBLE, plan_f.group[i], REQ_FFT_BACK, comm_cart, MPI_STATUS_IGNORE);
     } else { /* Self communication... */
       std::swap(fft.send_buf, fft.recv_buf);
     }
