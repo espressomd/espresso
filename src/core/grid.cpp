@@ -193,51 +193,6 @@ void calc_2d_grid(int n, int grid[3]) {
   }
 }
 
-int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
-  int i, row_dir = -1;
-  /* trivial case */
-  if (g3d[2] == 1) {
-    for (i = 0; i < 3; i++)
-      mult[i] = 1;
-    return 2;
-  }
-  if (g2d[0] % g3d[0] == 0) {
-    if (g2d[1] % g3d[1] == 0) {
-      row_dir = 2;
-    } else if (g2d[1] % g3d[2] == 0) {
-      row_dir = 1;
-      g2d[2] = g2d[1];
-      g2d[1] = 1;
-    }
-  } else if (g2d[0] % g3d[1] == 0) {
-    if (g2d[1] % g3d[0] == 0) {
-      row_dir = 2;
-      i = g2d[0];
-      g2d[0] = g2d[1];
-      g2d[1] = i;
-    } else if (g2d[1] % g3d[2] == 0) {
-      row_dir = 0;
-      g2d[2] = g2d[1];
-      g2d[1] = g2d[0];
-      g2d[0] = 1;
-    }
-  } else if (g2d[0] % g3d[2] == 0) {
-    if (g2d[1] % g3d[0] == 0) {
-      row_dir = 1;
-      g2d[2] = g2d[0];
-      g2d[0] = g2d[1];
-      g2d[1] = 1;
-    } else if (g2d[1] % g3d[1] == 0) {
-      row_dir = 0;
-      g2d[2] = g2d[0];
-      g2d[0] = 1;
-    }
-  }
-  for (i = 0; i < 3; i++)
-    mult[i] = g2d[i] / g3d[i];
-  return row_dir;
-}
-
 void rescale_boxl(int dir, double d_new) {
   double scale = (dir - 3) ? d_new / box_l[dir] : d_new / box_l[0];
   if (scale < 1.) {

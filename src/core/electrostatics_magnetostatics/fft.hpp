@@ -59,56 +59,56 @@
  *  FFT *grid before the actual FFT.
  */
 struct fft_forw_plan {
-    /** plan direction: 0 = Forward FFT, 1 = Backward FFT. */
-    int dir;
-    /** row direction of that FFT. */
-    int row_dir;
-    /** permutations from normal coordinate system. */
-    int n_permute;
-    /** number of 1D FFTs. */
-    int n_ffts;
-    /** plan for fft. */
-    fftw_plan our_fftw_plan;
+  /** plan direction: 0 = Forward FFT, 1 = Backward FFT. */
+  int dir;
+  /** row direction of that FFT. */
+  int row_dir;
+  /** permutations from normal coordinate system. */
+  int n_permute;
+  /** number of 1D FFTs. */
+  int n_ffts;
+  /** plan for fft. */
+  fftw_plan our_fftw_plan;
 
-    /** size of local mesh before communication. */
-    int old_mesh[3];
-    /** size of local mesh after communication, also used for actual FFT. */
-    int new_mesh[3];
-    /** lower left point of local FFT mesh in global FFT mesh coordinates. */
-    int start[3];
-    /** size of new mesh (number of mesh points). */
-    int new_size;
+  /** size of local mesh before communication. */
+  int old_mesh[3];
+  /** size of local mesh after communication, also used for actual FFT. */
+  int new_mesh[3];
+  /** lower left point of local FFT mesh in global FFT mesh coordinates. */
+  int start[3];
+  /** size of new mesh (number of mesh points). */
+  int new_size;
 
-    /** number of nodes which have to communicate with each other. */
-    int g_size;
-    /** group of nodes which have to communicate with each other. */
-    int *group;
+  /** number of nodes which have to communicate with each other. */
+  int g_size;
+  /** group of nodes which have to communicate with each other. */
+  int *group;
 
-    /** packing function for send blocks. */
-    void (*pack_function)(double const *const, double *const, int const *,
-                          int const *, int const *, int);
-    /** Send block specification. 6 integers for each node: start[3], size[3]. */
-    int *send_block;
-    /** Send block communication sizes. */
-    int *send_size;
-    /** Recv block specification. 6 integers for each node: start[3], size[3]. */
-    int *recv_block;
-    /** Recv block communication sizes. */
-    int *recv_size;
-    /** size of send block elements. */
-    int element;
+  /** packing function for send blocks. */
+  void (*pack_function)(double const *const, double *const, int const *,
+                        int const *, int const *, int);
+  /** Send block specification. 6 integers for each node: start[3], size[3]. */
+  int *send_block;
+  /** Send block communication sizes. */
+  int *send_size;
+  /** Recv block specification. 6 integers for each node: start[3], size[3]. */
+  int *recv_block;
+  /** Recv block communication sizes. */
+  int *recv_size;
+  /** size of send block elements. */
+  int element;
 };
 
 /** Additional information for backwards FFT.*/
 struct fft_back_plan {
-    /** plan direction. (e.g. fftw macro)*/
-    int dir;
-    /** plan for fft. */
-    fftw_plan our_fftw_plan;
+  /** plan direction. (e.g. fftw macro)*/
+  int dir;
+  /** plan for fft. */
+  fftw_plan our_fftw_plan;
 
-    /** packing function for send blocks. */
-    void (*pack_function)(double const *const, double *const, int const *,
-                          int const *, int const *, int);
+  /** packing function for send blocks. */
+  void (*pack_function)(double const *const, double *const, int const *,
+                        int const *, int const *, int);
 };
 
 /** Information about the three one dimensional FFTs and how the nodes
@@ -119,26 +119,26 @@ struct fft_back_plan {
  *        grid).
  */
 struct fft_data_struct {
-    /** Information for forward FFTs. */
-    fft_forw_plan plan[4];
-    /** Information for backward FFTs. */
-    fft_back_plan back[4];
+  /** Information for forward FFTs. */
+  fft_forw_plan plan[4];
+  /** Information for backward FFTs. */
+  fft_back_plan back[4];
 
-    /** Whether FFT is initialized or not. */
-    int init_tag;
+  /** Whether FFT is initialized or not. */
+  int init_tag;
 
-    /** Maximal size of the communication buffers. */
-    int max_comm_size;
+  /** Maximal size of the communication buffers. */
+  int max_comm_size;
 
-    /** Maximal local mesh size. */
-    int max_mesh_size;
+  /** Maximal local mesh size. */
+  int max_mesh_size;
 
-    /** send buffer. */
-    double *send_buf;
-    /** receive buffer. */
-    double *recv_buf;
-    /** Buffer for receive data. */
-    double *data_buf;
+  /** send buffer. */
+  double *send_buf;
+  /** receive buffer. */
+  double *recv_buf;
+  /** Buffer for receive data. */
+  double *data_buf;
 };
 
 /** \name Exported Functions */
