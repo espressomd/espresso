@@ -26,14 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <type_traits>
 
 #include "device_qualifier.hpp"
-#include "type_traits.hpp"
 
 namespace Utils {
 namespace detail {
 
 template <class T, class C>
 using has_data =
-    std::is_convertible<decay_t<decltype(std::declval<C>().data())> *,
+    std::is_convertible<std::decay_t<decltype(std::declval<C>().data())> *,
                         T *const *>;
 } // namespace detail
 
@@ -123,9 +122,9 @@ DEVICE_QUALIFIER constexpr Span<T> make_span(T *p, size_t N) {
 }
 
 template <typename T>
-DEVICE_QUALIFIER constexpr Span<add_const_t<T>> make_const_span(T *p,
-                                                                size_t N) {
-  return Span<add_const_t<T>>(p, N);
+DEVICE_QUALIFIER constexpr Span<std::add_const_t<T>> make_const_span(T *p,
+                                                                     size_t N) {
+  return Span<std::add_const_t<T>>(p, N);
 }
 } // namespace Utils
 

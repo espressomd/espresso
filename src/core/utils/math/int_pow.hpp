@@ -23,8 +23,7 @@
 #ifndef UTILS_MATH_INT_POW_HPP
 #define UTILS_MATH_INT_POW_HPP
 
-#include "utils/type_traits.hpp"
-
+#include <type_traits>
 namespace Utils {
 namespace detail {
 template <class T, unsigned n, class = void> struct int_pow_impl {
