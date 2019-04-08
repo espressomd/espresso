@@ -615,8 +615,6 @@ looking directly at the code.
 
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
 
--  ``FFT_DEBUG`` Output from the unified FFT code.
-
 -  ``RANDOM_DEBUG``
 
 -  ``FORCE_DEBUG`` Output from the force calculation loops.
