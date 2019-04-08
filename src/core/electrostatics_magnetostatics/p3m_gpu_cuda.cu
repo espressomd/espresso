@@ -48,7 +48,12 @@
 #include "EspressoSystemInterface.hpp"
 #include "global.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "p3m_gpu_common.hpp"
+
+#include <utils/math/int_pow.hpp>
+using Utils::int_pow;
+#include <utils/math/sinc.hpp>
+#include <utils/math/sqr.hpp>
+using Utils::sqr;
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -258,13 +263,13 @@ __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
 
   for (MX = -P3M_BRILLOUIN; MX <= P3M_BRILLOUIN; MX++) {
     NMX = ((NX > p.mesh[0] / 2) ? NX - p.mesh[0] : NX) + p.mesh[0] * MX;
-    S1 = int_pow<2 * cao>(csinc(Meshi[0] * NMX));
+    S1 = int_pow<2 * cao>(Utils::sinc(Meshi[0] * NMX));
     for (MY = -P3M_BRILLOUIN; MY <= P3M_BRILLOUIN; MY++) {
       NMY = ((NY > p.mesh[1] / 2) ? NY - p.mesh[1] : NY) + p.mesh[1] * MY;
-      S2 = S1 * int_pow<2 * cao>(csinc(Meshi[1] * NMY));
+      S2 = S1 * int_pow<2 * cao>(Utils::sinc(Meshi[1] * NMY));
       for (MZ = -P3M_BRILLOUIN; MZ <= P3M_BRILLOUIN; MZ++) {
         NMZ = ((NZ > p.mesh[2] / 2) ? NZ - p.mesh[2] : NZ) + p.mesh[2] * MZ;
-        S3 = S2 * int_pow<2 * cao>(csinc(Meshi[2] * NMZ));
+        S3 = S2 * int_pow<2 * cao>(Utils::sinc(Meshi[2] * NMZ));
 
         NM2 = sqr(NMX * Leni[0]) + sqr(NMY * Leni[1]) + sqr(NMZ * Leni[2]);
         *Nenner += S3;

@@ -23,6 +23,9 @@
 #ifndef UTILS_MATH_SINC_HPP
 #define UTILS_MATH_SINC_HPP
 
+#include "utils/constants.hpp"
+#include "utils/device_qualifier.hpp"
+
 #include <boost/math/constants/constants.hpp>
 
 #include <cmath>
@@ -41,10 +44,10 @@ namespace Utils {
  * also save time, since it reduces the number of function calls to
  * sin().
  */
-template <typename T> T sinc(T d) {
+template <typename T> DEVICE_QUALIFIER T sinc(T d) {
   const constexpr T epsi = 0.1;
 
-  const auto PId = boost::math::constants::pi<T>() * d;
+  const auto PId = PI * d;
 
   if (std::abs(d) > epsi)
     return std::sin(PId) / PId;

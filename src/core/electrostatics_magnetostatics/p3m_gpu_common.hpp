@@ -20,61 +20,6 @@
 #ifndef __P3M_GPU_COMMON_HPP
 #define __P3M_GPU_COMMON_HPP
 
-#include "utils.hpp"
-
-namespace {
-
-/** This function returns either fabs or fabsf depending on
- * the type of the argument via template specialization.
- */
-template <typename T> __device__ T myabs(T x) { return fabs(x); }
-
-template <> __device__ float myabs(float x) { return fabsf(x); }
-
-/**
- * \brief Calculate integer powers.
- * This functions calculates x^n, where
- * n is a positive integer that is known
- * at compile time. It uses exponentiation by
- * squaring to construct a efficient function.
- */
-template <unsigned n, typename T> __device__ T int_pow(T x) {
-  switch (n) {
-  case 0:
-    return T(1);
-  case 1:
-    return x;
-  default:
-    /** Even branch */
-    if (n % 2 == 0) {
-      return int_pow<n / 2, T>(x * x);
-    } else {
-      return x * int_pow<(n - 1) / 2, T>(x * x);
-    }
-  }
-}
-
-template <typename T> __device__ inline T csinc(T d) {
-  constexpr T epsi(0.1);
-
-  const T PId = PI * d;
-
-  if (myabs(d) > epsi)
-    return sin(PId) / PId;
-  else {
-    /** Coefficients of the Taylor expansion of sinc */
-    constexpr T c2 = -0.1666666666667e-0;
-    constexpr T c4 = 0.8333333333333e-2;
-    constexpr T c6 = -0.1984126984127e-3;
-    constexpr T c8 = 0.2755731922399e-5;
-
-    const T PId2 = PId * PId;
-    return 1.0 + PId2 * (c2 + PId2 * (c4 + PId2 * (c6 + PId2 * c8)));
-  }
-}
-
-template <typename T> __device__ T sqr(T x) { return x * x; }
-
-} // namespace
+namespace {} // namespace
 
 #endif
