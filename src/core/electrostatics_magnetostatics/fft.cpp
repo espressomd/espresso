@@ -35,6 +35,8 @@
 
 #include "utils/math/permute_ifield.hpp"
 using Utils::permute_ifield;
+#include "utils/index.hpp"
+using Utils::get_linear_index;
 
 #include <fftw3.h>
 #include <mpi.h>
