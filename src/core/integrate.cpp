@@ -689,7 +689,7 @@ void propagate_pos() {
         }
       }
       /* Verlet criterion check */
-        if ((p.r.p - p.l.p_old).norm2() > skin2)
+      if ((p.r.p - p.l.p_old).norm2() > skin2)
         set_resort_particles(Cells::RESORT_LOCAL);
     }
   }

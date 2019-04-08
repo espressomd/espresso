@@ -242,7 +242,7 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
           if (p1 != p2) {
             for (t2 = 0; t2 < n_p2; t2++) {
               if (p2.p.type == p2_types[t2]) {
-                  auto const act_dist2 = get_mi_vector(p1.r.p, p2.r.p).norm2();
+                auto const act_dist2 = get_mi_vector(p1.r.p, p2.r.p).norm2();
                 if (act_dist2 < min_dist2) {
                   min_dist2 = act_dist2;
                 }
@@ -387,10 +387,12 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
           for (; jt != partCfg.end(); ++jt) {
             for (int t2 = 0; t2 < n_p2; t2++) {
               if (jt->p.type == p2_types[t2]) {
-                  using Utils::make_const_span;
+                using Utils::make_const_span;
 
-                auto const dist = get_mi_vector(make_const_span(configs[k] + 3 * i, 3),
-                                                make_const_span(configs[k] + 3 * j, 3)).norm();
+                auto const dist =
+                    get_mi_vector(make_const_span(configs[k] + 3 * i, 3),
+                                  make_const_span(configs[k] + 3 * j, 3))
+                        .norm();
                 if (dist > r_min && dist < r_max) {
                   auto const ind =
                       static_cast<int>((dist - r_min) * inv_bin_width);
