@@ -48,6 +48,7 @@
 #include <utils/Vector.hpp>
 
 #include <fftw3.h>
+#include <boost/mpi/communicator.hpp>
 
 /************************************************
  * data types
@@ -146,7 +147,7 @@ struct fft_data_struct {
 /*@{*/
 
 /** Initialize FFT data structure. */
-void fft_pre_init(fft_data_struct *fft, const int n_nodes);
+void fft_pre_init(fft_data_struct *fft, const boost::mpi::communicator &comm);
 
 /** Initialize everything connected to the 3D-FFT.
  *

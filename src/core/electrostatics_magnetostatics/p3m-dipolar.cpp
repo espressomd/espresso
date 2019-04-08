@@ -318,7 +318,7 @@ void dp3m_pre_init() {
 
   dp3m.energy_correction = 0.0;
 
-  fft_pre_init(&dp3m.fft, n_nodes);
+  fft_pre_init(&dp3m.fft, comm_cart);
 }
 
 void dp3m_deactivate() {

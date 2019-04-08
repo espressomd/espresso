@@ -31,7 +31,6 @@
 #include "communication.hpp"
 #include "debug.hpp"
 #include "fft-common.hpp"
-#include "grid.hpp"
 
 #include "utils/math/permute_ifield.hpp"
 using Utils::permute_ifield;
@@ -286,11 +285,14 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 
   FFT_TRACE(fprintf(stderr, "%d: fft_init():\n", comm_cart.rank()));
 
+  int node_pos[3];
+  MPI_Cart_coords(comm_cart, comm_cart.rank(), 3, node_pos);
+
   fft.max_comm_size = 0;
   fft.max_mesh_size = 0;
   for (i = 0; i < 4; i++) {
-    n_id[i] = (int *)Utils::malloc(1 * n_nodes * sizeof(int));
-    n_pos[i] = (int *)Utils::malloc(3 * n_nodes * sizeof(int));
+    n_id[i] = (int *)Utils::malloc(1 * comm_cart.size() * sizeof(int));
+    n_pos[i] = (int *)Utils::malloc(3 * comm_cart.size() * sizeof(int));
   }
 
   /* === node grids === */
@@ -299,7 +301,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     n_grid[0][i] = grid[i];
     my_pos[0][i] = node_pos[i];
   }
-  for (i = 0; i < n_nodes; i++) {
+  for (i = 0; i < comm_cart.size(); i++) {
       MPI_Cart_coords(comm_cart, i, 3, &(n_pos[0][3 * i + 0]));
       auto const lin_ind = get_linear_index(n_pos[0][3 * i + 0], n_pos[0][3 * i + 1],
                                n_pos[0][3 * i + 2],
@@ -308,7 +310,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   }
 
   /* FFT node grids (n_grid[1 - 3]) */
-  calc_2d_grid(n_nodes, n_grid[1]);
+  calc_2d_grid(comm_cart.size(), n_grid[1]);
   /* resort n_grid[1] dimensions if necessary */
   fft.plan[1].row_dir = map_3don2d_grid(n_grid[0], n_grid[1], mult);
   fft.plan[0].n_permute = 0;
@@ -572,7 +574,7 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft) {
       printf("Complex value is not zero (i=%d,data=%g)!!!\n", i,
              data[2 * i + 1]);
       if (i > 100)
-        errexit();
+        throw std::runtime_error("Complex value is not zero");
     }
   }
   /* communicate (in is fft.data_buf) */
@@ -626,9 +628,9 @@ void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
   }
 }
 
-void fft_pre_init(fft_data_struct *fft, const int n_nodes) {
+void fft_pre_init(fft_data_struct *fft, const boost::mpi::communicator &comm) {
   for (auto &i : fft->plan) {
-    i.group = (int *)Utils::malloc(1 * n_nodes * sizeof(int));
+    i.group = (int *)Utils::malloc(1 * comm.size() * sizeof(int));
     i.send_block = nullptr;
     i.send_size = nullptr;
     i.recv_block = nullptr;
