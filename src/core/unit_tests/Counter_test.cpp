@@ -21,9 +21,8 @@
 
 #define BOOST_TEST_MODULE Utils::Counter test
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
-#include <boost/serialization/access.hpp> 
 #include "utils/Counter.hpp"
+#include <boost/test/unit_test.hpp>
 
 using Utils::Counter;
 
