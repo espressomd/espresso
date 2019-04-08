@@ -47,8 +47,8 @@
 
 #include <utils/Vector.hpp>
 
-#include <fftw3.h>
 #include <boost/mpi/communicator.hpp>
+#include <fftw3.h>
 
 /************************************************
  * data types
@@ -126,7 +126,7 @@ struct fft_data_struct {
   fft_back_plan back[4];
 
   /** Whether FFT is initialized or not. */
-  int init_tag = 0;
+  bool init_tag = false;
 
   /** Maximal size of the communication buffers. */
   int max_comm_size = 0;
@@ -159,8 +159,9 @@ struct fft_data_struct {
  *  \param comm            MPI communicator
  *  \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  */
-int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, int *global_mesh_dim,
-             double *global_mesh_off, int *ks_pnum, fft_data_struct &fft, const Vector3i &grid,
+int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
+             int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
+             fft_data_struct &fft, const Vector3i &grid,
              const boost::mpi::communicator &comm);
 
 /** Perform an in-place forward 3D FFT.
@@ -169,7 +170,8 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
  *  \param         fft   FFT plan.
  *  \param comm            MPI communicator
  */
-void fft_perform_forw(double *data, fft_data_struct &fft, const boost::mpi::communicator &comm);
+void fft_perform_forw(double *data, fft_data_struct &fft,
+                      const boost::mpi::communicator &comm);
 
 /** Perform an in-place backward 3D FFT.
  *  \warning The content of \a data is overwritten.
@@ -177,7 +179,8 @@ void fft_perform_forw(double *data, fft_data_struct &fft, const boost::mpi::comm
  *  \param check_complex  Throw an error if the complex component is non-zero.
  *  \param         fft    FFT plan.
  */
-void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft, const boost::mpi::communicator &comm);
+void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
+                      const boost::mpi::communicator &comm);
 
 /** pack a block (size[3] starting at start[3]) of an input 3d-grid
  *  with dimension dim[3] into an output 3d-block with dimension size[3].

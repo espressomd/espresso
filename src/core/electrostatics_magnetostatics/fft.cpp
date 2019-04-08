@@ -78,9 +78,10 @@ using Utils::get_linear_index;
  * \param[out] my_pos      Position of comm.rank() in grid2.
  * \return Size of the communication group.
  */
-int
-fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2, int const *const node_list1, int *const node_list2,
-                     int *const group, int *const pos, int *const my_pos, const boost::mpi::communicator &comm);
+int fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
+                         int const *const node_list1, int *const node_list2,
+                         int *const group, int *const pos, int *const my_pos,
+                         const boost::mpi::communicator &comm);
 
 /** Calculate the local fft mesh.  Calculate the local mesh (loc_mesh)
  *  of a node at position (n_pos) in a node grid (n_grid) for a global
@@ -186,7 +187,8 @@ void fft_pack_block_permute2(double const *in, double *out, int const start[3],
  * \param out  output mesh.
  * \param fft    FFT communication plan.
  */
-static void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out, fft_data_struct &fft,
+static void fft_forw_grid_comm(fft_forw_plan plan, const double *in,
+                               double *out, fft_data_struct &fft,
                                const boost::mpi::communicator &comm);
 
 /** Communicate the grid data according to the given backward FFT plan.
@@ -196,9 +198,10 @@ static void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out
  * \param out    output mesh.
  * \param fft    FFT communication plan.
  */
-static void
-fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, const double *in, double *out, fft_data_struct &fft,
-                   const boost::mpi::communicator &comm);
+static void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
+                               const double *in, double *out,
+                               fft_data_struct &fft,
+                               const boost::mpi::communicator &comm);
 
 namespace {
 /** calculate 'best' mapping between a 2d and 3d grid.
@@ -257,20 +260,21 @@ int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
 }
 
 /** calculate most square 2d grid. */
-    void calc_2d_grid(int n, int grid[3]) {
-        for(auto i = static_cast<int>(std::sqrt(n)); i >= 1; i--) {
-            if (n % i == 0) {
-                grid[0] = n / i;
-                grid[1] = i;
-                grid[2] = 1;
-                return;
-            }
-        }
+void calc_2d_grid(int n, int grid[3]) {
+  for (auto i = static_cast<int>(std::sqrt(n)); i >= 1; i--) {
+    if (n % i == 0) {
+      grid[0] = n / i;
+      grid[1] = i;
+      grid[2] = 1;
+      return;
     }
+  }
+}
 } // namespace
 
-int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, int *global_mesh_dim,
-             double *global_mesh_off, int *ks_pnum, fft_data_struct &fft, const Vector3i &grid,
+int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
+             int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
+             fft_data_struct &fft, const Vector3i &grid,
              const boost::mpi::communicator &comm) {
   int i, j;
   /* helpers */
@@ -284,9 +288,9 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
   int node_pos[3];
   MPI_Cart_coords(comm, comm.rank(), 3, node_pos);
 
-    for (auto &i : fft.plan) {
-        i.group = (int *) Utils::malloc(1 * comm.size() * sizeof(int));
-    }
+  for (auto &i : fft.plan) {
+    i.group = (int *)Utils::malloc(1 * comm.size() * sizeof(int));
+  }
 
   fft.max_comm_size = 0;
   fft.max_mesh_size = 0;
@@ -302,10 +306,10 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
     my_pos[0][i] = node_pos[i];
   }
   for (i = 0; i < comm.size(); i++) {
-      MPI_Cart_coords(comm, i, 3, &(n_pos[0][3 * i + 0]));
-      auto const lin_ind = get_linear_index(n_pos[0][3 * i + 0], n_pos[0][3 * i + 1],
-                               n_pos[0][3 * i + 2],
-                               {n_grid[0][0], n_grid[0][1], n_grid[0][2]});
+    MPI_Cart_coords(comm, i, 3, &(n_pos[0][3 * i + 0]));
+    auto const lin_ind = get_linear_index(
+        n_pos[0][3 * i + 0], n_pos[0][3 * i + 1], n_pos[0][3 * i + 2],
+        {n_grid[0][0], n_grid[0][1], n_grid[0][2]});
     n_id[0][lin_ind] = i;
   }
 
@@ -329,9 +333,9 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
   for (i = 1; i < 4; i++) {
     fft.plan[i].g_size = fft_find_comm_groups(
-            {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-            {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-            fft.plan[i].group, n_pos[i], my_pos[i], comm);
+        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+        fft.plan[i].group, n_pos[i], my_pos[i], comm);
     if (fft.plan[i].g_size == -1) {
       /* try permutation */
       j = n_grid[i][(fft.plan[i].row_dir + 1) % 3];
@@ -339,11 +343,11 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
           n_grid[i][(fft.plan[i].row_dir + 2) % 3];
       n_grid[i][(fft.plan[i].row_dir + 2) % 3] = j;
       fft.plan[i].g_size = fft_find_comm_groups(
-              {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-              {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-              fft.plan[i].group, n_pos[i], my_pos[i], comm);
+          {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+          fft.plan[i].group, n_pos[i], my_pos[i], comm);
       if (fft.plan[i].g_size == -1) {
-          throw std::runtime_error("INTERNAL ERROR: fft_find_comm_groups error");
+        throw std::runtime_error("INTERNAL ERROR: fft_find_comm_groups error");
       }
     }
 
@@ -456,7 +460,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
        Attention: destroys contents of c_data/data and c_fft.data_buf/data_buf.
      */
 
-    if (fft.init_tag == 1)
+    if (fft.init_tag)
       fftw_destroy_plan(fft.plan[i].our_fftw_plan);
     fft.plan[i].our_fftw_plan = fftw_plan_many_dft(
         1, &fft.plan[i].new_mesh[2], fft.plan[i].n_ffts, c_data, nullptr, 1,
@@ -469,7 +473,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
   for (i = 1; i < 4; i++) {
     fft.back[i].dir = FFTW_BACKWARD;
 
-    if (fft.init_tag == 1)
+    if (fft.init_tag)
       fftw_destroy_plan(fft.back[i].our_fftw_plan);
     fft.back[i].our_fftw_plan = fftw_plan_many_dft(
         1, &fft.plan[i].new_mesh[2], fft.plan[i].n_ffts, c_data, nullptr, 1,
@@ -483,7 +487,8 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
   } else if (fft.plan[1].row_dir == 1) {
     fft.back[1].pack_function = fft_pack_block_permute2;
   }
-  fft.init_tag = 1;
+
+  fft.init_tag = true;
   /* free(data); */
   for (i = 0; i < 4; i++) {
     free(n_id[i]);
@@ -492,14 +497,15 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
   return fft.max_mesh_size;
 }
 
-void fft_perform_forw(double *data, fft_data_struct &fft, const boost::mpi::communicator &comm) {
+void fft_perform_forw(double *data, fft_data_struct &fft,
+                      const boost::mpi::communicator &comm) {
   /* ===== first direction  ===== */
 
   auto *c_data = (fftw_complex *)data;
   auto *c_data_buf = (fftw_complex *)fft.data_buf;
 
   /* communication to current dir row format (in is data) */
-    fft_forw_grid_comm(fft.plan[1], data, fft.data_buf, fft, comm);
+  fft_forw_grid_comm(fft.plan[1], data, fft.data_buf, fft, comm);
 
   /* complexify the real data array (in is fft.data_buf) */
   for (int i = 0; i < fft.plan[1].new_size; i++) {
@@ -510,19 +516,20 @@ void fft_perform_forw(double *data, fft_data_struct &fft, const boost::mpi::comm
   fftw_execute_dft(fft.plan[1].our_fftw_plan, c_data, c_data);
   /* ===== second direction ===== */
   /* communication to current dir row format (in is data) */
-    fft_forw_grid_comm(fft.plan[2], data, fft.data_buf, fft, comm);
+  fft_forw_grid_comm(fft.plan[2], data, fft.data_buf, fft, comm);
   /* perform FFT (in/out is fft.data_buf)*/
   fftw_execute_dft(fft.plan[2].our_fftw_plan, c_data_buf, c_data_buf);
   /* ===== third direction  ===== */
   /* communication to current dir row format (in is fft.data_buf) */
-    fft_forw_grid_comm(fft.plan[3], fft.data_buf, data, fft, comm);
+  fft_forw_grid_comm(fft.plan[3], fft.data_buf, data, fft, comm);
   /* perform FFT (in/out is data)*/
   fftw_execute_dft(fft.plan[3].our_fftw_plan, c_data, c_data);
 
   /* REMARK: Result has to be in data. */
 }
 
-void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft, const boost::mpi::communicator &comm) {
+void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
+                      const boost::mpi::communicator &comm) {
   int i;
 
   auto *c_data = (fftw_complex *)data;
@@ -533,13 +540,13 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft, co
   /* perform FFT (in is data) */
   fftw_execute_dft(fft.back[3].our_fftw_plan, c_data, c_data);
   /* communicate (in is data)*/
-    fft_back_grid_comm(fft.plan[3], fft.back[3], data, fft.data_buf, fft, comm);
+  fft_back_grid_comm(fft.plan[3], fft.back[3], data, fft.data_buf, fft, comm);
 
   /* ===== second direction ===== */
   /* perform FFT (in is fft.data_buf) */
   fftw_execute_dft(fft.back[2].our_fftw_plan, c_data_buf, c_data_buf);
   /* communicate (in is fft.data_buf) */
-    fft_back_grid_comm(fft.plan[2], fft.back[2], fft.data_buf, data, fft, comm);
+  fft_back_grid_comm(fft.plan[2], fft.back[2], fft.data_buf, data, fft, comm);
 
   /* ===== first direction  ===== */
   /* perform FFT (in is data) */
@@ -556,12 +563,13 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft, co
     }
   }
   /* communicate (in is fft.data_buf) */
-    fft_back_grid_comm(fft.plan[1], fft.back[1], fft.data_buf, data, fft, comm);
+  fft_back_grid_comm(fft.plan[1], fft.back[1], fft.data_buf, data, fft, comm);
 
   /* REMARK: Result has to be in data. */
 }
 
-void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out, fft_data_struct &fft,
+void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
+                        fft_data_struct &fft,
                         const boost::mpi::communicator &comm) {
   for (int i = 0; i < plan.g_size; i++) {
     plan.pack_function(in, fft.send_buf, &(plan.send_block[6 * i]),
@@ -581,7 +589,8 @@ void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out, fft_d
   }
 }
 
-void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, const double *in, double *out, fft_data_struct &fft,
+void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
+                        const double *in, double *out, fft_data_struct &fft,
                         const boost::mpi::communicator &comm) {
   /* Back means: Use the send/receive stuff from the forward plan but
      replace the receive blocks by the send blocks and vice
@@ -733,9 +742,10 @@ void fft_unpack_block(double const *const in, double *const out,
  * private functions
  ************************************************/
 
-int
-fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2, int const *const node_list1, int *const node_list2,
-                     int *const group, int *const pos, int *const my_pos, const boost::mpi::communicator &comm) {
+int fft_find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
+                         int const *const node_list1, int *const node_list2,
+                         int *const group, int *const pos, int *const my_pos,
+                         const boost::mpi::communicator &comm) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];

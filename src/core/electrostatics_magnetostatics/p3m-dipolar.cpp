@@ -401,9 +401,9 @@ void dp3m_init() {
                       (void *)dp3m.rs_mesh));
 
     int ca_mesh_size =
-            fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
-                     dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
-                     dp3m.fft, node_grid, comm_cart);
+        fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
+                 dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
+                 dp3m.fft, node_grid, comm_cart);
     dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     for (n = 0; n < 3; n++)
@@ -923,9 +923,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[0]);
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[1]);
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[2]);
-      fft_perform_forw(dp3m.rs_mesh_dip[0], dp3m.fft, comm_cart);
-      fft_perform_forw(dp3m.rs_mesh_dip[1], dp3m.fft, comm_cart);
-      fft_perform_forw(dp3m.rs_mesh_dip[2], dp3m.fft, comm_cart);
+    fft_perform_forw(dp3m.rs_mesh_dip[0], dp3m.fft, comm_cart);
+    fft_perform_forw(dp3m.rs_mesh_dip[1], dp3m.fft, comm_cart);
+    fft_perform_forw(dp3m.rs_mesh_dip[2], dp3m.fft, comm_cart);
     // Note: after these calls, the grids are in the order yzx and not xyz
     // anymore!!!
   }
@@ -1070,7 +1070,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         }
 
         /* Back FFT force component mesh */
-          fft_perform_back(dp3m.rs_mesh, false, dp3m.fft, comm_cart);
+        fft_perform_back(dp3m.rs_mesh, false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
         dp3m_spread_force_grid(dp3m.rs_mesh);
         /* Assign force component from mesh to particle */
@@ -1151,9 +1151,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
           }
         }
         /* Back FFT force component mesh */
-          fft_perform_back(dp3m.rs_mesh_dip[0], false, dp3m.fft, comm_cart);
-          fft_perform_back(dp3m.rs_mesh_dip[1], false, dp3m.fft, comm_cart);
-          fft_perform_back(dp3m.rs_mesh_dip[2], false, dp3m.fft, comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[0], false, dp3m.fft, comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[1], false, dp3m.fft, comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[2], false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[0]);
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[1]);
