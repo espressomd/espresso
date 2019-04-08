@@ -57,19 +57,4 @@ inline void vector_product(T const &a, U const &b, V &c) {
 
 /*@}*/
 
-/*************************************************************/
-/** \name Distance calculations.  */
-/*************************************************************/
-/*@{*/
-
-/** Calculate the squared distance between two positions.
- *  \param a Position one.
- *  \param b Position two.
- */
-inline double distance2(const Vector3d &a, const Vector3d &b) {
-  return (a - b).norm2();
-}
-
-/*@}*/
-
 #endif
