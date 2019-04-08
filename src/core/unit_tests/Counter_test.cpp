@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(ctor) {
     BOOST_CHECK_EQUAL(c.initial_value(), 5);
     BOOST_CHECK_EQUAL(c.value(), 6);
   }
-  
+ 
   {
     auto c = Counter<int>();
     BOOST_CHECK_EQUAL(c.initial_value(), 0);
