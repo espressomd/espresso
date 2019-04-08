@@ -22,41 +22,43 @@
 #ifndef NSQUARE_H
 #define NSQUARE_H
 /** \file
-    This file contains the code for a simple n^2 particle loop.
-
-    The nsquare cell system performs a full n^2 particle interaction
-    calculation over the simulation box.  Therefore every node just
-    has a single cell containing all local particles plus one ghost
-    cell per other node. The communication is done via broadcasts
-    (exchange_ghosts and update_ghosts) and reduce operations
-    (collect_ghost_force).
-
-    The algorithm used for interaction calculation is parallelized,
-    but a full communication is needed every time step. Let us assume
-    that the number of nodes P is odd. Then a node p will do the
-    interaction calculation with another node q iff \f$(q-p)\,mod\,P\f$ is even.
-    Of course then every node has to do the same amount of work
-    (provided the particles are distributed equally), and each
-    interaction pair is done exactly once, since for odd P \f$r\,mod\,P\f$
-    odd iff \f$-r\,mod\,P\f$ is even. For an even number of nodes,
-    a virtual additional processor is assumed, with which no interactions occur.
-    This means, that each communication cycle, 1 processor is idle, which is
-    pretty ineffective.
-
-    The second main part of this cell system is a load balancer which
-    at the beginning of the integration is called and balances the
-    numbers of particles between the nodes. This means that the number
-    of particles per node should be around \f$N/P\f$, so the goal is to
-    let every processor have a number of particles which is one of the
-    two integers closest to \f$N/P\f$. The algorithm is greedy, i. e. it
-    searches for the node with most and least particles and transfers
-    as much as possible particles between them so that at least one of
-    them satisfies the constraints. Of course the algorithm terminates
-    if both satisfy the condition without transfer.
-
-    The calculations themselves are just simple loops over all
-    appropriate particle pairs.
-*/
+ *  This file contains the code for a simple n^2 particle loop.
+ *
+ *  The nsquare cell system performs a full n^2 particle interaction
+ *  calculation over the simulation box.  Therefore every node just
+ *  has a single cell containing all local particles plus one ghost
+ *  cell per other node. The communication is done via broadcasts
+ *  (exchange_ghosts and update_ghosts) and reduce operations
+ *  (collect_ghost_force).
+ *
+ *  The algorithm used for interaction calculation is parallelized,
+ *  but a full communication is needed every time step. Let us assume
+ *  that the number of nodes P is odd. Then a node p will do the
+ *  interaction calculation with another node q iff \f$(q-p)\,mod\,P\f$ is even.
+ *  Of course then every node has to do the same amount of work
+ *  (provided the particles are distributed equally), and each
+ *  interaction pair is done exactly once, since for odd P \f$r\,mod\,P\f$
+ *  odd iff \f$-r\,mod\,P\f$ is even. For an even number of nodes,
+ *  a virtual additional processor is assumed, with which no interactions occur.
+ *  This means, that each communication cycle, 1 processor is idle, which is
+ *  pretty ineffective.
+ *
+ *  The second main part of this cell system is a load balancer which
+ *  at the beginning of the integration is called and balances the
+ *  numbers of particles between the nodes. This means that the number
+ *  of particles per node should be around \f$N/P\f$, so the goal is to
+ *  let every processor have a number of particles which is one of the
+ *  two integers closest to \f$N/P\f$. The algorithm is greedy, i. e. it
+ *  searches for the node with most and least particles and transfers
+ *  as much as possible particles between them so that at least one of
+ *  them satisfies the constraints. Of course the algorithm terminates
+ *  if both satisfy the condition without transfer.
+ *
+ *  The calculations themselves are just simple loops over all
+ *  appropriate particle pairs.
+ *
+ *  Implementation in nsquare.cpp.
+ */
 
 #include "cells.hpp"
 

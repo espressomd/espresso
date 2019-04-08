@@ -19,11 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __ELLIPSOID_HPP
-#define __ELLIPSOID_HPP
+#ifndef SHAPES_ELLIPSOID_HPP
+#define SHAPES_ELLIPSOID_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 namespace Shapes {
 class Ellipsoid : public Shape {

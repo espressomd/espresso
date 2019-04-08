@@ -1,3 +1,27 @@
+/*
+Copyright (C) 2015-2019 The ESPResSo project
+
+This file is part of ESPResSo.
+
+ESPResSo is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ESPResSo is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/** @file
+ *
+ *  P3M electrostatics on GPU.
+ *
+ *  The corresponding header file is p3m_gpu_error.hpp.
+ */
 #include "cuda_wrapper.hpp"
 
 #include <stdio.h>
@@ -14,7 +38,8 @@
 #endif
 
 /** @todo Extend to higher order. This comes from some 1/sin expansion in
- * Hockney/Eastwood */
+ *  Hockney/Eastwood
+ */
 
 template <int cao>
 __device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i) {
@@ -82,9 +107,9 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
   }
 }
 
-__global__ void p3m_k_space_error_gpu_kernel_ad(int3 mesh, double3 meshi,
-                                                int cao, double alpha_L,
-                                                double *he_q) {
+__global__ void p3m_k_space_error_gpu_kernel_ad(const int3 mesh,
+                                                const double3 meshi, int cao,
+                                                double alpha_L, double *he_q) {
   int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
   int ny = -mesh.y / 2 + blockDim.y * blockIdx.y + threadIdx.y;
   int nz = -mesh.z / 2 + blockDim.z * blockIdx.z + threadIdx.z;
@@ -139,8 +164,9 @@ __global__ void p3m_k_space_error_gpu_kernel_ad(int3 mesh, double3 meshi,
   }
 }
 
-__global__ void p3m_k_space_error_gpu_kernel_ik_i(int3 mesh, double3 meshi,
-                                                  int cao, double alpha_L,
+__global__ void p3m_k_space_error_gpu_kernel_ik_i(const int3 mesh,
+                                                  const double3 meshi, int cao,
+                                                  double alpha_L,
                                                   double *he_q) {
 
   int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
@@ -201,8 +227,9 @@ __global__ void p3m_k_space_error_gpu_kernel_ik_i(int3 mesh, double3 meshi,
   }
 }
 
-__global__ void p3m_k_space_error_gpu_kernel_ad_i(int3 mesh, double3 meshi,
-                                                  int cao, double alpha_L,
+__global__ void p3m_k_space_error_gpu_kernel_ad_i(const int3 mesh,
+                                                  const double3 meshi, int cao,
+                                                  double alpha_L,
                                                   double *he_q) {
 
   int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
@@ -265,8 +292,9 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(int3 mesh, double3 meshi,
   }
 }
 
-double p3m_k_space_error_gpu(double prefactor, int *mesh, int cao, int npart,
-                             double sum_q2, double alpha_L, double *box) {
+double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,
+                             int npart, double sum_q2, double alpha_L,
+                             double *box) {
   static thrust::device_vector<double> he_q;
 
   const size_t mesh_size = mesh[0] * mesh[1] * mesh[2];

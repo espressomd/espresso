@@ -267,11 +267,9 @@ class ArrayPropertyTest(ut.TestCase):
     @ut.skipIf(not espressomd.has_features(["LB"]),
                "Features not available, skipping test!")
     def test_lb(self):
-
         # Check for exception for various operators
         # LB
         self.locked_operators(self.lbf[0, 0, 0].velocity)
-        self.locked_operators(self.lbf[0, 0, 0].density)
         self.locked_operators(self.lbf[0, 0, 0].pi)
         self.locked_operators(self.lbf[0, 0, 0].pi_neq)
         self.locked_operators(self.lbf[0, 0, 0].population)

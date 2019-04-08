@@ -139,8 +139,8 @@ def lj_force_vector(v_d, d, lj_params):
 
 
 def verify_lj_forces(system, tolerance, ids_to_skip=[]):
-    """Goes over all pairs of paritcles in system and compares the forces on them
-       to what would be expected based on the systems lj parametes.
+    """Goes over all pairs of particles in system and compares the forces on them
+       to what would be expected based on the systems LJ parametes.
        Particle ids listed in ids_to_skip are not checked
        Do not run this with a thermostat enabled."""
 
@@ -251,6 +251,35 @@ def rotation_matrix(axis, theta):
     return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
                      [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
                      [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
+
+
+def rotation_matrix_quat(system, part):
+    """
+    Return the rotation matrix associated with quaternion.
+
+    Parameters
+    ----------
+    part : :obj:`int`
+            Particle index.
+
+    """
+    A = np.zeros((3, 3))
+    quat = system.part[part].quat
+    qq = np.power(quat, 2)
+
+    A[0, 0] = qq[0] + qq[1] - qq[2] - qq[3]
+    A[1, 1] = qq[0] - qq[1] + qq[2] - qq[3]
+    A[2, 2] = qq[0] - qq[1] - qq[2] + qq[3]
+
+    A[0, 1] = 2 * (quat[1] * quat[2] + quat[0] * quat[3])
+    A[0, 2] = 2 * (quat[1] * quat[3] - quat[0] * quat[2])
+    A[1, 0] = 2 * (quat[1] * quat[2] - quat[0] * quat[3])
+
+    A[1, 2] = 2 * (quat[2] * quat[3] + quat[0] * quat[1])
+    A[2, 0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2])
+    A[2, 1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1])
+
+    return A
 
 
 def get_cylindrical_bin_volume(
@@ -583,6 +612,32 @@ def gaussian_force(r, eps, sig, cutoff):
     return f
 
 
+def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
+    r_normed = r_ij / np.linalg.norm(r_ij)
+    r_u_i = np.dot(r_normed, u_i)
+    r_u_j = np.dot(r_normed, u_j)
+    u_i_u_j = np.dot(u_i, u_j)
+
+    chi = (k_1**2 - 1.) / (k_1**2 + 1.)
+    chi_d = (k_2**(1. / mu) - 1) / (k_2**(1. / mu) + 1)
+
+    sigma = sigma_0 \
+        / np.sqrt(
+            (1 - 0.5 * chi * (
+             (r_u_i + r_u_j)**2 / (1 + chi * u_i_u_j) +
+             (r_u_i - r_u_j)**2 / (1 - chi * u_i_u_j))))
+
+    epsilon = epsilon_0 *\
+        (1 - chi**2 * u_i_u_j**2)**(-nu / 2.) *\
+        (1 - chi_d / 2. * (
+         (r_u_i + r_u_j)**2 / (1 + chi_d * u_i_u_j) +
+         (r_u_i - r_u_j)**2 / (1 - chi_d * u_i_u_j)))**mu
+
+    rr = np.linalg.norm((np.linalg.norm(r_ij) - sigma + sigma_0) / sigma_0)
+
+    return 4. * epsilon * (rr**-12 - rr**-6)
+
+
 class DynamicDict(dict):
 
     def __getitem__(self, key):
@@ -594,3 +649,7 @@ def single_component_maxwell(x1, x2, kT):
     """Integrate the probability density from x1 to x2 using the trapezoidal rule"""
     x = np.linspace(x1, x2, 1000)
     return np.trapz(np.exp(-x**2 / (2. * kT)), x) / np.sqrt(2. * np.pi * kT)
+
+
+def lists_contain_same_elements(list1, list2):
+    return len(list1) == len(list2) and sorted(list1) == sorted(list2)

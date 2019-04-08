@@ -44,10 +44,11 @@ class FieldTest(ut.TestCase):
         self.system.part.clear()
 
     def test_gravity(self):
-        g_const = [1, 2, 3]
+        g_const = np.array([1, 2, 3])
         gravity = constraints.Gravity(g=g_const)
 
-        self.assertSequenceEqual(gravity.g, g_const)
+        np.testing.assert_almost_equal(g_const, np.copy(gravity.g))
+
         self.system.constraints.add(gravity)
 
         if espressomd.has_features("MASS"):
@@ -87,12 +88,41 @@ class FieldTest(ut.TestCase):
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
                                self.system.analysis.energy()['external_fields'])
 
+    @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Skipping")
+    def test_electric_plane_wave(self):
+        E0 = np.array([1., -2., 3.])
+        k = np.array([-.1, .2, 0.3])
+        omega = 5.
+        phi = 1.4
+
+        electric_wave = constraints.ElectricPlaneWave(
+            E0=E0, k=k, omega=omega, phi=phi)
+        np.testing.assert_almost_equal(E0, electric_wave.E0)
+        np.testing.assert_almost_equal(k, electric_wave.k)
+        np.testing.assert_almost_equal(omega, electric_wave.omega)
+        np.testing.assert_almost_equal(phi, electric_wave.phi)
+
+        self.system.constraints.add(electric_wave)
+
+        p = self.system.part.add(pos=[0.4, 0.1, 0.11], q=-14.)
+        self.system.time = 1042.
+
+        self.system.integrator.run(0)
+
+        np.testing.assert_almost_equal(np.copy(p.f),
+                                       p.q * E0 * np.sin(np.dot(k, p.pos_folded) - omega * self.system.time + phi))
+
+        self.system.integrator.run(10)
+
+        np.testing.assert_almost_equal(np.copy(p.f),
+                                       p.q * E0 * np.sin(np.dot(k, p.pos_folded) - omega * self.system.time + phi))
+
     def test_homogeneous_flow_field(self):
         u = np.array([1., 2., 3.])
         gamma = 2.3
 
         flow_field = constraints.HomogeneousFlowField(u=u, gamma=gamma)
-        np.testing.assert_almost_equal(u, flow_field.u)
+        np.testing.assert_almost_equal(u, np.copy(flow_field.u))
 
         self.system.constraints.add(flow_field)
 
@@ -164,7 +194,7 @@ class FieldTest(ut.TestCase):
                 np.copy(p.f), q_part * self.force(x), rtol=1e-5)
 
     def test_force_field(self):
-        h = np.array([.2, .2, .2])
+        h = np.array([.8, .8, .8])
         box = np.array([10., 10., 10.])
         scaling = 2.6
 
@@ -187,7 +217,7 @@ class FieldTest(ut.TestCase):
             np.testing.assert_allclose(scaling * f_val, np.copy(p.f))
 
     def test_flow_field(self):
-        h = np.array([.2, .2, .2])
+        h = np.array([.8, .8, .8])
         box = np.array([10., 10., 10.])
         gamma = 2.6
 

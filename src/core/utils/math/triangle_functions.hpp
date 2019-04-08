@@ -1,7 +1,7 @@
 #ifndef UTILS_MATH_TRIANGEL_FUNCTIONS_HPP
 #define UTILS_MATH_TRIANGEL_FUNCTIONS_HPP
 
-#include "Vector.hpp"
+#include "utils/Vector.hpp"
 
 #include <cmath>
 
@@ -12,7 +12,7 @@ inline Vector3d get_n_triangle(const Vector3d &P1, const Vector3d &P2,
   auto const u = P2 - P1;
   auto const v = P3 - P1;
 
-  return u.cross(v);
+  return vector_product(u, v);
 }
 
 /** Computes the area of triangle between vectors P1,P2,P3,
@@ -80,8 +80,8 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
   tmp11 = -(normal1[0] * P1[0] + normal1[1] * P1[1] + normal1[2] * P1[2]);
   if (normal1[0] * P4[0] + normal1[1] * P4[1] + normal1[2] * P4[2] + tmp11 < 0)
     return 2 * M_PI - phi;
-  else
-    return phi;
+
+  return phi;
 }
 } // namespace Utils
 

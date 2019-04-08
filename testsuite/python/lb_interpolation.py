@@ -33,7 +33,6 @@ LB_PARAMETERS = {
     'agrid': AGRID,
     'visc': VISC,
     'dens': DENS,
-    'fric': FRIC,
     'tau': TAU
 }
 
