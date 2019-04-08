@@ -298,8 +298,8 @@ dp3m_data_struct::dp3m_data_struct() {
   sum_dip_part = 0;
   sum_mu2 = 0.0;
 
-  for (int i = 0; i < 7; i++)
-    int_caf[i] = nullptr;
+  for (auto & i : int_caf)
+    i = nullptr;
   pos_shift = 0.0;
   meshift = nullptr;
 
