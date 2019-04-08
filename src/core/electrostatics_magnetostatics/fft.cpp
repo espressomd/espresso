@@ -434,11 +434,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 }
 
 void fft_perform_forw(double *data, fft_data_struct &fft) {
-  int i;
-
-  /* int m,n,o; */
   /* ===== first direction  ===== */
-  FFT_TRACE(fprintf(stderr, "%d: fft_perform_forw: dir 1:\n", this_node));
 
   auto *c_data = (fftw_complex *)data;
   auto *c_data_buf = (fftw_complex *)fft.data_buf;
@@ -446,35 +442,19 @@ void fft_perform_forw(double *data, fft_data_struct &fft) {
   /* communication to current dir row format (in is data) */
   fft_forw_grid_comm(fft.plan[1], data, fft.data_buf, fft);
 
-  /*
-    fprintf(stderr,"%d: start grid \n",this_node);
-    i=0;
-    for(m=0;m<8;m++) {
-    for(n=0;n<8;n++) {
-    for(o=0;o<8;o++) {
-    fprintf(stderr,"%.3f ",fft.data_buf[i++]);
-    }
-    fprintf(stderr,"\n");
-    }
-    fprintf(stderr,"\n");
-    }
-  */
-
   /* complexify the real data array (in is fft.data_buf) */
-  for (i = 0; i < fft.plan[1].new_size; i++) {
-    data[2 * i] = fft.data_buf[i]; /* real value */
-    data[(2 * i) + 1] = 0;         /* complex value */
+  for (int i = 0; i < fft.plan[1].new_size; i++) {
+    data[2 * i + 0] = fft.data_buf[i]; /* real value */
+    data[2 * i + 1] = 0;               /* complex value */
   }
   /* perform FFT (in/out is data)*/
   fftw_execute_dft(fft.plan[1].our_fftw_plan, c_data, c_data);
   /* ===== second direction ===== */
-  FFT_TRACE(fprintf(stderr, "%d: fft_perform_forw: dir 2:\n", this_node));
   /* communication to current dir row format (in is data) */
   fft_forw_grid_comm(fft.plan[2], data, fft.data_buf, fft);
   /* perform FFT (in/out is fft.data_buf)*/
   fftw_execute_dft(fft.plan[2].our_fftw_plan, c_data_buf, c_data_buf);
   /* ===== third direction  ===== */
-  FFT_TRACE(fprintf(stderr, "%d: fft_perform_forw: dir 3:\n", this_node));
   /* communication to current dir row format (in is fft.data_buf) */
   fft_forw_grid_comm(fft.plan[3], fft.data_buf, data, fft);
   /* perform FFT (in/out is data)*/
@@ -614,8 +594,6 @@ void fft_pre_init(fft_data_struct *fft) {
 void fft_pack_block(double const *const in, double *const out,
                     int const start[3], int const size[3], int const dim[3],
                     int element) {
-    /* mid and slow changing indices */
-    int m, s;
     /* linear index of in grid, linear index of out grid */
     int li_in, li_out = 0;
     /* copy size */
@@ -631,8 +609,8 @@ void fft_pack_block(double const *const in, double *const out,
     m_out_offset = element * size[2];
     li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
 
-    for (s = 0; s < size[0]; s++) {
-        for (m = 0; m < size[1]; m++) {
+    for (int s = 0; s < size[0]; s++) {
+        for (int m = 0; m < size[1]; m++) {
             memmove(&(out[li_out]), &(in[li_in]), copy_size);
             li_in += m_in_offset;
             li_out += m_out_offset;
