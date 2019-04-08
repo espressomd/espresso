@@ -1,7 +1,7 @@
 #ifndef UTILS_COUNTER_HPP
 #define UTILS_COUNTER_HPP
 
-#include <boost/serialization/access.hpp> 
+#include <boost/serialization/access.hpp>
 
 namespace Utils {
 template <typename T> class Counter {
