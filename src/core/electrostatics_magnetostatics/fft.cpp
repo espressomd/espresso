@@ -585,9 +585,7 @@ void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
       MPI_Send(fft.send_buf, plan.send_size[i], MPI_DOUBLE, plan.group[i],
                REQ_FFT_FORW, comm_cart);
     } else { /* Self communication... */
-      tmp_ptr = fft.send_buf;
-      fft.send_buf = fft.recv_buf;
-      fft.recv_buf = tmp_ptr;
+      std::swap(fft.send_buf, fft.recv_buf);
     }
     fft_unpack_block(fft.recv_buf, out, &(plan.recv_block[6 * i]),
                      &(plan.recv_block[6 * i + 3]), plan.new_mesh,
@@ -597,15 +595,13 @@ void fft_forw_grid_comm(fft_forw_plan plan, double *in, double *out,
 
 void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
                         double *out, fft_data_struct &fft) {
-  int i;
   MPI_Status status;
-  double *tmp_ptr;
 
   /* Back means: Use the send/receive stuff from the forward plan but
      replace the receive blocks by the send blocks and vice
      versa. Attention then also new_mesh and old_mesh are exchanged */
 
-  for (i = 0; i < plan_f.g_size; i++) {
+  for (int i = 0; i < plan_f.g_size; i++) {
 
     plan_b.pack_function(in, fft.send_buf, &(plan_f.recv_block[6 * i]),
                          &(plan_f.recv_block[6 * i + 3]), plan_f.new_mesh,
@@ -622,9 +618,7 @@ void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, double *in,
       MPI_Send(fft.send_buf, plan_f.recv_size[i], MPI_DOUBLE, plan_f.group[i],
                REQ_FFT_BACK, comm_cart);
     } else { /* Self communication... */
-      tmp_ptr = fft.send_buf;
-      fft.send_buf = fft.recv_buf;
-      fft.recv_buf = tmp_ptr;
+      std::swap(fft.send_buf, fft.recv_buf);
     }
     fft_unpack_block(fft.recv_buf, out, &(plan_f.send_block[6 * i]),
                      &(plan_f.send_block[6 * i + 3]), plan_f.old_mesh,
