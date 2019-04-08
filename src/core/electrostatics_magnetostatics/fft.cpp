@@ -28,8 +28,6 @@
 #include "fft.hpp"
 
 #if defined(P3M) || defined(DP3M)
-#include "debug.hpp"
-// #include "communication.hpp"
 
 #include "utils/math/permute_ifield.hpp"
 using Utils::permute_ifield;
@@ -283,8 +281,6 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
   int *n_id[4];     /* linear node identity lists for the node grids. */
   int *n_pos[4];    /* positions of nodes in the node grids. */
 
-  FFT_TRACE(fprintf(stderr, "%d: fft_init():\n", comm.rank()));
-
   int node_pos[3];
   MPI_Cart_coords(comm, comm.rank(), 3, node_pos);
 
@@ -419,26 +415,16 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
     if (2 * fft.plan[i].new_size > fft.max_mesh_size)
       fft.max_mesh_size = 2 * fft.plan[i].new_size;
 
-  FFT_TRACE(fprintf(stderr,
-                    "%d: fft.max_comm_size = %d, fft.max_mesh_size = %d\n",
-                    comm.rank(), fft.max_comm_size, fft.max_mesh_size));
-
   /* === pack function === */
   for (i = 1; i < 4; i++) {
     fft.plan[i].pack_function = fft_pack_block_permute2;
-    FFT_TRACE(
-        fprintf(stderr, "%d: forw plan[%d] permute 2 \n", comm.rank(), i));
   }
   (*ks_pnum) = 6;
   if (fft.plan[1].row_dir == 2) {
     fft.plan[1].pack_function = fft_pack_block;
-    FFT_TRACE(
-        fprintf(stderr, "%d: forw plan[%d] permute 0 \n", comm.rank(), 1));
     (*ks_pnum) = 4;
   } else if (fft.plan[1].row_dir == 1) {
     fft.plan[1].pack_function = fft_pack_block_permute1;
-    FFT_TRACE(
-        fprintf(stderr, "%d: forw plan[%d] permute 1 \n", comm.rank(), 1));
     (*ks_pnum) = 5;
   }
 
@@ -487,17 +473,11 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
         fft.back[i].dir, FFTW_PATIENT);
 
     fft.back[i].pack_function = fft_pack_block_permute1;
-    FFT_TRACE(
-        fprintf(stderr, "%d: back plan[%d] permute 1 \n", comm.rank(), i));
   }
   if (fft.plan[1].row_dir == 2) {
     fft.back[1].pack_function = fft_pack_block;
-    FFT_TRACE(
-        fprintf(stderr, "%d: back plan[%d] permute 0 \n", comm.rank(), 1));
   } else if (fft.plan[1].row_dir == 1) {
     fft.back[1].pack_function = fft_pack_block_permute2;
-    FFT_TRACE(
-        fprintf(stderr, "%d: back plan[%d] permute 2 \n", comm.rank(), 1));
   }
   fft.init_tag = 1;
   /* free(data); */
