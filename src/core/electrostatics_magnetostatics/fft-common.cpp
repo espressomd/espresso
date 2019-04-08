@@ -321,39 +321,4 @@ int fft_calc_send_block(int const pos1[3], int const grid1[3],
   return size;
 }
 
-void fft_print_fft_plan(fft_forw_plan pl) {
-  int i;
-
-  fprintf(stderr, "%d: dir=%d, row_dir=%d, n_permute=%d, n_ffts=%d\n",
-          this_node, pl.dir, pl.row_dir, pl.n_permute, pl.n_ffts);
-
-  fprintf(stderr,
-          "%d:    local: old_mesh=(%d,%d,%d), new_mesh=(%d,%d,%d), "
-          "start=(%d,%d,%d)\n",
-          this_node, pl.old_mesh[0], pl.old_mesh[1], pl.old_mesh[2],
-          pl.new_mesh[0], pl.new_mesh[1], pl.new_mesh[2], pl.start[0],
-          pl.start[1], pl.start[2]);
-
-  fprintf(stderr, "%d:    g_size=%d group=(", this_node, pl.g_size);
-  for (i = 0; i < pl.g_size - 1; i++)
-    fprintf(stderr, "%d,", pl.group[i]);
-  fprintf(stderr, "%d)\n", pl.group[pl.g_size - 1]);
-
-  fprintf(stderr, "%d:    send=[", this_node);
-  for (i = 0; i < pl.g_size; i++)
-    fprintf(stderr, "(%d,%d,%d)+(%d,%d,%d), ", pl.send_block[6 * i + 0],
-            pl.send_block[6 * i + 1], pl.send_block[6 * i + 2],
-            pl.send_block[6 * i + 3], pl.send_block[6 * i + 4],
-            pl.send_block[6 * i + 5]);
-  fprintf(stderr, "]\n%d:    recv=[", this_node);
-  for (i = 0; i < pl.g_size; i++)
-    fprintf(stderr, "(%d,%d,%d)+(%d,%d,%d), ", pl.recv_block[6 * i + 0],
-            pl.recv_block[6 * i + 1], pl.recv_block[6 * i + 2],
-            pl.recv_block[6 * i + 3], pl.recv_block[6 * i + 4],
-            pl.recv_block[6 * i + 5]);
-  fprintf(stderr, "]\n");
-
-  fflush(stderr);
-}
-
 #endif /* defined(P3M) || defined(DP3M) */

@@ -197,13 +197,6 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
         fft.plan[i].recv_size[j] *= 2;
       }
     }
-    /* DEBUG */
-    for (j = 0; j < n_nodes; j++) {
-      /* MPI_Barrier(comm_cart); */
-      if (j == this_node) {
-        FFT_TRACE(fft_print_fft_plan(fft.plan[i]));
-      }
-    }
   }
 
   /* Factor 2 for complex fields */
@@ -265,7 +258,6 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
         fft.plan[i].new_mesh[2], c_data, nullptr, 1, fft.plan[i].new_mesh[2],
         fft.plan[i].dir, FFTW_PATIENT);
 
-    fft.plan[i].fft_function = fftw_execute;
   }
 
   /* === The BACK Direction === */
@@ -280,8 +272,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
         fft.plan[i].new_mesh[2], c_data, nullptr, 1, fft.plan[i].new_mesh[2],
         fft.back[i].dir, FFTW_PATIENT);
 
-    fft.back[i].fft_function = fftw_execute;
-    fft.back[i].pack_function = fft_pack_block_permute1;
+      fft.back[i].pack_function = fft_pack_block_permute1;
     FFT_TRACE(fprintf(stderr, "%d: back plan[%d] permute 1 \n", this_node, i));
   }
   if (fft.plan[1].row_dir == 2) {

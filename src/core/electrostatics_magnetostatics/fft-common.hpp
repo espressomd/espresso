@@ -48,10 +48,8 @@ struct fft_forw_plan {
   int n_ffts;
   /** plan for fft. */
   fftw_plan our_fftw_plan;
-  /** function for fft. */
-  void (*fft_function)(fftw_plan);
 
-  /** size of local mesh before communication. */
+    /** size of local mesh before communication. */
   int old_mesh[3];
   /** size of local mesh after communication, also used for actual FFT. */
   int new_mesh[3];
@@ -86,10 +84,8 @@ struct fft_back_plan {
   int dir;
   /** plan for fft. */
   fftw_plan our_fftw_plan;
-  /** function for fft. */
-  void (*fft_function)(fftw_plan);
 
-  /** packing function for send blocks. */
+    /** packing function for send blocks. */
   void (*pack_function)(double const *const, double *const, int const *,
                         int const *, int const *, int);
 };
@@ -131,14 +127,11 @@ struct fft_data_struct {
 /** @name MPI tags for FFT communication */
 /*@{*/
 /** Tag for communication in fft_init() */
-#define REQ_FFT_INIT 300
 /** Tag for communication in forw_grid_comm() */
 #define REQ_FFT_FORW 301
 /** Tag for communication in back_grid_comm() */
 #define REQ_FFT_BACK 302
 /*@}*/
-/* Tag for wisdom file I/O */
-#define FFTW_FAILURE 0
 
 /** Initialize FFT data structure. */
 void fft_pre_init(fft_data_struct *fft);
@@ -303,11 +296,6 @@ void fft_pack_block_permute2(double const *in, double *out, int const start[3],
  */
 void fft_unpack_block(double const *in, double *out, int const start[3],
                       int const size[3], int const dim[3], int element);
-
-/** Debug function to print fft_forw_plan structure.
- * \param pl fft/communication plan.
- */
-void fft_print_fft_plan(fft_forw_plan pl);
 
 #endif /* defined(P3M) || defined(DP3M) */
 #endif /* _FFT_COMMON_H */
