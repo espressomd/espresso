@@ -29,9 +29,12 @@
 #include "debug.hpp"
 #include "grid.hpp"
 
+#include "utils/index.hpp"
+using Utils::get_linear_index;
+
 int Lattice::init(double *agrid, double const *offset, int halo_size,
-                  size_t dim, const Vector3d &local_box,
-                  const Vector3d &myright, const Vector3d &box_length) {
+                  const Vector3d &local_box, const Vector3d &myright,
+                  const Vector3d &box_length) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
@@ -128,28 +131,6 @@ void Lattice::map_position_to_lattice(const Vector3d &pos,
   node_index[5] = node_index[4] + 1;
   node_index[6] = node_index[4] + this->halo_grid[0];
   node_index[7] = node_index[4] + this->halo_grid[0] + 1;
-}
-
-/********************** static Functions **********************/
-
-void Lattice::map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
-                                             Vector6d &delta,
-                                             double tmp_agrid) {
-  Vector3d rel{};
-  Vector3d local_pos = pos;
-  local_pos = pos - Vector3d::broadcast(0.5 * tmp_agrid);
-
-  fold_position(local_pos, ind);
-
-  for (int i = 0; i < 3; i++) {
-    // convert the position into lower left grid point
-    rel[i] = (local_pos[i]) / tmp_agrid;
-    // calculate the index of the position
-    ind[i] = floor(rel[i]);
-    // calculate the linear interpolation weighting
-    delta[3 + i] = rel[i] - ind[i];
-    delta[i] = 1 - delta[3 + i];
-  }
 }
 
 int Lattice::map_lattice_to_node(Vector3i &ind,
