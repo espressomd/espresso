@@ -83,19 +83,19 @@ struct fft_forw_plan {
   /** number of nodes which have to communicate with each other. */
   int g_size;
   /** group of nodes which have to communicate with each other. */
-  int *group;
+  int *group = nullptr;
 
   /** packing function for send blocks. */
   void (*pack_function)(double const *const, double *const, int const *,
                         int const *, int const *, int);
   /** Send block specification. 6 integers for each node: start[3], size[3]. */
-  int *send_block;
+  int *send_block = nullptr;
   /** Send block communication sizes. */
-  int *send_size;
+  int *send_size = nullptr;
   /** Recv block specification. 6 integers for each node: start[3], size[3]. */
-  int *recv_block;
+  int *recv_block = nullptr;
   /** Recv block communication sizes. */
-  int *recv_size;
+  int *recv_size = nullptr;
   /** size of send block elements. */
   int element;
 };
@@ -126,28 +126,25 @@ struct fft_data_struct {
   fft_back_plan back[4];
 
   /** Whether FFT is initialized or not. */
-  int init_tag;
+  int init_tag = 0;
 
   /** Maximal size of the communication buffers. */
-  int max_comm_size;
+  int max_comm_size = 0;
 
   /** Maximal local mesh size. */
-  int max_mesh_size;
+  int max_mesh_size = 0;
 
   /** send buffer. */
-  double *send_buf;
+  double *send_buf = nullptr;
   /** receive buffer. */
-  double *recv_buf;
+  double *recv_buf = nullptr;
   /** Buffer for receive data. */
-  double *data_buf;
+  double *data_buf = nullptr;
 };
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-/** Initialize FFT data structure. */
-void fft_pre_init(fft_data_struct *fft, const boost::mpi::communicator &comm);
 
 /** Initialize everything connected to the 3D-FFT.
  *
@@ -159,6 +156,7 @@ void fft_pre_init(fft_data_struct *fft, const boost::mpi::communicator &comm);
  *  \param ks_pnum         Number of permutations in k-space.
  *  \param fft             FFT plan.
  *  \param grid            Number of nodes in each spatial dimension.
+ *  \param comm            MPI communicator
  *  \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  */
 int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, int *global_mesh_dim,
@@ -169,6 +167,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
  *  \warning The content of \a data is overwritten.
  *  \param[in,out] data  Mesh.
  *  \param         fft   FFT plan.
+ *  \param comm            MPI communicator
  */
 void fft_perform_forw(double *data, fft_data_struct &fft, const boost::mpi::communicator &comm);
 
@@ -195,6 +194,7 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft, co
  *  \param[in]  size    size of the block (=dimension of the out-grid).
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
+ *  \param comm         MPI communicator
  */
 void fft_pack_block(double const *in, double *out, int const start[3],
                     int const size[3], int const dim[3], int element);

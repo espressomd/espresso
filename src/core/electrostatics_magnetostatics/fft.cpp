@@ -284,6 +284,10 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, i
   int node_pos[3];
   MPI_Cart_coords(comm, comm.rank(), 3, node_pos);
 
+    for (auto &i : fft.plan) {
+        i.group = (int *) Utils::malloc(1 * comm.size() * sizeof(int));
+    }
+
   fft.max_comm_size = 0;
   fft.max_mesh_size = 0;
   for (i = 0; i < 4; i++) {
@@ -600,23 +604,6 @@ void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, const double
                      &(plan_f.send_block[6 * i + 3]), plan_f.old_mesh,
                      plan_f.element);
   }
-}
-
-void fft_pre_init(fft_data_struct *fft, const boost::mpi::communicator &comm) {
-  for (auto &i : fft->plan) {
-    i.group = (int *)Utils::malloc(1 * comm.size() * sizeof(int));
-    i.send_block = nullptr;
-    i.send_size = nullptr;
-    i.recv_block = nullptr;
-    i.recv_size = nullptr;
-  }
-
-  fft->init_tag = 0;
-  fft->max_comm_size = 0;
-  fft->max_mesh_size = 0;
-  fft->send_buf = nullptr;
-  fft->recv_buf = nullptr;
-  fft->data_buf = nullptr;
 }
 
 void fft_pack_block(double const *const in, double *const out,
