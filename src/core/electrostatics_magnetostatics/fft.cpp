@@ -300,9 +300,8 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     my_pos[0][i] = node_pos[i];
   }
   for (i = 0; i < n_nodes; i++) {
-    int lin_ind;
-    map_node_array(i, &(n_pos[0][3 * i + 0]));
-    lin_ind = get_linear_index(n_pos[0][3 * i + 0], n_pos[0][3 * i + 1],
+      MPI_Cart_coords(comm_cart, i, 3, &(n_pos[0][3 * i + 0]));
+      auto const lin_ind = get_linear_index(n_pos[0][3 * i + 0], n_pos[0][3 * i + 1],
                                n_pos[0][3 * i + 2],
                                {n_grid[0][0], n_grid[0][1], n_grid[0][2]});
     n_id[0][lin_ind] = i;
@@ -342,9 +341,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
           {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
           fft.plan[i].group, n_pos[i], my_pos[i]);
       if (fft.plan[i].g_size == -1) {
-        fprintf(stderr, "%d: INTERNAL ERROR: fft_find_comm_groups error\n",
-                comm_cart.rank());
-        errexit();
+          throw std::runtime_error("INTERNAL ERROR: fft_find_comm_groups error");
       }
     }
 
@@ -455,9 +452,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     fftw_free(fft.data_buf);
   fft.data_buf = (double *)fftw_malloc(fft.max_mesh_size * sizeof(double));
   if (!(*data) || !fft.data_buf) {
-    fprintf(stderr, "%d: Could not allocate FFT data arays\n",
-            comm_cart.rank());
-    errexit();
+    throw std::bad_alloc{};
   }
 
   auto *c_data = (fftw_complex *)(*data);
