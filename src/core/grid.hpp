@@ -155,9 +155,6 @@ void grid_changed_box_l();
  * 2 * \ref MAX_INTERACTION_RANGE . */
 void calc_minimal_box_dimensions();
 
-/** calculate most square 2d grid. */
-void calc_2d_grid(int n, int grid[3]);
-
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales
  * the particles accordingly */
 void rescale_boxl(int dir, double d_new);

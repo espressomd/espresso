@@ -179,20 +179,6 @@ void calc_minimal_box_dimensions() {
   }
 }
 
-void calc_2d_grid(int n, int grid[3]) {
-  int i;
-  i = (int)sqrt((double)n);
-  while (i >= 1) {
-    if (n % i == 0) {
-      grid[0] = n / i;
-      grid[1] = i;
-      grid[2] = 1;
-      return;
-    }
-    i--;
-  }
-}
-
 void rescale_boxl(int dir, double d_new) {
   double scale = (dir - 3) ? d_new / box_l[dir] : d_new / box_l[0];
   if (scale < 1.) {

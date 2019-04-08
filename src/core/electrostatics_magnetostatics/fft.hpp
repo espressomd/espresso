@@ -146,7 +146,7 @@ struct fft_data_struct {
 /*@{*/
 
 /** Initialize FFT data structure. */
-void fft_pre_init(fft_data_struct *fft);
+void fft_pre_init(fft_data_struct *fft, const int n_nodes);
 
 /** Initialize everything connected to the 3D-FFT.
  *
