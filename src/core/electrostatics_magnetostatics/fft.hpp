@@ -161,16 +161,16 @@ void fft_pre_init(fft_data_struct *fft, const boost::mpi::communicator &comm);
  *  \param grid            Number of nodes in each spatial dimension.
  *  \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  */
-int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
-             int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft, const Vector3i &grid);
+int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, int *global_mesh_dim,
+             double *global_mesh_off, int *ks_pnum, fft_data_struct &fft, const Vector3i &grid,
+             const boost::mpi::communicator &comm);
 
 /** Perform an in-place forward 3D FFT.
  *  \warning The content of \a data is overwritten.
  *  \param[in,out] data  Mesh.
  *  \param         fft   FFT plan.
  */
-void fft_perform_forw(double *data, fft_data_struct &fft);
+void fft_perform_forw(double *data, fft_data_struct &fft, const boost::mpi::communicator &comm);
 
 /** Perform an in-place backward 3D FFT.
  *  \warning The content of \a data is overwritten.
@@ -178,7 +178,7 @@ void fft_perform_forw(double *data, fft_data_struct &fft);
  *  \param check_complex  Throw an error if the complex component is non-zero.
  *  \param         fft    FFT plan.
  */
-void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft);
+void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft, const boost::mpi::communicator &comm);
 
 /** pack a block (size[3] starting at start[3]) of an input 3d-grid
  *  with dimension dim[3] into an output 3d-block with dimension size[3].

@@ -188,8 +188,8 @@ void fft_pack_block_permute2(double const *in, double *out, int const start[3],
  * \param out  output mesh.
  * \param fft    FFT communication plan.
  */
-static void fft_forw_grid_comm(fft_forw_plan plan, const double *in,
-                               double *out, fft_data_struct &fft);
+static void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out, fft_data_struct &fft,
+                               const boost::mpi::communicator &comm);
 
 /** Communicate the grid data according to the given backward FFT plan.
  * \param plan_f Forward FFT plan.
@@ -198,9 +198,9 @@ static void fft_forw_grid_comm(fft_forw_plan plan, const double *in,
  * \param out    output mesh.
  * \param fft    FFT communication plan.
  */
-static void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
-                               const double *in, double *out,
-                               fft_data_struct &fft);
+static void
+fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, const double *in, double *out, fft_data_struct &fft,
+                   const boost::mpi::communicator &comm);
 
 namespace {
 /** calculate 'best' mapping between a 2d and 3d grid.
@@ -271,9 +271,9 @@ int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
     }
 } // namespace
 
-int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
-             int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft, const Vector3i &grid) {
+int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin, int *global_mesh_dim,
+             double *global_mesh_off, int *ks_pnum, fft_data_struct &fft, const Vector3i &grid,
+             const boost::mpi::communicator &comm) {
   int i, j;
   /* helpers */
   int mult[3];
@@ -283,16 +283,16 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   int *n_id[4];     /* linear node identity lists for the node grids. */
   int *n_pos[4];    /* positions of nodes in the node grids. */
 
-  FFT_TRACE(fprintf(stderr, "%d: fft_init():\n", comm_cart.rank()));
+  FFT_TRACE(fprintf(stderr, "%d: fft_init():\n", comm.rank()));
 
   int node_pos[3];
-  MPI_Cart_coords(comm_cart, comm_cart.rank(), 3, node_pos);
+  MPI_Cart_coords(comm, comm.rank(), 3, node_pos);
 
   fft.max_comm_size = 0;
   fft.max_mesh_size = 0;
   for (i = 0; i < 4; i++) {
-    n_id[i] = (int *)Utils::malloc(1 * comm_cart.size() * sizeof(int));
-    n_pos[i] = (int *)Utils::malloc(3 * comm_cart.size() * sizeof(int));
+    n_id[i] = (int *)Utils::malloc(1 * comm.size() * sizeof(int));
+    n_pos[i] = (int *)Utils::malloc(3 * comm.size() * sizeof(int));
   }
 
   /* === node grids === */
@@ -301,8 +301,8 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     n_grid[0][i] = grid[i];
     my_pos[0][i] = node_pos[i];
   }
-  for (i = 0; i < comm_cart.size(); i++) {
-      MPI_Cart_coords(comm_cart, i, 3, &(n_pos[0][3 * i + 0]));
+  for (i = 0; i < comm.size(); i++) {
+      MPI_Cart_coords(comm, i, 3, &(n_pos[0][3 * i + 0]));
       auto const lin_ind = get_linear_index(n_pos[0][3 * i + 0], n_pos[0][3 * i + 1],
                                n_pos[0][3 * i + 2],
                                {n_grid[0][0], n_grid[0][1], n_grid[0][2]});
@@ -310,7 +310,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   }
 
   /* FFT node grids (n_grid[1 - 3]) */
-  calc_2d_grid(comm_cart.size(), n_grid[1]);
+  calc_2d_grid(comm.size(), n_grid[1]);
   /* resort n_grid[1] dimensions if necessary */
   fft.plan[1].row_dir = map_3don2d_grid(n_grid[0], n_grid[1], mult);
   fft.plan[0].n_permute = 0;
@@ -421,24 +421,24 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 
   FFT_TRACE(fprintf(stderr,
                     "%d: fft.max_comm_size = %d, fft.max_mesh_size = %d\n",
-                    comm_cart.rank(), fft.max_comm_size, fft.max_mesh_size));
+                    comm.rank(), fft.max_comm_size, fft.max_mesh_size));
 
   /* === pack function === */
   for (i = 1; i < 4; i++) {
     fft.plan[i].pack_function = fft_pack_block_permute2;
     FFT_TRACE(
-        fprintf(stderr, "%d: forw plan[%d] permute 2 \n", comm_cart.rank(), i));
+        fprintf(stderr, "%d: forw plan[%d] permute 2 \n", comm.rank(), i));
   }
   (*ks_pnum) = 6;
   if (fft.plan[1].row_dir == 2) {
     fft.plan[1].pack_function = fft_pack_block;
     FFT_TRACE(
-        fprintf(stderr, "%d: forw plan[%d] permute 0 \n", comm_cart.rank(), 1));
+        fprintf(stderr, "%d: forw plan[%d] permute 0 \n", comm.rank(), 1));
     (*ks_pnum) = 4;
   } else if (fft.plan[1].row_dir == 1) {
     fft.plan[1].pack_function = fft_pack_block_permute1;
     FFT_TRACE(
-        fprintf(stderr, "%d: forw plan[%d] permute 1 \n", comm_cart.rank(), 1));
+        fprintf(stderr, "%d: forw plan[%d] permute 1 \n", comm.rank(), 1));
     (*ks_pnum) = 5;
   }
 
@@ -488,16 +488,16 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 
     fft.back[i].pack_function = fft_pack_block_permute1;
     FFT_TRACE(
-        fprintf(stderr, "%d: back plan[%d] permute 1 \n", comm_cart.rank(), i));
+        fprintf(stderr, "%d: back plan[%d] permute 1 \n", comm.rank(), i));
   }
   if (fft.plan[1].row_dir == 2) {
     fft.back[1].pack_function = fft_pack_block;
     FFT_TRACE(
-        fprintf(stderr, "%d: back plan[%d] permute 0 \n", comm_cart.rank(), 1));
+        fprintf(stderr, "%d: back plan[%d] permute 0 \n", comm.rank(), 1));
   } else if (fft.plan[1].row_dir == 1) {
     fft.back[1].pack_function = fft_pack_block_permute2;
     FFT_TRACE(
-        fprintf(stderr, "%d: back plan[%d] permute 2 \n", comm_cart.rank(), 1));
+        fprintf(stderr, "%d: back plan[%d] permute 2 \n", comm.rank(), 1));
   }
   fft.init_tag = 1;
   /* free(data); */
@@ -508,14 +508,14 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   return fft.max_mesh_size;
 }
 
-void fft_perform_forw(double *data, fft_data_struct &fft) {
+void fft_perform_forw(double *data, fft_data_struct &fft, const boost::mpi::communicator &comm) {
   /* ===== first direction  ===== */
 
   auto *c_data = (fftw_complex *)data;
   auto *c_data_buf = (fftw_complex *)fft.data_buf;
 
   /* communication to current dir row format (in is data) */
-  fft_forw_grid_comm(fft.plan[1], data, fft.data_buf, fft);
+    fft_forw_grid_comm(fft.plan[1], data, fft.data_buf, fft, comm);
 
   /* complexify the real data array (in is fft.data_buf) */
   for (int i = 0; i < fft.plan[1].new_size; i++) {
@@ -526,44 +526,38 @@ void fft_perform_forw(double *data, fft_data_struct &fft) {
   fftw_execute_dft(fft.plan[1].our_fftw_plan, c_data, c_data);
   /* ===== second direction ===== */
   /* communication to current dir row format (in is data) */
-  fft_forw_grid_comm(fft.plan[2], data, fft.data_buf, fft);
+    fft_forw_grid_comm(fft.plan[2], data, fft.data_buf, fft, comm);
   /* perform FFT (in/out is fft.data_buf)*/
   fftw_execute_dft(fft.plan[2].our_fftw_plan, c_data_buf, c_data_buf);
   /* ===== third direction  ===== */
   /* communication to current dir row format (in is fft.data_buf) */
-  fft_forw_grid_comm(fft.plan[3], fft.data_buf, data, fft);
+    fft_forw_grid_comm(fft.plan[3], fft.data_buf, data, fft, comm);
   /* perform FFT (in/out is data)*/
   fftw_execute_dft(fft.plan[3].our_fftw_plan, c_data, c_data);
 
   /* REMARK: Result has to be in data. */
 }
 
-void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft) {
+void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft, const boost::mpi::communicator &comm) {
   int i;
 
   auto *c_data = (fftw_complex *)data;
   auto *c_data_buf = (fftw_complex *)fft.data_buf;
 
   /* ===== third direction  ===== */
-  FFT_TRACE(
-      fprintf(stderr, "%d: fft_perform_back: dir 3:\n", comm_cart.rank()));
 
   /* perform FFT (in is data) */
   fftw_execute_dft(fft.back[3].our_fftw_plan, c_data, c_data);
   /* communicate (in is data)*/
-  fft_back_grid_comm(fft.plan[3], fft.back[3], data, fft.data_buf, fft);
+    fft_back_grid_comm(fft.plan[3], fft.back[3], data, fft.data_buf, fft, comm);
 
   /* ===== second direction ===== */
-  FFT_TRACE(
-      fprintf(stderr, "%d: fft_perform_back: dir 2:\n", comm_cart.rank()));
   /* perform FFT (in is fft.data_buf) */
   fftw_execute_dft(fft.back[2].our_fftw_plan, c_data_buf, c_data_buf);
   /* communicate (in is fft.data_buf) */
-  fft_back_grid_comm(fft.plan[2], fft.back[2], fft.data_buf, data, fft);
+    fft_back_grid_comm(fft.plan[2], fft.back[2], fft.data_buf, data, fft, comm);
 
   /* ===== first direction  ===== */
-  FFT_TRACE(
-      fprintf(stderr, "%d: fft_perform_back: dir 1:\n", comm_cart.rank()));
   /* perform FFT (in is data) */
   fftw_execute_dft(fft.back[1].our_fftw_plan, c_data, c_data);
   /* throw away the (hopefully) empty complex component (in is data)*/
@@ -578,22 +572,22 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft) {
     }
   }
   /* communicate (in is fft.data_buf) */
-  fft_back_grid_comm(fft.plan[1], fft.back[1], fft.data_buf, data, fft);
+    fft_back_grid_comm(fft.plan[1], fft.back[1], fft.data_buf, data, fft, comm);
 
   /* REMARK: Result has to be in data. */
 }
 
-void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
-                        fft_data_struct &fft) {
+void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out, fft_data_struct &fft,
+                        const boost::mpi::communicator &comm) {
   for (int i = 0; i < plan.g_size; i++) {
     plan.pack_function(in, fft.send_buf, &(plan.send_block[6 * i]),
                        &(plan.send_block[6 * i + 3]), plan.old_mesh,
                        plan.element);
 
-    if (plan.group[i] != comm_cart.rank()) {
+    if (plan.group[i] != comm.rank()) {
       MPI_Sendrecv(fft.send_buf, plan.send_size[i], MPI_DOUBLE, plan.group[i],
                    REQ_FFT_FORW, fft.recv_buf, plan.recv_size[i], MPI_DOUBLE,
-                   plan.group[i], REQ_FFT_FORW, comm_cart, MPI_STATUS_IGNORE);
+                   plan.group[i], REQ_FFT_FORW, comm, MPI_STATUS_IGNORE);
     } else { /* Self communication... */
       std::swap(fft.send_buf, fft.recv_buf);
     }
@@ -603,8 +597,8 @@ void fft_forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
   }
 }
 
-void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
-                        const double *in, double *out, fft_data_struct &fft) {
+void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b, const double *in, double *out, fft_data_struct &fft,
+                        const boost::mpi::communicator &comm) {
   /* Back means: Use the send/receive stuff from the forward plan but
      replace the receive blocks by the send blocks and vice
      versa. Attention then also new_mesh and old_mesh are exchanged */
@@ -614,11 +608,11 @@ void fft_back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
                          &(plan_f.recv_block[6 * i + 3]), plan_f.new_mesh,
                          plan_f.element);
 
-    if (plan_f.group[i] != comm_cart.rank()) { /* send first, receive second */
+    if (plan_f.group[i] != comm.rank()) { /* send first, receive second */
       MPI_Sendrecv(fft.send_buf, plan_f.recv_size[i], MPI_DOUBLE,
                    plan_f.group[i], REQ_FFT_BACK, fft.recv_buf,
                    plan_f.send_size[i], MPI_DOUBLE, plan_f.group[i],
-                   REQ_FFT_BACK, comm_cart, MPI_STATUS_IGNORE);
+                   REQ_FFT_BACK, comm, MPI_STATUS_IGNORE);
     } else { /* Self communication... */
       std::swap(fft.send_buf, fft.recv_buf);
     }
