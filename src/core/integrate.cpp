@@ -363,9 +363,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     // Propagate langevin philox rng counter
-    if (n_steps > 0) {
-      langevin_rng_counter_increment();
-    }
+    langevin_rng_counter_increment();
 
     force_calc();
 

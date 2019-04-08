@@ -43,8 +43,6 @@ double temperature = 0.0;
 /** True if the thermostat should act on virtual particles. */
 bool thermo_virtual = true;
 
-int langevin_seed;
-
 using Thermostat::GammaType;
 
 namespace {
@@ -95,6 +93,8 @@ void langevin_rng_counter_increment() {
 
 bool langevin_is_seed_required() {
   /* Seed is required if rng is not initialized (value == initial_value) */
+  printf("initial value %" PRIu64 "\n", langevin_rng_counter.initial_value());
+  printf("value %" PRIu64 "\n", langevin_rng_counter.value());
   return langevin_rng_counter.initial_value() == langevin_rng_counter.value();
 }
 

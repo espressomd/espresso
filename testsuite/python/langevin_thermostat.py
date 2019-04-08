@@ -73,6 +73,11 @@ class LangevinThermostat(ut.TestCase):
         
         kT = 1.1
         gamma = 3.5
+
+        #No seed should throw exception
+        with self.assertRaises(ValueError):
+            system.thermostat.set_langevin(kT=kT, gamma=gamma)
+
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         
         #'integrate 0' does not increase the philoc counter and should give the same force
