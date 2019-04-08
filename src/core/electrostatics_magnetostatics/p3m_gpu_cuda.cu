@@ -21,8 +21,9 @@
 
 /** \file
  *
- * Cuda (.cu) file for the P3M electrostatics method.
- * Header file \ref p3m_gpu.hpp .
+ *  P3M electrostatics on GPU.
+ *
+ *  The corresponding header file is p3m_gpu.hpp.
  */
 
 #include "config.hpp"
@@ -659,7 +660,7 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
  * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
  */
 
-void p3m_gpu_init(int cao, int mesh[3], double alpha) {
+void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
   P3M_GPU_TRACE(printf("cao %d mesh %d %d %d, alpha %e, box (%e %e %e)\n", cao,
                        mesh[0], mesh[1], mesh[2], alpha, box_l[0], box_l[1],
                        box_l[2]));

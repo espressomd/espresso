@@ -19,11 +19,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    This file contains the errorhandling code for severe errors, like
-    a broken bond or illegal parameter combinations. See section
-    "Errorhandling for developers" for details on the error format and
-    how to use this.
-*/
+ *  This file contains the errorhandling code for severe errors, like
+ *  a broken bond or illegal parameter combinations. See section
+ *  "Errorhandling for developers" for details on the error format and
+ *  how to use this.
+ */
 #ifndef _ERRORHANDLING_HPP
 #define _ERRORHANDLING_HPP
 
@@ -65,32 +65,31 @@ namespace ErrorHandling {
 void register_sigint_handler();
 
 /**
- * @brief Init error handling system.
+ * @brief Initialize the error collection system.
  *
- * @param cb Callbacks system the error handler should be on.
+ * @param callbacks Callbacks system the error handler should be on.
  */
 void init_error_handling(Communication::MpiCallbacks &callbacks);
 
 void _runtimeMessage(RuntimeError::ErrorLevel level, const std::string &msg,
-                     const char *function, const char *file, const int line);
+                     const char *function, const char *file, int line);
 
 void _runtimeWarning(const char *msg, const char *function, const char *file,
-                     const int line);
+                     int line);
 void _runtimeWarning(const std::string &msg, const char *function,
-                     const char *file, const int line);
+                     const char *file, int line);
 void _runtimeWarning(const std::ostringstream &msg, const char *function,
-                     const char *file, const int line);
+                     const char *file, int line);
 
 void _runtimeError(const char *msg, const char *function, const char *file,
-                   const int line);
+                   int line);
 void _runtimeError(const std::string &msg, const char *function,
-                   const char *file, const int line);
+                   const char *file, int line);
 void _runtimeError(const std::ostringstream &msg, const char *function,
-                   const char *file, const int line);
+                   const char *file, int line);
 
 RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
-                                         const std::string &file,
-                                         const int line,
+                                         const std::string &file, int line,
                                          const std::string &function);
 
 #define runtimeWarning(msg)                                                    \

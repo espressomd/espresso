@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_UTILS_MEMORY_HPP
 #define CORE_UTILS_MEMORY_HPP
 
+#include <cstdlib>
 #include <new>
 #include <stdexcept>
-#include <stdlib.h>
 
 namespace Utils {
 
@@ -45,7 +45,7 @@ template <typename T> inline T *realloc(T *old, size_t size) {
     return nullptr;
   }
 
-  T *p = static_cast<T *>(::realloc(static_cast<void *>(old), size));
+  auto *p = static_cast<T *>(::realloc(static_cast<void *>(old), size));
 
   if (p == nullptr) {
     throw std::bad_alloc{};

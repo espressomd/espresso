@@ -22,7 +22,7 @@ from . cimport utils
 include "myconfig.pxi"
 from .actors import Actor
 
-IF DIPOLES == 1:
+IF DIPOLES and DP3M:
     class MagnetostaticExtension(Actor):
 
         pass

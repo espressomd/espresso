@@ -106,3 +106,45 @@ BOOST_AUTO_TEST_CASE(element_access) {
 
   BOOST_CHECK_THROW(s.at(s.size()), std::out_of_range);
 }
+
+BOOST_AUTO_TEST_CASE(make_span_) {
+  using std::declval;
+  using Utils::make_span;
+
+  static_assert(
+      std::is_same<decltype(make_span(declval<int *>(), declval<size_t>())),
+                   Span<int>>::value,
+      "");
+  static_assert(std::is_same<decltype(make_span(declval<const int *>(),
+                                                declval<size_t>())),
+                             Span<const int>>::value,
+                "");
+
+  {
+    const int p = 5;
+    auto s = make_span(&p, 1);
+    BOOST_CHECK_EQUAL(s.data(), &p);
+    BOOST_CHECK_EQUAL(s.size(), 1);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(make_const_span_) {
+  using std::declval;
+  using Utils::make_const_span;
+
+  static_assert(std::is_same<decltype(make_const_span(declval<int *>(),
+                                                      declval<size_t>())),
+                             Span<const int>>::value,
+                "");
+  static_assert(std::is_same<decltype(make_const_span(declval<const int *>(),
+                                                      declval<size_t>())),
+                             Span<const int>>::value,
+                "");
+
+  {
+    const int p = 5;
+    auto s = make_const_span(&p, 1);
+    BOOST_CHECK_EQUAL(s.data(), &p);
+    BOOST_CHECK_EQUAL(s.size(), 1);
+  }
+}

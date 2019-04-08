@@ -19,37 +19,35 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref energy.hpp "energy.hpp".
-*/
+ *  Energy calculation.
+ */
 
 #include "EspressoSystemInterface.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy_inline.hpp"
+#include "event.hpp"
 #include "forces.hpp"
-#include "initialize.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"
 
 ActorList energyActors;
 
-Observable_stat energy = {0, {}, 0, 0, 0};
-Observable_stat total_energy = {0, {}, 0, 0, 0};
+Observable_stat energy{};
+Observable_stat total_energy{};
 
 /************************************************************/
 
 void init_energies(Observable_stat *stat) {
-  int n_pre, n_non_bonded, n_coulomb, n_dipolar;
+  int n_pre, n_non_bonded, n_coulomb(0), n_dipolar(0);
 
   n_pre = 1;
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
-  n_coulomb = 0;
 #ifdef ELECTROSTATICS
   switch (coulomb.method) {
   case COULOMB_NONE:
@@ -69,10 +67,7 @@ void init_energies(Observable_stat *stat) {
     n_coulomb = 1;
   }
 #endif
-
-  n_dipolar = 0;
 #ifdef DIPOLES
-
   switch (coulomb.Dmethod) {
   case DIPOLAR_NONE:
     n_dipolar = 1; // because there may be an external magnetic field
@@ -104,7 +99,6 @@ void init_energies(Observable_stat *stat) {
     n_dipolar = 2;
     break;
   }
-
 #endif
 
   obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,
@@ -135,9 +129,8 @@ void energy_calc(double *result) {
   EspressoSystemInterface::Instance().update();
 
   // Compute the energies from the energyActors
-  for (ActorList::iterator actor = energyActors.begin();
-       actor != energyActors.end(); ++actor)
-    (*actor)->computeEnergy(espressoSystemInterface);
+  for (auto &energyActor : energyActors)
+    energyActor->computeEnergy(espressoSystemInterface);
 
   on_observable_calc();
 
@@ -157,7 +150,7 @@ void energy_calc(double *result) {
   calc_long_range_energies();
 
   auto local_parts = local_cells.particles();
-  Constraints::constraints.add_energy(local_parts, energy);
+  Constraints::constraints.add_energy(local_parts, sim_time, energy);
 
 #ifdef CUDA
   copy_energy_from_GPU();
@@ -206,6 +199,9 @@ void calc_long_range_energies() {
       ELC_P3M_modify_p3m_sums_image();
 
       energy.coulomb[1] -= 0.5 * p3m_calc_kspace_forces(0, 1);
+
+      // restore modified sums
+      ELC_P3M_restore_p3m_sums();
     }
     energy.coulomb[2] = ELC_energy();
     break;
@@ -219,10 +215,6 @@ void calc_long_range_energies() {
   case COULOMB_MMM2D:
     *energy.coulomb += MMM2D_far_energy();
     *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
-    break;
-  /* calculate electric part of energy (only for MAGGS) */
-  case COULOMB_MAGGS:
-    *energy.coulomb += maggs_electric_energy();
     break;
   default:
     break;
@@ -245,10 +237,12 @@ void calc_long_range_energies() {
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
     energy.dipolar[1] = dawaanr_calculations(0, 1);
     break;
+#ifdef DP3M
   case DIPOLAR_MDLC_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
     energy.dipolar[2] = add_mdlc_energy_corrections();
     break;
+#endif
   case DIPOLAR_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
     break;

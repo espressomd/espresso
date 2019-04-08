@@ -35,7 +35,6 @@ The direct analysis commands can be classified into two types:
     - :ref:`Moment of inertia matrix`
     - :ref:`Gyration tensor`
     - :ref:`Stress Tensor`
-    - :ref:`Local Stress Tensor`
 
 - Analysis on stored configurations, added by :meth:`espressomd.analyze.Analysis.append`:
     - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
@@ -368,43 +367,6 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
     same aggregate. The second optional parameter enables one to consider
     aggregation state of only oppositely charged particles.
 
-    .. _Finding holes:
-
-    Finding holes
-    ~~~~~~~~~~~~~
-    .. todo:: This feature is not implemented
-
-    analyze holes
-
-    Function for the calculation of the unoccupied volume (often also called
-    free volume) in a system. Details can be found in
-    :cite:`schmitz00a`. It identifies free space in the
-    simulation box via a mesh based cluster algorithm. Free space is defined
-    via a probe particle and its interactions with other particles which
-    have to be defined through LJ interactions with the other existing
-    particle types via the inter command before calling this routine. A
-    point of the mesh is counted as free space if the distance of the point
-    is larger than LJ\_cut+LJ\_offset to any particle as defined by the LJ
-    interaction parameters between the probe particle type and other
-    particle types.How to use this function: Define interactions between all
-    (or the ones you are interested in) particle types in your system and a
-    fictitious particle type. Practically one uses the van der Waals radius
-    of the particles plus the size of the probe you want to use as the
-    Lennard-Jones cutoff. The mesh spacing is the box length divided by the
-    .
-
-    { { } { } { } }
-
-    A hole is defined as a continuous cluster of mesh elements that belong
-    to the unoccupied volume. Since the function is quite rudimentary it
-    gives back the whole information suitable for further processing on the
-    script level. and are given in number of mesh points, which means you
-    have to calculate the actual size via the corresponding volume or
-    surface elements yourself. The complete information is given in the
-    element\_lists for each hole. The element numbers give the position of a
-    mesh point in the linear representation of the 3D grid (coordinates are
-    in the order x, y, z). Attention: the algorithm assumes a cubic box.
-    Surface results have not been tested. .
 
 	.. _Temperature of the LB fluid:
 
@@ -500,35 +462,6 @@ That means the contributions are not easy to interpret! Those are the contributi
 
 Note that the angular velocities of the particles are not included in
 the calculation of the stress tensor.
-
-.. _Local Stress Tensor:
-
-Local Stress Tensor
-~~~~~~~~~~~~~~~~~~~
-
-.. todo:: This feature is not tested.
-
-:meth:`espressomd.analyze.Analysis.local_stress_tensor`
-
-A cuboid is defined in the system and divided into bins.
-For each of these bins an instantaneous stress tensor is calculated using the Irving Kirkwood method.
-That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles within that bin.
-
-If the P3M and MMM1D electrostatic methods are used, these interactions
-are not included in the local stress tensor. The DH and RF methods, in
-contrast, are included. Concerning bonded interactions only two body
-interactions (FENE, Harmonic) are included (angular and dihedral are
-not). For all electrostatic interactions only the real space part is
-included.
-
-Care should be taken when using constraints of any kind, since these are
-not accounted for in the local stress tensor calculations.
-
-The command is implemented in parallel.
-
-{ { LocalStressTensor } { { } { } } }
-
-specifying the local pressure tensor in each bin.
 
 .. _Chains:
 

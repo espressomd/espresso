@@ -65,6 +65,9 @@ extern int recalc_forces;
     used. */
 extern double verlet_reuse;
 
+/** Communicate signal handling to the Python interpreter */
+extern bool set_py_interrupt;
+
 /*@}*/
 
 /** \name Exported Functions */
@@ -86,10 +89,6 @@ void integrate_ensemble_init();
     the forces still stored with the particles for the first time step.
  */
 void integrate_vv(int n_steps, int reuse_forces);
-
-/** function that rescales all velocities on one node according to a
-    new time step. */
-void rescale_velocities(double scale);
 
 /*@}*/
 

@@ -223,63 +223,6 @@ current implementation with the ``COLLISION_DETECTION`` feature.
    ``r.stop()``.
 
 ..
-    .. _\`\`nemd\`\`\: Setting up non-equilibirum MD:
-
-    ``nemd``: Setting up non-equilibrium MD
-    ---------------------------------------
-
-    .. todo::
-        This is not implemented for the python interface yet
-
-    nemd exchange nemd shearrate nemd off nemd nemd profile nemd viscosity
-
-    Use NEMD (Non Equilibrium Molecular Dynamics) to simulate a system under
-    shear with help of an unphysical momentum change in two slabs in the
-    system.
-
-    Variants and will initialize NEMD. Two distinct methods exist. Both
-    methods divide the simulation box into slabs that lie parallel to the
-    x-y-plane and apply a shear in x direction. The shear is applied in the
-    top and the middle slabs. Note, that the methods should be used with a
-    DPD thermostat or in an NVE ensemble. Furthermore, you should not use
-    other special features like or inside the top and middle slabs. For
-    further reference on how NEMD is implemented into see
-    :cite:`soddeman01a`.
-
-    Variant chooses the momentum exchange method. In this method, in each
-    step the largest positive x-components of the velocity in the middle
-    slab are selected and exchanged with the largest negative x-components
-    of the velocity in the top slab.
-
-    Variant chooses the shear-rate method. In this method, the targeted
-    x-component of the mean velocity in the top and middle slabs are given
-    by
-
-    .. math:: {target\_velocity} = \pm {shearrate}\,\frac{L_z}{4}
-
-    where :math:`L_z` is the simulation box size in z-direction. During the
-    integration, the x-component of the mean velocities of the top and
-    middle slabs are measured. Then, the difference between the mean
-    x-velocities and the target x-velocities are added to the x-component of
-    the velocities of the particles in the respective slabs.
-
-    Variant will turn off NEMD, variant will print usage information of the
-    parameters of NEMD. Variant will return the velocity profile of the
-    system in x-direction (mean velocity per slab).
-
-    Variant will return the viscosity of the system, that is computed via
-
-    .. math:: \eta = \frac{F}{\dot{\gamma} L_x L_y}
-
-    where :math:`F` is the mean force (momentum transfer per unit time)
-    acting on the slab, :math:`L_x L_y` is the area of the slab and
-    :math:`\dot{\gamma}` is the shearrate.
-
-    NEMD as implemented generates a Poiseuille flow, with shear flow rate
-    varying over a finite wavelength determined by the box. For a planar
-    Couette flow (constant shear, infinite wavelength), consider using
-    Lees-Edwards boundary conditions (see ) to drive the shear.
-
 .. _Lees-Edwards boundary conditions:
 
 Lees-Edwards boundary conditions
@@ -355,7 +298,7 @@ The comma is needed to force Python to create a tuple containing a single item.
 
 
 For a more detailed description, see e.g. Guckenberger and Gekle, J. Phys. Cond. Mat. (2017) or contact us.
-This feature probably does not work with advanced LB features such electro kinetics or Shan-Chen.
+This feature probably does not work with advanced LB features such electro kinetics.
 
 A sample script is provided in the :file:`samples/immersed_boundary` directory of the source distribution.
 
@@ -1382,7 +1325,7 @@ continuity, diffusion-advection, Poisson, and Navier-Stokes equations:
 
    \begin{aligned}
    \label{eq:ek-model-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
-   \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+   \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} + \sqrt{n_k}\vec{\mathcal{W}}_k; \\
    \label{eq:ek-model-poisson} \Delta \Phi & = & -4 \pi \, {l_\mathrm{B}}\, {k_\mathrm{B}T}\sum_k q_k n_k \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
    \nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \vec{\nabla} \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -{k_\mathrm{B}T}\, \nabla \rho_\mathrm{fl} - q_k n_k \nabla \Phi \\
    \label{eq:ek-model-velocity} & & +\, \eta \vec{\Delta} \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
@@ -1412,6 +1355,9 @@ and input parameters
 
 :math:`\nu_k`
     the mobility of species :math:`k`,
+
+:math:`\vec{\mathcal{W}}_k`
+    the white-noise term for the flucatuations of species :math:`k`,
 
 :math:`q_k`
     the charge of a single particle of species :math:`k`,
@@ -1549,7 +1495,7 @@ stencil. For all other stencils, this choice is hardcoded. The default
 is ``"friction"``.
 
 
-The feature ``EK_ELECTROSTATIC_COUPLING`` enables the action of the electrostatic potential due to the
+``es_coupling`` enables the action of the electrostatic potential due to the
 electrokinetics species and charged boundaries on the MD particles. The
 forces on the particles are calculated by interpolation from the
 electric field which is in turn calculated from the potential via finite
@@ -1557,6 +1503,13 @@ differences. This only includes interactions between the species and
 boundaries and MD particles, not between MD particles and MD particles.
 To get complete electrostatic interactions a particles Coulomb method
 like Ewald or P3M has to be activated too.
+
+The fluctuation of the EK species can be turned on by the flag ``fluctuations``.
+This adds a white-noise term to the fluxes. The amplitude of this noise term
+can be controlled by ``fluctuation_amplitude``. To circumvent that these fluctuations
+lead to negative densities, they are modified by a smoothed Heaviside function,
+which decreases the magnitude of the flactuation for densities close to 0.
+By default the fluctuations are turned off.
 
 .. _Diffusive Species:
 

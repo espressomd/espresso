@@ -37,10 +37,8 @@ public:
          std::make_pair(min_z, max_z)}};
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
     for (auto const &id : ids()) {
-      auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
-      histogram.update(
-          ppos, ::Vector<3, double>{{partCfg[id].f.f[0], partCfg[id].f.f[1],
-                                     partCfg[id].f.f[2]}});
+      auto const ppos = ::Vector3d(folded_position(partCfg[id]));
+      histogram.update(ppos, partCfg[id].f.f);
     }
     histogram.normalize();
     return histogram.get_histogram();
