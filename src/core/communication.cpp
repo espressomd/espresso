@@ -723,7 +723,7 @@ void mpi_bcast_lb_particle_coupling() {
 
 void mpi_bcast_langevin_rng_counter() {
   mpi_call(mpi_bcast_langevin_rng_counter_slave, 0, 0);
-  boost::mpi::broadcast(comm_cart, langevin_rng_counter, 0);
+  boost::mpi::broadcast(comm_cart, *langevin_rng_counter, 0);
 }
 
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/

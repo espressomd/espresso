@@ -80,30 +80,28 @@ double nptiso_pref3;
 double nptiso_pref4;
 #endif
 
-Utils::Counter<uint64_t> langevin_rng_counter;
+std::shared_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
 
 void mpi_bcast_langevin_rng_counter_slave(int, int) {
-  boost::mpi::broadcast(comm_cart, langevin_rng_counter, 0);
+  boost::mpi::broadcast(comm_cart, *langevin_rng_counter, 0);
 }
 
 void langevin_rng_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN)
-    langevin_rng_counter.increment();
+    langevin_rng_counter->increment();
 }
 
 bool langevin_is_seed_required() {
   /* Seed is required if rng is not initialized (value == initial_value) */
-  return langevin_rng_counter.initial_value() == langevin_rng_counter.value();
+  return langevin_rng_counter == nullptr;
 }
 
 void langevin_set_rng_state(uint64_t counter) {
-  langevin_rng_counter = Utils::Counter<uint64_t>(counter);
-  /* Increment once that intitial_value() != value */
-  langevin_rng_counter.increment();
+  langevin_rng_counter = std::make_shared<Utils::Counter<uint64_t>>(counter);
   mpi_bcast_langevin_rng_counter();
 }
 
-uint64_t langevin_get_rng_state() { return langevin_rng_counter.value(); }
+uint64_t langevin_get_rng_state() { return langevin_rng_counter->value(); }
 
 void thermo_init_langevin() {
   langevin_pref1 = -langevin_gamma;
