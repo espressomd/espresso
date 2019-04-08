@@ -187,10 +187,6 @@ void calc_structurefactor(PartCfg &, int const *p_types, int n_types, int order,
 std::vector<std::vector<double>> modify_stucturefactor(int order,
                                                        double const *sf);
 
-/** Calculates the density profile in dir direction */
-void density_profile_av(int n_conf, int n_bin, double density, int dir,
-                        double *rho_ave, int type);
-
 int calc_cylindrical_average(
     PartCfg &, std::vector<double> const &center,
     std::vector<double> const &direction, double length, double radius,
@@ -200,30 +196,13 @@ int calc_cylindrical_average(
 
 template <typename T1, typename T2>
 double min_distance2(T1 const pos1, T2 const pos2) {
-  double diff[3];
-  get_mi_vector(diff, pos1, pos2);
-  return sqrlen(diff);
-}
-
-/** Calculate the minimal distance between two positions in the perhaps
- *  periodic simulation box.
- *  \param pos1  Position one.
- *  \param pos2  Position two.
- */
-template <typename T1, typename T2>
-double min_distance(T1 const pos1, T2 const pos2) {
-  return sqrt(min_distance2(pos1, pos2));
+  return get_mi_vector(pos1, pos2).norm2();
 }
 
 /** Calculate the center of mass of a special type of the current configuration.
  *  \param part_type  type of the particle
  */
 Vector3d centerofmass(PartCfg &, int part_type);
-
-/** Docs missing
- *  \todo Docs missing
- */
-Vector3d centerofmass_vel(PartCfg &, int type);
 
 /** Calculate the angular momentum of a special type of the current
  *  configuration.
