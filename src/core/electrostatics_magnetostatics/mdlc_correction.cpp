@@ -443,10 +443,6 @@ void add_mdlc_force_corrections() {
   // See Brodka, Chem. Phys. Lett. 400, 62, (2004).
 
   mz = slab_dip_count_mu(&mtot, &mx, &my);
-  {
-    fprintf(stderr, "You are not using the P3M method, therefore p3m.epsilon "
-                    "is unknown, I assume metallic borders \n");
-  }
 
   // --- Transfer the computed corrections to the Forces, Energy and torques
   //	of the particles
