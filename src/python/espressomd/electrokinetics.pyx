@@ -17,26 +17,6 @@ IF ELECTROKINETICS:
         Creates the electrokinetic method using the GPU unit.
 
         """
-        species_list = []
-
-        def __getstate__(self):
-            odict = {}
-            odict["species_list"] = self.species_list
-            odict.update(self._params.copy())
-            return odict
-
-        def __setstate__(self, params):
-            self.species_list = params["species_list"]
-            params.pop("species_list")
-            self._params = params
-            self._set_params_in_es_core()
-
-        def __str__(self):
-            tmp_params = self.get_params()
-            tmp_params["species_list"] = {}
-            for i in range(len(self.species_list)):
-                tmp_params["species_list"][i] = self.species_list[i]
-            return self.__class__.__name__ + "(" + str(tmp_params) + ")"
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -66,7 +46,7 @@ IF ELECTROKINETICS:
             Returns the valid options used for the electrokinetic method.
             """
 
-            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude", "es_coupling", "species_list"
+            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude", "es_coupling", "species"
 
         def required_keys(self):
             """
@@ -94,7 +74,8 @@ IF ELECTROKINETICS:
                     "fluid_coupling": "friction",
                     "fluctuations": False,
                     "fluctuation_amplitude": 0.0,
-                    "es_coupling": False}
+                    "es_coupling": False,
+                    "species":[]}
 
         def _get_params_from_es_core(self):
             if ek_parameters.stencil == 0:
@@ -183,7 +164,7 @@ IF ELECTROKINETICS:
 
         def _activate_method(self):
             self._set_params_in_es_core()
-            for species in self.species_list:
+            for species in self._params["species"]:
                 species._activate_method()
             self.ek_init()
 
@@ -243,7 +224,7 @@ IF ELECTROKINETICS:
                       Species to be initialized.
 
             """
-            self.species_list.append(species)
+            self._params["species"].append(species)
 
         def get_params(self):
             """
