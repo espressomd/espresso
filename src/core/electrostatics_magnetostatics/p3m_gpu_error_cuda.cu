@@ -99,8 +99,9 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
                       p3m_analytic_cotangent_sum<cao>(ny, meshi.y);
     const double ex = exp(-(PI * alpha_L_i) * (PI * alpha_L_i) * n2);
     const double ex2 = sqr(ex);
-    const double U2 = int_pow<2 * cao>(
-        Utils::sinc(meshi.x * nx) * Utils::sinc(meshi.y * ny) * Utils::sinc(meshi.z * nz));
+    const double U2 =
+        int_pow<2 * cao>(Utils::sinc(meshi.x * nx) * Utils::sinc(meshi.y * ny) *
+                         Utils::sinc(meshi.z * nz));
     auto const alias1 = ex2 / n2;
     auto const d = alias1 - sqr(U2 * ex / cs) / n2;
 
@@ -146,8 +147,8 @@ __global__ void p3m_k_space_error_gpu_kernel_ad(const int3 mesh,
 
           ex2 = sqr(ex);
 
-          U2 = pow((double)Utils::sinc(meshi.x * nmx) * Utils::sinc(meshi.y * nmy) *
-                       Utils::sinc(meshi.z * nmz),
+          U2 = pow((double)Utils::sinc(meshi.x * nmx) *
+                       Utils::sinc(meshi.y * nmy) * Utils::sinc(meshi.z * nmz),
                    2.0 * cao);
 
           alias1 += ex2 / n2;
@@ -205,8 +206,8 @@ __global__ void p3m_k_space_error_gpu_kernel_ik_i(const int3 mesh,
 
           ex2 = sqr(ex);
 
-          U2 = pow((double)Utils::sinc(meshi.x * nmx) * Utils::sinc(meshi.y * nmy) *
-                       Utils::sinc(meshi.z * nmz),
+          U2 = pow((double)Utils::sinc(meshi.x * nmx) *
+                       Utils::sinc(meshi.y * nmy) * Utils::sinc(meshi.z * nmz),
                    2.0 * cao);
 
           alias1 += ex2 / n2;
@@ -268,8 +269,8 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(const int3 mesh,
 
           ex2 = sqr(ex);
 
-          U2 = pow((double)Utils::sinc(meshi.x * nmx) * Utils::sinc(meshi.y * nmy) *
-                       Utils::sinc(meshi.z * nmz),
+          U2 = pow((double)Utils::sinc(meshi.x * nmx) *
+                       Utils::sinc(meshi.y * nmy) * Utils::sinc(meshi.z * nmz),
                    2.0 * cao);
 
           alias1 += ex2 / n2;
