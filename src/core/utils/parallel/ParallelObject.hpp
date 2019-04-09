@@ -34,14 +34,16 @@ public:
     cb.add(&mpi_callback);
   }
 
-  static void make(Communication::MpiCallbacks &cb) { cb.call(&mpi_callback); }
+  static void make(Communication::MpiCallbacks &cb) {
+    cb.call(&mpi_callback, CallbackAction::CREATE);
+  }
 
 private:
   /* Supported callback types. Currently we can only create new instances. */
   enum CallbackAction { CREATE };
 
   friend Communication::MpiCallbacks;
-  static void mpi_callback(int action, int) {
+  static void mpi_callback(CallbackAction action) {
     switch (action) {
     case CREATE:
       /* Create an instance */

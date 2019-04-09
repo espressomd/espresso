@@ -20,13 +20,9 @@
 */
 #ifndef UTILS_HPP
 #define UTILS_HPP
-/** \file utils.hpp
- *    Small functions that are useful not only for one modul.
-
- *  just some nice utilities...
- *  and some constants...
- *
-*/
+/** \file
+ *  Convenience functions for common operations on vectors.
+ */
 
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
@@ -40,7 +36,7 @@
 /**************************************************************/
 /*@{*/
 
-/** calculates the scalar product of two vectors a and b */
+/** calculates the scalar product of two vectors @p a and @p b */
 template <typename T1, typename T2> double scalar(const T1 &a, const T2 &b) {
   double d2 = 0.0;
   for (int i = 0; i < 3; i++)
@@ -57,52 +53,6 @@ inline void vector_product(T const &a, U const &b, V &c) {
   c[0] = a[1] * b[2] - a[2] * b[1];
   c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0];
-  return;
-}
-
-/*@}*/
-
-/*************************************************************/
-/** \name Three dimensional grid operations                  */
-/*************************************************************/
-/*@{*/
-
-/** get the linear index from the position (a,b,c) in a 3D grid
- *  of dimensions adim[]. returns linear index.
- *
- * @return        the linear index
- * @param a       x position
- * @param b       y position
- * @param c       z position
- * @param adim    dimensions of the underlying grid
- */
-inline int get_linear_index(int a, int b, int c, const Vector3i &adim) {
-  assert((a >= 0) && (a < adim[0]));
-  assert((b >= 0) && (b < adim[1]));
-  assert((c >= 0) && (c < adim[2]));
-
-  return (a + adim[0] * (b + adim[1] * c));
-}
-
-inline int get_linear_index(const Vector3i &ind, const Vector3i &adim) {
-  return get_linear_index(ind[0], ind[1], ind[2], adim);
-}
-
-/** get the position a[] from the linear index in a 3D grid
- *  of dimensions adim[].
- *
- * @param i       linear index
- * @param a       x position (return value)
- * @param b       y position (return value)
- * @param c       z position (return value)
- * @param adim    dimensions of the underlying grid
- */
-inline void get_grid_pos(int i, int *a, int *b, int *c, const Vector3i &adim) {
-  *a = i % adim[0];
-  i /= adim[0];
-  *b = i % adim[1];
-  i /= adim[1];
-  *c = i;
 }
 
 /*@}*/
@@ -112,7 +62,7 @@ inline void get_grid_pos(int i, int *a, int *b, int *c, const Vector3i &adim) {
 /*************************************************************/
 /*@{*/
 
-/** Calculate the distance between two positions.
+/** Calculate the squared distance between two positions.
  *  \param a Position one.
  *  \param b Position two.
  */

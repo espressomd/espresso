@@ -206,7 +206,7 @@ rocm-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export with_cuda=false test_timeout=900
+    - export with_cuda=false test_timeout=900 check_skip_long=true
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
     - export myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
@@ -384,3 +384,21 @@ status_failure:
   tags:
     - linux
   dependencies: []
+
+notify_success:
+  stage: result
+  script: bash maintainer/gh_close_issue.sh
+  when: on_success
+  only:
+    - python
+  tags:
+    - linux
+
+notify_failure:
+  stage: result
+  script: bash maintainer/gh_create_issue.sh
+  when: on_failure
+  only:
+    - python
+  tags:
+    - linux

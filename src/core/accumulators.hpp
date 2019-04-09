@@ -33,9 +33,7 @@ extern std::vector<std::shared_ptr<Accumulators::AccumulatorBase>>
 
 void auto_update();
 
-inline bool auto_update_enabled() {
-  return auto_update_accumulators.size() > 0;
-}
+inline bool auto_update_enabled() { return !auto_update_accumulators.empty(); }
 } // namespace Accumulators
 
 #endif // ESPRESSO_ACCUMULATORS_HPP

@@ -27,35 +27,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "particle_data.hpp"
 
-// DEBUG
-/*double maxBendingForce;
-double maxBendingDist;
-double maxX;*/
-
 /*************
    IBM_Tribend_CalcForce
 Calculate the bending force and add it to the particles
  **************/
 
-void IBM_Tribend_CalcForce(Particle *p1, const int numPartners,
-                           Particle **const partners,
-                           const Bonded_ia_parameters &iaparams) {
-  // move to separate function
-  if (numPartners != 3) {
-    throw std::runtime_error("IBM_Tribend expects 3 bond partners.");
-  }
-
-  Particle *p2 = partners[0];
-  Particle *p3 = partners[1];
-  Particle *p4 = partners[2];
-
+void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
+                           Particle *p4, const Bonded_ia_parameters &iaparams) {
   assert(p1);
   assert(p2);
   assert(p3);
   assert(p4);
-
-  // ************* This is Wolfgang's code **************
-  // with some corrections by Achim
 
   // Get vectors making up the two triangles
   double dx1[3], dx2[3], dx3[3];
@@ -231,8 +213,8 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
 
       // Get normals on triangle; pointing outwards by definition of indices
       // sequence
-      auto const n1l = dx1.cross(dx2);
-      auto const n2l = -dx1.cross(dx3);
+      auto const n1l = vector_product(dx1, dx2);
+      auto const n2l = -vector_product(dx1, dx3);
 
       auto const n1 = n1l / n1l.norm();
       auto const n2 = n2l / n2l.norm();
@@ -244,7 +226,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
 
       theta0 = acos(sc);
 
-      auto const desc = dx1 * n1.cross(n2);
+      auto const desc = dx1 * vector_product(n1, n2);
       if (desc < 0)
         theta0 = 2.0 * PI - theta0;
 

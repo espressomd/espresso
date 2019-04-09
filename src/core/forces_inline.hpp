@@ -359,7 +359,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M: {
-    if (q1q2) {
+    if (q1q2 != 0.) {
       p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
 
       // forces from the virtual charges
@@ -373,7 +373,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   case COULOMB_P3M_GPU:
   case COULOMB_P3M: {
 #ifdef NPT
-    if (q1q2) {
+    if (q1q2 != 0) {
       double eng = p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
       if (integ_switch == INTEG_METHOD_NPT_ISO)
         nptiso.p_vir[0] += eng;
@@ -386,16 +386,16 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 #endif
   case COULOMB_MMM1D:
-    if (q1q2)
+    if (q1q2 != 0)
       add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
     break;
   case COULOMB_MMM2D:
-    if (q1q2)
+    if (q1q2 != 0)
       add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    if (q1q2) {
+    if (q1q2 != 0) {
       Scafacos::add_pair_force(p1, p2, d, dist, force.data());
     }
     break;
@@ -509,10 +509,9 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
  */
 inline void add_bonded_force(Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
-  Bonded_ia_parameters *iaparams;
-  int i, j, bond_broken = 1;
+  int bond_broken = 1;
 
-  i = 0;
+  int i = 0;
   while (i < p1->bl.n) {
     double dx[3] = {0., 0., 0.};
     double force[3] = {0., 0., 0.};
@@ -521,12 +520,8 @@ inline void add_bonded_force(Particle *p1) {
 #if defined(OIF_LOCAL_FORCES)
     double force4[3] = {0., 0., 0.};
 #endif
-#ifdef ROTATION
-    double torque1[3] = {0., 0., 0.};
-    double torque2[3] = {0., 0., 0.};
-#endif
     int type_num = p1->bl.e[i++];
-    iaparams = &bonded_ia_params[type_num];
+    auto iaparams = &bonded_ia_params[type_num];
     int type = iaparams->type;
     int n_partners = iaparams->num;
 
@@ -590,16 +585,16 @@ inline void add_bonded_force(Particle *p1) {
     else if (n_partners == 2) {
       switch (type) {
       case BONDED_IA_ANGLE_HARMONIC:
-        bond_broken =
-            calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
+        bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force,
+                                                force2, force3);
         break;
       case BONDED_IA_ANGLE_COSINE:
-        bond_broken =
-            calc_angle_cosine_force(p1, p2, p3, iaparams, force, force2);
+        bond_broken = calc_angle_cosine_force(p1, p2, p3, iaparams, force,
+                                              force2, force3);
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
-        bond_broken =
-            calc_angle_cossquare_force(p1, p2, p3, iaparams, force, force2);
+        bond_broken = calc_angle_cossquare_force(p1, p2, p3, iaparams, force,
+                                                 force2, force3);
         break;
 #ifdef OIF_GLOBAL_FORCES
       case BONDED_IA_OIF_GLOBAL_FORCES:
@@ -610,17 +605,12 @@ inline void add_bonded_force(Particle *p1) {
       case BONDED_IA_TABULATED:
         if (iaparams->num == 2)
           bond_broken =
-              calc_tab_angle_force(p1, p2, p3, iaparams, force, force2);
+              calc_tab_angle_force(p1, p2, p3, iaparams, force, force2, force3);
         break;
 #endif
 #ifdef IMMERSED_BOUNDARY
       case BONDED_IA_IBM_TRIEL:
         bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
-        // These may be added later on, but we set them to zero because the
-        // force has already been added in IBM_Triel_CalcForce
-        force[0] = force2[0] = force3[0] = 0;
-        force[1] = force2[1] = force3[1] = 0;
-        force[2] = force2[2] = force3[2] = 0;
         break;
 #endif
       default:
@@ -646,29 +636,9 @@ inline void add_bonded_force(Particle *p1) {
 // IMMERSED_BOUNDARY
 #ifdef IMMERSED_BOUNDARY
       case BONDED_IA_IBM_TRIBEND: {
-        // First build neighbor list. This includes all nodes around the central
-        // node.
-        const int numNeighbors = iaparams->num;
-        Particle **neighbors = new Particle *[numNeighbors];
-        // Three are already there
-        neighbors[0] = p2;
-        neighbors[1] = p3;
-        neighbors[2] = p4;
-        // Get rest
-        for (int j = 3; j < numNeighbors; j++)
-          neighbors[j] = local_particles[p1->bl.e[i++]];
-
-        IBM_Tribend_CalcForce(p1, numNeighbors, neighbors, *iaparams);
+        IBM_Tribend_CalcForce(p1, p2, p3, p4, *iaparams);
         bond_broken = 0;
 
-        // Clean up
-        delete[] neighbors;
-
-        // These may be added later on, but we set them to zero because the
-        // force has
-        force[0] = force2[0] = force3[0] = 0;
-        force[1] = force2[1] = force3[1] = 0;
-        force[2] = force2[2] = force3[2] = 0;
         break;
       }
 #endif
@@ -701,7 +671,7 @@ inline void add_bonded_force(Particle *p1) {
         continue;
       }
 
-      for (j = 0; j < 3; j++) {
+      for (int j = 0; j < 3; j++) {
         switch (type) {
         case BONDED_IA_THERMALIZED_DIST:
           p1->f.f[j] += force[j];
@@ -710,10 +680,6 @@ inline void add_bonded_force(Particle *p1) {
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] -= force[j];
-#ifdef ROTATION
-          p1->f.torque[j] += torque1[j];
-          p2->f.torque[j] += torque2[j];
-#endif
         }
       }
       break;
@@ -725,12 +691,12 @@ inline void add_bonded_force(Particle *p1) {
         continue;
       }
 
-      for (j = 0; j < 3; j++) {
+      for (int j = 0; j < 3; j++) {
         switch (type) {
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
-          p3->f.f[j] -= (force[j] + force2[j]);
+          p3->f.f[j] += force3[j];
         }
       }
       break;
@@ -744,7 +710,7 @@ inline void add_bonded_force(Particle *p1) {
 
       switch (type) {
       case BONDED_IA_DIHEDRAL:
-        for (j = 0; j < 3; j++) {
+        for (int j = 0; j < 3; j++) {
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
           p3->f.f[j] += force3[j];
@@ -754,7 +720,7 @@ inline void add_bonded_force(Particle *p1) {
 
 #ifdef OIF_LOCAL_FORCES
       case BONDED_IA_OIF_LOCAL_FORCES:
-        for (j = 0; j < 3; j++) {
+        for (int j = 0; j < 3; j++) {
           p1->f.f[j] += force2[j];
           p2->f.f[j] += force[j];
           p3->f.f[j] += force3[j];

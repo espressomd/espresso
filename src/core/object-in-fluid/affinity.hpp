@@ -41,7 +41,7 @@ int affinity_set_params(int part_type_a, int part_type_b, int afftype,
 
 /** Calculate soft-sphere potential force between particle p1 and p2 */
 inline void add_affinity_pair_force(Particle *p1, Particle *p2,
-                                    IA_parameters *ia_params, double d[3],
+                                    IA_parameters *ia_params, double const d[3],
                                     double dist, double force[3]) {
 
   // The affinity potential has the first argument affinity_type. This is to

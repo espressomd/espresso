@@ -48,19 +48,17 @@ public:
                        return (m_shape != nullptr) ? m_shape->id() : ObjectId();
                      }}});
 #ifdef EK_BOUNDARIES
-    add_parameters(
-        {{"charge_density",
-          [this](Variant const &value) {
-            m_lbboundary->set_charge_density(boost::get<double>(value));
-          },
-          [this]() { return m_lbboundary->charge_density(); },
-          VariantType::DOUBLE, 0},
-         {"net_charge",
-          [this](Variant const &value) {
-            m_lbboundary->set_net_charge(boost::get<double>(value));
-          },
-          [this]() { return m_lbboundary->net_charge(); }, VariantType::DOUBLE,
-          0}});
+    add_parameters({{"charge_density",
+                     [this](Variant const &value) {
+                       m_lbboundary->set_charge_density(
+                           get_value<double>(value));
+                     },
+                     [this]() { return m_lbboundary->charge_density(); }},
+                    {"net_charge",
+                     [this](Variant const &value) {
+                       m_lbboundary->set_net_charge(get_value<double>(value));
+                     },
+                     [this]() { return m_lbboundary->net_charge(); }}});
 #endif
   }
 
@@ -69,8 +67,8 @@ public:
       // The get force method uses mpi callbacks on lb cpu
       if (this_node == 0)
         return m_lbboundary->get_force();
-      else
-        return none;
+
+      return none;
     }
     return none;
   }

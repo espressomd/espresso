@@ -58,7 +58,8 @@ uint64_t lb_lbcoupling_get_rng_state() {
 #ifdef LB
     return lb_coupling_get_rng_state_cpu();
 #endif
-  } else if (lattice_switch == ActiveLB::GPU) {
+  }
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return lb_coupling_get_rng_state_gpu();
 #endif
@@ -100,8 +101,8 @@ void add_md_force(Vector3d const &pos, Vector3d const &force) {
  *
  *  Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
  *
- * @param p          The coupled particle (Input).
- * @param f_random   Additional force to be included.
+ * @param[in,out] p         The coupled particle.
+ * @param[in]     f_random  Additional force to be included.
  *
  * @return The viscous coupling force plus f_random.
  */
@@ -226,9 +227,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
             return Vector3d{uniform(noise[0]), uniform(noise[1]),
                             uniform(noise[2])} -
                    Vector3d::broadcast(0.5);
-          } else {
-            return Vector3d{};
           }
+          return Vector3d{};
         };
 
         /* local cells */

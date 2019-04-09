@@ -505,12 +505,17 @@ endif()
 
 if(WITH_CLANG_TIDY)
   string(REGEX
-         REPLACE "^([1-9]+\\.[0-9]+).*$"
+          REPLACE "^([1-9]+)\\.[0-9]+.*$"
+          "\\1"
+          CLANG_MAJOR_VERSION
+          "${CMAKE_CXX_COMPILER_VERSION}")
+  string(REGEX
+         REPLACE "^[1-9]+\\.([0-9]+).*$"
                  "\\1"
                  CLANG_MINOR_VERSION
                  "${CMAKE_CXX_COMPILER_VERSION}")
   find_program(CLANG_TIDY_EXE
-               NAMES "clang-tidy-${CLANG_MINOR_VERSION}" "clang-tidy"
+               NAMES "clang-tidy-${CLANG_MAJOR_VERSION}.${CLANG_MINOR_VERSION}" "clang-tidy-${CLANG_MAJOR_VERSION}" "clang-tidy"
                DOC "Path to clang-tidy executable")
   if(NOT CLANG_TIDY_EXE)
     message(STATUS "clang-tidy not found.")
@@ -519,9 +524,7 @@ if(WITH_CLANG_TIDY)
     set(
       CMAKE_CXX_CLANG_TIDY
       "${CLANG_TIDY_EXE}"
-      "-checks=*,-clang-analyzer-alpha.*,-misc-unused-*,-android-*,-fuchsia-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses,-clang-analyzer-security.FloatLoopCounter,-clang-analyzer-optin.mpi.MPI-Checker,-boost-use-to-string,-hicpp-*"
-      "-header-filter=.*"
-      "-warnings-as-errors=*")
+    )
   endif()
 endif()
 

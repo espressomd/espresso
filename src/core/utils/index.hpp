@@ -1,10 +1,10 @@
 #ifndef UTILS_INDEX_HPP
 #define UTILS_INDEX_HPP
 
-#include <array>
 #include <iterator>
 #include <numeric>
-#include <vector>
+
+#include "Vector.hpp"
 
 namespace Utils {
 
@@ -57,6 +57,32 @@ inline void unravel_index(InputIterator dimensions_begin,
     mul *= (*rend_in);
   }
 }
+
+/*************************************************************/
+/** \name Three dimensional grid operations                  */
+/*************************************************************/
+/*@{*/
+
+/** get the linear index from the position (@p a,@p b,@p c) in a 3D grid
+ *  of dimensions @p adim.
+ *
+ * @return           The linear index
+ * @param a , b , c  Position in 3D space
+ * @param adim       Dimensions of the underlying grid
+ */
+inline int get_linear_index(int a, int b, int c, const Vector3i &adim) {
+  assert((a >= 0) && (a < adim[0]));
+  assert((b >= 0) && (b < adim[1]));
+  assert((c >= 0) && (c < adim[2]));
+
+  return (a + adim[0] * (b + adim[1] * c));
+}
+
+inline int get_linear_index(const Vector3i &ind, const Vector3i &adim) {
+  return get_linear_index(ind[0], ind[1], ind[2], adim);
+}
+
+/*@}*/
 
 } // namespace Utils
 

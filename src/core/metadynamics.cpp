@@ -191,7 +191,7 @@ void meta_perform() {
     factor = meta_f_bound * (meta_val_xi - meta_xi_max) / meta_xi_step;
   } else {
     // within the RC interval
-    int i = (int)std::round((meta_val_xi - meta_xi_min) / meta_xi_step);
+    auto i = (int)std::round((meta_val_xi - meta_xi_min) / meta_xi_step);
     if (i < 0)
       i = 0;
     if (i >= meta_xi_num_bins)
@@ -212,8 +212,8 @@ double calculate_lucy(double xi, double xi_0) {
   if (dist <= meta_bias_width) {
     return meta_bias_height * (1 + 2 * dist / meta_bias_width) *
            pow(1 - dist / meta_bias_width, 2);
-  } else
-    return 0.;
+  }
+  return 0.;
 }
 
 /** Calculate derivative of Lucy function */
@@ -227,8 +227,8 @@ double calculate_deriv_lucy(double xi, double xi_0) {
     if (xi < xi_0)
       result *= -1.;
     return result;
-  } else
-    return 0.;
+  }
+  return 0.;
 }
 
 #endif

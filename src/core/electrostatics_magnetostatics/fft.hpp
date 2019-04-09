@@ -52,30 +52,34 @@
 /*@{*/
 
 /** Initialize everything connected to the 3D-FFT.
-
- * \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
- * \param data            Pointer Pointer to data array.
- * \param ca_mesh_dim     Pointer to local CA mesh dimensions.
- * \param ca_mesh_margin  Pointer to local CA mesh margins.
- * \param global_mesh_dim Pointer to global CA mesh dimensions.
- * \param global_mesh_off Pointer to global CA mesh offset.
- * \param ks_pnum         Pointer to number of permutations in k-space.
+ *
+ *  \param data            Data array.
+ *  \param ca_mesh_dim     Local CA mesh dimensions.
+ *  \param ca_mesh_margin  Local CA mesh margins.
+ *  \param global_mesh_dim Global CA mesh dimensions.
+ *  \param global_mesh_off Global CA mesh offset.
+ *  \param ks_pnum         Number of permutations in k-space.
+ *  \param fft             FFT plan.
+ *  \param grid            Number of nodes in each spatial dimension.
+ *  \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  */
-int fft_init(double **data, int *ca_mesh_dim, int *ca_mesh_margin,
+int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft);
+             fft_data_struct &fft, const Vector3i &grid);
 
-/** perform the forward 3D FFT.
-    The assigned charges are in \a data. The result is also stored in \a data.
-    \warning The content of \a data is overwritten.
-    \param data Mesh.
-*/
+/** Perform an in-place forward 3D FFT.
+ *  \warning The content of \a data is overwritten.
+ *  \param[in,out] data  Mesh.
+ *  \param         fft   FFT plan.
+ */
 void fft_perform_forw(double *data, fft_data_struct &fft);
 
-/** perform the backward 3D FFT.
-    \warning The content of \a data is overwritten.
-    \param data Mesh.
-*/
+/** Perform an in-place backward 3D FFT.
+ *  \warning The content of \a data is overwritten.
+ *  \param[in,out] data   Mesh.
+ *  \param check_complex  Throw an error if the complex component is non-zero.
+ *  \param         fft    FFT plan.
+ */
 void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft);
 
 /*@}*/
