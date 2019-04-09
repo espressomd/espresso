@@ -80,7 +80,7 @@ class BHGPUTest(ut.TestCase):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5,
                 cutoff=0.55, shift="auto")
-            self.system.thermostat.set_langevin(kT=0.0, gamma=10.0)
+            self.system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
             stopAll(self.system)
             self.system.integrator.set_vv()
 

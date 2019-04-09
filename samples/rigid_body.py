@@ -41,7 +41,7 @@ skin = 10.0
 system.cell_system.skin = skin
 box_l = 100
 system.box_l = [box_l, box_l, box_l]
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 ### Particle types
 type_centre = 0

@@ -265,6 +265,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Langevin philox rng counter
+    if (n_steps > 0) {
+      langevin_rng_counter_increment();
+    }
+
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -355,6 +361,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Propagate langevin philox rng counter
+    langevin_rng_counter_increment();
+
     force_calc();
 
 #ifdef VIRTUAL_SITES
