@@ -443,8 +443,6 @@ integrator or thermostat:
 
 -  ``REACTION_ENSEMBLE``
 
--  ``MULTI_TIMESTEP`` (experimental)
-
 -  ``ENGINE``
 
 -  ``PARTICLE_ANISOTROPY``
