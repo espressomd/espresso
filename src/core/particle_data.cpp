@@ -43,7 +43,6 @@
 
 #include "utils.hpp"
 #include "utils/Cache.hpp"
-#include "utils/make_unique.hpp"
 #include "utils/mpi/gatherv.hpp"
 
 #include <boost/range/algorithm.hpp>
