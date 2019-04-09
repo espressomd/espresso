@@ -83,7 +83,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define VERLET_DEBUG
 #define PARTICLE_DEBUG
 #define P3M_DEBUG
-#define FFT_DEBUG
 #define RANDOM_DEBUG
 #define FORCE_DEBUG
 #define THERMO_DEBUG
