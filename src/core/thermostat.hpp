@@ -168,8 +168,8 @@ inline Vector3d v_noise(int particle_id) {
   using ctr_type = rng_type::ctr_type;
   using key_type = rng_type::key_type;
 
-  ctr_type c{
-      {langevin_rng_counter->value(), static_cast<uint64_t>(RNGSalt::LANGEVIN)}};
+  ctr_type c{{langevin_rng_counter->value(),
+              static_cast<uint64_t>(RNGSalt::LANGEVIN)}};
 
   key_type k{{static_cast<uint32_t>(particle_id)}};
 
