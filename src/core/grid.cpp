@@ -49,20 +49,20 @@
  * variables
  **********************************************/
 
-int node_grid[3] = {0, 0, 0};
-int node_pos[3] = {-1, -1, -1};
-int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
-int boundary[6] = {0, 0, 0, 0, 0, 0};
+Vector3i node_grid{};
+Vector3i node_pos = {-1, -1, -1};
+Vector<int, 6> node_neighbors{};
+Vector<int, 6> boundary{};
 int periodic = 7;
 
-double box_l[3] = {1, 1, 1};
-double half_box_l[3] = {.5, .5, .5};
-double box_l_i[3] = {1, 1, 1};
+Vector3d box_l = {1, 1, 1};
+Vector3d half_box_l = {0.5, 0.5, 0.5};
+Vector3d box_l_i = {1, 1, 1};
 double min_box_l;
 Vector3d local_box_l{1, 1, 1};
 double min_local_box_l;
-double my_left[3] = {0, 0, 0};
-double my_right[3] = {1, 1, 1};
+Vector3d my_left{};
+Vector3d my_right{1, 1, 1};
 
 /************************************************************/
 
@@ -88,7 +88,7 @@ int calc_node_neighbors(int node) {
 
   int dir, neighbor_count;
 
-  map_node_array(node, node_pos);
+  map_node_array(node, node_pos.data());
   for (dir = 0; dir < 3; dir++) {
     int buf;
 
@@ -152,7 +152,7 @@ void grid_changed_n_nodes() {
   mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
                            {{1, 1, 1}});
 
-  MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
+  MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
 
   calc_node_neighbors(this_node);
 
@@ -193,7 +193,7 @@ void calc_2d_grid(int n, int grid[3]) {
   }
 }
 
-int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]) {
+int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
   int i, row_dir = -1;
   /* trivial case */
   if (g3d[2] == 1) {

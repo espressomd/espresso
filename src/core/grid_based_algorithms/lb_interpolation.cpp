@@ -1,26 +1,48 @@
+#include <boost/mpi/collectives.hpp>
+
 #include "communication.hpp"
 #include "config.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
 #include "utils/Vector.hpp"
 
 #include "lb.hpp"
 #include "lb_interface.hpp"
 #include "lbgpu.hpp"
 
-#if defined(LB) || defined(LB_GPU)
-
 namespace {
 
+InterpolationOrder interpolation_order = InterpolationOrder::linear;
+}
+
+void mpi_set_interpolation_order_slave(int, int) {
+  boost::mpi::broadcast(comm_cart, interpolation_order, 0);
+}
+
+#if defined(LB) || defined(LB_GPU)
+
+void lb_lbinterpolation_set_interpolation_order(
+    InterpolationOrder const &order) {
+  interpolation_order = order;
+  mpi_call(mpi_set_interpolation_order_slave, 0, 0);
+  boost::mpi::broadcast(comm_cart, interpolation_order, 0);
+}
+
+InterpolationOrder lb_lbinterpolation_get_interpolation_order() {
+  return interpolation_order;
+}
+
+namespace {
 template <typename Op>
 void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
                            Op &&op) {
-  Vector<8, std::size_t> node_index{};
+  Vector<std::size_t, 8> node_index{};
   Vector6d delta{};
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
-  lattice.map_position_to_lattice(pos, node_index, delta);
+  lattice.map_position_to_lattice(pos, node_index, delta, my_left, local_box_l);
   for (int z = 0; z < 2; z++) {
     for (int y = 0; y < 2; y++) {
       for (int x = 0; x < 2; x++) {
@@ -48,7 +70,7 @@ Vector3d node_u(Lattice::index_t index) {
 
 const Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos) {
-  if (lattice_switch & LATTICE_LB) {
+  if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     Vector3d interpolated_u{};
 
@@ -69,19 +91,33 @@ lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos) {
 const Vector3d
 lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
   auto const folded_pos = folded_position(pos);
-  if (lattice_switch & LATTICE_LB_GPU) {
+  if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     Vector3d interpolated_u{};
-    lb_get_interpolated_velocity_gpu(folded_pos.data(), interpolated_u.data(),
-                                     1);
+    switch (interpolation_order) {
+    case (InterpolationOrder::linear):
+      lb_get_interpolated_velocity_gpu<8>(folded_pos.data(),
+                                          interpolated_u.data(), 1);
+      break;
+    case (InterpolationOrder::quadratic):
+      lb_get_interpolated_velocity_gpu<27>(folded_pos.data(),
+                                           interpolated_u.data(), 1);
+      break;
+    }
     return interpolated_u;
 #endif
-  } else if (lattice_switch & LATTICE_LB) {
+  }
+  if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
-    auto const node = map_position_node_array(folded_pos);
-    if (node == 0) {
-      return lb_lbinterpolation_get_interpolated_velocity(folded_pos);
-    } else {
+    switch (interpolation_order) {
+    case (InterpolationOrder::quadratic):
+      throw std::runtime_error("The non-linear interpolation scheme is not "
+                               "implemented for the CPU LB.");
+    case (InterpolationOrder::linear):
+      auto const node = map_position_node_array(folded_pos);
+      if (node == 0) {
+        return lb_lbinterpolation_get_interpolated_velocity(folded_pos);
+      }
       return mpi_recv_lb_interpolated_velocity(node, folded_pos);
     }
   }
@@ -92,11 +128,18 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
 #ifdef LB
 void lb_lbinterpolation_add_force_density(const Vector3d &pos,
                                           const Vector3d &force_density) {
-  lattice_interpolation(lblattice, pos,
-                        [&force_density](Lattice::index_t index, double w) {
-                          auto &field = lbfields[index];
-                          field.force_density += w * force_density;
-                        });
+  switch (interpolation_order) {
+  case (InterpolationOrder::quadratic):
+    throw std::runtime_error("The non-linear interpolation scheme is not "
+                             "implemented for the CPU LB.");
+  case (InterpolationOrder::linear):
+    lattice_interpolation(lblattice, pos,
+                          [&force_density](Lattice::index_t index, double w) {
+                            auto &field = lbfields[index];
+                            field.force_density += w * force_density;
+                          });
+    break;
+  }
 }
 #endif
 

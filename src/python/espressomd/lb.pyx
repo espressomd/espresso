@@ -25,12 +25,11 @@ cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
 from . cimport cuda_init
-from .particle_data cimport make_array_locked
 from . import cuda_init
-from globals cimport *
 from copy import deepcopy
 from . import utils
-from espressomd.utils import array_locked, is_valid_type
+from .utils import array_locked, is_valid_type
+from .utils cimport make_array_locked
 
 # Actor class
 ####################################################
@@ -174,6 +173,22 @@ cdef class HydrodynamicInteraction(Actor):
 
             return self._params
 
+        def set_interpolation_order(self, interpolation_order):
+            """ Set the order for the fluid interpolation scheme.
+
+            Parameters
+            ----------
+            interpolation_order : :obj:`str`
+                ``linear`` refers to linear interpolation, ``quadratic`` to quadratic interpolation.
+
+            """
+            if (interpolation_order == "linear"):
+                lb_lbinterpolation_set_interpolation_order(linear)
+            elif (interpolation_order == "quadratic"):
+                lb_lbinterpolation_set_interpolation_order(quadratic)
+            else:
+                raise ValueError("Invalid parameter")
+
         def get_interpolated_velocity(self, pos):
             """Get LB fluid velocity at specified position.
 
@@ -228,7 +243,7 @@ cdef class HydrodynamicInteraction(Actor):
     "Subclasses of HydrodynamicInteraction have to implement _activate_method.") 
 
         def _deactivate_method(self):
-            lb_lbfluid_set_lattice_switch(0)
+            lb_lbfluid_set_lattice_switch(NONE)
 
 
 # LBFluid main class
@@ -241,7 +256,7 @@ IF LB:
         """
 
         def _set_lattice_switch(self):
-            lb_lbfluid_set_lattice_switch(1)
+            lb_lbfluid_set_lattice_switch(CPU)
 
         def _activate_method(self):
             self.validate_params()
@@ -259,7 +274,7 @@ IF LB_GPU:
             lb_lbfluid_remove_total_momentum()
 
         def _set_lattice_switch(self):
-            lb_lbfluid_set_lattice_switch(2)
+            lb_lbfluid_set_lattice_switch(GPU)
 
         def _activate_method(self):
             self.validate_params()
@@ -268,7 +283,7 @@ IF LB_GPU:
 
         @cython.boundscheck(False)
         @cython.wraparound(False)
-        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None):
+        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None, three_point=False):
             """Calculate the fluid velocity at given positions.
 
             Parameters
@@ -292,7 +307,10 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_get_interpolated_velocity_gpu(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            if three_point:
+                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            else:
+                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 IF LB or LB_GPU:

@@ -30,13 +30,13 @@ The following minimal example illustrates how to use the LBM in |es|::
     sys.box_l = [10, 20, 30]
     sys.time_step = 0.01
     sys.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     sys.actors.add(lb)
     sys.integrator.run(100)
 
 To use the GPU accelerated variant, replace line 5 in the example above by::
 
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
 
 .. note:: Feature ``LB`` or ``LB_GPU`` required
 
@@ -90,7 +90,7 @@ expert, leave their defaults unchanged. If you do change them, note that they
 are to be given in LB units.
 
 Before running a simulation at least the following parameters must be
-set up: ``agrid``, ``tau``, ``visc``, ``dens``, ``fric``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force_density=[0,0,0]``.
+set up: ``agrid``, ``tau``, ``visc``, ``dens``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force_density=[0,0,0]``.
 
 .. _Checkpointing LB:
 
@@ -132,10 +132,11 @@ LB as a thermostat
 The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
 The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
 Temperature is set via the ``kT`` argument of the LB fluid. Furthermore a seed has to be given for the
-thermalization of the particle coupling.
+thermalization of the particle coupling. The magnitude of the fricitional coupling can be adjusted by
+the parameter ``gamma``.
 To enable the LB thermostat, use::
 
-    sys.thermostat.set_lb(LB_fluid=lbf, seed=123)
+    sys.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
 The LBM implementation in |es| uses Ahlrichs and Dünweg's point coupling
 method to couple MD particles the LB fluid. This coupling consists of a
@@ -162,6 +163,8 @@ The LBM implementation provides a fully thermalized LB fluid, all
 nonconserved modes, including the pressure tensor, fluctuate correctly
 according to the given temperature and the relaxation parameters. All
 fluctuations can be switched off by setting the temperature to 0.
+
+.. note:: Coupling between LB and MD only happens if the LB thermostat is set with a :math:`\gamma \ge 0.0`.
 
 Regarding the unit of the temperature, please refer to
 Section :ref:`On units`.
@@ -263,7 +266,7 @@ The following minimal example demonstrates how to use the GPU implementation of 
     sys.box_l = [10, 20, 30]
     sys.time_step = 0.01
     sys.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     sys.actors.add(lb)
     sys.integrator.run(100)
 
@@ -345,7 +348,7 @@ The following example sets up a system consisting of a spherical boundary in the
     sys.time_step = 0.01
     sys.cell_system.skin = 0.4
 
-    lb = lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    lb = lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     sys.actors.add(lb)
 
     v = [0, 0, 0.01]  # the boundary slip

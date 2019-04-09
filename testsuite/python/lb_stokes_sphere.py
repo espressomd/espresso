@@ -105,7 +105,7 @@ class Stokes(object):
         stokes_force = 6 * np.pi * KVISC * radius * size(v)
 
         # get force that is exerted on the sphere
-        force = sphere.get_force()
+        force = np.copy(sphere.get_force())
         np.testing.assert_allclose(
             force,
             [0,
@@ -114,7 +114,10 @@ class Stokes(object):
             rtol=0.06,
             atol=stokes_force * 0.06)
         self.system.integrator.run(300)
-        np.testing.assert_allclose(sphere.get_force(), force, atol=0.02)
+        np.testing.assert_allclose(
+            np.copy(sphere.get_force()),
+            force,
+            atol=0.02)
 
 
 @ut.skipIf(not espressomd.has_features(

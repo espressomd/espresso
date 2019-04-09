@@ -63,7 +63,6 @@ inline void check_user_has_seeded() {
     unseeded_error_thrown = true;
     unseeded_error();
   }
-  return;
 }
 
 /**
@@ -97,7 +96,7 @@ int get_state_size_of_generator();
 /**
  * @brief Initialize PRNG with MPI rank as seed.
  */
-void init_random(void);
+void init_random();
 
 /**
  * @brief Initialize PRNG with user-provided seed.
@@ -136,7 +135,7 @@ inline int i_random(int maxint) {
  * @brief draws a random number from the normal distribution with mean 0 and
  * variance 1.
  */
-inline double gaussian_random(void) {
+inline double gaussian_random() {
   using namespace Random;
   check_user_has_seeded();
   return normal_distribution(generator);
@@ -151,7 +150,7 @@ inline double gaussian_random(void) {
  *
  * @return Gaussian random number.
  */
-inline double gaussian_random_cut(void) {
+inline double gaussian_random_cut() {
   using namespace Random;
   check_user_has_seeded();
   const double random_number = 1.042267973 * normal_distribution(generator);
@@ -159,9 +158,8 @@ inline double gaussian_random_cut(void) {
   if (fabs(random_number) > 2 * 1.042267973) {
     if (random_number > 0) {
       return 2 * 1.042267973;
-    } else {
-      return -2 * 1.042267973;
     }
+    return -2 * 1.042267973;
   }
   return random_number;
 }

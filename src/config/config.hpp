@@ -36,11 +36,6 @@
 #include "config-features.hpp"
 #include "version.hpp"
 
-/*********************************************************/
-/** \name Parameters from myconfig.hpp that need to be set */
-/*********************************************************/
-/*@{*/
-
 #ifndef ONEPART_DEBUG_ID
 #define ONEPART_DEBUG_ID 13
 #endif

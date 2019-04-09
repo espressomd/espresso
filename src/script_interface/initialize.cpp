@@ -35,7 +35,6 @@
 #include "ComFixed.hpp"
 
 #include "ParallelScriptInterface.hpp"
-#include "VariantTester.hpp"
 
 #include "core/communication.hpp"
 #include "virtual_sites/initialize.hpp"
@@ -59,8 +58,6 @@ void initialize() {
   MPIIO::initialize();
   CollisionDetection::initialize();
 
-  ScriptInterface::register_new<Testing::VariantTester>(
-      "Testing::VariantTester");
   ScriptInterface::register_new<ComFixed>("ComFixed");
 }
 

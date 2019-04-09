@@ -3,7 +3,14 @@
 
 #include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
 #include "utils/Vector.hpp"
+
+/** @brief LB implementation currently active. */
+enum class ActiveLB { NONE, CPU, GPU };
+
+/** @brief Switch determining the type of lattice dynamics. */
+extern ActiveLB lattice_switch;
 
 #if defined(LB) || defined(LB_GPU)
 
@@ -47,16 +54,14 @@ void lb_lbfluid_set_rng_state(uint64_t counter);
 const Lattice &lb_lbfluid_get_lattice();
 
 /**
- * @brief Get the global variable lattice_switch which defines wether NONE, CPU
- * or GPU LB is active.
+ * @brief Get the global variable @ref lattice_switch.
  */
-int lb_lbfluid_get_lattice_switch();
+ActiveLB lb_lbfluid_get_lattice_switch();
 
 /**
- * @brief Set the global variable lattice_switch which defines wether NONE, CPU
- * or GPU LB is active.
+ * @brief Set the global variable @ref lattice_switch.
  */
-void lb_lbfluid_set_lattice_switch(int local_lattice_switch);
+void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 
 /**
  * @brief Set the LB time step.
@@ -121,7 +126,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u);
 /**
  * @brief Set the LB fluid populations for a single node.
  */
-void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &pop);
+void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &pop);
 
 /**
  * @brief Get the LB time step.
@@ -177,8 +182,8 @@ double lb_lbnode_get_density(const Vector3i &ind);
  * @brief Get the LB fluid velocity for a single node.
  */
 const Vector3d lb_lbnode_get_velocity(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind);
+const Vector6d lb_lbnode_get_pi(const Vector3i &ind);
+const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind);
 
 /**
  * @brief Get the LB fluid boundary bool for a single node.
@@ -188,7 +193,7 @@ int lb_lbnode_get_boundary(const Vector3i &ind);
 /**
  * @brief Get the LB fluid populations for a single node.
  */
-const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind);
+const Vector19d lb_lbnode_get_pop(const Vector3i &ind);
 
 /* IO routines */
 void lb_lbfluid_print_vtk_boundary(const std::string &filename);
@@ -207,7 +212,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
  */
 bool lb_lbnode_is_index_valid(const Vector3i &ind);
 
-void lb_lbfluid_on_lb_params_change(int field);
+void lb_lbfluid_on_lb_params_change(LBParam field);
 
 Vector3d lb_lbfluid_calc_fluid_momentum();
 #endif
