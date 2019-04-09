@@ -71,11 +71,8 @@ private:
       typename std::enable_if<detail::has_data<T, U>::value, U>::type;
 
 public:
-  DEVICE_QUALIFIER
   Span() = default;
-  DEVICE_QUALIFIER
   Span(const Span &) = default;
-  DEVICE_QUALIFIER
   Span &operator=(const Span &) = default;
 
   DEVICE_QUALIFIER
