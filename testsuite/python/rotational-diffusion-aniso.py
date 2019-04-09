@@ -174,7 +174,7 @@ class RotDiffAniso(ut.TestCase):
 
             # Actual comparison.
 
-            tolerance = 0.195
+            tolerance = 0.2
             # Too small values of the direction cosines are out of interest
             # compare to 0..1 range.
             min_value = 0.14
@@ -307,7 +307,7 @@ class RotDiffAniso(ut.TestCase):
         n = 800
         self.rot_diffusion_param_setup(n)
         self.system.thermostat.set_langevin(
-            kT=self.kT, gamma=self.gamma_global)
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         # Actual integration and validation run
         self.check_rot_diffusion(n)
 
