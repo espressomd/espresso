@@ -17,11 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <algorithm>
+#include <memory>
 #include <numeric>
 #include <type_traits>
 #include <vector>
-#include <memory>
-
 
 #define BOOST_TEST_MODULE ParticleIterator test
 #define BOOST_TEST_DYN_LINK

@@ -21,8 +21,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <mpi.h>
 #include <memory>
+#include <mpi.h>
 #ifdef OPEN_MPI
 #include <dlfcn.h>
 #endif
