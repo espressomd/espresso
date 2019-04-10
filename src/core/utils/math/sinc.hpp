@@ -49,8 +49,8 @@ template <typename T> DEVICE_QUALIFIER T sinc(T d) {
 
   const auto PId = PI * d;
 
-  if (std::abs(d) > epsi)
-    return std::sin(PId) / PId;
+  if (abs(d) > epsi)
+    return sin(PId) / PId;
 
   /** Coefficients of the Taylor expansion of sinc */
   const constexpr T c2 = -0.1666666666667e-0;
