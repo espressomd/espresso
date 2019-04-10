@@ -92,14 +92,11 @@ extern double nptiso_gamma0;
  * friction_thermV_nptiso */
 extern double nptiso_gammav;
 
-extern Utils::Counter<uint64_t> langevin_rng_counter;
+extern std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
 
 /************************************************
  * functions
  ************************************************/
-
-/** communication for the philox counter */
-void mpi_bcast_langevin_rng_counter(int, int);
 
 /** only require seed if rng is not initialized */
 bool langevin_is_seed_required();
@@ -171,20 +168,16 @@ inline Vector3d v_noise(int particle_id) {
   using ctr_type = rng_type::ctr_type;
   using key_type = rng_type::key_type;
 
-  ctr_type c{
-      {langevin_rng_counter.value(), static_cast<uint64_t>(RNGSalt::LANGEVIN)}};
+  ctr_type c{{langevin_rng_counter->value(),
+              static_cast<uint64_t>(RNGSalt::LANGEVIN)}};
 
-  auto f_random = [&c](int id) -> Vector3d {
-    key_type k{{static_cast<uint32_t>(id)}};
+  key_type k{{static_cast<uint32_t>(particle_id)}};
 
-    auto const noise = rng_type{}(c, k);
+  auto const noise = rng_type{}(c, k);
 
-    using Utils::uniform;
-    return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
-           Vector3d::broadcast(0.5);
-  };
-
-  return f_random(particle_id);
+  using Utils::uniform;
+  return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
+         Vector3d::broadcast(0.5);
 }
 
 /** Langevin thermostat core function.

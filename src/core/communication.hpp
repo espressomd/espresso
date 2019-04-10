@@ -272,8 +272,6 @@ void mpi_update_mol_ids();
 
 void mpi_bcast_lb_particle_coupling();
 
-void mpi_bcast_langevin_rng_counter();
-
 Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */

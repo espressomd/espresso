@@ -21,6 +21,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <mpi.h>
 #ifdef OPEN_MPI
 #include <dlfcn.h>
@@ -67,7 +68,6 @@
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
 #include "swimmer_reaction.hpp"
-#include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
 #include "serialization/IA_parameters.hpp"
@@ -76,7 +76,6 @@
 
 #include "utils.hpp"
 #include "utils/Counter.hpp"
-#include "utils/make_unique.hpp"
 #include "utils/u32_to_u64.hpp"
 
 #include <boost/mpi.hpp>
@@ -143,8 +142,7 @@ int n_nodes = -1;
   CB(mpi_update_particle_slave)                                                \
   CB(mpi_bcast_lb_particle_coupling_slave)                                     \
   CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
-  CB(mpi_set_interpolation_order_slave)                                        \
-  CB(mpi_bcast_langevin_rng_counter_slave)
+  CB(mpi_set_interpolation_order_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -231,12 +229,12 @@ void mpi_init() {
 #endif
 
 #ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
-  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>();
+  Communication::mpi_env = std::make_unique<boost::mpi::environment>();
 #else
   int argc{};
   char **argv{};
   Communication::mpi_env =
-      Utils::make_unique<boost::mpi::environment>(argc, argv);
+      std::make_unique<boost::mpi::environment>(argc, argv);
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -247,14 +245,14 @@ void mpi_init() {
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
 
   Communication::m_callbacks =
-      Utils::make_unique<Communication::MpiCallbacks>(comm_cart);
+      std::make_unique<Communication::MpiCallbacks>(comm_cart);
 
 #define CB(name) Communication::m_callbacks->add(&name);
   CALLBACK_LIST
 #undef CB
 
   ErrorHandling::init_error_handling(mpiCallbacks());
-  partCfg(Utils::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
+  partCfg(std::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
 
   on_program_start();
 }
@@ -717,13 +715,6 @@ void mpi_bcast_nptiso_geom_slave(int, int) {
 void mpi_bcast_lb_particle_coupling() {
   mpi_call(mpi_bcast_lb_particle_coupling_slave, 0, 0);
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
-}
-
-/******************* REQ_BCAST_LANGEVIN SEED********************/
-
-void mpi_bcast_langevin_rng_counter() {
-  mpi_call(mpi_bcast_langevin_rng_counter_slave, 0, 0);
-  boost::mpi::broadcast(comm_cart, langevin_rng_counter, 0);
 }
 
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/

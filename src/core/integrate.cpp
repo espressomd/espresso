@@ -368,9 +368,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     // Propagate langevin philox rng counter
-    if (n_steps > 0) {
-      langevin_rng_counter_increment();
-    }
+    langevin_rng_counter_increment();
 
     force_calc();
 
@@ -706,7 +704,7 @@ void propagate_pos() {
         }
       }
       /* Verlet criterion check */
-      if (distance2(p.r.p, p.l.p_old) > skin2)
+      if ((p.r.p - p.l.p_old).norm2() > skin2)
         set_resort_particles(Cells::RESORT_LOCAL);
     }
   }

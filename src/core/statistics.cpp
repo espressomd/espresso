@@ -60,15 +60,11 @@ int n_part_conf = 0;
  ****************************************************************************************/
 
 double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
-  double pt[3];
   int in_set;
 
   auto mindist2 = std::numeric_limits<double>::infinity();
 
   for (auto jt = partCfg.begin(); jt != (--partCfg.end()); ++jt) {
-    pt[0] = jt->r.p[0];
-    pt[1] = jt->r.p[1];
-    pt[2] = jt->r.p[2];
     /* check which sets particle j belongs to
        bit 0: set1, bit1: set2
     */
@@ -85,7 +81,7 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
        * versa. */
       if (((in_set & 1) && (set2.empty() || contains(set2, it->p.type))) ||
           ((in_set & 2) && (set1.empty() || contains(set1, it->p.type))))
-        mindist2 = std::min(mindist2, min_distance2(pt, it->r.p));
+        mindist2 = std::min(mindist2, min_distance2(jt->r.p, it->r.p));
   }
 
   return std::sqrt(mindist2);
@@ -135,26 +131,6 @@ Vector3d centerofmass(PartCfg &partCfg, int type) {
   for (int j = 0; j < 3; j++)
     com[j] /= mass;
   return com;
-}
-
-Vector3d centerofmass_vel(PartCfg &partCfg, int type) {
-  /*center of mass velocity scaled with time_step*/
-  Vector3d com_vel{};
-  int count = 0;
-
-  for (auto const &p : partCfg) {
-    if (type == p.p.type) {
-      for (int i = 0; i < 3; i++) {
-        com_vel[i] += p.m.v[i];
-      }
-      count++;
-    }
-  }
-
-  for (int i = 0; i < 3; i++) {
-    com_vel[i] /= count;
-  }
-  return com_vel;
 }
 
 void angularmomentum(PartCfg &partCfg, int type, double *com) {
@@ -244,7 +220,7 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
                             double *dist) {
   int t1, t2, ind, cnt = 0;
   double inv_bin_width = 0.0;
-  double min_dist, min_dist2 = 0.0, start_dist2, act_dist2;
+  double min_dist, min_dist2 = 0.0, start_dist2;
 
   start_dist2 = Utils::sqr(box_l[0] + box_l[1] + box_l[2]);
   /* bin preparation */
@@ -266,7 +242,7 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
           if (p1 != p2) {
             for (t2 = 0; t2 < n_p2; t2++) {
               if (p2.p.type == p2_types[t2]) {
-                act_dist2 = min_distance2(p1.r.p, p2.r.p);
+                auto const act_dist2 = get_mi_vector(p1.r.p, p2.r.p).norm2();
                 if (act_dist2 < min_dist2) {
                   min_dist2 = act_dist2;
                 }
@@ -313,7 +289,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
   long int cnt = 0;
   int i, t1, t2, ind;
   int mixed_flag = 0;
-  double inv_bin_width = 0.0, bin_width = 0.0, dist;
+  double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
 
   if (n_p1 == n_p2) {
@@ -338,7 +314,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
         for (; jt != partCfg.end(); ++jt) {
           for (t2 = 0; t2 < n_p2; t2++) {
             if (jt->p.type == p2_types[t2]) {
-              dist = min_distance(it->r.p, jt->r.p);
+              auto const dist = get_mi_vector(it->r.p, jt->r.p).norm();
               if (dist > r_min && dist < r_max) {
                 ind = (int)((dist - r_min) * inv_bin_width);
                 rdf[ind]++;
@@ -377,7 +353,7 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
   int mixed_flag = 0;
   double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
-  double *rdf_tmp, p1[3], p2[3];
+  double *rdf_tmp;
 
   rdf_tmp = (double *)Utils::malloc(r_bins * sizeof(double));
 
@@ -411,13 +387,12 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
           for (; jt != partCfg.end(); ++jt) {
             for (int t2 = 0; t2 < n_p2; t2++) {
               if (jt->p.type == p2_types[t2]) {
-                p1[0] = configs[k][3 * i + 0];
-                p1[1] = configs[k][3 * i + 1];
-                p1[2] = configs[k][3 * i + 2];
-                p2[0] = configs[k][3 * j + 0];
-                p2[1] = configs[k][3 * j + 1];
-                p2[2] = configs[k][3 * j + 2];
-                auto const dist = min_distance(p1, p2);
+                using Utils::make_const_span;
+
+                auto const dist =
+                    get_mi_vector(make_const_span(configs[k] + 3 * i, 3),
+                                  make_const_span(configs[k] + 3 * j, 3))
+                        .norm();
                 if (dist > r_min && dist < r_max) {
                   auto const ind =
                       static_cast<int>((dist - r_min) * inv_bin_width);
@@ -533,52 +508,6 @@ std::vector<std::vector<double>> modify_stucturefactor(int order,
   }
 
   return structure_factor;
-}
-
-// calculates average density profile in dir direction over last n_conf
-// configurations
-void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
-                        int dir, double *rho_ave, int type) {
-  int i, j, k, m, n;
-  double r;
-  double r_bin;
-
-  // calculation over last n_conf configurations
-
-  // bin width
-  r_bin = box_l[dir] / (double)(n_bin);
-
-  for (i = 0; i < n_bin; i++)
-    rho_ave[i] = 0;
-
-  k = n_configs - n_conf;
-
-  while (k < n_configs) {
-    r = 0;
-    j = 0;
-    while (r < box_l[dir]) {
-      n = 0;
-      for (auto const &p : partCfg) {
-        // com particles
-        if (p.p.type == type) {
-          auto const pos =
-              folded_position({&configs[k][3 * i], &configs[k][3 * i] + 3});
-
-          if (pos[dir] <= r + r_bin && pos[dir] > r)
-            n++;
-        }
-      }
-
-      rho_ave[j] += (double)(n) / (box_l[1] * box_l[2] * r_bin) / density;
-      j++;
-      r += r_bin;
-    }
-    k++;
-  } // k loop
-
-  // normalization
-  for (i = 0; i < n_bin; i++)
-    rho_ave[i] /= n_conf;
 }
 
 int calc_cylindrical_average(

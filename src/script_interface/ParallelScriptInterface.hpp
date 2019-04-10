@@ -24,18 +24,22 @@
 
 #include <utility>
 
-#include "ParallelScriptInterfaceSlave.hpp"
+#include "MpiCallbacks.hpp"
 #include "ScriptInterface.hpp"
 
 namespace ScriptInterface {
 
 class ParallelScriptInterface : public ScriptInterfaceBase {
-  static Communication::MpiCallbacks *m_cb;
-
 public:
-  using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
+  enum class CallbackAction {
+    NEW,
+    CONSTRUCT,
+    SET_PARAMETER,
+    CALL_METHOD,
+    DELETE
+  };
 
-  ParallelScriptInterface(std::string const &name);
+  explicit ParallelScriptInterface(std::string const &name);
   ~ParallelScriptInterface() override;
 
   /**
@@ -82,8 +86,7 @@ private:
   void collect_garbage();
 
   /* Data members */
-  Communication::CallbackHandle<ParallelScriptInterfaceSlave::CallbackAction>
-      m_callback_id;
+  Communication::CallbackHandle<CallbackAction> m_callback_id;
   /* Payload object */
   std::shared_ptr<ScriptInterfaceBase> m_p;
   map_t obj_map;
