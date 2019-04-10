@@ -84,8 +84,7 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/p3m-dipolar.cpp
   electrostatics_magnetostatics/p3m_gpu.cpp
   electrostatics_magnetostatics/scafacos.cpp
-  electrostatics_magnetostatics/fft-common.cpp
-  electrostatics_magnetostatics/fft.cpp
+        electrostatics_magnetostatics/fft.cpp
   grid_based_algorithms/halo.cpp
   grid_based_algorithms/lattice.cpp
   grid_based_algorithms/lbboundaries.cpp

@@ -37,7 +37,7 @@ class OifVolumeConservation(ut.TestCase):
         self.assertEqual(system.max_oif_objects, 0)
         system.time_step = 0.1
         system.cell_system.skin = 0.5
-        system.thermostat.set_langevin(kT=0, gamma=0.7)
+        system.thermostat.set_langevin(kT=0, gamma=0.7, seed=42)
 
         # creating the template for OIF object
         cell_type = oif.OifCellType(nodes_file=abspath("data/sphere393nodes.dat"), triangles_file=abspath(
