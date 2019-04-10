@@ -97,7 +97,8 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
     const double cs = p3m_analytic_cotangent_sum<cao>(nz, meshi.z) *
                       p3m_analytic_cotangent_sum<cao>(nx, meshi.x) *
                       p3m_analytic_cotangent_sum<cao>(ny, meshi.y);
-    const double ex = exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
+    const double ex =
+        exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
     const double ex2 = sqr(ex);
     const double U2 =
         int_pow<2 * cao>(Utils::sinc(meshi.x * nx) * Utils::sinc(meshi.y * ny) *
