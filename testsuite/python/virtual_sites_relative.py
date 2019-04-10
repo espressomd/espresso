@@ -278,7 +278,7 @@ class VirtualSites(ut.TestCase):
         system.integrator.set_vv()
         for i in range(10):
             # Langevin to maintain stability
-            system.thermostat.set_langevin(kT=kT, gamma=gamma)
+            system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
             system.integrator.run(50)
             system.thermostat.turn_off()
             # Constant energy to get rid of thermostat forces in the

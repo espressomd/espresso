@@ -35,7 +35,7 @@ np.random.seed(seed=system.seed)
 
 p = system.part.add(pos=(0, 0, 0), id=0)
 system.time_step = dt
-system.thermostat.set_langevin(kT=kT, gamma=gamma)
+system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
 system.cell_system.skin = 0.4
 system.integrator.run(1000)
 

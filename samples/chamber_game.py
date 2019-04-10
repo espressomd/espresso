@@ -267,7 +267,7 @@ energy = system.analysis.energy()
 p_startpos = system.part[:].pos
 
 # THERMOSTAT
-system.thermostat.set_langevin(kT=temperature, gamma=gamma)
+system.thermostat.set_langevin(kT=temperature, gamma=gamma, seed=42)
 
 # CONTROL CALLBACKS
 F_act_k = np.zeros(2)

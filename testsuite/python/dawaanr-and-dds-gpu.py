@@ -72,7 +72,7 @@ class DDSGPUTest(ut.TestCase):
             self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5,
                 cutoff=0.55, shift="auto")
-            self.es.thermostat.set_langevin(kT=0.0, gamma=10.0)
+            self.es.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
 
             self.es.integrator.set_steepest_descent(
                 f_max=0.0, gamma=0.1, max_displacement=0.1)
@@ -89,7 +89,7 @@ class DDSGPUTest(ut.TestCase):
             self.es.thermostat.turn_off()
             # gamma should be zero in order to avoid the noise term in force
             # and torque
-            self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
+            self.es.thermostat.set_langevin(kT=1.297, gamma=0.0, seed=42)
 
             dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(
                 prefactor=pf_dawaanr)
