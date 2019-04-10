@@ -84,9 +84,12 @@ class CoulombCloudWallTune(ut.TestCase):
             self.system.integrator.run(0)
             self.compare("p3m")
 
-    if espressomd.has_features(["ELECTROSTATICS", "CUDA"]) and not \
-       str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
-        def test_p3m_gpu(self):
+    @ut.skipIf(not espressomd.gpu_available(), "no gpu")
+    def test_p3m_gpu(self):
+            if str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
+                print("Test skipped on amd gpu")
+            return
+            
             # We have to add some tolerance here, because the reference
             # system is not homogeneous
             self.system.actors.add(
