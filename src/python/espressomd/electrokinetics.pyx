@@ -75,7 +75,7 @@ IF ELECTROKINETICS:
                     "fluctuations": False,
                     "fluctuation_amplitude": 0.0,
                     "es_coupling": False,
-                    "species":[]}
+                    "species": []}
 
         def _get_params_from_es_core(self):
             if ek_parameters.stencil == 0:
@@ -312,7 +312,7 @@ IF ELECTROKINETICS:
             else:
                 raise Exception("'es_coupling' is not active.")
 
-        def save_checkpoint(self,path):
+        def save_checkpoint(self, path):
             tmp_path = path + ".__tmp__"
             ek_save_checkpoint(utils.to_char_pointer(tmp_path))
             ek_path = tmp_path + ".ek"
@@ -320,7 +320,7 @@ IF ELECTROKINETICS:
             os.rename(ek_path, path + ".ek")
             os.rename(lb_path, path + ".lb")
 
-        def load_checkpoint(self,path):
+        def load_checkpoint(self, path):
             self._activate_method()
             ek_load_checkpoint(utils.to_char_pointer(path))
 

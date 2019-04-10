@@ -56,18 +56,18 @@ EK_implementation = None
 if espressomd.has_features('ELECTROKINETICS') and 'EK.GPU' in modes:
     EK_implementation = espressomd.electrokinetics
     ek = EK_implementation.Electrokinetics(
-          agrid=0.5,
+        agrid=0.5,
           lb_density=26.15,
           viscosity=1.7,
           friction=0.0,
           T=1.1,
           prefactor=0.88,
           stencil="linkcentered")
-    ek_species=EK_implementation.Species(
-          density=0.4,
+    ek_species = EK_implementation.Species(
+        density=0.4,
           D=0.02,
           valency=0.3,
-          ext_force_density=[0.01,-0.08,0.06])
+          ext_force_density=[0.01, -0.08, 0.06])
     ek.add_species(ek_species)
     system.actors.add(ek)
 

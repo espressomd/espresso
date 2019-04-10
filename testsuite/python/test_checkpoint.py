@@ -109,10 +109,22 @@ class CheckpointTest(ut.TestCase):
         reference_species = {'density': 0.4, 'D': 0.02, 'valency': 0.3}
         for key, val in reference_species.items():
             self.assertTrue(key in state_species)
-            self.assertAlmostEqual(reference_species[key], state_species[key], delta=1E-5)
-        self.assertAlmostEqual(state_species['ext_force_density'][0], 0.01, delta=1E-5)
-        self.assertAlmostEqual(state_species['ext_force_density'][1], -0.08, delta=1E-5)
-        self.assertAlmostEqual(state_species['ext_force_density'][2], 0.06, delta=1E-5)
+            self.assertAlmostEqual(
+                reference_species[key],
+                state_species[key],
+                delta=1E-5)
+        self.assertAlmostEqual(
+            state_species['ext_force_density'][0],
+            0.01,
+            delta=1E-5)
+        self.assertAlmostEqual(
+            state_species['ext_force_density'][1],
+            -0.08,
+            delta=1E-5)
+        self.assertAlmostEqual(
+            state_species['ext_force_density'][2],
+            0.06,
+            delta=1E-5)
 
     def test_variables(self):
         self.assertEqual(system.cell_system.skin, 0.1)
