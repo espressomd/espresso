@@ -191,6 +191,7 @@ python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2)
 python_test(FILE sigint.py DEPENDENCIES sigint_child.py MAX_NUM_PROC 1)
 python_test(FILE lb_density.py MAX_NUM_PROC 1)
 python_test(FILE observable_chain.py MAX_NUM_PROC 4)
+python_test(FILE mpiio.py MAX_NUM_PROC 4)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
