@@ -41,8 +41,7 @@ class TestLB(object):
     """
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = system.cell_system.get_state()["n_nodes"]
-    system.seed = range(n_nodes)
-    np.random.seed = 1
+    np.random.seed(1)
     params = {'int_steps': 15,
               'int_times': 20,
               'time_step': 0.01,
@@ -355,4 +354,8 @@ class TestLBGPU(TestLB, ut.TestCase):
 
 
 if __name__ == "__main__":
-    ut.main()
+    suite = ut.TestSuite()
+    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBCPU))
+    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBGPU))
+    result = ut.TextTestRunner(verbosity=4).run(suite)
+    sys.exit(not result.wasSuccessful())

@@ -96,8 +96,8 @@ void on_temperature_change();
 
 /** called every time other parameters (timestep,...) are changed. Note that
  *  this does not happen automatically. The callback procedure of the changed
- *  variable is responsible for that by calling \ref mpi_bcast_event (2).
- *  @param parameter is the FIELD_* identifier of the field changed.
+ *  variable is responsible for that.
+ *  @param parameter is the @ref Fields identifier of the field changed.
  */
 void on_parameter_change(int parameter);
 

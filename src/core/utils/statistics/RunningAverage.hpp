@@ -64,15 +64,15 @@ public:
   Scalar avg() const {
     if (m_n > 0)
       return m_new_avg;
-    else
-      return 0.0;
+
+    return 0.0;
   }
   /** Variance of the samples */
   Scalar var() const {
     if (m_n > 1)
       return m_new_var / m_n;
-    else
-      return 0.0;
+
+    return 0.0;
   }
 
   /** Standard deviation of the samples */

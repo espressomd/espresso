@@ -68,10 +68,10 @@ struct callback_concept_t {
 };
 
 /**
- * @brief Concrete implementation of @class callback_concept_t.
+ * @brief Concrete implementation of @ref callback_concept_t.
  *
  * This is an implementation of a callback for a specific callable
- * F and a set of arguments to call it with.
+ * @p F and a set of arguments to call it with.
  */
 template <class F, class... Args>
 struct callback_model_t final : public callback_concept_t {
@@ -129,7 +129,7 @@ auto make_model_impl(CRef &&c, FunctorTypes<C, R, Args...>) {
 }
 
 /**
- * @brief Make a @class callback_model_t for a functor or lambda.
+ * @brief Make a @ref callback_model_t for a functor or lambda.
  *
  * The signature is deduced from F::operator() const, which has
  * to exist and can not be overloaded.
@@ -139,7 +139,7 @@ template <typename F> auto make_model(F &&f) {
 }
 
 /**
- * @brief Make a @class callback_model_t for a function pointer.
+ * @brief Make a @ref callback_model_t for a function pointer.
  *
  * This instantiates a implementation of a callback for a function
  * pointer. The main task here is to transfer the signature from
@@ -155,8 +155,6 @@ template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
  * @brief  The interface of the MPI callback mechanism.
  */
 class MpiCallbacks {
-  enum class Message { ABORT, BCAST, NODE };
-
 public:
   /**
    * @brief RAII handle for a callback.
@@ -207,6 +205,8 @@ public:
       if (m_cb)
         m_cb->remove(m_id);
     }
+
+    MpiCallbacks *cb() const { return m_cb; }
   };
 
   /* Avoid accidental copy, leads to mpi deadlock
@@ -319,8 +319,7 @@ private:
    * in the MPI loop.
    *
    * @param id The callback to call.
-   * @param par1 First parameter to pass to the callback.
-   * @param par2 Second parameter to pass to the callback.
+   * @param args Arguments for the callback.
    */
   template <class... Args> void call(int id, Args &&... args) const {
     /** Can only be call from master */
@@ -352,7 +351,7 @@ public:
    * The method can only be called the master
    * and has the prerequisite that the other nodes are
    * in the MPI loop. Also the function has to be previously
-   * registered e.g. with the @def REGISTER_CALLBACK macro.
+   * registered e.g. with the @ref REGISTER_CALLBACK macro.
    *
    * @param fp Pointer to the function to call.
    * @param args Arguments for the callback.
@@ -390,10 +389,9 @@ public:
       /** id == 0 is loop_abort. */
       if (request == LOOP_ABORT) {
         break;
-      } else {
-        /** Call the callback */
-        m_callback_map[request]->operator()(ia);
       }
+      /** Call the callback */
+      m_callback_map[request]->operator()(ia);
     }
   }
 
@@ -446,7 +444,7 @@ using CallbackHandle = MpiCallbacks::CallbackHandle<Args...>;
 /**
  * @brief Helper class to atomatically add callbacks.
  *
- * Should not be used directly, but via @def REGISTER_CALLBACK.
+ * Should not be used directly, but via @ref REGISTER_CALLBACK.
  */
 class RegisterCallback {
 

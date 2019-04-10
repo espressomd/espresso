@@ -176,7 +176,7 @@ int mpi_integrate(int n_steps, int reuse_forces);
 /** Issue REQ_MIN_ENERGY: start energy minimization.
  *  @return nonzero on error
  */
-int mpi_minimize_energy(void);
+int mpi_minimize_energy();
 
 void mpi_bcast_all_ia_params();
 
@@ -262,13 +262,13 @@ void mpi_bcast_cell_structure(int cs);
 /** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all
  *  nodes.
  */
-void mpi_bcast_nptiso_geom(void);
+void mpi_bcast_nptiso_geom();
 
 /** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
  *  in sync with the topology. Note that this only makes sense if you
  *  have a simple topology such that each particle can only belong to
  *  a single molecule */
-void mpi_update_mol_ids(void);
+void mpi_update_mol_ids();
 
 void mpi_bcast_lb_particle_coupling();
 
@@ -325,16 +325,6 @@ std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
  */
 std::vector<int> mpi_resort_particles(int global_flag);
 
-/*@}*/
-
-/** \name Event codes for \ref mpi_bcast_event
- *  These codes are used by \ref mpi_bcast_event to notify certain changes
- *  of doing something now.
- */
-/*@{*/
-#define P3M_COUNT_CHARGES 0
-#define CHECK_PARTICLES 2
-#define P3M_COUNT_DIPOLES 5
 /*@}*/
 
 #endif

@@ -52,7 +52,7 @@ system.cell_system.skin = 0.4
 checkpoint.register("system")
 
 # test for "system.thermostat"
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # test for "system.non_bonded_inter"
 lj_eps = 1.0

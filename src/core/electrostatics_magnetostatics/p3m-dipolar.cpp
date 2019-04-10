@@ -130,7 +130,7 @@ static void dp3m_init_a_ai_cao_cut();
 /** Checks for correctness for magnetic dipoles in P3M of the cao_cut,
  *  necessary when the box length changes
  */
-static bool dp3m_sanity_checks_boxl(void);
+static bool dp3m_sanity_checks_boxl();
 
 /** Calculate properties of the local FFT mesh for the
  *   charge assignment process.
@@ -284,7 +284,7 @@ inside the loops
 
 */
 
-void dp3m_pre_init(void) {
+void dp3m_pre_init() {
   p3m_common_parameter_pre_init(&dp3m.params);
   dp3m.params.epsilon = P3M_EPSILON_MAGNETIC;
 
@@ -299,8 +299,8 @@ void dp3m_pre_init(void) {
   dp3m.sum_dip_part = 0;
   dp3m.sum_mu2 = 0.0;
 
-  for (int i = 0; i < 7; i++)
-    dp3m.int_caf[i] = nullptr;
+  for (auto &i : dp3m.int_caf)
+    i = nullptr;
   dp3m.pos_shift = 0.0;
   dp3m.meshift = nullptr;
 
@@ -317,8 +317,6 @@ void dp3m_pre_init(void) {
   dp3m.recv_grid = nullptr;
 
   dp3m.energy_correction = 0.0;
-
-  fft_common_pre_init(&dp3m.fft);
 }
 
 void dp3m_deactivate() {
@@ -405,7 +403,7 @@ void dp3m_init() {
     int ca_mesh_size =
         fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
                  dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
-                 dp3m.fft, node_grid);
+                 dp3m.fft, node_grid, comm_cart);
     dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     for (n = 0; n < 3; n++)
@@ -433,8 +431,8 @@ void dp3m_init() {
 }
 
 void dp3m_free_dipoles() {
-  for (int i = 0; i < 3; i++)
-    free(dp3m.rs_mesh_dip[i]);
+  for (auto &i : dp3m.rs_mesh_dip)
+    free(i);
   free(dp3m.ca_frac);
   free(dp3m.ca_fmp);
   free(dp3m.send_grid);
@@ -644,14 +642,14 @@ void dp3m_interpolate_dipole_assignment_function() {
   }
 }
 
-void dp3m_dipole_assign(void) {
+void dp3m_dipole_assign() {
   /* magnetic particle counter, dipole fraction counter */
   int cp_cnt = 0;
 
   /* prepare local FFT mesh */
-  for (int i = 0; i < 3; i++)
+  for (auto &i : dp3m.rs_mesh_dip)
     for (int j = 0; j < dp3m.local_mesh.size; j++)
-      dp3m.rs_mesh_dip[i][j] = 0.0;
+      i[j] = 0.0;
 
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
@@ -925,9 +923,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[0]);
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[1]);
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[2]);
-    fft_perform_forw(dp3m.rs_mesh_dip[0], dp3m.fft);
-    fft_perform_forw(dp3m.rs_mesh_dip[1], dp3m.fft);
-    fft_perform_forw(dp3m.rs_mesh_dip[2], dp3m.fft);
+    fft_perform_forw(dp3m.rs_mesh_dip[0], dp3m.fft, comm_cart);
+    fft_perform_forw(dp3m.rs_mesh_dip[1], dp3m.fft, comm_cart);
+    fft_perform_forw(dp3m.rs_mesh_dip[2], dp3m.fft, comm_cart);
     // Note: after these calls, the grids are in the order yzx and not xyz
     // anymore!!!
   }
@@ -1072,7 +1070,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         }
 
         /* Back FFT force component mesh */
-        fft_perform_back(dp3m.rs_mesh, false, dp3m.fft);
+        fft_perform_back(dp3m.rs_mesh, false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
         dp3m_spread_force_grid(dp3m.rs_mesh);
         /* Assign force component from mesh to particle */
@@ -1153,9 +1151,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
           }
         }
         /* Back FFT force component mesh */
-        fft_perform_back(dp3m.rs_mesh_dip[0], false, dp3m.fft);
-        fft_perform_back(dp3m.rs_mesh_dip[1], false, dp3m.fft);
-        fft_perform_back(dp3m.rs_mesh_dip[2], false, dp3m.fft);
+        fft_perform_back(dp3m.rs_mesh_dip[0], false, dp3m.fft, comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[1], false, dp3m.fft, comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[2], false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[0]);
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[1]);
@@ -1368,7 +1366,7 @@ void dp3m_realloc_ca_fields(int newsize) {
 
 /*****************************************************************************/
 
-void dp3m_calc_meshift(void) {
+void dp3m_calc_meshift() {
   int i;
   double dmesh;
   dmesh = (double)dp3m.params.mesh[0];

@@ -786,7 +786,6 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
 
     *dist = m_direction * d;
   }
-  return;
 }
 
 } // namespace Shapes

@@ -64,8 +64,8 @@ private:
   }
 
 public:
-  template <typename Container>
-  explicit Vector(Container const &v) : Vector(std::begin(v), std::end(v)) {}
+  template <class Range>
+  explicit Vector(Range const &rng) : Vector(std::begin(rng), std::end(rng)) {}
   explicit constexpr Vector(T const (&v)[N]) : Base() {
     copy_init(std::begin(v), std::end(v));
   }
@@ -135,9 +135,12 @@ using Vector19d = VectorXd<19>;
 using Vector3i = Vector<int, 3>;
 
 namespace detail {
-template <size_t N, typename T, typename Op>
-Vector<T, N> binary_op(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
-  Vector<T, N> ret;
+template <size_t N, typename T, typename U, typename Op>
+auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
+  using std::declval;
+
+  using R = decltype(op(declval<T>(), declval<U>()));
+  Vector<R, N> ret;
 
   std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
                  op);
@@ -194,9 +197,9 @@ constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
   return not(a == b);
 }
 
-template <size_t N, typename T>
-Vector<T, N> operator+(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::binary_op(a, b, std::plus<T>());
+template <size_t N, typename T, typename U>
+auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
+  return detail::binary_op(a, b, std::plus<>());
 }
 
 template <size_t N, typename T>
@@ -204,9 +207,9 @@ Vector<T, N> &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
   return detail::binary_op_assign(a, b, std::plus<T>());
 }
 
-template <size_t N, typename T>
-Vector<T, N> operator-(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::binary_op(a, b, std::minus<T>());
+template <size_t N, typename T, typename U>
+auto operator-(Vector<T, N> const &a, Vector<U, N> const &b) {
+  return detail::binary_op(a, b, std::minus<>());
 }
 
 template <size_t N, typename T> Vector<T, N> operator-(Vector<T, N> const &a) {
@@ -224,9 +227,10 @@ Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
 }
 
 /* Scalar multiplication */
-template <size_t N, typename T>
-Vector<T, N> operator*(T const &a, Vector<T, N> const &b) {
-  Vector<T, N> ret;
+template <size_t N, typename T, class U>
+auto operator*(U const &a, Vector<T, N> const &b) {
+  using R = decltype(a * std::declval<T>());
+  Vector<R, N> ret;
 
   std::transform(std::begin(b), std::end(b), std::begin(ret),
                  [a](T const &val) { return a * val; });
@@ -234,9 +238,10 @@ Vector<T, N> operator*(T const &a, Vector<T, N> const &b) {
   return ret;
 }
 
-template <size_t N, typename T>
-Vector<T, N> operator*(Vector<T, N> const &b, T const &a) {
-  Vector<T, N> ret;
+template <size_t N, typename T, class U>
+auto operator*(Vector<T, N> const &b, U const &a) {
+  using R = decltype(std::declval<T>() * a);
+  Vector<R, N> ret;
 
   std::transform(std::begin(b), std::end(b), std::begin(ret),
                  [a](T const &val) { return a * val; });
@@ -269,9 +274,12 @@ Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
 }
 
 /* Scalar product */
-template <size_t N, typename T>
-T operator*(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return std::inner_product(std::begin(a), std::end(a), std::begin(b), T{});
+template <size_t N, typename T, class U>
+auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() * declval<U>());
+
+  return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
 }
 
 /* Componentwise square root */

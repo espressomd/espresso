@@ -47,8 +47,8 @@ BOOST_AUTO_TEST_CASE(BindCoupling_test) {
 
   /* is_linear */
   {
-    static_assert(true == BindCoupling<Id<true>, Particle>::is_linear, "");
-    static_assert(false == BindCoupling<Id<false>, Particle>::is_linear, "");
+    static_assert(BindCoupling<Id<true>, Particle>::is_linear, "");
+    static_assert(!BindCoupling<Id<false>, Particle>::is_linear, "");
   }
 
   /* make_bind_coupling */
@@ -95,7 +95,6 @@ BOOST_AUTO_TEST_CASE(FieldBase_test) {
     int f = 2;
 
     auto base = Base<int, int>(c, f);
-    c = f = 0;
 
     BOOST_CHECK(1 == base.coupling());
     BOOST_CHECK(2 == base.field());
