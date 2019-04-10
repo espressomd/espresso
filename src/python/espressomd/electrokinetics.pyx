@@ -5,6 +5,8 @@ IF LB_GPU:
     from .lb cimport lb_lbfluid_print_vtk_boundary
     from .lb cimport python_lbnode_get_pi
     from .lb cimport lb_lbnode_is_index_valid
+    from .lb cimport lb_lbfluid_set_lattice_switch
+    from .lb cimport GPU
 from . import utils
 import os
 from .utils cimport Vector6d
@@ -166,6 +168,7 @@ IF ELECTROKINETICS:
             self._set_params_in_es_core()
             for species in self._params["species"]:
                 species._activate_method()
+            lb_lbfluid_set_lattice_switch(GPU)
             self.ek_init()
 
         def neutralize_system(self, species):
