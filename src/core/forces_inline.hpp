@@ -83,9 +83,7 @@
 
 /** Initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part) {
-  part->f.f[0] = 0;
-  part->f.f[1] = 0;
-  part->f.f[2] = 0;
+  part->f.f = Vector3d{};
 
 #ifdef ROTATION
   part->f.torque[0] = 0;
@@ -99,17 +97,17 @@ inline void init_local_particle_force(Particle *part) {
   if (thermo_switch & THERMO_LANGEVIN)
     friction_thermo_langevin(part);
   else {
-    part->f.f[0] = 0;
-    part->f.f[1] = 0;
-    part->f.f[2] = 0;
+    part->f.f = Vector3d{};
   }
 
 #ifdef EXTERNAL_FORCES
-  if (part->p.ext_flag & PARTICLE_EXT_FORCE) {
-    part->f.f[0] += part->p.ext_force[0];
-    part->f.f[1] += part->p.ext_force[1];
-    part->f.f[2] += part->p.ext_force[2];
-  }
+  // If individual coordinates are fixed, set force to 0.
+  for (int j = 0; j < 3; j++)
+    if (part->p.ext_flag & COORD_FIXED(j))
+      part->f.f[j] = 0;
+  // Add external force
+  if (part->p.ext_flag & PARTICLE_EXT_FORCE)
+    part->f.f += part->p.ext_force;
 #endif
 
 #ifdef ROTATION

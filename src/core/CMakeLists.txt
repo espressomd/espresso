@@ -84,7 +84,6 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/p3m-dipolar.cpp
   electrostatics_magnetostatics/p3m_gpu.cpp
   electrostatics_magnetostatics/scafacos.cpp
-  electrostatics_magnetostatics/fft-common.cpp
   electrostatics_magnetostatics/fft.cpp
   electrostatics_magnetostatics/coulomb.cpp
   electrostatics_magnetostatics/dipole.cpp

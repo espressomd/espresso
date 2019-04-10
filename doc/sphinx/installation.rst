@@ -441,8 +441,6 @@ integrator or thermostat:
 
 -  ``REACTION_ENSEMBLE``
 
--  ``MULTI_TIMESTEP`` (experimental)
-
 -  ``ENGINE``
 
 -  ``PARTICLE_ANISOTROPY``
@@ -612,8 +610,6 @@ looking directly at the code.
 -  ``ESR_DEBUG`` debugging of P\ :math:`^3`\ Ms real space part.
 
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
-
--  ``FFT_DEBUG`` Output from the unified FFT code.
 
 -  ``RANDOM_DEBUG``
 
