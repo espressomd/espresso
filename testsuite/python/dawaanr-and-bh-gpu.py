@@ -37,10 +37,6 @@ def stopAll(system):
 @ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT",
                                         "PARTIAL_PERIODIC"]),
            "Features not available, skipping test!")
-@ut.skipIf(espressomd.has_features(["CUDA"]) and
-           str(espressomd.cuda_init.CudaInitHandle().device_list[0]) ==
-           "Device 687f",
-           "Feature not yet supported on AMD GPU, skipping test!")
 class BHGPUTest(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
@@ -84,7 +80,7 @@ class BHGPUTest(ut.TestCase):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5,
                 cutoff=0.55, shift="auto")
-            self.system.thermostat.set_langevin(kT=0.0, gamma=10.0)
+            self.system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
             stopAll(self.system)
             self.system.integrator.set_vv()
 

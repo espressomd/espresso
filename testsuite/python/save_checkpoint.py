@@ -96,7 +96,7 @@ acc.update()
 system.part[0].pos = [1.0, 2.0, 3.0]
 acc.update()
 
-system.thermostat.set_langevin(kT=1.0, gamma=2.0)
+system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(

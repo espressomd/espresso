@@ -130,6 +130,7 @@ class CheckpointTest(ut.TestCase):
     def test_thermostat(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
         self.assertEqual(system.thermostat.get_state()[0]['kT'], 1.0)
+        self.assertEqual(system.thermostat.get_state()[0]['seed'], 42)
         np.testing.assert_array_equal(system.thermostat.get_state()[
             0]['gamma'], np.array([2.0, 2.0, 2.0]))
 

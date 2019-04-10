@@ -59,7 +59,7 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-thermostat.Thermostat().set_langevin(1.0, 1.0)
+thermostat.Thermostat().set_langevin(1.0, 1.0, seed=42)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
