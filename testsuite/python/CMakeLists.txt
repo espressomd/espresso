@@ -65,7 +65,7 @@ endfunction(PYTHON_TEST)
 
 # Checkpointing tests: semicolon-separated list of mutually-compatible features.
 # Separate features with hyphens, use a period to add an optional flag.
-foreach(TEST_COMBINATION lb.cpu-p3m.cpu-lj;lb.gpu-p3m.cpu-lj)
+foreach(TEST_COMBINATION lb.cpu-p3m.cpu-lj;lb.gpu-p3m.cpu-lj;ek.gpu)
   if(${TEST_COMBINATION} MATCHES "\\.gpu")
     set(TEST_LABELS "gpu")
   else()
