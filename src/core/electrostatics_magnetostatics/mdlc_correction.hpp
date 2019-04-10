@@ -43,9 +43,9 @@
 
 #if defined(DIPOLES) && defined(DP3M)
 
-/** @brief Parameters for the MDLC method */
-typedef struct {
-  /** Maximal allowed pairwise error for the potential and force. */
+/** parameters for the MDLC method */
+struct DLC_struct {
+  /** maximal pairwise error of the potential and force */
   double maxPWerror;
 
   /** Cutoff of the exponential sum. Since in all other MMM methods this is
@@ -68,7 +68,10 @@ typedef struct {
   /** Up to where particles can be found */
   double h;
 
-} DLC_struct;
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &maxPWerror &far_cut &gap_size &far_calculated &h;
+  }
+};
 extern DLC_struct dlc_params;
 
 int mdlc_set_params(double maxPWerror, double gap_size, double far_cut);

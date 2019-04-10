@@ -549,9 +549,8 @@ IF P3M:
     cdef extern from "bonded_interactions/bonded_coulomb_p3m_sr.hpp":
         int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 
-cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     int virtual_set_params(int bond_type)
-
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef enum enum_bonded_interaction "BondedInteraction":
