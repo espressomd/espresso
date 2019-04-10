@@ -58,7 +58,7 @@ void deep_copy(boost::multi_array<T, 3> &dst,
  */
 template <typename T, size_t codim> class Interpolated {
 public:
-  using value_type = typename decay_to_scalar<Vector<codim, T>>::type;
+  using value_type = typename decay_to_scalar<Vector<T, codim>>::type;
   using jacobian_type = detail::jacobian_type<T, codim>;
   using storage_type = boost::multi_array<value_type, 3>;
 

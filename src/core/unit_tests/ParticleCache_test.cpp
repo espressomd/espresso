@@ -78,7 +78,7 @@ void check_merge(unsigned size, unsigned split) {
       v.insert(val);
   }
 
-  auto merge = detail::Merge<boost::container::flat_set<int>, std::less<int>>{};
+  auto merge = detail::Merge<boost::container::flat_set<int>, std::less<>>{};
   auto w = merge(u, v);
 
   BOOST_CHECK(w.size() == u.size() + v.size());

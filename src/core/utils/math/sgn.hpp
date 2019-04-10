@@ -25,7 +25,9 @@
 
 namespace Utils {
 /** @brief Calculate signum of val. */
-template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
+template <typename T> constexpr int sgn(T val) {
+  return (T(0) < val) - (val < T(0));
+}
 } // namespace Utils
 
 #endif

@@ -18,13 +18,12 @@ set(EspressoCore_SRC
   global.cpp
   grid.cpp
   immersed_boundaries.cpp
-  initialize.cpp
+        event.cpp
   integrate.cpp
   layered.cpp
   metadynamics.cpp
   minimize_energy.cpp
-  MpiCallbacks.cpp
-  npt.cpp
+        npt.cpp
   nsquare.cpp
   partCfg_global.cpp
   particle_data.cpp
@@ -45,7 +44,6 @@ set(EspressoCore_SRC
   swimmer_reaction.cpp
   SystemInterface.cpp
   thermostat.cpp
-  topology.cpp
   tuning.cpp
   virtual_sites.cpp
   accumulators/Correlator.cpp
@@ -86,8 +84,7 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/p3m-dipolar.cpp
   electrostatics_magnetostatics/p3m_gpu.cpp
   electrostatics_magnetostatics/scafacos.cpp
-  electrostatics_magnetostatics/fft-common.cpp
-  electrostatics_magnetostatics/fft.cpp
+        electrostatics_magnetostatics/fft.cpp
   grid_based_algorithms/halo.cpp
   grid_based_algorithms/lattice.cpp
   grid_based_algorithms/lbboundaries.cpp
@@ -152,7 +149,6 @@ if(CUDA)
     grid_based_algorithms/fd-electrostatics_cuda.cu
     virtual_sites/lb_inertialess_tracers_cuda.cu
     grid_based_algorithms/electrokinetics.cpp
-    grid_based_algorithms/electrokinetics_pdb_parse.cpp
     grid_based_algorithms/lbgpu.cpp
     )
 

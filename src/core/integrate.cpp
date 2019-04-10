@@ -35,13 +35,13 @@
 #include "domain_decomposition.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
-#include "initialize.hpp"
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -99,7 +99,7 @@ int db_maxf_id = 0, db_maxv_id = 0;
 
 bool set_py_interrupt = false;
 namespace {
-volatile static std::sig_atomic_t ctrl_C = 0;
+volatile std::sig_atomic_t ctrl_C = 0;
 }
 
 /** \name Private Functions */
@@ -253,11 +253,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #if defined(LB) || defined(LB_GPU)
     lb_lbcoupling_deactivate();
-    if (not(lattice_switch & LATTICE_OFF) && this_node == 0 && n_part)
-      runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                     "included in the particle force the first time step. This "
-                     "only matters if it happens frequently during "
-                     "sampling.\n");
 #endif
 
     // Communication step: distribute ghost positions
@@ -270,6 +265,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Langevin philox rng counter
+    if (n_steps > 0) {
+      langevin_rng_counter_increment();
+    }
+
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -360,6 +361,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Propagate langevin philox rng counter
+    langevin_rng_counter_increment();
+
     force_calc();
 
 #ifdef VIRTUAL_SITES
@@ -615,7 +620,7 @@ void propagate_press_box_pos_and_rescale_npt() {
         }
       }
     }
-    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(box_l.data(), 3, MPI_DOUBLE, 0, comm_cart);
 
     /* fast box length update */
     grid_changed_box_l();
@@ -694,7 +699,7 @@ void propagate_pos() {
         }
       }
       /* Verlet criterion check */
-      if (distance2(p.r.p, p.l.p_old) > skin2)
+      if ((p.r.p - p.l.p_old).norm2() > skin2)
         set_resort_particles(Cells::RESORT_LOCAL);
     }
   }

@@ -25,6 +25,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
+#include "debug.hpp"
 #include "domain_decomposition.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
@@ -81,7 +82,8 @@ double layer_h = 0, layer_h_i = 0;
 
 static int btm, top;
 
-void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
+void layered_get_mi_vector(double res[3], double const a[3],
+                           double const b[3]) {
   int i;
 
   for (i = 0; i < 2; i++) {
@@ -299,7 +301,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
   }
 }
 
-void layered_topology_init(CellPList *old) {
+void layered_topology_init(CellPList *old, Vector3i &grid) {
   int c, p;
 
   CELL_TRACE(fprintf(
@@ -311,12 +313,12 @@ void layered_topology_init(CellPList *old) {
   cell_structure.position_to_cell = layered_position_to_cell;
 
   /* check node grid. All we can do is 1x1xn. */
-  if (node_grid[0] != 1 || node_grid[1] != 1) {
+  if (grid[0] != 1 || grid[1] != 1) {
     runtimeErrorMsg() << "selected node grid is not suitable for layered cell "
                          "structure (needs 1x1x"
                       << n_nodes << " grid";
-    node_grid[0] = node_grid[1] = 1;
-    node_grid[2] = n_nodes;
+    grid[0] = grid[1] = 1;
+    grid[2] = n_nodes;
   }
 
   if (this_node == 0 && determine_n_layers) {
