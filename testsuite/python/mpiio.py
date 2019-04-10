@@ -78,6 +78,7 @@ def random_particles():
 
 
 class MPIIOTest(ut.TestCase):
+
     """
     Test class for the MPI-IO core functionality.
     Generates random particles, dumps them, reads them in,
