@@ -57,7 +57,6 @@
 
 #include "debug.hpp"
 #include "fft.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
 
 #include "utils/math/AS_erfc_part.hpp"
@@ -66,8 +65,10 @@
  * data types
  ************************************************/
 
-typedef struct {
-  p3m_parameter_struct params;
+struct p3m_data_struct {
+  p3m_data_struct();
+
+  P3MParameters params;
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
@@ -122,12 +123,10 @@ typedef struct {
   double *recv_grid;
 
   fft_data_struct fft;
-} p3m_data_struct;
+};
 
 /** P3M parameters. */
 extern p3m_data_struct p3m;
-
-void p3m_pre_init();
 
 /** Tune P3M parameters to desired accuracy.
  *
@@ -230,13 +229,13 @@ inline double p3m_add_pair_force(double chgfac, double const *d, double dist2,
       double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
       double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-      double fac1 = coulomb.prefactor * chgfac * exp(-adist * adist);
+      double fac1 = chgfac * exp(-adist * adist);
       double fac2 =
           fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * Utils::sqrt_pi_i()) /
           dist2;
 #else
       erfc_part_ri = erfc(adist) / dist;
-      double fac1 = coulomb.prefactor * chgfac;
+      double fac1 = chgfac;
       double fac2 =
           fac1 *
           (erfc_part_ri +
@@ -305,10 +304,10 @@ inline double p3m_pair_energy(double chgfac, double dist) {
     double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    return coulomb.prefactor * chgfac * erfc_part_ri * exp(-adist * adist);
+    return chgfac * erfc_part_ri * exp(-adist * adist);
 #else
     double erfc_part_ri = erfc(adist) / dist;
-    return coulomb.prefactor * chgfac * erfc_part_ri;
+    return chgfac * erfc_part_ri;
 #endif
   }
   return 0.0;

@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "DipolarDirectSum_cuda.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <memory>
 
@@ -46,7 +46,7 @@ class DipolarDirectSum : public Actor {
 public:
   DipolarDirectSum(SystemInterface &s) {
 
-    k = coulomb.Dprefactor;
+    k = dipole.prefactor;
 
     if (!s.requestFGpu())
       std::cerr << "DipolarDirectSum needs access to forces on GPU!"
