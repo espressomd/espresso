@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Utils {
 namespace Interpolation {
 namespace detail {
-using Utils::enable_if_t;
+using std::enable_if_t;
 
 struct Block {
   /* Index of the lower left corner of the assignment cube */
