@@ -28,7 +28,7 @@ modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
 
 LB = (espressomd.has_features('LB') and 'LB.CPU' in modes or
-      espressomd.has_features('LB_GPU') and 'LB.GPU' in modes)
+      espressomd.gpu_available() and espressomd.has_features('LB_GPU') and 'LB.GPU' in modes)
 
 
 class CheckpointTest(ut.TestCase):
