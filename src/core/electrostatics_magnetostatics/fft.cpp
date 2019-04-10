@@ -79,10 +79,10 @@ using Utils::get_linear_index;
  * \return Size of the communication group.
  */
 namespace {
-boost::optional<std::vector<int>> find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
-                                                   int const *node_list1, int *node_list2,
-                                                   int *pos, int *my_pos,
-                                                   const boost::mpi::communicator &comm) {
+boost::optional<std::vector<int>>
+find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
+                 int const *node_list1, int *node_list2, int *pos, int *my_pos,
+                 const boost::mpi::communicator &comm) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];
@@ -547,10 +547,10 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
 
   for (i = 1; i < 4; i++) {
-    auto group = find_comm_groups(
-        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-        n_pos[i], my_pos[i], comm);
+    auto group =
+        find_comm_groups({n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+                         {n_grid[i][0], n_grid[i][1], n_grid[i][2]},
+                         n_id[i - 1], n_id[i], n_pos[i], my_pos[i], comm);
     if (not group) {
       /* try permutation */
       j = n_grid[i][(fft.plan[i].row_dir + 1) % 3];
