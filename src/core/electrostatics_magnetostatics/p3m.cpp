@@ -843,8 +843,8 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
                comm_cart);
     if (this_node == 0) {
       /* self energy correction */
-      k_space_energy -=
-          coulomb.prefactor * (p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i());
+      k_space_energy -= coulomb.prefactor *
+                        (p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i());
       /* net charge correction */
       k_space_energy -=
           coulomb.prefactor * p3m.square_sum_q * Utils::pi() /
@@ -1328,7 +1328,8 @@ template <int cao> void calc_influence_function_energy() {
         }
 
         else
-          p3m.g_energy[ind] = perform_aliasing_sums_energy<cao>(n) / Utils::pi();
+          p3m.g_energy[ind] =
+              perform_aliasing_sums_energy<cao>(n) / Utils::pi();
       }
     }
   }
@@ -2397,12 +2398,12 @@ void p3m_calc_kspace_stress(double *stress) {
     for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
       for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
         for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
-          kx = 2.0 * Utils::pi() * p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
-               box_l[RX];
-          ky = 2.0 * Utils::pi() * p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
-               box_l[RY];
-          kz = 2.0 * Utils::pi() * p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
-               box_l[RZ];
+          kx = 2.0 * Utils::pi() *
+               p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] / box_l[RX];
+          ky = 2.0 * Utils::pi() *
+               p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] / box_l[RY];
+          kz = 2.0 * Utils::pi() *
+               p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] / box_l[RZ];
           sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
           if (sqk == 0) {
             node_k_space_energy = 0.0;

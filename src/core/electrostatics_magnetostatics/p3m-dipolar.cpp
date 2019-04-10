@@ -1159,7 +1159,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[1]);
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[2]);
         /* Assign force component from mesh to particle */
-        dp3m_assign_forces_dip(dipole_prefac * pow(2 * Utils::pi() / box_l[0], 2), d_rs);
+        dp3m_assign_forces_dip(
+            dipole_prefac * pow(2 * Utils::pi() / box_l[0], 2), d_rs);
       }
 
       P3M_TRACE(fprintf(stderr,
@@ -2184,7 +2185,8 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
             he_q += d;
         }
 
-  return 8. * Utils::pi() * Utils::pi() / 3. * sum_q2 * sqrt(he_q / (double)n_c_part) /
+  return 8. * Utils::pi() * Utils::pi() / 3. * sum_q2 *
+         sqrt(he_q / (double)n_c_part) /
          (box_size * box_size * box_size * box_size);
 }
 
@@ -2601,7 +2603,8 @@ void dp3m_compute_constants_energy_dipolar() {
 
   Eself = -(2 * pow(dp3m.params.alpha_L, 3) * Utils::sqrt_pi_i() / 3.0);
 
-  dp3m.energy_correction = -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * Utils::pi() / 3.);
+  dp3m.energy_correction =
+      -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * Utils::pi() / 3.);
 }
 
 /*****************************************************************************/

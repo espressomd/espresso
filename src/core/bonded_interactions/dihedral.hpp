@@ -140,7 +140,8 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
   if (fabs(sin(phi)) < TINY_SIN_VALUE) {
 #ifdef OLD_DIHEDRAL
     sinmphi_sinphi = iaparams->p.dihedral.mult *
-                     cos(2.0 * Utils::pi() - iaparams->p.dihedral.mult * phi) / cos(phi);
+                     cos(2.0 * Utils::pi() - iaparams->p.dihedral.mult * phi) /
+                     cos(phi);
 #else
     /*(comes from taking the first term of the MacLaurin expansion of
       sin(n*phi - phi0) and sin(phi) and then making the division).

@@ -332,8 +332,8 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
   for (i = 0; i < r_bins; i++) {
     r_in = i * bin_width + r_min;
     r_out = r_in + bin_width;
-    bin_volume =
-        (4.0 / 3.0) * Utils::pi() * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
+    bin_volume = (4.0 / 3.0) * Utils::pi() *
+                 ((r_out * r_out * r_out) - (r_in * r_in * r_in));
     rdf[i] *= volume / (bin_volume * cnt);
   }
 }
@@ -412,8 +412,8 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
     for (int i = 0; i < r_bins; i++) {
       r_in = i * bin_width + r_min;
       r_out = r_in + bin_width;
-      bin_volume =
-          (4.0 / 3.0) * Utils::pi() * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
+      bin_volume = (4.0 / 3.0) * Utils::pi() *
+                   ((r_out * r_out * r_out) - (r_in * r_in * r_in));
       rdf[i] += rdf_tmp[i] * volume / (bin_volume * cnt);
     }
 

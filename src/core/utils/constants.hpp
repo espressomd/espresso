@@ -29,24 +29,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /*@{*/
 namespace Utils {
 
-    /**
-     * @brief Ratio of diameter and circumference of a circle.
-     */
-    template<class T = double>
-    DEVICE_QUALIFIER constexpr T pi() {
-        return 3.14159265358979323846264338328;
-    }
+/**
+ * @brief Ratio of diameter and circumference of a circle.
+ */
+template <class T = double> DEVICE_QUALIFIER constexpr T pi() {
+  return 3.14159265358979323846264338328;
+}
 
-    /**
-     * @brief One over square root of pi.
-     */
-    template<class T = double>
-    DEVICE_QUALIFIER constexpr T sqrt_pi_i() {
-        return 0.56418958354775627928034964498;
-    }
-
-/** Pi to the power 1/3. */
-#define driwu2 1.25992104989487316476721060728
+/**
+ * @brief One over square root of pi.
+ */
+template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_pi_i() {
+  return 0.56418958354775627928034964498;
+}
 
 /// error code if no error occurred
 #define ES_OK 0
@@ -63,9 +58,8 @@ namespace Utils {
 */
 #define ES_DOUBLE_SPACE 27
 
-}
+} // namespace Utils
 
 /*@}*/
-
 
 #endif

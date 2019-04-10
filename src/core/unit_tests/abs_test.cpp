@@ -25,13 +25,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cmath>
 
 BOOST_AUTO_TEST_CASE(abs_test) {
-    using Utils::abs;
+  using Utils::abs;
 
-    static_assert(std::is_same<float, decltype(abs(1.f))>::value, "");
-    static_assert(std::is_same<double, decltype(abs(1.))>::value, "");
+  static_assert(std::is_same<float, decltype(abs(1.f))>::value, "");
+  static_assert(std::is_same<double, decltype(abs(1.))>::value, "");
 
-    BOOST_CHECK_EQUAL(std::abs(3.1415),  abs(3.1415));
-    BOOST_CHECK_EQUAL(std::abs(-3.1415),  abs(-3.1415));
-    BOOST_CHECK_EQUAL(std::abs(3.1415f),  abs(3.1415f));
-    BOOST_CHECK_EQUAL(std::abs(-3.1415f),  abs(-3.1415f));
+  BOOST_CHECK_EQUAL(std::abs(3.1415), abs(3.1415));
+  BOOST_CHECK_EQUAL(std::abs(-3.1415), abs(-3.1415));
+  BOOST_CHECK_EQUAL(std::abs(3.1415f), abs(3.1415f));
+  BOOST_CHECK_EQUAL(std::abs(-3.1415f), abs(-3.1415f));
 }
