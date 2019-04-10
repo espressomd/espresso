@@ -140,8 +140,8 @@ static const float c_sound_sq = 1.0f / 3.0f;
 /*-------------------------------------------------------*/
 
 static constexpr float sqrt12 = 3.4641016151377544f;
-static Utils::Counter<uint64_t> rng_counter_coupling_gpu;
-Utils::Counter<uint64_t> rng_counter_fluid_gpu;
+std::unique_ptr<Utils::Counter<uint64_t>> rng_counter_coupling_gpu;
+std::unique_ptr<Utils::Counter<uint64_t>> rng_counter_fluid_gpu;
 
 /** Transformation from 1d array-index to xyz
  *  @param[in]  index   Node index / thread index
@@ -2669,8 +2669,8 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
         calc_fluid_particle_ia<no_of_neighbours>, dim_grid_particles,
         threads_per_block_particles, *current_nodes, gpu_get_particle_pointer(),
         gpu_get_particle_force_pointer(), node_f, device_rho_v, couple_virtual,
-        rng_counter_coupling_gpu.value(), friction, lb_boundary_velocity);
-    rng_counter_coupling_gpu.increment();
+        rng_counter_coupling_gpu->value(), friction, lb_boundary_velocity);
+    rng_counter_coupling_gpu->increment();
   }
 }
 template void lb_calc_particle_lattice_ia_gpu<8>(bool couple_virtual,
@@ -2983,13 +2983,13 @@ void lb_integrate_GPU() {
   if (intflag) {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
                device_rho_v, node_f, lb_ek_parameters_gpu,
-               rng_counter_fluid_gpu.value());
+               rng_counter_fluid_gpu->value());
     current_nodes = &nodes_b;
     intflag = false;
   } else {
     KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
                device_rho_v, node_f, lb_ek_parameters_gpu,
-               rng_counter_fluid_gpu.value());
+               rng_counter_fluid_gpu->value());
     current_nodes = &nodes_a;
     intflag = true;
   }
@@ -3241,19 +3241,19 @@ void quadratic_velocity_interpolation(double const *positions,
 }
 
 void lb_coupling_set_rng_state_gpu(uint64_t counter) {
-  rng_counter_coupling_gpu = Utils::Counter<uint64_t>(counter);
+  rng_counter_coupling_gpu = std::make_unique<Utils::Counter<uint64_t>>(counter);
 }
 
 void lb_fluid_set_rng_state_gpu(uint64_t counter) {
-  rng_counter_fluid_gpu = Utils::Counter<uint64_t>(counter);
+  rng_counter_fluid_gpu = std::make_unique<Utils::Counter<uint64_t>>(counter);
 #ifdef ELECTROKINETICS
   ek_set_rng_state(counter);
 #endif // ELECTROKINETICS
 }
 
 uint64_t lb_coupling_get_rng_state_gpu() {
-  return rng_counter_coupling_gpu.value();
+  return rng_counter_coupling_gpu->value();
 }
-uint64_t lb_fluid_get_rng_state_gpu() { return rng_counter_fluid_gpu.value(); }
+uint64_t lb_fluid_get_rng_state_gpu() { return rng_counter_fluid_gpu->value(); }
 
 #endif /* LB_GPU */

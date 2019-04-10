@@ -267,7 +267,7 @@ void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
 /*@}*/
-extern Utils::Counter<uint64_t> rng_counter_fluid_gpu;
+extern std::unique_ptr<Utils::Counter<uint64_t>> rng_counter_fluid_gpu;
 #endif /* LB_GPU */
 
 #endif /* LB_GPU_H */

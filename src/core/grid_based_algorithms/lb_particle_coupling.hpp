@@ -1,6 +1,8 @@
 #ifndef LB_PARTICLE_COUPLING_HPP
 #define LB_PARTICLE_COUPLING_HPP
 
+#include <boost/serialization/unique_ptr.hpp>
+
 #include "utils/Counter.hpp"
 
 /** Calculate particle lattice interactions.
@@ -30,7 +32,7 @@ void lb_lbcoupling_activate();
 void lb_lbcoupling_deactivate();
 
 struct LB_Particle_Coupling {
-  Utils::Counter<uint64_t> rng_counter_coupling{};
+  std::unique_ptr<Utils::Counter<uint64_t>> rng_counter_coupling;
   /*
    * @brief Friction constant for the particle coupling.
    */

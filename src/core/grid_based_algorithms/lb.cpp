@@ -67,7 +67,7 @@ static void lb_check_halo_regions(const LB_Fluid &lbfluid);
 #endif // ADDITIONAL_CHECKS
 
 /** Counter for the RNG */
-Utils::Counter<uint64_t> rng_counter_fluid;
+std::unique_ptr<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 /** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
@@ -583,10 +583,10 @@ void lb_sanity_checks() {
   }
 }
 
-uint64_t lb_fluid_get_rng_state() { return rng_counter_fluid.value(); }
+uint64_t lb_fluid_get_rng_state() { return rng_counter_fluid->value(); }
 
 void mpi_set_lb_fluid_counter(uint64_t counter) {
-  rng_counter_fluid = Utils::Counter<uint64_t>(counter);
+  rng_counter_fluid = std::make_unique<Utils::Counter<uint64_t>>(counter);
 }
 
 REGISTER_CALLBACK(mpi_set_lb_fluid_counter)
@@ -930,7 +930,7 @@ inline void lb_collide_stream() {
 #endif
 
   const r123::Philox4x64::ctr_type c{
-      {rng_counter_fluid.value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
+      {rng_counter_fluid->value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {

@@ -11,15 +11,16 @@ private:
 
 private:
   friend class boost::serialization::access;
-
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     ar &m_val;
     ar &m_initial;
   }
+  // Needed for serialization.
+  Counter () noexcept { Counter(T(0)); }
 
 public:
-  explicit Counter(T initial_value = T(0)) noexcept
+  explicit Counter(T initial_value) noexcept
       : m_val(initial_value), m_initial(initial_value) {}
   Counter(T initial_value, T value) noexcept
       : m_val(value), m_initial(initial_value) {}

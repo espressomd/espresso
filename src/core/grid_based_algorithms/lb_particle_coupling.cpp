@@ -50,7 +50,7 @@ void lb_lbcoupling_set_gamma(double gamma) {
 double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
 
 uint64_t lb_coupling_get_rng_state_cpu() {
-  return lb_particle_coupling.rng_counter_coupling.value();
+  return lb_particle_coupling.rng_counter_coupling->value();
 }
 
 uint64_t lb_lbcoupling_get_rng_state() {
@@ -70,8 +70,7 @@ uint64_t lb_lbcoupling_get_rng_state() {
 void lb_lbcoupling_set_rng_state(uint64_t counter) {
   if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
-    lb_particle_coupling.rng_counter_coupling =
-        Utils::Counter<uint64_t>(counter);
+    lb_particle_coupling.rng_counter_coupling = std::make_unique<Utils::Counter<uint64_t>>(counter);
     mpi_bcast_lb_particle_coupling();
 #endif
   } else if (lattice_switch == ActiveLB::GPU) {
@@ -207,7 +206,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         using ctr_type = rng_type::ctr_type;
         using key_type = rng_type::key_type;
 
-        ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
+        ctr_type c{{lb_particle_coupling.rng_counter_coupling->value(),
                     static_cast<uint64_t>(RNGSalt::PARTICLES)}};
 
         /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
@@ -266,6 +265,6 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 }
 
 void lb_lbcoupling_propagate() {
-  lb_particle_coupling.rng_counter_coupling.increment();
+  lb_particle_coupling.rng_counter_coupling->increment();
 }
 #endif
