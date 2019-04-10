@@ -33,7 +33,6 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "ghosts.hpp"
@@ -67,6 +66,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
+
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
@@ -148,39 +150,11 @@ void integrator_npt_sanity_checks() {
     }
 
 #ifdef ELECTROSTATICS
-
-    switch (coulomb.method) {
-    case COULOMB_NONE:
-      break;
-    case COULOMB_DH:
-      break;
-    case COULOMB_RF:
-      break;
-#ifdef P3M
-    case COULOMB_P3M:
-      break;
-#endif /*P3M*/
-    default: {
-      runtimeErrorMsg()
-          << "npt only works with P3M, Debye-Huckel or reaction field";
-    }
-    }
+    Coulomb::integrate_sanity_check();
 #endif /*ELECTROSTATICS*/
 
 #ifdef DIPOLES
-
-    switch (coulomb.Dmethod) {
-    case DIPOLAR_NONE:
-      break;
-#ifdef DP3M
-    case DIPOLAR_P3M:
-      break;
-#endif /* DP3M */
-    default: {
-      runtimeErrorMsg()
-          << "NpT does not work with your dipolar method, please use P3M.";
-    }
-    }
+    Dipole::integrate_sanity_check();
 #endif /* ifdef DIPOLES */
   }
 }
@@ -894,7 +868,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 #endif
 
 #ifdef DIPOLES
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dprefactor > 0) {
+  if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
                          "use the the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;
