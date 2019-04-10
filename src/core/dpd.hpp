@@ -40,13 +40,17 @@
 #include <Random123/philox.h>
 
 /** philox functiontality: increment, get/set */
+extern std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
+bool dpd_is_seed_required();
 void dpd_rng_counter_increment();
+void dpd_set_rng_state(uint64_t counter);
+uint64_t dpd_get_rng_state();
 
 void dpd_heat_up();
 void dpd_cool_down();
 void dpd_switch_off();
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
-                   int wf, double tgamma, double tr_c, int twf, uint64_t seed);
+                   int wf, double tgamma, double tr_c, int twf);
 void dpd_init();
 void dpd_update_params(double pref2_scale);
 
@@ -55,21 +59,21 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                         double dist2);
 
 
-/** Return a random 3d vector with the philox thermostat.
+/** Return a random 4d vector with the philox thermostat.
     Random numbers depend on
     1. dpd_rng_counter (initialized by seed) which is increased on
    integration
     2. Salt (decorrelates different counter)
-    3. Particle IDS (decorrelates particles, gets rid of seed-per-node)
+    3. Two particle IDs (order-independent, decorrelates particles, gets rid of seed-per-node)
 */
-inline Vector4d v_noise(int pid1, int pid2, uint64_t counter_value) {
+inline Vector4d dpd_noise(int pid1, int pid2) {
 
   using rng_type = r123::Philox4x64;
   using ctr_type = rng_type::ctr_type;
   using key_type = rng_type::key_type;
 
   ctr_type c{
-      {counter_value, static_cast<uint64_t>(RNGSalt::SALT_DPD)}};
+      {dpd_rng_counter->value(), static_cast<uint64_t>(RNGSalt::SALT_DPD)}};
 
   uint64_t merged_ids;
   if (pid1 > pid2)  {

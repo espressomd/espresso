@@ -29,17 +29,35 @@
 #include "global.hpp"
 #include "integrate.hpp"
 #include "thermostat.hpp"
+//#include "random.hpp"
+
+std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
+
+void mpi_bcast_dpd_rng_counter_slave(const uint64_t counter) {
+  dpd_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+}
+
+REGISTER_CALLBACK(mpi_bcast_dpd_rng_counter_slave)
+
+void mpi_bcast_dpd_rng_counter(const uint64_t counter) {
+  mpi_call(mpi_bcast_dpd_rng_counter_slave, counter);
+}
 
 void dpd_rng_counter_increment() {
-  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
-    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
-      auto data = get_ia_param(type_a, type_b);
-      if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
-        data->dpd_rng_counter_value++;
-      }
-    }
-  }
+    dpd_rng_counter->increment();
 }
+
+bool dpd_is_seed_required() {
+  /* Seed is required if rng is not initialized */
+  return dpd_rng_counter == nullptr;
+}
+
+void dpd_set_rng_state(const uint64_t counter) {
+  mpi_bcast_dpd_rng_counter(counter);
+  dpd_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+}
+
+uint64_t dpd_get_rng_state() { return dpd_rng_counter->value(); }
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
@@ -52,7 +70,7 @@ void dpd_cool_down() {
 }
 
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
-                   int wf, double tgamma, double tr_c, int twf, uint64_t seed) {
+                   int wf, double tgamma, double tr_c, int twf) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
   data->dpd_gamma = gamma;
@@ -75,11 +93,7 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
     data->dpd_pref1 = 0.0;
     data->dpd_pref3 = 0.0;
   }
-
-  // Initialize the RNG
-  data->dpd_rng_counter_initial = seed;
-  data->dpd_rng_counter_value = seed;
-
+  
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
@@ -139,7 +153,9 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   Vector3d f{};
   auto const dist_inv = 1.0 / dist;
 
-  Vector4d noise4 = v_noise(p1->p.identity, p2->p.identity, ia_params->dpd_rng_counter_value);
+  Vector4d noise4 = dpd_noise(p1->p.identity, p2->p.identity);
+  //Vector4d noise4 = Vector4d{d_random() - 0.5,d_random() - 0.5,d_random() - 0.5,d_random() - 0.5};
+  //printf("%f %f %f %f \n", noise4[0],noise4[1],noise4[2],noise4[3]);
 
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_pref1 > 0.0)) {
     auto const omega =

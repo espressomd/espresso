@@ -881,8 +881,7 @@ IF DPD:
                 "r_cut": ia_params.dpd_r_cut,
                 "trans_weight_function": ia_params.dpd_twf,
                 "trans_gamma": ia_params.dpd_tgamma,
-                "trans_r_cut": ia_params.dpd_tr_cut,
-                "seed": ia_params.dpd_rng_counter_initial,
+                "trans_r_cut": ia_params.dpd_tr_cut
             }
 
         def is_active(self):
@@ -920,8 +919,7 @@ IF DPD:
                               self._params["weight_function"],
                               self._params["trans_gamma"],
                               self._params["trans_r_cut"],
-                              self._params["trans_weight_function"],
-                              self._params["seed"]):
+                              self._params["trans_weight_function"]):
                 raise Exception("Could not set DPD parameters")
 
         def default_params(self):
@@ -931,8 +929,7 @@ IF DPD:
                 "r_cut": -1.0,
                 "trans_weight_function": 0,
                 "trans_gamma": 0.0,
-                "trans_r_cut": -1.0,
-                "seed": -1.0}
+                "trans_r_cut": -1.0}
 
         def type_name(self):
             return "DPD"
@@ -941,7 +938,7 @@ IF DPD:
             return self.default_params().keys()
 
         def required_keys(self):
-            return ["seed"]
+            return []
 
 # Smooth-step
 

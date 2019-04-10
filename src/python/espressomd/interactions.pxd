@@ -145,8 +145,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double dpd_tr_cut
         double dpd_pref3
         double dpd_pref4
-        int dpd_rng_counter_initial
-        int dpd_rng_counter_value
 
         double HAT_Fmax
         double HAT_r
@@ -251,7 +249,7 @@ IF DPD:
     cdef extern from "dpd.hpp":
         int dpd_set_params(int part_type_a, int part_type_b,
                            double gamma, double r_c, int wf,
-                           double tgamma, double tr_c, int twf, stdint.uint64_t seed)
+                           double tgamma, double tr_c, int twf)
 
 IF HAT:
     cdef extern from "nonbonded_interactions/hat.hpp":
