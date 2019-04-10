@@ -83,6 +83,16 @@ maxset-python3:
     - docker
     - linux
 
+maxset-walberla:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
+  script:
+    - export myconfig=maxset-walberla with_walberla=true with_coverage=true python_version=3
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
 no_rotation-python3:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
