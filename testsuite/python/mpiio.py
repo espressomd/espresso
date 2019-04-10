@@ -38,13 +38,15 @@ npart = 1023
 nbonds = 100
 
 filename = "testdata.mpiio"
-filenames = [filename + "." + ext for ext in ["head", "pref", "id", "type", "pos", "vel", "boff", "bond"]]
+exts = ["head", "pref", "id", "type", "pos", "vel", "boff", "bond"]
+filenames = [filename + "." + ext for ext in exts]
 
 
 def clean_files():
     for f in filenames:
         if os.path.isfile(f):
             os.remove(f)
+
 
 def randint_different_from(a, b, n):
     """Returns a random integer in [a, b) that is not n."""
@@ -74,10 +76,13 @@ def random_particles():
         parts.append(p)
     return parts
 
+
 class MPIIOTest(ut.TestCase):
     """
     Test class for the MPI-IO core functionality.
-    Generates random particles, dumps them, reads them in, again and then checks the input against the initially created random particles.
+    Generates random particles, dumps them, reads them in,
+    again and then checks the input against the initially created random
+    particles.
     """
     s = espressomd.system.System(box_l=[1, 1, 1])
     # Just a bunch of random interaction such that add_bond does not throw
@@ -91,9 +96,10 @@ class MPIIOTest(ut.TestCase):
             self.s.part.add(id=p.id, type=p.type, pos=p.pos, v=p.v)
             for b in p.bonds:
                 self.s.part[p.id].add_bond(b)
-    
+
     def assertAllEqual(self, v, w):
-        """AssertEqual for arrays and more. Checks assertEqual() for all corresponding elements."""
+        """AssertEqual for arrays and more. Checks assertEqual() for all
+        corresponding elements."""
         if isinstance(v, numpy.ndarray) and isinstance(w, numpy.ndarray):
             self.assertTupleEqual(v.shape, w.shape)
         else:
@@ -101,9 +107,10 @@ class MPIIOTest(ut.TestCase):
 
         for a, b in zip(v, w):
             self.assertEqual(a, b)
-    
+
     def check_sample_system(self):
-        """Checks the particles in the ESPResSo system "self.s" against the true values in "self.test_particles"."""
+        """Checks the particles in the ESPResSo system "self.s" against the
+        true values in "self.test_particles"."""
         for p, q in zip(self.s.part, self.test_particles):
             self.assertEqual(p.id, q.id)
             self.assertEqual(p.type, q.type)
@@ -118,12 +125,14 @@ class MPIIOTest(ut.TestCase):
                 self.assertAllEqual(bp[1:], bq[1:])
 
     def test_mpiio(self):
-        clean_files() # Prior call might not have completed sucecssfully
+        clean_files()  # Prior call might not have completed sucecssfully
         self.setup_sample_system()
-        espressomd.io.mpiio.mpiio.write(filename, types=True, positions=True, velocities=True, bonds=True)
+        espressomd.io.mpiio.mpiio.write(
+            filename, types=True, positions=True, velocities=True, bonds=True)
 
-        self.s.part.clear() # Clear to be on the safe side
-        espressomd.io.mpiio.mpiio.read(filename, types=True, positions=True, velocities=True, bonds=True)
+        self.s.part.clear()  # Clear to be on the safe side
+        espressomd.io.mpiio.mpiio.read(
+            filename, types=True, positions=True, velocities=True, bonds=True)
 
         self.check_sample_system()
         clean_files()
