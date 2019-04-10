@@ -606,11 +606,11 @@ int mdlc_tune(double error) {
 
   flag = 0;
   for (kc = 1; kc < limitkc; kc++) {
-    gc = kc * 2.0 * PI / lx;
+    gc = kc * 2.0 * Utils::pi() / lx;
     fa0 = sqrt(9.0 * exp(+2. * gc * h) * g1_DLC_dip(gc, lz - h) +
                22.0 * g1_DLC_dip(gc, lz) +
                9.0 * exp(-2.0 * gc * h) * g1_DLC_dip(gc, lz + h));
-    fa1 = 0.5 * sqrt(PI / (2.0 * a)) * fa0;
+    fa1 = 0.5 * sqrt(Utils::pi() / (2.0 * a)) * fa0;
     fa2 = g2_DLC_dip(gc, lz);
     de = n * (mu_max * mu_max) / (4.0 * (exp(gc * lz) - 1.0)) * (fa1 + fa2);
     if (de < error) {

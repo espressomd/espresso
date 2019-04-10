@@ -47,7 +47,7 @@ using Utils::sqr;
 
 template <int cao>
 __device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i) {
-  const double c = sqr(cos(PI * mesh_i * n));
+  const double c = sqr(cos(Utils::pi() * mesh_i * n));
 
   switch (cao) {
   case 1:
@@ -97,7 +97,7 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
     const double cs = p3m_analytic_cotangent_sum<cao>(nz, meshi.z) *
                       p3m_analytic_cotangent_sum<cao>(nx, meshi.x) *
                       p3m_analytic_cotangent_sum<cao>(ny, meshi.y);
-    const double ex = exp(-(PI * alpha_L_i) * (PI * alpha_L_i) * n2);
+    const double ex = exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
     const double ex2 = sqr(ex);
     const double U2 =
         int_pow<2 * cao>(Utils::sinc(meshi.x * nx) * Utils::sinc(meshi.y * ny) *
@@ -143,7 +143,7 @@ __global__ void p3m_k_space_error_gpu_kernel_ad(const int3 mesh,
 
           n2 = sqr(nmx) + sqr(nmy) + sqr(nmz);
 
-          ex = exp(-(PI * alpha_L_i) * (PI * alpha_L_i) * n2);
+          ex = exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
 
           ex2 = sqr(ex);
 
@@ -202,7 +202,7 @@ __global__ void p3m_k_space_error_gpu_kernel_ik_i(const int3 mesh,
 
           n2 = sqr(nmx) + sqr(nmy) + sqr(nmz);
 
-          ex = exp(-(PI * alpha_L_i) * (PI * alpha_L_i) * n2);
+          ex = exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
 
           ex2 = sqr(ex);
 
@@ -265,7 +265,7 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(const int3 mesh,
 
           n2 = sqr(nmx) + sqr(nmy) + sqr(nmz);
 
-          ex = exp(-(PI * alpha_L_i) * (PI * alpha_L_i) * n2);
+          ex = exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
 
           ex2 = sqr(ex);
 

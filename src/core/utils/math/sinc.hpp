@@ -25,8 +25,7 @@
 
 #include "utils/constants.hpp"
 #include "utils/device_qualifier.hpp"
-
-#include <boost/math/constants/constants.hpp>
+#include "utils/math/abs.hpp"
 
 #include <cmath>
 
@@ -47,9 +46,9 @@ namespace Utils {
 template <typename T> DEVICE_QUALIFIER T sinc(T d) {
   const constexpr T epsi = 0.1;
 
-  const auto PId = PI * d;
+  const auto PId = pi<T>() * d;
 
-  if (abs(d) > epsi)
+  if (::Utils::abs(d) > epsi)
     return sin(PId) / PId;
 
   /** Coefficients of the Taylor expansion of sinc */

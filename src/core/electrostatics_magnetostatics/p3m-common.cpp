@@ -126,7 +126,7 @@ void p3m_add_block(double const *in, double *out, int const start[3],
 
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
   double c, res = 0.0;
-  c = Utils::sqr(cos(PI * mesh_i * (double)n));
+  c = Utils::sqr(cos(Utils::pi() * mesh_i * (double)n));
 
   switch (cao) {
   case 1: {

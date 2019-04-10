@@ -257,11 +257,11 @@ private:
       phi_bin_size = get_bin_sizes()[1];
       z_bin_size = get_bin_sizes()[2];
       bin_volume =
-          PI *
+          Utils::pi() *
           ((min_r + (r_bin + 1) * r_bin_size) *
                (min_r + (r_bin + 1) * r_bin_size) -
            (min_r + r_bin * r_bin_size) * (min_r + r_bin * r_bin_size)) *
-          z_bin_size * phi_bin_size / (2 * PI);
+          z_bin_size * phi_bin_size / (2 * Utils::pi());
       for (size_t dim = 0; dim < m_n_dims_data; ++dim) {
         m_hist[ind + dim] /= bin_volume;
       }

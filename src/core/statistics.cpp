@@ -333,7 +333,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
     r_in = i * bin_width + r_min;
     r_out = r_in + bin_width;
     bin_volume =
-        (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
+        (4.0 / 3.0) * Utils::pi() * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
     rdf[i] *= volume / (bin_volume * cnt);
   }
 }
@@ -413,7 +413,7 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
       r_in = i * bin_width + r_min;
       r_out = r_in + bin_width;
       bin_volume =
-          (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
+          (4.0 / 3.0) * Utils::pi() * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
       rdf[i] += rdf_tmp[i] * volume / (bin_volume * cnt);
     }
 
@@ -433,7 +433,7 @@ void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
   ff[2 * order2] = 0;
-  twoPI_L = 2 * PI / box_l[0];
+  twoPI_L = 2 * Utils::pi() / box_l[0];
 
   if ((n_types < 0) || (n_types > max_seen_particle_type)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
@@ -492,7 +492,7 @@ std::vector<std::vector<double>> modify_stucturefactor(int order,
     }
   }
 
-  double qfak = 2.0 * PI / box_l[0];
+  double qfak = 2.0 * Utils::pi() / box_l[0];
   std::vector<double> intern;
   intern.assign(2, 0.0);
   std::vector<std::vector<double>> structure_factor;
