@@ -37,8 +37,14 @@ namespace Utils {
         return 3.14159265358979323846264338328;
     }
 
-/** One over square root of Pi. */
-#define wupii 0.56418958354775627928034964498
+    /**
+     * @brief One over square root of pi.
+     */
+    template<class T = double>
+    DEVICE_QUALIFIER constexpr T sqrt_pi_i() {
+        return 0.56418958354775627928034964498;
+    }
+
 /** Pi to the power 1/3. */
 #define driwu2 1.25992104989487316476721060728
 

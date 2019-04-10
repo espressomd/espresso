@@ -844,7 +844,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
     if (this_node == 0) {
       /* self energy correction */
       k_space_energy -=
-          coulomb.prefactor * (p3m.sum_q2 * p3m.params.alpha * wupii);
+          coulomb.prefactor * (p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i());
       /* net charge correction */
       k_space_energy -=
           coulomb.prefactor * p3m.square_sum_q * Utils::pi() /

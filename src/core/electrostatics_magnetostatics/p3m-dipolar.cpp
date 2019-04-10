@@ -988,7 +988,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         k_space_energy_dip -=
             coulomb.Dprefactor *
             (dp3m.sum_mu2 * 2 * pow(dp3m.params.alpha_L * box_l_i[0], 3) *
-             wupii / 3.0);
+             Utils::sqrt_pi_i() / 3.0);
 
         double volume = box_l[0] * box_l[1] * box_l[2];
         k_space_energy_dip += coulomb.Dprefactor * dp3m.energy_correction /
@@ -2599,7 +2599,7 @@ void dp3m_compute_constants_energy_dipolar() {
   P3M_TRACE(
       fprintf(stderr, "%d: Average Dipolar Energy = %lf.\n", this_node, Ukp3m));
 
-  Eself = -(2 * pow(dp3m.params.alpha_L, 3) * wupii / 3.0);
+  Eself = -(2 * pow(dp3m.params.alpha_L, 3) * Utils::sqrt_pi_i() / 3.0);
 
   dp3m.energy_correction = -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * Utils::pi() / 3.);
 }
