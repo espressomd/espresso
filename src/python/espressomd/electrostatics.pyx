@@ -130,6 +130,72 @@ IF ELECTROSTATICS:
                     "r_cut": -1,
                     "check_neutrality": True}
 
+    cdef class ReactionField(ElectrostaticInteraction):
+            """
+            Solve electrostatics in the Reaction-Field framework
+
+            Parameters
+            ----------
+            prefactor : :obj:`float`
+                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+            kappa : :obj:`float`
+                Inverse Debye screening length.
+            epsilon1 : :obj:`float`
+                interior dielectric constant
+            epsilon2 : :obj:`float`
+                exterior dielectric constant
+            r_cut : :obj:`float`
+                Cut off radius for this interaction.
+
+            """
+
+            def validate_params(self):
+                if (self._params["prefactor"] <= 0):
+                    raise ValueError(
+                        "prefactor should be a positive float")
+                if (self._params["kappa"] < 0):
+                    raise ValueError("kappa should be a non-negative double")
+                if (self._params["epsilon1"] < 0):
+                                    raise ValueError(
+                                        "epsilon1 should be a non-negative double")
+                if (self._params["epsilon2"] < 0):
+                                    raise ValueError(
+                                        "epsilon2 should be a non-negative double")
+                if (self._params["r_cut"] < 0):
+                    raise ValueError("r_cut should be a non-negative double")
+
+            def valid_keys(self):
+                return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut", "check_neutrality"
+
+            def required_keys(self):
+                return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"
+
+            def _set_params_in_es_core(self):
+                set_prefactor(self._params["prefactor"])
+                rf_set_params(
+                    self._params["kappa"],
+                    self._params["epsilon1"],
+                    self._params["epsilon2"],
+                    self._params["r_cut"])
+
+            def _get_params_from_es_core(self):
+                params = {}
+                params.update(rf_params)
+                return params
+
+            def _activate_method(self):
+                check_neutrality(self._params)
+                coulomb.method = COULOMB_RF
+                self._set_params_in_es_core()
+
+            def default_params(self):
+                return {"prefactor": -1,
+                        "kappa": -1,
+                        "epsilon1": -1,
+                        "epsilon2": -1,
+                        "r_cut": -1,
+                        "check_neutrality": True}
+
 
 IF P3M == 1:
     cdef class P3M(ElectrostaticInteraction):

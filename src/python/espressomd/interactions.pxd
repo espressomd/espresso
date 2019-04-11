@@ -459,6 +459,12 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double kappaV
         double volRef
 
+#* Parameters for Quartic   */
+    cdef struct Quartic_bond_parameters:
+        double k0, k1
+        double r
+        double r_cut
+
 #* Union in which to store the parameters of an individual bonded interaction */
     cdef union Bond_parameters:
         Fene_bond_parameters fene
@@ -481,6 +487,7 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         IBM_Triel_Parameters ibm_triel
         IBM_Tribend_Parameters ibm_tribend
         IBM_VolCons_Parameters ibmVolConsParameters
+        Quartic_bond_parameters quartic
 
     cdef struct Bonded_ia_parameters:
         int type
@@ -520,6 +527,8 @@ cdef extern from "bonded_interactions/thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
 cdef extern from "bonded_interactions/bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
+cdef extern from "bonded_interactions/quartic.hpp":
+    int quartic_set_params(int bond_type, double k0, double k1, double r, double r_cut)
 
 cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
     cppclass ImmersedBoundaries:
@@ -576,3 +585,4 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_UMBRELLA,
         BONDED_IA_THERMALIZED_DIST
+        BONDED_IA_QUARTIC

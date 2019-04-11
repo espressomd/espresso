@@ -92,6 +92,26 @@ class InteractionsBondedTest(ut.TestCase):
             lambda r: tests_common.coulomb_force(r, coulomb_k, q1, q2),
             lambda r: tests_common.coulomb_potential(r, coulomb_k, q1, q2),
             0.01, self.system.box_l[0] / 3)
+    
+    def test_quartic(self):
+        """Tests the Quartic bonded interaction by comparing the potential and force against the analytic values"""
+        
+        quartic_k0 = 2.
+        quartic_k1 = 5.
+        quartic_r = 0.5
+        quartic_r_cut = self.system.box_l[0] / 3.
+        
+        quartic = espressomd.interactions.QuarticBond(k0=quartic_k0,
+                                                      k1=quartic_k1,
+                                                      r=quartic_r,
+                                                      r_cut=quartic_r_cut)
+
+        self.run_test(quartic,
+                      lambda r: tests_common.quartic_force(
+                      k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
+                      lambda r: tests_common.quartic_potential(
+                      k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
+                      0.01, quartic_r_cut, True)
 
     def run_test(
         self,
