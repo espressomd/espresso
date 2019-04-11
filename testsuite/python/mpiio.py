@@ -41,6 +41,7 @@ filename = "testdata.mpiio"
 exts = ["head", "pref", "id", "type", "pos", "vel", "boff", "bond"]
 filenames = [filename + "." + ext for ext in exts]
 
+
 def clean_files():
     for f in filenames:
         if os.path.isfile(f):
