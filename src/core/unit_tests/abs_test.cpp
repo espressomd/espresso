@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
+Copyright (C) 2019 The ESPResSo project
 
 This file is part of ESPResSo.
 
@@ -16,14 +16,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef UTILS_MATH_SQR_HPP
-#define UTILS_MATH_SQR_HPP
+#define BOOST_TEST_MODULE abs test
+#define BOOST_TEST_DYN_LINK
+#include <boost/test/unit_test.hpp>
 
-#include "utils/device_qualifier.hpp"
+#include <utils/math/abs.hpp>
 
-namespace Utils {
-/** Calculates the SQuaRe of x */
-template <typename T> DEVICE_QUALIFIER constexpr T sqr(T x) { return x * x; }
-} // namespace Utils
+#include <cmath>
 
-#endif
+BOOST_AUTO_TEST_CASE(abs_test) {
+  using Utils::abs;
+
+  static_assert(std::is_same<float, decltype(abs(1.f))>::value, "");
+  static_assert(std::is_same<double, decltype(abs(1.))>::value, "");
+
+  BOOST_CHECK_EQUAL(std::abs(3.1415), abs(3.1415));
+  BOOST_CHECK_EQUAL(std::abs(-3.1415), abs(-3.1415));
+  BOOST_CHECK_EQUAL(std::abs(3.1415f), abs(3.1415f));
+  BOOST_CHECK_EQUAL(std::abs(-3.1415f), abs(-3.1415f));
+}
