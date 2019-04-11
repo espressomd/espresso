@@ -69,9 +69,7 @@
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
-#endif
-#ifdef P3M
-#include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
+#include "bonded_interactions/bonded_coulomb_sr.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
 #include "immersed_boundary/ibm_tribend.hpp"
@@ -386,11 +384,9 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
   case BONDED_IA_BONDED_COULOMB:
     bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
     break;
-#endif
-#ifdef P3M
-  case BONDED_IA_BONDED_COULOMB_P3M_SR:
+  case BONDED_IA_BONDED_COULOMB_SR:
     bond_broken =
-        calc_bonded_coulomb_p3m_sr_pair_force(p1, p2, iaparams, dx, force);
+        calc_bonded_coulomb_sr_pair_force(p1, p2, iaparams, dx, force);
     break;
 #endif
 #ifdef LENNARD_JONES
