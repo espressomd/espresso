@@ -20,7 +20,7 @@ import importlib_wrapper
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/05-raspberry_electrophoresis/05-raspberry_electrophoresis.py",
-    num_iterations=10, num_steps_per_iteration=10)
+    gpu=True, num_iterations=10, num_steps_per_iteration=10)
 
 
 @skipIfMissingFeatures

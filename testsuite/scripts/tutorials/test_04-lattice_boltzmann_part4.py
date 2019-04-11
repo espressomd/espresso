@@ -29,7 +29,7 @@ def substitutions(code):
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part4.py",
-    substitutions=substitutions)
+    gpu=True, substitutions=substitutions)
 
 
 @skipIfMissingFeatures

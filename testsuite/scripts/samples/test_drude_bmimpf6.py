@@ -19,7 +19,8 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
-if "gpu" in "@TEST_LABELS@".split(";"):
+gpu = "gpu" in "@TEST_LABELS@".split(";")
+if gpu:
     kwargs = {"n_int_steps": 50, "script_suffix": "gpu", "n_ionpairs": 100,
               "cmd_arguments": ["--path", "./bmimpf6_bulk/gpu/", "--gpu"]}
 else:
@@ -27,8 +28,8 @@ else:
               "cmd_arguments": ["--path", "./bmimpf6_bulk/cpu/"]}
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/drude_bmimpf6.py", n_max_steps=1000, n_timing_steps=10,
-    n_int_cycles=5, **kwargs)
+    "@SAMPLES_DIR@/drude_bmimpf6.py", gpu=gpu, n_max_steps=1000,
+    n_timing_steps=10, n_int_cycles=5, **kwargs)
 
 
 @skipIfMissingFeatures

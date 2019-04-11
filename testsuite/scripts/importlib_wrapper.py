@@ -32,6 +32,7 @@ def _id(x):
 
 
 def configure_and_import(filepath,
+                         gpu=False,
                          substitutions=lambda x: x,
                          cmd_arguments=None,
                          script_suffix=None,
@@ -51,6 +52,8 @@ def configure_and_import(filepath,
 
     :param filepath: python script to import
     :type  filepath: str
+    :param gpu: whether GPU is necessary or not
+    :type  gpu: bool
     :param substitutions: custom text replacement operation (useful to edit out
        calls to the OpenGL or Mayavi visualizers' :meth:`run` method)
     :type  substitutions: function
@@ -73,6 +76,10 @@ def configure_and_import(filepath,
     :param \*\*parameters: global variables to replace
     :type  \*\*parameters: int, float, bool
     """
+    if gpu and not espressomd.gpu_available():
+        skipIfMissingGPU = unittest.skip("gpu not available, skipping test!")
+        module = MagicMock()
+        return module, skipIfMissingGPU
     filepath = os.path.abspath(filepath)
     # load original script
     # read in binary mode, then decode as UTF-8 to avoid this python3.5 error:

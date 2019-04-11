@@ -20,7 +20,8 @@ import importlib_wrapper
 import os
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/06-active_matter/SOLUTIONS/rectification_geometry.py")
+    "@TUTORIALS_DIR@/06-active_matter/SOLUTIONS/rectification_geometry.py",
+    gpu=True)
 
 
 @skipIfMissingFeatures

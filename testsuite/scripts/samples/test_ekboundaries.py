@@ -20,7 +20,7 @@ import importlib_wrapper
 import os
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/ekboundaries.py", n_int_cycles=50)
+    "@SAMPLES_DIR@/ekboundaries.py", gpu=True, n_int_cycles=50)
 
 
 @skipIfMissingFeatures

@@ -21,8 +21,8 @@ import numpy as np
 
 implementation = "gpu" if "gpu" in "@TEST_LABELS@".split(";") else "cpu"
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/lbf.py", cmd_arguments=["--" + implementation],
-    script_suffix=implementation)
+    "@SAMPLES_DIR@/lbf.py", gpu=implementation == "gpu",
+    cmd_arguments=["--" + implementation], script_suffix=implementation)
 
 
 @skipIfMissingFeatures
