@@ -188,6 +188,18 @@ IF ELECTROSTATICS:
 
         int dh_set_params(double kappa, double r_cut)
 
+    cdef extern from "electrostatics_magnetostatics/reaction_field.hpp":
+            ctypedef struct Reaction_field_params:
+                double kappa
+                double epsilon1
+                double epsilon2
+                double r_cut
+
+            cdef extern Reaction_field_params rf_params
+
+            int rf_set_params(double kappa, double epsilon1, double epsilon2,
+                              double r_cut)
+
 IF ELECTROSTATICS:
     cdef extern from "electrostatics_magnetostatics/mmm1d.hpp":
         ctypedef struct MMM1D_struct:
