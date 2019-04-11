@@ -582,7 +582,10 @@ void lb_sanity_checks() {
   }
 }
 
-uint64_t lb_fluid_get_rng_state() { return rng_counter_fluid->value(); }
+uint64_t lb_fluid_get_rng_state() {
+  assert(rng_counter_fluid);
+  return rng_counter_fluid->value();
+}
 
 void mpi_set_lb_fluid_counter(uint64_t counter) {
   rng_counter_fluid = std::make_unique<Utils::Counter<uint64_t>>(counter);
