@@ -845,11 +845,11 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
                comm_cart);
     if (this_node == 0) {
       /* self energy correction */
-      k_space_energy -=
-          coulomb.prefactor * (p3m.sum_q2 * p3m.params.alpha * wupii);
+      k_space_energy -= coulomb.prefactor *
+                        (p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i());
       /* net charge correction */
       k_space_energy -=
-          coulomb.prefactor * p3m.square_sum_q * PI /
+          coulomb.prefactor * p3m.square_sum_q * Utils::pi() /
           (2.0 * box_l[0] * box_l[1] * box_l[2] * Utils::sqr(p3m.params.alpha));
     }
 
@@ -889,12 +889,12 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
         for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
           for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
             /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
-            p3m.rs_mesh[ind] = -2.0 * PI *
+            p3m.rs_mesh[ind] = -2.0 * Utils::pi() *
                                (p3m.ks_mesh[ind + 1] *
                                 d_operator[j[d] + p3m.fft.plan[3].start[d]]) /
                                box_l[d_rs];
             ind++;
-            p3m.rs_mesh[ind] = 2.0 * PI * p3m.ks_mesh[ind - 1] *
+            p3m.rs_mesh[ind] = 2.0 * Utils::pi() * p3m.ks_mesh[ind - 1] *
                                d_operator[j[d] + p3m.fft.plan[3].start[d]] /
                                box_l[d_rs];
             ind++;
@@ -1141,7 +1141,7 @@ inline double perform_aliasing_sums_force(int const n[3], double numerator[3]) {
   for (i = 0; i < 3; i++)
     numerator[i] = 0.0;
 
-  f1 = Utils::sqr(PI / (p3m.params.alpha));
+  f1 = Utils::sqr(Utils::pi() / (p3m.params.alpha));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX] * mx;
@@ -1223,7 +1223,7 @@ template <int cao> void calc_influence_function_force() {
           } else
             fak3 = fak1 / (fak2 * Utils::sqr(denominator));
 
-          p3m.g_force[ind] = 2 * fak3 / (PI);
+          p3m.g_force[ind] = 2 * fak3 / (Utils::pi());
         }
       }
     }
@@ -1267,7 +1267,7 @@ template <int cao> inline double perform_aliasing_sums_energy(int const n[3]) {
   double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
   double limit = 30;
 
-  f1 = Utils::sqr(PI / (p3m.params.alpha));
+  f1 = Utils::sqr(Utils::pi() / (p3m.params.alpha));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX] * mx;
@@ -1330,7 +1330,8 @@ template <int cao> void calc_influence_function_energy() {
         }
 
         else
-          p3m.g_energy[ind] = perform_aliasing_sums_energy<cao>(n) / PI;
+          p3m.g_energy[ind] =
+              perform_aliasing_sums_energy<cao>(n) / Utils::pi();
       }
     }
   }
@@ -2072,7 +2073,7 @@ void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
 
   double ex, ex2, nm2, U2, factor1;
 
-  factor1 = Utils::sqr(PI * alpha_L_i);
+  factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
 
   *alias1 = *alias2 = 0.0;
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
@@ -2399,12 +2400,12 @@ void p3m_calc_kspace_stress(double *stress) {
     for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
       for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
         for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
-          kx = 2.0 * PI * p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
-               box_l[RX];
-          ky = 2.0 * PI * p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
-               box_l[RY];
-          kz = 2.0 * PI * p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
-               box_l[RZ];
+          kx = 2.0 * Utils::pi() *
+               p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] / box_l[RX];
+          ky = 2.0 * Utils::pi() *
+               p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] / box_l[RY];
+          kz = 2.0 * Utils::pi() *
+               p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] / box_l[RZ];
           sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
           if (sqk == 0) {
             node_k_space_energy = 0.0;

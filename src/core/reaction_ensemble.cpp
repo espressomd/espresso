@@ -635,7 +635,7 @@ std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
     double random_radius =
         cyl_radius *
         std::sqrt(m_uniform_real_distribution(m_generator)); // for uniform disk point picking in cylinder
-    double phi = 2.0 * PI * m_uniform_real_distribution(m_generator);
+    double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
     out_pos[0] = random_radius * cos(phi);
     out_pos[1] = random_radius * sin(phi);
     while (std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) <=
@@ -673,7 +673,7 @@ std::vector<double> ReactionAlgorithm::
                   // within Metropolis hasting algorithm, proposal density is
                   // p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small radii
                   // are proposed more often
-  double phi = 2.0 * PI * m_uniform_real_distribution(m_generator);
+  double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
   std::vector<double> out_pos(3);
   out_pos[0] = random_radius * cos(phi);
   out_pos[1] = random_radius * sin(phi);
