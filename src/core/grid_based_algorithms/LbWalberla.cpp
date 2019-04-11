@@ -46,9 +46,31 @@ using namespace walberla;
 void walberla_mpi_init() {
 int argc = 0;
   char **argv = NULL;
-  static mpi::Environment m_env = mpi::Environment(argc, argv,false,false);
+  static mpi::Environment m_env = mpi::Environment(argc, argv);
+}
+namespace {
+std::unique_ptr<LbWalberla> lb_walberla_instance=nullptr;
 }
 
+const LbWalberla* lb_walberla() {
+  if (!lb_walberla_instance){
+    throw std::runtime_error(
+      "Attempted access to uninitialized LbWalberla instance." 
+    );
+  }
+  return lb_walberla_instance.get();
+}
+
+void init_lb_walberla(double viscosity, double agrid,
+                       const Vector3d &box_dimensions,
+                       const Vector3i &node_grid, double skin) {
+  lb_walberla_instance=std::make_unique<LbWalberla>(
+      LbWalberla{viscosity, agrid, box_dimensions, node_grid, skin});
+}
+
+void destruct_lb_walberla() {
+  lb_walberla_instance.reset(nullptr);
+}
 
 inline Vector3d to_vector3d(const Vector3<real_t> v) {
   return Vector3d{v[0], v[1], v[2]};
@@ -171,35 +193,36 @@ bool LbWalberla::set_node_velocity_at_boundary(const Vector3i node,
   // Return if we don't have the cell.
   if (!bc) return false;
 
-  UBB_t::Velocity velocity(v[0], v[1], v[2]);
+  const UBB_t::Velocity velocity(real_c(v[0]), real_c(v[1]), real_c(v[2]));
 
   Boundary_handling_t *boundary_handling =
       (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
   walberla::boundary::BoundaryUID uid =
       boundary_handling->getBoundaryUID(UBB_flag);
-  boundary_handling->getBoundaryCondition<UBB_t>(uid).registerCell(
-      boundary_handling->getNearBoundaryFlag(), (*bc).cell[0], (*bc).cell[1],
-      (*bc).cell[2], velocity);
+  boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1], bc->cell[2],velocity);
   return true;
 }
 
 
 
 boost::optional<Vector3d> LbWalberla::get_node_velocity_at_boundary(const Vector3i& node) const {
+  boost::optional<Vector3d> res;
   auto bc = get_block_and_cell(node);
   // return if we don't have the cell
-  if (!bc) return {boost::none};
+  if (!bc) return res;
   const Boundary_handling_t *boundary_handling =
       (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
   walberla::boundary::BoundaryUID uid =
       boundary_handling->getBoundaryUID(UBB_flag);
   
   if (!boundary_handling->isBoundary((*bc).cell))
-    return {boost::none};
+    return res;
 
-  return to_vector3d(
+  Vector3d v=to_vector3d(
       boundary_handling->getBoundaryCondition<UBB_t>(uid).getValue(
           (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]));
+   res={v};
+   return res;
 }
 
 bool LbWalberla::remove_node_from_boundary(const Vector3i &node) {
@@ -259,7 +282,7 @@ boost::optional<Vector3d> LbWalberla::get_node_velocity(const Vector3i node) con
   //     auto const& pdf_field = block->getData<Pdf_field_t>(m_pdf_field_id);
   auto const &vel_adaptor =
       (*bc).block->getData<VelocityAdaptor>(m_velocity_adaptor_id);
-  return to_vector3d(vel_adaptor->get((*bc).cell));
+  return {to_vector3d(vel_adaptor->get((*bc).cell))};
 }
 
 boost::optional<Vector3d> LbWalberla::get_velocity_at_pos(const Vector3d &pos) const {
@@ -270,7 +293,7 @@ boost::optional<Vector3d> LbWalberla::get_velocity_at_pos(const Vector3d &pos) c
       m_velocity_interpolator_id);
   Vector3<real_t> v;
   velocity_interpolator->get(to_vector3(pos), &v);
-  return to_vector3d(v);
+  return {to_vector3d(v)};
 }
 
 bool LbWalberla::set_node_velocity(const Vector3i& node, const Vector3d v) {
@@ -282,6 +305,7 @@ bool LbWalberla::set_node_velocity(const Vector3i& node, const Vector3d v) {
 
   pdf_field->setDensityAndVelocity((*bc).cell,
                                    Vector3<double>{v[0], v[1], v[2]}, density);
+return true;
 }
 
 void LbWalberla::set_viscosity(double viscosity) {
@@ -292,5 +316,17 @@ void LbWalberla::set_viscosity(double viscosity) {
 double LbWalberla::get_viscosity() {
   return m_lattice_model->collisionModel().viscosity();
 }
+bool LbWalberla::node_in_local_domain(const Vector3i&  node) const {
+  auto block = m_blocks->getBlock(Cell{uint_c(node[0]), uint_c(node[1]),uint_c(node[2])}, 0);
+  return (block != nullptr);
+}
+
+bool LbWalberla::pos_in_local_domain(const Vector3d& pos) const {
+  auto block = m_blocks->getBlock(real_c(pos[0]),real_c(pos[1]),real_c(pos[2]));
+  return (block != nullptr);
+}
+
+
+
 
 #endif 

@@ -34,13 +34,13 @@
 class SignalHandler {
   struct sigaction old_action;
 
+public:
   // Delete all copy and move constructors
   SignalHandler(SignalHandler &&) = delete;
   SignalHandler &operator=(SignalHandler &&) = delete;
   SignalHandler(SignalHandler const &) = delete;
   SignalHandler &operator=(SignalHandler const &) = delete;
 
-public:
   /** @brief Constructor
    *
    * @param[in] signal  Number of signal to replace

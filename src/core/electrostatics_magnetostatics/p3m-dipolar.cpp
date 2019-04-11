@@ -38,6 +38,7 @@
 
 #include "cells.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "domain_decomposition.hpp"
 #include "global.hpp"
 #include "grid.hpp"
@@ -129,7 +130,7 @@ static void dp3m_init_a_ai_cao_cut();
 /** Checks for correctness for magnetic dipoles in P3M of the cao_cut,
  *  necessary when the box length changes
  */
-static bool dp3m_sanity_checks_boxl(void);
+static bool dp3m_sanity_checks_boxl();
 
 /** Calculate properties of the local FFT mesh for the
  *   charge assignment process.
@@ -283,7 +284,7 @@ inside the loops
 
 */
 
-void dp3m_pre_init(void) {
+void dp3m_pre_init() {
   p3m_common_parameter_pre_init(&dp3m.params);
   dp3m.params.epsilon = P3M_EPSILON_MAGNETIC;
 
@@ -298,8 +299,8 @@ void dp3m_pre_init(void) {
   dp3m.sum_dip_part = 0;
   dp3m.sum_mu2 = 0.0;
 
-  for (int i = 0; i < 7; i++)
-    dp3m.int_caf[i] = nullptr;
+  for (auto &i : dp3m.int_caf)
+    i = nullptr;
   dp3m.pos_shift = 0.0;
   dp3m.meshift = nullptr;
 
@@ -345,7 +346,7 @@ void dp3m_init() {
   } else {
     P3M_TRACE(fprintf(stderr, "%d: dp3m_init:\n", this_node));
 
-    if (dp3m_sanity_checks())
+    if (dp3m_sanity_checks(node_grid))
       return;
 
     P3M_TRACE(fprintf(stderr, "%d: dp3m_init: starting\n", this_node));
@@ -401,9 +402,10 @@ void dp3m_init() {
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node,
                       (void *)dp3m.rs_mesh));
 
-    int ca_mesh_size = fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim,
-                                dp3m.local_mesh.margin, dp3m.params.mesh,
-                                dp3m.params.mesh_off, &dp3m.ks_pnum, dp3m.fft);
+    int ca_mesh_size =
+        fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
+                 dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
+                 dp3m.fft, node_grid);
     dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     for (n = 0; n < 3; n++)
@@ -431,8 +433,8 @@ void dp3m_init() {
 }
 
 void dp3m_free_dipoles() {
-  for (int i = 0; i < 3; i++)
-    free(dp3m.rs_mesh_dip[i]);
+  for (auto &i : dp3m.rs_mesh_dip)
+    free(i);
   free(dp3m.ca_frac);
   free(dp3m.ca_fmp);
   free(dp3m.send_grid);
@@ -642,14 +644,14 @@ void dp3m_interpolate_dipole_assignment_function() {
   }
 }
 
-void dp3m_dipole_assign(void) {
+void dp3m_dipole_assign() {
   /* magnetic particle counter, dipole fraction counter */
   int cp_cnt = 0;
 
   /* prepare local FFT mesh */
-  for (int i = 0; i < 3; i++)
+  for (auto &i : dp3m.rs_mesh_dip)
     for (int j = 0; j < dp3m.local_mesh.size; j++)
-      dp3m.rs_mesh_dip[i][j] = 0.0;
+      i[j] = 0.0;
 
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
@@ -1366,7 +1368,7 @@ void dp3m_realloc_ca_fields(int newsize) {
 
 /*****************************************************************************/
 
-void dp3m_calc_meshift(void) {
+void dp3m_calc_meshift() {
   int i;
   double dmesh;
   dmesh = (double)dp3m.params.mesh[0];
@@ -1809,7 +1811,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
                           int *_cao, double r_cut_iL_min, double r_cut_iL_max,
                           double *_r_cut_iL, double *_alpha_L,
                           double *_accuracy) {
-  double best_time = -1, tmp_time, tmp_r_cut_iL, tmp_alpha_L = 0.0,
+  double best_time = -1, tmp_r_cut_iL = -1., tmp_alpha_L = 0.0,
          tmp_accuracy = 0.0;
   /* in which direction improvement is possible. Initially, we don't know it
    * yet.
@@ -1824,6 +1826,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
   /* the initial step sets a timing mark. If there is no valid r_cut, we can
      only try
      to increase cao to increase the obtainable precision of the far formula. */
+  double tmp_time;
   do {
     tmp_time = dp3m_mc_time(log, mesh, cao, r_cut_iL_min, r_cut_iL_max,
                             &tmp_r_cut_iL, &tmp_alpha_L, &tmp_accuracy);
@@ -1986,7 +1989,8 @@ int dp3m_adaptive_tune(char **logger) {
   P3M_TRACE(fprintf(stderr, "%d: dp3m_adaptive_tune\n", this_node));
 
   /* preparation */
-  mpi_bcast_event(P3M_COUNT_DIPOLES);
+  mpi_call(dp3m_count_magnetic_particles);
+  dp3m_count_magnetic_particles();
 
   /* Print Status */
   sprintf(b,
@@ -2143,6 +2147,8 @@ void dp3m_count_magnetic_particles() {
   dp3m.sum_mu2 = tot_sums[0];
   dp3m.sum_dip_part = (int)(tot_sums[1] + 0.1);
 }
+
+REGISTER_CALLBACK(dp3m_count_magnetic_particles)
 
 /*****************************************************************************/
 
@@ -2421,7 +2427,7 @@ bool dp3m_sanity_checks_boxl() {
 
 /*****************************************************************************/
 
-bool dp3m_sanity_checks() {
+bool dp3m_sanity_checks(const Vector3i &grid) {
   bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
@@ -2461,7 +2467,7 @@ bool dp3m_sanity_checks() {
     runtimeErrorMsg() << "dipolar P3M_init: cao is not yet set";
     ret = true;
   }
-  if (node_grid[0] < node_grid[1] || node_grid[1] < node_grid[2]) {
+  if (grid[0] < grid[1] || grid[1] < grid[2]) {
     runtimeErrorMsg()
         << "dipolar P3M_init: node grid must be sorted, largest first";
     ret = true;

@@ -200,20 +200,21 @@ inline void clear_vec(double *pdc, int size) {
     pdc[i] = 0;
 }
 
-inline void copy_vec(double *pdc_d, double *pdc_s, int size) {
+inline void copy_vec(double *pdc_d, double const *pdc_s, int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s[i];
 }
 
-inline void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size) {
+inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
+                    int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
 
-inline void addscale_vec(double *pdc_d, double scale, double *pdc_s1,
-                         double *pdc_s2, int size) {
+inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
+                         double const *pdc_s2, int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
@@ -1168,20 +1169,18 @@ int ELC_tune(double error) {
 int ELC_sanity_checks() {
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
     runtimeErrorMsg() << "ELC requires periodicity 1 1 1";
-    return 1;
+    return ES_ERROR;
   }
   /* The product of the two dielectric contrasts should be < 1 for ELC to
-     work.
-     This is not the case for
-     two parallel boundaries, which can only be treated by the constant
-     potential code */
+     work. This is not the case for two parallel boundaries, which can only
+     be treated by the constant potential code */
   if (elc_params.dielectric_contrast_on &&
       (fabs(1.0 - elc_params.delta_mid_top * elc_params.delta_mid_bot) <
        ROUND_ERROR_PREC) &&
       !elc_params.const_pot) {
     runtimeErrorMsg() << "ELC with two parallel metallic boundaries requires "
                          "the const_pot option";
-    return 1;
+    return ES_ERROR;
   }
 
   // ELC with non-neutral systems and no fully metallic boundaries does not work
@@ -1189,10 +1188,10 @@ int ELC_sanity_checks() {
       p3m.square_sum_q > ROUND_ERROR_PREC) {
     runtimeErrorMsg() << "ELC does not work for non-neutral systems and "
                          "non-metallic dielectric contrast.";
-    return 1;
+    return ES_ERROR;
   }
 
-  return 0;
+  return ES_OK;
 }
 
 void ELC_init() {

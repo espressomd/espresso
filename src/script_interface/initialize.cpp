@@ -33,10 +33,8 @@
 #include "observables/initialize.hpp"
 
 #include "ComFixed.hpp"
-#include "LbWalberla.hpp"
 
 #include "ParallelScriptInterface.hpp"
-#include "VariantTester.hpp"
 
 #include "core/communication.hpp"
 #include "virtual_sites/initialize.hpp"
@@ -60,12 +58,7 @@ void initialize() {
   MPIIO::initialize();
   CollisionDetection::initialize();
 
-  ScriptInterface::register_new<Testing::VariantTester>(
-      "Testing::VariantTester");
   ScriptInterface::register_new<ComFixed>("ComFixed");
-#ifdef LB_WALBERLA  
-  ScriptInterface::register_new<LbWalberla>("LbWalberla");
-#endif
 }
 
 

@@ -26,16 +26,12 @@
 #include "utils/parallel/ParallelObject.hpp"
 
 namespace ScriptInterface {
-
-class ParallelScriptInterfaceSlaveBase {};
-
-class ParallelScriptInterfaceSlave : private ParallelScriptInterfaceSlaveBase {
+class ParallelScriptInterfaceSlave {
 public:
   enum class CallbackAction {
     NEW,
     CONSTRUCT,
     SET_PARAMETER,
-    SET_PARAMETERS,
     CALL_METHOD,
     DELETE
   };
@@ -53,15 +49,22 @@ private:
   /* If the variant encapsulates an object id we translate the
      master id to a local one */
   static void translate_id(Variant &v) {
-    if (is_objectid(v)) {
+    if (is_type<ObjectId>(v)) {
       v = get_translation_table().at(boost::get<ObjectId>(v));
+    }
+  }
+
+  static void translate_id(VariantMap &map) {
+    for (auto &e : map) {
+      translate_id(e.second);
     }
   }
 
   VariantMap bcast_variant_map() const;
 
 private:
-  void mpi_slave(int action, int);
+  Communication::CallbackHandle<CallbackAction> m_callback_id;
+  void mpi_slave(CallbackAction action);
 };
 } /* namespace ScriptInterface */
 

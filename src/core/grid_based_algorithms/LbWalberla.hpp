@@ -114,6 +114,9 @@ public:
     return m_agrid;
   }
 
+  bool node_in_local_domain(const Vector3i& node) const;
+  bool pos_in_local_domain(const Vector3d& pos) const;
+
 private:
   boost::optional<BlockAndCell> get_block_and_cell(const Vector3i& node) const;
   walberla::BlockDataID m_pdf_field_id;
@@ -163,7 +166,26 @@ private:
       const walberla::BlockDataID &flag_field_id);
 };
 
+/** @brief Initialize Walberla's MPI manager */
 void walberla_mpi_init();
+
+/** @brief Access the per-MPI-node LbWalberla isntance */
+const LbWalberla* lb_walberla();
+
+/** @brief Create the per-MPI-rank LbWalberal instance
+*
+*  @param viscosity Fluid viscosity
+*  @param agrid  Size of one lb cell
+*  @param box_dimensions Dimensions of the global simulation box
+*  @param node_grid  Dimensions of the MPI node grid 
+*  @param skin Distance beyond the node boundary a particle can reach 
+*/
+void init_lb_walberla(double viscosity, double agrid,
+                       const Vector3d &box_dimensions,
+                       const Vector3i &node_grid, double skin);
+
+/** @brief Destruct the per-MPI-rank LbWalberal instance */
+void destruct_lb_walberla(); 
 
 
 #endif // LB_WALBERLA

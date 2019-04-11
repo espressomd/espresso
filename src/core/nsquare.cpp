@@ -163,7 +163,7 @@ void nsq_balance_particles(int global_flag) {
     return;
 
   int pp = cells_get_n_particles();
-  int *ppnode = (int *)Utils::malloc(n_nodes * sizeof(int));
+  auto *ppnode = (int *)Utils::malloc(n_nodes * sizeof(int));
   /* minimal difference between node shares */
   int minshare = n_part / n_nodes;
   int maxshare = minshare + 1;

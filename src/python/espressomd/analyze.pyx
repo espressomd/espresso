@@ -32,7 +32,8 @@ from .interactions import *
 from espressomd.interactions cimport *
 import numpy as np
 cimport numpy as np
-from globals cimport n_configs, min_box_l
+from globals cimport n_configs
+
 from collections import OrderedDict
 from .system import System
 from espressomd.utils import is_valid_type
@@ -87,8 +88,8 @@ class Analysis(object):
 
         """
 
-        cdef int_list set1
-        cdef int_list set2
+        cdef List[int] set1
+        cdef List[int] set2
 
         if p1 == 'default' and p2 == 'default':
             pass
@@ -241,7 +242,7 @@ class Analysis(object):
         """
 
         cdef int planedims[3]
-        cdef int_list ids
+        cdef List[int] ids
         cdef double c_pos[3]
 
         check_type_or_throw_except(
@@ -268,7 +269,7 @@ class Analysis(object):
 
         ids = c_analyze.nbhood(c_analyze.partCfg(), c_pos, r_catch, planedims)
 
-        return create_nparray_from_int_list( & ids)
+        return create_nparray_from_int_list(ids)
 
     def cylindrical_average(self, center=None, axis=None,
                             length=None, radius=None,
@@ -997,19 +998,19 @@ class Analysis(object):
             raise ValueError("r_bins has to be greater than zero!")
 
         cdef double low
-        cdef double * distribution = < double * > malloc(sizeof(double) * r_bins)
+        cdef vector[double] distribution
+        distribution.resize(r_bins)
+
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
         c_analyze.calc_part_distribution(
             c_analyze.partCfg(
                 ), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
-                                         r_min, r_max, r_bins, log_flag, & low, distribution)
+                                         r_min, r_max, r_bins, log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(
-            distribution, r_bins)
-
-        free(distribution)
+            distribution.data(), r_bins)
 
         if int_flag:
             np_distribution[0] += low
@@ -1035,7 +1036,6 @@ class Analysis(object):
     #
 
     def angular_momentum(self, p_type=None):
-        print("p_type = ", p_type)
         check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
 

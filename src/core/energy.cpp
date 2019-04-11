@@ -25,13 +25,12 @@
 #include "EspressoSystemInterface.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy_inline.hpp"
+#include "event.hpp"
 #include "forces.hpp"
-#include "initialize.hpp"
 #include <cassert>
 
 #include "short_range_loop.hpp"
@@ -130,9 +129,8 @@ void energy_calc(double *result) {
   EspressoSystemInterface::Instance().update();
 
   // Compute the energies from the energyActors
-  for (ActorList::iterator actor = energyActors.begin();
-       actor != energyActors.end(); ++actor)
-    (*actor)->computeEnergy(espressoSystemInterface);
+  for (auto &energyActor : energyActors)
+    energyActor->computeEnergy(espressoSystemInterface);
 
   on_observable_calc();
 
@@ -214,10 +212,6 @@ void calc_long_range_energies() {
   case COULOMB_MMM2D:
     *energy.coulomb += MMM2D_far_energy();
     *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
-    break;
-  /* calculate electric part of energy (only for MAGGS) */
-  case COULOMB_MAGGS:
-    *energy.coulomb += maggs_electric_energy();
     break;
   default:
     break;

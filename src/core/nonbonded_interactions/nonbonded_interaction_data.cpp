@@ -29,12 +29,11 @@
 #include "dpd.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/cos2.hpp"
@@ -65,14 +64,15 @@
 #include "rattle.hpp"
 #include "reaction_field.hpp"
 #include "serialization/IA_parameters.hpp"
-#include "thermostat.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/range/algorithm/fill.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
+
 #include <cstdlib>
 #include <cstring>
 
@@ -303,8 +303,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef SOFT_SPHERE
-      if (max_cut_current < data->soft_cut)
-        max_cut_current = data->soft_cut;
+      if (max_cut_current < (data->soft_cut + data->soft_offset))
+        max_cut_current = (data->soft_cut + data->soft_offset);
 #endif
 
 #ifdef AFFINITY
@@ -417,11 +417,13 @@ void realloc_ia_params(int nsize) {
   std::swap(ia_params, new_params);
 }
 
+void reset_ia_params() {
+  boost::fill(ia_params, IA_parameters{});
+  mpi_bcast_all_ia_params();
+}
+
 bool is_new_particle_type(int type) {
-  if ((type + 1) <= max_seen_particle_type)
-    return false;
-  else
-    return true;
+  return (type + 1) > max_seen_particle_type;
 }
 
 void make_particle_type_exist(int type) {
@@ -469,7 +471,7 @@ int interactions_sanity_checks() {
     if (mdlc_sanity_checks())
       state = 0; // fall through
   case DIPOLAR_P3M:
-    if (dp3m_sanity_checks())
+    if (dp3m_sanity_checks(node_grid))
       state = 0;
     break;
   case DIPOLAR_MDLC_DS:
