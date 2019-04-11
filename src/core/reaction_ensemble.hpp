@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.hpp"
 #include "utils/Accumulator.hpp"
 #include <map>
-#include <string>
 #include <random>
+#include <string>
 
 namespace ReactionEnsemble {
 
@@ -111,13 +111,13 @@ class ReactionAlgorithm {
 
 public:
   ReactionAlgorithm() = delete;
-  ReactionAlgorithm(int seed){
+  ReactionAlgorithm(int seed) {
     std::seed_seq seeder{
         seed}; // come up with "sane" initialization to avoid too many zeros in
                // the internal state of the Mersenne twister
     m_generator.seed(seed);
     m_generator.discard(1e6); // discard the first 1e6 random numbers to warm
-                                  // up the Mersenne-Twister PRNG
+                              // up the Mersenne-Twister PRNG
     std::normal_distribution<double> m_normal_distribution(0, 1);
     std::uniform_real_distribution<double> m_uniform_real_distribution(0, 1);
   }
@@ -188,15 +188,15 @@ protected:
                           int number_of_saved_properties);
 
   int i_random(int maxint) {
-     std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
-     return uniform_int_dist(m_generator);
+    std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
+    return uniform_int_dist(m_generator);
   }
 
 private:
   std::mt19937 m_generator;
   std::normal_distribution<double> m_normal_distribution;
   std::uniform_real_distribution<double> m_uniform_real_distribution;
-  
+
   std::map<int, int> save_old_particle_numbers(int reaction_id);
 
   int calculate_nu_bar(
@@ -233,7 +233,8 @@ private:
 
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
-  ReactionEnsemble(int seed):ReactionAlgorithm(seed){}
+  ReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
+
 private:
   double calculate_acceptance_probability(
       SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
@@ -244,7 +245,7 @@ private:
 
 class WangLandauReactionEnsemble : public ReactionAlgorithm {
 public:
-  WangLandauReactionEnsemble(int seed):ReactionAlgorithm(seed){}
+  WangLandauReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
   bool do_energy_reweighting = false;
   bool do_not_sample_reaction_partition_function = false;
   double final_wang_landau_parameter = 0.00001;
@@ -347,7 +348,7 @@ private:
 
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
-  ConstantpHEnsemble(int seed):ReactionAlgorithm(seed){}
+  ConstantpHEnsemble(int seed) : ReactionAlgorithm(seed) {}
   double m_constant_pH = -10;
   int do_reaction(int reaction_steps) override;
 
@@ -362,7 +363,7 @@ private:
 
 class WidomInsertion : public ReactionAlgorithm {
 public:
-  WidomInsertion(int seed):ReactionAlgorithm(seed){}
+  WidomInsertion(int seed) : ReactionAlgorithm(seed) {}
   std::pair<double, double> measure_excess_chemical_potential(int reaction_id);
 };
 

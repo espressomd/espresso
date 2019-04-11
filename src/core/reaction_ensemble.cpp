@@ -634,13 +634,15 @@ std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
     // see http://mathworld.wolfram.com/DiskPointPicking.html
     double random_radius =
         cyl_radius *
-        std::sqrt(m_uniform_real_distribution(m_generator)); // for uniform disk point picking in cylinder
+        std::sqrt(m_uniform_real_distribution(
+            m_generator)); // for uniform disk point picking in cylinder
     double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
     out_pos[0] = random_radius * cos(phi);
     out_pos[1] = random_radius * sin(phi);
     while (std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) <=
            std::pow(exclusion_radius, 2)) {
-      random_radius = cyl_radius * std::sqrt(m_uniform_real_distribution(m_generator));
+      random_radius =
+          cyl_radius * std::sqrt(m_uniform_real_distribution(m_generator));
       out_pos[0] = random_radius * cos(phi);
       out_pos[1] = random_radius * sin(phi);
     }
@@ -650,7 +652,8 @@ std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
   } else if (box_has_wall_constraints) {
     out_pos[0] = box_l[0] * m_uniform_real_distribution(m_generator);
     out_pos[1] = box_l[1] * m_uniform_real_distribution(m_generator);
-    out_pos[2] = slab_start_z + (slab_end_z - slab_start_z) * m_uniform_real_distribution(m_generator);
+    out_pos[2] = slab_start_z + (slab_end_z - slab_start_z) *
+                                    m_uniform_real_distribution(m_generator);
   } else {
     // cubic case
     out_pos[0] = box_l[0] * m_uniform_real_distribution(m_generator);
@@ -669,10 +672,12 @@ std::vector<double> ReactionAlgorithm::
     get_random_position_in_box_enhanced_proposal_of_small_radii() {
   double random_radius =
       cyl_radius *
-      m_uniform_real_distribution(m_generator); // for enhanced proposal of small radii, needs correction
-                  // within Metropolis hasting algorithm, proposal density is
-                  // p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small radii
-                  // are proposed more often
+      m_uniform_real_distribution(
+          m_generator); // for enhanced proposal of small radii, needs
+                        // correction within Metropolis hasting algorithm,
+                        // proposal density is
+                        // p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small
+                        // radii are proposed more often
   double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
   std::vector<double> out_pos(3);
   out_pos[0] = random_radius * cos(phi);
@@ -827,9 +832,12 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     new_pos = get_random_position_in_box();
     double vel[3];
     auto const &p = get_particle_data(p_id);
-    vel[0] = std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
-    vel[1] = std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
-    vel[2] = std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
+    vel[0] =
+        std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
+    vel[1] =
+        std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
+    vel[2] =
+        std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
     set_particle_v(p_id, vel);
     // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
     // //enhanced proposal of small radii
