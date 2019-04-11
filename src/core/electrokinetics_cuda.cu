@@ -3728,7 +3728,7 @@ int ek_set_ext_force_density(int species, double ext_force_density_x,
 
 #ifdef EK_ELECTROSTATIC_COUPLING
 struct ek_charge_of_particle {
-  __device__ ekfloat operator()(CUDA_particle_data particle) {
+  __host__ __device__ ekfloat operator()(CUDA_particle_data particle) {
     return particle.q;
   };
 };
