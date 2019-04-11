@@ -3,6 +3,12 @@
 
 #include "TabulatedPotential.hpp"
 #include "particle_data.hpp"
+
+/** @file
+ *  Data structures for bonded interactions.
+ *  For more information on how to add new interactions, see @ref bondedIA_new.
+ */
+
 /** \name Type codes of bonded interactions
  *  Enumeration of implemented bonded interactions.
  */
