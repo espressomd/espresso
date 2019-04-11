@@ -18,12 +18,12 @@ set(EspressoCore_SRC
   global.cpp
   grid.cpp
   immersed_boundaries.cpp
-        event.cpp
+  event.cpp
   integrate.cpp
   layered.cpp
   metadynamics.cpp
   minimize_energy.cpp
-        npt.cpp
+  npt.cpp
   nsquare.cpp
   partCfg_global.cpp
   particle_data.cpp
@@ -84,7 +84,10 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/p3m-dipolar.cpp
   electrostatics_magnetostatics/p3m_gpu.cpp
   electrostatics_magnetostatics/scafacos.cpp
-        electrostatics_magnetostatics/fft.cpp
+  electrostatics_magnetostatics/fft.cpp
+  electrostatics_magnetostatics/coulomb.cpp
+  electrostatics_magnetostatics/dipole.cpp
+  electrostatics_magnetostatics/reaction_field.cpp
   grid_based_algorithms/halo.cpp
   grid_based_algorithms/lattice.cpp
   grid_based_algorithms/lbboundaries.cpp
@@ -109,7 +112,6 @@ set(EspressoCore_SRC
   nonbonded_interactions/morse.cpp
   nonbonded_interactions/nonbonded_interaction_data.cpp
   nonbonded_interactions/nonbonded_tab.cpp
-  nonbonded_interactions/reaction_field.cpp
   nonbonded_interactions/soft_sphere.cpp
   nonbonded_interactions/steppot.cpp
   nonbonded_interactions/thole.cpp

@@ -228,7 +228,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
 
       auto const desc = dx1 * vector_product(n1, n2);
       if (desc < 0)
-        theta0 = 2.0 * PI - theta0;
+        theta0 = 2.0 * Utils::pi() - theta0;
 
     } else
       theta0 = 0; // Flat

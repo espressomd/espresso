@@ -6,8 +6,8 @@ IF DIPOLES == 1:
     cdef extern from "communication.hpp":
         void mpi_bcast_coulomb_params()
 
-    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-        ctypedef enum dipolar_interaction "DipolarInteraction":
+    cdef extern from "electrostatics_magnetostatics/dipole.hpp":
+        ctypedef enum DipolarInteraction:
             DIPOLAR_NONE = 0,
             DIPOLAR_P3M,
             DIPOLAR_MDLC_P3M,
@@ -16,12 +16,15 @@ IF DIPOLES == 1:
             DIPOLAR_MDLC_DS,
             DIPOLAR_SCAFACOS
 
-        int dipolar_set_Dprefactor(double prefactor)
+        ctypedef struct Dipole_parameters:
+                    double prefactor
+                    DipolarInteraction method
 
-        ctypedef struct coulomb_parameters "Coulomb_parameters":
-            double Dprefactor
-            dipolar_interaction Dmethod
-        cdef extern coulomb_parameters coulomb
+        cdef extern Dipole_parameters dipole
+
+    cdef extern from "electrostatics_magnetostatics/dipole.hpp" namespace "Dipole":
+
+        int set_Dprefactor(double prefactor)
 
     cdef extern from "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp":
         int dawaanr_set_params()
@@ -40,7 +43,7 @@ IF DIPOLES == 1:
             void deactivate_dipolar_barnes_hut()
 
 IF DP3M == 1:
-    from p3m_common cimport p3m_parameter_struct
+    from p3m_common cimport P3MParameters
 
     cdef extern from "electrostatics_magnetostatics/p3m-dipolar.hpp":
         int dp3m_set_params(double r_cut, int mesh, int cao, double alpha, double accuracy)
@@ -52,7 +55,7 @@ IF DP3M == 1:
         int dp3m_deactivate()
 
         ctypedef struct dp3m_data_struct:
-            p3m_parameter_struct params
+            P3MParameters params
 
         # links intern C-struct with python object
         cdef extern dp3m_data_struct dp3m
