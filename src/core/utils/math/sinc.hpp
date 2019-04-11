@@ -23,7 +23,9 @@
 #ifndef UTILS_MATH_SINC_HPP
 #define UTILS_MATH_SINC_HPP
 
-#include <boost/math/constants/constants.hpp>
+#include "utils/constants.hpp"
+#include "utils/device_qualifier.hpp"
+#include "utils/math/abs.hpp"
 
 #include <cmath>
 
@@ -41,13 +43,13 @@ namespace Utils {
  * also save time, since it reduces the number of function calls to
  * sin().
  */
-template <typename T> T sinc(T d) {
+template <typename T> DEVICE_QUALIFIER T sinc(T d) {
   const constexpr T epsi = 0.1;
 
-  const auto PId = boost::math::constants::pi<T>() * d;
+  const auto PId = pi<T>() * d;
 
-  if (std::abs(d) > epsi)
-    return std::sin(PId) / PId;
+  if (::Utils::abs(d) > epsi)
+    return sin(PId) / PId;
 
   /** Coefficients of the Taylor expansion of sinc */
   const constexpr T c2 = -0.1666666666667e-0;

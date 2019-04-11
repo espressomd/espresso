@@ -231,14 +231,16 @@ inline double p3m_add_pair_force(double chgfac, double const *d, double dist2,
       double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
       double fac1 = chgfac * exp(-adist * adist);
       double fac2 =
-          fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * wupii) / dist2;
+          fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * Utils::sqrt_pi_i()) /
+          dist2;
 #else
       erfc_part_ri = erfc(adist) / dist;
-      double fac1 = cchgfac;
-      double fac2 = fac1 *
-                    (erfc_part_ri +
-                     2.0 * p3m.params.alpha * wupii * exp(-adist * adist)) /
-                    dist2;
+      double fac1 = chgfac;
+      double fac2 =
+          fac1 *
+          (erfc_part_ri +
+           2.0 * p3m.params.alpha * Utils::sqrt_pi_i() * exp(-adist * adist)) /
+          dist2;
 #endif
       for (int j = 0; j < 3; j++)
         force[j] += fac2 * d[j];
