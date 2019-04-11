@@ -15,7 +15,9 @@
 
 namespace Coulomb {
 // forces_inline
-inline void calc_pair_force(Particle *p1, Particle *p2, double q1q2, double *d, double dist, double dist2, Vector3d &force) {
+inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2, 
+                            double const *d, double const dist, 
+                            double const dist2, Vector3d &force) {
 
   if (q1q2 != 0) {
     Vector3d f{};

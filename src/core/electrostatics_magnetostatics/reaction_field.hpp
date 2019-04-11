@@ -59,7 +59,7 @@ int rf_set_params(double kappa, double epsilon1, double epsilon2, double r_cut);
 
 inline void add_rf_coulomb_pair_force_no_cutoff(const Particle *const p1,
                                                 const Particle *const p2,
-                                                double const d[3], double dist,
+                                                double const d[3], double const dist,
                                                 double force[3]) {
   int j;
   double fac;
@@ -79,8 +79,8 @@ inline void add_rf_coulomb_pair_force_no_cutoff(const Particle *const p1,
     @param dist      Distance between p1 and p2.
     @param force     returns the force on particle 1.
 */
-inline void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
-                                      double dist, double force[3]) {
+inline void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double const d[3],
+                                      double const dist, double force[3]) {
   if (dist < rf_params.r_cut) {
     add_rf_coulomb_pair_force_no_cutoff(p1, p2, d, dist, force);
   }

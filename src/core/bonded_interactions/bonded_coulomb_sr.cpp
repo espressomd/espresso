@@ -33,7 +33,7 @@ int bonded_coulomb_sr_set_params(int bond_type, double q1q2) {
 
   make_bond_type_exist(bond_type);
 
-  //bonded_ia_params[bond_type].p.bonded_coulomb_p3m_sr.q1q2 = q1q2;
+  bonded_ia_params[bond_type].p.bonded_coulomb_sr.q1q2 = q1q2;
   bonded_ia_params[bond_type].type = BONDED_IA_BONDED_COULOMB_SR;
   bonded_ia_params[bond_type].num = 1;
 

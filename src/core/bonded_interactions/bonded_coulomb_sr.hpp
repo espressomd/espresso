@@ -57,14 +57,15 @@ int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
 inline int
 calc_bonded_coulomb_sr_pair_force(Particle *p1, Particle *p2,
                                   Bonded_ia_parameters const *iaparams,
-                                  double dx[3], double force[3]) {
+                                  double const dx[3], double force[3]) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   if (dist < coulomb_cutoff) {
     //TODO ugly workaround
     Vector3d forcevec{};
-    //TODO only to get rid of warnings
-    force[0]++;
+    
+    //only to get rid of warnings
+    //force[0]++;
     
     Coulomb::calc_pair_force(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx, dist2, dist, forcevec);
     force = forcevec.data()
