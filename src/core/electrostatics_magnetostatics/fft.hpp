@@ -80,10 +80,8 @@ struct fft_forw_plan {
   /** size of new mesh (number of mesh points). */
   int new_size;
 
-  /** number of nodes which have to communicate with each other. */
-  int g_size;
   /** group of nodes which have to communicate with each other. */
-  int *group = nullptr;
+  std::vector<int> group;
 
   /** packing function for send blocks. */
   void (*pack_function)(double const *const, double *const, int const *,
