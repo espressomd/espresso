@@ -94,6 +94,8 @@ class InteractionsBondedTest(ut.TestCase):
             0.01, self.system.box_l[0] / 3)
     
     def test_quartic(self):
+        """Tests the Quatric bonded interaction by comparing the potential and force against the analytic values"""
+        
         quartic_k0 = 2.
         quartic_k1 = 5.
         quartic_r = 0.5

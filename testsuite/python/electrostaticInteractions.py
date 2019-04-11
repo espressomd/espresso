@@ -54,6 +54,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         return u
     
     def calc_rf_potential(self, r, rf_params):
+        """Calculates the potential of the ReactionField coulomb method"""
+        
         kT = 1.0
         
         q1 = self.system.part[0].q
@@ -154,6 +156,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.system.actors.remove(dh)
     
     def test_rf(self):
+        """Tests the ReactionField coulomb interaction by comparing the potential and force against the analytic values"""
+        
         rf_params = dict(prefactor=1.0,
                          kappa=2.0,
                          epsilon1=1.0,
