@@ -160,6 +160,8 @@ class VirtualSites(ut.TestCase):
             system.part[cur_id].vs_auto_relate_to(1)
             # Was the particle made virtual
             self.assertEqual(system.part[cur_id].virtual, 1)
+            # is the virtual particle mass 0
+            self.assertEqual(system.part[cur_id].mass, 0)
             # Are vs relative to id and
             vs_r = system.part[cur_id].vs_relative
             # id
