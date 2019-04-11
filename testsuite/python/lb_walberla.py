@@ -22,7 +22,8 @@ import espressomd
 from espressomd.lb_walberla import LbWalberla
 import numpy as np
 
-@ut.skipIf(not espressomd.has_features("LB_WALBERLA"),"Skipping for LACK of LB_WALBERLA")
+
+@ut.skipIf(not espressomd.has_features("LB_WALBERLA"), "Skipping for LACK of LB_WALBERLA")
 class LbWalberlaTest(ut.TestCase):
     visc = 2.
     agrid = .5

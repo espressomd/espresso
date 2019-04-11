@@ -23,19 +23,28 @@
 #include <boost/serialization/utility.hpp>
 
 #include "ParallelScriptInterfaceSlave.hpp"
-#include "utils/parallel/ParallelObject.hpp"
 
 #include <cassert>
 
-namespace ScriptInterface {
-using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
+namespace {
+Communication::MpiCallbacks *m_cb = nullptr;
 
+void make_remote_handle() {
+  assert(m_cb && "Not initialized.");
+
+  new ScriptInterface::ParallelScriptInterfaceSlave(m_cb);
+}
+} // namespace
+
+REGISTER_CALLBACK(make_remote_handle)
+
+namespace ScriptInterface {
 ParallelScriptInterface::ParallelScriptInterface(std::string const &name)
-    : m_callback_id(m_cb, [](ParallelScriptInterfaceSlave::CallbackAction) {}) {
+    : m_callback_id(m_cb, [](CallbackAction) {}) {
   assert(m_cb && "Not initialized!");
 
   /* Create the slaves */
-  Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>::make(*m_cb);
+  m_cb->call(make_remote_handle);
 
   call(CallbackAction::NEW);
 
@@ -63,10 +72,6 @@ bool ParallelScriptInterface::operator!=(ParallelScriptInterface const &rhs) {
 
 void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
   m_cb = &cb;
-  ParallelScriptInterfaceSlave::m_cb = &cb;
-
-  Utils::Parallel::ParallelObject<
-      ParallelScriptInterfaceSlave>::register_callback(cb);
 }
 
 void ParallelScriptInterface::construct(VariantMap const &params) {
@@ -217,6 +222,4 @@ void ParallelScriptInterface::collect_garbage() {
     ++it;
   }
 }
-Communication::MpiCallbacks *ParallelScriptInterface::m_cb = nullptr;
-
 } /* namespace ScriptInterface */

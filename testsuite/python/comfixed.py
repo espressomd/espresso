@@ -39,7 +39,7 @@ class ComFixed(ut.TestCase):
         s.time_step = dt
         s.cell_system.skin = skin
 
-        s.thermostat.set_langevin(kT=1., gamma=0.001)
+        s.thermostat.set_langevin(kT=1., gamma=0.001, seed=41)
 
         for i in range(100):
             r = [0.5, 1., 1.] * s.box_l * np.random.random(3)

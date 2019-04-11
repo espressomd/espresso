@@ -38,6 +38,9 @@
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
+#include "utils/index.hpp"
+using Utils::get_linear_index;
+
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -320,28 +323,19 @@ int lbboundary_get_force(void *lbb, double *f) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
     lb_gpu_get_boundary_forces(forces.data());
 
-    f[0] = -forces[3 * no + 0];
-    f[1] = -forces[3 * no + 1];
-    f[2] = -forces[3 * no + 2];
 #else
     return ES_ERROR;
 #endif
   } else {
 #if defined(LB_BOUNDARIES) && defined(LB)
     mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
-    const auto rho = lb_lbfluid_get_density();
-    const auto agrid = lb_lbfluid_get_agrid();
-    const auto tau = lb_lbfluid_get_tau();
-    f[0] = forces[3 * no + 0] * rho * agrid /
-           (tau * tau); // lbpar.tau; TODO this makes the units wrong and
-    f[1] = forces[3 * no + 1] * rho * agrid /
-           (tau * tau); // lbpar.tau; the result correct. But it's 3.13AM
-    f[2] = forces[3 * no + 2] * rho * agrid /
-           (tau * tau); // lbpar.tau; on a Saturday at the ICP. Someone fix.
+  }
+  f[0] = forces[3 * no + 0];
+  f[1] = forces[3 * no + 1];
+  f[2] = forces[3 * no + 2];
 #else
     return ES_ERROR;
 #endif
-  }
 
 #endif
   return 0;

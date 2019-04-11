@@ -61,5 +61,4 @@ void initialize() {
   ScriptInterface::register_new<ComFixed>("ComFixed");
 }
 
-
 } /* namespace ScriptInterface */

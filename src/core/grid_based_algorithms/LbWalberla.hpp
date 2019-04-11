@@ -6,10 +6,11 @@
 #include "utils/Vector.hpp"
 #undef PI
 #include "blockforest/StructuredBlockForest.h"
-#include "field/GhostLayerField.h"
+#include "boost/optional.hpp"
 #include "boundary/BoundaryHandling.h"
 #include "core/mpi/Environment.h"
 #include "field/FlagField.h"
+#include "field/GhostLayerField.h"
 #include "field/distributors/KernelDistributor.h"
 #include "field/interpolators/TrilinearFieldInterpolator.h"
 #include "lbm/boundary/UBB.h"
@@ -18,7 +19,6 @@
 #include "lbm/lattice_model/D3Q19.h"
 #include "timeloop/SweepTimeloop.h"
 #include "vtk/VTKOutput.h"
-#include "boost/optional.hpp"
 
 const walberla::FlagUID Fluid_flag("fluid");
 const walberla::FlagUID UBB_flag("velocity bounce back");
@@ -69,26 +69,26 @@ class LbWalberla {
     const walberla::BlockDataID m_pdf_field_id;
   };
 
-struct BlockAndCell {
-  walberla::IBlock* block;
-  walberla::Cell cell;
-};
+  struct BlockAndCell {
+    walberla::IBlock *block;
+    walberla::Cell cell;
+  };
 
 public:
-  LbWalberla(double viscosity, double agrid,
-             const Vector3d &box_dimensions, const Vector3i &node_grid,
-             double skin);
+  LbWalberla(double viscosity, double agrid, const Vector3d &box_dimensions,
+             const Vector3i &node_grid, double skin);
 
   void integrate();
   boost::optional<Vector3d> get_node_velocity(const Vector3i node) const;
-  bool set_node_velocity(const Vector3i& node, const Vector3d v);
+  bool set_node_velocity(const Vector3i &node, const Vector3d v);
 
   bool add_force_at_pos(const Vector3d &position, const Vector3d &force);
   boost::optional<Vector3d> get_velocity_at_pos(const Vector3d &position) const;
   boost::optional<double> get_density_at_pos(const Vector3d &position);
   //  Vector3d get_stress_at_pos(const Vector3d& position);
 
-  boost::optional<Vector3d> get_node_velocity_at_boundary(const Vector3i& node) const;
+  boost::optional<Vector3d>
+  get_node_velocity_at_boundary(const Vector3i &node) const;
   bool set_node_velocity_at_boundary(const Vector3i node, const Vector3d v);
   bool remove_node_from_boundary(const Vector3i &node);
   boost::optional<bool> get_node_is_boundary(const Vector3i &node) const;
@@ -105,20 +105,18 @@ public:
   void set_viscosity(double viscosity);
   double get_viscosity();
 
-
   Vector3i get_grid_dimensions() {
-    return Vector3i{{int(m_blocks->getXSize()), int(m_blocks->getYSize()), int(m_blocks->getZSize())}};
+    return Vector3i{{int(m_blocks->getXSize()), int(m_blocks->getYSize()),
+                     int(m_blocks->getZSize())}};
   };
 
-  double get_grid_spacing() {
-    return m_agrid;
-  }
+  double get_grid_spacing() { return m_agrid; }
 
-  bool node_in_local_domain(const Vector3i& node) const;
-  bool pos_in_local_domain(const Vector3d& pos) const;
+  bool node_in_local_domain(const Vector3i &node) const;
+  bool pos_in_local_domain(const Vector3d &pos) const;
 
 private:
-  boost::optional<BlockAndCell> get_block_and_cell(const Vector3i& node) const;
+  boost::optional<BlockAndCell> get_block_and_cell(const Vector3i &node) const;
   walberla::BlockDataID m_pdf_field_id;
   walberla::BlockDataID m_flag_field_id;
   walberla::BlockDataID m_force_field_id;
@@ -170,23 +168,22 @@ private:
 void walberla_mpi_init();
 
 /** @brief Access the per-MPI-node LbWalberla isntance */
-const LbWalberla* lb_walberla();
+const LbWalberla *lb_walberla();
 
 /** @brief Create the per-MPI-rank LbWalberal instance
-*
-*  @param viscosity Fluid viscosity
-*  @param agrid  Size of one lb cell
-*  @param box_dimensions Dimensions of the global simulation box
-*  @param node_grid  Dimensions of the MPI node grid 
-*  @param skin Distance beyond the node boundary a particle can reach 
-*/
+ *
+ *  @param viscosity Fluid viscosity
+ *  @param agrid  Size of one lb cell
+ *  @param box_dimensions Dimensions of the global simulation box
+ *  @param node_grid  Dimensions of the MPI node grid
+ *  @param skin Distance beyond the node boundary a particle can reach
+ */
 void init_lb_walberla(double viscosity, double agrid,
-                       const Vector3d &box_dimensions,
-                       const Vector3i &node_grid, double skin);
+                      const Vector3d &box_dimensions, const Vector3i &node_grid,
+                      double skin);
 
 /** @brief Destruct the per-MPI-rank LbWalberal instance */
-void destruct_lb_walberla(); 
-
+void destruct_lb_walberla();
 
 #endif // LB_WALBERLA
 
