@@ -39,10 +39,10 @@ cdef class ReactionAlgorithm(object):
     cdef CReactionAlgorithm * RE
 
     def _valid_keys(self):
-        return "temperature", "exclusion_radius"
+        return "temperature", "exclusion_radius", "seed"
 
     def _required_keys(self):
-        return "temperature", "exclusion_radius"
+        return "temperature", "exclusion_radius", "seed"
 
     def _set_params_in_es_core(self):
         self.RE.temperature = self._params[
@@ -174,6 +174,8 @@ cdef class ReactionAlgorithm(object):
                                the list of their types
         default_charges : dictionary
                         A dictionary of default charges for types that occur in the provided reaction.
+        check_for_electroneutrality : Boolean
+                                      Check for electroneutrality of the given reaction if True.
 
         """
         self._params["check_for_electroneutrality"] = True
@@ -337,8 +339,6 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
     cdef CReactionEnsemble * REptr
 
     def __init__(self, *args, **kwargs):
-        self.RE = <CReactionAlgorithm * > new CReactionEnsemble()
-        self.REptr = <CReactionEnsemble * > self.RE
         self._params = {"temperature": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
@@ -347,6 +347,8 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
                     "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
 
+        self.RE = <CReactionAlgorithm * > new CReactionEnsemble(self._params["seed"])
+        self.REptr = <CReactionEnsemble * > self.RE
         for k in kwargs:
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
@@ -362,8 +364,6 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     cdef CConstantpHEnsemble * constpHptr
 
     def __init__(self, *args, **kwargs):
-        self.RE = <CReactionAlgorithm * > new CConstantpHEnsemble()
-        self.constpHptr = <CConstantpHEnsemble * > self.RE
         self._params = {"temperature": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
@@ -371,6 +371,9 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
                 raise ValueError(
                     "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
+
+        self.RE = <CReactionAlgorithm * > new CConstantpHEnsemble(self._params["seed"])
+        self.constpHptr = <CConstantpHEnsemble * > self.RE
 
         for k in kwargs:
             if k in self._valid_keys():
@@ -414,8 +417,6 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
     cdef CWangLandauReactionEnsemble * WLRptr
 
     def __init__(self, *args, **kwargs):
-        self.RE = <CReactionAlgorithm * > new CWangLandauReactionEnsemble()
-        self.WLRptr = <CWangLandauReactionEnsemble * > self.RE
         self._params = {"temperature": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
@@ -428,6 +429,9 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
                 self._params[k] = kwargs[k]
             else:
                 raise KeyError("%s is not a vaild key" % k)
+
+        self.RE = <CReactionAlgorithm * > new CWangLandauReactionEnsemble(self._params["seed"])
+        self.WLRptr = <CWangLandauReactionEnsemble * > self.RE
 
         self._set_params_in_es_core()
 
@@ -657,8 +661,6 @@ cdef class WidomInsertion(ReactionAlgorithm):
     cdef CWidomInsertion * WidomInsertionPtr
 
     def __init__(self, *args, **kwargs):
-        self.WidomInsertionPtr = new CWidomInsertion()
-        self.RE = <CReactionAlgorithm * > self.WidomInsertionPtr
         self._params = {"temperature": 1,
                         "exclusion_radius": 0}
         for k in self._required_keys():
@@ -666,7 +668,8 @@ cdef class WidomInsertion(ReactionAlgorithm):
                 raise ValueError(
                     "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
-
+        self.WidomInsertionPtr = new CWidomInsertion(self._params["seed"])
+        self.RE = <CReactionAlgorithm * > self.WidomInsertionPtr
         for k in kwargs:
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
