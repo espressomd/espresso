@@ -21,8 +21,8 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport polymer
 import numpy as np
-from espressomd.utils import is_valid_type
-
+from espressomd.utils import is_valid_type, array_locked
+from espressomd.utils cimport make_Vector3d
 
 def validate_params(_params, default):
     if _params["N_P"] <= 0:
@@ -34,15 +34,9 @@ def validate_params(_params, default):
     if _params["bond_length"] < 0:
         raise ValueError(
             "bond_length has to be a positive float")
-    if _params["bond"]._bond_id == -1:
-        raise Exception(
-            "The bonded interaction passed as 'bond' keyword argument has not yet been added to the list of active bonds in Espresso.")
-    if _params["start_id"] < 0:
-        raise ValueError(
-            "start_id has to be a positive Integer")
-    if not hasattr(_params["start_pos"], "__getitem__") or len(_params["start_pos"]) != 3:
-        raise ValueError(
-            "start_pos has to be an numpy array with 3 Elements")
+#    if not hasattr(_params["start_pos"], "__getitem__") or len(_params["start_pos"]) != 3:
+#        raise ValueError(
+#            "start_pos has to be an numpy array with 3 Elements")
     if not is_valid_type(_params["mode"], int):
         raise ValueError(
             "mode has to be a positive Integer")
@@ -52,18 +46,6 @@ def validate_params(_params, default):
     if _params["max_tries"] < 0 and default["max_tries"] != _params["max_tries"]:
         raise ValueError(
             "max_tries has to be a positive Integer")
-    if not is_valid_type(_params["val_poly"], float) and default["val_poly"] != _params["val_poly"]:
-        raise ValueError(
-            "val_poly has to be a float")
-    if _params["charge_distance"] < 0:
-        raise ValueError(
-            "charge_distance has to be a positive Integer")
-    if _params["type_poly_neutral"] < 0:
-        raise ValueError(
-            "type_poly_neutral has to be a nonnegative Integer")
-    if _params["type_poly_charged"] < 0:
-        raise ValueError(
-            "type_poly_charged has to be a nonnegative Integer")
     if _params["angle"] < 0 and default["angle"] != _params["angle"]:
         raise ValueError(
             "angle has to be a positive float")
@@ -76,6 +58,55 @@ def validate_params(_params, default):
 
 # wrapper function to expose to the user interface
 
+def polymer_positions(**kwargs):
+    params = dict()
+    default_params = dict()
+    default_params["N_P"] = 0
+    default_params["MPC"] = 0
+    default_params["bond_length"] = 0
+    default_params["start_pos"] = np.array([])
+    default_params["mode"] = 1
+    default_params["shield"] = 0
+    default_params["max_tries"] = 1000
+    default_params["angle"] = -1.0
+    default_params["angle2"] = -1.0
+    default_params["constraints"] = 0
+
+    params = default_params
+
+    valid_keys = ["N_P", "MPC", "bond_length", "start_pos", "mode", "shield", "max_tries", "angle", "angle2", "constraints"]
+
+    required_keys = ["N_P", "MPC", "bond_length"]
+
+    for k in kwargs:
+        if not k in valid_keys:
+            raise ValueError("Unknown parameter '%s'" % k)
+        params[k] = kwargs[k]
+
+    for k in required_keys:
+        if k not in kwargs:
+            print(k)
+            raise ValueError(
+                "At least the following keys have to be given as keyword arguments: " + required_keys.__str__())
+
+    validate_params(params, default_params)
+
+    cdef vector[Vector3d] start_positions
+    if (params["start_pos"] != []):
+        for i in range(len(params["start_pos"])):
+            print(params["start_pos"][i])
+            start_positions.push_back(make_Vector3d(params["start_pos"][i]))
+
+    print("MARK")
+    data = draw_polymer_positions(partCfg(), params["N_P"], params["MPC"], params["bond_length"], start_positions, params["mode"], params["shield"], params["max_tries"], params["angle"], params["angle2"], params["constraints"])
+    positions = []
+    for polymer in data:
+        p = []
+        for monomer in polymer:
+            m = array_locked([monomer[0], monomer[1], monomer[2]])
+            p.append(m)
+        positions.append(p)
+    return np.array(positions)
 
 def create_polymer(**kwargs):
     """ Generators have a ``Yields`` section instead of a ``Returns`` section.

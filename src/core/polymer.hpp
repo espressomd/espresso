@@ -33,6 +33,14 @@
 #include "PartCfg.hpp"
 #include "particle_data.hpp"
 
+bool is_valid_position(const Vector3d *pos, const std::vector<std::vector<Vector3d>> *positions, const PartCfg &partCfg, const double shield, const int constr);
+std::vector<std::vector<Vector3d>> draw_polymer_positions(PartCfg &partCfg, int N_P, int MPC, double bond_length,
+              std::vector<Vector3d> &start_positions, int mode, double shield, int max_try,
+              double angle, double angle2, int constr);
+
+Vector3d random_position();
+Vector3d random_unit_vector();
+
 /*************************************************************
  * Functions                                                 *
  * ---------                                                 *
@@ -43,6 +51,9 @@
  *  less than \<r_catch\> away from the position of the particle \<part_id\>.
  */
 int mindist3(PartCfg &, int part_id, double r_catch, int *ids);
+
+double mindist4(PartCfg &partCfg, double pos[3]);
+double mindist5(PartCfg &partCfg, const Vector3d pos);
 
 /** Checks whether a particle at coordinates (\<posx\>, \<posy\>, \<posz\>)
  *  collides

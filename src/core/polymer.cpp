@@ -47,7 +47,130 @@
 #include "utils.hpp"
 
 #include "utils/vec_rotate.hpp"
+#include <vector>
 using Utils::vec_rotate;
+
+bool is_valid_position(const Vector3d *pos, const std::vector<std::vector<Vector3d>> *positions, PartCfg &partCfg, const double shield, const int constr) {
+    // check if constraint is violated
+    if (constr == true) {
+        Vector3d folded_pos = folded_position(*pos);
+        for (auto &c : Constraints::constraints) {
+            auto cs = std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
+            if (cs) {
+                double d;
+                double v[3];
+
+                cs->calc_dist(folded_pos, &d, v);
+
+                if (d <= 0) {
+//                    std::cout << "CONSTRAINT violated." << std::endl;
+                    return false;
+                }
+            }
+        }
+    }
+
+    if (shield > 0) {
+        // check for collision with existing particles
+        if (mindist5(partCfg, *pos) < shield) {
+//                    std::cout << "EXISTING violated." << std::endl;
+            return false;
+        }
+        // check for collision with buffered positions
+        double buff_mindist = std::numeric_limits<double>::infinity();
+        double h;
+        for (auto p = positions->begin(); p != positions->end(); ++p) {
+            for (auto m = p->begin(); m != p->end(); ++m) {
+                h = (*pos - *m).norm2();
+                buff_mindist = std::min(h, buff_mindist);
+            }
+        }
+        if (std::sqrt(buff_mindist) < shield) {
+//                    std::cout << "BUFFERED violated." << std::endl;
+            return false;
+        }
+    }
+    return true;
+}
+
+Vector3d random_position() {
+    Vector3d v;
+    for (int i=0; i<3; ++i)
+        v[i] = box_l[i] * d_random();
+    return v;
+}
+
+Vector3d random_unit_vector() {
+    Vector3d v;
+    const int phi = acos( 1. - 2. * d_random() );
+    const int theta = 2. * PI * d_random();
+    v[0] = sin(phi) * cos(theta);
+    v[1] = sin(phi) * sin(theta);
+    v[2] = cos(phi);
+    v /= v.norm();
+    return v;
+}
+
+std::vector<std::vector<Vector3d>> draw_polymer_positions(PartCfg &partCfg, int N_P, int MPC, double bond_length,
+              std::vector<Vector3d> &start_positions, int mode, double shield, int max_try,
+              double angle, double angle2, int constr) {
+    std::vector<std::vector<Vector3d>> positions(N_P, std::vector<Vector3d>(MPC));
+
+    // make sure that if given, all starting positions are valid
+    if ((not start_positions.empty())
+            and std::any_of(start_positions.begin(), start_positions.end(),
+                [&positions, &partCfg, shield, constr](Vector3d v)
+                { return not is_valid_position(&v, &positions, partCfg, shield, constr); }))
+        throw std::runtime_error("Invalid starting positions.");
+    // else generate initial positions
+    for (int p = 0; p < N_P; ++p) {
+        int counter = 0;
+        Vector3d trial_pos;
+        // first monomer
+        if (start_positions.empty()) {
+            do {
+                trial_pos = random_position();
+                counter++;
+            } while ((not is_valid_position(&trial_pos, &positions, partCfg, shield, constr))
+                    and (counter < max_try));
+            if (counter == max_try) {
+                throw std::runtime_error("Failed to create polymer positions.");
+            } else {
+                positions[p][0] = trial_pos;
+            }
+        } else {
+            positions[p][0] = start_positions[p];
+        }
+    }
+    // remaining monomers
+    for (int p = 0; p < N_P; ++p) {
+        int counter = 0;
+        Vector3d trial_pos;
+        for (int m = 1; m < MPC; ++m) {
+            do {
+                if (angle < 0 or m < 2) {
+                    // random step
+                    trial_pos = positions[p][m-1] + bond_length * random_unit_vector();
+                } else {
+                    // use prescribed angle
+                    Vector3d last_vec = positions[p][m-1] - positions[p][m-2];
+                    trial_pos = positions[p][m-1] + vec_rotate(
+                            last_vec.cross(random_unit_vector()),
+                            angle,
+                            last_vec);
+                }
+                counter++;
+            } while ((not is_valid_position(&trial_pos, &positions, partCfg, shield, constr))
+                    and (counter < max_try));
+            if (counter == max_try) {
+                throw std::runtime_error("22 Failed to create polymer positions.");
+            }
+            positions[p][m] = trial_pos;
+            counter = 0;
+        }
+    }
+    return positions;
+}
 
 /*************************************************************
  * Functions                                                 *
@@ -70,6 +193,22 @@ int mindist3(PartCfg &partCfg, int part_id, double r_catch, int *ids) {
   return caught;
 }
 
+double mindist5(PartCfg &partCfg, const Vector3d pos) {
+  if (partCfg.size() == 0) {
+    return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
+  }
+
+  auto const mindist = std::accumulate(
+      partCfg.begin(), partCfg.end(), std::numeric_limits<double>::infinity(),
+      [&pos](double mindist, Particle const &p) {
+        return std::min(mindist, get_mi_vector(pos, p.r.p).norm2());
+      });
+
+  if (mindist < std::numeric_limits<double>::infinity())
+    return std::sqrt(mindist);
+  return -1.0;
+}
+
 double mindist4(PartCfg &partCfg, double pos[3]) {
   if (partCfg.size() == 0) {
     return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
@@ -85,6 +224,7 @@ double mindist4(PartCfg &partCfg, double pos[3]) {
     return std::sqrt(mindist);
   return -1.0;
 }
+
 
 double buf_mindist4(double pos[3], int n_add, double *add) {
   double mindist = 30000.0, dx, dy, dz;
