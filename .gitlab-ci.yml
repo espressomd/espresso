@@ -186,7 +186,8 @@ cuda-maxset:
     - linux
     - cuda
 
-tutorials-samples:
+tutorials-samples-maxset:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
   script:
@@ -196,6 +197,41 @@ tutorials-samples:
     - docker
     - linux
     - cuda
+
+tutorials-samples-default:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  script:
+    - export myconfig=default with_coverage=false python_version=3 check_tutorials=true check_samples=true test_timeout=1200
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+
+tutorials-samples-empty:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  script:
+    - export myconfig=empty with_coverage=false python_version=3 check_tutorials=true check_samples=true test_timeout=1200
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+
+tutorials-samples-no-gpu:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  script:
+    - export myconfig=maxset with_coverage=false python_version=3 check_tutorials=true check_samples=true test_timeout=1200 hide_gpu=true
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
 
 # Test that non-gpu methods work when building with Cuda and no gpu is present
 # In case a GPU is present on the runner, it is hidden by setting
