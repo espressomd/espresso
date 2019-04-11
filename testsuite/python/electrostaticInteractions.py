@@ -52,6 +52,31 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         u[i] = df_params['prefactor'] * kT * q1 * \
             q2 * np.exp(-df_params['kappa'] * r[i]) / r[i]
         return u
+    
+    def calc_rf_potential(self, r, rf_params):
+        kT = 1.0
+        
+        q1 = self.system.part[0].q
+        q2 = self.system.part[1].q
+        epsilon1 = rf_params['epsilon1']
+        epsilon2 = rf_params['epsilon2']
+        kappa = rf_params['kappa']
+        r_cut = rf_params['r_cut']
+        # prefactor calculation
+        B = (2 * (epsilon1 - epsilon2) * (1 + kappa * r_cut) - \
+                 epsilon2 * kappa * kappa * r_cut * r_cut) / \
+                ((epsilon1 + 2 * epsilon2) * (1 + kappa * r_cut) + \
+                 epsilon2 * kappa * kappa * r_cut * r_cut)
+        offset = (1. - B / 2.) / r_cut
+        u = np.zeros_like(r)
+        
+        # r<r_cut
+        i = np.where(r < rf_params['r_cut'])[0]
+        u[i] = rf_params['prefactor'] * kT * q1 * q2 * \
+        ((1./r[i] - B * np.square(r[i]) / (2. * r_cut**3)) - offset)
+        return u
+        
+        
 
     @ut.skipIf(not espressomd.has_features(["P3M"]),
                "Features not available, skipping test!")
@@ -98,10 +123,11 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             electrostatics.DH,
             dh_params)
         dh = espressomd.electrostatics.DH(
-            prefactor=dh_params[
-                'prefactor'],
-                                           kappa=dh_params['kappa'],
-                                           r_cut=dh_params['r_cut'])
+            prefactor=dh_params['prefactor'],
+            kappa=dh_params['kappa'],
+            r_cut=dh_params['r_cut'])
+        
+        
         self.system.actors.add(dh)
         dr = 0.001
         r = np.arange(.5, 1.01 * dh_params['r_cut'], dr)
@@ -129,6 +155,53 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                                    -f_dh,
                                    atol=1e-2)
         self.system.actors.remove(dh)
+    
+    def test_rf(self):
+        rf_params = dict(prefactor=1.0,
+                         kappa=2.0,
+                         epsilon1=1.0,
+                         epsilon2=2.0,
+                         r_cut=2.0)
+        test_RF = tests_common.generate_test_for_class(
+            self.system,
+            electrostatics.RF,
+            rf_params)
+        rf = espressomd.electrostatics.RF(
+            prefactor=rf_params['prefactor'],
+            kappa=rf_params['kappa'],
+            epsilon1=rf_params['epsilon1'],
+            epsilon2=rf_params['epsilon2'],
+            r_cut=rf_params['r_cut'])
+        self.system.actors.add(rf)
+        
+        dr = 0.001
+        r = np.arange(.5, 1.01 * rf_params['r_cut'], dr)
+        
+        u_rf = self.calc_rf_potential(r, rf_params)
+        f_rf = -np.gradient(u_rf, dr)
+        
+        # zero the discontinuity, and re-evaluate the derivitive as a backwards
+        # difference
+        i_cut = np.argmin((rf_params['r_cut'] - r)**2)
+        f_rf[i_cut] = 0
+        f_rf[i_cut - 1] = (u_rf[i_cut - 2] - u_rf[i_cut - 1]) / dr
+        
+        u_rf_core = np.zeros_like(r)
+        f_rf_core = np.zeros_like(r)
+        
+        for i, ri in enumerate(r):
+            self.system.part[1].pos = self.system.part[0].pos + [ri, 0, 0]
+            self.system.integrator.run(0)
+            u_rf_core[i] = self.system.analysis.energy()['coulomb']
+            f_rf_core[i] = self.system.part[0].f[0]
+        
+        np.testing.assert_allclose(u_rf_core,
+                                   u_rf,
+                                   atol=1e-7)
+        np.testing.assert_allclose(f_rf_core,
+                                   -f_rf,
+                                   atol=1e-2)
+        self.system.actors.remove(rf)
 
 
 if __name__ == "__main__":
