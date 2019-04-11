@@ -134,8 +134,8 @@ class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
+    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features or gpu.")
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the GPU implementation of the LB."""
@@ -144,8 +144,8 @@ class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
+    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features or gpu.")
 class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the higher order interpolation scheme of the LB."""

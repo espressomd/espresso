@@ -34,9 +34,7 @@ def stopAll(system):
     system.part[:].omega_body = np.zeros(3)
 
 
-@ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT",
-                                        "PARTIAL_PERIODIC"]),
-           "Features not available, skipping test!")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["DIPOLAR_BARNES_HUT"]), "Features or gpu not available, skipping test!")
 class BHGPUTest(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
@@ -154,6 +152,9 @@ class BHGPUTest(ut.TestCase):
             self.system.part.clear()
 
     def test(self):
+        if str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
+            print("Test skipped on AMD card")
+            return
         if (self.system.cell_system.get_state()["n_nodes"] > 1):
             print("NOTE: Ignoring testcase for n_nodes > 1")
         else:
