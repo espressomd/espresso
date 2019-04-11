@@ -76,3 +76,4 @@ unit_test(NAME gatherv_test SRC gatherv_test.cpp DEPENDS Boost::mpi MPI::MPI_CXX
 unit_test(NAME all_gatherv_test SRC all_gatherv_test.cpp DEPENDS Boost::mpi MPI::MPI_CXX)
 unit_test(NAME contains_test SRC contains_test.cpp)
 unit_test(NAME Counter_test SRC Counter_test.cpp)
+unit_test(NAME abs_test SRC abs_test.cpp)

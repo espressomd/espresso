@@ -249,7 +249,7 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
     double mir = dip1 * Vector3d{d[0], d[1], d[2]};
     double mjr = dip2 * Vector3d{d[0], d[1], d[2]};
 
-    coeff = 2.0 * dp3m.params.alpha * wupii;
+    coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
     double dist2i = 1 / dist2;
     exp_adist2 = exp(-adist * adist);
 
@@ -331,7 +331,7 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2,
     mir = dip1 * Vector3d{d[0], d[1], d[2]};
     mjr = dip2 * Vector3d{d[0], d[1], d[2]};
 
-    coeff = 2.0 * dp3m.params.alpha * wupii;
+    coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
     dist2i = 1 / dist2;
     exp_adist2 = exp(-adist * adist);
 

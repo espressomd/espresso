@@ -34,9 +34,9 @@ transform_pos_to_cylinder_coordinates(const ::Vector3d &pos,
   static const ::Vector3d y_axis{0.0, 1.0, 0.0};
   ::Vector3d rotated_pos = pos;
   if (axis == "x") {
-    rotated_pos = vec_rotate(y_axis, -PI / 2.0, pos);
+    rotated_pos = vec_rotate(y_axis, -Utils::pi() / 2.0, pos);
   } else if (axis == "y") {
-    rotated_pos = vec_rotate(x_axis, PI / 2.0, pos);
+    rotated_pos = vec_rotate(x_axis, Utils::pi() / 2.0, pos);
   }
   double r = std::sqrt(rotated_pos[0] * rotated_pos[0] +
                        rotated_pos[1] * rotated_pos[1]);
@@ -56,11 +56,11 @@ inline ::Vector3d transform_vel_to_cylinder_coordinates(const ::Vector3d &vel,
   ::Vector3d rotated_vel = vel;
   ::Vector3d rotated_pos = pos;
   if (axis == "x") {
-    rotated_vel = vec_rotate(y_axis, -PI / 2.0, vel);
-    rotated_pos = vec_rotate(y_axis, -PI / 2.0, pos);
+    rotated_vel = vec_rotate(y_axis, -Utils::pi() / 2.0, vel);
+    rotated_pos = vec_rotate(y_axis, -Utils::pi() / 2.0, pos);
   } else if (axis == "y") {
-    rotated_vel = vec_rotate(x_axis, PI / 2.0, vel);
-    rotated_pos = vec_rotate(x_axis, PI / 2.0, pos);
+    rotated_vel = vec_rotate(x_axis, Utils::pi() / 2.0, vel);
+    rotated_pos = vec_rotate(x_axis, Utils::pi() / 2.0, pos);
   }
   // Coordinate transform the velocities.
   // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
