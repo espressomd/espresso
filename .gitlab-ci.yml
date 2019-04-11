@@ -168,6 +168,23 @@ cuda-maxset:
     - linux
     - cuda
 
+# Test that non-gpu methods work when building with Cuda and no gpu is present
+# In case a GPU is present on the runner, it is hidden by setting
+# CUDA_VISIBLE_DEVICES=""
+cuda-no-gpu:
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  script:
+    - export myconfig=maxset hide_gpu=true python_version=3 test_timeout=900
+    - bash maintainer/cuda_build.sh
+  artifacts:
+    paths:
+    - build/
+    expire_in: 1 week
+  tags:
+    - docker
+    - linux
+
 empty:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0

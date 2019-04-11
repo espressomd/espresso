@@ -2124,18 +2124,16 @@ __global__ void ek_clear_node_force(LB_node_force_density_gpu node_f) {
 }
 
 void ek_calculate_electrostatic_coupling() {
-  int blocks_per_grid_x;
-  int blocks_per_grid_y = 4;
-  int threads_per_block = 64;
-  dim3 dim_grid;
+  const int blocks_per_grid_y = 4;
+  const int threads_per_block = 64;
 
   if ((!ek_parameters.es_coupling) || (!ek_initialized))
     return;
 
-  blocks_per_grid_x = (lbpar_gpu.number_of_particles +
-                       threads_per_block * blocks_per_grid_y - 1) /
-                      (threads_per_block * blocks_per_grid_y);
-  dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  int blocks_per_grid_x = (lbpar_gpu.number_of_particles +
+                           threads_per_block * blocks_per_grid_y - 1) /
+                          (threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(ek_spread_particle_force, dim_grid, threads_per_block,
              gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),

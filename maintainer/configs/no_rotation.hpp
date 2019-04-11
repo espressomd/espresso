@@ -70,7 +70,7 @@
 #define SMOOTH_STEP
 #define HERTZIAN
 #define SOFT_SPHERE
-#define INTER_RF
+
 #define WCA
 
 #ifdef P3M

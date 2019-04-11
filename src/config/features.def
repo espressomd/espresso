@@ -34,11 +34,9 @@ ROTATIONAL_INERTIA              implies ROTATION
 /* Electrostatics */
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
-INTER_RF                        implies ELECTROSTATICS
 MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
 EWALD_GPU                       requires CUDA and ELECTROSTATICS
 _P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
-
 
 /* Magnetostatics */
 DIPOLES                         implies ROTATION
@@ -145,7 +143,6 @@ GRID_DEBUG
 VERLET_DEBUG
 PARTICLE_DEBUG
 P3M_DEBUG
-FFT_DEBUG
 RANDOM_DEBUG
 FORCE_DEBUG
 THERMO_DEBUG

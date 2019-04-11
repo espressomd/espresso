@@ -37,7 +37,7 @@ void activate_dipolar_barnes_hut(float epssq, float itolsq) {
   forceActors.push_back(dipolarBarnesHut);
   energyActors.push_back(dipolarBarnesHut);
 
-  coulomb.Dmethod = DIPOLAR_BH_GPU;
+  dipole.method = DIPOLAR_BH_GPU;
 }
 
 void deactivate_dipolar_barnes_hut() {
