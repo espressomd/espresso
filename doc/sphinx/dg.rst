@@ -119,60 +119,6 @@ Testsuite
   in the top build directory.
 
 
-.. _Documentation:
-
-Documentation
-=============
-
-The documentation of |es| consists of four parts:
-
-  -  The users' guide and developers' guide are located in :file:`doc/sphinx`, and make use of the Sphinx Python package
-  -  In-code documentation for the Python interface is located in the various files in src/python/espressomd and also makes use of the Sphinx Python package. We make use of the napoleon extension and use the NumPy documentation style.
-  -  In-code documentation of the C++ core is located in the .cpp and .hpp files in :file:`/src/core` and its sub-directories and makes use of Doxygen.
-
-Doxygen Code Documentation
---------------------------
-
-The documentation of each function should contain a short description,
-if necessary a more detailed description and a description for the
-return value and parameters.
-
-Look at the documentation of existing files and functions to get a
-feeling how it should be!
-
-Doxygen is able to understand simple LaTeX and HTML commands as well as
-some special command in order to give the documentation a nice structure
-and to make it more readable. In the following list you find a short
-description of the most common commands we need:
-
--  | ``\anchor`` *name* *description*
-   | Create an anchor to which you can refer using the ``\ref`` command.
-
--  | ``\ref`` *name* ``["``\ *text*\ ``"]``
-   | Insert a link to another object in the documentation (*e.g.*\ an
-     anchor).
-
--  | ``<a href="http://www.your_url.html">title</a>``
-   | Link to an external HTML source.
-
--  | ``\file`` *name* *description*
-   | Special anchor for a file.
-
--  | ``\image html`` *image*
-   | Include a picture. The picture file should reside in the subdir
-     ``doc/doxygen/figs``. Do not use the HTML ``<img>``-tag to include
-     pictures, as doxygen_ will not copy the pictures into the
-     documentation.
-
--  | ``<ul> <li>List entry 1</li> <li>List entry 2</li></ul>``
-   | Creates a list in the documentation.
-
--  | ``\param`` *name* *description*
-   | Document the parameter of a function.
-
--  | ``\return`` *description*
-   | Document the return value of a function.
-
 .. _Programmers's Guide:
 
 
