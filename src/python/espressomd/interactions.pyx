@@ -3304,6 +3304,71 @@ ELSE:
     class OifOutDirection(BondedInteractionNotDefined):
         name = "OIF_OUT_DIRECTION"
 
+class QuarticBond(BondedInteraction):
+
+    def __init__(self, *args, **kwargs):
+        """
+        QuarticBond initializer. Used to instantiate a QuarticBond identifier
+        with a given set of parameters.
+
+        Parameters
+        ----------
+        k0 : :obj:`float`
+            Specifies the magnitude of the bond interaction.
+        k1 : :obj:`float`
+            Specifies the magnitude of the bond interaction.
+        r : :obj:`float`
+            Specifies the magnitude of the bond interaction.
+        r_cut : :obj:`float`
+            Specifies the maximum stretch and compression length of the
+            bond.
+        """
+        super(QuarticBond, self).__init__(*args, **kwargs)
+
+    def type_number(self):
+        return BONDED_IA_QUARTIC
+
+    def type_name(self):
+        """Name of interaction type.
+
+        """
+        return "QUARTIC"
+
+    def valid_keys(self):
+        """All parameters that can be set.
+
+        """
+        return "k0", "k1", "r", "r_cut"
+
+    def required_keys(self):
+        """Parameters that have to be set.
+
+        """
+        return "k0", "k1", "r", "r_cut"
+
+    def set_default_params(self):
+        """Sets parameters that are not required to their default value.
+
+        """
+        """Sets parameters that are not required to their default value.
+
+        """
+        self._params = {"k0": 0.,
+                        "k1": 0.,
+                        "r": 0.,
+                        "r_cut": 0.}
+
+    def _get_params_from_es_core(self):
+        return \
+            {"k0": bonded_ia_params[self._bond_id].p.quartic.k0,
+             "k1": bonded_ia_params[self._bond_id].p.quartic.k1,
+             "r": bonded_ia_params[self._bond_id].p.quartic.r,
+             "r_cut": bonded_ia_params[self._bond_id].p.quartic.r_cut}
+
+    def _set_params_in_es_core(self):
+        quartic_set_params(
+            self._bond_id, self._params["k0"], self._params["k1"], self._params["r"], self._params["r_cut"])
+
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
     int(BONDED_IA_HARMONIC): HarmonicBond,
@@ -3321,7 +3386,8 @@ bonded_interaction_classes = {
     int(BONDED_IA_IBM_TRIEL): IBM_Triel,
     int(BONDED_IA_IBM_TRIBEND): IBM_Tribend,
     int(BONDED_IA_IBM_VOLUME_CONSERVATION): IBM_VolCons,
-    int(BONDED_IA_THERMALIZED_DIST): ThermalizedBond
+    int(BONDED_IA_THERMALIZED_DIST): ThermalizedBond,
+    int(BONDED_IA_QUARTIC) : QuarticBond
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ
