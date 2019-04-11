@@ -63,21 +63,19 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         kappa = rf_params['kappa']
         r_cut = rf_params['r_cut']
         # prefactor calculation
-        B = (2 * (epsilon1 - epsilon2) * (1 + kappa * r_cut) - \
-                 epsilon2 * kappa * kappa * r_cut * r_cut) / \
-                ((epsilon1 + 2 * epsilon2) * (1 + kappa * r_cut) + \
-                 epsilon2 * kappa * kappa * r_cut * r_cut)
+        B = (2 * (epsilon1 - epsilon2) * (1 + kappa * r_cut) -
+             epsilon2 * kappa * kappa * r_cut * r_cut) / \
+            ((epsilon1 + 2 * epsilon2) * (1 + kappa * r_cut) +
+             epsilon2 * kappa * kappa * r_cut * r_cut)
         offset = (1. - B / 2.) / r_cut
         u = np.zeros_like(r)
         
         # r<r_cut
         i = np.where(r < rf_params['r_cut'])[0]
         u[i] = rf_params['prefactor'] * kT * q1 * q2 * \
-        ((1./r[i] - B * np.square(r[i]) / (2. * r_cut**3)) - offset)
+            ((1. / r[i] - B * np.square(r[i]) / (2. * r_cut**3)) - offset)
         return u
         
-        
-
     @ut.skipIf(not espressomd.has_features(["P3M"]),
                "Features not available, skipping test!")
     def test_p3m(self):
@@ -126,7 +124,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             prefactor=dh_params['prefactor'],
             kappa=dh_params['kappa'],
             r_cut=dh_params['r_cut'])
-        
         
         self.system.actors.add(dh)
         dr = 0.001

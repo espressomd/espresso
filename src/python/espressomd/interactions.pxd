@@ -489,7 +489,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         IBM_VolCons_Parameters ibmVolConsParameters
         Quartic_bond_parameters quartic
 
-
     cdef struct Bonded_ia_parameters:
         int type
         int num

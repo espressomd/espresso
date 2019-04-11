@@ -3304,6 +3304,7 @@ ELSE:
     class OifOutDirection(BondedInteractionNotDefined):
         name = "OIF_OUT_DIRECTION"
 
+
 class QuarticBond(BondedInteraction):
 
     def __init__(self, *args, **kwargs):
@@ -3387,7 +3388,7 @@ bonded_interaction_classes = {
     int(BONDED_IA_IBM_TRIBEND): IBM_Tribend,
     int(BONDED_IA_IBM_VOLUME_CONSERVATION): IBM_VolCons,
     int(BONDED_IA_THERMALIZED_DIST): ThermalizedBond,
-    int(BONDED_IA_QUARTIC) : QuarticBond
+    int(BONDED_IA_QUARTIC): QuarticBond
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ

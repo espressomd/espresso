@@ -133,7 +133,6 @@ IF ELECTROSTATICS:
     cdef class RF(ElectrostaticInteraction):
             """
             Solve electrostatics in the Reaction-Field framework
-            M. Neumann, J. Chem. Phys 82, 5663 (1985)
 
             Parameters
             ----------
@@ -142,9 +141,9 @@ IF ELECTROSTATICS:
             kappa : :obj:`float`
                 Inverse Debye screening length.
             epsilon1 : :obj:`float`
-                ???
+                interior dielectric constant
             epsilon2 : :obj:`float`
-                ???
+                exterior dielectric constant
             r_cut : :obj:`float`
                 Cut off radius for this interaction.
 
@@ -157,9 +156,11 @@ IF ELECTROSTATICS:
                 if (self._params["kappa"] < 0):
                     raise ValueError("kappa should be a non-negative double")
                 if (self._params["epsilon1"] < 0):
-                                    raise ValueError("epsilon1 should be a non-negative double")
+                                    raise ValueError(
+                                        "epsilon1 should be a non-negative double")
                 if (self._params["epsilon2"] < 0):
-                                    raise ValueError("epsilon2 should be a non-negative double")
+                                    raise ValueError(
+                                        "epsilon2 should be a non-negative double")
                 if (self._params["r_cut"] < 0):
                     raise ValueError("r_cut should be a non-negative double")
 
@@ -171,7 +172,11 @@ IF ELECTROSTATICS:
 
             def _set_params_in_es_core(self):
                 set_prefactor(self._params["prefactor"])
-                rf_set_params(self._params["kappa"], self._params["epsilon1"], self._params["epsilon2"], self._params["r_cut"])
+                rf_set_params(
+                    self._params["kappa"],
+                    self._params["epsilon1"],
+                    self._params["epsilon2"],
+                    self._params["r_cut"])
 
             def _get_params_from_es_core(self):
                 params = {}
