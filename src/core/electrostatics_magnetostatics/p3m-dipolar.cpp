@@ -222,7 +222,7 @@ static double dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3]);
 /*
 
 // Do the sum over k<>0 where k={kx,ky,kz} with kx,ky,kz INTEGERS, of
-// exp(-PI**2*k**2/alpha**2/L**2)
+// exp(-Utils::pi()**2*k**2/alpha**2/L**2)
 static double dp3m_sumi1(double alpha_L){
        int k2,kx,ky,kz,kx2,ky2,limit=60;
        double suma,alpha_L2;
@@ -230,7 +230,7 @@ static double dp3m_sumi1(double alpha_L){
        alpha_L2= alpha_L* alpha_L;
 
        //fprintf(stderr,"alpha_L=%le\n",alpha_L);
-       //fprintf(stderr,"PI=%le\n",PI);
+       //fprintf(stderr,"Utils::pi()=%le\n",Utils::pi());
 
 
        suma=0.0;
@@ -240,7 +240,7 @@ static double dp3m_sumi1(double alpha_L){
          ky2=ky*ky;
        for(kz=-limit;kz<=limit;kz++){
            k2=kx2+ky2+kz*kz;
-           suma+=exp(-PI*PI*k2/(alpha_L*alpha_L));
+           suma+=exp(-Utils::pi()*Utils::pi()*k2/(alpha_L*alpha_L));
        }}}
        suma-=1; //It's easier to subtract the term k=0 later than put an if
 inside the loops
@@ -481,7 +481,7 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
 
   MPI_Reduce(&node_phi, &phi, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 
-  phi *= PI / 3. / box_l / pow(mesh, 3.0);
+  phi *= Utils::pi() / 3. / box_l / pow(mesh, 3.0);
 
   return phi;
 }
@@ -968,7 +968,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
           }
         }
       }
-      node_k_space_energy_dip *= dipole_prefac * PI / box_l[0];
+      node_k_space_energy_dip *= dipole_prefac * Utils::pi() / box_l[0];
       MPI_Reduce(&node_k_space_energy_dip, &k_space_energy_dip, 1, MPI_DOUBLE,
                  MPI_SUM, 0, comm_cart);
 
@@ -987,7 +987,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         k_space_energy_dip -=
             dipole.prefactor *
             (dp3m.sum_mu2 * 2 * pow(dp3m.params.alpha_L * box_l_i[0], 3) *
-             wupii / 3.0);
+             Utils::sqrt_pi_i() / 3.0);
 
         double volume = box_l[0] * box_l[1] * box_l[2];
         k_space_energy_dip += dipole.prefactor * dp3m.energy_correction /
@@ -1073,7 +1073,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         /* redistribute force component mesh */
         dp3m_spread_force_grid(dp3m.rs_mesh);
         /* Assign force component from mesh to particle */
-        P3M_assign_torques(dipole_prefac * (2 * PI / box_l[0]), d_rs);
+        P3M_assign_torques(dipole_prefac * (2 * Utils::pi() / box_l[0]), d_rs);
       }
       P3M_TRACE(fprintf(stderr, "%d: done torque calculation.\n", this_node));
 #endif /*if def ROTATION */
@@ -1158,7 +1158,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[1]);
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[2]);
         /* Assign force component from mesh to particle */
-        dp3m_assign_forces_dip(dipole_prefac * pow(2 * PI / box_l[0], 2), d_rs);
+        dp3m_assign_forces_dip(
+            dipole_prefac * pow(2 * Utils::pi() / box_l[0], 2), d_rs);
       }
 
       P3M_TRACE(fprintf(stderr,
@@ -1450,7 +1451,7 @@ double dp3m_perform_aliasing_sums_force(const int n[3], double nominator[1]) {
   nominator[0] = 0.0;
 
   f1 = 1.0 / (double)dp3m.params.mesh[0];
-  f2 = Utils::sqr(PI / (dp3m.params.alpha_L));
+  f2 = Utils::sqr(Utils::pi() / (dp3m.params.alpha_L));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = dp3m.meshift[n[0]] + dp3m.params.mesh[0] * mx;
@@ -1538,7 +1539,7 @@ double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]) {
   nominator[0] = 0.0;
 
   f1 = 1.0 / (double)dp3m.params.mesh[0];
-  f2 = Utils::sqr(PI / (dp3m.params.alpha_L));
+  f2 = Utils::sqr(Utils::pi() / (dp3m.params.alpha_L));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = dp3m.meshift[n[0]] + dp3m.params.mesh[0] * mx;
@@ -2183,7 +2184,8 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
             he_q += d;
         }
 
-  return 8. * PI * PI / 3. * sum_q2 * sqrt(he_q / (double)n_c_part) /
+  return 8. * Utils::pi() * Utils::pi() / 3. * sum_q2 *
+         sqrt(he_q / (double)n_c_part) /
          (box_size * box_size * box_size * box_size);
 }
 
@@ -2196,7 +2198,7 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
 
   double ex, ex2, nm2, U2, factor1;
 
-  factor1 = Utils::sqr(PI * alpha_L_i);
+  factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
 
   *alias1 = *alias2 = 0.0;
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
@@ -2598,9 +2600,10 @@ void dp3m_compute_constants_energy_dipolar() {
   P3M_TRACE(
       fprintf(stderr, "%d: Average Dipolar Energy = %lf.\n", this_node, Ukp3m));
 
-  Eself = -(2 * pow(dp3m.params.alpha_L, 3) * wupii / 3.0);
+  Eself = -(2 * pow(dp3m.params.alpha_L, 3) * Utils::sqrt_pi_i() / 3.0);
 
-  dp3m.energy_correction = -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * PI / 3.);
+  dp3m.energy_correction =
+      -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * Utils::pi() / 3.);
 }
 
 /*****************************************************************************/
