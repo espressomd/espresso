@@ -351,9 +351,10 @@ int lbboundary_get_force(void *lbb, double *f) {
 #if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
     lb_gpu_get_boundary_forces(forces.data());
 
-    f[0] = -forces[3 * no + 0];
-    f[1] = -forces[3 * no + 1];
-    f[2] = -forces[3 * no + 2];
+    auto factor = pow(lbpar_gpu.agrid, 2) / lbpar_gpu.rho[0];
+    f[0] = -forces[3 * no + 0] * factor;
+    f[1] = -forces[3 * no + 1] * factor;
+    f[2] = -forces[3 * no + 2] * factor;
 #else
     return ES_ERROR;
 #endif
