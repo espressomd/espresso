@@ -41,7 +41,6 @@ filename = "testdata.mpiio"
 exts = ["head", "pref", "id", "type", "pos", "vel", "boff", "bond"]
 filenames = [filename + "." + ext for ext in exts]
 
-
 def clean_files():
     for f in filenames:
         if os.path.isfile(f):
@@ -109,6 +108,11 @@ class MPIIOTest(ut.TestCase):
         for a, b in zip(v, w):
             self.assertEqual(a, b)
 
+    def check_files_exist(self):
+        """Checks if all necessary files have been written."""
+        for fn in filenames:
+            self.assertTrue(os.path.isfile(fn))
+
     def check_sample_system(self):
         """Checks the particles in the ESPResSo system "self.s" against the
         true values in "self.test_particles"."""
@@ -130,6 +134,8 @@ class MPIIOTest(ut.TestCase):
         self.setup_sample_system()
         espressomd.io.mpiio.mpiio.write(
             filename, types=True, positions=True, velocities=True, bonds=True)
+        
+        self.check_files_exist()
 
         self.s.part.clear()  # Clear to be on the safe side
         espressomd.io.mpiio.mpiio.read(
