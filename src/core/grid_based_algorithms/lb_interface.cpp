@@ -194,14 +194,16 @@ void lb_lbfluid_update() {
 
 void lb_lbfluid_propagate() {
   lb_lbfluid_update();
-  if (lattice_switch == ActiveLB::GPU) {
+  if (lb_lbfluid_get_kT() > 0.0) {
+    if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
-    rng_counter_fluid_gpu->increment();
+      rng_counter_fluid_gpu->increment();
 #endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+    } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
-    rng_counter_fluid->increment();
+      rng_counter_fluid->increment();
 #endif
+    }
   }
 }
 

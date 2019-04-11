@@ -70,7 +70,8 @@ uint64_t lb_lbcoupling_get_rng_state() {
 void lb_lbcoupling_set_rng_state(uint64_t counter) {
   if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
-    lb_particle_coupling.rng_counter_coupling = std::make_unique<Utils::Counter<uint64_t>>(counter);
+    lb_particle_coupling.rng_counter_coupling =
+        std::make_unique<Utils::Counter<uint64_t>>(counter);
     mpi_bcast_lb_particle_coupling();
 #endif
   } else if (lattice_switch == ActiveLB::GPU) {
@@ -265,6 +266,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 }
 
 void lb_lbcoupling_propagate() {
-  lb_particle_coupling.rng_counter_coupling->increment();
+  if (lb_lbfluid_get_kT() > 0.0) {
+    lb_particle_coupling.rng_counter_coupling->increment();
+  }
 }
 #endif

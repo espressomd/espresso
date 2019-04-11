@@ -17,7 +17,7 @@ private:
     ar &m_initial;
   }
   // Needed for serialization.
-  Counter () noexcept { Counter(T(0)); }
+  Counter() noexcept { Counter(T(0)); }
 
 public:
   explicit Counter(T initial_value) noexcept
