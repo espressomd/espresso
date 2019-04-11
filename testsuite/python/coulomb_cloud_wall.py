@@ -33,6 +33,7 @@ import tests_common
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
            "Features not available, skipping test!")
 class CoulombCloudWall(ut.TestCase):
+
     """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft
        electrostatic forces and energy against stored data.
 
