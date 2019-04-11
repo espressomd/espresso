@@ -47,7 +47,7 @@ cs.set_domain_decomposition()
 cs.set_domain_decomposition(True)
 cs.set_domain_decomposition(use_verlet_lists=True)
 
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.time_step = 0.01
 
 

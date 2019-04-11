@@ -40,7 +40,7 @@ system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.time_step = 0.01
 skin = 10.0
 system.cell_system.skin = skin
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 ### Particle types
 type_centre = 0

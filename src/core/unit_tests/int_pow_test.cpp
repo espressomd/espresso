@@ -24,11 +24,19 @@
 #include <boost/test/unit_test.hpp>
 
 #include "utils/math/int_pow.hpp"
+#include "utils/math/sqr.hpp"
 using Utils::int_pow;
+using Utils::sqr;
 
 #include <limits>
 
 auto const eps = std::numeric_limits<double>::epsilon();
+
+/* Check that it can be used in constexpr context */
+static_assert((int_pow<11>(2.), true), "");
+
+/* Check that it can be used in constexpr context */
+static_assert((sqr(2.), true), "");
 
 BOOST_AUTO_TEST_CASE(even) {
   const double x = 3.14159;
@@ -44,4 +52,8 @@ BOOST_AUTO_TEST_CASE(odd) {
   BOOST_CHECK(x == int_pow<1>(x));
   BOOST_CHECK_CLOSE((x * x) * x, int_pow<3>(x), eps);
   BOOST_CHECK_CLOSE((x * x) * (x * x) * x, int_pow<5>(x), 100. * eps);
+}
+
+BOOST_AUTO_TEST_CASE(square) {
+  BOOST_CHECK_EQUAL(int_pow<2>(3.1415), sqr(3.1415));
 }

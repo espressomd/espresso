@@ -36,7 +36,7 @@ system.part.add(pos=(0, 0, 0), v=(1, 2, 3))
 system.time_step = 0.01
 system.cell_system.skin = 0
 system.cell_system.set_n_square(use_verlet_lists=False)
-system.thermostat.set_langevin(kT=1, gamma=10)
+system.thermostat.set_langevin(kT=1, gamma=10, seed=42)
 system.integrator.run(1000)
 
 # Initialize observable for a particle with id 0

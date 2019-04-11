@@ -45,7 +45,7 @@ N = 50
 for i in range(N):
     system.part.add(pos=[0, 0, 0])
 
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # Callback for particle positions/velocities
 

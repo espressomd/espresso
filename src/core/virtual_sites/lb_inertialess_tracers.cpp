@@ -37,9 +37,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void CoupleIBMParticleToFluid(Particle *p);
 void ParticleVelocitiesFromLB_CPU();
-bool IsHalo(const int indexCheck);
-void GetIBMInterpolatedVelocity(double *p, double *const v,
-                                double *const forceAdded);
+bool IsHalo(int indexCheck);
+void GetIBMInterpolatedVelocity(double const *p, double *v, double *forceAdded);
 
 // ***** Internal variables ******
 
@@ -150,7 +149,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
         // Check if the particle might have crossed a box border (criterion see
         // e-mail Axel 28.8.2014)
         // if possible resort_particles = 1
-        const double dist2 = distance2(p[j].r.p, p[j].l.p_old);
+        const double dist2 = (p[j].r.p - p[j].l.p_old).norm2();
         if (dist2 > skin2) {
           set_resort_particles(Cells::RESORT_LOCAL);
         }
@@ -178,7 +177,8 @@ void CoupleIBMParticleToFluid(Particle *p) {
   // Get indices and weights of affected nodes using discrete delta function
   Vector<std::size_t, 8> node_index{};
   Vector6d delta{};
-  lblattice.map_position_to_lattice(p->r.p, node_index, delta);
+  lblattice.map_position_to_lattice(p->r.p, node_index, delta, my_left,
+                                    local_box_l);
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {
@@ -208,7 +208,7 @@ Very similar to the velocity interpolation done in standard Espresso, except
 that we add the f/2 contribution - only for CPU
 *******************/
 
-void GetIBMInterpolatedVelocity(double *p, double *const v,
+void GetIBMInterpolatedVelocity(double const *p, double *const v,
                                 double *const forceAdded) {
   Lattice::index_t index;
   double local_rho, local_j[3], interpolated_u[3];
@@ -233,7 +233,8 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
    and the relative position of the particle in this cell */
   Vector<std::size_t, 8> node_index{};
   Vector6d delta{};
-  lblattice.map_position_to_lattice(pos, node_index, delta);
+  lblattice.map_position_to_lattice(pos, node_index, delta, my_left,
+                                    local_box_l);
 
   /* calculate fluid velocity at particle's position
    this is done by linear interpolation

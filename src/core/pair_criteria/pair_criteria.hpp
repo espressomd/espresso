@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define PAIR_CRITERIA_HPP
 
 #include "energy_inline.hpp"
-#include "grid.hpp"
 #include "particle_data.hpp"
 #include <stdexcept>
 
@@ -40,7 +39,7 @@ public:
     const bool res = decide(p1, p2);
     return res;
   }
-  virtual ~PairCriterion() {}
+  virtual ~PairCriterion() = default;
 };
 
 /** @brief True if two particles are closer than a cut off distance, respecting

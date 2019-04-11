@@ -32,7 +32,11 @@
 #include "particle_data.hpp"
 #include "utils.hpp"
 
-/// set the parameters for the harmonic potential
+/** set the parameters for the harmonic potential
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int harmonic_set_params(int bond_type, double k, double r, double r_cut);
 
 /** Computes the harmonic bond length force.

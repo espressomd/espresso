@@ -37,7 +37,7 @@ system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.seed = system.seed
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(

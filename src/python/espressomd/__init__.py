@@ -24,6 +24,7 @@ import espressomd._init
 
 from espressomd.system import System
 from espressomd.code_info import features
+from espressomd.cuda_init import gpu_available
 
 
 class FeaturesError(Exception):

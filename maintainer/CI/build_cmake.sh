@@ -57,6 +57,7 @@ function end {
 [ -z "$make_check" ] && make_check="true"
 [ -z "$check_odd_only" ] && check_odd_only="false"
 [ -z "$check_gpu_only" ] && check_gpu_only="false"
+[ -z "$check_skip_long" ] && check_skip_long="false"
 [ -z "$check_tutorials" ] && check_tutorials="false"
 [ -z "$check_samples" ] && check_samples="false"
 [ -z "$python_version" ] && python_version="2"
@@ -64,6 +65,8 @@ function end {
 [ -z "$build_type" ] && build_type="Debug"
 [ -z "$with_ccache" ] && with_ccache="false"
 [ -z "$test_timeout" ] && test_timeout="300"
+[ -z "$hide_gpu" ] && hide_gpu="false" 
+
 
 # If there are no user-provided flags they
 # are added according to with_coverage.
@@ -89,6 +92,12 @@ cmake_params="$cmake_params -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="$cmake_params -DTEST_TIMEOUT=$test_timeout"
 if $with_ccache; then
   cmake_params="$cmake_params -DWITH_CCACHE=ON"
+fi
+
+if [[ "$hide_gpu" == "true" ]]
+then
+  echo Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES
+  export CUDA_VISIBLE_DEVICES=
 fi
 
 if $insource; then
@@ -246,6 +255,8 @@ if $make_check; then
             make -j${build_procs} check_python_parallel_odd $make_params || exit 1
         elif $check_gpu_only; then
             make -j${build_procs} check_python_gpu $make_params || exit 1
+        elif $check_skip_long; then
+            make -j${build_procs} check_python_skip_long $make_params || exit 1
         else
             make -j${build_procs} check_python $make_params || exit 1
         fi

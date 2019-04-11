@@ -56,7 +56,7 @@ class Checkpoint(object):
             raise ValueError("Invalid checkpoint path.")
 
         self.checkpoint_objects = []
-        self. checkpoint_signals = []
+        self.checkpoint_signals = []
         frm = inspect.stack()[1]
         self.calling_module = inspect.getmodule(frm[0])
 

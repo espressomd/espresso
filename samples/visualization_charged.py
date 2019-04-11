@@ -125,6 +125,6 @@ print("Tune p3m")
 p3m = electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-1)
 system.actors.add(p3m)
 
-system.thermostat.set_langevin(kT=temperature, gamma=2.0)
+system.thermostat.set_langevin(kT=temperature, gamma=2.0, seed=42)
 
 visualizer.run(1)

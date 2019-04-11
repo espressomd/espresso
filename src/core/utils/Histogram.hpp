@@ -39,8 +39,8 @@ inline size_t calculate_bin_index(double value, double bin_size,
 
 /**
  * \brief Calculate the bin sizes.
- * \param limits: contains min/max values for each dimension.
- * \param n_bins: number of bins for each dimension.
+ * \param limits  contains min/max values for each dimension.
+ * \param n_bins  number of bins for each dimension.
  * \return The bin sizes for each dimension.
  */
 template <typename T, size_t Dims>
@@ -56,8 +56,8 @@ calc_bin_sizes(std::array<std::pair<T, T>, Dims> const &limits,
 
 /*
  * \brief Check if data is within limits.
- * \param data: data value to check.
- * \param limits: the min/max values.
+ * \param data  data value to check.
+ * \param limits  the min/max values.
  */
 template <typename T, size_t Dims>
 inline bool check_limits(Span<const T> data,
@@ -107,10 +107,10 @@ protected:
 
 /**
  * \brief Histogram constructor.
- * \param n_bins: the number of bins in each histogram dimension.
- * \param n_dims_data: the number of dimensions the data has (e.g. 3 for
+ * \param n_bins  the number of bins in each histogram dimension.
+ * \param n_dims_data  the number of dimensions the data has (e.g. 3 for
  *        vector field).
- * \param limits: the minimum/maximum data values to consider for the
+ * \param limits  the minimum/maximum data values to consider for the
  *        histogram.
  */
 template <typename T, size_t Dims>
@@ -133,7 +133,7 @@ Histogram<T, Dims>::Histogram(std::array<size_t, Dims> n_bins,
 
 /**
  * \brief Add data to the histogram.
- * \param data: vector of single data value with type T.
+ * \param data  vector of single data value with type T.
  *              The size of the given vector has to match the number
  *              of dimensions of the histogram.
  */
@@ -146,10 +146,10 @@ void Histogram<T, Dims>::update(Span<const T> data) {
 
 /**
  * \brief Add data to the histogram.
- * \param data: vector of single data value with type T.
+ * \param data  vector of single data value with type T.
  *              The size of the given vector has to match the number
  *              of dimensions of the histogram.
- * \param weights: m_n_dims_data dimensional weights.
+ * \param weights  m_n_dims_data dimensional weights.
  */
 template <typename T, size_t Dims>
 void Histogram<T, Dims>::update(Span<const T> data, Span<const T> weights) {

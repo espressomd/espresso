@@ -18,37 +18,38 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 /** \file
  *
- *  This file contains functions for handling the system topology.
- *
- *  For more information see topology.hpp
- *   */
+ *  Implementation of \ref reaction_field.hpp
+ */
+#include "reaction_field.hpp"
 
-#include "topology.hpp"
-#include "particle_data.hpp"
+#ifdef ELECTROSTATICS
+#include "communication.hpp"
 
-std::vector<Molecule> topology;
-int topo_part_info_synced = 0;
+Reaction_field_params rf_params{};
 
-void realloc_topology(int size) {
-  topology.resize(size);
-  topo_part_info_synced = 0;
+int rf_set_params(double kappa, double epsilon1, double epsilon2,
+                  double r_cut) {
+  rf_params.kappa = kappa;
+  rf_params.epsilon1 = epsilon1;
+  rf_params.epsilon2 = epsilon2;
+  rf_params.r_cut = r_cut;
+  rf_params.B = (2 * (epsilon1 - epsilon2) * (1 + kappa * r_cut) -
+                 epsilon2 * kappa * kappa * r_cut * r_cut) /
+                ((epsilon1 + 2 * epsilon2) * (1 + kappa * r_cut) +
+                 epsilon2 * kappa * kappa * r_cut * r_cut);
+  if (rf_params.epsilon1 < 0.0)
+    return -1;
+
+  if (rf_params.epsilon2 < 0.0)
+    return -1;
+
+  if (rf_params.r_cut < 0.0)
+    return -2;
+
+  mpi_bcast_coulomb_params();
+
+  return 1;
 }
-
-// Parallel function for synchronising topology and particle data
-void sync_topo_part_info() {
-  for (unsigned molid = 0; molid < topology.size(); molid++) {
-    auto const &mol = topology.at(molid);
-    for (auto const &pid : mol.part) {
-      auto p = local_particles[pid];
-
-      if (p) {
-        p->p.mol_id = molid;
-      }
-    }
-  }
-
-  topo_part_info_synced = 1;
-}
+#endif

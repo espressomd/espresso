@@ -21,9 +21,10 @@
 /** \file
  *  Hook procedures.
  *
- *  Implemetation of initialize.hpp.
+ *  Implemetation of event.hpp.
  */
-#include "initialize.hpp"
+#include "event.hpp"
+
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -31,15 +32,6 @@
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "dpd.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/icc.hpp" /* -iccp3m- */
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/p3m_gpu.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -50,7 +42,6 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbboundaries.hpp"
 #include "metadynamics.hpp"
-#include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
 #include "partCfg_global.hpp"
@@ -67,6 +58,13 @@
 #include "virtual_sites.hpp"
 
 #include "utils/mpi/all_compare.hpp"
+
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+
+#ifdef SCAFACOS
+#include "electrostatics_magnetostatics/scafacos.hpp"
+#endif
 
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
@@ -93,13 +91,6 @@ void on_program_start() {
 
   /* initially go for domain decomposition */
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
-
-#ifdef P3M
-  p3m_pre_init();
-#endif
-#ifdef DP3M
-  dp3m_pre_init();
-#endif
 
 #ifdef LB_GPU
   if (this_node == 0) {
@@ -196,7 +187,7 @@ void on_integration_start() {
     runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
 #endif
 #ifdef DIPOLES
-  if (!Utils::Mpi::all_compare(comm_cart, coulomb.Dmethod))
+  if (!Utils::Mpi::all_compare(comm_cart, dipole.method))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
 #endif
   check_global_consistency();
@@ -215,19 +206,9 @@ void on_observable_calc() {
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
-    switch (coulomb.method) {
-#ifdef P3M
-    case COULOMB_ELC_P3M:
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M:
-      EVENT_TRACE(
-          fprintf(stderr, "%d: p3m_count_charged_particles\n", this_node));
-      p3m_count_charged_particles();
-      break;
-#endif
-    default:
-      break;
-    }
+
+    Coulomb::on_observable_calc();
+
     reinit_electrostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
@@ -235,17 +216,9 @@ void on_observable_calc() {
 #ifdef DIPOLES
   if (reinit_magnetostatics) {
     EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
-    switch (coulomb.Dmethod) {
-#ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-    // fall through
-    case DIPOLAR_P3M:
-      dp3m_count_magnetic_particles();
-      break;
-#endif
-    default:
-      break;
-    }
+
+    Dipole::on_observable_calc();
+
     reinit_magnetostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
@@ -292,45 +265,11 @@ void on_coulomb_change() {
   invalidate_obs();
 
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_DH:
-    break;
-#ifdef P3M
-#ifdef CUDA
-  case COULOMB_P3M_GPU:
-    p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
-    break;
-#endif
-  case COULOMB_ELC_P3M:
-    ELC_init();
-  // fall through
-  case COULOMB_P3M:
-    p3m_init();
-    break;
-#endif
-  case COULOMB_MMM1D:
-    MMM1D_init();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
-  default:
-    break;
-  }
+  Coulomb::on_coulomb_change();
 #endif /* ELECTROSTATICS */
 
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  // fall through
-  case DIPOLAR_P3M:
-    dp3m_init();
-    break;
-#endif
-  default:
-    break;
-  }
+  Dipole::on_coulomb_change();
 #endif /* ifdef DIPOLES */
 
   /* all Coulomb methods have a short range part, aka near field
@@ -374,18 +313,7 @@ void on_lbboundary_change() {
 void on_resort_particles() {
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_on_resort_particles();
-    break;
-#endif
-  case COULOMB_MMM2D:
-    MMM2D_on_resort_particles();
-    break;
-  default:
-    break;
-  }
+  Coulomb::on_resort_particles();
 #endif /* ifdef ELECTROSTATICS */
 
   /* DIPOLAR interactions so far don't need this */
@@ -404,49 +332,11 @@ void on_boxl_change() {
 
 /* Now give methods a chance to react to the change in box length */
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_init();
-  // fall through
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    p3m_scaleby_box_l();
-    break;
-#endif
-  case COULOMB_MMM1D:
-    MMM1D_init();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
-#ifdef SCAFACOS
-  case COULOMB_SCAFACOS:
-    Scafacos::update_system_params();
-    break;
-#endif
-  default:
-    break;
-  }
+  Coulomb::on_boxl_change();
 #endif
 
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  // fall through
-  case DIPOLAR_P3M:
-    dp3m_scaleby_box_l();
-    break;
-#endif
-#ifdef SCAFACOS
-  case DIPOLAR_SCAFACOS:
-    Scafacos::update_system_params();
-    break;
-#endif
-  default:
-    break;
-  }
+  Dipole::on_boxl_change();
 #endif
 
 #ifdef LB
@@ -466,42 +356,11 @@ void on_cell_structure_change() {
    have separate, faster methods, as this might happen frequently
    in a NpT simulation. */
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_DH:
-    break;
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_init();
-  // fall through
-  case COULOMB_P3M:
-    p3m_init();
-    break;
-  case COULOMB_P3M_GPU:
-    break;
-#endif
-  case COULOMB_MMM1D:
-    MMM1D_init();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
-  default:
-    break;
-  }
+  Coulomb::init();
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  // fall through
-  case DIPOLAR_P3M:
-    dp3m_init();
-    break;
-#endif
-  default:
-    break;
-  }
+  Dipole::init();
 #endif /* ifdef DIPOLES */
 
 #ifdef LB
@@ -538,7 +397,7 @@ void on_parameter_change(int field) {
     }
 #endif
 #ifdef DIPOLES
-    if (coulomb.Dmethod == DIPOLAR_SCAFACOS) {
+    if (dipole.method == DIPOLAR_SCAFACOS) {
       Scafacos::update_system_params();
     }
 #endif

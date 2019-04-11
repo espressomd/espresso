@@ -188,14 +188,14 @@ cdef class mayaviLive(object):
 
             # Iterate over bonds
             k = 0
-            while k < p.bl.n:
+            while k < p.bl.size():
                 # Bond type
-                t = p.bl.e[k]
+                t = p.bl[k]
                 k += 1
                 # Iterate over bond partners and store each connection
                 for l in range(bonded_ia_params[t].num):
                     bonds.push_back(i)
-                    bonds.push_back(p.bl.e[k])
+                    bonds.push_back(p.bl[k])
                     bonds.push_back(t)
                     k += 1
             j += 1

@@ -258,7 +258,7 @@ def main():
 
     ball.ext_force = impulse * np.array([math.sin(angle), 0, math.cos(angle)])
     ball.fix = [1, 1, 1]
-    system.thermostat.set_langevin(kT=0, gamma=0.8)
+    system.thermostat.set_langevin(kT=0, gamma=0.8, seed=42)
 
     cleared_balls = [0, 0]
     while True:

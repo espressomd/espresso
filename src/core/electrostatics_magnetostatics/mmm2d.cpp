@@ -27,11 +27,11 @@
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
 #include "mmm-common.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
 #include "utils.hpp"
@@ -339,22 +339,23 @@ inline void clear_vec(double *pdc, int size) {
 }
 
 /** pdc_d = pdc_s */
-inline void copy_vec(double *pdc_d, double *pdc_s, int size) {
+inline void copy_vec(double *pdc_d, double const *pdc_s, int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s[i];
 }
 
 /** pdc_d = pdc_s1 + pdc_s2 */
-inline void add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size) {
+inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
+                    int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
 
 /** pdc_d = scale*pdc_s1 + pdc_s2 */
-inline void addscale_vec(double *pdc_d, double scale, double *pdc_s1,
-                         double *pdc_s2, int size) {
+inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
+                         double const *pdc_s2, int size) {
   int i;
   for (i = 0; i < size; i++)
     pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
@@ -581,9 +582,10 @@ static void add_z_force() {
 
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 
-    field_induced = gbl_dm_z * coulomb.prefactor * 4 * M_PI * ux * uy * uz;
-    field_applied = mmm2d_params.pot_diff * uz;
-    field_tot = field_induced + field_applied;
+    coulomb.field_induced =
+        gbl_dm_z * coulomb.prefactor * 4 * M_PI * ux * uy * uz;
+    coulomb.field_applied = mmm2d_params.pot_diff * uz;
+    field_tot = coulomb.field_induced + coulomb.field_applied;
   }
 
   for (int c = 1; c <= n_layers; c++) {
@@ -1397,10 +1399,9 @@ static void prepareBernoulliNumbers(int bon_order) {
   }
 }
 
-void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
+void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl2,
                                   double dl, double force[3]) {
   double F[3];
-  double pref = coulomb.prefactor * charge_factor;
   double z2 = d[2] * d[2];
   double rho2 = d[1] * d[1] + z2;
   int i;
@@ -1568,7 +1569,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double d[3], double dl2,
     force[i] += pref * F[i];
 }
 
-inline double calc_mmm2d_copy_pair_energy(double d[3]) {
+inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
   double eng;
   double z2 = d[2] * d[2];
   double rho2 = d[1] * d[1] + z2;
@@ -1674,14 +1675,12 @@ inline double calc_mmm2d_copy_pair_energy(double d[3]) {
     cx = d[0] - box_l[0];
     rinv = sqrt(1.0 / (cx * cx + rho2));
     eng += rinv;
-
-    // fprintf(stderr, "explicit energy %f %f %f %f\n", d[0], d[1], d[2], eng);
   }
 
   return eng;
 }
 
-double mmm2d_coulomb_pair_energy(double charge_factor, double dv[3], double d2,
+double mmm2d_coulomb_pair_energy(double charge_factor, double dv[3], double,
                                  double d) {
   double eng, pref = coulomb.prefactor * charge_factor;
   if (pref != 0.0) {

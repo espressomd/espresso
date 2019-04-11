@@ -21,6 +21,7 @@ from cython.operator cimport dereference
 include "myconfig.pxi"
 from espressomd cimport actors
 from . import actors
+cimport grid
 cimport globals
 import numpy as np
 IF SCAFACOS == 1:
@@ -64,7 +65,7 @@ IF ELECTROSTATICS == 1:
                 _set_params_in_es_core() method.")
 
         def _deactivate_method(self):
-            deactivate_coulomb_method()
+            deactivate_method()
             handle_errors("Coulom method deactivation")
 
         def tune(self, **tune_params_subset):
@@ -110,7 +111,7 @@ IF ELECTROSTATICS:
             return "prefactor", "kappa", "r_cut"
 
         def _set_params_in_es_core(self):
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             dh_set_params(self._params["kappa"], self._params["r_cut"])
 
         def _get_params_from_es_core(self):
@@ -238,7 +239,7 @@ IF P3M == 1:
 
         def _set_params_in_es_core(self):
             #Sets lb, bcast, resets vars to zero if lb=0
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             #Sets cdef vars and calls p3m_set_params() in core
             python_p3m_set_params(self._params["r_cut"],
                                   self._params["mesh"], self._params["cao"],
@@ -253,7 +254,7 @@ IF P3M == 1:
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
         def _tune(self):
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             python_p3m_set_tune_params(self._params["r_cut"],
                                        self._params["mesh"],
                                        self._params["cao"],
@@ -374,7 +375,7 @@ IF P3M == 1:
                 return params
 
             def _tune(self):
-                coulomb_set_prefactor(self._params["prefactor"])
+                set_prefactor(self._params["prefactor"])
                 python_p3m_set_tune_params(self._params["r_cut"],
                                            self._params["mesh"],
                                            self._params["cao"],
@@ -397,7 +398,7 @@ IF P3M == 1:
                 self._set_params_in_es_core()
 
             def _set_params_in_es_core(self):
-                coulomb_set_prefactor(self._params["prefactor"])
+                set_prefactor(self._params["prefactor"])
                 python_p3m_set_params(self._params["r_cut"],
                                       self._params["mesh"],
                                       self._params["cao"],
@@ -463,7 +464,7 @@ IF ELECTROSTATICS:
             return params
 
         def _set_params_in_es_core(self):
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             MMM1D_set_params(
                 self._params["far_switch_radius"], self._params["maxPWerror"])
 
@@ -548,10 +549,10 @@ IF ELECTROSTATICS and MMM1D_GPU:
             return params
 
         def _set_params_in_es_core(self):
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             default_params = self.default_params()
 
-            self.thisptr.set_params(globals.box_l[2], coulomb.prefactor, self._params[
+            self.thisptr.set_params(grid.box_l[2], coulomb.prefactor, self._params[
                                     "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _tune(self):
@@ -662,7 +663,7 @@ IF ELECTROSTATICS:
             return params
 
         def _set_params_in_es_core(self):
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             if self._params["dielectric"]:
                 self._params["delta_mid_top"] = (self._params[
                                                  "mid"] - self._params["top"]) / (self._params["mid"] + self._params["top"])
@@ -706,7 +707,7 @@ IF ELECTROSTATICS:
 
             def _activate_method(self):
                 check_neutrality(self._params)
-                coulomb_set_prefactor(self._params["prefactor"])
+                set_prefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
                 mpi_bcast_coulomb_params()
 

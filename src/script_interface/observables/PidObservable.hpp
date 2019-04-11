@@ -1,3 +1,4 @@
+
 /*
   Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
@@ -33,6 +34,10 @@
 namespace ScriptInterface {
 namespace Observables {
 
+/** Base class for script interfaces to particle-based observables
+ *  @tparam CorePidObs Any core class derived from  @ref
+ *                     ::Observables::PidObservable "Observables::PidObservable"
+ */
 template <typename CorePidObs> class PidObservable : public Observable {
 public:
   static_assert(
@@ -44,18 +49,15 @@ public:
     return {{"ids", m_observable->ids()}};
   }
 
-  ParameterMap valid_parameters() const override {
-    return {{"ids", {ParameterType::INT_VECTOR, true}}};
+  Utils::Span<const boost::string_ref> valid_parameters() const override {
+    static std::array<const boost::string_ref, 1> params{"ids"};
+    return params;
   }
 
   void set_parameter(std::string const &name, Variant const &value) override {
     if ("ids" == name) {
       m_observable->ids() = get_value<std::vector<int>>(value);
     }
-  }
-
-  virtual std::shared_ptr<::Observables::PidObservable> pid_observable() const {
-    return m_observable;
   }
 
   std::shared_ptr<::Observables::Observable> observable() const override {
