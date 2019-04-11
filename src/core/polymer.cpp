@@ -40,7 +40,6 @@
 #include "constraints/ShapeBasedConstraint.hpp"
 #include "debug.hpp"
 #include "global.hpp"
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
@@ -103,7 +102,7 @@ Vector3d random_position() {
 Vector3d random_unit_vector() {
     Vector3d v;
     const int phi = acos( 1. - 2. * d_random() );
-    const int theta = 2. * PI * d_random();
+    const int theta = 2. * Utils::pi() * d_random();
     v[0] = sin(phi) * cos(theta);
     v[1] = sin(phi) * sin(theta);
     v[2] = cos(phi);
@@ -155,7 +154,7 @@ std::vector<std::vector<Vector3d>> draw_polymer_positions(PartCfg &partCfg, int 
                     // use prescribed angle
                     Vector3d last_vec = positions[p][m-1] - positions[p][m-2];
                     trial_pos = positions[p][m-1] + vec_rotate(
-                            last_vec.cross(random_unit_vector()),
+                            vector_product(last_vec, random_unit_vector()),
                             angle,
                             last_vec);
                 }
@@ -225,8 +224,7 @@ double mindist4(PartCfg &partCfg, double pos[3]) {
   return -1.0;
 }
 
-
-double buf_mindist4(double pos[3], int n_add, double *add) {
+double buf_mindist4(double const pos[3], int n_add, double const *const add) {
   double mindist = 30000.0, dx, dy, dz;
   int i;
 
@@ -276,9 +274,9 @@ int constraint_collision(double *p1, double *p2) {
 }
 
 int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
-             int part_id, double *posed, int mode, double shield, int max_try,
-             double val_cM, int cM_dist, int type_nM, int type_cM,
-             int type_bond, double angle, double angle2, double *posed2,
+             int part_id, double const *posed, int mode, double shield,
+             int max_try, double val_cM, int cM_dist, int type_nM, int type_cM,
+             int type_bond, double angle, double angle2, double const *posed2,
              int constr) {
   int p, n, cnt1, cnt2, max_cnt, bond_size, i;
   double phi, zz, rr;
@@ -353,7 +351,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
         for (cnt1 = 0; cnt1 < max_try; cnt1++) {
           zz = (2.0 * d_random() - 1.0) * bond_length;
           rr = sqrt(Utils::sqr(bond_length) - Utils::sqr(zz));
-          phi = 2.0 * PI * d_random();
+          phi = 2.0 * Utils::pi() * d_random();
           pos[0] = poz[0] + rr * cos(phi);
           pos[1] = poz[1] + rr * sin(phi);
           pos[2] = poz[2] + zz;
@@ -445,7 +443,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
             if (angle2 > -1.0 && n > 2) {
               vec_rotate(a, angle2, c, d);
             } else {
-              phi = 2.0 * PI * d_random();
+              phi = 2.0 * Utils::pi() * d_random();
               vec_rotate(a, phi, c, d);
             }
 
@@ -458,7 +456,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
           } else {
             zz = (2.0 * d_random() - 1.0) * bond_length;
             rr = sqrt(Utils::sqr(bond_length) - Utils::sqr(zz));
-            phi = 2.0 * PI * d_random();
+            phi = 2.0 * Utils::pi() * d_random();
             pos[0] = poz[0] + rr * cos(phi);
             pos[1] = poz[1] + rr * sin(phi);
             pos[2] = poz[2] + zz;
@@ -509,9 +507,9 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
     POLY_TRACE(printf(" %d/%d->%d \n", cnt1, cnt2, max_cnt));
     if (cnt2 >= max_try) {
       return (-2);
-    } else
+    }
 
-      max_cnt = std::max(max_cnt, std::max(cnt1, cnt2));
+    max_cnt = std::max(max_cnt, std::max(cnt1, cnt2));
 
     /* actually creating current polymer in ESPResSo */
     for (n = 0; n < MPC; n++) {

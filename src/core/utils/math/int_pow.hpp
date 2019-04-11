@@ -23,25 +23,32 @@
 #ifndef UTILS_MATH_INT_POW_HPP
 #define UTILS_MATH_INT_POW_HPP
 
+#include "utils/device_qualifier.hpp"
+
+#include <type_traits>
+
 namespace Utils {
 namespace detail {
-template <class T, unsigned n> struct int_pow_impl {
-  T operator()(T x) const {
-    /* Even branch */
-    if (n % 2 == 0) {
-      return int_pow_impl<T, n / 2>{}(x * x);
-    } else {
-      return x * int_pow_impl<T, (n - 1) / 2>{}(x * x);
-    }
+template <class T, unsigned n, class = void> struct int_pow_impl {
+  DEVICE_QUALIFIER constexpr T operator()(T x) const {
+    return x * int_pow_impl<T, (n - 1) / 2>{}(x * x);
+  }
+};
+
+/* Specializaton for n even */
+template <class T, unsigned n>
+struct int_pow_impl<T, n, std::enable_if_t<n % 2 == 0>> {
+  DEVICE_QUALIFIER constexpr T operator()(T x) const {
+    return int_pow_impl<T, n / 2>{}(x * x);
   }
 };
 
 template <class T> struct int_pow_impl<T, 1> {
-  T operator()(T x) const { return x; }
+  DEVICE_QUALIFIER constexpr T operator()(T x) const { return x; }
 };
 
 template <class T> struct int_pow_impl<T, 0> {
-  T operator()(T x) const { return T{1}; }
+  DEVICE_QUALIFIER constexpr T operator()(T x) const { return T{1}; }
 };
 } // namespace detail
 
@@ -52,7 +59,7 @@ template <class T> struct int_pow_impl<T, 0> {
  * at compile time. It uses exponentiation by
  * squaring to construct a efficient function.
  */
-template <unsigned n, typename T> inline T int_pow(T x) {
+template <unsigned n, typename T> DEVICE_QUALIFIER constexpr T int_pow(T x) {
   return detail::int_pow_impl<T, n>{}(x);
 }
 } // namespace Utils

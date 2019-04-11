@@ -67,4 +67,3 @@ IF ELECTROSTATICS and P3M:
 
     cdef extern from "communication.hpp":
         int mpi_iccp3m_init()
-        int mpi_iccp3m_iteration()

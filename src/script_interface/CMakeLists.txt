@@ -11,10 +11,8 @@ set(EspressoScriptInterface_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/mpiio/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/shapes/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Variant.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/ParallelScriptInterface.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/ParallelScriptInterfaceSlave.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/ParallelScriptInterface.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"
 )
 
 if(H5MD)

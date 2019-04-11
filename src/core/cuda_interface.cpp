@@ -25,7 +25,6 @@
 #include "config.hpp"
 #include "debug.hpp"
 #include "energy.hpp"
-#include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "serialization/CUDA_particle_data.hpp"
 
@@ -78,13 +77,6 @@ static void pack_particles(ParticleRange particles,
     buffer[i].dip[0] = static_cast<float>(dip[0]);
     buffer[i].dip[1] = static_cast<float>(dip[1]);
     buffer[i].dip[2] = static_cast<float>(dip[2]);
-#endif
-
-#ifdef SHANCHEN
-    // SAW TODO: does this really need to be copied every time?
-    for (int ii = 0; ii < 2 * LB_COMPONENTS; ii++) {
-      buffer[i].solvation[ii] = static_cast<float>(part.p.solvation[ii]);
-    }
 #endif
 
 #if defined(LB_ELECTROHYDRODYNAMICS) && defined(LB_GPU)
@@ -202,33 +194,6 @@ void cuda_mpi_send_forces(ParticleRange particles,
 
   COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
 }
-
-#ifdef SHANCHEN
-static void set_composition(ParticleRange particles,
-                            CUDA_fluid_composition *composition) {
-  for (auto &part : particles) {
-    for (int ii = 0; ii < LB_COMPONENTS; ii++) {
-      part.r.composition[ii] = composition->weight[ii];
-    }
-    composition++;
-  }
-}
-
-void cuda_mpi_send_composition(ParticleRange particles,
-                               CUDA_fluid_composition *host_composition) {
-  auto const n_elements = particles.size();
-
-  if (this_node > 0) {
-    std::vector<CUDA_fluid_composition> buffer(n_elements);
-
-    Utils::Mpi::scatter_buffer(buffer.data(), n_elements, comm_cart);
-    set_composition(particles, buffer.data());
-  } else {
-    Utils::Mpi::scatter_buffer(host_composition, n_elements, comm_cart);
-    set_composition(particles, host_composition);
-  }
-}
-#endif /* SHANCHEN */
 
 #if defined(ENGINE) && defined(LB_GPU)
 namespace {

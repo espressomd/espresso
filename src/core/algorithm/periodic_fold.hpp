@@ -42,7 +42,8 @@ template <typename T> T periodic_fold(T x, T const &l) {
   /* Can't fold if either x or l is nan or inf. */
   if (std::isnan(x) or std::isnan(l) or std::isinf(x) or (l == 0)) {
     return std::nan("");
-  } else if (std::isinf(l)) {
+  }
+  if (std::isinf(l)) {
     return x;
   }
 

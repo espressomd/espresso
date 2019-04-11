@@ -20,7 +20,7 @@ from __future__ import print_function, absolute_import
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport Vector3d, int_list, Span
+from espressomd.utils cimport Vector3d, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
@@ -61,8 +61,8 @@ cdef extern from "particle_data.hpp":
         particle_momentum m
         particle_force f
         particle_local l
-        int_list bl
-        int_list exclusions() except +
+        List[int] bl
+        List[int] exclusions() except +
         Vector3d calc_dip()
 
     IF ENGINE:
@@ -99,10 +99,6 @@ cdef extern from "particle_data.hpp":
     IF MASS:
         void set_particle_mass(int part, double mass)
 
-    IF SHANCHEN:
-        void set_particle_solvation(int part, double * solvation)
-        void pointer_to_solvation(const particle * p, const double * & res)
-
     IF ROTATIONAL_INERTIA:
         void set_particle_rotational_inertia(int part, double rinertia[3])
         void pointer_to_rotational_inertia(const particle * p, const double * & res)
@@ -115,7 +111,7 @@ cdef extern from "particle_data.hpp":
 
     IF LB_ELECTROHYDRODYNAMICS:
         void set_particle_mu_E(int part, double mu_E[3])
-        void get_particle_mu_E(int part, double ( & mu_E)[3])
+        void get_particle_mu_E(int part, double (& mu_E)[3])
 
     void set_particle_type(int part, int type)
 
@@ -241,7 +237,7 @@ cdef class _ParticleSliceImpl:
     cdef int _chunk_size
 
 cdef extern from "grid.hpp":
-    Vector3d folded_position(const particle *)
-    Vector3d unfolded_position(const particle *)
-    cdef void fold_position(double *, int*)
+    Vector3d folded_position(const particle * )
+    Vector3d unfolded_position(const particle * )
+    cdef void fold_position(double * , int*)
     void unfold_position(double pos[3], int image_box[3])

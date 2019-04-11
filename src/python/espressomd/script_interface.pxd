@@ -18,32 +18,16 @@
 
 
 from libcpp.map cimport map
+from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp.memory cimport shared_ptr
 from libcpp.memory cimport weak_ptr
 from libcpp cimport bool
 
-cdef extern from "Parameter.hpp" namespace "ScriptInterface":
-    cdef cppclass ParameterType:
-        bool operator == (const ParameterType & a, const ParameterType & b)
+from boost cimport string_ref
 
-cdef extern from "Parameter.hpp" namespace "ScriptInterface::ParameterType":
-    cdef ParameterType NONE
-    cdef ParameterType BOOL
-    cdef ParameterType INT
-    cdef ParameterType DOUBLE
-    cdef ParameterType STRING
-    cdef ParameterType INT_VECTOR
-    cdef ParameterType DOUBLE_VECTOR
-    cdef ParameterType OBJECTID
-    cdef ParameterType VECTOR
-
-cdef extern from "Parameter.hpp" namespace "ScriptInterface":
-    cdef cppclass Parameter:
-        ParameterType type()
-        int n_elements()
-        bool required()
+from utils cimport Span
 
 cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     void initialize()
@@ -52,12 +36,13 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
         Variant(const Variant & )
         Variant & operator = (const Variant &)
         int which()
-    void transform_vectors(Variant &)
-    string get_type_label(const Variant &)
-    string get_type_label(ParameterType)
 
-cdef extern from "ScriptInterface.hpp" namespace "boost":
-    T get[T](const Variant &) except +
+    bool is_type[T](const Variant &)
+    bool is_none(const Variant &)
+    ctypedef unordered_map[string, Variant] VariantMap
+
+cdef extern from "get_value.hpp" namespace "ScriptInterface":
+    T get_value[T](const Variant T)
 
 cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectId:
@@ -68,13 +53,12 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
 
     cdef cppclass ScriptInterfaceBase:
         const string name()
-        void construct(map[string, Variant]) except +
-        map[string, Variant] get_parameters() except +
-        map[string, Parameter] valid_parameters() except +
+        void construct(const VariantMap &) except +
+        VariantMap get_parameters() except +
+        Span[const string_ref] valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
-        void set_parameters(map[string, Variant] & parameters) except +
-        Variant call_method(const string & name, const map[string, Variant] & parameters) except +
+        Variant call_method(const string & name, const VariantMap & parameters) except +
         ObjectId id() except +
         void set_state(map[string, Variant]) except +
         map[string, Variant] get_state() except +
@@ -93,11 +77,10 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfa
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
 
-cdef variant_to_python_object(Variant value) except +
+cdef variant_to_python_object(const Variant & value) except +
 cdef Variant python_object_to_variant(value)
 
 cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
-    cdef map[string, Parameter] parameters
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
-    cdef map[string, Variant] _sanitize_params(self, in_params) except *
+    cdef VariantMap _sanitize_params(self, in_params) except *

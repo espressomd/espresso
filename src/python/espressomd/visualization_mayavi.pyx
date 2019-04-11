@@ -2,11 +2,12 @@ import numpy
 cimport numpy
 import os
 from libcpp cimport bool
-from espressomd.particle_data import ParticleHandle
-from particle_data cimport *
-from espressomd.interactions cimport *
-from espressomd.system cimport *
 from libcpp.vector cimport vector
+from .particle_data import ParticleHandle
+from .particle_data cimport *
+from .interactions cimport *
+from .system cimport *
+from .interactions import NonBondedInteractions
 
 include "myconfig.pxi"
 
@@ -22,7 +23,6 @@ from tvtk.tools import visual
 import atexit
 import threading
 
-from espressomd.interactions import NonBondedInteractions
 
 # workaround for https://github.com/enthought/mayavi/issues/3
 import vtk
@@ -188,14 +188,14 @@ cdef class mayaviLive(object):
 
             # Iterate over bonds
             k = 0
-            while k < p.bl.n:
+            while k < p.bl.size():
                 # Bond type
-                t = p.bl.e[k]
+                t = p.bl[k]
                 k += 1
                 # Iterate over bond partners and store each connection
                 for l in range(bonded_ia_params[t].num):
                     bonds.push_back(i)
-                    bonds.push_back(p.bl.e[k])
+                    bonds.push_back(p.bl[k])
                     bonds.push_back(t)
                     k += 1
             j += 1
