@@ -45,11 +45,11 @@ BOOST_AUTO_TEST_CASE(mass) {
 
   struct {
     struct {
-      const double mass = 1.23;
+      double mass() const { return 1.23; }
     } p;
   } p;
 
-  BOOST_CHECK((p.p.mass * 2.0) == Mass()(p, 2.0));
+  BOOST_CHECK((p.p.mass() * 2.0) == Mass()(p, 2.0));
 }
 
 BOOST_AUTO_TEST_CASE(direct) {

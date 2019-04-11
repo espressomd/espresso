@@ -130,7 +130,7 @@ using UpdatePropertyMessage = boost::variant
         < UpdateProperty<int, &Prop::type>
         , UpdateProperty<int, &Prop::mol_id>
 #ifdef MASS
-        , UpdateProperty<double, &Prop::mass>
+        , UpdateProperty<double, &Prop::m_mass>
 #endif
 #ifdef SHANCHEN
         , UpdateProperty<std::array<double, 2 * LB_COMPONENTS>, &Prop::solvation>
@@ -864,7 +864,7 @@ void set_particle_f(int part, const Vector3d &F) {
 
 #if defined(MASS)
 void set_particle_mass(int part, double mass) {
-  mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
+  mpi_update_particle_property<double, &ParticleProperties::m_mass>(part, mass);
 }
 #else
 const constexpr double ParticleProperties::mass;

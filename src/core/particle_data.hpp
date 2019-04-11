@@ -98,10 +98,11 @@ struct ParticleProperties {
 
 #ifdef MASS
   /** particle mass */
-  double mass = 1.0;
+  double m_mass = 1.0;
 #else
-  constexpr static double mass{1.0};
+  constexpr static double m_mass{1.0};
 #endif /* MASS */
+  double mass() const { return is_virtual ? 0 : m_mass; }
 
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */

@@ -90,7 +90,7 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef MASS
-    buffer[i].mass = static_cast<float>(part.p.mass);
+    buffer[i].mass = static_cast<float>(part.p.mass());
 #endif
 
 #ifdef ROTATION

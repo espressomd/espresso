@@ -366,7 +366,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return self.particle_data.p.mass
+            return self.particle_data.p.mass()
 
     IF ROTATION:
         property omega_lab:

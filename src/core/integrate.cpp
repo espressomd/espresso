@@ -467,13 +467,13 @@ void propagate_vel_finalize_p_inst() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-          nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
-          p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] +
-                      friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+          nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass();
+          p.m.v[j] += 0.5 * time_step / p.p.mass() * p.f.f[j] +
+                      friction_therm0_nptiso(p.m.v[j]) / p.p.mass();
         } else
 #endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
-          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass();
 #ifdef EXTERNAL_FORCES
       }
 #endif
@@ -629,13 +629,13 @@ void propagate_vel() {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-          p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass +
-                      friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
-          nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
+          p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass() +
+                      friction_therm0_nptiso(p.m.v[j]) / p.p.mass();
+          nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass();
         } else
 #endif
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
-          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass();
       }
 
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
@@ -704,7 +704,7 @@ void propagate_vel_pos() {
 #endif
       {
         /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
-        p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+        p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass();
 
         /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
          * v(t+0.5*dt) */

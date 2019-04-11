@@ -73,7 +73,7 @@ void local_system_CMS(double *sdata) {
   double mass = 0.0;
 
   for (auto const &p : local_cells.particles()) {
-    double M = p.p.mass;
+    double M = p.p.mass();
     mass += M;
 
     Vector3d ppos = unfolded_position(p);
@@ -95,7 +95,7 @@ void local_system_CMS_velocity(double *sdata) {
   double mass = 0.0;
 
   for (auto const &p : local_cells.particles()) {
-    double M = p.p.mass;
+    double M = p.p.mass();
     mass += M;
 
     x += M * p.m.v[0];

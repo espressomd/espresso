@@ -339,7 +339,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   if (write_species)
     typ[0][particle_index][0] = current_particle.p.type;
   if (write_mass)
-    mass[0][particle_index][0] = current_particle.p.mass;
+    mass[0][particle_index][0] = current_particle.p.mass();
   /* store folded particle positions. */
   if (write_pos) {
     Vector3d p = current_particle.r.p;

@@ -253,17 +253,17 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
     if (v_comp)
       virials.data.e[0] +=
           (Utils::sqr(p1->m.v[0] * time_step -
-                      p1->f.f[0] * 0.5 * time_step * time_step / p1->p.mass) +
+                      p1->f.f[0] * 0.5 * time_step * time_step / p1->p.mass()) +
            Utils::sqr(p1->m.v[1] * time_step -
-                      p1->f.f[1] * 0.5 * time_step * time_step / p1->p.mass) +
-           Utils::sqr(p1->m.v[2] * time_step -
-                      p1->f.f[2] * 0.5 * time_step * time_step / p1->p.mass)) *
-          (*p1).p.mass;
+                      p1->f.f[1] * 0.5 * time_step * time_step / p1->p.mass()) +
+           Utils::sqr(p1->m.v[2] * time_step - p1->f.f[2] * 0.5 * time_step *
+                                                   time_step / p1->p.mass())) *
+          (*p1).p.mass();
     else
       virials.data.e[0] += (Utils::sqr(p1->m.v[0] * time_step) +
                             Utils::sqr(p1->m.v[1] * time_step) +
                             Utils::sqr(p1->m.v[2] * time_step)) *
-                           (*p1).p.mass;
+                           (*p1).p.mass();
   }
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step'
@@ -271,7 +271,7 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
   for (k = 0; k < 3; k++)
     for (l = 0; l < 3; l++)
       p_tensor.data.e[k * 3 + l] +=
-          (p1->m.v[k] * time_step) * (p1->m.v[l] * time_step) * (*p1).p.mass;
+          (p1->m.v[k] * time_step) * (p1->m.v[l] * time_step) * (*p1).p.mass();
 }
 
 #endif

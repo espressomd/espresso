@@ -137,11 +137,11 @@ void compute_pos_corr_vec(int *repeat_) {
           auto const r_ij_t = get_mi_vector(p1->r.p_old, p2->r.p_old);
           auto const r_ij_dot = r_ij_t * r_ij;
           auto const G = 0.50 * (ia_params->p.rigid_bond.d2 - r_ij2) /
-                         r_ij_dot / (p1->p.mass + p2->p.mass);
+                         r_ij_dot / (p1->p.mass() + p2->p.mass());
 
           auto const pos_corr = G * r_ij_t;
-          p1->f.f += pos_corr * p2->p.mass;
-          p2->f.f -= pos_corr * p1->p.mass;
+          p1->f.f += pos_corr * p2->p.mass();
+          p2->f.f -= pos_corr * p1->p.mass();
 
           /*Increase the 'repeat' flag by one */
           *repeat_ = *repeat_ + 1;
@@ -238,13 +238,13 @@ void compute_vel_corr_vec(int *repeat_) {
 
         auto const v_proj = v_ij * r_ij;
         if (std::abs(v_proj) > ia_params->p.rigid_bond.v_tol) {
-          auto const K =
-              v_proj / ia_params->p.rigid_bond.d2 / (p1->p.mass + p2->p.mass);
+          auto const K = v_proj / ia_params->p.rigid_bond.d2 /
+                         (p1->p.mass() + p2->p.mass());
 
           auto const vel_corr = K * r_ij;
 
-          p1->f.f -= vel_corr * p2->p.mass;
-          p2->f.f += vel_corr * p1->p.mass;
+          p1->f.f -= vel_corr * p2->p.mass();
+          p2->f.f += vel_corr * p1->p.mass();
 
           *repeat_ = *repeat_ + 1;
         }

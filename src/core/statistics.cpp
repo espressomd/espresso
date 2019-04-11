@@ -91,11 +91,11 @@ void predict_momentum_particles(double *result) {
   double momentum[3] = {0.0, 0.0, 0.0};
 
   for (auto const &p : local_cells.particles()) {
-    auto const mass = p.p.mass;
+    auto const mass = p.p.mass();
 
-    momentum[0] += mass * (p.m.v[0] + p.f.f[0] * 0.5 * time_step / p.p.mass);
-    momentum[1] += mass * (p.m.v[1] + p.f.f[1] * 0.5 * time_step / p.p.mass);
-    momentum[2] += mass * (p.m.v[2] + p.f.f[2] * 0.5 * time_step / p.p.mass);
+    momentum[0] += mass * (p.m.v[0] + p.f.f[0] * 0.5 * time_step / p.p.mass());
+    momentum[1] += mass * (p.m.v[1] + p.f.f[1] * 0.5 * time_step / p.p.mass());
+    momentum[2] += mass * (p.m.v[2] + p.f.f[2] * 0.5 * time_step / p.p.mass());
   }
 
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
@@ -123,9 +123,9 @@ Vector3d centerofmass(PartCfg &partCfg, int type) {
   for (auto const &p : partCfg) {
     if ((p.p.type == type) || (type == -1)) {
       for (int j = 0; j < 3; j++) {
-        com[j] += p.r.p[j] * (p).p.mass;
+        com[j] += p.r.p[j] * (p).p.mass();
       }
-      mass += (p).p.mass;
+      mass += (p).p.mass();
     }
   }
   for (int j = 0; j < 3; j++)
@@ -141,7 +141,7 @@ void angularmomentum(PartCfg &partCfg, int type, double *com) {
     if (type == p.p.type) {
       vector_product(p.r.p, p.m.v, tmp);
       for (int i = 0; i < 3; i++) {
-        com[i] += tmp[i] * p.p.mass;
+        com[i] += tmp[i] * p.p.mass();
       }
     }
   }
@@ -162,7 +162,7 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
       for (i = 0; i < 3; i++) {
         p1[i] = p.r.p[i] - com[i];
       }
-      massi = p.p.mass;
+      massi = p.p.mass();
       MofImatrix[0] += massi * (p1[1] * p1[1] + p1[2] * p1[2]);
       MofImatrix[4] += massi * (p1[0] * p1[0] + p1[2] * p1[2]);
       MofImatrix[8] += massi * (p1[0] * p1[0] + p1[1] * p1[1]);

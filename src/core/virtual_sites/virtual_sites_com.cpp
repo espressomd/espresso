@@ -88,9 +88,9 @@ void calc_mol_vel(Particle *p_com, double v_com[3]) {
     if (p->p.is_virtual)
       continue;
     for (j = 0; j < 3; j++) {
-      v_com[j] += (*p).p.mass * p->m.v[j];
+      v_com[j] += (*p).p.mass() * p->m.v[j];
     }
-    M += (*p).p.mass;
+    M += (*p).p.mass();
 #ifdef VIRTUAL_SITES_DEBUG
     count++;
 #endif
@@ -135,9 +135,9 @@ void calc_mol_pos(Particle *p_com, double r_com[3]) {
       continue;
     get_mi_vector(vec12, p->r.p, p_com->r.p);
     for (j = 0; j < 3; j++) {
-      r_com[j] += (*p).p.mass * vec12[j];
+      r_com[j] += (*p).p.mass() * vec12[j];
     }
-    M += (*p).p.mass;
+    M += (*p).p.mass();
 #ifdef VIRTUAL_SITES_DEBUG
     count++;
 #endif
@@ -181,7 +181,7 @@ void put_mol_force_on_parts(Particle *p_com) {
 #endif
     if (p->p.is_virtual)
       continue;
-    M += (*p).p.mass;
+    M += (*p).p.mass();
   }
 #else
   M = topology[mol_id].part.n - 1;
@@ -198,7 +198,7 @@ void put_mol_force_on_parts(Particle *p_com) {
 #endif
     if (!p->p.is_virtual) {
       for (j = 0; j < 3; j++) {
-        p->f.f[j] += (*p).p.mass * force[j] / M;
+        p->f.f[j] += (*p).p.mass() * force[j] / M;
       }
 #ifdef VIRTUAL_SITES_DEBUG
       count++;

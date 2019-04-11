@@ -40,7 +40,7 @@ cdef extern from "particle_data.hpp":
         int    identity
         int    mol_id
         int    type
-        double mass
+        double mass()
 
     ctypedef struct particle_position "ParticlePosition":
         Vector3d p

@@ -394,7 +394,7 @@ inline void add_kinetic_energy(Particle *p1) {
   /* kinetic energy */
   energy.data.e[0] += (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) +
                        Utils::sqr(p1->m.v[2])) *
-                      0.5 * p1->p.mass;
+                      0.5 * p1->p.mass();
 
 #ifdef ROTATION
   if (p1->p.rotation) {

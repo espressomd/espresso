@@ -86,10 +86,10 @@ void calc_rg(PartCfg &partCfg, double **_rg) {
     IdoubMPC = 1. / (double)chain_length;
     for (j = 0; j < chain_length; j++) {
       p = chain_start + i * chain_length + j;
-      r_CM_x += partCfg[p].r.p[0] * (partCfg[p]).p.mass;
-      r_CM_y += partCfg[p].r.p[1] * (partCfg[p]).p.mass;
-      r_CM_z += partCfg[p].r.p[2] * (partCfg[p]).p.mass;
-      M += (partCfg[p]).p.mass;
+      r_CM_x += partCfg[p].r.p[0] * (partCfg[p]).p.mass();
+      r_CM_y += partCfg[p].r.p[1] * (partCfg[p]).p.mass();
+      r_CM_z += partCfg[p].r.p[2] * (partCfg[p]).p.mass();
+      M += (partCfg[p]).p.mass();
     }
     r_CM_x /= M;
     r_CM_y /= M;

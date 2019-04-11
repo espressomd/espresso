@@ -71,16 +71,16 @@ inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
   }
 
   double force_lv_com, force_lv_dist, com_vel, dist_vel;
-  double mass_tot = p1->p.mass + p2->p.mass;
+  double mass_tot = p1->p.mass() + p2->p.mass();
   double mass_tot_inv = 1.0 / mass_tot;
   double sqrt_mass_tot = sqrt(mass_tot);
-  double sqrt_mass_red = sqrt(p1->p.mass * p2->p.mass / mass_tot);
+  double sqrt_mass_red = sqrt(p1->p.mass() * p2->p.mass() / mass_tot);
 
   for (int i = 0; i < 3; i++) {
 
     // Langevin thermostat for center of mass
     com_vel =
-        mass_tot_inv * (p1->p.mass * p1->m.v[i] + p2->p.mass * p2->m.v[i]);
+        mass_tot_inv * (p1->p.mass() * p1->m.v[i] + p2->p.mass() * p2->m.v[i]);
     if (iaparams->p.thermalized_bond.pref2_com > 0.0) {
       force_lv_com = -iaparams->p.thermalized_bond.pref1_com * com_vel +
                      sqrt_mass_tot * iaparams->p.thermalized_bond.pref2_com *
@@ -99,8 +99,8 @@ inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
       force_lv_dist = -iaparams->p.thermalized_bond.pref1_dist * dist_vel;
     }
     // Add forces
-    force1[i] = p1->p.mass * mass_tot_inv * force_lv_com - force_lv_dist;
-    force2[i] = p2->p.mass * mass_tot_inv * force_lv_com + force_lv_dist;
+    force1[i] = p1->p.mass() * mass_tot_inv * force_lv_com - force_lv_dist;
+    force2[i] = p2->p.mass() * mass_tot_inv * force_lv_com + force_lv_dist;
   }
 
   ONEPART_TRACE(if (p1->p.identity == check_id) fprintf(
