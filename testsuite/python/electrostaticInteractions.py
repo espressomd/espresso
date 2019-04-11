@@ -90,8 +90,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.system.actors.remove(p3m)
 
     def test_dh(self):
-        dh_params = dict(prefactor=1.0,
-                         kappa=2.0,
+        dh_params = dict(prefactor=1.2,
+                         kappa=0.8,
                          r_cut=2.0)
         test_DH = tests_common.generate_test_for_class(
             self.system,

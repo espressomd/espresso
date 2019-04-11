@@ -54,10 +54,10 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
       add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, f.data());
       break;
     case COULOMB_DH:
-      add_dh_coulomb_pair_force(p1, p2, d, dist, f.data());
+      add_dh_coulomb_pair_force(q1q2, d, dist, f.data());
       break;
     case COULOMB_RF:
-      add_rf_coulomb_pair_force(p1, p2, d, dist, f.data());
+      add_rf_coulomb_pair_force(q1q2, d, dist, f.data());
       break;
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
@@ -67,7 +67,7 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
     default:
       break;
     }
-
+    
     force += coulomb.prefactor * f;
   }
 }
@@ -129,9 +129,9 @@ inline double add_pair_energy(Particle *p1, Particle *p2, double q1q2,
       return Scafacos::pair_energy(p1, p2, dist);
 #endif
     case COULOMB_DH:
-      return dh_coulomb_pair_energy(p1, p2, dist);
+      return dh_coulomb_pair_energy(q1q2, dist);
     case COULOMB_RF:
-      return rf_coulomb_pair_energy(p1, p2, dist);
+      return rf_coulomb_pair_energy(q1q2, dist);
     case COULOMB_MMM1D:
       return mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
     case COULOMB_MMM2D:

@@ -64,12 +64,11 @@ calc_bonded_coulomb_sr_pair_force(Particle *p1, Particle *p2,
     //TODO ugly workaround
     Vector3d forcevec{};
     
-    //only to get rid of warnings
-    //force[0]++;
+    Coulomb::calc_pair_force(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx, dist, dist2, forcevec);
+    force[0] = forcevec[0];
+    force[1] = forcevec[1];
+    force[2] = forcevec[2];
     
-    Coulomb::calc_pair_force(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx, dist2, dist, forcevec);
-    force = forcevec.data()
-
     ONEPART_TRACE(if (p1->p.identity == check_id) fprintf(
         stderr,
         "%d: OPT: BONDED_COULOMB_SR f = (%.3e,%.3e,%.3e) with part id=%d "
