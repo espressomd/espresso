@@ -24,18 +24,19 @@
  * electrostatics_magnetostatics/elc.hpp
  * "electrostatics_magnetostatics/elc.hpp".
  */
-#include "electrostatics_magnetostatics/elc.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "mmm-common.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "utils.hpp"
 #include <cmath>
 #include <mpi.h>
+
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/p3m.hpp"
 
 #ifdef P3M
 
@@ -328,9 +329,9 @@ static void add_dipole_force() {
 
   // Const. potential contribution
   if (elc_params.const_pot) {
-    field_induced = gblcblk[1];
-    field_applied = elc_params.pot_diff * height_inverse;
-    field_tot -= field_applied + field_induced;
+    coulomb.field_induced = gblcblk[1];
+    coulomb.field_applied = elc_params.pot_diff * height_inverse;
+    field_tot -= coulomb.field_applied + coulomb.field_induced;
   }
 
   for (auto &p : local_cells.particles()) {
@@ -1298,21 +1299,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
   ELC_setup_constants();
 
-  switch (coulomb.method) {
-  case COULOMB_P3M_GPU: {
-    runtimeErrorMsg()
-        << "ELC tuning failed, ELC is not set up to work with the GPU P3M";
-    return ES_ERROR;
-  }
-  case COULOMB_ELC_P3M:
-
-  case COULOMB_P3M:
-    p3m.params.epsilon = P3M_EPSILON_METALLIC;
-    coulomb.method = COULOMB_ELC_P3M;
-    break;
-  default:
-    return ES_ERROR;
-  }
+  Coulomb::elc_sanity_check();
 
   elc_params.far_cut = far_cut;
   if (far_cut != -1) {
@@ -1427,14 +1414,12 @@ void ELC_p3m_charge_assign_image() {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
-                                                  double force1[3],
-                                                  double force2[3]) {
+void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
+                                                  const Particle *p2,
+                                                  double *force1,
+                                                  double *force2) {
   double dist, dist2, d[3];
   double pos[3], q;
-  double tp2;
-
-  tp2 = p2->r.p[2];
 
   if (p1->r.p[2] < elc_params.space_layer) {
     q = elc_params.delta_mid_bot * p1->p.q * p2->p.q;
@@ -1458,22 +1443,22 @@ void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
     p3m_add_pair_force(q, d, dist2, dist, force2);
   }
 
-  if (tp2 < elc_params.space_layer) {
+  if (p2->r.p[2] < elc_params.space_layer) {
     q = elc_params.delta_mid_bot * p1->p.q * p2->p.q;
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
-    pos[2] = -tp2;
+    pos[2] = -p2->r.p[2];
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
     p3m_add_pair_force(q, d, dist2, dist, force1);
   }
 
-  if (tp2 > (elc_params.h - elc_params.space_layer)) {
+  if (p2->r.p[2] > (elc_params.h - elc_params.space_layer)) {
     q = elc_params.delta_mid_top * p1->p.q * p2->p.q;
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
-    pos[2] = 2 * elc_params.h - tp2;
+    pos[2] = 2 * elc_params.h - p2->r.p[2];
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);

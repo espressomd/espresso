@@ -26,9 +26,10 @@
 #include "EspressoSystemInterface.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
 #include <iostream>
 
 #ifndef ACTOR_DIPOLARBARNESHUT_HPP
@@ -40,7 +41,7 @@ typedef float dds_float;
 class DipolarBarnesHut : public Actor {
 public:
   DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq) {
-    k = coulomb.Dprefactor;
+    k = dipole.prefactor;
     m_epssq = epssq;
     m_itolsq = itolsq;
     setBHPrecision(&m_epssq, &m_itolsq);
@@ -94,7 +95,7 @@ protected:
   float m_itolsq;
   BHData m_bh_data = {0,       0,       0,       nullptr, nullptr,
                       nullptr, nullptr, nullptr, nullptr, nullptr,
-                      nullptr, nullptr, nullptr};
+                      nullptr, nullptr, nullptr, nullptr};
 };
 
 void activate_dipolar_barnes_hut(float epssq, float itolsq);

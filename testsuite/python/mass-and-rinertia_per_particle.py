@@ -432,7 +432,7 @@ class ThermoTest(ut.TestCase):
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
         self.system.thermostat.set_langevin(
-            kT=self.kT, gamma=self.gamma_global)
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         # Actual integration and validation run
         self.check_dissipation(n)
 
@@ -444,7 +444,7 @@ class ThermoTest(ut.TestCase):
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
         self.system.thermostat.set_langevin(
-            kT=self.kT, gamma=self.gamma_global)
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_diffusivity_tran()
         # Actual integration and validation run
         self.check_fluctuation_dissipation(n)
@@ -458,7 +458,7 @@ class ThermoTest(ut.TestCase):
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
         self.system.thermostat.set_langevin(
-            kT=self.kT, gamma=self.gamma_global)
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_gamma(n)
         # Actual integration and validation run
         self.check_dissipation(n)
@@ -472,7 +472,7 @@ class ThermoTest(ut.TestCase):
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
         self.system.thermostat.set_langevin(
-            kT=self.kT, gamma=self.gamma_global)
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_gamma(n)
         self.set_diffusivity_tran()
         # Actual integration and validation run
@@ -487,7 +487,7 @@ class ThermoTest(ut.TestCase):
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
         self.system.thermostat.set_langevin(
-            kT=self.kT, gamma=self.gamma_global)
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_temperature(n)
         # Actual integration and validation run
         self.check_dissipation(n)
@@ -501,7 +501,7 @@ class ThermoTest(ut.TestCase):
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
         self.system.thermostat.set_langevin(
-            kT=self.kT, gamma=self.gamma_global)
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_temperature(n)
         self.set_diffusivity_tran()
         # Actual integration and validation run
@@ -516,7 +516,7 @@ class ThermoTest(ut.TestCase):
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
         self.system.thermostat.set_langevin(
-            kT=self.kT, gamma=self.gamma_global)
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_gamma(n)
         self.set_particle_specific_temperature(n)
         # Actual integration and validation run
@@ -531,7 +531,7 @@ class ThermoTest(ut.TestCase):
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
         self.system.thermostat.set_langevin(
-            kT=self.kT, gamma=self.gamma_global)
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_gamma(n)
         self.set_particle_specific_temperature(n)
         self.set_diffusivity_tran()
@@ -550,7 +550,7 @@ class ThermoTest(ut.TestCase):
         self.system.thermostat.set_langevin(
             kT=self.kT,
             gamma=self.gamma_global,
-            gamma_rotation=self.gamma_global_rot)
+            gamma_rotation=self.gamma_global_rot, seed=42)
         # Actual integration and validation run
         self.check_dissipation(n)
 
@@ -566,7 +566,7 @@ class ThermoTest(ut.TestCase):
         self.system.thermostat.set_langevin(
             kT=self.kT,
             gamma=self.gamma_global,
-            gamma_rotation=self.gamma_global_rot)
+            gamma_rotation=self.gamma_global_rot, seed=42)
         self.set_diffusivity_tran()
         # Actual integration and validation run
         self.check_fluctuation_dissipation(n)

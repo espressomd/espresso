@@ -16,13 +16,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "DipolarDirectSum.hpp"
 
+#include <memory>
+
+#include "DipolarDirectSum.hpp"
 #include "EspressoSystemInterface.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
-
-#include "utils/make_unique.hpp"
 
 #ifdef DIPOLAR_DIRECT_SUM
 
@@ -30,11 +30,11 @@ std::unique_ptr<DipolarDirectSum> dipolarDirectSum;
 
 void activate_dipolar_direct_sum_gpu() {
   // also necessary on 1 CPU or GPU, does more than just broadcasting
-  coulomb.Dmethod = DIPOLAR_DS_GPU;
+  dipole.method = DIPOLAR_DS_GPU;
   mpi_bcast_coulomb_params();
 
   dipolarDirectSum =
-      Utils::make_unique<DipolarDirectSum>(espressoSystemInterface);
+      std::make_unique<DipolarDirectSum>(espressoSystemInterface);
   forceActors.push_back(dipolarDirectSum.get());
   energyActors.push_back(dipolarDirectSum.get());
 }

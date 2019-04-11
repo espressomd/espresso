@@ -169,7 +169,7 @@ screenshots without blocking the simulation script::
     for i in range(1000):
         system.part.add(pos=[5, 5, 5])
 
-    system.thermostat.set_langevin(kT=1, gamma=1)
+    system.thermostat.set_langevin(kT=1, gamma=1, seed=42)
 
     visualizer = visualization.openGLLive(system, window_size=[500, 500])
 
