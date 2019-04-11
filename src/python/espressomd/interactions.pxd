@@ -461,9 +461,9 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
 
 #* Parameters for Quartic   */
     cdef struct Quartic_bond_parameters:
-      double k0, k1
-      double r
-      double r_cut
+        double k0, k1
+        double r
+        double r_cut
 
 #* Union in which to store the parameters of an individual bonded interaction */
     cdef union Bond_parameters:
