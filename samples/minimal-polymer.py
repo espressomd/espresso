@@ -21,10 +21,11 @@ This sample sets up a polymer.
 """
 from __future__ import print_function
 import espressomd
+espressomd.assert_features(["LENNARD_JONES"])
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
-from espressomd.io.writer import vtf  # pylint: disable=import-error
+from espressomd.io.writer import vtf
 import numpy as np
 
 # System parameters

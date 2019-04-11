@@ -29,6 +29,7 @@ from threading import Thread
 from time import sleep
 
 import espressomd
+espressomd.assert_features(["P3M"])
 from espressomd.electrostatics import P3M
 from espressomd.interactions import ThermalizedBond, HarmonicBond
 import espressomd.visualization_opengl

@@ -19,6 +19,7 @@ import math
 import numpy as np
 
 import espressomd
+espressomd.assert_features(["MASS"])
 import espressomd.shapes
 from espressomd.visualization_opengl import openGLLive
 

@@ -31,12 +31,11 @@ import os
 import sys
 
 import espressomd
-from espressomd import assert_features, lb
+espressomd.assert_features(["LB_GPU", "LB_BOUNDARIES_GPU"])
+from espressomd import lb
 from espressomd.lbboundaries import LBBoundary
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
-
-assert_features(["LB_GPU", "LB_BOUNDARIES_GPU"])
 
 # Setup constants
 

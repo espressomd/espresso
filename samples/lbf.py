@@ -26,13 +26,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 
-import espressomd
-
-required_features = ["LB"]
-espressomd.assert_features(required_features)
-
-import espressomd.lb
-
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
 group.add_argument('--cpu', action='store_true')
@@ -48,10 +41,16 @@ print("""
 
 if args.gpu:
     print("Using GPU implementation")
+    required_features = ["LB_GPU"]
 else:
     print("Using CPU implementation")
+    required_features = ["LB"]
     if not args.cpu:
         print("(select the implementation with --cpu or --gpu)")
+
+import espressomd
+espressomd.assert_features(required_features)
+import espressomd.lb
 
 print("\nProgram Information:")
 print(espressomd.features())

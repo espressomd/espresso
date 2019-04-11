@@ -21,6 +21,7 @@ from __future__ import division
 import numpy as np
 
 import espressomd
+espressomd.assert_features(["ELECTROSTATICS", "LENNARD_JONES"])
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate

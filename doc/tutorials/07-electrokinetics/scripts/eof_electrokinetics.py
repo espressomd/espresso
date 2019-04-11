@@ -17,8 +17,9 @@
 # Initializing espresso modules and the numpy package
 import sys
 import numpy as np
-from espressomd import electrokinetics, shapes
 import espressomd
+espressomd.assert_features(["ELECTROKINETICS"])
+from espressomd import electrokinetics, shapes
 
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field outside the slit
