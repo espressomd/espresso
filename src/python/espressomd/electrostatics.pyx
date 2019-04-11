@@ -130,7 +130,7 @@ IF ELECTROSTATICS:
                     "r_cut": -1,
                     "check_neutrality": True}
 
-    cdef class RF(ElectrostaticInteraction):
+    cdef class ReactionField(ElectrostaticInteraction):
             """
             Solve electrostatics in the Reaction-Field framework
 

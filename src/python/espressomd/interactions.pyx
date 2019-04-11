@@ -3315,14 +3315,13 @@ class QuarticBond(BondedInteraction):
         Parameters
         ----------
         k0 : :obj:`float`
-            Specifies the magnitude of the bond interaction.
+            Specifies the magnitude of the square term.
         k1 : :obj:`float`
-            Specifies the magnitude of the bond interaction.
+            Specifies the magnitude of the fourth order term.
         r : :obj:`float`
-            Specifies the magnitude of the bond interaction.
+            Specifies the equilibrium length of the bond.
         r_cut : :obj:`float`
-            Specifies the maximum stretch and compression length of the
-            bond.
+            Specifies the maximum interaction length.
         """
         super(QuarticBond, self).__init__(*args, **kwargs)
 

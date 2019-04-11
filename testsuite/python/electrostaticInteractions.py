@@ -161,9 +161,9 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                          r_cut=2.0)
         test_RF = tests_common.generate_test_for_class(
             self.system,
-            electrostatics.RF,
+            electrostatics.ReactionField,
             rf_params)
-        rf = espressomd.electrostatics.RF(
+        rf = espressomd.electrostatics.ReactionField(
             prefactor=rf_params['prefactor'],
             kappa=rf_params['kappa'],
             epsilon1=rf_params['epsilon1'],
