@@ -118,9 +118,11 @@ class CoulombCloudWall(ut.TestCase):
             self.S.integrator.run(0)
             self.compare("p3m", energy=True, prefactor=3)
 
-    if espressomd.has_features(["ELECTROSTATICS", "CUDA"]) and not \
-       str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
-        def test_p3m_gpu(self):
+    @ut.skipIf(not espressomd.gpu_available(), "no gpu")
+    def test_p3m_gpu(self):
+            if str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
+                print("skipping test on amd gpu")
+                return
             self.S.actors.add(
                 espressomd.electrostatics.P3MGPU(
                     prefactor=2.2,

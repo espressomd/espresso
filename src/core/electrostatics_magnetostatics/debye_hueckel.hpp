@@ -25,11 +25,11 @@
  *  for a particle pair.
  */
 #include "config.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 
 #ifdef ELECTROSTATICS
 
-#include "debug.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 
 /** Structure to hold Debye-Hueckel Parameters. */
 typedef struct {
@@ -47,8 +47,6 @@ extern Debye_hueckel_params dh_params;
 /*@{*/
 
 int dh_set_params(double kappa, double r_cut);
-int dh_set_params_cdh(double kappa, double r_cut, double eps_int,
-                      double eps_ext, double r0, double r1, double alpha);
 
 /** Computes the Debye_Hueckel pair force and adds this
     force to the particle forces.
@@ -74,19 +72,6 @@ inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2,
     }
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
-
-    ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: DH   f = (%.3e,%.3e,%.3e) with "
-                              "part id=%d at dist %f fac %.3e\n",
-                              this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                              p2->p.identity, dist, fac));
-    ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: DH   f = (%.3e,%.3e,%.3e) with "
-                              "part id=%d at dist %f fac %.3e\n",
-                              this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                              p1->p.identity, dist, fac));
   }
 }
 

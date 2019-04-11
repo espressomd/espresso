@@ -86,7 +86,7 @@ system.constraints.add(shape=espressomd.shapes.SimplePore(center=[25, 25, 25], a
 # width=2, direction=1), particle_type=0, penetrable=True)
 
 
-system.thermostat.set_langevin(kT=10.0, gamma=10)
+system.thermostat.set_langevin(kT=10.0, gamma=10, seed=42)
 
 for i in range(100):
     rpos = np.random.random(3) * box_l

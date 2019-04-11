@@ -45,9 +45,11 @@
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include "utils/Counter.hpp"
+#include "utils/index.hpp"
 #include "utils/math/matrix_vector_product.hpp"
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
+using Utils::get_linear_index;
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
@@ -149,7 +151,6 @@ void lb_init() {
     runtimeErrorMsg()
         << "Lattice Boltzmann agrid not set when initializing fluid";
   }
-
   if (check_runtime_errors())
     return;
 
@@ -160,7 +161,8 @@ void lb_init() {
   }
 
   /* initialize the local lattice domain */
-  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1, 0,
+
+  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1,
                                    local_box_l, my_right, box_l);
 
   if (check_runtime_errors() || init_status != ES_OK)

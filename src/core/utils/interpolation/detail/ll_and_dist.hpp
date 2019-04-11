@@ -23,14 +23,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <array>
 #include <cmath>
+#include <type_traits>
 #include <utility>
-
-#include "utils/type_traits.hpp"
 
 namespace Utils {
 namespace Interpolation {
 namespace detail {
-using Utils::enable_if_t;
 
 struct Block {
   /* Index of the lower left corner of the assignment cube */
@@ -42,7 +40,7 @@ struct Block {
 template <size_t order, typename = void> struct ll_and_dist_;
 
 template <size_t order>
-struct ll_and_dist_<order, enable_if_t<(order % 2) == 1>> {
+struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 1>> {
   Block operator()(const Vector3d &pos, const Vector3d &grid_spacing,
                    const Vector3d &offset) const {
     Vector3d dist;
@@ -61,7 +59,7 @@ struct ll_and_dist_<order, enable_if_t<(order % 2) == 1>> {
 };
 
 template <size_t order>
-struct ll_and_dist_<order, enable_if_t<(order % 2) == 0>> {
+struct ll_and_dist_<order, std::enable_if_t<(order % 2) == 0>> {
   Block operator()(const Vector3d &pos, const Vector3d &grid_spacing,
                    const Vector3d &offset) const {
     Vector3d dist;
