@@ -57,7 +57,7 @@ system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.periodicity = [1, 1, 1]
 system.time_step = time_step
 system.cell_system.skin = 0.3
-system.thermostat.set_langevin(kT=temp, gamma=gamma)
+system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 # Place particles
 for i in range(int(n_ionpairs)):

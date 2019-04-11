@@ -102,7 +102,7 @@ def main():
     system.periodicity = [1, 1, 1]
     system.time_step = time_step
     system.cell_system.skin = 0.3
-    system.thermostat.set_langevin(kT=temp, gamma=gamma)
+    system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
     # Place particles on a face-centered cubic lattice
     q = 1

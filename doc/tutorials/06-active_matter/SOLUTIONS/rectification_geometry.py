@@ -70,7 +70,7 @@ densi = 1.0
 
 lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt)
 system.actors.add(lbf)
-system.thermostat.set_lb(LB_fluid=lbf, gamma=frict)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
 ################################################################################
 #

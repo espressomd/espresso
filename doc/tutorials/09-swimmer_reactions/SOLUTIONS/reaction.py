@@ -276,7 +276,7 @@ system.integrator.set_vv()
 # capping, a separate integration loop with thermostatting would have
 # been used to remove offending configurations.
 
-system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid)
+system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid, seed=42)
 
 ##########################################################################
 

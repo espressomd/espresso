@@ -97,7 +97,7 @@ system.box_l = [length, diameter + 4, diameter + 4]
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 ################################################################################
 #

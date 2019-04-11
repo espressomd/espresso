@@ -260,7 +260,7 @@ system.integrator.set_vv()
 ## Exercise 6 ##
 # Why do we enable the thermostat only after warmup?
 
-system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid)
+system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid, seed=42)
 
 ##########################################################################
 

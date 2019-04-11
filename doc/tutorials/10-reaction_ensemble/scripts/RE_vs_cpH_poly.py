@@ -49,7 +49,7 @@ system.time_step = 0.01
 system.cell_system.skin = 10.  # only for tutorial purposes
 system.cell_system.max_num_cells = 2744
 
-system.thermostat.set_langevin(kT=temperature, gamma=1.0)
+system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
 
 
 #
