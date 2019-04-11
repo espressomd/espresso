@@ -55,16 +55,19 @@ int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
  *  @retval 0
  */
 inline int
-calc_bonded_coulomb_sr_pair_force(Particle const *p1, Particle const *p2,
+calc_bonded_coulomb_sr_pair_force(Particle *p1, Particle *p2,
                                   Bonded_ia_parameters const *iaparams,
-                                  double const dx[3], double force[3]) {
+                                  double dx[3], double force[3]) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   if (dist < coulomb_cutoff) {
-    // Set to zero because calc_pair_force adds forces
-    force[0] = force[1] = force[2] = 0.;
-
-    Coulomb::calc_pair_force(p1, p2, dx, dist2, dist, force);
+    //TODO ugly workaround
+    Vector3d forcevec{};
+    //TODO only to get rid of warnings
+    force[0]++;
+    
+    Coulomb::calc_pair_force(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx, dist2, dist, forcevec);
+    force = forcevec.data()
 
     ONEPART_TRACE(if (p1->p.identity == check_id) fprintf(
         stderr,
@@ -90,12 +93,12 @@ calc_bonded_coulomb_sr_pair_force(Particle const *p1, Particle const *p2,
  *  @retval 0
  */
 inline int
-bonded_coulomb_sr_pair_energy(Particle const *p1, Particle const *p2,
+bonded_coulomb_sr_pair_energy(Particle *p1, Particle *p2,
                               Bonded_ia_parameters const *iaparams,
-                              double const dx[3], double *_energy) {
+                              double dx[3], double *_energy) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
-  *_energy = Coulomb::add_pair_energy(p1, p2, dx, dist, dist2);
+  *_energy = Coulomb::add_pair_energy(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx, dist, dist2);
 
   return 0;
 }

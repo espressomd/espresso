@@ -309,7 +309,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /***********************************************/
 
 #ifdef ELECTROSTATICS
-  Coulomb::calc_pair_force(p1, p2, d, dist, dist2, force);
+  Coulomb::calc_pair_force(p1, p2, p1->p.q * p2->p.q, d, dist, dist2, force);
 #endif
 
 /*********************************************************************/

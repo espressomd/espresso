@@ -192,7 +192,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
 #ifdef ELECTROSTATICS
-  energy.coulomb[0] += Coulomb::add_pair_energy(p1, p2, d, dist, dist2);
+  energy.coulomb[0] += Coulomb::add_pair_energy(p1, p2, p1->p.q*p2->p.q, d, dist, dist2);
 #endif
 
 #ifdef DIPOLES
