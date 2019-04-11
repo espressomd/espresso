@@ -370,6 +370,17 @@ def coulomb_potential(scalar_r, k, q1, q2):
 def coulomb_force(scalar_r, k, q1, q2):
     return k * q1 * q2 / scalar_r**2
 
+# QUARTIC bond
+
+def quartic_force(k0, k1, r, r_cut, scalar_r):
+  if scalar_r > r_cut:
+    return 0.0
+  return - k0 * (scalar_r - r) - k1 * (scalar_r - r)**3
+
+def quartic_potential(k0, k1, r, r_cut, scalar_r):
+  if scalar_r > r_cut:
+    return 0.0
+  return 0.5 * k0 * (scalar_r - r)**2 + 0.25 * k1 * (scalar_r - r)**4
 
 # Generic Lennard-Jones
 def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12.,
