@@ -244,6 +244,19 @@ class LBVelocityProfile(Observable):
 
 
 @script_interface_register
+class LBFluidStress(Observable):
+
+    """Calculates the average stress of the LB fluid for all nodes.
+
+    Parameters
+    ----------
+    None
+
+    """
+    _so_name = "Observables::LBFluidStress"
+
+
+@script_interface_register
 class MagneticDipoleMoment(Observable):
 
     """Calculates the magnetic dipole moment for particles with given ids.
@@ -347,12 +360,57 @@ class ParticleVelocities(Observable):
 
 
 @script_interface_register
+class ParticleDistances(Observable):
+
+    """Calculates the distances between particles with given ids along a
+    polymer chain.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
+    _so_name = "Observables::ParticleDistances"
+
+
+@script_interface_register
+class ParticleAngles(Observable):
+
+    """Calculates the angles between particles with given ids along a
+    polymer chain.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
+    _so_name = "Observables::ParticleAngles"
+
+
+@script_interface_register
+class ParticleDihedrals(Observable):
+
+    """Calculates the dihedrals between particles with given ids along a
+    polymer chain.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
+    _so_name = "Observables::ParticleDihedrals"
+
+
+@script_interface_register
 class StressTensor(Observable):
-    _so_name = "Observables::StressTensor"
 
     """Calculates the total stress tensor. See :ref:`stress tensor`)
 
     """
+    _so_name = "Observables::StressTensor"
 
 
 @script_interface_register

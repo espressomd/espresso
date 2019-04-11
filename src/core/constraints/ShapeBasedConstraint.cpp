@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Constraints {
 Vector3d ShapeBasedConstraint::total_force() const {
-  return all_reduce(comm_cart, m_local_force, std::plus<Vector3d>());
+  return all_reduce(comm_cart, m_local_force, std::plus<>());
 }
 
 double ShapeBasedConstraint::total_normal_force() const {
@@ -47,8 +47,8 @@ double ShapeBasedConstraint::min_dist() {
           double vec[3], dist;
           m_shape->calculate_dist(folded_position(p), &dist, vec);
           return std::min(min, dist);
-        } else
-          return min;
+        }
+        return min;
       });
   boost::mpi::reduce(comm_cart, local_mindist, global_mindist,
                      boost::mpi::minimum<double>(), 0);
@@ -56,7 +56,8 @@ double ShapeBasedConstraint::min_dist() {
 }
 
 ParticleForce ShapeBasedConstraint::force(const Particle &p,
-                                          const Vector3d &folded_pos) {
+                                          const Vector3d &folded_pos,
+                                          double t) {
 
   double dist = 0.;
   Vector3d dist_vec, force, torque1, torque2, outer_normal_vec;
@@ -117,7 +118,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
 }
 
 void ShapeBasedConstraint::add_energy(const Particle &p,
-                                      const Vector3d &folded_pos,
+                                      const Vector3d &folded_pos, double t,
                                       Observable_stat &energy) const {
   double dist;
   IA_parameters *ia_params;

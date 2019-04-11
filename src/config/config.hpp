@@ -36,11 +36,6 @@
 #include "config-features.hpp"
 #include "version.hpp"
 
-/*********************************************************/
-/** \name Parameters from myconfig.hpp that need to be set */
-/*********************************************************/
-/*@{*/
-
 #ifndef ONEPART_DEBUG_ID
 #define ONEPART_DEBUG_ID 13
 #endif
@@ -127,15 +122,6 @@
 /** maximal number of objects in the object-in-fluid framework. */
 #ifndef MAX_OBJECTS_IN_FLUID
 #define MAX_OBJECTS_IN_FLUID 10000
-#endif
-
-/** number of fluid components for lattice Boltzmann  */
-#ifndef LB_COMPONENTS
-#ifdef SHANCHEN
-#define LB_COMPONENTS 2
-#else
-#define LB_COMPONENTS 1
-#endif
 #endif
 
 /* Mathematical constants, from gcc's math.hpp */

@@ -112,8 +112,7 @@ class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
                 visc=1.0,
                 dens=1.0,
                 agrid=0.5,
-                tau=1.0,
-                fric=1.0)
+                tau=1.0)
 
         self.system.actors.add(self.lbf)
 
@@ -122,8 +121,10 @@ class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
         self.system.actors.remove(self.lbf)
 
 
-@ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES_GPU"]),
-           "Features not available, skipping test!")
+@ut.skipIf(
+    not espressomd.gpu_available() or not espressomd.has_features(
+        ["LB_BOUNDARIES_GPU"]),
+           "Features or not available, skipping test!")
 class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
     lbf = None
 
@@ -133,8 +134,7 @@ class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
                 visc=1.0,
                 dens=1.0,
                 agrid=0.5,
-                tau=1.0,
-                fric=1.0)
+                tau=1.0)
 
         self.system.actors.add(self.lbf)
 

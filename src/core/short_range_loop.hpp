@@ -19,16 +19,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_SHORT_RANGE_HPP
 #define CORE_SHORT_RANGE_HPP
 
-#include <utility>
-
-#include <boost/iterator/indirect_iterator.hpp>
-
 #include "algorithm/for_each_pair.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
+#include <boost/iterator/indirect_iterator.hpp>
+#include <profiler/profiler.hpp>
+
+#include <utility>
 
 /**
  * @brief Distance vector and length handed to pair kernels.
@@ -101,6 +103,7 @@ void decide_distance(CellIterator first, CellIterator last,
 template <typename ParticleKernel, typename PairKernel>
 void short_range_loop(ParticleKernel &&particle_kernel,
                       PairKernel &&pair_kernel) {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   auto first = boost::make_indirect_iterator(local_cells.begin());
   auto last = boost::make_indirect_iterator(local_cells.end());

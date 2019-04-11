@@ -45,31 +45,26 @@ print(espressomd.features())
 box_l = 50
 system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.time_step = 0.01
 system.cell_system.skin = 0.1
 
-system.part.add(id=0, pos=[box_l / 2.0, box_l /
-                           2.0, box_l / 2.0], fix=[1, 1, 1])
+system.part.add(pos=[box_l / 2.0] * 3, fix=[1, 1, 1])
 
 
-lb_params = {'agrid': 1, 'fric': 1, 'dens': 1, 'visc': 1, 'tau': 0.01,
+lb_params = {'agrid': 1, 'dens': 1, 'visc': 1, 'tau': 0.01,
              'ext_force_density': [0, 0, -1.0 / (box_l**3)]}
 #lbf = espressomd.lb.LBFluidGPU(**lb_params)
 lbf = espressomd.lb.LBFluid(**lb_params)
 system.actors.add(lbf)
-print(system.actors)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0)
 print(lbf.get_params())
 
-f_list = []
+f_list = np.zeros((10, 3))
 for i in range(10):
-    f_list.append(system.part[0].f)
+    f_list[i] = system.part[0].f
     system.integrator.run(steps=10)
     print(i)
-
-f_list = np.array(f_list)
-
 
 fig1 = plt.figure()
 ax = fig1.add_subplot(111)
