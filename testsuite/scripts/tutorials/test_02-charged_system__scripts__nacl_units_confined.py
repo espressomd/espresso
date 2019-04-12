@@ -32,8 +32,8 @@ class Tutorial(ut.TestCase):
     def test_distance_Na_Cl(self):
         d_Na_Electrode = np.argmax(tutorial.z_dens_na)
         d_Cl_Electrode = np.argmax(tutorial.z_dens_cl)
-        self.assertGreaterEqual(d_Na_Electrode, 90)
-        self.assertLessEqual(d_Cl_Electrode, 11)
+        self.assertGreaterEqual(d_Na_Electrode, 88)
+        self.assertLessEqual(d_Cl_Electrode, 12)
 
 
 if __name__ == "__main__":
