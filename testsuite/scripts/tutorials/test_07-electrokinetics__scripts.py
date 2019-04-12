@@ -18,18 +18,19 @@
 import unittest as ut
 import importlib_wrapper as iw
 import numpy as np
+import sys
 
 # these tutorials need to be executed sequentially
 tutorial_simulation, skipIfMissingFeatures_simulation = iw.configure_and_import(
     "@TUTORIALS_DIR@/07-electrokinetics/scripts/eof_electrokinetics.py",
     gpu=True, integration_length=600, dt=0.5)
-tutorial_analytical, skipIfMissingFeatures_analytical = iw.configure_and_import(
-    "@TUTORIALS_DIR@/07-electrokinetics/scripts/eof_analytical.py", gpu=True)
+# use importlib directly to avoid an error for some myconfig.hpp configurations
+sys.path.insert(0, "@TUTORIALS_DIR@/07-electrokinetics/scripts/")
+tutorial_analytical = iw.importlib.import_module("eof_analytical")
 tutorial_plot, skipIfMissingFeatures_plot = iw.configure_and_import(
-    "@TUTORIALS_DIR@/07-electrokinetics/scripts/plot.py", gpu=True)
+    "@TUTORIALS_DIR@/07-electrokinetics/scripts/plot.py")
 
 
-@skipIfMissingFeatures_analytical
 @skipIfMissingFeatures_simulation
 @skipIfMissingFeatures_plot
 class Tutorial(ut.TestCase):
