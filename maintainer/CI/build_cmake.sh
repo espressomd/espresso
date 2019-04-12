@@ -68,7 +68,7 @@ function end {
 [ -z "$hide_gpu" ] && hide_gpu="false" 
 
 if [ $make_check ] || [ $make_check_tutorials ] || [ $make_check_samples ]; then
-  run_tests="true"
+  run_checks="true"
 fi
 
 # If there are no user-provided flags they
@@ -77,7 +77,7 @@ if [ -z "$cxx_flags" ]; then
     if $with_coverage; then
         cxx_flags="-Og"
     else
-        if $run_tests; then
+        if $run_checks; then
             cxx_flags="-O3"
         else
             cxx_flags="-O0"
@@ -251,7 +251,7 @@ if [ $with_cuda != "true" -o "$(echo $NVCC | grep -o clang)" = "clang" ]; then
     fi
 fi
 
-if $run_tests; then
+if $run_checks; then
     start "TEST"
 
     # integration and unit tests
@@ -284,6 +284,8 @@ if $run_tests; then
     if $make_check_samples; then
         make -j${build_procs} check_samples $make_params || exit 1
     fi
+
+    # installation tests
     make check_cmake_install $make_params || exit 1
 
     end "TEST"
