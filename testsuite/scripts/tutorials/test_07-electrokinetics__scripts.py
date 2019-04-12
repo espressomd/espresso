@@ -20,11 +20,11 @@ import importlib_wrapper as iw
 import numpy as np
 
 # these tutorials need to be executed sequentially
-tutorial_analytical, skipIfMissingFeatures_analytical = iw.configure_and_import(
-    "@TUTORIALS_DIR@/07-electrokinetics/scripts/eof_analytical.py", gpu=True)
 tutorial_simulation, skipIfMissingFeatures_simulation = iw.configure_and_import(
     "@TUTORIALS_DIR@/07-electrokinetics/scripts/eof_electrokinetics.py",
     gpu=True, integration_length=600, dt=0.5)
+tutorial_analytical, skipIfMissingFeatures_analytical = iw.configure_and_import(
+    "@TUTORIALS_DIR@/07-electrokinetics/scripts/eof_analytical.py", gpu=True)
 tutorial_plot, skipIfMissingFeatures_plot = iw.configure_and_import(
     "@TUTORIALS_DIR@/07-electrokinetics/scripts/plot.py", gpu=True)
 
