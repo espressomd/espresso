@@ -25,7 +25,6 @@
  *  for a particle pair.
  */
 #include "config.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
 
 #ifdef ELECTROSTATICS
 
@@ -64,11 +63,10 @@ inline void add_dh_coulomb_pair_force(double const q1q2,
     if (dh_params.kappa > 0.0) {
       /* debye hueckel case: */
       double kappa_dist = dh_params.kappa * dist;
-      fac = coulomb.prefactor * q1q2 *
-            (exp(-kappa_dist) / (dist * dist * dist)) * (1.0 + kappa_dist);
+      fac = q1q2 * (exp(-kappa_dist) / (dist * dist * dist)) * (1.0 + kappa_dist);
     } else {
       /* pure Coulomb case: */
-      fac = coulomb.prefactor * q1q2 / (dist * dist * dist);
+      fac = q1q2 / (dist * dist * dist);
     }
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
@@ -78,10 +76,9 @@ inline void add_dh_coulomb_pair_force(double const q1q2,
 inline double dh_coulomb_pair_energy(double const q1q2, double const dist) {
   if (dist < dh_params.r_cut) {
     if (dh_params.kappa > 0.0)
-      return coulomb.prefactor * q1q2 *
-             exp(-dh_params.kappa * dist) / dist;
+      return q1q2 * exp(-dh_params.kappa * dist) / dist;
 
-    return coulomb.prefactor * q1q2 / dist;
+    return q1q2 / dist;
   }
   return 0.0;
 }
