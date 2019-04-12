@@ -215,7 +215,7 @@ run upon import, at which point all global variables become accessible to
 the unittest classes, including the :class:`~espressomd.system.System` object.
 However, some scripts can be slow to import and require specific command line
 arguments. To solve both issues, the scripts are edited first and saved to
-a new file with suffix ``_for_CTest.py``, which is the one being actually
+a new file with suffix ``_processed.py``, which is the one being actually
 imported by the testing script. During editing, global variables controlling
 the running time (number of integration steps, number of particles, target
 accuracy, etc.) are substituted with new values defined in the testing script,

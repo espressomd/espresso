@@ -119,8 +119,10 @@ def configure_and_import(filepath,
             script_suffix = "_" + script_suffix
     else:
         script_suffix = ""
-    script_suffix += "_for_CTest.py"
+    script_suffix += "_processed.py"
     output_filepath = os.path.splitext(filepath)[0] + script_suffix
+    assert os.path.isfile(output_filepath) is False, \
+        "File {} already processed, cannot overwrite".format(output_filepath)
     with open(output_filepath, "wb") as f:
         f.write(code.encode(encoding="utf-8"))
     # import
