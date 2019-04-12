@@ -58,8 +58,8 @@ function end {
 [ -z "$check_odd_only" ] && check_odd_only="false"
 [ -z "$check_gpu_only" ] && check_gpu_only="false"
 [ -z "$check_skip_long" ] && check_skip_long="false"
-[ -z "$check_tutorials" ] && check_tutorials="false"
-[ -z "$check_samples" ] && check_samples="false"
+[ -z "$make_check_tutorials" ] && make_check_tutorials="false"
+[ -z "$make_check_samples" ] && make_check_samples="false"
 [ -z "$python_version" ] && python_version="2"
 [ -z "$with_cuda" ] && with_cuda="true"
 [ -z "$build_type" ] && build_type="Debug"
@@ -67,6 +67,9 @@ function end {
 [ -z "$test_timeout" ] && test_timeout="300"
 [ -z "$hide_gpu" ] && hide_gpu="false" 
 
+if [ $make_check ] || [ $make_check_tutorials ] || [ $make_check_samples ]; then
+  run_tests="true"
+fi
 
 # If there are no user-provided flags they
 # are added according to with_coverage.
@@ -74,7 +77,7 @@ if [ -z "$cxx_flags" ]; then
     if $with_coverage; then
         cxx_flags="-Og"
     else
-        if $make_check; then
+        if $run_tests; then
             cxx_flags="-O3"
         else
             cxx_flags="-O0"
@@ -106,7 +109,8 @@ elif [ -z "$builddir" ]; then
     builddir=$srcdir/build
 fi
 
-outp insource srcdir builddir make_check \
+outp insource srcdir builddir \
+    make_check make_check_tutorials make_check_samples \
     cmake_params with_fftw \
     with_python_interface with_coverage \
     with_ubsan with_asan \
@@ -247,30 +251,37 @@ if [ $with_cuda != "true" -o "$(echo $NVCC | grep -o clang)" = "clang" ]; then
     fi
 fi
 
-if $make_check; then
+if $run_tests; then
     start "TEST"
 
-    if [ -z "$run_tests" ]; then
-        if $check_odd_only; then
-            make -j${build_procs} check_python_parallel_odd $make_params || exit 1
-        elif $check_gpu_only; then
-            make -j${build_procs} check_python_gpu $make_params || exit 1
-        elif $check_skip_long; then
-            make -j${build_procs} check_python_skip_long $make_params || exit 1
+    # integration and unit tests
+    if $make_check; then
+        if [ -z "$run_tests" ]; then
+            if $check_odd_only; then
+                make -j${build_procs} check_python_parallel_odd $make_params || exit 1
+            elif $check_gpu_only; then
+                make -j${build_procs} check_python_gpu $make_params || exit 1
+            elif $check_skip_long; then
+                make -j${build_procs} check_python_skip_long $make_params || exit 1
+            else
+                make -j${build_procs} check_python $make_params || exit 1
+            fi
         else
-            make -j${build_procs} check_python $make_params || exit 1
+            make python_tests $make_params
+            for t in $run_tests; do
+                ctest --timeout 60 --output-on-failure -R $t || exit 1
+            done
         fi
-    else
-        make python_tests $make_params
-        for t in $run_tests; do
-            ctest --timeout 60 --output-on-failure -R $t || exit 1
-        done
+        make -j${build_procs} check_unit_tests $make_params || exit 1
     fi
-    make -j${build_procs} check_unit_tests $make_params || exit 1
-    if $check_tutorials; then
+
+    # tutorial tests
+    if $make_check_tutorials; then
         make -j${build_procs} check_tutorials $make_params || exit 1
     fi
-    if $check_samples; then
+
+    # sample tests
+    if $make_check_samples; then
         make -j${build_procs} check_samples $make_params || exit 1
     fi
     make check_cmake_install $make_params || exit 1
