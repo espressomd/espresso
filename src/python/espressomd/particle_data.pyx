@@ -524,7 +524,7 @@ cdef class ParticleHandle(object):
             """
             The particle rotational inertia.
 
-            rintertia : list of :obj:`float`
+            rinertia : list of :obj:`float`
 
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
