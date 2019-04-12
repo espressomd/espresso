@@ -56,11 +56,13 @@ class ElectrostaticInteractionsTests(ut.TestCase):
     @ut.skipIf(not espressomd.has_features(["P3M"]),
                "Features not available, skipping test!")
     def test_p3m(self):
+        prefactor = 1.1
         self.system.part[0].pos = [1.0, 2.0, 2.0]
         self.system.part[1].pos = [3.0, 2.0, 2.0]
         # results,
-        p3m_energy = -0.501062398379
-        p3m_force = 2.48921612e-01
+        #reference values for energy and force only calculated for prefactor = 1
+        p3m_energy = -0.501062398379 *prefactor
+        p3m_force = 2.48921612e-01 *prefactor
         test_P3M = tests_common.generate_test_for_class(
             self.system,
             electrostatics.P3M,
@@ -71,7 +73,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                  r_cut=8.906249999999998,
                  alpha=0.387611049779351,
                  tune=False))
-        p3m = espressomd.electrostatics.P3M(prefactor=1.0,
+        p3m = espressomd.electrostatics.P3M(prefactor=prefactor,
                                             accuracy=9.910945054074526e-08,
                                             mesh=[22, 22, 22],
                                             cao=7,

@@ -65,6 +65,7 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
       Scafacos::add_pair_force(p1, p2, d, dist, f.data());
+      f *= coulomb.prefactor;
       break;
 #endif
     default:
@@ -130,7 +131,7 @@ inline double add_pair_energy(Particle *p1, Particle *p2, double const q1q2,
 #endif
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
-      return Scafacos::pair_energy(p1, p2, dist);
+      return coulomb.prefactor * Scafacos::pair_energy(p1, p2, dist);
 #endif
     case COULOMB_DH:
       return dh_coulomb_pair_energy(q1q2, dist);
