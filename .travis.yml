@@ -1,5 +1,11 @@
 language: generic
 
+branches:
+  except:
+  - staging.tmp
+  - trying.tmp
+
+
 matrix:
   include:
     - os: linux
