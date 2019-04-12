@@ -72,12 +72,12 @@ class InteractionsBondedTest(ut.TestCase):
 
         fene = espressomd.interactions.FeneBond(
             k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
-        #self.run_test(fene,
-                      #lambda r: tests_common.fene_force(
-                      #scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
-                      #lambda r: tests_common.fene_potential(
-                      #scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
-                      #0.01, fene_r_0 + fene_d_r_max, True)
+        self.run_test(fene,
+                      lambda r: tests_common.fene_force(
+                      scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
+                      lambda r: tests_common.fene_potential(
+                      scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
+                      0.01, fene_r_0 + fene_d_r_max, True)
 
     @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
                "ELECTROSTATICS feature is not available, skipping coulomb test.")
