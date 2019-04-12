@@ -68,7 +68,7 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
       break;
     }
     
-    force += coulomb.prefactor * f;
+    force += f;
   }
 }
 
@@ -107,8 +107,8 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double q1q2, double *d
 }
 
 // energy_inline
-inline double add_pair_energy(Particle *p1, Particle *p2, double q1q2,
-                              double *d, double dist, double dist2) {
+inline double add_pair_energy(Particle *p1, Particle *p2, double const q1q2,
+                              double *d, double const dist, double const dist2) {
   /* real space Coulomb */
   auto E = [&]() {
     switch (coulomb.method) {
@@ -140,8 +140,7 @@ inline double add_pair_energy(Particle *p1, Particle *p2, double q1q2,
       return 0.;
     }
   }();
-
-  return coulomb.prefactor * E;
+  return E;
 }
 } // namespace Coulomb
 

@@ -75,7 +75,7 @@ inline void add_dh_coulomb_pair_force(double const q1q2,
   }
 }
 
-inline double dh_coulomb_pair_energy(double const q1q2, double dist) {
+inline double dh_coulomb_pair_energy(double const q1q2, double const dist) {
   if (dist < dh_params.r_cut) {
     if (dh_params.kappa > 0.0)
       return coulomb.prefactor * q1q2 *

@@ -99,7 +99,6 @@ bonded_coulomb_sr_pair_energy(Particle *p1, Particle *p2,
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   *_energy = Coulomb::add_pair_energy(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx, dist, dist2);
-
   return 0;
 }
 
