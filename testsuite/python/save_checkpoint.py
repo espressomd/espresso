@@ -45,7 +45,7 @@ checkpoint = espressomd.checkpointing.Checkpoint(
 LB_implementation = None
 if espressomd.has_features('LB') and 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
-elif espressomd.has_features('LB_GPU') and 'LB.GPU' in modes:
+elif espressomd.gpu_available() and espressomd.has_features('LB_GPU') and 'LB.GPU' in modes:
     LB_implementation = espressomd.lb.LBFluidGPU
 if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
@@ -76,7 +76,7 @@ acc.update()
 system.part[0].pos = [1.0, 2.0, 3.0]
 acc.update()
 
-system.thermostat.set_langevin(kT=1.0, gamma=2.0)
+system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(

@@ -459,6 +459,12 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double kappaV
         double volRef
 
+#* Parameters for Quartic   */
+    cdef struct Quartic_bond_parameters:
+        double k0, k1
+        double r
+        double r_cut
+
 #* Union in which to store the parameters of an individual bonded interaction */
     cdef union Bond_parameters:
         Fene_bond_parameters fene
@@ -481,6 +487,7 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         IBM_Triel_Parameters ibm_triel
         IBM_Tribend_Parameters ibm_tribend
         IBM_VolCons_Parameters ibmVolConsParameters
+        Quartic_bond_parameters quartic
 
     cdef struct Bonded_ia_parameters:
         int type
@@ -520,6 +527,8 @@ cdef extern from "bonded_interactions/thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
 cdef extern from "bonded_interactions/bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
+cdef extern from "bonded_interactions/quartic.hpp":
+    int quartic_set_params(int bond_type, double k0, double k1, double r, double r_cut)
 
 cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
     cppclass ImmersedBoundaries:
@@ -549,9 +558,8 @@ IF P3M:
     cdef extern from "bonded_interactions/bonded_coulomb_p3m_sr.hpp":
         int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
 
-cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     int virtual_set_params(int bond_type)
-
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef enum enum_bonded_interaction "BondedInteraction":
@@ -577,3 +585,4 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_UMBRELLA,
         BONDED_IA_THERMALIZED_DIST
+        BONDED_IA_QUARTIC
