@@ -85,10 +85,12 @@ Configure tests in :file:`/src/core/unit_tests/CMakeLists.txt` using the syntax
 
 .. code-block:: cmake
 
-   unit_test(NAME <mytest> SRC <mytest.c> [<../dependency1.c>, ...] [NUM_PROC <N>])
+   unit_test(NAME <mytest> SRC <mytest.cpp> [DEPENDS <target1>[, ...]] [NUM_PROC <N>])
 
 where ``NUM_PROC`` instructs CTest to run the binary through OpenMPI with ``N``
 threads. When ``NUM_PROC`` is not provided, the binary is executed normally.
+The use of more than 1 source file should be avoided in favor of the
+``DEPENDS`` option.
 
 
 .. _Python integration tests:
