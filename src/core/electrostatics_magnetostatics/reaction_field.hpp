@@ -57,15 +57,15 @@ extern Reaction_field_params rf_params;
 ///
 int rf_set_params(double kappa, double epsilon1, double epsilon2, double r_cut);
 
-inline void add_rf_coulomb_pair_force_no_cutoff(const Particle *const p1,
-                                                const Particle *const p2,
-                                                double const d[3], double dist,
+inline void add_rf_coulomb_pair_force_no_cutoff(double const q1q2,
+                                                double const d[3],
+                                                double const dist,
                                                 double force[3]) {
   int j;
   double fac;
   fac = 1.0 / (dist * dist * dist) +
         rf_params.B / (rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
-  fac *= p1->p.q * p2->p.q;
+  fac *= q1q2;
 
   for (j = 0; j < 3; j++)
     force[j] += fac * d[j];
@@ -79,29 +79,28 @@ inline void add_rf_coulomb_pair_force_no_cutoff(const Particle *const p1,
     @param dist      Distance between p1 and p2.
     @param force     returns the force on particle 1.
 */
-inline void add_rf_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
-                                      double dist, double force[3]) {
+inline void add_rf_coulomb_pair_force(double const q1q2, double const d[3],
+                                      double const dist, double force[3]) {
   if (dist < rf_params.r_cut) {
-    add_rf_coulomb_pair_force_no_cutoff(p1, p2, d, dist, force);
+    add_rf_coulomb_pair_force_no_cutoff(q1q2, d, dist, force);
   }
 }
 
-inline double rf_coulomb_pair_energy_no_cutoff(const Particle *p1,
-                                               const Particle *p2,
-                                               double dist) {
+inline double rf_coulomb_pair_energy_no_cutoff(double const q1q2,
+                                               double const dist) {
   double fac;
   fac = 1.0 / dist -
         (rf_params.B * dist * dist) /
             (2 * rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
   // cut off part
   fac -= (1 - rf_params.B / 2) / rf_params.r_cut;
-  fac *= p1->p.q * p2->p.q;
+  fac *= q1q2;
   return fac;
 }
 
-inline double rf_coulomb_pair_energy(Particle *p1, Particle *p2, double dist) {
+inline double rf_coulomb_pair_energy(double const q1q2, double const dist) {
   if (dist < rf_params.r_cut) {
-    return rf_coulomb_pair_energy_no_cutoff(p1, p2, dist);
+    return rf_coulomb_pair_energy_no_cutoff(q1q2, dist);
   }
   return 0.0;
 }

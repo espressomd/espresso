@@ -2193,13 +2193,13 @@ if ELECTROSTATICS:
             bonded_coulomb_set_params(
                 self._bond_id, self._params["prefactor"])
 
-if P3M:
-    class BondedCoulombP3MSRBond(BondedInteraction):
+if ELECTROSTATICS:
+    class BondedCoulombSRBond(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
             """
-            BondedCoulombP3MSRBond initialiser. Used to instantiate a BondedCoulombP3MSRBond identifier
-            with a given set of parameters. Calculates ony the P3M shortrange part.
+            BondedCoulombSRBond initialiser. Used to instantiate a BondedCoulombSRBond identifier
+            with a given set of parameters. Calculates the shortrange part of coulomb interactions.
 
             Parameters
             ----------
@@ -2207,13 +2207,13 @@ if P3M:
             q1q2 : :obj:`float`
                    Sets the charge factor of the involved particle pair. Not the particle charges are used to allow e.g. only partial subtraction of the involved charges.
             """
-            super(BondedCoulombP3MSRBond, self).__init__(*args, **kwargs)
+            super(BondedCoulombSRBond, self).__init__(*args, **kwargs)
 
         def type_number(self):
-            return BONDED_IA_BONDED_COULOMB_P3M_SR
+            return BONDED_IA_BONDED_COULOMB_SR
 
         def type_name(self):
-            return "BONDED_COULOMB_P3M_SR"
+            return "BONDED_COULOMB_SR"
 
         def valid_keys(self):
             return {"q1q2"}
@@ -2227,10 +2227,10 @@ if P3M:
         def _get_params_from_es_core(self):
             return \
                 {"q1q2": bonded_ia_params[
-                    self._bond_id].p.bonded_coulomb_p3m_sr.q1q2}
+                    self._bond_id].p.bonded_coulomb_sr.q1q2}
 
         def _set_params_in_es_core(self):
-            bonded_coulomb_p3m_sr_set_params(
+            bonded_coulomb_sr_set_params(
                 self._bond_id, self._params["q1q2"])
 
 
@@ -3393,9 +3393,8 @@ IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ
 IF ELECTROSTATICS:
     bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulomb
-IF P3M:
     bonded_interaction_classes[
-        int(BONDED_IA_BONDED_COULOMB_P3M_SR)] = BondedCoulombP3MSRBond
+        int(BONDED_IA_BONDED_COULOMB_SR)] = BondedCoulombSRBond
 
 
 class BondedInteractions(object):
