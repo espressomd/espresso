@@ -57,7 +57,7 @@ int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
 inline int
 calc_bonded_coulomb_sr_pair_force(Particle *p1, Particle *p2,
                                   Bonded_ia_parameters const *iaparams,
-                                  double const dx[3], double force[3]) {
+                                  double dx[3], double force[3]) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   if (dist < coulomb_cutoff) {
