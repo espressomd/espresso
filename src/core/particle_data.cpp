@@ -456,8 +456,6 @@ void try_delete_exclusion(Particle *part, int part2);
 
 void try_add_exclusion(Particle *part, int part2);
 
-void auto_exclusion(int distance);
-
 /************************************************
  * particle initialization functions
  ************************************************/
@@ -867,7 +865,7 @@ void set_particle_mass(int part, double mass) {
   mpi_update_particle_property<double, &ParticleProperties::m_mass>(part, mass);
 }
 #else
-const constexpr double ParticleProperties::mass;
+const constexpr double ParticleProperties::m_mass;
 #endif
 
 #ifdef ROTATIONAL_INERTIA
