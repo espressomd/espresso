@@ -119,9 +119,35 @@ class InteractionsBondedTest(ut.TestCase):
             0.01,
             r_cut,
             test_breakage=False)
+            
+    def test_quartic(self):
+        """Tests the Quartic bonded interaction by comparing the potential and force against the analytic values"""
         
-    def run_test(self, bond_instance, force_func, energy_func, min_dist,
-                 cutoff, test_breakage=False):
+        quartic_k0 = 2.
+        quartic_k1 = 5.
+        quartic_r = 0.5
+        quartic_r_cut = self.system.box_l[0] / 3.
+        
+        quartic = espressomd.interactions.QuarticBond(k0=quartic_k0,
+                                                      k1=quartic_k1,
+                                                      r=quartic_r,
+                                                      r_cut=quartic_r_cut)
+
+        self.run_test(quartic,
+                      lambda r: tests_common.quartic_force(
+                      k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
+                      lambda r: tests_common.quartic_potential(
+                      k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
+                      0.01, quartic_r_cut, True)
+
+    def run_test(
+        self,
+        bond_instance,
+     force_func,
+     energy_func,
+     min_dist,
+     cutoff,
+     test_breakage=False):
         self.system.bonded_inter.add(bond_instance)
         self.system.part[0].bonds = ((bond_instance, 1),)
 
