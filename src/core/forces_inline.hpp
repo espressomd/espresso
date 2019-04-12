@@ -68,8 +68,8 @@
 
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
-#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #include "bonded_interactions/bonded_coulomb_sr.hpp"
+#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
 #include "immersed_boundary/ibm_tribend.hpp"

@@ -162,7 +162,6 @@ struct Bonded_coulomb_sr_bond_parameters {
   double q1q2;
 };
 
-
 /** Parameters for three-body angular potential.
  *  @note
  *      ATTENTION: there are different implementations of the bond angle

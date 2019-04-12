@@ -60,9 +60,10 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.system.part[0].pos = [1.0, 2.0, 2.0]
         self.system.part[1].pos = [3.0, 2.0, 2.0]
         # results,
-        #reference values for energy and force only calculated for prefactor = 1
-        p3m_energy = -0.501062398379 *prefactor
-        p3m_force = 2.48921612e-01 *prefactor
+        # reference values for energy and force only calculated for prefactor =
+        # 1
+        p3m_energy = -0.501062398379 * prefactor
+        p3m_force = 2.48921612e-01 * prefactor
         test_P3M = tests_common.generate_test_for_class(
             self.system,
             electrostatics.P3M,

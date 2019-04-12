@@ -57,8 +57,8 @@
 #include "nonbonded_interactions/wca.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
-#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #include "bonded_interactions/bonded_coulomb_sr.hpp"
+#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
 #include "statistics.hpp"
 
@@ -192,7 +192,8 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
 #ifdef ELECTROSTATICS
-  energy.coulomb[0] += Coulomb::add_pair_energy(p1, p2, p1->p.q*p2->p.q, d, dist, dist2);
+  energy.coulomb[0] +=
+      Coulomb::add_pair_energy(p1, p2, p1->p.q * p2->p.q, d, dist, dist2);
 #endif
 
 #ifdef DIPOLES
@@ -273,8 +274,7 @@ inline void add_bonded_energy(Particle *p1) {
         bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
         break;
       case BONDED_IA_BONDED_COULOMB_SR:
-        bond_broken =
-            bonded_coulomb_sr_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = bonded_coulomb_sr_pair_energy(p1, p2, iaparams, dx, &ret);
         break;
 #endif
 #ifdef LENNARD_JONES

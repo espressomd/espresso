@@ -23,8 +23,8 @@
 /** \file
  *  Routines to calculate the BONDED_COULOMB_SR Energy or/and
  * BONDED_COULOMB_SR force for a particle pair. This is only the shortrange
- * part of any coulomb interaction and first used to subtract certain intramolecular interactions in
- * combination with Thole damping \ref forces.cpp
+ * part of any coulomb interaction and first used to subtract certain
+ * intramolecular interactions in combination with Thole damping \ref forces.cpp
  */
 
 /************************************************************/
@@ -61,14 +61,15 @@ calc_bonded_coulomb_sr_pair_force(Particle *p1, Particle *p2,
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   if (dist < coulomb_cutoff) {
-    //TODO ugly workaround
+    // TODO ugly workaround
     Vector3d forcevec{};
-    
-    Coulomb::calc_pair_force(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx, dist, dist2, forcevec);
+
+    Coulomb::calc_pair_force(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx,
+                             dist, dist2, forcevec);
     force[0] = forcevec[0];
     force[1] = forcevec[1];
     force[2] = forcevec[2];
-    
+
     ONEPART_TRACE(if (p1->p.identity == check_id) fprintf(
         stderr,
         "%d: OPT: BONDED_COULOMB_SR f = (%.3e,%.3e,%.3e) with part id=%d "
@@ -92,13 +93,13 @@ calc_bonded_coulomb_sr_pair_force(Particle *p1, Particle *p2,
  *  @param[out] _energy   Energy.
  *  @retval 0
  */
-inline int
-bonded_coulomb_sr_pair_energy(Particle *p1, Particle *p2,
-                              Bonded_ia_parameters const *iaparams,
-                              double dx[3], double *_energy) {
+inline int bonded_coulomb_sr_pair_energy(Particle *p1, Particle *p2,
+                                         Bonded_ia_parameters const *iaparams,
+                                         double dx[3], double *_energy) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
-  *_energy = Coulomb::add_pair_energy(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx, dist, dist2);
+  *_energy = Coulomb::add_pair_energy(
+      p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx, dist, dist2);
   return 0;
 }
 

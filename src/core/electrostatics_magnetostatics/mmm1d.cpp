@@ -312,7 +312,7 @@ double mmm1d_coulomb_pair_energy(double const chpref, double const d[3],
 
       r2n *= rxy2_d;
     }
-    E *=  uz;
+    E *= uz;
 
     /* real space parts */
 

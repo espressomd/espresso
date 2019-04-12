@@ -58,7 +58,8 @@ extern Reaction_field_params rf_params;
 int rf_set_params(double kappa, double epsilon1, double epsilon2, double r_cut);
 
 inline void add_rf_coulomb_pair_force_no_cutoff(double const q1q2,
-                                                double const d[3], double const dist,
+                                                double const d[3],
+                                                double const dist,
                                                 double force[3]) {
   int j;
   double fac;
@@ -85,7 +86,8 @@ inline void add_rf_coulomb_pair_force(double const q1q2, double const d[3],
   }
 }
 
-inline double rf_coulomb_pair_energy_no_cutoff(double const q1q2, double const dist) {
+inline double rf_coulomb_pair_energy_no_cutoff(double const q1q2,
+                                               double const dist) {
   double fac;
   fac = 1.0 / dist -
         (rf_params.B * dist * dist) /

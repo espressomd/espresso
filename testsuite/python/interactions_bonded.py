@@ -93,37 +93,35 @@ class InteractionsBondedTest(ut.TestCase):
             lambda r: tests_common.coulomb_potential(r, coulomb_k, q1, q2),
             0.01, self.system.box_l[0] / 3)
         
-        
-        
     @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
                "ELECTROSTATICS feature is not available, skipping coulomb short range test.")
     def test_coulomb_sr(self):
-        #with negated actual charges and only short range int: cancels out all interactions
+        # with negated actual charges and only short range int: cancels out all
+        # interactions
         q1 = 1.2
         q2 = -q1
         self.system.part[0].q = q1
         self.system.part[1].q = q2
         r_cut = 2
         
-        sr_solver = espressomd.electrostatics.DH(prefactor = 2, kappa = 0.8, r_cut = r_cut)
+        sr_solver = espressomd.electrostatics.DH(
+            prefactor=2, kappa=0.8, r_cut=r_cut)
         self.system.actors.add(sr_solver)
-        coulomb_sr = espressomd.interactions.BondedCoulombSRBond(q1q2 = - q1*q2)
+        coulomb_sr = espressomd.interactions.BondedCoulombSRBond(
+            q1q2=- q1 * q2)
         
-        #no break test, bond can't break. it extends as far as the short range part of the electrostatics actor 
-        self.run_test(coulomb_sr, lambda r: [0.,0.,0.], lambda r: 0, 0.01, r_cut, test_breakage=False)
+        # no break test, bond can't break. it extends as far as the short range
+        # part of the electrostatics actor
+        self.run_test(
+            coulomb_sr,
+            lambda r: [0., 0., 0.],
+            lambda r: 0,
+            0.01,
+            r_cut,
+            test_breakage=False)
         
-        
-        
-
-
-    def run_test(
-        self,
-        bond_instance,
-     force_func,
-     energy_func,
-     min_dist,
-     cutoff,
-     test_breakage=False):
+    def run_test(self, bond_instance, force_func, energy_func, min_dist,
+                 cutoff, test_breakage=False):
         self.system.bonded_inter.add(bond_instance)
         self.system.part[0].bonds = ((bond_instance, 1),)
 

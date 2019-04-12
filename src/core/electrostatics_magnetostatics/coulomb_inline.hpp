@@ -15,9 +15,9 @@
 
 namespace Coulomb {
 // forces_inline
-inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2, 
-                            double *d, double dist, 
-                            double const dist2, Vector3d &force) {
+inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
+                            double *d, double dist, double const dist2,
+                            Vector3d &force) {
 
   if (q1q2 != 0) {
     Vector3d f{};
@@ -67,14 +67,14 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
     default:
       break;
     }
-    
+
     force += coulomb.prefactor * f;
   }
 }
 
 // pressure_inline.hpp
-inline void add_pair_pressure(Particle *p1, Particle *p2, double q1q2, double *d,
-                              double dist, double dist2,
+inline void add_pair_pressure(Particle *p1, Particle *p2, double q1q2,
+                              double *d, double dist, double dist2,
                               Observable_stat &virials,
                               Observable_stat &p_tensor) {
   switch (coulomb.method) {
@@ -115,8 +115,8 @@ inline double add_pair_energy(Particle *p1, Particle *p2, double const q1q2,
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
-      //TODO some energy functions include the prefactor, some don't
-      return  p3m_pair_energy(q1q2, dist);
+      // TODO some energy functions include the prefactor, some don't
+      return p3m_pair_energy(q1q2, dist);
     case COULOMB_ELC_P3M:
       if (elc_params.dielectric_contrast_on) {
         return 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2) +
