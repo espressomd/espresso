@@ -256,6 +256,9 @@ Contrary to the :ref:`Python integration tests` where fixtures
 ``@ut.skipIf(<condition>)`` are used to disable tests for missing features,
 tutorials and samples already have ``espressomd.assert_features()`` statements
 from which a fixture ``@skipIfMissingFeatures`` is automatically created.
+When importing multiple scripts in the same test (for example, some tutorials
+have bonus scripts that don't necessarily require ``assert_features()``),
+on the first import failure all subsequent imports will be skipped.
 
 Please note that numerical results of interest (``sample.pressure`` in the
 previous example) need to be stored in global variables to be accessible.

@@ -31,6 +31,11 @@ def _id(x):
     return x
 
 
+# global variable: if one import failed, all subsequent imports will be skipped,
+# see skip_future_imports_dependency()
+skip_future_imports = False
+
+
 def configure_and_import(filepath,
                          gpu=False,
                          substitutions=lambda x: x,
@@ -76,7 +81,12 @@ def configure_and_import(filepath,
     :param \*\*parameters: global variables to replace
     :type  \*\*parameters: int, float, bool
     """
+    if skip_future_imports:
+        module = MagicMock()
+        skipIfMissingImport = skip_future_imports_dependency(filepath)
+        return module, skipIfMissingImport
     if gpu and not espressomd.gpu_available():
+        skip_future_imports_dependency(filepath)
         skipIfMissingGPU = unittest.skip("gpu not available, skipping test!")
         module = MagicMock()
         return module, skipIfMissingGPU
@@ -122,6 +132,7 @@ def configure_and_import(filepath,
     try:
         module = importlib.import_module(module_name)
     except espressomd.FeaturesError as err:
+        skip_future_imports_dependency(filepath)
         skipIfMissingFeatures = unittest.skip(str(err) + ", skipping test!")
         module = MagicMock()
     else:
@@ -253,3 +264,17 @@ except ImportError:
     # handle deferred ImportError
     code = re_es_vis_import.sub(substitution_es_vis_import, code)
     return code
+
+
+def skip_future_imports_dependency(filepath):
+    """
+    If an import failed, all subsequent imports will be skipped. The
+    fixture message provides the name of the module that failed.
+    """
+    global skip_future_imports
+    if not skip_future_imports:
+        module_name = os.path.splitext(os.path.basename(filepath))[0]
+        assert module_name != ""
+        skip_future_imports = module_name
+    return unittest.skip("failed to import {}, skipping test!"
+                         .format(skip_future_imports))
