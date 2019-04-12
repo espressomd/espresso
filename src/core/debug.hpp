@@ -35,8 +35,7 @@
  */
 void check_particle_consistency();
 
-/** check the consistency of the cells and particle_node. Called from
- *  mpi_bcast_event(CHECK_PARTICLES)
+/** check the consistency of the cells and particle_node.
  */
 void check_particles();
 
@@ -167,22 +166,6 @@ extern int check_id;
   { cmd; }
 #else
 #define MDLC_TRACE(cmd)
-#endif
-
-#ifdef MAGGS_DEBUG
-#define MAGGS_TRACE(cmd)                                                       \
-  { cmd; }
-#else
-/** Equals { cmd } iff MAGGS_DEBUG is set. */
-#define MAGGS_TRACE(cmd)
-#endif
-
-#ifdef FFT_DEBUG
-#define FFT_TRACE(cmd)                                                         \
-  { cmd; }
-#else
-/** Equals { cmd } iff FFT_DEBUG is set. */
-#define FFT_TRACE(cmd)
 #endif
 
 #ifdef RANDOM_DEBUG

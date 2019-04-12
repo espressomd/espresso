@@ -30,9 +30,9 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
+#include "event.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
@@ -43,7 +43,6 @@
 
 #include "utils.hpp"
 #include "utils/Cache.hpp"
-#include "utils/make_unique.hpp"
 #include "utils/mpi/gatherv.hpp"
 
 #include <boost/range/algorithm.hpp>
@@ -71,9 +70,9 @@ namespace {
  * @brief A generic particle update.
  *
  * Here the sub-struct struture of Particle is
- * used: the specification of the data memeber to update
- * consists of to parts, the pointer to the subsutruct @p s
- * and a pointer to a member of that substruct @m.
+ * used: the specification of the data member to update
+ * consists of two parts, the pointer to the substruct @p s
+ * and a pointer to a member of that substruct @p m.
  *
  * @tparam S Substruct type of Particle
  * @tparam s Pointer to a member of Particle
@@ -369,7 +368,7 @@ struct UpdateVisitor : public boost::static_visitor<void> {
 } // namespace
 
 /**
- * @brief Callback for @f mpi_send_update_message.
+ * @brief Callback for \ref mpi_send_update_message.
  */
 void mpi_update_particle_slave(int node, int id) {
   if (node == comm_cart.rank()) {
@@ -451,28 +450,18 @@ Particle **local_particles = nullptr;
  * local functions
  ************************************************/
 
-/** Remove bond from particle if possible */
 int try_delete_bond(Particle *part, const int *bond);
 
-/** Remove exclusion from particle if possible */
 void try_delete_exclusion(Particle *part, int part2);
 
-/** Insert an exclusion if not already set */
 void try_add_exclusion(Particle *part, int part2);
 
-/** Automatically add the next \<distance\> neighbors in each molecule to the
-   exclusion list. This uses the bond topology obtained directly from the
-   particles, since only this contains the full topology, in contrast to \ref
-   topology::topology. To easily setup the bonds, all data should be on a single
-   node, therefore the \ref partCfg array is used. With large amounts of
-   particles, you should avoid this function and setup exclusions manually. */
 void auto_exclusion(int distance);
 
 /************************************************
  * particle initialization functions
  ************************************************/
 
-/** Deallocate the dynamic storage of a particle. */
 void free_particle(Particle *part) { part->~Particle(); }
 
 void mpi_who_has_slave(int, int) {
@@ -495,7 +484,7 @@ void mpi_who_has_slave(int, int) {
 }
 
 void mpi_who_has() {
-  static int *sizes = new int[n_nodes];
+  static auto *sizes = new int[n_nodes];
   int *pdata = nullptr;
   int pdata_s = 0;
 
@@ -548,9 +537,8 @@ int get_particle_node(int id) {
   if (needle == particle_node.end()) {
     throw std::runtime_error("Particle node for id " + std::to_string(id) +
                              " not found!");
-  } else {
-    return needle->second;
   }
+  return needle->second;
 }
 
 void clear_particle_node() { particle_node.clear(); }
@@ -812,11 +800,10 @@ void prefetch_particle_data(std::vector<int> ids) {
                            [](int id) {
                              if (not particle_exists(id)) {
                                return true;
-                             } else {
-                               auto const pnode = get_particle_node(id);
-                               return (pnode == this_node) ||
-                                      particle_fetch_cache.has(id);
                              }
+                             auto const pnode = get_particle_node(id);
+                             return (pnode == this_node) ||
+                                    particle_fetch_cache.has(id);
                            }),
             ids.end());
 
@@ -875,16 +862,6 @@ void set_particle_f(int part, const Vector3d &F) {
       part, F);
 }
 
-#ifdef SHANCHEN
-void set_particle_solvation(int part, double *solvation) {
-  std::array<double, 2 * LB_COMPONENTS> s;
-  std::copy(solvation, solvation + 2 * LB_COMPONENTS, s.begin());
-  mpi_update_particle_property<std::array<double, 2 * LB_COMPONENTS>,
-                               &ParticleProperties::solvation>(part, s);
-}
-
-#endif
-
 #if defined(MASS)
 void set_particle_mass(int part, double mass) {
   mpi_update_particle_property<double, &ParticleProperties::mass>(part, mass);
@@ -899,7 +876,7 @@ void set_particle_rotational_inertia(int part, double *rinertia) {
       part, Vector3d(rinertia, rinertia + 3));
 }
 #else
-const constexpr double ParticleProperties::rinertia[3];
+constexpr Vector3d ParticleProperties::rinertia;
 #endif
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
@@ -931,7 +908,7 @@ void set_particle_dipm(int part, double dipm) {
   mpi_update_particle_property<double, &ParticleProperties::dipm>(part, dipm);
 }
 
-void set_particle_dip(int part, double *dip) {
+void set_particle_dip(int part, double const *const dip) {
   Vector4d quat;
   double dipm;
   std::tie(quat, dipm) =
@@ -953,7 +930,7 @@ void set_particle_virtual(int part, int is_virtual) {
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part, double *vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
-  vs_relative.quat = Vector<4, double>(vs_relative_quat, vs_relative_quat + 4);
+  vs_relative.quat = Vector4d(vs_relative_quat, vs_relative_quat + 4);
 
   mpi_update_particle_property<
       ParticleProperties::VirtualSitesRelativeParameteres,
@@ -1082,7 +1059,7 @@ void set_particle_gamma_rot(int part, Vector3d gamma_rot) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 void set_particle_ext_torque(int part, const Vector3d &torque) {
-  auto const flag = (torque != Vector3d{}) ? PARTICLE_EXT_TORQUE : 0;
+  auto const flag = (!torque.empty()) ? PARTICLE_EXT_TORQUE : 0;
   if (flag) {
     mpi_update_particle_property<Vector3d, &ParticleProperties::ext_torque>(
         part, torque);
@@ -1093,7 +1070,7 @@ void set_particle_ext_torque(int part, const Vector3d &torque) {
 #endif
 
 void set_particle_ext_force(int part, const Vector3d &force) {
-  auto const flag = (force != Vector3d{}) ? PARTICLE_EXT_FORCE : 0;
+  auto const flag = (!force.empty()) ? PARTICLE_EXT_FORCE : 0;
   if (flag) {
     mpi_update_particle_property<Vector3d, &ParticleProperties::ext_force>(
         part, force);
@@ -1195,7 +1172,7 @@ void local_remove_particle(int part) {
   Particle p_destroy = extract_indexed_particle(cell, n);
 }
 
-void local_place_particle(int part, const double p[3], int _new) {
+Particle *local_place_particle(int part, const double p[3], int _new) {
   Particle *pt;
 
   Vector3i i{};
@@ -1232,6 +1209,10 @@ void local_place_particle(int part, const double p[3], int _new) {
 #ifdef BOND_CONSTRAINT
   pt->r.p_old = pp;
 #endif
+
+  assert(local_particles[part] == pt);
+
+  return pt;
 }
 
 void local_remove_all_particles() {
@@ -1433,9 +1414,8 @@ int change_exclusion(int part1, int part2, int _delete) {
   if (particle_exists(part1) && particle_exists(part2)) {
     mpi_send_exclusion(part1, part2, _delete);
     return ES_OK;
-  } else {
-    return ES_ERROR;
   }
+  return ES_ERROR;
 }
 
 void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
@@ -1528,7 +1508,7 @@ void remove_id_from_map(int part_id, int type) {
 }
 
 int get_random_p_id(int type) {
-  if (particle_type_map.at(type).size() == 0)
+  if (particle_type_map.at(type).empty())
     throw std::runtime_error("No particles of given type could be found");
   int rand_index = i_random(particle_type_map.at(type).size());
   return *std::next(particle_type_map[type].begin(), rand_index);

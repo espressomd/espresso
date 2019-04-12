@@ -28,9 +28,8 @@ import tests_common
     not (
         espressomd.has_features(
             'LB') or espressomd.has_features(
-            'LB_GPU')) or espressomd.has_features(
-                'SHANCHEN'),
-           "Both LB and LB_GPU not compiled in or SHANCHEN activated, can not check functionality.")
+            'LB_GPU')),
+           "Both LB and LB_GPU not compiled in, can not check functionality.")
 class TestCylindricalLBObservable(ut.TestCase):
 
     """
@@ -61,10 +60,10 @@ class TestCylindricalLBObservable(ut.TestCase):
     def setUpClass(self):
         if espressomd.has_features('LB_GPU'):
             self.lbf_gpu = espressomd.lb.LBFluidGPU(
-                agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+                agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
         if espressomd.has_features('LB'):
             self.lbf_cpu = espressomd.lb.LBFluid(
-                agrid=1.0, fric=1.0, dens=1.0, visc=1.0, tau=0.01)
+                agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
 
     def tearDown(self):
         del self.positions[:]
@@ -306,7 +305,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_velocity_profile_at_particle_positions_test()
         self.system.actors.remove(self.lbf)
 
-    @ut.skipIf(not espressomd.has_features('LB_GPU'), "LB_GPU not compiled in, skipping test.")
+    @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features('LB_GPU'), "LB_GPU not compiled in, skipping test.")
     def test_x_axis_gpu(self):
         self.params['axis'] = 'x'
         self.lbf = self.lbf_gpu
@@ -316,7 +315,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_velocity_profile_test()
         self.system.actors.remove(self.lbf)
 
-    @ut.skipIf(not espressomd.has_features('LB_GPU'), "LB_GPU not compiled in, skipping test.")
+    @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features('LB_GPU'), "LB_GPU not compiled in or no gpu present, skipping test.")
     def test_y_axis_gpu(self):
         self.params['axis'] = 'y'
         self.lbf = self.lbf_gpu
@@ -326,7 +325,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_velocity_profile_test()
         self.system.actors.remove(self.lbf)
 
-    @ut.skipIf(not espressomd.has_features('LB_GPU'), "LB_GPU not compiled in, skipping test.")
+    @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features('LB_GPU'), "LB_GPU not compiled in, skipping test.")
     def test_z_axis_gpu(self):
         self.params['axis'] = 'z'
         self.lbf = self.lbf_gpu

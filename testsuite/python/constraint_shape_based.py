@@ -163,22 +163,13 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # check force calculation of cylinder constraint
         interaction_dir = -1  # constraint is directed inwards
         cylinder_shape = espressomd.shapes.Cylinder(
-            center=[
-                self.box_l /
-                2.0,
-                self.box_l /
-                2.0,
-                self.box_l /
-                2.0],
-            axis=[
-                0,
-                0,
-                1],
+            center=[self.box_l / 2.0,
+                    self.box_l / 2.0,
+                    self.box_l / 2.0],
+            axis=[0, 0, 1],
             direction=interaction_dir,
-            radius=self.box_l /
-            2.0,
-            length=self.box_l +
-            5)  # +5 in order to have no top or bottom
+            radius=self.box_l / 2.0,
+            length=self.box_l + 5)  # +5 in order to have no top or bottom
         penetrability = False  # impenetrable
         outer_cylinder_constraint = espressomd.constraints.ShapeBasedConstraint(
             shape=cylinder_shape, particle_type=1, penetrable=penetrability)
@@ -519,7 +510,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             system.integrator.run(recalc_forces=True, steps=0)
             self.assertEqual(slitpore_constraint.min_dist(), ref_mindist)
             numpy.testing.assert_almost_equal(
-                slitpore_constraint.total_force(), ref_force, 10)
+                numpy.copy(slitpore_constraint.total_force()), ref_force, 10)
 
         # Reset
         system.non_bonded_inter[0, 1].generic_lennard_jones.set_params(

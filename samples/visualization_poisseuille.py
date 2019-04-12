@@ -51,7 +51,7 @@ visualizer = espressomd.visualization_opengl.openGLLive(system,
                                                         0.1],
                                                         velocity_arrows_type_colors=[[0, 1, 0]])
 
-lbf = lb.LBFluid(agrid=1.0, fric=1.0, dens=1.0,
+lbf = lb.LBFluid(agrid=1.0, dens=1.0,
                  visc=1.0, tau=0.1, ext_force_density=[0, 0.003, 0])
 system.actors.add(lbf)
 system.thermostat.set_lb(kT=0)

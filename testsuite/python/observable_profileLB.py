@@ -37,7 +37,6 @@ DENS = 1.7
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
-             'fric': 1.0,
              'tau': TIME_STEP
              }
 
@@ -114,7 +113,7 @@ class ObservableProfileLBCommon(object):
 
 
 @ut.skipIf(not espressomd.has_features(
-    'LB') or espressomd.has_features('SHANCHEN'), "Skipping test due to missing features.")
+    'LB'), "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, ObservableProfileLBCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -125,8 +124,8 @@ class LBCPU(ut.TestCase, ObservableProfileLBCommon):
         self.system.actors.add(self.lbf)
 
 
-@ut.skipIf(not espressomd.has_features(
-    'LB_GPU') or espressomd.has_features('SHANCHEN'), "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
+    'LB_GPU'), "Skipping test due to missing features or gpu.")
 class LBGPU(ut.TestCase, ObservableProfileLBCommon):
 
     """Test for the GPU implementation of the LB."""

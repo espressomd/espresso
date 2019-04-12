@@ -22,9 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
 #include "core/communication.hpp"
+#include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
 #include "shapes/Shape.hpp"
 
+#if (defined(LB) || defined(LB_GPU))
 namespace ScriptInterface {
 namespace LBBoundaries {
 class LBBoundary : public AutoParameters<LBBoundary> {
@@ -48,29 +50,32 @@ public:
                        return (m_shape != nullptr) ? m_shape->id() : ObjectId();
                      }}});
 #ifdef EK_BOUNDARIES
-    add_parameters(
-        {{"charge_density",
-          [this](Variant const &value) {
-            m_lbboundary->set_charge_density(boost::get<double>(value));
-          },
-          [this]() { return m_lbboundary->charge_density(); },
-          VariantType::DOUBLE, 0},
-         {"net_charge",
-          [this](Variant const &value) {
-            m_lbboundary->set_net_charge(boost::get<double>(value));
-          },
-          [this]() { return m_lbboundary->net_charge(); }, VariantType::DOUBLE,
-          0}});
+    add_parameters({{"charge_density",
+                     [this](Variant const &value) {
+                       m_lbboundary->set_charge_density(
+                           get_value<double>(value));
+                     },
+                     [this]() { return m_lbboundary->charge_density(); }},
+                    {"net_charge",
+                     [this](Variant const &value) {
+                       m_lbboundary->set_net_charge(get_value<double>(value));
+                     },
+                     [this]() { return m_lbboundary->net_charge(); }}});
 #endif
   }
 
   Variant call_method(const std::string &name, const VariantMap &) override {
     if (name == "get_force") {
       // The get force method uses mpi callbacks on lb cpu
-      if (this_node == 0)
-        return m_lbboundary->get_force();
-      else
-        return none;
+      if (this_node == 0) {
+        const auto rho = lb_lbfluid_get_density();
+        const auto agrid = lb_lbfluid_get_agrid();
+        const auto tau = lb_lbfluid_get_tau();
+        const double unit_conversion =
+            agrid * agrid * agrid * agrid / rho / tau / tau;
+        return m_lbboundary->get_force() * unit_conversion;
+      }
+      return none;
     }
     return none;
   }
@@ -88,4 +93,5 @@ private:
 }; // class LBBoundary
 } // namespace LBBoundaries
 } /* namespace ScriptInterface */
+#endif
 #endif
