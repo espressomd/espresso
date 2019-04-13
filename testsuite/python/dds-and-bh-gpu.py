@@ -35,10 +35,13 @@ def stopAll(system):
 
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["DIPOLAR_BARNES_HUT"]), "Features or gpu not available, skipping test!")
-class BHGPUTest(ut.TestCase):
+class BH_DDS_gpu_multCPU_test(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-    np.random.seed(system.seed)
+    # just some seeding based on 14
+    system.seed = [s * 14 for s in range(
+        system.cell_system.get_state()["n_nodes"])]
+    # just some seeding different from the previous one
+    np.random.seed(71)
 
     def vectorsTheSame(self, a, b):
         tol = 5E-2
@@ -47,10 +50,9 @@ class BHGPUTest(ut.TestCase):
         return rel <= tol
 
     def run_test_case(self):
-        seed(1)
         pf_bh_gpu = 2.34
-        pf_dawaanr = 3.524
-        ratio_dawaanr_bh_gpu = pf_dawaanr / pf_bh_gpu
+        pf_dds_gpu = 3.524
+        ratio_dawaanr_bh_gpu = pf_dds_gpu / pf_bh_gpu
         l = 15
         self.system.box_l = [l, l, l]
         self.system.periodicity = [0, 0, 0]
@@ -67,7 +69,7 @@ class BHGPUTest(ut.TestCase):
             for i in range(n):
                 part_pos = np.array(random(3)) * l
                 costheta = 2 * random() - 1
-                sintheta = np.sin(np.arcsin(costheta))
+                sintheta = np.sin(np.arccos(costheta))
                 phi = 2 * np.pi * random()
                 part_dip[0] = sintheta * np.cos(phi) * dipole_modulus
                 part_dip[1] = sintheta * np.sin(phi) * dipole_modulus
@@ -94,9 +96,9 @@ class BHGPUTest(ut.TestCase):
             # and torque
             self.system.thermostat.set_langevin(kT=1.297, gamma=0.0)
 
-            dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(
-                prefactor=pf_dawaanr)
-            self.system.actors.add(dds_cpu)
+            dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(
+                prefactor=pf_dds_gpu)
+            self.system.actors.add(dds_gpu)
             self.system.integrator.run(steps=0, recalc_forces=True)
 
             dawaanr_f = []
@@ -108,7 +110,7 @@ class BHGPUTest(ut.TestCase):
             dawaanr_e = espressomd.analyze.Analysis(
                 self.system).energy()["total"]
 
-            del dds_cpu
+            del dds_gpu
             self.system.actors.clear()
 
             self.system.integrator.run(steps=0, recalc_forces=True)
@@ -152,10 +154,7 @@ class BHGPUTest(ut.TestCase):
             self.system.part.clear()
 
     def test(self):
-        if (self.system.cell_system.get_state()["n_nodes"] > 1):
-            print("NOTE: Ignoring testcase for n_nodes > 1")
-        else:
-            self.run_test_case()
+        self.run_test_case()
 
 if __name__ == '__main__':
     ut.main()
