@@ -29,11 +29,11 @@
 #include "config.hpp"
 
 #ifdef THOLE
-
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
+#include "grid.hpp"
 
 int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
                      double q1q2);
@@ -45,7 +45,7 @@ inline void add_thole_pair_force(const Particle *const p1,
   double thole_q1q2 = ia_params->THOLE_q1q2;
   double thole_s = ia_params->THOLE_scaling_coeff;
 
-  if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut &&
+  if (thole_s != 0 && thole_q1q2 != 0 && dist < Coulomb::cutoff(box_l) &&
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
 
     // Calc damping function (see doi.org/10.1016/0301-0104(81)85176-2)
@@ -70,13 +70,8 @@ inline double thole_pair_energy(const Particle *p1, const Particle *p2,
   double thole_s = ia_params->THOLE_scaling_coeff;
   double thole_q1q2 = ia_params->THOLE_q1q2;
 
-  if (thole_s != 0 && thole_q1q2 != 0 && dist < p3m.params.r_cut &&
+  if (thole_s != 0 && thole_q1q2 != 0 && dist < Coulomb::cutoff(box_l) &&
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
-
-    double chgfac = p1->p.q * p2->p.q;
-
-    // Subtract p3m shortrange energy
-    e_thole += p3m_pair_energy(-chgfac, dist);
 
     // Add damped p3m shortrange energy
     double sd = thole_s * dist;
