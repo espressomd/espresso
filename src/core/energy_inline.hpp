@@ -91,7 +91,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 
 #ifdef LENNARD_JONES
   /* Lennard-Jones */
-  ret += lj_pair_energy(p1, p2, ia_params, d, dist);
+  ret += lj_pair_energy(ia_params, dist);
 #endif
 #ifdef WCA
   /* WCA */

@@ -15,23 +15,23 @@
 #include "electrostatics_magnetostatics/scafacos.hpp"
 
 namespace Coulomb {
-inline Vector3d central_force(double const q1q2, const double *d, double dist,
-                              double const dist2) {
+inline Vector3d central_force(double const q1q2, const double *d, double dist) {
   Vector3d f{};
 
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_P3M_GPU:
-  case COULOMB_P3M: {
-    p3m_add_pair_force(q1q2, d, dist2, dist, f.data());
+  case COULOMB_P3M:
+  case COULOMB_ELC_P3M: {
+    p3m_add_pair_force(q1q2, d, dist, f.data());
     break;
   }
 #endif
   case COULOMB_MMM1D:
-    add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, f.data());
+    add_mmm1d_coulomb_pair_force(q1q2, d, dist, f.data());
     break;
   case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, f.data());
+    add_mmm2d_coulomb_pair_force(q1q2, d, dist, f.data());
     break;
   case COULOMB_DH:
     add_dh_coulomb_pair_force(q1q2, d, dist, f.data());
@@ -41,32 +41,29 @@ inline Vector3d central_force(double const q1q2, const double *d, double dist,
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    Scafacos::add_pair_force(p1, p2, d, dist, f.data());
+    Scafacos::add_pair_force(q1q2, d, dist, f.data());
     break;
 #endif
   default:
     break;
   }
 
-  return f;
+  return coulomb.prefactor * f;
 }
 
-inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
-                            const double *d, double dist, double const dist2,
-                            Vector3d &force) {
+inline void calc_pair_force(Particle *p1, Particle *p2, const double *d,
+                            double dist, Vector3d &force) {
+  auto const q1q2 = p1->p.q * p2->p.q;
+
   if (q1q2 == 0)
     return;
 
-  Vector3d f{};
+  force += central_force(q1q2, d, dist);
 
-  switch (coulomb.method) {
 #ifdef P3M
-  case COULOMB_ELC_P3M: {
-    p3m_add_pair_force(q1q2, d, dist2, dist, f.data());
-
+  if((coulomb.method == COULOMB_ELC_P3M) && (elc_params.dielectric_contrast_on)) {
     // forces from the virtual charges
     // they go directly onto the particles, since they are not pairwise forces
-    if (elc_params.dielectric_contrast_on) {
       Vector3d f1{};
       Vector3d f2{};
 
@@ -75,27 +72,24 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
 
       p1->f.f += coulomb.prefactor * f1;
       p2->f.f += coulomb.prefactor * f2;
-    }
-    break;
   }
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
 #endif
-  case COULOMB_MMM1D:
-  case COULOMB_MMM2D:
-  case COULOMB_DH:
-  case COULOMB_RF:
-    force += central_force(p1->p.q * p2->p.q, d, dist, dist2);
-  default:
-    break;
-  }
-
-  force += coulomb.prefactor * f;
 }
 
-inline Vector<Vector3d, 3> add_pair_pressure(Particle *p1, Particle *p2,
-                                             double q1q2, const Vector3d &d,
-                                             double dist, double dist2) {
+/**
+ * @brief Pair contribution to the pressure tensor.
+ *
+ * If supported by the method, this returns the virial
+ * contribution to the pressure tensor for this pair.
+ *
+ * @param p1 Particle
+ * @param p2 Particle
+ * @param d  Distance
+ * @param dist |d|
+ * @return Contribution to the pressure tensor.
+ */
+inline Vector<Vector3d, 3> pair_pressure(const Particle *p1, const Particle *p2,
+                                         const Vector3d &d, double dist) {
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
@@ -106,7 +100,7 @@ inline Vector<Vector3d, 3> add_pair_pressure(Particle *p1, Particle *p2,
   case COULOMB_MMM1D:
   case COULOMB_DH:
   case COULOMB_RF: {
-    auto const force = central_force(p1->p.q * p2->p.q, d.data(), dist, dist2);
+    auto const force = central_force(p1->p.q * p2->p.q, d.data(), dist);
 
     return Utils::tensor_product(force, d);
   }
@@ -140,7 +134,7 @@ inline double pair_energy(const Particle *p1, const Particle *p2,
 #endif
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
-      return Scafacos::pair_energy(p1, p2, dist);
+      return Scafacos::pair_energy(q1q2, dist);
 #endif
     case COULOMB_DH:
       return dh_coulomb_pair_energy(q1q2, dist);

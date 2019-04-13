@@ -1399,8 +1399,8 @@ static void prepareBernoulliNumbers(int bon_order) {
   }
 }
 
-void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl2,
-                                  double dl, double force[3]) {
+void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
+                                  double force[3]) {
   double F[3];
   double z2 = d[2] * d[2];
   double rho2 = d[1] * d[1] + z2;
@@ -1557,12 +1557,10 @@ void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl2,
     F[1] += d[1] * rinv3;
     F[2] += d[2] * rinv3;
 
-    rinv3 = 1 / (dl2 * dl);
+    rinv3 = 1 / (dl * dl * dl);
     F[0] += d[0] * rinv3;
     F[1] += d[1] * rinv3;
     F[2] += d[2] * rinv3;
-
-    // fprintf(stderr, "explicit force %f %f %f\n", F[0], F[1], F[2]);
   }
 
   for (i = 0; i < 3; i++)
@@ -1874,8 +1872,7 @@ void MMM2D_dielectric_layers_force_contribution() {
         layered_get_mi_vector(d, p1->r.p.data(), a);
         dist2 = sqrlen(d);
         charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_bot;
-        add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2,
-                                     force);
+        add_mmm2d_coulomb_pair_force(charge_factor, d, dist2, force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] -= pref * charge_factor;
       }
@@ -1903,8 +1900,7 @@ void MMM2D_dielectric_layers_force_contribution() {
         layered_get_mi_vector(d, p1->r.p.data(), a);
         dist2 = sqrlen(d);
         charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_top;
-        add_mmm2d_coulomb_pair_force(charge_factor, d, sqrt(dist2), dist2,
-                                     force);
+        add_mmm2d_coulomb_pair_force(charge_factor, d, dist2, force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] += pref * charge_factor;
       }

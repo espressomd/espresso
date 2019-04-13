@@ -47,22 +47,19 @@
 int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
 
 /** Computes the BONDED_COULOMB_SR pair force.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
  *  @retval 0
  */
 inline int
-calc_bonded_coulomb_sr_pair_force(Particle *p1, Particle *p2,
-                                  Bonded_ia_parameters const *iaparams,
+calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *iaparams,
                                   double dx[3], double force[3]) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   if (dist < coulomb_cutoff) {
-    auto const forcevec = Coulomb::central_force(iaparams->p.bonded_coulomb_sr.q1q2, dx, dist,
-                           dist2);
+    auto const forcevec =
+        Coulomb::central_force(iaparams->p.bonded_coulomb_sr.q1q2, dx, dist);
 
     force[0] = forcevec[0];
     force[1] = forcevec[1];

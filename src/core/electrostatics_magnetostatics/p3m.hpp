@@ -222,17 +222,17 @@ void p3m_shrink_wrap_charge_grid(int n_charges);
  *
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
-inline void p3m_add_pair_force(double chgfac, double const *d, double dist2,
-                               double dist, double *force) {
+inline void p3m_add_pair_force(double chgfac, double const *d, double dist,
+                               double *force) {
   if (dist < p3m.params.r_cut) {
-    if (dist > 0.0) { // Vincent
+    if (dist > 0.0) {
       double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
       auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
       auto const fac1 = chgfac * exp(-adist * adist);
       auto const fac2 =
           fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * Utils::sqrt_pi_i()) /
-          dist2;
+              (dist * dist);
 #else
       auto const erfc_part_ri = erfc(adist) / dist;
       auto const fac1 = chgfac;
@@ -240,7 +240,7 @@ inline void p3m_add_pair_force(double chgfac, double const *d, double dist2,
           fac1 *
           (erfc_part_ri +
            2.0 * p3m.params.alpha * Utils::sqrt_pi_i() * exp(-adist * adist)) /
-          dist2;
+          (dist * dist);
 #endif
       for (int j = 0; j < 3; j++)
         force[j] += fac2 * d[j];
