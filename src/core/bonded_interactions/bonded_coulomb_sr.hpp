@@ -61,28 +61,17 @@ calc_bonded_coulomb_sr_pair_force(Particle *p1, Particle *p2,
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   if (dist < coulomb_cutoff) {
-    // TODO ugly workaround
-    Vector3d forcevec{};
+    auto const forcevec = Coulomb::central_force(iaparams->p.bonded_coulomb_sr.q1q2, dx, dist,
+                           dist2);
 
-    Coulomb::calc_pair_force(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx,
-                             dist, dist2, forcevec);
     force[0] = forcevec[0];
     force[1] = forcevec[1];
     force[2] = forcevec[2];
 
-    ONEPART_TRACE(if (p1->p.identity == check_id) fprintf(
-        stderr,
-        "%d: OPT: BONDED_COULOMB_SR f = (%.3e,%.3e,%.3e) with part id=%d "
-        "at dist %f\n",
-        this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2], p2->p.identity, dist2));
-    ONEPART_TRACE(if (p2->p.identity == check_id) fprintf(
-        stderr,
-        "%d: OPT: BONDED_COULOMB_SR f = (%.3e,%.3e,%.3e) with part id=%d "
-        "at dist %f\n",
-        this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2], p1->p.identity, dist2));
+    return 0;
+  } else {
+    return 1;
   }
-
-  return 0;
 }
 
 /** Computes the BONDED_COULOMB_SR pair energy.

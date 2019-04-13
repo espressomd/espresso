@@ -15,64 +15,84 @@
 #include "electrostatics_magnetostatics/scafacos.hpp"
 
 namespace Coulomb {
-// forces_inline
+inline Vector3d central_force(double const q1q2, const double *d, double dist,
+                              double const dist2) {
+  Vector3d f{};
+
+  switch (coulomb.method) {
+#ifdef P3M
+  case COULOMB_P3M_GPU:
+  case COULOMB_P3M: {
+    p3m_add_pair_force(q1q2, d, dist2, dist, f.data());
+    break;
+  }
+#endif
+  case COULOMB_MMM1D:
+    add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, f.data());
+    break;
+  case COULOMB_MMM2D:
+    add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, f.data());
+    break;
+  case COULOMB_DH:
+    add_dh_coulomb_pair_force(q1q2, d, dist, f.data());
+    break;
+  case COULOMB_RF:
+    add_rf_coulomb_pair_force(q1q2, d, dist, f.data());
+    break;
+#ifdef SCAFACOS
+  case COULOMB_SCAFACOS:
+    Scafacos::add_pair_force(p1, p2, d, dist, f.data());
+    break;
+#endif
+  default:
+    break;
+  }
+
+  return f;
+}
+
 inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
                             const double *d, double dist, double const dist2,
                             Vector3d &force) {
-  if (q1q2 != 0) {
-    Vector3d f{};
+  if (q1q2 == 0)
+    return;
 
-    switch (coulomb.method) {
+  Vector3d f{};
+
+  switch (coulomb.method) {
 #ifdef P3M
-    case COULOMB_ELC_P3M: {
-      p3m_add_pair_force(q1q2, d, dist2, dist, f.data());
+  case COULOMB_ELC_P3M: {
+    p3m_add_pair_force(q1q2, d, dist2, dist, f.data());
 
-      // forces from the virtual charges
-      // they go directly onto the particles, since they are not pairwise forces
-      if (elc_params.dielectric_contrast_on) {
-        Vector3d f1{};
-        Vector3d f2{};
+    // forces from the virtual charges
+    // they go directly onto the particles, since they are not pairwise forces
+    if (elc_params.dielectric_contrast_on) {
+      Vector3d f1{};
+      Vector3d f2{};
 
-        ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1.data(),
-                                                     f2.data());
+      ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1.data(),
+                                                   f2.data());
 
-        p1->f.f += coulomb.prefactor * f1;
-        p2->f.f += coulomb.prefactor * f2;
-      }
-      break;
+      p1->f.f += coulomb.prefactor * f1;
+      p2->f.f += coulomb.prefactor * f2;
     }
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M: {
-      p3m_add_pair_force(q1q2, d, dist2, dist, f.data());
-      break;
-    }
-#endif
-    case COULOMB_MMM1D:
-      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, f.data());
-      break;
-    case COULOMB_MMM2D:
-      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, f.data());
-      break;
-    case COULOMB_DH:
-      add_dh_coulomb_pair_force(q1q2, d, dist, f.data());
-      break;
-    case COULOMB_RF:
-      add_rf_coulomb_pair_force(q1q2, d, dist, f.data());
-      break;
-#ifdef SCAFACOS
-    case COULOMB_SCAFACOS:
-      Scafacos::add_pair_force(p1, p2, d, dist, f.data());
-      break;
-#endif
-    default:
-      break;
-    }
-
-    force += coulomb.prefactor * f;
+    break;
   }
+  case COULOMB_P3M_GPU:
+  case COULOMB_P3M:
+#endif
+  case COULOMB_MMM1D:
+  case COULOMB_MMM2D:
+  case COULOMB_DH:
+  case COULOMB_RF:
+    force += central_force(p1->p.q * p2->p.q, d, dist, dist2);
+  default:
+    break;
+  }
+
+  force += coulomb.prefactor * f;
 }
 
-// pressure_inline.hpp
 inline Vector<Vector3d, 3> add_pair_pressure(Particle *p1, Particle *p2,
                                              double q1q2, const Vector3d &d,
                                              double dist, double dist2) {
@@ -86,8 +106,7 @@ inline Vector<Vector3d, 3> add_pair_pressure(Particle *p1, Particle *p2,
   case COULOMB_MMM1D:
   case COULOMB_DH:
   case COULOMB_RF: {
-    Vector3d force{};
-    calc_pair_force(p1, p2, q1q2, d.data(), dist, dist2, force);
+    auto const force = central_force(p1->p.q * p2->p.q, d.data(), dist, dist2);
 
     return Utils::tensor_product(force, d);
   }
@@ -110,7 +129,6 @@ inline double pair_energy(const Particle *p1, const Particle *p2,
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
-      // TODO some energy functions include the prefactor, some don't
       return p3m_pair_energy(q1q2, dist);
     case COULOMB_ELC_P3M:
       if (elc_params.dielectric_contrast_on) {
