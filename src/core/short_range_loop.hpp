@@ -111,7 +111,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
   detail::decide_distance(
       first, last, std::forward<ParticleKernel>(particle_kernel),
       std::forward<PairKernel>(pair_kernel),
-      VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff,
+      VerletCriterion{skin, max_cut, Coulomb::cutoff(box_l), dipolar_cutoff,
                       collision_detection_cutoff()});
 
   rebuild_verletlist = 0;

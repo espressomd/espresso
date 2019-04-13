@@ -4,8 +4,6 @@
 #include "config.hpp"
 #include "utils/Vector.hpp"
 
-extern double coulomb_cutoff;
-
 #ifdef ELECTROSTATICS
 #include "Observable_stat.hpp"
 

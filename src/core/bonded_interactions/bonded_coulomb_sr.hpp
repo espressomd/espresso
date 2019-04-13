@@ -57,18 +57,14 @@ calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *iaparams,
                                   double dx[3], double force[3]) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
-  if (dist < coulomb_cutoff) {
-    auto const forcevec =
-        Coulomb::central_force(iaparams->p.bonded_coulomb_sr.q1q2, dx, dist);
+  auto const forcevec =
+      Coulomb::central_force(iaparams->p.bonded_coulomb_sr.q1q2, dx, dist);
 
-    force[0] = forcevec[0];
-    force[1] = forcevec[1];
-    force[2] = forcevec[2];
+  force[0] = forcevec[0];
+  force[1] = forcevec[1];
+  force[2] = forcevec[2];
 
-    return 0;
-  } else {
-    return 1;
-  }
+  return 0;
 }
 
 /** Computes the BONDED_COULOMB_SR pair energy.
@@ -79,9 +75,9 @@ calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *iaparams,
  *  @param[out] _energy   Energy.
  *  @retval 0
  */
-inline int bonded_coulomb_sr_pair_energy(Particle *p1, Particle *p2,
+inline int bonded_coulomb_sr_pair_energy(const Particle *p1, const Particle *p2,
                                          Bonded_ia_parameters const *iaparams,
-                                         double dx[3], double *_energy) {
+                                         double *dx, double *_energy) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   *_energy = Coulomb::pair_energy(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2,
