@@ -20,7 +20,6 @@
 */
 
 #include "thole.hpp"
-#include "utils.hpp"
 
 #ifdef THOLE
 #include "communication.hpp"
