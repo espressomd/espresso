@@ -114,7 +114,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
 
-#ifdef DIPOLE
+#ifdef DIPOLES
   auto const dipole_cutoff = Dipole::cutoff(box_l);
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
