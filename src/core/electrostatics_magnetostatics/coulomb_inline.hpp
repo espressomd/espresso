@@ -75,9 +75,7 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
 // pressure_inline.hpp
 inline Vector<Vector3d, 3> add_pair_pressure(Particle *p1, Particle *p2,
                                              double q1q2, const Vector3d &d,
-                                             double dist, double dist2,
-                                             Observable_stat &virials,
-                                             Observable_stat &p_tensor) {
+                                             double dist, double dist2) {
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
