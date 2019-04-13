@@ -154,7 +154,6 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
 #ifdef DIPOLES
   max_cut_global = std::max(max_cut_global, Dipole::cutoff(box_l));
 #endif
-
 }
 
 static void recalc_maximal_cutoff_nonbonded() {
