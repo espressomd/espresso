@@ -61,17 +61,17 @@ inline void calc_pair_force(Particle *p1, Particle *p2, const double *d,
   force += central_force(q1q2, d, dist);
 
 #ifdef P3M
-  if((coulomb.method == COULOMB_ELC_P3M) && (elc_params.dielectric_contrast_on)) {
+  if ((coulomb.method == COULOMB_ELC_P3M) &&
+      (elc_params.dielectric_contrast_on)) {
     // forces from the virtual charges
     // they go directly onto the particles, since they are not pairwise forces
-      Vector3d f1{};
-      Vector3d f2{};
+    Vector3d f1{};
+    Vector3d f2{};
 
-      ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1.data(),
-                                                   f2.data());
+    ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1.data(), f2.data());
 
-      p1->f.f += coulomb.prefactor * f1;
-      p2->f.f += coulomb.prefactor * f2;
+    p1->f.f += coulomb.prefactor * f1;
+    p2->f.f += coulomb.prefactor * f2;
   }
 #endif
 }
