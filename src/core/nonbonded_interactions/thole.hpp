@@ -81,7 +81,8 @@ inline double thole_pair_energy(const Particle *p1, const Particle *p2,
     // Add damped p3m shortrange energy
     double sd = thole_s * dist;
     double S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);
-    e_thole += Coulomb::pair_energy(p1, p2, thole_q1q2 *(-1. + S_r), d, dist * dist, dist);
+    e_thole += Coulomb::pair_energy(p1, p2, thole_q1q2 * (-1. + S_r), d,
+                                    dist * dist, dist);
   }
   return e_thole;
 }
