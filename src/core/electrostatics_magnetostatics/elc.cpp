@@ -1468,8 +1468,8 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
-                                                     Particle *p2) {
+double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
+                                                     const Particle *p2) {
   double pos[3], q;
   double dist, dist2, d[3];
   double tp2;

@@ -1680,12 +1680,10 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
   return eng;
 }
 
-double mmm2d_coulomb_pair_energy(double charge_factor, double dv[3], double,
+double mmm2d_coulomb_pair_energy(double charge_factor, const double dv[3],
                                  double d) {
-  double eng, pref = charge_factor;
-  if (pref != 0.0) {
-    eng = calc_mmm2d_copy_pair_energy(dv);
-    return pref * (eng + 1 / d);
+  if (charge_factor) {
+    return charge_factor * (calc_mmm2d_copy_pair_energy(dv) + 1. / d);
   }
   return 0.0;
 }
@@ -1948,7 +1946,7 @@ double MMM2D_dielectric_layers_energy_contribution() {
         charge_factor = mmm2d_params.delta_mid_bot * p1->p.q * pl[j].p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
-        eng += mmm2d_coulomb_pair_energy(charge_factor, d, dist2, sqrt(dist2)) +
+        eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) +
                pref * charge_factor * d[2];
       }
     }
@@ -1970,7 +1968,7 @@ double MMM2D_dielectric_layers_energy_contribution() {
         charge_factor = mmm2d_params.delta_mid_top * p1->p.q * pl[j].p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
-        eng += mmm2d_coulomb_pair_energy(charge_factor, d, dist2, sqrt(dist2)) -
+        eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) -
                pref * charge_factor * d[2];
       }
     }

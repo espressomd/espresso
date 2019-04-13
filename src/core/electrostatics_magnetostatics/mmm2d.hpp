@@ -99,7 +99,7 @@ void add_mmm2d_coulomb_pair_force(double charge_factor, double const dv[3],
                                   double d2, double d, double f[3]);
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-double mmm2d_coulomb_pair_energy(double charge_factor, double dv[3], double d2,
+double mmm2d_coulomb_pair_energy(double charge_factor, const double dv[3],
                                  double d);
 
 /// check that MMM2D can run with the current parameters
