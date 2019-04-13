@@ -2,6 +2,7 @@
 #define ESPRESSO_COULOMB_INLINE_HPP
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
+#include <utils/math/tensor_product.hpp>
 
 #ifdef ELECTROSTATICS
 
@@ -16,7 +17,7 @@
 namespace Coulomb {
 // forces_inline
 inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
-                            double *d, double dist, double const dist2,
+                            const double *d, double dist, double const dist2,
                             Vector3d &force) {
   if (q1q2 != 0) {
     Vector3d f{};
@@ -72,10 +73,11 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
 }
 
 // pressure_inline.hpp
-inline void add_pair_pressure(Particle *p1, Particle *p2, double q1q2,
-                              double *d, double dist, double dist2,
-                              Observable_stat &virials,
-                              Observable_stat &p_tensor) {
+inline Vector<Vector3d, 3> add_pair_pressure(Particle *p1, Particle *p2,
+                                             double q1q2, const Vector3d &d,
+                                             double dist, double dist2,
+                                             Observable_stat &virials,
+                                             Observable_stat &p_tensor) {
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
@@ -87,22 +89,17 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double q1q2,
   case COULOMB_DH:
   case COULOMB_RF: {
     Vector3d force{};
-    calc_pair_force(p1, p2, q1q2, d, dist, dist2, force);
+    calc_pair_force(p1, p2, q1q2, d.data(), dist, dist2, force);
 
-    /* Calculate the virial pressure */
-    for (int k = 0; k < 3; k++) {
-      for (int l = 0; l < 3; l++) {
-        p_tensor.coulomb[k * 3 + l] += force[k] * d[l];
-      }
-      virials.coulomb[0] += d[k] * force[k];
-    }
-    break;
+    return Utils::tensor_product(force, d);
   }
   default:
     fprintf(stderr, "calculating pressure for electrostatics method that "
                     "doesn't have it implemented\n");
     break;
   }
+
+  return {};
 }
 
 // energy_inline

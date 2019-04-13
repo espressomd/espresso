@@ -234,9 +234,9 @@ inline void p3m_add_pair_force(double chgfac, double const *d, double dist2,
           fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * Utils::sqrt_pi_i()) /
           dist2;
 #else
-      erfc_part_ri = erfc(adist) / dist;
-      double fac1 = chgfac;
-      double fac2 =
+      auto const erfc_part_ri = erfc(adist) / dist;
+      auto const fac1 = chgfac;
+      auto const fac2 =
           fac1 *
           (erfc_part_ri +
            2.0 * p3m.params.alpha * Utils::sqrt_pi_i() * exp(-adist * adist)) /
