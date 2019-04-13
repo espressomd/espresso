@@ -18,7 +18,6 @@ namespace Coulomb {
 inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
                             double *d, double dist, double const dist2,
                             Vector3d &force) {
-
   if (q1q2 != 0) {
     Vector3d f{};
 
@@ -107,9 +106,9 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double q1q2,
 }
 
 // energy_inline
-inline double add_pair_energy(const Particle *p1, const Particle *p2,
-                              double const q1q2, const double *d, double dist,
-                              double dist2) {
+inline double pair_energy(const Particle *p1, const Particle *p2,
+                          double const q1q2, const double *d, double dist,
+                          double dist2) {
   /* real space Coulomb */
   auto E = [&]() {
     switch (coulomb.method) {
