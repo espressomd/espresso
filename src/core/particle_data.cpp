@@ -184,6 +184,9 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<Utils::Vector3d, &Prop::ext_torque>
 #endif
 #endif
+#ifdef STOKESIAN_DYNAMICS
+        , UpdateProperty<double, &Prop::radius>
+#endif
         >;
 
 using UpdatePositionMessage = boost::variant
@@ -863,11 +866,8 @@ void set_particle_f(int part, const Utils::Vector3d &F) {
 }
 
 #ifdef STOKESIAN_DYNAMICS
-int set_particle_radius(int part, double r) {
-  auto const pnode = get_particle_node(part);
-
-  mpi_send_radius(pnode, part, r);
-  return ES_OK;
+void set_particle_radius(int part, double r) {
+  mpi_update_particle_property<double, &ParticleProperties::radius>(part, r);
 }
 #endif
 

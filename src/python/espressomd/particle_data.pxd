@@ -193,7 +193,7 @@ cdef extern from "particle_data.hpp":
         void pointer_to_swimming(const particle * p, const particle_parameters_swimming * & swim)
 
     IF STOKESIAN_DYNAMICS:
-        int set_particle_radius(int part, double r)
+        void set_particle_radius(int part, double r)
         void pointer_to_radius(const particle * p, const double * & res)
 
     int remove_particle(int part) except +

@@ -993,7 +993,7 @@ void pointer_to_swimming(Particle const *p,
 #endif
 
 #ifdef STOKESIAN_DYNAMICS
-int set_particle_radius(int part, double r);
+void set_particle_radius(int part, double r);
 void pointer_to_radius(Particle const *p, double const *&res);
 #endif
 

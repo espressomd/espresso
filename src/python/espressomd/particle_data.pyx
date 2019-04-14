@@ -1317,8 +1317,7 @@ cdef class ParticleHandle(object):
 
             def __set__(self, r):
                 check_type_or_throw_except(r, 1, float, "radius has to be float.")
-                if set_particle_radius(self._id, r) == 1:
-                    raise Exception("Set particle position first.")
+                set_particle_radius(self._id, r)
 
             def __get__(self):
                 self.update_particle_data()
