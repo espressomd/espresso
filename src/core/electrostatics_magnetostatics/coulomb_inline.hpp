@@ -22,10 +22,9 @@ inline Vector3d central_force(double const q1q2, const double *d, double dist) {
 #ifdef P3M
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-  case COULOMB_ELC_P3M: {
+  case COULOMB_ELC_P3M:
     p3m_add_pair_force(q1q2, d, dist, f.data());
     break;
-  }
 #endif
   case COULOMB_MMM1D:
     add_mmm1d_coulomb_pair_force(q1q2, d, dist, f.data());
