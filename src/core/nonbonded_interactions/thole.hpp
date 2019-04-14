@@ -45,7 +45,8 @@ inline void add_thole_pair_force(const Particle *const p1,
   auto const thole_q1q2 = ia_params->THOLE_q1q2;
   auto const thole_s = ia_params->THOLE_scaling_coeff;
 
-  if (thole_s != 0 && thole_q1q2 != 0 && !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
+  if (thole_s != 0 && thole_q1q2 != 0 &&
+      !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
     // Calc damping function (see doi.org/10.1016/0301-0104(81)85176-2)
     // S(r) = 1.0 - (1.0 + thole_s*r/2.0) * exp(-thole_s*r);
     // Calc F = - d/dr ( S(r)*q1q2/r) =
@@ -74,7 +75,7 @@ inline double thole_pair_energy(const Particle *p1, const Particle *p2,
     double sd = thole_s * dist;
     double S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);
     return Coulomb::pair_energy(p1, p2, thole_q1q2 * (-1. + S_r), d,
-                                    dist * dist, dist);
+                                dist * dist, dist);
   }
   return 0.0;
 }
