@@ -167,21 +167,21 @@ inline void elc_clear_vec(double *pdc, int size) {
 }
 
 /** pdc_d = pdc_s */
-inline void elc_copy_vec(double *pdc_d, double *pdc_s, int size) {
+inline void elc_copy_vec(double *pdc_d, const double *pdc_s, int size) {
   for (int i = 0; i < size; i++)
     pdc_d[i] = pdc_s[i];
 }
 
 /** pdc_d = pdc_s1 + pdc_s2 */
-inline void elc_add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2,
+inline void elc_add_vec(double *pdc_d, const double *pdc_s1, const double *pdc_s2,
                         int size) {
   for (int i = 0; i < size; i++)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
 
 /** pdc_d = scale*pdc_s1 + pdc_s2 */
-inline void elc_addscale_vec(double *pdc_d, double scale, double *pdc_s1,
-                             double *pdc_s2, int size) {
+inline void elc_addscale_vec(double *pdc_d, double scale, const double *pdc_s1,
+                             const double *pdc_s2, int size) {
   for (int i = 0; i < size; i++)
     pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
 }
