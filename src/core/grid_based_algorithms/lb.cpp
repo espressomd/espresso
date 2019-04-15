@@ -67,7 +67,7 @@ static void lb_check_halo_regions(const LB_Fluid &lbfluid);
 #endif // ADDITIONAL_CHECKS
 
 /** Counter for the RNG */
-std::unique_ptr<Utils::Counter<uint64_t>> rng_counter_fluid;
+boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 /** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
@@ -588,7 +588,7 @@ uint64_t lb_fluid_get_rng_state() {
 }
 
 void mpi_set_lb_fluid_counter(uint64_t counter) {
-  rng_counter_fluid = std::make_unique<Utils::Counter<uint64_t>>(counter);
+  rng_counter_fluid = Utils::Counter<uint64_t>(counter);
 }
 
 REGISTER_CALLBACK(mpi_set_lb_fluid_counter)

@@ -28,13 +28,15 @@
 #ifndef LB_H
 #define LB_H
 
-#include "config.hpp"
 
+
+#include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 
 #ifdef LB
 
+#include <boost/optional.hpp>
 #include <array>
 #include <memory>
 
@@ -67,7 +69,7 @@
  *  velocity sub-lattice and the corresponding coefficients
  *  of the pseudo-equilibrium distribution
  */
-extern std::unique_ptr<Utils::Counter<uint64_t>> rng_counter_fluid;
+extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 template <size_t N_vel = 19> struct LB_Model {
   /** number of velocities */
   static const constexpr int n_veloc = static_cast<int>(N_vel);
