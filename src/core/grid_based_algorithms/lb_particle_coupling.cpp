@@ -49,9 +49,14 @@ void lb_lbcoupling_set_gamma(double gamma) {
 
 double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
 
+bool lb_lbcoupling_is_seed_required() {
+  return not lb_particle_coupling.rng_counter_coupling.is_initialized();
+}
+
 uint64_t lb_coupling_get_rng_state_cpu() {
   return lb_particle_coupling.rng_counter_coupling->value();
 }
+
 
 uint64_t lb_lbcoupling_get_rng_state() {
   if (lattice_switch == ActiveLB::CPU) {

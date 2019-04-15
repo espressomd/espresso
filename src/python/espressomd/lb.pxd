@@ -98,6 +98,7 @@ IF LB_GPU or LB:
         stdint.uint64_t lb_lbcoupling_get_rng_state() except +
         void lb_lbcoupling_set_gamma(double)
         double lb_lbcoupling_get_gamma() except +
+        bool lb_lbcoupling_is_seed_required()
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()

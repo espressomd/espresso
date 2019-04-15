@@ -16,6 +16,7 @@ uint64_t lb_lbcoupling_get_rng_state();
 void lb_lbcoupling_set_rng_state(uint64_t counter);
 void lb_lbcoupling_set_gamma(double friction);
 double lb_lbcoupling_get_gamma();
+bool lb_lbcoupling_is_seed_required();
 
 /*
  * @brief Activate the coupling between LB and MD particles.
