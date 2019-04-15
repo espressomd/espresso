@@ -114,8 +114,8 @@ class MPIIOTest(ut.TestCase):
         for p, q in zip(self.s.part, self.test_particles):
             self.assertEqual(p.id, q.id)
             self.assertEqual(p.type, q.type)
-            numpy.testing.assert_array_equal(p.pos, q.pos)
-            numpy.testing.assert_array_equal(p.v, q.v)
+            numpy.testing.assert_array_equal(numpy.copy(p.pos), q.pos)
+            numpy.testing.assert_array_equal(numpy.copy(p.v), q.v)
             self.assertEqual(len(p.bonds), len(q.bonds))
             # Check all bonds
             for bp, bq in zip(p.bonds, q.bonds):
