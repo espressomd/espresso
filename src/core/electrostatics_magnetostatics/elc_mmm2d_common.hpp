@@ -33,7 +33,7 @@ static double ux, ux2, uy, uy2, uz;
 /** struct to hold cached sin/cos values */
 /*@{*/
 typedef struct {
-    double s, c;
+  double s, c;
 } SCCache;
 /*@}*/
 
@@ -49,16 +49,16 @@ static void init_invBoxl() {
 
 /*@}*/
 
-
-inline double
-elc_add_force_dir(int position, const double *partblk, const double *gblcblk) {
+inline double elc_add_force_dir(int position, const double *partblk,
+                                const double *gblcblk) {
   return partblk[position + POQESM] * gblcblk[POQECP] -
          partblk[position + POQECM] * gblcblk[POQESP] +
          partblk[position + POQESP] * gblcblk[POQECM] -
          partblk[position + POQECP] * gblcblk[POQESM];
 }
 
-inline double sum_small(int position, const double *partblk, const double *gblcblk, bool sum) {
+inline double sum_small(int position, const double *partblk,
+                        const double *gblcblk, bool sum) {
   double sum1 = partblk[position + POQECM] * gblcblk[POQECP] +
                 partblk[position + POQESM] * gblcblk[POQESP];
 
@@ -68,7 +68,8 @@ inline double sum_small(int position, const double *partblk, const double *gblcb
   return sum ? sum1 + sum2 : sum1 - sum2;
 }
 
-inline double sum_large(int position, const double *partblk, const double *gblcblk, bool sum) {
+inline double sum_large(int position, const double *partblk,
+                        const double *gblcblk, bool sum) {
   double sum1 = partblk[position + PQESSM] * gblcblk[PQESSP] +
                 partblk[position + PQESCM] * gblcblk[PQESCP] +
                 partblk[position + PQECSM] * gblcblk[PQECSP] +
@@ -82,40 +83,41 @@ inline double sum_large(int position, const double *partblk, const double *gblcb
   return sum ? sum1 + sum2 : sum1 - sum2;
 }
 
-inline double
-elc_add_force_z(int position, const double *partblk, const double *gblcblk) {
+inline double elc_add_force_z(int position, const double *partblk,
+                              const double *gblcblk) {
   return sum_small(position, partblk, gblcblk, false);
 }
 
-inline double
-elc_dir_energy(int position, const double *partblk, const double *gblcblk) {
+inline double elc_dir_energy(int position, const double *partblk,
+                             const double *gblcblk) {
   return sum_small(position, partblk, gblcblk, true);
 }
 
-inline void
-elc_PQ_setup(int position, int xCacheOffset, int yCacheOffset, double factor, double *partblk,
-             Utils::Span<const SCCache> scxcache, Utils::Span<const SCCache> scycache) {
+inline void elc_PQ_setup(int position, int xCacheOffset, int yCacheOffset,
+                         double factor, double *partblk,
+                         Utils::Span<const SCCache> scxcache,
+                         Utils::Span<const SCCache> scycache) {
   partblk[position + PQESSM] =
-          scxcache[xCacheOffset].s * scycache[yCacheOffset].s / factor;
+      scxcache[xCacheOffset].s * scycache[yCacheOffset].s / factor;
   partblk[position + PQESCM] =
-          scxcache[xCacheOffset].s * scycache[yCacheOffset].c / factor;
+      scxcache[xCacheOffset].s * scycache[yCacheOffset].c / factor;
   partblk[position + PQECSM] =
-          scxcache[xCacheOffset].c * scycache[yCacheOffset].s / factor;
+      scxcache[xCacheOffset].c * scycache[yCacheOffset].s / factor;
   partblk[position + PQECCM] =
-          scxcache[xCacheOffset].c * scycache[yCacheOffset].c / factor;
+      scxcache[xCacheOffset].c * scycache[yCacheOffset].c / factor;
 
   partblk[position + PQESSP] =
-          scxcache[xCacheOffset].s * scycache[yCacheOffset].s * factor;
+      scxcache[xCacheOffset].s * scycache[yCacheOffset].s * factor;
   partblk[position + PQESCP] =
-          scxcache[xCacheOffset].s * scycache[yCacheOffset].c * factor;
+      scxcache[xCacheOffset].s * scycache[yCacheOffset].c * factor;
   partblk[position + PQECSP] =
-          scxcache[xCacheOffset].c * scycache[yCacheOffset].s * factor;
+      scxcache[xCacheOffset].c * scycache[yCacheOffset].s * factor;
   partblk[position + PQECCP] =
-          scxcache[xCacheOffset].c * scycache[yCacheOffset].c * factor;
+      scxcache[xCacheOffset].c * scycache[yCacheOffset].c * factor;
 }
 
-inline double
-elc_add_PQ_force_x(int position, const double *partblk, const double *gblcblk) {
+inline double elc_add_PQ_force_x(int position, const double *partblk,
+                                 const double *gblcblk) {
   return partblk[position + PQESCM] * gblcblk[PQECCP] +
          partblk[position + PQESSM] * gblcblk[PQECSP] -
          partblk[position + PQECCM] * gblcblk[PQESCP] -
@@ -126,8 +128,8 @@ elc_add_PQ_force_x(int position, const double *partblk, const double *gblcblk) {
          partblk[position + PQECSP] * gblcblk[PQESSM];
 }
 
-inline double
-elc_add_PQ_force_y(int position, const double *partblk, const double *gblcblk) {
+inline double elc_add_PQ_force_y(int position, const double *partblk,
+                                 const double *gblcblk) {
   return partblk[position + PQECSM] * gblcblk[PQECCP] +
          partblk[position + PQESSM] * gblcblk[PQESCP] -
          partblk[position + PQECCM] * gblcblk[PQECSP] -
@@ -138,19 +140,18 @@ elc_add_PQ_force_y(int position, const double *partblk, const double *gblcblk) {
          partblk[position + PQESCP] * gblcblk[PQESSM];
 }
 
-inline double
-elc_add_PQ_force_z(int position, const double *partblk, const double *gblcblk) {
+inline double elc_add_PQ_force_z(int position, const double *partblk,
+                                 const double *gblcblk) {
   return sum_large(position, partblk, gblcblk, false);
 }
 
-inline double
-elc_PQ_energy(int position, const double *partblk, const double *gblcblk) {
+inline double elc_PQ_energy(int position, const double *partblk,
+                            const double *gblcblk) {
   return sum_large(position, partblk, gblcblk, true);
 }
 
-inline void
-elc_setup(int position, double factor, int cacheOffset, double *partblk,
-          Utils::Span<const SCCache> sccache) {
+inline void elc_setup(int position, double factor, int cacheOffset,
+                      double *partblk, Utils::Span<const SCCache> sccache) {
   partblk[position + POQESM] = sccache[cacheOffset].s / factor;
   partblk[position + POQESP] = sccache[cacheOffset].s * factor;
   partblk[position + POQECM] = sccache[cacheOffset].c / factor;
@@ -172,7 +173,8 @@ inline void elc_copy_vec(double *pdc_d, double *pdc_s, int size) {
 }
 
 /** pdc_d = pdc_s1 + pdc_s2 */
-inline void elc_add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2, int size) {
+inline void elc_add_vec(double *pdc_d, double *pdc_s1, double *pdc_s2,
+                        int size) {
   for (int i = 0; i < size; i++)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
@@ -195,7 +197,6 @@ inline void elc_scale_vec(double scale, double *pdc, int size) {
 inline double *elc_block(double *p, int index, int size) {
   return &p[index * size];
 }
-
 
 #endif /* ELECTROSTATICS */
 #endif /* ESPRESSO_ELC_MMM2D_COMMON_HPP */

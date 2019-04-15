@@ -26,9 +26,9 @@
  */
 #include "cells.hpp"
 #include "communication.hpp"
+#include "elc_mmm2d_common.hpp"
 #include "errorhandling.hpp"
 #include "mmm-common.hpp"
-#include "elc_mmm2d_common.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "utils.hpp"
@@ -138,7 +138,7 @@ void ELC_setup_constants() {
 
 static SCCache sc(double arg) { return {sin(arg), cos(arg)}; }
 
-template<size_t dir>
+template <size_t dir>
 static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
                              int n_sccache) {
   for (int freq = 1; freq <= n_sccache; freq++) {
@@ -531,7 +531,8 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
 
     elc_setup(ic * size, e, o + ic, partblk, sccache);
 
-    elc_addscale_vec(gblcblk, p.p.q, elc_block(partblk, ic, size), gblcblk, size);
+    elc_addscale_vec(gblcblk, p.p.q, elc_block(partblk, ic, size), gblcblk,
+                     size);
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
@@ -547,7 +548,7 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
         elc_addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 
         e = (exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
-             elc_params.delta_mid_bot +
+                 elc_params.delta_mid_bot +
              exp(omega * (p.r.p[2] - 2 * elc_params.h))) *
             fac_delta;
 
@@ -555,7 +556,7 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
 
         e = (exp(omega * (-p.r.p[2])) +
              exp(omega * (p.r.p[2] - 2 * elc_params.h)) *
-             elc_params.delta_mid_top) *
+                 elc_params.delta_mid_top) *
             fac_delta_mid_bot;
       }
 
@@ -574,7 +575,7 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
         elc_addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
 
         e = (exp(omega * (p.r.p[2] - 4 * elc_params.h)) *
-             elc_params.delta_mid_top +
+                 elc_params.delta_mid_top +
              exp(omega * (-p.r.p[2] - 2 * elc_params.h))) *
             fac_delta;
 
@@ -582,7 +583,7 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
 
         e = (exp(omega * (+p.r.p[2] - 2 * elc_params.h)) +
              exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
-             elc_params.delta_mid_bot) *
+                 elc_params.delta_mid_bot) *
             fac_delta_mid_top;
       }
 
@@ -601,17 +602,11 @@ static void setup(int p, double omega, Utils::Span<const SCCache> sccache) {
   }
 }
 
-static void setup_P(int p, double omega) {
-  setup(p, omega, scxcache);
-}
+static void setup_P(int p, double omega) { setup(p, omega, scxcache); }
 
-static void setup_Q(int q, double omega) {
-  setup(q, omega, scycache);
-}
+static void setup_Q(int q, double omega) { setup(q, omega, scycache); }
 
-
-template<size_t dir>
-static void add_force() {
+template <size_t dir> static void add_force() {
   const int size = 4;
 
   int ic = 0;
@@ -622,13 +617,9 @@ static void add_force() {
   }
 }
 
-static inline void add_P_force() {
-  add_force<0>();
-}
+static inline void add_P_force() { add_force<0>(); }
 
-static inline void add_Q_force() {
-  add_force<1>();
-}
+static inline void add_Q_force() { add_force<1>(); }
 
 static double dir_energy(const double omega) {
   const int size = 4;
@@ -675,7 +666,8 @@ static void setup_PQ(int p, int q, double omega) {
 
     elc_PQ_setup(size * ic, ox + ic, oy + ic, e, partblk, scxcache, scycache);
 
-    elc_addscale_vec(gblcblk, p.p.q, elc_block(partblk, ic, size), gblcblk, size);
+    elc_addscale_vec(gblcblk, p.p.q, elc_block(partblk, ic, size), gblcblk,
+                     size);
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
@@ -689,7 +681,7 @@ static void setup_PQ(int p, int q, double omega) {
         elc_addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
 
         e = (exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
-             elc_params.delta_mid_bot +
+                 elc_params.delta_mid_bot +
              exp(omega * (p.r.p[2] - 2 * elc_params.h))) *
             fac_delta * p.p.q;
 
@@ -697,7 +689,7 @@ static void setup_PQ(int p, int q, double omega) {
 
         e = (exp(omega * (-p.r.p[2])) +
              exp(omega * (p.r.p[2] - 2 * elc_params.h)) *
-             elc_params.delta_mid_top) *
+                 elc_params.delta_mid_top) *
             fac_delta_mid_bot * p.p.q;
       }
 
@@ -717,7 +709,7 @@ static void setup_PQ(int p, int q, double omega) {
         elc_addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
 
         e = (exp(omega * (p.r.p[2] - 4 * elc_params.h)) *
-             elc_params.delta_mid_top +
+                 elc_params.delta_mid_top +
              exp(omega * (-p.r.p[2] - 2 * elc_params.h))) *
             fac_delta * p.p.q;
 
@@ -725,7 +717,7 @@ static void setup_PQ(int p, int q, double omega) {
 
         e = (exp(omega * (p.r.p[2] - 2 * elc_params.h)) +
              exp(omega * (-p.r.p[2] - 2 * elc_params.h)) *
-             elc_params.delta_mid_bot) *
+                 elc_params.delta_mid_bot) *
             fac_delta_mid_top * p.p.q;
       }
 
@@ -754,8 +746,10 @@ static void add_PQ_force(int p, int q, double omega) {
 
   ic = 0;
   for (auto &p : local_cells.particles()) {
-    p.f.f[0] += pref_x * p.p.q * elc_add_PQ_force_x(size * ic, partblk, gblcblk);
-    p.f.f[1] += pref_y * p.p.q * elc_add_PQ_force_y(size * ic, partblk, gblcblk);
+    p.f.f[0] +=
+        pref_x * p.p.q * elc_add_PQ_force_x(size * ic, partblk, gblcblk);
+    p.f.f[1] +=
+        pref_y * p.p.q * elc_add_PQ_force_y(size * ic, partblk, gblcblk);
     p.f.f[2] += p.p.q * elc_add_PQ_force_z(size * ic, partblk, gblcblk);
     ic++;
   }
@@ -986,8 +980,8 @@ void ELC_init() {
 
 void ELC_on_resort_particles() {
   n_localpart = cells_get_n_particles();
-  n_scxcache = (int) (ceil(elc_params.far_cut / ux) + 1);
-  n_scycache = (int) (ceil(elc_params.far_cut / uy) + 1);
+  n_scxcache = (int)(ceil(elc_params.far_cut / ux) + 1);
+  n_scycache = (int)(ceil(elc_params.far_cut / uy) + 1);
   scxcache.resize(n_scxcache * n_localpart);
   scycache.resize(n_scycache * n_localpart);
 

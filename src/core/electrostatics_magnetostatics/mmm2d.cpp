@@ -27,12 +27,12 @@
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "elc_mmm2d_common.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
 #include "mmm-common.hpp"
-#include "elc_mmm2d_common.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
 #include "utils.hpp"
@@ -115,7 +115,6 @@ static IntList besselCutoff;
 static int complexCutoff[COMPLEX_STEP + 1];
 /** bernoulli numbers divided by n */
 static DoubleList bon;
-
 
 /** maximal z for near formula, minimal z for far formula.
     Is identical in the theory, but with the Verlet tricks
@@ -342,7 +341,8 @@ void gather_image_contributions(int e_size) {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    elc_copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size, e_size);
+    elc_copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size,
+                 e_size);
 }
 
 /* the data transfer routine for the lclcblks itself */
@@ -367,7 +367,8 @@ void distribute(int e_size, double fac) {
       if (node + 1 < n_nodes) {
         elc_addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size),
                          blwentry(lclcblk, n_layers - 1, e_size), e_size);
-        elc_copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
+        elc_copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size),
+                     e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     } else if (node + 1 == this_node) {
@@ -449,7 +450,8 @@ static void checkpoint(char *text, int p, int q, int e_size) {
       fprintf(stderr, " %10.3g", block(gblcblk, c, 2 * e_size)[i]);
     fprintf(stderr, " m");
     for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", elc_mmm2d_common_block(gblcblk, c, 2 * e_size)[i + e_size]);
+      fprintf(stderr, " %10.3g",
+              elc_mmm2d_common_block(gblcblk, c, 2 * e_size)[i + e_size]);
     fprintf(stderr, "\n");
   }
   fprintf(stderr, "\n");
@@ -598,7 +600,8 @@ static double z_energy() {
   return eng;
 }
 
-static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sccache) {
+static void setup(int p, double omega, double fac,
+                  Utils::Span<const SCCache> sccache) {
   int np, c, i, ic, o = (p - 1) * n_localpart;
   Particle *part;
   double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
@@ -649,7 +652,7 @@ static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sc
           /* There are image charges at -(2h+z) and -(2h-z) etc. layer_h
              included due to the shift in z */
           e_di_l = (exp(omega * (-part[i].r.p[2] - 2 * h + layer_h)) *
-                    mmm2d_params.delta_mid_bot +
+                        mmm2d_params.delta_mid_bot +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h))) *
                    fac_delta;
 
@@ -662,14 +665,14 @@ static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sc
            * due to the shift in z */
           e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
-                    mmm2d_params.delta_mid_top) *
+                        mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
 
         if (c == n_layers && this_node == n_nodes - 1) {
           /* There are image charges at (3h-z) and (h+z) from the top layer etc.
              layer_h included due to the shift in z */
           e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
-                    mmm2d_params.delta_mid_top +
+                        mmm2d_params.delta_mid_top +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
                    fac_delta;
 
@@ -685,7 +688,7 @@ static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sc
              layer_h included due to the shift in z */
           e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
-                    mmm2d_params.delta_mid_bot) *
+                        mmm2d_params.delta_mid_bot) *
                    fac_delta_mid_top;
 
         lclimge[POQESP] += part[i].p.q * sccache[o + ic].s * e_di_l;
@@ -694,7 +697,8 @@ static void setup(int p, double omega, double fac, Utils::Span<const SCCache> sc
         lclimge[POQECM] += part[i].p.q * sccache[o + ic].c * e_di_h;
       }
 
-      elc_addscale_vec(llclcblk, part[i].p.q, elc_block(partblk, ic, size), llclcblk, size);
+      elc_addscale_vec(llclcblk, part[i].p.q, elc_block(partblk, ic, size),
+                       llclcblk, size);
       ic++;
     }
     elc_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
@@ -724,8 +728,7 @@ static void setup_Q(int q, double omega, double fac) {
   setup(q, omega, fac, scycache);
 }
 
-template<size_t dir>
-static void add_force() {
+template <size_t dir> static void add_force() {
   const int size = 4;
 
   int ic = 0;
@@ -735,8 +738,10 @@ static void add_force() {
     auto const othcblk = elc_block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
-      part[i].f.f[dir] += part[i].p.q * elc_add_force_dir(size * ic, partblk, othcblk);
-      part[i].f.f[2] += part[i].p.q * elc_add_force_z(size * ic, partblk, othcblk);
+      part[i].f.f[dir] +=
+          part[i].p.q * elc_add_force_dir(size * ic, partblk, othcblk);
+      part[i].f.f[2] +=
+          part[i].p.q * elc_add_force_z(size * ic, partblk, othcblk);
 
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
                          this_node, part[i].p.identity, part[i].f.f[0],
@@ -821,7 +826,7 @@ static void setup_PQ(int p, int q, double omega, double fac) {
       if (mmm2d_params.dielectric_contrast_on) {
         if (c == 1 && this_node == 0) {
           e_di_l = (exp(omega * (-part[i].r.p[2] - 2 * h + layer_h)) *
-                    mmm2d_params.delta_mid_bot +
+                        mmm2d_params.delta_mid_bot +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h))) *
                    fac_delta;
 
@@ -838,12 +843,12 @@ static void setup_PQ(int p, int q, double omega, double fac) {
         } else
           e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
-                    mmm2d_params.delta_mid_top) *
+                        mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
 
         if (c == n_layers && this_node == n_nodes - 1) {
           e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
-                    mmm2d_params.delta_mid_top +
+                        mmm2d_params.delta_mid_top +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
                    fac_delta;
 
@@ -861,7 +866,7 @@ static void setup_PQ(int p, int q, double omega, double fac) {
         } else
           e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
-                    mmm2d_params.delta_mid_bot) *
+                        mmm2d_params.delta_mid_bot) *
                    fac_delta_mid_top;
 
         lclimge[PQESSP] +=
@@ -883,7 +888,8 @@ static void setup_PQ(int p, int q, double omega, double fac) {
             scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_h;
       }
 
-      elc_addscale_vec(llclcblk, part[i].p.q, elc_block(partblk, ic, size), llclcblk, size);
+      elc_addscale_vec(llclcblk, part[i].p.q, elc_block(partblk, ic, size),
+                       llclcblk, size);
       ic++;
     }
     elc_scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
@@ -917,11 +923,12 @@ static void add_PQ_force(int p, int q, double omega) {
     othcblk = elc_block(gblcblk, c - 1, size);
 
     for (i = 0; i < np; i++) {
-      part[i].f.f[0] +=
-              pref_x * part[i].p.q * elc_add_PQ_force_x(size * ic, partblk, othcblk);
-      part[i].f.f[1] +=
-              pref_y * part[i].p.q * elc_add_PQ_force_y(size * ic, partblk, othcblk);
-      part[i].f.f[2] += part[i].p.q * elc_add_PQ_force_z(size * ic, partblk, othcblk);
+      part[i].f.f[0] += pref_x * part[i].p.q *
+                        elc_add_PQ_force_x(size * ic, partblk, othcblk);
+      part[i].f.f[1] += pref_y * part[i].p.q *
+                        elc_add_PQ_force_y(size * ic, partblk, othcblk);
+      part[i].f.f[2] +=
+          part[i].p.q * elc_add_PQ_force_z(size * ic, partblk, othcblk);
 
       LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
                          this_node, part[i].p.identity, part[i].f.f[0],
