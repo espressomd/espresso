@@ -28,16 +28,14 @@
 #ifndef LB_H
 #define LB_H
 
-
-
 #include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 
 #ifdef LB
 
-#include <boost/optional.hpp>
 #include <array>
+#include <boost/optional.hpp>
 #include <memory>
 
 #include "errorhandling.hpp"

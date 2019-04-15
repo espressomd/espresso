@@ -28,6 +28,7 @@
 #include "config.hpp"
 
 #ifdef LB_GPU
+#include <boost/optional.hpp>
 #include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
@@ -139,8 +140,8 @@ static const float c_sound_sq = 1.0f / 3.0f;
 /*-------------------------------------------------------*/
 
 static constexpr float sqrt12 = 3.4641016151377544f;
-std::unique_ptr<Utils::Counter<uint64_t>> rng_counter_coupling_gpu;
-std::unique_ptr<Utils::Counter<uint64_t>> rng_counter_fluid_gpu;
+boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling_gpu;
+boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid_gpu;
 
 /** Transformation from 1d array-index to xyz
  *  @param[in]  index   Node index / thread index
@@ -3283,12 +3284,11 @@ void quadratic_velocity_interpolation(double const *positions,
 }
 
 void lb_coupling_set_rng_state_gpu(uint64_t counter) {
-  rng_counter_coupling_gpu =
-      std::make_unique<Utils::Counter<uint64_t>>(counter);
+  rng_counter_coupling_gpu = Utils::Counter<uint64_t>(counter);
 }
 
 void lb_fluid_set_rng_state_gpu(uint64_t counter) {
-  rng_counter_fluid_gpu = std::make_unique<Utils::Counter<uint64_t>>(counter);
+  rng_counter_fluid_gpu = Utils::Counter<uint64_t>(counter);
 #ifdef ELECTROKINETICS
   ek_set_rng_state(counter);
 #endif // ELECTROKINETICS
