@@ -103,17 +103,6 @@ class MPIIOTest(ut.TestCase):
     def tearDown(self):
         clean_files()
 
-    def assertAllEqual(self, v, w):
-        """AssertEqual for arrays and more. Checks assertEqual() for all
-        corresponding elements."""
-        if isinstance(v, numpy.ndarray) and isinstance(w, numpy.ndarray):
-            self.assertTupleEqual(v.shape, w.shape)
-        else:
-            self.assertEqual(len(v), len(w))
-
-        for a, b in zip(v, w):
-            self.assertEqual(a, b)
-
     def check_files_exist(self):
         """Checks if all necessary files have been written."""
         for fn in filenames:
@@ -125,15 +114,15 @@ class MPIIOTest(ut.TestCase):
         for p, q in zip(self.s.part, self.test_particles):
             self.assertEqual(p.id, q.id)
             self.assertEqual(p.type, q.type)
-            self.assertAllEqual(p.pos, q.pos)
-            self.assertAllEqual(p.v, q.v)
+            numpy.testing.assert_array_equal(p.pos, q.pos)
+            numpy.testing.assert_array_equal(p.v, q.v)
             self.assertEqual(len(p.bonds), len(q.bonds))
             # Check all bonds
             for bp, bq in zip(p.bonds, q.bonds):
                 # Bond type - "bend" stores the index of the bond
                 self.assertEqual(bp[0].params["bend"], bq[0])
                 # Bond partners
-                self.assertAllEqual(bp[1:], bq[1:])
+                numpy.testing.assert_array_equal(bp[1:], bq[1:])
 
     def test_mpiio(self):
         espressomd.io.mpiio.mpiio.write(
