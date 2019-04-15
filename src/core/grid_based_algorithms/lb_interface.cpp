@@ -1546,16 +1546,15 @@ Vector3d lb_lbfluid_calc_fluid_momentum() {
 }
 #endif
 
-
-/*** Sanity check if the velocity defined at LB boundaries is within the Mach 
+/*** Sanity check if the velocity defined at LB boundaries is within the Mach
 number limits of the scheme i.e. u < 0.3**************************************/
 
 void lb_boundary_mach_check() {
-  for(auto it = 0; it < LBBoundaries::lbboundaries.size(); ++it) {
-    for(int v = 0; v < 3; ++v) {
-      if ( LBBoundaries::lbboundaries[it]->velocity()[v] > 0.3) {
+  for (auto it = 0; it < LBBoundaries::lbboundaries.size(); ++it) {
+    for (int v = 0; v < 3; ++v) {
+      if (LBBoundaries::lbboundaries[it]->velocity()[v] > 0.3) {
         runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
-        }
       }
     }
+  }
 }
