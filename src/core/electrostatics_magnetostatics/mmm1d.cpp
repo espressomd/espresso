@@ -282,9 +282,8 @@ void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
     force[dim] += chpref * F[dim];
 }
 
-double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double const d[3],
+double mmm1d_coulomb_pair_energy(double const chpref, double const d[3],
                                  double r2, double r) {
-  double chpref = p1->p.q * p2->p.q;
   double rxy2, rxy2_d, z_d;
   double E;
 
@@ -313,19 +312,19 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double const d[3],
 
       r2n *= rxy2_d;
     }
-    E *= coulomb.prefactor * uz;
+    E *= uz;
 
     /* real space parts */
 
-    E += coulomb.prefactor / r;
+    E += 1 / r;
 
     shift_z = d[2] + box_l[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
-    E += coulomb.prefactor / rt;
+    E += 1 / rt;
 
     shift_z = d[2] - box_l[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
-    E += coulomb.prefactor / rt;
+    E += 1 / rt;
   } else {
     /* far range formula */
     double rxy = sqrt(rxy2);
@@ -341,7 +340,7 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double const d[3],
       double fq = C_2PI * bp;
       E += K0(fq * rxy_d) * cos(fq * z_d);
     }
-    E *= 4 * coulomb.prefactor * uz;
+    E *= 4 * uz;
   }
 
   return chpref * E;

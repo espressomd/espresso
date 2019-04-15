@@ -35,7 +35,10 @@ import tests_common
 class CoulombCloudWall(ut.TestCase):
 
     """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft
-       electrostatic forces and energy against stored data."""
+       electrostatic forces and energy against stored data.
+
+    """
+
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
     S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
 
@@ -102,7 +105,28 @@ class CoulombCloudWall(ut.TestCase):
     # Tests for individual methods
 
     if espressomd.has_features(["P3M"]):
-        def test_p3m(self):
+        def test_p3m_direct_caf(self):
+            """
+            This checks P3M with using the charge assignment
+            function (window function) directly by setting the
+            `inter` parameter to zero.
+
+            """
+
+            self.S.actors.add(
+                espressomd.electrostatics.P3M(
+                    prefactor=3, r_cut=1.001, accuracy=1e-3,
+                                              mesh=64, cao=7, alpha=2.70746, tune=False, inter=0))
+            self.S.integrator.run(0)
+            self.compare("p3m", energy=True, prefactor=3)
+
+        def test_p3m_interpolated_caf(self):
+            """
+            This checks P3M with using an interpolated charge assignment
+            function (window function), which is the default.
+
+            """
+
             self.S.actors.add(
                 espressomd.electrostatics.P3M(
                     prefactor=3, r_cut=1.001, accuracy=1e-3,
