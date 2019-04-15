@@ -91,12 +91,17 @@ class MPIIOTest(ut.TestCase):
         s.bonded_inter[i] = AngleHarmonic(bend=i, phi0=i)
     test_particles = random_particles()
 
-    def setup_sample_system(self):
-        """Sets up a system from test_particles."""
+    def setUp(self):
+        """Sets up a system from test_particles and prepares environment
+        for the tests."""
+        clean_files()  # Prior call might not have completed sucecssfully
         for p in self.test_particles:
             self.s.part.add(id=p.id, type=p.type, pos=p.pos, v=p.v)
             for b in p.bonds:
                 self.s.part[p.id].add_bond(b)
+    
+    def tearDown(self):
+        clean_files()
 
     def assertAllEqual(self, v, w):
         """AssertEqual for arrays and more. Checks assertEqual() for all
@@ -131,8 +136,6 @@ class MPIIOTest(ut.TestCase):
                 self.assertAllEqual(bp[1:], bq[1:])
 
     def test_mpiio(self):
-        clean_files()  # Prior call might not have completed sucecssfully
-        self.setup_sample_system()
         espressomd.io.mpiio.mpiio.write(
             filename, types=True, positions=True, velocities=True, bonds=True)
         
@@ -143,7 +146,6 @@ class MPIIOTest(ut.TestCase):
             filename, types=True, positions=True, velocities=True, bonds=True)
 
         self.check_sample_system()
-        clean_files()
 
 
 if __name__ == '__main__':
