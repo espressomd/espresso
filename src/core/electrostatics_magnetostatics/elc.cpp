@@ -20,9 +20,7 @@
 */
 /** \file
  *
- *  For more information about ELC, see \ref
- * electrostatics_magnetostatics/elc.hpp
- * "electrostatics_magnetostatics/elc.hpp".
+ *  For more information about ELC, see \ref elc.hpp.
  */
 #include "cells.hpp"
 #include "communication.hpp"
@@ -55,10 +53,8 @@
  * LOCAL VARIABLES
  ****************************************/
 
-/** \name Inverse box dimensions and derived constants */
-/*@{*/
+/** Inverse of ELC_struct::h */
 static double height_inverse;
-/*@}*/
 
 ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0.0};
 
@@ -74,15 +70,13 @@ static double *partblk = nullptr;
 /** collected data from the other cells */
 static double gblcblk[8];
 
-/** structure for storing of sin and cos values */
-
 /** \name sin/cos caching */
 /*@{*/
-/** sin/cos caching */
+/** sin/cos caches along the x-axis */
 static std::vector<SCCache> scxcache;
 /* _Not_ the size of scxcache */
 static int n_scxcache;
-/** sin/cos caching */
+/** sin/cos caches along the y-axis */
 static std::vector<SCCache> scycache;
 /* _Not_ the size of scycache */
 static int n_scycache;
@@ -97,32 +91,28 @@ static int n_scycache;
 static void prepare_scx_cache();
 static void prepare_scy_cache();
 /*@}*/
-/** \name common code */
-/*@{*/
 static void distribute(int size);
-/*@}*/
 /** \name p=0 per frequency code */
 /*@{*/
 static void setup_P(int p, double omega);
 static void add_P_force();
-
-static double dir_energy(double omega);
 /*@}*/
 /** \name q=0 per frequency code */
 /*@{*/
 static void setup_Q(int q, double omega);
 static void add_Q_force();
 /*@}*/
+static double dir_energy(double omega);
 /** \name p,q <> 0 per frequency code */
 /*@{*/
 static void setup_PQ(int p, int q, double omega);
 static void add_PQ_force(int p, int q, double omega);
 static double PQ_energy(double omega);
+/*@}*/
 static void add_dipole_force();
 static double dipole_energy();
 static double z_energy();
 static void add_z_force();
-/*@}*/
 
 /* COMMON */
 /**********/

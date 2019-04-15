@@ -6,9 +6,9 @@
 #ifdef ELECTROSTATICS
 
 /** \name Product decomposition data organization
-    For the cell blocks
-    it is assumed that the lower blocks part is in the lower half.
-    This has to have positive sign, so that has to be first. */
+ *  For the cell blocks it is assumed that the lower blocks part is in the
+ *  lower half. This has to have positive sign, so that has to be first.
+ */
 /*@{*/
 #define POQESP 0
 #define POQECP 1
@@ -30,15 +30,12 @@
 static double ux, ux2, uy, uy2, uz;
 /*@}*/
 
-/** struct to hold cached sin/cos values */
-/*@{*/
+/** Cached sin/cos values */
 typedef struct {
   double s, c;
 } SCCache;
-/*@}*/
 
-/** calculating the inverse box dimensions*/
-/*@{*/
+/** Calculate the inverse box dimensions */
 static void init_invBoxl() {
   ux = 1 / box_l[0];
   ux2 = ux * ux;
@@ -46,8 +43,6 @@ static void init_invBoxl() {
   uy2 = uy * uy;
   uz = 1 / box_l[2];
 }
-
-/*@}*/
 
 inline double elc_add_force_dir(int position, const double *partblk,
                                 const double *gblcblk) {

@@ -21,7 +21,7 @@
 /** \file
  *  MMM2D algorithm for long range Coulomb interaction.
  *
- *  For more information about MMM2D, see \ref mmm2d.hpp "mmm2d.hpp".
+ *  For more information about MMM2D, see \ref mmm2d.hpp.
  */
 
 #include "electrostatics_magnetostatics/mmm2d.hpp"
@@ -123,7 +123,6 @@ static DoubleList bon;
 static double max_near, min_far;
 /*@}*/
 
-///
 static double self_energy;
 
 MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1};
@@ -150,6 +149,8 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1};
  * LOCAL ARRAYS
  ****************************************/
 
+/** @name Product decomposition data organization */
+/*@{*/
 #define QQEQQP 0
 #define QQEQQM 1
 
@@ -157,6 +158,7 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1};
 #define ABEQZP 1
 #define ABEQQM 2
 #define ABEQZM 3
+/*@}*/
 
 /** number of local particles */
 static int n_localpart = 0;
@@ -173,14 +175,17 @@ static double *gblcblk = nullptr;
 /** contribution from the image charges */
 static double lclimge[8];
 
-/** sin/cos caching */
+/** \name sin/cos caching */
+/*@{*/
+/** sin/cos caches along the x-axis */
 static std::vector<SCCache> scxcache;
 /* _Not_ the size of scxcache */
 static int n_scxcache;
-/** sin/cos caching */
+/** sin/cos caches along the y-axis */
 static std::vector<SCCache> scycache;
 /* _Not_ the size of scycache */
 static int n_scycache;
+/*@}*/
 
 /** \name Local functions for the near formula */
 /************************************************************/
@@ -197,9 +202,8 @@ void MMM2D_self_energy();
 
 /*@}*/
 
-/** \name Local functions for the far formula */
+/** Local functions for the far formula */
 /************************************************************/
-/*@{*/
 
 /** sin/cos storage */
 static void prepare_scx_cache();
@@ -217,27 +221,30 @@ static void setup_z_energy();
 static void add_z_force();
 static double z_energy();
 /** p=0 per frequency code */
+/*@{*/
 static void setup_P(int p, double omega, double fac);
 static void add_P_force();
+/*@}*/
 
 /** q=0 per frequency code */
+/*@{*/
 static void setup_Q(int q, double omega, double fac);
 static void add_Q_force();
+/*@}*/
 
 /** P- and Q- energy calculation */
 static double dir_energy(double omega);
 
 /** p,q <> 0 per frequency code */
+/*@{*/
 static void setup_PQ(int p, int q, double omega, double fac);
 static void add_PQ_force(int p, int q, double omega);
 static double PQ_energy(double omega);
+/*@}*/
 
 /** cutoff error setup. Returns error code */
 static int MMM2D_tune_far(double error);
 
-/*@}*/
-
-///
 void MMM2D_setup_constants() {
   init_invBoxl();
 
