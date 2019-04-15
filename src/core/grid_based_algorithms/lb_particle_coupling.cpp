@@ -71,7 +71,7 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
   if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lb_particle_coupling.rng_counter_coupling =
-        std::make_unique<Utils::Counter<uint64_t>>(counter);
+        Utils::Counter<uint64_t>(counter);
     mpi_bcast_lb_particle_coupling();
 #endif
   } else if (lattice_switch == ActiveLB::GPU) {
@@ -202,13 +202,17 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         ghost_communicator(&cell_structure.exchange_ghosts_comm,
                            GHOSTTRANS_SWIMMING);
 #endif
-
         using rng_type = r123::Philox4x64;
         using ctr_type = rng_type::ctr_type;
         using key_type = rng_type::key_type;
 
-        ctr_type c{{lb_particle_coupling.rng_counter_coupling->value(),
-                    static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+        ctr_type c;
+        if (lb_lbfluid_get_kT() > 0.0) {
+          c = ctr_type{{lb_particle_coupling.rng_counter_coupling->value(),
+                        static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+        } else {
+          c = ctr_type{{0, 0}};
+        }
 
         /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
          * The factor 12 comes from the fact that we use random numbers
