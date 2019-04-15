@@ -35,7 +35,7 @@ LB_PARAMETERS = {
     'dens': DENS,
     'tau': TAU
 }
-V_BOUNDARY=0.6
+V_BOUNDARY = 0.6
 
 
 def velocity_profile(x):
