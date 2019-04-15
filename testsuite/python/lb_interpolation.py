@@ -22,12 +22,12 @@ import espressomd
 import espressomd.shapes
 import espressomd.lb
 
-AGRID = 1.2
+AGRID = 1.5
 VISC = 1.0
 DENS = 1.0
 FRIC = 1.0
 TAU = 0.1
-BOX_L = 12.0
+BOX_L = 18.0
 TIME_STEP = TAU
 LB_PARAMETERS = {
     'agrid': AGRID,
@@ -74,7 +74,7 @@ class LBInterpolation(object):
 
         """
         self.set_boundaries()
-        self.system.integrator.run(1000)
+        self.system.integrator.run(3000)
         # Shear plane for boundary 1
         #for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
         #    np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
