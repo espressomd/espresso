@@ -209,6 +209,8 @@ tutorials-samples-default:
     - docker
     - linux
     - cuda
+  only:
+    - schedules
 
 tutorials-samples-empty:
   <<: *global_job_definition
@@ -221,6 +223,8 @@ tutorials-samples-empty:
     - docker
     - linux
     - cuda
+  only:
+    - schedules
 
 tutorials-samples-no-gpu:
   <<: *global_job_definition
@@ -232,6 +236,8 @@ tutorials-samples-no-gpu:
   tags:
     - docker
     - linux
+  only:
+    - schedules
 
 # Test that non-gpu methods work when building with Cuda and no gpu is present
 # In case a GPU is present on the runner, it is hidden by setting
