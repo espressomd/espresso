@@ -35,10 +35,11 @@ LB_PARAMETERS = {
     'dens': DENS,
     'tau': TAU
 }
+V_BOUNDARY=0.6
 
 
 def velocity_profile(x):
-    return 1. / (BOX_L - 2. * AGRID) * (x - AGRID)
+    return V_BOUNDARY / (BOX_L - 2. * AGRID) * (x - AGRID)
 
 
 class LBInterpolation(object):
@@ -64,7 +65,7 @@ class LBInterpolation(object):
         self.system.lbboundaries.add(
             espressomd.lbboundaries.LBBoundary(shape=wall_shape1))
         self.system.lbboundaries.add(
-            espressomd.lbboundaries.LBBoundary(shape=wall_shape2, velocity=[0.0, 0.0, 1.0]))
+            espressomd.lbboundaries.LBBoundary(shape=wall_shape2, velocity=[0.0, 0.0, V_BOUNDARY]))
 
     def test_interpolated_velocity(self):
         """
