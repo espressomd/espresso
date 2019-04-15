@@ -209,6 +209,8 @@ void lb_lbfluid_on_integration_start() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_GPU_sanity_checks();
+    lb_boundary_mach_check();
+
     if (this_node == 0 && lb_reinit_particles_gpu()) {
       lb_realloc_particles_gpu();
       lb_reinit_particles_gpu.validate();
@@ -217,6 +219,7 @@ void lb_lbfluid_on_integration_start() {
   } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lb_sanity_checks();
+    lb_boundary_mach_check();
 
     halo_communication(&update_halo_comm,
                        reinterpret_cast<char *>(lbfluid[0].data()));
@@ -1542,3 +1545,17 @@ Vector3d lb_lbfluid_calc_fluid_momentum() {
   return fluid_momentum;
 }
 #endif
+
+
+/*** Sanity check if the velocity defined at LB boundaries is within the Mach 
+number limits of the scheme i.e. u < 0.3**************************************/
+
+void lb_boundary_mach_check() {
+  for(auto it = 0; it < LBBoundaries::lbboundaries.size(); ++it) {
+    for(int v = 0; v < 3; ++v) {
+      if ( LBBoundaries::lbboundaries[it]->velocity()[v] > 0.3) {
+        runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
+        }
+      }
+    }
+}
