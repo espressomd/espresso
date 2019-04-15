@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2016-2018 The ESPResSo project
+  Copyright (C) 2019 The ESPResSo project
 
   This file is part of ESPResSo.
 
@@ -16,24 +16,32 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef UTILS_DEMANGLE_HPP
+#define UTILS_DEMANGLE_HPP
 
-#ifndef UTILS_MAKE_UNIQUE_HPP
-#define UTILS_MAKE_UNIQUE_HPP
+#include <boost/version.hpp>
 
-#include <memory>
+#if BOOST_VERSION >= 105600
+#include <boost/core/demangle.hpp>
+#endif
 
 namespace Utils {
-
 /**
- * @brief Constructs an object of type T and wraps it in a std::unique_ptr.
+ * @brief Get a human-readable name for a type.
  *
- * This function is part of the standard from c++14 on.
+ * Uses boost to demangle the name, for details
+ * see documentation for boost::core::demangle.
+ *
+ * @tparam T type
+ * @return name
  */
-template <typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args &&... args) {
-  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
-} /* namespace Utils */
-
+template <class T> std::string demangle() {
+#if BOOST_VERSION >= 105600
+  return boost::core::demangle(typeid(T).name());
+#else
+  return typeid(T).name();
 #endif
+}
+} // namespace Utils
+
+#endif // UTILS_DEMANGLE_HPP

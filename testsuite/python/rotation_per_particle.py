@@ -39,7 +39,7 @@ class Rotation(ut.TestCase):
     def test_langevin(self):
         """Applies langevin thermostat and checks that correct axes get thermalized"""
         s = self.s
-        s.thermostat.set_langevin(gamma=1, kT=1)
+        s.thermostat.set_langevin(gamma=1, kT=1, seed=42)
         for x in 0, 1:
             for y in 0, 1:
                 for z in 0, 1:

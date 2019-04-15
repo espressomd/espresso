@@ -84,7 +84,6 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/p3m-dipolar.cpp
   electrostatics_magnetostatics/p3m_gpu.cpp
   electrostatics_magnetostatics/scafacos.cpp
-  electrostatics_magnetostatics/fft-common.cpp
   electrostatics_magnetostatics/fft.cpp
   electrostatics_magnetostatics/coulomb.cpp
   electrostatics_magnetostatics/dipole.cpp
@@ -152,7 +151,6 @@ if(CUDA)
     grid_based_algorithms/fd-electrostatics_cuda.cu
     virtual_sites/lb_inertialess_tracers_cuda.cu
     grid_based_algorithms/electrokinetics.cpp
-    grid_based_algorithms/electrokinetics_pdb_parse.cpp
     grid_based_algorithms/lbgpu.cpp
     )
 

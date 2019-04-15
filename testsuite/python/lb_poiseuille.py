@@ -32,7 +32,7 @@ by comparing to the analytical solution.
 
 AGRID = .25
 EXT_FORCE = .1
-VISC = .7
+VISC = 2.7
 DENS = 1.7
 TIME_STEP = 0.1
 LB_PARAMS = {'agrid': AGRID,
@@ -65,7 +65,7 @@ class LBPoiseuilleCommon(object):
 
     """Base class of the test that holds the test logic."""
     lbf = None
-    system = espressomd.System(box_l=[12.0, 3.0, 3.0])
+    system = espressomd.System(box_l=[9.0, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
@@ -121,7 +121,7 @@ class LBPoiseuilleCommon(object):
                                      EXT_FORCE,
                                      VISC * DENS)
         rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
-        self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
+        self.assertLess(rmsd, 0.015 * AGRID / TIME_STEP)
 
 
 @ut.skipIf(not espressomd.has_features(
@@ -134,8 +134,8 @@ class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
+    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features or gpu.")
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the GPU implementation of the LB."""
@@ -144,8 +144,8 @@ class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
+    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features or gpu.")
 class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the higher order interpolation scheme of the LB."""

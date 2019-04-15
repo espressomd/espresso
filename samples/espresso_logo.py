@@ -155,7 +155,7 @@ system.constraints.add(
 system.time_step = 0.00022
 system.cell_system.skin = 0.4
 
-system.thermostat.set_langevin(kT=0.0, gamma=0.02)
+system.thermostat.set_langevin(kT=0.0, gamma=0.02, seed=42)
 WCA_cut = 2.**(1. / 6.)
 
 lj_eps = 1.0

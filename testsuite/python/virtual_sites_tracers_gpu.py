@@ -33,10 +33,12 @@ from virtual_sites_tracers_common import VirtualSitesTracersCommon
 required_features = "VIRTUAL_SITES_INERTIALESS_TRACERS", "LB_GPU"
 
 
-@ut.skipIf(not espressomd.has_features(required_features),
-           "Test requires VIRTUAL_SITES_INERTIALESS_TRACERS")
+@ut.skipIf(
+    not espressomd.gpu_available() or not espressomd.has_features(
+        required_features),
+           "Test requires VIRTUAL_SITES_INERTIALESS_TRACERS and a GPU")
 class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
-    if espressomd.has_features(required_features):
+    if espressomd.has_features(required_features) and espressomd.gpu_available():
         box_height = 10.
         box_lw = 8.
         system = espressomd.System(box_l=(box_lw, box_lw, box_height))

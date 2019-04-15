@@ -175,7 +175,7 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist,
   const double fak = p2->p.q * p1->p.q * field / dist;
 
   for (int i = 0; i < 3; i++) {
-    force[i] += fak * d[i];
+    force[i] -= fak * d[i];
   }
 }
 

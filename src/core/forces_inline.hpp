@@ -83,9 +83,7 @@
 
 /** Initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part) {
-  part->f.f[0] = 0;
-  part->f.f[1] = 0;
-  part->f.f[2] = 0;
+  part->f.f = Vector3d{};
 
 #ifdef ROTATION
   part->f.torque[0] = 0;
@@ -99,17 +97,17 @@ inline void init_local_particle_force(Particle *part) {
   if (thermo_switch & THERMO_LANGEVIN)
     friction_thermo_langevin(part);
   else {
-    part->f.f[0] = 0;
-    part->f.f[1] = 0;
-    part->f.f[2] = 0;
+    part->f.f = Vector3d{};
   }
 
 #ifdef EXTERNAL_FORCES
-  if (part->p.ext_flag & PARTICLE_EXT_FORCE) {
-    part->f.f[0] += part->p.ext_force[0];
-    part->f.f[1] += part->p.ext_force[1];
-    part->f.f[2] += part->p.ext_force[2];
-  }
+  // If individual coordinates are fixed, set force to 0.
+  for (int j = 0; j < 3; j++)
+    if (part->p.ext_flag & COORD_FIXED(j))
+      part->f.f[j] = 0;
+  // Add external force
+  if (part->p.ext_flag & PARTICLE_EXT_FORCE)
+    part->f.f += part->p.ext_force;
 #endif
 
 #ifdef ROTATION
@@ -501,16 +499,16 @@ inline void add_bonded_force(Particle *p1) {
     else if (n_partners == 2) {
       switch (type) {
       case BONDED_IA_ANGLE_HARMONIC:
-        bond_broken =
-            calc_angle_harmonic_force(p1, p2, p3, iaparams, force, force2);
+        bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force,
+                                                force2, force3);
         break;
       case BONDED_IA_ANGLE_COSINE:
-        bond_broken =
-            calc_angle_cosine_force(p1, p2, p3, iaparams, force, force2);
+        bond_broken = calc_angle_cosine_force(p1, p2, p3, iaparams, force,
+                                              force2, force3);
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
-        bond_broken =
-            calc_angle_cossquare_force(p1, p2, p3, iaparams, force, force2);
+        bond_broken = calc_angle_cossquare_force(p1, p2, p3, iaparams, force,
+                                                 force2, force3);
         break;
 #ifdef OIF_GLOBAL_FORCES
       case BONDED_IA_OIF_GLOBAL_FORCES:
@@ -521,7 +519,7 @@ inline void add_bonded_force(Particle *p1) {
       case BONDED_IA_TABULATED:
         if (iaparams->num == 2)
           bond_broken =
-              calc_tab_angle_force(p1, p2, p3, iaparams, force, force2);
+              calc_tab_angle_force(p1, p2, p3, iaparams, force, force2, force3);
         break;
 #endif
 #ifdef IMMERSED_BOUNDARY
@@ -612,7 +610,7 @@ inline void add_bonded_force(Particle *p1) {
         default:
           p1->f.f[j] += force[j];
           p2->f.f[j] += force2[j];
-          p3->f.f[j] -= (force[j] + force2[j]);
+          p3->f.f[j] += force3[j];
         }
       }
       break;

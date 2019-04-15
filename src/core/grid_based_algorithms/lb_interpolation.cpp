@@ -106,7 +106,8 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
     }
     return interpolated_u;
 #endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+  }
+  if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     switch (interpolation_order) {
     case (InterpolationOrder::quadratic):
@@ -116,9 +117,8 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
       auto const node = map_position_node_array(folded_pos);
       if (node == 0) {
         return lb_lbinterpolation_get_interpolated_velocity(folded_pos);
-      } else {
-        return mpi_recv_lb_interpolated_velocity(node, folded_pos);
       }
+      return mpi_recv_lb_interpolated_velocity(node, folded_pos);
     }
   }
 #endif

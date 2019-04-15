@@ -105,7 +105,7 @@ class Stress(ut.TestCase):
         system.time_step = time_step
 
         # thermostat and cell system
-        system.thermostat.set_langevin(kT=0.0, gamma=1.0)
+        system.thermostat.set_langevin(kT=0.0, gamma=1.0, seed=41)
         system.cell_system.skin = skin
         system.periodicity = [1, 1, 1]
 

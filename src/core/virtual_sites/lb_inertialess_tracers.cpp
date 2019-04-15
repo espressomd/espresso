@@ -37,9 +37,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void CoupleIBMParticleToFluid(Particle *p);
 void ParticleVelocitiesFromLB_CPU();
-bool IsHalo(const int indexCheck);
-void GetIBMInterpolatedVelocity(double const *p, double *const v,
-                                double *const forceAdded);
+bool IsHalo(int indexCheck);
+void GetIBMInterpolatedVelocity(double const *p, double *v, double *forceAdded);
 
 // ***** Internal variables ******
 
@@ -150,7 +149,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
         // Check if the particle might have crossed a box border (criterion see
         // e-mail Axel 28.8.2014)
         // if possible resort_particles = 1
-        const double dist2 = distance2(p[j].r.p, p[j].l.p_old);
+        const double dist2 = (p[j].r.p - p[j].l.p_old).norm2();
         if (dist2 > skin2) {
           set_resort_particles(Cells::RESORT_LOCAL);
         }

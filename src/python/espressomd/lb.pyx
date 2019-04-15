@@ -25,11 +25,11 @@ cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
 from . cimport cuda_init
-from .particle_data cimport make_array_locked
 from . import cuda_init
 from copy import deepcopy
 from . import utils
-from espressomd.utils import array_locked, is_valid_type
+from .utils import array_locked, is_valid_type
+from .utils cimport make_array_locked
 
 # Actor class
 ####################################################
@@ -263,6 +263,16 @@ IF LB:
             self._set_lattice_switch()
             self._set_params_in_es_core()
 
+        property stress:
+            def __get__(self):
+                cdef Vector6d res
+                res = lb_lbfluid_get_stress() 
+                return array_locked((
+                    res[0], res[1], res[2], res[3], res[4], res[5]))
+
+            def __set__(self, value):
+                raise NotImplementedError
+
 IF LB_GPU:
     cdef class LBFluidGPU(HydrodynamicInteraction):
         """
@@ -308,9 +318,9 @@ IF LB_GPU:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 IF LB or LB_GPU:
@@ -347,7 +357,7 @@ IF LB or LB_GPU:
             def __set__(self, value):
                 python_lbnode_set_density(self.node, value)
 
-        property pi:
+        property stress:
             def __get__(self):
                 cdef Vector6d pi = python_lbnode_get_pi(self.node)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],
@@ -357,7 +367,7 @@ IF LB or LB_GPU:
             def __set__(self, value):
                 raise NotImplementedError
 
-        property pi_neq:
+        property stress_neq:
             def __get__(self):
                 cdef Vector6d pi = python_lbnode_get_pi_neq(self.node)
                 return array_locked(np.array([[pi[0], pi[1], pi[3]],

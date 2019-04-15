@@ -30,10 +30,10 @@ from ek_common import *
 #Build plates using two ek species.
 
 
-@ut.skipIf(
-    not espressomd.has_features(
-        ["ELECTROKINETICS"]),
-           "Features not available, skipping test!")
+@ut.skipIf(not espressomd.gpu_available() or 
+           not espressomd.has_features(
+    ["ELECTROKINETICS"]),
+    "Features or gpu not available, skipping test!")
 class ek_charged_plate(ut.TestCase):
 
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])

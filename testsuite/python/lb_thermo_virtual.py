@@ -88,8 +88,10 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
     def test_lb_cpu(self):
         self.check_virtual(espressomd.lb.LBFluid)
 
-    @ut.skipIf(not espressomd.has_features(["LB_GPU"]),
-               "Features not available, skipping test.")
+    @ut.skipIf(
+        not espressomd.gpu_available() or not espressomd.has_features(
+            ["LB_GPU"]),
+               "Features or gpu not available, skipping test.")
     def test_lb_gpu(self):
         self.check_virtual(espressomd.lb.LBFluidGPU)
 

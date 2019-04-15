@@ -1262,7 +1262,7 @@ PAPER_TYPE             = a4wide
 # The EXTRA_PACKAGES tag can be to specify one or more names of LaTeX
 # packages that should be included in the LaTeX output.
 
-EXTRA_PACKAGES         =
+EXTRA_PACKAGES         = amsmath
 
 # The LATEX_HEADER tag can be used to specify a personal LaTeX header for
 # the generated latex document. The header should contain everything until
@@ -1515,8 +1515,7 @@ INCLUDE_FILE_PATTERNS  = *.h *.hpp *.cuh
 # Use the PREDEFINED tag if you want to use a different macro definition that
 # overrules the definition found in the source code.
 
-EXPAND_AS_DEFINED      = NEW_CYLINDRICAL_PROFILE_OBSERVABLE \
-                         NEW_PARAMLESS_OBSERVABLE
+EXPAND_AS_DEFINED      = NEW_PARAMLESS_OBSERVABLE
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES (the default) then
 # doxygen's preprocessor will remove all references to function-like macros

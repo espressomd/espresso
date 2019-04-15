@@ -103,11 +103,11 @@ int cuda_test_device_access();
     @return vector of device on master, empty vector on other nodes.
 */
 
-std::vector<EspressoGpuDevice> cuda_gather_gpus(void);
+std::vector<EspressoGpuDevice> cuda_gather_gpus();
 
 /** Get properties of a CUDA device
  */
-int cuda_get_device_props(const int dev, EspressoGpuDevice &d);
+int cuda_get_device_props(int dev, EspressoGpuDevice &d);
 
 /** current error message of CUDA. */
 extern const char *cuda_error;
