@@ -22,7 +22,7 @@ import espressomd
 import espressomd.shapes
 import espressomd.lb
 
-AGRID = 1.0
+AGRID = 1.2
 VISC = 1.0
 DENS = 1.0
 FRIC = 1.0
