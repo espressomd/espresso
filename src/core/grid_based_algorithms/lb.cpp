@@ -36,7 +36,7 @@
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "halo.hpp"
 #include "integrate.hpp"
 #include "lb-d3q19.hpp"

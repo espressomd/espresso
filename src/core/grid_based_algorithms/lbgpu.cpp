@@ -31,7 +31,7 @@
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
