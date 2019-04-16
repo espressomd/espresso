@@ -349,8 +349,8 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
                     "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
 
-        self.REptr = make_shared[CReactionEnsemble](<int> int(self._params["seed"]))        
-        self.RE = <shared_ptr[CReactionAlgorithm]> self.REptr
+        self.REptr = make_shared[CReactionEnsemble]( < int > int(self._params["seed"]))        
+        self.RE = <shared_ptr[CReactionAlgorithm] > self.REptr
         
         for k in kwargs:
             if k in self._valid_keys():
@@ -373,8 +373,8 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             self._params[k] = kwargs[k]
 
 
-        self.constpHptr = make_shared[CConstantpHEnsemble](<int> int(self._params["seed"]))
-        self.RE = <shared_ptr[CReactionAlgorithm]> self.constpHptr        
+        self.constpHptr = make_shared[CConstantpHEnsemble]( < int > int(self._params["seed"]))
+        self.RE = <shared_ptr[CReactionAlgorithm] > self.constpHptr        
 
         for k in kwargs:
             if k in self._valid_keys():
@@ -428,8 +428,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             else:
                 raise KeyError("%s is not a vaild key" % k)
 
-        self.WLRptr = make_shared[CWangLandauReactionEnsemble](<int> int(self._params["seed"]))
-        self.RE = <shared_ptr[CReactionAlgorithm]> self.WLRptr
+        self.WLRptr = make_shared[CWangLandauReactionEnsemble]( < int > int(self._params["seed"]))
+        self.RE = <shared_ptr[CReactionAlgorithm] > self.WLRptr
 
         self._set_params_in_es_core()
 
@@ -613,7 +613,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         order to avoid choosing the wrong potential energy boundaries.
 
         """
-        self.WLRptr.get().update_maximum_and_minimum_energies_at_current_state()
+        self.WLRptr.get(
+    ).update_maximum_and_minimum_energies_at_current_state()
 
     def write_out_preliminary_energy_run_results(self):
         """
@@ -631,7 +632,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         collective variables.
 
         """
-        self.WLRptr.get().write_wang_landau_results_to_file(filename.encode("utf-8"))
+        self.WLRptr.get().write_wang_landau_results_to_file(
+            filename.encode("utf-8"))
 
     def displacement_mc_move_for_particles_of_type(self, type_mc,
                                                    particle_number_to_be_changed=1):
@@ -668,9 +670,9 @@ cdef class WidomInsertion(ReactionAlgorithm):
                 raise ValueError(
                     "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
-        self._params["exclusion_radius"]=0.0
-        self.WidomInsertionPtr = make_shared[CWidomInsertion](<int> int(self._params["seed"]))
-        self.RE = <shared_ptr[CReactionAlgorithm]> self.WidomInsertionPtr
+        self._params["exclusion_radius"] = 0.0
+        self.WidomInsertionPtr = make_shared[CWidomInsertion]( < int > int(self._params["seed"]))
+        self.RE = <shared_ptr[CReactionAlgorithm] > self.WidomInsertionPtr
         for k in kwargs:
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
@@ -678,7 +680,6 @@ cdef class WidomInsertion(ReactionAlgorithm):
                 raise KeyError("%s is not a vaild key" % k)
 
         self._set_params_in_es_core()
-
 
     def measure_excess_chemical_potential(self, reaction_id=0):
         """
