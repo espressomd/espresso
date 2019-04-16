@@ -9,6 +9,8 @@ IF LB_GPU:
     from .lb cimport GPU
 from . import utils
 import os
+import tempfile
+import shutil
 from .utils cimport Vector6d
 import numpy as np
 from espressomd.utils import is_valid_type
@@ -317,11 +319,14 @@ IF ELECTROKINETICS:
 
         def save_checkpoint(self, path):
             tmp_path = path + ".__tmp__"
-            ek_save_checkpoint(utils.to_char_pointer(tmp_path))
+            tmpfile_ek = tempfile.NamedTemporaryFile(mode='w+b')
+            tmpfile_lb = tempfile.NamedTemporaryFile(mode='w+b')
+            ek_save_checkpoint(utils.to_char_pointer(tmpfile_ek.name),
+                               utils.to_char_pointer(tmpfile_lb.name))
             ek_path = tmp_path + ".ek"
             lb_path = tmp_path + ".lb"
-            os.rename(ek_path, path + ".ek")
-            os.rename(lb_path, path + ".lb")
+            shutil.copy(tmpfile_ek.name, path + ".ek")
+            shutil.copy(tmpfile_lb.name, path + ".lb")
 
         def load_checkpoint(self, path):
             self._activate_method()
