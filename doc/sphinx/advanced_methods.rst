@@ -1562,6 +1562,22 @@ the options associated to these shapes. In order to properly set up the
 boundaries, the ``charge_density`` and ``shape``
 must be specified.
 
+.. _Checkpointing:
+
+Checkpointing
+^^^^^^^^^^^^^
+::
+
+    ek.save_checkpoint(path)
+
+Checkpointing in the EK works quite similar to checkpointing in the LB, because the density in not saved within the :class:`espressomd.checkpointing` object. However one should keep in mind, that the EK not only saved the density of the species but also saves the population of the LB fluid in a seperate file. To load a checkpoint the :class:`espressomd.electrokinetics.Electrokinetics` should have the same name as in the scribt it was saved, but to use the species one need to extract them from the :class:`espressomd.electrokinetics.Electrokinetics` via ``species'``.
+
+::
+
+    checkpoint.load(cpt_path)
+    species = ek.get_params()['species']
+    ek.load_checkpoint(path)
+
 .. _Output:
 
 Output
