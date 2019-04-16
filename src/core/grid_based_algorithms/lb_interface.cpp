@@ -1550,11 +1550,19 @@ Vector3d lb_lbfluid_calc_fluid_momentum() {
 number limits of the scheme i.e. u < 0.3**************************************/
 
 void lb_boundary_mach_check() {
-  for (auto it = 0; it < LBBoundaries::lbboundaries.size(); ++it) {
-    for (int v = 0; v < 3; ++v) {
-      if (LBBoundaries::lbboundaries[it]->velocity()[v] > 0.3) {
-        runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
-      }
+
+  //User specified velocity needs to be converted to LB units
+  auto conv_fac = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid();
+
+  for(auto it = 0; it < LBBoundaries::lbboundaries.size(); ++it) {
+    double ux = LBBoundaries::lbboundaries[it]->velocity()[0] * conv_fac;
+    double uy = LBBoundaries::lbboundaries[it]->velocity()[1] * conv_fac;
+    double uz = LBBoundaries::lbboundaries[it]->velocity()[2] * conv_fac;
+
+    double u = sqrt(ux*ux + uy*uy + uz*uz);
+
+    if ( u > 0.3) {
+      runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
     }
   }
 }
