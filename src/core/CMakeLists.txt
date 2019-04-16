@@ -90,6 +90,7 @@ set(EspressoCore_SRC
   grid_based_algorithms/lbboundaries.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/LbWalberla.cpp
+  grid_based_algorithms/lb_walberla_instance.cpp
   grid_based_algorithms/lb_interface.cpp
   grid_based_algorithms/lb_interpolation.cpp
   grid_based_algorithms/lb_particle_coupling.cpp

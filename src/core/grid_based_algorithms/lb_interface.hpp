@@ -12,7 +12,7 @@ enum class ActiveLB { NONE, CPU, GPU };
 /** @brief Switch determining the type of lattice dynamics. */
 extern ActiveLB lattice_switch;
 
-#if defined(LB) || defined(LB_GPU)
+#if defined(LB) || defined(LB_GPU) || defined(LB_WALBERLA)
 
 /**
  * @brief Propagate the LB fluid.
