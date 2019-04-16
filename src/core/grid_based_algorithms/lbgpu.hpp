@@ -133,7 +133,6 @@ typedef struct {
 typedef struct {
 
   lbForceFloat *force_density;
-  float *scforce_density;
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual
@@ -160,7 +159,6 @@ typedef struct {
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_rho_v_pi_gpu *host_values;
-extern LB_extern_nodeforcedensity_gpu *extern_node_force_densities_gpu;
 extern LB_particle_allocation_state lb_reinit_particles_gpu;
 #ifdef ELECTROKINETICS
 extern LB_node_force_density_gpu node_f;
@@ -178,12 +176,8 @@ void lb_GPU_sanity_checks();
 
 void lb_get_device_values_pointer(LB_rho_v_gpu **pointeradress);
 void lb_get_boundary_force_pointer(float **pointeradress);
-void lb_get_lbpar_pointer(LB_parameters_gpu **pointeradress);
 void lb_get_para_pointer(LB_parameters_gpu **pointeradress);
 void lattice_boltzmann_update_gpu();
-
-/** (Pre-)initialize data structures. */
-void lb_pre_init_gpu();
 
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
@@ -207,7 +201,7 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
-void lb_free_GPU();
+
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);
 void lb_print_node_GPU(int single_nodeindex,
                        LB_rho_v_pi_gpu *host_print_values);
@@ -229,8 +223,6 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);
-void lb_remove_fluid_momentum_GPU();
-void lb_calc_fluid_temperature_GPU(double *host_temp);
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag);
 void lb_get_boundary_flags_GPU(unsigned int *host_bound_array);
 
@@ -240,7 +232,6 @@ void lb_set_node_rho_GPU(int single_nodeindex, float host_rho);
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
-int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double *forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd);
 void lb_load_checkpoint_GPU(float const *host_checkpoint_vd);
