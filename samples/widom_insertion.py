@@ -112,7 +112,7 @@ system.force_cap = 0
 
 unimportant_K_diss = 0.0088
 RE = reaction_ensemble.WidomInsertion(
-    temperature=temperature, exclusion_radius=1.0)
+    temperature=temperature, seed=77)
 RE.add_reaction(gamma=unimportant_K_diss, reactant_types=[], reactant_coefficients=[], product_types=[
                 1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
