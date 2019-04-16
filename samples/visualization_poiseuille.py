@@ -14,7 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Visualization sample for Poisseuille flow with Lattice Boltzmann.
+"""
+Visualization sample for Poiseuille flow with Lattice Boltzmann.
 """
 
 from __future__ import print_function
@@ -35,26 +36,24 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.2
 
-visualizer = espressomd.visualization_opengl.openGLLive(system,
-                                                        LB_draw_boundaries=True,
-                                                        LB_draw_velocity_plane=True,
-                                                        LB_plane_dist=8,
-                                                        LB_plane_axis=1,
-                                                        LB_vel_scale=1e2,
-                                                        LB_plane_ngrid=15,
-                                                        camera_position=[
-                                                        8, 16, 50],
-                                                        velocity_arrows=True,
-                                                        velocity_arrows_type_scale=[
-                                                        20.],
-                                                        velocity_arrows_type_radii=[
-                                                        0.1],
-                                                        velocity_arrows_type_colors=[[0, 1, 0]])
+visualizer = espressomd.visualization_opengl.openGLLive(
+    system,
+    LB_draw_boundaries=True,
+    LB_draw_velocity_plane=True,
+    LB_plane_dist=8,
+    LB_plane_axis=1,
+    LB_vel_scale=1e2,
+    LB_plane_ngrid=15,
+    camera_position=[8, 16, 50],
+    velocity_arrows=True,
+    velocity_arrows_type_scale=[20.],
+    velocity_arrows_type_radii=[0.1],
+    velocity_arrows_type_colors=[[0, 1, 0]])
 
-lbf = lb.LBFluid(agrid=1.0, dens=1.0,
+lbf = lb.LBFluid(kT=0, agrid=1.0, dens=1.0,
                  visc=1.0, tau=0.1, ext_force_density=[0, 0.003, 0])
 system.actors.add(lbf)
-system.thermostat.set_lb(kT=0)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 
 # Setup boundaries
 walls = [lbboundaries.LBBoundary() for k in range(2)]

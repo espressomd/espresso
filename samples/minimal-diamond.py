@@ -1,7 +1,3 @@
-"""
-This sample sets up a diamond-structured polymer network.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -20,8 +16,12 @@ This sample sets up a diamond-structured polymer network.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample sets up a diamond-structured polymer network.
+"""
 from __future__ import print_function
 import espressomd
+espressomd.assert_features(["LENNARD_JONES"])
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import diamond
@@ -60,7 +60,7 @@ system.bonded_inter.add(fene)
 # These polymers are initialized in a straight line connected to crosslink nodes
 # Furthermore they are connected to one another across simulation boxes in a periodic fashion.
 # It is crucial that the simulation box, chain length and a-parameters be
-# chosen such that the arangement will not break bonds.
+# chosen such that the arrangement will not break bonds.
 
 # monomers per chain
 MPC = 15

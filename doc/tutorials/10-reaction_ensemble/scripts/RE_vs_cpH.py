@@ -21,6 +21,7 @@ from __future__ import division
 import numpy as np
 
 import espressomd
+espressomd.assert_features(["ELECTROSTATICS", "LENNARD_JONES"])
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
@@ -71,8 +72,9 @@ elif(mode == "constant_pH_ensemble"):
     RE = reaction_ensemble.ConstantpHEnsemble(
         temperature=1, exclusion_radius=1)
     RE.constant_pH = 3
-RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
-    1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
+RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
+                product_types=[1, 2], product_coefficients=[1, 1],
+                default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
@@ -83,7 +85,8 @@ alpha = []
 for i in range(100):
     RE.reaction(100)
     print("HA", system.number_of_particles(type=0), "A-",
-          system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
+          system.number_of_particles(type=1), "H+",
+          system.number_of_particles(type=2))
     alpha.append(system.number_of_particles(type=1) / N0)
 
 alpha_av = np.mean(alpha)

@@ -97,7 +97,7 @@ system.box_l = [length, diameter + 4, diameter + 4]
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 ################################################################################
 #
@@ -110,10 +110,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 cylinder = Cylinder(
     center=[length / 2.0, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
-                    axis=[1, 0, 0],
-                    radius=diameter / 2.0,
-                    length=length,
-                    direction=-1)
+    axis=[1, 0, 0], radius=diameter / 2.0, length=length, direction=-1)
 system.constraints.add(shape=cylinder, particle_type=1)
 
 # Setup walls
@@ -134,11 +131,11 @@ shift = 0.25 * orad * cos(angle)
 hollow_cone = HollowCone(
     center=[length / 2.0 + shift, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
     axis=[-1, 0, 0],
-                         outer_radius=orad,
-                         inner_radius=irad,
-                         width=2.0,
-                         opening_angle=angle,
-                         direction=1)
+    outer_radius=orad,
+    inner_radius=irad,
+    width=2.0,
+    opening_angle=angle,
+    direction=1)
 system.constraints.add(shape=hollow_cone, particle_type=4)
 
 ################################################################################
@@ -187,8 +184,8 @@ for cntr in range(npart):
     phi = float(2 * np.random.random() * np.pi)
     quats = a2quat(theta, phi)
 
-    system.part.add(pos=[x, y, z], type=0, swimming={
-                    'v_swim': vel}, quat=quats, rotation=[1, 1, 1])
+    system.part.add(pos=[x, y, z], type=0, swimming={'v_swim': vel},
+                    quat=quats, rotation=[1, 1, 1])
 
 ##########################################################################
 

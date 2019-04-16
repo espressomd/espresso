@@ -42,6 +42,7 @@
 #define cudaStreamDestroy hipStreamDestroy
 #define cudaStream_t hipStream_t
 #define cudaSuccess hipSuccess
+#define __all_sync __all
 
 #else // Nvidia via CUDA
 

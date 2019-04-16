@@ -14,7 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" ESPResSo 8Ball billard game.
+"""
+ESPResSo 8Ball billiard game.
 """
 
 from __future__ import print_function
@@ -35,44 +36,36 @@ import espressomd.shapes
 required_features = ["LENNARD_JONES", "MASS", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
-print(
-    '8Ball BILLARD - An Espresso Visualizer Demo\nControls:\nNumpad 4/6: Adjust Angle\nNumpad 2/8: Adjust Impulse\nNumpad 5: Shoot')
+print('''8Ball BILLIARD - An ESPResSo Visualizer Demo
+Controls:
+  Numpad 4/6: Adjust Angle
+  Numpad 2/8: Adjust Impulse
+  Numpad 5: Shoot''')
 
-#ESPRESSO
+# ESPRESSO
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 table_dim = [2.24, 1.12]
 system.box_l = [table_dim[0], 3, table_dim[1]]
 
-visualizer = espressomd.visualization_opengl.openGLLive(system,
-                                                        ext_force_arrows=True,
-                                                        ext_force_arrows_type_scale=[
-                                                        0.02],
-                                                        ext_force_arrows_type_radii=[
-                                                        0.01],
-                                                        background_color=[
-                                                        0.5, 0.4, 0.5],
-                                                        drag_enabled=False,
-                                                        particle_type_materials=[
-                                                        'medium', 'bright', 'bright', 'medium'],
-                                                        particle_type_colors=[
-                                                        [1, 1, 1], [0.5, 0.1, 0.1], [0.1, 0.2, 0.4], [0.2, 0.2, 0.2]],
-                                                        constraint_type_materials=[
-                                                        'dark'],
-                                                        constraint_type_colors=[
-                                                        [0.1, 0.424, 0.011], [0.1, 0.1, 0.1]],
-                                                        camera_position=[
-                                                        1.12, 2.8, 0.56],
-                                                        window_size=[
-                                                            1000, 600],
-                                                        draw_axis=False,
-                                                        light_pos=[
-                                                        table_dim[
-                                                            0] * 0.5, 1.0, table_dim[
-                                                                1] * 0.5],
-                                                        light_colors=[
-                                                        [0.8, 0.8, 0.8], [0.9, 0.9, 0.9], [1.0, 1.0, 1.0]],
-                                                        light_brightness=1.0)
+visualizer = espressomd.visualization_opengl.openGLLive(
+    system,
+    ext_force_arrows=True,
+    ext_force_arrows_type_scale=[0.02],
+    ext_force_arrows_type_radii=[0.01],
+    background_color=[0.5, 0.4, 0.5],
+    drag_enabled=False,
+    particle_type_materials=['medium', 'bright', 'bright', 'medium'],
+    particle_type_colors=[
+        [1, 1, 1], [0.5, 0.1, 0.1], [0.1, 0.2, 0.4], [0.2, 0.2, 0.2]],
+    constraint_type_materials=['dark'],
+    constraint_type_colors=[[0.1, 0.424, 0.011], [0.1, 0.1, 0.1]],
+    camera_position=[1.12, 2.8, 0.56],
+    window_size=[1000, 600],
+    draw_axis=False,
+    light_pos=[table_dim[0] * 0.5, 1.0, table_dim[1] * 0.5],
+    light_colors=[[0.8, 0.8, 0.8], [0.9, 0.9, 0.9], [1.0, 1.0, 1.0]],
+    light_brightness=1.0)
 
 stopped = True
 angle = np.pi * 0.5
@@ -120,16 +113,22 @@ def fire():
         system.part[0].fix = [0, 1, 0]
         system.part[0].ext_force = [0, 0, 0]
 
+
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('4', espressomd.visualization_opengl.KeyboardFireEvent.Hold, decreaseAngle))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        '4', espressomd.visualization_opengl.KeyboardFireEvent.Hold, decreaseAngle))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('6', espressomd.visualization_opengl.KeyboardFireEvent.Hold, increaseAngle))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        '6', espressomd.visualization_opengl.KeyboardFireEvent.Hold, increaseAngle))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('2', espressomd.visualization_opengl.KeyboardFireEvent.Hold, decreaseImpulse))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        '2', espressomd.visualization_opengl.KeyboardFireEvent.Hold, decreaseImpulse))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('8', espressomd.visualization_opengl.KeyboardFireEvent.Hold, increaseImpulse))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        '8', espressomd.visualization_opengl.KeyboardFireEvent.Hold, increaseImpulse))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent('5', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, fire))
+    espressomd.visualization_opengl.KeyboardButtonEvent(
+        '5', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, fire))
 
 
 def main():
@@ -149,23 +148,47 @@ def main():
                 [table_dim[0] - hole_dist, table_h, table_dim[1] - hole_dist],
                 [table_dim[0] * 0.5, table_h, table_dim[1] - hole_dist],
                 [table_dim[0] * 0.5, table_h, hole_dist]]
-    types = {'cue_ball': 0, 'striped_ball': 1, 'solid_ball':
-             2, 'black_ball': 3, 'table': 4, 'wall': 5, 'hole': 6}
+    types = {'cue_ball': 0, 'striped_ball': 1, 'solid_ball': 2,
+             'black_ball': 3, 'table': 4, 'wall': 5, 'hole': 6}
 
     system.constraints.add(
-        shape=espressomd.shapes.Wall(dist=table_h, normal=[0.0, 1.0, 0.0]), particle_type=types['table'], penetrable=True)
+        shape=espressomd.shapes.Wall(dist=table_h, normal=[0.0, 1.0, 0.0]),
+        particle_type=types['table'],
+        penetrable=True)
 
     system.constraints.add(
-        shape=espressomd.shapes.Wall(dist=0.01, normal=[1.0, 0.0, 0.0]), particle_type=types['wall'], penetrable=True)
-    system.constraints.add(shape=espressomd.shapes.Wall(dist=-(table_dim[0] - 0.01), normal=[
-                           -1.0, 0.0, 0.0]), particle_type=types['wall'], penetrable=True)
+        shape=espressomd.shapes.Wall(dist=0.01, normal=[1.0, 0.0, 0.0]),
+        particle_type=types['wall'],
+        penetrable=True)
     system.constraints.add(
-        shape=espressomd.shapes.Wall(dist=0.01, normal=[0.0, 0.0, 1.0]), particle_type=types['wall'], penetrable=True)
+        shape=espressomd.shapes.Wall(
+            dist=-(table_dim[0] - 0.01),
+            normal=[-1.0, 0.0, 0.0]),
+        particle_type=types['wall'],
+        penetrable=True)
     system.constraints.add(
-        shape=espressomd.shapes.Wall(dist=-(table_dim[1] - 0.01), normal=[0.0, 0.0, -1.0]), particle_type=types['wall'], penetrable=True)
+        shape=espressomd.shapes.Wall(
+            dist=0.01,
+            normal=[0.0, 0.0, 1.0]),
+        particle_type=types['wall'],
+        penetrable=True)
+    system.constraints.add(
+        shape=espressomd.shapes.Wall(
+            dist=-(table_dim[1] - 0.01),
+            normal=[0.0, 0.0, -1.0]),
+        particle_type=types['wall'],
+        penetrable=True)
     for h in hole_pos:
-        system.constraints.add(shape=espressomd.shapes.Cylinder(center=(np.array(h) - np.array([0, table_h * 0.5, 0])).tolist(), axis=[
-                               0, 1, 0], radius=hole_rad, length=1.02 * table_h, direction=1), particle_type=types['hole'], penetrable=True)
+        system.constraints.add(
+            shape=espressomd.shapes.Cylinder(
+                center=(np.array(h)
+                        - np.array([0, table_h * 0.5, 0])).tolist(),
+                axis=[0, 1, 0],
+                radius=hole_rad,
+                length=1.02 * table_h,
+                direction=1),
+            particle_type=types['hole'],
+            penetrable=True)
 
     lj_eps = np.array([1])
     lj_sig = np.array([ball_diam])
@@ -175,7 +198,7 @@ def main():
 
     num_types = len(lj_sig)
 
-    #LENNARD JONES
+    # LENNARD JONES
     def mix_eps(eps1, eps2, rule='LB'):
         return math.sqrt(eps1 * eps2)
 
@@ -192,7 +215,7 @@ def main():
 
     ball_y = table_h + ball_diam * 1.5
 
-    #PARTICLES
+    # PARTICLES
     ball_start_pos = [table_dim[0] * 0.25, ball_y, table_dim[1] * 0.5]
     system.part.add(id=0, pos=ball_start_pos,
                     type=types['cue_ball'], mass=mass[0])
@@ -208,11 +231,20 @@ def main():
     pid = 1
     order = [
         types['solid_ball'],
-        types['striped_ball'], types['solid_ball'],
-        types['solid_ball'], types['black_ball'], types['striped_ball'],
-        types['striped_ball'], types['solid_ball'], types[
-            'striped_ball'], types['solid_ball'],
-        types['solid_ball'], types['striped_ball'], types['striped_ball'], types['solid_ball'], types['striped_ball']]
+        types['striped_ball'],
+        types['solid_ball'],
+        types['solid_ball'],
+        types['black_ball'],
+        types['striped_ball'],
+        types['striped_ball'],
+        types['solid_ball'],
+        types['striped_ball'],
+        types['solid_ball'],
+        types['solid_ball'],
+        types['striped_ball'],
+        types['striped_ball'],
+        types['solid_ball'],
+        types['striped_ball']]
 
     for i in range(5):
         for j in range(i + 1):
@@ -227,9 +259,6 @@ def main():
     ball.ext_force = impulse * np.array([math.sin(angle), 0, math.cos(angle)])
     ball.fix = [1, 1, 1]
     system.thermostat.set_langevin(kT=0, gamma=0.8, seed=42)
-    #ELECTROSTATICS
-    #	p3m = electrostatics.P3M(prefactor=50, accuracy=1e-2)
-    #	system.actors.add(p3m)
 
     cleared_balls = [0, 0]
     while True:
@@ -241,8 +270,8 @@ def main():
 
             for h in hole_pos:
 
-                d = ((p.pos_folded[0] - h[0])**2 + (
-                    p.pos_folded[2] - h[2])**2)**0.5
+                d = ((p.pos_folded[0] - h[0])**2
+                     + (p.pos_folded[2] - h[2])**2)**0.5
                 if (d < hole_score_rad):
                     if p.id == 0:
                         p.pos = ball_start_pos
