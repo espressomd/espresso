@@ -110,21 +110,24 @@ private:
 class ReactionAlgorithm {
 
 public:
-//  ReactionAlgorithm(int seed) {
-//    std::seed_seq seeder{
-//        seed}; // come up with "sane" initialization to avoid too many zeros in
-//               // the internal state of the Mersenne twister
-//    m_generator.seed(seed);
-//    m_generator.discard(1e6); // discard the first 1e6 random numbers to warm
-//                              // up the Mersenne-Twister PRNG
-//    m_normal_distribution= std::normal_distribution<double>(0, 1);
-//    m_uniform_real_distribution= std::uniform_real_distribution<double>(0, 1);
-//  }
-ReactionAlgorithm(int seed) : m_seeder({seed, seed, seed}), m_generator(m_seeder), 
-                                               m_normal_distribution(0.0, 1.0), 
-                                               m_uniform_real_distribution(0.0, 1.0) {
-  m_generator.discard(1e6);
-}
+  //  ReactionAlgorithm(int seed) {
+  //    std::seed_seq seeder{
+  //        seed}; // come up with "sane" initialization to avoid too many zeros
+  //        in
+  //               // the internal state of the Mersenne twister
+  //    m_generator.seed(seed);
+  //    m_generator.discard(1e6); // discard the first 1e6 random numbers to
+  //    warm
+  //                              // up the Mersenne-Twister PRNG
+  //    m_normal_distribution= std::normal_distribution<double>(0, 1);
+  //    m_uniform_real_distribution= std::uniform_real_distribution<double>(0,
+  //    1);
+  //  }
+  ReactionAlgorithm(int seed)
+      : m_seeder({seed, seed, seed}), m_generator(m_seeder),
+        m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
+    m_generator.discard(1e6);
+  }
 
   virtual ~ReactionAlgorithm() = default;
 
