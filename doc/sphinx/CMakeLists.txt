@@ -30,7 +30,6 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/appendix.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/constraints.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/contributing.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/dg.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/electrostatics.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/index.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/installation.rst"

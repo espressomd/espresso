@@ -11,17 +11,6 @@ User's Guide
 
     ug.rst
 
-.. _Developers Guide:
-
-Developer's Guide
------------------
-
-.. toctree::
-    :numbered:
-    :maxdepth: 1
-
-    dg.rst
-
 Python module documentation
 ===========================
 
