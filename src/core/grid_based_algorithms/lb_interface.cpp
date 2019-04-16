@@ -1552,16 +1552,13 @@ number limits of the scheme i.e. u < 0.3**************************************/
 void lb_boundary_mach_check() {
 
   // User specified velocity needs to be converted to LB units
-  auto conv_fac = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid();
+  auto const conv_fac = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid();
+  double constexpr mach_limit = 0.3;
 
-  for (auto it = 0; it < LBBoundaries::lbboundaries.size(); ++it) {
-    double ux = LBBoundaries::lbboundaries[it]->velocity()[0] * conv_fac;
-    double uy = LBBoundaries::lbboundaries[it]->velocity()[1] * conv_fac;
-    double uz = LBBoundaries::lbboundaries[it]->velocity()[2] * conv_fac;
+  for (auto const &lbboundary : LBBoundaries::lbboundaries) {
+    auto const u = (lbboundary->velocity() * conv_fac).norm();
 
-    double u = sqrt(ux * ux + uy * uy + uz * uz);
-
-    if (u > 0.3) {
+    if (u >= mach_limit) {
       runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
     }
   }
