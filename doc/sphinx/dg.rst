@@ -66,28 +66,6 @@ This will create a directory named "espresso" which contains the code.
 The build process does not differ from the one for release versions described in the users' guide.
 
 
-Testsuite
----------
-
--  New or significantly changed features will only be accepted if they have a test case.
-   This is to make sure the feature is not broken by future changes to |es|, and so other users can get an impression of what behavior is guaranteed to work.
--  There are multiple kinds of tests:
-
-  -  C++-unit tests, testing individual C++ functions and classes. They make use of the boost unit test framework and reside in :file:`/src/core/unit_tests`
-  -  Python integration tests, testing the Python interface and (physical) results of features. They reside in :file:`/testsuite/python`
-  -  CMake tests, testing the software can be successfully installed. They reside in :file:`/testsuite/cmake`
-  -  Python scripts tests, testing the IPython notebooks and Python samples in :file:`/doc/tutorials` and :file:`/samples`. They reside in :file:`/testsuite/scripts/tutorials` resp. :file:`/testsuite/scripts/samples` and are executed on a different schedule
-
-- To execute the tests, run:
-
-  .. code-block:: bash
-
-     make check
-
-  in the top build directory.
-
-- See :ref:`Unit testing` for how to develop new tests
-
 .. _git: http://git-scm.com/
 
 .. _doxygen: http://www.doxygen.org/
