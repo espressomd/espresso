@@ -39,7 +39,8 @@ polymer.create_polymer(
 
 system.integrator.run(steps=0)
 h5_file = h5md.H5md(filename="sample.h5", write_pos=True, write_vel=True,
-                    write_force=True, write_species=True, write_mass=False, write_charge=True, write_ordered=True)
+                    write_force=True, write_species=True, write_mass=False,
+                    write_charge=True, write_ordered=True)
 for i in range(1):
     h5_file.write()
 h5_file.flush()
