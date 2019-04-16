@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 void CoupleIBMParticleToFluid(Particle *p);
 void ParticleVelocitiesFromLB_CPU();
 bool IsHalo(int indexCheck);
-void GetIBMInterpolatedVelocity(double const *p, double *v, double *forceAdded);
+void GetIBMInterpolatedVelocity(const Vector3d &p, double *v, double *forceAdded);
 
 // ***** Internal variables ******
 
@@ -189,26 +189,8 @@ Very similar to the velocity interpolation done in standard Espresso, except
 that we add the f/2 contribution - only for CPU
 *******************/
 
-void GetIBMInterpolatedVelocity(double const *p, double *const v,
-                                double *const forceAdded) {
-  Lattice::index_t index;
-  double local_rho, local_j[3], interpolated_u[3];
-  double modes[19];
-  int x, y, z;
-
-  double lbboundary_mindist, distvec[3];
-  Vector3d pos;
-
-#ifdef LB_BOUNDARIES
-  pos[0] = p[0];
-  pos[1] = p[1];
-  pos[2] = p[2];
-
-#else
-  pos[0] = p[0];
-  pos[1] = p[1];
-  pos[2] = p[2];
-#endif
+void GetIBMInterpolatedVelocity(const Vector3d &pos, double *v,
+                                double *forceAdded) {
 
   /* determine elementary lattice cell surrounding the particle
    and the relative position of the particle in this cell */
@@ -220,34 +202,26 @@ void GetIBMInterpolatedVelocity(double const *p, double *const v,
   /* calculate fluid velocity at particle's position
    this is done by linear interpolation
    (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0;
+  Vector3d interpolated_u = {};
   // This for the f/2 contribution to the velocity
   forceAdded[0] = forceAdded[1] = forceAdded[2] = 0;
 
-  for (z = 0; z < 2; z++) {
-    for (y = 0; y < 2; y++) {
-      for (x = 0; x < 2; x++) {
-
-        index = node_index[(z * 2 + y) * 2 + x];
+  for (int z = 0; z < 2; z++) {
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 2; x++) {
+        auto const index = node_index[(z * 2 + y) * 2 + x];
         const auto &f = lbfields[index].force_density_buf;
+
+        double local_rho;
+        Vector3d local_j;
 
 // This can be done easier without copying the code twice
 // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
           local_rho = lbpar.rho;
-          local_j[0] =
-              lbpar.rho *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[0];
-          local_j[1] =
-              lbpar.rho *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[1];
-          local_j[2] =
-              lbpar.rho *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[2];
+          local_j = lbpar.rho * (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
+                                                   .velocity();
         } else
 #endif
         {
@@ -293,15 +267,11 @@ void GetIBMInterpolatedVelocity(double const *p, double *const v,
       }
     }
   }
-#ifdef LB_BOUNDARIES
+
   v[0] = interpolated_u[0];
   v[1] = interpolated_u[1];
   v[2] = interpolated_u[2];
-#else
-  v[0] = interpolated_u[0];
-  v[1] = interpolated_u[1];
-  v[2] = interpolated_u[2];
-#endif
+
   v[0] *= lbpar.agrid / lbpar.tau;
   v[1] *= lbpar.agrid / lbpar.tau;
   v[2] *= lbpar.agrid / lbpar.tau;
@@ -357,7 +327,7 @@ void ParticleVelocitiesFromLB_CPU() {
         double dummy[3];
         // Get interpolated velocity and store in the force (!) field
         // for later communication (see below)
-        GetIBMInterpolatedVelocity(p[j].r.p.data(), p[j].f.f.data(), dummy);
+        GetIBMInterpolatedVelocity(p[j].r.p, p[j].f.f.data(), dummy);
       }
   }
 
@@ -380,7 +350,7 @@ void ParticleVelocitiesFromLB_CPU() {
           double dummy[3];
           double force[3] = {0, 0,
                              0}; // The force stemming from the ghost particle
-          GetIBMInterpolatedVelocity(p[j].r.p.data(), dummy, force);
+          GetIBMInterpolatedVelocity(p[j].r.p, dummy, force);
 
           // Rescale and store in the force field of the particle (for
           // communication, see below)
