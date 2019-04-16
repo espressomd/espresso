@@ -91,25 +91,6 @@ void IBM_ForcesIntoFluid_CPU() {
   }
 }
 
-/***************
-  IBM_ResetLBForces_CPU
-Called from the integrate loop directly after the IBM particle update
-Usually the reset would be done by Espresso after the LB update. But we need to
-keep the forces till after the position update for the f/2 term
-****************/
-
-void IBM_ResetLBForces_CPU() {
-  for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-    // unit conversion: force density
-    lbfields[i].force_density[0] = lbpar.ext_force_density[0] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[i].force_density[1] = lbpar.ext_force_density[1] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[i].force_density[2] = lbpar.ext_force_density[2] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-  }
-}
-
 /*************
   IBM_UpdateParticlePositions
 This function is called from the integrate right after the LB update
