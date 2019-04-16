@@ -410,7 +410,6 @@ __device__ void reset_LB_force_densities(unsigned int index,
   }
 #endif
 
-#ifdef EXTERNAL_FORCES
   if (para->external_force_density) {
     node_f.force_density[0 * para->number_of_nodes + index] =
         para->ext_force_density[0];
@@ -423,12 +422,6 @@ __device__ void reset_LB_force_densities(unsigned int index,
     node_f.force_density[1 * para->number_of_nodes + index] = 0.0f;
     node_f.force_density[2 * para->number_of_nodes + index] = 0.0f;
   }
-#else
-  /* reset force */
-  node_f.force_density[0 * para->number_of_nodes + index] = 0.0f;
-  node_f.force_density[1 * para->number_of_nodes + index] = 0.0f;
-  node_f.force_density[2 * para->number_of_nodes + index] = 0.0f;
-#endif
 }
 
 __global__ void
