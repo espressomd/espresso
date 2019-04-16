@@ -171,9 +171,9 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
              p_tensor_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-const Vector<double, 9> dpd_stress() {
-  Vector<double, 9> dpd_stress = {{1, 1, 1, 1, 1, 1, 1, 1, 1}};
-  //mpi_collect
+const Vector9d dpd_stress() {
+  Vector9d dpd_stress = {{1, 1, 1, 1, 1, 1, 1, 1, 1}};
+
   if (max_cut > 0) {
   //  short_range_loop(
   //      [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
@@ -184,6 +184,8 @@ const Vector<double, 9> dpd_stress() {
   }
   return dpd_stress;
 }
+
+
 
 /************************************************************/
 
