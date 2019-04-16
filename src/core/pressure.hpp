@@ -67,6 +67,8 @@ int observable_compute_stress_tensor(int v_comp, double *A);
 
 void update_pressure(int v_comp);
 
+const Vector<double, 9> dpd_stress();
+
 /*@}*/
 
 #endif

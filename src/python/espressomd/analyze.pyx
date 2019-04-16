@@ -34,6 +34,8 @@ import numpy as np
 cimport numpy as np
 from globals cimport n_configs
 
+from .utils import array_locked
+
 from collections import OrderedDict
 from .system import System
 from espressomd.utils import is_valid_type
@@ -593,6 +595,14 @@ class Analysis(object):
                 p["virtual_sites"] = total_vs
 
         return p
+
+    def dpd_stress(self):
+        cdef Vector9d p
+        p = dpd_stress()
+        return array_locked((
+            p[0], p[1], p[2],
+            p[3], p[4], p[5],
+            p[6], p[7], p[8]))
 
     #
     # Energy analysis

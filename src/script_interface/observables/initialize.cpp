@@ -140,6 +140,9 @@ void initialize() {
   REGISTER_CYLPID_PROFILE_OBS(CylindricalDensityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
+#ifdef DPD
+  REGISTER(DPDStress)
+#endif
 
 #if (defined(LB) || defined(LB_GPU))
   REGISTER(LBFluidStress);

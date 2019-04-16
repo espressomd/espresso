@@ -171,6 +171,20 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
              p_tensor_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
+const Vector<double, 9> dpd_stress() {
+  Vector<double, 9> dpd_stress = {{1, 1, 1, 1, 1, 1, 1, 1, 1}};
+  //mpi_collect
+  if (max_cut > 0) {
+  //  short_range_loop(
+  //      [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
+  //      [](Particle &p1, Particle &p2, Distance &d) {
+  //        add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(),
+  //                                    sqrt(d.dist2), d.dist2);
+  //      });
+  }
+  return dpd_stress;
+}
+
 /************************************************************/
 
 void calc_long_range_virials() {

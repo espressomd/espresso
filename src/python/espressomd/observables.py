@@ -412,6 +412,13 @@ class StressTensor(Observable):
     """
     _so_name = "Observables::StressTensor"
 
+@script_interface_register
+class DPDStress(Observable):
+
+    """Calculates the non-equilibrium contribution of the DPD interaction to the stress tensor. See :ref:`DPD stress`)
+
+    """
+    _so_name = "Observables::DPDStress"
 
 @script_interface_register
 class CylindricalDensityProfile(Observable):

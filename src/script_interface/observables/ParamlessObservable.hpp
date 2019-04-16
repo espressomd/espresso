@@ -31,6 +31,7 @@
 #include "core/observables/LBFluidStress.hpp"
 #include "core/observables/Observable.hpp"
 #include "core/observables/StressTensor.hpp"
+#include "core/observables/DPDStress.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -55,6 +56,9 @@ private:
 #define NEW_PARAMLESS_OBSERVABLE(name)                                         \
   using name = ParamlessObservableInterface<::Observables::name>;
 NEW_PARAMLESS_OBSERVABLE(StressTensor)
+#ifdef DPD
+NEW_PARAMLESS_OBSERVABLE(DPDStress)
+#endif
 #if (defined(LB) || defined(LB_GPU))
 NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
 #endif
