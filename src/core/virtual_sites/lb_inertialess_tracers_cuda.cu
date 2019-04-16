@@ -534,8 +534,7 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
           para.ext_force_density[1] * force_factor;
       node_f.force_density[2 * para.number_of_nodes + index] =
           para.ext_force_density[2] * force_factor;
-    } else
-    {
+    } else {
       node_f.force_density[0 * para.number_of_nodes + index] = 0.0f;
       node_f.force_density[1 * para.number_of_nodes + index] = 0.0f;
       node_f.force_density[2 * para.number_of_nodes + index] = 0.0f;
