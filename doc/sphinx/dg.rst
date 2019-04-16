@@ -66,40 +66,6 @@ This will create a directory named "espresso" which contains the code.
 The build process does not differ from the one for release versions described in the users' guide.
 
 
-Build System
-------------
-
-The build system of |es| is based on CMake.
-
-The central source files of the build system are the following:
-
--  :file:`CMakeLists.txt`
-
--  Contents of the :file:`cmake` directory
-
--  The :file:`CMakeLists.txt` files in the :file:`src/`, :file:`doc/`, and :file:`testsuite/` directories and their sub-directories
-
-The most common reasons for editing these files are:
-
--  Adding new source files
--  Adding new external dependencies
-
-Adding New Source Files
-~~~~~~~~~~~~~~~~~~~~~~~
-
-To add new files to |es| (like C++ source files or header files) you
-need to look at the CMakeLists.txt in the directory where the file is located.
-
-* Please note that .hpp-header files usually do not have to be added to CMakeList.txt
-
-* All files are explicitly included (e.g., testsuite/python/CMakeLists.txt):: 
-
-      set(py_tests  bondedInteractions.py
-                   cellsystem.py
-                   constraint_shape_based.py
-                   coulomb_cloud_wall.py)
-
-
 Testsuite
 ---------
 
@@ -121,44 +87,6 @@ Testsuite
   in the top build directory.
 
 - See :ref:`Unit testing` for how to develop new tests
-
-.. _Programmers's Guide:
-
-
-Programmer's Guide
-==================
-
-This chapter provides some hints on how to extend |es|. It is not
-exhaustive, so for major changes the best documentation are the other
-developers.
-
-
-Source code structure
----------------------
-
-The source tree has the following structure:
-
-* src: The actual source code
-
-  * core: The C++ source code of the simulation core
-  * python/espressomd: Source of the espressomd Python module and its submodules
-  * script_interface: C++ source code of the script_interface component, which links Python classes to functionality in the simulation core
-
-* doc: Documentation
-
-  * sphinx: The sphinx-based documentation, consisting of user and developer guide.
-  * tutorials/python: Source and pdf files for the introductory tutorials
-  * doxygen_: Build directory for the C++ in-code documentation
-
-* testsuite/python: Python integration tests. Note that some C++ unit tests for individual core components are in src/core/unittests
-* samples/python: Some sample scripts
-* libs: External dependencies (at this point h5xx)
-* maintainer: Files used by the maintainers
-
-  * configs: Collection of myconfig.hpp files which activate different sets of features for testing.
-  * docker: Definitions of the docker images for various distributions used for continuous integration testing
-  * CI: Support files for the continuous integration testing run on the Travis-CI service.
-  * jenkins: Outdated support files for the Jenkins continuous integration testing
 
 .. _git: http://git-scm.com/
 
