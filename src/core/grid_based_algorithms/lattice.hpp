@@ -36,13 +36,13 @@ public:
   using index_t = int;
 
   Utils::Vector3i grid; /**< number of local lattice sites in each direction
-                  *   (excluding halo) */
+                         *   (excluding halo) */
   Utils::Vector3i global_grid;
   Utils::Vector3d agrid; /**< lattice constant */
 
   Utils::Vector3i halo_grid; /**< number of lattice sites in each direction
-                       *   (including halo) */
-  index_t halo_size;  /**< halo size in all directions */
+                              *   (including halo) */
+  index_t halo_size;         /**< halo size in all directions */
 
   Utils::Vector3d offset; /**< global offset */
   Utils::Vector3d local_offset;
@@ -89,7 +89,8 @@ public:
    */
   void map_position_to_lattice(const Utils::Vector3d &pos,
                                Utils::Vector<std::size_t, 8> &node_index,
-                               Utils::Vector6d &delta, const Utils::Vector3d &myLeft,
+                               Utils::Vector6d &delta,
+                               const Utils::Vector3d &myLeft,
                                const Utils::Vector3d &local_box) const;
 
   /** Map a global lattice site to the node grid.
@@ -102,7 +103,8 @@ public:
    *  \param local_node_grid  number of nodes in each spatial dimension
    *  \return index of the node for the lattice site
    */
-  int map_lattice_to_node(Utils::Vector3i &ind, const Utils::Vector3i &local_node_grid) const;
+  int map_lattice_to_node(Utils::Vector3i &ind,
+                          const Utils::Vector3i &local_node_grid) const;
 };
 
 #endif /* CORE_LB_LATTICE_HPP */

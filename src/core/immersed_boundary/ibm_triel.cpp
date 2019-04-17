@@ -36,7 +36,8 @@ namespace {
  *consistent with the literature
  */
 void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
-                  double f2[3], const Utils::Vector3d &v12, const Utils::Vector3d &v13) {
+                  double f2[3], const Utils::Vector3d &v12,
+                  const Utils::Vector3d &v13) {
   // fRot is in the rotated system, i.e. in a system where the side lPrime of
   // the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is
   // perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).

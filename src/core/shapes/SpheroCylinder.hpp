@@ -57,9 +57,11 @@ public:
        {0,1,0} are independent, e_z can not be parallel to both
        of them. Then we can do Gram-Schmidt */
     if ((Utils::Vector3d{1., 0., 0} * e_z) < 1.)
-      e_r_axis = Utils::Vector3d{1., 0., 0} - (e_z * Utils::Vector3d{1., 0., 0}) * e_z;
+      e_r_axis =
+          Utils::Vector3d{1., 0., 0} - (e_z * Utils::Vector3d{1., 0., 0}) * e_z;
     else
-      e_r_axis = Utils::Vector3d{0., 1., 0} - (e_z * Utils::Vector3d{0., 1., 0}) * e_z;
+      e_r_axis =
+          Utils::Vector3d{0., 1., 0} - (e_z * Utils::Vector3d{0., 1., 0}) * e_z;
 
     e_r_axis.normalize();
   }

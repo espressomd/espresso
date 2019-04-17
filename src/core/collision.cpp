@@ -249,7 +249,8 @@ void queue_collision(const int part1, const int part2) {
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
  *    Returns id of particle to bind vs to */
 const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
-                                            const Particle &p2, Utils::Vector3d &pos) {
+                                            const Particle &p2,
+                                            Utils::Vector3d &pos) {
   double vec21[3];
   double c;
   get_mi_vector(vec21, p1.r.p, p2.r.p);
@@ -276,7 +277,8 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
 
 void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
                                             const Particle *const p2,
-                                            Utils::Vector3d &pos1, Utils::Vector3d &pos2) {
+                                            Utils::Vector3d &pos1,
+                                            Utils::Vector3d &pos2) {
   double vec21[3];
   get_mi_vector(vec21, p1->r.p, p2->r.p);
   for (int i = 0; i < 3; i++) {

@@ -62,16 +62,18 @@ BOOST_AUTO_TEST_CASE(sum_of_weights) {
 }
 
 BOOST_AUTO_TEST_CASE(interpolation_weights_2) {
-  auto check_weight = [](const std::array<int, 3> &ind, const Utils::Vector3d &w) {
-    auto const expected = Utils::Vector3d{Utils::bspline_d<2>(ind[0], 0.1 - 0.5) *
-                                       Utils::bspline<2>(ind[1], 0.2 - 0.5) *
-                                       Utils::bspline<2>(ind[2], 0.3 - 0.5),
-                                   Utils::bspline<2>(ind[0], 0.1 - 0.5) *
-                                       Utils::bspline_d<2>(ind[1], 0.2 - 0.5) *
-                                       Utils::bspline<2>(ind[2], 0.3 - 0.5),
-                                   Utils::bspline<2>(ind[0], 0.1 - 0.5) *
-                                       Utils::bspline<2>(ind[1], 0.2 - 0.5) *
-                                       Utils::bspline_d<2>(ind[2], 0.3 - 0.5)};
+  auto check_weight = [](const std::array<int, 3> &ind,
+                         const Utils::Vector3d &w) {
+    auto const expected =
+        Utils::Vector3d{Utils::bspline_d<2>(ind[0], 0.1 - 0.5) *
+                            Utils::bspline<2>(ind[1], 0.2 - 0.5) *
+                            Utils::bspline<2>(ind[2], 0.3 - 0.5),
+                        Utils::bspline<2>(ind[0], 0.1 - 0.5) *
+                            Utils::bspline_d<2>(ind[1], 0.2 - 0.5) *
+                            Utils::bspline<2>(ind[2], 0.3 - 0.5),
+                        Utils::bspline<2>(ind[0], 0.1 - 0.5) *
+                            Utils::bspline<2>(ind[1], 0.2 - 0.5) *
+                            Utils::bspline_d<2>(ind[2], 0.3 - 0.5)};
 
     for (int i = 0; i < 3; i++) {
       BOOST_CHECK_CLOSE(w[i], expected[i], 1e-12);
@@ -84,7 +86,8 @@ BOOST_AUTO_TEST_CASE(interpolation_weights_2) {
 }
 
 BOOST_AUTO_TEST_CASE(interpolation_weights_3) {
-  auto check_weight = [](const std::array<int, 3> &ind, const Utils::Vector3d &w) {
+  auto check_weight = [](const std::array<int, 3> &ind,
+                         const Utils::Vector3d &w) {
     auto const expected = Utils::Vector3d{
         Utils::bspline_d<3>(ind[0], 0.1) * Utils::bspline<3>(ind[1], 0.2) *
             Utils::bspline<3>(ind[2], 0.3),
@@ -149,8 +152,8 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_vec_integration_test_odd) {
       p, [&data](const std::array<int, 3> &ind) { return data(ind); },
       grid_spacing, origin, Utils::Vector<Utils::Vector3d, 2>{});
 
-  const Utils::Vector<Utils::Vector3d, 2> exact_value = {del_gaussian(p, x0[0], sigma[0]),
-                                           del_gaussian(p, x0[1], sigma[1])};
+  const Utils::Vector<Utils::Vector3d, 2> exact_value = {
+      del_gaussian(p, x0[0], sigma[0]), del_gaussian(p, x0[1], sigma[1])};
 
   BOOST_CHECK_SMALL((interpolated_value[0] - exact_value[0]).norm(), 1.e-2);
   BOOST_CHECK_SMALL((interpolated_value[1] - exact_value[1]).norm(), 1.e-4);

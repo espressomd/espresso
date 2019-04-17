@@ -118,10 +118,12 @@ struct field_params_impl<Interpolated<T, codim>> {
                                "one in all directions.");
     }
 
-    auto const grid_spacing = get_value<Utils::Vector3d>(params, "grid_spacing");
+    auto const grid_spacing =
+        get_value<Utils::Vector3d>(params, "grid_spacing");
     auto const origin = -0.5 * grid_spacing;
 
-    using field_data_type = typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
+    using field_data_type =
+        typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
     auto array_ref = boost::const_multi_array_ref<field_data_type, 3>(
         reinterpret_cast<const field_data_type *>(field_data.data()),
         field_shape);

@@ -88,8 +88,8 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
   return {};
 }
 
-const Utils::Vector3d
-lb_lbinterpolation_get_interpolated_velocity_global(const Utils::Vector3d &pos) {
+const Utils::Vector3d lb_lbinterpolation_get_interpolated_velocity_global(
+    const Utils::Vector3d &pos) {
   auto const folded_pos = folded_position(pos);
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
@@ -126,8 +126,8 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Utils::Vector3d &pos) 
 }
 
 #ifdef LB
-void lb_lbinterpolation_add_force_density(const Utils::Vector3d &pos,
-                                          const Utils::Vector3d &force_density) {
+void lb_lbinterpolation_add_force_density(
+    const Utils::Vector3d &pos, const Utils::Vector3d &force_density) {
   switch (interpolation_order) {
   case (InterpolationOrder::quadratic):
     throw std::runtime_error("The non-linear interpolation scheme is not "

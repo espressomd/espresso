@@ -31,9 +31,10 @@ using Utils::Interpolation::detail::ll_and_dist;
 #include <limits>
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_1) {
-  auto const block = ll_and_dist<1>(/* pos */ Utils::Vector3d{.4, .5, .6},
-                                    /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
-                                    /* offset */ {});
+  auto const block =
+      ll_and_dist<1>(/* pos */ Utils::Vector3d{.4, .5, .6},
+                     /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
+                     /* offset */ {});
 
   BOOST_CHECK_CLOSE(block.distance[0], +.4, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], -.5, 1e-13);
@@ -45,9 +46,10 @@ BOOST_AUTO_TEST_CASE(ll_and_dist_test_1) {
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_2) {
-  auto const block = ll_and_dist<2>(/* pos */ Utils::Vector3d{.4, .5, .6},
-                                    /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
-                                    /* offset */ {});
+  auto const block =
+      ll_and_dist<2>(/* pos */ Utils::Vector3d{.4, .5, .6},
+                     /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
+                     /* offset */ {});
   BOOST_CHECK_CLOSE(block.distance[0], -.1, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], 0.0, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[2], +.1, 1e-13);
@@ -58,9 +60,10 @@ BOOST_AUTO_TEST_CASE(ll_and_dist_test_2) {
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_3) {
-  auto const block = ll_and_dist<3>(/* pos */ Utils::Vector3d{.4, .5, .6},
-                                    /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
-                                    /* offset */ {});
+  auto const block =
+      ll_and_dist<3>(/* pos */ Utils::Vector3d{.4, .5, .6},
+                     /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
+                     /* offset */ {});
   BOOST_CHECK_CLOSE(block.distance[0], +.4, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], -.5, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[2], -.4, 1e-13);
@@ -71,9 +74,10 @@ BOOST_AUTO_TEST_CASE(ll_and_dist_test_3) {
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_4) {
-  auto const block = ll_and_dist<4>(/* pos */ Utils::Vector3d{.4, .5, .6},
-                                    /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
-                                    /* offset */ {});
+  auto const block =
+      ll_and_dist<4>(/* pos */ Utils::Vector3d{.4, .5, .6},
+                     /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
+                     /* offset */ {});
   BOOST_CHECK_CLOSE(block.distance[0], -.1, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], 0.0, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[2], +.1, 1e-13);
@@ -84,9 +88,10 @@ BOOST_AUTO_TEST_CASE(ll_and_dist_test_4) {
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_5) {
-  auto const block = ll_and_dist<5>(/* pos */ Utils::Vector3d{.4, .5, .6},
-                                    /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
-                                    /* offset */ {});
+  auto const block =
+      ll_and_dist<5>(/* pos */ Utils::Vector3d{.4, .5, .6},
+                     /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
+                     /* offset */ {});
   BOOST_CHECK_CLOSE(block.distance[0], +.4, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], -.5, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[2], -.4, 1e-13);

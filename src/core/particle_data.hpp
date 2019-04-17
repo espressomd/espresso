@@ -364,7 +364,9 @@ struct Particle {
   ///
   ParticlePosition r;
 #ifdef DIPOLES
-  inline const Utils::Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
+  inline const Utils::Vector3d calc_dip() const {
+    return r.calc_director() * p.dipm;
+  }
 #endif
   ///
   ParticleMomentum m;

@@ -29,13 +29,15 @@ inline double gaussian(Utils::Vector3d x, Utils::Vector3d x0, double sigma) {
   return std::exp(-((x - x0).norm2() / (2. * sigma * sigma)));
 }
 
-inline Utils::Vector3d del_gaussian(Utils::Vector3d x, Utils::Vector3d x0, double sigma) {
+inline Utils::Vector3d del_gaussian(Utils::Vector3d x, Utils::Vector3d x0,
+                                    double sigma) {
   return -(x - x0) * gaussian(x, x0, sigma) / (sigma * sigma);
 }
 
 inline boost::multi_array<double, 3> gaussian_field(int size, Utils::Vector3d h,
                                                     Utils::Vector3d origin,
-                                                    Utils::Vector3d x0, double sigma) {
+                                                    Utils::Vector3d x0,
+                                                    double sigma) {
   boost::multi_array<double, 3> data(Utils::Vector3i{10, 10, 10});
   for (int i = 0; i < 10; i++)
     for (int j = 0; j < 10; j++)

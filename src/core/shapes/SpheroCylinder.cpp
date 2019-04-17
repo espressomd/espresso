@@ -81,7 +81,8 @@ void SpheroCylinder::calculate_dist(const Utils::Vector3d &pos, double *dist,
       double dir = 1;
       if (z < 0)
         dir = -1;
-      Utils::Vector3d c_dist_cap = -(pos - (m_center + dir * e_z * m_half_length));
+      Utils::Vector3d c_dist_cap =
+          -(pos - (m_center + dir * e_z * m_half_length));
       *dist = m_rad - c_dist_cap.norm();
       c_dist_cap.normalize();
       Utils::Vector3d v = *dist * c_dist_cap;

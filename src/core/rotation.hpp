@@ -52,10 +52,13 @@ void convert_torques_propagate_omega();
     the integration loop */
 void convert_initial_torques();
 
-Utils::Vector3d convert_vector_body_to_space(const Particle &p, const Utils::Vector3d &v);
-Utils::Vector3d convert_vector_space_to_body(const Particle &p, const Utils::Vector3d &v);
+Utils::Vector3d convert_vector_body_to_space(const Particle &p,
+                                             const Utils::Vector3d &v);
+Utils::Vector3d convert_vector_space_to_body(const Particle &p,
+                                             const Utils::Vector3d &v);
 
-inline void convert_quat_to_director(const Utils::Vector4d &quat, Utils::Vector3d &director) {
+inline void convert_quat_to_director(const Utils::Vector4d &quat,
+                                     Utils::Vector3d &director) {
   /* director */
   director[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
   director[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);
@@ -79,7 +82,8 @@ int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat);
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
-inline std::pair<Utils::Vector4d, double> convert_dip_to_quat(const Utils::Vector3d &dip) {
+inline std::pair<Utils::Vector4d, double>
+convert_dip_to_quat(const Utils::Vector3d &dip) {
   Utils::Vector4d quat;
   convert_director_to_quat(dip, quat);
 

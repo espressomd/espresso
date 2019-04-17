@@ -89,7 +89,8 @@ REGISTER_CALLBACK(mpi_send_fluid_populations_slave)
  *  @param index  index of the lattice site
  *  @param pop    local fluid population
  */
-void mpi_send_fluid_populations(int node, int index, const Utils::Vector19d &pop) {
+void mpi_send_fluid_populations(int node, int index,
+                                const Utils::Vector19d &pop) {
   if (node == this_node) {
     lb_set_populations(index, pop);
   } else {
@@ -1151,7 +1152,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
 }
 
 bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind) {
-  auto within_bounds = [](const Utils::Vector3i &ind, const Utils::Vector3i &limits) {
+  auto within_bounds = [](const Utils::Vector3i &ind,
+                          const Utils::Vector3i &limits) {
     return ind < limits && ind >= Utils::Vector3i{};
   };
   if (lattice_switch == ActiveLB::GPU) {
@@ -1437,7 +1439,8 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
   }
 }
 
-void lb_lbnode_set_velocity(const Utils::Vector3i &ind, const Utils::Vector3d &u) {
+void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
+                            const Utils::Vector3d &u) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float host_velocity[3];
@@ -1471,7 +1474,8 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind, const Utils::Vector3d &u
   }
 }
 
-void lb_lbnode_set_pop(const Utils::Vector3i &ind, const Utils::Vector19d &p_pop) {
+void lb_lbnode_set_pop(const Utils::Vector3i &ind,
+                       const Utils::Vector19d &p_pop) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float population[19];

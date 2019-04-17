@@ -858,8 +858,8 @@ void set_particle_swimming(int part, ParticleParametersSwimming swim) {
 #endif
 
 void set_particle_f(int part, const Utils::Vector3d &F) {
-  mpi_update_particle<ParticleForce, &Particle::f, Utils::Vector3d, &ParticleForce::f>(
-      part, F);
+  mpi_update_particle<ParticleForce, &Particle::f, Utils::Vector3d,
+                      &ParticleForce::f>(part, F);
 }
 
 #if defined(MASS)
@@ -898,7 +898,8 @@ void set_particle_affinity(int part, double *bond_site) {
 
 #ifdef MEMBRANE_COLLISION
 void set_particle_out_direction(int part, double *out_direction) {
-  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::out_direction>(
+  mpi_update_particle_property<Utils::Vector3d,
+                               &ParticleProperties::out_direction>(
       part, Utils::Vector3d(out_direction, out_direction + 3));
 }
 #endif
@@ -1000,7 +1001,8 @@ void set_particle_mol_id(int part, int mid) {
 #ifdef ROTATION
 void set_particle_quat(int part, double *quat) {
   mpi_update_particle<ParticlePosition, &Particle::r, Utils::Vector4d,
-                      &ParticlePosition::quat>(part, Utils::Vector4d(quat, quat + 4));
+                      &ParticlePosition::quat>(part,
+                                               Utils::Vector4d(quat, quat + 4));
 }
 
 void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab) {
@@ -1036,8 +1038,8 @@ void set_particle_gamma(int part, double gamma) {
 }
 #else
 void set_particle_gamma(int part, Utils::Vector3d gamma) {
-  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::gamma>(part,
-                                                                     gamma);
+  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::gamma>(
+      part, gamma);
 }
 #endif // PARTICLE_ANISOTROPY
 
@@ -1061,8 +1063,8 @@ void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
 void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
   auto const flag = (!torque.empty()) ? PARTICLE_EXT_TORQUE : 0;
   if (flag) {
-    mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::ext_torque>(
-        part, torque);
+    mpi_update_particle_property<Utils::Vector3d,
+                                 &ParticleProperties::ext_torque>(part, torque);
   }
   mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
                                     PARTICLE_EXT_TORQUE, flag}));
@@ -1072,8 +1074,8 @@ void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
 void set_particle_ext_force(int part, const Utils::Vector3d &force) {
   auto const flag = (!force.empty()) ? PARTICLE_EXT_FORCE : 0;
   if (flag) {
-    mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::ext_force>(
-        part, force);
+    mpi_update_particle_property<Utils::Vector3d,
+                                 &ParticleProperties::ext_force>(part, force);
   }
   mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
                                     PARTICLE_EXT_FORCE, flag}));

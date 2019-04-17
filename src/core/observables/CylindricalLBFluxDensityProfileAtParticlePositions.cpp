@@ -40,9 +40,10 @@ operator()(PartCfg &partCfg) const {
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
   std::vector<Utils::Vector3d> folded_positions(ids().size());
-  boost::transform(
-      ids(), folded_positions.begin(),
-      [&partCfg](int id) -> Utils::Vector3d { return folded_position(partCfg[id]); });
+  boost::transform(ids(), folded_positions.begin(),
+                   [&partCfg](int id) -> Utils::Vector3d {
+                     return folded_position(partCfg[id]);
+                   });
 
   std::vector<Utils::Vector3d> velocities(folded_positions.size());
 #if defined(LB) || defined(LB_GPU)

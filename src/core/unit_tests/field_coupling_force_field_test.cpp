@@ -102,7 +102,9 @@ BOOST_AUTO_TEST_CASE(FieldBase_test) {
 }
 
 struct DummyVectorField {
-  Utils::Vector3d operator()(const Utils::Vector3d &x, double t) const { return t * x; }
+  Utils::Vector3d operator()(const Utils::Vector3d &x, double t) const {
+    return t * x;
+  }
 };
 
 BOOST_AUTO_TEST_CASE(ForceField_test) {
@@ -116,8 +118,12 @@ BOOST_AUTO_TEST_CASE(ForceField_test) {
 }
 
 struct DummyScalarField {
-  double operator()(const Utils::Vector3d &x, double t) const { return t * x.norm(); }
-  Utils::Vector3d jacobian(const Utils::Vector3d &x, double = {}) const { return 3. * x; }
+  double operator()(const Utils::Vector3d &x, double t) const {
+    return t * x.norm();
+  }
+  Utils::Vector3d jacobian(const Utils::Vector3d &x, double = {}) const {
+    return 3. * x;
+  }
 };
 
 BOOST_AUTO_TEST_CASE(PotentialField_test) {

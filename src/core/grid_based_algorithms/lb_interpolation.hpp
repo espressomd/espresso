@@ -21,7 +21,8 @@ InterpolationOrder lb_lbinterpolation_get_interpolation_order();
  * lattice.
  * @note It can lead to undefined behaviour if the
  * position is not within the local lattice. */
-const Utils::Vector3d lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &p);
+const Utils::Vector3d
+lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &p);
 
 /**
  * @brief Calculates the interpolated fluid velocity on the master process.

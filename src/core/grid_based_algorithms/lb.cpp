@@ -676,7 +676,8 @@ void lb_prepare_communication() {
 /***********************************************************************/
 /*@{*/
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             Utils::Vector3d const &j, Utils::Vector6d const &pi) {
+                             Utils::Vector3d const &j,
+                             Utils::Vector6d const &pi) {
   double local_rho, local_j[3], local_pi[6], trace;
   local_rho = rho;
 

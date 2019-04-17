@@ -44,8 +44,8 @@
 #ifdef DIPOLES
 
 // Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1, Particle *p2,
-                             int force_flag) {
+double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
+                             Particle *p2, int force_flag) {
   double u, r, pe1, pe2, pe3, pe4, r3, r5, r2, r7, a, b, cc, d, ab;
 #ifdef ROTATION
   double bx, by, bz, ax, ay, az;

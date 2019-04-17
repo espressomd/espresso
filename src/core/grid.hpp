@@ -199,7 +199,8 @@ Utils::Vector3d get_mi_vector(T const &a, U const &b) {
     i. e. a previously folded position will be folded correctly.
 */
 template <size_t N, typename T1, typename T2>
-void fold_coordinate(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box, int dir) {
+void fold_coordinate(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box,
+                     int dir) {
   if (PERIODIC(dir)) {
     std::tie(pos[dir], image_box[dir]) =
         Algorithm::periodic_fold(pos[dir], image_box[dir], box_l[dir]);

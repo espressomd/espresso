@@ -121,7 +121,8 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double density);
 /**
  * @brief Set the LB fluid velocity for a single node.
  */
-void lb_lbnode_set_velocity(const Utils::Vector3i &ind, const Utils::Vector3d &u);
+void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
+                            const Utils::Vector3d &u);
 
 /**
  * @brief Set the LB fluid populations for a single node.

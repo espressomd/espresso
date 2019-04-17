@@ -35,7 +35,8 @@ class LBBoundary {
 public:
   LBBoundary()
       : m_shape(std::make_shared<Shapes::NoWhere>()),
-        m_velocity(Utils::Vector3d{0, 0, 0}), m_force(Utils::Vector3d{0, 0, 0}) {
+        m_velocity(Utils::Vector3d{0, 0, 0}),
+        m_force(Utils::Vector3d{0, 0, 0}) {
 #ifdef EK_BOUNDARIES
     m_charge_density = 0.0;
     m_net_charge = 0.0;

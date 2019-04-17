@@ -39,7 +39,8 @@ BOOST_AUTO_TEST_CASE(jacobian_type_test) {
   using std::is_same;
 
   static_assert(is_same<jacobian_type<double, 1>, Utils::Vector3d>::value, "");
-  static_assert(is_same<jacobian_type<double, 2>, Utils::Vector<Utils::Vector3d, 2>>::value,
+  static_assert(is_same<jacobian_type<double, 2>,
+                        Utils::Vector<Utils::Vector3d, 2>>::value,
                 "");
 }
 
@@ -49,7 +50,8 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
   /* Types */
   {
     static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(std::is_same<Field::jacobian_type, Utils::Vector3d>::value, "");
+    static_assert(std::is_same<Field::jacobian_type, Utils::Vector3d>::value,
+                  "");
   }
 
   /* ctor */
@@ -81,7 +83,8 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
   {
     Field field(5.);
 
-    BOOST_CHECK((Utils::Vector3d{0.0, 0.0, 0.0} == field.jacobian({1., 2., 3.})));
+    BOOST_CHECK(
+        (Utils::Vector3d{0.0, 0.0, 0.0} == field.jacobian({1., 2., 3.})));
   }
 }
 
@@ -91,8 +94,9 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
   /* Types */
   {
     static_assert(std::is_same<Field::value_type, Utils::Vector2d>::value, "");
-    static_assert(
-        std::is_same<Field::jacobian_type, Utils::Vector<Utils::Vector3d, 2>>::value, "");
+    static_assert(std::is_same<Field::jacobian_type,
+                               Utils::Vector<Utils::Vector3d, 2>>::value,
+                  "");
   }
 
   /* ctor */
@@ -137,9 +141,9 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
   /* Types */
   {
     static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(
-        std::is_same<Field::jacobian_type, Utils::Vector<Field::value_type, 3>>::value,
-        "");
+    static_assert(std::is_same<Field::jacobian_type,
+                               Utils::Vector<Field::value_type, 3>>::value,
+                  "");
   }
 
   /* ctor */
@@ -231,7 +235,8 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   /* Types */
   {
     static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(std::is_same<Field::jacobian_type, Utils::Vector3d>::value, "");
+    static_assert(std::is_same<Field::jacobian_type, Utils::Vector3d>::value,
+                  "");
   }
 
   /* Ctor */
@@ -310,8 +315,9 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
   /* Types */
   {
     static_assert(std::is_same<Field::value_type, Utils::Vector2d>::value, "");
-    static_assert(
-        std::is_same<Field::jacobian_type, Utils::Vector<Utils::Vector3d, 2>>::value, "");
+    static_assert(std::is_same<Field::jacobian_type,
+                               Utils::Vector<Utils::Vector3d, 2>>::value,
+                  "");
   }
 
   /* field value */
@@ -326,7 +332,8 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
     Utils::Vector3d x0[2] = {0.12 * a, -3. * a};
     auto const sigma = Utils::Vector2d{2., 3.};
 
-    boost::multi_array<Utils::Vector2d, 3> data(Utils::Vector3i{n_nodes, n_nodes, n_nodes});
+    boost::multi_array<Utils::Vector2d, 3> data(
+        Utils::Vector3i{n_nodes, n_nodes, n_nodes});
     for (int i = 0; i < n_nodes; i++)
       for (int j = 0; j < n_nodes; j++)
         for (int k = 0; k < n_nodes; k++) {
@@ -362,7 +369,8 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
     Utils::Vector3d x0[2] = {0.12 * a, -3. * a};
     auto const sigma = Utils::Vector2d{2., 3.};
 
-    boost::multi_array<Utils::Vector2d, 3> data(Utils::Vector3i{n_nodes, n_nodes, n_nodes});
+    boost::multi_array<Utils::Vector2d, 3> data(
+        Utils::Vector3i{n_nodes, n_nodes, n_nodes});
     for (int i = 0; i < n_nodes; i++)
       for (int j = 0; j < n_nodes; j++)
         for (int k = 0; k < n_nodes; k++) {

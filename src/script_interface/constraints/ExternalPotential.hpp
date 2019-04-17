@@ -55,7 +55,8 @@ public:
                                    get_value_or<double>(args, "t", 0.));
     }
     if (name == "_eval_jacobian") {
-      return m_constraint->field().jacobian(get_value<Utils::Vector3d>(args, "x"));
+      return m_constraint->field().jacobian(
+          get_value<Utils::Vector3d>(args, "x"));
     }
 
     return none;

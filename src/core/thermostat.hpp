@@ -176,7 +176,8 @@ inline Utils::Vector3d v_noise(int particle_id) {
   auto const noise = rng_type{}(c, k);
 
   using Utils::uniform;
-  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
+  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
+                         uniform(noise[2])} -
          Utils::Vector3d::broadcast(0.5);
 }
 

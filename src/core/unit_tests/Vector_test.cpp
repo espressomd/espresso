@@ -65,8 +65,9 @@ BOOST_AUTO_TEST_CASE(iterator_constructor) {
                                 std::end(test_numbers));
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
 
-  BOOST_CHECK_THROW(Utils::Vector2d(std::begin(test_numbers), std::end(test_numbers)),
-                    std::length_error);
+  BOOST_CHECK_THROW(
+      Utils::Vector2d(std::begin(test_numbers), std::end(test_numbers)),
+      std::length_error);
 }
 
 BOOST_AUTO_TEST_CASE(const_iterator_constructor) {
@@ -178,8 +179,8 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
     BOOST_CHECK(v2 == (v1 /= 2));
   }
 
-  BOOST_CHECK(
-      (sqrt(Utils::Vector3d{1., 2., 3.}) == Utils::Vector3d{sqrt(1.), sqrt(2.), sqrt(3.)}));
+  BOOST_CHECK((sqrt(Utils::Vector3d{1., 2., 3.}) ==
+               Utils::Vector3d{sqrt(1.), sqrt(2.), sqrt(3.)}));
 }
 
 BOOST_AUTO_TEST_CASE(broadcast) {
@@ -228,9 +229,11 @@ BOOST_AUTO_TEST_CASE(vector_broadcast) {
 }
 
 BOOST_AUTO_TEST_CASE(scalar_product) {
-  static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3d{}), double>::value,
+  static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3d{}),
+                             double>::value,
                 "");
-  static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3i{}), double>::value,
+  static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3i{}),
+                             double>::value,
                 "");
   static_assert(std::is_same<decltype(Vector<std::complex<float>, 2>{} * 3.f),
                              Vector<std::complex<float>, 2>>::value,

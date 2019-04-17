@@ -27,9 +27,8 @@ namespace Utils {
 /** \brief Transform the given 3D position to cylinder coordinates with
  * longitudinal axis aligned with axis parameter.
  */
-inline Vector3d
-transform_pos_to_cylinder_coordinates(const Vector3d &pos,
-                                      const std::string &axis) {
+inline Vector3d transform_pos_to_cylinder_coordinates(const Vector3d &pos,
+                                                      const std::string &axis) {
   static const Vector3d x_axis{1.0, 0.0, 0.0};
   static const Vector3d y_axis{0.0, 1.0, 0.0};
   Vector3d rotated_pos = pos;
@@ -48,8 +47,8 @@ transform_pos_to_cylinder_coordinates(const Vector3d &pos,
  * longitudinal axis aligned with axis parameter.
  */
 inline Vector3d transform_vel_to_cylinder_coordinates(const Vector3d &vel,
-                                                        const std::string &axis,
-                                                        const Vector3d &pos) {
+                                                      const std::string &axis,
+                                                      const Vector3d &pos) {
   double v_r, v_phi, v_z;
   static const Vector3d x_axis{1.0, 0.0, 0.0};
   static const Vector3d y_axis{0.0, 1.0, 0.0};

@@ -80,7 +80,9 @@ template <typename T, typename = void> struct get_value_helper {
 
 template <class T, size_t N>
 struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
-  Utils::Vector<T, N> operator()(Utils::Vector<T, N> const &v) const { return v; }
+  Utils::Vector<T, N> operator()(Utils::Vector<T, N> const &v) const {
+    return v;
+  }
 
   /* We try do unpack variant vectors and check if they
    * are convertible element by element. */

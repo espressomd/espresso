@@ -107,12 +107,10 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
  *  @param[out] f_left    Force on @p p_left.
  *  @param[out] f_right   Force on @p p_right.
  */
-inline void calc_three_body_bonded_forces(Particle const *p_mid,
-                                          Particle const *p_left,
-                                          Particle const *p_right,
-                                          Bonded_ia_parameters const *iaparams,
-                                          Utils::Vector3d &f_mid, Utils::Vector3d &f_left,
-                                          Utils::Vector3d &f_right) {
+inline void calc_three_body_bonded_forces(
+    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
+    Bonded_ia_parameters const *iaparams, Utils::Vector3d &f_mid,
+    Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
   switch (iaparams->type) {
   case BONDED_IA_ANGLE_HARMONIC:
     std::tie(f_mid, f_left, f_right) =

@@ -29,7 +29,8 @@ namespace Fields {
  */
 template <typename T, size_t codim> class Constant {
 public:
-  using value_type = typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
+  using value_type =
+      typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
   using jacobian_type = detail::jacobian_type<T, codim>;
 
 private:
@@ -40,7 +41,9 @@ public:
 
   value_type &value() { return m_value; }
 
-  value_type operator()(const Utils::Vector3d &, double = {}) const { return m_value; }
+  value_type operator()(const Utils::Vector3d &, double = {}) const {
+    return m_value;
+  }
   static constexpr jacobian_type jacobian(const Utils::Vector3d &) {
     return jacobian_type{};
   }

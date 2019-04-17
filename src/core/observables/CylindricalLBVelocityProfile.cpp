@@ -41,8 +41,8 @@ operator()(PartCfg &partCfg) const {
 #if defined(LB) || defined(LB_GPU)
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
     Utils::Vector3d pos_tmp = {m_sample_positions[ind + 0],
-                        m_sample_positions[ind + 1],
-                        m_sample_positions[ind + 2]};
+                               m_sample_positions[ind + 1],
+                               m_sample_positions[ind + 2]};
     const Utils::Vector3d v =
         lb_lbinterpolation_get_interpolated_velocity_global(pos_tmp) *
         lb_lbfluid_get_lattice_speed();
@@ -50,9 +50,10 @@ operator()(PartCfg &partCfg) const {
   }
 #endif
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
-    const Utils::Vector3d pos_shifted = {{m_sample_positions[ind + 0] - center[0],
-                                   m_sample_positions[ind + 1] - center[1],
-                                   m_sample_positions[ind + 2] - center[2]}};
+    const Utils::Vector3d pos_shifted = {
+        {m_sample_positions[ind + 0] - center[0],
+         m_sample_positions[ind + 1] - center[1],
+         m_sample_positions[ind + 2] - center[2]}};
     const Utils::Vector3d pos_cyl =
         Utils::transform_pos_to_cylinder_coordinates(pos_shifted, axis);
     const Utils::Vector3d velocity = {

@@ -101,7 +101,8 @@ void predict_momentum_particles(double *result) {
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-Utils::Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
+Utils::Vector3d calc_linear_momentum(int include_particles,
+                                     int include_lbfluid) {
   Utils::Vector3d linear_momentum{};
   if (include_particles) {
     Utils::Vector3d momentum_particles{};

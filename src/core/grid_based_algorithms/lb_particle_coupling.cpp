@@ -111,7 +111,8 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
  * @return The viscous coupling force plus f_random.
  */
 #ifdef LB
-Utils::Vector3d lb_viscous_coupling(Particle *p, Utils::Vector3d const &f_random) {
+Utils::Vector3d lb_viscous_coupling(Particle *p,
+                                    Utils::Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
@@ -233,7 +234,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 
             using Utils::uniform;
             return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
-                            uniform(noise[2])} -
+                                   uniform(noise[2])} -
                    Utils::Vector3d::broadcast(0.5);
           }
           return Utils::Vector3d{};

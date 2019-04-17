@@ -48,8 +48,8 @@ public:
    * @param[in] t The time at which the force should be calculated.
    * @return The force on the particle.
    */
-  virtual ParticleForce force(const Particle &p, const Utils::Vector3d &folded_pos,
-                              double t) = 0;
+  virtual ParticleForce force(const Particle &p,
+                              const Utils::Vector3d &folded_pos, double t) = 0;
 
   /**
    * @brief Check if constraints if compatible with box size.

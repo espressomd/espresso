@@ -377,7 +377,8 @@ void convert_initial_torques() {
 }
 // Frame conversion routines
 
-Utils::Vector3d convert_vector_body_to_space(const Particle &p, const Utils::Vector3d &vec) {
+Utils::Vector3d convert_vector_body_to_space(const Particle &p,
+                                             const Utils::Vector3d &vec) {
   Utils::Vector3d res = {0, 0, 0};
   double A[9];
   define_rotation_matrix(p, A);
@@ -392,7 +393,8 @@ Utils::Vector3d convert_vector_body_to_space(const Particle &p, const Utils::Vec
   return res;
 }
 
-Utils::Vector3d convert_vector_space_to_body(const Particle &p, const Utils::Vector3d &v) {
+Utils::Vector3d convert_vector_space_to_body(const Particle &p,
+                                             const Utils::Vector3d &v) {
   Utils::Vector3d res = {0, 0, 0};
   double A[9];
   define_rotation_matrix(p, A);

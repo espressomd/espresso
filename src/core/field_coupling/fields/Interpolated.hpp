@@ -58,7 +58,8 @@ void deep_copy(boost::multi_array<T, 3> &dst,
  */
 template <typename T, size_t codim> class Interpolated {
 public:
-  using value_type = typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
+  using value_type =
+      typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
   using jacobian_type = detail::jacobian_type<T, codim>;
   using storage_type = boost::multi_array<value_type, 3>;
 
@@ -69,7 +70,8 @@ private:
 
 public:
   Interpolated(const boost::const_multi_array_ref<value_type, 3> &global_field,
-               const Utils::Vector3d &grid_spacing, const Utils::Vector3d &origin)
+               const Utils::Vector3d &grid_spacing,
+               const Utils::Vector3d &origin)
       : m_global_field(global_field), m_grid_spacing(grid_spacing),
         m_origin(origin) {}
 
@@ -119,8 +121,8 @@ public:
 
   bool fits_in_box(const Utils::Vector3d &box) const {
     const Utils::Vector3d grid_size = {m_grid_spacing[0] * shape()[0],
-                                m_grid_spacing[1] * shape()[1],
-                                m_grid_spacing[2] * shape()[2]};
+                                       m_grid_spacing[1] * shape()[1],
+                                       m_grid_spacing[2] * shape()[2]};
     return (m_origin < Utils::Vector3d::broadcast(0.)) &&
            ((m_origin + grid_size) >= box);
   }

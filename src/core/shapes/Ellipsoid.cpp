@@ -72,7 +72,8 @@ bool Ellipsoid::inside_ellipsoid(const Utils::Vector3d &ppos) const {
   return is_inside;
 }
 
-double Ellipsoid::newton_term(const Utils::Vector3d &ppos, const double &l) const {
+double Ellipsoid::newton_term(const Utils::Vector3d &ppos,
+                              const double &l) const {
   Utils::Vector3d axpos, lax, lax2;
   for (int i = 0; i < 3; i++) {
     axpos[i] = Utils::sqr(m_semiaxes[i]) * Utils::sqr(ppos[i]);

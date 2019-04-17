@@ -35,7 +35,8 @@ public:
 private:
   TypeIndex m_type_index;
 
-  std::vector<Utils::Vector3d> local_type_forces(ParticleRange &particles) const {
+  std::vector<Utils::Vector3d>
+  local_type_forces(ParticleRange &particles) const {
     std::vector<Utils::Vector3d> ret(m_type_index.size(), Utils::Vector3d{});
 
     for (auto const &p : particles) {
