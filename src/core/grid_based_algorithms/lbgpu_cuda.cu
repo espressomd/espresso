@@ -2162,6 +2162,15 @@ __global__ void init_boundaries(int *boundary_node_list,
 
     n_a.boundary[node_index] = boundary_index;
     n_b.boundary[node_index] = boundary_index;
+
+    Utils::Array<float, 3> v = {
+      boundary_velocities[3* (boundary_index - 1) + 0],
+      boundary_velocities[3* (boundary_index - 1) + 1],
+      boundary_velocities[3* (boundary_index - 1) + 2]
+    };
+
+    n_a.boundary_velocity[index] = v;
+    n_b.boundary_velocity[index] = v;
   }
 }
 
