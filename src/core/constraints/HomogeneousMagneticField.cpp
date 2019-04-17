@@ -25,9 +25,9 @@ ParticleForce HomogeneousMagneticField::force(const Particle &p,
                                               const Utils::Vector3d &folded_pos,
                                               double t) {
 #if defined(ROTATION) && defined(DIPOLES)
-  return {Utils::Vector3d{}, vector_product(p.calc_dip(), m_field)};
+  return {{}, vector_product(p.calc_dip(), m_field)};
 #else
-  return {Vector3d{}};
+  return {};
 #endif
 }
 
