@@ -25,7 +25,7 @@ from espressomd import drude_helpers
 
 class Drude(ut.TestCase):
 
-    @ut.skipIf(not espressomd.has_features("P3M", "THOLE", "LANGEVIN_PER_PARTICLE"), "Test needs P3M, THOLE and LANGEVIN_PER_PARTICLE")
+    @ut.skipIf(not espressomd.has_features("P3M", "ELECTROSTATICS", "THOLE", "LANGEVIN_PER_PARTICLE", "MASS"), "Test needs P3M, ELECTROSTATICS, THOLE and LANGEVIN_PER_PARTICLE")
     def test(self):
         """
         Sets up a BMIM PF6 pair separated in y-direction with fixed cores.

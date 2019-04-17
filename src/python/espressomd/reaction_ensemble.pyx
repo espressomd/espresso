@@ -38,7 +38,7 @@ cdef class ReactionAlgorithm(object):
                        the partition function, therefore they can be neglected.
     """
     cdef object _params
-    cdef unique_ptr[CReactionAlgorithm] RE
+    cdef CReactionAlgorithm* RE
 
     def _valid_keys(self):
         return "temperature", "exclusion_radius", "seed"
@@ -350,7 +350,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
             self._params[k] = kwargs[k]
 
         self.REptr = make_unique[CReactionEnsemble]( < int > int(self._params["seed"]))        
-        self.RE = <unique_ptr[CReactionAlgorithm] > self.REptr.get()
+        self.RE = <CReactionAlgorithm* > self.REptr.get()
         
         for k in kwargs:
             if k in self._valid_keys():
@@ -374,7 +374,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
 
 
         self.constpHptr = make_unique[CConstantpHEnsemble]( < int > int(self._params["seed"]))
-        self.RE = <unique_ptr[CReactionAlgorithm] > self.constpHptr.get()
+        self.RE = <CReactionAlgorithm * > self.constpHptr.get()
 
         for k in kwargs:
             if k in self._valid_keys():
@@ -429,7 +429,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
                 raise KeyError("%s is not a vaild key" % k)
 
         self.WLRptr = make_unique[CWangLandauReactionEnsemble]( < int > int(self._params["seed"]))
-        self.RE = <unique_ptr[CReactionAlgorithm] > self.WLRptr.get()
+        self.RE = <CReactionAlgorithm *> self.WLRptr.get()
 
         self._set_params_in_es_core()
 
@@ -680,7 +680,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
         self._params["gamma"]=1.0 #this is not used by the widom insertion method
 
         self.WidomInsertionPtr = make_unique[CWidomInsertion]( < int > int(self._params["seed"]))
-        self.RE = <unique_ptr[CReactionAlgorithm] > self.WidomInsertionPtr.get()
+        self.RE = <CReactionAlgorithm *> self.WidomInsertionPtr.get()
         for k in kwargs:
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
