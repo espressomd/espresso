@@ -20,12 +20,12 @@ This sample illustrates how bond information can be stored.
 
 from __future__ import print_function
 import espressomd
-from espressomd.interactions import *
+from espressomd import interactions
 
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-f = FeneBond(k=1, d_r_max=1)
-f2 = FeneBond(k=2, d_r_max=1.5)
-h = HarmonicBond(r_0=0, k=1)
+f = interactions.FeneBond(k=1, d_r_max=1)
+f2 = interactions.FeneBond(k=2, d_r_max=1.5)
+h = interactions.HarmonicBond(r_0=0, k=1)
 
 # Pickle data
 ###########################################################
@@ -38,7 +38,7 @@ system.bonded_inter.add(f)
 system.bonded_inter.add(f2)
 system.bonded_inter.add(h)
 
-output_filename = "bonded_inter_save"
+output_filename = "bonded_inter_save.pkl"
 
 with open(output_filename, "wb") as bonded_ia_save:
     pickle.dump(system.bonded_inter, bonded_ia_save, -1)

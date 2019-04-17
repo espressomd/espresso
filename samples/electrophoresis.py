@@ -1,7 +1,3 @@
-"""
-This sample simulates electrophoresis using P3M solver.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -20,6 +16,9 @@ This sample simulates electrophoresis using P3M solver.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample simulates electrophoresis using P3M solver.
+"""
 from __future__ import print_function
 import espressomd
 
@@ -69,7 +68,7 @@ system.non_bonded_inter[0, 1].lennard_jones.set_params(
     epsilon=1, sigma=1,
     cutoff=2**(1. / 6), shift="auto")
 
-# WCA coions - polymer
+# WCA ions - polymer
 system.non_bonded_inter[0, 2].lennard_jones.set_params(
     epsilon=1, sigma=1,
     cutoff=2**(1. / 6), shift="auto")
@@ -94,8 +93,11 @@ system.bonded_inter.add(harmonicangle)
 #########################################################################################
 n_monomers = 20
 
-init_polymer_pos = np.dstack((np.arange(n_monomers), np.zeros(n_monomers), np.zeros(n_monomers)))[
-    0] + np.array([system.box_l[0] / 2 - n_monomers / 2, system.box_l[1] / 2, system.box_l[2] / 2])
+init_polymer_pos = np.dstack(
+    (np.arange(n_monomers), np.zeros(n_monomers), np.zeros(n_monomers)))[0] + \
+    np.array([system.box_l[0] / 2 - n_monomers / 2,
+              system.box_l[1] / 2,
+              system.box_l[2] / 2])
 
 system.part.add(pos=init_polymer_pos)
 
@@ -124,8 +126,8 @@ system.part.add(pos=np.random.random((n_monomers, 3)) * system.box_l,
 n_ions = 100
 
 system.part.add(pos=np.random.random((n_ions, 3)) * system.box_l,
-                q=np.hstack((np.ones(n_ions / 2), -np.ones(n_ions / 2))),
-                type=np.array(np.hstack((np.ones(n_ions / 2), 2 * np.ones(n_ions / 2))), dtype=int))
+                q=np.hstack((np.ones(n_ions // 2), -np.ones(n_ions // 2))),
+                type=np.array(np.hstack((np.ones(n_ions // 2), 2 * np.ones(n_ions // 2))), dtype=int))
 
 
 # Sign charges to particles after the particle creation:
@@ -144,8 +146,9 @@ print("Q_tot:", np.sum(system.part[:].q))
 system.force_cap = 10
 
 for i in range(1000):
-    sys.stdout.write("\rWarmup: %03i" % i)
-    sys.stdout.flush()
+    if i % 100 == 0:
+        sys.stdout.write("\rWarmup: %03i" % i)
+        sys.stdout.flush()
     system.integrator.run(steps=1)
     system.force_cap = 10*i
 
@@ -157,13 +160,14 @@ print("\nWarmup finished!\n")
 #      Sampling                                             #
 #############################################################
 #
-# Activate electostatic with checkpoint example
+# Activate electrostatic with checkpoint example
 #############################################################
 read_checkpoint = False
 # Load checkpointed p3m class
-if os.path.isfile("p3m_checkpoint") and read_checkpoint is True:
+if os.path.isfile("p3m_checkpoint.pkl") and read_checkpoint is True:
     print("reading p3m from file")
-    p3m = pickle.load(open("p3m_checkpoint", "rb"))
+    with open("p3m_checkpoint.pkl", "rb") as fp:
+        p3m = pickle.load(fp)
 else:
     p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
     print("Tuning P3M")
@@ -171,7 +175,8 @@ else:
 system.actors.add(p3m)
 
 # Checkpoint AFTER tuning (adding method to actors)
-pickle.dump(p3m, open("p3m_checkpoint", "wb"), -1)
+with open("p3m_checkpoint.pkl", "wb") as fp:
+    pickle.dump(p3m, fp, -1)
 
 print("P3M parameter:\n")
 p3m_params = p3m.get_params()
@@ -200,13 +205,12 @@ pos_list = []
 
 # Sampling Loop
 for i in range(4000):
-    sys.stdout.write("\rSampling: %04i" % i)
-    sys.stdout.flush()
+    if i % 100 == 0:
+        sys.stdout.write("\rSampling: %04i" % i)
+        sys.stdout.flush()
     system.integrator.run(steps=1)
-
     v_list.append(system.part[:n_monomers].v)
     pos_list.append(system.part[:n_monomers].pos)
-    # other observales:
 
 print("\nSampling finished!\n")
 
@@ -231,7 +235,7 @@ print("MOBILITY", mu)
 ##################################
 # this calculation method requires
 # numpy 1.10 or higher
-if float(np.version.version.split(".")[1]) >= 10:
+if tuple(map(int, np.__version__.split("."))) >= (1, 10):
     from scipy.optimize import curve_fit
     from numpy.linalg import norm
 
@@ -282,7 +286,7 @@ ax.legend(loc="best")
 ax.set_xlabel("time step")
 ax.set_ylabel("v")
 
-if float(np.version.version.split(".")[1]) >= 10:
+if tuple(map(int, np.__version__.split("."))) >= (1, 10):
     fig3 = pp.figure()
     ax = fig3.add_subplot(111)
     ax.plot(c_length, cos_theta, label="sim data")

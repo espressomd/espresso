@@ -8,16 +8,18 @@ try:
         raise ImportError("Cannot connect to X server")
 except ImportError as e:
     class mayaviLive(object):
+        deferred_ImportError = e
 
-        def __init__(*args, **kwargs):
-            raise e
+        def __init__(self, *args, **kwargs):
+            raise self.deferred_ImportError
 
 try:
     from .visualization_opengl import openGLLive
 except ImportError as e:
     class openGLLive(object):
+        deferred_ImportError = e
 
-        def __init__(*args, **kwargs):
-            raise e
+        def __init__(self, *args, **kwargs):
+            raise self.deferred_ImportError
 
 __all__ = ['mayaviLive', 'openGLLive']

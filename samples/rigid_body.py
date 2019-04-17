@@ -14,14 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Demonstrates the construction of a rigid object by means of the
+"""
+Demonstrates the construction of a rigid object by means of the
 VIRTUAL_SITES_RELATIVE feature.
-
 """
 
 from __future__ import print_function
 
 import espressomd
+espressomd.assert_features(["VIRTUAL_SITES_RELATIVE"])
 from espressomd import thermostat
 from espressomd import integrate
 from espressomd.virtual_sites import VirtualSitesRelative
@@ -32,15 +33,14 @@ required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
 espressomd.assert_features(required_features)
 
 
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+box_l = 100
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.set_random_state_PRNG()
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.time_step = 0.01
 skin = 10.0
 system.cell_system.skin = skin
-box_l = 100
-system.box_l = [box_l, box_l, box_l]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 ### Particle types
@@ -64,10 +64,10 @@ z = box_l * 0.5
 # place six branches, pointing +/-x +/-y and +/-z
 for direction in np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
     for n in range(branch_len):
-        system.part.add(
-            pos=[x, y, z] + (n + 1) * direction, type=type_A, virtual=1)
-        system.part.add(
-            pos=[x, y, z] - (n + 1) * direction, type=type_A, virtual=1)
+        system.part.add(pos=[x, y, z] + (n + 1) * direction,
+                        type=type_A, virtual=1)
+        system.part.add(pos=[x, y, z] - (n + 1) * direction,
+                        type=type_A, virtual=1)
 
 system.virtual_sites = VirtualSitesRelative(have_velocity=True)
 
@@ -95,7 +95,8 @@ print("moment of intertia is", momI)
 
 #place center bead
 p_center = system.part.add(
-    pos=com, mass=branch_len * 6 + 1, rinertia=momI, rotation=[1, 1, 1], type=type_centre)
+    pos=com, mass=branch_len * 6 + 1, rinertia=momI,
+    rotation=[1, 1, 1], type=type_centre)
 
 # The virtual particles relate to the center one
 for p in system.part:

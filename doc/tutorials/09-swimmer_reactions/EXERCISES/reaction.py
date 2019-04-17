@@ -31,16 +31,14 @@ import sys
 import time
 import espressomd
 from espressomd import assert_features
-from espressomd.observables import ParticlePositions, ParticleBodyAngularVelocities
-from espressomd.accumulators import Correlator
-from espressomd.swimmer_reaction import Reaction
-
-
 assert_features(["ROTATION",
                  "ROTATIONAL_INERTIA",
                  "LANGEVIN_PER_PARTICLE",
                  "SWIMMER_REACTIONS",
                  "LENNARD_JONES"])
+from espressomd.observables import ParticlePositions, ParticleBodyAngularVelocities
+from espressomd.accumulators import Correlator
+from espressomd.swimmer_reaction import Reaction
 
 ##########################################################################
 
@@ -260,7 +258,7 @@ system.integrator.set_vv()
 ## Exercise 6 ##
 # Why do we enable the thermostat only after warmup?
 
-system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid)
+system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid, seed=42)
 
 ##########################################################################
 

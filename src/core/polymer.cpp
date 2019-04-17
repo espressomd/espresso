@@ -212,7 +212,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
         for (cnt1 = 0; cnt1 < max_try; cnt1++) {
           zz = (2.0 * d_random() - 1.0) * bond_length;
           rr = sqrt(Utils::sqr(bond_length) - Utils::sqr(zz));
-          phi = 2.0 * PI * d_random();
+          phi = 2.0 * Utils::pi() * d_random();
           pos[0] = poz[0] + rr * cos(phi);
           pos[1] = poz[1] + rr * sin(phi);
           pos[2] = poz[2] + zz;
@@ -304,7 +304,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
             if (angle2 > -1.0 && n > 2) {
               vec_rotate(a, angle2, c, d);
             } else {
-              phi = 2.0 * PI * d_random();
+              phi = 2.0 * Utils::pi() * d_random();
               vec_rotate(a, phi, c, d);
             }
 
@@ -317,7 +317,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
           } else {
             zz = (2.0 * d_random() - 1.0) * bond_length;
             rr = sqrt(Utils::sqr(bond_length) - Utils::sqr(zz));
-            phi = 2.0 * PI * d_random();
+            phi = 2.0 * Utils::pi() * d_random();
             pos[0] = poz[0] + rr * cos(phi);
             pos[1] = poz[1] + rr * sin(phi);
             pos[2] = poz[2] + zz;
@@ -458,7 +458,8 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
       pos[j] = dnodes[i][j];
     }
     if (place_particle(part_id, pos) == ES_PART_ERROR)
-      set_particle_q(part_id, val_nodes);
+      return (-3);
+    set_particle_q(part_id, val_nodes);
     set_particle_type(part_id, type_node);
 
     part_id++;

@@ -1,3 +1,5 @@
+file(COPY "scripts" DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/)
+
 get_filename_component(BASENAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # we assume the tex filename is the same as the directory name

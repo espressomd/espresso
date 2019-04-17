@@ -80,13 +80,13 @@ IF SWIMMER_REACTIONS:
                     "One particle type cannot be part of more than one reaction species!")
             if self._params["ct_range"] < 0:
                 raise ValueError(
-                    "Negative equilibrium reaction rate contstant is not allowed!")
+                    "Negative equilibrium reaction rate constant is not allowed!")
             if self._params["ct_rate"] < 0:
                 raise ValueError(
                     "Negative catalytic reaction rate constant is not allowed!")
             if (self._params["eq_rate"] < 0 and abs(self._params["eq_rate"] + 1.0) > 0.001):
                 raise ValueError(
-                    "Negative equilibrium reaction rate contstant is not allowed!")
+                    "Negative equilibrium reaction rate constant is not allowed!")
 
         def valid_keys(self):
             return "product_type", "reactant_type", "catalyzer_type", "ct_range", "ct_rate", "eq_rate", "react_once", "swap"

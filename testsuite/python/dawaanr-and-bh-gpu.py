@@ -152,9 +152,6 @@ class BHGPUTest(ut.TestCase):
             self.system.part.clear()
 
     def test(self):
-        if str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
-            print("Test skipped on AMD card")
-            return
         if (self.system.cell_system.get_state()["n_nodes"] > 1):
             print("NOTE: Ignoring testcase for n_nodes > 1")
         else:

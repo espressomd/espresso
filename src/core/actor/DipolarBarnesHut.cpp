@@ -27,28 +27,25 @@
 
 #ifdef DIPOLAR_BARNES_HUT
 
-void activate_dipolar_barnes_hut(float epssq, float itolsq) {
-  delete dipolarBarnesHut;
-  dipolarBarnesHut = nullptr;
-  // also necessary on 1 CPU or GPU, does more than just broadcasting
-  mpi_bcast_coulomb_params();
-  dipolarBarnesHut =
-      new DipolarBarnesHut(espressoSystemInterface, epssq, itolsq);
-  forceActors.push_back(dipolarBarnesHut);
-  energyActors.push_back(dipolarBarnesHut);
+std::unique_ptr<DipolarBarnesHut> dipolarBarnesHut;
 
+void activate_dipolar_barnes_hut(float epssq, float itolsq) {
+  // also necessary on 1 CPU or GPU, does more than just broadcasting
   dipole.method = DIPOLAR_BH_GPU;
+  mpi_bcast_coulomb_params();
+
+  dipolarBarnesHut = std::make_unique<DipolarBarnesHut>(espressoSystemInterface,
+                                                        epssq, itolsq);
+  forceActors.push_back(dipolarBarnesHut.get());
+  energyActors.push_back(dipolarBarnesHut.get());
 }
 
 void deactivate_dipolar_barnes_hut() {
   if (dipolarBarnesHut) {
-    forceActors.remove(dipolarBarnesHut);
-    energyActors.remove(dipolarBarnesHut);
+    forceActors.remove(dipolarBarnesHut.get());
+    energyActors.remove(dipolarBarnesHut.get());
+    dipolarBarnesHut.reset();
   }
-  delete dipolarBarnesHut;
-  dipolarBarnesHut = nullptr;
 }
-
-DipolarBarnesHut *dipolarBarnesHut = nullptr;
 
 #endif
