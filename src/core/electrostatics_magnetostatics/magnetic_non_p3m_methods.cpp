@@ -44,8 +44,8 @@
 #ifdef DIPOLES
 
 // Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle *p1, const Vector3d &dip1, Particle *p2,
-                             int force_flag) {
+double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
+                             Particle *p2, int force_flag) {
   double u, r, pe1, pe2, pe3, pe4, r3, r5, r2, r7, a, b, cc, d, ab;
 #ifdef ROTATION
   double bx, by, bz, ax, ay, az;
@@ -53,10 +53,10 @@ double calc_dipole_dipole_ia(Particle *p1, const Vector3d &dip1, Particle *p2,
   double ffx, ffy, ffz;
 
   // Cache dipole momente
-  const Vector3d dip2 = p2->calc_dip();
+  const Utils::Vector3d dip2 = p2->calc_dip();
 
   // Distance between particles
-  Vector3d dr;
+  Utils::Vector3d dr;
   get_mi_vector(dr, p1->r.p, p2->r.p);
 
   // Powers of distance
@@ -153,7 +153,7 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
     if (it->p.dipm == 0.0)
       continue;
 
-    const Vector3d dip1 = it->calc_dip();
+    const Utils::Vector3d dip1 = it->calc_dip();
     auto jt = it;
     /* Skip diagonal */
     ++jt;
@@ -240,7 +240,7 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
   dip_particles = 0;
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
-      const Vector3d dip = p.calc_dip();
+      const Utils::Vector3d dip = p.calc_dip();
 
       mx[dip_particles] = dip[0];
       my[dip_particles] = dip[1];

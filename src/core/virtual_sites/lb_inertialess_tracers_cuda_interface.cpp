@@ -56,7 +56,7 @@ void pack_particles(ParticleRange particles,
 
   int i = 0;
   for (auto const &part : particles) {
-    Vector3d pos = folded_position(part);
+    Utils::Vector3d pos = folded_position(part);
 
     buffer[i].pos[0] = (float)pos[0];
     buffer[i].pos[1] = (float)pos[1];

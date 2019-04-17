@@ -139,7 +139,7 @@ void halo_free_fieldtype(Fieldtype *ftype);
  */
 void prepare_halo_communication(HaloCommunicator *hc, Lattice const *lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype,
-                                const Vector3i &local_node_grid);
+                                const Utils::Vector3i &local_node_grid);
 
 /** Frees datastructures associated with a halo communicator
  *  @param[in,out] hc  halo communicator to be released

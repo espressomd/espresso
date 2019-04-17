@@ -85,10 +85,10 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   // This is obtained, by multiplying the quaternion representing the director
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
-  Vector4d q;
+  Utils::Vector4d q;
   multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation, q);
   // Calculate the director resulting from the quaternions
-  Vector3d director = {0, 0, 0};
+  Utils::Vector3d director = {0, 0, 0};
   convert_quat_to_director(q, director);
   // normalize
   double l = sqrt(sqrlen(director));
@@ -140,7 +140,7 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
   get_mi_vector(d, p.r.p, p_real->r.p);
 
   // Get omega of real particle in space-fixed frame
-  Vector3d omega_space_frame =
+  Utils::Vector3d omega_space_frame =
       convert_vector_body_to_space(*p_real, p_real->m.omega);
   // Obtain velocity from v=v_real particle + omega_real_particle \times
   // director

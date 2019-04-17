@@ -62,7 +62,7 @@ calc_bonded_coulomb_sr_pair_force(Particle *p1, Particle *p2,
   double dist = sqrt(dist2);
   if (dist < coulomb_cutoff) {
     // TODO ugly workaround
-    Vector3d forcevec{};
+    Utils::Vector3d forcevec{};
 
     Coulomb::calc_pair_force(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx,
                              dist, dist2, forcevec);

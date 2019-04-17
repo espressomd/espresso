@@ -159,7 +159,7 @@ struct fft_data_struct {
  */
 int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft, const Vector3i &grid,
+             fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm);
 
 /** Perform an in-place forward 3D FFT.

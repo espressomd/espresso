@@ -69,10 +69,10 @@ struct iccp3m_struct {
       ein; /* Array of dielectric constants at each surface element */
   std::vector<double> sigma; /* Surface Charge density */
   double convergence = 1e-2; /* Convergence criterion                       */
-  std::vector<Vector3d> normals;  /* Surface normal vectors */
-  Vector3d ext_field = {0, 0, 0}; /* External field */
-  double relax = 0.7;             /* relaxation parameter for iterative */
-  int citeration = 0;             /* current number of iterations*/
+  std::vector<Utils::Vector3d> normals;  /* Surface normal vectors */
+  Utils::Vector3d ext_field = {0, 0, 0}; /* External field */
+  double relax = 0.7; /* relaxation parameter for iterative */
+  int citeration = 0; /* current number of iterations*/
   int first_id = 0;
 
   template <typename Archive>

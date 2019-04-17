@@ -58,18 +58,20 @@ void deep_copy(boost::multi_array<T, 3> &dst,
  */
 template <typename T, size_t codim> class Interpolated {
 public:
-  using value_type = typename decay_to_scalar<Vector<T, codim>>::type;
+  using value_type =
+      typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
   using jacobian_type = detail::jacobian_type<T, codim>;
   using storage_type = boost::multi_array<value_type, 3>;
 
 private:
   storage_type m_global_field;
-  Vector3d m_grid_spacing;
-  Vector3d m_origin;
+  Utils::Vector3d m_grid_spacing;
+  Utils::Vector3d m_origin;
 
 public:
   Interpolated(const boost::const_multi_array_ref<value_type, 3> &global_field,
-               const Vector3d &grid_spacing, const Vector3d &origin)
+               const Utils::Vector3d &grid_spacing,
+               const Utils::Vector3d &origin)
       : m_global_field(global_field), m_grid_spacing(grid_spacing),
         m_origin(origin) {}
 
@@ -88,17 +90,17 @@ public:
     return *this;
   }
 
-  Vector3d grid_spacing() const { return m_grid_spacing; }
+  Utils::Vector3d grid_spacing() const { return m_grid_spacing; }
   storage_type const &field_data() const { return m_global_field; }
-  Vector3d origin() const { return m_origin; }
-  Vector3i shape() const {
+  Utils::Vector3d origin() const { return m_origin; }
+  Utils::Vector3i shape() const {
     return {m_global_field.shape(), m_global_field.shape() + 3};
   }
 
   /*
    * @brief Evaluate f at pos with the field value as argument.
    */
-  value_type operator()(const Vector3d &pos, double = {}) const {
+  value_type operator()(const Utils::Vector3d &pos, double = {}) const {
     using Utils::Interpolation::bspline_3d_accumulate;
     return bspline_3d_accumulate<2>(
         pos,
@@ -109,7 +111,7 @@ public:
   /*
    * @brief Evaluate f at pos with the jacobian field value as argument.
    */
-  jacobian_type jacobian(const Vector3d &pos, double = {}) const {
+  jacobian_type jacobian(const Utils::Vector3d &pos, double = {}) const {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
     return bspline_3d_gradient_accumulate<2>(
         pos,
@@ -117,11 +119,11 @@ public:
         m_grid_spacing, m_origin, jacobian_type{});
   }
 
-  bool fits_in_box(const Vector3d &box) const {
-    const Vector3d grid_size = {m_grid_spacing[0] * shape()[0],
-                                m_grid_spacing[1] * shape()[1],
-                                m_grid_spacing[2] * shape()[2]};
-    return (m_origin < Vector3d::broadcast(0.)) &&
+  bool fits_in_box(const Utils::Vector3d &box) const {
+    const Utils::Vector3d grid_size = {m_grid_spacing[0] * shape()[0],
+                                       m_grid_spacing[1] * shape()[1],
+                                       m_grid_spacing[2] * shape()[2]};
+    return (m_origin < Utils::Vector3d::broadcast(0.)) &&
            ((m_origin + grid_size) >= box);
   }
 };

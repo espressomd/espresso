@@ -161,13 +161,13 @@ struct CellStructure {
    *  \param  pos Position of a particle.
    *  \return number of the node where to put the particle.
    */
-  int (*position_to_node)(const Vector3d &pos);
+  int (*position_to_node)(const Utils::Vector3d &pos);
   /** Cell system dependent function to find the right cell for a
    *  particle at position @p pos.
    *  \param  pos Position of a particle.
    *  \return pointer to cell  where to put the particle.
    */
-  Cell *(*position_to_cell)(const Vector3d &pos);
+  Cell *(*position_to_cell)(const Utils::Vector3d &pos);
 };
 
 /*@}*/
