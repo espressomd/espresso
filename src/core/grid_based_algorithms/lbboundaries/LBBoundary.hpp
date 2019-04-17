@@ -86,8 +86,7 @@ public:
 
 private:
   /** Private data members */
-  std::shared_ptr<Shapes::Shape>
-      m_shape;
+  std::shared_ptr<Shapes::Shape> m_shape;
   Vector3d m_velocity;
   Vector3d m_force;
 

@@ -33,8 +33,8 @@
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 

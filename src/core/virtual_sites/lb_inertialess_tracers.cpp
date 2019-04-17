@@ -26,8 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cells.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
 #include "lb_inertialess_tracers_cuda_interface.hpp"
 #include "particle_data.hpp"
@@ -38,7 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 void CoupleIBMParticleToFluid(Particle *p);
 void ParticleVelocitiesFromLB_CPU();
 bool IsHalo(int indexCheck);
-void GetIBMInterpolatedVelocity(const Vector3d &p, double *v, double *forceAdded);
+void GetIBMInterpolatedVelocity(const Vector3d &p, double *v,
+                                double *forceAdded);
 
 // ***** Internal variables ******
 
@@ -220,8 +221,9 @@ void GetIBMInterpolatedVelocity(const Vector3d &pos, double *v,
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
           local_rho = lbpar.rho;
-          local_j = lbpar.rho * (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                                                   .velocity();
+          local_j = lbpar.rho *
+                    (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
+                        .velocity();
         } else
 #endif
         {
