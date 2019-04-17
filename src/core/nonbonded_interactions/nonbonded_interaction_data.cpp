@@ -276,6 +276,12 @@ static void recalc_maximal_cutoff_nonbonded() {
         max_cut_current = data->REACTION_range;
 #endif
 
+#ifdef THOLE
+      // If THOLE is active, use p3m cutoff
+      if (data->THOLE_scaling_coeff != 0)
+        max_cut_current = std::max(max_cut_current, Coulomb::cutoff(box_l));
+#endif
+
       IA_parameters *data_sym = get_ia_param(j, i);
 
       /* no interaction ever touched it, at least no real
