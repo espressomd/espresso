@@ -13,8 +13,7 @@ public:
   int n_values() const override { return 9; };
   std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
-    dpd_stress();
-    return res;
+    return dpd_stress();
   }
 };
 
