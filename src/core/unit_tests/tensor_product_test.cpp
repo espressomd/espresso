@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(square) {
 }
 
 BOOST_AUTO_TEST_CASE(non_square) {
-  Vector3i x{1, 2, 3};
+  Utils::Vector3i x{1, 2, 3};
   Vector<int, 4> y{5, 6, 7, 8};
 
   using expected_type = Vector<Vector<int, 4>, 3>;
@@ -71,9 +71,9 @@ BOOST_AUTO_TEST_CASE(non_square) {
 
 BOOST_AUTO_TEST_CASE(left_scalar) {
   double x = 3.;
-  Vector2d y{1., 2.};
+  Utils::Vector2d y{1., 2.};
 
-  using expected_type = Vector2d;
+  using expected_type = Utils::Vector2d;
   using actual_type = decltype(tensor_product(x, y));
 
   /* Check return type */

@@ -2426,7 +2426,7 @@ bool dp3m_sanity_checks_boxl() {
 
 /*****************************************************************************/
 
-bool dp3m_sanity_checks(const Vector3i &grid) {
+bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
   bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {

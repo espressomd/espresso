@@ -658,7 +658,7 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
 #endif // LB_GPU
   } else {
 #ifdef LB
-    Vector3i pos;
+    Utils::Vector3i pos;
     auto const grid_size = lblattice.global_grid;
 
     fprintf(fp,
@@ -718,7 +718,7 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
     bb_high.push_back(std::max(*val1, *val2));
   }
 
-  Vector3i pos;
+  Utils::Vector3i pos;
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
@@ -788,7 +788,7 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
                                                 sizeof(unsigned int));
     lb_get_boundary_flags_GPU(bound_array);
 
-    Vector3i xyz;
+    Utils::Vector3i xyz;
     int j;
     for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j % lbpar_gpu.dim_x;
@@ -805,8 +805,8 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
 #endif // LB_GPU
   } else {
 #ifdef LB
-    Vector3i pos;
-    Vector3i gridsize;
+    Utils::Vector3i pos;
+    Utils::Vector3i gridsize;
 
     gridsize[0] = box_l[0] / lblattice.agrid[0];
     gridsize[1] = box_l[1] / lblattice.agrid[1];
@@ -842,7 +842,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
     lb_get_values_GPU(host_values);
-    Vector3i xyz;
+    Utils::Vector3i xyz;
     int j;
     for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j % lbpar_gpu.dim_x;
@@ -861,8 +861,8 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
 #endif // LB_GPU
   } else {
 #ifdef LB
-    Vector3i pos;
-    Vector3i gridsize;
+    Utils::Vector3i pos;
+    Utils::Vector3i gridsize;
 
     gridsize[0] = box_l[0] / lblattice.agrid[0];
     gridsize[1] = box_l[1] / lblattice.agrid[1];
@@ -928,7 +928,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
     }
 
     double pop[19];
-    Vector3i ind;
+    Utils::Vector3i ind;
     auto const gridsize = lblattice.global_grid;
 
     if (!binary) {
@@ -1061,7 +1061,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
     }
 
     Vector19d pop;
-    Vector3i ind;
+    Utils::Vector3i ind;
     auto const gridsize = lblattice.global_grid;
     int saved_gridsize[3];
     mpi_bcast_lb_params(LBParam::DENSITY);
@@ -1150,9 +1150,9 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
   }
 }
 
-bool lb_lbnode_is_index_valid(const Vector3i &ind) {
-  auto within_bounds = [](const Vector3i &ind, const Vector3i &limits) {
-    return ind < limits && ind >= Vector3i{};
+bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind) {
+  auto within_bounds = [](const Utils::Vector3i &ind, const Utils::Vector3i &limits) {
+    return ind < limits && ind >= Utils::Vector3i{};
   };
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
@@ -1169,7 +1169,7 @@ bool lb_lbnode_is_index_valid(const Vector3i &ind) {
   return false;
 }
 
-double lb_lbnode_get_density(const Vector3i &ind) {
+double lb_lbnode_get_density(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
@@ -1206,7 +1206,7 @@ double lb_lbnode_get_density(const Vector3i &ind) {
   throw std::runtime_error("LB not activated.");
 }
 
-const Utils::Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
+const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
@@ -1243,7 +1243,7 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
   return {};
 }
 
-const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
+const Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind) {
   Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
 
   // Add equilibrium stress to the diagonal (in LB units)
@@ -1256,7 +1256,7 @@ const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
   return p_pi;
 }
 
-const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
+const Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
   Vector6d p_pi{};
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
@@ -1325,7 +1325,7 @@ const Vector6d lb_lbfluid_get_stress() {
     for (int i = 0; i < lblattice.global_grid[0]; i++) {
       for (int j = 0; j < lblattice.global_grid[1]; j++) {
         for (int k = 0; k < lblattice.global_grid[2]; k++) {
-          const Vector3i node{{i, j, k}};
+          const Utils::Vector3i node{{i, j, k}};
           p += lb_lbnode_get_pi(node);
         }
       }
@@ -1344,7 +1344,7 @@ const Vector6d lb_lbfluid_get_stress() {
   return p;
 }
 
-int lb_lbnode_get_boundary(const Vector3i &ind) {
+int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     unsigned int host_flag;
@@ -1375,7 +1375,7 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
   throw std::runtime_error("LB not activated.");
 }
 
-const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
+const Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float population[19];
@@ -1408,7 +1408,7 @@ const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
   throw std::runtime_error("LB not activated.");
 }
 
-void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
+void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
@@ -1437,7 +1437,7 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
   }
 }
 
-void lb_lbnode_set_velocity(const Vector3i &ind, const Utils::Vector3d &u) {
+void lb_lbnode_set_velocity(const Utils::Vector3i &ind, const Utils::Vector3d &u) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float host_velocity[3];
@@ -1471,7 +1471,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Utils::Vector3d &u) {
   }
 }
 
-void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &p_pop) {
+void lb_lbnode_set_pop(const Utils::Vector3i &ind, const Vector19d &p_pop) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float population[19];

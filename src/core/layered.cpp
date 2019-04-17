@@ -301,7 +301,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
   }
 }
 
-void layered_topology_init(CellPList *old, Vector3i &grid) {
+void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   int c, p;
 
   CELL_TRACE(fprintf(

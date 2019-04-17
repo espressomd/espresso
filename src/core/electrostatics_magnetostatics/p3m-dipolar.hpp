@@ -138,7 +138,7 @@ void dp3m_init();
 void dp3m_scaleby_box_l();
 
 /** Sanity checks */
-bool dp3m_sanity_checks(const Vector3i &grid);
+bool dp3m_sanity_checks(const Utils::Vector3i &grid);
 
 /** Assign the physical dipoles using the tabulated assignment function.
  *  If Dstore_ca_frac is true, then the charge fractions are buffered in

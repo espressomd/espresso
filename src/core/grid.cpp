@@ -49,8 +49,8 @@
  * variables
  **********************************************/
 
-Vector3i node_grid{};
-Vector3i node_pos = {-1, -1, -1};
+Utils::Vector3i node_grid{};
+Utils::Vector3i node_pos = {-1, -1, -1};
 Vector<int, 6> node_neighbors{};
 Vector<int, 6> boundary{};
 int periodic = 7;
@@ -74,7 +74,7 @@ void init_node_grid() {
 int map_position_node_array(const Utils::Vector3d &pos) {
   auto const f_pos = folded_position(pos);
 
-  Vector3i im;
+  Utils::Vector3i im;
   for (int i = 0; i < 3; i++) {
     im[i] = std::floor(f_pos[i] / local_box_l[i]);
     im[i] = boost::algorithm::clamp(im[i], 0, node_grid[i] - 1);

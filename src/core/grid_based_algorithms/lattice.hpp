@@ -35,18 +35,18 @@ class Lattice {
 public:
   using index_t = int;
 
-  Vector3i grid; /**< number of local lattice sites in each direction
+  Utils::Vector3i grid; /**< number of local lattice sites in each direction
                   *   (excluding halo) */
-  Vector3i global_grid;
+  Utils::Vector3i global_grid;
   Utils::Vector3d agrid; /**< lattice constant */
 
-  Vector3i halo_grid; /**< number of lattice sites in each direction
+  Utils::Vector3i halo_grid; /**< number of lattice sites in each direction
                        *   (including halo) */
   index_t halo_size;  /**< halo size in all directions */
 
   Utils::Vector3d offset; /**< global offset */
   Utils::Vector3d local_offset;
-  Vector3i local_index_offset;
+  Utils::Vector3i local_index_offset;
 
   index_t halo_grid_volume; /**< total number (volume) of lattice sites
                              *   (including halo) */
@@ -102,7 +102,7 @@ public:
    *  \param local_node_grid  number of nodes in each spatial dimension
    *  \return index of the node for the lattice site
    */
-  int map_lattice_to_node(Vector3i &ind, const Vector3i &local_node_grid) const;
+  int map_lattice_to_node(Utils::Vector3i &ind, const Utils::Vector3i &local_node_grid) const;
 };
 
 #endif /* CORE_LB_LATTICE_HPP */

@@ -214,7 +214,7 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
 void prepare_halo_communication(HaloCommunicator *const hc,
                                 Lattice const *const lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype,
-                                const Vector3i &local_node_grid) {
+                                const Utils::Vector3i &local_node_grid) {
   int k, n, dir, lr, cnt, num = 0;
   const auto grid = lattice->grid;
   const auto period = lattice->halo_grid;

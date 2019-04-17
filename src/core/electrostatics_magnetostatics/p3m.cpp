@@ -153,7 +153,7 @@ static void p3m_spread_force_grid(double *mesh);
 static void p3m_realloc_ca_fields(int newsize);
 #endif
 
-static bool p3m_sanity_checks_system(const Vector3i &grid);
+static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
 
 /** Checks for correctness for charges in P3M of the cao_cut,
  *  necessary when the box length changes
@@ -2215,7 +2215,7 @@ bool p3m_sanity_checks_boxl() {
  *
  * @return false if ok, true on error.
  */
-bool p3m_sanity_checks_system(const Vector3i &grid) {
+bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
   bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {

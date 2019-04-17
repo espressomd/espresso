@@ -90,14 +90,14 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
 
   /* Types */
   {
-    static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
+    static_assert(std::is_same<Field::value_type, Utils::Vector2d>::value, "");
     static_assert(
         std::is_same<Field::jacobian_type, Vector<Utils::Vector3d, 2>>::value, "");
   }
 
   /* ctor */
   {
-    const Vector2d val = {1.23, 4.56};
+    const Utils::Vector2d val = {1.23, 4.56};
     Field field(val);
 
     BOOST_CHECK(val == field.value());
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
   {
     Field field({});
 
-    const Vector2d val = {1.23, 4.56};
+    const Utils::Vector2d val = {1.23, 4.56};
     field.value() = val;
 
     BOOST_CHECK(val == field.value());
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
 
   /* Field value */
   {
-    const Vector2d field_val = {5., 6.};
+    const Utils::Vector2d field_val = {5., 6.};
 
     Field field(field_val);
 
@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
 
   /* Types */
   {
-    static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
+    static_assert(std::is_same<Field::value_type, Utils::Vector2d>::value, "");
     static_assert(
         std::is_same<Field::jacobian_type, Matrix<2, 3, double>>::value, "");
   }
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
   /* Field value unshifted */
   {
     const Vector<Utils::Vector3d, 2> A = {{1., 2., 3}, {4., 5., 6.}};
-    const Vector2d b = {7., 8.};
+    const Utils::Vector2d b = {7., 8.};
     Field field(A, b);
 
     const Utils::Vector3d x = {1., 1., 1.};
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
   /* Gradient */
   {
     const Vector<Utils::Vector3d, 2> A = {{1., 2., 3}, {4., 5., 6.}};
-    const Vector2d b = {7., 8.};
+    const Utils::Vector2d b = {7., 8.};
     Field field(A, b);
 
     BOOST_CHECK(A == field.jacobian({1., 2., 3.}));
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
   /* Ctor */
   {
-    boost::multi_array<double, 3> data(Vector3i{10, 11, 12});
+    boost::multi_array<double, 3> data(Utils::Vector3i{10, 11, 12});
     data[5][5][5] = -1. / 12.;
 
     const Utils::Vector3d grid_spacing = {.1, .2, .3};
@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
   /* Types */
   {
-    static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
+    static_assert(std::is_same<Field::value_type, Utils::Vector2d>::value, "");
     static_assert(
         std::is_same<Field::jacobian_type, Vector<Utils::Vector3d, 2>>::value, "");
   }
@@ -324,9 +324,9 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
     auto const a = origin + 0.37 * n_nodes * grid_spacing;
     Utils::Vector3d x0[2] = {0.12 * a, -3. * a};
-    auto const sigma = Vector2d{2., 3.};
+    auto const sigma = Utils::Vector2d{2., 3.};
 
-    boost::multi_array<Vector2d, 3> data(Vector3i{n_nodes, n_nodes, n_nodes});
+    boost::multi_array<Utils::Vector2d, 3> data(Utils::Vector3i{n_nodes, n_nodes, n_nodes});
     for (int i = 0; i < n_nodes; i++)
       for (int j = 0; j < n_nodes; j++)
         for (int k = 0; k < n_nodes; k++) {
@@ -344,7 +344,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
     auto const interpolated_value = bspline_3d_accumulate<2>(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-        grid_spacing, origin, Vector2d{});
+        grid_spacing, origin, Utils::Vector2d{});
 
     BOOST_CHECK_SMALL((interpolated_value - field_value).norm(),
                       std::numeric_limits<double>::epsilon());
@@ -360,9 +360,9 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
     auto const a = origin + 0.37 * n_nodes * grid_spacing;
     Utils::Vector3d x0[2] = {0.12 * a, -3. * a};
-    auto const sigma = Vector2d{2., 3.};
+    auto const sigma = Utils::Vector2d{2., 3.};
 
-    boost::multi_array<Vector2d, 3> data(Vector3i{n_nodes, n_nodes, n_nodes});
+    boost::multi_array<Utils::Vector2d, 3> data(Utils::Vector3i{n_nodes, n_nodes, n_nodes});
     for (int i = 0; i < n_nodes; i++)
       for (int j = 0; j < n_nodes; j++)
         for (int k = 0; k < n_nodes; k++) {

@@ -66,9 +66,9 @@
 /*@{*/
 
 /** The number of nodes in each spatial dimension. */
-extern Vector3i node_grid;
+extern Utils::Vector3i node_grid;
 /** position of node in node grid */
-extern Vector3i node_pos;
+extern Utils::Vector3i node_pos;
 /** the six nearest neighbors of a node in the node grid. */
 extern Vector<int, 6> node_neighbors;
 /** where to fold particles that leave local box in direction i. */

@@ -377,7 +377,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // Create the bond
 
   // First, fill bond data structure
-  const Vector3i bondT = {bond_id, p1.p.identity, p2.p.identity};
+  const Utils::Vector3i bondT = {bond_id, p1.p.identity, p2.p.identity};
 
   local_add_particle_bond(p, bondT);
 }

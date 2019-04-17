@@ -126,12 +126,9 @@ public:
 };
 
 template <size_t N> using VectorXd = Vector<double, N>;
-using Vector2d = VectorXd<2>;
 using Vector4d = VectorXd<4>;
 using Vector6d = VectorXd<6>;
 using Vector19d = VectorXd<19>;
-
-using Vector3i = Vector<int, 3>;
 
 namespace Utils {
     template <size_t N> using VectorXd = Vector<double, N>;

@@ -267,7 +267,7 @@ void lb_reinit_parameters() {
 
 /* Halo communication for push scheme */
 static void halo_push_communication(LB_Fluid &lbfluid,
-                                    const Vector3i &local_node_grid) {
+                                    const Utils::Vector3i &local_node_grid) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;

@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(initializer_list_constructor) {
 
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
 
-  BOOST_CHECK_THROW(Vector2d({1., 2., 3.}), std::length_error);
+  BOOST_CHECK_THROW(Utils::Vector2d({1., 2., 3.}), std::length_error);
 }
 
 BOOST_AUTO_TEST_CASE(iterator_constructor) {
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(iterator_constructor) {
                                 std::end(test_numbers));
   BOOST_CHECK(std::equal(v.begin(), v.end(), test_numbers));
 
-  BOOST_CHECK_THROW(Vector2d(std::begin(test_numbers), std::end(test_numbers)),
+  BOOST_CHECK_THROW(Utils::Vector2d(std::begin(test_numbers), std::end(test_numbers)),
                     std::length_error);
 }
 
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(decay_to_scalar_test) {
 }
 
 BOOST_AUTO_TEST_CASE(vector_broadcast) {
-  Vector2d const v = Vector2d::broadcast(1.4);
+  Utils::Vector2d const v = Utils::Vector2d::broadcast(1.4);
 
   BOOST_CHECK_EQUAL(v[0], 1.4);
   BOOST_CHECK_EQUAL(v[1], 1.4);

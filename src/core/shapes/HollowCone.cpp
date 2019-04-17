@@ -323,7 +323,7 @@ void HollowCone::calculate_dist(const Utils::Vector3d &pos, double *dist,
   // of the z-axis oriented hollow cone located
   // in the origin
 
-  Vector2d pp;
+  Utils::Vector2d pp;
   pp[0] = matrix[0] * p[0] + matrix[3] * p[1] + matrix[6] * p[2];
   pp[1] = matrix[1] * p[0] + matrix[4] * p[1] + matrix[7] * p[2];
 

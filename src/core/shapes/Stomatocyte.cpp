@@ -64,7 +64,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double *dist,
 
   // So the shortest distance to the line is
 
-  Vector2d dist_2D;
+  Utils::Vector2d dist_2D;
   dist_2D[0] = Utils::Vector3d(closest_pos - pos).norm();
   dist_2D[1] = mu * m_orientation.norm();
 
@@ -158,7 +158,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double *dist,
 
   // Center points for the circles
 
-  Vector2d pt0, pt1, pt2, pt3;
+  Utils::Vector2d pt0, pt1, pt2, pt3;
 
   pt0 = {0.0, 0.0};
   pt1 = {3.0 * c + e, d - e};
@@ -232,7 +232,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double *dist,
   // but we still need the normal
 
   distance = -mindist;
-  Vector2d normal({-1.0, -1.0});
+  Utils::Vector2d normal({-1.0, -1.0});
 
   switch (number) {
   case 0:
@@ -320,7 +320,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double *dist,
   // of the z-axis oriented stomatocyte located
   // in the origin
 
-  Vector2d pp;
+  Utils::Vector2d pp;
   pp[0] = matrix[0] * p[0] + matrix[3] * p[1] + matrix[6] * p[2];
   pp[1] = matrix[1] * p[0] + matrix[4] * p[1] + matrix[7] * p[2];
 

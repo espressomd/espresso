@@ -104,7 +104,7 @@ struct field_params_impl<Interpolated<T, codim>> {
   static Interpolated<T, codim> make(const VariantMap &params) {
     auto const field_data =
         get_value<std::vector<double>>(params, "_field_data");
-    auto const field_shape = get_value<Vector3i>(params, "_field_shape");
+    auto const field_shape = get_value<Utils::Vector3i>(params, "_field_shape");
     auto const field_codim = get_value<int>(params, "_field_codim");
 
     if (field_codim != codim) {

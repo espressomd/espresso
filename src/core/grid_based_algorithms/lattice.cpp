@@ -89,7 +89,7 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
                                       Vector<std::size_t, 8> &node_index,
                                       Vector6d &delta, const Utils::Vector3d &myLeft,
                                       const Utils::Vector3d &local_box) const {
-  Vector3i ind{};
+  Utils::Vector3i ind{};
   auto const epsilon = std::numeric_limits<double>::epsilon();
 
   /* determine the elementary lattice cell containing the particle
@@ -133,10 +133,10 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
   node_index[7] = node_index[4] + this->halo_grid[0] + 1;
 }
 
-int Lattice::map_lattice_to_node(Vector3i &ind,
-                                 const Vector3i &local_node_grid) const {
+int Lattice::map_lattice_to_node(Utils::Vector3i &ind,
+                                 const Utils::Vector3i &local_node_grid) const {
   /* determine coordinates in node_grid */
-  Vector3i grid;
+  Utils::Vector3i grid;
   grid[0] =
       (int)floor(ind[0] * this->agrid[0] * box_l_i[0] * local_node_grid[0]);
   grid[1] =
