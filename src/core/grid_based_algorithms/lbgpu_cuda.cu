@@ -2442,6 +2442,10 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(nodes_b.boundary,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
+  free_realloc_and_clear(nodes_a.boundary_velocity,
+                         lbpar_gpu->number_of_nodes * sizeof(float3));
+  free_realloc_and_clear(nodes_b.boundary_velocity,
+                         lbpar_gpu->number_of_nodes * sizeof(float3));
 
   /*write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(para), lbpar_gpu,

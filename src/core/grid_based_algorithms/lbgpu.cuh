@@ -38,7 +38,7 @@ typedef struct {
   float *vd;
   /** flag indicating whether this site belongs to a boundary */
   unsigned int *boundary;
-
+  float3 *boundary_velocity;
 } LB_nodes_gpu;
 
 inline __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
