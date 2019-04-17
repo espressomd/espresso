@@ -64,7 +64,7 @@ add_subdirectory(07-electrokinetics)
 add_subdirectory(08-visualization)
 add_subdirectory(09-swimmer_reactions)
 add_subdirectory(10-reaction_ensemble)
-add_subdirectory(11-ferrofluid_monolayer)
+add_subdirectory(11-ferrofluid)
 
 
 ### here: add the appropriate tutorial target after DEPENDS
