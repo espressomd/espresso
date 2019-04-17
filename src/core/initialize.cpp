@@ -548,7 +548,10 @@ void on_cell_structure_change() {
 
 #ifdef LB
   if (lattice_switch & LATTICE_LB) {
-    lb_init();
+    runtimeErrorMsg()
+        << "The CPU LB does not currently support handling changes of the MD "
+           "cell geometry. Setup the cell system, skin and interactions before "
+           "activating the CPU LB.";
   }
 #endif
 }
