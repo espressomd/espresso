@@ -38,7 +38,7 @@ template <typename Op>
 void lattice_interpolation(Lattice const &lattice, Utils::Vector3d const &pos,
                            Op &&op) {
   Vector<std::size_t, 8> node_index{};
-  Vector6d delta{};
+  Utils::Vector6d delta{};
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */

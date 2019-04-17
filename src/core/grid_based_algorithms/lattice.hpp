@@ -89,7 +89,7 @@ public:
    */
   void map_position_to_lattice(const Utils::Vector3d &pos,
                                Vector<std::size_t, 8> &node_index,
-                               Vector6d &delta, const Utils::Vector3d &myLeft,
+                               Utils::Vector6d &delta, const Utils::Vector3d &myLeft,
                                const Utils::Vector3d &local_box) const;
 
   /** Map a global lattice site to the node grid.

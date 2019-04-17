@@ -25,7 +25,7 @@ namespace {
  *  @param pi     local fluid pressure
  */
 void mpi_send_fluid(int node, int index, double rho, Utils::Vector3d const &j,
-                    Vector6d const &pi) {
+                    Utils::Vector6d const &pi) {
   if (node == this_node) {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
   } else if (0 == this_node) {
@@ -1228,7 +1228,7 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
     auto ind_shifted = ind;
     double rho;
     Utils::Vector3d j;
-    Vector6d pi;
+    Utils::Vector6d pi;
 
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
@@ -1243,8 +1243,8 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   return {};
 }
 
-const Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind) {
-  Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
+const Utils::Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind) {
+  Utils::Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
 
   // Add equilibrium stress to the diagonal (in LB units)
   double const p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
@@ -1256,8 +1256,8 @@ const Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind) {
   return p_pi;
 }
 
-const Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
-  Vector6d p_pi{};
+const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
+  Utils::Vector6d p_pi{};
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
@@ -1278,7 +1278,7 @@ const Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
     int node;
     double rho;
     double j[3];
-    Vector6d pi{};
+    Utils::Vector6d pi{};
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
@@ -1294,8 +1294,8 @@ const Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
 /** calculates the average stress of all nodes by iterating
  * over all nodes and deviding by the number_of_nodes.
  */
-const Vector6d lb_lbfluid_get_stress() {
-  Vector6d p{0, 0, 0, 0, 0, 0};
+const Utils::Vector6d lb_lbfluid_get_stress() {
+  Utils::Vector6d p{0, 0, 0, 0, 0, 0};
 
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
@@ -1422,7 +1422,7 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
     int node;
     double rho;
     Utils::Vector3d j;
-    Vector6d pi;
+    Utils::Vector6d pi;
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
@@ -1460,7 +1460,7 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind, const Utils::Vector3d &u
 
     double rho;
     Utils::Vector3d j;
-    Vector6d pi;
+    Utils::Vector6d pi;
 
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
 

@@ -182,13 +182,13 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind);
  * @brief Get the LB fluid velocity for a single node.
  */
 const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
-const Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind);
-const Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind);
+const Utils::Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind);
+const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind);
 
 /** calculates the average stress of all nodes by iterating
  * over all nodes and deviding by the number_of_nodes.
  */
-const Vector6d lb_lbfluid_get_stress();
+const Utils::Vector6d lb_lbfluid_get_stress();
 
 /**
  * @brief Get the LB fluid boundary bool for a single node.

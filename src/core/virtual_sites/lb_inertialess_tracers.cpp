@@ -176,7 +176,7 @@ void CoupleIBMParticleToFluid(Particle *p) {
 
   // Get indices and weights of affected nodes using discrete delta function
   Vector<std::size_t, 8> node_index{};
-  Vector6d delta{};
+  Utils::Vector6d delta{};
   lblattice.map_position_to_lattice(p->r.p, node_index, delta, my_left,
                                     local_box_l);
 
@@ -232,7 +232,7 @@ void GetIBMInterpolatedVelocity(double const *p, double *const v,
   /* determine elementary lattice cell surrounding the particle
    and the relative position of the particle in this cell */
   Vector<std::size_t, 8> node_index{};
-  Vector6d delta{};
+  Utils::Vector6d delta{};
   lblattice.map_position_to_lattice(pos, node_index, delta, my_left,
                                     local_box_l);
 

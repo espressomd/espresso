@@ -188,7 +188,7 @@ void lb_reinit_fluid() {
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   Utils::Vector3d j{};
-  Vector6d pi{};
+  Utils::Vector6d pi{};
 
   LB_TRACE(fprintf(stderr,
                    "Initializing the fluid with equilibrium populations\n"););
@@ -676,7 +676,7 @@ void lb_prepare_communication() {
 /***********************************************************************/
 /*@{*/
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             Utils::Vector3d const &j, Vector6d const &pi) {
+                             Utils::Vector3d const &j, Utils::Vector6d const &pi) {
   double local_rho, local_j[3], local_pi[6], trace;
   local_rho = rho;
 
@@ -1254,7 +1254,7 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
     return;
 
   /* equilibrium part of the stress modes */
-  Vector6d modes_from_pi_eq{};
+  Utils::Vector6d modes_from_pi_eq{};
   modes_from_pi_eq[0] = scalar(j, j) / *rho;
   modes_from_pi_eq[1] = (Utils::sqr(j[0]) - Utils::sqr(j[1])) / *rho;
   modes_from_pi_eq[2] = (scalar(j, j) - 3.0 * Utils::sqr(j[2])) / *rho;
