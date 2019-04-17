@@ -33,8 +33,8 @@
 using Utils::get_linear_index;
 
 int Lattice::init(double *agrid, double const *offset, int halo_size,
-                  const Vector3d &local_box, const Vector3d &myright,
-                  const Vector3d &box_length) {
+                  const Utils::Vector3d &local_box, const Utils::Vector3d &myright,
+                  const Utils::Vector3d &box_length) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
@@ -85,10 +85,10 @@ int Lattice::init(double *agrid, double const *offset, int halo_size,
   return ES_OK;
 }
 
-void Lattice::map_position_to_lattice(const Vector3d &pos,
+void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
                                       Vector<std::size_t, 8> &node_index,
-                                      Vector6d &delta, const Vector3d &myLeft,
-                                      const Vector3d &local_box) const {
+                                      Vector6d &delta, const Utils::Vector3d &myLeft,
+                                      const Utils::Vector3d &local_box) const {
   Vector3i ind{};
   auto const epsilon = std::numeric_limits<double>::epsilon();
 

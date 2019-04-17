@@ -1349,7 +1349,7 @@ void ELC_P3M_self_forces() {
 ////////////////////////////////////////////////////////////////////////////////////
 
 void ELC_p3m_charge_assign_both() {
-  Vector3d pos;
+  Utils::Vector3d pos;
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
@@ -1385,7 +1385,7 @@ void ELC_p3m_charge_assign_both() {
 }
 
 void ELC_p3m_charge_assign_image() {
-  Vector3d pos;
+  Utils::Vector3d pos;
   /* prepare local FFT mesh */
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;

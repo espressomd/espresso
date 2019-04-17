@@ -154,7 +154,7 @@ void lb_init() {
   if (check_runtime_errors())
     return;
 
-  Vector3d temp_agrid, temp_offset;
+  Utils::Vector3d temp_agrid, temp_offset;
   for (int i = 0; i < 3; i++) {
     temp_agrid[i] = lbpar.agrid;
     temp_offset[i] = 0.5;
@@ -187,7 +187,7 @@ void lb_reinit_fluid() {
 #ifdef LB
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
-  Vector3d j{};
+  Utils::Vector3d j{};
   Vector6d pi{};
 
   LB_TRACE(fprintf(stderr,
@@ -676,7 +676,7 @@ void lb_prepare_communication() {
 /***********************************************************************/
 /*@{*/
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             Vector3d const &j, Vector6d const &pi) {
+                             Utils::Vector3d const &j, Vector6d const &pi) {
   double local_rho, local_j[3], local_pi[6], trace;
   local_rho = rho;
 
@@ -1375,7 +1375,7 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
  *  @param[in]  index  Local lattice site
  *  @retval The local fluid momentum.
  */
-inline Vector3d lb_calc_local_j(Lattice::index_t index) {
+inline Utils::Vector3d lb_calc_local_j(Lattice::index_t index) {
   return {{lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
                lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
                lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
@@ -1398,7 +1398,7 @@ inline Vector3d lb_calc_local_j(Lattice::index_t index) {
 void lb_calc_fluid_momentum(double *result) {
 
   int x, y, z, index;
-  Vector3d j{}, momentum{};
+  Utils::Vector3d j{}, momentum{};
 
   for (x = 1; x <= lblattice.grid[0]; x++) {
     for (y = 1; y <= lblattice.grid[1]; y++) {

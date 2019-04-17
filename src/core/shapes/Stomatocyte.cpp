@@ -26,7 +26,7 @@
 using namespace std;
 
 namespace Shapes {
-void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
+void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double *dist,
                                  double *vec) const {
 
   using Utils::sqr;
@@ -40,7 +40,7 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
       dst2, dst3, t0, t1, t2, t3, t4, ttota, distance, mindist, time0, time1,
       xd, yd, zd, xp, yp, zp, xpp, ypp, normal_x_3D, normal_y_3D, normal_z_3D;
 
-  Vector3d closest_pos({-1.0, -1.0, -1.0});
+  Utils::Vector3d closest_pos({-1.0, -1.0, -1.0});
 
   // Set the three dimensions of the stomatocyte
 
@@ -65,7 +65,7 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
   // So the shortest distance to the line is
 
   Vector2d dist_2D;
-  dist_2D[0] = Vector3d(closest_pos - pos).norm();
+  dist_2D[0] = Utils::Vector3d(closest_pos - pos).norm();
   dist_2D[1] = mu * m_orientation.norm();
 
   /***** Use the obtained planar coordinates in distance function *****/
@@ -313,7 +313,7 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
   // Next we determine the 3D vector between the center
   // of the stomatocyte and the point of interest
 
-  Vector3d p(pos - m_position);
+  Utils::Vector3d p(pos - m_position);
 
   // Now we use the inverse matrix to find the
   // position of the point with respect to the origin
@@ -349,7 +349,7 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
   // Now we need to transform the normal back to
   // the real coordinate system
 
-  Vector3d normal_3D;
+  Utils::Vector3d normal_3D;
 
   normal_3D[0] = matrix[0] * normal_x_3D + matrix[1] * normal_y_3D +
                  matrix[2] * normal_z_3D;

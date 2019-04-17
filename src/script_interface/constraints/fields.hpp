@@ -118,7 +118,7 @@ struct field_params_impl<Interpolated<T, codim>> {
                                "one in all directions.");
     }
 
-    auto const grid_spacing = get_value<Vector3d>(params, "grid_spacing");
+    auto const grid_spacing = get_value<Utils::Vector3d>(params, "grid_spacing");
     auto const origin = -0.5 * grid_spacing;
 
     using field_data_type = typename decay_to_scalar<Vector<T, codim>>::type;

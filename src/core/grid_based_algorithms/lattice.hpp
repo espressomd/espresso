@@ -38,14 +38,14 @@ public:
   Vector3i grid; /**< number of local lattice sites in each direction
                   *   (excluding halo) */
   Vector3i global_grid;
-  Vector3d agrid; /**< lattice constant */
+  Utils::Vector3d agrid; /**< lattice constant */
 
   Vector3i halo_grid; /**< number of lattice sites in each direction
                        *   (including halo) */
   index_t halo_size;  /**< halo size in all directions */
 
-  Vector3d offset; /**< global offset */
-  Vector3d local_offset;
+  Utils::Vector3d offset; /**< global offset */
+  Utils::Vector3d local_offset;
   Vector3i local_index_offset;
 
   index_t halo_grid_volume; /**< total number (volume) of lattice sites
@@ -66,8 +66,8 @@ public:
    *  \param box_length  lengths of the local box
    */
   int init(double *agrid, double const *offset, int halo_size,
-           const Vector3d &local_box, const Vector3d &myright,
-           const Vector3d &box_length);
+           const Utils::Vector3d &local_box, const Utils::Vector3d &myright,
+           const Utils::Vector3d &box_length);
 
   /** Map a spatial position to the surrounding lattice sites.
    *
@@ -87,10 +87,10 @@ public:
    * \param myLeft     left (bottom, front) corner of the local box
    * \param local_box  dimensions of the local box
    */
-  void map_position_to_lattice(const Vector3d &pos,
+  void map_position_to_lattice(const Utils::Vector3d &pos,
                                Vector<std::size_t, 8> &node_index,
-                               Vector6d &delta, const Vector3d &myLeft,
-                               const Vector3d &local_box) const;
+                               Vector6d &delta, const Utils::Vector3d &myLeft,
+                               const Utils::Vector3d &local_box) const;
 
   /** Map a global lattice site to the node grid.
    *

@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(test_norm2) {
 }
 
 BOOST_AUTO_TEST_CASE(normalize) {
-  Vector3d v{1, 2, 3};
+  Utils::Vector3d v{1, 2, 3};
   v.normalize();
 
   BOOST_CHECK((v.norm2() - 1.0) <= std::numeric_limits<double>::epsilon());
@@ -144,12 +144,12 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
 
   /* Mixed types */
   {
-    BOOST_CHECK((Vector3d{1., 2., 3.} * 4) ==
-                (Vector3d{1. * 4, 2. * 4, 3. * 4}));
-    BOOST_CHECK((Vector3d{1., 2., 3.} + Vector3i{11, 12, 13}) ==
-                (Vector3d{1. + 11, 2. + 12, 3. + 13}));
-    BOOST_CHECK((Vector3d{1., 2., 3.} - Vector3i{11, 12, 13}) ==
-                (Vector3d{1. - 11, 2. - 12, 3. - 13}));
+    BOOST_CHECK((Utils::Vector3d{1., 2., 3.} * 4) ==
+                (Utils::Vector3d{1. * 4, 2. * 4, 3. * 4}));
+    BOOST_CHECK((Utils::Vector3d{1., 2., 3.} + Vector3i{11, 12, 13}) ==
+                (Utils::Vector3d{1. + 11, 2. + 12, 3. + 13}));
+    BOOST_CHECK((Utils::Vector3d{1., 2., 3.} - Vector3i{11, 12, 13}) ==
+                (Utils::Vector3d{1. - 11, 2. - 12, 3. - 13}));
   }
 
   {
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
   }
 
   BOOST_CHECK(
-      (sqrt(Vector3d{1., 2., 3.}) == Vector3d{sqrt(1.), sqrt(2.), sqrt(3.)}));
+      (sqrt(Utils::Vector3d{1., 2., 3.}) == Utils::Vector3d{sqrt(1.), sqrt(2.), sqrt(3.)}));
 }
 
 BOOST_AUTO_TEST_CASE(broadcast) {
@@ -227,16 +227,16 @@ BOOST_AUTO_TEST_CASE(vector_broadcast) {
 }
 
 BOOST_AUTO_TEST_CASE(scalar_product) {
-  static_assert(std::is_same<decltype(Vector3d{} * Vector3d{}), double>::value,
+  static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3d{}), double>::value,
                 "");
-  static_assert(std::is_same<decltype(Vector3d{} * Vector3i{}), double>::value,
+  static_assert(std::is_same<decltype(Utils::Vector3d{} * Vector3i{}), double>::value,
                 "");
   static_assert(std::is_same<decltype(Vector<std::complex<float>, 2>{} * 3.f),
                              Vector<std::complex<float>, 2>>::value,
                 "");
 
-  auto const v1 = Vector3d{1., 2., 3.};
-  auto const v2 = Vector3d{4.1, 5.2, 6.3};
+  auto const v1 = Utils::Vector3d{1., 2., 3.};
+  auto const v2 = Utils::Vector3d{4.1, 5.2, 6.3};
   auto const v3 = Vector3i{11, 12, 13};
   BOOST_CHECK_EQUAL(v1 * v2, boost::inner_product(v1, v2, 0.));
   BOOST_CHECK_EQUAL(v1 * v3, boost::inner_product(v1, v3, 0.));

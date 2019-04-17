@@ -30,8 +30,8 @@ void vec_rotate(const T1 &axis, double alpha, const T2 &vector, T3 &result) {
 }
 
 /** rotates vector around axis by alpha */
-inline ::Vector3d vec_rotate(::Vector3d axis, double alpha, ::Vector3d vector) {
-  ::Vector3d result;
+inline Vector3d vec_rotate(Vector3d axis, double alpha, Vector3d vector) {
+  Vector3d result;
   vec_rotate(axis, alpha, vector, result);
   return result;
 }

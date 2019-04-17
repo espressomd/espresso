@@ -227,8 +227,8 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
     return 0.;
 
   double coeff, exp_adist2;
-  const Vector3d dip1 = p1->calc_dip();
-  const Vector3d dip2 = p2->calc_dip();
+  const Utils::Vector3d dip1 = p1->calc_dip();
+  const Utils::Vector3d dip2 = p2->calc_dip();
   double B_r, C_r, D_r;
   double alpsq = dp3m.params.alpha * dp3m.params.alpha;
 #ifdef ROTATION
@@ -246,8 +246,8 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
     // Calculate scalar multiplications for vectors mi, mj, rij
     double mimj = dip1 * dip2;
 
-    double mir = dip1 * Vector3d{d[0], d[1], d[2]};
-    double mjr = dip2 * Vector3d{d[0], d[1], d[2]};
+    double mir = dip1 * Utils::Vector3d{d[0], d[1], d[2]};
+    double mjr = dip2 * Utils::Vector3d{d[0], d[1], d[2]};
 
     coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
     double dist2i = 1 / dist2;
@@ -306,8 +306,8 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
 inline double dp3m_pair_energy(Particle *p1, Particle *p2,
                                double const *const d, double dist2,
                                double dist) {
-  const Vector3d dip1 = p1->calc_dip();
-  const Vector3d dip2 = p2->calc_dip();
+  const Utils::Vector3d dip1 = p1->calc_dip();
+  const Utils::Vector3d dip2 = p2->calc_dip();
   double /* fac1,*/ adist, erfc_part_ri, coeff, exp_adist2, dist2i;
   double mimj, mir, mjr;
   double B_r, C_r;
@@ -328,8 +328,8 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2,
 
     // Calculate scalar multiplications for vectors mi, mj, rij
     mimj = dip1 * dip2;
-    mir = dip1 * Vector3d{d[0], d[1], d[2]};
-    mjr = dip2 * Vector3d{d[0], d[1], d[2]};
+    mir = dip1 * Utils::Vector3d{d[0], d[1], d[2]};
+    mjr = dip2 * Utils::Vector3d{d[0], d[1], d[2]};
 
     coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
     dist2i = 1 / dist2;

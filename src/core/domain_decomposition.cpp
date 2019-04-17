@@ -42,7 +42,7 @@ using Utils::get_linear_index;
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
-Cell *dd_save_position_to_cell(const Vector3d &pos);
+Cell *dd_save_position_to_cell(const Utils::Vector3d &pos);
 
 /************************************************/
 /** \name Variables */
@@ -537,7 +537,7 @@ void dd_init_cell_interactions(const Vector3i &grid) {
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
-Cell *dd_save_position_to_cell(const Vector3d &pos) {
+Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
   int cpos[3];
 
   for (int i = 0; i < 3; i++) {

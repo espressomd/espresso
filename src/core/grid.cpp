@@ -55,14 +55,14 @@ Vector<int, 6> node_neighbors{};
 Vector<int, 6> boundary{};
 int periodic = 7;
 
-Vector3d box_l = {1, 1, 1};
-Vector3d half_box_l = {0.5, 0.5, 0.5};
-Vector3d box_l_i = {1, 1, 1};
+Utils::Vector3d box_l = {1, 1, 1};
+Utils::Vector3d half_box_l = {0.5, 0.5, 0.5};
+Utils::Vector3d box_l_i = {1, 1, 1};
 double min_box_l;
-Vector3d local_box_l{1, 1, 1};
+Utils::Vector3d local_box_l{1, 1, 1};
 double min_local_box_l;
-Vector3d my_left{};
-Vector3d my_right{1, 1, 1};
+Utils::Vector3d my_left{};
+Utils::Vector3d my_right{1, 1, 1};
 
 /************************************************************/
 
@@ -71,7 +71,7 @@ void init_node_grid() {
   cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
 }
 
-int map_position_node_array(const Vector3d &pos) {
+int map_position_node_array(const Utils::Vector3d &pos) {
   auto const f_pos = folded_position(pos);
 
   Vector3i im;

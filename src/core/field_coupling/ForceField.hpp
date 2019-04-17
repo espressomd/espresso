@@ -36,7 +36,7 @@ public:
   using Base::Base;
 
   template <typename Particle>
-  Vector3d force(const Particle &p, const Vector3d &folded_pos,
+  Utils::Vector3d force(const Particle &p, const Utils::Vector3d &folded_pos,
                  double t) const {
     using detail::make_bind_coupling;
     return m_coupling(p, m_field(folded_pos, t));

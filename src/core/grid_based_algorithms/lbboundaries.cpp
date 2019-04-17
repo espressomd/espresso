@@ -65,7 +65,7 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
   on_lbboundary_change();
 }
 
-void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
+void lbboundary_mindist_position(const Utils::Vector3d &pos, double *mindist,
                                  double distvec[3], int *no) {
 
   double vec[3] = {std::numeric_limits<double>::infinity(),
@@ -143,7 +143,7 @@ void lb_init_boundaries() {
         for (int x = 0; x < int(lbpar_gpu.dim_x); x++) {
           auto const pos =
               static_cast<double>(lbpar_gpu.agrid) *
-              (Vector3d{1. * x, 1. * y, 1. * z} + Vector3d::broadcast(0.5));
+              (Utils::Vector3d{1. * x, 1. * y, 1. * z} + Utils::Vector3d::broadcast(0.5));
 
           double dist = 1e99;
           double dist_tmp = 0.0;
@@ -264,7 +264,7 @@ void lb_init_boundaries() {
     for (int z = 0; z < lblattice.grid[2] + 2; z++) {
       for (int y = 0; y < lblattice.grid[1] + 2; y++) {
         for (int x = 0; x < lblattice.grid[0] + 2; x++) {
-          Vector3d pos;
+          Utils::Vector3d pos;
           pos[0] = (offset[0] + (x - 0.5)) * lblattice.agrid[0];
           pos[1] = (offset[1] + (y - 0.5)) * lblattice.agrid[1];
           pos[2] = (offset[2] + (z - 0.5)) * lblattice.agrid[2];

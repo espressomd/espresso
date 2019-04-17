@@ -33,12 +33,12 @@ public:
   HollowCone() : m_hollowcone(new ::Shapes::HollowCone()) {
     add_parameters({{"center",
                      [this](Variant const &v) {
-                       m_hollowcone->set_position(get_value<Vector3d>(v));
+                       m_hollowcone->set_position(get_value<Utils::Vector3d>(v));
                      },
                      [this]() { return m_hollowcone->position(); }},
                     {"axis",
                      [this](Variant const &v) {
-                       m_hollowcone->set_orientation(get_value<Vector3d>(v));
+                       m_hollowcone->set_orientation(get_value<Utils::Vector3d>(v));
                      },
                      [this]() { return m_hollowcone->orientation(); }},
                     {"outer_radius", m_hollowcone->outer_radius()},

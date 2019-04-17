@@ -40,12 +40,12 @@ public:
 
   value_type &value() { return m_value; }
 
-  value_type operator()(const Vector3d &, double = {}) const { return m_value; }
-  static constexpr jacobian_type jacobian(const Vector3d &) {
+  value_type operator()(const Utils::Vector3d &, double = {}) const { return m_value; }
+  static constexpr jacobian_type jacobian(const Utils::Vector3d &) {
     return jacobian_type{};
   }
 
-  bool fits_in_box(const Vector3d &) const { return true; }
+  bool fits_in_box(const Utils::Vector3d &) const { return true; }
 };
 } // namespace Fields
 } // namespace FieldCoupling

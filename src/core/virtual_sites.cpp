@@ -48,7 +48,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
                                    const Particle &p_relate_to, double &l,
                                    Vector4d &quat) {
   // get the distance between the particles
-  Vector3d d;
+  Utils::Vector3d d;
   get_mi_vector(d, p_current.r.p, p_relate_to.r.p);
 
   // Check, if the distance between virtual and non-virtual particles is larger

@@ -93,7 +93,7 @@ namespace {
  * @param pos Position of the force
  * @param force Force in MD units.
  */
-void add_md_force(Vector3d const &pos, Vector3d const &force) {
+void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
@@ -111,7 +111,7 @@ void add_md_force(Vector3d const &pos, Vector3d const &force) {
  * @return The viscous coupling force plus f_random.
  */
 #ifdef LB
-Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
+Utils::Vector3d lb_viscous_coupling(Particle *p, Utils::Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
@@ -119,7 +119,7 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
       lb_lbinterpolation_get_interpolated_velocity(p->r.p) *
       lb_lbfluid_get_lattice_speed();
 
-  Vector3d v_drift = interpolated_u;
+  Utils::Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
   if (p->swim.swimming) {
     v_drift += p->swim.v_swim * p->r.calc_director();
@@ -145,7 +145,7 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
 #endif
 
 namespace {
-bool in_local_domain(Vector3d const &pos) {
+bool in_local_domain(Utils::Vector3d const &pos) {
   auto const lblattice = lb_lbfluid_get_lattice();
   return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
           pos[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
@@ -225,18 +225,18 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
          */
         auto const noise_amplitude = sqrt(12. * 2. * lb_lbcoupling_get_gamma() *
                                           lb_lbfluid_get_kT() / time_step);
-        auto f_random = [&c](int id) -> Vector3d {
+        auto f_random = [&c](int id) -> Utils::Vector3d {
           if (lb_lbfluid_get_kT() > 0.0) {
             key_type k{{static_cast<uint32_t>(id)}};
 
             auto const noise = rng_type{}(c, k);
 
             using Utils::uniform;
-            return Vector3d{uniform(noise[0]), uniform(noise[1]),
+            return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
                             uniform(noise[2])} -
-                   Vector3d::broadcast(0.5);
+                   Utils::Vector3d::broadcast(0.5);
           }
-          return Vector3d{};
+          return Utils::Vector3d{};
         };
 
         /* local cells */

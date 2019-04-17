@@ -33,12 +33,12 @@ public:
   Stomatocyte() : m_stomatocyte(new ::Shapes::Stomatocyte()) {
     add_parameters({{"center",
                      [this](Variant const &v) {
-                       m_stomatocyte->set_position(get_value<Vector3d>(v));
+                       m_stomatocyte->set_position(get_value<Utils::Vector3d>(v));
                      },
                      [this]() { return m_stomatocyte->position(); }},
                     {"axis",
                      [this](Variant const &v) {
-                       m_stomatocyte->set_orientation(get_value<Vector3d>(v));
+                       m_stomatocyte->set_orientation(get_value<Utils::Vector3d>(v));
                      },
                      [this]() { return m_stomatocyte->orientation(); }},
                     {"outer_radius", m_stomatocyte->outer_radius()},

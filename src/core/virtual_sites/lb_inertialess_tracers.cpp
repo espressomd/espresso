@@ -216,7 +216,7 @@ void GetIBMInterpolatedVelocity(double const *p, double *const v,
   int x, y, z;
 
   double lbboundary_mindist, distvec[3];
-  Vector3d pos;
+  Utils::Vector3d pos;
 
 #ifdef LB_BOUNDARIES
   pos[0] = p[0];

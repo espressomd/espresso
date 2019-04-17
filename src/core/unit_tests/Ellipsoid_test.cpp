@@ -41,7 +41,7 @@ bool check_distance_function(const Shapes::Shape &s) {
       double d;
 
       /* pos part of surface */
-      Vector3d pos = {semiaxes[0] * sqrt(1. - v * v) * cos(theta),
+      Utils::Vector3d pos = {semiaxes[0] * sqrt(1. - v * v) * cos(theta),
                       semiaxes[1] * sqrt(1. - v * v) * sin(theta),
                       semiaxes[2] * v};
 

@@ -66,13 +66,13 @@ public:
   jacobian_type &A() { return m_A; }
   value_type &b() { return m_b; }
 
-  value_type operator()(const Vector3d &pos, double = {}) const {
+  value_type operator()(const Utils::Vector3d &pos, double = {}) const {
     return detail::matrix_vector_impl<T, codim>{}(m_A, pos) + m_b;
   }
 
-  jacobian_type jacobian(const Vector3d &, double = {}) const { return m_A; }
+  jacobian_type jacobian(const Utils::Vector3d &, double = {}) const { return m_A; }
 
-  bool fits_in_box(const Vector3d &) const { return true; }
+  bool fits_in_box(const Utils::Vector3d &) const { return true; }
 };
 } // namespace Fields
 } // namespace FieldCoupling

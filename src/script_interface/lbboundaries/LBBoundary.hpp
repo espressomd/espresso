@@ -34,7 +34,7 @@ public:
   LBBoundary() : m_lbboundary(new ::LBBoundaries::LBBoundary()) {
     add_parameters({{"velocity",
                      [this](Variant const &value) {
-                       m_lbboundary->set_velocity(get_value<Vector3d>(value));
+                       m_lbboundary->set_velocity(get_value<Utils::Vector3d>(value));
                      },
                      [this]() { return m_lbboundary->velocity(); }},
                     {"shape",

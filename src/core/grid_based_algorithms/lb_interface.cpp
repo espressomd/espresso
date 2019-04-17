@@ -24,7 +24,7 @@ namespace {
  *  @param j      local fluid velocity
  *  @param pi     local fluid pressure
  */
-void mpi_send_fluid(int node, int index, double rho, Vector3d const &j,
+void mpi_send_fluid(int node, int index, double rho, Utils::Vector3d const &j,
                     Vector6d const &pi) {
   if (node == this_node) {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
@@ -509,7 +509,7 @@ double lb_lbfluid_get_agrid() {
   return {};
 }
 
-void lb_lbfluid_set_ext_force_density(const Vector3d &force_density) {
+void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.ext_force_density[0] = static_cast<float>(force_density[0]);
@@ -532,7 +532,7 @@ void lb_lbfluid_set_ext_force_density(const Vector3d &force_density) {
   }
 }
 
-const Vector3d lb_lbfluid_get_ext_force_density() {
+const Utils::Vector3d lb_lbfluid_get_ext_force_density() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return {{lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1],
@@ -1206,7 +1206,7 @@ double lb_lbnode_get_density(const Vector3i &ind) {
   throw std::runtime_error("LB not activated.");
 }
 
-const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
+const Utils::Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
@@ -1227,7 +1227,7 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     int node;
     auto ind_shifted = ind;
     double rho;
-    Vector3d j;
+    Utils::Vector3d j;
     Vector6d pi;
 
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
@@ -1421,7 +1421,7 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
     Lattice::index_t index;
     int node;
     double rho;
-    Vector3d j;
+    Utils::Vector3d j;
     Vector6d pi;
 
     auto ind_shifted = ind;
@@ -1437,7 +1437,7 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
   }
 }
 
-void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
+void lb_lbnode_set_velocity(const Vector3i &ind, const Utils::Vector3d &u) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float host_velocity[3];
@@ -1459,7 +1459,7 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
                              lblattice.halo_grid);
 
     double rho;
-    Vector3d j;
+    Utils::Vector3d j;
     Vector6d pi;
 
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
@@ -1530,8 +1530,8 @@ void lb_lbfluid_on_lb_params_change(LBParam field) {
   lb_lbfluid_reinit_parameters();
 }
 
-Vector3d lb_lbfluid_calc_fluid_momentum() {
-  Vector3d fluid_momentum{};
+Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
+  Utils::Vector3d fluid_momentum{};
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_calc_fluid_momentum_GPU(fluid_momentum.data());

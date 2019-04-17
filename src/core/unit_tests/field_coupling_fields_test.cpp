@@ -38,8 +38,8 @@ BOOST_AUTO_TEST_CASE(jacobian_type_test) {
   using FieldCoupling::Fields::detail::jacobian_type;
   using std::is_same;
 
-  static_assert(is_same<jacobian_type<double, 1>, Vector3d>::value, "");
-  static_assert(is_same<jacobian_type<double, 2>, Vector<Vector3d, 2>>::value,
+  static_assert(is_same<jacobian_type<double, 1>, Utils::Vector3d>::value, "");
+  static_assert(is_same<jacobian_type<double, 2>, Vector<Utils::Vector3d, 2>>::value,
                 "");
 }
 
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
   /* Types */
   {
     static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(std::is_same<Field::jacobian_type, Vector3d>::value, "");
+    static_assert(std::is_same<Field::jacobian_type, Utils::Vector3d>::value, "");
   }
 
   /* ctor */
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
   {
     Field field(5.);
 
-    BOOST_CHECK((Vector3d{0.0, 0.0, 0.0} == field.jacobian({1., 2., 3.})));
+    BOOST_CHECK((Utils::Vector3d{0.0, 0.0, 0.0} == field.jacobian({1., 2., 3.})));
   }
 }
 
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
   {
     static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
     static_assert(
-        std::is_same<Field::jacobian_type, Vector<Vector3d, 2>>::value, "");
+        std::is_same<Field::jacobian_type, Vector<Utils::Vector3d, 2>>::value, "");
   }
 
   /* ctor */
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
 
   /* ctor */
   {
-    const Vector3d A = {1., 2., 3.};
+    const Utils::Vector3d A = {1., 2., 3.};
     const double b = 4.;
     Field field(A, b);
 
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
   {
     Field field({}, {});
 
-    const Vector3d A = {1., 2., 3.};
+    const Utils::Vector3d A = {1., 2., 3.};
     const double b = 4.;
     field.A() = A;
     field.b() = b;
@@ -167,18 +167,18 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
 
   /* Field value */
   {
-    const Vector3d A = {1., 2., 3.};
+    const Utils::Vector3d A = {1., 2., 3.};
     const double b = 4.;
     Field field(A, b);
 
-    const Vector3d x = {1., 2., 3.};
+    const Utils::Vector3d x = {1., 2., 3.};
 
     BOOST_CHECK((A * x + b) == field(x));
   }
 
   /* Gradient */
   {
-    const Vector3d A = {1., 2., 3.};
+    const Utils::Vector3d A = {1., 2., 3.};
     const double b = 4.;
     Field field(A, b);
 
@@ -201,11 +201,11 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
 
   /* Field value unshifted */
   {
-    const Vector<Vector3d, 2> A = {{1., 2., 3}, {4., 5., 6.}};
+    const Vector<Utils::Vector3d, 2> A = {{1., 2., 3}, {4., 5., 6.}};
     const Vector2d b = {7., 8.};
     Field field(A, b);
 
-    const Vector3d x = {1., 1., 1.};
+    const Utils::Vector3d x = {1., 1., 1.};
 
     auto const res = field(x);
 
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
 
   /* Gradient */
   {
-    const Vector<Vector3d, 2> A = {{1., 2., 3}, {4., 5., 6.}};
+    const Vector<Utils::Vector3d, 2> A = {{1., 2., 3}, {4., 5., 6.}};
     const Vector2d b = {7., 8.};
     Field field(A, b);
 
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   /* Types */
   {
     static_assert(std::is_same<Field::value_type, double>::value, "");
-    static_assert(std::is_same<Field::jacobian_type, Vector3d>::value, "");
+    static_assert(std::is_same<Field::jacobian_type, Utils::Vector3d>::value, "");
   }
 
   /* Ctor */
@@ -239,8 +239,8 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
     boost::multi_array<double, 3> data(Vector3i{10, 11, 12});
     data[5][5][5] = -1. / 12.;
 
-    const Vector3d grid_spacing = {.1, .2, .3};
-    const Vector3d origin = {-1., 2., -3.};
+    const Utils::Vector3d grid_spacing = {.1, .2, .3};
+    const Utils::Vector3d origin = {-1., 2., -3.};
 
     Field field(data, grid_spacing, origin);
 
@@ -253,8 +253,8 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   {
     using Utils::Interpolation::bspline_3d_accumulate;
 
-    const Vector3d grid_spacing = {.1, .2, .3};
-    const Vector3d origin = {-1., 2., -1.4};
+    const Utils::Vector3d grid_spacing = {.1, .2, .3};
+    const Utils::Vector3d origin = {-1., 2., -1.4};
     const int n_nodes = 10;
 
     auto const x0 = origin + 0.5 * n_nodes * grid_spacing;
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     Field field(data, grid_spacing, origin);
 
-    auto const p = Vector3d{-.4, 3.14, 0.1};
+    auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
 
     auto const interpolated_value = bspline_3d_accumulate<2>(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
@@ -280,8 +280,8 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
-    const Vector3d grid_spacing = {.1, .2, .3};
-    const Vector3d origin = {-1., 2., -1.4};
+    const Utils::Vector3d grid_spacing = {.1, .2, .3};
+    const Utils::Vector3d origin = {-1., 2., -1.4};
     const int n_nodes = 10;
 
     auto const x0 = origin + 0.57 * n_nodes * grid_spacing;
@@ -291,13 +291,13 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     Field field(data, grid_spacing, origin);
 
-    auto const p = Vector3d{-.4, 3.14, 0.1};
+    auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
 
     auto const field_value = field.jacobian(p);
 
     auto const interpolated_value = bspline_3d_gradient_accumulate<2>(
         p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-        grid_spacing, origin, Vector3d{});
+        grid_spacing, origin, Utils::Vector3d{});
 
     BOOST_CHECK((interpolated_value - field_value).norm() <
                 2 * std::numeric_limits<double>::epsilon());
@@ -311,19 +311,19 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
   {
     static_assert(std::is_same<Field::value_type, Vector2d>::value, "");
     static_assert(
-        std::is_same<Field::jacobian_type, Vector<Vector3d, 2>>::value, "");
+        std::is_same<Field::jacobian_type, Vector<Utils::Vector3d, 2>>::value, "");
   }
 
   /* field value */
   {
     using Utils::Interpolation::bspline_3d_accumulate;
 
-    const Vector3d grid_spacing = {.1, .2, .3};
-    const Vector3d origin = {-1., 2., -1.4};
+    const Utils::Vector3d grid_spacing = {.1, .2, .3};
+    const Utils::Vector3d origin = {-1., 2., -1.4};
     const int n_nodes = 10;
 
     auto const a = origin + 0.37 * n_nodes * grid_spacing;
-    Vector3d x0[2] = {0.12 * a, -3. * a};
+    Utils::Vector3d x0[2] = {0.12 * a, -3. * a};
     auto const sigma = Vector2d{2., 3.};
 
     boost::multi_array<Vector2d, 3> data(Vector3i{n_nodes, n_nodes, n_nodes});
@@ -331,14 +331,14 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
       for (int j = 0; j < n_nodes; j++)
         for (int k = 0; k < n_nodes; k++) {
           auto const &h = grid_spacing;
-          auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
+          auto const x = origin + Utils::Vector3d{i * h[0], j * h[1], k * h[2]};
           data[i][j][k] = {gaussian(x, x0[0], sigma[0]),
                            gaussian(x, x0[1], sigma[1])};
         }
 
     Field field(data, grid_spacing, origin);
 
-    auto const p = Vector3d{-.4, 3.14, 0.1};
+    auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
 
     auto const field_value = field(p);
 
@@ -354,12 +354,12 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
   {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
-    const Vector3d grid_spacing = {.1, .2, .3};
-    const Vector3d origin = {-1., 2., -1.4};
+    const Utils::Vector3d grid_spacing = {.1, .2, .3};
+    const Utils::Vector3d origin = {-1., 2., -1.4};
     const int n_nodes = 10;
 
     auto const a = origin + 0.37 * n_nodes * grid_spacing;
-    Vector3d x0[2] = {0.12 * a, -3. * a};
+    Utils::Vector3d x0[2] = {0.12 * a, -3. * a};
     auto const sigma = Vector2d{2., 3.};
 
     boost::multi_array<Vector2d, 3> data(Vector3i{n_nodes, n_nodes, n_nodes});
@@ -367,14 +367,14 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
       for (int j = 0; j < n_nodes; j++)
         for (int k = 0; k < n_nodes; k++) {
           auto const &h = grid_spacing;
-          auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
+          auto const x = origin + Utils::Vector3d{i * h[0], j * h[1], k * h[2]};
           data[i][j][k] = {gaussian(x, x0[0], sigma[0]),
                            gaussian(x, x0[1], sigma[1])};
         }
 
     Field field(data, grid_spacing, origin);
 
-    auto const p = Vector3d{-.4, 3.14, 0.1};
+    auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
 
     auto const field_value = field.jacobian(p);
 
