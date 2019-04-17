@@ -612,6 +612,71 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
 
+    def test_torus(self):
+        """Checks that torus constraints with LJ interactions exert forces
+        on a test particle (that is, the constraints do what they should).
+
+        """
+        system = self.system
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
+
+        interaction_dir = 1  # constraint is directed inwards
+        radius = self.box_l / 4.0
+        tube_radius = self.box_l / 6.0
+        part_offset = 1.2
+
+        system.part.add(
+            id=0, pos=[self.box_l / 2.0, self.box_l / 2.0 + part_offset, self.box_l / 2.0], type=0)
+
+        # check force calculation of cylinder constraint
+        torus_shape = espressomd.shapes.Torus(
+            center=[self.box_l / 2.0,
+                    self.box_l / 2.0,
+                    self.box_l / 2.0],
+            normal=[0, 0, 1],
+            direction=interaction_dir,
+            radius=radius,
+            tube_radius=tube_radius)
+        penetrability = False  # impenetrable
+        torus_constraint = espressomd.constraints.ShapeBasedConstraint(
+            shape=torus_shape, particle_type=1, penetrable=penetrability)
+        torus_wall = system.constraints.add(torus_constraint)
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
+        system.integrator.run(0)  # update forces
+
+        self.assertAlmostEqual(torus_constraint.min_dist(),
+                               radius - tube_radius - part_offset)
+
+        # test summed forces on torus wall
+        self.assertAlmostEqual(
+            -1.0 * torus_wall.total_force()[1],
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.0,
+                sig=1.0,
+                r=torus_constraint.min_dist()),
+            places=10)  # minus for Newton's third law
+
+        #check whether total_summed_outer_normal_force is correct
+        y_part2 = self.box_l/2.0 + 2.0 * radius - part_offset
+        system.part.add(
+            id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
+        system.integrator.run(0)
+
+        self.assertAlmostEqual(torus_wall.total_force()[1], 0.0)
+        self.assertAlmostEqual(torus_wall.total_normal_force(), 2 * tests_common.lj_force(
+            espressomd, cutoff=2.0, offset=0., eps=1.0, sig=1.0,
+            r=radius - tube_radius - part_offset))
+
+        # Reset
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
+            epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
+
+
 
 if __name__ == "__main__":
     ut.main()
