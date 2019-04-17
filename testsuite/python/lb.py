@@ -70,7 +70,7 @@ class TestLB(object):
     def test_mass_momentum_thermostat(self):
         self.system.actors.clear()
         self.system.part.clear()
-        self.n_col_part = 100
+        self.n_col_part = 1000
         self.system.part.add(pos=np.random.random(
             (self.n_col_part, 3)) * self.params["box_l"])
         if espressomd.has_features("MASS"):
