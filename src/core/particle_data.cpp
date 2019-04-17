@@ -188,7 +188,7 @@ using UpdatePropertyMessage = boost::variant
 using UpdatePositionMessage = boost::variant
         < UpdatePosition<Utils::Vector3d, &ParticlePosition::p>
 #ifdef ROTATION
-        , UpdatePosition<Vector4d, &ParticlePosition::quat>
+        , UpdatePosition<Utils::Vector4d, &ParticlePosition::quat>
 #endif
         >;
 
@@ -909,7 +909,7 @@ void set_particle_dipm(int part, double dipm) {
 }
 
 void set_particle_dip(int part, double const *const dip) {
-  Vector4d quat;
+  Utils::Vector4d quat;
   double dipm;
   std::tie(quat, dipm) =
       convert_dip_to_quat(Utils::Vector3d({dip[0], dip[1], dip[2]}));
@@ -930,7 +930,7 @@ void set_particle_virtual(int part, int is_virtual) {
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part, double *vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
-  vs_relative.quat = Vector4d(vs_relative_quat, vs_relative_quat + 4);
+  vs_relative.quat = Utils::Vector4d(vs_relative_quat, vs_relative_quat + 4);
 
   mpi_update_particle_property<
       ParticleProperties::VirtualSitesRelativeParameteres,
@@ -999,8 +999,8 @@ void set_particle_mol_id(int part, int mid) {
 
 #ifdef ROTATION
 void set_particle_quat(int part, double *quat) {
-  mpi_update_particle<ParticlePosition, &Particle::r, Vector4d,
-                      &ParticlePosition::quat>(part, Vector4d(quat, quat + 4));
+  mpi_update_particle<ParticlePosition, &Particle::r, Utils::Vector4d,
+                      &ParticlePosition::quat>(part, Utils::Vector4d(quat, quat + 4));
 }
 
 void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab) {

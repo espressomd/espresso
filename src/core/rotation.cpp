@@ -72,7 +72,7 @@ static void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
 
 /** convert quaternions to the director */
 /** Convert director to quaternions */
-int convert_director_to_quat(const Utils::Vector3d &d, Vector4d &quat) {
+int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat) {
   double d_xy, dm;
   double theta2, phi2;
 
