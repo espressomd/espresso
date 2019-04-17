@@ -53,7 +53,7 @@ if LB_implementation:
     system.actors.add(lbf)
 
 EK_implementation = None
-if espressomd.has_features('ELECTROKINETICS') and 'EK.GPU' in modes:
+if espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') and 'EK.GPU' in modes:
     EK_implementation = espressomd.electrokinetics
     ek = EK_implementation.Electrokinetics(
         agrid=0.5,
