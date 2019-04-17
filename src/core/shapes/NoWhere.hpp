@@ -34,7 +34,7 @@ namespace Shapes {
  */
 class NoWhere : public Shape {
 public:
-  void calculate_dist(const Vector3d &, double *dist,
+  void calculate_dist(const Utils::Vector3d &, double *dist,
                       double *vec) const override {
     *dist = std::numeric_limits<double>::infinity();
 

@@ -99,11 +99,11 @@ BOOST_AUTO_TEST_CASE(viscous) {
   {
     struct {
       struct {
-        const Vector3d v = {1., 2., 3.};
+        const Utils::Vector3d v = {1., 2., 3.};
       } m;
     } p;
 
-    auto const u = Vector3d{4., 5., 6.};
+    auto const u = Utils::Vector3d{4., 5., 6.};
 
     BOOST_CHECK((-gamma * (p.m.v - u)) == viscous_coupling(p, u));
   }

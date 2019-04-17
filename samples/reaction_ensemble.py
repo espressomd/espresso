@@ -1,7 +1,3 @@
-"""
-This sample simulates the reaction ensemble. It also illustrates how the constant pH method can be used.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -20,14 +16,27 @@ This sample simulates the reaction ensemble. It also illustrates how the constan
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample simulates the reaction ensemble. It also illustrates how the
+constant pH method can be used.
+"""
 from __future__ import print_function
 import numpy as np
+import argparse
 
 import espressomd
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
 from espressomd import reaction_ensemble
+
+parser = argparse.ArgumentParser()
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--reaction_ensemble', action='store_const', dest='mode',
+                   const='reaction_ensemble', default='reaction_ensemble')
+group.add_argument('--constant_pH_ensemble', action='store_const', dest='mode',
+                   const='constant_pH_ensemble')
+args = parser.parse_args()
 
 
 # System parameters
@@ -45,13 +54,6 @@ system.time_step = 0.02
 system.cell_system.skin = 0.4
 system.cell_system.max_num_cells = 2744
 
-
-#############################################################
-#  Setup System                                             #
-#############################################################
-mode = "reaction_ensemble"
-#mode="constant_pH_ensemble"
-
 # Particle setup
 #############################################################
 # type 0 = HA
@@ -67,20 +69,21 @@ for i in range(N0, 2 * N0):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=2)
 
 RE = None
-if(mode == "reaction_ensemble"):
+if args.mode == "reaction_ensemble":
     RE = reaction_ensemble.ReactionEnsemble(temperature=1, exclusion_radius=1)
-elif(mode == "constant_pH_ensemble"):
+elif args.mode == "constant_pH_ensemble":
     RE = reaction_ensemble.ConstantpHEnsemble(
         temperature=1, exclusion_radius=1)
     RE.constant_pH = 2
-RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
-    1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
+RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
+                product_types=[1, 2], product_coefficients=[1, 1],
+                default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
 for i in range(10000):
     RE.reaction()
-    if(i % 100 == 0):
+    if i % 100 == 0:
         print("HA", system.number_of_particles(type=0), "A-",
               system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
 

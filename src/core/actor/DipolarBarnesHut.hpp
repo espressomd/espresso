@@ -101,7 +101,7 @@ protected:
 void activate_dipolar_barnes_hut(float epssq, float itolsq);
 void deactivate_dipolar_barnes_hut();
 
-extern DipolarBarnesHut *dipolarBarnesHut;
+extern std::unique_ptr<DipolarBarnesHut> dipolarBarnesHut;
 
 #endif
 

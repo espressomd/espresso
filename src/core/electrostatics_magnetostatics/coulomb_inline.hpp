@@ -2,9 +2,10 @@
 #define ESPRESSO_COULOMB_INLINE_HPP
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
-#include <utils/math/tensor_product.hpp>
 
 #ifdef ELECTROSTATICS
+#include <utils/Vector.hpp>
+#include <utils/math/tensor_product.hpp>
 
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
@@ -15,7 +16,7 @@
 #include "electrostatics_magnetostatics/scafacos.hpp"
 
 namespace Coulomb {
-inline Vector3d central_force(double const q1q2, const double *d, double dist) {
+inline Utils::Vector3d central_force(double const q1q2, const double *d, double dist) {
   Vector3d f{};
 
   switch (coulomb.method) {

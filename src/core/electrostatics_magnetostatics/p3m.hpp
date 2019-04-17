@@ -213,7 +213,7 @@ void p3m_charge_assign();
  *                        is not stored in the @ref p3m_data_struct::ca_frac
  *                        "ca_frac" arrays
  */
-void p3m_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
+void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
 
 /** Shrink wrap the charge grid */
 void p3m_shrink_wrap_charge_grid(int n_charges);

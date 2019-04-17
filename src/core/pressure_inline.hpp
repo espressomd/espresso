@@ -115,12 +115,10 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
  *  @param[out] f_left    Force on @p p_left.
  *  @param[out] f_right   Force on @p p_right.
  */
-inline void calc_three_body_bonded_forces(Particle const *p_mid,
-                                          Particle const *p_left,
-                                          Particle const *p_right,
-                                          Bonded_ia_parameters const *iaparams,
-                                          Vector3d &f_mid, Vector3d &f_left,
-                                          Vector3d &f_right) {
+inline void calc_three_body_bonded_forces(
+    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
+    Bonded_ia_parameters const *iaparams, Utils::Vector3d &f_mid,
+    Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
   switch (iaparams->type) {
   case BONDED_IA_ANGLE_HARMONIC:
     std::tie(f_mid, f_left, f_right) =
@@ -144,7 +142,7 @@ inline void calc_three_body_bonded_forces(Particle const *p_mid,
     default:
       runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
                         << p_mid->p.identity << " unknown\n";
-      f_mid = f_left = f_right = Vector3d{};
+      f_mid = f_left = f_right = Utils::Vector3d{};
       return;
     }
     break;
@@ -153,7 +151,7 @@ inline void calc_three_body_bonded_forces(Particle const *p_mid,
     fprintf(stderr, "calc_three_body_bonded_forces: \
             WARNING: Bond type %d, atom %d unhandled, Atom 2: %d\n",
             iaparams->type, p_mid->p.identity, p_left->p.identity);
-    f_mid = f_left = f_right = Vector3d{};
+    f_mid = f_left = f_right = Utils::Vector3d{};
     break;
   }
 }
@@ -234,7 +232,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
     auto const dx21 = -get_mi_vector(p1->r.p, p2->r.p);
     auto const dx31 = get_mi_vector(p3->r.p, p1->r.p);
 
-    Vector3d force1, force2, force3;
+    Utils::Vector3d force1, force2, force3;
     calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2, force3);
     /* three-body bonded interactions contribute to the stress but not the
      * scalar pressure */

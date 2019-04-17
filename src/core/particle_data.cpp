@@ -136,20 +136,20 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<std::array<double, 2 * LB_COMPONENTS>, &Prop::solvation>
 #endif
 #ifdef ROTATIONAL_INERTIA
-        , UpdateProperty<Vector3d, &Prop::rinertia>
+        , UpdateProperty<Utils::Vector3d, &Prop::rinertia>
 #endif
 #ifdef AFFINITY
-        , UpdateProperty<Vector3d, &Prop::bond_site>
+        , UpdateProperty<Utils::Vector3d, &Prop::bond_site>
 #endif
 #ifdef MEMBRANE_COLLISION
-        , UpdateProperty<Vector3d, &Prop::out_direction>
+        , UpdateProperty<Utils::Vector3d, &Prop::out_direction>
 #endif
         , UpdateProperty<int, &Prop::rotation>
 #ifdef ELECTROSTATICS
         , UpdateProperty<double, &Prop::q>
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
-        , UpdateProperty<Vector3d, &Prop::mu_E>
+        , UpdateProperty<Utils::Vector3d, &Prop::mu_E>
 #endif
 #ifdef DIPOLES
         , UpdateProperty<double, &Prop::dipm>
@@ -166,43 +166,43 @@ using UpdatePropertyMessage = boost::variant
 #ifndef PARTICLE_ANISOTROPY
         , UpdateProperty<double, &Prop::gamma>
 #else
-        , UpdateProperty<Vector3d, &Prop::gamma>
+        , UpdateProperty<Utils::Vector3d, &Prop::gamma>
 #endif // PARTICLE_ANISOTROPY
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
         , UpdateProperty<double, &Prop::gamma_rot>
 #else
-        , UpdateProperty<Vector3d, &Prop::gamma_rot>
+        , UpdateProperty<Utils::Vector3d, &Prop::gamma_rot>
 #endif // ROTATIONAL_INERTIA
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
         , UpdateExternalFlag
-        , UpdateProperty<Vector3d, &Prop::ext_force>
+        , UpdateProperty<Utils::Vector3d, &Prop::ext_force>
 #ifdef ROTATION
-        , UpdateProperty<Vector3d, &Prop::ext_torque>
+        , UpdateProperty<Utils::Vector3d, &Prop::ext_torque>
 #endif
 #endif
         >;
 
 using UpdatePositionMessage = boost::variant
-        < UpdatePosition<Vector3d, &ParticlePosition::p>
+        < UpdatePosition<Utils::Vector3d, &ParticlePosition::p>
 #ifdef ROTATION
-        , UpdatePosition<Vector4d, &ParticlePosition::quat>
+        , UpdatePosition<Utils::Vector4d, &ParticlePosition::quat>
 #endif
         >;
 
 using UpdateMomentumMessage = boost::variant
-      < UpdateMomentum<Vector3d, &ParticleMomentum::v>
+      < UpdateMomentum<Utils::Vector3d, &ParticleMomentum::v>
 #ifdef ROTATION
-      , UpdateMomentum<Vector3d, &ParticleMomentum::omega>
+      , UpdateMomentum<Utils::Vector3d, &ParticleMomentum::omega>
 #endif
       >;
 
 using UpdateForceMessage = boost::variant
-      < UpdateForce<Vector3d, &ParticleForce::f>
+      < UpdateForce<Utils::Vector3d, &ParticleForce::f>
 #ifdef ROTATION
-      , UpdateForce<Vector3d, &ParticleForce::torque>
+      , UpdateForce<Utils::Vector3d, &ParticleForce::torque>
 #endif
       >;
 
@@ -272,7 +272,7 @@ struct UpdateSwim {
 
 #ifdef ROTATION
 struct UpdateOrientation {
-    Vector3d axis;
+    Utils::Vector3d axis;
     double angle;
 
     void operator()(Particle &p) const {
@@ -833,7 +833,7 @@ int place_particle(int part, double p[3]) {
     mpi_place_particle(pnode, part, p);
   } else {
     /* new particle, node by spatial position */
-    pnode = cell_structure.position_to_node(Vector3d{p, p + 3});
+    pnode = cell_structure.position_to_node(Utils::Vector3d{p, p + 3});
 
     /* master node specific stuff */
     particle_node[part] = pnode;
@@ -847,8 +847,8 @@ int place_particle(int part, double p[3]) {
 }
 
 void set_particle_v(int part, double *v) {
-  mpi_update_particle<ParticleMomentum, &Particle::m, Vector3d,
-                      &ParticleMomentum::v>(part, Vector3d(v, v + 3));
+  mpi_update_particle<ParticleMomentum, &Particle::m, Utils::Vector3d,
+                      &ParticleMomentum::v>(part, Utils::Vector3d(v, v + 3));
 }
 
 #ifdef ENGINE
@@ -857,9 +857,9 @@ void set_particle_swimming(int part, ParticleParametersSwimming swim) {
 }
 #endif
 
-void set_particle_f(int part, const Vector3d &F) {
-  mpi_update_particle<ParticleForce, &Particle::f, Vector3d, &ParticleForce::f>(
-      part, F);
+void set_particle_f(int part, const Utils::Vector3d &F) {
+  mpi_update_particle<ParticleForce, &Particle::f, Utils::Vector3d,
+                      &ParticleForce::f>(part, F);
 }
 
 #if defined(MASS)
@@ -872,11 +872,11 @@ const constexpr double ParticleProperties::mass;
 
 #ifdef ROTATIONAL_INERTIA
 void set_particle_rotational_inertia(int part, double *rinertia) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::rinertia>(
-      part, Vector3d(rinertia, rinertia + 3));
+  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::rinertia>(
+      part, Utils::Vector3d(rinertia, rinertia + 3));
 }
 #else
-constexpr Vector3d ParticleProperties::rinertia;
+constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
@@ -884,22 +884,23 @@ void set_particle_rotation(int part, int rot) {
 }
 #endif
 #ifdef ROTATION
-void rotate_particle(int part, const Vector3d &axis, double angle) {
+void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
   mpi_send_update_message(part, UpdateOrientation{axis, angle});
 }
 #endif
 
 #ifdef AFFINITY
 void set_particle_affinity(int part, double *bond_site) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::bond_site>(
-      part, Vector3d(bond_site, bond_site + 3));
+  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::bond_site>(
+      part, Utils::Vector3d(bond_site, bond_site + 3));
 }
 #endif
 
 #ifdef MEMBRANE_COLLISION
 void set_particle_out_direction(int part, double *out_direction) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::out_direction>(
-      part, Vector3d(out_direction, out_direction + 3));
+  mpi_update_particle_property<Utils::Vector3d,
+                               &ParticleProperties::out_direction>(
+      part, Utils::Vector3d(out_direction, out_direction + 3));
 }
 #endif
 
@@ -909,10 +910,10 @@ void set_particle_dipm(int part, double dipm) {
 }
 
 void set_particle_dip(int part, double const *const dip) {
-  Vector4d quat;
+  Utils::Vector4d quat;
   double dipm;
   std::tie(quat, dipm) =
-      convert_dip_to_quat(Vector3d({dip[0], dip[1], dip[2]}));
+      convert_dip_to_quat(Utils::Vector3d({dip[0], dip[1], dip[2]}));
 
   set_particle_dipm(part, dipm);
   set_particle_quat(part, quat.data());
@@ -930,7 +931,7 @@ void set_particle_virtual(int part, int is_virtual) {
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part, double *vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
-  vs_relative.quat = Vector4d(vs_relative_quat, vs_relative_quat + 4);
+  vs_relative.quat = Utils::Vector4d(vs_relative_quat, vs_relative_quat + 4);
 
   mpi_update_particle_property<
       ParticleProperties::VirtualSitesRelativeParameteres,
@@ -962,8 +963,8 @@ const constexpr double ParticleProperties::q;
 
 #ifdef LB_ELECTROHYDRODYNAMICS
 void set_particle_mu_E(int part, double *mu_E) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::mu_E>(
-      part, Vector3d(mu_E, mu_E + 3));
+  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::mu_E>(
+      part, Utils::Vector3d(mu_E, mu_E + 3));
 }
 
 void get_particle_mu_E(int part, double (&mu_E)[3]) {
@@ -999,27 +1000,28 @@ void set_particle_mol_id(int part, int mid) {
 
 #ifdef ROTATION
 void set_particle_quat(int part, double *quat) {
-  mpi_update_particle<ParticlePosition, &Particle::r, Vector4d,
-                      &ParticlePosition::quat>(part, Vector4d(quat, quat + 4));
+  mpi_update_particle<ParticlePosition, &Particle::r, Utils::Vector4d,
+                      &ParticlePosition::quat>(part,
+                                               Utils::Vector4d(quat, quat + 4));
 }
 
-void set_particle_omega_lab(int part, const Vector3d &omega_lab) {
+void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab) {
   auto const &particle = get_particle_data(part);
 
-  mpi_update_particle<ParticleMomentum, &Particle::m, Vector3d,
+  mpi_update_particle<ParticleMomentum, &Particle::m, Utils::Vector3d,
                       &ParticleMomentum::omega>(
       part, convert_vector_space_to_body(particle, omega_lab));
 }
 
-void set_particle_omega_body(int part, const Vector3d &omega) {
-  mpi_update_particle<ParticleMomentum, &Particle::m, Vector3d,
+void set_particle_omega_body(int part, const Utils::Vector3d &omega) {
+  mpi_update_particle<ParticleMomentum, &Particle::m, Utils::Vector3d,
                       &ParticleMomentum::omega>(part, omega);
 }
 
-void set_particle_torque_lab(int part, const Vector3d &torque_lab) {
+void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab) {
   auto const &particle = get_particle_data(part);
 
-  mpi_update_particle<ParticleForce, &Particle::f, Vector3d,
+  mpi_update_particle<ParticleForce, &Particle::f, Utils::Vector3d,
                       &ParticleForce::torque>(
       part, convert_vector_space_to_body(particle, torque_lab));
 }
@@ -1035,9 +1037,9 @@ void set_particle_gamma(int part, double gamma) {
   mpi_update_particle_property<double, &ParticleProperties::gamma>(part, gamma);
 }
 #else
-void set_particle_gamma(int part, Vector3d gamma) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::gamma>(part,
-                                                                     gamma);
+void set_particle_gamma(int part, Utils::Vector3d gamma) {
+  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::gamma>(
+      part, gamma);
 }
 #endif // PARTICLE_ANISOTROPY
 
@@ -1048,8 +1050,8 @@ void set_particle_gamma_rot(int part, double gamma_rot) {
       part, gamma_rot);
 }
 #else
-void set_particle_gamma_rot(int part, Vector3d gamma_rot) {
-  mpi_update_particle_property<Vector3d, &ParticleProperties::gamma_rot>(
+void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
+  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::gamma_rot>(
       part, gamma_rot);
 }
 #endif // PARTICLE_ANISOTROPY
@@ -1058,22 +1060,22 @@ void set_particle_gamma_rot(int part, Vector3d gamma_rot) {
 
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
-void set_particle_ext_torque(int part, const Vector3d &torque) {
+void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
   auto const flag = (!torque.empty()) ? PARTICLE_EXT_TORQUE : 0;
   if (flag) {
-    mpi_update_particle_property<Vector3d, &ParticleProperties::ext_torque>(
-        part, torque);
+    mpi_update_particle_property<Utils::Vector3d,
+                                 &ParticleProperties::ext_torque>(part, torque);
   }
   mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
                                     PARTICLE_EXT_TORQUE, flag}));
 }
 #endif
 
-void set_particle_ext_force(int part, const Vector3d &force) {
+void set_particle_ext_force(int part, const Utils::Vector3d &force) {
   auto const flag = (!force.empty()) ? PARTICLE_EXT_FORCE : 0;
   if (flag) {
-    mpi_update_particle_property<Vector3d, &ParticleProperties::ext_force>(
-        part, force);
+    mpi_update_particle_property<Utils::Vector3d,
+                                 &ParticleProperties::ext_force>(part, force);
   }
   mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
                                     PARTICLE_EXT_FORCE, flag}));
@@ -1175,8 +1177,8 @@ void local_remove_particle(int part) {
 Particle *local_place_particle(int part, const double p[3], int _new) {
   Particle *pt;
 
-  Vector3i i{};
-  Vector3d pp = {p[0], p[1], p[2]};
+  Utils::Vector3i i{};
+  Utils::Vector3d pp = {p[0], p[1], p[2]};
   fold_position(pp, i);
 
   if (_new) {

@@ -37,17 +37,17 @@ public:
   const Coupling &coupling() const { return impl.coupling(); }
   const Field &field() const { return impl.field(); }
 
-  void add_energy(const Particle &p, const Vector3d &folded_pos, double t,
-                  Observable_stat &e) const override {
+  void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
+                  double t, Observable_stat &e) const override {
     e.external_fields[0] += impl.energy(p, folded_pos, t);
   }
 
-  ParticleForce force(const Particle &p, const Vector3d &folded_pos,
+  ParticleForce force(const Particle &p, const Utils::Vector3d &folded_pos,
                       double t) override {
     return impl.force(p, folded_pos, t);
   }
 
-  bool fits_in_box(Vector3d const &box) const override {
+  bool fits_in_box(Utils::Vector3d const &box) const override {
     return impl.field().fits_in_box(box);
   }
 };

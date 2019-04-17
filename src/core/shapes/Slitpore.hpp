@@ -32,7 +32,7 @@ public:
         m_lower_smoothing_radius(0.0), m_channel_width(0.0), m_pore_width(0.0),
         m_pore_length(0.0), m_dividing_plane(0.0) {}
 
-  void calculate_dist(const Vector3d &pos, double *dist,
+  void calculate_dist(const Utils::Vector3d &pos, double *dist,
                       double *vec) const override;
 
   double &pore_mouth() { return m_pore_mouth; }
