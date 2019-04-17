@@ -815,7 +815,8 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b,
  *                                    set by the user
  *  @param[out] lb_boundary_force     Force on the boundary nodes
  */
-__device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, LB_boundaries_gpu boundaries,
+__device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
+                                       LB_boundaries_gpu boundaries,
                                        unsigned int index,
                                        float *lb_boundary_force) {
   int c[3];
@@ -2150,8 +2151,9 @@ __global__ void set_rho(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
  */
 __global__ void init_boundaries(int *boundary_node_list,
                                 int *boundary_index_list,
-                                float* boundary_velocities,
-                                int number_of_boundnodes, LB_boundaries_gpu boundaries) {
+                                float *boundary_velocities,
+                                int number_of_boundnodes,
+                                LB_boundaries_gpu boundaries) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -2160,10 +2162,9 @@ __global__ void init_boundaries(int *boundary_node_list,
     auto const boundary_index = boundary_index_list[index];
 
     Utils::Array<float, 3> v = {
-      boundary_velocities[3* (boundary_index - 1) + 0],
-      boundary_velocities[3* (boundary_index - 1) + 1],
-      boundary_velocities[3* (boundary_index - 1) + 2]
-    };
+        boundary_velocities[3 * (boundary_index - 1) + 0],
+        boundary_velocities[3 * (boundary_index - 1) + 1],
+        boundary_velocities[3 * (boundary_index - 1) + 2]};
 
     boundaries.index[node_index] = boundary_index;
     boundaries.velocity[node_index] = v;
@@ -2174,7 +2175,7 @@ __global__ void init_boundaries(int *boundary_node_list,
  *  @param[out] n_a   Local node residing in array a
  *  @param[out] n_b   Local node residing in array b
  */
- __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
+__global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
   size_t index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x +
                  threadIdx.x;
   if (index < para->number_of_nodes) {
@@ -2450,7 +2451,8 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   free_realloc_and_clear(boundaries.index,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(boundaries.velocity,
-                         lbpar_gpu->number_of_nodes * sizeof(Utils::Array<float, 3>));
+                         lbpar_gpu->number_of_nodes *
+                             sizeof(Utils::Array<float, 3>));
 
   nodes_a.boundary = nodes_b.boundary = boundaries.index;
   nodes_a.boundary_velocity = nodes_b.boundary_velocity = boundaries.velocity;
@@ -2586,7 +2588,8 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
         make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
 
     KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound,
-               boundary_node_list, boundary_index_list, lb_boundary_velocity, number_of_boundnodes, boundaries);
+               boundary_node_list, boundary_index_list, lb_boundary_velocity,
+               number_of_boundnodes, boundaries);
   }
 
   cudaDeviceSynchronize();
