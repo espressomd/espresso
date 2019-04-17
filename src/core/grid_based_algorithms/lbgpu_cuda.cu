@@ -2684,7 +2684,6 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
                  node_f, device_rho_v, couple_virtual,
                  rng_counter_coupling_gpu->value(), friction,
                  lb_boundary_velocity);
-      rng_counter_coupling_gpu->increment();
     } else {
       // We use a dummy value for the RNG counter if no temperature is set.
       KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid_particles,

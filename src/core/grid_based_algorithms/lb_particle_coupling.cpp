@@ -275,7 +275,15 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 
 void lb_lbcoupling_propagate() {
   if (lb_lbfluid_get_kT() > 0.0) {
-    lb_particle_coupling.rng_counter_coupling->increment();
+    if (lattice_switch == ActiveLB::CPU) {
+#ifdef LB
+      lb_particle_coupling.rng_counter_coupling->increment();
+#endif
+    } else if (lattice_switch == ActiveLB::GPU) {
+#ifdef LB_GPU
+      rng_counter_coupling_gpu->increment();
+#endif
+    }
   }
 }
 #endif
