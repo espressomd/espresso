@@ -175,7 +175,7 @@ const Vector9d dpd_stress() {
   Vector9d dpd_stress = Vector9d::broadcast(0);
 
   if (max_cut > 0) {
-    short_range_loop([]() {},
+    short_range_loop(Utils::NoOp{},
       [&dpd_stress](Particle &p1, Particle &p2, Distance &d) {
       Vector3d f;
       IA_parameters *ia_params = get_ia_param(p1.p.type, p2.p.type);
