@@ -45,7 +45,7 @@ class ReactionEnsembleTest(ut.TestCase):
     lj_sig = 1.0
     lj_cut = 5.0
     box_l = 20.0
-    lj_shift = lj_potential(lj_cut, lj_eps, lj_sig, lj_cut+1, 0.0)
+    lj_shift = lj_potential(lj_cut, lj_eps, lj_sig, lj_cut + 1, 0.0)
 
     def lj_potential_arr(r, lj_eps, lj_sig, lj_shift):
         """lennard jones potential (that works for array input)"""
@@ -55,11 +55,21 @@ class ReactionEnsembleTest(ut.TestCase):
         ljsig12 = ljsig6**2
         return 4.0 * lj_eps * (ljsig12 * r12 - ljsig6 * r6) + lj_shift
 
-    r = np.linspace(1e-10,lj_cut,1000)
-    integrateSphere = 4*np.pi*np.trapz(r**2*np.exp(-lj_potential_arr(r, lj_eps, lj_sig, lj_shift)/ temperature), x=r) #numerical solution 
-    integreateRest = (box_l**3 - 4.0 / 3.0 * np.pi * lj_cut**3) #numerical solution for V_lj=0 => corresponds to the volume (as exp(0)=1)
+    r = np.linspace(1e-10, lj_cut, 1000)
+    integrateSphere = 4 * np.pi * np.trapz(
+        r**2 * np.exp(-lj_potential_arr(r,
+                                        lj_eps,
+                                        lj_sig,
+                                        lj_shift) / temperature),
+        x=r)  # numerical solution 
+    integreateRest = (box_l**3 - 4.0 / 3.0 * np.pi * lj_cut**3)
+                      # numerical solution for V_lj=0 => corresponds to the
+                      # volume (as exp(0)=1)
 
-    target_mu_ex = -temperature*np.log((integrateSphere + integreateRest)/box_l**3) #calculate excess chemical potential of the system from the integral values
+    target_mu_ex = -temperature * \
+        np.log((integrateSphere + integreateRest) / box_l**3)
+                                       # calculate excess chemical potential of
+                                       # the system from the integral values
 
     system = espressomd.System(box_l=np.ones(3) * box_l)
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
