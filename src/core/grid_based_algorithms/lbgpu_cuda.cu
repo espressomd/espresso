@@ -2150,14 +2150,18 @@ __global__ void set_rho(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
  */
 __global__ void init_boundaries(int *boundary_node_list,
                                 int *boundary_index_list,
+                                float* boundary_velocities,
                                 int number_of_boundnodes, LB_nodes_gpu n_a,
                                 LB_nodes_gpu n_b) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index < number_of_boundnodes) {
-    n_a.boundary[boundary_node_list[index]] = boundary_index_list[index];
-    n_b.boundary[boundary_node_list[index]] = boundary_index_list[index];
+    auto const node_index = boundary_node_list[index];
+    auto const boundary_index = boundary_index_list[index];
+
+    n_a.boundary[node_index] = boundary_index;
+    n_b.boundary[node_index] = boundary_index;
   }
 }
 
@@ -2443,9 +2447,9 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   free_realloc_and_clear(nodes_b.boundary,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(nodes_a.boundary_velocity,
-                         lbpar_gpu->number_of_nodes * sizeof(float3));
+                         lbpar_gpu->number_of_nodes * sizeof(Utils::Array<float, 3>));
   free_realloc_and_clear(nodes_b.boundary_velocity,
-                         lbpar_gpu->number_of_nodes * sizeof(float3));
+                         lbpar_gpu->number_of_nodes * sizeof(Utils::Array<float, 3>));
 
   /*write parameters in const memory*/
   cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(para), lbpar_gpu,
@@ -2578,7 +2582,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
         make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
 
     KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound,
-               boundary_node_list, boundary_index_list, number_of_boundnodes,
+               boundary_node_list, boundary_index_list, lb_boundary_velocity, number_of_boundnodes,
                nodes_a, nodes_b);
   }
 

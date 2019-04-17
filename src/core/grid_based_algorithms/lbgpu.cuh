@@ -30,15 +30,16 @@
 #ifdef CUDA
 #include "curand_wrapper.hpp"
 
+#include <utils/Array.hpp>
+
 #ifdef LB_GPU
 /** Velocity densities for the lattice Boltzmann system. */
 typedef struct {
-
   /** velocity density of the node */
   float *vd;
   /** flag indicating whether this site belongs to a boundary */
   unsigned int *boundary;
-  float3 *boundary_velocity;
+  Utils::Array<float, 3> *boundary_velocity;
 } LB_nodes_gpu;
 
 inline __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
