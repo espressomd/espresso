@@ -135,20 +135,20 @@ BOOST_AUTO_TEST_CASE(comparison_operators) {
 }
 
 BOOST_AUTO_TEST_CASE(algebraic_operators) {
-  Vector3i v1{1, 2, 3};
-  Vector3i v2{4, 5, 6};
+  Utils::Vector3i v1{1, 2, 3};
+  Utils::Vector3i v2{4, 5, 6};
 
-  BOOST_CHECK(((v1 + v2) == Vector3i{5, 7, 9}));
-  BOOST_CHECK(((v1 - v2) == Vector3i{-3, -3, -3}));
-  BOOST_CHECK(((-v1) == Vector3i{-1, -2, -3}));
+  BOOST_CHECK(((v1 + v2) == Utils::Vector3i{5, 7, 9}));
+  BOOST_CHECK(((v1 - v2) == Utils::Vector3i{-3, -3, -3}));
+  BOOST_CHECK(((-v1) == Utils::Vector3i{-1, -2, -3}));
 
   /* Mixed types */
   {
     BOOST_CHECK((Utils::Vector3d{1., 2., 3.} * 4) ==
                 (Utils::Vector3d{1. * 4, 2. * 4, 3. * 4}));
-    BOOST_CHECK((Utils::Vector3d{1., 2., 3.} + Vector3i{11, 12, 13}) ==
+    BOOST_CHECK((Utils::Vector3d{1., 2., 3.} + Utils::Vector3i{11, 12, 13}) ==
                 (Utils::Vector3d{1. + 11, 2. + 12, 3. + 13}));
-    BOOST_CHECK((Utils::Vector3d{1., 2., 3.} - Vector3i{11, 12, 13}) ==
+    BOOST_CHECK((Utils::Vector3d{1., 2., 3.} - Utils::Vector3i{11, 12, 13}) ==
                 (Utils::Vector3d{1. - 11, 2. - 12, 3. - 13}));
   }
 
@@ -162,17 +162,17 @@ BOOST_AUTO_TEST_CASE(algebraic_operators) {
     BOOST_CHECK((v1 - v2) == (v3 -= v2));
   }
 
-  BOOST_CHECK(((2 * v1) == Vector3i{2, 4, 6}));
-  BOOST_CHECK(((v1 * 2) == Vector3i{2, 4, 6}));
+  BOOST_CHECK(((2 * v1) == Utils::Vector3i{2, 4, 6}));
+  BOOST_CHECK(((v1 * 2) == Utils::Vector3i{2, 4, 6}));
 
   {
-    Vector3i v1{2, 4, 6};
+    Utils::Vector3i v1{2, 4, 6};
     auto v2 = 2 * v1;
     BOOST_CHECK(v2 == (v1 *= 2));
   }
 
   {
-    Vector3i v1{2, 4, 6};
+    Utils::Vector3i v1{2, 4, 6};
     auto v2 = v1 / 2;
     BOOST_CHECK(v2 == (v1 /= 2));
   }
@@ -191,8 +191,8 @@ BOOST_AUTO_TEST_CASE(broadcast) {
 }
 
 BOOST_AUTO_TEST_CASE(swap) {
-  const auto cv1 = Vector3i{1, 2, 3};
-  const auto cv2 = Vector3i{4, 5, 6};
+  const auto cv1 = Utils::Vector3i{1, 2, 3};
+  const auto cv2 = Utils::Vector3i{4, 5, 6};
 
   auto v1 = cv1;
   auto v2 = cv2;
@@ -212,7 +212,7 @@ BOOST_AUTO_TEST_CASE(decay_to_scalar_test) {
   }
 
   {
-    using original_t = Vector3i;
+    using original_t = Utils::Vector3i;
     using decayed_t = typename decay_to_scalar<original_t>::type;
 
     static_assert(std::is_same<original_t, decayed_t>::value, "");
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(vector_broadcast) {
 BOOST_AUTO_TEST_CASE(scalar_product) {
   static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3d{}), double>::value,
                 "");
-  static_assert(std::is_same<decltype(Utils::Vector3d{} * Vector3i{}), double>::value,
+  static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3i{}), double>::value,
                 "");
   static_assert(std::is_same<decltype(Vector<std::complex<float>, 2>{} * 3.f),
                              Vector<std::complex<float>, 2>>::value,
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE(scalar_product) {
 
   auto const v1 = Utils::Vector3d{1., 2., 3.};
   auto const v2 = Utils::Vector3d{4.1, 5.2, 6.3};
-  auto const v3 = Vector3i{11, 12, 13};
+  auto const v3 = Utils::Vector3i{11, 12, 13};
   BOOST_CHECK_EQUAL(v1 * v2, boost::inner_product(v1, v2, 0.));
   BOOST_CHECK_EQUAL(v1 * v3, boost::inner_product(v1, v3, 0.));
 }
