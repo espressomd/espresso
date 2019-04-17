@@ -4047,8 +4047,7 @@ int ek_neutralize_system(int species) {
 
 int ek_save_checkpoint(char *filename, char *lb_filename) {
   std::string fname(filename);
-  std::ofstream fout((const char *)(fname).c_str(),
-                     std::ofstream::binary);
+  std::ofstream fout((const char *)(fname).c_str(), std::ofstream::binary);
   ekfloat *densities =
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
