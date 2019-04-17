@@ -1565,4 +1565,4 @@ void lb_boundary_mach_check() {
   }
 }
 
-#endif
+#endif // end of LB guard
