@@ -68,8 +68,8 @@ void MMM1D_init();
 void add_mmm1d_coulomb_pair_force(double chprf, double const d[3], double dist2,
                                   double dist, double force[3]);
 
-double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double const d[3],
-                                 double r2, double r);
+double mmm1d_coulomb_pair_energy(double q1q2, double const d[3], double r2,
+                                 double r);
 
 /** Tuning of the parameters which are not set by the user, e.g. the
  *  switching radius or the bessel_cutoff. Call this only on the master node.

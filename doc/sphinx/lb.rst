@@ -42,7 +42,7 @@ To use the GPU accelerated variant, replace line 5 in the example above by::
 
 To use the (much faster) GPU implementation of the LBM, use
 :class:`espressomd.lb.LBFluidGPU` in place of :class:`espressomd.lb.LBFluid`.
-Please note that the GPU implementation uses single precision floating point operations. This decreases the accuracy of calculations compared to the CPU implementation. In particular, due to rounding errors, the fluid density decreases over time, when external forces, coupling to particles, or thermalization is used. The loss of density is on the order of $10^-12$ per time step.
+Please note that the GPU implementation uses single precision floating point operations. This decreases the accuracy of calculations compared to the CPU implementation. In particular, due to rounding errors, the fluid density decreases over time, when external forces, coupling to particles, or thermalization is used. The loss of density is on the order of :math:`10^{-12}` per time step.
 
 The command initializes the fluid with a given set of parameters. It is
 also possible to change parameters on the fly, but this will only rarely

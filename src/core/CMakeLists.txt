@@ -58,7 +58,7 @@ set(EspressoCore_SRC
   bonded_interactions/angle_cossquare.cpp
   bonded_interactions/angle_harmonic.cpp
   bonded_interactions/bonded_coulomb.cpp
-  bonded_interactions/bonded_coulomb_p3m_sr.cpp
+  bonded_interactions/bonded_coulomb_sr.cpp
   bonded_interactions/bonded_interaction_data.cpp
   bonded_interactions/bonded_tab.cpp
   bonded_interactions/dihedral.cpp

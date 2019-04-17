@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This samples simulates the flow of a Lattice-Boltzmann fluid past a cylinder, obtains the velocity profile in polar coordinates and compares it with the analytical result.
+This sample simulates the flow of a Lattice-Boltzmann fluid past a cylinder,
+obtains the velocity profile in polar coordinates and compares it with the
+analytical solution.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -34,6 +36,7 @@ import espressomd.accumulators
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])
 system.time_step = 0.01
 system.cell_system.skin = 0.4
+n_steps = 500
 
 lb_fluid = espressomd.lb.LBFluidGPU(
     agrid=1.0, dens=1.0, visc=1.0, tau=0.01, ext_force_density=[0, 0, 0.15], kT=1.0, seed=32)
@@ -41,33 +44,33 @@ system.actors.add(lb_fluid)
 system.thermostat.set_lb(LB_fluid=lb_fluid, seed=23)
 fluid_obs = espressomd.observables.CylindricalLBVelocityProfile(
     center=[5.0, 5.0, 0.0],
-        axis='z',
-        n_r_bins=100,
-        n_phi_bins=1,
-        n_z_bins=1,
-        min_r=0.0,
-        max_r=4.0,
-        min_phi=-np.pi,
-        max_phi=np.pi,
-        min_z=0.0,
-        max_z=10.0,
-        sampling_delta_x=0.05,
-        sampling_delta_y=0.05,
-        sampling_delta_z=1.0)
+    axis='z',
+    n_r_bins=100,
+    n_phi_bins=1,
+    n_z_bins=1,
+    min_r=0.0,
+    max_r=4.0,
+    min_phi=-np.pi,
+    max_phi=np.pi,
+    min_z=0.0,
+    max_z=10.0,
+    sampling_delta_x=0.05,
+    sampling_delta_y=0.05,
+    sampling_delta_z=1.0)
 cylinder_shape = espressomd.shapes.Cylinder(
     center=[5.0, 5.0, 5.0],
-        axis=[0, 0, 1],
-        direction=-1,
-        radius=4.0,
-        length=20.0)
+    axis=[0, 0, 1],
+    direction=-1,
+    radius=4.0,
+    length=20.0)
 cylinder_boundary = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
 system.lbboundaries.add(cylinder_boundary)
-system.integrator.run(5000)
+system.integrator.run(n_steps)
 
 
 accumulator = espressomd.accumulators.MeanVarianceCalculator(obs=fluid_obs)
 system.auto_update_accumulators.add(accumulator)
-system.integrator.run(5000)
+system.integrator.run(n_steps)
 
 lb_fluid_profile = accumulator.get_mean()
 lb_fluid_profile = np.reshape(lb_fluid_profile, (100, 1, 1, 3))
