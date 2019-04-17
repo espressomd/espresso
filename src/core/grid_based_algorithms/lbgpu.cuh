@@ -34,13 +34,18 @@
 
 #ifdef LB_GPU
 /** Velocity densities for the lattice Boltzmann system. */
-typedef struct {
+struct LB_nodes_gpu {
   /** velocity density of the node */
   float *vd;
   /** flag indicating whether this site belongs to a boundary */
   unsigned int *boundary;
   Utils::Array<float, 3> *boundary_velocity;
-} LB_nodes_gpu;
+};
+
+struct LB_boundaries_gpu {
+  unsigned int *index = nullptr;
+  Utils::Array<float, 3> *velocity = nullptr;
+};
 
 inline __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
                                         uint64_t philox_counter){
