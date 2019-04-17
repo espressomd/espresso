@@ -56,7 +56,7 @@ class SwimmerTest(ut.TestCase):
         S.part.add(id=1, pos=pos_1, swimming={"f_swim": f_swim})
         S.part[:].rotation = 1, 1, 1
 
-        S.thermostat.set_langevin(kT=temp, gamma=gamma)
+        S.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
         S.integrator.run(sampsteps)
 

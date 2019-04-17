@@ -91,17 +91,17 @@ int convert_director_to_quat(const Vector3d &d, Vector4d &quat) {
     if (d[2] > 0)
       theta2 = 0;
     else
-      theta2 = PI / 2.;
+      theta2 = Utils::pi() / 2.;
     phi2 = 0;
   } else {
     // Here, we take care of all other directions
-    // Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi - PI/2),
-    // where theta and phi - angles are in spherical coordinates
+    // Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi -
+    // Utils::pi()/2), where theta and phi - angles are in spherical coordinates
     theta2 = 0.5 * acos(d[2] / dm);
     if (d[1] < 0)
-      phi2 = -0.5 * acos(d[0] / d_xy) - PI * 0.25;
+      phi2 = -0.5 * acos(d[0] / d_xy) - Utils::pi() * 0.25;
     else
-      phi2 = 0.5 * acos(d[0] / d_xy) - PI * 0.25;
+      phi2 = 0.5 * acos(d[0] / d_xy) - Utils::pi() * 0.25;
   }
 
   // Calculate the quaternion from the angles

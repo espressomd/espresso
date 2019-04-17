@@ -28,7 +28,7 @@ modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
 
 LB = (espressomd.has_features('LB') and 'LB.CPU' in modes or
-      espressomd.has_features('LB_GPU') and 'LB.GPU' in modes)
+      espressomd.gpu_available() and espressomd.has_features('LB_GPU') and 'LB.GPU' in modes)
 
 
 class CheckpointTest(ut.TestCase):
@@ -91,6 +91,7 @@ class CheckpointTest(ut.TestCase):
     def test_thermostat(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
         self.assertEqual(system.thermostat.get_state()[0]['kT'], 1.0)
+        self.assertEqual(system.thermostat.get_state()[0]['seed'], 42)
         np.testing.assert_array_equal(system.thermostat.get_state()[
             0]['gamma'], np.array([2.0, 2.0, 2.0]))
 

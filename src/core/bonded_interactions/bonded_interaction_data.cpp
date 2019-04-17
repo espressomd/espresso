@@ -1,5 +1,6 @@
 #include "bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
+#include "communication.hpp"
 
 std::vector<Bonded_ia_parameters> bonded_ia_params;
 
@@ -89,4 +90,19 @@ void make_bond_type_exist(int type) {
   /* set bond types not used as undefined */
   for (i = old_size; i < ns; i++)
     bonded_ia_params[i].type = BONDED_IA_NONE;
+}
+
+int virtual_set_params(int bond_type) {
+  if (bond_type < 0)
+    return ES_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].type = BONDED_IA_VIRTUAL_BOND;
+  bonded_ia_params[bond_type].num = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1);
+
+  return ES_OK;
 }
