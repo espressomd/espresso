@@ -28,6 +28,7 @@
 #include "config.hpp"
 
 #ifdef LB_GPU
+#include <boost/optional.hpp>
 #include <cassert>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +50,6 @@
 #include <thrust/host_vector.h>
 #include <thrust/transform_reduce.h>
 
-#include <cassert>
 #include <cstdint>
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,8 +143,8 @@ static const float c_sound_sq = 1.0f / 3.0f;
 /*-------------------------------------------------------*/
 
 static constexpr float sqrt12 = 3.4641016151377544f;
-static Utils::Counter<uint64_t> rng_counter_coupling_gpu;
-Utils::Counter<uint64_t> rng_counter_fluid_gpu;
+boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling_gpu;
+boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid_gpu;
 
 /** Transformation from 1d array-index to xyz
  *  @param[in]  index   Node index / thread index
@@ -1660,21 +1660,22 @@ calc_viscous_force(LB_nodes_gpu n_a,
   viscforce_density.z += friction * particle_data[part_index].mu_E[2];
 #endif
 
-  /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
-  float4 random_floats = random_wrapper_philox(
-      particle_data[part_index].identity, LBQ * 32, philox_counter);
-  /* lb_coupl_pref is stored in MD units (force)
-   * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
-   * The factor 12 comes from the fact that we use random numbers
-   * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-   * time_step comes from the discretization.
-   */
-  float lb_coupl_pref =
-      sqrtf(12.f * 2.f * friction * para->kT / para->time_step);
-  viscforce_density.x += lb_coupl_pref * (random_floats.w - 0.5f);
-  viscforce_density.y += lb_coupl_pref * (random_floats.x - 0.5f);
-  viscforce_density.z += lb_coupl_pref * (random_floats.y - 0.5f);
-
+  if (para->kT > 0.0) {
+    /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
+    float4 random_floats = random_wrapper_philox(
+        particle_data[part_index].identity, LBQ * 32, philox_counter);
+    /* lb_coupl_pref is stored in MD units (force)
+     * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+     * The factor 12 comes from the fact that we use random numbers
+     * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
+     * time_step comes from the discretization.
+     */
+    float lb_coupl_pref =
+        sqrtf(12.f * 2.f * friction * para->kT / para->time_step);
+    viscforce_density.x += lb_coupl_pref * (random_floats.w - 0.5f);
+    viscforce_density.y += lb_coupl_pref * (random_floats.x - 0.5f);
+    viscforce_density.z += lb_coupl_pref * (random_floats.y - 0.5f);
+  }
   /** delta_j for transform momentum transfer to lattice units which is done
     in calc_node_force (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225
     (1999)) */
@@ -2204,9 +2205,32 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
   if (index < para->number_of_nodes) {
     calc_m_from_n(n_a, index, mode);
     relax_modes(mode, index, node_f, d_v);
-    if (para->kT > 0.0) {
-      thermalize_modes(mode, index, philox_counter);
-    }
+    thermalize_modes(mode, index, philox_counter);
+    apply_forces(index, mode, node_f, d_v);
+    normalize_modes(mode);
+    calc_n_from_modes_push(n_b, mode, index);
+  }
+}
+
+/** Integration step of the LB-fluid-solver
+ *  @param[in]     n_a     Local node residing in array a
+ *  @param[out]    n_b     Local node residing in array b
+ *  @param[in,out] d_v     Local device values
+ *  @param[in,out] node_f  Local node force density
+ *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
+ */
+__global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
+                          LB_node_force_density_gpu node_f,
+                          EK_parameters *ek_parameters_gpu) {
+  /*every node is connected to a thread via the index*/
+  unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
+                       blockDim.x * blockIdx.x + threadIdx.x;
+  /*the 19 moments (modes) are only temporary register values */
+  Utils::Array<float, 19> mode;
+
+  if (index < para->number_of_nodes) {
+    calc_m_from_n(n_a, index, mode);
+    relax_modes(mode, index, node_f, d_v);
     apply_forces(index, mode, node_f, d_v);
     normalize_modes(mode);
     calc_n_from_modes_push(n_b, mode, index);
@@ -2666,13 +2690,22 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
         (threads_per_block_particles * blocks_per_grid_particles_y);
     dim3 dim_grid_particles =
         make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-
-    KERNELCALL(
-        calc_fluid_particle_ia<no_of_neighbours>, dim_grid_particles,
-        threads_per_block_particles, *current_nodes, gpu_get_particle_pointer(),
-        gpu_get_particle_force_pointer(), node_f, device_rho_v, couple_virtual,
-        rng_counter_coupling_gpu.value(), friction, lb_boundary_velocity);
-    rng_counter_coupling_gpu.increment();
+    if (lbpar_gpu.kT > 0.0) {
+      assert(rng_counter_coupling_gpu);
+      KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid_particles,
+                 threads_per_block_particles, *current_nodes,
+                 gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
+                 node_f, device_rho_v, couple_virtual,
+                 rng_counter_coupling_gpu->value(), friction,
+                 lb_boundary_velocity);
+    } else {
+      // We use a dummy value for the RNG counter if no temperature is set.
+      KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid_particles,
+                 threads_per_block_particles, *current_nodes,
+                 gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
+                 node_f, device_rho_v, couple_virtual, 0, friction,
+                 lb_boundary_velocity);
+    }
   }
 }
 template void lb_calc_particle_lattice_ia_gpu<8>(bool couple_virtual,
@@ -2910,15 +2943,27 @@ void lb_integrate_GPU() {
 
   /* call of fluid step */
   if (intflag) {
-    KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-               device_rho_v, node_f, lb_ek_parameters_gpu,
-               rng_counter_fluid_gpu.value());
+    if (lbpar_gpu.kT > 0.0) {
+      assert(rng_counter_fluid_gpu);
+      KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
+                 device_rho_v, node_f, lb_ek_parameters_gpu,
+                 rng_counter_fluid_gpu->value());
+    } else {
+      KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
+                 device_rho_v, node_f, lb_ek_parameters_gpu);
+    }
     current_nodes = &nodes_b;
     intflag = false;
   } else {
-    KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-               device_rho_v, node_f, lb_ek_parameters_gpu,
-               rng_counter_fluid_gpu.value());
+    if (lbpar_gpu.kT > 0.0) {
+      assert(rng_counter_fluid_gpu);
+      KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
+                 device_rho_v, node_f, lb_ek_parameters_gpu,
+                 rng_counter_fluid_gpu->value());
+    } else {
+      KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
+                 device_rho_v, node_f, lb_ek_parameters_gpu);
+    }
     current_nodes = &nodes_a;
     intflag = true;
   }
@@ -3181,8 +3226,12 @@ void lb_fluid_set_rng_state_gpu(uint64_t counter) {
 }
 
 uint64_t lb_coupling_get_rng_state_gpu() {
-  return rng_counter_coupling_gpu.value();
+  assert(rng_counter_coupling_gpu);
+  return rng_counter_coupling_gpu->value();
 }
-uint64_t lb_fluid_get_rng_state_gpu() { return rng_counter_fluid_gpu.value(); }
+uint64_t lb_fluid_get_rng_state_gpu() {
+  assert(rng_counter_fluid_gpu);
+  return rng_counter_fluid_gpu->value();
+}
 
 #endif /* LB_GPU */

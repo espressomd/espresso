@@ -26,10 +26,12 @@
 #define LB_GPU_H
 
 #include "config.hpp"
-#include "utils/Counter.hpp"
 
 #ifdef LB_GPU
+#include <boost/optional.hpp>
+
 #include "utils.hpp"
+#include "utils/Counter.hpp"
 
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
@@ -258,8 +260,8 @@ void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
 /*@}*/
-extern Utils::Counter<uint64_t> rng_counter_fluid_gpu;
-
+extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid_gpu;
+extern boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling_gpu;
 #endif /* LB_GPU */
 
 #endif /* LB_GPU_H */
