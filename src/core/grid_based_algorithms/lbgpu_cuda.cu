@@ -82,8 +82,6 @@ static LB_nodes_gpu nodes_b = {nullptr, nullptr};
 LB_node_force_density_gpu node_f = {
     // force_density
     nullptr,
-    // scforce_density
-    nullptr,
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
     // force_density_buf
     nullptr
@@ -410,7 +408,6 @@ __device__ void reset_LB_force_densities(unsigned int index,
   }
 #endif
 
-#ifdef EXTERNAL_FORCES
   if (para->external_force_density) {
     node_f.force_density[0 * para->number_of_nodes + index] =
         para->ext_force_density[0];
@@ -423,12 +420,6 @@ __device__ void reset_LB_force_densities(unsigned int index,
     node_f.force_density[1 * para->number_of_nodes + index] = 0.0f;
     node_f.force_density[2 * para->number_of_nodes + index] = 0.0f;
   }
-#else
-  /* reset force */
-  node_f.force_density[0 * para->number_of_nodes + index] = 0.0f;
-  node_f.force_density[1 * para->number_of_nodes + index] = 0.0f;
-  node_f.force_density[2 * para->number_of_nodes + index] = 0.0f;
-#endif
 }
 
 __global__ void
@@ -2796,79 +2787,6 @@ void lb_calc_fluid_momentum_GPU(double *host_mom) {
   host_mom[0] = (double)(host_momentum[0] * lbpar_gpu.agrid / lbpar_gpu.tau);
   host_mom[1] = (double)(host_momentum[1] * lbpar_gpu.agrid / lbpar_gpu.tau);
   host_mom[2] = (double)(host_momentum[2] * lbpar_gpu.agrid / lbpar_gpu.tau);
-}
-
-/** Setup and call kernel to remove the net momentum of the whole fluid
- */
-void lb_remove_fluid_momentum_GPU(void) {
-  float *tot_momentum;
-  float host_momentum[3] = {0.0f, 0.0f, 0.0f};
-  cuda_safe_mem(cudaMalloc((void **)&tot_momentum, 3 * sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(tot_momentum, host_momentum, 3 * sizeof(float),
-                           cudaMemcpyHostToDevice));
-
-  /* values for the kernel call */
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
-      (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-
-  KERNELCALL(momentum, dim_grid, threads_per_block, *current_nodes,
-             device_rho_v, node_f, tot_momentum);
-
-  cuda_safe_mem(cudaMemcpy(host_momentum, tot_momentum, 3 * sizeof(float),
-                           cudaMemcpyDeviceToHost));
-
-  KERNELCALL(remove_momentum, dim_grid, threads_per_block, *current_nodes,
-             device_rho_v, node_f, tot_momentum);
-
-  cudaFree(tot_momentum);
-}
-
-/** Setup and call kernel to calculate the temperature of the hole fluid
- *  @param host_temp   value of the temperature calculated on the GPU
- */
-void lb_calc_fluid_temperature_GPU(double *host_temp) {
-  int host_number_of_non_boundary_nodes = 0;
-  int *device_number_of_non_boundary_nodes;
-  cuda_safe_mem(
-      cudaMalloc((void **)&device_number_of_non_boundary_nodes, sizeof(int)));
-  cuda_safe_mem(cudaMemcpy(device_number_of_non_boundary_nodes,
-                           &host_number_of_non_boundary_nodes, sizeof(int),
-                           cudaMemcpyHostToDevice));
-
-  float host_jsquared = 0.0f;
-  float *device_jsquared;
-  cuda_safe_mem(cudaMalloc((void **)&device_jsquared, sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(device_jsquared, &host_jsquared, sizeof(float),
-                           cudaMemcpyHostToDevice));
-
-  /* values for the kernel call */
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
-      (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-
-  KERNELCALL(temperature, dim_grid, threads_per_block, *current_nodes,
-             device_jsquared, device_number_of_non_boundary_nodes);
-
-  cuda_safe_mem(cudaMemcpy(&host_number_of_non_boundary_nodes,
-                           device_number_of_non_boundary_nodes, sizeof(int),
-                           cudaMemcpyDeviceToHost));
-  cuda_safe_mem(cudaMemcpy(&host_jsquared, device_jsquared, sizeof(float),
-                           cudaMemcpyDeviceToHost));
-
-  *host_temp = 0;
-
-  *host_temp +=
-      (double)(host_jsquared * 1. /
-               (3.0f * lbpar_gpu.rho / lbpar_gpu.agrid / lbpar_gpu.agrid /
-                lbpar_gpu.agrid * host_number_of_non_boundary_nodes *
-                lbpar_gpu.tau * lbpar_gpu.tau * lbpar_gpu.agrid));
 }
 
 /** Setup and call kernel for getting macroscopic fluid values of all nodes
