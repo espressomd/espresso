@@ -38,7 +38,7 @@ cdef class ReactionAlgorithm(object):
                        the partition function, therefore they can be neglected.
     """
     cdef object _params
-    cdef CReactionAlgorithm* RE
+    cdef CReactionAlgorithm * RE
 
     def _valid_keys(self):
         return "temperature", "exclusion_radius", "seed"
@@ -350,7 +350,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
             self._params[k] = kwargs[k]
 
         self.REptr = make_unique[CReactionEnsemble]( < int > int(self._params["seed"]))        
-        self.RE = <CReactionAlgorithm* > self.REptr.get()
+        self.RE = <CReactionAlgorithm * > self.REptr.get()
         
         for k in kwargs:
             if k in self._valid_keys():
@@ -429,7 +429,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
                 raise KeyError("%s is not a vaild key" % k)
 
         self.WLRptr = make_unique[CWangLandauReactionEnsemble]( < int > int(self._params["seed"]))
-        self.RE = <CReactionAlgorithm *> self.WLRptr.get()
+        self.RE = <CReactionAlgorithm * > self.WLRptr.get()
 
         self._set_params_in_es_core()
 
@@ -442,7 +442,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         called between consecutive reactions.
 
         """
-        status_wang_landau = deref(self.WLRptr).do_reaction(int(reaction_steps))
+        status_wang_landau = deref(
+            self.WLRptr).do_reaction(int(reaction_steps))
         if(status_wang_landau < 0):
                 raise WangLandauHasConverged(
                     "The Wang-Landau algorithm has converged.")
@@ -676,11 +677,13 @@ cdef class WidomInsertion(ReactionAlgorithm):
                 raise ValueError(
                     "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
-        self._params["exclusion_radius"] = 0.0 #this is not used by the widom insertion method
-        self._params["gamma"]=1.0 #this is not used by the widom insertion method
+        self._params[
+            "exclusion_radius"] = 0.0  # this is not used by the widom insertion method
+        self._params[
+            "gamma"] = 1.0  # this is not used by the widom insertion method
 
         self.WidomInsertionPtr = make_unique[CWidomInsertion]( < int > int(self._params["seed"]))
-        self.RE = <CReactionAlgorithm *> self.WidomInsertionPtr.get()
+        self.RE = <CReactionAlgorithm * > self.WidomInsertionPtr.get()
         for k in kwargs:
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
