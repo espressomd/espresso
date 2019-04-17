@@ -6,6 +6,8 @@
 #include "grid.hpp"
 #include "lb.hpp"
 #include "lbgpu.hpp"
+#include "LbWalberla.hpp"
+#include "lb_walberla_instance.hpp"
 
 #include "utils/index.hpp"
 using Utils::get_linear_index;
@@ -171,7 +173,7 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
 } // namespace
 #endif
 
-#if defined(LB) || defined(LB_GPU)
+#if defined(LB) || defined(LB_GPU) || defined(LB_WALBERLA)
 void lb_lbfluid_update() {
   if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
@@ -1236,11 +1238,23 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     return j / rho;
 #endif // LB
   }
+#ifdef LB_WALBERLA
+  if (lb_walberla()){
+    Vector3d velocity = {};
+    if(comm_cart.rank()==0){
+      velocity = (collector_function(&LbWalberla::get_node_velocity, ind));
+    }else{
+      collector_function(&LbWalberla::get_node_velocity, ind);
+    }
+    return velocity;
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 
   return {};
 }
 
+#if defined(LB) || defined(LB_GPU) // lbmodel not defined for LB_WALBERLA
 const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
   Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
 
@@ -1253,6 +1267,7 @@ const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
 
   return p_pi;
 }
+#endif
 
 const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
   Vector6d p_pi{};
