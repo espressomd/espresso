@@ -147,9 +147,9 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_vec_integration_test_odd) {
   auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
   auto const interpolated_value = bspline_3d_gradient_accumulate<order>(
       p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, Vector<Utils::Vector3d, 2>{});
+      grid_spacing, origin, Utils::Vector<Utils::Vector3d, 2>{});
 
-  const Vector<Utils::Vector3d, 2> exact_value = {del_gaussian(p, x0[0], sigma[0]),
+  const Utils::Vector<Utils::Vector3d, 2> exact_value = {del_gaussian(p, x0[0], sigma[0]),
                                            del_gaussian(p, x0[1], sigma[1])};
 
   BOOST_CHECK_SMALL((interpolated_value[0] - exact_value[0]).norm(), 1.e-2);

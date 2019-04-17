@@ -28,9 +28,9 @@ namespace Fields {
 namespace detail {
 
 template <typename T, size_t codim> struct matrix_vector_impl {
-  Vector<T, codim> operator()(const Vector<Vector<T, 3>, codim> &A,
-                              Vector<T, 3> const &v) const {
-    Vector<T, codim> ret;
+  Utils::Vector<T, codim> operator()(const Utils::Vector<Utils::Vector<T, 3>, codim> &A,
+                              Utils::Vector<T, 3> const &v) const {
+    Utils::Vector<T, codim> ret;
 
     for (int i = 0; i < codim; i++)
       ret[i] = A[i] * v;
@@ -40,7 +40,7 @@ template <typename T, size_t codim> struct matrix_vector_impl {
 };
 
 template <typename T> struct matrix_vector_impl<T, 1> {
-  T operator()(const Vector<T, 3> &A, Vector<T, 3> const &v) const {
+  T operator()(const Utils::Vector<T, 3> &A, Utils::Vector<T, 3> const &v) const {
     return A * v;
   }
 };
@@ -53,7 +53,7 @@ template <typename T> struct matrix_vector_impl<T, 1> {
  */
 template <typename T, size_t codim> class AffineMap {
 public:
-  using value_type = typename Utils::decay_to_scalar<Vector<T, codim>>::type;
+  using value_type = typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
   using jacobian_type = detail::jacobian_type<T, codim>;
 
 private:

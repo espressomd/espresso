@@ -51,8 +51,8 @@
 
 Utils::Vector3i node_grid{};
 Utils::Vector3i node_pos = {-1, -1, -1};
-Vector<int, 6> node_neighbors{};
-Vector<int, 6> boundary{};
+Utils::Vector<int, 6> node_neighbors{};
+Utils::Vector<int, 6> boundary{};
 int periodic = 7;
 
 Utils::Vector3d box_l = {1, 1, 1};

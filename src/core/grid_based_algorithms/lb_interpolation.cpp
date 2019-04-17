@@ -37,7 +37,7 @@ namespace {
 template <typename Op>
 void lattice_interpolation(Lattice const &lattice, Utils::Vector3d const &pos,
                            Op &&op) {
-  Vector<std::size_t, 8> node_index{};
+  Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
 
   /* determine elementary lattice cell surrounding the particle

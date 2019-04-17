@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "utils/Vector.hpp"
+using Utils::Vector;
 
 /** Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
 #define TEST_NUMBERS                                                           \
@@ -206,14 +207,14 @@ BOOST_AUTO_TEST_CASE(swap) {
 BOOST_AUTO_TEST_CASE(decay_to_scalar_test) {
   {
     using original_t = Vector<int, 1>;
-    using decayed_t = typename decay_to_scalar<original_t>::type;
+    using decayed_t = typename Utils::decay_to_scalar<original_t>::type;
 
     static_assert(std::is_same<int, decayed_t>::value, "");
   }
 
   {
     using original_t = Utils::Vector3i;
-    using decayed_t = typename decay_to_scalar<original_t>::type;
+    using decayed_t = typename Utils::decay_to_scalar<original_t>::type;
 
     static_assert(std::is_same<original_t, decayed_t>::value, "");
   }

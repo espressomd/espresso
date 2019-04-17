@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(jacobian_type_test) {
   using std::is_same;
 
   static_assert(is_same<jacobian_type<double, 1>, Utils::Vector3d>::value, "");
-  static_assert(is_same<jacobian_type<double, 2>, Vector<Utils::Vector3d, 2>>::value,
+  static_assert(is_same<jacobian_type<double, 2>, Utils::Vector<Utils::Vector3d, 2>>::value,
                 "");
 }
 
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(constant_vector_field) {
   {
     static_assert(std::is_same<Field::value_type, Utils::Vector2d>::value, "");
     static_assert(
-        std::is_same<Field::jacobian_type, Vector<Utils::Vector3d, 2>>::value, "");
+        std::is_same<Field::jacobian_type, Utils::Vector<Utils::Vector3d, 2>>::value, "");
   }
 
   /* ctor */
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
   {
     static_assert(std::is_same<Field::value_type, double>::value, "");
     static_assert(
-        std::is_same<Field::jacobian_type, Vector<Field::value_type, 3>>::value,
+        std::is_same<Field::jacobian_type, Utils::Vector<Field::value_type, 3>>::value,
         "");
   }
 
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
 }
 
 template <size_t N, size_t M, typename T>
-using Matrix = Vector<Vector<T, M>, N>;
+using Matrix = Utils::Vector<Utils::Vector<T, M>, N>;
 
 BOOST_AUTO_TEST_CASE(affine_vector_field) {
   using Field = AffineMap<double, 2>;
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
 
   /* Field value unshifted */
   {
-    const Vector<Utils::Vector3d, 2> A = {{1., 2., 3}, {4., 5., 6.}};
+    const Utils::Vector<Utils::Vector3d, 2> A = {{1., 2., 3}, {4., 5., 6.}};
     const Utils::Vector2d b = {7., 8.};
     Field field(A, b);
 
@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
 
   /* Gradient */
   {
-    const Vector<Utils::Vector3d, 2> A = {{1., 2., 3}, {4., 5., 6.}};
+    const Utils::Vector<Utils::Vector3d, 2> A = {{1., 2., 3}, {4., 5., 6.}};
     const Utils::Vector2d b = {7., 8.};
     Field field(A, b);
 
@@ -311,7 +311,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
   {
     static_assert(std::is_same<Field::value_type, Utils::Vector2d>::value, "");
     static_assert(
-        std::is_same<Field::jacobian_type, Vector<Utils::Vector3d, 2>>::value, "");
+        std::is_same<Field::jacobian_type, Utils::Vector<Utils::Vector3d, 2>>::value, "");
   }
 
   /* field value */

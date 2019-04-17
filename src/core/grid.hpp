@@ -70,9 +70,9 @@ extern Utils::Vector3i node_grid;
 /** position of node in node grid */
 extern Utils::Vector3i node_pos;
 /** the six nearest neighbors of a node in the node grid. */
-extern Vector<int, 6> node_neighbors;
+extern Utils::Vector<int, 6> node_neighbors;
 /** where to fold particles that leave local box in direction i. */
-extern Vector<int, 6> boundary;
+extern Utils::Vector<int, 6> boundary;
 /** Flags for all three dimensions whether pbc are applied (default).
     The first three bits give the periodicity */
 extern int periodic;
@@ -199,7 +199,7 @@ Utils::Vector3d get_mi_vector(T const &a, U const &b) {
     i. e. a previously folded position will be folded correctly.
 */
 template <size_t N, typename T1, typename T2>
-void fold_coordinate(Vector<T1, N> &pos, Vector<T2, N> &image_box, int dir) {
+void fold_coordinate(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box, int dir) {
   if (PERIODIC(dir)) {
     std::tie(pos[dir], image_box[dir]) =
         Algorithm::periodic_fold(pos[dir], image_box[dir], box_l[dir]);
@@ -222,7 +222,7 @@ void fold_coordinate(Vector<T1, N> &pos, Vector<T2, N> &image_box, int dir) {
     i. e. a previously folded position will be folded correctly.
 */
 template <size_t N, typename T1, typename T2>
-void fold_position(Vector<T1, N> &pos, Vector<T2, N> &image_box) {
+void fold_position(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box) {
   for (int i = 0; i < 3; i++)
     fold_coordinate(pos, image_box, i);
 }
