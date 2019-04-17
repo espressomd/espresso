@@ -1546,7 +1546,6 @@ Vector3d lb_lbfluid_calc_fluid_momentum() {
   }
   return fluid_momentum;
 }
-#endif
 
 /*** Sanity check if the velocity defined at LB boundaries is within the Mach
 number limits of the scheme i.e. u < 0.3**************************************/
@@ -1565,3 +1564,5 @@ void lb_boundary_mach_check() {
     }
   }
 }
+
+#endif
