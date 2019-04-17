@@ -662,7 +662,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
             places=10)  # minus for Newton's third law
 
         #check whether total_summed_outer_normal_force is correct
-        y_part2 = self.box_l/2.0 + 2.0 * radius - part_offset
+        y_part2 = self.box_l / 2.0 + 2.0 * radius - part_offset
         system.part.add(
             id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
         system.integrator.run(0)
@@ -675,7 +675,6 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
-
 
 
 if __name__ == "__main__":
