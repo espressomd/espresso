@@ -602,7 +602,7 @@ class Analysis(object):
         return array_locked((
             p[0], p[1], p[2],
             p[3], p[4], p[5],
-            p[6], p[7], p[8]))
+            p[6], p[7], p[8])).reshape((3,3))
 
     #
     # Energy analysis
