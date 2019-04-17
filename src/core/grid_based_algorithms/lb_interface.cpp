@@ -75,7 +75,7 @@ void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
 
 void mpi_send_fluid_populations_slave(int node, int index) {
   if (node == this_node) {
-    Vector19d populations;
+    Utils::Vector19d populations;
     MPI_Recv(populations.data(), 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
     lb_set_populations(index, populations);
@@ -89,7 +89,7 @@ REGISTER_CALLBACK(mpi_send_fluid_populations_slave)
  *  @param index  index of the lattice site
  *  @param pop    local fluid population
  */
-void mpi_send_fluid_populations(int node, int index, const Vector19d &pop) {
+void mpi_send_fluid_populations(int node, int index, const Utils::Vector19d &pop) {
   if (node == this_node) {
     lb_set_populations(index, pop);
   } else {
@@ -1060,7 +1060,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       throw std::runtime_error(err_msg + "could not open file for reading.");
     }
 
-    Vector19d pop;
+    Utils::Vector19d pop;
     Utils::Vector3i ind;
     auto const gridsize = lblattice.global_grid;
     int saved_gridsize[3];
@@ -1375,13 +1375,13 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
   throw std::runtime_error("LB not activated.");
 }
 
-const Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
+const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float population[19];
 
     lb_lbfluid_get_population(ind, population);
-    Vector19d p_pop;
+    Utils::Vector19d p_pop;
     for (int i = 0; i < LBQ; ++i)
       p_pop[i] = population[i];
     return p_pop;
@@ -1398,7 +1398,7 @@ const Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
-    Vector19d p_pop;
+    Utils::Vector19d p_pop;
     mpi_recv_fluid_populations(node, index, p_pop.data());
     return p_pop;
 #else
@@ -1471,7 +1471,7 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind, const Utils::Vector3d &u
   }
 }
 
-void lb_lbnode_set_pop(const Utils::Vector3i &ind, const Vector19d &p_pop) {
+void lb_lbnode_set_pop(const Utils::Vector3i &ind, const Utils::Vector19d &p_pop) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float population[19];
