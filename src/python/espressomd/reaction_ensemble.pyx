@@ -1,7 +1,7 @@
 include "myconfig.pxi"
 from libcpp.vector cimport vector
 from libcpp.string cimport string
-from libcpp.memory cimport shared_ptr, make_shared
+from libcpp.memory cimport unique_ptr, make_unique
 from cython.operator cimport dereference as deref
 import numpy as np
 
@@ -38,7 +38,7 @@ cdef class ReactionAlgorithm(object):
                        the partition function, therefore they can be neglected.
     """
     cdef object _params
-    cdef shared_ptr[CReactionAlgorithm] RE
+    cdef unique_ptr[CReactionAlgorithm] RE
 
     def _valid_keys(self):
         return "temperature", "exclusion_radius", "seed"
@@ -338,7 +338,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
     This class implements the Reaction Ensemble.
     """
 
-    cdef shared_ptr[CReactionEnsemble] REptr
+    cdef unique_ptr[CReactionEnsemble] REptr
 
     def __init__(self, *args, **kwargs):
         self._params = {"temperature": 1,
@@ -349,8 +349,8 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
                     "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
 
-        self.REptr = make_shared[CReactionEnsemble]( < int > int(self._params["seed"]))        
-        self.RE = <shared_ptr[CReactionAlgorithm] > self.REptr
+        self.REptr = make_unique[CReactionEnsemble]( < int > int(self._params["seed"]))        
+        self.RE = <unique_ptr[CReactionAlgorithm] > self.REptr.get()
         
         for k in kwargs:
             if k in self._valid_keys():
@@ -361,7 +361,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
         self._set_params_in_es_core()
 
 cdef class ConstantpHEnsemble(ReactionAlgorithm):
-    cdef shared_ptr[CConstantpHEnsemble] constpHptr 
+    cdef unique_ptr[CConstantpHEnsemble] constpHptr 
 
     def __init__(self, *args, **kwargs):
         self._params = {"temperature": 1,
@@ -373,8 +373,8 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             self._params[k] = kwargs[k]
 
 
-        self.constpHptr = make_shared[CConstantpHEnsemble]( < int > int(self._params["seed"]))
-        self.RE = <shared_ptr[CReactionAlgorithm] > self.constpHptr        
+        self.constpHptr = make_unique[CConstantpHEnsemble]( < int > int(self._params["seed"]))
+        self.RE = <unique_ptr[CReactionAlgorithm] > self.constpHptr.get()
 
         for k in kwargs:
             if k in self._valid_keys():
@@ -405,14 +405,14 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
 
             """
 
-            self.constpHptr.get().m_constant_pH = pH
+            deref(self.constpHptr).m_constant_pH = pH
 
 cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
     """
     This Class implements the Wang-Landau Reaction Ensemble.
     """
 
-    cdef shared_ptr[CWangLandauReactionEnsemble] WLRptr
+    cdef unique_ptr[CWangLandauReactionEnsemble] WLRptr
 
     def __init__(self, *args, **kwargs):
         self._params = {"temperature": 1,
@@ -428,8 +428,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             else:
                 raise KeyError("%s is not a vaild key" % k)
 
-        self.WLRptr = make_shared[CWangLandauReactionEnsemble]( < int > int(self._params["seed"]))
-        self.RE = <shared_ptr[CReactionAlgorithm] > self.WLRptr
+        self.WLRptr = make_unique[CWangLandauReactionEnsemble]( < int > int(self._params["seed"]))
+        self.RE = <unique_ptr[CReactionAlgorithm] > self.WLRptr.get()
 
         self._set_params_in_es_core()
 
@@ -442,7 +442,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         called between consecutive reactions.
 
         """
-        status_wang_landau = self.WLRptr.get().do_reaction(int(reaction_steps))
+        status_wang_landau = deref(self.WLRptr).do_reaction(int(reaction_steps))
         if(status_wang_landau < 0):
                 raise WangLandauHasConverged(
                     "The Wang-Landau algorithm has converged.")
@@ -481,7 +481,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         for i in range(len(self._params["corresponding_acid_types"])):
             _corresponding_acid_types.push_back(
                 self._params["corresponding_acid_types"][i])
-        self.WLRptr.get().add_new_CV_degree_of_association(
+        deref(self.WLRptr).add_new_CV_degree_of_association(
             self._params["associated_type"], self._params["min"], self._params["max"], _corresponding_acid_types)
 
     def _valid_keys_add_collective_variable_degree_of_association(self):
@@ -530,7 +530,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
                 self._params[k] = kwargs[k]
         filname_potential_energy_boundaries_file = self._params[
             "filename"].encode("utf-8")
-        self.WLRptr.get().add_new_CV_potential_energy(
+        deref(self.WLRptr).add_new_CV_potential_energy(
             filname_potential_energy_boundaries_file, self._params["delta"])
 
     def _valid_keys_add_collective_variable_potential_energy(self):
@@ -655,13 +655,19 @@ cdef class WidomInsertion(ReactionAlgorithm):
 
     """
 
-    cdef shared_ptr[CWidomInsertion] WidomInsertionPtr
+    cdef unique_ptr[CWidomInsertion] WidomInsertionPtr
 
     def _required_keys(self):
         return "temperature", "seed"
 
     def _valid_keys(self):
         return "temperature", "seed"
+
+    def _valid_keys_add(self):
+        return "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
+
+    def _required_keys_add(self):
+        return ["reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
 
     def __init__(self, *args, **kwargs):
         self._params = {"temperature": 1}
@@ -670,9 +676,11 @@ cdef class WidomInsertion(ReactionAlgorithm):
                 raise ValueError(
                     "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
-        self._params["exclusion_radius"] = 0.0
-        self.WidomInsertionPtr = make_shared[CWidomInsertion]( < int > int(self._params["seed"]))
-        self.RE = <shared_ptr[CReactionAlgorithm] > self.WidomInsertionPtr
+        self._params["exclusion_radius"] = 0.0 #this is not used by the widom insertion method
+        self._params["gamma"]=1.0 #this is not used by the widom insertion method
+
+        self.WidomInsertionPtr = make_unique[CWidomInsertion]( < int > int(self._params["seed"]))
+        self.RE = <unique_ptr[CReactionAlgorithm] > self.WidomInsertionPtr.get()
         for k in kwargs:
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
