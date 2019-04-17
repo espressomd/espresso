@@ -1,13 +1,13 @@
 #include "lb_interface.hpp"
+#include "LbWalberla.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "electrokinetics.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "lb.hpp"
-#include "lbgpu.hpp"
-#include "LbWalberla.hpp"
 #include "lb_walberla_instance.hpp"
+#include "lbgpu.hpp"
 
 #include "utils/index.hpp"
 using Utils::get_linear_index;
@@ -1239,11 +1239,11 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
 #endif // LB
   }
 #ifdef LB_WALBERLA
-  if (lb_walberla()){
+  if (lb_walberla()) {
     Vector3d velocity = {};
-    if(comm_cart.rank()==0){
+    if (comm_cart.rank() == 0) {
       velocity = (collector_function(&LbWalberla::get_node_velocity, ind));
-    }else{
+    } else {
       collector_function(&LbWalberla::get_node_velocity, ind);
     }
     return velocity;

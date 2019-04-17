@@ -8,8 +8,8 @@
 
 #include "boost/mpi.hpp"
 #include "grid_based_algorithms/LbWalberla.hpp"
-#include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "utils/Vector.hpp"
 #include <iostream>
 
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(mpi_collector) {
       BOOST_CHECK(lb_walberla()->set_node_velocity(node, v));
     }
     Vector3d res = lb_lbnode_get_velocity(node);
-    if(comm_cart.rank() == 0){
+    if (comm_cart.rank() == 0) {
       BOOST_CHECK((res - v).norm() < eps);
     }
   }

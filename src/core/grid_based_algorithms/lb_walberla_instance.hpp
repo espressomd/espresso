@@ -2,8 +2,8 @@
 #define GRID_BASED_ALGORITHMS_LBWALBERLA_INSTANCE_HPP
 
 #include "LbWalberla.hpp"
-#include "utils/Vector.hpp"
 #include "communication.hpp"
+#include "utils/Vector.hpp"
 #include "utils/mpi/gatherv.hpp"
 
 /** @brief Initialize Walberla's MPI manager */
@@ -33,25 +33,25 @@ auto collector_function(Getter getter_function, V position) -> decltype(auto) {
 
 #ifdef ADDITIONAL_CHECKS
   int hits = 0;
-  if(result){
+  if (result) {
     hits = 1;
   }
   mpi_allreduce(&hits, &hits, 1, MPI_INT, MPI_SUM, comm_cart);
-  if(hits > 1)
+  if (hits > 1)
     throw std::runtime_error("More than one process found local data.");
-  if(hits < 1)
+  if (hits < 1)
     throw std::runtime_error("Local data cannot be found.");
 #endif
   typename decltype(result)::value_type *global_result{};
-  if(comm_cart.rank()==0){
-    if(!result){
+  if (comm_cart.rank() == 0) {
+    if (!result) {
       comm_cart.recv(boost::mpi::any_source, 222, global_result);
-    }else{
+    } else {
       global_result = &(result.get());
     }
     return *global_result;
-  }else{
-    if(result){
+  } else {
+    if (result) {
       global_result = &(result.get());
       comm_cart.send(0, 222, global_result);
     }

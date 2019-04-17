@@ -1,9 +1,9 @@
 #include "config.hpp"
 #ifdef LB_WALBERLA
 #include "LbWalberla.hpp"
+#include "communication.hpp"
 #include "lb_walberla_instance.hpp"
 #include "utils/Vector.hpp"
-#include "communication.hpp"
 #include "utils/mpi/gatherv.hpp"
 
 #include "blockforest/Initialization.h"
