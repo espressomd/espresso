@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
+include(unit_test)
+
 # Add tests here
 unit_test(NAME Vector_test SRC Vector_test.cpp)
 unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp DEPENDS Boost::serialization)
