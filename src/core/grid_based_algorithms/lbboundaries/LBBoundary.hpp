@@ -85,15 +85,9 @@ public:
 #endif
 
 private:
-  /** Private methods */
-  /* The actual boundary */
-  std::shared_ptr<::LBBoundaries::LBBoundary>
-      m_lbboundary; // TODO probably a brainfart (and named wrong)
-
   /** Private data members */
   std::shared_ptr<Shapes::Shape>
-      m_shape; // TODO: I don't like this being a pointer just to get around the
-               // virtual limitations
+      m_shape;
   Vector3d m_velocity;
   Vector3d m_force;
 
