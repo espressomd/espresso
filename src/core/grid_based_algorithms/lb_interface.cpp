@@ -208,12 +208,14 @@ void lb_lbfluid_propagate() {
 void lb_lbfluid_on_integration_start() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
-    lb_GPU_sanity_checks();
-    lb_boundary_mach_check();
+    if (this_node == 0) {
+      lb_GPU_sanity_checks();
+      lb_boundary_mach_check();
 
-    if (this_node == 0 && lb_reinit_particles_gpu()) {
-      lb_realloc_particles_gpu();
-      lb_reinit_particles_gpu.validate();
+      if (lb_reinit_particles_gpu()) {
+        lb_realloc_particles_gpu();
+        lb_reinit_particles_gpu.validate();
+      }
     }
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
