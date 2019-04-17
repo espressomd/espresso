@@ -814,18 +814,14 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr, unsigned int index,
                                        float *lb_boundary_velocity,
                                        float *lb_boundary_force) {
   int c[3];
-  float v[3];
   float shift, weight, pop_to_bounce_back;
   float boundary_force[3] = {0.0f, 0.0f, 0.0f};
   size_t to_index, to_index_x, to_index_y, to_index_z;
   int population, inverse;
-  int boundary_index;
 
-  boundary_index = n_curr.boundary[index];
+  auto const boundary_index = n_curr.boundary[index];
   if (boundary_index != 0) {
-    v[0] = lb_boundary_velocity[3 * (boundary_index - 1) + 0];
-    v[1] = lb_boundary_velocity[3 * (boundary_index - 1) + 1];
-    v[2] = lb_boundary_velocity[3 * (boundary_index - 1) + 2];
+    auto const v = n_curr.boundary_velocity[index];
 
     auto const xyz = index_to_xyz(index);
 
@@ -2169,8 +2165,8 @@ __global__ void init_boundaries(int *boundary_node_list,
       boundary_velocities[3* (boundary_index - 1) + 2]
     };
 
-    n_a.boundary_velocity[index] = v;
-    n_b.boundary_velocity[index] = v;
+    n_a.boundary_velocity[node_index] = v;
+    n_b.boundary_velocity[node_index] = v;
   }
 }
 
