@@ -1682,7 +1682,7 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
 
 double mmm2d_coulomb_pair_energy(double charge_factor, double dv[3], double,
                                  double d) {
-  double eng, pref = coulomb.prefactor * charge_factor;
+  double eng, pref = charge_factor;
   if (pref != 0.0) {
     eng = calc_mmm2d_copy_pair_energy(dv);
     return pref * (eng + 1 / d);

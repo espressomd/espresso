@@ -28,7 +28,7 @@ sys.path.append(os.path.join(moduledir, '..', '..', 'config'))
 import featuredefs
 
 if len(sys.argv) != 3:
-    print("Usage: {} DEFFILE OYXFILE".format(sys.argv[0]), file=sys.stderr)
+    print("Usage: {} DEFFILE PYXFILE".format(sys.argv[0]), file=sys.stderr)
     exit(2)
 
 deffilename, cfilename = sys.argv[1:3]

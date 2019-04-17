@@ -67,7 +67,7 @@ static void lb_check_halo_regions(const LB_Fluid &lbfluid);
 #endif // ADDITIONAL_CHECKS
 
 /** Counter for the RNG */
-Utils::Counter<uint64_t> rng_counter_fluid;
+boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 /** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
@@ -582,7 +582,10 @@ void lb_sanity_checks() {
   }
 }
 
-uint64_t lb_fluid_get_rng_state() { return rng_counter_fluid.value(); }
+uint64_t lb_fluid_get_rng_state() {
+  assert(rng_counter_fluid);
+  return rng_counter_fluid->value();
+}
 
 void mpi_set_lb_fluid_counter(uint64_t counter) {
   rng_counter_fluid = Utils::Counter<uint64_t>(counter);
@@ -798,14 +801,15 @@ inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
 }
 
 template <typename T>
-inline std::array<T, 19>
-lb_thermalize_modes(Lattice::index_t index, const r123::Philox4x64::ctr_type &c,
-                    const std::array<T, 19> &modes) {
+inline std::array<T, 19> lb_thermalize_modes(Lattice::index_t index,
+                                             const std::array<T, 19> &modes) {
   if (lbpar.kT > 0.0) {
     using Utils::uniform;
     using rng_type = r123::Philox4x64;
     using ctr_type = rng_type::ctr_type;
 
+    const r123::Philox4x64::ctr_type c{
+        {rng_counter_fluid->value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
     const T rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
     auto const pref = std::sqrt(12.) * rootrho;
 
@@ -928,8 +932,6 @@ inline void lb_collide_stream() {
   }
 #endif
 
-  const r123::Philox4x64::ctr_type c{
-      {rng_counter_fluid.value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
@@ -948,7 +950,7 @@ inline void lb_collide_stream() {
 
           /* fluctuating hydrodynamics */
           auto const thermalized_modes =
-              lb_thermalize_modes(index, c, relaxed_modes);
+              lb_thermalize_modes(index, relaxed_modes);
 
           /* apply forces */
           auto const modes_with_forces =

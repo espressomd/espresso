@@ -21,7 +21,7 @@
 import espressomd
 from espressomd import assert_features, electrostatics, electrostatic_extensions
 from espressomd.shapes import Wall
-from espressomd.visualization_opengl import *
+from espressomd import visualization_opengl
 import numpy
 from threading import Thread
 from time import sleep
@@ -43,9 +43,8 @@ temp = 1198.3
 gamma = 50
 #l_bjerrum = 0.885^2 * e^2/(4*pi*epsilon_0*k_B*T)
 l_bjerrum = 130878.0 / temp
-Ez = 0
-
-num_steps_equilibration = 500
+Vz = 0  # potential difference between the electrodes
+Ez = 364.5  # conversion from potential to electical field
 
 # Particle parameters
 types = {"Cl": 0, "Na": 1, "Electrode": 2}
@@ -69,11 +68,18 @@ system.box_l = [box_l, box_l, box_z + elc_gap]
 system.periodicity = [1, 1, 1]
 system.time_step = time_step
 system.cell_system.skin = 0.3
-system.thermostat.set_langevin(kT=temp, gamma=gamma)
+system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 # Visualizer
-visualizer = openGLLive(system, camera_position=[-3 * box_l, box_l * 0.5, box_l * 0.5], camera_right=[
-                        0, 0, 1], drag_force=5 * 298, background_color=[1, 1, 1], light_pos=[30, 30, 30], ext_force_arrows_type_scale=[0.0001], ext_force_arrows=False)
+visualizer = visualization_opengl.openGLLive(
+    system,
+    camera_position=[-3 * box_l, box_l * 0.5, box_l * 0.5],
+    camera_right=[0, 0, 1],
+    drag_force=5 * 298,
+    background_color=[1, 1, 1],
+    light_pos=[30, 30, 30],
+    ext_force_arrows_type_scale=[0.0001],
+    ext_force_arrows=False)
 
 # Walls
 system.constraints.add(shape=Wall(
@@ -85,13 +91,13 @@ system.constraints.add(shape=Wall(
 for i in range(int(n_ionpairs)):
     p = numpy.random.random(3) * box_l
     p[2] += lj_sigmas["Electrode"]
-    system.part.add(id=len(system.part),
-                    type=types["Cl"], pos=p, q=charges["Cl"], mass=masses["Cl"])
+    system.part.add(id=len(system.part), type=types["Cl"],
+                    pos=p, q=charges["Cl"], mass=masses["Cl"])
 for i in range(int(n_ionpairs)):
     p = numpy.random.random(3) * box_l
     p[2] += lj_sigmas["Electrode"]
-    system.part.add(id=len(system.part),
-                    type=types["Na"], pos=p, q=charges["Na"], mass=masses["Na"])
+    system.part.add(id=len(system.part), type=types["Na"],
+                    pos=p, q=charges["Na"], mass=masses["Na"])
 
 # Lennard-Jones interactions parameters
 
@@ -132,26 +138,26 @@ system.actors.add(elc)
 
 
 def increaseElectricField():
-    global Ez
-    Ez += 1000
+    global Vz
+    Vz += 3
     for p in system.part:
-        p.ext_force = [0, 0, Ez * p.q]
-    print(Ez)
+        p.ext_force = [0, 0, p.q * Vz * Vz_to_Ez]
+    print('Potential difference: {:.0V}'.format(Vz))
 
 
 def decreaseElectricField():
     global Ez
-    Ez -= 1000
+    Vz -= 3
     for p in system.part:
-        p.ext_force = [0, 0, Ez * p.q]
-    print(Ez)
+        p.ext_force = [0, 0, p.q * Vz * Vz_to_Ez]
+    print('Potential difference: {:.0V}'.format(Vz))
 
 
 # Register buttons
-visualizer.keyboardManager.register_button(KeyboardButtonEvent(
-    'u', KeyboardFireEvent.Hold, increaseElectricField))
-visualizer.keyboardManager.register_button(KeyboardButtonEvent(
-    'j', KeyboardFireEvent.Hold, decreaseElectricField))
+visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+    'u', visualization_opengl.KeyboardFireEvent.Hold, increaseElectricField))
+visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+    'j', visualization_opengl.KeyboardFireEvent.Hold, decreaseElectricField))
 
 
 def main():

@@ -49,8 +49,12 @@ void lb_lbcoupling_set_gamma(double gamma) {
 
 double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
 
+bool lb_lbcoupling_is_seed_required() {
+  return not lb_particle_coupling.rng_counter_coupling.is_initialized();
+}
+
 uint64_t lb_coupling_get_rng_state_cpu() {
-  return lb_particle_coupling.rng_counter_coupling.value();
+  return lb_particle_coupling.rng_counter_coupling->value();
 }
 
 uint64_t lb_lbcoupling_get_rng_state() {
@@ -202,13 +206,17 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         ghost_communicator(&cell_structure.exchange_ghosts_comm,
                            GHOSTTRANS_SWIMMING);
 #endif
-
         using rng_type = r123::Philox4x64;
         using ctr_type = rng_type::ctr_type;
         using key_type = rng_type::key_type;
 
-        ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
-                    static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+        ctr_type c;
+        if (lb_lbfluid_get_kT() > 0.0) {
+          c = ctr_type{{lb_particle_coupling.rng_counter_coupling->value(),
+                        static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+        } else {
+          c = ctr_type{{0, 0}};
+        }
 
         /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
          * The factor 12 comes from the fact that we use random numbers
@@ -266,6 +274,16 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 }
 
 void lb_lbcoupling_propagate() {
-  lb_particle_coupling.rng_counter_coupling.increment();
+  if (lb_lbfluid_get_kT() > 0.0) {
+    if (lattice_switch == ActiveLB::CPU) {
+#ifdef LB
+      lb_particle_coupling.rng_counter_coupling->increment();
+#endif
+    } else if (lattice_switch == ActiveLB::GPU) {
+#ifdef LB_GPU
+      rng_counter_coupling_gpu->increment();
+#endif
+    }
+  }
 }
 #endif

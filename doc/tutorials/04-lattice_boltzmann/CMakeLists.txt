@@ -2,6 +2,7 @@ configure_file(04-lattice_boltzmann_part4.ipynb ${CMAKE_CURRENT_BINARY_DIR}/04-l
 configure_file(04-lattice_boltzmann_part3.ipynb ${CMAKE_CURRENT_BINARY_DIR}/04-lattice_boltzmann_part3.ipynb COPYONLY)
 configure_file(04-lattice_boltzmann_part2.ipynb ${CMAKE_CURRENT_BINARY_DIR}/04-lattice_boltzmann_part2.ipynb COPYONLY)
 configure_file(04-lattice_boltzmann_part1.ipynb ${CMAKE_CURRENT_BINARY_DIR}/04-lattice_boltzmann_part1.ipynb COPYONLY)
+configure_file(scripts/part4_plot.py ${CMAKE_CURRENT_BINARY_DIR}/scripts/part4_plot.py COPYONLY)
 configure_file(figures/poiseuille.png ${CMAKE_CURRENT_BINARY_DIR}/figures/poiseuille.png COPYONLY)
 configure_file(figures/msd.png ${CMAKE_CURRENT_BINARY_DIR}/figures/msd.png COPYONLY)
 configure_file(figures/latticeboltzmann-momentumexchange.png ${CMAKE_CURRENT_BINARY_DIR}/figures/latticeboltzmann-momentumexchange.png COPYONLY)
