@@ -34,7 +34,7 @@ namespace Fields {
  */
 template <typename T, size_t codim> class PlaneWave {
 public:
-  using value_type = typename decay_to_scalar<Vector<T, codim>>::type;
+  using value_type = typename Utils::decay_to_scalar<Vector<T, codim>>::type;
   using jacobian_type = detail::jacobian_type<T, codim>;
 
 private:

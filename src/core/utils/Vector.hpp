@@ -126,7 +126,10 @@ public:
 };
 
 namespace Utils {
-    template <size_t N> using VectorXd = Vector<double, N>;
+    template<class T, size_t N>
+    using Vector = ::Vector<T, N>;
+
+    template<size_t N> using VectorXd = Vector<double, N>;
     using Vector2d = VectorXd<2>;
     using Vector3d = VectorXd<3>;
     using Vector4d = VectorXd<4>;
@@ -134,181 +137,189 @@ namespace Utils {
     using Vector19d = VectorXd<19>;
 
     using Vector3i = Vector<int, 3>;
-}
 
-namespace detail {
-template <size_t N, typename T, typename U, typename Op>
-auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
-  using std::declval;
+    namespace detail {
+        template<size_t N, typename T, typename U, typename Op>
+        auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
+            using std::declval;
 
-  using R = decltype(op(declval<T>(), declval<U>()));
-  Vector<R, N> ret;
+            using R = decltype(op(declval<T>(), declval<U>()));
+            Vector<R, N> ret;
 
-  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
-                 op);
+            std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
+                           op);
 
-  return ret;
-}
+            return ret;
+        }
 
-template <size_t N, typename T, typename Op>
-Vector<T, N> &binary_op_assign(Vector<T, N> &a, Vector<T, N> const &b, Op op) {
-  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
-  return a;
-}
+        template<size_t N, typename T, typename Op>
+        Vector<T, N> &binary_op_assign(Vector<T, N> &a, Vector<T, N> const &b, Op op) {
+            std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(a), op);
+            return a;
+        }
 
-template <size_t N, typename T, typename Op>
-constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
-  for (int i = 0; i < a.size(); i++) {
-    /* Short circuit */
-    if (!static_cast<bool>(op(a[i], b[i]))) {
-      return false;
+        template<size_t N, typename T, typename Op>
+        constexpr bool all_of(Vector<T, N> const &a, Vector<T, N> const &b, Op op) {
+            for (int i = 0; i < a.size(); i++) {
+                /* Short circuit */
+                if (!static_cast<bool>(op(a[i], b[i]))) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    } // namespace detail
+
+    template<size_t N, typename T>
+    constexpr bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
+        return detail::all_of(a, b, std::less<T>());
     }
-  }
 
-  return true;
-}
-} // namespace detail
+    template<size_t N, typename T>
+    constexpr bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
+        return detail::all_of(a, b, std::greater<T>());
+    }
 
-template <size_t N, typename T>
-constexpr bool operator<(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::less<T>());
-}
+    template<size_t N, typename T>
+    constexpr bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
+        return detail::all_of(a, b, std::less_equal<T>());
+    }
 
-template <size_t N, typename T>
-constexpr bool operator>(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::greater<T>());
-}
+    template<size_t N, typename T>
+    constexpr bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
+        return detail::all_of(a, b, std::greater_equal<T>());
+    }
 
-template <size_t N, typename T>
-constexpr bool operator<=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::less_equal<T>());
-}
+    template<size_t N, typename T>
+    constexpr bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
+        return detail::all_of(a, b, std::equal_to<T>());
+    }
 
-template <size_t N, typename T>
-constexpr bool operator>=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::greater_equal<T>());
-}
+    template<size_t N, typename T>
+    constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
+        return not(a == b);
+    }
 
-template <size_t N, typename T>
-constexpr bool operator==(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return detail::all_of(a, b, std::equal_to<T>());
-}
+    template<size_t N, typename T, typename U>
+    auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
+        return detail::binary_op(a, b, std::plus<>());
+    }
 
-template <size_t N, typename T>
-constexpr bool operator!=(Vector<T, N> const &a, Vector<T, N> const &b) {
-  return not(a == b);
-}
+    template<size_t N, typename T>
+    Vector<T, N> &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
+        return detail::binary_op_assign(a, b, std::plus<T>());
+    }
 
-template <size_t N, typename T, typename U>
-auto operator+(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return detail::binary_op(a, b, std::plus<>());
-}
+    template<size_t N, typename T, typename U>
+    auto operator-(Vector<T, N> const &a, Vector<U, N> const &b) {
+        return detail::binary_op(a, b, std::minus<>());
+    }
 
-template <size_t N, typename T>
-Vector<T, N> &operator+=(Vector<T, N> &a, Vector<T, N> const &b) {
-  return detail::binary_op_assign(a, b, std::plus<T>());
-}
+    template<size_t N, typename T>
+    Vector<T, N> operator-(Vector<T, N> const &a) {
+        Vector<T, N> ret;
 
-template <size_t N, typename T, typename U>
-auto operator-(Vector<T, N> const &a, Vector<U, N> const &b) {
-  return detail::binary_op(a, b, std::minus<>());
-}
+        std::transform(std::begin(a), std::end(a), std::begin(ret),
+                       [](T const &v) { return -v; });
 
-template <size_t N, typename T> Vector<T, N> operator-(Vector<T, N> const &a) {
-  Vector<T, N> ret;
+        return ret;
+    }
 
-  std::transform(std::begin(a), std::end(a), std::begin(ret),
-                 [](T const &v) { return -v; });
-
-  return ret;
-}
-
-template <size_t N, typename T>
-Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
-  return detail::binary_op_assign(a, b, std::minus<T>());
-}
+    template<size_t N, typename T>
+    Vector<T, N> &operator-=(Vector<T, N> &a, Vector<T, N> const &b) {
+        return detail::binary_op_assign(a, b, std::minus<T>());
+    }
 
 /* Scalar multiplication */
-template <size_t N, typename T, class U>
-auto operator*(U const &a, Vector<T, N> const &b) {
-  using R = decltype(a * std::declval<T>());
-  Vector<R, N> ret;
+    template<size_t N, typename T, class U>
+    auto operator*(U const &a, Vector<T, N> const &b) {
+        using R = decltype(a * std::declval<T>());
+        Vector<R, N> ret;
 
-  std::transform(std::begin(b), std::end(b), std::begin(ret),
-                 [a](T const &val) { return a * val; });
+        std::transform(std::begin(b), std::end(b), std::begin(ret),
+                       [a](T const &val) { return a * val; });
 
-  return ret;
-}
+        return ret;
+    }
 
-template <size_t N, typename T, class U>
-auto operator*(Vector<T, N> const &b, U const &a) {
-  using R = decltype(std::declval<T>() * a);
-  Vector<R, N> ret;
+    template<size_t N, typename T, class U>
+    auto operator*(Vector<T, N> const &b, U const &a) {
+        using R = decltype(std::declval<T>() * a);
+        Vector<R, N> ret;
 
-  std::transform(std::begin(b), std::end(b), std::begin(ret),
-                 [a](T const &val) { return a * val; });
+        std::transform(std::begin(b), std::end(b), std::begin(ret),
+                       [a](T const &val) { return a * val; });
 
-  return ret;
-}
+        return ret;
+    }
 
-template <size_t N, typename T>
-Vector<T, N> &operator*=(Vector<T, N> &b, T const &a) {
-  std::transform(std::begin(b), std::end(b), std::begin(b),
-                 [a](T const &val) { return a * val; });
-  return b;
-}
+    template<size_t N, typename T>
+    Vector<T, N> &operator*=(Vector<T, N> &b, T const &a) {
+        std::transform(std::begin(b), std::end(b), std::begin(b),
+                       [a](T const &val) { return a * val; });
+        return b;
+    }
 
 /* Scalar division */
-template <size_t N, typename T>
-Vector<T, N> operator/(Vector<T, N> const &a, T const &b) {
-  Vector<T, N> ret;
+    template<size_t N, typename T>
+    Vector<T, N> operator/(Vector<T, N> const &a, T const &b) {
+        Vector<T, N> ret;
 
-  std::transform(std::begin(a), std::end(a), ret.begin(),
-                 [b](T const &val) { return val / b; });
-  return ret;
-}
+        std::transform(std::begin(a), std::end(a), ret.begin(),
+                       [b](T const &val) { return val / b; });
+        return ret;
+    }
 
-template <size_t N, typename T>
-Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
-  std::transform(std::begin(a), std::end(a), std::begin(a),
-                 [b](T const &val) { return val / b; });
-  return a;
-}
+    template<size_t N, typename T>
+    Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
+        std::transform(std::begin(a), std::end(a), std::begin(a),
+                       [b](T const &val) { return val / b; });
+        return a;
+    }
 
 /* Scalar product */
-template <size_t N, typename T, class U>
-auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
-  using std::declval;
-  using R = decltype(declval<T>() * declval<U>());
+    template<size_t N, typename T, class U>
+    auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
+        using std::declval;
+        using R = decltype(declval<T>() * declval<U>());
 
-  return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
-}
+        return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
+    }
 
 /* Componentwise square root */
-template <size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
-  using std::sqrt;
-  Vector<T, N> ret;
+    template<size_t N, typename T>
+    Vector<T, N> sqrt(Vector<T, N> const &a) {
+        using std::sqrt;
+        Vector<T, N> ret;
 
-  std::transform(std::begin(a), std::end(a), ret.begin(),
-                 [](T const &v) { return sqrt(v); });
+        std::transform(std::begin(a), std::end(a), ret.begin(),
+                       [](T const &v) { return sqrt(v); });
 
-  return ret;
-}
+        return ret;
+    }
 
-template <class T>
-Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
-  return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
-          a[0] * b[1] - a[1] * b[0]};
-}
+    template<class T>
+    Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
+        return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+                a[0] * b[1] - a[1] * b[0]};
+    }
 
 /**
  * @brief Meta function to turns a Vector<1, T> into T.
  */
-template <typename T> struct decay_to_scalar {};
-template <typename T, size_t N> struct decay_to_scalar<Vector<T, N>> {
-  using type = Vector<T, N>;
-};
+    template<typename T>
+    struct decay_to_scalar {
+    };
+    template<typename T, size_t N>
+    struct decay_to_scalar<Vector<T, N>> {
+        using type = Vector<T, N>;
+    };
 
-template <typename T> struct decay_to_scalar<Vector<T, 1>> { using type = T; };
+    template<typename T>
+    struct decay_to_scalar<Vector<T, 1>> {
+        using type = T;
+    };
+}
 
 #endif
