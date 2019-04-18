@@ -294,6 +294,17 @@ bool LbWalberla::set_node_velocity(const Vector3i &node, const Vector3d v) {
   return true;
 }
 
+boost::optional<double>
+LbWalberla::get_node_density(const Vector3i node) const {
+  auto bc = get_block_and_cell(node);
+  if (!bc)
+    return {boost::none};
+
+  auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
+
+  return {pdf_field->getDensity((*bc).cell)};
+}
+
 void LbWalberla::set_viscosity(double viscosity) {
   m_lattice_model->collisionModel().reset(
       lbm::collision_model::omegaFromViscosity((real_t)viscosity));

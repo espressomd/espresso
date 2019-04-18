@@ -1203,6 +1203,17 @@ double lb_lbnode_get_density(const Vector3i &ind) {
     return {};
 #endif // LB
   }
+#ifdef LB_WALBERLA
+  if (lb_walberla()) {
+    double density = 0.0;
+    if (comm_cart.rank() == 0) {
+      density = (collector_function(&LbWalberla::get_node_density, ind));
+    } else {
+      collector_function(&LbWalberla::get_node_density, ind);
+    }
+    return density;
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 
