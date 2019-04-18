@@ -145,8 +145,8 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
   double poz[3];
   double poy[3] = {0, 0, 0};
   double pox[3] = {0, 0, 0};
-  double a[3] = {0, 0, 0};
-  double b[3], c[3] = {0., 0., 0.}, d[3];
+  Utils::Vector3d a = {0, 0, 0};
+  Utils::Vector3d b, c = {0., 0., 0.};
   double absc;
 
   std::vector<double> poly(3 * MPC);
@@ -301,11 +301,13 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
               c[1] = 0;
               c[2] = 0;
             }
+
+            Utils::Vector3d d;
             if (angle2 > -1.0 && n > 2) {
-              vec_rotate(a, angle2, c, d);
+              d = vec_rotate(a, angle2, c);
             } else {
               phi = 2.0 * Utils::pi() * d_random();
-              vec_rotate(a, phi, c, d);
+              d = vec_rotate(a, phi, c);
             }
 
             vec_rotate(d, angle, a, b);
