@@ -20,7 +20,8 @@ import espressomd
 import numpy as np
 import espressomd.interactions
 
-COULOMB_PREFACTOR=1.3
+COULOMB_PREFACTOR = 1.3
+
 
 @ut.skipIf(not espressomd.has_features(["THOLE", "EXTERNAL_FORCES", "P3M"]),
            "Features not available, skipping test!")
@@ -46,7 +47,13 @@ class TestThole(ut.TestCase):
         self.system.part.add(pos=[0, 0, 0], type=0, fix=[1, 1, 1], q=q1)
         self.system.part.add(pos=[2, 0, 0], type=0, fix=[1, 1, 1], q=q2)
 
-        p3m = P3M(prefactor=COULOMB_PREFACTOR, accuracy=1e-6, mesh=[52, 52, 52], cao=4)
+        p3m = P3M(
+            prefactor=COULOMB_PREFACTOR,
+            accuracy=1e-6,
+            mesh=[52,
+                  52,
+                  52],
+            cao=4)
         self.system.actors.add(p3m)
 
         self.system.non_bonded_inter[0, 0].thole.set_params(
