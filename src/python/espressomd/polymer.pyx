@@ -25,58 +25,62 @@ from espressomd.utils import is_valid_type, array_locked
 from espressomd.utils cimport make_Vector3d
 
 def validate_params(_params, default):
-    if _params["N_P"] <= 0:
+    if _params["polymers"] <= 0:
         raise ValueError(
-            "N_P has to be a positive Integer")
-    if _params["MPC"] <= 1:
+            "polymers has to be a positive Integer")
+    if _params["monomers"] <= 1:
         raise ValueError(
-            "MPC has to be a positive Integer larger than 1")
+            "monomers has to be a positive Integer larger than 1")
     if _params["bond_length"] < 0:
         raise ValueError(
             "bond_length has to be a positive float")
-#    if not hasattr(_params["start_pos"], "__getitem__") or len(_params["start_pos"]) != 3:
-#        raise ValueError(
-#            "start_pos has to be an numpy array with 3 Elements")
+    if not ((np.size(_params["start_positions"]) == 0)
+            or np.shape(_params["start_positions"]) == (_params["polymers"], 3)):
+        raise ValueError(
+            "start_positions has to be an numpy array with shape (polymers, 3)")
     if not is_valid_type(_params["mode"], int):
         raise ValueError(
             "mode has to be a positive Integer")
-    if _params["shield"] < 0 and default["shield"] != _params["shield"]:
+    if _params["minimum_distance"] < 0:
         raise ValueError(
-            "shield has to be a positive float")
-    if _params["max_tries"] < 0 and default["max_tries"] != _params["max_tries"]:
+            "minimum_distance has to be a positive float")
+    if _params["max_tries"] < 0:
         raise ValueError(
             "max_tries has to be a positive Integer")
-    if _params["angle"] < 0 and default["angle"] != _params["angle"]:
+    if _params["use_bond_angle"] and np.isnan(_params["bond_angle"]):
         raise ValueError(
-            "angle has to be a positive float")
+            "bond_angle has to be a positive float")
     if _params["angle2"] < 0 and default["angle2"] != _params["angle2"]:
         raise ValueError(
             "angle2 has to be a positive float")
-    if _params["constraints"] < 0:
+    if type(_params["respect_constraints"]) != bool:
         raise ValueError(
-            "constraint has to be either 0 or 1")
+            "respect_constraints has to be either True or False")
 
 # wrapper function to expose to the user interface
 
 def polymer_positions(**kwargs):
     params = dict()
     default_params = dict()
-    default_params["N_P"] = 0
-    default_params["MPC"] = 0
+    default_params["polymers"] = 0
+    default_params["monomers"] = 0
     default_params["bond_length"] = 0
-    default_params["start_pos"] = np.array([])
+    default_params["start_positions"] = np.array([])
     default_params["mode"] = 1
-    default_params["shield"] = 0
+    default_params["minimum_distance"] = 0
     default_params["max_tries"] = 1000
-    default_params["angle"] = -1.0
+    default_params["bond_angle"] = -1
     default_params["angle2"] = -1.0
-    default_params["constraints"] = 0
+    default_params["respect_constraints"] = False
 
     params = default_params
 
-    valid_keys = ["N_P", "MPC", "bond_length", "start_pos", "mode", "shield", "max_tries", "angle", "angle2", "constraints"]
+    # use bond_angle if set via kwarg
+    params["use_bond_angle"] = "bond_angle" in kwargs
 
-    required_keys = ["N_P", "MPC", "bond_length"]
+    valid_keys = ["polymers", "monomers", "bond_length", "start_positions", "mode", "minimum_distance", "max_tries", "bond_angle", "angle2", "respect_constraints"]
+
+    required_keys = ["polymers", "monomers", "bond_length"]
 
     for k in kwargs:
         if not k in valid_keys:
@@ -92,13 +96,11 @@ def polymer_positions(**kwargs):
     validate_params(params, default_params)
 
     cdef vector[Vector3d] start_positions
-    if (params["start_pos"] != []):
-        for i in range(len(params["start_pos"])):
-            print(params["start_pos"][i])
-            start_positions.push_back(make_Vector3d(params["start_pos"][i]))
+    if (params["start_positions"] != []):
+        for i in range(len(params["start_positions"])):
+            start_positions.push_back(make_Vector3d(params["start_positions"][i]))
 
-    print("MARK")
-    data = draw_polymer_positions(partCfg(), params["N_P"], params["MPC"], params["bond_length"], start_positions, params["mode"], params["shield"], params["max_tries"], params["angle"], params["angle2"], params["constraints"])
+    data = draw_polymer_positions(partCfg(), params["polymers"], params["monomers"], params["bond_length"], start_positions, params["mode"], params["minimum_distance"], params["max_tries"], int(params["use_bond_angle"]), params["bond_angle"], params["angle2"], int(params["respect_constraints"]))
     positions = []
     for polymer in data:
         p = []

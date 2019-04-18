@@ -111,7 +111,7 @@ Vector3d random_unit_vector() {
 }
 
 std::vector<std::vector<Vector3d>> draw_polymer_positions(PartCfg &partCfg, int N_P, int MPC, double bond_length,
-              std::vector<Vector3d> &start_positions, int mode, double shield, int max_try,
+              std::vector<Vector3d> &start_positions, int mode, double shield, int max_try, const int use_bond_angle,
               double angle, double angle2, int constr) {
     std::vector<std::vector<Vector3d>> positions(N_P, std::vector<Vector3d>(MPC));
 
@@ -147,7 +147,7 @@ std::vector<std::vector<Vector3d>> draw_polymer_positions(PartCfg &partCfg, int 
         Vector3d trial_pos;
         for (int m = 1; m < MPC; ++m) {
             do {
-                if (angle < 0 or m < 2) {
+                if (not use_bond_angle or m < 2) {
                     // random step
                     trial_pos = positions[p][m-1] + bond_length * random_unit_vector();
                 } else {
