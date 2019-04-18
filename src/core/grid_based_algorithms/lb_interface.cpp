@@ -205,24 +205,55 @@ void lb_lbfluid_propagate() {
   }
 }
 
-void lb_lbfluid_on_integration_start() {
+/**
+ * @brief Check the boundary velocities.
+ * Sanity check if the velocity defined at LB boundaries is within the Mach
+ * number limits of the scheme i.e. u < 0.3.
+ */
+void lb_boundary_mach_check() {
+  // Boundary velocities are stored in MD units, therefore we need to scale them
+  // in order to get lattice units.
+  auto const conv_fac = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid();
+  double constexpr mach_limit = 0.3;
+  for (auto const &lbboundary : LBBoundaries::lbboundaries) {
+    auto const u = (lbboundary->velocity() * conv_fac).norm();
+
+    if (u >= mach_limit) {
+      runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
+    }
+  }
+}
+
+/**
+ * @brief Perform LB parameter and boundary velocity checks.
+ */
+void lb_lbfluid_sanity_checks() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     if (this_node == 0) {
       lb_GPU_sanity_checks();
       lb_boundary_mach_check();
-
-      if (lb_reinit_particles_gpu()) {
-        lb_realloc_particles_gpu();
-        lb_reinit_particles_gpu.validate();
-      }
     }
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
     lb_sanity_checks();
     lb_boundary_mach_check();
+#endif
+  }
+}
 
+void lb_lbfluid_on_integration_start() {
+  lb_lbfluid_sanity_checks();
+  if (lattice_switch == ActiveLB::GPU) {
+#ifdef LB_GPU
+    if (this_node == 0 and lb_reinit_particles_gpu()) {
+      lb_realloc_particles_gpu();
+      lb_reinit_particles_gpu.validate();
+    }
+#endif
+  } else if (lattice_switch == ActiveLB::CPU) {
+#ifdef LB
     halo_communication(&update_halo_comm,
                        reinterpret_cast<char *>(lbfluid[0].data()));
 #endif
@@ -1545,24 +1576,6 @@ Vector3d lb_lbfluid_calc_fluid_momentum() {
 #endif
   }
   return fluid_momentum;
-}
-
-/*** Sanity check if the velocity defined at LB boundaries is within the Mach
-number limits of the scheme i.e. u < 0.3**************************************/
-
-void lb_boundary_mach_check() {
-
-  // User specified velocity needs to be converted to LB units
-  auto const conv_fac = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid();
-  double constexpr mach_limit = 0.3;
-
-  for (auto const &lbboundary : LBBoundaries::lbboundaries) {
-    auto const u = (lbboundary->velocity() * conv_fac).norm();
-
-    if (u >= mach_limit) {
-      runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
-    }
-  }
 }
 
 #endif // end of LB guard

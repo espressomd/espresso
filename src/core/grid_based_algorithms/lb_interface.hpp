@@ -69,11 +69,6 @@ void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 void lb_lbfluid_set_tau(double p_tau);
 
 /**
- * @brief Test the boundary velocity for LB Mach limits
- */
-void lb_boundary_mach_check();
-
-/**
  * @brief Set the global LB density.
  */
 void lb_lbfluid_set_density(double p_dens);
