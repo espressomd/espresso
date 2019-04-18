@@ -47,6 +47,8 @@
 
 #include "utils/vec_rotate.hpp"
 using Utils::vec_rotate;
+#include "utils/Vector.hpp"
+#include "utils/math/sqr.hpp"
 
 /*************************************************************
  * Functions                                                 *
@@ -310,7 +312,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
               d = vec_rotate(a, phi, c);
             }
 
-            vec_rotate(d, angle, a, b);
+            b = vec_rotate(d, angle, a);
 
             pos[0] = poz[0] + b[0];
             pos[1] = poz[1] + b[1];
