@@ -40,13 +40,13 @@ class VirtualSitesTracersCommon(object):
     system.time_step = 0.05
     system.cell_system.skin = 0.1
     
-    def reset_lb(self, ext_force_density=[0,0,0]):
+    def reset_lb(self, ext_force_density=[0, 0, 0]):
         box_height = 10 
         box_lw = 8
         self.system.actors.clear()
         self.system.lbboundaries.clear()
         self.lbf = self.LBClass(kT=0.0,
-                         agrid=1, dens=1, visc=1.8, tau=self.system.time_step, ext_force_density=ext_force_density)
+                                agrid=1, dens=1, visc=1.8, tau=self.system.time_step, ext_force_density=ext_force_density)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
@@ -75,7 +75,7 @@ class VirtualSitesTracersCommon(object):
         self.assertEqual(self.system.virtual_sites.have_velocity, True)
 
     def test_advection(self):
-        self.reset_lb(ext_force_density=[0.1,0,0])
+        self.reset_lb(ext_force_density=[0.1, 0, 0])
         # System setup
         system = self.system
         box_lw = self.box_lw
@@ -204,8 +204,7 @@ class VirtualSitesTracersCommon(object):
         system.bonded_inter.add(triStrong)
         system.part[6].add_bond((triStrong, 7, 8))
 
-
-        self.reset_lb(ext_force_density=[0.1, 0,0])
+        self.reset_lb(ext_force_density=[0.1, 0, 0])
         ## Perform integration
         system.integrator.run(4500)
 

@@ -38,8 +38,9 @@ required_features = "VIRTUAL_SITES_INERTIALESS_TRACERS", "LB_GPU"
         required_features),
            "Test requires VIRTUAL_SITES_INERTIALESS_TRACERS and a GPU")
 class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
+
     def setUp(self):
-        self.LBClass=lb.LBFluidGPU
+        self.LBClass = lb.LBFluidGPU
 
 if __name__ == "__main__":
     ut.main()
