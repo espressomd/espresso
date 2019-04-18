@@ -215,12 +215,12 @@ void lb_boundary_mach_check() {
   // in order to get lattice units.
   auto const conv_fac = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid();
   double constexpr mach_limit = 0.3;
-  for (auto const &lbboundary : LBBoundaries::lbboundaries) {
-    auto const u = (lbboundary->velocity() * conv_fac).norm();
-
-    if (u >= mach_limit) {
-      runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
-    }
+  using LBBoundaries::lbboundaries;
+  if (std::any_of(lbboundaries.begin(), lbboundaries.end(),
+                  [conv_fac](auto const &b) {
+                    return (b->velocity() * conv_fac).norm() >= mach_limit;
+                  })) {
+    runtimeErrorMsg() << "Lattice velocity exceeds the Mach number limit";
   }
 }
 
