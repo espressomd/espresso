@@ -114,8 +114,8 @@ int collision(PartCfg &partCfg, double pos[3], double shield, int n_add,
 }
 
 int constraint_collision(double *p1, double *p2) {
-  Vector3d folded_pos1 = folded_position({p1, p1 + 3});
-  Vector3d folded_pos2 = folded_position({p2, p2 + 3});
+  Utils::Vector3d folded_pos1 = folded_position({p1, p1 + 3});
+  Utils::Vector3d folded_pos2 = folded_position({p2, p2 + 3});
 
   for (auto &c : Constraints::constraints) {
     auto cs =
@@ -458,7 +458,8 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
       pos[j] = dnodes[i][j];
     }
     if (place_particle(part_id, pos) == ES_PART_ERROR)
-      set_particle_q(part_id, val_nodes);
+      return (-3);
+    set_particle_q(part_id, val_nodes);
     set_particle_type(part_id, type_node);
 
     part_id++;

@@ -95,10 +95,12 @@ cdef class Diamond(object):
                         self._params["val_nodes"], self._params["val_cM"], self._params["val_CI"], self._params["cM_dist"], self._params["nonet"])
 
     def _set_params_in_es_core(self):
-        tmp_try = self.__set_params_in_es_core()
+        error_code = self.__set_params_in_es_core()
         handle_errors("Failed changing bonds in diamondC")
-        if(tmp_try == -3):
+        if error_code == 0:
+            pass
+        elif error_code == -3:
             raise Exception(
                 "Failed upon creating one of the monomers in Espresso!\nAborting...\n")
         else:
-            raise Exception("Unknown Error")
+            raise Exception("Unknown error code: {}".format(error_code))

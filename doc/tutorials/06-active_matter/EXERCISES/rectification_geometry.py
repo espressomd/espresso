@@ -31,12 +31,11 @@ import os
 import sys
 
 import espressomd
-from espressomd import assert_features, lb
+espressomd.assert_features(["LB_GPU", "LB_BOUNDARIES_GPU"])
+from espressomd import lb
 from espressomd.lbboundaries import LBBoundary
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
-
-assert_features(["LB_GPU", "LB_BOUNDARIES_GPU"])
 
 # Setup constants
 
@@ -71,7 +70,7 @@ densi = 1.0
 
 lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt)
 system.actors.add(lbf)
-system.thermostat.set_lb(LB_fluid=lbf, gamma=frict)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
 ################################################################################
 #
@@ -88,10 +87,7 @@ system.thermostat.set_lb(LB_fluid=lbf, gamma=frict)
 cylinder = LBBoundary(
     shape=Cylinder(
         center=[length / 2.0, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
-                     axis=[1, 0, 0],
-                                     radius=diameter / 2.0,
-                                     length=length,
-                                     direction=-1))
+        axis=[1, 0, 0], radius=diameter / 2.0, length=length, direction=-1))
 system.lbboundaries.add(cylinder)
 
 # Setup walls
@@ -111,13 +107,14 @@ shift = 0.25 * orad * cos(angle)
 hollow_cone = LBBoundary(
     shape=HollowCone(
         center=[length / 2.0 + shift,
-                        (diameter + 4) / 2.0, (diameter + 4) / 2.0],
+                (diameter + 4) / 2.0,
+                (diameter + 4) / 2.0],
         axis=[-1, 0, 0],
-                                          outer_radius=orad,
-                                          inner_radius=irad,
-                                          width=2.0,
-                                          opening_angle=angle,
-                                          direction=1))
+        outer_radius=orad,
+        inner_radius=irad,
+        width=2.0,
+        opening_angle=angle,
+        direction=1))
 system.lbboundaries.add(hollow_cone)
 
 ##########################################################################

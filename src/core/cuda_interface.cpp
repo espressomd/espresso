@@ -73,7 +73,7 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef DIPOLES
-    const Vector3d dip = part.calc_dip();
+    const Utils::Vector3d dip = part.calc_dip();
     buffer[i].dip[0] = static_cast<float>(dip[0]);
     buffer[i].dip[1] = static_cast<float>(dip[1]);
     buffer[i].dip[2] = static_cast<float>(dip[2]);
@@ -94,7 +94,7 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef ROTATION
-    const Vector3d director = part.r.calc_director();
+    const Utils::Vector3d director = part.r.calc_director();
     buffer[i].director[0] = static_cast<float>(director[0]);
     buffer[i].director[1] = static_cast<float>(director[1]);
     buffer[i].director[2] = static_cast<float>(director[2]);

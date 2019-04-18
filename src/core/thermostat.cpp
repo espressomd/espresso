@@ -50,7 +50,7 @@ namespace {
    Langevin params, indicating that they have not been
    set yet. */
 constexpr double sentinel(double) { return -1.0; }
-Vector3d sentinel(Vector3d) { return {-1.0, -1.0, -1.0}; }
+Utils::Vector3d sentinel(Utils::Vector3d) { return {-1.0, -1.0, -1.0}; }
 } // namespace
 
 /* LANGEVIN THERMOSTAT */
