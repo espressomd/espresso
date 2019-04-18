@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(velocity) {
     }
   }
 }
-
+/*
 BOOST_AUTO_TEST_CASE(mpi_collector) {
   init_lb_walberla(viscosity, agrid, box_dimensions, node_grid, skin);
   double eps = 1E-8;
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(mpi_collector) {
       BOOST_CHECK(std::abs(dens_res - density) < eps);
     }
   }
-}
+}*/
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
