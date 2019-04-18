@@ -40,10 +40,9 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   assert(p4);
 
   // Get vectors making up the two triangles
-  double dx1[3], dx2[3], dx3[3];
-  get_mi_vector(dx1, p1->r.p, p3->r.p);
-  get_mi_vector(dx2, p2->r.p, p3->r.p);
-  get_mi_vector(dx3, p4->r.p, p3->r.p);
+  auto const dx1 = get_mi_vector(p1->r.p, p3->r.p);
+  auto const dx2 = get_mi_vector(p2->r.p, p3->r.p);
+  auto const dx3 = get_mi_vector(p4->r.p, p3->r.p);
 
   // Get normals on triangle; pointing outwards by definition of indices
   // sequence
