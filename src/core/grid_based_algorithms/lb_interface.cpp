@@ -1203,17 +1203,6 @@ double lb_lbnode_get_density(const Vector3i &ind) {
     return {};
 #endif // LB
   }
-#ifdef LB_WALBERLA
-  if (lb_walberla()) {
-    double density = 0.0;
-    if (comm_cart.rank() == 0) {
-      density = (collector_function(&LbWalberla::get_node_density, ind));
-    } else {
-      collector_function(&LbWalberla::get_node_density, ind);
-    }
-    return density;
-  }
-#endif
   throw std::runtime_error("LB not activated.");
 }
 
@@ -1249,17 +1238,6 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     return j / rho;
 #endif // LB
   }
-#ifdef LB_WALBERLA
-  if (lb_walberla()) {
-    Vector3d velocity = {};
-    if (comm_cart.rank() == 0) {
-      velocity = (collector_function(&LbWalberla::get_node_velocity, ind));
-    } else {
-      collector_function(&LbWalberla::get_node_velocity, ind);
-    }
-    return velocity;
-  }
-#endif
   throw std::runtime_error("LB not activated.");
 
   return {};
@@ -1396,20 +1374,6 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
     return {};
 #endif // LB
   }
-#ifdef LB_WALBERLA
-  if (lb_walberla()) {
-    bool is_boundary = false;
-    if (comm_cart.rank() == 0) {
-      is_boundary = (collector_function(&LbWalberla::get_node_is_boundary, ind));
-    } else {
-      collector_function(&LbWalberla::get_node_is_boundary, ind);
-    }
-    if(is_boundary)
-      return 1;
-    else
-      return 0;
-  }
-#endif
   throw std::runtime_error("LB not activated.");
 }
 
