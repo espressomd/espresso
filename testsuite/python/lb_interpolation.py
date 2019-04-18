@@ -22,12 +22,12 @@ import espressomd
 import espressomd.shapes
 import espressomd.lb
 
-AGRID = 1.0
+AGRID = 1.5
 VISC = 1.0
 DENS = 1.0
 FRIC = 1.0
 TAU = 0.1
-BOX_L = 12.0
+BOX_L = 18.0
 TIME_STEP = TAU
 LB_PARAMETERS = {
     'agrid': AGRID,
@@ -35,10 +35,11 @@ LB_PARAMETERS = {
     'dens': DENS,
     'tau': TAU
 }
+V_BOUNDARY = 0.6
 
 
 def velocity_profile(x):
-    return 1. / (BOX_L - 2. * AGRID) * (x - AGRID)
+    return V_BOUNDARY / (BOX_L - 2. * AGRID) * (x - AGRID)
 
 
 class LBInterpolation(object):
@@ -73,8 +74,8 @@ class LBInterpolation(object):
 
         """
         self.system.lbboundaries.clear()
-        self.set_boundaries([0.0, 0.0, 1.0])
-        self.system.integrator.run(1000)
+        self.set_boundaries([0.0, 0.0, V_BOUNDARY])
+        self.system.integrator.run(3000)
         # Shear plane for boundary 1
         #for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
         #    np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
@@ -92,7 +93,7 @@ class LBInterpolation(object):
         Assert that the mach number check fires an exception.
 
         """
-        max_vel = 0.3 * AGRID / TAU
+        max_vel = 0.31 * AGRID / TAU
         self.system.lbboundaries.clear()
         self.set_boundaries([0.0, 0.0, max_vel])
         with self.assertRaises(Exception):

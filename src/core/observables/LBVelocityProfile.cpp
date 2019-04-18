@@ -36,9 +36,9 @@ std::vector<double> LBVelocityProfile::operator()(PartCfg &partCfg) const {
   std::vector<double> velocities(m_sample_positions.size());
 #if defined(LB) || defined(LB_GPU)
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
-    Vector3d pos_tmp = {m_sample_positions[ind + 0],
-                        m_sample_positions[ind + 1],
-                        m_sample_positions[ind + 2]};
+    Utils::Vector3d pos_tmp = {m_sample_positions[ind + 0],
+                               m_sample_positions[ind + 1],
+                               m_sample_positions[ind + 2]};
     const auto v =
         lb_lbinterpolation_get_interpolated_velocity_global(pos_tmp) *
         lb_lbfluid_get_lattice_speed();
@@ -46,10 +46,10 @@ std::vector<double> LBVelocityProfile::operator()(PartCfg &partCfg) const {
   }
 #endif
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
-    const Vector3d position = {{m_sample_positions[ind + 0],
-                                m_sample_positions[ind + 1],
-                                m_sample_positions[ind + 2]}};
-    const Vector3d velocity = {
+    const Utils::Vector3d position = {{m_sample_positions[ind + 0],
+                                       m_sample_positions[ind + 1],
+                                       m_sample_positions[ind + 2]}};
+    const Utils::Vector3d velocity = {
         {velocities[ind + 0], velocities[ind + 1], velocities[ind + 2]}};
     histogram.update(position, velocity);
   }

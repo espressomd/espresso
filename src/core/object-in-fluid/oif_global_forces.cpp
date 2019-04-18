@@ -79,7 +79,7 @@ void calc_oif_global(double *area_volume,
 
   /* loop over particles */
   Particle *p1, *p2, *p3;
-  Vector3d p11, p22, p33;
+  Utils::Vector3d p11, p22, p33;
   int img[3];
   double AA[3], BB[3];
   Bonded_ia_parameters *iaparams;

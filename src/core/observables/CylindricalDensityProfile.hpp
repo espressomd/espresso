@@ -35,10 +35,10 @@ public:
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
          std::make_pair(min_z, max_z)}};
     Utils::CylindricalHistogram<double, 3> histogram(n_bins, 1, limits);
-    std::vector<::Vector3d> folded_positions;
+    std::vector<::Utils::Vector3d> folded_positions;
     std::transform(ids().begin(), ids().end(),
                    std::back_inserter(folded_positions), [&partCfg](int id) {
-                     return ::Vector3d(folded_position(partCfg[id]));
+                     return ::Utils::Vector3d(folded_position(partCfg[id]));
                    });
     for (auto &p : folded_positions) {
       p -= center;

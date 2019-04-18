@@ -34,7 +34,7 @@ public:
       : m_constraint(new ::Constraints::HomogeneousMagneticField()) {
     add_parameters({{"H",
                      [this](Variant const &v) {
-                       m_constraint->set_H(get_value<Vector3d>(v));
+                       m_constraint->set_H(get_value<Utils::Vector3d>(v));
                      },
                      [this]() { return m_constraint->H(); }}});
   }
