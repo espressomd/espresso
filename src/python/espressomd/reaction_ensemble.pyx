@@ -372,7 +372,6 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
                     "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
 
-
         self.constpHptr.reset(new CConstantpHEnsemble(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.constpHptr.get()
 
@@ -615,7 +614,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
         """
         self.WLRptr.get(
-    ).update_maximum_and_minimum_energies_at_current_state()
+        ).update_maximum_and_minimum_energies_at_current_state()
 
     def write_out_preliminary_energy_run_results(self):
         """
