@@ -43,26 +43,28 @@ class WidomInsertionTest(ut.TestCase):
     LJ_EPS = 1.0
     LJ_SIG = 1.0
     LJ_CUT = 5
-    BOX_L = 2*LJ_CUT
+    BOX_L = 2 * LJ_CUT
     LJ_SHIFT = lj_potential(LJ_CUT, LJ_EPS, LJ_SIG, LJ_CUT + 1, 0.0)
 
     radius = np.linspace(1e-10, LJ_CUT, 1000)
-    # numerical integration for radii smaller than the cut-off in spherical coordinates
+    # numerical integration for radii smaller than the cut-off in spherical
+    # coordinates
     integrateUpToCutOff = 4 * np.pi * np.trapz(
         radius**2 * np.exp(-lj_potential(radius,
-                                        LJ_EPS,
-                                        LJ_SIG,
-                                        LJ_CUT,
-                                        LJ_SHIFT) / TEMPERATURE),
+                                         LJ_EPS,
+                                         LJ_SIG,
+                                         LJ_CUT,
+                                         LJ_SHIFT) / TEMPERATURE),
         x=radius)   
     # numerical solution for V_lj=0 => corresponds to the volume (as exp(0)=1)
     integreateRest = (BOX_L**3 - 4.0 / 3.0 * np.pi * LJ_CUT**3)
                       
-    # calculate excess chemical potential of the system, see Frenkel Smith, p 174. Note: He uses scaled coordinates, which is why we need to divide by the Box volume
+    # calculate excess chemical potential of the system, see Frenkel Smith, p
+    # 174. Note: He uses scaled coordinates, which is why we need to divide by
+    # the Box volume
     target_mu_ex = -TEMPERATURE * \
         np.log((integrateUpToCutOff + integreateRest) / BOX_L**3)
                                        
-
     system = espressomd.System(box_l=np.ones(3) * BOX_L)
     system.cell_system.set_n_square()
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
@@ -76,7 +78,11 @@ class WidomInsertionTest(ut.TestCase):
 
     def setUp(self):
         """Prepare a testsystem."""
-        self.system.part.add(id=0, pos=0.5 * self.system.box_l, type=self.TYPE_HA)
+        self.system.part.add(
+            id=0,
+            pos=0.5 *
+            self.system.box_l,
+            type=self.TYPE_HA)
         
         self.system.non_bonded_inter[self.TYPE_HA, self.TYPE_HA].lennard_jones.set_params(
             epsilon=self.LJ_EPS,
@@ -101,7 +107,8 @@ class WidomInsertionTest(ut.TestCase):
             'n_nodes'] * [np.random.randint(5)]
         num_samples = 100000
         for i in range(num_samples):
-            Widom.measure_excess_chemical_potential(0)  # 0 for insertion reaction
+            Widom.measure_excess_chemical_potential(
+                0)  # 0 for insertion reaction
         mu_ex = Widom.measure_excess_chemical_potential(0)
         deviation_mu_ex = abs(mu_ex[0] - target_mu_ex)
 

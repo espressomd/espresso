@@ -80,7 +80,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
 
         E_ref = tests_common.lj_generic_potential(
-            r=numpy.arange(1,232) * self.step_width, eps=lj_eps, sig=lj_sig,
+            r=numpy.arange(1, 232) * self.step_width, eps=lj_eps, sig=lj_sig,
             cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
 
         for i in range(231):
@@ -122,7 +122,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                                                           sigma=wca_sig)
 
         E_ref = tests_common.lj_generic_potential(
-                r=numpy.arange(1,232) * self.step_width, eps=wca_eps, sig=wca_sig,
+            r=numpy.arange(1, 232) * self.step_width, eps=wca_eps, sig=wca_sig,
                 cutoff=wca_cutoff, shift=4. * wca_shift)
         
         for i in range(231):
@@ -131,7 +131,6 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-
 
             # Calculate forces
             f0_sim = self.system.part[0].f
