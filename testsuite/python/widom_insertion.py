@@ -32,93 +32,82 @@ from tests_common import lj_potential
            "Features not available, skipping test!")
 class WidomInsertionTest(ut.TestCase):
 
-    """Test the implementation of the widom insertion (part of the reaction ensemble)."""
+    """Test the implementation of the widom insertion.
 
-    # The excess chemical potential is calculated for identical particles into
-    # a 20 cubed box with a single particle, interacting via a LJ-potential
-    # (cut-off at 5 sigma).
+       The excess chemical potential is calculated for identical particles in a 20 cubed box with a single particle, interacting via a LJ-potential (cut-off at 5 sigma)."""
+
     N0 = 1
-    temperature = 0.5
-    type_HA = 0
-    charge_HA = 0
-    lj_eps = 1.0
-    lj_sig = 1.0
-    lj_cut = 5.0
-    box_l = 20.0
-    lj_shift = lj_potential(lj_cut, lj_eps, lj_sig, lj_cut + 1, 0.0)
+    TEMPERATURE = 0.5
+    TYPE_HA = 0
+    CHARGE_HA = 0
+    LJ_EPS = 1.0
+    LJ_SIG = 1.0
+    LJ_CUT = 5
+    BOX_L = 2*LJ_CUT
+    LJ_SHIFT = lj_potential(LJ_CUT, LJ_EPS, LJ_SIG, LJ_CUT + 1, 0.0)
 
-    def lj_potential_arr(r, lj_eps, lj_sig, lj_shift):
-        """lennard jones potential (that works for array input)"""
-        r6 = r**(-6)
-        r12 = r6**2
-        ljsig6 = lj_sig**6
-        ljsig12 = ljsig6**2
-        return 4.0 * lj_eps * (ljsig12 * r12 - ljsig6 * r6) + lj_shift
+    radius = np.linspace(1e-10, LJ_CUT, 1000)
+    # numerical integration for radii smaller than the cut-off in spherical coordinates
+    integrateUpToCutOff = 4 * np.pi * np.trapz(
+        radius**2 * np.exp(-lj_potential(radius,
+                                        LJ_EPS,
+                                        LJ_SIG,
+                                        LJ_CUT,
+                                        LJ_SHIFT) / TEMPERATURE),
+        x=radius)   
+    # numerical solution for V_lj=0 => corresponds to the volume (as exp(0)=1)
+    integreateRest = (BOX_L**3 - 4.0 / 3.0 * np.pi * LJ_CUT**3)
+                      
+    # calculate excess chemical potential of the system, see Frenkel Smith, p 174. Note: He uses scaled coordinates, which is why we need to divide by the Box volume
+    target_mu_ex = -TEMPERATURE * \
+        np.log((integrateUpToCutOff + integreateRest) / BOX_L**3)
+                                       
 
-    r = np.linspace(1e-10, lj_cut, 1000)
-    integrateSphere = 4 * np.pi * np.trapz(
-        r**2 * np.exp(-lj_potential_arr(r,
-                                        lj_eps,
-                                        lj_sig,
-                                        lj_shift) / temperature),
-        x=r)  # numerical solution 
-    integreateRest = (box_l**3 - 4.0 / 3.0 * np.pi * lj_cut**3)
-                      # numerical solution for V_lj=0 => corresponds to the
-                      # volume (as exp(0)=1)
-
-    target_mu_ex = -temperature * \
-        np.log((integrateSphere + integreateRest) / box_l**3)
-                                       # calculate excess chemical potential of
-                                       # the system from the integral values
-
-    system = espressomd.System(box_l=np.ones(3) * box_l)
+    system = espressomd.System(box_l=np.ones(3) * BOX_L)
+    system.cell_system.set_n_square()
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     volume = np.prod(system.box_l)  # cuboid box
     
-    unimportant_exclusion_radius = np.nan
     Widom = reaction_ensemble.WidomInsertion(
-        temperature=temperature,
-        exclusion_radius=unimportant_exclusion_radius)    
+        temperature=TEMPERATURE,
+        exclusion_radius=np.nan)    
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         """Prepare a testsystem."""
-        cls.system.part.add(id=0, pos=0.5 * cls.system.box_l, type=cls.type_HA)
+        self.system.part.add(id=0, pos=0.5 * self.system.box_l, type=self.TYPE_HA)
         
-        cls.system.non_bonded_inter[cls.type_HA, cls.type_HA].lennard_jones.set_params(
-            epsilon=cls.lj_eps,
-                                                           sigma=cls.lj_sig,
-                                                           cutoff=cls.lj_cut, shift="auto")
+        self.system.non_bonded_inter[self.TYPE_HA, self.TYPE_HA].lennard_jones.set_params(
+            epsilon=self.LJ_EPS,
+                                                           sigma=self.LJ_SIG,
+                                                           cutoff=self.LJ_CUT, shift="auto")
 
-        unimportant_K_diss = 0.8888
-        cls.Widom.add_reaction(
-            gamma=unimportant_K_diss,
+        self.Widom.add_reaction(
+            gamma=np.nan,
             reactant_types=[],
             reactant_coefficients=[],
-            product_types=[cls.type_HA],
+            product_types=[self.TYPE_HA],
             product_coefficients=[1],
-            default_charges={cls.type_HA: cls.charge_HA})
+            default_charges={self.TYPE_HA: self.CHARGE_HA})
 
     def test_widom_insertion(self):   
-        type_HA = ReactionEnsembleTest.type_HA
-        system = ReactionEnsembleTest.system
-        Widom = ReactionEnsembleTest.Widom
-        target_mu_ex = ReactionEnsembleTest.target_mu_ex
+        TYPE_HA = WidomInsertionTest.TYPE_HA
+        system = WidomInsertionTest.system
+        Widom = WidomInsertionTest.Widom
+        target_mu_ex = WidomInsertionTest.target_mu_ex
 
         system.seed = system.cell_system.get_state()[
             'n_nodes'] * [np.random.randint(5)]
         num_samples = 100000
         for i in range(num_samples):
-            Widom.measure_excess_chemical_potential(
-                0)  # 0 for insertion reaction
+            Widom.measure_excess_chemical_potential(0)  # 0 for insertion reaction
         mu_ex = Widom.measure_excess_chemical_potential(0)
         deviation_mu_ex = abs(mu_ex[0] - target_mu_ex)
 
         # error
         self.assertLess(
-            deviation_mu_ex - 0.00015,
+            deviation_mu_ex - 1e-3,
             0.0,
             msg="\nExcess chemical potential for single LJ-particle computed via widom insertion gives a wrong value.\n"
             + "  average mu_ex: " + str(mu_ex[0])
