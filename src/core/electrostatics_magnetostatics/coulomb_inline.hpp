@@ -18,7 +18,7 @@
 namespace Coulomb {
 inline Utils::Vector3d central_force(double const q1q2, const double *d,
                                      double dist) {
-  Vector3d f{};
+  Utils::Vector3d f{};
 
   switch (coulomb.method) {
 #ifdef P3M
@@ -53,7 +53,7 @@ inline Utils::Vector3d central_force(double const q1q2, const double *d,
 }
 
 inline void calc_pair_force(Particle *p1, Particle *p2, const double *d,
-                            double dist, Vector3d &force) {
+                            double dist, Utils::Vector3d &force) {
   auto const q1q2 = p1->p.q * p2->p.q;
 
   if (q1q2 == 0)
@@ -66,8 +66,8 @@ inline void calc_pair_force(Particle *p1, Particle *p2, const double *d,
       (elc_params.dielectric_contrast_on)) {
     // forces from the virtual charges
     // they go directly onto the particles, since they are not pairwise forces
-    Vector3d f1{};
-    Vector3d f2{};
+    Utils::Vector3d f1{};
+    Utils::Vector3d f2{};
 
     ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1.data(), f2.data());
 
@@ -89,8 +89,10 @@ inline void calc_pair_force(Particle *p1, Particle *p2, const double *d,
  * @param dist |d|
  * @return Contribution to the pressure tensor.
  */
-inline Vector<Vector3d, 3> pair_pressure(const Particle *p1, const Particle *p2,
-                                         const Vector3d &d, double dist) {
+inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(const Particle *p1,
+                                                       const Particle *p2,
+                                                       const Utils::Vector3d &d,
+                                                       double dist) {
   switch (coulomb.method) {
   case COULOMB_NONE:
     break;
