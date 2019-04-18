@@ -1,7 +1,7 @@
 include "myconfig.pxi"
 from libcpp.vector cimport vector
 from libcpp.string cimport string
-from libcpp.memory cimport unique_ptr, make_unique
+from libcpp.memory cimport unique_ptr
 from cython.operator cimport dereference as deref
 import numpy as np
 
@@ -349,7 +349,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
                     "At least the following keys have to be given as keyword arguments: " + self._required_keys().__str__() + " got " + kwargs.__str__())
             self._params[k] = kwargs[k]
 
-        self.REptr = make_unique[CReactionEnsemble]( < int > int(self._params["seed"]))        
+        self.REptr.reset(new CReactionEnsemble(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.REptr.get()
         
         for k in kwargs:
@@ -373,7 +373,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             self._params[k] = kwargs[k]
 
 
-        self.constpHptr = make_unique[CConstantpHEnsemble]( < int > int(self._params["seed"]))
+        self.constpHptr.reset(new CConstantpHEnsemble(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.constpHptr.get()
 
         for k in kwargs:
@@ -428,7 +428,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             else:
                 raise KeyError("%s is not a vaild key" % k)
 
-        self.WLRptr = make_unique[CWangLandauReactionEnsemble]( < int > int(self._params["seed"]))
+        self.WLRptr.reset(new CWangLandauReactionEnsemble(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.WLRptr.get()
 
         self._set_params_in_es_core()
@@ -682,7 +682,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
         self._params[
             "gamma"] = 1.0  # this is not used by the widom insertion method
 
-        self.WidomInsertionPtr = make_unique[CWidomInsertion]( < int > int(self._params["seed"]))
+        self.WidomInsertionPtr.reset(new CWidomInsertion(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.WidomInsertionPtr.get()
         for k in kwargs:
             if k in self._valid_keys():
