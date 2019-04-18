@@ -90,6 +90,7 @@ public:
   //  Vector3d get_stress_at_pos(const Vector3d& position);
 
   boost::optional<double> get_node_density(const Vector3i node) const;
+  bool set_node_density(const Vector3i node, const double density);
   boost::optional<Vector3d>
   get_node_velocity_at_boundary(const Vector3i &node) const;
   bool set_node_velocity_at_boundary(const Vector3i node, const Vector3d v);

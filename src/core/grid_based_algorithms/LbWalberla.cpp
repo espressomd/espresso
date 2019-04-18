@@ -294,6 +294,22 @@ bool LbWalberla::set_node_velocity(const Vector3i &node, const Vector3d v) {
   return true;
 }
 
+bool LbWalberla::set_node_density(const Vector3i node, const double density) {
+  auto bc = get_block_and_cell(node);
+  if (!bc)
+    return false;
+
+  auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
+  auto const &vel_adaptor =
+      (*bc).block->getData<VelocityAdaptor>(m_velocity_adaptor_id);
+  Vector3<double> v = vel_adaptor->get((*bc).cell);
+
+  pdf_field->setDensityAndVelocity((*bc).cell,
+                                   Vector3<double>{v[0], v[1], v[2]}, density);
+
+  return true;
+}
+
 boost::optional<double>
 LbWalberla::get_node_density(const Vector3i node) const {
   auto bc = get_block_and_cell(node);
