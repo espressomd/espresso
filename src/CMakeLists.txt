@@ -28,6 +28,7 @@ endif(WITH_TESTS)
 
 add_subdirectory(core)
 add_subdirectory(config)
+add_subdirectory(utils)
 
 add_subdirectory(profiler)
 add_subdirectory(pdbparser)
