@@ -30,7 +30,7 @@ from tests_common import lj_potential
 
 @ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
            "Features not available, skipping test!")
-class ReactionEnsembleTest(ut.TestCase):
+class WidomInsertionTest(ut.TestCase):
 
     """Test the implementation of the widom insertion (part of the reaction ensemble)."""
 
