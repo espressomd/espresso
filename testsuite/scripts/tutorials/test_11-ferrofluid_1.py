@@ -20,22 +20,22 @@ import importlib_wrapper
 import numpy as np
 
 
-
-
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/11-ferrofluid/11-ferrofluid_part1.py",
-    equil_steps=200,equil_rounds=10)
+    equil_steps=200, equil_rounds=10)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-
     def test(self):
-        self.assertTrue(int(np.sum(tutorial.n_clusters)) == len(tutorial.cluster_sizes))
+        self.assertTrue(
+            int(np.sum(tutorial.n_clusters)) == len(tutorial.cluster_sizes))
         for i in range(8):
-            self.assertLess(tutorial.size_dist[0][i+1],tutorial.size_dist[0][i])
+            self.assertLess(
+                tutorial.size_dist[0][i + 1],
+                tutorial.size_dist[0][i])
 
 
 if __name__ == "__main__":

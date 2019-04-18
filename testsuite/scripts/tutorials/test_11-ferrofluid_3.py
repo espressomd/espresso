@@ -20,30 +20,26 @@ import importlib_wrapper
 import numpy as np
 
 
-
-
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/11-ferrofluid/11-ferrofluid_part3.py",
-    equil_steps=200,equil_rounds=10,loops=250,alphas=[0.5])
+    equil_steps=200, equil_rounds=10, loops=250, alphas=[0.5])
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-
     def test(self):
         self.assertGreater(
             tutorial.magnetization_star[1],
-            tutorial.L(tutorial.alpha_mean_field(tutorial.alphas[1],tutorial.dip_lambda,tutorial.phi)))
+            tutorial.L(tutorial.alpha_mean_field(tutorial.alphas[1], tutorial.dip_lambda, tutorial.phi)))
         self.assertLess(
             tutorial.magnetization_star[1],
             1)
         self.assertAlmostEqual(
-            tutorial.chi,tutorial.chi_I,delta=0.05)
+            tutorial.chi, tutorial.chi_I, delta=0.05)
         self.assertGreater(
-            tutorial.chi,tutorial.chi_L)
-
+            tutorial.chi, tutorial.chi_L)
 
 
 if __name__ == "__main__":
