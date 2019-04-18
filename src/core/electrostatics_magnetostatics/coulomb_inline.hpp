@@ -16,7 +16,8 @@
 #include "electrostatics_magnetostatics/scafacos.hpp"
 
 namespace Coulomb {
-inline Utils::Vector3d central_force(double const q1q2, const double *d, double dist) {
+inline Utils::Vector3d central_force(double const q1q2, const double *d,
+                                     double dist) {
   Vector3d f{};
 
   switch (coulomb.method) {
