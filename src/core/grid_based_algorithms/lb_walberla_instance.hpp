@@ -42,21 +42,22 @@ auto collector_function(Getter getter_function, V position) -> decltype(auto) {
   if (hits < 1)
     throw std::runtime_error("Local data cannot be found.");
 #endif
-  typename decltype(result)::value_type *global_result{};
+  typedef typename decltype(result)::value_type T;
+  T global_result{};
   if (comm_cart.rank() == 0) {
     if (!result) {
       comm_cart.recv(boost::mpi::any_source, 222, global_result);
     } else {
-      global_result = &(result.get());
+      global_result = result.get();
     }
-    return *global_result;
+    return global_result;
   } else {
     if (result) {
-      global_result = &(result.get());
+      global_result = result.get();
       comm_cart.send(0, 222, global_result);
     }
   }
-  return *global_result;
+  return global_result;
 }
 
 #endif

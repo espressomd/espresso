@@ -1385,6 +1385,20 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
     return {};
 #endif // LB
   }
+#ifdef LB_WALBERLA
+  if (lb_walberla()) {
+    bool is_boundary = false;
+    if (comm_cart.rank() == 0) {
+      is_boundary = (collector_function(&LbWalberla::get_node_is_boundary, ind));
+    } else {
+      collector_function(&LbWalberla::get_node_is_boundary, ind);
+    }
+    if(is_boundary)
+      return 1;
+    else
+      return 0;
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 

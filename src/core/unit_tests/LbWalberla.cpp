@@ -102,6 +102,23 @@ BOOST_AUTO_TEST_CASE(mpi_collector) {
       BOOST_CHECK((res - v).norm() < eps);
     }
   }
+  Vector3d vel = {0.2, 3.8, 4.2};
+  for (Vector3i node : std::vector<Vector3i>{{0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
+    if (lb_walberla()->node_in_local_domain(node)) {
+      BOOST_CHECK(lb_walberla()->set_node_velocity_at_boundary(node, vel));
+    }
+    int is_boundary = lb_lbnode_get_boundary(node);
+    if (comm_cart.rank() == 0) {
+      BOOST_CHECK(is_boundary);
+    }
+    if (lb_walberla()->node_in_local_domain(node)) {
+      BOOST_CHECK(lb_walberla()->remove_node_from_boundary(node));
+    }
+    is_boundary = lb_lbnode_get_boundary(node);
+    if (comm_cart.rank() == 0) {
+      BOOST_CHECK(!is_boundary);
+    }
+  }
 }
 
 int main(int argc, char **argv) {
