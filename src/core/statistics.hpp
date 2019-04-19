@@ -202,7 +202,7 @@ double min_distance2(T1 const pos1, T2 const pos2) {
 /** Calculate the center of mass of a special type of the current configuration.
  *  \param part_type  type of the particle
  */
-Vector3d centerofmass(PartCfg &, int part_type);
+Utils::Vector3d centerofmass(PartCfg &, int part_type);
 
 /** Calculate the angular momentum of a special type of the current
  *  configuration.
@@ -228,7 +228,8 @@ void predict_momentum_particles(double *result);
  *  calculation
  *  @return Result for this processor
  */
-Vector3d calc_linear_momentum(int include_particles, int include_lbfluid);
+Utils::Vector3d calc_linear_momentum(int include_particles,
+                                     int include_lbfluid);
 
 inline double *obsstat_bonded(Observable_stat *stat, int j) {
   return stat->bonded + stat->chunk_size * j;

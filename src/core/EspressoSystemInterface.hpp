@@ -149,7 +149,7 @@ public:
 
 #endif
 
-  Vector3d box() const override;
+  Utils::Vector3d box() const override;
 
   unsigned int npart_gpu() override {
 #ifdef CUDA

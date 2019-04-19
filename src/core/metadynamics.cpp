@@ -67,9 +67,9 @@ double *meta_acc_force = nullptr;
 /** Accumulated free energy profile */
 double *meta_acc_fprofile = nullptr;
 
-Vector3d meta_cur_xi;
+Utils::Vector3d meta_cur_xi;
 double meta_val_xi = 0.;
-Vector3d meta_apply_direction;
+Utils::Vector3d meta_apply_direction;
 
 void meta_init() {
   if (meta_switch == META_OFF)
@@ -101,7 +101,7 @@ void meta_init() {
  * - apply external force
  */
 void meta_perform() {
-  Vector3d ppos1, ppos2;
+  Utils::Vector3d ppos1, ppos2;
 
   if (meta_switch == META_OFF)
     return;

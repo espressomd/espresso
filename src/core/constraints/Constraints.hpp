@@ -46,7 +46,7 @@ private:
 
 public:
   void add(std::shared_ptr<Constraint> const &c) {
-    if (not c->fits_in_box(Vector3d{box_l})) {
+    if (not c->fits_in_box(Utils::Vector3d{box_l})) {
       throw std::runtime_error("Constraint not compatible with box size.");
     }
 
