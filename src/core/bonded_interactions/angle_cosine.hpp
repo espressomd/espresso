@@ -43,7 +43,7 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0);
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  *  @return Forces on the second, first and third particles, in that order.
  */
-inline std::tuple<Vector3d, Vector3d, Vector3d>
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 calc_angle_cosine_3body_forces(Particle const *p_mid, Particle const *p_left,
                                Particle const *p_right,
                                Bonded_ia_parameters const *iaparams) {
@@ -79,7 +79,7 @@ inline int calc_angle_cosine_force(Particle const *p_mid,
                                    double f_mid[3], double f_left[3],
                                    double f_right[3]) {
 
-  Vector3d f_mid_v, f_left_v, f_right_v;
+  Utils::Vector3d f_mid_v, f_left_v, f_right_v;
   std::tie(f_mid_v, f_left_v, f_right_v) =
       calc_angle_cosine_3body_forces(p_mid, p_left, p_right, iaparams);
   for (int i = 0; i < 3; ++i) {

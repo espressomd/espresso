@@ -93,11 +93,11 @@ extern double *meta_acc_force;
 extern double *meta_acc_fprofile;
 
 /* Current vector of the reaction coordinate */
-extern Vector3d meta_cur_xi;
+extern Utils::Vector3d meta_cur_xi;
 /* Current value of the reaction coordinate (scalar) */
 extern double meta_val_xi;
 /* Direction of the force that is applied (normalized) */
-extern Vector3d meta_apply_direction;
+extern Utils::Vector3d meta_apply_direction;
 
 /*********************************
  * functions

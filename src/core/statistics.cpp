@@ -101,10 +101,11 @@ void predict_momentum_particles(double *result) {
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
-  Vector3d linear_momentum{};
+Utils::Vector3d calc_linear_momentum(int include_particles,
+                                     int include_lbfluid) {
+  Utils::Vector3d linear_momentum{};
   if (include_particles) {
-    Vector3d momentum_particles{};
+    Utils::Vector3d momentum_particles{};
     mpi_gather_stats(4, momentum_particles.data(), nullptr, nullptr, nullptr);
     linear_momentum += momentum_particles;
   }
@@ -116,8 +117,8 @@ Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
   return linear_momentum;
 }
 
-Vector3d centerofmass(PartCfg &partCfg, int type) {
-  Vector3d com{};
+Utils::Vector3d centerofmass(PartCfg &partCfg, int type) {
+  Utils::Vector3d com{};
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
@@ -180,7 +181,7 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
 IntList nbhood(PartCfg &partCfg, double pt[3], double r,
                int const planedims[3]) {
   IntList ids;
-  Vector3d d;
+  Utils::Vector3d d;
 
   auto const r2 = r * r;
 
@@ -521,8 +522,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{center_};
-  auto direction = Vector3d{direction_};
+  auto center = Utils::Vector3d{center_};
+  auto direction = Utils::Vector3d{direction_};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -558,7 +559,7 @@ int calc_cylindrical_average(
       if (types[type_id] == p.p.type || all_types) {
         auto const pos = folded_position(p);
 
-        Vector3d vel{p.m.v};
+        Utils::Vector3d vel{p.m.v};
 
         auto const diff = pos - center;
 

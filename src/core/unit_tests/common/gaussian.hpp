@@ -25,22 +25,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cmath>
 
-inline double gaussian(Vector3d x, Vector3d x0, double sigma) {
+inline double gaussian(Utils::Vector3d x, Utils::Vector3d x0, double sigma) {
   return std::exp(-((x - x0).norm2() / (2. * sigma * sigma)));
 }
 
-inline Vector3d del_gaussian(Vector3d x, Vector3d x0, double sigma) {
+inline Utils::Vector3d del_gaussian(Utils::Vector3d x, Utils::Vector3d x0,
+                                    double sigma) {
   return -(x - x0) * gaussian(x, x0, sigma) / (sigma * sigma);
 }
 
-inline boost::multi_array<double, 3> gaussian_field(int size, Vector3d h,
-                                                    Vector3d origin,
-                                                    Vector3d x0, double sigma) {
-  boost::multi_array<double, 3> data(Vector3i{10, 10, 10});
+inline boost::multi_array<double, 3> gaussian_field(int size, Utils::Vector3d h,
+                                                    Utils::Vector3d origin,
+                                                    Utils::Vector3d x0,
+                                                    double sigma) {
+  boost::multi_array<double, 3> data(Utils::Vector3i{10, 10, 10});
   for (int i = 0; i < 10; i++)
     for (int j = 0; j < 10; j++)
       for (int k = 0; k < 10; k++) {
-        auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
+        auto const x = origin + Utils::Vector3d{i * h[0], j * h[1], k * h[2]};
         data[i][j][k] = gaussian(x, x0, sigma);
       }
 

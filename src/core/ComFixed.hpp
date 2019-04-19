@@ -35,14 +35,15 @@ public:
 private:
   TypeIndex m_type_index;
 
-  std::vector<Vector3d> local_type_forces(ParticleRange &particles) const {
-    std::vector<Vector3d> ret(m_type_index.size(), Vector3d{});
+  std::vector<Utils::Vector3d>
+  local_type_forces(ParticleRange &particles) const {
+    std::vector<Utils::Vector3d> ret(m_type_index.size(), Utils::Vector3d{});
 
     for (auto const &p : particles) {
       /* Check if type is of interest */
       auto it = m_type_index.find(p.p.type);
       if (it != m_type_index.end()) {
-        ret[it->second] += Vector3d{p.f.f};
+        ret[it->second] += Utils::Vector3d{p.f.f};
       }
     }
 
@@ -84,12 +85,12 @@ public:
     auto const local_masses = local_type_masses(particles);
 
     /* Total forces and masses of the types. */
-    std::vector<Vector3d> forces(m_type_index.size(), Vector3d{});
+    std::vector<Utils::Vector3d> forces(m_type_index.size(), Utils::Vector3d{});
     std::vector<double> masses(m_type_index.size(), 0.0);
 
     /* Add contributions from all nodes and redistribute them to all. */
     boost::mpi::all_reduce(comm, local_forces.data(), local_forces.size(),
-                           forces.data(), std::plus<Vector3d>{});
+                           forces.data(), std::plus<Utils::Vector3d>{});
     boost::mpi::all_reduce(comm, local_masses.data(), local_masses.size(),
                            masses.data(), std::plus<double>{});
 
