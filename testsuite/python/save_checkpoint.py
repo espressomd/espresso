@@ -26,6 +26,7 @@ import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
 import espressomd.lb
+import espressomd.electrokinetics
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
@@ -50,6 +51,25 @@ elif espressomd.gpu_available() and espressomd.has_features('LB_GPU') and 'LB.GP
 if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
     system.actors.add(lbf)
+
+EK_implementation = None
+if espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') and 'EK.GPU' in modes:
+    EK_implementation = espressomd.electrokinetics
+    ek = EK_implementation.Electrokinetics(
+        agrid=0.5,
+          lb_density=26.15,
+          viscosity=1.7,
+          friction=0.0,
+          T=1.1,
+          prefactor=0.88,
+          stencil="linkcentered")
+    ek_species = EK_implementation.Species(
+        density=0.4,
+          D=0.02,
+          valency=0.3,
+          ext_force_density=[0.01, -0.08, 0.06])
+    ek.add_species(ek_species)
+    system.actors.add(ek)
 
 system.part.add(pos=[1.0] * 3)
 system.part.add(pos=[1.0, 1.0, 2.0])
@@ -121,6 +141,23 @@ if LB_implementation:
     # save LB checkpoint file
     lbf_cpt_path = checkpoint.checkpoint_dir + "/lb.cpt"
     lbf.save_checkpoint(lbf_cpt_path, cpt_mode)
+
+if EK_implementation:
+    m = np.pi / 12
+    nx = int(np.round(system.box_l[0] / ek.get_params()["agrid"]))
+    ny = int(np.round(system.box_l[1] / ek.get_params()["agrid"]))
+    nz = int(np.round(system.box_l[2] / ek.get_params()["agrid"]))
+    # Create a 3D grid with deterministic values to fill the LB fluid lattice
+    grid_3D = np.fromfunction(
+        lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+                              (nx, ny, nz), dtype=float)
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                ek_species[i, j, k].density = grid_3D[i, j, k]
+    # save LB checkpoint file
+    ek_cpt_path = checkpoint.checkpoint_dir + "/ek"
+    ek.save_checkpoint(ek_cpt_path)
 
 # save checkpoint file
 checkpoint.save(0)
