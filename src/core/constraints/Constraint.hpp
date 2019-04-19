@@ -35,7 +35,7 @@ public:
    * @param[in] t The time at which the energy should be calculated.
    * @param[out] energy to add the energy to.
    */
-  virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
+  virtual void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
                           double t, Observable_stat &energy) const = 0;
 
   /**
@@ -48,13 +48,13 @@ public:
    * @param[in] t The time at which the force should be calculated.
    * @return The force on the particle.
    */
-  virtual ParticleForce force(const Particle &p, const Vector3d &folded_pos,
-                              double t) = 0;
+  virtual ParticleForce force(const Particle &p,
+                              const Utils::Vector3d &folded_pos, double t) = 0;
 
   /**
    * @brief Check if constraints if compatible with box size.
    */
-  virtual bool fits_in_box(Vector3d const &box) const = 0;
+  virtual bool fits_in_box(Utils::Vector3d const &box) const = 0;
 
   virtual void reset_force(){};
 

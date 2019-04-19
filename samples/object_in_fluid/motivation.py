@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample loads model red blood cells and simulates its motion in a complex geometry.
+This sample loads model red blood cells and simulates its motion
+in a complex geometry.
 """
 
 import espressomd
@@ -27,23 +28,22 @@ espressomd.assert_features(required_features)
 from espressomd import lb
 from espressomd import lbboundaries
 from espressomd import shapes
-from espressomd.shapes import Rhomboid
-from espressomd.shapes import Cylinder
-from espressomd.interactions import OifLocalForces
-from espressomd.interactions import OifGlobalForces
-from espressomd.interactions import OifOutDirection
-# from espressomd.interactions import SoftSphereInteraction
-# from espressomd.interactions import MembraneCollisionInteraction
 
 import numpy as np
 import os
 import sys
+import warnings
 
 import object_in_fluid as oif
 from object_in_fluid.oif_utils import output_vtk_rhomboid, output_vtk_cylinder
 
+assert len(sys.argv) == 2, "please provide a number for the simulation"
 simNo = sys.argv[1]
-os.mkdir("output/sim" + str(simNo))
+if not os.path.isdir("output/sim" + str(simNo)):
+    os.makedirs("output/sim" + str(simNo))
+else:
+    warnings.warn("Folder {} already exists, files will be overwritten"
+                  .format("output/sim" + str(simNo)))
 
 boxX = 22.0
 boxY = 14.0
@@ -65,11 +65,22 @@ cell0 = oif.OifCell(cell_type=cell_type,
 cell1 = oif.OifCell(cell_type=cell_type,
                     particle_type=1, origin=[5.0, 5.0, 7.0])
 
+# cell-wall interactions
+system.non_bonded_inter[0, 10].soft_sphere.set_params(
+    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
+system.non_bonded_inter[1, 10].soft_sphere.set_params(
+    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
+
+# cell-cell interactions
+system.non_bonded_inter[0, 1].membrane_collision.set_params(
+    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
+
+
 # fluid
 lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5,
                             tau=0.1, ext_force_density=[0.002, 0.0, 0.0])
 system.actors.add(lbf)
-system.thermostat.set_lb(LB_fluid=lbf, friction=1.5)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 
 # creating boundaries and obstacles in the channel
 # OutputVtk writes a file
@@ -131,15 +142,6 @@ for boundary in boundaries:
     system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary))
     system.constraints.add(shape=boundary, particle_type=10)
 
-# cell-wall interactions
-system.non_bonded_inter[0, 10].soft_sphere.set_params(
-    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
-system.non_bonded_inter[1, 10].soft_sphere.set_params(
-    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
-
-# cell-cell interactions
-system.non_bonded_inter[0, 1].membrane_collision.set_params(
-    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
 
 maxCycle = 50
 # main integration loop
@@ -153,5 +155,5 @@ for i in range(1, maxCycle):
         file_name="output/sim" + str(simNo) + "/cell0_" + str(i) + ".vtk")
     cell1.output_vtk_pos_folded(
         file_name="output/sim" + str(simNo) + "/cell1_" + str(i) + ".vtk")
-    print("time: ", str(i * time_step))
+    print("time: {:.1f}".format(i * time_step))
 print("Simulation completed.")

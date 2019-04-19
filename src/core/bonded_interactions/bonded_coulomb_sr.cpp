@@ -20,21 +20,21 @@
 */
 /** \file
  *
- *  Implementation of \ref bonded_coulomb_p3m_sr.hpp
+ *  Implementation of \ref bonded_coulomb_sr.hpp
  */
-#include "bonded_coulomb_p3m_sr.hpp"
+#include "bonded_coulomb_sr.hpp"
 #include "communication.hpp"
 
-#ifdef P3M
+#ifdef ELECTROSTATICS
 
-int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2) {
+int bonded_coulomb_sr_set_params(int bond_type, double q1q2) {
   if (bond_type < 0)
     return ES_ERROR;
 
   make_bond_type_exist(bond_type);
 
-  bonded_ia_params[bond_type].p.bonded_coulomb_p3m_sr.q1q2 = q1q2;
-  bonded_ia_params[bond_type].type = BONDED_IA_BONDED_COULOMB_P3M_SR;
+  bonded_ia_params[bond_type].p.bonded_coulomb_sr.q1q2 = q1q2;
+  bonded_ia_params[bond_type].type = BONDED_IA_BONDED_COULOMB_SR;
   bonded_ia_params[bond_type].num = 1;
 
   /* broadcast interaction parameters */

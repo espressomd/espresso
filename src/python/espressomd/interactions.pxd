@@ -305,13 +305,13 @@ ELSE:
         int type
         TabulatedPotential * pot
 
-IF P3M:
+IF ELECTROSTATICS:
     cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         #* Parameters for Bonded Coulomb p3m sr */
-        cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
+        cdef struct Bonded_coulomb_sr_bond_parameters:
             double q1q2
 ELSE:
-    cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
+    cdef struct Bonded_coulomb_sr_bond_parameters:
         double q1q2
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
@@ -472,7 +472,7 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         Oif_local_forces_bond_parameters oif_local_forces
         Thermalized_bond_parameters thermalized_bond
         Bonded_coulomb_bond_parameters bonded_coulomb
-        Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr
+        Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr
         Harmonic_bond_parameters harmonic
         Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_bond_parameters angle
@@ -554,9 +554,8 @@ IF ELECTROSTATICS:
     cdef extern from "bonded_interactions/bonded_coulomb.hpp":
         int bonded_coulomb_set_params(int bond_type, double prefactor)
 
-IF P3M:
-    cdef extern from "bonded_interactions/bonded_coulomb_p3m_sr.hpp":
-        int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
+    cdef extern from "bonded_interactions/bonded_coulomb_sr.hpp":
+        int bonded_coulomb_sr_set_params(int bond_type, double q1q2)
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     int virtual_set_params(int bond_type)
@@ -568,7 +567,7 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_HARMONIC,
         BONDED_IA_HARMONIC_DUMBBELL,
         BONDED_IA_BONDED_COULOMB,
-        BONDED_IA_BONDED_COULOMB_P3M_SR,
+        BONDED_IA_BONDED_COULOMB_SR,
         BONDED_IA_DIHEDRAL,
         BONDED_IA_TABULATED,
         BONDED_IA_SUBT_LJ,

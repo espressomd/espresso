@@ -34,14 +34,14 @@ public:
         m_outer_radius(0.0), m_inner_radius(0.0), m_width(0.0),
         m_opening_angle(0.0), m_direction(0.0) {}
 
-  void calculate_dist(const Vector3d &pos, double *dist,
+  void calculate_dist(const Utils::Vector3d &pos, double *dist,
                       double *vec) const override;
 
-  Vector3d const &position() const { return m_position; }
-  void set_position(Vector3d const &position) { m_position = position; }
+  Utils::Vector3d const &position() const { return m_position; }
+  void set_position(Utils::Vector3d const &position) { m_position = position; }
 
-  Vector3d const &orientation() const { return m_orientation; }
-  void set_orientation(Vector3d const &orientation) {
+  Utils::Vector3d const &orientation() const { return m_orientation; }
+  void set_orientation(Utils::Vector3d const &orientation) {
     m_orientation = orientation;
   }
 
@@ -53,10 +53,10 @@ public:
 
 private:
   /** Hollow cone position. */
-  Vector3d m_position;
+  Utils::Vector3d m_position;
 
   /** Hollow cone orientation. */
-  Vector3d m_orientation;
+  Utils::Vector3d m_orientation;
 
   /** Hollow cone dimensions. */
   double m_outer_radius;
