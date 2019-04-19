@@ -244,6 +244,19 @@ class LBVelocityProfile(Observable):
 
 
 @script_interface_register
+class LBFluidStress(Observable):
+
+    """Calculates the average stress of the LB fluid for all nodes.
+
+    Parameters
+    ----------
+    None
+
+    """
+    _so_name = "Observables::LBFluidStress"
+
+
+@script_interface_register
 class MagneticDipoleMoment(Observable):
 
     """Calculates the magnetic dipole moment for particles with given ids.

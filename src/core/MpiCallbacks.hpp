@@ -155,8 +155,6 @@ template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
  * @brief  The interface of the MPI callback mechanism.
  */
 class MpiCallbacks {
-  enum class Message { ABORT, BCAST, NODE };
-
 public:
   /**
    * @brief RAII handle for a callback.
@@ -207,6 +205,8 @@ public:
       if (m_cb)
         m_cb->remove(m_id);
     }
+
+    MpiCallbacks *cb() const { return m_cb; }
   };
 
   /* Avoid accidental copy, leads to mpi deadlock
@@ -389,10 +389,9 @@ public:
       /** id == 0 is loop_abort. */
       if (request == LOOP_ABORT) {
         break;
-      } else {
-        /** Call the callback */
-        m_callback_map[request]->operator()(ia);
       }
+      /** Call the callback */
+      m_callback_map[request]->operator()(ia);
     }
   }
 

@@ -38,9 +38,8 @@ public:
     if (method == "decide") {
       return pair_criterion()->decide(boost::get<int>(parameters.at("id1")),
                                       boost::get<int>(parameters.at("id2")));
-    } else {
-      throw std::runtime_error("Unknown method called.");
     }
+    throw std::runtime_error("Unknown method called.");
   }
 };
 

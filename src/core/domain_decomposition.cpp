@@ -31,7 +31,9 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "serialization/ParticleList.hpp"
+#include "utils/index.hpp"
 #include "utils/mpi/sendrecv.hpp"
+using Utils::get_linear_index;
 
 #include "event.hpp"
 
@@ -40,7 +42,7 @@
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
-Cell *dd_save_position_to_cell(const Vector3d &pos);
+Cell *dd_save_position_to_cell(const Utils::Vector3d &pos);
 
 /************************************************/
 /** \name Variables */
@@ -246,7 +248,7 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
  *  GhostCommunicator)
  */
 void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
-                     const Vector3i &grid) {
+                     const Utils::Vector3i &grid) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
@@ -432,7 +434,7 @@ void dd_assign_prefetches(GhostCommunicator *comm) {
  *  GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
  *  dd_prepare_comm.
  */
-void dd_update_communicators_w_boxl(const Vector3i &grid) {
+void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
   int cnt = 0;
 
   /* direction loop: x, y, z */
@@ -479,11 +481,11 @@ void dd_update_communicators_w_boxl(const Vector3i &grid) {
  * created list of interacting neighbor cells is used by the Verlet
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
-void dd_init_cell_interactions(const Vector3i &grid) {
+void dd_init_cell_interactions(const Utils::Vector3i &grid) {
   int m, n, o, p, q, r, ind1, ind2;
 
   for (int i = 0; i < 3; i++) {
-    if (dd.fully_connected[i] == true and grid[i] != 1) {
+    if (dd.fully_connected[i] and grid[i] != 1) {
       runtimeErrorMsg()
           << "Node grid not compatible with fully_connected property";
     }
@@ -506,7 +508,7 @@ void dd_init_cell_interactions(const Vector3i &grid) {
         int upper_index[3] = {m + 1, n + 1, o + 1};
 
         for (int i = 0; i < 3; i++) {
-          if (dd.fully_connected[i] == true) {
+          if (dd.fully_connected[i]) {
             lower_index[i] = 0;
             upper_index[i] = dd.ghost_cell_grid[i] - 1;
           }
@@ -535,7 +537,7 @@ void dd_init_cell_interactions(const Vector3i &grid) {
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
-Cell *dd_save_position_to_cell(const Vector3d &pos) {
+Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
   int cpos[3];
 
   for (int i = 0; i < 3; i++) {
@@ -572,7 +574,7 @@ Cell *dd_save_position_to_cell(const Vector3d &pos) {
 /* Public Functions */
 /************************************************************/
 
-void dd_on_geometry_change(int flags, const Vector3i &grid) {
+void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
@@ -637,7 +639,7 @@ void dd_on_geometry_change(int flags, const Vector3i &grid) {
 }
 
 /************************************************************/
-void dd_topology_init(CellPList *old, const Vector3i &grid) {
+void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   int c, p;
   int exchange_data, update_data;
 
@@ -781,14 +783,15 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
   }
 }
 
-void exchange_neighbors(ParticleList *pl, const Vector3i &grid) {
+void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
     if (grid[dir] == 1) {
       continue;
       /* In this (common) case left and right neighbors are
          the same, and we need only one communication */
-    } else if (grid[dir] == 2) {
+    }
+    if (grid[dir] == 2) {
       ParticleList send_buf, recv_buf;
       move_left_or_right(*pl, send_buf, send_buf, dir);
 
@@ -826,7 +829,7 @@ void exchange_neighbors(ParticleList *pl, const Vector3i &grid) {
 } // namespace
 
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    const Vector3i &grid) {
+                                    const Utils::Vector3i &grid) {
   if (global) {
     /* Worst case we need grid - 1 rounds per direction.
      * This correctly implies that if there is only one node,
@@ -849,7 +852,7 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
 
 /*************************************************/
 
-int calc_processor_min_num_cells(const Vector3i &grid) {
+int calc_processor_min_num_cells(const Utils::Vector3i &grid) {
   int i, min = 1;
   /* the minimal number of cells can be lower if there are at least two nodes
      serving a direction,

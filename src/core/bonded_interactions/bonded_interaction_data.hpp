@@ -23,6 +23,8 @@ enum BondedInteraction {
   BONDED_IA_QUARTIC,
   /** Type of bonded interaction is a BONDED_COULOMB */
   BONDED_IA_BONDED_COULOMB,
+  /** Type of bonded interaction is a BONDED_COULOMB_SR */
+  BONDED_IA_BONDED_COULOMB_SR,
   /** Type of bonded interaction is a dihedral potential. */
   BONDED_IA_DIHEDRAL,
   /** Type of tabulated bonded interaction potential,
@@ -58,8 +60,6 @@ enum BondedInteraction {
   BONDED_IA_UMBRELLA,
   /** Type of bonded interaction is thermalized distance bond. */
   BONDED_IA_THERMALIZED_DIST,
-  /** Type of bonded interaction is a BONDED_COULOMB_P3M_SR */
-  BONDED_IA_BONDED_COULOMB_P3M_SR,
 };
 
 /** Specify tabulated bonded interactions  */
@@ -156,13 +156,11 @@ struct Bonded_coulomb_bond_parameters {
   double prefactor;
 };
 
-#ifdef P3M
-/** Parameters for Coulomb bond p3m short-range Potential */
-struct Bonded_coulomb_p3m_sr_bond_parameters {
+/** Parameters for Coulomb bond short-range Potential */
+struct Bonded_coulomb_sr_bond_parameters {
   /** charge factor */
   double q1q2;
 };
-#endif
 
 /** Parameters for three-body angular potential.
  *  @note
@@ -309,6 +307,7 @@ union Bond_parameters {
 #endif
   Quartic_bond_parameters quartic;
   Bonded_coulomb_bond_parameters bonded_coulomb;
+  Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr;
   Angle_bond_parameters angle;
   Angle_harmonic_bond_parameters angle_harmonic;
   Angle_cosine_bond_parameters angle_cosine;
@@ -321,9 +320,6 @@ union Bond_parameters {
   Umbrella_bond_parameters umbrella;
 #endif
   Thermalized_bond_parameters thermalized_bond;
-#ifdef P3M
-  Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr;
-#endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
   IBM_Triel_Parameters ibm_triel;
@@ -399,9 +395,8 @@ inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
     if (iaparams->type == (int)bond &&
         p_bond->bl.e[i + 1] == p_partner->p.identity) {
       return true;
-    } else {
-      i += iaparams->num + 1;
     }
+    i += iaparams->num + 1;
   }
   return false;
 }
@@ -418,14 +413,14 @@ inline bool pair_bond_enum_exists_between(const Particle *const p1,
                                           BondedInteraction bond) {
   if (p1 == p2)
     return false;
-  else {
-    // Check if particles have bonds (bl.n > 0) and search for the bond of
-    // interest with are_bonded(). Could be saved on both sides (and both could
-    // have other bonds), so we need to check both.
-    return (p1->bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) ||
-           (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
-  }
+
+  // Check if particles have bonds (bl.n > 0) and search for the bond of
+  // interest with are_bonded(). Could be saved on both sides (and both could
+  // have other bonds), so we need to check both.
+  return (p1->bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) ||
+         (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
 }
 
 void recalc_maximal_cutoff_bonded();
+int virtual_set_params(int bond_type);
 #endif

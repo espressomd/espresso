@@ -21,19 +21,20 @@ InterpolationOrder lb_lbinterpolation_get_interpolation_order();
  * lattice.
  * @note It can lead to undefined behaviour if the
  * position is not within the local lattice. */
-const Vector3d lb_lbinterpolation_get_interpolated_velocity(const Vector3d &p);
+const Utils::Vector3d
+lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &p);
 
 /**
  * @brief Calculates the interpolated fluid velocity on the master process.
  * @param pos Position at which the velocity is to be calculated.
  * @retval interpolated fluid velocity.
  */
-const Vector3d
-lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos);
+const Utils::Vector3d
+lb_lbinterpolation_get_interpolated_velocity_global(const Utils::Vector3d &pos);
 
 /**
  * @brief Add a force density to the fluid at the given position.
  */
-void lb_lbinterpolation_add_force_density(const Vector3d &p,
-                                          const Vector3d &force_density);
+void lb_lbinterpolation_add_force_density(const Utils::Vector3d &p,
+                                          const Utils::Vector3d &force_density);
 #endif

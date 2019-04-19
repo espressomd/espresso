@@ -84,16 +84,15 @@ inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
       return 4.0 * ia_params->LJCOS_eps * (Utils::sqr(frac6) - frac6);
     }
     /* cosine part of the potential. */
-    else if (dist < (ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
+    if (dist < (ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
       return .5 * ia_params->LJCOS_eps *
              (cos(ia_params->LJCOS_alfa * Utils::sqr(r_off) +
                   ia_params->LJCOS_beta) -
               1.);
     }
     /* this should not happen! */
-    else {
-      fprintf(stderr, "this is the distance, which is negative %.3e\n", r_off);
-    }
+
+    fprintf(stderr, "this is the distance, which is negative %.3e\n", r_off);
   }
   return 0.0;
 }

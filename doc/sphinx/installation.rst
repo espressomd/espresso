@@ -343,8 +343,6 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``INTER_RF``
-
 -  ``MMM1D_GPU``
 
 -  ``_P3M_GPU_FLOAT``
@@ -612,8 +610,6 @@ looking directly at the code.
 -  ``ESR_DEBUG`` debugging of P\ :math:`^3`\ Ms real space part.
 
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
-
--  ``FFT_DEBUG`` Output from the unified FFT code.
 
 -  ``RANDOM_DEBUG``
 

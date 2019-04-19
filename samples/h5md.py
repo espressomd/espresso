@@ -29,7 +29,7 @@ system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.time_step = 0.01
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.skin = 0.4
 
 fene = interactions.FeneBond(k=10, d_r_max=2)
@@ -39,7 +39,8 @@ polymer.create_polymer(
 
 system.integrator.run(steps=0)
 h5_file = h5md.H5md(filename="sample.h5", write_pos=True, write_vel=True,
-                    write_force=True, write_species=True, write_mass=False, write_charge=True, write_ordered=True)
+                    write_force=True, write_species=True, write_mass=False,
+                    write_charge=True, write_ordered=True)
 for i in range(1):
     h5_file.write()
 h5_file.flush()

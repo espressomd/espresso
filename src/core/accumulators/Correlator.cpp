@@ -73,7 +73,8 @@ std::vector<double> compress_discard2(std::vector<double> const &A1,
 }
 
 std::vector<double> scalar_product(std::vector<double> const &A,
-                                   std::vector<double> const &B, Vector3d) {
+                                   std::vector<double> const &B,
+                                   Utils::Vector3d) {
   if (A.size() != B.size()) {
     throw std::runtime_error(
         "Error in scalar product: The vector sizes do not match");
@@ -85,27 +86,27 @@ std::vector<double> scalar_product(std::vector<double> const &A,
 
 std::vector<double> componentwise_product(std::vector<double> const &A,
                                           std::vector<double> const &B,
-                                          Vector3d) {
+                                          Utils::Vector3d) {
   std::vector<double> C(A.size());
   if (!(A.size() == B.size())) {
     throw std::runtime_error(
         "Error in componentwise product: The vector sizes do not match");
   }
 
-  std::transform(A.begin(), A.end(), B.begin(), C.begin(),
-                 std::multiplies<double>());
+  std::transform(A.begin(), A.end(), B.begin(), C.begin(), std::multiplies<>());
 
   return C;
 }
 
 std::vector<double> tensor_product(std::vector<double> const &A,
-                                   std::vector<double> const &B, Vector3d) {
+                                   std::vector<double> const &B,
+                                   Utils::Vector3d) {
   std::vector<double> C(A.size() * B.size());
   auto C_it = C.begin();
 
   for (auto A_it = A.begin(); A_it != A.begin(); ++A_it) {
-    for (auto B_it = B.begin(); B_it != B.end(); ++B_it) {
-      *(C_it++) = *A_it * *B_it;
+    for (double B_it : B) {
+      *(C_it++) = *A_it * B_it;
     }
   }
   assert(C_it == C.end());
@@ -115,7 +116,7 @@ std::vector<double> tensor_product(std::vector<double> const &A,
 
 std::vector<double> square_distance_componentwise(std::vector<double> const &A,
                                                   std::vector<double> const &B,
-                                                  Vector3d) {
+                                                  Utils::Vector3d) {
   if (!(A.size() == B.size())) {
     throw std::runtime_error(
         "Error in square distance componentwise: The vector sizes do not "
@@ -134,7 +135,8 @@ std::vector<double> square_distance_componentwise(std::vector<double> const &A,
 // note: the argument name wsquare denotes that it value is w^2 while the user
 // sets w
 std::vector<double> fcs_acf(std::vector<double> const &A,
-                            std::vector<double> const &B, Vector3d wsquare) {
+                            std::vector<double> const &B,
+                            Utils::Vector3d wsquare) {
   if (!(A.size() == B.size())) {
     throw std::runtime_error(
         "Error in square distance componentwise: The vector sizes do not "
@@ -250,13 +252,12 @@ void Correlator::initialize() {
   if (m_tau_max <= m_dt) {
     throw std::runtime_error(init_errors[4]);
 
-  } else { // set hierarchy depth which can  accommodate at least m_tau_max
-    if ((m_tau_max / m_dt) < m_tau_lin) {
-      hierarchy_depth = 1;
-    } else {
-      hierarchy_depth = (unsigned int)ceil(
-          1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0));
-    }
+  } // set hierarchy depth which can  accommodate at least m_tau_max
+  if ((m_tau_max / m_dt) < m_tau_lin) {
+    hierarchy_depth = 1;
+  } else {
+    hierarchy_depth = (unsigned int)ceil(
+        1 + log((m_tau_max / m_dt) / (m_tau_lin - 1)) / log(2.0));
   }
 
   dim_A = 0;
@@ -275,20 +276,21 @@ void Correlator::initialize() {
   }
 
   // choose the correlation operation
-  if (corr_operation_name == "") {
+  if (corr_operation_name.empty()) {
     throw std::runtime_error(init_errors[11]); // there is no reasonable default
-  } else if (corr_operation_name == "componentwise_product") {
+  }
+  if (corr_operation_name == "componentwise_product") {
     m_dim_corr = dim_A;
     corr_operation = &componentwise_product;
-    m_correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
     m_dim_corr = dim_A * dim_B;
     corr_operation = &tensor_product;
-    m_correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "square_distance_componentwise") {
     m_dim_corr = dim_A;
     corr_operation = &square_distance_componentwise;
-    m_correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "fcs_acf") {
     // note: user provides w=(wx,wy,wz) but we want to use
     // wsquare=(wx^2,wy^2,wz^2)
@@ -308,13 +310,13 @@ void Correlator::initialize() {
   } else if (corr_operation_name == "scalar_product") {
     m_dim_corr = 1;
     corr_operation = &scalar_product;
-    m_correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else {
     throw std::runtime_error(init_errors[11]);
   }
 
   // Choose the compression function
-  if (compressA_name == "") { // this is the default
+  if (compressA_name.empty()) { // this is the default
     compressA_name = "discard2";
     compressA = &compress_discard2;
   } else if (compressA_name == "discard2") {
@@ -327,7 +329,7 @@ void Correlator::initialize() {
     throw std::runtime_error(init_errors[12]);
   }
 
-  if (compressB_name == "") {
+  if (compressB_name.empty()) {
     compressB_name = compressA_name;
     compressB = compressA;
   } else if (compressB_name == "discard2") {
@@ -395,7 +397,7 @@ void Correlator::update() {
   i = 0;
   // Lets find out how far we have to go back in the hierarchy to make space for
   // the new value
-  while (1) {
+  while (true) {
     if (((t - ((m_tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
          0)) {
       if (i < (int(hierarchy_depth) - 1) && n_vals[i] > m_tau_lin) {

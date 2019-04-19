@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample simulates planar Poisseuille flow in Espresso. A spherical RBC-like particle is added and advected with and without volume conservation.
+This sample simulates planar Poiseuille flow in Espresso. A spherical RBC-like
+particle is added and advected with and without volume conservation.
 """
 import espressomd
 
@@ -40,7 +41,7 @@ lbf = lb.LBFluid(agrid=1, dens=1, visc=1, tau=system.time_step, ext_force_densit
                  force, 0, 0])
 system.actors.add(lbf)
 
-system.thermostat.set_lb(LB_fluid=lbf, friction=1.0, act_on_virtual=False)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0, act_on_virtual=False)
 
 # Setup boundaries
 walls = [lbboundaries.LBBoundary() for k in range(2)]
@@ -81,7 +82,7 @@ WriteVTK(system, str(outputDir + "/cell_" + str(0) + ".vtk"))
 stepSize = 1000
 numSteps = 20
 
-for i in range(0, numSteps):
+for i in range(numSteps):
 
     system.integrator.run(stepSize)
     WriteVTK(system, str(outputDir + "/cell_" + str(i + 1) + ".vtk"))

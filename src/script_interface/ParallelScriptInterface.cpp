@@ -23,19 +23,28 @@
 #include <boost/serialization/utility.hpp>
 
 #include "ParallelScriptInterfaceSlave.hpp"
-#include "utils/parallel/ParallelObject.hpp"
 
 #include <cassert>
 
-namespace ScriptInterface {
-using CallbackAction = ParallelScriptInterfaceSlave::CallbackAction;
+namespace {
+Communication::MpiCallbacks *m_cb = nullptr;
 
+void make_remote_handle() {
+  assert(m_cb && "Not initialized.");
+
+  new ScriptInterface::ParallelScriptInterfaceSlave(m_cb);
+}
+} // namespace
+
+REGISTER_CALLBACK(make_remote_handle)
+
+namespace ScriptInterface {
 ParallelScriptInterface::ParallelScriptInterface(std::string const &name)
-    : m_callback_id(m_cb, [](ParallelScriptInterfaceSlave::CallbackAction) {}) {
+    : m_callback_id(m_cb, [](CallbackAction) {}) {
   assert(m_cb && "Not initialized!");
 
   /* Create the slaves */
-  Utils::Parallel::ParallelObject<ParallelScriptInterfaceSlave>::make(*m_cb);
+  m_cb->call(make_remote_handle);
 
   call(CallbackAction::NEW);
 
@@ -63,10 +72,6 @@ bool ParallelScriptInterface::operator!=(ParallelScriptInterface const &rhs) {
 
 void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
   m_cb = &cb;
-  ParallelScriptInterfaceSlave::m_cb = &cb;
-
-  Utils::Parallel::ParallelObject<
-      ParallelScriptInterfaceSlave>::register_callback(cb);
 }
 
 void ParallelScriptInterface::construct(VariantMap const &params) {
@@ -155,10 +160,10 @@ ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
 
     if (oid != ObjectId()) {
       return obj_map.at(oid)->id();
-    } else {
-      return oid;
     }
-  } else if (is_type<std::vector<Variant>>(value)) {
+    return oid;
+  }
+  if (is_type<std::vector<Variant>>(value)) {
     auto const &in_vec = boost::get<std::vector<Variant>>(value);
     std::vector<Variant> out_vec;
     out_vec.reserve(in_vec.size());
@@ -168,9 +173,8 @@ ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
     }
 
     return out_vec;
-  } else {
-    return value;
   }
+  return value;
 }
 
 Variant
@@ -189,16 +193,16 @@ ParallelScriptInterface::map_parallel_to_local_id(Variant const &value) {
 
     /* and return the id of the underlying object */
     return inner_id;
-  } else if (so_ptr == nullptr) {
+  }
+  if (so_ptr == nullptr) {
     /* Release the object */
     obj_map.erase(outer_id);
 
     /* Return None */
     return ObjectId();
-  } else {
-    throw std::runtime_error(
-        "Parameters passed to Parallel entities must also be parallel.");
   }
+  throw std::runtime_error(
+      "Parameters passed to Parallel entities must also be parallel.");
 }
 
 void ParallelScriptInterface::collect_garbage() {
@@ -218,6 +222,4 @@ void ParallelScriptInterface::collect_garbage() {
     ++it;
   }
 }
-Communication::MpiCallbacks *ParallelScriptInterface::m_cb = nullptr;
-
 } /* namespace ScriptInterface */

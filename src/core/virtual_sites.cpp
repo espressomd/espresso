@@ -46,9 +46,9 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
 
 void calculate_vs_relate_to_params(const Particle &p_current,
                                    const Particle &p_relate_to, double &l,
-                                   Vector4d &quat) {
+                                   Utils::Vector4d &quat) {
   // get the distance between the particles
-  Vector3d d;
+  Utils::Vector3d d;
   get_mi_vector(d, p_current.r.p, p_relate_to.r.p);
 
   // Check, if the distance between virtual and non-virtual particles is larger
@@ -87,7 +87,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
       d[i] /= l;
 
     // Obtain quaternions from desired director
-    Vector4d quat_director;
+    Utils::Vector4d quat_director;
     convert_director_to_quat(d, quat_director);
 
     // Define quat as described above:
@@ -132,7 +132,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
 // both particles to be accessible through local_particles and only executes the
 // changes on the virtual site locally
 int local_vs_relate_to(Particle *p_current, const Particle *p_relate_to) {
-  Vector4d quat;
+  Utils::Vector4d quat;
 
   double l;
   calculate_vs_relate_to_params(*p_current, *p_relate_to, l, quat);
@@ -154,7 +154,7 @@ int vs_relate_to(int part_num, int relate_to) {
   auto const &p_current = get_particle_data(part_num);
   auto const &p_relate_to = get_particle_data(relate_to);
 
-  Vector4d quat;
+  Utils::Vector4d quat;
   double l;
   calculate_vs_relate_to_params(p_current, p_relate_to, l, quat);
 

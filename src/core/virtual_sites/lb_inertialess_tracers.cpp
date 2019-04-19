@@ -37,9 +37,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void CoupleIBMParticleToFluid(Particle *p);
 void ParticleVelocitiesFromLB_CPU();
-bool IsHalo(const int indexCheck);
-void GetIBMInterpolatedVelocity(double const *p, double *const v,
-                                double *const forceAdded);
+bool IsHalo(int indexCheck);
+void GetIBMInterpolatedVelocity(double const *p, double *v, double *forceAdded);
 
 // ***** Internal variables ******
 
@@ -150,7 +149,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
         // Check if the particle might have crossed a box border (criterion see
         // e-mail Axel 28.8.2014)
         // if possible resort_particles = 1
-        const double dist2 = distance2(p[j].r.p, p[j].l.p_old);
+        const double dist2 = (p[j].r.p - p[j].l.p_old).norm2();
         if (dist2 > skin2) {
           set_resort_particles(Cells::RESORT_LOCAL);
         }
@@ -176,8 +175,8 @@ void CoupleIBMParticleToFluid(Particle *p) {
   delta_j[2] = p->f.f[2] * lbpar.tau * lbpar.tau / lbpar.agrid;
 
   // Get indices and weights of affected nodes using discrete delta function
-  Vector<std::size_t, 8> node_index{};
-  Vector6d delta{};
+  Utils::Vector<std::size_t, 8> node_index{};
+  Utils::Vector6d delta{};
   lblattice.map_position_to_lattice(p->r.p, node_index, delta, my_left,
                                     local_box_l);
 
@@ -217,7 +216,7 @@ void GetIBMInterpolatedVelocity(double const *p, double *const v,
   int x, y, z;
 
   double lbboundary_mindist, distvec[3];
-  Vector3d pos;
+  Utils::Vector3d pos;
 
 #ifdef LB_BOUNDARIES
   pos[0] = p[0];
@@ -232,8 +231,8 @@ void GetIBMInterpolatedVelocity(double const *p, double *const v,
 
   /* determine elementary lattice cell surrounding the particle
    and the relative position of the particle in this cell */
-  Vector<std::size_t, 8> node_index{};
-  Vector6d delta{};
+  Utils::Vector<std::size_t, 8> node_index{};
+  Utils::Vector6d delta{};
   lblattice.map_position_to_lattice(pos, node_index, delta, my_left,
                                     local_box_l);
 

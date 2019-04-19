@@ -79,8 +79,10 @@ template <typename T, typename = void> struct get_value_helper {
 };
 
 template <class T, size_t N>
-struct vector_conversion_visitor : boost::static_visitor<Vector<T, N>> {
-  Vector<T, N> operator()(Vector<T, N> const &v) const { return v; }
+struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
+  Utils::Vector<T, N> operator()(Utils::Vector<T, N> const &v) const {
+    return v;
+  }
 
   /* We try do unpack variant vectors and check if they
    * are convertible element by element. */
@@ -89,21 +91,21 @@ struct vector_conversion_visitor : boost::static_visitor<Vector<T, N>> {
       throw boost::bad_get{};
     }
 
-    Vector<T, N> ret;
+    Utils::Vector<T, N> ret;
     boost::transform(vv, ret.begin(),
                      [](const Variant &v) { return get_value_helper<T>{}(v); });
 
     return ret;
   }
 
-  template <typename U> Vector<T, N> operator()(U const &) const {
+  template <typename U> Utils::Vector<T, N> operator()(U const &) const {
     throw boost::bad_get{};
   }
 };
 
-/* Vector<T, N> case */
-template <typename T, size_t N> struct get_value_helper<Vector<T, N>> {
-  Vector<T, N> operator()(Variant const &v) const {
+/* Utils::Vector<T, N> case */
+template <typename T, size_t N> struct get_value_helper<Utils::Vector<T, N>> {
+  Utils::Vector<T, N> operator()(Variant const &v) const {
     return boost::apply_visitor(detail::vector_conversion_visitor<T, N>{}, v);
   }
 };
@@ -163,20 +165,18 @@ struct get_value_helper<
     auto const object_id = boost::get<ObjectId>(v);
     if (object_id == ObjectId()) {
       return nullptr;
-    } else {
-      auto so_ptr = ScriptInterfaceBase::get_instance(object_id).lock();
-      if (!so_ptr) {
-        throw std::runtime_error("Unknown Object.");
-      }
-
-      auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
-
-      if (t_ptr) {
-        return t_ptr;
-      } else {
-        throw std::runtime_error("Wrong type: " + so_ptr->name());
-      }
     }
+    auto so_ptr = ScriptInterfaceBase::get_instance(object_id).lock();
+    if (!so_ptr) {
+      throw std::runtime_error("Unknown Object.");
+    }
+
+    auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
+
+    if (t_ptr) {
+      return t_ptr;
+    }
+    throw std::runtime_error("Wrong type: " + so_ptr->name());
   }
 };
 } // namespace detail
@@ -224,9 +224,8 @@ T get_value_or(VariantMap const &vals, std::string const &name,
                T const &default_) {
   if (vals.count(name)) {
     return get_value<T>(vals.at(name));
-  } else {
-    return default_;
   }
+  return default_;
 }
 
 /**

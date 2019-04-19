@@ -76,6 +76,7 @@ IF LB_GPU or LB:
         void lb_lbfluid_load_checkpoint(string filename, int binary) except +
         void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) except +
         ActiveLB lb_lbfluid_get_lattice_switch() except +
+        Vector6d lb_lbfluid_get_stress() except +
         bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
         const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
         void lb_lbnode_set_velocity(const Vector3i & ind, const Vector3d & u) except +
@@ -97,6 +98,7 @@ IF LB_GPU or LB:
         stdint.uint64_t lb_lbcoupling_get_rng_state() except +
         void lb_lbcoupling_set_gamma(double)
         double lb_lbcoupling_get_gamma() except +
+        bool lb_lbcoupling_is_seed_required()
 
     cdef extern from "grid_based_algorithms/lbgpu.hpp":
         int lb_lbfluid_remove_total_momentum()

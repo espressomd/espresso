@@ -33,7 +33,6 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "ghosts.hpp"
@@ -68,6 +67,9 @@
 #include <cstring>
 #include <mpi.h>
 
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
 #endif
@@ -99,7 +101,7 @@ int db_maxf_id = 0, db_maxv_id = 0;
 
 bool set_py_interrupt = false;
 namespace {
-volatile static std::sig_atomic_t ctrl_C = 0;
+volatile std::sig_atomic_t ctrl_C = 0;
 }
 
 /** \name Private Functions */
@@ -148,39 +150,11 @@ void integrator_npt_sanity_checks() {
     }
 
 #ifdef ELECTROSTATICS
-
-    switch (coulomb.method) {
-    case COULOMB_NONE:
-      break;
-    case COULOMB_DH:
-      break;
-    case COULOMB_RF:
-      break;
-#ifdef P3M
-    case COULOMB_P3M:
-      break;
-#endif /*P3M*/
-    default: {
-      runtimeErrorMsg()
-          << "npt only works with P3M, Debye-Huckel or reaction field";
-    }
-    }
+    Coulomb::integrate_sanity_check();
 #endif /*ELECTROSTATICS*/
 
 #ifdef DIPOLES
-
-    switch (coulomb.Dmethod) {
-    case DIPOLAR_NONE:
-      break;
-#ifdef DP3M
-    case DIPOLAR_P3M:
-      break;
-#endif /* DP3M */
-    default: {
-      runtimeErrorMsg()
-          << "NpT does not work with your dipolar method, please use P3M.";
-    }
-    }
+    Dipole::integrate_sanity_check();
 #endif /* ifdef DIPOLES */
   }
 }
@@ -265,6 +239,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Langevin philox rng counter
+    if (n_steps > 0) {
+      langevin_rng_counter_increment();
+    }
+
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -355,6 +335,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Propagate langevin philox rng counter
+    langevin_rng_counter_increment();
+
     force_calc();
 
 #ifdef VIRTUAL_SITES
@@ -689,7 +673,7 @@ void propagate_pos() {
         }
       }
       /* Verlet criterion check */
-      if (distance2(p.r.p, p.l.p_old) > skin2)
+      if ((p.r.p - p.l.p_old).norm2() > skin2)
         set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
@@ -884,7 +868,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 #endif
 
 #ifdef DIPOLES
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dprefactor > 0) {
+  if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
                          "use the the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;

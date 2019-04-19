@@ -35,18 +35,18 @@ class Lattice {
 public:
   using index_t = int;
 
-  Vector3i grid; /**< number of local lattice sites in each direction
-                  *   (excluding halo) */
-  Vector3i global_grid;
-  Vector3d agrid; /**< lattice constant */
+  Utils::Vector3i grid; /**< number of local lattice sites in each direction
+                         *   (excluding halo) */
+  Utils::Vector3i global_grid;
+  Utils::Vector3d agrid; /**< lattice constant */
 
-  Vector3i halo_grid; /**< number of lattice sites in each direction
-                       *   (including halo) */
-  int halo_size;      /**< halo size in all directions */
+  Utils::Vector3i halo_grid; /**< number of lattice sites in each direction
+                              *   (including halo) */
+  index_t halo_size;         /**< halo size in all directions */
 
-  Vector3d offset; /**< global offset */
-  Vector3d local_offset;
-  Vector3i local_index_offset;
+  Utils::Vector3d offset; /**< global offset */
+  Utils::Vector3d local_offset;
+  Utils::Vector3i local_index_offset;
 
   index_t halo_grid_volume; /**< total number (volume) of lattice sites
                              *   (including halo) */
@@ -61,14 +61,13 @@ public:
    *  \param agrid       lattice spacing
    *  \param offset      lattice offset
    *  \param halo_size   halo size
-   *  \param dim         lattice dimensions
    *  \param local_box   dimensions of the local box
    *  \param myright     right (top, back) corner of the local box
    *  \param box_length  lengths of the local box
    */
-  int init(double *agrid, double const *offset, int halo_size, size_t dim,
-           const Vector3d &local_box, const Vector3d &myright,
-           const Vector3d &box_length);
+  int init(double *agrid, double const *offset, int halo_size,
+           const Utils::Vector3d &local_box, const Utils::Vector3d &myright,
+           const Utils::Vector3d &box_length);
 
   /** Map a spatial position to the surrounding lattice sites.
    *
@@ -88,11 +87,11 @@ public:
    * \param myLeft     left (bottom, front) corner of the local box
    * \param local_box  dimensions of the local box
    */
-  void map_position_to_lattice(const Vector3d &pos,
-                               Vector<std::size_t, 8> &node_index,
-                               Vector6d &delta, const Vector3d &myLeft,
-                               const Vector3d &local_box) const;
-  /********************** Inline Functions **********************/
+  void map_position_to_lattice(const Utils::Vector3d &pos,
+                               Utils::Vector<std::size_t, 8> &node_index,
+                               Utils::Vector6d &delta,
+                               const Utils::Vector3d &myLeft,
+                               const Utils::Vector3d &local_box) const;
 
   /** Map a global lattice site to the node grid.
    *
@@ -104,29 +103,8 @@ public:
    *  \param local_node_grid  number of nodes in each spatial dimension
    *  \return index of the node for the lattice site
    */
-  int map_lattice_to_node(Vector3i &ind, const Vector3i &local_node_grid) const;
-
-  /********************** static Functions **********************/
-
-  /** Map a spatial position to the surrounding lattice sites.
-   *
-   * This function takes a global spatial position and determines the
-   * surrounding elementary cell of the lattice for this position.
-   * The distance fraction in each direction is also calculated.
-   * <br><em>Remarks:</em>
-   * <ul>
-   * <li>The spatial position is given in global coordinates.</li>
-   * <li>The lattice sites of the elementary cell are returned as local
-   * indices</li>
-   * </ul>
-   * \param pos        spatial position (Input)
-   * \param ind        global index of the lower left lattice site (Output)
-   * \param delta      distance fraction of pos from the surrounding
-   *                   elementary cell, 6 directions (Output)
-   * \param tmp_agrid  lattice mesh distance
-   */
-  static void map_position_to_lattice_global(const Vector3d &pos, Vector3i &ind,
-                                             Vector6d &delta, double tmp_agrid);
+  int map_lattice_to_node(Utils::Vector3i &ind,
+                          const Utils::Vector3i &local_node_grid) const;
 };
 
 #endif /* CORE_LB_LATTICE_HPP */

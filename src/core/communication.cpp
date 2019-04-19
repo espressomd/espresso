@@ -21,6 +21,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <mpi.h>
 #ifdef OPEN_MPI
 #include <dlfcn.h>
@@ -36,14 +37,6 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "cuda_interface.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "energy.hpp"
 #include "event.hpp"
 #include "forces.hpp"
@@ -58,7 +51,6 @@
 #include "io/mpiio/mpiio.hpp"
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
-#include "nonbonded_interactions/reaction_field.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
@@ -69,13 +61,17 @@
 #include "swimmer_reaction.hpp"
 #include "virtual_sites.hpp"
 
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/icc.hpp"
+#include "electrostatics_magnetostatics/mdlc_correction.hpp"
+
 #include "serialization/IA_parameters.hpp"
 #include "serialization/Particle.hpp"
 #include "serialization/ParticleParametersSwimming.hpp"
 
 #include "utils.hpp"
 #include "utils/Counter.hpp"
-#include "utils/make_unique.hpp"
 #include "utils/u32_to_u64.hpp"
 
 #include <boost/mpi.hpp>
@@ -124,7 +120,6 @@ int n_nodes = -1;
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
-  CB(mpi_iccp3m_iteration_slave)                                               \
   CB(mpi_bcast_max_mu_slave)                                                   \
   CB(mpi_kill_particle_motion_slave)                                           \
   CB(mpi_kill_particle_forces_slave)                                           \
@@ -229,12 +224,12 @@ void mpi_init() {
 #endif
 
 #ifdef BOOST_MPI_HAS_NOARG_INITIALIZATION
-  Communication::mpi_env = Utils::make_unique<boost::mpi::environment>();
+  Communication::mpi_env = std::make_unique<boost::mpi::environment>();
 #else
   int argc{};
   char **argv{};
   Communication::mpi_env =
-      Utils::make_unique<boost::mpi::environment>(argc, argv);
+      std::make_unique<boost::mpi::environment>(argc, argv);
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
@@ -245,14 +240,14 @@ void mpi_init() {
   MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
 
   Communication::m_callbacks =
-      Utils::make_unique<Communication::MpiCallbacks>(comm_cart);
+      std::make_unique<Communication::MpiCallbacks>(comm_cart);
 
 #define CB(name) Communication::m_callbacks->add(&name);
   CALLBACK_LIST
 #undef CB
 
   ErrorHandling::init_error_handling(mpiCallbacks());
-  partCfg(Utils::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
+  partCfg(std::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
 
   on_program_start();
 }
@@ -579,85 +574,19 @@ void mpi_bcast_coulomb_params() {
 void mpi_bcast_coulomb_params_slave(int, int) {
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
-  MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
 
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-  // fall through, scafacos has internal parameter propagation
-  case COULOMB_SCAFACOS:
-    break;
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    MPI_Bcast(&elc_params, sizeof(ELC_struct), MPI_BYTE, 0, comm_cart);
-  // fall through
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    MPI_Bcast(&p3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0,
-              comm_cart);
-    break;
-#endif
-  case COULOMB_DH:
-    MPI_Bcast(&dh_params, sizeof(Debye_hueckel_params), MPI_BYTE, 0, comm_cart);
-    break;
-  case COULOMB_MMM1D:
-  case COULOMB_MMM1D_GPU:
-    MPI_Bcast(&mmm1d_params, sizeof(MMM1D_struct), MPI_BYTE, 0, comm_cart);
-    break;
-  case COULOMB_MMM2D:
-    MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, comm_cart);
-    break;
-  case COULOMB_RF:
-  case COULOMB_INTER_RF:
-    MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,
-              comm_cart);
-    break;
-  default:
-    fprintf(stderr,
-            "%d: INTERNAL ERROR: cannot bcast coulomb params for "
-            "unknown method %d\n",
-            this_node, coulomb.method);
-    errexit();
-  }
+  MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
+
+  Coulomb::bcast_coulomb_params();
 #endif
 
 #ifdef DIPOLES
-  set_dipolar_method_local(coulomb.Dmethod);
+  MPI_Bcast(&dipole, sizeof(Dipole_parameters), MPI_BYTE, 0, comm_cart);
 
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_NONE:
-    break;
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    MPI_Bcast(&dlc_params, sizeof(DLC_struct), MPI_BYTE, 0, comm_cart);
-  // fall through
-  case DIPOLAR_P3M:
-    MPI_Bcast(&dp3m.params, sizeof(p3m_parameter_struct), MPI_BYTE, 0,
-              comm_cart);
-    break;
-#endif
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    break;
-  case DIPOLAR_MDLC_DS:
-  // fall trough
-  case DIPOLAR_DS:
-    break;
-  case DIPOLAR_DS_GPU:
-    break;
-#ifdef DIPOLAR_BARNES_HUT
-  case DIPOLAR_BH_GPU:
-    break;
-#endif
-  case DIPOLAR_SCAFACOS:
-    break;
-  default:
-    fprintf(stderr,
-            "%d: INTERNAL ERROR: cannot bcast dipolar params for "
-            "unknown method %d\n",
-            this_node, coulomb.Dmethod);
-    errexit();
-  }
+  Dipole::set_method_local(dipole.method);
 
+  Dipole::bcast_params(comm_cart);
 #endif
 
   on_coulomb_change();
@@ -750,27 +679,6 @@ void mpi_send_exclusion(int part1, int part2, int _delete) {
 }
 #endif
 
-/********************* REQ_ICCP3M_ITERATION ********/
-int mpi_iccp3m_iteration() {
-#ifdef ELECTROSTATICS
-  mpi_call(mpi_iccp3m_iteration_slave, -1, 0);
-
-  iccp3m_iteration();
-
-  return check_runtime_errors();
-#else
-  return 0;
-#endif
-}
-
-void mpi_iccp3m_iteration_slave(int, int) {
-#ifdef ELECTROSTATICS
-  iccp3m_iteration();
-
-  check_runtime_errors();
-#endif
-}
-
 /********************* REQ_ICCP3M_INIT********/
 #ifdef ELECTROSTATICS
 void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {
@@ -794,12 +702,13 @@ int mpi_iccp3m_init() {
 }
 #endif
 
-Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos) {
+Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
+                                                  Utils::Vector3d const &pos) {
 #ifdef LB
   if (this_node == 0) {
     comm_cart.send(node, SOME_TAG, pos);
     mpi_call(mpi_recv_lb_interpolated_velocity_slave, node, 0);
-    Vector3d interpolated_u{};
+    Utils::Vector3d interpolated_u{};
     comm_cart.recv(node, SOME_TAG, interpolated_u);
     return interpolated_u;
   }
@@ -810,7 +719,7 @@ Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos) {
 void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
 #ifdef LB
   if (node == this_node) {
-    Vector3d pos{};
+    Utils::Vector3d pos{};
     comm_cart.recv(0, SOME_TAG, pos);
     auto const interpolated_u =
         lb_lbinterpolation_get_interpolated_velocity(pos);

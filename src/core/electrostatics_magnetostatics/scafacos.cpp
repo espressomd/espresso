@@ -40,9 +40,11 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "tuning.hpp"
 #include "utils.hpp"
+
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 #if defined(SCAFACOS_DIPOLES) && !defined(FCS_ENABLE_DIPOLES)
 #error                                                                         \
@@ -146,8 +148,8 @@ void ScafacosData::update_particle_forces() const {
 
       // Add to particles
       for (int j = 0; j < 3; j++) {
-        p.f.f[j] += coulomb.Dprefactor * f[j];
-        p.f.torque[j] += coulomb.Dprefactor * t[j];
+        p.f.f[j] += dipole.prefactor * f[j];
+        p.f.torque[j] += dipole.prefactor * t[j];
       }
       it++;
 #endif
@@ -170,17 +172,16 @@ void add_pair_force(Particle *p1, Particle *p2, double *d, double dist,
 
   assert(scafacos);
   const double field = scafacos->pair_force(dist);
-  const double fak = p2->p.q * p1->p.q * field * coulomb.prefactor / dist;
+  const double fak = p2->p.q * p1->p.q * field / dist;
 
   for (int i = 0; i < 3; i++) {
-    p1->f.f[i] -= fak * d[i];
-    p2->f.f[i] += fak * d[i];
+    force[i] -= fak * d[i];
   }
 }
 
 double pair_energy(Particle *p1, Particle *p2, double dist) {
   if (dist <= get_r_cut())
-    return coulomb.prefactor * p1->p.q * p2->p.q * scafacos->pair_energy(dist);
+    return p1->p.q * p2->p.q * scafacos->pair_energy(dist);
   else
     return 0.;
 }
@@ -243,7 +244,7 @@ double long_range_energy() {
 #ifdef SCAFACOS_DIPOLES
       scafacos->run_dipolar(particles.dipoles, particles.positions,
                             particles.fields, particles.potentials);
-      return -0.5 * coulomb.Dprefactor *
+      return -0.5 * dipole.prefactor *
              std::inner_product(particles.dipoles.begin(),
                                 particles.dipoles.end(),
                                 particles.potentials.begin(), 0.0);
@@ -344,7 +345,7 @@ static void set_params_safe(const std::string &method,
   scafacos->set_dipolar(dipolar_ia);
 #ifdef DIPOLES
   if (dipolar_ia) {
-    coulomb.Dmethod = DIPOLAR_SCAFACOS;
+    dipole.method = DIPOLAR_SCAFACOS;
   }
 #endif
 #ifdef ELECTROSTATICS
