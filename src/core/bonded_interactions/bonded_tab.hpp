@@ -216,16 +216,16 @@ inline int calc_tab_dihedral_force(Particle const *p2, Particle const *p1,
                                    double force2[3], double force1[3],
                                    double force3[3]) {
   /* vectors for dihedral angle calculation */
-  double v12[3], v23[3], v34[3], v12Xv23[3], v23Xv34[3], l_v12Xv23, l_v23Xv34;
-  double v23Xf1[3], v23Xf4[3], v34Xf4[3], v12Xf1[3];
+  Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
+  double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle, cosine of the bond angles */
   double phi, cos_phi;
   /* force factors */
   auto const *tab_pot = iaparams->p.tab.pot;
 
   /* dihedral angle */
-  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
-                      v23Xv34, &l_v23Xv34, &cos_phi, &phi);
+  calc_dihedral_angle(p1, p2, p3, p4, v12.data(), v23.data(), v34.data(), v12Xv23.data(), &l_v12Xv23,
+                      v23Xv34.data(), &l_v23Xv34, &cos_phi, &phi);
   /* dihedral angle not defined - force zero */
   if (phi == -1.0) {
     for (int i = 0; i < 3; i++) {
@@ -237,15 +237,13 @@ inline int calc_tab_dihedral_force(Particle const *p2, Particle const *p1,
   }
 
   /* calculate force components (directions) */
-  double f1[3], f4[3];
-  for (int i = 0; i < 3; i++) {
-    f1[i] = (v23Xv34[i] - cos_phi * v12Xv23[i]) / l_v12Xv23;
-    f4[i] = (v12Xv23[i] - cos_phi * v23Xv34[i]) / l_v23Xv34;
-  }
-  vector_product(v23, f1, v23Xf1);
-  vector_product(v23, f4, v23Xf4);
-  vector_product(v34, f4, v34Xf4);
-  vector_product(v12, f1, v12Xf1);
+  auto const f1 = (v23Xv34 - cos_phi * v12Xv23) / l_v12Xv23;
+  auto const f4 = (v12Xv23 - cos_phi * v23Xv34) / l_v23Xv34;
+
+  auto const v23Xf1 = vector_product(v23, f1);
+  auto const v23Xf4 = vector_product(v23, f4);
+  auto const v34Xf4 = vector_product(v34, f4);
+  auto const v12Xf1 = vector_product(v12, f1);
 
   /* table lookup */
   auto const fac = tab_pot->force(phi);

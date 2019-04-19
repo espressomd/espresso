@@ -291,7 +291,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
           b[1] = pox[1] - poy[1];
           b[2] = pox[2] - poy[2];
 
-          vector_product(a, b, c);
+          c = vector_product(a, b);
         }
 
         for (cnt1 = 0; cnt1 < max_try; cnt1++) {

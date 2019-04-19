@@ -121,7 +121,6 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
   /* calculate force components (directions) */
   for (i = 0; i < 3; i++) {
     f1[i] = (v23Xv34[i] - cosphi * v12Xv23[i]) / l_v12Xv23;
-    ;
     f4[i] = (v12Xv23[i] - cosphi * v23Xv34[i]) / l_v23Xv34;
   }
   vector_product(v23, f1, v23Xf1);

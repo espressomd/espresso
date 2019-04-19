@@ -135,12 +135,11 @@ Utils::Vector3d centerofmass(PartCfg &partCfg, int type) {
 }
 
 void angularmomentum(PartCfg &partCfg, int type, double *com) {
-  double tmp[3];
   com[0] = com[1] = com[2] = 0.;
 
   for (auto const &p : partCfg) {
     if (type == p.p.type) {
-      vector_product(p.r.p, p.m.v, tmp);
+      auto const tmp = vector_product(p.r.p, p.m.v);
       for (int i = 0; i < 3; i++) {
         com[i] += tmp[i] * p.p.mass;
       }
