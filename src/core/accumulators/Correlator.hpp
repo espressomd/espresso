@@ -244,8 +244,10 @@ public:
   int dim_corr() const { return m_dim_corr; }
   int n_result() const { return m_n_result; }
 
-  Vector3d const &correlation_args() const { return m_correlation_args; }
-  void set_correlation_args(Vector3d const &args) { m_correlation_args = args; }
+  Utils::Vector3d const &correlation_args() const { return m_correlation_args; }
+  void set_correlation_args(Utils::Vector3d const &args) {
+    m_correlation_args = args;
+  }
 
   std::string const &compress1() const { return compressA_name; }
   std::string const &compress2() const { return compressB_name; }
@@ -262,8 +264,9 @@ private:
   unsigned int finalized; // non-zero of correlation is finalized
   unsigned int t;         // global time in number of frames
 
-  Vector3d m_correlation_args; // additional arguments, which the correlation
-                               // may need (currently only used by fcs_acf)
+  Utils::Vector3d
+      m_correlation_args; // additional arguments, which the correlation
+                          // may need (currently only used by fcs_acf)
 
   int hierarchy_depth; // maximum level of data compression
   int m_tau_lin;       // number of frames in the linear correlation
@@ -304,8 +307,9 @@ private:
   unsigned int dim_A; // dimensionality of A
   unsigned int dim_B;
 
-  using correlation_operation_type = std::vector<double> (*)(
-      std::vector<double> const &, std::vector<double> const &, Vector3d);
+  using correlation_operation_type =
+      std::vector<double> (*)(std::vector<double> const &,
+                              std::vector<double> const &, Utils::Vector3d);
 
   correlation_operation_type corr_operation;
 

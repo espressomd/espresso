@@ -61,7 +61,7 @@ int pressure_n();
 void calc_pressure_long_range();
 
 void nonbonded_sanity_check(int &state);
-double cutoff(const Vector3d &box_l);
+double cutoff(const Utils::Vector3d &box_l);
 
 void integrate_sanity_check();
 void on_observable_calc();

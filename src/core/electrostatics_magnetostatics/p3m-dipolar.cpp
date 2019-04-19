@@ -809,7 +809,7 @@ static void P3M_assign_torques(double prefac, int d_rs) {
 
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
-      const Vector3d dip = p.calc_dip();
+      const Utils::Vector3d dip = p.calc_dip();
       q_ind = dp3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
@@ -873,7 +873,7 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs) {
 
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
-      const Vector3d dip = p.calc_dip();
+      const Utils::Vector3d dip = p.calc_dip();
       q_ind = dp3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
@@ -1196,7 +1196,7 @@ double calc_surface_term(int force_flag, int energy_flag) {
 
   int ip = 0;
   for (auto const &p : local_cells.particles()) {
-    const Vector3d dip = p.calc_dip();
+    const Utils::Vector3d dip = p.calc_dip();
     mx[ip] = dip[0];
     my[ip] = dip[1];
     mz[ip] = dip[2];
@@ -2426,7 +2426,7 @@ bool dp3m_sanity_checks_boxl() {
 
 /*****************************************************************************/
 
-bool dp3m_sanity_checks(const Vector3i &grid) {
+bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
   bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {

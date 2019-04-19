@@ -26,7 +26,7 @@
 using namespace std;
 
 namespace Shapes {
-void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
+void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double *dist,
                               double *vec) const {
   double axb[3], bxc[3], axc[3];
   double A, B, C;

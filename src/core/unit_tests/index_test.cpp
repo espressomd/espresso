@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_CASE(unravel_index_test) {
 BOOST_AUTO_TEST_CASE(get_linear_index) {
   using Utils::get_linear_index;
 
-  auto const grid_size = Vector3i{7, 5, 3};
-  auto const index = Vector3i{5, 4, 2};
+  auto const grid_size = Utils::Vector3i{7, 5, 3};
+  auto const index = Utils::Vector3i{5, 4, 2};
 
   /* 3 ints version */
   {
