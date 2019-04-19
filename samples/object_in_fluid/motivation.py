@@ -65,6 +65,17 @@ cell0 = oif.OifCell(cell_type=cell_type,
 cell1 = oif.OifCell(cell_type=cell_type,
                     particle_type=1, origin=[5.0, 5.0, 7.0])
 
+# cell-wall interactions
+system.non_bonded_inter[0, 10].soft_sphere.set_params(
+    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
+system.non_bonded_inter[1, 10].soft_sphere.set_params(
+    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
+
+# cell-cell interactions
+system.non_bonded_inter[0, 1].membrane_collision.set_params(
+    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
+
+
 # fluid
 lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5,
                             tau=0.1, fric=1.5, ext_force_density=[0.002, 0.0, 0.0])
@@ -130,15 +141,6 @@ for boundary in boundaries:
     system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary))
     system.constraints.add(shape=boundary, particle_type=10)
 
-# cell-wall interactions
-system.non_bonded_inter[0, 10].soft_sphere.set_params(
-    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
-system.non_bonded_inter[1, 10].soft_sphere.set_params(
-    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
-
-# cell-cell interactions
-system.non_bonded_inter[0, 1].membrane_collision.set_params(
-    a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
 
 maxCycle = 50
 # main integration loop
