@@ -413,9 +413,7 @@ class DPDThermostat(ut.TestCase):
 
       pos = s.box_l * np.random.random((n_part, 3))
       s.part.add(pos=pos)
-      s.integrator.run(100)
-
-      s.thermostat.set_dpd(kT=0.0)
+      s.integrator.run(10)
       s.integrator.run(steps=0, recalc_forces=True)
 
       pairs = s.part.pairs()

@@ -124,7 +124,7 @@ static double weight(int type, double r_cut, double dist_inv) {
 
 Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                         IA_parameters *ia_params, double const *d, double dist,
-                        double dist2) {
+                        double dist2, bool include_noise) {
   Vector3d f{};
   auto const dist_inv = 1.0 / dist;
 
@@ -141,7 +141,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
         ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor
     double noise;
-    if (ia_params->dpd_pref2 > 0.0) {
+    if (ia_params->dpd_pref2 > 0.0 && include_noise == true) {
       noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
     } else {
       noise = 0.0;
@@ -162,7 +162,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
            noise_vec[3];
     for (int i = 0; i < 3; i++) {
       // noise vector
-      if (ia_params->dpd_pref2 > 0.0) {
+      if (ia_params->dpd_pref2 > 0.0 && include_noise == true) {
         noise_vec[i] = d_random() - 0.5;
       } else {
         noise_vec[i] = 0.0;
@@ -202,7 +202,9 @@ const Vector9d dpd_stress() {
     short_range_loop(Utils::NoOp{},
       [&dpd_stress](Particle &p1, Particle &p2, Distance &d) {
       IA_parameters *ia_params = get_ia_param(p1.p.type, p2.p.type);
-      auto const f = dpd_pair_force(&p1, &p2, ia_params, d.vec21.data(), sqrt(d.dist2), d.dist2);
+      bool include_noise = false;
+      auto const f = dpd_pair_force(&p1, &p2, ia_params, d.vec21.data(), sqrt(d.dist2), d.dist2,
+                     include_noise);
       const Vector3d &r = d.vec21;
       dpd_stress +=
         Vector9d {
