@@ -42,7 +42,12 @@ struct LB_nodes_gpu {
 };
 
 struct LB_boundaries_gpu {
+  /** For each fluid node this array contains either
+   *  0 if the node is not a boundary, or the index of
+   *  the boundary in LBBoundaries::lbboundaries minus one. */
   unsigned int *index = nullptr;
+  /** If the node is a boundary node, this contains the
+   *  velocity of the boundary */
   Utils::Array<float, 3> *velocity = nullptr;
 };
 
