@@ -159,6 +159,8 @@ class VirtualSitesTracersCommon(object):
         system.bonded_inter.add(tribend)
         system.part[0].add_bond((tribend, 1, 2, 3))
 
+        self.reset_lb()
+
         ## output before
         print("Angle before twisting: " + str(self.compute_angle()))
 
