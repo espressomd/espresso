@@ -183,12 +183,13 @@ const Vector9d dpd_stress() {
       const Vector3d &r = d.vec21;
       dpd_stress +=
         Vector9d {
-          f[0]*r[0], f[0]*r[1], f[0]*r[2],
-          f[1]*r[0], f[1]*r[1], f[1]*r[2],
-          f[2]*r[0], f[2]*r[1], f[2]*r[2]
+          r[0]*f[0], r[0]*f[1], r[0]*f[2],
+          r[1]*f[0], r[1]*f[1], r[1]*f[2],
+          r[2]*f[0], r[2]*f[1], r[2]*f[2]
         };
       });
   }
+  dpd_stress /= (box_l[0] * box_l[1] * box_l[2]);
   return dpd_stress;
 }
 
