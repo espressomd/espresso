@@ -178,7 +178,8 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
       pos[j] = dnodes[i][j];
     }
     if (place_particle(part_id, pos) == ES_PART_ERROR)
-      set_particle_q(part_id, val_nodes);
+      return (-3);
+    set_particle_q(part_id, val_nodes);
     set_particle_type(part_id, type_node);
 
     part_id++;

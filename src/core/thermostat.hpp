@@ -57,7 +57,7 @@ namespace Thermostat {
 static auto noise = []() { return (d_random() - 0.5); };
 
 #ifdef PARTICLE_ANISOTROPY
-using GammaType = Vector3d;
+using GammaType = Utils::Vector3d;
 #else
 using GammaType = double;
 #endif
@@ -162,7 +162,7 @@ inline double friction_thermV_nptiso(double p_diff) {
     2. Salt (decorrelates different counter)
     3. Particle ID (decorrelates particles, gets rid of seed-per-node)
 */
-inline Vector3d v_noise(int particle_id) {
+inline Utils::Vector3d v_noise(int particle_id) {
 
   using rng_type = r123::Philox4x64;
   using ctr_type = rng_type::ctr_type;
@@ -176,8 +176,9 @@ inline Vector3d v_noise(int particle_id) {
   auto const noise = rng_type{}(c, k);
 
   using Utils::uniform;
-  return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
-         Vector3d::broadcast(0.5);
+  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
+                         uniform(noise[2])} -
+         Utils::Vector3d::broadcast(0.5);
 }
 
 /** Langevin thermostat core function.
@@ -190,7 +191,7 @@ inline void friction_thermo_langevin(Particle *p) {
 
   // Eary exit for virtual particles without thermostat
   if (p->p.is_virtual && !thermo_virtual) {
-    p->f.f = Vector3d{};
+    p->f.f = Utils::Vector3d{};
     return;
   }
 
@@ -228,7 +229,7 @@ inline void friction_thermo_langevin(Particle *p) {
 #endif /* LANGEVIN_PER_PARTICLE */
 
   // Get velocity effective in the thermostatting
-  Vector3d velocity = p->m.v;
+  Utils::Vector3d velocity = p->m.v;
 #ifdef ENGINE
   if (p->swim.v_swim != 0) {
     // In case of the engine feature, the velocity is relaxed
@@ -250,7 +251,7 @@ inline void friction_thermo_langevin(Particle *p) {
     velocity = convert_vector_space_to_body(*p, velocity);
 
   // Do the actual (anisotropic) hermostatting
-  Vector3d noise = v_noise(p->p.identity);
+  Utils::Vector3d noise = v_noise(p->p.identity);
   for (int j = 0; j < 3; j++) {
     p->f.f[j] = langevin_pref_friction_buf[j] * velocity[j] +
                 langevin_pref_noise_buf[j] * noise[j];
@@ -319,7 +320,7 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
   // so no switching here
 
   // Here the thermostats happens
-  Vector3d noise = v_noise(p->p.identity);
+  Utils::Vector3d noise = v_noise(p->p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef PARTICLE_ANISOTROPY
     if (langevin_pref_noise_buf[j] > 0.0) {

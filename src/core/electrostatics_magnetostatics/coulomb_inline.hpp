@@ -15,12 +15,12 @@
 
 namespace Coulomb {
 // forces_inline
-inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
-                            double dist2, Vector3d &force) {
-  auto const q1q2 = p1->p.q * p2->p.q;
+inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
+                            double *d, double dist, double const dist2,
+                            Utils::Vector3d &force) {
 
   if (q1q2 != 0) {
-    Vector3d f{};
+    Utils::Vector3d f{};
 
     switch (coulomb.method) {
 #ifdef P3M
@@ -30,8 +30,8 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
       // forces from the virtual charges
       // they go directly onto the particles, since they are not pairwise forces
       if (elc_params.dielectric_contrast_on) {
-        Vector3d f1{};
-        Vector3d f2{};
+        Utils::Vector3d f1{};
+        Utils::Vector3d f2{};
 
         ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1.data(),
                                                      f2.data());
@@ -54,10 +54,10 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
       add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, f.data());
       break;
     case COULOMB_DH:
-      add_dh_coulomb_pair_force(p1, p2, d, dist, f.data());
+      add_dh_coulomb_pair_force(q1q2, d, dist, f.data());
       break;
     case COULOMB_RF:
-      add_rf_coulomb_pair_force(p1, p2, d, dist, f.data());
+      add_rf_coulomb_pair_force(q1q2, d, dist, f.data());
       break;
 #ifdef SCAFACOS
     case COULOMB_SCAFACOS:
@@ -73,8 +73,8 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
 }
 
 // pressure_inline.hpp
-inline void add_pair_pressure(Particle *p1, Particle *p2, double *d,
-                              double dist, double dist2,
+inline void add_pair_pressure(Particle *p1, Particle *p2, double q1q2,
+                              double *d, double dist, double dist2,
                               Observable_stat &virials,
                               Observable_stat &p_tensor) {
   switch (coulomb.method) {
@@ -87,8 +87,8 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double *d,
   case COULOMB_MMM1D:
   case COULOMB_DH:
   case COULOMB_RF: {
-    Vector3d force{};
-    calc_pair_force(p1, p2, d, dist, dist2, force);
+    Utils::Vector3d force{};
+    calc_pair_force(p1, p2, q1q2, d, dist, dist2, force);
 
     /* Calculate the virial pressure */
     for (int k = 0; k < 3; k++) {
@@ -107,21 +107,22 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double *d,
 }
 
 // energy_inline
-inline double add_pair_energy(Particle *p1, Particle *p2, double *d,
-                              double dist, double dist2) {
+inline double add_pair_energy(Particle *p1, Particle *p2, double const q1q2,
+                              double *d, double dist, double dist2) {
   /* real space Coulomb */
   auto E = [&]() {
     switch (coulomb.method) {
 #ifdef P3M
     case COULOMB_P3M_GPU:
     case COULOMB_P3M:
-      return p3m_pair_energy(p1->p.q * p2->p.q, dist);
+      // TODO some energy functions include the prefactor, some don't
+      return p3m_pair_energy(q1q2, dist);
     case COULOMB_ELC_P3M:
       if (elc_params.dielectric_contrast_on) {
         return 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2) +
-               p3m_pair_energy(p1->p.q * p2->p.q, dist);
+               p3m_pair_energy(q1q2, dist);
       } else {
-        return p3m_pair_energy(p1->p.q * p2->p.q, dist);
+        return p3m_pair_energy(q1q2, dist);
       }
 #endif
 #ifdef SCAFACOS
@@ -129,18 +130,17 @@ inline double add_pair_energy(Particle *p1, Particle *p2, double *d,
       return Scafacos::pair_energy(p1, p2, dist);
 #endif
     case COULOMB_DH:
-      return dh_coulomb_pair_energy(p1, p2, dist);
+      return dh_coulomb_pair_energy(q1q2, dist);
     case COULOMB_RF:
-      return rf_coulomb_pair_energy(p1, p2, dist);
+      return rf_coulomb_pair_energy(q1q2, dist);
     case COULOMB_MMM1D:
-      return mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
+      return mmm1d_coulomb_pair_energy(q1q2, d, dist2, dist);
     case COULOMB_MMM2D:
-      return mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
+      return mmm2d_coulomb_pair_energy(q1q2, d, dist2, dist);
     default:
       return 0.;
     }
   }();
-
   return coulomb.prefactor * E;
 }
 } // namespace Coulomb

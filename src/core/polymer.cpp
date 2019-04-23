@@ -46,13 +46,13 @@
 #include "utils.hpp"
 
 #include "utils/vec_rotate.hpp"
-#include <vector>
 using Utils::vec_rotate;
 
-bool is_valid_position(const Vector3d *pos, const std::vector<std::vector<Vector3d>> *positions, PartCfg &partCfg, const double shield, const int constr) {
+
+bool is_valid_position(const Utils::Vector3d *pos, const std::vector<std::vector<Utils::Vector3d>> *positions, PartCfg &partCfg, const double shield, const int constr) {
     // check if constraint is violated
     if (constr == true) {
-        Vector3d folded_pos = folded_position(*pos);
+        Utils::Vector3d folded_pos = folded_position(*pos);
         for (auto &c : Constraints::constraints) {
             auto cs = std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
             if (cs) {
@@ -92,15 +92,15 @@ bool is_valid_position(const Vector3d *pos, const std::vector<std::vector<Vector
     return true;
 }
 
-Vector3d random_position() {
-    Vector3d v;
+Utils::Vector3d random_position() {
+    Utils::Vector3d v;
     for (int i=0; i<3; ++i)
         v[i] = box_l[i] * d_random();
     return v;
 }
 
-Vector3d random_unit_vector() {
-    Vector3d v;
+Utils::Vector3d random_unit_vector() {
+    Utils::Vector3d v;
     const int phi = acos( 1. - 2. * d_random() );
     const int theta = 2. * Utils::pi() * d_random();
     v[0] = sin(phi) * cos(theta);
@@ -110,21 +110,21 @@ Vector3d random_unit_vector() {
     return v;
 }
 
-std::vector<std::vector<Vector3d>> draw_polymer_positions(PartCfg &partCfg, int N_P, int MPC, double bond_length,
-              std::vector<Vector3d> &start_positions, int mode, double shield, int max_try, const int use_bond_angle,
+std::vector<std::vector<Utils::Vector3d>> draw_polymer_positions(PartCfg &partCfg, int N_P, int MPC, double bond_length,
+              std::vector<Utils::Vector3d> &start_positions, int mode, double shield, int max_try, const int use_bond_angle,
               double angle, double angle2, int constr) {
-    std::vector<std::vector<Vector3d>> positions(N_P, std::vector<Vector3d>(MPC));
+    std::vector<std::vector<Utils::Vector3d>> positions(N_P, std::vector<Utils::Vector3d>(MPC));
 
     // make sure that if given, all starting positions are valid
     if ((not start_positions.empty())
             and std::any_of(start_positions.begin(), start_positions.end(),
-                [&positions, &partCfg, shield, constr](Vector3d v)
+                [&positions, &partCfg, shield, constr](Utils::Vector3d v)
                 { return not is_valid_position(&v, &positions, partCfg, shield, constr); }))
         throw std::runtime_error("Invalid starting positions.");
     // else generate initial positions
     for (int p = 0; p < N_P; ++p) {
         int counter = 0;
-        Vector3d trial_pos;
+        Utils::Vector3d trial_pos;
         // first monomer
         if (start_positions.empty()) {
             do {
@@ -144,7 +144,7 @@ std::vector<std::vector<Vector3d>> draw_polymer_positions(PartCfg &partCfg, int 
     // remaining monomers
     for (int p = 0; p < N_P; ++p) {
         int counter = 0;
-        Vector3d trial_pos;
+        Utils::Vector3d trial_pos;
         for (int m = 1; m < MPC; ++m) {
             do {
                 if (not use_bond_angle or m < 2) {
@@ -152,7 +152,7 @@ std::vector<std::vector<Vector3d>> draw_polymer_positions(PartCfg &partCfg, int 
                     trial_pos = positions[p][m-1] + bond_length * random_unit_vector();
                 } else {
                     // use prescribed angle
-                    Vector3d last_vec = positions[p][m-1] - positions[p][m-2];
+                    Utils::Vector3d last_vec = positions[p][m-1] - positions[p][m-2];
                     trial_pos = positions[p][m-1] + vec_rotate(
                             vector_product(last_vec, random_unit_vector()),
                             angle,
@@ -176,6 +176,22 @@ std::vector<std::vector<Vector3d>> draw_polymer_positions(PartCfg &partCfg, int 
  * ---------                                                 *
  *************************************************************/
 
+double mindist5(PartCfg &partCfg, const Utils::Vector3d pos) {
+  if (partCfg.size() == 0) {
+    return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
+  }
+
+  auto const mindist = std::accumulate(
+      partCfg.begin(), partCfg.end(), std::numeric_limits<double>::infinity(),
+      [&pos](double mindist, Particle const &p) {
+        return std::min(mindist, get_mi_vector(pos, p.r.p).norm2());
+      });
+
+  if (mindist < std::numeric_limits<double>::infinity())
+    return std::sqrt(mindist);
+  return -1.0;
+}
+
 int mindist3(PartCfg &partCfg, int part_id, double r_catch, int *ids) {
   int caught = 0;
 
@@ -190,22 +206,6 @@ int mindist3(PartCfg &partCfg, int part_id, double r_catch, int *ids) {
   }
 
   return caught;
-}
-
-double mindist5(PartCfg &partCfg, const Vector3d pos) {
-  if (partCfg.size() == 0) {
-    return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
-  }
-
-  auto const mindist = std::accumulate(
-      partCfg.begin(), partCfg.end(), std::numeric_limits<double>::infinity(),
-      [&pos](double mindist, Particle const &p) {
-        return std::min(mindist, get_mi_vector(pos, p.r.p).norm2());
-      });
-
-  if (mindist < std::numeric_limits<double>::infinity())
-    return std::sqrt(mindist);
-  return -1.0;
 }
 
 double mindist4(PartCfg &partCfg, double pos[3]) {
@@ -253,8 +253,8 @@ int collision(PartCfg &partCfg, double pos[3], double shield, int n_add,
 }
 
 int constraint_collision(double *p1, double *p2) {
-  Vector3d folded_pos1 = folded_position({p1, p1 + 3});
-  Vector3d folded_pos2 = folded_position({p2, p2 + 3});
+  Utils::Vector3d folded_pos1 = folded_position({p1, p1 + 3});
+  Utils::Vector3d folded_pos2 = folded_position({p2, p2 + 3});
 
   for (auto &c : Constraints::constraints) {
     auto cs =

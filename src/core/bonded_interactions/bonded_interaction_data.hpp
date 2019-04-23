@@ -23,6 +23,8 @@ enum BondedInteraction {
   BONDED_IA_QUARTIC,
   /** Type of bonded interaction is a BONDED_COULOMB */
   BONDED_IA_BONDED_COULOMB,
+  /** Type of bonded interaction is a BONDED_COULOMB_SR */
+  BONDED_IA_BONDED_COULOMB_SR,
   /** Type of bonded interaction is a dihedral potential. */
   BONDED_IA_DIHEDRAL,
   /** Type of tabulated bonded interaction potential,
@@ -58,8 +60,6 @@ enum BondedInteraction {
   BONDED_IA_UMBRELLA,
   /** Type of bonded interaction is thermalized distance bond. */
   BONDED_IA_THERMALIZED_DIST,
-  /** Type of bonded interaction is a BONDED_COULOMB_P3M_SR */
-  BONDED_IA_BONDED_COULOMB_P3M_SR,
 };
 
 /** Specify tabulated bonded interactions  */
@@ -156,13 +156,11 @@ struct Bonded_coulomb_bond_parameters {
   double prefactor;
 };
 
-#ifdef P3M
-/** Parameters for Coulomb bond p3m short-range Potential */
-struct Bonded_coulomb_p3m_sr_bond_parameters {
+/** Parameters for Coulomb bond short-range Potential */
+struct Bonded_coulomb_sr_bond_parameters {
   /** charge factor */
   double q1q2;
 };
-#endif
 
 /** Parameters for three-body angular potential.
  *  @note
@@ -309,6 +307,7 @@ union Bond_parameters {
 #endif
   Quartic_bond_parameters quartic;
   Bonded_coulomb_bond_parameters bonded_coulomb;
+  Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr;
   Angle_bond_parameters angle;
   Angle_harmonic_bond_parameters angle_harmonic;
   Angle_cosine_bond_parameters angle_cosine;
@@ -321,9 +320,6 @@ union Bond_parameters {
   Umbrella_bond_parameters umbrella;
 #endif
   Thermalized_bond_parameters thermalized_bond;
-#ifdef P3M
-  Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr;
-#endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
   IBM_Triel_Parameters ibm_triel;

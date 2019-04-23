@@ -47,6 +47,6 @@ void EspressoSystemInterface::init() { gatherParticles(); }
 
 void EspressoSystemInterface::update() { gatherParticles(); }
 
-Vector3d EspressoSystemInterface::box() const {
-  return Vector3d{box_l[0], box_l[1], box_l[2]};
+Utils::Vector3d EspressoSystemInterface::box() const {
+  return Utils::Vector3d{box_l[0], box_l[1], box_l[2]};
 }

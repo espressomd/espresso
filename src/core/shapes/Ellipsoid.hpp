@@ -32,7 +32,7 @@ public:
       : m_center({0.0, 0.0, 0.0}), m_semiaxes({1.0, 1.0, 1.0}),
         m_direction(1.0) {}
 
-  void calculate_dist(const Vector3d &pos, double *dist,
+  void calculate_dist(const Utils::Vector3d &pos, double *dist,
                       double *vec) const override;
 
   void set_semiaxis_a(const double &value) { m_semiaxes[0] = value; }
@@ -44,18 +44,18 @@ public:
   // not exposed via interface; used in core unit test
   void set_semiaxis_c(const double &value) { m_semiaxes[2] = value; }
 
-  Vector3d &center() { return m_center; }
+  Utils::Vector3d &center() { return m_center; }
   double &semiaxis_a() { return m_semiaxes[0]; }
   double &semiaxis_b() { return m_semiaxes[1]; }
   double &semiaxis_c() { return m_semiaxes[2]; }
   double &direction() { return m_direction; }
 
 private:
-  bool inside_ellipsoid(const Vector3d &ppos) const;
-  double newton_term(const Vector3d &ppos, const double &l) const;
+  bool inside_ellipsoid(const Utils::Vector3d &ppos) const;
+  double newton_term(const Utils::Vector3d &ppos, const double &l) const;
 
-  Vector3d m_center;
-  Vector3d m_semiaxes;
+  Utils::Vector3d m_center;
+  Utils::Vector3d m_semiaxes;
   double m_direction;
 };
 } // namespace Shapes

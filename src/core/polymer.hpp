@@ -32,14 +32,15 @@
 
 #include "PartCfg.hpp"
 #include "particle_data.hpp"
+#include "utils/Vector.hpp"
 
-bool is_valid_position(const Vector3d *pos, const std::vector<std::vector<Vector3d>> *positions, const PartCfg &partCfg, const double shield, const int constr);
-std::vector<std::vector<Vector3d>> draw_polymer_positions(PartCfg &partCfg, int N_P, int MPC, double bond_length,
-              std::vector<Vector3d> &start_positions, int mode, double shield, int max_try, const int use_bond_angle,
+bool is_valid_position(const Utils::Vector3d *pos, const std::vector<std::vector<Utils::Vector3d>> *positions, const PartCfg &partCfg, const double shield, const int constr);
+std::vector<std::vector<Utils::Vector3d>> draw_polymer_positions(PartCfg &partCfg, int N_P, int MPC, double bond_length,
+              std::vector<Utils::Vector3d> &start_positions, int mode, double shield, int max_try, const int use_bond_angle,
               double angle, double angle2, int constr);
 
-Vector3d random_position();
-Vector3d random_unit_vector();
+Utils::Vector3d random_position();
+Utils::Vector3d random_unit_vector();
 
 /*************************************************************
  * Functions                                                 *
@@ -53,7 +54,7 @@ Vector3d random_unit_vector();
 int mindist3(PartCfg &, int part_id, double r_catch, int *ids);
 
 double mindist4(PartCfg &partCfg, double pos[3]);
-double mindist5(PartCfg &partCfg, const Vector3d pos);
+double mindist5(PartCfg &partCfg, const Utils::Vector3d pos);
 
 /** Checks whether a particle at coordinates (\<posx\>, \<posy\>, \<posz\>)
  *  collides

@@ -34,7 +34,8 @@ public:
   double const &gamma() const { return m_gamma; }
 
   template <typename Particle>
-  Vector3d operator()(Particle const &p, Vector3d const &field) const {
+  Utils::Vector3d operator()(Particle const &p,
+                             Utils::Vector3d const &field) const {
     return m_gamma * (field - p.m.v);
   }
 };

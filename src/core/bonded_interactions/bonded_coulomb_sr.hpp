@@ -18,24 +18,24 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef _BONDED_COULOMB_P3M_SR_HPP
-#define _BONDED_COULOMB_P3M_SR_HPP
+#ifndef _BONDED_COULOMB_SR_HPP
+#define _BONDED_COULOMB_SR_HPP
 /** \file
- *  Routines to calculate the BONDED_COULOMB_P3M_SR Energy or/and
- * BONDED_COULOMB_P3M_SR force for a particle pair. This is only the shortrange
- * part of P3M and first used to subtract certain intramolecular interactions in
- * combination with Thole damping \ref forces.cpp
+ *  Routines to calculate the BONDED_COULOMB_SR Energy or/and
+ * BONDED_COULOMB_SR force for a particle pair. This is only the shortrange
+ * part of any coulomb interaction and first used to subtract certain
+ * intramolecular interactions in combination with Thole damping \ref forces.cpp
  */
 
 /************************************************************/
 
 #include "config.hpp"
 
-#ifdef P3M
+#ifdef ELECTROSTATICS
 
 #include "bonded_interaction_data.hpp"
 #include "debug.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
+#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #include "particle_data.hpp"
 #include "utils.hpp"
 
@@ -44,9 +44,9 @@
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
  */
-int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2);
+int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
 
-/** Computes the BONDED_COULOMB_P3M_SR pair force.
+/** Computes the BONDED_COULOMB_SR pair force.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.
@@ -55,26 +55,29 @@ int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2);
  *  @retval 0
  */
 inline int
-calc_bonded_coulomb_p3m_sr_pair_force(Particle const *p1, Particle const *p2,
-                                      Bonded_ia_parameters const *iaparams,
-                                      double const dx[3], double force[3]) {
+calc_bonded_coulomb_sr_pair_force(Particle *p1, Particle *p2,
+                                  Bonded_ia_parameters const *iaparams,
+                                  double dx[3], double force[3]) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
-  if (dist < p3m.params.r_cut) {
-    // Set to zero because p3m adds forces
-    force[0] = force[1] = force[2] = 0.;
+  if (dist < coulomb_cutoff) {
+    // TODO ugly workaround
+    Utils::Vector3d forcevec{};
 
-    p3m_add_pair_force(iaparams->p.bonded_coulomb_p3m_sr.q1q2, dx, dist2, dist,
-                       force);
+    Coulomb::calc_pair_force(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx,
+                             dist, dist2, forcevec);
+    force[0] = forcevec[0];
+    force[1] = forcevec[1];
+    force[2] = forcevec[2];
 
     ONEPART_TRACE(if (p1->p.identity == check_id) fprintf(
         stderr,
-        "%d: OPT: BONDED_COULOMB_P3M_SR f = (%.3e,%.3e,%.3e) with part id=%d "
+        "%d: OPT: BONDED_COULOMB_SR f = (%.3e,%.3e,%.3e) with part id=%d "
         "at dist %f\n",
         this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2], p2->p.identity, dist2));
     ONEPART_TRACE(if (p2->p.identity == check_id) fprintf(
         stderr,
-        "%d: OPT: BONDED_COULOMB_P3M_SR f = (%.3e,%.3e,%.3e) with part id=%d "
+        "%d: OPT: BONDED_COULOMB_SR f = (%.3e,%.3e,%.3e) with part id=%d "
         "at dist %f\n",
         this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2], p1->p.identity, dist2));
   }
@@ -82,7 +85,7 @@ calc_bonded_coulomb_p3m_sr_pair_force(Particle const *p1, Particle const *p2,
   return 0;
 }
 
-/** Computes the BONDED_COULOMB_P3M_SR pair energy.
+/** Computes the BONDED_COULOMB_SR pair energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.
@@ -90,14 +93,13 @@ calc_bonded_coulomb_p3m_sr_pair_force(Particle const *p1, Particle const *p2,
  *  @param[out] _energy   Energy.
  *  @retval 0
  */
-inline int
-bonded_coulomb_p3m_sr_pair_energy(Particle const *p1, Particle const *p2,
-                                  Bonded_ia_parameters const *iaparams,
-                                  double const dx[3], double *_energy) {
+inline int bonded_coulomb_sr_pair_energy(Particle *p1, Particle *p2,
+                                         Bonded_ia_parameters const *iaparams,
+                                         double dx[3], double *_energy) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
-  *_energy = p3m_pair_energy(iaparams->p.bonded_coulomb_p3m_sr.q1q2, dist);
-
+  *_energy = Coulomb::add_pair_energy(
+      p1, p2, iaparams->p.bonded_coulomb_sr.q1q2, dx, dist, dist2);
   return 0;
 }
 

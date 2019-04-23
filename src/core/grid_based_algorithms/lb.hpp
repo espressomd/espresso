@@ -29,13 +29,14 @@
 #define LB_H
 
 #include "config.hpp"
-
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 
 #ifdef LB
 
 #include <array>
+#include <boost/optional.hpp>
+#include <memory>
 
 #include "errorhandling.hpp"
 
@@ -66,7 +67,7 @@
  *  velocity sub-lattice and the corresponding coefficients
  *  of the pseudo-equilibrium distribution
  */
-extern Utils::Counter<uint64_t> rng_counter_fluid;
+extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 template <size_t N_vel = 19> struct LB_Model {
   /** number of velocities */
   static const constexpr int n_veloc = static_cast<int>(N_vel);
@@ -98,16 +99,16 @@ struct LB_FluidNode {
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   int boundary;
-  Vector3d slip_velocity = {};
+  Utils::Vector3d slip_velocity = {};
 #endif // LB_BOUNDARIES
 
   /** local force density */
-  Vector3d force_density;
+  Utils::Vector3d force_density;
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   // For particle update, we need the force on the nodes in LBM
   // Yet, Espresso resets the force immediately after the LBM update
   // Therefore we save it here
-  Vector3d force_density_buf;
+  Utils::Vector3d force_density_buf;
 #endif
 };
 
@@ -131,7 +132,7 @@ struct LB_Parameters {
 
   /** external force density applied to the fluid at each lattice site (LB
    * Units) */
-  Vector3d ext_force_density;
+  Utils::Vector3d ext_force_density;
 
   /** relaxation of the odd kinetic modes */
   double gamma_odd;
@@ -150,7 +151,7 @@ struct LB_Parameters {
 
   /** \name Derived parameters */
   /** amplitudes of the fluctuations of the modes */
-  Vector19d phi;
+  Utils::Vector19d phi;
   // Thermal energy
   double kT;
 
@@ -231,7 +232,8 @@ void lb_sanity_checks();
     @param pi local fluid pressure
 */
 void lb_calc_n_from_rho_j_pi(Lattice::index_t index, double rho,
-                             Vector3d const &j, Vector6d const &pi);
+                             Utils::Vector3d const &j,
+                             Utils::Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif
@@ -259,7 +261,8 @@ inline void lb_get_populations(Lattice::index_t index, double *pop) {
   }
 }
 
-inline void lb_set_populations(Lattice::index_t index, const Vector19d &pop) {
+inline void lb_set_populations(Lattice::index_t index,
+                               const Utils::Vector19d &pop) {
   for (int i = 0; i < LB_Model<>::n_veloc; ++i) {
     lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
   }

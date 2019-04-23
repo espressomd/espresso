@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 namespace Constraints {
-Vector3d ShapeBasedConstraint::total_force() const {
+Utils::Vector3d ShapeBasedConstraint::total_force() const {
   return all_reduce(comm_cart, m_local_force, std::plus<>());
 }
 
@@ -56,11 +56,11 @@ double ShapeBasedConstraint::min_dist() {
 }
 
 ParticleForce ShapeBasedConstraint::force(const Particle &p,
-                                          const Vector3d &folded_pos,
+                                          const Utils::Vector3d &folded_pos,
                                           double t) {
 
   double dist = 0.;
-  Vector3d dist_vec, force, torque1, torque2, outer_normal_vec;
+  Utils::Vector3d dist_vec, force, torque1, torque2, outer_normal_vec;
 
   IA_parameters *ia_params = get_ia_param(p.p.type, part_rep.p.type);
 
@@ -118,8 +118,8 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
 }
 
 void ShapeBasedConstraint::add_energy(const Particle &p,
-                                      const Vector3d &folded_pos, double t,
-                                      Observable_stat &energy) const {
+                                      const Utils::Vector3d &folded_pos,
+                                      double t, Observable_stat &energy) const {
   double dist;
   IA_parameters *ia_params;
   double nonbonded_en = 0.0;
