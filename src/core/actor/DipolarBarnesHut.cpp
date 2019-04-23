@@ -37,8 +37,8 @@ void activate_dipolar_barnes_hut(float epssq, float itolsq) {
   mpi_bcast_coulomb_params();
 
   coulomb.Dmethod = DIPOLAR_BH_GPU;
-  dipolarBarnesHut = Utils::make_unique<DipolarBarnesHut>(espressoSystemInterface,
-                                                        epssq, itolsq);
+  dipolarBarnesHut = Utils::make_unique<DipolarBarnesHut>(
+      espressoSystemInterface, epssq, itolsq);
   forceActors.push_back(dipolarBarnesHut.get());
   energyActors.push_back(dipolarBarnesHut.get());
 }
