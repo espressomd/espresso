@@ -28,10 +28,10 @@
 
 #include "Observable.hpp"
 #include "config.hpp"
+#include "core/observables/DPDStress.hpp"
 #include "core/observables/LBFluidStress.hpp"
 #include "core/observables/Observable.hpp"
 #include "core/observables/StressTensor.hpp"
-#include "core/observables/DPDStress.hpp"
 
 namespace ScriptInterface {
 namespace Observables {

@@ -412,6 +412,7 @@ class StressTensor(Observable):
     """
     _so_name = "Observables::StressTensor"
 
+
 @script_interface_register
 class DPDStress(Observable):
 
@@ -419,6 +420,7 @@ class DPDStress(Observable):
 
     """
     _so_name = "Observables::DPDStress"
+
 
 @script_interface_register
 class CylindricalDensityProfile(Observable):

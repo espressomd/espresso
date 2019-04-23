@@ -358,86 +358,86 @@ class DPDThermostat(ut.TestCase):
 
     def test_dpd_stress(self):
 
-      def calc_omega(dist):
-        return (1./dist - 1./r_cut) ** 2.0
+        def calc_omega(dist):
+            return (1./dist - 1./r_cut) ** 2.0
 
-      def diss_force_1(dist, vel_diff):
-        f = np.zeros(3)
-        vel12dotd12 = 0.
-        dist_norm = np.linalg.norm(dist)
+        def diss_force_1(dist, vel_diff):
+            f = np.zeros(3)
+            vel12dotd12 = 0.
+            dist_norm = np.linalg.norm(dist)
 
-        for d in range(3):
-          vel12dotd12 += vel_diff[d] * dist[d]
+            for d in range(3):
+                vel12dotd12 += vel_diff[d] * dist[d]
 
-        friction = gamma * calc_omega(dist_norm) * vel12dotd12
+            friction = gamma * calc_omega(dist_norm) * vel12dotd12
 
-        for d in range(3):
-          f[d] -= (dist[d] * friction)
+            for d in range(3):
+                f[d] -= (dist[d] * friction)
 
-        return f
+            return f
 
-      def diss_force_2(dist, vel_diff):
-        dist_norm = np.linalg.norm(dist)
-        mat = np.identity(3) * (dist_norm**2.0)
+        def diss_force_2(dist, vel_diff):
+            dist_norm = np.linalg.norm(dist)
+            mat = np.identity(3) * (dist_norm**2.0)
 
-        f = np.zeros(3)
+            f = np.zeros(3)
 
-        for d1 in range(3):
-          for d2 in range(3):
-            mat[d1,d2] -= dist[d1] * dist[d2]
+            for d1 in range(3):
+                for d2 in range(3):
+                    mat[d1, d2] -= dist[d1] * dist[d2]
 
-        for d1 in range(3):
-          for d2 in range(3):
-            f[d1] += mat[d1,d2] * vel_diff[d2]
-          f[d1] *= - 1.0 * gamma/2.0 * calc_omega(dist_norm)
+            for d1 in range(3):
+                for d2 in range(3):
+                    f[d1] += mat[d1, d2] * vel_diff[d2]
+                f[d1] *= - 1.0 * gamma/2.0 * calc_omega(dist_norm)
 
-        return f
+            return f
 
-      def calc_stress(dist, vel_diff):
-        force_pair = diss_force_1(dist, vel_diff) +\
-                     diss_force_2(dist, vel_diff)
-        stress_pair = np.outer(dist, force_pair)
-        return stress_pair
+        def calc_stress(dist, vel_diff):
+            force_pair = diss_force_1(dist, vel_diff) +\
+                         diss_force_2(dist, vel_diff)
+            stress_pair = np.outer(dist, force_pair)
+            return stress_pair
 
-      n_part = 1000
-      r_cut = 1.0
-      gamma=5.
-      r_cut=1.0
+        n_part = 1000
+        r_cut = 1.0
+        gamma = 5.
+        r_cut = 1.0
 
-      s = self.s
-      s.part.clear()
+        s = self.s
+        s.part.clear()
 
-      s.non_bonded_inter[0,0].dpd.set_params(
-        weight_function=1, gamma=gamma, r_cut=r_cut,
-        trans_weight_function=1, trans_gamma=gamma/2.0, trans_r_cut=r_cut)
+        s.non_bonded_inter[0, 0].dpd.set_params(
+          weight_function=1, gamma=gamma, r_cut=r_cut,
+          trans_weight_function=1, trans_gamma=gamma/2.0, trans_r_cut=r_cut)
 
-      pos = s.box_l * np.random.random((n_part, 3))
-      s.part.add(pos=pos)
-      s.integrator.run(10)
-      s.integrator.run(steps=0, recalc_forces=True)
+        pos = s.box_l * np.random.random((n_part, 3))
+        s.part.add(pos=pos)
+        s.integrator.run(10)
+        s.integrator.run(steps=0, recalc_forces=True)
 
-      pairs = s.part.pairs()
+        pairs = s.part.pairs()
 
-      stress = np.zeros([3,3])
+        stress = np.zeros([3, 3])
 
-      for pair in pairs:
-        dist = s.distance_vec(pair[0], pair[1])
-        if np.linalg.norm(dist) < r_cut:
-          vel_diff = pair[1].v - pair[0].v
-          stress += calc_stress(dist, vel_diff)
+        for pair in pairs:
+            dist = s.distance_vec(pair[0], pair[1])
+            if np.linalg.norm(dist) < r_cut:
+                vel_diff = pair[1].v - pair[0].v
+                stress += calc_stress(dist, vel_diff)
 
-      stress /= s.box_l[0] ** 3.0
+        stress /= s.box_l[0] ** 3.0
 
-      dpd_stress = s.analysis.dpd_stress()
+        dpd_stress = s.analysis.dpd_stress()
 
-      dpd_obs = DPDStress()
-      obs_stress = dpd_obs.calculate()
-      obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[2]],
-                             [obs_stress[3], obs_stress[4], obs_stress[5]],
-                             [obs_stress[6], obs_stress[7], obs_stress[8]]])
+        dpd_obs = DPDStress()
+        obs_stress = dpd_obs.calculate()
+        obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[2]],
+                               [obs_stress[3], obs_stress[4], obs_stress[5]],
+                               [obs_stress[6], obs_stress[7], obs_stress[8]]])
 
-      np.testing.assert_array_almost_equal(dpd_stress, stress)
-      np.testing.assert_array_almost_equal(obs_stress, stress)
+        np.testing.assert_array_almost_equal(dpd_stress, stress)
+        np.testing.assert_array_almost_equal(obs_stress, stress)
 
 if __name__ == "__main__":
     ut.main()
