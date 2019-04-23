@@ -46,10 +46,10 @@ class VirtualSitesTracersCommon(object):
         self.system.actors.clear()
         self.system.lbboundaries.clear()
         self.lbf = self.LBClass(
-                                agrid=1, dens=1, visc=1.8, tau=self.system.time_step, ext_force_density=ext_force_density, fric = 1)
+            agrid=1, dens=1, visc=1.8, tau=self.system.time_step, ext_force_density=ext_force_density, fric=1)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(kT=0,
-            act_on_virtual=False)
+                                      act_on_virtual=False)
 
         # Setup boundaries
         walls = [lbboundaries.LBBoundary() for k in range(2)]
@@ -164,7 +164,6 @@ class VirtualSitesTracersCommon(object):
 
         ## twist
         system.part[1].pos = [5.2, 5, 6]
-
 
         ## Perform integrat[ion
         last_angle = self.compute_angle()

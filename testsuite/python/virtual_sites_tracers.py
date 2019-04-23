@@ -36,6 +36,7 @@ required_features = "VIRTUAL_SITES_INERTIALESS_TRACERS", "LB"
 @ut.skipIf(not espressomd.has_features(required_features),
            "Test requires VIRTUAL_SITES_INERTIALESS_TRACERS")
 class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
+
     def setUp(self):
         self.LBClass = lb.LBFluid
 
