@@ -3100,7 +3100,7 @@ __global__ void lb_lbfluid_set_population_kernel(LB_nodes_gpu n_a,
  *  @param[in] xyz              Node coordinates
  *  @param[in] population_host  Population
  */
-void lb_lbfluid_set_population(const Vector3i &xyz,
+void lb_lbfluid_set_population(const Utils::Vector3i &xyz,
                                float population_host[LBQ]) {
   float *population_device;
   cuda_safe_mem(cudaMalloc((void **)&population_device, LBQ * sizeof(float)));
@@ -3135,7 +3135,7 @@ __global__ void lb_lbfluid_get_population_kernel(LB_nodes_gpu n_a,
  *  @param[in]  xyz              Node coordinates
  *  @param[out] population_host  Population
  */
-void lb_lbfluid_get_population(const Vector3i &xyz,
+void lb_lbfluid_get_population(const Utils::Vector3i &xyz,
                                float population_host[LBQ]) {
   float *population_device;
   cuda_safe_mem(cudaMalloc((void **)&population_device, LBQ * sizeof(float)));

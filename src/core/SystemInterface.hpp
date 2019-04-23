@@ -31,7 +31,7 @@ public:
       : m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false),
         m_needsDirectorGpu(false), m_needsFGpu(false), m_needsDipGpu(false),
         m_needsTorqueGpu(false){};
-  typedef Vector3d Vector3;
+  typedef Utils::Vector3d Vector3;
   typedef double Real;
 
   virtual void init() = 0;

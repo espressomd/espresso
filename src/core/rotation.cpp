@@ -72,7 +72,7 @@ static void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
 
 /** convert quaternions to the director */
 /** Convert director to quaternions */
-int convert_director_to_quat(const Vector3d &d, Vector4d &quat) {
+int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat) {
   double d_xy, dm;
   double theta2, phi2;
 
@@ -262,7 +262,7 @@ void propagate_omega_quat_particle(Particle *p) {
 
 inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
   auto const t = convert_vector_space_to_body(p, p.f.torque);
-  p.f.torque = Vector3d{{0, 0, 0}};
+  p.f.torque = Utils::Vector3d{{0, 0, 0}};
 
   if (thermo_switch & THERMO_LANGEVIN) {
 #if defined(VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
@@ -314,7 +314,7 @@ void convert_torques_propagate_omega() {
 
       auto const diff = p.swim.v_center - p.swim.v_source;
 
-      const Vector3d cross = vector_product(diff, dip);
+      const Utils::Vector3d cross = vector_product(diff, dip);
       const double l_diff = diff.norm();
       const double l_cross = cross.norm();
 
@@ -340,7 +340,7 @@ void convert_torques_propagate_omega() {
     p.m.omega[2] += time_step_half * p.f.torque[2] / p.p.rinertia[2];
 
     // zeroth estimate of omega
-    Vector3d omega_0 = p.m.omega;
+    Utils::Vector3d omega_0 = p.m.omega;
 
     /* if the tensor of inertia is isotropic, the following refinement is not
        needed.
@@ -351,7 +351,7 @@ void convert_torques_propagate_omega() {
     const double rinertia_diff_12 = p.p.rinertia[1] - p.p.rinertia[2];
     const double rinertia_diff_20 = p.p.rinertia[2] - p.p.rinertia[0];
     for (int times = 0; times <= 5; times++) {
-      Vector3d Wd;
+      Utils::Vector3d Wd;
 
       Wd[0] = p.m.omega[1] * p.m.omega[2] * rinertia_diff_12 / p.p.rinertia[0];
       Wd[1] = p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
@@ -377,8 +377,9 @@ void convert_initial_torques() {
 }
 // Frame conversion routines
 
-Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &vec) {
-  Vector3d res = {0, 0, 0};
+Utils::Vector3d convert_vector_body_to_space(const Particle &p,
+                                             const Utils::Vector3d &vec) {
+  Utils::Vector3d res = {0, 0, 0};
   double A[9];
   define_rotation_matrix(p, A);
 
@@ -392,8 +393,9 @@ Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &vec) {
   return res;
 }
 
-Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v) {
-  Vector3d res = {0, 0, 0};
+Utils::Vector3d convert_vector_space_to_body(const Particle &p,
+                                             const Utils::Vector3d &v) {
+  Utils::Vector3d res = {0, 0, 0};
   double A[9];
   define_rotation_matrix(p, A);
   res[0] = A[0 + 3 * 0] * v[0] + A[0 + 3 * 1] * v[1] + A[0 + 3 * 2] * v[2];
@@ -404,10 +406,10 @@ Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v) {
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
-void local_rotate_particle(Particle &p, const Vector3d &axis_space_frame,
+void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space_frame,
                            const double phi) {
   // Convert rotation axis to body-fixed frame
-  Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
+  Utils::Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
 
   // Rotation turned off entirely?
   if (!p.p.rotation)

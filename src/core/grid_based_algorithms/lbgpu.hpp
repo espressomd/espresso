@@ -244,8 +244,8 @@ void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
                                      int include_lbfluid);
 void lb_lbfluid_particles_add_momentum(float const velocity[3]);
 
-void lb_lbfluid_set_population(const Vector3i &, float[LBQ]);
-void lb_lbfluid_get_population(const Vector3i &, float[LBQ]);
+void lb_lbfluid_set_population(const Utils::Vector3i &, float[LBQ]);
+void lb_lbfluid_get_population(const Utils::Vector3i &, float[LBQ]);
 
 template <std::size_t no_of_neighbours>
 void lb_get_interpolated_velocity_gpu(double const *positions,

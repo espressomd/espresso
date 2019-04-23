@@ -31,24 +31,26 @@
 
 #include "utils/Array.hpp"
 
-template <typename T, std::size_t N> class Vector : public Utils::Array<T, N> {
-  using Base = Utils::Array<T, N>;
+namespace Utils {
+
+template <typename T, std::size_t N> class Vector : public Array<T, N> {
+  using Base = Array<T, N>;
 
 public:
-  using Utils::Array<T, N>::at;
-  using Utils::Array<T, N>::operator[];
-  using Utils::Array<T, N>::front;
-  using Utils::Array<T, N>::back;
-  using Utils::Array<T, N>::data;
-  using Utils::Array<T, N>::begin;
-  using Utils::Array<T, N>::cbegin;
-  using Utils::Array<T, N>::end;
-  using Utils::Array<T, N>::cend;
-  using Utils::Array<T, N>::empty;
-  using Utils::Array<T, N>::size;
-  using Utils::Array<T, N>::max_size;
-  using Utils::Array<T, N>::fill;
-  using Utils::Array<T, N>::broadcast;
+  using Array<T, N>::at;
+  using Array<T, N>::operator[];
+  using Array<T, N>::front;
+  using Array<T, N>::back;
+  using Array<T, N>::data;
+  using Array<T, N>::begin;
+  using Array<T, N>::cbegin;
+  using Array<T, N>::end;
+  using Array<T, N>::cend;
+  using Array<T, N>::empty;
+  using Array<T, N>::size;
+  using Array<T, N>::max_size;
+  using Array<T, N>::fill;
+  using Array<T, N>::broadcast;
   Vector() = default;
   Vector(Vector const &) = default;
   Vector &operator=(Vector const &) = default;
@@ -308,5 +310,6 @@ template <typename T, size_t N> struct decay_to_scalar<Vector<T, N>> {
 };
 
 template <typename T> struct decay_to_scalar<Vector<T, 1>> { using type = T; };
+} // namespace Utils
 
 #endif

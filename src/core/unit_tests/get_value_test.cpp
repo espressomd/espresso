@@ -53,15 +53,15 @@ BOOST_AUTO_TEST_CASE(static_vector) {
   /* From same type */
   {
     Variant v = std::vector<Variant>({1., 2., 3.});
-    auto const expected = Vector3d{1., 2., 3.};
-    BOOST_CHECK(get_value<Vector3d>(v) == expected);
+    auto const expected = Utils::Vector3d{1., 2., 3.};
+    BOOST_CHECK(get_value<Utils::Vector3d>(v) == expected);
   }
 
   /* Conversion applied */
   {
     Variant v = std::vector<Variant>({1, 2, 3});
-    auto const expected = Vector3d{1, 2, 3};
-    BOOST_CHECK(get_value<Vector3d>(v) == expected);
+    auto const expected = Utils::Vector3d{1, 2, 3};
+    BOOST_CHECK(get_value<Utils::Vector3d>(v) == expected);
   }
 }
 
