@@ -67,7 +67,7 @@ static void lb_check_halo_regions(const LB_Fluid &lbfluid);
 #endif // ADDITIONAL_CHECKS
 
 /** Counter for the RNG */
-Utils::Counter<uint64_t> rng_counter_fluid;
+boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 /** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
@@ -154,7 +154,7 @@ void lb_init() {
   if (check_runtime_errors())
     return;
 
-  Vector3d temp_agrid, temp_offset;
+  Utils::Vector3d temp_agrid, temp_offset;
   for (int i = 0; i < 3; i++) {
     temp_agrid[i] = lbpar.agrid;
     temp_offset[i] = 0.5;
@@ -187,8 +187,8 @@ void lb_reinit_fluid() {
 #ifdef LB
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
-  Vector3d j{};
-  Vector6d pi{};
+  Utils::Vector3d j{};
+  Utils::Vector6d pi{};
 
   LB_TRACE(fprintf(stderr,
                    "Initializing the fluid with equilibrium populations\n"););
@@ -267,7 +267,7 @@ void lb_reinit_parameters() {
 
 /* Halo communication for push scheme */
 static void halo_push_communication(LB_Fluid &lbfluid,
-                                    const Vector3i &local_node_grid) {
+                                    const Utils::Vector3i &local_node_grid) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
@@ -582,7 +582,10 @@ void lb_sanity_checks() {
   }
 }
 
-uint64_t lb_fluid_get_rng_state() { return rng_counter_fluid.value(); }
+uint64_t lb_fluid_get_rng_state() {
+  assert(rng_counter_fluid);
+  return rng_counter_fluid->value();
+}
 
 void mpi_set_lb_fluid_counter(uint64_t counter) {
   rng_counter_fluid = Utils::Counter<uint64_t>(counter);
@@ -673,7 +676,8 @@ void lb_prepare_communication() {
 /***********************************************************************/
 /*@{*/
 void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             Vector3d const &j, Vector6d const &pi) {
+                             Utils::Vector3d const &j,
+                             Utils::Vector6d const &pi) {
   double local_rho, local_j[3], local_pi[6], trace;
   local_rho = rho;
 
@@ -798,14 +802,15 @@ inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
 }
 
 template <typename T>
-inline std::array<T, 19>
-lb_thermalize_modes(Lattice::index_t index, const r123::Philox4x64::ctr_type &c,
-                    const std::array<T, 19> &modes) {
+inline std::array<T, 19> lb_thermalize_modes(Lattice::index_t index,
+                                             const std::array<T, 19> &modes) {
   if (lbpar.kT > 0.0) {
     using Utils::uniform;
     using rng_type = r123::Philox4x64;
     using ctr_type = rng_type::ctr_type;
 
+    const r123::Philox4x64::ctr_type c{
+        {rng_counter_fluid->value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
     const T rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
     auto const pref = std::sqrt(12.) * rootrho;
 
@@ -928,8 +933,6 @@ inline void lb_collide_stream() {
   }
 #endif
 
-  const r123::Philox4x64::ctr_type c{
-      {rng_counter_fluid.value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
@@ -948,7 +951,7 @@ inline void lb_collide_stream() {
 
           /* fluctuating hydrodynamics */
           auto const thermalized_modes =
-              lb_thermalize_modes(index, c, relaxed_modes);
+              lb_thermalize_modes(index, relaxed_modes);
 
           /* apply forces */
           auto const modes_with_forces =
@@ -1252,7 +1255,7 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
     return;
 
   /* equilibrium part of the stress modes */
-  Vector6d modes_from_pi_eq{};
+  Utils::Vector6d modes_from_pi_eq{};
   modes_from_pi_eq[0] = scalar(j, j) / *rho;
   modes_from_pi_eq[1] = (Utils::sqr(j[0]) - Utils::sqr(j[1])) / *rho;
   modes_from_pi_eq[2] = (scalar(j, j) - 3.0 * Utils::sqr(j[2])) / *rho;
@@ -1373,7 +1376,7 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
  *  @param[in]  index  Local lattice site
  *  @retval The local fluid momentum.
  */
-inline Vector3d lb_calc_local_j(Lattice::index_t index) {
+inline Utils::Vector3d lb_calc_local_j(Lattice::index_t index) {
   return {{lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
                lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
                lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
@@ -1396,7 +1399,7 @@ inline Vector3d lb_calc_local_j(Lattice::index_t index) {
 void lb_calc_fluid_momentum(double *result) {
 
   int x, y, z, index;
-  Vector3d j{}, momentum{};
+  Utils::Vector3d j{}, momentum{};
 
   for (x = 1; x <= lblattice.grid[0]; x++) {
     for (y = 1; y <= lblattice.grid[1]; y++) {

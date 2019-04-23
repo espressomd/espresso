@@ -223,6 +223,20 @@ class TestLB(object):
         self.lbf[0, 0, 0].density = density
         self.assertAlmostEqual(self.lbf[0, 0, 0].density, density, delta=1e-4)
 
+    def test_parameter_change_without_seed(self):
+        self.system.actors.clear()
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            ext_force_density=[0, 0, 0],
+            kT=1.0,
+            seed=42)
+        self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=23, gamma=2.0)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=3.0)
+
     def test_grid_index(self):
         self.system.actors.clear()
         self.lbf = self.lb_class(

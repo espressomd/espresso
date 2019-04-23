@@ -27,7 +27,7 @@
 using namespace std;
 
 namespace Shapes {
-void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
+void Slitpore::calculate_dist(const Utils::Vector3d &pos, double *dist,
                               double *vec) const {
   // the left circles
   double c11[2] = {dividing_plane() - m_pore_width / 2 -

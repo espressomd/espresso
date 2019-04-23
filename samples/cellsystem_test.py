@@ -1,10 +1,3 @@
-"""
-This sample sets up a polymer and tests the available cell systems.
-"""
-
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
 # Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -22,12 +15,17 @@ This sample sets up a polymer and tests the available cell systems.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample sets up a polymer and tests the available cell systems.
+"""
+
 from __future__ import print_function
-import espressomd
-from espressomd import polymer
-from espressomd import interactions
 import time
 import numpy as np
+import espressomd
+espressomd.assert_features(["LENNARD_JONES"])
+from espressomd import polymer
+from espressomd import interactions
 
 
 def profile():
@@ -35,9 +33,8 @@ def profile():
     ti = time.time()
     system.integrator.run(n_steps)
     tf = time.time()
-    print(
-        "\t with skin={} ran {:d} steps in {:f} seconds. steps/sec:{:f} ".format(skin,
-                                                                                 n_steps, tf - ti, n_steps * 1. / (tf - ti)))
+    print("\t with skin={} ran {:d} steps in {:f} seconds. steps/sec:{:f} "
+          .format(skin, n_steps, tf - ti, n_steps * 1. / (tf - ti)))
 
 
 system = espressomd.System(box_l=[100, 100, 100])
@@ -61,8 +58,8 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
     cutoff=2**(1. / 6), shift="auto")
 fene = interactions.FeneBond(k=10, d_r_max=1.5)
 system.bonded_inter.add(fene)
-polymer.create_polymer(
-    N_P=1, bond_length=0.97, MPC=100, bond=fene, start_pos=[0, 0, 0])
+polymer.create_polymer(N_P=1, bond_length=0.97, MPC=100,
+                       bond=fene, start_pos=[0, 0, 0])
 
 n_steps = 1000
 

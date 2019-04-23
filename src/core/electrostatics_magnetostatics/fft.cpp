@@ -80,7 +80,7 @@ using Utils::get_linear_index;
  */
 namespace {
 boost::optional<std::vector<int>>
-find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
+find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
                  int const *node_list1, int *node_list2, int *pos, int *my_pos,
                  const boost::mpi::communicator &comm) {
   int i;
@@ -492,7 +492,7 @@ void calc_2d_grid(int n, int grid[3]) {
 
 int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft, const Vector3i &grid,
+             fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm) {
   int i, j;
   /* helpers */

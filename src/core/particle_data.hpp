@@ -105,19 +105,19 @@ struct ParticleProperties {
 
 #ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
-  Vector3d rinertia = {1., 1., 1.};
+  Utils::Vector3d rinertia = {1., 1., 1.};
 #else
-  static constexpr Vector3d rinertia = {1., 1., 1.};
+  static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
 #endif
 
 #ifdef AFFINITY
   /** parameters for affinity mechanisms */
-  Vector3d bond_site = {-1., -1., -1.};
+  Utils::Vector3d bond_site = {-1., -1., -1.};
 #endif
 
 #ifdef MEMBRANE_COLLISION
   /** parameters for membrane collision mechanisms */
-  Vector3d out_direction = {0., 0., 0.};
+  Utils::Vector3d out_direction = {0., 0., 0.};
 #endif
 
   // Determines, whether a particle's rotational degrees of freedom are
@@ -133,7 +133,7 @@ struct ParticleProperties {
 
 #ifdef LB_ELECTROHYDRODYNAMICS
   /** electrophoretic mobility times E-field: mu_0 * E */
-  Vector3d mu_E = {0., 0., 0.};
+  Utils::Vector3d mu_E = {0., 0., 0.};
 #endif
 
 #ifdef DIPOLES
@@ -157,9 +157,9 @@ struct ParticleProperties {
     int to_particle_id = 0;
     double distance = 0;
     // Store relative position of the virtual site.
-    Vector4d rel_orientation = {0., 0., 0., 0.};
+    Utils::Vector4d rel_orientation = {0., 0., 0., 0.};
     // Store the orientation of the virtual particle in the body fixed frame.
-    Vector4d quat = {0., 0., 0., 0.};
+    Utils::Vector4d quat = {0., 0., 0., 0.};
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &to_particle_id;
@@ -179,14 +179,14 @@ struct ParticleProperties {
 #ifndef PARTICLE_ANISOTROPY
   double gamma = -1.;
 #else
-  Vector3d gamma = {-1., -1., -1.};
+  Utils::Vector3d gamma = {-1., -1., -1.};
 #endif // PARTICLE_ANISOTROPY
 /* Friction coefficient gamma for rotation */
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
   double gamma_rot = -1.;
 #else
-  Vector3d gamma_rot = {-1., -1., -1.};
+  Utils::Vector3d gamma_rot = {-1., -1., -1.};
 #endif // ROTATIONAL_INERTIA
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
@@ -206,11 +206,11 @@ struct ParticleProperties {
   */
   int ext_flag = 0;
   /** External force, apply if \ref ParticleProperties::ext_flag == 1. */
-  Vector3d ext_force = {0, 0, 0};
+  Utils::Vector3d ext_force = {0, 0, 0};
 
 #ifdef ROTATION
   /** External torque, apply if \ref ParticleProperties::ext_flag == 16. */
-  Vector3d ext_torque = {0, 0, 0};
+  Utils::Vector3d ext_torque = {0, 0, 0};
 #endif
 #endif
 };
@@ -219,13 +219,13 @@ struct ParticleProperties {
     communicated to calculate interactions with ghost particles. */
 struct ParticlePosition {
   /** periodically folded position. */
-  Vector3d p = {0, 0, 0};
+  Utils::Vector3d p = {0, 0, 0};
 
 #ifdef ROTATION
   /** quaternions to define particle orientation */
-  Vector4d quat = {1., 0., 0., 0.};
+  Utils::Vector4d quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
-  inline const Vector3d calc_director() const {
+  inline const Utils::Vector3d calc_director() const {
     return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
             2 * (quat[2] * quat[3] - quat[0] * quat[1]),
             quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
@@ -235,7 +235,7 @@ struct ParticlePosition {
 
 #ifdef BOND_CONSTRAINT
   /**stores the particle position at the previous time step*/
-  Vector3d p_old = {0., 0., 0.};
+  Utils::Vector3d p_old = {0., 0., 0.};
 #endif
 };
 
@@ -244,9 +244,9 @@ struct ParticlePosition {
 struct ParticleForce {
   ParticleForce() = default;
   ParticleForce(ParticleForce const &) = default;
-  ParticleForce(const Vector3d &f) : f(f) {}
+  ParticleForce(const Utils::Vector3d &f) : f(f) {}
 #ifdef ROTATION
-  ParticleForce(const Vector3d &f, const Vector3d &torque)
+  ParticleForce(const Utils::Vector3d &f, const Utils::Vector3d &torque)
       : f(f), torque(torque) {}
 #endif
 
@@ -260,11 +260,11 @@ struct ParticleForce {
   }
 
   /** force. */
-  Vector3d f = {0., 0., 0.};
+  Utils::Vector3d f = {0., 0., 0.};
 
 #ifdef ROTATION
   /** torque */
-  Vector3d torque = {0., 0., 0.};
+  Utils::Vector3d torque = {0., 0., 0.};
 #endif
 };
 
@@ -273,12 +273,12 @@ struct ParticleForce {
     be necessary for velocity dependent potentials. */
 struct ParticleMomentum {
   /** velocity. */
-  Vector3d v = {0., 0., 0.};
+  Utils::Vector3d v = {0., 0., 0.};
 
 #ifdef ROTATION
   /** angular velocity
       ALWAYS IN PARTICLE FIXED, I.E., CO-ROTATING COORDINATE SYSTEM */
-  Vector3d omega = {0., 0., 0.};
+  Utils::Vector3d omega = {0., 0., 0.};
 #endif
 };
 
@@ -287,9 +287,9 @@ struct ParticleMomentum {
  */
 struct ParticleLocal {
   /** position in the last time step before last Verlet list update. */
-  Vector3d p_old = {0, 0, 0};
+  Utils::Vector3d p_old = {0, 0, 0};
   /** index of the simulation box image where the particle really sits. */
-  Vector3i i = {0, 0, 0};
+  Utils::Vector3i i = {0, 0, 0};
 
   /** check whether a particle is a ghost or not */
   int ghost = 0;
@@ -304,8 +304,8 @@ struct ParticleParametersSwimming {
 #if defined(LB) || defined(LB_GPU)
   int push_pull = 0;
   double dipole_length = 0.;
-  Vector3d v_center;
-  Vector3d v_source;
+  Utils::Vector3d v_center;
+  Utils::Vector3d v_source;
   double rotational_friction = 0.;
 #endif
 #endif
@@ -364,7 +364,9 @@ struct Particle {
   ///
   ParticlePosition r;
 #ifdef DIPOLES
-  inline const Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
+  inline const Utils::Vector3d calc_dip() const {
+    return r.calc_director() * p.dipm;
+  }
 #endif
   ///
   ParticleMomentum m;
@@ -614,7 +616,7 @@ void set_particle_swimming(int part, ParticleParametersSwimming swim);
  *  @param part the particle.
  *  @param F its new force.
  */
-void set_particle_f(int part, const Vector3d &F);
+void set_particle_f(int part, const Utils::Vector3d &F);
 
 /** Call only on the master node: set particle mass.
  *  @param part the particle.
@@ -650,7 +652,7 @@ void set_particle_rotation(int part, int rot);
  *  @param axis rotation axis
  *  @param angle rotation angle
  */
-void rotate_particle(int part, const Vector3d &axis, double angle);
+void rotate_particle(int part, const Utils::Vector3d &axis, double angle);
 
 #ifdef AFFINITY
 /** Call only on the master node: set particle affinity.
@@ -706,19 +708,19 @@ void set_particle_quat(int part, double *quat);
  *  @param part the particle.
  *  @param omega_lab its new angular velocity.
  */
-void set_particle_omega_lab(int part, const Vector3d &omega_lab);
+void set_particle_omega_lab(int part, const Utils::Vector3d &omega_lab);
 
 /** Call only on the master node: set particle angular velocity in body frame.
  *  @param part the particle.
  *  @param omega its new angular velocity.
  */
-void set_particle_omega_body(int part, const Vector3d &omega);
+void set_particle_omega_body(int part, const Utils::Vector3d &omega);
 
 /** Call only on the master node: set particle torque from lab frame.
  *  @param part the particle.
  *  @param torque_lab its new torque.
  */
-void set_particle_torque_lab(int part, const Vector3d &torque_lab);
+void set_particle_torque_lab(int part, const Utils::Vector3d &torque_lab);
 
 #endif
 
@@ -763,13 +765,13 @@ void set_particle_temperature(int part, double T);
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma(int part, double gamma);
 #else
-void set_particle_gamma(int part, Vector3d gamma);
+void set_particle_gamma(int part, Utils::Vector3d gamma);
 #endif
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
 void set_particle_gamma_rot(int part, double gamma);
 #else
-void set_particle_gamma_rot(int part, Vector3d gamma_rot);
+void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot);
 #endif
 #endif
 #endif // LANGEVIN_PER_PARTICLE
@@ -780,13 +782,13 @@ void set_particle_gamma_rot(int part, Vector3d gamma_rot);
  *  @param part  the particle.
  *  @param torque new value for ext_torque.
  */
-void set_particle_ext_torque(int part, const Vector3d &torque);
+void set_particle_ext_torque(int part, const Utils::Vector3d &torque);
 #endif
 /** Call only on the master node: set particle external force.
  *  @param part  the particle.
  *  @param force new value for ext_force.
  */
-void set_particle_ext_force(int part, const Vector3d &force);
+void set_particle_ext_force(int part, const Utils::Vector3d &force);
 /** Call only on the master node: set coordinate axes for which the particles
  *  motion is fixed.
  *  @param part  the particle.
@@ -955,7 +957,7 @@ int number_of_particles_with_type(int type);
 #ifdef ROTATION
 void pointer_to_omega_body(Particle const *p, double const *&res);
 
-inline Vector3d get_torque_body(const Particle &p) { return p.f.torque; }
+inline Utils::Vector3d get_torque_body(const Particle &p) { return p.f.torque; }
 
 void pointer_to_quat(Particle const *p, double const *&res);
 

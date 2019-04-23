@@ -14,18 +14,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Visualization sample of a simple plate capacitor with applied potential difference and charged particles.
+"""
+Visualization sample of a simple plate capacitor with applied potential
+difference and charged particles.
 """
 
 from __future__ import print_function
-import numpy
+import numpy as np
 import math
 from threading import Thread
 
 import espressomd
 import espressomd.shapes
 from espressomd import electrostatics
-import espressomd.visualization_opengl
+from espressomd import visualization
 
 required_features = ["PARTIAL_PERIODIC", "ELECTROSTATICS", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
@@ -34,8 +36,11 @@ box_l = 20
 system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
-visualizer = openGLLive(system, constraint_type_colors=[
-                        [1, 1, 1]], camera_position=[50, 15, 15], camera_right=[0, 0, -1])
+visualizer = visualization.openGLLive(
+    system,
+    constraint_type_colors=[[1, 1, 1]],
+    camera_position=[50, 15, 15],
+    camera_right=[0, 0, -1])
 
 system.time_step = 0.02
 system.cell_system.skin = 0.4
@@ -44,14 +49,14 @@ system.periodicity = [1, 1, 0]
 
 qion = 1
 for i in range(300):
-    rpos = numpy.random.random(3) * box_l
+    rpos = np.random.random(3) * box_l
     system.part.add(pos=rpos, type=0, q=qion)
     qion *= -1
 
 system.constraints.add(shape=espressomd.shapes.Wall(
     dist=0, normal=[0, 0, 1]), particle_type=1)
-system.constraints.add(
-    shape=espressomd.shapes.Wall(dist=-box_l, normal=[0, 0, -1]), particle_type=1)
+system.constraints.add(shape=espressomd.shapes.Wall(
+    dist=-box_l, normal=[0, 0, -1]), particle_type=1)
 
 WCA_cut = 2.**(1. / 6.)
 system.non_bonded_inter[0, 1].lennard_jones.set_params(

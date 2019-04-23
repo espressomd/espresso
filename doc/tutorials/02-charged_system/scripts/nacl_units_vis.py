@@ -20,7 +20,7 @@
 #
 import espressomd
 from espressomd import assert_features, electrostatics, electrostatic_extensions
-from espressomd.visualization_opengl import *
+from espressomd import visualization_opengl
 import numpy
 from threading import Thread
 from time import sleep
@@ -31,8 +31,11 @@ system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 numpy.random.seed(system.seed)
 
-visualizer = openGLLive(system, drag_force=5 * 298,
-                        background_color=[1, 1, 1], light_pos=[30, 30, 30])
+visualizer = visualization_opengl.openGLLive(
+    system,
+    drag_force=5 * 298,
+    background_color=[1, 1, 1],
+    light_pos=[30, 30, 30])
 
 # Callbacks to control temperature
 temperature = 298.0
@@ -42,7 +45,7 @@ def increaseTemp():
     global temperature
     temperature += 10
     system.thermostat.set_langevin(kT=temperature, gamma=1.0)
-    print(temperature)
+    print("T = {:.0f} K".format(temperature))
 
 
 def decreaseTemp():
@@ -54,21 +57,21 @@ def decreaseTemp():
     else:
         temperature = 0
         system.thermostat.turn_off()
-    print(temperature)
+    print("T = {:.0f} K".format(temperature))
 
 
 # Register buttons
-visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
-visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
+visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+    't', visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
+visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+    'g', visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
 
 
 def main():
 
     print("\n--->Setup system")
 
-# System parameters
+    # System parameters
     n_ppside = 10
     n_part = int(n_ppside**3)
     n_ionpairs = n_part / 2
@@ -79,11 +82,9 @@ def main():
     #l_bjerrum = 0.885^2 * e^2/(4*pi*epsilon_0*k_B*T)
     l_bjerrum = 130878.0 / temp
 
-    num_steps_equilibration = 3000
-    num_configs = 50
-    integ_steps_per_config = 500
+    num_steps_equilibration = 30
 
-# Particle parameters
+    # Particle parameters
     types = {"Cl": 0, "Na": 1}
     numbers = {"Cl": n_ionpairs, "Na": n_ionpairs}
     charges = {"Cl": -1.0, "Na": 1.0}
@@ -95,15 +96,15 @@ def main():
 
     masses = {"Cl": 35.453, "Na": 22.99}
 
-# Setup System
+    # Setup System
     box_l = (n_ionpairs * sum(masses.values()) / density)**(1. / 3.)
     system.box_l = [box_l, box_l, box_l]
     system.periodicity = [1, 1, 1]
     system.time_step = time_step
     system.cell_system.skin = 0.3
-    system.thermostat.set_langevin(kT=temp, gamma=gamma)
+    system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
-# Place particles
+    # Place particles on a face-centered cubic lattice
     q = 1
     l = box_l / n_ppside
     for i in range(n_ppside):
@@ -133,7 +134,7 @@ def main():
         else:
             return ValueError("No combination rule defined")
 
-# Lennard-Jones interactions parameters
+    # Lennard-Jones interactions parameters
     for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"]]:
         lj_sig = combination_rule_sigma(
             "Berthelot", lj_sigmas[s[0]], lj_sigmas[s[1]])
@@ -146,29 +147,23 @@ def main():
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
     print("\n--->Tuning Electrostatics")
-    # p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2,
-    # mesh=[84,84,84], cao=6)
     p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)
     system.actors.add(p3m)
 
     print("\n--->Temperature Equilibration")
     system.time = 0.0
-    for i in range(int(num_steps_equilibration / 100)):
+    for i in range(num_steps_equilibration):
         energy = system.analysis.energy()
         temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-        print(
-            "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                                  energy[
-                                                                                  'total'],
-                                                                                  energy[
-                                                                                  'coulomb'],
-                                                                                  temp_measured))
+        print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}"
+              .format(system.time, energy['total'], energy['coulomb'],
+                      temp_measured))
         system.integrator.run(100)
         visualizer.update()
 
     print("\n--->Integration")
     system.time = 0.0
-    while (True):
+    while True:
         system.integrator.run(1)
         visualizer.update()
 

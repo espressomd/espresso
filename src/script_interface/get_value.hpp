@@ -79,8 +79,10 @@ template <typename T, typename = void> struct get_value_helper {
 };
 
 template <class T, size_t N>
-struct vector_conversion_visitor : boost::static_visitor<Vector<T, N>> {
-  Vector<T, N> operator()(Vector<T, N> const &v) const { return v; }
+struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
+  Utils::Vector<T, N> operator()(Utils::Vector<T, N> const &v) const {
+    return v;
+  }
 
   /* We try do unpack variant vectors and check if they
    * are convertible element by element. */
@@ -89,21 +91,21 @@ struct vector_conversion_visitor : boost::static_visitor<Vector<T, N>> {
       throw boost::bad_get{};
     }
 
-    Vector<T, N> ret;
+    Utils::Vector<T, N> ret;
     boost::transform(vv, ret.begin(),
                      [](const Variant &v) { return get_value_helper<T>{}(v); });
 
     return ret;
   }
 
-  template <typename U> Vector<T, N> operator()(U const &) const {
+  template <typename U> Utils::Vector<T, N> operator()(U const &) const {
     throw boost::bad_get{};
   }
 };
 
-/* Vector<T, N> case */
-template <typename T, size_t N> struct get_value_helper<Vector<T, N>> {
-  Vector<T, N> operator()(Variant const &v) const {
+/* Utils::Vector<T, N> case */
+template <typename T, size_t N> struct get_value_helper<Utils::Vector<T, N>> {
+  Utils::Vector<T, N> operator()(Variant const &v) const {
     return boost::apply_visitor(detail::vector_conversion_visitor<T, N>{}, v);
   }
 };

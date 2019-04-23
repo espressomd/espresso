@@ -150,8 +150,10 @@ cdef class HydrodynamicInteraction(Actor):
             default_params = self.default_params()
             cdef double kT = lb_lbfluid_get_kT()
             self._params["kT"] = kT
-            cdef stdint.uint64_t seed = lb_lbfluid_get_rng_state()
-            self._params['seed'] = seed
+            cdef stdint.uint64_t seed
+            if kT > 0.0:
+                seed = lb_lbfluid_get_rng_state()
+                self._params['seed'] = seed
             if python_lbfluid_get_density(self._params["dens"], self._params["agrid"]):
                 raise Exception("lb_lbfluid_get_density error")
 
