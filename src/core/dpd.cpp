@@ -26,13 +26,13 @@
 #ifdef DPD
 
 #include "communication.hpp"
-#include "global.hpp"
-#include "integrate.hpp"
 #include "random.hpp"
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
 
 #include "utils/NoOp.hpp"
+
+using Utils::Vector3d;
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
@@ -126,6 +126,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                         IA_parameters *ia_params, double const *d, double dist,
                         double dist2, bool include_noise) {
   Vector3d f{};
+
   auto const dist_inv = 1.0 / dist;
 
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_pref1 > 0.0)) {
@@ -195,7 +196,10 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
 
   return f;
 }
-const Vector9d dpd_stress() {
+
+Utils::Vector9d dpd_stress() {
+  using Utils::Vector9d;
+
   Vector9d dpd_stress{};
 
   if (max_cut > 0) {

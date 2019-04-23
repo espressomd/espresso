@@ -35,8 +35,8 @@
 
 Cell *local;
 
-Cell *nsq_position_to_cell(const Vector3d &pos) { return local; }
-int nsq_position_to_node(const Vector3d &) { return this_node; }
+Cell *nsq_position_to_cell(const Utils::Vector3d &pos) { return local; }
+int nsq_position_to_node(const Utils::Vector3d &) { return this_node; }
 
 void nsq_topology_release() {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_release:\n", this_node));

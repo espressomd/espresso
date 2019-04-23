@@ -27,6 +27,13 @@ from espressomd.code_info import features
 from espressomd.cuda_init import gpu_available
 
 
+class FeaturesError(Exception):
+
+    def __init__(self, missing_features_list):
+        message = "Missing features " + ", ".join(missing_features_list)
+        super(FeaturesError, self).__init__(message)
+
+
 def has_features(*args):
     """Tests whether a list of features is a subset of the compiled-in features"""
 
@@ -49,5 +56,4 @@ def assert_features(*args):
     """Raises an exception when a list of features is not a subset of the compiled-in features"""
 
     if not has_features(*args):
-        raise Exception(
-            "Missing features " + ", ".join(missing_features(*args)))
+        raise FeaturesError(missing_features(*args))

@@ -81,7 +81,7 @@
 
 /** Initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part) {
-  part->f.f = Vector3d{};
+  part->f.f = Utils::Vector3d{};
 
 #ifdef ROTATION
   part->f.torque[0] = 0;
@@ -95,7 +95,7 @@ inline void init_local_particle_force(Particle *part) {
   if (thermo_switch & THERMO_LANGEVIN)
     friction_thermo_langevin(part);
   else {
-    part->f.f = Vector3d{};
+    part->f.f = Utils::Vector3d{};
   }
 
 #ifdef EXTERNAL_FORCES
@@ -255,7 +255,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
 
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
-  Vector3d force{};
+  Utils::Vector3d force{};
   double torque1[3] = {0., 0., 0.};
   double torque2[3] = {0., 0., 0.};
   int j;

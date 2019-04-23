@@ -34,7 +34,8 @@ namespace Fields {
  */
 template <typename T, size_t codim> class PlaneWave {
 public:
-  using value_type = typename decay_to_scalar<Vector<T, codim>>::type;
+  using value_type =
+      typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
   using jacobian_type = detail::jacobian_type<T, codim>;
 
 private:
@@ -59,7 +60,7 @@ public:
    * @param t When?
    * @return Value of the field at point x and time t.
    */
-  value_type operator()(const Vector3d &x, T t = 0.) const {
+  value_type operator()(const Utils::Vector3d &x, T t = 0.) const {
     return m_amplitude * sin(m_k * x - m_omega * t + m_phase);
   }
 
@@ -74,14 +75,14 @@ public:
    * @param t When?
    * @return Jacobian matrix
    */
-  jacobian_type jacobian(const Vector3d &x, T t = 0.) const {
+  jacobian_type jacobian(const Utils::Vector3d &x, T t = 0.) const {
     using Utils::tensor_product;
 
     return tensor_product(m_amplitude, m_k) *
            cos(m_k * x - m_omega * t + m_phase);
   }
 
-  bool fits_in_box(const Vector3d &) const { return true; }
+  bool fits_in_box(const Utils::Vector3d &) const { return true; }
 };
 } // namespace Fields
 } // namespace FieldCoupling

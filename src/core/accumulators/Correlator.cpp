@@ -73,7 +73,8 @@ std::vector<double> compress_discard2(std::vector<double> const &A1,
 }
 
 std::vector<double> scalar_product(std::vector<double> const &A,
-                                   std::vector<double> const &B, Vector3d) {
+                                   std::vector<double> const &B,
+                                   Utils::Vector3d) {
   if (A.size() != B.size()) {
     throw std::runtime_error(
         "Error in scalar product: The vector sizes do not match");
@@ -85,7 +86,7 @@ std::vector<double> scalar_product(std::vector<double> const &A,
 
 std::vector<double> componentwise_product(std::vector<double> const &A,
                                           std::vector<double> const &B,
-                                          Vector3d) {
+                                          Utils::Vector3d) {
   std::vector<double> C(A.size());
   if (!(A.size() == B.size())) {
     throw std::runtime_error(
@@ -98,7 +99,8 @@ std::vector<double> componentwise_product(std::vector<double> const &A,
 }
 
 std::vector<double> tensor_product(std::vector<double> const &A,
-                                   std::vector<double> const &B, Vector3d) {
+                                   std::vector<double> const &B,
+                                   Utils::Vector3d) {
   std::vector<double> C(A.size() * B.size());
   auto C_it = C.begin();
 
@@ -114,7 +116,7 @@ std::vector<double> tensor_product(std::vector<double> const &A,
 
 std::vector<double> square_distance_componentwise(std::vector<double> const &A,
                                                   std::vector<double> const &B,
-                                                  Vector3d) {
+                                                  Utils::Vector3d) {
   if (!(A.size() == B.size())) {
     throw std::runtime_error(
         "Error in square distance componentwise: The vector sizes do not "
@@ -133,7 +135,8 @@ std::vector<double> square_distance_componentwise(std::vector<double> const &A,
 // note: the argument name wsquare denotes that it value is w^2 while the user
 // sets w
 std::vector<double> fcs_acf(std::vector<double> const &A,
-                            std::vector<double> const &B, Vector3d wsquare) {
+                            std::vector<double> const &B,
+                            Utils::Vector3d wsquare) {
   if (!(A.size() == B.size())) {
     throw std::runtime_error(
         "Error in square distance componentwise: The vector sizes do not "
@@ -279,15 +282,15 @@ void Correlator::initialize() {
   if (corr_operation_name == "componentwise_product") {
     m_dim_corr = dim_A;
     corr_operation = &componentwise_product;
-    m_correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "tensor_product") {
     m_dim_corr = dim_A * dim_B;
     corr_operation = &tensor_product;
-    m_correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "square_distance_componentwise") {
     m_dim_corr = dim_A;
     corr_operation = &square_distance_componentwise;
-    m_correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else if (corr_operation_name == "fcs_acf") {
     // note: user provides w=(wx,wy,wz) but we want to use
     // wsquare=(wx^2,wy^2,wz^2)
@@ -307,7 +310,7 @@ void Correlator::initialize() {
   } else if (corr_operation_name == "scalar_product") {
     m_dim_corr = 1;
     corr_operation = &scalar_product;
-    m_correlation_args = Vector3d{0, 0, 0};
+    m_correlation_args = Utils::Vector3d{0, 0, 0};
   } else {
     throw std::runtime_error(init_errors[11]);
   }

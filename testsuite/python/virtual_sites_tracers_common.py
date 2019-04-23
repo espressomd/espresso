@@ -34,6 +34,35 @@ from numpy import random
 
 
 class VirtualSitesTracersCommon(object):
+    box_height = 10.
+    box_lw = 8.
+    system = espressomd.System(box_l=(box_lw, box_lw, box_height))
+    system.time_step = 0.05
+    system.cell_system.skin = 0.1
+    
+    def reset_lb(self, ext_force_density=[0, 0, 0]):
+        box_height = 10 
+        box_lw = 8
+        self.system.actors.clear()
+        self.system.lbboundaries.clear()
+        self.lbf = self.LBClass(kT=0.0,
+                                agrid=1, dens=1, visc=1.8, tau=self.system.time_step, ext_force_density=ext_force_density)
+        self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            act_on_virtual=False,
+            gamma=1)
+
+        # Setup boundaries
+        walls = [lbboundaries.LBBoundary() for k in range(2)]
+        walls[0].set_params(shape=shapes.Wall(normal=[0, 0, 1], dist=0.5))
+        walls[1].set_params(
+            shape=shapes.Wall(normal=[0, 0, -1], dist=-box_height - 0.5))
+
+        for wall in walls:
+            self.system.lbboundaries.add(wall)
+
+        handle_errors("setup")
 
     def test_aa_method_switching(self):
         # Virtual sites should be disabled by default
@@ -46,14 +75,13 @@ class VirtualSitesTracersCommon(object):
         self.assertEqual(self.system.virtual_sites.have_velocity, True)
 
     def test_advection(self):
-
+        self.reset_lb(ext_force_density=[0.1, 0, 0])
         # System setup
         system = self.system
         box_lw = self.box_lw
         box_height = self.box_height
 
         system.virtual_sites = VirtualSitesInertialessTracers()
-        self.lbf.set_params(ext_force_density=(0.1, 0., 0.))
 
         # Establish steady state flow field
         system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=1)
@@ -70,13 +98,6 @@ class VirtualSitesTracersCommon(object):
                 system.part[0].pos)[0] * system.time
             self.assertAlmostEqual(
                 system.part[0].pos[0] / X - 1, 0, delta=0.005)
-
-    def stop_fluid(self):
-        system = self.system
-        for i in range(int(system.box_l[0])):
-            for j in range(int(system.box_l[1])):
-                for k in range(int(system.box_l[2])):
-                    self.lbf[i, j, k].velocity = (0., 0., 0.)
 
     def compute_angle(self):
         system = self.system
@@ -99,14 +120,12 @@ class VirtualSitesTracersCommon(object):
 
     @ut.skipIf(not espressomd.has_features("IMMERSED_BOUNDARY"), "skipped for lack of IMMERSED_BOUNDARY")
     def test_tribend(self):
-
+        self.system.actors.clear()
         # two triangles with bending interaction
         # move nodes, should relax back
 
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
-        self.lbf.set_params(ext_force_density=(0.0, 0., 0.))
-        self.stop_fluid()
 
         system.part.clear()
 
@@ -139,6 +158,8 @@ class VirtualSitesTracersCommon(object):
         ## twist
         system.part[1].pos = [5.2, 5, 6]
 
+        self.reset_lb()
+
         ## Perform integrat[ion
         last_angle = self.compute_angle()
         for i in range(6):
@@ -150,10 +171,9 @@ class VirtualSitesTracersCommon(object):
 
     @ut.skipIf(not espressomd.has_features("IMMERSED_BOUNDARY"), "skipped for lack of IMMERSED_BOUNDARY")
     def test_triel(self):
+        self.system.actors.clear()
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
-        self.lbf.set_params(ext_force_density=(0.1, 0., 0.))
-        self.stop_fluid()
         system.virtual_sites = VirtualSitesInertialessTracers()
 
         system.part.clear()
@@ -183,6 +203,8 @@ class VirtualSitesTracersCommon(object):
             ind1=6, ind2=7, ind3=8, elasticLaw="Skalak", k1=15, k2=0, maxDist=2.4)
         system.bonded_inter.add(triStrong)
         system.part[6].add_bond((triStrong, 7, 8))
+
+        self.reset_lb(ext_force_density=[0.1, 0, 0])
         ## Perform integration
         system.integrator.run(4500)
 
@@ -232,6 +254,7 @@ class VirtualSitesTracersCommon(object):
         virutal ones.
 
         """
+        self.reset_lb()
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
         system.actors.clear()
