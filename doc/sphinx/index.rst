@@ -11,6 +11,14 @@ User's Guide
 
     ug.rst
 
+.. _Online resources:
+
+Online resources
+----------------
+
+* `Repository <https://github.com/espressomd/espresso>`_
+* `Wiki <https://github.com/espressomd/espresso/wiki>`_
+
 Python module documentation
 ===========================
 
