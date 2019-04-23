@@ -175,7 +175,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     }
 
     double f_D[3], f_R[3];
-    for (int i = 0; i < 3; i++) {
+    yt for (int i = 0; i < 3; i++) {
       // Damping force
       f_D[i] = 0;
       // Random force
