@@ -65,7 +65,7 @@ endfunction(PYTHON_TEST)
 
 # Checkpointing tests: semicolon-separated list of mutually-compatible features.
 # Separate features with hyphens, use a period to add an optional flag.
-foreach(TEST_COMBINATION lb.cpu-p3m.cpu-lj;lb.gpu-p3m.cpu-lj)
+foreach(TEST_COMBINATION lb.cpu-p3m.cpu-lj;lb.gpu-p3m.cpu-lj;ek.gpu)
   if(${TEST_COMBINATION} MATCHES "\\.gpu")
     set(TEST_LABELS "gpu")
   else()
@@ -114,6 +114,7 @@ python_test(FILE rotational-diffusion-aniso.py MAX_NUM_PROC 1)
 python_test(FILE script_interface_object_params.py MAX_NUM_PROC 4)
 python_test(FILE lbgpu_remove_total_momentum.py MAX_NUM_PROC 4 LABELS gpu)
 python_test(FILE reaction_ensemble.py MAX_NUM_PROC 4)
+python_test(FILE widom_insertion.py MAX_NUM_PROC 1)
 python_test(FILE constant_pH.py MAX_NUM_PROC 4)
 python_test(FILE swimmer_reaction.py MAX_NUM_PROC 1)
 python_test(FILE writevtf.py MAX_NUM_PROC 4)

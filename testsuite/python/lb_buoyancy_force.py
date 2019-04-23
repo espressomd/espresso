@@ -22,12 +22,12 @@ import numpy as np
 import sys
 
 # Define the LB Parameters
-TIME_STEP = 0.2
+TIME_STEP = 0.01
 AGRID = 0.5 
-KVISC = 5 
-DENS = 1.2 
+KVISC = 6 
+DENS = 2
 G=0.08
-BOX_SIZE=25*AGRID
+BOX_SIZE=27*AGRID
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -74,7 +74,7 @@ class Buoyancy(object):
             self.system.integrator.run(10)
             force = np.linalg.norm(sphere.get_force())
             
-            if np.linalg.norm(force -last_force) <0.05:
+            if np.linalg.norm(force -last_force) <0.01:
                 break
             last_force = force
 
@@ -82,7 +82,7 @@ class Buoyancy(object):
         boundary_force=np.zeros(3)
         for b in self.system.lbboundaries:
             boundary_force+=b.get_force()
-        applied_force = np.array((0, ((BOX_SIZE-AGRID)**3-4./3.*np.pi*radius**3)*DENS*G, 0))
+        applied_force = ((BOX_SIZE-AGRID)**3 -4./3.*np.pi*radius**3)*np.array(LB_PARAMS['ext_force_density'])
         np.testing.assert_allclose(boundary_force, applied_force, rtol=6E-2,atol=0.08 * np.linalg.norm(applied_force))
         force = np.copy(sphere.get_force())
         np.testing.assert_allclose(
