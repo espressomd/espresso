@@ -73,7 +73,7 @@ class WidomInsertionTest(ut.TestCase):
     volume = np.prod(system.box_l)  # cuboid box
     
     Widom = reaction_ensemble.WidomInsertion(
-        temperature=TEMPERATURE)    
+        temperature=TEMPERATURE, seed=1)    
 
     def setUp(self):
         """Prepare a testsystem."""
