@@ -59,7 +59,7 @@ class Buoyancy(object):
 
             self.system.lbboundaries.add(lbboundaries.LBBoundary(
                                          shape=shapes.Wall(
-                                         normal=--n, dist=AGRID)))
+                                         normal=n, dist=AGRID)))
         
         # setup sphere without slip in the middle
         sphere = lbboundaries.LBBoundary(shape=shapes.Sphere(
