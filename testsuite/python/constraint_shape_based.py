@@ -52,6 +52,33 @@ class ShapeBasedConstraintTest(ut.TestCase):
                            v])
         return pos + center
 
+    def test_sphere(self):
+        """Checks geometry of an inverted sphere
+
+        """
+        rad = self.box_l / 2.0
+        sphere_shape = espressomd.shapes.Sphere(
+                       center=[self.box_l / 2.,
+                               self.box_l / 2.,
+                               self.box_l / 2.],
+                       radius=rad,
+                       direction=-1)
+        phi_steps = 11
+        theta_steps = 11
+        for distance in {-1.2,2.6}:
+            for phi in range(phi_steps):
+                phi_angle = phi / phi_steps * 2.0 * math.pi
+                for theta in range(theta_steps):
+                    theta_angle = theta / theta_steps * math.pi
+                    pos = numpy.array(
+                           [math.cos(phi_angle) * math.sin(theta_angle) * (rad + distance) + self.box_l / 2.,
+                            math.sin(phi_angle) * math.sin(theta_angle) * (rad + distance) + self.box_l / 2.,
+                            math.cos(theta_angle) * (rad + distance) + self.box_l / 2.])
+
+                    shape_dist, shape_dist_vec = sphere_shape.call_method("calc_distance",
+                                                                          position=pos.tolist())
+                    self.assertAlmostEqual(shape_dist, -distance)
+
     def test_ellipsoid(self):
         """Checks that distance of particles on the ellipsoid constraint's surface is zero.
         For the case of a spherical ellipsoid, also several non-zero distances are tested.
