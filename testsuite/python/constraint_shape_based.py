@@ -58,25 +58,27 @@ class ShapeBasedConstraintTest(ut.TestCase):
         """
         rad = self.box_l / 2.0
         sphere_shape = espressomd.shapes.Sphere(
-                       center=[self.box_l / 2.,
-                               self.box_l / 2.,
-                               self.box_l / 2.],
-                       radius=rad,
-                       direction=-1)
+            center=[self.box_l / 2.,
+                    self.box_l / 2.,
+                    self.box_l / 2.],
+            radius=rad,
+            direction=-1)
         phi_steps = 11
         theta_steps = 11
-        for distance in {-1.2,2.6}:
+        for distance in {-1.2, 2.6}:
             for phi in range(phi_steps):
                 phi_angle = phi / phi_steps * 2.0 * math.pi
                 for theta in range(theta_steps):
                     theta_angle = theta / theta_steps * math.pi
                     pos = numpy.array(
-                           [math.cos(phi_angle) * math.sin(theta_angle) * (rad + distance) + self.box_l / 2.,
-                            math.sin(phi_angle) * math.sin(theta_angle) * (rad + distance) + self.box_l / 2.,
-                            math.cos(theta_angle) * (rad + distance) + self.box_l / 2.])
+                        [math.cos(phi_angle) * math.sin(theta_angle)
+                         * (rad + distance) + self.box_l / 2.,
+                         math.sin(phi_angle) * math.sin(theta_angle) 
+                         * (rad + distance) + self.box_l / 2.,
+                         math.cos(theta_angle) * (rad + distance) + self.box_l / 2.])
 
-                    shape_dist, shape_dist_vec = sphere_shape.call_method("calc_distance",
-                                                                          position=pos.tolist())
+                    shape_dist, shape_dist_vec = sphere_shape.call_method(
+                        "calc_distance", position=pos.tolist())
                     self.assertAlmostEqual(shape_dist, -distance)
 
     def test_ellipsoid(self):
@@ -220,7 +222,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 r=1.02),
             places=10)  # minus for Newton's third law
 
-        #check whether total_summed_outer_normal_force is correct
+        # check whether total_summed_outer_normal_force is correct
         y_part2 = self.box_l - 1.02
         system.part.add(
             id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
@@ -228,8 +230,16 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         dist_part2 = self.box_l - y_part2
         self.assertAlmostEqual(outer_cylinder_wall.total_force()[2], 0.0)
-        self.assertAlmostEqual(outer_cylinder_wall.total_normal_force(), 2 * tests_common.lj_force(
-            espressomd, cutoff=2.0, offset=0., eps=1.0, sig=1.0, r=dist_part2))
+        self.assertAlmostEqual(
+            outer_cylinder_wall.total_normal_force(),
+            2 *
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.0,
+                sig=1.0,
+                r=dist_part2))
 
         # Test the geometry of an cylinder with top and bottom
         rad = self.box_l / 2.0
@@ -263,24 +273,25 @@ class ShapeBasedConstraintTest(ut.TestCase):
                           math.cos(phi_angle),
                           0.0],
                          [0.0, 0.0, 1.0]])
-                    phi_rot_point = numpy.dot(phi_rot_matrix, start_point - center) + center
+                    phi_rot_point = numpy.dot(
+                        phi_rot_matrix, start_point - center) + center
 
-                    shape_dist, shape_dist_vec = cylinder_shape_finite.call_method("calc_distance",
-                                                              position=phi_rot_point.tolist())
+                    shape_dist, shape_dist_vec = cylinder_shape_finite.call_method(
+                        "calc_distance", position=phi_rot_point.tolist())
 
                     dist = -distance
                     if(distance > 0.0):
-                        if(z<(self.box_l - length) / 2.0 + distance):
+                        if(z < (self.box_l - length) / 2.0 + distance):
                             dist = (self.box_l - length) / 2.0 - z
-                        elif(z>(self.box_l + length) / 2.0 - distance):
+                        elif(z > (self.box_l + length) / 2.0 - distance):
                             dist = z - (self.box_l + length) / 2.0
                         else:
                             dist = -distance
                     else:
-                        if(z<(self.box_l - length) / 2.0):
+                        if(z < (self.box_l - length) / 2.0):
                             z_dist = (self.box_l - length) / 2.0 - z
                             dist = math.sqrt(z_dist**2 + distance**2)
-                        elif(z>(self.box_l + length) / 2.0):
+                        elif(z > (self.box_l + length) / 2.0):
                             z_dist = z - (self.box_l + length) / 2.0
                             dist = math.sqrt(z_dist**2 + distance**2)
                         else:
@@ -338,7 +349,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 r=1.02),
             places=10)  # minus for Newton's third law
 
-        #check whether total_summed_outer_normal_force is correct
+        # check whether total_summed_outer_normal_force is correct
         y_part2 = self.box_l - 1.02
         system.part.add(
             id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
@@ -349,7 +360,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.assertAlmostEqual(outer_cylinder_constraint.total_normal_force(),
                                2 * tests_common.lj_force(
                                    espressomd, cutoff=2.0,
-                                 offset=0., eps=1.0, sig=1.0, r=dist_part2))
+            offset=0., eps=1.0, sig=1.0, r=dist_part2))
 
         # Reset
         system.part.clear()
@@ -478,7 +489,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 r=0.83),
             places=10)
 
-        #check whether total_normal_force is correct
+        # check whether total_normal_force is correct
         self.assertAlmostEqual(
             wall_xy.total_normal_force(),
             tests_common.lj_force(
@@ -534,8 +545,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
             epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
         system.integrator.run(0)  # update forces
 
-        self.assertAlmostEqual(hollowcone_constraint.min_dist(),
-                               1.134228603)  # distance measured manually; shape geometry not trivial
+        # distance measured manually; shape geometry not trivial
+        self.assertAlmostEqual(hollowcone_constraint.min_dist(), 1.134228603)
 
         # test summed forces on hollowcone wall
         self.assertAlmostEqual(
