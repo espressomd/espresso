@@ -677,36 +677,49 @@ class ShapeBasedConstraintTest(ut.TestCase):
         phi_steps = 11
         theta_steps = 11
         center = numpy.array([self.box_l / 2.0,
-                           self.box_l / 2.0,
-                           self.box_l / 2.0])
+                              self.box_l / 2.0,
+                              self.box_l / 2.0])
         tube_center = numpy.array([self.box_l / 2.0,
-                                self.box_l / 2.0 + radius,
-                                self.box_l / 2.0])
+                                   self.box_l / 2.0 + radius,
+                                   self.box_l / 2.0])
 
-        for distance in {1.02,-0.7}:
+        for distance in {1.02, -0.7}:
             start_point = numpy.array([self.box_l / 2.0,
-                                    self.box_l / 2.0 + radius - tube_radius - distance,
-                                    self.box_l / 2.0])
+                                       self.box_l / 2.0 + radius -
+                                       tube_radius - distance,
+                                       self.box_l / 2.0])
             for phi in range(phi_steps):
                 for theta in range(theta_steps):
                     # Rotation around the tube
-                    theta_angle = theta/theta_steps * 2.0 * math.pi
+                    theta_angle = theta / theta_steps * 2.0 * math.pi
                     theta_rot_matrix = numpy.array(
-                                        [[1.0, 0.0, 0.0],
-                                         [0.0, math.cos(theta_angle), -1.0 * math.sin(theta_angle)],
-                                         [0.0, math.sin(theta_angle), math.cos(theta_angle)]])
-                    theta_rot_point = numpy.dot(theta_rot_matrix, start_point - tube_center)
+                        [[1.0, 0.0, 0.0],
+                         [0.0, math.cos(
+                          theta_angle), -1.0 * math.sin(
+                          theta_angle)],
+                         [0.0, math.sin(theta_angle), math.cos(theta_angle)]])
+                    theta_rot_point = numpy.dot(
+                        theta_rot_matrix,
+                        start_point - tube_center)
                     theta_rot_point += tube_center
 
                     # Rotation around the center of the torus
-                    phi_angle = phi/phi_steps * 2.0 * math.pi
+                    phi_angle = phi / phi_steps * 2.0 * math.pi
                     phi_rot_matrix = numpy.array(
-                                        [[math.cos(theta_angle), -1.0 * math.sin(theta_angle), 0.0],
-                                         [math.sin(theta_angle), math.cos(theta_angle), 0.0],
-                                         [0.0, 0.0, 1.0]])
-                    phi_rot_point = numpy.dot(phi_rot_matrix, theta_rot_point - center) + center
+                        [[math.cos(
+                          theta_angle), -1.0 * math.sin(
+                          theta_angle), 0.0],
+                         [math.sin(
+                          theta_angle),
+                          math.cos(theta_angle),
+                             0.0],
+                            [0.0, 0.0, 1.0]])
+                    phi_rot_point = numpy.dot(
+                        phi_rot_matrix,
+                        theta_rot_point - center) + center
 
-                    shape_dist, shape_dist_vec = torus_shape.call_method("calc_distance",
+                    shape_dist, shape_dist_vec = torus_shape.call_method(
+                        "calc_distance",
                                                               position=phi_rot_point.tolist())
                     self.assertAlmostEqual(shape_dist, distance)
 
