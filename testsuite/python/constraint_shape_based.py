@@ -18,6 +18,7 @@ from __future__ import division, print_function
 
 import unittest as ut
 import numpy
+import math
 
 import espressomd
 import espressomd.interactions
@@ -203,6 +204,62 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.assertAlmostEqual(outer_cylinder_wall.total_normal_force(), 2 * tests_common.lj_force(
             espressomd, cutoff=2.0, offset=0., eps=1.0, sig=1.0, r=dist_part2))
 
+        # Test the geometry of an cylinder with top and bottom
+        rad = self.box_l / 2.0
+        length = self.box_l / 2.0
+        cylinder_shape_finite = espressomd.shapes.Cylinder(
+            center=[self.box_l / 2.0,
+                    self.box_l / 2.0,
+                    self.box_l / 2.0],
+            axis=[0, 0, 1],
+            direction=1,
+            radius=rad,
+            length=length)
+
+        phi_steps = 11
+        for distance in {-3.6, 2.8}:
+            for z in range(int(self.box_l)):
+                center = numpy.array([self.box_l / 2.0,
+                                      self.box_l / 2.0,
+                                      z])
+                start_point = numpy.array([self.box_l / 2.0,
+                                           self.box_l / 2.0 + rad - distance,
+                                           z])
+                for phi in range(phi_steps):
+                    # Rotation around the axis of the cylinder
+                    phi_angle = phi / phi_steps * 2.0 * math.pi
+                    phi_rot_matrix = numpy.array(
+                        [[math.cos(phi_angle),
+                          -1.0 * math.sin(phi_angle), 
+                          0.0],
+                         [math.sin(phi_angle),
+                          math.cos(phi_angle),
+                          0.0],
+                         [0.0, 0.0, 1.0]])
+                    phi_rot_point = numpy.dot(phi_rot_matrix, start_point - center) + center
+
+                    shape_dist, shape_dist_vec = cylinder_shape_finite.call_method("calc_distance",
+                                                              position=phi_rot_point.tolist())
+
+                    dist = -distance
+                    if(distance > 0.0):
+                        if(z<(self.box_l - length) / 2.0 + distance):
+                            dist = (self.box_l - length) / 2.0 - z
+                        elif(z>(self.box_l + length) / 2.0 - distance):
+                            dist = z - (self.box_l + length) / 2.0
+                        else:
+                            dist = -distance
+                    else:
+                        if(z<(self.box_l - length) / 2.0):
+                            z_dist = (self.box_l - length) / 2.0 - z
+                            dist = math.sqrt(z_dist**2 + distance**2)
+                        elif(z>(self.box_l + length) / 2.0):
+                            z_dist = z - (self.box_l + length) / 2.0
+                            dist = math.sqrt(z_dist**2 + distance**2)
+                        else:
+                            dist = -distance
+
+                    self.assertAlmostEqual(shape_dist, dist)
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
