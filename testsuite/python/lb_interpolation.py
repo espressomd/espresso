@@ -74,7 +74,7 @@ class LBInterpolation(object):
 
         """
         self.set_boundaries()
-        self.system.integrator.run(3000)
+        self.system.integrator.run(1800)
         # Shear plane for boundary 1
         #for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
         #    np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
