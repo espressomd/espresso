@@ -27,17 +27,19 @@ AGRID = 0.5
 KVISC = 6 
 DENS = 0.5
 
-F=0.013
-BOX_SIZE=10*AGRID
+F = 0.013
+BOX_SIZE = 10 * AGRID
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'tau': TIME_STEP,
              'ext_force_density': [0, F, 0]}
+
+
 class Momentum(object):
     lbf = None
-    system = espressomd.System(box_l=[BOX_SIZE]*3)
+    system = espressomd.System(box_l=[BOX_SIZE] * 3)
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.01
 
@@ -45,10 +47,11 @@ class Momentum(object):
         self.system.actors.clear()
         self.system.part.clear()
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf,gamma=1,seed=1)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1, seed=1)
 
-        applied_force = self.system.volume() *np.array(LB_PARAMS['ext_force_density'])
-        p=self.system.part.add(pos=(0,0,0),ext_force=-applied_force)
+        applied_force = self.system.volume() * np.array(
+            LB_PARAMS['ext_force_density'])
+        p = self.system.part.add(pos=(0, 0, 0), ext_force=-applied_force)
 
         # Reach steady state
         self.system.integrator.run(700)
@@ -60,19 +63,17 @@ class Momentum(object):
             # Check that particle momentum =-fluid momenum
             # up to the momentum trnasferred in 1/2 time step
             np.testing.assert_allclose(
-                p.v*p.mass, -np.array(self.system.analysis.analyze_linear_momentum(include_particles=False)),
-                atol=np.linalg.norm(applied_force)*TIME_STEP*0.55)
+                p.v * p.mass, -
+                    np.array(
+                        self.system.analysis.analyze_linear_momentum(
+                            include_particles=False)),
+                atol=np.linalg.norm(applied_force) * TIME_STEP * 0.55)
 
             # Check that particle velocity is stationary
             # up to the acceleration of 1/2 time step
-            np.testing.assert_allclose(np.copy(p.v),v_final, 
-                atol=np.linalg.norm(applied_force)/p.mass*TIME_STEP*0.55)
+            np.testing.assert_allclose(np.copy(p.v), v_final, 
+                                       atol=np.linalg.norm(applied_force) / p.mass * TIME_STEP * 0.55)
            
-
-
-
-
-
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
     ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
