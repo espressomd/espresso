@@ -28,4 +28,3 @@ from .c_analyze cimport PartCfg, partCfg
 cdef extern from "polymer.hpp":
     vector[vector[Vector3d]] draw_polymer_positions(PartCfg &, int polymers, int monomers, double bond_length, vector[Vector3d] & start_positions, int mode, double shield, int max_try, int use_bond_angle, double angle, double angle2, int constr)
     int polymerC(PartCfg &, int N_P, int MPC, double bond_length, int part_id, double * posed, int mode, double shield, int max_try, double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2, double * posed2, int constr)
-    int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist, int nonet)
