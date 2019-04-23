@@ -707,11 +707,11 @@ class ShapeBasedConstraintTest(ut.TestCase):
                     phi_angle = phi / phi_steps * 2.0 * math.pi
                     phi_rot_matrix = numpy.array(
                         [[math.cos(
-                          theta_angle), -1.0 * math.sin(
-                          theta_angle), 0.0],
+                          phi_angle), -1.0 * math.sin(
+                          phi_angle), 0.0],
                          [math.sin(
-                          theta_angle),
-                          math.cos(theta_angle),
+                          phi_angle),
+                          math.cos(phi_angle),
                              0.0],
                             [0.0, 0.0, 1.0]])
                     phi_rot_point = numpy.dot(
