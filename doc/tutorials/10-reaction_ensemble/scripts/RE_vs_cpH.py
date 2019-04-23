@@ -67,7 +67,10 @@ for i in range(N0, 2 * N0):
 
 RE = None
 if(mode == "reaction_ensemble"):
-    RE = reaction_ensemble.ReactionEnsemble(temperature=1, exclusion_radius=1, seed=2)
+    RE = reaction_ensemble.ReactionEnsemble(
+        temperature=1,
+        exclusion_radius=1,
+     seed=2)
 elif(mode == "constant_pH_ensemble"):
     RE = reaction_ensemble.ConstantpHEnsemble(
         temperature=1, exclusion_radius=1, seed=2)
