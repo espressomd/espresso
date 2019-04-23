@@ -175,7 +175,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     }
 
     double f_D[3], f_R[3];
-    yt for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
       // Damping force
       f_D[i] = 0;
       // Random force
@@ -184,9 +184,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
         f_D[i] += P_times_dist_sqr[i][j] * (p1->m.v[j] - p2->m.v[j]);
         f_R[i] += P_times_dist_sqr[i][j] * noise_vec[j];
       }
-      // NOTE: velocity are scaled with time_step
       f_D[i] *= ia_params->dpd_pref3 * omega2 * time_step;
-      // NOTE: noise force scales with 1/sqrt(time_step
       f_R[i] *= ia_params->dpd_pref4 * omega * dist_inv;
     }
     for (int j = 0; j < 3; j++) {
