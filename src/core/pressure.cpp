@@ -171,28 +171,6 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
              p_tensor_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-const Vector9d dpd_stress() {
-  Vector9d dpd_stress = Vector9d::broadcast(0);
-
-  if (max_cut > 0) {
-    short_range_loop(Utils::NoOp{},
-      [&dpd_stress](Particle &p1, Particle &p2, Distance &d) {
-      Vector3d f;
-      IA_parameters *ia_params = get_ia_param(p1.p.type, p2.p.type);
-      f = dpd_pair_force(&p1, &p2, ia_params, d.vec21.data(), sqrt(d.dist2), d.dist2);
-      const Vector3d &r = d.vec21;
-      dpd_stress +=
-        Vector9d {
-          r[0]*f[0], r[0]*f[1], r[0]*f[2],
-          r[1]*f[0], r[1]*f[1], r[1]*f[2],
-          r[2]*f[0], r[2]*f[1], r[2]*f[2]
-        };
-      });
-  }
-  dpd_stress /= (box_l[0] * box_l[1] * box_l[2]);
-  return dpd_stress;
-}
-
 /************************************************************/
 
 void calc_long_range_virials() {

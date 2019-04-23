@@ -3,7 +3,7 @@
 
 #include "Observable.hpp"
 #include "particle_data.hpp"
-#include "pressure.hpp"
+#include "dpd.hpp"
 #include <vector>
 
 namespace Observables {

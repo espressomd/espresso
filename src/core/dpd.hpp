@@ -45,6 +45,7 @@ void dpd_update_params(double pref2_scale);
 Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                         IA_parameters *ia_params, double const *d, double dist,
                         double dist2);
+const Vector<double, 9> dpd_stress();
 #endif
 
 #endif

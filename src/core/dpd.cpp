@@ -29,7 +29,10 @@
 #include "global.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
+#include "short_range_loop.hpp"
 #include "thermostat.hpp"
+
+#include "utils/NoOp.hpp"
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
@@ -192,5 +195,24 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
 
   return f;
 }
+const Vector9d dpd_stress() {
+  Vector9d dpd_stress {};
 
+  if (max_cut > 0) {
+    short_range_loop(Utils::NoOp{},
+      [&dpd_stress](Particle &p1, Particle &p2, Distance &d) {
+      IA_parameters *ia_params = get_ia_param(p1.p.type, p2.p.type);
+      auto const f = dpd_pair_force(&p1, &p2, ia_params, d.vec21.data(), sqrt(d.dist2), d.dist2);
+      const Vector3d &r = d.vec21;
+      dpd_stress +=
+        Vector9d {
+          r[0]*f[0], r[0]*f[1], r[0]*f[2],
+          r[1]*f[0], r[1]*f[1], r[1]*f[2],
+          r[2]*f[0], r[2]*f[1], r[2]*f[2]
+        };
+      });
+  }
+  dpd_stress /= (box_l[0] * box_l[1] * box_l[2]);
+  return dpd_stress;
+}
 #endif
