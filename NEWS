@@ -45,6 +45,9 @@ Further changes:
 
   * Minor corrections and extensions to the test suite (#2477, #2552)
 
+  * Fixed a dead-lock in the dipolar Barnes Hutt method on the GPU for
+    recent NVIDIA cards such as RTX 2080 (#2719).
+
 
 
 
