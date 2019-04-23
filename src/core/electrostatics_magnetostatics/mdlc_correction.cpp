@@ -176,7 +176,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
 
         for (auto const &p : local_cells.particles()) {
           if (p.p.dipm > 0) {
-            const Vector3d dip = p.calc_dip();
+            const Utils::Vector3d dip = p.calc_dip();
 
             a = gx * dip[0] + gy * dip[1];
             b = gr * dip[2];
@@ -270,7 +270,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
   ip = 0;
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm > 0) {
-      const Vector3d dip = p.calc_dip();
+      const Utils::Vector3d dip = p.calc_dip();
       a = dip[1] * tz[ip] - dip[2] * ty[ip];
       b = dip[2] * tx[ip] - dip[0] * tz[ip];
       c = dip[0] * ty[ip] - dip[1] * tx[ip];
@@ -351,7 +351,7 @@ double get_DLC_energy_dipolar(int kcut) {
 
         for (auto const &p : local_cells.particles()) {
           if (p.p.dipm > 0) {
-            const Vector3d dip = p.calc_dip();
+            const Utils::Vector3d dip = p.calc_dip();
 
             a = gx * dip[0] + gy * dip[1];
             {
@@ -450,7 +450,7 @@ void add_mdlc_force_corrections() {
   ip = 0;
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
-      const Vector3d dip = p.calc_dip();
+      const Utils::Vector3d dip = p.calc_dip();
 
       p.f.f[0] += dipole.prefactor * dip_DLC_f_x[ip];
       p.f.f[1] += dipole.prefactor * dip_DLC_f_y[ip];

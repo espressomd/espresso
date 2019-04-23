@@ -65,7 +65,7 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
   on_lbboundary_change();
 }
 
-void lbboundary_mindist_position(const Vector3d &pos, double *mindist,
+void lbboundary_mindist_position(const Utils::Vector3d &pos, double *mindist,
                                  double distvec[3], int *no) {
 
   double vec[3] = {std::numeric_limits<double>::infinity(),
@@ -141,9 +141,9 @@ void lb_init_boundaries() {
     for (int z = 0; z < int(lbpar_gpu.dim_z); z++) {
       for (int y = 0; y < int(lbpar_gpu.dim_y); y++) {
         for (int x = 0; x < int(lbpar_gpu.dim_x); x++) {
-          auto const pos =
-              static_cast<double>(lbpar_gpu.agrid) *
-              (Vector3d{1. * x, 1. * y, 1. * z} + Vector3d::broadcast(0.5));
+          auto const pos = static_cast<double>(lbpar_gpu.agrid) *
+                           (Utils::Vector3d{1. * x, 1. * y, 1. * z} +
+                            Utils::Vector3d::broadcast(0.5));
 
           double dist = 1e99;
           double dist_tmp = 0.0;
@@ -246,7 +246,7 @@ void lb_init_boundaries() {
 #endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB) && defined(LB_BOUNDARIES)
-    Vector3i node_domain_position, offset;
+    Utils::Vector3i node_domain_position, offset;
     int the_boundary = -1;
     map_node_array(this_node, node_domain_position.data());
     const auto lblattice = lb_lbfluid_get_lattice();
@@ -264,7 +264,7 @@ void lb_init_boundaries() {
     for (int z = 0; z < lblattice.grid[2] + 2; z++) {
       for (int y = 0; y < lblattice.grid[1] + 2; y++) {
         for (int x = 0; x < lblattice.grid[0] + 2; x++) {
-          Vector3d pos;
+          Utils::Vector3d pos;
           pos[0] = (offset[0] + (x - 0.5)) * lblattice.agrid[0];
           pos[1] = (offset[1] + (y - 0.5)) * lblattice.agrid[1];
           pos[2] = (offset[2] + (z - 0.5)) * lblattice.agrid[2];

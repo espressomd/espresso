@@ -42,9 +42,11 @@
  *          @f$ \left\|\vec{r_{kj}}\right\|^{-1} @f$,
  *          @f$ \cos(\theta_{ijk}) @f$
  */
-inline std::tuple<Vector3d, Vector3d, double, double, double>
-calc_vectors_and_cosine(Vector3d const &r_mid, Vector3d const &r_left,
-                        Vector3d const &r_right, bool sanitize_cosine = false) {
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, double, double, double>
+calc_vectors_and_cosine(Utils::Vector3d const &r_mid,
+                        Utils::Vector3d const &r_left,
+                        Utils::Vector3d const &r_right,
+                        bool sanitize_cosine = false) {
   /* normalized vector from p_mid to p_left */
   auto vec1 = get_mi_vector(r_left, r_mid);
   auto const d1i = 1.0 / vec1.norm();
@@ -79,11 +81,12 @@ calc_vectors_and_cosine(Vector3d const &r_mid, Vector3d const &r_left,
  *  @return Forces on the second, first and third particles, in that order.
  */
 template <typename ForceFactor>
-std::tuple<Vector3d, Vector3d, Vector3d>
-calc_angle_generic_force(Vector3d const &r_mid, Vector3d const &r_left,
-                         Vector3d const &r_right, ForceFactor forceFactor,
-                         bool sanitize_cosine) {
-  Vector3d vec1, vec2;
+std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+calc_angle_generic_force(Utils::Vector3d const &r_mid,
+                         Utils::Vector3d const &r_left,
+                         Utils::Vector3d const &r_right,
+                         ForceFactor forceFactor, bool sanitize_cosine) {
+  Utils::Vector3d vec1, vec2;
   double d1i, d2i, cosine;
   std::tie(vec1, vec2, d1i, d2i, cosine) =
       calc_vectors_and_cosine(r_mid, r_left, r_right, sanitize_cosine);

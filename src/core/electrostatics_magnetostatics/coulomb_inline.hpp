@@ -17,10 +17,10 @@ namespace Coulomb {
 // forces_inline
 inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
                             double *d, double dist, double const dist2,
-                            Vector3d &force) {
+                            Utils::Vector3d &force) {
 
   if (q1q2 != 0) {
-    Vector3d f{};
+    Utils::Vector3d f{};
 
     switch (coulomb.method) {
 #ifdef P3M
@@ -30,8 +30,8 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double const q1q2,
       // forces from the virtual charges
       // they go directly onto the particles, since they are not pairwise forces
       if (elc_params.dielectric_contrast_on) {
-        Vector3d f1{};
-        Vector3d f2{};
+        Utils::Vector3d f1{};
+        Utils::Vector3d f2{};
 
         ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1.data(),
                                                      f2.data());
@@ -87,7 +87,7 @@ inline void add_pair_pressure(Particle *p1, Particle *p2, double q1q2,
   case COULOMB_MMM1D:
   case COULOMB_DH:
   case COULOMB_RF: {
-    Vector3d force{};
+    Utils::Vector3d force{};
     calc_pair_force(p1, p2, q1q2, d, dist, dist2, force);
 
     /* Calculate the virial pressure */

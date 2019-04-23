@@ -52,9 +52,9 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
   tmp11 *= fabs(tmp11);                         // tmp11 = (n1.n2)^2
   tmp11 /= (normal1.norm2() * normal2.norm2()); // tmp11 = (n1.n2/(|n1||n2|))^2
   if (tmp11 > 0) {
-    tmp11 = sqrt(tmp11);
+    tmp11 = std::sqrt(tmp11);
   } else {
-    tmp11 = -sqrt(-tmp11);
+    tmp11 = -std::sqrt(-tmp11);
   }
 
   if (tmp11 >= 1.) {
