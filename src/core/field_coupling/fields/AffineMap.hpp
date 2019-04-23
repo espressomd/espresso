@@ -28,9 +28,10 @@ namespace Fields {
 namespace detail {
 
 template <typename T, size_t codim> struct matrix_vector_impl {
-  Vector<T, codim> operator()(const Vector<Vector<T, 3>, codim> &A,
-                              Vector<T, 3> const &v) const {
-    Vector<T, codim> ret;
+  Utils::Vector<T, codim>
+  operator()(const Utils::Vector<Utils::Vector<T, 3>, codim> &A,
+             Utils::Vector<T, 3> const &v) const {
+    Utils::Vector<T, codim> ret;
 
     for (int i = 0; i < codim; i++)
       ret[i] = A[i] * v;
@@ -40,7 +41,8 @@ template <typename T, size_t codim> struct matrix_vector_impl {
 };
 
 template <typename T> struct matrix_vector_impl<T, 1> {
-  T operator()(const Vector<T, 3> &A, Vector<T, 3> const &v) const {
+  T operator()(const Utils::Vector<T, 3> &A,
+               Utils::Vector<T, 3> const &v) const {
     return A * v;
   }
 };
@@ -53,7 +55,8 @@ template <typename T> struct matrix_vector_impl<T, 1> {
  */
 template <typename T, size_t codim> class AffineMap {
 public:
-  using value_type = typename decay_to_scalar<Vector<T, codim>>::type;
+  using value_type =
+      typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
   using jacobian_type = detail::jacobian_type<T, codim>;
 
 private:
@@ -66,13 +69,15 @@ public:
   jacobian_type &A() { return m_A; }
   value_type &b() { return m_b; }
 
-  value_type operator()(const Vector3d &pos, double = {}) const {
+  value_type operator()(const Utils::Vector3d &pos, double = {}) const {
     return detail::matrix_vector_impl<T, codim>{}(m_A, pos) + m_b;
   }
 
-  jacobian_type jacobian(const Vector3d &, double = {}) const { return m_A; }
+  jacobian_type jacobian(const Utils::Vector3d &, double = {}) const {
+    return m_A;
+  }
 
-  bool fits_in_box(const Vector3d &) const { return true; }
+  bool fits_in_box(const Utils::Vector3d &) const { return true; }
 };
 } // namespace Fields
 } // namespace FieldCoupling

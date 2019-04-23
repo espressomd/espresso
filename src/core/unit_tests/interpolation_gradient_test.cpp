@@ -31,7 +31,7 @@ using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
 BOOST_AUTO_TEST_CASE(number_of_points) {
   int count = 0;
-  auto counter = [&count](const std::array<int, 3> &, const Vector3d &) {
+  auto counter = [&count](const std::array<int, 3> &, const Utils::Vector3d &) {
     count++;
   };
 
@@ -41,12 +41,12 @@ BOOST_AUTO_TEST_CASE(number_of_points) {
 }
 
 BOOST_AUTO_TEST_CASE(sum_of_weights) {
-  const Vector3d grid_spacing{.4, .5, .6};
+  const Utils::Vector3d grid_spacing{.4, .5, .6};
 
-  Vector3d sum_const{};
-  Vector3d sum_lin{};
+  Utils::Vector3d sum_const{};
+  Utils::Vector3d sum_lin{};
   auto summer = [&sum_const, &sum_lin, &grid_spacing](
-                    const std::array<int, 3> &ind, const Vector3d &w) {
+                    const std::array<int, 3> &ind, const Utils::Vector3d &w) {
     sum_const += w;
     sum_lin +=
         {w[0] * ind[0] * grid_spacing[0], w[1] * ind[1] * grid_spacing[1],
@@ -62,16 +62,18 @@ BOOST_AUTO_TEST_CASE(sum_of_weights) {
 }
 
 BOOST_AUTO_TEST_CASE(interpolation_weights_2) {
-  auto check_weight = [](const std::array<int, 3> &ind, const Vector3d &w) {
-    auto const expected = Vector3d{Utils::bspline_d<2>(ind[0], 0.1 - 0.5) *
-                                       Utils::bspline<2>(ind[1], 0.2 - 0.5) *
-                                       Utils::bspline<2>(ind[2], 0.3 - 0.5),
-                                   Utils::bspline<2>(ind[0], 0.1 - 0.5) *
-                                       Utils::bspline_d<2>(ind[1], 0.2 - 0.5) *
-                                       Utils::bspline<2>(ind[2], 0.3 - 0.5),
-                                   Utils::bspline<2>(ind[0], 0.1 - 0.5) *
-                                       Utils::bspline<2>(ind[1], 0.2 - 0.5) *
-                                       Utils::bspline_d<2>(ind[2], 0.3 - 0.5)};
+  auto check_weight = [](const std::array<int, 3> &ind,
+                         const Utils::Vector3d &w) {
+    auto const expected =
+        Utils::Vector3d{Utils::bspline_d<2>(ind[0], 0.1 - 0.5) *
+                            Utils::bspline<2>(ind[1], 0.2 - 0.5) *
+                            Utils::bspline<2>(ind[2], 0.3 - 0.5),
+                        Utils::bspline<2>(ind[0], 0.1 - 0.5) *
+                            Utils::bspline_d<2>(ind[1], 0.2 - 0.5) *
+                            Utils::bspline<2>(ind[2], 0.3 - 0.5),
+                        Utils::bspline<2>(ind[0], 0.1 - 0.5) *
+                            Utils::bspline<2>(ind[1], 0.2 - 0.5) *
+                            Utils::bspline_d<2>(ind[2], 0.3 - 0.5)};
 
     for (int i = 0; i < 3; i++) {
       BOOST_CHECK_CLOSE(w[i], expected[i], 1e-12);
@@ -84,8 +86,9 @@ BOOST_AUTO_TEST_CASE(interpolation_weights_2) {
 }
 
 BOOST_AUTO_TEST_CASE(interpolation_weights_3) {
-  auto check_weight = [](const std::array<int, 3> &ind, const Vector3d &w) {
-    auto const expected = Vector3d{
+  auto check_weight = [](const std::array<int, 3> &ind,
+                         const Utils::Vector3d &w) {
+    auto const expected = Utils::Vector3d{
         Utils::bspline_d<3>(ind[0], 0.1) * Utils::bspline<3>(ind[1], 0.2) *
             Utils::bspline<3>(ind[2], 0.3),
         Utils::bspline<3>(ind[0], 0.1) * Utils::bspline_d<3>(ind[1], 0.2) *
@@ -105,8 +108,8 @@ BOOST_AUTO_TEST_CASE(interpolation_weights_3) {
 
 BOOST_AUTO_TEST_CASE(interpolation_gradient_integration_test_odd) {
   constexpr int order = 5;
-  const Vector3d grid_spacing = {.1, .2, .3};
-  const Vector3d origin = {-1., 2., -1.4};
+  const Utils::Vector3d grid_spacing = {.1, .2, .3};
+  const Utils::Vector3d origin = {-1., 2., -1.4};
   const int n_nodes = 10;
 
   auto const x0 = origin + 0.57 * n_nodes * grid_spacing;
@@ -114,10 +117,10 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_integration_test_odd) {
 
   auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
 
-  auto const p = Vector3d{-.4, 3.14, 0.1};
+  auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
   auto const interpolated_value = bspline_3d_gradient_accumulate<order>(
       p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, Vector3d{});
+      grid_spacing, origin, Utils::Vector3d{});
 
   auto const exact_value = del_gaussian(p, x0, sigma);
 
@@ -126,31 +129,31 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_integration_test_odd) {
 
 BOOST_AUTO_TEST_CASE(interpolation_gradient_vec_integration_test_odd) {
   constexpr int order = 5;
-  const Vector3d grid_spacing = {.1, .2, .3};
-  const Vector3d origin = {-1., 2., -1.4};
+  const Utils::Vector3d grid_spacing = {.1, .2, .3};
+  const Utils::Vector3d origin = {-1., 2., -1.4};
   const int n_nodes = 10;
 
   auto const a = origin + 0.37 * n_nodes * grid_spacing;
-  Vector3d x0[2] = {0.12 * a, -3. * a};
-  auto const sigma = Vector2d{2., 3.};
+  Utils::Vector3d x0[2] = {0.12 * a, -3. * a};
+  auto const sigma = Utils::Vector2d{2., 3.};
 
-  boost::multi_array<Vector2d, 3> data(Vector3i{10, 10, 10});
+  boost::multi_array<Utils::Vector2d, 3> data(Utils::Vector3i{10, 10, 10});
   for (int i = 0; i < 10; i++)
     for (int j = 0; j < 10; j++)
       for (int k = 0; k < 10; k++) {
         auto const &h = grid_spacing;
-        auto const x = origin + Vector3d{i * h[0], j * h[1], k * h[2]};
+        auto const x = origin + Utils::Vector3d{i * h[0], j * h[1], k * h[2]};
         data[i][j][k] = {gaussian(x, x0[0], sigma[0]),
                          gaussian(x, x0[1], sigma[1])};
       }
 
-  auto const p = Vector3d{-.4, 3.14, 0.1};
+  auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
   auto const interpolated_value = bspline_3d_gradient_accumulate<order>(
       p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, Vector<Vector3d, 2>{});
+      grid_spacing, origin, Utils::Vector<Utils::Vector3d, 2>{});
 
-  const Vector<Vector3d, 2> exact_value = {del_gaussian(p, x0[0], sigma[0]),
-                                           del_gaussian(p, x0[1], sigma[1])};
+  const Utils::Vector<Utils::Vector3d, 2> exact_value = {
+      del_gaussian(p, x0[0], sigma[0]), del_gaussian(p, x0[1], sigma[1])};
 
   BOOST_CHECK_SMALL((interpolated_value[0] - exact_value[0]).norm(), 1.e-2);
   BOOST_CHECK_SMALL((interpolated_value[1] - exact_value[1]).norm(), 1.e-4);
@@ -158,8 +161,8 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_vec_integration_test_odd) {
 
 BOOST_AUTO_TEST_CASE(interpolation_gradient_integration_test_even) {
   constexpr int order = 6;
-  const Vector3d grid_spacing = {.1, .2, .3};
-  const Vector3d origin = {-1., 2., -1.4};
+  const Utils::Vector3d grid_spacing = {.1, .2, .3};
+  const Utils::Vector3d origin = {-1., 2., -1.4};
   const int n_nodes = 10;
 
   auto const x0 = origin + 0.57 * n_nodes * grid_spacing;
@@ -167,10 +170,10 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_integration_test_even) {
 
   auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
 
-  auto const p = Vector3d{-.4, 3.14, 0.1};
+  auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
   auto const interpolated_value = bspline_3d_gradient_accumulate<order>(
       p, [&data](const std::array<int, 3> &ind) { return data(ind); },
-      grid_spacing, origin, Vector3d{});
+      grid_spacing, origin, Utils::Vector3d{});
 
   auto const exact_value = del_gaussian(p, x0, sigma);
 

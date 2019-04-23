@@ -30,11 +30,11 @@ BOOST_AUTO_TEST_CASE(rotation) {
   using std::sin;
 
   /* Axis */
-  auto const k = Vector3d{1, 2, 3}.normalize();
+  auto const k = Utils::Vector3d{1, 2, 3}.normalize();
   /* Angle */
   auto const t = 1.23;
   /* Original vector */
-  auto const v = Vector3d{2, 3, 4};
+  auto const v = Utils::Vector3d{2, 3, 4};
 
   /* Rodrigues' formula from wikipedia */
   auto const expected =
