@@ -129,6 +129,5 @@ private:
     ar &m_storage;
   }
 };
-
 } // namespace Utils
 #endif
