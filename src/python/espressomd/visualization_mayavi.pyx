@@ -8,6 +8,7 @@ from .particle_data cimport *
 from .interactions cimport *
 from .system cimport *
 from .interactions import NonBondedInteractions
+from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
 
 include "myconfig.pxi"
 
@@ -193,11 +194,23 @@ cdef class mayaviLive(object):
                 t = p.bl[k]
                 k += 1
                 # Iterate over bond partners and store each connection
-                for l in range(bonded_ia_params[t].num):
-                    bonds.push_back(i)
+                if bonded_ia_params[t].num == 3 and t in (BONDED_IA_DIHEDRAL,
+                                                          BONDED_IA_TABULATED):
+                    for l in range(2):
+                        bonds.push_back(i)
+                        bonds.push_back(p.bl[k])
+                        bonds.push_back(t)
+                        k += 1
+                    bonds.push_back(p.bl[k - 1])
                     bonds.push_back(p.bl[k])
                     bonds.push_back(t)
                     k += 1
+                else:
+                    for l in range(bonded_ia_params[t].num):
+                        bonds.push_back(i)
+                        bonds.push_back(p.bl[k])
+                        bonds.push_back(t)
+                        k += 1
             j += 1
         assert j == len(self.system.part)
         cdef int Nbonds = bonds.size() // 3
