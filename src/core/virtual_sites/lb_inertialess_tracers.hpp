@@ -33,7 +33,6 @@ void IBM_UpdateParticlePositions(ParticleRange particles);
 
 // Main functions for CPU implementation - called from integrate.cpp
 void IBM_ForcesIntoFluid_CPU();
-void IBM_ResetLBForces_CPU();
 
 // Main functions for GPU implementation - called from integrate.cpp
 // These are in ibm_cuda.cu
