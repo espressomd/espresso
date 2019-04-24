@@ -145,10 +145,10 @@ K_w = 10.**(-14) * 0.02694**2
 RE = None
 if(mode == "reaction_ensemble"):
     RE = reaction_ensemble.ReactionEnsemble(
-        temperature=temperature, exclusion_radius=1)
+        temperature=temperature, exclusion_radius=1, seed=3)
 elif(mode == "constant_pH_ensemble"):
     RE = reaction_ensemble.ConstantpHEnsemble(
-        temperature=temperature, exclusion_radius=1)
+        temperature=temperature, exclusion_radius=1, seed=3)
     RE.constant_pH = 0
 
 # HA <--> A- + H+

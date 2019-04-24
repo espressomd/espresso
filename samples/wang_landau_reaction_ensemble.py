@@ -73,7 +73,7 @@ system.part[0].add_bond((h, 1))
 
 
 RE = reaction_ensemble.WangLandauReactionEnsemble(
-    temperature=1, exclusion_radius=0)
+    temperature=1, exclusion_radius=0, seed=77)
 RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
                 product_types=[1, 2], product_coefficients=[1, 1],
                 default_charges={0: 0, 1: -1, 2: +1})
