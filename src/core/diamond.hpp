@@ -23,11 +23,9 @@
 /** \file
 
     This file contains everything needed to create a start-up
-    configuration of (partially charged) polymer chains with
-    counterions and salt molecules, assigning velocities to the
-    particles and cross-linking the polymers if necessary.
+    diamond structure-like configuration of (partially charged)
+    polymer chains with counterions and salt molecules.
 
-    For more information on polymer, see polymer.cpp.
 */
 
 #include "PartCfg.hpp"
@@ -55,18 +53,6 @@ double mindist4(PartCfg &partCfg, double pos[3]);
  *  @return Returns '1' if there is a collision, '0' otherwise.
  */
 int collision(PartCfg &, double pos[3], double shield, int n_add, double *add);
-
-/** Function used by polymerC to determine whether a constraint has been
- *  violated while setting up a polymer. Currently only "wall", "sphere" and
- *  "cylinder" constraints are respected.
- *  @param p1           = position of first particle given as double-array of
- *  length 3
- *  @param p2           = position of second particle given as double-array of
- *  length 3
- *  @return Returns 1 if p1 and p2 sit on opposite sites of any constraint
- *  currently defined in the system and 0 otherwise
- */
-int constraint_collision(double *p1, double *p2);
 
 /** C implementation of 'counterions \<N_CI\> [options]'.
  *  @param  N_CI        = number of counterions to create

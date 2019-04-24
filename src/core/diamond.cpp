@@ -46,7 +46,6 @@
 #include "utils.hpp"
 
 #include "utils/vec_rotate.hpp"
-#include <vector>
 using Utils::vec_rotate;
 
 
@@ -97,27 +96,6 @@ int collision(PartCfg &partCfg, double pos[3], double shield, int n_add,
   if (mindist4(partCfg, pos) > shield && buf_mindist4(pos, n_add, add) > shield)
     return (0);
   return (1);
-}
-
-int constraint_collision(double *p1, double *p2) {
-  Vector3d folded_pos1 = folded_position({p1, p1 + 3});
-  Vector3d folded_pos2 = folded_position({p2, p2 + 3});
-
-  for (auto &c : Constraints::constraints) {
-    auto cs =
-        std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
-    if (cs) {
-      double d1, d2;
-      double v[3];
-
-      cs->calc_dist(folded_pos1, &d1, v);
-      cs->calc_dist(folded_pos2, &d2, v);
-
-      if (d1 * d2 < 0.0)
-        return 1;
-    }
-  }
-  return 0;
 }
 
 int counterionsC(PartCfg &partCfg, int N_CI, int part_id, int mode,
