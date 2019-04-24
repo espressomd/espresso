@@ -194,8 +194,8 @@ cdef class mayaviLive(object):
                 t = p.bl[k]
                 k += 1
                 # Iterate over bond partners and store each connection
-                if bonded_ia_params[t].num == 3 and t in (BONDED_IA_DIHEDRAL,
-                                                          BONDED_IA_TABULATED):
+                if bonded_ia_params[t].num == 3 and bonded_ia_params[t].type \
+                        in (BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED):
                     for l in range(2):
                         bonds.push_back(i)
                         bonds.push_back(p.bl[k])
