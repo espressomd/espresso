@@ -17,6 +17,14 @@ Corrections for bugs that may harm simulation results:
   * A sign error in tabulated interactions was corrected such that
     the force equals the negative gradient of the potential. (#2519,2520)
   
+  * The flow field of the CPU lattice-Boltzmann implementation was deleted
+    when aspects of the molecular dynamics cell grid were changed; E.g., when 
+    interactions, the skin or the parallelization setup were changed.
+    ESPResSo now terminates with an error, when this happens.
+    To avoid this, please setup the CPU lattice-Boltzmann after all
+    other aspects of the system. The GPU LB is not affected in the 4.0
+    release, but was affected in the current development branch. (#2728, #2736)
+
   * Corrected the force acting on LB Boundaries for the case of
     agrid and density not equal to 1 (#2624).
   
