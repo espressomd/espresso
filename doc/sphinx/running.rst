@@ -88,30 +88,6 @@ Usage example::
 
 
 
-.. _Multi-timestepping:
-
-Multi-timestepping
-------------------
-
-Required feature: ``MULTI_TIMESTEP``
-
-The multi-timestepping integrator allows to run two concurrent
-integration time steps within a simulation, associating beads with
-either the large :attr:`espressomd.system.System.time_step` or the
-other :attr:`espressomd.system.System.smaller_time_step`. Setting
-:attr:`espressomd.system.System.smaller_time_step` to a positive
-value turns on the multi-timestepping algorithm. Beads are by default associated with
-:attr:`espressomd.system.System.time_step`, corresponding to the
-particle property
-:attr:`espressomd.particle_data.ParticleHandle.smaller_timestep` set
-to 0. Setting to
-:attr:`espressomd.particle_data.ParticleHandle.smaller_timestep` to 1
-associates the particle to the
-:attr:`espressomd.system.System.smaller_time_step` integration. The
-integrator can be used in the NVE ensemble, as well as with the
-Langevin thermostat and the modified Andersen barostat for NVT and NPT
-simulations, respectively. See :cite:`bereau15` for more details.
-
 .. _Integrating rotational degrees of freedom:
 
 Integrating rotational degrees of freedom

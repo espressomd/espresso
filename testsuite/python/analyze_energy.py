@@ -42,7 +42,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.non_bonded_inter[1, 1].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0,
             cutoff=2**(1. / 6.), shift="auto")
-        self.system.thermostat.set_langevin(kT=0., gamma=1.)
+        self.system.thermostat.set_langevin(kT=0., gamma=1., seed=42)
         self.system.bonded_inter.add(self.harmonic)
 
     def setUp(self):

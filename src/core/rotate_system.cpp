@@ -32,7 +32,7 @@ namespace mpi = boost::mpi;
 
 void local_rotate_system(double phi, double theta, double alpha) {
   // Calculate center of mass
-  Vector3d local_com{};
+  Utils::Vector3d local_com{};
   double local_mass = 0.0;
 
   for (auto const &p : local_cells.particles()) {
@@ -47,7 +47,7 @@ void local_rotate_system(double phi, double theta, double alpha) {
       mpi::all_reduce(comm_cart, local_com, std::plus<>()) / total_mass;
 
   // Rotation axis in Cartesian coordinates
-  Vector3d axis;
+  Utils::Vector3d axis;
   axis[0] = sin(theta) * cos(phi);
   axis[1] = sin(theta) * sin(phi);
   axis[2] = cos(theta);

@@ -29,6 +29,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "event.hpp"
@@ -152,7 +153,7 @@ static void p3m_spread_force_grid(double *mesh);
 static void p3m_realloc_ca_fields(int newsize);
 #endif
 
-static bool p3m_sanity_checks_system(const Vector3i &grid);
+static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
 
 /** Checks for correctness for charges in P3M of the cao_cut,
  *  necessary when the box length changes
@@ -254,43 +255,42 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
 template <int cao> static void p3m_do_charge_assign();
 
 template <int cao>
-void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
+void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
 
-void p3m_pre_init() {
-  p3m_common_parameter_pre_init(&p3m.params);
-  /* p3m.local_mesh is uninitialized */
-  /* p3m.sm is uninitialized */
+p3m_data_struct::p3m_data_struct() {
+  /* local_mesh is uninitialized */
+  /* sm is uninitialized */
 
-  p3m.rs_mesh = nullptr;
-  p3m.ks_mesh = nullptr;
-  p3m.sum_qpart = 0;
-  p3m.sum_q2 = 0.0;
-  p3m.square_sum_q = 0.0;
+  rs_mesh = nullptr;
+  ks_mesh = nullptr;
+  sum_qpart = 0;
+  sum_q2 = 0.0;
+  square_sum_q = 0.0;
 
-  for (auto &i : p3m.int_caf)
-    i = nullptr;
-  p3m.pos_shift = 0.0;
-  p3m.meshift_x = nullptr;
-  p3m.meshift_y = nullptr;
-  p3m.meshift_z = nullptr;
+  for (auto &e : int_caf) {
+    e = nullptr;
+  }
 
-  p3m.d_op[0] = nullptr;
-  p3m.d_op[1] = nullptr;
-  p3m.d_op[2] = nullptr;
-  p3m.g_force = nullptr;
-  p3m.g_energy = nullptr;
+  pos_shift = 0.0;
+  meshift_x = nullptr;
+  meshift_y = nullptr;
+  meshift_z = nullptr;
+
+  d_op[0] = nullptr;
+  d_op[1] = nullptr;
+  d_op[2] = nullptr;
+  g_force = nullptr;
+  g_energy = nullptr;
 
 #ifdef P3M_STORE_CA_FRAC
-  p3m.ca_num = 0;
-  p3m.ca_frac = nullptr;
-  p3m.ca_fmp = nullptr;
+  ca_num = 0;
+  ca_frac = nullptr;
+  ca_fmp = nullptr;
 #endif
-  p3m.ks_pnum = 0;
+  ks_pnum = 0;
 
-  p3m.send_grid = nullptr;
-  p3m.recv_grid = nullptr;
-
-  fft_common_pre_init(&p3m.fft);
+  send_grid = nullptr;
+  recv_grid = nullptr;
 }
 
 void p3m_free() {
@@ -366,9 +366,10 @@ void p3m_init() {
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
                       (void *)p3m.rs_mesh));
 
-    int ca_mesh_size = fft_init(
-        &p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
-        p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft, node_grid);
+    int ca_mesh_size =
+        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
+                 p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft,
+                 node_grid, comm_cart);
     p3m.ks_mesh = Utils::realloc(p3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
@@ -570,7 +571,7 @@ template <int cao> void p3m_do_charge_assign() {
 }
 
 /* Template wrapper for p3m_do_assign_charge() */
-void p3m_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
+void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
   switch (p3m.params.cao) {
   case 1:
     p3m_do_assign_charge<1>(q, real_pos, cp_cnt);
@@ -597,7 +598,7 @@ void p3m_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
 }
 
 template <int cao>
-void p3m_do_assign_charge(double q, Vector3d &real_pos, int cp_cnt) {
+void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
   auto const inter = not(p3m.params.inter == 0);
   /* distance to nearest mesh point */
   double dist[3];
@@ -817,7 +818,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
   /* and Perform forward 3D FFT (Charge Assignment Mesh). */
   if (p3m.sum_q2 > 0) {
     p3m_gather_fft_grid(p3m.rs_mesh);
-    fft_perform_forw(p3m.rs_mesh, p3m.fft);
+    fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
   }
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!
@@ -844,11 +845,11 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
                comm_cart);
     if (this_node == 0) {
       /* self energy correction */
-      k_space_energy -=
-          coulomb.prefactor * (p3m.sum_q2 * p3m.params.alpha * wupii);
+      k_space_energy -= coulomb.prefactor *
+                        (p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i());
       /* net charge correction */
       k_space_energy -=
-          coulomb.prefactor * p3m.square_sum_q * PI /
+          coulomb.prefactor * p3m.square_sum_q * Utils::pi() /
           (2.0 * box_l[0] * box_l[1] * box_l[2] * Utils::sqr(p3m.params.alpha));
     }
 
@@ -888,12 +889,12 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
         for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
           for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
             /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
-            p3m.rs_mesh[ind] = -2.0 * PI *
+            p3m.rs_mesh[ind] = -2.0 * Utils::pi() *
                                (p3m.ks_mesh[ind + 1] *
                                 d_operator[j[d] + p3m.fft.plan[3].start[d]]) /
                                box_l[d_rs];
             ind++;
-            p3m.rs_mesh[ind] = 2.0 * PI * p3m.ks_mesh[ind - 1] *
+            p3m.rs_mesh[ind] = 2.0 * Utils::pi() * p3m.ks_mesh[ind - 1] *
                                d_operator[j[d] + p3m.fft.plan[3].start[d]] /
                                box_l[d_rs];
             ind++;
@@ -902,7 +903,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
       }
       /* Back FFT force component mesh */
       fft_perform_back(p3m.rs_mesh, /* check_complex */ !p3m.params.tuning,
-                       p3m.fft);
+                       p3m.fft, comm_cart);
       /* redistribute force component mesh */
       p3m_spread_force_grid(p3m.rs_mesh);
       /* Assign force component from mesh to particle */
@@ -1140,7 +1141,7 @@ inline double perform_aliasing_sums_force(int const n[3], double numerator[3]) {
   for (i = 0; i < 3; i++)
     numerator[i] = 0.0;
 
-  f1 = Utils::sqr(PI / (p3m.params.alpha));
+  f1 = Utils::sqr(Utils::pi() / (p3m.params.alpha));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX] * mx;
@@ -1222,7 +1223,7 @@ template <int cao> void calc_influence_function_force() {
           } else
             fak3 = fak1 / (fak2 * Utils::sqr(denominator));
 
-          p3m.g_force[ind] = 2 * fak3 / (PI);
+          p3m.g_force[ind] = 2 * fak3 / (Utils::pi());
         }
       }
     }
@@ -1266,7 +1267,7 @@ template <int cao> inline double perform_aliasing_sums_energy(int const n[3]) {
   double sx, sy, sz, f1, f2, mx, my, mz, nmx, nmy, nmz, nm2, expo;
   double limit = 30;
 
-  f1 = Utils::sqr(PI / (p3m.params.alpha));
+  f1 = Utils::sqr(Utils::pi() / (p3m.params.alpha));
 
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
     nmx = p3m.meshift_x[n[KX]] + p3m.params.mesh[RX] * mx;
@@ -1329,7 +1330,8 @@ template <int cao> void calc_influence_function_energy() {
         }
 
         else
-          p3m.g_energy[ind] = perform_aliasing_sums_energy<cao>(n) / PI;
+          p3m.g_energy[ind] =
+              perform_aliasing_sums_energy<cao>(n) / Utils::pi();
       }
     }
   }
@@ -2071,7 +2073,7 @@ void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
 
   double ex, ex2, nm2, U2, factor1;
 
-  factor1 = Utils::sqr(PI * alpha_L_i);
+  factor1 = Utils::sqr(Utils::pi() * alpha_L_i);
 
   *alias1 = *alias2 = 0.0;
   for (mx = -P3M_BRILLOUIN; mx <= P3M_BRILLOUIN; mx++) {
@@ -2213,7 +2215,7 @@ bool p3m_sanity_checks_boxl() {
  *
  * @return false if ok, true on error.
  */
-bool p3m_sanity_checks_system(const Vector3i &grid) {
+bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
   bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
@@ -2392,18 +2394,18 @@ void p3m_calc_kspace_stress(double *stress) {
     }
 
     p3m_gather_fft_grid(p3m.rs_mesh);
-    fft_perform_forw(p3m.rs_mesh, p3m.fft);
+    fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
     force_prefac = coulomb.prefactor / (2.0 * box_l[0] * box_l[1] * box_l[2]);
 
     for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
       for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
         for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
-          kx = 2.0 * PI * p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
-               box_l[RX];
-          ky = 2.0 * PI * p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
-               box_l[RY];
-          kz = 2.0 * PI * p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
-               box_l[RZ];
+          kx = 2.0 * Utils::pi() *
+               p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] / box_l[RX];
+          ky = 2.0 * Utils::pi() *
+               p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] / box_l[RY];
+          kz = 2.0 * Utils::pi() *
+               p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] / box_l[RZ];
           sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
           if (sqk == 0) {
             node_k_space_energy = 0.0;
@@ -2455,8 +2457,8 @@ void p3m_calc_kspace_stress(double *stress) {
 }
 
 /** Debug function to print p3m parameters */
-void p3m_p3m_print_struct(p3m_parameter_struct ps) {
-  fprintf(stderr, "%d: p3m_parameter_struct:\n", this_node);
+void p3m_p3m_print_struct(P3MParameters ps) {
+  fprintf(stderr, "%d: P3MParameters:\n", this_node);
   fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f\n", ps.alpha_L, ps.r_cut_iL);
   fprintf(stderr, "   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n", ps.mesh[0],
           ps.mesh[1], ps.mesh[2], ps.mesh_off[0], ps.mesh_off[1],

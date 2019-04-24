@@ -34,9 +34,9 @@ float multigpu_factors[] = {1.0};
 #define cudaSetDevice(d)
 
 #include "EspressoSystemInterface.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "mmm-common_cuda.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!

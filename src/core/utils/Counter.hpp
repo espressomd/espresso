@@ -1,15 +1,14 @@
 #ifndef UTILS_COUNTER_HPP
 #define UTILS_COUNTER_HPP
 
+#include <boost/serialization/access.hpp>
+
 namespace Utils {
 template <typename T> class Counter {
 private:
   T m_val;
   T m_initial;
-
-private:
   friend class boost::serialization::access;
-
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     ar &m_val;
@@ -28,5 +27,4 @@ public:
   T initial_value() const { return m_initial; }
 };
 } // namespace Utils
-
 #endif // UTILS_COUNTER_HPP

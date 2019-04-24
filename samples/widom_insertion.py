@@ -1,8 +1,3 @@
-"""
-This sample measures the excess chemical potential for Widom insertion of charged
-particles using the reaction ensemble method.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -21,6 +16,10 @@ particles using the reaction ensemble method.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample measures the excess chemical potential for Widom insertion of
+charged particles using the reaction ensemble method.
+"""
 from __future__ import print_function
 import numpy as np
 import sys
@@ -37,6 +36,7 @@ espressomd.assert_features(required_features)
 
 # System parameters
 #############################################################
+assert len(sys.argv) == 2, "please provide a value for cs_bulk"
 cs_bulk = float(sys.argv[1])
 box_l = 50.0
 N0 = int(cs_bulk * box_l**3)
@@ -51,7 +51,7 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 temperature = 1.0
-system.thermostat.set_langevin(kT=temperature, gamma=1.0)
+system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
 system.cell_system.max_num_cells = 2744
 
 
@@ -103,30 +103,33 @@ while (i < warm_n_times):
     print(i, "warmup")
     system.integrator.run(steps=warm_steps)
     i += 1
-    #Increase LJ cap
+    # Increase LJ cap
     lj_cap = lj_cap + 10
     system.force_cap = lj_cap
 
 # remove force capping
 system.force_cap = 0
 
-unimportant_K_diss = 0.0088
 RE = reaction_ensemble.WidomInsertion(
-    temperature=temperature, exclusion_radius=1.0)
-RE.add_reaction(gamma=unimportant_K_diss, reactant_types=[], reactant_coefficients=[], product_types=[
-                1, 2], product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
+    temperature=temperature, seed=77)
+RE.add_reaction(reactant_types=[],
+                reactant_coefficients=[], product_types=[1, 2],
+                product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
-for i in range(10000):
+n_iterations = 100
+for i in range(n_iterations):
     for j in range(30):
         RE.measure_excess_chemical_potential(0)  # 0 for insertion reaction
         system.integrator.run(steps=2)
     system.integrator.run(steps=500)
-    if(i % 100 == 0):
-        print("mu_ex_pair", RE.measure_excess_chemical_potential(0))
-              #0 for insertion reaction
+    if i % 20 == 0:
+        print("mu_ex_pair ({:.4f}, +/- {:.4f})".format(
+            *RE.measure_excess_chemical_potential(0)  # 0 for insertion reaction
+        ))
         print("HA", system.number_of_particles(type=0), "A-",
-              system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
+              system.number_of_particles(type=1), "H+",
+              system.number_of_particles(type=2))
 
 print(RE.measure_excess_chemical_potential(0))  # 0 for insertion reaction

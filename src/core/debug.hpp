@@ -168,14 +168,6 @@ extern int check_id;
 #define MDLC_TRACE(cmd)
 #endif
 
-#ifdef FFT_DEBUG
-#define FFT_TRACE(cmd)                                                         \
-  { cmd; }
-#else
-/** Equals { cmd } iff FFT_DEBUG is set. */
-#define FFT_TRACE(cmd)
-#endif
-
 #ifdef RANDOM_DEBUG
 #define RANDOM_TRACE(cmd)                                                      \
   { cmd; }

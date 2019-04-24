@@ -76,7 +76,7 @@ void local_system_CMS(double *sdata) {
     double M = p.p.mass;
     mass += M;
 
-    Vector3d ppos = unfolded_position(p);
+    Utils::Vector3d ppos = unfolded_position(p);
 
     x += M * ppos[0];
     y += M * ppos[1];

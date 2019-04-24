@@ -38,25 +38,6 @@ struct function_remove_const<R(Args...) const> {
   using type = R(Args...);
 };
 
-template <class T>
-using function_remove_const_t = typename function_remove_const<T>::type;
-
-/**
- * @brief True iff T is an instantiation of Template.
- */
-template <typename T, template <typename...> class Template>
-struct is_instance_of : public std::false_type {};
-
-template <typename... T, template <typename...> class Template>
-struct is_instance_of<Template<T...>, Template> : public std::true_type {};
-
-template <bool P, typename T = void>
-using enable_if_t = typename std::enable_if<P, T>::type;
-
-template <typename T> using decay_t = typename std::decay<T>::type;
-
-template <class T> using add_const_t = typename std::add_const<T>::type;
-
 template <class...> struct conjunction : std::true_type {};
 template <class B1> struct conjunction<B1> : B1 {};
 template <class B1, class... Bn>

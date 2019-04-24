@@ -49,8 +49,12 @@ void lb_lbcoupling_set_gamma(double gamma) {
 
 double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
 
+bool lb_lbcoupling_is_seed_required() {
+  return not lb_particle_coupling.rng_counter_coupling.is_initialized();
+}
+
 uint64_t lb_coupling_get_rng_state_cpu() {
-  return lb_particle_coupling.rng_counter_coupling.value();
+  return lb_particle_coupling.rng_counter_coupling->value();
 }
 
 uint64_t lb_lbcoupling_get_rng_state() {
@@ -89,7 +93,7 @@ namespace {
  * @param pos Position of the force
  * @param force Force in MD units.
  */
-void add_md_force(Vector3d const &pos, Vector3d const &force) {
+void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
   /* transform momentum transfer to lattice units
      (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
@@ -107,7 +111,8 @@ void add_md_force(Vector3d const &pos, Vector3d const &force) {
  * @return The viscous coupling force plus f_random.
  */
 #ifdef LB
-Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
+Utils::Vector3d lb_viscous_coupling(Particle *p,
+                                    Utils::Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
@@ -115,7 +120,7 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
       lb_lbinterpolation_get_interpolated_velocity(p->r.p) *
       lb_lbfluid_get_lattice_speed();
 
-  Vector3d v_drift = interpolated_u;
+  Utils::Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
   if (p->swim.swimming) {
     v_drift += p->swim.v_swim * p->r.calc_director();
@@ -141,7 +146,7 @@ Vector3d lb_viscous_coupling(Particle *p, Vector3d const &f_random) {
 #endif
 
 namespace {
-bool in_local_domain(Vector3d const &pos) {
+bool in_local_domain(Utils::Vector3d const &pos) {
   auto const lblattice = lb_lbfluid_get_lattice();
   return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
           pos[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
@@ -202,13 +207,17 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         ghost_communicator(&cell_structure.exchange_ghosts_comm,
                            GHOSTTRANS_SWIMMING);
 #endif
-
         using rng_type = r123::Philox4x64;
         using ctr_type = rng_type::ctr_type;
         using key_type = rng_type::key_type;
 
-        ctr_type c{{lb_particle_coupling.rng_counter_coupling.value(),
-                    static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+        ctr_type c;
+        if (lb_lbfluid_get_kT() > 0.0) {
+          c = ctr_type{{lb_particle_coupling.rng_counter_coupling->value(),
+                        static_cast<uint64_t>(RNGSalt::PARTICLES)}};
+        } else {
+          c = ctr_type{{0, 0}};
+        }
 
         /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
          * The factor 12 comes from the fact that we use random numbers
@@ -217,18 +226,18 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
          */
         auto const noise_amplitude = sqrt(12. * 2. * lb_lbcoupling_get_gamma() *
                                           lb_lbfluid_get_kT() / time_step);
-        auto f_random = [&c](int id) -> Vector3d {
+        auto f_random = [&c](int id) -> Utils::Vector3d {
           if (lb_lbfluid_get_kT() > 0.0) {
             key_type k{{static_cast<uint32_t>(id)}};
 
             auto const noise = rng_type{}(c, k);
 
             using Utils::uniform;
-            return Vector3d{uniform(noise[0]), uniform(noise[1]),
-                            uniform(noise[2])} -
-                   Vector3d::broadcast(0.5);
+            return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
+                                   uniform(noise[2])} -
+                   Utils::Vector3d::broadcast(0.5);
           }
-          return Vector3d{};
+          return Utils::Vector3d{};
         };
 
         /* local cells */
@@ -266,6 +275,16 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 }
 
 void lb_lbcoupling_propagate() {
-  lb_particle_coupling.rng_counter_coupling.increment();
+  if (lb_lbfluid_get_kT() > 0.0) {
+    if (lattice_switch == ActiveLB::CPU) {
+#ifdef LB
+      lb_particle_coupling.rng_counter_coupling->increment();
+#endif
+    } else if (lattice_switch == ActiveLB::GPU) {
+#ifdef LB_GPU
+      rng_counter_coupling_gpu->increment();
+#endif
+    }
+  }
 }
 #endif

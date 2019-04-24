@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Visualization sample for bonds. Simulates a large chain of particles connected via harmonic bonds.
+"""
+Visualization sample for bonds. Simulates a large chain of particles connected
+via harmonic bonds.
 """
 
 from __future__ import print_function
@@ -38,7 +40,7 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=0.1, gamma=20.0)
+system.thermostat.set_langevin(kT=0.1, gamma=20.0, seed=42)
 
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(

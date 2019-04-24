@@ -282,4 +282,25 @@ cdef class mayaviLive(object):
     def register_callback(self, cb, interval=1000):
         self.timers.append(Timer(interval, cb))
 
+    def run(self, integ_steps=1):
+        """Convenience method with a simple integration thread.
+        """
+
+        def main():
+            while True:
+
+                self.update()
+
+                try:
+                    self.system.integrator.run(integ_steps)
+                except Exception as e:
+                    print(e)
+                    os._exit(1)
+
+        t = threading.Thread(target=main)
+        t.daemon = True
+        t.start()
+
+        self.start()
+
 # TODO: constraints

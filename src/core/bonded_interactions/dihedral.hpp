@@ -84,7 +84,7 @@ inline void calc_dihedral_angle(Particle const *p1, Particle const *p2,
   /* Calculate dihedral angle */
   *phi = acos(*cosphi);
   if (scalar(aXb, c) < 0.0)
-    *phi = (2.0 * PI) - *phi;
+    *phi = (2.0 * Utils::pi()) - *phi;
 }
 
 /** calculate dihedral force between particles p1, p2 p3 and p4
@@ -140,7 +140,8 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
   if (fabs(sin(phi)) < TINY_SIN_VALUE) {
 #ifdef OLD_DIHEDRAL
     sinmphi_sinphi = iaparams->p.dihedral.mult *
-                     cos(2.0 * PI - iaparams->p.dihedral.mult * phi) / cos(phi);
+                     cos(2.0 * Utils::pi() - iaparams->p.dihedral.mult * phi) /
+                     cos(phi);
 #else
     /*(comes from taking the first term of the MacLaurin expansion of
       sin(n*phi - phi0) and sin(phi) and then making the division).

@@ -58,7 +58,7 @@ public:
         {"center",
          [this](const Variant &v) {
            cylindrical_pid_profile_observable()->center =
-               get_value<::Vector3d>(v);
+               get_value<::Utils::Vector3d>(v);
          },
          [this]() { return cylindrical_pid_profile_observable()->center; }},
         {"axis",

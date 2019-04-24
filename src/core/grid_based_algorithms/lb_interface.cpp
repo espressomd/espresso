@@ -7,6 +7,9 @@
 #include "lb.hpp"
 #include "lbgpu.hpp"
 
+#include "utils/index.hpp"
+using Utils::get_linear_index;
+
 #include <fstream>
 
 ActiveLB lattice_switch = ActiveLB::NONE;
@@ -21,8 +24,8 @@ namespace {
  *  @param j      local fluid velocity
  *  @param pi     local fluid pressure
  */
-void mpi_send_fluid(int node, int index, double rho, Vector3d const &j,
-                    Vector6d const &pi) {
+void mpi_send_fluid(int node, int index, double rho, Utils::Vector3d const &j,
+                    Utils::Vector6d const &pi) {
   if (node == this_node) {
     lb_calc_n_from_rho_j_pi(index, rho, j, pi);
   } else if (0 == this_node) {
@@ -72,7 +75,7 @@ void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
 
 void mpi_send_fluid_populations_slave(int node, int index) {
   if (node == this_node) {
-    Vector19d populations;
+    Utils::Vector19d populations;
     MPI_Recv(populations.data(), 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
              MPI_STATUS_IGNORE);
     lb_set_populations(index, populations);
@@ -86,7 +89,8 @@ REGISTER_CALLBACK(mpi_send_fluid_populations_slave)
  *  @param index  index of the lattice site
  *  @param pop    local fluid population
  */
-void mpi_send_fluid_populations(int node, int index, const Vector19d &pop) {
+void mpi_send_fluid_populations(int node, int index,
+                                const Utils::Vector19d &pop) {
   if (node == this_node) {
     lb_set_populations(index, pop);
   } else {
@@ -112,11 +116,13 @@ void mpi_bcast_lb_params(LBParam field) {
 }
 
 void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
+#ifdef LB_BOUNDARIES
   if (node == this_node) {
     int data;
     lb_local_fields_get_boundary_flag(index, &data);
     MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, comm_cart);
   }
+#endif
 }
 
 REGISTER_CALLBACK(mpi_recv_fluid_boundary_flag_slave)
@@ -128,6 +134,7 @@ REGISTER_CALLBACK(mpi_recv_fluid_boundary_flag_slave)
  *  @param boundary  local boundary flag
  */
 void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
+#ifdef LB_BOUNDARIES
   if (node == this_node) {
     lb_local_fields_get_boundary_flag(index, boundary);
   } else {
@@ -136,6 +143,7 @@ void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
     MPI_Recv(&data, 1, MPI_INT, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
     *boundary = data;
   }
+#endif
 }
 
 void mpi_recv_fluid_populations_slave(int node, int index) {
@@ -187,14 +195,16 @@ void lb_lbfluid_update() {
 
 void lb_lbfluid_propagate() {
   lb_lbfluid_update();
-  if (lattice_switch == ActiveLB::GPU) {
+  if (lb_lbfluid_get_kT() > 0.0) {
+    if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
-    rng_counter_fluid_gpu.increment();
+      rng_counter_fluid_gpu->increment();
 #endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+    } else if (lattice_switch == ActiveLB::CPU) {
 #ifdef LB
-    rng_counter_fluid.increment();
+      rng_counter_fluid->increment();
 #endif
+    }
   }
 }
 
@@ -500,7 +510,7 @@ double lb_lbfluid_get_agrid() {
   return {};
 }
 
-void lb_lbfluid_set_ext_force_density(const Vector3d &force_density) {
+void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lbpar_gpu.ext_force_density[0] = static_cast<float>(force_density[0]);
@@ -523,7 +533,7 @@ void lb_lbfluid_set_ext_force_density(const Vector3d &force_density) {
   }
 }
 
-const Vector3d lb_lbfluid_get_ext_force_density() {
+const Utils::Vector3d lb_lbfluid_get_ext_force_density() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     return {{lbpar_gpu.ext_force_density[0], lbpar_gpu.ext_force_density[1],
@@ -649,7 +659,7 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
 #endif // LB_GPU
   } else {
 #ifdef LB
-    Vector3i pos;
+    Utils::Vector3i pos;
     auto const grid_size = lblattice.global_grid;
 
     fprintf(fp,
@@ -709,7 +719,7 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
     bb_high.push_back(std::max(*val1, *val2));
   }
 
-  Vector3i pos;
+  Utils::Vector3i pos;
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
@@ -779,7 +789,7 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
                                                 sizeof(unsigned int));
     lb_get_boundary_flags_GPU(bound_array);
 
-    Vector3i xyz;
+    Utils::Vector3i xyz;
     int j;
     for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j % lbpar_gpu.dim_x;
@@ -796,8 +806,8 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
 #endif // LB_GPU
   } else {
 #ifdef LB
-    Vector3i pos;
-    Vector3i gridsize;
+    Utils::Vector3i pos;
+    Utils::Vector3i gridsize;
 
     gridsize[0] = box_l[0] / lblattice.agrid[0];
     gridsize[1] = box_l[1] / lblattice.agrid[1];
@@ -833,7 +843,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
     host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
     lb_get_values_GPU(host_values);
-    Vector3i xyz;
+    Utils::Vector3i xyz;
     int j;
     for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j % lbpar_gpu.dim_x;
@@ -852,8 +862,8 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
 #endif // LB_GPU
   } else {
 #ifdef LB
-    Vector3i pos;
-    Vector3i gridsize;
+    Utils::Vector3i pos;
+    Utils::Vector3i gridsize;
 
     gridsize[0] = box_l[0] / lblattice.agrid[0];
     gridsize[1] = box_l[1] / lblattice.agrid[1];
@@ -919,7 +929,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
     }
 
     double pop[19];
-    Vector3i ind;
+    Utils::Vector3i ind;
     auto const gridsize = lblattice.global_grid;
 
     if (!binary) {
@@ -1051,8 +1061,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       throw std::runtime_error(err_msg + "could not open file for reading.");
     }
 
-    Vector19d pop;
-    Vector3i ind;
+    Utils::Vector19d pop;
+    Utils::Vector3i ind;
     auto const gridsize = lblattice.global_grid;
     int saved_gridsize[3];
     mpi_bcast_lb_params(LBParam::DENSITY);
@@ -1141,9 +1151,10 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
   }
 }
 
-bool lb_lbnode_is_index_valid(const Vector3i &ind) {
-  auto within_bounds = [](const Vector3i &ind, const Vector3i &limits) {
-    return ind < limits && ind >= Vector3i{};
+bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind) {
+  auto within_bounds = [](const Utils::Vector3i &ind,
+                          const Utils::Vector3i &limits) {
+    return ind < limits && ind >= Utils::Vector3i{};
   };
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
@@ -1160,7 +1171,7 @@ bool lb_lbnode_is_index_valid(const Vector3i &ind) {
   return false;
 }
 
-double lb_lbnode_get_density(const Vector3i &ind) {
+double lb_lbnode_get_density(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
@@ -1197,7 +1208,7 @@ double lb_lbnode_get_density(const Vector3i &ind) {
   throw std::runtime_error("LB not activated.");
 }
 
-const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
+const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
@@ -1218,8 +1229,8 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
     int node;
     auto ind_shifted = ind;
     double rho;
-    Vector3d j;
-    Vector6d pi;
+    Utils::Vector3d j;
+    Utils::Vector6d pi;
 
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
@@ -1234,19 +1245,11 @@ const Vector3d lb_lbnode_get_velocity(const Vector3i &ind) {
   return {};
 }
 
-const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
-  double p0 = 0;
-  Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
+const Utils::Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind) {
+  Utils::Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
 
-  if (lattice_switch == ActiveLB::GPU) {
-#ifdef LB_GPU
-    p0 += lbpar_gpu.rho / lbpar_gpu.agrid / lbpar_gpu.tau / lbpar_gpu.tau / 3.;
-#endif // LB_GPU
-  } else {
-#ifdef LB
-    p0 = lbpar.rho / lbpar.agrid / lbpar.tau / lbpar.tau / 3.;
-#endif // LB
-  }
+  // Add equilibrium stress to the diagonal (in LB units)
+  double const p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
 
   p_pi[0] += p0;
   p_pi[2] += p0;
@@ -1255,8 +1258,8 @@ const Vector6d lb_lbnode_get_pi(const Vector3i &ind) {
   return p_pi;
 }
 
-const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
-  Vector6d p_pi{};
+const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
+  Utils::Vector6d p_pi{};
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
@@ -1277,22 +1280,73 @@ const Vector6d lb_lbnode_get_pi_neq(const Vector3i &ind) {
     int node;
     double rho;
     double j[3];
-    Vector6d pi{};
+    Utils::Vector6d pi{};
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
-    mpi_recv_fluid(node, index, &rho, j, pi.data());
-    // unit conversion
-    p_pi = pi / lbpar.tau / lbpar.tau / lbpar.agrid;
+    mpi_recv_fluid(node, index, &rho, j, p_pi.data());
 #endif // LB
   }
   return p_pi;
 }
 
-int lb_lbnode_get_boundary(const Vector3i &ind) {
+/** calculates the average stress of all nodes by iterating
+ * over all nodes and deviding by the number_of_nodes.
+ */
+const Utils::Vector6d lb_lbfluid_get_stress() {
+  Utils::Vector6d p{0, 0, 0, 0, 0, 0};
+
+  if (lattice_switch == ActiveLB::GPU) {
+#ifdef LB_GPU
+    // Copy observable data from gpu
+    std::vector<LB_rho_v_pi_gpu> host_values(lbpar_gpu.number_of_nodes);
+    lb_get_values_GPU(host_values.data());
+    std::for_each(host_values.begin(), host_values.end(),
+                  [&p](LB_rho_v_pi_gpu &v) {
+                    for (int i = 0; i < 6; i++)
+                      p[i] += v.pi[i];
+                  });
+
+    // Normalize
+    p *= (1. / lbpar_gpu.number_of_nodes);
+
+    // Add equilibrium stress to the diagonal (in LB units)
+    double const p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
+
+    p[0] += p0;
+    p[2] += p0;
+    p[5] += p0;
+
+#endif
+  } else
+#ifdef LB
+      if (lattice_switch == ActiveLB::CPU) {
+    for (int i = 0; i < lblattice.global_grid[0]; i++) {
+      for (int j = 0; j < lblattice.global_grid[1]; j++) {
+        for (int k = 0; k < lblattice.global_grid[2]; k++) {
+          const Utils::Vector3i node{{i, j, k}};
+          p += lb_lbnode_get_pi(node);
+        }
+      }
+    }
+
+    int const number_of_nodes = lblattice.global_grid[0] *
+                                lblattice.global_grid[1] *
+                                lblattice.global_grid[2];
+
+    p *= 1. / number_of_nodes;
+  } else
+#endif
+  {
+    throw std::runtime_error("LB method called on inactive LB");
+  }
+  return p;
+}
+
+int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     unsigned int host_flag;
@@ -1323,13 +1377,13 @@ int lb_lbnode_get_boundary(const Vector3i &ind) {
   throw std::runtime_error("LB not activated.");
 }
 
-const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
+const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float population[19];
 
     lb_lbfluid_get_population(ind, population);
-    Vector19d p_pop;
+    Utils::Vector19d p_pop;
     for (int i = 0; i < LBQ; ++i)
       p_pop[i] = population[i];
     return p_pop;
@@ -1346,7 +1400,7 @@ const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
-    Vector19d p_pop;
+    Utils::Vector19d p_pop;
     mpi_recv_fluid_populations(node, index, p_pop.data());
     return p_pop;
 #else
@@ -1356,7 +1410,7 @@ const Vector19d lb_lbnode_get_pop(const Vector3i &ind) {
   throw std::runtime_error("LB not activated.");
 }
 
-void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
+void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
@@ -1369,8 +1423,8 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
     Lattice::index_t index;
     int node;
     double rho;
-    Vector3d j;
-    Vector6d pi;
+    Utils::Vector3d j;
+    Utils::Vector6d pi;
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
@@ -1385,7 +1439,8 @@ void lb_lbnode_set_density(const Vector3i &ind, double p_rho) {
   }
 }
 
-void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
+void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
+                            const Utils::Vector3d &u) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float host_velocity[3];
@@ -1400,25 +1455,27 @@ void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u) {
 #ifdef LB
     Lattice::index_t index;
     int node;
-    double rho;
-    Vector3d j;
-    Vector6d pi;
 
     auto ind_shifted = ind;
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
-    /* transform to lattice units */
+    double rho;
+    Utils::Vector3d j;
+    Utils::Vector6d pi;
 
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
+
+    /* transform to lattice units */
     j = rho * u;
     mpi_send_fluid(node, index, rho, j, pi);
 #endif // LB
   }
 }
 
-void lb_lbnode_set_pop(const Vector3i &ind, const Vector19d &p_pop) {
+void lb_lbnode_set_pop(const Utils::Vector3i &ind,
+                       const Utils::Vector19d &p_pop) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     float population[19];
@@ -1477,8 +1534,8 @@ void lb_lbfluid_on_lb_params_change(LBParam field) {
   lb_lbfluid_reinit_parameters();
 }
 
-Vector3d lb_lbfluid_calc_fluid_momentum() {
-  Vector3d fluid_momentum{};
+Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
+  Utils::Vector3d fluid_momentum{};
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_calc_fluid_momentum_GPU(fluid_momentum.data());

@@ -197,7 +197,7 @@ by invoking
 \begin{espresso}
 lbf = espressomd.lb.LBFluidGPU(agrid=1, dens=1.0, visc=1.0, tau=0.01)
 system.actors.add(lbf)
-system.thermostat.set_lb(LB_fluid=lbf, friction=20.0)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=20.0, seed=42)
 \end{espresso}
 In this example we used parameters for which we know the LB reproduces
 Stokes-level hydrodynamic interactions well. Here, we simulate a

@@ -32,8 +32,10 @@ except ImportError:
     exit()
 
 
-@ut.skipIf(not espressomd.has_features(["ENGINE", "LB_GPU"]),
-           "Features not available, skipping test!")
+@ut.skipIf(
+    not espressomd.gpu_available() or not espressomd.has_features(
+        ["ENGINE", "LB_GPU"]),
+           "Features or gpu not available, skipping test!")
 class SwimmerTest(ut.TestCase):
 
     def prepare(self, S):
