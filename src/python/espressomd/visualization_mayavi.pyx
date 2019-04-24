@@ -65,14 +65,15 @@ cdef class mayaviLive(object):
         self.particle_sizes = particle_sizes
 
         # objects drawn
-        self.points = mlab.quiver3d(
-            [], [], [], [], [], [], scalars=[], mode="sphere", scale_factor=1, name="Particles")
+        self.points = mlab.quiver3d([], [], [], [], [], [], scalars=[],
+                                    mode="sphere", scale_factor=1,
+                                    name="Particles")
         self.points.glyph.color_mode = 'color_by_scalar'
         self.points.glyph.glyph_source.glyph_source.center = [0, 0, 0]
-        self.box = mlab.outline(
-            extent=(0, 0, 0, 0, 0, 0), color=(1, 1, 1), name="Box")
-        self.arrows = mlab.quiver3d(
-            [], [], [], [], [], [], scalars=[], mode="2ddash", scale_factor=1, name="Bonds")
+        self.box = mlab.outline(extent=(0, 0, 0, 0, 0, 0), color=(1, 1, 1),
+                                name="Box")
+        self.arrows = mlab.quiver3d([], [], [], [], [], [], scalars=[],
+                                    mode="2ddash", scale_factor=1, name="Bonds")
         self.arrows.glyph.color_mode = 'color_by_scalar'
 
         # state
@@ -133,22 +134,29 @@ cdef class mayaviLive(object):
         if box_changed or not self.running:
             self.box.set(bounds=(0, boxl[0], 0, boxl[1], 0, boxl[2]))
         if not N_changed:
-            self.points.mlab_source.set(x=coords[:, 0] % boxl[0], y=coords[:, 1] % boxl[
-                                        1], z=coords[:, 2] % boxl[2], u=radii, v=radii, w=radii, scalars=types)
+            self.points.mlab_source.set(x=coords[:, 0] % boxl[0],
+                                        y=coords[:, 1] % boxl[1],
+                                        z=coords[:, 2] % boxl[2], u=radii,
+                                        v=radii, w=radii, scalars=types)
         else:
-            self.points.mlab_source.reset(x=coords[:, 0] % boxl[0], y=coords[:, 1] % boxl[
-                                          1], z=coords[:, 2] % boxl[2], u=radii, v=radii, w=radii, scalars=types)
+            self.points.mlab_source.reset(x=coords[:, 0] % boxl[0],
+                                          y=coords[:, 1] % boxl[1],
+                                          z=coords[:, 2] % boxl[2], u=radii,
+                                          v=radii, w=radii, scalars=types)
         if not self.running:
             f.scene.reset_zoom()
             self.running = True
 
         if not Nbonds_changed:
             if bonds.shape[0] > 0:
-                self.arrows.mlab_source.set(x=bonds[:, 0], y=bonds[:, 1], z=bonds[
-                                            :, 2], u=bonds[:, 3], v=bonds[:, 4], w=bonds[:, 5])
+                self.arrows.mlab_source.set(x=bonds[:, 0], y=bonds[:, 1],
+                                            z=bonds[:, 2], u=bonds[:, 3],
+                                            v=bonds[:, 4], w=bonds[:, 5])
         else:
-            self.arrows.mlab_source.reset(x=bonds[:, 0], y=bonds[:, 1], z=bonds[
-                                          :, 2], u=bonds[:, 3], v=bonds[:, 4], w=bonds[:, 5], scalars=bonds[:, 6])
+            self.arrows.mlab_source.reset(x=bonds[:, 0], y=bonds[:, 1],
+                                          z=bonds[:, 2], u=bonds[:, 3],
+                                          v=bonds[:, 4], w=bonds[:, 5],
+                                          scalars=bonds[:, 6])
 
     def update(self):
         """Pull the latest particle information from Espresso.
@@ -175,8 +183,8 @@ cdef class mayaviLive(object):
         cdef IA_parameters * ia
         cdef vector[int] bonds
 
-    # Using (additional) untyped variables and python constructs in the loop
-    # will slow it down considerably.
+        # Using (additional) untyped variables and python constructs in the loop
+        # will slow it down considerably.
         for i in range(N):
             p = get_particle_data_ptr(get_particle_data(i))
             if not p:
