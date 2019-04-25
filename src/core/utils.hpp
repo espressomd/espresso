@@ -46,15 +46,6 @@ template <typename T1, typename T2> double scalar(const T1 &a, const T2 &b) {
 
 /** calculates the squared length of a vector */
 template <typename T> double sqrlen(T const &v) { return scalar(v, v); }
-
-/** calculates the vector product c of two vectors a and b */
-template <typename T, typename U, typename V>
-inline void vector_product(T const &a, U const &b, V &c) {
-  c[0] = a[1] * b[2] - a[2] * b[1];
-  c[1] = a[2] * b[0] - a[0] * b[2];
-  c[2] = a[0] * b[1] - a[1] * b[0];
-}
-
 /*@}*/
 
 #endif
