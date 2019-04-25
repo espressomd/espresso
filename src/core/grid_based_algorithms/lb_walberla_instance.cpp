@@ -3,14 +3,14 @@
 #include "utils/Vector.hpp"
 #include <memory>
 
-
 #include "core/mpi/Environment.h"
 
 #ifdef LB_WALBERLA
 void walberla_mpi_init() {
   int argc = 0;
   char **argv = NULL;
-  static walberla::mpi::Environment m_env = walberla::mpi::Environment(argc, argv);
+  static walberla::mpi::Environment m_env =
+      walberla::mpi::Environment(argc, argv);
 }
 
 namespace {
