@@ -62,7 +62,7 @@ public:
   bool decide(const Particle &p1, const Particle &p2) const override {
     // Distance between particles
     auto const vec21 = get_mi_vector(p1.r.p, p2.r.p);
-    const double dist_betw_part =vec21.norm();
+    const double dist_betw_part = vec21.norm();
 
     // Interaction parameters for particle types
     IA_parameters *ia_params = get_ia_param(p1.p.type, p2.p.type);
