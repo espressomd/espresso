@@ -35,14 +35,6 @@
 /**************************************************************/
 /*@{*/
 
-/** calculates the scalar product of two vectors @p a and @p b */
-template <typename T1, typename T2> double scalar(const T1 &a, const T2 &b) {
-  double d2 = 0.0;
-  for (int i = 0; i < 3; i++)
-    d2 += a[i] * b[i];
-  return d2;
-}
-
 /** calculates the squared length of a vector */
 template <class T, size_t N> T sqrlen(const T (&v)[N]) {
   return boost::inner_product(v, v, T{});
