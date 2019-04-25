@@ -43,12 +43,12 @@
 #include "integrate.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
-#include "utils.hpp"
 
 #include "utils/vec_rotate.hpp"
 using Utils::vec_rotate;
 #include "utils/Vector.hpp"
 #include "utils/math/sqr.hpp"
+#include <utils/constants.hpp>
 
 /*************************************************************
  * Functions                                                 *

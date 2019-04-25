@@ -30,7 +30,8 @@
 
 #include "bonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
+
+#include <utils/math/sqr.hpp>
 
 /** set the parameters for the harmonic potential
  *

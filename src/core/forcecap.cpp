@@ -26,7 +26,6 @@
 
 #include "forcecap.hpp"
 #include "global.hpp"
-#include "utils.hpp"
 
 double force_cap = 0.0;
 

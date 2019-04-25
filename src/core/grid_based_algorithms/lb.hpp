@@ -41,7 +41,6 @@
 #include "errorhandling.hpp"
 
 #include "halo.hpp"
-#include "utils.hpp"
 
 #include "utils/Counter.hpp"
 #include "utils/Span.hpp"

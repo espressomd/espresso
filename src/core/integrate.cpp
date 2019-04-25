@@ -51,24 +51,22 @@
 #include "signalhandling.hpp"
 #include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
 #include "virtual_sites.hpp"
-
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "collision.hpp"
 #include "forces.hpp"
 #include "immersed_boundaries.hpp"
 #include "npt.hpp"
 
 #include <profiler/profiler.hpp>
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
-
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>

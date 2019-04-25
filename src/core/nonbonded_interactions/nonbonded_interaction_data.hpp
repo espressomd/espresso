@@ -25,7 +25,6 @@
 */
 
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include "TabulatedPotential.hpp"
 

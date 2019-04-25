@@ -39,7 +39,6 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "tuning.hpp"
-#include "utils.hpp"
 #ifdef CUDA
 #include "p3m_gpu_error.hpp"
 #endif
@@ -49,6 +48,8 @@
 using Utils::sinc;
 #include "utils/strcat_alloc.hpp"
 using Utils::strcat_alloc;
+#include "utils/math/sqr.hpp"
+#include "utils/constants.hpp"
 
 #include <cstdio>
 #include <cstdlib>

@@ -31,7 +31,6 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
-#include "utils.hpp"
 
 #ifdef AFFINITY
 

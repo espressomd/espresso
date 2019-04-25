@@ -36,6 +36,7 @@
 using Utils::angle_btw_triangles;
 using Utils::area_triangle;
 using Utils::get_n_triangle;
+#include "utils/constants.hpp"
 
 /** set parameters for the OIF_GLOBAL_FORCES potential.
  */

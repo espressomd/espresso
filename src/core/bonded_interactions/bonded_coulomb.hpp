@@ -35,7 +35,6 @@
 #include "bonded_interaction_data.hpp"
 #include "debug.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 /** set the parameters for the bonded_coulomb potential
  *

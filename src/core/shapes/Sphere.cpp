@@ -20,7 +20,9 @@
 */
 
 #include "Sphere.hpp"
-#include "utils.hpp"
+
+#include <utils/math/sqr.hpp>
+
 #include <cmath>
 
 using namespace std;

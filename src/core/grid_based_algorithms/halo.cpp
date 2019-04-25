@@ -33,7 +33,6 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "halo.hpp"
-#include "utils.hpp"
 
 /** Primitive fieldtypes and their initializers */
 struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,

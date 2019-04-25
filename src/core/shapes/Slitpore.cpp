@@ -20,7 +20,8 @@
 */
 
 #include "Slitpore.hpp"
-#include "utils.hpp"
+
+#include <utils/math/sqr.hpp>
 
 #include <cmath>
 

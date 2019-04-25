@@ -60,6 +60,7 @@
 #include "p3m-common.hpp"
 
 #include "utils/math/AS_erfc_part.hpp"
+#include <utils/constants.hpp>
 
 /************************************************
  * data types

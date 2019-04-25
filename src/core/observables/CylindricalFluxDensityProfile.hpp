@@ -21,7 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "CylindricalPidProfileObservable.hpp"
 #include "integrate.hpp"
-#include "utils.hpp"
 #include "utils/Histogram.hpp"
 
 namespace Observables {

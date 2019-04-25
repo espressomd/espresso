@@ -17,15 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.hpp"
+
+#include "immersed_boundary/ibm_tribend.hpp"
 
 #ifdef IMMERSED_BOUNDARY
-
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "immersed_boundary/ibm_tribend.hpp"
 #include "particle_data.hpp"
+
+#include "utils/constants.hpp"
 
 /*************
    IBM_Tribend_CalcForce

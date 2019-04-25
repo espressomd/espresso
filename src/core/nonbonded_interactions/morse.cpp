@@ -23,9 +23,11 @@
  *  Implementation of \ref morse.hpp
  */
 #include "morse.hpp"
-#include "communication.hpp"
 
 #ifdef MORSE
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int morse_set_params(int part_type_a, int part_type_b, double eps, double alpha,
                      double rmin, double cut) {

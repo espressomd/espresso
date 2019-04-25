@@ -20,7 +20,6 @@
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include "utils/serialization/multi_array.hpp"
 

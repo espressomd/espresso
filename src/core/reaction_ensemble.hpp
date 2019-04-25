@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define REACTION_ENSEMBLE_H
 
 #include "energy.hpp"
-#include "utils.hpp"
 #include "utils/Accumulator.hpp"
 #include <map>
 #include <random>

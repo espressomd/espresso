@@ -29,9 +29,9 @@
 
 #include "bonded_interaction_data.hpp"
 #include "grid.hpp"
-#include "utils.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/constants.hpp>
 
 /** set dihedral parameters
  *

@@ -25,6 +25,7 @@
  */
 
 #include "statistics.hpp"
+
 #include "communication.hpp"
 #include "energy.hpp"
 #include "event.hpp"
@@ -37,10 +38,11 @@
 #include "pressure.hpp"
 #include "short_range_loop.hpp"
 #include "statistics_chain.hpp"
-#include "utils.hpp"
+#include "virtual_sites.hpp"
+
 #include "utils/NoOp.hpp"
 #include "utils/contains.hpp"
-#include "virtual_sites.hpp"
+#include "utils/constants.hpp"
 
 #include <cstdlib>
 #include <cstring>

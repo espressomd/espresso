@@ -25,6 +25,8 @@
  */
 
 #include "electrostatics_magnetostatics/mmm2d.hpp"
+
+#ifdef ELECTROSTATICS
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -34,12 +36,14 @@
 #include "mmm-common.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
-#include "utils.hpp"
+
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
+
 #include <cmath>
 #include <mpi.h>
 #include <numeric>
 
-#ifdef ELECTROSTATICS
 char const *mmm2d_errors[] = {
     "ok",
     "Layer height too large for MMM2D near formula, increase n_layers",

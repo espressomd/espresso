@@ -37,7 +37,6 @@
 #include "debug.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 /** set the parameters for the bonded_coulomb potential
  *

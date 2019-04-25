@@ -27,6 +27,8 @@
 #include "rotation.hpp"
 #include "statistics.hpp"
 
+#include <utils/constants.hpp>
+
 #ifdef VIRTUAL_SITES
 
 namespace {

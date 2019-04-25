@@ -54,7 +54,6 @@
 #include "statistics.hpp"
 #include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
 #include "virtual_sites.hpp"
 
 #include "utils/mpi/all_compare.hpp"

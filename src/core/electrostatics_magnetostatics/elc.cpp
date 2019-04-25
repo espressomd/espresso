@@ -30,7 +30,6 @@
 #include "mmm-common.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
-#include "utils.hpp"
 #include <cmath>
 #include <mpi.h>
 

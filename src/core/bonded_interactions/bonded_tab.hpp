@@ -36,6 +36,9 @@
 #include "particle_data.hpp"
 #include <tuple>
 
+#include <utils/math/sqr.hpp>
+#include <utils/constants.hpp>
+
 /** Set the parameters of a bonded tabulated potential.
  *  ia_params and force/energy tables are communicated to each node.
  *

@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OBSERVABLES_CYLINDRICALDENSITYPROFILE_HPP
 
 #include "CylindricalPidProfileObservable.hpp"
-#include "utils.hpp"
 #include "utils/Histogram.hpp"
 #include "utils/coordinate_transformation.hpp"
 

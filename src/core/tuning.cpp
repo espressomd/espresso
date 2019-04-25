@@ -25,7 +25,6 @@
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
-#include "utils.hpp"
 #include "utils/statistics/RunningAverage.hpp"
 #include <limits>
 #include <sys/resource.h>

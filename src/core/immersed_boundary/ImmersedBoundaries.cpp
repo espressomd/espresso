@@ -17,16 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.hpp"
+#include "ImmersedBoundaries.hpp"
 
 #ifdef IMMERSED_BOUNDARY
-
-#include "ImmersedBoundaries.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
+
+#include <utils/constants.hpp>
 
 /************
   IBM_VolumeConservation

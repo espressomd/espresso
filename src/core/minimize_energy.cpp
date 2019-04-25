@@ -25,12 +25,14 @@
 #include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
-#include "utils.hpp"
 
-#include <algorithm>
+#include <utils/math/sqr.hpp>
+
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
+
 #include <limits>
+#include <algorithm>
 
 #ifdef MINIMIZE_ENERGY_DEBUG
 #define MINIMIZE_ENERGY_TRACE(A) A

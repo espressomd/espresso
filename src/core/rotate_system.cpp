@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "event.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
-#include "utils.hpp"
 
 #include "utils/vec_rotate.hpp"
 

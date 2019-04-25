@@ -30,7 +30,6 @@
 #ifdef LB_GPU
 #include <boost/optional.hpp>
 
-#include "utils.hpp"
 #include "utils/Counter.hpp"
 
 /* For the D3Q19 model most functions have a separate implementation

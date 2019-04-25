@@ -129,7 +129,6 @@
 #include "AccumulatorBase.hpp"
 #include "integrate.hpp"
 #include "observables/Observable.hpp"
-#include "utils.hpp"
 #include "utils/Vector.hpp"
 
 namespace Accumulators {

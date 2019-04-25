@@ -20,7 +20,6 @@
 #include "cuda_init.hpp"
 #include "communication.hpp"
 #include "config.hpp"
-#include "utils.hpp"
 
 #include <cstring>
 #include <iterator>
