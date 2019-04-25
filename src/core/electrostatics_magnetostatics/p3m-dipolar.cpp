@@ -50,8 +50,8 @@
 using Utils::strcat_alloc;
 #include "utils/math/sinc.hpp"
 using Utils::sinc;
-#include "utils/math/sqr.hpp"
 #include "utils/constants.hpp"
+#include "utils/math/sqr.hpp"
 
 #include <cstdio>
 #include <cstdlib>

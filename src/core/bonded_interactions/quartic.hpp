@@ -32,8 +32,8 @@
 #include "debug.hpp"
 #include "particle_data.hpp"
 
-#include <utils/math/sqr.hpp>
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 /** set the parameters for the quartic potential
  *

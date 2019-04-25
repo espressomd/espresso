@@ -31,8 +31,8 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
 
-#include <limits>
 #include <algorithm>
+#include <limits>
 
 #ifdef MINIMIZE_ENERGY_DEBUG
 #define MINIMIZE_ENERGY_TRACE(A) A

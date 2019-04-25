@@ -40,8 +40,8 @@
 
 #include "utils/strcat_alloc.hpp"
 using Utils::strcat_alloc;
-#include <utils/math/sqr.hpp>
 #include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 /** How many trial calculations */
 #define TEST_INTEGRATIONS 1000

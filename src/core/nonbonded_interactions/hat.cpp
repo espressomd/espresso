@@ -30,7 +30,6 @@
 
 #include <utils/constants.hpp>
 
-
 int hat_set_params(int part_type_a, int part_type_b, double Fmax, double r) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 

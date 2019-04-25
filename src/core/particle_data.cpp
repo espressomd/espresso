@@ -43,8 +43,8 @@
 #include "virtual_sites.hpp"
 
 #include "utils/Cache.hpp"
-#include "utils/mpi/gatherv.hpp"
 #include "utils/constants.hpp"
+#include "utils/mpi/gatherv.hpp"
 
 #include <boost/range/algorithm.hpp>
 #include <boost/serialization/variant.hpp>
