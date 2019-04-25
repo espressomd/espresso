@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <vector>
-
-#include "boost/mpi/collectives.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -29,10 +26,16 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
-#include "utils/mpi/all_compare.hpp"
-#include "utils/mpi/gather_buffer.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
+
+#include <utils/mpi/all_compare.hpp>
+#include <utils/mpi/gather_buffer.hpp>
+
 #include <boost/serialization/serialization.hpp>
+#include <boost/mpi/collectives.hpp>
+#include <boost/algorithm/clamp.hpp>
+
+#include <vector>
 
 #ifdef COLLISION_DETECTION_DEBUG
 #define TRACE(a) a
@@ -336,36 +339,16 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
 
   // If we are still here, we need to create angular bond
   // First, find the angle between the particle p, p1 and p2
-  double cosine = 0.0;
 
-  double vec1[3], vec2[3];
   /* vector from p to p1 */
-  get_mi_vector(vec1, p.r.p, p1.r.p);
-  // Normalize
-  double dist2 = sqrlen(vec1);
-  double d1i = 1.0 / sqrt(dist2);
-  for (double &j : vec1)
-    j *= d1i;
+  auto const vec1 = get_mi_vector(p.r.p, p1.r.p).normalize();
+    /* vector from p to p2 */
+  auto const vec2 = get_mi_vector(p.r.p, p2.r.p).normalize();
 
-  /* vector from p to p2 */
-  get_mi_vector(vec2, p.r.p, p2.r.p);
-  // normalize
-  dist2 = sqrlen(vec2);
-  double d2i = 1.0 / sqrt(dist2);
-  for (double &j : vec2)
-    j *= d2i;
-
-  /* scalar product of vec1 and vec2 */
-  cosine = scalar(vec1, vec2);
-
-  // Handle case where cosine is nearly 1 or nearly -1
-  if (cosine > TINY_COS_VALUE)
-    cosine = TINY_COS_VALUE;
-  if (cosine < -TINY_COS_VALUE)
-    cosine = -TINY_COS_VALUE;
+  auto const cosine = boost::algorithm::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
 
   // Bond angle
-  double phi = acos(cosine);
+  auto const phi = acos(cosine);
 
   // We find the bond id by dividing the range from 0 to pi in
   // three_particle_angle_resolution steps and by adding the id
