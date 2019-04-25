@@ -51,13 +51,11 @@ int subt_lj_set_params(int bond_type);
     @return true if bond is broken
 */
 inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
-                                   Bonded_ia_parameters *, double dx[3],
-                                   double force[3]) {
+                                   Bonded_ia_parameters *,
+                                   const Utils::Vector3d &dx, double *force) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
-  auto const dx_ = -Utils::Vector3d(dx, dx + 3);
-
-  add_lj_pair_force(ia_params, dx_.data(), dx_.norm(), force);
+  add_lj_pair_force(ia_params, dx.data(), dx.norm(), force);
 
   return ES_OK;
 }

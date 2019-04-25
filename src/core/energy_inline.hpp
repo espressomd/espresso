@@ -258,14 +258,14 @@ inline void add_bonded_energy(const Particle *p1) {
         break;
 #ifdef ROTATION
       case BONDED_IA_HARMONIC_DUMBBELL:
-        bond_broken = harmonic_dumbbell_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = harmonic_dumbbell_pair_energy(p1, iaparams, dx, &ret);
         break;
 #endif
       case BONDED_IA_HARMONIC:
-        bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = harmonic_pair_energy(iaparams, dx, &ret);
         break;
       case BONDED_IA_QUARTIC:
-        bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = quartic_pair_energy( iaparams, dx, &ret);
         break;
 #ifdef ELECTROSTATICS
       case BONDED_IA_BONDED_COULOMB:
