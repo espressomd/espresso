@@ -124,7 +124,7 @@ typedef struct {
   int s_ur[6][3];
   /** sizes for send buffers. */
   int s_size[6];
-  /** dimensionof sub meshes to recv. */
+  /** dimension of sub meshes to recv. */
   int r_dim[6][3];
   /** left down corners of sub meshes to recv. */
   int r_ld[6][3];
