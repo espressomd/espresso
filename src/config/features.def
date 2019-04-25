@@ -97,7 +97,7 @@ UMBRELLA                           requires EXPERIMENTAL_FEATURES
 GAY_BERNE                       implies ROTATION
 GAY_BERNE                       requires EXPERIMENTAL_FEATURES
 OVERLAPPED
-THOLE                           requires P3M
+THOLE                           requires ELECTROSTATICS
 
 /* Fluid-Structure Interactions (object in fluid) */
 OIF_LOCAL_FORCES

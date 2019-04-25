@@ -65,8 +65,8 @@ int MMM1D_sanity_checks();
 /// initialize the MMM1D constants
 void MMM1D_init();
 
-void add_mmm1d_coulomb_pair_force(double chprf, double const d[3], double dist2,
-                                  double dist, double force[3]);
+void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
+                                  double force[3]);
 
 double mmm1d_coulomb_pair_energy(double q1q2, double const d[3], double r2,
                                  double r);
