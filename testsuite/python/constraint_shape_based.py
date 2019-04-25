@@ -73,7 +73,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                     pos = numpy.array(
                         [math.cos(phi_angle) * math.sin(theta_angle)
                          * (rad + distance) + self.box_l / 2.,
-                         math.sin(phi_angle) * math.sin(theta_angle) 
+                         math.sin(phi_angle) * math.sin(theta_angle)
                          * (rad + distance) + self.box_l / 2.,
                          math.cos(theta_angle) * (rad + distance) + self.box_l / 2.])
 
@@ -267,7 +267,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                     phi_angle = phi / phi_steps * 2.0 * math.pi
                     phi_rot_matrix = numpy.array(
                         [[math.cos(phi_angle),
-                          -1.0 * math.sin(phi_angle), 
+                          -1.0 * math.sin(phi_angle),
                           0.0],
                          [math.sin(phi_angle),
                           math.cos(phi_angle),
@@ -624,7 +624,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # check force calculation of rhomboid constraint
         # (1) using a cuboid
         interaction_dir = +1  # constraint is directed outwards
-        length = numpy.array([-5.0,6.0,7.0])  #dimension of the cuboid
+        length = numpy.array([-5.0, 6.0, 7.0])  # dimension of the cuboid
         corner = numpy.array([self.box_l / 2.0,
                               self.box_l / 2.0,
                               self.box_l / 2.0])
@@ -678,59 +678,67 @@ class ShapeBasedConstraintTest(ut.TestCase):
             for y in range(y_range):
                 for z in range(z_range):
                     pos = numpy.array([x + (self.box_l + length[0] - x_range) / 2.0,
-                                       y + (self.box_l + length[1] - y_range) / 2.0,
+                                       y + (self.box_l +
+                                            length[1] - y_range) / 2.0,
                                        z + (self.box_l + length[2] - z_range) / 2.0])
                     shape_dist, shape_dist_vec = rhomboid_shape.call_method(
                         "calc_distance",
-                                                              position=pos.tolist())
+                        position=pos.tolist())
 
                     outside = False
                     edge_case = False
-                    dist_vec = numpy.array([0.0,0.0,0.0])
+                    dist_vec = numpy.array([0.0, 0.0, 0.0])
 
-                    #check if outside or inside
-                    if(pos[0] < (self.box_l + length[0] - abs(length[0])) / 2.0 or 
+                    # check if outside or inside
+                    if(pos[0] < (self.box_l + length[0] - abs(length[0])) / 2.0 or
                        pos[0] > (self.box_l + length[0] + abs(length[0])) / 2.0 or
-                       pos[1] < (self.box_l + length[1] - abs(length[1])) / 2.0 or 
+                       pos[1] < (self.box_l + length[1] - abs(length[1])) / 2.0 or
                        pos[1] > (self.box_l + length[1] + abs(length[1])) / 2.0 or
-                       pos[2] < (self.box_l + length[2] - abs(length[2])) / 2.0 or 
+                       pos[2] < (self.box_l + length[2] - abs(length[2])) / 2.0 or
                        pos[2] > (self.box_l + length[2] + abs(length[2])) / 2.0):
                         outside = True
 
                     if(outside):
                         for i in range(3):
                             if(pos[i] < (self.box_l + length[i] - abs(length[i])) / 2.0):
-                                dist_vec[i] = pos[i] - (self.box_l + length[i] - abs(length[i])) / 2.0
+                                dist_vec[i] = pos[i] - \
+                                    (self.box_l +
+                                     length[i] - abs(length[i])) / 2.0
                             elif(pos[i] > (self.box_l + length[i] + abs(length[i])) / 2.0):
-                                dist_vec[i] = pos[i] - (self.box_l + length[i] + abs(length[i])) / 2.0
+                                dist_vec[i] = pos[i] - \
+                                    (self.box_l +
+                                     length[i] + abs(length[i])) / 2.0
                             else:
                                 dist_vec[i] = 0.0
-                        dist = math.sqrt(dist_vec[0]**2 + dist_vec[1]**2 + dist_vec[2]**2)
+                        dist = math.sqrt(
+                            dist_vec[0]**2 + dist_vec[1]**2 + dist_vec[2]**2)
                     else:
                         dist = self.box_l
                         c1 = pos - corner
                         c2 = corner + length - pos
-                        abs_c1c2 = numpy.abs(numpy.concatenate((c1,c2)))
+                        abs_c1c2 = numpy.abs(numpy.concatenate((c1, c2)))
                         dist = numpy.amin(abs_c1c2)
-                        where = numpy.argwhere(dist==abs_c1c2)
+                        where = numpy.argwhere(dist == abs_c1c2)
                         if(len(where) > 1):
                             edge_case = True
                         for which in where:
                             if(which < 3):
                                 dist_vec[which] = dist * numpy.sign(c1[which])
                             else:
-                                dist_vec[which - 3] = -dist * numpy.sign(c2[which - 3])
+                                dist_vec[which - 3] = -dist * \
+                                    numpy.sign(c2[which - 3])
 
                         dist *= -interaction_dir
 
                     if(edge_case):
                         for i in range(3):
                             if(shape_dist_vec[i] != 0.0):
-                                self.assertAlmostEqual(abs(shape_dist_vec[i]),abs(dist_vec[i]))
+                                self.assertAlmostEqual(
+                                    abs(shape_dist_vec[i]), abs(dist_vec[i]))
                     else:
-                        self.assertAlmostEqual(shape_dist_vec[0],dist_vec[0])
-                        self.assertAlmostEqual(shape_dist_vec[1],dist_vec[1])
-                        self.assertAlmostEqual(shape_dist_vec[2],dist_vec[2])
+                        self.assertAlmostEqual(shape_dist_vec[0], dist_vec[0])
+                        self.assertAlmostEqual(shape_dist_vec[1], dist_vec[1])
+                        self.assertAlmostEqual(shape_dist_vec[2], dist_vec[2])
                     self.assertAlmostEqual(shape_dist, dist)
 
         # (2) using a rhomboid
@@ -823,7 +831,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 r=torus_constraint.min_dist()),
             places=10)  # minus for Newton's third law
 
-        #check whether total_summed_outer_normal_force is correct
+        # check whether total_summed_outer_normal_force is correct
         y_part2 = self.box_l / 2.0 + 2.0 * radius - part_offset
         system.part.add(
             id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
@@ -881,7 +889,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
                     shape_dist, shape_dist_vec = torus_shape.call_method(
                         "calc_distance",
-                                                              position=phi_rot_point.tolist())
+                        position=phi_rot_point.tolist())
                     self.assertAlmostEqual(shape_dist, distance)
 
         # Reset
