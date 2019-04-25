@@ -28,9 +28,6 @@
 #include "utils/constants.hpp"
 #include "utils/math/sqr.hpp"
 
-#include <cassert>
-#include <cmath>
-
 /**************************************************************/
 /** \name Vector and matrix operations for three dimensions.  */
 /**************************************************************/
@@ -46,6 +43,11 @@ template <typename T1, typename T2> double scalar(const T1 &a, const T2 &b) {
 
 /** calculates the squared length of a vector */
 template <typename T> double sqrlen(T const &v) { return scalar(v, v); }
+
+template <class T, size_t N> T sqrlen(Utils::Vector<T, N> const &v) {
+  return v.norm2();
+}
+
 /*@}*/
 
 #endif

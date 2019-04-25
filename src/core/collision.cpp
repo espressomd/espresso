@@ -254,10 +254,9 @@ void queue_collision(const int part1, const int part2) {
 const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
                                             const Particle &p2,
                                             Utils::Vector3d &pos) {
-  double vec21[3];
   double c;
-  get_mi_vector(vec21, p1.r.p, p2.r.p);
-  const double dist_betw_part = sqrt(sqrlen(vec21));
+  auto const vec21 = get_mi_vector(p1.r.p, p2.r.p);
+  const double dist_betw_part = vec21.norm();
 
   // Find out, which is the particle to be glued.
   if ((p1.p.type == collision_params.part_type_to_be_glued) &&
@@ -293,15 +292,12 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
 // Considers three particles for three_particle_binding and performs
 // the binding if the criteria are met //
 void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
-  double vec21[3];
   // If p1 and p2 are not closer or equal to the cutoff distance, skip
   // p1:
-  get_mi_vector(vec21, p.r.p, p1.r.p);
-  if (sqrt(sqrlen(vec21)) > collision_params.distance)
+  if (get_mi_vector(p.r.p, p1.r.p).norm() > collision_params.distance)
     return;
   // p2:
-  get_mi_vector(vec21, p.r.p, p2.r.p);
-  if (sqrt(sqrlen(vec21)) > collision_params.distance)
+  if (get_mi_vector(p.r.p, p2.r.p).norm() > collision_params.distance)
     return;
 
   // Check, if there already is a three-particle bond centered on p
