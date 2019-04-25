@@ -39,15 +39,14 @@
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
 #include "debug.hpp"
+#include "diamond.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
-#include "diamond.hpp"
 #include "random.hpp"
 #include "utils.hpp"
 
 #include "utils/vec_rotate.hpp"
 using Utils::vec_rotate;
-
 
 /*************************************************************
  * Functions                                                 *

@@ -102,7 +102,7 @@ lj_shift = 0.0
 
 # setting up the polymer
 positions = polymer.polymer_positions(
-        n_polymers=N_P, beads_per_chain=MPC, bond_length=bond_l, seed=13)
+    n_polymers=N_P, beads_per_chain=MPC, bond_length=bond_l, seed=13)
 for polymer in positions:
     for i, pos in enumerate(polymer):
         id = len(system.part)

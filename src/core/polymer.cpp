@@ -47,23 +47,22 @@
 
 #include "utils/vec_rotate.hpp"
 
-
-Utils::Vector3d random_position(const std::function<double()>& generate_rn) {
-    Utils::Vector3d v;
-    for (int i=0; i<3; ++i)
-        v[i] = box_l[i] * generate_rn();
-    return v;
+Utils::Vector3d random_position(const std::function<double()> &generate_rn) {
+  Utils::Vector3d v;
+  for (int i = 0; i < 3; ++i)
+    v[i] = box_l[i] * generate_rn();
+  return v;
 }
 
-Utils::Vector3d random_unit_vector(const std::function<double()>& generate_rn) {
-    Utils::Vector3d v;
-    const double phi = acos( 1. - 2. * generate_rn());
-    const double theta = 2. * Utils::pi() * generate_rn();
-    v[0] = sin(phi) * cos(theta);
-    v[1] = sin(phi) * sin(theta);
-    v[2] = cos(phi);
-    v /= v.norm();
-    return v;
+Utils::Vector3d random_unit_vector(const std::function<double()> &generate_rn) {
+  Utils::Vector3d v;
+  const double phi = acos(1. - 2. * generate_rn());
+  const double theta = 2. * Utils::pi() * generate_rn();
+  v[0] = sin(phi) * cos(theta);
+  v[1] = sin(phi) * sin(theta);
+  v[2] = cos(phi);
+  v /= v.norm();
+  return v;
 }
 
 double mindist(PartCfg &partCfg, const Utils::Vector3d pos) {
@@ -82,129 +81,148 @@ double mindist(PartCfg &partCfg, const Utils::Vector3d pos) {
   return -1.0;
 }
 
-bool is_valid_position(const Utils::Vector3d *pos,
-        const std::vector<std::vector<Utils::Vector3d>> *positions,
-        PartCfg &partCfg, const double min_distance, const int respect_constraints) {
-    const Utils::Vector3d folded_pos = folded_position(*pos);
-    // check if constraint is violated
-    if (respect_constraints) {
-        for (auto &c : Constraints::constraints) {
-            auto cs = std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
-            if (cs) {
-                double d;
-                double v[3];
+bool is_valid_position(
+    const Utils::Vector3d *pos,
+    const std::vector<std::vector<Utils::Vector3d>> *positions,
+    PartCfg &partCfg, const double min_distance,
+    const int respect_constraints) {
+  const Utils::Vector3d folded_pos = folded_position(*pos);
+  // check if constraint is violated
+  if (respect_constraints) {
+    for (auto &c : Constraints::constraints) {
+      auto cs =
+          std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
+      if (cs) {
+        double d;
+        double v[3];
 
-                cs->calc_dist(folded_pos, &d, v);
+        cs->calc_dist(folded_pos, &d, v);
 
-                if (d <= 0) {
-                    return false;
-                }
-            }
+        if (d <= 0) {
+          return false;
         }
+      }
     }
+  }
 
-    if (min_distance > 0) {
-        // check for collision with existing particles
-        if (mindist(partCfg, *pos) < min_distance) {
-            return false;
-        }
-        // check for collision with buffered positions
-        double buff_mindist = std::numeric_limits<double>::infinity();
-        double h;
-        for (auto p = positions->begin(); p != positions->end(); ++p) {
-            for (auto m = p->begin(); m != p->end(); ++m) {
-                h = (folded_position(*pos) - folded_position(*m)).norm2();
-                buff_mindist = std::min(h, buff_mindist);
-            }
-        }
-        if (std::sqrt(buff_mindist) < min_distance) {
-            return false;
-        }
+  if (min_distance > 0) {
+    // check for collision with existing particles
+    if (mindist(partCfg, *pos) < min_distance) {
+      return false;
     }
-    return true;
+    // check for collision with buffered positions
+    double buff_mindist = std::numeric_limits<double>::infinity();
+    double h;
+    for (auto p = positions->begin(); p != positions->end(); ++p) {
+      for (auto m = p->begin(); m != p->end(); ++m) {
+        h = (folded_position(*pos) - folded_position(*m)).norm2();
+        buff_mindist = std::min(h, buff_mindist);
+      }
+    }
+    if (std::sqrt(buff_mindist) < min_distance) {
+      return false;
+    }
+  }
+  return true;
 }
 
-std::vector<std::vector<Utils::Vector3d>> draw_polymer_positions(PartCfg &partCfg,
-        const int n_polymers, const int beads_per_chain, const double bond_length,
-        const std::vector<Utils::Vector3d> &start_positions, const double min_distance,
-        const int max_tries, const int use_bond_angle, const double bond_angle,
-        const int respect_constraints, const int seed) {
-    std::vector<std::vector<Utils::Vector3d>> positions(n_polymers, std::vector<Utils::Vector3d>(beads_per_chain));
+std::vector<std::vector<Utils::Vector3d>>
+draw_polymer_positions(PartCfg &partCfg, const int n_polymers,
+                       const int beads_per_chain, const double bond_length,
+                       const std::vector<Utils::Vector3d> &start_positions,
+                       const double min_distance, const int max_tries,
+                       const int use_bond_angle, const double bond_angle,
+                       const int respect_constraints, const int seed) {
+  std::vector<std::vector<Utils::Vector3d>> positions(
+      n_polymers, std::vector<Utils::Vector3d>(beads_per_chain));
 
-    std::mt19937 mt(seed);
-    std::uniform_real_distribution<double> dist(0.0, 1.0);
+  std::mt19937 mt(seed);
+  std::uniform_real_distribution<double> dist(0.0, 1.0);
 
-    Utils::Vector3d trial_pos;
-    int attempts_mono, attempts_poly;
+  Utils::Vector3d trial_pos;
+  int attempts_mono, attempts_poly;
 
-    // make sure that if given, all starting positions are valid
-    if ((not start_positions.empty())
-            and std::any_of(start_positions.begin(), start_positions.end(),
-                [&positions, &partCfg, min_distance, respect_constraints](Utils::Vector3d v)
-                { return not is_valid_position(&v, &positions, partCfg, min_distance, respect_constraints); }))
-        throw std::runtime_error("Invalid start positions.");
-    // use (if none given, random) starting positions for first monomer of each polymer
-    for (int p = 0; p < n_polymers; ++p) {
-        attempts_mono = 0;
-        // first monomer for all polymers
-        if (start_positions.empty()) {
-            do {
-                trial_pos = random_position( [&](){ return dist(mt); } );
-                attempts_mono++;
-            } while ((not is_valid_position(&trial_pos, &positions, partCfg, min_distance, respect_constraints))
-                    and (attempts_mono < max_tries));
-            if (attempts_mono == max_tries) {
-                throw std::runtime_error("Failed to create polymer start positions.");
-            } else {
-                positions[p][0] = trial_pos;
-            }
+  // make sure that if given, all starting positions are valid
+  if ((not start_positions.empty()) and
+      std::any_of(start_positions.begin(), start_positions.end(),
+                  [&positions, &partCfg, min_distance,
+                   respect_constraints](Utils::Vector3d v) {
+                    return not is_valid_position(&v, &positions, partCfg,
+                                                 min_distance,
+                                                 respect_constraints);
+                  }))
+    throw std::runtime_error("Invalid start positions.");
+  // use (if none given, random) starting positions for first monomer of each
+  // polymer
+  for (int p = 0; p < n_polymers; ++p) {
+    attempts_mono = 0;
+    // first monomer for all polymers
+    if (start_positions.empty()) {
+      do {
+        trial_pos = random_position([&]() { return dist(mt); });
+        attempts_mono++;
+      } while ((not is_valid_position(&trial_pos, &positions, partCfg,
+                                      min_distance, respect_constraints)) and
+               (attempts_mono < max_tries));
+      if (attempts_mono == max_tries) {
+        throw std::runtime_error("Failed to create polymer start positions.");
+      } else {
+        positions[p][0] = trial_pos;
+      }
+    } else {
+      positions[p][0] = start_positions[p];
+    }
+  }
+
+  // create remaining monomers' positions
+  for (int p = 0; p < n_polymers; ++p) {
+    attempts_poly = 0;
+    for (int m = 1; m < beads_per_chain; ++m) {
+      attempts_mono = 0;
+      do {
+        if (m == 0) {
+          // m == 0 is only true after a failed attempt to position a polymer
+          trial_pos = random_position([&]() { return dist(mt); });
+        } else if (not use_bond_angle or m < 2) {
+          // random step, also necessary if angle is set, placing the second
+          // bead
+          trial_pos =
+              positions[p][m - 1] +
+              bond_length * random_unit_vector([&]() { return dist(mt); });
         } else {
-            positions[p][0] = start_positions[p];
+          // use prescribed angle
+          Utils::Vector3d last_vec = positions[p][m - 1] - positions[p][m - 2];
+          trial_pos = positions[p][m - 1] +
+                      Utils::vec_rotate(
+                          vector_product(last_vec, random_unit_vector([&]() {
+                                           return dist(mt);
+                                         })),
+                          bond_angle, -last_vec);
         }
-    }
+        attempts_mono++;
+      } while ((not is_valid_position(&trial_pos, &positions, partCfg,
+                                      min_distance, respect_constraints)) and
+               (attempts_mono < max_tries));
 
-    // create remaining monomers' positions
-    for (int p = 0; p < n_polymers; ++p) {
-        attempts_poly = 0;
-        for (int m = 1; m < beads_per_chain; ++m) {
-            attempts_mono = 0;
-            do {
-                if (m == 0) {
-                    // m == 0 is only true after a failed attempt to position a polymer
-                    trial_pos = random_position( [&](){ return dist(mt); } );
-                } else if (not use_bond_angle or m < 2) {
-                    // random step, also necessary if angle is set, placing the second bead
-                    trial_pos = positions[p][m-1] + bond_length * random_unit_vector( [&](){ return dist(mt); } );
-                } else {
-                    // use prescribed angle
-                    Utils::Vector3d last_vec = positions[p][m-1] - positions[p][m-2];
-                    trial_pos = positions[p][m-1] + Utils::vec_rotate(
-                            vector_product(last_vec, random_unit_vector( [&](){ return dist(mt); } )),
-                            bond_angle,
-                            -last_vec);
-                }
-                attempts_mono++;
-            } while ((not is_valid_position(&trial_pos, &positions, partCfg, min_distance, respect_constraints))
-                    and (attempts_mono < max_tries));
-
-            if (attempts_mono == max_tries) {
-                if (attempts_poly < max_tries) {
-                    // if start positions have to be respected: fail ...
-                    if (start_positions.empty()) {
-                        throw std::runtime_error("Failed to create polymer positions with given start positions.");}
-                    else {
-                    // ... otherwise retry to position the whole polymer
-                        attempts_poly++;
-                        m = -1;
-                    }
-                } else {
-                    // ... but only if max_tries has not been exceeded.
-                    throw std::runtime_error("Failed to create polymer positions.");
-                }
-            } else {
-                positions[p][m] = trial_pos;
-            }
+      if (attempts_mono == max_tries) {
+        if (attempts_poly < max_tries) {
+          // if start positions have to be respected: fail ...
+          if (start_positions.empty()) {
+            throw std::runtime_error("Failed to create polymer positions with "
+                                     "given start positions.");
+          } else {
+            // ... otherwise retry to position the whole polymer
+            attempts_poly++;
+            m = -1;
+          }
+        } else {
+          // ... but only if max_tries has not been exceeded.
+          throw std::runtime_error("Failed to create polymer positions.");
         }
+      } else {
+        positions[p][m] = trial_pos;
+      }
     }
-    return positions;
+  }
+  return positions;
 }

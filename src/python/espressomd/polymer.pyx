@@ -24,6 +24,7 @@ import numpy as np
 from espressomd.utils import is_valid_type, array_locked
 from espressomd.utils cimport make_Vector3d
 
+
 def validate_params(_params, default):
     if _params["n_polymers"] <= 0:
         raise ValueError(
@@ -55,6 +56,7 @@ def validate_params(_params, default):
             "seed has to be an integer")
 
 # wrapper function to expose to the user interface
+
 
 def polymer_positions(**kwargs):
     """
@@ -113,7 +115,16 @@ def polymer_positions(**kwargs):
     # use bond_angle if set via kwarg
     params["use_bond_angle"] = "bond_angle" in kwargs
 
-    valid_keys = ["n_polymers", "beads_per_chain", "bond_length", "start_positions", "min_distance", "max_tries", "bond_angle", "respect_constraints", "seed"]
+    valid_keys = [
+        "n_polymers",
+        "beads_per_chain",
+     "bond_length",
+     "start_positions",
+     "min_distance",
+     "max_tries",
+     "bond_angle",
+     "respect_constraints",
+     "seed"]
 
     required_keys = ["n_polymers", "beads_per_chain", "bond_length", "seed"]
 
@@ -133,9 +144,21 @@ def polymer_positions(**kwargs):
     cdef vector[Vector3d] start_positions
     if (params["start_positions"] != []):
         for i in range(len(params["start_positions"])):
-            start_positions.push_back(make_Vector3d(params["start_positions"][i]))
+            start_positions.push_back(
+                make_Vector3d(params["start_positions"][i]))
 
-    data = draw_polymer_positions(partCfg(), params["n_polymers"], params["beads_per_chain"], params["bond_length"], start_positions, params["min_distance"], params["max_tries"], int(params["use_bond_angle"]), params["bond_angle"], int(params["respect_constraints"]), params["seed"])
+    data = draw_polymer_positions(
+        partCfg(),
+        params["n_polymers"],
+     params["beads_per_chain"],
+     params["bond_length"],
+     start_positions,
+     params["min_distance"],
+     params["max_tries"],
+     int(params["use_bond_angle"]),
+     params["bond_angle"],
+     int(params["respect_constraints"]),
+     params["seed"])
     positions = []
     for polymer in data:
         p = []
