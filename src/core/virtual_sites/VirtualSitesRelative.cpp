@@ -162,8 +162,9 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
       // (r_virtualParticle-r_realParticle)
 
       // Add forces and torques
-        p_real->f.torque += vector_product(get_mi_vector(p.r.p, p_real->r.p), p.f.f) + p.f.torque;
-        p_real->f.f += p.f.f;
+      p_real->f.torque +=
+          vector_product(get_mi_vector(p.r.p, p_real->r.p), p.f.f) + p.f.torque;
+      p_real->f.f += p.f.f;
     }
   }
 }

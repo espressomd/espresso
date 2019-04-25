@@ -83,15 +83,15 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   auto const v2 = (n1 - sc * n2).normalize();
 
   // Force for particle 1:
-  p1->f.f += Pre * (vector_product(get_mi_vector(p2->r.p, p3->r.p), v1) / Ai
-                   +vector_product(get_mi_vector(p3->r.p, p4->r.p), v2) / Aj);
+  p1->f.f += Pre * (vector_product(get_mi_vector(p2->r.p, p3->r.p), v1) / Ai +
+                    vector_product(get_mi_vector(p3->r.p, p4->r.p), v2) / Aj);
 
   // Force for particle 2:
   p2->f.f += Pre * (vector_product(get_mi_vector(p3->r.p, p1->r.p), v1) / Ai);
 
   // Force for Particle 3:
-  p3->f.f += Pre *(vector_product(get_mi_vector(p1->r.p, p2->r.p), v1) / Ai
-                  +vector_product(get_mi_vector(p4->r.p, p1->r.p), v2) / Aj);
+  p3->f.f += Pre * (vector_product(get_mi_vector(p1->r.p, p2->r.p), v1) / Ai +
+                    vector_product(get_mi_vector(p4->r.p, p1->r.p), v2) / Aj);
 
   // Force for Particle 4:
   p4->f.f += Pre * (vector_product(get_mi_vector(p1->r.p, p3->r.p), v2) / Aj);

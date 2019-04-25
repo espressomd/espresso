@@ -224,8 +224,8 @@ inline int calc_tab_dihedral_force(Particle const *p2, Particle const *p1,
   auto const *tab_pot = iaparams->p.tab.pot;
 
   /* dihedral angle */
-  calc_dihedral_angle(p1, p2, p3, p4, v12.data(), v23.data(), v34.data(), v12Xv23.data(), &l_v12Xv23,
-                      v23Xv34.data(), &l_v23Xv34, &cos_phi, &phi);
+  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
+                      v23Xv34, &l_v23Xv34, &cos_phi, &phi);
   /* dihedral angle not defined - force zero */
   if (phi == -1.0) {
     for (int i = 0; i < 3; i++) {
@@ -274,7 +274,8 @@ inline int tab_dihedral_energy(Particle const *p2, Particle const *p1,
                                Bonded_ia_parameters const *iaparams,
                                double *_energy) {
   /* vectors for dihedral calculations. */
-  double v12[3], v23[3], v34[3], v12Xv23[3], v23Xv34[3], l_v12Xv23, l_v23Xv34;
+  Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
+  double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle */
   double phi, cos_phi;
   auto const *tab_pot = iaparams->p.tab.pot;

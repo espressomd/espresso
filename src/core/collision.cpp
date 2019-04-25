@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "cells.hpp"
 #include "collision.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
@@ -31,9 +31,9 @@
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
-#include <boost/serialization/serialization.hpp>
-#include <boost/mpi/collectives.hpp>
 #include <boost/algorithm/clamp.hpp>
+#include <boost/mpi/collectives.hpp>
+#include <boost/serialization/serialization.hpp>
 
 #include <vector>
 
@@ -342,10 +342,11 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
 
   /* vector from p to p1 */
   auto const vec1 = get_mi_vector(p.r.p, p1.r.p).normalize();
-    /* vector from p to p2 */
+  /* vector from p to p2 */
   auto const vec2 = get_mi_vector(p.r.p, p2.r.p).normalize();
 
-  auto const cosine = boost::algorithm::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
+  auto const cosine =
+      boost::algorithm::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
 
   // Bond angle
   auto const phi = acos(cosine);
