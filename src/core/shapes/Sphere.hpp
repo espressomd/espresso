@@ -30,15 +30,15 @@ class Sphere : public Shape {
 public:
   Sphere() : m_pos({0.0, 0.0, 0.0}), m_rad(0.0), m_direction(1.0) {}
 
-  void calculate_dist(const Vector3d &pos, double *dist,
+  void calculate_dist(const Utils::Vector3d &pos, double *dist,
                       double *vec) const override;
 
-  Vector3d &pos() { return m_pos; }
+  Utils::Vector3d &pos() { return m_pos; }
   double &rad() { return m_rad; }
   double &direction() { return m_direction; }
 
 private:
-  Vector3d m_pos;
+  Utils::Vector3d m_pos;
   double m_rad;
   double m_direction;
 };

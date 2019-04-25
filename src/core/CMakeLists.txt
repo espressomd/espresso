@@ -90,7 +90,7 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/reaction_field.cpp
   grid_based_algorithms/halo.cpp
   grid_based_algorithms/lattice.cpp
-  grid_based_algorithms/lbboundaries.cpp
+        grid_based_algorithms/lb_boundaries.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/lb_interface.cpp
   grid_based_algorithms/lb_interpolation.cpp

@@ -21,7 +21,7 @@
 #define _ELECTROKINETICS_HPP
 
 #include "config.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 
 // note that we need to declare the ek_parameters struct and instantiate it for
 // LB_GPU to compile when electrokinetics is not compiled in. This seemed more
@@ -185,7 +185,7 @@ int ek_node_print_potential(int x, int y, int z, double *potential);
 int ek_node_set_density(int species, int x, int y, int z, double density);
 ekfloat ek_calculate_net_charge();
 int ek_neutralize_system(int species);
-int ek_save_checkpoint(char *filename);
+int ek_save_checkpoint(char *filename, char *lb_filename);
 int ek_load_checkpoint(char *filename);
 
 #ifdef EK_BOUNDARIES

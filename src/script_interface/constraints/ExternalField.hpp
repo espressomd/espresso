@@ -53,7 +53,7 @@ public:
   Variant call_method(const std::string &name,
                       VariantMap const &args) override {
     if (name == "_eval_field") {
-      return m_constraint->field()(get_value<Vector3d>(args, "x"),
+      return m_constraint->field()(get_value<Utils::Vector3d>(args, "x"),
                                    get_value_or<double>(args, "t", 0.));
     }
     return none;

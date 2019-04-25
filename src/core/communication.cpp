@@ -702,12 +702,13 @@ int mpi_iccp3m_init() {
 }
 #endif
 
-Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos) {
+Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
+                                                  Utils::Vector3d const &pos) {
 #ifdef LB
   if (this_node == 0) {
     comm_cart.send(node, SOME_TAG, pos);
     mpi_call(mpi_recv_lb_interpolated_velocity_slave, node, 0);
-    Vector3d interpolated_u{};
+    Utils::Vector3d interpolated_u{};
     comm_cart.recv(node, SOME_TAG, interpolated_u);
     return interpolated_u;
   }
@@ -718,7 +719,7 @@ Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos) {
 void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
 #ifdef LB
   if (node == this_node) {
-    Vector3d pos{};
+    Utils::Vector3d pos{};
     comm_cart.recv(0, SOME_TAG, pos);
     auto const interpolated_u =
         lb_lbinterpolation_get_interpolated_velocity(pos);

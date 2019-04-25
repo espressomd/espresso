@@ -160,11 +160,11 @@ cdef class System(object):
             self, "non_bonded_inter")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['part'] = System.__getattribute__(self, "part")
+        odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(
             self, "auto_update_accumulators")
-        odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
         odict['constraints'] = System.__getattribute__(self, "constraints")
         odict['galilei'] = System.__getattribute__(self, "galilei")

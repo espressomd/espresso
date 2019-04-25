@@ -389,16 +389,15 @@ def quartic_potential(k0, k1, r, r_cut, scalar_r):
 
 def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12.,
                          e2=6., b1=4., b2=4., delta=0., lam=1.):
-    V = 0.
-    if (r >= offset + cutoff):
-        V = 0.
-    else:
-        # LJGEN_SOFTCORE transformations
-        rroff = np.sqrt(
-            np.power(r - offset, 2) + (1 - lam) * delta * sig**2)
-        V = eps * lam * \
-            (b1 * np.power(sig / rroff, e1) -
-             b2 * np.power(sig / rroff, e2) + shift)
+    r = np.array(r)
+    V = np.zeros_like(r)
+    cutoffMask = (r <= cutoff + offset)
+    # LJGEN_SOFTCORE transformations
+    rroff = np.sqrt(
+        np.power(r[cutoffMask] - offset, 2) + (1 - lam) * delta * sig**2)
+    V[cutoffMask] = eps * lam * \
+        (b1 * np.power(sig / rroff, e1) -
+         b2 * np.power(sig / rroff, e2) + shift)
     return V
 
 
