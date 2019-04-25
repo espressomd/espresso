@@ -83,7 +83,7 @@ inline int calc_fene_pair_force(Particle const *p1, Particle const *p2,
  */
 inline int fene_pair_energy(Particle const *p1, Particle const *p2,
                             Bonded_ia_parameters const *iaparams,
-                            double const dx[3], double *_energy) {
+                            const Utils::Vector3d &dx, double *_energy) {
   /* compute bond stretching (r-r0) */
   double dr = sqrt(sqrlen(dx)) - iaparams->p.fene.r0;
 

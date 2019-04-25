@@ -208,7 +208,7 @@ inline void add_bonded_energy(Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
   int i, bond_broken = 1;
-  double ret = 0, dx[3] = {0, 0, 0};
+  double ret = 0;
 
   i = 0;
   while (i < p1->bl.n) {
@@ -249,11 +249,9 @@ inline void add_bonded_energy(Particle *p1) {
         return;
       }
     }
-    /* similar to the force, we prepare the center-center vector */
-    if (n_partners == 1)
-      get_mi_vector(dx, p1->r.p, p2->r.p);
 
     if (n_partners == 1) {
+        auto const dx = get_mi_vector(p1->r.p, p2->r.p);
       switch (type) {
       case BONDED_IA_FENE:
         bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);

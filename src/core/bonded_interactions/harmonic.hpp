@@ -82,7 +82,7 @@ inline int calc_harmonic_pair_force(Particle const *p1, Particle const *p2,
  */
 inline int harmonic_pair_energy(Particle const *p1, Particle const *p2,
                                 Bonded_ia_parameters const *iaparams,
-                                double const dx[3], double *_energy) {
+                                const Utils::Vector3d &dx, double *_energy) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
 

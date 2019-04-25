@@ -78,11 +78,11 @@ calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *iaparams,
  */
 inline int bonded_coulomb_sr_pair_energy(const Particle *p1, const Particle *p2,
                                          Bonded_ia_parameters const *iaparams,
-                                         double *dx, double *_energy) {
+                                         const Utils::Vector3d &dx, double *_energy) {
   double dist2 = sqrlen(dx);
   double dist = sqrt(dist2);
   *_energy = Coulomb::pair_energy(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2,
-                                  dx, dist, dist2);
+                                  dx.data(), dist, dist2);
   return 0;
 }
 

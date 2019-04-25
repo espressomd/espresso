@@ -103,7 +103,7 @@ inline int calc_tab_bond_force(Particle const *p1, Particle const *p2,
  */
 inline int tab_bond_energy(Particle const *p1, Particle const *p2,
                            Bonded_ia_parameters const *iaparams,
-                           double const dx[3], double *_energy) {
+                           const Utils::Vector3d &dx, double *_energy) {
   auto const *tab_pot = iaparams->p.tab.pot;
   auto const dist = sqrt(sqrlen(dx));
 
