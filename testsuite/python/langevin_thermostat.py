@@ -139,10 +139,10 @@ class LangevinThermostat(ut.TestCase):
             system.integrator.run(10)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                     np.testing.assert_allclose(
-                        system.part[0].v, v0 * np.exp(-gamma_t_a / system.part[0].mass * system.time), atol=3E-4)
+                        np.copy(system.part[0].v), v0 * np.exp(-gamma_t_a / system.part[0].mass * system.time), atol=3E-4)
             else:
                     np.testing.assert_allclose(
-                        system.part[0].v, v0 * np.exp(-gamma_t_i / system.part[0].mass * system.time), atol=3E-4)
+                        np.copy(system.part[0].v), v0 * np.exp(-gamma_t_i / system.part[0].mass * system.time), atol=3E-4)
 
     @ut.skipIf(not espressomd.has_features("ROTATION"), "Skipped for lack of ROTATION")
     def test_03__friction_rot(self):
