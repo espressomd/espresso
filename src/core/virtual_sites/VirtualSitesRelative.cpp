@@ -91,7 +91,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   Utils::Vector3d director = {0, 0, 0};
   convert_quat_to_director(q, director);
   // normalize
-  double l = sqrt(sqrlen(director));
+  double l = director.norm();
   // Division comes in the loop below
 
   // Calculate the new position of the virtual sites from

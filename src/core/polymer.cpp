@@ -296,7 +296,7 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
 
         for (cnt1 = 0; cnt1 < max_try; cnt1++) {
           if (angle > -1.0) {
-            if (sqrlen(c) < ROUND_ERROR_PREC) {
+            if (c.norm2() < ROUND_ERROR_PREC) {
               fprintf(stderr, "WARNING: rotation axis is 0,0,0, check the "
                               "angles given to the polymer command\n");
               c[0] = 1;
