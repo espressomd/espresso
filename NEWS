@@ -56,6 +56,8 @@ Further changes:
   * Fixed a dead-lock in the dipolar Barnes Hutt method on the GPU for
     recent NVIDIA cards such as RTX 2080 (#2719).
 
+  * Restore Mayavi visualizer's API-compatibility with OpenGL visualizer (#2751)
+
 
 
 
