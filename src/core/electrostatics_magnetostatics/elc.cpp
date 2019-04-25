@@ -1518,7 +1518,6 @@ double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
 
 double ELC_P3M_dielectric_layers_energy_self() {
   double pos[3], q;
-  double dist, dist2, d[3];
   double eng = 0.0;
 
   // Loop cell neighbors
@@ -1539,7 +1538,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
       pos[0] = p.r.p[0];
       pos[1] = p.r.p[1];
       pos[2] = 2 * elc_params.h - p.r.p[2];
-      
+
       eng += p3m_pair_energy(q, get_mi_vector(p.r.p, pos).norm());
     }
   }

@@ -55,7 +55,9 @@ inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
                                    const Utils::Vector3d &dx, double *force) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
-  add_lj_pair_force(ia_params, dx.data(), dx.norm(), force);
+  auto const neg_dir = -dx;
+
+  add_lj_pair_force(ia_params, neg_dir.data(), neg_dir.norm(), force);
 
   return ES_OK;
 }
