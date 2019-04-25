@@ -48,8 +48,7 @@ int harmonic_set_params(int bond_type, double k, double r, double r_cut);
  */
 inline int calc_harmonic_pair_force(Bonded_ia_parameters const *iaparams,
                                     const Utils::Vector3d &dx, double *force) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
+  double dist = dx.norm();
 
   if ((iaparams->p.harmonic.r_cut > 0.0) && (dist > iaparams->p.harmonic.r_cut))
     return 1;
@@ -77,8 +76,7 @@ inline int calc_harmonic_pair_force(Bonded_ia_parameters const *iaparams,
  */
 inline int harmonic_pair_energy(Bonded_ia_parameters const *iaparams,
                                 const Utils::Vector3d &dx, double *_energy) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
+  double dist = dx.norm();
 
   if ((iaparams->p.harmonic.r_cut > 0.0) && (dist > iaparams->p.harmonic.r_cut))
     return 1;

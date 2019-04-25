@@ -48,8 +48,8 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
  */
 inline int
 calc_fene_pair_force(Bonded_ia_parameters const *iaparams, const Utils::Vector3d &dx, double *force) {
-  const double len2 = sqrlen(dx);
-  const double len = sqrt(len2);
+  const double len = dx.norm();
+
   const double dr = len - iaparams->p.fene.r0;
 
   if (dr >= iaparams->p.fene.drmax)
@@ -79,7 +79,7 @@ calc_fene_pair_force(Bonded_ia_parameters const *iaparams, const Utils::Vector3d
 inline int
 fene_pair_energy(Bonded_ia_parameters const *iaparams, const Utils::Vector3d &dx, double *_energy) {
   /* compute bond stretching (r-r0) */
-  double dr = sqrt(sqrlen(dx)) - iaparams->p.fene.r0;
+  double dr = dx.norm() - iaparams->p.fene.r0;
 
   /* check bond stretching */
   if (dr >= iaparams->p.fene.drmax) {

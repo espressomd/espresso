@@ -71,7 +71,7 @@ int tabulated_bonded_set_params(int bond_type,
 inline int
 calc_tab_bond_force(Bonded_ia_parameters const *iaparams, const Utils::Vector3d &dx, double *force) {
   auto const *tab_pot = iaparams->p.tab.pot;
-  auto const dist = sqrt(sqrlen(dx));
+  auto const dist = dx.norm();
 
   if (dist < tab_pot->cutoff()) {
     auto const fac = tab_pot->force(dist) / dist;
@@ -99,7 +99,7 @@ calc_tab_bond_force(Bonded_ia_parameters const *iaparams, const Utils::Vector3d 
 inline int
 tab_bond_energy(Bonded_ia_parameters const *iaparams, const Utils::Vector3d &dx, double *_energy) {
   auto const *tab_pot = iaparams->p.tab.pot;
-  auto const dist = sqrt(sqrlen(dx));
+  auto const dist = dx.norm();
 
   if (dist < tab_pot->cutoff()) {
     *_energy = tab_pot->energy(dist);
