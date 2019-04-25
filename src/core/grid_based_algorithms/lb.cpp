@@ -50,6 +50,7 @@
 #include "utils/u32_to_u64.hpp"
 #include "utils/uniform.hpp"
 using Utils::get_linear_index;
+#include "utils/constants.hpp"
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
