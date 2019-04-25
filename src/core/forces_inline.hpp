@@ -366,7 +366,7 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
 
   switch (iaparams->type) {
   case BONDED_IA_FENE:
-    bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_fene_pair_force(iaparams, dx, force);
     break;
 #ifdef ROTATION
   case BONDED_IA_HARMONIC_DUMBBELL:
@@ -396,7 +396,7 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
 #ifdef TABULATED
   case BONDED_IA_TABULATED:
     if (iaparams->num == 1)
-      bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
+      bond_broken = calc_tab_bond_force(iaparams, dx, force);
     break;
 #endif
 #ifdef UMBRELLA

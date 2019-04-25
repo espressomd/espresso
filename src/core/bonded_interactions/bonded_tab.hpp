@@ -62,17 +62,14 @@ int tabulated_bonded_set_params(int bond_type,
  *  particles. For distances smaller than the tabulated range it uses a linear
  *  extrapolation based on the first two tabulated force values.
  *
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
  *  @retval 1 if the bond is broken
  *  @retval 0 otherwise
  */
-inline int calc_tab_bond_force(Particle const *p1, Particle const *p2,
-                               Bonded_ia_parameters const *iaparams,
-                               double const dx[3], double force[3]) {
+inline int
+calc_tab_bond_force(Bonded_ia_parameters const *iaparams, const Utils::Vector3d &dx, double *force) {
   auto const *tab_pot = iaparams->p.tab.pot;
   auto const dist = sqrt(sqrlen(dx));
 
@@ -93,17 +90,14 @@ inline int calc_tab_bond_force(Particle const *p1, Particle const *p2,
  *  extrapolation based on the first two tabulated force values and the first
  *  tabulated energy value.
  *
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.
  *  @retval 1 if the bond is broken
  *  @retval 0 otherwise
  */
-inline int tab_bond_energy(Particle const *p1, Particle const *p2,
-                           Bonded_ia_parameters const *iaparams,
-                           const Utils::Vector3d &dx, double *_energy) {
+inline int
+tab_bond_energy(Bonded_ia_parameters const *iaparams, const Utils::Vector3d &dx, double *_energy) {
   auto const *tab_pot = iaparams->p.tab.pot;
   auto const dist = sqrt(sqrlen(dx));
 

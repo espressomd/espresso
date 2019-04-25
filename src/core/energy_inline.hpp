@@ -254,7 +254,7 @@ inline void add_bonded_energy(const Particle *p1) {
         auto const dx = get_mi_vector(p1->r.p, p2->r.p);
       switch (type) {
       case BONDED_IA_FENE:
-        bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = fene_pair_energy(iaparams, dx, &ret);
         break;
 #ifdef ROTATION
       case BONDED_IA_HARMONIC_DUMBBELL:
@@ -289,7 +289,7 @@ inline void add_bonded_energy(const Particle *p1) {
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 1)
-          bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
+          bond_broken = tab_bond_energy(iaparams, dx, &ret);
         break;
 #endif
 #ifdef UMBRELLA
