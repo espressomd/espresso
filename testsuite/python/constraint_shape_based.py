@@ -677,10 +677,11 @@ class ShapeBasedConstraintTest(ut.TestCase):
         for x in range(x_range):
             for y in range(y_range):
                 for z in range(z_range):
-                    pos = numpy.array([x + (self.box_l + length[0] - x_range) / 2.0,
-                                       y + (self.box_l +
-                                            length[1] - y_range) / 2.0,
-                                       z + (self.box_l + length[2] - z_range) / 2.0])
+                    pos = numpy.array(
+                        [x + (self.box_l + length[0] - x_range) / 2.0,
+                         y + (self.box_l +
+                              length[1] - y_range) / 2.0,
+                         z + (self.box_l + length[2] - z_range) / 2.0])
                     shape_dist, shape_dist_vec = rhomboid_shape.call_method(
                         "calc_distance",
                         position=pos.tolist())
