@@ -28,18 +28,4 @@
 #include "utils/constants.hpp"
 #include "utils/math/sqr.hpp"
 
-#include <boost/range/numeric.hpp>
-
-/**************************************************************/
-/** \name Vector and matrix operations for three dimensions.  */
-/**************************************************************/
-/*@{*/
-
-/** calculates the squared length of a vector */
-template <class T, size_t N> T sqrlen(const T (&v)[N]) {
-  return boost::inner_product(v, v, T{});
-}
-
-/*@}*/
-
 #endif
