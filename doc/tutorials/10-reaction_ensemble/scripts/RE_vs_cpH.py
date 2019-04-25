@@ -38,7 +38,7 @@ box_l = 60
 system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 # system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.random.seed(seed=system.seed)
+np.random.seed(seed=12)
 
 system.time_step = 0.02
 system.cell_system.skin = 0.4
@@ -67,10 +67,13 @@ for i in range(N0, 2 * N0):
 
 RE = None
 if(mode == "reaction_ensemble"):
-    RE = reaction_ensemble.ReactionEnsemble(temperature=1, exclusion_radius=1)
+    RE = reaction_ensemble.ReactionEnsemble(
+        temperature=1,
+        exclusion_radius=1,
+     seed=2)
 elif(mode == "constant_pH_ensemble"):
     RE = reaction_ensemble.ConstantpHEnsemble(
-        temperature=1, exclusion_radius=1)
+        temperature=1, exclusion_radius=1, seed=2)
     RE.constant_pH = 3
 RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
                 product_types=[1, 2], product_coefficients=[1, 1],

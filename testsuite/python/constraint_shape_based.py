@@ -18,6 +18,7 @@ from __future__ import division, print_function
 
 import unittest as ut
 import numpy
+import math
 
 import espressomd
 import espressomd.interactions
@@ -50,6 +51,35 @@ class ShapeBasedConstraintTest(ut.TestCase):
                            numpy.sin(theta), semiaxis2 *
                            v])
         return pos + center
+
+    def test_sphere(self):
+        """Checks geometry of an inverted sphere
+
+        """
+        rad = self.box_l / 2.0
+        sphere_shape = espressomd.shapes.Sphere(
+            center=[self.box_l / 2.,
+                    self.box_l / 2.,
+                    self.box_l / 2.],
+            radius=rad,
+            direction=-1)
+        phi_steps = 11
+        theta_steps = 11
+        for distance in {-1.2, 2.6}:
+            for phi in range(phi_steps):
+                phi_angle = phi / phi_steps * 2.0 * math.pi
+                for theta in range(theta_steps):
+                    theta_angle = theta / theta_steps * math.pi
+                    pos = numpy.array(
+                        [math.cos(phi_angle) * math.sin(theta_angle)
+                         * (rad + distance) + self.box_l / 2.,
+                         math.sin(phi_angle) * math.sin(theta_angle) 
+                         * (rad + distance) + self.box_l / 2.,
+                         math.cos(theta_angle) * (rad + distance) + self.box_l / 2.])
+
+                    shape_dist, shape_dist_vec = sphere_shape.call_method(
+                        "calc_distance", position=pos.tolist())
+                    self.assertAlmostEqual(shape_dist, -distance)
 
     def test_ellipsoid(self):
         """Checks that distance of particles on the ellipsoid constraint's surface is zero.
@@ -192,7 +222,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 r=1.02),
             places=10)  # minus for Newton's third law
 
-        #check whether total_summed_outer_normal_force is correct
+        # check whether total_summed_outer_normal_force is correct
         y_part2 = self.box_l - 1.02
         system.part.add(
             id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
@@ -200,9 +230,74 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         dist_part2 = self.box_l - y_part2
         self.assertAlmostEqual(outer_cylinder_wall.total_force()[2], 0.0)
-        self.assertAlmostEqual(outer_cylinder_wall.total_normal_force(), 2 * tests_common.lj_force(
-            espressomd, cutoff=2.0, offset=0., eps=1.0, sig=1.0, r=dist_part2))
+        self.assertAlmostEqual(
+            outer_cylinder_wall.total_normal_force(),
+            2 *
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.0,
+                sig=1.0,
+                r=dist_part2))
 
+        # Test the geometry of an cylinder with top and bottom
+        rad = self.box_l / 2.0
+        length = self.box_l / 2.0
+        cylinder_shape_finite = espressomd.shapes.Cylinder(
+            center=[self.box_l / 2.0,
+                    self.box_l / 2.0,
+                    self.box_l / 2.0],
+            axis=[0, 0, 1],
+            direction=1,
+            radius=rad,
+            length=length)
+
+        phi_steps = 11
+        for distance in {-3.6, 2.8}:
+            for z in range(int(self.box_l)):
+                center = numpy.array([self.box_l / 2.0,
+                                      self.box_l / 2.0,
+                                      z])
+                start_point = numpy.array([self.box_l / 2.0,
+                                           self.box_l / 2.0 + rad - distance,
+                                           z])
+                for phi in range(phi_steps):
+                    # Rotation around the axis of the cylinder
+                    phi_angle = phi / phi_steps * 2.0 * math.pi
+                    phi_rot_matrix = numpy.array(
+                        [[math.cos(phi_angle),
+                          -1.0 * math.sin(phi_angle), 
+                          0.0],
+                         [math.sin(phi_angle),
+                          math.cos(phi_angle),
+                          0.0],
+                         [0.0, 0.0, 1.0]])
+                    phi_rot_point = numpy.dot(
+                        phi_rot_matrix, start_point - center) + center
+
+                    shape_dist, shape_dist_vec = cylinder_shape_finite.call_method(
+                        "calc_distance", position=phi_rot_point.tolist())
+
+                    dist = -distance
+                    if(distance > 0.0):
+                        if(z < (self.box_l - length) / 2.0 + distance):
+                            dist = (self.box_l - length) / 2.0 - z
+                        elif(z > (self.box_l + length) / 2.0 - distance):
+                            dist = z - (self.box_l + length) / 2.0
+                        else:
+                            dist = -distance
+                    else:
+                        if(z < (self.box_l - length) / 2.0):
+                            z_dist = (self.box_l - length) / 2.0 - z
+                            dist = math.sqrt(z_dist**2 + distance**2)
+                        elif(z > (self.box_l + length) / 2.0):
+                            z_dist = z - (self.box_l + length) / 2.0
+                            dist = math.sqrt(z_dist**2 + distance**2)
+                        else:
+                            dist = -distance
+
+                    self.assertAlmostEqual(shape_dist, dist)
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
@@ -254,7 +349,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 r=1.02),
             places=10)  # minus for Newton's third law
 
-        #check whether total_summed_outer_normal_force is correct
+        # check whether total_summed_outer_normal_force is correct
         y_part2 = self.box_l - 1.02
         system.part.add(
             id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
@@ -265,7 +360,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.assertAlmostEqual(outer_cylinder_constraint.total_normal_force(),
                                2 * tests_common.lj_force(
                                    espressomd, cutoff=2.0,
-                                 offset=0., eps=1.0, sig=1.0, r=dist_part2))
+            offset=0., eps=1.0, sig=1.0, r=dist_part2))
 
         # Reset
         system.part.clear()
@@ -394,7 +489,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 r=0.83),
             places=10)
 
-        #check whether total_normal_force is correct
+        # check whether total_normal_force is correct
         self.assertAlmostEqual(
             wall_xy.total_normal_force(),
             tests_common.lj_force(
@@ -450,8 +545,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
             epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
         system.integrator.run(0)  # update forces
 
-        self.assertAlmostEqual(hollowcone_constraint.min_dist(),
-                               1.134228603)  # distance measured manually; shape geometry not trivial
+        # distance measured manually; shape geometry not trivial
+        self.assertAlmostEqual(hollowcone_constraint.min_dist(), 1.134228603)
 
         # test summed forces on hollowcone wall
         self.assertAlmostEqual(
@@ -607,6 +702,120 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 sig=1.,
                 r=1.2247448714),
             places=10)
+
+        # Reset
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
+            epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
+
+    def test_torus(self):
+        """Checks that torus constraints with LJ interactions exert forces
+        on a test particle (that is, the constraints do what they should).
+
+        """
+        system = self.system
+        system.time_step = 0.01
+        system.cell_system.skin = 0.4
+
+        interaction_dir = 1  # constraint is directed inwards
+        radius = self.box_l / 4.0
+        tube_radius = self.box_l / 6.0
+        part_offset = 1.2
+
+        system.part.add(
+            id=0, pos=[self.box_l / 2.0, self.box_l / 2.0 + part_offset, self.box_l / 2.0], type=0)
+
+        # check force calculation of cylinder constraint
+        torus_shape = espressomd.shapes.Torus(
+            center=[self.box_l / 2.0,
+                    self.box_l / 2.0,
+                    self.box_l / 2.0],
+            normal=[0, 0, 1],
+            direction=interaction_dir,
+            radius=radius,
+            tube_radius=tube_radius)
+        penetrability = False  # impenetrable
+        torus_constraint = espressomd.constraints.ShapeBasedConstraint(
+            shape=torus_shape, particle_type=1, penetrable=penetrability)
+        torus_wall = system.constraints.add(torus_constraint)
+        system.non_bonded_inter[0, 1].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
+        system.integrator.run(0)  # update forces
+
+        self.assertAlmostEqual(torus_constraint.min_dist(),
+                               radius - tube_radius - part_offset)
+
+        # test summed forces on torus wall
+        self.assertAlmostEqual(
+            -1.0 * torus_wall.total_force()[1],
+            tests_common.lj_force(
+                espressomd,
+                cutoff=2.0,
+                offset=0.,
+                eps=1.0,
+                sig=1.0,
+                r=torus_constraint.min_dist()),
+            places=10)  # minus for Newton's third law
+
+        #check whether total_summed_outer_normal_force is correct
+        y_part2 = self.box_l / 2.0 + 2.0 * radius - part_offset
+        system.part.add(
+            id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
+        system.integrator.run(0)
+
+        self.assertAlmostEqual(torus_wall.total_force()[1], 0.0)
+        self.assertAlmostEqual(torus_wall.total_normal_force(), 2 * tests_common.lj_force(
+            espressomd, cutoff=2.0, offset=0., eps=1.0, sig=1.0,
+            r=radius - tube_radius - part_offset))
+
+        # Test the geometry of the shape directly
+        phi_steps = 11
+        theta_steps = 11
+        center = numpy.array([self.box_l / 2.0,
+                              self.box_l / 2.0,
+                              self.box_l / 2.0])
+        tube_center = numpy.array([self.box_l / 2.0,
+                                   self.box_l / 2.0 + radius,
+                                   self.box_l / 2.0])
+
+        for distance in {1.02, -0.7}:
+            start_point = numpy.array([self.box_l / 2.0,
+                                       self.box_l / 2.0 + radius -
+                                       tube_radius - distance,
+                                       self.box_l / 2.0])
+            for phi in range(phi_steps):
+                for theta in range(theta_steps):
+                    # Rotation around the tube
+                    theta_angle = theta / theta_steps * 2.0 * math.pi
+                    theta_rot_matrix = numpy.array(
+                        [[1.0, 0.0, 0.0],
+                         [0.0, math.cos(
+                          theta_angle), -1.0 * math.sin(
+                          theta_angle)],
+                         [0.0, math.sin(theta_angle), math.cos(theta_angle)]])
+                    theta_rot_point = numpy.dot(
+                        theta_rot_matrix,
+                        start_point - tube_center)
+                    theta_rot_point += tube_center
+
+                    # Rotation around the center of the torus
+                    phi_angle = phi / phi_steps * 2.0 * math.pi
+                    phi_rot_matrix = numpy.array(
+                        [[math.cos(
+                          phi_angle), -1.0 * math.sin(
+                          phi_angle), 0.0],
+                         [math.sin(
+                          phi_angle),
+                          math.cos(phi_angle),
+                             0.0],
+                            [0.0, 0.0, 1.0]])
+                    phi_rot_point = numpy.dot(
+                        phi_rot_matrix,
+                        theta_rot_point - center) + center
+
+                    shape_dist, shape_dist_vec = torus_shape.call_method(
+                        "calc_distance",
+                                                              position=phi_rot_point.tolist())
+                    self.assertAlmostEqual(shape_dist, distance)
 
         # Reset
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
