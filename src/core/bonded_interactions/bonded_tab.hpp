@@ -68,8 +68,8 @@ int tabulated_bonded_set_params(int bond_type,
  *  @retval 1 if the bond is broken
  *  @retval 0 otherwise
  */
-inline int
-calc_tab_bond_force(Bonded_ia_parameters const *iaparams, const Utils::Vector3d &dx, double *force) {
+inline int calc_tab_bond_force(Bonded_ia_parameters const *iaparams,
+                               const Utils::Vector3d &dx, double *force) {
   auto const *tab_pot = iaparams->p.tab.pot;
   auto const dist = dx.norm();
 
@@ -96,8 +96,8 @@ calc_tab_bond_force(Bonded_ia_parameters const *iaparams, const Utils::Vector3d 
  *  @retval 1 if the bond is broken
  *  @retval 0 otherwise
  */
-inline int
-tab_bond_energy(Bonded_ia_parameters const *iaparams, const Utils::Vector3d &dx, double *_energy) {
+inline int tab_bond_energy(Bonded_ia_parameters const *iaparams,
+                           const Utils::Vector3d &dx, double *_energy) {
   auto const *tab_pot = iaparams->p.tab.pot;
   auto const dist = dx.norm();
 

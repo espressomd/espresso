@@ -45,7 +45,7 @@ template <typename T1, typename T2> double scalar(const T1 &a, const T2 &b) {
 
 /** calculates the squared length of a vector */
 template <class T, size_t N> T sqrlen(const T (&v)[N]) {
-    return boost::inner_product(v, v, T{});
+  return boost::inner_product(v, v, T{});
 }
 
 /*@}*/

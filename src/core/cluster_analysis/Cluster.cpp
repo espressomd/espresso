@@ -73,13 +73,10 @@ double Cluster::longest_distance() {
   double ld = 0.;
   for (auto a = particles.begin(); a != particles.end(); a++) {
     for (auto b = a; ++b != particles.end();) {
-      double dist[3];
-      get_mi_vector(dist, partCfg()[*a].r.p, partCfg()[*b].r.p);
+      auto const dist = get_mi_vector(partCfg()[*a].r.p, partCfg()[*b].r.p).norm();
 
       // Larger than previous largest distance?
-      if (ld < sqrt(sqrlen(dist))) {
-        ld = sqrt(sqrlen(dist)); // save bigger value as longest distance - ld
-      }
+      ld = std::max(ld, dist);
     }
   }
   return ld;
@@ -96,10 +93,8 @@ Cluster::radius_of_gyration_subcluster(std::vector<int> &subcl_particle_ids) {
   Utils::Vector3d com = center_of_mass_subcluster(subcl_particle_ids);
   double sum_sq_dist = 0.;
   for (auto const pid : subcl_particle_ids) {
-    double distance[3];
-    get_mi_vector(distance, com, partCfg()[pid].r.p);
     // calculate square length of this distance
-    sum_sq_dist += sqrlen(distance);
+    sum_sq_dist += get_mi_vector(com, partCfg()[pid].r.p).norm2();
   }
 
   return sqrt(sum_sq_dist / subcl_particle_ids.size());
@@ -129,10 +124,8 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   std::vector<double> distances;
 
   for (auto const &it : particles) {
-    double dist[3];
-    get_mi_vector(dist, com.begin(), partCfg()[it].r.p);
-    distances.push_back(
-        sqrt(sqrlen(dist))); // add distance from the current particle to the
+    distances.push_back(get_mi_vector(com.begin(), partCfg()[it].r.p).norm()
+        ); // add distance from the current particle to the
                              // com in the distances vectors
   }
 

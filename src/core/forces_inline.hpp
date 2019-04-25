@@ -379,7 +379,7 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
     bond_broken = calc_harmonic_pair_force(iaparams, dx, force);
     break;
   case BONDED_IA_QUARTIC:
-    bond_broken = calc_quartic_pair_force( iaparams, dx, force);
+    bond_broken = calc_quartic_pair_force(iaparams, dx, force);
     break;
 #ifdef ELECTROSTATICS
   case BONDED_IA_BONDED_COULOMB:

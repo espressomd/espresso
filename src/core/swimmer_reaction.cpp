@@ -129,7 +129,8 @@ void integrate_reaction_noswap() {
 
             /* Count the number of times a reactant particle is
                checked against a catalyst */
-            if (get_mi_vector(p1->r.p, p2->r.p).norm2() < reaction.range * reaction.range) {
+            if (get_mi_vector(p1->r.p, p2->r.p).norm2() <
+                reaction.range * reaction.range) {
 
               if (p1->p.type == reaction.reactant_type) {
                 p1->p.catalyzer_count++;
@@ -295,7 +296,8 @@ void integrate_reaction_swap() {
             // Check if the distance is within the reaction range and
             // check if no reaction has taken place on the particle in
             // the current step
-            if (get_mi_vector(p_local[catalyzer].r.p, p_neigh[i].r.p).norm2() < reaction.range * reaction.range &&
+            if (get_mi_vector(p_local[catalyzer].r.p, p_neigh[i].r.p).norm2() <
+                    reaction.range * reaction.range &&
                 p_neigh[i].p.catalyzer_count == 0) {
               // If the particle is of correct type AND resides in the
               // correct half space, append it to the lists of viable

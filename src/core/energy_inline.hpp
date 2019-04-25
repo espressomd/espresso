@@ -251,7 +251,7 @@ inline void add_bonded_energy(const Particle *p1) {
     }
 
     if (n_partners == 1) {
-        auto const dx = get_mi_vector(p1->r.p, p2->r.p);
+      auto const dx = get_mi_vector(p1->r.p, p2->r.p);
       switch (type) {
       case BONDED_IA_FENE:
         bond_broken = fene_pair_energy(iaparams, dx, &ret);
@@ -265,7 +265,7 @@ inline void add_bonded_energy(const Particle *p1) {
         bond_broken = harmonic_pair_energy(iaparams, dx, &ret);
         break;
       case BONDED_IA_QUARTIC:
-        bond_broken = quartic_pair_energy( iaparams, dx, &ret);
+        bond_broken = quartic_pair_energy(iaparams, dx, &ret);
         break;
 #ifdef ELECTROSTATICS
       case BONDED_IA_BONDED_COULOMB:
