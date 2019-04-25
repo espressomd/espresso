@@ -32,6 +32,8 @@
 
 #include "utils/NoOp.hpp"
 
+#include <boost/mpi/collectives.hpp>
+
 using Utils::Vector3d;
 
 void dpd_heat_up() {
@@ -199,6 +201,7 @@ Utils::Vector9d dpd_stress() {
   using Utils::Vector9d;
 
   Vector9d dpd_stress{};
+  Vector9d dpd_stress_global{};
 
   if (max_cut > 0) {
     short_range_loop(
@@ -213,7 +216,10 @@ Utils::Vector9d dpd_stress() {
                                  r[2] * f[0], r[2] * f[1], r[2] * f[2]};
         });
   }
-  dpd_stress /= (box_l[0] * box_l[1] * box_l[2]);
-  return dpd_stress;
+
+  boost::mpi::reduce(comm_cart, dpd_stress, dpd_stress_global, std::plus<>() , 0);
+
+  dpd_stress_global /= (box_l[0] * box_l[1] * box_l[2]);
+  return dpd_stress_global;
 }
 #endif
