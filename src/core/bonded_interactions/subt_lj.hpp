@@ -62,7 +62,7 @@ inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
   return ES_OK;
 }
 
-inline int subt_lj_pair_energy(Particle *p1, Particle *p2,
+inline int subt_lj_pair_energy(const Particle *p1, const Particle *p2,
                                Bonded_ia_parameters *, const Utils::Vector3d &dx,
                                double *_energy) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);

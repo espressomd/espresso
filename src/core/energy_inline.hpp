@@ -204,7 +204,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 /** Calculate bonded energies for one particle.
  *  @param p1 particle for which to calculate energies
  */
-inline void add_bonded_energy(Particle *p1) {
+inline void add_bonded_energy(const Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
   int i, bond_broken = 1;
@@ -379,16 +379,14 @@ inline void add_bonded_energy(Particle *p1) {
 /** Calculate kinetic energies for one particle.
  *  @param p1 particle for which to calculate energies
  */
-inline void add_kinetic_energy(Particle *p1) {
+inline void add_kinetic_energy(const Particle *p1) {
 #ifdef VIRTUAL_SITES
   if (p1->p.is_virtual)
     return;
 #endif
 
   /* kinetic energy */
-  energy.data.e[0] += (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) +
-                       Utils::sqr(p1->m.v[2])) *
-                      0.5 * p1->p.mass;
+  energy.data.e[0] += 0.5 * p1->p.mass * p1->m.v.norm2();
 
 #ifdef ROTATION
   if (p1->p.rotation) {
