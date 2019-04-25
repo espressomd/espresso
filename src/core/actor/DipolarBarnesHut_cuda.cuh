@@ -109,7 +109,7 @@ void buildTreeBH(int blocks);
 void summarizeBH(int blocks);
 
 // Sort particle indexes according to the BH tree representation.
-// Crucial for the per-warp perfomance tuning of forceCalculationKernel and energyCalculationKernel.
+// Crucial for the per-warp performance tuning of forceCalculationKernel and energyCalculationKernel.
 void sortBH(int blocks);
 
 // Force calculation.

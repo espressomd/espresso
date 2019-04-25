@@ -196,7 +196,7 @@ int ObservableStructureFactorFast::actual_calculate(PartCfg &partCfg) {
     }
   }
   for (int l = 0; l < n; l++) {
-    // devide by the sqrt of number_of_particle, average later
+    // divide by the sqrt of number_of_particle, average later
     A[l] /= sqrt(n_part);
   }
   return 0;

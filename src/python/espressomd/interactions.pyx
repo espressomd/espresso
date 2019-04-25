@@ -2233,7 +2233,7 @@ IF THOLE:
             Parameters
             ----------
             scaling_coeff : :obj:`float`
-                            The facor used in the thole damping function between
+                            The factor used in the thole damping function between
                             polarizable particles i and j. Usually calculated by
                             the polarizabilities alpha_i, alpha_j and damping
                             parameters  a_i, a_j via

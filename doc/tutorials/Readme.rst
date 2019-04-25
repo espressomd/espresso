@@ -55,7 +55,7 @@ To view the tutorials, first change to the tutorials directory and then run the 
     /path_to_espresso_build/ipypresso notebook
 
 This will launch a web browser in which the notebooks for the tutorials can be viewed and run.
-For more details, please see: hppt://jupyter.readthedocs.io/en/latest/running.html
+For more details, please see: http://jupyter.readthedocs.io/en/latest/running.html
 Note that `Jupyter` is the successor of IPython.
 
 

@@ -162,7 +162,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      * 	strength of the force is proportional to the difference of actual bond
      *length and relaxed bond length bond is created with probability
      *1-exp(-Kon*timestep) maxBond is not used, we use probability
-     *1-exp(-Koff*timestep) to brake the bond Koff depends on the bondlenth via
+     *1-exp(-Koff*timestep) to brake the bond Koff depends on the bondlength via
      *Koff = K0*exp(F/Fd) = K0*exp(kappa(r-r0)/Fd) here, ia_params->Koff gives
      *us K_0, off rate when bond is relaxed. here, maxBond is used as detachment
      *force F_d. The original check for ensuring, that particle flows out of the
@@ -548,7 +548,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      * 	strength of the force is proportional to the difference of actual bond
      *length and 75% of the relaxed bond length bond is created with probability
      *1-exp(-Kon*timestep) maxBond is not used, we use probability
-     *1-exp(-Koff*timestep) to brake the bond Koff depends on the bondlenth via
+     *1-exp(-Koff*timestep) to brake the bond Koff depends on the bondlength via
      *Koff = K0*exp(F/Fd) = K0*exp(kappa(r-0.75*r0)/Fd) here, ia_params->Koff
      *gives us K_0, off rate when bond is relaxed. here, maxBond is used as
      *detachment force F_d. The original check for ensuring, that particle flows
@@ -691,7 +691,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      * 	strength of the force is proportional to the difference of actual bond
      *length and the relaxed bond length bond is created with probability
      *1-exp(-Kon*timestep) maxBond is not used, we use probability
-     *1-exp(-Koff*timestep) to brake the bond Koff depends on the bondlenth via
+     *1-exp(-Koff*timestep) to brake the bond Koff depends on the bondlength via
      *Koff = K0*exp(F/Fd) = K0*exp(kappa(r-0.75*r0)/Fd) here, ia_params->Koff
      *gives us K_0, off rate when bond is relaxed. here, maxBond is used as
      *detachment force F_d. The original check for ensuring, that particle flows

@@ -34,7 +34,7 @@ public:
   /** @brief Update positions and/or velocities of virtual sites
 
   * Velocities are only updated have_velocity() return true
-  * @param recalc_positions can be used to skip the reculation of positions
+  * @param recalc_positions can be used to skip the recalculation of positions
   */
   void update(bool recalc_positions = true) const override;
   /** Back-transfer forces (and torques) to non-virtual particles */

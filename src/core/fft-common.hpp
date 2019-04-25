@@ -223,7 +223,7 @@ int fft_calc_send_block(int pos1[3], int grid1[3], int pos2[3], int grid2[3],
 void fft_pack_block(double *in, double *out, int start[3], int size[3],
                     int dim[3], int element);
 
-/** pack a block with dimensions (size[0] * size[1] * aize[2]) starting
+/** pack a block with dimensions (size[0] * size[1] * size[2]) starting
  *  at start[3] of an input 3d-grid with dimension dim[3] into an
  *  output 3d-grid with dimensions (size[2] * size[0] * size[1]) with
  *  a simultaneous one-fold permutation of the indices.
@@ -249,7 +249,7 @@ void fft_pack_block(double *in, double *out, int start[3], int size[3],
 void fft_pack_block_permute1(double *in, double *out, int start[3], int size[3],
                              int dim[3], int element);
 
-/** pack a block with dimensions (size[0] * size[1] * aize[2]) starting
+/** pack a block with dimensions (size[0] * size[1] * size[2]) starting
  *  at start[3] of an input 3d-grid with dimension dim[3] into an
  *  output 3d-grid with dimensions (size[2] * size[0] * size[1]), this
  *  is a simultaneous two-fold permutation of the indices.

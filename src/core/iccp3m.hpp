@@ -43,7 +43,7 @@
     it can be tolerated.
 
     For the determination of the induced charges only the forces
-    acting on the induced charges has to be determined. As P3M an the
+    acting on the induced charges has to be determined. As P3M and the
     other coulomb solvers calculate all mutual forces, the force
     calculation was modified to avoid the calculation of the short
     range part of the source-source force calculation.  For different

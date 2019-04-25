@@ -463,7 +463,7 @@ class openGLLive(object):
             constraint_types.append(c.get_parameter('particle_type'))
         all_types.update(constraint_types)
 
-        # COLLECT ALL ACTIVCE NONBONDED INTERACTIONS
+        # COLLECT ALL ACTIVE NONBONDED INTERACTIONS
         all_non_bonded_inters = [x for x in dir(self.system.non_bonded_inter[0, 0]) if not x.startswith(
             '__') and not x == 'type1' and not x == 'type2']
         for t1 in all_types:
@@ -1399,7 +1399,7 @@ class openGLLive(object):
             return
 
         def redraw_on_idle():
-            # DONT REPOST FASTER THAN 60 FPS
+            # DON'T REPOST FASTER THAN 60 FPS
             self.draw_elapsed += (time.time() - self.draw_timer)
             if self.draw_elapsed > 1.0 / 60.0:
                 self.draw_elapsed = 0

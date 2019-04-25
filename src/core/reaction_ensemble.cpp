@@ -500,7 +500,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     // accept
     accepted_state = new_state_index;
 
-    // delete hidden reactant_particles (remark: dont delete changed particles)
+    // delete hidden reactant_particles (remark: don't delete changed particles)
     // extract ids of to be deleted particles
     int len_hidden_particles_properties =
         static_cast<int>(hidden_particles_properties.size());
@@ -1283,7 +1283,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
  *  no-energy-reweighting case, or with the functions
  *  do_global_mc_move_for_particles_of_type
  *
- *  perform additional Monte-carlo moves to to sample configurational
+ *  perform additional Monte-Carlo moves to to sample configurational
  *  partition function according to "Density-of-states Monte Carlo method
  *  for simulation of fluids"
  *
