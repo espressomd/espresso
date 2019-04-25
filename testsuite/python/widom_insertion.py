@@ -73,8 +73,7 @@ class WidomInsertionTest(ut.TestCase):
     volume = np.prod(system.box_l)  # cuboid box
     
     Widom = reaction_ensemble.WidomInsertion(
-        temperature=TEMPERATURE,
-        exclusion_radius=np.nan)    
+        temperature=TEMPERATURE, seed=1)    
 
     def setUp(self):
         """Prepare a testsystem."""
@@ -90,7 +89,6 @@ class WidomInsertionTest(ut.TestCase):
                                                            cutoff=self.LJ_CUT, shift="auto")
 
         self.Widom.add_reaction(
-            gamma=np.nan,
             reactant_types=[],
             reactant_coefficients=[],
             product_types=[self.TYPE_HA],

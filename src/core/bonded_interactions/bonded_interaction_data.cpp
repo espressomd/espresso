@@ -4,8 +4,6 @@
 
 std::vector<Bonded_ia_parameters> bonded_ia_params;
 
-/** calculate the maximal cutoff of bonded interactions, required to
-    determine the cell size for communication. */
 void recalc_maximal_cutoff_bonded() {
   int i;
   double max_cut_tmp;
@@ -52,15 +50,8 @@ void recalc_maximal_cutoff_bonded() {
     }
   }
 
-  /* Bond angle and dihedral potentials do not contain a cutoff
-     intrinsically. The cutoff for these potentials depends on the
-     bond length potentials. For bond angle potentials nothing has to
-     be done (it is assumed, that particles participating in a bond
-     angle or dihedral potential are bound to each other by some bond
-     length potential (FENE, Harmonic or tabulated)). For dihedral
-     potentials (both normal and tabulated ones) it follows, that the
-     cutoff is TWO TIMES the maximal cutoff! That's what the following
-     lines assure. */
+  /* dihedrals: the central particle is indirectly connected to the fourth
+   * particle via the third particle, so we have to double the cutoff */
   max_cut_tmp = 2.0 * max_cut_bonded;
   for (i = 0; i < bonded_ia_params.size(); i++) {
     switch (bonded_ia_params[i].type) {
