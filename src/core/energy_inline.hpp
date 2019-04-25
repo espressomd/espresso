@@ -91,7 +91,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 
 #ifdef LENNARD_JONES
   /* Lennard-Jones */
-  ret += lj_pair_energy(p1, p2, ia_params, d, dist);
+  ret += lj_pair_energy(ia_params, dist);
 #endif
 #ifdef WCA
   /* WCA */
@@ -193,7 +193,7 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 
 #ifdef ELECTROSTATICS
   energy.coulomb[0] +=
-      Coulomb::add_pair_energy(p1, p2, p1->p.q * p2->p.q, d, dist, dist2);
+      Coulomb::pair_energy(p1, p2, p1->p.q * p2->p.q, d, dist, dist2);
 #endif
 
 #ifdef DIPOLES

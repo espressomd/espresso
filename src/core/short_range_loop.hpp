@@ -108,10 +108,22 @@ void short_range_loop(ParticleKernel &&particle_kernel,
   auto first = boost::make_indirect_iterator(local_cells.begin());
   auto last = boost::make_indirect_iterator(local_cells.end());
 
+#ifdef ELECTROSTATICS
+  auto const coulomb_cutoff = Coulomb::cutoff(box_l);
+#else
+  auto const coulomb_cutoff = INACTIVE_CUTOFF;
+#endif
+
+#ifdef DIPOLES
+  auto const dipole_cutoff = Dipole::cutoff(box_l);
+#else
+  auto const dipole_cutoff = INACTIVE_CUTOFF;
+#endif
+
   detail::decide_distance(
       first, last, std::forward<ParticleKernel>(particle_kernel),
       std::forward<PairKernel>(pair_kernel),
-      VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff,
+      VerletCriterion{skin, max_cut, coulomb_cutoff, dipole_cutoff,
                       collision_detection_cutoff()});
 
   rebuild_verletlist = 0;
