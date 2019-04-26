@@ -2,7 +2,7 @@
 #define __TORUS_HPP
 
 #include "Shape.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Shapes {
 class Torus : public Shape {

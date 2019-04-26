@@ -57,7 +57,7 @@
 
 #if defined(ELECTROSTATICS)
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 /* iccp3m data structures*/
 struct iccp3m_struct {

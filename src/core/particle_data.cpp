@@ -25,6 +25,7 @@
  */
 
 #include "particle_data.hpp"
+
 #include "PartCfg.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
@@ -41,9 +42,9 @@
 #include "serialization/ParticleList.hpp"
 #include "virtual_sites.hpp"
 
-#include "utils.hpp"
-#include "utils/Cache.hpp"
-#include "utils/mpi/gatherv.hpp"
+#include <utils/Cache.hpp>
+#include <utils/constants.hpp>
+#include <utils/mpi/gatherv.hpp>
 
 #include <boost/range/algorithm.hpp>
 #include <boost/serialization/variant.hpp>

@@ -43,10 +43,12 @@
 #include "integrate.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
-#include "utils.hpp"
 
-#include "utils/vec_rotate.hpp"
+#include <utils/vec_rotate.hpp>
 using Utils::vec_rotate;
+#include <utils/Vector.hpp>
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 /*************************************************************
  * Functions                                                 *
@@ -145,8 +147,8 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
   double poz[3];
   double poy[3] = {0, 0, 0};
   double pox[3] = {0, 0, 0};
-  double a[3] = {0, 0, 0};
-  double b[3], c[3] = {0., 0., 0.}, d[3];
+  Utils::Vector3d a = {0, 0, 0};
+  Utils::Vector3d b, c = {0., 0., 0.};
   double absc;
 
   std::vector<double> poly(3 * MPC);
@@ -289,26 +291,28 @@ int polymerC(PartCfg &partCfg, int N_P, int MPC, double bond_length,
           b[1] = pox[1] - poy[1];
           b[2] = pox[2] - poy[2];
 
-          vector_product(a, b, c);
+          c = vector_product(a, b);
         }
 
         for (cnt1 = 0; cnt1 < max_try; cnt1++) {
           if (angle > -1.0) {
-            if (sqrlen(c) < ROUND_ERROR_PREC) {
+            if (c.norm2() < ROUND_ERROR_PREC) {
               fprintf(stderr, "WARNING: rotation axis is 0,0,0, check the "
                               "angles given to the polymer command\n");
               c[0] = 1;
               c[1] = 0;
               c[2] = 0;
             }
+
+            Utils::Vector3d d;
             if (angle2 > -1.0 && n > 2) {
-              vec_rotate(a, angle2, c, d);
+              d = vec_rotate(a, angle2, c);
             } else {
               phi = 2.0 * Utils::pi() * d_random();
-              vec_rotate(a, phi, c, d);
+              d = vec_rotate(a, phi, c);
             }
 
-            vec_rotate(d, angle, a, b);
+            b = vec_rotate(d, angle, a);
 
             pos[0] = poz[0] + b[0];
             pos[1] = poz[1] + b[1];

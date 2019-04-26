@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OBSERVABLES_DENSITYPROFILE_HPP
 
 #include "PidProfileObservable.hpp"
-#include "utils/Histogram.hpp"
+#include <utils/Histogram.hpp>
 #include <vector>
 
 namespace Observables {

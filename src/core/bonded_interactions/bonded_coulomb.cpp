@@ -25,6 +25,8 @@
 #include "bonded_coulomb.hpp"
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+
 #ifdef ELECTROSTATICS
 
 int bonded_coulomb_set_params(int bond_type, double prefactor) {

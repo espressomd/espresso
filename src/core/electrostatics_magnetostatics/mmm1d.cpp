@@ -25,6 +25,8 @@
  */
 
 #include "electrostatics_magnetostatics/mmm1d.hpp"
+
+#ifdef ELECTROSTATICS
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -33,14 +35,13 @@
 #include "polynom.hpp"
 #include "specfunc.hpp"
 #include "tuning.hpp"
-#include "utils.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
-#include "utils/strcat_alloc.hpp"
+#include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
-
-#ifdef ELECTROSTATICS
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 /** How many trial calculations */
 #define TEST_INTEGRATIONS 1000

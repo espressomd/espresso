@@ -51,7 +51,6 @@
  *
  */
 #include "config.hpp"
-#include "utils.hpp"
 
 #if defined(P3M) || defined(DP3M)
 

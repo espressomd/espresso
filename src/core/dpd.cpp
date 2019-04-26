@@ -31,6 +31,8 @@
 #include "random.hpp"
 #include "thermostat.hpp"
 
+#include <utils/constants.hpp>
+
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
   dpd_update_params(pref_scale);

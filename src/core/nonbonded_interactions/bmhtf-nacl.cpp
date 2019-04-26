@@ -27,6 +27,8 @@
 #ifdef BMHTF_NACL
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+
 int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
                      double C, double D, double sig, double cut) {
   double shift, dist2, pw6;

@@ -178,9 +178,10 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
  */
-inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
-                                       double dist, double dist2) {
-  IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
+inline void add_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
+                                       const double *d, double dist,
+                                       double dist2) {
+  IA_parameters const *ia_params = get_ia_param(p1->p.type, p2->p.type);
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
 #endif
@@ -204,11 +205,11 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
 /** Calculate bonded energies for one particle.
  *  @param p1 particle for which to calculate energies
  */
-inline void add_bonded_energy(Particle *p1) {
+inline void add_bonded_energy(const Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
   int i, bond_broken = 1;
-  double ret = 0, dx[3] = {0, 0, 0};
+  double ret = 0;
 
   i = 0;
   while (i < p1->bl.n) {
@@ -249,25 +250,23 @@ inline void add_bonded_energy(Particle *p1) {
         return;
       }
     }
-    /* similar to the force, we prepare the center-center vector */
-    if (n_partners == 1)
-      get_mi_vector(dx, p1->r.p, p2->r.p);
 
     if (n_partners == 1) {
+      auto const dx = get_mi_vector(p1->r.p, p2->r.p);
       switch (type) {
       case BONDED_IA_FENE:
-        bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = fene_pair_energy(iaparams, dx, &ret);
         break;
 #ifdef ROTATION
       case BONDED_IA_HARMONIC_DUMBBELL:
-        bond_broken = harmonic_dumbbell_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = harmonic_dumbbell_pair_energy(p1, iaparams, dx, &ret);
         break;
 #endif
       case BONDED_IA_HARMONIC:
-        bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = harmonic_pair_energy(iaparams, dx, &ret);
         break;
       case BONDED_IA_QUARTIC:
-        bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = quartic_pair_energy(iaparams, dx, &ret);
         break;
 #ifdef ELECTROSTATICS
       case BONDED_IA_BONDED_COULOMB:
@@ -291,7 +290,7 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 1)
-          bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
+          bond_broken = tab_bond_energy(iaparams, dx, &ret);
         break;
 #endif
 #ifdef UMBRELLA
@@ -381,16 +380,14 @@ inline void add_bonded_energy(Particle *p1) {
 /** Calculate kinetic energies for one particle.
  *  @param p1 particle for which to calculate energies
  */
-inline void add_kinetic_energy(Particle *p1) {
+inline void add_kinetic_energy(const Particle *p1) {
 #ifdef VIRTUAL_SITES
   if (p1->p.is_virtual)
     return;
 #endif
 
   /* kinetic energy */
-  energy.data.e[0] += (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) +
-                       Utils::sqr(p1->m.v[2])) *
-                      0.5 * p1->p.mass;
+  energy.data.e[0] += 0.5 * p1->p.mass * p1->m.v.norm2();
 
 #ifdef ROTATION
   if (p1->p.rotation) {
@@ -404,7 +401,7 @@ inline void add_kinetic_energy(Particle *p1) {
 #endif
 }
 
-inline void add_single_particle_energy(Particle *p) {
+inline void add_single_particle_energy(const Particle *p) {
   add_kinetic_energy(p);
   add_bonded_energy(p);
 }

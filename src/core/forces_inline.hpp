@@ -360,25 +360,26 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 }
 
 inline int calc_bond_pair_force(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *iaparams, double *dx,
+                                Bonded_ia_parameters *iaparams, double *dx_,
                                 double *force) {
   int bond_broken = 0;
 
+  auto const dx = Utils::Vector3d{dx_, dx_ + 3};
+
   switch (iaparams->type) {
   case BONDED_IA_FENE:
-    bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_fene_pair_force(iaparams, dx, force);
     break;
 #ifdef ROTATION
   case BONDED_IA_HARMONIC_DUMBBELL:
-    bond_broken =
-        calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_harmonic_dumbbell_pair_force(p1, iaparams, dx, force);
     break;
 #endif
   case BONDED_IA_HARMONIC:
-    bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_harmonic_pair_force(iaparams, dx, force);
     break;
   case BONDED_IA_QUARTIC:
-    bond_broken = calc_quartic_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_quartic_pair_force(iaparams, dx, force);
     break;
 #ifdef ELECTROSTATICS
   case BONDED_IA_BONDED_COULOMB:
@@ -396,7 +397,7 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
 #ifdef TABULATED
   case BONDED_IA_TABULATED:
     if (iaparams->num == 1)
-      bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
+      bond_broken = calc_tab_bond_force(iaparams, dx, force);
     break;
 #endif
 #ifdef UMBRELLA

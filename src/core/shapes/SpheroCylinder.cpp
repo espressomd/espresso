@@ -20,7 +20,6 @@
 */
 
 #include "SpheroCylinder.hpp"
-#include "utils.hpp"
 #include <cmath>
 
 namespace Shapes {

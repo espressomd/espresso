@@ -26,6 +26,9 @@
 #include "fene.hpp"
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
+
 int fene_set_params(int bond_type, double k, double drmax, double r0) {
   if (bond_type < 0)
     return ES_ERROR;

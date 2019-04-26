@@ -5,7 +5,7 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include "lb.hpp"
 #include "lb_interface.hpp"

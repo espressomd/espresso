@@ -25,11 +25,10 @@
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
-#include "utils.hpp"
-#include "utils/statistics/RunningAverage.hpp"
 #include <limits>
 #include <sys/resource.h>
 #include <sys/time.h>
+#include <utils/statistics/RunningAverage.hpp>
 
 int timing_samples = 10;
 

@@ -23,7 +23,7 @@
 #define __SPHEROCYLINDER_HPP
 
 #include "Shape.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Shapes {
 class SpheroCylinder : public Shape {

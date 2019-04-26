@@ -23,7 +23,7 @@
 #define __RHOMBOID_HPP
 
 #include "Shape.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Shapes {
 class Rhomboid : public Shape {

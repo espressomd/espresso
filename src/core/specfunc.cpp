@@ -23,7 +23,6 @@
 */
 #include "specfunc.hpp"
 #include "polynom.hpp"
-#include "utils.hpp"
 #include <cmath>
 
 /* Original gsl header

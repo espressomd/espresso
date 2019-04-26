@@ -28,7 +28,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../utils/statistics/RunningAverage.hpp"
+#include "utils/statistics/RunningAverage.hpp"
 
 /** random sequence */
 #include "random_sequence.hpp"
