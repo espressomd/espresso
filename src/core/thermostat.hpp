@@ -34,9 +34,9 @@
 
 #include <utils/Vector.hpp>
 
+#include <Random123/philox.h>
 #include <utils/Counter.hpp>
 #include <utils/uniform.hpp>
-#include <Random123/philox.h>
 
 #include <cmath>
 #include <tuple>
