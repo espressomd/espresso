@@ -31,6 +31,7 @@
 #include <boost/optional.hpp>
 
 #include "utils/Counter.hpp"
+#include "utils/Vector.hpp"
 
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
