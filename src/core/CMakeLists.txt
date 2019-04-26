@@ -100,8 +100,7 @@ set(EspressoCore_SRC
   immersed_boundary/ImmersedBoundaries.cpp
   nonbonded_interactions/bmhtf-nacl.cpp
   nonbonded_interactions/buckingham.cpp
-  nonbonded_interactions/cos2.cpp
-  nonbonded_interactions/gaussian.cpp
+        nonbonded_interactions/gaussian.cpp
   nonbonded_interactions/gb.cpp
   nonbonded_interactions/hat.cpp
   nonbonded_interactions/hertzian.cpp
