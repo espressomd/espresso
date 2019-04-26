@@ -54,7 +54,7 @@ class LBInterpolation(object):
     system.cell_system.skin = 0.4 * AGRID
     system.time_step = TIME_STEP
 
-    def set_boundaries(self):
+    def set_boundaries(self, velocity):
         """Place boundaries *not* exactly on a LB node.
 
         """
@@ -65,7 +65,7 @@ class LBInterpolation(object):
         self.system.lbboundaries.add(
             espressomd.lbboundaries.LBBoundary(shape=wall_shape1))
         self.system.lbboundaries.add(
-            espressomd.lbboundaries.LBBoundary(shape=wall_shape2, velocity=[0.0, 0.0, V_BOUNDARY]))
+            espressomd.lbboundaries.LBBoundary(shape=wall_shape2, velocity=velocity))
 
     def test_interpolated_velocity(self):
         """
@@ -73,7 +73,8 @@ class LBInterpolation(object):
         node and first fluid node.
 
         """
-        self.set_boundaries()
+        self.system.lbboundaries.clear()
+        self.set_boundaries([0.0, 0.0, V_BOUNDARY])
         self.system.integrator.run(3000)
         # Shear plane for boundary 1
         #for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
@@ -87,6 +88,17 @@ class LBInterpolation(object):
         # np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2],
         # 1.0, decimal=4)
 
+    def test_mach_limit_check(self):
+        """
+        Assert that the mach number check fires an exception.
+
+        """
+        max_vel = 0.31 * AGRID / TAU
+        self.system.lbboundaries.clear()
+        self.set_boundaries([0.0, 0.0, max_vel])
+        with self.assertRaises(Exception):
+            self.system.integrator.run(1)
+        
 
 @ut.skipIf(not espressomd.has_features(['LB', 'LB_BOUNDARIES']), "Skipped, features missing.")
 class LBInterpolationCPU(ut.TestCase, LBInterpolation):
