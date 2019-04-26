@@ -48,7 +48,7 @@ A minimal working example is the following:
 """
 
 try:
-    import cStringIO as StringIO
+    from cStringIO import StringIO
 except ImportError:
     from io import StringIO
 
