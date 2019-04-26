@@ -88,38 +88,38 @@ BOOST_AUTO_TEST_CASE(velocity) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(mpi_collector) {
-  init_lb_walberla(viscosity, agrid, box_dimensions, node_grid, skin);
-  for (Utils::Vector3i node : std::vector<Utils::Vector3i>{
-           {9, 9, 9}, {2, 2, 3}, {1, 0, 0}, {0, 1, 2}, {3, 2, 3}, {3, 2, 3}}) {
-    const Utils::Vector3d v{{double(node[0]) + 1, -1, 2.5 - double(node[2])}};
-    double eps = 1E-8;
-    if (lb_walberla()->node_in_local_domain(node)) {
-      BOOST_CHECK(lb_walberla()->set_node_velocity(node, v));
-    }
-    Utils::Vector3d res = lb_lbnode_get_velocity(node);
-    if (comm_cart.rank() == 0) {
-      BOOST_CHECK((res - v).norm() < eps);
-    }
-  }
-  Utils::Vector3d vel = {0.2, 3.8, 4.2};
-  for (Utils::Vector3i node : std::vector<Utils::Vector3i>{{0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
-    if (lb_walberla()->node_in_local_domain(node)) {
-      BOOST_CHECK(lb_walberla()->set_node_velocity_at_boundary(node, vel));
-    }
-    int is_boundary = lb_lbnode_get_boundary(node);
-    if (comm_cart.rank() == 0) {
-      BOOST_CHECK(is_boundary);
-    }
-    if (lb_walberla()->node_in_local_domain(node)) {
-      BOOST_CHECK(lb_walberla()->remove_node_from_boundary(node));
-    }
-    is_boundary = lb_lbnode_get_boundary(node);
-    if (comm_cart.rank() == 0) {
-      BOOST_CHECK(!is_boundary);
-    }
-  }
-}
+//BOOST_AUTO_TEST_CASE(mpi_collector) {
+//  init_lb_walberla(viscosity, agrid, box_dimensions, node_grid, skin);
+//  for (Utils::Vector3i node : std::vector<Utils::Vector3i>{
+//           {9, 9, 9}, {2, 2, 3}, {1, 0, 0}, {0, 1, 2}, {3, 2, 3}, {3, 2, 3}}) {
+//    const Utils::Vector3d v{{double(node[0]) + 1, -1, 2.5 - double(node[2])}};
+//    double eps = 1E-8;
+//    if (lb_walberla()->node_in_local_domain(node)) {
+//      BOOST_CHECK(lb_walberla()->set_node_velocity(node, v));
+//    }
+//    Utils::Vector3d res = lb_lbnode_get_velocity(node);
+//    if (comm_cart.rank() == 0) {
+//      BOOST_CHECK((res - v).norm() < eps);
+//    }
+//  }
+//  Utils::Vector3d vel = {0.2, 3.8, 4.2};
+//  for (Utils::Vector3i node : std::vector<Utils::Vector3i>{{0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
+//    if (lb_walberla()->node_in_local_domain(node)) {
+//      BOOST_CHECK(lb_walberla()->set_node_velocity_at_boundary(node, vel));
+//    }
+//    int is_boundary = lb_lbnode_get_boundary(node);
+//    if (comm_cart.rank() == 0) {
+//      BOOST_CHECK(is_boundary);
+//    }
+//    if (lb_walberla()->node_in_local_domain(node)) {
+//      BOOST_CHECK(lb_walberla()->remove_node_from_boundary(node));
+//    }
+//    is_boundary = lb_lbnode_get_boundary(node);
+//    if (comm_cart.rank() == 0) {
+//      BOOST_CHECK(!is_boundary);
+//    }
+//  }
+//}
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
