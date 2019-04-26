@@ -47,17 +47,17 @@
 
 #include "utils/vec_rotate.hpp"
 
-Utils::Vector3d random_position(const std::function<double()> &generate_rn) {
+Utils::Vector3d random_position(std::function<double()> const &generate_rn) {
   Utils::Vector3d v;
   for (int i = 0; i < 3; ++i)
     v[i] = box_l[i] * generate_rn();
   return v;
 }
 
-Utils::Vector3d random_unit_vector(const std::function<double()> &generate_rn) {
+Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn) {
   Utils::Vector3d v;
-  const double phi = acos(1. - 2. * generate_rn());
-  const double theta = 2. * Utils::pi() * generate_rn();
+  double const phi = acos(1. - 2. * generate_rn());
+  double const theta = 2. * Utils::pi() * generate_rn();
   v[0] = sin(phi) * cos(theta);
   v[1] = sin(phi) * sin(theta);
   v[2] = cos(phi);
@@ -65,7 +65,7 @@ Utils::Vector3d random_unit_vector(const std::function<double()> &generate_rn) {
   return v;
 }
 
-double mindist(PartCfg &partCfg, const Utils::Vector3d pos) {
+double mindist(PartCfg &partCfg, Utils::Vector3d const pos) {
   if (partCfg.size() == 0) {
     return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
   }
@@ -82,11 +82,11 @@ double mindist(PartCfg &partCfg, const Utils::Vector3d pos) {
 }
 
 bool is_valid_position(
-    const Utils::Vector3d *pos,
-    const std::vector<std::vector<Utils::Vector3d>> *positions,
-    PartCfg &partCfg, const double min_distance,
-    const int respect_constraints) {
-  const Utils::Vector3d folded_pos = folded_position(*pos);
+    Utils::Vector3d const *pos,
+    std::vector<std::vector<Utils::Vector3d>> const *positions,
+    PartCfg &partCfg, double const min_distance,
+    int const respect_constraints) {
+  Utils::Vector3d const folded_pos = folded_position(*pos);
   // check if constraint is violated
   if (respect_constraints) {
     for (auto &c : Constraints::constraints) {
@@ -113,7 +113,7 @@ bool is_valid_position(
     // check for collision with buffered positions
     double buff_mindist = std::numeric_limits<double>::infinity();
     double h;
-    for (const auto p : *positions) {
+    for (auto const p : *positions) {
       for (auto m : p) {
         h = (folded_position(*pos) - folded_position(m)).norm2();
         buff_mindist = std::min(h, buff_mindist);
@@ -127,12 +127,12 @@ bool is_valid_position(
 }
 
 std::vector<std::vector<Utils::Vector3d>>
-draw_polymer_positions(PartCfg &partCfg, const int n_polymers,
-                       const int beads_per_chain, const double bond_length,
-                       const std::vector<Utils::Vector3d> &start_positions,
-                       const double min_distance, const int max_tries,
-                       const int use_bond_angle, const double bond_angle,
-                       const int respect_constraints, const int seed) {
+draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
+                       int const beads_per_chain, double const bond_length,
+                       std::vector<Utils::Vector3d> const &start_positions,
+                       double const min_distance, int const max_tries,
+                       int const use_bond_angle, double const bond_angle,
+                       int const respect_constraints, int const seed) {
   std::vector<std::vector<Utils::Vector3d>> positions(
       n_polymers, std::vector<Utils::Vector3d>(beads_per_chain));
 

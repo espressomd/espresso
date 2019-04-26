@@ -32,8 +32,8 @@
 #include "particle_data.hpp"
 #include "utils/Vector.hpp"
 
-Utils::Vector3d random_position(const std::function<double()> &generate_rn);
-Utils::Vector3d random_unit_vector(const std::function<double()> &generate_rn);
+Utils::Vector3d random_position(std::function<double()> const &generate_rn);
+Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn);
 
 /** Returns the miminum distance between position pos and all existing
  *  particles.
@@ -51,9 +51,9 @@ double mindist(PartCfg &partCfg, Utils::Vector3d pos);
  *  @param respect_constraints = whether to respect constraints <br>
  */
 bool is_valid_position(
-    const Utils::Vector3d *pos,
-    const std::vector<std::vector<Utils::Vector3d>> *positions,
-    const PartCfg &partCfg, double min_distance, int respect_constraints);
+    Utils::Vector3d const *pos,
+    std::vector<std::vector<Utils::Vector3d>> const *positions,
+    PartCfg const &partCfg, double min_distance, int respect_constraints);
 
 /** Determines valid polymer positions and returns them.
  *  @param  n_polymers         = how many polymers to create <br>
@@ -71,7 +71,7 @@ bool is_valid_position(
 std::vector<std::vector<Utils::Vector3d>>
 draw_polymer_positions(PartCfg &partCfg, int n_polymers, int beads_per_chain,
                        double bond_length,
-                       const std::vector<Utils::Vector3d> &start_positions,
+                       std::vector<Utils::Vector3d> const &start_positions,
                        double min_distance, int max_tries, int use_bond_angle,
                        double bond_angle, int respect_constraints, int seed);
 

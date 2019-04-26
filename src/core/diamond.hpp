@@ -30,28 +30,12 @@
 
 #include "PartCfg.hpp"
 #include "particle_data.hpp"
+#include "utils/Vector.hpp"
 
 /*************************************************************
  * Functions                                                 *
  * ---------                                                 *
  *************************************************************/
-
-/** Returns the distance to the particle closest to 'pos'.
- */
-double mindist(PartCfg &partCfg, double pos[3]);
-
-/** Checks whether a particle at coordinates (\<posx\>, \<posy\>, \<posz\>)
- *  collides
- *  with any other particle due to a minimum image distance smaller than
- *  \<shield\>.
- *  @param pos coordinates of particle to check
- *  @param shield minimum distance before it is defined as collision
- *  @param n_add number of additional coordinates to check
- *  @param add additional coordinates to check
- *  @return Returns '1' if there is a collision, '0' otherwise.
- */
-int collides_with_particle(PartCfg &, double pos[3], double shield, int n_add,
-                           double *add);
 
 /** C implementation of 'counterions \<N_CI\> [options]'.
  *  @param  N_CI        = number of counterions to create
