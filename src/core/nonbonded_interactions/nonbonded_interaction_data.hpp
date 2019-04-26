@@ -225,16 +225,6 @@ struct IA_parameters {
 /*@}*/
 #endif
 
-#ifdef COS2
-  /** \name Cos2 potential */
-  /*@{*/
-  double COS2_eps = INACTIVE_CUTOFF;
-  double COS2_cut = INACTIVE_CUTOFF;
-  double COS2_offset = INACTIVE_CUTOFF;
-  double COS2_w = INACTIVE_CUTOFF;
-/*@}*/
-#endif
-
 #ifdef GAY_BERNE
   /** \name Gay-Berne potential */
   /*@{*/

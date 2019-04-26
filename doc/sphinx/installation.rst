@@ -538,8 +538,6 @@ following features.
 
 -  ``LJGEN_SOFTCORE``
 
--  ``COS2``
-
 -  ``GAUSSIAN``
 
 -  ``HAT``
