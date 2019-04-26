@@ -122,11 +122,11 @@ class LangevinThermostat(ut.TestCase):
         # Translation
         gamma_t_i = 2
         gamma_t_a = np.array((0.5, 2, 1.5))
-        v0 = 5.
+        v0 = np.array((5., 5., 5.))
 
         system.time_step = 0.0005
         system.part.clear()
-        system.part.add(pos=(0, 0, 0), v=(v0, v0, v0))
+        system.part.add(pos=(0, 0, 0), v=v0)
         if espressomd.has_features("MASS"):
             system.part[0].mass = 3
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
@@ -139,10 +139,10 @@ class LangevinThermostat(ut.TestCase):
             system.integrator.run(10)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                     np.testing.assert_allclose(
-                        np.copy(system.part[0].v), v0 * np.exp(-gamma_t_a / system.part[0].mass * system.time), atol=3E-4)
+                        np.copy(system.part[0].v), v0 * np.exp(-gamma_t_a / system.part[0].mass * system.time), atol=4E-4)
             else:
                     np.testing.assert_allclose(
-                        np.copy(system.part[0].v), v0 * np.exp(-gamma_t_i / system.part[0].mass * system.time), atol=3E-4)
+                        np.copy(system.part[0].v), v0 * np.exp(-gamma_t_i / system.part[0].mass * system.time), atol=45E-4)
 
     @ut.skipIf(not espressomd.has_features("ROTATION"), "Skipped for lack of ROTATION")
     def test_03__friction_rot(self):
@@ -154,12 +154,12 @@ class LangevinThermostat(ut.TestCase):
         gamma_t_a = 0.5, 2, 1.5
         gamma_r_i = 3
         gamma_r_a = np.array((1.5, 0.7, 1.2))
-        o0 = 5.
+        o0 = np.array((5., 5., 5.))
 
         system.time_step = 0.0005
         system.part.clear()
         system.part.add(
-            pos=(0, 0, 0), omega_body=(o0, o0, o0), rotation=(1, 1, 1))
+            pos=(0, 0, 0), omega_body=o0, rotation=(1, 1, 1))
         if espressomd.has_features("ROTATIONAL_INERTIA"):
             system.part[0].rinertia = 2, 2, 2
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
