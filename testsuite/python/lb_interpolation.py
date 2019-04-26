@@ -26,7 +26,7 @@ AGRID = 1.5
 VISC = 1.0
 DENS = 1.0
 FRIC = 1.0
-TAU = 0.1
+TAU = 0.2
 BOX_L = 18.0
 TIME_STEP = TAU
 LB_PARAMETERS = {
@@ -75,7 +75,7 @@ class LBInterpolation(object):
         """
         self.system.lbboundaries.clear()
         self.set_boundaries([0.0, 0.0, V_BOUNDARY])
-        self.system.integrator.run(3000)
+        self.system.integrator.run(1200)
         # Shear plane for boundary 1
         #for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
         #    np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
