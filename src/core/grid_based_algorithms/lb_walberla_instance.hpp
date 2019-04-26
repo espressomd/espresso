@@ -1,6 +1,8 @@
 #ifndef GRID_BASED_ALGORITHMS_LBWALBERLA_INSTANCE_HPP
 #define GRID_BASED_ALGORITHMS_LBWALBERLA_INSTANCE_HPP
+#include "config.hpp"
 
+#ifdef LB_WALBERLA
 #include "LbWalberla.hpp"
 #include "communication.hpp"
 #include "utils/Vector.hpp"
@@ -72,5 +74,6 @@ auto lb_walberla_get_on_head_node(Getter getter_function, T const &arg)
   }
   return global_result;
 }
+#endif
 
 #endif

@@ -1,3 +1,6 @@
+#include "config.hpp" 
+
+#ifdef LB_WALBERLA
 #include "LbWalberla.hpp"
 #include "communication.hpp"
 #include "utils/Vector.hpp"
@@ -36,4 +39,5 @@ REGISTER_CALLBACK(init_lb_walberla);
 void destruct_lb_walberla() { lb_walberla_instance.reset(nullptr); }
 REGISTER_CALLBACK(destruct_lb_walberla);
 
+#endif
 #endif
