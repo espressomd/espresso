@@ -87,13 +87,13 @@ BOOST_AUTO_TEST_CASE(velocity) {
     }
   }
 }
-/*
+
 BOOST_AUTO_TEST_CASE(mpi_collector) {
   init_lb_walberla(viscosity, agrid, box_dimensions, node_grid, skin);
-  double eps = 1E-8;
   for (Vector3i node : std::vector<Vector3i>{
            {9, 9, 9}, {2, 2, 3}, {1, 0, 0}, {0, 1, 2}, {3, 2, 3}, {3, 2, 3}}) {
     const Vector3d v{{double(node[0]) + 1, -1, 2.5 - double(node[2])}};
+    double eps = 1E-8;
     if (lb_walberla()->node_in_local_domain(node)) {
       BOOST_CHECK(lb_walberla()->set_node_velocity(node, v));
     }
@@ -103,7 +103,6 @@ BOOST_AUTO_TEST_CASE(mpi_collector) {
     }
   }
   Vector3d vel = {0.2, 3.8, 4.2};
-  double density = 1.2;
   for (Vector3i node : std::vector<Vector3i>{{0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
     if (lb_walberla()->node_in_local_domain(node)) {
       BOOST_CHECK(lb_walberla()->set_node_velocity_at_boundary(node, vel));
@@ -119,16 +118,8 @@ BOOST_AUTO_TEST_CASE(mpi_collector) {
     if (comm_cart.rank() == 0) {
       BOOST_CHECK(!is_boundary);
     }
-
-    if (lb_walberla()->node_in_local_domain(node)) {
-      BOOST_CHECK(lb_walberla()->set_node_density(node, density));
-    }
-    double dens_res = lb_lbnode_get_density(node);
-    if (comm_cart.rank() == 0) {
-      BOOST_CHECK(std::abs(dens_res - density) < eps);
-    }
   }
-}*/
+}
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
