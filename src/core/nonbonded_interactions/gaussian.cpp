@@ -23,9 +23,11 @@
  *  Implementation of \ref gaussian.hpp
  */
 #include "gaussian.hpp"
-#include "communication.hpp"
 
 #ifdef GAUSSIAN
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int gaussian_set_params(int part_type_a, int part_type_b, double eps,
                         double sig, double cut) {

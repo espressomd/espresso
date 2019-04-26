@@ -23,9 +23,11 @@
  *  Implementation of \ref bonded_coulomb_sr.hpp
  */
 #include "bonded_coulomb_sr.hpp"
-#include "communication.hpp"
 
 #ifdef ELECTROSTATICS
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int bonded_coulomb_sr_set_params(int bond_type, double q1q2) {
   if (bond_type < 0)

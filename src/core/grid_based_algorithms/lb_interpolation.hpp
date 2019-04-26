@@ -1,7 +1,7 @@
 #ifndef LATTICE_INTERPOLATION_HPP
 #define LATTICE_INTERPOLATION_HPP
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 /**
  * @brief Interpolation order for the LB fluid interpolation.
  * @note For the CPU LB only linear interpolation is available.

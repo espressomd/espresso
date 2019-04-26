@@ -35,13 +35,15 @@
  */
 
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
+
+#ifdef DIPOLES
 #include "cells.hpp"
 #include "dipole.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#ifdef DIPOLES
+#include <utils/constants.hpp>
 
 // Calculates dipolar energy and/or force between two particles
 double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,

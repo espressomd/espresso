@@ -28,6 +28,8 @@
 #include "errorhandling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
+#include <utils/constants.hpp>
+
 #include <random>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)

@@ -15,9 +15,9 @@
 #include "lbgpu.hpp"
 #include "random.hpp"
 
-#include "utils/Counter.hpp"
 #include "utils/u32_to_u64.hpp"
-#include "utils/uniform.hpp"
+#include <utils/Counter.hpp>
+#include <utils/uniform.hpp>
 
 LB_Particle_Coupling lb_particle_coupling;
 

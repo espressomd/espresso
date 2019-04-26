@@ -25,7 +25,6 @@
 */
 
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include "TabulatedPotential.hpp"
 
@@ -375,7 +374,7 @@ inline int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
 
-#include "utils/math/sqr.hpp"
+#include <utils/math/sqr.hpp>
 
 /** Returns true if the particles are to be considered for short range
     interactions */

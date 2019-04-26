@@ -18,16 +18,15 @@
 */
 
 #include "cuda_init.hpp"
+#ifdef CUDA
 #include "communication.hpp"
-#include "config.hpp"
-#include "utils.hpp"
+
+#include <utils/constants.hpp>
 
 #include <cstring>
 #include <iterator>
 #include <mpi.h>
 #include <set>
-
-#ifdef CUDA
 
 /** Helper class force device set
  */

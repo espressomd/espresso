@@ -29,7 +29,6 @@
 #define _HALO_HPP
 
 #include "grid_based_algorithms/lattice.hpp"
-#include "utils.hpp"
 #include <mpi.h>
 
 #ifdef LATTICE

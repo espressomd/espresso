@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "detail/Base.hpp"
 #include "detail/BindCoupling.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace FieldCoupling {
 template <typename Coupling, typename Field>

@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OBSERVABLES_PARTICLEDISTANCES_HPP
 
 #include "PidObservable.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <vector>
 

@@ -2,13 +2,13 @@
 #define ESPRESSO_DIPOLE_HPP
 
 #include "config.hpp"
-#include "utils/Vector.hpp"
 
 extern double dipolar_cutoff;
 
 #ifdef DIPOLES
-
 #include "Observable_stat.hpp"
+
+#include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
 

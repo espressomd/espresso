@@ -44,12 +44,13 @@
 #include "random.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
-#include "utils/Counter.hpp"
-#include "utils/index.hpp"
-#include "utils/math/matrix_vector_product.hpp"
 #include "utils/u32_to_u64.hpp"
-#include "utils/uniform.hpp"
+#include <utils/Counter.hpp>
+#include <utils/index.hpp>
+#include <utils/math/matrix_vector_product.hpp>
+#include <utils/uniform.hpp>
 using Utils::get_linear_index;
+#include <utils/constants.hpp>
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
@@ -776,10 +777,13 @@ inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
   j[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
   j[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
 
+  using Utils::sqr;
+  auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
+
   /* equilibrium part of the stress modes */
-  pi_eq[0] = scalar(j, j) / rho;
-  pi_eq[1] = (Utils::sqr(j[0]) - Utils::sqr(j[1])) / rho;
-  pi_eq[2] = (scalar(j, j) - 3.0 * Utils::sqr(j[2])) / rho;
+  pi_eq[0] = j2 / rho;
+  pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / rho;
+  pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / rho;
   pi_eq[3] = j[0] * j[1] / rho;
   pi_eq[4] = j[0] * j[2] / rho;
   pi_eq[5] = j[1] * j[2] / rho;
@@ -849,23 +853,22 @@ inline std::array<T, 19> lb_thermalize_modes(Lattice::index_t index,
 template <typename T>
 std::array<T, 19> lb_apply_forces(Lattice::index_t index,
                                   const std::array<T, 19> &modes) {
-  T rho, u[3], C[6];
-
   const auto &f = lbfields[index].force_density;
 
-  rho = modes[0] + lbpar.rho;
+  auto const rho = modes[0] + lbpar.rho;
 
   /* hydrodynamic momentum density is redefined when external forces present */
-  u[0] = (modes[1] + 0.5 * f[0]) / rho;
-  u[1] = (modes[2] + 0.5 * f[1]) / rho;
-  u[2] = (modes[3] + 0.5 * f[2]) / rho;
+  auto const u = Utils::Vector3d{modes[1] + 0.5 * f[0], modes[2] + 0.5 * f[1],
+                                 modes[3] + 0.5 * f[2]} /
+                 rho;
 
+  double C[6];
   C[0] = (1. + lbpar.gamma_bulk) * u[0] * f[0] +
-         1. / 3. * (lbpar.gamma_bulk - lbpar.gamma_shear) * scalar(u, f);
+         1. / 3. * (lbpar.gamma_bulk - lbpar.gamma_shear) * (u * f);
   C[2] = (1. + lbpar.gamma_bulk) * u[1] * f[1] +
-         1. / 3. * (lbpar.gamma_bulk - lbpar.gamma_shear) * scalar(u, f);
+         1. / 3. * (lbpar.gamma_bulk - lbpar.gamma_shear) * (u * f);
   C[5] = (1. + lbpar.gamma_bulk) * u[2] * f[2] +
-         1. / 3. * (lbpar.gamma_bulk - lbpar.gamma_shear) * scalar(u, f);
+         1. / 3. * (lbpar.gamma_bulk - lbpar.gamma_shear) * (u * f);
   C[1] = 1. / 2. * (1. + lbpar.gamma_shear) * (u[0] * f[1] + u[1] * f[0]);
   C[3] = 1. / 2. * (1. + lbpar.gamma_shear) * (u[0] * f[2] + u[2] * f[0]);
   C[4] = 1. / 2. * (1. + lbpar.gamma_shear) * (u[1] * f[2] + u[2] * f[1]);
@@ -1254,11 +1257,14 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   if (!pi)
     return;
 
+  using Utils::sqr;
+  auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
+
   /* equilibrium part of the stress modes */
   Utils::Vector6d modes_from_pi_eq{};
-  modes_from_pi_eq[0] = scalar(j, j) / *rho;
-  modes_from_pi_eq[1] = (Utils::sqr(j[0]) - Utils::sqr(j[1])) / *rho;
-  modes_from_pi_eq[2] = (scalar(j, j) - 3.0 * Utils::sqr(j[2])) / *rho;
+  modes_from_pi_eq[0] = j2 / *rho;
+  modes_from_pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / *rho;
+  modes_from_pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / *rho;
   modes_from_pi_eq[3] = j[0] * j[1] / *rho;
   modes_from_pi_eq[4] = j[0] * j[2] / *rho;
   modes_from_pi_eq[5] = j[1] * j[2] / *rho;

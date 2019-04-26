@@ -29,8 +29,9 @@
 #include "debug.hpp"
 #include "grid.hpp"
 
-#include "utils/index.hpp"
+#include <utils/index.hpp>
 using Utils::get_linear_index;
+#include <utils/constants.hpp>
 
 int Lattice::init(double *agrid, double const *offset, int halo_size,
                   const Utils::Vector3d &local_box,

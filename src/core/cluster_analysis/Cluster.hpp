@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CLUSTER_ANALYSIS_CLUSTER_HPP
 #define CLUSTER_ANALYSIS_CLUSTER_HPP
 
-#include "utils/Vector.hpp"
 #include <map>
 #include <string>
+#include <utils/Vector.hpp>
 #include <valarray>
 #include <vector>
 

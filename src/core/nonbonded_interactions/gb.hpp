@@ -29,9 +29,8 @@
 
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
-#include "utils/math/int_pow.hpp"
-#include "utils/math/sqr.hpp"
+#include <utils/math/int_pow.hpp>
+#include <utils/math/sqr.hpp>
 
 #ifdef GAY_BERNE
 

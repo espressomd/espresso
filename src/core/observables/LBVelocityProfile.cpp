@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "LBVelocityProfile.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
-#include "utils/Histogram.hpp"
+#include <utils/Histogram.hpp>
 
 namespace Observables {
 

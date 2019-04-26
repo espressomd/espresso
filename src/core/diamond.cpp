@@ -44,7 +44,6 @@
 #include "integrate.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
-#include "utils.hpp"
 
 /*************************************************************
  * Functions                                                 *
