@@ -256,7 +256,7 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
                                             Utils::Vector3d &pos) {
   double c;
   auto const vec21 = get_mi_vector(p1.r.p, p2.r.p);
-  const double dist_betw_part = vec21.norm();
+  double const dist_betw_part = vec21.norm();
 
   // Find out, which is the particle to be glued.
   if ((p1.p.type == collision_params.part_type_to_be_glued) &&

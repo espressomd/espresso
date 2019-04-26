@@ -381,9 +381,9 @@ inline int checkIfParticlesInteract(int i, int j) {
 class VerletCriterion {
   const double m_skin;
   const double m_eff_max_cut2;
-  const double m_eff_coulomb_cut2 = 0.;
-  const double m_eff_dipolar_cut2 = 0.;
-  const double m_collision_cut2 = 0.;
+  double const m_eff_coulomb_cut2 = 0.;
+  double const m_eff_dipolar_cut2 = 0.;
+  double const m_collision_cut2 = 0.;
 
 public:
   VerletCriterion(double skin, double max_cut, double coulomb_cut = 0.,

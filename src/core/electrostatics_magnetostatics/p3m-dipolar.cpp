@@ -1183,7 +1183,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
 /************************************************************/
 
 double calc_surface_term(int force_flag, int energy_flag) {
-  const double pref = dipole.prefactor * 4 * M_PI * box_l_i[0] * box_l_i[1] *
+  double const pref = dipole.prefactor * 4 * M_PI * box_l_i[0] * box_l_i[1] *
                       box_l_i[2] / (2 * dp3m.params.epsilon + 1);
   double suma, a[3];
   double en;

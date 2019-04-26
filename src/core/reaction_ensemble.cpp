@@ -370,10 +370,10 @@ double ReactionEnsemble::calculate_acceptance_probability(
     int dummy_new_state_index,
     bool dummy_only_make_configuration_changing_move) {
   /**calculate the acceptance probability in the reaction ensemble */
-  const double factorial_expr =
+  double const factorial_expr =
       calculate_factorial_expression(current_reaction, old_particle_numbers);
 
-  const double beta = 1.0 / temperature;
+  double const beta = 1.0 / temperature;
   // calculate Boltzmann factor
   return std::pow(volume, current_reaction.nu_bar) * current_reaction.gamma *
          factorial_expr * exp(-beta * (E_pot_new - E_pot_old));
@@ -447,7 +447,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   }
 
   // calculate potential energy
-  const double E_pot_old =
+  double const E_pot_old =
       calculate_current_potential_energy_of_system(); // only consider potential
                                                       // energy since we assume
                                                       // that the kinetic part
@@ -468,7 +468,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   std::vector<int> p_ids_created_particles;
   std::vector<StoredParticleProperty> hidden_particles_properties;
   std::vector<StoredParticleProperty> changed_particles_properties;
-  const int number_of_saved_properties =
+  int const number_of_saved_properties =
       3; // save p_id, charge and type of the reactant particle, only thing we
          // need to hide the particle and recover it
   make_reaction_attempt(current_reaction, changed_particles_properties,
@@ -802,7 +802,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     return got_accepted;
   }
 
-  const double E_pot_old = calculate_current_potential_energy_of_system();
+  double const E_pot_old = calculate_current_potential_energy_of_system();
 
   std::vector<double> particle_positions(3 *
                                          particle_number_of_type_to_be_changed);
@@ -1464,7 +1464,7 @@ int WangLandauReactionEnsemble::
                                           double_fill_value);
   }
 
-  const double E_pot_current = calculate_current_potential_energy_of_system();
+  double const E_pot_current = calculate_current_potential_energy_of_system();
   int index = get_flattened_index_wang_landau_of_current_state();
 
   // update stored energy values
@@ -1530,7 +1530,7 @@ int WangLandauReactionEnsemble::
                        unraveled_index.begin(),
                        flattened_index_with_EnergyCollectiveVariable);
   // use unraveled index
-  const int nr_collective_variables =
+  int const nr_collective_variables =
       collective_variables.size() -
       1; // forget the last collective variable (the energy collective variable)
   std::vector<double> current_state(nr_collective_variables);
@@ -1771,7 +1771,7 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
    */
   double ln_bf;
   double pKa;
-  const double beta = 1.0 / temperature;
+  double const beta = 1.0 / temperature;
   pKa = -current_reaction.nu_bar * log10(current_reaction.gamma);
   ln_bf = (E_pot_new - E_pot_old) - current_reaction.nu_bar * 1.0 / beta *
                                         log(10) * (m_constant_pH - pKa);
@@ -1782,18 +1782,18 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
 std::pair<double, double>
 WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   SingleReaction &current_reaction = reactions[reaction_id];
-  const double E_pot_old = calculate_current_potential_energy_of_system();
+  double const E_pot_old = calculate_current_potential_energy_of_system();
 
   // make reaction attempt
   std::vector<int> p_ids_created_particles;
   std::vector<StoredParticleProperty> hidden_particles_properties;
   std::vector<StoredParticleProperty> changed_particles_properties;
-  const int number_of_saved_properties =
+  int const number_of_saved_properties =
       3; // save p_id, charge and type of the reactant particle, only thing we
          // need to hide the particle and recover it
   make_reaction_attempt(current_reaction, changed_particles_properties,
                         p_ids_created_particles, hidden_particles_properties);
-  const double E_pot_new = calculate_current_potential_energy_of_system();
+  double const E_pot_new = calculate_current_potential_energy_of_system();
   // reverse reaction attempt
   // reverse reaction
   // 1) delete created product particles

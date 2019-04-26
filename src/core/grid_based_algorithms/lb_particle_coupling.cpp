@@ -160,7 +160,7 @@ bool in_local_domain(Utils::Vector3d const &pos) {
 void add_swimmer_force(Particle &p) {
   if (p.swim.swimming) {
     // calculate source position
-    const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
+    double const direction = double(p.swim.push_pull) * p.swim.dipole_length;
     auto const director = p.r.calc_director();
     auto const source_position = p.r.p + direction * director;
 

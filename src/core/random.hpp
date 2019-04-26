@@ -153,7 +153,7 @@ inline double gaussian_random() {
 inline double gaussian_random_cut() {
   using namespace Random;
   check_user_has_seeded();
-  const double random_number = 1.042267973 * normal_distribution(generator);
+  double const random_number = 1.042267973 * normal_distribution(generator);
 
   if (fabs(random_number) > 2 * 1.042267973) {
     if (random_number > 0) {

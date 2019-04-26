@@ -90,9 +90,9 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   auto const lp = vec1.norm();
 
   // angles between these vectors; calculated directly via the products
-  const double cosPhi = (vec1 * vec2) / (lp * l);
+  double const cosPhi = (vec1 * vec2) / (lp * l);
   auto const vecpro = vector_product(vec1, vec2);
-  const double sinPhi = vecpro.norm() / (l * lp);
+  double const sinPhi = vecpro.norm() / (l * lp);
 
   // Check for sanity
   if ((lp - iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxDist) ||
@@ -101,31 +101,31 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   }
 
   // Variables in the reference state
-  const double l0 = iaparams->p.ibm_triel.l0;
-  const double lp0 = iaparams->p.ibm_triel.lp0;
-  const double cosPhi0 = iaparams->p.ibm_triel.cosPhi0;
-  const double sinPhi0 = iaparams->p.ibm_triel.sinPhi0;
-  const double a1 = iaparams->p.ibm_triel.a1;
-  const double a2 = iaparams->p.ibm_triel.a2;
-  const double b1 = iaparams->p.ibm_triel.b1;
-  const double b2 = iaparams->p.ibm_triel.b2;
-  const double A0 = iaparams->p.ibm_triel.area0;
+  double const l0 = iaparams->p.ibm_triel.l0;
+  double const lp0 = iaparams->p.ibm_triel.lp0;
+  double const cosPhi0 = iaparams->p.ibm_triel.cosPhi0;
+  double const sinPhi0 = iaparams->p.ibm_triel.sinPhi0;
+  double const a1 = iaparams->p.ibm_triel.a1;
+  double const a2 = iaparams->p.ibm_triel.a2;
+  double const b1 = iaparams->p.ibm_triel.b1;
+  double const b2 = iaparams->p.ibm_triel.b2;
+  double const A0 = iaparams->p.ibm_triel.area0;
 
   // Displacement gradient tensor D: Eq. (C.9) Krüger thesis
-  const double Dxx = lp / lp0;
-  const double Dxy = ((l / l0 * cosPhi) - (lp / lp0 * cosPhi0)) / sinPhi0;
-  const double Dyx = 0.0;
-  const double Dyy = l / l0 * sinPhi / sinPhi0;
+  double const Dxx = lp / lp0;
+  double const Dxy = ((l / l0 * cosPhi) - (lp / lp0 * cosPhi0)) / sinPhi0;
+  double const Dyx = 0.0;
+  double const Dyy = l / l0 * sinPhi / sinPhi0;
 
   // Tensor G: (C.12)
-  const double Gxx = Utils::sqr(Dxx) + Utils::sqr(Dyx);
-  const double Gxy = Dxx * Dxy + Dyx * Dyy;
-  const double Gyx = Dxx * Dxy + Dyy * Dyx; // = Gxy because of symmetry
-  const double Gyy = Utils::sqr(Dxy) + Utils::sqr(Dyy);
+  double const Gxx = Utils::sqr(Dxx) + Utils::sqr(Dyx);
+  double const Gxy = Dxx * Dxy + Dyx * Dyy;
+  double const Gyx = Dxx * Dxy + Dyy * Dyx; // = Gxy because of symmetry
+  double const Gyy = Utils::sqr(Dxy) + Utils::sqr(Dyy);
 
   // Strain invariants, C.11 and C.12
-  const double i1 = (Gxx + Gyy) - 2;
-  const double i2 = ((Gxx * Gyy) - (Gxy * Gyx)) - 1;
+  double const i1 = (Gxx + Gyy) - 2;
+  double const i2 = ((Gxx * Gyy) - (Gxy * Gyx)) - 1;
 
   // Derivatives of energy density E used in chain rule below: Eq. (C.14)
   double dEdI1;
@@ -144,38 +144,38 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   // ******** Achim's version *****************
 
   // Derivatives of Is (C.15)
-  const double dI1dGxx = 1;
-  const double dI1dGxy = 0;
-  const double dI1dGyx = 0;
-  const double dI1dGyy = 1;
+  double const dI1dGxx = 1;
+  double const dI1dGxy = 0;
+  double const dI1dGyx = 0;
+  double const dI1dGyy = 1;
 
-  const double dI2dGxx = Gyy;
-  const double dI2dGxy = -Gyx; // Note: Krueger has a factor 2 here, because he
+  double const dI2dGxx = Gyy;
+  double const dI2dGxy = -Gyx; // Note: Krueger has a factor 2 here, because he
                                // uses the symmetry of the G-matrix.
-  const double dI2dGyx = -Gxy; // But we don't use it. So, Krueger is missing
+  double const dI2dGyx = -Gxy; // But we don't use it. So, Krueger is missing
                                // the yx term, whereas we have it.
-  const double dI2dGyy = Gxx;
+  double const dI2dGyy = Gxx;
 
   // Derivatives of G (C.16)
-  const double dGxxdV1x = 2 * a1 * Dxx;
-  const double dGxxdV1y = 0;
-  const double dGxxdV2x = 2 * a2 * Dxx;
-  const double dGxxdV2y = 0;
+  double const dGxxdV1x = 2 * a1 * Dxx;
+  double const dGxxdV1y = 0;
+  double const dGxxdV2x = 2 * a2 * Dxx;
+  double const dGxxdV2y = 0;
 
-  const double dGxydV1x = a1 * Dxy + b1 * Dxx;
-  const double dGxydV1y = a1 * Dyy;
-  const double dGxydV2x = a2 * Dxy + b2 * Dxx;
-  const double dGxydV2y = a2 * Dyy;
+  double const dGxydV1x = a1 * Dxy + b1 * Dxx;
+  double const dGxydV1y = a1 * Dyy;
+  double const dGxydV2x = a2 * Dxy + b2 * Dxx;
+  double const dGxydV2y = a2 * Dyy;
 
-  const double dGyxdV1x = a1 * Dxy + b1 * Dxx;
-  const double dGyxdV1y = a1 * Dyy;
-  const double dGyxdV2x = a2 * Dxy + b2 * Dxx;
-  const double dGyxdV2y = a2 * Dyy;
+  double const dGyxdV1x = a1 * Dxy + b1 * Dxx;
+  double const dGyxdV1y = a1 * Dyy;
+  double const dGyxdV2x = a2 * Dxy + b2 * Dxx;
+  double const dGyxdV2y = a2 * Dyy;
 
-  const double dGyydV1x = 2 * b1 * Dxy;
-  const double dGyydV1y = 2 * b1 * Dyy;
-  const double dGyydV2x = 2 * b2 * Dxy;
-  const double dGyydV2y = 2 * b2 * Dyy;
+  double const dGyydV1x = 2 * b1 * Dxy;
+  double const dGyydV1y = 2 * b1 * Dyy;
+  double const dGyydV2x = 2 * b2 * Dxy;
+  double const dGyydV2y = 2 * b2 * Dyy;
 
   // Calculate forces per area in rotated system: chain rule as in appendix C of
   // Krüger (chain rule applied in eq. (C.13), but for the energy density). Only
@@ -212,12 +212,12 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   // ****************** Wolfgang's version ***********
   /*
    // Left here for checking, but should be identical to the version above
-   const double i11 = 1.0;
-   const double i12 = 1.0;
-   const double i21 = Gyy;
-   const double i22 = -Gyx;
-   const double i23 = i22;
-   const double i24 = Gxx;
+   double const i11 = 1.0;
+   double const i12 = 1.0;
+   double const i21 = Gyy;
+   double const i22 = -Gyx;
+   double const i23 = i22;
+   double const i24 = Gxx;
 
    //For sake of better readability shorten the call for the triangle's
    constants: A0 = iaparams->p.stretching_force_ibm.Area0; a1 =
@@ -282,15 +282,15 @@ int IBM_Triel_ResetParams(const int bond_type, const double k1,
   }
 
   // Compute cache values a1, a2, b1, b2
-  const double area0 = bonded_ia_params[bond_type].p.ibm_triel.area0;
-  const double lp0 = bonded_ia_params[bond_type].p.ibm_triel.lp0;
-  const double sinPhi0 = bonded_ia_params[bond_type].p.ibm_triel.sinPhi0;
-  const double cosPhi0 = bonded_ia_params[bond_type].p.ibm_triel.cosPhi0;
-  const double area2 = 2.0 * area0;
-  const double a1 = -(l0 * sinPhi0) / area2;
-  const double a2 = -a1;
-  const double b1 = (l0 * cosPhi0 - lp0) / area2;
-  const double b2 = -(l0 * cosPhi0) / area2;
+  double const area0 = bonded_ia_params[bond_type].p.ibm_triel.area0;
+  double const lp0 = bonded_ia_params[bond_type].p.ibm_triel.lp0;
+  double const sinPhi0 = bonded_ia_params[bond_type].p.ibm_triel.sinPhi0;
+  double const cosPhi0 = bonded_ia_params[bond_type].p.ibm_triel.cosPhi0;
+  double const area2 = 2.0 * area0;
+  double const a1 = -(l0 * sinPhi0) / area2;
+  double const a2 = -a1;
+  double const b1 = (l0 * cosPhi0 - lp0) / area2;
+  double const b2 = -(l0 * cosPhi0) / area2;
 
   // Hand these values over to parameter structure
   bonded_ia_params[bond_type].p.ibm_triel.a1 = a1;
@@ -323,24 +323,24 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
   // Calculate equilibrium lengths and angle; Note the sequence of the points!
   // lo = length between 1 and 3
   auto const templo = get_mi_vector(part3.r.p, part1.r.p);
-  const double l0 = templo.norm();
+  double const l0 = templo.norm();
   // lpo = length between 1 and 2
   auto const templpo = get_mi_vector(part2.r.p, part1.r.p);
-  const double lp0 = templpo.norm();
+  double const lp0 = templpo.norm();
 
   // cospo / sinpo angle functions between these vectors; calculated directly
   // via the products
-  const double cosPhi0 = (templo * templpo) / (l0 * lp0);
+  double const cosPhi0 = (templo * templpo) / (l0 * lp0);
   auto const vecpro = vector_product(templo, templpo);
-  const double sinPhi0 = vecpro.norm() / (l0 * lp0);
+  double const sinPhi0 = vecpro.norm() / (l0 * lp0);
 
   // Use the values determined above for further constants of the stretch-force
   // calculation
-  const double area2 = l0 * lp0 * sinPhi0;
-  const double a1 = -(l0 * sinPhi0) / area2;
-  const double a2 = -a1;
-  const double b1 = (l0 * cosPhi0 - lp0) / area2;
-  const double b2 = -(l0 * cosPhi0) / area2;
+  double const area2 = l0 * lp0 * sinPhi0;
+  double const a1 = -(l0 * sinPhi0) / area2;
+  double const a2 = -a1;
+  double const b1 = (l0 * cosPhi0 - lp0) / area2;
+  double const b2 = -(l0 * cosPhi0) / area2;
 
   // General stuff
   bonded_ia_params[bond_type].type = BONDED_IA_IBM_TRIEL;

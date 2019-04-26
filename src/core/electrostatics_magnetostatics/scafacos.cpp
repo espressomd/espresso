@@ -169,8 +169,8 @@ void add_pair_force(double q1q2, const double *d, double dist, double *force) {
     return;
 
   assert(scafacos);
-  const double field = scafacos->pair_force(dist);
-  const double fak = q1q2 * field / dist;
+  double const field = scafacos->pair_force(dist);
+  double const fak = q1q2 * field / dist;
 
   for (int i = 0; i < 3; i++) {
     force[i] -= fak * d[i];
@@ -275,7 +275,7 @@ double time_r_cut(double r_cut) {
 
 /** Determine the optimal cutoff by bisection */
 void tune_r_cut() {
-  const double tune_limit = 1e-3;
+  double const tune_limit = 1e-3;
   /** scafacos p3m and Ewald do not accept r_cut 0 for no good reason */
   double r_min = 1.0;
   double r_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
@@ -284,8 +284,8 @@ void tune_r_cut() {
 
   /** Run bisection */
   while (std::fabs(r_min - r_max) > tune_limit) {
-    const double dr = 0.5 * (r_max - r_min);
-    const double t_mid = time_r_cut(r_min + dr);
+    double const dr = 0.5 * (r_max - r_min);
+    double const t_mid = time_r_cut(r_min + dr);
     t_min = time_r_cut(r_min);
     t_max = time_r_cut(r_max);
 

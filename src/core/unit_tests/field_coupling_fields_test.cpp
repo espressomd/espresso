@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
 
   /* ctor */
   {
-    const double val = 1.23;
+    double const val = 1.23;
     Field field(val);
 
     BOOST_CHECK(val == field.value());
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(constant_scalar_field) {
   {
     Field field(0.);
 
-    const double val = 1.23;
+    double const val = 1.23;
     field.value() = val;
 
     BOOST_CHECK(val == field.value());
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
   /* ctor */
   {
     const Utils::Vector3d A = {1., 2., 3.};
-    const double b = 4.;
+    double const b = 4.;
     Field field(A, b);
 
     BOOST_CHECK(A == field.A());
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
     Field field({}, {});
 
     const Utils::Vector3d A = {1., 2., 3.};
-    const double b = 4.;
+    double const b = 4.;
     field.A() = A;
     field.b() = b;
 
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
   /* Field value */
   {
     const Utils::Vector3d A = {1., 2., 3.};
-    const double b = 4.;
+    double const b = 4.;
     Field field(A, b);
 
     const Utils::Vector3d x = {1., 2., 3.};
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(affine_scalar_field) {
   /* Gradient */
   {
     const Utils::Vector3d A = {1., 2., 3.};
-    const double b = 4.;
+    double const b = 4.;
     Field field(A, b);
 
     BOOST_CHECK(A == field.jacobian({1., 2., 3.}));
@@ -330,7 +330,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
     const Utils::Vector3d grid_spacing = {.1, .2, .3};
     const Utils::Vector3d origin = {-1., 2., -1.4};
-    const int n_nodes = 10;
+    int const n_nodes = 10;
 
     auto const a = origin + 0.37 * n_nodes * grid_spacing;
     Utils::Vector3d x0[2] = {0.12 * a, -3. * a};
@@ -367,7 +367,7 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
 
     const Utils::Vector3d grid_spacing = {.1, .2, .3};
     const Utils::Vector3d origin = {-1., 2., -1.4};
-    const int n_nodes = 10;
+    int const n_nodes = 10;
 
     auto const a = origin + 0.37 * n_nodes * grid_spacing;
     Utils::Vector3d x0[2] = {0.12 * a, -3. * a};

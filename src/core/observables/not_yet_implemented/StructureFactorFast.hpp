@@ -21,9 +21,9 @@ int ObservableStructureFactorFast::actual_calculate(PartCfg &partCfg) {
   double *A = last_value;
   // FIXME Currently scattering length is hardcoded as 1.0
   observable_sf_params *params = (observable_sf_params *)container;
-  const int k_max = params->order * params->k_density;
-  const double scattering_length = 1.0;
-  const double twoPI_L = 2 * PI / box_l[0];
+  int const k_max = params->order * params->k_density;
+  double const scattering_length = 1.0;
+  double const twoPI_L = 2 * PI / box_l[0];
 
   if (!sortPartCfg()) {
     runtimeErrorMsg() << "could not sort partCfg";

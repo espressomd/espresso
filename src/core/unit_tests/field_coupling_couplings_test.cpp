@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(charge) {
 
   struct {
     struct {
-      const double q = 1.23;
+      double const q = 1.23;
     } p;
   } p;
 
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(mass) {
 
   struct {
     struct {
-      const double mass = 1.23;
+      double const mass = 1.23;
     } p;
   } p;
 

@@ -49,7 +49,7 @@ inline int calc_fene_pair_force(Bonded_ia_parameters const *iaparams,
                                 Utils::Vector3d const &dx, double *force) {
   auto const len = dx.norm();
 
-  const double dr = len - iaparams->p.fene.r0;
+  double const dr = len - iaparams->p.fene.r0;
 
   if (dr >= iaparams->p.fene.drmax)
     return 1;

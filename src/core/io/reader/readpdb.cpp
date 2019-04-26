@@ -41,10 +41,10 @@ static void add_lj_interaction(
   for (std::vector<PdbLJInteraction>::const_iterator it = interactions.begin();
        it != interactions.end(); ++it) {
     for (auto type : types) {
-      const double epsilon_ij = sqrt(it->epsilon * type.epsilon);
-      const double sigma_ij = 0.5 * (it->sigma + 10. * type.sigma);
-      const double cutoff_ij = rel_cutoff * sigma_ij;
-      const double shift_ij =
+      double const epsilon_ij = sqrt(it->epsilon * type.epsilon);
+      double const sigma_ij = 0.5 * (it->sigma + 10. * type.sigma);
+      double const cutoff_ij = rel_cutoff * sigma_ij;
+      double const shift_ij =
           -(pow(sigma_ij / cutoff_ij, 12) - pow(sigma_ij / cutoff_ij, 6));
       if ((epsilon_ij <= 0) || (sigma_ij <= 0)) {
         continue;
@@ -69,10 +69,10 @@ static void add_lj_internal(
         continue;
       if (only_diagonal && (it->espresso_id != type.espresso_id))
         continue;
-      const double epsilon_ij = sqrtf(it->epsilon * type.epsilon);
-      const double sigma_ij = 0.5 * (10. * it->sigma + 10. * type.sigma);
-      const double cutoff_ij = rel_cutoff * sigma_ij;
-      const double shift_ij =
+      double const epsilon_ij = sqrtf(it->epsilon * type.epsilon);
+      double const sigma_ij = 0.5 * (10. * it->sigma + 10. * type.sigma);
+      double const cutoff_ij = rel_cutoff * sigma_ij;
+      double const shift_ij =
           -pow(sigma_ij / cutoff_ij, 12) - pow(sigma_ij / cutoff_ij, 6);
       if ((epsilon_ij <= 0) || (sigma_ij <= 0)) {
         continue;

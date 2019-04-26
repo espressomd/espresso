@@ -66,11 +66,11 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   double theta = acos(sc);
 
   auto const direc = vector_product(n1, n2);
-  const double desc = (dx1 * direc);
+  double const desc = (dx1 * direc);
 
   if (desc < 0)
     theta = -1.0 * theta;
-  const double DTh = theta - iaparams.p.ibm_tribend.theta0;
+  double const DTh = theta - iaparams.p.ibm_tribend.theta0;
 
   double Pre;
   // Correct version with linearized sin

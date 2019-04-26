@@ -136,7 +136,7 @@ GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19>
          {{1, 0, 1, -1, 1, -1, -1, 0, 0, -1, 0, 1, -1, 0, -1, 1, 1, -1, -1}},
          {{1, 0, -1, 1, 1, -1, -1, 0, 0, -1, 0, -1, 1, 0, 1, -1, 1, -1, -1}}}};
 
-static constexpr const double c_sound_sq = 1. / 3.;
+static constexpr double const c_sound_sq = 1. / 3.;
 
 } // namespace D3Q19
 

@@ -316,8 +316,8 @@ void convert_torques_propagate_omega() {
       auto const diff = p.swim.v_center - p.swim.v_source;
 
       const Utils::Vector3d cross = vector_product(diff, dip);
-      const double l_diff = diff.norm();
-      const double l_cross = cross.norm();
+      double const l_diff = diff.norm();
+      double const l_cross = cross.norm();
 
       if (l_cross > 0 && p.swim.dipole_length > 0) {
         auto const omega_swim =
@@ -348,9 +348,9 @@ void convert_torques_propagate_omega() {
        Otherwise repeat this loop 2-3 times depending on the required accuracy
        */
 
-    const double rinertia_diff_01 = p.p.rinertia[0] - p.p.rinertia[1];
-    const double rinertia_diff_12 = p.p.rinertia[1] - p.p.rinertia[2];
-    const double rinertia_diff_20 = p.p.rinertia[2] - p.p.rinertia[0];
+    double const rinertia_diff_01 = p.p.rinertia[0] - p.p.rinertia[1];
+    double const rinertia_diff_12 = p.p.rinertia[1] - p.p.rinertia[2];
+    double const rinertia_diff_20 = p.p.rinertia[2] - p.p.rinertia[0];
     for (int times = 0; times <= 5; times++) {
       Utils::Vector3d Wd;
 

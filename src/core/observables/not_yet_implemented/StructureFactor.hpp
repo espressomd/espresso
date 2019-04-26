@@ -26,7 +26,7 @@ int ObservableStructureFactor::actual_calculate(PartCfg &partCfg) {
   observable_sf_params *params;
   params = (observable_sf_params *)container;
   //  scattering_length = params->scattering_length;
-  const double scattering_length = 1.0;
+  double const scattering_length = 1.0;
   order = params->order;
   order2 = order * order;
   twoPI_L = 2 * PI / box_l[0];

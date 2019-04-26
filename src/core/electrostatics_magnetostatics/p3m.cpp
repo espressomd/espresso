@@ -1209,7 +1209,7 @@ template <int cao> void calc_influence_function_force() {
             (n[KZ] % (p3m.params.mesh[RZ] / 2) == 0)) {
           p3m.g_force[ind] = 0.0;
         } else {
-          const double denominator =
+          double const denominator =
               perform_aliasing_sums_force<cao>(n, nominator);
 
           fak1 = p3m.d_op[RX][n[KX]] * nominator[RX] / box_l[RX] +

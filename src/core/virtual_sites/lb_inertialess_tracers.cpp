@@ -62,7 +62,7 @@ void IBM_ForcesIntoFluid_CPU() {
   for (int c = 0; c < local_cells.n; c++) {
     Cell *cell = local_cells.cell[c];
     Particle *p = cell->part;
-    const int np = cell->n;
+    int const np = cell->n;
 
     for (int i = 0; i < np; i++)
       if (p[i].p.is_virtual)
@@ -73,7 +73,7 @@ void IBM_ForcesIntoFluid_CPU() {
   for (int c = 0; c < ghost_cells.n; c++) {
     Cell *cell = ghost_cells.cell[c];
     Particle *p = cell->part;
-    const int np = cell->n;
+    int const np = cell->n;
 
     for (int i = 0; i < np; i++) {
       // for ghost particles we have to check if they lie
@@ -108,7 +108,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
 #endif
 
   // Do update: Euler
-  const double skin2 = Utils::sqr(0.5 * skin);
+  double const skin2 = Utils::sqr(0.5 * skin);
   // Loop over particles in local cells
   for (int c = 0; c < local_cells.n; c++) {
     const Cell *const cell = local_cells.cell[c];
@@ -131,7 +131,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
         // Check if the particle might have crossed a box border (criterion see
         // e-mail Axel 28.8.2014)
         // if possible resort_particles = 1
-        const double dist2 = (p[j].r.p - p[j].l.p_old).norm2();
+        double const dist2 = (p[j].r.p - p[j].l.p_old).norm2();
         if (dist2 > skin2) {
           set_resort_particles(Cells::RESORT_LOCAL);
         }

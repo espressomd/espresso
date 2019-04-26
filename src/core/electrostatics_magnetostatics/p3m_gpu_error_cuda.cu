@@ -47,7 +47,7 @@ using Utils::sqr;
 
 template <int cao>
 __device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i) {
-  const double c = sqr(cos(Utils::pi() * mesh_i * n));
+  double const c = sqr(cos(Utils::pi() * mesh_i * n));
 
   switch (cao) {
   case 1:
@@ -81,26 +81,26 @@ __device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i) {
 template <int cao>
 __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
                                                 double alpha_L, double *he_q) {
-  const int nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
-  const int ny = -mesh.y / 2 + blockDim.y * blockIdx.y + threadIdx.y;
-  const int nz = -mesh.z / 2 + blockDim.z * blockIdx.z + threadIdx.z;
+  int const nx = -mesh.x / 2 + blockDim.x * blockIdx.x + threadIdx.x;
+  int const ny = -mesh.y / 2 + blockDim.y * blockIdx.y + threadIdx.y;
+  int const nz = -mesh.z / 2 + blockDim.z * blockIdx.z + threadIdx.z;
 
   if ((nx >= mesh.x / 2) || (ny >= mesh.y / 2) || (nz >= mesh.z / 2))
     return;
 
-  const int lind = (nx + mesh.x / 2) * mesh.y * mesh.z +
+  int const lind = (nx + mesh.x / 2) * mesh.y * mesh.z +
                    (ny + mesh.y / 2) * mesh.z + (nz + mesh.z / 2);
 
   if ((nx != 0) || (ny != 0) || (nz != 0)) {
-    const double alpha_L_i = 1. / alpha_L;
-    const double n2 = sqr(nx) + sqr(ny) + sqr(nz);
-    const double cs = p3m_analytic_cotangent_sum<cao>(nz, meshi.z) *
+    double const alpha_L_i = 1. / alpha_L;
+    double const n2 = sqr(nx) + sqr(ny) + sqr(nz);
+    double const cs = p3m_analytic_cotangent_sum<cao>(nz, meshi.z) *
                       p3m_analytic_cotangent_sum<cao>(nx, meshi.x) *
                       p3m_analytic_cotangent_sum<cao>(ny, meshi.y);
-    const double ex =
+    double const ex =
         exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
-    const double ex2 = sqr(ex);
-    const double U2 =
+    double const ex2 = sqr(ex);
+    double const U2 =
         int_pow<2 * cao>(Utils::sinc(meshi.x * nx) * Utils::sinc(meshi.y * ny) *
                          Utils::sinc(meshi.z * nz));
     auto const alias1 = ex2 / n2;

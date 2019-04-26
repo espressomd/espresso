@@ -72,7 +72,7 @@ void ImmersedBoundaries::init_volume_conservation() {
         // reference
         BoundariesFound = true;
         if (bonded_ia_param.p.ibmVolConsParameters.volRef == 0) {
-          const int softID = bonded_ia_param.p.ibmVolConsParameters.softID;
+          int const softID = bonded_ia_param.p.ibmVolConsParameters.softID;
           bonded_ia_param.p.ibmVolConsParameters.volRef =
               VolumesCurrent[softID];
         }
@@ -174,9 +174,9 @@ void ImmersedBoundaries::calc_volumes() {
       int softID = -1;
       int j = 0;
       while (j < p1.bl.n) {
-        const int type_num = p1.bl.e[j];
+        int const type_num = p1.bl.e[j];
         const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
-        const int type = iaparams.type;
+        int const type = iaparams.type;
         if (type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
           if (p1.p.is_virtual)
             softID = iaparams.p.ibmVolConsParameters.softID;
@@ -195,9 +195,9 @@ void ImmersedBoundaries::calc_volumes() {
       if (softID > -1) {
         j = 0;
         while (j < p1.bl.n) {
-          const int type_num = p1.bl.e[j];
+          int const type_num = p1.bl.e[j];
           const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
-          const int type = iaparams.type;
+          int const type = iaparams.type;
 
           if (type == BONDED_IA_IBM_TRIEL) {
             // Our particle is the leading particle of a triel
@@ -252,12 +252,12 @@ void ImmersedBoundaries::calc_volumes() {
             // should be equivalent to the formulation using vector identities
             // in Krüger thesis
 
-            const double v321 = x3[0] * x2[1] * x1[2];
-            const double v231 = x2[0] * x3[1] * x1[2];
-            const double v312 = x3[0] * x1[1] * x2[2];
-            const double v132 = x1[0] * x3[1] * x2[2];
-            const double v213 = x2[0] * x1[1] * x3[2];
-            const double v123 = x1[0] * x2[1] * x3[2];
+            double const v321 = x3[0] * x2[1] * x1[2];
+            double const v231 = x2[0] * x3[1] * x1[2];
+            double const v312 = x3[0] * x1[1] * x2[2];
+            double const v132 = x1[0] * x3[1] * x2[2];
+            double const v213 = x2[0] * x1[1] * x3[2];
+            double const v123 = x1[0] * x2[1] * x3[2];
 
             tempVol[softID] +=
                 1.0 / 6.0 * (-v321 + v231 + v312 - v132 - v213 + v123);
@@ -302,9 +302,9 @@ void ImmersedBoundaries::calc_volume_force() {
       double kappaV = 0.;
       int j = 0;
       while (j < p1.bl.n) {
-        const int type_num = p1.bl.e[j];
+        int const type_num = p1.bl.e[j];
         const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
-        const int type = iaparams.type;
+        int const type = iaparams.type;
         if (type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
           if (!p1.p.is_virtual) {
             printf("Error. Encountered non-virtual particle with "
@@ -324,9 +324,9 @@ void ImmersedBoundaries::calc_volume_force() {
       if (softID > -1) {
         j = 0;
         while (j < p1.bl.n) {
-          const int type_num = p1.bl.e[j];
+          int const type_num = p1.bl.e[j];
           const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
-          const int type = iaparams.type;
+          int const type = iaparams.type;
 
           if (type == BONDED_IA_IBM_TRIEL) {
             // Our particle is the leading particle of a triel
@@ -349,7 +349,7 @@ void ImmersedBoundaries::calc_volume_force() {
             // Now we have the true and good coordinates
             // Compute force according to eq. C.46 Krüger thesis
             // It is the same as deriving Achim's equation w.r.t x
-            /*                        const double fact = kappaV * 1/6. *
+            /*                        double const fact = kappaV * 1/6. *
             (IBMVolumesCurrent[softID] - volRef) / IBMVolumesCurrent[softID];
 
              double x2[3];
@@ -372,9 +372,9 @@ void ImmersedBoundaries::calc_volume_force() {
             // This is Dupin 2008. I guess the result will be very similar as
             // the code above
             auto const n = vector_product(a12, a13);
-            const double ln = n.norm();
-            const double A = 0.5 * ln;
-            const double fact = kappaV * (VolumesCurrent[softID] - volRef) /
+            double const ln = n.norm();
+            double const A = 0.5 * ln;
+            double const fact = kappaV * (VolumesCurrent[softID] - volRef) /
                                 VolumesCurrent[softID];
 
             auto const nHat = n / ln;

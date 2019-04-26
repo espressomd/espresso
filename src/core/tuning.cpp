@@ -50,12 +50,12 @@ double time_force_calc(int default_samples) {
 
   /* perform force calculation test */
   for (i = 0; i < rds; i++) {
-    const double tick = MPI_Wtime();
+    double const tick = MPI_Wtime();
 
     if (mpi_integrate(0, -1))
       return -1;
 
-    const double tock = MPI_Wtime();
+    double const tock = MPI_Wtime();
     running_average.add_sample((tock - tick));
   }
 
@@ -84,10 +84,10 @@ static double time_calc(int rds) {
     return -1;
 
   /* perform force calculation test */
-  const double tick = MPI_Wtime();
+  double const tick = MPI_Wtime();
   if (mpi_integrate(rds, -1))
     return -1;
-  const double tock = MPI_Wtime();
+  double const tock = MPI_Wtime();
 
   /* MPI returns s, return value should be in ms. */
   return 1000. * (tock - tick) / rds;
