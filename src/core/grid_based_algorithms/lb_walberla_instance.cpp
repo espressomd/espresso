@@ -1,4 +1,4 @@
-#include "config.hpp" 
+#include "config.hpp"
 
 #ifdef LB_WALBERLA
 #include "LbWalberla.hpp"
