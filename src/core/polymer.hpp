@@ -38,7 +38,7 @@ Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn);
 /** Returns the miminum distance between position pos and all existing
  *  particles.
  */
-double mindist(PartCfg &partCfg, Utils::Vector3d pos);
+double mindist(PartCfg &partCfg, Utils::Vector3d const &pos);
 
 /** Determines whether a given position pos is valid, i.e., it doesn't collide
  *  with existing or buffered particles, nor with existing constraints (if
