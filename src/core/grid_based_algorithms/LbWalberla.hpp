@@ -75,15 +75,19 @@ class LbWalberla {
   };
 
 public:
-  LbWalberla(double viscosity, double agrid, const Utils::Vector3d &box_dimensions,
+  LbWalberla(double viscosity, double agrid,
+             const Utils::Vector3d &box_dimensions,
              const Utils::Vector3i &node_grid, double skin);
 
   void integrate();
-  boost::optional<Utils::Vector3d> get_node_velocity(const Utils::Vector3i node) const;
+  boost::optional<Utils::Vector3d>
+  get_node_velocity(const Utils::Vector3i node) const;
   bool set_node_velocity(const Utils::Vector3i &node, const Utils::Vector3d v);
 
-  bool add_force_at_pos(const Utils::Vector3d &position, const Utils::Vector3d &force);
-  boost::optional<Utils::Vector3d> get_velocity_at_pos(const Utils::Vector3d &position) const;
+  bool add_force_at_pos(const Utils::Vector3d &position,
+                        const Utils::Vector3d &force);
+  boost::optional<Utils::Vector3d>
+  get_velocity_at_pos(const Utils::Vector3d &position) const;
   boost::optional<double> get_density_at_pos(const Utils::Vector3d &position);
   //  Utils::Vector3d get_stress_at_pos(const Utils::Vector3d& position);
 
@@ -91,7 +95,8 @@ public:
   bool set_node_density(const Utils::Vector3i node, const double density);
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const;
-  bool set_node_velocity_at_boundary(const Utils::Vector3i node, const Utils::Vector3d v);
+  bool set_node_velocity_at_boundary(const Utils::Vector3i node,
+                                     const Utils::Vector3d v);
   bool remove_node_from_boundary(const Utils::Vector3i &node);
   boost::optional<bool> get_node_is_boundary(const Utils::Vector3i &node) const;
 
@@ -108,8 +113,9 @@ public:
   double get_viscosity();
 
   Utils::Vector3i get_grid_dimensions() {
-    return Utils::Vector3i{{int(m_blocks->getXSize()), int(m_blocks->getYSize()),
-                     int(m_blocks->getZSize())}};
+    return Utils::Vector3i{{int(m_blocks->getXSize()),
+                            int(m_blocks->getYSize()),
+                            int(m_blocks->getZSize())}};
   };
 
   double get_grid_spacing() { return m_agrid; }
@@ -118,7 +124,8 @@ public:
   bool pos_in_local_domain(const Utils::Vector3d &pos) const;
 
 private:
-  boost::optional<BlockAndCell> get_block_and_cell(const Utils::Vector3i &node) const;
+  boost::optional<BlockAndCell>
+  get_block_and_cell(const Utils::Vector3i &node) const;
   walberla::BlockDataID m_pdf_field_id;
   walberla::BlockDataID m_flag_field_id;
   walberla::BlockDataID m_force_field_id;

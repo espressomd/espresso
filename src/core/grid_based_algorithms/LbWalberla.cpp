@@ -281,7 +281,8 @@ LbWalberla::get_velocity_at_pos(const Utils::Vector3d &pos) const {
   return {to_vector3d(v)};
 }
 
-bool LbWalberla::set_node_velocity(const Utils::Vector3i &node, const Utils::Vector3d v) {
+bool LbWalberla::set_node_velocity(const Utils::Vector3i &node,
+                                   const Utils::Vector3d v) {
   auto bc = get_block_and_cell(node);
   if (!bc)
     return false;
@@ -294,7 +295,8 @@ bool LbWalberla::set_node_velocity(const Utils::Vector3i &node, const Utils::Vec
   return true;
 }
 
-bool LbWalberla::set_node_density(const Utils::Vector3i node, const double density) {
+bool LbWalberla::set_node_density(const Utils::Vector3i node,
+                                  const double density) {
   auto bc = get_block_and_cell(node);
   if (!bc)
     return false;
