@@ -66,8 +66,9 @@ int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
         break;
     }
     if (cnt1 >= max_try)
-      throw std::runtime_error("Too many failed attpts finding valid position.");
-    if (place_particle(part_id, &pos[0]) == ES_PART_ERROR)
+      throw std::runtime_error(
+          "Too many failed attpts finding valid position.");
+    if (place_particle(part_id, pos.data()) == ES_PART_ERROR)
       throw std::runtime_error("Failed to place particle.");
     set_particle_q(part_id, val_CI);
     set_particle_type(part_id, type_CI);
@@ -88,9 +89,8 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
                    int const nonet) {
   Utils::Vector3d pos;
   double const off = bond_length / sqrt(3);
-  double dnodes[8][3] = {
-      {0, 0, 0}, {1, 1, 1}, {2, 2, 0}, {0, 2, 2},
-      {2, 0, 2}, {3, 3, 1}, {1, 3, 3}, {3, 1, 3}};
+  double dnodes[8][3] = {{0, 0, 0}, {1, 1, 1}, {2, 2, 0}, {0, 2, 2},
+                         {2, 0, 2}, {3, 3, 1}, {1, 3, 3}, {3, 1, 3}};
   static constexpr int dchain[16][5] = {
       {0, 1, +1, +1, +1}, {1, 2, +1, +1, -1}, {1, 3, -1, +1, +1},
       {1, 4, +1, -1, +1}, {2, 5, +1, +1, +1}, {3, 6, +1, +1, +1},
@@ -111,7 +111,7 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
       dnodes[i][j] *= a / 4.;
       pos[j] = dnodes[i][j];
     }
-    if (place_particle(part_id, &pos[0]) == ES_PART_ERROR)
+    if (place_particle(part_id, pos.data()) == ES_PART_ERROR)
       return -3;
     set_particle_q(part_id, val_nodes);
     set_particle_type(part_id, type_node);
@@ -124,7 +124,7 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
     for (int k = 1; k <= MPC; ++k) {
       for (int j = 0; j < 3; ++j)
         pos[j] = dnodes[dchain[i][0]][j] + k * dchain[i][2 + j] * off;
-      if (place_particle(part_id, &pos[0]) == ES_PART_ERROR)
+      if (place_particle(part_id, pos.data()) == ES_PART_ERROR)
         throw std::runtime_error("Failed to place particle.");
       set_particle_q(part_id, (k % cM_dist == 0) ? val_cM : 0.0);
       set_particle_type(part_id, (k % cM_dist == 0) ? type_cM : type_nM);
