@@ -39,7 +39,7 @@
 #include "particle_data.hpp"
 
 #include <utils/NoOp.hpp>
-#include "utils/mpi/gather_buffer.hpp"
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/iterator/indirect_iterator.hpp>
 

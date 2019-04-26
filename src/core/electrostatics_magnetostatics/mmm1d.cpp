@@ -38,7 +38,7 @@
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
-#include "utils/strcat_alloc.hpp"
+#include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>

@@ -32,7 +32,7 @@
 #include "grid.hpp"
 #include "particle_data.hpp"
 
-#include "utils/math/triangle_functions.hpp"
+#include <utils/math/triangle_functions.hpp>
 using Utils::get_n_triangle;
 
 // set out_direction parameters

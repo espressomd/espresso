@@ -21,7 +21,7 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include <utils/Histogram.hpp>
-#include "utils/coordinate_transformation.hpp"
+#include <utils/coordinate_transformation.hpp>
 
 #include <boost/range/algorithm.hpp>
 

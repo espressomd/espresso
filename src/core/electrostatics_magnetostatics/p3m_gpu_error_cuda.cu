@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cuda_utils.hpp"
 #include "p3m_gpu_error.hpp"
 
-#include "utils/math/int_pow.hpp"
+#include <utils/math/int_pow.hpp>
 using Utils::int_pow;
 #include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>

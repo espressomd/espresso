@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "utils/interpolation/bspline_3d.hpp"
 #include "utils/interpolation/bspline_3d_gradient.hpp"
-#include "utils/math/tensor_product.hpp"
+#include <utils/math/tensor_product.hpp>
 
 #include "jacobian_type.hpp"
 #include <utils/Vector.hpp>

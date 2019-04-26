@@ -46,7 +46,7 @@
 #include "particle_data.hpp"
 #include "tuning.hpp"
 
-#include "utils/strcat_alloc.hpp"
+#include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
 #include <utils/math/sinc.hpp>
 using Utils::sinc;

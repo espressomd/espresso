@@ -41,8 +41,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "MpiCallbacks.hpp"
 #include <utils/NoOp.hpp>
-#include "utils/mpi/gather_buffer.hpp"
-#include "utils/serialization/flat_set.hpp"
+#include <utils/mpi/gather_buffer.hpp>
+#include <utils/serialization/flat_set.hpp>
 
 namespace detail {
 /**

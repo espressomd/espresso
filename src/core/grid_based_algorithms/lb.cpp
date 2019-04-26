@@ -46,7 +46,7 @@
 
 #include <utils/Counter.hpp>
 #include <utils/index.hpp>
-#include "utils/math/matrix_vector_product.hpp"
+#include <utils/math/matrix_vector_product.hpp>
 #include "utils/u32_to_u64.hpp"
 #include <utils/uniform.hpp>
 using Utils::get_linear_index;
