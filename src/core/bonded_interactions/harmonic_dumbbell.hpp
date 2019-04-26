@@ -68,7 +68,7 @@ calc_harmonic_dumbbell_pair_force(Particle *p1, Particle const *p2,
   for (int i = 0; i < 3; i++)
     force[i] = fac * dx[i];
 
-  auto const dhat = Vector3d{dx[0], dx[1], dx[2]} * normalizer;
+  auto const dhat = Utils::Vector3d{dx[0], dx[1], dx[2]} * normalizer;
   auto const da = vector_product(dhat, p1->r.calc_director());
 
   p1->f.torque += iaparams->p.harmonic_dumbbell.k2 * da;
@@ -99,7 +99,7 @@ inline int harmonic_dumbbell_pair_energy(Particle const *p1, Particle const *p2,
   dhat[2] = dx[2] / dist;
 
   double da[3];
-  const Vector3d director1 = p1->r.calc_director();
+  const Utils::Vector3d director1 = p1->r.calc_director();
   da[0] = dhat[1] * director1[2] - dhat[2] * director1[1];
   da[1] = dhat[2] * director1[0] - dhat[0] * director1[2];
   da[2] = dhat[0] * director1[1] - dhat[1] * director1[0];

@@ -34,9 +34,7 @@ def stopAll(system):
     system.part[:].omega_body = np.zeros(3)
 
 
-@ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT",
-                                        "PARTIAL_PERIODIC"]),
-           "Features not available, skipping test!")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["DIPOLAR_BARNES_HUT"]), "Features or gpu not available, skipping test!")
 class BHGPUTest(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]

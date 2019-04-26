@@ -36,13 +36,6 @@
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
 #include "collision.hpp"
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "forces.hpp"
 #include "metadynamics.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
@@ -68,14 +61,15 @@
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/out_direction.hpp"
 #include "thermostat.hpp"
+
+#ifdef DIPOLES
+#include "electrostatics_magnetostatics/dipole_inline.hpp"
+#endif
+
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
-#include "nonbonded_interactions/reaction_field.hpp"
-#endif
-#ifdef P3M
-#include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
+#include "bonded_interactions/bonded_coulomb_sr.hpp"
+#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
 #ifdef IMMERSED_BOUNDARY
 #include "immersed_boundary/ibm_tribend.hpp"
@@ -87,7 +81,7 @@
 
 /** Initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part) {
-  part->f.f = Vector3d{};
+  part->f.f = Utils::Vector3d{};
 
 #ifdef ROTATION
   part->f.torque[0] = 0;
@@ -101,7 +95,7 @@ inline void init_local_particle_force(Particle *part) {
   if (thermo_switch & THERMO_LANGEVIN)
     friction_thermo_langevin(part);
   else {
-    part->f.f = Vector3d{};
+    part->f.f = Utils::Vector3d{};
   }
 
 #ifdef EXTERNAL_FORCES
@@ -163,7 +157,7 @@ inline void calc_non_bonded_pair_force_parts(
 #endif
 /* Lennard-Jones */
 #ifdef LENNARD_JONES
-  add_lj_pair_force(p1, p2, ia_params, d, dist, force);
+  add_lj_pair_force(ia_params, d, dist, force);
 #endif
 /* WCA */
 #ifdef WCA
@@ -232,9 +226,6 @@ inline void calc_non_bonded_pair_force_parts(
     add_gb_pair_force(p1, p2, ia_params, d, dist, force, torque1, torque2);
   }
 #endif
-#ifdef INTER_RF
-  add_interrf_pair_force(p1, p2, ia_params, d, dist, force);
-#endif
 }
 
 inline void calc_non_bonded_pair_force(const Particle *p1, const Particle *p2,
@@ -264,7 +255,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
 
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
-  Vector3d force{};
+  Utils::Vector3d force{};
   double torque1[3] = {0., 0., 0.};
   double torque2[3] = {0., 0., 0.};
   int j;
@@ -318,11 +309,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /***********************************************/
 
 #ifdef ELECTROSTATICS
-  if (coulomb.method == COULOMB_DH)
-    add_dh_coulomb_pair_force(p1, p2, d, dist, force.data());
-
-  if (coulomb.method == COULOMB_RF)
-    add_rf_coulomb_pair_force(p1, p2, d, dist, force.data());
+  Coulomb::calc_pair_force(p1, p2, d, dist, force);
 #endif
 
 /*********************************************************************/
@@ -330,9 +317,11 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 /* but nothing afterwards                                            */
 /*********************************************************************/
 #ifdef NPT
-  for (j = 0; j < 3; j++)
-    if (integ_switch == INTEG_METHOD_NPT_ISO)
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+    for (j = 0; j < 3; j++) {
       nptiso.p_vir[j] += force[j] * d[j];
+    }
+  }
 #endif
 
 /***********************************************/
@@ -347,87 +336,12 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 #endif
 
   /***********************************************/
-  /* long range electrostatics                   */
-  /***********************************************/
-
-#ifdef ELECTROSTATICS
-  /* real space Coulomb */
-  const double q1q2 = p1->p.q * p2->p.q;
-
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M: {
-    if (q1q2 != 0.) {
-      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
-
-      // forces from the virtual charges
-      // they go directly onto the particles, since they are not pairwise forces
-      if (elc_params.dielectric_contrast_on)
-        ELC_P3M_dielectric_layers_force_contribution(p1, p2, p1->f.f.data(),
-                                                     p2->f.f.data());
-    }
-    break;
-  }
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M: {
-#ifdef NPT
-    if (q1q2 != 0) {
-      double eng = p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
-      if (integ_switch == INTEG_METHOD_NPT_ISO)
-        nptiso.p_vir[0] += eng;
-    }
-#else
-    if (q1q2)
-      p3m_add_pair_force(q1q2, d, dist2, dist, force.data());
-#endif
-    break;
-  }
-#endif
-  case COULOMB_MMM1D:
-    if (q1q2 != 0)
-      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
-    break;
-  case COULOMB_MMM2D:
-    if (q1q2 != 0)
-      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force.data());
-    break;
-#ifdef SCAFACOS
-  case COULOMB_SCAFACOS:
-    if (q1q2 != 0) {
-      Scafacos::add_pair_force(p1, p2, d, dist, force.data());
-    }
-    break;
-#endif
-  default:
-    break;
-  }
-
-#endif /*ifdef ELECTROSTATICS */
-
-  /***********************************************/
   /* long range magnetostatics                   */
   /***********************************************/
 
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  // fall trough
-  case DIPOLAR_P3M: {
-#ifdef NPT
-    double eng = dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
-    if (integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += eng;
-#else
-    dp3m_add_pair_force(p1, p2, d, dist2, dist, force.data());
-#endif
-    break;
-  }
-#endif /*ifdef DP3M */
-  default:
-    break;
-  }
+  Dipole::calc_pair_force(p1, p2, d, dist, dist2, force);
 #endif /* ifdef DIPOLES */
 
   /***********************************************/
@@ -470,11 +384,8 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
   case BONDED_IA_BONDED_COULOMB:
     bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
     break;
-#endif
-#ifdef P3M
-  case BONDED_IA_BONDED_COULOMB_P3M_SR:
-    bond_broken =
-        calc_bonded_coulomb_p3m_sr_pair_force(p1, p2, iaparams, dx, force);
+  case BONDED_IA_BONDED_COULOMB_SR:
+    bond_broken = calc_bonded_coulomb_sr_pair_force(iaparams, dx, force);
     break;
 #endif
 #ifdef LENNARD_JONES

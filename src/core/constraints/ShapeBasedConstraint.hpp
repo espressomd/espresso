@@ -37,19 +37,19 @@ public:
     ShapeBasedConstraint::reset_force();
   }
 
-  void add_energy(const Particle &p, const Vector3d &folded_pos, double t,
-                  Observable_stat &energy) const override;
+  void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
+                  double t, Observable_stat &energy) const override;
 
-  ParticleForce force(const Particle &p, const Vector3d &folded_pos,
+  ParticleForce force(const Particle &p, const Utils::Vector3d &folded_pos,
                       double t) override;
 
-  bool fits_in_box(Vector3d const &) const override { return true; }
+  bool fits_in_box(Utils::Vector3d const &) const override { return true; }
 
   /* finds the minimum distance to all particles */
   double min_dist();
 
   /* Calculate distance from the constraint */
-  void calc_dist(const Vector3d &pos, double *dist, double *vec) const {
+  void calc_dist(const Utils::Vector3d &pos, double *dist, double *vec) const {
     m_shape->calculate_dist(pos, dist, vec);
   }
 
@@ -60,21 +60,21 @@ public:
   Shapes::Shape const &shape() const { return *m_shape; }
 
   void reset_force() override {
-    m_local_force = Vector3d{0, 0, 0};
+    m_local_force = Utils::Vector3d{0, 0, 0};
     m_outer_normal_force = 0.0;
   }
 
   bool &only_positive() { return m_only_positive; }
   bool &penetrable() { return m_penetrable; }
   int &type() { return part_rep.p.type; }
-  Vector3d &velocity() { return part_rep.m.v; }
+  Utils::Vector3d &velocity() { return part_rep.m.v; }
 
   void set_type(const int &type) {
     part_rep.p.type = type;
     make_particle_type_exist_local(type);
   }
 
-  Vector3d total_force() const;
+  Utils::Vector3d total_force() const;
   double total_normal_force() const;
 
 private:
@@ -85,7 +85,7 @@ private:
 
   bool m_penetrable;
   bool m_only_positive;
-  Vector3d m_local_force;
+  Utils::Vector3d m_local_force;
   double m_outer_normal_force;
 };
 

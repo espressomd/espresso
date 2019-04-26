@@ -8,6 +8,11 @@ stages:
   - deploy
   - result
 
+.global_job_template: &global_job_definition
+  except:
+    - staging.tmp
+    - trying.tmp
+
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   CCACHE_DIR: /cache
@@ -15,6 +20,7 @@ variables:
   with_ccache: "true"
 
 check_permission:
+  <<: *global_job_definition
   stage: permission
   only:
     - /.*external.*/
@@ -26,12 +32,14 @@ check_permission:
     - linux
 
 status_pending:
+  <<: *global_job_definition
   stage: prepare
   script: bash maintainer/gh_post_status.sh pending
   tags:
     - linux
 
 style:
+  <<: *global_job_definition
   stage: prepare
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
   dependencies: []
@@ -56,6 +64,7 @@ style:
 ### Builds without CUDA
 
 default:
+  <<: *global_job_definition
   stage: build
   script:
     - export with_cuda=false myconfig=default with_coverage=true
@@ -65,6 +74,7 @@ default:
     - linux
 
 maxset:
+  <<: *global_job_definition
   stage: build
   script:
     - export with_cuda=false myconfig=maxset with_coverage=true
@@ -74,6 +84,7 @@ maxset:
     - linux
 
 maxset-python3:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
   script:
@@ -94,6 +105,7 @@ maxset-walberla:
     - linux
 
 no_rotation-python3:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
   script:
@@ -104,6 +116,7 @@ no_rotation-python3:
     - linux
 
 nocheckmaxset:
+  <<: *global_job_definition
   stage: build
   script:
     - export with_cuda=false myconfig=nocheck-maxset make_check=false
@@ -117,6 +130,7 @@ nocheckmaxset:
 #debian:8 removed: similar to ubuntu:1404
 
 debian:9:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
@@ -128,6 +142,7 @@ debian:9:
     - linux
 
 opensuse:15.0:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
@@ -138,6 +153,7 @@ opensuse:15.0:
     - linux
 
 centos:7:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
@@ -148,6 +164,7 @@ centos:7:
     - linux
 
 fedora:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:next
   script:
@@ -164,6 +181,7 @@ fedora:
 ### Builds with CUDA
 
 cuda-maxset:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
@@ -178,7 +196,79 @@ cuda-maxset:
     - linux
     - cuda
 
+tutorials-samples-maxset:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  script:
+    - export myconfig=maxset with_coverage=false python_version=3 make_check=false make_check_tutorials=true make_check_samples=true test_timeout=1200
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+
+tutorials-samples-default:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  script:
+    - export myconfig=default with_coverage=false python_version=3 make_check=false make_check_tutorials=true make_check_samples=true test_timeout=1200
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+  only:
+    - schedules
+
+tutorials-samples-empty:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  script:
+    - export myconfig=empty with_coverage=false python_version=3 make_check=false make_check_tutorials=true make_check_samples=true test_timeout=1200
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+    - cuda
+  only:
+    - schedules
+
+tutorials-samples-no-gpu:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  script:
+    - export myconfig=maxset with_coverage=false python_version=3 make_check=false make_check_tutorials=true make_check_samples=true test_timeout=1200 hide_gpu=true
+    - bash maintainer/cuda_build.sh
+  tags:
+    - docker
+    - linux
+  only:
+    - schedules
+
+# Test that non-gpu methods work when building with Cuda and no gpu is present
+# In case a GPU is present on the runner, it is hidden by setting
+# CUDA_VISIBLE_DEVICES=""
+cuda-no-gpu:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  script:
+    - export myconfig=maxset hide_gpu=true python_version=3 test_timeout=900
+    - bash maintainer/cuda_build.sh
+  artifacts:
+    paths:
+    - build/
+    expire_in: 1 week
+  tags:
+    - docker
+    - linux
+
 empty:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
@@ -190,6 +280,7 @@ empty:
     - cuda
 
 ubuntu:wo-dependencies:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
@@ -202,6 +293,7 @@ ubuntu:wo-dependencies:
 ### Builds with ROCm
 
 rocm-maxset:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm:latest
   script:
@@ -213,6 +305,7 @@ rocm-maxset:
 ### Builds on different architectures
 
 .arch_template: &arch_definition
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
@@ -247,6 +340,7 @@ ubuntu:s390x:
 ### Builds with OS X
 
 osx:
+  <<: *global_job_definition
   stage: build
   script:
     - export with_ccache=false myconfig=maxset with_cuda=false
@@ -255,6 +349,7 @@ osx:
     - mac
 
 osx-python3:
+  <<: *global_job_definition
   stage: build
   script:
     - export with_ccache=false myconfig=maxset with_cuda=false python_version=3
@@ -263,6 +358,7 @@ osx-python3:
     - mac
 
 osx-cuda:
+  <<: *global_job_definition
   stage: build
   script:
     - export with_ccache=false myconfig=maxset with_cuda=true make_check=false
@@ -273,6 +369,7 @@ osx-cuda:
 ### Builds with different compilers
 
 clang:6.0:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
@@ -285,6 +382,7 @@ clang:6.0:
     - ptrace
 
 intel:18:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
@@ -297,6 +395,7 @@ intel:18:
     - cuda
 
 check_sphinx:
+  <<: *global_job_definition
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   dependencies:
@@ -315,6 +414,7 @@ check_sphinx:
     - cuda
 
 check_doxygen:
+  <<: *global_job_definition
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   dependencies:
@@ -333,6 +433,7 @@ check_doxygen:
     - cuda
 
 check_with_odd_no_of_processors:
+  <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
@@ -346,6 +447,7 @@ check_with_odd_no_of_processors:
 
 
 .deploy_base:
+  <<: *global_job_definition
   stage: deploy
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   only:
@@ -380,6 +482,7 @@ deploy_doxygen_documentation:
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
 
 status_success:
+  <<: *global_job_definition
   stage: result
   script: bash maintainer/gh_post_status.sh success
   when: on_success
@@ -388,6 +491,7 @@ status_success:
   dependencies: []
 
 status_failure:
+  <<: *global_job_definition
   stage: result
   script: bash maintainer/gh_post_status.sh failure
   when: on_failure
@@ -396,6 +500,7 @@ status_failure:
   dependencies: []
 
 notify_success:
+  <<: *global_job_definition
   stage: result
   script: bash maintainer/gh_close_issue.sh
   when: on_success
@@ -405,6 +510,7 @@ notify_success:
     - linux
 
 notify_failure:
+  <<: *global_job_definition
   stage: result
   script: bash maintainer/gh_create_issue.sh
   when: on_failure

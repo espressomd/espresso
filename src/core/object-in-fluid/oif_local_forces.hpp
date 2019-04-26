@@ -177,10 +177,10 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
   */
   if (iaparams->p.oif_local_forces.kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
 
-    auto handle_triangle = [](double kal, double A0, Vector3d const &fp1,
-                              Vector3d const &fp2, Vector3d const &fp3,
-                              double force1[3], double force2[3],
-                              double force3[3]) {
+    auto handle_triangle = [](double kal, double A0, Utils::Vector3d const &fp1,
+                              Utils::Vector3d const &fp2,
+                              Utils::Vector3d const &fp3, double force1[3],
+                              double force2[3], double force3[3]) {
       auto const h = (1. / 3.) * (fp1 + fp2 + fp3);
       auto const A = Utils::area_triangle(fp1, fp2, fp3);
       auto const t = sqrt(A / A0) - 1.0;

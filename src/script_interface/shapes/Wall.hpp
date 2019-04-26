@@ -34,7 +34,7 @@ public:
     add_parameters({{"dist", m_wall->d()},
                     {"normal",
                      [this](Variant const &v) {
-                       m_wall->set_normal(get_value<Vector3d>(v));
+                       m_wall->set_normal(get_value<Utils::Vector3d>(v));
                      },
                      [this]() { return m_wall->n(); }}});
   }

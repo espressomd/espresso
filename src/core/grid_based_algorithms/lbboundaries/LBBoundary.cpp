@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "LBBoundary.hpp"
 #include "errorhandling.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 
 namespace LBBoundaries {
 // Vector3d LBBoundary::get_force() {

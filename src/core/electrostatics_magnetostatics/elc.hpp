@@ -125,12 +125,13 @@ void ELC_init();
 void ELC_on_resort_particles();
 
 /// pairwise contributions from the lowest and top layers to the energy
-double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
-                                                     Particle *p2);
+double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
+                                                     const Particle *p2);
 /// pairwise contributions from the lowest and top layers to the force
-void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
-                                                  double force1[3],
-                                                  double force2[3]);
+void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
+                                                  const Particle *p2,
+                                                  double *force1,
+                                                  double *force2);
 /// self energies of top and bottom layers with their virtual images
 double ELC_P3M_dielectric_layers_energy_self();
 /// forces of particles in border layers with themselves

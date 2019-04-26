@@ -101,10 +101,11 @@ void predict_momentum_particles(double *result) {
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
-  Vector3d linear_momentum{};
+Utils::Vector3d calc_linear_momentum(int include_particles,
+                                     int include_lbfluid) {
+  Utils::Vector3d linear_momentum{};
   if (include_particles) {
-    Vector3d momentum_particles{};
+    Utils::Vector3d momentum_particles{};
     mpi_gather_stats(4, momentum_particles.data(), nullptr, nullptr, nullptr);
     linear_momentum += momentum_particles;
   }
@@ -116,8 +117,8 @@ Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
   return linear_momentum;
 }
 
-Vector3d centerofmass(PartCfg &partCfg, int type) {
-  Vector3d com{};
+Utils::Vector3d centerofmass(PartCfg &partCfg, int type) {
+  Utils::Vector3d com{};
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
@@ -180,7 +181,7 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
 IntList nbhood(PartCfg &partCfg, double pt[3], double r,
                int const planedims[3]) {
   IntList ids;
-  Vector3d d;
+  Utils::Vector3d d;
 
   auto const r2 = r * r;
 
@@ -332,8 +333,8 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
   for (i = 0; i < r_bins; i++) {
     r_in = i * bin_width + r_min;
     r_out = r_in + bin_width;
-    bin_volume =
-        (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
+    bin_volume = (4.0 / 3.0) * Utils::pi() *
+                 ((r_out * r_out * r_out) - (r_in * r_in * r_in));
     rdf[i] *= volume / (bin_volume * cnt);
   }
 }
@@ -412,8 +413,8 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
     for (int i = 0; i < r_bins; i++) {
       r_in = i * bin_width + r_min;
       r_out = r_in + bin_width;
-      bin_volume =
-          (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
+      bin_volume = (4.0 / 3.0) * Utils::pi() *
+                   ((r_out * r_out * r_out) - (r_in * r_in * r_in));
       rdf[i] += rdf_tmp[i] * volume / (bin_volume * cnt);
     }
 
@@ -433,7 +434,7 @@ void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
   ff[2 * order2] = 0;
-  twoPI_L = 2 * PI / box_l[0];
+  twoPI_L = 2 * Utils::pi() / box_l[0];
 
   if ((n_types < 0) || (n_types > max_seen_particle_type)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
@@ -492,7 +493,7 @@ std::vector<std::vector<double>> modify_stucturefactor(int order,
     }
   }
 
-  double qfak = 2.0 * PI / box_l[0];
+  double qfak = 2.0 * Utils::pi() / box_l[0];
   std::vector<double> intern;
   intern.assign(2, 0.0);
   std::vector<std::vector<double>> structure_factor;
@@ -521,8 +522,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{center_};
-  auto direction = Vector3d{direction_};
+  auto center = Utils::Vector3d{center_};
+  auto direction = Utils::Vector3d{direction_};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -558,7 +559,7 @@ int calc_cylindrical_average(
       if (types[type_id] == p.p.type || all_types) {
         auto const pos = folded_position(p);
 
-        Vector3d vel{p.m.v};
+        Utils::Vector3d vel{p.m.v};
 
         auto const diff = pos - center;
 

@@ -2193,13 +2193,13 @@ if ELECTROSTATICS:
             bonded_coulomb_set_params(
                 self._bond_id, self._params["prefactor"])
 
-if P3M:
-    class BondedCoulombP3MSRBond(BondedInteraction):
+if ELECTROSTATICS:
+    class BondedCoulombSRBond(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
             """
-            BondedCoulombP3MSRBond initialiser. Used to instantiate a BondedCoulombP3MSRBond identifier
-            with a given set of parameters. Calculates ony the P3M shortrange part.
+            BondedCoulombSRBond initialiser. Used to instantiate a BondedCoulombSRBond identifier
+            with a given set of parameters. Calculates the shortrange part of coulomb interactions.
 
             Parameters
             ----------
@@ -2207,13 +2207,13 @@ if P3M:
             q1q2 : :obj:`float`
                    Sets the charge factor of the involved particle pair. Not the particle charges are used to allow e.g. only partial subtraction of the involved charges.
             """
-            super(BondedCoulombP3MSRBond, self).__init__(*args, **kwargs)
+            super(BondedCoulombSRBond, self).__init__(*args, **kwargs)
 
         def type_number(self):
-            return BONDED_IA_BONDED_COULOMB_P3M_SR
+            return BONDED_IA_BONDED_COULOMB_SR
 
         def type_name(self):
-            return "BONDED_COULOMB_P3M_SR"
+            return "BONDED_COULOMB_SR"
 
         def valid_keys(self):
             return {"q1q2"}
@@ -2227,10 +2227,10 @@ if P3M:
         def _get_params_from_es_core(self):
             return \
                 {"q1q2": bonded_ia_params[
-                    self._bond_id].p.bonded_coulomb_p3m_sr.q1q2}
+                    self._bond_id].p.bonded_coulomb_sr.q1q2}
 
         def _set_params_in_es_core(self):
-            bonded_coulomb_p3m_sr_set_params(
+            bonded_coulomb_sr_set_params(
                 self._bond_id, self._params["q1q2"])
 
 
@@ -3304,6 +3304,71 @@ ELSE:
     class OifOutDirection(BondedInteractionNotDefined):
         name = "OIF_OUT_DIRECTION"
 
+
+class QuarticBond(BondedInteraction):
+
+    def __init__(self, *args, **kwargs):
+        """
+        QuarticBond initializer. Used to instantiate a QuarticBond identifier
+        with a given set of parameters.
+
+        Parameters
+        ----------
+        k0 : :obj:`float`
+            Specifies the magnitude of the square term.
+        k1 : :obj:`float`
+            Specifies the magnitude of the fourth order term.
+        r : :obj:`float`
+            Specifies the equilibrium length of the bond.
+        r_cut : :obj:`float`
+            Specifies the maximum interaction length.
+        """
+        super(QuarticBond, self).__init__(*args, **kwargs)
+
+    def type_number(self):
+        return BONDED_IA_QUARTIC
+
+    def type_name(self):
+        """Name of interaction type.
+
+        """
+        return "QUARTIC"
+
+    def valid_keys(self):
+        """All parameters that can be set.
+
+        """
+        return "k0", "k1", "r", "r_cut"
+
+    def required_keys(self):
+        """Parameters that have to be set.
+
+        """
+        return "k0", "k1", "r", "r_cut"
+
+    def set_default_params(self):
+        """Sets parameters that are not required to their default value.
+
+        """
+        """Sets parameters that are not required to their default value.
+
+        """
+        self._params = {"k0": 0.,
+                        "k1": 0.,
+                        "r": 0.,
+                        "r_cut": 0.}
+
+    def _get_params_from_es_core(self):
+        return \
+            {"k0": bonded_ia_params[self._bond_id].p.quartic.k0,
+             "k1": bonded_ia_params[self._bond_id].p.quartic.k1,
+             "r": bonded_ia_params[self._bond_id].p.quartic.r,
+             "r_cut": bonded_ia_params[self._bond_id].p.quartic.r_cut}
+
+    def _set_params_in_es_core(self):
+        quartic_set_params(
+            self._bond_id, self._params["k0"], self._params["k1"], self._params["r"], self._params["r_cut"])
+
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
     int(BONDED_IA_HARMONIC): HarmonicBond,
@@ -3321,15 +3386,15 @@ bonded_interaction_classes = {
     int(BONDED_IA_IBM_TRIEL): IBM_Triel,
     int(BONDED_IA_IBM_TRIBEND): IBM_Tribend,
     int(BONDED_IA_IBM_VOLUME_CONSERVATION): IBM_VolCons,
-    int(BONDED_IA_THERMALIZED_DIST): ThermalizedBond
+    int(BONDED_IA_THERMALIZED_DIST): ThermalizedBond,
+    int(BONDED_IA_QUARTIC): QuarticBond
 }
 IF LENNARD_JONES:
     bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ
 IF ELECTROSTATICS:
     bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulomb
-IF P3M:
     bonded_interaction_classes[
-        int(BONDED_IA_BONDED_COULOMB_P3M_SR)] = BondedCoulombP3MSRBond
+        int(BONDED_IA_BONDED_COULOMB_SR)] = BondedCoulombSRBond
 
 
 class BondedInteractions(object):

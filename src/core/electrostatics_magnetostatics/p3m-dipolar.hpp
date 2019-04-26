@@ -39,14 +39,17 @@
 #include "config.hpp"
 
 #ifdef DP3M
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "fft.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
+#include "particle_data.hpp"
 
 #include "utils/math/AS_erfc_part.hpp"
 
-typedef struct {
-  p3m_parameter_struct params;
+struct dp3m_data_struct {
+  dp3m_data_struct();
+
+  P3MParameters params;
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
@@ -100,7 +103,7 @@ typedef struct {
   double energy_correction;
 
   fft_data_struct fft;
-} dp3m_data_struct;
+};
 
 /** dipolar P3M parameters. */
 extern dp3m_data_struct dp3m;
@@ -108,8 +111,6 @@ extern dp3m_data_struct dp3m;
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-void dp3m_pre_init();
 
 /** @copydoc p3m_set_tune_params */
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
@@ -137,7 +138,7 @@ void dp3m_init();
 void dp3m_scaleby_box_l();
 
 /** Sanity checks */
-bool dp3m_sanity_checks(const Vector3i &grid);
+bool dp3m_sanity_checks(const Utils::Vector3i &grid);
 
 /** Assign the physical dipoles using the tabulated assignment function.
  *  If Dstore_ca_frac is true, then the charge fractions are buffered in
@@ -226,8 +227,8 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
     return 0.;
 
   double coeff, exp_adist2;
-  const Vector3d dip1 = p1->calc_dip();
-  const Vector3d dip2 = p2->calc_dip();
+  const Utils::Vector3d dip1 = p1->calc_dip();
+  const Utils::Vector3d dip2 = p2->calc_dip();
   double B_r, C_r, D_r;
   double alpsq = dp3m.params.alpha * dp3m.params.alpha;
 #ifdef ROTATION
@@ -245,10 +246,10 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
     // Calculate scalar multiplications for vectors mi, mj, rij
     double mimj = dip1 * dip2;
 
-    double mir = dip1 * Vector3d{d[0], d[1], d[2]};
-    double mjr = dip2 * Vector3d{d[0], d[1], d[2]};
+    double mir = dip1 * Utils::Vector3d{d[0], d[1], d[2]};
+    double mjr = dip2 * Utils::Vector3d{d[0], d[1], d[2]};
 
-    coeff = 2.0 * dp3m.params.alpha * wupii;
+    coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
     double dist2i = 1 / dist2;
     exp_adist2 = exp(-adist * adist);
 
@@ -262,7 +263,7 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
 
     // Calculate real-space forces
     for (int j = 0; j < 3; j++)
-      force[j] += coulomb.Dprefactor *
+      force[j] += dipole.prefactor *
                   ((mimj * d[j] + dip1[j] * mjr + dip2[j] * mir) * C_r -
                    mir * mjr * D_r * d[j]);
 
@@ -283,17 +284,17 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
     // Calculate real-space torques
     for (int j = 0; j < 3; j++) {
       p1->f.torque[j] +=
-          coulomb.Dprefactor * (-mixmj[j] * B_r + mixr[j] * mjr * C_r);
+          dipole.prefactor * (-mixmj[j] * B_r + mixr[j] * mjr * C_r);
       p2->f.torque[j] +=
-          coulomb.Dprefactor * (mixmj[j] * B_r + mjxr[j] * mir * C_r);
+          dipole.prefactor * (mixmj[j] * B_r + mjxr[j] * mir * C_r);
     }
 #endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
     double fac1 =
-        coulomb.Dprefactor * p1->p.dipm * p2->p.dipm * exp(-adist * adist);
+        dipole.prefactor * p1->p.dipm * p2->p.dipm * exp(-adist * adist);
 #else
-    double fac1 = coulomb.Dprefactor * p1->p.dipm * p2->p.dipm;
+    double fac1 = dipole.prefactor * p1->p.dipm * p2->p.dipm;
 #endif
     return fac1 * (mimj * B_r - mir * mjr * C_r);
 #endif
@@ -305,8 +306,8 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
 inline double dp3m_pair_energy(Particle *p1, Particle *p2,
                                double const *const d, double dist2,
                                double dist) {
-  const Vector3d dip1 = p1->calc_dip();
-  const Vector3d dip2 = p2->calc_dip();
+  const Utils::Vector3d dip1 = p1->calc_dip();
+  const Utils::Vector3d dip2 = p2->calc_dip();
   double /* fac1,*/ adist, erfc_part_ri, coeff, exp_adist2, dist2i;
   double mimj, mir, mjr;
   double B_r, C_r;
@@ -314,23 +315,23 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2,
 
   if (dist < dp3m.params.r_cut && dist > 0) {
     adist = dp3m.params.alpha * dist;
-    /*fac1 = coulomb.Dprefactor;*/
+    /*fac1 = dipole.prefactor;*/
 
 #if USE_ERFC_APPROXIMATION
     erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    /*  fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */
+    /*  fac1 = dipole.prefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */
     /* *exp(-adist*adist); */
 #else
     erfc_part_ri = erfc(adist) / dist;
-    /* fac1 = coulomb.Dprefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/
+    /* fac1 = dipole.prefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/
 #endif
 
     // Calculate scalar multiplications for vectors mi, mj, rij
     mimj = dip1 * dip2;
-    mir = dip1 * Vector3d{d[0], d[1], d[2]};
-    mjr = dip2 * Vector3d{d[0], d[1], d[2]};
+    mir = dip1 * Utils::Vector3d{d[0], d[1], d[2]};
+    mjr = dip2 * Utils::Vector3d{d[0], d[1], d[2]};
 
-    coeff = 2.0 * dp3m.params.alpha * wupii;
+    coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
     dist2i = 1 / dist2;
     exp_adist2 = exp(-adist * adist);
 
@@ -347,7 +348,7 @@ inline double dp3m_pair_energy(Particle *p1, Particle *p2,
     */
 
     /* old line return fac1 * ( mimj*B_r - mir*mjr * C_r );*/
-    return coulomb.Dprefactor * (mimj * B_r - mir * mjr * C_r);
+    return dipole.prefactor * (mimj * B_r - mir * mjr * C_r);
   }
   return 0.0;
 }
