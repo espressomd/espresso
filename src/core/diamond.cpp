@@ -67,7 +67,7 @@ int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
     }
     if (cnt1 >= max_try)
       throw std::runtime_error(
-          "Too many failed attpts finding valid position.");
+          "Too many failed attempts finding valid position.");
     if (place_particle(part_id, pos.data()) == ES_PART_ERROR)
       throw std::runtime_error("Failed to place particle.");
     set_particle_q(part_id, val_CI);
@@ -77,10 +77,8 @@ int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
     max_cnt = std::max(cnt1, max_cnt);
   }
   POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
-  if (cnt1 >= max_try)
-    throw std::runtime_error("Too many failed attpts finding valid position.");
 
-  return std::max(max_cnt, cnt1);
+  return max_cnt;
 }
 
 int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
@@ -106,10 +104,10 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
 
   int part_id = 0;
   /* place 8 tetra-functional nodes */
-  for (int i = 0; i < 8; ++i) {
-    for (int j = 0; j < 3; ++j) {
-      dnodes[i][j] *= a / 4.;
-      pos[j] = dnodes[i][j];
+  for (auto &dnode : dnodes) {
+    for (int i = 0; i < 3; ++i) {
+      dnode[i] *= a / 4.;
+      pos[i] = dnode[i];
     }
     if (place_particle(part_id, pos.data()) == ES_PART_ERROR)
       return -3;
@@ -120,10 +118,10 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
   }
 
   /* place intermediate monomers on chains connecting the nodes */
-  for (int i = 0; i < 2 * 8; ++i) {
+  for (auto const &chain : dchain) {
     for (int k = 1; k <= MPC; ++k) {
       for (int j = 0; j < 3; ++j)
-        pos[j] = dnodes[dchain[i][0]][j] + k * dchain[i][2 + j] * off;
+        pos[j] = dnodes[chain[0]][j] + k * chain[2 + j] * off;
       if (place_particle(part_id, pos.data()) == ES_PART_ERROR)
         throw std::runtime_error("Failed to place particle.");
       set_particle_q(part_id, (k % cM_dist == 0) ? val_cM : 0.0);
@@ -133,7 +131,7 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
       bond[0] = type_bond;
       if (k == 1) {
         if (nonet != 1) {
-          bond[1] = dchain[i][0];
+          bond[1] = chain[0];
           add_particle_bond(part_id, bond);
         }
       } else {
@@ -141,7 +139,7 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
         add_particle_bond(part_id, bond);
       }
       if ((k == MPC) && (nonet != 1)) {
-        bond[1] = dchain[i][1];
+        bond[1] = chain[1];
         add_particle_bond(part_id, bond);
       }
       part_id++;
