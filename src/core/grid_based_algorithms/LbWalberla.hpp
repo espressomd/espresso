@@ -9,6 +9,7 @@
 #undef PI
 #include "blockforest/StructuredBlockForest.h"
 #include "boost/optional.hpp"
+#include "boost/tuple/tuple.hpp"
 #include "boundary/BoundaryHandling.h"
 #include "core/mpi/Environment.h"
 #include "field/FlagField.h"
@@ -43,10 +44,8 @@ class LbWalberla {
   using Pdf_field_t = walberla::lbm::PdfField<Lattice_model_t>;
 
   using UBB_t = walberla::lbm::UBB<Lattice_model_t, walberla::uint8_t>;
-  using Boundary_conditions_t = boost::tuples::tuple<UBB_t>;
   using Boundary_handling_t =
-      walberla::BoundaryHandling<Flag_field_t, Lattice_model_t::Stencil,
-                                 Boundary_conditions_t>;
+      walberla::BoundaryHandling<Flag_field_t, Lattice_model_t::Stencil, UBB_t>;
   class LB_boundary_handling {
   public:
     LB_boundary_handling(const walberla::BlockDataID &flag_field_id,
@@ -62,8 +61,7 @@ class LbWalberla {
 
       return new Boundary_handling_t(
           "boundary handling", flag_field, fluid,
-          boost::tuples::make_tuple(
-              UBB_t("velocity bounce back", UBB_flag, pdf_field, nullptr)));
+          UBB_t("velocity bounce back", UBB_flag, pdf_field, nullptr));
     }
 
   private:
