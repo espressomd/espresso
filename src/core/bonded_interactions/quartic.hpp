@@ -50,21 +50,18 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,
  *  @retval 0
  */
 inline int calc_quartic_pair_force(Bonded_ia_parameters const *iaparams,
-                                   const Utils::Vector3d &dx, double *force) {
-  int i;
-  double fac;
-  double dist = dx.norm();
-  double dr;
+                                   Utils::Vector3d const&dx, double *force) {
+  auto const dist = dx.norm();
 
   if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut))
     return 1;
 
-  dr = dist - iaparams->p.quartic.r;
+  auto const dr = dist - iaparams->p.quartic.r;
 
-  fac = (iaparams->p.quartic.k0 * dr + iaparams->p.quartic.k1 * dr * dr * dr) /
+  auto const fac = (iaparams->p.quartic.k0 * dr + iaparams->p.quartic.k1 * dr * dr * dr) /
         dist;
 
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     force[i] = -fac * dx[i];
 
   return 0;
@@ -77,8 +74,8 @@ inline int calc_quartic_pair_force(Bonded_ia_parameters const *iaparams,
  *  @retval 0
  */
 inline int quartic_pair_energy(Bonded_ia_parameters const *iaparams,
-                               const Utils::Vector3d &dx, double *_energy) {
-  double dist = dx.norm();
+                               Utils::Vector3d const&dx, double *_energy) {
+  auto const dist = dx.norm();
 
   if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut))
     return 1;

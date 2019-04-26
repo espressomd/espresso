@@ -54,8 +54,8 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
 inline int
 calc_harmonic_dumbbell_pair_force(Particle *p1,
                                   Bonded_ia_parameters const *iaparams,
-                                  const Utils::Vector3d &dx, double *force) {
-  double dist = dx.norm();
+                                  Utils::Vector3d const&dx, double *force) {
+  auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic_dumbbell.r_cut))
@@ -84,9 +84,9 @@ calc_harmonic_dumbbell_pair_force(Particle *p1,
  */
 inline int harmonic_dumbbell_pair_energy(Particle const *p1,
                                          Bonded_ia_parameters const *iaparams,
-                                         const Utils::Vector3d &dx,
+                                         Utils::Vector3d const&dx,
                                          double *_energy) {
-  double dist = dx.norm();
+  auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic_dumbbell.r_cut))

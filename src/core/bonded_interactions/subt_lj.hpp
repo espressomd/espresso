@@ -51,7 +51,7 @@ int subt_lj_set_params(int bond_type);
 */
 inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
                                    Bonded_ia_parameters *,
-                                   const Utils::Vector3d &dx, double *force) {
+                                   Utils::Vector3d const&dx, double *force) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
   auto const neg_dir = -dx;
@@ -63,7 +63,7 @@ inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
 
 inline int subt_lj_pair_energy(const Particle *p1, const Particle *p2,
                                Bonded_ia_parameters *,
-                               const Utils::Vector3d &dx, double *_energy) {
+                               Utils::Vector3d const&dx, double *_energy) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
   *_energy = -lj_pair_energy(ia_params, dx.norm());
