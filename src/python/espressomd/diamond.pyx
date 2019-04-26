@@ -89,14 +89,14 @@ cdef class Diamond(object):
                 "Please define a bonded interaction [0] before setting up polymers!")
 
     def __set_params_in_es_core(self):
-        return diamondC(
+        return create_diamond(
             partCfg(), self._params["a"], self._params[
                 "bond_length"], self._params["MPC"], self._params["N_CI"],
                         self._params["val_nodes"], self._params["val_cM"], self._params["val_CI"], self._params["cM_dist"], self._params["nonet"])
 
     def _set_params_in_es_core(self):
         error_code = self.__set_params_in_es_core()
-        handle_errors("Failed changing bonds in diamondC")
+        handle_errors("Failed changing bonds in create_diamond")
         if error_code == 0:
             pass
         elif error_code == -3:

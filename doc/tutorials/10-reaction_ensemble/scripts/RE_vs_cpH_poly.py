@@ -28,7 +28,6 @@ from espressomd import integrate
 from espressomd.interactions import *
 from espressomd import reaction_ensemble
 from espressomd import polymer
-from espressomd.polymer import polymer_positions
 from espressomd import interactions
 from espressomd import electrostatics
 import sys
@@ -101,7 +100,7 @@ lj_shift = 0.0
 
 
 # setting up the polymer
-positions = polymer.polymer_positions(
+positions = polymer.positions(
     n_polymers=N_P, beads_per_chain=MPC, bond_length=bond_l, seed=13)
 for polymer in positions:
     for i, pos in enumerate(polymer):

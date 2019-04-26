@@ -40,10 +40,10 @@ class AnalyzeChain(ut.TestCase):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
         fene = FeneBond(k=30, d_r_max=2)
         self.system.bonded_inter.add(fene)
-        positions = polymer.polymer_positions(n_polymers=self.num_poly,
-                                              bond_length=0.9,
-                                              beads_per_chain=self.num_mono,
-                                              seed=42)
+        positions = polymer.positions(n_polymers=self.num_poly,
+                                      bond_length=0.9,
+                                      beads_per_chain=self.num_mono,
+                                      seed=42)
         for p in positions:
             for ndx, m in enumerate(p):
                 part_id = len(self.system.part)

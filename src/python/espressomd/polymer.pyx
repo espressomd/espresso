@@ -38,7 +38,7 @@ def validate_params(_params, default):
     if not ((np.size(_params["start_positions"]) == 0)
             or np.shape(_params["start_positions"]) == (_params["n_polymers"], 3)):
         raise ValueError(
-            "start_positions has to be an numpy array with shape (n_polymers, 3)")
+            "start_positions has to be a numpy array with shape (n_polymers, 3)")
     if _params["min_distance"] < 0:
         raise ValueError(
             "min_distance has to be a positive float")
@@ -58,7 +58,7 @@ def validate_params(_params, default):
 # wrapper function to expose to the user interface
 
 
-def polymer_positions(**kwargs):
+def positions(**kwargs):
     """
     Generates particle positions for polymer creation.
 
@@ -82,7 +82,7 @@ def polymer_positions(**kwargs):
     min_distance : :obj:`float`, optional
         Minimum distance between all generated positions. Defaults to 0
     respect_constraints : :obj:`bool`, optional
-        If True, the particle setup-up tries to obey previously defined constraints.
+        If True, the particle setup tries to obey previously defined constraints.
         Default value is False.
     max_tries : :obj:`int`, optional
         Maximal number of attempts to generate every monomer position,

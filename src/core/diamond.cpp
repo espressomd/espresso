@@ -53,7 +53,7 @@ using Utils::vec_rotate;
  * ---------                                                 *
  *************************************************************/
 
-double mindist4(PartCfg &partCfg, double pos[3]) {
+double mindist(PartCfg &partCfg, double pos[3]) {
   if (partCfg.size() == 0) {
     return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
   }
@@ -69,7 +69,7 @@ double mindist4(PartCfg &partCfg, double pos[3]) {
   return -1.0;
 }
 
-double buf_mindist4(double const pos[3], int n_add, double const *const add) {
+double buf_mindist(double const pos[3], int n_add, double const *const add) {
   double mindist = 30000.0, dx, dy, dz;
   int i;
 
@@ -90,15 +90,15 @@ double buf_mindist4(double const pos[3], int n_add, double const *const add) {
   return (-1.0);
 }
 
-int collision(PartCfg &partCfg, double pos[3], double shield, int n_add,
-              double *add) {
-  if (mindist4(partCfg, pos) > shield && buf_mindist4(pos, n_add, add) > shield)
+int collides_with_particle(PartCfg &partCfg, double pos[3], double shield,
+                           int n_add, double *add) {
+  if (mindist(partCfg, pos) > shield && buf_mindist(pos, n_add, add) > shield)
     return (0);
   return (1);
 }
 
-int counterionsC(PartCfg &partCfg, int N_CI, int part_id, int mode,
-                 double shield, int max_try, double val_CI, int type_CI) {
+int create_counterions(PartCfg &partCfg, int N_CI, int part_id, int mode,
+                       double shield, int max_try, double val_CI, int type_CI) {
   int n, cnt1, max_cnt;
   double pos[3];
 
@@ -108,7 +108,8 @@ int counterionsC(PartCfg &partCfg, int N_CI, int part_id, int mode,
       pos[0] = box_l[0] * d_random();
       pos[1] = box_l[1] * d_random();
       pos[2] = box_l[2] * d_random();
-      if ((mode != 0) || (collision(partCfg, pos, shield, 0, nullptr) == 0))
+      if ((mode != 0) ||
+          (collides_with_particle(partCfg, pos, shield, 0, nullptr) == 0))
         break;
       POLY_TRACE(printf("c"); fflush(nullptr));
     }
@@ -131,9 +132,9 @@ int counterionsC(PartCfg &partCfg, int N_CI, int part_id, int mode,
   return (std::max(max_cnt, cnt1));
 }
 
-int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
-             double val_nodes, double val_cM, double val_CI, int cM_dist,
-             int nonet) {
+int create_diamond(PartCfg &partCfg, double a, double bond_length, int MPC,
+                   int N_CI, double val_nodes, double val_cM, double val_CI,
+                   int cM_dist, int nonet) {
   int i, j, k, part_id, bond[2], type_bond = 0, type_node = 0, type_cM = 1,
                                  type_nM = 1, type_CI = 2;
   double pos[3], off = bond_length / sqrt(3);
@@ -192,7 +193,7 @@ int diamondC(PartCfg &partCfg, double a, double bond_length, int MPC, int N_CI,
 
   /* place counterions (if any) */
   if (N_CI > 0)
-    counterionsC(partCfg, N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
+    create_counterions(partCfg, N_CI, part_id, 1, 0.0, 30000, val_CI, type_CI);
 
   return (0);
 }

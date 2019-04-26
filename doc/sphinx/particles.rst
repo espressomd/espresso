@@ -194,13 +194,10 @@ Create particular particle configurations
 Setting up polymer chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-::
-
-    from espressomd.polymer import polymer_positions
-
-If you want to have polymers in your system, this function can provide
-you with suitable particle positions.
-See :attr:`espressomd.polymer.polymer_positions()` for a detailed list of
+If you want to have polymers in your system, you can use the function
+`espressomd.polymer.positions()` to determine suitable postitions.
+See :attr:`espressomd.polymer.positions()` for a detailed list of
+arguments.
 
 Required arguments are the desired number of polymers ``n_polymers``, the
 number of monomers per polymer chain ``beads_per_chain``, and the parameter
@@ -210,15 +207,15 @@ Determining suitable particle positions pseudo-randomly requires the use of
 a pseudo-random number genererator, which has to be seeded. This ``seed``
 is therefore also a mandatory parameter.
 
-The function :attr:`espressomd.polymer.polymer_positions()` returns a
+The function :attr:`espressomd.polymer.positions()` returns a
 three-dimensional numpy array, namely a list of polymers containing the
 positions of monomers (x, y, z). A quick example of how to set up polymers::
 
      import espressomd
-     from espressomd.polymer import polymer_positions
+     from espressomd import polymer
 
      system = espressomd.System([50, 50, 50])
-     polymers = polymer_positions(n_polymers=10,
+     polymers = polymer.positions(n_polymers=10,
                                   beads_per_chain=25,
                                   bond_length=0.9, seed=23)
      for p in polymers:

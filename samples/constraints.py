@@ -75,19 +75,17 @@ c2 = system.constraints.add(
     particle_type=0, penetrable=False, only_positive=False, shape=ceil)
 
 
-# polymer_positions will avoid violating the contraints
+# polymer.positions will avoid violating the contraints
 
 fene = interactions.FeneBond(k=30, d_r_max=2)
 system.bonded_inter.add(fene)
 # start it next to the wall to test it!
 start = np.array([1, 1, 1 + wall_offset])
 
-positions = polymer.polymer_positions(n_polymers=1,
-                                      beads_per_chain=50,
-                                      bond_length=1.0,
-                                      seed=1234,
-                                      min_distance=0.9,
-                                      respect_constraints=True)
+positions = polymer.positions(n_polymers=1, beads_per_chain=50,
+                              bond_length=1.0, seed=1234,
+                              min_distance=0.9,
+                              respect_constraints=True)
 for i, pos in enumerate(positions[0]):
     id = len(system.part)
     system.part.add(id=id, pos=pos)

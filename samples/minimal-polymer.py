@@ -50,10 +50,10 @@ fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
 
-positions = polymer.polymer_positions(n_polymers=1,
-                                      beads_per_chain=50,
-                                      bond_length=1.0,
-                                      seed=3210)
+positions = polymer.positions(n_polymers=1,
+                              beads_per_chain=50,
+                              bond_length=1.0,
+                              seed=3210)
 for i, pos in enumerate(positions[0]):
     id = len(system.part)
     system.part.add(id=id, pos=pos)

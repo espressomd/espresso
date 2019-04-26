@@ -23,11 +23,9 @@
 /** \file
 
     This file contains everything needed to create a start-up
-    configuration of (partially charged) polymer chains with
-    counterions and salt molecules, assigning velocities to the
-    particles and cross-linking the polymers if necessary.
+    configuration of polymer chains which may respect already
+    existing particles and/or constraints.
 
-    For more information on polymer, see polymer.cpp.
 */
 
 #include "PartCfg.hpp"
@@ -38,13 +36,19 @@ Utils::Vector3d random_position(const std::function<double()> &generate_rn);
 Utils::Vector3d random_unit_vector(const std::function<double()> &generate_rn);
 
 /** Returns the miminum distance between position pos and all existing
- * particles.
+ *  particles.
  */
 double mindist(PartCfg &partCfg, Utils::Vector3d pos);
 
 /** Determines whether a given position pos is valid, i.e., it doesn't collide
- * with existing or buffered particles, nor with existing constraints (if
- * respect_constraints).
+ *  with existing or buffered particles, nor with existing constraints (if
+ *  respect_constraints). Returns true if valid, false if not.
+ *  @param pos                 = the trial position in question <br>
+ *  @param positions           = buffered positions to respect <br>
+ *  @param partCfg             = existing particles to respect <br>
+ *  @param min_distance        = threshold for the minimum distance between
+ *  trial position and buffered/existing particles <br>
+ *  @param respect_constraints = whether to respect constraints <br>
  */
 bool is_valid_position(
     const Utils::Vector3d *pos,

@@ -88,7 +88,7 @@ class PolymerPositions(ut.TestCase):
         num_poly = 10
         num_mono = 25
         for bond_length in bond_lengths:
-            positions = polymer.polymer_positions(
+            positions = polymer.positions(
                 n_polymers=num_poly, beads_per_chain=num_mono,
                     bond_length=bond_length, seed=self.seed)
 
@@ -105,7 +105,7 @@ class PolymerPositions(ut.TestCase):
         num_mono = 25
         bond_length = 1.34
         for bond_angle in bond_angles:
-            positions = polymer.polymer_positions(
+            positions = polymer.positions(
                 n_polymers=num_poly, beads_per_chain=num_mono,
                     bond_angle=bond_angle,
                     bond_length=bond_length, seed=self.seed)
@@ -126,14 +126,14 @@ class PolymerPositions(ut.TestCase):
 
         # make sure that incorrect size leads to error
         with self.assertRaises(ValueError):
-            positions = polymer.polymer_positions(
+            positions = polymer.positions(
                 n_polymers=num_poly + 1,
                     beads_per_chain=num_mono,
                     start_positions=start_positions,
                     bond_length=bond_length, seed=self.seed)
 
         # check that start positions are actually used
-        positions = polymer.polymer_positions(
+        positions = polymer.positions(
             n_polymers=num_poly,
                 beads_per_chain=num_mono,
                 start_positions=start_positions,
@@ -153,7 +153,7 @@ class PolymerPositions(ut.TestCase):
         num_mono = 150
         bond_length = 0.945
 
-        positions = polymer.polymer_positions(
+        positions = polymer.positions(
             n_polymers=num_poly,
                 beads_per_chain=num_mono,
                 bond_length=bond_length,
@@ -175,7 +175,7 @@ class PolymerPositions(ut.TestCase):
         wall_constraint = espressomd.constraints.ShapeBasedConstraint(shape=w)
         c = self.system.constraints.add(wall_constraint)
 
-        positions = polymer.polymer_positions(
+        positions = polymer.positions(
             n_polymers=num_poly,
                 beads_per_chain=num_mono,
                 bond_length=bond_length,
@@ -193,7 +193,7 @@ class PolymerPositions(ut.TestCase):
             3, 2) else self.assertRaisesRegex
         with assertRaisesRegex(Exception, 'Invalid start positions.'):
             illegal_start = np.array([[1., 1., 0.2 * self.box_l]])
-            positions = polymer.polymer_positions(
+            positions = polymer.positions(
                 n_polymers=1,
                     beads_per_chain=10,
                     start_positions=illegal_start,

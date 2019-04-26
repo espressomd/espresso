@@ -36,11 +36,9 @@
  * ---------                                                 *
  *************************************************************/
 
-/** C implementation of 'mindist \<part_id\> \<r_catch\>',<br>
- *  which returns the size of an array \<ids\> of indices of particles which are
- *  less than \<r_catch\> away from the position of the particle \<part_id\>.
+/** Returns the distance to the particle closest to 'pos'.
  */
-double mindist4(PartCfg &partCfg, double pos[3]);
+double mindist(PartCfg &partCfg, double pos[3]);
 
 /** Checks whether a particle at coordinates (\<posx\>, \<posy\>, \<posz\>)
  *  collides
@@ -52,7 +50,8 @@ double mindist4(PartCfg &partCfg, double pos[3]);
  *  @param add additional coordinates to check
  *  @return Returns '1' if there is a collision, '0' otherwise.
  */
-int collision(PartCfg &, double pos[3], double shield, int n_add, double *add);
+int collides_with_particle(PartCfg &, double pos[3], double shield, int n_add,
+                           double *add);
 
 /** C implementation of 'counterions \<N_CI\> [options]'.
  *  @param  N_CI        = number of counterions to create
@@ -70,12 +69,12 @@ int collision(PartCfg &, double pos[3], double shield, int n_add, double *add);
  *  @return Returns how often the attempt to place a particle failed in the
  *  worst case.
  */
-int counterionsC(PartCfg &, int N_CI, int part_id, int mode, double shield,
-                 int max_try, double val_CI, int type_CI);
+int create_counterions(PartCfg &, int N_CI, int part_id, int mode,
+                       double shield, int max_try, double val_CI, int type_CI);
 
 /** C implementation of 'diamond \<a\> \<bond_length\> \<MPC\> [options]' */
-int diamondC(PartCfg &, double a, double bond_length, int MPC, int N_CI,
-             double val_nodes, double val_cM, double val_CI, int cM_dist,
-             int nonet);
+int create_diamond(PartCfg &, double a, double bond_length, int MPC, int N_CI,
+                   double val_nodes, double val_cM, double val_CI, int cM_dist,
+                   int nonet);
 
 #endif

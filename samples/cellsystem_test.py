@@ -58,11 +58,11 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
     cutoff=2**(1. / 6), shift="auto")
 fene = interactions.FeneBond(k=10, d_r_max=1.5)
 system.bonded_inter.add(fene)
-positions = polymer.polymer_positions(n_polymers=1,
-                                      beads_per_chain=100,
-                                      bond_length=0.97,
-                                      seed=1234,
-                                      min_distance=0.969)
+positions = polymer.positions(n_polymers=1,
+                              beads_per_chain=100,
+                              bond_length=0.97,
+                              seed=1234,
+                              min_distance=0.969)
 for i, pos in enumerate(positions[0]):
     id = len(system.part)
     system.part.add(id=id, pos=pos)
