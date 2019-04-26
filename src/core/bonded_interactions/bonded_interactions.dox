@@ -18,11 +18,197 @@
 */
 
 /** @page bondedIA Bonded interactions
- * 
+ *
+ *  @tableofcontents
+ *
+ *  @section bondedIA_new Adding new interactions
+ *
+ *  To add a new bonded interaction, the following steps are required:
+ *  * core:
+ *   - define a data structure for the interaction parameters (prefactors, etc.)
+ *   - write a setter function, which takes the parameters of the interactions
+ *     and stores them in the interaction data structure
+ *   - write functions for calculating force and energy
+ *   - add calls to the force and energy calculation functions to the force
+ *     calculation in the integration loop as well as to energy and
+ *     pressure/stress tensor analysis
+ *  * Python interface:
+ *   - import the definition of the interaction struct from the core
+ *   - implement a class for the bonded interaction derived from the Python
+ *     BondedInteraction base class
+ *
+ *  @subsection bondedIA_new_struct Defining the interaction data structure
+ *
+ *  The data structures for bonded interactions reside in
+ *  bonded_interaction_data.hpp.
+ *
+ *  * Add your interaction to the @ref BondedInteraction enum, it is used to
+ *    identify different bonded interactions.
+ *  * Create a new struct containing the parameters of the interaction, using
+ *    for example @ref Fene_bond_parameters as a guide.
+ *  * Add the struct to the @ref Bond_parameters union
+ *
+ *  @subsection bondedIA_new_fun Functions for calculating force and energy, \
+ *                               and for setting parameters
+ *
+ *  Every interaction resides in its own source .cpp and .hpp files. A simple
+ *  example for a bonded interaction is the FENE bond in @ref fene.hpp and
+ *  @ref fene.cpp. Use these two files as templates for your interaction.
+ *  In particular, use the same function names: \c calc_NAME_pair_force,
+ *  \c calc_NAME_pair_energy, \c NAME_set_params, \c angle_NAME_force,
+ *  \c angle_NAME_energy, \c angle_NAME_set_params, etc. with \c NAME your
+ *  interaction name. In the checklist below, we'll use \c NAME = \c fene.
+ *
+ *  * The recommended signatures of the force and energy functions are:
+ *    @code{.cpp}
+ *    inline int calc_fene_pair_force(Particle *p1, Particle *p2,
+ *                                    Bonded_ia_parameters *iaparams,
+ *                                    double const dx[3], double force[3]);
+ *    inline int fene_pair_energy(Particle *p1, Particle *p2,
+ *                                Bonded_ia_parameters *iaparams,
+ *                                double const dx[3], double energy[3]);
+ *    @endcode
+ *  * The setter function gets a \p bond_type which is a numerical id
+ *    identifying the number of the bond type in the simulation.
+ *    It DOES NOT determine the type of the bond potential (harmonic vs FENE).
+ *    The signature of the setter function has to contain the \c bond_type, the
+ *    remaining parameters are specific to the interaction:
+ *    @code{.cpp}
+ *    int fene_set_params(int bond_type, double k, double drmax, double r0);
+ *    @endcode
+ *    @ref ES_OK is returned on success, @ref ES_ERROR on error, e.g. when
+ *    parameters are invalid.
+ *  * The setter function must call @ref make_bond_type_exist() with
+ *    \p bond_type to allocate the memory for storing the parameters.
+ *  * Afterwards, the bond parameters can be stored in the global variable
+ *    @ref bonded_ia_params "bonded_ia_params[bond_type]"
+ *  * \c bonded_ia_params[bond_type].num is the number of particles involved
+ *    in the bond, minus 1, i.e. 1 for a pairwise bonded potential such as the
+ *    FENE bond.
+ *  * The parameters for the individual bonded interaction go to the member of
+ *    @ref Bond_parameters for your interaction defined in the previous step.
+ *    For the FENE bond, this would be:
+ *    @code{.cpp}
+ *    bonded_ia_params[bond_type].p.fene
+ *    @endcode
+ *  * At the end of the parameter setter function, do not forget the call to
+ *    @ref mpi_bcast_ia_params(), which will sync the parameters just set to
+ *    other compute nodes in a parallel simulation.
+ *  * The functions calculating force and energy return an integer, @ref ES_OK
+ *    in case of success, @ref ES_ERROR if the bond is broken (particles are
+ *    too far apart). This will stop the integration with a runtime error.
+ *  * The functions calculating force and energy can make use of a
+ *    pre-calculated distance vector (\p dx) pointing from particle 2 to
+ *    particle 1, that takes periodic boundary conditions into account.
+ *  * The force on particle 1 has to be stored in (NOT added to) the force
+ *    vector. The force on particle 2 will be obtained from Newton's law.
+ *  * The result of the energy calculation is placed in (NOT added to) the
+ *    @p _energy argument.
+ *
+ *  @subsection bondedIA_new_integration Including the bonded interaction in \
+ *                                       the force calculation and the energy \
+ *                                       and pressure analysis
+ *
+ *  * In bonded_interaction_data.cpp:
+ *    - in function @ref recalc_maximal_cutoff_bonded(): add a case for the new
+ *      interaction which makes sure that @ref max_cut_bonded is as large as
+ *      the interaction range of the new interaction. This is only relevant to
+ *      pairwise bonds and dihedral bonds. The range can be calculated by a
+ *      formula, so it is not strictly necessary that the maximal interaction
+ *      range be stored explicitly in the struct.
+ *  * In forces_inline.hpp:
+ *    - include the header file of the new interaction
+ *    - in function @ref add_bonded_force(): add the new interaction to the
+ *      switch statement if it is a pairwise bond. For the FENE bond, the
+ *      code looks like this:
+ *      @code{.cpp}
+ *      case BONDED_IA_FENE:
+ *        bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+ *        break;
+ *      @endcode
+ *    - in function @ref calc_bond_pair_force(): add the new interaction to the
+ *      switch statement if it is not a pairwise bond. For the harmonic angle,
+ *      the code looks like this:
+ *      @code{.cpp}
+ *      case BONDED_IA_ANGLE_HARMONIC:
+ *        bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force,
+ *                                                force2, force3);
+ *        break;
+ *      @endcode
+ *  * In energy_inline.hpp:
+ *    - include the header file of the new interaction
+ *    - in function @ref add_bonded_energy(): add the new interaction to the
+ *      switch statement. For the FENE bond, e.g., the code looks like this:
+ *      @code{.cpp}
+ *      case BONDED_IA_FENE:
+ *        bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
+ *        break;
+ *      @endcode
+ *  * Pressure, stress tensor and virial calculation: if your bonded
+ *    interaction is not a pair bond or modifies the particles involved,
+ *    you have to implement a custom solution for virial calculation.
+ *    The pressure occurs twice, once for the parallelized isotropic pressure
+ *    and once for the tensorial pressure calculation. For pair forces, the
+ *    pressure is calculated using the virials, for many body interactions
+ *    currently no pressure is calculated.
+ *
+ *  @subsection bondedIA_new_interface Adding the interaction in the Python \
+ *                                     interface
+ *
+ *  Please note that the following is Cython code (www.cython.org), rather than
+ *  pure Python.
+ *
+ *  * In file <tt>src/python/espressomd/interactions.pxd</tt>:
+ *    - Import the parameter data structure from the C++ header file for the new
+ *      interaction. For the FENE bond, this looks like:
+ *      @code{.py}
+ *      cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
+ *          cdef struct Fene_bond_parameters:
+ *              double k
+ *              double drmax
+ *              double r0
+ *              double drmax2
+ *              double drmax2i
+ *      @endcode
+ *    - Add the bonded interaction to the Cython copy of the
+ *      @ref BondedInteraction enum analogous to the one in the core
+ *      The spelling has to match the one in the C++ enum exactly:
+ *      @code{.py}
+ *      cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
+ *          cdef enum enum_bonded_interaction "BondedInteraction":
+ *              BONDED_IA_NONE = -1,
+ *              BONDED_IA_FENE,
+ *              [...]
+ *      @endcode
+ *    - Add the bonded interaction to the Cython copy of the
+ *      @ref Bond_parameters union analogous to the C++ core.
+ *      The member name has to match the one in C++ exactly:
+ *      @code{.py}
+ *      cdef union Bond_parameters:
+ *          Fene_bond_parameters fene
+ *          [...]
+ *      @endcode
+ *    - Import the declaration of the setter function implemented in the core.
+ *      For the FENE bond, this looks like:
+ *      @code{.py}
+ *      cdef extern from "bonded_interactions/fene.hpp":
+ *          int fene_set_params(int bond_type, double k, double drmax, double r0)
+ *      @endcode
+ *  * In file <tt>src/python/espressomd/interactions.pyx</tt>:
+ *    - Implement the Cython class for the bonded interaction, using the one
+ *      for the FENE bond as template. Please use pep8 naming convention.
+ *  * In file <tt>testsuite/python/interactions_bonded_interface.py</tt>:
+ *    - Add a test case to verify that parameters set and gotten from the
+ *      interaction are consistent.
+ *  * In file <tt>testsuite/python/interactions_bonded.py</tt> or
+ *    <tt>testsuite/python/interactions_bond_angle.py</tt> or
+ *    <tt>testsuite/python/interactions_dihedral.py</tt>:
+ *    - Add a test case to verify the forces and energies are correct.
+ *
  *  @section bondedIA_bond_angles Bond angle potentials
- * 
+ *
  *  @subsection bondedIA_angle_force General expressions for the forces
- * 
+ *
  *  This section uses the particle force expressions derived in
  *  Swope, Ferguson *J. Comput. Chem.* **1992**, *13*(5): 585-594,
  *  doi:[10.1002/jcc.540130508](https://doi.org/10.1002/jcc.540130508).
@@ -102,7 +288,6 @@
  *                  \right)
  *                /\, \partial x_{ij}}
  *                 {\left\|\vec{r_{ij}}\right\|^2\left\|\vec{r_{kj}}\right\|^2}
- *            
  *  @f]
  *
  *  with

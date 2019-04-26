@@ -179,8 +179,8 @@ void MMM1D_init() {
                            mmm1d_params.far_switch_radius_2);
 }
 
-void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
-                                  double r, double force[3]) {
+void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
+                                  double force[3]) {
   int dim;
   double F[3];
   double rxy2, rxy2_d, z_d;
@@ -223,7 +223,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
 
     /* real space parts */
 
-    pref = 1. / (r2 * r);
+    pref = 1. / (r * r * r);
     Fx += pref * d[0];
     Fy += pref * d[1];
     Fz += pref * d[2];

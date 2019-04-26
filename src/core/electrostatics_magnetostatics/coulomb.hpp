@@ -2,12 +2,11 @@
 #define ESPRESSO_COULOMB_HPP
 
 #include "config.hpp"
-#include "utils/Vector.hpp"
-
-extern double coulomb_cutoff;
 
 #ifdef ELECTROSTATICS
 #include "Observable_stat.hpp"
+
+#include "utils/Vector.hpp"
 
 /** \name Type codes for the type of Coulomb interaction
     Enumeration of implemented methods for the electrostatic
@@ -20,11 +19,11 @@ enum CoulombMethod {
   COULOMB_NONE,      //< Coulomb interaction switched off (NONE)
   COULOMB_DH,        //< Coulomb method is Debye-Hueckel
   COULOMB_P3M,       //< Coulomb method is P3M
+  COULOMB_P3M_GPU,   //< Coulomb method is P3M with GPU based long range part
+  COULOMB_ELC_P3M,   //< Coulomb method is P3M plus ELC
   COULOMB_MMM1D,     //< Coulomb method is one-dimensional MMM
   COULOMB_MMM2D,     //< Coulomb method is two-dimensional MMM
-  COULOMB_ELC_P3M,   //< Coulomb method is P3M plus ELC
   COULOMB_RF,        //< Coulomb method is Reaction-Field
-  COULOMB_P3M_GPU,   //< Coulomb method is P3M with GPU based long range part
                      // calculation
   COULOMB_MMM1D_GPU, //< Coulomb method is one-dimensional MMM running on GPU
   COULOMB_SCAFACOS,  //< Coulomb method is scafacos

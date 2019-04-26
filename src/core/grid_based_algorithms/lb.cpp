@@ -36,7 +36,7 @@
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "halo.hpp"
 #include "integrate.hpp"
 #include "lb-d3q19.hpp"
@@ -1329,14 +1329,12 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
                    9, 12, 11, 14, 13, 16, 15, 18, 17};
 
   /* bottom-up sweep */
-  //  for (k=lblattice.halo_offset;k<lblattice.halo_grid_volume;k++)
   for (int z = 0; z < lblattice.grid[2] + 2; z++) {
     for (int y = 0; y < lblattice.grid[1] + 2; y++) {
       for (int x = 0; x < lblattice.grid[0] + 2; x++) {
         k = get_linear_index(x, y, z, lblattice.halo_grid);
 
         if (lbfields[k].boundary) {
-
           for (i = 0; i < 19; i++) {
             population_shift = 0;
             for (l = 0; l < 3; l++) {

@@ -28,6 +28,8 @@
 #ifdef ELECTROSTATICS
 #include "communication.hpp"
 
+Debye_hueckel_params dh_params{};
+
 int dh_set_params(double kappa, double r_cut) {
   if (dh_params.kappa < 0.0)
     return -1;

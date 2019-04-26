@@ -113,7 +113,7 @@ The focus of the user guide is documenting the scripting interface, its
 behavior and use in the simulation. It only describes certain technical details
 of implementation which are necessary for understanding how the script
 interface works. Technical documentation of the code and program structure is
-contained in the :ref:`Developers guide`.
+contained in the `online wiki <https://github.com/espressomd/espresso/wiki>`_.
 
 .. _Basic python simulation script:
 

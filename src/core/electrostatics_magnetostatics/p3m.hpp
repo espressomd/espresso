@@ -222,37 +222,30 @@ void p3m_shrink_wrap_charge_grid(int n_charges);
  *
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
-inline double p3m_add_pair_force(double chgfac, double const *d, double dist2,
-                                 double dist, double force[3]) {
+inline void p3m_add_pair_force(double q1q2, double const *d, double dist,
+                               double *force) {
   if (dist < p3m.params.r_cut) {
-    if (dist > 0.0) { // Vincent
+    if (dist > 0.0) {
       double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-      double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-      double fac1 = chgfac * exp(-adist * adist);
-      double fac2 =
+      auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
+      auto const fac1 = q1q2 * exp(-adist * adist);
+      auto const fac2 =
           fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * Utils::sqrt_pi_i()) /
-          dist2;
+          (dist * dist);
 #else
-      erfc_part_ri = erfc(adist) / dist;
-      double fac1 = chgfac;
-      double fac2 =
+      auto const erfc_part_ri = erfc(adist) / dist;
+      auto const fac1 = q1q2;
+      auto const fac2 =
           fac1 *
           (erfc_part_ri +
            2.0 * p3m.params.alpha * Utils::sqrt_pi_i() * exp(-adist * adist)) /
-          dist2;
+          (dist * dist);
 #endif
       for (int j = 0; j < 3; j++)
         force[j] += fac2 * d[j];
-      ESR_TRACE(
-          fprintf(stderr, "%d: RSE: Pair dist=%.3f: force (%.3e,%.3e,%.3e)\n",
-                  this_node, dist, fac2 * d[0], fac2 * d[1], fac2 * d[2]));
-#ifdef NPT
-      return fac1 * erfc_part_ri;
-#endif
     }
   }
-  return 0.0;
 }
 
 /** Set initial values for p3m_adaptive_tune()
