@@ -113,9 +113,9 @@ bool is_valid_position(
     // check for collision with buffered positions
     double buff_mindist = std::numeric_limits<double>::infinity();
     double h;
-    for (auto p = positions->begin(); p != positions->end(); ++p) {
-      for (auto m = p->begin(); m != p->end(); ++m) {
-        h = (folded_position(*pos) - folded_position(*m)).norm2();
+    for (const auto p : *positions) {
+      for (auto m : p) {
+        h = (folded_position(*pos) - folded_position(m)).norm2();
         buff_mindist = std::min(h, buff_mindist);
       }
     }
@@ -152,8 +152,7 @@ draw_polymer_positions(PartCfg &partCfg, const int n_polymers,
                                                  respect_constraints);
                   }))
     throw std::runtime_error("Invalid start positions.");
-  // use (if none given, random) starting positions for first monomer of each
-  // polymer
+  // use (if none given, random) starting positions for every first monomer
   for (int p = 0; p < n_polymers; ++p) {
     attempts_mono = 0;
     // first monomer for all polymers
@@ -166,9 +165,8 @@ draw_polymer_positions(PartCfg &partCfg, const int n_polymers,
                (attempts_mono < max_tries));
       if (attempts_mono == max_tries) {
         throw std::runtime_error("Failed to create polymer start positions.");
-      } else {
-        positions[p][0] = trial_pos;
       }
+      positions[p][0] = trial_pos;
     } else {
       positions[p][0] = start_positions[p];
     }
@@ -210,11 +208,10 @@ draw_polymer_positions(PartCfg &partCfg, const int n_polymers,
           if (start_positions.empty()) {
             throw std::runtime_error("Failed to create polymer positions with "
                                      "given start positions.");
-          } else {
-            // ... otherwise retry to position the whole polymer
-            attempts_poly++;
-            m = -1;
           }
+          // ... otherwise retry to position the whole polymer
+          attempts_poly++;
+          m = -1;
         } else {
           // ... but only if max_tries has not been exceeded.
           throw std::runtime_error("Failed to create polymer positions.");

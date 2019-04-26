@@ -62,7 +62,7 @@ positions = polymer.polymer_positions(n_polymers=1,
                                       beads_per_chain=100,
                                       bond_length=0.97,
                                       seed=1234,
-                                      min_distance=0.95)
+                                      min_distance=0.969)
 for i, pos in enumerate(positions[0]):
     id = len(system.part)
     system.part.add(id=id, pos=pos)
