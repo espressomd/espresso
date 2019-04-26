@@ -87,7 +87,7 @@ void dd_create_cell_grid() {
 
   if (max_range < ROUND_ERROR_PREC * box_l[0]) {
     /* this is the non-interacting case */
-    const int cells_per_dir = std::ceil(std::pow(min_num_cells, 1. / 3.));
+    int const cells_per_dir = std::ceil(std::pow(min_num_cells, 1. / 3.));
 
     dd.cell_grid[0] = cells_per_dir;
     dd.cell_grid[1] = cells_per_dir;

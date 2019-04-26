@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(direct_binding) {
 
 BOOST_AUTO_TEST_CASE(read_only) {
   using namespace ScriptInterface;
-  const int i = 12;
+  int const i = 12;
 
   auto p = AutoParameter("i", i);
   ;

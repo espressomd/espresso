@@ -665,7 +665,7 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
                                int n_vs, int c_size) {
 
   // Number of doubles to store pressure in
-  const int total =
+  int const total =
       c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
                 n_dipolar + n_vs + Observable_stat::n_external_field);
 

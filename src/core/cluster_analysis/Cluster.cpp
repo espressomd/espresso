@@ -156,7 +156,7 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   // xstride, const double * y, const size_t ystride, size_t n, double * c0,
   // double * c1, double * cov00, double * cov01, double * cov11, double *
   // sumsq)
-  const int n = log_pcounts.size();
+  int const n = log_pcounts.size();
   double c0, c1, cov00, cov01, cov11, sumsq;
   gsl_fit_linear(&log_diameters.front(), 1, &log_pcounts.front(), 1, n, &c0,
                  &c1, &cov00, &cov01, &cov11, &sumsq);

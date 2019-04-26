@@ -273,7 +273,7 @@ public:
    **/
   template <class... Args> void add(void (*fp)(Args...)) {
     m_callbacks.emplace_back(detail::make_model(fp));
-    const int id = m_callback_map.add(m_callbacks.back().get());
+    int const id = m_callback_map.add(m_callbacks.back().get());
     m_func_ptr_to_id[reinterpret_cast<void (*)()>(fp)] = id;
   }
 
@@ -363,7 +363,7 @@ public:
       std::enable_if_t<std::is_void<decltype(fp(args...))>::value> {
     /** If the function pointer is invalid, map.at will throw
         an out_of_range exception. */
-    const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
+    int const id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
     call(id, std::forward<ArgRef>(args)...);
   }

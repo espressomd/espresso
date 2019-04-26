@@ -171,7 +171,7 @@ struct ParticleProperties {
 
 #endif
 #else  /* VIRTUAL_SITES */
-  static constexpr const int is_virtual = 0;
+  static constexpr int const is_virtual = 0;
 #endif /* VIRTUAL_SITES */
 
 #ifdef LANGEVIN_PER_PARTICLE

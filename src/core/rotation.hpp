@@ -32,9 +32,9 @@
 #include "particle_data.hpp"
 #include <utils/Vector.hpp>
 
-constexpr const int ROTATION_X = 2;
-constexpr const int ROTATION_Y = 4;
-constexpr const int ROTATION_Z = 8;
+constexpr int const ROTATION_X = 2;
+constexpr int const ROTATION_Y = 4;
+constexpr int const ROTATION_Z = 8;
 
 /*************************************************************
  * Functions                                                 *

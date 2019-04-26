@@ -88,7 +88,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
   // (2) Copy forces to the GPU
   // (3) interpolate on the LBM grid and spread forces
 
-  const int numParticles =
+  int const numParticles =
       gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 
   // Storage only needed on master and allocated only once at the first time
@@ -269,7 +269,7 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
   // (2) transfer velocities back to CPU
   // (3) spread velocities to local cells via MPI
 
-  const int numParticles =
+  int const numParticles =
       gpu_get_global_particle_vars_pointer_host()->number_of_particles;
 
   // **** GPU stuff only on master ****
@@ -352,9 +352,9 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
 
     // modulo for negative numbers is strange at best, shift to make sure we are
     // positive
-    const int x = my_left[0] + para.dim_x;
-    const int y = my_left[1] + para.dim_y;
-    const int z = my_left[2] + para.dim_z;
+    int const x = my_left[0] + para.dim_x;
+    int const y = my_left[1] + para.dim_y;
+    int const z = my_left[2] + para.dim_z;
 
     node_index[0] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
                     para.dim_x * para.dim_y * (z % para.dim_z);
@@ -468,7 +468,7 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
 #ifdef LB_BOUNDARIES_GPU
       if (n_curr.boundary[node_index[i]]) {
         // Boundary node
-        const int boundary_index = n_curr.boundary[node_index[i]];
+        int const boundary_index = n_curr.boundary[node_index[i]];
 
         // lb_boundary_velocity is given in MD units --> convert to LB and
         // reconvert back at the end of this function

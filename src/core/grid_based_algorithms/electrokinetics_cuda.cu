@@ -2124,8 +2124,8 @@ __global__ void ek_clear_node_force(LB_node_force_density_gpu node_f) {
 }
 
 void ek_calculate_electrostatic_coupling() {
-  const int blocks_per_grid_y = 4;
-  const int threads_per_block = 64;
+  int const blocks_per_grid_y = 4;
+  int const threads_per_block = 64;
 
   if ((!ek_parameters.es_coupling) || (!ek_initialized))
     return;

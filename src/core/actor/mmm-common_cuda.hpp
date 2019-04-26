@@ -24,8 +24,8 @@
 // As the coefficients are stored in __constant__ memory, the array needs to be
 // sized in advance. We don't know exactly how many coefficients per order, so
 // we size plentiful.
-const int modpsi_order = 30;
-const int modpsi_constant_size = modpsi_order * modpsi_order * 2;
+int const modpsi_order = 30;
+int const modpsi_constant_size = modpsi_order * modpsi_order * 2;
 
 // linearized array on host
 int *linModPsi_offsets = nullptr, *linModPsi_lengths = nullptr;

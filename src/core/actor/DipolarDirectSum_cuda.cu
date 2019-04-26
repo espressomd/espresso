@@ -280,7 +280,7 @@ void DipolarDirectSum_kernel_wrapper_force(dds_float k, int n, float *pos,
                                            dds_float box_l[3],
                                            int periodic[3]) {
 
-  const int bs = 64;
+  int const bs = 64;
   dim3 grid(1, 1, 1);
   dim3 block(1, 1, 1);
 
@@ -315,7 +315,7 @@ void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos,
                                             float *dip, dds_float box_l[3],
                                             int periodic[3], float *E) {
 
-  const int bs = 512;
+  int const bs = 512;
   dim3 grid(1, 1, 1);
   dim3 block(1, 1, 1);
 

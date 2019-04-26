@@ -29,7 +29,7 @@
 #ifdef MMM1D_GPU
 
 // the code is mostly multi-GPU capable, but Espresso is not yet
-const int deviceCount = 1;
+int const deviceCount = 1;
 float multigpu_factors[] = {1.0};
 #define cudaSetDevice(d)
 

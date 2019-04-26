@@ -288,9 +288,9 @@ __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
 template <int cao>
 __global__ void calculate_influence_function_device(const P3MGpuData p) {
 
-  const int NX = blockDim.x * blockIdx.x + threadIdx.x;
-  const int NY = blockDim.y * blockIdx.y + threadIdx.y;
-  const int NZ = blockDim.z * blockIdx.z + threadIdx.z;
+  int const NX = blockDim.x * blockIdx.x + threadIdx.x;
+  int const NY = blockDim.y * blockIdx.y + threadIdx.y;
+  int const NZ = blockDim.z * blockIdx.z + threadIdx.z;
   REAL_TYPE Dnx, Dny, Dnz;
   REAL_TYPE Zaehler[3] = {0.0, 0.0, 0.0}, Nenner = 0.0;
   REAL_TYPE zwi;
@@ -348,14 +348,14 @@ __device__ inline int linear_index_k(P3MGpuData const &p, int i, int j, int k) {
 } // namespace
 
 __global__ void apply_diff_op(const P3MGpuData p) {
-  const int linear_index =
+  int const linear_index =
       linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
 
-  const int nx =
+  int const nx =
       (blockIdx.x > p.mesh[0] / 2) ? blockIdx.x - p.mesh[0] : blockIdx.x;
-  const int ny =
+  int const ny =
       (blockIdx.y > p.mesh[1] / 2) ? blockIdx.y - p.mesh[1] : blockIdx.y;
-  const int nz = threadIdx.x;
+  int const nz = threadIdx.x;
 
   const FFT_TYPE_COMPLEX meshw = p.charge_mesh[linear_index];
   FFT_TYPE_COMPLEX buf;
@@ -382,7 +382,7 @@ __device__ inline int wrap_index(const int ind, const int mesh) {
 }
 
 __global__ void apply_influence_function(const P3MGpuData p) {
-  const int linear_index =
+  int const linear_index =
       linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
 
   p.charge_mesh[linear_index].x *= p.G_hat[linear_index];
@@ -393,8 +393,8 @@ template <int cao, bool shared>
 __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
                                      const P3MGpuData par,
                                      const int parts_per_block) {
-  const int part_in_block = threadIdx.x / cao;
-  const int cao_id_x = threadIdx.x - part_in_block * cao;
+  int const part_in_block = threadIdx.x / cao;
+  int const cao_id_x = threadIdx.x - part_in_block * cao;
   /** id of the particle **/
   int id =
       parts_per_block * (blockIdx.x * gridDim.y + blockIdx.y) + part_in_block;
@@ -424,7 +424,7 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
   nmp_y = wrap_index(nmp_y + threadIdx.y, par.mesh[1]);
   nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh[2]);
 
-  const int ind = linear_index_r(par, nmp_x, nmp_y, nmp_z);
+  int const ind = linear_index_r(par, nmp_x, nmp_y, nmp_z);
 
   HIP_DYNAMIC_SHARED(float, weights);
 
@@ -451,8 +451,8 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
 void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
   dim3 grid, block;
   grid.z = 1;
-  const int cao3 = p.cao * p.cao * p.cao;
-  const int cao = p.cao;
+  int const cao3 = p.cao * p.cao * p.cao;
+  int const cao = p.cao;
   int parts_per_block = 1, n_blocks = 1;
 
   while ((parts_per_block + 1) * cao3 <= 1024) {
@@ -522,8 +522,8 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
                                      const P3MGpuData par,
                                      float *lb_particle_force_gpu,
                                      REAL_TYPE prefactor, int parts_per_block) {
-  const int part_in_block = threadIdx.x / cao;
-  const int cao_id_x = threadIdx.x - part_in_block * cao;
+  int const part_in_block = threadIdx.x / cao;
+  int const cao_id_x = threadIdx.x - part_in_block * cao;
   /** id of the particle **/
   int id =
       parts_per_block * (blockIdx.x * gridDim.y + blockIdx.y) + part_in_block;
@@ -553,7 +553,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
   nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh[2]);
 
   REAL_TYPE c;
-  const int index = linear_index_r(par, nmp_x, nmp_y, nmp_z);
+  int const index = linear_index_r(par, nmp_x, nmp_y, nmp_z);
 
   HIP_DYNAMIC_SHARED(float, weights);
 
@@ -587,8 +587,8 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
   dim3 grid, block;
   grid.z = 1;
 
-  const int cao = p.cao;
-  const int cao3 = cao * cao * cao;
+  int const cao = p.cao;
+  int const cao3 = cao * cao * cao;
   int parts_per_block = 1, n_blocks = 1;
 
   while ((parts_per_block + 1) * cao3 <= 1024) {
@@ -729,7 +729,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
 
     if ((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
       /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
-      const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
+      int const cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
                              (p3m_gpu_data.mesh[2] / 2 + 1);
 
       cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),

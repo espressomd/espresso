@@ -34,7 +34,7 @@
 struct CompareDevices {
   bool operator()(const EspressoGpuDevice &a,
                   const EspressoGpuDevice &b) const {
-    const int name_comp = strncmp(a.proc_name, b.proc_name, 63);
+    int const name_comp = strncmp(a.proc_name, b.proc_name, 63);
     /* Both devs are from the same node, order by id */
     if (name_comp == 0)
       return a.id < b.id;

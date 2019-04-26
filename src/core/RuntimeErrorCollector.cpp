@@ -96,7 +96,7 @@ void RuntimeErrorCollector::error(const ostringstream &mstr,
 
 int RuntimeErrorCollector::count() const {
   int totalMessages;
-  const int numMessages = m_errors.size();
+  int const numMessages = m_errors.size();
 
   all_reduce(m_comm, numMessages, totalMessages, std::plus<int>());
 
@@ -104,7 +104,7 @@ int RuntimeErrorCollector::count() const {
 }
 
 int RuntimeErrorCollector::count(RuntimeError::ErrorLevel level) {
-  const int numMessages = std::count_if(
+  int const numMessages = std::count_if(
       m_errors.begin(), m_errors.end(),
       [level](const RuntimeError &e) { return e.level() >= level; });
   int totalMessages;
