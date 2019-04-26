@@ -157,7 +157,7 @@ inline void calc_non_bonded_pair_force_parts(
 #endif
 /* Lennard-Jones */
 #ifdef LENNARD_JONES
-  add_lj_pair_force(p1, p2, ia_params, d, dist, force);
+  add_lj_pair_force(ia_params, d, dist, force);
 #endif
 /* WCA */
 #ifdef WCA
@@ -309,7 +309,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /***********************************************/
 
 #ifdef ELECTROSTATICS
-  Coulomb::calc_pair_force(p1, p2, p1->p.q * p2->p.q, d, dist, dist2, force);
+  Coulomb::calc_pair_force(p1, p2, d, dist, force);
 #endif
 
 /*********************************************************************/
@@ -385,8 +385,7 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
     bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
     break;
   case BONDED_IA_BONDED_COULOMB_SR:
-    bond_broken =
-        calc_bonded_coulomb_sr_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_bonded_coulomb_sr_pair_force(iaparams, dx, force);
     break;
 #endif
 #ifdef LENNARD_JONES

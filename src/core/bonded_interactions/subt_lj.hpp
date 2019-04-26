@@ -57,7 +57,7 @@ inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
 
   auto const dx_ = -Utils::Vector3d(dx, dx + 3);
 
-  add_lj_pair_force(p1, p2, ia_params, dx_.data(), dx_.norm(), force);
+  add_lj_pair_force(ia_params, dx_.data(), dx_.norm(), force);
 
   return ES_OK;
 }
@@ -68,7 +68,7 @@ inline int subt_lj_pair_energy(Particle *p1, Particle *p2,
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
   auto const dx_ = -Utils::Vector3d(dx, dx + 3);
 
-  *_energy = -lj_pair_energy(p1, p2, ia_params, dx_.data(), dx_.norm());
+  *_energy = -lj_pair_energy(ia_params, dx_.norm());
   return ES_OK;
 }
 

@@ -70,7 +70,7 @@ inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
                                              double d[3], double dist,
                                              double dist2) {
   Utils::Vector3d force{};
-  Coulomb::calc_pair_force(p1, p2, p1->p.q * p2->p.q, d, dist, dist2, force);
+  Coulomb::calc_pair_force(p1, p2, d, dist, force);
 
   p1->f.f += force;
   p2->f.f -= force;
