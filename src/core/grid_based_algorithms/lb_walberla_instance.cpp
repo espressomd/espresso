@@ -26,7 +26,7 @@ LbWalberla *lb_walberla() {
 }
 
 void init_lb_walberla(double viscosity, double agrid,
-                      const Vector3d &box_dimensions, const Vector3i &node_grid,
+                      const Utils::Vector3d &box_dimensions, const Utils::Vector3i &node_grid,
                       double skin) {
   lb_walberla_instance = std::make_unique<LbWalberla>(
       LbWalberla{viscosity, agrid, box_dimensions, node_grid, skin});

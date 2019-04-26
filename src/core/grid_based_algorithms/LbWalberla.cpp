@@ -44,21 +44,21 @@
 
 using namespace walberla;
 
-inline Vector3d to_vector3d(const Vector3<real_t> v) {
-  return Vector3d{v[0], v[1], v[2]};
+inline Utils::Vector3d to_vector3d(const Vector3<real_t> v) {
+  return Utils::Vector3d{v[0], v[1], v[2]};
 }
-Vector3<real_t> to_vector3(const Vector3d v) {
+Vector3<real_t> to_vector3(const Utils::Vector3d v) {
   return Vector3<real_t>{v[0], v[1], v[2]};
 }
 
 LbWalberla::LbWalberla(double viscosity, double agrid,
-                       const Vector3d &box_dimensions,
-                       const Vector3i &node_grid, double skin) {
+                       const Utils::Vector3d &box_dimensions,
+                       const Utils::Vector3i &node_grid, double skin) {
 
   m_skin = skin;
   m_agrid = agrid;
 
-  Vector3i grid_dimensions;
+  Utils::Vector3i grid_dimensions;
   for (int i = 0; i < 3; i++) {
     if (fmod(box_dimensions[i], agrid) >
         std::numeric_limits<double>::epsilon()) {
@@ -149,7 +149,7 @@ void LbWalberla::print_vtk_density(char *filename) {
 void LbWalberla::integrate() { m_time_loop->run(); }
 
 boost::optional<LbWalberla::BlockAndCell>
-LbWalberla::get_block_and_cell(const Vector3i &node) const {
+LbWalberla::get_block_and_cell(const Utils::Vector3i &node) const {
   // Get block and local cell
   Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
   auto block = m_blocks->getBlock(global_cell, 0);
@@ -163,8 +163,8 @@ LbWalberla::get_block_and_cell(const Vector3i &node) const {
   return {{block, local_cell}};
 }
 
-bool LbWalberla::set_node_velocity_at_boundary(const Vector3i node,
-                                               const Vector3d v) {
+bool LbWalberla::set_node_velocity_at_boundary(const Utils::Vector3i node,
+                                               const Utils::Vector3d v) {
   auto bc = get_block_and_cell(node);
   // Return if we don't have the cell.
   if (!bc)
@@ -181,9 +181,9 @@ bool LbWalberla::set_node_velocity_at_boundary(const Vector3i node,
   return true;
 }
 
-boost::optional<Vector3d>
-LbWalberla::get_node_velocity_at_boundary(const Vector3i &node) const {
-  boost::optional<Vector3d> res;
+boost::optional<Utils::Vector3d>
+LbWalberla::get_node_velocity_at_boundary(const Utils::Vector3i &node) const {
+  boost::optional<Utils::Vector3d> res;
   auto bc = get_block_and_cell(node);
   // return if we don't have the cell
   if (!bc)
@@ -196,14 +196,14 @@ LbWalberla::get_node_velocity_at_boundary(const Vector3i &node) const {
   if (!boundary_handling->isBoundary((*bc).cell))
     return res;
 
-  Vector3d v =
+  Utils::Vector3d v =
       to_vector3d(boundary_handling->getBoundaryCondition<UBB_t>(uid).getValue(
           (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]));
   res = {v};
   return res;
 }
 
-bool LbWalberla::remove_node_from_boundary(const Vector3i &node) {
+bool LbWalberla::remove_node_from_boundary(const Utils::Vector3i &node) {
   auto bc = get_block_and_cell(node);
   if (!bc)
     return false;
@@ -215,7 +215,7 @@ bool LbWalberla::remove_node_from_boundary(const Vector3i &node) {
 }
 
 boost::optional<bool>
-LbWalberla::get_node_is_boundary(const Vector3i &node) const {
+LbWalberla::get_node_is_boundary(const Utils::Vector3i &node) const {
   auto bc = get_block_and_cell(node);
   if (!bc)
     return {boost::none};
@@ -256,8 +256,8 @@ LbWalberla::create_fluid_field_vtk_writer(
   return pdf_field_vtk_writer;
 }
 
-boost::optional<Vector3d>
-LbWalberla::get_node_velocity(const Vector3i node) const {
+boost::optional<Utils::Vector3d>
+LbWalberla::get_node_velocity(const Utils::Vector3i node) const {
   auto bc = get_block_and_cell(node);
   if (!bc)
     return {boost::none};
@@ -268,8 +268,8 @@ LbWalberla::get_node_velocity(const Vector3i node) const {
   return {to_vector3d(vel_adaptor->get((*bc).cell))};
 }
 
-boost::optional<Vector3d>
-LbWalberla::get_velocity_at_pos(const Vector3d &pos) const {
+boost::optional<Utils::Vector3d>
+LbWalberla::get_velocity_at_pos(const Utils::Vector3d &pos) const {
   auto block = m_blocks->getBlock(to_vector3(pos));
   if (!block)
     return {boost::none};
@@ -281,7 +281,7 @@ LbWalberla::get_velocity_at_pos(const Vector3d &pos) const {
   return {to_vector3d(v)};
 }
 
-bool LbWalberla::set_node_velocity(const Vector3i &node, const Vector3d v) {
+bool LbWalberla::set_node_velocity(const Utils::Vector3i &node, const Utils::Vector3d v) {
   auto bc = get_block_and_cell(node);
   if (!bc)
     return false;
@@ -294,7 +294,7 @@ bool LbWalberla::set_node_velocity(const Vector3i &node, const Vector3d v) {
   return true;
 }
 
-bool LbWalberla::set_node_density(const Vector3i node, const double density) {
+bool LbWalberla::set_node_density(const Utils::Vector3i node, const double density) {
   auto bc = get_block_and_cell(node);
   if (!bc)
     return false;
@@ -311,7 +311,7 @@ bool LbWalberla::set_node_density(const Vector3i node, const double density) {
 }
 
 boost::optional<double>
-LbWalberla::get_node_density(const Vector3i node) const {
+LbWalberla::get_node_density(const Utils::Vector3i node) const {
   auto bc = get_block_and_cell(node);
   if (!bc)
     return {boost::none};
@@ -329,13 +329,13 @@ void LbWalberla::set_viscosity(double viscosity) {
 double LbWalberla::get_viscosity() {
   return m_lattice_model->collisionModel().viscosity();
 }
-bool LbWalberla::node_in_local_domain(const Vector3i &node) const {
+bool LbWalberla::node_in_local_domain(const Utils::Vector3i &node) const {
   auto block = m_blocks->getBlock(
       Cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])}, 0);
   return (block != nullptr);
 }
 
-bool LbWalberla::pos_in_local_domain(const Vector3d &pos) const {
+bool LbWalberla::pos_in_local_domain(const Utils::Vector3d &pos) const {
   auto block =
       m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
   return (block != nullptr);

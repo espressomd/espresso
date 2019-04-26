@@ -21,7 +21,7 @@ LbWalberla *lb_walberla();
  *  @param skin Distance beyond the node boundary a particle can reach
  */
 void init_lb_walberla(double viscosity, double agrid,
-                      const Vector3d &box_dimensions, const Vector3i &node_grid,
+                      const Utils::Vector3d &box_dimensions, const Utils::Vector3i &node_grid,
                       double skin);
 
 /** @brief Destruct the per-MPI-rank LbWalberal instance */
