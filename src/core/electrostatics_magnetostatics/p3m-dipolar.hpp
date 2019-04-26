@@ -44,7 +44,7 @@
 #include "p3m-common.hpp"
 #include "particle_data.hpp"
 
-#include "utils/constants.hpp"
+#include <utils/constants.hpp>
 #include "utils/math/AS_erfc_part.hpp"
 
 struct dp3m_data_struct {

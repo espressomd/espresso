@@ -37,9 +37,9 @@
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
-#include "utils/index.hpp"
+#include <utils/index.hpp>
 using Utils::get_linear_index;
-#include "utils/constants.hpp"
+#include <utils/constants.hpp>
 
 #include <algorithm>
 #include <limits>

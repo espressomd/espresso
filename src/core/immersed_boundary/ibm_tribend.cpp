@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "grid.hpp"
 #include "particle_data.hpp"
 
-#include "utils/constants.hpp"
+#include <utils/constants.hpp>
 
 /*************
    IBM_Tribend_CalcForce

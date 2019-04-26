@@ -23,7 +23,7 @@
 #define SHAPES_ELLIPSOID_HPP
 
 #include "Shape.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Shapes {
 class Ellipsoid : public Shape {

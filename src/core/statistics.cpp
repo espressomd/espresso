@@ -40,9 +40,9 @@
 #include "statistics_chain.hpp"
 #include "virtual_sites.hpp"
 
-#include "utils/NoOp.hpp"
-#include "utils/constants.hpp"
-#include "utils/contains.hpp"
+#include <utils/NoOp.hpp>
+#include <utils/constants.hpp>
+#include <utils/contains.hpp>
 
 #include <cstdlib>
 #include <cstring>

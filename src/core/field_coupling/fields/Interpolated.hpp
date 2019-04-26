@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/math/tensor_product.hpp"
 
 #include "jacobian_type.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 /* Turn off range checks if release build. */
 #if defined(NDEBUG) && !defined(BOOST_DISABLE_ASSERTS)

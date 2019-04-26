@@ -6,7 +6,7 @@
 #ifdef ELECTROSTATICS
 #include "Observable_stat.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 /** \name Type codes for the type of Coulomb interaction
     Enumeration of implemented methods for the electrostatic

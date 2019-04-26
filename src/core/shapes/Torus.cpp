@@ -1,5 +1,5 @@
 #include "Torus.hpp"
-#include "utils/math/sqr.hpp"
+#include <utils/math/sqr.hpp>
 #include <cmath>
 
 namespace Shapes {

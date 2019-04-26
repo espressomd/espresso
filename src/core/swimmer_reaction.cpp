@@ -32,7 +32,7 @@
 #include "integrate.hpp"
 #include "random.hpp"
 
-#include "utils/math/sgn.hpp"
+#include <utils/math/sgn.hpp>
 
 #include <algorithm>
 #include <random>

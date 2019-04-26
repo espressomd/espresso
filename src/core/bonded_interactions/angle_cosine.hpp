@@ -31,7 +31,7 @@
 #include "grid.hpp"
 #include "particle_data.hpp"
 
-#include "utils/math/sqr.hpp"
+#include <utils/math/sqr.hpp>
 
 #include <tuple>
 

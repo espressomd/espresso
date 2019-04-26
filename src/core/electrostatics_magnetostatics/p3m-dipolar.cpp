@@ -48,10 +48,10 @@
 
 #include "utils/strcat_alloc.hpp"
 using Utils::strcat_alloc;
-#include "utils/math/sinc.hpp"
+#include <utils/math/sinc.hpp>
 using Utils::sinc;
-#include "utils/constants.hpp"
-#include "utils/math/sqr.hpp"
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <cstdio>
 #include <cstdlib>

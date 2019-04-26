@@ -40,7 +40,7 @@
 
 #include "lbboundaries/LBBoundary.hpp"
 
-#include "utils/Span.hpp"
+#include <utils/Span.hpp>
 
 #include <array>
 

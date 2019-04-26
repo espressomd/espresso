@@ -52,7 +52,7 @@
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 
-#include "utils/constants.hpp"
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>

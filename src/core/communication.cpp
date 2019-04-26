@@ -70,7 +70,7 @@
 #include "serialization/Particle.hpp"
 #include "serialization/ParticleParametersSwimming.hpp"
 
-#include "utils/Counter.hpp"
+#include <utils/Counter.hpp>
 #include "utils/u32_to_u64.hpp"
 
 #include <boost/mpi.hpp>

@@ -19,8 +19,8 @@
 #ifndef CORE_COMFIXED_HPP
 #define CORE_COMFIXED_HPP
 
-#include "utils/Vector.hpp"
-#include "utils/keys.hpp"
+#include <utils/Vector.hpp>
+#include <utils/keys.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>

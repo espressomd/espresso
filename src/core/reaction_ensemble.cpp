@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 
-#include "utils/index.hpp"
+#include <utils/index.hpp>
 #include <utils/constants.hpp>
 
 #include <cstdio>

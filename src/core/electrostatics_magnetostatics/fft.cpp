@@ -31,7 +31,7 @@
 
 #include "utils/math/permute_ifield.hpp"
 using Utils::permute_ifield;
-#include "utils/index.hpp"
+#include <utils/index.hpp>
 using Utils::get_linear_index;
 #include <utils/memory.hpp>
 

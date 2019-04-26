@@ -33,8 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "utils/math/int_pow.hpp"
 using Utils::int_pow;
-#include "utils/math/sinc.hpp"
-#include "utils/math/sqr.hpp"
+#include <utils/math/sinc.hpp>
+#include <utils/math/sqr.hpp>
 using Utils::sqr;
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)

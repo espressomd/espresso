@@ -44,13 +44,13 @@
 #include "random.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
-#include "utils/Counter.hpp"
-#include "utils/index.hpp"
+#include <utils/Counter.hpp>
+#include <utils/index.hpp>
 #include "utils/math/matrix_vector_product.hpp"
 #include "utils/u32_to_u64.hpp"
-#include "utils/uniform.hpp"
+#include <utils/uniform.hpp>
 using Utils::get_linear_index;
-#include "utils/constants.hpp"
+#include <utils/constants.hpp>
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>

@@ -8,7 +8,7 @@ extern double dipolar_cutoff;
 #ifdef DIPOLES
 #include "Observable_stat.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <boost/mpi/communicator.hpp>
 

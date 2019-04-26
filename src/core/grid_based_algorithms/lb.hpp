@@ -42,8 +42,8 @@
 
 #include "halo.hpp"
 
-#include "utils/Counter.hpp"
-#include "utils/Span.hpp"
+#include <utils/Counter.hpp>
+#include <utils/Span.hpp>
 
 /** Some general remarks:
  *  This file implements the LB D3Q19 method to Espresso. The LB_Model

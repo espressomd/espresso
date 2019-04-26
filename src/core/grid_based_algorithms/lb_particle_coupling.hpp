@@ -3,7 +3,7 @@
 
 #include <boost/serialization/optional.hpp>
 
-#include "utils/Counter.hpp"
+#include <utils/Counter.hpp>
 
 /** Calculate particle lattice interactions.
  *  So far, only viscous coupling with Stokesian friction is implemented.

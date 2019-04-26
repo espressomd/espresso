@@ -32,10 +32,10 @@
 #include "random.hpp"
 #include "rotation.hpp"
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
-#include "utils/Counter.hpp"
-#include "utils/uniform.hpp"
+#include <utils/Counter.hpp>
+#include <utils/uniform.hpp>
 #include <Random123/philox.h>
 
 #include <cmath>
