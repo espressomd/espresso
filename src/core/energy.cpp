@@ -94,8 +94,8 @@ void energy_calc(double *result) {
 
   // Execute short range loop if the cutoff is >0
   if (max_cut > 0) {
-    short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
-                     [](Particle &p1, Particle &p2, Distance &d) {
+    short_range_loop([](Particle const&p) { add_single_particle_energy(&p); },
+                     [](Particle const&p1, Particle const&p2, Distance const&d) {
                        add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
                                                   sqrt(d.dist2), d.dist2);
                      });

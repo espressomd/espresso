@@ -179,8 +179,9 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
  *  @param dist2     distance squared between p1 and p2.
  */
 inline void add_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
-                                       double *d, double dist, double dist2) {
-  IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
+                                       const double *d, double dist,
+                                       double dist2) {
+  IA_parameters const *ia_params = get_ia_param(p1->p.type, p2->p.type);
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
 #endif

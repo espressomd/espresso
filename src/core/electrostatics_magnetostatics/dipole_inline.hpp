@@ -31,8 +31,8 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
 }
 
 // energy_inline
-inline void add_pair_energy(const Particle *p1, const Particle *p2, double *d,
-                            double dist, double dist2,
+inline void add_pair_energy(const Particle *p1, const Particle *p2,
+                            const double *d, double dist, double dist2,
                             Observable_stat &energy) {
   double ret = 0;
   if (dipole.method != DIPOLAR_NONE) {
