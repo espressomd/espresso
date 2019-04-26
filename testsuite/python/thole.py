@@ -20,8 +20,10 @@ import espressomd
 import numpy as np
 import espressomd.interactions
 
+COULOMB_PREFACTOR = 1.3
 
-@ut.skipIf(not espressomd.has_features(["THOLE", "EXTERNAL_FORCES"]),
+
+@ut.skipIf(not espressomd.has_features(["THOLE", "EXTERNAL_FORCES", "P3M"]),
            "Features not available, skipping test!")
 class TestThole(ut.TestCase):
 
@@ -45,7 +47,13 @@ class TestThole(ut.TestCase):
         self.system.part.add(pos=[0, 0, 0], type=0, fix=[1, 1, 1], q=q1)
         self.system.part.add(pos=[2, 0, 0], type=0, fix=[1, 1, 1], q=q2)
 
-        p3m = P3M(prefactor=1.0, accuracy=1e-6, mesh=[52, 52, 52], cao=4)
+        p3m = P3M(
+            prefactor=COULOMB_PREFACTOR,
+            accuracy=1e-6,
+            mesh=[52,
+                  52,
+                  52],
+            cao=4)
         self.system.actors.add(p3m)
 
         self.system.non_bonded_inter[0, 0].thole.set_params(
@@ -58,7 +66,7 @@ class TestThole(ut.TestCase):
             x = 8.0 * i / ns
             self.system.part[1].pos = [x, 0, 0]
             self.system.integrator.run(0)
-            res.append(self.system.part[1].f[0] - (-1 / x**2 * 0.5 *
+            res.append(self.system.part[1].f[0] - (-COULOMB_PREFACTOR / x**2 * 0.5 *
                                                    (2.0 - (np.exp(-x) * (x * (x + 2.0) + 2.0)))))
 
         for f in res:

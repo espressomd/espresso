@@ -39,8 +39,8 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
 #include "metadynamics.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
@@ -364,7 +364,12 @@ void on_cell_structure_change() {
 #endif /* ifdef DIPOLES */
 
 #ifdef LB
-  lb_lbfluid_init();
+  if (lattice_switch == ActiveLB::CPU) {
+    runtimeErrorMsg()
+        << "The CPU LB does not currently support handling changes of the MD "
+           "cell geometry. Setup the cell system, skin and interactions before "
+           "activating the CPU LB.";
+  }
 #endif
 }
 

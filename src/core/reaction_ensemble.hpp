@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils.hpp"
 #include "utils/Accumulator.hpp"
 #include <map>
+#include <random>
 #include <string>
 
 namespace ReactionEnsemble {
@@ -109,7 +110,12 @@ private:
 class ReactionAlgorithm {
 
 public:
-  ReactionAlgorithm() = default;
+  ReactionAlgorithm(int seed)
+      : m_seeder({seed, seed, seed}), m_generator(m_seeder),
+        m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
+    m_generator.discard(1e6);
+  }
+
   virtual ~ReactionAlgorithm() = default;
 
   std::vector<SingleReaction> reactions;
@@ -176,12 +182,22 @@ protected:
   void restore_properties(std::vector<StoredParticleProperty> &property_list,
                           int number_of_saved_properties);
 
+  int i_random(int maxint) {
+    std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
+    return uniform_int_dist(m_generator);
+  }
+
 private:
+  std::seed_seq m_seeder;
+  std::mt19937 m_generator;
+  std::normal_distribution<double> m_normal_distribution;
+  std::uniform_real_distribution<double> m_uniform_real_distribution;
+
   std::map<int, int> save_old_particle_numbers(int reaction_id);
 
   int calculate_nu_bar(
       std::vector<int> &reactant_coefficients,
-      std::vector<int> &product_coefficients); // should only be used at when
+      std::vector<int> &product_coefficients); // should only be used when
                                                // defining a new reaction
   int m_invalid_charge =
       -10000; // this is the default charge which is assigned to a type which
@@ -212,6 +228,9 @@ private:
 /// declaration of specific reaction algorithms
 
 class ReactionEnsemble : public ReactionAlgorithm {
+public:
+  ReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
+
 private:
   double calculate_acceptance_probability(
       SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
@@ -222,6 +241,7 @@ private:
 
 class WangLandauReactionEnsemble : public ReactionAlgorithm {
 public:
+  WangLandauReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
   bool do_energy_reweighting = false;
   bool do_not_sample_reaction_partition_function = false;
   double final_wang_landau_parameter = 0.00001;
@@ -324,6 +344,7 @@ private:
 
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
+  ConstantpHEnsemble(int seed) : ReactionAlgorithm(seed) {}
   double m_constant_pH = -10;
   int do_reaction(int reaction_steps) override;
 
@@ -338,6 +359,7 @@ private:
 
 class WidomInsertion : public ReactionAlgorithm {
 public:
+  WidomInsertion(int seed) : ReactionAlgorithm(seed) {}
   std::pair<double, double> measure_excess_chemical_potential(int reaction_id);
 };
 

@@ -1199,7 +1199,7 @@ void ELC_init() {
 
   ELC_setup_constants();
 
-  if (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on) {
+  if (elc_params.dielectric_contrast_on) {
     // recalculate the space layer size
     // set the space_layer to be 1/3 of the gap size, so that box = layer
     elc_params.space_layer = (1. / 3.) * elc_params.gap_size;
@@ -1227,13 +1227,12 @@ void ELC_init() {
         std::min(elc_params.space_box, elc_params.space_layer);
   }
 
-  if (elc_params.far_calculated && (coulomb.method == COULOMB_ELC_P3M &&
-                                    elc_params.dielectric_contrast_on)) {
+  if (elc_params.far_calculated && (elc_params.dielectric_contrast_on)) {
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       runtimeErrorMsg() << "ELC auto-retuning failed, gap size too small";
     }
   }
-  if (coulomb.method == COULOMB_ELC_P3M && elc_params.dielectric_contrast_on) {
+  if (elc_params.dielectric_contrast_on) {
     p3m.params.additional_mesh[0] = 0;
     p3m.params.additional_mesh[1] = 0;
     p3m.params.additional_mesh[2] = elc_params.space_layer;
@@ -1331,7 +1330,7 @@ void ELC_P3M_self_forces() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      p3m_add_pair_force(q, d, dist2, dist, p.f.f.data());
+      p3m_add_pair_force(q, d, dist, p.f.f.data());
     }
     if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
       q = elc_params.delta_mid_top * p.p.q * p.p.q;
@@ -1341,7 +1340,7 @@ void ELC_P3M_self_forces() {
       get_mi_vector(d, p.r.p, pos);
       dist2 = sqrlen(d);
       dist = sqrt(dist2);
-      p3m_add_pair_force(q, d, dist2, dist, p.f.f.data());
+      p3m_add_pair_force(q, d, dist, p.f.f.data());
     }
   }
 }
@@ -1429,7 +1428,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     get_mi_vector(d, p2->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    p3m_add_pair_force(q, d, dist2, dist, force2);
+    p3m_add_pair_force(q, d, dist, force2);
   }
 
   if (p1->r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -1440,7 +1439,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     get_mi_vector(d, p2->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    p3m_add_pair_force(q, d, dist2, dist, force2);
+    p3m_add_pair_force(q, d, dist, force2);
   }
 
   if (p2->r.p[2] < elc_params.space_layer) {
@@ -1451,7 +1450,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    p3m_add_pair_force(q, d, dist2, dist, force1);
+    p3m_add_pair_force(q, d, dist, force1);
   }
 
   if (p2->r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -1462,14 +1461,14 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     get_mi_vector(d, p1->r.p, pos);
     dist2 = sqrlen(d);
     dist = sqrt(dist2);
-    p3m_add_pair_force(q, d, dist2, dist, force1);
+    p3m_add_pair_force(q, d, dist, force1);
   }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
-                                                     Particle *p2) {
+double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
+                                                     const Particle *p2) {
   double pos[3], q;
   double dist, dist2, d[3];
   double tp2;

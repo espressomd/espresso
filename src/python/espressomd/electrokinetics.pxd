@@ -105,7 +105,7 @@ IF ELECTROKINETICS and CUDA:
         int ek_node_set_density(int species, int x, int y, int z, double density)
         ekfloat ek_calculate_net_charge()
         int ek_neutralize_system(int species)
-        int ek_save_checkpoint(char * filename)
+        int ek_save_checkpoint(char * filename, char * lb_filename)
         int ek_load_checkpoint(char * filename)
 
         int ek_set_electrostatics_coupling(bool electrostatics_coupling)

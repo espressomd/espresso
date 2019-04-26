@@ -82,9 +82,17 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 
 #ifdef ELECTROSTATICS
   /* real space Coulomb */
-  if (coulomb.method != COULOMB_NONE) {
-    Coulomb::add_pair_pressure(p1, p2, p1->p.q * p2->p.q, d, dist, dist2,
-                               virials, p_tensor);
+  auto const p_coulomb =
+      Coulomb::pair_pressure(p1, p2, Utils::Vector3d{d, d + 3}, dist);
+
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      p_tensor.coulomb[i * 3 + j] += p_coulomb[i][j];
+    }
+  }
+
+  for (int i = 0; i < 3; i++) {
+    virials.coulomb[0] += p_coulomb[i][i];
   }
 #endif /*ifdef ELECTROSTATICS */
 

@@ -21,8 +21,6 @@
 from __future__ import print_function, absolute_import
 
 from libcpp.vector cimport vector
-
-from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
 from .utils cimport Vector3i
