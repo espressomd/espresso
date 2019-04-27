@@ -109,9 +109,9 @@ public:
 
   template <class U> explicit operator Vector<U, N>() const {
     Vector<U, N> ret;
-    for (int i = 0; i < N; i++) {
-      ret[i] = static_cast<U>(operator[](i));
-    }
+
+    std::transform(begin(), end(), ret.begin(),
+                   [](auto e) { return static_cast<U>(e); });
 
     return ret;
   }
