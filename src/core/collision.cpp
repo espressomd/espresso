@@ -686,8 +686,11 @@ void handle_collisions() {
 #endif
 
     // If any node had a collision, all nodes need to do on_particle_change
+    // and resort
+
     if (!gathered_queue.empty()) {
       on_particle_change();
+      cells_update_ghosts();
     }
   }    // are we in one of the vs_based methods
 #endif // defined VIRTUAL_SITES_RELATIVE
