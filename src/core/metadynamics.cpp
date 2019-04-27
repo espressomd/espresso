@@ -147,7 +147,7 @@ void meta_perform() {
   for (int i = 0; i < meta_xi_num_bins; ++i) {
     if (meta_switch == META_DIST) {
       // reaction coordinate value
-      meta_val_xi = sqrt(sqrlen(meta_cur_xi));
+      meta_val_xi = meta_cur_xi.norm();
       // Update free energy profile and biased force
       if (int(sim_time / time_step) % meta_num_relaxation_steps == 0) {
         meta_acc_fprofile[i] -=

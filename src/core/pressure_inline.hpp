@@ -30,7 +30,6 @@
 #include "integrate.hpp"
 #include "npt.hpp"
 #include "pressure.hpp"
-#include "utils.hpp"
 
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.

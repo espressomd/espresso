@@ -245,3 +245,15 @@ BOOST_AUTO_TEST_CASE(scalar_product) {
   BOOST_CHECK_EQUAL(v1 * v2, boost::inner_product(v1, v2, 0.));
   BOOST_CHECK_EQUAL(v1 * v3, boost::inner_product(v1, v3, 0.));
 }
+
+BOOST_AUTO_TEST_CASE(conversion) {
+  using Utils::Vector3d;
+  using Utils::Vector3f;
+
+  auto orig = Vector3d{1., 2., 3.};
+  auto result = static_cast<Vector3f>(orig);
+
+  BOOST_CHECK_EQUAL(result[0], static_cast<float>(orig[0]));
+  BOOST_CHECK_EQUAL(result[1], static_cast<float>(orig[1]));
+  BOOST_CHECK_EQUAL(result[2], static_cast<float>(orig[2]));
+}

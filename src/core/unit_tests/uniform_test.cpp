@@ -19,7 +19,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/uniform.hpp"
+#include <utils/uniform.hpp>
 
 BOOST_AUTO_TEST_CASE(limits) {
   BOOST_CHECK_SMALL(Utils::uniform(0ul),

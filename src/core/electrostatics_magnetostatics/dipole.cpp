@@ -19,6 +19,8 @@ double dipolar_cutoff;
 #include "integrate.hpp"
 #include "npt.hpp"
 
+#include <utils/constants.hpp>
+
 #include <boost/mpi/collectives.hpp>
 
 Dipole_parameters dipole = {

@@ -29,7 +29,6 @@
 #define _ELC_H
 
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef P3M
 

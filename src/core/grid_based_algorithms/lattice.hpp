@@ -29,7 +29,7 @@
 #ifndef CORE_LB_LATTICE_HPP
 #define CORE_LB_LATTICE_HPP
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 class Lattice {
 public:

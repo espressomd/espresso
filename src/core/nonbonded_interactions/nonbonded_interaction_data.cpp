@@ -34,7 +34,6 @@
 #include "grid.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
-#include "nonbonded_interactions/cos2.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
 #include "nonbonded_interactions/gb.hpp"
 #include "nonbonded_interactions/hat.hpp"
@@ -249,14 +248,6 @@ static void recalc_maximal_cutoff_nonbonded() {
 #ifdef LJCOS2
       {
         double max_cut_tmp = data->LJCOS2_cut + data->LJCOS2_offset;
-        if (max_cut_current < max_cut_tmp)
-          max_cut_current = max_cut_tmp;
-      }
-#endif
-
-#ifdef COS2
-      {
-        double max_cut_tmp = data->COS2_cut + data->COS2_offset;
         if (max_cut_current < max_cut_tmp)
           max_cut_current = max_cut_tmp;
       }

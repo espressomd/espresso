@@ -28,7 +28,6 @@
 
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef GAUSSIAN
 

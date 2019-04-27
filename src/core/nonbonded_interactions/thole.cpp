@@ -24,6 +24,8 @@
 #ifdef THOLE
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+
 int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
                      double q1q2) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);

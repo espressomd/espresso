@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CORE_EXTERNAL_FIELD_FIELDS_CONSTANT_HPP
 
 #include "jacobian_type.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace FieldCoupling {
 namespace Fields {

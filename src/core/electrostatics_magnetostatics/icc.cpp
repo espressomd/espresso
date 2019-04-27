@@ -45,7 +45,7 @@
 #include "particle_data.hpp"
 
 #include "short_range_loop.hpp"
-#include "utils/NoOp.hpp"
+#include <utils/NoOp.hpp>
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"

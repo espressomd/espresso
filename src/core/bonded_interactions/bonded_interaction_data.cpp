@@ -2,6 +2,8 @@
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+
 std::vector<Bonded_ia_parameters> bonded_ia_params;
 
 void recalc_maximal_cutoff_bonded() {

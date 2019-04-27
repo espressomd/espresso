@@ -34,7 +34,6 @@ extern int n_thermalized_bonds;
 #include "debug.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
-#include "utils.hpp"
 
 /** Set the parameters of a thermalized bond
  *

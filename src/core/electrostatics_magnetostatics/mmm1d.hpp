@@ -31,7 +31,6 @@
 #define MMM1D_H
 
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef ELECTROSTATICS
 

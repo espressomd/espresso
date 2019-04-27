@@ -26,8 +26,9 @@
 #include "soft_sphere.hpp"
 
 #ifdef SOFT_SPHERE
-
 #include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int soft_sphere_set_params(int part_type_a, int part_type_b, double a, double n,
                            double cut, double offset) {

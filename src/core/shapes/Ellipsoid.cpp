@@ -21,7 +21,7 @@
 
 #include "Ellipsoid.hpp"
 
-#include "utils/math/sqr.hpp"
+#include <utils/math/sqr.hpp>
 
 #include <cmath>
 

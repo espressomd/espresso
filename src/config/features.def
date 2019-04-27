@@ -83,7 +83,6 @@ LENNARD_JONES_GENERIC           implies LENNARD_JONES
 LJCOS
 LJCOS2
 LJGEN_SOFTCORE                  implies LENNARD_JONES_GENERIC
-COS2
 GAY_BERNE                       depends EXPERIMENTAL_FEATURES
 SMOOTH_STEP
 HERTZIAN
@@ -122,11 +121,8 @@ GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
 
 
 /* Strange features. Use only if you know what you are doing! */
-/* activate the old dihedral form */
-OLD_DIHEDRAL                    notest
 /* turn off certain nonbonded interactions within molecules */
 NO_INTRA_NB                     notest
-
 
 /* Debugging */
 ADDITIONAL_CHECKS

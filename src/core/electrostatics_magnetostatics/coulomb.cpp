@@ -20,6 +20,8 @@ double coulomb_cutoff;
 #include "layered.hpp"
 #include "npt.hpp"
 
+#include <utils/constants.hpp>
+
 Coulomb_parameters coulomb;
 
 namespace Coulomb {

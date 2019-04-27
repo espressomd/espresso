@@ -26,11 +26,13 @@
  *  @ref bondedIA_angle_cosine.
  */
 
+#include "angle_common.hpp"
 #include "bonded_interaction_data.hpp"
+#include "grid.hpp"
 #include "particle_data.hpp"
 
-#include "angle_common.hpp"
-#include "grid.hpp"
+#include <utils/math/sqr.hpp>
+
 #include <tuple>
 
 /** Set parameters for the angle potential. */

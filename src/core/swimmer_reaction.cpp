@@ -31,9 +31,8 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
-#include "utils.hpp"
 
-#include "utils/math/sgn.hpp"
+#include <utils/math/sgn.hpp>
 
 #include <algorithm>
 #include <random>
@@ -88,7 +87,7 @@ void local_setup_reaction() {
 }
 
 void integrate_reaction_noswap() {
-  double dist2, vec21[3], ct_ratexp, eq_ratexp, rand, bernoulli;
+  double ct_ratexp, eq_ratexp, rand, bernoulli;
 
   if (reaction.ct_rate > 0.0) {
 
@@ -126,12 +125,11 @@ void integrate_reaction_noswap() {
                p2->p.type == reaction.catalyzer_type) ||
               (p2->p.type == reaction.reactant_type &&
                p1->p.type == reaction.catalyzer_type)) {
-            get_mi_vector(vec21, p1->r.p, p2->r.p);
-            dist2 = sqrlen(vec21);
 
             /* Count the number of times a reactant particle is
                checked against a catalyst */
-            if (dist2 < reaction.range * reaction.range) {
+            if (get_mi_vector(p1->r.p, p2->r.p).norm2() <
+                reaction.range * reaction.range) {
 
               if (p1->p.type == reaction.reactant_type) {
                 p1->p.catalyzer_count++;
@@ -230,7 +228,7 @@ void integrate_reaction_swap() {
   int np;
   Particle *p_local, *p_neigh;
   Cell *cell;
-  double dist2, vec21[3], ct_ratexp, rand;
+  double ct_ratexp, rand;
   int n_reactions;
 
 #ifdef ELECTROSTATICS
@@ -294,14 +292,11 @@ void integrate_reaction_swap() {
 
           // Particle list loop
           for (int i = 0; i < np; i++) {
-            // Get the distance between a catalyst and another particle
-            get_mi_vector(vec21, p_local[catalyzer].r.p, p_neigh[i].r.p);
-            dist2 = sqrlen(vec21);
-
             // Check if the distance is within the reaction range and
             // check if no reaction has taken place on the particle in
             // the current step
-            if (dist2 < reaction.range * reaction.range &&
+            if (get_mi_vector(p_local[catalyzer].r.p, p_neigh[i].r.p).norm2() <
+                    reaction.range * reaction.range &&
                 p_neigh[i].p.catalyzer_count == 0) {
               // If the particle is of correct type AND resides in the
               // correct half space, append it to the lists of viable

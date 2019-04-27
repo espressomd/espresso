@@ -19,10 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /// \file
 /// \brief Main of the Bayreuth Immersed-Boundary implementation
 
-#include "config.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-
 #include "cells.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
@@ -31,7 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "integrate.hpp"
 #include "lb_inertialess_tracers_cuda_interface.hpp"
 #include "particle_data.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
+
+#include <utils/math/sqr.hpp>
 
 // ****** Functions for internal use ********
 

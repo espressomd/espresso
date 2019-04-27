@@ -29,7 +29,6 @@
 #include "communication.hpp"
 #include "debug.hpp"
 #include "global.hpp"
-#include "utils.hpp"
 
 #include <boost/algorithm/clamp.hpp>
 #include <mpi.h>

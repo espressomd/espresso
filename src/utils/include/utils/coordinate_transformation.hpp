@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define UTILS_COORDINATE_TRANSFORMATION_HPP
 
 #include "utils/Vector.hpp"
+#include "utils/constants.hpp"
 #include "vec_rotate.hpp"
 
 namespace Utils {

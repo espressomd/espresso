@@ -12,9 +12,6 @@ from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
 
 include "myconfig.pxi"
 
-cdef extern from "utils.hpp":
-    void get_mi_vector(double * res, double * a, double * b)
-
 if not "ETS_TOOLKIT" in os.environ:
     os.environ["ETS_TOOLKIT"] = "wx"
 from mayavi import mlab

@@ -37,6 +37,7 @@ template <typename T, std::size_t N> class Vector : public Array<T, N> {
   using Base = Array<T, N>;
 
 public:
+  using Base::Base;
   using Array<T, N>::at;
   using Array<T, N>::operator[];
   using Array<T, N>::front;
@@ -106,6 +107,15 @@ public:
 
   operator std::vector<T>() const { return as_vector(); }
 
+  template <class U> explicit operator Vector<U, N>() const {
+    Vector<U, N> ret;
+
+    std::transform(begin(), end(), ret.begin(),
+                   [](auto e) { return static_cast<U>(e); });
+
+    return ret;
+  }
+
   inline T norm2() const { return (*this) * (*this); }
   inline T norm() const { return std::sqrt(norm2()); }
 
@@ -134,7 +144,11 @@ using Vector4d = VectorXd<4>;
 using Vector6d = VectorXd<6>;
 using Vector19d = VectorXd<19>;
 
-using Vector3i = Vector<int, 3>;
+template <size_t N> using VectorXf = Vector<float, N>;
+using Vector3f = VectorXf<3>;
+
+template <size_t N> using VectorXi = Vector<int, N>;
+using Vector3i = VectorXi<3>;
 
 namespace detail {
 template <size_t N, typename T, typename U, typename Op>

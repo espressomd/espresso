@@ -61,7 +61,7 @@
 #include "grid_based_algorithms/lb_constants.hpp"
 #include "particle_data.hpp"
 
-#include "utils/serialization/array.hpp"
+#include <utils/serialization/array.hpp>
 
 /**************************************************
  * exported variables
