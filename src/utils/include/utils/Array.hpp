@@ -4,7 +4,10 @@
 #include "device_qualifier.hpp"
 
 #include <boost/serialization/access.hpp>
+
 #include <cstddef>
+#include <stdexcept>
+#include <cassert>
 
 namespace Utils {
 

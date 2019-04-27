@@ -24,7 +24,9 @@
 #ifdef CUDA
 
 #include "ParticleRange.hpp"
-#include "SystemInterface.hpp"
+
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 
 #ifdef ENGINE
 // velocities which need to be copied from the GPU to the CPU to calculate a
@@ -39,43 +41,49 @@ typedef struct {
 
 // Parameters for swimmers
 #ifdef ENGINE
-typedef struct {
+struct CUDA_ParticleParametersSwimming {
+  using Vector3f = Utils::Vector3f;
+
   // v_cs has to stay in the front for memmove reasons
   float v_cs[6];
   float v_swim;
   float f_swim;
-  float director[3];
+  Vector3f director;
   int push_pull;
   float dipole_length;
   bool swimming;
-} CUDA_ParticleParametersSwimming;
+};
 #endif
 
 /** data structure which must be copied to the GPU at each step run on the GPU
  */
 struct CUDA_particle_data {
+  using Vector3f = Utils::Vector3f;
 //   // This has to stay in front of the struct for memmove reasons
 #ifdef ENGINE
   CUDA_ParticleParametersSwimming swim;
 #endif
 
   /** particle position given from md part*/
-  float p[3];
+  Vector3f p;
 
 #if defined(LB_GPU)
   /** particle id */
   int identity;
+#ifdef VIRTUAL_SITES
+  bool is_virtual;
+#endif
 
   /** particle momentum struct velocity p.m->v*/
-  float v[3];
+  Vector3f v;
 #endif
 
 #ifdef ROTATION
-  float director[3];
+  Vector3f director;
 #endif
 
 #if defined(LB_ELECTROHYDRODYNAMICS) && defined(LB_GPU)
-  float mu_E[3];
+  Vector3f mu_E;
 #endif
 
 #ifdef ELECTROSTATICS
@@ -86,12 +94,8 @@ struct CUDA_particle_data {
   float mass;
 #endif
 
-#ifdef VIRTUAL_SITES
-  bool is_virtual;
-#endif
-
 #ifdef DIPOLES
-  float dip[3];
+  Vector3f dip;
 #endif
 };
 
