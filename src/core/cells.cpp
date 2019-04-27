@@ -211,7 +211,7 @@ void topology_init(int cs, CellPList *local) {
 }
 
 bool topology_check_resort(int cs, bool local_resort) {
-  switch(cs) {
+  switch (cs) {
   case CELL_STRUCTURE_DOMDEC:
     return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
   case CELL_STRUCTURE_NSQUARE:
