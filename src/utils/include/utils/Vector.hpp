@@ -107,10 +107,9 @@ public:
 
   operator std::vector<T>() const { return as_vector(); }
 
-  template<class U>
-  explicit operator Vector<U, N>() const {
+  template <class U> explicit operator Vector<U, N>() const {
     Vector<U, N> ret;
-    for(int i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
       ret[i] = static_cast<U>(operator[](i));
     }
 

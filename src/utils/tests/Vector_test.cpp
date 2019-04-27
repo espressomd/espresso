@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(conversion) {
   using Utils::Vector3d;
   using Utils::Vector3f;
 
-  auto orig = Vector3d{1.,2.,3.};
+  auto orig = Vector3d{1., 2., 3.};
   auto result = static_cast<Vector3f>(orig);
 
   BOOST_CHECK_EQUAL(result[0], static_cast<float>(orig[0]));
