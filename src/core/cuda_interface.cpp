@@ -31,11 +31,6 @@
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
 
-/// MPI tag for cuda particle gathering
-#define REQ_CUDAGETPARTS 0xcc01
-/// MPI tag for cuda force gathering
-#define REQ_CUDAGETFORCES 0xcc02
-
 #ifdef ENGINE
 static void cuda_mpi_send_v_cs_slave(ParticleRange particles);
 #endif

@@ -58,12 +58,14 @@ struct CUDA_particle_data {
 #ifdef ENGINE
   CUDA_ParticleParametersSwimming swim;
 #endif
-  int identity;
 
   /** particle position given from md part*/
   float p[3];
 
 #if defined(LB_GPU)
+  /** particle id */
+  int identity;
+
   /** particle momentum struct velocity p.m->v*/
   float v[3];
 #endif
@@ -98,22 +100,11 @@ typedef struct {
   float bonded, non_bonded, coulomb, dipolar;
 } CUDA_energy;
 
-/** Note the particle's seed gets its own struct since it doesn't get copied
- * back and forth from the GPU */
-typedef struct {
-  unsigned int seed;
-} CUDA_particle_seed;
-
 extern CUDA_particle_data *particle_data_host;
 
 /** This structure contains global variables associated with all of the
  * particles and not with one individual particle */
 typedef struct {
-
-  /**  This is for seeding the particles' individual seeds and is initialized
-   * using irandom, beware if using for other purposes */
-  unsigned int seed;
-
   unsigned int number_of_particles;
 
   /** a boolean variable to indicate if particle info should be communicated
@@ -125,7 +116,6 @@ void copy_forces_from_GPU(ParticleRange particles);
 void copy_energy_from_GPU();
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();
-void copy_composition_from_GPU();
 
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host();
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer();
@@ -137,7 +127,6 @@ float *gpu_get_particle_torque_pointer();
 
 CUDA_energy *gpu_get_energy_pointer();
 float *gpu_get_particle_torque_pointer();
-CUDA_particle_seed *gpu_get_particle_seed_pointer();
 void gpu_change_number_of_part_to_comm();
 void gpu_init_particle_comm();
 
