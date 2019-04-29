@@ -279,7 +279,7 @@ feature ``PARTICLE_ANISOTROPY``.
 The keyword ``seed`` controls the state of the random number generator (Philox
 Counter-based RNG) and is required on first activation of the thermostat. It
 can be omitted in subsequent calls of ``set_langevin()``. It is the user's
-responsibility to decide wether the thermostat should be deterministic (by
+responsibility to decide whether the thermostat should be deterministic (by
 using a fixed seed) or not (by using a randomized seed).
 
 If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
