@@ -87,7 +87,7 @@ if [ -z "$cxx_flags" ]; then
     fi
 fi
 
-if [[ ! -z ${with_coverage+x} ]]; then
+if [ ! -z ${with_coverage+x} ]; then
   bash <(curl -s https://codecov.io/env) &> /dev/null;
 fi
 
@@ -102,9 +102,8 @@ fi
 if [ $cuda_job = "true" ]; then
   nvidia-smi
 fi
-if [[ "$hide_gpu" == "true" ]]
-then
-  echo Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES
+if [ $hide_gpu = "true" ]; then
+  echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
   export CUDA_VISIBLE_DEVICES=
 fi
 
