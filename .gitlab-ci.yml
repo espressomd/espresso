@@ -393,7 +393,7 @@ check_sphinx:
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
-    - make sphinx
+    - make -t && make sphinx
   artifacts:
     paths:
     - build/doc/sphinx
@@ -412,7 +412,7 @@ check_doxygen:
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
-    - make doxygen
+    - make -t && make doxygen
   artifacts:
     paths:
     - build/doc/doxygen
