@@ -42,6 +42,8 @@ function end {
 
 # execute and output a command
 # handle environment variables
+[ -z "$cuda_job" ] && cuda_job="false"
+[ $cuda_job = "true" ] && [ -n "${CI_PROJECT_DIR}" ] && srcdir="${CI_PROJECT_DIR}"
 [ -z "$insource" ] && insource="false"
 [ -z "$srcdir" ] && srcdir=`pwd`
 [ -z "$cmake_params" ] && cmake_params=""
@@ -85,7 +87,7 @@ if [ -z "$cxx_flags" ]; then
     fi
 fi
 
-if [[ ! -z ${with_coverage+x} ]]; then
+if [ ! -z ${with_coverage+x} ]; then
   bash <(curl -s https://codecov.io/env) &> /dev/null;
 fi
 
@@ -97,9 +99,11 @@ if $with_ccache; then
   cmake_params="$cmake_params -DWITH_CCACHE=ON"
 fi
 
-if [[ "$hide_gpu" == "true" ]]
-then
-  echo Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES
+if [ $cuda_job = "true" ]; then
+  nvidia-smi
+fi
+if [ $hide_gpu = "true" ]; then
+  echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
   export CUDA_VISIBLE_DEVICES=
 fi
 
