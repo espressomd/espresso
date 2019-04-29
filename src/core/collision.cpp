@@ -17,11 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <vector>
-
-#include "boost/mpi/collectives.hpp"
-#include "cells.hpp"
 #include "collision.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
@@ -29,10 +26,16 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
-#include "utils/mpi/all_compare.hpp"
-#include "utils/mpi/gather_buffer.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
+
+#include <utils/mpi/all_compare.hpp>
+#include <utils/mpi/gather_buffer.hpp>
+
+#include <boost/algorithm/clamp.hpp>
+#include <boost/mpi/collectives.hpp>
 #include <boost/serialization/serialization.hpp>
+
+#include <vector>
 
 #ifdef COLLISION_DETECTION_DEBUG
 #define TRACE(a) a
@@ -249,11 +252,11 @@ void queue_collision(const int part1, const int part2) {
 /** @brief Calculate position of vs for GLUE_TO_SURFACE mode
  *    Returns id of particle to bind vs to */
 const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
-                                            const Particle &p2, Vector3d &pos) {
-  double vec21[3];
+                                            const Particle &p2,
+                                            Utils::Vector3d &pos) {
   double c;
-  get_mi_vector(vec21, p1.r.p, p2.r.p);
-  const double dist_betw_part = sqrt(sqrlen(vec21));
+  auto const vec21 = get_mi_vector(p1.r.p, p2.r.p);
+  const double dist_betw_part = vec21.norm();
 
   // Find out, which is the particle to be glued.
   if ((p1.p.type == collision_params.part_type_to_be_glued) &&
@@ -276,7 +279,8 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
 
 void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
                                             const Particle *const p2,
-                                            Vector3d &pos1, Vector3d &pos2) {
+                                            Utils::Vector3d &pos1,
+                                            Utils::Vector3d &pos2) {
   double vec21[3];
   get_mi_vector(vec21, p1->r.p, p2->r.p);
   for (int i = 0; i < 3; i++) {
@@ -288,15 +292,12 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
 // Considers three particles for three_particle_binding and performs
 // the binding if the criteria are met //
 void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
-  double vec21[3];
   // If p1 and p2 are not closer or equal to the cutoff distance, skip
   // p1:
-  get_mi_vector(vec21, p.r.p, p1.r.p);
-  if (sqrt(sqrlen(vec21)) > collision_params.distance)
+  if (get_mi_vector(p.r.p, p1.r.p).norm() > collision_params.distance)
     return;
   // p2:
-  get_mi_vector(vec21, p.r.p, p2.r.p);
-  if (sqrt(sqrlen(vec21)) > collision_params.distance)
+  if (get_mi_vector(p.r.p, p2.r.p).norm() > collision_params.distance)
     return;
 
   // Check, if there already is a three-particle bond centered on p
@@ -334,36 +335,17 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
 
   // If we are still here, we need to create angular bond
   // First, find the angle between the particle p, p1 and p2
-  double cosine = 0.0;
 
-  double vec1[3], vec2[3];
   /* vector from p to p1 */
-  get_mi_vector(vec1, p.r.p, p1.r.p);
-  // Normalize
-  double dist2 = sqrlen(vec1);
-  double d1i = 1.0 / sqrt(dist2);
-  for (double &j : vec1)
-    j *= d1i;
-
+  auto const vec1 = get_mi_vector(p.r.p, p1.r.p).normalize();
   /* vector from p to p2 */
-  get_mi_vector(vec2, p.r.p, p2.r.p);
-  // normalize
-  dist2 = sqrlen(vec2);
-  double d2i = 1.0 / sqrt(dist2);
-  for (double &j : vec2)
-    j *= d2i;
+  auto const vec2 = get_mi_vector(p.r.p, p2.r.p).normalize();
 
-  /* scalar product of vec1 and vec2 */
-  cosine = scalar(vec1, vec2);
-
-  // Handle case where cosine is nearly 1 or nearly -1
-  if (cosine > TINY_COS_VALUE)
-    cosine = TINY_COS_VALUE;
-  if (cosine < -TINY_COS_VALUE)
-    cosine = -TINY_COS_VALUE;
+  auto const cosine =
+      boost::algorithm::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
 
   // Bond angle
-  double phi = acos(cosine);
+  auto const phi = acos(cosine);
 
   // We find the bond id by dividing the range from 0 to pi in
   // three_particle_angle_resolution steps and by adding the id
@@ -377,15 +359,15 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // Create the bond
 
   // First, fill bond data structure
-  const Vector3i bondT = {bond_id, p1.p.identity, p2.p.identity};
+  const Utils::Vector3i bondT = {bond_id, p1.p.identity, p2.p.identity};
 
   local_add_particle_bond(p, bondT);
 }
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void place_vs_and_relate_to_particle(const int current_vs_pid,
-                                     const Vector3d &pos, int relate_to,
-                                     const Vector3d &initial_pos) {
+                                     const Utils::Vector3d &pos, int relate_to,
+                                     const Utils::Vector3d &initial_pos) {
 
   // The virtual site is placed at initial_pos which will be in the local
   // node's domain. It will then be moved to its final position.
@@ -599,12 +581,12 @@ void handle_collisions() {
         // Use initial position for new vs, which is in the local node's
         // domain
         // Vs is moved afterwards and resorted after all collision s are handled
-        const Vector3d initial_pos{my_left[0], my_left[1], my_left[2]};
+        const Utils::Vector3d initial_pos{my_left[0], my_left[1], my_left[2]};
 
         // If we are in the two vs mode
         // Virtual site related to first particle in the collision
         if (collision_params.mode & COLLISION_MODE_VS) {
-          Vector3d pos1, pos2;
+          Utils::Vector3d pos1, pos2;
 
           // Enable rotation on the particles to which vs will be attached
           p1->p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
@@ -613,7 +595,7 @@ void handle_collisions() {
           // Positions of the virtual sites
           bind_at_point_of_collision_calc_vs_pos(p1, p2, pos1, pos2);
 
-          auto handle_particle = [&](Particle *p, Vector3d const &pos) {
+          auto handle_particle = [&](Particle *p, Utils::Vector3d const &pos) {
             if (not p->l.ghost) {
               place_vs_and_relate_to_particle(current_vs_pid, pos,
                                               p->identity(), initial_pos);
@@ -656,7 +638,7 @@ void handle_collisions() {
             }
           }
 
-          Vector3d pos;
+          Utils::Vector3d pos;
           const Particle &attach_vs_to =
               glue_to_surface_calc_vs_pos(*p1, *p2, pos);
 

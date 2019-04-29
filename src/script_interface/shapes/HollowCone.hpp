@@ -31,21 +31,22 @@ namespace Shapes {
 class HollowCone : public Shape {
 public:
   HollowCone() : m_hollowcone(new ::Shapes::HollowCone()) {
-    add_parameters({{"center",
-                     [this](Variant const &v) {
-                       m_hollowcone->set_position(get_value<Vector3d>(v));
-                     },
-                     [this]() { return m_hollowcone->position(); }},
-                    {"axis",
-                     [this](Variant const &v) {
-                       m_hollowcone->set_orientation(get_value<Vector3d>(v));
-                     },
-                     [this]() { return m_hollowcone->orientation(); }},
-                    {"outer_radius", m_hollowcone->outer_radius()},
-                    {"inner_radius", m_hollowcone->inner_radius()},
-                    {"width", m_hollowcone->width()},
-                    {"opening_angle", m_hollowcone->opening_angle()},
-                    {"direction", m_hollowcone->direction()}});
+    add_parameters(
+        {{"center",
+          [this](Variant const &v) {
+            m_hollowcone->set_position(get_value<Utils::Vector3d>(v));
+          },
+          [this]() { return m_hollowcone->position(); }},
+         {"axis",
+          [this](Variant const &v) {
+            m_hollowcone->set_orientation(get_value<Utils::Vector3d>(v));
+          },
+          [this]() { return m_hollowcone->orientation(); }},
+         {"outer_radius", m_hollowcone->outer_radius()},
+         {"inner_radius", m_hollowcone->inner_radius()},
+         {"width", m_hollowcone->width()},
+         {"opening_angle", m_hollowcone->opening_angle()},
+         {"direction", m_hollowcone->direction()}});
   }
 
   std::shared_ptr<::Shapes::Shape> shape() const override {

@@ -33,7 +33,7 @@ public:
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION
-      const Vector3d omega =
+      const Utils::Vector3d omega =
           convert_vector_body_to_space(partCfg[i], partCfg[i].m.omega);
       res[3 * i + 0] = omega[0];
       res[3 * i + 1] = omega[1];

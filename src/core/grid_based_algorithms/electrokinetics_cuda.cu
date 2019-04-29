@@ -39,9 +39,9 @@
 #include "errorhandling.hpp"
 #include "fd-electrostatics.cuh"
 #include "grid_based_algorithms/electrokinetics.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
 
@@ -4045,10 +4045,8 @@ int ek_neutralize_system(int species) {
   return 0;
 }
 
-int ek_save_checkpoint(char *filename) {
-  std::string fname(filename);
-  std::ofstream fout((const char *)(fname + ".ek").c_str(),
-                     std::ofstream::binary);
+int ek_save_checkpoint(char *filename, char *lb_filename) {
+  std::ofstream fout(filename, std::ofstream::binary);
   ekfloat *densities =
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
@@ -4068,8 +4066,7 @@ int ek_save_checkpoint(char *filename) {
   free(densities);
   fout.close();
 
-  lb_lbfluid_save_checkpoint((char *)(fname + ".lb").c_str(), 1);
-
+  lb_lbfluid_save_checkpoint(lb_filename, 1);
   return 0;
 }
 

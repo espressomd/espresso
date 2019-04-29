@@ -81,7 +81,7 @@
 
 /** Initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part) {
-  part->f.f = Vector3d{};
+  part->f.f = Utils::Vector3d{};
 
 #ifdef ROTATION
   part->f.torque[0] = 0;
@@ -95,7 +95,7 @@ inline void init_local_particle_force(Particle *part) {
   if (thermo_switch & THERMO_LANGEVIN)
     friction_thermo_langevin(part);
   else {
-    part->f.f = Vector3d{};
+    part->f.f = Utils::Vector3d{};
   }
 
 #ifdef EXTERNAL_FORCES
@@ -157,7 +157,7 @@ inline void calc_non_bonded_pair_force_parts(
 #endif
 /* Lennard-Jones */
 #ifdef LENNARD_JONES
-  add_lj_pair_force(p1, p2, ia_params, d, dist, force);
+  add_lj_pair_force(ia_params, d, dist, force);
 #endif
 /* WCA */
 #ifdef WCA
@@ -255,7 +255,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
 
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
-  Vector3d force{};
+  Utils::Vector3d force{};
   double torque1[3] = {0., 0., 0.};
   double torque2[3] = {0., 0., 0.};
   int j;
@@ -309,7 +309,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /***********************************************/
 
 #ifdef ELECTROSTATICS
-  Coulomb::calc_pair_force(p1, p2, p1->p.q * p2->p.q, d, dist, dist2, force);
+  Coulomb::calc_pair_force(p1, p2, d, dist, force);
 #endif
 
 /*********************************************************************/
@@ -360,33 +360,33 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 }
 
 inline int calc_bond_pair_force(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *iaparams, double *dx,
+                                Bonded_ia_parameters *iaparams, double *dx_,
                                 double *force) {
   int bond_broken = 0;
 
+  auto const dx = Utils::Vector3d{dx_, dx_ + 3};
+
   switch (iaparams->type) {
   case BONDED_IA_FENE:
-    bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_fene_pair_force(iaparams, dx, force);
     break;
 #ifdef ROTATION
   case BONDED_IA_HARMONIC_DUMBBELL:
-    bond_broken =
-        calc_harmonic_dumbbell_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_harmonic_dumbbell_pair_force(p1, iaparams, dx, force);
     break;
 #endif
   case BONDED_IA_HARMONIC:
-    bond_broken = calc_harmonic_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_harmonic_pair_force(iaparams, dx, force);
     break;
   case BONDED_IA_QUARTIC:
-    bond_broken = calc_quartic_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_quartic_pair_force(iaparams, dx, force);
     break;
 #ifdef ELECTROSTATICS
   case BONDED_IA_BONDED_COULOMB:
     bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
     break;
   case BONDED_IA_BONDED_COULOMB_SR:
-    bond_broken =
-        calc_bonded_coulomb_sr_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_bonded_coulomb_sr_pair_force(iaparams, dx, force);
     break;
 #endif
 #ifdef LENNARD_JONES
@@ -397,7 +397,7 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
 #ifdef TABULATED
   case BONDED_IA_TABULATED:
     if (iaparams->num == 1)
-      bond_broken = calc_tab_bond_force(p1, p2, iaparams, dx, force);
+      bond_broken = calc_tab_bond_force(iaparams, dx, force);
     break;
 #endif
 #ifdef UMBRELLA

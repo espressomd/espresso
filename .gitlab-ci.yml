@@ -249,10 +249,6 @@ cuda-no-gpu:
   script:
     - export myconfig=maxset hide_gpu=true python_version=3 test_timeout=900
     - bash maintainer/cuda_build.sh
-  artifacts:
-    paths:
-    - build/
-    expire_in: 1 week
   tags:
     - docker
     - linux
@@ -393,7 +389,7 @@ check_sphinx:
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
-    - make sphinx
+    - make -t && make sphinx
   artifacts:
     paths:
     - build/doc/sphinx
@@ -412,7 +408,7 @@ check_doxygen:
   when: on_success
   script:
     - cd ${CI_PROJECT_DIR}/build
-    - make doxygen
+    - make -t && make doxygen
   artifacts:
     paths:
     - build/doc/doxygen

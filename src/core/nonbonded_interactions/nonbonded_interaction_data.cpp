@@ -34,7 +34,6 @@
 #include "grid.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
-#include "nonbonded_interactions/cos2.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
 #include "nonbonded_interactions/gb.hpp"
 #include "nonbonded_interactions/hat.hpp"
@@ -78,15 +77,6 @@
  *****************************************/
 int max_seen_particle_type = 0;
 std::vector<IA_parameters> ia_params;
-
-#ifdef ELECTROSTATICS
-Debye_hueckel_params dh_params{};
-
-/** Induced field (for const. potential feature) **/
-double field_induced;
-/** Applied field (for const. potential feature) **/
-double field_applied;
-#endif
 
 double min_global_cut = 0.0;
 
@@ -157,14 +147,12 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
      but the method not yet reinitialized.
    */
 #ifdef ELECTROSTATICS
-  coulomb_cutoff = Coulomb::cutoff(box_l);
+  max_cut_global = std::max(max_cut_global, Coulomb::cutoff(box_l));
 #endif
-  max_cut_global = std::max(max_cut_global, coulomb_cutoff);
 
 #ifdef DIPOLES
-  dipolar_cutoff = Dipole::cutoff(box_l);
+  max_cut_global = std::max(max_cut_global, Dipole::cutoff(box_l));
 #endif
-  max_cut_global = std::max(max_cut_global, dipolar_cutoff);
 }
 
 static void recalc_maximal_cutoff_nonbonded() {
@@ -265,14 +253,6 @@ static void recalc_maximal_cutoff_nonbonded() {
       }
 #endif
 
-#ifdef COS2
-      {
-        double max_cut_tmp = data->COS2_cut + data->COS2_offset;
-        if (max_cut_current < max_cut_tmp)
-          max_cut_current = max_cut_tmp;
-      }
-#endif
-
 #ifdef GAY_BERNE
       if (max_cut_current < data->GB_cut)
         max_cut_current = data->GB_cut;
@@ -286,10 +266,11 @@ static void recalc_maximal_cutoff_nonbonded() {
       if (max_cut_current < data->REACTION_range)
         max_cut_current = data->REACTION_range;
 #endif
+
 #ifdef THOLE
       // If THOLE is active, use p3m cutoff
       if (data->THOLE_scaling_coeff != 0)
-        max_cut_current = std::max(max_cut_current, p3m.params.r_cut);
+        max_cut_current = std::max(max_cut_current, Coulomb::cutoff(box_l));
 #endif
 
       IA_parameters *data_sym = get_ia_param(j, i);
@@ -368,7 +349,7 @@ int interactions_sanity_checks() {
   Coulomb::sanity_checks(state);
 #endif /* ifdef ELECTROSTATICS */
 
-#if defined(DIPOLES) and defined(DP3M)
+#ifdef DIPOLES
   Dipole::nonbonded_sanity_check(state);
 #endif /* ifdef  DIPOLES */
 

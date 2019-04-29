@@ -26,14 +26,16 @@ using Utils::Interpolation::bspline_3d;
 using Utils::Interpolation::bspline_3d_accumulate;
 using Utils::Interpolation::detail::ll_and_dist;
 
-#include "common/gaussian.hpp"
+#include "utils/math/gaussian.hpp"
+#include "utils/raster.hpp"
 
 #include <limits>
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_1) {
-  auto const block = ll_and_dist<1>(/* pos */ Vector3d{.4, .5, .6},
-                                    /* grid_spaceing */ Vector3d{1.0, 1.0, 1.0},
-                                    /* offset */ {});
+  auto const block =
+      ll_and_dist<1>(/* pos */ Utils::Vector3d{.4, .5, .6},
+                     /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
+                     /* offset */ {});
 
   BOOST_CHECK_CLOSE(block.distance[0], +.4, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], -.5, 1e-13);
@@ -45,9 +47,10 @@ BOOST_AUTO_TEST_CASE(ll_and_dist_test_1) {
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_2) {
-  auto const block = ll_and_dist<2>(/* pos */ Vector3d{.4, .5, .6},
-                                    /* grid_spaceing */ Vector3d{1.0, 1.0, 1.0},
-                                    /* offset */ {});
+  auto const block =
+      ll_and_dist<2>(/* pos */ Utils::Vector3d{.4, .5, .6},
+                     /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
+                     /* offset */ {});
   BOOST_CHECK_CLOSE(block.distance[0], -.1, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], 0.0, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[2], +.1, 1e-13);
@@ -58,9 +61,10 @@ BOOST_AUTO_TEST_CASE(ll_and_dist_test_2) {
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_3) {
-  auto const block = ll_and_dist<3>(/* pos */ Vector3d{.4, .5, .6},
-                                    /* grid_spaceing */ Vector3d{1.0, 1.0, 1.0},
-                                    /* offset */ {});
+  auto const block =
+      ll_and_dist<3>(/* pos */ Utils::Vector3d{.4, .5, .6},
+                     /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
+                     /* offset */ {});
   BOOST_CHECK_CLOSE(block.distance[0], +.4, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], -.5, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[2], -.4, 1e-13);
@@ -71,9 +75,10 @@ BOOST_AUTO_TEST_CASE(ll_and_dist_test_3) {
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_4) {
-  auto const block = ll_and_dist<4>(/* pos */ Vector3d{.4, .5, .6},
-                                    /* grid_spaceing */ Vector3d{1.0, 1.0, 1.0},
-                                    /* offset */ {});
+  auto const block =
+      ll_and_dist<4>(/* pos */ Utils::Vector3d{.4, .5, .6},
+                     /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
+                     /* offset */ {});
   BOOST_CHECK_CLOSE(block.distance[0], -.1, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], 0.0, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[2], +.1, 1e-13);
@@ -84,9 +89,10 @@ BOOST_AUTO_TEST_CASE(ll_and_dist_test_4) {
 }
 
 BOOST_AUTO_TEST_CASE(ll_and_dist_test_5) {
-  auto const block = ll_and_dist<5>(/* pos */ Vector3d{.4, .5, .6},
-                                    /* grid_spaceing */ Vector3d{1.0, 1.0, 1.0},
-                                    /* offset */ {});
+  auto const block =
+      ll_and_dist<5>(/* pos */ Utils::Vector3d{.4, .5, .6},
+                     /* grid_spaceing */ Utils::Vector3d{1.0, 1.0, 1.0},
+                     /* offset */ {});
   BOOST_CHECK_CLOSE(block.distance[0], +.4, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[1], -.5, 1e-13);
   BOOST_CHECK_CLOSE(block.distance[2], -.4, 1e-13);
@@ -227,16 +233,18 @@ BOOST_AUTO_TEST_CASE(interpolation_accumulate) {
 
 BOOST_AUTO_TEST_CASE(interpolation_integration_test_odd) {
   constexpr int order = 5;
-  const Vector3d grid_spacing = {.1, .2, .3};
-  const Vector3d origin = {-1., 2., -1.4};
+  const Utils::Vector3d grid_spacing = {.1, .2, .3};
+  const Utils::Vector3d origin = {-1., 2., -1.4};
   const int n_nodes = 10;
 
   auto const x0 = origin + 0.57 * 10. * grid_spacing;
   auto const sigma = 4.;
 
-  auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+  auto const data = Utils::raster<double>(
+      origin, grid_spacing, Utils::Vector3i::broadcast(n_nodes),
+      [&](auto x) { return gaussian(x, x0, sigma); });
 
-  auto const p = Vector3d{-.4, 3.14, 0.1};
+  auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
   auto const interpolated_value = bspline_3d_accumulate<order>(
       p, [&data](const std::array<int, 3> &ind) { return data(ind); },
       grid_spacing, origin, 0.0);
@@ -248,16 +256,18 @@ BOOST_AUTO_TEST_CASE(interpolation_integration_test_odd) {
 
 BOOST_AUTO_TEST_CASE(interpolation_integration_test_even) {
   constexpr int order = 6;
-  const Vector3d grid_spacing = {.1, .2, .3};
-  const Vector3d origin = {-1., 2., -1.4};
+  const Utils::Vector3d grid_spacing = {.1, .2, .3};
+  const Utils::Vector3d origin = {-1., 2., -1.4};
   const int n_nodes = 10;
 
   auto const x0 = origin + 0.57 * 10. * grid_spacing;
   auto const sigma = 4.;
 
-  auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+  auto const data = Utils::raster<double>(
+      origin, grid_spacing, Utils::Vector3i::broadcast(n_nodes),
+      [&](auto x) { return gaussian(x, x0, sigma); });
 
-  auto const p = Vector3d{-.4, 3.14, 0.1};
+  auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
   auto const interpolated_value = bspline_3d_accumulate<order>(
       p, [&data](const std::array<int, 3> &ind) { return data(ind); },
       grid_spacing, origin, 0.0);

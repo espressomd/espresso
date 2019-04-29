@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(blocking) {
 
   /* Non-MPI datatype */
   {
-    const std::string send = std::to_string(right);
+    const std::string send = std::to_string(rank);
     std::string recv;
 
     sendrecv(world, left, 42, send, right, 42, recv);

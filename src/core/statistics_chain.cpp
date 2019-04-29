@@ -25,7 +25,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "statistics.hpp"
-#include "utils.hpp"
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t)) */
 /*@{*/

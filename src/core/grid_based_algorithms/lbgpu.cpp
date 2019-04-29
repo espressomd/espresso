@@ -22,7 +22,7 @@
  *  The corresponding header file is lbgpu.hpp.
  */
 
-#include "config.hpp"
+#include "lbgpu.hpp"
 
 #ifdef LB_GPU
 
@@ -31,14 +31,15 @@
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "statistics.hpp"
-#include "utils.hpp"
+
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>

@@ -29,9 +29,11 @@
 #include "ljcos2.hpp"
 
 #ifdef LJCOS2
-#include <cmath>
-
 #include "communication.hpp"
+
+#include <utils/constants.hpp>
+
+#include <cmath>
 
 int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
                       double offset, double w) {

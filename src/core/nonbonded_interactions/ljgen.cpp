@@ -29,14 +29,13 @@
  *  \ref forces.cpp
  */
 
-#include "config.hpp"
+#include "ljgen.hpp"
 
 #ifdef LENNARD_JONES_GENERIC
-
-// we use their force cap
 #include "communication.hpp"
 #include "lj.hpp"
-#include "ljgen.hpp"
+
+#include <utils/constants.hpp>
 
 int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double shift, double offset, double a1,

@@ -26,6 +26,8 @@
 
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+
 int angle_cosine_set_params(int bond_type, double bend, double phi0) {
   if (bond_type < 0)
     return ES_ERROR;

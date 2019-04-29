@@ -35,7 +35,7 @@ TIME_STEP = 0.02
 # Box size will be H +2 AGRID to make room for walls.
 # The number of grid cells should be devisible by four and 3 in all directions
 # for testing on multiple mpi nodes.
-H = 24 * AGRID 
+H = 12 * AGRID 
 W = 6 * AGRID  
 SHEAR_VELOCITY = 0.3
 
@@ -116,8 +116,8 @@ class LBShearCommon(object):
         t0 = self.system.time
         sample_points = int(H / AGRID - 1)
 
-        for i in range(6):
-            self.system.integrator.run(100)
+        for i in range(9):
+            self.system.integrator.run(50)
 
             v_expected = shear_flow(
                 x=(np.arange(0, sample_points) + .5) * AGRID,
@@ -150,7 +150,7 @@ class LBShearCommon(object):
             -np.copy(wall2.get_force()),
             atol=1E-4)
         np.testing.assert_allclose(np.copy(wall1.get_force()), 
-                                   shear_direction * SHEAR_VELOCITY / H * W**2 * VISC, atol=1E-2)
+                                   shear_direction * SHEAR_VELOCITY / H * W**2 * VISC, atol=2E-4)
 
     def test(self):
         x = np.array((1, 0, 0), dtype=float)

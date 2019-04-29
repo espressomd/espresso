@@ -19,6 +19,8 @@ double dipolar_cutoff;
 #include "integrate.hpp"
 #include "npt.hpp"
 
+#include <utils/constants.hpp>
+
 #include <boost/mpi/collectives.hpp>
 
 Dipole_parameters dipole = {
@@ -63,7 +65,7 @@ void nonbonded_sanity_check(int &state) {
 #endif
 }
 
-double cutoff(const Vector3d &box_l) {
+double cutoff(const Utils::Vector3d &box_l) {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:

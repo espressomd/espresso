@@ -51,15 +51,7 @@ void VirtualSitesInertialessTracers::after_force_calc() {
 
 void VirtualSitesInertialessTracers::after_lb_propagation() {
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-
   IBM_UpdateParticlePositions(local_cells.particles());
-// We reset all since otherwise the halo nodes may not be reset
-// NB: the normal Espresso reset is also done after applying the forces
-//    if (lattice_switch == ActiveLB::CPU) IBM_ResetLBForces_CPU();
-#ifdef LB_GPU
-// if (lattice_switch == ActiveLB::GPU) IBM_ResetLBForces_GPU();
-#endif
-
   // Ghost positions are now out-of-date
   // We should update.
   // Actually we seem to get the same results whether we do this here or not,

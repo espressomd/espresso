@@ -69,10 +69,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define SOFT_SPHERE
 #define OVERLAPPED
 #define WCA
-
-#ifdef P3M
 #define THOLE
-#endif
 
 #define EXPERIMENTAL_FEATURES
 
