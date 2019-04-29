@@ -87,8 +87,11 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
                    int const nonet) {
   Utils::Vector3d pos;
   double const off = bond_length / sqrt(3);
-  double dnodes[8][3] = {{0, 0, 0}, {1, 1, 1}, {2, 2, 0}, {0, 2, 2},
-                         {2, 0, 2}, {3, 3, 1}, {1, 3, 3}, {3, 1, 3}};
+  auto const dnodes =
+      a / 4. * Utils::Vector<Utils::Vector3d, 8>{{0, 0, 0}, {1, 1, 1},
+                                                 {2, 2, 0}, {0, 2, 2},
+                                                 {2, 0, 2}, {3, 3, 1},
+                                                 {1, 3, 3}, {3, 1, 3}};
   static constexpr int dchain[16][5] = {
       {0, 1, +1, +1, +1}, {1, 2, +1, +1, -1}, {1, 3, -1, +1, +1},
       {1, 4, +1, -1, +1}, {2, 5, +1, +1, +1}, {3, 6, +1, +1, +1},
@@ -106,7 +109,6 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
   /* place 8 tetra-functional nodes */
   for (auto &dnode : dnodes) {
     for (int i = 0; i < 3; ++i) {
-      dnode[i] *= a / 4.;
       pos[i] = dnode[i];
     }
     if (place_particle(part_id, pos.data()) == ES_PART_ERROR)
