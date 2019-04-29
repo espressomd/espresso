@@ -20,6 +20,8 @@ double coulomb_cutoff;
 #include "layered.hpp"
 #include "npt.hpp"
 
+#include <utils/constants.hpp>
+
 Coulomb_parameters coulomb;
 
 namespace Coulomb {
@@ -100,7 +102,7 @@ void sanity_checks(int &state) {
   }
 }
 
-double cutoff(const Vector3d &box_l) {
+double cutoff(const Utils::Vector3d &box_l) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:

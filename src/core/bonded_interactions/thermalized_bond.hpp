@@ -34,7 +34,6 @@ extern int n_thermalized_bonds;
 #include "debug.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
-#include "utils.hpp"
 
 /** Set the parameters of a thermalized bond
  *
@@ -66,7 +65,7 @@ inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
                                         double force2[3]) {
   // Bond broke?
   if (iaparams->p.thermalized_bond.r_cut > 0.0 &&
-      Vector3d(dx, dx + 3).norm() > iaparams->p.thermalized_bond.r_cut) {
+      Utils::Vector3d(dx, dx + 3).norm() > iaparams->p.thermalized_bond.r_cut) {
     return 1;
   }
 

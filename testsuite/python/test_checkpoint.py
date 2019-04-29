@@ -30,6 +30,9 @@ modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
 LB = (espressomd.has_features('LB') and 'LB.CPU' in modes or
       espressomd.gpu_available() and espressomd.has_features('LB_GPU') and 'LB.GPU' in modes)
 
+EK = (espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') and 'EK.GPU'
+      in modes)
+
 
 class CheckpointTest(ut.TestCase):
 
@@ -74,6 +77,55 @@ class CheckpointTest(ut.TestCase):
         for key, val in reference.items():
             self.assertTrue(key in state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-9)
+
+    @ut.skipIf(not EK, "Skipping test due to missing features.")
+    def test_EK(self):
+        ek = system.actors[0]
+        ek_species = ek.get_params()['species'][0]
+        cpt_path = self.checkpoint.checkpoint_dir + "/ek"
+        ek.load_checkpoint(cpt_path)
+        precision = 5
+        m = np.pi / 12
+        nx = int(np.round(system.box_l[0] / ek.get_params()["agrid"]))
+        ny = int(np.round(system.box_l[1] / ek.get_params()["agrid"]))
+        nz = int(np.round(system.box_l[2] / ek.get_params()["agrid"]))
+        grid_3D = np.fromfunction(
+            lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+            (nx, ny, nz), dtype=float)
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    np.testing.assert_almost_equal(
+                        np.copy(ek_species[i, j, k].density),
+                                grid_3D[i, j, k],
+                                decimal=precision)
+        state = ek.get_params()
+        reference = {'agrid': 0.5, 'lb_density': 26.15,
+                     'viscosity': 1.7, 'friction': 0.0,
+                     'T': 1.1, 'prefactor': 0.88, 'stencil': "linkcentered"}
+        for key, val in reference.items():
+            self.assertTrue(key in state)
+            self.assertAlmostEqual(reference[key], state[key], delta=1E-5)
+        state_species = ek_species.get_params()
+        reference_species = {'density': 0.4, 'D': 0.02, 'valency': 0.3}
+        for key, val in reference_species.items():
+            self.assertTrue(key in state_species)
+            self.assertAlmostEqual(
+                reference_species[key],
+                state_species[key],
+                delta=1E-5)
+        self.assertAlmostEqual(
+            state_species['ext_force_density'][0],
+            0.01,
+            delta=1E-5)
+        self.assertAlmostEqual(
+            state_species['ext_force_density'][1],
+            -0.08,
+            delta=1E-5)
+        self.assertAlmostEqual(
+            state_species['ext_force_density'][2],
+            0.06,
+            delta=1E-5)
 
     def test_variables(self):
         self.assertEqual(system.cell_system.skin, 0.1)

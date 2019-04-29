@@ -3,6 +3,12 @@
 
 #include "TabulatedPotential.hpp"
 #include "particle_data.hpp"
+
+/** @file
+ *  Data structures for bonded interactions.
+ *  For more information on how to add new interactions, see @ref bondedIA_new.
+ */
+
 /** \name Type codes of bonded interactions
  *  Enumeration of implemented bonded interactions.
  */
@@ -340,13 +346,18 @@ struct Bonded_ia_parameters {
 /** Field containing the parameters of the bonded ia types */
 extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 
-/** Maximal interaction cutoff (real space/short range bonded interactions). */
+/** @brief Maximal interaction cutoff for bonded interactions (real space).
+ *  This value must be as large as the maximal interaction range in the list
+ *  of bonded interactions. This is necessary to ensure that in a parallel
+ *  simulation, a compute node has access to both bond partners.
+ */
 extern double max_cut_bonded;
 
 /** Makes sure that \ref bonded_ia_params is large enough to cover the
-    parameters for the bonded interaction type. Attention: 1: There is
-    no initialization done here. 2: Use only in connection with
-    creating new or overwriting old bond types*/
+ *  parameters for the bonded interaction type.
+ *  Attention: 1: There is no initialization done here.
+ *  2: Use only in connection with creating new or overwriting old bond types
+ */
 void make_bond_type_exist(int type);
 
 /** @brief Checks if particle has a pair bond with a given partner
@@ -421,6 +432,21 @@ inline bool pair_bond_enum_exists_between(const Particle *const p1,
          (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
 }
 
+/** Calculate the maximal cutoff of bonded interactions, required to
+ *  determine the cell size for communication.
+ *
+ *  Bond angle and dihedral potentials do not contain a cutoff intrinsically.
+ *  The cutoff for these potentials depends on the bond length potentials
+ *  (it is assumed that particles participating in a bond angle or dihedral
+ *  potential are bound to each other by some bond length potential). For bond
+ *  angle potentials nothing has to be done. For dihedral potentials the cutoff
+ *  is set to twice the maximal cutoff because the particle in which the bond
+ *  is stored is only bonded to the first two partners, one of which has an
+ *  additional bond to the third partner.
+ *
+ *  The result is stored in global variable @ref max_cut_bonded.
+ */
 void recalc_maximal_cutoff_bonded();
+
 int virtual_set_params(int bond_type);
 #endif

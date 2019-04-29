@@ -110,23 +110,22 @@ while (i < warm_n_times):
 # remove force capping
 system.force_cap = 0
 
-unimportant_K_diss = 0.0088
 RE = reaction_ensemble.WidomInsertion(
-    temperature=temperature, exclusion_radius=1.0)
-RE.add_reaction(gamma=unimportant_K_diss, reactant_types=[],
+    temperature=temperature, seed=77)
+RE.add_reaction(reactant_types=[],
                 reactant_coefficients=[], product_types=[1, 2],
                 product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
-n_iterations = 10000
+n_iterations = 100
 for i in range(n_iterations):
     for j in range(30):
         RE.measure_excess_chemical_potential(0)  # 0 for insertion reaction
         system.integrator.run(steps=2)
     system.integrator.run(steps=500)
     if i % 20 == 0:
-        print("mu_ex_pair ({:.4f}, {:.4f})".format(
+        print("mu_ex_pair ({:.4f}, +/- {:.4f})".format(
             *RE.measure_excess_chemical_potential(0)  # 0 for insertion reaction
         ))
         print("HA", system.number_of_particles(type=0), "A-",

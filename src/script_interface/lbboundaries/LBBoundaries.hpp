@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "LBBoundary.hpp"
 #include "ScriptInterface.hpp"
 #include "ScriptObjectRegistry.hpp"
-#include "core/grid_based_algorithms/lbboundaries.hpp"
+#include "core/grid_based_algorithms/lb_boundaries.hpp"
 #if (defined(LB) || defined(LB_GPU))
 namespace ScriptInterface {
 namespace LBBoundaries {

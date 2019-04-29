@@ -35,6 +35,8 @@ int n_rigidbonds = 0;
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
+#include <utils/constants.hpp>
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

@@ -20,13 +20,15 @@
 */
 
 #include "Sphere.hpp"
-#include "utils.hpp"
+
+#include <utils/math/sqr.hpp>
+
 #include <cmath>
 
 using namespace std;
 
 namespace Shapes {
-void Sphere::calculate_dist(const Vector3d &pos, double *dist,
+void Sphere::calculate_dist(const Utils::Vector3d &pos, double *dist,
                             double *vec) const {
   int i;
   double fac, c_dist;

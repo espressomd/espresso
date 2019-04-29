@@ -61,7 +61,7 @@
 #include "grid_based_algorithms/lb_constants.hpp"
 #include "particle_data.hpp"
 
-#include "utils/serialization/array.hpp"
+#include <utils/serialization/array.hpp>
 
 /**************************************************
  * exported variables
@@ -272,7 +272,8 @@ void mpi_update_mol_ids();
 
 void mpi_bcast_lb_particle_coupling();
 
-Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos);
+Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
+                                                  Utils::Vector3d const &pos);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();

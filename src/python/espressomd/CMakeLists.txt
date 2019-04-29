@@ -80,14 +80,16 @@ foreach(cython_file ${cython_SRC})
                          DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi ${cython_file}
                                  ${cython_HEADER}
                          )
-      add_library(${basename} SHARED ${outputpath})
+      set(target "espressomd_${basename}")
+      add_library(${target} SHARED ${outputpath})
       if(NOT "${relpath}" STREQUAL "")
-          set_target_properties(${basename} PROPERTIES PREFIX "${relpath}/")
+          set_target_properties(${target} PROPERTIES PREFIX "${relpath}/")
       else()
-          set_target_properties(${basename} PROPERTIES PREFIX "")
+          set_target_properties(${target} PROPERTIES PREFIX "")
       endif()
+      set_target_properties(${target} PROPERTIES OUTPUT_NAME ${basename})
       if (APPLE)
-         set_target_properties(${basename} PROPERTIES
+         set_target_properties(${target} PROPERTIES
                  SUFFIX ".so"
                  LINK_FLAGS "-undefined dynamic_lookup"
                  )
@@ -101,14 +103,14 @@ foreach(cython_file ${cython_SRC})
       else()
           set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-unused-variable")
       endif()
-      set_target_properties(${basename} PROPERTIES CXX_CLANG_TIDY "")
-      target_link_libraries(${basename} PRIVATE EspressoConfig EspressoCore EspressoScriptInterface)
-      target_include_directories(${basename} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR})
-      add_dependencies(espressomd ${basename})
+      set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
+      target_link_libraries(${target} PRIVATE EspressoConfig EspressoCore EspressoScriptInterface)
+      target_include_directories(${target} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR})
+      add_dependencies(espressomd ${target})
   endif()
 endforeach()
 
-target_link_libraries(profiler PRIVATE Profiler)
+target_link_libraries(espressomd_profiler PRIVATE Profiler)
 
 foreach(auxfile ${cython_AUX})
   get_filename_component(filename ${auxfile} NAME)

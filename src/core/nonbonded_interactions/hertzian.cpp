@@ -23,9 +23,11 @@
  *  Implementation of \ref hertzian.hpp
  */
 #include "hertzian.hpp"
-#include "communication.hpp"
 
 #ifdef HERTZIAN
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int hertzian_set_params(int part_type_a, int part_type_b, double eps,
                         double sig) {

@@ -37,7 +37,7 @@
 #include "rattle.hpp"
 #include "thermostat.hpp"
 #include "tuning.hpp"
-#include "utils/mpi/all_compare.hpp"
+#include <utils/mpi/all_compare.hpp>
 
 #include <boost/functional/hash.hpp>
 

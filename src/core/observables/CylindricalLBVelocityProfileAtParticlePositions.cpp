@@ -20,10 +20,9 @@
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
-#include "utils.hpp"
-#include "utils/Histogram.hpp"
-#include "utils/coordinate_transformation.hpp"
 #include <boost/range/algorithm/transform.hpp>
+#include <utils/Histogram.hpp>
+#include <utils/coordinate_transformation.hpp>
 
 namespace Observables {
 
@@ -38,14 +37,14 @@ operator()(PartCfg &partCfg) const {
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
-  std::vector<Vector3d> folded_positions(ids().size());
+  std::vector<Utils::Vector3d> folded_positions(ids().size());
   boost::transform(ids(), folded_positions.begin(),
                    [&partCfg](int id) { return folded_position(partCfg[id]); });
 
-  std::vector<Vector3d> velocities(ids().size());
+  std::vector<Utils::Vector3d> velocities(ids().size());
 #if defined(LB) || defined(LB_GPU)
   boost::transform(
-      folded_positions, velocities.begin(), [](const Vector3d &pos) {
+      folded_positions, velocities.begin(), [](const Utils::Vector3d &pos) {
         return lb_lbinterpolation_get_interpolated_velocity_global(pos) *
                lb_lbfluid_get_lattice_speed();
       });

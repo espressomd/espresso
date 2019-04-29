@@ -28,6 +28,8 @@
 #include "communication.hpp"
 #include "global.hpp"
 
+#include <utils/constants.hpp>
+
 int n_thermalized_bonds = 0;
 
 int thermalized_bond_set_params(int bond_type, double temp_com,

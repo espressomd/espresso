@@ -91,7 +91,7 @@ cdef extern from "<limits>" namespace "std" nogil:
         @staticmethod
         T max()
 
-cdef extern from "utils/Vector.hpp":
+cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector2d:
         pass
     cppclass Vector4d:
@@ -116,8 +116,5 @@ cdef extern from "utils/Vector.hpp":
     cppclass Vector19d:
         double & operator[](int i)
         double * data()
-
-cdef extern from "utils/math/bspline.hpp" namespace "Utils":
-    cdef double bspline(int k, int i, double x)
 
 cdef make_array_locked(const Vector3d & v)
