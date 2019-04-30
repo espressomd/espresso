@@ -39,10 +39,12 @@ def has_features(*args):
 
     if len(args) == 1 and not isinstance(args[0], str) and hasattr(args[0], "__iter__"):
         check_set = set(args[0])
-    else: check_set = set(args)
+    else:
+        check_set = set(args)
 
     if not check_set < all_features():
-        raise RuntimeError("'{}' is not a feature".format(','.join(check_set - all_features())))
+        raise RuntimeError(
+            "'{}' is not a feature".format(','.join(check_set - all_features())))
 
     return check_set < set(features())
 
