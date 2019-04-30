@@ -99,7 +99,7 @@ if $with_ccache; then
   cmake_params="$cmake_params -DWITH_CCACHE=ON"
 fi
 
-if [ $cuda_job = "true" ]; then
+if [[ "${CI_RUNNER_TAGS}" =~ "cuda" ]]; then
   nvidia-smi
 fi
 if [ $hide_gpu = "true" ]; then
