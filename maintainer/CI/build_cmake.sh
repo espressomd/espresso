@@ -43,7 +43,6 @@ function end {
 # execute and output a command
 # handle environment variables
 [ -z "$cuda_job" ] && cuda_job="false"
-[ $cuda_job = "true" ] && [ -n "${CI_PROJECT_DIR}" ] && srcdir="${CI_PROJECT_DIR}"
 [ -z "$insource" ] && insource="false"
 [ -z "$srcdir" ] && srcdir=`pwd`
 [ -z "$cmake_params" ] && cmake_params=""
