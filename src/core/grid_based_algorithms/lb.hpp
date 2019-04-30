@@ -32,7 +32,6 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 
-
 #include <array>
 #include <boost/optional.hpp>
 #include <memory>

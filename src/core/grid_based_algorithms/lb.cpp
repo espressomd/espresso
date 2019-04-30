@@ -140,7 +140,6 @@ static double fluidstep = 0.0;
 #include "global.hpp"
 #include "grid.hpp"
 
-
 /********************** The Main LB Part *************************************/
 void lb_init() {
   LB_TRACE(printf("Begin initializing fluid on CPU\n"));
@@ -1432,4 +1431,3 @@ void lb_collect_boundary_forces(double *result) {
 }
 
 /*@}*/
-

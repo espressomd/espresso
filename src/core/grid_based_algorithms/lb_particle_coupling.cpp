@@ -81,7 +81,6 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
   }
 }
 
-
 namespace {
 /**
  * @brief Add a force to the lattice force density.

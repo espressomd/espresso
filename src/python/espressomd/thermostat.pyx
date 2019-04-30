@@ -28,6 +28,7 @@ from .lb import HydrodynamicInteraction
 from .lb cimport lb_lbcoupling_set_gamma
 from .lb cimport lb_lbcoupling_get_gamma
 
+
 def AssertThermostatType(*allowedthermostats):
     """Assert that only a certain thermostat is active
 

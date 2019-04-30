@@ -310,9 +310,8 @@ struct ParticleParametersSwimming {
 
   template <typename Archive> void serialize(Archive &ar, long int) {
 #ifdef ENGINE
-    ar &swimming &f_swim &v_swim
-        &push_pull &dipole_length &v_center &v_source &rotational_friction
-        ;
+    ar &swimming &f_swim &v_swim &push_pull &dipole_length &v_center &v_source
+        &rotational_friction;
 #endif
   }
 };

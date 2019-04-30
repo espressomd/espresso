@@ -366,9 +366,7 @@ void on_cell_structure_change() {
   }
 }
 
-void on_temperature_change() {
-  lb_lbfluid_reinit_parameters();
-}
+void on_temperature_change() { lb_lbfluid_reinit_parameters(); }
 
 void on_parameter_change(int field) {
   EVENT_TRACE(
@@ -469,7 +467,7 @@ void on_ghost_flags_change() {
   ghosts_have_v = 0;
   ghosts_have_bonds = 0;
 
-/* DPD and LB need also ghost velocities */
+  /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
     ghosts_have_v = 1;
 #ifdef BOND_CONSTRAINT

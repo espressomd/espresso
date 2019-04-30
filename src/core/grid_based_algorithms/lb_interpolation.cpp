@@ -20,7 +20,6 @@ void mpi_set_interpolation_order_slave(int, int) {
   boost::mpi::broadcast(comm_cart, interpolation_order, 0);
 }
 
-
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &order) {
   interpolation_order = order;
@@ -135,4 +134,3 @@ void lb_lbinterpolation_add_force_density(
     break;
   }
 }
-

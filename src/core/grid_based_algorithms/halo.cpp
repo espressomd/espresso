@@ -27,7 +27,6 @@
 
 #include "config.hpp"
 
-
 #include "debug.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
@@ -392,4 +391,3 @@ void halo_communication(HaloCommunicator const *const hc, char *const base) {
     }
   }
 }
-

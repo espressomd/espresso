@@ -1266,8 +1266,7 @@ const Utils::Vector6d lb_lbfluid_get_stress() {
     p[5] += p0;
 
 #endif
-  } else
-      if (lattice_switch == ActiveLB::CPU) {
+  } else if (lattice_switch == ActiveLB::CPU) {
     for (int i = 0; i < lblattice.global_grid[0]; i++) {
       for (int j = 0; j < lblattice.global_grid[1]; j++) {
         for (int k = 0; k < lblattice.global_grid[2]; k++) {
@@ -1282,8 +1281,7 @@ const Utils::Vector6d lb_lbfluid_get_stress() {
                                 lblattice.global_grid[2];
 
     p *= 1. / number_of_nodes;
-  } else
-  {
+  } else {
     throw std::runtime_error("LB method called on inactive LB");
   }
   return p;
@@ -1470,4 +1468,3 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
   }
   return fluid_momentum;
 }
-
