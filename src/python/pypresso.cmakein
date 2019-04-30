@@ -54,6 +54,7 @@ fi
 case $1 in
     --gdb)
         shift
+        expr match @PYTHON_FRONTEND@ '.*ipython.*' && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec /usr/bin/ipython \"$@\"'" --args /usr/bin/python $@
         exec gdb --args @PYTHON_FRONTEND@ $@
         ;;
     --lldb)
@@ -75,6 +76,7 @@ case $1 in
     --gdb=*)
         options="${1#*=}"
         shift
+        expr match @PYTHON_FRONTEND@ '.*ipython.*' && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec /usr/bin/ipython \"$@\"'" ${options} --args /usr/bin/python $@
         exec gdb ${options} --args @PYTHON_FRONTEND@ $@
         ;;
     --lldb=*)
