@@ -44,7 +44,7 @@ checkpoint = espressomd.checkpointing.Checkpoint(
     checkpoint_id=idx, checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
 LB_implementation = None
-if espressomd.has_features('LB') and 'LB.CPU' in modes:
+if 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
 elif espressomd.gpu_available() and espressomd.has_features('LB_GPU') and 'LB.GPU' in modes:
     LB_implementation = espressomd.lb.LBFluidGPU

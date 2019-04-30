@@ -78,8 +78,6 @@ class LBThermostatCommon(object):
                 self.assertLessEqual(abs(found - expected), error_tol)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB']), "Skipping test due to missing features.")
 class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the CPU implementation of the LB."""
