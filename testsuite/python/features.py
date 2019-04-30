@@ -23,6 +23,9 @@ class Features(ut.TestCase):
         for feature in code_info.features():
             self.assertTrue(has_features(feature))
 
+        for feature in code_info.all_features() - set(code_info.features()):
+            self.assertFalse(has_features(feature))
+
         with self.assertRaises(RuntimeError) as _:
             has_features("NotAFeature")
 
