@@ -27,7 +27,6 @@
 
 #include "config.hpp"
 
-#ifdef LATTICE
 
 #include "debug.hpp"
 #include "grid.hpp"
@@ -394,4 +393,3 @@ void halo_communication(HaloCommunicator const *const hc, char *const base) {
   }
 }
 
-#endif /* LATTICE */
