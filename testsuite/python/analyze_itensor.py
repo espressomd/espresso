@@ -41,7 +41,7 @@ class AnalyzeITensor(ut.TestCase):
             self.system.part.add(
                 id=i, pos=np.random.random(3) * self.box_l, type=1)
         if espressomd.has_features("MASS"):
-            s.part[:].mass = 0.5 + np.random.random(20)
+            self.system.part[:].mass = 0.5 + np.random.random(20)
 
     def i_tensor(self, ids):
         pslice = self.system.part[ids]
