@@ -16,7 +16,7 @@ stages:
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
   variables:
-    GIT_STRATEGY: none
+    GIT_SUBMODULE_STRATEGY: none
   dependencies: []
   tags:
     - linux
