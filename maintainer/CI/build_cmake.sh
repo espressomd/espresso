@@ -98,9 +98,7 @@ if $with_ccache; then
   cmake_params="$cmake_params -DWITH_CCACHE=ON"
 fi
 
-if [[ "${CI_RUNNER_TAGS}" =~ "cuda" ]]; then
-  nvidia-smi
-fi
+command -v nvidia-smi && nvidia-smi
 if [ $hide_gpu = "true" ]; then
   echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
   export CUDA_VISIBLE_DEVICES=
