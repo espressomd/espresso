@@ -336,7 +336,7 @@ class openGLLive(object):
         IF not ROTATION:
             self.specs['director_arrows'] = False
 
-        IF not LB and not LB_GPU:
+        IF not LB_GPU:
             self.specs['LB_draw_velocity_plane'] = False
             self.specs['LB_draw_boundaries'] = False
             self.specs['LB_draw_nodes'] = False
@@ -1582,9 +1582,7 @@ class openGLLive(object):
         # LOOK FOR LB ACTOR
         if self.specs['LB_draw_velocity_plane'] or self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
             for a in self.system.actors:
-                types = []
-                IF LB:
-                    types.append(espressomd.lb.LBFluid)
+                types = [types.append(espressomd.lb.LBFluid)]
                 IF LB_GPU:
                     types.append(espressomd.lb.LBFluidGPU)
 

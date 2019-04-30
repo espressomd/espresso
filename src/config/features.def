@@ -59,7 +59,6 @@ VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
 DPD
 
 /* Lattice-Boltzmann features */
-LB
 LB_GPU                          requires CUDA
 LB_BOUNDARIES
 LB_BOUNDARIES_GPU               requires LB_GPU

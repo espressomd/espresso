@@ -66,21 +66,15 @@ cdef extern from "particle_data.hpp":
         Vector3d calc_dip()
 
     IF ENGINE:
-        IF LB or LB_GPU:
-            ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
-                bool swimming
-                double f_swim
-                double v_swim
-                int push_pull
-                double dipole_length
-                double v_center[3]
-                double v_source[3]
-                double rotational_friction
-        ELSE:
-            ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
-                bool swimming
-                double f_swim
-                double v_swim
+        ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
+            bool swimming
+            double f_swim
+            double v_swim
+            int push_pull
+            double dipole_length
+            double v_center[3]
+            double v_source[3]
+            double rotational_friction
 
     # Setter/getter/modifier functions functions
     void prefetch_particle_data(vector[int] ids)
