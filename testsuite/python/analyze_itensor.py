@@ -40,7 +40,7 @@ class AnalyzeITensor(ut.TestCase):
         for i in range(20, 30, 1):
             self.system.part.add(
                 id=i, pos=np.random.random(3) * self.box_l, type=1)
-        if espressomd.has_features("mass"):
+        if espressomd.has_features("MASS"):
             s.part[:].mass = 0.5 + np.random.random(20)
 
     def i_tensor(self, ids):
