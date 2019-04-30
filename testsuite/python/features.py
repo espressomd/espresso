@@ -18,7 +18,9 @@
 import unittest as ut
 from espressomd import has_features, code_info
 
+
 class Features(ut.TestCase):
+
     def test_has_features(self):
         for feature in code_info.features():
             self.assertTrue(has_features(feature))
@@ -31,4 +33,3 @@ class Features(ut.TestCase):
 
 if __name__ == '__main__':
     ut.main()
-
