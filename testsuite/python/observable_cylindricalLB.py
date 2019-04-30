@@ -26,7 +26,7 @@ import tests_common
 
 @ut.skipIf(
     not (espressomd.has_features(
-            'LB_GPU')),
+         'LB_GPU')),
            "Both LB and LB_GPU not compiled in, can not check functionality.")
 class TestCylindricalLBObservable(ut.TestCase):
 
