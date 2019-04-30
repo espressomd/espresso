@@ -175,7 +175,7 @@ cuda-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
-    - export cuda_job=true myconfig=maxset with_coverage=true python_version=3 test_timeout=900
+    - export cuda_job=true myconfig=maxset with_coverage=true python_version=3 test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:

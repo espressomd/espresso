@@ -43,7 +43,6 @@ function end {
 # execute and output a command
 # handle environment variables
 [ -z "$cuda_job" ] && cuda_job="false"
-[ $cuda_job = "true" ] && [ -n "${CI_PROJECT_DIR}" ] && srcdir="${CI_PROJECT_DIR}"
 [ -z "$insource" ] && insource="false"
 [ -z "$srcdir" ] && srcdir=`pwd`
 [ -z "$cmake_params" ] && cmake_params=""
@@ -99,9 +98,7 @@ if $with_ccache; then
   cmake_params="$cmake_params -DWITH_CCACHE=ON"
 fi
 
-if [ $cuda_job = "true" ]; then
-  nvidia-smi
-fi
+command -v nvidia-smi && nvidia-smi
 if [ $hide_gpu = "true" ]; then
   echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
   export CUDA_VISIBLE_DEVICES=
