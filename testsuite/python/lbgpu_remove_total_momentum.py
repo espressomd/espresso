@@ -22,7 +22,7 @@ import espressomd.lb
 import numpy as np
 
 
-@ut.skipIf((not espressomd.gpu_available() or not espressomd.has_features(["LB_GPU"])), "Features or gpu not available, skipping test!")
+@ut.skipIf((not espressomd.gpu_available() or not espressomd.has_features(["CUDA"])), "Features or gpu not available, skipping test!")
 class RemoveTotalMomentumTest(ut.TestCase):
 
     def test(self):
