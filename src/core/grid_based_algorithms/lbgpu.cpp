@@ -24,7 +24,7 @@
 
 #include "lbgpu.hpp"
 
-#ifdef LB_GPU
+#ifdef  CUDA
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"
@@ -378,4 +378,4 @@ void lb_set_agrid_gpu(double agrid) {
       lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
 }
 
-#endif /* LB_GPU */
+#endif /*  CUDA */
