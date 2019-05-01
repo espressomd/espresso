@@ -31,7 +31,7 @@ except ImportError:
     exit()
 
 
-@ut.skipIf(not espressomd.has_features(["ENGINE", "LB"]),
+@ut.skipIf(not espressomd.has_features(["ENGINE"]),
            "Features not available, skipping test!")
 class SwimmerTest(ut.TestCase):
 

@@ -324,9 +324,6 @@ class TestLB(object):
                 np.copy(self.lbf[n].velocity), fluid_velocity, atol=1E-6)
 
 
-@ut.skipIf(
-    not espressomd.has_features(["LB"]),
-           "Features not available, skipping test!")
 class TestLBCPU(TestLB, ut.TestCase):
 
     def setUp(self):
