@@ -21,7 +21,7 @@ in a complex geometry.
 
 import espressomd
 
-required_features = ["LB", "LB_BOUNDARIES", "EXTERNAL_FORCES", "SOFT_SPHERE",
+required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES", "SOFT_SPHERE",
                      "MEMBRANE_COLLISION", "OIF_GLOBAL_FORCES", "OIF_LOCAL_FORCES", "MASS"]
 espressomd.assert_features(required_features)
 
