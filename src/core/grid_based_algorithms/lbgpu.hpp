@@ -22,12 +22,12 @@
  *  Implementation in lbgpu.cpp.
  */
 
-#ifndef  CUDA_H
-#define  CUDA_H
+#ifndef LBGPU_HPP
+#define LBGPU_HPP
 
 #include "config.hpp"
 
-#ifdef  CUDA
+#ifdef CUDA
 #include <boost/optional.hpp>
 
 #include <utils/Counter.hpp>

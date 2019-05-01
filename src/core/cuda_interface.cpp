@@ -54,7 +54,7 @@ static void pack_particles(ParticleRange particles,
   for (auto const &part : particles) {
     buffer[i].p = static_cast<Vector3f>(folded_position(part));
 
-#ifdef  CUDA
+#ifdef CUDA
     buffer[i].identity = part.p.identity;
     buffer[i].v = static_cast<Vector3f>(part.m.v);
 #ifdef VIRTUAL_SITES
@@ -66,7 +66,7 @@ static void pack_particles(ParticleRange particles,
     buffer[i].dip = static_cast<Vector3f>(part.calc_dip());
 #endif
 
-#if defined(LB_ELECTROHYDRODYNAMICS) && defined( CUDA)
+#if defined(LB_ELECTROHYDRODYNAMICS) && defined(CUDA)
     buffer[i].mu_E = static_cast<Vector3f>(part.p.mu_E);
 #endif
 
@@ -174,7 +174,7 @@ void cuda_mpi_send_forces(ParticleRange particles,
   COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
 }
 
-#if defined(ENGINE) && defined( CUDA)
+#if defined(ENGINE) && defined(CUDA)
 namespace {
 void set_v_cs(ParticleRange particles, const std::vector<CUDA_v_cs> &v_cs) {
   int ind = 0;

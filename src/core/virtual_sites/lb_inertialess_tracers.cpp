@@ -102,7 +102,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
   if (lattice_switch == ActiveLB::CPU)
     ParticleVelocitiesFromLB_CPU();
-#ifdef  CUDA
+#ifdef CUDA
   if (lattice_switch == ActiveLB::GPU)
     ParticleVelocitiesFromLB_GPU(particles);
 #endif

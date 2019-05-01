@@ -68,7 +68,7 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
   if (lattice_switch == ActiveLB::GPU) {
-#if defined( CUDA) && defined(LB_BOUNDARIES_GPU)
+#if defined(CUDA) && defined(LB_BOUNDARIES_GPU)
     if (this_node != 0) {
       return;
     }
@@ -297,7 +297,7 @@ int lbboundary_get_force(void *lbb, double *f) {
   std::vector<double> forces(3 * lbboundaries.size());
 
   if (lattice_switch == ActiveLB::GPU) {
-#if defined(LB_BOUNDARIES_GPU) && defined( CUDA)
+#if defined(LB_BOUNDARIES_GPU) && defined(CUDA)
     lb_gpu_get_boundary_forces(forces.data());
 
 #else

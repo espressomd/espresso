@@ -24,7 +24,7 @@
 
 #include "lbgpu.hpp"
 
-#ifdef  CUDA
+#ifdef CUDA
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"

@@ -53,7 +53,7 @@
 // Hydrodynamics
 #define LB_BOUNDARIES
 #ifdef CUDA
-#define  CUDA
+#define CUDA
 #define LB_BOUNDARIES_GPU
 #endif
 

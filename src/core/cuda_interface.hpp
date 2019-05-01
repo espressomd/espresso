@@ -67,7 +67,7 @@ struct CUDA_particle_data {
   /** particle position given from md part*/
   Vector3f p;
 
-#if defined( CUDA)
+#if defined(CUDA)
   /** particle id */
   int identity;
 #ifdef VIRTUAL_SITES
@@ -82,7 +82,7 @@ struct CUDA_particle_data {
   Vector3f director;
 #endif
 
-#if defined(LB_ELECTROHYDRODYNAMICS) && defined( CUDA)
+#if defined(LB_ELECTROHYDRODYNAMICS) && defined(CUDA)
   Vector3f mu_E;
 #endif
 

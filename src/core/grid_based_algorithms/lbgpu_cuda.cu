@@ -27,7 +27,7 @@
 
 #include "config.hpp"
 
-#ifdef  CUDA
+#ifdef CUDA
 #include <boost/optional.hpp>
 #include <cassert>
 #include <stdio.h>

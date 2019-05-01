@@ -294,7 +294,7 @@ void convert_torques_propagate_omega() {
   INTEG_TRACE(
       fprintf(stderr, "%d: convert_torques_propagate_omega:\n", this_node));
 
-#if defined( CUDA) && defined(ENGINE)
+#if defined(CUDA) && defined(ENGINE)
   if ((lb_lbfluid_get_lattice_switch() == ActiveLB::GPU) &&
       swimming_particles_exist) {
     copy_v_cs_from_GPU(local_cells.particles());
