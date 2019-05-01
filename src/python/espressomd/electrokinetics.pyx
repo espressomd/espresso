@@ -1,6 +1,6 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-IF LB_GPU:
+IF CUDA:
     from .lb cimport HydrodynamicInteraction
     from .lb cimport lb_lbfluid_print_vtk_boundary
     from .lb cimport python_lbnode_get_pi
