@@ -95,12 +95,12 @@ LB_node_force_density_gpu node_f = {
 
 static LB_extern_nodeforcedensity_gpu *extern_node_force_densities = nullptr;
 
+/** @brief Velocity at the boundary */
+static float *lb_boundary_velocity = nullptr;
+
 #ifdef LB_BOUNDARIES_GPU
 /** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
-
-/** @brief Velocity at the boundary */
-static float *lb_boundary_velocity = nullptr;
 
 /** @name pointers for bound index array */
 /*@{*/
