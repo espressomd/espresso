@@ -153,7 +153,7 @@ additional information.
 In situations where hydrodynamic interactions between swimmers or swimmers and
 objects are of importance, we use the lattice-Boltzmann (LB) to propagate the
 fluid's momentum diffusion. This requires the additional activation of the
-\code{LB} or \code{LB_GPU} feature in \es{}~\cite{UG,Arnold_13,roehm12}. We
+\code{LB} or \code{CUDA} feature in \es{}~\cite{UG,Arnold_13,roehm12}. We
 recommend the GPU-based variant of LB in \es{}, since it is much faster.
 Moreover, the current implementation of the CPU self-propulsion is limited to
 one CPU. This is because the ghost-node structure of the \es{} cell-list code
@@ -315,7 +315,7 @@ To run all the tutorials you need to uncomment the following \code{FEATURES}:
 #define ENGINE
 #define ROTATION
 #define ROTATIONAL_INERTIA
-#define LB_GPU
+#define CUDA
 #define LB_BOUNDARIES_GPU
 #define LENNARD_JONES
 \end{bash}
