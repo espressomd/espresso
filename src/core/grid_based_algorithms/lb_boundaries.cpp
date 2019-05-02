@@ -222,7 +222,7 @@ void lb_init_boundaries() {
 
 #endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
   } else if (lattice_switch == ActiveLB::CPU) {
-#if defined(LB) && defined(LB_BOUNDARIES)
+#if defined(LB_BOUNDARIES)
     Utils::Vector3i node_domain_position, offset;
     int the_boundary = -1;
     map_node_array(this_node, node_domain_position.data());
@@ -304,7 +304,7 @@ int lbboundary_get_force(void *lbb, double *f) {
     return ES_ERROR;
 #endif
   } else {
-#if defined(LB_BOUNDARIES) && defined(LB)
+#if defined(LB_BOUNDARIES)
     mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
   }
   f[0] = forces[3 * no + 0];

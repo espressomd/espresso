@@ -125,7 +125,7 @@ class LBPoiseuilleCommon(object):
 
 
 @ut.skipIf(not espressomd.has_features(
-    ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+    ['LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the CPU implementation of the LB."""

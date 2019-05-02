@@ -152,9 +152,7 @@ void force_calc() {
   immersed_boundaries.volume_conservation();
 #endif
 
-#if defined(LB_GPU) || defined(LB)
   lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
-#endif
 
 #ifdef METADYNAMICS
   /* Metadynamics main function */

@@ -475,7 +475,6 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     mpi_call(mpi_gather_stats_slave, -1, 4);
     predict_momentum_particles((double *)result);
     break;
-#ifdef LB
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
     lb_calc_fluid_momentum((double *)result);
@@ -487,7 +486,6 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     mpi_call(mpi_gather_stats_slave, -1, 8);
     lb_collect_boundary_forces((double *)result);
     break;
-#endif
 #endif
   default:
     fprintf(
@@ -517,7 +515,6 @@ void mpi_gather_stats_slave(int, int job) {
   case 4:
     predict_momentum_particles(nullptr);
     break;
-#ifdef LB
   case 6:
     lb_calc_fluid_momentum(nullptr);
     break;
@@ -527,7 +524,6 @@ void mpi_gather_stats_slave(int, int job) {
   case 8:
     lb_collect_boundary_forces(nullptr);
     break;
-#endif
 #endif
   default:
     fprintf(
@@ -703,7 +699,6 @@ int mpi_iccp3m_init() {
 
 Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
                                                   Utils::Vector3d const &pos) {
-#ifdef LB
   if (this_node == 0) {
     comm_cart.send(node, SOME_TAG, pos);
     mpi_call(mpi_recv_lb_interpolated_velocity_slave, node, 0);
@@ -711,12 +706,10 @@ Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
     comm_cart.recv(node, SOME_TAG, interpolated_u);
     return interpolated_u;
   }
-#endif
   return {};
 }
 
 void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
-#ifdef LB
   if (node == this_node) {
     Utils::Vector3d pos{};
     comm_cart.recv(0, SOME_TAG, pos);
@@ -724,7 +717,6 @@ void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
         lb_lbinterpolation_get_interpolated_velocity(pos);
     comm_cart.send(0, SOME_TAG, interpolated_u);
   }
-#endif
 }
 
 /****************************************************/

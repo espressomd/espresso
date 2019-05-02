@@ -59,9 +59,7 @@ uint64_t lb_coupling_get_rng_state_cpu() {
 
 uint64_t lb_lbcoupling_get_rng_state() {
   if (lattice_switch == ActiveLB::CPU) {
-#ifdef LB
     return lb_coupling_get_rng_state_cpu();
-#endif
   }
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
@@ -73,19 +71,15 @@ uint64_t lb_lbcoupling_get_rng_state() {
 
 void lb_lbcoupling_set_rng_state(uint64_t counter) {
   if (lattice_switch == ActiveLB::CPU) {
-#ifdef LB
     lb_particle_coupling.rng_counter_coupling =
         Utils::Counter<uint64_t>(counter);
     mpi_bcast_lb_particle_coupling();
-#endif
   } else if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
     lb_coupling_set_rng_state_gpu(counter);
 #endif
   }
 }
-
-#if defined(LB) || defined(LB_GPU)
 
 namespace {
 /**
@@ -110,7 +104,6 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
  *
  * @return The viscous coupling force plus f_random.
  */
-#ifdef LB
 Utils::Vector3d lb_viscous_coupling(Particle *p,
                                     Utils::Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
@@ -143,7 +136,6 @@ Utils::Vector3d lb_viscous_coupling(Particle *p,
 
   return force;
 }
-#endif
 
 namespace {
 bool in_local_domain(Utils::Vector3d const &pos) {
@@ -196,7 +188,6 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
     }
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-#ifdef LB
     if (lb_particle_coupling.couple_to_md) {
       switch (lb_lbinterpolation_get_interpolation_order()) {
       case (InterpolationOrder::quadratic):
@@ -269,7 +260,6 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         break;
       }
       }
-#endif
     }
   }
 }
@@ -277,9 +267,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 void lb_lbcoupling_propagate() {
   if (lb_lbfluid_get_kT() > 0.0) {
     if (lattice_switch == ActiveLB::CPU) {
-#ifdef LB
       lb_particle_coupling.rng_counter_coupling->increment();
-#endif
     } else if (lattice_switch == ActiveLB::GPU) {
 #ifdef LB_GPU
       rng_counter_coupling_gpu->increment();
@@ -287,4 +275,3 @@ void lb_lbcoupling_propagate() {
     }
   }
 }
-#endif

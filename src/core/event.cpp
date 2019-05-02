@@ -131,9 +131,7 @@ void on_integration_start() {
 #ifdef SWIMMER_REACTIONS
   reactions_sanity_checks();
 #endif
-#if defined(LB) || defined(LB_GPU)
   lb_lbfluid_on_integration_start();
-#endif
 
   /********************************************/
   /* end sanity checks                        */
@@ -338,11 +336,9 @@ void on_boxl_change() {
   Dipole::on_boxl_change();
 #endif
 
-#ifdef LB
   lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
   LBBoundaries::lb_init_boundaries();
-#endif
 #endif
 }
 
@@ -362,21 +358,15 @@ void on_cell_structure_change() {
   Dipole::init();
 #endif /* ifdef DIPOLES */
 
-#ifdef LB
   if (lattice_switch == ActiveLB::CPU) {
     runtimeErrorMsg()
         << "The CPU LB does not currently support handling changes of the MD "
            "cell geometry. Setup the cell system, skin and interactions before "
            "activating the CPU LB.";
   }
-#endif
 }
 
-void on_temperature_change() {
-#if defined(LB) || defined(LB_GPU)
-  lb_lbfluid_reinit_parameters();
-#endif
-}
+void on_temperature_change() { lb_lbfluid_reinit_parameters(); }
 
 void on_parameter_change(int field) {
   EVENT_TRACE(
@@ -422,9 +412,7 @@ void on_parameter_change(int field) {
     reinit_thermo = 1;
     break;
   case FIELD_TIMESTEP:
-#if defined(LB) || defined(LB_GPU)
     lb_lbfluid_reinit_parameters();
-#endif
   case FIELD_LANGEVIN_GAMMA:
   case FIELD_LANGEVIN_GAMMA_ROTATION:
   case FIELD_NPTISO_G0:
@@ -447,12 +435,10 @@ void on_parameter_change(int field) {
     }
 #endif
     break;
-#ifdef LB
   case FIELD_LATTICE_SWITCH:
     /* LB needs ghost velocities */
     on_ghost_flags_change();
     break;
-#endif
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
     invalidate_obs();
@@ -481,11 +467,9 @@ void on_ghost_flags_change() {
   ghosts_have_v = 0;
   ghosts_have_bonds = 0;
 
-/* DPD and LB need also ghost velocities */
-#ifdef LB
+  /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
     ghosts_have_v = 1;
-#endif
 #ifdef BOND_CONSTRAINT
   if (n_rigidbonds)
     ghosts_have_v = 1;

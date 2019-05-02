@@ -12,8 +12,6 @@ enum class ActiveLB { NONE, CPU, GPU };
 /** @brief Switch determining the type of lattice dynamics. */
 extern ActiveLB lattice_switch;
 
-#if defined(LB) || defined(LB_GPU)
-
 /**
  * @brief Propagate the LB fluid.
  */
@@ -221,6 +219,5 @@ bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind);
 void lb_lbfluid_on_lb_params_change(LBParam field);
 
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
-#endif
 
 #endif

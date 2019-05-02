@@ -31,8 +31,6 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include <mpi.h>
 
-#ifdef LATTICE
-
 /** \name Types of halo communications */
 /*@{*/
 #define HALO_LOCL                                                              \
@@ -151,7 +149,5 @@ void release_halo_communication(HaloCommunicator *hc);
  *  @param[in]  base  base plane of local node
  */
 void halo_communication(HaloCommunicator const *hc, char *base);
-
-#endif /* LATTICE */
 
 #endif /* HALO_H */

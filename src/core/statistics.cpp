@@ -112,9 +112,7 @@ Utils::Vector3d calc_linear_momentum(int include_particles,
     linear_momentum += momentum_particles;
   }
   if (include_lbfluid) {
-#if defined(LB) or defined(LB_GPU)
     linear_momentum += lb_lbfluid_calc_fluid_momentum();
-#endif
   }
   return linear_momentum;
 }

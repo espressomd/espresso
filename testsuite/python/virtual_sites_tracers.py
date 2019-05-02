@@ -30,7 +30,7 @@ from numpy import random
 from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
-required_features = "VIRTUAL_SITES_INERTIALESS_TRACERS", "LB"
+required_features = "VIRTUAL_SITES_INERTIALESS_TRACERS"
 
 
 @ut.skipIf(not espressomd.has_features(required_features),

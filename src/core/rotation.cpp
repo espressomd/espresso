@@ -308,7 +308,7 @@ void convert_torques_propagate_omega() {
 
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
 
-#if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
+#if defined(ENGINE)
     if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
 
       auto const dip = p.swim.dipole_length * p.r.calc_director();

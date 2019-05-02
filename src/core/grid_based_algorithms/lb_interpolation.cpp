@@ -20,8 +20,6 @@ void mpi_set_interpolation_order_slave(int, int) {
   boost::mpi::broadcast(comm_cart, interpolation_order, 0);
 }
 
-#if defined(LB) || defined(LB_GPU)
-
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &order) {
   interpolation_order = order;
@@ -71,7 +69,6 @@ Utils::Vector3d node_u(Lattice::index_t index) {
 const Utils::Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
   if (lattice_switch == ActiveLB::CPU) {
-#ifdef LB
     Utils::Vector3d interpolated_u{};
 
     /* calculate fluid velocity at particle's position
@@ -84,7 +81,6 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
     return interpolated_u;
   }
-#endif
   return {};
 }
 
@@ -108,7 +104,6 @@ const Utils::Vector3d lb_lbinterpolation_get_interpolated_velocity_global(
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
-#ifdef LB
     switch (interpolation_order) {
     case (InterpolationOrder::quadratic):
       throw std::runtime_error("The non-linear interpolation scheme is not "
@@ -121,11 +116,9 @@ const Utils::Vector3d lb_lbinterpolation_get_interpolated_velocity_global(
       return mpi_recv_lb_interpolated_velocity(node, folded_pos);
     }
   }
-#endif
   return {};
 }
 
-#ifdef LB
 void lb_lbinterpolation_add_force_density(
     const Utils::Vector3d &pos, const Utils::Vector3d &force_density) {
   switch (interpolation_order) {
@@ -141,6 +134,3 @@ void lb_lbinterpolation_add_force_density(
     break;
   }
 }
-#endif
-
-#endif
