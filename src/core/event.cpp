@@ -447,12 +447,10 @@ void on_parameter_change(int field) {
     }
 #endif
     break;
-#ifdef LB
   case FIELD_LATTICE_SWITCH:
     /* LB needs ghost velocities */
     on_ghost_flags_change();
     break;
-#endif
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
     invalidate_obs();
@@ -482,10 +480,8 @@ void on_ghost_flags_change() {
   ghosts_have_bonds = 0;
 
 /* DPD and LB need also ghost velocities */
-#ifdef LB
-  if (lattice_switch == ActiveLB::CPU)
+  if ((lattice_switch == ActiveLB::CPU) or (lattice_switch == ActiveLB::WALBERLA))
     ghosts_have_v = 1;
-#endif
 #ifdef BOND_CONSTRAINT
   if (n_rigidbonds)
     ghosts_have_v = 1;

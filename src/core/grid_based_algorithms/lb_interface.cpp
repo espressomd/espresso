@@ -623,6 +623,7 @@ void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
   case ActiveLB::NONE:
   case ActiveLB::CPU:
   case ActiveLB::GPU:
+  case ActiveLB::WALBERLA:
     break;
   default:
     throw std::invalid_argument("Invalid lattice switch.");

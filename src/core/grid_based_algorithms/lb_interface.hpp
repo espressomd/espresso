@@ -7,7 +7,7 @@
 #include <utils/Vector.hpp>
 
 /** @brief LB implementation currently active. */
-enum class ActiveLB { NONE, CPU, GPU };
+enum class ActiveLB { NONE, CPU, GPU, WALBERLA };
 
 /** @brief Switch determining the type of lattice dynamics. */
 extern ActiveLB lattice_switch;
