@@ -25,6 +25,9 @@
 #ifndef D3Q19_H
 #define D3Q19_H
 
+#include <array>
+#include <cstddef>
+
 // circumvent bug in gcc versions < 6
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52036
 #if defined(__GNUC__) && (__GNUC___ < 6)
