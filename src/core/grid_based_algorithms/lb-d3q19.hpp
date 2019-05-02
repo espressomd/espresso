@@ -28,9 +28,11 @@
 #include <array>
 #include <cstddef>
 
+#include <boost/predef.h>
+
 // circumvent bug in gcc versions < 6
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52036
-#if defined(__GNUC__) && (__GNUC___ < 6)
+#if BOOST_COMP_GNUC && (BOOST_COMP_GNUC < BOOST_VERSION_NUMBER(6, 0, 0))
 #define GCC_EXTERN_STATEMENT extern
 #else
 #define GCC_EXTERN_STATEMENT static
@@ -91,7 +93,7 @@ static constexpr const std::array<double, 19> w = {
      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.}};
 
 /** Basis of the mode space as described in [Duenweg, Schiller, Ladd] */
-static constexpr const std::array<std::array<int, 19>, 19> e_ki = {
+GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19> e_ki = { // NOLINT
     {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
      {{0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0}},
      {{0, 0, 0, 1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 0, 1, -1, 1, -1}},
@@ -118,7 +120,7 @@ static constexpr const std::array<double, 19> w_k = {
      1. / 9., 1. / 9., 2. / 3., 2. / 3., 2. / 3., 2. / 9., 2. / 9., 2. / 9.,
      2.0, 4. / 9., 4. / 3.}};
 
-static constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
+GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = { // NOLINT
     {{{1, 0, 0, 0, -1, 0, -0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
      {{1, 1, 0, 0, 0, 1, 1, 0, 0, 0, -2, 0, 0, -0, 0, 0, -2, -1, -1}},
      {{1, -1, 0, 0, 0, 1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, -2, -1, -1}},
