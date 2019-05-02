@@ -170,8 +170,8 @@ html_last_updated_fmt = '%b %d, %Y'
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
-html_sidebars = { 
-    '**': ['localtoc.html','searchbox.html'] 
+html_sidebars = {
+    '**': ['localtoc.html','searchbox.html']
 }
 
 # Additional templates that should be rendered to pages, maps page names to
@@ -242,8 +242,9 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'ExtensibleSimulationPackageforSoftMatterResearch.tex', 'Extensible Simulation Package for Soft Matter Research Documentation',
-   'Florian Weik', 'manual'),
+    (master_doc, 'ExtensibleSimulationPackageforSoftMatterResearch.tex',
+     'Extensible Simulation Package for Soft Matter Research Documentation',
+     'Florian Weik', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -273,8 +274,8 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc, 'extensiblesimulationpackageforsoftmatterresearch',
-        'Extensible Simulation Package for Soft Matter Research Documentation',
-        [author], 1)
+     'Extensible Simulation Package for Soft Matter Research Documentation',
+     [author], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -287,11 +288,10 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'ExtensibleSimulationPackageforSoftMatterResearch', 'Extensible\
-      Simulation Package for Soft Matter Research Documentation', author,
-      'ExtensibleSimulationPackageforSoftMatterResearch', 'One line description\
-      of project.',
-   'Miscellaneous'),
+    (master_doc, 'ExtensibleSimulationPackageforSoftMatterResearch',
+     'Extensible Simulation Package for Soft Matter Research Documentation',
+     author, 'ExtensibleSimulationPackageforSoftMatterResearch',
+     'One line description of project.', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -309,8 +309,7 @@ texinfo_documents = [
 # Supress warning if html is build
 # http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 autodoc_mock_imports = ['featuredefs', 'mayavi', 'pyface', 'tvtk', 'vtk', 'MDAnalysis', 'electrostatics']
-autodoc_default_flags = ['members',
-                         'show-inheritance', 'undoc-members']
+autodoc_default_flags = ['members', 'show-inheritance', 'undoc-members']
 # For sidebar toc depth
 rst_prolog = """
 :tocdepth: 3
