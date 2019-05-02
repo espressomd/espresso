@@ -86,9 +86,6 @@ template <size_t N_vel = 19> struct LB_Model {
   /** normalization factors for the moment basis */
   std::array<double, N_vel> w_k;
 
-  /** speed of sound squared */
-  double c_sound_sq;
-
   /** transposed basis of moment space */
   std::array<std::array<int, N_vel>, N_vel> e_ki_transposed;
 };

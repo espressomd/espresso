@@ -95,7 +95,6 @@ LB_node_force_density_gpu node_f = {
 
 static LB_extern_nodeforcedensity_gpu *extern_node_force_densities = nullptr;
 
-#ifdef LB_BOUNDARIES_GPU
 /** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
 
@@ -104,11 +103,10 @@ static float *lb_boundary_velocity = nullptr;
 
 /** @name pointers for bound index array */
 /*@{*/
-static int *boundary_node_list;
-static int *boundary_index_list;
-static size_t size_of_boundindex;
+static int *boundary_node_list = nullptr;
+static int *boundary_index_list = nullptr;
+static size_t size_of_boundindex = 0;
 /*@}*/
-#endif
 
 EK_parameters *lb_ek_parameters_gpu;
 

@@ -33,6 +33,8 @@ InterpolationOrder lb_lbinterpolation_get_interpolation_order() {
   return interpolation_order;
 }
 
+#ifdef LB
+
 namespace {
 template <typename Op>
 void lattice_interpolation(Lattice const &lattice, Utils::Vector3d const &pos,
@@ -67,6 +69,7 @@ Utils::Vector3d node_u(Lattice::index_t index) {
 }
 
 } // namespace
+#endif
 
 const Utils::Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
@@ -83,8 +86,8 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
                           });
 
     return interpolated_u;
-  }
 #endif
+  }
   return {};
 }
 
@@ -120,8 +123,8 @@ const Utils::Vector3d lb_lbinterpolation_get_interpolated_velocity_global(
       }
       return mpi_recv_lb_interpolated_velocity(node, folded_pos);
     }
-  }
 #endif
+  }
   return {};
 }
 

@@ -50,7 +50,14 @@ void lb_lbcoupling_set_gamma(double gamma) {
 double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
 
 bool lb_lbcoupling_is_seed_required() {
-  return not lb_particle_coupling.rng_counter_coupling.is_initialized();
+  if (lattice_switch == ActiveLB::CPU) {
+    return not lb_particle_coupling.rng_counter_coupling.is_initialized();
+  } else if (lattice_switch == ActiveLB::GPU) {
+#ifdef LB_GPU
+    return not rng_counter_coupling_gpu.is_initialized();
+#endif
+  }
+  return false;
 }
 
 uint64_t lb_coupling_get_rng_state_cpu() {
@@ -269,8 +276,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         break;
       }
       }
-#endif
     }
+#endif
   }
 }
 

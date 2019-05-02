@@ -23,6 +23,7 @@
  */
 
 #include "lbgpu.hpp"
+#include "lb-d3q19.hpp"
 
 #ifdef LB_GPU
 
@@ -108,9 +109,6 @@ static int max_ran = 1000000;
 
 /** measures the MD time since the last fluid update */
 static int fluidstep = 0;
-
-/** c_sound_square in LB units*/
-static float c_sound_sq = 1.0f / 3.0f;
 
 // clock_t start, end;
 int i;
@@ -211,7 +209,8 @@ void lb_reinit_parameters_gpu() {
     LB_TRACE(fprintf(stderr, "fluct on \n"));
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).*/
     /* Note that the modes are not normalized as in the paper here! */
-    lbpar_gpu.mu = lbpar_gpu.kT * lbpar_gpu.tau * lbpar_gpu.tau / c_sound_sq /
+    lbpar_gpu.mu = lbpar_gpu.kT * lbpar_gpu.tau * lbpar_gpu.tau /
+                   D3Q19::c_sound_sq<float> /
                    (lbpar_gpu.agrid * lbpar_gpu.agrid);
   }
   LB_TRACE(fprintf(stderr, "lb_reinit_prarameters_gpu \n"));

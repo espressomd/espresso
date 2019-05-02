@@ -4,6 +4,7 @@
 #include "electrokinetics.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "lb-d3q19.hpp"
 #include "lb.hpp"
 #include "lbgpu.hpp"
 
@@ -1285,7 +1286,7 @@ const Utils::Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind) {
   Utils::Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
 
   // Add equilibrium stress to the diagonal (in LB units)
-  double const p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
+  double const p0 = lb_lbfluid_get_density() * D3Q19::c_sound_sq<double>;
 
   p_pi[0] += p0;
   p_pi[2] += p0;
@@ -1350,7 +1351,7 @@ const Utils::Vector6d lb_lbfluid_get_stress() {
     p *= (1. / lbpar_gpu.number_of_nodes);
 
     // Add equilibrium stress to the diagonal (in LB units)
-    double const p0 = lb_lbfluid_get_density() * lbmodel.c_sound_sq;
+    double const p0 = lb_lbfluid_get_density() * D3Q19::c_sound_sq<double>;
 
     p[0] += p0;
     p[2] += p0;

@@ -100,13 +100,9 @@ LB_Parameters lbpar = {
     0.0};
 
 /** The DnQm model to be used. */
-LB_Model<> lbmodel = {::D3Q19::c,
-                      ::D3Q19::coefficients,
-                      ::D3Q19::w,
-                      ::D3Q19::e_ki,
-                      ::D3Q19::w_k,
-                      ::D3Q19::c_sound_sq,
-                      ::D3Q19::e_ki_transposed};
+LB_Model<> lbmodel = {::D3Q19::c,   ::D3Q19::coefficients,
+                      ::D3Q19::w,   ::D3Q19::e_ki,
+                      ::D3Q19::w_k, ::D3Q19::e_ki_transposed};
 
 #if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
 #define FLATNOISE
@@ -237,7 +233,7 @@ void lb_reinit_parameters() {
   if (lbpar.kT > 0.0) {
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
      * Note that the modes are not normalized as in the paper here! */
-    double mu = lbpar.kT / lbmodel.c_sound_sq * lbpar.tau * lbpar.tau /
+    double mu = lbpar.kT / ::D3Q19::c_sound_sq * lbpar.tau * lbpar.tau /
                 (lbpar.agrid * lbpar.agrid);
 
     for (int i = 0; i < 4; i++)
@@ -1346,7 +1342,7 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
             for (l = 0; l < 3; l++) {
               population_shift -= lbpar.rho * 2 * lbmodel.c[i][l] *
                                   lbmodel.w[i] * lbfields[k].slip_velocity[l] /
-                                  lbmodel.c_sound_sq;
+                                  ::D3Q19::c_sound_sq;
             }
 
             if (x - lbmodel.c[i][0] > 0 &&
