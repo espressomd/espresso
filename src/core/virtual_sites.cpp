@@ -27,6 +27,8 @@
 #include "rotation.hpp"
 #include "statistics.hpp"
 
+#include <utils/constants.hpp>
+
 #ifdef VIRTUAL_SITES
 
 namespace {
@@ -48,12 +50,11 @@ void calculate_vs_relate_to_params(const Particle &p_current,
                                    const Particle &p_relate_to, double &l,
                                    Utils::Vector4d &quat) {
   // get the distance between the particles
-  Utils::Vector3d d;
-  get_mi_vector(d, p_current.r.p, p_relate_to.r.p);
+  Utils::Vector3d d = get_mi_vector(p_current.r.p, p_relate_to.r.p);
 
   // Check, if the distance between virtual and non-virtual particles is larger
   // htan minimum global cutoff If so, warn user
-  l = sqrt(sqrlen(d));
+  l = d.norm();
   if (l > min_global_cut && n_nodes > 1) {
     runtimeErrorMsg()
         << "Warning: The distance between virtual and non-virtual particle ("

@@ -25,7 +25,6 @@
 */
 
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include "TabulatedPotential.hpp"
 
@@ -226,16 +225,6 @@ struct IA_parameters {
 /*@}*/
 #endif
 
-#ifdef COS2
-  /** \name Cos2 potential */
-  /*@{*/
-  double COS2_eps = INACTIVE_CUTOFF;
-  double COS2_cut = INACTIVE_CUTOFF;
-  double COS2_offset = INACTIVE_CUTOFF;
-  double COS2_w = INACTIVE_CUTOFF;
-/*@}*/
-#endif
-
 #ifdef GAY_BERNE
   /** \name Gay-Berne potential */
   /*@{*/
@@ -375,7 +364,7 @@ inline int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
 
-#include "utils/math/sqr.hpp"
+#include <utils/math/sqr.hpp>
 
 /** Returns true if the particles are to be considered for short range
     interactions */

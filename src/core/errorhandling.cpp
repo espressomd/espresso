@@ -28,7 +28,6 @@
 #include <memory>
 
 #include "errorhandling.hpp"
-#include "utils.hpp"
 
 #include "MpiCallbacks.hpp"
 #include "RuntimeErrorCollector.hpp"

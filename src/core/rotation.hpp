@@ -30,7 +30,7 @@
 #ifdef ROTATION
 
 #include "particle_data.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 constexpr const int ROTATION_X = 2;
 constexpr const int ROTATION_Y = 4;

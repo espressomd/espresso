@@ -35,7 +35,7 @@ class Sample(ut.TestCase):
 
     def test_mobility(self):
         value = sample.mu
-        self.assertTrue(-0.4 < value < 0.4, "mobility = {:.2f}".format(value))
+        self.assertLess(abs(value), 0.45, "mobility = {:.2f}".format(value))
 
     def test_electrophoresis_gradient(self):
         # the force is applied along the x-axis

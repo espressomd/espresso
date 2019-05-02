@@ -37,7 +37,6 @@
 #include "debug.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 /** set the parameters for the bonded_coulomb potential
  *
@@ -54,12 +53,11 @@ int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
  */
 inline int
 calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *iaparams,
-                                  double dx[3], double force[3]) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
+                                  Utils::Vector3d const &dx, double *force) {
+  auto const dist = dx.norm();
 
-  auto const forcevec =
-      Coulomb::central_force(iaparams->p.bonded_coulomb_sr.q1q2, dx, dist);
+  auto const forcevec = Coulomb::central_force(
+      iaparams->p.bonded_coulomb_sr.q1q2, dx.data(), dist);
 
   force[0] = forcevec[0];
   force[1] = forcevec[1];
@@ -78,11 +76,13 @@ calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *iaparams,
  */
 inline int bonded_coulomb_sr_pair_energy(const Particle *p1, const Particle *p2,
                                          Bonded_ia_parameters const *iaparams,
-                                         double *dx, double *_energy) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
+                                         Utils::Vector3d const &dx,
+                                         double *_energy) {
+  auto const dist2 = dx.norm2();
+  auto const dist = sqrt(dist2);
+
   *_energy = Coulomb::pair_energy(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2,
-                                  dx, dist, dist2);
+                                  dx.data(), dist, dist2);
   return 0;
 }
 

@@ -25,7 +25,7 @@
  *
  */
 
-#include "config.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 
 #include "communication.hpp"
 #include "event.hpp"
@@ -33,13 +33,13 @@
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
-#include "utils/index.hpp"
+#include <utils/index.hpp>
 using Utils::get_linear_index;
+#include <utils/constants.hpp>
 
 #include <algorithm>
 #include <limits>

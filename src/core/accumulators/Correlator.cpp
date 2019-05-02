@@ -20,9 +20,8 @@
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
-#include "utils/serialization/multi_array.hpp"
+#include <utils/serialization/multi_array.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>

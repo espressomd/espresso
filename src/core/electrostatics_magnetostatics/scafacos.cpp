@@ -41,7 +41,6 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "tuning.hpp"
-#include "utils.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"

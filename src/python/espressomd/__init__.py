@@ -23,7 +23,7 @@
 import espressomd._init
 
 from espressomd.system import System
-from espressomd.code_info import features
+from espressomd.code_info import features, all_features
 from espressomd.cuda_init import gpu_available
 
 
@@ -38,16 +38,22 @@ def has_features(*args):
     """Tests whether a list of features is a subset of the compiled-in features"""
 
     if len(args) == 1 and not isinstance(args[0], str) and hasattr(args[0], "__iter__"):
-        return set(args[0]) < set(features())
+        check_set = set(args[0])
+    else:
+        check_set = set(args)
 
-    return set(args) < set(features())
+    if not check_set < all_features():
+        raise RuntimeError(
+            "'{}' is not a feature".format(','.join(check_set - all_features())))
+
+    return check_set < set(features())
 
 
 def missing_features(*args):
     """Returns a list of the missing features in the argument"""
 
     if len(args) == 1 and not isinstance(args[0], str) and hasattr(args[0], "__iter__"):
-            return set(args[0]) - set(features())
+        return set(args[0]) - set(features())
 
     return set(args) - set(features())
 

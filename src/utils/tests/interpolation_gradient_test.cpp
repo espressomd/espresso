@@ -25,7 +25,8 @@
 using Utils::Interpolation::bspline_3d_gradient;
 using Utils::Interpolation::bspline_3d_gradient_accumulate;
 
-#include "common/gaussian.hpp"
+#include "utils/math/gaussian.hpp"
+#include "utils/raster.hpp"
 
 #include <limits>
 
@@ -115,7 +116,9 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_integration_test_odd) {
   auto const x0 = origin + 0.57 * n_nodes * grid_spacing;
   auto const sigma = 4.;
 
-  auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+  auto const data = Utils::raster<double>(
+      origin, grid_spacing, Utils::Vector3i::broadcast(n_nodes),
+      [&](auto x) { return gaussian(x, x0, sigma); });
 
   auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
   auto const interpolated_value = bspline_3d_gradient_accumulate<order>(
@@ -168,7 +171,9 @@ BOOST_AUTO_TEST_CASE(interpolation_gradient_integration_test_even) {
   auto const x0 = origin + 0.57 * n_nodes * grid_spacing;
   auto const sigma = 4.;
 
-  auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+  auto const data = Utils::raster<double>(
+      origin, grid_spacing, Utils::Vector3i::broadcast(n_nodes),
+      [&](auto x) { return gaussian(x, x0, sigma); });
 
   auto const p = Utils::Vector3d{-.4, 3.14, 0.1};
   auto const interpolated_value = bspline_3d_gradient_accumulate<order>(

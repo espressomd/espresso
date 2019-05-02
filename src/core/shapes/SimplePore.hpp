@@ -21,7 +21,7 @@
 #define SHAPES_SIMPLE_PORE_HPP
 
 #include "Shape.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Shapes {
 class SimplePore : public Shape {

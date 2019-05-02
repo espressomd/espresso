@@ -33,6 +33,13 @@
  */
 
 #include "rotation.hpp"
+
+/****************************************************
+ *                     DEFINES
+ ***************************************************/
+/**************** local variables  *******************/
+
+#ifdef ROTATION
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
@@ -44,20 +51,14 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
+
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
-
-/****************************************************
- *                     DEFINES
- ***************************************************/
-/**************** local variables  *******************/
-
-#ifdef ROTATION
 
 /** \name Private Functions */
 /************************************************************/

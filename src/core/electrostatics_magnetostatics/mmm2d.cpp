@@ -25,6 +25,8 @@
  */
 
 #include "electrostatics_magnetostatics/mmm2d.hpp"
+
+#ifdef ELECTROSTATICS
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -34,12 +36,14 @@
 #include "mmm-common.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
-#include "utils.hpp"
+
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
+
 #include <cmath>
 #include <mpi.h>
 #include <numeric>
 
-#ifdef ELECTROSTATICS
 char const *mmm2d_errors[] = {
     "ok",
     "Layer height too large for MMM2D near formula, increase n_layers",
@@ -1843,7 +1847,6 @@ void MMM2D_dielectric_layers_force_contribution() {
   Cell *celll;
   int npl;
   Particle *pl, *p1;
-  double d[3];
   double charge_factor;
   double a[3];
   double force[3] = {0, 0, 0};
@@ -1869,11 +1872,12 @@ void MMM2D_dielectric_layers_force_contribution() {
         a[0] = pl[j].r.p[0];
         a[1] = pl[j].r.p[1];
         a[2] = -pl[j].r.p[2];
-        layered_get_mi_vector(d, p1->r.p.data(), a);
-        auto const dist2 = sqrlen(d);
+        Utils::Vector3d d;
+        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
         charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_bot;
-        add_mmm2d_coulomb_pair_force(charge_factor, d, dist, force);
+        add_mmm2d_coulomb_pair_force(charge_factor, d.data(), dist, force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] -= pref * charge_factor;
       }
@@ -1898,11 +1902,12 @@ void MMM2D_dielectric_layers_force_contribution() {
         a[0] = pl[j].r.p[0];
         a[1] = pl[j].r.p[1];
         a[2] = 2 * box_l[2] - pl[j].r.p[2];
-        layered_get_mi_vector(d, p1->r.p.data(), a);
-        auto const dist2 = sqrlen(d);
+        Utils::Vector3d d;
+        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
         charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_top;
-        add_mmm2d_coulomb_pair_force(charge_factor, d, dist, force);
+        add_mmm2d_coulomb_pair_force(charge_factor, d.data(), dist, force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] += pref * charge_factor;
       }
@@ -1918,7 +1923,6 @@ double MMM2D_dielectric_layers_energy_contribution() {
   Cell *celll;
   int npl;
   Particle *pl, *p1;
-  double dist2, d[3];
   double charge_factor;
   double a[3];
   double eng = 0.0;
@@ -1939,12 +1943,13 @@ double MMM2D_dielectric_layers_energy_contribution() {
         a[0] = pl[j].r.p[0];
         a[1] = pl[j].r.p[1];
         a[2] = -pl[j].r.p[2];
-        layered_get_mi_vector(d, p1->r.p.data(), a);
-        dist2 = sqrlen(d);
+        Utils::Vector3d d;
+        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        auto const dist2 = d.norm2();
         charge_factor = mmm2d_params.delta_mid_bot * p1->p.q * pl[j].p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
-        eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) +
+        eng += mmm2d_coulomb_pair_energy(charge_factor, d.data(), sqrt(dist2)) +
                pref * charge_factor * d[2];
       }
     }
@@ -1961,12 +1966,13 @@ double MMM2D_dielectric_layers_energy_contribution() {
         a[0] = pl[j].r.p[0];
         a[1] = pl[j].r.p[1];
         a[2] = 2 * box_l[2] - pl[j].r.p[2];
-        layered_get_mi_vector(d, p1->r.p.data(), a);
-        dist2 = sqrlen(d);
+        Utils::Vector3d d;
+        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        auto const dist2 = d.norm2();
         charge_factor = mmm2d_params.delta_mid_top * p1->p.q * pl[j].p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
-        eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) -
+        eng += mmm2d_coulomb_pair_energy(charge_factor, d.data(), sqrt(dist2)) -
                pref * charge_factor * d[2];
       }
     }

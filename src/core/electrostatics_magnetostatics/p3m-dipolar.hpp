@@ -44,7 +44,8 @@
 #include "p3m-common.hpp"
 #include "particle_data.hpp"
 
-#include "utils/math/AS_erfc_part.hpp"
+#include <utils/constants.hpp>
+#include <utils/math/AS_erfc_part.hpp>
 
 struct dp3m_data_struct {
   dp3m_data_struct();
@@ -303,7 +304,7 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
 }
 
 /** Calculate real space contribution of dipolar pair energy. */
-inline double dp3m_pair_energy(Particle *p1, Particle *p2,
+inline double dp3m_pair_energy(const Particle *p1, const Particle *p2,
                                double const *const d, double dist2,
                                double dist) {
   const Utils::Vector3d dip1 = p1->calc_dip();

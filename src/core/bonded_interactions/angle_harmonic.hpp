@@ -31,6 +31,9 @@
 
 #include "angle_common.hpp"
 #include "grid.hpp"
+
+#include <utils/math/sqr.hpp>
+
 #include <tuple>
 
 /** Set parameters for the angle potential. */

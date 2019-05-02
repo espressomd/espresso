@@ -27,6 +27,8 @@
 #ifdef LENNARD_JONES
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+
 int subt_lj_set_params(int bond_type) {
   if (bond_type < 0)
     return ES_ERROR;

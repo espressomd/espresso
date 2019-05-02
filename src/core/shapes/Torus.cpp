@@ -1,6 +1,6 @@
 #include "Torus.hpp"
-#include "utils/math/sqr.hpp"
 #include <cmath>
+#include <utils/math/sqr.hpp>
 
 namespace Shapes {
 

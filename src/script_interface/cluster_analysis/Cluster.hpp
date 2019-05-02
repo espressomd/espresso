@@ -24,7 +24,8 @@
 
 #include "ScriptInterface.hpp"
 #include "core/cluster_analysis/Cluster.hpp"
-#include "core/utils/Factory.hpp"
+
+#include <utils/Factory.hpp>
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {

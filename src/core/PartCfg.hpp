@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "grid.hpp"
 #include "particle_data.hpp"
 #include "serialization/Particle.hpp"
-#include "utils/SkipIterator.hpp"
+#include <utils/SkipIterator.hpp>
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/range/iterator_range.hpp>

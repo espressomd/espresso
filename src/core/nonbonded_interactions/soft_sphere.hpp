@@ -34,7 +34,6 @@
 #include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 ///
 int soft_sphere_set_params(int part_type_a, int part_type_b, double a, double n,

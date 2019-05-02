@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_CONSTRAINTS_DETAIL_VISCOUS_HPP
 #define CORE_CONSTRAINTS_DETAIL_VISCOUS_HPP
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace FieldCoupling {
 namespace Coupling {

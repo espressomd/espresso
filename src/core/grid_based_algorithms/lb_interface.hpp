@@ -4,7 +4,7 @@
 #include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 /** @brief LB implementation currently active. */
 enum class ActiveLB { NONE, CPU, GPU };
