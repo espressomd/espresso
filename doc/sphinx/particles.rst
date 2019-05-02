@@ -194,41 +194,59 @@ Create particular particle configurations
 Setting up polymer chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-::
-
-    from espressomd.polymer import create_polymer
-
-A function that allows to create a number of polymers and polyelectrolytes.
-See :attr:`espressomd.polymer.create_polymer()` for a detailed list of
+If you want to have polymers in your system, you can use the function
+`espressomd.polymer.positions()` to determine suitable postitions.
+See :attr:`espressomd.polymer.positions()` for a detailed list of
 arguments.
 
-The distance between adjacent monomers
+Required arguments are the desired number of polymers ``n_polymers``, the
+number of monomers per polymer chain ``beads_per_chain``, and the parameter
+``bond_length``, which determines the distance between adjacent monomers
+within the polymer chains.
+Determining suitable particle positions pseudo-randomly requires the use of
+a pseudo-random number genererator, which has to be seeded. This ``seed``
+is therefore also a mandatory parameter.
+
+The function :attr:`espressomd.polymer.positions()` returns a
+three-dimensional numpy array, namely a list of polymers containing the
+positions of monomers (x, y, z). A quick example of how to set up polymers::
+
+     import espressomd
+     from espressomd import polymer
+
+     system = espressomd.System([50, 50, 50])
+     polymers = polymer.positions(n_polymers=10,
+                                  beads_per_chain=25,
+                                  bond_length=0.9, seed=23)
+     for p in polymers:
+         for i, m in enumerate(p):
+            id = len(system.part)
+            system.part.add(id=id, pos=m)
+            if i > 0:
+                system.part[id].add_bond((<BOND_TYPE>, id - 1))
+
+If there are constraints present in your system which you want to be taken
+into account when creating the polymer positions, you can set the optional
+boolean parameter ``respect_constraint=True``.
+To simulate excluded volume while drawing the polymer positions, a minimum
+distance between all particles can be set via ``min_distance``. This will
+also resprect already existing particles in the system.
+Both when setting ``respect_constraints`` and choosing a ``min_distance``
+trial positions are pseudo-randomly chosen and only accepted if the
+requested requirement is fulfilled. Otherwise, a new attepmt will be made,
+up to ``max_tries`` times per monomer and if this fails ``max_tries`` per
+polymer. The default value is ``max_tries=1000``. Depending on the total
+number of beads and constraints, this value may need to be adapted. If
+detemining suitable polymer positions whithin this limit fails, a runtime
+error is thrown.
+
+Note that the distance between adjacent monomers
 during the course of the simulation depends on the applied potentials.
 For fixed bond length please refer to the Rattle Shake
 algorithm\ :cite:`andersen83a`. The algorithm is based on
 Verlet algorithm and satisfy internal constraints for molecular models
 with internal constraints, using Lagrange multipliers.
 
-The polymer can be created using several different random walk modes (via the parameter ``modes``):
-
- (Random walk)
-    ``mode = 1`` The monomers are randomly placed by a random walk with a
-    step size of ``bond_length``.
-
- (Pruned self-avoiding walk)
-    ``mode = 2`` The position of a monomer is randomly chosen within a distance
-    to the previous monomer. If the position is closer to another
-    particle than ``shield``, the attempt is repeated up to ``max_tries`` times. Note, that this
-    is not a real self-avoiding random walk, as the particle
-    distribution is not the same. If you want a real self-avoiding walk, use
-    the mode 0. However, this mode is several orders of magnitude faster than a
-    true self-avoiding random walk, especially for long chains.
-
- (Self-avoiding random walk)
-    ``mode = 0`` The positions of the monomers are chosen as in the plain
-    random walk. However, if this results in a chain that has a monomer
-    that is closer to another particle than ``shield``, a new attempt of setting
-    up the whole chain is done, up to ``max_tries`` times.
 
 .. _Setting up diamond polymer networks:
 
