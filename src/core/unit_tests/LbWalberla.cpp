@@ -22,11 +22,11 @@ Utils::Vector3i node_grid;
 
 BOOST_AUTO_TEST_CASE(viscosity_test) {
   LbWalberla lb = LbWalberla(viscosity, agrid, box_dimensions, node_grid, skin);
-  BOOST_CHECK(abs(lb.get_viscosity() - viscosity) <
+  BOOST_CHECK(fabs(lb.get_viscosity() - viscosity) <
               std::numeric_limits<double>::epsilon());
   double new_viscosity = 2.0;
   lb.set_viscosity(new_viscosity);
-  BOOST_CHECK(abs(lb.get_viscosity() - new_viscosity) <
+  BOOST_CHECK(fabs(lb.get_viscosity() - new_viscosity) <
               std::numeric_limits<double>::epsilon());
 }
 
