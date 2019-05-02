@@ -299,9 +299,6 @@ class VirtualSites(ut.TestCase):
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=0, sigma=0, cutoff=0, shift=0)
 
-    @ut.skipIf(
-        espressomd.has_features("VIRTUAL_SITES_THERMOSTAT"),
-        "LJ fluid test only works when VIRTUAL_SITES_THERMOSTAT is not compiled in.")
     def test_lj(self):
         """Run LJ fluid test for different cell systems."""
         system = self.system

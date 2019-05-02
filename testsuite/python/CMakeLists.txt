@@ -195,6 +195,7 @@ python_test(FILE lb_density.py MAX_NUM_PROC 1)
 python_test(FILE observable_chain.py MAX_NUM_PROC 4)
 python_test(FILE mpiio.py MAX_NUM_PROC 4)
 python_test(FILE gpu_availability.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE features.py MAX_NUM_PROC 1)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
