@@ -29,7 +29,6 @@
 
 #include "grid_based_algorithms/lb.hpp"
 
-#ifdef LB
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
@@ -136,13 +135,10 @@ HaloCommunicator update_halo_comm = {0, nullptr};
 static double fluidstep = 0.0;
 
 /***********************************************************************/
-#endif // LB
 
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-
-#ifdef LB
 
 /********************** The Main LB Part *************************************/
 void lb_init() {
@@ -185,7 +181,6 @@ void lb_init() {
 }
 
 void lb_reinit_fluid() {
-#ifdef LB
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   Utils::Vector3d j{};
@@ -207,7 +202,6 @@ void lb_reinit_fluid() {
 #ifdef LB_BOUNDARIES
   LBBoundaries::lb_init_boundaries();
 #endif // LB_BOUNDARIES
-#endif
 }
 
 void lb_reinit_parameters() {
@@ -1437,5 +1431,3 @@ void lb_collect_boundary_forces(double *result) {
 }
 
 /*@}*/
-
-#endif // LB

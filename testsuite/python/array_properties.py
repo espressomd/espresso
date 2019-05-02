@@ -86,9 +86,8 @@ class ArrayPropertyTest(ut.TestCase):
     system.time_step = 0.01
     system.cell_system.skin = 0.01
     system.part.add(pos=[0, 0, 0])
-    if espressomd.has_features(["LB"]):
-        lbf = lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
-        system.actors.add(lbf)
+    lbf = lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
+    system.actors.add(lbf)
 
     def locked_operators(self, v):
         with self.assertRaises(ValueError):
@@ -264,8 +263,6 @@ class ArrayPropertyTest(ut.TestCase):
         # Particle
         self.set_copy(self.system.part[0].gamma_rot)
 
-    @ut.skipIf(not espressomd.has_features(["LB"]),
-               "Features not available, skipping test!")
     def test_lb(self):
         # Check for exception for various operators
         # LB

@@ -87,10 +87,8 @@ static void pack_particles(ParticleRange particles,
     buffer[i].swim.f_swim = static_cast<float>(part.swim.f_swim);
     buffer[i].swim.director = buffer[i].director;
 
-#if defined(LB) || defined(LB_GPU)
     buffer[i].swim.push_pull = part.swim.push_pull;
     buffer[i].swim.dipole_length = static_cast<float>(part.swim.dipole_length);
-#endif
     buffer[i].swim.swimming = part.swim.swimming;
 #endif
     i++;

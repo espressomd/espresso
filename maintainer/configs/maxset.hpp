@@ -38,7 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DPD
 #define METADYNAMICS
 
-#define LB
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 

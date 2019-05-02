@@ -82,8 +82,6 @@ class LBSwitchActor(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(system.part[0].f), [-friction_2, 0.0, 0.0])
 
-    @ut.skipIf(not espressomd.has_features(["LB"]),
-               "LB_GPU not available, skipping test.")
     def test_CPU_LB(self):
         self.switch_test()
 

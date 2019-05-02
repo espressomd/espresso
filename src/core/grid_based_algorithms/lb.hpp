@@ -32,8 +32,6 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 
-#ifdef LB
-
 #include <array>
 #include <boost/optional.hpp>
 #include <memory>
@@ -270,7 +268,6 @@ inline void lb_set_populations(Lattice::index_t index,
 uint64_t lb_fluid_get_rng_state();
 void lb_fluid_set_rng_state(uint64_t counter);
 void lb_prepare_communication();
-#endif
 
 #ifdef LB_BOUNDARIES
 /** Bounce back boundary conditions.

@@ -165,7 +165,7 @@ class LBShearCommon(object):
 
 
 @ut.skipIf(not espressomd.has_features(
-    ['LB', 'LB_BOUNDARIES']), "Skipping test due to missing features.")
+    ['LB_BOUNDARIES']), "Skipping test due to missing features.")
 class LBCPUShear(ut.TestCase, LBShearCommon):
 
     """Test for the CPU implementation of the LB."""

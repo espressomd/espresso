@@ -54,25 +54,21 @@ VIRTUAL_SITES_RELATIVE          implies ROTATION
 
 VIRTUAL_SITES_INERTIALESS_TRACERS
 VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
-VIRTUAL_SITES_INERTIALESS_TRACERS requires LB or LB_GPU
 
 /* DPD features */
 DPD
 
 /* Lattice-Boltzmann features */
-LB
 LB_GPU                          requires CUDA
-LB_BOUNDARIES                   requires LB
+LB_BOUNDARIES
 LB_BOUNDARIES_GPU               requires LB_GPU
-LB_ELECTROHYDRODYNAMICS         implies LB
+LB_ELECTROHYDRODYNAMICS
 ELECTROKINETICS                 implies LB_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 ELECTROKINETICS                 requires CUDA
 EK_BOUNDARIES                   implies ELECTROKINETICS, LB_GPU, LB_BOUNDARIES_GPU, EXTERNAL_FORCES, ELECTROSTATICS
 EK_BOUNDARIES                   requires CUDA
 EK_DEBUG                        requires ELECTROKINETICS
 EK_DOUBLE_PREC                  requires ELECTROKINETICS
-LATTICE                         equals LB or LB_GPU
-
 
 /* Interaction features */
 TABULATED

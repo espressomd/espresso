@@ -221,9 +221,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     thermo_heat_up();
 
-#if defined(LB) || defined(LB_GPU)
     lb_lbcoupling_deactivate();
-#endif
 
     // Communication step: distribute ghost positions
     cells_update_ghosts();
@@ -316,10 +314,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
 
-#if defined(LB) || defined(LB_GPU)
     if (n_part > 0)
       lb_lbcoupling_activate();
-#endif
 
     // Communication step: distribute ghost positions
     cells_update_ghosts();
@@ -364,10 +360,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-#if defined(LB) || defined(LB_GPU)
       lb_lbfluid_propagate();
       lb_lbcoupling_propagate();
-#endif // LB || LB_GPU
 
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation();

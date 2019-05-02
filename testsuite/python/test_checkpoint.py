@@ -27,7 +27,7 @@ import tests_common
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
 
-LB = (espressomd.has_features('LB') and 'LB.CPU' in modes or
+LB = ('LB.CPU' in modes or
       espressomd.gpu_available() and espressomd.has_features('LB_GPU') and 'LB.GPU' in modes)
 
 EK = (espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') and 'EK.GPU'
