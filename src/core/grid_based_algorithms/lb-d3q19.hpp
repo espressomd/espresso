@@ -35,6 +35,8 @@
 
 namespace D3Q19 {
 
+static constexpr std::size_t n_vel = 19;
+
 /** Velocity sub-lattice of the D3Q19 model */
 static constexpr const std::array<std::array<double, 3>, 19> c = {
     {{{0., 0., 0.}},
