@@ -64,7 +64,7 @@ using Utils::get_linear_index;
 
 namespace {
 /** Basis of the mode space as described in [Duenweg, Schiller, Ladd] */
-constexpr const std::array<std::array<int, 19>, 19> e_ki = {
+extern constexpr const std::array<std::array<int, 19>, 19> e_ki = {
     {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
      {{0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0}},
      {{0, 0, 0, 1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 0, 1, -1, 1, -1}},
@@ -85,7 +85,7 @@ constexpr const std::array<std::array<int, 19>, 19> e_ki = {
      {{0, -1, -1, 1, 1, -0, -0, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1}},
      {{0, -1, -1, -1, -1, 2, 2, 2, 2, 2, 2, -1, -1, -1, -1, -1, -1, -1, -1}}}};
 
-constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
+extern constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
     {{{1, 0, 0, 0, -1, 0, -0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
      {{1, 1, 0, 0, 0, 1, 1, 0, 0, 0, -2, 0, 0, -0, 0, 0, -2, -1, -1}},
      {{1, -1, 0, 0, 0, 1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, -2, -1, -1}},
