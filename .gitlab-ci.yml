@@ -13,6 +13,14 @@ stages:
     - staging.tmp
     - trying.tmp
 
+.notification_job_template: &notification_job_definition
+  <<: *global_job_definition
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  dependencies: []
+  tags:
+    - linux
+
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   CCACHE_DIR: /cache
@@ -20,7 +28,7 @@ variables:
   with_ccache: "true"
 
 check_permission:
-  <<: *global_job_definition
+  <<: *notification_job_definition
   stage: permission
   only:
     - /.*external.*/
@@ -28,15 +36,11 @@ check_permission:
   allow_failure: false
   script:
     - exit 0
-  tags:
-    - linux
 
 status_pending:
-  <<: *global_job_definition
+  <<: *notification_job_definition
   stage: prepare
   script: bash maintainer/gh_post_status.sh pending
-  tags:
-    - linux
 
 style:
   <<: *global_job_definition
@@ -322,6 +326,8 @@ ubuntu:ppc64le:
 
 ubuntu:s390x:
   <<: *arch_definition
+  variables:
+    LD_BIND_NOW: none
 
 ### Builds with OS X
 
@@ -468,39 +474,29 @@ deploy_doxygen_documentation:
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
 
 status_success:
-  <<: *global_job_definition
+  <<: *notification_job_definition
   stage: result
   script: bash maintainer/gh_post_status.sh success
   when: on_success
-  tags:
-    - linux
-  dependencies: []
 
 status_failure:
-  <<: *global_job_definition
+  <<: *notification_job_definition
   stage: result
   script: bash maintainer/gh_post_status.sh failure
   when: on_failure
-  tags:
-    - linux
-  dependencies: []
 
 notify_success:
-  <<: *global_job_definition
+  <<: *notification_job_definition
   stage: result
   script: bash maintainer/gh_close_issue.sh
   when: on_success
   only:
     - python
-  tags:
-    - linux
 
 notify_failure:
-  <<: *global_job_definition
+  <<: *notification_job_definition
   stage: result
   script: bash maintainer/gh_create_issue.sh
   when: on_failure
   only:
     - python
-  tags:
-    - linux

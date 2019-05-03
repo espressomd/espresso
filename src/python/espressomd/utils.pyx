@@ -231,6 +231,18 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
     def __ixor__(self, val):
         raise ValueError(array_locked.ERR_MSG)
 
+
+cdef make_array_locked(const Vector3d & v):
+    return array_locked([v[0], v[1], v[2]])
+
+
+cdef Vector3d make_Vector3d(a):
+    cdef Vector3d v
+    for i, ai in enumerate(a):
+        v[i] = ai
+    return v
+
+
 cpdef handle_errors(msg):
     """
     Gathers runtime errors.
@@ -283,6 +295,3 @@ def is_valid_type(value, t):
         return isinstance(value, (float, np.float16, np.float32, np.float64, np.longdouble))
     else:
         return isinstance(value, t)
-
-cdef make_array_locked(const Vector3d & v):
-    return array_locked([v[0], v[1], v[2]])
