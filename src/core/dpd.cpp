@@ -30,11 +30,6 @@
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
 
-#include "utils/NoOp.hpp"
-
-#include <boost/mpi/collectives.hpp>
-#include <boost/serialization/vector.hpp>
-
 using Utils::Vector3d;
 
 Utils::Vector9d dpd_virial = {0, 0, 0, 0, 0, 0, 0, 0, 0};
