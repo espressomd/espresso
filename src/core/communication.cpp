@@ -55,6 +55,7 @@
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
+#include "dpd.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
@@ -77,6 +78,7 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
 using namespace std;
 
@@ -137,7 +139,8 @@ int n_nodes = -1;
   CB(mpi_update_particle_slave)                                                \
   CB(mpi_bcast_lb_particle_coupling_slave)                                     \
   CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
-  CB(mpi_set_interpolation_order_slave)
+  CB(mpi_set_interpolation_order_slave)                                        \
+  CB(mpi_get_dpd_virial_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -889,6 +892,24 @@ void mpi_setup_reaction() {
 void mpi_setup_reaction_slave(int, int) {
 #ifdef SWIMMER_REACTIONS
   local_setup_reaction();
+#endif
+}
+
+/******************** REQ_DPD ********************/
+
+void mpi_get_dpd_virial() {
+#ifdef DPD
+  mpi_call(mpi_get_dpd_virial_slave, -1, 0);
+
+  boost::mpi::reduce(comm_cart, dpd_virial, dpd_global_virial, std::plus<>(), 0);
+
+#endif
+}
+
+void mpi_get_dpd_virial_slave(int, int) {
+#ifdef DPD
+
+  boost::mpi::reduce(comm_cart, dpd_virial, dpd_global_virial, std::plus<>(), 0);
 #endif
 }
 

@@ -47,6 +47,8 @@ Utils::Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                                double dist, double dist2,
                                bool include_noise = true);
 Utils::Vector9d dpd_stress();
+extern Utils::Vector9d dpd_virial;
+extern Utils::Vector9d dpd_global_virial;
 #endif
 
 #endif

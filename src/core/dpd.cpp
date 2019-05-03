@@ -33,8 +33,12 @@
 #include "utils/NoOp.hpp"
 
 #include <boost/mpi/collectives.hpp>
+#include <boost/serialization/vector.hpp>
 
 using Utils::Vector3d;
+
+Utils::Vector9d dpd_virial = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+Utils::Vector9d dpd_global_virial = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
@@ -198,28 +202,11 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
 }
 
 Utils::Vector9d dpd_stress() {
-  using Utils::Vector9d;
 
-  Vector9d dpd_stress{};
-  Vector9d dpd_stress_global{};
+  mpi_get_dpd_virial();
 
-  if (max_cut > 0) {
-    short_range_loop(
-        Utils::NoOp{}, [&dpd_stress](Particle &p1, Particle &p2, Distance &d) {
-          IA_parameters *ia_params = get_ia_param(p1.p.type, p2.p.type);
-          bool include_noise = false;
-          auto const f = dpd_pair_force(&p1, &p2, ia_params, d.vec21.data(),
-                                        sqrt(d.dist2), d.dist2, include_noise);
-          const Vector3d &r = d.vec21;
-          dpd_stress += Vector9d{r[0] * f[0], r[0] * f[1], r[0] * f[2],
-                                 r[1] * f[0], r[1] * f[1], r[1] * f[2],
-                                 r[2] * f[0], r[2] * f[1], r[2] * f[2]};
-        });
-  }
+  dpd_global_virial /= (box_l[0] * box_l[1] * box_l[2]);
 
-  boost::mpi::reduce(comm_cart, dpd_stress, dpd_stress_global, std::plus<>() , 0);
-
-  dpd_stress_global /= (box_l[0] * box_l[1] * box_l[2]);
-  return dpd_stress_global;
+  return dpd_global_virial;
 }
 #endif
