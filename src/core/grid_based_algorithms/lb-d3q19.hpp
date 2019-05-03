@@ -28,16 +28,6 @@
 #include <array>
 #include <cstddef>
 
-#include <boost/predef.h>
-
-// circumvent bug in gcc versions < 6
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52036
-#if BOOST_COMP_GNUC && (BOOST_COMP_GNUC < BOOST_VERSION_NUMBER(6, 0, 0))
-#define GCC_EXTERN_STATEMENT extern
-#else
-#define GCC_EXTERN_STATEMENT static
-#endif
-
 namespace D3Q19 {
 
 static constexpr std::size_t n_vel = 19;
@@ -92,8 +82,9 @@ static constexpr const std::array<double, 19> w = {
      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.,
      1. / 36., 1. / 36., 1. / 36., 1. / 36., 1. / 36.}};
 
+namespace {
 /** Basis of the mode space as described in [Duenweg, Schiller, Ladd] */
-GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19> e_ki =
+constexpr const std::array<std::array<int, 19>, 19> e_ki =
     { // NOLINT
         {{{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}},
          {{0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0}},
@@ -115,6 +106,7 @@ GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19> e_ki =
          {{0, -1, -1, 1, 1, -0, -0, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1}},
          {{0, -1, -1, -1, -1, 2, 2, 2, 2, 2, 2, -1, -1, -1, -1, -1, -1, -1,
            -1}}}};
+}
 
 /* the following values are the (weighted) lengths of the vectors */
 static constexpr const std::array<double, 19> w_k = {
@@ -122,7 +114,8 @@ static constexpr const std::array<double, 19> w_k = {
      1. / 9., 1. / 9., 2. / 3., 2. / 3., 2. / 3., 2. / 9., 2. / 9., 2. / 9.,
      2.0, 4. / 9., 4. / 3.}};
 
-GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19>
+namespace {
+constexpr const std::array<std::array<int, 19>, 19>
     e_ki_transposed = { // NOLINT
         {{{1, 0, 0, 0, -1, 0, -0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
          {{1, 1, 0, 0, 0, 1, 1, 0, 0, 0, -2, 0, 0, -0, 0, 0, -2, -1, -1}},
@@ -143,6 +136,7 @@ GCC_EXTERN_STATEMENT constexpr const std::array<std::array<int, 19>, 19>
          {{1, 0, -1, -1, 1, -1, -1, 0, 0, 1, 0, -1, -1, 0, 1, 1, 1, -1, -1}},
          {{1, 0, 1, -1, 1, -1, -1, 0, 0, -1, 0, 1, -1, 0, -1, 1, 1, -1, -1}},
          {{1, 0, -1, 1, 1, -1, -1, 0, 0, -1, 0, -1, 1, 0, 1, -1, 1, -1, -1}}}};
+}
 
 template <typename T>
 static constexpr const T c_sound_sq = static_cast<T>(1. / 3.);
