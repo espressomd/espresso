@@ -42,6 +42,6 @@ unit_test(NAME field_coupling_couplings SRC field_coupling_couplings_test.cpp DE
 unit_test(NAME field_coupling_fields SRC field_coupling_fields_test.cpp DEPENDS utils)
 unit_test(NAME field_coupling_force_field SRC field_coupling_force_field_test.cpp DEPENDS utils)
 unit_test(NAME periodic_fold_test SRC periodic_fold_test.cpp)
-unit_test(NAME LbWalberla_test SRC LbWalberla.cpp DEPENDS EspressoCore Boost::mpi MPI::MPI_CXX MPI::MPI_C ${WALBERLA_LIBS})
+unit_test(NAME LbWalberla_test SRC LbWalberla.cpp DEPENDS EspressoCore Boost::mpi ${WALBERLA_LIBS})
 unit_test(NAME None_test SRC None_test.cpp DEPENDS EspressoScriptInterface)
 
