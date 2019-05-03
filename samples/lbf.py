@@ -44,7 +44,7 @@ if args.gpu:
     required_features = ["LB_GPU"]
 else:
     print("Using CPU implementation")
-    required_features = ["LB"]
+    required_features = []
     if not args.cpu:
         print("(select the implementation with --cpu or --gpu)")
 

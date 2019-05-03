@@ -24,10 +24,9 @@ from globals cimport *
 import numpy as np
 from . cimport utils
 from .lb cimport *
-if LB or LB_GPU:
-    from .lb import HydrodynamicInteraction
-    from .lb cimport lb_lbcoupling_set_gamma
-    from .lb cimport lb_lbcoupling_get_gamma
+from .lb import HydrodynamicInteraction
+from .lb cimport lb_lbcoupling_set_gamma
+from .lb cimport lb_lbcoupling_get_gamma
 
 
 def AssertThermostatType(*allowedthermostats):
@@ -142,14 +141,14 @@ cdef class Thermostat(object):
                 lang_dict["gamma_rotation"] = None
 
             thermo_list.append(lang_dict)
-        IF LB:
-            if thermo_switch & THERMO_LB:
-                lb_dict = {}
-                lb_dict["gamma"] = lb_lbcoupling_get_gamma()
-                lb_dict["type"] = "LB"
-                lb_dict["act_on_virtual"] = thermo_virtual
-                lb_dict["rng_counter_fluid"] = lb_lbcoupling_get_rng_state()
-                thermo_list.append(lb_dict)
+
+        if thermo_switch & THERMO_LB:
+            lb_dict = {}
+            lb_dict["gamma"] = lb_lbcoupling_get_gamma()
+            lb_dict["type"] = "LB"
+            lb_dict["act_on_virtual"] = thermo_virtual
+            lb_dict["rng_counter_fluid"] = lb_lbcoupling_get_rng_state()
+            thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
             npt_dict = {}
             npt_dict["type"] = "NPT_ISO"
@@ -201,8 +200,7 @@ cdef class Thermostat(object):
         global thermo_switch
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-        IF LB or LB_GPU:
-            lb_lbcoupling_set_gamma(0.0)
+        lb_lbcoupling_set_gamma(0.0)
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
@@ -352,51 +350,50 @@ cdef class Thermostat(object):
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
-    IF LB_GPU or LB:
-        @AssertThermostatType(THERMO_LB)
-        def set_lb(
-            self,
-            seed=None,
-            act_on_virtual=True,
-            LB_fluid=None,
-                gamma=0.0):
-            """
-            Sets the LB thermostat.
+    @AssertThermostatType(THERMO_LB)
+    def set_lb(
+        self,
+        seed=None,
+        act_on_virtual=True,
+        LB_fluid=None,
+            gamma=0.0):
+        """
+        Sets the LB thermostat.
 
-            This thermostat requires the feature LBFluid or LBFluidGPU.
+        This thermostat requires the feature LBFluid or LBFluidGPU.
 
-            Parameters
-            ----------
-            LB_fluid : instance of :class:`espressomd.LBFluid` or :class:`espressomd.LBFluidGPU`
-            seed : :obj:`int`
-                 Seed for the random number generator, required
-                 if kT > 0.
-            act_on_virtual : :obj:`bool`, optional
-                If true the thermostat will act on virtual sites, default is on.
-            gamma : :obj:`float`
-                Frictional coupling constant for the MD particle coupling.
+        Parameters
+        ----------
+        LB_fluid : instance of :class:`espressomd.LBFluid` or :class:`espressomd.LBFluidGPU`
+        seed : :obj:`int`
+             Seed for the random number generator, required
+             if kT > 0.
+        act_on_virtual : :obj:`bool`, optional
+            If true the thermostat will act on virtual sites, default is on.
+        gamma : :obj:`float`
+            Frictional coupling constant for the MD particle coupling.
 
-            """
-            if not isinstance(LB_fluid, HydrodynamicInteraction):
+        """
+        if not isinstance(LB_fluid, HydrodynamicInteraction):
+            raise ValueError(
+                "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
+
+        if lb_lbfluid_get_kT() > 0.:
+            if not seed and lb_lbcoupling_is_seed_required():
                 raise ValueError(
-                    "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
+                    "seed has to be given as keyword arg")
+            elif seed:
+                lb_lbcoupling_set_rng_state(seed)
 
-            if lb_lbfluid_get_kT() > 0.:
-                if not seed and lb_lbcoupling_is_seed_required():
-                    raise ValueError(
-                        "seed has to be given as keyword arg")
-                elif seed:
-                    lb_lbcoupling_set_rng_state(seed)
+        global thermo_switch
+        thermo_switch = (thermo_switch or THERMO_LB)
+        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
 
-            global thermo_switch
-            thermo_switch = (thermo_switch or THERMO_LB)
-            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-
-            global thermo_virtual
-            thermo_virtual = act_on_virtual
-            mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
-            lb_lbcoupling_set_gamma(gamma)
-            return True
+        global thermo_virtual
+        thermo_virtual = act_on_virtual
+        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+        lb_lbcoupling_set_gamma(gamma)
+        return True
 
     IF NPT:
         @AssertThermostatType(THERMO_NPT_ISO)

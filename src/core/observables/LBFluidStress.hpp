@@ -7,7 +7,6 @@
 #include <vector>
 
 namespace Observables {
-#if (defined(LB) || defined(LB_GPU))
 class LBFluidStress : public Observable {
 public:
   int n_values() const override { return 6; }
@@ -18,7 +17,6 @@ public:
     return lb_lbfluid_get_stress() * unit_conversion;
   }
 };
-#endif
 
 } // Namespace Observables
 

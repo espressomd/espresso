@@ -28,12 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void VirtualSitesInertialessTracers::after_force_calc() {
   // Now the forces are computed and need to go into the LB fluid
-#ifdef LB
   if (lattice_switch == ActiveLB::CPU) {
     IBM_ForcesIntoFluid_CPU();
     return;
   }
-#endif
 #ifdef LB_GPU
   if (lattice_switch == ActiveLB::GPU) {
     IBM_ForcesIntoFluid_GPU(local_cells.particles());

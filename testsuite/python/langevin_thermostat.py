@@ -27,9 +27,6 @@ from espressomd.accumulators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 from tests_common import single_component_maxwell
 
-
-@ut.skipIf(espressomd.has_features("THERMOSTAT_IGNORE_NON_VIRTUAL"),
-           "Skipped because of THERMOSTAT_IGNORE_NON_VIRTUAL")
 class LangevinThermostat(ut.TestCase):
 
     """Tests the velocity distribution created by the Langevin thermostat against

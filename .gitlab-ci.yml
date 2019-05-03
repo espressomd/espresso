@@ -326,6 +326,8 @@ ubuntu:ppc64le:
 
 ubuntu:s390x:
   <<: *arch_definition
+  variables:
+    LD_BIND_NOW: none
 
 ### Builds with OS X
 

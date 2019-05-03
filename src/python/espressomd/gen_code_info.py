@@ -63,7 +63,10 @@ for feature in defs.allfeatures:
 
 cfile.write("""
     return sorted(f)
-""")
+
+def all_features():
+    return {}
+""".format(defs.allfeatures))
 
 cfile.close()
 print("Done.")

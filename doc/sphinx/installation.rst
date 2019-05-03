@@ -455,10 +455,6 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB`` Enables the lattice Boltzmann fluid code.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
-
 -  ``LB_GPU`` Enables the lattice Boltzmann fluid code support for GPU.
 
    .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`

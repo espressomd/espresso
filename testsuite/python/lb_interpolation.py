@@ -100,7 +100,7 @@ class LBInterpolation(object):
             self.system.integrator.run(1)
         
 
-@ut.skipIf(not espressomd.has_features(['LB', 'LB_BOUNDARIES']), "Skipped, features missing.")
+@ut.skipIf(not espressomd.has_features(['LB_BOUNDARIES']), "Skipped, features missing.")
 class LBInterpolationCPU(ut.TestCase, LBInterpolation):
 
     def setUp(self):
