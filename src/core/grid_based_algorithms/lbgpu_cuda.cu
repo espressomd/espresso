@@ -39,6 +39,7 @@
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
+#include "grid_based_algorithms/lb-d3q19.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include <utils/Array.hpp>
@@ -95,7 +96,6 @@ LB_node_force_density_gpu node_f = {
 
 static LB_extern_nodeforcedensity_gpu *extern_node_force_densities = nullptr;
 
-#ifdef LB_BOUNDARIES_GPU
 /** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
 
@@ -104,11 +104,10 @@ static float *lb_boundary_velocity = nullptr;
 
 /** @name pointers for bound index array */
 /*@{*/
-static int *boundary_node_list;
-static int *boundary_index_list;
-static size_t size_of_boundindex;
+static int *boundary_node_list = nullptr;
+static int *boundary_index_list = nullptr;
+static size_t size_of_boundindex = 0;
 /*@}*/
-#endif
 
 EK_parameters *lb_ek_parameters_gpu;
 
@@ -132,8 +131,6 @@ static size_t size_of_extern_node_force_densities;
 
 /** Parameters residing in constant memory */
 __device__ __constant__ LB_parameters_gpu para[1];
-static const float c_sound_sq = 1.0f / 3.0f;
-
 /*-------------------------------------------------------*/
 /*********************************************************/
 /** \name device functions called by kernel functions */
@@ -1762,10 +1759,14 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
 
     float Rho = para->rho;
     Utils::Array<float, 3> v{};
-    Utils::Array<float, 6> pi = {
-        Rho * c_sound_sq, 0.0f, Rho * c_sound_sq, 0.0f, 0.0f, Rho * c_sound_sq};
+    Utils::Array<float, 6> pi = {Rho * D3Q19::c_sound_sq<float>,
+                                 0.0f,
+                                 Rho * D3Q19::c_sound_sq<float>,
+                                 0.0f,
+                                 0.0f,
+                                 Rho * D3Q19::c_sound_sq<float>};
     Utils::Array<float, 6> local_pi{};
-    float rhoc_sq = Rho * c_sound_sq;
+    float rhoc_sq = Rho * D3Q19::c_sound_sq<float>;
     float avg_rho = para->rho;
     float local_rho, trace;
     Utils::Array<float, 3> local_j{};
