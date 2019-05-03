@@ -52,12 +52,8 @@ double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
 bool lb_lbcoupling_is_seed_required() {
   if (lattice_switch == ActiveLB::CPU) {
     return not lb_particle_coupling.rng_counter_coupling.is_initialized();
-  } else if (lattice_switch == ActiveLB::GPU) {
-#ifdef LB_GPU
-    return not rng_counter_coupling_gpu.is_initialized();
-#endif
   }
-  return false;
+  return not rng_counter_coupling_gpu.is_initialized();
 }
 
 uint64_t lb_coupling_get_rng_state_cpu() {
