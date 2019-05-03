@@ -329,27 +329,3 @@ def isfunction(obj):
 
 import inspect
 inspect.isfunction = isfunction
-
-
-# -- Options for private class members ------------------------------------
-
-def is_class_init_docstring_empty(docstring):
-    return docstring is None \
-        or docstring is 'x.__init__(...) initializes x; see help(type(x)) for signature' \
-        or '__init__(' in docstring and not '\n' in docstring
-
-# include docstrings of `__init__()` members. PEP 257 allows docstrings in class
-# constructors (https://www.python.org/dev/peps/pep-0257/#what-is-a-docstring).
-# See for example the constructor of `ExampleClass` in the Napoleon samples
-# (https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html)
-# or section 3.8.4 Classes in the Google Python Style Guide
-# (https://github.com/google/styleguide/blob/gh-pages/pyguide.md#384-classes).
-# We include class constructors only when they have a docstring.
-def skip(app, what, name, obj, default_skip, options):
-    if name == "__init__" and not is_class_init_docstring_empty(obj.__doc__):
-        return False
-    return default_skip
-
-# http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#event-autodoc-skip-member
-def setup(app):
-    app.connect("autodoc-skip-member", skip)
