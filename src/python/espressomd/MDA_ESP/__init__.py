@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 """
 This modules allows to expose ESPREsSo's coordinates and particle attributes
 to MDAnalysis without need to save information to files.
@@ -49,6 +47,7 @@ A minimal working example is the following:
 
 try:
     import cStringIO as StringIO
+    StringIO = StringIO.StringIO
 except ImportError:
     from io import StringIO
 
