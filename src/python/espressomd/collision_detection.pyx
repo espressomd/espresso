@@ -13,6 +13,7 @@ cdef extern from "collision.hpp":
 
 @script_interface_register
 class CollisionDetection(ScriptInterfaceHelper):
+
     """
     Inteface to the collision detection / dynamic binding.
 

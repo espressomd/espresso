@@ -2031,6 +2031,7 @@ class BondedInteractionNotDefined(object):
 
 
 class FeneBond(BondedInteraction):
+
     """
     FENE bond.
 
@@ -2092,6 +2093,7 @@ class FeneBond(BondedInteraction):
 
 
 class HarmonicBond(BondedInteraction):
+
     """
     Harmonic bond.
 
@@ -2149,6 +2151,7 @@ class HarmonicBond(BondedInteraction):
 
 if ELECTROSTATICS:
     class BondedCoulomb(BondedInteraction):
+
         """
         Bonded Coulomb bond.
 
@@ -2188,6 +2191,7 @@ if ELECTROSTATICS:
 
 if ELECTROSTATICS:
     class BondedCoulombSRBond(BondedInteraction):
+
         """
         Bonded Coulomb short range bond. Calculates the short range part of
         Coulomb interactions.
@@ -2230,6 +2234,7 @@ if ELECTROSTATICS:
 
 
 class ThermalizedBond(BondedInteraction):
+
     """
     Thermalized bond.
 
@@ -2347,6 +2352,7 @@ IF THOLE:
 
 IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
+
         """
         Harmonic Dumbbell bond.
 
@@ -2408,6 +2414,7 @@ IF ROTATION:
 
 IF ROTATION != 1:
     class HarmonicDumbbellBond(BondedInteraction):
+
         """
         Harmonic Dumbbell bond.
 
@@ -2462,6 +2469,7 @@ IF ROTATION != 1:
 
 IF BOND_CONSTRAINT == 1:
     class RigidBond(BondedInteraction):
+
         """
         Rigid bond.
 
@@ -2562,6 +2570,7 @@ class Dihedral(BondedInteraction):
 
 IF TABULATED == 1:
     class Tabulated(BondedInteraction):
+
         """
         Tabulated bond.
 
@@ -2767,6 +2776,7 @@ IF TABULATED == 1:
 
 IF TABULATED != 1:
     class Tabulated(BondedInteraction):
+
         """
         Tabulated non-bonded interaction.
 
@@ -2849,6 +2859,7 @@ IF LENNARD_JONES == 1:
 
 
 class Virtual(BondedInteraction):
+
     """
     Virtual bond.
     """
@@ -3029,6 +3040,7 @@ class AngleCossquare(BondedInteraction):
 # IBM triel
 IF IMMERSED_BOUNDARY:
     class IBM_Triel(BondedInteraction):
+
         """
         IBM Triel bond.
 
@@ -3088,6 +3100,7 @@ ELSE:
 # IBM tribend
 IF IMMERSED_BOUNDARY == 1:
     class IBM_Tribend(BondedInteraction):
+
         """
         IBM Tribend bond.
 
@@ -3140,6 +3153,7 @@ ELSE:
 # IBM VolCons
 IF IMMERSED_BOUNDARY == 1:
     class IBM_VolCons(BondedInteraction):
+
         """
         IBM VolCons bond.
 
@@ -3313,6 +3327,7 @@ ELSE:
 
 
 class QuarticBond(BondedInteraction):
+
     """
     Quartic bond.
 

@@ -73,6 +73,7 @@ from MDAnalysis.core.topologyattrs import (
 
 
 class Stream(object):
+
     """
     Create an object that provides a MDAnalysis topology and a coordinate reader
 
@@ -118,6 +119,7 @@ class Stream(object):
 
 
 class ESPParser(TopologyReaderBase):
+
     """
     An MDAnalysis reader of espresso's topology
 
