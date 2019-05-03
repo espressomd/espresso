@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(callback_model_t) {
     auto cb = detail::make_model(fp);
 
     boost::mpi::packed_iarchive ia(world, buff);
-    cb->operator()(ia);
+    cb->operator()(world, ia);
 
     BOOST_CHECK(called);
   }
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(callback_model_t) {
     });
 
     boost::mpi::packed_iarchive ia(world, buff);
-    cb->operator()(ia);
+    cb->operator()(world, ia);
 
     BOOST_CHECK(called);
   }

@@ -63,7 +63,7 @@ using are_allowed_arguments =
  * called without any type information on the parameters.
  */
 struct callback_concept_t {
-  virtual void operator()(boost::mpi::packed_iarchive &) const = 0;
+  virtual void operator()(boost::mpi::communicator const&, boost::mpi::packed_iarchive &) const = 0;
   virtual ~callback_concept_t() = default;
 };
 
@@ -74,18 +74,18 @@ struct callback_concept_t {
  * @p F and a set of arguments to call it with.
  */
 template <class F, class... Args>
-struct callback_model_t final : public callback_concept_t {
+struct callback_void_t final : public callback_concept_t {
   F m_f;
 
   static_assert(are_allowed_arguments<Args...>::value,
                 "Pointers and non-const references are not allowed as "
                 "arguments for callbacks.");
 
-  callback_model_t(callback_model_t const &) = delete;
-  callback_model_t(callback_model_t &&) = delete;
+  callback_void_t(callback_void_t const &) = delete;
+  callback_void_t(callback_void_t &&) = delete;
 
   template <class FRef>
-  explicit callback_model_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
+  explicit callback_void_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
 
   /**
    * @brief Execute the callback.
@@ -94,7 +94,7 @@ struct callback_model_t final : public callback_concept_t {
    *
    * @param comm The communicator to receive the parameters on.
    */
-  void operator()(boost::mpi::packed_iarchive &ia) const override {
+  void operator()(boost::mpi::communicator const&, boost::mpi::packed_iarchive &ia) const override {
     /* This is the local receive buffer for the parameters. We have to strip
        away const so we can actually deserialize into it. */
     std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
@@ -125,7 +125,7 @@ using functor_types =
 
 template <class CRef, class C, class R, class... Args>
 auto make_model_impl(CRef &&c, FunctorTypes<C, R, Args...>) {
-  return std::make_unique<callback_model_t<C, Args...>>(std::forward<CRef>(c));
+  return std::make_unique<callback_void_t<C, Args...>>(std::forward<CRef>(c));
 }
 
 /**
@@ -147,7 +147,7 @@ template <typename F> auto make_model(F &&f) {
  * deduction.
  */
 template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
-  return std::make_unique<callback_model_t<void (*)(Args...), Args...>>(f_ptr);
+  return std::make_unique<callback_void_t<void (*)(Args...), Args...>>(f_ptr);
 }
 } // namespace detail
 
@@ -391,7 +391,7 @@ public:
         break;
       }
       /** Call the callback */
-      m_callback_map[request]->operator()(ia);
+      m_callback_map[request]->operator()(m_comm, ia);
     }
   }
 
