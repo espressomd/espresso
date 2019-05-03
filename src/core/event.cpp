@@ -467,8 +467,9 @@ void on_ghost_flags_change() {
   ghosts_have_v = 0;
   ghosts_have_bonds = 0;
 
-/* DPD and LB need also ghost velocities */
-  if ((lattice_switch == ActiveLB::CPU) or (lattice_switch == ActiveLB::WALBERLA))
+  /* DPD and LB need also ghost velocities */
+  if ((lattice_switch == ActiveLB::CPU) or
+      (lattice_switch == ActiveLB::WALBERLA))
     ghosts_have_v = 1;
 #ifdef BOND_CONSTRAINT
   if (n_rigidbonds)

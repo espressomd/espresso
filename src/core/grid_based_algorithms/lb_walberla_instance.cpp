@@ -4,9 +4,9 @@
 #include "LbWalberla.hpp"
 
 #include "communication.hpp"
-#include "lb_interface.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "lb_interface.hpp"
 
 #include "utils/Vector.hpp"
 
@@ -34,25 +34,24 @@ LbWalberla *lb_walberla() {
   return lb_walberla_instance.get();
 }
 
-void init_lb_walberla(double viscosity, double density, double agrid, double tau,
-                      const Utils::Vector3d &box_dimensions,
+void init_lb_walberla(double viscosity, double density, double agrid,
+                      double tau, const Utils::Vector3d &box_dimensions,
                       const Utils::Vector3i &node_grid, double skin) {
-  lb_walberla_instance = std::make_unique<LbWalberla>(
-      LbWalberla{viscosity, density, agrid, tau, box_dimensions, node_grid, skin});
+  lb_walberla_instance = std::make_unique<LbWalberla>(LbWalberla{
+      viscosity, density, agrid, tau, box_dimensions, node_grid, skin});
 }
 REGISTER_CALLBACK(init_lb_walberla);
 
 void destruct_lb_walberla() { lb_walberla_instance.reset(nullptr); }
 REGISTER_CALLBACK(destruct_lb_walberla);
 
-void mpi_init_lb_walberla(double viscosity, double density, double agrid, double tau) {
-  Communication::mpiCallbacks().call(init_lb_walberla,
-    viscosity, density, agrid, tau, box_l, node_grid,skin);
-  init_lb_walberla(
-    viscosity, density, agrid, tau, box_l, node_grid,skin);
+void mpi_init_lb_walberla(double viscosity, double density, double agrid,
+                          double tau) {
+  Communication::mpiCallbacks().call(init_lb_walberla, viscosity, density,
+                                     agrid, tau, box_l, node_grid, skin);
+  init_lb_walberla(viscosity, density, agrid, tau, box_l, node_grid, skin);
   lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
 }
-
 
 void mpi_destruct_lb_walberla() {
   Communication::mpiCallbacks().call(destruct_lb_walberla);

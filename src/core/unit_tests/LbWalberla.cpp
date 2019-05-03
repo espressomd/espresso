@@ -13,15 +13,18 @@
 #include "utils/Vector.hpp"
 #include <iostream>
 
-Utils::Vector3i grid_dimensions = {10, 10, 10};
 double viscosity = 3;
-Utils::Vector3d box_dimensions = {10, 10, 10};
-double agrid = box_dimensions[0] / grid_dimensions[0];
+Utils::Vector3d box_dimensions = {10, 12, 14};
+double agrid = 0.5;
+Utils::Vector3d grid_dimensions = box_dimensions / agrid;
+double tau = 0.34;
 double skin = 0.01;
+double density = 2.5;
 Utils::Vector3i node_grid;
 
 BOOST_AUTO_TEST_CASE(viscosity_test) {
-  LbWalberla lb = LbWalberla(viscosity, agrid, box_dimensions, node_grid, skin);
+  LbWalberla lb = LbWalberla(viscosity, density, agrid, tau, box_dimensions,
+                             node_grid, skin);
   BOOST_CHECK(fabs(lb.get_viscosity() - viscosity) <
               std::numeric_limits<double>::epsilon());
   double new_viscosity = 2.0;
@@ -32,8 +35,10 @@ BOOST_AUTO_TEST_CASE(viscosity_test) {
 
 BOOST_AUTO_TEST_CASE(boundary) {
   Utils::Vector3d vel = {0.2, 3.8, 4.2};
-  LbWalberla lb = LbWalberla(viscosity, agrid, box_dimensions, node_grid, skin);
+  LbWalberla lb = LbWalberla(viscosity, density, agrid, tau, box_dimensions,
+                             node_grid, skin);
   for (Utils::Vector3i node :
+
        std::vector<Utils::Vector3i>{{0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
     if (lb.node_in_local_domain(node)) {
       BOOST_CHECK(lb.set_node_velocity_at_boundary(node, vel));
@@ -59,7 +64,8 @@ BOOST_AUTO_TEST_CASE(boundary) {
 }
 
 BOOST_AUTO_TEST_CASE(velocity) {
-  LbWalberla lb = LbWalberla(viscosity, agrid, box_dimensions, node_grid, skin);
+  LbWalberla lb = LbWalberla(viscosity, density, agrid, tau, box_dimensions,
+                             node_grid, skin);
   for (Utils::Vector3i node : std::vector<Utils::Vector3i>{
            {2, 2, 3}, {1, 0, 0}, {0, 1, 2}, {3, 2, 3}, {3, 2, 3}}) {
     const Utils::Vector3d pos = Utils::Vector3d{

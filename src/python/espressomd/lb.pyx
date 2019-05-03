@@ -32,7 +32,7 @@ from .utils import array_locked, is_valid_type
 from .utils cimport make_array_locked
 
 # Actor class
-####################################################
+#
 
 
 def _construct(cls, params):
@@ -57,7 +57,7 @@ cdef class HydrodynamicInteraction(Actor):
                 "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," % key)
 
     # validate the given parameters on actor initialization
-    ####################################################
+    #
     def validate_params(self):
         default_params = self.default_params()
 
@@ -74,17 +74,17 @@ cdef class HydrodynamicInteraction(Actor):
                 raise ValueError("Density must be one positive double")
 
     # list of valid keys for parameters
-    ####################################################
+    #
     def valid_keys(self):
         return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
     # list of essential keys required for the fluid
-    ####################################################
+    #
     def required_keys(self):
         return ["dens", "agrid", "visc", "tau"]
 
     # list of default parameters
-    ####################################################
+    #
     def default_params(self):
         return {"agrid": -1.0,
                 "dens": -1.0,
@@ -96,7 +96,7 @@ cdef class HydrodynamicInteraction(Actor):
                 "kT": 0.}
 
     # function that calls wrapper functions which set the parameters at C-Level
-    ####################################################
+    #
     def _set_lattice_switch(self):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _set_lattice_switch() method.")
@@ -143,7 +143,7 @@ cdef class HydrodynamicInteraction(Actor):
         utils.handle_errors("LB fluid activation")
 
     # function that calls wrapper functions which get the parameters from C-Level
-    ####################################################
+    #
     def _get_params_from_es_core(self):
         default_params = self.default_params()
         cdef double kT = lb_lbfluid_get_kT()
@@ -240,15 +240,15 @@ cdef class HydrodynamicInteraction(Actor):
 
     def _activate_method(self):
         raise Exception(
-"Subclasses of HydrodynamicInteraction have to implement _activate_method.") 
+"Subclasses of HydrodynamicInteraction have to implement _activate_method.")
 
     def _deactivate_method(self):
         lb_lbfluid_set_lattice_switch(NONE)
-    
+
     property stress:
         def __get__(self):
             cdef Vector6d res
-            res = lb_lbfluid_get_stress() 
+            res = lb_lbfluid_get_stress()
             return array_locked((
                 res[0], res[1], res[2], res[3], res[4], res[5]))
 
@@ -256,9 +256,8 @@ cdef class HydrodynamicInteraction(Actor):
             raise NotImplementedError
 
 
-
 # LBFluid main class
-####################################################
+#
 cdef class LBFluid(HydrodynamicInteraction):
     """
     Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
@@ -277,33 +276,34 @@ IF LB_WALBERLA:
     cdef class LBFluidWalberla(HydrodynamicInteraction):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using Walberla
-    
+
         """
+
         def valid_keys(self):
             return "agrid", "tau", "dens", "visc", "kT"
-        
+
         def validate_params(self):
             super(LBFluidWalberla, self).validate_params()
-    
+
             if float(self._params["kT"]) != 0.:
                 raise ValueError(
                     "The Walberla interface does not currently support thermalization (kT>0).")
-    
+
         def _set_lattice_switch(self):
-           raise Exception("This may not be called")
-        
+            raise Exception("This may not be called")
+
         def _set_params_in_es_core(self):
-           raise Exception("This may not be called")
-    
+            raise Exception("This may not be called")
+
         def _activate_method(self):
             self.validate_params()
             mpi_init_lb_walberla(
-                self._params["visc"],self._params["dens"],self._params["agrid"],self._params["tau"])
-    
+                self._params["visc"], self._params["dens"], self._params["agrid"], self._params["tau"])
+
         def _deactivate_method(self):
             mpi_destruct_lb_walberla()
-    
-    
+
+
 IF LB_GPU:
     cdef class LBFluidGPU(HydrodynamicInteraction):
         """
@@ -349,9 +349,9 @@ IF LB_GPU:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines(object):

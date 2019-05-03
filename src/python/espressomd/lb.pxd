@@ -34,11 +34,11 @@ from .utils cimport Vector19d
 cdef class HydrodynamicInteraction(Actor):
     pass
 
-    ##############################################
+    #
     #
     # extern functions and structs
     #
-    ##############################################
+    #
 
 cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace "ActiveLB":
     cdef ActiveLB NONE
@@ -119,11 +119,11 @@ IF LB_WALBERLA:
         void mpi_destruct_lb_walberla() except +
 
 
-###############################################
+#
 #
 # Wrapper-functions for access to C-pointer: Set params
 #
-###############################################
+#
 cdef inline python_lbfluid_set_density(p_dens, agrid):
     cdef double c_dens
 
@@ -135,7 +135,7 @@ cdef inline python_lbfluid_set_density(p_dens, agrid):
     # call c-function
     lb_lbfluid_set_density(c_dens)
 
-###############################################
+#
 
 cdef inline python_lbfluid_set_viscosity(p_visc, p_agrid, p_tau):
     cdef double c_visc
@@ -147,7 +147,7 @@ cdef inline python_lbfluid_set_viscosity(p_visc, p_agrid, p_tau):
     # call c-function
     lb_lbfluid_set_viscosity(c_visc)
 
-###############################################
+#
 
 cdef inline python_lbfluid_set_agrid(p_agrid):
     cdef double c_agrid
@@ -156,7 +156,7 @@ cdef inline python_lbfluid_set_agrid(p_agrid):
     # call c-function
     lb_lbfluid_set_agrid(c_agrid)
 
-###############################################
+#
 
 cdef inline python_lbfluid_set_bulk_viscosity(p_bvisc, p_agrid, p_tau):
     cdef double c_bvisc
@@ -168,7 +168,7 @@ cdef inline python_lbfluid_set_bulk_viscosity(p_bvisc, p_agrid, p_tau):
     # call c-function
     lb_lbfluid_set_bulk_viscosity(c_bvisc)
 
-###############################################
+#
 
 cdef inline python_lbfluid_set_gamma(p_gamma):
     cdef double c_gamma
@@ -200,7 +200,7 @@ cdef inline python_lbfluid_set_gamma_even(gamma_even):
     # call c-function
     lb_lbfluid_set_gamma_even(c_gamma_even)
 
-###############################################
+#
 
 cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density, p_agrid, p_tau):
 
