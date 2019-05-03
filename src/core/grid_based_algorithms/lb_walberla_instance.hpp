@@ -14,20 +14,17 @@ void walberla_mpi_init();
 /** @brief Access the per-MPI-node LbWalberla isntance */
 LbWalberla *lb_walberla();
 
-/** @brief Create the per-MPI-rank LbWalberal instance
+/** @brief Create the LbWalberal instance and sets the lattice dwitch to WALBERLA
  *
  *  @param viscosity Fluid viscosity
+ *  @param density Fluiddensity
  *  @param agrid  Size of one lb cell
- *  @param box_dimensions Dimensions of the global simulation box
- *  @param node_grid  Dimensions of the MPI node grid
- *  @param skin Distance beyond the node boundary a particle can reach
+ *  @param tau    LB time step
  */
-void init_lb_walberla(double viscosity, double agrid,
-                      const Utils::Vector3d &box_dimensions,
-                      const Utils::Vector3i &node_grid, double skin);
+void mpi_init_lb_walberla(double viscosity, double density, double agrid, double tau);
 
-/** @brief Destruct the per-MPI-rank LbWalberal instance */
-void destruct_lb_walberla();
+/** @brief Destruct the LbWalberal instance and set lattice switch to NONE */
+void mpi_destruct_lb_walberla();
 
 /** @brief Get local fluid properties of the Walberla instance on the head node
  * @param getter  reference to the getter function, e.g.,

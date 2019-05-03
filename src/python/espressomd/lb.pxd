@@ -113,6 +113,12 @@ cdef extern from "grid_based_algorithms/lb_interpolation.hpp" namespace "Interpo
     cdef InterpolationOrder linear
     cdef InterpolationOrder quadratic
 
+IF LB_WALBERLA:
+    cdef extern from "grid_based_algorithms/lb_walberla_instance.hpp":
+        void mpi_init_lb_walberla(double viscosity, double density, double agrid, double tau) except +
+        void mpi_destruct_lb_walberla() except +
+
+
 ###############################################
 #
 # Wrapper-functions for access to C-pointer: Set params

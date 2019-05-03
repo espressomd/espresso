@@ -51,16 +51,18 @@ Vector3<real_t> to_vector3(const Utils::Vector3d v) {
   return Vector3<real_t>{v[0], v[1], v[2]};
 }
 
-LbWalberla::LbWalberla(double viscosity, double agrid,
+LbWalberla::LbWalberla(double viscosity, double density, double agrid, double tau,
                        const Utils::Vector3d &box_dimensions,
                        const Utils::Vector3i &node_grid, double skin) {
 
   m_skin = skin;
   m_agrid = agrid;
+  m_tau = tau;
+  m_density = density;
 
   Utils::Vector3i grid_dimensions;
   for (int i = 0; i < 3; i++) {
-    if (fmod(box_dimensions[i], agrid) >
+    if (fabs(floor(box_dimensions[i]/agrid) *agrid -box_dimensions[i]) >
         std::numeric_limits<double>::epsilon()) {
       throw std::runtime_error(
           "Box length not commensurate with agrid in direction " +

@@ -31,6 +31,8 @@ const walberla::FlagUID UBB_flag("velocity bounce back");
 class LbWalberla {
   double m_skin;
   double m_agrid;
+  double m_tau;
+  double m_density;
   Utils::Vector3d m_ext_force;
 
   // Type definitions
@@ -75,7 +77,7 @@ class LbWalberla {
   };
 
 public:
-  LbWalberla(double viscosity, double agrid,
+  LbWalberla(double viscosity, double density, double agrid, double tau,
              const Utils::Vector3d &box_dimensions,
              const Utils::Vector3i &node_grid, double skin);
 

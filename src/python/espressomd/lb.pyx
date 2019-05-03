@@ -244,6 +244,17 @@ cdef class HydrodynamicInteraction(Actor):
 
     def _deactivate_method(self):
         lb_lbfluid_set_lattice_switch(NONE)
+    
+    property stress:
+        def __get__(self):
+            cdef Vector6d res
+            res = lb_lbfluid_get_stress() 
+            return array_locked((
+                res[0], res[1], res[2], res[3], res[4], res[5]))
+
+        def __set__(self, value):
+            raise NotImplementedError
+
 
 
 # LBFluid main class
@@ -262,16 +273,37 @@ cdef class LBFluid(HydrodynamicInteraction):
         self._set_lattice_switch()
         self._set_params_in_es_core()
 
-    property stress:
-        def __get__(self):
-            cdef Vector6d res
-            res = lb_lbfluid_get_stress() 
-            return array_locked((
-                res[0], res[1], res[2], res[3], res[4], res[5]))
-
-        def __set__(self, value):
-            raise NotImplementedError
-
+IF LB_WALBERLA:
+    cdef class LBFluidWalberla(HydrodynamicInteraction):
+        """
+        Initialize the lattice-Boltzmann method for hydrodynamic flow using Walberla
+    
+        """
+        def valid_keys(self):
+            return "agrid", "tau", "dens", "visc", "kT"
+        
+        def validate_params(self):
+            super(LBFluidWalberla, self).validate_params()
+    
+            if float(self._params["kT"]) != 0.:
+                raise ValueError(
+                    "The Walberla interface does not currently support thermalization (kT>0).")
+    
+        def _set_lattice_switch(self):
+           raise Exception("This may not be called")
+        
+        def _set_params_in_es_core(self):
+           raise Exception("This may not be called")
+    
+        def _activate_method(self):
+            self.validate_params()
+            mpi_init_lb_walberla(
+                self._params["visc"],self._params["dens"],self._params["agrid"],self._params["tau"])
+    
+        def _deactivate_method(self):
+            mpi_destruct_lb_walberla()
+    
+    
 IF LB_GPU:
     cdef class LBFluidGPU(HydrodynamicInteraction):
         """
