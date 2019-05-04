@@ -38,6 +38,7 @@
 
 namespace Communication {
 namespace Tag {
+struct Ignore {};
 struct OneRank {};
 struct Reduction {};
 } // namespace Tag
@@ -205,7 +206,7 @@ using functor_types =
     decltype(functor_types_impl(&std::remove_reference_t<F>::operator()));
 
 template <class CRef, class C, class R, class... Args>
-auto make_model_impl(CRef &&c, FunctorTypes<C, R, Args...>) {
+auto make_model_impl(Tag::Ignore, CRef &&c, FunctorTypes<C, R, Args...>) {
   return std::make_unique<callback_void_t<C, Args...>>(std::forward<CRef>(c));
 }
 
@@ -216,7 +217,7 @@ auto make_model_impl(CRef &&c, FunctorTypes<C, R, Args...>) {
  * to exist and can not be overloaded.
  */
 template <typename F> auto make_model(F &&f) {
-  return make_model_impl(std::forward<F>(f), functor_types<F>{});
+  return make_model_impl(Tag::Ignore{}, std::forward<F>(f), functor_types<F>{});
 }
 
 /**
