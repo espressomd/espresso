@@ -31,7 +31,7 @@ class openGLLive(object):
     Parameters
     ----------
 
-    system : instance of :attr:`espressomd.System`
+    system : :class:`espressomd.system.System`
     window_size : array_like :obj:`int`, optional
                   Size of the visualizer window in pixels.
     name : :obj:`str`, optional

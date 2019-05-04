@@ -215,7 +215,7 @@ class AutoUpdateAccumulators(ScriptInterfaceHelper):
 
     """
     Class for handling auto-update of Accumulators used by
-    :class:`espressomd.System`.
+    :class:`espressomd.system.System`.
 
     """
     _so_name = "Accumulators::AutoUpdateAccumulators"

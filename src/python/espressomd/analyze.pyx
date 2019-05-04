@@ -199,8 +199,9 @@ class Analysis(object):
 
         Parameters
         ----------
-        p_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                    Particle type for which to calculate the center of mass.
+        p_type : :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` for
+            which to calculate the center of mass.
 
         Returns
         -------
@@ -788,7 +789,7 @@ class Analysis(object):
 
         Returns
         -------
-        array_like
+        array_like : :obj:`float`
             Where [0] is the mean hydrodynamic radius of the chains
             and [1] its standard deviation,
 

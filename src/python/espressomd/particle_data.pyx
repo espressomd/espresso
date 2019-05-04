@@ -284,8 +284,8 @@ cdef class ParticleHandle(object):
 
         See Also
         --------
-        add_bond() : Method to add bonds to a `Particle`
-        delete_bond() : Method to remove bonds from a `Particle`
+        espressomd.particle_data.ParticleHandle.add_bond : Method to add bonds to a `Particle`
+        espressomd.particle_data.ParticleHandle.delete_bond : Method to remove bonds from a `Particle`
 
         .. note::
            Bond ids have to be an integer >= 0.
@@ -494,10 +494,6 @@ cdef class ParticleHandle(object):
                (:attr:`espressomd.particle_data.ParticleHandle.quat`) must be
                set before setting this property, otherwise the conversion from
                lab to body frame will not be handled properly.
-
-            See also
-            --------
-            :attr:`espressomd.particle_data.ParticleHandle.torque_body`
 
             """
 
@@ -1312,8 +1308,8 @@ cdef class ParticleHandle(object):
 
         See Also
         --------
-        add
-        clear
+        espressomd.particle_data.ParticleList.add
+        espressomd.particle_data.ParticleList.clear
 
         """
         if remove_particle(self._id):

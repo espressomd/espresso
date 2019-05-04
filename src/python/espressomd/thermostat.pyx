@@ -364,7 +364,7 @@ cdef class Thermostat(object):
 
         Parameters
         ----------
-        LB_fluid : instance of :class:`espressomd.LBFluid` or :class:`espressomd.LBFluidGPU`
+        LB_fluid : instance of :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`
         seed : :obj:`int`
              Seed for the random number generator, required
              if kT > 0.

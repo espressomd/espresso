@@ -46,13 +46,16 @@ class Constraints(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        Either an instance of :class:`espressomd.constraints.Constraint`, or
-        the parameters to construct an :class:`espressomd.constraints.ShapeBasedConstraint`.
+        constraint: :class:`espressomd.constraints.Constraint`
+            Either a constraint object...
+        \*\*kwargs : any
+            ... or parameters to construct an
+            :class:`espressomd.constraints.ShapeBasedConstraint`
 
         Returns
         ----------
-        constraint : Instance of :class:`espressomd.constraints.Constraint`
-                     The added constraint
+        constraint : :class:`espressomd.constraints.Constraint`
+            The added constraint
 
         """
 
