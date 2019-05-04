@@ -617,4 +617,16 @@ public:
   static ::Communication::RegisterCallback register_##cb(&(cb));               \
   }
 
+#define REGISTER_CALLBACK_REDUCTION(cb, op)                                    \
+  namespace Communication {                                                    \
+  static ::Communication::RegisterCallback                                     \
+      register_reduction_##cb(::Communication::Tag::Reduction, &(cb), (op));   \
+  }
+
+#define REGISTER_CALLBACK_ONE_RANK(cb)                                         \
+  namespace Communication {                                                    \
+  static ::Communication::RegisterCallback                                     \
+      register_one_rank_##cb(::Communication::Tag::OneRank, &(cb));            \
+  }
+
 #endif

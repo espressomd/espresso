@@ -38,6 +38,25 @@
 
 static bool called = false;
 
+BOOST_AUTO_TEST_CASE(invoke_test) {
+  using Communication::detail::invoke;
+
+  auto f = [](int i, double d) {
+    return i + d;
+  };
+
+  boost::mpi::communicator world;
+  boost::mpi::packed_oarchive::buffer_type buff;
+
+  auto const i = 123;
+  auto const d = 3.1415;
+  boost::mpi::packed_oarchive(world, buff) << i << d;
+
+  boost::mpi::packed_iarchive ia(world, buff);
+
+  BOOST_CHECK_EQUAL(f(i, d), (invoke<decltype(f), int, double>(f, ia)));
+}
+
 /**
  * Test that the implementation of callback_model_t
  * correctly deserialize the parameters and call
