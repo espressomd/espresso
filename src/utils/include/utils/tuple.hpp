@@ -22,8 +22,6 @@ constexpr decltype(auto) apply_impl(F &&f, Tuple &&t,
  *
  * @tparam F Callable with tuple elements as arguments
  * @tparam Tuple Has to conform to the tuple interface
- * @param f
- * @param t
  * @return Whatever @p f returns.
  */
 template <class F, class Tuple>
