@@ -38,8 +38,8 @@
 
 namespace Communication {
 namespace Tag {
-  struct Reduction{};
-}
+struct Reduction {};
+} // namespace Tag
 
 namespace detail {
 /**
@@ -67,7 +67,8 @@ using are_allowed_arguments =
  * called without any type information on the parameters.
  */
 struct callback_concept_t {
-  virtual void operator()(boost::mpi::communicator const&, boost::mpi::packed_iarchive &) const = 0;
+  virtual void operator()(boost::mpi::communicator const &,
+                          boost::mpi::packed_iarchive &) const = 0;
   virtual ~callback_concept_t() = default;
 };
 
@@ -98,7 +99,8 @@ struct callback_void_t final : public callback_concept_t {
    *
    * @param comm The communicator to receive the parameters on.
    */
-  void operator()(boost::mpi::communicator const&, boost::mpi::packed_iarchive &ia) const override {
+  void operator()(boost::mpi::communicator const &,
+                  boost::mpi::packed_iarchive &ia) const override {
     /* This is the local receive buffer for the parameters. We have to strip
        away const so we can actually deserialize into it. */
     std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
@@ -125,7 +127,8 @@ struct callback_reduce_t final : public callback_concept_t {
   callback_reduce_t(callback_reduce_t &&) = delete;
 
   template <class OpRef, class FRef>
-  explicit callback_reduce_t(OpRef && op, FRef &&f) : m_op(op), m_f(std::forward<FRef>(f)) {}
+  explicit callback_reduce_t(OpRef &&op, FRef &&f)
+      : m_op(op), m_f(std::forward<FRef>(f)) {}
 
   /**
    * @brief Execute the callback.
@@ -134,7 +137,8 @@ struct callback_reduce_t final : public callback_concept_t {
    *
    * @param comm The communicator to receive the parameters on.
    */
-  void operator()(boost::mpi::communicator const& comm, boost::mpi::packed_iarchive &ia) const override {
+  void operator()(boost::mpi::communicator const &comm,
+                  boost::mpi::packed_iarchive &ia) const override {
     /* This is the local receive buffer for the parameters. We have to strip
        away const so we can actually deserialize into it. */
     std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
@@ -144,7 +148,8 @@ struct callback_reduce_t final : public callback_concept_t {
        or const reference. Output parameters on callbacks are not
        sensible because the changes are not propagated back, so
        we make sure this does not compile. */
-    boost::mpi::reduce(comm, Utils::apply(m_f, Utils::as_const(params)), m_op, 0);
+    boost::mpi::reduce(comm, Utils::apply(m_f, Utils::as_const(params)), m_op,
+                       0);
   }
 };
 
@@ -190,8 +195,11 @@ template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
   return std::make_unique<callback_void_t<void (*)(Args...), Args...>>(f_ptr);
 }
 
-template <class Op, class R, class... Args> auto make_model(R (*f_ptr)(Args...), Op&& op) {
-  return std::make_unique<callback_reduce_t<std::remove_reference_t<Op>, R (*)(Args...), Args...>>(std::forward<Op>(op), f_ptr);
+template <class Op, class R, class... Args>
+auto make_model(R (*f_ptr)(Args...), Op &&op) {
+  return std::make_unique<
+      callback_reduce_t<std::remove_reference_t<Op>, R (*)(Args...), Args...>>(
+      std::forward<Op>(op), f_ptr);
 }
 } // namespace detail
 
@@ -334,7 +342,8 @@ public:
                                     detail::make_model(fp));
   }
 
-  template <class Op, class R, class... Args> static void add_static(Tag::Reduction, R (*fp)(Args...), Op op) {
+  template <class Op, class R, class... Args>
+  static void add_static(Tag::Reduction, R (*fp)(Args...), Op op) {
     static_callbacks().emplace_back(reinterpret_cast<void (*)()>(fp),
                                     detail::make_model(fp, std::move(op)));
   }
@@ -418,10 +427,10 @@ public:
   }
 
   template <class Op, class R, class... Args>
-  auto reduce(Op op, R (*fp)(Args...), Args ... args) const {
-        /* Result of the reduction operation when called with the
-         * return type of the callback. */
-        using result_type = decltype(op(std::declval<R>(), std::declval<R>()));
+  auto reduce(Op op, R (*fp)(Args...), Args... args) const {
+    /* Result of the reduction operation when called with the
+     * return type of the callback. */
+    using result_type = decltype(op(std::declval<R>(), std::declval<R>()));
 
     /** If the function pointer is invalid, map.at will throw
         an out_of_range exception. */
