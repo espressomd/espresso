@@ -468,25 +468,42 @@ public:
     call(id, std::forward<ArgRef>(args)...);
   }
 
-  template <class Op, class R, class... Args>
-  auto reduce(Op op, R (*fp)(Args...), Args... args) const {
-    /* Result of the reduction operation when called with the
-     * return type of the callback. */
-    using result_type = decltype(op(std::declval<R>(), std::declval<R>()));
+  /**
+   * @brief Call a callback and reduce the result over all nodes.
+   *
+   * This calls a callback on all nodes, including the head node,
+   * and does a mpi reduction with the registered operation.
+   *
+   * This method can only be called on the head node.
+   *
+   * @tparam Op
+   * @tparam R
+   * @tparam Args
+   * @param op
+   * @param fp
+   * @param args
+   * @return
+   */
 
+  template <class Op, class R, class... Args>
+  auto reduce(Op op, R (*fp)(Args...), Args... args) const
+      -> std::remove_reference_t<decltype(op(std::declval<R>(),
+                                             std::declval<R>()))> {
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
     call(id, args...);
 
-    result_type result;
-
+    std::remove_cv_t<std::remove_reference_t<decltype(
+        op(std::declval<R>(), std::declval<R>()))>>
+        result;
     boost::mpi::reduce(m_comm, fp(args...), result, op, 0);
 
     return result;
   }
 
   template <class R, class... Args>
-  auto one_rank(R (*fp)(Args...), Args... args) {
+  auto one_rank(R (*fp)(Args...), Args... args)
+      -> std::remove_reference_t<decltype(*std::declval<R>())> {
     using result_type = decltype(*std::declval<R>());
 
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
@@ -501,7 +518,7 @@ public:
     if (!!local_result) {
       return *local_result;
     } else {
-      std::remove_reference_t<result_type> result;
+      std::remove_cv_t<std::remove_reference_t<result_type>> result;
       m_comm.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
       return result;
     }
@@ -620,13 +637,13 @@ public:
 #define REGISTER_CALLBACK_REDUCTION(cb, op)                                    \
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback                                     \
-      register_reduction_##cb(::Communication::Tag::Reduction, &(cb), (op));   \
+      register_reduction_##cb(::Communication::Tag::Reduction{}, &(cb), (op)); \
   }
 
 #define REGISTER_CALLBACK_ONE_RANK(cb)                                         \
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback                                     \
-      register_one_rank_##cb(::Communication::Tag::OneRank, &(cb));            \
+      register_one_rank_##cb(::Communication::Tag::OneRank{}, &(cb));          \
   }
 
 #endif
