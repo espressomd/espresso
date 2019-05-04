@@ -24,13 +24,16 @@ import os
 with open('doc/doxygen/warnings.log') as f:
     content = f.read()
 
-raw_warnings = re.findall(r'(?:^|\n)doxygen:(.+?):(\d+): warning: (.+?)(?=\n\S|\n*$)', content, re.DOTALL)
+raw_warnings = re.findall(
+    r'(?:^|\n)doxygen:(.+?):(\d+): warning: (.+?)(?=\n\S|\n*$)',
+     content, re.DOTALL)
 
 # collect list of empty @param and @tparam blocks
 with open('doc/doxygen/empty-params.log') as f:
     content = f.read()
 
-source_code_ext = set(['.hpp', '.cpp', '.hh', '.cc', '.h', '.c', '.cuh', '.cu', '.dox'])
+source_code_ext = set(['.hpp', '.cpp', '.hh', '.cc', '.h', '.c', '.cuh',
+                       '.cu', '.dox'])
 for line in content.strip().split('\n'):
     m = re.search(r'^(.+):(\d+):[\s\*]*([@\\]t?param).*\s(\S+)\s*$', line)
     filepath, lineno, paramtype, varname = m.groups()
@@ -80,8 +83,8 @@ if n_unique == 0:
 
 # generate a log file
 with open('dox_warnings.log', 'w') as f:
-    f.write('The Doxygen documentation generated {} unique warnings (total: {}, ignored: {}):\n'
-            .format(n_unique, n_all, n_unique_raw - n_unique))
+    f.write('The Doxygen documentation generated {} unique warnings (total: {},'
+            ' ignored: {}):\n'.format(n_unique, n_all, n_unique_raw - n_unique))
     for filepath in sorted(warnings.keys()):
         f.write(filepath + ':\n')
         for (lineno, warning) in sorted(warnings[filepath].keys()):
