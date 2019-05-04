@@ -38,6 +38,7 @@
 
 namespace Communication {
 namespace Tag {
+struct OneRank {};
 struct Reduction {};
 } // namespace Tag
 
@@ -60,31 +61,22 @@ using are_allowed_arguments =
     typename Utils::conjunction<is_allowed_argument<Args>...>::type;
 
 /**
- * @brief Type-erased interface for callbacks.
- *
- * This encapsulates the signature of the callback
- * and the parameter transfer, so that it can be
- * called without any type information on the parameters.
- */
-struct callback_concept_t {
-  virtual void operator()(boost::mpi::communicator const &,
-                          boost::mpi::packed_iarchive &) const = 0;
-  virtual ~callback_concept_t() = default;
-};
-
-/**
- * @brief Invoke a callable with arguments extracked from an mpi buffer.
+ * @brief Invoke a callable with arguments from an mpi buffer.
  *
  * @tparam F A Callable that can be called with Args as parameters.
  * @tparam Args Pack of arguments for @type F
  *
  * @param f Functor to be called
- * @param ia Buffer to extrackt the parameters from
+ * @param ia Buffer to extract the parameters from
  *
  * @return Return value of calling @param f.
  */
 template <class F, class... Args>
 auto invoke(F f, boost::mpi::packed_iarchive &ia) {
+  static_assert(are_allowed_arguments<Args...>::value,
+                "Pointers and non-const references are not allowed as "
+                "arguments for callbacks.");
+
   /* This is the local receive buffer for the parameters. We have to strip
        away const so we can actually deserialize into it. */
   std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
@@ -98,49 +90,85 @@ auto invoke(F f, boost::mpi::packed_iarchive &ia) {
 }
 
 /**
- * @brief Concrete implementation of @ref callback_concept_t.
+ * @brief Type-erased interface for callbacks.
+ *
+ * This encapsulates the signature of the callback
+ * and the parameter transfer, so that it can be
+ * called without any type information on the parameters.
+ */
+struct callback_concept_t {
+  /**
+   * @brief Execute the callback.
+   *
+   * Unpack parameters for this callback, and then call it.
+   *
+   * @param comm communicator used for return value collection.
+   * @param ia MPI buffer containing the arguments.
+   */
+  virtual void operator()(boost::mpi::communicator const &,
+                          boost::mpi::packed_iarchive &) const = 0;
+  virtual ~callback_concept_t() = default;
+};
+
+/**
+ * @brief Callback without a return value.
  *
  * This is an implementation of a callback for a specific callable
- * @p F and a set of arguments to call it with.
+ * @p F and a set of arguments to call it with, where the there
+ * is no return value.
  */
 template <class F, class... Args>
 struct callback_void_t final : public callback_concept_t {
   F m_f;
 
-  static_assert(are_allowed_arguments<Args...>::value,
-                "Pointers and non-const references are not allowed as "
-                "arguments for callbacks.");
-
-  callback_void_t(callback_void_t const &) = delete;
-  callback_void_t(callback_void_t &&) = delete;
-
   template <class FRef>
   explicit callback_void_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
-
-  /**
-   * @brief Execute the callback.
-   *
-   * Receive parameters for this callback, and then call it.
-   *
-   * @param ia MPI buffer containing the arguments.
-   */
   void operator()(boost::mpi::communicator const &,
                   boost::mpi::packed_iarchive &ia) const override {
     detail::invoke<F, Args...>(m_f, ia);
   }
 };
 
+/**
+ * @brief Callback with a return value from one rank.
+ *
+ * This is an implementation of a callback for a specific callable
+ * @p F and a set of arguments to call it with, where the value from
+ * one rank is returned.
+ */
+template <class F, class... Args>
+struct callback_one_rank_t final : public callback_concept_t {
+  F m_f;
+
+  template <class FRef>
+  explicit callback_one_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
+  void operator()(boost::mpi::communicator const &comm,
+                  boost::mpi::packed_iarchive &ia) const override {
+    auto const result = detail::invoke<F, Args...>(m_f, ia);
+
+    /* Check that there was exactly one rank that has returned
+     * a value. */
+    assert(1 == boost::mpi::all_reduce(comm, static_cast<int>(!!result),
+                                       std::plus<>()));
+
+    /* If this rank returned a result, send it to the head node. */
+    if (!!result) {
+      comm.send(0, 42, *result);
+    }
+  }
+};
+
+/**
+ * @brief Callback with return value reduction.
+ *
+ * This is an implementation of a callback for a specific callable
+ * @p F and a set of arguments to call it with, where the return
+ * value if reduced over the communicator.
+ */
 template <class Op, class F, class... Args>
 struct callback_reduce_t final : public callback_concept_t {
   Op m_op;
   F m_f;
-
-  static_assert(are_allowed_arguments<Args...>::value,
-                "Pointers and non-const references are not allowed as "
-                "arguments for callbacks.");
-
-  callback_reduce_t(callback_reduce_t const &) = delete;
-  callback_reduce_t(callback_reduce_t &&) = delete;
 
   template <class OpRef, class FRef>
   explicit callback_reduce_t(OpRef &&op, FRef &&f)
@@ -204,10 +232,15 @@ template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
 }
 
 template <class Op, class R, class... Args>
-auto make_model(R (*f_ptr)(Args...), Op &&op) {
+auto make_model(Tag::Reduction, R (*f_ptr)(Args...), Op &&op) {
   return std::make_unique<
       callback_reduce_t<std::remove_reference_t<Op>, R (*)(Args...), Args...>>(
       std::forward<Op>(op), f_ptr);
+}
+
+template <class R, class... Args>
+auto make_model(Tag::OneRank, R (*f_ptr)(Args...)) {
+  return std::make_unique<callback_one_rank_t<R (*)(Args...), Args...>>(f_ptr);
 }
 } // namespace detail
 
@@ -350,10 +383,11 @@ public:
                                     detail::make_model(fp));
   }
 
-  template <class Op, class R, class... Args>
-  static void add_static(Tag::Reduction, R (*fp)(Args...), Op op) {
-    static_callbacks().emplace_back(reinterpret_cast<void (*)()>(fp),
-                                    detail::make_model(fp, std::move(op)));
+  template <class Tag, class R, class... Args, class... TagArgs>
+  static void add_static(Tag tag, R (*fp)(Args...), TagArgs &&... tag_args) {
+    static_callbacks().emplace_back(
+        reinterpret_cast<void (*)()>(fp),
+        detail::make_model(tag, fp, std::forward<TagArgs>(tag_args)...));
   }
 
 private:
@@ -440,8 +474,6 @@ public:
      * return type of the callback. */
     using result_type = decltype(op(std::declval<R>(), std::declval<R>()));
 
-    /** If the function pointer is invalid, map.at will throw
-        an out_of_range exception. */
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
     call(id, args...);
@@ -451,6 +483,28 @@ public:
     boost::mpi::reduce(m_comm, fp(args...), result, op, 0);
 
     return result;
+  }
+
+  template <class R, class... Args>
+  auto one_rank(R (*fp)(Args...), Args... args) {
+    using result_type = decltype(*std::declval<R>());
+
+    const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
+
+    call(id, args...);
+
+    auto const local_result = fp(std::forward<Args>(args)...);
+
+    assert(1 == boost::mpi::all_reduce(m_comm, static_cast<int>(!!local_result),
+                                       std::plus<>()));
+
+    if (!!local_result) {
+      return *local_result;
+    } else {
+      std::remove_reference_t<result_type> result;
+      m_comm.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
+      return result;
+    }
   }
 
   /**
@@ -509,10 +563,13 @@ private:
    */
   boost::mpi::communicator &m_comm;
 
+  /**
+   * Internal storage for the callback functions.
+   */
   std::vector<std::unique_ptr<detail::callback_concept_t>> m_callbacks;
 
   /**
-   * Internal storage for the callback functions.
+   * Map of ids to callbacks.
    */
   Utils::NumeratedContainer<detail::callback_concept_t *> m_callback_map;
 
@@ -527,7 +584,7 @@ template <class... Args>
 using CallbackHandle = MpiCallbacks::CallbackHandle<Args...>;
 
 /**
- * @brief Helper class to atomatically add callbacks.
+ * @brief Helper class to add callbacks before main.
  *
  * Should not be used directly, but via @ref REGISTER_CALLBACK.
  */
@@ -538,6 +595,11 @@ public:
 
   template <class... Args> explicit RegisterCallback(void (*cb)(Args...)) {
     MpiCallbacks::add_static(cb);
+  }
+
+  template <class Tag, class R, class... Args, class... TagArgs>
+  explicit RegisterCallback(Tag tag, R (*cb)(Args...), TagArgs &&... tag_args) {
+    MpiCallbacks::add_static(tag, cb, std::forward<TagArgs>(tag_args)...);
   }
 };
 } /* namespace Communication */
@@ -552,7 +614,7 @@ public:
  */
 #define REGISTER_CALLBACK(cb)                                                  \
   namespace Communication {                                                    \
-  static ::Communication::RegisterCallback register_##cb(&cb);                 \
+  static ::Communication::RegisterCallback register_##cb(&(cb));               \
   }
 
 #endif
