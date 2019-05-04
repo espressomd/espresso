@@ -73,6 +73,31 @@ struct callback_concept_t {
 };
 
 /**
+ * @brief Invoke a callable with arguments extracked from an mpi buffer.
+ *
+ * @tparam F A Callable that can be called with Args as parameters.
+ * @tparam Args Pack of arguments for @type F
+ *
+ * @param f Functor to be called
+ * @param ia Buffer to extrackt the parameters from
+ *
+ * @return Return value of calling @param f.
+ */
+template <class F, class... Args>
+auto invoke(F f, boost::mpi::packed_iarchive &ia) {
+  /* This is the local receive buffer for the parameters. We have to strip
+       away const so we can actually deserialize into it. */
+  std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
+  Utils::for_each([&ia](auto &e) { ia >> e; }, params);
+
+  /* We add const here, so that parameters can only by by value
+     or const reference. Output parameters on callbacks are not
+     sensible because the changes are not propagated back, so
+     we make sure this does not compile. */
+  return Utils::apply(f, Utils::as_const(params));
+}
+
+/**
  * @brief Concrete implementation of @ref callback_concept_t.
  *
  * This is an implementation of a callback for a specific callable
@@ -97,20 +122,11 @@ struct callback_void_t final : public callback_concept_t {
    *
    * Receive parameters for this callback, and then call it.
    *
-   * @param comm The communicator to receive the parameters on.
+   * @param ia MPI buffer containing the arguments.
    */
   void operator()(boost::mpi::communicator const &,
                   boost::mpi::packed_iarchive &ia) const override {
-    /* This is the local receive buffer for the parameters. We have to strip
-       away const so we can actually deserialize into it. */
-    std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
-    Utils::for_each([&ia](auto &e) { ia >> e; }, params);
-
-    /* We add const here, so that parameters can only by by value
-       or const reference. Output parameters on callbacks are not
-       sensible because the changes are not propagated back, so
-       we make sure this does not compile. */
-    Utils::apply(m_f, Utils::as_const(params));
+    detail::invoke<F, Args...>(m_f, ia);
   }
 };
 
@@ -128,7 +144,7 @@ struct callback_reduce_t final : public callback_concept_t {
 
   template <class OpRef, class FRef>
   explicit callback_reduce_t(OpRef &&op, FRef &&f)
-      : m_op(op), m_f(std::forward<FRef>(f)) {}
+      : m_op(std::forward<OpRef>(op)), m_f(std::forward<FRef>(f)) {}
 
   /**
    * @brief Execute the callback.
@@ -139,17 +155,9 @@ struct callback_reduce_t final : public callback_concept_t {
    */
   void operator()(boost::mpi::communicator const &comm,
                   boost::mpi::packed_iarchive &ia) const override {
-    /* This is the local receive buffer for the parameters. We have to strip
-       away const so we can actually deserialize into it. */
-    std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
-    Utils::for_each([&ia](auto &e) { ia >> e; }, params);
-
-    /* We add const here, so that parameters can only by by value
-       or const reference. Output parameters on callbacks are not
-       sensible because the changes are not propagated back, so
-       we make sure this does not compile. */
-    boost::mpi::reduce(comm, Utils::apply(m_f, Utils::as_const(params)), m_op,
-                       0);
+    /* Call the callback function, and reduce over the results with
+     * the stored reduction operation. */
+    boost::mpi::reduce(comm, detail::invoke<F, Args...>(m_f, ia), m_op, 0);
   }
 };
 
