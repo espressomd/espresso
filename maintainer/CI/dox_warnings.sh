@@ -62,6 +62,10 @@ n_warnings=$?
 # print logfile
 cat dox_warnings.log
 
+if [ "$CI" != "" ]; then
+    "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen ${n_warnings} dox_warnings.log
+fi
+
 if [ ${n_warnings} = "0" ]; then
     exit 0
 else

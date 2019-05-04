@@ -70,6 +70,10 @@ if [ $? = "0" ]; then
     rm doc_warnings.log~
 fi
 
+if [ "$CI" != "" ]; then
+    "${srcdir}/maintainer/gh_post_docs_warnings.py" sphinx ${n_warnings} doc_warnings.log
+fi
+
 if [ ${n_warnings} = "0" ]; then
     exit 0
 else
