@@ -157,6 +157,23 @@ BOOST_AUTO_TEST_CASE(CallbackHandle) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(reduce_callback) {
+  auto cb = []() -> int { return boost::mpi::communicator().rank(); };
+  Communication::MpiCallbacks::add_static(Communication::Tag::Reduction{},
+      static_cast<int(*)()>(cb), std::plus<int>());
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    auto const ret = cbs.reduce(std::plus<int>(), static_cast<int (*)()>(cb));
+    auto const n = world.size();
+    BOOST_CHECK_EQUAL(ret, (n * (n - 1))/2);
+  } else {
+    cbs.loop();
+  }
+}
+
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);
 

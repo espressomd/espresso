@@ -37,6 +37,10 @@
 #include <utility>
 
 namespace Communication {
+namespace Tag {
+  struct Reduction{};
+}
+
 namespace detail {
 /**
  * @brief Check if a type can be used as a callback argument.
@@ -108,6 +112,42 @@ struct callback_void_t final : public callback_concept_t {
   }
 };
 
+template <class Op, class F, class... Args>
+struct callback_reduce_t final : public callback_concept_t {
+  Op m_op;
+  F m_f;
+
+  static_assert(are_allowed_arguments<Args...>::value,
+                "Pointers and non-const references are not allowed as "
+                "arguments for callbacks.");
+
+  callback_reduce_t(callback_reduce_t const &) = delete;
+  callback_reduce_t(callback_reduce_t &&) = delete;
+
+  template <class OpRef, class FRef>
+  explicit callback_reduce_t(OpRef && op, FRef &&f) : m_op(op), m_f(std::forward<FRef>(f)) {}
+
+  /**
+   * @brief Execute the callback.
+   *
+   * Receive parameters for this callback, and then call it.
+   *
+   * @param comm The communicator to receive the parameters on.
+   */
+  void operator()(boost::mpi::communicator const& comm, boost::mpi::packed_iarchive &ia) const override {
+    /* This is the local receive buffer for the parameters. We have to strip
+       away const so we can actually deserialize into it. */
+    std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
+    Utils::for_each([&ia](auto &e) { ia >> e; }, params);
+
+    /* We add const here, so that parameters can only by by value
+       or const reference. Output parameters on callbacks are not
+       sensible because the changes are not propagated back, so
+       we make sure this does not compile. */
+    boost::mpi::reduce(comm, Utils::apply(m_f, Utils::as_const(params)), m_op, 0);
+  }
+};
+
 template <class F, class R, class... Args> struct FunctorTypes {
   using functor_type = F;
   using return_type = R;
@@ -148,6 +188,10 @@ template <typename F> auto make_model(F &&f) {
  */
 template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
   return std::make_unique<callback_void_t<void (*)(Args...), Args...>>(f_ptr);
+}
+
+template <class Op, class R, class... Args> auto make_model(R (*f_ptr)(Args...), Op&& op) {
+  return std::make_unique<callback_reduce_t<std::remove_reference_t<Op>, R (*)(Args...), Args...>>(std::forward<Op>(op), f_ptr);
 }
 } // namespace detail
 
@@ -290,6 +334,11 @@ public:
                                     detail::make_model(fp));
   }
 
+  template <class Op, class R, class... Args> static void add_static(Tag::Reduction, R (*fp)(Args...), Op op) {
+    static_callbacks().emplace_back(reinterpret_cast<void (*)()>(fp),
+                                    detail::make_model(fp, std::move(op)));
+  }
+
 private:
   /**
    * @brief Remove callback.
@@ -366,6 +415,25 @@ public:
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
     call(id, std::forward<ArgRef>(args)...);
+  }
+
+  template <class Op, class R, class... Args>
+  auto reduce(Op op, R (*fp)(Args...), Args ... args) const {
+        /* Result of the reduction operation when called with the
+         * return type of the callback. */
+        using result_type = decltype(op(std::declval<R>(), std::declval<R>()));
+
+    /** If the function pointer is invalid, map.at will throw
+        an out_of_range exception. */
+    const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
+
+    call(id, args...);
+
+    result_type result;
+
+    boost::mpi::reduce(m_comm, fp(args...), result, op, 0);
+
+    return result;
   }
 
   /**
