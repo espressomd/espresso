@@ -192,7 +192,7 @@ class Correlator(ScriptInterfaceHelper):
                               For more information, we recommend to read Ref.
                               :cite:`ramirez10a` or to perform your own tests.
 
-    args: :obj:`float[3]`
+    args: :obj:`float` of length 3
                      Three floats which are passed as arguments to the
                      correlation function.  Currently it is only used by
                      fcs_acf. Other correlation operations will ignore these
