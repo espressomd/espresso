@@ -42,9 +42,9 @@ if [ $? = "0" ]; then
         reference=$(echo "${line}" | sed -r 's|^.+<span class="pre">(.+)</span></code>$|\1|' | sed  's/()$//')
         # skip if broken link refers to a standard Python type or to a
         # class/function from an imported module other than espressomd
-        echo "${reference}" | grep -Pq '^(int|float|bool|str|object|list|tuple|dict|[a-zA-Z0-9_]+Error|[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$'
+        echo "${reference}" | grep -Pq '^(int|float|bool|str|object|list|tuple|dict|[a-zA-Z0-9_]+Error|[a-zA-Z0-9_]*Exception|[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$'
         is_standard_or_module=$?
-        echo "${reference}" | grep -Pq "^espressomd\.[a-zA-Z0-9_\.]+$"
+        echo "${reference}" | grep -Pq "^espressomd\.(?!visualization)[a-zA-Z0-9_\.]+$"
         is_espressomd=$?
         if [ ${is_standard_or_module} = "0" ] && [ ${is_espressomd} != "0" ]; then
             continue
