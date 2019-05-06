@@ -56,11 +56,10 @@ private:
 #define NEW_PARAMLESS_OBSERVABLE(name)                                         \
   using name = ParamlessObservableInterface<::Observables::name>;
 NEW_PARAMLESS_OBSERVABLE(StressTensor)
+NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
 #ifdef DPD
 NEW_PARAMLESS_OBSERVABLE(DPDStress)
 #endif
-#if (defined(LB) || defined(LB_GPU))
-NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */
