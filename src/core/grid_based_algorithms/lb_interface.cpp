@@ -1308,7 +1308,7 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
     node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
-    int p_boundary;
+    int p_boundary = {};
     mpi_recv_fluid_boundary_flag(node, index, &p_boundary);
     return p_boundary;
   }
