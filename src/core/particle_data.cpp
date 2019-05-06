@@ -1062,7 +1062,7 @@ void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
-  auto const flag = (!torque.empty()) ? PARTICLE_EXT_TORQUE : 0;
+  auto const flag = (torque != Utils::Vector3d{}) ? PARTICLE_EXT_TORQUE : 0;
   if (flag) {
     mpi_update_particle_property<Utils::Vector3d,
                                  &ParticleProperties::ext_torque>(part, torque);
@@ -1073,7 +1073,7 @@ void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
 #endif
 
 void set_particle_ext_force(int part, const Utils::Vector3d &force) {
-  auto const flag = (!force.empty()) ? PARTICLE_EXT_FORCE : 0;
+  auto const flag = (force != Utils::Vector3d{}) ? PARTICLE_EXT_FORCE : 0;
   if (flag) {
     mpi_update_particle_property<Utils::Vector3d,
                                  &ParticleProperties::ext_force>(part, force);
