@@ -18,7 +18,6 @@
 */
 
 #include "initialize.hpp"
-#include "CylindricalLBProfileObservable.hpp"
 #include "CylindricalPidProfileObservable.hpp"
 #include "LBProfileObservable.hpp"
 #include "ParamlessObservable.hpp"
@@ -32,7 +31,6 @@
 #include "core/observables/ComPosition.hpp"
 #include "core/observables/ComVelocity.hpp"
 #include "core/observables/Current.hpp"
-#include "core/observables/CylindricalLBVelocityProfile.hpp"
 #include "core/observables/DipoleMoment.hpp"
 #include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/MagneticDipoleMoment.hpp"
@@ -91,14 +89,6 @@ namespace Observables {
       CylindricalPidProfileObservable<::Observables::name>>(                   \
       "Observables::" #name "");
 
-/** Register a @ref ScriptInterface::Observables::CylindricalLBProfileObservable
- *  "CylindricalLBProfileObservable"
- */
-#define REGISTER_CYLLB_OBS(name)                                               \
-  ScriptInterface::register_new<                                               \
-      CylindricalLBProfileObservable<::Observables::name>>(                    \
-      "Observables::" #name "");
-
 /** Register an @ref ScriptInterface::Observables::LBProfileObservable
  *  "LBProfileObservable"
  */
@@ -142,10 +132,6 @@ void initialize() {
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
 
   REGISTER(LBFluidStress);
-  REGISTER_CYLPID_PROFILE_OBS(
-      CylindricalLBFluxDensityProfileAtParticlePositions);
-  REGISTER_CYLPID_PROFILE_OBS(CylindricalLBVelocityProfileAtParticlePositions);
-  REGISTER_CYLLB_OBS(CylindricalLBVelocityProfile);
   REGISTER_LB_OBS(LBVelocityProfile);
 
 #undef REGISTER

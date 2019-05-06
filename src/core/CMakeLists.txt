@@ -121,9 +121,6 @@ set(EspressoCore_SRC
   object-in-fluid/oif_global_forces.cpp
   object-in-fluid/oif_local_forces.cpp
   object-in-fluid/out_direction.cpp
-  observables/CylindricalLBFluxDensityProfileAtParticlePositions.cpp
-  observables/CylindricalLBVelocityProfileAtParticlePositions.cpp
-  observables/CylindricalLBVelocityProfile.cpp
   observables/LBVelocityProfile.cpp
   virtual_sites/lb_inertialess_tracers.cpp
   virtual_sites/lb_inertialess_tracers_cuda_interface.cpp
