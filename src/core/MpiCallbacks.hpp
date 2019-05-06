@@ -44,6 +44,8 @@ struct OneRank {};
 constexpr auto one_rank = OneRank{};
 struct Reduction {};
 constexpr auto reduction = Reduction{};
+struct HeadNode {};
+constexpr auto head_node = HeadNode{};
 } // namespace Result
 
 namespace detail {
@@ -457,6 +459,7 @@ public:
    * and has the prerequisite that the other nodes are
    * in the MPI loop. Also the function has to be previously
    * registered e.g. with the @ref REGISTER_CALLBACK macro.
+   * The callback is not called on the head node.
    *
    * @param fp Pointer to the function to call.
    * @param args Arguments for the callback.
@@ -474,6 +477,25 @@ public:
   }
 
   /**
+   * @brief call a callback.
+   *
+   * Call a static callback by pointer.
+   * The method can only be called the master
+   * and has the prerequisite that the other nodes are
+   * in the MPI loop. Also the function has to be previously
+   * registered e.g. with the @ref REGISTER_CALLBACK macro.
+   * The callback is called on the head node.
+   *
+   * @param fp Pointer to the function to call.
+   * @param args Arguments for the callback.
+   */
+  template <class... Args, class... ArgRef>
+  void call_all(void (*fp)(Args...), ArgRef &&... args) const {
+    call(fp, args...);
+    fp(args...);
+  }
+
+  /**
    * @brief Call a callback and reduce the result over all nodes.
    *
    * This calls a callback on all nodes, including the head node,
@@ -481,9 +503,8 @@ public:
    *
    * This method can only be called on the head node.
    */
-
   template <class Op, class R, class... Args>
-  auto reduce(Result::Reduction, Op op, R (*fp)(Args...), Args... args) const
+  auto call(Result::Reduction, Op op, R (*fp)(Args...), Args... args) const
       -> std::remove_reference_t<decltype(op(std::declval<R>(),
                                              std::declval<R>()))> {
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
@@ -498,23 +519,31 @@ public:
     return result;
   }
 
+  /**
+   * @brief Call a callback and reduce the result over all nodes.
+   *
+   * This calls a callback on all nodes, including the head node,
+   * and returns the value from the node which returned an engaged
+   * optional.
+   *
+   * This method can only be called on the head node.
+   */
   template <class R, class... Args>
-  auto call(Result::OneRank, R (*fp)(Args...), Args... args)
-      -> std::remove_reference_t<decltype(*std::declval<R>())> {
-    using result_type = decltype(*std::declval<R>());
+  auto call(Result::OneRank, boost::optional<R> (*fp)(Args...), Args... args)
+      -> std::remove_reference_t<R> {
 
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
+    call(id, args...);
 
     auto const local_result = fp(std::forward<Args>(args)...);
+
+    assert(1 == boost::mpi::all_reduce(m_comm, static_cast<int>(!!local_result),
+                                       std::plus<>()));
 
     if (!!local_result) {
       return *local_result;
     } else {
-      call(id, args...);
-      assert(1 == boost::mpi::all_reduce(
-                      m_comm, static_cast<int>(!!local_result), std::plus<>()));
-
-      std::remove_cv_t<std::remove_reference_t<result_type>> result;
+      std::remove_cv_t<std::remove_reference_t<R>> result;
       m_comm.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
       return result;
     }
