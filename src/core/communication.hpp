@@ -50,10 +50,6 @@
  *  in \ref anonymous_namespace{communication.cpp}::names "names".
  */
 
-#include <boost/mpi/communicator.hpp>
-
-#include <array>
-
 #include "MpiCallbacks.hpp"
 
 /** Included needed by callbacks. */
@@ -62,6 +58,10 @@
 #include "particle_data.hpp"
 
 #include <utils/serialization/array.hpp>
+#include <boost/mpi/communicator.hpp>
+
+#include <array>
+#include <vector>
 
 /**************************************************
  * exported variables
@@ -73,7 +73,7 @@
 extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
-// extern MPI_Comm comm_cart;
+/** The communicator */
 extern boost::mpi::communicator comm_cart;
 /*@}*/
 
@@ -96,11 +96,6 @@ MpiCallbacks &mpiCallbacks();
  * a slave exists which processes this request on
  * the slave nodes. It is denoted by *_slave.
  **************************************************/
-
-/**********************************************
- * slave callbacks.
- **********************************************/
-typedef void(SlaveCallback)(int node, int param);
 
 /** \name Exported Functions */
 /*@{*/
@@ -266,12 +261,6 @@ void mpi_bcast_cell_structure(int cs);
  */
 void mpi_bcast_nptiso_geom();
 
-/** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
- *  in sync with the topology. Note that this only makes sense if you
- *  have a simple topology such that each particle can only belong to
- *  a single molecule */
-void mpi_update_mol_ids();
-
 void mpi_bcast_lb_particle_coupling();
 
 Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
@@ -279,11 +268,6 @@ Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();
-
-/** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
- *  @return nonzero on error
- */
-int mpi_iccp3m_iteration();
 
 /** Issue REQ_ICCP3M_INIT: performs iccp3m initialization
  *  @return nonzero on error
@@ -305,17 +289,11 @@ void mpi_kill_particle_forces(int torque);
 void mpi_system_CMS();
 void mpi_system_CMS_velocity();
 void mpi_galilei_transform();
-void mpi_observable_lb_radial_velocity_profile();
 
 /** Issue REQ_SWIMMER_REACTIONS: notify the system of changes to the reaction
  *  parameters
  */
 void mpi_setup_reaction();
-
-#ifdef CUDA
-/** Gather CUDA devices from all nodes */
-std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
-#endif
 
 /**
  * @brief Resort the particles.
