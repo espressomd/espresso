@@ -173,7 +173,7 @@ int mpi_integrate(int n_steps, int reuse_forces);
 /** Issue REQ_MIN_ENERGY: start energy minimization.
  *  @return nonzero on error
  */
-int mpi_minimize_energy();
+void mpi_minimize_energy();
 
 void mpi_bcast_all_ia_params();
 

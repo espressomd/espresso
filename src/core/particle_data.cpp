@@ -497,8 +497,6 @@ void mpi_who_has() {
 
   /* then fetch particle locations */
   for (int pnode = 0; pnode < n_nodes; pnode++) {
-    COMM_TRACE(
-        fprintf(stderr, "node %d reports %d particles\n", pnode, sizes[pnode]));
     if (pnode == this_node) {
       for (auto const &p : local_cells.particles())
         particle_node[p.p.identity] = this_node;

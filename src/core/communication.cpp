@@ -106,7 +106,6 @@ int n_nodes = -1;
 #define CALLBACK_LIST                                                          \
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_place_particle_slave)                                                 \
-  CB(mpi_integrate_slave)                                                      \
   CB(mpi_bcast_ia_params_slave)                                                \
   CB(mpi_bcast_all_ia_params_slave)                                            \
   CB(mpi_bcast_max_seen_particle_type_slave)                                   \
@@ -126,8 +125,6 @@ int n_nodes = -1;
   CB(mpi_galilei_transform_slave)                                              \
   CB(mpi_setup_reaction_slave)                                                 \
   CB(mpi_check_runtime_errors_slave)                                           \
-  CB(mpi_minimize_energy_slave)                                                \
-  CB(mpi_gather_cuda_devices_slave)                                            \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
@@ -334,27 +331,17 @@ void mpi_remove_particle_slave(int pnode, int part) {
 
 /********************* REQ_MIN_ENERGY ********/
 
-int mpi_minimize_energy() {
-  mpi_call(mpi_minimize_energy_slave, 0, 0);
-  return minimize_energy();
+REGISTER_CALLBACK(minimize_energy)
+void mpi_minimize_energy() {
+  mpi_call_all(minimize_energy);
 }
-
-void mpi_minimize_energy_slave(int, int) { minimize_energy(); }
 
 /********************* REQ_INTEGRATE ********/
+REGISTER_CALLBACK(integrate_vv)
 int mpi_integrate(int n_steps, int reuse_forces) {
-  mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
-  integrate_vv(n_steps, reuse_forces);
-  COMM_TRACE(
-      fprintf(stderr, "%d: integration task %d done.\n", this_node, n_steps));
-  return mpi_check_runtime_errors();
-}
+  mpi_call_all(integrate_vv, n_steps, reuse_forces);
 
-void mpi_integrate_slave(int n_steps, int reuse_forces) {
-  integrate_vv(n_steps, reuse_forces);
-  COMM_TRACE(fprintf(
-      stderr, "%d: integration for %d n_steps with %d reuse_forces done.\n",
-      this_node, n_steps, reuse_forces));
+  return mpi_check_runtime_errors();
 }
 
 /*************** REQ_BCAST_IA ************/
