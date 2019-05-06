@@ -39,8 +39,11 @@
 namespace Communication {
 namespace Result {
 struct Ignore {};
+constexpr auto ignore = Ignore{};
 struct OneRank {};
+constexpr auto one_rank = OneRank{};
 struct Reduction {};
+constexpr auto reduction = Reduction{};
 } // namespace Result
 
 namespace detail {
@@ -217,7 +220,8 @@ auto make_model_impl(Result::Ignore, CRef &&c, FunctorTypes<C, R, Args...>) {
  * to exist and can not be overloaded.
  */
 template <typename F> auto make_model(F &&f) {
-  return make_model_impl(Result::Ignore{}, std::forward<F>(f), functor_types<F>{});
+  return make_model_impl(Result::Ignore{}, std::forward<F>(f),
+                         functor_types<F>{});
 }
 
 /**
@@ -495,7 +499,7 @@ public:
   }
 
   template <class R, class... Args>
-  auto one_rank(Result::OneRank, R (*fp)(Args...), Args... args)
+  auto call(Result::OneRank, R (*fp)(Args...), Args... args)
       -> std::remove_reference_t<decltype(*std::declval<R>())> {
     using result_type = decltype(*std::declval<R>());
 
@@ -507,8 +511,8 @@ public:
       return *local_result;
     } else {
       call(id, args...);
-      assert(1 == boost::mpi::all_reduce(m_comm, static_cast<int>(!!local_result),
-                                         std::plus<>()));
+      assert(1 == boost::mpi::all_reduce(
+                      m_comm, static_cast<int>(!!local_result), std::plus<>()));
 
       std::remove_cv_t<std::remove_reference_t<result_type>> result;
       m_comm.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
@@ -635,7 +639,7 @@ public:
 #define REGISTER_CALLBACK_ONE_RANK(cb)                                         \
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback                                     \
-      register_one_rank_##cb(::Communication::Result::OneRank{}, &(cb));          \
+      register_one_rank_##cb(::Communication::Result::OneRank{}, &(cb));       \
   }
 
 #endif

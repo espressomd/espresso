@@ -206,13 +206,13 @@ BOOST_AUTO_TEST_CASE(one_rank_callback) {
 
   auto const fp = static_cast<boost::optional<int> (*)()>(cb);
 
-  Communication::MpiCallbacks::add_static(Communication::Result::OneRank{}, fp);
+  Communication::MpiCallbacks::add_static(Communication::Result::one_rank, fp);
 
   boost::mpi::communicator world;
   Communication::MpiCallbacks cbs(world);
 
   if (0 == world.rank()) {
-    BOOST_CHECK_EQUAL(cbs.one_rank(Communication::Result::OneRank{}, fp),
+    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::one_rank, fp),
                       world.size() - 1);
   } else {
     cbs.loop();

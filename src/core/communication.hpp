@@ -156,16 +156,6 @@ void mpi_send_exclusion(int part, int part2, int _delete);
  */
 void mpi_remove_particle(int node, int id);
 
-/** Issue REQ_GET_PART: recv particle data. The data has to be freed later
- *  using \ref free_particle, otherwise the dynamically allocated parts, bonds
- *  and exclusions are left over.
- *  \param part  the particle.
- *  \param node  the node it is attached to.
- *  \note Gets a copy of the particle data not a pointer to the actual particle
- *  used in integration
- */
-Particle mpi_recv_part(int node, int part);
-
 /** Issue REQ_INTEGRATE: start integrator.
  *  @param n_steps       how many steps to do.
  *  @param reuse_forces  whether to trust the old forces for the first half step

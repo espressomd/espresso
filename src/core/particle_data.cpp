@@ -740,9 +740,8 @@ const Particle &get_particle_data(int part) {
   /* Cache miss, fetch the particle,
    * put it into the cache and return a pointer into the cache. */
   auto const cache_ptr = particle_fetch_cache.put(
-      part,
-      Communication::mpiCallbacks().one_rank(Communication::Result::OneRank{},
-                                             get_particle_data_local, part));
+      part, Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                               get_particle_data_local, part));
   return *cache_ptr;
 }
 

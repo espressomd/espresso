@@ -106,7 +106,6 @@ int n_nodes = -1;
 #define CALLBACK_LIST                                                          \
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_place_particle_slave)                                                 \
-  CB(mpi_recv_part_slave)                                                      \
   CB(mpi_integrate_slave)                                                      \
   CB(mpi_bcast_ia_params_slave)                                                \
   CB(mpi_bcast_all_ia_params_slave)                                            \
@@ -317,24 +316,6 @@ void mpi_place_new_particle_slave(int pnode, int part) {
   }
 
   on_particle_change();
-}
-
-/****************** REQ_GET_PART ************/
-Particle mpi_recv_part(int pnode, int part) {
-  Particle ret;
-
-  mpi_call(mpi_recv_part_slave, pnode, part);
-  comm_cart.recv(pnode, SOME_TAG, ret);
-
-  return ret;
-}
-
-void mpi_recv_part_slave(int pnode, int part) {
-  if (pnode != this_node)
-    return;
-
-  assert(local_particles[part]);
-  comm_cart.send(0, SOME_TAG, *local_particles[part]);
 }
 
 /****************** REQ_REM_PART ************/
