@@ -37,6 +37,7 @@
 #include "cells.hpp"
 #include "collision.hpp"
 #include "cuda_interface.hpp"
+#include "dpd.hpp"
 #include "energy.hpp"
 #include "event.hpp"
 #include "forces.hpp"
@@ -55,7 +56,6 @@
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
-#include "dpd.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
@@ -892,7 +892,8 @@ void mpi_get_dpd_virial() {
 #ifdef DPD
   mpi_call(mpi_get_dpd_virial_slave, -1, 0);
 
-  boost::mpi::reduce(comm_cart, dpd_virial, dpd_global_virial, std::plus<>(), 0);
+  boost::mpi::reduce(comm_cart, dpd_virial, dpd_global_virial, std::plus<>(),
+                     0);
 
 #endif
 }
@@ -900,7 +901,8 @@ void mpi_get_dpd_virial() {
 void mpi_get_dpd_virial_slave(int, int) {
 #ifdef DPD
 
-  boost::mpi::reduce(comm_cart, dpd_virial, dpd_global_virial, std::plus<>(), 0);
+  boost::mpi::reduce(comm_cart, dpd_virial, dpd_global_virial, std::plus<>(),
+                     0);
 #endif
 }
 

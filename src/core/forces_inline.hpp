@@ -337,12 +337,12 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
     auto tmp_force = dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
     get_mi_vector(dx, p1->r.p, p2->r.p);
 
-    dpd_virial += Utils::Vector9d{dx[0] * tmp_force[0], dx[0] * tmp_force[1], dx[0] * tmp_force[2],
-	dx[1] * tmp_force[0], dx[1] * tmp_force[1], dx[1] * tmp_force[2],
-	dx[2] * tmp_force[0], dx[2] * tmp_force[1], dx[2] * tmp_force[2]};
+    dpd_virial += Utils::Vector9d{
+        dx[0] * tmp_force[0], dx[0] * tmp_force[1], dx[0] * tmp_force[2],
+        dx[1] * tmp_force[0], dx[1] * tmp_force[1], dx[1] * tmp_force[2],
+        dx[2] * tmp_force[0], dx[2] * tmp_force[1], dx[2] * tmp_force[2]};
 
     force += tmp_force;
-
   }
 #endif
 
