@@ -3235,4 +3235,4 @@ uint64_t lb_fluid_get_rng_state_gpu() {
   return rng_counter_fluid_gpu->value();
 }
 
-#endif /* LB_GPU */
+#endif /* CUDA */

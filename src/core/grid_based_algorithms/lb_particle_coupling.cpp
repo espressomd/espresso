@@ -53,7 +53,7 @@ bool lb_lbcoupling_is_seed_required() {
   if (lattice_switch == ActiveLB::CPU) {
     return not lb_particle_coupling.rng_counter_coupling.is_initialized();
   }
-#ifdef LB_GPU
+#ifdef CUDA
   if (lattice_switch == ActiveLB::GPU) {
     return not rng_counter_coupling_gpu.is_initialized();
   }
