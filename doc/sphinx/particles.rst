@@ -648,6 +648,6 @@ field.
 .. warning::
 
     Please note that even though swimming is interoperable with the
-    CPU version of LB it is only supported on *one* Open MPI
-    node, i.e. ``n_nodes`` = 1.
+    CPU version of LB it is only supported on *one* MPI
+    rank, i.e. ``n_nodes`` = 1.
 
