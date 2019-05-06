@@ -77,9 +77,10 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfa
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
 
+cdef variant_to_python_object(const Variant & value) except +
+cdef Variant python_object_to_variant(value)
+
 cdef class PScriptInterface:
     cdef shared_ptr[ScriptInterfaceBase] sip
     cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
-    cdef variant_to_python_object(self, Variant value) except +
-    cdef Variant python_object_to_variant(self, value)
     cdef VariantMap _sanitize_params(self, in_params) except *

@@ -25,7 +25,7 @@
  *
  */
 
-#include "config.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 
 #include "communication.hpp"
 #include "event.hpp"
@@ -34,12 +34,12 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
-#include "utils/index.hpp"
+#include <utils/index.hpp>
 using Utils::get_linear_index;
+#include <utils/constants.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -63,29 +63,6 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
   lbboundaries.erase(std::remove(lbb.begin(), lbb.end(), b), lbb.end());
 
   on_lbboundary_change();
-}
-
-void lbboundary_mindist_position(const Utils::Vector3d &pos, double *mindist,
-                                 double distvec[3], int *no) {
-
-  double vec[3] = {std::numeric_limits<double>::infinity(),
-                   std::numeric_limits<double>::infinity(),
-                   std::numeric_limits<double>::infinity()};
-  double dist = std::numeric_limits<double>::infinity();
-  *mindist = std::numeric_limits<double>::infinity();
-
-  int n = 0;
-  for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end(); ++lbb, n++) {
-    (**lbb).calc_dist(pos, &dist, vec);
-
-    if (dist < *mindist || lbb == lbboundaries.begin()) {
-      *no = n;
-      *mindist = dist;
-      distvec[0] = vec[0];
-      distvec[1] = vec[1];
-      distvec[2] = vec[2];
-    }
-  }
 }
 
 /** Initialize boundary conditions for all constraints in the system. */
@@ -245,7 +222,7 @@ void lb_init_boundaries() {
 
 #endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
   } else if (lattice_switch == ActiveLB::CPU) {
-#if defined(LB) && defined(LB_BOUNDARIES)
+#if defined(LB_BOUNDARIES)
     Utils::Vector3i node_domain_position, offset;
     int the_boundary = -1;
     map_node_array(this_node, node_domain_position.data());
@@ -327,7 +304,7 @@ int lbboundary_get_force(void *lbb, double *f) {
     return ES_ERROR;
 #endif
   } else {
-#if defined(LB_BOUNDARIES) && defined(LB)
+#if defined(LB_BOUNDARIES)
     mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
   }
   f[0] = forces[3 * no + 0];

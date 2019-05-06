@@ -34,6 +34,7 @@ using Utils::Vector3d;
 
 Utils::Vector9d dpd_virial = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 Utils::Vector9d dpd_global_virial = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+#include <utils/constants.hpp>
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);

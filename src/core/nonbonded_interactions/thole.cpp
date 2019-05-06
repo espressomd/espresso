@@ -20,10 +20,11 @@
 */
 
 #include "thole.hpp"
-#include "utils.hpp"
 
 #ifdef THOLE
 #include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
                      double q1q2) {

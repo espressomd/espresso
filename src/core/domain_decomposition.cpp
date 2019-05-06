@@ -31,8 +31,8 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "serialization/ParticleList.hpp"
-#include "utils/index.hpp"
-#include "utils/mpi/sendrecv.hpp"
+#include <utils/index.hpp>
+#include <utils/mpi/sendrecv.hpp>
 using Utils::get_linear_index;
 
 #include "event.hpp"

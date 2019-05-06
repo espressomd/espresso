@@ -27,13 +27,10 @@
 
 #include "config.hpp"
 
-#ifdef LATTICE
-
 #include "debug.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "halo.hpp"
-#include "utils.hpp"
 
 /** Primitive fieldtypes and their initializers */
 struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,
@@ -394,5 +391,3 @@ void halo_communication(HaloCommunicator const *const hc, char *const base) {
     }
   }
 }
-
-#endif /* LATTICE */

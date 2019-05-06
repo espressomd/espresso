@@ -130,7 +130,7 @@ class LBGPUStokes(ut.TestCase, Stokes):
 
 
 @ut.skipIf(not espressomd.has_features(
-    ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+    ['LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBCPUStokes(ut.TestCase, Stokes):
 
     def setUp(self):

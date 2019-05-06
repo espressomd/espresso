@@ -23,12 +23,14 @@
  */
 #include "p3m-common.hpp"
 
+#if defined(P3M) || defined(DP3M)
 #include "errorhandling.hpp"
+
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 /* For debug messages */
 extern int this_node;
-
-#if defined(P3M) || defined(DP3M)
 
 /* Debug function printing p3m structures */
 void p3m_p3m_print_local_mesh(p3m_local_mesh l) {

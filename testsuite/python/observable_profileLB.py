@@ -112,8 +112,6 @@ class ObservableProfileLBCommon(object):
             obs.calculate()
 
 
-@ut.skipIf(not espressomd.has_features(
-    'LB'), "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, ObservableProfileLBCommon):
 
     """Test for the CPU implementation of the LB."""

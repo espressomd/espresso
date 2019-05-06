@@ -61,7 +61,6 @@ NEW_PARAMLESS_OBSERVABLE(DPDStress)
 #endif
 #if (defined(LB) || defined(LB_GPU))
 NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
-#endif
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

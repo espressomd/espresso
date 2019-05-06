@@ -27,6 +27,8 @@
 #ifdef BUCKINGHAM
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+
 int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
                           double C, double D, double cut, double discont,
                           double shift) {

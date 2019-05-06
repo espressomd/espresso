@@ -30,9 +30,8 @@
 
 #include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb-d3q19.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
-
-#ifdef LB
 
 #include <array>
 #include <boost/optional.hpp>
@@ -41,10 +40,9 @@
 #include "errorhandling.hpp"
 
 #include "halo.hpp"
-#include "utils.hpp"
 
-#include "utils/Counter.hpp"
-#include "utils/Span.hpp"
+#include <utils/Counter.hpp>
+#include <utils/Span.hpp>
 
 /** Some general remarks:
  *  This file implements the LB D3Q19 method to Espresso. The LB_Model
@@ -68,31 +66,6 @@
  *  of the pseudo-equilibrium distribution
  */
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
-template <size_t N_vel = 19> struct LB_Model {
-  /** number of velocities */
-  static const constexpr int n_veloc = static_cast<int>(N_vel);
-
-  /** unit vectors of the velocity sublattice */
-  std::array<std::array<double, 3>, N_vel> c;
-
-  /** coefficients in the pseudo-equilibrium distribution */
-  std::array<std::array<double, 4>, N_vel> coeff;
-
-  /** weights in the functional for the equilibrium distribution */
-  std::array<double, N_vel> w;
-
-  /** basis of moment space */
-  std::array<std::array<int, N_vel>, N_vel> e_ki;
-
-  /** normalization factors for the moment basis */
-  std::array<double, N_vel> w_k;
-
-  /** speed of sound squared */
-  double c_sound_sq;
-
-  /** transposed basis of moment space */
-  std::array<std::array<int, N_vel>, N_vel> e_ki_transposed;
-};
 
 /** Data structure for fluid on a local lattice site */
 struct LB_FluidNode {
@@ -160,9 +133,6 @@ struct LB_Parameters {
         &gamma_even &gamma_shear &gamma_bulk &is_TRT &phi &kT;
   }
 };
-
-/** The DnQm model to be used. */
-extern LB_Model<> lbmodel;
 
 /** %Lattice Boltzmann parameters. */
 extern LB_Parameters lbpar;
@@ -256,22 +226,21 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 #endif
 
 inline void lb_get_populations(Lattice::index_t index, double *pop) {
-  for (int i = 0; i < LB_Model<>::n_veloc; ++i) {
-    pop[i] = lbfluid[i][index] + lbmodel.coeff[i][0] * lbpar.rho;
+  for (int i = 0; i < D3Q19::n_vel; ++i) {
+    pop[i] = lbfluid[i][index] + D3Q19::coefficients[i][0] * lbpar.rho;
   }
 }
 
 inline void lb_set_populations(Lattice::index_t index,
                                const Utils::Vector19d &pop) {
-  for (int i = 0; i < LB_Model<>::n_veloc; ++i) {
-    lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
+  for (int i = 0; i < D3Q19::n_vel; ++i) {
+    lbfluid[i][index] = pop[i] - D3Q19::coefficients[i][0] * lbpar.rho;
   }
 }
 
 uint64_t lb_fluid_get_rng_state();
 void lb_fluid_set_rng_state(uint64_t counter);
 void lb_prepare_communication();
-#endif
 
 #ifdef LB_BOUNDARIES
 /** Bounce back boundary conditions.
@@ -285,9 +254,7 @@ void lb_bounce_back(LB_Fluid &lbfluid);
 
 #endif /* LB_BOUNDARIES */
 
-void lb_calc_fluid_mass(double *result);
 void lb_calc_fluid_momentum(double *result);
-void lb_calc_fluid_temp(double *result);
 void lb_collect_boundary_forces(double *result);
 
 /*@}*/

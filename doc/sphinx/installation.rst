@@ -455,10 +455,6 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB`` Enables the lattice Boltzmann fluid code.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
-
 -  ``LB_GPU`` Enables the lattice Boltzmann fluid code support for GPU.
 
    .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
@@ -531,18 +527,12 @@ Some of the short range interactions have additional features:
    prints a warning if particles come too close so that the simulation
    becomes unphysical.
 
--  ``OLD_DIHEDRAL`` Switch the interface of the dihedral potential to its old, less
-   flexible form. Use this for older scripts that are not yet adapted to
-   the new interface of the dihedral potential.
-
 If you want to use bond-angle potentials (see section :ref:`Bond-angle interactions`), you need the
 following features.
 
 -  ``BOND_ANGLE``
 
 -  ``LJGEN_SOFTCORE``
-
--  ``COS2``
 
 -  ``GAUSSIAN``
 

@@ -11,17 +11,13 @@ User's Guide
 
     ug.rst
 
-.. _Developers Guide:
+.. _Online resources:
 
-Developer's Guide
------------------
+Online resources
+----------------
 
-.. toctree::
-    :numbered:
-    :maxdepth: 1
-
-    dg.rst
-    testing.rst
+* `Repository <https://github.com/espressomd/espresso>`_
+* `Wiki <https://github.com/espressomd/espresso/wiki>`_
 
 Python module documentation
 ===========================

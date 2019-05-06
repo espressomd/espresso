@@ -113,7 +113,7 @@ The focus of the user guide is documenting the scripting interface, its
 behavior and use in the simulation. It only describes certain technical details
 of implementation which are necessary for understanding how the script
 interface works. Technical documentation of the code and program structure is
-contained in the :ref:`Developers guide`.
+contained in the `online wiki <https://github.com/espressomd/espresso/wiki>`_.
 
 .. _Basic python simulation script:
 
@@ -383,7 +383,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * :file:`minimal-diamond.py`
 
 * :file:`minimal-polymer.py`
-   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.create_polymer`.
+   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.positions`.
 
 * :file:`minimal_random_number_generator.py`
 

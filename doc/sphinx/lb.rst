@@ -38,7 +38,7 @@ To use the GPU accelerated variant, replace line 5 in the example above by::
 
     lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
 
-.. note:: Feature ``LB`` or ``LB_GPU`` required
+.. note:: Feature ``LB_GPU`` required for GPU accelerated variant
 
 To use the (much faster) GPU implementation of the LBM, use
 :class:`espressomd.lb.LBFluidGPU` in place of :class:`espressomd.lb.LBFluid`.

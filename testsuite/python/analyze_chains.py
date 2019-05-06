@@ -40,10 +40,16 @@ class AnalyzeChain(ut.TestCase):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
         fene = FeneBond(k=30, d_r_max=2)
         self.system.bonded_inter.add(fene)
-        polymer.create_polymer(start_pos=[0, 0, 0], N_P=self.num_poly,
-                               bond_length=0.9,
-                               MPC=self.num_mono,
-                               bond=fene)
+        positions = polymer.positions(n_polymers=self.num_poly,
+                                      bond_length=0.9,
+                                      beads_per_chain=self.num_mono,
+                                      seed=42)
+        for p in positions:
+            for ndx, m in enumerate(p):
+                part_id = len(self.system.part)
+                self.system.part.add(id=part_id, pos=m)
+                if ndx > 0:
+                    self.system.part[part_id].add_bond((fene, part_id - 1))
         # bring two polymers to opposite corners:
         # far in centre cell, but mirror images are close
         head_id = 0

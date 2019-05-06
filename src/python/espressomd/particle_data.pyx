@@ -1233,11 +1233,10 @@ cdef class ParticleHandle(object):
                 swim.swimming = True
                 swim.v_swim = 0.0
                 swim.f_swim = 0.0
-                IF LB or LB_GPU:
-                    swim.push_pull = 0
-                    swim.dipole_length = 0.0
-                    swim.rotational_friction = 0.0
-
+                swim.push_pull = 0
+                swim.dipole_length = 0.0
+                swim.rotational_friction = 0.0
+ 
                 if type(_params) == type(True):
                     if _params:
                         raise Exception(
@@ -1258,28 +1257,27 @@ cdef class ParticleHandle(object):
                             _params['v_swim'], 1, float, "v_swim has to be a float.")
                         swim.v_swim = _params['v_swim']
 
-                    IF LB or LB_GPU:
-                        if 'mode' in _params:
-                            if _params['mode'] == "pusher":
-                                swim.push_pull = -1
-                            elif _params['mode'] == "puller":
-                                swim.push_pull = 1
-                            elif _params['mode'] == "N/A":
-                                swim.push_pull = 0
-                            else:
-                                raise Exception(
-                                    "'mode' has to be either 'pusher' or 'puller'.")
+                    if 'mode' in _params:
+                        if _params['mode'] == "pusher":
+                            swim.push_pull = -1
+                        elif _params['mode'] == "puller":
+                            swim.push_pull = 1
+                        elif _params['mode'] == "N/A":
+                            swim.push_pull = 0
+                        else:
+                            raise Exception(
+                                "'mode' has to be either 'pusher' or 'puller'.")
 
-                        if 'dipole_length' in _params:
-                            check_type_or_throw_except(
-                                _params['dipole_length'], 1, float, "dipole_length has to be a float.")
-                            swim.dipole_length = _params['dipole_length']
+                    if 'dipole_length' in _params:
+                        check_type_or_throw_except(
+                            _params['dipole_length'], 1, float, "dipole_length has to be a float.")
+                        swim.dipole_length = _params['dipole_length']
 
-                        if 'rotational_friction' in _params:
-                            check_type_or_throw_except(
-                                _params['rotational_friction'], 1, float, "rotational_friction has to be a float.")
-                            swim.rotational_friction = _params[
-                                'rotational_friction']
+                    if 'rotational_friction' in _params:
+                        check_type_or_throw_except(
+                            _params['rotational_friction'], 1, float, "rotational_friction has to be a float.")
+                        swim.rotational_friction = _params[
+                            'rotational_friction']
 
                 if swim.f_swim != 0 or swim.v_swim != 0:
                     swimming_particles_exist = True
@@ -1293,23 +1291,19 @@ cdef class ParticleHandle(object):
                 mode = "N/A"
                 cdef const particle_parameters_swimming * _swim = NULL
                 pointer_to_swimming(self.particle_data, _swim)
-                IF LB or LB_GPU:
-                    if _swim.push_pull == -1:
-                        mode = 'pusher'
-                    elif _swim.push_pull == 1:
-                        mode = 'puller'
-                    swim = {
-                        'v_swim': _swim.v_swim,
-                        'f_swim': _swim.f_swim,
-                        'mode': mode,
-                        'dipole_length': _swim.dipole_length,
-                        'rotational_friction': _swim.rotational_friction
-                    }
-                ELSE:
-                    swim = {
-                        'v_swim': _swim.v_swim,
-                        'f_swim': _swim.f_swim,
-                    }
+
+                if _swim.push_pull == -1:
+                    mode = 'pusher'
+                elif _swim.push_pull == 1:
+                    mode = 'puller'
+                swim = {
+                    'v_swim': _swim.v_swim,
+                    'f_swim': _swim.f_swim,
+                    'mode': mode,
+                    'dipole_length': _swim.dipole_length,
+                    'rotational_friction': _swim.rotational_friction
+                }
+
                 return swim
 
     def remove(self):

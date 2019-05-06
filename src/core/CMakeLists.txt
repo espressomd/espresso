@@ -6,6 +6,7 @@ set(EspressoCore_SRC
   communication.cpp
   constraints.cpp
   debug.cpp
+  diamond.cpp
   domain_decomposition.cpp
   dpd.cpp
   energy.cpp
@@ -90,7 +91,7 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/reaction_field.cpp
   grid_based_algorithms/halo.cpp
   grid_based_algorithms/lattice.cpp
-  grid_based_algorithms/lbboundaries.cpp
+  grid_based_algorithms/lb_boundaries.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/lb_interface.cpp
   grid_based_algorithms/lb_interpolation.cpp
@@ -100,7 +101,6 @@ set(EspressoCore_SRC
   immersed_boundary/ImmersedBoundaries.cpp
   nonbonded_interactions/bmhtf-nacl.cpp
   nonbonded_interactions/buckingham.cpp
-  nonbonded_interactions/cos2.cpp
   nonbonded_interactions/gaussian.cpp
   nonbonded_interactions/gb.cpp
   nonbonded_interactions/hat.cpp
@@ -175,7 +175,7 @@ if(WITH_COVERAGE)
   endif()
 endif()
 
-target_link_libraries(EspressoCore PUBLIC EspressoConfig)
+target_link_libraries(EspressoCore PUBLIC EspressoConfig utils)
 target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX Random123)
 target_link_libraries(EspressoCore PRIVATE Profiler)
 target_link_libraries(EspressoCore PRIVATE pdbparser)

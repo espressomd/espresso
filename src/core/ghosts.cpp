@@ -30,7 +30,6 @@
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include <algorithm>
 #include <cstdio>

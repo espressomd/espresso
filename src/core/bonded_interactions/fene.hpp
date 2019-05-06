@@ -28,7 +28,6 @@
 
 #include "bonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 /************************************************************/
 
@@ -40,19 +39,16 @@
 int fene_set_params(int bond_type, double k, double drmax, double r0);
 
 /** Computes the FENE bond length force.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
  *  @retval 1 if the bond is broken
  *  @retval 0 otherwise
  */
-inline int calc_fene_pair_force(Particle const *p1, Particle const *p2,
-                                Bonded_ia_parameters const *iaparams,
-                                double const dx[3], double force[3]) {
-  const double len2 = sqrlen(dx);
-  const double len = sqrt(len2);
+inline int calc_fene_pair_force(Bonded_ia_parameters const *iaparams,
+                                Utils::Vector3d const &dx, double *force) {
+  auto const len = dx.norm();
+
   const double dr = len - iaparams->p.fene.r0;
 
   if (dr >= iaparams->p.fene.drmax)
@@ -73,19 +69,16 @@ inline int calc_fene_pair_force(Particle const *p1, Particle const *p2,
 }
 
 /** Computes the FENE bond length force.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.
  *  @retval 1 if the bond is broken
  *  @retval 0 otherwise
  */
-inline int fene_pair_energy(Particle const *p1, Particle const *p2,
-                            Bonded_ia_parameters const *iaparams,
-                            double const dx[3], double *_energy) {
+inline int fene_pair_energy(Bonded_ia_parameters const *iaparams,
+                            Utils::Vector3d const &dx, double *_energy) {
   /* compute bond stretching (r-r0) */
-  double dr = sqrt(sqrlen(dx)) - iaparams->p.fene.r0;
+  double const dr = dx.norm() - iaparams->p.fene.r0;
 
   /* check bond stretching */
   if (dr >= iaparams->p.fene.drmax) {

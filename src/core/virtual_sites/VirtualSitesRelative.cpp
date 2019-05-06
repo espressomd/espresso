@@ -91,7 +91,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   Utils::Vector3d director = {0, 0, 0};
   convert_quat_to_director(q, director);
   // normalize
-  double l = sqrt(sqrlen(director));
+  double l = director.norm();
   // Division comes in the loop below
 
   // Calculate the new position of the virtual sites from
@@ -136,23 +136,14 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
     return;
   }
 
-  double d[3];
-  get_mi_vector(d, p.r.p, p_real->r.p);
+  auto const d = get_mi_vector(p.r.p, p_real->r.p);
 
   // Get omega of real particle in space-fixed frame
   Utils::Vector3d omega_space_frame =
       convert_vector_body_to_space(*p_real, p_real->m.omega);
   // Obtain velocity from v=v_real particle + omega_real_particle \times
   // director
-  vector_product(omega_space_frame, d, p.m.v);
-
-  int i;
-  // Add prefactors and add velocity of real particle
-  for (i = 0; i < 3; i++) {
-    // Scale the velocity by the distance of virtual particle from the real
-    // particle Add velocity of real particle
-    p.m.v[i] += p_real->m.v[i];
-  }
+  p.m.v = vector_product(omega_space_frame, d) + p_real->m.v;
 }
 
 // Distribute forces that have accumulated on virtual particles to the
@@ -165,26 +156,15 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
       // First obtain the real particle responsible for this virtual particle:
       Particle *p_real = local_particles[p.p.vs_relative.to_particle_id];
 
-      // Get distance vector pointing from real to virtual particle, respecting
-      // periodic boundary i
-      // conditions
-      double d[3];
-      get_mi_vector(d, p.r.p, p_real->r.p);
-
       // The rules for transferring forces are:
       // F_realParticle +=F_virtualParticle
       // T_realParticle +=f_realParticle \times
       // (r_virtualParticle-r_realParticle)
 
-      // Calculate torque to be added on real particle
-      double tmp[3];
-      vector_product(d, p.f.f, tmp);
-
       // Add forces and torques
-      for (int j = 0; j < 3; j++) {
-        p_real->f.torque[j] += tmp[j] + p.f.torque[j];
-        p_real->f.f[j] += p.f.f[j];
-      }
+      p_real->f.torque +=
+          vector_product(get_mi_vector(p.r.p, p_real->r.p), p.f.f) + p.f.torque;
+      p_real->f.f += p.f.f;
     }
   }
 }

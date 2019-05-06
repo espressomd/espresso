@@ -34,8 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "serialization/ibm_cuda_particle_velocities_input.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
-#include "utils/mpi/gather_buffer.hpp"
-#include "utils/mpi/scatter_buffer.hpp"
+#include <utils/mpi/gather_buffer.hpp>
+#include <utils/mpi/scatter_buffer.hpp>
 
 // Variables for communication
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host = nullptr;

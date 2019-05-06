@@ -28,11 +28,13 @@
 
 /************************************************************/
 
-#include "bonded_interaction_data.hpp"
-#include "particle_data.hpp"
-#include "utils.hpp"
+#include "config.hpp"
 
 #ifdef ROTATION
+#include "bonded_interaction_data.hpp"
+#include "particle_data.hpp"
+
+#include <utils/math/sqr.hpp>
 
 /** set the parameters for the harmonic potential
  *
@@ -44,18 +46,16 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
 
 /** Computes the harmonic dumbbell bond length force and update torque.
  *  @param[in,out]  p1        First particle, torque gets updated.
- *  @param[in]      p2        Second particle.
  *  @param[in]      iaparams  Bonded parameters for the pair interaction.
  *  @param[in]      dx        %Distance between the particles.
  *  @param[out]     force     Force.
  *  @retval 0
  */
 inline int
-calc_harmonic_dumbbell_pair_force(Particle *p1, Particle const *p2,
+calc_harmonic_dumbbell_pair_force(Particle *p1,
                                   Bonded_ia_parameters const *iaparams,
-                                  double const dx[3], double force[3]) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
+                                  Utils::Vector3d const &dx, double *force) {
+  auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic_dumbbell.r_cut))
@@ -77,17 +77,16 @@ calc_harmonic_dumbbell_pair_force(Particle *p1, Particle const *p2,
 
 /** Computes the harmonic dumbbell bond length energy.
  *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.
  *  @retval 0
  */
-inline int harmonic_dumbbell_pair_energy(Particle const *p1, Particle const *p2,
+inline int harmonic_dumbbell_pair_energy(Particle const *p1,
                                          Bonded_ia_parameters const *iaparams,
-                                         double const dx[3], double *_energy) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
+                                         Utils::Vector3d const &dx,
+                                         double *_energy) {
+  auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic_dumbbell.r_cut))

@@ -48,9 +48,8 @@
 #include "algorithm/periodic_fold.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "utils.hpp"
-#include "utils/Span.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 
 #include <limits>
 

@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OBSERVABLES_PARTICLEANGLES_HPP
 
 #include "PidObservable.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <cmath>
 #include <vector>

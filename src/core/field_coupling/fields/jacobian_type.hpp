@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_FIELD_COUPLING_GRADIENT_TYPE_HPP
 #define CORE_FIELD_COUPLING_GRADIENT_TYPE_HPP
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace FieldCoupling {
 namespace Fields {

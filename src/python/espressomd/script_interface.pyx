@@ -62,10 +62,10 @@ cdef class PScriptInterface(object):
         cdef VariantMap parameters
 
         for name in kwargs:
-            parameters[to_char_pointer(name)] = self.python_object_to_variant(
+            parameters[to_char_pointer(name)] = python_object_to_variant(
                 kwargs[name])
 
-        res = self.variant_to_python_object(
+        res = variant_to_python_object(
             self.sip.get().call_method(to_char_pointer(method), parameters))
         handle_errors("")
         return res
@@ -88,7 +88,7 @@ cdef class PScriptInterface(object):
 
         for pname in in_params:
             if pname in valid_params:
-                out_params[to_char_pointer(pname)] = self.python_object_to_variant(
+                out_params[to_char_pointer(pname)] = python_object_to_variant(
                     in_params[pname])
             else:
                 raise RuntimeError("Unknown parameter '{}'".format(pname))
@@ -98,106 +98,106 @@ cdef class PScriptInterface(object):
     def set_params(self, **kwargs):
         for name, value in kwargs.items():
             self.sip.get().set_parameter(to_char_pointer(name),
-                                         self.python_object_to_variant(value))
-
-    cdef Variant python_object_to_variant(self, value):
-        cdef Variant v
-        cdef vector[Variant] vec
-        cdef PObjectId oid
-
-        if value is None:
-            return Variant()
-
-        # The order is important, the object character should
-        # be preserved even if the PScriptInterface derived class
-        # is iterable.
-        if isinstance(value, PScriptInterface):
-            # Map python object do id
-            oid = value.id()
-            return make_variant[ObjectId](oid.id)
-        elif hasattr(value, '__iter__') and not(type(value) == str):
-            for e in value:
-                vec.push_back(self.python_object_to_variant(e))
-            return make_variant[vector[Variant]](vec)
-        elif type(value) == str:
-            return make_variant[string](to_char_pointer(value))
-        elif type(value) == type(True):
-            return make_variant[bool](value)
-        elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
-            return make_variant[int](value)
-        elif np.issubdtype(np.dtype(type(value)), np.floating):
-            return make_variant[double](value)
-        else:
-            raise TypeError("Unknown type for conversion to Variant")
-
-    cdef variant_to_python_object(self, const Variant & value) except +:
-        cdef ObjectId oid
-        cdef vector[Variant] vec
-        cdef shared_ptr[ScriptInterfaceBase] ptr
-        if is_none(value):
-            return None
-        if is_type[bool](value):
-            return get_value[bool](value)
-        if is_type[int](value):
-            return get_value[int](value)
-        if is_type[double](value):
-            return get_value[double](value)
-        if is_type[string](value):
-            return to_str(get_value[string](value))
-        if is_type[vector[int]](value):
-            return get_value[vector[int]](value)
-        if is_type[vector[double]](value):
-            return get_value[vector[double]](value)
-        if is_type[Vector3d](value):
-            return make_array_locked(get_value[Vector3d](value))
-        if is_type[ObjectId](value):
-            # Get the id and build a corresponding object
-            try:
-                oid = get_value[ObjectId](value)
-                ptr = get_instance(oid).lock()
-                if ptr != shared_ptr[ScriptInterfaceBase]():
-                    so_name = to_str(ptr.get().name())
-                    if not so_name:
-                        raise Exception(
-                            "Script object without name returned from the core")
-                    # Fallback class, if nothing more specific is registered
-                    # for the script object name
-                    pclass = ScriptInterfaceHelper
-                    # Look up class
-                    if so_name in _python_class_by_so_name:
-                        pclass = _python_class_by_so_name[so_name]
-                    pobj = pclass()
-                    poid = PObjectId()
-                    poid.id = ptr.get().id()
-                    pobj.set_sip_via_oid(poid)
-                    return pobj
-                else:
-                    return None
-            except:
-                return None
-        if is_type[vector[Variant]](value):
-            vec = get_value[vector[Variant]](value)
-            res = []
-
-            for i in vec:
-                res.append(self.variant_to_python_object(i))
-
-            return res
-
-        raise TypeError("Unknown type")
+                                         python_object_to_variant(value))
 
     def get_parameter(self, name):
         cdef Variant value = self.sip.get().get_parameter(to_char_pointer(name))
-        return self.variant_to_python_object(value)
+        return variant_to_python_object(value)
 
     def get_params(self):
         odict = {}
 
         for pair in self.sip.get().get_parameters():
-            odict[to_str(pair.first)] = self.variant_to_python_object(
+            odict[to_str(pair.first)] = variant_to_python_object(
                 pair.second)
 
         return odict
+
+cdef Variant python_object_to_variant(value):
+    cdef Variant v
+    cdef vector[Variant] vec
+    cdef PObjectId oid
+
+    if value is None:
+        return Variant()
+
+    # The order is important, the object character should
+    # be preserved even if the PScriptInterface derived class
+    # is iterable.
+    if isinstance(value, PScriptInterface):
+        # Map python object do id
+        oid = value.id()
+        return make_variant[ObjectId](oid.id)
+    elif hasattr(value, '__iter__') and not(type(value) == str):
+        for e in value:
+            vec.push_back(python_object_to_variant(e))
+        return make_variant[vector[Variant]](vec)
+    elif type(value) == str:
+        return make_variant[string](to_char_pointer(value))
+    elif type(value) == type(True):
+        return make_variant[bool](value)
+    elif np.issubdtype(np.dtype(type(value)), np.signedinteger):
+        return make_variant[int](value)
+    elif np.issubdtype(np.dtype(type(value)), np.floating):
+        return make_variant[double](value)
+    else:
+        raise TypeError("Unknown type for conversion to Variant")
+
+cdef variant_to_python_object(const Variant & value) except +:
+    cdef ObjectId oid
+    cdef vector[Variant] vec
+    cdef shared_ptr[ScriptInterfaceBase] ptr
+    if is_none(value):
+        return None
+    if is_type[bool](value):
+        return get_value[bool](value)
+    if is_type[int](value):
+        return get_value[int](value)
+    if is_type[double](value):
+        return get_value[double](value)
+    if is_type[string](value):
+        return to_str(get_value[string](value))
+    if is_type[vector[int]](value):
+        return get_value[vector[int]](value)
+    if is_type[vector[double]](value):
+        return get_value[vector[double]](value)
+    if is_type[Vector3d](value):
+        return make_array_locked(get_value[Vector3d](value))
+    if is_type[ObjectId](value):
+        # Get the id and build a corresponding object
+        try:
+            oid = get_value[ObjectId](value)
+            ptr = get_instance(oid).lock()
+            if ptr != shared_ptr[ScriptInterfaceBase]():
+                so_name = to_str(ptr.get().name())
+                if not so_name:
+                    raise Exception(
+                        "Script object without name returned from the core")
+                # Fallback class, if nothing more specific is registered
+                # for the script object name
+                pclass = ScriptInterfaceHelper
+                # Look up class
+                if so_name in _python_class_by_so_name:
+                    pclass = _python_class_by_so_name[so_name]
+                pobj = pclass()
+                poid = PObjectId()
+                poid.id = ptr.get().id()
+                pobj.set_sip_via_oid(poid)
+                return pobj
+            else:
+                return None
+        except:
+            return None
+    if is_type[vector[Variant]](value):
+        vec = get_value[vector[Variant]](value)
+        res = []
+
+        for i in vec:
+            res.append(variant_to_python_object(i))
+
+        return res
+
+    raise TypeError("Unknown type")
 
 
 def _unpickle_so_class(so_name, state):

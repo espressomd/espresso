@@ -20,10 +20,9 @@
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
-#include "utils.hpp"
-#include "utils/Histogram.hpp"
-#include "utils/coordinate_transformation.hpp"
 #include <boost/range/algorithm/transform.hpp>
+#include <utils/Histogram.hpp>
+#include <utils/coordinate_transformation.hpp>
 
 namespace Observables {
 
@@ -43,13 +42,11 @@ operator()(PartCfg &partCfg) const {
                    [&partCfg](int id) { return folded_position(partCfg[id]); });
 
   std::vector<Utils::Vector3d> velocities(ids().size());
-#if defined(LB) || defined(LB_GPU)
   boost::transform(
       folded_positions, velocities.begin(), [](const Utils::Vector3d &pos) {
         return lb_lbinterpolation_get_interpolated_velocity_global(pos) *
                lb_lbfluid_get_lattice_speed();
       });
-#endif
   for (auto &p : folded_positions)
     p -= center;
   for (int ind = 0; ind < ids().size(); ++ind) {

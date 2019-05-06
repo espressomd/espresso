@@ -33,6 +33,13 @@
  */
 
 #include "rotation.hpp"
+
+/****************************************************
+ *                     DEFINES
+ ***************************************************/
+/**************** local variables  *******************/
+
+#ifdef ROTATION
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
@@ -44,20 +51,14 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
+
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
-
-/****************************************************
- *                     DEFINES
- ***************************************************/
-/**************** local variables  *******************/
-
-#ifdef ROTATION
 
 /** \name Private Functions */
 /************************************************************/
@@ -307,7 +308,7 @@ void convert_torques_propagate_omega() {
 
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
 
-#if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
+#if defined(ENGINE)
     if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
 
       auto const dip = p.swim.dipole_length * p.r.calc_director();

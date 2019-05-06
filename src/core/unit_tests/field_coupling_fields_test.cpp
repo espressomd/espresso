@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "utils/interpolation/bspline_3d.hpp"
 #include "utils/interpolation/bspline_3d_gradient.hpp"
+#include <utils/math/gaussian.hpp>
+#include <utils/raster.hpp>
 
 #include <limits>
 
@@ -227,8 +229,6 @@ BOOST_AUTO_TEST_CASE(affine_vector_field) {
   }
 }
 
-#include "common/gaussian.hpp"
-
 BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
   using Field = Interpolated<double, 1>;
 
@@ -260,12 +260,14 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     const Utils::Vector3d grid_spacing = {.1, .2, .3};
     const Utils::Vector3d origin = {-1., 2., -1.4};
-    const int n_nodes = 10;
+    auto const n_nodes = Utils::Vector3i{10, 10, 10};
 
-    auto const x0 = origin + 0.5 * n_nodes * grid_spacing;
+    auto const x0 = origin + 0.5 * 10 * grid_spacing;
     auto const sigma = 2.;
 
-    auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+    auto const data =
+        Utils::raster<double>(origin, grid_spacing, n_nodes,
+                              [&](auto x) { return gaussian(x, x0, sigma); });
 
     Field field(data, grid_spacing, origin);
 
@@ -287,12 +289,14 @@ BOOST_AUTO_TEST_CASE(interpolated_scalar_field) {
 
     const Utils::Vector3d grid_spacing = {.1, .2, .3};
     const Utils::Vector3d origin = {-1., 2., -1.4};
-    const int n_nodes = 10;
+    auto const n_nodes = 10;
 
     auto const x0 = origin + 0.57 * n_nodes * grid_spacing;
     auto const sigma = 2.;
 
-    auto const data = gaussian_field(n_nodes, grid_spacing, origin, x0, sigma);
+    auto const data = Utils::raster<double>(
+        origin, grid_spacing, Utils::Vector3i::broadcast(n_nodes),
+        [&](auto x) { return gaussian(x, x0, sigma); });
 
     Field field(data, grid_spacing, origin);
 

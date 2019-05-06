@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "config.hpp"
 #include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace LBBoundaries {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
@@ -86,15 +86,8 @@ public:
 #endif
 
 private:
-  /** Private methods */
-  /* The actual boundary */
-  std::shared_ptr<::LBBoundaries::LBBoundary>
-      m_lbboundary; // TODO probably a brainfart (and named wrong)
-
   /** Private data members */
-  std::shared_ptr<Shapes::Shape>
-      m_shape; // TODO: I don't like this being a pointer just to get around the
-               // virtual limitations
+  std::shared_ptr<Shapes::Shape> m_shape;
   Utils::Vector3d m_velocity;
   Utils::Vector3d m_force;
 

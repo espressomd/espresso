@@ -33,14 +33,18 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
+#include "forces.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
+#include "immersed_boundaries.hpp"
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -51,24 +55,16 @@
 #include "signalhandling.hpp"
 #include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
 #include "virtual_sites.hpp"
 
-#include "collision.hpp"
-#include "forces.hpp"
-#include "immersed_boundaries.hpp"
-#include "npt.hpp"
-
 #include <profiler/profiler.hpp>
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
-
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
@@ -225,9 +221,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     thermo_heat_up();
 
-#if defined(LB) || defined(LB_GPU)
     lb_lbcoupling_deactivate();
-#endif
 
     // Communication step: distribute ghost positions
     cells_update_ghosts();
@@ -320,10 +314,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
 
-#if defined(LB) || defined(LB_GPU)
     if (n_part > 0)
       lb_lbcoupling_activate();
-#endif
 
     // Communication step: distribute ghost positions
     cells_update_ghosts();
@@ -368,10 +360,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-#if defined(LB) || defined(LB_GPU)
       lb_lbfluid_propagate();
       lb_lbcoupling_propagate();
-#endif // LB || LB_GPU
 
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation();

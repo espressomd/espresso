@@ -28,13 +28,13 @@
 #include "errorhandling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#include <random>
+#include <utils/constants.hpp>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-static CUDA_global_part_vars global_part_vars_host = {0, 0, 0};
+static CUDA_global_part_vars global_part_vars_host = {};
 __device__ __constant__ CUDA_global_part_vars global_part_vars_device[1];
 
 /** struct for particle force */
@@ -43,8 +43,6 @@ static float *particle_torques_device = nullptr;
 
 /** struct for particle position and velocity */
 static CUDA_particle_data *particle_data_device = nullptr;
-/** struct for storing particle rn seed */
-static CUDA_particle_seed *particle_seeds_device = nullptr;
 /** struct for energies */
 static CUDA_energy *energy_device = nullptr;
 
@@ -117,11 +115,9 @@ __device__ unsigned int getThreadIndex() {
 /** Kernel for the initialisation of the particle force array
  * @param[out] particle_forces_device    Local particle force
  * @param[out] particle_torques_device   Local particle torque
- * @param[out] particle_seeds_device     Particle random seed
  */
 __global__ void init_particle_force(float *particle_forces_device,
-                                    float *particle_torques_device,
-                                    CUDA_particle_seed *particle_seeds_device) {
+                                    float *particle_torques_device) {
 
   unsigned int part_index = getThreadIndex();
 
@@ -135,9 +131,6 @@ __global__ void init_particle_force(float *particle_forces_device,
     particle_torques_device[3 * part_index + 1] = 0.0f;
     particle_torques_device[3 * part_index + 2] = 0.0f;
 #endif
-
-    particle_seeds_device[part_index].seed =
-        global_part_vars_device->seed + part_index;
   }
 }
 
@@ -178,7 +171,6 @@ void gpu_change_number_of_part_to_comm() {
   if (global_part_vars_host.number_of_particles != n_part &&
       global_part_vars_host.communication_enabled == 1 && this_node == 0) {
 
-    global_part_vars_host.seed = (unsigned int)std::random_device{}();
     global_part_vars_host.number_of_particles = n_part;
 
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(global_part_vars_device),
@@ -199,10 +191,7 @@ void gpu_change_number_of_part_to_comm() {
       cudaFree(particle_data_device);
       particle_data_device = nullptr;
     }
-    if (particle_seeds_device) {
-      cuda_safe_mem(cudaFree(particle_seeds_device));
-      particle_seeds_device = nullptr;
-    }
+
 #ifdef ENGINE
     host_v_cs.clear();
 #endif
@@ -246,9 +235,6 @@ void gpu_change_number_of_part_to_comm() {
       cuda_safe_mem(cudaMalloc((void **)&particle_data_device,
                                global_part_vars_host.number_of_particles *
                                    sizeof(CUDA_particle_data)));
-      cuda_safe_mem(cudaMalloc((void **)&particle_seeds_device,
-                               global_part_vars_host.number_of_particles *
-                                   sizeof(CUDA_particle_seed)));
 
       /** values for the particle kernel */
       int threads_per_block_particles = 64;
@@ -262,7 +248,7 @@ void gpu_change_number_of_part_to_comm() {
 
       KERNELCALL(init_particle_force, dim_grid_particles,
                  threads_per_block_particles, particle_forces_device,
-                 particle_torques_device, particle_seeds_device);
+                 particle_torques_device);
     }
   }
 }
@@ -313,10 +299,6 @@ CUDA_global_part_vars *gpu_get_global_particle_vars_pointer() {
 float *gpu_get_particle_force_pointer() { return particle_forces_device; }
 CUDA_energy *gpu_get_energy_pointer() { return energy_device; }
 float *gpu_get_particle_torque_pointer() { return particle_torques_device; }
-
-CUDA_particle_seed *gpu_get_particle_seed_pointer() {
-  return particle_seeds_device;
-}
 
 void copy_part_data_to_gpu(ParticleRange particles) {
   COMM_TRACE(printf("global_part_vars_host.communication_enabled = %d && "

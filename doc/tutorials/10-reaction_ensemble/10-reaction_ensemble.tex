@@ -167,7 +167,7 @@ for i in range(N0, 2 * N0):
 \end{verbatim}
 
 For each negatively charged \ce{A-} particle (type = 1) we put in the simulation box the respective counterion \ce{H+} (type = 2) in order to maintain the electroneutrality of the system.
-Notice that the implementation in Espresso requires that the dimension of the equilibrium constant is consistent with its internal unit of volume; rules for a correct conversion of $K_a$ (experimental) to $K_c$ (in internal units) are explained in the user guide: \url{http://espressomd.org/html/doc/advanced_methods.html}. The next step is to define the reaction:
+Notice that the implementation in Espresso requires that the dimension of the equilibrium constant is consistent with its internal unit of volume; rules for a correct conversion of $K_a$ (experimental) to $K_c$ (in internal units) are explained in the user guide: \url{http://espressomd.org/html/doc/advanced_methods.html}. The next step is to define the reaction system and seed the pseudo random number generator which is used for the Monte Carlo steps:
 
 \begin{verbatim}
 mode="reaction_ensemble"
@@ -176,9 +176,9 @@ mode="reaction_ensemble"
 RE=None
 mode=="reaction_ensemble"
 if(mode=="reaction_ensemble"):
-    RE = reaction_ensemble.ReactionEnsemble(temperature=1, exclusion_radius=1)
+    RE = reaction_ensemble.ReactionEnsemble(temperature=1, exclusion_radius=1, seed=42)
 elif(mode=="constant_pH_ensemble"):
-    RE = reaction_ensemble.ConstantpHEnsemble(temperature=1, exclusion_radius=1)
+    RE = reaction_ensemble.ConstantpHEnsemble(temperature=1, exclusion_radius=1, seed=42)
     RE.constant_pH=7
     
 RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1], 
@@ -267,9 +267,14 @@ lj_cut   = 1.12246
 lj_shift = 0.0
 
 # setting up the polymer
-polymer.create_polymer(N_P = N_P, bond_length = bond_l, MPC=MPC, start_id=0,
- bond=harmonic_bond, type_poly_neutral=type_HA, type_poly_charged=type_A, mode=0,
-  val_poly=charges[type_A])
+positions = polymer.positions(
+        n_polymers=N_P, beads_per_chain=MPC, bond_length=bond_l, seed=13)
+for polymer in positions:
+    for i, pos in enumerate(polymer):
+        id = len(system.part)
+        system.part.add(id=id, pos=pos, type=type_A, q=charges[type_A])
+        if i > 0:
+            system.part[id].add_bond((harmonic_bond, id - 1))
   
 # setting up counterions
 for i in range(N0):

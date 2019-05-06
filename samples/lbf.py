@@ -39,12 +39,12 @@ print("""
 =======================================================
 """)
 
+required_features = ["EXTERNAL_FORCES"]
 if args.gpu:
     print("Using GPU implementation")
-    required_features = ["LB_GPU"]
+    required_features.append("LB_GPU")
 else:
     print("Using CPU implementation")
-    required_features = ["LB"]
     if not args.cpu:
         print("(select the implementation with --cpu or --gpu)")
 
