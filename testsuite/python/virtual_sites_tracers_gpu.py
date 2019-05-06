@@ -30,7 +30,7 @@ from numpy import random
 from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
-required_features = "VIRTUAL_SITES_INERTIALESS_TRACERS", "LB_GPU"
+required_features = "VIRTUAL_SITES_INERTIALESS_TRACERS", "CUDA"
 
 
 @ut.skipIf(

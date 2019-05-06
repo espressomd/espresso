@@ -7,7 +7,7 @@
 
 #include "config.hpp"
 
-#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) && defined(LB_GPU)
+#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) && defined(CUDA)
 
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"

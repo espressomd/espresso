@@ -33,7 +33,7 @@ import espressomd
 from espressomd import assert_features, lb
 
 
-assert_features(["ENGINE", "LB_GPU", "MASS", "ROTATION", "ROTATIONAL_INERTIA"])
+assert_features(["ENGINE", "CUDA", "MASS", "ROTATION", "ROTATIONAL_INERTIA"])
 
 # Read in the hydrodynamic type (pusher/puller) and position
 
