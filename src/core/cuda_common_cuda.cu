@@ -361,7 +361,7 @@ void copy_forces_from_GPU(ParticleRange particles) {
   }
 }
 
-#if defined(ENGINE) && defined(LB_GPU)
+#if defined(ENGINE) && defined(CUDA)
 // setup and call kernel to copy v_cs to host
 void copy_v_cs_from_GPU(ParticleRange particles) {
   if (global_part_vars_host.communication_enabled == 1 &&

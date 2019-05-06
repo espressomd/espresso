@@ -27,7 +27,7 @@
 
 #include "config.hpp"
 
-#ifdef LB_GPU
+#ifdef CUDA
 #include <boost/optional.hpp>
 #include <cassert>
 #include <stdio.h>
@@ -3235,4 +3235,4 @@ uint64_t lb_fluid_get_rng_state_gpu() {
   return rng_counter_fluid_gpu->value();
 }
 
-#endif /* LB_GPU */
+#endif /* CUDA */

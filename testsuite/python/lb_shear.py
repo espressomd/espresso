@@ -175,7 +175,7 @@ class LBCPUShear(ut.TestCase, LBShearCommon):
 
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features or gpu.")
+    ['CUDA', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features or gpu.")
 class LBGPUShear(ut.TestCase, LBShearCommon):
 
     """Test for the GPU implementation of the LB."""

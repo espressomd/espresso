@@ -42,7 +42,7 @@ print("""
 required_features = ["EXTERNAL_FORCES"]
 if args.gpu:
     print("Using GPU implementation")
-    required_features.append("LB_GPU")
+    required_features.append("CUDA")
 else:
     print("Using CPU implementation")
     if not args.cpu:
