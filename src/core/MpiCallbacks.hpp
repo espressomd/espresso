@@ -37,11 +37,11 @@
 #include <utility>
 
 namespace Communication {
-namespace Tag {
+namespace Result {
 struct Ignore {};
 struct OneRank {};
 struct Reduction {};
-} // namespace Tag
+} // namespace Result
 
 namespace detail {
 /**
@@ -206,7 +206,7 @@ using functor_types =
     decltype(functor_types_impl(&std::remove_reference_t<F>::operator()));
 
 template <class CRef, class C, class R, class... Args>
-auto make_model_impl(Tag::Ignore, CRef &&c, FunctorTypes<C, R, Args...>) {
+auto make_model_impl(Result::Ignore, CRef &&c, FunctorTypes<C, R, Args...>) {
   return std::make_unique<callback_void_t<C, Args...>>(std::forward<CRef>(c));
 }
 
@@ -217,7 +217,7 @@ auto make_model_impl(Tag::Ignore, CRef &&c, FunctorTypes<C, R, Args...>) {
  * to exist and can not be overloaded.
  */
 template <typename F> auto make_model(F &&f) {
-  return make_model_impl(Tag::Ignore{}, std::forward<F>(f), functor_types<F>{});
+  return make_model_impl(Result::Ignore{}, std::forward<F>(f), functor_types<F>{});
 }
 
 /**
@@ -233,14 +233,14 @@ template <class... Args> auto make_model(void (*f_ptr)(Args...)) {
 }
 
 template <class Op, class R, class... Args>
-auto make_model(Tag::Reduction, R (*f_ptr)(Args...), Op &&op) {
+auto make_model(Result::Reduction, R (*f_ptr)(Args...), Op &&op) {
   return std::make_unique<
       callback_reduce_t<std::remove_reference_t<Op>, R (*)(Args...), Args...>>(
       std::forward<Op>(op), f_ptr);
 }
 
 template <class R, class... Args>
-auto make_model(Tag::OneRank, R (*f_ptr)(Args...)) {
+auto make_model(Result::OneRank, R (*f_ptr)(Args...)) {
   return std::make_unique<callback_one_rank_t<R (*)(Args...), Args...>>(f_ptr);
 }
 } // namespace detail
@@ -476,18 +476,10 @@ public:
    * and does a mpi reduction with the registered operation.
    *
    * This method can only be called on the head node.
-   *
-   * @tparam Op
-   * @tparam R
-   * @tparam Args
-   * @param op
-   * @param fp
-   * @param args
-   * @return
    */
 
   template <class Op, class R, class... Args>
-  auto reduce(Op op, R (*fp)(Args...), Args... args) const
+  auto reduce(Result::Reduction, Op op, R (*fp)(Args...), Args... args) const
       -> std::remove_reference_t<decltype(op(std::declval<R>(),
                                              std::declval<R>()))> {
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
@@ -503,22 +495,21 @@ public:
   }
 
   template <class R, class... Args>
-  auto one_rank(R (*fp)(Args...), Args... args)
+  auto one_rank(Result::OneRank, R (*fp)(Args...), Args... args)
       -> std::remove_reference_t<decltype(*std::declval<R>())> {
     using result_type = decltype(*std::declval<R>());
 
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
-    call(id, args...);
-
     auto const local_result = fp(std::forward<Args>(args)...);
-
-    assert(1 == boost::mpi::all_reduce(m_comm, static_cast<int>(!!local_result),
-                                       std::plus<>()));
 
     if (!!local_result) {
       return *local_result;
     } else {
+      call(id, args...);
+      assert(1 == boost::mpi::all_reduce(m_comm, static_cast<int>(!!local_result),
+                                         std::plus<>()));
+
       std::remove_cv_t<std::remove_reference_t<result_type>> result;
       m_comm.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
       return result;
@@ -644,7 +635,7 @@ public:
 #define REGISTER_CALLBACK_ONE_RANK(cb)                                         \
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback                                     \
-      register_one_rank_##cb(::Communication::Tag::OneRank{}, &(cb));          \
+      register_one_rank_##cb(::Communication::Result::OneRank{}, &(cb));          \
   }
 
 #endif

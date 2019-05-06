@@ -41,9 +41,7 @@ static bool called = false;
 BOOST_AUTO_TEST_CASE(invoke_test) {
   using Communication::detail::invoke;
 
-  auto f = [](int i, double d) {
-    return i + d;
-  };
+  auto f = [](int i, double d) { return i + d; };
 
   boost::mpi::communicator world;
   boost::mpi::packed_oarchive::buffer_type buff;
@@ -179,7 +177,7 @@ BOOST_AUTO_TEST_CASE(CallbackHandle) {
 
 BOOST_AUTO_TEST_CASE(reduce_callback) {
   auto cb = []() -> int { return boost::mpi::communicator().rank(); };
-  Communication::MpiCallbacks::add_static(Communication::Tag::Reduction{},
+  Communication::MpiCallbacks::add_static(Communication::Result::Reduction{},
                                           static_cast<int (*)()>(cb),
                                           std::plus<int>());
 
@@ -187,7 +185,8 @@ BOOST_AUTO_TEST_CASE(reduce_callback) {
   Communication::MpiCallbacks cbs(world);
 
   if (0 == world.rank()) {
-    auto const ret = cbs.reduce(std::plus<int>(), static_cast<int (*)()>(cb));
+    auto const ret = cbs.reduce(Communication::Result::Reduction{},
+                                std::plus<int>(), static_cast<int (*)()>(cb));
     auto const n = world.size();
     BOOST_CHECK_EQUAL(ret, (n * (n - 1)) / 2);
   } else {
@@ -207,13 +206,14 @@ BOOST_AUTO_TEST_CASE(one_rank_callback) {
 
   auto const fp = static_cast<boost::optional<int> (*)()>(cb);
 
-  Communication::MpiCallbacks::add_static(Communication::Tag::OneRank{}, fp);
+  Communication::MpiCallbacks::add_static(Communication::Result::OneRank{}, fp);
 
   boost::mpi::communicator world;
   Communication::MpiCallbacks cbs(world);
 
   if (0 == world.rank()) {
-    BOOST_CHECK_EQUAL(cbs.one_rank(fp), world.size() - 1);
+    BOOST_CHECK_EQUAL(cbs.one_rank(Communication::Result::OneRank{}, fp),
+                      world.size() - 1);
   } else {
     cbs.loop();
   }

@@ -712,16 +712,16 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 
 boost::optional<const Particle &> get_particle_data_local(int id) {
-    auto p = local_particles[id];
+  auto p = local_particles[id];
 
-    if(p) {
-        return *p;
-    } else {
-        return {};
-    }
+  if (p and (not p->l.ghost)) {
+    return *p;
+  } else {
+    return {};
+  }
 }
 
-REGISTER_CALLBACK_ONE_RANK(get_particle_data_local);
+REGISTER_CALLBACK_ONE_RANK(get_particle_data_local)
 
 const Particle &get_particle_data(int part) {
   auto const pnode = get_particle_node(part);
@@ -739,8 +739,10 @@ const Particle &get_particle_data(int part) {
 
   /* Cache miss, fetch the particle,
    * put it into the cache and return a pointer into the cache. */
-  auto const cache_ptr =
-      particle_fetch_cache.put(part, Communication::mpiCallbacks().one_rank(get_particle_data_local, part));
+  auto const cache_ptr = particle_fetch_cache.put(
+      part,
+      Communication::mpiCallbacks().one_rank(Communication::Result::OneRank{},
+                                             get_particle_data_local, part));
   return *cache_ptr;
 }
 
