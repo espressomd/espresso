@@ -1,7 +1,10 @@
-#define BOOST_TEST_MODULE Node setters / getters
+#define BOOST_TEST_MODULE Walberla Node setters / getters
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_NO_MAIN
 #include "config.hpp"
+
+#ifdef LB_WALBERLA
+
+#define BOOST_TEST_NO_MAIN
 #include <boost/test/unit_test.hpp>
 #include <memory>
 #include <vector>
@@ -141,3 +144,7 @@ int main(int argc, char **argv) {
   MPI_Finalize();
   return res;
 }
+
+#else // ifdef LB_WALBERLA
+int main(int argc, char **argv) {}
+#endif
