@@ -125,7 +125,7 @@ static double weight(int type, double r_cut, double dist_inv) {
 
 Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                         IA_parameters *ia_params, double const *d, double dist,
-                        double dist2, bool include_noise) {
+                        double dist2) {
   Vector3d f{};
 
   auto const dist_inv = 1.0 / dist;
@@ -143,7 +143,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
         ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
     // random force prefactor
     double noise;
-    if (ia_params->dpd_pref2 > 0.0 && include_noise == true) {
+    if (ia_params->dpd_pref2 > 0.0) {
       noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
     } else {
       noise = 0.0;
@@ -164,7 +164,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
            noise_vec[3];
     for (int i = 0; i < 3; i++) {
       // noise vector
-      if (ia_params->dpd_pref2 > 0.0 && include_noise == true) {
+      if (ia_params->dpd_pref2 > 0.0) {
         noise_vec[i] = d_random() - 0.5;
       } else {
         noise_vec[i] = 0.0;
