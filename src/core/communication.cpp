@@ -261,12 +261,6 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
   this_node = comm_cart.rank();
 }
 
-void mpi_call(SlaveCallback cb, int node, int param) {
-  mpiCallbacks().call(cb, node, param);
-
-  COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
-}
-
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/
 
 void mpi_place_particle(int pnode, int part, double p[3]) {

@@ -113,6 +113,18 @@ void mpi_call(void (*fp)(Args...), ArgRef &&... args) {
   Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
 }
 
+template <class... Args, class... ArgRef>
+void mpi_call_all(void (*fp)(Args...), ArgRef &&... args) {
+  Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
+}
+
+template <class Tag, class... TagArgs, class R, class... Args, class... ArgRef>
+void mpi_call(Tag tag, TagArgs &&... tag_args, void (*fp)(Args...),
+              ArgRef &&... args) {
+  Communication::mpiCallbacks().call(tag, std::forward<TagArgs>(tag_args)...,
+                                     fp, std::forward<ArgRef>(args)...);
+}
+
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
