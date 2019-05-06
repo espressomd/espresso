@@ -484,6 +484,7 @@ class CylindricalFluxDensityProfile(Observable):
     """
     _so_name = "Observables::CylindricalFluxDensityProfile"
 
+
 @script_interface_register
 class CylindricalVelocityProfile(Observable):
 
