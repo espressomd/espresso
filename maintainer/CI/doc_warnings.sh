@@ -31,24 +31,45 @@
 # negative lookahead filters out common Python types (for performance reasons).
 regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|bool|str|object|list|tuple|dict)<)[^<>]+?</span></code>(?!</a>)'
 
+if [ ! -f doc/sphinx/html/index.html ]; then
+    echo "Please run Sphinx first."
+    exit 1
+fi
+
 n_warnings=0
 grep -qrP "${regex_sphinx_broken_link}" doc/sphinx/html/
 if [ $? = "0" ]; then
     rm -f doc_warnings.log~
-    echo "The Sphinx documentation contains broken links:"
+    touch doc_warnings.log~
+    found="false"
     grep -rPno "${regex_sphinx_broken_link}" doc/sphinx/html/ | sort | uniq | while read -r line
     do
         # extract link target
         reference=$(echo "${line}" | sed -r 's|^.+<span class="pre">(.+)</span></code>$|\1|' | sed  's/()$//')
         # skip if broken link refers to a standard Python type or to a
         # class/function from an imported module other than espressomd
-        echo "${reference}" | grep -Pq '^(int|float|bool|str|object|list|tuple|dict|[a-zA-Z0-9_]+Error|[a-zA-Z0-9_]*Exception|[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$'
-        is_standard_or_module=$?
-        echo "${reference}" | grep -Pq "^espressomd\.(?!visualization)[a-zA-Z0-9_\.]+$"
-        is_espressomd=$?
-        if [ ${is_standard_or_module} = "0" ] && [ ${is_espressomd} != "0" ]; then
+        is_standard_type_or_module="false"
+        grep -Pq '^([a-zA-Z0-9_]+Error|[a-zA-Z0-9_]*Exception|(?!espressomd\.)[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$' <<< "${reference}"
+        [ "$?" = "0" ] && is_standard_type_or_module="true"
+        # skip espresso modules not compiled in CI (visualization, scafacos)
+        is_es_feature_skipped="false"
+        if [ "$CI" != "" ]; then
+            #echo "${reference}" | grep -Pq "^espressomd\.(?!visualization|[a-z]+\.Scafacos)[a-zA-Z0-9_\.]+$"
+            grep -Pq "^espressomd\.(visualization|[a-z]+\.[sS]cafacos)" <<< "${reference}"
+            [ "$?" = "0" ] && is_es_feature_skipped="true"
+        fi
+        # private objects are not documented and cannot be linked
+        is_private="false"
+        grep -Pq "(^_|\._)" <<< "${reference}"
+        [ "$?" = "0" ] && is_private="true"
+        # filter out false positives
+        if [ ${is_standard_type_or_module} = "true" ] || [ ${is_es_feature_skipped} = "true" ] || [ ${is_private} = "true" ]; then
             continue
         fi
+        if [ ${found} = "false" ]; then
+            echo "The Sphinx documentation contains broken links:"
+        fi
+        found="true"
         # locate the .rst file containing the broken link
         filepath_html=$(echo "${line}" | sed -r 's/^(.+?):[0-9]+:<code.+$/\1/')
         filepath_rst=$(echo "${filepath_html}" | sed 's|/html/|/|')
@@ -75,6 +96,7 @@ if [ "$CI" != "" ]; then
 fi
 
 if [ ${n_warnings} = "0" ]; then
+    echo "Found no broken link requiring fixing."
     exit 0
 else
     exit 1

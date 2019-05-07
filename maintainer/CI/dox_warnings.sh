@@ -19,6 +19,12 @@
 
 # This script generates a log of all Doxygen warnings that require fixing.
 
+dox_version=`doxygen --version`
+if [ "${dox_version}" != "1.8.13" ] && [ "${dox_version}" != "1.8.11" ]; then
+    echo "Doxygen version ${dox_version} not supported"
+    exit 1
+fi
+
 [ -z "${srcdir}" ] && srcdir=`realpath ..`
 
 # prepare Doxyfile for the XML version
@@ -55,9 +61,15 @@ mv doc/doxygen/Doxyfile.bak doc/doxygen/Doxyfile
 # find @param without description
 grep -Prn '^[\ \t]*(?:\*?[\ \t]+)?[@\\]t?param(?:\[[in, out]+\])?[\ \t]+[a-zA-Z0-9_\*]+[\ \t]*$' "${srcdir}/src" > doc/doxygen/empty-params.log
 
+rm -f dox_warnings.log
+
 # process warnings
 ${srcdir}/maintainer/CI/dox_warnings.py
 n_warnings=$?
+
+if [ ! -f dox_warnings.log ]; then
+    exit 1
+fi
 
 # print logfile
 cat dox_warnings.log
@@ -67,6 +79,7 @@ if [ "$CI" != "" ]; then
 fi
 
 if [ ${n_warnings} = "0" ]; then
+    echo "Found no warning requiring fixing."
     exit 0
 else
     exit 1

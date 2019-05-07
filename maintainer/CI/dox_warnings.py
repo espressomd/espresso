@@ -30,19 +30,20 @@ raw_warnings = re.findall(
 
 # collect list of empty @param and @tparam blocks
 with open('doc/doxygen/empty-params.log') as f:
-    content = f.read()
+    content = f.read().strip()
 
-source_code_ext = set(['.hpp', '.cpp', '.hh', '.cc', '.h', '.c', '.cuh',
-                       '.cu', '.dox'])
-for line in content.strip().split('\n'):
-    m = re.search(r'^(.+):(\d+):[\s\*]*([@\\]t?param).*\s(\S+)\s*$', line)
-    filepath, lineno, paramtype, varname = m.groups()
-    ext = os.path.splitext(filepath)[1]
-    if ext.lower() not in source_code_ext:
-        continue
-    warning = ('argument \'{0}\' of {1} has no description, either add one or '
-               'remove {1}'.format(varname, paramtype))
-    raw_warnings.append((filepath, lineno, warning))
+if content:
+    source_code_ext = set(['.hpp', '.cpp', '.hh', '.cc', '.h', '.c', '.cuh',
+                           '.cu', '.dox'])
+    for line in content.strip().split('\n'):
+        m = re.search(r'^(.+):(\d+):[\s\*]*([@\\]t?param).*\s(\S+)\s*$', line)
+        filepath, lineno, paramtype, varname = m.groups()
+        ext = os.path.splitext(filepath)[1]
+        if ext.lower() not in source_code_ext:
+            continue
+        warning = ('argument \'{0}\' of {1} has no description, either add one'
+                   ' or remove {1}'.format(varname, paramtype))
+        raw_warnings.append((filepath, lineno, warning))
 
 # remove duplicated warnings
 n_all = len(raw_warnings)
@@ -79,6 +80,8 @@ for (filepath, lineno, warning), warning_list in raw_warnings.items():
 
 n_unique = sum(map(len, warnings.values()))
 if n_unique == 0:
+    with open('dox_warnings.log', 'w') as f:
+        pass
     exit(0)
 
 # generate a log file
