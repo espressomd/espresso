@@ -1206,7 +1206,7 @@ cdef class ParticleHandle(object):
             -----
             This needs the feature ENGINE.  The keys 'mode',
             'dipole_length', and 'rotational_friction' are only
-            available if ENGINE is used with LB or LB_GPU.
+            available if ENGINE is used with LB or CUDA.
 
             Examples
             --------

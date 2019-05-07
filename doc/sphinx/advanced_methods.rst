@@ -1451,7 +1451,7 @@ Initialization
         stencil='linkcentered', advection=True, fluid_coupling='friction')
     sys.actors.add(ek)
 
-.. note:: Features ``ELECTROKINETICS`` and ``LB_GPU`` required
+.. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
 
 The above is a minimal example how to initialize the LB fluid, and
 it is very similar to the lattice Boltzmann command in set-up. We

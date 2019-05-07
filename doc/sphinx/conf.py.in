@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Extensible Simulation Package for Soft Matter Research documentation build configuration file, created by
+# Extensible Simulation Package for Research on Soft Matter Systems
+# documentation build configuration file, created by
 # sphinx-quickstart on Thu Oct  6 11:27:00 2016.
 #
 # This file is execfile()d with the current directory set to its
@@ -58,7 +59,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'ESPResSo'
-copyright = '2018, The ESPResSo project'
+copyright = '2018-2019, The ESPResSo project'
 author = 'C. Holm, F. Weik, R. Weeber'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -170,8 +171,8 @@ html_last_updated_fmt = '%b %d, %Y'
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
-html_sidebars = { 
-    '**': ['localtoc.html','searchbox.html'] 
+html_sidebars = {
+    '**': ['localtoc.html','searchbox.html']
 }
 
 # Additional templates that should be rendered to pages, maps page names to
@@ -242,8 +243,9 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'ExtensibleSimulationPackageforSoftMatterResearch.tex', 'Extensible Simulation Package for Soft Matter Research Documentation',
-   'Florian Weik', 'manual'),
+    (master_doc, 'ExtensibleSimulationPackageforResearchonSoftMatterSystems.tex',
+     'Extensible Simulation Package for Research on Soft Matter Systems Documentation',
+     'Florian Weik', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -272,9 +274,9 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'extensiblesimulationpackageforsoftmatterresearch',
-        'Extensible Simulation Package for Soft Matter Research Documentation',
-        [author], 1)
+    (master_doc, 'extensiblesimulationpackageforresearchonsoftmattersystems',
+     'Extensible Simulation Package for Research on Soft Matter Systems Documentation',
+     [author], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -287,11 +289,10 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'ExtensibleSimulationPackageforSoftMatterResearch', 'Extensible\
-      Simulation Package for Soft Matter Research Documentation', author,
-      'ExtensibleSimulationPackageforSoftMatterResearch', 'One line description\
-      of project.',
-   'Miscellaneous'),
+    (master_doc, 'ExtensibleSimulationPackageforResearchonSoftMatterSystems',
+     'Extensible Simulation Package for Research on Soft Matter Systems Documentation',
+     author, 'ExtensibleSimulationPackageforSoftMatterResearch',
+     'One line description of project.', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -309,8 +310,7 @@ texinfo_documents = [
 # Supress warning if html is build
 # http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 autodoc_mock_imports = ['featuredefs', 'mayavi', 'pyface', 'tvtk', 'vtk', 'MDAnalysis', 'electrostatics']
-autodoc_default_flags = ['members',
-                         'show-inheritance', 'undoc-members']
+autodoc_default_flags = ['members', 'show-inheritance', 'undoc-members']
 # For sidebar toc depth
 rst_prolog = """
 :tocdepth: 3
@@ -319,6 +319,9 @@ rst_prolog = """
 rst_epilog = """
 .. |es| replace:: `ESPResSo`
 """
+
+
+# -- Options for Cython ---------------------------------------------------
 
 # see http://opendreamkit.org/2017/06/09/CythonSphinx/ why this is needed
 def isfunction(obj):
