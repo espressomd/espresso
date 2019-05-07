@@ -70,8 +70,8 @@
 #include "serialization/Particle.hpp"
 #include "serialization/ParticleParametersSwimming.hpp"
 
-#include <utils/u32_to_u64.hpp>
 #include <utils/Counter.hpp>
+#include <utils/u32_to_u64.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
@@ -717,7 +717,7 @@ Utils::Vector3d mpi_system_CMS_velocity() {
 
 REGISTER_CALLBACK_REDUCTION(local_system_CMS, pair_sum{})
 
-void mpi_galilei_transform_slave(Utils::Vector3d const& cmsvel) {
+void mpi_galilei_transform_slave(Utils::Vector3d const &cmsvel) {
   local_galilei_transform(cmsvel);
   on_particle_change();
 }
