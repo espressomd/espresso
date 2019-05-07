@@ -31,18 +31,21 @@
 # negative lookahead filters out common Python types (for performance reasons).
 regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|bool|str|object|list|tuple|dict)<)[^<>]+?</span></code>(?!</a>)'
 
+# list of espresso modules not compiled in CI (visualization, scafacos)
+regex_ignored_es_features_ci='(visualization|[a-z]+\.[sS]cafacos)'
+
 if [ ! -f doc/sphinx/html/index.html ]; then
     echo "Please run Sphinx first."
     exit 1
 fi
 
 n_warnings=0
-grep -qrP "${regex_sphinx_broken_link}" doc/sphinx/html/
+grep -qrP --include \*.html --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/
 if [ $? = "0" ]; then
     rm -f doc_warnings.log~
     touch doc_warnings.log~
     found="false"
-    grep -rPno "${regex_sphinx_broken_link}" doc/sphinx/html/ | sort | uniq | while read -r line
+    grep -rPno --include \*.html --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/ | sort | uniq | while read -r line
     do
         # extract link target
         reference=$(echo "${line}" | sed -r 's|^.+<span class="pre">(.+)</span></code>$|\1|' | sed  's/()$//')
@@ -53,9 +56,8 @@ if [ $? = "0" ]; then
         [ "$?" = "0" ] && is_standard_type_or_module="true"
         # skip espresso modules not compiled in CI (visualization, scafacos)
         is_es_feature_skipped="false"
-        if [ "$CI" != "" ]; then
-            #echo "${reference}" | grep -Pq "^espressomd\.(?!visualization|[a-z]+\.Scafacos)[a-zA-Z0-9_\.]+$"
-            grep -Pq "^espressomd\.(visualization|[a-z]+\.[sS]cafacos)" <<< "${reference}"
+        if [ "${CI}" != "" ]; then
+            grep -Pq "^espressomd\.${regex_ignored_es_features_ci}" <<< "${reference}"
             [ "$?" = "0" ] && is_es_feature_skipped="true"
         fi
         # private objects are not documented and cannot be linked
@@ -89,9 +91,26 @@ if [ $? = "0" ]; then
     echo "The Sphinx documentation contains ${n_warnings} broken links:" > doc_warnings.log
     cat doc_warnings.log~ >> doc_warnings.log
     rm doc_warnings.log~
+    # warn user about ignored features in CI
+    grep -Pq "espressomd\.${regex_ignored_es_features_ci}" doc_warnings.log
+    if [ "$?" = "0" ] && [ "${CI}" = "" ]; then
+        echo "(Note that features visualization and Scafacos are ignored in CI)"
+    fi
 fi
 
-if [ "$CI" != "" ]; then
+# Find malformed reSt roles, appearing as raw text in the HTML output:
+#    * unparsed roles, e.g. ":cite:`UnknownKey`"
+#    * broken math formula, e.g. ":math:` leading whitespace`"
+#    * incorrect syntax, e.g. "obj:float:"
+#    * incorrect numpydoc syntax, e.g. ":rtype:`float`"
+# They are difficult to predict, so we leave them to the user's discretion
+grep -qrP --include \*.html --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
+if [ $? = "0" ]; then
+    echo "Possibly errors:"
+    grep -rP --color --include \*.html --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
+fi
+
+if [ "${CI}" != "" ]; then
     "${srcdir}/maintainer/gh_post_docs_warnings.py" sphinx ${n_warnings} doc_warnings.log
 fi
 

@@ -74,7 +74,7 @@ fi
 # print logfile
 cat dox_warnings.log
 
-if [ "$CI" != "" ]; then
+if [ "${CI}" != "" ]; then
     "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen ${n_warnings} dox_warnings.log
 fi
 
