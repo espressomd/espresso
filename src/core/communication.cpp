@@ -688,6 +688,8 @@ void mpi_kill_particle_forces_slave(int torque) {
   on_particle_change();
 }
 
+REGISTER_CALLBACK(mpi_kill_particle_forces_slave)
+
 void mpi_kill_particle_forces(int torque) {
   mpi_call_all(mpi_kill_particle_forces_slave, torque);
 }
