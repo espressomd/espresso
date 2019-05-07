@@ -664,9 +664,12 @@ void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
 
 /****************************************************/
 
+#ifdef DP3M
 REGISTER_CALLBACK(calc_mu_max)
+#endif
+
 void mpi_bcast_max_mu() {
-#if defined(DIPOLES) and defined(DP3M)
+#ifdef DP3M
   mpi_call_all(calc_mu_max);
 #endif
 }
