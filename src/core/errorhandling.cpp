@@ -76,5 +76,6 @@ int check_runtime_errors_local() {
 }
 
 int check_runtime_errors(boost::mpi::communicator const &comm) {
-return boost::mpi::all_reduce(comm, check_runtime_errors_local(), std::plus<int>());
+  return boost::mpi::all_reduce(comm, check_runtime_errors_local(),
+                                std::plus<int>());
 }
