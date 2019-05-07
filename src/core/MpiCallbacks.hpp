@@ -37,15 +37,21 @@
 #include <utility>
 
 namespace Communication {
+/**
+ * This namespace contains tag types
+ * to indicate what to do with the return
+ * values of callbacks.
+ */
 namespace Result {
+/** Ignore result */
 struct Ignore {};
 constexpr auto ignore = Ignore{};
+/** Return value from one rank */
 struct OneRank {};
 constexpr auto one_rank = OneRank{};
+/** Reduce return value over all ranks */
 struct Reduction {};
 constexpr auto reduction = Reduction{};
-struct HeadNode {};
-constexpr auto head_node = HeadNode{};
 } // namespace Result
 
 namespace detail {
@@ -390,6 +396,18 @@ public:
                                     detail::make_model(fp));
   }
 
+  /**
+   * @brief Add a new callback with a return value.
+   *
+   * Add a new callback to the system. This is a collective
+   * function that must be run on all nodes.
+   * Tag is one of the tag types from @namespace Communication::Result,
+   * which indicates what to to with the return values.
+   *
+   * @param tag Tag type indicating return operation
+   * @param tag_args Argument for the return operation, if any.
+   * @param fp Pointer to the static callback function to add.
+   **/
   template <class Tag, class R, class... Args, class... TagArgs>
   static void add_static(Tag tag, R (*fp)(Args...), TagArgs &&... tag_args) {
     static_callbacks().emplace_back(
@@ -469,8 +487,6 @@ public:
       /* Enable only if fp can be called with the provided arguments,
        * e.g. if fp(args...) is well-formed. */
       std::enable_if_t<std::is_void<decltype(fp(args...))>::value> {
-    /** If the function pointer is invalid, map.at will throw
-        an out_of_range exception. */
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
 
     call(id, std::forward<ArgRef>(args)...);
@@ -529,8 +545,8 @@ public:
    * This method can only be called on the head node.
    */
   template <class R, class... Args>
-  auto call(Result::OneRank, boost::optional<R> (*fp)(Args...), Args... args)
-      -> std::remove_reference_t<R> {
+  auto call(Result::OneRank, boost::optional<R> (*fp)(Args...),
+            Args... args) const -> std::remove_reference_t<R> {
 
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
     call(id, args...);
@@ -659,6 +675,16 @@ public:
   static ::Communication::RegisterCallback register_##cb(&(cb));               \
   }
 
+/**
+ * @brief Register a static callback
+ *
+ * This registers a function as an mpi callback with
+ * reduction of the return values from the nodes.
+ * The macro should be used at global scope.
+ *
+ * @param cb A function
+ * @param op Reduction operation
+ */
 #define REGISTER_CALLBACK_REDUCTION(cb, op)                                    \
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback                                     \
@@ -666,6 +692,17 @@ public:
                               (op));                                           \
   }
 
+/**
+ * @brief Register a static callback
+ *
+ * This registers a function as an mpi callback with
+ * reduction of the return values from one node
+ * where the value of the optional is set.
+ * The macro should be used at global scope.
+ *
+ * @param cb A function
+ * @param op Reduction operation
+ */
 #define REGISTER_CALLBACK_ONE_RANK(cb)                                         \
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback                                     \

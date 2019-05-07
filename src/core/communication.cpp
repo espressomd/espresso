@@ -752,17 +752,6 @@ void mpi_loop() {
     mpiCallbacks().loop();
 }
 
-/*********************** other stuff ****************/
-
-#ifdef CUDA
-#endif
-
-void mpi_gather_cuda_devices_slave(int, int) {
-#ifdef CUDA
-  cuda_gather_gpus();
-#endif
-}
-
 std::vector<int> mpi_resort_particles(int global_flag) {
   mpi_call(mpi_resort_particles_slave, global_flag, 0);
   cells_resort_particles(global_flag);
