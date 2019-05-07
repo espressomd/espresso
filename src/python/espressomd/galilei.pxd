@@ -16,27 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-
 from __future__ import print_function, absolute_import
-cdef extern from "galilei.hpp":
 
-    void local_kill_particle_motion(int rotation)
-    void local_kill_particle_forces(int torque)
-    void local_system_CMS(double * sdata)
-    void local_system_CMS_velocity(double * sdata)
-    void local_galilei_transform(double * sdata)
-
-    ctypedef struct galilei_struct "GalileiStruct":
-        double cms[3]
-        double cms_vel[3]
-
-    extern galilei_struct gal
+from .utils cimport Vector3d
 
 cdef extern from "communication.hpp":
-
     void mpi_kill_particle_motion(int rotation)
     void mpi_kill_particle_forces(int torque)
-    void mpi_system_CMS()
-    void mpi_system_CMS_velocity()
+    Vector3d mpi_system_CMS()
+    Vector3d mpi_system_CMS_velocity()
     void mpi_galilei_transform()
