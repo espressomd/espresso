@@ -165,13 +165,14 @@ To use the method, create an instance of :class:`espressomd.magnetostatics.Dipol
 Scafacos Magnetostatics
 -----------------------
 
-Espresso can use the methods from the Scafacos *Scalable fast Coulomb
-solvers* library for dipoles, if the methods support dipolar
-calculations. The feature ``SCAFACOS_DIPOLES`` has to be added to
-:file:`myconfig.hpp` to activate this feature. At the time of this writing (Feb
-2018) dipolar calculations are only included in the ``dipolar`` branch of the Scafacos code.
+Espresso can use the methods from the Scafacos *Scalable fast Coulomb solvers*
+library for dipoles, if the methods support dipolar calculations. The feature
+``SCAFACOS_DIPOLES`` has to be added to :file:`myconfig.hpp` to activate this
+feature. Dipolar calculations are only included in the ``dipolar`` branch of
+the Scafacos code.
 
-To use SCAFACOS, create an instance of :class:`espressomd.magnetostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+To use SCAFACOS, create an instance of :class:`espressomd.magnetostatics.Scafacos`
+and add it to the list of active actors. Three parameters have to be specified:
 
 * ``method_name``: name of the SCAFACOS method being used.
 * ``method_params``: dictionary containing the method-specific parameters

@@ -151,7 +151,8 @@ class ShapeBasedConstraint(Constraint):
 
         Returns
         ----------
-        :obj:float: The minimum distance
+        :obj:`float` :
+            The minimum distance
         """
         return self.call_method("min_dist", object=self)
 
@@ -464,7 +465,7 @@ class ElectricPlaneWave(Constraint):
     ----------
     E0 : array of :obj:`float`
         The amplitude of the electric field.
-    k  : array of :obj`float`
+    k  : array of :obj:`float`
         Wave vector of the wave
     omega : :obj:`float`
         Frequency of the wave
