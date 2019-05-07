@@ -85,10 +85,8 @@ system.actors.add(ek)
 # Integrate the system
 for i in range(100):
     system.integrator.run(integration_length)
-    sys.stdout.write("\rintegration step: %03i" % i)
+    sys.stdout.write("\rintegration: %i%%" % (i + 1))
     sys.stdout.flush()
-
-print("Integration finished.")
 
 # Output
 position_list = []
