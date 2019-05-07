@@ -662,7 +662,8 @@ public:
 #define REGISTER_CALLBACK_REDUCTION(cb, op)                                    \
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback                                     \
-      register_reduction_##cb(::Communication::Tag::Reduction{}, &(cb), (op)); \
+      register_reduction_##cb(::Communication::Result::Reduction{}, &(cb),     \
+                              (op));                                           \
   }
 
 #define REGISTER_CALLBACK_ONE_RANK(cb)                                         \

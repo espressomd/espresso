@@ -107,7 +107,6 @@ int n_nodes = -1;
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_place_particle_slave)                                                 \
   CB(mpi_bcast_ia_params_slave)                                                \
-  CB(mpi_bcast_all_ia_params_slave)                                            \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_place_new_particle_slave)                                             \
@@ -122,7 +121,6 @@ int n_nodes = -1;
   CB(mpi_system_CMS_velocity_slave)                                            \
   CB(mpi_galilei_transform_slave)                                              \
   CB(mpi_setup_reaction_slave)                                                 \
-  CB(mpi_check_runtime_errors_slave)                                           \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
@@ -330,27 +328,29 @@ void mpi_remove_particle_slave(int pnode, int part) {
 /********************* REQ_MIN_ENERGY ********/
 
 REGISTER_CALLBACK(minimize_energy)
-void mpi_minimize_energy() {
-  mpi_call_all(minimize_energy);
-}
+void mpi_minimize_energy() { mpi_call_all(minimize_energy); }
 
 /********************* REQ_INTEGRATE ********/
-REGISTER_CALLBACK(integrate_vv)
-int mpi_integrate(int n_steps, int reuse_forces) {
-  mpi_call_all(integrate_vv, n_steps, reuse_forces);
+static int mpi_integrate_slave(int n_steps, int reuse_forces) {
+  integrate_vv(n_steps, reuse_forces);
 
-  return mpi_check_runtime_errors();
+  return check_runtime_errors();
+}
+REGISTER_CALLBACK_REDUCTION(mpi_integrate_slave, std::plus<int>())
+
+int mpi_integrate(int n_steps, int reuse_forces) {
+  return mpi_call(Communication::Result::reduction, std::plus<int>(),
+                  mpi_integrate_slave, n_steps, reuse_forces);
 }
 
 /*************** REQ_BCAST_IA ************/
-void mpi_bcast_all_ia_params() {
-  mpi_call(mpi_bcast_all_ia_params_slave, -1, -1);
+static void mpi_bcast_all_ia_params_slave() {
   boost::mpi::broadcast(comm_cart, ia_params, 0);
 }
 
-void mpi_bcast_all_ia_params_slave(int, int) {
-  boost::mpi::broadcast(comm_cart, ia_params, 0);
-}
+REGISTER_CALLBACK(mpi_bcast_all_ia_params_slave)
+
+void mpi_bcast_all_ia_params() { mpi_call_all(mpi_bcast_all_ia_params_slave); }
 
 void mpi_bcast_ia_params(int i, int j) {
   mpi_call(mpi_bcast_ia_params_slave, i, j);
@@ -499,20 +499,11 @@ void mpi_set_time_step_slave(double dt) {
 
   on_parameter_change(FIELD_TIMESTEP);
 }
-
 REGISTER_CALLBACK(mpi_set_time_step_slave)
 
 void mpi_set_time_step(double time_s) {
-  mpiCallbacks().call(mpi_set_time_step_slave, time_s);
-  mpi_set_time_step_slave(time_s);
+  mpi_call_all(mpi_set_time_step_slave, time_s);
 }
-
-int mpi_check_runtime_errors() {
-  mpi_call(mpi_check_runtime_errors_slave, 0, 0);
-  return check_runtime_errors();
-}
-
-void mpi_check_runtime_errors_slave(int, int) { check_runtime_errors(); }
 
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params() {

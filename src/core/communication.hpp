@@ -57,8 +57,8 @@
 #include "grid_based_algorithms/lb_constants.hpp"
 #include "particle_data.hpp"
 
-#include <utils/serialization/array.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <utils/serialization/array.hpp>
 
 #include <array>
 #include <vector>
@@ -113,11 +113,16 @@ void mpi_call_all(void (*fp)(Args...), ArgRef &&... args) {
   Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
 }
 
-template <class Tag, class... TagArgs, class R, class... Args, class... ArgRef>
-void mpi_call(Tag tag, TagArgs &&... tag_args, void (*fp)(Args...),
-              ArgRef &&... args) {
-  Communication::mpiCallbacks().call(tag, std::forward<TagArgs>(tag_args)...,
-                                     fp, std::forward<ArgRef>(args)...);
+template <class Tag, class R, class... Args, class... ArgRef>
+auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&... args) {
+  return Communication::mpiCallbacks().call(tag, fp,
+                                            std::forward<ArgRef>(args)...);
+}
+
+template <class Tag, class TagArg, class R, class... Args, class... ArgRef>
+auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
+  return Communication::mpiCallbacks().call(tag, std::forward<TagArg>(tag_arg),
+                                            fp, std::forward<ArgRef>(args)...);
 }
 
 /** Process requests from master node. Slave nodes main loop. */
