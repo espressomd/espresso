@@ -21,37 +21,31 @@
 #ifndef DIAMOND_H
 #define DIAMOND_H
 /** \file
-
-    This file contains everything needed to create a start-up
-    diamond structure-like configuration of (partially charged)
-    polymer chains with counterions and salt molecules.
-
-*/
+ *
+ *  This file contains everything needed to create a start-up
+ *  diamond structure-like configuration of (partially charged)
+ *  polymer chains with counterions and salt molecules.
+ *
+ *  Implementation in diamond.cpp.
+ */
 
 #include "PartCfg.hpp"
 #include "particle_data.hpp"
 #include "utils/Vector.hpp"
 
-/*************************************************************
- * Functions                                                 *
- * ---------                                                 *
- *************************************************************/
-
 /** C implementation of 'counterions \<N_CI\> [options]'.
- *  @param  N_CI        = number of counterions to create
- *  @param  part_id     = particle number of the first counterion (defaults to
- *  'n_total_particles')
- *  @param  mode        = selects setup mode: Self avoiding walk (SAW) or plain
- *  random walk (RW) (defaults to 'SAW')
- *  @param  shield      = shield around each particle another particle's
- *  position may not enter if using SAW (defaults to '0.0')
- *  @param  max_try     = how often a monomer should be reset if current
- *  position collides with a previous particle (defaults to '30000')
- *  @param  val_CI      = valency of the counterions (defaults to '-1.0')
- *  @param  type_CI     = type number of the counterions to be used with "part"
- *  (default to '2')
- *  @return Returns how often the attempt to place a particle failed in the
- *  worst case.
+ *  @param  N_CI         number of counterions to create
+ *  @param  part_id      particle number of the first counterion
+ *  @param  mode         selects setup mode: Self avoiding walk (SAW) or plain
+ *                       random walk (RW) (defaults to 'SAW')
+ *  @param  shield       shield around each particle another particle's
+ *                       position may not enter if using SAW (e.g. 0.0)
+ *  @param  max_try      how often a monomer should be reset if current position
+ *                       collides with a previous particle (e.g. 30000)
+ *  @param  val_CI       valency of the counterions (e.g. -1.0)
+ *  @param  type_CI      type number of the counterions to be used with "part"
+ *                       (e.g. 2)
+ *  @return how often the attempt to place a particle failed in the worst case.
  */
 int create_counterions(PartCfg &, int N_CI, int part_id, int mode,
                        double shield, int max_try, double val_CI, int type_CI);

@@ -54,7 +54,6 @@ extern Reaction_field_params rf_params;
 /************************************************************/
 /*@{*/
 
-///
 int rf_set_params(double kappa, double epsilon1, double epsilon2, double r_cut);
 
 inline void add_rf_coulomb_pair_force_no_cutoff(double const q1q2,
@@ -72,13 +71,12 @@ inline void add_rf_coulomb_pair_force_no_cutoff(double const q1q2,
 }
 
 /** Computes the Reaction Field pair force and adds this
-    force to the particle forces.
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param d         Vector pointing from p1 to p2.
-    @param dist      Distance between p1 and p2.
-    @param force     returns the force on particle 1.
-*/
+ *  force to the particle forces.
+ *  @param q1q2      Product of the charges on p1 and p2.
+ *  @param d         Vector pointing from p1 to p2.
+ *  @param dist      Distance between p1 and p2.
+ *  @param force     returns the force on particle 1.
+ */
 inline void add_rf_coulomb_pair_force(double const q1q2, double const d[3],
                                       double const dist, double force[3]) {
   if (dist < rf_params.r_cut) {

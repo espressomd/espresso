@@ -132,12 +132,12 @@ extern p3m_data_struct p3m;
 /** Tune P3M parameters to desired accuracy.
  *
  *  The parameters
- *  @ref p3m_parameter_struct::mesh "mesh",
- *  @ref p3m_parameter_struct::cao "cao",
- *  @ref p3m_parameter_struct::r_cut_iL "r_cut_iL" and
- *  @ref p3m_parameter_struct::alpha_L "alpha_L"
+ *  @ref P3MParameters::mesh "mesh",
+ *  @ref P3MParameters::cao "cao",
+ *  @ref P3MParameters::r_cut_iL "r_cut_iL" and
+ *  @ref P3MParameters::alpha_L "alpha_L"
  *  are tuned to obtain the target accuracy (initially stored in
- *  @ref p3m_parameter_struct::accuracy "accuracy") in optimal time.
+ *  @ref P3MParameters::accuracy "accuracy") in optimal time.
  *  These parameters are stored in the @ref p3m object.
  *
  *  The function utilizes the analytic expression of the error estimate
@@ -177,8 +177,8 @@ int p3m_adaptive_tune(char **log);
  */
 void p3m_init();
 
-/** Update @ref p3m_parameter_struct::alpha "alpha" and
- *  @ref p3m_parameter_struct::r_cut "r_cut" if @ref box_l changed
+/** Update @ref P3MParameters::alpha "alpha" and
+ *  @ref P3MParameters::r_cut "r_cut" if @ref box_l changed
  */
 void p3m_scaleby_box_l();
 
@@ -251,23 +251,23 @@ inline void p3m_add_pair_force(double q1q2, double const *d, double dist,
 
 /** Set initial values for p3m_adaptive_tune()
  *
- *  @param[in]  r_cut        @copybrief p3m_parameter_struct::r_cut
- *  @param[in]  mesh         @copybrief p3m_parameter_struct::mesh
- *  @param[in]  cao          @copybrief p3m_parameter_struct::cao
- *  @param[in]  alpha        @copybrief p3m_parameter_struct::alpha
- *  @param[in]  accuracy     @copybrief p3m_parameter_struct::accuracy
- *  @param[in]  n_interpol   @copybrief p3m_parameter_struct::inter
+ *  @param[in]  r_cut        @copybrief P3MParameters::r_cut
+ *  @param[in]  mesh         @copybrief P3MParameters::mesh
+ *  @param[in]  cao          @copybrief P3MParameters::cao
+ *  @param[in]  alpha        @copybrief P3MParameters::alpha
+ *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
+ *  @param[in]  n_interpol   @copybrief P3MParameters::inter
  */
 void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
                          double accuracy, int n_interpol);
 
 /** Set custom parameters
  *
- *  @param[in]  r_cut        @copybrief p3m_parameter_struct::r_cut
- *  @param[in]  mesh         @copybrief p3m_parameter_struct::mesh
- *  @param[in]  cao          @copybrief p3m_parameter_struct::cao
- *  @param[in]  alpha        @copybrief p3m_parameter_struct::alpha
- *  @param[in]  accuracy     @copybrief p3m_parameter_struct::accuracy
+ *  @param[in]  r_cut        @copybrief P3MParameters::r_cut
+ *  @param[in]  mesh         @copybrief P3MParameters::mesh
+ *  @param[in]  cao          @copybrief P3MParameters::cao
+ *  @param[in]  alpha        @copybrief P3MParameters::alpha
+ *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
  *  @return Custom error code
  */
 int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
@@ -275,20 +275,20 @@ int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
 
 /** Set mesh offset
  *
- *  @param[in]  x , y , z  Components of @ref p3m_parameter_struct::mesh_off
+ *  @param[in]  x , y , z  Components of @ref P3MParameters::mesh_off
  *                         "mesh_off"
  */
 int p3m_set_mesh_offset(double x, double y, double z);
 
-/** Set @ref p3m_parameter_struct::epsilon "epsilon" parameter
+/** Set @ref P3MParameters::epsilon "epsilon" parameter
  *
- *  @param[in]  eps          @copybrief p3m_parameter_struct::epsilon
+ *  @param[in]  eps          @copybrief P3MParameters::epsilon
  */
 int p3m_set_eps(double eps);
 
-/** Set @ref p3m_parameter_struct::inter "inter" parameter
+/** Set @ref P3MParameters::inter "inter" parameter
  *
- *  @param[in]  n            @copybrief p3m_parameter_struct::inter
+ *  @param[in]  n            @copybrief P3MParameters::inter
  */
 int p3m_set_ninterpol(int n);
 

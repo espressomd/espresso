@@ -21,7 +21,7 @@
 /** \file
  *
  * Boundary conditions for lattice Boltzmann fluid dynamics.
- * Header file for \ref lbboundaries.hpp.
+ * Header file for \ref lb_boundaries.hpp.
  *
  */
 

@@ -145,10 +145,10 @@ class Correlator(ScriptInterfaceHelper):
         Number of timesteps between subsequent samples for the auto update mechanism.
 
     tau_max : :obj:`float`
-              This is the maximum value of :math:`\tau` for which the
+              This is the maximum value of :math:`\\tau` for which the
               correlation should be computed.  Warning: Unless you are using
               the multiple tau correlator, choosing `tau_max` of more than
-              100`dt` will result in a huge computational overhead.  In a
+              100 `dt` will result in a huge computational overhead.  In a
               multiple tau correlator with reasonable parameters, `tau_max`
               can span the entire simulation without too much additional cpu
               time.
@@ -159,7 +159,7 @@ class Correlator(ScriptInterfaceHelper):
               want to use it, make sure that you know how it works. By default, it
               is set equal to `tau_max` which results in the trivial linear
               correlator. By setting `tau_lin` < `tau_max` the multiple
-              tau correlator is switched on. In many cases, `tau_lin`=16 is a
+              tau correlator is switched on. In many cases, `tau_lin=16` is a
               good choice but this may strongly depend on the observables you are
               correlating. For more information, we recommend to read
               Ref. :cite:`ramirez10a` or to perform your own tests.
@@ -192,7 +192,7 @@ class Correlator(ScriptInterfaceHelper):
                               For more information, we recommend to read Ref.
                               :cite:`ramirez10a` or to perform your own tests.
 
-    args: :obj:`float[3]`
+    args: :obj:`float` of length 3
                      Three floats which are passed as arguments to the
                      correlation function.  Currently it is only used by
                      fcs_acf. Other correlation operations will ignore these
@@ -215,7 +215,7 @@ class AutoUpdateAccumulators(ScriptInterfaceHelper):
 
     """
     Class for handling auto-update of Accumulators used by
-    :class:`espressomd.System`.
+    :class:`espressomd.system.System`.
 
     """
     _so_name = "Accumulators::AutoUpdateAccumulators"

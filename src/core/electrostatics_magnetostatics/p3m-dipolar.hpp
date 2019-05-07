@@ -153,12 +153,12 @@ void dp3m_deactivate();
 /** Tune dipolar P3M parameters to desired accuracy.
  *
  *  The parameters
- *  @ref p3m_parameter_struct::mesh "mesh",
- *  @ref p3m_parameter_struct::cao "cao",
- *  @ref p3m_parameter_struct::r_cut_iL "r_cut_iL" and
- *  @ref p3m_parameter_struct::alpha_L "alpha_L"
+ *  @ref P3MParameters::mesh "mesh",
+ *  @ref P3MParameters::cao "cao",
+ *  @ref P3MParameters::r_cut_iL "r_cut_iL" and
+ *  @ref P3MParameters::alpha_L "alpha_L"
  *  are tuned to obtain the target accuracy (initially stored in
- *  @ref p3m_parameter_struct::accuracy "accuracy") in optimal time.
+ *  @ref P3MParameters::accuracy "accuracy") in optimal time.
  *  These parameters are stored in the @ref dp3m object.
  *
  *  The function utilizes the analytic expression of the error estimate

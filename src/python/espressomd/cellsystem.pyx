@@ -301,7 +301,7 @@ cdef class CellSystem(object):
 
         Returns
         -------
-        :attr:`espressomd.cell_system.skin`
+        :attr:`skin`
 
         """
         c_tune_skin(min_skin, max_skin, tol, int_steps)

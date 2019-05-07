@@ -386,7 +386,7 @@ General features
 -  ``EXCLUSIONS`` Allows to exclude specific short ranged interactions within
    molecules.
 
-   .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.exclude`
+   .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
