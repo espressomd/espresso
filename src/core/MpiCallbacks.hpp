@@ -558,11 +558,11 @@ public:
 
     if (!!local_result) {
       return *local_result;
-    } else {
-      std::remove_cv_t<std::remove_reference_t<R>> result;
-      m_comm.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
-      return result;
     }
+
+    std::remove_cv_t<std::remove_reference_t<R>> result;
+    m_comm.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
+    return result;
   }
 
   /**
