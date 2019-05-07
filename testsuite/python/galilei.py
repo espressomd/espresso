@@ -11,7 +11,7 @@ N_PART = 500
 
 
 class Galilei(ut.TestCase):
-    system = espressomd.System(box_l=[10, 20, 30])
+    system = espressomd.System(box_l=BOX_L)
 
     def setUp(self):
         self.system.part.add(pos=BOX_L * np.random.random((N_PART, 3)),
