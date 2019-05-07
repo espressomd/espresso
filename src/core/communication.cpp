@@ -330,7 +330,7 @@ void mpi_minimize_energy() { mpi_call_all(minimize_energy); }
 static int mpi_integrate_slave(int n_steps, int reuse_forces) {
   integrate_vv(n_steps, reuse_forces);
 
-  return check_runtime_errors();
+  return check_runtime_errors_local();
 }
 REGISTER_CALLBACK_REDUCTION(mpi_integrate_slave, std::plus<int>())
 
@@ -623,7 +623,7 @@ void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {
 #ifdef ELECTROSTATICS
   iccp3m_cfg = iccp3m_cfg_;
 
-  check_runtime_errors();
+  check_runtime_errors(comm_cart);
 #endif
 }
 
@@ -633,7 +633,7 @@ int mpi_iccp3m_init() {
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_init_slave, iccp3m_cfg);
 
-  return check_runtime_errors();
+  return check_runtime_errors(comm_cart);
 #else
   return 0;
 #endif

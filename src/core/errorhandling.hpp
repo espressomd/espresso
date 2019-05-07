@@ -24,17 +24,18 @@
  *  "Errorhandling for developers" for details on the error format and
  *  how to use this.
  */
-#ifndef _ERRORHANDLING_HPP
-#define _ERRORHANDLING_HPP
-
-#include <iosfwd>
-#include <string>
-#include <vector>
+#ifndef ERRORHANDLING_HPP
+#define ERRORHANDLING_HPP
 
 #include "config.hpp"
 
 #include "RuntimeError.hpp"
 #include "RuntimeErrorStream.hpp"
+
+#include <boost/mpi/communicator.hpp>
+
+#include <string>
+#include <vector>
 
 /* Forward declaration of MpiCallbacks,
  * so we don't have to include the header.
@@ -55,15 +56,19 @@ void errexit();
  * @brief check for runtime errors on all nodes.
  * This has to be called on all nodes synchronously.
  *
- * @return the number of characters in the error messages of all nodes together.
+ * @return the number of error messages of all nodes together.
  */
-int check_runtime_errors();
+int check_runtime_errors(boost::mpi::communicator const &comm);
+
+/**
+ * @brief check for runtime errors on all nodes.
+ * This has to be called on all nodes synchronously.
+ *
+ * @return the number of error messages on this node.
+ */
+int check_runtime_errors_local();
 
 namespace ErrorHandling {
-
-/** register a handler for sigint that translates it into an runtime error. */
-void register_sigint_handler();
-
 /**
  * @brief Initialize the error collection system.
  *
@@ -71,31 +76,9 @@ void register_sigint_handler();
  */
 void init_error_handling(Communication::MpiCallbacks &callbacks);
 
-void _runtimeMessage(RuntimeError::ErrorLevel level, const std::string &msg,
-                     const char *function, const char *file, int line);
-
-void _runtimeWarning(const char *msg, const char *function, const char *file,
-                     int line);
-void _runtimeWarning(const std::string &msg, const char *function,
-                     const char *file, int line);
-void _runtimeWarning(const std::ostringstream &msg, const char *function,
-                     const char *file, int line);
-
-void _runtimeError(const char *msg, const char *function, const char *file,
-                   int line);
-void _runtimeError(const std::string &msg, const char *function,
-                   const char *file, int line);
-void _runtimeError(const std::ostringstream &msg, const char *function,
-                   const char *file, int line);
-
 RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
                                          const std::string &file, int line,
                                          const std::string &function);
-
-#define runtimeWarning(msg)                                                    \
-  ErrorHandling::_runtimeWarning(msg, __PRETTYFUNC__, __FILE__, __LINE__)
-#define runtimeError(msg)                                                      \
-  ErrorHandling::_runtimeError(msg, __PRETTYFUNC__, __FILE__, __LINE__)
 
 #define runtimeErrorMsg()                                                      \
   ErrorHandling::_runtimeMessageStream(                                        \
@@ -105,11 +88,6 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
 #define runtimeWarningMsg()                                                    \
   ErrorHandling::_runtimeMessageStream(                                        \
       ErrorHandling::RuntimeError::ErrorLevel::WARNING, __FILE__, __LINE__,    \
-      __PRETTYFUNC__)
-
-#define debugMsg()                                                             \
-  ErrorHandling::_runtimeMessageStream(                                        \
-      ErrorHandling::RuntimeError::ErrorLevel::DEBUG, __FILE__, __LINE__,      \
       __PRETTYFUNC__)
 
 std::vector<RuntimeError> mpi_gather_runtime_errors();

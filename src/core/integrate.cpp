@@ -198,7 +198,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
-  if (check_runtime_errors())
+  if (check_runtime_errors(comm_cart))
     return;
 
   /* Verlet list criterion */
@@ -257,7 +257,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
 
-  if (check_runtime_errors())
+  if (check_runtime_errors(comm_cart))
     return;
 
   n_verlet_updates = 0;
@@ -379,7 +379,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
     }
 
-    if (check_runtime_errors())
+    if (check_runtime_errors(comm_cart))
       break;
 
     // Check if SIGINT has been caught.
