@@ -108,7 +108,6 @@ int n_nodes = -1;
   CB(mpi_place_particle_slave)                                                 \
   CB(mpi_bcast_ia_params_slave)                                                \
   CB(mpi_bcast_all_ia_params_slave)                                            \
-  CB(mpi_bcast_max_seen_particle_type_slave)                                   \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_place_new_particle_slave)                                             \
@@ -117,7 +116,6 @@ int n_nodes = -1;
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
-  CB(mpi_bcast_max_mu_slave)                                                   \
   CB(mpi_kill_particle_motion_slave)                                           \
   CB(mpi_kill_particle_forces_slave)                                           \
   CB(mpi_system_CMS_slave)                                                     \
@@ -404,13 +402,9 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
 /*************** REQ_BCAST_IA_SIZE ************/
 
+REGISTER_CALLBACK(realloc_ia_params)
 void mpi_bcast_max_seen_particle_type(int ns) {
-  mpi_call(mpi_bcast_max_seen_particle_type_slave, -1, ns);
-  mpi_bcast_max_seen_particle_type_slave(-1, ns);
-}
-
-void mpi_bcast_max_seen_particle_type_slave(int, int ns) {
-  realloc_ia_params(ns);
+  mpi_call_all(realloc_ia_params, ns);
 }
 
 /*************** REQ_GATHER ************/
@@ -683,25 +677,14 @@ void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
 
 /****************************************************/
 
+REGISTER_CALLBACK(calc_mu_max)
 void mpi_bcast_max_mu() {
 #if defined(DIPOLES) and defined(DP3M)
-  mpi_call(mpi_bcast_max_mu_slave, -1, 0);
-
-  calc_mu_max();
-
-#endif
-}
-
-void mpi_bcast_max_mu_slave(int, int) {
-#if defined(DIPOLES) and defined(DP3M)
-
-  calc_mu_max();
-
+  mpi_call_all(calc_mu_max);
 #endif
 }
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
-
 void mpi_kill_particle_motion(int rotation) {
   mpi_call(mpi_kill_particle_motion_slave, -1, rotation);
   local_kill_particle_motion(rotation);
