@@ -291,8 +291,8 @@ void mpi_bcast_max_mu();
  */
 void mpi_kill_particle_motion(int rotation);
 void mpi_kill_particle_forces(int torque);
-void mpi_system_CMS();
-void mpi_system_CMS_velocity();
+Utils::Vector3d mpi_system_CMS();
+Utils::Vector3d mpi_system_CMS_velocity();
 void mpi_galilei_transform();
 
 /** Issue REQ_SWIMMER_REACTIONS: notify the system of changes to the reaction

@@ -70,12 +70,13 @@
 #include "serialization/Particle.hpp"
 #include "serialization/ParticleParametersSwimming.hpp"
 
-#include "utils/u32_to_u64.hpp"
+#include <utils/u32_to_u64.hpp>
 #include <utils/Counter.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/serialization/utility.hpp>
 
 using namespace std;
 
@@ -115,11 +116,6 @@ int n_nodes = -1;
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
-  CB(mpi_kill_particle_motion_slave)                                           \
-  CB(mpi_kill_particle_forces_slave)                                           \
-  CB(mpi_system_CMS_slave)                                                     \
-  CB(mpi_system_CMS_velocity_slave)                                            \
-  CB(mpi_galilei_transform_slave)                                              \
   CB(mpi_setup_reaction_slave)                                                 \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
@@ -676,132 +672,60 @@ void mpi_bcast_max_mu() {
 }
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
-void mpi_kill_particle_motion(int rotation) {
-  mpi_call(mpi_kill_particle_motion_slave, -1, rotation);
+void mpi_kill_particle_motion_slave(int rotation) {
   local_kill_particle_motion(rotation);
   on_particle_change();
 }
 
-void mpi_kill_particle_motion_slave(int, int rotation) {
-  local_kill_particle_motion(rotation);
+REGISTER_CALLBACK(mpi_kill_particle_motion_slave)
+
+void mpi_kill_particle_motion(int rotation) {
+  mpi_call_all(mpi_kill_particle_motion_slave, rotation);
+}
+
+void mpi_kill_particle_forces_slave(int torque) {
+  local_kill_particle_forces(torque);
   on_particle_change();
 }
 
 void mpi_kill_particle_forces(int torque) {
-  mpi_call(mpi_kill_particle_forces_slave, -1, torque);
-  local_kill_particle_forces(torque);
+  mpi_call_all(mpi_kill_particle_forces_slave, torque);
+}
+
+struct pair_sum {
+  template <class T, class U>
+  auto operator()(std::pair<T, U> l, std::pair<T, U> r) const {
+    return std::pair<T, U>{l.first + r.first, l.second + r.second};
+  }
+};
+
+Utils::Vector3d mpi_system_CMS() {
+  auto const data =
+      mpi_call(Communication::Result::reduction, pair_sum{}, local_system_CMS);
+  return data.first / data.second;
+}
+
+REGISTER_CALLBACK_REDUCTION(local_system_CMS_velocity, pair_sum{})
+
+Utils::Vector3d mpi_system_CMS_velocity() {
+  auto const data = mpi_call(Communication::Result::reduction, pair_sum{},
+                             local_system_CMS_velocity);
+  return data.first / data.second;
+}
+
+REGISTER_CALLBACK_REDUCTION(local_system_CMS, pair_sum{})
+
+void mpi_galilei_transform_slave(Utils::Vector3d const& cmsvel) {
+  local_galilei_transform(cmsvel);
   on_particle_change();
 }
 
-void mpi_kill_particle_forces_slave(int, int torque) {
-  local_kill_particle_forces(torque);
-  on_particle_change();
-}
-
-void mpi_system_CMS() {
-  int pnode;
-  double data[4];
-  double rdata[4];
-  double *pdata = rdata;
-
-  data[0] = 0.0;
-  data[1] = 0.0;
-  data[2] = 0.0;
-  data[3] = 0.0;
-
-  mpi_call(mpi_system_CMS_slave, -1, 0);
-
-  for (pnode = 0; pnode < n_nodes; pnode++) {
-    if (pnode == this_node) {
-      local_system_CMS(pdata);
-      data[0] += rdata[0];
-      data[1] += rdata[1];
-      data[2] += rdata[2];
-      data[3] += rdata[3];
-    } else {
-      MPI_Recv(rdata, 4, MPI_DOUBLE, MPI_ANY_SOURCE, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-      data[0] += rdata[0];
-      data[1] += rdata[1];
-      data[2] += rdata[2];
-      data[3] += rdata[3];
-    }
-  }
-
-  gal.cms[0] = data[0] / data[3];
-  gal.cms[1] = data[1] / data[3];
-  gal.cms[2] = data[2] / data[3];
-}
-
-void mpi_system_CMS_slave(int, int) {
-  double rdata[4];
-  double *pdata = rdata;
-  local_system_CMS(pdata);
-  MPI_Send(rdata, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-}
-
-void mpi_system_CMS_velocity() {
-  int pnode;
-  double data[4];
-  double rdata[4];
-  double *pdata = rdata;
-
-  data[0] = 0.0;
-  data[1] = 0.0;
-  data[2] = 0.0;
-  data[3] = 0.0;
-
-  mpi_call(mpi_system_CMS_velocity_slave, -1, 0);
-
-  for (pnode = 0; pnode < n_nodes; pnode++) {
-    if (pnode == this_node) {
-      local_system_CMS_velocity(pdata);
-      data[0] += rdata[0];
-      data[1] += rdata[1];
-      data[2] += rdata[2];
-      data[3] += rdata[3];
-    } else {
-      MPI_Recv(rdata, 4, MPI_DOUBLE, MPI_ANY_SOURCE, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-      data[0] += rdata[0];
-      data[1] += rdata[1];
-      data[2] += rdata[2];
-      data[3] += rdata[3];
-    }
-  }
-
-  gal.cms_vel[0] = data[0] / data[3];
-  gal.cms_vel[1] = data[1] / data[3];
-  gal.cms_vel[2] = data[2] / data[3];
-}
-
-void mpi_system_CMS_velocity_slave(int, int) {
-  double rdata[4];
-  double *pdata = rdata;
-  local_system_CMS_velocity(pdata);
-  MPI_Send(rdata, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-}
+REGISTER_CALLBACK(mpi_galilei_transform_slave)
 
 void mpi_galilei_transform() {
-  double cmsvel[3];
+  auto const cmsvel = mpi_system_CMS_velocity();
 
-  mpi_system_CMS_velocity();
-  memmove(cmsvel, gal.cms_vel, 3 * sizeof(double));
-
-  mpi_call(mpi_galilei_transform_slave, -1, 0);
-  MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);
-
-  local_galilei_transform(cmsvel);
-
-  on_particle_change();
-}
-
-void mpi_galilei_transform_slave(int, int) {
-  double cmsvel[3];
-  MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);
-
-  local_galilei_transform(cmsvel);
-  on_particle_change();
+  mpi_call_all(mpi_galilei_transform_slave, cmsvel);
 }
 
 /******************** REQ_SWIMMER_REACTIONS ********************/
