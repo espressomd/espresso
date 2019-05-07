@@ -172,10 +172,10 @@ Subtract P3M short-range bond
     Requires the ``P3M`` feature.
 
 This bond can be instantiated via
-:class:`espressomd.interactions.BondedCoulombP3MSRBond`::
+:class:`espressomd.interactions.BondedCoulombSRBond`::
 
-    from espressomd.interactions import BondedCoulombP3MSRBond
-    subtr_p3m_sr = BondedCoulombP3MSRBond(q1q2=<float>)
+    from espressomd.interactions import BondedCoulombSRBond
+    subtr_p3m_sr = BondedCoulombSRBond(q1q2=<float>)
 
 The parameter ``q1q2`` sets the charge factor of the short-range P3M interaction.
 It can differ from the actual particle charges.  This specialized bond can be

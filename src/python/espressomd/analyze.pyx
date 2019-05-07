@@ -199,8 +199,9 @@ class Analysis(object):
 
         Parameters
         ----------
-        p_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                    Particle type for which to calculate the center of mass.
+        p_type : :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` for
+            which to calculate the center of mass.
 
         Returns
         -------
@@ -701,10 +702,7 @@ class Analysis(object):
         This requires that a set of chains of equal length which start with the
         particle with particle number ``chain_start`` and are consecutively
         numbered, the last particle in that topology has id number
-
-        .. math::
-
-            ``chain_start`` + ``number_of_chains`` * ``chain_length`` -1.
+        ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
         ----------
@@ -717,7 +715,7 @@ class Analysis(object):
 
         Returns
         -------
-        array_like : :obj:`float`
+        array_like :obj:`float` :
                      Where [0] is the Mean end-to-end distance of chains
                      and [1] its standard deviation,
                      [2] the Mean Square end-to-end distance
@@ -744,16 +742,16 @@ class Analysis(object):
 
         Parameters
         ----------
-        chain_start : :obj:`int`.
+        chain_start : :obj:`int`
                       The id of the first monomer of the first chain.
-        number_of_chains : :obj:`int`.
+        number_of_chains : :obj:`int`
                            Number of chains contained in the range.
-        chain_length : :obj:`int`.
+        chain_length : :obj:`int`
                        The length of every chain.
 
         Returns
         -------
-        array_like : :obj:`float`
+        array_like :obj:`float` :
                      Where [0] is the Mean radius of gyration of the chains
                      and [1] its standard deviation,
                      [2] the Mean Square radius of gyration
@@ -773,22 +771,22 @@ class Analysis(object):
         Calculates the hydrodynamic mean radius of chains and its standard deviation.
 
         This requires that a set of chains of equal length which start with the
-        particle with particle number `chain_start` and are consecutively
+        particle with particle number ``chain_start`` and are consecutively
         numbered (the last particle in that topology has id number :
-        `chain_start`+ `number_of_chains`*`chain_length`-1.
+        ``chain_start + number_of_chains * chain_length - 1``).
 
         Parameters
         ----------
-        chain_start : :obj:`int`.
+        chain_start : :obj:`int`
                       The id of the first monomer of the first chain
-        number_of_chains : :obj:`int`.
+        number_of_chains : :obj:`int`
                            Number of chains contained in the range.
-        chain_length : :obj:`int`.
+        chain_length : :obj:`int`
                        The length of every chain.
 
         Returns
         -------
-        array_like
+        array_like :obj:`float`:
             Where [0] is the mean hydrodynamic radius of the chains
             and [1] its standard deviation,
 

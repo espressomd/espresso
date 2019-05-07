@@ -207,7 +207,7 @@ used, which are indexed circularly by the numerical particle type::
                                           particle_type_colors=[[1, 1, 1], [0, 0, 1]],
                                           particle_type_materials=[steel, bright])
 
-Materials are stored in :attr:`espressomd.visualization.openGLLive().materials`.
+Materials are stored in :attr:`espressomd.visualization_opengl.openGLLive.materials`.
 
 .. _Visualize vectorial properties:
 

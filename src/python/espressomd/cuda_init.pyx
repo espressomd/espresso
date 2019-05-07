@@ -29,9 +29,11 @@ cdef class CudaInitHandle(object):
         @property
         def device(self):
             """
+            Get device.
+
             Returns
             -------
-            :obj:`int`
+            :obj:`int` :
                 Id of current set device.
 
             """
@@ -47,8 +49,8 @@ cdef class CudaInitHandle(object):
 
             Parameters
             ----------
-            'dev' : :obj:`int`
-                    Set the device id of the graphics card to use.
+            dev : :obj:`int`
+                Set the device id of the graphics card to use.
 
             """
             cuda_set_device(_dev)
@@ -57,9 +59,11 @@ cdef class CudaInitHandle(object):
         @property
         def device_list(self):
             """
+            List devices.
+
             Returns
             -------
-            :obj:`list`
+            :obj:`list` :
                 List of available CUDA devices.
 
             """

@@ -396,6 +396,7 @@ check_sphinx:
   script:
     - cd ${CI_PROJECT_DIR}/build
     - make -t && make sphinx
+    - bash ../maintainer/CI/doc_warnings.sh
   artifacts:
     paths:
     - build/doc/sphinx
@@ -415,6 +416,7 @@ check_doxygen:
   script:
     - cd ${CI_PROJECT_DIR}/build
     - make -t && make doxygen
+    - bash ../maintainer/CI/dox_warnings.sh
   artifacts:
     paths:
     - build/doc/doxygen

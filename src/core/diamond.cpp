@@ -19,13 +19,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    This file contains everything needed to create a start-up configuration
-    of (partially charged) diamond structure polymer chains with counterions
-    and salt molecules, assigning velocities to the particles and
-    cross-linking the polymers if necessary.
-
-    The corresponding header file is diamond.hpp.
-*/
+ *  This file contains everything needed to create a start-up configuration
+ *  of (partially charged) diamond structure polymer chains with counterions
+ *  and salt molecules, assigning velocities to the particles and
+ *  cross-linking the polymers if necessary.
+ *
+ *  The corresponding header file is diamond.hpp.
+ */
 
 #include <cmath>
 #include <cstddef>
@@ -44,11 +44,6 @@
 #include "integrate.hpp"
 #include "polymer.hpp"
 #include "random.hpp"
-
-/*************************************************************
- * Functions                                                 *
- * ---------                                                 *
- *************************************************************/
 
 int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
                        int const mode, double const shield, int const max_try,

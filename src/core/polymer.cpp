@@ -19,13 +19,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    This file contains everything needed to create a start-up configuration
-    of (partially charged) polymer chains with counterions and salt molecules,
-    assigning velocities to the particles and cross-linking the polymers if
-   necessary.
-
-    The corresponding header file is polymer.hpp.
-*/
+ *  This file contains everything needed to create a start-up configuration
+ *  of (partially charged) polymer chains with counterions and salt molecules,
+ *  assigning velocities to the particles and cross-linking the polymers if
+ *  necessary.
+ *
+ *  The corresponding header file is polymer.hpp.
+ */
 
 #include <cmath>
 #include <cstddef>
