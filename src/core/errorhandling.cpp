@@ -27,8 +27,8 @@
 #include "MpiCallbacks.hpp"
 #include "RuntimeErrorCollector.hpp"
 
-#include <boost/mpi/communicator.hpp>
 #include <boost/mpi/collectives.hpp>
+#include <boost/mpi/communicator.hpp>
 
 #include <memory>
 
