@@ -21,11 +21,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cmath>
 
-#include "Observable.hpp"
+#include "ProfileObservable.hpp"
 
 namespace Observables {
 
-class LBProfileObservable : public ProfileObservable, virtual public Observable {
+class LBProfileObservable : public ProfileObservable {
 public:
   double sampling_delta_x = 1.0, sampling_delta_y = 1.0, sampling_delta_z = 1.0;
   double sampling_offset_x = 0.0, sampling_offset_y = 0.0,
