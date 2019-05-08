@@ -714,9 +714,9 @@ boost::optional<const Particle &> get_particle_data_local(int id) {
 
   if (p and (not p->l.ghost)) {
     return *p;
-  } else {
-    return {};
   }
+
+  return {};
 }
 
 REGISTER_CALLBACK_ONE_RANK(get_particle_data_local)
