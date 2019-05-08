@@ -38,8 +38,7 @@ TIME_STEP = 0.1
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
-             'tau': TIME_STEP,
-             'ext_force_density': [0.0, 0.0, EXT_FORCE]}
+             'tau': TIME_STEP}
 
 
 def poiseuille_flow(r, R, ext_force_density, dyn_visc):
@@ -68,6 +67,7 @@ class LBPoiseuilleCommon(object):
     system = espressomd.System(box_l=[9.0, 9.0, 9.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
+    params = {'axis': [0, 0, 1]}
 
     def prepare(self):
         """
@@ -75,9 +75,13 @@ class LBPoiseuilleCommon(object):
         accuracy.
 
         """
-        self.system.actors.clear()
+        local_lb_params = LB_PARAMS.copy()
+        local_lb_params['ext_force_density'] = np.array(
+            self.params['axis']) * EXT_FORCE
+        self.lbf = self.lbf(**local_lb_params)
         self.system.actors.add(self.lbf)
-        cylinder_shape = espressomd.shapes.Cylinder(center=self.system.box_l / 2.0, axis=[0, 0, 1], direction=-1, radius=self.system.box_l[2] / 2.0 - 1.0, length=self.system.box_l[2] * 1.5)
+        cylinder_shape = espressomd.shapes.Cylinder(
+            center=self.system.box_l / 2.0, axis=self.params['axis'], direction=-1, radius=self.system.box_l[2] / 2.0 - 1.0, length=self.system.box_l[2] * 1.5)
         cylinder = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
 
         self.system.lbboundaries.add(cylinder)
@@ -88,12 +92,13 @@ class LBPoiseuilleCommon(object):
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
         while diff > 0.001:
-            self.system.integrator.run(200)
-            new_val = self.lbf[mid_indices].velocity[2]
+            self.system.integrator.run(20)
+            new_val = self.lbf[mid_indices].velocity[np.nonzero(self.params['axis'])[
+                0]]
             diff = abs(new_val - old_val)
             old_val = new_val
 
-    def test_profile(self):
+    def compare_to_analytical(self):
         """
         Compare against analytical function by calculating the RMSD.
 
@@ -105,7 +110,10 @@ class LBPoiseuilleCommon(object):
         for y in range(velocities.shape[0]):
             v_tmp = []
             for z in range(int(self.system.box_l[2] / AGRID)):
-                v_tmp.append(self.lbf[int(self.system.box_l[0] / AGRID) / 2, y, z].velocity[2])
+                index = np.roll([int(self.system.box_l[0] / AGRID) / 2,
+                                 y, z], np.nonzero(self.params['axis'])[0] + 1)
+                v_tmp.append(
+                    self.lbf[index].velocity[np.nonzero(self.params['axis'])[0]])
             velocities[y] = np.mean(np.array(v_tmp))
             positions[y] = (y + 0.5) * AGRID
 
@@ -117,25 +125,45 @@ class LBPoiseuilleCommon(object):
         rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
         self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
 
+    def test_x(self):
+        self.params['axis'] = [1, 0, 0]
+        self.compare_to_analytical()
+
+    def test_y(self):
+        self.params['axis'] = [0, 1, 0]
+        self.compare_to_analytical()
+
+    def test_z(self):
+        self.params['axis'] = [0, 0, 1]
+        self.compare_to_analytical()
+
 
 @ut.skipIf(not espressomd.has_features(
-    ['LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+    ['LB_BOUNDARIES']), "Skipping test due to missing features.")
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the CPU implementation of the LB."""
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluid
+
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.lbboundaries.clear()
 
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['CUDA', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features or gpu.")
+    ['CUDA', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features or gpu.")
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the GPU implementation of the LB."""
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluidGPU
+
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.lbboundaries.clear()
 
 
 if __name__ == '__main__':
