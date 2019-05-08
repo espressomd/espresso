@@ -33,10 +33,7 @@ LB_PARAMS = {'agrid': AGRID,
              'visc': VISC,
              'tau': TIME_STEP,
              }
-#@ut.skipIf(
-#    not (espressomd.has_features(
-#         'CUDA')),
-#           "Both LB and CUDA not compiled in, can not check functionality.")
+
 class CylindricalLBObservableCommon(object):
 
     """
@@ -118,7 +115,6 @@ class CylindricalLBObservableCommon(object):
             self.lbf[np.array(position, dtype=int)].velocity = velocity
 
     def set_fluid_velocity_on_all_nodes(self):
-        self.system.part.clear()
         self.v_r = .75
         self.v_phi = 2.5
         self.v_z = 1.5
@@ -291,7 +287,12 @@ class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
     def tearDown(self):
         del self.positions[:]
         self.system.actors.remove(self.lbf)
+        self.system.part.clear()
 
+@ut.skipIf(
+    not (espressomd.has_features(
+         'CUDA')),
+           "CUDA not compiled in, can not check functionality.")
 class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
@@ -300,6 +301,7 @@ class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
     def tearDown(self):
         del self.positions[:]
         self.system.actors.remove(self.lbf)
+        self.system.part.clear()
 
 if __name__ == "__main__":
     ut.main()
