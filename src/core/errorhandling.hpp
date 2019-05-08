@@ -32,8 +32,6 @@
 #include "RuntimeError.hpp"
 #include "RuntimeErrorStream.hpp"
 
-#include <boost/mpi/communicator.hpp>
-
 #include <string>
 #include <vector>
 
@@ -45,6 +43,12 @@
 namespace Communication {
 class MpiCallbacks;
 }
+
+namespace boost {
+namespace mpi {
+class communicator;
+}
+} // namespace boost
 
 /**
  * @brief exit ungracefully,
