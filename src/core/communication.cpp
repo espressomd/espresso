@@ -241,7 +241,7 @@ void mpi_init() {
   Communication::m_callbacks =
       std::make_unique<Communication::MpiCallbacks>(comm_cart);
 
-#define CB(name) Communication::m_callbacks->add(&name);
+#define CB(name) Communication::m_callbacks->add(&(name));
   CALLBACK_LIST
 #undef CB
 

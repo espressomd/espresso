@@ -467,7 +467,7 @@ public:
  */
 #define REGISTER_CALLBACK(cb)                                                  \
   namespace Communication {                                                    \
-  static ::Communication::RegisterCallback register_##cb(&cb);                 \
+  static ::Communication::RegisterCallback register_##cb(&(cb));                 \
   }
 
 #endif
