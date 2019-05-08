@@ -26,4 +26,3 @@ class AnalyzeDistanceEmpty(ut.TestCase):
 
 if __name__ == "__main__":
     ut.main()
-
