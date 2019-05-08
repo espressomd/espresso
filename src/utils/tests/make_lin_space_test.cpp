@@ -34,7 +34,8 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
     auto const stop = 2.;
     auto const num = 13;
 
-    auto const lin_space = make_lin_space(start, stop, num, /* endpoint */ true);
+    auto const lin_space =
+        make_lin_space(start, stop, num, /* endpoint */ true);
     BOOST_CHECK_EQUAL(lin_space.size(), num);
 
     std::vector<double> values(lin_space.begin(), lin_space.end());
@@ -42,8 +43,8 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
     BOOST_CHECK_EQUAL(values.back(), stop);
 
     auto const dx = (stop - start) / (num - 1);
-    for(int i = 0; i < values.size(); i++) {
-     BOOST_CHECK_CLOSE(values.at(i), start + i*dx, 1e-14);
+    for (int i = 0; i < values.size(); i++) {
+      BOOST_CHECK_CLOSE(values.at(i), start + i * dx, 1e-14);
     }
   }
 
@@ -53,7 +54,8 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
     auto const stop = 2.;
     auto const num = 13;
 
-    auto const lin_space = make_lin_space(start, stop, num, /* endpoint */ false);
+    auto const lin_space =
+        make_lin_space(start, stop, num, /* endpoint */ false);
     BOOST_CHECK_EQUAL(lin_space.size(), num);
 
     std::vector<double> values(lin_space.begin(), lin_space.end());
@@ -61,8 +63,8 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
     BOOST_CHECK_LT(values.back(), stop);
 
     auto const dx = (stop - start) / num;
-    for(int i = 0; i < values.size(); i++) {
-      BOOST_CHECK_CLOSE(values.at(i), start + i*dx, 1e-14);
+    for (int i = 0; i < values.size(); i++) {
+      BOOST_CHECK_CLOSE(values.at(i), start + i * dx, 1e-14);
     }
   }
 }
