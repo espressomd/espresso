@@ -701,7 +701,6 @@ public:
  * The macro should be used at global scope.
  *
  * @param cb A function
- * @param op Reduction operation
  */
 #define REGISTER_CALLBACK_ONE_RANK(cb)                                         \
   namespace Communication {                                                    \
