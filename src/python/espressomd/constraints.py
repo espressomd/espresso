@@ -46,13 +46,16 @@ class Constraints(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        Either an instance of :class:`espressomd.constraints.Constraint`, or
-        the parameters to construct an :class:`espressomd.constraints.ShapeBasedConstraint`.
+        constraint: :class:`espressomd.constraints.Constraint`
+            Either a constraint object...
+        \*\*kwargs : any
+            ... or parameters to construct an
+            :class:`espressomd.constraints.ShapeBasedConstraint`
 
         Returns
         ----------
-        constraint : Instance of :class:`espressomd.constraints.Constraint`
-                     The added constraint
+        constraint : :class:`espressomd.constraints.Constraint`
+            The added constraint
 
         """
 
@@ -148,7 +151,8 @@ class ShapeBasedConstraint(Constraint):
 
         Returns
         ----------
-        :obj:float: The minimum distance
+        :obj:`float` :
+            The minimum distance
         """
         return self.call_method("min_dist", object=self)
 
@@ -461,7 +465,7 @@ class ElectricPlaneWave(Constraint):
     ----------
     E0 : array of :obj:`float`
         The amplitude of the electric field.
-    k  : array of :obj`float`
+    k  : array of :obj:`float`
         Wave vector of the wave
     omega : :obj:`float`
         Frequency of the wave

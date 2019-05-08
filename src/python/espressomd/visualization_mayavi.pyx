@@ -37,8 +37,9 @@ cdef class mayaviLive(object):
 
     Parameters
     ----------
-    system : instance of espressomd.System
-    particle_sizes : (optional) function, list, or dict, which maps particle types to radii
+    system : :class:`espressomd.system.System`
+    particle_sizes : function, list, or dict (optional)
+        object which maps particle types to radii
 
     """
 
