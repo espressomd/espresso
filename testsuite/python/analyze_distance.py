@@ -22,9 +22,10 @@ import espressomd
 
 BOX_L = 50.
 
+
 @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
 class AnalyzeDistance(ut.TestCase):
-    system = espressomd.System(box_l=3*[BOX_L])
+    system = espressomd.System(box_l=3 * [BOX_L])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(1234)
 
