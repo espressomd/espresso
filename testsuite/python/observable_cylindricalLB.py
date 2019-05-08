@@ -114,26 +114,6 @@ class CylindricalLBObservableCommon(object):
             self.positions.append(position)
             self.lbf[np.array(position, dtype=int)].velocity = velocity
 
-    def set_fluid_velocity_on_all_nodes(self):
-        self.v_r = .75
-        self.v_phi = 2.5
-        self.v_z = 1.5
-        node_positions = np.arange(-4.5, 5.0, 1.0)
-        for x in node_positions:
-            for y in node_positions:
-                for z in node_positions:
-                    position = np.array([x, y, z])
-                    v_y = (position[0] * np.sqrt(position[0]**2.0 + position[1]**2.0) * self.v_phi +
-                           position[1] * self.v_r) / np.sqrt(position[0]**2.0 + position[1]**2.0)
-                    v_x = (
-                        self.v_r * np.sqrt(position[0]**2.0 + position[1]**2.0) - position[1] * v_y) / position[0]
-                    velocity = np.array([v_x, v_y, self.v_z])
-                    velocity = self.swap_axis(velocity, self.params['axis'])
-                    position = self.swap_axis(position, self.params['axis'])
-                    position += np.array(self.params['center'])
-                    self.positions.append(position)
-                    self.lbf[np.array(position, dtype=int)].velocity = velocity
-
     def normalize_with_bin_volume(self, histogram):
         bin_volume = tests_common.get_cylindrical_bin_volume(
             self.params['n_r_bins'],
@@ -222,48 +202,8 @@ class CylindricalLBObservableCommon(object):
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
         self.assertEqual(p.n_values(), len(np_hist.flatten()) * 3)
 
-    def LB_velocity_profile_test(self):
-        self.set_fluid_velocity_on_all_nodes()
-        # Set up the Observable.
-        local_params = self.params.copy()
-        del local_params['ids']
-        local_params['sampling_density'] = 2.0
-        p = espressomd.observables.CylindricalLBVelocityProfile(
-            **local_params)
-        core_hist = np.array(
-            p.calculate()).reshape(
-            self.params['n_r_bins'],
-            self.params['n_phi_bins'],
-            self.params['n_z_bins'],
-            3)
-        core_hist_v_r = core_hist[:, :, :, 0]
-        core_hist_v_phi = core_hist[:, :, :, 1]
-        core_hist_v_z = core_hist[:, :, :, 2]
-        self.pol_positions = self.pol_coords()
-        np_hist, _ = np.histogramdd(
-            self.pol_positions, bins=(self.params['n_r_bins'],
-                                      self.params[
-                                      'n_phi_bins'],
-                                      self.params[
-                                      'n_z_bins']),
-                                    range=[(self.params['min_r'],
-                                            self.params['max_r']),
-                                           (self.params['min_phi'],
-                                            self.params['max_phi']),
-                                           (self.params['min_z'],
-                                            self.params['max_z'])])
-        for x in np.nditer(np_hist, op_flags=['readwrite']):
-            if x[...] > 0.0:
-                x[...] /= x[...]
-        np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
-        np.testing.assert_array_almost_equal(
-            np_hist * self.v_phi, core_hist_v_phi)
-        np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
-        self.assertEqual(p.n_values(), len(np_hist.flatten()) * 3)
-
     def perform_tests(self):
         self.LB_fluxdensity_profile_test()
-        self.LB_velocity_profile_test()
         self.LB_velocity_profile_at_particle_positions_test()
 
     def test_x_axis(self):
