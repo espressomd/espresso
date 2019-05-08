@@ -199,9 +199,9 @@ BOOST_AUTO_TEST_CASE(one_rank_callback) {
     boost::mpi::communicator world;
     if (world.rank() == (world.size() - 1)) {
       return world.rank();
-    } else {
-      return {};
     }
+
+    return {};
   };
 
   auto const fp = static_cast<boost::optional<int> (*)()>(cb);
