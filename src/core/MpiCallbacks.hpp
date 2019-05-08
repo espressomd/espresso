@@ -529,7 +529,7 @@ public:
 
     std::remove_cv_t<std::remove_reference_t<decltype(
         op(std::declval<R>(), std::declval<R>()))>>
-        result;
+        result{};
     boost::mpi::reduce(m_comm, fp(args...), result, op, 0);
 
     return result;
