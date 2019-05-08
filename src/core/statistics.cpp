@@ -66,6 +66,9 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
 
   auto mindist2 = std::numeric_limits<double>::infinity();
 
+  if (partCfg.empty())
+    return mindist2;
+
   for (auto jt = partCfg.begin(); jt != (--partCfg.end()); ++jt) {
     /* check which sets particle j belongs to
        bit 0: set1, bit1: set2
