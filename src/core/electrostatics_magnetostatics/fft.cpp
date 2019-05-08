@@ -363,10 +363,11 @@ void pack_block_permute2(double const *const in, double *const out,
 }
 
 /** Communicate the grid data according to the given forward FFT plan.
- * \param plan FFT communication plan.
- * \param in   input mesh.
- * \param out  output mesh.
- * \param fft    FFT communication plan.
+ *  \param plan   FFT communication plan.
+ *  \param in     input mesh.
+ *  \param out    output mesh.
+ *  \param fft    FFT communication plan.
+ *  \param comm   MPI communicator.
  */
 void forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
                     fft_data_struct &fft,
@@ -390,11 +391,12 @@ void forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
 }
 
 /** Communicate the grid data according to the given backward FFT plan.
- * \param plan_f Forward FFT plan.
- * \param plan_b Backward FFT plan.
- * \param in     input mesh.
- * \param out    output mesh.
- * \param fft    FFT communication plan.
+ *  \param plan_f Forward FFT plan.
+ *  \param plan_b Backward FFT plan.
+ *  \param in     input mesh.
+ *  \param out    output mesh.
+ *  \param fft    FFT communication plan.
+ *  \param comm   MPI communicator.
  */
 void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
                     const double *in, double *out, fft_data_struct &fft,

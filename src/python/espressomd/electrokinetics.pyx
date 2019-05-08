@@ -143,11 +143,11 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            species : :obj:`integer`
+            species : :obj:`int`
                       species for which the density will apply.
             density : :obj:`float`
                       The value to which the density will be set to.
-            node : numpy-array of type :obj:`integer` of length (3)
+            node : numpy-array of type :obj:`int` of length (3)
                    If set the density will be only applied on this specific node.
 
             """
@@ -180,7 +180,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            species : :obj:`integer`
+            species : :obj:`int`
                       The species which will be changed to neutralize the system.
 
             note : The previous density of the species will be ignored and
@@ -225,7 +225,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            species : :obj:`integer`
+            species : :obj:`int`
                       Species to be initialized.
 
             """
@@ -245,7 +245,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the boundary is written to.
 
             """
@@ -257,7 +257,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the velocity is written to.
 
             """
@@ -269,7 +269,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the LB density is written to.
 
             """
@@ -281,7 +281,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the electrostatic potential is written to.
 
             """
@@ -293,7 +293,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the LB force is written to.
 
             """
@@ -305,7 +305,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the electrostatic potential is written to.
 
             note : This only works if 'es_coupling' is active.
@@ -489,7 +489,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the species density is written to.
 
             """
@@ -501,7 +501,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the species flux is written to.
 
             """

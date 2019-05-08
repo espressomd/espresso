@@ -112,7 +112,7 @@ public:
   ReactionAlgorithm(int seed)
       : m_seeder({seed, seed, seed}), m_generator(m_seeder),
         m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
-    m_generator.discard(1e6);
+    m_generator.discard(1'000'000);
   }
 
   virtual ~ReactionAlgorithm() = default;
