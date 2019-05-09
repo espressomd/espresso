@@ -439,8 +439,8 @@ class DPDThermostat(ut.TestCase):
                                [obs_stress[3], obs_stress[4], obs_stress[5]],
                                [obs_stress[6], obs_stress[7], obs_stress[8]]])
 
-        np.testing.assert_array_almost_equal(dpd_stress, stress)
-        np.testing.assert_array_almost_equal(obs_stress, stress)
+        np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
+        np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
 
 if __name__ == "__main__":
     ut.main()
