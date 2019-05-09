@@ -28,12 +28,13 @@
  */
 
 #include "config.hpp"
-#include "utils/Vector.hpp"
 
 #ifdef DPD
 
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
+
+#include <utils/Vector.hpp>
 
 void dpd_heat_up();
 void dpd_cool_down();
@@ -46,9 +47,6 @@ void dpd_update_params(double pref2_scale);
 Utils::Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                                IA_parameters *ia_params, double const *d,
                                double dist, double dist2);
-extern Utils::Vector9d dpd_virial;
-extern Utils::Vector9d dpd_global_virial;
-#endif
-
-#endif
 Utils::Vector9d dpd_stress();
+#endif
+#endif

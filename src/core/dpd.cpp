@@ -30,11 +30,13 @@
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
 
+#include <utils/Vector.hpp>
 using Utils::Vector3d;
-
-Utils::Vector9d dpd_virial = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-Utils::Vector9d dpd_global_virial = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+#include <utils/NoOp.hpp>
 #include <utils/constants.hpp>
+#include <utils/math/tensor_product.hpp>
+
+#include <boost/mpi/collectives/reduce.hpp>
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
@@ -197,12 +199,40 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   return f;
 }
 
+static auto dpd_stress_local() {
+  Utils::Vector<Utils::Vector3d, 3> stress{};
+
+
+
+  short_range_loop(
+      Utils::NoOp{},
+      [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
+        auto const f =
+            dpd_pair_force(&p1, &p2, get_ia_param_safe(p1.p.type, p2.p.type),
+                           d.vec21.data(), sqrt(d.dist2), d.dist2);
+
+        stress += Utils::tensor_product(d.vec21, f);
+      });
+
+  return stress;
+}
+
+void mpi_dpd_stress_slave() {
+  boost::mpi::reduce(comm_cart, dpd_stress_local(), std::plus<>(), 0);
+}
+REGISTER_CALLBACK(mpi_dpd_stress_slave)
+
+Utils::Vector9d mpi_dpd_stress() {
+  Utils::Vector<Utils::Vector3d, 3> stress{};
+
+  mpi_call(mpi_dpd_stress_slave);
+  boost::mpi::reduce(comm_cart, dpd_stress_local(), stress, std::plus<>(), 0);
+
+  return {stress[0][0], stress[0][1], stress[0][2], stress[1][0], stress[1][1],
+          stress[1][2], stress[2][0], stress[2][1], stress[2][2]};
+}
+
 Utils::Vector9d dpd_stress() {
-
-  mpi_get_dpd_virial();
-
-  dpd_global_virial /= (box_l[0] * box_l[1] * box_l[2]);
-
-  return dpd_global_virial;
+  return mpi_dpd_stress() / (box_l[0] * box_l[1] * box_l[2]);
 }
 #endif
