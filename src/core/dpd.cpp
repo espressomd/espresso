@@ -202,8 +202,6 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
 static auto dpd_stress_local() {
   Utils::Vector<Utils::Vector3d, 3> stress{};
 
-
-
   short_range_loop(
       Utils::NoOp{},
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {

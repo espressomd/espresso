@@ -310,11 +310,6 @@ void mpi_observable_lb_radial_velocity_profile();
  */
 void mpi_setup_reaction();
 
-/** Reduce the value for the DPD virial
- */
-
-void mpi_get_dpd_virial();
-
 #ifdef CUDA
 /** Gather CUDA devices from all nodes */
 std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
