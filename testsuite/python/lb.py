@@ -262,16 +262,18 @@ class TestLB(object):
         local_box_l aren't integer multiples of agrid.
         """
         self.system.actors.clear()
-        print("Testing LB error messages:", file=sys.stderr)
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'] + 1e-5,
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
+        print("\nTesting LB error messages:", file=sys.stderr)
+        sys.stderr.flush()
         with self.assertRaises(Exception):
             self.system.actors.add(self.lbf)
         print("End of LB error messages", file=sys.stderr)
+        sys.stderr.flush()
 
     @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
                "Features not available, skipping test!")
