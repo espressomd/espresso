@@ -110,7 +110,7 @@ class LBPoiseuilleCommon(object):
         for y in range(velocities.shape[0]):
             v_tmp = []
             for z in range(int(self.system.box_l[2] / AGRID)):
-                index = np.roll([int(self.system.box_l[0] / AGRID) / 2,
+                index = np.roll([int(self.system.box_l[0] / AGRID / 2),
                                  y, z], np.nonzero(self.params['axis'])[0] + 1)
                 v_tmp.append(
                     self.lbf[index].velocity[np.nonzero(self.params['axis'])[0]])
