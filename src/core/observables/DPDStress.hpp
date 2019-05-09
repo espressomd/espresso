@@ -12,8 +12,6 @@ class DPDStress : public Observable {
 public:
   int n_values() const override { return 9; };
   std::vector<double> operator()(PartCfg &) const override {
-    std::vector<double> res(n_values());
-
     return dpd_stress();
   }
 };
