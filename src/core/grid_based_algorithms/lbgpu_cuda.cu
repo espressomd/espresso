@@ -27,7 +27,7 @@
 
 #include "config.hpp"
 
-#ifdef LB_GPU
+#ifdef CUDA
 #include <boost/optional.hpp>
 #include <cassert>
 #include <stdio.h>
@@ -555,7 +555,6 @@ __device__ void relax_modes(Utils::Array<float, 19> &mode, unsigned int index,
 /** Thermalization of the modes with Gaussian random numbers
  *  @param[in] index     Node index / thread index
  *  @param[in,out] mode  Local register values mode
- *  @param[in] philox_counter
  */
 __device__ void thermalize_modes(Utils::Array<float, 19> &mode,
                                  unsigned int index, uint64_t philox_counter) {
@@ -808,8 +807,7 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b,
  *  [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  *  @param[in]  index   Node index / thread index
  *  @param[in]  n_curr  Local node receiving the current node field
- *  @param[in]  lb_boundary_velocity  Constant velocity at the boundary,
- *                                    set by the user
+ *  @param[in]  boundaries  Constant velocity at the boundary, set by the user
  *  @param[out] lb_boundary_force     Force on the boundary nodes
  */
 __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
@@ -1562,7 +1560,6 @@ __device__ __inline__ float3 velocity_interpolation(
  *  @param[in]  d_v                Local device values
  *  @param[in]  flag_cs            Determine if we are at the centre (0,
  *                                 typical) or at the source (1, swimmer only)
- *  @param[in]  philox_counter
  *  @param[in]  friction           Friction constant for the particle coupling
  *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @tparam no_of_neighbours       The number of neighbours to consider for
@@ -2148,8 +2145,6 @@ __global__ void set_rho(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
  *  @param[in]  boundary_node_list    Indices of the boundary nodes
  *  @param[in]  boundary_index_list   Flag for the corresponding boundary
  *  @param[in]  number_of_boundnodes  Number of boundary nodes
- *  @param[out] n_a                   Local node residing in array a
- *  @param[out] n_b                   Local node residing in array b
  */
 __global__ void init_boundaries(int *boundary_node_list,
                                 int *boundary_index_list,
@@ -2173,10 +2168,7 @@ __global__ void init_boundaries(int *boundary_node_list,
   }
 }
 
-/** Reset the boundary flag of every node
- *  @param[out] n_a   Local node residing in array a
- *  @param[out] n_b   Local node residing in array b
- */
+/** Reset the boundary flag of every node */
 __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
   size_t index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x +
                  threadIdx.x;
@@ -2191,7 +2183,6 @@ __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
  *  @param[in,out] d_v     Local device values
  *  @param[in,out] node_f  Local node force density
  *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
- *  @param[in]     philox_counter
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
@@ -2244,8 +2235,6 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[in,out]  particle_force  Particle force
  *  @param[out] node_f              Local node force
  *  @param[in]  d_v                 Local device values
- *  @param[in]  couple_virtual
- *  @param[in]  philox_counter
  *  @param[in]  friction            Friction constant for the particle coupling
  *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @tparam     no_of_neighbours    The number of neighbours to consider for
@@ -2289,8 +2278,7 @@ __global__ void calc_fluid_particle_ia(
 #ifdef LB_BOUNDARIES_GPU
 /** Bounce back boundary kernel
  *  @param[in]  n_curr  Pointer to local node receiving the current node field
- *  @param[in]  lb_boundary_velocity  Constant velocity at the boundary,
- *                                    set by the user
+ *  @param[in]  boundaries  Constant velocity at the boundary, set by the user
  *  @param[out] lb_boundary_force     Force on the boundary nodes
  */
 __global__ void apply_boundaries(LB_nodes_gpu n_curr,
@@ -3235,4 +3223,4 @@ uint64_t lb_fluid_get_rng_state_gpu() {
   return rng_counter_fluid_gpu->value();
 }
 
-#endif /* LB_GPU */
+#endif /* CUDA */

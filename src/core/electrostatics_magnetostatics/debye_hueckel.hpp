@@ -49,8 +49,7 @@ int dh_set_params(double kappa, double r_cut);
 
 /** Computes the Debye_Hueckel pair force and adds this
     force to the particle forces.
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
+    @param q1q2      Product of the charges on p1 and p2.
     @param d         Vector pointing from p1 to p2.
     @param dist      Distance between p1 and p2.
     @param force     returns the force on particle 1.

@@ -64,7 +64,7 @@ The module :mod:`espressomd.constraints` provides the class
     shape_constraint = espressomd.constraints.ShapeBasedConstraint(shape=my_shape)
 
 In order to add the constraint to the system
-invoke the :meth:`espressomd.constraints.add` method::
+invoke the :meth:`espressomd.constraints.Constraints.add` method::
 
     system.constraints.add(shape_constraint)
 
@@ -101,7 +101,7 @@ as usual (:ref:`Non-bonded interactions`).
 Deleting a constraint
 ~~~~~~~~~~~~~~~~~~~~~
 
-Constraints can be removed in a similar fashion using :meth:`espressomd.system.constraints.remove` ::
+Constraints can be removed in a similar fashion using :meth:`espressomd.constraints.Constraints.remove` ::
 
     system.constraints.remove(myConstraint)
 
@@ -126,7 +126,7 @@ will print the shape information for all defined constraints.
 Getting the force on a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:meth:`espressomd.system.constraints.total_force`
+:meth:`espressomd.constraints.ShapeBasedConstraint.total_force`
 
 Returns the force acting on the constraint. Note, however, that this is
 only due to forces from interactions with particles, not with other
@@ -145,7 +145,7 @@ For example the pressure from wall ::
 Getting the minimal distance to a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:meth:`espressomd.system.constraints.min_dist`
+:meth:`espressomd.constraints.ShapeBasedConstraint.min_dist`
 
 Calculates the smallest distance to all interacting
 constraints that can be repulsive (wall, cylinder, sphere, rhomboid,
@@ -427,7 +427,7 @@ Pictured is an example constraint with a ``SpheroCylinder`` shape created with :
     system.constraints.add(shape=spherocylinder, particle_type=0)
 
 
-:class:`espressomd.shapes.Hollowcone`
+:class:`espressomd.shapes.HollowCone`
    A hollow cone.
 
 The resulting surface is a section of a hollow cone.
@@ -574,11 +574,11 @@ Constant fields
 These are fields that are constant in space or simple linear functions
 of the position.  The available fields are
 
-:class:`espressomd.Constraints::HomogeneousMagneticField`
-:class:`espressomd.Constraints::HomogeneousElectricField`
-:class:`espressomd.Constraints::LinearElectricPotential`
-:class:`espressomd.Constraints::HomogeneousFlowField`
-:class:`espressomd.Constraints::Gravity`
+:class:`espressomd.constraints.HomogeneousMagneticField`
+:class:`espressomd.constraints.ElectricPlaneWave`
+:class:`espressomd.constraints.LinearElectricPotential`
+:class:`espressomd.constraints.HomogeneousFlowField`
+:class:`espressomd.constraints.Gravity`
 
 a detailed description can be found in the class documentation.
 
@@ -595,8 +595,8 @@ which has to be provided by the user. The fields differ by how
 they couple to particles, for a detailed description see their respective
 class documentation.
 
-:class:`espressomd.Constraints::ForceField`
-:class:`espressomd.Constraints::PotentialField`
-:class:`espressomd.Constraints::ElectricPotential`
-:class:`espressomd.Constraints::FlowField`
+:class:`espressomd.constraints.ForceField`
+:class:`espressomd.constraints.PotentialField`
+:class:`espressomd.constraints.ElectricPotential`
+:class:`espressomd.constraints.FlowField`
 

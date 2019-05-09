@@ -62,15 +62,13 @@ int n_part_conf = 0;
  ****************************************************************************************/
 
 double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
-  int in_set;
-
   auto mindist2 = std::numeric_limits<double>::infinity();
 
-  for (auto jt = partCfg.begin(); jt != (--partCfg.end()); ++jt) {
+  for (auto jt = partCfg.begin(); jt != partCfg.end(); ++jt) {
     /* check which sets particle j belongs to
        bit 0: set1, bit1: set2
     */
-    in_set = 0;
+    auto in_set = 0;
     if (set1.empty() || contains(set1, jt->p.type))
       in_set = 1;
     if (set2.empty() || contains(set2, jt->p.type))

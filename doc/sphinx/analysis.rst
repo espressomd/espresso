@@ -429,7 +429,7 @@ Stress Tensor
 :meth:`espressomd.analyze.Analysis.stress_tensor`
 
 Computes the volume averaged instantaneous stress tensor of the system with options which are
-described by in :meth:`espressomd.System.analysis.stress_tensor`. It is called a stress tensor but the sign convention follows that of a pressure tensor.
+described by in :meth:`espressomd.analyze.Analysis.stress_tensor`. It is called a stress tensor but the sign convention follows that of a pressure tensor.
 In general do only use it for (on average) homogeneous systems. For inhomogeneous systems you need to use the local stress tensor.
 
 The instantaneous virial stress tensor is calculated by
@@ -628,11 +628,11 @@ the script level and back, which produces a significant overhead when
 performed too often.
 
 Some observables in the core have their corresponding counterparts in
-the :mod:`espressomd.analysis` module. However, only the core-observables can be used
+the :mod:`espressomd.analyze` module. However, only the core-observables can be used
 on the fly with the toolbox of the correlator and on the fly analysis of
 time series.
 Similarly, some special cases of using the correlator have
-their redundant counterparts in :mod:`espressomd.analysis`,
+their redundant counterparts in :mod:`espressomd.analyze`,
 but the correlator provides a general and
 versatile toolbox which can be used with any implemented
 core-observables.

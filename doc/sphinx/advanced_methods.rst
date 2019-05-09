@@ -161,10 +161,10 @@ with the reaction rate :math:`k_{\mathrm{ct}}` and the simulation time step :mat
 
 Self-propulsion is achieved by imposing an interaction asymmetry between the partners of a swapped pair. That is, the heterogeneous distribution of chemical species induced by the swapping leads to a net force on the particle, counter balanced by friction.
 
-To set up the system for catalytic reactions the class :class:`espressomd.reaction.Reaction`
+To set up the system for catalytic reactions the class :class:`espressomd.swimmer_reaction.Reaction`
 can be used. ::
 
-    from espressomd.reaction import Reaction
+    from espressomd.swimmer_reaction import Reaction
 
     system = espressomd.System()
 
@@ -1451,7 +1451,7 @@ Initialization
         stencil='linkcentered', advection=True, fluid_coupling='friction')
     sys.actors.add(ek)
 
-.. note:: Features ``ELECTROKINETICS`` and ``LB_GPU`` required
+.. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
 
 The above is a minimal example how to initialize the LB fluid, and
 it is very similar to the lattice Boltzmann command in set-up. We

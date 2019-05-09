@@ -811,7 +811,7 @@ IF GAY_BERNE:
                   Interaction range.
             cut : :obj:`float`
                   Cutoff distance of the interaction.
-            k1 : :obj:`float` or :obj:`string`
+            k1 : :obj:`float` or :obj:`str`
                   Molecular elongation.
             k2 : :obj:`float`, optional
                   Ratio of the potential well depths for the side-by-side
@@ -1311,7 +1311,7 @@ IF BUCKINGHAM == 1:
             ----------
             a : :obj:`float`
                 Magnitude of the exponential part of the interaction.
-            b : :obj`float`
+            b : :obj:`float`
                 Exponent of the exponential part of the interaction.
             c : :obj:`float`
                 Prefactor of term decaying with the sixth power of distance.
@@ -2577,7 +2577,7 @@ IF TABULATED == 1:
         Parameters
         ----------
 
-        type : :obj:`string`,
+        type : :obj:`str`,
             The type of bond, one of 'distance', 'angle' or
             'dihedral'.
         min : :obj:`float`,
@@ -3055,7 +3055,7 @@ IF IMMERSED_BOUNDARY:
             Specifies area resistance for Skalak
         maxDist : :obj:`float`
             Gives an error if an edge becomes longer than maxDist
-        elasticLaw : :obj:`string`
+        elasticLaw : :obj:`str`
             Specify NeoHookean or Skalak
 
         """
@@ -3111,7 +3111,7 @@ IF IMMERSED_BOUNDARY == 1:
             initializing reference state
         kb : :obj:`float`
             Specifies bending modulus
-        refShape : :obj:`string`
+        refShape : :obj:`str`
             Flat or Initial
 
         """

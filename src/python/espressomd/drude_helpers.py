@@ -41,7 +41,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     harmonic_bond: This method adds this harmonic bond to between Drude particle and core
     thermalized_bond: This method adds this thermalizerd_bond to between Drude particle and core
     p_core: The existing core particle
@@ -132,7 +132,7 @@ def add_thole_pair_damping(system, t1, t2, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     t1 : :obj:`int`
         Type 1
     t2 : :obj:`int`
@@ -160,7 +160,7 @@ def add_all_thole(system, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     verbose : :obj:`bool`
              Turns on verbosity.
 
@@ -191,7 +191,7 @@ def setup_and_add_drude_exclusion_bonds(system, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     verbose: :obj:`bool`
              Turns on verbosity.
 
@@ -232,7 +232,7 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types,
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     mol_drude_types : List of types of Drude particles within the molecule
     mol_core_types : List of types of core particles within the molecule
     mol_core_partial_charges : List of partial charges of core particles within the molecule
@@ -268,7 +268,7 @@ def add_intramol_exclusion_bonds(system, drude_ids, core_ids, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     drude_ids : IDs of Drude particles within a molecule.
     core_ids : IDs of core particles within a molecule.
     verbose : :obj:`bool`
