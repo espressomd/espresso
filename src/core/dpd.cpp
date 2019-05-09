@@ -145,7 +145,6 @@ constexpr Vector<T, sizeof...(J)> e_impl(std::index_sequence<J...>) {
 }
 } // namespace detail
 
-
 /**
  * @brief I-th vector of the N-dimensional standard basis.
  * @tparam T Floating point type
@@ -186,16 +185,15 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   auto const v21 = p1->m.v - p2->m.v;
   auto const d21 = Utils::Vector3d{d[0], d[1], d[2]};
 
-  if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_pref1 > 0.0)) {
+  /* Projection to d21 subspace */
+  auto const P = Matrix<double, 3, 1>{{d[0], d[1], d[2]}};
+
+  if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_gamma > 0.0)) {
     auto const omega =
         weight(ia_params->dpd_wf, ia_params->dpd_r_cut, dist_inv);
     auto const omega2 = Utils::sqr(omega);
-    // DPD part
-    // friction force prefactor
-    auto const vel12_dot_d12 = v21 * d21;
 
-    auto const friction =
-        ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
+    auto const friction = ia_params->dpd_gamma * omega2 * (P * v21)[0];
     double noise = (ia_params->dpd_pref2 > 0.0) ? (d_random() - 0.5) : 0.0;
 
     f += (ia_params->dpd_pref2 * omega * noise - friction) * d21;
@@ -206,8 +204,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
         weight(ia_params->dpd_twf, ia_params->dpd_tr_cut, dist_inv);
     auto const omega2 = Utils::sqr(omega);
 
-    auto const P =
-        dist2 * I<double, 3>() - tensor_product(d21, d21);
+    auto const P = dist2 * I<double, 3>() - tensor_product(d21, d21);
 
     auto const noise_vec =
         (ia_params->dpd_pref2 > 0.0)
