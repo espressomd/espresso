@@ -416,7 +416,12 @@ class StressTensor(Observable):
 @script_interface_register
 class DPDStress(Observable):
 
-    """Calculates the non-equilibrium contribution of the DPD interaction to the stress tensor. See :ref:`DPD stress`)
+    """Calculates the non-equilibrium contribution of the DPD interaction
+    to the stress tensor.
+
+    Parameters
+    ----------
+    None
 
     """
     _so_name = "Observables::DPDStress"
