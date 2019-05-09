@@ -34,6 +34,7 @@ LB_PARAMS = {'agrid': AGRID,
              'tau': TIME_STEP,
              }
 
+
 class CylindricalLBObservableCommon(object):
 
     """
@@ -220,6 +221,7 @@ class CylindricalLBObservableCommon(object):
 
 
 class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
+
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
         self.system.actors.add(self.lbf)
@@ -229,11 +231,13 @@ class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
         self.system.actors.remove(self.lbf)
         self.system.part.clear()
 
+
 @ut.skipIf(
     not (espressomd.has_features(
          'CUDA')),
            "CUDA not compiled in, can not check functionality.")
 class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
+
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
         self.system.actors.add(self.lbf)

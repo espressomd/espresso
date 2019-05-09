@@ -118,7 +118,8 @@ class LBPoiseuilleCommon(object):
             positions[y] = (y + 0.5) * AGRID
 
         v_measured = velocities[1:-1]
-        v_expected = poiseuille_flow(positions[1:-1] - 0.5 * self.system.box_l[0],
+        v_expected = poiseuille_flow(
+            positions[1:-1] - 0.5 * self.system.box_l[0],
                                      self.system.box_l[0] / 2.0 - 1.0,
                                      EXT_FORCE,
                                      VISC * DENS)
