@@ -596,13 +596,14 @@ class Analysis(object):
 
         return p
 
-    def dpd_stress(self):
-        cdef Vector9d p
-        p = dpd_stress()
-        return array_locked((
-            p[0], p[1], p[2],
-            p[3], p[4], p[5],
-            p[6], p[7], p[8])).reshape((3, 3))
+    IF DPD == 1:
+      def dpd_stress(self):
+          cdef Vector9d p
+          p = dpd_stress()
+          return array_locked((
+              p[0], p[1], p[2],
+              p[3], p[4], p[5],
+              p[6], p[7], p[8])).reshape((3, 3))
 
     #
     # Energy analysis

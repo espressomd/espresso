@@ -114,8 +114,9 @@ void force_calc() {
   }
 
   calc_long_range_forces();
+#ifdef DPD
   dpd_virial = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-
+#endif
   // Only calculate pair forces if the maximum cutoff is >0
   if (max_cut > 0) {
     short_range_loop([](Particle &p) { add_single_particle_force(&p); },
