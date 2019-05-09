@@ -126,12 +126,65 @@ static double weight(int type, double r_cut, double dist_inv) {
   return dist_inv - 1.0 / r_cut;
 }
 
+using Utils::Vector;
+
+template <class T, size_t N, size_t M> using Matrix = Vector<Vector<T, M>, N>;
+
+/**
+ * @brief Kronecker delta.
+ *
+ * @return true iff I = J.
+ *
+ */
+template <size_t I, size_t J> constexpr bool delta() { return I == J; }
+
+namespace detail {
+template <class T, size_t I, size_t... J>
+constexpr Vector<T, sizeof...(J)> e_impl(std::index_sequence<J...>) {
+  return {delta<I, J>()...};
+}
+} // namespace detail
+
+
+/**
+ * @brief I-th vector of the N-dimensional standard basis.
+ * @tparam T Floating point type
+ * @tparam N Dimension
+ * @tparam I Index
+ *                   .-> I-th element
+ * @return { 0, ..., 1, 0, ... }
+ */
+template <class T, size_t N, size_t I> constexpr Vector<T, N> e() {
+  return detail::e_impl<T, I>(std::make_index_sequence<N>{});
+}
+
+namespace detail {
+template <class T, size_t... I>
+constexpr Matrix<T, sizeof...(I), sizeof...(I)>
+I_impl(std::index_sequence<I...>) {
+  return {e<T, sizeof...(I), I>()...};
+}
+} // namespace detail
+
+/**
+ * @briefn NxN identity matrix
+ * @tparam T Floating point type
+ * @tparam N Dimension
+ * @return e<T, I>() * e<T, J>()
+ */
+template <class T, size_t N> constexpr Matrix<T, N, N> I() {
+  return detail::I_impl<T>(std::make_index_sequence<N>{});
+}
+
 Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
-                        IA_parameters *ia_params, double const *d, double dist,
-                        double dist2) {
+                        const IA_parameters *ia_params, double const *d,
+                        double dist, double dist2) {
+  using Utils::tensor_product;
   Vector3d f{};
 
   auto const dist_inv = 1.0 / dist;
+  auto const v21 = p1->m.v - p2->m.v;
+  auto const d21 = Utils::Vector3d{d[0], d[1], d[2]};
 
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_pref1 > 0.0)) {
     auto const omega =
@@ -139,21 +192,13 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     auto const omega2 = Utils::sqr(omega);
     // DPD part
     // friction force prefactor
-    double vel12_dot_d12 = 0.0;
-    for (int j = 0; j < 3; j++)
-      vel12_dot_d12 += (p1->m.v[j] - p2->m.v[j]) * d[j];
+    auto const vel12_dot_d12 = v21 * d21;
+
     auto const friction =
         ia_params->dpd_pref1 * omega2 * vel12_dot_d12 * time_step;
-    // random force prefactor
-    double noise;
-    if (ia_params->dpd_pref2 > 0.0) {
-      noise = ia_params->dpd_pref2 * omega * (d_random() - 0.5);
-    } else {
-      noise = 0.0;
-    }
-    for (int j = 0; j < 3; j++) {
-      f[j] += (noise - friction) * d[j];
-    }
+    double noise = (ia_params->dpd_pref2 > 0.0) ? (d_random() - 0.5) : 0.0;
+
+    f += (ia_params->dpd_pref2 * omega * noise - friction) * d21;
   }
   // DPD2 part
   if ((dist < ia_params->dpd_tr_cut) && (ia_params->dpd_pref3 > 0.0)) {
@@ -161,39 +206,21 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
         weight(ia_params->dpd_twf, ia_params->dpd_tr_cut, dist_inv);
     auto const omega2 = Utils::sqr(omega);
 
-    double P_times_dist_sqr[3][3] = {{dist2, 0, 0},
-                                     {0, dist2, 0},
-                                     {0, 0, dist2}},
-           noise_vec[3];
-    for (int i = 0; i < 3; i++) {
-      // noise vector
-      if (ia_params->dpd_pref2 > 0.0) {
-        noise_vec[i] = d_random() - 0.5;
-      } else {
-        noise_vec[i] = 0.0;
-      }
-      // Projection Matrix
-      for (int j = 0; j < 3; j++) {
-        P_times_dist_sqr[i][j] -= d[i] * d[j];
-      }
-    }
+    auto const P =
+        dist2 * I<double, 3>() - tensor_product(d21, d21);
 
-    double f_D[3], f_R[3];
-    for (int i = 0; i < 3; i++) {
-      // Damping force
-      f_D[i] = 0;
-      // Random force
-      f_R[i] = 0;
-      for (int j = 0; j < 3; j++) {
-        f_D[i] += P_times_dist_sqr[i][j] * (p1->m.v[j] - p2->m.v[j]);
-        f_R[i] += P_times_dist_sqr[i][j] * noise_vec[j];
-      }
-      f_D[i] *= ia_params->dpd_pref3 * omega2 * time_step;
-      f_R[i] *= ia_params->dpd_pref4 * omega * dist_inv;
-    }
-    for (int j = 0; j < 3; j++) {
-      f[j] += f_R[j] - f_D[j];
-    }
+    auto const noise_vec =
+        (ia_params->dpd_pref2 > 0.0)
+            ? Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5}
+            : Vector3d{};
+
+    auto f_D = P * v21;
+    auto f_R = P * noise_vec;
+
+    f_D *= ia_params->dpd_pref3 * omega2 * time_step;
+    f_R *= ia_params->dpd_pref4 * omega * dist_inv;
+
+    f += f_R - f_D;
   }
 
   return f;
