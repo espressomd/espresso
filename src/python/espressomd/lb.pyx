@@ -272,7 +272,7 @@ cdef class LBFluid(HydrodynamicInteraction):
         def __set__(self, value):
             raise NotImplementedError
 
-IF LB_GPU:
+IF CUDA:
     cdef class LBFluidGPU(HydrodynamicInteraction):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
