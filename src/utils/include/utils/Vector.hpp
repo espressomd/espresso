@@ -324,6 +324,14 @@ template <typename T, size_t N> struct decay_to_scalar<Vector<T, N>> {
 };
 
 template <typename T> struct decay_to_scalar<Vector<T, 1>> { using type = T; };
-} // namespace Utils
 
+template <size_t N, typename T>
+std::ostream& operator<< (std::ostream &out, Vector<T, N> const &a) {
+  for (auto const &value : a) {
+    out << value << " ";
+  }
+  return out;
+}
+
+} // namespace Utils
 #endif
