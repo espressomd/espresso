@@ -38,7 +38,6 @@
 
 void dpd_heat_up();
 void dpd_cool_down();
-void dpd_switch_off();
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
                    int wf, double tgamma, double tr_c, int twf);
 void dpd_init();

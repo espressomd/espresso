@@ -81,15 +81,6 @@ void dpd_init() {
   }
 }
 
-void dpd_switch_off() {
-  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
-    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
-      auto data = get_ia_param(type_a, type_b);
-       ;
-    }
-  }
-}
-
 void dpd_update_params(double pref_scale) {
   int type_a, type_b;
   IA_parameters *data;
