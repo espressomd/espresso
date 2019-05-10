@@ -24,8 +24,8 @@
 #include "dpd.hpp"
 
 #ifdef DPD
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "communication.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
@@ -52,8 +52,10 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
                    int wf, double tgamma, double tr_c, int twf) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  data->dpd_radial = DPDParameters{gamma, r_c, wf, sqrt(24.0 * temperature * gamma / time_step)};
-  data->dpd_trans = DPDParameters{tgamma, tr_c, twf, sqrt(24.0 * temperature * tgamma / time_step)};
+  data->dpd_radial = DPDParameters{
+      gamma, r_c, wf, sqrt(24.0 * temperature * gamma / time_step)};
+  data->dpd_trans = DPDParameters{
+      tgamma, tr_c, twf, sqrt(24.0 * temperature * tgamma / time_step)};
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -69,7 +71,7 @@ void dpd_init() {
         data->dpd_radial.pref =
             sqrt(24.0 * temperature * data->dpd_radial.gamma / time_step);
         data->dpd_trans.pref =
-            sqrt(24.0 * temperature * data->dpd_trans.gamma/ time_step);
+            sqrt(24.0 * temperature * data->dpd_trans.gamma / time_step);
       }
     }
   }
@@ -98,10 +100,10 @@ static double weight(int type, double r_cut, double r) {
   return 1. - r / r_cut;
 }
 
-Vector3d dpd_pair_force(DPDParameters const& params, const Vector3d &v, double dist, const Vector3d &noise) {
+Vector3d dpd_pair_force(DPDParameters const &params, const Vector3d &v,
+                        double dist, const Vector3d &noise) {
   if ((dist < params.cutoff)) {
-    auto const omega =
-        weight(params.wf, params.cutoff, dist);
+    auto const omega = weight(params.wf, params.cutoff, dist);
     auto const omega2 = Utils::sqr(omega);
 
     auto const f_d = params.gamma * omega2 * v;
@@ -116,9 +118,8 @@ Vector3d dpd_pair_force(DPDParameters const& params, const Vector3d &v, double d
 Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                         const IA_parameters *ia_params, double const *d,
                         double dist, double dist2) {
-  using Utils::tensor_product;
-
-  if(ia_params->dpd_radial.cutoff <= 0.0 || ia_params->dpd_trans.cutoff <= 0.0) {
+  if (ia_params->dpd_radial.cutoff <= 0.0 &&
+      ia_params->dpd_trans.cutoff <= 0.0) {
     return {};
   }
 
@@ -131,34 +132,42 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
 
   auto const noise_vec =
       (ia_params->dpd_radial.pref > 0.0 || ia_params->dpd_trans.pref > 0.0)
-      ? Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5}
-      : Vector3d{};
+          ? Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5}
+          : Vector3d{};
 
   auto const noise_r = P * noise_vec;
   auto const noise_t = noise_vec - noise_r;
 
-  return dpd_pair_force(ia_params->dpd_radial, v_r, dist, noise_r)
-        +dpd_pair_force(ia_params->dpd_trans, v_t, dist, noise_t);
+  return dpd_pair_force(ia_params->dpd_radial, v_r, dist, noise_r) +
+         dpd_pair_force(ia_params->dpd_trans, v_t, dist, noise_t);
 }
 
-static auto dpd_stress_local() {
+static auto dpd_viscous_stress_local() {
   Utils::Vector<Utils::Vector3d, 3> stress{};
 
   short_range_loop(
       Utils::NoOp{},
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
-        auto const f =
-            dpd_pair_force(&p1, &p2, get_ia_param_safe(p1.p.type, p2.p.type),
-                           d.vec21.data(), sqrt(d.dist2), d.dist2);
+        auto const P = tensor_product(d.vec21 / d.dist2, d.vec21);
 
-        stress += Utils::tensor_product(d.vec21, f);
+        auto const v21 = p1.m.v - p2.m.v;
+        auto const v_r = P * v21;
+        auto const v_t = (v21 - v_r);
+
+        auto ia_params = get_ia_param(p1.p.type, p2.p.type);
+        auto const dist = std::sqrt(d.dist2);
+
+        auto const f = dpd_pair_force(ia_params->dpd_radial, v_r, dist, {}) +
+                       dpd_pair_force(ia_params->dpd_trans, v_t, dist, {});
+
+        stress += tensor_product(d.vec21, f);
       });
 
   return stress;
 }
 
 void mpi_dpd_stress_slave() {
-  boost::mpi::reduce(comm_cart, dpd_stress_local(), std::plus<>(), 0);
+  boost::mpi::reduce(comm_cart, dpd_viscous_stress_local(), std::plus<>(), 0);
 }
 REGISTER_CALLBACK(mpi_dpd_stress_slave)
 
@@ -166,7 +175,8 @@ Utils::Vector9d mpi_dpd_stress() {
   Utils::Vector<Utils::Vector3d, 3> stress{};
 
   mpi_call(mpi_dpd_stress_slave);
-  boost::mpi::reduce(comm_cart, dpd_stress_local(), stress, std::plus<>(), 0);
+  boost::mpi::reduce(comm_cart, dpd_viscous_stress_local(), stress,
+                     std::plus<>(), 0);
 
   return {stress[0][0], stress[0][1], stress[0][2], stress[1][0], stress[1][1],
           stress[1][2], stress[2][0], stress[2][1], stress[2][2]};
