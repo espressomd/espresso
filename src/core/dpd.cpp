@@ -95,60 +95,11 @@ void dpd_update_params(double pref_scale) {
   }
 }
 
-static double weight(int type, double r_cut, double dist_inv) {
+static double weight(int type, double r_cut, double r) {
   if (type == 0) {
-    return dist_inv;
+    return 1.;
   }
-  return dist_inv - 1.0 / r_cut;
-}
-
-using Utils::Vector;
-
-template <class T, size_t N, size_t M> using Matrix = Vector<Vector<T, M>, N>;
-
-/**
- * @brief Kronecker delta.
- *
- * @return true iff I = J.
- *
- */
-template <size_t I, size_t J> constexpr bool delta() { return I == J; }
-
-namespace detail {
-template <class T, size_t I, size_t... J>
-constexpr Vector<T, sizeof...(J)> e_impl(std::index_sequence<J...>) {
-  return {delta<I, J>()...};
-}
-} // namespace detail
-
-/**
- * @brief I-th vector of the N-dimensional standard basis.
- * @tparam T Floating point type
- * @tparam N Dimension
- * @tparam I Index
- *                   .-> I-th element
- * @return { 0, ..., 1, 0, ... }
- */
-template <class T, size_t N, size_t I> constexpr Vector<T, N> e() {
-  return detail::e_impl<T, I>(std::make_index_sequence<N>{});
-}
-
-namespace detail {
-template <class T, size_t... I>
-constexpr Matrix<T, sizeof...(I), sizeof...(I)>
-I_impl(std::index_sequence<I...>) {
-  return {e<T, sizeof...(I), I>()...};
-}
-} // namespace detail
-
-/**
- * @briefn NxN identity matrix
- * @tparam T Floating point type
- * @tparam N Dimension
- * @return e<T, I>() * e<T, J>()
- */
-template <class T, size_t N> constexpr Matrix<T, N, N> I() {
-  return detail::I_impl<T>(std::make_index_sequence<N>{});
+  return 1. - r / r_cut;
 }
 
 Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
@@ -157,42 +108,40 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   using Utils::tensor_product;
   Vector3d f{};
 
-  auto const dist_inv = 1.0 / dist;
   auto const v21 = p1->m.v - p2->m.v;
   auto const d21 = Utils::Vector3d{d[0], d[1], d[2]};
-  auto const v_r = (d21 * v21);
-  // auto const v_t = (1 - v_r) * v21;
-  
+  auto const P = tensor_product(d21 / dist2, d21);
+  auto const v_r = P * v21;
+  auto const v_t = (v21 - v_r);
+
+  auto const noise_vec =
+      (ia_params->dpd_pref2 > 0.0 || ia_params->dpd_pref4 > 0.0)
+      ? Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5}
+      : Vector3d{};
+
+  auto const noise_r = P * noise_vec;
+  auto const noise_t = noise_vec - noise_r;
+
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_gamma > 0.0)) {
     auto const omega =
-        weight(ia_params->dpd_wf, ia_params->dpd_r_cut, dist_inv);
+        weight(ia_params->dpd_wf, ia_params->dpd_r_cut, dist);
     auto const omega2 = Utils::sqr(omega);
 
     auto const friction = ia_params->dpd_gamma * omega2 * v_r;
-    double noise = (ia_params->dpd_pref2 > 0.0) ? (d_random() - 0.5) : 0.0;
+    auto const noise = ia_params->dpd_pref2 * omega * noise_r;
 
-    f += (ia_params->dpd_pref2 * omega * noise - friction) * d21;
+    f += (noise - friction);
   }
   // DPD2 part
   if ((dist < ia_params->dpd_tr_cut) && (ia_params->dpd_tgamma > 0.0)) {
     auto const omega =
-        weight(ia_params->dpd_twf, ia_params->dpd_tr_cut, dist_inv);
+        weight(ia_params->dpd_twf, ia_params->dpd_tr_cut, dist);
     auto const omega2 = Utils::sqr(omega);
 
-    auto const P = dist2 * I<double, 3>() - tensor_product(d21, d21);
+    auto const friction = ia_params->dpd_tgamma * omega2 * v_t;
+    auto const noise = ia_params->dpd_pref4 * omega * noise_t;
 
-    auto const noise_vec =
-        (ia_params->dpd_pref2 > 0.0)
-            ? Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5}
-            : Vector3d{};
-
-    auto f_D = P * v21;
-    auto f_R = P * noise_vec;
-
-    f_D *= ia_params->dpd_tgamma * omega2;
-    f_R *= ia_params->dpd_pref4 * omega * dist_inv;
-
-    f += f_R - f_D;
+    f += (noise - friction);
   }
 
   return f;
