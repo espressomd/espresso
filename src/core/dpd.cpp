@@ -68,28 +68,22 @@ void dpd_init() {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
-      if ((data->dpd_radial.cutoff > 0) || (data->dpd_trans.cutoff > 0)) {
-        data->dpd_radial.pref =
-            sqrt(24.0 * temperature * data->dpd_radial.gamma / time_step);
-        data->dpd_trans.pref =
-            sqrt(24.0 * temperature * data->dpd_trans.gamma / time_step);
-      }
+
+      data->dpd_radial.pref =
+          sqrt(24.0 * temperature * data->dpd_radial.gamma / time_step);
+      data->dpd_trans.pref =
+          sqrt(24.0 * temperature * data->dpd_trans.gamma / time_step);
     }
   }
 }
 
 void dpd_update_params(double pref_scale) {
-  int type_a, type_b;
-  IA_parameters *data;
+  for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
+    for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
+      auto data = get_ia_param(type_a, type_b);
 
-  for (type_a = 0; type_a < max_seen_particle_type; type_a++) {
-    for (type_b = 0; type_b < max_seen_particle_type; type_b++) {
-      data = get_ia_param(type_a, type_b);
-
-      if ((data->dpd_radial.cutoff > 0) || (data->dpd_trans.cutoff > 0)) {
-        data->dpd_radial.pref *= pref_scale;
-        data->dpd_trans.pref *= pref_scale;
-      }
+      data->dpd_radial.pref *= pref_scale;
+      data->dpd_trans.pref *= pref_scale;
     }
   }
 }
@@ -103,7 +97,7 @@ static double weight(int type, double r_cut, double r) {
 
 Vector3d dpd_pair_force(DPDParameters const &params, const Vector3d &v,
                         double dist, const Vector3d &noise) {
-  if ((dist < params.cutoff)) {
+  if (dist < params.cutoff) {
     auto const omega = weight(params.wf, params.cutoff, dist);
     auto const omega2 = Utils::sqr(omega);
 

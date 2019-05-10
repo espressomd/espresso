@@ -381,9 +381,9 @@ void cells_resort_particles(int global_flag) {
     }
   } else {
 #ifdef ADDITIONAL_CHECKS
-  /* at the end of the day, everything should be consistent again */
-  check_particle_consistency();
-  check_particle_sorting();
+    /* at the end of the day, everything should be consistent again */
+    check_particle_consistency();
+    check_particle_sorting();
 #endif
   }
 

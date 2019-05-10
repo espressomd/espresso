@@ -32,8 +32,7 @@ class DPDThermostat(ut.TestCase):
     """Tests the velocity distribution created by the dpd thermostat against
        the single component Maxwell distribution."""
 
-    s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.box_l = 3 * [10]
+    s = espressomd.System(box_l=3*[10.0])
     s.time_step = 0.01
     s.cell_system.skin = 0.4
 
@@ -126,13 +125,14 @@ class DPDThermostat(ut.TestCase):
         N = 200
         s = self.s
         s.time_step = 0.01
-        s.part.add(pos=np.random.random((N, 3)))
+        s.part.add(pos=s.box_l * np.random.random((N, 3)))
         kT = 2.3
         gamma = 1.5
         s.thermostat.set_dpd(kT=kT)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
+
         s.integrator.run(10)
 
         s.thermostat.turn_off()
@@ -296,8 +296,6 @@ class DPDThermostat(ut.TestCase):
 
     def test_ghosts_have_v(self):
         s = self.s
-
-        s.box_l = 3 * [10.]
 
         r_cut = 1.5
         dx = 0.25 * r_cut
