@@ -179,7 +179,7 @@ static void recalc_maximal_cutoff_nonbonded() {
 
 #ifdef DPD
       max_cut_current = std::max(max_cut_current,
-                                 std::max(data->dpd_r_cut, data->dpd_tr_cut));
+                                 std::max(data->dpd_radial.cutoff, data->dpd_trans.cutoff));
 #endif
 
 #ifdef LENNARD_JONES_GENERIC

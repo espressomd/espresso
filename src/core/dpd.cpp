@@ -24,6 +24,7 @@
 #include "dpd.hpp"
 
 #ifdef DPD
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "random.hpp"
 #include "short_range_loop.hpp"
@@ -51,14 +52,8 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
                    int wf, double tgamma, double tr_c, int twf) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  data->dpd_gamma = gamma;
-  data->dpd_r_cut = r_c;
-  data->dpd_wf = wf;
-  data->dpd_pref2 = sqrt(24.0 * temperature * gamma / time_step);
-  data->dpd_tgamma = tgamma;
-  data->dpd_tr_cut = tr_c;
-  data->dpd_twf = twf;
-  data->dpd_pref4 = sqrt(24.0 * temperature * tgamma / time_step);
+  data->dpd_radial = DPDParameters{gamma, r_c, wf, sqrt(24.0 * temperature * gamma / time_step)};
+  data->dpd_trans = DPDParameters{tgamma, tr_c, twf, sqrt(24.0 * temperature * tgamma / time_step)};
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -70,11 +65,11 @@ void dpd_init() {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
-      if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
-        data->dpd_pref2 =
-            sqrt(24.0 * temperature * data->dpd_gamma / time_step);
-        data->dpd_pref4 =
-            sqrt(24.0 * temperature * data->dpd_tgamma / time_step);
+      if ((data->dpd_radial.cutoff > 0) || (data->dpd_trans.cutoff > 0)) {
+        data->dpd_radial.pref =
+            sqrt(24.0 * temperature * data->dpd_radial.gamma / time_step);
+        data->dpd_trans.pref =
+            sqrt(24.0 * temperature * data->dpd_trans.gamma/ time_step);
       }
     }
   }
@@ -87,9 +82,10 @@ void dpd_update_params(double pref_scale) {
   for (type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (type_b = 0; type_b < max_seen_particle_type; type_b++) {
       data = get_ia_param(type_a, type_b);
-      if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
-        data->dpd_pref2 *= pref_scale;
-        data->dpd_pref4 *= pref_scale;
+
+      if ((data->dpd_radial.cutoff > 0) || (data->dpd_trans.cutoff > 0)) {
+        data->dpd_radial.pref *= pref_scale;
+        data->dpd_trans.pref *= pref_scale;
       }
     }
   }
@@ -102,49 +98,47 @@ static double weight(int type, double r_cut, double r) {
   return 1. - r / r_cut;
 }
 
+Vector3d dpd_pair_force(DPDParameters const& params, const Vector3d &v, double dist, const Vector3d &noise) {
+  if ((dist < params.cutoff)) {
+    auto const omega =
+        weight(params.wf, params.cutoff, dist);
+    auto const omega2 = Utils::sqr(omega);
+
+    auto const f_d = params.gamma * omega2 * v;
+    auto const f_r = params.pref * omega * noise;
+
+    return f_r - f_d;
+  }
+
+  return {};
+}
+
 Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                         const IA_parameters *ia_params, double const *d,
                         double dist, double dist2) {
   using Utils::tensor_product;
-  Vector3d f{};
 
-  auto const v21 = p1->m.v - p2->m.v;
+  if(ia_params->dpd_radial.cutoff <= 0.0 || ia_params->dpd_trans.cutoff <= 0.0) {
+    return {};
+  }
+
   auto const d21 = Utils::Vector3d{d[0], d[1], d[2]};
   auto const P = tensor_product(d21 / dist2, d21);
+
+  auto const v21 = p1->m.v - p2->m.v;
   auto const v_r = P * v21;
   auto const v_t = (v21 - v_r);
 
   auto const noise_vec =
-      (ia_params->dpd_pref2 > 0.0 || ia_params->dpd_pref4 > 0.0)
+      (ia_params->dpd_radial.pref > 0.0 || ia_params->dpd_trans.pref > 0.0)
       ? Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5}
       : Vector3d{};
 
   auto const noise_r = P * noise_vec;
   auto const noise_t = noise_vec - noise_r;
 
-  if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_gamma > 0.0)) {
-    auto const omega =
-        weight(ia_params->dpd_wf, ia_params->dpd_r_cut, dist);
-    auto const omega2 = Utils::sqr(omega);
-
-    auto const friction = ia_params->dpd_gamma * omega2 * v_r;
-    auto const noise = ia_params->dpd_pref2 * omega * noise_r;
-
-    f += (noise - friction);
-  }
-  // DPD2 part
-  if ((dist < ia_params->dpd_tr_cut) && (ia_params->dpd_tgamma > 0.0)) {
-    auto const omega =
-        weight(ia_params->dpd_twf, ia_params->dpd_tr_cut, dist);
-    auto const omega2 = Utils::sqr(omega);
-
-    auto const friction = ia_params->dpd_tgamma * omega2 * v_t;
-    auto const noise = ia_params->dpd_pref4 * omega * noise_t;
-
-    f += (noise - friction);
-  }
-
-  return f;
+  return dpd_pair_force(ia_params->dpd_radial, v_r, dist, noise_r)
+        +dpd_pair_force(ia_params->dpd_trans, v_t, dist, noise_t);
 }
 
 static auto dpd_stress_local() {

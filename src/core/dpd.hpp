@@ -30,11 +30,18 @@
 #include "config.hpp"
 
 #ifdef DPD
-
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
 #include <utils/Vector.hpp>
+
+struct IA_parameters;
+
+struct DPDParameters {
+  double gamma = 0.;
+  double cutoff = -1.;
+  int wf = 0;
+  double pref = 0.0;
+};
 
 void dpd_heat_up();
 void dpd_cool_down();
