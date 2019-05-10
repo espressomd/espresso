@@ -257,7 +257,6 @@ struct IA_parameters {
   double dpd_pref2 = 0.0;
   double dpd_tgamma = 0.0;
   double dpd_tr_cut = INACTIVE_CUTOFF;
-  double dpd_pref3 = 0.0;
   double dpd_pref4 = 0.0;
 /*@}*/
 #endif

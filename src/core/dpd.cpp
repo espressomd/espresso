@@ -61,16 +61,6 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
   data->dpd_twf = twf;
   data->dpd_pref4 = sqrt(24.0 * temperature * tgamma / time_step);
 
-  /* Only make active if the DPD thermostat is
-     activated, otherwise it will by activated
-     by dpd_init() on thermostat change.
-  */
-  if (thermo_switch & THERMO_DPD) {
-    data->dpd_pref3 = tgamma / time_step;
-  } else {
-    data->dpd_pref3 = 0.0;
-  }
-
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
@@ -84,7 +74,6 @@ void dpd_init() {
       if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
         data->dpd_pref2 =
             sqrt(24.0 * temperature * data->dpd_gamma / time_step);
-        data->dpd_pref3 = data->dpd_tgamma / time_step;
         data->dpd_pref4 =
             sqrt(24.0 * temperature * data->dpd_tgamma / time_step);
       }
@@ -96,7 +85,7 @@ void dpd_switch_off() {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
-      data->dpd_pref3 = 0.0;
+       ;
     }
   }
 }
@@ -196,7 +185,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     f += (ia_params->dpd_pref2 * omega * noise - friction) * d21;
   }
   // DPD2 part
-  if ((dist < ia_params->dpd_tr_cut) && (ia_params->dpd_pref3 > 0.0)) {
+  if ((dist < ia_params->dpd_tr_cut) && (ia_params->dpd_tgamma > 0.0)) {
     auto const omega =
         weight(ia_params->dpd_twf, ia_params->dpd_tr_cut, dist_inv);
     auto const omega2 = Utils::sqr(omega);
@@ -211,7 +200,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     auto f_D = P * v21;
     auto f_R = P * noise_vec;
 
-    f_D *= ia_params->dpd_pref3 * omega2 * time_step;
+    f_D *= ia_params->dpd_tgamma * omega2;
     f_R *= ia_params->dpd_pref4 * omega * dist_inv;
 
     f += f_R - f_D;
