@@ -146,7 +146,7 @@ void minimize_energy_init(const double f_max, const double gamma,
   params->max_displacement = max_displacement;
 }
 
-bool minimize_energy() {
+void minimize_energy() {
   if (!params)
     params = new MinimizeEnergyParameters;
 
@@ -155,6 +155,4 @@ bool minimize_energy() {
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   integrate_vv(params->max_steps, -1);
   integ_switch = integ_switch_old;
-
-  return true;
 }

@@ -70,12 +70,13 @@
 #include "serialization/Particle.hpp"
 #include "serialization/ParticleParametersSwimming.hpp"
 
-#include "utils/u32_to_u64.hpp"
 #include <utils/Counter.hpp>
+#include <utils/u32_to_u64.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/serialization/utility.hpp>
 
 using namespace std;
 
@@ -106,11 +107,7 @@ int n_nodes = -1;
 #define CALLBACK_LIST                                                          \
   CB(mpi_who_has_slave)                                                        \
   CB(mpi_place_particle_slave)                                                 \
-  CB(mpi_recv_part_slave)                                                      \
-  CB(mpi_integrate_slave)                                                      \
   CB(mpi_bcast_ia_params_slave)                                                \
-  CB(mpi_bcast_all_ia_params_slave)                                            \
-  CB(mpi_bcast_max_seen_particle_type_slave)                                   \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
   CB(mpi_place_new_particle_slave)                                             \
@@ -119,16 +116,7 @@ int n_nodes = -1;
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
-  CB(mpi_bcast_max_mu_slave)                                                   \
-  CB(mpi_kill_particle_motion_slave)                                           \
-  CB(mpi_kill_particle_forces_slave)                                           \
-  CB(mpi_system_CMS_slave)                                                     \
-  CB(mpi_system_CMS_velocity_slave)                                            \
-  CB(mpi_galilei_transform_slave)                                              \
   CB(mpi_setup_reaction_slave)                                                 \
-  CB(mpi_check_runtime_errors_slave)                                           \
-  CB(mpi_minimize_energy_slave)                                                \
-  CB(mpi_gather_cuda_devices_slave)                                            \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
@@ -262,12 +250,6 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
   this_node = comm_cart.rank();
 }
 
-void mpi_call(SlaveCallback cb, int node, int param) {
-  mpiCallbacks().call(cb, node, param);
-
-  COMM_TRACE(fprintf(stderr, "%d: finished sending.\n", this_node));
-}
-
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/
 
 void mpi_place_particle(int pnode, int part, double p[3]) {
@@ -319,24 +301,6 @@ void mpi_place_new_particle_slave(int pnode, int part) {
   on_particle_change();
 }
 
-/****************** REQ_GET_PART ************/
-Particle mpi_recv_part(int pnode, int part) {
-  Particle ret;
-
-  mpi_call(mpi_recv_part_slave, pnode, part);
-  comm_cart.recv(pnode, SOME_TAG, ret);
-
-  return ret;
-}
-
-void mpi_recv_part_slave(int pnode, int part) {
-  if (pnode != this_node)
-    return;
-
-  assert(local_particles[part]);
-  comm_cart.send(0, SOME_TAG, *local_particles[part]);
-}
-
 /****************** REQ_REM_PART ************/
 void mpi_remove_particle(int pnode, int part) {
   mpi_call(mpi_remove_particle_slave, pnode, part);
@@ -359,38 +323,30 @@ void mpi_remove_particle_slave(int pnode, int part) {
 
 /********************* REQ_MIN_ENERGY ********/
 
-int mpi_minimize_energy() {
-  mpi_call(mpi_minimize_energy_slave, 0, 0);
-  return minimize_energy();
-}
-
-void mpi_minimize_energy_slave(int, int) { minimize_energy(); }
+REGISTER_CALLBACK(minimize_energy)
+void mpi_minimize_energy() { mpi_call_all(minimize_energy); }
 
 /********************* REQ_INTEGRATE ********/
-int mpi_integrate(int n_steps, int reuse_forces) {
-  mpi_call(mpi_integrate_slave, n_steps, reuse_forces);
+static int mpi_integrate_slave(int n_steps, int reuse_forces) {
   integrate_vv(n_steps, reuse_forces);
-  COMM_TRACE(
-      fprintf(stderr, "%d: integration task %d done.\n", this_node, n_steps));
-  return mpi_check_runtime_errors();
-}
 
-void mpi_integrate_slave(int n_steps, int reuse_forces) {
-  integrate_vv(n_steps, reuse_forces);
-  COMM_TRACE(fprintf(
-      stderr, "%d: integration for %d n_steps with %d reuse_forces done.\n",
-      this_node, n_steps, reuse_forces));
+  return check_runtime_errors_local();
+}
+REGISTER_CALLBACK_REDUCTION(mpi_integrate_slave, std::plus<int>())
+
+int mpi_integrate(int n_steps, int reuse_forces) {
+  return mpi_call(Communication::Result::reduction, std::plus<int>(),
+                  mpi_integrate_slave, n_steps, reuse_forces);
 }
 
 /*************** REQ_BCAST_IA ************/
-void mpi_bcast_all_ia_params() {
-  mpi_call(mpi_bcast_all_ia_params_slave, -1, -1);
+static void mpi_bcast_all_ia_params_slave() {
   boost::mpi::broadcast(comm_cart, ia_params, 0);
 }
 
-void mpi_bcast_all_ia_params_slave(int, int) {
-  boost::mpi::broadcast(comm_cart, ia_params, 0);
-}
+REGISTER_CALLBACK(mpi_bcast_all_ia_params_slave)
+
+void mpi_bcast_all_ia_params() { mpi_call_all(mpi_bcast_all_ia_params_slave); }
 
 void mpi_bcast_ia_params(int i, int j) {
   mpi_call(mpi_bcast_ia_params_slave, i, j);
@@ -442,13 +398,9 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
 /*************** REQ_BCAST_IA_SIZE ************/
 
+REGISTER_CALLBACK(realloc_ia_params)
 void mpi_bcast_max_seen_particle_type(int ns) {
-  mpi_call(mpi_bcast_max_seen_particle_type_slave, -1, ns);
-  mpi_bcast_max_seen_particle_type_slave(-1, ns);
-}
-
-void mpi_bcast_max_seen_particle_type_slave(int, int ns) {
-  realloc_ia_params(ns);
+  mpi_call_all(realloc_ia_params, ns);
 }
 
 /*************** REQ_GATHER ************/
@@ -543,20 +495,11 @@ void mpi_set_time_step_slave(double dt) {
 
   on_parameter_change(FIELD_TIMESTEP);
 }
-
 REGISTER_CALLBACK(mpi_set_time_step_slave)
 
 void mpi_set_time_step(double time_s) {
-  mpiCallbacks().call(mpi_set_time_step_slave, time_s);
-  mpi_set_time_step_slave(time_s);
+  mpi_call_all(mpi_set_time_step_slave, time_s);
 }
-
-int mpi_check_runtime_errors() {
-  mpi_call(mpi_check_runtime_errors_slave, 0, 0);
-  return check_runtime_errors();
-}
-
-void mpi_check_runtime_errors_slave(int, int) { check_runtime_errors(); }
 
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params() {
@@ -680,7 +623,7 @@ void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {
 #ifdef ELECTROSTATICS
   iccp3m_cfg = iccp3m_cfg_;
 
-  check_runtime_errors();
+  check_runtime_errors(comm_cart);
 #endif
 }
 
@@ -690,7 +633,7 @@ int mpi_iccp3m_init() {
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_init_slave, iccp3m_cfg);
 
-  return check_runtime_errors();
+  return check_runtime_errors(comm_cart);
 #else
   return 0;
 #endif
@@ -721,151 +664,73 @@ void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
 
 /****************************************************/
 
-void mpi_bcast_max_mu() {
-#if defined(DIPOLES) and defined(DP3M)
-  mpi_call(mpi_bcast_max_mu_slave, -1, 0);
-
-  calc_mu_max();
-
+#ifdef DP3M
+REGISTER_CALLBACK(calc_mu_max)
 #endif
-}
 
-void mpi_bcast_max_mu_slave(int, int) {
-#if defined(DIPOLES) and defined(DP3M)
-
-  calc_mu_max();
-
+void mpi_bcast_max_mu() {
+#ifdef DP3M
+  mpi_call_all(calc_mu_max);
 #endif
 }
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
+void mpi_kill_particle_motion_slave(int rotation) {
+  local_kill_particle_motion(rotation);
+  on_particle_change();
+}
+
+REGISTER_CALLBACK(mpi_kill_particle_motion_slave)
 
 void mpi_kill_particle_motion(int rotation) {
-  mpi_call(mpi_kill_particle_motion_slave, -1, rotation);
-  local_kill_particle_motion(rotation);
+  mpi_call_all(mpi_kill_particle_motion_slave, rotation);
+}
+
+void mpi_kill_particle_forces_slave(int torque) {
+  local_kill_particle_forces(torque);
   on_particle_change();
 }
 
-void mpi_kill_particle_motion_slave(int, int rotation) {
-  local_kill_particle_motion(rotation);
-  on_particle_change();
-}
+REGISTER_CALLBACK(mpi_kill_particle_forces_slave)
 
 void mpi_kill_particle_forces(int torque) {
-  mpi_call(mpi_kill_particle_forces_slave, -1, torque);
-  local_kill_particle_forces(torque);
+  mpi_call_all(mpi_kill_particle_forces_slave, torque);
+}
+
+struct pair_sum {
+  template <class T, class U>
+  auto operator()(std::pair<T, U> l, std::pair<T, U> r) const {
+    return std::pair<T, U>{l.first + r.first, l.second + r.second};
+  }
+};
+
+Utils::Vector3d mpi_system_CMS() {
+  auto const data =
+      mpi_call(Communication::Result::reduction, pair_sum{}, local_system_CMS);
+  return data.first / data.second;
+}
+
+REGISTER_CALLBACK_REDUCTION(local_system_CMS_velocity, pair_sum{})
+
+Utils::Vector3d mpi_system_CMS_velocity() {
+  auto const data = mpi_call(Communication::Result::reduction, pair_sum{},
+                             local_system_CMS_velocity);
+  return data.first / data.second;
+}
+
+REGISTER_CALLBACK_REDUCTION(local_system_CMS, pair_sum{})
+
+void mpi_galilei_transform_slave(Utils::Vector3d const &cmsvel) {
+  local_galilei_transform(cmsvel);
   on_particle_change();
 }
 
-void mpi_kill_particle_forces_slave(int, int torque) {
-  local_kill_particle_forces(torque);
-  on_particle_change();
-}
-
-void mpi_system_CMS() {
-  int pnode;
-  double data[4];
-  double rdata[4];
-  double *pdata = rdata;
-
-  data[0] = 0.0;
-  data[1] = 0.0;
-  data[2] = 0.0;
-  data[3] = 0.0;
-
-  mpi_call(mpi_system_CMS_slave, -1, 0);
-
-  for (pnode = 0; pnode < n_nodes; pnode++) {
-    if (pnode == this_node) {
-      local_system_CMS(pdata);
-      data[0] += rdata[0];
-      data[1] += rdata[1];
-      data[2] += rdata[2];
-      data[3] += rdata[3];
-    } else {
-      MPI_Recv(rdata, 4, MPI_DOUBLE, MPI_ANY_SOURCE, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-      data[0] += rdata[0];
-      data[1] += rdata[1];
-      data[2] += rdata[2];
-      data[3] += rdata[3];
-    }
-  }
-
-  gal.cms[0] = data[0] / data[3];
-  gal.cms[1] = data[1] / data[3];
-  gal.cms[2] = data[2] / data[3];
-}
-
-void mpi_system_CMS_slave(int, int) {
-  double rdata[4];
-  double *pdata = rdata;
-  local_system_CMS(pdata);
-  MPI_Send(rdata, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-}
-
-void mpi_system_CMS_velocity() {
-  int pnode;
-  double data[4];
-  double rdata[4];
-  double *pdata = rdata;
-
-  data[0] = 0.0;
-  data[1] = 0.0;
-  data[2] = 0.0;
-  data[3] = 0.0;
-
-  mpi_call(mpi_system_CMS_velocity_slave, -1, 0);
-
-  for (pnode = 0; pnode < n_nodes; pnode++) {
-    if (pnode == this_node) {
-      local_system_CMS_velocity(pdata);
-      data[0] += rdata[0];
-      data[1] += rdata[1];
-      data[2] += rdata[2];
-      data[3] += rdata[3];
-    } else {
-      MPI_Recv(rdata, 4, MPI_DOUBLE, MPI_ANY_SOURCE, SOME_TAG, comm_cart,
-               MPI_STATUS_IGNORE);
-      data[0] += rdata[0];
-      data[1] += rdata[1];
-      data[2] += rdata[2];
-      data[3] += rdata[3];
-    }
-  }
-
-  gal.cms_vel[0] = data[0] / data[3];
-  gal.cms_vel[1] = data[1] / data[3];
-  gal.cms_vel[2] = data[2] / data[3];
-}
-
-void mpi_system_CMS_velocity_slave(int, int) {
-  double rdata[4];
-  double *pdata = rdata;
-  local_system_CMS_velocity(pdata);
-  MPI_Send(rdata, 4, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-}
+REGISTER_CALLBACK(mpi_galilei_transform_slave)
 
 void mpi_galilei_transform() {
-  double cmsvel[3];
+  auto const cmsvel = mpi_system_CMS_velocity();
 
-  mpi_system_CMS_velocity();
-  memmove(cmsvel, gal.cms_vel, 3 * sizeof(double));
-
-  mpi_call(mpi_galilei_transform_slave, -1, 0);
-  MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);
-
-  local_galilei_transform(cmsvel);
-
-  on_particle_change();
-}
-
-void mpi_galilei_transform_slave(int, int) {
-  double cmsvel[3];
-  MPI_Bcast(cmsvel, 3, MPI_DOUBLE, 0, comm_cart);
-
-  local_galilei_transform(cmsvel);
-  on_particle_change();
+  mpi_call_all(mpi_galilei_transform_slave, cmsvel);
 }
 
 /******************** REQ_SWIMMER_REACTIONS ********************/
@@ -888,21 +753,6 @@ void mpi_setup_reaction_slave(int, int) {
 void mpi_loop() {
   if (this_node != 0)
     mpiCallbacks().loop();
-}
-
-/*********************** other stuff ****************/
-
-#ifdef CUDA
-std::vector<EspressoGpuDevice> mpi_gather_cuda_devices() {
-  mpi_call(mpi_gather_cuda_devices_slave, 0, 0);
-  return cuda_gather_gpus();
-}
-#endif
-
-void mpi_gather_cuda_devices_slave(int, int) {
-#ifdef CUDA
-  cuda_gather_gpus();
-#endif
 }
 
 std::vector<int> mpi_resort_particles(int global_flag) {

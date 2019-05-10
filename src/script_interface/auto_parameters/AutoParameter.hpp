@@ -38,7 +38,7 @@ struct AutoParameter {
   /* Exception types */
   struct WriteError {};
 
-  /* Tag types */
+  /* Result types */
   struct ReadOnly {};
   static constexpr const ReadOnly read_only = ReadOnly{};
 

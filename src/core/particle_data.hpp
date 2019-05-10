@@ -619,12 +619,6 @@ void set_particle_f(int part, const Utils::Vector3d &F);
  */
 void set_particle_mass(int part, double mass);
 
-/** Call only on the master node: set particle solvation free energy.
- *  @param part the particle.
- *  @param solvation its new solvation free energy.
- */
-void set_particle_solvation(int part, double *solvation);
-
 #ifdef ROTATIONAL_INERTIA
 /** Call only on the master node: set particle rotational inertia.
  *  @param part the particle.
@@ -969,8 +963,6 @@ void pointer_to_vs_quat(Particle const *p, double const *&res);
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
                             double const *&res2, double const *&res3);
 #endif
-
-void pointer_to_dip(Particle const *P, double const *&res);
 
 void pointer_to_dipm(Particle const *P, double const *&res);
 
