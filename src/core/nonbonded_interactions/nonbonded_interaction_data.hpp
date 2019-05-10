@@ -254,7 +254,6 @@ struct IA_parameters {
   int dpd_twf = 0;
   double dpd_gamma = 0.0;
   double dpd_r_cut = INACTIVE_CUTOFF;
-  double dpd_pref1 = 0.0;
   double dpd_pref2 = 0.0;
   double dpd_tgamma = 0.0;
   double dpd_tr_cut = INACTIVE_CUTOFF;

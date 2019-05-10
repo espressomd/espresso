@@ -66,10 +66,8 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
      by dpd_init() on thermostat change.
   */
   if (thermo_switch & THERMO_DPD) {
-    data->dpd_pref1 = gamma / time_step;
     data->dpd_pref3 = tgamma / time_step;
   } else {
-    data->dpd_pref1 = 0.0;
     data->dpd_pref3 = 0.0;
   }
 
@@ -84,7 +82,6 @@ void dpd_init() {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
       if ((data->dpd_r_cut != 0) || (data->dpd_tr_cut != 0)) {
-        data->dpd_pref1 = data->dpd_gamma / time_step;
         data->dpd_pref2 =
             sqrt(24.0 * temperature * data->dpd_gamma / time_step);
         data->dpd_pref3 = data->dpd_tgamma / time_step;
@@ -99,7 +96,7 @@ void dpd_switch_off() {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
       auto data = get_ia_param(type_a, type_b);
-      data->dpd_pref1 = data->dpd_pref3 = 0.0;
+      data->dpd_pref3 = 0.0;
     }
   }
 }
