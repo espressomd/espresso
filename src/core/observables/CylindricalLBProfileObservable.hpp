@@ -21,22 +21,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "CylindricalProfileObservable.hpp"
 #include <utils/Vector.hpp>
-#include <utils/sampling.hpp>
 #include <utils/coordinate_transformation.hpp>
+#include <utils/sampling.hpp>
 
 using boost::math::constants::pi;
 using Utils::Vector3d;
-
-
 
 namespace Observables {
 
 class CylindricalLBProfileObservable : public CylindricalProfileObservable {
 public:
   void calculate_sampling_positions() {
-    sampling_positions = Utils::get_cylindrical_sampling_positions(std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi), std::make_pair(min_phi, max_phi), n_r_bins, n_phi_bins, n_z_bins, sampling_density);
+    sampling_positions = Utils::get_cylindrical_sampling_positions(
+        std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
+        std::make_pair(min_phi, max_phi), n_r_bins, n_phi_bins, n_z_bins,
+        sampling_density);
     for (auto &p : sampling_positions) {
-      auto const p_cart = Utils::transform_coordinate_cylinder_to_cartesian(p, axis);
+      auto const p_cart =
+          Utils::transform_coordinate_cylinder_to_cartesian(p, axis);
       p = p_cart - center;
     }
   }

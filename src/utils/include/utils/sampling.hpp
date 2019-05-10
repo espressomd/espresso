@@ -22,23 +22,33 @@ namespace Utils {
  * @param sampling_density The number of samples per unit volume.
  * @retval Cartesian sampling coordinates.
  */
-std::vector<Vector3d> get_cylindrical_sampling_positions(
-    std::pair<double, double> const &r_limits,
-    std::pair<double, double> const &phi_limits,
-    std::pair<double, double> const &z_limits, int n_r_bins, int n_phi_bins, int n_z_bins, double sampling_density) {
+std::vector<Vector3d>
+get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
+                                   std::pair<double, double> const &phi_limits,
+                                   std::pair<double, double> const &z_limits,
+                                   int n_r_bins, int n_phi_bins, int n_z_bins,
+                                   double sampling_density) {
   auto const delta_r = (r_limits.second - r_limits.first) / n_r_bins;
   auto const delta_phi = (phi_limits.second - phi_limits.first) / n_phi_bins;
 
   // For the smallest bin we chose samples along the z-direction for a single
-  // azimuthal angle per bin such that we fullfill the sampling density requirement.
-  auto const smallest_bin_volume = pi() * pow(r_limits.first + delta_r, 2.0) * delta_phi / (2.0 * pi());
-  auto const min_n_samples = std::max(n_z_bins, static_cast<int>(smallest_bin_volume * sampling_density));
+  // azimuthal angle per bin such that we fullfill the sampling density
+  // requirement.
+  auto const smallest_bin_volume =
+      pi() * pow(r_limits.first + delta_r, 2.0) * delta_phi / (2.0 * pi());
+  auto const min_n_samples = std::max(
+      n_z_bins, static_cast<int>(smallest_bin_volume * sampling_density));
   auto const delta_z = (z_limits.second - z_limits.first) / min_n_samples;
 
-  auto const r_range = make_lin_space(r_limits.first + .5 * delta_r, r_limits.second, n_r_bins, /* endpoint */ false);
-  auto const phi_range = make_lin_space(phi_limits.first + .5 * delta_phi, phi_limits.second, n_phi_bins, /* endpoint */ false);
-  auto const z_range = make_lin_space(z_limits.first + .5 * delta_z, z_limits.second, min_n_samples, /* endpoint */ false);
-
+  auto const r_range =
+      make_lin_space(r_limits.first + .5 * delta_r, r_limits.second, n_r_bins,
+                     /* endpoint */ false);
+  auto const phi_range =
+      make_lin_space(phi_limits.first + .5 * delta_phi, phi_limits.second,
+                     n_phi_bins, /* endpoint */ false);
+  auto const z_range =
+      make_lin_space(z_limits.first + .5 * delta_z, z_limits.second,
+                     min_n_samples, /* endpoint */ false);
 
   // Create the sampling positions for the innermost bin.
   std::vector<Vector3d> sampling_positions;
@@ -49,7 +59,7 @@ std::vector<Vector3d> get_cylindrical_sampling_positions(
       sampling_positions.push_back(Vector3d{{*r_range.begin(), phi, z}});
     }
   }
-  
+
   // Scale the number of samples for larger bins
   auto arc_length = [delta_phi, delta_r](int r_bin) {
     return delta_phi * (r_bin + 1) * delta_r;
@@ -58,18 +68,19 @@ std::vector<Vector3d> get_cylindrical_sampling_positions(
     return arc_length(r_bin) / arc_length(0);
   };
   auto phis = [n_phi_samples, n_phi_bins, delta_phi, phi_limits](int r_bin) {
-    auto const phis_range = make_lin_space(phi_limits.first + 0.5 * delta_phi, phi_limits.second, n_phi_bins * n_phi_samples(r_bin), /*endpoint */ false);
+    auto const phis_range =
+        make_lin_space(phi_limits.first + 0.5 * delta_phi, phi_limits.second,
+                       n_phi_bins * n_phi_samples(r_bin), /*endpoint */ false);
     return phis_range;
   };
   // Calculate the sampling positions
   // Along z
   for (auto const z : z_range) {
     // Along r
-    for (auto r = r_range.begin(); r!= r_range.end(); ++r) {
+    for (auto r = r_range.begin(); r != r_range.end(); ++r) {
       // Along phi
       for (auto const phi : phis(std::distance(r_range.begin(), r))) {
-        sampling_positions.push_back(Vector3d{
-            {*r, phi, z}});
+        sampling_positions.push_back(Vector3d{{*r, phi, z}});
       }
     }
   }

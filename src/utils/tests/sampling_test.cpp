@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <utils/Histogram.hpp>
 #include <utils/constants.hpp>
-#include <utils/sampling.hpp>
 #include <utils/index.hpp>
+#include <utils/sampling.hpp>
 
 BOOST_AUTO_TEST_CASE(get_cylindrical_sampling_positions_test) {
   auto const min_r = 0.0;
@@ -55,8 +55,11 @@ BOOST_AUTO_TEST_CASE(get_cylindrical_sampling_positions_test) {
   auto const tot_count = histogram.get_tot_count();
   std::array<std::size_t, 3> const dimensions{{n_r_bins, n_phi_bins, n_z_bins}};
   std::array<std::size_t, 3> index{};
-  for (int c = 0;  c<tot_count.size(); ++c) {
-    Utils::unravel_index(dimensions.begin(), dimensions.end(), index.begin(), c);
-    BOOST_TEST(tot_count[c] > 0, "no sampling for bin index r: " << index[0] << " phi: " << index[1] << " z: " << index[2]);
+  for (int c = 0; c < tot_count.size(); ++c) {
+    Utils::unravel_index(dimensions.begin(), dimensions.end(), index.begin(),
+                         c);
+    BOOST_TEST(tot_count[c] > 0, "no sampling for bin index r: "
+                                     << index[0] << " phi: " << index[1]
+                                     << " z: " << index[2]);
   }
 }
