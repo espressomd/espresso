@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
 
     auto const dx = (stop - start) / (num - 1);
     for (int i = 0; i < values.size(); i++) {
-      BOOST_CHECK_CLOSE(values.at(i), start + i * dx, 1e-14);
+      BOOST_CHECK_CLOSE(values.at(i), start + i * dx, 1e-13);
     }
   }
 
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(make_lin_space_test) {
 
     auto const dx = (stop - start) / num;
     for (int i = 0; i < values.size(); i++) {
-      BOOST_CHECK_CLOSE(values.at(i), start + i * dx, 1e-14);
+      BOOST_CHECK_CLOSE(values.at(i), start + i * dx, 1e-13);
     }
   }
 }
