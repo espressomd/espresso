@@ -28,12 +28,7 @@
 #include "auto_parameters/AutoParameters.hpp"
 
 #include "Observable.hpp"
-#include "core/observables/CylindricalDensityProfile.hpp"
-#include "core/observables/CylindricalFluxDensityProfile.hpp"
-#include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
-#include "core/observables/CylindricalLBVelocityProfileAtParticlePositions.hpp"
 #include "core/observables/CylindricalPidProfileObservable.hpp"
-#include "core/observables/CylindricalVelocityProfile.hpp"
 
 namespace ScriptInterface {
 namespace Observables {

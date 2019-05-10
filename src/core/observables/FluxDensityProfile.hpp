@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Observables {
 class FluxDensityProfile : public PidProfileObservable {
 public:
+  using PidProfileObservable::PidProfileObservable;
   int n_values() const override { return 3 * n_x_bins * n_y_bins * n_z_bins; }
   std::vector<double> operator()(PartCfg &partCfg) const override {
     std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),

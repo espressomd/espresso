@@ -626,20 +626,8 @@ class CylindricalLBVelocityProfile(Observable):
               Maximum ``phi`` to consider.
     max_z : :obj:`float`
             Maximum ``z`` to consider.
-    sampling_delta_x : :obj:`float`, default=1.0
-        Spacing for the sampling grid in ``x``-direction.
-    sampling_delta_y : :obj:`float`, default=1.0
-        Spacing for the sampling grid in ``y``-direction.
-    sampling_delta_z : :obj:`float`, default=1.0
-        Spacing for the sampling grid in ``z``-direction.
-    sampling_offset_x : :obj:`float`, default=0.0
-        Offset for the sampling grid in ``x``-direction.
-    sampling_offset_y : :obj:`float`, default=0.0
-        Offset for the sampling grid in ``y``-direction.
-    sampling_offset_z : :obj:`float`, default=0.0
-        Offset for the sampling grid in ``z``-direction.
-    allow_empty_bins : :obj:`bool`, default=False
-        Wether or not to allow bins that will not be sampled at all.
+    sampling_density : :obj:`float`
+        Samples per unit volume for the LB velocity interpolation.
 
     """
     _so_name = "Observables::CylindricalLBVelocityProfile"

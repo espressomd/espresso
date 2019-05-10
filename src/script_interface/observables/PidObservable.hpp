@@ -49,6 +49,11 @@ public:
     return {{"ids", m_observable->ids()}};
   }
 
+  void construct(VariantMap const &params) override {
+    m_observable =
+        make_shared_from_args<CorePidObs, std::vector<int>>(params, "ids");
+  }
+
   Utils::Span<const boost::string_ref> valid_parameters() const override {
     static std::array<const boost::string_ref, 1> params{"ids"};
     return params;

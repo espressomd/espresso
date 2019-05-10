@@ -27,6 +27,7 @@ namespace Observables {
 
 class ComPosition : public PidObservable {
 public:
+  using PidObservable::PidObservable;
   int n_values() const override { return 3; }
   std::vector<double> operator()(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());

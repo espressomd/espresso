@@ -28,7 +28,7 @@
 
 #include "Observable.hpp"
 #include "core/observables/CylindricalLBProfileObservable.hpp"
-#include "core/observables/CylindricalLBVelocityProfile.hpp"
+#include "get_value.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -111,12 +111,20 @@ public:
     });
   }
 
+  void construct(VariantMap const &params) override {
+    m_observable =
+        make_shared_from_args<CoreCylLBObs, Utils::Vector3d, std::string, int,
+                              int, int, double, double, double, double, double,
+                              double, double>(
+            params, "center", "axis", "n_r_bins", "n_phi_bins", "n_z_bins",
+            "min_r", "min_phi", "min_z", "max_r", "max_phi", "max_z",
+            "sampling_density");
+    m_observable->calculate_sampling_positions();
+  }
+
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "calculate") {
-      if (cylindrical_profile_observable()->sampling_positions.empty()) {
-        cylindrical_profile_observable()->calculate_sampling_positions();
-      }
       return cylindrical_profile_observable()->operator()(partCfg());
     }
     if (method == "n_values") {

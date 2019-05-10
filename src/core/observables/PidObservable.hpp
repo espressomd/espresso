@@ -36,6 +36,7 @@ class PidObservable : virtual public Observable {
   std::vector<int> m_ids;
 
 public:
+  PidObservable(std::vector<int> const &ids) : m_ids(ids) {}
   std::vector<int> &ids() { return m_ids; }
   std::vector<int> const &ids() const { return m_ids; }
 };
