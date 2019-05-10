@@ -25,6 +25,7 @@
 
 #ifdef DPD
 #include "communication.hpp"
+#include "event.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 #include "short_range_loop.hpp"
@@ -143,8 +144,9 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
 }
 
 static auto dpd_viscous_stress_local() {
-  Utils::Vector<Utils::Vector3d, 3> stress{};
+  on_observable_calc();
 
+  Utils::Vector<Utils::Vector3d, 3> stress{};
   short_range_loop(
       Utils::NoOp{},
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
