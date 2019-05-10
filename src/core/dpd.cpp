@@ -186,7 +186,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   auto const d21 = Utils::Vector3d{d[0], d[1], d[2]};
 
   /* Projection to d21 subspace */
-  auto const P = Matrix<double, 3, 1>{{d[0], d[1], d[2]}};
+  auto const P = Matrix<double, 3, 1>{{d[0]}, {d[1]}, {d[2]}};
 
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_gamma > 0.0)) {
     auto const omega =
