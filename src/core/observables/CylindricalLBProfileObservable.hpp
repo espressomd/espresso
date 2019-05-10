@@ -19,83 +19,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef OBSERVABLES_CYLINDRICALLBPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_CYLINDRICALLBPROFILEOBSERVABLE_HPP
 
-#include <algorithm>
-#include <boost/math/constants/constants.hpp>
-#include <limits>
-#include <math.h>
-
 #include "CylindricalProfileObservable.hpp"
 #include <utils/Vector.hpp>
+#include <utils/sampling.hpp>
+#include <utils/coordinate_transformation.hpp>
 
 using boost::math::constants::pi;
 using Utils::Vector3d;
+
+
 
 namespace Observables {
 
 class CylindricalLBProfileObservable : public CylindricalProfileObservable {
 public:
   void calculate_sampling_positions() {
-    sampling_positions.clear();
-    auto const r_range = max_r - min_r;
-    auto const z_range = max_z - min_z;
-    auto const delta_r = r_bin_size();
-    auto const delta_phi = phi_bin_size();
-
-    auto const smallest_bin_volume = pi<double>() * pow(min_r + delta_r, 2.0) *
-                                     delta_phi / (2.0 * pi<double>());
-    auto const min_n_samples = std::max(
-        n_z_bins, static_cast<int>(smallest_bin_volume * sampling_density));
-    auto const z_step = z_range / min_n_samples;
-
-    // Take care of the smallest bin
-    for (int i = 0; i < min_n_samples; ++i) {
-      if (min_r < std::numeric_limits<double>::epsilon()) {
-        // Place a sample in the center if r_min is 0.0
-        sampling_positions.push_back(
-            Vector3d{{0.0, 0.0, min_z + (i + 0.5) * z_step}});
-      }
-      for (int j = 0; j < n_phi_bins; ++j) {
-        sampling_positions.push_back(
-            Vector3d{{min_r + 0.5 * delta_r, min_phi + (j + 0.5) * delta_phi,
-                      min_z + (i + 0.5) * z_step}});
-      }
+    sampling_positions = Utils::get_cylindrical_sampling_positions(std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi), std::make_pair(min_phi, max_phi), n_r_bins, n_phi_bins, n_z_bins, sampling_density);
+    for (auto &p : sampling_positions) {
+      auto const p_cart = Utils::transform_coordinate_cylinder_to_cartesian(p, axis);
+      p = p_cart - center;
     }
-
-    // Scale the number of samples for larger bins
-    auto arc_length = [&delta_phi](int r_bin) {
-      return delta_phi * 2.0 * pi<double>() * (r_bin + 1);
-    };
-    auto n_phi_samples = [&arc_length](int r_bin) {
-      return arc_length(r_bin) / arc_length(0);
-    };
-    auto phis = [this, &n_phi_samples](int r_bin) {
-      std::vector<double> phi_values;
-      auto const phi_step =
-          (max_phi - min_phi) / (n_phi_bins * n_phi_samples(r_bin));
-      for (int i = 0; i < n_phi_bins * n_phi_samples(r_bin); ++i) {
-        phi_values.push_back(min_phi + i * phi_step);
-      }
-      return phi_values;
-    };
-    // Calculate the sampling positions
-    // Along z
-    for (int i = 0; i < min_n_samples; ++i) {
-      // Along r
-      for (int j = 0; j < n_r_bins; ++j) {
-        // Along phi
-        for (auto const &phi : phis(j)) {
-          sampling_positions.push_back(Vector3d{
-              {min_r + (j + 1.5) * delta_r, phi, min_z + (i + 0.5) * z_step}});
-        }
-      }
-    }
-    // Transform to cartesian coordinates
-    std::transform(
-        sampling_positions.begin(), sampling_positions.end(),
-        sampling_positions.begin(), [this](Vector3d const &p) -> Vector3d {
-          return {{center[0] + p[0] * std::cos(p[1]),
-                   center[1] + p[0] * std::sin(p[1]), center[2] + p[2]}};
-        });
   }
   std::vector<Vector3d> sampling_positions;
   double sampling_density;

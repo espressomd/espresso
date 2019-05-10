@@ -43,8 +43,8 @@ operator()(PartCfg &partCfg) const {
         lb_lbfluid_get_lattice_speed();
     auto const pos_shifted = p - center;
     auto const pos_cyl =
-        Utils::transform_pos_to_cylinder_coordinates(pos_shifted, axis);
-    histogram.update(pos_cyl, Utils::transform_vel_to_cylinder_coordinates(
+        Utils::transform_coordinate_cartesian_to_cylinder(pos_shifted, axis);
+    histogram.update(pos_cyl, Utils::transform_velocity_cartesian_to_cylinder(
                                   velocity, axis, pos_shifted));
   }
   auto hist_data = histogram.get_histogram();

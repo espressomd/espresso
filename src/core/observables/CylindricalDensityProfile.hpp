@@ -41,7 +41,7 @@ public:
                    });
     for (auto &p : folded_positions) {
       p -= center;
-      histogram.update(Utils::transform_pos_to_cylinder_coordinates(p, axis));
+      histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(p, axis));
     }
     histogram.normalize();
     return histogram.get_histogram();

@@ -49,9 +49,9 @@ public:
       p -= center;
     // Write data to the histogram
     for (size_t ind = 0; ind < folded_positions.size(); ++ind) {
-      histogram.update(Utils::transform_pos_to_cylinder_coordinates(
+      histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
                            folded_positions[ind], axis),
-                       Utils::transform_vel_to_cylinder_coordinates(
+                       Utils::transform_velocity_cartesian_to_cylinder(
                            velocities[ind], axis, folded_positions[ind]));
     }
     auto hist_tmp = histogram.get_histogram();

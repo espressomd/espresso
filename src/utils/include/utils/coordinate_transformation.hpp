@@ -28,7 +28,7 @@ namespace Utils {
 /** \brief Transform the given 3D position to cylinder coordinates with
  * longitudinal axis aligned with axis parameter.
  */
-inline Vector3d transform_pos_to_cylinder_coordinates(const Vector3d &pos,
+inline Vector3d transform_coordinate_cartesian_to_cylinder(const Vector3d &pos,
                                                       const std::string &axis) {
   static const Vector3d x_axis{1.0, 0.0, 0.0};
   static const Vector3d y_axis{0.0, 1.0, 0.0};
@@ -47,7 +47,7 @@ inline Vector3d transform_pos_to_cylinder_coordinates(const Vector3d &pos,
 /** \brief Transform the given 3D velocity to cylinder coordinates with
  * longitudinal axis aligned with axis parameter.
  */
-inline Vector3d transform_vel_to_cylinder_coordinates(const Vector3d &vel,
+inline Vector3d transform_velocity_cartesian_to_cylinder(const Vector3d &vel,
                                                       const std::string &axis,
                                                       const Vector3d &pos) {
   double v_r, v_phi, v_z;
@@ -73,6 +73,21 @@ inline Vector3d transform_vel_to_cylinder_coordinates(const Vector3d &vel,
   // v_z = v_z
   v_z = rotated_vel[2];
   return Vector3d{v_r, v_phi, v_z};
+}
+
+/**
+ * @brief Coordinate transformation from cylinder to cartesian coordinates.
+ */
+inline Vector3d transform_coordinate_cylinder_to_cartesian(Vector3d const &p, const std::string &axis) {
+  Vector3d transformed{{p[0] * std::cos(p[1]), p[0] * std::sin(p[1]), p[2]}};
+  static const Vector3d x_axis{1.0, 0.0, 0.0};
+  static const Vector3d y_axis{0.0, 1.0, 0.0};
+  if (axis == "x") {
+    transformed = vec_rotate(y_axis, Utils::pi() / 2.0, transformed);
+  } else if (axis == "y") {
+    transformed = vec_rotate(x_axis, -Utils::pi() / 2.0, transformed);
+  }
+  return transformed;
 }
 
 } // namespace Utils
