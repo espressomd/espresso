@@ -24,7 +24,6 @@
 #include "dpd.hpp"
 
 #ifdef DPD
-
 #include "communication.hpp"
 #include "random.hpp"
 #include "short_range_loop.hpp"
@@ -161,16 +160,15 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   auto const dist_inv = 1.0 / dist;
   auto const v21 = p1->m.v - p2->m.v;
   auto const d21 = Utils::Vector3d{d[0], d[1], d[2]};
-
-  /* Projection to d21 subspace */
-  auto const P = Matrix<double, 3, 1>{{d[0]}, {d[1]}, {d[2]}};
-
+  auto const v_r = (d21 * v21);
+  // auto const v_t = (1 - v_r) * v21;
+  
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_gamma > 0.0)) {
     auto const omega =
         weight(ia_params->dpd_wf, ia_params->dpd_r_cut, dist_inv);
     auto const omega2 = Utils::sqr(omega);
 
-    auto const friction = ia_params->dpd_gamma * omega2 * (P * v21)[0];
+    auto const friction = ia_params->dpd_gamma * omega2 * v_r;
     double noise = (ia_params->dpd_pref2 > 0.0) ? (d_random() - 0.5) : 0.0;
 
     f += (ia_params->dpd_pref2 * omega * noise - friction) * d21;
