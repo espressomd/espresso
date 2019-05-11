@@ -27,11 +27,6 @@
 #include "MpiCallbacks.hpp"
 #include "RuntimeErrorCollector.hpp"
 
-#include <boost/version.hpp>
-#if BOOST_VERSION >= 106500
-#include <boost/stacktrace.hpp>
-#define HAVE_BOOST_STACKTRACE
-#endif
 #include <boost/mpi/collectives.hpp>
 #include <boost/mpi/communicator.hpp>
 
@@ -74,10 +69,6 @@ std::vector<RuntimeError> mpi_gather_runtime_errors() {
 } // namespace ErrorHandling
 
 void errexit() {
-#ifdef HAVE_BOOST_STACKTRACE
-  std::cerr << boost::stacktrace::stacktrace();
-#endif
-
   ErrorHandling::m_callbacks->comm().abort(1);
 
   std::abort();
