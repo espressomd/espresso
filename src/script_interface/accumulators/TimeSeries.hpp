@@ -1,16 +1,11 @@
-//
-// Created by florian on 11.05.19.
-//
-
-#ifndef SCRIPT_INTERFACE_ACCUMULATORS_TIMESERIES_HPP
-#define SCRIPT_INTERFACE_ACCUMULATORS_TIMESERIES_HPP
+#ifndef SCRIPT_INTERFACE_ACCUMULATORS_TIME_SERIES_HPP
+#define SCRIPT_INTERFACE_ACCUMULATORS_TIME_SERIES_HPP
 
 #include "AccumulatorBase.hpp"
 #include "core/accumulators/TimeSeries.hpp"
 #include "observables/Observable.hpp"
 
-#include "utils/as_const.hpp"
-
+#include <utils/as_const.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
 #include <memory>

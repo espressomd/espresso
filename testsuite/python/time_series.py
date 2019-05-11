@@ -18,7 +18,7 @@
 #
 
 """
-Testmodule for the observable accumulator.
+Testmodule for the observable recorder.
 
 """
 from __future__ import print_function
@@ -31,10 +31,10 @@ from espressomd.accumulators import TimeSeries
 
 N_PART=100
 
-class AccumulatorTest(ut.TestCase):
+class TimeSeriesTest(ut.TestCase):
 
     """
-    Test class for the observable accumulator.
+    Test class for the observable time series.
 
     """
 

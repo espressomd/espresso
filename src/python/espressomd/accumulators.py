@@ -66,8 +66,10 @@ class TimeSeries(ScriptInterfaceHelper):
     -------
     update
         Update the accumulator (get the current values from the observable).
-    time_seris
+    time_series
         Returns the recorded values of the observable.
+    clear
+        Clear the data
 
     """
     _so_name = "Accumulators::TimeSeries"
