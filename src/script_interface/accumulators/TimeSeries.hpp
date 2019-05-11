@@ -5,8 +5,8 @@
 #include "core/accumulators/TimeSeries.hpp"
 #include "observables/Observable.hpp"
 
-#include <utils/as_const.hpp>
 #include <boost/range/algorithm/transform.hpp>
+#include <utils/as_const.hpp>
 
 #include <memory>
 
@@ -41,7 +41,7 @@ public:
 
       return ret;
     }
-    if(method == "clear") {
+    if (method == "clear") {
       m_accumulator->clear();
     }
 

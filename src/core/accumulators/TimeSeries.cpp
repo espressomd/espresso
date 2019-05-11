@@ -9,9 +9,7 @@
 #include "partCfg_global.hpp"
 
 namespace Accumulators {
-void TimeSeries::update() {
-  m_data.emplace_back(m_obs->operator()(partCfg()));
-}
+void TimeSeries::update() { m_data.emplace_back(m_obs->operator()(partCfg())); }
 
 std::string TimeSeries::get_internal_state() const {
   std::stringstream ss;
