@@ -161,24 +161,15 @@ static auto dpd_viscous_stress_local() {
 
   return stress;
 }
-
-void mpi_dpd_stress_slave() {
-  boost::mpi::reduce(comm_cart, dpd_viscous_stress_local(), std::plus<>(), 0);
-}
-REGISTER_CALLBACK(mpi_dpd_stress_slave)
-
-Utils::Vector9d mpi_dpd_stress() {
-  Utils::Vector<Utils::Vector3d, 3> stress{};
-
-  mpi_call(mpi_dpd_stress_slave);
-  boost::mpi::reduce(comm_cart, dpd_viscous_stress_local(), stress,
-                     std::plus<>(), 0);
-
-  return {stress[0][0], stress[0][1], stress[0][2], stress[1][0], stress[1][1],
-          stress[1][2], stress[2][0], stress[2][1], stress[2][2]};
-}
+REGISTER_CALLBACK_REDUCTION(dpd_viscous_stress_local, std::plus<>())
 
 Utils::Vector9d dpd_stress() {
-  return mpi_dpd_stress() / (box_l[0] * box_l[1] * box_l[2]);
+  auto const stress = mpi_call(Communication::Result::reduction, std::plus<>(),
+                               dpd_viscous_stress_local);
+
+  return Utils::Vector9d{stress[0][0], stress[0][1], stress[0][2],
+                         stress[1][0], stress[1][1], stress[1][2],
+                         stress[2][0], stress[2][1], stress[2][2]} /
+         (box_l[0] * box_l[1] * box_l[2]);
 }
 #endif
