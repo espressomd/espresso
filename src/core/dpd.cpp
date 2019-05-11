@@ -118,23 +118,21 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     return {};
   }
 
-  auto const d21 = Utils::Vector3d{d[0], d[1], d[2]};
-  auto const P = tensor_product(d21 / dist2, d21);
-
   auto const v21 = p1->m.v - p2->m.v;
-  auto const v_r = P * v21;
-  auto const v_t = (v21 - v_r);
-
   auto const noise_vec =
       (ia_params->dpd_radial.pref > 0.0 || ia_params->dpd_trans.pref > 0.0)
           ? Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5}
           : Vector3d{};
 
-  auto const noise_r = P * noise_vec;
-  auto const noise_t = noise_vec - noise_r;
+  auto const f_r = dpd_pair_force(ia_params->dpd_radial, v21, dist, noise_vec);
+  auto const f_t = dpd_pair_force(ia_params->dpd_trans, v21, dist, noise_vec);
 
-  return dpd_pair_force(ia_params->dpd_radial, v_r, dist, noise_r) +
-         dpd_pair_force(ia_params->dpd_trans, v_t, dist, noise_t);
+  auto const d21 = Utils::Vector3d{d[0], d[1], d[2]};
+  /* Projection operator to radial direction */
+  auto const P = tensor_product(d21 / dist2, d21);
+  /* This is equivalent to P * f_r + (1 - P) * f_t, but with
+   * doing only one matrix-vector multiplication */
+  return P * (f_r - f_t) + f_t;
 }
 
 static auto dpd_viscous_stress_local() {
@@ -144,17 +142,19 @@ static auto dpd_viscous_stress_local() {
   short_range_loop(
       Utils::NoOp{},
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
-        auto const P = tensor_product(d.vec21 / d.dist2, d.vec21);
-
         auto const v21 = p1.m.v - p2.m.v;
-        auto const v_r = P * v21;
-        auto const v_t = (v21 - v_r);
 
         auto ia_params = get_ia_param(p1.p.type, p2.p.type);
         auto const dist = std::sqrt(d.dist2);
 
-        auto const f = dpd_pair_force(ia_params->dpd_radial, v_r, dist, {}) +
-                       dpd_pair_force(ia_params->dpd_trans, v_t, dist, {});
+        auto const f_r = dpd_pair_force(ia_params->dpd_radial, v21, dist, {});
+        auto const f_t = dpd_pair_force(ia_params->dpd_trans, v21, dist, {});
+
+        /* Projection operator to radial direction */
+        auto const P = tensor_product(d.vec21 / d.dist2, d.vec21);
+        /* This is equivalent to P * f_r + (1 - P) * f_t, but with
+         * doing only one matrix-vector multiplication */
+        auto const f = P * (f_r - f_t) + f_t;
 
         stress += tensor_product(d.vec21, f);
       });
@@ -163,6 +163,18 @@ static auto dpd_viscous_stress_local() {
 }
 REGISTER_CALLBACK_REDUCTION(dpd_viscous_stress_local, std::plus<>())
 
+/**
+ * @brief Viscous stress tensor of the DPD interaction.
+ *
+ * This calculates the total viscous stress contribution of the
+ * DPD interaction. It contains only the dissipative contributions
+ * of the interaction without noise. It's calculated as the
+ * sum over all pair virials as \sum_i \sum_{j < i} (- gamma(i, j) v_ij)
+ * where gamma(i,j) is the (in general tensor valued) DPD friction coefficient
+ * for particles i and j, and v_ij is their relative velocity.
+ *
+ * @return Stress tensor contribution.
+ */
 Utils::Vector9d dpd_stress() {
   auto const stress = mpi_call(Communication::Result::reduction, std::plus<>(),
                                dpd_viscous_stress_local);
