@@ -169,9 +169,10 @@ REGISTER_CALLBACK_REDUCTION(dpd_viscous_stress_local, std::plus<>())
  * This calculates the total viscous stress contribution of the
  * DPD interaction. It contains only the dissipative contributions
  * of the interaction without noise. It's calculated as the
- * sum over all pair virials as \sum_i \sum_{j < i} (- gamma(i, j) v_ij)
- * where gamma(i,j) is the (in general tensor valued) DPD friction coefficient
- * for particles i and j, and v_ij is their relative velocity.
+ * sum over all pair virials as \f$V^{-1}\sum_i \sum_{j < i} (- \gamma_{i,j} v_{i,j})\f$
+ * where \f$\gamma_{i,j}\f$ is the (in general tensor valued) DPD friction coefficient
+ * for particles i and j, \f$v_{i,j}\f$ is their relative velocity and \f$V\f$ is the box
+ *  volume.
  *
  * @return Stress tensor contribution.
  */
