@@ -184,7 +184,7 @@ void lb_init() {
     runtimeErrorMsg()
         << "Lattice Boltzmann agrid not set when initializing fluid";
   }
-  if (check_runtime_errors())
+  if (check_runtime_errors(comm_cart))
     return;
 
   Utils::Vector3d temp_agrid, temp_offset;
@@ -198,7 +198,7 @@ void lb_init() {
   int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1,
                                    local_box_l, my_right, box_l);
 
-  if (check_runtime_errors() || init_status != ES_OK)
+  if (check_runtime_errors(comm_cart) || init_status != ES_OK)
     return;
 
   /* allocate memory for data structures */

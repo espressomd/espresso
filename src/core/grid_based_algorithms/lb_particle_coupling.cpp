@@ -32,10 +32,11 @@ void lb_lbcoupling_activate() {
 
 void lb_lbcoupling_deactivate() {
   if (lattice_switch != ActiveLB::NONE && this_node == 0 && n_part) {
-    runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                   "included in the particle force the first time step. This "
-                   "only matters if it happens frequently during "
-                   "sampling.\n");
+    runtimeWarningMsg()
+        << "Recalculating forces, so the LB coupling forces are not "
+           "included in the particle force the first time step. This "
+           "only matters if it happens frequently during "
+           "sampling.";
   }
 
   lb_particle_coupling.couple_to_md = false;
