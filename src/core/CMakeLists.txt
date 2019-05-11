@@ -130,7 +130,7 @@ set(EspressoCore_SRC
   virtual_sites/virtual_sites_com.cpp
   virtual_sites/VirtualSitesInertialessTracers.cpp
   virtual_sites/VirtualSitesRelative.cpp
-  )
+        accumulators/TimeSeries.cpp accumulators/TimeSeries.hpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
