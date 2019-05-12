@@ -18,10 +18,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "accumulators.hpp"
-#include "integrate.hpp"
+
+#include <boost/range/algorithm/remove.hpp>
+
+#include <vector>
 
 namespace Accumulators {
-std::vector<std::shared_ptr<Accumulators::AccumulatorBase>>
+std::vector<AccumulatorBase *>
     auto_update_accumulators;
 
 void auto_update() {
@@ -29,4 +32,17 @@ void auto_update() {
     c->auto_update();
   }
 }
+
+bool auto_update_enabled() { return !auto_update_accumulators.empty(); }
+
+void auto_update_add(AccumulatorBase *acc) {
+  auto_update_accumulators.push_back(acc);
+}
+void auto_update_remove(AccumulatorBase *acc) {
+  auto_update_accumulators.erase(
+      boost::remove(auto_update_accumulators, acc),
+      auto_update_accumulators.end()
+  );
+}
+
 } // namespace Accumulators
