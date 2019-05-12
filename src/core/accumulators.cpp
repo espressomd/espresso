@@ -19,30 +19,51 @@
 */
 #include "accumulators.hpp"
 
-#include <boost/range/algorithm/remove.hpp>
+#include <boost/range/algorithm/remove_if.hpp>
+#include <boost/range/numeric.hpp>
 
+#include <cassert>
 #include <vector>
 
 namespace Accumulators {
-std::vector<AccumulatorBase *>
-    auto_update_accumulators;
+struct AutoUpdateAccumulator {
+  explicit AutoUpdateAccumulator(AccumulatorBase *acc)
+      : frequency(acc->delta_N()), counter(0), acc(acc) {}
+  int frequency;
+  int counter;
+  AccumulatorBase *acc;
+};
 
-void auto_update() {
-  for (auto &c : auto_update_accumulators) {
-    c->auto_update();
+std::vector<AutoUpdateAccumulator> auto_update_accumulators;
+
+void auto_update(int steps) {
+  for (auto &acc : auto_update_accumulators) {
+    acc.counter -= steps;
+    if (acc.counter <= 0) {
+      acc.acc->update();
+      acc.counter = acc.frequency;
+    }
   }
+}
+
+int auto_update_next_update() {
+  return boost::accumulate(auto_update_accumulators,
+                           std::numeric_limits<int>::max(),
+                           [](int a, AutoUpdateAccumulator const& acc) { return std::min(a, acc.counter); });
 }
 
 bool auto_update_enabled() { return !auto_update_accumulators.empty(); }
 
 void auto_update_add(AccumulatorBase *acc) {
-  auto_update_accumulators.push_back(acc);
+  assert(acc);
+  auto_update_accumulators.emplace_back(acc);
 }
 void auto_update_remove(AccumulatorBase *acc) {
   auto_update_accumulators.erase(
-      boost::remove(auto_update_accumulators, acc),
-      auto_update_accumulators.end()
-  );
+      boost::remove_if(
+          auto_update_accumulators,
+          [acc](AutoUpdateAccumulator const &au) { return au.acc == acc; }),
+      auto_update_accumulators.end());
 }
 
 } // namespace Accumulators

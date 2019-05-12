@@ -739,8 +739,6 @@ void force_and_velocity_display() {
 #endif
 }
 
-/** @todo This needs to go!! */
-
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
@@ -782,7 +780,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       if (mpi_integrate(1, reuse_forces))
         return ES_ERROR;
       reuse_forces = 1;
-      Accumulators::auto_update();
+      Accumulators::auto_update(1);
     }
     if (n_steps == 0) {
       if (mpi_integrate(0, reuse_forces))

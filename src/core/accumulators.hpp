@@ -23,8 +23,16 @@
 #include "accumulators/AccumulatorBase.hpp"
 
 namespace Accumulators {
-void auto_update();
+/**
+ * @brief Update accumulators.
+ *
+ * Checks for all auto update accumulators if
+ * they need to be updated and if so does.
+ *
+ */
+void auto_update(int steps);
 bool auto_update_enabled();
+int auto_update_next_update();
 void auto_update_add(AccumulatorBase *);
 void auto_update_remove(AccumulatorBase *);
 
