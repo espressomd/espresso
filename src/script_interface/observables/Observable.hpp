@@ -28,7 +28,6 @@
 #include <stdexcept>
 
 #include "core/observables/Observable.hpp"
-#include "partCfg_global.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -40,7 +39,7 @@ public:
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "calculate") {
-      return observable()->operator()(partCfg());
+      return observable()->operator()();
     }
     if (method == "n_values") {
       return observable()->n_values();

@@ -22,6 +22,9 @@
 #define OBSERVABLES_PIDOBSERVABLE_HPP
 
 #include "Observable.hpp"
+
+#include "PartCfg.hpp"
+
 #include <vector>
 
 namespace Observables {
@@ -35,7 +38,11 @@ class PidObservable : virtual public Observable {
   /** Identifiers of particles measured by this observable */
   std::vector<int> m_ids;
 
+  virtual std::vector<double> operator()(PartCfg &partCfg) const = 0;
+
 public:
+  std::vector<double> operator()() const override;
+
   std::vector<int> &ids() { return m_ids; }
   std::vector<int> const &ids() const { return m_ids; }
 };

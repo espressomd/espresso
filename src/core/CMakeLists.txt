@@ -131,7 +131,7 @@ set(EspressoCore_SRC
   virtual_sites/VirtualSitesInertialessTracers.cpp
   virtual_sites/VirtualSitesRelative.cpp
   accumulators/TimeSeries.cpp
-  )
+        observables/PidObservable.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC

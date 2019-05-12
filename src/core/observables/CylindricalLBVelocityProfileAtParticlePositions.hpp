@@ -21,8 +21,6 @@
 #define OBSERVABLES_CYLINDRICALLBVELOCITYPROFILEATPARTICLEPOSITIONS_HPP
 
 #include "CylindricalPidProfileObservable.hpp"
-#include "partCfg_global.hpp"
-#include <utils/Histogram.hpp>
 
 namespace Observables {
 class CylindricalLBVelocityProfileAtParticlePositions
