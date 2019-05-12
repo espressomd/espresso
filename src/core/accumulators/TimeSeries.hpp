@@ -16,8 +16,8 @@ namespace Accumulators {
  */
 class TimeSeries : public AccumulatorBase {
 public:
-  TimeSeries(std::shared_ptr<Observables::Observable> const &obs, int delta_N)
-      : AccumulatorBase(delta_N), m_obs(obs) {}
+  TimeSeries(std::shared_ptr<Observables::Observable> obs, int delta_N)
+      : AccumulatorBase(delta_N), m_obs(std::move(obs)) {}
 
   void update() override;
   std::string get_internal_state() const;
