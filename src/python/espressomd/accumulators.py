@@ -50,6 +50,7 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
     )
     _so_creation_policy = "LOCAL"
 
+
 @script_interface_register
 class TimeSeries(ScriptInterfaceHelper):
 
@@ -79,6 +80,7 @@ class TimeSeries(ScriptInterfaceHelper):
         "clear"
     )
     _so_creation_policy = "LOCAL"
+
 
 @script_interface_register
 class Correlator(ScriptInterfaceHelper):

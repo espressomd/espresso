@@ -29,7 +29,8 @@ import espressomd  # pylint: disable=import-error
 from espressomd.observables import ParticlePositions
 from espressomd.accumulators import TimeSeries
 
-N_PART=100
+N_PART = 100
+
 
 class TimeSeriesTest(ut.TestCase):
 
@@ -43,7 +44,7 @@ class TimeSeriesTest(ut.TestCase):
 
         """
 
-        system = espressomd.System(box_l=3*[1.])
+        system = espressomd.System(box_l=3 * [1.])
         system.part.add(pos=np.random.random((N_PART, 3)))
 
         obs = ParticlePositions(ids=system.part[:].id)
@@ -58,7 +59,8 @@ class TimeSeriesTest(ut.TestCase):
             time_series.update()
 
         for result, expected in zip(time_series.time_series(), positions):
-            np.testing.assert_array_equal(np.array(result).reshape((N_PART, 3)), expected)
+            np.testing.assert_array_equal(
+                np.array(result).reshape((N_PART, 3)), expected)
 
         time_series.clear()
         self.assertEqual(len(time_series.time_series()), 0)
