@@ -778,7 +778,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
     auto const steps = std::min((n_steps - i), auto_update_next_update());
     if (mpi_integrate(steps, reuse_forces))
       return ES_ERROR;
-    
+
     reuse_forces = 1;
 
     auto_update(steps);

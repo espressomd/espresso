@@ -36,7 +36,7 @@ struct AutoUpdateAccumulator {
 };
 
 std::vector<AutoUpdateAccumulator> auto_update_accumulators;
-}
+} // namespace
 
 void auto_update(int steps) {
   for (auto &acc : auto_update_accumulators) {
@@ -54,7 +54,9 @@ void auto_update(int steps) {
 int auto_update_next_update() {
   return boost::accumulate(auto_update_accumulators,
                            std::numeric_limits<int>::max(),
-                           [](int a, AutoUpdateAccumulator const& acc) { return std::min(a, acc.counter); });
+                           [](int a, AutoUpdateAccumulator const &acc) {
+                             return std::min(a, acc.counter);
+                           });
 }
 
 void auto_update_add(AccumulatorBase *acc) {

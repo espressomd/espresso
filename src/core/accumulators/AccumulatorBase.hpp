@@ -28,6 +28,7 @@ public:
   virtual ~AccumulatorBase() = default;
 
   virtual void update() = 0;
+
 private:
   // Number of timesteps between automatic updates.
   int m_delta_N;
