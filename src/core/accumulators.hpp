@@ -31,7 +31,6 @@ namespace Accumulators {
  *
  */
 void auto_update(int steps);
-bool auto_update_enabled();
 int auto_update_next_update();
 void auto_update_add(AccumulatorBase *);
 void auto_update_remove(AccumulatorBase *);

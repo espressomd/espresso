@@ -26,23 +26,28 @@
 #include <vector>
 
 namespace Accumulators {
+namespace {
 struct AutoUpdateAccumulator {
   explicit AutoUpdateAccumulator(AccumulatorBase *acc)
-      : frequency(acc->delta_N()), counter(0), acc(acc) {}
+      : frequency(acc->delta_N()), counter(1), acc(acc) {}
   int frequency;
   int counter;
   AccumulatorBase *acc;
 };
 
 std::vector<AutoUpdateAccumulator> auto_update_accumulators;
+}
 
 void auto_update(int steps) {
   for (auto &acc : auto_update_accumulators) {
+    assert(steps <= acc.frequency);
     acc.counter -= steps;
     if (acc.counter <= 0) {
       acc.acc->update();
       acc.counter = acc.frequency;
     }
+
+    assert(acc.counter > 0);
   }
 }
 
@@ -51,8 +56,6 @@ int auto_update_next_update() {
                            std::numeric_limits<int>::max(),
                            [](int a, AutoUpdateAccumulator const& acc) { return std::min(a, acc.counter); });
 }
-
-bool auto_update_enabled() { return !auto_update_accumulators.empty(); }
 
 void auto_update_add(AccumulatorBase *acc) {
   assert(acc);
