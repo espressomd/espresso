@@ -2219,7 +2219,7 @@ bool p3m_sanity_checks_boxl() {
 bool p3m_sanity_checks_system(const Utils::Vector3i &grid) {
   bool ret = false;
 
-  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
+  if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "P3M requires periodicity 1 1 1";
     ret = true;
   }

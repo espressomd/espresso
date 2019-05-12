@@ -53,12 +53,32 @@
 
 #include <limits>
 
-/** Macro that tests for a coordinate being periodic or not. */
+struct BoxGeometry {
 #ifdef PARTIAL_PERIODIC
-#define PERIODIC(coord) (periodic & (1L << (coord)))
+/** Flags for all three dimensions whether pbc are applied (default).
+    The first three bits give the periodicity */
+  unsigned m_periodic;
+
+  void set_periodic(unsigned coord, bool val) {
+    if(val) {
+      m_periodic |= (1u << coord);
+    } else {
+      m_periodic &= ~(1u << coord);
+    }
+  }
+  constexpr bool periodic(unsigned coord) {
+    assert(coord <= 2);
+    return m_periodic & (1u << (coord));
+  }
 #else
-#define PERIODIC(coord) (1)
+constexpr bool periodic(int) {
+    return true;
+  }
 #endif
+
+};
+
+extern BoxGeometry box_geo;
 
 /** \name Exported Variables */
 /************************************************************/
@@ -72,9 +92,6 @@ extern Utils::Vector3i node_pos;
 extern Utils::Vector<int, 6> node_neighbors;
 /** where to fold particles that leave local box in direction i. */
 extern Utils::Vector<int, 6> boundary;
-/** Flags for all three dimensions whether pbc are applied (default).
-    The first three bits give the periodicity */
-extern int periodic;
 
 /** Simulation box dimensions. */
 extern Utils::Vector3d box_l;
@@ -161,7 +178,7 @@ void rescale_boxl(int dir, double d_new);
 template <typename T> T get_mi_coord(T a, T b, int dir) {
   auto dx = a - b;
 
-  if (PERIODIC(dir) && std::fabs(dx) > half_box_l[dir])
+  if (box_geo.periodic(dir) && std::fabs(dx) > half_box_l[dir])
     dx -= std::round(dx * box_l_i[dir]) * box_l[dir];
 
   return dx;
@@ -200,7 +217,7 @@ Utils::Vector3d get_mi_vector(T const &a, U const &b) {
 template <size_t N, typename T1, typename T2>
 void fold_coordinate(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box,
                      int dir) {
-  if (PERIODIC(dir)) {
+  if (box_geo.periodic(dir)) {
     std::tie(pos[dir], image_box[dir]) =
         Algorithm::periodic_fold(pos[dir], image_box[dir], box_l[dir]);
 
@@ -230,7 +247,7 @@ void fold_position(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box) {
 inline Utils::Vector3d folded_position(const Utils::Vector3d &p) {
   Utils::Vector3d p_folded;
   for (int i = 0; i < 3; i++) {
-    if (PERIODIC(i)) {
+    if (box_geo.periodic(i)) {
       p_folded[i] = Algorithm::periodic_fold(p[i], box_l[i]);
     } else {
       p_folded[i] = p[i];

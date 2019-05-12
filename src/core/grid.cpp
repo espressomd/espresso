@@ -48,11 +48,12 @@
  * variables
  **********************************************/
 
+BoxGeometry box_geo;
+
 Utils::Vector3i node_grid{};
 Utils::Vector3i node_pos = {-1, -1, -1};
 Utils::Vector<int, 6> node_neighbors{};
 Utils::Vector<int, 6> boundary{};
-int periodic = 7;
 
 Utils::Vector3d box_l = {1, 1, 1};
 Utils::Vector3d half_box_l = {0.5, 0.5, 0.5};

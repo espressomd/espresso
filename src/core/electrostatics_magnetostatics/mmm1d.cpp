@@ -150,7 +150,7 @@ int MMM1D_set_params(double switch_rad, double maxPWerror) {
 
 int MMM1D_sanity_checks() {
   // char *errtxt;
-  if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2)) {
+  if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "MMM1D requires periodicity 0 0 1";
     return 1;
   }

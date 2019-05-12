@@ -266,7 +266,7 @@ void prepare_halo_communication(HaloCommunicator *const hc,
       MPI_Type_commit(&hinfo->datatype);
 
 #ifdef PARTIAL_PERIODIC
-      if (!PERIODIC(dir) &&
+      if (!box_geo.periodic(dir) &&
           (boundary[2 * dir + lr] != 0 || boundary[2 * dir + 1 - lr] != 0)) {
         if (local_node_grid[dir] == 1) {
           hinfo->type = HALO_OPEN;

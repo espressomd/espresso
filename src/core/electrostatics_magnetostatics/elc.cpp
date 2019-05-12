@@ -1167,7 +1167,7 @@ int ELC_tune(double error) {
  ****************************************/
 
 int ELC_sanity_checks() {
-  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
+  if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "ELC requires periodicity 1 1 1";
     return ES_ERROR;
   }

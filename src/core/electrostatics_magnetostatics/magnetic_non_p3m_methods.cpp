@@ -285,7 +285,7 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
 
     for (i = 0; i < 3; i++) {
       NCUT[i] = Ncut_off_magnetic_dipolar_direct_sum;
-      if (PERIODIC(i) == 0) {
+      if (box_geo.periodic(i) == 0) {
         NCUT[i] = 0;
       }
     }

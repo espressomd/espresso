@@ -1077,7 +1077,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   r_buffer = (double *)Utils::malloc(count * sizeof(double));
   s_buffer = (double *)Utils::malloc(count * sizeof(double));
 
-  if (PERIODIC(0)) {
+  if (box_geo.periodic(0)) {
     for (z = 0; z < lblattice.halo_grid[2]; ++z) {
       for (y = 0; y < lblattice.halo_grid[1]; ++y) {
         index = get_linear_index(0, y, z, lblattice.halo_grid);
@@ -1134,7 +1134,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
     }
   }
 
-  if (PERIODIC(1)) {
+  if (box_geo.periodic(1)) {
     for (z = 0; z < lblattice.halo_grid[2]; ++z) {
       for (x = 0; x < lblattice.halo_grid[0]; ++x) {
         index = get_linear_index(x, 0, z, lblattice.halo_grid);
@@ -1192,7 +1192,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
     }
   }
 
-  if (PERIODIC(2)) {
+  if (box_geo.periodic(2)) {
     for (y = 0; y < lblattice.halo_grid[1]; ++y) {
       for (x = 0; x < lblattice.halo_grid[0]; ++x) {
         index = get_linear_index(x, y, 0, lblattice.halo_grid);

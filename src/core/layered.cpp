@@ -87,7 +87,7 @@ void layered_get_mi_vector(double res[3], double const a[3],
 
   for (i = 0; i < 2; i++) {
     res[i] = a[i] - b[i];
-    if (PERIODIC(i))
+    if (box_geo.periodic(i))
       res[i] -= std::round(res[i] * box_l_i[i]) * box_l[i];
   }
   res[2] = a[2] - b[2];
@@ -342,7 +342,7 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   if (this_node == n_nodes - 1)
     layered_flags |= LAYERED_TOP;
 
-  if (PERIODIC(2))
+  if (box_geo.periodic(2))
     layered_flags |= LAYERED_PERIODIC;
 
   top = this_node + 1;

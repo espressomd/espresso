@@ -104,7 +104,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
     double old = p.r.p[i];
     // Handle the case that one of the particles had gone over the periodic
     // boundary and its coordinate has been folded
-    if (PERIODIC(i)) {
+    if (box_geo.periodic(i)) {
       tmp = p.r.p[i] - new_pos[i];
       if (tmp > box_l[i] / 2.) {
         p.r.p[i] = new_pos[i] + box_l[i];

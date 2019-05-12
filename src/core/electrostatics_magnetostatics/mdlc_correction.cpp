@@ -639,7 +639,7 @@ int mdlc_tune(double error) {
 //======================================================================================================================
 
 int mdlc_sanity_checks() {
-  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
+  if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "mdlc requires periodicity 1 1 1";
     return 1;
   }

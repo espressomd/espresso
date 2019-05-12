@@ -1775,7 +1775,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
 
 int MMM2D_sanity_checks() {
 
-  if (!PERIODIC(0) || !PERIODIC(1) || PERIODIC(2)) {
+  if (!box_geo.periodic(0) || !box_geo.periodic(1) || box_geo.periodic(2)) {
     runtimeErrorMsg() << "MMM2D requires periodicity 1 1 0";
     return 1;
   }
