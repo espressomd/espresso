@@ -102,6 +102,9 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         int * data()
 
     cppclass Vector3d:
+        Vector3d()
+        Vector3d(const Vector3d&)
+
         double & operator[](int i)
         double * data()
         Vector3d operator * (double i)
@@ -117,5 +120,6 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         double & operator[](int i)
         double * data()
 
-cdef make_array_locked(const Vector3d & v)
+cdef make_array_locked(const Vector3d&)
+cdef make_array_locked(Vector3d)
 cdef Vector3d make_Vector3d(a)

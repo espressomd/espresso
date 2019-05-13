@@ -194,19 +194,6 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
   return dx;
 }
 
-/** get the minimal distance vector of two vectors in the current bc.
- *  @param a the vector to subtract from
- *  @param b the vector to subtract
- *  @param res where to store the result
- */
-
-template <typename T, typename U, typename V>
-inline void get_mi_vector(T &res, U const &a, V const &b) {
-  for (int i = 0; i < 3; i++) {
-    res[i] = get_mi_coord(a[i], b[i], box_geo.length()[i], box_geo.periodic(i));
-  }
-}
-
 template <typename T>
 Utils::Vector<T, 3> get_mi_vector(Utils::Vector<T, 3> const &a, Utils::Vector<T, 3> const &b) {
   return {get_mi_coord(a[0], b[0], box_geo.length()[0], box_geo.periodic(0)),

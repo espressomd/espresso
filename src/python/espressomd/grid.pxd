@@ -15,3 +15,5 @@ cdef extern from "grid.hpp":
         void set_length(Vector3d)
 
     BoxGeometry box_geo
+
+    Vector3d get_mi_vector(const Vector3d &, const Vector3d &)

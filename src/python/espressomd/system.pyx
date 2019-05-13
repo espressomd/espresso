@@ -24,7 +24,7 @@ from globals cimport *
 import numpy as np
 import collections
 
-from grid cimport box_l
+from grid cimport get_mi_vector
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -33,7 +33,7 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
-from .utils cimport numeric_limits
+from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
 from .lb cimport lb_lbfluid_get_tau
 from .lb cimport lb_lbfluid_get_lattice_switch
 from .lb cimport NONE
@@ -438,12 +438,10 @@ cdef class System(object):
         """Return the distance vector between the particles, respecting periodic boundaries.
 
         """
-        cdef double[3] res, a, b
-        a = p1.pos
-        b = p2.pos
 
-        get_mi_vector(res, b, a)
-        return np.array((res[0], res[1], res[2]))
+        cdef Vector3d mi_vec = get_mi_vector(<const Vector3d> make_Vector3d(p1.pos), <const Vector3d> make_Vector3d(p2.pos))
+
+        return make_array_locked(mi_vec)
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
