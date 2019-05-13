@@ -44,7 +44,7 @@ operator()(PartCfg &partCfg) const {
     auto const pos_shifted = p - center;
     auto const pos_cyl =
         Utils::transform_coordinate_cartesian_to_cylinder(pos_shifted, axis);
-    histogram.update(pos_cyl, Utils::transform_velocity_cartesian_to_cylinder(
+    histogram.update(pos_cyl, Utils::transform_vector_cartesian_to_cylinder(
                                   velocity, axis, pos_shifted));
   }
   auto hist_data = histogram.get_histogram();

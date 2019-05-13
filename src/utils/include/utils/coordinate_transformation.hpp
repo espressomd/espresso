@@ -45,33 +45,33 @@ transform_coordinate_cartesian_to_cylinder(const Vector3d &pos,
   return Vector3d{r, phi, rotated_pos[2]};
 }
 
-/** \brief Transform the given 3D velocity to cylinder coordinates with
+/** \brief Transform the given 3D vector to cylinder coordinates with
  * longitudinal axis aligned with axis parameter.
  */
-inline Vector3d transform_velocity_cartesian_to_cylinder(
-    const Vector3d &vel, const std::string &axis, const Vector3d &pos) {
+inline Vector3d transform_vector_cartesian_to_cylinder(
+    Vector3d const &vec, std::string const &axis, Vector3d const &pos) {
   double v_r, v_phi, v_z;
   static const Vector3d x_axis{1.0, 0.0, 0.0};
   static const Vector3d y_axis{0.0, 1.0, 0.0};
-  Vector3d rotated_vel = vel;
+  Vector3d rotated_vec = vec;
   Vector3d rotated_pos = pos;
   if (axis == "x") {
-    rotated_vel = vec_rotate(y_axis, -Utils::pi() / 2.0, vel);
+    rotated_vec = vec_rotate(y_axis, -Utils::pi() / 2.0, vec);
     rotated_pos = vec_rotate(y_axis, -Utils::pi() / 2.0, pos);
   } else if (axis == "y") {
-    rotated_vel = vec_rotate(x_axis, Utils::pi() / 2.0, vel);
+    rotated_vec = vec_rotate(x_axis, Utils::pi() / 2.0, vec);
     rotated_pos = vec_rotate(x_axis, Utils::pi() / 2.0, pos);
   }
   // Coordinate transform the velocities.
   // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
-  v_r = (rotated_pos[0] * rotated_vel[0] + rotated_pos[1] * rotated_vel[1]) /
+  v_r = (rotated_pos[0] * rotated_vec[0] + rotated_pos[1] * rotated_vec[1]) /
         std::sqrt(rotated_pos[0] * rotated_pos[0] +
                   rotated_pos[1] * rotated_pos[1]);
   // v_phi = (x * v_y - y * v_x ) / (x^2 + y^2)
-  v_phi = (rotated_pos[0] * rotated_vel[1] - rotated_pos[1] * rotated_vel[0]) /
+  v_phi = (rotated_pos[0] * rotated_vec[1] - rotated_pos[1] * rotated_vec[0]) /
           (rotated_pos[0] * rotated_pos[0] + rotated_pos[1] * rotated_pos[1]);
   // v_z = v_z
-  v_z = rotated_vel[2];
+  v_z = rotated_vec[2];
   return Vector3d{v_r, v_phi, v_z};
 }
 

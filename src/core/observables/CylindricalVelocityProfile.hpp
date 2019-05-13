@@ -52,7 +52,7 @@ public:
     for (size_t ind = 0; ind < folded_positions.size(); ++ind) {
       histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
                            folded_positions[ind], axis),
-                       Utils::transform_velocity_cartesian_to_cylinder(
+                       Utils::transform_vector_cartesian_to_cylinder(
                            velocities[ind], axis, folded_positions[ind]));
     }
     auto hist_tmp = histogram.get_histogram();
