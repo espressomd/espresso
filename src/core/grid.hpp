@@ -51,24 +51,22 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <bitset>
 #include <limits>
+#include <cassert>
 
 struct BoxGeometry {
 #ifdef PARTIAL_PERIODIC
-/** Flags for all three dimensions whether pbc are applied (default).
-    The first three bits give the periodicity */
-  unsigned m_periodic;
+/** Flags for all three dimensions whether pbc are applied (default). */
+    std::bitset<3> m_periodic = 0b111;
 
   void set_periodic(unsigned coord, bool val) {
-    if(val) {
-      m_periodic |= (1u << coord);
-    } else {
-      m_periodic &= ~(1u << coord);
-    }
+      m_periodic[coord] = val;
   }
-  constexpr bool periodic(unsigned coord) {
+
+  constexpr bool periodic(unsigned coord) const {
     assert(coord <= 2);
-    return m_periodic & (1u << (coord));
+    return m_periodic[coord];
   }
 #else
 constexpr bool periodic(int) {

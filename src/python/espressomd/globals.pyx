@@ -4,7 +4,6 @@ cimport grid
 from globals cimport time_step
 from globals cimport mpi_set_time_step
 from globals cimport min_global_cut
-from grid cimport periodic
 from globals cimport sim_time
 from globals cimport timing_samples
 from globals cimport forcecap_set
@@ -49,17 +48,17 @@ cdef class Globals(object):
 
     property periodicity:
         def __set__(self, _periodic):
-            global periodic
-            periodic = 4 * _periodic[2] + 2 * _periodic[1] + _periodic[0]
-            # first 3 bits of periodic determine the periodicity
+
+            for i in range(3):
+                grid.box_geo.set_periodic(i, _periodic[i])
             mpi_bcast_parameter(FIELD_PERIODIC)
 
         def __get__(self):
-            global periodic
             periodicity = np.zeros(3)
-            periodicity[0] = periodic % 2
-            periodicity[1] = int(periodic / 2) % 2
-            periodicity[2] = int(periodic / 4) % 2
+            
+            for i in range(3):
+                periodicity[i] = grid.box_geo.periodic(i)
+
             return array_locked(periodicity)
 
     property time:
