@@ -325,13 +325,5 @@ template <typename T, size_t N> struct decay_to_scalar<Vector<T, N>> {
 
 template <typename T> struct decay_to_scalar<Vector<T, 1>> { using type = T; };
 
-template <size_t N, typename T, typename Out>
-Out &operator<<(Out &out, Vector<T, N> const &a) {
-  for (auto const &value : a) {
-    out << value;
-  }
-  return out;
-}
-
 } // namespace Utils
 #endif
