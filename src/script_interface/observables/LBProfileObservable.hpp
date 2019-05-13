@@ -126,12 +126,12 @@ public:
   void construct(VariantMap const &params) override {
     m_observable =
         make_shared_from_args<CoreLBObs, double, double, double, double, double,
-                              double, bool, int, int, int, double, double,
-                              double, double, double, double>(
+                              double, int, int, int, double, double,
+                              double, double, double, double, bool>(
             params, "sampling_delta_x", "sampling_delta_y", "sampling_delta_z",
             "sampling_offset_x", "sampling_offset_y", "sampling_offset_z",
-            "allow_empty_bins", "n_x_bins", "n_y_bins", "n_z_bins", "min_x",
-            "min_y", "min_z", "max_x", "max_y", "max_z");
+            "n_x_bins", "n_y_bins", "n_z_bins", "min_x",
+            "min_y", "min_z", "max_x", "max_y", "max_z", "allow_empty_bins");
   }
 
   Variant call_method(std::string const &method,

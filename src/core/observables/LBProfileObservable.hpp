@@ -31,16 +31,16 @@ public:
   LBProfileObservable(double sampling_delta_x, double sampling_delta_y,
                       double sampling_delta_z, double sampling_offset_x,
                       double sampling_offset_y, double sampling_offset_z,
-                      bool allow_empty_bins, int n_x_bins, int n_y_bins,
+                      int n_x_bins, int n_y_bins,
                       int n_z_bins, double min_x, double min_y, double min_z,
-                      double max_x, double max_y, double max_z)
+                      double max_x, double max_y, double max_z, bool allow_empty_bins=false)
       : ProfileObservable(min_x, max_x, min_y, max_y, min_z, max_z, n_x_bins,
                           n_y_bins, n_z_bins),
         sampling_delta_x(sampling_delta_x), sampling_delta_y(sampling_delta_y),
         sampling_delta_z(sampling_delta_z),
         sampling_offset_x(sampling_offset_x),
         sampling_offset_y(sampling_offset_y),
-        sampling_offset_z(sampling_offset_z) {
+        sampling_offset_z(sampling_offset_z), allow_empty_bins(allow_empty_bins) {
     calculate_sampling_positions();
   }
   double sampling_delta_x;
@@ -49,7 +49,7 @@ public:
   double sampling_offset_x;
   double sampling_offset_y;
   double sampling_offset_z;
-  bool allow_empty_bins = false;
+  bool allow_empty_bins;
   void calculate_sampling_positions() {
     sampling_positions.clear();
     if (sampling_delta_x == 0 or sampling_delta_y == 0 or sampling_delta_z == 0)
