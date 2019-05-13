@@ -618,7 +618,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             set_prefactor(self._params["prefactor"])
             default_params = self.default_params()
 
-            self.thisptr.set_params(grid.box_l[2], coulomb.prefactor, self._params[
+            self.thisptr.set_params(grid.box_geo.length()[2], coulomb.prefactor, self._params[
                                     "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _tune(self):

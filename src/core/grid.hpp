@@ -187,7 +187,7 @@ void rescale_boxl(int dir, double d_new);
 template <typename T> T get_mi_coord(T a, T b, int dir) {
   auto dx = a - b;
 
-  if (box_geo.periodic(dir) && std::fabs(dx) > half_box_l[dir])
+  if (box_geo.periodic(dir) && std::fabs(dx) > (0.5 *box_geo.length()[dir]))
     dx -= std::round(dx * box_l_i[dir]) * box_geo.length()[dir];
 
   return dx;

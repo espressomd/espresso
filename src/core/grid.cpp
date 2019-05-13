@@ -117,32 +117,14 @@ int calc_node_neighbors(int node) {
 }
 
 void grid_changed_box_l() {
-  int i;
-
-  GRID_TRACE(fprintf(stderr, "%d: grid_changed_box_l:\n", this_node));
-  GRID_TRACE(fprintf(stderr, "%d: node_pos %d %d %d\n", this_node, node_pos[0],
-                     node_pos[1], node_pos[2]));
-  GRID_TRACE(fprintf(stderr, "%d: node_grid %d %d %d\n", this_node,
-                     node_grid[0], node_grid[1], node_grid[2]));
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     local_box_l[i] = box_geo.length()[i] / (double)node_grid[i];
     my_left[i] = node_pos[i] * local_box_l[i];
     my_right[i] = (node_pos[i] + 1) * local_box_l[i];
     box_l_i[i] = 1 / box_geo.length()[i];
-    half_box_l[i] = 0.5 * box_geo.length()[i];
   }
 
   calc_minimal_box_dimensions();
-
-#ifdef GRID_DEBUG
-  fprintf(stderr, "%d: local_box_l = (%.3f, %.3f, %.3f)\n", this_node,
-          local_box_l[0], local_box_l[1], local_box_l[2]);
-  fprintf(stderr,
-          "%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in "
-          "[%.3f, %.3f]\n",
-          this_node, my_left[0], my_right[0], my_left[1], my_right[1],
-          my_left[2], my_right[2]);
-#endif
 }
 
 void grid_changed_n_nodes() {
