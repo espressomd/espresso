@@ -48,8 +48,9 @@ transform_coordinate_cartesian_to_cylinder(const Vector3d &pos,
 /** \brief Transform the given 3D vector to cylinder coordinates with
  * longitudinal axis aligned with axis parameter.
  */
-inline Vector3d transform_vector_cartesian_to_cylinder(
-    Vector3d const &vec, std::string const &axis, Vector3d const &pos) {
+inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
+                                                       std::string const &axis,
+                                                       Vector3d const &pos) {
   double v_r, v_phi, v_z;
   static const Vector3d x_axis{1.0, 0.0, 0.0};
   static const Vector3d y_axis{0.0, 1.0, 0.0};
