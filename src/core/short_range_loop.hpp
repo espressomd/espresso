@@ -46,13 +46,13 @@ struct Distance {
 namespace detail {
 struct MinimalImageDistance {
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(get_mi_vector(p1.r.p, p2.r.p));
+    return Distance(get_mi_vector(p1.r.p, p2.r.p, box_geo));
   }
 };
 
 struct LayeredMinimalImageDistance {
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    auto mi_dist = get_mi_vector(p1.r.p, p2.r.p);
+    auto mi_dist = get_mi_vector(p1.r.p, p2.r.p, box_geo);
     mi_dist[2] = p1.r.p[2] - p2.r.p[2];
 
     return Distance(mi_dist);

@@ -193,10 +193,16 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
 }
 
 template <typename T>
-Utils::Vector<T, 3> get_mi_vector(Utils::Vector<T, 3> const &a, Utils::Vector<T, 3> const &b) {
-  return {get_mi_coord(a[0], b[0], box_geo.length()[0], box_geo.periodic(0)),
-          get_mi_coord(a[1], b[1], box_geo.length()[1], box_geo.periodic(1)),
-          get_mi_coord(a[2], b[2], box_geo.length()[2], box_geo.periodic(2))};
+Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
+                                  const Utils::Vector<T, 3> &b,
+                                  const BoxGeometry &box) {
+  return {get_mi_coord(a[0], b[0], box.length()[0], box.periodic(0)),
+          get_mi_coord(a[1], b[1], box.length()[1], box.periodic(1)),
+          get_mi_coord(a[2], b[2], box.length()[2], box.periodic(2))};
+}
+
+inline Utils::Vector3d get_mi_vector(const Utils::Vector3d &a, const Utils::Vector3d &b) {
+  return get_mi_vector(a, b, box_geo);
 }
 
 /** fold a coordinate to primary simulation box.

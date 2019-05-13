@@ -128,7 +128,7 @@ void integrate_reaction_noswap() {
 
             /* Count the number of times a reactant particle is
                checked against a catalyst */
-            if (get_mi_vector(p1->r.p, p2->r.p).norm2() <
+            if (get_mi_vector(p1->r.p, p2->r.p, box_geo).norm2() <
                 reaction.range * reaction.range) {
 
               if (p1->p.type == reaction.reactant_type) {
@@ -218,7 +218,7 @@ void integrate_reaction_noswap() {
 bool in_lower_half_space(Particle p1, Particle p2) {
   // This function determines whether the particle p2 is in the lower
   // half space of particle p1
-  auto const distvec = get_mi_vector(p1.r.p, p2.r.p);
+  auto const distvec = get_mi_vector(p1.r.p, p2.r.p, box_geo);
   double dot = p1.r.calc_director() * distvec;
   int sgn = Utils::sgn(dot);
   return (sgn + 1) / 2;
@@ -295,7 +295,8 @@ void integrate_reaction_swap() {
             // Check if the distance is within the reaction range and
             // check if no reaction has taken place on the particle in
             // the current step
-            if (get_mi_vector(p_local[catalyzer].r.p, p_neigh[i].r.p).norm2() <
+            if (get_mi_vector(p_local[catalyzer].r.p, p_neigh[i].r.p, box_geo)
+                        .norm2() <
                     reaction.range * reaction.range &&
                 p_neigh[i].p.catalyzer_count == 0) {
               // If the particle is of correct type AND resides in the

@@ -186,7 +186,7 @@ IntList nbhood(PartCfg &partCfg, double pt_[3], double r,
 
   for (auto const &p : partCfg) {
     if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      d = get_mi_vector(pt, p.r.p);
+      d = get_mi_vector(pt, p.r.p, box_geo);
     } else {
       /* Calculate the in plane distance */
       for (int j = 0; j < 3; j++) {
@@ -207,7 +207,7 @@ double distto(PartCfg &partCfg, double p[3], int pid) {
 
   for (auto const &part : partCfg) {
     if (pid != part.p.identity) {
-      auto const d = get_mi_vector({p[0], p[1], p[2]}, part.r.p);
+      auto const d = get_mi_vector({p[0], p[1], p[2]}, part.r.p, box_geo);
       mindist = std::min(mindist, d.norm2());
     }
   }
@@ -242,7 +242,8 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
           if (p1 != p2) {
             for (t2 = 0; t2 < n_p2; t2++) {
               if (p2.p.type == p2_types[t2]) {
-                auto const act_dist2 = get_mi_vector(p1.r.p, p2.r.p).norm2();
+                auto const act_dist2 =
+                    get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
                 if (act_dist2 < min_dist2) {
                   min_dist2 = act_dist2;
                 }
@@ -314,7 +315,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
         for (; jt != partCfg.end(); ++jt) {
           for (t2 = 0; t2 < n_p2; t2++) {
             if (jt->p.type == p2_types[t2]) {
-              auto const dist = get_mi_vector(it->r.p, jt->r.p).norm();
+              auto const dist = get_mi_vector(it->r.p, jt->r.p, box_geo).norm();
               if (dist > r_min && dist < r_max) {
                 ind = (int)((dist - r_min) * inv_bin_width);
                 rdf[ind]++;
@@ -391,8 +392,10 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
                 using Utils::Vector3d;
 
                 auto const dist =
-                    get_mi_vector(Vector3d{make_const_span(configs[k] + 3 * i, 3)},
-                                  Vector3d{make_const_span(configs[k] + 3 * j, 3)})
+                    get_mi_vector(
+                        Vector3d{make_const_span(configs[k] + 3 * i, 3)},
+                        Vector3d{make_const_span(configs[k] + 3 * j, 3)},
+                        box_geo)
                         .norm();
                 if (dist > r_min && dist < r_max) {
                   auto const ind =

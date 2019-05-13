@@ -223,8 +223,8 @@ void ImmersedBoundaries::calc_volumes() {
             // this is to get a continuous trajectory with no jumps when box
             // boundaries are crossed
             auto const x1 = unfolded_position(p1);
-            auto const x2 = x1 + get_mi_vector(p2->r.p, x1);
-            auto const x3 = x1 + get_mi_vector(p3->r.p, x1);
+            auto const x2 = x1 + get_mi_vector(p2->r.p, x1, box_geo);
+            auto const x3 = x1 + get_mi_vector(p3->r.p, x1, box_geo);
 
             // Volume of this tetrahedron
             // See Cha Zhang et.al. 2001, doi:10.1109/ICIP.2001.958278
@@ -326,8 +326,8 @@ void ImmersedBoundaries::calc_volume_force() {
 
             // Unfolding seems to work only for the first particle of a triel
             // so get the others from relative vectors considering PBC
-            auto const a12 = get_mi_vector(p2->r.p, x1);
-            auto const a13 = get_mi_vector(p3->r.p, x1);
+            auto const a12 = get_mi_vector(p2->r.p, x1, box_geo);
+            auto const a13 = get_mi_vector(p3->r.p, x1, box_geo);
 
             // Now we have the true and good coordinates
             // Compute force according to eq. C.46 Krüger thesis

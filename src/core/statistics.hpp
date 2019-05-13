@@ -195,7 +195,7 @@ int calc_cylindrical_average(
 
 template <typename T>
 double min_distance2(Utils::Vector<T, 3> const &pos1, Utils::Vector<T, 3> const &pos2) {
-  return get_mi_vector(pos1, pos2).norm2();
+  return get_mi_vector(pos1, pos2, box_geo).norm2();
 }
 
 /** Calculate the center of mass of a special type of the current configuration.

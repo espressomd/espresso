@@ -103,7 +103,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           return get_mi_vector(p1.r.p, p2.r.p).norm2();
+                           return get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
                          });
     break;
   case CELL_STRUCTURE_LAYERED:
@@ -111,7 +111,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p);
+                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p, box_geo);
                            vec21[2] = p1.r.p[2] - p2.r.p[2];
 
                            return vec21.norm2();

@@ -75,7 +75,7 @@ double mindist(PartCfg &partCfg, Utils::Vector3d const &pos) {
   auto const mindist = std::accumulate(
       partCfg.begin(), partCfg.end(), std::numeric_limits<double>::infinity(),
       [&pos](double mindist, Particle const &p) {
-        return std::min(mindist, get_mi_vector(pos, p.r.p).norm2());
+        return std::min(mindist, get_mi_vector(pos, p.r.p, box_geo).norm2());
       });
 
   if (mindist < std::numeric_limits<double>::infinity())
