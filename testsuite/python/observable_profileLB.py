@@ -123,7 +123,7 @@ class LBCPU(ut.TestCase, ObservableProfileLBCommon):
 
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    'LB_GPU'), "Skipping test due to missing features or gpu.")
+    'CUDA'), "Skipping test due to missing features or gpu.")
 class LBGPU(ut.TestCase, ObservableProfileLBCommon):
 
     """Test for the GPU implementation of the LB."""

@@ -32,7 +32,7 @@ void VirtualSitesInertialessTracers::after_force_calc() {
     IBM_ForcesIntoFluid_CPU();
     return;
   }
-#ifdef LB_GPU
+#ifdef CUDA
   if (lattice_switch == ActiveLB::GPU) {
     IBM_ForcesIntoFluid_GPU(local_cells.particles());
     return;

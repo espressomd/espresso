@@ -45,7 +45,7 @@ SET(cython_SRC  "${cython_SRC}" CACHE INTERNAL "cython_SRC")
 file(GLOB cython_HEADER *.pxd)
 SET(cython_HEADER  "${cython_HEADER}" CACHE INTERNAL "cython_HEADER")
 file(GLOB cython_AUX *.py)
-file(COPY MDA_ESP DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(MDA_ESP/__init__.py ${CMAKE_CURRENT_BINARY_DIR}/MDA_ESP/__init__.py COPYONLY)
 SET(cython_AUX  "${cython_AUX}" CACHE INTERNAL "cython_AUX")
 
 add_subdirectory(io)

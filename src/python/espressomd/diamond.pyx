@@ -6,35 +6,32 @@ from espressomd.utils import is_valid_type
 
 cdef class Diamond(object):
     """
-    Class to create a diamond like network
+    Class to create a diamond-like polymer network.
+
+    Parameters
+    ----------
+    a : :obj:`float`
+        Size of the unit cell.
+    bond_length : :obj:`float`
+        Distance between adjacent monomers in the chains.
+    MPC : :obj:`int`
+        Monomers per chain.
+    cM_dist : :obj:`int`, optional
+        Distance between charged monomers.
+    N_CI : :obj:`int`, optional
+        Number of counter ions.
+    val_nodes : :obj:`float`, optional
+        Charge valency of the 8 node particles (crosslinker).
+    val_cM : :obj:`float`, optional
+        Valency of the charge bearing monomers.
+    val_CI : :obj:`float`, optional
+        Valency of the counterions.
+    nonet : :obj:`int`, optional
+        0 creates network, 1 does not crosslink the individual polymers.
+
     """
 
     def __init__(self, *args, **kwargs):
-        """
-        Wrapper object to create a diamond like polymer network.
-
-        Parameters
-        ----------
-        a : :obj:`float`
-            Size of the unit cell.
-        bond_length : :obj:`float`
-                      Distance between adjacent monomers in the chains.
-        MPC : :obj:`int`
-              Monomers per chain.
-        cM_dist : :obj:`int`, optional
-                  Distance between charged monomers.
-        N_CI : :obj:`int`, optional
-               Number of counter ions.
-        val_nodes : :obj:`float`, optional
-                    Charge valency of the 8 node particles (crosslinker).
-        val_cM : :obj:`float`, optional
-                 Valency of the charge bearing monomers.
-        val_CI : :obj:`float`, optional
-                 Valency of the counterions.
-        nonet : :obj:`int`, optional
-                0 creates network, 1 does not crosslink the individual polymers.
-
-        """
         self._params = self.default_params()
         for k in self.required_keys():
             if k not in kwargs:

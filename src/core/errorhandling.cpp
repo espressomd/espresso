@@ -21,31 +21,24 @@
 /** \file
  *  Implementation of \ref errorhandling.hpp.
  */
-#include <csignal>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <memory>
 
 #include "errorhandling.hpp"
 
 #include "MpiCallbacks.hpp"
 #include "RuntimeErrorCollector.hpp"
 
-using namespace std;
+#include <boost/mpi/collectives.hpp>
+#include <boost/mpi/communicator.hpp>
+
+#include <memory>
 
 namespace ErrorHandling {
-
-/* Forward declarations */
-
-void mpi_gather_runtime_errors_slave();
-
 namespace {
 /** RuntimeErrorCollector instance.
  *  This is a weak pointer so we don't
  *  leak on repeated calls of init_error_handling.
  */
-unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
+std::unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 
 /** The callback loop we are on. */
 Communication::MpiCallbacks *m_callbacks = nullptr;
@@ -58,36 +51,6 @@ void init_error_handling(Communication::MpiCallbacks &cb) {
       std::make_unique<RuntimeErrorCollector>(m_callbacks->comm());
 }
 
-void _runtimeWarning(const std::string &msg, const char *function,
-                     const char *file, const int line) {
-  runtimeErrorCollector->warning(msg, function, file, line);
-}
-
-void _runtimeWarning(const char *msg, const char *function, const char *file,
-                     const int line) {
-  runtimeErrorCollector->warning(msg, function, file, line);
-}
-
-void _runtimeWarning(const std::ostringstream &msg, const char *function,
-                     const char *file, const int line) {
-  runtimeErrorCollector->warning(msg, function, file, line);
-}
-
-void _runtimeError(const std::string &msg, const char *function,
-                   const char *file, const int line) {
-  runtimeErrorCollector->error(msg, function, file, line);
-}
-
-void _runtimeError(const char *msg, const char *function, const char *file,
-                   const int line) {
-  runtimeErrorCollector->error(msg, function, file, line);
-}
-
-void _runtimeError(const std::ostringstream &msg, const char *function,
-                   const char *file, const int line) {
-  runtimeErrorCollector->error(msg, function, file, line);
-}
-
 RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
                                          const std::string &file,
                                          const int line,
@@ -96,15 +59,13 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
                             function);
 }
 
-vector<RuntimeError> mpi_gather_runtime_errors() {
-  // Tell other processors to send their errors
+void mpi_gather_runtime_errors_slave() { runtimeErrorCollector->gatherSlave(); }
+REGISTER_CALLBACK(mpi_gather_runtime_errors_slave)
+
+std::vector<RuntimeError> mpi_gather_runtime_errors() {
   m_callbacks->call(mpi_gather_runtime_errors_slave);
   return runtimeErrorCollector->gather();
 }
-
-void mpi_gather_runtime_errors_slave() { runtimeErrorCollector->gatherSlave(); }
-
-REGISTER_CALLBACK(mpi_gather_runtime_errors_slave)
 } // namespace ErrorHandling
 
 void errexit() {
@@ -112,7 +73,12 @@ void errexit() {
   std::abort();
 }
 
-int check_runtime_errors() {
+int check_runtime_errors_local() {
   using namespace ErrorHandling;
   return runtimeErrorCollector->count(RuntimeError::ErrorLevel::ERROR);
+}
+
+int check_runtime_errors(boost::mpi::communicator const &comm) {
+  return boost::mpi::all_reduce(comm, check_runtime_errors_local(),
+                                std::plus<int>());
 }

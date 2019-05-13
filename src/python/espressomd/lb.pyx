@@ -304,7 +304,7 @@ IF LB_WALBERLA:
             mpi_destruct_lb_walberla()
 
 
-IF LB_GPU:
+IF CUDA:
     cdef class LBFluidGPU(HydrodynamicInteraction):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.

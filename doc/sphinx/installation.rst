@@ -386,7 +386,7 @@ General features
 -  ``EXCLUSIONS`` Allows to exclude specific short ranged interactions within
    molecules.
 
-   .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.exclude`
+   .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
@@ -454,10 +454,6 @@ Fluid dynamics and fluid structure interaction
 -  ``DPD`` Enables the dissipative particle dynamics thermostat and interaction.
 
    .. seealso:: :ref:`DPD interaction`
-
--  ``LB_GPU`` Enables the lattice Boltzmann fluid code support for GPU.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
 
 -  ``LB_BOUNDARIES``
 

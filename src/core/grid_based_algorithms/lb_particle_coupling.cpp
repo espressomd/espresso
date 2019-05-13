@@ -32,10 +32,11 @@ void lb_lbcoupling_activate() {
 
 void lb_lbcoupling_deactivate() {
   if (lattice_switch != ActiveLB::NONE && this_node == 0 && n_part) {
-    runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                   "included in the particle force the first time step. This "
-                   "only matters if it happens frequently during "
-                   "sampling.\n");
+    runtimeWarningMsg()
+        << "Recalculating forces, so the LB coupling forces are not "
+           "included in the particle force the first time step. This "
+           "only matters if it happens frequently during "
+           "sampling.";
   }
 
   lb_particle_coupling.couple_to_md = false;
@@ -50,7 +51,15 @@ void lb_lbcoupling_set_gamma(double gamma) {
 double lb_lbcoupling_get_gamma() { return lb_particle_coupling.gamma; }
 
 bool lb_lbcoupling_is_seed_required() {
-  return not lb_particle_coupling.rng_counter_coupling.is_initialized();
+  if (lattice_switch == ActiveLB::CPU) {
+    return not lb_particle_coupling.rng_counter_coupling.is_initialized();
+  }
+#ifdef CUDA
+  if (lattice_switch == ActiveLB::GPU) {
+    return not rng_counter_coupling_gpu.is_initialized();
+  }
+#endif
+  return false;
 }
 
 uint64_t lb_coupling_get_rng_state_cpu() {
@@ -62,7 +71,7 @@ uint64_t lb_lbcoupling_get_rng_state() {
     return lb_coupling_get_rng_state_cpu();
   }
   if (lattice_switch == ActiveLB::GPU) {
-#ifdef LB_GPU
+#ifdef CUDA
     return lb_coupling_get_rng_state_gpu();
 #endif
   }
@@ -75,7 +84,7 @@ void lb_lbcoupling_set_rng_state(uint64_t counter) {
         Utils::Counter<uint64_t>(counter);
     mpi_bcast_lb_particle_coupling();
   } else if (lattice_switch == ActiveLB::GPU) {
-#ifdef LB_GPU
+#ifdef CUDA
     lb_coupling_set_rng_state_gpu(counter);
 #endif
   }
@@ -173,7 +182,7 @@ void add_swimmer_force(Particle &p) {
 void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::GPU) {
-#ifdef LB_GPU
+#ifdef CUDA
     if (lb_particle_coupling.couple_to_md && this_node == 0) {
       switch (lb_lbinterpolation_get_interpolation_order()) {
       case (InterpolationOrder::linear):
@@ -269,7 +278,7 @@ void lb_lbcoupling_propagate() {
     if (lattice_switch == ActiveLB::CPU) {
       lb_particle_coupling.rng_counter_coupling->increment();
     } else if (lattice_switch == ActiveLB::GPU) {
-#ifdef LB_GPU
+#ifdef CUDA
       rng_counter_coupling_gpu->increment();
 #endif
     }

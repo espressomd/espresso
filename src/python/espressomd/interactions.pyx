@@ -31,10 +31,10 @@ from globals cimport immersed_boundaries
 
 cdef class NonBondedInteraction(object):
     """
-    Represents an instance of a non-bonded interaction, such as Lennard-Jones
+    Represents an instance of a non-bonded interaction, such as Lennard-Jones.
     Either called with two particle type id, in which case, the interaction
-    will represent the bonded interaction as it is defined in Espresso core
-    Or called with keyword arguments describing a new interaction.
+    will represent the bonded interaction as it is defined in Espresso core,
+    or called with keyword arguments describing a new interaction.
 
     """
 
@@ -811,7 +811,7 @@ IF GAY_BERNE:
                   Interaction range.
             cut : :obj:`float`
                   Cutoff distance of the interaction.
-            k1 : :obj:`float` or :obj:`string`
+            k1 : :obj:`float` or :obj:`str`
                   Molecular elongation.
             k2 : :obj:`float`, optional
                   Ratio of the potential well depths for the side-by-side
@@ -1311,7 +1311,7 @@ IF BUCKINGHAM == 1:
             ----------
             a : :obj:`float`
                 Magnitude of the exponential part of the interaction.
-            b : :obj`float`
+            b : :obj:`float`
                 Exponent of the exponential part of the interaction.
             c : :obj:`float`
                 Prefactor of term decaying with the sixth power of distance.
@@ -1713,8 +1713,7 @@ IF GAUSSIAN == 1:
 class NonBondedInteractionHandle(object):
 
     """
-    Provides access to all Non-bonded interactions between
-    two particle types.
+    Provides access to all non-bonded interactions between two particle types.
 
     """
 
@@ -1742,7 +1741,6 @@ class NonBondedInteractionHandle(object):
     thole = None
 
     def __init__(self, _type1, _type2):
-        """Takes two particle types as argument"""
         if not (is_valid_type(_type1, int) and is_valid_type(_type2, int)):
             raise TypeError("The particle types have to be of type integer.")
         self.type1 = _type1
@@ -1822,14 +1820,18 @@ cdef class NonBondedInteractions(object):
 
     def reset(self):
         """
-        Reset all interaction parameters to their default
-        values.
+        Reset all interaction parameters to their default values.
         """
 
         reset_ia_params()
 
 cdef class BondedInteraction(object):
-    """Base class for bonded interactions.
+    """
+    Base class for bonded interactions.
+
+    Either called with an interaction id, in which case, the interaction
+    will represent the bonded interaction as it is defined in Espresso core
+    Or called with keyword arguments describing a new interaction.
 
     """
 
@@ -1837,12 +1839,6 @@ cdef class BondedInteraction(object):
     _bond_id = -1
 
     def __init__(self, *args, **kwargs):
-        """
-        Either called with an interaction id, in which case, the interaction
-        will represent the bonded interaction as it is defined in Espresso core
-        Or called with keyword arguments describing a new interaction.
-
-        """
         # Interaction id as argument
         if len(args) == 1 and is_valid_type(args[0], int):
             bond_id = args[0]
@@ -2036,22 +2032,22 @@ class BondedInteractionNotDefined(object):
 
 class FeneBond(BondedInteraction):
 
+    """
+    FENE bond.
+
+    Parameters
+    ----------
+    k : :obj:`float`
+        Specifies the magnitude of the bond interaction.
+    d_r_max : :obj:`float`
+              Specifies the maximum stretch and compression length of the
+              bond.
+    r_0 : :obj:`float`, optional
+          Specifies the equilibrium length of the bond.
+
+    """
+
     def __init__(self, *args, **kwargs):
-        """
-        FeneBond initializer. Used to instantiate a FeneBond identifier
-        with a given set of parameters.
-
-        Parameters
-        ----------
-        k : :obj:`float`
-            Specifies the magnitude of the bond interaction.
-        d_r_max : :obj:`float`
-                  Specifies the maximum stretch and compression length of the
-                  bond.
-        r_0 : :obj:`float`, optional
-              Specifies the equilibrium length of the bond.
-
-        """
         super(FeneBond, self).__init__(*args, **kwargs)
 
     def type_number(self):
@@ -2098,22 +2094,22 @@ class FeneBond(BondedInteraction):
 
 class HarmonicBond(BondedInteraction):
 
+    """
+    Harmonic bond.
+
+    Parameters
+    ----------
+    k : :obj:`float`
+        Specifies the magnitude of the bond interaction.
+    r_0 : :obj:`float`
+          Specifies the equilibrium length of the bond.
+    r_cut : :obj:`float`, optional
+            Specifies maximum distance beyond which the bond is considered
+            broken.
+
+    """
+
     def __init__(self, *args, **kwargs):
-        """
-        HarmonicBond initializer. Used to instantiate a HarmonicBond identifier
-        with a given set of parameters.
-
-        Parameters
-        ----------
-        k : :obj:`float`
-            Specifies the magnitude of the bond interaction.
-        r_0 : :obj:`float`
-              Specifies the equilibrium length of the bond.
-        r_cut : :obj:`float`, optional
-                Specifies maximum distance beyond which the bond is considered
-                broken.
-
-        """
         super(HarmonicBond, self).__init__(*args, **kwargs)
 
     def type_number(self):
@@ -2156,17 +2152,17 @@ class HarmonicBond(BondedInteraction):
 if ELECTROSTATICS:
     class BondedCoulomb(BondedInteraction):
 
+        """
+        Bonded Coulomb bond.
+
+        Parameters
+        ----------
+
+        prefactor : :obj:`float`
+                    Sets the Coulomb prefactor of the bonded Coulomb interaction.
+        """
+
         def __init__(self, *args, **kwargs):
-            """
-            BondedCoulombBond initialiser. Used to instantiate a BondedCoulombBond identifier
-            with a given set of parameters.
-
-            Parameters
-            ----------
-
-            prefactor : :obj:`float`
-                        Sets the Coulomb prefactor of the bonded Coulomb interaction.
-            """
             super(BondedCoulomb, self).__init__(*args, **kwargs)
 
         def type_number(self):
@@ -2196,17 +2192,20 @@ if ELECTROSTATICS:
 if ELECTROSTATICS:
     class BondedCoulombSRBond(BondedInteraction):
 
+        """
+        Bonded Coulomb short range bond. Calculates the short range part of
+        Coulomb interactions.
+
+        Parameters
+        ----------
+
+        q1q2 : :obj:`float`
+               Sets the charge factor of the involved particle pair. Note the
+               particle charges are used to allow e.g. only partial subtraction
+               of the involved charges.
+        """
+
         def __init__(self, *args, **kwargs):
-            """
-            BondedCoulombSRBond initialiser. Used to instantiate a BondedCoulombSRBond identifier
-            with a given set of parameters. Calculates the shortrange part of coulomb interactions.
-
-            Parameters
-            ----------
-
-            q1q2 : :obj:`float`
-                   Sets the charge factor of the involved particle pair. Not the particle charges are used to allow e.g. only partial subtraction of the involved charges.
-            """
             super(BondedCoulombSRBond, self).__init__(*args, **kwargs)
 
         def type_number(self):
@@ -2236,25 +2235,29 @@ if ELECTROSTATICS:
 
 class ThermalizedBond(BondedInteraction):
 
+    """
+    Thermalized bond.
+
+    Parameters
+    ----------
+
+    temp_com : :obj:`float`
+        Sets the temperature of the Langevin thermostat for the com of the
+        particle pair.
+    gamma_com: :obj:`float`
+        Sets the friction coefficient of the Langevin thermostat for the com of
+        the particle pair.
+    temp_distance: :obj:`float`
+        Sets the temperature of the Langevin thermostat for the distance vector
+        of the particle pair.
+    gamma_distance: :obj:`float`
+        Sets the friction coefficient of the Langevin thermostat for the
+        distance vector of the particle pair.
+    r_cut: :obj:`float`, optional
+        Specifies maximum distance beyond which the bond is considered broken.
+    """
+
     def __init__(self, *args, **kwargs):
-        """
-        ThermalizedBond initialiser. Used to instantiate a ThermalizedBond identifier
-        with a given set of parameters.
-
-        Parameters
-        ----------
-
-        temp_com : :obj:`float`
-                    Sets the temperature of the Langevin thermostat for the com of the particle pair.
-        gamma_com: :obj:`float`
-                    Sets the friction coefficient of the Langevin thermostat for the com of the particle pair.
-        temp_distance: :obj:`float`
-                    Sets the temperature of the Langevin thermostat for the distance vector of the particle pair.
-        gamma_distance: :obj:`float`
-                     Sets the friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
-        r_cut: :obj:`float`, optional
-                Specifies maximum distance beyond which the bond is considered broken.
-        """
         super(ThermalizedBond, self).__init__(*args, **kwargs)
 
     def type_number(self):
@@ -2350,24 +2353,24 @@ IF THOLE:
 IF ROTATION:
     class HarmonicDumbbellBond(BondedInteraction):
 
+        """
+        Harmonic Dumbbell bond.
+
+        Parameters
+        ----------
+        k1 : :obj:`float`
+            Specifies the magnitude of the bond interaction.
+        k2 : :obj:`float`
+            Specifies the magnitude of the angular interaction.
+        r_0 : :obj:`float`
+            Specifies the equilibrium length of the bond.
+        r_cut : :obj:`float`, optional
+            Specifies maximum distance beyond which the bond is considered
+            broken.
+
+        """
+
         def __init__(self, *args, **kwargs):
-            """
-            HarmonicDumbbellBond initializer. Used to instantiate a
-            HarmonicDumbbellBond identifier with a given set of parameters.
-
-            Parameters
-            ----------
-            k1 : :obj:`float`
-                Specifies the magnitude of the bond interaction.
-            k2 : :obj:`float`
-                Specifies the magnitude of the angular interaction.
-            r_0 : :obj:`float`
-                  Specifies the equilibrium length of the bond.
-            r_cut : :obj:`float`, optional
-                    Specifies maximum distance beyond which the bond is considered
-                    broken.
-
-            """
             super(HarmonicDumbbellBond, self).__init__(*args, **kwargs)
 
         def type_number(self):
@@ -2412,24 +2415,14 @@ IF ROTATION:
 IF ROTATION != 1:
     class HarmonicDumbbellBond(BondedInteraction):
 
+        """
+        Harmonic Dumbbell bond.
+
+        Requires feature ``ROTATION``.
+
+        """
+
         def __init__(self, *args, **kwargs):
-            """
-            HarmonicDumbbellBond initializer. Used to instantiate a
-            HarmonicDumbbellBond identifier with a given set of parameters.
-
-            Parameters
-            ----------
-            k1 : :obj:`float`
-                Specifies the magnitude of the bond interaction.
-            k2 : :obj:`float`
-                Specifies the magnitude of the angular interaction.
-            r_0 : :obj:`float`
-                  Specifies the equilibrium length of the bond.
-            r_cut : :obj:`float`, optional
-                    Specifies maximum distance beyond which the bond is considered
-                    broken.
-
-            """
             raise Exception(
                 "HarmonicDumbbellBond: ROTATION has to be defined in myconfig.hpp.")
 
@@ -2477,21 +2470,21 @@ IF ROTATION != 1:
 IF BOND_CONSTRAINT == 1:
     class RigidBond(BondedInteraction):
 
+        """
+        Rigid bond.
+
+        Parameters
+        ----------
+        r : :obj:`float`
+            Specifies the length of the rigid bond.
+        ptol : :obj:`float`, optional
+            Specifies the tolerance for positional deviations.
+        vtop : :obj:`float`, optional
+            Specifies the tolerance for velocity deviations.
+
+        """
+
         def __init__(self, *args, **kwargs):
-            """
-            RigidBond initializer. Used to instantiate a RigidBond identifier
-            with a given set of parameters.
-
-            Parameters
-            ----------
-            r : :obj:`float`
-                Specifies the length of the rigid bond.
-            ptol : :obj:`float`, optional
-                   Specifies the tolerance for positional deviations.
-            vtop : :obj:`float`, optional
-                   Specifies the tolerance for velocity deviations.
-
-            """
             super(RigidBond, self).__init__(*args, **kwargs)
 
         def type_number(self):
@@ -2578,29 +2571,29 @@ class Dihedral(BondedInteraction):
 IF TABULATED == 1:
     class Tabulated(BondedInteraction):
 
+        """
+        Tabulated bond.
+
+        Parameters
+        ----------
+
+        type : :obj:`str`,
+            The type of bond, one of 'distance', 'angle' or
+            'dihedral'.
+        min : :obj:`float`,
+            The minimal interaction distance. Has to be 0 if
+            type is 'angle' or 'dihedral'
+        max : :obj:`float`,
+            The maximal interaction distance. Has to be pi if
+            type is 'angle' or 2pi if 'dihedral'
+        energy: array_like :obj:`float`
+            The energy table.
+        force: array_like :obj:`float`
+            The force table.
+
+        """
+
         def __init__(self, *args, **kwargs):
-            """
-            Tabulated bond initializer. Used to instantiate a Tabulated bond identifier
-            with a given set of parameters.
-
-            Parameters
-            ----------
-
-            type : :obj:`string`,
-                The type of bond, one of 'distance', 'angle' or
-                'dihedral'.
-            min : :obj:`float`,
-                The minimal interaction distance. Has to be 0 if
-                type is 'angle' or 'dihedral'
-            max : :obj:`float`,
-                The maximal interaction distance. Has to be pi if
-                type is 'angle' or 2pi if 'dihedral'
-            energy: array_like :obj:`float`
-                The energy table.
-            force: array_like :obj:`float`
-                The force table.
-
-            """
             super(Tabulated, self).__init__(*args, **kwargs)
 
         def type_number(self):
@@ -2688,6 +2681,23 @@ IF TABULATED == 1:
             self._params = self._get_params_from_es_core()
 
     cdef class TabulatedNonBonded(NonBondedInteraction):
+        """
+        Tabulated non-bonded interaction.
+
+        Parameters
+        ----------
+
+        min : :obj:`float`,
+            The minimal interaction distance.
+        max : :obj:`float`,
+            The maximal interaction distance.
+        energy: array_like :obj:`float`
+            The energy table.
+        force: array_like :obj:`float`
+            The force table.
+
+        """
+
         cdef int state
 
         def __init__(self, *args, **kwargs):
@@ -2716,7 +2726,7 @@ IF TABULATED == 1:
             return ["min", "max", "energy", "force"]
 
         def set_params(self, **kwargs):
-            """ Set parameters for the TabulatedNonBonded interaction.
+            """Set parameters for the TabulatedNonBonded interaction.
 
             Parameters
             ----------
@@ -2734,7 +2744,7 @@ IF TABULATED == 1:
             super(TabulatedNonBonded, self).set_params(**kwargs)
 
         def set_default_params(self):
-            """Sets parameters that are not required to their default value.
+            """Set parameters that are not required to their default value.
 
             """
             self._params = {'min': -1., 'max': -1, 'energy': [], 'force': []}
@@ -2766,6 +2776,13 @@ IF TABULATED == 1:
 
 IF TABULATED != 1:
     class Tabulated(BondedInteraction):
+
+        """
+        Tabulated non-bonded interaction.
+
+        Requires feature ``TABULATED``.
+
+        """
 
         def type_number(self):
             raise Exception("TABULATED has to be defined in myconfig.hpp.")
@@ -2843,10 +2860,11 @@ IF LENNARD_JONES == 1:
 
 class Virtual(BondedInteraction):
 
+    """
+    Virtual bond.
+    """
+
     def __init__(self, *args, **kwargs):
-        """
-        VirtualBond initializer. Used to instantiate a VirtualBond identifier.
-        """
         super(Virtual, self).__init__(*args, **kwargs)
 
     def type_number(self):
@@ -2932,7 +2950,7 @@ class AngleHarmonic(BondedInteraction):
 class AngleCosine(BondedInteraction):
 
     """
-    Bond angle dependent ine potential.
+    Bond angle dependent cosine potential.
 
     See :ref:`Bond-angle interactions`
 
@@ -2978,7 +2996,7 @@ class AngleCosine(BondedInteraction):
 class AngleCossquare(BondedInteraction):
 
     """
-    Bond angle dependent cos^2 potential.
+    Bond angle dependent cosine squared potential.
 
     See :ref:`Bond-angle interactions`
 
@@ -3023,25 +3041,26 @@ class AngleCossquare(BondedInteraction):
 IF IMMERSED_BOUNDARY:
     class IBM_Triel(BondedInteraction):
 
+        """
+        IBM Triel bond.
+
+        Parameters
+        ----------
+        indX : :obj:`int`
+            Specify first, second and third bonding partner. Used for
+            initializing reference state
+        k1 : :obj:`float`
+            Specifies shear elasticity for Skalak and Neo-Hookean
+        k2 : :obj:`float`
+            Specifies area resistance for Skalak
+        maxDist : :obj:`float`
+            Gives an error if an edge becomes longer than maxDist
+        elasticLaw : :obj:`str`
+            Specify NeoHookean or Skalak
+
+        """
+
         def __init__(self, *args, **kwargs):
-            """
-            IBM_Triel initializer. Used to instantiate an IBM_Triel identifier
-            with a given set of parameters.
-
-            Parameters
-            ----------
-            indX : :obj:`int`
-                  Specify first, second and third bonding partner. Used for initializing reference state
-            k1 : :obj:`float`
-                  Specifies shear elasticity for Skalak and Neo-Hookean
-            k2 : :obj:`float`
-                  Specifies area resistance for Skalak
-            maxDist : :obj:`float`
-                  Gives an error if an edge becomes longer than maxDist
-            elasticLaw : :obj:`string`
-                  Specify NeoHookean or Skalak
-
-            """
             super(IBM_Triel, self).__init__(*args, **kwargs)
 
         def type_number(self):
@@ -3082,21 +3101,22 @@ ELSE:
 IF IMMERSED_BOUNDARY == 1:
     class IBM_Tribend(BondedInteraction):
 
+        """
+        IBM Tribend bond.
+
+        Parameters
+        ----------
+        indX : :obj:`int`
+            Specify first, second, third and fourth bonding partner. Used for
+            initializing reference state
+        kb : :obj:`float`
+            Specifies bending modulus
+        refShape : :obj:`str`
+            Flat or Initial
+
+        """
+
         def __init__(self, *args, **kwargs):
-            """
-            IBM_Tribend initializer. Used to instantiate an IBM_Tribend identifier
-            with a given set of parameters.
-
-            Parameters
-            ----------
-            indX : :obj:`int`
-                  Specify first, second, third and fourth bonding partner. Used for initializing reference state
-            kb : :obj:`float`
-                  Specifies bending modulus
-            refShape : :obj:`string`
-                  Flat or Initial
-
-            """
             super(IBM_Tribend, self).__init__(*args, **kwargs)
 
         def type_number(self):
@@ -3134,19 +3154,20 @@ ELSE:
 IF IMMERSED_BOUNDARY == 1:
     class IBM_VolCons(BondedInteraction):
 
+        """
+        IBM VolCons bond.
+
+        Parameters
+        ----------
+        softID : :obj:`int`
+            Used to identify the object to which this bond belongs. Each object
+            (cell) needs its own ID
+        kappaV : :obj:`float`
+            Modulus for volume force
+
+        """
+
         def __init__(self, *args, **kwargs):
-            """
-            IBM_VolCons initializer. Used to instantiate an IBM_VolCons identifier
-            with a given set of parameters.
-
-            Parameters
-            ----------
-            softID : :obj:`int`
-                  Used to identify the object to which this bond belongs. Each object (cell) needs its own ID
-            kappaV : :obj:`float`
-                  Modulus for volume force
-
-            """
             super(IBM_VolCons, self).__init__(*args, **kwargs)
 
         def type_number(self):
@@ -3307,22 +3328,22 @@ ELSE:
 
 class QuarticBond(BondedInteraction):
 
-    def __init__(self, *args, **kwargs):
-        """
-        QuarticBond initializer. Used to instantiate a QuarticBond identifier
-        with a given set of parameters.
+    """
+    Quartic bond.
 
-        Parameters
-        ----------
-        k0 : :obj:`float`
-            Specifies the magnitude of the square term.
-        k1 : :obj:`float`
-            Specifies the magnitude of the fourth order term.
-        r : :obj:`float`
-            Specifies the equilibrium length of the bond.
-        r_cut : :obj:`float`
-            Specifies the maximum interaction length.
-        """
+    Parameters
+    ----------
+    k0 : :obj:`float`
+        Specifies the magnitude of the square term.
+    k1 : :obj:`float`
+        Specifies the magnitude of the fourth order term.
+    r : :obj:`float`
+        Specifies the equilibrium length of the bond.
+    r_cut : :obj:`float`
+        Specifies the maximum interaction length.
+    """
+
+    def __init__(self, *args, **kwargs):
         super(QuarticBond, self).__init__(*args, **kwargs)
 
     def type_number(self):

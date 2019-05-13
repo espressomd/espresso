@@ -364,7 +364,7 @@ and set the following parameters:
     * ``gamma0``: (float) Friction coefficient of the bath
     * ``gammav``: (float) Artificial friction coefficient for the volume fluctuations.
 
-Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.system.integrator.set_isotropic_npt`
+Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
 and the parameters:
 
     * ``ext_pressure``:  (float) The external pressure as float variable.

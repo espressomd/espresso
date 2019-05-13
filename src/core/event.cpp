@@ -91,7 +91,7 @@ void on_program_start() {
   /* initially go for domain decomposition */
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
-#ifdef LB_GPU
+#ifdef CUDA
   if (this_node == 0) {
     //   lb_pre_init_gpu();
   }
@@ -242,7 +242,7 @@ void on_particle_change() {
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
 
-#ifdef LB_GPU
+#ifdef CUDA
   lb_lbfluid_invalidate_particle_allocation();
 #endif
 #ifdef CUDA

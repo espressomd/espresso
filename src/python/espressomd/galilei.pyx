@@ -19,6 +19,7 @@
 
 from __future__ import print_function, absolute_import
 from . cimport galilei
+from .utils cimport make_array_locked
 
 cdef class GalileiTransform(object):
 
@@ -56,8 +57,7 @@ cdef class GalileiTransform(object):
               The of the center of mass position vector as a list of floats.
 
         """
-        mpi_system_CMS()
-        return gal.cms
+        return make_array_locked(mpi_system_CMS())
 
     def system_CMS_velocity(self):
         """
@@ -71,8 +71,7 @@ cdef class GalileiTransform(object):
 
         """
 
-        mpi_system_CMS_velocity()
-        return gal.cms_vel
+        return make_array_locked(mpi_system_CMS_velocity())
 
     def galilei_transform(self):
         """

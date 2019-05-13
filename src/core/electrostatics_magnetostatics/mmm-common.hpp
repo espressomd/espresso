@@ -32,9 +32,9 @@
 /** \name Math Constants */
 /*@{*/
 #define C_2PI (2 * M_PI)
-#define C_GAMMA 0.57721566490153286060651209008
-#define C_2LOG4PI -5.0620484939385815859557831885
-#define C_2PISQR C_2PI *C_2PI
+#define C_GAMMA (0.57721566490153286060651209008)
+#define C_2LOG4PI (-5.0620484939385815859557831885)
+#define C_2PISQR (C_2PI * C_2PI)
 /*@}*/
 
 /** table of the Taylor expansions of the modified polygamma functions */
