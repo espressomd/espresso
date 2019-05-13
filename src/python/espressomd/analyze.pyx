@@ -72,8 +72,8 @@ class Analysis(object):
         p1, p2
 
         """
-        cdef double p1c[3]
-        cdef double p2c[3]
+        cdef Vector3d p1c
+        cdef Vector3d p2c
         for i in range(3):
             p1c[i] = p1[i]
             p2c[i] = p2[i]

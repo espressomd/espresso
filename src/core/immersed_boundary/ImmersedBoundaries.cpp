@@ -337,9 +337,7 @@ void ImmersedBoundaries::calc_volume_force() {
             // Unfold position of first node
             // this is to get a continuous trajectory with no jumps when box
             // boundaries are crossed
-            double x1[3] = {p1.r.p[0], p1.r.p[1], p1.r.p[2]};
-            int img[3] = {p1.l.i[0], p1.l.i[1], p1.l.i[2]};
-            unfold_position(x1, img);
+            auto const x1 = unfolded_position(p1);
 
             // Unfolding seems to work only for the first particle of a triel
             // so get the others from relative vectors considering PBC

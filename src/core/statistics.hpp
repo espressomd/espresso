@@ -193,8 +193,8 @@ int calc_cylindrical_average(
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution);
 
-template <typename T1, typename T2>
-double min_distance2(T1 const pos1, T2 const pos2) {
+template <typename T>
+double min_distance2(Utils::Vector<T, 3> const &pos1, Utils::Vector<T, 3> const &pos2) {
   return get_mi_vector(pos1, pos2).norm2();
 }
 

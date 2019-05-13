@@ -175,12 +175,14 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   MofImatrix[7] = MofImatrix[5];
 }
 
-IntList nbhood(PartCfg &partCfg, double pt[3], double r,
+IntList nbhood(PartCfg &partCfg, double pt_[3], double r,
                int const planedims[3]) {
   IntList ids;
-  Utils::Vector3d d;
 
   auto const r2 = r * r;
+    auto const pt = Utils::Vector3d{pt_[0], pt_[1], pt_[2]};
+
+    Utils::Vector3d d;
 
   for (auto const &p : partCfg) {
     if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
@@ -205,7 +207,7 @@ double distto(PartCfg &partCfg, double p[3], int pid) {
 
   for (auto const &part : partCfg) {
     if (pid != part.p.identity) {
-      auto const d = get_mi_vector(p, part.r.p);
+      auto const d = get_mi_vector({p[0], p[1], p[2]}, part.r.p);
       mindist = std::min(mindist, d.norm2());
     }
   }
@@ -386,10 +388,11 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
             for (int t2 = 0; t2 < n_p2; t2++) {
               if (jt->p.type == p2_types[t2]) {
                 using Utils::make_const_span;
+                using Utils::Vector3d;
 
                 auto const dist =
-                    get_mi_vector(make_const_span(configs[k] + 3 * i, 3),
-                                  make_const_span(configs[k] + 3 * j, 3))
+                    get_mi_vector(Vector3d{make_const_span(configs[k] + 3 * i, 3)},
+                                  Vector3d{make_const_span(configs[k] + 3 * j, 3)})
                         .norm();
                 if (dist > r_min && dist < r_max) {
                   auto const ind =

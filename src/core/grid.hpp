@@ -208,8 +208,8 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
   }
 }
 
-template <typename T, typename U>
-Utils::Vector3d get_mi_vector(T const &a, U const &b) {
+template <typename T>
+Utils::Vector<T, 3> get_mi_vector(Utils::Vector<T, 3> const &a, Utils::Vector<T, 3> const &b) {
   Utils::Vector3d res;
   get_mi_vector(res, a, b);
 

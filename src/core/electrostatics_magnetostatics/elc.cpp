@@ -1317,12 +1317,13 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 ////////////////////////////////////////////////////////////////////////////////////
 
 void ELC_P3M_self_forces() {
-  double pos[3];
+  Utils::Vector3d pos;
   double q;
 
   for (auto &p : local_cells.particles()) {
     if (p.r.p[2] < elc_params.space_layer) {
       q = elc_params.delta_mid_bot * p.p.q * p.p.q;
+
       pos[0] = p.r.p[0];
       pos[1] = p.r.p[1];
       pos[2] = -p.r.p[2];
@@ -1414,7 +1415,8 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
                                                   const Particle *p2,
                                                   double *force1,
                                                   double *force2) {
-  double pos[3], q;
+  Utils::Vector3d pos;
+  double q;
 
   if (p1->r.p[2] < elc_params.space_layer) {
     q = elc_params.delta_mid_bot * p1->p.q * p2->p.q;
@@ -1461,7 +1463,8 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
 
 double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
                                                      const Particle *p2) {
-  double pos[3], q;
+  Utils::Vector3d pos;
+  double q;
   double tp2;
   double eng = 0.0;
 
@@ -1509,7 +1512,8 @@ double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
 //////////////////////////////////////////////////////////////////////////////////
 
 double ELC_P3M_dielectric_layers_energy_self() {
-  double pos[3], q;
+  Utils::Vector3d pos;
+  double q;
   double eng = 0.0;
 
   // Loop cell neighbors

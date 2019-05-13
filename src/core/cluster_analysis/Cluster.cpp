@@ -125,7 +125,7 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   std::vector<double> distances;
 
   for (auto const &it : particles) {
-    distances.push_back(get_mi_vector(com.begin(), partCfg()[it].r.p)
+    distances.push_back(get_mi_vector(com, partCfg()[it].r.p)
                             .norm()); // add distance from the current particle
                                       // to the com in the distances vectors
   }
