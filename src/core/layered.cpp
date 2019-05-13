@@ -415,12 +415,15 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
     fold_position(pl->part[p].r.p, pl->part[p].l.i);
 
     if (LAYERED_BTM_NEIGHBOR &&
-        (get_mi_coord(pl->part[p].r.p[2], my_left[2], 2,box_geo.length()[2]) < 0.0)) {
+        (get_mi_coord(pl->part[p].r.p[2], my_left[2], 2, box_geo.length()[2],
+                      box_geo.periodic(2)) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node below\n",
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(dn, pl, p);
     } else if (LAYERED_TOP_NEIGHBOR &&
-               (get_mi_coord(pl->part[p].r.p[2], my_right[2], 2,box_geo.length()[2]) >= 0.0)) {
+               (get_mi_coord(pl->part[p].r.p[2], my_right[2], 2,
+                             box_geo.length()[2],
+                             box_geo.periodic(2)) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node above\n",
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(up, pl, p);
@@ -449,14 +452,16 @@ void layered_exchange_and_sort_particles(int global_flag,
     part = &displaced_parts->part[p];
 
     if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR &&
-        (get_mi_coord(part->r.p[2], my_left[2], 2,box_geo.length()[2]) < 0.0)) {
+        (get_mi_coord(part->r.p[2], my_left[2], 2, box_geo.length()[2],
+                      box_geo.periodic(2)) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: send part %d down\n", this_node,
                          part->p.identity));
       move_indexed_particle(&send_buf_dn, displaced_parts, p);
       if (p < displaced_parts->n)
         p--;
     } else if (n_nodes != 1 && LAYERED_TOP_NEIGHBOR &&
-               (get_mi_coord(part->r.p[2], my_right[2], 2,box_geo.length()[2]) >= 0.0)) {
+               (get_mi_coord(part->r.p[2], my_right[2], 2, box_geo.length()[2],
+                             box_geo.periodic(2)) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: send part %d up\n", this_node,
                          part->p.identity));
       move_indexed_particle(&send_buf_up, displaced_parts, p);

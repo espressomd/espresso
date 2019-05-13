@@ -185,10 +185,10 @@ void calc_minimal_box_dimensions();
 void rescale_boxl(int dir, double d_new);
 
 template <typename T>
-T get_mi_coord(T a, T b, int dir, const double &box_length) {
+T get_mi_coord(T a, T b, int dir, T box_length, bool periodic) {
   auto dx = a - b;
 
-  if (box_geo.periodic(dir) && std::fabs(dx) > (0.5 * box_length))
+  if (periodic && std::fabs(dx) > (0.5 * box_length))
     dx -= std::round(dx * box_l_i[dir]) * box_length;
 
   return dx;
@@ -203,7 +203,8 @@ T get_mi_coord(T a, T b, int dir, const double &box_length) {
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++) {
-    res[i] = get_mi_coord(a[i], b[i], i, box_geo.length()[i]);
+    res[i] =
+        get_mi_coord(a[i], b[i], i, box_geo.length()[i], box_geo.periodic(i));
   }
 }
 
