@@ -104,8 +104,6 @@ extern Utils::Vector<int, 6> node_neighbors;
 /** where to fold particles that leave local box in direction i. */
 extern Utils::Vector<int, 6> boundary;
 
-/** Half the box dimensions. Used for get_mi_vector. */
-extern Utils::Vector3d half_box_l;
 /** 1 / box dimensions. */
 extern Utils::Vector3d box_l_i;
 /** Smallest simulation box dimension (\ref box_l).
