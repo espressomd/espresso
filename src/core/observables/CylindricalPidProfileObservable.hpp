@@ -28,6 +28,7 @@ namespace Observables {
 
 class CylindricalPidProfileObservable : public PidObservable,
                                         public CylindricalProfileObservable {
+public:
   CylindricalPidProfileObservable(std::vector<int> const &ids,
                                   Utils::Vector3d const &center,
                                   std::string const &axis, int n_r_bins,

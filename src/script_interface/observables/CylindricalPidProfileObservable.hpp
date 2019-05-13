@@ -109,6 +109,16 @@ public:
     });
   };
 
+  void construct(VariantMap const &params) override {
+    m_observable =
+        make_shared_from_args<CoreObs, std::vector<int>, Utils::Vector3d,
+                              std::string, int, int, int, double, double,
+                              double, double, double, double>(
+            params, "ids", "center", "axis", "n_r_bins", "n_phi_bins",
+            "n_z_bins", "min_r", "min_phi", "min_z", "max_r", "max_phi",
+            "max_z");
+  }
+
   std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;
   }

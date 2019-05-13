@@ -28,6 +28,7 @@ namespace Observables {
 class CylindricalLBFluxDensityProfileAtParticlePositions
     : public CylindricalPidProfileObservable {
 public:
+  using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
   std::vector<double> operator()(PartCfg &partCfg) const override;
   int n_values() const override { return 3 * n_r_bins * n_phi_bins * n_z_bins; }
 };
