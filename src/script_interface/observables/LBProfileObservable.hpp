@@ -89,37 +89,31 @@ public:
          {"sampling_delta_x",
           [this](const Variant &v) {
             profile_observable()->sampling_delta_x = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_delta_x; }},
          {"sampling_delta_y",
           [this](const Variant &v) {
             profile_observable()->sampling_delta_y = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_delta_y; }},
          {"sampling_delta_z",
           [this](const Variant &v) {
             profile_observable()->sampling_delta_z = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_delta_z; }},
          {"sampling_offset_x",
           [this](const Variant &v) {
             profile_observable()->sampling_offset_x = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_offset_x; }},
          {"sampling_offset_y",
           [this](const Variant &v) {
             profile_observable()->sampling_offset_y = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_offset_y; }},
          {"sampling_offset_z",
           [this](const Variant &v) {
             profile_observable()->sampling_offset_z = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_offset_z; }},
          {"allow_empty_bins",

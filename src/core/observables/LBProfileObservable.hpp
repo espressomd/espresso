@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cmath>
 
 #include "ProfileObservable.hpp"
+#include <utils/Vector.hpp>
 
 namespace Observables {
 
@@ -39,7 +40,9 @@ public:
         sampling_delta_z(sampling_delta_z),
         sampling_offset_x(sampling_offset_x),
         sampling_offset_y(sampling_offset_y),
-        sampling_offset_z(sampling_offset_z) {}
+        sampling_offset_z(sampling_offset_z) {
+    calculate_sampling_positions();
+  }
   double sampling_delta_x;
   double sampling_delta_y;
   double sampling_delta_z;
@@ -47,8 +50,8 @@ public:
   double sampling_offset_y;
   double sampling_offset_z;
   bool allow_empty_bins = false;
-  void calculate_sample_positions() {
-    m_sample_positions.clear();
+  void calculate_sampling_positions() {
+    sampling_positions.clear();
     if (sampling_delta_x == 0 or sampling_delta_y == 0 or sampling_delta_z == 0)
       throw std::runtime_error("Parameter delta_x/y/z must not be zero!");
     const auto n_samples_x = static_cast<size_t>(
@@ -60,17 +63,15 @@ public:
     for (size_t x = 0; x < n_samples_x; ++x) {
       for (size_t y = 0; y < n_samples_y; ++y) {
         for (size_t z = 0; z < n_samples_z; ++z) {
-          m_sample_positions.push_back(sampling_offset_x +
-                                       x * sampling_delta_x);
-          m_sample_positions.push_back(sampling_offset_y +
-                                       y * sampling_delta_y);
-          m_sample_positions.push_back(sampling_offset_z +
-                                       z * sampling_delta_z);
+          sampling_positions.push_back(
+              Utils::Vector3d{{sampling_offset_x + x * sampling_delta_x,
+                               sampling_offset_y + y * sampling_delta_y,
+                               sampling_offset_z + z * sampling_delta_z}});
         }
       }
     }
   }
-  std::vector<double> m_sample_positions;
+  std::vector<Utils::Vector3d> sampling_positions;
 };
 
 } // namespace Observables
