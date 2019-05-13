@@ -190,8 +190,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     // Get distance vector pointing from real to virtual particle, respecting
     // periodic boundary i
     // conditions
-    double d[3];
-    get_mi_vector(d, p_real->r.p, p.r.p);
+    auto const d = get_mi_vector(p_real->r.p, p.r.p);
 
     // Stress tensor contribution
     for (int k = 0; k < 3; k++)

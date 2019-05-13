@@ -58,8 +58,7 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
   const Utils::Vector3d dip2 = p2->calc_dip();
 
   // Distance between particles
-  Utils::Vector3d dr;
-  get_mi_vector(dr, p1->r.p, p2->r.p);
+  auto const dr = get_mi_vector(p1->r.p, p2->r.p);
 
   // Powers of distance
   r2 = dr * dr;

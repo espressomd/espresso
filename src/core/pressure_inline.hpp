@@ -194,7 +194,7 @@ inline void add_bonded_virials(Particle *p1) {
     }
 
     auto dx = get_mi_vector(p1->r.p, p2->r.p);
-    calc_bond_pair_force(p1, p2, iaparams, dx.data(), force);
+    calc_bond_pair_force(p1, p2, iaparams, dx, force);
     *obsstat_bonded(&virials, type_num) +=
         dx[0] * force[0] + dx[1] * force[1] + dx[2] * force[2];
 
