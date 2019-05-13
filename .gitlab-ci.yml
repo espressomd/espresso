@@ -65,6 +65,21 @@ style:
     expire_in: 1 week
     when: on_failure
 
+style_doxygen:
+  <<: *global_job_definition
+  stage: prepare
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  dependencies: []
+  script:
+    - mkdir build
+    - cd build
+    - cp ../maintainer/configs/maxset.hpp myconfig.hpp
+    - cmake ..
+    - bash ../maintainer/CI/dox_warnings.sh
+  tags:
+    - docker
+    - linux
+
 ### Builds without CUDA
 
 default:
@@ -416,7 +431,6 @@ check_doxygen:
   script:
     - cd ${CI_PROJECT_DIR}/build
     - make -t && make doxygen
-    - bash ../maintainer/CI/dox_warnings.sh
   artifacts:
     paths:
     - build/doc/doxygen
