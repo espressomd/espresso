@@ -47,15 +47,13 @@ REGISTER_CALLBACK(destruct_lb_walberla);
 
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau) {
-  Communication::mpiCallbacks().call(init_lb_walberla, viscosity, density,
+  Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity, density,
                                      agrid, tau, box_l, node_grid, skin);
-  init_lb_walberla(viscosity, density, agrid, tau, box_l, node_grid, skin);
   lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
 }
 
 void mpi_destruct_lb_walberla() {
-  Communication::mpiCallbacks().call(destruct_lb_walberla);
-  destruct_lb_walberla();
+  Communication::mpiCallbacks().call_all(destruct_lb_walberla);
   lb_lbfluid_set_lattice_switch(ActiveLB::NONE);
 }
 #endif
