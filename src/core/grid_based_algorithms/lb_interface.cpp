@@ -489,9 +489,11 @@ double lb_lbfluid_get_agrid() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.agrid;
   }
+#ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     return lb_walberla()->get_grid_spacing();
   }
+#endif
   throw std::runtime_error("LB not activated.");
 
   return {};
@@ -556,9 +558,11 @@ double lb_lbfluid_get_tau() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.tau;
   }
+#ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     return lb_walberla()->get_tau();
   }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 
@@ -1129,9 +1133,11 @@ bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::CPU) {
     return within_bounds(ind, lblattice.global_grid);
   }
+#ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     return within_bounds(ind, lb_walberla()->get_grid_dimensions());
   }
+#endif
   return false;
 }
 
@@ -1198,9 +1204,11 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
     return j / rho;
   }
+#ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     return Communication::mpiCallbacks().call(Communication::Result::one_rank, Walberla::get_node_velocity, ind);
   }
+#endif
   
   throw std::runtime_error("LB not activated.");
 
@@ -1415,9 +1423,12 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
     /* transform to lattice units */
     j = rho * u;
     mpi_send_fluid(node, index, rho, j, pi);
-  } else if (lattice_switch == ActiveLB::WALBERLA) {
+  }
+#ifdef LB_WALBERLA
+  else if (lattice_switch == ActiveLB::WALBERLA) {
     Communication::mpiCallbacks().call_all(Walberla::set_node_velocity,ind,u);
   }
+#endif
 }
 
 void lb_lbnode_set_pop(const Utils::Vector3i &ind,

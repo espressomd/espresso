@@ -19,24 +19,30 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-from espressomd.lb_walberla import LbWalberla
+from espressomd.lb import LBFluidWalberla
 import numpy as np
 
 
 @ut.skipIf(not espressomd.has_features("LB_WALBERLA"), "Skipping for LACK of LB_WALBERLA")
 class LbWalberlaTest(ut.TestCase):
-    visc = 2.
-    agrid = .5
-    vel = [1.3, 2.2, 3.1]
-
     def test(self):
-        system = espressomd.System(box_l=[10] * 3)
-        lb = LbWalberla(visc=self.visc, agrid=self.agrid)
-        self.assertEqual(lb.visc, self.visc)
-        self.assertEqual(lb.agrid, self.agrid)
-        lb[0, 0, 0].velocity = self.vel
-        self.assertEqual(lb[0, 0, 0].velocity, self.vel)
-    
+        s=espressomd.System(box_l=(9.6,12,15.6))
+        s.time_step = 0.2
+        s.cell_system.skin =0.
+        lbf=LBFluidWalberla(agrid = .6, dens = 1.3, visc = 2.5,tau=s.time_step)
+        s.actors.add(lbf)
+        max_ind=s.box_l/.6
+        for i in range(int(max_ind[0])):
+          for j in range(int(max_ind[1])):
+            for k in range(int(max_ind[2])):
+              assert np.linalg.norm(lbf[i,j,k].velocity) == 0
+              v=np.array((i*.5,j*1.5,k*2.5))
+              lbf[i,j,k].velocity =v
+              assert np.linalg.norm(lbf[i,j,k].velocity -v)<1E-10
+              
+        s.actors.remove(lbf)
+
+
 if __name__ == "__main__":
     # print("Features: ", espressomd.features())
     ut.main()
