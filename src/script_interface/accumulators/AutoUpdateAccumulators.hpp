@@ -30,20 +30,11 @@ namespace ScriptInterface {
 namespace Accumulators {
 class AutoUpdateAccumulators : public ScriptObjectRegistry<AccumulatorBase> {
   void add_in_core(std::shared_ptr<AccumulatorBase> obj_ptr) override {
-    ::Accumulators::auto_update_accumulators.push_back(obj_ptr->accumulator());
+    ::Accumulators::auto_update_add(obj_ptr->accumulator().get());
   }
 
   void remove_in_core(std::shared_ptr<AccumulatorBase> obj_ptr) override {
-    auto it = std::find(::Accumulators::auto_update_accumulators.begin(),
-                        ::Accumulators::auto_update_accumulators.end(),
-                        obj_ptr->accumulator());
-
-    if (it != ::Accumulators::auto_update_accumulators.end()) {
-      ::Accumulators::auto_update_accumulators.erase(it);
-
-    } else {
-      throw std::runtime_error("Could not find Accumulator to remove");
-    }
+    ::Accumulators::auto_update_remove(obj_ptr->accumulator().get());
   }
 };
 } /* namespace Accumulators */

@@ -28,7 +28,7 @@ namespace Observables {
 class MagneticDipoleMoment : public PidObservable {
 public:
   int n_values() const override { return 3; };
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values(), 0.0);
     for (int i : ids()) {
 #ifdef DIPOLES
