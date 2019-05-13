@@ -28,8 +28,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <sstream>
 #include <boost/range/numeric.hpp>
+#include <sstream>
 
 #include <algorithm>
 #include <complex>
