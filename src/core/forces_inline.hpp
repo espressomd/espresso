@@ -423,7 +423,6 @@ inline void add_bonded_force(Particle *p1) {
 
   int i = 0;
   while (i < p1->bl.n) {
-    double dx[3] = {0., 0., 0.};
     double force[3] = {0., 0., 0.};
     double force2[3] = {0., 0., 0.};
     double force3[3] = {0., 0., 0.};
@@ -473,7 +472,8 @@ inline void add_bonded_force(Particle *p1) {
          1->2 distance vector here. For many body interactions this vector is
          not needed,
          and the pressure calculation not yet clear. */
-      get_mi_vector(dx, p1->r.p, p2->r.p);
+        double dx[3] = {0., 0., 0.};
+        get_mi_vector(dx, p1->r.p, p2->r.p);
       bond_broken = calc_bond_pair_force(p1, p2, iaparams, dx, force);
 
 #ifdef NPT
@@ -575,9 +575,7 @@ inline void add_bonded_force(Particle *p1) {
     case 1:
       if (bond_broken) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                          << " and " << p2->p.identity
-                          << ". Distance vector: " << dx[0] << " " << dx[1]
-                          << " " << dx[2];
+                          << " and " << p2->p.identity;
         continue;
       }
 
