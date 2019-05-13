@@ -281,12 +281,10 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
                                             const Particle *const p2,
                                             Utils::Vector3d &pos1,
                                             Utils::Vector3d &pos2) {
-  double vec21[3];
-  get_mi_vector(vec21, p1->r.p, p2->r.p);
-  for (int i = 0; i < 3; i++) {
-    pos1[i] = p1->r.p[i] - vec21[i] * collision_params.vs_placement;
-    pos2[i] = p1->r.p[i] - vec21[i] * (1. - collision_params.vs_placement);
-  }
+  auto const vec21 = get_mi_vector(p1->r.p, p2->r.p);
+    pos1 = p1->r.p - vec21 * collision_params.vs_placement;
+    pos2 = p1->r.p - vec21 * (1. - collision_params.vs_placement);
+
 }
 
 // Considers three particles for three_particle_binding and performs
