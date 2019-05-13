@@ -28,11 +28,11 @@ namespace Observables {
 
 class CylindricalProfileObservable : virtual public Observable {
 public:
-  CylindricalProfileObservable(Utils::Vector3d center, std::string const &axis,
+  CylindricalProfileObservable(Utils::Vector3d const &center, std::string axis,
                                double min_r, double max_r, double min_phi,
                                double max_phi, double min_z, double max_z,
                                int n_r_bins, int n_phi_bins, int n_z_bins)
-      : center(center), axis(axis), min_r(min_r), max_r(max_r),
+      : center(center), axis(std::move(axis)), min_r(min_r), max_r(max_r),
         min_phi(min_phi), max_phi(max_phi), min_z(min_z), max_z(max_z),
         n_r_bins(n_r_bins), n_phi_bins(n_phi_bins), n_z_bins(n_z_bins){};
   Utils::Vector3d center;
