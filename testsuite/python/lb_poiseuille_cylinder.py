@@ -172,7 +172,11 @@ class LBPoiseuilleCommon(object):
             OBS_PARAMS['min_r'],
             OBS_PARAMS['max_r'],
             OBS_PARAMS['n_r_bins'])
-        v_expected = poiseuille_flow(x, BOX_L / 2.0 -1.0, EXT_FORCE, VISC * DENS)
+        v_expected = poiseuille_flow(
+            x,
+            BOX_L / 2.0 - 1.0,
+            EXT_FORCE,
+            VISC * DENS)
         v_measured = obs_result[:, 0, 0, 2]
         rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
         self.assertLess(rmsd, 0.0025 * AGRID / TIME_STEP)
