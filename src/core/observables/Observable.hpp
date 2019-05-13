@@ -44,8 +44,6 @@ public:
   Observable() = default;
   virtual ~Observable() = default;
   /** Calculate the set of values measured by the observable
-   *  @param partCfg Set of particles involved in the calculation, only
-   *                 relevant for observables acting on particles
    */
   virtual std::vector<double> operator()() const = 0;
 
