@@ -69,6 +69,10 @@ struct BoxGeometry {
     return m_periodic[coord];
   }
 #else
+void set_periodic(unsigned, bool val) const {
+    if(!val)
+      throw std::runtime_error("Disabeling periodicity needs feature 'PARTIAL_PERIODIC'.");
+  }
 constexpr bool periodic(int) {
     return true;
   }

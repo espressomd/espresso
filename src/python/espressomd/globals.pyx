@@ -11,6 +11,8 @@ from globals cimport forcecap_get
 from espressomd.utils import array_locked, is_valid_type
 from utils cimport Vector3d
 
+include "myconfig.pxi"
+
 cdef class Globals(object):
     property box_l:
         def __set__(self, _box_l):
@@ -48,14 +50,15 @@ cdef class Globals(object):
 
     property periodicity:
         def __set__(self, _periodic):
-
             for i in range(3):
                 grid.box_geo.set_periodic(i, _periodic[i])
-            mpi_bcast_parameter(FIELD_PERIODIC)
+
+            IF PARTIAL_PERIODIC:
+                mpi_bcast_parameter(FIELD_PERIODIC)
 
         def __get__(self):
             periodicity = np.zeros(3)
-            
+
             for i in range(3):
                 periodicity[i] = grid.box_geo.periodic(i)
 
