@@ -41,8 +41,7 @@ public:
   static_assert(std::is_base_of<::Observables::CylindricalPidProfileObservable,
                                 CoreObs>::value,
                 "");
-  CylindricalPidProfileObservable()
-      : m_observable(std::make_shared<CoreObs>()) {
+  CylindricalPidProfileObservable() {
     this->add_parameters({
         {"ids",
          [this](const Variant &v) {

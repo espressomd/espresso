@@ -37,7 +37,6 @@ operator()(PartCfg &partCfg) const {
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
        std::make_pair(min_z, max_z)}};
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
-  std::cout << sampling_positions.size() << std::endl;
   for (auto const &p : sampling_positions) {
     auto const velocity =
         lb_lbinterpolation_get_interpolated_velocity_global(p) *

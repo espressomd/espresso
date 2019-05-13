@@ -41,8 +41,7 @@ public:
   static_assert(std::is_base_of<::Observables::CylindricalLBProfileObservable,
                                 CoreCylLBObs>::value,
                 "");
-  CylindricalLBProfileObservable()
-      : m_observable(std::make_shared<CoreCylLBObs>()) {
+  CylindricalLBProfileObservable() {
     this->add_parameters({
         {"center",
          [this](const Variant &v) {
@@ -119,7 +118,6 @@ public:
             params, "center", "axis", "n_r_bins", "n_phi_bins", "n_z_bins",
             "min_r", "min_phi", "min_z", "max_r", "max_phi", "max_z",
             "sampling_density");
-    m_observable->calculate_sampling_positions();
   }
 
   Variant call_method(std::string const &method,

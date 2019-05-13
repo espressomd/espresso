@@ -27,9 +27,25 @@ namespace Observables {
 
 class LBProfileObservable : public ProfileObservable {
 public:
-  double sampling_delta_x = 1.0, sampling_delta_y = 1.0, sampling_delta_z = 1.0;
-  double sampling_offset_x = 0.0, sampling_offset_y = 0.0,
-         sampling_offset_z = 0.0;
+  LBProfileObservable(double sampling_delta_x, double sampling_delta_y,
+                      double sampling_delta_z, double sampling_offset_x,
+                      double sampling_offset_y, double sampling_offset_z,
+                      bool allow_empty_bins, int n_x_bins, int n_y_bins,
+                      int n_z_bins, double min_x, double min_y, double min_z,
+                      double max_x, double max_y, double max_z)
+      : ProfileObservable(min_x, max_x, min_y, max_y, min_z, max_z, n_x_bins,
+                          n_y_bins, n_z_bins),
+        sampling_delta_x(sampling_delta_x), sampling_delta_y(sampling_delta_y),
+        sampling_delta_z(sampling_delta_z),
+        sampling_offset_x(sampling_offset_x),
+        sampling_offset_y(sampling_offset_y),
+        sampling_offset_z(sampling_offset_z) {}
+  double sampling_delta_x;
+  double sampling_delta_y;
+  double sampling_delta_z;
+  double sampling_offset_x;
+  double sampling_offset_y;
+  double sampling_offset_z;
   bool allow_empty_bins = false;
   void calculate_sample_positions() {
     m_sample_positions.clear();

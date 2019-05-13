@@ -37,7 +37,7 @@ template <typename CoreObs>
 class PidProfileObservable
     : public AutoParameters<PidProfileObservable<CoreObs>, Observable> {
 public:
-  PidProfileObservable() : m_observable(std::make_shared<CoreObs>()) {
+  PidProfileObservable() {
     this->add_parameters(
         {{"ids",
           [this](const Variant &v) {

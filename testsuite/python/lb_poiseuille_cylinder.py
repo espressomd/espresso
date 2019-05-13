@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import numpy as np
+import matplotlib.pyplot as plt
 
 import espressomd.lb
 import espressomd.lbboundaries
@@ -49,10 +50,10 @@ OBS_PARAMS = {'n_r_bins' : 50,
               'min_r' : 0.0,
               'min_phi' : -np.pi,
               'min_z' : 0.0,
-              'max_r' : BOX_L / 2.0,
+              'max_r' : BOX_L / 2.0 - 1.0,
               'max_phi' : np.pi,
               'max_z' : BOX_L,
-              'sampling_density' : 2.0}
+              'sampling_density' : 3.0}
 
 def poiseuille_flow(r, R, ext_force_density, dyn_visc):
     """
@@ -159,22 +160,29 @@ class LBPoiseuilleCommon(object):
     def check_observable(self):
         self.prepare_obs()
         # gather some statistics for the observable accumulator
-        self.system.integrator.run(50)
+        self.system.integrator.run(10)
         obs_result = np.array(self.accumulator.get_mean()).reshape(OBS_PARAMS['n_r_bins'], OBS_PARAMS['n_phi_bins'], OBS_PARAMS['n_z_bins'], 3)
+        x = np.linspace(OBS_PARAMS['min_r'], OBS_PARAMS['max_r'], OBS_PARAMS['n_r_bins'])
+        #plt.plot(x, obs_result[:, 0, 0, 2], label='observable')
+        #plt.plot(x, poiseuille_flow(x, BOX_L / 2.0 -1.0, EXT_FORCE, VISC * DENS))
+        #plt.legend()
+        #plt.show()
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]
         self.compare_to_analytical()
+        self.check_observable()
 
     def test_y(self):
         self.params['axis'] = [0, 1, 0]
         self.compare_to_analytical()
+        self.check_observable()
 
     def test_z(self):
         self.params['axis'] = [0, 0, 1]
         self.compare_to_analytical()
         self.check_observable()
-        
+
 
 
 @ut.skipIf(not espressomd.has_features(

@@ -43,7 +43,7 @@ public:
   static_assert(
       std::is_base_of<::Observables::PidObservable, CorePidObs>::value, "");
 
-  PidObservable() : m_observable(std::make_shared<CorePidObs>()) {}
+  PidObservable() {}
 
   VariantMap get_parameters() const override {
     return {{"ids", m_observable->ids()}};
