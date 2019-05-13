@@ -220,7 +220,7 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
   double inv_bin_width = 0.0;
   double min_dist, min_dist2 = 0.0, start_dist2;
 
-  start_dist2 = Utils::sqr(box_l[0] + box_l[1] + box_l[2]);
+  start_dist2 = Utils::sqr(box_geo.length()[0] + box_geo.length()[1] + box_geo.length()[2]);
   /* bin preparation */
   *low = 0.0;
   for (int i = 0; i < r_bins; i++)
@@ -326,7 +326,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
   }
 
   /* normalization */
-  volume = box_l[0] * box_l[1] * box_l[2];
+  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
   for (i = 0; i < r_bins; i++) {
     r_in = i * bin_width + r_min;
     r_out = r_in + bin_width;
@@ -364,7 +364,7 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
 
   bin_width = (r_max - r_min) / (double)r_bins;
   inv_bin_width = 1.0 / bin_width;
-  volume = box_l[0] * box_l[1] * box_l[2];
+  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
   for (int l = 0; l < r_bins; l++)
     rdf_tmp[l] = rdf[l] = 0.0;
 
@@ -431,7 +431,7 @@ void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
   ff[2 * order2] = 0;
-  twoPI_L = 2 * Utils::pi() / box_l[0];
+  twoPI_L = 2 * Utils::pi() / box_geo.length()[0];
 
   if ((n_types < 0) || (n_types > max_seen_particle_type)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
@@ -490,7 +490,7 @@ std::vector<std::vector<double>> modify_stucturefactor(int order,
     }
   }
 
-  double qfak = 2.0 * Utils::pi() / box_l[0];
+  double qfak = 2.0 * Utils::pi() / box_geo.length()[0];
   std::vector<double> intern;
   intern.assign(2, 0.0);
   std::vector<std::vector<double>> structure_factor;

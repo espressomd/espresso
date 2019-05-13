@@ -300,7 +300,7 @@ void File::create_new_file(const std::string &filename) {
 
   // write time independent datasets
   // write box information
-  std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
+  std::vector<double> boxvec = {box_geo.length()[0], box_geo.length()[1], box_geo.length()[2]};
   auto group = h5xx::group(m_h5md_file, "particles/atoms/box");
   h5xx::write_attribute(group, "dimension", 3);
   h5xx::write_attribute(group, "boundary", "periodic");

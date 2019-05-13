@@ -109,13 +109,13 @@ void short_range_loop(ParticleKernel &&particle_kernel,
   auto last = boost::make_indirect_iterator(local_cells.end());
 
 #ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = Coulomb::cutoff(box_l);
+  auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
 #else
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipole::cutoff(box_l);
+  auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif

@@ -78,6 +78,15 @@ constexpr bool periodic(int) {
   }
 #endif
 
+  Utils::Vector3d m_length = {1,1,1};
+
+  Utils::Vector3d const& length() const {
+    return m_length;
+  }
+
+  void set_length(Utils::Vector3d const& box_l) {
+    m_length = box_l;
+  }
 };
 
 extern BoxGeometry box_geo;
@@ -95,8 +104,6 @@ extern Utils::Vector<int, 6> node_neighbors;
 /** where to fold particles that leave local box in direction i. */
 extern Utils::Vector<int, 6> boundary;
 
-/** Simulation box dimensions. */
-extern Utils::Vector3d box_l;
 /** Half the box dimensions. Used for get_mi_vector. */
 extern Utils::Vector3d half_box_l;
 /** 1 / box dimensions. */
@@ -181,7 +188,7 @@ template <typename T> T get_mi_coord(T a, T b, int dir) {
   auto dx = a - b;
 
   if (box_geo.periodic(dir) && std::fabs(dx) > half_box_l[dir])
-    dx -= std::round(dx * box_l_i[dir]) * box_l[dir];
+    dx -= std::round(dx * box_l_i[dir]) * box_geo.length()[dir];
 
   return dx;
 }
@@ -221,7 +228,7 @@ void fold_coordinate(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box,
                      int dir) {
   if (box_geo.periodic(dir)) {
     std::tie(pos[dir], image_box[dir]) =
-        Algorithm::periodic_fold(pos[dir], image_box[dir], box_l[dir]);
+        Algorithm::periodic_fold(pos[dir], image_box[dir], box_geo.length()[dir]);
 
     if ((image_box[dir] == std::numeric_limits<T2>::min()) ||
         (image_box[dir] == std::numeric_limits<T2>::max())) {
@@ -250,7 +257,7 @@ inline Utils::Vector3d folded_position(const Utils::Vector3d &p) {
   Utils::Vector3d p_folded;
   for (int i = 0; i < 3; i++) {
     if (box_geo.periodic(i)) {
-      p_folded[i] = Algorithm::periodic_fold(p[i], box_l[i]);
+      p_folded[i] = Algorithm::periodic_fold(p[i], box_geo.length()[i]);
     } else {
       p_folded[i] = p[i];
     }
@@ -284,7 +291,7 @@ template <typename T1, typename T2, typename T3>
 void unfold_position(T1 &pos, T2 &vel, T3 &image_box) {
   int i;
   for (i = 0; i < 3; i++) {
-    pos[i] = pos[i] + image_box[i] * box_l[i];
+    pos[i] = pos[i] + image_box[i] * box_geo.length()[i];
     image_box[i] = 0;
   }
 }
@@ -292,7 +299,7 @@ void unfold_position(T1 &pos, T2 &vel, T3 &image_box) {
 inline Utils::Vector3d unfolded_position(Particle const *p) {
   Utils::Vector3d pos{p->r.p};
   for (int i = 0; i < 3; i++) {
-    pos[i] += p->l.i[i] * box_l[i];
+    pos[i] += p->l.i[i] * box_geo.length()[i];
   }
 
   return pos;

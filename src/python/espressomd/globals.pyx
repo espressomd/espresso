@@ -9,7 +9,7 @@ from globals cimport timing_samples
 from globals cimport forcecap_set
 from globals cimport forcecap_get
 from espressomd.utils import array_locked, is_valid_type
-from utils cimport Vector3d
+from espressomd.utils cimport Vector3d, make_array_locked
 
 include "myconfig.pxi"
 
@@ -24,11 +24,11 @@ cdef class Globals(object):
                     raise ValueError(
                         "Box length must be > 0  in all directions")
                 temp_box_l[i] = _box_l[i]
-            grid.box_l = temp_box_l
+            grid.box_geo.set_length(temp_box_l)
             mpi_bcast_parameter(FIELD_BOXL)
 
         def __get__(self):
-            return array_locked(np.array([grid.box_l[0], grid.box_l[1], grid.box_l[2]]))
+            return make_array_locked(grid.box_geo.length())
 
     property time_step:
         def __set__(self, time_step):

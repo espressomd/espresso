@@ -210,7 +210,7 @@ void ReactionAlgorithm::check_reaction_ensemble() {
  */
 void ReactionAlgorithm::set_cuboid_reaction_ensemble_volume() {
   if (volume < 0)
-    volume = box_l[0] * box_l[1] * box_l[2];
+    volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
 }
 
 /**
@@ -649,17 +649,17 @@ std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
     }
     out_pos[0] += cyl_x;
     out_pos[1] += cyl_y;
-    out_pos[2] = box_l[2] * m_uniform_real_distribution(m_generator);
+    out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   } else if (box_has_wall_constraints) {
-    out_pos[0] = box_l[0] * m_uniform_real_distribution(m_generator);
-    out_pos[1] = box_l[1] * m_uniform_real_distribution(m_generator);
+    out_pos[0] = box_geo.length()[0] * m_uniform_real_distribution(m_generator);
+    out_pos[1] = box_geo.length()[1] * m_uniform_real_distribution(m_generator);
     out_pos[2] = slab_start_z + (slab_end_z - slab_start_z) *
                                     m_uniform_real_distribution(m_generator);
   } else {
     // cubic case
-    out_pos[0] = box_l[0] * m_uniform_real_distribution(m_generator);
-    out_pos[1] = box_l[1] * m_uniform_real_distribution(m_generator);
-    out_pos[2] = box_l[2] * m_uniform_real_distribution(m_generator);
+    out_pos[0] = box_geo.length()[0] * m_uniform_real_distribution(m_generator);
+    out_pos[1] = box_geo.length()[1] * m_uniform_real_distribution(m_generator);
+    out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   }
   return out_pos;
 }
@@ -693,7 +693,7 @@ std::vector<double> ReactionAlgorithm::
   }
   out_pos[0] += cyl_x;
   out_pos[1] += cyl_y;
-  out_pos[2] = box_l[2] * m_uniform_real_distribution(m_generator);
+  out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   return out_pos;
 }
 

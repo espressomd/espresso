@@ -69,7 +69,7 @@ typedef struct {
 
 const std::unordered_map<int, Datafield> fields{
     {FIELD_BOXL,
-     {box_l.data(), Datafield::Type::DOUBLE, 3,
+     {box_geo.m_length.data(), Datafield::Type::DOUBLE, 3,
       "box_l"}}, /* 0  from grid.cpp */
     {FIELD_CELLGRID,
      {dd.cell_grid, Datafield::Type::INT, 3,

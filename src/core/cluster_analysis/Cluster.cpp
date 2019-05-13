@@ -64,7 +64,7 @@ Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
   // Fold into simulation box
 
   for (int i = 0; i < 3; i++) {
-    com[i] = fmod(com[i], box_l[i]);
+    com[i] = fmod(com[i], box_geo.length()[i]);
   }
   return com;
 }

@@ -772,9 +772,9 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
     Utils::Vector3i pos;
     Utils::Vector3i gridsize;
 
-    gridsize[0] = box_l[0] / lblattice.agrid[0];
-    gridsize[1] = box_l[1] / lblattice.agrid[1];
-    gridsize[2] = box_l[2] / lblattice.agrid[2];
+    gridsize[0] = box_geo.length()[0] / lblattice.agrid[0];
+    gridsize[1] = box_geo.length()[1] / lblattice.agrid[1];
+    gridsize[2] = box_geo.length()[2] / lblattice.agrid[2];
 
     for (pos[2] = 0; pos[2] < gridsize[2]; pos[2]++) {
       for (pos[1] = 0; pos[1] < gridsize[1]; pos[1]++) {
@@ -826,9 +826,9 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     Utils::Vector3i pos;
     Utils::Vector3i gridsize;
 
-    gridsize[0] = box_l[0] / lblattice.agrid[0];
-    gridsize[1] = box_l[1] / lblattice.agrid[1];
-    gridsize[2] = box_l[2] / lblattice.agrid[2];
+    gridsize[0] = box_geo.length()[0] / lblattice.agrid[0];
+    gridsize[1] = box_geo.length()[1] / lblattice.agrid[1];
+    gridsize[2] = box_geo.length()[2] / lblattice.agrid[2];
 
     for (pos[2] = 0; pos[2] < gridsize[2]; pos[2]++) {
       for (pos[1] = 0; pos[1] < gridsize[1]; pos[1]++) {

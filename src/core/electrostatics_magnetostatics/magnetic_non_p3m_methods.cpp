@@ -302,15 +302,15 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
         rz = z[i] - z[j];
 
         for (nx = -NCUT[0]; nx <= NCUT[0]; nx++) {
-          rnx = rx + nx * box_l[0];
+          rnx = rx + nx * box_geo.length()[0];
           rnx2 = rnx * rnx;
           for (ny = -NCUT[1]; ny <= NCUT[1]; ny++) {
-            rny = ry + ny * box_l[1];
+            rny = ry + ny * box_geo.length()[1];
             rny2 = rny * rny;
             for (nz = -NCUT[2]; nz <= NCUT[2]; nz++) {
               if (!(i == j && nx == 0 && ny == 0 && nz == 0)) {
                 if (nx * nx + ny * ny + nz * nz <= NCUT2) {
-                  rnz = rz + nz * box_l[2];
+                  rnz = rz + nz * box_geo.length()[2];
                   r2 = rnx2 + rny2 + rnz * rnz;
                   r = sqrt(r2);
                   r3 = r2 * r;

@@ -88,7 +88,7 @@ void layered_get_mi_vector(double res[3], double const a[3],
   for (i = 0; i < 2; i++) {
     res[i] = a[i] - b[i];
     if (box_geo.periodic(i))
-      res[i] -= std::round(res[i] * box_l_i[i]) * box_l[i];
+      res[i] -= std::round(res[i] * box_l_i[i]) * box_geo.length()[i];
   }
   res[2] = a[2] - b[2];
 }
@@ -167,7 +167,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
               (data_parts & GHOSTTRANS_POSITION)) {
             comm->data_parts |= GHOSTTRANS_POSSHFTD;
-            comm->comm[c].shift[2] = box_l[2];
+            comm->comm[c].shift[2] = box_geo.length()[2];
           } else
             comm->comm[c].shift[2] = 0;
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n",
@@ -219,7 +219,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) &&
               (data_parts & GHOSTTRANS_POSITION)) {
             comm->data_parts |= GHOSTTRANS_POSSHFTD;
-            comm->comm[c].shift[2] = -box_l[2];
+            comm->comm[c].shift[2] = -box_geo.length()[2];
           } else
             comm->comm[c].shift[2] = 0;
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f topl\n",
@@ -278,7 +278,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (data_parts & GHOSTTRANS_POSITION)
           comm->data_parts |= GHOSTTRANS_POSSHFTD;
         comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-        comm->comm[c].shift[2] = box_l[2];
+        comm->comm[c].shift[2] = box_geo.length()[2];
       }
       c++;
 
@@ -294,7 +294,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (data_parts & GHOSTTRANS_POSITION)
           comm->data_parts |= GHOSTTRANS_POSSHFTD;
         comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-        comm->comm[c].shift[2] = -box_l[2];
+        comm->comm[c].shift[2] = -box_geo.length()[2];
       }
     }
   }

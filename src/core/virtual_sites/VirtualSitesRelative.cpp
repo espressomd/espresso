@@ -106,10 +106,10 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
     // boundary and its coordinate has been folded
     if (box_geo.periodic(i)) {
       tmp = p.r.p[i] - new_pos[i];
-      if (tmp > box_l[i] / 2.) {
-        p.r.p[i] = new_pos[i] + box_l[i];
-      } else if (tmp < -box_l[i] / 2.) {
-        p.r.p[i] = new_pos[i] - box_l[i];
+      if (tmp > box_geo.length()[i] / 2.) {
+        p.r.p[i] = new_pos[i] + box_geo.length()[i];
+      } else if (tmp < -box_geo.length()[i] / 2.) {
+        p.r.p[i] = new_pos[i] - box_geo.length()[i];
       } else
         p.r.p[i] = new_pos[i];
     } else

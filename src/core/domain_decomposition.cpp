@@ -85,7 +85,7 @@ void dd_create_cell_grid() {
   /* initialize */
   cell_range[0] = cell_range[1] = cell_range[2] = max_range;
 
-  if (max_range < ROUND_ERROR_PREC * box_l[0]) {
+  if (max_range < ROUND_ERROR_PREC * box_geo.length()[0]) {
     /* this is the non-interacting case */
     const int cells_per_dir = std::ceil(std::pow(min_num_cells, 1. / 3.));
 
@@ -302,7 +302,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           /* prepare folding of ghost positions */
           if ((data_parts & GHOSTTRANS_POSSHFTD) &&
               boundary[2 * dir + lr] != 0) {
-            comm->comm[cnt].shift[dir] = boundary[2 * dir + lr] * box_l[dir];
+            comm->comm[cnt].shift[dir] = boundary[2 * dir + lr] * box_geo.length()[dir];
           }
 
           /* fill send comm cells */
@@ -340,7 +340,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
               if ((data_parts & GHOSTTRANS_POSSHFTD) &&
                   boundary[2 * dir + lr] != 0) {
                 comm->comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
+                    boundary[2 * dir + lr] * box_geo.length()[dir];
               }
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
@@ -446,9 +446,9 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
             cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                boundary[2 * dir + lr] * box_l[dir];
+                boundary[2 * dir + lr] * box_geo.length()[dir];
             cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                boundary[2 * dir + lr] * box_l[dir];
+                boundary[2 * dir + lr] * box_geo.length()[dir];
           }
           cnt++;
         }
@@ -460,9 +460,9 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
               /* prepare folding of ghost positions */
               if (boundary[2 * dir + lr] != 0) {
                 cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
+                    boundary[2 * dir + lr] * box_geo.length()[dir];
                 cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
+                    boundary[2 * dir + lr] * box_geo.length()[dir];
               }
               cnt++;
             }
@@ -550,12 +550,12 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
        the particle belongs here and could otherwise potentially be dismissed
        due to rouding errors. */
     if (cpos[i] < 1) {
-      if ((!box_geo.periodic(i) or (pos[i] >= box_l[i])) && boundary[2 * i])
+      if ((!box_geo.periodic(i) or (pos[i] >= box_geo.length()[i])) && boundary[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > dd.cell_grid[i]) {
-      if ((!box_geo.periodic(i) or (pos[i] < box_l[i])) && boundary[2 * i + 1])
+      if ((!box_geo.periodic(i) or (pos[i] < box_geo.length()[i])) && boundary[2 * i + 1])
         cpos[i] = dd.cell_grid[i];
       else
         return nullptr;

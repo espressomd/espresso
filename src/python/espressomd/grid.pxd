@@ -11,5 +11,7 @@ cdef extern from "grid.hpp":
     cppclass BoxGeometry:
         void set_periodic(unsigned coord, bool value)
         bool periodic(unsigned coord)
+        const Vector3d &length()
+        void set_length(Vector3d)
 
     BoxGeometry box_geo
