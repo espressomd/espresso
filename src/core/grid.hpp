@@ -184,12 +184,12 @@ void calc_minimal_box_dimensions();
  * the particles accordingly */
 void rescale_boxl(int dir, double d_new);
 
-template <typename T>
-T get_mi_coord(T a, T b, int dir, T box_length, bool periodic) {
+template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
   auto dx = a - b;
 
-  if (periodic && std::fabs(dx) > (0.5 * box_length))
-    dx -= std::round(dx * box_l_i[dir]) * box_length;
+  if (periodic && (std::fabs(dx) > (0.5 * box_length))) {
+    return dx - std::round(dx / box_length) * box_length;
+  }
 
   return dx;
 }
@@ -203,17 +203,15 @@ T get_mi_coord(T a, T b, int dir, T box_length, bool periodic) {
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
   for (int i = 0; i < 3; i++) {
-    res[i] =
-        get_mi_coord(a[i], b[i], i, box_geo.length()[i], box_geo.periodic(i));
+    res[i] = get_mi_coord(a[i], b[i], box_geo.length()[i], box_geo.periodic(i));
   }
 }
 
 template <typename T>
 Utils::Vector<T, 3> get_mi_vector(Utils::Vector<T, 3> const &a, Utils::Vector<T, 3> const &b) {
-  Utils::Vector3d res;
-  get_mi_vector(res, a, b);
-
-  return res;
+  return {get_mi_coord(a[0], b[0], box_geo.length()[0], box_geo.periodic(0)),
+          get_mi_coord(a[1], b[1], box_geo.length()[1], box_geo.periodic(1)),
+          get_mi_coord(a[2], b[2], box_geo.length()[2], box_geo.periodic(2))};
 }
 
 /** fold a coordinate to primary simulation box.

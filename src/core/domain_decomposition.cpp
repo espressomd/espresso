@@ -765,14 +765,14 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 
     assert(local_particles[src.part[i].p.identity] == nullptr);
 
-    if (get_mi_coord(part.r.p[dir], my_left[dir], dir,box_geo.length()[dir],box_geo.periodic(dir)) < 0.0) {
+    if (get_mi_coord(part.r.p[dir], my_left[dir],box_geo.length()[dir],box_geo.periodic(dir)) < 0.0) {
       if (box_geo.periodic(dir) || (boundary[2 * dir] == 0)) {
 
         move_unindexed_particle(&left, &src, i);
         if (i < src.n)
           i--;
       }
-    } else if (get_mi_coord(part.r.p[dir], my_right[dir], dir,box_geo.length()[dir],box_geo.periodic(dir)) >= 0.0) {
+    } else if (get_mi_coord(part.r.p[dir], my_right[dir],box_geo.length()[dir],box_geo.periodic(dir)) >= 0.0) {
       if (box_geo.periodic(dir) || (boundary[2 * dir + 1] == 0)) {
 
         move_unindexed_particle(&right, &src, i);
