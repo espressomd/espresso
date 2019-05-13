@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import numpy as np
-import matplotlib.pyplot as plt
 
 import espressomd.lb
 import espressomd.lbboundaries
@@ -33,7 +32,7 @@ by comparing to the analytical solution.
 """
 
 
-AGRID = .25
+AGRID = .5
 EXT_FORCE = .1
 VISC = 2.7
 DENS = 1.7
@@ -53,7 +52,7 @@ OBS_PARAMS = {'n_r_bins': 50,
               'max_r': BOX_L / 2.0 - 1.0,
               'max_phi': np.pi,
               'max_z': BOX_L,
-              'sampling_density': 3.0}
+              'sampling_density': 1.0}
 
 
 def poiseuille_flow(r, R, ext_force_density, dyn_visc):
@@ -107,7 +106,7 @@ class LBPoiseuilleCommon(object):
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
         while diff > 0.001:
-            self.system.integrator.run(20)
+            self.system.integrator.run(5)
             new_val = self.lbf[mid_indices].velocity[np.nonzero(self.params['axis'])[
                 0]]
             diff = abs(new_val - old_val)
@@ -163,7 +162,7 @@ class LBPoiseuilleCommon(object):
     def check_observable(self):
         self.prepare_obs()
         # gather some statistics for the observable accumulator
-        self.system.integrator.run(10)
+        self.system.integrator.run(1)
         obs_result = np.array(
             self.accumulator.get_mean()).reshape(OBS_PARAMS['n_r_bins'],
                                                  OBS_PARAMS['n_phi_bins'],
@@ -173,10 +172,10 @@ class LBPoiseuilleCommon(object):
             OBS_PARAMS['min_r'],
             OBS_PARAMS['max_r'],
             OBS_PARAMS['n_r_bins'])
-        #plt.plot(x, obs_result[:, 0, 0, 2], label='observable')
-        #plt.plot(x, poiseuille_flow(x, BOX_L / 2.0 -1.0, EXT_FORCE, VISC * DENS))
-        #plt.legend()
-        #plt.show()
+        v_expected = poiseuille_flow(x, BOX_L / 2.0 -1.0, EXT_FORCE, VISC * DENS)
+        v_measured = obs_result[:, 0, 0, 2]
+        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
+        self.assertLess(rmsd, 0.0025 * AGRID / TIME_STEP)
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]
