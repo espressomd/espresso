@@ -34,6 +34,7 @@ class LbWalberla {
   double m_tau;
   double m_density;
   Utils::Vector3d m_ext_force;
+  Utils::Vector3i m_grid_dimensions;
 
   // Type definitions
   using vector_field_t =
@@ -115,12 +116,11 @@ public:
   double get_viscosity();
 
   Utils::Vector3i get_grid_dimensions() {
-    return Utils::Vector3i{{int(m_blocks->getXSize()),
-                            int(m_blocks->getYSize()),
-                            int(m_blocks->getZSize())}};
+    return m_grid_dimensions; 
   };
 
   double get_grid_spacing() { return m_agrid; }
+  double get_tau() { return m_tau; }
 
   bool node_in_local_domain(const Utils::Vector3i &node) const;
   bool pos_in_local_domain(const Utils::Vector3d &pos) const;

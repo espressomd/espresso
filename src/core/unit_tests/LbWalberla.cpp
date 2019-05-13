@@ -19,7 +19,7 @@
 double viscosity = 3;
 Utils::Vector3d box_dimensions = {10, 12, 14};
 double agrid = 0.5;
-Utils::Vector3d grid_dimensions = box_dimensions / agrid;
+Utils::Vector3i grid_dimensions{int(box_dimensions[0] / agrid),int(box_dimensions[1]/agrid),int(box_dimensions[2]/agrid)};
 double tau = 0.34;
 double skin = 0.01;
 double density = 2.5;
@@ -28,6 +28,10 @@ Utils::Vector3i node_grid;
 BOOST_AUTO_TEST_CASE(viscosity_test) {
   LbWalberla lb = LbWalberla(viscosity, density, agrid, tau, box_dimensions,
                              node_grid, skin);
+  BOOST_CHECK(lb.get_grid_dimensions()==grid_dimensions);
+  BOOST_CHECK(lb.get_grid_spacing()==agrid);
+  BOOST_CHECK(lb.get_tau()==tau);
+
   BOOST_CHECK(fabs(lb.get_viscosity() - viscosity) <
               std::numeric_limits<double>::epsilon());
   double new_viscosity = 2.0;
