@@ -58,6 +58,11 @@ make doxygen
 # restore Doxyfile
 mv doc/doxygen/Doxyfile.bak doc/doxygen/Doxyfile
 
+# print enabled features
+if [ "${CI}" != "" ]; then
+    cat doc/doxygen/doxy-features
+fi
+
 # find @param without description
 grep -Prn '^[\ \t]*(?:\*?[\ \t]+)?[@\\]t?param(?:\[[in, out]+\])?[\ \t]+[a-zA-Z0-9_\*]+[\ \t]*$' "${srcdir}/src" > doc/doxygen/empty-params.log
 
