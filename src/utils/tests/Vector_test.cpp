@@ -28,6 +28,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <sstream>
 #include <boost/range/numeric.hpp>
 
 #include <algorithm>
@@ -256,4 +257,13 @@ BOOST_AUTO_TEST_CASE(conversion) {
   BOOST_CHECK_EQUAL(result[0], static_cast<float>(orig[0]));
   BOOST_CHECK_EQUAL(result[1], static_cast<float>(orig[1]));
   BOOST_CHECK_EQUAL(result[2], static_cast<float>(orig[2]));
+}
+
+BOOST_AUTO_TEST_CASE(to_stream) {
+  using Utils::Vector3d;
+
+  auto orig = Vector3d{1.2, 2.3, 3.4};
+  std::stringstream s;
+  s << orig;
+  BOOST_CHECK_EQUAL(s.str(), "1.22.33.4");
 }
