@@ -115,9 +115,7 @@ public:
   void set_viscosity(double viscosity);
   double get_viscosity();
 
-  Utils::Vector3i get_grid_dimensions() {
-    return m_grid_dimensions; 
-  };
+  Utils::Vector3i get_grid_dimensions() { return m_grid_dimensions; };
 
   double get_grid_spacing() { return m_agrid; }
   double get_tau() { return m_tau; }

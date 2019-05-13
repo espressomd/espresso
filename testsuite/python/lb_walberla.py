@@ -25,21 +25,26 @@ import numpy as np
 
 @ut.skipIf(not espressomd.has_features("LB_WALBERLA"), "Skipping for LACK of LB_WALBERLA")
 class LbWalberlaTest(ut.TestCase):
+
     def test(self):
-        s=espressomd.System(box_l=(9.6,12,15.6))
+        s = espressomd.System(box_l=(9.6, 12, 15.6))
         s.time_step = 0.2
-        s.cell_system.skin =0.
-        lbf=LBFluidWalberla(agrid = .6, dens = 1.3, visc = 2.5,tau=s.time_step)
+        s.cell_system.skin = 0.
+        lbf = LBFluidWalberla(
+            agrid=.6,
+            dens=1.3,
+            visc=2.5,
+            tau=s.time_step)
         s.actors.add(lbf)
-        max_ind=s.box_l/.6
+        max_ind = s.box_l / .6
         for i in range(int(max_ind[0])):
-          for j in range(int(max_ind[1])):
-            for k in range(int(max_ind[2])):
-              assert np.linalg.norm(lbf[i,j,k].velocity) == 0
-              v=np.array((i*.5,j*1.5,k*2.5))
-              lbf[i,j,k].velocity =v
-              assert np.linalg.norm(lbf[i,j,k].velocity -v)<1E-10
-              
+            for j in range(int(max_ind[1])):
+                for k in range(int(max_ind[2])):
+                    assert np.linalg.norm(lbf[i, j, k].velocity) == 0
+                    v = np.array((i * .5, j * 1.5, k * 2.5))
+                    lbf[i, j, k].velocity = v
+                    assert np.linalg.norm(lbf[i, j, k].velocity - v) < 1E-10
+
         s.actors.remove(lbf)
 
 

@@ -6,9 +6,9 @@
 #include "grid.hpp"
 #include "lb-d3q19.hpp"
 #include "lb.hpp"
-#include "lbgpu.hpp"
-#include "lb_walberla_interface.hpp"
 #include "lb_walberla_instance.hpp"
+#include "lb_walberla_interface.hpp"
+#include "lbgpu.hpp"
 
 #include <utils/index.hpp>
 using Utils::get_linear_index;
@@ -1206,10 +1206,11 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   }
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return Communication::mpiCallbacks().call(Communication::Result::one_rank, Walberla::get_node_velocity, ind);
+    return Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                              Walberla::get_node_velocity, ind);
   }
 #endif
-  
+
   throw std::runtime_error("LB not activated.");
 
   return {};
@@ -1426,7 +1427,7 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
   }
 #ifdef LB_WALBERLA
   else if (lattice_switch == ActiveLB::WALBERLA) {
-    Communication::mpiCallbacks().call_all(Walberla::set_node_velocity,ind,u);
+    Communication::mpiCallbacks().call_all(Walberla::set_node_velocity, ind, u);
   }
 #endif
 }

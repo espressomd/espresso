@@ -70,10 +70,11 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
     }
     grid_dimensions[i] = int(std::round(box_dimensions[i] / agrid));
     if (grid_dimensions[i] % node_grid[i] != 0) {
-      throw std::runtime_error("LB grid dimensions and mpi node grid are not compatible.");
+      throw std::runtime_error(
+          "LB grid dimensions and mpi node grid are not compatible.");
     }
   }
-  m_grid_dimensions=grid_dimensions;
+  m_grid_dimensions = grid_dimensions;
 
   m_blocks = blockforest::createUniformBlockGrid(
       uint_c(node_grid[0]), // blocks in x direction
