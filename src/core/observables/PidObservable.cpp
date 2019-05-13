@@ -4,6 +4,6 @@
 
 namespace Observables {
 std::vector<double> PidObservable::operator()() const {
-  return this->operator()(partCfg());
+  return this->evaluate(partCfg());
 }
 } // namespace Observables
