@@ -19,7 +19,8 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-from espressomd.lb import LBFluidWalberla
+if espressomd.has_features("LB_WALBERLA"):
+    from espressomd.lb import LBFluidWalberla
 import numpy as np
 
 
