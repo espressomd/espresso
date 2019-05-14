@@ -37,7 +37,7 @@
  *  See page @ref script_interface for detailed instructions.
  */
 namespace ScriptInterface {
-  extern Utils::Factory<ScriptInterfaceBase> factory;
+extern Utils::Factory<ScriptInterfaceBase> factory;
 
 template <typename T> static void register_new(std::string const &name) {
   static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "");
@@ -47,7 +47,7 @@ template <typename T> static void register_new(std::string const &name) {
 }
 
 inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
-  const auto id = boost::get<ObjectId>(value);
+  const auto id = get_value<ObjectId>(value);
 
   return ScriptInterfaceBase::get_instance(id).lock();
 }

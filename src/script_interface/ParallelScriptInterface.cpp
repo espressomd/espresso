@@ -165,7 +165,7 @@ ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
      * if so it does not need translation, the empty object
      * has the same id everywhere.
      */
-    auto oid = boost::get<ObjectId>(value);
+    auto oid = get_value<ObjectId>(value);
 
     if (oid != ObjectId()) {
       return obj_map.at(oid)->id();
@@ -173,7 +173,7 @@ ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
     return oid;
   }
   if (is_type<std::vector<Variant>>(value)) {
-    auto const &in_vec = boost::get<std::vector<Variant>>(value);
+    auto const &in_vec = get_value<std::vector<Variant>>(value);
     std::vector<Variant> out_vec;
     out_vec.reserve(in_vec.size());
 
@@ -188,7 +188,7 @@ ParallelScriptInterface::map_local_to_parallel_id(Variant const &value) const {
 
 Variant
 ParallelScriptInterface::map_parallel_to_local_id(Variant const &value) {
-  const auto outer_id = boost::get<ObjectId>(value);
+  const auto outer_id = get_value<ObjectId>(value);
 
   auto so_ptr = get_instance(outer_id).lock();
 

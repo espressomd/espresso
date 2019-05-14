@@ -55,8 +55,8 @@ public:
           std::dynamic_pointer_cast<Cluster>(ScriptInterfaceBase::make_shared(
               "ClusterAnalysis::Cluster",
               ScriptInterfaceBase::CreationPolicy::LOCAL));
-      c->set_cluster(m_cluster_structure.clusters.at(
-          boost::get<int>(parameters.at("id"))));
+      c->set_cluster(
+          m_cluster_structure.clusters.at(get_value<int>(parameters.at("id"))));
 
       // Store a temporary copy of the most recent cluster being returned.
       // This ensures, that the reference count of the shared_ptr doesn't go
@@ -79,7 +79,7 @@ public:
     }
     if (method == "cid_for_particle") {
       return m_cluster_structure.cluster_id.at(
-          boost::get<int>(parameters.at("pid")));
+          get_value<int>(parameters.at("pid")));
     }
     if (method == "clear") {
       m_cluster_structure.clear();

@@ -21,8 +21,8 @@
 
 #include "ScriptInterfaceBase.hpp"
 #include "ParallelScriptInterface.hpp"
-#include "Serializer.hpp"
 #include "ScriptInterface.hpp"
+#include "Serializer.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -32,7 +32,7 @@
 #include <sstream>
 
 namespace ScriptInterface {
-  Utils::Factory<ScriptInterfaceBase> factory;
+Utils::Factory<ScriptInterfaceBase> factory;
 
 std::shared_ptr<ScriptInterfaceBase>
 ScriptInterfaceBase::make_shared(std::string const &name,
@@ -93,15 +93,12 @@ Variant ScriptInterfaceBase::get_state() const {
 }
 
 void ScriptInterfaceBase::set_state(Variant const &state) {
-  using boost::get;
-  using std::vector;
-
   VariantMap params;
   UnSerializer u;
 
-  for (auto const &v : get<vector<Variant>>(state)) {
-    auto const &p = get<vector<Variant>>(v);
-    params[get<std::string>(p.at(0))] = boost::apply_visitor(u, p.at(1));
+  for (auto const &v : get_value<std::vector<Variant>>(state)) {
+    auto const &p = get_value<std::vector<Variant>>(v);
+    params[get_value<std::string>(p.at(0))] = boost::apply_visitor(u, p.at(1));
   }
 
   this->construct(params);
@@ -137,7 +134,7 @@ ScriptInterfaceBase::unserialize(std::string const &state) {
   ia >> v;
 
   UnSerializer u;
-  auto oid = boost::get<ObjectId>(boost::apply_visitor(u, v));
+  auto oid = get_value<ObjectId>(boost::apply_visitor(u, v));
 
   return get_instance(oid).lock();
 }

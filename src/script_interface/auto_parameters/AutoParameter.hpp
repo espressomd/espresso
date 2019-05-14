@@ -106,8 +106,9 @@ struct AutoParameter {
       : name(name), setter_([&obj, getter_setter](Variant const &v) {
           (obj.get()->*getter_setter)() = get_value<T>(v);
         }),
-        getter_([&obj, getter_setter]() { return (obj.get()->*getter_setter)(); }) {
-  }
+        getter_([&obj, getter_setter]() {
+          return (obj.get()->*getter_setter)();
+        }) {}
 
   /** @brief Read-write parameter that is bound to an object.
    *
@@ -128,7 +129,8 @@ struct AutoParameter {
       : name(name), setter_([&binding](Variant const &v) {
           binding = get_value<std::shared_ptr<T>>(v);
         }),
-        getter_([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
+        getter_(
+            [&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
   /** @brief Read-only parameter that is bound to an object.
    *  @overload
@@ -144,7 +146,8 @@ struct AutoParameter {
   template <typename T>
   AutoParameter(const char *name, std::shared_ptr<T> const &binding)
       : name(name), setter_([](Variant const &) { throw WriteError{}; }),
-        getter_([&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
+        getter_(
+            [&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
   /**
    * @brief Read-write parameter with a user-provided getter and setter.
@@ -188,13 +191,9 @@ struct AutoParameter {
    */
   const std::function<Variant()> getter_;
 
-  void set(Variant const& v) const {
-    setter_(v);
-  }
+  void set(Variant const &v) const { setter_(v); }
 
-  Variant get() const {
-    return getter_();
-  }
+  Variant get() const { return getter_(); }
 };
 } // namespace ScriptInterface
 

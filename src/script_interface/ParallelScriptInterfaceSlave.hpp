@@ -44,7 +44,8 @@ public:
   std::shared_ptr<ScriptInterfaceBase> m_p;
 
   static auto &get_translation_table() {
-    static std::map<ObjectId, std::weak_ptr<ScriptInterfaceBase>> m_translation_table;
+    static std::map<ObjectId, std::weak_ptr<ScriptInterfaceBase>>
+        m_translation_table;
 
     return m_translation_table;
   }
@@ -53,7 +54,7 @@ public:
    master id to a local one */
   static void translate_id(Variant &v) {
     if (is_type<ObjectId>(v)) {
-      v = get_translation_table().at(boost::get<ObjectId>(v)).lock()->id();
+      v = get_translation_table().at(get_value<ObjectId>(v)).lock()->id();
     }
   }
 

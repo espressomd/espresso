@@ -53,8 +53,7 @@ BOOST_AUTO_TEST_CASE(regiser_class) {
   factory.register_new("derived_test_class",
                        []() { return new DerivedTestClass(); });
   /* Overload with default builder */
-  factory.register_new<OtherDerivedTestClass>(
-      "other_derived_class");
+  factory.register_new<OtherDerivedTestClass>("other_derived_class");
 
   /* Both builders should be present. */
   BOOST_CHECK(factory.has_builder("derived_test_class"));

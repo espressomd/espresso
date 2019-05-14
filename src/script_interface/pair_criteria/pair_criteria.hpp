@@ -36,8 +36,8 @@ public:
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "decide") {
-      return pair_criterion()->decide(boost::get<int>(parameters.at("id1")),
-                                      boost::get<int>(parameters.at("id2")));
+      return pair_criterion()->decide(get_value<int>(parameters.at("id1")),
+                                      get_value<int>(parameters.at("id2")));
     }
     throw std::runtime_error("Unknown method called.");
   }

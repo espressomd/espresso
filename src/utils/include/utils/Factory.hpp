@@ -121,7 +121,7 @@ public:
    * @param name Given name for the type, has to be unique in this Factory<T>.
    */
   template <typename Derived> void register_new(const std::string &name) {
-    register_new(name, []() -> T* { return new Derived(); } );
+    register_new(name, []() -> T * { return new Derived(); });
   }
 
 private:

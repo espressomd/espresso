@@ -105,7 +105,7 @@
 ///   // Set the name
 ///   void set_parameter(const std::string &name, const Variant &value) override {
 ///     if(name == "name")
-///       m_name = boost::get<std::string>(value);
+///       m_name = get_value<std::string>(value);
 ///   }
 ///
 ///   // This class has only one function, "greet", which does not take parameters.
@@ -194,14 +194,14 @@
 /// stores @ref Utils::ObjectId "ObjectId<T>" objects as Variants.
 ///
 /// In C++ the variants can simply assigned a value of any supported type. To
-/// get the value back, it has to be fetched via @c boost::get<T>(Variant).
+/// get the value back, it has to be fetched via @c get_value<T>(Variant).
 ///
 /// Example:
 /// @code{.cpp}
 /// Variant v;
 /// v = 5; // v now holds an int
-/// int i = boost::get<int>(v); // i now holds 5
-/// /* std::string s = boost::get<std::string>(v); Raises an exception,
+/// int i = get_value<int>(v); // i now holds 5
+/// /* std::string s = get_value<std::string>(v); Raises an exception,
 ///                                                v does not hold a string. */
 /// @endcode
 ///
