@@ -19,7 +19,7 @@ cdef class PScriptInterface(object):
         if policy == "GLOBAL":
             policy_ = GLOBAL
         elif policy == "LOCAL":
-            policy_ = LOCAL 
+            policy_ = LOCAL
         else:
             raise Exception("Unknown policy '{}'.".format(policy))
 
@@ -166,24 +166,32 @@ cdef variant_to_python_object(const Variant & value) except +:
     if is_type[ObjectId](value):
         # Get the id and build a corresponding object
         oid = get_value[ObjectId](value)
-        ptr = get_instance(oid).lock()
 
-        if ptr:
+        # ObjectId is nullable, and the default
+        # id corresponds to "null".
+        if oid != ObjectId():
+            ptr = get_instance(oid).lock()
+
+            if not ptr:
+                raise Exception("Object failed to exist.")
+
             so_name = to_str(ptr.get().name())
             if not so_name:
                 raise Exception(
                     "Script object without name returned from the core")
-            # Fallback class, if nothing more specific is registered
-            # for the script object name
-            pclass = ScriptInterfaceHelper
-            # Look up class
-            if so_name in _python_class_by_so_name:
+
+            # Look up python type for object
+            try:
                 pclass = _python_class_by_so_name[so_name]
-            pobj = pclass()
+            except KeyError:
+                # Fallback class, if nothing more specific is registered
+                # for the script object name
+                pclass = ScriptInterfaceHelper
+
             poid = PObjectId()
             poid.id = ptr.get().id()
-            pobj.set_sip_via_oid(poid)
-            return pobj
+
+            return pclass(oid=poid)
         else:
             return None
     if is_type[vector[Variant]](value):
