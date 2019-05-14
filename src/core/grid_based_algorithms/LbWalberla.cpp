@@ -59,6 +59,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   m_agrid = agrid;
   m_tau = tau;
   m_density = density;
+  m_velocity = {0,0,0};
 
   Utils::Vector3i grid_dimensions;
   for (int i = 0; i < 3; i++) {
@@ -100,7 +101,9 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       force_model_t(m_force_field_id));
 
   m_pdf_field_id =
-      lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model);
+      lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model, 
+                                Vector3<double>{m_velocity[0], m_velocity[1], m_velocity[2]},
+                                (real_t)m_density);
 
   m_flag_field_id =
       field::addFlagFieldToStorage<Flag_field_t>(m_blocks, "flag field");

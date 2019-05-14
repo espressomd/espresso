@@ -32,7 +32,8 @@ class LbWalberla {
   double m_skin;
   double m_agrid;
   double m_tau;
-  double m_density;
+  double m_density; // initial density
+  Utils::Vector3d m_velocity; // initial velocity
   Utils::Vector3d m_ext_force;
   Utils::Vector3i m_grid_dimensions;
 
