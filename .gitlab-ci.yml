@@ -1,4 +1,4 @@
-image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu:18.04
+image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
 
 stages:
   - permission
@@ -71,7 +71,7 @@ default:
   <<: *global_job_definition
   stage: build
   script:
-    - export with_cuda=false myconfig=default with_coverage=true
+    - export with_cuda=false myconfig=default with_coverage=true python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -81,27 +81,15 @@ maxset:
   <<: *global_job_definition
   stage: build
   script:
-    - export with_cuda=false myconfig=maxset with_coverage=true
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
-maxset-python3:
-  <<: *global_job_definition
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
-  script:
     - export myconfig=maxset with_coverage=true python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
     - linux
 
-no_rotation-python3:
+no_rotation:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
   script:
     - export myconfig=no_rotation with_coverage=true python_version=3
     - bash maintainer/CI/build_cmake.sh
