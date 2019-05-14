@@ -1171,6 +1171,12 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
     mpi_recv_fluid(node, index, &rho, j, pi);
     return rho;
   }
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                              Walberla::get_node_density, ind);
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 
@@ -1389,7 +1395,13 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
 
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
     mpi_send_fluid(node, index, p_rho, j, pi);
-  } else {
+  }
+#ifdef LB_WALBERLA
+  else if (lattice_switch == ActiveLB::WALBERLA) {
+    Communication::mpiCallbacks().call_all(Walberla::set_node_density, ind, p_rho);
+  }
+#endif
+  else {
     throw std::runtime_error("LB not activated.");
   }
 }
