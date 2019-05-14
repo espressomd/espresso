@@ -67,7 +67,7 @@ cdef class PScriptInterface:
         if policy == "GLOBAL":
             policy_ = GLOBAL
         elif policy == "LOCAL":
-            policy_ = LOCAL 
+            policy_ = LOCAL
         else:
             raise Exception("Unknown policy '{}'.".format(policy))
 
@@ -231,7 +231,8 @@ cdef variant_to_python_object(const Variant & value) except +:
         # Get the id and build a corresponding object
         oid = get_value[ObjectId](value)
 
-        # ObjectId is nullable, and the default id corresponds to "null".
+        # ObjectId is nullable, and the default
+        # id corresponds to "null".
         if oid != ObjectId():
             ptr = get_instance(oid).lock()
 
