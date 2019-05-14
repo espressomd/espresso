@@ -67,7 +67,7 @@ cdef class PScriptInterface:
         if policy == "GLOBAL":
             policy_ = GLOBAL
         elif policy == "LOCAL":
-            policy_ = LOCAL
+            policy_ = LOCAL 
         else:
             raise Exception("Unknown policy '{}'.".format(policy))
 
