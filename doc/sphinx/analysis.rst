@@ -449,7 +449,7 @@ The short ranged part is given by:
 
 .. math :: p^\text{Coulomb, P3M, dir}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2V} \sum_{\vec{n}}^* \sum_{i,j=1}^N q_i q_j \left( \frac{ \mathrm{erfc}(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^3} +\frac{2\beta \pi^{-1/2} \exp(-(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)^2)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^2} \right) (\vec{r}_j-\vec{r}_i+\vec{n})_k (\vec{r}_j-\vec{r}_i+\vec{n})_l,
 
-where :math:`\beta` is the P3M splitting parameter, :math:`\vec{n}` identifies the periodic images, the asterix denotes that terms with :math:`\vec{n}=\vec{0}` and i=j are omitted.
+where :math:`\beta` is the P3M splitting parameter, :math:`\vec{n}` identifies the periodic images, the asterisk denotes that terms with :math:`\vec{n}=\vec{0}` and i=j are omitted.
 The long ranged (k-space) part is given by:
 
 .. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 \cdot (\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),

@@ -54,6 +54,7 @@ fi
 case $1 in
     --gdb)
         shift
+        [ "@PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" --args "@PYTHON_EXECUTABLE@" $@
         exec gdb --args @PYTHON_FRONTEND@ $@
         ;;
     --lldb)
@@ -75,6 +76,7 @@ case $1 in
     --gdb=*)
         options="${1#*=}"
         shift
+        [ "@PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" ${options} --args "@PYTHON_EXECUTABLE@" $@
         exec gdb ${options} --args @PYTHON_FRONTEND@ $@
         ;;
     --lldb=*)
