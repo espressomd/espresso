@@ -120,21 +120,3 @@ BOOST_AUTO_TEST_CASE(make_shared_from_args_test) {
                       std::runtime_error);
   }
 }
-
-BOOST_AUTO_TEST_CASE(pack_pair_test) {
-  using ScriptInterface::pack_pair;
-  using ScriptInterface::unpack_pair;
-
-  const std::pair<int, double> p{4, 3.14};
-
-  BOOST_CHECK((p == unpack_pair<int, double>(pack_pair(p))));
-}
-
-BOOST_AUTO_TEST_CASE(pack_map_test) {
-  using ScriptInterface::pack_map;
-  using ScriptInterface::unpack_map;
-
-  const std::unordered_map<double, int> map{{3.3, 2}, {4.2, 9}};
-
-  BOOST_CHECK((map == unpack_map<double, int>(pack_map(map))));
-}
