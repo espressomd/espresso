@@ -20,6 +20,10 @@ import importlib_wrapper
 import numpy as np
 
 
+# value of a reference simulation (10000 equilibration steps; 200000 sampling rounds; 10 sampling steps per round)
+reference_chi = 0.86
+
+
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/11-ferrofluid/11-ferrofluid_part3.py",
     equil_steps=200, equil_rounds=10, loops=250, alphas=[0.5])
@@ -37,7 +41,7 @@ class Tutorial(ut.TestCase):
             tutorial.magnetization_star[1],
             1)
         self.assertAlmostEqual(
-            tutorial.chi, tutorial.chi_I, delta=0.05)
+            tutorial.chi, reference_chi, delta=0.45)
         self.assertGreater(
             tutorial.chi, tutorial.chi_L)
 
