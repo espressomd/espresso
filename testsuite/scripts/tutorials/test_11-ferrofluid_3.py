@@ -20,7 +20,8 @@ import importlib_wrapper
 import numpy as np
 
 
-# value of a reference simulation (10000 equilibration steps; 200000 sampling rounds; 10 sampling steps per round)
+# value of a reference simulation (10000 equilibration steps; 200000
+# sampling rounds; 10 sampling steps per round)
 reference_chi = 0.86
 
 
