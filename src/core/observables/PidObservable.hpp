@@ -34,7 +34,7 @@ namespace Observables {
  *  Base class for observables extracting raw data from particle subsets and
  *  returning either the data or a statistic derived from it.
  */
-class PidObservable : public Observable {
+class PidObservable : virtual public Observable {
   /** Identifiers of particles measured by this observable */
   std::vector<int> m_ids;
 

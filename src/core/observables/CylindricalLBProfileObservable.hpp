@@ -19,7 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef OBSERVABLES_CYLINDRICALLBPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_CYLINDRICALLBPROFILEOBSERVABLE_HPP
 
-#include "CylindricalProfileObservable.hpp"
+#include "CylindricalProfile.hpp"
+#include "Observable.hpp"
+
 #include <utils/Vector.hpp>
 #include <utils/coordinate_transformation.hpp>
 #include <utils/sampling.hpp>
@@ -28,7 +30,8 @@ using Utils::Vector3d;
 
 namespace Observables {
 
-class CylindricalLBProfileObservable : public CylindricalProfileObservable {
+class CylindricalLBProfileObservable : public Observable,
+                                       public CylindricalProfile {
 public:
   CylindricalLBProfileObservable(Vector3d const &center,
                                  std::string const &axis, int n_r_bins,
@@ -36,9 +39,8 @@ public:
                                  double min_phi, double min_z, double max_r,
                                  double max_phi, double max_z,
                                  double sampling_density)
-      : CylindricalProfileObservable(center, axis, min_r, max_r, min_phi,
-                                     max_phi, min_z, max_z, n_r_bins,
-                                     n_phi_bins, n_z_bins),
+      : CylindricalProfile(center, axis, min_r, max_r, min_phi, max_phi, min_z,
+                           max_z, n_r_bins, n_phi_bins, n_z_bins),
         sampling_density(sampling_density) {
     calculate_sampling_positions();
   }
