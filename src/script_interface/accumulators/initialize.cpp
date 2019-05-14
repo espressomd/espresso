@@ -23,6 +23,7 @@
 #include "AutoUpdateAccumulators.hpp"
 #include "Correlator.hpp"
 #include "MeanVarianceCalculator.hpp"
+#include "TimeSeries.hpp"
 
 namespace ScriptInterface {
 namespace Accumulators {
@@ -35,6 +36,9 @@ void initialize() {
   ScriptInterface::register_new<
       ScriptInterface::Accumulators::MeanVarianceCalculator>(
       "Accumulators::MeanVarianceCalculator");
+
+  ScriptInterface::register_new<ScriptInterface::Accumulators::TimeSeries>(
+      "Accumulators::TimeSeries");
 
   ScriptInterface::register_new<ScriptInterface::Accumulators::Correlator>(
       "Accumulators::Correlator");

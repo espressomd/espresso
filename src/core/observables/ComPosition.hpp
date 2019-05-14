@@ -29,7 +29,7 @@ class ComPosition : public PidObservable {
 public:
   using PidObservable::PidObservable;
   int n_values() const override { return 3; }
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     double total_mass = 0;
     for (int i : ids()) {

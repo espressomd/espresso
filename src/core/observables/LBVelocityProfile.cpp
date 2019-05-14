@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Observables {
 
-std::vector<double> LBVelocityProfile::operator()(PartCfg &partCfg) const {
+std::vector<double> LBVelocityProfile::operator()() const {
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),
                                 static_cast<size_t>(n_y_bins),
                                 static_cast<size_t>(n_z_bins)}};
