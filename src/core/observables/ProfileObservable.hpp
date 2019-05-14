@@ -20,9 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OBSERVABLES_PROFILEOBSERVABLE_HPP
 
 #include "Observable.hpp"
-#include "integrate.hpp"
-#include "particle_data.hpp"
-#include <vector>
 
 namespace Observables {
 
