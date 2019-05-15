@@ -295,6 +295,7 @@ intel:15:
     - docker
     - linux
     - cuda
+    - icp
 
 intel:17:
   stage: build
@@ -307,6 +308,7 @@ intel:17:
     - docker
     - linux
     - cuda
+    - icp
 
 check_sphinx:
   stage: additional_checks
@@ -359,6 +361,7 @@ deploy_documentation:
     - docker
     - linux
     - cuda
+    - icp
 
 status_success:
   stage: result
