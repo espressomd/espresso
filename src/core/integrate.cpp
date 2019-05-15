@@ -739,15 +739,11 @@ void force_and_velocity_display() {
 #endif
 }
 
-/** @todo This needs to go!! */
-
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
-  int reuse_forces = 0;
-  reuse_forces = reuse_forces_par;
-  INTEG_TRACE(fprintf(stderr, "%d: integrate:\n", this_node));
+  int reuse_forces = reuse_forces_par;
 
   if (recalc_forces) {
     if (reuse_forces) {
@@ -773,22 +769,28 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
     mpi_bcast_parameter(FIELD_SKIN);
   }
 
-  /* perform integration */
-  if (!Accumulators::auto_update_enabled()) {
-    if (mpi_integrate(n_steps, reuse_forces))
+  using Accumulators::auto_update;
+  using Accumulators::auto_update_next_update;
+
+  for (int i = 0; i < n_steps;) {
+    /* Integrate to either the next accumulator update, or the
+     * end, depending on what comes first. */
+    auto const steps = std::min((n_steps - i), auto_update_next_update());
+    if (mpi_integrate(steps, reuse_forces))
       return ES_ERROR;
-  } else {
-    for (int i = 0; i < n_steps; i++) {
-      if (mpi_integrate(1, reuse_forces))
-        return ES_ERROR;
-      reuse_forces = 1;
-      Accumulators::auto_update();
-    }
-    if (n_steps == 0) {
-      if (mpi_integrate(0, reuse_forces))
-        return ES_ERROR;
-    }
+
+    reuse_forces = 1;
+
+    auto_update(steps);
+
+    i += steps;
   }
+
+  if (n_steps == 0) {
+    if (mpi_integrate(0, reuse_forces))
+      return ES_ERROR;
+  }
+
   return ES_OK;
 }
 
