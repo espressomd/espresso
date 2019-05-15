@@ -28,6 +28,7 @@
 
 #include "ScriptInterfaceBase.hpp"
 #include "get_value.hpp"
+#include "pack.hpp"
 #include "initialize.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "utils/Factory.hpp"

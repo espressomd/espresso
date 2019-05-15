@@ -177,7 +177,7 @@ public:
   make_shared(std::string const &name, CreationPolicy policy,
               Variant const &state) {
     auto so_ptr = make_shared(name, policy);
-    so_ptr->set_state(state);
+    // so_ptr->set_state(state);
     return so_ptr;
   }
 
@@ -204,10 +204,6 @@ public:
   std::string serialize() const;
   static std::shared_ptr<ScriptInterfaceBase>
   unserialize(std::string const &state);
-  virtual Variant get_state() const;
-
-protected:
-  virtual void set_state(Variant const &state);
 };
 } /* namespace ScriptInterface */
 #endif

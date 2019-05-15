@@ -76,16 +76,8 @@ public:
     return {};
   }
 
-  Variant get_state() const override {
-    std::vector<Variant> state(2);
-    state[0] = ScriptInterfaceBase::get_state();
-    state[1] = mean_variance_calculator()->get_internal_state();
-    return state;
-  }
-
   std::shared_ptr<::Accumulators::AccumulatorBase> accumulator() override {
-    return std::static_pointer_cast<::Accumulators::AccumulatorBase>(
-        m_accumulator);
+    return m_accumulator;
   }
 
   std::shared_ptr<const ::Accumulators::AccumulatorBase>
@@ -95,13 +87,6 @@ public:
   }
 
 private:
-  void set_state(Variant const &state) override {
-    auto const &state_vec = get_value<std::vector<Variant>>(state);
-    ScriptInterfaceBase::set_state(state_vec.at(0));
-    mean_variance_calculator()->set_internal_state(
-        get_value<std::string>(state_vec.at(1)));
-  }
-
   /* The actual accumulator */
   std::shared_ptr<::Accumulators::MeanVarianceCalculator> m_accumulator;
   std::shared_ptr<Observables::Observable> m_obs;
