@@ -379,6 +379,7 @@ intel:18:
     - docker
     - linux
     - cuda
+    - icp
 
 check_sphinx:
   <<: *global_job_definition
@@ -459,6 +460,8 @@ deploy_sphinx_documentation:
   script:
     - cd ${CI_PROJECT_DIR}/build/doc/sphinx/html && 
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
+  tags:
+    - icp
 
 deploy_doxygen_documentation:
   extends: .deploy_base
@@ -467,6 +470,8 @@ deploy_doxygen_documentation:
   script:
     - cd ${CI_PROJECT_DIR}/build/doc/doxygen/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
+  tags:
+    - icp
 
 status_success:
   <<: *notification_job_definition
