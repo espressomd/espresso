@@ -474,10 +474,10 @@ To use the, e.g.,  ``ewald`` solver from SCAFACOS as electrostatics solver for y
 cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 :math:`10^{-3}`, use::
 
-  from espressomd.electrostatics import Scafacos
-  scafacos = Scafacos(prefactor=1, method_name="ewald",
-                      method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
-  system.actors.add(scafacos)
+   from espressomd.electrostatics import Scafacos
+   scafacos = Scafacos(prefactor=1, method_name="ewald",
+                       method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
+   system.actors.add(scafacos)
 
 
 For details of the various methods and their parameters please refer to

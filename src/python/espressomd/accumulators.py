@@ -52,6 +52,37 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
 
 
 @script_interface_register
+class TimeSeries(ScriptInterfaceHelper):
+
+    """
+    Records results from observables.
+
+    Parameters
+    ----------
+    obs : Instance of :class:`espressomd.observables.Observable`.
+    delta_N : :obj:`int`
+        Number of timesteps between subsequent samples for the auto update mechanism.
+
+    Methods
+    -------
+    update
+        Update the accumulator (get the current values from the observable).
+    time_series
+        Returns the recorded values of the observable.
+    clear
+        Clear the data
+
+    """
+    _so_name = "Accumulators::TimeSeries"
+    _so_bind_methods = (
+        "update",
+        "time_series",
+        "clear"
+    )
+    _so_creation_policy = "LOCAL"
+
+
+@script_interface_register
 class Correlator(ScriptInterfaceHelper):
 
     """

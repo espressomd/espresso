@@ -2,6 +2,66 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 4.0.2
+==============
+
+This release provides a number of corrections for the Espresso 4.0 line.
+We recommend that this release be used for all production simulations.
+Please note that a sign error in tabulated interactions was fixed.
+Simulation scripts which worked around this problem might have to be changed.
+Below, please find the list of changes. The numbers in brackets refer to
+ticket numbers on http://github.com/espressomd/espresso
+
+
+Corrections for bugs that may harm simulation results:
+  * A sign error in tabulated interactions was corrected such that
+    the force equals the negative gradient of the potential. (#2519,2520)
+
+  * The flow field of the CPU lattice-Boltzmann implementation was deleted
+    when aspects of the molecular dynamics cell grid were changed; E.g., when
+    interactions, the skin or the parallelization setup were changed.
+    ESPResSo now terminates with an error, when this happens.
+    To avoid this, please setup the CPU lattice-Boltzmann after all
+    other aspects of the system. The GPU LB is not affected in the 4.0
+    release, but was affected in the current development branch. (#2728, #2736)
+
+  * Corrected the force acting on LB Boundaries for the case of
+    agrid and density not equal to 1 (#2624).
+
+  * Corrected the cutoff calculation for the soft sphere interaction. In the
+    previous implementation, the offset parameter was ignored. (#2505)
+
+  * The "three point coupling" of particles to the lattice-Boltzmann method
+    has been removed. While it works in most environments, for some compilers
+    the calculation gives wrong values. This is likely caused by undefined
+    behavior. A corrected implementation is available in
+    ESPResSo's development branch. It cannot be safely backported to 4.0.2,
+    because the code has diverged too far. (#2516, #2517)
+    Users who did not explicitly activate this coupling via couple="3pt" are
+    not affected.
+
+  * The velocity of existing particles was changed when setting or changing
+    the simulation time step (#2480)
+
+
+Further changes:
+  * Fixed the electrokinetic Python interface (#2486)
+
+  * Correction to the installation instructions for mac (#2510)
+
+  * Corrected file permissions (#2470)
+
+  * Minor corrections and extensions to the test suite (#2477, #2552)
+
+  * Fixed a dead-lock in the dipolar Barnes Hutt method on the GPU for
+    recent NVIDIA cards such as RTX 2080 (#2719).
+
+  * Restored Mayavi visualizer's API-compatibility with OpenGL visualizer
+    (#2751)
+
+
+
+
 ESPResSo 4.0.1
 ==============
 

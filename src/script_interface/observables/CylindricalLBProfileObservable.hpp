@@ -167,7 +167,7 @@ public:
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "calculate") {
-      return cylindrical_profile_observable()->operator()(partCfg());
+      return cylindrical_profile_observable()->operator()();
     }
     if (method == "n_values") {
       return cylindrical_profile_observable()->n_values();
