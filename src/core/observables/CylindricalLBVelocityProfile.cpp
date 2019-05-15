@@ -25,7 +25,7 @@
 
 namespace Observables {
 
-std::vector<double> CylindricalLBVelocityProfile::operator()() const {
+std::vector<double> CylindricalLBVelocityProfile::evaluate() const {
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                                 static_cast<size_t>(n_phi_bins),
                                 static_cast<size_t>(n_z_bins)}};

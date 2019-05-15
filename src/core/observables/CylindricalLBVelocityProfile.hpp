@@ -25,7 +25,7 @@
 namespace Observables {
 class CylindricalLBVelocityProfile : public CylindricalLBProfileObservable {
 public:
-  std::vector<double> operator()() const override;
+  std::vector<double> evaluate() const override;
   int n_values() const override { return 3 * n_r_bins * n_phi_bins * n_z_bins; }
 };
 

@@ -45,7 +45,7 @@ public:
   virtual ~Observable() = default;
   /** Calculate the set of values measured by the observable
    */
-  virtual std::vector<double> operator()() const = 0;
+  virtual std::vector<double> evaluate() const = 0;
 
   /** Size of the array returned by the observable */
   virtual int n_values() const = 0;

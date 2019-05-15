@@ -11,7 +11,7 @@ namespace Observables {
 class DPDStress : public Observable {
 public:
   int n_values() const override { return 9; };
-  std::vector<double> operator()(PartCfg &) const override {
+  std::vector<double> evaluate() const override {
     return dpd_stress();
   }
 };

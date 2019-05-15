@@ -39,7 +39,7 @@ public:
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "calculate") {
-      return observable()->operator()();
+      return observable()->evaluate();
     }
     if (method == "n_values") {
       return observable()->n_values();
