@@ -41,8 +41,8 @@ namespace Utils {
  */
 template <class T>
 auto make_lin_space(T start, T stop, size_t number, bool endpoint = true) {
-  using boost::make_iterator_range;
   using boost::make_counting_iterator;
+  using boost::make_iterator_range;
   using boost::make_transform_iterator;
 
   auto const dx = (stop - start) / (number - endpoint);
