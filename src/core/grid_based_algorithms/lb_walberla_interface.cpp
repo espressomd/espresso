@@ -25,6 +25,13 @@ boost::optional<double> get_node_density(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_density);
 
+boost::optional<bool> get_node_is_boundary(Utils::Vector3i ind) {
+  auto res = lb_walberla()->get_node_is_boundary(ind);
+  return res;
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_node_is_boundary);
+
 
 void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u) {
   lb_walberla()->set_node_velocity(ind, u);

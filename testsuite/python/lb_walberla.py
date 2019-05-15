@@ -30,9 +30,10 @@ class LbWalberlaTest(ut.TestCase):
         s = espressomd.System(box_l=(9.6, 12, 15.6))
         s.time_step = 0.2
         s.cell_system.skin = 0.
+        dens_init = 1.3
         lbf = LBFluidWalberla(
             agrid=.6,
-            dens=1.3,
+            dens=dens_init,
             visc=2.5,
             tau=s.time_step)
         s.actors.add(lbf)
@@ -40,7 +41,7 @@ class LbWalberlaTest(ut.TestCase):
         for i in range(int(max_ind[0])):
             for j in range(int(max_ind[1])):
                 for k in range(int(max_ind[2])):
-                    assert np.linalg.norm(lbf[i, j, k].velocity) == 0
+                    assert np.linalg.norm(lbf[i, j, k].velocity) < 1E-15
                     v = np.array((i * .5, j * 1.5, k * 2.5))
                     lbf[i, j, k].velocity = v
                     assert np.linalg.norm(lbf[i, j, k].velocity - v) < 1E-10
@@ -48,7 +49,6 @@ class LbWalberlaTest(ut.TestCase):
                     assert abs(lbf[i, j, k].density - dens_init / 0.6**3) < 1E-10
                     rho = i*j*k*0.5 + 0.8
                     lbf[i, j, k].density = rho
-                    print("{} {} {} {}".format(i,j,k,lbf[i, j, k].density))
                     assert abs(lbf[i, j, k].density - rho) < 1E-10
 
         s.actors.remove(lbf)

@@ -1341,6 +1341,12 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
     mpi_recv_fluid_boundary_flag(node, index, &p_boundary);
     return p_boundary;
   }
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                              Walberla::get_node_is_boundary, ind);
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 

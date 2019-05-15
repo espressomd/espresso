@@ -102,8 +102,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_pdf_field_id =
       lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model, 
-                                Vector3<double>{m_velocity[0], m_velocity[1], m_velocity[2]},
-                                (real_t)m_density);
+                                to_vector3(m_velocity), (real_t)m_density);
 
   m_flag_field_id =
       field::addFlagFieldToStorage<Flag_field_t>(m_blocks, "flag field");
