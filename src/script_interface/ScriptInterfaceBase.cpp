@@ -23,6 +23,7 @@
 #include "ParallelScriptInterface.hpp"
 #include "ScriptInterface.hpp"
 #include "Serializer.hpp"
+#include "pack.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -81,22 +82,21 @@ ScriptInterfaceBase::get_instance(ObjectId id) {
 Variant ScriptInterfaceBase::get_state() const {
   std::vector<Variant> state;
 
-  auto params = this->get_parameters();
-  state.reserve(params.size());
-
-  for (auto const &p : params) {
+  for (auto const &p : get_parameters()) {
     state.push_back(std::vector<Variant>{
         {p.first, boost::apply_visitor(Serializer{}, p.second)}});
   }
 
-  return state;
+  return pack(state);
 }
 
 void ScriptInterfaceBase::set_state(Variant const &state) {
   VariantMap params;
   UnSerializer u;
 
-  for (auto const &v : get_value<std::vector<Variant>>(state)) {
+  auto const vv = unpack<std::vector<Variant>>(get_value<std::string>(state));
+
+  for (auto const &v : vv) {
     auto const &p = get_value<std::vector<Variant>>(v);
     params[get_value<std::string>(p.at(0))] = boost::apply_visitor(u, p.at(1));
   }
