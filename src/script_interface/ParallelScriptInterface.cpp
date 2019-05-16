@@ -133,17 +133,6 @@ Variant ParallelScriptInterface::get_parameter(std::string const &name) const {
   return map_local_to_parallel_id(p);
 }
 
-VariantMap ParallelScriptInterface::get_parameters() const {
-  auto p = m_p->get_parameters();
-
-  /* Wrap the object ids */
-  for (auto &it : p) {
-    it.second = map_local_to_parallel_id(it.second);
-  }
-
-  return p;
-}
-
 VariantMap ParallelScriptInterface::unwrap_variant_map(VariantMap const &map) {
   /* Copy parameters into a non-const buffer, needed by boost::mpi */
   auto p = map;
