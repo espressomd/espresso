@@ -27,6 +27,7 @@
 #include "utils/Span.hpp"
 
 #include <boost/utility/string_ref.hpp>
+#include <boost/container/flat_map.hpp>
 
 #include "Variant.hpp"
 
@@ -49,6 +50,13 @@ template <typename T> Variant make_variant(const T &x) { return Variant(x); }
 class ObjectHandle : public Utils::AutoObjectId<ObjectHandle> {
 public:
   enum class CreationPolicy { LOCAL, GLOBAL };
+
+private:
+  boost::container::flat_map<std::string, ObjectRef> m_keep_alive;
+
+  void keep_alive(std::string const&name, ObjectId id) {
+    m_keep_alive[name] = get_instance(id).lock();
+  }
 
 protected:
   ObjectHandle() = default;
@@ -105,6 +113,12 @@ public:
    *               are valid for a default-constructed object are valid.
    */
    void construct(VariantMap const& params) {
+     for(auto const& p: params) {
+       if(is_type<ObjectId>(p.second)) {
+         keep_alive(p.first, boost::get<ObjectId>(p.second));
+       }
+     }
+
      this->do_construct(params);
    }
 
@@ -150,7 +164,13 @@ public:
     return get_parameters().at(name);
   }
 
-  void set_parameter(const std::string & name, const Variant &value) { this->do_set_parameter(name, value); }
+  void set_parameter(const std::string & name, const Variant &value) {
+    if(is_type<ObjectId>(value)) {
+      keep_alive(name, boost::get<ObjectId>(value));
+    }
+
+    this->do_set_parameter(name, value);
+  }
 
 private:
   /**
