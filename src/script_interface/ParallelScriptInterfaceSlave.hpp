@@ -94,7 +94,7 @@ private:
     case CallbackAction::CONSTRUCT: {
       auto const parameters = bcast_variant_map();
 
-      m_p->construct(parameters);
+      m_p->do_construct(parameters);
       break;
     }
     case CallbackAction::SET_PARAMETER: {

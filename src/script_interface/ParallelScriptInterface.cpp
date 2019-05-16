@@ -83,17 +83,17 @@ void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
   m_cb = &cb;
 }
 
-void ParallelScriptInterface::construct(VariantMap const &params) {
+void ParallelScriptInterface::do_construct(VariantMap const &params) {
   call(CallbackAction::CONSTRUCT);
 
   auto p = unwrap_variant_map(params);
   boost::mpi::broadcast(m_cb->comm(), p, 0);
 
-  m_p->construct(p);
+  m_p->do_construct(p);
 }
 
-void ParallelScriptInterface::set_parameter(const std::string &name,
-                                            const Variant &value) {
+void ParallelScriptInterface::do_set_parameter(const std::string &name,
+                                               const Variant &value) {
   std::pair<std::string, Variant> d(name, Variant());
 
   if (is_type<ObjectId>(value)) {

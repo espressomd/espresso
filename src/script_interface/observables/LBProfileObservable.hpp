@@ -137,7 +137,7 @@ public:
           [this]() { return profile_observable()->allow_empty_bins; }}});
   }
 
-  void construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &params) override {
     m_observable =
         make_shared_from_args<CoreLBObs, double, double, double, double, double,
                               double, int, int, int, double, double, double,

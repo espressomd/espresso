@@ -38,7 +38,7 @@ struct TestClass : public ObjectHandle {
   TestClass() { constructed = true; }
   ~TestClass() override { destructed = true; }
 
-  void set_parameter(const std::string &name, const Variant &value) override {
+  void do_set_parameter(const std::string &name, const Variant &value) override {
     last_parameter = make_pair(name, value);
 
     if (name == "obj_param") {
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(set_parameter) {
   if (callbacks->comm().rank() == 0) {
     auto so = std::make_shared<ParallelScriptInterface>("TestClass");
 
-    so->set_parameter("TestParam", std::string("TestValue"));
+    so->do_set_parameter("TestParam", std::string("TestValue"));
 
     callbacks->abort_loop();
   } else {
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(parameter_lifetime) {
 
       BOOST_CHECK(get_instance(parameter->id()) == parameter);
 
-      host->set_parameter("obj_param", parameter->id());
+      host->do_set_parameter("obj_param", parameter->id());
     }
 
     auto param_id = host->get_parameter("obj_param");

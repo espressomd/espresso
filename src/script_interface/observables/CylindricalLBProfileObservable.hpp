@@ -127,7 +127,7 @@ public:
     });
   }
 
-  void construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &params) override {
     m_observable =
         make_shared_from_args<CoreCylLBObs, Utils::Vector3d, Utils::Vector3d,
                               int, int, int, double, double, double, double,

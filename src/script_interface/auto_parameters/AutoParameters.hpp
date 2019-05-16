@@ -132,7 +132,7 @@ public:
     }
   }
 
-  void set_parameter(const std::string &name, const Variant &value) final {
+  void do_set_parameter(const std::string &name, const Variant &value) final {
     try {
       m_parameters.at(name).set(value);
     } catch (AutoParameter::WriteError const &e) {

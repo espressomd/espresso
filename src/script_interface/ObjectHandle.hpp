@@ -104,9 +104,13 @@ public:
    * @param params The parameters to the constructor. Only parameters that
    *               are valid for a default-constructed object are valid.
    */
-  virtual void construct(VariantMap const &params) {
+   void construct(VariantMap const& params) {
+     this->do_construct(params);
+   }
+
+  virtual void do_construct(VariantMap const &params) {
     for (auto const &p : params) {
-      set_parameter(p.first, p.second);
+      do_set_parameter(p.first, p.second);
     }
   }
 
@@ -146,11 +150,15 @@ public:
     return get_parameters().at(name);
   }
 
+  void set_parameter(const std::string & name, const Variant &value) { this->do_set_parameter(name, value); }
+
+private:
   /**
    * @brief Set single parameter.
    */
-  virtual void set_parameter(const std::string &, const Variant &) {}
+  virtual void do_set_parameter(const std::string &, const Variant &) {}
 
+public:
   /**
    * @brief Call a method on the object.
    *

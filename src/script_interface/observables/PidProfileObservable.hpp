@@ -106,7 +106,7 @@ public:
           [this]() { return pid_profile_observable()->max_z; }}});
   }
 
-  void construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &params) override {
     m_observable =
         make_shared_from_args<CoreObs, std::vector<int>, int, int, int, double,
                               double, double, double, double, double>(

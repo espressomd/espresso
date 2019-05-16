@@ -36,7 +36,7 @@ public:
   /* as_const is to make obs read-only. */
   TimeSeries() { add_parameters({{"obs", Utils::as_const(m_obs)}}); }
 
-  void construct(VariantMap const &params) override {
+  void do_construct(VariantMap const &params) override {
     set_from_args(m_obs, params, "obs");
 
     if (m_obs)

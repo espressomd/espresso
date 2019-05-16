@@ -56,7 +56,7 @@ struct ScriptInterfaceTest : public ScriptInterface::ObjectHandle {
     return {};
   }
 
-  void set_parameter(const string &name, const Variant &value) override {
+  void do_set_parameter(const string &name, const Variant &value) override {
     if (name == "bool_opt") {
       bool_opt =
           get_value<std::remove_reference<decltype(bool_opt)>::type>(value);

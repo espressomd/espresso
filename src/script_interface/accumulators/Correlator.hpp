@@ -59,7 +59,7 @@ public:
          {"n_result", m_correlator, &CoreCorr::n_result}});
   }
 
-  void construct(VariantMap const &args) override {
+  void do_construct(VariantMap const &args) override {
     set_from_args(m_obs1, args, "obs1");
     if (args.count("obs2"))
       set_from_args(m_obs2, args, "obs2");

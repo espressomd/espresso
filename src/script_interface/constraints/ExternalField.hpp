@@ -45,7 +45,7 @@ public:
         [this]() { return m_constraint->field(); }));
   }
 
-  void construct(VariantMap const &args) override {
+  void do_construct(VariantMap const &args) override {
     m_constraint = std::make_shared<CoreField>(
         detail::make_coupling<Coupling>(args), detail::make_field<Field>(args));
   }
