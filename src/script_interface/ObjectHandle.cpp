@@ -87,4 +87,12 @@ ObjectHandle::unserialize(std::string const &state) {
   return {};
 }
 
+ObjectHandle::ObjectHandle(std::string name, CreationPolicy policy) : m_name(std::move(name)), m_policy(policy) {
+    switch(policy) {
+        case CreationPolicy::LOCAL:
+            break;
+        case CreationPolicy::GLOBAL:
+            break;
+    }
+}
 } /* namespace ScriptInterface */

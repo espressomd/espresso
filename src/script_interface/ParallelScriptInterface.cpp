@@ -22,7 +22,7 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/utility.hpp>
 
-#include "ParallelScriptInterfaceSlave.hpp"
+#include "RemoteObjectHandle.hpp"
 
 #include <cassert>
 
@@ -32,7 +32,7 @@ Communication::MpiCallbacks *m_cb = nullptr;
 void make_remote_handle() {
   assert(m_cb && "Not initialized.");
 
-  new ScriptInterface::ParallelScriptInterfaceSlave(m_cb);
+  new ScriptInterface::RemoteObjectHandle(m_cb);
 }
 } // namespace
 

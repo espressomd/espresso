@@ -58,15 +58,17 @@ private:
     m_keep_alive[name] = get_instance(id).lock();
   }
 
+public:
+  ObjectHandle(std::string name, CreationPolicy policy);
 protected:
-  ObjectHandle() = default;
+  ObjectHandle() : m_policy(CreationPolicy::LOCAL) {}
 
 public:
   /* Copy has unclear semantics, so it should not be allowed. */
   ObjectHandle(ObjectHandle const &) = delete;
-  ObjectHandle(ObjectHandle &&) = delete;
+  ObjectHandle(ObjectHandle &&) = default;
   ObjectHandle &operator=(ObjectHandle const &) = delete;
-  ObjectHandle &operator=(ObjectHandle &&) = delete;
+  ObjectHandle &operator=(ObjectHandle &&) = default;
   ~ObjectHandle() override = default;
 
   static std::weak_ptr<ObjectHandle> &get_instance(ObjectId id);

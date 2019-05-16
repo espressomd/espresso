@@ -31,14 +31,14 @@
 #include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
-class ParallelScriptInterfaceSlave {
+class RemoteObjectHandle {
 private:
   const auto &comm() const { return m_callback_id.cb()->comm(); }
 
   using CallbackAction = ParallelScriptInterface::CallbackAction;
 
 public:
-  ParallelScriptInterfaceSlave(Communication::MpiCallbacks *cb)
+  RemoteObjectHandle(Communication::MpiCallbacks *cb)
       : m_callback_id(cb, [this](CallbackAction a) { mpi_slave(a); }) {}
 
   std::shared_ptr<ObjectHandle> m_p;
