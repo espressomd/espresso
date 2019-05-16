@@ -20,18 +20,18 @@
 #ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
 #define SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
 
+#include "Variant.hpp"
+#include "MpiCallbacks.hpp"
+
+#include <utils/Span.hpp>
+
+#include <boost/utility/string_ref.hpp>
+#include <boost/mpi/collectives.hpp>
+#include <boost/serialization/utility.hpp>
+
 #include <map>
 #include <memory>
 #include <type_traits>
-
-#include "utils/Span.hpp"
-
-#include <boost/container/flat_map.hpp>
-#include <boost/utility/string_ref.hpp>
-
-#include "Variant.hpp"
-
-#include "MpiCallbacks.hpp"
 
 namespace Communication {
 class MpiCallbacks;
@@ -57,23 +57,8 @@ class ObjectHandle : public Utils::AutoObjectId<ObjectHandle> {
 public:
   enum class CreationPolicy { LOCAL, GLOBAL };
 
-private:
-  enum class CallbackAction;
-  using callback_type = Communication::CallbackHandle<CallbackAction>;
-  boost::optional<callback_type> m_callback_id;
-
-  boost::container::flat_map<std::string, ObjectRef> m_keep_alive;
-  void keep_alive(std::string const &name, ObjectId id) {
-    m_keep_alive[name] = get_instance(id).lock();
-  }
-
-public:
-  ObjectHandle(std::string name, CreationPolicy policy);
-  ObjectHandle(std::string name, Communication::MpiCallbacks *,
-               CreationPolicy policy);
-
 protected:
-  ObjectHandle() : m_policy(CreationPolicy::LOCAL) {}
+  ObjectHandle() = default;
 
 public:
   /* Copy has unclear semantics, so it should not be allowed. */
@@ -90,7 +75,7 @@ private:
      only to be used internally. */
 
   std::string m_name;
-  CreationPolicy m_policy;
+  CreationPolicy m_policy = CreationPolicy::LOCAL;
 
   void set_name(std::string const &name) { m_name = name; }
   void set_policy(CreationPolicy policy) { m_policy = policy; }
@@ -127,12 +112,6 @@ public:
    *               are valid for a default-constructed object are valid.
    */
   void construct(VariantMap const &params) {
-    for (auto const &p : params) {
-      if (is_type<ObjectId>(p.second)) {
-        keep_alive(p.first, boost::get<ObjectId>(p.second));
-      }
-    }
-
     this->do_construct(params);
   }
 
@@ -180,10 +159,6 @@ public:
   }
 
   void set_parameter(const std::string &name, const Variant &value) {
-    if (is_type<ObjectId>(value)) {
-      keep_alive(name, boost::get<ObjectId>(value));
-    }
-
     this->do_set_parameter(name, value);
   }
 
@@ -221,25 +196,6 @@ public:
                                                    Variant const &state) {
     auto so_ptr = make_shared(name, policy);
     return so_ptr;
-  }
-
-  /**
-   * @brief Get a new reference counted instance of a script interface by
-   * type.
-   *
-   */
-  template <typename T> std::shared_ptr<T> static make_shared() {
-    std::shared_ptr<T> sp = std::make_shared<T>();
-
-    /* id of the newly created instance */
-    const auto id = sp->id();
-
-    /* get a reference to the corresponding weak_ptr in ObjectId and update
-       it with our shared ptr, so that everybody uses the same ref count.
-    */
-    sp->get_instance(id) = std::static_pointer_cast<ObjectHandle>(sp);
-
-    return sp;
   }
 
 public:

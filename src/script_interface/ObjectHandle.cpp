@@ -81,10 +81,4 @@ std::shared_ptr<ObjectHandle>
 ObjectHandle::unserialize(std::string const &state) {
   return {};
 }
-
-ObjectHandle::ObjectHandle(std::string name, Communication::MpiCallbacks *cb,
-                           CreationPolicy policy)
-    : m_callback_id(boost::in_place_init, cb, [](CallbackAction) {}),
-      m_name(std::move(name)), m_policy(policy) {}
-
 } /* namespace ScriptInterface */

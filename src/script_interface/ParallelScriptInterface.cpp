@@ -30,8 +30,6 @@ namespace {
 Communication::MpiCallbacks *m_cb = nullptr;
 
 void make_remote_handle() {
-  assert(m_cb && "Not initialized.");
-
   new ScriptInterface::RemoteObjectHandle(m_cb);
 }
 } // namespace
