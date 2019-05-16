@@ -62,7 +62,6 @@ public:
   }
 
   void do_construct(VariantMap const &params) override;
-  const std::string name() const { return m_p->name(); }
   void do_set_parameter(const std::string &name, const Variant &value) override;
   Utils::Span<const boost::string_ref> valid_parameters() const override {
     return m_p->valid_parameters();
