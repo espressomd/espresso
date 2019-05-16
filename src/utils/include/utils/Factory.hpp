@@ -26,11 +26,10 @@
 #include <utils/type_id.hpp>
 
 #include <exception>
-#include <functional>
 #include <memory>
 #include <string>
-#include <type_traits>
-#include <unordered_map>
+
+#include <boost/container/flat_map.hpp>
 
 namespace Utils {
 
@@ -82,7 +81,7 @@ public:
   /** The returned pointer type */
   using pointer_type = std::unique_ptr<T>;
   /** Type of the constructor functions */
-  using builder_type = std::function<T *()>;
+  using builder_type = pointer_type (*)();
 
 public:
   /**
@@ -91,7 +90,7 @@ public:
   pointer_type make(const std::string &name) const {
     try {
       auto builder = m_map.at(name);
-      return assert(builder), pointer_type(builder());
+      return assert(builder), builder();
     } catch (std::out_of_range const &) {
       throw std::domain_error("Class '" + name + "' not found.");
     }
@@ -113,12 +112,12 @@ public:
    * @param name Given name for the type, has to be unique in this Factory<T>.
    */
   template <typename Derived> void register_new(const std::string &name) {
-    m_map[name] = []() -> T * { return new Derived(); };
+    m_map[name] = []() { return pointer_type(new Derived()); };
   }
 
 private:
   /** Maps names to construction functions. */
-  std::unordered_map<std::string, builder_type> m_map;
+  boost::container::flat_map<std::string, builder_type> m_map;
 };
 
 } /* namespace Utils */
