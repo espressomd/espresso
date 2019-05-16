@@ -51,9 +51,6 @@ public:
    */
   static void initialize(Communication::MpiCallbacks &cb);
 
-  bool operator==(ParallelScriptInterface const &rhs);
-  bool operator!=(ParallelScriptInterface const &rhs);
-
   /**
    * @brief Get the payload object.
    */

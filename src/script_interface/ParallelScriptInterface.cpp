@@ -71,14 +71,6 @@ ParallelScriptInterface::~ParallelScriptInterface() {
   }
 }
 
-bool ParallelScriptInterface::operator==(ParallelScriptInterface const &rhs) {
-  return this->get_underlying_object() == rhs.get_underlying_object();
-}
-
-bool ParallelScriptInterface::operator!=(ParallelScriptInterface const &rhs) {
-  return !(*this == rhs);
-}
-
 void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
   m_cb = &cb;
 }
