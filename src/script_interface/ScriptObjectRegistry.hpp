@@ -27,7 +27,7 @@
 namespace ScriptInterface {
 
 template <typename ManagedType>
-class ScriptObjectRegistry : public ScriptInterfaceBase {
+class ScriptObjectRegistry : public ObjectHandle {
 public:
   virtual void add_in_core(std::shared_ptr<ManagedType> obj_ptr) = 0;
   virtual void remove_in_core(std::shared_ptr<ManagedType> obj_ptr) = 0;

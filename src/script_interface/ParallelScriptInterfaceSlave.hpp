@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_PARALLEL_SCRIPT_INTERFACE_SLAVE_HPP
 
 #include "MpiCallbacks.hpp"
-#include "ScriptInterfaceBase.hpp"
+#include "ObjectHandle.hpp"
 
 #include "ParallelScriptInterface.hpp"
 
@@ -41,10 +41,10 @@ public:
   ParallelScriptInterfaceSlave(Communication::MpiCallbacks *cb)
       : m_callback_id(cb, [this](CallbackAction a) { mpi_slave(a); }) {}
 
-  std::shared_ptr<ScriptInterfaceBase> m_p;
+  std::shared_ptr<ObjectHandle> m_p;
 
   static auto &get_translation_table() {
-    static std::map<ObjectId, std::weak_ptr<ScriptInterfaceBase>>
+    static std::map<ObjectId, std::weak_ptr<ObjectHandle>>
         m_translation_table;
 
     return m_translation_table;
@@ -84,8 +84,8 @@ private:
       std::pair<ObjectId, std::string> what;
       boost::mpi::broadcast(comm(), what, 0);
 
-      m_p = ScriptInterfaceBase::make_shared(
-          what.second, ScriptInterfaceBase::CreationPolicy::LOCAL);
+      m_p = ObjectHandle::make_shared(
+          what.second, ObjectHandle::CreationPolicy::LOCAL);
 
       get_translation_table()[what.first] = m_p;
 

@@ -22,8 +22,7 @@
 #ifndef SCRIPT_INTERFACE_COM_FIXED_HPP
 #define SCRIPT_INTERFACE_COM_FIXED_HPP
 
-#include "ScriptInterfaceBase.hpp"
-#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include "core/comfixed_global.hpp"
 

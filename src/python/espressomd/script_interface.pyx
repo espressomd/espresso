@@ -89,7 +89,7 @@ cdef class PScriptInterface:
     def _valid_parameters(self):
         return [to_str(p.data()) for p in self.sip.get().valid_parameters()]
 
-    cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip):
+    cdef set_sip(self, shared_ptr[ObjectHandle] sip):
         self.sip = sip
 
     def set_sip_via_oid(self, PObjectId id):
@@ -140,7 +140,7 @@ cdef class PScriptInterface:
         return self.sip.get().serialize()
 
     def _unserialize(self, state):
-        cdef shared_ptr[ScriptInterfaceBase] so_ptr = ScriptInterfaceBase.unserialize(state)
+        cdef shared_ptr[ObjectHandle] so_ptr = ObjectHandle.unserialize(state)
         self.set_sip(so_ptr)
 
     cdef VariantMap _sanitize_params(self, in_params) except *:
@@ -210,7 +210,7 @@ cdef variant_to_python_object(const Variant & value) except +:
     """Convert C++ Variant objects to Python objects."""
     cdef ObjectId oid
     cdef vector[Variant] vec
-    cdef shared_ptr[ScriptInterfaceBase] ptr
+    cdef shared_ptr[ObjectHandle] ptr
     if is_none(value):
         return None
     if is_type[bool](value):
@@ -271,7 +271,7 @@ cdef variant_to_python_object(const Variant & value) except +:
 
 
 def _unpickle_so_class(so_name, state):
-    cdef shared_ptr[ScriptInterfaceBase] sip = ScriptInterfaceBase.unserialize(state)
+    cdef shared_ptr[ObjectHandle] sip = ObjectHandle.unserialize(state)
 
     poid = PObjectId()
     poid.id = sip.get().id()

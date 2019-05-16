@@ -52,7 +52,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 
     Variant make_variant[T](const T & x)
 
-    cdef cppclass ScriptInterfaceBase:
+    cdef cppclass ObjectHandle:
         const string name()
         void construct(const VariantMap &) except +
         VariantMap get_parameters() except +
@@ -66,15 +66,15 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         string serialize() except +
 
         @staticmethod
-        shared_ptr[ScriptInterfaceBase] unserialize(const string & state) except +
+        shared_ptr[ObjectHandle] unserialize(const string & state) except +
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ObjectHandle":
     cdef cppclass CreationPolicy:
         pass
-    shared_ptr[ScriptInterfaceBase] make_shared(const string & name, CreationPolicy policy) except +
-    weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id) except +
+    shared_ptr[ObjectHandle] make_shared(const string & name, CreationPolicy policy) except +
+    weak_ptr[ObjectHandle] get_instance(ObjectId id) except +
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase::CreationPolicy":
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ObjectHandle::CreationPolicy":
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
 
@@ -82,6 +82,6 @@ cdef variant_to_python_object(const Variant & value) except +
 cdef Variant python_object_to_variant(value)
 
 cdef class PScriptInterface:
-    cdef shared_ptr[ScriptInterfaceBase] sip
-    cdef set_sip(self, shared_ptr[ScriptInterfaceBase] sip)
+    cdef shared_ptr[ObjectHandle] sip
+    cdef set_sip(self, shared_ptr[ObjectHandle] sip)
     cdef VariantMap _sanitize_params(self, in_params) except *

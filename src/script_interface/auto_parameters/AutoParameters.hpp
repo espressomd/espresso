@@ -19,8 +19,8 @@
 #ifndef SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 #define SCRIPT_INTERFACE_AUTO_PARAMETERS_AUTO_PARAMETERS_HPP
 
-#include "script_interface/ScriptInterfaceBase.hpp"
 #include "script_interface/auto_parameters/AutoParameter.hpp"
+#include "script_interface/ObjectHandle.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -82,9 +82,9 @@ namespace ScriptInterface {
  * (this has to be captured in the lambdas to have access to the member
  * functions of the class).
  */
-template <typename Derived, typename Base = ScriptInterfaceBase>
+template <typename Derived, typename Base = ObjectHandle>
 class AutoParameters : public Base {
-  static_assert(std::is_base_of<ScriptInterfaceBase, Base>::value, "");
+  static_assert(std::is_base_of<ObjectHandle, Base>::value, "");
 
 public:
   /** @brief Exception thrown when accessing an unknown parameter */
@@ -112,7 +112,7 @@ protected:
   }
 
 public:
-  /* ScriptInterfaceBase implementation */
+  /* ObjectHandle implementation */
   Utils::Span<const boost::string_ref> valid_parameters() const final {
     static std::vector<boost::string_ref> valid_params;
     valid_params.clear();

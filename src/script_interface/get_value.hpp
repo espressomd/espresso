@@ -20,7 +20,7 @@
 #ifndef SCRIPT_INTERFACE_GET_VALUE_HPP
 #define SCRIPT_INTERFACE_GET_VALUE_HPP
 
-#include "ScriptInterfaceBase.hpp"
+#include "ObjectHandle.hpp"
 #include "Variant.hpp"
 
 #include "utils/demangle.hpp"
@@ -167,14 +167,14 @@ template <> struct get_value_helper<std::vector<double>, void> {
 template <typename T>
 struct get_value_helper<
     std::shared_ptr<T>,
-    typename std::enable_if<std::is_base_of<ScriptInterfaceBase, T>::value,
+    typename std::enable_if<std::is_base_of<ObjectHandle, T>::value,
                             void>::type> {
   std::shared_ptr<T> operator()(Variant const &v) const {
     auto const object_id = boost::get<ObjectId>(v);
     if (object_id == ObjectId()) {
       return nullptr;
     }
-    auto so_ptr = ScriptInterfaceBase::get_instance(object_id).lock();
+    auto so_ptr = ObjectHandle::get_instance(object_id).lock();
     if (!so_ptr) {
       throw std::runtime_error("Unknown Object.");
     }

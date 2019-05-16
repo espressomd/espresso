@@ -46,22 +46,22 @@ template <typename T> Variant make_variant(const T &x) { return Variant(x); }
  * create derived classes.
  *
  */
-class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
+class ObjectHandle : public Utils::AutoObjectId<ObjectHandle> {
 public:
   enum class CreationPolicy { LOCAL, GLOBAL };
 
 protected:
-  ScriptInterfaceBase() = default;
+  ObjectHandle() = default;
 
 public:
   /* Copy has unclear semantics, so it should not be allowed. */
-  ScriptInterfaceBase(ScriptInterfaceBase const &) = delete;
-  ScriptInterfaceBase(ScriptInterfaceBase &&) = delete;
-  ScriptInterfaceBase &operator=(ScriptInterfaceBase const &) = delete;
-  ScriptInterfaceBase &operator=(ScriptInterfaceBase &&) = delete;
-  ~ScriptInterfaceBase() override = default;
+  ObjectHandle(ObjectHandle const &) = delete;
+  ObjectHandle(ObjectHandle &&) = delete;
+  ObjectHandle &operator=(ObjectHandle const &) = delete;
+  ObjectHandle &operator=(ObjectHandle &&) = delete;
+  ~ObjectHandle() override = default;
 
-  static std::weak_ptr<ScriptInterfaceBase> &get_instance(ObjectId id);
+  static std::weak_ptr<ObjectHandle> &get_instance(ObjectId id);
 
 private:
   /* Members related to object construction, they are
@@ -165,7 +165,7 @@ public:
    * name.
    *
    */
-  static std::shared_ptr<ScriptInterfaceBase>
+  static std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, CreationPolicy policy);
 
   /**
@@ -173,7 +173,7 @@ public:
    * name, restoring the state of the object
    *
    */
-  static std::shared_ptr<ScriptInterfaceBase>
+  static std::shared_ptr<ObjectHandle>
   make_shared(std::string const &name, CreationPolicy policy,
               Variant const &state) {
     auto so_ptr = make_shared(name, policy);
@@ -195,14 +195,14 @@ public:
     /* get a reference to the corresponding weak_ptr in ObjectId and update
        it with our shared ptr, so that everybody uses the same ref count.
     */
-    sp->get_instance(id) = std::static_pointer_cast<ScriptInterfaceBase>(sp);
+    sp->get_instance(id) = std::static_pointer_cast<ObjectHandle>(sp);
 
     return sp;
   }
 
 public:
   std::string serialize() const;
-  static std::shared_ptr<ScriptInterfaceBase>
+  static std::shared_ptr<ObjectHandle>
   unserialize(std::string const &state);
 };
 } /* namespace ScriptInterface */

@@ -32,9 +32,9 @@
 #include <boost/serialization/vector.hpp>
 
 namespace ScriptInterface {
-class ScriptInterfaceBase;
-using ObjectId = Utils::ObjectId<ScriptInterfaceBase>;
-using ObjectRef = std::shared_ptr<ScriptInterfaceBase>;
+class ObjectHandle;
+using ObjectId = Utils::ObjectId<ObjectHandle>;
+using ObjectRef = std::shared_ptr<ObjectHandle>;
 /**
  * @brief None-"literal".
  */

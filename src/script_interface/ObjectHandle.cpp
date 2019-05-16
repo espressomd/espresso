@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "ScriptInterfaceBase.hpp"
+#include "ObjectHandle.hpp"
 #include "ParallelScriptInterface.hpp"
 #include "ScriptInterface.hpp"
 
@@ -31,12 +31,12 @@
 #include <sstream>
 
 namespace ScriptInterface {
-Utils::Factory<ScriptInterfaceBase> factory;
+Utils::Factory<ObjectHandle> factory;
 
-std::shared_ptr<ScriptInterfaceBase>
-ScriptInterfaceBase::make_shared(std::string const &name,
+std::shared_ptr<ObjectHandle>
+ObjectHandle::make_shared(std::string const &name,
                                  CreationPolicy policy) {
-  std::shared_ptr<ScriptInterfaceBase> sp;
+  std::shared_ptr<ObjectHandle> sp;
 
   switch (policy) {
   case CreationPolicy::LOCAL:
@@ -44,7 +44,7 @@ ScriptInterfaceBase::make_shared(std::string const &name,
     break;
   case CreationPolicy::GLOBAL:
     sp =
-        std::shared_ptr<ScriptInterfaceBase>(new ParallelScriptInterface(name));
+        std::shared_ptr<ObjectHandle>(new ParallelScriptInterface(name));
     break;
   }
 
@@ -63,9 +63,9 @@ ScriptInterfaceBase::make_shared(std::string const &name,
   return sp;
 }
 
-std::weak_ptr<ScriptInterfaceBase> &
-ScriptInterfaceBase::get_instance(ObjectId id) {
-  return Utils::AutoObjectId<ScriptInterfaceBase>::get_instance(id);
+std::weak_ptr<ObjectHandle> &
+ObjectHandle::get_instance(ObjectId id) {
+  return Utils::AutoObjectId<ObjectHandle>::get_instance(id);
 }
 
 /* Checkpointing functions. */
@@ -74,7 +74,7 @@ ScriptInterfaceBase::get_instance(ObjectId id) {
  * @brief Returns a binary representation of the state often
  *        the instance, as returned by get_state().
  */
-std::string ScriptInterfaceBase::serialize() const {
+std::string ObjectHandle::serialize() const {
   return {};
 }
 
@@ -82,8 +82,8 @@ std::string ScriptInterfaceBase::serialize() const {
  * @brief Creates a new instance from a binary state,
  *        as returned by serialize().
  */
-std::shared_ptr<ScriptInterfaceBase>
-ScriptInterfaceBase::unserialize(std::string const &state) {
+std::shared_ptr<ObjectHandle>
+ObjectHandle::unserialize(std::string const &state) {
   return {};
 }
 

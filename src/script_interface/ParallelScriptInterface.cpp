@@ -49,8 +49,8 @@ ParallelScriptInterface::ParallelScriptInterface(std::string const &name)
   call(CallbackAction::NEW);
 
   /* Create local object */
-  m_p = ScriptInterfaceBase::make_shared(
-      name, ScriptInterfaceBase::CreationPolicy::LOCAL);
+  m_p = ObjectHandle::make_shared(
+      name, ObjectHandle::CreationPolicy::LOCAL);
 
   /* Bcast class name and global id to the slaves */
   std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name);

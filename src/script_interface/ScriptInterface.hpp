@@ -26,7 +26,8 @@
 
 #include "Variant.hpp"
 
-#include "ScriptInterfaceBase.hpp"
+#include "ObjectHandle.hpp"
+#include "auto_parameters/AutoParameters.hpp"
 #include "get_value.hpp"
 #include "pack.hpp"
 #include "initialize.hpp"
@@ -38,19 +39,19 @@
  *  See page @ref script_interface for detailed instructions.
  */
 namespace ScriptInterface {
-extern Utils::Factory<ScriptInterfaceBase> factory;
+extern Utils::Factory<ObjectHandle> factory;
 
 template <typename T> static void register_new(std::string const &name) {
-  static_assert(std::is_base_of<ScriptInterfaceBase, T>::value, "");
+  static_assert(std::is_base_of<ObjectHandle, T>::value, "");
 
   /* Register with the factory */
   factory.register_new<T>(name);
 }
 
-inline std::shared_ptr<ScriptInterfaceBase> get_instance(Variant value) {
+inline std::shared_ptr<ObjectHandle> get_instance(Variant value) {
   const auto id = get_value<ObjectId>(value);
 
-  return ScriptInterfaceBase::get_instance(id).lock();
+  return ObjectHandle::get_instance(id).lock();
 }
 } /* namespace ScriptInterface */
 

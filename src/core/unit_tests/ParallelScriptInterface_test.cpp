@@ -34,7 +34,7 @@ std::unique_ptr<Communication::MpiCallbacks> callbacks;
 
 using namespace ScriptInterface;
 
-struct TestClass : public ScriptInterfaceBase {
+struct TestClass : public ObjectHandle {
   TestClass() { constructed = true; }
   ~TestClass() override { destructed = true; }
 
@@ -63,7 +63,7 @@ struct TestClass : public ScriptInterfaceBase {
   static std::pair<std::string, VariantMap> last_method_parameters;
   static std::pair<std::string, Variant> last_parameter;
 
-  std::shared_ptr<ScriptInterfaceBase> obj_param;
+  std::shared_ptr<ObjectHandle> obj_param;
 
   static bool constructed;
   static bool destructed;
@@ -148,11 +148,11 @@ BOOST_AUTO_TEST_CASE(call_method) {
 BOOST_AUTO_TEST_CASE(parameter_lifetime) {
   if (callbacks->comm().rank() == 0) {
     auto host = std::make_shared<ParallelScriptInterface>("TestClass");
-    ScriptInterfaceBase *bare_ptr;
+    ObjectHandle *bare_ptr;
 
     {
-      auto parameter = ScriptInterfaceBase::make_shared(
-          "TestClass", ScriptInterfaceBase::CreationPolicy::GLOBAL);
+      auto parameter = ObjectHandle::make_shared(
+          "TestClass", ObjectHandle::CreationPolicy::GLOBAL);
       bare_ptr = parameter.get();
 
       BOOST_CHECK(get_instance(parameter->id()) == parameter);

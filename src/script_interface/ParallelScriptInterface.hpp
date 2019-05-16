@@ -28,8 +28,12 @@
 #include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
+using TransportVariant = boost::make_recursive_variant<
+    None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
+    ObjectId, std::vector<boost::recursive_variant_>, Utils::Vector2d,
+    Utils::Vector3d, Utils::Vector4d>::type;
 
-class ParallelScriptInterface : public ScriptInterfaceBase {
+class ParallelScriptInterface : public ObjectHandle {
 public:
   enum class CallbackAction {
     NEW,
@@ -53,8 +57,8 @@ public:
   /**
    * @brief Get the payload object.
    */
-  std::shared_ptr<ScriptInterfaceBase> get_underlying_object() const {
-    return std::static_pointer_cast<ScriptInterfaceBase>(m_p);
+  std::shared_ptr<ObjectHandle> get_underlying_object() const {
+    return std::static_pointer_cast<ObjectHandle>(m_p);
   }
 
   void construct(VariantMap const &params) override;
@@ -88,7 +92,7 @@ private:
   /* Data members */
   Communication::CallbackHandle<CallbackAction> m_callback_id;
   /* Payload object */
-  std::shared_ptr<ScriptInterfaceBase> m_p;
+  std::shared_ptr<ObjectHandle> m_p;
   map_t obj_map;
 };
 

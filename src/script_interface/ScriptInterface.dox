@@ -32,24 +32,24 @@
 ///    <tt>src/script_interface/\<namespace\>/\<MyClass\>.hpp</tt>
 /// 2. Add <tt>\#include "ScriptInterface.hpp"</tt>
 /// 3. Create a new class that derives from
-///    @ref ScriptInterface::ScriptInterfaceBase "ScriptInterfaceBase"
+///    @ref ScriptInterface::ObjectHandle "ObjectHandle"
 /// 4. Implement the required methods:
-///    - @ref ScriptInterface::ScriptInterfaceBase::name "name()" should return
+///    - @ref ScriptInterface::ObjectHandle::name "name()" should return
 ///      the full name for the class
-///    - @ref ScriptInterface::ScriptInterfaceBase::valid_parameters
+///    - @ref ScriptInterface::ObjectHandle::valid_parameters
 ///      "valid_parameters()" should return a list of all accepted parameters
 ///      (e.g. @ref src/script_interface/observables/PidObservable.hpp
 ///      "PidObservable.hpp"). Alternatively, use
 ///      @ref ScriptInterface::AutoParameters::add_parameters "add_parameters()"
 ///      in the class constructor
 ///      (e.g. @ref src/script_interface/shapes/Wall.hpp "Wall.hpp").
-///    - @ref ScriptInterface::ScriptInterfaceBase::get_parameters "get_parameters()"
+///    - @ref ScriptInterface::ObjectHandle::get_parameters "get_parameters()"
 ///      should return a map of parameters.
-///    - @ref ScriptInterface::ScriptInterfaceBase::set_parameter "set_parameter()"
+///    - @ref ScriptInterface::ObjectHandle::set_parameter "set_parameter()"
 ///      should set the named parameter.
 ///    - optionally, add implementations for
-///      @ref ScriptInterface::ScriptInterfaceBase::get_parameter "get_parameter()",
-///      @ref ScriptInterface::ScriptInterfaceBase::call_method "call_method()".
+///      @ref ScriptInterface::ObjectHandle::get_parameter "get_parameter()",
+///      @ref ScriptInterface::ObjectHandle::call_method "call_method()".
 /// 5. Add the new class to the initialization functions
 ///    - if they don't exist, create initialization files
 ///      (<tt>src/script_interface/\<namespace\>/initialize\.{hpp,cpp}</tt>)
@@ -84,7 +84,7 @@
 ///
 /// namespace ScriptInterface {
 ///
-/// class HelloWorld : public ScriptInterfaceBase {
+/// class HelloWorld : public ObjectHandle {
 /// public:
 ///   HelloWorld() : m_name("John Doe") {}
 ///
