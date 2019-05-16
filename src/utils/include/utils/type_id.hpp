@@ -18,9 +18,7 @@ using typeid_t = void (*)();
  * @tparam T Any type
  * @return A unique integral identifier for T.
  */
-template <typename T> typeid_t type_id() {
-  return typeid_t(type_id<T>);
-}
+template <typename T> typeid_t type_id() { return typeid_t(type_id<T>); }
 } // namespace Utils
 
 #endif

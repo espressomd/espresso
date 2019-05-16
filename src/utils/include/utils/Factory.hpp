@@ -23,6 +23,8 @@
 #ifndef __UTILS_FACTORY_HPP
 #define __UTILS_FACTORY_HPP
 
+#include <utils/type_id.hpp>
+
 #include <exception>
 #include <functional>
 #include <memory>
@@ -106,22 +108,12 @@ public:
   }
 
   /**
-   * @brief Register a new type.
-   *
-   * @param name Given name for the type, has to be unique in this Factory<T>.
-   * @param b Function to create an instance.
-   */
-  void register_new(const std::string &name, const builder_type &b) {
-    m_map[name] = b;
-  }
-
-  /**
    * @brief Register a new type with the default construction function.
    *
    * @param name Given name for the type, has to be unique in this Factory<T>.
    */
   template <typename Derived> void register_new(const std::string &name) {
-    register_new(name, []() -> T * { return new Derived(); });
+    m_map[name] = []() -> T * { return new Derived(); };
   }
 
 private:

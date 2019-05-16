@@ -29,7 +29,6 @@
 
 #include "utils/Factory.hpp"
 
-namespace Testing {
 struct TestClass {
   virtual void method() = 0;
   virtual ~TestClass() = default;
@@ -42,34 +41,22 @@ struct DerivedTestClass : public TestClass {
 struct OtherDerivedTestClass : public TestClass {
   void method() override {}
 };
-} /* namespace Testing */
 
 /* Check registration of construction functions */
 BOOST_AUTO_TEST_CASE(regiser_class) {
-  using namespace Testing;
   Utils::Factory<TestClass> factory;
 
-  /* Overload with explicit builder */
-  factory.register_new("derived_test_class",
-                       []() { return new DerivedTestClass(); });
-  /* Overload with default builder */
   factory.register_new<OtherDerivedTestClass>("other_derived_class");
 
-  /* Both builders should be present. */
-  BOOST_CHECK(factory.has_builder("derived_test_class"));
   BOOST_CHECK(factory.has_builder("other_derived_class"));
 }
 
 /* Check object construction. */
 BOOST_AUTO_TEST_CASE(make) {
-  using namespace Testing;
-
-  using namespace Testing;
   Utils::Factory<TestClass> factory;
 
   /* Overload with explicit builder */
-  factory.register_new("derived_test_class",
-                       []() { return new DerivedTestClass(); });
+  factory.register_new<DerivedTestClass>("derived_test_class");
 
   /* Make a derived object */
   auto o = factory.make("derived_test_class");
