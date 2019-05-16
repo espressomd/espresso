@@ -26,10 +26,16 @@
 
 #include "utils/Span.hpp"
 
-#include <boost/utility/string_ref.hpp>
 #include <boost/container/flat_map.hpp>
+#include <boost/utility/string_ref.hpp>
 
 #include "Variant.hpp"
+
+#include "MpiCallbacks.hpp"
+
+namespace Communication {
+class MpiCallbacks;
+}
 
 namespace ScriptInterface {
 /**
@@ -52,14 +58,20 @@ public:
   enum class CreationPolicy { LOCAL, GLOBAL };
 
 private:
-  boost::container::flat_map<std::string, ObjectRef> m_keep_alive;
+  enum class CallbackAction;
+  using callback_type = Communication::CallbackHandle<CallbackAction>;
+  boost::optional<callback_type> m_callback_id;
 
-  void keep_alive(std::string const&name, ObjectId id) {
+  boost::container::flat_map<std::string, ObjectRef> m_keep_alive;
+  void keep_alive(std::string const &name, ObjectId id) {
     m_keep_alive[name] = get_instance(id).lock();
   }
 
 public:
   ObjectHandle(std::string name, CreationPolicy policy);
+  ObjectHandle(std::string name, Communication::MpiCallbacks *,
+               CreationPolicy policy);
+
 protected:
   ObjectHandle() : m_policy(CreationPolicy::LOCAL) {}
 
@@ -114,16 +126,17 @@ public:
    * @param params The parameters to the constructor. Only parameters that
    *               are valid for a default-constructed object are valid.
    */
-   void construct(VariantMap const& params) {
-     for(auto const& p: params) {
-       if(is_type<ObjectId>(p.second)) {
-         keep_alive(p.first, boost::get<ObjectId>(p.second));
-       }
-     }
+  void construct(VariantMap const &params) {
+    for (auto const &p : params) {
+      if (is_type<ObjectId>(p.second)) {
+        keep_alive(p.first, boost::get<ObjectId>(p.second));
+      }
+    }
 
-     this->do_construct(params);
-   }
+    this->do_construct(params);
+  }
 
+private:
   virtual void do_construct(VariantMap const &params) {
     for (auto const &p : params) {
       do_set_parameter(p.first, p.second);
@@ -166,8 +179,8 @@ public:
     return get_parameters().at(name);
   }
 
-  void set_parameter(const std::string & name, const Variant &value) {
-    if(is_type<ObjectId>(value)) {
+  void set_parameter(const std::string &name, const Variant &value) {
+    if (is_type<ObjectId>(value)) {
       keep_alive(name, boost::get<ObjectId>(value));
     }
 
@@ -195,19 +208,18 @@ public:
    * name.
    *
    */
-  static std::shared_ptr<ObjectHandle>
-  make_shared(std::string const &name, CreationPolicy policy);
+  static std::shared_ptr<ObjectHandle> make_shared(std::string const &name,
+                                                   CreationPolicy policy);
 
   /**
    * @brief Get a new reference counted instance of a script interface by
    * name, restoring the state of the object
    *
    */
-  static std::shared_ptr<ObjectHandle>
-  make_shared(std::string const &name, CreationPolicy policy,
-              Variant const &state) {
+  static std::shared_ptr<ObjectHandle> make_shared(std::string const &name,
+                                                   CreationPolicy policy,
+                                                   Variant const &state) {
     auto so_ptr = make_shared(name, policy);
-    // so_ptr->set_state(state);
     return so_ptr;
   }
 
@@ -232,8 +244,7 @@ public:
 
 public:
   std::string serialize() const;
-  static std::shared_ptr<ObjectHandle>
-  unserialize(std::string const &state);
+  static std::shared_ptr<ObjectHandle> unserialize(std::string const &state);
 };
 } /* namespace ScriptInterface */
 #endif

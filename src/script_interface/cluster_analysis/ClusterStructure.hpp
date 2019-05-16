@@ -51,10 +51,8 @@ public:
       // Note: Cluster objects are generated on the fly, to avoid having to
       // store a script interface object for all clusters (which can by
       // thousands)
-      auto c =
-          std::dynamic_pointer_cast<Cluster>(ObjectHandle::make_shared(
-              "ClusterAnalysis::Cluster",
-              ObjectHandle::CreationPolicy::LOCAL));
+      auto c = std::dynamic_pointer_cast<Cluster>(ObjectHandle::make_shared(
+          "ClusterAnalysis::Cluster", ObjectHandle::CreationPolicy::LOCAL));
       c->set_cluster(
           m_cluster_structure.clusters.at(get_value<int>(parameters.at("id"))));
 

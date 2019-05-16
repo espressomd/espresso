@@ -25,14 +25,13 @@
 #include <type_traits>
 
 #include "Variant.hpp"
-
 #include "ObjectHandle.hpp"
 #include "auto_parameters/AutoParameters.hpp"
 #include "get_value.hpp"
-#include "pack.hpp"
 #include "initialize.hpp"
-#include "script_interface/auto_parameters/AutoParameters.hpp"
-#include "utils/Factory.hpp"
+#include "pack.hpp"
+
+#include <utils/Factory.hpp>
 
 /** @namespace ScriptInterface
  *  @brief Interface to core functions for Python bindings.

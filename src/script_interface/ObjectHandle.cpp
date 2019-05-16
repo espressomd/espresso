@@ -33,9 +33,8 @@
 namespace ScriptInterface {
 Utils::Factory<ObjectHandle> factory;
 
-std::shared_ptr<ObjectHandle>
-ObjectHandle::make_shared(std::string const &name,
-                                 CreationPolicy policy) {
+std::shared_ptr<ObjectHandle> ObjectHandle::make_shared(std::string const &name,
+                                                        CreationPolicy policy) {
   std::shared_ptr<ObjectHandle> sp;
 
   switch (policy) {
@@ -43,8 +42,7 @@ ObjectHandle::make_shared(std::string const &name,
     sp = factory.make(name);
     break;
   case CreationPolicy::GLOBAL:
-    sp =
-        std::shared_ptr<ObjectHandle>(new ParallelScriptInterface(name));
+    sp = std::shared_ptr<ObjectHandle>(new ParallelScriptInterface(name));
     break;
   }
 
@@ -63,8 +61,7 @@ ObjectHandle::make_shared(std::string const &name,
   return sp;
 }
 
-std::weak_ptr<ObjectHandle> &
-ObjectHandle::get_instance(ObjectId id) {
+std::weak_ptr<ObjectHandle> &ObjectHandle::get_instance(ObjectId id) {
   return Utils::AutoObjectId<ObjectHandle>::get_instance(id);
 }
 
@@ -74,9 +71,7 @@ ObjectHandle::get_instance(ObjectId id) {
  * @brief Returns a binary representation of the state often
  *        the instance, as returned by get_state().
  */
-std::string ObjectHandle::serialize() const {
-  return {};
-}
+std::string ObjectHandle::serialize() const { return {}; }
 
 /**
  * @brief Creates a new instance from a binary state,
@@ -87,12 +82,9 @@ ObjectHandle::unserialize(std::string const &state) {
   return {};
 }
 
-ObjectHandle::ObjectHandle(std::string name, CreationPolicy policy) : m_name(std::move(name)), m_policy(policy) {
-    switch(policy) {
-        case CreationPolicy::LOCAL:
-            break;
-        case CreationPolicy::GLOBAL:
-            break;
-    }
-}
+ObjectHandle::ObjectHandle(std::string name, Communication::MpiCallbacks *cb,
+                           CreationPolicy policy)
+    : m_callback_id(boost::in_place_init, cb, [](CallbackAction) {}),
+      m_name(std::move(name)), m_policy(policy) {}
+
 } /* namespace ScriptInterface */

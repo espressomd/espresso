@@ -38,7 +38,8 @@ struct TestClass : public ObjectHandle {
   TestClass() { constructed = true; }
   ~TestClass() override { destructed = true; }
 
-  void do_set_parameter(const std::string &name, const Variant &value) override {
+  void do_set_parameter(const std::string &name,
+                        const Variant &value) override {
     last_parameter = make_pair(name, value);
 
     if (name == "obj_param") {

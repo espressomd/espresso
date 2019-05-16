@@ -44,8 +44,7 @@ public:
   std::shared_ptr<ObjectHandle> m_p;
 
   static auto &get_translation_table() {
-    static std::map<ObjectId, std::weak_ptr<ObjectHandle>>
-        m_translation_table;
+    static std::map<ObjectId, std::weak_ptr<ObjectHandle>> m_translation_table;
 
     return m_translation_table;
   }
@@ -84,8 +83,8 @@ private:
       std::pair<ObjectId, std::string> what;
       boost::mpi::broadcast(comm(), what, 0);
 
-      m_p = ObjectHandle::make_shared(
-          what.second, ObjectHandle::CreationPolicy::LOCAL);
+      m_p = ObjectHandle::make_shared(what.second,
+                                      ObjectHandle::CreationPolicy::LOCAL);
 
       get_translation_table()[what.first] = m_p;
 
@@ -94,7 +93,7 @@ private:
     case CallbackAction::CONSTRUCT: {
       auto const parameters = bcast_variant_map();
 
-      m_p->do_construct(parameters);
+      m_p->construct(parameters);
       break;
     }
     case CallbackAction::SET_PARAMETER: {
