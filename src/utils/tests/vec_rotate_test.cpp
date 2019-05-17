@@ -19,7 +19,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/vec_rotate.hpp"
+#include "utils/math/vec_rotate.hpp"
 using Utils::vec_rotate;
 
 #include <cmath>

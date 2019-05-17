@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
-#include "utils/vec_rotate.hpp"
+#include "utils/math/vec_rotate.hpp"
 
 namespace Utils {
 

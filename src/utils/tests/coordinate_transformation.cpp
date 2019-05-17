@@ -22,7 +22,7 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/coordinate_transformation.hpp>
-#include <utils/vec_rotate.hpp>
+#include <utils/math/vec_rotate.hpp>
 
 using Utils::Vector3d;
 
