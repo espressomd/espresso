@@ -31,7 +31,7 @@ namespace Utils {
 inline Vector3d
 transform_coordinate_cartesian_to_cylinder(const Vector3d &pos,
                                            const Vector3d &axis) {
-  static auto constexpr z_axis = Vector3d{{0, 0, 1}};
+  static auto z_axis = Vector3d{{0, 0, 1}};
   double theta;
   Vector3d rotation_axis;
   std::tie(theta, rotation_axis) = get_rotation_params(axis, z_axis);
@@ -48,7 +48,7 @@ transform_coordinate_cartesian_to_cylinder(const Vector3d &pos,
 inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
                                                        Vector3d const &axis,
                                                        Vector3d const &pos) {
-  static auto constexpr z_axis = Vector3d{{0, 0, 1}};
+  static auto z_axis = Vector3d{{0, 0, 1}};
   double theta;
   Vector3d rotation_axis;
   std::tie(theta, rotation_axis) = get_rotation_params(axis, z_axis);
@@ -73,7 +73,7 @@ inline Vector3d
 transform_coordinate_cylinder_to_cartesian(Vector3d const &p,
                                            Vector3d const &axis) {
   Vector3d transformed{{p[0] * std::cos(p[1]), p[0] * std::sin(p[1]), p[2]}};
-  static auto constexpr z_axis = Vector3d{{0, 0, 1}};
+  static auto z_axis = Vector3d{{0, 0, 1}};
   double theta;
   Vector3d rotation_axis;
   std::tie(theta, rotation_axis) = get_rotation_params(z_axis, axis);
