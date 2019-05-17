@@ -31,15 +31,30 @@ namespace Utils {
 inline Vector3d
 transform_coordinate_cartesian_to_cylinder(const Vector3d &pos,
                                            const Vector3d &axis) {
-  static auto z_axis = Vector3d{{0, 0, 1}};
+  static auto const z_axis = Vector3d{{0, 0, 1}};
   double theta;
   Vector3d rotation_axis;
-  std::tie(theta, rotation_axis) = get_rotation_params(axis, z_axis);
+  std::tie(theta, rotation_axis) = rotation_params(axis, z_axis);
   auto const rotated_pos = vec_rotate(rotation_axis, theta, pos);
   auto const r = std::sqrt(rotated_pos[0] * rotated_pos[0] +
                            rotated_pos[1] * rotated_pos[1]);
   auto const phi = std::atan2(rotated_pos[1], rotated_pos[0]);
   return Vector3d{r, phi, rotated_pos[2]};
+}
+
+/**
+ * @brief Coordinate transformation from cylinder to cartesian coordinates.
+ */
+inline Vector3d
+transform_coordinate_cylinder_to_cartesian(Vector3d const &pos,
+                                           Vector3d const &axis) {
+  Vector3d const transformed{{pos[0] * std::cos(pos[1]), pos[0] * std::sin(pos[1]), pos[2]}};
+  static auto const z_axis = Vector3d{{0, 0, 1}};
+  double theta;
+  Vector3d rotation_axis;
+  std::tie(theta, rotation_axis) = rotation_params(z_axis, axis);
+  auto const rotated_pos = vec_rotate(rotation_axis, theta, transformed);
+  return rotated_pos;
 }
 
 /** \brief Transform the given 3D vector to cylinder coordinates with
@@ -48,10 +63,10 @@ transform_coordinate_cartesian_to_cylinder(const Vector3d &pos,
 inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
                                                        Vector3d const &axis,
                                                        Vector3d const &pos) {
-  static auto z_axis = Vector3d{{0, 0, 1}};
+  static auto const z_axis = Vector3d{{0, 0, 1}};
   double theta;
   Vector3d rotation_axis;
-  std::tie(theta, rotation_axis) = get_rotation_params(axis, z_axis);
+  std::tie(theta, rotation_axis) = rotation_params(axis, z_axis);
   auto const rotated_pos = vec_rotate(rotation_axis, theta, pos);
   auto const rotated_vec = vec_rotate(rotation_axis, theta, vec);
   // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
@@ -64,21 +79,6 @@ inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
       (rotated_pos[0] * rotated_vec[1] - rotated_pos[1] * rotated_vec[0]) /
       (rotated_pos[0] * rotated_pos[0] + rotated_pos[1] * rotated_pos[1]);
   return Vector3d{v_r, v_phi, rotated_vec[2]};
-}
-
-/**
- * @brief Coordinate transformation from cylinder to cartesian coordinates.
- */
-inline Vector3d
-transform_coordinate_cylinder_to_cartesian(Vector3d const &p,
-                                           Vector3d const &axis) {
-  Vector3d transformed{{p[0] * std::cos(p[1]), p[0] * std::sin(p[1]), p[2]}};
-  static auto z_axis = Vector3d{{0, 0, 1}};
-  double theta;
-  Vector3d rotation_axis;
-  std::tie(theta, rotation_axis) = get_rotation_params(z_axis, axis);
-  auto const rotated_pos = vec_rotate(rotation_axis, theta, transformed);
-  return rotated_pos;
 }
 
 } // namespace Utils

@@ -40,7 +40,7 @@ inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
  * @return rotation angle and rotation axis
  */
 inline std::tuple<double, Vector3d>
-get_rotation_params(Vector3d const &vec, Vector3d const &target_vec) {
+rotation_params(Vector3d const &vec, Vector3d const &target_vec) {
   auto const theta =
       std::acos(vec * target_vec) / (vec.norm() * target_vec.norm());
   auto const rotation_axis = Utils::vector_product(vec, target_vec).normalize();
