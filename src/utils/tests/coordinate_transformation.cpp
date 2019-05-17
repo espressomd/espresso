@@ -29,12 +29,12 @@ using Utils::Vector3d;
 BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_test,
                      *boost::unit_test::tolerance(1e-13)) {
   Vector3d const cart_coord{{1.0, 3.3, 2.0}};
-  auto const transformed_x =
-      transform_coordinate_cartesian_to_cylinder(cart_coord, Vector3d{{1,0,0}});
-  auto const transformed_y =
-      transform_coordinate_cartesian_to_cylinder(cart_coord, Vector3d{{0,1,0}});
-  auto const transformed_z =
-      transform_coordinate_cartesian_to_cylinder(cart_coord, Vector3d{{0,0,1}});
+  auto const transformed_x = transform_coordinate_cartesian_to_cylinder(
+      cart_coord, Vector3d{{1, 0, 0}});
+  auto const transformed_y = transform_coordinate_cartesian_to_cylinder(
+      cart_coord, Vector3d{{0, 1, 0}});
+  auto const transformed_z = transform_coordinate_cartesian_to_cylinder(
+      cart_coord, Vector3d{{0, 0, 1}});
   // For x as the symmetry axis we rotate the cartesian coordinates around the
   // y-axis by -pi/2.
   auto const expected_x = transform_coordinate_cartesian_to_cylinder(
@@ -59,20 +59,22 @@ BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_test,
 BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_test,
                      *boost::unit_test::tolerance(1e-13)) {
   Vector3d const cylinder_coord{{1.2, 3.123, 42.0}};
-  auto const transformed_x =
-      transform_coordinate_cylinder_to_cartesian(cylinder_coord, Vector3d{{1, 0, 0}});
-  auto const transformed_y =
-      transform_coordinate_cylinder_to_cartesian(cylinder_coord, Vector3d{{0, 1, 0}});
-  auto const transformed_z =
-      transform_coordinate_cylinder_to_cartesian(cylinder_coord, Vector3d{{0, 0, 1}});
+  auto const transformed_x = transform_coordinate_cylinder_to_cartesian(
+      cylinder_coord, Vector3d{{1, 0, 0}});
+  auto const transformed_y = transform_coordinate_cylinder_to_cartesian(
+      cylinder_coord, Vector3d{{0, 1, 0}});
+  auto const transformed_z = transform_coordinate_cylinder_to_cartesian(
+      cylinder_coord, Vector3d{{0, 0, 1}});
   // We transform from cylinder zu cartesian and have to rotate back. See test
   // cartesian_to_cylinder_test.
-  auto const expected_x = vec_rotate(
-      Vector3d{{0.0, 1.0, 0.0}}, Utils::pi() / 2.0,
-      transform_coordinate_cylinder_to_cartesian(cylinder_coord, Vector3d{{0, 0, 1}}));
-  auto const expected_y = vec_rotate(
-      Vector3d{{1.0, 0.0, 0.0}}, -Utils::pi() / 2.0,
-      transform_coordinate_cylinder_to_cartesian(cylinder_coord, Vector3d{{0, 0, 1}}));
+  auto const expected_x =
+      vec_rotate(Vector3d{{0.0, 1.0, 0.0}}, Utils::pi() / 2.0,
+                 transform_coordinate_cylinder_to_cartesian(
+                     cylinder_coord, Vector3d{{0, 0, 1}}));
+  auto const expected_y =
+      vec_rotate(Vector3d{{1.0, 0.0, 0.0}}, -Utils::pi() / 2.0,
+                 transform_coordinate_cylinder_to_cartesian(
+                     cylinder_coord, Vector3d{{0, 0, 1}}));
   // x = r * cos(phi); y = r * sin(phi); z = z
   auto const expected_z = Vector3d{
       {cylinder_coord[0] * std::cos(cylinder_coord[1]),

@@ -33,11 +33,10 @@ namespace Observables {
 class CylindricalLBProfileObservable : public Observable,
                                        public CylindricalProfile {
 public:
-  CylindricalLBProfileObservable(Vector3d const &center,
-                                 Vector3d const &axis, int n_r_bins,
-                                 int n_phi_bins, int n_z_bins, double min_r,
-                                 double min_phi, double min_z, double max_r,
-                                 double max_phi, double max_z,
+  CylindricalLBProfileObservable(Vector3d const &center, Vector3d const &axis,
+                                 int n_r_bins, int n_phi_bins, int n_z_bins,
+                                 double min_r, double min_phi, double min_z,
+                                 double max_r, double max_phi, double max_z,
                                  double sampling_density)
       : CylindricalProfile(center, axis, min_r, max_r, min_phi, max_phi, min_z,
                            max_z, n_r_bins, n_phi_bins, n_z_bins),

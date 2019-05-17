@@ -7,7 +7,6 @@
 #include "utils/Vector.hpp"
 #include "utils/math/sqr.hpp"
 
-
 namespace Utils {
 /**
  * @brief Rotate a vector around an axis.
@@ -40,8 +39,10 @@ inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
  * @param target_vec Target vector
  * @return rotation angle and rotation axis
  */
-inline std::tuple<double, Vector3d> get_rotation_params(Vector3d const &vec, Vector3d const &target_vec) {
-  auto const theta =  std::acos(vec * target_vec) / (vec.norm() * target_vec.norm());
+inline std::tuple<double, Vector3d>
+get_rotation_params(Vector3d const &vec, Vector3d const &target_vec) {
+  auto const theta =
+      std::acos(vec * target_vec) / (vec.norm() * target_vec.norm());
   auto const rotation_axis = Utils::vector_product(vec, target_vec).normalize();
   return std::make_tuple(theta, rotation_axis);
 }
