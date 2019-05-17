@@ -31,7 +31,7 @@ class CylindricalPidProfileObservable : public PidObservable,
 public:
   CylindricalPidProfileObservable(std::vector<int> const &ids,
                                   Utils::Vector3d const &center,
-                                  std::string const &axis, int n_r_bins,
+                                  Utils::Vector3d const &axis, int n_r_bins,
                                   int n_phi_bins, int n_z_bins, double min_r,
                                   double min_phi, double min_z, double max_r,
                                   double max_phi, double max_z)

@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Observable.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/coordinate_transformation.hpp>
+#include <utils/math/coordinate_transformation.hpp>
 #include <utils/sampling.hpp>
 
 using Utils::Vector3d;
@@ -34,7 +34,7 @@ class CylindricalLBProfileObservable : public Observable,
                                        public CylindricalProfile {
 public:
   CylindricalLBProfileObservable(Vector3d const &center,
-                                 std::string const &axis, int n_r_bins,
+                                 Vector3d const &axis, int n_r_bins,
                                  int n_phi_bins, int n_z_bins, double min_r,
                                  double min_phi, double min_z, double max_r,
                                  double max_phi, double max_z,

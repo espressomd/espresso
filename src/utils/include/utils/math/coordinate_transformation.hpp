@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "utils/Vector.hpp"
 #include "utils/constants.hpp"
-#include "vec_rotate.hpp"
+#include "utils/vec_rotate.hpp"
 
 namespace Utils {
 
@@ -30,50 +30,38 @@ namespace Utils {
  */
 inline Vector3d
 transform_coordinate_cartesian_to_cylinder(const Vector3d &pos,
-                                           const std::string &axis) {
-  static const Vector3d x_axis{1.0, 0.0, 0.0};
-  static const Vector3d y_axis{0.0, 1.0, 0.0};
-  Vector3d rotated_pos = pos;
-  if (axis == "x") {
-    rotated_pos = vec_rotate(y_axis, -Utils::pi() / 2.0, pos);
-  } else if (axis == "y") {
-    rotated_pos = vec_rotate(x_axis, Utils::pi() / 2.0, pos);
-  }
-  double r = std::sqrt(rotated_pos[0] * rotated_pos[0] +
+                                           const Vector3d &axis) {
+  static auto constexpr z_axis = Vector3d{{0, 0, 1}};
+  double theta;
+  Vector3d rotation_axis;
+  std::tie(theta, rotation_axis) = get_rotation_params(axis, z_axis);
+  auto const rotated_pos = vec_rotate(rotation_axis, theta, pos);
+  auto const r = std::sqrt(rotated_pos[0] * rotated_pos[0] +
                        rotated_pos[1] * rotated_pos[1]);
-  double phi = std::atan2(rotated_pos[1], rotated_pos[0]);
+  auto const phi = std::atan2(rotated_pos[1], rotated_pos[0]);
   return Vector3d{r, phi, rotated_pos[2]};
 }
 
 /** \brief Transform the given 3D vector to cylinder coordinates with
- * longitudinal axis aligned with axis parameter.
+ * symmetry axis aligned with axis parameter.
  */
 inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
-                                                       std::string const &axis,
+                                                       Vector3d const &axis,
                                                        Vector3d const &pos) {
-  double v_r, v_phi, v_z;
-  static const Vector3d x_axis{1.0, 0.0, 0.0};
-  static const Vector3d y_axis{0.0, 1.0, 0.0};
-  Vector3d rotated_vec = vec;
-  Vector3d rotated_pos = pos;
-  if (axis == "x") {
-    rotated_vec = vec_rotate(y_axis, -Utils::pi() / 2.0, vec);
-    rotated_pos = vec_rotate(y_axis, -Utils::pi() / 2.0, pos);
-  } else if (axis == "y") {
-    rotated_vec = vec_rotate(x_axis, Utils::pi() / 2.0, vec);
-    rotated_pos = vec_rotate(x_axis, Utils::pi() / 2.0, pos);
-  }
-  // Coordinate transform the velocities.
+  static auto constexpr z_axis = Vector3d{{0, 0, 1}};
+  double theta;
+  Vector3d rotation_axis;
+  std::tie(theta, rotation_axis) = get_rotation_params(axis, z_axis);
+  auto const rotated_pos = vec_rotate(rotation_axis, theta, pos);
+  auto const rotated_vec = vec_rotate(rotation_axis, theta, vec);
   // v_r = (x * v_x + y * v_y) / sqrt(x^2 + y^2)
-  v_r = (rotated_pos[0] * rotated_vec[0] + rotated_pos[1] * rotated_vec[1]) /
+  auto const v_r = (rotated_pos[0] * rotated_vec[0] + rotated_pos[1] * rotated_vec[1]) /
         std::sqrt(rotated_pos[0] * rotated_pos[0] +
                   rotated_pos[1] * rotated_pos[1]);
   // v_phi = (x * v_y - y * v_x ) / (x^2 + y^2)
-  v_phi = (rotated_pos[0] * rotated_vec[1] - rotated_pos[1] * rotated_vec[0]) /
+  auto const v_phi = (rotated_pos[0] * rotated_vec[1] - rotated_pos[1] * rotated_vec[0]) /
           (rotated_pos[0] * rotated_pos[0] + rotated_pos[1] * rotated_pos[1]);
-  // v_z = v_z
-  v_z = rotated_vec[2];
-  return Vector3d{v_r, v_phi, v_z};
+  return Vector3d{v_r, v_phi, rotated_vec[2]};
 }
 
 /**
@@ -81,16 +69,14 @@ inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
  */
 inline Vector3d
 transform_coordinate_cylinder_to_cartesian(Vector3d const &p,
-                                           const std::string &axis) {
+                                           Vector3d const &axis) {
   Vector3d transformed{{p[0] * std::cos(p[1]), p[0] * std::sin(p[1]), p[2]}};
-  static const Vector3d x_axis{1.0, 0.0, 0.0};
-  static const Vector3d y_axis{0.0, 1.0, 0.0};
-  if (axis == "x") {
-    transformed = vec_rotate(y_axis, Utils::pi() / 2.0, transformed);
-  } else if (axis == "y") {
-    transformed = vec_rotate(x_axis, -Utils::pi() / 2.0, transformed);
-  }
-  return transformed;
+  static auto constexpr z_axis = Vector3d{{0, 0, 1}};
+  double theta;
+  Vector3d rotation_axis;
+  std::tie(theta, rotation_axis) = get_rotation_params(z_axis, axis);
+  auto const rotated_pos = vec_rotate(rotation_axis, theta, transformed);
+  return rotated_pos;
 }
 
 } // namespace Utils
