@@ -33,7 +33,7 @@
 #include <utils/Vector.hpp>
 #include <utils/math/triangle_functions.hpp>
 
-/** Set parameters for OIF local forces */
+// set parameters for local forces
 int oif_local_forces_set_params(int bond_type, double r0, double ks,
                                 double kslin, double phi0, double kb,
                                 double A01, double A02, double kal,
@@ -134,20 +134,34 @@ calc_oif_local(Particle const &p2, Particle const &p1, Particle const &p3,
      force for triangle p2,p3,p4 p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2;
      p3 -= 0.5*forceT1+0.5*forceT2; p4 += forceT2; */
   if (iaparams.p.oif_local_forces.kb > TINY_OIF_ELASTICITY_COEFFICIENT) {
-    auto const n1 = Utils::get_n_triangle(fp2, fp1, fp3).normalize();
-    auto const n2 = Utils::get_n_triangle(fp2, fp3, fp4).normalize();
-
     auto const phi = Utils::angle_btw_triangles(fp1, fp2, fp3, fp4);
     auto const aa = (phi - iaparams.p.oif_local_forces
                                .phi0); // no renormalization by phi0, to be
                                        // consistent with Krueger and Fedosov
     auto const fac = iaparams.p.oif_local_forces.kb * aa;
-    auto const f = 0.5 * fac * n1 + 0.5 * fac * n2;
 
-    force1 += fac * n1;
-    force2 -= f;
-    force3 -= f;
-    force4 += fac * n2;
+    auto const Nc = Utils::get_n_triangle(
+        fp1, fp2,
+        fp3); // returns (fp2 - fp1)x(fp3 - fp1), thus Nc = (A - C)x(B - C)
+    auto const Nd = Utils::get_n_triangle(
+        fp4, fp3,
+        fp2); // returns (fp3 - fp4)x(fp2 - fp4), thus Nd = (B - D)x(A - D)
+
+    auto const BminA = fp3 - fp2;
+
+    auto const factorFaNc =
+        (fp2 - fp3) * (fp1 - fp3) / BminA.norm() / Nc.norm2();
+    auto const factorFaNd =
+        (fp2 - fp3) * (fp4 - fp3) / BminA.norm() / Nd.norm2();
+    auto const factorFbNc =
+        (fp2 - fp3) * (fp2 - fp1) / BminA.norm() / Nc.norm2();
+    auto const factorFbNd =
+        (fp2 - fp3) * (fp2 - fp4) / BminA.norm() / Nd.norm2();
+
+    force1 -= fac * BminA.norm() / Nc.norm2() * Nc;      // Fc
+    force2 += fac * (factorFaNc * Nc + factorFaNd * Nd); // Fa
+    force3 += fac * (factorFbNc * Nc + factorFbNd * Nd); // Fb
+    force4 -= fac * BminA.norm() / Nd.norm2() * Nd;      // Fc
   }
 
   /* local area
