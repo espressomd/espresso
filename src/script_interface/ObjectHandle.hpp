@@ -20,14 +20,14 @@
 #ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
 #define SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
 
-#include "Variant.hpp"
 #include "MpiCallbacks.hpp"
+#include "Variant.hpp"
 
 #include <utils/Span.hpp>
 
-#include <boost/utility/string_ref.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/utility.hpp>
+#include <boost/utility/string_ref.hpp>
 
 #include <map>
 #include <memory>
@@ -111,9 +111,7 @@ public:
    * @param params The parameters to the constructor. Only parameters that
    *               are valid for a default-constructed object are valid.
    */
-  void construct(VariantMap const &params) {
-    this->do_construct(params);
-  }
+  void construct(VariantMap const &params) { this->do_construct(params); }
 
 private:
   virtual void do_construct(VariantMap const &params) {

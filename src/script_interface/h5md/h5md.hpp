@@ -47,7 +47,7 @@ public:
   };
 
   Variant do_call_method(const std::string &name,
-                      const VariantMap &parameters) override;
+                         const VariantMap &parameters) override;
 
   void do_construct(VariantMap const &params) override {
     m_h5md =

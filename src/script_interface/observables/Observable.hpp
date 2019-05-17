@@ -37,7 +37,7 @@ class Observable : public ObjectHandle {
 public:
   virtual std::shared_ptr<::Observables::Observable> observable() const = 0;
   Variant do_call_method(std::string const &method,
-                      VariantMap const &parameters) override {
+                         VariantMap const &parameters) override {
     if (method == "calculate") {
       return observable()->operator()();
     }

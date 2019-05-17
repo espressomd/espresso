@@ -29,9 +29,7 @@
 namespace {
 Communication::MpiCallbacks *m_cb = nullptr;
 
-void make_remote_handle() {
-  new ScriptInterface::RemoteObjectHandle(m_cb);
-}
+void make_remote_handle() { new ScriptInterface::RemoteObjectHandle(m_cb); }
 } // namespace
 
 REGISTER_CALLBACK(make_remote_handle)

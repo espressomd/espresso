@@ -34,7 +34,7 @@ public:
   virtual std::shared_ptr<::PairCriteria::PairCriterion>
   pair_criterion() const = 0;
   Variant do_call_method(std::string const &method,
-                      VariantMap const &parameters) override {
+                         VariantMap const &parameters) override {
     if (method == "decide") {
       return pair_criterion()->decide(get_value<int>(parameters.at("id1")),
                                       get_value<int>(parameters.at("id2")));
