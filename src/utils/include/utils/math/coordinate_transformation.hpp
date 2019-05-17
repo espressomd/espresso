@@ -48,7 +48,8 @@ transform_coordinate_cartesian_to_cylinder(const Vector3d &pos,
 inline Vector3d
 transform_coordinate_cylinder_to_cartesian(Vector3d const &pos,
                                            Vector3d const &axis) {
-  Vector3d const transformed{{pos[0] * std::cos(pos[1]), pos[0] * std::sin(pos[1]), pos[2]}};
+  Vector3d const transformed{
+      {pos[0] * std::cos(pos[1]), pos[0] * std::sin(pos[1]), pos[2]}};
   static auto const z_axis = Vector3d{{0, 0, 1}};
   double theta;
   Vector3d rotation_axis;
