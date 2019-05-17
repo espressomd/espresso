@@ -109,7 +109,7 @@ Variant ParallelScriptInterface::do_call_method(const std::string &name,
   /* Broadcast method name and parameters */
   boost::mpi::broadcast(m_cb->comm(), d, 0);
 
-  auto ret = map_local_to_parallel_id(m_p->do_call_method(name, p));
+  auto ret = map_local_to_parallel_id(m_p->call_method(name, p));
 
   collect_garbage();
 

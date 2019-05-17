@@ -174,10 +174,11 @@ public:
    *
    * If not overridden by the implementation, this does nothing.
    */
-  Variant call_method(const std::string &s, const VariantMap &m) {
-    return do_call_method(s, m);
+  Variant call_method(const std::string &name, const VariantMap &params) {
+    return this->do_call_method(name, params);
   }
 
+private:
   virtual Variant do_call_method(const std::string &, const VariantMap &) {
     return none;
   }
