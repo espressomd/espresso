@@ -53,8 +53,6 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
   // Create the sampling positions for the innermost bin.
   std::vector<Vector3d> sampling_positions;
   for (auto const z : z_range) {
-    // Center
-    sampling_positions.push_back(Vector3d{{r_limits.first, 0., z}});
     for (auto const phi : phi_range) {
       sampling_positions.push_back(Vector3d{{*r_range.begin(), phi, z}});
     }
