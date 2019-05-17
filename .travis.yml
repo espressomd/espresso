@@ -11,10 +11,6 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset python_version=2
-    - os: linux
-      sudo: required
-      services: docker
       env: myconfig=maxset image=ubuntu-python3 python_version=3
 
 script:
