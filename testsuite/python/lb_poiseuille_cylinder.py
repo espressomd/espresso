@@ -142,17 +142,14 @@ class LBPoiseuilleCommon(object):
 
     def prepare_obs(self):
         if self.params['axis'] == [1, 0, 0]:
-            obs_axis = 'x'
             obs_center = [0.0, BOX_L / 2.0, BOX_L / 2.0]
         elif self.params['axis'] == [0, 1, 0]:
-            obs_axis = 'y'
             obs_center = [BOX_L / 2.0, 0.0, BOX_L / 2.0]
         else:
-            obs_axis = 'z'
             obs_center = [BOX_L / 2.0, BOX_L / 2.0, 0.0]
         local_obs_params = OBS_PARAMS.copy()
         local_obs_params['center'] = obs_center
-        local_obs_params['axis'] = obs_axis
+        local_obs_params['axis'] = self.params['axis']
         obs = espressomd.observables.CylindricalLBVelocityProfile(
             **local_obs_params)
         self.accumulator = espressomd.accumulators.MeanVarianceCalculator(
