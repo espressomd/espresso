@@ -135,8 +135,15 @@ class CylindricalLBObservableCommon(object):
         self.set_fluid_velocity()
         self.set_particles()
         # Set up the Observable.
+        local_params = self.params.copy()
+        if self.params['axis'] == 'x':
+            local_params['axis'] = [1.0, 0.0, 0.0]
+        elif self.params['axis'] == 'y':
+            local_params['axis'] = [0.0, 1.0, 0.0]
+        else:
+            local_params['axis'] = [0.0, 0.0, 1.0]
         p = espressomd.observables.CylindricalLBFluxDensityProfileAtParticlePositions(
-            **self.params)
+            **local_params)
         core_hist = np.array(
             p.calculate()).reshape(
             self.params['n_r_bins'],
@@ -170,8 +177,15 @@ class CylindricalLBObservableCommon(object):
         self.set_fluid_velocity()
         self.set_particles()
         # Set up the Observable.
+        local_params = self.params.copy()
+        if self.params['axis'] == 'x':
+            local_params['axis'] = [1.0, 0.0, 0.0]
+        elif self.params['axis'] == 'y':
+            local_params['axis'] = [0.0, 1.0, 0.0]
+        else:
+            local_params['axis'] = [0.0, 0.0, 1.0]
         p = espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions(
-            **self.params)
+            **local_params)
         core_hist = np.array(
             p.calculate()).reshape(
             self.params['n_r_bins'],
