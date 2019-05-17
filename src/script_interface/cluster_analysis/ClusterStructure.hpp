@@ -44,7 +44,7 @@ public:
           },
           [this]() { return (m_pc != nullptr) ? m_pc->id() : ObjectId(); }}});
   };
-  Variant call_method(std::string const &method,
+  Variant do_call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "get_cluster") {
 

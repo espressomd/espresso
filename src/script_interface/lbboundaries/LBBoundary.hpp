@@ -63,7 +63,7 @@ public:
 #endif
   }
 
-  Variant call_method(const std::string &name, const VariantMap &) override {
+  Variant do_call_method(const std::string &name, const VariantMap &) override {
     if (name == "get_force") {
       // The get force method uses mpi callbacks on lb cpu
       if (this_node == 0) {

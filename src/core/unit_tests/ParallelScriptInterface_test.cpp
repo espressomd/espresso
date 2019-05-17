@@ -54,8 +54,8 @@ struct TestClass : public ObjectHandle {
     return last_parameter.second;
   }
 
-  Variant call_method(const std::string &method,
-                      const VariantMap &params) override {
+  Variant do_call_method(const std::string &method,
+                         const VariantMap &params) override {
     last_method_parameters = make_pair(method, params);
 
     return std::string("TestResult");
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(call_method) {
   if (callbacks->comm().rank() == 0) {
     auto so = std::make_shared<ParallelScriptInterface>("TestClass");
 
-    auto result = so->call_method(method, params);
+    auto result = so->do_call_method(method, params);
 
     /* Check return value */
     BOOST_CHECK(boost::get<std::string>(result) == "TestResult");

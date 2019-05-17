@@ -79,8 +79,8 @@ struct ScriptInterfaceTest : public ScriptInterface::ObjectHandle {
     };
   }
 
-  Variant call_method(const std::string &name,
-                      const VariantMap &params) override {
+  Variant do_call_method(const std::string &name,
+                         const VariantMap &params) override {
     if (name == "test_method") {
     }
 
@@ -109,5 +109,5 @@ BOOST_AUTO_TEST_CASE(non_copyable) {
 BOOST_AUTO_TEST_CASE(default_implementation) {
   ScriptInterfaceTest si_test;
 
-  si_test.call_method("test_method", {});
+  si_test.do_call_method("test_method", {});
 }

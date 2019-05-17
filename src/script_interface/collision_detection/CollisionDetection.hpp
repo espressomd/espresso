@@ -55,7 +55,7 @@ public:
          {"part_type_after_glueing",
           collision_params.part_type_after_glueing}});
   };
-  Variant call_method(const std::string &name,
+  Variant do_call_method(const std::string &name,
                       const VariantMap &params) override {
     if (name == "validate") {
       return validate_collision_parameters();

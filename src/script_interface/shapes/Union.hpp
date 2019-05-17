@@ -33,8 +33,8 @@ class Union : public Shape {
 public:
   Union() : m_core_shape(new ::Shapes::Union()) {}
 
-  Variant call_method(std::string const &name,
-                      VariantMap const &params) override {
+  Variant do_call_method(std::string const &name,
+                         VariantMap const &params) override {
     if (name == "add") {
       auto const shape =
           get_value<std::shared_ptr<Shapes::Shape>>(params.at("shape"));
@@ -63,7 +63,7 @@ public:
     } else if (name == "empty") {
       return m_shapes.empty();
     }
-    return Shape::call_method(name, params);
+    return Shape::do_call_method(name, params);
   }
   std::shared_ptr<::Shapes::Shape> shape() const override {
     return m_core_shape;

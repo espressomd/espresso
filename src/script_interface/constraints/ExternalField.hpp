@@ -50,7 +50,7 @@ public:
         detail::make_coupling<Coupling>(args), detail::make_field<Field>(args));
   }
 
-  Variant call_method(const std::string &name,
+  Variant do_call_method(const std::string &name,
                       VariantMap const &args) override {
     if (name == "_eval_field") {
       return m_constraint->field()(get_value<Utils::Vector3d>(args, "x"),

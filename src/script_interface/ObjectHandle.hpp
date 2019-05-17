@@ -174,10 +174,15 @@ public:
    *
    * If not overridden by the implementation, this does nothing.
    */
-  virtual Variant call_method(const std::string &, const VariantMap &) {
+  Variant call_method(const std::string &s, const VariantMap &m) {
+    return do_call_method(s, m);
+  }
+
+  virtual Variant do_call_method(const std::string &, const VariantMap &) {
     return none;
   }
 
+public:
   /**
    * @brief Get a new reference counted instance of a script interface by
    * name.

@@ -44,7 +44,7 @@ public:
           m_obs->observable(), get_value_or<int>(params, "delta_N", 1));
   }
 
-  Variant call_method(std::string const &method,
+  Variant do_call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "update") {
       m_accumulator->update();

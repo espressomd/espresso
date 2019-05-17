@@ -59,7 +59,7 @@ public:
     return m_accumulator;
   }
 
-  Variant call_method(std::string const &method,
+  Variant do_call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "update") {
       mean_variance_calculator()->update();

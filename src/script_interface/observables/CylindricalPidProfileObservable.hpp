@@ -137,7 +137,7 @@ public:
             "max_z");
   }
 
-  Variant call_method(std::string const &method,
+  Variant do_call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
@@ -145,7 +145,7 @@ public:
                   std::back_inserter(variant_edges));
       return variant_edges;
     }
-    return Base::call_method(method, parameters);
+    return Base::do_call_method(method, parameters);
   }
 
   std::shared_ptr<::Observables::Observable> observable() const override {

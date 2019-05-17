@@ -33,7 +33,7 @@ class PairCriterion : public AutoParameters<PairCriterion> {
 public:
   virtual std::shared_ptr<::PairCriteria::PairCriterion>
   pair_criterion() const = 0;
-  Variant call_method(std::string const &method,
+  Variant do_call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "decide") {
       return pair_criterion()->decide(get_value<int>(parameters.at("id1")),

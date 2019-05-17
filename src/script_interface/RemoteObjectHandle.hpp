@@ -117,7 +117,7 @@ private:
       translate_id(d.second);
 
       /* Forward to the local instance. */
-      m_p->call_method(d.first, d.second);
+      m_p->do_call_method(d.first, d.second);
 
       break;
     }

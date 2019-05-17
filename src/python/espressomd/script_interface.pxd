@@ -59,7 +59,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Span[const string_ref] valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
-        Variant call_method(const string & name, const VariantMap & parameters) except +
+        Variant call_method(const string & name, const VariantMap & parameters) except +	
         ObjectId id() except +
         void set_state(map[string, Variant]) except +
         map[string, Variant] get_state() except +

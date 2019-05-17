@@ -65,8 +65,8 @@ public:
   }
 
   Variant get_parameter(const std::string &name) const override;
-  Variant call_method(const std::string &name,
-                      const VariantMap &parameters) override;
+  Variant do_call_method(const std::string &name,
+                         const VariantMap &parameters) override;
 
   /* Id mapping */
   Variant map_local_to_parallel_id(Variant const &value) const;

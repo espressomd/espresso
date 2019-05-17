@@ -148,15 +148,15 @@ public:
             "max_x", "max_y", "max_z", "allow_empty_bins");
   }
 
-  Variant call_method(std::string const &method,
-                      VariantMap const &parameters) override {
+  Variant do_call_method(std::string const &method,
+                         VariantMap const &parameters) override {
     if (method == "edges") {
       std::vector<Variant> variant_edges;
       boost::copy(profile_observable()->edges(),
                   std::back_inserter(variant_edges));
       return variant_edges;
     }
-    return Base::call_method(method, parameters);
+    return Base::do_call_method(method, parameters);
   }
 
   std::shared_ptr<::Observables::Observable> observable() const override {

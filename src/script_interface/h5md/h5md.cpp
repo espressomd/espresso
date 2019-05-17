@@ -30,7 +30,7 @@
 
 namespace ScriptInterface {
 namespace Writer {
-Variant H5md::call_method(const std::string &name,
+Variant H5md::do_call_method(const std::string &name,
                           const VariantMap &parameters) {
   if (name == "write")
     m_h5md->write(cell_structure.local_particles(), sim_time,
