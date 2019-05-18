@@ -112,12 +112,8 @@ public:
    *               are valid for a default-constructed object are valid.
    */
   void construct(VariantMap const &params, CreationPolicy policy,
-                 const std::string &name) {
-    m_name = name;
-    m_policy = policy;
-
-    this->do_construct(params); }
-
+                 const std::string &name);
+  
 private:
   virtual void do_construct(VariantMap const &params) {
     for (auto const &p : params) {

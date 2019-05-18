@@ -79,4 +79,12 @@ std::shared_ptr<ObjectHandle>
 ObjectHandle::unserialize(std::string const &state) {
   return {};
 }
+
+void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
+               const std::string &name) {
+  m_name = name;
+  m_policy = policy;
+
+  this->do_construct(params); }
+
 } /* namespace ScriptInterface */
