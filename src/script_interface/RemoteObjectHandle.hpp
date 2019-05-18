@@ -83,12 +83,12 @@ private:
       std::pair<ObjectId, std::string> what;
       boost::mpi::broadcast(comm(), what, 0);
 
+      auto const parameters = bcast_variant_map();
+      
       m_p = ObjectHandle::make_shared(what.second,
                                       ObjectHandle::CreationPolicy::LOCAL);
 
       get_translation_table()[what.first] = m_p;
-
-      auto const parameters = bcast_variant_map();
 
       m_p->construct(parameters);
       break;

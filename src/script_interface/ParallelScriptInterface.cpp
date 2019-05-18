@@ -69,10 +69,10 @@ void ParallelScriptInterface::do_construct(VariantMap const &params) {
   std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name());
   boost::mpi::broadcast(m_cb->comm(), what, 0);
 
-  call(CallbackAction::CONSTRUCT);
-
   auto p = unwrap_variant_map(params);
   boost::mpi::broadcast(m_cb->comm(), p, 0);
+
+  call(CallbackAction::CONSTRUCT);
 
   m_p->construct(p);
 }
