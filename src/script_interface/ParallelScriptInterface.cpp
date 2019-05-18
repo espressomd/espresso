@@ -65,8 +65,6 @@ void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
 }
 
 void ParallelScriptInterface::do_construct(VariantMap const &params) {
-  call(CallbackAction::NEW);
-
   /* Bcast class name and global id to the slaves */
   std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name());
   boost::mpi::broadcast(m_cb->comm(), what, 0);

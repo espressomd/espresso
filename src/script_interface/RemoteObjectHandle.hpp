@@ -79,7 +79,7 @@ private:
   Communication::CallbackHandle<CallbackAction> m_callback_id;
   void mpi_slave(CallbackAction action) {
     switch (action) {
-    case CallbackAction::NEW: {
+    case CallbackAction::CONSTRUCT: {
       std::pair<ObjectId, std::string> what;
       boost::mpi::broadcast(comm(), what, 0);
 
@@ -88,9 +88,6 @@ private:
 
       get_translation_table()[what.first] = m_p;
 
-      break;
-    }
-    case CallbackAction::CONSTRUCT: {
       auto const parameters = bcast_variant_map();
 
       m_p->construct(parameters);
