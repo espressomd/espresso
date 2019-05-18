@@ -42,14 +42,8 @@ ParallelScriptInterface::ParallelScriptInterface(std::string const &name)
   /* Create the slaves */
   m_cb->call(make_remote_handle);
 
-  call(CallbackAction::NEW);
-
   /* Create local object */
   m_p = ObjectHandle::make_shared(name, ObjectHandle::CreationPolicy::LOCAL);
-
-  /* Bcast class name and global id to the slaves */
-  std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name);
-  boost::mpi::broadcast(m_cb->comm(), what, 0);
 }
 
 ParallelScriptInterface::~ParallelScriptInterface() {
@@ -71,6 +65,12 @@ void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
 }
 
 void ParallelScriptInterface::do_construct(VariantMap const &params) {
+  call(CallbackAction::NEW);
+
+  /* Bcast class name and global id to the slaves */
+  std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name());
+  boost::mpi::broadcast(m_cb->comm(), what, 0);
+
   call(CallbackAction::CONSTRUCT);
 
   auto p = unwrap_variant_map(params);
