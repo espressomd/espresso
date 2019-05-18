@@ -23,8 +23,6 @@
 #ifndef __UTILS_FACTORY_HPP
 #define __UTILS_FACTORY_HPP
 
-#include <utils/type_id.hpp>
-
 #include <exception>
 #include <memory>
 #include <string>

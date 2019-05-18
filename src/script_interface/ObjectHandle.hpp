@@ -125,7 +125,7 @@ public:
    * @brief get current parameters.
    * @return Parameters set in class.
    */
-  virtual VariantMap get_parameters() const {
+  VariantMap get_parameters() const {
     VariantMap values;
 
     for (auto const &p : valid_parameters()) {
@@ -153,17 +153,14 @@ public:
    * @return Value of parameter @p name
    */
   virtual Variant get_parameter(const std::string &name) const {
-    return get_parameters().at(name);
+    return {};
   }
 
-  void set_parameter(const std::string &name, const Variant &value) {
-    this->do_set_parameter(name, value);
-  }
-
-private:
   /**
-   * @brief Set single parameter.
-   */
+ * @brief Set single parameter.
+ */
+  void set_parameter(const std::string &name, const Variant &value);
+private:
   virtual void do_set_parameter(const std::string &, const Variant &) {}
 
 public:
@@ -172,10 +169,7 @@ public:
    *
    * If not overridden by the implementation, this does nothing.
    */
-  Variant call_method(const std::string &name, const VariantMap &params) {
-    return this->do_call_method(name, params);
-  }
-
+  Variant call_method(const std::string &name, const VariantMap &params);
 private:
   virtual Variant do_call_method(const std::string &, const VariantMap &) {
     return none;
