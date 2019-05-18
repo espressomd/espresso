@@ -36,14 +36,11 @@ REGISTER_CALLBACK(make_remote_handle)
 
 namespace ScriptInterface {
 ParallelScriptInterface::ParallelScriptInterface(std::string const &name)
-    : m_callback_id(m_cb, [](CallbackAction) {}) {
+    : ObjectHandle(name, CreationPolicy::GLOBAL), m_callback_id(m_cb, [](CallbackAction) {}) {
   assert(m_cb && "Not initialized!");
 
   /* Create the slaves */
   m_cb->call(make_remote_handle);
-
-  /* Create local object */
-  m_p = ObjectHandle::make_shared(name, ObjectHandle::CreationPolicy::LOCAL);
 }
 
 ParallelScriptInterface::~ParallelScriptInterface() {
@@ -65,16 +62,17 @@ void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
 }
 
 void ParallelScriptInterface::do_construct(VariantMap const &params) {
-  /* Bcast class name and global id to the slaves */
-  std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name());
-  boost::mpi::broadcast(m_cb->comm(), what, 0);
-
   auto p = unwrap_variant_map(params);
-  boost::mpi::broadcast(m_cb->comm(), p, 0);
+/* Create local object */
+  m_p = ObjectHandle::make_shared(name(), CreationPolicy::LOCAL,
+                                  p);
 
   call(CallbackAction::CONSTRUCT);
 
-  m_p->construct(p);
+  /* Bcast class name and global id to the slaves */
+  std::pair<ObjectId, std::string> what = std::make_pair(m_p->id(), name());
+  boost::mpi::broadcast(m_cb->comm(), what, 0);
+  boost::mpi::broadcast(m_cb->comm(), p, 0);
 }
 
 void ParallelScriptInterface::do_set_parameter(const std::string &name,

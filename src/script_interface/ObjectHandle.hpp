@@ -24,6 +24,7 @@
 #include "Variant.hpp"
 
 #include <utils/Span.hpp>
+#include <utils/print.hpp>
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/utility.hpp>
@@ -59,6 +60,8 @@ public:
 
 protected:
   ObjectHandle() = default;
+  ObjectHandle(const std::string& name, CreationPolicy policy) :
+  m_name(name), m_policy(policy) {}
 
 public:
   /* Copy has unclear semantics, so it should not be allowed. */
@@ -76,9 +79,6 @@ private:
 
   std::string m_name;
   CreationPolicy m_policy = CreationPolicy::LOCAL;
-
-  void set_name(std::string const &name) { m_name = name; }
-  void set_policy(CreationPolicy policy) { m_policy = policy; }
 
 public:
   /**
@@ -111,7 +111,12 @@ public:
    * @param params The parameters to the constructor. Only parameters that
    *               are valid for a default-constructed object are valid.
    */
-  void construct(VariantMap const &params) { this->do_construct(params); }
+  void construct(VariantMap const &params, CreationPolicy policy,
+                 const std::string &name) {
+    m_name = name;
+    m_policy = policy;
+
+    this->do_construct(params); }
 
 private:
   virtual void do_construct(VariantMap const &params) {
@@ -187,8 +192,9 @@ public:
    * name.
    *
    */
-  static std::shared_ptr<ObjectHandle> make_shared(std::string const &name,
-                                                   CreationPolicy policy);
+  static std::shared_ptr<ObjectHandle>
+  make_shared(std::string const &name, CreationPolicy policy,
+              const VariantMap &parameters = {});
 
   /**
    * @brief Get a new reference counted instance of a script interface by

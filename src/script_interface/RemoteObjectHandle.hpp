@@ -29,6 +29,7 @@
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/utility.hpp>
+#include <jmorecfg.h>
 
 namespace ScriptInterface {
 class RemoteObjectHandle {
@@ -82,15 +83,12 @@ private:
     case CallbackAction::CONSTRUCT: {
       std::pair<ObjectId, std::string> what;
       boost::mpi::broadcast(comm(), what, 0);
-
       auto const parameters = bcast_variant_map();
-      
-      m_p = ObjectHandle::make_shared(what.second,
-                                      ObjectHandle::CreationPolicy::LOCAL);
+
+      m_p = ObjectHandle::make_shared(
+          what.second, ObjectHandle::CreationPolicy::LOCAL, parameters);
 
       get_translation_table()[what.first] = m_p;
-
-      m_p->construct(parameters);
       break;
     }
     case CallbackAction::SET_PARAMETER: {

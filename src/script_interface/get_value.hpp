@@ -184,6 +184,7 @@ struct get_value_helper<
     if (t_ptr) {
       return t_ptr;
     }
+
     throw std::runtime_error("Wrong type: " + so_ptr->name());
   }
 };

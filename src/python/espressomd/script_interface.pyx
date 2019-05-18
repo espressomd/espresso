@@ -74,8 +74,7 @@ cdef class PScriptInterface:
         if oid:
             self.set_sip_via_oid(oid)
         else:
-            self.set_sip(make_shared(to_char_pointer(name), policy_))
-            self.sip.get().construct(self._sanitize_params(kwargs))
+            self.set_sip(make_shared(to_char_pointer(name), policy_, self._sanitize_params(kwargs)))
 
     def __richcmp__(a, b, op):
         if op == 2:
@@ -145,16 +144,10 @@ cdef class PScriptInterface:
 
     cdef VariantMap _sanitize_params(self, in_params) except *:
         cdef VariantMap out_params
-        cdef Variant v
-
-        valid_params = self._valid_parameters()
 
         for pname in in_params:
-            if pname in valid_params:
-                out_params[to_char_pointer(pname)] = python_object_to_variant(
-                    in_params[pname])
-            else:
-                raise RuntimeError("Unknown parameter '{}'".format(pname))
+            out_params[to_char_pointer(pname)] = python_object_to_variant(
+                in_params[pname])
 
         return out_params
 

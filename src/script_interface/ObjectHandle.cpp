@@ -34,7 +34,7 @@ namespace ScriptInterface {
 Utils::Factory<ObjectHandle> factory;
 
 std::shared_ptr<ObjectHandle> ObjectHandle::make_shared(std::string const &name,
-                                                        CreationPolicy policy) {
+                                                        CreationPolicy policy, const VariantMap & parameters) {
   std::shared_ptr<ObjectHandle> sp;
 
   switch (policy) {
@@ -46,9 +46,7 @@ std::shared_ptr<ObjectHandle> ObjectHandle::make_shared(std::string const &name,
     break;
   }
 
-  /* Set the policy and the name */
-  sp->set_policy(policy);
-  sp->set_name(name);
+  sp->construct(parameters, policy, name);
 
   /* Id of the newly created instance */
   const auto id = sp->id();

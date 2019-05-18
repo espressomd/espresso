@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(parameter_lifetime) {
 
     {
       auto parameter = ObjectHandle::make_shared(
-          "TestClass", ObjectHandle::CreationPolicy::GLOBAL);
+          "TestClass", ObjectHandle::CreationPolicy::GLOBAL, <#initializer #>);
       bare_ptr = parameter.get();
 
       BOOST_CHECK(get_instance(parameter->id()) == parameter);

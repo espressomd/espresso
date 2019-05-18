@@ -54,7 +54,6 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 
     cdef cppclass ObjectHandle:
         const string name()
-        void construct(const VariantMap &) except +
         VariantMap get_parameters() except +
         Span[const string_ref] valid_parameters() except +
         Variant get_parameter(const string & name) except +
@@ -71,7 +70,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ObjectHandle":
     cdef cppclass CreationPolicy:
         pass
-    shared_ptr[ObjectHandle] make_shared(const string & name, CreationPolicy policy) except +
+    shared_ptr[ObjectHandle] make_shared(const string &, CreationPolicy, const VariantMap &) except +
     weak_ptr[ObjectHandle] get_instance(ObjectId id) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ObjectHandle::CreationPolicy":
