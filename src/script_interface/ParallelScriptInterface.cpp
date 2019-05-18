@@ -36,7 +36,8 @@ REGISTER_CALLBACK(make_remote_handle)
 
 namespace ScriptInterface {
 ParallelScriptInterface::ParallelScriptInterface(std::string const &name)
-    : ObjectHandle(name, CreationPolicy::GLOBAL), m_callback_id(m_cb, [](CallbackAction) {}) {
+    : ObjectHandle(name, CreationPolicy::GLOBAL),
+      m_callback_id(m_cb, [](CallbackAction) {}) {
   assert(m_cb && "Not initialized!");
 
   /* Create the slaves */
@@ -63,9 +64,8 @@ void ParallelScriptInterface::initialize(Communication::MpiCallbacks &cb) {
 
 void ParallelScriptInterface::do_construct(VariantMap const &params) {
   auto p = unwrap_variant_map(params);
-/* Create local object */
-  m_p = ObjectHandle::make_shared(name(), CreationPolicy::LOCAL,
-                                  p);
+  /* Create local object */
+  m_p = ObjectHandle::make_shared(name(), CreationPolicy::LOCAL, p);
 
   call(CallbackAction::CONSTRUCT);
 

@@ -33,8 +33,9 @@
 namespace ScriptInterface {
 Utils::Factory<ObjectHandle> factory;
 
-std::shared_ptr<ObjectHandle> ObjectHandle::make_shared(std::string const &name,
-                                                        CreationPolicy policy, const VariantMap & parameters) {
+std::shared_ptr<ObjectHandle>
+ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
+                          const VariantMap &parameters) {
   std::shared_ptr<ObjectHandle> sp;
 
   switch (policy) {
@@ -81,10 +82,11 @@ ObjectHandle::unserialize(std::string const &state) {
 }
 
 void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
-               const std::string &name) {
+                             const std::string &name) {
   m_name = name;
   m_policy = policy;
 
-  this->do_construct(params); }
+  this->do_construct(params);
+}
 
 } /* namespace ScriptInterface */

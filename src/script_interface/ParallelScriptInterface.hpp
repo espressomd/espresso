@@ -35,12 +35,7 @@ using TransportVariant = boost::make_recursive_variant<
 
 class ParallelScriptInterface : public ObjectHandle {
 public:
-  enum class CallbackAction {
-    CONSTRUCT,
-    SET_PARAMETER,
-    CALL_METHOD,
-    DELETE
-  };
+  enum class CallbackAction { CONSTRUCT, SET_PARAMETER, CALL_METHOD, DELETE };
 
   explicit ParallelScriptInterface(std::string const &name);
   ~ParallelScriptInterface() override;
