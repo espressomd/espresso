@@ -243,7 +243,7 @@ cdef class ReactionAlgorithm(object):
         if(self._params["check_for_electroneutrality"]):
             charges = np.array(list(self._params["default_charges"].values()))
             if(np.count_nonzero(charges) == 0):
-                # all partices have zero charge
+                # all particles have zero charge
                 # no need to check electroneutrality
                 return
             total_charge_change = 0.0

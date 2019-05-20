@@ -658,7 +658,7 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
   _cuda_check_errors(block, grid, "assign_forces", __FILE__, __LINE__);
 }
 
-/* Init the internal datastructures of the P3M GPU.
+/* Init the internal data structures of the P3M GPU.
  * Mainly allocation on the device and influence function calculation.
  * Be advised: this needs mesh^3*5*sizeof(REAL_TYPE) of device memory.
  * We use real to complex FFTs, so the size of the reciprocal mesh
