@@ -170,11 +170,7 @@ struct get_value_helper<
     typename std::enable_if<std::is_base_of<ObjectHandle, T>::value,
                             void>::type> {
   std::shared_ptr<T> operator()(Variant const &v) const {
-    auto const object_id = boost::get<ObjectId>(v);
-    if (object_id == ObjectId()) {
-      return nullptr;
-    }
-    auto so_ptr = ObjectHandle::get_instance(object_id).lock();
+    auto so_ptr = boost::get<ObjectRef>(v);
     if (!so_ptr) {
       throw std::runtime_error("Unknown Object.");
     }

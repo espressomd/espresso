@@ -50,7 +50,7 @@ public:
       std::vector<Variant> ret;
       ret.reserve(m_shapes.size());
       for (auto const &s : m_shapes) {
-        ret.emplace_back(s->id());
+        ret.emplace_back(s);
       }
       return ret;
     } else if (name == "clear") {
