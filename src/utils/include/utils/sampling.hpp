@@ -65,9 +65,9 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
   auto n_phi_samples = [arc_length](int r_bin) {
     return arc_length(r_bin) / arc_length(0);
   };
-  auto phis = [n_phi_samples, n_phi_bins, delta_phi, phi_limits](int r_bin) {
+  auto phis = [n_phi_samples, n_phi_bins, phi_limits](int r_bin) {
     auto const phis_range =
-        make_lin_space(phi_limits.first + 0.5 * delta_phi, phi_limits.second,
+        make_lin_space(phi_limits.first, phi_limits.second,
                        n_phi_bins * n_phi_samples(r_bin), /*endpoint */ false);
     return phis_range;
   };
@@ -75,7 +75,7 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
   // Along z
   for (auto const z : z_range) {
     // Along r
-    for (auto r = r_range.begin(); r != r_range.end(); ++r) {
+    for (auto r = ++r_range.begin(); r != r_range.end(); ++r) {
       // Along phi
       for (auto const phi : phis(std::distance(r_range.begin(), r))) {
         sampling_positions.push_back(Vector3d{{*r, phi, z}});
