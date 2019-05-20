@@ -47,6 +47,7 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/under_the_hood.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/visualization.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/zrefs.bib"
+        "${CMAKE_CURRENT_SOURCE_DIR}/zreferences.rst"
         )
 
     foreach(file ${FILE_LIST})
