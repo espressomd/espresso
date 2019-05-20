@@ -74,14 +74,6 @@ public:
    * @brief Get identifier for this instance.
    */
   ObjectId<T> id() const { return m_id; }
-  /**
-   * @brief get instance by id. If the id is none (ObjectId()),
-   * a nullptr is returned. If the id is unknown, an out-of-range
-   * exception is thrown.
-   */
-  static std::weak_ptr<T> &get_instance(ObjectId<T> id) {
-    return reg()[id.m_id];
-  }
 
 private:
   ObjectId<T> m_id;
