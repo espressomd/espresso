@@ -44,9 +44,7 @@ public:
                        ::set_virtual_sites(
                            m_active_implementation->virtual_sites());
                      },
-                     [this]() {
-                       return m_active_implementation;
-                     }}});
+                     [this]() { return m_active_implementation; }}});
   }
 
 private:

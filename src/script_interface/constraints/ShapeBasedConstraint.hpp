@@ -51,9 +51,7 @@ public:
                          m_constraint->set_shape(m_shape->shape());
                        };
                      },
-                     [this]() {
-                       return m_shape;
-                     }},
+                     [this]() { return m_shape; }},
                     {"particle_velocity", m_constraint->velocity()}});
   }
 

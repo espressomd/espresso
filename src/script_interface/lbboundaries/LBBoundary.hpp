@@ -45,9 +45,7 @@ public:
               m_lbboundary->set_shape(m_shape->shape());
             };
           },
-          [this]() {
-            return m_shape;
-          }}});
+          [this]() { return m_shape; }}});
 #ifdef EK_BOUNDARIES
     add_parameters({{"charge_density",
                      [this](Variant const &value) {

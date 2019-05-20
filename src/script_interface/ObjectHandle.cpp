@@ -245,10 +245,10 @@ void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
 
   if (m_policy == CreationPolicy::GLOBAL) {
     assert(m_callbacks);
-    m_cb_ = std::make_unique<detail::Callback>(m_callbacks,
-                                               [](detail::CallbackAction) {});
+    m_cb = std::make_unique<detail::Callback>(m_callbacks,
+                                              [](detail::CallbackAction) {});
     m_callbacks->call(make_remote_handle);
-    m_cb_->operator()(
+    m_cb->operator()(
         CallbackAction{Construct{id(), name, detail::pack(params)}});
   }
 
@@ -261,8 +261,7 @@ void ObjectHandle::set_parameter(const std::string &name,
   using SetParameter = CallbackAction::SetParameter;
 
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_cb_->operator()(
-        CallbackAction{SetParameter{name, detail::pack(value)}});
+    m_cb->operator()(CallbackAction{SetParameter{name, detail::pack(value)}});
   }
 
   this->do_set_parameter(name, value);
@@ -274,8 +273,7 @@ Variant ObjectHandle::call_method(const std::string &name,
   using CallMethod = CallbackAction::CallMethod;
 
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_cb_->operator()(
-        CallbackAction{CallMethod{name, detail::pack(params)}});
+    m_cb->operator()(CallbackAction{CallMethod{name, detail::pack(params)}});
   }
 
   return this->do_call_method(name, params);

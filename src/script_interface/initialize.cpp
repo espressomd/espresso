@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptInterface.hpp"
 #include "initialize.hpp"
+#include "ScriptInterface.hpp"
 #include "cluster_analysis/initialize.hpp"
 #include "config.hpp"
 #include "constraints/initialize.hpp"

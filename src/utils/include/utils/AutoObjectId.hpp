@@ -96,14 +96,11 @@ private:
 } /* namespace Utils */
 
 namespace std {
-template <class T>
-struct hash<Utils::ObjectId<T>>
-{
-  size_t operator()(const Utils::ObjectId<T> & x) const
-  {
+template <class T> struct hash<Utils::ObjectId<T>> {
+  size_t operator()(const Utils::ObjectId<T> &x) const {
     return std::hash<int>{}(x.id());
   }
 };
-}
+} // namespace std
 
 #endif
