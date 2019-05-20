@@ -130,7 +130,7 @@ public:
   bool node_in_local_domain(const Utils::Vector3i &node) const;
   bool pos_in_local_domain(const Utils::Vector3d &pos) const;
 
-  const Utils::Vector<int, 19> es_pop_index_to_walberla_pop_index{
+  const Utils::Vector<walberla::uint_t, 19> es_pop_index_to_walberla_pop_index{
       Lattice_model_t::Stencil::idx[walberla::stencil::C],
       Lattice_model_t::Stencil::idx[walberla::stencil::E],
       Lattice_model_t::Stencil::idx[walberla::stencil::W],
@@ -157,6 +157,7 @@ private:
   walberla::BlockDataID m_pdf_field_id;
   walberla::BlockDataID m_flag_field_id;
   walberla::BlockDataID m_force_field_id;
+  walberla::BlockDataID m_force_field_from_md_id;
   walberla::BlockDataID m_force_distributor_id;
   walberla::BlockDataID m_velocity_adaptor_id;
   walberla::BlockDataID m_velocity_interpolator_id;
