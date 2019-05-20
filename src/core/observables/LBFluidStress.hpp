@@ -10,7 +10,7 @@ namespace Observables {
 class LBFluidStress : public Observable {
 public:
   int n_values() const override { return 6; }
-  std::vector<double> operator()(PartCfg &) const override {
+  std::vector<double> operator()() const override {
 
     auto const unit_conversion =
         1. / (lb_lbfluid_get_agrid() * pow(lb_lbfluid_get_tau(), 2));
