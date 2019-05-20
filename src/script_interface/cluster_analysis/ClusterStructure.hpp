@@ -42,7 +42,7 @@ public:
               m_cluster_structure.set_pair_criterion(m_pc->pair_criterion());
             };
           },
-          [this]() { return (m_pc != nullptr) ? m_pc->id() : ObjectId(); }}});
+          [this]() { return m_pc; }}});
   };
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
@@ -56,14 +56,7 @@ public:
       c->set_cluster(
           m_cluster_structure.clusters.at(get_value<int>(parameters.at("id"))));
 
-      // Store a temporary copy of the most recent cluster being returned.
-      // This ensures, that the reference count of the shared_ptr doesn't go
-      // to zero, while it is passed to Python.
-      // (At some point, it is converted to an ObjectId, which is passed
-      //  to Python, where a new script object is constructed. While it is
-      // passed as ObjectId, no one holds an instance of the shared_ptr)
-      m_tmp_cluster = c;
-      return m_tmp_cluster->id();
+      return c;
     }
     if (method == "cluster_ids") {
       std::vector<int> cluster_ids;
@@ -97,7 +90,6 @@ public:
 private:
   ::ClusterAnalysis::ClusterStructure m_cluster_structure;
   std::shared_ptr<PairCriteria::PairCriterion> m_pc;
-  std::shared_ptr<Cluster> m_tmp_cluster;
 };
 
 } /* namespace ClusterAnalysis */

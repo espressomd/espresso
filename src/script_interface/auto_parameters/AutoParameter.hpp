@@ -121,17 +121,6 @@ struct AutoParameter {
         setter_([&binding](Variant const &v) { binding = get_value<T>(v); }),
         getter_([&binding]() { return Variant{binding}; }) {}
 
-  /** @brief Read-write parameter that is bound to an object.
-   *  @overload
-   */
-  template <typename T>
-  AutoParameter(const char *name, std::shared_ptr<T> &binding)
-      : name(name), setter_([&binding](Variant const &v) {
-          binding = get_value<std::shared_ptr<T>>(v);
-        }),
-        getter_(
-            [&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
-
   /** @brief Read-only parameter that is bound to an object.
    *  @overload
    */
@@ -139,15 +128,6 @@ struct AutoParameter {
   AutoParameter(const char *name, T const &binding)
       : name(name), setter_([](Variant const &) { throw WriteError{}; }),
         getter_([&binding]() -> Variant { return binding; }) {}
-
-  /** @brief Read-only parameter that is bound to an object.
-   *  @overload
-   */
-  template <typename T>
-  AutoParameter(const char *name, std::shared_ptr<T> const &binding)
-      : name(name), setter_([](Variant const &) { throw WriteError{}; }),
-        getter_(
-            [&binding]() { return (binding) ? binding->id() : ObjectId(); }) {}
 
   /**
    * @brief Read-write parameter with a user-provided getter and setter.

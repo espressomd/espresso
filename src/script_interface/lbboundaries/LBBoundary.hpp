@@ -46,7 +46,7 @@ public:
             };
           },
           [this]() {
-            return (m_shape != nullptr) ? m_shape->id() : ObjectId();
+            return m_shape;
           }}});
 #ifdef EK_BOUNDARIES
     add_parameters({{"charge_density",
