@@ -35,10 +35,12 @@ namespace ScriptInterface {
 std::unordered_map<ObjectId, std::shared_ptr<ObjectHandle>> local_objects;
 
 namespace detail {
-using TransportVariant = boost::make_recursive_variant<
-    None, bool, int, size_t, double, std::string, std::vector<int>,
-    std::vector<double>, ObjectId, std::vector<boost::recursive_variant_>,
-    Utils::Vector2d, Utils::Vector3d, Utils::Vector4d>::type;
+using PackedVariant = boost::make_recursive_variant<
+    None, bool, int, size_t, double, std::string, std::vector<int>, std::vector<double>,
+    ObjectId, std::vector<boost::recursive_variant_>, Utils::Vector2d,
+    Utils::Vector3d, Utils::Vector4d>::type;
+
+using PackedMap = std::vector<std::pair<std::string, PackedVariant>>;
 
 template <class D, class V, class R>
 struct recursive_visitor : boost::static_visitor<R> {
@@ -59,44 +61,44 @@ struct recursive_visitor : boost::static_visitor<R> {
 };
 
 struct VariantToTransport
-    : recursive_visitor<VariantToTransport, Variant, TransportVariant> {
-  using recursive_visitor<VariantToTransport, Variant, TransportVariant>::
+    : recursive_visitor<VariantToTransport, Variant, PackedVariant> {
+  using recursive_visitor<VariantToTransport, Variant, PackedVariant>::
   operator();
 
-  TransportVariant operator()(const ObjectRef &so_ptr) const {
+  PackedVariant operator()(const ObjectRef &so_ptr) const {
     return so_ptr->id();
   }
 };
 
 struct TransportToVariant
-    : recursive_visitor<TransportToVariant, TransportVariant, Variant> {
-  using recursive_visitor<TransportToVariant, TransportVariant, Variant>::
+    : recursive_visitor<TransportToVariant, PackedVariant, Variant> {
+  using recursive_visitor<TransportToVariant, PackedVariant, Variant>::
   operator();
 
   Variant operator()(const ObjectId &id) const { return local_objects.at(id); }
 };
 
-TransportVariant pack(const Variant &v) {
+PackedVariant pack(const Variant &v) {
   return boost::apply_visitor(VariantToTransport{}, v);
 }
 
-Variant unpack(const TransportVariant &v) {
+Variant unpack(const PackedVariant &v) {
   return boost::apply_visitor(TransportToVariant{}, v);
 }
 
-std::vector<std::pair<std::string, TransportVariant>>
+PackedMap
 pack(const VariantMap &v) {
-  std::vector<std::pair<std::string, TransportVariant>> ret(v.size());
+  std::vector<std::pair<std::string, PackedVariant>> ret(v.size());
 
   boost::transform(v, ret.begin(), [](auto const &kv) {
-    return std::pair<std::string, TransportVariant>{kv.first, pack(kv.second)};
+    return std::pair<std::string, PackedVariant>{kv.first, pack(kv.second)};
   });
 
   return ret;
 }
 
 VariantMap
-unpack(const std::vector<std::pair<std::string, TransportVariant>> &v) {
+unpack(const PackedMap &v) {
   VariantMap ret;
 
   boost::transform(v, std::inserter(ret, ret.end()), [](auto const &kv) {
@@ -107,24 +109,16 @@ unpack(const std::vector<std::pair<std::string, TransportVariant>> &v) {
 }
 
 struct CallbackAction {
-  struct SetParameter {
-    std::string name;
-    TransportVariant value;
-
-    template <class Archive> void serialize(Archive &ar, long int) {
-      ar &name &value;
-    }
-  };
   struct CallMethod {
     std::string name;
-    std::vector<std::pair<std::string, TransportVariant>> arguments;
+    PackedMap arguments;
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &name &arguments;
     }
   };
 
-  boost::variant<SetParameter, CallMethod> value;
+  boost::variant<CallMethod> value;
 
   template <class Archive> void serialize(Archive &ar, long int) { ar &value; }
 };
@@ -133,49 +127,21 @@ struct CallbackAction {
 namespace {
 Communication::MpiCallbacks *m_callbacks = nullptr;
 
-class RemoteObjectHandle {
-private:
-  detail::Callback m_callback_id;
-
-  const auto &comm() const { return m_callback_id.cb()->comm(); }
-  std::shared_ptr<ObjectHandle> m_p;
-
-public:
-  RemoteObjectHandle(Communication::MpiCallbacks *cb)
-      : m_callback_id(cb, [this](detail::CallbackAction a) { mpi_slave(a); }) {}
-
-  struct CallbackVisitor {
-    using CallbackAction = detail::CallbackAction;
-
-    std::shared_ptr<ObjectHandle> &o;
-
-    void operator()(const CallbackAction::SetParameter &param) const {
-      assert(o), o->set_parameter(param.name, detail::unpack(param.value));
-    }
-    void operator()(const CallbackAction::CallMethod &method) const {
-      assert(o);
-      (void)o->call_method(method.name, detail::unpack(method.arguments));
-    }
-  };
-
-  void mpi_slave(detail::CallbackAction a) {
-    boost::apply_visitor(CallbackVisitor{this->m_p}, a.value);
-  }
-};
-
 void make_remote_handle(
     ObjectId id, const std::string &name,
     const std::vector<
-        std::pair<std::string, detail::TransportVariant>>
+        std::pair<std::string, detail::PackedVariant>>
     &parameters) {
   using namespace ScriptInterface;
   local_objects[id] = ObjectHandle::make_shared(
       name, ObjectHandle::CreationPolicy::LOCAL, detail::unpack(parameters));
 }
 
-void remote_set_parameter(ObjectId id, std::string const& name, detail::TransportVariant const& value) {
+void remote_set_parameter(ObjectId id, std::string const& name, detail::PackedVariant const& value) {
   local_objects.at(id)->set_parameter(name, detail::unpack(value));
 }
+
+//void remote_call_method(ObjectId id, )
 
 void delete_remote_handle(ScriptInterface::ObjectId id) {
   using namespace ScriptInterface;
@@ -234,11 +200,8 @@ void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
 
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {
-  using detail::CallbackAction;
-  using SetParameter = CallbackAction::SetParameter;
-
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_cb->operator()(CallbackAction{SetParameter{name, detail::pack(value)}});
+    m_callbacks->call(remote_set_parameter, id(), name, detail::pack(value));
   }
 
   this->do_set_parameter(name, value);
