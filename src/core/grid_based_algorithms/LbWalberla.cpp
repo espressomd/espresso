@@ -59,7 +59,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   m_agrid = agrid;
   m_tau = tau;
   m_density = density;
-  m_velocity = {0,0,0};
+  m_velocity = {0, 0, 0};
 
   Utils::Vector3i grid_dimensions;
   for (int i = 0; i < 3; i++) {
@@ -95,13 +95,13 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
       uint_c(1));
-  m_lattice_model = std::make_shared<Lattice_model_t>(
-      Lattice_model_t(lbm::collision_model::TRT::constructWithMagicNumber(
+  m_lattice_model = std::make_shared<Lattice_model_t>(Lattice_model_t(
+      lbm::collision_model::TRT::constructWithMagicNumber(
           lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
       force_model_t(m_force_field_id)));
 
   m_pdf_field_id =
-      lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model, 
+      lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model,
                                 to_vector3(m_velocity), (real_t)m_density);
 
   m_flag_field_id =
@@ -339,9 +339,9 @@ bool LbWalberla::set_node_pop(const Utils::Vector3i &node,
     return false;
 
   auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
-  auto & xyz0 = (*pdf_field)(node[0],node[1],node[2],0);
+  auto &xyz0 = (*pdf_field)(node[0], node[1], node[2], 0);
 
-  for(int i = 0; i < 19; i++){
+  for (int i = 0; i < 19; i++) {
     pdf_field->getF(&xyz0, es_pop_index_to_walberla_pop_index[i]) = pop[i];
   }
 
@@ -355,11 +355,11 @@ LbWalberla::get_node_pop(const Utils::Vector3i node) const {
     return {boost::none};
 
   auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
-  const auto & xyz0 = (*pdf_field)(node[0],node[1],node[2],0);
+  const auto &xyz0 = (*pdf_field)(node[0], node[1], node[2], 0);
 
   Utils::Vector19d pop;
 
-  for(int i = 0; i < 19; i++){
+  for (int i = 0; i < 19; i++) {
     pop[i] = pdf_field->getF(&xyz0, es_pop_index_to_walberla_pop_index[i]);
   }
 

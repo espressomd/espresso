@@ -47,13 +47,14 @@ class LbWalberlaTest(ut.TestCase):
                     lbf[i, j, k].velocity = v
                     assert np.linalg.norm(lbf[i, j, k].velocity - v) < 1E-10
 
-                    assert abs(lbf[i, j, k].density - dens_init / 0.6**3) < 1E-10
-                    rho = i*j*k*0.5 + 0.8
+                    assert abs(
+                        lbf[i, j, k].density - dens_init / 0.6**3) < 1E-10
+                    rho = i * j * k * 0.5 + 0.8
                     lbf[i, j, k].density = rho
                     assert abs(lbf[i, j, k].density - rho) < 1E-10
 
-                    pop = np.array((i*j*k,i,-i,j,-j,k,-k, \
-                                    i+j,i-j,-i+j,-i-j,i+k,i-k,-i+k,-i-k,j+k,j-k,-j+k,-j-k))
+                    pop = np.array((i * j * k, i, -i, j, -j, k, -k,
+                                    i + j, i - j, -i + j, -i - j, i + k, i - k, -i + k, -i - k, j + k, j - k, -j + k, -j - k))
                     lbf[i, j, k].population = pop
                     lb_pop = lbf[i, j, k].population
                     for p_idx in range(len(pop)):

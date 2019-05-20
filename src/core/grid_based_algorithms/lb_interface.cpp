@@ -1343,8 +1343,8 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
   }
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return Communication::mpiCallbacks().call(Communication::Result::one_rank,
-                                              Walberla::get_node_is_boundary, ind);
+    return Communication::mpiCallbacks().call(
+        Communication::Result::one_rank, Walberla::get_node_is_boundary, ind);
   }
 #endif
   throw std::runtime_error("LB not activated.");
@@ -1378,8 +1378,8 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
   }
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    Utils::Vector19d p_pop = Communication::mpiCallbacks().call(Communication::Result::one_rank,
-                                              Walberla::get_node_pop, ind);
+    Utils::Vector19d p_pop = Communication::mpiCallbacks().call(
+        Communication::Result::one_rank, Walberla::get_node_pop, ind);
     return p_pop;
   }
 #endif
@@ -1411,7 +1411,8 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
   }
 #ifdef LB_WALBERLA
   else if (lattice_switch == ActiveLB::WALBERLA) {
-    Communication::mpiCallbacks().call_all(Walberla::set_node_density, ind, p_rho);
+    Communication::mpiCallbacks().call_all(Walberla::set_node_density, ind,
+                                           p_rho);
   }
 #endif
   else {
