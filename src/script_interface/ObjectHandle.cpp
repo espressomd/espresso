@@ -32,10 +32,80 @@
 
 namespace ScriptInterface {
 namespace detail {
+using TransportVariant = boost::make_recursive_variant<
+    None, bool, int, size_t, double, std::string, std::vector<int>,
+    std::vector<double>, ObjectId, std::vector<boost::recursive_variant_>,
+    Utils::Vector2d, Utils::Vector3d, Utils::Vector4d>::type;
+
+struct VariantToTransport : boost::static_visitor<TransportVariant> {
+  template <class T> TransportVariant operator()(T &&val) const {
+    return std::forward<T>(val);
+  }
+
+  TransportVariant operator()(const ObjectRef &so_ptr) const {
+    return so_ptr->id();
+  }
+  TransportVariant operator()(const std::vector<Variant> &vec) const {
+    std::vector<TransportVariant> ret(vec.size());
+
+    boost::transform(vec, ret.begin(), [this](const Variant &v) {
+      return boost::apply_visitor(*this, v);
+    });
+
+    return ret;
+  }
+};
+
+struct TransportToVariant : boost::static_visitor<Variant> {
+  template <class T> Variant operator()(const T &val) const { return val; }
+
+  Variant operator()(const ObjectId &id) const { return id; }
+
+  Variant operator()(const std::vector<TransportVariant> &vec) const {
+    std::vector<Variant> ret(vec.size());
+
+    boost::transform(vec, ret.begin(), [this](const TransportVariant &v) {
+      return boost::apply_visitor(*this, v);
+    });
+
+    return ret;
+  }
+};
+
+TransportVariant pack(const Variant &v) {
+  return boost::apply_visitor(VariantToTransport{}, v);
+}
+
+Variant unpack(const TransportVariant &v) {
+  return boost::apply_visitor(TransportToVariant{}, v);
+}
+
+std::vector<std::pair<std::string, TransportVariant>>
+pack(const VariantMap &v) {
+  std::vector<std::pair<std::string, TransportVariant>> ret(v.size());
+
+  boost::transform(v, ret.begin(), [](auto const &kv) {
+    return std::pair<std::string, TransportVariant>{kv.first, pack(kv.second)};
+  });
+
+  return ret;
+}
+
+VariantMap
+unpack(const std::vector<std::pair<std::string, TransportVariant>> &v) {
+  VariantMap ret;
+
+  boost::transform(v, std::inserter(ret, ret.end()), [](auto const &kv) {
+    return std::pair<std::string, Variant>{kv.first, unpack(kv.second)};
+  });
+
+  return ret;
+}
+
 struct CallbackAction {
   struct Construct {
     std::string name;
-    VariantMap parameters;
+    std::vector<std::pair<std::string, TransportVariant>> parameters;
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &name &parameters;
@@ -43,7 +113,7 @@ struct CallbackAction {
   };
   struct SetParameter {
     std::string name;
-    Variant value;
+    TransportVariant value;
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &name &value;
@@ -51,13 +121,13 @@ struct CallbackAction {
   };
   struct CallMethod {
     std::string name;
-    VariantMap arguments;
+    std::vector<std::pair<std::string, TransportVariant>> arguments;
 
     template <class Archive> void serialize(Archive &ar, long int) {
       ar &name &arguments;
     }
   };
- 
+
   boost::variant<Construct, SetParameter, CallMethod> value;
 
   template <class Archive> void serialize(Archive &ar, long int) { ar &value; }
@@ -84,15 +154,16 @@ public:
     std::shared_ptr<ObjectHandle> &o;
 
     void operator()(const CallbackAction::Construct &ctor) const {
-      o = ObjectHandle::make_shared(
-          ctor.name, ObjectHandle::CreationPolicy::LOCAL, ctor.parameters);
+      o = ObjectHandle::make_shared(ctor.name,
+                                    ObjectHandle::CreationPolicy::LOCAL,
+                                    detail::unpack(ctor.parameters));
     }
     void operator()(const CallbackAction::SetParameter &param) const {
-      assert(o), o->set_parameter(param.name, param.value);
+      assert(o), o->set_parameter(param.name, detail::unpack(param.value));
     }
     void operator()(const CallbackAction::CallMethod &method) const {
       assert(o);
-      (void)o->call_method(method.name, method.arguments);
+      (void)o->call_method(method.name, detail::unpack(method.arguments));
     }
   };
 
@@ -174,7 +245,7 @@ void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
     m_cb_ = std::make_unique<detail::Callback>(m_callbacks,
                                                [](detail::CallbackAction) {});
     m_callbacks->call(make_remote_handle);
-    m_cb_->operator()(CallbackAction{Construct{name, params}});
+    m_cb_->operator()(CallbackAction{Construct{name, detail::pack(params)}});
   }
 
   this->do_construct(params);
