@@ -1376,6 +1376,13 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
     mpi_recv_fluid_populations(node, index, p_pop.data());
     return p_pop;
   }
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    Utils::Vector19d p_pop = Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                              Walberla::get_node_pop, ind);
+    return p_pop;
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 
@@ -1470,7 +1477,13 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
-  } else {
+  }
+#ifdef LB_WALBERLA
+  else if (lattice_switch == ActiveLB::WALBERLA) {
+    Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind, p_pop);
+  }
+#endif
+  else {
     throw std::runtime_error("LB not activated.");
   }
 }

@@ -51,6 +51,13 @@ class LbWalberlaTest(ut.TestCase):
                     lbf[i, j, k].density = rho
                     assert abs(lbf[i, j, k].density - rho) < 1E-10
 
+                    pop = np.array((i*j*k,i,-i,j,-j,k,-k, \
+                                    i+j,i-j,-i+j,-i-j,i+k,i-k,-i+k,-i-k,j+k,j-k,-j+k,-j-k))
+                    lbf[i, j, k].population = pop
+                    lb_pop = lbf[i, j, k].population
+                    for p_idx in range(len(pop)):
+                        assert abs(lb_pop[p_idx] - pop[p_idx]) < 1E-10
+
         s.actors.remove(lbf)
 
 
