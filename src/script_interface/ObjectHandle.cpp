@@ -27,14 +27,13 @@
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/serialization/utility.hpp>
-#include <boost/serialization/variant.hpp>
 
 #include <sstream>
 
 namespace ScriptInterface {
+namespace {
 std::unordered_map<ObjectId, std::shared_ptr<ObjectHandle>> local_objects;
 
-namespace detail {
 using PackedVariant = boost::make_recursive_variant<
     None, bool, int, size_t, double, std::string, std::vector<int>, std::vector<double>,
     ObjectId, std::vector<boost::recursive_variant_>, Utils::Vector2d,
@@ -86,8 +85,7 @@ Variant unpack(const PackedVariant &v) {
   return boost::apply_visitor(TransportToVariant{}, v);
 }
 
-PackedMap
-pack(const VariantMap &v) {
+PackedMap pack(const VariantMap &v) {
   std::vector<std::pair<std::string, PackedVariant>> ret(v.size());
 
   boost::transform(v, ret.begin(), [](auto const &kv) {
@@ -97,8 +95,7 @@ pack(const VariantMap &v) {
   return ret;
 }
 
-VariantMap
-unpack(const PackedMap &v) {
+VariantMap unpack(const PackedMap &v) {
   VariantMap ret;
 
   boost::transform(v, std::inserter(ret, ret.end()), [](auto const &kv) {
@@ -108,54 +105,34 @@ unpack(const PackedMap &v) {
   return ret;
 }
 
-struct CallbackAction {
-  struct CallMethod {
-    std::string name;
-    PackedMap arguments;
-
-    template <class Archive> void serialize(Archive &ar, long int) {
-      ar &name &arguments;
-    }
-  };
-
-  boost::variant<CallMethod> value;
-
-  template <class Archive> void serialize(Archive &ar, long int) { ar &value; }
-};
-} // namespace detail
-
-namespace {
 Communication::MpiCallbacks *m_callbacks = nullptr;
 
-void make_remote_handle(
-    ObjectId id, const std::string &name,
-    const std::vector<
-        std::pair<std::string, detail::PackedVariant>>
-    &parameters) {
-  using namespace ScriptInterface;
+void make_remote_handle(ObjectId id, const std::string &name,
+                        const PackedMap &parameters) {
   local_objects[id] = ObjectHandle::make_shared(
-      name, ObjectHandle::CreationPolicy::LOCAL, detail::unpack(parameters));
+      name, ObjectHandle::CreationPolicy::LOCAL, unpack(parameters));
 }
 
-void remote_set_parameter(ObjectId id, std::string const& name, detail::PackedVariant const& value) {
-  local_objects.at(id)->set_parameter(name, detail::unpack(value));
+void remote_set_parameter(ObjectId id, std::string const &name,
+                          PackedVariant const &value) {
+  local_objects.at(id)->set_parameter(name, unpack(value));
 }
 
-//void remote_call_method(ObjectId id, )
+void remote_call_method(ObjectId id, std::string const &name,
+                        PackedMap const &arguments) {
+  local_objects.at(id)->call_method(name, unpack(arguments));
+}
 
-void delete_remote_handle(ScriptInterface::ObjectId id) {
-  using namespace ScriptInterface;
+void delete_remote_handle(ObjectId id) {
   local_objects.erase(id);
 }
 
 REGISTER_CALLBACK(make_remote_handle)
 REGISTER_CALLBACK(remote_set_parameter)
+REGISTER_CALLBACK(remote_call_method)
 REGISTER_CALLBACK(delete_remote_handle)
-
 } // namespace
-} // namespace ScriptInterface
 
-namespace ScriptInterface {
 Utils::Factory<ObjectHandle> factory;
 
 std::shared_ptr<ObjectHandle>
@@ -189,10 +166,7 @@ void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
   m_policy = policy;
 
   if (m_policy == CreationPolicy::GLOBAL) {
-    assert(m_callbacks);
-    m_cb = std::make_unique<detail::Callback>(m_callbacks,
-                                              [](detail::CallbackAction) {});
-    m_callbacks->call(make_remote_handle, id(), name, detail::pack(params));
+    m_callbacks->call(make_remote_handle, id(), name, pack(params));
   }
 
   this->do_construct(params);
@@ -201,7 +175,7 @@ void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(remote_set_parameter, id(), name, detail::pack(value));
+    m_callbacks->call(remote_set_parameter, id(), name, pack(value));
   }
 
   this->do_set_parameter(name, value);
@@ -209,14 +183,17 @@ void ObjectHandle::set_parameter(const std::string &name,
 
 Variant ObjectHandle::call_method(const std::string &name,
                                   const VariantMap &params) {
-  using detail::CallbackAction;
-  using CallMethod = CallbackAction::CallMethod;
-
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_cb->operator()(CallbackAction{CallMethod{name, detail::pack(params)}});
+    m_callbacks->call(remote_call_method, id(), name, pack(params));
   }
 
   return this->do_call_method(name, params);
+}
+
+ObjectHandle::~ObjectHandle() {
+  if (m_policy == CreationPolicy::GLOBAL) {
+    m_callbacks->call(delete_remote_handle, id());
+  }
 }
 
 void ObjectHandle::initialize(::Communication::MpiCallbacks &cb) {

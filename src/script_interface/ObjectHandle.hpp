@@ -32,11 +32,6 @@
 #include <memory>
 
 namespace ScriptInterface {
-namespace detail {
-struct CallbackAction;
-using Callback = Communication::CallbackHandle<detail::CallbackAction>;
-} // namespace detail
-
 /**
  * @brief Make a Variant from argument.
  *
@@ -65,11 +60,9 @@ public:
   ObjectHandle(ObjectHandle &&) = default;
   ObjectHandle &operator=(ObjectHandle const &) = delete;
   ObjectHandle &operator=(ObjectHandle &&) = default;
-  ~ObjectHandle() override = default;
+  ~ObjectHandle() override;
 
 private:
-  std::unique_ptr<detail::Callback> m_cb;
-
   std::string m_name;
   CreationPolicy m_policy = CreationPolicy::LOCAL;
 
