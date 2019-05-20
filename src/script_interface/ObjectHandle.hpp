@@ -25,13 +25,11 @@
 
 #include <utils/Span.hpp>
 
-#include <boost/mpi/collectives.hpp>
-#include <boost/serialization/utility.hpp>
 #include <boost/utility/string_ref.hpp>
+#include <boost/optional.hpp>
 
 #include <map>
 #include <memory>
-#include <type_traits>
 
 namespace ScriptInterface {
 namespace detail {

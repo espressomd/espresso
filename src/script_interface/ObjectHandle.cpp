@@ -26,6 +26,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/serialization/utility.hpp>
 #include <boost/serialization/variant.hpp>
 
 #include <sstream>
@@ -39,40 +40,41 @@ using TransportVariant = boost::make_recursive_variant<
     std::vector<double>, ObjectId, std::vector<boost::recursive_variant_>,
     Utils::Vector2d, Utils::Vector3d, Utils::Vector4d>::type;
 
-struct VariantToTransport : boost::static_visitor<TransportVariant> {
-  template <class T> TransportVariant operator()(T &&val) const {
+template <class D, class V, class R>
+struct recursive_visitor : boost::static_visitor<R> {
+  template <class T> R operator()(T &&val) const {
     return std::forward<T>(val);
   }
 
-  TransportVariant operator()(const ObjectRef &so_ptr) const {
-    return so_ptr->id();
-  }
-  TransportVariant operator()(const std::vector<Variant> &vec) const {
-    std::vector<TransportVariant> ret(vec.size());
+  R operator()(const std::vector<V> &vec) const {
+    std::vector<R> ret(vec.size());
 
-    boost::transform(vec, ret.begin(), [this](const Variant &v) {
-      return boost::apply_visitor(*this, v);
-    });
+    boost::transform(vec, ret.begin(),
+                     [visitor = static_cast<const D *>(this)](const V &v) {
+                       return boost::apply_visitor(*visitor, v);
+                     });
 
     return ret;
   }
 };
 
-struct TransportToVariant : boost::static_visitor<Variant> {
-  template <class T> Variant operator()(const T &val) const { return val; }
+struct VariantToTransport
+    : recursive_visitor<VariantToTransport, Variant, TransportVariant> {
+  using recursive_visitor<VariantToTransport, Variant, TransportVariant>::
+  operator();
+
+  TransportVariant operator()(const ObjectRef &so_ptr) const {
+    return so_ptr->id();
+  }
+};
+
+struct TransportToVariant
+    : recursive_visitor<TransportToVariant, TransportVariant, Variant> {
+  using recursive_visitor<TransportToVariant, TransportVariant, Variant>::
+  operator();
 
   Variant operator()(const ObjectId &id) const {
     return local_objects.at(id).lock();
-  }
-
-  Variant operator()(const std::vector<TransportVariant> &vec) const {
-    std::vector<Variant> ret(vec.size());
-
-    boost::transform(vec, ret.begin(), [this](const TransportVariant &v) {
-      return boost::apply_visitor(*this, v);
-    });
-
-    return ret;
   }
 };
 
@@ -202,14 +204,6 @@ ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
   std::shared_ptr<ObjectHandle> sp = factory.make(name);
 
   sp->construct(parameters, policy, name);
-
-  /* Id of the newly created instance */
-  const auto id = sp->id();
-
-  /* Now get a reference to the corresponding weak_ptr in ObjectId and update
-     it with our shared ptr, so that everybody uses the same ref count.
-  */
-  sp->get_instance(id) = sp;
 
   return sp;
 }

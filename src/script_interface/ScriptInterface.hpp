@@ -47,11 +47,6 @@ template <typename T> static void register_new(std::string const &name) {
   factory.register_new<T>(name);
 }
 
-inline std::shared_ptr<ObjectHandle> get_instance(Variant value) {
-  const auto id = get_value<ObjectId>(value);
-
-  return ObjectHandle::get_instance(id).lock();
-}
 } /* namespace ScriptInterface */
 
 #endif
