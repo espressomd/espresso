@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ScriptInterface.hpp"
 #include "initialize.hpp"
 #include "cluster_analysis/initialize.hpp"
 #include "config.hpp"
@@ -34,15 +35,13 @@
 
 #include "ComFixed.hpp"
 
-#include "ParallelScriptInterface.hpp"
-
 #include "core/communication.hpp"
 #include "virtual_sites/initialize.hpp"
 
 namespace ScriptInterface {
 
 void initialize() {
-  ParallelScriptInterface::initialize(Communication::mpiCallbacks());
+  ObjectHandle::initialize(Communication::mpiCallbacks());
 
   Shapes::initialize();
   Constraints::initialize();

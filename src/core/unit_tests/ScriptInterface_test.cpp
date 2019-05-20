@@ -39,7 +39,7 @@ namespace Testing {
  * @brief Mock to test ScriptInterface.
  */
 struct ScriptInterfaceTest : public ScriptInterface::ObjectHandle {
-  VariantMap get_parameters() const override {
+  Variant get_parameter(const std::string &name) const override {
     VariantMap ret;
 
     ret["bool_opt"] = bool_opt;
@@ -48,7 +48,7 @@ struct ScriptInterfaceTest : public ScriptInterface::ObjectHandle {
     ret["vec_double"] = vec_double;
     ret["vec_int"] = vec_int;
 
-    return ret;
+    return ret.at(name);
   }
 
   /* Not needed for testing */

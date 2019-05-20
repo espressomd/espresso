@@ -30,9 +30,6 @@ unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp DEPENDS
           ScriptInterface)
 unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp DEPENDS
           EspressoUtils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
-unit_test(NAME ParallelScriptInterface_test SRC
-          ParallelScriptInterface_test.cpp DEPENDS ScriptInterface Boost::mpi
-          MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp DEPENDS
           ScriptInterface)
 unit_test(NAME AutoParameter_test SRC AutoParameter_test.cpp DEPENDS

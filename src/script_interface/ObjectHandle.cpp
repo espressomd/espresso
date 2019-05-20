@@ -20,24 +20,101 @@
 */
 
 #include "ObjectHandle.hpp"
-#include "ParallelScriptInterface.hpp"
 #include "ScriptInterface.hpp"
-#include "RemoteObjectHandle.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/serialization/variant.hpp>
 
 #include <sstream>
 
-namespace {
-Communication::MpiCallbacks *m_cb = nullptr;
+namespace ScriptInterface {
+namespace detail {
+struct CallbackAction {
+  struct Construct {
+    std::string name;
+    VariantMap parameters;
 
-void make_remote_handle() { new ScriptInterface::RemoteObjectHandle(m_cb); }
+    template <class Archive> void serialize(Archive &ar, long int) {
+      ar &name &parameters;
+    }
+  };
+  struct SetParameter {
+    std::string name;
+    Variant value;
+
+    template <class Archive> void serialize(Archive &ar, long int) {
+      ar &name &value;
+    }
+  };
+  struct CallMethod {
+    std::string name;
+    VariantMap arguments;
+
+    template <class Archive> void serialize(Archive &ar, long int) {
+      ar &name &arguments;
+    }
+  };
+ 
+  boost::variant<Construct, SetParameter, CallMethod> value;
+
+  template <class Archive> void serialize(Archive &ar, long int) { ar &value; }
+};
+} // namespace detail
+
+namespace {
+Communication::MpiCallbacks *m_callbacks = nullptr;
+
+class RemoteObjectHandle {
+private:
+  detail::Callback m_callback_id;
+
+  const auto &comm() const { return m_callback_id.cb()->comm(); }
+  std::shared_ptr<ObjectHandle> m_p;
+
+public:
+  RemoteObjectHandle(Communication::MpiCallbacks *cb)
+      : m_callback_id(cb, [this](detail::CallbackAction a) { mpi_slave(a); }) {}
+
+  struct CallbackVisitor {
+    using CallbackAction = detail::CallbackAction;
+
+    std::shared_ptr<ObjectHandle> &o;
+
+    void operator()(const CallbackAction::Construct &ctor) const {
+      o = ObjectHandle::make_shared(
+          ctor.name, ObjectHandle::CreationPolicy::LOCAL, ctor.parameters);
+    }
+    void operator()(const CallbackAction::SetParameter &param) const {
+      assert(o), o->set_parameter(param.name, param.value);
+    }
+    void operator()(const CallbackAction::CallMethod &method) const {
+      assert(o);
+      (void)o->call_method(method.name, method.arguments);
+    }
+  };
+
+  void mpi_slave(detail::CallbackAction a) {
+    boost::apply_visitor(CallbackVisitor{this->m_p}, a.value);
+  }
+};
 } // namespace
+} // namespace ScriptInterface
+
+static void make_remote_handle() {
+  using namespace ScriptInterface;
+  new RemoteObjectHandle(m_callbacks);
+}
+
+static void delete_remote_handle() {
+  using namespace ScriptInterface;
+  /* TODO: Implement */
+}
 
 REGISTER_CALLBACK(make_remote_handle)
+REGISTER_CALLBACK(delete_remote_handle)
 
 namespace ScriptInterface {
 Utils::Factory<ObjectHandle> factory;
@@ -45,16 +122,7 @@ Utils::Factory<ObjectHandle> factory;
 std::shared_ptr<ObjectHandle>
 ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
                           const VariantMap &parameters) {
-  std::shared_ptr<ObjectHandle> sp;
-
-  switch (policy) {
-  case CreationPolicy::LOCAL:
-    sp = factory.make(name);
-    break;
-  case CreationPolicy::GLOBAL:
-    sp = std::shared_ptr<ObjectHandle>(new ParallelScriptInterface(name));
-    break;
-  }
+  std::shared_ptr<ObjectHandle> sp = factory.make(name);
 
   sp->construct(parameters, policy, name);
 
@@ -92,17 +160,37 @@ ObjectHandle::unserialize(std::string const &state) {
 
 void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
                              const std::string &name) {
+  using detail::CallbackAction;
+  using Construct = CallbackAction::Construct;
+
   m_name = name;
   m_policy = policy;
+
+  switch (policy) {
+  case CreationPolicy::LOCAL:
+    break;
+  case CreationPolicy::GLOBAL:
+    assert(m_callbacks);
+    m_cb_ = std::make_unique<detail::Callback>(m_callbacks,
+                                               [](detail::CallbackAction) {});
+    m_callbacks->call(make_remote_handle);
+    m_cb_->operator()(CallbackAction{Construct{name, params}});
+  }
 
   this->do_construct(params);
 }
 
-void ObjectHandle::set_parameter(const std::string &name, const Variant &value) {
+void ObjectHandle::set_parameter(const std::string &name,
+                                 const Variant &value) {
   this->do_set_parameter(name, value);
 }
 
-Variant ObjectHandle::call_method(const std::string &name, const VariantMap &params) {
+Variant ObjectHandle::call_method(const std::string &name,
+                                  const VariantMap &params) {
   return this->do_call_method(name, params);
+}
+
+void ObjectHandle::initialize(Communication::MpiCallbacks &cb) {
+  m_callbacks = &cb;
 }
 } /* namespace ScriptInterface */

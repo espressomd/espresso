@@ -374,6 +374,7 @@ public:
     }
 
     MpiCallbacks *cb() const { return m_cb; }
+    int id() const { return m_id; }
   };
 
   /* Avoid accidental copy, leads to mpi deadlock
