@@ -40,8 +40,9 @@ class LbWalberla {
   using vector_field_t =
       walberla::GhostLayerField<walberla::Vector3<walberla::real_t>, 1>;
   using force_model_t = walberla::lbm::force_model::GuoField<vector_field_t>;
+  //  LatticeModel_T(lbm::collision_model::TRT::constructWithMagicNumber( walberla::lbm::collision_model::omegaFromViscosity(eta_s)), lbm::force_model::GuoField<ForceField_T>( forceFieldId ) );
   using Lattice_model_t =
-      walberla::lbm::D3Q19<walberla::lbm::collision_model::SRT, false,
+      walberla::lbm::D3Q19<walberla::lbm::collision_model::TRT, false,
                            force_model_t>;
   using Flag_field_t = walberla::FlagField<walberla::uint8_t>;
   using Pdf_field_t = walberla::lbm::PdfField<Lattice_model_t>;

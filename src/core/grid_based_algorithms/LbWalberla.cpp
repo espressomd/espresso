@@ -95,9 +95,9 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
       uint_c(1));
   m_lattice_model = std::make_shared<Lattice_model_t>(
-      lbm::collision_model::SRT(
+      Lattice_model_t(lbm::collision_model::TRT::constructWithMagicNumber(
           lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
-      force_model_t(m_force_field_id));
+      force_model_t(m_force_field_id)));
 
   m_pdf_field_id =
       lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model);
@@ -331,7 +331,7 @@ LbWalberla::get_node_density(const Utils::Vector3i node) const {
 }
 
 void LbWalberla::set_viscosity(double viscosity) {
-  m_lattice_model->collisionModel().reset(
+  m_lattice_model->collisionModel().resetWithMagicNumber(
       lbm::collision_model::omegaFromViscosity((real_t)viscosity));
 }
 
