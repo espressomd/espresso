@@ -67,8 +67,6 @@ public:
   ObjectHandle &operator=(ObjectHandle &&) = default;
   ~ObjectHandle() override = default;
 
-  static std::weak_ptr<ObjectHandle> &get_instance(ObjectId id);
-
 private:
   std::unique_ptr<detail::Callback> m_cb;
 

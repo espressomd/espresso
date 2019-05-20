@@ -32,7 +32,7 @@
 #include <sstream>
 
 namespace ScriptInterface {
-std::unordered_map<ObjectId, std::weak_ptr<ObjectHandle>> local_objects;
+std::unordered_map<ObjectId, std::shared_ptr<ObjectHandle>> local_objects;
 
 namespace detail {
 using TransportVariant = boost::make_recursive_variant<
@@ -73,9 +73,7 @@ struct TransportToVariant
   using recursive_visitor<TransportToVariant, TransportVariant, Variant>::
   operator();
 
-  Variant operator()(const ObjectId &id) const {
-    return local_objects.at(id).lock();
-  }
+  Variant operator()(const ObjectId &id) const { return local_objects.at(id); }
 };
 
 TransportVariant pack(const Variant &v) {
@@ -109,15 +107,6 @@ unpack(const std::vector<std::pair<std::string, TransportVariant>> &v) {
 }
 
 struct CallbackAction {
-  struct Construct {
-    ObjectId id;
-    std::string name;
-    std::vector<std::pair<std::string, TransportVariant>> parameters;
-
-    template <class Archive> void serialize(Archive &ar, long int) {
-      ar &id &name &parameters;
-    }
-  };
   struct SetParameter {
     std::string name;
     TransportVariant value;
@@ -135,7 +124,7 @@ struct CallbackAction {
     }
   };
 
-  boost::variant<Construct, SetParameter, CallMethod> value;
+  boost::variant<SetParameter, CallMethod> value;
 
   template <class Archive> void serialize(Archive &ar, long int) { ar &value; }
 };
@@ -160,12 +149,6 @@ public:
 
     std::shared_ptr<ObjectHandle> &o;
 
-    void operator()(const CallbackAction::Construct &ctor) const {
-      o = ObjectHandle::make_shared(ctor.name,
-                                    ObjectHandle::CreationPolicy::LOCAL,
-                                    detail::unpack(ctor.parameters));
-      local_objects[ctor.id] = o;
-    }
     void operator()(const CallbackAction::SetParameter &param) const {
       assert(o), o->set_parameter(param.name, detail::unpack(param.value));
     }
@@ -179,21 +162,32 @@ public:
     boost::apply_visitor(CallbackVisitor{this->m_p}, a.value);
   }
 };
-} // namespace
-} // namespace ScriptInterface
 
-static void make_remote_handle() {
+void make_remote_handle(
+    ObjectId id, const std::string &name,
+    const std::vector<
+        std::pair<std::string, detail::TransportVariant>>
+    &parameters) {
   using namespace ScriptInterface;
-  new RemoteObjectHandle(m_callbacks);
+  local_objects[id] = ObjectHandle::make_shared(
+      name, ObjectHandle::CreationPolicy::LOCAL, detail::unpack(parameters));
 }
 
-static void delete_remote_handle() {
+void remote_set_parameter(ObjectId id, std::string const& name, detail::TransportVariant const& value) {
+  local_objects.at(id)->set_parameter(name, detail::unpack(value));
+}
+
+void delete_remote_handle(ScriptInterface::ObjectId id) {
   using namespace ScriptInterface;
-  /* TODO: Implement */
+  local_objects.erase(id);
 }
 
 REGISTER_CALLBACK(make_remote_handle)
+REGISTER_CALLBACK(remote_set_parameter)
 REGISTER_CALLBACK(delete_remote_handle)
+
+} // namespace
+} // namespace ScriptInterface
 
 namespace ScriptInterface {
 Utils::Factory<ObjectHandle> factory;
@@ -207,12 +201,6 @@ ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
 
   return sp;
 }
-
-std::weak_ptr<ObjectHandle> &ObjectHandle::get_instance(ObjectId id) {
-  return Utils::AutoObjectId<ObjectHandle>::get_instance(id);
-}
-
-/* Checkpointing functions. */
 
 /**
  * @brief Returns a binary representation of the state often
@@ -231,9 +219,6 @@ ObjectHandle::unserialize(std::string const &state) {
 
 void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
                              const std::string &name) {
-  using detail::CallbackAction;
-  using Construct = CallbackAction::Construct;
-
   m_name = name;
   m_policy = policy;
 
@@ -241,9 +226,7 @@ void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
     assert(m_callbacks);
     m_cb = std::make_unique<detail::Callback>(m_callbacks,
                                               [](detail::CallbackAction) {});
-    m_callbacks->call(make_remote_handle);
-    m_cb->operator()(
-        CallbackAction{Construct{id(), name, detail::pack(params)}});
+    m_callbacks->call(make_remote_handle, id(), name, detail::pack(params));
   }
 
   this->do_construct(params);
@@ -273,7 +256,7 @@ Variant ObjectHandle::call_method(const std::string &name,
   return this->do_call_method(name, params);
 }
 
-void ObjectHandle::initialize(Communication::MpiCallbacks &cb) {
+void ObjectHandle::initialize(::Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;
 }
 } /* namespace ScriptInterface */
