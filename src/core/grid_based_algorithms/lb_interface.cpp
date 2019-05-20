@@ -1171,6 +1171,12 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
     mpi_recv_fluid(node, index, &rho, j, pi);
     return rho;
   }
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                              Walberla::get_node_density, ind);
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 
@@ -1335,6 +1341,12 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
     mpi_recv_fluid_boundary_flag(node, index, &p_boundary);
     return p_boundary;
   }
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                              Walberla::get_node_is_boundary, ind);
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 
@@ -1364,6 +1376,13 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
     mpi_recv_fluid_populations(node, index, p_pop.data());
     return p_pop;
   }
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    Utils::Vector19d p_pop = Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                              Walberla::get_node_pop, ind);
+    return p_pop;
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 
@@ -1389,7 +1408,13 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
 
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
     mpi_send_fluid(node, index, p_rho, j, pi);
-  } else {
+  }
+#ifdef LB_WALBERLA
+  else if (lattice_switch == ActiveLB::WALBERLA) {
+    Communication::mpiCallbacks().call_all(Walberla::set_node_density, ind, p_rho);
+  }
+#endif
+  else {
     throw std::runtime_error("LB not activated.");
   }
 }
@@ -1452,7 +1477,13 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
-  } else {
+  }
+#ifdef LB_WALBERLA
+  else if (lattice_switch == ActiveLB::WALBERLA) {
+    Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind, p_pop);
+  }
+#endif
+  else {
     throw std::runtime_error("LB not activated.");
   }
 }

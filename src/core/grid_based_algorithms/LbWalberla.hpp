@@ -32,7 +32,8 @@ class LbWalberla {
   double m_skin;
   double m_agrid;
   double m_tau;
-  double m_density;
+  double m_density; // initial density
+  Utils::Vector3d m_velocity; // initial velocity
   Utils::Vector3d m_ext_force;
   Utils::Vector3i m_grid_dimensions;
 
@@ -86,6 +87,9 @@ public:
   boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i node) const;
   bool set_node_velocity(const Utils::Vector3i &node, const Utils::Vector3d v);
+  boost::optional<Utils::Vector19d>
+  get_node_pop(const Utils::Vector3i node) const;
+  bool set_node_pop(const Utils::Vector3i &node, const Utils::Vector19d pop);
 
   bool add_force_at_pos(const Utils::Vector3d &position,
                         const Utils::Vector3d &force);
@@ -122,6 +126,28 @@ public:
 
   bool node_in_local_domain(const Utils::Vector3i &node) const;
   bool pos_in_local_domain(const Utils::Vector3d &pos) const;
+
+  const Utils::Vector<int,19> es_pop_index_to_walberla_pop_index {
+    Lattice_model_t::Stencil::idx[walberla::stencil::C],
+    Lattice_model_t::Stencil::idx[walberla::stencil::E],
+    Lattice_model_t::Stencil::idx[walberla::stencil::W],
+    Lattice_model_t::Stencil::idx[walberla::stencil::N],
+    Lattice_model_t::Stencil::idx[walberla::stencil::S],
+    Lattice_model_t::Stencil::idx[walberla::stencil::T],
+    Lattice_model_t::Stencil::idx[walberla::stencil::B],
+    Lattice_model_t::Stencil::idx[walberla::stencil::NE],
+    Lattice_model_t::Stencil::idx[walberla::stencil::SW],
+    Lattice_model_t::Stencil::idx[walberla::stencil::SE],
+    Lattice_model_t::Stencil::idx[walberla::stencil::NW],
+    Lattice_model_t::Stencil::idx[walberla::stencil::TE],
+    Lattice_model_t::Stencil::idx[walberla::stencil::BW],
+    Lattice_model_t::Stencil::idx[walberla::stencil::BE],
+    Lattice_model_t::Stencil::idx[walberla::stencil::TW],
+    Lattice_model_t::Stencil::idx[walberla::stencil::TN],
+    Lattice_model_t::Stencil::idx[walberla::stencil::BS],
+    Lattice_model_t::Stencil::idx[walberla::stencil::BN],
+    Lattice_model_t::Stencil::idx[walberla::stencil::TS]};
+
 
 private:
   boost::optional<BlockAndCell>

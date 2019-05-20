@@ -59,6 +59,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   m_agrid = agrid;
   m_tau = tau;
   m_density = density;
+  m_velocity = {0,0,0};
 
   Utils::Vector3i grid_dimensions;
   for (int i = 0; i < 3; i++) {
@@ -100,7 +101,8 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       force_model_t(m_force_field_id));
 
   m_pdf_field_id =
-      lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model);
+      lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model, 
+                                to_vector3(m_velocity), (real_t)m_density);
 
   m_flag_field_id =
       field::addFlagFieldToStorage<Flag_field_t>(m_blocks, "flag field");
@@ -328,6 +330,40 @@ LbWalberla::get_node_density(const Utils::Vector3i node) const {
   auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
 
   return {pdf_field->getDensity((*bc).cell)};
+}
+
+bool LbWalberla::set_node_pop(const Utils::Vector3i &node,
+                              const Utils::Vector19d pop) {
+  auto bc = get_block_and_cell(node);
+  if (!bc)
+    return false;
+
+  auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
+  auto & xyz0 = (*pdf_field)(node[0],node[1],node[2],0);
+
+  for(int i = 0; i < 19; i++){
+    pdf_field->getF(&xyz0, es_pop_index_to_walberla_pop_index[i]) = pop[i];
+  }
+
+  return true;
+}
+
+boost::optional<Utils::Vector19d>
+LbWalberla::get_node_pop(const Utils::Vector3i node) const {
+  auto bc = get_block_and_cell(node);
+  if (!bc)
+    return {boost::none};
+
+  auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
+  const auto & xyz0 = (*pdf_field)(node[0],node[1],node[2],0);
+
+  Utils::Vector19d pop;
+
+  for(int i = 0; i < 19; i++){
+    pop[i] = pdf_field->getF(&xyz0, es_pop_index_to_walberla_pop_index[i]);
+  }
+
+  return {pop};
 }
 
 void LbWalberla::set_viscosity(double viscosity) {
