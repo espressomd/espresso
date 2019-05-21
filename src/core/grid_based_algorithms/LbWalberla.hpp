@@ -130,7 +130,7 @@ public:
   bool node_in_local_domain(const Utils::Vector3i &node) const;
   bool pos_in_local_domain(const Utils::Vector3d &pos) const;
 
-  const Utils::Vector<int, 19> es_pop_index_to_walberla_pop_index{
+  const Utils::Vector<walberla::uint_t, 19> es_pop_index_to_walberla_pop_index{
       Lattice_model_t::Stencil::idx[walberla::stencil::C],
       Lattice_model_t::Stencil::idx[walberla::stencil::E],
       Lattice_model_t::Stencil::idx[walberla::stencil::W],

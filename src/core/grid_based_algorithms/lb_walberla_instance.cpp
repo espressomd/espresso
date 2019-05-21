@@ -40,10 +40,10 @@ void init_lb_walberla(double viscosity, double density, double agrid,
   lb_walberla_instance = std::make_unique<LbWalberla>(LbWalberla{
       viscosity, density, agrid, tau, box_dimensions, node_grid, skin});
 }
-REGISTER_CALLBACK(init_lb_walberla);
+REGISTER_CALLBACK(init_lb_walberla)
 
 void destruct_lb_walberla() { lb_walberla_instance.reset(nullptr); }
-REGISTER_CALLBACK(destruct_lb_walberla);
+REGISTER_CALLBACK(destruct_lb_walberla)
 
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau) {

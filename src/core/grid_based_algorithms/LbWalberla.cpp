@@ -183,8 +183,6 @@ bool LbWalberla::set_node_velocity_at_boundary(const Utils::Vector3i node,
 
   Boundary_handling_t *boundary_handling =
       (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
-  walberla::boundary::BoundaryUID uid =
-      boundary_handling->getBoundaryUID(UBB_flag);
   boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1],
                                    bc->cell[2], velocity);
   return true;
