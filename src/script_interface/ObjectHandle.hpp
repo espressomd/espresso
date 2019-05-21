@@ -33,14 +33,6 @@
 
 namespace ScriptInterface {
 /**
- * @brief Make a Variant from argument.
- *
- * This is a convenience function, so that rather involved constructors from
- * boost::variant are not needed in the script interfaces.
- */
-template <typename T> Variant make_variant(const T &x) { return Variant(x); }
-
-/**
  * @brief Base class for generic script interfaces.
  *
  * See section @ref script_interface_howto for detailed instructions on how to
