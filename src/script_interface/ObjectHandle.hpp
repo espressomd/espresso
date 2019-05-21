@@ -25,8 +25,8 @@
 
 #include <utils/Span.hpp>
 
-#include <boost/utility/string_ref.hpp>
 #include <boost/optional.hpp>
+#include <boost/utility/string_ref.hpp>
 
 #include <map>
 #include <memory>
@@ -47,7 +47,7 @@ template <typename T> Variant make_variant(const T &x) { return Variant(x); }
  * create derived classes.
  *
  */
-class ObjectHandle : public Utils::AutoObjectId<ObjectHandle> {
+class ObjectHandle {
 public:
   enum class CreationPolicy { LOCAL, GLOBAL };
 
@@ -57,10 +57,8 @@ protected:
 public:
   /* Copy has unclear semantics, so it should not be allowed. */
   ObjectHandle(ObjectHandle const &) = delete;
-  ObjectHandle(ObjectHandle &&) = default;
   ObjectHandle &operator=(ObjectHandle const &) = delete;
-  ObjectHandle &operator=(ObjectHandle &&) = default;
-  ~ObjectHandle() override;
+  virtual ~ObjectHandle();
 
 private:
   std::string m_name;

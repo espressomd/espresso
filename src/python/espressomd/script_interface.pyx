@@ -21,17 +21,6 @@ from .utils cimport Vector3d, make_array_locked, handle_errors
 cdef class PObjectRef(object):
     cdef shared_ptr[ObjectHandle] sip
 
-cdef class PObjectId:
-    """Python interface to a core ObjectId object."""
-
-    cdef ObjectId id
-
-    def __richcmp__(PObjectId a, PObjectId b, op):
-        if op == 2:
-            return a.id == b.id
-        else:
-            raise NotImplementedError
-
 cdef class PScriptInterface:
 
     """
@@ -102,12 +91,6 @@ cdef class PScriptInterface:
 
     cdef set_sip(self, shared_ptr[ObjectHandle] sip):
         self.sip = sip
-
-    def id(self):
-        """Return the core class object id (:class:`PObjectId`)."""
-        oid = PObjectId()
-        oid.id = self.sip.get().id()
-        return oid
 
     def call_method(self, method, **kwargs):
         """
@@ -224,8 +207,6 @@ cdef variant_to_python_object(const Variant & value) except +:
         # Get the id and build a corresponding object
         ptr = get_value[shared_ptr[ObjectHandle]](value)
 
-        # ObjectId is nullable, and the default
-        # id corresponds to "null".
         if ptr:
             so_name = to_str(ptr.get().name())
             if not so_name:
@@ -259,12 +240,11 @@ cdef variant_to_python_object(const Variant & value) except +:
 
 
 def _unpickle_so_class(so_name, state):
-    cdef shared_ptr[ObjectHandle] sip = ObjectHandle.unserialize(state)
+    cdef PObjectRef so_ptr
+    so_ptr = PObjectRef()
+    so_ptr.sip = ObjectHandle.unserialize(state)
 
-    poid = PObjectId()
-    poid.id = sip.get().id()
-
-    so = _python_class_by_so_name[so_name](oid=poid)
+    so = _python_class_by_so_name[so_name](sip=so_ptr)
     so.define_bound_methods()
 
     return so

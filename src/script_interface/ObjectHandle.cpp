@@ -31,7 +31,14 @@
 #include <sstream>
 
 namespace ScriptInterface {
+using ObjectId = std::size_t;
+
 namespace {
+ObjectId object_id(const ObjectHandle *p) {
+  return std::hash<const ObjectHandle *>{}(p);
+}
+ObjectId object_id(ObjectRef const &p) { return object_id(p.get()); }
+
 std::unordered_map<ObjectId, std::shared_ptr<ObjectHandle>> local_objects;
 
 using PackedVariant = boost::make_recursive_variant<
@@ -65,7 +72,7 @@ struct VariantToTransport
   operator();
 
   PackedVariant operator()(const ObjectRef &so_ptr) const {
-    return so_ptr->id();
+    return object_id(so_ptr);
   }
 };
 
@@ -123,9 +130,7 @@ void remote_call_method(ObjectId id, std::string const &name,
   local_objects.at(id)->call_method(name, unpack(arguments));
 }
 
-void delete_remote_handle(ObjectId id) {
-  local_objects.erase(id);
-}
+void delete_remote_handle(ObjectId id) { local_objects.erase(id); }
 
 REGISTER_CALLBACK(make_remote_handle)
 REGISTER_CALLBACK(remote_set_parameter)
@@ -166,7 +171,7 @@ void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
   m_policy = policy;
 
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(make_remote_handle, id(), name, pack(params));
+    m_callbacks->call(make_remote_handle, object_id(this), name, pack(params));
   }
 
   this->do_construct(params);
@@ -175,7 +180,7 @@ void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(remote_set_parameter, id(), name, pack(value));
+    m_callbacks->call(remote_set_parameter, object_id(this), name, pack(value));
   }
 
   this->do_set_parameter(name, value);
@@ -184,7 +189,7 @@ void ObjectHandle::set_parameter(const std::string &name,
 Variant ObjectHandle::call_method(const std::string &name,
                                   const VariantMap &params) {
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(remote_call_method, id(), name, pack(params));
+    m_callbacks->call(remote_call_method, object_id(this), name, pack(params));
   }
 
   return this->do_call_method(name, params);
@@ -192,7 +197,7 @@ Variant ObjectHandle::call_method(const std::string &name,
 
 ObjectHandle::~ObjectHandle() {
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(delete_remote_handle, id());
+    m_callbacks->call(delete_remote_handle, object_id(this));
   }
 }
 

@@ -22,7 +22,6 @@
 #include <boost/variant.hpp>
 
 #include "None.hpp"
-#include "utils/AutoObjectId.hpp"
 #include "utils/Vector.hpp"
 #include "utils/serialization/unordered_map.hpp"
 
@@ -33,7 +32,6 @@
 
 namespace ScriptInterface {
 class ObjectHandle;
-using ObjectId = Utils::ObjectId<ObjectHandle>;
 using ObjectRef = std::shared_ptr<ObjectHandle>;
 /**
  * @brief None-"literal".

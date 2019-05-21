@@ -43,13 +43,8 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
     T get_value[T](const Variant T)
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
-    cdef cppclass ObjectId:
-        ObjectId()
-        string to_string()
-        bool operator == (const ObjectId & rhs)
-        bool operator != (const ObjectId & rhs)
 
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     Variant make_variant[T](const T & x)
 
     cdef cppclass ObjectHandle:
@@ -58,8 +53,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Span[const string_ref] valid_parameters() except +
         Variant get_parameter(const string & name) except +
         void set_parameter(const string & name, const Variant & value) except +
-        Variant call_method(const string & name, const VariantMap & parameters) except +	
-        ObjectId id() except +
+        Variant call_method(const string & name, const VariantMap & parameters) except +
         void set_state(map[string, Variant]) except +
         map[string, Variant] get_state() except +
         string serialize() except +
