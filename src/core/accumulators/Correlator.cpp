@@ -18,8 +18,6 @@
 */
 #include "Correlator.hpp"
 #include "integrate.hpp"
-#include "partCfg_global.hpp"
-#include "particle_data.hpp"
 
 #include <utils/serialization/multi_array.hpp>
 
@@ -427,9 +425,9 @@ void Correlator::update() {
   newest[0] = (newest[0] + 1) % (m_tau_lin + 1);
   n_vals[0]++;
 
-  A[0][newest[0]] = A_obs->operator()(partCfg());
+  A[0][newest[0]] = A_obs->operator()();
   if (A_obs != B_obs) {
-    B[0][newest[0]] = B_obs->operator()(partCfg());
+    B[0][newest[0]] = B_obs->operator()();
   } else {
     B[0][newest[0]] = A[0][newest[0]];
   }

@@ -24,7 +24,7 @@ import espressomd.shapes
 import espressomd.lbboundaries
 from espressomd import visualization_opengl
 
-required_features = ["LB", "LB_BOUNDARIES"]
+required_features = ["LB_BOUNDARIES"]
 espressomd.assert_features(required_features)
 
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])

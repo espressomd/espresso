@@ -50,8 +50,15 @@ fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
 
-polymer.create_polymer(N_P=1, bond_length=1.0, type_poly_neutral=0,
-                       type_poly_charged=0, MPC=50, bond=fene, start_pos=[0., 0., 0.])
+positions = polymer.positions(n_polymers=1,
+                              beads_per_chain=50,
+                              bond_length=1.0,
+                              seed=3210)
+for i, pos in enumerate(positions[0]):
+    id = len(system.part)
+    system.part.add(id=id, pos=pos)
+    if i > 0:
+        system.part[id].add_bond((fene, id - 1))
 vtf.writevsf(system, outfile)
 
 

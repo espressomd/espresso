@@ -24,7 +24,7 @@ import numpy as np
 from threading import Thread
 import espressomd.visualization_opengl
 
-required_features = ["LB", "LB_BOUNDARIES", "EXTERNAL_FORCES"]
+required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
 # System setup

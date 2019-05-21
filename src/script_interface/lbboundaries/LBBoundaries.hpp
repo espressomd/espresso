@@ -23,7 +23,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ScriptInterface.hpp"
 #include "ScriptObjectRegistry.hpp"
 #include "core/grid_based_algorithms/lb_boundaries.hpp"
-#if (defined(LB) || defined(LB_GPU))
 namespace ScriptInterface {
 namespace LBBoundaries {
 class LBBoundaries : public ScriptObjectRegistry<LBBoundary> {
@@ -41,6 +40,4 @@ class LBBoundaries : public ScriptObjectRegistry<LBBoundary> {
 };
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */
-
-#endif
 #endif

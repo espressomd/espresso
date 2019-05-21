@@ -31,7 +31,7 @@ class openGLLive(object):
     Parameters
     ----------
 
-    system : instance of :attr:`espressomd.System`
+    system : :class:`espressomd.system.System`
     window_size : array_like :obj:`int`, optional
                   Size of the visualizer window in pixels.
     name : :obj:`str`, optional
@@ -336,7 +336,7 @@ class openGLLive(object):
         IF not ROTATION:
             self.specs['director_arrows'] = False
 
-        IF not LB and not LB_GPU:
+        IF not CUDA:
             self.specs['LB_draw_velocity_plane'] = False
             self.specs['LB_draw_boundaries'] = False
             self.specs['LB_draw_nodes'] = False
@@ -1582,10 +1582,8 @@ class openGLLive(object):
         # LOOK FOR LB ACTOR
         if self.specs['LB_draw_velocity_plane'] or self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
             for a in self.system.actors:
-                types = []
-                IF LB:
-                    types.append(espressomd.lb.LBFluid)
-                IF LB_GPU:
+                types = [types.append(espressomd.lb.LBFluid)]
+                IF CUDA:
                     types.append(espressomd.lb.LBFluidGPU)
 
                 # if type(a) == espressomd.lb.LBFluidGPU or type(a) ==

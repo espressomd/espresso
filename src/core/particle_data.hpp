@@ -301,22 +301,17 @@ struct ParticleParametersSwimming {
   bool swimming = false;
   double f_swim = 0.;
   double v_swim = 0.;
-#if defined(LB) || defined(LB_GPU)
   int push_pull = 0;
   double dipole_length = 0.;
   Utils::Vector3d v_center;
   Utils::Vector3d v_source;
   double rotational_friction = 0.;
 #endif
-#endif
 
   template <typename Archive> void serialize(Archive &ar, long int) {
 #ifdef ENGINE
-    ar &swimming &f_swim &v_swim
-#if defined(LB) || defined(LB_GPU)
-        &push_pull &dipole_length &v_center &v_source &rotational_friction
-#endif
-        ;
+    ar &swimming &f_swim &v_swim &push_pull &dipole_length &v_center &v_source
+        &rotational_friction;
 #endif
   }
 };
@@ -623,12 +618,6 @@ void set_particle_f(int part, const Utils::Vector3d &F);
  *  @param mass its new mass.
  */
 void set_particle_mass(int part, double mass);
-
-/** Call only on the master node: set particle solvation free energy.
- *  @param part the particle.
- *  @param solvation its new solvation free energy.
- */
-void set_particle_solvation(int part, double *solvation);
 
 #ifdef ROTATIONAL_INERTIA
 /** Call only on the master node: set particle rotational inertia.
@@ -974,8 +963,6 @@ void pointer_to_vs_quat(Particle const *p, double const *&res);
 void pointer_to_vs_relative(Particle const *p, int const *&res1,
                             double const *&res2, double const *&res3);
 #endif
-
-void pointer_to_dip(Particle const *P, double const *&res);
 
 void pointer_to_dipm(Particle const *P, double const *&res);
 

@@ -78,8 +78,6 @@ class LBThermostatCommon(object):
                 self.assertLessEqual(abs(found - expected), error_tol)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB']), "Skipping test due to missing features.")
 class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -89,7 +87,7 @@ class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
 
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['LB_GPU']), "Skipping test due to missing features or gpu.")
+    ['CUDA']), "Skipping test due to missing features or gpu.")
 class LBGPUThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the GPU implementation of the LB."""

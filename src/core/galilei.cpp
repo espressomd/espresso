@@ -25,25 +25,18 @@
 #include "galilei.hpp"
 #include "cells.hpp"
 #include "event.hpp"
-#include "forces.hpp"
 #include "grid.hpp"
 
-galilei_struct gal;
+#include <boost/range/numeric.hpp>
 
 /* Stop the particle motion by setting the
    velocity of each particle to zero */
 void local_kill_particle_motion(int omega) {
   for (auto &p : local_cells.particles()) {
-    p.m.v[0] = 0.0;
-    p.m.v[1] = 0.0;
-    p.m.v[2] = 0.0;
-
-    if (omega != 0) {
-#ifdef ROTATION
-      p.m.omega[0] = 0.0;
-      p.m.omega[1] = 0.0;
-      p.m.omega[2] = 0.0;
-#endif
+    if (omega) {
+      p.m = {};
+    } else {
+      p.m.v = {};
     }
   }
 }
@@ -52,67 +45,36 @@ void local_kill_particle_motion(int omega) {
    to zero */
 void local_kill_particle_forces(int torque) {
   for (auto &p : local_cells.particles()) {
-    p.f.f[0] = 0.0;
-    p.f.f[1] = 0.0;
-    p.f.f[2] = 0.0;
-
-    if (torque != 0) {
-#ifdef ROTATION
-      p.f.torque[0] = 0.0;
-      p.f.torque[1] = 0.0;
-      p.f.torque[2] = 0.0;
-#endif
+    if (torque) {
+      p.f = {};
+    } else {
+      p.f.f = {};
     }
   }
 }
 
 /* Calculate the CMS of the system */
-void local_system_CMS(double *sdata) {
-  double x = 0.0, y = 0.0, z = 0.0;
-  double mass = 0.0;
-
-  for (auto const &p : local_cells.particles()) {
-    double M = p.p.mass;
-    mass += M;
-
-    Utils::Vector3d ppos = unfolded_position(p);
-
-    x += M * ppos[0];
-    y += M * ppos[1];
-    z += M * ppos[2];
-  }
-
-  sdata[0] = x;
-  sdata[1] = y;
-  sdata[2] = z;
-  sdata[3] = mass;
+std::pair<Utils::Vector3d, double> local_system_CMS() {
+  return boost::accumulate(
+      local_cells.particles(), std::pair<Utils::Vector3d, double>{},
+      [](auto sum, const Particle &p) {
+        return std::pair<Utils::Vector3d, double>{
+            sum.first + p.p.mass * unfolded_position(p), sum.second + p.p.mass};
+      });
 }
 
-/* Calculate the CMS velocity of the system */
-void local_system_CMS_velocity(double *sdata) {
-  double x = 0.0, y = 0.0, z = 0.0;
-  double mass = 0.0;
-
-  for (auto const &p : local_cells.particles()) {
-    double M = p.p.mass;
-    mass += M;
-
-    x += M * p.m.v[0];
-    y += M * p.m.v[1];
-    z += M * p.m.v[2];
-  }
-
-  sdata[0] = x;
-  sdata[1] = y;
-  sdata[2] = z;
-  sdata[3] = mass;
+std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
+  return boost::accumulate(
+      local_cells.particles(), std::pair<Utils::Vector3d, double>{},
+      [](auto sum, const Particle &p) {
+        return std::pair<Utils::Vector3d, double>{sum.first + p.p.mass * p.m.v,
+                                                  sum.second + p.p.mass};
+      });
 }
 
 /* Remove the CMS velocity */
-void local_galilei_transform(double const *const sdata) {
+void local_galilei_transform(const Utils::Vector3d &cmsvel) {
   for (auto &p : local_cells.particles()) {
-    p.m.v[0] -= sdata[0];
-    p.m.v[1] -= sdata[1];
-    p.m.v[2] -= sdata[2];
+    p.m.v -= cmsvel;
   }
 }

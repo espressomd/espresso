@@ -83,14 +83,12 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
         np.testing.assert_almost_equal(np.copy(virtual.f), [-1, 0, 0])
 
-    @ut.skipIf(not espressomd.has_features(["LB"]),
-               "Features not available, skipping test.")
     def test_lb_cpu(self):
         self.check_virtual(espressomd.lb.LBFluid)
 
     @ut.skipIf(
         not espressomd.gpu_available() or not espressomd.has_features(
-            ["LB_GPU"]),
+            ["CUDA"]),
                "Features or gpu not available, skipping test.")
     def test_lb_gpu(self):
         self.check_virtual(espressomd.lb.LBFluidGPU)

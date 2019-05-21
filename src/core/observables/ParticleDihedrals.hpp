@@ -40,7 +40,7 @@ namespace Observables {
  */
 class ParticleDihedrals : public PidObservable {
 public:
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     auto v1 = get_mi_vector(partCfg[ids()[1]].r.p, partCfg[ids()[0]].r.p);
     auto v2 = get_mi_vector(partCfg[ids()[2]].r.p, partCfg[ids()[1]].r.p);

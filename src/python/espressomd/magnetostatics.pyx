@@ -84,7 +84,7 @@ IF DP3M == 1:
               Charge-assignment order, an integer between -1 and 7.
         mesh : :obj:`int` or array_like
                Number of mesh points.
-        mesh_off : array_like
+        mesh_off : array_like :obj:`float`
                    Mesh offset.
         r_cut : :obj:`float`
                 Real space cutoff.

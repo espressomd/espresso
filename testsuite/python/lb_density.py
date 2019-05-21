@@ -75,8 +75,6 @@ class LBMassCommon(object):
             atol=1e-7)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB']), "Skipping test due to missing features.")
 class LBCPUMass(ut.TestCase, LBMassCommon):
 
     """Test for the CPU implementation of the LB."""

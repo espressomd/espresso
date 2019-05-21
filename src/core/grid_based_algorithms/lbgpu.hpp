@@ -22,12 +22,12 @@
  *  Implementation in lbgpu.cpp.
  */
 
-#ifndef LB_GPU_H
-#define LB_GPU_H
+#ifndef LBGPU_HPP
+#define LBGPU_HPP
 
 #include "config.hpp"
 
-#ifdef LB_GPU
+#ifdef CUDA
 #include <boost/optional.hpp>
 
 #include <utils/Counter.hpp>
@@ -262,6 +262,6 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter);
 /*@}*/
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid_gpu;
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling_gpu;
-#endif /* LB_GPU */
+#endif /*  CUDA */
 
-#endif /* LB_GPU_H */
+#endif /*  CUDA_H */

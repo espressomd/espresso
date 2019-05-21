@@ -60,11 +60,12 @@ double time_force_calc(int default_samples) {
   }
 
   if (running_average.avg() <= 5 * MPI_Wtick()) {
-    runtimeWarning("Clock resolution is too low to reliably time integration.");
+    runtimeWarningMsg()
+        << "Clock resolution is too low to reliably time integration.";
   }
 
   if (running_average.sig() >= 0.1 * running_average.avg()) {
-    runtimeWarning("Statistics of tuning samples is very bad.");
+    runtimeWarningMsg() << "Statistics of tuning samples is very bad.";
   }
 
   /* MPI returns s, return value should be in ms. */

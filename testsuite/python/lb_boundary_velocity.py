@@ -22,7 +22,7 @@ import unittest as ut
 import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features(["LB", "LB_BOUNDARIES"]),
+@ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES"]),
            "Features not available, skipping test.")
 class LBBoundaryVelocityTest(ut.TestCase):
 

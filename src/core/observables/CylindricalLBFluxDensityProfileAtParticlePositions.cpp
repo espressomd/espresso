@@ -27,8 +27,9 @@
 
 namespace Observables {
 
-std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::
-operator()(PartCfg &partCfg) const {
+std::vector<double>
+CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
+    PartCfg &partCfg) const {
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                                 static_cast<size_t>(n_phi_bins),
                                 static_cast<size_t>(n_z_bins)}};
@@ -45,13 +46,11 @@ operator()(PartCfg &partCfg) const {
                    });
 
   std::vector<Utils::Vector3d> velocities(folded_positions.size());
-#if defined(LB) || defined(LB_GPU)
   boost::transform(
       folded_positions, velocities.begin(), [](const Utils::Vector3d &pos) {
         return lb_lbinterpolation_get_interpolated_velocity_global(pos) *
                lb_lbfluid_get_lattice_speed();
       });
-#endif
   for (auto &p : folded_positions)
     p -= center;
   for (int ind = 0; ind < ids().size(); ++ind) {

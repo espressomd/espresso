@@ -107,9 +107,6 @@ class LBStreamingCommon(object):
                 self.lbf[target_node_index].population = np.zeros(19)
 
 
-@ut.skipIf(
-    not espressomd.has_features('LB'),
-          "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, LBStreamingCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -120,7 +117,7 @@ class LBCPU(ut.TestCase, LBStreamingCommon):
 
 @ut.skipIf(not espressomd.gpu_available() or 
            not espressomd.has_features(
-    'LB_GPU'),
+    'CUDA'),
     "Skipping test due to missing features.")
 class LBGPU(ut.TestCase, LBStreamingCommon):
 

@@ -28,7 +28,6 @@ from espressomd import integrate
 from espressomd.interactions import *
 from espressomd import reaction_ensemble
 from espressomd import polymer
-from espressomd.polymer import create_polymer
 from espressomd import interactions
 from espressomd import electrostatics
 import sys
@@ -101,10 +100,14 @@ lj_shift = 0.0
 
 
 # setting up the polymer
-polymer.create_polymer(
-    N_P=N_P, bond_length=bond_l, MPC=MPC, start_id=0, bond=harmonic_bond,
-    type_poly_neutral=type_HA, type_poly_charged=type_A, mode=0,
-    val_poly=charges[type_A], start_pos=[0] * 3)
+positions = polymer.positions(
+    n_polymers=N_P, beads_per_chain=MPC, bond_length=bond_l, seed=13)
+for polymer in positions:
+    for i, pos in enumerate(polymer):
+        id = len(system.part)
+        system.part.add(id=id, pos=pos, type=type_A, q=charges[type_A])
+        if i > 0:
+            system.part[id].add_bond((harmonic_bond, id - 1))
 # setting up counterions
 for i in range(N0):
     system.part.add(pos=np.random.random(3) *

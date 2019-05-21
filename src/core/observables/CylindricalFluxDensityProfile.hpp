@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Observables {
 class CylindricalFluxDensityProfile : public CylindricalPidProfileObservable {
 public:
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                                   static_cast<size_t>(n_phi_bins),
                                   static_cast<size_t>(n_z_bins)}};

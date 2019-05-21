@@ -6,6 +6,7 @@ set(EspressoCore_SRC
   communication.cpp
   constraints.cpp
   debug.cpp
+  diamond.cpp
   domain_decomposition.cpp
   dpd.cpp
   energy.cpp
@@ -129,7 +130,8 @@ set(EspressoCore_SRC
   virtual_sites/virtual_sites_com.cpp
   virtual_sites/VirtualSitesInertialessTracers.cpp
   virtual_sites/VirtualSitesRelative.cpp
-  )
+  accumulators/TimeSeries.cpp
+        observables/PidObservable.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC

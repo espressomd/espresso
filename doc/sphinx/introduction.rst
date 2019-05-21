@@ -383,7 +383,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * :file:`minimal-diamond.py`
 
 * :file:`minimal-polymer.py`
-   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.create_polymer`.
+   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.positions`.
 
 * :file:`minimal_random_number_generator.py`
 
