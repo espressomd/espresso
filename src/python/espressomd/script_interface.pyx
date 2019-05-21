@@ -19,6 +19,14 @@ from .utils import to_char_pointer, to_str
 from .utils cimport Vector3d, make_array_locked, handle_errors
 
 cdef class PObjectRef(object):
+    def __richcmp__(a, b, op):
+        cdef PObjectRef b_ = b
+
+        if op == 2:
+            return a.sip == b_.sip
+        else:
+            raise NotImplementedError
+
     cdef shared_ptr[ObjectHandle] sip
 
 cdef class PScriptInterface:
@@ -59,6 +67,7 @@ cdef class PScriptInterface:
 
     def __init__(self, name=None, policy="GLOBAL", sip=None, **kwargs):
         cdef CreationPolicy policy_
+        cdef PObjectRef sip_
 
         if policy == "GLOBAL":
             policy_ = GLOBAL
@@ -68,13 +77,14 @@ cdef class PScriptInterface:
             raise Exception("Unknown policy '{}'.".format(policy))
 
         if sip:
-            self.set_set(sip.sip)
+            sip_ = sip
+            self.sip = sip_.sip
         else:
             self.set_sip(make_shared(to_char_pointer(name), policy_, self._sanitize_params(kwargs)))
 
     def __richcmp__(a, b, op):
         if op == 2:
-            return a.id() == b.id()
+            return a.get_sip() == b.get_sip()
         else:
             raise NotImplementedError
 
