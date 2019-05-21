@@ -167,7 +167,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       Lattice_model_t::CommunicationStencil>
       communication(m_blocks);
   communication.addPackInfo(
-      std::make_shared<lbm::PdfFieldPackInfo<Lattice_model_t>>(m_pdf_field_id));
+      std::make_shared<field::communication::PackInfo<Pdf_field_t>>(m_pdf_field_id));
 
   m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
                      << timeloop::Sweep(Boundary_handling_t::getBlockSweep(
