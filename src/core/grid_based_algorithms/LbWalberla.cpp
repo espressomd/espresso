@@ -13,6 +13,7 @@
 
 #include "core/mpi/Environment.h"
 #include "core/mpi/MPIManager.h"
+#include "core/mpi/Reduce.h"
 
 #include "domain_decomposition/SharedSweep.h"
 
@@ -167,7 +168,8 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       Lattice_model_t::CommunicationStencil>
       communication(m_blocks);
   communication.addPackInfo(
-      std::make_shared<field::communication::PackInfo<Pdf_field_t>>(m_pdf_field_id));
+      std::make_shared<field::communication::PackInfo<Pdf_field_t>>(
+          m_pdf_field_id));
 
   m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
                      << timeloop::Sweep(Boundary_handling_t::getBlockSweep(
@@ -193,6 +195,20 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   m_velocity_interpolator_id =
       field::addFieldInterpolator<VectorFieldAdaptorInterpolator, Flag_field_t>(
           m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
+}
+
+Utils::Vector3d LbWalberla::get_momentum() const {
+  Vector3<real_t> mom;
+  for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
+       ++block_it) {
+    auto pdf_field = block_it->getData<Pdf_field_t>(m_pdf_field_id);
+    Vector3<real_t> local_v;
+    WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
+      double local_dens = pdf_field->getDensityAndVelocity(local_v, x, y, z);
+      mom += local_dens * local_v;
+    });
+  }
+  return to_vector3d(mom);
 }
 
 void LbWalberla::print_vtk_density(char *filename) {
