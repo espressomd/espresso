@@ -164,18 +164,6 @@ public:
   make_shared(std::string const &name, CreationPolicy policy,
               const VariantMap &parameters = {});
 
-  /**
-   * @brief Get a new reference counted instance of a script interface by
-   * name, restoring the state of the object
-   *
-   */
-  static std::shared_ptr<ObjectHandle> make_shared(std::string const &name,
-                                                   CreationPolicy policy,
-                                                   Variant const &state) {
-    auto so_ptr = make_shared(name, policy);
-    return so_ptr;
-  }
-
 public:
   std::string serialize() const;
   static std::shared_ptr<ObjectHandle> unserialize(std::string const &state);
