@@ -22,12 +22,6 @@
 #ifndef ESPRESSO_H5MD_CORE_HPP
 #define ESPRESSO_H5MD_CORE_HPP
 
-#include "MpiCallbacks.hpp"
-#include "PartCfg.hpp"
-#include "cells.hpp"
-#include "global.hpp"
-
-#include "communication.hpp"
 #include <algorithm>
 #include <boost/filesystem.hpp>
 #include <fstream>
@@ -36,6 +30,8 @@
 #include <mpi.h>
 #include <string>
 #include <unordered_map>
+
+#include "PartCfg.hpp"
 
 namespace Writer {
 namespace H5md {
