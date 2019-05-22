@@ -172,7 +172,7 @@ public:
    */
   Correlator(int tau_lin, double tau_max, int delta_N, std::string compress1_,
              std::string compress2_, std::string corr_operation, obs_ptr obs1,
-             obs_ptr obs2, Utils::Vector3d correlation_args_={})
+             obs_ptr obs2, Utils::Vector3d correlation_args_ = {})
       : AccumulatorBase(delta_N), finalized(0), t(0),
         m_correlation_args(correlation_args_), m_tau_lin(tau_lin),
         m_dt(delta_N * time_step), m_tau_max(tau_max),
