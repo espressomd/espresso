@@ -379,6 +379,7 @@ intel:18:
     - docker
     - linux
     - cuda
+    - icp
 
 check_sphinx:
   <<: *global_job_definition
@@ -450,7 +451,7 @@ check_with_odd_no_of_processors:
   tags:
     - docker
     - linux
-    - cuda
+    - icp
 
 deploy_sphinx_documentation:
   extends: .deploy_base
