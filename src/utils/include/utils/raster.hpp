@@ -21,21 +21,21 @@ namespace Utils {
  * @return Function values at the grid points.
  */
 template <class T, class F>
-auto raster(Vector3d const &offset, Vector3d const &grid_spacing, Vector3i size,
-            F f) {
+auto raster(Vector<T, 3> const &offset, Vector<T, 3> const &grid_spacing,
+            Vector3i size, F f) {
   using R = decltype(f((offset)));
 
   boost::multi_array<R, 3> res(size);
 
-  auto const end =
-      offset + Vector3d{grid_spacing[0] * size[0], grid_spacing[1] * size[1],
-                        grid_spacing[2] * size[2]};
+  auto const end = offset + Vector<T, 3>{grid_spacing[0] * size[0],
+                                         grid_spacing[1] * size[1],
+                                         grid_spacing[2] * size[2]};
 
   auto it = res.data();
   for (auto x : make_lin_space(offset[0], end[0], size[0], false))
     for (auto y : make_lin_space(offset[1], end[1], size[1], false))
       for (auto z : make_lin_space(offset[2], end[2], size[2], false)) {
-        *it++ = f(Vector3d{x, y, z});
+        *it++ = f(Vector<T, 3>{x, y, z});
       }
 
   return res;
