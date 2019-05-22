@@ -38,9 +38,8 @@ class PidObservable : public Observable {
   /** Identifiers of particles measured by this observable */
   std::vector<int> m_ids;
 
-  virtual std::vector<double> evaluate(PartCfg &partCfg) const = 0;
-
 public:
+  virtual std::vector<double> evaluate(PartCfg &partCfg) const = 0;
   std::vector<double> evaluate() const final;
 
   std::vector<int> &ids() { return m_ids; }
