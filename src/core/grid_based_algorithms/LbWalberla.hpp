@@ -110,6 +110,8 @@ public:
   bool remove_node_from_boundary(const Utils::Vector3i &node);
   boost::optional<bool> get_node_is_boundary(const Utils::Vector3i &node) const;
 
+  Utils::Vector3d get_momentum() const;
+
   void print_vtk_velocity(char *filename);
   void print_vtk_density(char *filename);
   void print_vtk_boundary(char *filename);
@@ -157,6 +159,7 @@ private:
   walberla::BlockDataID m_pdf_field_id;
   walberla::BlockDataID m_flag_field_id;
   walberla::BlockDataID m_force_field_id;
+  walberla::BlockDataID m_force_field_from_md_id;
   walberla::BlockDataID m_force_distributor_id;
   walberla::BlockDataID m_velocity_adaptor_id;
   walberla::BlockDataID m_velocity_interpolator_id;
