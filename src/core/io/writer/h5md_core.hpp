@@ -33,9 +33,7 @@
 #include <mpi.h>
 #include <string>
 #include <unordered_map>
-#define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
-#undef BOOST_NO_CXX11_SCOPED_ENUMS
 #include "communication.hpp"
 #include <h5xx/h5xx.hpp>
 
