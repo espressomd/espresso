@@ -27,15 +27,15 @@
 #include "cells.hpp"
 #include "global.hpp"
 
+#include "communication.hpp"
 #include <algorithm>
+#include <boost/filesystem.hpp>
 #include <fstream>
+#include <h5xx/h5xx.hpp>
 #include <iostream>
 #include <mpi.h>
 #include <string>
 #include <unordered_map>
-#include <boost/filesystem.hpp>
-#include "communication.hpp"
-#include <h5xx/h5xx.hpp>
 
 namespace Writer {
 namespace H5md {
