@@ -29,8 +29,8 @@
 #include "core/accumulators/Correlator.hpp"
 #include "observables/Observable.hpp"
 
-#include "utils/as_const.hpp"
 #include "utils/Vector.hpp"
+#include "utils/as_const.hpp"
 
 #include <memory>
 
