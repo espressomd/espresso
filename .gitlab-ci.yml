@@ -171,9 +171,9 @@ fedora:
     - docker
     - linux
 
-#ubuntu:1404 not needed: used in cuda:8.0
 #ubuntu:1604 not needed: used in cuda:9.0
 #ubuntu:1804 not needed: default used in non-CUDA builds
+#ubuntu:1904 not needed: base image for builds on different architectures
 
 ### Builds with CUDA
 
@@ -304,7 +304,7 @@ rocm-maxset:
   script:
     - export with_cuda=false test_timeout=900 check_skip_long=true
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
-    - export myconfig=maxset
+    - export myconfig=maxset python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
