@@ -248,7 +248,7 @@ class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
 
 @ut.skipIf(
     not (espressomd.has_features(
-         'CUDA')),
+         'CUDA')) or not espressomd.gpu_available(),
            "CUDA not compiled in, can not check functionality.")
 class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
 
