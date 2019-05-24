@@ -57,7 +57,7 @@ public:
       // We have to rotate the coordinates since the utils function assumes
       // z-axis symmetry.
       std::tie(theta, rotation_axis) =
-          Utils::get_rotation_params(Vector3d{{0.0, 0.0, 1.0}}, axis);
+          Utils::rotation_params(Vector3d{{0.0, 0.0, 1.0}}, axis);
       p_cart = Utils::vec_rotate(rotation_axis, theta, p_cart);
       p = p_cart + center;
     }
