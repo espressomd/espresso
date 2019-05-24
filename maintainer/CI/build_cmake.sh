@@ -90,7 +90,7 @@ if [ ! -z ${with_coverage+x} ]; then
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=$build_type -DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params -DWITH_SCAFACOS=ON"
-cmake_params="$cmake_params -DCMAKE_CXX_FLAGS=$cxx_flags"
+cmake_params="$cmake_params -DCMAKE_CXX_FLAGS=$cxx_flags -DCUDA_NVCC_FLAGS=$cxx_flags"
 cmake_params="$cmake_params -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="$cmake_params -DTEST_TIMEOUT=$test_timeout"
 if $with_ccache; then
