@@ -58,8 +58,6 @@ BOOST_AUTO_TEST_CASE(get_cylindrical_sampling_positions_test) {
   for (int c = 0; c < tot_count.size(); ++c) {
     Utils::unravel_index(dimensions.begin(), dimensions.end(), index.begin(),
                          c);
-    BOOST_TEST(tot_count[c] > 0, "no sampling for bin index r: "
-                                     << index[0] << " phi: " << index[1]
-                                     << " z: " << index[2]);
+    BOOST_CHECK(tot_count[c] > 0);
   }
 }
