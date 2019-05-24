@@ -67,7 +67,7 @@ checking for the feature ``FFTW`` with ``espressomd.features``.
 P3M requires full periodicity (1 1 1). Make sure that you know the relevance of the
 P3M parameters before using P3M! If you are not sure, read the following
 references
-:cite:`ewald21,hockney88,kolafa92,deserno98,deserno98a,deserno00,deserno00a,cerda08a`.
+:cite:`ewald21,hockney88,kolafa92,deserno98a,deserno98b,deserno00,deserno00a,cerda08d`.
 
 .. _Tuning Coulomb P3M:
 
@@ -252,7 +252,7 @@ With each iteration, ICC has to solve electrostatics which can severely slow
 down the integration. The performance can be improved by using multiple cores,
 a minimal set of ICC particles and convergence and relaxation parameters that
 result in a minimal number of iterations. Also please make sure to read the
-corresponding articles, mainly :cite:`espresso2,tyagi10a,kesselheim11a` before
+corresponding articles, mainly :cite:`arnold13a,tyagi10a,kesselheim11a` before
 using it.
 
 .. _MMM2D:
@@ -334,8 +334,8 @@ algorithm is definitely faster than MMM2D for larger numbers of particles
 (:math:`>400` at reasonable accuracy requirements). The periodicity has to be
 set to ``1 1 1`` still, *ELC* cancels the electrostatic contribution of the
 periodic replica in **z-direction**. Make sure that you read the papers on ELC
-(:cite:`arnold02c,icelc`) before using it. ELC is an |es| actor and is used
-with::
+(:cite:`arnold02c,arnold02d,tyagi08a`) before using it. ELC is an |es| actor
+and is used with::
 
     elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.actors.add(elc)
@@ -358,7 +358,7 @@ Parameters are:
     * ``delta_mid_top``/``delta_mid_bot``:
         *ELC* can also be used to simulate 2D periodic systems with image charges,
         specified by dielectric contrasts on the non-periodic boundaries
-        (:cite:`icelc`).  Similar to *MMM2D*, these can be set with the
+        (:cite:`tyagi08a`).  Similar to *MMM2D*, these can be set with the
         keywords ``delta_mid_bot`` and ``delta_mid_top``, setting the dielectric
         jump from the simulation region (*middle*) to *bottom* (at ``z<0``) and
         from *middle* to *top* (``z > box_l[2] - gap_size``). The fully metallic case
