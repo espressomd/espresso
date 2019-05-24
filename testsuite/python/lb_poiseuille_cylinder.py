@@ -37,7 +37,7 @@ EXT_FORCE = .1
 VISC = 2.7
 DENS = 1.7
 TIME_STEP = 0.1
-BOX_L = 9.0
+BOX_L = 8.0
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
@@ -106,7 +106,7 @@ class LBPoiseuilleCommon(object):
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
         while diff > 0.001:
-            self.system.integrator.run(5)
+            self.system.integrator.run(1)
             new_val = self.lbf[mid_indices].velocity[np.nonzero(self.params['axis'])[
                 0]]
             diff = abs(new_val - old_val)
@@ -176,7 +176,7 @@ class LBPoiseuilleCommon(object):
             VISC * DENS)
         v_measured = obs_result[:, 0, 0, 2]
         rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
-        self.assertLess(rmsd, 0.0025 * AGRID / TIME_STEP)
+        self.assertLess(rmsd, 0.004 * AGRID / TIME_STEP)
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]
