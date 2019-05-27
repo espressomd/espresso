@@ -128,6 +128,10 @@ pep8_command () {
         pep8 "$@"
     elif hash pycodestyle 2> /dev/null; then
         pycodestyle "$@"
+    elif hash pycodestyle-2 2> /dev/null; then
+        pycodestyle-2 "$@"
+    elif hash pycodestyle-3 2> /dev/null; then
+        pycodestyle-3 "$@"
     else
         echo "pep8 not found";
         exit 1
