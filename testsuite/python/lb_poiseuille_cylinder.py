@@ -43,7 +43,7 @@ LB_PARAMS = {'agrid': AGRID,
              'visc': VISC,
              'tau': TIME_STEP}
 
-OBS_PARAMS = {'n_r_bins': 50,
+OBS_PARAMS = {'n_r_bins': 25,
               'n_phi_bins': 1,
               'n_z_bins': 1,
               'min_r': 0.0,
