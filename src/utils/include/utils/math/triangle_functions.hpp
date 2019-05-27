@@ -77,10 +77,10 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
     tmp11 = -std::sqrt(-tmp11);
   }
 
-  if (tmp11 >= 1.) {
-    tmp11 = 0.0;
-  } else if (tmp11 <= -1.) {
-    tmp11 = M_PI;
+  if (tmp11 > 1.) {
+    tmp11 = 1.0;
+  } else if (tmp11 < -1.) {
+    tmp11 = -1.0;
   }
   auto const phi =
       M_PI - std::acos(tmp11); // The angle between the faces (not considering
