@@ -18,6 +18,7 @@
 #
 # Tests particle property setters/getters
 import unittest as ut
+import tests_common
 import espressomd
 import numpy as np
 
@@ -30,21 +31,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
-    def paramsMatch(self, inParams, outParams):
-        """Check, if the parameters set and gotten back match.
-        Only check keys present in inParams.
-        """
-
-        for k in inParams.keys():
-            if k not in outParams:
-                print(k, "missing from returned parameters")
-                return False
-            if outParams[k] != inParams[k]:
-                print("Mismatch in parameter ", k, inParams[k], outParams[k])
-                return False
-
-        return True
-
     def setUp(self):
         if not self.system.part:
             self.system.periodicity = [0, 0, 1]
@@ -55,36 +41,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             self.system.part[0].q = 1
             self.system.part[1].q = -1
 
-    def generateTestForElectrostaticInteraction(_interClass, _params):
-        """Generates test cases for checking interaction parameters set and gotten back
-        from Es actually match. Only keys which are present  in _params are checked
-        1st: Interaction parameters as dictionary, i.e., {"k"=1.,"r_0"=0.
-        2nd: Name of the interaction property to set (i.e. "P3M")
-        """
-        params = _params
-        interClass = _interClass
-
-        def func(self):
-            # This code is run at the execution of the generated function.
-            # It will use the state of the variables in the outer function,
-            # which was there, when the outer function was called
-
-            # set Parameter
-            Inter = interClass(**params)
-            Inter.validate_params()
-            Inter._set_params_in_es_core()
-            self.system.actors.add(Inter)
-
-            # Read them out again
-            outParams = Inter._get_params_from_es_core()
-
-            self.assertTrue(self.paramsMatch(params, outParams), "Missmatch of parameters.\nParameters set " +
-                            params.__str__() + " vs. output parameters " + outParams.__str__())
-
-        return func
-
     if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
-        test_mmm1d = generateTestForElectrostaticInteraction(
+        test_mmm1d = tests_common.generate_test_for_class(system,
             MMM1D, dict(prefactor=2.0,
                         maxPWerror=0.001,
                         far_switch_radius=3,
