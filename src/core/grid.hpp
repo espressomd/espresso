@@ -41,21 +41,23 @@
  *  (e.g \ref node_grid, \ref box_l , \ref my_left,...).
  *
  *
- *  For more information on the domain decomposition, see \ref grid.cpp
- * "grid.c".
+ *  Implementation in grid.cpp.
  */
+
 #include "RuntimeErrorStream.hpp"
+#include "algorithm/periodic_fold.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "utils.hpp"
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
 
-#include <climits>
+#include <limits>
 
 /** Macro that tests for a coordinate being periodic or not. */
 #ifdef PARTIAL_PERIODIC
-#define PERIODIC(coord) (periodic & (1L << coord))
+#define PERIODIC(coord) (periodic & (1L << (coord)))
 #else
-#define PERIODIC(coord) 1
+#define PERIODIC(coord) (1)
 #endif
 
 /** \name Exported Variables */
@@ -63,37 +65,37 @@
 /*@{*/
 
 /** The number of nodes in each spatial dimension. */
-extern int node_grid[3];
+extern Utils::Vector3i node_grid;
 /** position of node in node grid */
-extern int node_pos[3];
+extern Utils::Vector3i node_pos;
 /** the six nearest neighbors of a node in the node grid. */
-extern int node_neighbors[6];
+extern Utils::Vector<int, 6> node_neighbors;
 /** where to fold particles that leave local box in direction i. */
-extern int boundary[6];
+extern Utils::Vector<int, 6> boundary;
 /** Flags for all three dimensions whether pbc are applied (default).
     The first three bits give the periodicity */
 extern int periodic;
 
 /** Simulation box dimensions. */
-extern double box_l[3];
+extern Utils::Vector3d box_l;
 /** Half the box dimensions. Used for get_mi_vector. */
-extern double half_box_l[3];
+extern Utils::Vector3d half_box_l;
 /** 1 / box dimensions. */
-extern double box_l_i[3];
+extern Utils::Vector3d box_l_i;
 /** Smallest simulation box dimension (\ref box_l).
     Remark: with PARTIAL_PERIODIC, only the periodic directions
     are taken into account! */
 extern double min_box_l;
 /** Dimensions of the box a single node is responsible for. */
-extern double local_box_l[3];
+extern Utils::Vector3d local_box_l;
 /** Smallest local simulation box dimension (\ref local_box_l).
     Remark: with PARTIAL_PERIODIC, only the periodic directions
     are taken into account! */
 extern double min_local_box_l;
 /** Left (bottom, front) corner of this nodes local box. */
-extern double my_left[3];
+extern Utils::Vector3d my_left;
 /** Right (top, back) corner of this nodes local box. */
-extern double my_right[3];
+extern Utils::Vector3d my_right;
 
 /*@}*/
 
@@ -119,14 +121,14 @@ inline void map_node_array(int node, int pos[3]) {
  * \return      rank of the node at position pos.
  * \param pos   position of the node in node grid.
  */
-inline int map_array_node(int pos[3]) {
+inline int map_array_node(Utils::Span<const int> pos) {
   int rank;
-  MPI_Cart_rank(comm_cart, pos, &rank);
+  MPI_Cart_rank(comm_cart, pos.data(), &rank);
   return rank;
 }
 
 /** map a spatial position to the node grid */
-int map_position_node_array(const Vector3d &pos);
+int map_position_node_array(const Utils::Vector3d &pos);
 
 /** fill neighbor lists of node.
  *
@@ -151,21 +153,6 @@ void grid_changed_box_l();
  * Remark: In the aperiodic case min_box_l is set to
  * 2 * \ref MAX_INTERACTION_RANGE . */
 void calc_minimal_box_dimensions();
-
-/** calculate most square 2d grid. */
-void calc_2d_grid(int n, int grid[3]);
-
-/** calculate 'best' mapping between a 2d and 3d grid.
- *  This we need for the communication from 3d domain decomposition
- *  to 2d row decomposition.
- *  The dimensions of the 2d grid are resorted, if necessary, in a way
- *  that they are multiples of the 3d grid dimensions.
- *  \param g3d      3d grid.
- *  \param g2d      2d grid.
- *  \param mult     factors between 3d and 2d grid dimensions
- *  \return         index of the row direction [0,1,2].
- */
-int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]);
 
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales
  * the particles accordingly */
@@ -194,16 +181,15 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
 }
 
 template <typename T, typename U>
-Vector3d get_mi_vector(T const &a, U const &b) {
-  Vector3d res;
+Utils::Vector3d get_mi_vector(T const &a, U const &b) {
+  Utils::Vector3d res;
   get_mi_vector(res, a, b);
 
   return res;
 }
 
-/** fold a coordinate to primary simulation box, including velocity.
+/** fold a coordinate to primary simulation box.
     \param pos         the position...
-    \param vel         the velocity...
     \param image_box   and the box
     \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z
    coordinate.
@@ -211,18 +197,15 @@ Vector3d get_mi_vector(T const &a, U const &b) {
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
 */
-template <typename T1, typename T2, typename T3>
-void fold_coordinate(T1 &pos, T2 &vel, T3 &image_box, int dir) {
+template <size_t N, typename T1, typename T2>
+void fold_coordinate(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box,
+                     int dir) {
   if (PERIODIC(dir)) {
-    while ((pos[dir] < 0) && (image_box[dir] > INT_MIN)) {
-      pos[dir] += box_l[dir];
-      image_box[dir] -= 1;
-    }
-    while ((pos[dir] >= box_l[dir]) && (image_box[dir] < INT_MAX)) {
-      pos[dir] -= box_l[dir];
-      image_box[dir] += 1;
-    }
-    if ((image_box[dir] == INT_MIN) || (image_box[dir] == INT_MAX)) {
+    std::tie(pos[dir], image_box[dir]) =
+        Algorithm::periodic_fold(pos[dir], image_box[dir], box_l[dir]);
+
+    if ((image_box[dir] == std::numeric_limits<T2>::min()) ||
+        (image_box[dir] == std::numeric_limits<T2>::max())) {
       throw std::runtime_error(
           "Overflow in the image box count while folding a particle coordinate "
           "into the primary simulation box. Maybe a particle experienced a "
@@ -231,35 +214,6 @@ void fold_coordinate(T1 &pos, T2 &vel, T3 &image_box, int dir) {
   }
 }
 
-/** fold a coordinate to primary simulation box, not caring about velocities.
-    \param pos         the position...
-    \param image_box   and the box
-    \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z
-   coordinate.
-
-    Both pos and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
-template <typename T1, typename T2>
-void fold_coordinate(T1 &pos, T2 &image_box, int dir) {
-  double v[3];
-  fold_coordinate(pos, v, image_box, dir);
-}
-
-/** fold particle coordinates to primary simulation box.
-    \param pos the position...
-    \param vel the velocity...
-    \param image_box and the box
-
-    Pos, vel and image_box are I/O,
-    i. e. a previously folded position will be folded correctly.
-*/
-template <typename T1, typename T2, typename T3>
-inline void fold_position(T1 &pos, T2 &vel, T3 &image_box) {
-  for (int i = 0; i < 3; i++)
-    fold_coordinate(pos, vel, image_box, i);
-}
-
 /** fold particle coordinates to primary simulation box.
     \param pos the position...
     \param image_box and the box
@@ -267,28 +221,36 @@ inline void fold_position(T1 &pos, T2 &vel, T3 &image_box) {
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
 */
-template <typename T1, typename T2> void fold_position(T1 &pos, T2 &image_box) {
+template <size_t N, typename T1, typename T2>
+void fold_position(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box) {
   for (int i = 0; i < 3; i++)
     fold_coordinate(pos, image_box, i);
+}
+
+inline Utils::Vector3d folded_position(const Utils::Vector3d &p) {
+  Utils::Vector3d p_folded;
+  for (int i = 0; i < 3; i++) {
+    if (PERIODIC(i)) {
+      p_folded[i] = Algorithm::periodic_fold(p[i], box_l[i]);
+    } else {
+      p_folded[i] = p[i];
+    }
+  }
+
+  return p_folded;
 }
 
 /** fold particle coordinates to primary simulation box.
  * The particle is not changed.
  */
-inline Vector3d folded_position(Particle const &p) {
-  Vector3d pos{p.r.p};
-  int tmp[3] = {0, 0, 0};
-  for (int dir = 0; dir < 3; dir++) {
-    fold_coordinate(pos, tmp, dir);
-  }
-
-  return pos;
+inline Utils::Vector3d folded_position(Particle const &p) {
+  return folded_position(p.r.p);
 }
 
 /** @overload */
-inline Vector3d folded_position(const Particle *p) {
+inline Utils::Vector3d folded_position(const Particle *p) {
   assert(p);
-  return folded_position(*p);
+  return folded_position(p->r.p);
 }
 
 /** unfold coordinates to physical position.
@@ -308,8 +270,8 @@ void unfold_position(T1 &pos, T2 &vel, T3 &image_box) {
   }
 }
 
-inline Vector3d unfolded_position(Particle const *p) {
-  Vector3d pos{p->r.p};
+inline Utils::Vector3d unfolded_position(Particle const *p) {
+  Utils::Vector3d pos{p->r.p};
   for (int i = 0; i < 3; i++) {
     pos[i] += p->l.i[i] * box_l[i];
   }
@@ -317,7 +279,7 @@ inline Vector3d unfolded_position(Particle const *p) {
   return pos;
 }
 
-inline Vector3d unfolded_position(Particle const &p) {
+inline Utils::Vector3d unfolded_position(Particle const &p) {
   return unfolded_position(&p);
 }
 

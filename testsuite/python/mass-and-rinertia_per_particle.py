@@ -17,9 +17,10 @@
 from __future__ import print_function
 import unittest as ut
 import numpy as np
-from numpy.random import random, seed
+from numpy.random import uniform
 import espressomd
 import math
+import random
 
 
 @ut.skipIf(not espressomd.has_features(["MASS",
@@ -31,13 +32,13 @@ class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = [s * 15 for s in range(system.cell_system.get_state()["n_nodes"])]
-    system.cell_system.skin = 5.0
-
     # The NVT thermostat parameters
     kT = 0.0
     gamma_global = np.zeros((3))
     gamma_global_rot = np.zeros((3))
+    # Test ranges    
+    gamma_min = 5.
+    gamma_max = 10.
 
     # Particle properties
     mass = 0.0
@@ -63,7 +64,14 @@ class ThermoTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        np.random.seed(20)
+        # Handle a random generator seeding
+        seed1 = 15
+        np.random.seed(seed1)
+        seed2 = 42
+        # The Espresso system configuration
+        cls.system.seed = [s * seed2 for s in range(cls.system.cell_system.get_state()["n_nodes"])]
+        cls.system.cell_system.set_domain_decomposition(use_verlet_lists=True)
+        cls.system.cell_system.skin = 5.0
 
     def setUp(self):
         self.system.time = 0.0
@@ -83,39 +91,6 @@ class ThermoTest(ut.TestCase):
         system.part[:].v = np.zeros((3))
         system.part[:].omega_body = np.zeros((3))
         system.part[:].quat = np.array([1., 0., 0., 0.])
-
-    def generate_scalar_ranged_rnd(self, min_par, max_par):
-        """
-        Generate the scaled random scalar in the range between
-        min_par*max_par and (min_par+1.0)*max_par.
-
-        Parameters
-        ----------
-        min_par : :obj:`int`
-                  Minimal value parameter.
-        max_par : :obj:`int`
-                  Maximal value parameter.
-
-        """
-        res = (min_par + np.random.random()) * max_par
-        return res
-
-    def generate_vec_ranged_rnd(self, min_par, max_par):
-        """
-        Generate the scaled random 3D vector with a magnitude
-        in the range between sqrt(3)*min_par*max_par and
-        sqrt(3)*(min_par+1.0)*max_par.
-
-        Parameters
-        ----------
-        min_par : :obj:`int`
-                  Minimal value parameter.
-        max_par : :obj:`int`
-                  Maximal value parameter.
-
-        """
-        res = (min_par + np.random.random(3)) * max_par
-        return res
 
     def set_langevin_global_defaults(self):
         """
@@ -141,10 +116,15 @@ class ThermoTest(ut.TestCase):
             self.gamma_rot_p_validate[k,:] = self.gamma_global_rot[:]
             self.halfkT_p_validate[k] = self.kT / 2.0
 
-    def dissipation_param_setup(self):
+    def dissipation_param_setup(self, n):
         """
         Setup the parameters for the following dissipation
         test.
+
+        Parameters
+        ----------
+        n : :obj:`int`
+            Number of particles of the each type. There are 2 types.
 
         """
 
@@ -166,44 +146,48 @@ class ThermoTest(ut.TestCase):
         # As far as the problem characteristic time is t0 ~ mass / gamma
         # and the Langevin equation finite-difference approximation is stable
         # only for time_step << t0, it is needed to set the gamma less than
-        # some maximal value according to the value max_gamma_param.
-        # Also, it cannot be very small (min_gamma_param), otherwise the thermalization will require
+        # some maximal value according to the value gamma_max.
+        # Also, it cannot be very small (gamma_min), otherwise the thermalization will require
         # too much of the CPU time. Same: for all such gamma assignments throughout the test.
         #
-        min_gamma_param = 0.5
-        max_gamma_param = 2.0 / 3.0
-        gamma_rnd = self.generate_scalar_ranged_rnd(
-            min_gamma_param, max_gamma_param)
+        gamma_min = self.gamma_min
+        gamma_max = self.gamma_max
+        gamma_rnd = uniform(gamma_min, gamma_max)
         self.gamma_global = gamma_rnd, gamma_rnd, gamma_rnd
         # Additional test case for the specific global rotational gamma set.
-        self.gamma_global_rot = self.generate_vec_ranged_rnd(0.5, 2.0 / 3.0)
+        self.gamma_global_rot = uniform(gamma_min, gamma_max, 3)
         # Per-paricle values:
         self.kT_p = 0.0, 0.0
         # Either translational friction isotropy is required
         # or both translational and rotational ones.
         # Otherwise these types of motion will interfere.
         # ..Let's test both cases depending on the particle index.
-        for k in range(2):
-            gamma_rnd = self.generate_scalar_ranged_rnd(0.5, 1.0)
-            for j in range(3):
-                self.gamma_tran_p[k, j] = gamma_rnd
-        self.gamma_rot_p[0,:] = self.generate_vec_ranged_rnd(0.5, 2.0 / 3.0)
-        gamma_rnd = self.generate_scalar_ranged_rnd(
-            0.5, 2.0 / 3.0)
-        for j in range(3):
-            self.gamma_rot_p[1, j] = gamma_rnd
+        self.gamma_tran_p[0, 0] = uniform(gamma_min, gamma_max)
+        self.gamma_tran_p[0, 1] = self.gamma_tran_p[0, 0]
+        self.gamma_tran_p[0, 2] = self.gamma_tran_p[0, 0]
+        self.gamma_rot_p[0,:] = uniform(gamma_min, gamma_max, 3)
+        self.gamma_tran_p[1, 0] = uniform(gamma_min, gamma_max)
+        self.gamma_tran_p[1, 1] = self.gamma_tran_p[1, 0]
+        self.gamma_tran_p[1, 2] = self.gamma_tran_p[1, 0]
+        self.gamma_rot_p[1, 0] = uniform(gamma_min, gamma_max)
+        self.gamma_rot_p[1, 1] = self.gamma_rot_p[1, 0]
+        self.gamma_rot_p[1, 2] = self.gamma_rot_p[1, 0]
 
         # Particles
         self.mass = 12.74
         self.J = 10.0, 10.0, 10.0
-        for i in range(2):
-            system.part.add(rotation=(1, 1, 1), pos=(0.0, 0.0, 0.0), id=i)
-            system.part[i].v = 1.0, 1.0, 1.0
-            if "ROTATION" in espressomd.features():
-                system.part[i].omega_body = 1.0, 1.0, 1.0
-            system.part[i].mass = self.mass
-            system.part[i].rinertia = self.J
 
+        for i in range(n):
+            for k in range(2):
+                ind = i + k * n
+                self.system.part.add(
+                    rotation=(1, 1, 1), pos=(0.0, 0.0, 0.0), id=ind)
+                self.system.part[ind].v = 1.0, 1.0, 1.0
+                if "ROTATION" in espressomd.features():
+                    self.system.part[ind].omega_body = 1.0, 1.0, 1.0
+                self.system.part[ind].mass = self.mass
+                self.system.part[ind].rinertia = self.J
+    
     def dissipation_viscous_drag_setup_bd(self):
         """
         Setup the specific parameters for the following dissipation
@@ -237,22 +221,17 @@ class ThermoTest(ut.TestCase):
         # Also, it cannot be very small (min_gamma_param), otherwise the thermalization will require
         # too much of the CPU time. Same: for all such gamma assignments throughout the test.
         #
-        min_gamma_param = 0.5
-        max_gamma_param = 2.0 / 3.0
-        gamma_rnd = self.generate_scalar_ranged_rnd(
-            min_gamma_param, max_gamma_param)
+        gamma_rnd = uniform(self.gamma_min, self.gamma_max)
         self.gamma_global = gamma_rnd, gamma_rnd, gamma_rnd
         # Additional test case for the specific global rotational gamma set.
-        gamma_rnd = self.generate_scalar_ranged_rnd(
-            min_gamma_param, max_gamma_param)
+        gamma_rnd = uniform(self.gamma_min, self.gamma_max)
         self.gamma_global_rot = gamma_rnd, gamma_rnd, gamma_rnd
         # Per-paricle values:
         self.kT_p = 0.0, 0.0
         # Isotropy is required here for the drag tests
         for k in range(2):
-            gamma_rnd_tran = self.generate_scalar_ranged_rnd(0.5, 1.0)
-            gamma_rnd_rot = self.generate_scalar_ranged_rnd(
-                0.5, 2.0 / 3.0)
+            gamma_rnd_tran = uniform(self.gamma_min, self.gamma_max)
+            gamma_rnd_rot = uniform(self.gamma_min, self.gamma_max)
             for j in range(3):
                 self.gamma_tran_p[k, j] = gamma_rnd_tran
                 self.gamma_rot_p[k, j] = gamma_rnd_rot
@@ -294,18 +273,20 @@ class ThermoTest(ut.TestCase):
 
         # NVT thermostat
         # Just some temperature range to cover by the test:
-        self.kT = self.generate_scalar_ranged_rnd(0.3, 5)
+        self.kT = uniform(1.5, 5.)
         # See the above comment regarding the gamma assignments.
         # Note: here & hereinafter specific variations in these ranges are related to
         # the test execution duration to achieve the required statistical
         # averages faster.
-        self.gamma_global = self.generate_vec_ranged_rnd(1.5, 2.0 / 3.0)
-        self.gamma_global_rot = self.generate_vec_ranged_rnd(0.2, 20)
+        gamma_min = self.gamma_min
+        gamma_max = self.gamma_max
+        self.gamma_global = uniform(gamma_min, gamma_max, 3)
+        self.gamma_global_rot = uniform(gamma_min, gamma_max, 3)
         # Per-particle parameters
         self.kT_p = 2.5, 2.0
         for k in range(2):
-            self.gamma_tran_p[k,:] = self.generate_vec_ranged_rnd(0.4, 10.0)
-            self.gamma_rot_p[k,:] = self.generate_vec_ranged_rnd(0.2, 20.0)
+            self.gamma_tran_p[k,:] = uniform(gamma_min, gamma_max, 3)
+            self.gamma_rot_p[k,:] = uniform(gamma_min, gamma_max, 3)
 
         # Particles
         # As far as the problem characteristic time is t0 ~ mass / gamma
@@ -315,11 +296,10 @@ class ThermoTest(ut.TestCase):
         # Also, it is expected to test the large enough mass (max_mass_param).
         # It should be not very large, otherwise the thermalization will require
         # too much of the CPU time.
-        min_mass_param = 0.2
-        max_mass_param = 7.0
-        self.mass = self.generate_scalar_ranged_rnd(
-            min_mass_param, max_mass_param)
-        self.J = self.generate_vec_ranged_rnd(min_mass_param, max_mass_param)
+        min_mass_param = 3.
+        max_mass_param = 10.0
+        self.mass = uniform(min_mass_param, max_mass_param)
+        self.J = uniform(min_mass_param, max_mass_param, 3)
         for i in range(n):
             for k in range(2):
                 ind = i + k * n
@@ -339,27 +319,33 @@ class ThermoTest(ut.TestCase):
                 if "ROTATION" in espressomd.features():
                     self.system.part[ind].omega_body = part_omega_body
 
-    def check_dissipation(self):
+    def check_dissipation(self, n):
         """
         Check the dissipation relations: the simple viscous decelleration test.
 
+        Parameters
+        ----------
+        n : :obj:`int`
+            Number of particles of the each type. There are 2 types.
+
         """
-
-        system = self.system
-        tol = 1.25E-4
-        for i in range(100):
-            for k in range(2):
-                for j in range(3):
-                    # Note: velocity is defined in the lab frame of reference
-                    # while gamma_tr is defined in the body one.
-                    # Hence, only isotropic gamma_tran_p_validate could be
-                    # tested here.
-                    self.assertLess(abs(
-                        system.part[k].v[j] - math.exp(- self.gamma_tran_p_validate[k, j] * system.time / self.mass)), tol)
-                    if "ROTATION" in espressomd.features():
+        tol = 1.21E-3
+        for step in range(100):
+            self.system.integrator.run(2)
+            for i in range(n):
+                for k in range(2):
+                    ind = i + k * n
+                    for j in range(3):
+                        # Note: velocity is defined in the lab frame of reference
+                        # while gamma_tr is defined in the body one.
+                        # Hence, only isotropic gamma_tran_p_validate could be
+                        # tested here.
                         self.assertLess(abs(
-                            system.part[k].omega_body[j] - math.exp(- self.gamma_rot_p_validate[k, j] * system.time / self.J[j])), tol)
-
+                            self.system.part[ind].v[j] - math.exp(- self.gamma_tran_p_validate[k, j] * self.system.time / self.mass)), tol)
+                        if "ROTATION" in espressomd.features():
+                            self.assertLess(abs(
+                                self.system.part[ind].omega_body[j] - math.exp(- self.gamma_rot_p_validate[k, j] * self.system.time / self.J[j])), tol)
+    
     # Note: the decelleration test is needed for the Langevin thermostat only. Brownian thermostat is defined
     # over a larger time-step by its concept.
     def check_dissipation_viscous_drag(self, n):
@@ -384,11 +370,11 @@ class ThermoTest(ut.TestCase):
                 for i in range(n):
                     ind = i + k * n
                     # Just some random forces
-                    f[ind,:] = self.generate_vec_ranged_rnd(-0.5, 500.)
+                    f[ind,:] = uniform(-0.5, 500., 3)
                     system.part[ind].ext_force = f[ind,:]
                     if "ROTATION" in espressomd.features():
                         # Just some random torques
-                        tor[ind,:] = self.generate_vec_ranged_rnd(-0.5, 500.)
+                        tor[ind,:] = uniform(-0.5, 500., 3)
                         system.part[ind].ext_torque = tor[ind,:]
                         # Let's set the dipole perpendicular to the torque
                         if "DIPOLES" in espressomd.features():
@@ -488,7 +474,7 @@ class ThermoTest(ut.TestCase):
 
         system.integrator.run(therm_steps)
 
-        int_steps = 5
+        int_steps = 50
         for i in range(loops):
             system.integrator.run(int_steps)
             # Get kinetic energy in each degree of freedom for all particles
@@ -511,16 +497,13 @@ class ThermoTest(ut.TestCase):
                     # matching (cf. eq. (10.1.1) there):
                     sigma2_tr[k] = 0.0
                     for j in range(3):
-                        sigma2_tr[k] += self.D_tran_p_validate[k,
-                                                               j] * (
-                                                                   2.0 * dt + dt0[
-                                                                       k,
-                                                                       j] * (
-                                                                           - 3.0 + 4.0 * math.exp(
-                                                                               - dt / dt0[
-                                                                                   k,
-                                                                                                                            j]) - math.exp(- 2.0 * dt / dt0[k,
-                                                                                                                                                            j])))
+                        sigma2_tr[k] += \
+                            self.D_tran_p_validate[k, j] * \
+                            (2.0 * dt + dt0[k, j] * \
+                            (- 3.0 + 4.0 * \
+                            math.exp(- dt / dt0[k, j]) - \
+                            math.exp(- 2.0 * \
+                            dt / dt0[k, j])))
                     dr_norm[k] += (sum(dr2[k,:]) -
                                    sigma2_tr[k]) / sigma2_tr[k]
 
@@ -623,12 +606,13 @@ class ThermoTest(ut.TestCase):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
         n = 1
-        self.dissipation_param_setup()
+        self.dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         # Actual integration and validation run
-        self.check_dissipation()
+        self.check_dissipation(n)
 
     # Test case 0.0.1:
     # no particle specific values / dissipation viscous drag only / BD only.
@@ -642,7 +626,8 @@ class ThermoTest(ut.TestCase):
             self.dissipation_viscous_drag_setup_bd()
             self.set_langevin_global_defaults()
             # The test case-specific thermostat and per-particle parameters
-            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            system.thermostat.set_brownian(
+                kT=self.kT, gamma=self.gamma_global, seed=42)
             # Actual integration and validation run
             self.check_dissipation_viscous_drag(n)
 
@@ -654,13 +639,14 @@ class ThermoTest(ut.TestCase):
     def test_case_01(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
-        n = 200
-        therm_steps = 20
-        loops = 250
+        n = 500
+        therm_steps = 1000
+        loops = 10
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_diffusivity_tran()
         # Actual integration and validation run
         self.check_fluctuation_dissipation(n, therm_steps, loops)
@@ -677,7 +663,8 @@ class ThermoTest(ut.TestCase):
             therm_steps = 2
             # The test case-specific thermostat
             system.thermostat.turn_off()
-            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            system.thermostat.set_brownian(
+                kT=self.kT, gamma=self.gamma_global, seed=42)
             # Actual integration and validation run
             self.check_fluctuation_dissipation(n, therm_steps, loops)
 
@@ -687,13 +674,14 @@ class ThermoTest(ut.TestCase):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
         n = 1
-        self.dissipation_param_setup()
+        self.dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_gamma(n)
         # Actual integration and validation run
-        self.check_dissipation()
+        self.check_dissipation(n)
 
     # Test case 1.0.1: particle specific gamma but not temperature /
     # dissipation viscous drag only / BD only.
@@ -705,7 +693,8 @@ class ThermoTest(ut.TestCase):
             self.dissipation_viscous_drag_setup_bd()
             self.set_langevin_global_defaults()
             # The test case-specific thermostat and per-particle parameters
-            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            system.thermostat.set_brownian(
+                kT=self.kT, gamma=self.gamma_global, seed=42)
             self.set_particle_specific_gamma(n)
             # Actual integration and validation run
             self.check_dissipation_viscous_drag(n)
@@ -715,13 +704,14 @@ class ThermoTest(ut.TestCase):
     def test_case_11(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
-        n = 200
-        therm_steps = 20
-        loops = 250
+        n = 500
+        therm_steps = 1000
+        loops = 10
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_gamma(n)
         self.set_diffusivity_tran()
         # Actual integration and validation run
@@ -733,7 +723,8 @@ class ThermoTest(ut.TestCase):
             therm_steps = 2
             # The test case-specific thermostat
             system.thermostat.turn_off()
-            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            system.thermostat.set_brownian(
+                kT=self.kT, gamma=self.gamma_global, seed=42)
             # Actual integration and validation run
             self.check_fluctuation_dissipation(n, therm_steps, loops)
 
@@ -743,13 +734,14 @@ class ThermoTest(ut.TestCase):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
         n = 1
-        self.dissipation_param_setup()
+        self.dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_temperature(n)
         # Actual integration and validation run
-        self.check_dissipation()
+        self.check_dissipation(n)
 
     # Test case 2.0.1: particle specific temperature but not gamma / dissipation
     # viscous drag only / BD only
@@ -761,7 +753,8 @@ class ThermoTest(ut.TestCase):
             self.dissipation_viscous_drag_setup_bd()
             self.set_langevin_global_defaults()
             # The test case-specific thermostat and per-particle parameters
-            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            system.thermostat.set_brownian(
+                kT=self.kT, gamma=self.gamma_global, seed=42)
             self.set_particle_specific_temperature(n)
             # Actual integration and validation run
             self.check_dissipation_viscous_drag(n)
@@ -771,13 +764,14 @@ class ThermoTest(ut.TestCase):
     def test_case_21(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
-        n = 200
-        therm_steps = 20
-        loops = 250
+        n = 500
+        therm_steps = 1000
+        loops = 10
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_temperature(n)
         self.set_diffusivity_tran()
         # Actual integration and validation run
@@ -789,7 +783,8 @@ class ThermoTest(ut.TestCase):
             therm_steps = 2
             # The test case-specific thermostat and per-particle parameters
             system.thermostat.turn_off()
-            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            system.thermostat.set_brownian(
+                kT=self.kT, gamma=self.gamma_global, seed=42)
             # Actual integration and validation run
             self.check_fluctuation_dissipation(n, therm_steps, loops)
 
@@ -799,14 +794,15 @@ class ThermoTest(ut.TestCase):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
         n = 1
-        self.dissipation_param_setup()
+        self.dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_gamma(n)
         self.set_particle_specific_temperature(n)
         # Actual integration and validation run
-        self.check_dissipation()
+        self.check_dissipation(n)
 
     # Test case 3.0.1: both particle specific gamma and temperature /
     # dissipation viscous drag only / BD only
@@ -818,7 +814,8 @@ class ThermoTest(ut.TestCase):
             self.dissipation_viscous_drag_setup_bd()
             self.set_langevin_global_defaults()
             # The test case-specific thermostat and per-particle parameters
-            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            system.thermostat.set_brownian(
+                kT=self.kT, gamma=self.gamma_global, seed=42)
             self.set_particle_specific_gamma(n)
             self.set_particle_specific_temperature(n)
             # Actual integration and validation run
@@ -829,13 +826,14 @@ class ThermoTest(ut.TestCase):
     def test_case_31(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
-        n = 200
-        therm_steps = 20
-        loops = 250
+        n = 500
+        therm_steps = 1000
+        loops = 10
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults()
         # The test case-specific thermostat and per-particle parameters
-        system.thermostat.set_langevin(kT=self.kT, gamma=self.gamma_global)
+        system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
         self.set_particle_specific_gamma(n)
         self.set_particle_specific_temperature(n)
         self.set_diffusivity_tran()
@@ -848,7 +846,8 @@ class ThermoTest(ut.TestCase):
             therm_steps = 2
             # The test case-specific thermostat
             system.thermostat.turn_off()
-            system.thermostat.set_brownian(kT=self.kT, gamma=self.gamma_global)
+            system.thermostat.set_brownian(
+                kT=self.kT, gamma=self.gamma_global, seed=42)
             # Actual integration and validation run
             self.check_fluctuation_dissipation(n, therm_steps, loops)
 
@@ -858,15 +857,16 @@ class ThermoTest(ut.TestCase):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
         n = 1
-        self.dissipation_param_setup()
+        self.dissipation_param_setup(n)
         self.set_langevin_global_defaults_rot_differ()
         # The test case-specific thermostat and per-particle parameters
+        self.system.thermostat.turn_off()
         system.thermostat.set_langevin(
             kT=self.kT,
             gamma=self.gamma_global,
-            gamma_rotation=self.gamma_global_rot)
+            gamma_rotation=self.gamma_global_rot, seed=42)
         # Actual integration and validation run
-        self.check_dissipation()
+        self.check_dissipation(n)
 
     # Test case 4.0.1: no particle specific values / rotational specific global
     # thermostat / dissipation only / BD only
@@ -881,7 +881,8 @@ class ThermoTest(ut.TestCase):
             system.thermostat.set_brownian(
                 kT=self.kT,
                 gamma=self.gamma_global,
-                gamma_rotation=self.gamma_global_rot)
+                gamma_rotation=self.gamma_global_rot,
+                seed=42)
             # Actual integration and validation run
             self.check_dissipation_viscous_drag(n)
 
@@ -890,16 +891,16 @@ class ThermoTest(ut.TestCase):
     def test_case_41(self):
         system = self.system
         # Each of 2 kind of particles will be represented by n instances:
-        n = 200
-        therm_steps = 20
-        loops = 250
+        n = 500
+        therm_steps = 1000
+        loops = 10
         self.fluctuation_dissipation_param_setup(n)
         self.set_langevin_global_defaults_rot_differ()
         # The test case-specific thermostat and per-particle parameters
         system.thermostat.set_langevin(
             kT=self.kT,
             gamma=self.gamma_global,
-            gamma_rotation=self.gamma_global_rot)
+            gamma_rotation=self.gamma_global_rot, seed=42)
         self.set_diffusivity_tran()
         # Actual integration and validation run
         self.check_fluctuation_dissipation(n, therm_steps, loops)
@@ -913,7 +914,8 @@ class ThermoTest(ut.TestCase):
             system.thermostat.set_brownian(
                 kT=self.kT,
                 gamma=self.gamma_global,
-                gamma_rotation=self.gamma_global_rot)
+                gamma_rotation=self.gamma_global_rot,
+                seed=42)
             # Actual integration and validation run
             self.check_fluctuation_dissipation(n, therm_steps, loops)
 

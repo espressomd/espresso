@@ -35,7 +35,6 @@
 #include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include <cmath>
 
@@ -45,7 +44,7 @@ int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
 /** Calculate lj-cos2 force between particle p1 and p2 */
 inline void add_ljcos2_pair_force(const Particle *const p1,
                                   const Particle *const p2,
-                                  IA_parameters *ia_params, double d[3],
+                                  IA_parameters *ia_params, double const d[3],
                                   double dist, double force[3]) {
   if ((dist < ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
     double r_off = dist - ia_params->LJCOS2_offset;
@@ -100,7 +99,8 @@ inline double ljcos2_pair_energy(const Particle *p1, const Particle *p2,
       double frac2 = Utils::sqr(ia_params->LJCOS2_sig / r_off);
       double frac6 = frac2 * frac2 * frac2;
       return 4.0 * ia_params->LJCOS2_eps * (Utils::sqr(frac6) - frac6);
-    } else if (r_off < ia_params->LJCOS2_rchange + ia_params->LJCOS2_w) {
+    }
+    if (r_off < ia_params->LJCOS2_rchange + ia_params->LJCOS2_w) {
       return -ia_params->LJCOS2_eps / 2 *
              (cos(M_PI * (r_off - ia_params->LJCOS2_rchange) /
                   ia_params->LJCOS2_w) +

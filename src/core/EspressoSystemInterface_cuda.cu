@@ -77,7 +77,7 @@ __global__ void split_kernel_r(CUDA_particle_data *particles, float *r, int n) {
   r[idx + 2] = p.p[2];
 }
 
-#ifdef LB_GPU
+#ifdef CUDA
 // Velocity
 __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   int idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -189,7 +189,7 @@ void EspressoSystemInterface::split_particle_struct() {
   if (!m_needsQGpu && m_needsRGpu)
     hipLaunchKernelGGL(split_kernel_r, dim3(grid), dim3(block), 0, 0,
                        gpu_get_particle_pointer(), m_r_gpu_begin, n);
-#ifdef LB_GPU
+#ifdef CUDA
   if (m_needsVGpu)
     hipLaunchKernelGGL(split_kernel_v, dim3(grid), dim3(block), 0, 0,
                        gpu_get_particle_pointer(), m_v_gpu_begin, n);

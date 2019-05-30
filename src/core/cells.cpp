@@ -22,23 +22,24 @@
  *
  *  This file contains functions for the cell system.
  *
- *  For more information on cells, see cells.hpp
- *   */
+ *  Implementation of cells.hpp.
+ */
 #include "cells.hpp"
 #include "algorithm/link_cell.hpp"
 #include "communication.hpp"
+#include "debug.hpp"
 #include "domain_decomposition.hpp"
+#include "event.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
-#include "utils/NoOp.hpp"
-#include "utils/mpi/gather_buffer.hpp"
+
+#include <utils/NoOp.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/iterator/indirect_iterator.hpp>
 
@@ -57,8 +58,8 @@ CellPList local_cells = {nullptr, 0, 0};
 CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
-CellStructure cell_structure = {/* type */ CELL_STRUCTURE_NONEYET,
-                                /* use_verlet_list*/ true};
+CellStructure cell_structure = {
+    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr};
 
 double max_range = 0.0;
 
@@ -94,7 +95,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           return distance2(p1.r.p, p2.r.p);
+                           return (p1.r.p - p2.r.p).norm2();
                          });
     break;
   case CELL_STRUCTURE_NSQUARE:
@@ -102,9 +103,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           double vec21[3];
-                           get_mi_vector(vec21, p1.r.p, p2.r.p);
-                           return sqrlen(vec21);
+                           return get_mi_vector(p1.r.p, p2.r.p).norm2();
                          });
     break;
   case CELL_STRUCTURE_LAYERED:
@@ -112,11 +111,10 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           double vec21[3];
-                           get_mi_vector(vec21, p1.r.p, p2.r.p);
+                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p);
                            vec21[2] = p1.r.p[2] - p2.r.p[2];
 
-                           return sqrlen(vec21);
+                           return vec21.norm2();
                          });
   }
 
@@ -157,8 +155,7 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 /************************************************************/
 /*@{*/
 
-/** Switch for choosing the topology release function of a certain
-    cell system. */
+/** Choose the topology release function of a certain cell system. */
 static void topology_release(int cs) {
   switch (cs) {
   case CELL_STRUCTURE_NONEYET:
@@ -184,8 +181,7 @@ static void topology_release(int cs) {
   }
 }
 
-/** Switch for choosing the topology init function of a certain
-    cell system. */
+/** Choose the topology init function of a certain cell system. */
 void topology_init(int cs, CellPList *local) {
   /** broadcast the flag for using Verlet list */
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
@@ -197,13 +193,13 @@ void topology_init(int cs, CellPList *local) {
     topology_init(cell_structure.type, local);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(local);
+    dd_topology_init(local, node_grid);
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_init(local);
     break;
   case CELL_STRUCTURE_LAYERED:
-    layered_topology_init(local);
+    layered_topology_init(local, node_grid);
     break;
   default:
     fprintf(stderr,
@@ -211,6 +207,18 @@ void topology_init(int cs, CellPList *local) {
             "unknown way (%d)\n",
             cs);
     errexit();
+  }
+}
+
+bool topology_check_resort(int cs, bool local_resort) {
+  switch (cs) {
+  case CELL_STRUCTURE_DOMDEC:
+    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+  case CELL_STRUCTURE_NSQUARE:
+  case CELL_STRUCTURE_LAYERED:
+    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+  default:
+    return true;
   }
 }
 
@@ -278,15 +286,6 @@ void set_resort_particles(Cells::Resort level) {
 
 unsigned const &get_resort_particles() { return resort_particles; }
 
-void announce_resort_particles() {
-  MPI_Allreduce(MPI_IN_PLACE, &resort_particles, 1, MPI_UNSIGNED, MPI_BOR,
-                comm_cart);
-
-  INTEG_TRACE(fprintf(stderr,
-                      "%d: announce_resort_particles: resort_particles=%u\n",
-                      this_node, resort_particles));
-}
-
 /*************************************************/
 
 int cells_get_n_particles() {
@@ -298,8 +297,7 @@ int cells_get_n_particles() {
 
 namespace {
 /**
- * @brief Fold coordinates to box and reset the
- *        old position.
+ * @brief Fold coordinates to box and reset the old position.
  */
 void fold_and_reset(Particle &p) {
   fold_position(p.r.p, p.l.i);
@@ -311,10 +309,9 @@ void fold_and_reset(Particle &p) {
 /**
  * @brief Sort and fold particles.
  *
- * This function folds the positions of all particles back into
- * the box and puts them back into the correct cells. Particles
- * that do not belong to this node are removed from the cell
- * and returned.
+ * This function folds the positions of all particles back into the
+ * box and puts them back into the correct cells. Particles that do
+ * not belong to this node are removed from the cell and returned.
  *
  * @param cs The cell system to be used.
  * @param cells Cells to iterate over.
@@ -372,7 +369,7 @@ void cells_resort_particles(int global_flag) {
     nsq_balance_particles(global_flag);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag, &displaced_parts);
+    dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid);
     break;
   }
 
@@ -421,7 +418,7 @@ void cells_on_geometry_change(int flags) {
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    dd_on_geometry_change(flags);
+    dd_on_geometry_change(flags, node_grid);
     break;
   case CELL_STRUCTURE_LAYERED:
     /* there is no fast version, always redo everything. */
@@ -440,17 +437,15 @@ void check_resort_particles() {
   resort_particles |= (std::any_of(local_cells.particles().begin(),
                                    local_cells.particles().end(),
                                    [&skin2](Particle const &p) {
-                                     return distance2(p.r.p, p.l.p_old) > skin2;
+                                     return (p.r.p - p.l.p_old).norm2() > skin2;
                                    }))
                           ? Cells::RESORT_LOCAL
                           : Cells::RESORT_NONE;
-
-  announce_resort_particles();
 }
 
 /*************************************************/
 void cells_update_ghosts() {
-  if (resort_particles) {
+  if (topology_check_resort(cell_structure.type, resort_particles)) {
     int global = (resort_particles & Cells::RESORT_GLOBAL)
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;

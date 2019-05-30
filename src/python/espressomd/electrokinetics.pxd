@@ -43,6 +43,8 @@ IF ELECTROKINETICS and CUDA:
             float mass_product1
             int stencil
             int number_of_boundary_nodes
+            float fluctuation_amplitude
+            bool fluctuations
             bool advection
             bool fluidcoupling_ideal_contribution
             float * charge_potential
@@ -56,10 +58,9 @@ IF ELECTROKINETICS and CUDA:
             float valency[MAX_NUMBER_OF_SPECIES]
             float ext_force_density[3][MAX_NUMBER_OF_SPECIES]
             char * node_is_catalyst
-            # IF EK_ELECTROSTATIC_COUPLING:
-            #     bool es_coupling
-            #     float *charge_potential_buffer
-            #     float *electric_field
+            bool es_coupling
+            float * charge_potential_buffer
+            float * electric_field
 
         cdef extern EK_parameters ek_parameters
 
@@ -71,6 +72,8 @@ IF ELECTROKINETICS and CUDA:
         unsigned int ek_calculate_boundary_mass()
         int ek_print_vtk_density(int species, char * filename)
         int ek_print_vtk_flux(int species, char * filename)
+        int ek_print_vtk_flux_fluc(int species, char * filename)
+        int ek_print_vtk_flux_link(int species, char * filename)
         int ek_print_vtk_potential(char * filename)
         int ek_print_vtk_lbforce_density(char * filename)
         int ek_lb_print_vtk_density(char * filename)
@@ -92,6 +95,8 @@ IF ELECTROKINETICS and CUDA:
         int ek_set_ext_force_density(int species, double ext_force_density_x, double ext_force_density_y, double ext_force_density_z)
         int ek_set_stencil(int stencil)
         int ek_set_advection(bool advection)
+        int ek_set_fluctuations(bool fluctuations)
+        int ek_set_fluctuation_amplitude(float fluctuation_amplitude)
         int ek_set_fluidcoupling(bool ideal_contribution)
         int ek_node_print_velocity(int x, int y, int z, double * velocity)
         int ek_node_print_density(int species, int x, int y, int z, double * density)
@@ -100,17 +105,12 @@ IF ELECTROKINETICS and CUDA:
         int ek_node_set_density(int species, int x, int y, int z, double density)
         ekfloat ek_calculate_net_charge()
         int ek_neutralize_system(int species)
-        int ek_save_checkpoint(char * filename)
+        int ek_save_checkpoint(char * filename, char * lb_filename)
         int ek_load_checkpoint(char * filename)
 
-        IF EK_ELECTROSTATIC_COUPLING:
-            int ek_set_electrostatics_coupling(bool electrostatics_coupling)
-            void ek_calculate_electrostatic_coupling()
-            int ek_print_vtk_particle_potential(char * filename)
+        int ek_set_electrostatics_coupling(bool electrostatics_coupling)
+        void ek_calculate_electrostatic_coupling()
+        int ek_print_vtk_particle_potential(char * filename)
 
         IF EK_BOUNDARIES:
             void ek_init_species_density_wallcharge(ekfloat * wallcharge_species_density, int wallcharge_species)
-
-    cdef extern from "grid_based_algorithms/lb.hpp":
-        int lb_lbfluid_print_vtk_boundary(char * filename)
-        int lb_lbnode_get_pi(const Vector3i & ind, double * p_pi)

@@ -27,7 +27,7 @@ class LBEHTest(ut.TestCase):
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
-        self.params = {'time_step': 0.005,
+        self.params = {'time_step': 0.01,
                        'tau': 0.02,
                        'agrid': 0.5,
                        'dens': 0.85,
@@ -49,10 +49,13 @@ class LBEHTest(ut.TestCase):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.s.time_step,
-            fric=self.params['friction'])
+            kT=self.params['temp']
+        )
 
         self.s.actors.add(self.lbf)
-        self.s.thermostat.set_lb(kT=self.params['temp'])
+        self.s.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            gamma=self.params['friction'])
 
     def test(self):
         s = self.s
@@ -65,7 +68,7 @@ class LBEHTest(ut.TestCase):
         v_term = (
             1. - 1. / (s.box_l[0] * s.box_l[1] * s.box_l[2] * self.params['dens'])) * mu_E
 
-        s.integrator.run(steps=1000)
+        s.integrator.run(steps=500)
 
         np.testing.assert_allclose(v_term, np.copy(s.part[0].v), atol=1e-5)
 

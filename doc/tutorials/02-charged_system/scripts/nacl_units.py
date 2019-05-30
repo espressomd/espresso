@@ -18,7 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd import electrostatics, assert_features
+import espressomd
+from espressomd import assert_features, electrostatics
 import numpy
 
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
@@ -62,9 +63,9 @@ system.box_l = [box_l, box_l, box_l]
 system.periodicity = [1, 1, 1]
 system.time_step = time_step
 system.cell_system.skin = 0.3
-system.thermostat.set_langevin(kT=temp, gamma=gamma)
+system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
-# Place particles
+# Place particles on a face-centered cubic lattice
 q = 1
 l = box_l / n_ppside
 for i in range(n_ppside):
@@ -110,9 +111,7 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"]]:
 
 
 print("\n--->Tuning Electrostatics")
-# p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2,
-# mesh=[84,84,84], cao=6)
-p3m = electrostatics.P3M(bjerrum_length=l_bjerrum, accuracy=1e-2)
+p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)
 system.actors.add(p3m)
 
 print("\n--->Temperature Equilibration")
@@ -120,13 +119,9 @@ system.time = 0.0
 for i in range(int(num_steps_equilibration / 100)):
     energy = system.analysis.energy()
     temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-    print(
-        "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                              energy[
-                                                                              'total'],
-                                                                              energy[
-                                                                              'coulomb'],
-                                                                              temp_measured))
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}"
+          .format(system.time, energy['total'], energy['coulomb'],
+                  temp_measured))
     system.integrator.run(100)
 
 print("\n--->Integration")
@@ -134,13 +129,9 @@ system.time = 0.0
 for i in range(num_configs):
     energy = system.analysis.energy()
     temp_measured = energy['kinetic'] / ((3.0 / 2.0) * n_part)
-    print(
-        "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                              energy[
-                                                                              'total'],
-                                                                              energy[
-                                                                              'coulomb'],
-                                                                              temp_measured))
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}"
+          .format(system.time, energy['total'], energy['coulomb'],
+                  temp_measured))
     system.integrator.run(integ_steps_per_config)
 
     # Internally append particle configuration

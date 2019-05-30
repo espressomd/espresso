@@ -38,11 +38,12 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
+
+#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 
 #if defined(DIPOLES) && defined(DP3M)
 
@@ -174,7 +175,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
 
         for (auto const &p : local_cells.particles()) {
           if (p.p.dipm > 0) {
-            const Vector3d dip = p.calc_dip();
+            const Utils::Vector3d dip = p.calc_dip();
 
             a = gx * dip[0] + gy * dip[1];
             b = gr * dip[2];
@@ -268,7 +269,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
   ip = 0;
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm > 0) {
-      const Vector3d dip = p.calc_dip();
+      const Utils::Vector3d dip = p.calc_dip();
       a = dip[1] * tz[ip] - dip[2] * ty[ip];
       b = dip[2] * tx[ip] - dip[0] * tz[ip];
       c = dip[0] * ty[ip] - dip[1] * tx[ip];
@@ -349,7 +350,7 @@ double get_DLC_energy_dipolar(int kcut) {
 
         for (auto const &p : local_cells.particles()) {
           if (p.p.dipm > 0) {
-            const Vector3d dip = p.calc_dip();
+            const Utils::Vector3d dip = p.calc_dip();
 
             a = gx * dip[0] + gy * dip[1];
             {
@@ -401,7 +402,6 @@ void add_mdlc_force_corrections() {
       dip_DLC_f_z(n_part);
   std::vector<double> dip_DLC_t_x(n_part), dip_DLC_t_y(n_part),
       dip_DLC_t_z(n_part);
-  double dip_DLC_energy = 0.0;
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
 #if defined(ROTATION) && defined(DP3M)
   double dx, dy, dz, correps;
@@ -429,13 +429,8 @@ void add_mdlc_force_corrections() {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
-  dip_DLC_energy +=
-      coulomb.Dprefactor *
-      get_DLC_dipolar(dip_DLC_kcut, dip_DLC_f_x, dip_DLC_f_y, dip_DLC_f_z,
-                      dip_DLC_t_x, dip_DLC_t_y, dip_DLC_t_z);
-
-  //            printf("Energy DLC                                  = %20.15le
-  //            \n",dip_DLC_energy);
+  get_DLC_dipolar(dip_DLC_kcut, dip_DLC_f_x, dip_DLC_f_y, dip_DLC_f_z,
+                  dip_DLC_t_x, dip_DLC_t_y, dip_DLC_t_z);
 
   // Now we compute the the correction like Yeh and Klapp to take into account
   // the fact that you are using a
@@ -447,22 +442,6 @@ void add_mdlc_force_corrections() {
   // See Brodka, Chem. Phys. Lett. 400, 62, (2004).
 
   mz = slab_dip_count_mu(&mtot, &mx, &my);
-#ifdef DP3M
-  if (coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
-    if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
-      dip_DLC_energy += coulomb.Dprefactor * 2. * M_PI / volume * (mz * mz);
-    } else {
-      dip_DLC_energy +=
-          coulomb.Dprefactor * 2. * M_PI / volume *
-          (mz * mz - mtot * mtot / (2.0 * dp3m.params.epsilon + 1.0));
-    }
-  } else
-#endif
-  {
-    dip_DLC_energy += coulomb.Dprefactor * 2. * M_PI / volume * (mz * mz);
-    fprintf(stderr, "You are not using the P3M method, therefore p3m.epsilon "
-                    "is unknown, I assume metallic borders \n");
-  }
 
   // --- Transfer the computed corrections to the Forces, Energy and torques
   //	of the particles
@@ -470,11 +449,11 @@ void add_mdlc_force_corrections() {
   ip = 0;
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
-      const Vector3d dip = p.calc_dip();
+      const Utils::Vector3d dip = p.calc_dip();
 
-      p.f.f[0] += coulomb.Dprefactor * dip_DLC_f_x[ip];
-      p.f.f[1] += coulomb.Dprefactor * dip_DLC_f_y[ip];
-      p.f.f[2] += coulomb.Dprefactor *
+      p.f.f[0] += dipole.prefactor * dip_DLC_f_x[ip];
+      p.f.f[1] += dipole.prefactor * dip_DLC_f_y[ip];
+      p.f.f[2] += dipole.prefactor *
                   dip_DLC_f_z[ip]; // SDC correction term is zero for the forces
 
 #if defined(ROTATION) && defined(DP3M)
@@ -489,11 +468,11 @@ void add_mdlc_force_corrections() {
         dz = correc * (-1.0) * mz;
 
         p.f.torque[0] +=
-            coulomb.Dprefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
+            dipole.prefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
         p.f.torque[1] +=
-            coulomb.Dprefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
+            dipole.prefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
         p.f.torque[2] +=
-            coulomb.Dprefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
+            dipole.prefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
 
       } else {
 
@@ -503,11 +482,11 @@ void add_mdlc_force_corrections() {
         dz = correc * (-1.0 + 1. / (2.0 * dp3m.params.epsilon + 1.0)) * mz;
 
         p.f.torque[0] +=
-            coulomb.Dprefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
+            dipole.prefactor * (dip_DLC_t_x[ip] + dip[1] * dz - dip[2] * dy);
         p.f.torque[1] +=
-            coulomb.Dprefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
+            dipole.prefactor * (dip_DLC_t_y[ip] + dip[2] * dx - dip[0] * dz);
         p.f.torque[2] +=
-            coulomb.Dprefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
+            dipole.prefactor * (dip_DLC_t_z[ip] + dip[0] * dy - dip[1] * dx);
       }
 #endif
     }
@@ -533,7 +512,7 @@ double add_mdlc_energy_corrections() {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
-  dip_DLC_energy += coulomb.Dprefactor * get_DLC_energy_dipolar(dip_DLC_kcut);
+  dip_DLC_energy += dipole.prefactor * get_DLC_energy_dipolar(dip_DLC_kcut);
 
   //           printf("Energy DLC                                  = %20.15le
   //           \n",dip_DLC_energy);
@@ -551,27 +530,26 @@ double add_mdlc_energy_corrections() {
 
   if (this_node == 0) {
 #ifdef DP3M
-    if (coulomb.Dmethod == DIPOLAR_MDLC_P3M) {
+    if (dipole.method == DIPOLAR_MDLC_P3M) {
       if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
-        dip_DLC_energy += coulomb.Dprefactor * 2. * M_PI / volume * (mz * mz);
+        dip_DLC_energy += dipole.prefactor * 2. * M_PI / volume * (mz * mz);
       } else {
         dip_DLC_energy +=
-            coulomb.Dprefactor * 2. * M_PI / volume *
+            dipole.prefactor * 2. * M_PI / volume *
             (mz * mz - mtot * mtot / (2.0 * dp3m.params.epsilon + 1.0));
       }
     } else
 #endif
     {
-      dip_DLC_energy += coulomb.Dprefactor * 2. * M_PI / volume * (mz * mz);
+      dip_DLC_energy += dipole.prefactor * 2. * M_PI / volume * (mz * mz);
       fprintf(stderr, "You are not using the P3M method, therefore "
                       "dp3m.params.epsilon unknown, I assume metallic borders "
                       "\n");
     }
 
     return dip_DLC_energy;
-  } else {
-    return 0.0;
   }
+  return 0.0;
 }
 /* ***************************************************************** */
 
@@ -629,11 +607,11 @@ int mdlc_tune(double error) {
 
   flag = 0;
   for (kc = 1; kc < limitkc; kc++) {
-    gc = kc * 2.0 * PI / lx;
+    gc = kc * 2.0 * Utils::pi() / lx;
     fa0 = sqrt(9.0 * exp(+2. * gc * h) * g1_DLC_dip(gc, lz - h) +
                22.0 * g1_DLC_dip(gc, lz) +
                9.0 * exp(-2.0 * gc * h) * g1_DLC_dip(gc, lz + h));
-    fa1 = 0.5 * sqrt(PI / (2.0 * a)) * fa0;
+    fa1 = 0.5 * sqrt(Utils::pi() / (2.0 * a)) * fa0;
     fa2 = g2_DLC_dip(gc, lz);
     de = n * (mu_max * mu_max) / (4.0 * (exp(gc * lz) - 1.0)) * (fa1 + fa2);
     if (de < error) {
@@ -682,18 +660,8 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
   dlc_params.gap_size = gap_size;
   dlc_params.h = box_l[2] - gap_size;
 
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-  case DIPOLAR_P3M:
-    set_dipolar_method_local(DIPOLAR_MDLC_P3M);
-    break;
-#endif
-  case DIPOLAR_MDLC_DS:
-  case DIPOLAR_DS:
-    set_dipolar_method_local(DIPOLAR_MDLC_DS);
-    break;
-  default:
+  if (Dipole::set_mesh()) {
+    // if Dipole::set_mesh fails
     return ES_ERROR;
   }
 

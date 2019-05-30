@@ -22,7 +22,8 @@
 #include "cuda_init.hpp"
 #include "cuda_utils.hpp"
 #include "debug.hpp"
-#include "utils.hpp"
+
+#include <utils/constants.hpp>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -32,13 +33,27 @@
 
 /** \name minimally required compute capability. */
 /*@{*/
-static const int computeCapabilityMinMajor = 1;
-static const int computeCapabilityMinMinor = 1;
+static const int computeCapabilityMinMajor = 3;
+static const int computeCapabilityMinMinor = 0;
 /*@}*/
 
 const char *cuda_error;
 
-void cuda_init() { cudaStreamCreate(&stream[0]); }
+void cuda_init() {
+#if defined(__HIPCC__) and not defined(__CUDACC__) and                         \
+    HIP_VERSION_PATCH <= 19171 /* i.e. <= v2.4.0 */
+  // Catch an exception that causes `import espressomd` to crash in
+  // Python when no compatible GPU is available (fixed in HIP v2.5.0)
+  try {
+    cudaStreamCreate(&stream[0]);
+  } catch (std::exception &) {
+    // The ihipException is not part of the public HIP library,
+    // so we catch its parent class std::exception instead
+  }
+#else
+  cudaStreamCreate(&stream[0]);
+#endif
+}
 
 /// get the number of CUDA devices.
 int cuda_get_n_gpus() {

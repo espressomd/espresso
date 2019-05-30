@@ -34,7 +34,7 @@ class CollisionDetection(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(seed=s.seed)
-    if espressomd.has_features("VIRTUAL_SITES"):
+    if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
         from espressomd.virtual_sites import VirtualSitesRelative
         s.virtual_sites = VirtualSitesRelative()
 
@@ -136,7 +136,7 @@ class CollisionDetection(ut.TestCase):
 
         # Check that nothing explodes, when the particles are moved.
         # In particular for parallel simulations
-        self.s.thermostat.set_langevin(kT=0, gamma=0.01)
+        self.s.thermostat.set_langevin(kT=0, gamma=0.01, seed=42)
         self.s.part[:].v = 0.05, 0.01, 0.15
         self.s.integrator.run(3000)
         self.verify_state_after_bind_at_poc(expected_np)
@@ -216,8 +216,9 @@ class CollisionDetection(ut.TestCase):
                 dist_centers = p1.pos - p2.pos
             expected_pos = self.s.part[rel_to].pos_folded + \
                 self.s.collision_detection.vs_placement * dist_centers
-            np.testing.assert_allclose(
-                np.copy(p.pos_folded), expected_pos, atol=1E-4)
+            dist = expected_pos - p.pos_folded
+            dist -= np.round(dist / self.s.box_l) * self.s.box_l
+            self.assertLess(np.linalg.norm(dist), 1E-12)
 
     @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
     def test_bind_at_point_of_collision(self):
@@ -242,7 +243,7 @@ class CollisionDetection(ut.TestCase):
         self.run_test_bind_at_point_of_collision_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES", "VIRTUAL_SITES"), "Skipping for lack of LJ potential")
+    @ut.skipIf(not espressomd.has_features("LENNARD_JONES", "VIRTUAL_SITES_RELATIVE"), "Skipping for lack of LJ potential")
     def test_bind_at_point_of_collision_random(self):
         """Integrate lj liquid and check that no double bonds are formed
            and the number of bonds fits the number of virtual sites
@@ -363,7 +364,7 @@ class CollisionDetection(ut.TestCase):
 
         # Check that nothing explodes, when the particles are moved.
         # In particular for parallel simulations
-        self.s.thermostat.set_langevin(kT=0, gamma=0.01)
+        self.s.thermostat.set_langevin(kT=0, gamma=0.01, seed=42)
         self.s.part[:].v = 0.05, 0.01, 0.15
         self.s.integrator.run(3000)
         self.verify_state_after_glue_to_surface(expected_np)
@@ -586,7 +587,6 @@ class CollisionDetection(ut.TestCase):
                 sigma=0,
          cutoff=0)
 
-    @ut.skipIf(not espressomd.has_features("BOND_ANGLE"), "Tests skipped because AngleHarmonic not compiled in")
     def test_bind_three_particles(self):
         # Setup particles
         self.s.part.clear()

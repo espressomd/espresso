@@ -20,7 +20,7 @@
 */
 /** \file
  *
- *  Implementation of  \ref nsquare.hpp "nsquare.hpp".
+ *  Implementation of nsquare.hpp.
  */
 
 #include "nsquare.hpp"
@@ -28,15 +28,14 @@
 #include "constraints.hpp"
 #include "debug.hpp"
 #include "ghosts.hpp"
-#include "utils.hpp"
 
 #include <cstring>
 #include <mpi.h>
 
 Cell *local;
 
-Cell *nsq_position_to_cell(const Vector3d &pos) { return local; }
-int nsq_position_to_node(const Vector3d &) { return this_node; }
+Cell *nsq_position_to_cell(const Utils::Vector3d &pos) { return local; }
+int nsq_position_to_node(const Utils::Vector3d &) { return this_node; }
 
 void nsq_topology_release() {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_release:\n", this_node));
@@ -163,7 +162,7 @@ void nsq_balance_particles(int global_flag) {
     return;
 
   int pp = cells_get_n_particles();
-  int *ppnode = (int *)Utils::malloc(n_nodes * sizeof(int));
+  auto *ppnode = (int *)Utils::malloc(n_nodes * sizeof(int));
   /* minimal difference between node shares */
   int minshare = n_part / n_nodes;
   int maxshare = minshare + 1;

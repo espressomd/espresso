@@ -28,49 +28,54 @@
  *  Hockney/Eastwood and Deserno/Holm.
  *
  *  Further reading:
- *  <ul>
- *  <li> P.P. Ewald,
- *       <i>Die Berechnung optischer und elektrostatischer Gitterpotentiale</i>,
- *       Ann. Phys. (64) 253-287, 1921
- *  <li> R. W. Hockney and J. W. Eastwood,
- *       <i>Computer Simulation Using Particles</i>,
- *       IOP, London, 1988
- *  <li> M. Deserno and C. Holm,
- *       <i>How to mesh up {E}wald sums. I. + II.</i>,
- *       J. Chem. Phys. (109) 7678, 1998; (109) 7694, 1998
- *  <li> M. Deserno, C. Holm and H. J. Limbach,
- *       <i>How to mesh up {E}wald sums. </i>,
- *       in Molecular Dynamics on Parallel Computers,
- *       Ed. R. Esser et al., World Scientific, Singapore, 2000
- *  <li> M. Deserno,
- *       <i>Counterion condensation for rigid linear polyelectrolytes</i>,
- *       PhdThesis, Universit{\"a}t Mainz, 2000
- *  <li> J.J. Cerda, P3M for dipolar interactions. J. Chem. Phys, 129, xxx
- * ,(2008).
- *  </ul>
+ *  - P. P. Ewald,
+ *    *Die Berechnung optischer und elektrostatischer Gitterpotentiale*,
+ *    Ann. Phys. (64) 253-287, 1921
+ *  - R. W. Hockney and J. W. Eastwood,
+ *    *Computer simulation using particles*,
+ *    IOP, London, 1988
+ *  - M. Deserno and C. Holm,
+ *    *How to mesh up Ewald sums I + II*,
+ *    J. Chem. Phys. (109) 7678, 1998; (109) 7694, 1998
+ *  - M. Deserno, C. Holm and H. J. Limbach,
+ *    *How to mesh up Ewald sums*,
+ *    in Molecular Dynamics on Parallel Computers,
+ *    Ed. R. Esser et al., World Scientific, Singapore, 2000
+ *  - M. Deserno,
+ *    *Counterion condensation for rigid linear polyelectrolytes*,
+ *    PhD Thesis, Universität Mainz, 2000
+ *  - J. J. Cerda,
+ *    *P3M for dipolar interactions*,
+ *    J. Chem. Phys (129) 234104, 2008
+ *
+ *  Implementation in p3m.cpp.
  */
 
 #include "config.hpp"
-#include "debug.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "p3m-common.hpp"
-
-#include "utils/math/AS_erfc_part.hpp"
 
 #ifdef P3M
+
+#include "debug.hpp"
+#include "fft.hpp"
+#include "p3m-common.hpp"
+
+#include <utils/constants.hpp>
+#include <utils/math/AS_erfc_part.hpp>
 
 /************************************************
  * data types
  ************************************************/
 
-typedef struct {
-  p3m_parameter_struct params;
+struct p3m_data_struct {
+  p3m_data_struct();
+
+  P3MParameters params;
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
   /** real space mesh (local) for CA/FFT.*/
   double *rs_mesh;
-  /** k space mesh (local) for k space calculation and FFT.*/
+  /** k-space mesh (local) for k-space calculation and FFT.*/
   double *ks_mesh;
 
   /** number of charged particles (only on master node). */
@@ -117,147 +122,174 @@ typedef struct {
   double *send_grid;
   /** Field to store grid points to recv */
   double *recv_grid;
-} p3m_data_struct;
+
+  fft_data_struct fft;
+};
 
 /** P3M parameters. */
 extern p3m_data_struct p3m;
 
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
-
-void p3m_pre_init(void);
-
+/** Tune P3M parameters to desired accuracy.
+ *
+ *  The parameters
+ *  @ref P3MParameters::mesh "mesh",
+ *  @ref P3MParameters::cao "cao",
+ *  @ref P3MParameters::r_cut_iL "r_cut_iL" and
+ *  @ref P3MParameters::alpha_L "alpha_L"
+ *  are tuned to obtain the target accuracy (initially stored in
+ *  @ref P3MParameters::accuracy "accuracy") in optimal time.
+ *  These parameters are stored in the @ref p3m object.
+ *
+ *  The function utilizes the analytic expression of the error estimate
+ *  for the P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
+ *  order to obtain the rms error in the force for a system of N randomly
+ *  distributed particles in a cubic box.
+ *  For the real space error the estimate of Kolafa/Perram is used.
+ *
+ *  Parameter ranges if not given explicit values via p3m_set_tune_params():
+ *  - @p r_cut_iL starts from (@ref min_local_box_l - @ref #skin) / (
+ *    n * @ref box_l), with n an integer (this implies @p r_cut_iL is the
+ *    largest cutoff in the system!)
+ *  - @p mesh is set up such that the number of mesh points is equal to the
+ *    number of charged particles
+ *  - @p cao explores all possible values
+ *  - @p alpha_L is tuned for each tuple (@p r_cut_iL, @p mesh, @p cao) and
+ *    calculated assuming that the error contributions of real and reciprocal
+ *    space should be equal
+ *
+ *  After checking if the total error lies below the target accuracy, the
+ *  time needed for one force calculation (including Verlet list update)
+ *  is measured via time_force_calc().
+ *
+ *  The function generates a log of the performed tuning.
+ *
+ *  The function is based on routines of the program HE_Q.cpp written by M.
+ *  Deserno.
+ *
+ *  @param[out]  log  log output
+ *  @retval ES_OK
+ *  @retval ES_ERROR
+ */
 int p3m_adaptive_tune(char **log);
 
 /** Initialize all structures, parameters and arrays needed for the
  *  P3M algorithm for charge-charge interactions.
  */
-void p3m_init(void);
+void p3m_init();
 
-/** Updates \ref p3m_parameter_struct::alpha and
-    \ref p3m_parameter_struct::r_cut if \ref box_l changed. */
+/** Update @ref P3MParameters::alpha "alpha" and
+ *  @ref P3MParameters::r_cut "r_cut" if @ref box_l changed
+ */
 void p3m_scaleby_box_l();
 
-/** compute the k-space part of forces and energies for the charge-charge
- * interaction  **/
+/** Compute the k-space part of forces and energies for the charge-charge
+ *  interaction
+ */
 double p3m_calc_kspace_forces(int force_flag, int energy_flag);
 
-/** computer the k-space part of the stress tensor **/
+/** Compute the k-space part of the stress tensor **/
 void p3m_calc_kspace_stress(double *stress);
 
-/// sanity checks
-int p3m_sanity_checks();
+/** Sanity checks */
+bool p3m_sanity_checks();
 
 /** Calculate number of charged particles, the sum of the squared
-    charges and the squared sum of the charges. */
+ *  charges and the squared sum of the charges.
+ */
 void p3m_count_charged_particles();
 
-/** Error Codes for p3m tuning (version 2) :
-    P3M_TUNE_FAIL: force evaluation failed,
-    P3M_TUNE_NO_CUTOFF: could not find a valid realspace cutoff radius,
-    P3M_TUNE_CAOTOLARGE: Charge assignment order to large for mesh size,
-    P3M_TUNE_ELCTEST: conflict with ELC gap size.
-*/
-
-enum P3M_TUNE_ERROR {
-  P3M_TUNE_FAIL = 1,
-  P3M_TUNE_NOCUTOFF = 2,
-  P3M_TUNE_CAOTOLARGE = 4,
-  P3M_TUNE_ELCTEST = 8,
-  P3M_TUNE_CUTOFF_TOO_LARGE = 16
-};
-
-/** Tune P3M parameters to desired accuracy.
-
-    The parameters are tuned to obtain the desired accuracy in best
-    time, by running mpi_integrate(0) for several parameter sets.
-
-    The function utilizes the analytic expression of the error estimate
-    for the P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
-    order to obtain the rms error in the force for a system of N randomly
-    distributed particles in a cubic box.
-    For the real space error the estimate of Kolafa/Perram is used.
-
-    Parameter range if not given explicit values: For \ref
-   p3m_parameter_struct::r_cut_iL the function uses the values (\ref
-   min_local_box_l -\ref #skin) / (n * \ref box_l), n being an integer (this
-   implies the assumption that \ref p3m_parameter_struct::r_cut_iL is the
-   largest cutoff in the system!). For \ref p3m_parameter_struct::mesh the
-   function uses the two values which matches best the equation: number of mesh
-   point = number of charged particles. For \ref p3m_parameter_struct::cao the
-   function considers all possible values.
-
-    For each setting \ref p3m_parameter_struct::alpha_L is calculated assuming
-   that the error contributions of real and reciprocal space should be equal.
-
-    After checking if the total error fulfills the accuracy goal the
-    time needed for one force calculation (including Verlet list
-    update) is measured via \ref mpi_integrate (0).
-
-    The function returns a log of the performed tuning.
-
-    The function is based on routines of the program HE_Q.cpp written by M.
-   Deserno.
+/** Assign the physical charges using the tabulated charge assignment function.
+ *  If @ref P3M_STORE_CA_FRAC is true, then the charge fractions are buffered
+ *  in @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
+ *  "ca_frac".
  */
-
-/** assign the physical charges using the tabulated charge assignment function.
-    If store_ca_frac is true, then the charge fractions are buffered in
-   cur_ca_fmp and cur_ca_frac. */
-
 void p3m_charge_assign();
 
-/** assign a single charge into the current charge grid. cp_cnt gives the a
-   running index, which may be smaller than 0, in which case the charge is
-   assumed to be virtual and is not stored in the ca_frac arrays. */
-void p3m_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
+/** Assign a single charge into the current charge grid.
+ *
+ *  @param[in] q          %Particle charge
+ *  @param[in] real_pos   %Particle position in real space
+ *  @param[in] cp_cnt     The running index, which may be smaller than 0, in
+ *                        which case the charge is assumed to be virtual and
+ *                        is not stored in the @ref p3m_data_struct::ca_frac
+ *                        "ca_frac" arrays
+ */
+void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
 
-/** shrink wrap the charge grid */
+/** Shrink wrap the charge grid */
 void p3m_shrink_wrap_charge_grid(int n_charges);
 
 /** Calculate real space contribution of Coulomb pair forces.
-    If NPT is compiled in, it returns the energy, which is needed for NPT. */
-inline double p3m_add_pair_force(double chgfac, double *d, double dist2,
-                                 double dist, double force[3]) {
+ *
+ *  If NPT is compiled in, it returns the energy, which is needed for NPT.
+ */
+inline void p3m_add_pair_force(double q1q2, double const *d, double dist,
+                               double *force) {
   if (dist < p3m.params.r_cut) {
-    if (dist > 0.0) { // Vincent
+    if (dist > 0.0) {
       double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-      double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-      double fac1 = coulomb.prefactor * chgfac * exp(-adist * adist);
-      double fac2 =
-          fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * wupii) / dist2;
+      auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
+      auto const fac1 = q1q2 * exp(-adist * adist);
+      auto const fac2 =
+          fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * Utils::sqrt_pi_i()) /
+          (dist * dist);
 #else
-      erfc_part_ri = erfc(adist) / dist;
-      double fac1 = coulomb.prefactor * chgfac;
-      double fac2 = fac1 *
-                    (erfc_part_ri +
-                     2.0 * p3m.params.alpha * wupii * exp(-adist * adist)) /
-                    dist2;
+      auto const erfc_part_ri = erfc(adist) / dist;
+      auto const fac1 = q1q2;
+      auto const fac2 =
+          fac1 *
+          (erfc_part_ri +
+           2.0 * p3m.params.alpha * Utils::sqrt_pi_i() * exp(-adist * adist)) /
+          (dist * dist);
 #endif
       for (int j = 0; j < 3; j++)
         force[j] += fac2 * d[j];
-      ESR_TRACE(
-          fprintf(stderr, "%d: RSE: Pair dist=%.3f: force (%.3e,%.3e,%.3e)\n",
-                  this_node, dist, fac2 * d[0], fac2 * d[1], fac2 * d[2]));
-#ifdef NPT
-      return fac1 * erfc_part_ri;
-#endif
     }
   }
-  return 0.0;
 }
 
-void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha,
+/** Set initial values for p3m_adaptive_tune()
+ *
+ *  @param[in]  r_cut        @copybrief P3MParameters::r_cut
+ *  @param[in]  mesh         @copybrief P3MParameters::mesh
+ *  @param[in]  cao          @copybrief P3MParameters::cao
+ *  @param[in]  alpha        @copybrief P3MParameters::alpha
+ *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
+ *  @param[in]  n_interpol   @copybrief P3MParameters::inter
+ */
+void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
                          double accuracy, int n_interpol);
 
-int p3m_set_params(double r_cut, int *mesh, int cao, double alpha,
+/** Set custom parameters
+ *
+ *  @param[in]  r_cut        @copybrief P3MParameters::r_cut
+ *  @param[in]  mesh         @copybrief P3MParameters::mesh
+ *  @param[in]  cao          @copybrief P3MParameters::cao
+ *  @param[in]  alpha        @copybrief P3MParameters::alpha
+ *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
+ *  @return Custom error code
+ */
+int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
                    double accuracy);
 
+/** Set mesh offset
+ *
+ *  @param[in]  x , y , z  Components of @ref P3MParameters::mesh_off
+ *                         "mesh_off"
+ */
 int p3m_set_mesh_offset(double x, double y, double z);
 
+/** Set @ref P3MParameters::epsilon "epsilon" parameter
+ *
+ *  @param[in]  eps          @copybrief P3MParameters::epsilon
+ */
 int p3m_set_eps(double eps);
 
+/** Set @ref P3MParameters::inter "inter" parameter
+ *
+ *  @param[in]  n            @copybrief P3MParameters::inter
+ */
 int p3m_set_ninterpol(int n);
 
 /** Calculate real space contribution of Coulomb pair energy. */
@@ -266,10 +298,10 @@ inline double p3m_pair_energy(double chgfac, double dist) {
     double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    return coulomb.prefactor * chgfac * erfc_part_ri * exp(-adist * adist);
+    return chgfac * erfc_part_ri * exp(-adist * adist);
 #else
     double erfc_part_ri = erfc(adist) / dist;
-    return coulomb.prefactor * chgfac * erfc_part_ri;
+    return chgfac * erfc_part_ri;
 #endif
   }
   return 0.0;

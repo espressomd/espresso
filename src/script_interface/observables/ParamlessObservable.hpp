@@ -27,26 +27,35 @@
 #include <memory>
 
 #include "Observable.hpp"
+#include "config.hpp"
+#include "core/observables/LBFluidStress.hpp"
 #include "core/observables/Observable.hpp"
 #include "core/observables/StressTensor.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
-#define NEW_PARAMLESS_OBSERVABLE(obs_name)                                     \
-  class obs_name : public Observable {                                         \
-  public:                                                                      \
-    obs_name() : m_observable(new ::Observables::obs_name()){};                \
-                                                                               \
-    std::shared_ptr<::Observables::Observable> observable() const override {   \
-      return m_observable;                                                     \
-    };                                                                         \
-                                                                               \
-  private:                                                                     \
-    std::shared_ptr<::Observables::obs_name> m_observable;                     \
-  };
+/** Cython interface for parameter-free observables.
+ *  Create new observables with @ref NEW_PARAMLESS_OBSERVABLE.
+ *  @tparam CoreObs The core class exposed in Cython by this class.
+ */
+template <class CoreObs>
+class ParamlessObservableInterface : public Observable {
+public:
+  ParamlessObservableInterface() : m_observable(new CoreObs()) {}
 
+  std::shared_ptr<::Observables::Observable> observable() const override {
+    return m_observable;
+  }
+
+private:
+  std::shared_ptr<CoreObs> m_observable;
+};
+
+#define NEW_PARAMLESS_OBSERVABLE(name)                                         \
+  using name = ParamlessObservableInterface<::Observables::name>;
 NEW_PARAMLESS_OBSERVABLE(StressTensor)
+NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

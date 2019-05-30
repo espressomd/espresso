@@ -28,7 +28,7 @@ namespace Observables {
 
 class ParticleBodyAngularVelocities : public PidObservable {
 public:
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION

@@ -49,7 +49,7 @@ class test_variant_conversion(ut.TestCase):
     def test_mirror(self):
         for v in 1.1, 0.6, 0.1232, 1, [1, 1.1], "blabla":
             self.assertEqual(v, self.vt.call_method("mirror", value=v))
-    
+
     def test_default(self):
         """ Check that a default constructed Variant translates to None.
         """

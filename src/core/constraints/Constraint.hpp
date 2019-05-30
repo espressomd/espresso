@@ -19,8 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CONSTRAINTS_CONSTRAINT_HPP
 #define CONSTRAINTS_CONSTRAINT_HPP
 
-#include <memory>
-
 #include "energy.hpp"
 #include "particle_data.hpp"
 
@@ -29,19 +27,34 @@ class Constraint {
 public:
   /**
    * @brief Add energy contribution of this constraints to energy.
+   *
+   * Add constraint energy for particle to observable.
+   *
+   * @param[in] p The particle to add the energy for.
+   * @param[in] folded_pos Folded position of the particle.
+   * @param[in] t The time at which the energy should be calculated.
+   * @param[out] energy to add the energy to.
    */
-  virtual void add_energy(const Particle &p, const Vector3d &folded_pos,
-                          Observable_stat &energy) const = 0;
+  virtual void add_energy(const Particle &p, const Utils::Vector3d &folded_pos,
+                          double t, Observable_stat &energy) const = 0;
+
   /**
-   * @brief Return constraint force on particle.
+   * @brief Calculate the force of the constraint on a particle.
+   *
+   * Add constraint energy for particle to observable.
+   *
+   * @param[in] p The particle to calculate the force for.
+   * @param[in] folded_pos Folded position of the particle.
+   * @param[in] t The time at which the force should be calculated.
+   * @return The force on the particle.
    */
   virtual ParticleForce force(const Particle &p,
-                              const Vector3d &folded_pos) = 0;
+                              const Utils::Vector3d &folded_pos, double t) = 0;
 
   /**
    * @brief Check if constraints if compatible with box size.
    */
-  virtual bool fits_in_box(Vector3d const &box) const = 0;
+  virtual bool fits_in_box(Utils::Vector3d const &box) const = 0;
 
   virtual void reset_force(){};
 

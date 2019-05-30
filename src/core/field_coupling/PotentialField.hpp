@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "detail/Base.hpp"
 #include "detail/BindCoupling.hpp"
 
-#include "Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace FieldCoupling {
 template <typename Coupling, typename Field>
@@ -36,14 +36,16 @@ public:
   using Base::Base;
 
   template <typename Particle>
-  Vector3d force(const Particle &p, const Vector3d &folded_pos) const {
+  Utils::Vector3d force(const Particle &p, const Utils::Vector3d &folded_pos,
+                        double t) const {
     using detail::make_bind_coupling;
-    return m_coupling(p, -m_field.gradient(folded_pos));
+    return m_coupling(p, -m_field.jacobian(folded_pos, t));
   }
 
   template <typename Particle>
-  double energy(const Particle &p, const Vector3d &folded_pos) const {
-    return m_coupling(p, m_field(folded_pos));
+  double energy(const Particle &p, const Utils::Vector3d &folded_pos,
+                double t) const {
+    return m_coupling(p, m_field(folded_pos, t));
   }
 };
 } /* namespace FieldCoupling */

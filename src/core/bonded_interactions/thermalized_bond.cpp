@@ -28,6 +28,8 @@
 #include "communication.hpp"
 #include "global.hpp"
 
+#include <utils/constants.hpp>
+
 int n_thermalized_bonds = 0;
 
 int thermalized_bond_set_params(int bond_type, double temp_com,
@@ -75,9 +77,9 @@ void thermalized_bond_cool_down() {
 
 void thermalized_bond_init() {
 
-  for (int i = 0; i < bonded_ia_params.size(); i++) {
-    if (bonded_ia_params[i].type == BONDED_IA_THERMALIZED_DIST) {
-      Thermalized_bond_parameters &t = bonded_ia_params[i].p.thermalized_bond;
+  for (auto &bonded_ia_param : bonded_ia_params) {
+    if (bonded_ia_param.type == BONDED_IA_THERMALIZED_DIST) {
+      Thermalized_bond_parameters &t = bonded_ia_param.p.thermalized_bond;
       t.pref1_com = t.gamma_com;
       t.pref2_com = sqrt(24.0 * t.gamma_com / time_step * t.temp_com);
       t.pref1_dist = t.gamma_distance;
@@ -89,9 +91,9 @@ void thermalized_bond_init() {
 
 void thermalized_bond_update_params(double pref_scale) {
 
-  for (int i = 0; i < bonded_ia_params.size(); i++) {
-    if (bonded_ia_params[i].type == BONDED_IA_THERMALIZED_DIST) {
-      Thermalized_bond_parameters &t = bonded_ia_params[i].p.thermalized_bond;
+  for (auto &bonded_ia_param : bonded_ia_params) {
+    if (bonded_ia_param.type == BONDED_IA_THERMALIZED_DIST) {
+      Thermalized_bond_parameters &t = bonded_ia_param.p.thermalized_bond;
       t.pref2_com *= pref_scale;
       t.pref2_dist *= pref_scale;
     }

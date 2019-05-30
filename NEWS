@@ -2,6 +2,216 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 4.0.2
+==============
+
+This release provides a number of corrections for the Espresso 4.0 line.
+We recommend that this release be used for all production simulations.
+Please note that a sign error in tabulated interactions was fixed.
+Simulation scripts which worked around this problem might have to be changed.
+Below, please find the list of changes. The numbers in brackets refer to
+ticket numbers on http://github.com/espressomd/espresso
+
+
+Corrections for bugs that may harm simulation results:
+  * A sign error in tabulated interactions was corrected such that
+    the force equals the negative gradient of the potential. (#2519,2520)
+
+  * The flow field of the CPU lattice-Boltzmann implementation was deleted
+    when aspects of the molecular dynamics cell grid were changed; E.g., when
+    interactions, the skin or the parallelization setup were changed.
+    ESPResSo now terminates with an error, when this happens.
+    To avoid this, please setup the CPU lattice-Boltzmann after all
+    other aspects of the system. The GPU LB is not affected in the 4.0
+    release, but was affected in the current development branch. (#2728, #2736)
+
+  * Corrected the force acting on LB Boundaries for the case of
+    agrid and density not equal to 1 (#2624).
+
+  * Corrected the cutoff calculation for the soft sphere interaction. In the
+    previous implementation, the offset parameter was ignored. (#2505)
+
+  * The "three point coupling" of particles to the lattice-Boltzmann method
+    has been removed. While it works in most environments, for some compilers
+    the calculation gives wrong values. This is likely caused by undefined
+    behavior. A corrected implementation is available in
+    ESPResSo's development branch. It cannot be safely backported to 4.0.2,
+    because the code has diverged too far. (#2516, #2517)
+    Users who did not explicitly activate this coupling via couple="3pt" are
+    not affected.
+
+  * The velocity of existing particles was changed when setting or changing
+    the simulation time step (#2480)
+
+
+Further changes:
+  * Fixed the electrokinetic Python interface (#2486)
+
+  * Correction to the installation instructions for mac (#2510)
+
+  * Corrected file permissions (#2470)
+
+  * Minor corrections and extensions to the test suite (#2477, #2552)
+
+  * Fixed a dead-lock in the dipolar Barnes Hutt method on the GPU for
+    recent NVIDIA cards such as RTX 2080 (#2719).
+
+  * Restored Mayavi visualizer's API-compatibility with OpenGL visualizer
+    (#2751)
+
+
+
+
+ESPResSo 4.0.1
+==============
+
+This release provides a number of corrections for Espresso 4.0.
+We recommend that this release be used for all production simulations.
+The interface has not been changed between Espresso 4.0 and 4.0.1
+However, some bugs were discovered which can affect simulation results.
+Below, please find the list of changes. The numbers in brackets refer to
+ticket numbers on http://github.com/espressomd/espresso
+
+
+Physics related corrections:
+  * The GPU lattice Boltzmann method produced incorrect results when
+    EXTERNAL_FORCES was not declared in myconfig.hpp.
+    This issue was present since around June 2018 (#2241)
+
+  * The temperature fluctuations for the GPU lattice Boltzmann implementation
+    were larger than the ones for the Cpu lattice Boltzmann implementation.
+    The cause was likely weak or incorrect random number generation.
+    It is not clear since when this issue existed.
+    It has been resolved by using library code for a counter-based
+    random number generator (Philox) rather than the existing custom code.
+
+  * Particles which were moved with the configuration changing moves (MC) implemented in the reaction ensemble
+    module did not get assigned a random velocity. This was not a problem if you were looking at observables
+    which do not depend on velocity.
+
+  * Particles which were created in the Reaction Ensemble module were assigned a random velocity which was not distributed according to the Maxwell-Boltzmann distribution. This was not a problem if you were looking at observables which do not depend on velocity. If you looked at velocity dependent observables but used a thermostat for thermalization before taking a sample you are also fine.  (#2377).
+
+  * Under some conditions, the torque on self-propelled particles
+    in a lattice-Boltzmann fluid was incorrect due to a sign error in the
+    ENGINE feature. This was the case since the introduction of the feature
+    (#2383)
+
+  * The SimplePore shape was incorrect (#2379)
+
+  * The parameters passed from Python to some features were narrowed to single
+    precision. I.e., the values used were only accurate up to the 7th-8th
+    significant digit. Further calculations with those values still were
+    done using double precision.
+    Classes backed by the script interface were affected. This includes
+    shapes, LB boundaries, pair criteria and the collision detection.
+    This issue was likely present since the introduction of Python support
+    for the relevant features. (#2379)
+
+  * Forces on LB boundaries retrieved via the LbBoundary.get_force() method
+    in a Python script were incorrect for the CPU LB implementation.
+    The GPU implementation was not affected.
+    It is not clear, when the issue was introduced. (#2366)
+
+  * In highly dense systems, the Widdom insertion scheme reported wrong values
+    (#2294)
+
+  * Fixed the Gay-Berne potential for sigma != 1. Downgraded the GAY_BERNE feature to an experimental feature due to insufficient testing (#2424)
+
+Further general corrections and improvements:
+
+* Fix restoring checkpointed simulations which contain exclusions (#2418)
+
+* Allow neutral systems in reaction ensemble (#2378)
+
+* Support re-tuning the dipolar P3M method (#2351, #1937)
+
+* Support checkpointing of the collision detection parameters (#2342)
+
+* Virtual sites tracers: don't complain about missing lb for non-virtual
+  part (#2341)
+
+* Prevent access to non-existent lb nodes from Python
+
+* Opengl wildcard imports + mac fix  (#2295)
+
+* Fix segfaults in virtual sites based collision detection schemes on more than one processor core (#2195)
+
+* Fixed find_current_cell() and particle deletion (#2410, #2441)
+
+* Fixed coordinate folding for corner cases (0 - epsilon on 32 bit architectures) (#2415)
+
+Documentation and tutorials corrections and improvements:
+
+* Mention how to read h5md files in the docs (#2353)
+
+* Correct docs for setting the skin (#2340)
+
+* Corrections to the Lennard-Jones tutorial (#2339)
+
+* doc: Fixed Gay-Bern formula (#2234)
+
+* Update PDF of tutorial 6 with bibliography (#2285)
+
+
+Build system and platform related corrections and improvements:
+
+* Fix Cython detection on Fedora 29 (#2371)
+
+* Properly detect CUDA libraries if multiple are available (#2352)
+
+* Guard tests and compilation for different feature sets
+  in myconfig.hpp (#2344, #2326, #2350, #2349, #2335, #2337, #2266)
+
+* install libH5mdCore (#2277)
+
+* Fix MPI on Ubuntu 18.04 with CUDA (#2271)
+
+* Fix PARTIAL_PERIODIC on big-endian platforms (#2259)
+
+* Fixes for OpenSUSE rpm build (#2255)
+
+* ctest: add ARGS option to custom 'make check' (#2252)
+
+* cmake: workaround for cmake bug#18349 (#2244)
+
+* Remove some superfluous executable bits (#2242)
+
+* Silence arm32 warnings (#2267)
+
+* Fix unit test without SSE instructions (#2265)
+
+* Turn off ScaFaCoS support by default. Has to be enabled explicitly using -DWITH_SCAFACOS=on in CMake. (#2417)
+
+* Fix builds with the Gnu Scientific Library in non-standard locations (#2429)
+
+* Resolve some floating point rounding issues on I386 32-bit (#2454)
+
+
+Improved testing:
+
+* Test the LB thermostat (#2391, #2362)
+
+* Better stability of the LB test (#2360)
+
+* testsuite: fix checkpoint test (#2336)
+
+* Test the installation routine (#2268)
+
+* Improved testing of the cylindrical lb profile observables (#2272)
+
+* testsuite: Check planar shear profile of LB (#2263)
+
+* Test builds without optional dependencies (#2406)
+
+* Test builds on non-Amd64 architectures (#2401)
+
+* Improved test coverage of the Wang-Landau reaction ensemble (#2404)
+
+* Testing of the electrostatic pressure (#2409)
+
+
+
+
 ESPResSo 4.0
 ============
 
@@ -14,7 +224,7 @@ TCL-based versions.
 Transitioning from TCL-based versions
 -------------------------------------
 
-The following can serve as a starting point for the new interface: 
+The following can serve as a starting point for the new interface:
 * The "Introduction" chapter in the user's guide
 * The tutorials provided with ESPResSo
 Both can be found at http://espressomd.org/wordpress/documentation
@@ -25,7 +235,7 @@ New features:
 -------------
 * Reaction ensemble methods for the modelling of chemical reactions, including constant pH and Wang-Landau schemes
 * Polarisable particles via the Drude-oscillator scheme
-* Steepest-descent energy minimization scheme 
+* Steepest-descent energy minimization scheme
 * Methods for active particles (swimmer_reaction, dipolar swimmers)
 * GPU-accelerated P3M method for electrostatic interactions
 * GPU-accelerated direct summation and Barnes-Hutt schemes for dipolar interactions under open boundary conditions
@@ -34,7 +244,7 @@ New features:
 * Virtual sites acting as inertialess tracers in an LB fluid usable as part of the immersed boundary method or independently
 * Online cluster analysis based on criteria for pairs of particles
 * New bonded quartic and Coulomb interactions
-* Possibility to tune the skin parameter 
+* Possibility to tune the skin parameter
 * Support for saving to the h5md file format for molecular dynamics data.
 * Connection to the MD Analysis Python package
 * A rotate_system command was added, which rotates the particle positions around the system's center of mass
@@ -65,7 +275,7 @@ The following features are not part of the ESPResSo 4.0 release, but support is 
 * The com_force feature
 * The Shan Chen lattice Boltzmann extension
 * Lees-Edwards (shear) boundary conditions
-* The chain rdf analysis 
+* The chain rdf analysis
 
 The following functionality is removed permanently:
 * Blockfile support, which is replaced by support for the h5md format as well as checkpointing based on the pickle Python module.
@@ -81,25 +291,25 @@ The following functionality is removed permanently:
 Known issues and limitations
 ----------------------------
 The numbers refer to issue numbers at http://github.com/espressomd/espresso
-* Lattice Boltzmann interpolated velocities are only accurate up to one 
+* Lattice Boltzmann interpolated velocities are only accurate up to one
   lattice cell next to a boundary (#1865)
 * Adding boundaries in the electrokinetics method resets species densities
   to their initial values (#1899)
 * The collision detection feature does not support checkpointing (#1943)
-* Changing interaction parameters does not automatically update the value of 
+* Changing interaction parameters does not automatically update the value of
   the force property stored on the particles. Forces are re-calculated in
   the next integration step. (#1973)
 * The domain decomposition cell system does not always choose the node grid
   yielding the best performance in parallel simulations (#1970)
 * The dipolar P3M method can only be tuned once in a simulation script,
-  unless method parameters are explicitly reset to 0 before the second tuning 
+  unless method parameters are explicitly reset to 0 before the second tuning
   (#1937)
 * In rare cases, P3M produces an rs mesh overflow warning (#2067)
-* The H5MD file writer cannot handle bounds that involve more than two bond 
+* The H5MD file writer cannot handle bounds that involve more than two bond
   partners (#1715)
-* Pickle checkpoints are not guaranteed to be compatible between 
+* Pickle checkpoints are not guaranteed to be compatible between
   different ESPResSo versions (#1181)
-* Switching from the GPU-Based MMM1D and MMM2D methods to a different 
+* Switching from the GPU-Based MMM1D and MMM2D methods to a different
   electrostatic method within a single simulation script may not work (#396)
 * The membrane_collision interaction of the object in fluid framework may
   use an outward direction which is outdated by one time step (#2214)
@@ -110,7 +320,7 @@ ESPResSo 3.3
 New user-visible features
 -------------------------
 
-* SHANCHEN: a bicomponent lattice Boltzmann fluid, with support for rigid 
+* SHANCHEN: a bicomponent lattice Boltzmann fluid, with support for rigid
   boundaries and coupling to particle dynamics.
 
 * ELECTROKINETICS: An algorithm to treat species of ions on a mean-field
@@ -162,11 +372,11 @@ User-visible changes
 
 * Comfixed now works with periodic boundary conditions.
 
-* The pressure contribution due to rigid bodies constructed by means of the 
-  virtual sites relative mechanism is included, both for pressure and stress 
-  tensor. Note that the corresponding contribution for rigid bonds is still 
+* The pressure contribution due to rigid bodies constructed by means of the
+  virtual sites relative mechanism is included, both for pressure and stress
+  tensor. Note that the corresponding contribution for rigid bonds is still
   not implemented.
- 
+
 * The configure option "--with-myconfig" has been removed. Instead,
   the configure variable "MYCONFIG" can be set to give the name of a
   myconfig file.
@@ -187,13 +397,13 @@ User-visible changes
 
 * Removed outdated ADRESS code.
 
-* external_potential tabulated to include arbitrary potentials applied to all 
+* external_potential tabulated to include arbitrary potentials applied to all
   particles.
 
-* thermostat inter_dpd ignore_fixed_particles 1 allows the user to swith on DPD 
+* thermostat inter_dpd ignore_fixed_particles 1 allows the user to swith on DPD
   with fixed particles.
 
-* New Observable concept that includes running averages and other observables 
+* New Observable concept that includes running averages and other observables
   with history
 
 
@@ -204,8 +414,8 @@ Changes visible for developers
 
 * The code has been switched to using a C++ compiler.
 
-* Introduced object-oriented interfaces for forces/constraints/external fields: 
-  SystemInterface and Actor. 
+* Introduced object-oriented interfaces for forces/constraints/external fields:
+  SystemInterface and Actor.
 
 * Improved Lattice structure
 
@@ -515,12 +725,12 @@ Organizational changes
 
 * The mailing list and source code repository have been moved to GNU
   Savannah. Furthermore, we have a bugtracker now. The development
-  homepage is 
+  homepage is
 
     https://savannah.nongnu.org/projects/espressomd
 
 * The maintenance of ESPResSo has been relocated from Torsten Stühn
-  from the Max-Planck-Institute for Polymer Research at Mainz to 
+  from the Max-Planck-Institute for Polymer Research at Mainz to
 
     Olaf Lenz <olenz@icp.uni-stuttgart.de>
 
@@ -546,9 +756,9 @@ Changes visible for developers
 
     https://github.com/espressomd/espresso
 
-* We have an automated build server (Jenkins) at 
+* We have an automated build server (Jenkins) at
 
-    http://espressomd.org/jenkins/ 
+    http://espressomd.org/jenkins/
 
   that automatically builds and checks the ESPResSo package whenever
   new code is pushed to the main development repository.  Every night,

@@ -20,13 +20,15 @@
 */
 
 #include "Stomatocyte.hpp"
-#include "utils.hpp"
+
+#include <utils/math/sqr.hpp>
+
 #include <cmath>
 
 using namespace std;
 
 namespace Shapes {
-void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
+void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double *dist,
                                  double *vec) const {
 
   using Utils::sqr;
@@ -35,13 +37,12 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
 
   int number;
 
-  double mu, T0, T1, T1p, T2, T3, T3sqrt, T3p, T4sqrt, T4, a, b, c, d, e, rad0,
-      rad1, rad2, rad3, pt0x, pt0y, pt1x, pt1y, pt2x, pt2y, pt3x, pt3y, dst0,
-      dst1, dst2, dst3, t0, t1, t2, t3, t4, ttota, distance, mindist, time0,
-      time1, xd, yd, zd, xp, yp, zp, xpp, ypp, normal_x_3D, normal_y_3D,
-      normal_z_3D;
+  double mu, T0, T1, T1p, T2, T3, T3sqrt, T3p, T4, a, b, c, d, e, rad0, rad1,
+      rad2, rad3, pt0x, pt0y, pt1x, pt1y, pt2x, pt2y, pt3x, pt3y, dst0, dst1,
+      dst2, dst3, t0, t1, t2, t3, t4, ttota, distance, mindist, time0, time1,
+      xd, yd, zd, xp, yp, zp, xpp, ypp, normal_x_3D, normal_y_3D, normal_z_3D;
 
-  Vector3d closest_pos({-1.0, -1.0, -1.0});
+  Utils::Vector3d closest_pos({-1.0, -1.0, -1.0});
 
   // Set the three dimensions of the stomatocyte
 
@@ -56,7 +57,7 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
   // Calculate the point on position + mu * orientation,
   // where the difference segment is orthogonal
 
-  mu = (m_orientation.dot(pos) - m_position.dot(m_orientation)) /
+  mu = (m_orientation * pos - m_position * m_orientation) /
        m_orientation.norm2();
 
   // Then the closest point to the line is
@@ -65,8 +66,8 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
 
   // So the shortest distance to the line is
 
-  Vector2d dist_2D;
-  dist_2D[0] = Vector3d(closest_pos - pos).norm();
+  Utils::Vector2d dist_2D;
+  dist_2D[0] = Utils::Vector3d(closest_pos - pos).norm();
   dist_2D[1] = mu * m_orientation.norm();
 
   /***** Use the obtained planar coordinates in distance function *****/
@@ -138,14 +139,6 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
 
   T3 = 3.0 * M_PI / 4.0 - T3p;
 
-  T4sqrt = -sqr(b) * sqr(c) *
-           (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
-            2 * a * (b + 2 * c + d)) *
-           (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) - 2 * a * (b + 2 * c + d) +
-            2 * b * (4 * c + d));
-
-  T4sqrt = std::max(T4sqrt, 0.0);
-
   T4 = acos((b * (-a + b + 2 * c + d) *
                  (sqr(a) + 2 * sqr(b) + 9 * sqr(c) + 4 * c * d + sqr(d) +
                   2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d)) -
@@ -167,7 +160,7 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
 
   // Center points for the circles
 
-  Vector2d pt0, pt1, pt2, pt3;
+  Utils::Vector2d pt0, pt1, pt2, pt3;
 
   pt0 = {0.0, 0.0};
   pt1 = {3.0 * c + e, d - e};
@@ -241,7 +234,7 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
   // but we still need the normal
 
   distance = -mindist;
-  Vector2d normal({-1.0, -1.0});
+  Utils::Vector2d normal({-1.0, -1.0});
 
   switch (number) {
   case 0:
@@ -322,14 +315,14 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
   // Next we determine the 3D vector between the center
   // of the stomatocyte and the point of interest
 
-  Vector3d p(pos - m_position);
+  Utils::Vector3d p(pos - m_position);
 
   // Now we use the inverse matrix to find the
   // position of the point with respect to the origin
   // of the z-axis oriented stomatocyte located
   // in the origin
 
-  Vector2d pp;
+  Utils::Vector2d pp;
   pp[0] = matrix[0] * p[0] + matrix[3] * p[1] + matrix[6] * p[2];
   pp[1] = matrix[1] * p[0] + matrix[4] * p[1] + matrix[7] * p[2];
 
@@ -358,7 +351,7 @@ void Stomatocyte::calculate_dist(const Vector3d &pos, double *dist,
   // Now we need to transform the normal back to
   // the real coordinate system
 
-  Vector3d normal_3D;
+  Utils::Vector3d normal_3D;
 
   normal_3D[0] = matrix[0] * normal_x_3D + matrix[1] * normal_y_3D +
                  matrix[2] * normal_z_3D;

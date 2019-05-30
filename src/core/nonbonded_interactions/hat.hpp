@@ -34,7 +34,6 @@
 #include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 ///
 int hat_set_params(int part_type_a, int part_type_b, double Fmax, double r);
@@ -54,7 +53,7 @@ inline double hat_energy_r(double Fmax, double r, double dist) {
 /** Calculate hat potential force between particle p1 and p2 */
 inline void add_hat_pair_force(const Particle *const p1,
                                const Particle *const p2,
-                               IA_parameters *ia_params, double d[3],
+                               IA_parameters *ia_params, double const d[3],
                                double dist, double force[3]) {
   if (dist > 0. && dist < ia_params->HAT_r) {
     auto const fac =

@@ -19,25 +19,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref global.hpp "global.hpp".
-*/
+ *  Implementation of \ref global.hpp "global.hpp".
+ */
 #include "global.hpp"
 
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
-#include "ghmc.hpp"
+#include "event.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
-#include "lattice.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "rattle.hpp"
+#include "thermostat.hpp"
 #include "tuning.hpp"
-#include "utils/mpi/all_compare.hpp"
+#include <utils/mpi/all_compare.hpp>
 
 #include <boost/functional/hash.hpp>
 
@@ -54,9 +54,9 @@ typedef struct {
   enum class Type { INT = 0, DOUBLE = 1, BOOL = 2 };
   /** Physical address of the variable. */
   void *data;
-  /** Type of the variable, either \ref TYPE_INT or \ref TYPE_DOUBLE.*/
+  /** Type of the variable. */
   Type type;
-  /** Dimension of the variable. Limited to \ref MAX_DIMENSION */
+  /** Dimension of the variable. Typically in the range 1-3. */
   int dimension;
   /** Name of the variable, mainly used for the front end and debugging */
   const char *name;
@@ -69,13 +69,11 @@ typedef struct {
 
 const std::unordered_map<int, Datafield> fields{
     {FIELD_BOXL,
-     {box_l, Datafield::Type::DOUBLE, 3, "box_l"}}, /* 0  from grid.cpp */
+     {box_l.data(), Datafield::Type::DOUBLE, 3,
+      "box_l"}}, /* 0  from grid.cpp */
     {FIELD_CELLGRID,
      {dd.cell_grid, Datafield::Type::INT, 3,
       "cell_grid"}}, /* 1  from cells.cpp */
-    {FIELD_CELLSIZE,
-     {dd.cell_size, Datafield::Type::DOUBLE, 3,
-      "cell_size"}}, /* 2  from cells.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA,
      {&langevin_gamma, Datafield::Type::DOUBLE, 1,
@@ -88,43 +86,24 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_INTEG_SWITCH,
      {&integ_switch, Datafield::Type::INT, 1,
       "integ_switch"}}, /* 7  from integrate.cpp */
-    {FIELD_LBOXL,
-     {local_box_l, Datafield::Type::DOUBLE, 3,
-      "local_box_l"}}, /* 8  from global.cpp */
-    {FIELD_MCUT,
-     {&max_cut, Datafield::Type::DOUBLE, 1,
-      "max_cut"}}, /* 9  from interaction_data.cpp */
     {FIELD_MAXNUMCELLS,
      {&max_num_cells, Datafield::Type::INT, 1,
       "max_num_cells"}}, /* 10 from cells.cpp */
     {FIELD_MAXPART,
      {&max_seen_particle, Datafield::Type::INT, 1,
       "max_part"}}, /* 11 from particle_data.cpp */
-    {FIELD_MAXRANGE,
-     {&max_range, Datafield::Type::DOUBLE, 1,
-      "max_range"}}, /* 12 from integrate.cpp */
-    {FIELD_MAXSKIN,
-     {&max_skin, Datafield::Type::DOUBLE, 1,
-      "max_skin"}}, /* 13 from integrate.cpp */
     {FIELD_MINNUMCELLS,
      {&min_num_cells, Datafield::Type::INT, 1,
       "min_num_cells"}}, /* 14  from cells.cpp */
     {FIELD_NLAYERS,
      {&n_layers, Datafield::Type::INT, 1,
       "n_layers"}}, /* 15 from layered.cpp */
-    {FIELD_NNODES,
-     {&n_nodes, Datafield::Type::INT, 1,
-      "n_nodes"}}, /* 16 from communication.cpp */
-    {FIELD_NPART,
-     {&n_part, Datafield::Type::INT, 1, "n_part"}}, /* 17 from particle.cpp */
-    {FIELD_NPARTTYPE,
-     {&max_seen_particle_type, Datafield::Type::INT, 1,
-      "max_seen_particle_type"}}, /* 18 from interaction_data.cpp */
     {FIELD_RIGIDBONDS,
      {&n_rigidbonds, Datafield::Type::INT, 1,
       "n_rigidbonds"}}, /* 19 from rattle.cpp */
     {FIELD_NODEGRID,
-     {node_grid, Datafield::Type::INT, 3, "node_grid"}}, /* 20 from grid.cpp */
+     {node_grid.data(), Datafield::Type::INT, 3,
+      "node_grid"}}, /* 20 from grid.cpp */
     {FIELD_NPTISO_G0,
      {&nptiso_gamma0, Datafield::Type::DOUBLE, 1,
       "nptiso_gamma0"}}, /* 21 from thermostat.cpp */
@@ -163,41 +142,15 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_TIMESTEP,
      {&time_step, Datafield::Type::DOUBLE, 1,
       "time_step"}}, /* 33 from integrate.cpp */
-    {FIELD_TIMINGSAMP,
-     {&timing_samples, Datafield::Type::INT, 1,
-      "timings"}}, /* 34 from tuning.cpp */
-    {FIELD_MCUT_NONBONDED,
-     {&max_cut_nonbonded, Datafield::Type::DOUBLE, 1,
-      "max_cut_nonbonded"}}, /* 35 from interaction_data.cpp */
-    {FIELD_VERLETREUSE,
-     {&verlet_reuse, Datafield::Type::DOUBLE, 1,
-      "verlet_reuse"}}, /* 36 from integrate.cpp */
     {FIELD_LATTICE_SWITCH,
      {&lattice_switch, Datafield::Type::INT, 1,
       "lattice_switch"}}, /* 37 from lattice.cpp */
-    {FIELD_MCUT_BONDED,
-     {&max_cut_bonded, Datafield::Type::DOUBLE, 1,
-      "max_cut_bonded"}}, /* 42 from interaction_data.cpp */
     {FIELD_MIN_GLOBAL_CUT,
      {&min_global_cut, Datafield::Type::DOUBLE, 1,
       "min_global_cut"}}, /* 43 from interaction_data.cpp */
-    {FIELD_GHMC_NMD,
-     {&ghmc_nmd, Datafield::Type::INT, 1,
-      "ghmc_nmd"}}, /* 44 from thermostat.cpp */
-    {FIELD_GHMC_PHI,
-     {&ghmc_phi, Datafield::Type::DOUBLE, 1,
-      "ghmc_phi"}}, /* 45 from thermostat.cpp */
-    {FIELD_GHMC_RES,
-     {&ghmc_mc_res, Datafield::Type::INT, 1,
-      "ghmc_mc_res"}}, /* 46 from ghmc.cpp */
-    {FIELD_GHMC_FLIP,
-     {&ghmc_mflip, Datafield::Type::INT, 1,
-      "ghmc_mflip"}}, /* 47 from ghmc.cpp */
-    {FIELD_GHMC_SCALE,
-     {&ghmc_tscale, Datafield::Type::INT, 1,
-      "ghmc_tscale"}}, /* 48 from ghmc.cpp */
-    {FIELD_WARNINGS,
-     {&warnings, Datafield::Type::INT, 1, "warnings"}}, /* 50 from global.cpp */
+    {FIELD_SWIMMING_PARTICLES_EXIST,
+     {&swimming_particles_exist, Datafield::Type::BOOL, 1,
+      "swimming_particles_exist"}}, /* from particle_data.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
      {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1,
@@ -236,7 +189,7 @@ std::size_t hash_value(Datafield const &field) {
   }
   default:
     throw std::runtime_error("Unknown type.");
-  };
+  }
 }
 
 void common_bcast_parameter(int i) {
@@ -256,14 +209,11 @@ void common_bcast_parameter(int i) {
     break;
   default:
     throw std::runtime_error("Unknown type.");
-    break;
   }
 
   on_parameter_change(i);
 }
 } // namespace
-
-int warnings = 1;
 
 void check_global_consistency() {
   using Utils::Mpi::all_compare;
@@ -288,15 +238,17 @@ void check_global_consistency() {
 
 /*************** REQ_BCAST_PAR ************/
 
-void mpi_bcast_parameter_slave(int node, int i) {
+void mpi_bcast_parameter_slave(int i) {
   common_bcast_parameter(i);
-  check_runtime_errors();
+  check_runtime_errors(comm_cart);
 }
 
+REGISTER_CALLBACK(mpi_bcast_parameter_slave)
+
 int mpi_bcast_parameter(int i) {
-  mpi_call(mpi_bcast_parameter_slave, -1, i);
+  Communication::mpiCallbacks().call(mpi_bcast_parameter_slave, i);
 
   common_bcast_parameter(i);
 
-  return check_runtime_errors();
+  return check_runtime_errors(comm_cart);
 }

@@ -7,6 +7,7 @@ function(CMAKE_TEST)
   endforeach(dependency)
   set(TEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TEST_FILE}")
   add_test(NAME ${TEST_NAME} COMMAND ${TEST_FILE})
+  set_tests_properties(${TEST_NAME} PROPERTIES RUN_SERIAL ON)
   set(cmake_tests ${cmake_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(CMAKE_TEST)
 
@@ -34,6 +35,6 @@ endif()
 
 cmake_test(FILE test_python_bindings.sh DEPENDENCIES BashUnitTests.sh)
 
-add_custom_target(check_cmake_install COMMAND ${CMAKE_CTEST_COMMAND} -C serial --output-on-failure)
+add_custom_target(check_cmake_install COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -C serial --output-on-failure)
 add_dependencies(check_cmake_install setup_install)
 

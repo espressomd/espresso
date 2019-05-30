@@ -23,23 +23,23 @@
 #define SHAPES_WALL_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Shapes {
 class Wall : public Shape {
 public:
   Wall() : m_n({1., 0., 0.}), m_d(0.0) {}
 
-  void calculate_dist(const Vector3d &pos, double *dist,
+  void calculate_dist(const Utils::Vector3d &pos, double *dist,
                       double *vec) const override;
 
-  void set_normal(const Vector3d &normal) {
+  void set_normal(const Utils::Vector3d &normal) {
     m_n = normal;
 
     m_n.normalize();
   }
 
-  Vector3d const &n() const { return m_n; }
+  Utils::Vector3d const &n() const { return m_n; }
 
   double const &d() const { return m_d; }
 
@@ -47,7 +47,7 @@ public:
 
 private:
   /** normal vector on the plane */
-  Vector3d m_n;
+  Utils::Vector3d m_n;
   /** distance of the wall from the origin. */
   double m_d;
 };

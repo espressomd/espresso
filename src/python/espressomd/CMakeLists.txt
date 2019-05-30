@@ -20,33 +20,21 @@
 add_custom_command(OUTPUT gen_pxiconfig.cpp
                    COMMAND ${PYTHON_EXECUTABLE}
                    ${CMAKE_CURRENT_SOURCE_DIR}/gen_pxiconfig.py
-                   ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig.cpp
-                   DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def
+                   ${CMAKE_SOURCE_DIR}/src/config/features.def ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig.cpp
+                   DEPENDS ${CMAKE_SOURCE_DIR}/src/config/features.def
                   )
 
-include_directories(${CMAKE_BINARY_DIR}/src)
-include_directories(${CMAKE_SOURCE_DIR}/src/core)
-include_directories(${CMAKE_BINARY_DIR}/src/core)
-if (HDF5_FOUND)
-    include_directories(${CMAKE_BINARY_DIR}/src/core/io/writer/h5md)
-    include_directories(${CMAKE_SOURCE_DIR}/src/core/io/writer/h5md)
-endif(HDF5_FOUND)
-
 add_executable(gen_pxiconfig gen_pxiconfig.cpp)
-add_dependencies(gen_pxiconfig EspressoConfig)
+target_link_libraries(gen_pxiconfig EspressoConfig)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/gen_pxiconfig > ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
                    DEPENDS gen_pxiconfig
                    )
 
-
-include_directories(SYSTEM ${PYTHON_INCLUDE_DIRS})
-include_directories(SYSTEM ${NUMPY_INCLUDE_DIR})
-
 add_custom_target(espressomd)
 add_custom_command(OUTPUT code_info.pyx
-        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
+        COMMAND ${PYTHON_EXECUTABLE} gen_code_info.py ${CMAKE_SOURCE_DIR}/src/config/features.def ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
         )
 
@@ -57,7 +45,7 @@ SET(cython_SRC  "${cython_SRC}" CACHE INTERNAL "cython_SRC")
 file(GLOB cython_HEADER *.pxd)
 SET(cython_HEADER  "${cython_HEADER}" CACHE INTERNAL "cython_HEADER")
 file(GLOB cython_AUX *.py)
-file(COPY MDA_ESP DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(MDA_ESP/__init__.py ${CMAKE_CURRENT_BINARY_DIR}/MDA_ESP/__init__.py COPYONLY)
 SET(cython_AUX  "${cython_AUX}" CACHE INTERNAL "cython_AUX")
 
 add_subdirectory(io)
@@ -80,7 +68,6 @@ foreach(cython_file ${cython_SRC})
   if(basename STREQUAL "")
       message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
   else()
-      list(APPEND cython_generated_SRC "${basename}.cpp")
       add_custom_command(OUTPUT ${outputpath}
                          COMMAND ${CYTHON_EXECUTABLE} ${CYTHON_FLAGS} --cplus
                          --directive embedsignature=True
@@ -93,14 +80,19 @@ foreach(cython_file ${cython_SRC})
                          DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi ${cython_file}
                                  ${cython_HEADER}
                          )
-      add_library(${basename} SHARED ${outputpath})
+      set(target "espressomd_${basename}")
+      add_library(${target} SHARED ${outputpath})
       if(NOT "${relpath}" STREQUAL "")
-          set_target_properties(${basename} PROPERTIES PREFIX "${relpath}/")
+          set_target_properties(${target} PROPERTIES PREFIX "${relpath}/")
       else()
-          set_target_properties(${basename} PROPERTIES PREFIX "")
+          set_target_properties(${target} PROPERTIES PREFIX "")
       endif()
+      set_target_properties(${target} PROPERTIES OUTPUT_NAME ${basename})
       if (APPLE)
-         set_target_properties(${basename} PROPERTIES SUFFIX ".so")
+         set_target_properties(${target} PROPERTIES
+                 SUFFIX ".so"
+                 LINK_FLAGS "-undefined dynamic_lookup"
+                 )
       endif()
       if ( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
           set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-cpp -Wno-strict-aliasing -Wno-maybe-uninitialized -Wno-unused-variable")
@@ -111,11 +103,14 @@ foreach(cython_file ${cython_SRC})
       else()
           set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-unused-variable")
       endif()
-      set_target_properties(${basename} PROPERTIES CXX_CLANG_TIDY "")
-      target_link_libraries(${basename} EspressoCore EspressoScriptInterface ${LIBRARIES})
-      add_dependencies(espressomd ${basename})
+      set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
+      target_link_libraries(${target} PRIVATE EspressoConfig EspressoCore EspressoScriptInterface)
+      target_include_directories(${target} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR})
+      add_dependencies(espressomd ${target})
   endif()
 endforeach()
+
+target_link_libraries(espressomd_profiler PRIVATE Profiler)
 
 foreach(auxfile ${cython_AUX})
   get_filename_component(filename ${auxfile} NAME)

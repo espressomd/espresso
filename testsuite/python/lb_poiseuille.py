@@ -32,13 +32,12 @@ by comparing to the analytical solution.
 
 AGRID = .25
 EXT_FORCE = .1
-VISC = .7
+VISC = 2.7
 DENS = 1.7
 TIME_STEP = 0.1
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
-             'fric': 1.0,
              'tau': TIME_STEP,
              'ext_force_density': [0.0, 0.0, EXT_FORCE]}
 
@@ -66,7 +65,7 @@ class LBPoiseuilleCommon(object):
 
     """Base class of the test that holds the test logic."""
     lbf = None
-    system = espressomd.System(box_l=[12.0, 3.0, 3.0])
+    system = espressomd.System(box_l=[9.0, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
@@ -92,7 +91,7 @@ class LBPoiseuilleCommon(object):
                        int((self.system.box_l[2] / AGRID) / 2)]
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
-        while diff > 0.01:
+        while diff > 0.005:
             self.system.integrator.run(100)
             new_val = self.lbf[mid_indices].velocity[2]
             diff = abs(new_val - old_val)
@@ -122,11 +121,11 @@ class LBPoiseuilleCommon(object):
                                      EXT_FORCE,
                                      VISC * DENS)
         rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
-        self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
+        self.assertLess(rmsd, 0.015 * AGRID / TIME_STEP)
 
 
 @ut.skipIf(not espressomd.has_features(
-    ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+    ['LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -135,8 +134,8 @@ class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
+    ['CUDA', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features or gpu.")
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the GPU implementation of the LB."""
@@ -144,6 +143,46 @@ class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
+
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
+    ['CUDA', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features or gpu.")
+class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
+
+    """Test for the higher order interpolation scheme of the LB."""
+
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+        self.lbf.set_interpolation_order("quadratic")
+
+    def test_profile(self):
+        """
+        Compare against analytical function by calculating the RMSD.
+
+        """
+        self.prepare()
+        velocities = np.zeros((50, 2))
+        x_values = np.linspace(
+            2.0 * AGRID,
+            self.system.box_l[0] - 2.0 * AGRID,
+            50)
+
+        cnt = 0
+        for x in x_values:
+            v_tmp = []
+            for y in range(int(self.system.box_l[1] + 1)):
+                for z in range(int(self.system.box_l[2] + 1)):
+                    v_tmp.append(
+                        self.lbf.get_interpolated_velocity([x, y * AGRID, z * AGRID])[2])
+            velocities[cnt, 1] = np.mean(np.array(v_tmp))
+            velocities[cnt, 0] = x
+            cnt += 1
+
+        v_expected = poiseuille_flow(x_values - 0.5 * self.system.box_l[0],
+                                     self.system.box_l[0] - 2.0 * AGRID,
+                                     EXT_FORCE,
+                                     VISC * DENS)
+        rmsd = np.sqrt(np.sum(np.square(v_expected - velocities[:, 1])))
+        self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
 
 if __name__ == '__main__':
     ut.main()

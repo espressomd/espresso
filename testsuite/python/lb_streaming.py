@@ -55,7 +55,6 @@ LB_PARAMETERS = {
     'visc': VISC,
     'bulk_visc': BULK_VISC,
     'tau': TAU,
-    'fric': 1.0,
     'dens': 1.0,
     'gamma_odd': 1.0,
     'gamma_even': 1.0
@@ -108,9 +107,6 @@ class LBStreamingCommon(object):
                 self.lbf[target_node_index].population = np.zeros(19)
 
 
-@ut.skipIf(
-    not espressomd.has_features('LB') or espressomd.has_features('SHANCHEN'),
-          "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, LBStreamingCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -119,10 +115,10 @@ class LBCPU(ut.TestCase, LBStreamingCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
 
 
-@ut.skipIf(
-    not espressomd.has_features(
-        'LB_GPU') or espressomd.has_features('SHANCHEN'),
-           "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.gpu_available() or 
+           not espressomd.has_features(
+    'CUDA'),
+    "Skipping test due to missing features.")
 class LBGPU(ut.TestCase, LBStreamingCommon):
 
     """Test for the GPU implementation of the LB."""

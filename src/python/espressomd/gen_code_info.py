@@ -24,11 +24,11 @@ import sys
 import os
 # find featuredefs.py
 moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
-sys.path.append(os.path.join(moduledir, '..', '..'))
+sys.path.append(os.path.join(moduledir, '..', '..', 'config'))
 import featuredefs
 
 if len(sys.argv) != 3:
-    print("Usage: {} DEFFILE OYXFILE".format(sys.argv[0]), file=sys.stderr)
+    print("Usage: {} DEFFILE PYXFILE".format(sys.argv[0]), file=sys.stderr)
     exit(2)
 
 deffilename, cfilename = sys.argv[1:3]
@@ -63,7 +63,10 @@ for feature in defs.allfeatures:
 
 cfile.write("""
     return sorted(f)
-""")
+
+def all_features():
+    return {}
+""".format(defs.allfeatures))
 
 cfile.close()
 print("Done.")

@@ -22,20 +22,17 @@ import os
 import cython
 import numpy as np
 cimport numpy as np
+from libc cimport stdint
 from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
-from globals cimport *
 from copy import deepcopy
 from . import utils
-from espressomd.utils import array_locked, is_valid_type
+from .utils import array_locked, is_valid_type
+from .utils cimport make_array_locked
 
 # Actor class
 ####################################################
-cdef class HydrodynamicInteraction(Actor):
-    def _lb_init(self):
-        raise Exception(
-            "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
 
 def _construct(cls, params):
@@ -43,228 +40,240 @@ def _construct(cls, params):
     obj._params = params
     return obj
 
-# LBFluid main class
-####################################################
-IF LB_GPU or LB:
-    cdef class LBFluid(HydrodynamicInteraction):
-        """
-        Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
+cdef class HydrodynamicInteraction(Actor):
+    def _lb_init(self):
+        raise Exception(
+            "Subclasses of HydrodynamicInteraction must define the _lb_init() method.")
 
-        """
+    def __reduce__(self):
+        return _construct, (self.__class__, self._params), None
 
-        def __reduce__(self):
-            return _construct, (self.__class__, self._params), None
+    def __getitem__(self, key):
+        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            if len(key) == 3:
+                return LBFluidRoutines(np.array(key))
+        else:
+            raise Exception(
+                "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," % key)
 
-        def __getitem__(self, key):
-            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
-                if len(key) == 3:
-                    return LBFluidRoutines(np.array(key))
-            else:
-                raise Exception(
-                    "%s is not a valid key. Should be a point on the nodegrid e.g. lbf[0,0,0]," % key)
+    # validate the given parameters on actor initialization
+    ####################################################
+    def validate_params(self):
+        default_params = self.default_params()
 
-        # validate the given parameters on actor initialization
-        ####################################################
-        def validate_params(self):
-            default_params = self.default_params()
+        utils.check_type_or_throw_except(
+            self._params["kT"], 1, float, "kT must be a number")
+        if self._params["kT"] > 0. and not self._params["seed"]:
+            raise ValueError(
+                "seed has to be given if temperature is not 0.")
 
-            IF SHANCHEN:
-                if not hasattr(self._params["dens"], "__getitem__"):
-                    raise ValueError(
-                        "Density must be two positive double (ShanChen)")
-                if not (self._params["dens"][0] > 0.0 and self._params["dens"][1] > 0.0):
-                    raise ValueError(
-                        "Density must be two positive double (ShanChen)")
-            ELSE:
-                if self._params["dens"] == default_params["dens"]:
-                    raise Exception("LB_FLUID density not set")
-                else:
-                    if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
-                        raise ValueError("Density must be one positive double")
+        if self._params["dens"] == default_params["dens"]:
+            raise Exception("LB_FLUID density not set")
+        else:
+            if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
+                raise ValueError("Density must be one positive double")
 
-        # list of valid keys for parameters
-        ####################################################
-        def valid_keys(self):
-            return "agrid", "dens", "fric", "ext_force_density", "visc", "tau", "couple", "bulk_visc", "gamma_odd", "gamma_even"
+    # list of valid keys for parameters
+    ####################################################
+    def valid_keys(self):
+        return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
-        # list of essential keys required for the fluid
-        ####################################################
-        def required_keys(self):
-            return ["dens", "agrid", "visc", "tau"]
+    # list of essential keys required for the fluid
+    ####################################################
+    def required_keys(self):
+        return ["dens", "agrid", "visc", "tau"]
 
-        # list of default parameters
-        ####################################################
-        def default_params(self):
-            IF SHANCHEN:
-                return {"agrid": -1.0,
-                        "dens": [-1.0, -1.0],
-                        "fric": [-1.0, -1.0],
-                        "ext_force_density": [0.0, 0.0, 0.0],
-                        "visc": [-1.0, -1.0],
-                        "bulk_visc": [-1.0, -1.0],
-                        "tau": -1.0,
-                        "couple": "2pt"}
-            ELSE:
-                return {"agrid": -1.0,
-                        "dens": -1.0,
-                        "fric": -1.0,
-                        "ext_force_density": [0.0, 0.0, 0.0],
-                        "visc": -1.0,
-                        "bulk_visc": -1.0,
-                        "tau": -1.0,
-                        "couple": "2pt"}
+    # list of default parameters
+    ####################################################
+    def default_params(self):
+        return {"agrid": -1.0,
+                "dens": -1.0,
+                "ext_force_density": [0.0, 0.0, 0.0],
+                "visc": -1.0,
+                "bulk_visc": -1.0,
+                "tau": -1.0,
+                "seed": None,
+                "kT": 0.}
 
-        # function that calls wrapper functions which set the parameters at C-Level
-        ####################################################
-        def _set_lattice_switch(self):
-            if lb_set_lattice_switch(1):
-                raise Exception("lb_set_lattice_switch error")
+    # function that calls wrapper functions which set the parameters at C-Level
+    ####################################################
+    def _set_lattice_switch(self):
+        raise Exception(
+            "Subclasses of HydrodynamicInteraction must define the _set_lattice_switch() method.")
 
-        def _set_params_in_es_core(self):
-            default_params = self.default_params()
+    def _set_params_in_es_core(self):
+        default_params = self.default_params()
 
-            if python_lbfluid_set_density(self._params["dens"]):
-                raise Exception("lb_lbfluid_set_density error")
+        cdef stdint.uint64_t seed
+        if self._params["kT"] > 0.:
+            seed = self._params["seed"]
+            lb_lbfluid_set_rng_state(seed)
+        lb_lbfluid_set_kT(self._params["kT"])
 
-            if python_lbfluid_set_tau(self._params["tau"]):
-                raise Exception("lb_lbfluid_set_tau error")
+        python_lbfluid_set_density(
+    self._params["dens"],
+    self._params["agrid"])
 
-            if python_lbfluid_set_visc(self._params["visc"]):
-                raise Exception("lb_lbfluid_set_visc error")
+        lb_lbfluid_set_tau(self._params["tau"])
 
-            if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
-                if python_lbfluid_set_bulk_visc(self._params["bulk_visc"]):
-                    raise Exception("lb_lbfluid_set_bulk_visc error")
+        python_lbfluid_set_viscosity(
+    self._params["visc"],
+    self._params["agrid"],
+    self._params["tau"])
 
-            if python_lbfluid_set_agrid(self._params["agrid"]):
-                raise Exception("lb_lbfluid_set_agrid error")
+        if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
+            python_lbfluid_set_bulk_viscosity(
+    self._params["bulk_visc"],
+    self._params["agrid"],
+    self._params["tau"])
 
-            if self._params["fric"] != default_params["fric"]:
-                if python_lbfluid_set_friction(self._params["fric"]):
-                    raise Exception("lb_lbfluid_set_friction error")
+        python_lbfluid_set_agrid(self._params["agrid"])
 
-            if python_lbfluid_set_ext_force_density(self._params["ext_force_density"]):
+        python_lbfluid_set_ext_force_density(
+    self._params["ext_force_density"],
+    self._params["agrid"],
+    self._params["tau"])
+
+        if "gamma_odd" in self._params:
+            python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
+
+        if "gamma_even" in self._params:
+            python_lbfluid_set_gamma_even(self._params["gamma_even"])
+
+        utils.handle_errors("LB fluid activation")
+
+    # function that calls wrapper functions which get the parameters from C-Level
+    ####################################################
+    def _get_params_from_es_core(self):
+        default_params = self.default_params()
+        cdef double kT = lb_lbfluid_get_kT()
+        self._params["kT"] = kT
+        cdef stdint.uint64_t seed
+        if kT > 0.0:
+            seed = lb_lbfluid_get_rng_state()
+            self._params['seed'] = seed
+        if python_lbfluid_get_density(self._params["dens"], self._params["agrid"]):
+            raise Exception("lb_lbfluid_get_density error")
+
+        self._params["tau"] = lb_lbfluid_get_tau()
+
+        if python_lbfluid_get_viscosity(self._params["visc"], self._params["agrid"], self._params["tau"]):
+            raise Exception("lb_lbfluid_set_viscosity error")
+
+        if not self._params["bulk_visc"] == default_params["bulk_visc"]:
+            if python_lbfluid_get_bulk_viscosity(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
+                raise Exception("lb_lbfluid_set_bulk_viscosity error")
+
+        if python_lbfluid_get_agrid(self._params["agrid"]):
+            raise Exception("lb_lbfluid_set_agrid error")
+
+        if not self._params["ext_force_density"] == default_params["ext_force_density"]:
+            if python_lbfluid_get_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"]):
                 raise Exception("lb_lbfluid_set_ext_force_density error")
 
-            if python_lbfluid_set_couple_flag(self._params["couple"]):
-                raise Exception("lb_lbfluid_set_couple_flag error")
+        return self._params
 
-            if "gamma_odd" in self._params:
-                if python_lbfluid_set_gamma_odd(self._params["gamma_odd"]):
-                    raise Exception("lb_lbfluid_set_gamma_odd error")
+    def set_interpolation_order(self, interpolation_order):
+        """ Set the order for the fluid interpolation scheme.
 
-            if "gamma_even" in self._params:
-                if python_lbfluid_set_gamma_even(self._params["gamma_even"]):
-                    raise Exception("lb_lbfluid_set_gamma_even error")
+        Parameters
+        ----------
+        interpolation_order : :obj:`str`
+            ``linear`` refers to linear interpolation, ``quadratic`` to quadratic interpolation.
 
-            utils.handle_errors("LB fluid activation")
+        """
+        if (interpolation_order == "linear"):
+            lb_lbinterpolation_set_interpolation_order(linear)
+        elif (interpolation_order == "quadratic"):
+            lb_lbinterpolation_set_interpolation_order(quadratic)
+        else:
+            raise ValueError("Invalid parameter")
 
-        # function that calls wrapper functions which get the parameters from C-Level
-        ####################################################
-        def _get_params_from_es_core(self):
-            default_params = self.default_params()
+    def get_interpolated_velocity(self, pos):
+        """Get LB fluid velocity at specified position.
 
-            if python_lbfluid_get_density(self._params["dens"]):
-                raise Exception("lb_lbfluid_get_density error")
+        Parameters
+        ----------
+        pos : array_like :obj:`float`
+              The position at which velocity is requested.
 
-            if python_lbfluid_get_tau(self._params["tau"]):
-                raise Exception("lb_lbfluid_set_tau error")
+        Returns
+        -------
+        v : array_like :obj:`float`
+            The LB fluid velocity at ``pos``.
 
-            if python_lbfluid_get_visc(self._params["visc"]):
-                raise Exception("lb_lbfluid_set_visc error")
+        """
+        cdef Vector3d p
 
-            if not self._params["bulk_visc"] == default_params["bulk_visc"]:
-                if python_lbfluid_get_bulk_visc(self._params["bulk_visc"]):
-                    raise Exception("lb_lbfluid_set_bulk_visc error")
+        for i in range(3):
+            p[i] = pos[i]
+        cdef Vector3d v = lb_lbinterpolation_get_interpolated_velocity_global(p) * lb_lbfluid_get_lattice_speed()
+        return make_array_locked(v)
 
-            if python_lbfluid_get_agrid(self._params["agrid"]):
-                raise Exception("lb_lbfluid_set_agrid error")
+    def print_vtk_velocity(self, path, bb1=None, bb2=None):
+        cdef vector[int] bb1_vec
+        cdef vector[int] bb2_vec
+        if bb1 is None or bb2 is None:
+            lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
+        else:
+            bb1_vec = bb1
+            bb2_vec = bb2
+            lb_lbfluid_print_vtk_velocity(
+                utils.to_char_pointer(path), bb1_vec, bb2_vec)
 
-            if not self._params["fric"] == default_params["fric"]:
-                if python_lbfluid_get_friction(self._params["fric"]):
-                    raise Exception("lb_lbfluid_set_friction error")
+    def print_vtk_boundary(self, path):
+        lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
 
-            if not self._params["ext_force_density"] == default_params["ext_force_density"]:
-                if python_lbfluid_get_ext_force_density(self._params["ext_force_density"]):
-                    raise Exception("lb_lbfluid_set_ext_force_density error")
+    def print_velocity(self, path):
+        lb_lbfluid_print_velocity(utils.to_char_pointer(path))
 
-            if not self._params["couple"] == default_params["couple"]:
-                if python_lbfluid_get_couple_flag(self._params["couple"]):
-                    raise Exception("lb_lbfluid_get_couple_flag error")
+    def print_boundary(self, path):
+        lb_lbfluid_print_boundary(utils.to_char_pointer(path))
 
-            return self._params
+    def save_checkpoint(self, path, binary):
+        tmp_path = path + ".__tmp__"
+        lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
+        os.rename(tmp_path, path)
 
-        def get_interpolated_velocity(self, pos):
-            """Get LB fluid velocity at specified position.
+    def load_checkpoint(self, path, binary):
+        lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
 
-            Parameters
-            ----------
-            pos : array_like :obj:`float`
-                  The position at which velocity is requested.
+    def _activate_method(self):
+        raise Exception(
+"Subclasses of HydrodynamicInteraction have to implement _activate_method.") 
 
-            Returns
-            -------
-            v : array_like :obj:`float`
-                The LB fluid velocity at ``pos``.
+    def _deactivate_method(self):
+        lb_lbfluid_set_lattice_switch(NONE)
 
-            """
-            cdef Vector3d p
-            cdef double[3] v
 
-            for i in range(3):
-                p[i] = pos[i]
+# LBFluid main class
+####################################################
+cdef class LBFluid(HydrodynamicInteraction):
+    """
+    Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
 
-            lb_lbfluid_get_interpolated_velocity_global(p, v)
-            return v
+    """
 
-        # input/output function wrappers for whole LB fields
-        ####################################################
-        def print_vtk_velocity(self, path, bb1=None, bb2=None):
-            cdef vector[int] bb1_vec
-            cdef vector[int] bb2_vec
-            if bb1 is None or bb2 is None:
-                lb_lbfluid_print_vtk_velocity(utils.to_char_pointer(path))
-            else:
-                bb1_vec = bb1
-                bb2_vec = bb2
-                lb_lbfluid_print_vtk_velocity(
-                    utils.to_char_pointer(path), bb1_vec, bb2_vec)
+    def _set_lattice_switch(self):
+        lb_lbfluid_set_lattice_switch(CPU)
 
-        def print_vtk_boundary(self, path):
-            lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
+    def _activate_method(self):
+        self.validate_params()
+        self._set_lattice_switch()
+        self._set_params_in_es_core()
 
-        def print_velocity(self, path):
-            lb_lbfluid_print_velocity(utils.to_char_pointer(path))
+    property stress:
+        def __get__(self):
+            cdef Vector6d res
+            res = lb_lbfluid_get_stress() 
+            return array_locked((
+                res[0], res[1], res[2], res[3], res[4], res[5]))
 
-        def print_boundary(self, path):
-            lb_lbfluid_print_boundary(utils.to_char_pointer(path))
+        def __set__(self, value):
+            raise NotImplementedError
 
-        def save_checkpoint(self, path, binary):
-            tmp_path = path + ".__tmp__"
-            lb_lbfluid_save_checkpoint(utils.to_char_pointer(tmp_path), binary)
-            os.rename(tmp_path, path)
-
-        def load_checkpoint(self, path, binary):
-            lb_lbfluid_load_checkpoint(utils.to_char_pointer(path), binary)
-
-        # Activate Actor
-        ####################################################
-        def _activate_method(self):
-            self.validate_params()
-            self._set_lattice_switch()
-            self._set_params_in_es_core()
-            utils.handle_errors("LB fluid activation")
-            IF LB:
-                return
-            ELSE:
-                raise Exception("LB not compiled in")
-
-        def _deactivate_method(self):
-            if lb_set_lattice_switch(0):
-                raise Exception("lb_set_lattice_switch error")
-
-IF LB_GPU:
-    cdef class LBFluidGPU(LBFluid):
+IF CUDA:
+    cdef class LBFluidGPU(HydrodynamicInteraction):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
 
@@ -274,21 +283,16 @@ IF LB_GPU:
             lb_lbfluid_remove_total_momentum()
 
         def _set_lattice_switch(self):
-            if lb_set_lattice_switch(2):
-                raise Exception("lb_set_lattice_switch error")
+            lb_lbfluid_set_lattice_switch(GPU)
 
         def _activate_method(self):
             self.validate_params()
             self._set_lattice_switch()
             self._set_params_in_es_core()
-            IF LB_GPU:
-                return
-            ELSE:
-                raise Exception("LB_GPU not compiled in")
 
         @cython.boundscheck(False)
         @cython.wraparound(False)
-        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None):
+        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None, three_point=False):
             """Calculate the fluid velocity at given positions.
 
             Parameters
@@ -312,84 +316,101 @@ IF LB_GPU:
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
-            lb_lbfluid_get_interpolated_velocity_at_positions(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
-            return velocities
+            if three_point:
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            else:
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+            return velocities * lb_lbfluid_get_lattice_speed()
 
-IF LB or LB_GPU:
-    cdef class LBFluidRoutines(object):
-        cdef Vector3i node
+cdef class LBFluidRoutines(object):
+    cdef Vector3i node
 
-        def __init__(self, key):
-            utils.check_type_or_throw_except(
-                key, 3, int, "The index of an lb fluid node consists of three integers.")
-            self.node[0] = key[0]
-            self.node[1] = key[1]
-            self.node[2] = key[2]
-            if not lb_lbnode_is_index_valid(self.node):
-                raise ValueError("LB node index out of bounds")
+    def __init__(self, key):
+        utils.check_type_or_throw_except(
+            key, 3, int, "The index of an lb fluid node consists of three integers.")
+        self.node[0] = key[0]
+        self.node[1] = key[1]
+        self.node[2] = key[2]
+        if not lb_lbnode_is_index_valid(self.node):
+            raise ValueError("LB node index out of bounds")
 
-        property velocity:
-            def __get__(self):
-                cdef double[3] double_return
-                lb_lbnode_get_u(self.node, double_return)
-                return array_locked(double_return)
+    property velocity:
+        def __get__(self):
+            return make_array_locked(python_lbnode_get_velocity(self.node))
 
-            def __set__(self, value):
-                cdef double[3] host_velocity
-                if all(is_valid_type(v, float) for v in value) and len(value) == 3:
-                    host_velocity = value
-                    lb_lbnode_set_u(self.node, host_velocity)
-                else:
-                    raise ValueError(
-                        "Velocity has to be of shape 3 and type float.")
-        property density:
-            def __get__(self):
-                cdef double[3] double_return
-                lb_lbnode_get_rho(self.node, double_return)
-                return array_locked(double_return)
+        def __set__(self, value):
+            cdef Vector3d c_velocity
+            if all(is_valid_type(v, float) for v in value) and len(value) == 3:
+                c_velocity[0] = value[0]
+                c_velocity[1] = value[1]
+                c_velocity[2] = value[2]
+                python_lbnode_set_velocity(self.node, c_velocity)
+            else:
+                raise ValueError(
+                    "Velocity has to be of shape 3 and type float.")
+    property density:
+        def __get__(self):
+            return python_lbnode_get_density(self.node)
 
-            def __set__(self, value):
-                raise NotImplementedError
+        def __set__(self, value):
+            python_lbnode_set_density(self.node, value)
 
-        property pi:
-            def __get__(self):
-                cdef double[6] pi
-                lb_lbnode_get_pi(self.node, pi)
-                return array_locked(np.array([[pi[0], pi[1], pi[3]],
-                                              [pi[1], pi[2], pi[4]],
-                                              [pi[3], pi[4], pi[5]]]))
+    property stress:
+        def __get__(self):
+            cdef Vector6d pi = python_lbnode_get_pi(self.node)
+            return array_locked(np.array([[pi[0], pi[1], pi[3]],
+                                          [pi[1], pi[2], pi[4]],
+                                          [pi[3], pi[4], pi[5]]]))
 
-            def __set__(self, value):
-                raise NotImplementedError
+        def __set__(self, value):
+            raise NotImplementedError
 
-        property pi_neq:
-            def __get__(self):
-                cdef double[6] pi
-                lb_lbnode_get_pi_neq(self.node, pi)
-                return array_locked(np.array([[pi[0], pi[1], pi[3]],
-                                              [pi[1], pi[2], pi[4]],
-                                              [pi[3], pi[4], pi[5]]]))
+    property stress_neq:
+        def __get__(self):
+            cdef Vector6d pi = python_lbnode_get_pi_neq(self.node)
+            return array_locked(np.array([[pi[0], pi[1], pi[3]],
+                                          [pi[1], pi[2], pi[4]],
+                                          [pi[3], pi[4], pi[5]]]))
 
-            def __set__(self, value):
-                raise NotImplementedError
+        def __set__(self, value):
+            raise NotImplementedError
 
-        property population:
-            def __get__(self):
-                cdef double[19] double_return
-                lb_lbnode_get_pop(self.node, double_return)
-                return array_locked(double_return)
+    property population:
+        def __get__(self):
+            cdef Vector19d double_return
+            double_return = lb_lbnode_get_pop(self.node)
+            return array_locked(np.array([double_return[0],
+                                          double_return[1],
+                                          double_return[2],
+                                          double_return[3],
+                                          double_return[4],
+                                          double_return[5],
+                                          double_return[6],
+                                          double_return[7],
+                                          double_return[8],
+                                          double_return[9],
+                                          double_return[10],
+                                          double_return[11],
+                                          double_return[12],
+                                          double_return[13],
+                                          double_return[14],
+                                          double_return[15],
+                                          double_return[16],
+                                          double_return[17],
+                                          double_return[18]]
+                   ))
 
-            def __set__(self, value):
-                cdef double[19] double_return
-                for i in range(19):
-                    double_return[i] = value[i]
-                lb_lbnode_set_pop(self.node, double_return)
+        def __set__(self, value):
+            cdef Vector19d double_return
+            for i in range(19):
+                double_return[i] = value[i]
+            lb_lbnode_set_pop(self.node, double_return)
 
-        property boundary:
-            def __get__(self):
-                cdef int int_return
-                lb_lbnode_get_boundary(self.node, & int_return)
-                return int_return
+    property boundary:
+        def __get__(self):
+            cdef int int_return
+            int_return = lb_lbnode_get_boundary(self.node)
+            return int_return
 
-            def __set__(self, value):
-                raise NotImplementedError
+        def __set__(self, value):
+            raise NotImplementedError

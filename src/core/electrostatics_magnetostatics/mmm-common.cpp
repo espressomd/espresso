@@ -33,7 +33,8 @@
 #include "config.hpp"
 
 #include "mmm-common.hpp"
-#include "utils.hpp"
+
+#include <cmath>
 
 std::vector<Polynom> modPsi;
 int n_modPsi = 0;

@@ -30,7 +30,7 @@ public:
   virtual void computeForces(SystemInterface &s){};
   virtual void computeTorques(SystemInterface &s){};
   virtual void computeEnergy(SystemInterface &s){};
-  virtual ~Actor() {}
+  virtual ~Actor() = default;
 };
 
 #endif /* _ACTOR_ACTOR_HPP */

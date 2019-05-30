@@ -34,6 +34,15 @@
 #include <string>
 #include <vector>
 
+/*
+ * @brief Salt for the RNGs
+ *
+ * This is to avoid correlations between the
+ * noise on the particle coupling and the fluid
+ * thermalization.
+ */
+enum class RNGSalt { FLUID, PARTICLES, LANGEVIN, BROWNIAN };
+
 namespace Random {
 extern std::mt19937 generator;
 extern std::normal_distribution<double> normal_distribution;
@@ -54,12 +63,12 @@ inline void check_user_has_seeded() {
     unseeded_error_thrown = true;
     unseeded_error();
   }
-  return;
 }
 
 /**
  * @brief Set seed of random number generators on each node.
  *
+ * @param cnt   Unused.
  * @param seeds A vector of seeds, must be at least n_nodes long.
  **/
 void mpi_random_seed(int cnt, std::vector<int> &seeds);
@@ -87,7 +96,7 @@ int get_state_size_of_generator();
 /**
  * @brief Initialize PRNG with MPI rank as seed.
  */
-void init_random(void);
+void init_random();
 
 /**
  * @brief Initialize PRNG with user-provided seed.
@@ -126,7 +135,7 @@ inline int i_random(int maxint) {
  * @brief draws a random number from the normal distribution with mean 0 and
  * variance 1.
  */
-inline double gaussian_random(void) {
+inline double gaussian_random() {
   using namespace Random;
   check_user_has_seeded();
   return normal_distribution(generator);
@@ -141,7 +150,7 @@ inline double gaussian_random(void) {
  *
  * @return Gaussian random number.
  */
-inline double gaussian_random_cut(void) {
+inline double gaussian_random_cut() {
   using namespace Random;
   check_user_has_seeded();
   const double random_number = 1.042267973 * normal_distribution(generator);
@@ -149,11 +158,68 @@ inline double gaussian_random_cut(void) {
   if (fabs(random_number) > 2 * 1.042267973) {
     if (random_number > 0) {
       return 2 * 1.042267973;
-    } else {
-      return -2 * 1.042267973;
     }
+    return -2 * 1.042267973;
   }
   return random_number;
+}
+
+/** @brief Generator for Gaussian random numbers.
+ * 
+ * Uses the Box-Muller
+ * transformation to generate two Gaussian random numbers from two
+ * uniform random numbers.
+ *
+ * @param d1 decorrelated uniform random from (0..1).
+ * @param d2 decorrelated uniform random from (0..1).
+ * @param &repeat_flag whether we need to calc new rnd numbers.
+ * 
+ * @return Gaussian random number.
+ *
+ */
+inline double gaussian_random_box_muller(double d1, double d2, int &repeat_flag) {
+  double x1, x2, r2, fac;
+  static int calc_new = 1;
+  static double save;
+
+  /* On every second call two gaussian random numbers are calculated
+     via the Box-Muller transformation. One is returned as the result
+     and the second one is stored for use on the next call.
+  */
+
+  if (calc_new) {
+
+    /* draw two uniform random numbers in the unit circle */
+    x1 = 2.0*d1;
+    x2 = 2.0*d2;
+    r2 = x1*x1 + x2*x2;
+    if ((r2 >= 1.0) || (r2 == 0.0)) {
+      repeat_flag = 1;
+      return NAN; // actually, no numbers
+    } else {
+      repeat_flag = 0;
+
+      /* perform Box-Muller transformation */
+      fac = sqrt(-2.0*log(r2)/r2);
+
+      /* save one number for later use */
+      save = x1*fac;
+      calc_new = 0;
+
+      /* return the second number */
+      return x2*fac;
+    }
+
+  } else {
+
+    repeat_flag = 0;
+    calc_new = 1;
+
+    /* return the stored gaussian random number */
+    return save;
+
+  }
+
 }
 
 #endif

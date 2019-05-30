@@ -29,9 +29,8 @@
 
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
-#include "utils/math/int_pow.hpp"
-#include "utils/math/sqr.hpp"
+#include <utils/math/int_pow.hpp>
+#include <utils/math/sqr.hpp>
 
 #ifdef GAY_BERNE
 
@@ -42,7 +41,7 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
 
 inline void
 add_gb_pair_force(const Particle *const p1, const Particle *const p2,
-                  IA_parameters *ia_params, double d[3], double dist,
+                  IA_parameters *ia_params, double const d[3], double dist,
                   double force[3], double torque1[3], double torque2[3])
 
 {
@@ -177,7 +176,7 @@ inline double gb_pair_energy(const Particle *p1, const Particle *p2,
   auto const chi2 = ia_params->GB_chi2;
   auto const mu = ia_params->GB_mu;
   auto const nu = ia_params->GB_nu;
-  auto const r = Vector3d({d[0], d[1], d[2]}).normalize();
+  auto const r = Utils::Vector3d({d[0], d[1], d[2]}).normalize();
 
   auto const ui = p1->r.calc_director();
   auto const uj = p2->r.calc_director();

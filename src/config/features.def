@@ -1,0 +1,169 @@
+# Feature definitions
+#
+# The definitions are used for
+# * generation of src/config-features.hpp, which checks the sanity of
+#   the various features and their combinations
+# * generation of myconfig-sample.hpp
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+#
+# Lines commented with '/* ... */' or '//' are copied to myconfig-sample.hpp
+# Lines commented with '#' are ignored
+
+/* Generic features */
+PARTIAL_PERIODIC
+EXTERNAL_FORCES
+MASS
+EXCLUSIONS
+BOND_CONSTRAINT
+LANGEVIN_PER_PARTICLE
+COLLISION_DETECTION
+METADYNAMICS
+NPT
+SWIMMER_REACTIONS
+ENGINE                          implies ROTATION, EXTERNAL_FORCES
+PARTICLE_ANISOTROPY             implies ROTATION
+BROWNIAN_DYNAMICS
+
+/* Rotation */
+ROTATION
+ROTATIONAL_INERTIA              implies ROTATION
+
+/* Electrostatics */
+ELECTROSTATICS
+P3M                             equals ELECTROSTATICS and FFTW
+MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
+EWALD_GPU                       requires CUDA and ELECTROSTATICS
+_P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
+
+/* Magnetostatics */
+DIPOLES                         implies ROTATION
+DP3M                            equals DIPOLES and FFTW
+DIPOLAR_DIRECT_SUM              requires CUDA
+DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
+
+DIPOLAR_BARNES_HUT              requires CUDA
+DIPOLAR_BARNES_HUT              equals DIPOLES and ROTATION and CUDA
+
+/* Virtual sites features */
+VIRTUAL_SITES                   
+VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
+VIRTUAL_SITES_RELATIVE          implies ROTATION
+
+VIRTUAL_SITES_INERTIALESS_TRACERS
+VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
+
+/* DPD features */
+DPD
+
+/* Lattice-Boltzmann features */
+LB_BOUNDARIES
+LB_BOUNDARIES_GPU               requires CUDA
+LB_ELECTROHYDRODYNAMICS
+ELECTROKINETICS                 implies EXTERNAL_FORCES, ELECTROSTATICS
+ELECTROKINETICS                 requires CUDA
+EK_BOUNDARIES                   implies ELECTROKINETICS, LB_BOUNDARIES_GPU, EXTERNAL_FORCES, ELECTROSTATICS
+EK_BOUNDARIES                   requires CUDA
+EK_DEBUG                        requires ELECTROKINETICS
+EK_DOUBLE_PREC                  requires ELECTROKINETICS
+
+/* Interaction features */
+TABULATED
+LENNARD_JONES
+WCA
+LJ_WARN_WHEN_CLOSE
+LENNARD_JONES_GENERIC           implies LENNARD_JONES
+LJCOS
+LJCOS2
+LJGEN_SOFTCORE                  implies LENNARD_JONES_GENERIC
+GAY_BERNE                       depends EXPERIMENTAL_FEATURES
+SMOOTH_STEP
+HERTZIAN
+GAUSSIAN
+BMHTF_NACL
+MORSE
+BUCKINGHAM
+SOFT_SPHERE
+HAT
+UMBRELLA                           requires EXPERIMENTAL_FEATURES 
+GAY_BERNE                       implies ROTATION
+GAY_BERNE                       requires EXPERIMENTAL_FEATURES
+OVERLAPPED
+THOLE                           requires ELECTROSTATICS
+
+/* Fluid-Structure Interactions (object in fluid) */
+OIF_LOCAL_FORCES
+OIF_GLOBAL_FORCES
+AFFINITY
+MEMBRANE_COLLISION
+
+
+/* Immersed-Boundary Bayreuth version */
+IMMERSED_BOUNDARY
+IMMERSED_BOUNDARY               requires VIRTUAL_SITES
+SCAFACOS_DIPOLES                requires SCAFACOS
+SCAFACOS_DIPOLES                implies DIPOLES
+SCAFACOS                        requires ELECTROSTATICS
+
+EXPERIMENTAL_FEATURES
+
+// Shape of the noise in the (Langevin) thermostat
+FLATNOISE                       requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
+GAUSSRANDOM                     requires not FLATNOISE and not GAUSSRANDOM_CUT
+GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
+
+
+/* Strange features. Use only if you know what you are doing! */
+/* turn off certain nonbonded interactions within molecules */
+NO_INTRA_NB                     notest
+
+/* Debugging */
+ADDITIONAL_CHECKS
+
+ESIF_DEBUG
+COMM_DEBUG
+EVENT_DEBUG
+INTEG_DEBUG
+CELL_DEBUG
+GHOST_DEBUG
+LATTICE_DEBUG
+HALO_DEBUG
+GRID_DEBUG
+VERLET_DEBUG
+PARTICLE_DEBUG
+P3M_DEBUG
+RANDOM_DEBUG
+FORCE_DEBUG
+THERMO_DEBUG
+LE_DEBUG
+LJ_DEBUG
+MORSE_DEBUG
+ESR_DEBUG
+ESK_DEBUG
+FENE_DEBUG
+GHOST_FORCE_DEBUG
+STAT_DEBUG
+POLY_DEBUG
+PTENSOR_DEBUG
+LB_DEBUG
+VIRTUAL_SITES_DEBUG
+CUDA_DEBUG
+H5MD_DEBUG
+ICC_DEBUG
+
+
+/* Single particle debugging */
+ONEPART_DEBUG
+// which particle id to debug
+//#define ONEPART_DEBUG_ID 13
+
+# External switches
+# Switches that are set by configure or gcc, not to be set manually
+CUDA external
+FFTW external
+H5MD external
+SCAFACOS external
+GSL external

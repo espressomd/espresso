@@ -53,7 +53,7 @@ class ReactionEnsembleTest(ut.TestCase):
     product_coefficients = [1, 1]
     nubar = 1
     system = espressomd.System(box_l=np.ones(3) * (N0 / c0)**(1.0 / 3.0))
-    system.seed = system.cell_system.get_state()['n_nodes'] * [2]
+    system.seed = system.cell_system.get_state()['n_nodes'] * [67]
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     volume = np.prod(system.box_l)  # cuboid box
@@ -64,7 +64,7 @@ class ReactionEnsembleTest(ut.TestCase):
     gamma = target_alpha**2 / (1. - target_alpha) * N0 / (volume**nubar)
     RE = reaction_ensemble.ReactionEnsemble(
         temperature=temperature,
-        exclusion_radius=exclusion_radius)
+        exclusion_radius=exclusion_radius, seed=12)
 
     @classmethod
     def setUpClass(cls):
@@ -106,14 +106,12 @@ class ReactionEnsembleTest(ut.TestCase):
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
-        RE.reaction(2 * N0)
+        RE.reaction(20 * N0)
 
-        system.seed = system.cell_system.get_state()[
-            'n_nodes'] * [np.random.randint(5)]
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
-        num_samples = 200
+        num_samples = 1000
         for i in range(num_samples):
             RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)
@@ -123,6 +121,7 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NA /= num_samples
         average_NHA /= num_samples
         average_alpha = average_NA / float(N0)
+        print(average_alpha)
         # Note: with 40 particles, alpha=0.5 and 1000*10 reactions, standard
         # deviation of average alpha is about 0.003 (determined from 40
         # repeated simulations).  We set the desired accuracy to 5*std = 0.015

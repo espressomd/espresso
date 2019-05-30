@@ -35,8 +35,12 @@ struct ParticleIterator : public boost::iterator_facade<
     }
   }
 
-public:
-  friend typename std::iterator_traits<ParticleIterator>::difference_type
+private:
+  using base_type = typename boost::iterator_facade<
+      ParticleIterator<BidirectionalIterator, Particle>, Particle,
+      boost::forward_traversal_tag>;
+
+  friend typename base_type::difference_type
   distance(ParticleIterator const &begin, ParticleIterator const &end) {
     if (begin == end)
       return 0;
@@ -58,7 +62,6 @@ public:
     return dist;
   }
 
-private:
   friend class boost::iterator_core_access;
 
   void increment() {
@@ -74,7 +77,6 @@ private:
     } else {
       m_part_id = 0;
 
-      /* Don't run over the end */
       if (m_cell != m_end)
         ++m_cell;
 

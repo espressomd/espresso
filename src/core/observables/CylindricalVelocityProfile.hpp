@@ -20,13 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OBSERVABLES_CYLINDRICALVELOCITYPROFILE_HPP
 
 #include "CylindricalPidProfileObservable.hpp"
-#include "utils.hpp"
-#include "utils/Histogram.hpp"
+#include <utils/Histogram.hpp>
 
 namespace Observables {
 class CylindricalVelocityProfile : public CylindricalPidProfileObservable {
 public:
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                                   static_cast<size_t>(n_phi_bins),
                                   static_cast<size_t>(n_z_bins)}};
@@ -34,17 +33,17 @@ public:
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
          std::make_pair(min_z, max_z)}};
     Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
-    std::vector<::Vector<3, double>> folded_positions;
+    std::vector<::Utils::Vector3d> folded_positions;
     std::transform(ids().begin(), ids().end(),
                    std::back_inserter(folded_positions), [&partCfg](int id) {
-                     return ::Vector<3, double>(folded_position(partCfg[id]));
+                     return ::Utils::Vector3d(folded_position(partCfg[id]));
                    });
-    std::vector<::Vector<3, double>> velocities;
+    std::vector<::Utils::Vector3d> velocities;
     std::transform(ids().begin(), ids().end(), std::back_inserter(velocities),
                    [&partCfg](int id) {
-                     return ::Vector<3, double>{{partCfg[id].m.v[0],
-                                                 partCfg[id].m.v[1],
-                                                 partCfg[id].m.v[2]}};
+                     return ::Utils::Vector3d{{partCfg[id].m.v[0],
+                                               partCfg[id].m.v[1],
+                                               partCfg[id].m.v[2]}};
                    });
     for (auto &p : folded_positions)
       p -= center;

@@ -1,7 +1,3 @@
-"""
-This sample simulates charged particles that interact via repulsive WCA potential. Electrostatic interactions are included using the P3M solver. Relevant properties of the simulation is stored as a pickle file.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -20,6 +16,11 @@ This sample simulates charged particles that interact via repulsive WCA potentia
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample simulates charged particles that interact via repulsive WCA
+potential. Electrostatic interactions are included using the P3M solver.
+Relevant properties of the simulation is stored in a pickle file.
+"""
 from __future__ import print_function
 import numpy as np
 import espressomd
@@ -38,8 +39,6 @@ print("""
 Program Information:""")
 print(espressomd.features())
 
-dev = "cpu"
-
 # System parameters
 #############################################################
 
@@ -57,14 +56,14 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 
 # warmup integration (with capped LJ potential)
@@ -84,8 +83,6 @@ int_n_times = 10
 
 # Interaction setup
 #############################################################
-
-system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
@@ -113,7 +110,7 @@ print("Start with minimal distance {}".format(act_min_dist))
 system.cell_system.max_num_cells = 2744
 
 
-# Assingn charge to particles
+# Assign charge to particles
 for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
@@ -149,7 +146,7 @@ while (i < warm_n_times and act_min_dist < min_dist):
     act_min_dist = system.analysis.min_dist()
     i += 1
 
-#   Increase LJ cap
+    # Increase LJ cap
     lj_cap = lj_cap + 10
     system.force_cap = lj_cap
 
@@ -169,19 +166,16 @@ try:
 except ImportError:
     import pickle
 
-with open("particle_save", "wb") as particle_save:
-    pickle.dump(system.part, particle_save, -1)
-
-with open("p3m_save", "wb") as p3m_save:
+with open("p3m_save.pkl", "wb") as p3m_save:
     pickle.dump(p3m, p3m_save, -1)
 
-with open("system_save", "wb") as system_save:
+with open("system_save.pkl", "wb") as system_save:
     pickle.dump(system, system_save, -1)
 
-with open("thermostat_save", "wb") as thermostat_save:
+with open("thermostat_save.pkl", "wb") as thermostat_save:
     pickle.dump(system.thermostat, thermostat_save, -1)
 
-with open("nonBondedInter_save", "wb") as bond_save:
+with open("nonBondedInter_save.pkl", "wb") as bond_save:
     pickle.dump(system.non_bonded_inter, bond_save, -1)
 
 # terminate program

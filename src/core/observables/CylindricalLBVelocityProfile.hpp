@@ -21,15 +21,11 @@
 #define OBSERVABLES_CYLINDRICALLBVELOCITYPROFILE_HPP
 
 #include "CylindricalLBProfileObservable.hpp"
-#include "grid.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
-#include "partCfg_global.hpp"
-#include "utils/Histogram.hpp"
 
 namespace Observables {
 class CylindricalLBVelocityProfile : public CylindricalLBProfileObservable {
 public:
-  std::vector<double> operator()(PartCfg &partCfg) const override;
+  std::vector<double> operator()() const override;
   int n_values() const override { return 3 * n_r_bins * n_phi_bins * n_z_bins; }
 };
 

@@ -22,14 +22,16 @@
 #include "minimize_energy.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "initialize.hpp"
+#include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
-#include "utils.hpp"
 
-#include <algorithm>
+#include <utils/math/sqr.hpp>
+
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
+
+#include <algorithm>
 #include <limits>
 
 #ifdef MINIMIZE_ENERGY_DEBUG
@@ -45,12 +47,12 @@ struct MinimizeEnergyParameters {
   double max_displacement;
 };
 
-static MinimizeEnergyParameters *params = 0;
+static MinimizeEnergyParameters *params = nullptr;
 
 /* Signum of val */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
-bool steepest_descent_step(void) {
+bool steepest_descent_step() {
   // Maximal force encountered on node
   double f_max = -std::numeric_limits<double>::max();
   // and globally
@@ -119,10 +121,6 @@ bool steepest_descent_step(void) {
 
   set_resort_particles(Cells::RESORT_LOCAL);
 
-  MINIMIZE_ENERGY_TRACE(
-      printf("f_max %e resort_particles %d\n", f_max, resort_particles));
-  announce_resort_particles();
-
   // Synchronize maximum force/torque encountered
   namespace mpi = boost::mpi;
   auto const f_max_global =
@@ -144,7 +142,7 @@ void minimize_energy_init(const double f_max, const double gamma,
   params->max_displacement = max_displacement;
 }
 
-bool minimize_energy(void) {
+void minimize_energy() {
   if (!params)
     params = new MinimizeEnergyParameters;
 
@@ -153,6 +151,4 @@ bool minimize_energy(void) {
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   integrate_vv(params->max_steps, -1);
   integ_switch = integ_switch_old;
-
-  return true;
 }

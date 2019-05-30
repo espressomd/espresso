@@ -41,25 +41,21 @@ IF ELECTROSTATICS:
         void mpi_bcast_coulomb_params()
 
     IF P3M:
-        from p3m_common cimport p3m_parameter_struct
-    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-        cdef enum CoulombMethod:
-            COULOMB_NONE, \
-                COULOMB_DH, \
-                COULOMB_P3M, \
-                COULOMB_MMM1D, \
-                COULOMB_MMM2D, \
-                COULOMB_MAGGS, \
-                COULOMB_ELC_P3M, \
-                COULOMB_RF, \
-                COULOMB_INTER_RF, \
-                COULOMB_P3M_GPU, \
-                COULOMB_MMM1D_GPU, \
-                COULOMB_EK, \
-                COULOMB_SCAFACOS
+        from p3m_common cimport P3MParameters
 
-        int coulomb_set_prefactor(double prefactor)
-        void deactivate_coulomb_method()
+    cdef extern from "electrostatics_magnetostatics/coulomb.hpp":
+
+        cdef enum CoulombMethod:
+                    COULOMB_NONE, \
+                    COULOMB_DH, \
+                    COULOMB_P3M, \
+                    COULOMB_MMM1D, \
+                    COULOMB_MMM2D, \
+                    COULOMB_ELC_P3M, \
+                    COULOMB_RF, \
+                    COULOMB_P3M_GPU, \
+                    COULOMB_MMM1D_GPU, \
+                    COULOMB_SCAFACOS
 
         ctypedef struct Coulomb_parameters:
             double prefactor
@@ -67,9 +63,14 @@ IF ELECTROSTATICS:
 
         cdef extern Coulomb_parameters coulomb
 
+    cdef extern from "electrostatics_magnetostatics/coulomb.hpp" namespace "Coulomb":
+
+        int set_prefactor(double prefactor)
+        void deactivate_method()
+
     IF P3M:
         cdef extern from "electrostatics_magnetostatics/p3m-common.hpp":
-            ctypedef struct p3m_parameter_struct:
+            ctypedef struct P3MParameters:
                 double alpha_L
                 double r_cut_iL
                 int    mesh[3]
@@ -96,7 +97,7 @@ IF ELECTROSTATICS:
             int p3m_adaptive_tune(char ** log)
 
             ctypedef struct p3m_data_struct:
-                p3m_parameter_struct params
+                P3MParameters params
 
             # links intern C-struct with python object
             cdef extern p3m_data_struct p3m
@@ -186,6 +187,18 @@ IF ELECTROSTATICS:
         cdef extern Debye_hueckel_params dh_params
 
         int dh_set_params(double kappa, double r_cut)
+
+    cdef extern from "electrostatics_magnetostatics/reaction_field.hpp":
+        ctypedef struct Reaction_field_params:
+            double kappa
+            double epsilon1
+            double epsilon2
+            double r_cut
+
+        cdef extern Reaction_field_params rf_params
+
+        int rf_set_params(double kappa, double epsilon1, double epsilon2,
+                          double r_cut)
 
 IF ELECTROSTATICS:
     cdef extern from "electrostatics_magnetostatics/mmm1d.hpp":

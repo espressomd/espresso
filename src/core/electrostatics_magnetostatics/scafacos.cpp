@@ -32,17 +32,23 @@
 #include <memory>
 #include <numeric>
 
+#include "Scafacos.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "scafacos/Scafacos.hpp"
 #include "tuning.hpp"
-#include "utils.hpp"
+
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+
+#if defined(SCAFACOS_DIPOLES) && !defined(FCS_ENABLE_DIPOLES)
+#error                                                                         \
+    "SCAFACOS_DIPOLES requires dipoles support in scafacos library (FCS_ENABLE_DIPOLES)."
+#endif
 
 /** This file contains the c-like interface for Scafacos */
 
@@ -141,8 +147,8 @@ void ScafacosData::update_particle_forces() const {
 
       // Add to particles
       for (int j = 0; j < 3; j++) {
-        p.f.f[j] += coulomb.Dprefactor * f[j];
-        p.f.torque[j] += coulomb.Dprefactor * t[j];
+        p.f.f[j] += dipole.prefactor * f[j];
+        p.f.torque[j] += dipole.prefactor * t[j];
       }
       it++;
 #endif
@@ -158,24 +164,22 @@ void ScafacosData::update_particle_forces() const {
   }
 }
 
-void add_pair_force(Particle *p1, Particle *p2, double *d, double dist,
-                    double *force) {
+void add_pair_force(double q1q2, const double *d, double dist, double *force) {
   if (dist > get_r_cut())
     return;
 
   assert(scafacos);
   const double field = scafacos->pair_force(dist);
-  const double fak = p2->p.q * p1->p.q * field * coulomb.prefactor / dist;
+  const double fak = q1q2 * field / dist;
 
   for (int i = 0; i < 3; i++) {
-    p1->f.f[i] -= fak * d[i];
-    p2->f.f[i] += fak * d[i];
+    force[i] -= fak * d[i];
   }
 }
 
-double pair_energy(Particle *p1, Particle *p2, double dist) {
+double pair_energy(double q1q2, double dist) {
   if (dist <= get_r_cut())
-    return coulomb.prefactor * p1->p.q * p2->p.q * scafacos->pair_energy(dist);
+    return q1q2 * scafacos->pair_energy(dist);
   else
     return 0.;
 }
@@ -238,7 +242,7 @@ double long_range_energy() {
 #ifdef SCAFACOS_DIPOLES
       scafacos->run_dipolar(particles.dipoles, particles.positions,
                             particles.fields, particles.potentials);
-      return -0.5 * coulomb.Dprefactor *
+      return -0.5 * dipole.prefactor *
              std::inner_product(particles.dipoles.begin(),
                                 particles.dipoles.end(),
                                 particles.potentials.begin(), 0.0);
@@ -258,17 +262,14 @@ void set_r_cut_and_tune_local(double r_cut) {
   scafacos->tune(particles.charges, particles.positions);
 }
 
+REGISTER_CALLBACK(set_r_cut_and_tune_local)
+
 /** Determine runtime for a specific cutoff */
 double time_r_cut(double r_cut) {
-  assert(this_node == 0);
-  double t;
-
   /** Set cutoff to time */
-  mpi_call(mpi_scafacos_set_r_cut_and_tune_slave, 0, 0);
-  MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
-
+  mpi_call(set_r_cut_and_tune_local, r_cut);
   set_r_cut_and_tune_local(r_cut);
-  // mpi_bcast_coulomb_params();
+
   return time_force_calc(10);
 }
 
@@ -342,7 +343,7 @@ static void set_params_safe(const std::string &method,
   scafacos->set_dipolar(dipolar_ia);
 #ifdef DIPOLES
   if (dipolar_ia) {
-    coulomb.Dmethod = DIPOLAR_SCAFACOS;
+    dipole.method = DIPOLAR_SCAFACOS;
   }
 #endif
 #ifdef ELECTROSTATICS
@@ -350,7 +351,7 @@ static void set_params_safe(const std::string &method,
     coulomb.method = COULOMB_SCAFACOS;
   }
 #endif
-  scafacos->set_common_parameters(box_l, per, n_part);
+  scafacos->set_common_parameters(box_l.data(), per, n_part);
 
   on_coulomb_change();
 
@@ -358,6 +359,8 @@ static void set_params_safe(const std::string &method,
     tune();
   }
 }
+
+REGISTER_CALLBACK(set_params_safe)
 
 /** Bend result from scafacos back to original format */
 std::string get_method_and_parameters() {
@@ -383,26 +386,8 @@ double get_r_cut() {
 
 void set_parameters(const std::string &method, const std::string &params,
                     bool dipolar_ia) {
-  mpi_call(mpi_scafacos_set_parameters_slave, method.size(), params.size());
-
-  /** This requires C++11, otherwise this is undefined because std::string was
-   * not required to have continuous memory before. */
-  /* const_cast is ok, this code runs only on rank 0 where the mpi call does not
-   * modify the buffer */
-  MPI_Bcast(const_cast<char *>(&(*method.begin())), method.size(), MPI_CHAR, 0,
-            comm_cart);
-  MPI_Bcast(const_cast<char *>(&(*params.begin())), params.size(), MPI_CHAR, 0,
-            comm_cart);
-
-#ifdef SCAFACOS_DIPOLES
-  bool d = dipolar_ia;
-  MPI_Bcast(&d, sizeof(bool), MPI_CHAR, 0, comm_cart);
-#endif
-
+  mpi_call(set_params_safe, method, params, dipolar_ia);
   set_params_safe(method, params, dipolar_ia);
-#ifdef SCAFACOS_DIPOLES
-  set_dipolar(d);
-#endif
 }
 
 bool dipolar() {
@@ -419,14 +404,15 @@ void set_dipolar(bool d) {
 }
 
 void free_handle() {
-
   if (this_node == 0)
-    mpi_call(mpi_scafacos_free_slave, 0, 0);
+    mpi_call(free_handle);
   if (scafacos) {
     delete scafacos;
     scafacos = 0;
   }
 }
+
+REGISTER_CALLBACK(free_handle)
 
 void update_system_params() {
   // If scafacos is not active, do nothing
@@ -439,45 +425,8 @@ void update_system_params() {
   int tmp;
   MPI_Allreduce(&n_part, &tmp, 1, MPI_INT, MPI_MAX, comm_cart);
   n_part = tmp;
-  scafacos->set_common_parameters(box_l, per, n_part);
+  scafacos->set_common_parameters(box_l.data(), per, n_part);
 }
 
 } // namespace Scafacos
 #endif /* SCAFACOS */
-
-void mpi_scafacos_set_parameters_slave(int n_method, int n_params) {
-#if defined(SCAFACOS)
-  using namespace Scafacos;
-  std::string method;
-  std::string params;
-
-  method.resize(n_method);
-  params.resize(n_params);
-
-  /** This requires C++11, otherwise this is undefined because std::string was
-   * not required to have continuous memory before. */
-  MPI_Bcast(&(*method.begin()), n_method, MPI_CHAR, 0, comm_cart);
-  MPI_Bcast(&(*params.begin()), n_params, MPI_CHAR, 0, comm_cart);
-  bool dip = false;
-#ifdef SCAFACOS_DIPOLES
-  MPI_Bcast(&dip, sizeof(bool), MPI_CHAR, 0, comm_cart);
-#endif
-  set_params_safe(method, params, dip);
-#endif /* SCAFACOS */
-}
-
-void mpi_scafacos_free_slave(int a, int b) {
-#if defined(SCAFACOS)
-  using namespace Scafacos;
-  free_handle();
-#endif
-}
-
-void mpi_scafacos_set_r_cut_and_tune_slave(int a, int b) {
-#if defined(SCAFACOS)
-  using namespace Scafacos;
-  double r_cut;
-  MPI_Bcast(&r_cut, 1, MPI_DOUBLE, 0, comm_cart);
-  set_r_cut_and_tune_local(r_cut);
-#endif
-}

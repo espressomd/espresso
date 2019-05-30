@@ -35,32 +35,23 @@
 #include "debug.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
-/** Non-Bonded tabulated potentials:
-    Reads tabulated parameters and force and energy tables from a file.
-    ia_params and force/energy tables are then communicated to each node
-
-    @param part_type_a particle type for which the interaction is defined
-    @param part_type_b particle type for which the interaction is defined
-    @param filename from which file to fetch the data
-
-    @return <ul>
-    <li> 0 on success
-    <li> 1 on particle type mismatches
-    <li> 2 file name too long
-    <li> 3 cannot open the file
-    <li> 4 file too short
-    <li> 5 file broken, cannot parse numbers
-    <li> 6 number of points of existing potential changed
-    </ul>
-*/
+/** Set the parameters of a non-Bonded tabulated potential.
+ *  ia_params and force/energy tables are communicated to each node
+ *
+ *  @param part_type_a  particle type for which the interaction is defined
+ *  @param part_type_b  particle type for which the interaction is defined
+ *  @param min          @copybrief TabulatedPotential::minval
+ *  @param max          @copybrief TabulatedPotential::maxval
+ *  @param energy       @copybrief TabulatedPotential::energy_tab
+ *  @param force        @copybrief TabulatedPotential::force_tab
+ *  @retval ES_OK
+ */
 int tabulated_set_params(int part_type_a, int part_type_b, double min,
                          double max, std::vector<double> const &energy,
                          std::vector<double> const &force);
 
-/** Add a non-bonded pair force by linear interpolation from a table.
-    Needs feature TABULATED compiled in (see \ref config.hpp). */
+/** Add a non-bonded pair force by linear interpolation from a table. */
 inline void add_tabulated_pair_force(const Particle *const p1,
                                      const Particle *const p2,
                                      IA_parameters const *ia_params,
@@ -70,20 +61,18 @@ inline void add_tabulated_pair_force(const Particle *const p1,
     auto const fac = ia_params->TAB.force(dist) / dist;
 
     for (int j = 0; j < 3; j++)
-      force[j] -= fac * d[j];
+      force[j] += fac * d[j];
   }
 }
 
-/** Add a non-bonded pair energy by linear interpolation from a table.
-    Needs feature TABULATED compiled in (see \ref config.hpp). */
+/** Add a non-bonded pair energy by linear interpolation from a table. */
 inline double tabulated_pair_energy(Particle const *, Particle const *,
                                     IA_parameters const *ia_params,
                                     const double d[3], double dist) {
   if (dist < ia_params->TAB.cutoff()) {
     return ia_params->TAB.energy(dist);
-  } else {
-    return 0.0;
   }
+  return 0.0;
 }
 
 #endif

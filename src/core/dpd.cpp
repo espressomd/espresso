@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref dpd.hpp "dpd.hpp"
+ *  Implementation of dpd.hpp.
  */
 #include "dpd.hpp"
 
@@ -30,6 +30,8 @@
 #include "integrate.hpp"
 #include "random.hpp"
 #include "thermostat.hpp"
+
+#include <utils/constants.hpp>
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
@@ -115,15 +117,14 @@ void dpd_update_params(double pref_scale) {
 static double weight(int type, double r_cut, double dist_inv) {
   if (type == 0) {
     return dist_inv;
-  } else {
-    return dist_inv - 1.0 / r_cut;
   }
+  return dist_inv - 1.0 / r_cut;
 }
 
-Vector3d dpd_pair_force(const Particle *p1, const Particle *p2,
-                        IA_parameters *ia_params, double *d, double dist,
-                        double dist2) {
-  Vector3d f{};
+Utils::Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
+                               IA_parameters *ia_params, double const *d,
+                               double dist, double dist2) {
+  Utils::Vector3d f{};
   auto const dist_inv = 1.0 / dist;
 
   if ((dist < ia_params->dpd_r_cut) && (ia_params->dpd_pref1 > 0.0)) {

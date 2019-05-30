@@ -25,7 +25,7 @@ from espressomd import drude_helpers
 
 class Drude(ut.TestCase):
 
-    @ut.skipIf(not espressomd.has_features("P3M", "THOLE", "LANGEVIN_PER_PARTICLE"), "Test needs P3M, THOLE and LANGEVIN_PER_PARTICLE")
+    @ut.skipIf(not espressomd.has_features("P3M", "ELECTROSTATICS", "THOLE", "LANGEVIN_PER_PARTICLE", "MASS"), "Test needs P3M, ELECTROSTATICS, THOLE and LANGEVIN_PER_PARTICLE")
     def test(self):
         """
         Sets up a BMIM PF6 pair separated in y-direction with fixed cores.
@@ -142,7 +142,10 @@ class Drude(ut.TestCase):
         system.part.add(id=6, type=types["BMIM_C3"], pos=pos_com + [
                         0, 0.187, -2.389], q=charges["BMIM_C3"], mass=masses["BMIM_C3"], fix=[1, 1, 1])
 
-        system.thermostat.set_langevin(kT=temperature_com, gamma=gamma_com)
+        system.thermostat.set_langevin(
+            kT=temperature_com,
+            gamma=gamma_com,
+            seed=42)
 
         p3m = espressomd.electrostatics.P3M(
             prefactor=coulomb_prefactor, accuracy=1e-4, mesh=[18, 18, 18], cao=5)

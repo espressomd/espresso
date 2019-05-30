@@ -29,8 +29,8 @@
 
 #ifdef ROTATION
 
-#include "Vector.hpp"
 #include "particle_data.hpp"
+#include <utils/Vector.hpp>
 
 constexpr const int ROTATION_X = 2;
 constexpr const int ROTATION_Y = 4;
@@ -52,11 +52,13 @@ void convert_torques_propagate_omega();
     the integration loop */
 void convert_initial_torques();
 
-Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &v);
-Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v);
+Utils::Vector3d convert_vector_body_to_space(const Particle &p,
+                                             const Utils::Vector3d &v);
+Utils::Vector3d convert_vector_space_to_body(const Particle &p,
+                                             const Utils::Vector3d &v);
 
-inline void convert_quat_to_director(const Vector<4, double> &quat,
-                                     Vector3d &director) {
+inline void convert_quat_to_director(const Utils::Vector4d &quat,
+                                     Utils::Vector3d &director) {
   /* director */
   director[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
   director[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);
@@ -75,26 +77,23 @@ void multiply_quaternions(const T1 &a, const T2 &b, T3 &result) {
 }
 
 /** Convert director to quaternions */
-int convert_director_to_quat(const Vector3d &d, Vector<4, double> &quat);
+int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat);
 
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
-inline int convert_dip_to_quat(const Vector3d &dip, Vector<4, double> &quat,
-                               double *dipm) {
-  double dm;
-  // Calculate magnitude of dipole moment
-  dm = sqrt(dip[0] * dip[0] + dip[1] * dip[1] + dip[2] * dip[2]);
-  *dipm = dm;
+inline std::pair<Utils::Vector4d, double>
+convert_dip_to_quat(const Utils::Vector3d &dip) {
+  Utils::Vector4d quat;
   convert_director_to_quat(dip, quat);
 
-  return 0;
+  return {quat, dip.norm()};
 }
 
 #endif
 
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
-void local_rotate_particle(Particle &p, const Vector3d &a, const double phi);
+void local_rotate_particle(Particle &p, const Utils::Vector3d &a, double phi);
 
 inline void normalize_quaternion(double *q) {
   double tmp = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
