@@ -22,8 +22,7 @@ import espressomd
 from espressomd import lb
 
 
-@ut.skipIf(not espressomd.has_features("LB_GPU") or espressomd.has_features(
-    "SHANCHEN"), "LB_GPU feature not available, skipping test!")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features("CUDA"), "CUDA feature or gpu not available, skipping test!")
 class TestLBGetUAtPos(ut.TestCase):
 
     """
@@ -58,7 +57,6 @@ class TestLBGetUAtPos(ut.TestCase):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.params['tau'],
-            fric=self.params['friction']
         )
         self.system.actors.add(self.lb_fluid)
         self.vels = np.zeros((self.n_nodes_per_dim, 3))
@@ -79,7 +77,7 @@ class TestLBGetUAtPos(ut.TestCase):
         numpy.testing.assert_allclose(
             self.interpolated_vels[:-1],
             self.lb_fluid.get_interpolated_fluid_velocity_at_positions(
-                self.system.part[:].pos)[:-1],
+                self.system.part[:].pos, False)[:-1],
             atol=1e-4)
 
 

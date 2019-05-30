@@ -16,13 +16,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "grid.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #ifdef GSL
 #include "gsl/gsl_fit.h"
 #endif
-#include "Vector.hpp"
+#include <utils/Vector.hpp>
 #include <vector>
 
 #include "Cluster.hpp"
@@ -30,26 +29,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace ClusterAnalysis {
 
 // Center of mass of an aggregate
-Vector3d Cluster::center_of_mass() {
+Utils::Vector3d Cluster::center_of_mass() {
   return center_of_mass_subcluster(particles);
 }
 
 // Center of mass of an aggregate
-Vector3d
+Utils::Vector3d
 Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
-  Vector3d com{};
+  Utils::Vector3d com{};
 
   // The distances between the particles "folded", such that all distances
   // are smaller than box_l/2 in a periodic system. The 1st particle
   // of the cluster is arbitrarily chosen as reference.
 
-  Vector3d reference_position = folded_position(partCfg()[particles[0]]);
-  Vector3d dist_to_reference;
+  Utils::Vector3d reference_position = folded_position(partCfg()[particles[0]]);
+  Utils::Vector3d dist_to_reference;
   double total_mass = 0.;
   for (int pid :
        subcl_partcicle_ids) // iterate over all particle ids within a cluster
   {
-    const Vector3d folded_pos = folded_position(partCfg()[pid]);
+    const Utils::Vector3d folded_pos = folded_position(partCfg()[pid]);
     get_mi_vector(dist_to_reference, folded_pos,
                   reference_position); // add current particle positions
     com = com + dist_to_reference * partCfg()[pid].p.mass;
@@ -74,13 +73,11 @@ double Cluster::longest_distance() {
   double ld = 0.;
   for (auto a = particles.begin(); a != particles.end(); a++) {
     for (auto b = a; ++b != particles.end();) {
-      double dist[3];
-      get_mi_vector(dist, partCfg()[*a].r.p, partCfg()[*b].r.p);
+      auto const dist =
+          get_mi_vector(partCfg()[*a].r.p, partCfg()[*b].r.p).norm();
 
       // Larger than previous largest distance?
-      if (ld < sqrt(sqrlen(dist))) {
-        ld = sqrt(sqrlen(dist)); // save bigger value as longest distance - ld
-      }
+      ld = std::max(ld, dist);
     }
   }
   return ld;
@@ -94,13 +91,11 @@ double Cluster::radius_of_gyration() {
 double
 Cluster::radius_of_gyration_subcluster(std::vector<int> &subcl_particle_ids) {
   // Center of mass
-  Vector3d com = center_of_mass_subcluster(subcl_particle_ids);
+  Utils::Vector3d com = center_of_mass_subcluster(subcl_particle_ids);
   double sum_sq_dist = 0.;
   for (auto const pid : subcl_particle_ids) {
-    double distance[3];
-    get_mi_vector(distance, com, partCfg()[pid].r.p);
     // calculate square length of this distance
-    sum_sq_dist += sqrlen(distance);
+    sum_sq_dist += get_mi_vector(com, partCfg()[pid].r.p).norm2();
   }
 
   return sqrt(sum_sq_dist / subcl_particle_ids.size());
@@ -121,7 +116,7 @@ std::vector<std::size_t> sort_indices(const std::vector<T> &v) {
 
 std::pair<double, double> Cluster::fractal_dimension(double dr) {
 #ifdef GSL
-  Vector3d com = center_of_mass();
+  Utils::Vector3d com = center_of_mass();
   // calculate Df using linear regression on the logarithms of the radii of
   // gyration against the number of particles in sub-clusters. Particles are
   // included step by step from the center of mass outwards
@@ -130,11 +125,9 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   std::vector<double> distances;
 
   for (auto const &it : particles) {
-    double dist[3];
-    get_mi_vector(dist, com.begin(), partCfg()[it].r.p);
-    distances.push_back(
-        sqrt(sqrlen(dist))); // add distance from the current particle to the
-                             // com in the distances vectors
+    distances.push_back(get_mi_vector(com.begin(), partCfg()[it].r.p)
+                            .norm()); // add distance from the current particle
+                                      // to the com in the distances vectors
   }
 
   // Get particle indices in the cluster which yield distances  sorted in

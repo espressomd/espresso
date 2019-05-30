@@ -93,7 +93,7 @@ system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 ## Exercise 1 ##
 # Why are the Langevin parameters chosen as such?
 
@@ -174,8 +174,8 @@ for cntr in range(npart):
     z = ...
     quats = ...
 
-    system.part.add(pos=[x, y, z], type=0, swimming={
-                    'v_swim': vel}, quat=quats, rotation=[1, 1, 1])
+    system.part.add(pos=[x, y, z], type=0, swimming={'v_swim': vel},
+                    quat=quats, rotation=[1, 1, 1])
 
 ##########################################################################
 

@@ -43,7 +43,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.part.add(id=1, pos=self.start_pos, type=0)
 
     def tearDown(self):
-
+        self.system.non_bonded_inter.reset()
         self.system.part.clear()
 
     # Required, since assertAlmostEqual does NOT check significant places
@@ -79,15 +79,16 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
 
+        E_ref = tests_common.lj_generic_potential(
+            r=numpy.arange(1, 232) * self.step_width, eps=lj_eps, sig=lj_sig,
+            cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
+
         for i in range(231):
             self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.lj_generic_potential(
-                r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
-                cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
@@ -97,7 +98,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                                                                sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2)
 
             # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
+            self.assertFractionAlmostEqual(E_sim, E_ref[i])
             # force equals minus the counter-force  ...
             self.assertTrue((f0_sim == -f1_sim).all())
             # and has correct value.
@@ -120,15 +121,16 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].wca.set_params(epsilon=wca_eps,
                                                           sigma=wca_sig)
 
+        E_ref = tests_common.lj_generic_potential(
+            r=numpy.arange(1, 232) * self.step_width, eps=wca_eps, sig=wca_sig,
+                cutoff=wca_cutoff, shift=4. * wca_shift)
+        
         for i in range(231):
             self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
 
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
-            E_ref = tests_common.lj_generic_potential(
-                r=(i + 1) * self.step_width, eps=wca_eps, sig=wca_sig,
-                cutoff=wca_cutoff, shift=4. * wca_shift)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
@@ -137,7 +139,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                                                                r=(i + 1) * self.step_width, eps=wca_eps,
                                                                sig=wca_sig, cutoff=wca_cutoff)
             # Check that energies match, ...
-            self.assertFractionAlmostEqual(E_sim, E_ref)
+            self.assertFractionAlmostEqual(E_sim, E_ref[i])
             # force equals minus the counter-force  ...
             self.assertTrue((f0_sim == -f1_sim).all())
             # and has correct value.
@@ -476,7 +478,6 @@ class InteractionsNonBondedTest(ut.TestCase):
     @ut.skipIf(not espressomd.has_features("SOFT_SPHERE"),
                "Features not available, skipping test!")
     def test_soft_sphere(self):
-
         ss_a = 1.92
         ss_n = 3.03
         ss_cut = 1.123

@@ -14,7 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Visualization sample for charged particles. Simulates a pool of particles with various charges, LJ parameters and masses.
+"""
+Visualization sample for charged particles. Simulates a pool of particles
+with various charges, LJ parameters and masses.
 """
 
 import espressomd
@@ -28,8 +30,8 @@ espressomd.assert_features(required_features)
 box = [40, 40, 40]
 system = espressomd.System(box_l=box)
 system.cell_system.set_domain_decomposition(use_verlet_lists=True)
-visualizer = openGLLive(system, background_color=[
-                        1, 1, 1], drag_enabled=True, drag_force=10)
+visualizer = openGLLive(system, background_color=[1, 1, 1],
+                        drag_enabled=True, drag_force=10)
 
 system.set_random_state_PRNG()
 
@@ -56,7 +58,8 @@ lj_sigmas = {"Cl": 3.85, "Na": 2.52, "Colloid": 10.0, "Solvent": 1.5}
 lj_epsilons = {"Cl": 192.45, "Na": 17.44,
                "Colloid": 100.0, "Solvent": 50.0}
 lj_cuts = {"Cl": 2.0 * lj_sigmas["Cl"], "Na": 2.0 * lj_sigmas["Na"],
-           "Colloid": 1.5 * lj_sigmas["Colloid"], "Solvent": 2.0 * lj_sigmas["Solvent"]}
+           "Colloid": 1.5 * lj_sigmas["Colloid"],
+           "Solvent": 2.0 * lj_sigmas["Solvent"]}
 masses = {"Cl": 35.453, "Na": 22.99, "Colloid": 300, "Solvent": 18.0}
 
 n_ionpairs = 50
@@ -122,6 +125,6 @@ print("Tune p3m")
 p3m = electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-1)
 system.actors.add(p3m)
 
-system.thermostat.set_langevin(kT=temperature, gamma=2.0)
+system.thermostat.set_langevin(kT=temperature, gamma=2.0, seed=42)
 
 visualizer.run(1)

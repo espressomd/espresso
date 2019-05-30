@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import print_function
 
 
 def AddBending(system, kb):
@@ -24,7 +25,7 @@ def AddBending(system, kb):
     from espressomd.interactions import IBM_Tribend
     with open("tables/softAngles", "r") as fp:
         numAngles = int(fp.readline())
-        print "Found " + str(numAngles) + " angles"
+        print("Found {}".format(numAngles))
         # actual add
         for i in range(0, numAngles):
             line = str.split(fp.readline())

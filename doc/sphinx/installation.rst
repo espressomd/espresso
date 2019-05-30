@@ -40,7 +40,7 @@ CMake
     The build system is based on CMake
 
 C++ Compiler
-    C++11 capable C++ compiler (e.g., Gcc 4.8.1 or later)
+    C++14 capable C++ compiler (e.g., gcc 5 or later)
 
 Boost
     A number of advanced C++ features used by ESPResSo is provided by Boost.
@@ -126,7 +126,7 @@ following commands:
       doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
     sudo port select --set cython cython27
     sudo port select --set python python27
-    sudo port selet --set pip pip27
+    sudo port select --set pip pip27
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.
@@ -343,8 +343,6 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``INTER_RF``
-
 -  ``MMM1D_GPU``
 
 -  ``_P3M_GPU_FLOAT``
@@ -388,7 +386,7 @@ General features
 -  ``EXCLUSIONS`` Allows to exclude specific short ranged interactions within
    molecules.
 
-   .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.exclude`
+   .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
@@ -434,11 +432,6 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
-..
-    -  ``NEMD`` Enables the non-equilbrium (shear) MD support.
-
-       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
-
 -  ``NPT`` Enables an on-the-fly NPT integration scheme.
 
    .. seealso:: :ref:`Isotropic NPT thermostat`
@@ -447,10 +440,6 @@ integrator or thermostat:
 -  ``MEMBRANE_COLLISION``
 
 -  ``REACTION_ENSEMBLE``
-
--  ``GHMC``
-
--  ``MULTI_TIMESTEP`` (experimental)
 
 -  ``ENGINE``
 
@@ -466,19 +455,9 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB`` Enables the lattice Boltzmann fluid code.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
-
--  ``LB_GPU`` Enables the lattice Boltzmann fluid code support for GPU.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
-
 -  ``LB_BOUNDARIES``
 
 -  ``LB_BOUNDARIES_GPU``
-
--  ``SHANCHEN`` (experimental) Enables the Shan Chen bicomponent fluid code on the GPU.
 
 -  ``AFFINITY``
 
@@ -488,8 +467,6 @@ Fluid dynamics and fluid structure interaction
 -  ``ELECTROKINETICS``
 
 -  ``EK_BOUNDARIES``
-
--  ``EK_ELECTROSTATIC_COUPLING``
 
 -  ``EK_DEBUG``
 
@@ -546,18 +523,12 @@ Some of the short range interactions have additional features:
    prints a warning if particles come too close so that the simulation
    becomes unphysical.
 
--  ``OLD_DIHEDRAL`` Switch the interface of the dihedral potential to its old, less
-   flexible form. Use this for older scripts that are not yet adapted to
-   the new interface of the dihedral potential.
-
 If you want to use bond-angle potentials (see section :ref:`Bond-angle interactions`), you need the
 following features.
 
 -  ``BOND_ANGLE``
 
 -  ``LJGEN_SOFTCORE``
-
--  ``COS2``
 
 -  ``GAUSSIAN``
 
@@ -625,10 +596,6 @@ looking directly at the code.
 -  ``ESR_DEBUG`` debugging of P\ :math:`^3`\ Ms real space part.
 
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
-
--  ``FFT_DEBUG`` Output from the unified FFT code.
-
--  ``MAGGS_DEBUG``
 
 -  ``RANDOM_DEBUG``
 

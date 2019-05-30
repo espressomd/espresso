@@ -64,7 +64,7 @@ avoided, providing the user with the possibility of choice. |es| cannot be
 aware whether your particles are representing atoms or billiard balls, so it
 cannot check if the chosen parameters make sense and it is the user's
 responsibility to make sure they do. In fact, |es| can be used to play billiard
-(see the sample script in :file:`samples/billard.py`)!
+(see the sample script in :file:`samples/billiard.py`)!
 
 On the other hand, flexibility of |es| stems from the employment of a scripting
 language at the steering level. Apart from the ability to modify the simulation
@@ -113,7 +113,7 @@ The focus of the user guide is documenting the scripting interface, its
 behavior and use in the simulation. It only describes certain technical details
 of implementation which are necessary for understanding how the script
 interface works. Technical documentation of the code and program structure is
-contained in the :ref:`Developers guide`.
+contained in the `online wiki <https://github.com/espressomd/espresso/wiki>`_.
 
 .. _Basic python simulation script:
 
@@ -383,7 +383,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * :file:`minimal-diamond.py`
 
 * :file:`minimal-polymer.py`
-   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.create_polymer`.
+   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.positions`.
 
 * :file:`minimal_random_number_generator.py`
 
@@ -459,7 +459,7 @@ everything in multiples of the van-der-Waals binding energy of the
 respective particles.
 
 The final choice is the time (or mass) scale. By default, |es| uses a reduced
-mass of 1, so that the mass unit is simply the mass of all particles.
+mass of 1 for all particles, so that the mass unit is simply the mass of one particle.
 Combined with the energy and length scale, this is sufficient to derive
 the resulting time scale:
 
@@ -624,17 +624,9 @@ report so to the developers.
     +--------------------------------+------------------------+------------------+------------+
     | Ewald on GPU                   | Single                 | Single           | Yes        |
     +--------------------------------+------------------------+------------------+------------+
-    | GHMC Thermostat                | Single                 | Single           | Yes        |
-    +--------------------------------+------------------------+------------------+------------+
     | DPD Thermostat                 | None                   | Good             | Yes        |
     +--------------------------------+------------------------+------------------+------------+
-    | NEMD                           | None                   | Group            | No         |
-    +--------------------------------+------------------------+------------------+------------+
     | Directional Lennard-Jones      | Single                 | Single           | No         |
-    +--------------------------------+------------------------+------------------+------------+
-    | MEMD                           | Single                 | Group            | Yes        |
-    +--------------------------------+------------------------+------------------+------------+
-    | Shan-Chen Multicomponent Fluid | Group                  | Group            | No         |
     +--------------------------------+------------------------+------------------+------------+
     | Tunable Slip Boundary          | Single                 | Single           | Yes        |
     +--------------------------------+------------------------+------------------+------------+

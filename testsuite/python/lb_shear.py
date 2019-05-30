@@ -28,18 +28,22 @@ by comparing to the analytical solution.
 """
 
 
-AGRID = 0.5
-VISC = 1.4
+AGRID = 0.6
+VISC = 3.2
 DENS = 2.3
-TIME_STEP = 0.01
-H = 30.
-SHEAR_RATE = 0.3
+TIME_STEP = 0.02
+# Box size will be H +2 AGRID to make room for walls.
+# The number of grid cells should be devisible by four and 3 in all directions
+# for testing on multiple mpi nodes.
+H = 12 * AGRID 
+W = 6 * AGRID  
+SHEAR_VELOCITY = 0.3
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
-             'fric': 1.0,
-             'tau': TIME_STEP}
+             'tau': TIME_STEP
+             }
 
 
 def shear_flow(x, t, nu, v, h, k_max):
@@ -79,12 +83,12 @@ class LBShearCommon(object):
     """Base class of the test that holds the test logic."""
     lbf = None
     system = espressomd.System(box_l=[H + 2. * AGRID,
-                                      3.0,
-                                      3.0])
+                                      W,
+                                      W])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
-    def test_profile(self):
+    def check_profile(self, shear_plane_normal, shear_direction):
         """
         Integrate the LB fluid and regularly compare with
         the exact solution.
@@ -92,44 +96,76 @@ class LBShearCommon(object):
         """
         self.system.lbboundaries.clear()
         self.system.actors.clear()
+        self.system.box_l = np.max(
+            ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
+
         self.system.actors.add(self.lbf)
 
-        wall_shape1 = espressomd.shapes.Wall(normal=[1, 0, 0], dist=AGRID)
+        wall_shape1 = espressomd.shapes.Wall(
+            normal=shear_plane_normal, dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
-            normal=[-1, 0, 0], dist=-(self.system.box_l[0] - AGRID))
+            normal=-1.0 * shear_plane_normal, dist=-(H + AGRID))
         wall1 = espressomd.lbboundaries.LBBoundary(
-            shape=wall_shape1, velocity=[0, 0, -0.5 * SHEAR_RATE])
+            shape=wall_shape1, velocity=-0.5 * SHEAR_VELOCITY * shear_direction)
         wall2 = espressomd.lbboundaries.LBBoundary(
-            shape=wall_shape2, velocity=[0, 0, +0.5 * SHEAR_RATE])
+            shape=wall_shape2, velocity=.5 * SHEAR_VELOCITY * shear_direction)
 
         self.system.lbboundaries.add(wall1)
         self.system.lbboundaries.add(wall2)
 
         t0 = self.system.time
-        sample_points = int(H / AGRID)
+        sample_points = int(H / AGRID - 1)
 
-        for i in range(10):
-            self.system.integrator.run(100)
+        for i in range(9):
+            self.system.integrator.run(50)
 
-            v_measured = np.zeros(sample_points)
-            x = np.zeros(sample_points)
-            for j in range(1, sample_points + 1):
-                v_measured[j - 1] = self.lbf[j, 1, 1].velocity[2]
-                x[j - 1] = (j - 1 + 0.5) * AGRID
+            v_expected = shear_flow(
+                x=(np.arange(0, sample_points) + .5) * AGRID,
+                                t=self.system.time - t0,
+                                nu=VISC,
+                                v=SHEAR_VELOCITY,
+                                h=H,
+                                k_max=100)
+            for j in range(1, sample_points):
+                ind = np.max(((1, 1, 1), shear_plane_normal * j + 1), 0)
+                ind = np.array(ind, dtype=int)
+                v_measured = self.lbf[ind[0], ind[1], ind[2]].velocity
+                np.testing.assert_allclose(
+                    np.copy(v_measured),
+                    np.copy(v_expected[j]) * shear_direction, atol=3E-3)
 
-            v_expected = shear_flow(x=x,
-                                    t=self.system.time - t0,
-                                    nu=VISC,
-                                    v=SHEAR_RATE,
-                                    h=H,
-                                    k_max=100)
+        # Test stedy state stress tensor on a node
+        p_eq = DENS * AGRID**2 / TIME_STEP**2 / 3
+        p_expected = np.diag((p_eq, p_eq, p_eq))
+        p_expected += -VISC * DENS * SHEAR_VELOCITY / H * (
+            np.outer(shear_plane_normal, shear_direction)
+           + np.outer(shear_direction, shear_plane_normal))
+        for n in (2, 3, 4), (3, 4, 2), (5, 4, 3):
+            node_stress = np.copy(self.lbf[n[0], n[1], n[2]].stress)
+            np.testing.assert_allclose(node_stress,
+                                       p_expected, atol=1E-5, rtol=5E-3)
 
-            rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
-            self.assertLess(rmsd, 1.e-4 * AGRID / TIME_STEP)
+        np.testing.assert_allclose(
+            np.copy(wall1.get_force()),
+            -np.copy(wall2.get_force()),
+            atol=1E-4)
+        np.testing.assert_allclose(np.copy(wall1.get_force()), 
+                                   shear_direction * SHEAR_VELOCITY / H * W**2 * VISC, atol=2E-4)
+
+    def test(self):
+        x = np.array((1, 0, 0), dtype=float)
+        y = np.array((0, 1, 0), dtype=float)
+        z = np.array((0, 0, 1), dtype=float)
+        self.check_profile(x, y)
+        self.check_profile(x, z)
+        self.check_profile(y, z)
+        self.check_profile(x, -y)
+        self.check_profile(x, -z)
+        self.check_profile(y, -z)
 
 
 @ut.skipIf(not espressomd.has_features(
-    ['LB', 'LB_BOUNDARIES']), "Skipping test due to missing features.")
+    ['LB_BOUNDARIES']), "Skipping test due to missing features.")
 class LBCPUShear(ut.TestCase, LBShearCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -138,8 +174,8 @@ class LBCPUShear(ut.TestCase, LBShearCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
+    ['CUDA', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features or gpu.")
 class LBGPUShear(ut.TestCase, LBShearCommon):
 
     """Test for the GPU implementation of the LB."""

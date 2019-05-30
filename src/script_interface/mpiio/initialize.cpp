@@ -18,7 +18,6 @@
 */
 
 #include "initialize.hpp"
-#include "ParallelScriptInterface.hpp"
 #include "si_mpiio.hpp"
 
 namespace ScriptInterface {

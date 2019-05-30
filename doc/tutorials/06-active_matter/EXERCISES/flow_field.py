@@ -99,7 +99,7 @@ force = 0.1
 
 system.part.add(
     pos=[x0, y0, z0], type=0, mass=sph_mass, rinertia=[Ixyz, Ixyz, Ixyz],
-                swimming={'f_swim': force, 'mode': mode, 'dipole_length': sph_size + 0.5})
+    swimming={'f_swim': force, 'mode': mode, 'dipole_length': sph_size + 0.5})
 
 ## Exercise 5 ##
 # Why is the dipole_length chosen in this way?
@@ -115,15 +115,13 @@ vskin = 0.1
 frict = 20.0
 visco = 1.0
 densi = 1.0
-temp = 0.0
 
 lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco,
-                    tau=dt, fric=frict, couple='3pt')
+                    tau=dt)
 ## Exercise 6 ##
-# What does 'couple 3pt' imply?
 # Can the particle rotate in the flow field?
 system.actors.add(lbf)
-system.thermostat.set_lb(kT=temp)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
 ##########################################################################
 

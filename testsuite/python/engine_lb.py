@@ -31,7 +31,7 @@ except ImportError:
     exit()
 
 
-@ut.skipIf(not espressomd.has_features(["ENGINE", "LB"]),
+@ut.skipIf(not espressomd.has_features(["ENGINE"]),
            "Features not available, skipping test!")
 class SwimmerTest(ut.TestCase):
 
@@ -94,7 +94,7 @@ class SwimmerTest(ut.TestCase):
         else:
             lbm.print_vtk_velocity("engine_test_tmp.vtk")
             different, difference = tests_common.calculate_vtk_max_pointwise_difference(
-                vtk_name, "engine_test_tmp.vtk", tol=2.0e-7)
+                vtk_name, "engine_test_tmp.vtk", tol=1.5e-6)
             os.remove("engine_test_tmp.vtk")
             print(
                 "Maximum deviation to the reference point is: {}".format(difference))
@@ -109,14 +109,12 @@ class SwimmerTest(ut.TestCase):
         self.prepare(S)
 
         lbm = espressomd.lb.LBFluid(
-            agrid=1.0, tau=S.time_step, fric=0.5, visc=1.0, dens=1.0)
+            agrid=1.0, tau=S.time_step, visc=1.0, dens=1.0)
         S.actors.add(lbm)
+        S.thermostat.set_lb(LB_fluid=lbm, gamma=0.5)
 
-        if (S.cell_system.get_state()["n_nodes"] > 1):
-            print("NOTE: Ignoring testcase for n_nodes > 1")
-        else:
-            self.run_and_check(
-                S, lbm, tests_common.abspath("data/engine_lb.vtk"))
+        self.run_and_check(
+            S, lbm, tests_common.abspath("data/engine_lb.vtk"))
 
 
 if __name__ == '__main__':

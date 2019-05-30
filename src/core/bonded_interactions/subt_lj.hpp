@@ -33,40 +33,41 @@
 #include "bonded_interaction_data.hpp"
 #include "debug.hpp"
 #include "nonbonded_interactions/lj.hpp"
-#include "utils.hpp"
 
-/// set the parameters for the subtract LJ potential
+/** set the parameters for the subtract LJ potential
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int subt_lj_set_params(int bond_type);
 
 /** Computes the negative of the LENNARD-JONES pair forces
     and adds this force to the particle forces.
     @param p1        Pointer to first particle.
     @param p2        Pointer to second/middle particle.
-    @param iaparams  Parameters of interaction
     @param dx        change in position
     @param force     force on particles
     @return true if bond is broken
 */
 inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
-                                   Bonded_ia_parameters *, double dx_[3],
-                                   double force[3]) {
+                                   Bonded_ia_parameters *,
+                                   Utils::Vector3d const &dx, double *force) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
 
-  auto const dx = -Vector3d(dx_, dx_ + 3);
+  auto const neg_dir = -dx;
 
-  add_lj_pair_force(p1, p2, ia_params, dx.data(), dx.norm(), force);
+  add_lj_pair_force(ia_params, neg_dir.data(), neg_dir.norm(), force);
 
-  return ES_OK;
+  return 0;
 }
 
-inline int subt_lj_pair_energy(Particle *p1, Particle *p2,
-                               Bonded_ia_parameters *, double dx_[3],
-                               double *_energy) {
+inline int subt_lj_pair_energy(const Particle *p1, const Particle *p2,
+                               Bonded_ia_parameters *,
+                               Utils::Vector3d const &dx, double *_energy) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
-  auto const dx = -Vector3d(dx_, dx_ + 3);
 
-  *_energy = -lj_pair_energy(p1, p2, ia_params, dx.data(), dx.norm());
-  return ES_OK;
+  *_energy = -lj_pair_energy(ia_params, dx.norm());
+  return 0;
 }
 
 #endif

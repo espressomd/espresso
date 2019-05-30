@@ -54,7 +54,7 @@ enforce force recalculation.
 Run steepest descent minimization
 ---------------------------------
 
-:func:`espressomd.espresso.thermostat.Thermostat.set_steepest_descent`
+:func:`espressomd.integrate.Integrator.set_steepest_descent`
 
 
 
@@ -62,9 +62,8 @@ This feature is used to propagate each particle by a small distance parallel to 
 When only conservative forces for which a potential exists are in use, this is equivalent to a steepest descent energy minimization.
 A common application is removing overlap between randomly placed particles.
 
-Please note that the behavior is undefined if either a thermostat,
-Maggs electrostatics or lattice Boltzmann is activated. It runs a simple
-steepest descent algorithm:
+Please note that the behavior is undefined if a thermostat is activated.
+It runs a simple steepest descent algorithm:
 
 Iterate
 
@@ -88,30 +87,6 @@ Usage example::
 
 
 
-
-.. _Multi-timestepping:
-
-Multi-timestepping
-------------------
-
-Required feature: ``MULTI_TIMESTEP``
-
-The multi-timestepping integrator allows to run two concurrent
-integration time steps within a simulation, associating beads with
-either the large :attr:`espressomd.system.System.time_step` or the
-other :attr:`espressomd.system.System.smaller_time_step`. Setting
-:attr:`espressomd.system.System.smaller_time_step` to a positive
-value turns on the multi-timestepping algorithm. Beads are by default associated with
-:attr:`espressomd.system.System.time_step`, corresponding to the
-particle property
-:attr:`espressomd.particle_data.ParticleHandle.smaller_timestep` set
-to 0. Setting to
-:attr:`espressomd.particle_data.ParticleHandle.smaller_timestep` to 1
-associates the particle to the
-:attr:`espressomd.system.System.smaller_time_step` integration. The
-integrator can be used in the NVE ensemble, as well as with the
-Langevin thermostat and the modified Andersen barostat for NVT and NPT
-simulations, respectively. See :cite:`bereau15` for more details.
 
 .. _Integrating rotational degrees of freedom:
 

@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of the energy calculation.
-*/
+ *  Implementation of the energy calculation.
+ */
 #ifndef ENERGY_INLINE_HPP
 #define ENERGY_INLINE_HPP
 
@@ -38,7 +38,6 @@
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/subt_lj.hpp"
 #include "bonded_interactions/umbrella.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -52,37 +51,32 @@
 #include "nonbonded_interactions/morse.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
-#include "nonbonded_interactions/reaction_field.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/steppot.hpp"
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #ifdef ELECTROSTATICS
 #include "bonded_interactions/bonded_coulomb.hpp"
+#include "bonded_interactions/bonded_coulomb_sr.hpp"
+#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
-#ifdef P3M
-#include "bonded_interactions/bonded_coulomb_p3m_sr.hpp"
-#endif
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
-#include "electrostatics_magnetostatics/scafacos.hpp"
 #include "statistics.hpp"
-#include "thermostat.hpp"
 
 #include "energy.hpp"
 
+#ifdef DIPOLES
+#include "electrostatics_magnetostatics/dipole_inline.hpp"
+#endif
+
 /** Calculate non bonded energies between a pair of particles.
-    @param p1        pointer to particle 1.
-    @param p2        pointer to particle 2.
-    @param ia_params the interaction parameters between the two particles
-    @param d         vector between p1 and p2.
-    @param dist      distance between p1 and p2.
-    @param dist2     distance squared between p1 and p2.
-    @return the short ranged interaction energy between the two particles
-*/
+ *  @param p1         pointer to particle 1.
+ *  @param p2         pointer to particle 2.
+ *  @param ia_params  the interaction parameters between the two particles
+ *  @param d          vector between p1 and p2.
+ *  @param dist       distance between p1 and p2.
+ *  @param dist2      distance squared between p1 and p2.
+ *  @return the short ranged interaction energy between the two particles
+ */
 inline double calc_non_bonded_pair_energy(const Particle *p1,
                                           const Particle *p2,
                                           const IA_parameters *ia_params,
@@ -97,7 +91,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
 
 #ifdef LENNARD_JONES
   /* Lennard-Jones */
-  ret += lj_pair_energy(p1, p2, ia_params, d, dist);
+  ret += lj_pair_energy(ia_params, dist);
 #endif
 #ifdef WCA
   /* WCA */
@@ -174,26 +168,22 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
   ret += gb_pair_energy(p1, p2, ia_params, d, dist);
 #endif
 
-#ifdef INTER_RF
-  ret += interrf_pair_energy(p1, p2, ia_params, dist);
-#endif
-
   return ret;
 }
 
 /** Add non bonded energies and short range Coulomb between a pair of particles.
-    @param p1        pointer to particle 1.
-    @param p2        pointer to particle 2.
-    @param d         vector between p1 and p2.
-    @param dist      distance between p1 and p2.
-    @param dist2     distance squared between p1 and p2.
-*/
-inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
-                                       double dist, double dist2) {
-  IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
+ *  @param p1        pointer to particle 1.
+ *  @param p2        pointer to particle 2.
+ *  @param d         vector between p1 and p2.
+ *  @param dist      distance between p1 and p2.
+ *  @param dist2     distance squared between p1 and p2.
+ */
+inline void add_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
+                                       const double *d, double dist,
+                                       double dist2) {
+  IA_parameters const *ia_params = get_ia_param(p1->p.type, p2->p.type);
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
-  double ret = 0;
 #endif
 
 #ifdef EXCLUSIONS
@@ -203,76 +193,23 @@ inline void add_non_bonded_pair_energy(Particle *p1, Particle *p2, double d[3],
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
 
 #ifdef ELECTROSTATICS
-  if (coulomb.method != COULOMB_NONE) {
-    /* real space Coulomb */
-    switch (coulomb.method) {
-#ifdef P3M
-    case COULOMB_P3M_GPU:
-    case COULOMB_P3M:
-      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
-      break;
-    case COULOMB_ELC_P3M:
-      ret = p3m_pair_energy(p1->p.q * p2->p.q, dist);
-      if (elc_params.dielectric_contrast_on)
-        ret += 0.5 * ELC_P3M_dielectric_layers_energy_contribution(p1, p2);
-      break;
-#endif
-#ifdef SCAFACOS
-    case COULOMB_SCAFACOS:
-      ret += Scafacos::pair_energy(p1, p2, dist);
-      break;
-#endif
-    case COULOMB_DH:
-      ret = dh_coulomb_pair_energy(p1, p2, dist);
-      break;
-    case COULOMB_RF:
-      ret = rf_coulomb_pair_energy(p1, p2, dist);
-      break;
-    case COULOMB_INTER_RF:
-      // this is done above as interaction
-      ret = 0;
-      break;
-    case COULOMB_MMM1D:
-      ret = mmm1d_coulomb_pair_energy(p1, p2, d, dist2, dist);
-      break;
-    case COULOMB_MMM2D:
-      ret = mmm2d_coulomb_pair_energy(p1->p.q * p2->p.q, d, dist2, dist);
-      break;
-    default:
-      ret = 0.;
-    }
-    energy.coulomb[0] += ret;
-  }
+  energy.coulomb[0] +=
+      Coulomb::pair_energy(p1, p2, p1->p.q * p2->p.q, d, dist, dist2);
 #endif
 
 #ifdef DIPOLES
-  if (coulomb.Dmethod != DIPOLAR_NONE) {
-    // ret=0;
-    switch (coulomb.Dmethod) {
-#ifdef DP3M
-    case DIPOLAR_MDLC_P3M:
-    // fall trough
-    case DIPOLAR_P3M:
-      ret = dp3m_pair_energy(p1, p2, d, dist2, dist);
-      break;
-#endif
-    default:
-      ret = 0;
-    }
-    energy.dipolar[0] += ret;
-  }
+  Dipole::add_pair_energy(p1, p2, d, dist, dist2, energy);
 #endif
 }
 
 /** Calculate bonded energies for one particle.
-    @param p1 particle for which to calculate energies
-*/
-
-inline void add_bonded_energy(Particle *p1) {
+ *  @param p1 particle for which to calculate energies
+ */
+inline void add_bonded_energy(const Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
   int i, bond_broken = 1;
-  double ret = 0, dx[3] = {0, 0, 0};
+  double ret = 0;
 
   i = 0;
   while (i < p1->bl.n) {
@@ -313,35 +250,30 @@ inline void add_bonded_energy(Particle *p1) {
         return;
       }
     }
-    /* similar to the force, we prepare the center-center vector */
-    if (n_partners == 1)
-      get_mi_vector(dx, p1->r.p, p2->r.p);
 
     if (n_partners == 1) {
+      auto const dx = get_mi_vector(p1->r.p, p2->r.p);
       switch (type) {
       case BONDED_IA_FENE:
-        bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = fene_pair_energy(iaparams, dx, &ret);
         break;
 #ifdef ROTATION
       case BONDED_IA_HARMONIC_DUMBBELL:
-        bond_broken = harmonic_dumbbell_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = harmonic_dumbbell_pair_energy(p1, iaparams, dx, &ret);
         break;
 #endif
       case BONDED_IA_HARMONIC:
-        bond_broken = harmonic_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = harmonic_pair_energy(iaparams, dx, &ret);
         break;
       case BONDED_IA_QUARTIC:
-        bond_broken = quartic_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = quartic_pair_energy(iaparams, dx, &ret);
         break;
 #ifdef ELECTROSTATICS
       case BONDED_IA_BONDED_COULOMB:
         bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
         break;
-#endif
-#ifdef P3M
-      case BONDED_IA_BONDED_COULOMB_P3M_SR:
-        bond_broken =
-            bonded_coulomb_p3m_sr_pair_energy(p1, p2, iaparams, dx, &ret);
+      case BONDED_IA_BONDED_COULOMB_SR:
+        bond_broken = bonded_coulomb_sr_pair_energy(p1, p2, iaparams, dx, &ret);
         break;
 #endif
 #ifdef LENNARD_JONES
@@ -358,7 +290,7 @@ inline void add_bonded_energy(Particle *p1) {
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 1)
-          bond_broken = tab_bond_energy(p1, p2, iaparams, dx, &ret);
+          bond_broken = tab_bond_energy(iaparams, dx, &ret);
         break;
 #endif
 #ifdef UMBRELLA
@@ -378,7 +310,6 @@ inline void add_bonded_energy(Particle *p1) {
     } // 1 partner
     else if (n_partners == 2) {
       switch (type) {
-#ifdef BOND_ANGLE
       case BONDED_IA_ANGLE_HARMONIC:
         bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
         break;
@@ -388,7 +319,6 @@ inline void add_bonded_energy(Particle *p1) {
       case BONDED_IA_ANGLE_COSSQUARE:
         bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
         break;
-#endif
 #ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 2)
@@ -448,18 +378,16 @@ inline void add_bonded_energy(Particle *p1) {
 }
 
 /** Calculate kinetic energies for one particle.
-    @param p1 particle for which to calculate energies
-*/
-inline void add_kinetic_energy(Particle *p1) {
+ *  @param p1 particle for which to calculate energies
+ */
+inline void add_kinetic_energy(const Particle *p1) {
 #ifdef VIRTUAL_SITES
   if (p1->p.is_virtual)
     return;
 #endif
 
   /* kinetic energy */
-  energy.data.e[0] += (Utils::sqr(p1->m.v[0]) + Utils::sqr(p1->m.v[1]) +
-                       Utils::sqr(p1->m.v[2])) *
-                      0.5 * p1->p.mass;
+  energy.data.e[0] += 0.5 * p1->p.mass * p1->m.v.norm2();
 
 #ifdef ROTATION
   if (p1->p.rotation) {
@@ -473,7 +401,7 @@ inline void add_kinetic_energy(Particle *p1) {
 #endif
 }
 
-inline void add_single_particle_energy(Particle *p) {
+inline void add_single_particle_energy(const Particle *p) {
   add_kinetic_energy(p);
   add_bonded_energy(p);
 }

@@ -21,117 +21,57 @@
 #ifndef POLYMER_H
 #define POLYMER_H
 /** \file
-
-    This file contains everything needed to create a start-up
-    configuration of (partially charged) polymer chains with
-    counterions and salt molecules, assigning velocities to the
-    particles and cross-linking the polymers if necessary.
-
-    For more information on polymer, see \ref polymer.cpp "polymer.cpp"
-*/
+ *
+ *  This file contains everything needed to create a start-up
+ *  configuration of polymer chains which may respect already
+ *  existing particles and/or constraints.
+ *
+ *  Implementation in polymer.cpp.
+ */
 
 #include "PartCfg.hpp"
 #include "particle_data.hpp"
+#include "utils/Vector.hpp"
 
-/*************************************************************
- * Functions                                                 *
- * ---------                                                 *
- *************************************************************/
+Utils::Vector3d random_position(std::function<double()> const &generate_rn);
+Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn);
 
-/** C implementation of 'mindist \<part_id\> \<r_catch\>',<br>
- *  which returns the size of an array \<ids\> of indices of particles which are
- *  less than \<r_catch\> away from the position of the particle \<part_id\>.
+/** Returns the miminum distance between position @p pos and all existing
+ *  particles.
  */
-int mindist3(PartCfg &, int part_id, double r_catch, int *ids);
+double mindist(PartCfg &partCfg, Utils::Vector3d const &pos);
 
-/** Checks whether a particle at coordinates (\<posx\>, \<posy\>, \<posz\>)
- *  collides
- *  with any other particle due to a minimum image distance smaller than
- *  \<shield\>.
- *  @param pos coordinates of particle to check
- *  @param shield minimum distance before it is defined as collision
- *  @param n_add number of additional coordinates to check
- *  @param add additional coordinates to check
- *  @return Returns '1' if there is a collision, '0' otherwise.
+/** Determines whether a given position @p pos is valid, i.e., it doesn't
+ *  collide with existing or buffered particles, nor with existing constraints
+ *  (if @c respect_constraints).
+ *  @param pos                   the trial position in question
+ *  @param positions             buffered positions to respect
+ *  @param partCfg               existing particles to respect
+ *  @param min_distance          threshold for the minimum distance between
+ *                               trial position and buffered/existing particles
+ *  @param respect_constraints   whether to respect constraints
+ *  @return true if valid position, false if not.
  */
-int collision(PartCfg &, double pos[3], double shield, int n_add, double *add);
+bool is_valid_position(
+    Utils::Vector3d const *pos,
+    std::vector<std::vector<Utils::Vector3d>> const *positions,
+    PartCfg const &partCfg, double min_distance, int respect_constraints);
 
-/** Function used by polymerC to determine whether a constraint has been
- *  violated while setting up a polymer. Currently only "wall", "sphere" and
- *  "cylinder" constraints are respected.
- *  @param p1           = position of first particle given as double-array of
- *  length 3
- *  @param p2           = position of second particle given as double-array of
- *  length 3
- *  @return Returns 1 if p1 and p2 sit on opposite sites of any constraint
- *  currently defined in the system and 0 otherwise
+/** Determines valid polymer positions and returns them.
+ *  @param  n_polymers        how many polymers to create
+ *  @param  beads_per_chain   monomers per chain
+ *  @param  bond_length       length of the bonds between two monomers
+ *  @param  seed              seed for RNG
+ *  @param  min_distance      minimum distance between all particles
+ *  @param  max_tries         how often a monomer/polymer should be reset if
+ *                            current position collides with a previous particle
+ *  @param  bond_angle        desired bond-angle to be fixed
  */
-int constraint_collision(double *p1, double *p2);
-
-/** C implementation of 'polymer \<N_P\> \<MPC\> \<bond_length\> [options]',
- *  which returns how often the attempt to place a monomer failed in the worst
- *  case.
- *  @param  N_P         = how many polymers to create <br>
- *  @param  MPC         = monomers per chain <br>
- *  @param  bond_length = length of the bonds between two monomers <br>
- *  @param  part_id     = particle number of the start monomer (defaults to '0')
- *  <br>
- *  @param  posed       = sets the position of the start monomer of the first
- *  chain (defaults to a randomly chosen value) <br>
- *  @param  mode        = selects setup mode: (Pseudo) self avoiding walk
- *  ([P]SAW) or plain random walk (RW) (defaults to 'SAW') <br>
- *  @param  shield      = shield around each particle another particle's
- *  position may not enter if using SAW (defaults to '0.0') <br>
- *  @param  max_try     = how often a monomer should be reset if current
- *  position collides with a previous particle (defaults to '30000') <br>
- *  @param  val_cM      = valency of charged monomers (defaults to '0.0') <br>
- *  @param  cM_dist     = distance between two charged monomers' indices
- *  (defaults to '1')<br>
- *  @param  type_nM     = type number of neutral monomers (defaults to '0') <br>
- *  @param  type_cM     = type number of charged monomers (default to '1') <br>
- *  @param  type_FENE   = type number of the FENE-typed bonded interaction bonds
- *  to be set between the monomers (defaults to '0') <br>
- *  @param  angle       = desired bond-angle to be fixed <br>
- *  @param  angle2      = second spherical bond-angle <br>
- *  @param  posed2      = sets the position of the 2nd monomer of the first
- *  chain <br>
- *  @param  constr      = shall constraints be respected when setting up
- *  polymer?  (0=no, 1=yes, default: 0)
- *  @return Returns how often the attempt to place a monomer failed in the
- *  worst case. <br>
- *  If val_cM \< 1e-10, the charge is assumed to be zero, and type_cM = type_nM.
- */
-int polymerC(PartCfg &, int N_P, int MPC, double bond_length, int part_id,
-             double *posed, int mode, double shield, int max_try, double val_cM,
-             int cM_dist, int type_nM, int type_cM, int type_FENE, double angle,
-             double angle2, double *posed2, int constr);
-
-/** C implementation of 'counterions \<N_CI\> [options]'.
- *  @param  N_CI        = number of counterions to create
- *  @param  part_id     = particle number of the first counterion (defaults to
- *  'n_total_particles')
- *  @param  mode        = selects setup mode: Self avoiding walk (SAW) or plain
- *  random walk (RW) (defaults to 'SAW')
- *  @param  shield      = shield around each particle another particle's
- *  position may not enter if using SAW (defaults to '0.0')
- *  @param  max_try     = how often a monomer should be reset if current
- *  position collides with a previous particle (defaults to '30000')
- *  @param  val_CI      = valency of the counterions (defaults to '-1.0')
- *  @param  type_CI     = type number of the counterions to be used with "part"
- *  (default to '2')
- *  @return Returns how often the attempt to place a particle failed in the
- *  worst case.
- */
-int counterionsC(PartCfg &, int N_CI, int part_id, int mode, double shield,
-                 int max_try, double val_CI, int type_CI);
-
-/** C implementation of 'diamond \<a\> \<bond_length\> \<MPC\> [options]' */
-int diamondC(PartCfg &, double a, double bond_length, int MPC, int N_CI,
-             double val_nodes, double val_cM, double val_CI, int cM_dist,
-             int nonet);
-
-/** C implementation of 'icosaeder \<a\> \<bond_length\> \<MPC\> [options]' */
-int icosaederC(PartCfg &, double ico_a, int MPC, int N_CI, double val_cM,
-               double val_CI, int cM_dist);
+std::vector<std::vector<Utils::Vector3d>>
+draw_polymer_positions(PartCfg &partCfg, int n_polymers, int beads_per_chain,
+                       double bond_length,
+                       std::vector<Utils::Vector3d> const &start_positions,
+                       double min_distance, int max_tries, int use_bond_angle,
+                       double bond_angle, int respect_constraints, int seed);
 
 #endif

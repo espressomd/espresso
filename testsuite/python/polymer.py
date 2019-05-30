@@ -21,65 +21,185 @@ import numpy as np
 import espressomd
 from espressomd.interactions import FeneBond
 from espressomd import polymer
+from espressomd.shapes import Wall
 
 
-class Polymer(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+class PolymerPositions(ut.TestCase):
+    box_l = 15
+    seed = 23
+
+    system = espressomd.System(box_l=[box_l, box_l, box_l])
     np.random.seed(1234)
     system.set_random_state_PRNG()
 
-    num_mono = 5
+    def assertShape(self, positions, n_poly, n_mono):
+        """
+        Assert that positions array has expected shape and
+        expected number of elements.
 
-    @classmethod
-    def setUpClass(self):
-        box_l = 20.0
-        # start with a small bo
-        self.system.box_l = np.array([box_l, box_l, box_l])
-        self.system.cell_system.set_n_square(use_verlet_lists=False)
-        fene = FeneBond(k=30, d_r_max=2)
-        self.fene = fene
-        self.system.bonded_inter.add(fene)
+        """
+        shape = np.shape(positions)
+        self.assertEqual(shape, (n_poly, n_mono, 3))
 
-    def test(self):
-        num_poly = 2
+    def assertBondLength(self, positions, bond_length):
+        """
+        Assert that distance between monomers is bond_length.
+
+        """
+        for p in positions:
+            distances = np.linalg.norm(p[1:] - p[:-1], axis=1)
+            max_deviation = np.max(abs(distances - bond_length))
+            self.assertLess(max_deviation, 1e-10)
+
+    def assertBondAngle(self, positions, bond_angle, bond_length):
+        """
+        Assert that angle between adjacent beads in positions is bond_angle.
+
+        """
+        for p in positions:
+            distance_vectors = (p[1:] - p[:-1]) / bond_length
+            cos_angles = np.einsum(
+                'ij, ij -> i',
+                distance_vectors[1:],
+                -distance_vectors[:-1])
+            max_deviation = max(abs(cos_angles - np.cos(bond_angle)))
+            self.assertLess(max_deviation, 1e-10)
+
+    def assertMinDistGreaterEqual(self, positions, r_min):
+        """
+        Assert that all points in positions are at least r_min away from each other.
+
+        """
+        particle_positions = positions.flatten().reshape((-1, 3))
+        # use folded coordinates
+        particle_positions %= self.box_l
+        for pos in particle_positions:
+            distances = np.linalg.norm(particle_positions - pos, axis=1)
+            # exclude zero distance, i.e.,  distance to pos itself
+            distances = distances[np.nonzero(distances)]
+            self.assertGreaterEqual(min(distances), r_min)
+
+    def test_bond_lengths(self):
+        """
+        Check that distance between neighboring monomers is indeed bond_length.
+
+        """
+        bond_lengths = [0.735, 1.459]
+        num_poly = 10
+        num_mono = 25
+        for bond_length in bond_lengths:
+            positions = polymer.positions(
+                n_polymers=num_poly, beads_per_chain=num_mono,
+                    bond_length=bond_length, seed=self.seed)
+
+            self.assertShape(positions, num_poly, num_mono)
+            self.assertBondLength(positions, bond_length)
+
+    def test_bond_angles(self):
+        """
+        Check that bond_angle is obeyed.
+
+        """
+        bond_angles = [0.436 * np.pi, np.pi / 3., np.pi / 5.]
+        num_poly = 10
+        num_mono = 25
+        bond_length = 1.34
+        for bond_angle in bond_angles:
+            positions = polymer.positions(
+                n_polymers=num_poly, beads_per_chain=num_mono,
+                    bond_angle=bond_angle,
+                    bond_length=bond_length, seed=self.seed)
+
+            self.assertShape(positions, num_poly, num_mono)
+            self.assertBondLength(positions, bond_length)
+            self.assertBondAngle(positions, bond_angle, bond_length)
+
+    def test_start_positions(self):
+        """
+        Check that setting start positions behaves correctly.
+
+        """
+        num_poly = 90
+        num_mono = 25
+        bond_length = 0.83
+        start_positions = np.random.random((num_poly, 3)) * self.box_l
+
+        # make sure that incorrect size leads to error
+        with self.assertRaises(ValueError):
+            positions = polymer.positions(
+                n_polymers=num_poly + 1,
+                    beads_per_chain=num_mono,
+                    start_positions=start_positions,
+                    bond_length=bond_length, seed=self.seed)
+
+        # check that start positions are actually used
+        positions = polymer.positions(
+            n_polymers=num_poly,
+                beads_per_chain=num_mono,
+                start_positions=start_positions,
+                bond_length=bond_length, seed=self.seed)
+
+        self.assertListEqual(
+            start_positions.tolist(),
+            positions[:,
+                      0].tolist())
+
+    def test_min_dist(self):
+        """
+        Check that min_dist is respected.
+
+        """
+        num_poly = 5
+        num_mono = 150
+        bond_length = 0.945
+
+        positions = polymer.positions(
+            n_polymers=num_poly,
+                beads_per_chain=num_mono,
+                bond_length=bond_length,
+                min_distance=bond_length, seed=self.seed)
+
+        self.assertBondLength(positions, bond_length)
+        self.assertMinDistGreaterEqual(positions, bond_length - 1e-10)
+
+    def test_respect_constraints_wall(self):
+        """
+        Check that constraints are respected.
+
+        """
+        num_poly = 20
         num_mono = 5
-        polymer.create_polymer(start_pos=[1, 1, 1], N_P=num_poly,
-                               bond_length=0.9, bond=self.fene,
-                               MPC=num_mono,
-                               start_id=2)
+        bond_length = 1.19
 
-        # Was the start id considered
-        # bond=fene,start_id=2)
-        for i in 0, 1:
-            self.assertTrue(not self.system.part.exists(i))
-        # Were all other particles placed in the correct order
-        for i in range(2, 2 + num_mono * num_poly):
-            self.assertTrue(self.system.part.exists(i))
-        # Total number of particles
-        self.assertEqual(len(self.system.part), num_mono * num_poly)
+        w = espressomd.shapes.Wall(normal=[0., 0., 1.], dist=0.5 * self.box_l)
+        wall_constraint = espressomd.constraints.ShapeBasedConstraint(shape=w)
+        c = self.system.constraints.add(wall_constraint)
 
-        # Start position
-        np.testing.assert_allclose(
-            np.copy(self.system.part[2].pos), [1., 1., 1.])
+        positions = polymer.positions(
+            n_polymers=num_poly,
+                beads_per_chain=num_mono,
+                bond_length=bond_length,
+                respect_constraints=True, seed=self.seed)
 
-        # Distance between consecutive particles
-        for i in range(num_poly):
-            first_particle = 2 + num_mono * i
-            for j in range(first_particle + 1, first_particle + num_mono):
-                print(first_particle, j)
-                self.assertAlmostEqual(self.system.distance(
-                    self.system.part[j], self.system.part[j - 1]), 0.9, places=5)
-        # Test polymer with specified pos2
-        self.system.part.clear()
-        polymer.create_polymer(start_pos=[1, 1, 1], pos2=[1.9, 1, 1], N_P=1,
-                               bond_length=0.9, bond=self.fene,
-                               MPC=num_mono,
-                               start_id=2, angle2=1)
+        positions %= self.box_l
 
-        np.testing.assert_allclose(
-            np.copy(self.system.part[2].pos), [1., 1., 1.])
-        np.testing.assert_allclose(
-            np.copy(self.system.part[3].pos), [1.9, 1., 1.])
+        z_components = positions[:, :, 2][0]
+        for z in z_components:
+            print(z)
+            self.assertGreaterEqual(z, 0.5 * self.box_l)
+
+        # assert that illegal start position raises error
+        assertRaisesRegex = self.assertRaisesRegexp if sys.version_info < (
+            3, 2) else self.assertRaisesRegex
+        with assertRaisesRegex(Exception, 'Invalid start positions.'):
+            illegal_start = np.array([[1., 1., 0.2 * self.box_l]])
+            positions = polymer.positions(
+                n_polymers=1,
+                    beads_per_chain=10,
+                    start_positions=illegal_start,
+                    bond_length=bond_length,
+                    respect_constraints=True, seed=self.seed)
+        self.system.constraints.remove(wall_constraint)
 
 
 if __name__ == "__main__":

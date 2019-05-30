@@ -33,14 +33,13 @@
 #include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset);
 
 inline void add_ljcos_pair_force(const Particle *const p1,
                                  const Particle *const p2,
-                                 IA_parameters *ia_params, double d[3],
+                                 IA_parameters *ia_params, double const d[3],
                                  double dist, double force[3]) {
   if ((dist < ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
     double r_off = dist - ia_params->LJCOS_offset;
@@ -84,16 +83,15 @@ inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
       return 4.0 * ia_params->LJCOS_eps * (Utils::sqr(frac6) - frac6);
     }
     /* cosine part of the potential. */
-    else if (dist < (ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
+    if (dist < (ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
       return .5 * ia_params->LJCOS_eps *
              (cos(ia_params->LJCOS_alfa * Utils::sqr(r_off) +
                   ia_params->LJCOS_beta) -
               1.);
     }
     /* this should not happen! */
-    else {
-      fprintf(stderr, "this is the distance, which is negative %.3e\n", r_off);
-    }
+
+    fprintf(stderr, "this is the distance, which is negative %.3e\n", r_off);
   }
   return 0.0;
 }

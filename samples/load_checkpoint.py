@@ -19,6 +19,10 @@ This sample illustrates how various observables of interest can be checkpointed.
 """
 from __future__ import print_function
 import espressomd
+
+required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+espressomd.assert_features(required_features)
+
 from espressomd import checkpointing
 import numpy as np
 

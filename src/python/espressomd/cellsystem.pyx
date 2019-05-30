@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+from grid cimport local_box_l, node_grid
 from . cimport cellsystem
 from . cimport integrate
 from globals cimport *
@@ -226,7 +227,7 @@ cdef class CellSystem(object):
 
         def __set__(self, int _min_num_cells):
             global min_num_cells
-            min = calc_processor_min_num_cells()
+            min = calc_processor_min_num_cells(node_grid)
             if _min_num_cells < min:
                 raise ValueError(
                     "min_num_cells must be >= processor_min_num_cells (currently " + str(min) + ")")
@@ -300,7 +301,7 @@ cdef class CellSystem(object):
 
         Returns
         -------
-        :attr:`espressomd.cell_system.skin`
+        :attr:`skin`
 
         """
         c_tune_skin(min_skin, max_skin, tol, int_steps)

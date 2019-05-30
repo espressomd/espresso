@@ -31,15 +31,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
-#include "utils/serialization/ibm_cuda_particle_velocities_input.hpp"
+#include "serialization/ibm_cuda_particle_velocities_input.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
-#include "utils/mpi/gather_buffer.hpp"
-#include "utils/mpi/scatter_buffer.hpp"
-
-/// MPI tags for sending velocities and receiving particles
-#define REQ_CUDAIBMSENDVEL 0xcc03
-#define REQ_CUDAIBMGETPART 0xcc04
+#include <utils/mpi/gather_buffer.hpp>
+#include <utils/mpi/scatter_buffer.hpp>
 
 // Variables for communication
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host = nullptr;
@@ -60,7 +56,7 @@ void pack_particles(ParticleRange particles,
 
   int i = 0;
   for (auto const &part : particles) {
-    Vector3d pos = folded_position(part);
+    Utils::Vector3d pos = folded_position(part);
 
     buffer[i].pos[0] = (float)pos[0];
     buffer[i].pos[1] = (float)pos[1];

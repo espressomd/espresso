@@ -23,8 +23,49 @@
 #include "ScriptInterfaceBase.hpp"
 #include "Variant.hpp"
 
+#include "utils/demangle.hpp"
+
+#include <boost/range/algorithm/transform.hpp>
+
 namespace ScriptInterface {
 namespace detail {
+struct type_label_visitor : boost::static_visitor<std::string> {
+  template <class T> std::string operator()(const T &) const {
+    return Utils::demangle<T>();
+  }
+};
+
+inline std::string type_label(const Variant &v) {
+  return boost::apply_visitor(type_label_visitor{}, v);
+}
+
+/*
+ * Allows
+ * T -> T,
+ * floating point -> floating point and
+ * integral -> floating point
+ */
+template <class To, class From>
+using allow_conversion =
+    std::integral_constant<bool, std::is_same<To, From>::value ||
+                                     (std::is_convertible<To, From>::value &&
+                                      std::is_floating_point<To>::value &&
+                                      std::is_arithmetic<From>::value)>;
+
+template <class To> struct conversion_visitor : boost::static_visitor<To> {
+  template <class From>
+  std::enable_if_t<allow_conversion<To, From>::value, To>
+  operator()(const From &value) const {
+    return value;
+  }
+
+  template <class From>
+  std::enable_if_t<!allow_conversion<To, From>::value, To>
+  operator()(const From &) const {
+    throw boost::bad_get{};
+  }
+};
+
 /**
  * @brief Implementation of get_value.
  *
@@ -32,13 +73,40 @@ namespace detail {
  * is not allowed.
  */
 template <typename T, typename = void> struct get_value_helper {
-  T operator()(Variant const &v) const { return boost::get<T>(v); }
+  T operator()(Variant const &v) const {
+    return boost::apply_visitor(detail::conversion_visitor<T>{}, v);
+  }
 };
 
-/* Vector<N,T> case */
-template <size_t N, typename T> struct get_value_helper<Vector<N, T>, void> {
-  Vector<N, T> operator()(Variant const &v) const {
-    return Vector<N, T>(boost::get<std::vector<T>>(v));
+template <class T, size_t N>
+struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
+  Utils::Vector<T, N> operator()(Utils::Vector<T, N> const &v) const {
+    return v;
+  }
+
+  /* We try do unpack variant vectors and check if they
+   * are convertible element by element. */
+  auto operator()(std::vector<Variant> const &vv) const {
+    if (N != vv.size()) {
+      throw boost::bad_get{};
+    }
+
+    Utils::Vector<T, N> ret;
+    boost::transform(vv, ret.begin(),
+                     [](const Variant &v) { return get_value_helper<T>{}(v); });
+
+    return ret;
+  }
+
+  template <typename U> Utils::Vector<T, N> operator()(U const &) const {
+    throw boost::bad_get{};
+  }
+};
+
+/* Utils::Vector<T, N> case */
+template <typename T, size_t N> struct get_value_helper<Utils::Vector<T, N>> {
+  Utils::Vector<T, N> operator()(Variant const &v) const {
+    return boost::apply_visitor(detail::vector_conversion_visitor<T, N>{}, v);
   }
 };
 
@@ -51,14 +119,13 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
 
   /* Standard case, correct type */
   std::vector<T> operator()(std::vector<T> const &v) const { return v; }
-  /* Variant is an empty vector<Variant> -> return empty vector<T> instead,
-   *  else throw wrong type. */
   std::vector<T> operator()(std::vector<Variant> const &vv) const {
-    if (vv.empty()) {
-      return {};
-    } else {
-      throw boost::bad_get{};
-    }
+    std::vector<T> ret(vv.size());
+
+    boost::transform(vv, ret.begin(),
+                     [](const Variant &v) { return get_value_helper<T>{}(v); });
+
+    return ret;
   }
 };
 
@@ -98,20 +165,18 @@ struct get_value_helper<
     auto const object_id = boost::get<ObjectId>(v);
     if (object_id == ObjectId()) {
       return nullptr;
-    } else {
-      auto so_ptr = ScriptInterfaceBase::get_instance(object_id).lock();
-      if (!so_ptr) {
-        throw std::runtime_error("Unknown Object.");
-      }
-
-      auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
-
-      if (t_ptr) {
-        return t_ptr;
-      } else {
-        throw std::runtime_error("Wrong type: " + so_ptr->name());
-      }
     }
+    auto so_ptr = ScriptInterfaceBase::get_instance(object_id).lock();
+    if (!so_ptr) {
+      throw std::runtime_error("Unknown Object.");
+    }
+
+    auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
+
+    if (t_ptr) {
+      return t_ptr;
+    }
+    throw std::runtime_error("Wrong type: " + so_ptr->name());
   }
 };
 } // namespace detail
@@ -126,7 +191,13 @@ struct get_value_helper<
  * be converted.
  */
 template <typename T> T get_value(Variant const &v) {
-  return detail::get_value_helper<T>{}(v);
+  try {
+    return detail::get_value_helper<T>{}(v);
+  } catch (const boost::bad_get &) {
+    throw std::runtime_error("Provided argument of type " +
+                             detail::type_label(v) + " is not convertible to " +
+                             Utils::demangle<T>());
+  }
 }
 
 /**
@@ -139,11 +210,6 @@ template <typename T>
 T get_value(VariantMap const &vals, std::string const &name) {
   try {
     return get_value<T>(vals.at(name));
-  } catch (boost::bad_get const &) {
-    throw std::runtime_error(std::string("Argument '") + name +
-                             "' has wrong type: Is a " +
-                             get_type_label(vals.at(name)) + " expected a " +
-                             get_type_label(infer_type<T>()));
   } catch (std::out_of_range const &) {
     throw std::out_of_range("Parameter '" + name + "' is missing.");
   }
@@ -158,9 +224,8 @@ T get_value_or(VariantMap const &vals, std::string const &name,
                T const &default_) {
   if (vals.count(name)) {
     return get_value<T>(vals.at(name));
-  } else {
-    return default_;
   }
+  return default_;
 }
 
 /**
@@ -180,36 +245,6 @@ std::shared_ptr<T> make_shared_from_args(VariantMap const &vals,
                                          ArgNames &&... args) {
   return std::make_shared<T>(
       get_value<Types>(vals, std::forward<ArgNames>(args))...);
-}
-
-/**
- * @brief Call a function with parameters fetched from a VariantMap.
- *
- * If not provided the types of the arguments are deduced from the
- * function signature.
- *
- * (In R (T::*m)(Args...), m is a pointer to member function of a T,
- * returning R and taking Args as parameters.)
- */
-template <typename T, typename R, typename... Args, typename... ArgNames>
-auto call_with_args(T &this_, R (T::*m)(Args...), VariantMap const &vals,
-                    ArgNames &&... args) -> R {
-  return (this_.*m)(get_value<Args>(vals, std::forward<ArgNames>(args))...);
-}
-
-/**
- * @brief Call a function with parameters fetched from a VariantMap.
- *
- * If not provided the types of the arguments are deduced from the
- * function signature.
- *
- * (In R (*m)(Args...), m is a function pointer,
- * returning R and taking Args as parameters.)
- */
-template <typename R, typename... Args, typename... ArgNames>
-auto call_with_args(R (*m)(Args...), VariantMap const &vals,
-                    ArgNames &&... args) -> R {
-  return (*m)(get_value<Args>(vals, std::forward<ArgNames>(args))...);
 }
 
 template <typename T>

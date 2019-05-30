@@ -17,8 +17,12 @@
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
+class Shape(object):
+    _so_bind_methods = ("calc_distance",)
+
+
 @script_interface_register
-class Cylinder(ScriptInterfaceHelper):
+class Cylinder(Shape, ScriptInterfaceHelper):
 
     """
     A cylinder shape.
@@ -44,7 +48,7 @@ class Cylinder(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Ellipsoid(ScriptInterfaceHelper):
+class Ellipsoid(Shape, ScriptInterfaceHelper):
 
     """
     An ellipsoid.
@@ -54,7 +58,7 @@ class Ellipsoid(ScriptInterfaceHelper):
 
     Attributes
     ----------
-    center : :obj:`array_like`
+    center : array_like :obj:`float`
        Coordinates of the center of the ellipsoid.
     a : :obj:`float`
        Semiaxis along the axis of rotational symmetry.
@@ -68,7 +72,7 @@ class Ellipsoid(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class HollowCone(ScriptInterfaceHelper):
+class HollowCone(Shape, ScriptInterfaceHelper):
 
     """
     A hollow cone shape.
@@ -96,29 +100,7 @@ class HollowCone(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Maze(ScriptInterfaceHelper):
-
-    """
-    Spherical cavities on a regular grid that are
-    connected by tubes.
-
-    Attributes
-    ----------
-    cylrad : :obj:`float`
-             Radius of the tubes.
-    dim : :obj:`float`
-          Dimension of the maze.
-    nsphere : :obj:`int`
-              Number of spherical cavities.
-    sphrad : :obj:`float`
-             Radius of the spherical cavities.
-
-    """
-    _so_name = "Shapes::Maze"
-
-
-@script_interface_register
-class Rhomboid(ScriptInterfaceHelper):
+class Rhomboid(Shape, ScriptInterfaceHelper):
 
     """
     An parallelepiped.
@@ -142,7 +124,7 @@ class Rhomboid(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Slitpore(ScriptInterfaceHelper):
+class Slitpore(Shape, ScriptInterfaceHelper):
 
     """
 
@@ -157,13 +139,14 @@ class Slitpore(ScriptInterfaceHelper):
     pore_mouth : :obj:`float`
     pore_width : :obj:`float`
     upper_smoothing_radius : :obj:`float`
+    dividing_plane : :obj:`float`
 
     """
     _so_name = "Shapes::Slitpore"
 
 
 @script_interface_register
-class Sphere(ScriptInterfaceHelper):
+class Sphere(Shape, ScriptInterfaceHelper):
 
     """
     A sphere.
@@ -183,7 +166,7 @@ class Sphere(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class SpheroCylinder(ScriptInterfaceHelper):
+class SpheroCylinder(Shape, ScriptInterfaceHelper):
 
     """
     A cylinder with hemispheres as caps.
@@ -207,7 +190,7 @@ class SpheroCylinder(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Stomatocyte(ScriptInterfaceHelper):
+class Stomatocyte(Shape, ScriptInterfaceHelper):
 
     """
     Attributes
@@ -232,7 +215,7 @@ class Stomatocyte(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Torus(ScriptInterfaceHelper):
+class Torus(Shape, ScriptInterfaceHelper):
 
     """
     A torus shape.
@@ -255,7 +238,7 @@ class Torus(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class Wall(ScriptInterfaceHelper):
+class Wall(Shape, ScriptInterfaceHelper):
 
     """
     An infinite plane.
@@ -272,7 +255,7 @@ class Wall(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class SimplePore(ScriptInterfaceHelper):
+class SimplePore(Shape, ScriptInterfaceHelper):
 
     """
     Two parallel infinite planes, and a cylindrical orfice connecting them.

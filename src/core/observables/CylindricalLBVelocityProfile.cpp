@@ -19,14 +19,13 @@
 */
 
 #include "CylindricalLBVelocityProfile.hpp"
-#include "grid_based_algorithms/lb.hpp"
-#include "utils.hpp"
-#include "utils/Histogram.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
+#include <utils/Histogram.hpp>
 
 namespace Observables {
 
-std::vector<double> CylindricalLBVelocityProfile::
-operator()(PartCfg &partCfg) const {
+std::vector<double> CylindricalLBVelocityProfile::operator()() const {
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                                 static_cast<size_t>(n_phi_bins),
                                 static_cast<size_t>(n_z_bins)}};
@@ -37,31 +36,23 @@ operator()(PartCfg &partCfg) const {
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
   std::vector<double> velocities(m_sample_positions.size());
-  if (lattice_switch & LATTICE_LB_GPU) {
-#if defined(LB_GPU)
-    lb_lbfluid_get_interpolated_velocity_at_positions(
-        m_sample_positions.data(), velocities.data(),
-        m_sample_positions.size() / 3);
-#endif
-  } else if (lattice_switch & LATTICE_LB) {
-#if defined(LB)
-    for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
-      Vector3d pos_tmp = {m_sample_positions[ind + 0],
-                          m_sample_positions[ind + 1],
-                          m_sample_positions[ind + 2]};
-      lb_lbfluid_get_interpolated_velocity(pos_tmp, &(velocities[ind + 0]));
-    }
-#endif
-  } else {
-    return histogram.get_histogram();
+  for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
+    Utils::Vector3d pos_tmp = {m_sample_positions[ind + 0],
+                               m_sample_positions[ind + 1],
+                               m_sample_positions[ind + 2]};
+    const Utils::Vector3d v =
+        lb_lbinterpolation_get_interpolated_velocity_global(pos_tmp) *
+        lb_lbfluid_get_lattice_speed();
+    std::copy_n(v.begin(), 3, &(velocities[ind + 0]));
   }
   for (size_t ind = 0; ind < m_sample_positions.size(); ind += 3) {
-    const Vector3d pos_shifted = {{m_sample_positions[ind + 0] - center[0],
-                                   m_sample_positions[ind + 1] - center[1],
-                                   m_sample_positions[ind + 2] - center[2]}};
-    const Vector3d pos_cyl =
+    const Utils::Vector3d pos_shifted = {
+        {m_sample_positions[ind + 0] - center[0],
+         m_sample_positions[ind + 1] - center[1],
+         m_sample_positions[ind + 2] - center[2]}};
+    const Utils::Vector3d pos_cyl =
         Utils::transform_pos_to_cylinder_coordinates(pos_shifted, axis);
-    const Vector3d velocity = {
+    const Utils::Vector3d velocity = {
         {velocities[ind + 0], velocities[ind + 1], velocities[ind + 2]}};
     histogram.update(pos_cyl, Utils::transform_vel_to_cylinder_coordinates(
                                   velocity, axis, pos_shifted));

@@ -43,7 +43,7 @@ class ScriptInterfaceObjectParams(ut.TestCase):
         self.assertEqual(c.shape.__class__, Sphere)
         # Test parameter retrieval
         self.assertAlmostEqual(c.shape.radius, 1, places=8)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             c.shape = Wall(thisparameterdoesnotexist=0)
 
 if __name__ == "__main__":

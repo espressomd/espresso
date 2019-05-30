@@ -19,143 +19,94 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- * Header file for lb.cpp
  *
- * This is the header file for the Lattice Boltzmann implementation in lb.cpp
+ * %Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
+ *
+ * Implementation in lb.cpp.
  */
 
 #ifndef LB_H
 #define LB_H
 
 #include "config.hpp"
+#include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb-d3q19.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
 
-#include "lattice.hpp"
-
-#ifdef LB
+#include <array>
+#include <boost/optional.hpp>
+#include <memory>
 
 #include "errorhandling.hpp"
 
-#include "utils.hpp"
+#include "halo.hpp"
 
+#include <utils/Counter.hpp>
 #include <utils/Span.hpp>
 
-/* For the D3Q19 model most functions have a separate implementation
- * where the coefficients and the velocity vectors are hardcoded
- * explicitly. This saves a lot of multiplications with 1's and 0's
- * thus making the code more efficient. */
-#define D3Q19
-
-/** \name Parameter fields for Lattice Boltzmann
- * The numbers are referenced in \ref mpi_bcast_lb_params
- * to determine what actions have to take place upon change
- * of the respective parameter. */
-/*@{*/
-#define LBPAR_DENSITY 0   /**< fluid density */
-#define LBPAR_VISCOSITY 1 /**< fluid kinematic viscosity */
-#define LBPAR_AGRID 2     /**< grid constant for fluid lattice */
-#define LBPAR_TAU 3       /**< time step for fluid propagation */
-#define LBPAR_FRICTION                                                         \
-  4 /**< friction coefficient for viscous coupling between particles and fluid \
-     */
-#define LBPAR_EXTFORCE 5 /**< external force density acting on the fluid */
-#define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
-
-/** Note these are used for binary logic so should be powers of 2 */
-#define LB_COUPLE_NULL 1
-#define LB_COUPLE_TWO_POINT 2
-#define LB_COUPLE_THREE_POINT 4
-
-#ifdef ADDITIONAL_CHECKS
-void print_fluid();
-#endif
-/*@}*/
 /** Some general remarks:
- * This file implements the LB D3Q19 method to Espresso. The LB_Model
- * construction is preserved for historical reasons and might be removed
- * soon. It is constructed as a multi-relaxation time LB, thus all populations
- * are converted to modes, then collision is performed and transfered back
- * to population space, where the streaming is performed.
+ *  This file implements the LB D3Q19 method to Espresso. The LB_Model
+ *  construction is preserved for historical reasons and might be removed
+ *  soon. It is constructed as a multi-relaxation time LB, thus all populations
+ *  are converted to modes, then collision is performed and transfered back
+ *  to population space, where the streaming is performed.
  *
- * For performance reasons it is clever to do streaming and collision at the
- * same time
- * because every fluid node has to be read and written only once. This increases
- * mainly cache efficiency.
- * Two alternatives are implemented: stream_collide and collide_stream.
+ *  For performance reasons it is clever to do streaming and collision at the
+ *  same time because every fluid node has to be read and written only once.
+ *  This increases mainly cache efficiency. Two alternatives are implemented:
+ *  stream_collide and collide_stream.
  *
- * The hydrodynamic fields, corresponding to density, velocity and stress, are
- * stored in LB_FluidNodes in the array lbfields, the populations in lbfluid
- * which is constructed as 2 x (Nx x Ny x Nz) x 19 array.
+ *  The hydrodynamic fields, corresponding to density, velocity and stress, are
+ *  stored in LB_FluidNodes in the array lbfields, the populations in lbfluid
+ *  which is constructed as 2 x (Nx x Ny x Nz) x 19 array.
  */
 
 /** Description of the LB Model in terms of the unit vectors of the
  *  velocity sub-lattice and the corresponding coefficients
- *  of the pseudo-equilibrium distribution */
-template <size_t N_vel = 19> struct LB_Model {
-  /** number of velocities */
-  static const int n_veloc = static_cast<int>(N_vel);
-
-  /** unit vectors of the velocity sublattice */
-  std::array<std::array<double, 3>, N_vel> c;
-
-  /** coefficients in the pseudo-equilibrium distribution */
-  std::array<std::array<double, 4>, N_vel> coeff;
-
-  /** weights in the functional for the equilibrium distribution */
-  std::array<double, N_vel> w;
-
-  /** basis of moment space */
-  std::array<std::array<double, N_vel>, N_vel + 1> e;
-
-  /** speed of sound squared */
-  double c_sound_sq;
-};
+ *  of the pseudo-equilibrium distribution
+ */
+extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 /** Data structure for fluid on a local lattice site */
 struct LB_FluidNode {
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   int boundary;
-  Vector3d slip_velocity = {};
+  Utils::Vector3d slip_velocity = {};
 #endif // LB_BOUNDARIES
 
   /** local force density */
-  double force_density[3];
+  Utils::Vector3d force_density;
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   // For particle update, we need the force on the nodes in LBM
   // Yet, Espresso resets the force immediately after the LBM update
   // Therefore we save it here
-  double force_density_buf[3];
+  Utils::Vector3d force_density_buf;
 #endif
 };
 
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
-typedef struct {
-  /** number density (LJ units) */
+struct LB_Parameters {
+  /** number density (LB units) */
   double rho;
 
-  /** kinematic viscosity (LJ units) */
+  /** kinematic viscosity (LB units) */
   double viscosity;
 
-  /** bulk viscosity (LJ units) */
+  /** bulk viscosity (LB units) */
   double bulk_viscosity;
 
-  /** lattice spacing (LJ units) */
+  /** lattice spacing */
   double agrid;
 
-  /** time step for fluid propagation (LJ units)
+  /** time step for fluid propagation (MD units)
    *  Note: Has to be larger than MD time step! */
   double tau;
 
-  /** friction coefficient for viscous coupling (LJ units)
-   * Note that the friction coefficient is quite high and may
-   * lead to numerical artifacts with low order integrators */
-  double friction;
+  /** external force density applied to the fluid at each lattice site (LB
+   * Units) */
+  Utils::Vector3d ext_force_density;
 
-  /** external force density applied to the fluid at each lattice site (MD
-   * units) */
-  double ext_force_density[3]; /* Open question: Do we want a local force or
-                          global force? */
-  double rho_lb_units;
   /** relaxation of the odd kinetic modes */
   double gamma_odd;
   /** relaxation of the even kinetic modes */
@@ -166,73 +117,83 @@ typedef struct {
   double gamma_bulk;
 
   /** Flag determining whether lbpar.gamma_shear, gamma_odd, and gamma_even are
-   * calculated
-   *  from lbpar.gamma_shear in such a way to yield a TRT LB with minimized slip
-   * at
-   *  bounce-back boundaries */
+   *  calculated from lbpar.gamma_shear in such a way to yield a TRT LB with
+   *  minimized slip at bounce-back boundaries
+   */
   bool is_TRT;
 
-  int resend_halo;
-
   /** \name Derived parameters */
-  /** Flag indicating whether fluctuations are present. */
-  int fluct;
   /** amplitudes of the fluctuations of the modes */
-  double phi[19];
-} LB_Parameters;
+  Utils::Vector19d phi;
+  // Thermal energy
+  double kT;
 
-/** The DnQm model to be used. */
-extern LB_Model<> lbmodel;
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &rho &viscosity &bulk_viscosity &agrid &tau &ext_force_density &gamma_odd
+        &gamma_even &gamma_shear &gamma_bulk &is_TRT &phi &kT;
+  }
+};
 
-/** Struct holding the Lattice Boltzmann parameters */
+/** %Lattice Boltzmann parameters. */
 extern LB_Parameters lbpar;
 
 /** The underlying lattice */
 extern Lattice lblattice;
 
+extern HaloCommunicator update_halo_comm;
+
+void lb_realloc_fluid();
+
+void lb_init();
+
+void lb_reinit_fluid();
+
+void lb_reinit_parameters();
 /** Pointer to the velocity populations of the fluid.
- * lbfluid contains pre-collision populations, lbfluid_post
- * contains post-collision populations*/
+ *  lbfluid contains pre-collision populations, lbfluid_post
+ *  contains post-collision populations
+ */
 using LB_Fluid = std::array<Utils::Span<double>, 19>;
 extern LB_Fluid lbfluid;
 
+class LB_Fluid_Ref {
+public:
+  LB_Fluid_Ref(std::size_t index, const LB_Fluid &lb_fluid)
+      : m_index(index), m_lb_fluid(lb_fluid) {}
+  template <std::size_t I> const auto &get() const {
+    return m_lb_fluid[I][m_index];
+  }
+
+private:
+  const std::size_t m_index;
+  const LB_Fluid &m_lb_fluid;
+};
+
+namespace Utils {
+
+template <std::size_t I> auto get(const LB_Fluid_Ref &lb_fluid) {
+  return lb_fluid.get<I>();
+}
+
+} // namespace Utils
+
 /** Pointer to the hydrodynamic fields of the fluid */
 extern std::vector<LB_FluidNode> lbfields;
-
-/** Switch indicating momentum exchange between particles and fluid */
-extern int transfer_momentum;
 
 /************************************************************/
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
 
-/** Updates the Lattice Boltzmann system for one time step.
- * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the
- * collisions. If boundaries are present, it also applies the boundary
- * conditions.
+/** Update the lattice Boltzmann system for one time step.
+ *  This function performs the collision step and the streaming step.
+ *  If external force densities are present, they are applied prior to the
+ *  collisions. If boundaries are present, it also applies the boundary
+ *  conditions.
  */
 void lattice_boltzmann_update();
 
-/** Performs a full initialization of
- *  the Lattice Boltzmann system. All derived parameters
- *  and the fluid are reset to their default values. */
-void lb_init();
-
-/** (Re-)initializes the derived parameters
- *  for the Lattice Boltzmann system.
- *  The current state of the fluid is unchanged. */
-void lb_reinit_parameters();
-
-/** (Re-)initializes the fluid. */
-void lb_reinit_fluid();
-
-/** Resets the force densities on the fluid nodes */
-void lb_reinit_force_densities();
-
-/** Checks if all LB parameters are meaningful */
-int lb_sanity_checks();
+void lb_sanity_checks();
 
 /** Calculates the equilibrium distributions.
     @param index Index of the local site
@@ -240,303 +201,62 @@ int lb_sanity_checks();
     @param j local fluid speed
     @param pi local fluid pressure
 */
-void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             const std::array<double, 3> &j,
-                             const std::array<double, 6> &pi);
+void lb_calc_n_from_rho_j_pi(Lattice::index_t index, double rho,
+                             Utils::Vector3d const &j,
+                             Utils::Vector6d const &pi);
 
-/** Propagates the Lattice Boltzmann system for one time step.
- * This function performs the collision step and the streaming step.
- * If external force densities are present, they are applied prior to the
- * collisions. If boundaries are present, it also applies the boundary
- * conditions.
- */
-void lb_propagate();
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#endif
 
-/** Calculates the coupling of MD particles to the LB fluid.
- * This function  is called from \ref force_calc. The force is added
- * to the particle force and the corresponding momentum exchange is
- * applied to the fluid.
- * Note that this function changes the state of the fluid!
- */
-void calc_particle_lattice_ia();
-
-/** calculates the fluid velocity at a given position of the
- * lattice. Note that it can lead to undefined behaviour if the
- * position is not within the local lattice. */
-void lb_lbfluid_get_interpolated_velocity(const Vector3d &p, double *v);
-
-inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                                 double *pi);
+void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
+                          double *pi);
 
 /** Calculation of hydrodynamic modes.
  *
  *  @param index number of the node to calculate the modes for
- *  @param mode output pointer to a double[19]
+ *  @retval Array containing the modes.
  */
-void lb_calc_modes(Lattice::index_t index, double *mode);
-
-/** Calculate the local fluid density.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index the local lattice site (Input).
- * @param rho   local fluid density
- */
-inline void lb_calc_local_rho(Lattice::index_t index, double *rho) {
-  // unit conversion: mass density
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_rho in " << __FILE__
-                      << __LINE__ << ": CPU LB not switched on.";
-    *rho = 0;
-    return;
-  }
-
-  double avg_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-
-  *rho = avg_rho + lbfluid[0][index] + lbfluid[1][index] + lbfluid[2][index] +
-         lbfluid[3][index] + lbfluid[4][index] + lbfluid[5][index] +
-         lbfluid[6][index] + lbfluid[7][index] + lbfluid[8][index] +
-         lbfluid[9][index] + lbfluid[10][index] + lbfluid[11][index] +
-         lbfluid[12][index] + lbfluid[13][index] + lbfluid[14][index] +
-         lbfluid[15][index] + lbfluid[16][index] + lbfluid[17][index] +
-         lbfluid[18][index];
-}
-
-/** Calculate the local fluid momentum.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param j local fluid speed
- */
-inline void lb_calc_local_j(Lattice::index_t index, double *j) {
-
-#ifndef D3Q19
-#error Only D3Q19 is implemened!
-#endif
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_j in " << __FILE__ << __LINE__
-                      << ": CPU LB not switched on.";
-    j[0] = j[1] = j[2] = 0;
-    return;
-  }
-
-  j[0] = lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
-         lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
-         lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
-         lbfluid[14][index];
-  j[1] = lbfluid[3][index] - lbfluid[4][index] + lbfluid[7][index] -
-         lbfluid[8][index] - lbfluid[9][index] + lbfluid[10][index] +
-         lbfluid[15][index] - lbfluid[16][index] + lbfluid[17][index] -
-         lbfluid[18][index];
-  j[2] = lbfluid[5][index] - lbfluid[6][index] + lbfluid[11][index] -
-         lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
-         lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
-         lbfluid[18][index];
-}
-
-/** Calculate the local fluid stress.
- * The calculation is implemented explicitly for the special case of D3Q19.
- * @param index The local lattice site (Input).
- * @param pi local fluid pressure
- */
-inline void lb_calc_local_pi(Lattice::index_t index, double *pi) {
-
-  double rho;
-  double j[3];
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_pi in " << __FILE__ << __LINE__
-                      << ": CPU LB not switched on.";
-    j[0] = j[1] = j[2] = 0;
-    return;
-  }
-
-  lb_calc_local_fields(index, &rho, j, pi);
-}
-
-/** Calculate the local fluid fields.
- * The calculation is implemented explicitly for the special case of D3Q19.
- *
- * @param index   Index of the local lattice site.
- * @param rho     local fluid density
- * @param j       local fluid speed
- * @param pi      local fluid pressure
- */
-inline void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                                 double *pi) {
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_fields in " << __FILE__
-                      << __LINE__ << ": CPU LB not switched on.";
-    *rho = 0;
-    j[0] = j[1] = j[2] = 0;
-    pi[0] = pi[1] = pi[2] = pi[3] = pi[4] = pi[5] = 0;
-    return;
-  }
-
-#ifndef D3Q19
-#error Only D3Q19 is implemened!
-#endif
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_calc_local_pi in " << __FILE__ << __LINE__
-                      << ": CPU LB not switched on.";
-    j[0] = j[1] = j[2] = 0;
-    return;
-  }
-
-#ifdef LB_BOUNDARIES
-  if (lbfields[index].boundary) {
-    *rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-    j[0] = 0.;
-    j[1] = 0.;
-    j[2] = 0.;
-    if (pi) {
-      pi[0] = 0.;
-      pi[1] = 0.;
-      pi[2] = 0.;
-      pi[3] = 0.;
-      pi[4] = 0.;
-      pi[5] = 0.;
-    }
-    return;
-  }
-#endif
-  double mode[19];
-  double modes_from_pi_eq[6];
-  lb_calc_modes(index, mode);
-
-  *rho = mode[0] + lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-
-  j[0] = mode[1] + 0.5 * lbfields[index].force_density[0];
-  j[1] = mode[2] + 0.5 * lbfields[index].force_density[1];
-  j[2] = mode[3] + 0.5 * lbfields[index].force_density[2];
-
-  if (!pi)
-    return;
-
-  /* equilibrium part of the stress modes */
-  modes_from_pi_eq[0] = scalar(j, j) / *rho;
-  modes_from_pi_eq[1] = (Utils::sqr(j[0]) - Utils::sqr(j[1])) / *rho;
-  modes_from_pi_eq[2] = (scalar(j, j) - 3.0 * Utils::sqr(j[2])) / *rho;
-  modes_from_pi_eq[3] = j[0] * j[1] / *rho;
-  modes_from_pi_eq[4] = j[0] * j[2] / *rho;
-  modes_from_pi_eq[5] = j[1] * j[2] / *rho;
-
-  /* Now we must predict the outcome of the next collision */
-  /* We immediately average pre- and post-collision. */
-  mode[4] = modes_from_pi_eq[0] +
-            (0.5 + 0.5 * lbpar.gamma_bulk) * (mode[4] - modes_from_pi_eq[0]);
-  mode[5] = modes_from_pi_eq[1] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[5] - modes_from_pi_eq[1]);
-  mode[6] = modes_from_pi_eq[2] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[6] - modes_from_pi_eq[2]);
-  mode[7] = modes_from_pi_eq[3] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[7] - modes_from_pi_eq[3]);
-  mode[8] = modes_from_pi_eq[4] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[8] - modes_from_pi_eq[4]);
-  mode[9] = modes_from_pi_eq[5] +
-            (0.5 + 0.5 * lbpar.gamma_shear) * (mode[9] - modes_from_pi_eq[5]);
-
-  // Transform the stress tensor components according to the modes that
-  // correspond to those used by U. Schiller. In terms of populations this
-  // expression then corresponds exactly to those in Eqs. 116 - 121 in the
-  // Duenweg and Ladd paper, when these are written out in populations.
-  // But to ensure this, the expression in Schiller's modes has to be different!
-
-  pi[0] = (2.0 * (mode[0] + mode[4]) + mode[6] + 3.0 * mode[5]) / 6.0; // xx
-  pi[1] = mode[7];                                                     // xy
-  pi[2] = (2.0 * (mode[0] + mode[4]) + mode[6] - 3.0 * mode[5]) / 6.0; // yy
-  pi[3] = mode[8];                                                     // xz
-  pi[4] = mode[9];                                                     // yz
-  pi[5] = (mode[0] + mode[4] - mode[6]) / 3.0;                         // zz
-}
+std::array<double, 19> lb_calc_modes(Lattice::index_t index);
 
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
                                               int *boundary) {
-
-  if (!(lattice_switch & LATTICE_LB)) {
-    runtimeErrorMsg() << "Error in lb_local_fields_get_boundary_flag in "
-                      << __FILE__ << __LINE__ << ": CPU LB not switched on.";
-    *boundary = 0;
-    return;
-  }
-
   *boundary = lbfields[index].boundary;
 }
 #endif
 
 inline void lb_get_populations(Lattice::index_t index, double *pop) {
-  for (int i = 0; i < lbmodel.n_veloc; ++i) {
-    pop[i] = lbfluid[i][index] + lbmodel.coeff[i][0] * lbpar.rho;
+  for (int i = 0; i < D3Q19::n_vel; ++i) {
+    pop[i] = lbfluid[i][index] + D3Q19::coefficients[i][0] * lbpar.rho;
   }
 }
 
-inline void lb_set_populations(Lattice::index_t index, double *pop) {
-  for (int i = 0; i < lbmodel.n_veloc; ++i) {
-    lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
+inline void lb_set_populations(Lattice::index_t index,
+                               const Utils::Vector19d &pop) {
+  for (int i = 0; i < D3Q19::n_vel; ++i) {
+    lbfluid[i][index] = pop[i] - D3Q19::coefficients[i][0] * lbpar.rho;
   }
 }
-#endif
 
-#if defined(LB) || defined(LB_GPU)
-/* A C level interface to the LB fluid */
-int lb_lbfluid_set_density(double *p_dens);
-int lb_lbfluid_get_density(double *p_dens);
-int lb_lbfluid_set_visc(double *p_visc);
-int lb_lbfluid_set_bulk_visc(double *p_bulk_visc);
-int lb_lbfluid_set_gamma_odd(double *p_gamma_odd);
-int lb_lbfluid_set_gamma_even(double *p_gamma_even);
-int lb_lbfluid_set_friction(double *p_friction);
-int lb_lbfluid_set_couple_flag(int couple_flag);
-int lb_lbfluid_set_agrid(double p_agrid);
-int lb_lbfluid_set_ext_force_density(int component, double p_fx, double p_fy,
-                                     double p_fz);
-int lb_lbfluid_set_tau(double p_tau);
-int lb_lbfluid_set_remove_momentum(void);
-int lb_lbfluid_get_agrid(double *p_agrid);
-int lb_lbfluid_get_tau(double *p_tau);
-int lb_lbfluid_get_visc(double *p_visc);
-int lb_lbfluid_get_bulk_visc(double *p_bulk_visc);
-int lb_lbfluid_get_friction(double *p_friction);
-int lb_lbfluid_get_couple_flag(int *couple_flag);
-int lb_lbfluid_get_ext_force_density(double *p_f);
-#ifdef SHANCHEN
-int lb_lbfluid_set_shanchen_coupling(double *p_coupling);
-int lb_lbfluid_set_mobility(double *p_mobility);
-#endif
-int lb_set_lattice_switch(int py_switch);
-int lb_get_lattice_switch(int *py_switch);
+uint64_t lb_fluid_get_rng_state();
+void lb_fluid_set_rng_state(uint64_t counter);
+void lb_prepare_communication();
 
-/* IO routines */
-int lb_lbfluid_print_vtk_boundary(char *filename);
-int lb_lbfluid_print_vtk_velocity(char *filename,
-                                  std::vector<int> = {-1, -1, -1},
-                                  std::vector<int> = {-1, -1, -1});
-int lb_lbfluid_print_vtk_density(char **filename);
-int lb_lbfluid_print_boundary(char *filename);
-int lb_lbfluid_print_velocity(char *filename);
+#ifdef LB_BOUNDARIES
+/** Bounce back boundary conditions.
+ * The populations that have propagated into a boundary node
+ * are bounced back to the node they came from. This results
+ * in no slip boundary conditions.
+ *
+ * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
+ */
+void lb_bounce_back(LB_Fluid &lbfluid);
 
-int lb_lbfluid_save_checkpoint(char *filename, int binary);
-int lb_lbfluid_load_checkpoint(char *filename, int binary);
+#endif /* LB_BOUNDARIES */
 
-bool lb_lbnode_is_index_valid(const Vector3i &ind);
-int lb_lbnode_get_rho(const Vector3i &ind, double *p_rho);
-int lb_lbnode_get_u(const Vector3i &ind, double *u);
-int lb_lbnode_get_pi(const Vector3i &ind, double *pi);
-int lb_lbnode_get_pi_neq(const Vector3i &ind, double *pi_neq);
-int lb_lbnode_get_boundary(const Vector3i &ind, int *p_boundary);
-int lb_lbnode_get_pop(const Vector3i &ind, double *pop);
+void lb_calc_fluid_momentum(double *result);
+void lb_collect_boundary_forces(double *result);
 
-int lb_lbnode_set_rho(const Vector3i &ind, double *rho);
-int lb_lbnode_set_u(const Vector3i &ind, double *u);
-int lb_lbnode_set_pop(const Vector3i &ind, double *pop);
-
-/** calculates the fluid velocity at a given position of the
- * lattice. Note that it can lead to undefined behaviour if the
- * position is not within the local lattice. This version of the function
- * can be called without the position needing to be on the local processor */
-int lb_lbfluid_get_interpolated_velocity_global(Vector3d &p, double *v);
-
-#endif
+/*@}*/
 
 #endif /* _LB_H */
-/*@}*/

@@ -34,10 +34,12 @@ class ParticleProperties(ut.TestCase):
 
     # Handle for espresso system
     system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+    system.cell_system.skin = 0
+    system.time_step = 0.01
 
-    f1 = FeneBond(k=1, d_r_max=5)
+    f1 = FeneBond(k=1, d_r_max=2)
     system.bonded_inter.add(f1)
-    f2 = FeneBond(k=1, d_r_max=5)
+    f2 = FeneBond(k=1, d_r_max=2)
     system.bonded_inter.add(f2)
 
     def setUp(self):
@@ -148,6 +150,15 @@ class ParticleProperties(ut.TestCase):
 
     if espressomd.has_features(["ELECTROSTATICS"]):
         test_charge = generateTestForScalarProperty("q", -19.7)
+
+    if espressomd.has_features(["EXTERNAL_FORCES"]):
+        test_ext_force = generateTestForVectorProperty(
+            "ext_force", [0.1, 0.2, 0.3])
+        test_fix = generateTestForVectorProperty("fix", [True, False, True])
+
+    if espressomd.has_features(["EXTERNAL_FORCES", "ROTATION"]):
+        test_ext_torque = generateTestForVectorProperty(
+            "ext_torque", [.4, .5, .6])
 
     if espressomd.has_features(["DIPOLES"]):
         test_dip = generateTestForVectorProperty(
@@ -271,6 +282,39 @@ class ParticleProperties(ut.TestCase):
             self.system.part[id].remove()
         with self.assertRaises(Exception):
             self.system.part[17].remove()
+
+    def test_coord_fold_corner_cases(self):
+        system = self.system
+        system.time_step = .5
+        system.cell_system.set_domain_decomposition(use_verlet_lists=False)
+        system.cell_system.skin = 0
+        system.min_global_cut = 3
+        system.part.clear()
+        p1 = system.part.add(
+            pos=3 * [np.nextafter(0., -1.)], v=system.box_l / 3)
+        print(p1.pos)
+        p2 = system.part.add(
+            pos=np.nextafter(system.box_l, 2 * system.box_l), v=system.box_l / 3)
+        print(p2.pos)
+        p3 = system.part.add(
+            pos=np.nextafter(system.box_l, (0, 0, 0)), v=system.box_l / 3)
+        print(p3.pos)
+        p4 = system.part.add(
+            pos=3 * [np.nextafter(0., 1.)], v=system.box_l / 3)
+        print(p4.pos)
+        system.integrator.run(3)
+        for p in system.part:
+            for i in range(3):
+                self.assertGreaterEqual(p.pos_folded[i], 0)
+                self.assertLess(p.pos_folded[i], system.box_l[i])
+
+        # Force resort
+        system.part.add(pos=(0, 0, 0))
+        system.integrator.run(9)
+        for p in system.part:
+            for i in range(3):
+                self.assertGreaterEqual(p.pos_folded[i], 0)
+                self.assertLess(p.pos_folded[i], system.box_l[i])
 
 
 if __name__ == "__main__":

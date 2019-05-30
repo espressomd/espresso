@@ -31,27 +31,26 @@ namespace ErrorHandling {
 
 class RuntimeErrorCollector {
 public:
-  explicit RuntimeErrorCollector(const boost::mpi::communicator &comm);
+  explicit RuntimeErrorCollector(boost::mpi::communicator comm);
   ~RuntimeErrorCollector();
 
   void message(RuntimeError message);
   void message(const RuntimeError &message);
   void message(RuntimeError::ErrorLevel level, const std::string &msg,
-               const char *function, const char *file, const int line);
+               const char *function, const char *file, int line);
 
   void warning(const std::string &msg, const char *function, const char *file,
-               const int line);
+               int line);
   void warning(const char *msg, const char *function, const char *file,
-               const int line);
+               int line);
   void warning(const std::ostringstream &mstr, const char *function,
-               const char *file, const int line);
+               const char *file, int line);
 
   void error(const std::string &msg, const char *function, const char *file,
-             const int line);
-  void error(const char *msg, const char *function, const char *file,
-             const int line);
+             int line);
+  void error(const char *msg, const char *function, const char *file, int line);
   void error(const std::ostringstream &mstr, const char *function,
-             const char *file, const int line);
+             const char *file, int line);
 
   /**
    * \brief Return the number of all flying messages.
@@ -75,6 +74,8 @@ public:
 
   std::vector<RuntimeError> gather();
   void gatherSlave();
+
+  const boost::mpi::communicator &comm() const { return m_comm; }
 
 private:
   std::vector<RuntimeError> m_errors;

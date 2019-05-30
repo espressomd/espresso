@@ -22,7 +22,7 @@ import unittest as ut
 import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features(["LB", "LB_BOUNDARIES"]),
+@ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES"]),
            "Features not available, skipping test.")
 class LBBoundaryVelocityTest(ut.TestCase):
 
@@ -40,7 +40,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         system = self.system
 
         lb_fluid = espressomd.lb.LBFluid(
-            agrid=2.0, dens=1.0, visc=1.0, fric=1.0, tau=0.03)
+            agrid=2.0, dens=.5, visc=3.0, tau=0.5)
         system.actors.add(lb_fluid)
 
         v_boundary = [0.03, 0.02, 0.01]
@@ -50,7 +50,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
             shape=wall_shape, velocity=v_boundary)
         system.lbboundaries.add(wall)
 
-        system.integrator.run(10000)
+        system.integrator.run(2000)
 
         v_fluid = lb_fluid[1, 0, 0].velocity
         self.assertAlmostEqual(v_fluid[0], v_boundary[0], places=3)

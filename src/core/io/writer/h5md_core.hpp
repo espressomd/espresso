@@ -22,25 +22,16 @@
 #ifndef ESPRESSO_H5MD_CORE_HPP
 #define ESPRESSO_H5MD_CORE_HPP
 
-#include "MpiCallbacks.hpp"
-#include "PartCfg.hpp"
-#include "cells.hpp"
-#include "global.hpp"
 #include <algorithm>
+#include <boost/filesystem.hpp>
 #include <fstream>
+#include <h5xx/h5xx.hpp>
 #include <iostream>
 #include <mpi.h>
 #include <string>
 #include <unordered_map>
-#define BOOST_NO_CXX11_SCOPED_ENUMS
-#include <boost/filesystem.hpp>
-#undef BOOST_NO_CXX11_SCOPED_ENUMS
-#include "communication.hpp"
-#include <h5xx/h5xx.hpp>
 
-extern double sim_time;
-extern double time_step;
-extern double box_l[3];
+#include "PartCfg.hpp"
 
 namespace Writer {
 namespace H5md {
@@ -57,8 +48,8 @@ public:
    * Constructor/destructor without arguments (due to script_interface).
    * @brief Constructor of the File class.
    */
-  File();
-  ~File();
+  File() = default;
+  ~File() = default;
   /**
    * @brief Initialize the File object.
    */
@@ -84,13 +75,6 @@ public:
    */
   void Write(int write_dat, PartCfg &partCfg);
 
-  /**
-   * @brief Method to write the energy contributions to the H5MD file.
-   * @param total Boolean values for total energy
-   * @param kinetic Boolean values for kinetic energy
-   * \todo Implement this method.
-   */
-  void WriteEnergy(bool total = true, bool kinetic = true);
   std::string &filename() { return m_filename; };
   std::string &scriptname() { return m_scriptname; };
   // Returns the int that describes which data should be written to the dataset.
@@ -206,13 +190,13 @@ private:
 };
 
 struct incompatible_h5mdfile : public std::exception {
-  const char *what() const noexcept {
+  const char *what() const noexcept override {
     return "The given hdf5 file does not have a valid h5md structure!";
   }
 };
 
 struct left_backupfile : public std::exception {
-  const char *what() const noexcept {
+  const char *what() const noexcept override {
     return "A backup of the .h5 file exists. This usually means \
 that either you forgot to call the 'close' method or your simulation \
 crashed.";

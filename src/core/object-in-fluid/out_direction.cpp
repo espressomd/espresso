@@ -24,9 +24,11 @@
  */
 
 #include "out_direction.hpp"
-#include "../communication.hpp"
 
 #ifdef MEMBRANE_COLLISION
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 // set out_direction parameters
 int oif_out_direction_set_params(int bond_type) {

@@ -28,7 +28,7 @@ int tabulated_bonded_set_params(int bond_type,
                                 double max, std::vector<double> const &energy,
                                 std::vector<double> const &force) {
   if (bond_type < 0)
-    return 1;
+    return ES_ERROR;
 
   assert(max >= min);
   assert((max == min) || force.size() > 1);
@@ -49,14 +49,14 @@ int tabulated_bonded_set_params(int bond_type,
     bonded_ia_params[bond_type].num = 1;
   } else if (tab_type == TAB_BOND_ANGLE) {
     tab_pot->minval = 0.0;
-    tab_pot->maxval = PI + ROUND_ERROR_PREC;
+    tab_pot->maxval = Utils::pi() + ROUND_ERROR_PREC;
     bonded_ia_params[bond_type].num = 2;
   } else if (tab_type == TAB_BOND_DIHEDRAL) {
     tab_pot->minval = 0.0;
-    tab_pot->maxval = 2.0 * PI + ROUND_ERROR_PREC;
+    tab_pot->maxval = 2.0 * Utils::pi() + ROUND_ERROR_PREC;
     bonded_ia_params[bond_type].num = 3;
   } else {
-    runtimeError("Unsupported tabulated bond type.");
+    runtimeErrorMsg() << "Unsupported tabulated bond type.";
     return 1;
   }
 

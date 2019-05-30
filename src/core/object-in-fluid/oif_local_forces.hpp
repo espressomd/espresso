@@ -25,11 +25,11 @@
  * (Dupin2007) \ref forces.cpp
  */
 
-#include "Vector.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-#include "utils/math/triangle_functions.hpp"
+#include <utils/Vector.hpp>
+#include <utils/math/triangle_functions.hpp>
 
 // set parameters for local forces
 int oif_local_forces_set_params(int bond_type, double r0, double ks,
@@ -44,12 +44,17 @@ inline double KS(double lambda) { // Defined by (19) from Dupin2007
 }
 
 /** Computes the local forces (Dupin2007) and adds them
-    to the particle forces.
-    @param p1,p2,p3     Pointers to particles of triangle 1.
-    @param p2,p3,p4     Pointers to particles of triangle 2.
-    (triangles have particles p2 and p3 in common)
-    @return 0
-*/
+ *  to the particle forces.
+ *  @param p1           %Particle of triangle 1.
+ *  @param p2 , p3      Particles common to triangle 1 and triangle 2.
+ *  @param p4           %Particle of triangle 2.
+ *  @param iaparams     Bonded parameters for the OIF interaction.
+ *  @param force        Force on @p p1.
+ *  @param force2       Force on @p p2.
+ *  @param force3       Force on @p p3.
+ *  @param force4       Force on @p p4.
+ *  @return 0
+ */
 inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
                           Particle *p4, Bonded_ia_parameters *iaparams,
                           double force[3], double force2[3], double force3[3],
@@ -172,10 +177,10 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
   */
   if (iaparams->p.oif_local_forces.kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
 
-    auto handle_triangle = [](double kal, double A0, Vector3d const &fp1,
-                              Vector3d const &fp2, Vector3d const &fp3,
-                              double force1[3], double force2[3],
-                              double force3[3]) {
+    auto handle_triangle = [](double kal, double A0, Utils::Vector3d const &fp1,
+                              Utils::Vector3d const &fp2,
+                              Utils::Vector3d const &fp3, double force1[3],
+                              double force2[3], double force3[3]) {
       auto const h = (1. / 3.) * (fp1 + fp2 + fp3);
       auto const A = Utils::area_triangle(fp1, fp2, fp3);
       auto const t = sqrt(A / A0) - 1.0;

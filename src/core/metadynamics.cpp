@@ -67,9 +67,9 @@ double *meta_acc_force = nullptr;
 /** Accumulated free energy profile */
 double *meta_acc_fprofile = nullptr;
 
-Vector3d meta_cur_xi;
+Utils::Vector3d meta_cur_xi;
 double meta_val_xi = 0.;
-Vector3d meta_apply_direction;
+Utils::Vector3d meta_apply_direction;
 
 void meta_init() {
   if (meta_switch == META_OFF)
@@ -101,7 +101,7 @@ void meta_init() {
  * - apply external force
  */
 void meta_perform() {
-  Vector3d ppos1, ppos2;
+  Utils::Vector3d ppos1, ppos2;
 
   if (meta_switch == META_OFF)
     return;
@@ -147,7 +147,7 @@ void meta_perform() {
   for (int i = 0; i < meta_xi_num_bins; ++i) {
     if (meta_switch == META_DIST) {
       // reaction coordinate value
-      meta_val_xi = sqrt(sqrlen(meta_cur_xi));
+      meta_val_xi = meta_cur_xi.norm();
       // Update free energy profile and biased force
       if (int(sim_time / time_step) % meta_num_relaxation_steps == 0) {
         meta_acc_fprofile[i] -=
@@ -191,7 +191,7 @@ void meta_perform() {
     factor = meta_f_bound * (meta_val_xi - meta_xi_max) / meta_xi_step;
   } else {
     // within the RC interval
-    int i = (int)std::round((meta_val_xi - meta_xi_min) / meta_xi_step);
+    auto i = (int)std::round((meta_val_xi - meta_xi_min) / meta_xi_step);
     if (i < 0)
       i = 0;
     if (i >= meta_xi_num_bins)
@@ -212,8 +212,8 @@ double calculate_lucy(double xi, double xi_0) {
   if (dist <= meta_bias_width) {
     return meta_bias_height * (1 + 2 * dist / meta_bias_width) *
            pow(1 - dist / meta_bias_width, 2);
-  } else
-    return 0.;
+  }
+  return 0.;
 }
 
 /** Calculate derivative of Lucy function */
@@ -227,8 +227,8 @@ double calculate_deriv_lucy(double xi, double xi_0) {
     if (xi < xi_0)
       result *= -1.;
     return result;
-  } else
-    return 0.;
+  }
+  return 0.;
 }
 
 #endif

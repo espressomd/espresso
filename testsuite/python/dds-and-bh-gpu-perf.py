@@ -27,8 +27,10 @@ import espressomd
 import espressomd.magnetostatics
 
 
-@ut.skipIf(not espressomd.has_features(["DIPOLAR_BARNES_HUT"]),
-           "Features not available, skipping test!")
+@ut.skipIf(
+    not espressomd.gpu_available() or not espressomd.has_features(
+        ["DIPOLAR_BARNES_HUT"]),
+           "Features or gpu not available, skipping test!")
 class BHGPUPerfTest(ut.TestCase):
     # Handle for espresso system
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
@@ -79,7 +81,7 @@ class BHGPUPerfTest(ut.TestCase):
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
                 epsilon=10.0, sigma=0.5,
                 cutoff=0.55, shift="auto")
-            self.system.thermostat.set_langevin(kT=0.0, gamma=10.0)
+            self.system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
 
             self.system.integrator.set_steepest_descent(
                 f_max=0.0, gamma=0.1, max_displacement=0.1)
@@ -97,7 +99,7 @@ class BHGPUPerfTest(ut.TestCase):
 
             # gamma should be zero in order to avoid the noise term in force
             # and torque
-            self.system.thermostat.set_langevin(kT=1.297, gamma=0.0)
+            self.system.thermostat.set_langevin(kT=1.297, gamma=0.0, seed=42)
 
             dds_gpu = espressomd.magnetostatics.DipolarDirectSumGpu(
                 prefactor=pf_dds_gpu)

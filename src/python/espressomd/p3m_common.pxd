@@ -3,7 +3,7 @@ include "myconfig.pxi"
 
 IF P3M == 1 or DP3M == 1:
     cdef extern from "electrostatics_magnetostatics/p3m-common.hpp":
-        ctypedef struct p3m_parameter_struct:
+        ctypedef struct P3MParameters:
             double alpha_L
             double r_cut_iL
             int    mesh[3]

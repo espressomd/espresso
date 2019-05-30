@@ -22,7 +22,7 @@
 
 #include "AccumulatorBase.hpp"
 #include "observables/Observable.hpp"
-#include "utils/Accumulator.hpp"
+#include <utils/Accumulator.hpp>
 
 namespace Accumulators {
 
@@ -37,7 +37,6 @@ public:
   void update() override;
   std::vector<double> get_mean();
   std::vector<double> get_variance();
-  std::vector<double> get_std_error();
   /* Partial serialization of state that is not accessible
      via the interface. */
   std::string get_internal_state() const;

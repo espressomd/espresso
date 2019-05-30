@@ -32,10 +32,10 @@ public:
   Mmm1dgpuForce(SystemInterface &s, mmm1dgpu_real coulomb_prefactor,
                 mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius = -1,
                 int bessel_cutoff = -1);
-  ~Mmm1dgpuForce();
+  ~Mmm1dgpuForce() override;
   // interface methods
-  void computeForces(SystemInterface &s);
-  void computeEnergy(SystemInterface &s);
+  void computeForces(SystemInterface &s) override;
+  void computeEnergy(SystemInterface &s) override;
   // configuration methods
   void setup(SystemInterface &s);
   void tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,

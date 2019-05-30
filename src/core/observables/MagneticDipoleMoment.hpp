@@ -28,13 +28,13 @@ namespace Observables {
 class MagneticDipoleMoment : public PidObservable {
 public:
   int n_values() const override { return 3; };
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values(), 0.0);
-    for (int i = 0; i < ids().size(); i++) {
+    for (int i : ids()) {
 #ifdef DIPOLES
-      res[0] += partCfg[ids()[i]].calc_dip()[0];
-      res[1] += partCfg[ids()[i]].calc_dip()[1];
-      res[2] += partCfg[ids()[i]].calc_dip()[2];
+      res[0] += partCfg[i].calc_dip()[0];
+      res[1] += partCfg[i].calc_dip()[1];
+      res[2] += partCfg[i].calc_dip()[2];
 #endif
     }
     return res;

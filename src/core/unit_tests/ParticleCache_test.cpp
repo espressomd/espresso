@@ -26,7 +26,7 @@
 #include <random>
 #include <vector>
 
-#include "core/ParticleCache.hpp"
+#include "ParticleCache.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
@@ -38,7 +38,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "mock/Particle.hpp"
-#include "utils/List.hpp"
+#include <utils/List.hpp>
 
 using Communication::MpiCallbacks;
 namespace mpi = boost::mpi;
@@ -78,7 +78,7 @@ void check_merge(unsigned size, unsigned split) {
       v.insert(val);
   }
 
-  auto merge = detail::Merge<boost::container::flat_set<int>, std::less<int>>{};
+  auto merge = detail::Merge<boost::container::flat_set<int>, std::less<>>{};
   auto w = merge(u, v);
 
   BOOST_CHECK(w.size() == u.size() + v.size());

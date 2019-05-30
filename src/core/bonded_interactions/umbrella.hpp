@@ -30,22 +30,32 @@
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef UMBRELLA
 
-///
+/** Set the parameters of an umbrella bond
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int umbrella_set_params(int bond_type, double k, int dir, double r);
 
-/** Resultant Force due to an umbrella potential */
+/** Resultant force due to an umbrella potential */
 inline double umbrella_force_r(double k, int dir, double r, double distn) {
   return -k * (distn - r);
 }
 
-/** Calculate umbrella potential force between particle p1 and p2 */
-inline int calc_umbrella_pair_force(Particle *p1, Particle *p2,
-                                    Bonded_ia_parameters *ia_params,
-                                    double d[3], double force[3]) {
+/** Compute the umbrella bond length force.
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  ia_params Bonded parameters for the pair interaction.
+ *  @param[in]  d         %Distance between the particles.
+ *  @param[out] force     Force.
+ *  @retval 0
+ */
+inline int calc_umbrella_pair_force(Particle const *p1, Particle const *p2,
+                                    Bonded_ia_parameters const *ia_params,
+                                    double const d[3], double force[3]) {
   double distn;
   double fac = 0.0;
   distn = d[ia_params->p.umbrella.dir];
@@ -67,10 +77,17 @@ inline int calc_umbrella_pair_force(Particle *p1, Particle *p2,
   return 0;
 }
 
-/** calculate umbrella energy between particle p1 and p2. */
-inline int umbrella_pair_energy(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *ia_params, double d[3],
-                                double *_energy) {
+/** Compute the umbrella bond length energy.
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  ia_params Bonded parameters for the pair interaction.
+ *  @param[in]  d         %Distance between the particles.
+ *  @param[out] _energy   Energy.
+ *  @retval 0
+ */
+inline int umbrella_pair_energy(Particle const *p1, Particle const *p2,
+                                Bonded_ia_parameters const *ia_params,
+                                double const d[3], double *_energy) {
   double distn;
   distn = d[ia_params->p.umbrella.dir];
   *_energy = 0.5 * ia_params->p.umbrella.k *

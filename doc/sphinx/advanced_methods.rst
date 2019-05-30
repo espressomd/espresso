@@ -10,7 +10,7 @@ Advanced Methods
 Creating bonds when particles collide
 -------------------------------------
 
-Please cite :cite:`espresso2` when using dynamic bonding.
+Please cite :cite:`arnold13a` when using dynamic bonding.
 
 With the help of this feature, bonds between particles can be created
 automatically during the simulation, every time two particles collide.
@@ -161,10 +161,10 @@ with the reaction rate :math:`k_{\mathrm{ct}}` and the simulation time step :mat
 
 Self-propulsion is achieved by imposing an interaction asymmetry between the partners of a swapped pair. That is, the heterogeneous distribution of chemical species induced by the swapping leads to a net force on the particle, counter balanced by friction.
 
-To set up the system for catalytic reactions the class :class:`espressomd.reaction.Reaction`
+To set up the system for catalytic reactions the class :class:`espressomd.swimmer_reaction.Reaction`
 can be used. ::
 
-    from espressomd.reaction import Reaction
+    from espressomd.swimmer_reaction import Reaction
 
     system = espressomd.System()
 
@@ -223,63 +223,6 @@ current implementation with the ``COLLISION_DETECTION`` feature.
    ``r.stop()``.
 
 ..
-    .. _\`\`nemd\`\`\: Setting up non-equilibirum MD:
-
-    ``nemd``: Setting up non-equilibrium MD
-    ---------------------------------------
-
-    .. todo::
-        This is not implemented for the python interface yet
-
-    nemd exchange nemd shearrate nemd off nemd nemd profile nemd viscosity
-
-    Use NEMD (Non Equilibrium Molecular Dynamics) to simulate a system under
-    shear with help of an unphysical momentum change in two slabs in the
-    system.
-
-    Variants and will initialize NEMD. Two distinct methods exist. Both
-    methods divide the simulation box into slabs that lie parallel to the
-    x-y-plane and apply a shear in x direction. The shear is applied in the
-    top and the middle slabs. Note, that the methods should be used with a
-    DPD thermostat or in an NVE ensemble. Furthermore, you should not use
-    other special features like or inside the top and middle slabs. For
-    further reference on how NEMD is implemented into see
-    :cite:`soddeman01a`.
-
-    Variant chooses the momentum exchange method. In this method, in each
-    step the largest positive x-components of the velocity in the middle
-    slab are selected and exchanged with the largest negative x-components
-    of the velocity in the top slab.
-
-    Variant chooses the shear-rate method. In this method, the targeted
-    x-component of the mean velocity in the top and middle slabs are given
-    by
-
-    .. math:: {target\_velocity} = \pm {shearrate}\,\frac{L_z}{4}
-
-    where :math:`L_z` is the simulation box size in z-direction. During the
-    integration, the x-component of the mean velocities of the top and
-    middle slabs are measured. Then, the difference between the mean
-    x-velocities and the target x-velocities are added to the x-component of
-    the velocities of the particles in the respective slabs.
-
-    Variant will turn off NEMD, variant will print usage information of the
-    parameters of NEMD. Variant will return the velocity profile of the
-    system in x-direction (mean velocity per slab).
-
-    Variant will return the viscosity of the system, that is computed via
-
-    .. math:: \eta = \frac{F}{\dot{\gamma} L_x L_y}
-
-    where :math:`F` is the mean force (momentum transfer per unit time)
-    acting on the slab, :math:`L_x L_y` is the area of the slab and
-    :math:`\dot{\gamma}` is the shearrate.
-
-    NEMD as implemented generates a Poiseuille flow, with shear flow rate
-    varying over a finite wavelength determined by the box. For a planar
-    Couette flow (constant shear, infinite wavelength), consider using
-    Lees-Edwards boundary conditions (see ) to drive the shear.
-
 .. _Lees-Edwards boundary conditions:
 
 Lees-Edwards boundary conditions
@@ -355,7 +298,7 @@ The comma is needed to force Python to create a tuple containing a single item.
 
 
 For a more detailed description, see e.g. Guckenberger and Gekle, J. Phys. Cond. Mat. (2017) or contact us.
-This feature probably does not work with advanced LB features such electro kinetics or Shan-Chen.
+This feature probably does not work with advanced LB features such electro kinetics.
 
 A sample script is provided in the :file:`samples/immersed_boundary` directory of the source distribution.
 
@@ -371,7 +314,7 @@ University of Zilina:
 
 | ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
-  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zref.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zref.bib)
+  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zrefs.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zrefs.bib)
 
 | This documentation introduces the features of module Object-in-fluid
   (OIF). Even though ESPResSo was not primarily intended to work with closed
@@ -1382,7 +1325,7 @@ continuity, diffusion-advection, Poisson, and Navier-Stokes equations:
 
    \begin{aligned}
    \label{eq:ek-model-continuity} \frac{\partial n_k}{\partial t} & = & -\, \nabla \cdot \vec{j}_k \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
-   \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
+   \label{eq:ek-model-fluxes} \vec{j}_{k} & = & -D_k \nabla n_k - \nu_k \, q_k n_k\, \nabla \Phi + n_k \vec{v}_{\mathrm{fl}} \vphantom{\left(\frac{\partial}{\partial}\right)} + \sqrt{n_k}\vec{\mathcal{W}}_k; \\
    \label{eq:ek-model-poisson} \Delta \Phi & = & -4 \pi \, {l_\mathrm{B}}\, {k_\mathrm{B}T}\sum_k q_k n_k \vphantom{\left(\frac{\partial}{\partial}\right)}; \\
    \nonumber \left(\frac{\partial \vec{v}_{\mathrm{fl}}}{\partial t} + \vec{v}_{\mathrm{fl}} \cdot \vec{\nabla} \vec{v}_{\mathrm{fl}} \right) \rho_\mathrm{fl} & = & -{k_\mathrm{B}T}\, \nabla \rho_\mathrm{fl} - q_k n_k \nabla \Phi \\
    \label{eq:ek-model-velocity} & & +\, \eta \vec{\Delta} \vec{v}_{\mathrm{fl}} + (\eta / 3 + \eta_{\text{b}}) \nabla (\nabla \cdot \vec{v}_{\mathrm{fl}}) \vphantom{\left(\frac{\partial}{\partial}\right)} ; \\
@@ -1412,6 +1355,9 @@ and input parameters
 
 :math:`\nu_k`
     the mobility of species :math:`k`,
+
+:math:`\vec{\mathcal{W}}_k`
+    the white-noise term for the flucatuations of species :math:`k`,
 
 :math:`q_k`
     the charge of a single particle of species :math:`k`,
@@ -1505,7 +1451,7 @@ Initialization
         stencil='linkcentered', advection=True, fluid_coupling='friction')
     sys.actors.add(ek)
 
-.. note:: Features ``ELECTROKINETICS`` and ``LB_GPU`` required
+.. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
 
 The above is a minimal example how to initialize the LB fluid, and
 it is very similar to the lattice Boltzmann command in set-up. We
@@ -1549,7 +1495,7 @@ stencil. For all other stencils, this choice is hardcoded. The default
 is ``"friction"``.
 
 
-The feature ``EK_ELECTROSTATIC_COUPLING`` enables the action of the electrostatic potential due to the
+``es_coupling`` enables the action of the electrostatic potential due to the
 electrokinetics species and charged boundaries on the MD particles. The
 forces on the particles are calculated by interpolation from the
 electric field which is in turn calculated from the potential via finite
@@ -1557,6 +1503,13 @@ differences. This only includes interactions between the species and
 boundaries and MD particles, not between MD particles and MD particles.
 To get complete electrostatic interactions a particles Coulomb method
 like Ewald or P3M has to be activated too.
+
+The fluctuation of the EK species can be turned on by the flag ``fluctuations``.
+This adds a white-noise term to the fluxes. The amplitude of this noise term
+can be controlled by ``fluctuation_amplitude``. To circumvent that these fluctuations
+lead to negative densities, they are modified by a smoothed Heaviside function,
+which decreases the magnitude of the flactuation for densities close to 0.
+By default the fluctuations are turned off.
 
 .. _Diffusive Species:
 
@@ -1574,13 +1527,16 @@ valency of the particles of that species ``valency``, and an optional external
 before, the LB density is completely decoupled from the electrokinetic
 densities. This has the advantage that greater freedom can be achieved
 in matching the internal parameters to an experimental system. Moreover,
-it is possible to choose parameters for which the LB is more stable. The species has to be added to a LB fluid::
+it is possible to choose parameters for which the LB is more stable. The species can be added to a LB fluid::
 
     ek.add_species(species)
 
-The LB fluid must be set up before using
-:class:`espressomd.electrokinetics.Electrokinetics` as shown above, before a
-diffusive species can be added. The variables ``density``, ``D``, and
+One can also add the species during the initialization step of the 
+:class:`espressomd.electrokinetics.Electrokinetics` by defining the list variable ``species``::
+
+    ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
+
+The variables ``density``, ``D``, and
 ``valency`` must be set to properly initialize the diffusive species; the
 ``ext_force_density`` is optional.
 
@@ -1608,6 +1564,22 @@ rhomboid and hollowcone. We refer to the documentation of the
 the options associated to these shapes. In order to properly set up the
 boundaries, the ``charge_density`` and ``shape``
 must be specified.
+
+.. _Checkpointing:
+
+Checkpointing
+^^^^^^^^^^^^^
+::
+
+    ek.save_checkpoint(path)
+
+Checkpointing in the EK works quite similar to checkpointing in the LB, because the density is not saved within the :class:`espressomd.checkpointing` object. However one should keep in mind, that the EK not only saves the density of the species but also saves the population of the LB fluid in a separate file. To load a checkpoint the :class:`espressomd.electrokinetics.Electrokinetics` should have the same name as in the script it was saved, but to use the species one need to extract them from the :class:`espressomd.electrokinetics.Electrokinetics` via ``species``.
+
+::
+
+    checkpoint.load(cpt_path)
+    species = ek.get_params()['species']
+    ek.load_checkpoint(path)
 
 .. _Output:
 
@@ -1976,7 +1948,7 @@ Combination of the Reaction Ensemble with the Wang-Landau algorithm
 allows for enhanced sampling of the reacting system, and
 and for the determination of the density of states with respect
 to the reaction coordinate or with respect to some other collective
-variable :cite:`landsgesell16a`. Here the 1/t Wang-Landau
+variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
 does not suffer from systematic errors. Additionally to the above
 commands for the reaction ensemble use the following commands for the
@@ -1998,7 +1970,7 @@ In the constant pH method due to Reed and Reed
 of :math:`H^{+}` ions, assuming that the simulated system is coupled to an
 infinite reservoir. This value is the used to simulate dissociation
 equilibrium of acids and bases. Under certain conditions, the constant
-pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell16b`. However, it
+pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell17b`. However, it
 treats the chemical potential of :math:`H^{+}` ions and their actual
 number in the simulation box as independent variables, which can lead to
 serious artifacts.

@@ -37,7 +37,7 @@ class RigidBondTest(ut.TestCase):
         s.box_l = 10, 10, 10
         s.cell_system.skin = 0.4
         s.time_step = 0.01
-        s.thermostat.set_langevin(kT=1, gamma=1)
+        s.thermostat.set_langevin(kT=1, gamma=1, seed=42)
         r = RigidBond(r=1.2, ptol=1E-3, vtol=target_acc)
         s.bonded_inter.add(r)
 

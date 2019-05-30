@@ -34,7 +34,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include "../RuntimeError.hpp"
+#include "RuntimeError.hpp"
 
 using ErrorHandling::RuntimeError;
 using std::string;

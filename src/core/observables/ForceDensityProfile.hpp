@@ -28,7 +28,7 @@ namespace Observables {
 class ForceDensityProfile : public PidProfileObservable {
 public:
   int n_values() const override { return 3 * n_x_bins * n_y_bins * n_z_bins; }
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),
                                   static_cast<size_t>(n_y_bins),
                                   static_cast<size_t>(n_z_bins)}};
@@ -37,10 +37,8 @@ public:
          std::make_pair(min_z, max_z)}};
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
     for (auto const &id : ids()) {
-      auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
-      histogram.update(
-          ppos, ::Vector<3, double>{{partCfg[id].f.f[0], partCfg[id].f.f[1],
-                                     partCfg[id].f.f[2]}});
+      auto const ppos = ::Utils::Vector3d(folded_position(partCfg[id]));
+      histogram.update(ppos, partCfg[id].f.f);
     }
     histogram.normalize();
     return histogram.get_histogram();

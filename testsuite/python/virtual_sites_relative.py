@@ -21,9 +21,10 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
+if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
+    from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
 import numpy as np
 from espressomd.interactions import FeneBond
-from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
 
 from tests_common import verify_lj_forces
 from numpy import random
@@ -107,6 +108,13 @@ class VirtualSites(ut.TestCase):
         self.system.integrator.run(1)
         self.assertRaises(AssertionError, np.testing.assert_array_equal, np.copy(
             self.system.part[1].quat), [1, 0, 0, 0])
+
+        # co-aligned case
+        self.system.part[1].vs_quat = (1, 0, 0, 0)
+        self.system.integrator.run(1)
+        np.testing.assert_allclose(
+            np.copy(self.system.part[1].director), np.copy(self.system.part[0].director), atol=1E-12)
+
         # Construct a quaternion with perpendicular orientation.
         p0 = np.cos(np.pi / 4.0)
         p = np.array([0, np.sin(np.pi / 4.0), 0])
@@ -115,9 +123,10 @@ class VirtualSites(ut.TestCase):
         r0 = p0 * q0
         r = -np.dot(q, p) + np.cross(q, p) + p0 * q + q0 * p
         self.system.part[1].vs_quat = [r0, r[0], r[1], r[2]]
+        self.system.integrator.run(1)
         # Check for orthogonality.
-        self.assertEqual(
-            np.dot(self.system.part[0].director, self.system.part[1].director), 0.0)
+        self.assertAlmostEqual(
+            np.dot(self.system.part[0].director, self.system.part[1].director), 0.0, delta=1E-12)
         # Check if still true after integration.
         self.system.integrator.run(1)
         self.assertAlmostEqual(
@@ -269,7 +278,7 @@ class VirtualSites(ut.TestCase):
         system.integrator.set_vv()
         for i in range(10):
             # Langevin to maintain stability
-            system.thermostat.set_langevin(kT=kT, gamma=gamma)
+            system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
             system.integrator.run(50)
             system.thermostat.turn_off()
             # Constant energy to get rid of thermostat forces in the
@@ -290,9 +299,6 @@ class VirtualSites(ut.TestCase):
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=0, sigma=0, cutoff=0, shift=0)
 
-    @ut.skipIf(
-        espressomd.has_features("VIRTUAL_SITES_THERMOSTAT"),
-        "LJ fluid test only works when VIRTUAL_SITES_THERMOSTAT is not compiled in.")
     def test_lj(self):
         """Run LJ fluid test for different cell systems."""
         system = self.system

@@ -25,7 +25,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "script_interface/ScriptInterface.hpp"
+#include "ScriptInterface.hpp"
 
 using std::map;
 using std::string;
@@ -39,8 +39,8 @@ namespace Testing {
  * @brief Mock to test ScriptInterface.
  */
 struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
-  map<string, Variant> get_parameters() const override {
-    map<string, Variant> ret;
+  VariantMap get_parameters() const override {
+    VariantMap ret;
 
     ret["bool_opt"] = bool_opt;
     ret["integer"] = integer;
@@ -52,26 +52,41 @@ struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   }
 
   /* Not needed for testing */
-  map<string, Parameter> valid_parameters() const override { return {}; }
+  Utils::Span<const boost::string_ref> valid_parameters() const override {
+    return {};
+  }
 
   void set_parameter(const string &name, const Variant &value) override {
-    SET_PARAMETER_HELPER("bool_opt", bool_opt);
-    SET_PARAMETER_HELPER("integer", integer);
-    SET_PARAMETER_HELPER("bool_req", bool_req);
-    SET_PARAMETER_HELPER("vec_double", vec_double);
-    SET_PARAMETER_HELPER("vec_int", vec_int);
+    if (name == "bool_opt") {
+      bool_opt =
+          get_value<std::remove_reference<decltype(bool_opt)>::type>(value);
+    };
+    if (name == "integer") {
+      integer =
+          get_value<std::remove_reference<decltype(integer)>::type>(value);
+    };
+    if (name == "bool_req") {
+      bool_req =
+          get_value<std::remove_reference<decltype(bool_req)>::type>(value);
+    };
+    if (name == "vec_double") {
+      vec_double =
+          get_value<std::remove_reference<decltype(vec_double)>::type>(value);
+    };
+    if (name == "vec_int") {
+      vec_int =
+          get_value<std::remove_reference<decltype(vec_int)>::type>(value);
+    };
   }
 
   Variant call_method(const std::string &name,
                       const VariantMap &params) override {
     if (name == "test_method") {
-      method_called = true;
     }
 
     return true;
   }
 
-  bool method_called{false};
   bool bool_opt, bool_req;
   int integer;
   vector<double> vec_double;
@@ -93,35 +108,6 @@ BOOST_AUTO_TEST_CASE(non_copyable) {
  */
 BOOST_AUTO_TEST_CASE(default_implementation) {
   ScriptInterfaceTest si_test;
-
-  map<string, Variant> test_parameters;
-
-  vector<int> vec_int{1, 4, 7, 10};
-  vector<double> vec_double{0.1, 10.4, 11.9, 14.3};
-
-  /* Some parameters to set, types should not
-   * be relevant. */
-  test_parameters["bool_opt"] = false;
-  test_parameters["bool_req"] = true;
-  test_parameters["integer"] = 5;
-  test_parameters["vec_double"] = vec_double;
-  test_parameters["vec_int"] = vec_int;
-
-  /* Set values using the default implementation
-   * set_parameters which in turn calls set_parameter
-   * for every parameter. */
-  si_test.set_parameters(test_parameters);
-
-  /* Get values using the default implementation
-   * set_parameter which in turn calls get_parameters
-   * and extracts the required parameter. */
-  BOOST_CHECK(boost::get<bool>(si_test.get_parameter("bool_opt")) == false);
-  BOOST_CHECK(boost::get<bool>(si_test.get_parameter("bool_req")) == true);
-  BOOST_CHECK(boost::get<int>(si_test.get_parameter("integer")) == 5);
-  BOOST_CHECK(boost::get<vector<int>>(si_test.get_parameter("vec_int")) ==
-              vec_int);
-  BOOST_CHECK(boost::get<vector<double>>(si_test.get_parameter("vec_double")) ==
-              vec_double);
 
   si_test.call_method("test_method", {});
 }

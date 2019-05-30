@@ -19,25 +19,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_SHORT_RANGE_HPP
 #define CORE_SHORT_RANGE_HPP
 
-#include <utility>
-
-#include <boost/iterator/indirect_iterator.hpp>
-
 #include "algorithm/for_each_pair.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
+#include <boost/iterator/indirect_iterator.hpp>
+#include <profiler/profiler.hpp>
+
+#include <utility>
 
 /**
  * @brief Distance vector and length handed to pair kernels.
  */
 struct Distance {
-  explicit Distance(Vector3d const &vec21)
+  explicit Distance(Utils::Vector3d const &vec21)
       : vec21(vec21), dist2(vec21.norm2()) {}
 
-  Vector3d vec21;
+  Utils::Vector3d vec21;
   const double dist2;
 };
 
@@ -101,14 +103,29 @@ void decide_distance(CellIterator first, CellIterator last,
 template <typename ParticleKernel, typename PairKernel>
 void short_range_loop(ParticleKernel &&particle_kernel,
                       PairKernel &&pair_kernel) {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+
+  assert(get_resort_particles() == Cells::RESORT_NONE);
 
   auto first = boost::make_indirect_iterator(local_cells.begin());
   auto last = boost::make_indirect_iterator(local_cells.end());
 
+#ifdef ELECTROSTATICS
+  auto const coulomb_cutoff = Coulomb::cutoff(box_l);
+#else
+  auto const coulomb_cutoff = INACTIVE_CUTOFF;
+#endif
+
+#ifdef DIPOLES
+  auto const dipole_cutoff = Dipole::cutoff(box_l);
+#else
+  auto const dipole_cutoff = INACTIVE_CUTOFF;
+#endif
+
   detail::decide_distance(
       first, last, std::forward<ParticleKernel>(particle_kernel),
       std::forward<PairKernel>(pair_kernel),
-      VerletCriterion{skin, max_cut, coulomb_cutoff, dipolar_cutoff,
+      VerletCriterion{skin, max_cut, coulomb_cutoff, dipole_cutoff,
                       collision_detection_cutoff()});
 
   rebuild_verletlist = 0;

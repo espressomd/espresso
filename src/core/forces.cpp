@@ -22,29 +22,32 @@
 /** \file
  *  Force calculation.
  *
- *  For more information see \ref forces.hpp "forces.hpp".
+ *  The corresponding header file is forces.hpp.
  */
 
 #include "EspressoSystemInterface.hpp"
 
 #include "comfixed_global.hpp"
 #include "constraints.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
-#include "electrostatics_magnetostatics/maggs.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
-#include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbgpu.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
 #include "short_range_loop.hpp"
+
+#include <profiler/profiler.hpp>
 
 #include <cassert>
 
 ActorList forceActors;
 
 void init_forces() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   /* The force initialization depends on the used thermostat and the
      thermodynamic ensemble */
 
@@ -90,6 +93,7 @@ void check_forces() {
 }
 
 void force_calc() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   espressoSystemInterface.update();
 
@@ -97,30 +101,15 @@ void force_calc() {
   prepare_local_collision_queue();
 #endif
 
-#ifdef LB_GPU
-#ifdef SHANCHEN
-  if (lattice_switch & LATTICE_LB_GPU && this_node == 0)
-    lattice_boltzmann_calc_shanchen_gpu();
-#endif // SHANCHEN
-
-  // transfer_momentum_gpu check makes sure the LB fluid doesn't get updated on
-  // integrate 0
-  // this_node==0 makes sure it is the master node where the gpu exists
-  if (lattice_switch & LATTICE_LB_GPU && transfer_momentum_gpu &&
-      (this_node == 0))
-    lb_calc_particle_lattice_ia_gpu(thermo_virtual);
-#endif // LB_GPU
-
 #ifdef ELECTROSTATICS
   iccp3m_iteration();
 #endif
   init_forces();
 
-  for (ActorList::iterator actor = forceActors.begin();
-       actor != forceActors.end(); ++actor) {
-    (*actor)->computeForces(espressoSystemInterface);
+  for (auto &forceActor : forceActors) {
+    forceActor->computeForces(espressoSystemInterface);
 #ifdef ROTATION
-    (*actor)->computeTorques(espressoSystemInterface);
+    forceActor->computeTorques(espressoSystemInterface);
 #endif
   }
 
@@ -140,7 +129,7 @@ void force_calc() {
     }
   }
   auto local_parts = local_cells.particles();
-  Constraints::constraints.add_forces(local_parts);
+  Constraints::constraints.add_forces(local_parts, sim_time);
 
 #ifdef OIF_GLOBAL_FORCES
   if (max_oif_objects) {
@@ -163,10 +152,7 @@ void force_calc() {
   immersed_boundaries.volume_conservation();
 #endif
 
-#ifdef LB
-  if (lattice_switch & LATTICE_LB)
-    calc_particle_lattice_ia();
-#endif
+  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
 
 #ifdef METADYNAMICS
   /* Metadynamics main function */
@@ -201,67 +187,10 @@ void force_calc() {
 }
 
 void calc_long_range_forces() {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    if (elc_params.dielectric_contrast_on) {
-      ELC_P3M_modify_p3m_sums_both();
-      ELC_p3m_charge_assign_both();
-      ELC_P3M_self_forces();
-    } else
-      p3m_charge_assign();
-
-    p3m_calc_kspace_forces(1, 0);
-
-    if (elc_params.dielectric_contrast_on)
-      ELC_P3M_restore_p3m_sums();
-
-    ELC_add_force();
-
-    break;
-#endif
-#ifdef CUDA
-  case COULOMB_P3M_GPU:
-    if (this_node == 0) {
-      FORCE_TRACE(printf("Computing GPU P3M forces.\n"));
-      p3m_gpu_add_farfield_force();
-    }
-    /* there is no NPT handling here as long as we cannot compute energies.
-       This is checked in integrator_npt_sanity_checks() when integration
-       starts. */
-    break;
-#endif
-#ifdef P3M
-  case COULOMB_P3M:
-    FORCE_TRACE(printf("%d: Computing P3M forces.\n", this_node));
-    p3m_charge_assign();
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO)
-      nptiso.p_vir[0] += p3m_calc_kspace_forces(1, 1);
-    else
-#endif
-      p3m_calc_kspace_forces(1, 0);
-    break;
-#endif
-  case COULOMB_MAGGS:
-    maggs_calc_forces();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_add_far_force();
-    MMM2D_dielectric_layers_force_contribution();
-    break;
-#ifdef SCAFACOS
-  case COULOMB_SCAFACOS:
-    assert(!Scafacos::dipolar());
-    Scafacos::add_long_range_force();
-    break;
-#endif
-  default:
-    break;
-  }
-
+  Coulomb::calc_long_range_force();
 /* If enabled, calculate electrostatics contribution from electrokinetics
  * species. */
 #ifdef EK_ELECTROSTATIC_COUPLING
@@ -272,52 +201,6 @@ void calc_long_range_forces() {
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  switch (coulomb.Dmethod) {
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    add_mdlc_force_corrections();
-  // fall through
-  case DIPOLAR_P3M:
-    dp3m_dipole_assign();
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      nptiso.p_vir[0] += dp3m_calc_kspace_forces(1, 1);
-      fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
-    } else
-#endif
-      dp3m_calc_kspace_forces(1, 0);
-
-    break;
-#endif
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    dawaanr_calculations(1, 0);
-    break;
-#ifdef DP3M
-  case DIPOLAR_MDLC_DS:
-    add_mdlc_force_corrections();
-    // fall through
-#endif
-  case DIPOLAR_DS:
-    magnetic_dipolar_direct_sum_calculations(1, 0);
-    break;
-  case DIPOLAR_DS_GPU:
-    // Do nothing. It's an actor
-    break;
-#ifdef DIPOLAR_BARNES_HUT
-  case DIPOLAR_BH_GPU:
-    // Do nothing, it's an actor.
-    break;
-#endif // BARNES_HUT
-#ifdef SCAFACOS_DIPOLES
-  case DIPOLAR_SCAFACOS:
-    assert(Scafacos::dipolar());
-    Scafacos::add_long_range_force();
-#endif
-  case DIPOLAR_NONE:
-    break;
-  default:
-    runtimeErrorMsg() << "unknown dipolar method";
-    break;
-  }
+  Dipole::calc_long_range_force();
 #endif /*ifdef DIPOLES */
 }

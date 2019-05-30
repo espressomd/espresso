@@ -20,27 +20,29 @@
 */
 
 #include "Slitpore.hpp"
-#include "utils.hpp"
-/* For box_l */
-#include "grid.hpp"
+
+#include <utils/math/sqr.hpp>
 
 #include <cmath>
 
 using namespace std;
 
 namespace Shapes {
-void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
+void Slitpore::calculate_dist(const Utils::Vector3d &pos, double *dist,
                               double *vec) const {
   // the left circles
-  double box_l_x = box_l[0];
-  double c11[2] = {box_l_x / 2 - m_pore_width / 2 - m_upper_smoothing_radius,
+  double c11[2] = {dividing_plane() - m_pore_width / 2 -
+                       m_upper_smoothing_radius,
                    m_pore_mouth - m_upper_smoothing_radius};
-  double c12[2] = {box_l_x / 2 - m_pore_width / 2 + m_lower_smoothing_radius,
+  double c12[2] = {dividing_plane() - m_pore_width / 2 +
+                       m_lower_smoothing_radius,
                    m_pore_mouth - m_pore_length + m_lower_smoothing_radius};
   // the right circles
-  double c21[2] = {box_l_x / 2 + m_pore_width / 2 + m_upper_smoothing_radius,
+  double c21[2] = {dividing_plane() + m_pore_width / 2 +
+                       m_upper_smoothing_radius,
                    m_pore_mouth - m_upper_smoothing_radius};
-  double c22[2] = {box_l_x / 2 + m_pore_width / 2 - m_lower_smoothing_radius,
+  double c22[2] = {dividing_plane() + m_pore_width / 2 -
+                       m_lower_smoothing_radius,
                    m_pore_mouth - m_pore_length + m_lower_smoothing_radius};
 
   if (pos[2] > m_pore_mouth + m_channel_width / 2) {
@@ -62,7 +64,7 @@ void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
 
   if (pos[2] > c11[1]) {
     // Feel the upper smoothing
-    if (pos[0] < box_l_x / 2) {
+    if (pos[0] < dividing_plane()) {
       *dist = sqrt(Utils::sqr(c11[0] - pos[0]) + Utils::sqr(c11[1] - pos[2])) -
               m_upper_smoothing_radius;
       vec[0] =
@@ -71,31 +73,27 @@ void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
       vec[2] =
           -(c11[1] - pos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
       return;
-    } else {
-      *dist = sqrt(Utils::sqr(c21[0] - pos[0]) + Utils::sqr(c21[1] - pos[2])) -
-              m_upper_smoothing_radius;
-      vec[0] =
-          -(c21[0] - pos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
-      vec[1] = 0;
-      vec[2] =
-          -(c21[1] - pos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
-      return;
     }
+    *dist = sqrt(Utils::sqr(c21[0] - pos[0]) + Utils::sqr(c21[1] - pos[2])) -
+            m_upper_smoothing_radius;
+    vec[0] = -(c21[0] - pos[0]) * (*dist) / (*dist + m_upper_smoothing_radius);
+    vec[1] = 0;
+    vec[2] = -(c21[1] - pos[2]) * (*dist) / (*dist + m_upper_smoothing_radius);
+    return;
   }
 
   if (pos[2] > c12[1]) {
     // Feel the pore wall
-    if (pos[0] < box_l_x / 2) {
-      *dist = pos[0] - (box_l_x / 2 - m_pore_width / 2);
+    if (pos[0] < dividing_plane()) {
+      *dist = pos[0] - (dividing_plane() - m_pore_width / 2);
       vec[0] = *dist;
       vec[1] = vec[2] = 0;
       return;
-    } else {
-      *dist = (box_l_x / 2 + m_pore_width / 2) - pos[0];
-      vec[0] = -*dist;
-      vec[1] = vec[2] = 0;
-      return;
     }
+    *dist = (dividing_plane() + m_pore_width / 2) - pos[0];
+    vec[0] = -*dist;
+    vec[1] = vec[2] = 0;
+    return;
   }
 
   if (pos[0] > c12[0] && pos[0] < c22[0]) {
@@ -108,22 +106,18 @@ void Slitpore::calculate_dist(const Vector3d &pos, double *dist,
   }
   // Else
   // Feel the lower smoothing
-  if (pos[0] < box_l_x / 2) {
+  if (pos[0] < dividing_plane()) {
     *dist = -sqrt(Utils::sqr(c12[0] - pos[0]) + Utils::sqr(c12[1] - pos[2])) +
             m_lower_smoothing_radius;
     vec[0] = (c12[0] - pos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     vec[1] = 0;
     vec[2] = (c12[1] - pos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
     return;
-  } else {
-    *dist = -sqrt(Utils::sqr(c22[0] - pos[0]) + Utils::sqr(c22[1] - pos[2])) +
-            m_lower_smoothing_radius;
-    vec[0] = (c22[0] - pos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
-    vec[1] = 0;
-    vec[2] = (c22[1] - pos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
-    return;
   }
-
-  return;
+  *dist = -sqrt(Utils::sqr(c22[0] - pos[0]) + Utils::sqr(c22[1] - pos[2])) +
+          m_lower_smoothing_radius;
+  vec[0] = (c22[0] - pos[0]) * (*dist) / (-*dist + m_lower_smoothing_radius);
+  vec[1] = 0;
+  vec[2] = (c22[1] - pos[2]) * (*dist) / (-*dist + m_lower_smoothing_radius);
 }
 } // namespace Shapes

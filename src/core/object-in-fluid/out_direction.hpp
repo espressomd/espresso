@@ -31,29 +31,29 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
-#include "utils/math/triangle_functions.hpp"
+#include <utils/math/triangle_functions.hpp>
 using Utils::get_n_triangle;
 
 // set out_direction parameters
 int oif_out_direction_set_params(int bond_type);
 
 /** Computes the outward direction of the membrane from one particle and its
-   three neighbors
-
-    @param p1           Pointer to the central particle.
-    @param p2,p3,p4     Pointers to the neighboring particles.
-
-    computes the normal of triangle p2p3p4
-    this triangle was initially oriented in such a way that its normal already
-   points out of the object normalizes and stores the result as out_direction in
-   p1 data
-    @return 0
-*/
+ *  three neighbors
+ *
+ *  @param[out] p1            The central particle.
+ *  @param[in]  p2 , p3 , p4  The neighboring particles.
+ *
+ *  Computes the normal of triangle p2p3p4. This triangle was initially
+ *  oriented in such a way that its normal already points out of the object.
+ *  Normalizes and stores the result as @ref ParticleProperties::out_direction
+ *  "out_direction" in @p p1.
+ *  @return 0
+ */
 inline int calc_out_direction(
-    Particle *p1, Particle *p2, Particle *p3, Particle *p4,
-    Bonded_ia_parameters *iaparams) // first-fold-then-the-same approach
+    Particle *const p1, Particle const *const p2, Particle const *const p3,
+    Particle const *const p4,
+    Bonded_ia_parameters * /* iaparams */) // first-fold-then-the-same approach
 {
   auto const fp2 = unfolded_position(*p2);
   auto const fp3 = fp2 + get_mi_vector(p3->r.p, fp2);
