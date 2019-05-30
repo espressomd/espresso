@@ -33,13 +33,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define LANGEVIN_PER_PARTICLE
 #define SWIMMER_REACTIONS
 
-#define NEMD
 #define NPT
-#define GHMC
+
 #define DPD
 #define METADYNAMICS
 
-#define LB
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
@@ -48,11 +46,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BROWNIAN_DYNAMICS
 
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
-#define EK_ELECTROSTATIC_COUPLING
 #define MMM1D_GPU
 #endif
 
@@ -71,14 +67,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define INTER_RF
 #define OVERLAPPED
-
-#ifdef P3M
+#define WCA
 #define THOLE
-#endif
-
-#define BOND_ANGLE
 
 #define EXPERIMENTAL_FEATURES
 

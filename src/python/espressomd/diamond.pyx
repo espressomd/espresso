@@ -6,35 +6,32 @@ from espressomd.utils import is_valid_type
 
 cdef class Diamond(object):
     """
-    Class to create a diamond like network
+    Class to create a diamond-like polymer network.
+
+    Parameters
+    ----------
+    a : :obj:`float`
+        Size of the unit cell.
+    bond_length : :obj:`float`
+        Distance between adjacent monomers in the chains.
+    MPC : :obj:`int`
+        Monomers per chain.
+    cM_dist : :obj:`int`, optional
+        Distance between charged monomers.
+    N_CI : :obj:`int`, optional
+        Number of counter ions.
+    val_nodes : :obj:`float`, optional
+        Charge valency of the 8 node particles (crosslinker).
+    val_cM : :obj:`float`, optional
+        Valency of the charge bearing monomers.
+    val_CI : :obj:`float`, optional
+        Valency of the counterions.
+    nonet : :obj:`int`, optional
+        0 creates network, 1 does not crosslink the individual polymers.
+
     """
 
     def __init__(self, *args, **kwargs):
-        """
-        Wrapper object to create a diamond like polymer network.
-
-        Parameters
-        ----------
-        a : :obj:`float`
-            Size of the unit cell.
-        bond_length : :obj:`float`
-                      Distance between adjacent monomers in the chains.
-        MPC : :obj:`int`
-              Monomers per chain.
-        cM_dist : :obj:`int`, optional
-                  Distance between charged monomers.
-        N_CI : :obj:`int`, optional
-               Number of counter ions.
-        val_nodes : :obj:`float`, optional
-                    Charge valency of the 8 node particles (crosslinker).
-        val_cM : :obj:`float`, optional
-                 Valency of the charge bearing monomers.
-        val_CI : :obj:`float`, optional
-                 Valency of the counterions.
-        nonet : :obj:`int`, optional
-                0 creates network, 1 does not crosslink the individual polymers.
-
-        """
         self._params = self.default_params()
         for k in self.required_keys():
             if k not in kwargs:
@@ -89,18 +86,18 @@ cdef class Diamond(object):
                 "Please define a bonded interaction [0] before setting up polymers!")
 
     def __set_params_in_es_core(self):
-        return diamondC(
+        return create_diamond(
             partCfg(), self._params["a"], self._params[
                 "bond_length"], self._params["MPC"], self._params["N_CI"],
                         self._params["val_nodes"], self._params["val_cM"], self._params["val_CI"], self._params["cM_dist"], self._params["nonet"])
 
     def _set_params_in_es_core(self):
-        tmp_try = self.__set_params_in_es_core()
-        handle_errors("Failed changing bonds in diamondC")
-        if(tmp_try == -3):
+        error_code = self.__set_params_in_es_core()
+        handle_errors("Failed changing bonds in create_diamond")
+        if error_code == 0:
+            pass
+        elif error_code == -3:
             raise Exception(
                 "Failed upon creating one of the monomers in Espresso!\nAborting...\n")
-        elif(tmp_try >= 0):
-            print(tmp_try)
         else:
-            raise Exception("Unknown Error")
+            raise Exception("Unknown error code: {}".format(error_code))

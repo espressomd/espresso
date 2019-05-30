@@ -26,9 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Observables {
 
+/** Extract particle forces.
+ *  For \f$n\f$ particles, return \f$3 n\f$ forces ordered as
+ *  \f$(f_x^1, f_y^1, f_z^1, \dots, f_x^n, f_y^n, f_z^n)\f$.
+ */
 class ParticleForces : public PidObservable {
 public:
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
       res[3 * i + 0] = partCfg[ids()[i]].f.f[0];

@@ -1,9 +1,17 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from .lb cimport HydrodynamicInteraction
-IF LB:
+IF CUDA:
+    from .lb cimport HydrodynamicInteraction
+    from .lb cimport lb_lbfluid_print_vtk_boundary
+    from .lb cimport python_lbnode_get_pi
     from .lb cimport lb_lbnode_is_index_valid
+    from .lb cimport lb_lbfluid_set_lattice_switch
+    from .lb cimport GPU
 from . import utils
+import os
+import tempfile
+import shutil
+from .utils cimport Vector6d
 import numpy as np
 from espressomd.utils import is_valid_type
 
@@ -13,7 +21,6 @@ IF ELECTROKINETICS:
         Creates the electrokinetic method using the GPU unit.
 
         """
-        species_list = []
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -30,9 +37,9 @@ IF ELECTROKINETICS:
             """
             default_params = self.default_params()
 
-            if not (self._params["stencil"] in ["linkcentered", "nonlinear", "nodecentered"]):
+            if not (self._params["stencil"] in ["linkcentered", "nodecentered"]):
                 raise ValueError(
-                    "stencil has to be 'linkcentered', 'nonlinear' or 'nodecentered'.")
+                    "stencil has to be 'linkcentered' or 'nodecentered'.")
 
             if not (self._params["fluid_coupling"] in ["friction", "estatics"]):
                 raise ValueError(
@@ -41,9 +48,9 @@ IF ELECTROKINETICS:
         def valid_keys(self):
             """
             Returns the valid options used for the electrokinetic method.
-
             """
-            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling"
+
+            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude", "es_coupling", "species"
 
         def required_keys(self):
             """
@@ -68,14 +75,16 @@ IF ELECTROKINETICS:
                     "prefactor": -1,
                     "stencil": "linkcentered",
                     "advection": True,
-                    "fluid_coupling": "friction"}
+                    "fluid_coupling": "friction",
+                    "fluctuations": False,
+                    "fluctuation_amplitude": 0.0,
+                    "es_coupling": False,
+                    "species": []}
 
         def _get_params_from_es_core(self):
             if ek_parameters.stencil == 0:
                 stencil = "linkcentered"
             elif ek_parameters.stencil == 1:
-                stencil = "nonlinear"
-            elif ek_parameters.stencil == 2:
                 stencil = "nodecentered"
             else:
                 raise Exception("Value of stencil could not be identified.")
@@ -96,15 +105,17 @@ IF ELECTROKINETICS:
                     "prefactor": ek_parameters.prefactor,
                     "stencil": stencil,
                     "advection": ek_parameters.advection,
-                    "fluid_coupling": fluid_coupling}
+                    "fluid_coupling": fluid_coupling,
+                    "fluctuations": ek_parameters.fluctuations,
+                    "fluctuation_amplitude":
+                        ek_parameters.fluctuation_amplitude,
+                    "es_coupling": ek_parameters.es_coupling}
 
         def _set_params_in_es_core(self):
             if self._params["stencil"] == "linkcentered":
                 ek_set_stencil(0)
-            elif self._params["stencil"] == "nonlinear":
-                ek_set_stencil(1)
             elif self._params["stencil"] == "nodecentered":
-                ek_set_stencil(2)
+                ek_set_stencil(1)
 
             if self._params["fluid_coupling"] == "friction":
                 ek_set_fluidcoupling(True)
@@ -121,6 +132,9 @@ IF ELECTROKINETICS:
             ek_set_gamma_odd(self._params["gamma_odd"])
             ek_set_gamma_even(self._params["gamma_even"])
             ek_set_advection(self._params["advection"])
+            ek_set_fluctuations(self._params["fluctuations"])
+            ek_set_fluctuation_amplitude(self._params["fluctuation_amplitude"])
+            ek_set_electrostatics_coupling(self._params["es_coupling"])
 
         def set_density(self, species=None, density=None, node=None):
             """
@@ -129,11 +143,11 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            species : :obj:`integer`
+            species : :obj:`int`
                       species for which the density will apply.
             density : :obj:`float`
                       The value to which the density will be set to.
-            node : numpy-array of type :obj:`integer` of length (3)
+            node : numpy-array of type :obj:`int` of length (3)
                    If set the density will be only applied on this specific node.
 
             """
@@ -154,8 +168,9 @@ IF ELECTROKINETICS:
 
         def _activate_method(self):
             self._set_params_in_es_core()
-            for species in self.species_list:
+            for species in self._params["species"]:
                 species._activate_method()
+            lb_lbfluid_set_lattice_switch(GPU)
             self.ek_init()
 
         def neutralize_system(self, species):
@@ -165,7 +180,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            species : :obj:`integer`
+            species : :obj:`int`
                       The species which will be changed to neutralize the system.
 
             note : The previous density of the species will be ignored and
@@ -202,7 +217,7 @@ IF ELECTROKINETICS:
                 raise Exception(
                     'EK init failed', 'agrid incompatible with box size')
             elif err != 0:
-                raise Exception('EK init failed', 'unknown error')
+                raise Exception('EK init failed, unknown error', err)
 
         def add_species(self, species):
             """
@@ -210,11 +225,11 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            species : :obj:`integer`
+            species : :obj:`int`
                       Species to be initialized.
 
             """
-            self.species_list.append(species)
+            self._params["species"].append(species)
 
         def get_params(self):
             """
@@ -230,7 +245,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the boundary is written to.
 
             """
@@ -242,7 +257,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the velocity is written to.
 
             """
@@ -254,7 +269,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the LB density is written to.
 
             """
@@ -266,19 +281,19 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the electrostatic potential is written to.
 
             """
             ek_print_vtk_potential(utils.to_char_pointer(path))
 
-        def print_vtk_lbforce_density(self, path):
+        def print_vtk_lbforce(self, path):
             """
             Writes the LB force information into a vtk-file.
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the LB force is written to.
 
             """
@@ -290,21 +305,32 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the electrostatic potential is written to.
 
-            note : This only works if 'EK_ELECTROSTATIC_COUPLING' is active.
+            note : This only works if 'es_coupling' is active.
 
             """
-            IF EK_ELECTROSTATIC_COUPLING:
-                ek_print_vtk_particle_potential(utils.to_char_pointer(path))
-            ELSE:
-                raise Exception("'EK_ELECTROSTATIC_COUPLING' ist not active.")
 
-        # TODO:
-        def checkpoint(self):
-            raise Exception(
-                "Please implement this method in the pickle routine.")
+            if(self._params["es_coupling"]):
+                ek_print_vtk_particle_potential(utils.to_char_pointer(path))
+            else:
+                raise Exception("'es_coupling' is not active.")
+
+        def save_checkpoint(self, path):
+            tmp_path = path + ".__tmp__"
+            tmpfile_ek = tempfile.NamedTemporaryFile(mode='w+b')
+            tmpfile_lb = tempfile.NamedTemporaryFile(mode='w+b')
+            ek_save_checkpoint(utils.to_char_pointer(tmpfile_ek.name),
+                               utils.to_char_pointer(tmpfile_lb.name))
+            ek_path = tmp_path + ".ek"
+            lb_path = tmp_path + ".lb"
+            shutil.copy(tmpfile_ek.name, path + ".ek")
+            shutil.copy(tmpfile_lb.name, path + ".lb")
+
+        def load_checkpoint(self, path):
+            self._activate_method()
+            ek_load_checkpoint(utils.to_char_pointer(path))
 
         def add_reaction(self, shape):
             raise Exception("This method is not implemented yet.")
@@ -343,8 +369,8 @@ IF ELECTROKINETICS:
 
         property pressure:
             def __get__(self):
-                cdef double pi[6]
-                lb_lbnode_get_pi(self.node, pi)
+                cdef Vector6d pi
+                pi = python_lbnode_get_pi(self.node)
                 return np.array([[pi[0], pi[1], pi[3]],
                                  [pi[1], pi[2], pi[4]],
                                  [pi[3], pi[4], pi[5]]])
@@ -362,6 +388,22 @@ IF ELECTROKINETICS:
         py_number_of_species = 0
         id = -1
         _params = {}
+
+        # __getstate__ and __setstate__ define the pickle interaction
+        def __getstate__(self):
+            odict = {}
+            odict["id"] = self.id
+            odict.update(self._params.copy())
+            return odict
+
+        def __setstate__(self, params):
+            self.id = params["id"]
+            params.pop("id")
+            self._params = params
+            self._set_params_in_es_core()
+
+        def __str__(self):
+            return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -447,7 +489,7 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the species density is written to.
 
             """
@@ -459,11 +501,17 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
+            path : :obj:`str`
                    The path and vtk-file name the species flux is written to.
 
             """
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
+
+        def print_vtk_flux_fluc(self, path):
+            ek_print_vtk_flux_fluc(self.id, utils.to_char_pointer(path))
+
+        def print_vtk_flux_link(self, path):
+            ek_print_vtk_flux_link(self.id, utils.to_char_pointer(path))
 
     cdef class SpecieRoutines(object):
         cdef Vector3i node

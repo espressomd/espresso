@@ -19,8 +19,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of the energy calculation.
-*/
+ *  Energy calculation.
+ *
+ *  Implementation in energy.cpp.
+ */
 
 #ifndef _ENERGY_H
 #define _ENERGY_H

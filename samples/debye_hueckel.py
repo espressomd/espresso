@@ -1,7 +1,3 @@
-"""
-This sample simulates monovalent salt (equal number of positive and negative unit charges). Electrostatic interactions between charges is emulated by the Debye-Hueckel potential. The system is maintained at a constant temperature by using a Langevin thermostat.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -20,6 +16,12 @@ This sample simulates monovalent salt (equal number of positive and negative uni
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample simulates monovalent salt (equal number of positive and negative
+unit charges). Electrostatic interactions between charges is emulated by the
+Debye-Hueckel potential. The system is maintained at a constant temperature
+using a Langevin thermostat.
+"""
 from __future__ import print_function
 import espressomd
 
@@ -75,7 +77,7 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
@@ -196,7 +198,7 @@ energies = system.analysis.energy()
 print(energies)
 
 j = 0
-for i in range(0, int_n_times):
+for i in range(int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
     system.integrator.run(steps=int_steps)

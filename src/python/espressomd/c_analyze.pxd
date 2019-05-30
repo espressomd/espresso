@@ -46,7 +46,7 @@ cdef extern from "statistics.hpp":
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat:
         int init_status
-        double_list data
+        List[double] data
         int n_coulomb
         int n_dipolar
         int n_non_bonded
@@ -61,9 +61,9 @@ cdef extern from "statistics.hpp":
 cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
-    cdef double mindist(PartCfg &, const int_list & set1, const int_list & set2)
+    cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
     cdef double min_distance2(double pos1[3], double pos2[3])
-    cdef int_list nbhood(PartCfg &, double pos[3], double r_catch, int planedims[3])
+    cdef List[int] nbhood(PartCfg &, double pos[3], double r_catch, int planedims[3])
     cdef double distto(PartCfg &, double pos[3], int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
@@ -83,7 +83,6 @@ cdef extern from "pressure.hpp":
     cdef Observable_stat total_p_tensor
     cdef Observable_stat_non_bonded total_p_tensor_non_bonded
     cdef void update_pressure(int)
-    cdef int analyze_local_stress_tensor(int * periodic, double * range_start, double * range, int * bins, double_list * local_stress_tensor)
 
 cdef extern from "energy.hpp":
     cdef Observable_stat total_energy

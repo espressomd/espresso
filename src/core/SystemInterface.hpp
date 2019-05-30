@@ -19,8 +19,8 @@
 #ifndef SYSTEMINTERFACE_H
 #define SYSTEMINTERFACE_H
 
-#include "Vector.hpp"
 #include "config.hpp"
+#include <utils/Vector.hpp>
 #include <vector>
 
 /** @todo: Turn needsXY in getter/setter **/
@@ -31,63 +31,63 @@ public:
       : m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false),
         m_needsDirectorGpu(false), m_needsFGpu(false), m_needsDipGpu(false),
         m_needsTorqueGpu(false){};
-  typedef Vector3d Vector3;
+  typedef Utils::Vector3d Vector3;
   typedef double Real;
 
   virtual void init() = 0;
   virtual void update() = 0;
 
-  virtual float *rGpuBegin() { return 0; };
-  virtual float *rGpuEnd() { return 0; };
+  virtual float *rGpuBegin() { return nullptr; };
+  virtual float *rGpuEnd() { return nullptr; };
   virtual bool hasRGpu() { return false; };
   virtual bool requestRGpu() {
     m_needsRGpu = hasRGpu();
     return m_needsRGpu;
   }
 
-  virtual float *dipGpuBegin() { return 0; };
-  virtual float *dipGpuEnd() { return 0; };
+  virtual float *dipGpuBegin() { return nullptr; };
+  virtual float *dipGpuEnd() { return nullptr; };
   virtual bool hasDipGpu() { return false; };
   virtual bool requestDipGpu() {
     m_needsDipGpu = hasDipGpu();
     return m_needsDipGpu;
   }
 
-  virtual float *torqueGpuBegin() { return 0; };
-  virtual float *torqueGpuEnd() { return 0; };
+  virtual float *torqueGpuBegin() { return nullptr; };
+  virtual float *torqueGpuEnd() { return nullptr; };
   virtual bool hasTorqueGpu() { return false; };
   virtual bool requestTorqueGpu() {
     m_needsTorqueGpu = hasTorqueGpu();
     return m_needsTorqueGpu;
   }
 
-  virtual float *vGpuBegin() { return 0; };
-  virtual float *vGpuEnd() { return 0; };
+  virtual float *vGpuBegin() { return nullptr; };
+  virtual float *vGpuEnd() { return nullptr; };
   virtual bool hasVGpu() { return false; };
   virtual bool requestVGpu() {
     m_needsVGpu = hasVGpu();
     return m_needsVGpu;
   }
 
-  virtual float *qGpuBegin() { return 0; };
-  virtual float *qGpuEnd() { return 0; };
+  virtual float *qGpuBegin() { return nullptr; };
+  virtual float *qGpuEnd() { return nullptr; };
   virtual bool hasQGpu() { return false; };
   virtual bool requestQGpu() {
     m_needsQGpu = hasQGpu();
     return m_needsQGpu;
   }
 
-  virtual float *fGpuBegin() { return 0; };
-  virtual float *fGpuEnd() { return 0; };
-  virtual float *eGpu() { return 0; };
+  virtual float *fGpuBegin() { return nullptr; };
+  virtual float *fGpuEnd() { return nullptr; };
+  virtual float *eGpu() { return nullptr; };
   virtual bool hasFGpu() { return false; };
   virtual bool requestFGpu() {
     m_needsFGpu = hasFGpu();
     return m_needsFGpu;
   }
 
-  virtual float *directorGpuBegin() { return 0; };
-  virtual float *directorGpuEnd() { return 0; };
+  virtual float *directorGpuBegin() { return nullptr; };
+  virtual float *directorGpuEnd() { return nullptr; };
   virtual bool hasDirectorGpu() { return false; };
   virtual bool requestDirectorGpu() {
     m_needsDirectorGpu = hasDirectorGpu();

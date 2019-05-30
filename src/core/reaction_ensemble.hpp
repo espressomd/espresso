@@ -20,10 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define REACTION_ENSEMBLE_H
 
 #include "energy.hpp"
-#include "utils.hpp"
-#include "utils/Accumulator.hpp"
 #include <map>
+#include <random>
 #include <string>
+#include <utils/Accumulator.hpp>
 
 namespace ReactionEnsemble {
 
@@ -33,10 +33,16 @@ struct SingleReaction {
   std::vector<int> reactant_coefficients;
   std::vector<int> product_types;
   std::vector<int> product_coefficients;
-  double gamma;
+  double gamma = {};
   // calculated values that are stored for performance reasons
-  int nu_bar;
+  int nu_bar = {};
   Utils::Accumulator accumulator_exponentials = Utils::Accumulator(1);
+  int tried_moves = 0;
+  int accepted_moves = 0;
+  double get_acceptance_rate() {
+    return static_cast<double>(accepted_moves) /
+           static_cast<double>(tried_moves);
+  };
 };
 
 struct StoredParticleProperty {
@@ -46,13 +52,13 @@ struct StoredParticleProperty {
 };
 
 struct CollectiveVariable {
-  double CV_minimum;
-  double CV_maximum;
-  double delta_CV;
+  double CV_minimum = {};
+  double CV_maximum = {};
+  double delta_CV = {};
   virtual double determine_current_state() = 0; // use pure virtual, otherwise
                                                 // this will be used in vector
                                                 // of collective variables
-  virtual ~CollectiveVariable() {}
+  virtual ~CollectiveVariable() = default;
 };
 
 class WangLandauReactionEnsemble;
@@ -81,9 +87,9 @@ private:
    */
   double calculate_degree_of_association() {
     int total_number_of_corresponding_acid = 0;
-    for (int i = 0; i < corresponding_acid_types.size(); ++i) {
+    for (int corresponding_acid_type : corresponding_acid_types) {
       int num_of_current_type =
-          number_of_particles_with_type(corresponding_acid_types[i]);
+          number_of_particles_with_type(corresponding_acid_type);
       total_number_of_corresponding_acid += num_of_current_type;
     }
     if (total_number_of_corresponding_acid == 0) {
@@ -103,8 +109,13 @@ private:
 class ReactionAlgorithm {
 
 public:
-  ReactionAlgorithm(){};
-  virtual ~ReactionAlgorithm(){};
+  ReactionAlgorithm(int seed)
+      : m_seeder({seed, seed, seed}), m_generator(m_seeder),
+        m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
+    m_generator.discard(1'000'000);
+  }
+
+  virtual ~ReactionAlgorithm() = default;
 
   std::vector<SingleReaction> reactions;
   std::map<int, double> charges_of_types;
@@ -127,6 +138,10 @@ public:
 
   int m_accepted_configurational_MC_moves = 0;
   int m_tried_configurational_MC_moves = 0;
+  double get_acceptance_rate_configurational_moves() {
+    return static_cast<double>(m_accepted_configurational_MC_moves) /
+           static_cast<double>(m_tried_configurational_MC_moves);
+  }
 
   void set_cuboid_reaction_ensemble_volume();
   virtual int do_reaction(int reaction_steps);
@@ -140,7 +155,7 @@ public:
 
   bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type,
-                                               const bool use_wang_landau);
+                                               bool use_wang_landau);
 
   bool particle_inserted_too_close_to_another_one;
 
@@ -164,23 +179,33 @@ protected:
       std::vector<int> &p_ids_created_particles,
       std::vector<StoredParticleProperty> &hidden_particles_properties);
   void restore_properties(std::vector<StoredParticleProperty> &property_list,
-                          const int number_of_saved_properties);
+                          int number_of_saved_properties);
+
+  int i_random(int maxint) {
+    std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
+    return uniform_int_dist(m_generator);
+  }
 
 private:
+  std::seed_seq m_seeder;
+  std::mt19937 m_generator;
+  std::normal_distribution<double> m_normal_distribution;
+  std::uniform_real_distribution<double> m_uniform_real_distribution;
+
   std::map<int, int> save_old_particle_numbers(int reaction_id);
 
   int calculate_nu_bar(
       std::vector<int> &reactant_coefficients,
-      std::vector<int> &product_coefficients); // should only be used at when
+      std::vector<int> &product_coefficients); // should only be used when
                                                // defining a new reaction
   int m_invalid_charge =
       -10000; // this is the default charge which is assigned to a type which
               // occurs in a reaction. this charge has to be overwritten. if it
               // is not overwritten the reaction ensemble will complain.
   bool all_reactant_particles_exist(int reaction_id);
-  int replace_particle(int p_id, int desired_type);
+  void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
-  int hide_particle(int p_id, int previous_type);
+  void hide_particle(int p_id, int previous_type);
 
   void append_particle_property_of_random_particle(
       int type, std::vector<StoredParticleProperty> &list_of_particles);
@@ -202,6 +227,9 @@ private:
 /// declaration of specific reaction algorithms
 
 class ReactionEnsemble : public ReactionAlgorithm {
+public:
+  ReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
+
 private:
   double calculate_acceptance_probability(
       SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
@@ -212,6 +240,7 @@ private:
 
 class WangLandauReactionEnsemble : public ReactionAlgorithm {
 public:
+  WangLandauReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
   bool do_energy_reweighting = false;
   bool do_not_sample_reaction_partition_function = false;
   double final_wang_landau_parameter = 0.00001;
@@ -314,6 +343,7 @@ private:
 
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
+  ConstantpHEnsemble(int seed) : ReactionAlgorithm(seed) {}
   double m_constant_pH = -10;
   int do_reaction(int reaction_steps) override;
 
@@ -328,6 +358,7 @@ private:
 
 class WidomInsertion : public ReactionAlgorithm {
 public:
+  WidomInsertion(int seed) : ReactionAlgorithm(seed) {}
   std::pair<double, double> measure_excess_chemical_potential(int reaction_id);
 };
 

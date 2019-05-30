@@ -395,20 +395,34 @@ def coulomb_potential(scalar_r, k, q1, q2):
 def coulomb_force(scalar_r, k, q1, q2):
     return k * q1 * q2 / scalar_r**2
 
+# QUARTIC bond
+
+
+def quartic_force(k0, k1, r, r_cut, scalar_r):
+    if scalar_r > r_cut:
+        return 0.0
+    return - k0 * (scalar_r - r) - k1 * (scalar_r - r)**3
+
+
+def quartic_potential(k0, k1, r, r_cut, scalar_r):
+    if scalar_r > r_cut:
+        return 0.0
+    return 0.5 * k0 * (scalar_r - r)**2 + 0.25 * k1 * (scalar_r - r)**4
 
 # Generic Lennard-Jones
+
+
 def lj_generic_potential(r, eps, sig, cutoff, offset=0., shift=0., e1=12.,
                          e2=6., b1=4., b2=4., delta=0., lam=1.):
-    V = 0.
-    if (r >= offset + cutoff):
-        V = 0.
-    else:
-        # LJGEN_SOFTCORE transformations
-        rroff = np.sqrt(
-            np.power(r - offset, 2) + (1 - lam) * delta * sig**2)
-        V = eps * lam * \
-            (b1 * np.power(sig / rroff, e1) -
-             b2 * np.power(sig / rroff, e2) + shift)
+    r = np.array(r)
+    V = np.zeros_like(r)
+    cutoffMask = (r <= cutoff + offset)
+    # LJGEN_SOFTCORE transformations
+    rroff = np.sqrt(
+        np.power(r[cutoffMask] - offset, 2) + (1 - lam) * delta * sig**2)
+    V[cutoffMask] = eps * lam * \
+        (b1 * np.power(sig / rroff, e1) -
+         b2 * np.power(sig / rroff, e2) + shift)
     return V
 
 

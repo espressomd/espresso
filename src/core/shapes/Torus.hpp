@@ -2,15 +2,15 @@
 #define __TORUS_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Shapes {
 class Torus : public Shape {
 public:
   /* center of the cylinder. */
-  Vector3d m_center;
+  Utils::Vector3d m_center;
   /* Normal axis of the cylinder. */
-  Vector3d m_normal;
+  Utils::Vector3d m_normal;
   /* radius. */
   double m_rad;
   /* tube radius. */
@@ -19,7 +19,7 @@ public:
   double m_direction;
 
   /* Unit vector in z direction */
-  Vector3d e_z;
+  Utils::Vector3d e_z;
 
   /** @brief Calculate derived parameters. */
   void precalc() { e_z = m_normal / m_normal.norm(); }
@@ -43,16 +43,16 @@ public:
     precalc();
   }
 
-  Vector3d const &normal() const { return m_normal; }
-  void set_normal(Vector3d const &normal) {
+  Utils::Vector3d const &normal() const { return m_normal; }
+  void set_normal(Utils::Vector3d const &normal) {
     m_normal = normal;
     precalc();
   }
 
-  Vector3d &center() { return m_center; }
+  Utils::Vector3d &center() { return m_center; }
   double &direction() { return m_direction; }
 
-  void calculate_dist(const Vector3d &pos, double *dist,
+  void calculate_dist(const Utils::Vector3d &pos, double *dist,
                       double *vec) const override;
 };
 } // namespace Shapes

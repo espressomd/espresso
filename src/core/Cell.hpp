@@ -19,13 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_CELL_HPP
 #define CORE_CELL_HPP
 
-#include <functional>
-#include <vector>
-
 #include "particle_data.hpp"
 
-#include "utils/Range.hpp"
-#include "utils/Span.hpp"
+#include <utils/Span.hpp>
+
+#include <boost/range/iterator_range.hpp>
+
+#include <functional>
+#include <vector>
 
 template <class CellRef> class Neighbors {
   using storage_type = std::vector<CellRef>;
@@ -34,7 +35,7 @@ public:
   using value_type = typename storage_type::value_type;
   using iterator = typename storage_type::iterator;
   using const_iterator = typename storage_type::const_iterator;
-  using cell_range = Utils::Range<iterator>;
+  using cell_range = boost::iterator_range<iterator>;
 
 private:
   void copy(const Neighbors &rhs) {

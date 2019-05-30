@@ -25,9 +25,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Observables {
 
+/** Extract particle velocities.
+ *  For \f$n\f$ particles, return \f$3 n\f$ velocities ordered as
+ *  \f$(v_x^1, v_y^1, v_z^1, \dots, v_x^n, v_y^n, v_z^n)\f$.
+ */
 class ParticleVelocities : public PidObservable {
 public:
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
       res[3 * i + 0] = partCfg[ids()[i]].m.v[0];

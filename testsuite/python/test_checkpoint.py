@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import sys
 import subprocess
 import unittest as ut
 import numpy as np
@@ -23,28 +24,108 @@ import espressomd.checkpointing
 import espressomd.virtual_sites
 import tests_common
 
+modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
+         for x in [mode, mode.split('.')[0]]}
+
+LB = ('LB.CPU' in modes or
+      espressomd.gpu_available() and espressomd.has_features('CUDA') and 'LB.GPU' in modes)
+
+EK = (espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') and 'EK.GPU'
+      in modes)
+
 
 class CheckpointTest(ut.TestCase):
 
     @classmethod
     def setUpClass(self):
-        checkpoint = espressomd.checkpointing.Checkpoint(
-            checkpoint_id="mycheckpoint",
+        self.checkpoint = espressomd.checkpointing.Checkpoint(
+            checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
+                '.', '__'),
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
-        checkpoint.load(0)
-        if espressomd.has_features('LB'):
-            self.lbf = system.actors[0]
-            self.lbf.load_checkpoint("@CMAKE_CURRENT_BINARY_DIR@/lb.cpt", 1)
+        self.checkpoint.load(0)
 
-    @ut.skipIf(not espressomd.has_features('LB'),
-               "Skipping test due to missing features.")
+    @ut.skipIf(not LB, "Skipping test due to missing features.")
     def test_LB(self):
-        np.testing.assert_almost_equal(
-            np.copy(self.lbf[1, 1, 1].velocity), np.array([0.1, 0.2, 0.3]))
-        state = self.lbf.get_params()
+        lbf = system.actors[0]
+        cpt_mode = int("@TEST_BINARY@")
+        cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
+        with self.assertRaises(RuntimeError):
+            lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
+        assertRaisesRegex = self.assertRaisesRegexp if sys.version_info < (
+            3, 2) else self.assertRaisesRegex
+        with assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+            lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
+        lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
+        precision = 9 if "LB.CPU" in modes else 5
+        m = np.pi / 12
+        nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
+        ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
+        nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
+        grid_3D = np.fromfunction(
+            lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+            (nx, ny, nz), dtype=float)
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    np.testing.assert_almost_equal(
+                        np.copy(lbf[i, j, k].population),
+                                grid_3D[i, j, k] * np.arange(1, 20),
+                                decimal=precision)
+        state = lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3,
-                     'dens': 1.5, 'tau': 0.01, 'fric': 2.0}
-        self.assertDictContainsSubset(reference, state)
+                     'dens': 1.5, 'tau': 0.01}
+        for key, val in reference.items():
+            self.assertTrue(key in state)
+            self.assertAlmostEqual(reference[key], state[key], delta=1E-9)
+
+    @ut.skipIf(not EK, "Skipping test due to missing features.")
+    def test_EK(self):
+        ek = system.actors[0]
+        ek_species = ek.get_params()['species'][0]
+        cpt_path = self.checkpoint.checkpoint_dir + "/ek"
+        ek.load_checkpoint(cpt_path)
+        precision = 5
+        m = np.pi / 12
+        nx = int(np.round(system.box_l[0] / ek.get_params()["agrid"]))
+        ny = int(np.round(system.box_l[1] / ek.get_params()["agrid"]))
+        nz = int(np.round(system.box_l[2] / ek.get_params()["agrid"]))
+        grid_3D = np.fromfunction(
+            lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
+            (nx, ny, nz), dtype=float)
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    np.testing.assert_almost_equal(
+                        np.copy(ek_species[i, j, k].density),
+                                grid_3D[i, j, k],
+                                decimal=precision)
+        state = ek.get_params()
+        reference = {'agrid': 0.5, 'lb_density': 26.15,
+                     'viscosity': 1.7, 'friction': 0.0,
+                     'T': 1.1, 'prefactor': 0.88, 'stencil': "linkcentered"}
+        for key, val in reference.items():
+            self.assertTrue(key in state)
+            self.assertAlmostEqual(reference[key], state[key], delta=1E-5)
+        state_species = ek_species.get_params()
+        reference_species = {'density': 0.4, 'D': 0.02, 'valency': 0.3}
+        for key, val in reference_species.items():
+            self.assertTrue(key in state_species)
+            self.assertAlmostEqual(
+                reference_species[key],
+                state_species[key],
+                delta=1E-5)
+        self.assertAlmostEqual(
+            state_species['ext_force_density'][0],
+            0.01,
+            delta=1E-5)
+        self.assertAlmostEqual(
+            state_species['ext_force_density'][1],
+            -0.08,
+            delta=1E-5)
+        self.assertAlmostEqual(
+            state_species['ext_force_density'][2],
+            0.06,
+            delta=1E-5)
 
     def test_variables(self):
         self.assertEqual(system.cell_system.skin, 0.1)
@@ -62,13 +143,14 @@ class CheckpointTest(ut.TestCase):
     def test_thermostat(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
         self.assertEqual(system.thermostat.get_state()[0]['kT'], 1.0)
+        self.assertEqual(system.thermostat.get_state()[0]['seed'], 42)
         np.testing.assert_array_equal(system.thermostat.get_state()[
             0]['gamma'], np.array([2.0, 2.0, 2.0]))
 
-    @ut.skipIf(
-        not espressomd.has_features(
-            ['LENNARD_JONES']),
-        "Cannot test for Lennard-Jones checkpointing because feature not compiled in.")
+    @ut.skipIf(not espressomd.has_features('LENNARD_JONES'),
+               "Skipping test due to missing features.")
+    @ut.skipIf('LJ' not in modes,
+               "Skipping test due to missing combination.")
     def test_non_bonded_inter(self):
         state = system.non_bonded_inter[
             0, 0].lennard_jones._get_params_from_es_core()
@@ -89,10 +171,9 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(
             len(set(state.items()) & set(reference.items())), len(reference))
 
-    @ut.skipIf(
-        not espressomd.has_features(
-            ['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']),
-        "Cannot test for virtual site checkpointing because feature not compiled in.")
+    @ut.skipIf(not espressomd.has_features(['VIRTUAL_SITES',
+                                            'VIRTUAL_SITES_RELATIVE']),
+               "Skipping test due to missing features.")
     def test_virtual_sites(self):
         self.assertEqual(system.part[1].virtual, 1)
         self.assertTrue(
@@ -106,29 +187,31 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(
             acc.get_variance(), np.array([0., 0.5, 2., 0., 0., 0.]))
 
-    @ut.skipIf(
-        not espressomd.has_features(
-            ['ELECTROSTATICS']),
-        "Cannot test for P3M checkpointing because feature not compiled in.")
+    @ut.skipIf(not espressomd.has_features('ELECTROSTATICS'),
+               "Skipping test due to missing features.")
+    @ut.skipIf('P3M.CPU' not in modes,
+               "Skipping test due to missing combination.")
     def test_p3m(self):
         self.assertTrue(any(isinstance(actor, espressomd.electrostatics.P3M)
                             for actor in system.actors.active_actors))
     
-    @ut.skipIf(not espressomd.has_features("COLLISION_DETECTION"), "skipped for missing features")
+    @ut.skipIf(not espressomd.has_features('COLLISION_DETECTION'),
+               "Skipping test due to missing features.")
     def test_collision_detection(self):
         coldet = system.collision_detection
         self.assertEqual(coldet.mode, "bind_centers")
         self.assertAlmostEqual(coldet.distance, 0.11, delta=1E-9)
         self.assertTrue(coldet.bond_centers, system.bonded_inter[0])
 
-    @ut.skipIf(not espressomd.has_features("EXCLUSIONS"), "Skipped because feature EXCLUSIONS missing.")
+    @ut.skipIf(not espressomd.has_features('EXCLUSIONS'),
+               "Skipping test due to missing features.")
     def test_exclusions(self):
-        self.assertTrue(
-            tests_common.lists_contain_same_elements(system.part[0].exclusions, [2]))
-        self.assertTrue(
-            tests_common.lists_contain_same_elements(system.part[1].exclusions, [2]))
-        self.assertTrue(
-            tests_common.lists_contain_same_elements(system.part[2].exclusions, [0, 1]))
+        self.assertTrue(tests_common.lists_contain_same_elements(
+            system.part[0].exclusions, [2]))
+        self.assertTrue(tests_common.lists_contain_same_elements(
+            system.part[1].exclusions, [2]))
+        self.assertTrue(tests_common.lists_contain_same_elements(
+            system.part[2].exclusions, [0, 1]))
 
 
 if __name__ == '__main__':

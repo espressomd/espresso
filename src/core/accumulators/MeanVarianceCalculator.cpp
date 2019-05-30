@@ -27,10 +27,9 @@
 #include <boost/serialization/vector.hpp>
 
 #include "MeanVarianceCalculator.hpp"
-#include "partCfg_global.hpp"
 
 namespace Accumulators {
-void MeanVarianceCalculator::update() { m_acc(m_obs->operator()(partCfg())); }
+void MeanVarianceCalculator::update() { m_acc(m_obs->operator()()); }
 
 std::vector<double> MeanVarianceCalculator::get_mean() {
   return m_acc.get_mean();

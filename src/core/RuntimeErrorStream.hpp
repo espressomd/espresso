@@ -35,8 +35,7 @@ class RuntimeErrorStream {
 public:
   RuntimeErrorStream(const RuntimeErrorStream &rhs);
   RuntimeErrorStream(RuntimeErrorCollector &ec, RuntimeError::ErrorLevel level,
-                     const std::string &file, const int line,
-                     const std::string &function);
+                     std::string file, int line, std::string function);
   ~RuntimeErrorStream();
   template <typename T> RuntimeErrorStream &operator<<(T const &value) {
     m_buff << value;

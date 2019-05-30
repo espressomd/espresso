@@ -128,6 +128,7 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
   }
 #endif /* LANGEVIN_PER_PARTICLE */
 
+  Utils::Vector3d noise = v_noise_g(p.p.identity, RNGSalt::BROWNIAN);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -141,7 +142,7 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
       // of Schlick2010. A difference is the mass factor to the friction tensor.
       // The noise is Gaussian according to the convention at p. 237 (last
       // paragraph), Pottier2010.
-      p.m.v[j] += brown_sigma_vel_temp * Thermostat::noise_g() / sqrt(p.p.mass);
+      p.m.v[j] += brown_sigma_vel_temp * noise[j] / sqrt(p.p.mass);
     }
   }
 }

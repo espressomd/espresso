@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-""" Visualization sample for a Lennard Jones liquid with live plotting via matplotlib.
+"""
+Visualization sample for a Lennard-Jones liquid with live plotting via
+matplotlib.
 """
 
 from __future__ import print_function
@@ -68,7 +70,7 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.001
 system.cell_system.skin = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
@@ -139,11 +141,11 @@ while (i < warm_n_times and act_min_dist < min_dist):
     system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-# print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" %
-# (i,system.time,lj_cap,act_min_dist), end=' ')
+    # print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" %
+    # (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
 
-#   Increase LJ cap
+    # Increase LJ cap
     lj_cap = lj_cap + 10
     system.force_cap = lj_cap
     visualizer.update()
@@ -201,7 +203,7 @@ def main_loop():
 
 
 def main_thread():
-    for i in range(0, int_n_times):
+    for i in range(int_n_times):
         main_loop()
 
 

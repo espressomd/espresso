@@ -1,5 +1,3 @@
-find_program( IPYTHON_EXECUTABLE NAMES ipython )
-
 # Configure pypresso for build dir
 set(PYTHON_DIR ${CMAKE_CURRENT_BINARY_DIR})
 

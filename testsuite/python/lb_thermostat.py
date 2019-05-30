@@ -26,16 +26,17 @@ Check the Lattice Boltzmann thermostat with respect to the particle velocity dis
 
 """
 
-KT = 2.25
+KT = 0.25
 AGRID = 2.5
-VISC = .7
+VISC = 2.7
 DENS = 1.7
-TIME_STEP = 0.01
+TIME_STEP = 0.05
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
-             'fric': 2.0,
-             'tau': TIME_STEP}
+             'tau': TIME_STEP,
+             'kT': KT,
+             'seed': 123}
 
 
 class LBThermostatCommon(object):
@@ -51,20 +52,20 @@ class LBThermostatCommon(object):
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
         self.system.part.add(
-            pos=np.random.random((250, 3)) * self.system.box_l)
-        self.system.thermostat.set_lb(kT=KT)
+            pos=np.random.random((100, 3)) * self.system.box_l)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=2.0)
 
     def test_velocity_distribution(self):
         self.prepare()
-        self.system.integrator.run(200)
+        self.system.integrator.run(20)
         N = len(self.system.part)
         loops = 250
         v_stored = np.zeros((N * loops, 3))
         for i in range(loops):
-            self.system.integrator.run(15)
+            self.system.integrator.run(6)
             v_stored[i * N:(i + 1) * N, :] = self.system.part[:].v
         minmax = 5
-        n_bins = 5
+        n_bins = 7
         error_tol = 0.01
         for i in range(3):
             hist = np.histogram(v_stored[:, i], range=(
@@ -77,8 +78,6 @@ class LBThermostatCommon(object):
                 self.assertLessEqual(abs(found - expected), error_tol)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB']) or espressomd.has_features("SHANCHEN"), "Skipping test due to missing features.")
 class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -87,8 +86,8 @@ class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_GPU']) or espressomd.has_features("SHANCHEN"), "Skipping test due to missing features.")
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
+    ['CUDA']), "Skipping test due to missing features or gpu.")
 class LBGPUThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the GPU implementation of the LB."""

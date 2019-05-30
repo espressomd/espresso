@@ -52,7 +52,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.time_step = 0.01
     RE = reaction_ensemble.ConstantpHEnsemble(
         temperature=1.0,
-        exclusion_radius=1)
+        exclusion_radius=1, seed=44)
 
     @classmethod
     def setUpClass(cls):
@@ -85,7 +85,7 @@ class ReactionEnsembleTest(ut.TestCase):
         RE = ReactionEnsembleTest.RE
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
-        RE.reaction(5 * N0)
+        RE.reaction(40 * N0)
 
         volume = np.prod(self.system.box_l)  # cuboid box
         average_NH = 0.0
@@ -93,13 +93,13 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NA = 0.0
         num_samples = 1000
         for i in range(num_samples):
-            RE.reaction(2)
+            RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)
             average_NHA += system.number_of_particles(type=type_HA)
             average_NA += system.number_of_particles(type=type_A)
-        average_NH /= num_samples
-        average_NA /= num_samples
-        average_NHA /= num_samples
+        average_NH /= float(num_samples)
+        average_NA /= float(num_samples)
+        average_NHA /= float(num_samples)
         average_alpha = average_NA / float(N0)
         # note you cannot calculate the pH via -log10(<NH>/volume) in the
         # constant pH ensemble, since the volume is totally arbitrary and does
@@ -112,7 +112,7 @@ class ReactionEnsembleTest(ut.TestCase):
         # relative error
         self.assertLess(
             rel_error_alpha,
-            0.07,
+            0.015,
             msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
             + "  pH: " + str(pH)
             + "  pKa: " + str(pKa)

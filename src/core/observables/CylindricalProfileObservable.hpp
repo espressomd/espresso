@@ -19,16 +19,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 
-#include <cmath>
+#include <utils/Vector.hpp>
 
-#include "Observable.hpp"
-#include "Vector.hpp"
+#include <string>
 
 namespace Observables {
-
-class CylindricalProfileObservable : virtual public Observable {
+class CylindricalProfileObservable {
 public:
-  ::Vector<3, double> center;
+  ::Utils::Vector3d center;
   std::string axis;
   double min_r, max_r;
   double min_phi, max_phi;

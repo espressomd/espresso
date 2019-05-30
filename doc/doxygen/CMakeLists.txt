@@ -1,18 +1,23 @@
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
+  add_custom_command(OUTPUT doxy-features
+    COMMAND ${PYTHON_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/gen_doxyconfig.py
+    ${CMAKE_SOURCE_DIR}/src/config doxy-features
+    DEPENDS EspressoConfig
+  )
 
-add_custom_command(OUTPUT doxy-features
-                   COMMAND ${PYTHON_EXECUTABLE}
-                   ${CMAKE_CURRENT_SOURCE_DIR}/gen_doxyconfig.py
-                   ${CMAKE_SOURCE_DIR}/src/features.def doxy-features
-                   DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def
-)
+  set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+  set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
 
-add_custom_target(doxygen
-  COMMAND BUILDDIR=${CMAKE_CURRENT_BINARY_DIR} SRCDIR=${CMAKE_SOURCE_DIR}
-  ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doxy-features
-  COMMENT "Generating API documentation with Doxygen" VERBATIM
-)
+  configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+
+  add_custom_target(doxygen
+    COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Generating API documentation with Doxygen"
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/doxy-features
+    VERBATIM
+  )
 
 endif(DOXYGEN_FOUND)

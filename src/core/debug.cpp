@@ -19,9 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implements the malloc replacements as described in \ref debug.hpp
-   "debug.hpp".
-*/
+ *  Implements the malloc replacements as described in debug.hpp.
+ */
 
 #include "debug.hpp"
 
@@ -36,7 +35,6 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "utils.hpp"
 
 int regular_exit = 1;
 

@@ -23,46 +23,16 @@
  */
 #include "p3m-common.hpp"
 
+#if defined(P3M) || defined(DP3M)
 #include "errorhandling.hpp"
+
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 /* For debug messages */
 extern int this_node;
 
-#if defined(P3M) || defined(DP3M)
-
-void p3m_common_parameter_pre_init(p3m_parameter_struct *params) {
-  params->tuning = false;
-  params->alpha = 0.0;
-  params->alpha_L = 0.0;
-  params->r_cut = 0.0;
-  params->r_cut_iL = 0.0;
-  params->mesh[0] = 0;
-  params->mesh[1] = 0;
-  params->mesh[2] = 0;
-  params->cao = 0;
-  params->cao3 = 0;
-  params->mesh_off[0] = P3M_MESHOFF;
-  params->mesh_off[1] = P3M_MESHOFF;
-  params->mesh_off[2] = P3M_MESHOFF;
-  params->inter = P3M_N_INTERPOL;
-  params->inter2 = 0;
-  params->accuracy = 0.0;
-  params->epsilon = P3M_EPSILON;
-  params->cao_cut[0] = 0.0;
-  params->cao_cut[1] = 0.0;
-  params->cao_cut[2] = 0.0;
-  params->a[0] = 0.0;
-  params->a[1] = 0.0;
-  params->a[2] = 0.0;
-  params->ai[0] = 0.0;
-  params->ai[1] = 0.0;
-  params->ai[2] = 0.0;
-  params->additional_mesh[0] = 0;
-  params->additional_mesh[1] = 0;
-  params->additional_mesh[2] = 0;
-}
-
-/** Debug function printing p3m structures */
+/* Debug function printing p3m structures */
 void p3m_p3m_print_local_mesh(p3m_local_mesh l) {
   fprintf(stderr, "%d: p3m_local_mesh: dim=(%d,%d,%d), size=%d\n", this_node,
           l.dim[0], l.dim[1], l.dim[2], l.size);
@@ -80,7 +50,7 @@ void p3m_p3m_print_local_mesh(p3m_local_mesh l) {
           l.r_margin[4], l.r_margin[5]);
 }
 
-/** Debug function printing p3m structures */
+/* Debug function printing p3m structures */
 void p3m_p3m_print_send_mesh(p3m_send_mesh sm) {
   int i;
   fprintf(stderr, "%d: p3m_send_mesh: max=%d\n", this_node, sm.max);
@@ -100,8 +70,8 @@ void p3m_p3m_print_send_mesh(p3m_send_mesh sm) {
   }
 }
 
-void p3m_add_block(double *in, double *out, int start[3], int size[3],
-                   int dim[3]) {
+void p3m_add_block(double const *in, double *out, int const start[3],
+                   int const size[3], int const dim[3]) {
   /* fast,mid and slow changing indices */
   int f, m, s;
   /* linear index of in grid, linear index of out grid */
@@ -126,7 +96,7 @@ void p3m_add_block(double *in, double *out, int start[3], int size[3],
 
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
   double c, res = 0.0;
-  c = Utils::sqr(cos(PI * mesh_i * (double)n));
+  c = Utils::sqr(cos(Utils::pi() * mesh_i * (double)n));
 
   switch (cao) {
   case 1: {
@@ -177,8 +147,6 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
   return res;
 }
 
-/** Computes the  assignment function of for the \a i'th degree
-    at value \a x. */
 double p3m_caf(int i, double x, int cao_value) {
   switch (cao_value) {
   case 1:

@@ -44,7 +44,6 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.Cylinder`
     - :class:`espressomd.shapes.Ellipsoid`
     - :class:`espressomd.shapes.HollowCone`
-    - :class:`espressomd.shapes.Maze`
     - :class:`espressomd.shapes.Rhomboid`
     - :class:`espressomd.shapes.SimplePore`
     - :class:`espressomd.shapes.Slitpore`
@@ -65,7 +64,7 @@ The module :mod:`espressomd.constraints` provides the class
     shape_constraint = espressomd.constraints.ShapeBasedConstraint(shape=my_shape)
 
 In order to add the constraint to the system
-invoke the :meth:`espressomd.constraints.add` method::
+invoke the :meth:`espressomd.constraints.Constraints.add` method::
 
     system.constraints.add(shape_constraint)
 
@@ -102,7 +101,7 @@ as usual (:ref:`Non-bonded interactions`).
 Deleting a constraint
 ~~~~~~~~~~~~~~~~~~~~~
 
-Constraints can be removed in a similar fashion using :meth:`espressomd.system.constraints.remove` ::
+Constraints can be removed in a similar fashion using :meth:`espressomd.constraints.Constraints.remove` ::
 
     system.constraints.remove(myConstraint)
 
@@ -127,7 +126,7 @@ will print the shape information for all defined constraints.
 Getting the force on a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:meth:`espressomd.system.constraints.total_force`
+:meth:`espressomd.constraints.ShapeBasedConstraint.total_force`
 
 Returns the force acting on the constraint. Note, however, that this is
 only due to forces from interactions with particles, not with other
@@ -146,7 +145,7 @@ For example the pressure from wall ::
 Getting the minimal distance to a constraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:meth:`espressomd.system.constraints.min_dist`
+:meth:`espressomd.constraints.ShapeBasedConstraint.min_dist`
 
 Calculates the smallest distance to all interacting
 constraints that can be repulsive (wall, cylinder, sphere, rhomboid,
@@ -293,27 +292,6 @@ The direction ``direction`` determines the force direction, ``-1`` for inward an
 creates a rhomboid defined by one corner located at ``[5.0, 5.0, 5.0]`` and three
 adjacent edges, defined by the three vectors connecting the corner with its three neighboring corners, ``(1,1,0)`` , ``(0,0,1)`` and ``(0,1,0)``.
 
-
-:class:`espressomd.shapes.Maze`
-    Spherical cavities on a regular grid that are connected by tubes.
-
-The resulting surface is ``nsphere`` spheres of radius ``sphrad`` along each dimension, connected by cylinders of radius ``cylrad``.
-The sphere grid have simple cubic symmetry.
-The spheres are distributed evenly by dividing the boxl by ``nsphere``.
-Dimension of the maze can be controlled by ``dim``: 0 for one dimensional, 1 for two dimensional and 2 for three dimensional maze.
-
-
-.. figure:: figures/shape-maze.png
-   :alt: Example constraint with a ``Maze`` shape.
-   :align: center
-   :height: 6.00000cm
-
-Pictured is an example constraint with a ``Maze`` shape created with ::
-
-    maze = Maze(cylrad=2, dim=2, nsphere=5, sphrad=6)
-    system.constraints.add(shape=maze, particle_type=0, penetrable=1)
-
-
 :class:`espressomd.shapes.SimplePore`
     Two parallel infinite planes, connected by a cylindrical orifice. The cylinder is connected to the
     planes by torus segments with an adjustable radius.
@@ -398,6 +376,7 @@ The parameter ``channel_width`` specifies the distance between the top and the p
 The parameter ``pore_length`` specifies the distance between the bottom and the plateau edge.
 The parameter ``pore_width`` specifies the distance between the two plateau edges, it is the space between the left and right walls of the pore region.
 The parameter ``pore_mouth`` specifies the location (z-coordinate) of the pore opening (center). It is always centered in the x-direction.
+The parameter ``dividing_plane`` specifies the location (z-coordinate) of the middle between the two walls.
 
 All the edges  are smoothed via the parameters ``upper_smoothing_radius`` (for the concave corner at the edge of the plateau region) and ``lower_smoothing_radius`` (for the convex corner at the bottom of the pore region).
 The meaning of the geometrical parameters can be inferred from the schematic in Fig. :ref:`slitpore <figure-slitpore>`.
@@ -411,12 +390,15 @@ The meaning of the geometrical parameters can be inferred from the schematic in 
 
 Pictured is an example constraint with a ``Slitpore`` shape created with ::
 
-    slitpore = Slitpore(channel_width=30,
-                        lower_smoothing_radius=3,
-                        upper_smoothing_radius=3,
-                        pore_length=40,
-                        pore_mouth=60,
-                        pore_width=10)
+
+    slitpore = Slitpore(channel_width=15,
+                        lower_smoothing_radius=1.5,
+                        upper_smoothing_radius=2,
+                        pore_length=20,
+                        pore_mouth=30,
+                        pore_width=5,
+                        dividing_plane=40)
+
     system.constraints.add(shape=slitpore, particle_type=0, penetrable=1)
 
 
@@ -445,7 +427,7 @@ Pictured is an example constraint with a ``SpheroCylinder`` shape created with :
     system.constraints.add(shape=spherocylinder, particle_type=0)
 
 
-:class:`espressomd.shapes.Hollowcone`
+:class:`espressomd.shapes.HollowCone`
    A hollow cone.
 
 The resulting surface is a section of a hollow cone.
@@ -592,11 +574,11 @@ Constant fields
 These are fields that are constant in space or simple linear functions
 of the position.  The available fields are
 
-:class:`espressomd.Constraints::HomogeneousMagneticField`
-:class:`espressomd.Constraints::HomogeneousElectricField`
-:class:`espressomd.Constraints::LinearElectricPotential`
-:class:`espressomd.Constraints::HomogeneousFlowField`
-:class:`espressomd.Constraints::Gravity`
+:class:`espressomd.constraints.HomogeneousMagneticField`
+:class:`espressomd.constraints.ElectricPlaneWave`
+:class:`espressomd.constraints.LinearElectricPotential`
+:class:`espressomd.constraints.HomogeneousFlowField`
+:class:`espressomd.constraints.Gravity`
 
 a detailed description can be found in the class documentation.
 
@@ -613,8 +595,8 @@ which has to be provided by the user. The fields differ by how
 they couple to particles, for a detailed description see their respective
 class documentation.
 
-:class:`espressomd.Constraints::ForceField`
-:class:`espressomd.Constraints::PotentialField`
-:class:`espressomd.Constraints::ElectricPotential`
-:class:`espressomd.Constraints::FlowField`
+:class:`espressomd.constraints.ForceField`
+:class:`espressomd.constraints.PotentialField`
+:class:`espressomd.constraints.ElectricPotential`
+:class:`espressomd.constraints.FlowField`
 

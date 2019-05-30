@@ -1,6 +1,3 @@
-"""
-This sample sets up a polymer.
-"""
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -19,26 +16,29 @@ This sample sets up a polymer.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample sets up a polymer.
+"""
 from __future__ import print_function
 import espressomd
+espressomd.assert_features(["LENNARD_JONES"])
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
-from espressomd.io.writer import vtf  # pylint: disable=import-error
+from espressomd.io.writer import vtf
 import numpy as np
 
 # System parameters
 #############################################################
 
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system = espressomd.System(box_l=[100, 100, 100])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.box_l = [100, 100, 100]
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 outfile = open('polymer.vtf', 'w')
 
@@ -50,8 +50,15 @@ fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
 
-polymer.create_polymer(N_P=1, bond_length=1.0, type_poly_neutral=0,
-                       type_poly_charged=0, MPC=50, bond=fene, start_pos=[0., 0., 0.])
+positions = polymer.positions(n_polymers=1,
+                              beads_per_chain=50,
+                              bond_length=1.0,
+                              seed=3210)
+for i, pos in enumerate(positions[0]):
+    id = len(system.part)
+    system.part.add(id=id, pos=pos)
+    if i > 0:
+        system.part[id].add_bond((fene, id - 1))
 vtf.writevsf(system, outfile)
 
 

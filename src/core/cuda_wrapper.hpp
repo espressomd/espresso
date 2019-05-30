@@ -6,7 +6,7 @@
 #include <hip/hip_runtime.h>
 
 #define cudaDeviceProp hipDeviceProp_t
-#define cudaThreadSynchronize hipDeviceSynchronize
+#define cudaDeviceSynchronize hipDeviceSynchronize
 #define cudaErrorInvalidValue hipErrorInvalidValue
 #define cudaError_t hipError_t
 #define cudaEventCreate hipEventCreate
@@ -42,6 +42,7 @@
 #define cudaStreamDestroy hipStreamDestroy
 #define cudaStream_t hipStream_t
 #define cudaSuccess hipSuccess
+#define __all_sync __all
 
 #else // Nvidia via CUDA
 

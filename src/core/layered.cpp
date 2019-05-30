@@ -19,16 +19,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref layered.hpp "layered.hpp".
+ *  Implementation of layered.hpp.
  */
 #include "layered.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
+#include "debug.hpp"
 #include "domain_decomposition.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
-#include "utils.hpp"
 
 #include <cstring>
 #include <mpi.h>
@@ -81,7 +81,8 @@ double layer_h = 0, layer_h_i = 0;
 
 static int btm, top;
 
-void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
+void layered_get_mi_vector(double res[3], double const a[3],
+                           double const b[3]) {
   int i;
 
   for (i = 0; i < 2; i++) {
@@ -92,7 +93,7 @@ void layered_get_mi_vector(double res[3], double a[3], double b[3]) {
   res[2] = a[2] - b[2];
 }
 
-Cell *layered_position_to_cell(const Vector3d &pos) {
+Cell *layered_position_to_cell(const Utils::Vector3d &pos) {
   int cpos =
       static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
   if (cpos < 1) {
@@ -299,7 +300,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
   }
 }
 
-void layered_topology_init(CellPList *old) {
+void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   int c, p;
 
   CELL_TRACE(fprintf(
@@ -311,12 +312,12 @@ void layered_topology_init(CellPList *old) {
   cell_structure.position_to_cell = layered_position_to_cell;
 
   /* check node grid. All we can do is 1x1xn. */
-  if (node_grid[0] != 1 || node_grid[1] != 1) {
+  if (grid[0] != 1 || grid[1] != 1) {
     runtimeErrorMsg() << "selected node grid is not suitable for layered cell "
                          "structure (needs 1x1x"
                       << n_nodes << " grid";
-    node_grid[0] = node_grid[1] = 1;
-    node_grid[2] = n_nodes;
+    grid[0] = grid[1] = 1;
+    grid[2] = n_nodes;
   }
 
   if (this_node == 0 && determine_n_layers) {
@@ -411,7 +412,7 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
 
   CELL_TRACE(fprintf(stderr, "%d: sorting in %d\n", this_node, pl->n));
   for (p = 0; p < pl->n; p++) {
-    fold_position(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i);
+    fold_position(pl->part[p].r.p, pl->part[p].l.i);
 
     if (LAYERED_BTM_NEIGHBOR &&
         (get_mi_coord(pl->part[p].r.p[2], my_left[2], 2) < 0.0)) {

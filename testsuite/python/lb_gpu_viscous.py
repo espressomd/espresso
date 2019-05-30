@@ -23,9 +23,10 @@ import espressomd.lb
 
 
 @ut.skipIf(
+    not espressomd.gpu_available() or
     not espressomd.has_features(
-        ['LB_GPU', 'EXTERNAL_FORCES']) or espressomd.has_features("SHANCHEN"),
-           "Features not available, skipping test!")
+        ['CUDA', 'EXTERNAL_FORCES']),
+           "Features or gpu not available, skipping test!")
 class LBGPUViscous(ut.TestCase):
     system = espressomd.System(box_l=[10.0] * 3)
     system.time_step = 0.01
@@ -42,8 +43,11 @@ class LBGPUViscous(ut.TestCase):
         v_part = np.array([1, 2, 3])
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf = espressomd.lb.LBFluidGPU(
-            visc=self.viscosity, dens=self.dens, agrid=self.agrid, tau=self.system.time_step, fric=self.friction)
+            visc=self.viscosity, dens=self.dens, agrid=self.agrid, tau=self.system.time_step)
         self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            gamma=self.friction)
         self.system.part.add(
             pos=[0.5 * self.agrid] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid

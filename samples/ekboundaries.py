@@ -23,8 +23,9 @@ import espressomd
 required_features = ["ELECTROKINETICS", "EK_BOUNDARIES", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
-from espressomd import System, shapes, electrokinetics
+from espressomd import System, shapes, electrokinetics, ekboundaries
 import sys
+import os
 
 system = System(box_l=[10, 10, 10])
 system.set_random_state_PRNG()
@@ -51,14 +52,20 @@ print(neg.get_params())
 print(pos[5, 5, 5].density)
 
 
-ek_wall_left = electrokinetics.EKBoundary(
+ek_wall_left = ekboundaries.EKBoundary(
     shape=shapes.Wall(dist=1, normal=[1, 0, 0]), charge_density=-0.01)
-ek_wall_right = electrokinetics.EKBoundary(
+ek_wall_right = ekboundaries.EKBoundary(
     shape=shapes.Wall(dist=-9, normal=[-1, 0, 0]), charge_density=0.01)
 system.ekboundaries.add(ek_wall_left)
 system.ekboundaries.add(ek_wall_right)
 
-for i in range(1000):
+
+if not os.path.isdir("ek"):
+    os.makedirs("ek")
+
+
+n_int_cycles = 1000
+for i in range(n_int_cycles):
     system.integrator.run(100)
     sys.stdout.write("\rIntegrating: %03i" % i)
     sys.stdout.flush()

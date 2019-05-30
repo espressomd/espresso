@@ -19,6 +19,7 @@
 from __future__ import print_function, absolute_import
 
 from libcpp cimport bool as cbool
+from libc cimport stdint
 
 include "myconfig.pxi"
 from .utils cimport Vector3d
@@ -40,3 +41,8 @@ cdef extern from "thermostat.hpp":
     ELSE:
         double langevin_gamma_rotation
         double langevin_gamma
+
+    void langevin_set_rng_state(stdint.uint64_t counter)
+    cbool langevin_is_seed_required()
+
+    stdint.uint64_t langevin_get_rng_state()

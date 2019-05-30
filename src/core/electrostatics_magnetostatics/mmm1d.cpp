@@ -25,21 +25,23 @@
  */
 
 #include "electrostatics_magnetostatics/mmm1d.hpp"
+
+#ifdef ELECTROSTATICS
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "mmm-common.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "polynom.hpp"
 #include "specfunc.hpp"
 #include "tuning.hpp"
-#include "utils.hpp"
 
-#include "utils/strcat_alloc.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+
+#include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
-
-#ifdef ELECTROSTATICS
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 /** How many trial calculations */
 #define TEST_INTEGRATIONS 1000
@@ -66,7 +68,7 @@ using Utils::strcat_alloc;
 static double uz, L2, uz2, prefuz2, prefL3_i;
 /*@}*/
 
-MMM1D_struct mmm1d_params = {0.05, 1e-5};
+MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
 /** From which distance a certain Bessel cutoff is valid. Can't be part of the
     params since these get broadcasted. */
 static double *bessel_radii;
@@ -178,8 +180,8 @@ void MMM1D_init() {
                            mmm1d_params.far_switch_radius_2);
 }
 
-void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
-                                  double r, double force[3]) {
+void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
+                                  double force[3]) {
   int dim;
   double F[3];
   double rxy2, rxy2_d, z_d;
@@ -222,7 +224,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
 
     /* real space parts */
 
-    pref = coulomb.prefactor / (r2 * r);
+    pref = 1. / (r * r * r);
     Fx += pref * d[0];
     Fy += pref * d[1];
     Fz += pref * d[2];
@@ -230,7 +232,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
     shift_z = d[2] + box_l[2];
     rt2 = rxy2 + shift_z * shift_z;
     rt = sqrt(rt2);
-    pref = coulomb.prefactor / (rt2 * rt);
+    pref = 1. / (rt2 * rt);
     Fx += pref * d[0];
     Fy += pref * d[1];
     Fz += pref * shift_z;
@@ -238,7 +240,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
     shift_z = d[2] - box_l[2];
     rt2 = rxy2 + shift_z * shift_z;
     rt = sqrt(rt2);
-    pref = coulomb.prefactor / (rt2 * rt);
+    pref = 1. / (rt2 * rt);
     Fx += pref * d[0];
     Fy += pref * d[1];
     Fz += pref * shift_z;
@@ -270,20 +272,19 @@ void add_mmm1d_coulomb_pair_force(double chpref, double d[3], double r2,
     sr *= uz2 * 4 * C_2PI;
     sz *= uz2 * 4 * C_2PI;
 
-    pref = coulomb.prefactor * (sr / rxy + 2 * uz / rxy2);
+    pref = 1. * (sr / rxy + 2 * uz / rxy2);
 
     F[0] = pref * d[0];
     F[1] = pref * d[1];
-    F[2] = coulomb.prefactor * sz;
+    F[2] = 1. * sz;
   }
 
   for (dim = 0; dim < 3; dim++)
     force[dim] += chpref * F[dim];
 }
 
-double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3],
+double mmm1d_coulomb_pair_energy(double const chpref, double const d[3],
                                  double r2, double r) {
-  double chpref = p1->p.q * p2->p.q;
   double rxy2, rxy2_d, z_d;
   double E;
 
@@ -312,19 +313,19 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3],
 
       r2n *= rxy2_d;
     }
-    E *= coulomb.prefactor * uz;
+    E *= uz;
 
     /* real space parts */
 
-    E += coulomb.prefactor / r;
+    E += 1 / r;
 
     shift_z = d[2] + box_l[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
-    E += coulomb.prefactor / rt;
+    E += 1 / rt;
 
     shift_z = d[2] - box_l[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
-    E += coulomb.prefactor / rt;
+    E += 1 / rt;
   } else {
     /* far range formula */
     double rxy = sqrt(rxy2);
@@ -340,7 +341,7 @@ double mmm1d_coulomb_pair_energy(Particle *p1, Particle *p2, double d[3],
       double fq = C_2PI * bp;
       E += K0(fq * rxy_d) * cos(fq * z_d);
     }
-    E *= 4 * coulomb.prefactor * uz;
+    E *= 4 * uz;
   }
 
   return chpref * E;

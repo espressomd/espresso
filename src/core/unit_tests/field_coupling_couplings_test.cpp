@@ -20,11 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/field_coupling/couplings/Charge.hpp"
-#include "core/field_coupling/couplings/Direct.hpp"
-#include "core/field_coupling/couplings/Mass.hpp"
-#include "core/field_coupling/couplings/Scaled.hpp"
-#include "core/field_coupling/couplings/Viscous.hpp"
+#include "field_coupling/couplings/Charge.hpp"
+#include "field_coupling/couplings/Direct.hpp"
+#include "field_coupling/couplings/Mass.hpp"
+#include "field_coupling/couplings/Scaled.hpp"
+#include "field_coupling/couplings/Viscous.hpp"
 
 using namespace FieldCoupling::Coupling;
 
@@ -99,11 +99,11 @@ BOOST_AUTO_TEST_CASE(viscous) {
   {
     struct {
       struct {
-        const Vector3d v = {1., 2., 3.};
+        const Utils::Vector3d v = {1., 2., 3.};
       } m;
     } p;
 
-    auto const u = Vector3d{4., 5., 6.};
+    auto const u = Utils::Vector3d{4., 5., 6.};
 
     BOOST_CHECK((-gamma * (p.m.v - u)) == viscous_coupling(p, u));
   }

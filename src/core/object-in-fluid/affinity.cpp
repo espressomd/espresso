@@ -23,9 +23,11 @@
  *  Implementation of \ref affinity.hpp
  */
 #include "affinity.hpp"
-#include "../communication.hpp"
 
 #ifdef AFFINITY
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int affinity_set_params(int part_type_a, int part_type_b, int afftype,
                         double kappa, double r0, double Kon, double Koff,

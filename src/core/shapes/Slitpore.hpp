@@ -30,9 +30,9 @@ public:
   Slitpore()
       : m_pore_mouth(0.0), m_upper_smoothing_radius(0.0),
         m_lower_smoothing_radius(0.0), m_channel_width(0.0), m_pore_width(0.0),
-        m_pore_length(0.0) {}
+        m_pore_length(0.0), m_dividing_plane(0.0) {}
 
-  void calculate_dist(const Vector3d &pos, double *dist,
+  void calculate_dist(const Utils::Vector3d &pos, double *dist,
                       double *vec) const override;
 
   double &pore_mouth() { return m_pore_mouth; }
@@ -41,6 +41,8 @@ public:
   double &channel_width() { return m_channel_width; }
   double &pore_width() { return m_pore_width; }
   double &pore_length() { return m_pore_length; }
+  double &dividing_plane() { return m_dividing_plane; }
+  const double &dividing_plane() const { return m_dividing_plane; }
 
 private:
   double m_pore_mouth;
@@ -49,6 +51,7 @@ private:
   double m_channel_width;
   double m_pore_width;
   double m_pore_length;
+  double m_dividing_plane;
 };
 } // namespace Shapes
 

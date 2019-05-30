@@ -23,7 +23,7 @@
 #define __RHOMBOID_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Shapes {
 class Rhomboid : public Shape {
@@ -32,22 +32,22 @@ public:
       : m_pos({0.0, 0.0, 0.0}), m_a({0.0, 0.0, 0.0}), m_b({0.0, 0.0, 0.0}),
         m_c({0.0, 0.0, 0.0}), m_direction(0.0) {}
 
-  void calculate_dist(const Vector3d &pos, double *dist,
+  void calculate_dist(const Utils::Vector3d &pos, double *dist,
                       double *vec) const override;
 
-  Vector3d &pos() { return m_pos; }
-  Vector3d &a() { return m_a; }
-  Vector3d &b() { return m_b; }
-  Vector3d &c() { return m_c; }
+  Utils::Vector3d &pos() { return m_pos; }
+  Utils::Vector3d &a() { return m_a; }
+  Utils::Vector3d &b() { return m_b; }
+  Utils::Vector3d &c() { return m_c; }
   double &direction() { return m_direction; }
 
 private:
   /** corner of the rhomboid */
-  Vector3d m_pos;
+  Utils::Vector3d m_pos;
   /** edges adjacent to the corner */
-  Vector3d m_a;
-  Vector3d m_b;
-  Vector3d m_c;
+  Utils::Vector3d m_a;
+  Utils::Vector3d m_b;
+  Utils::Vector3d m_c;
   /** rhomboid direction. (+1 outside -1 inside interaction direction)*/
   double m_direction;
 };

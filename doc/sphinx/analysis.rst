@@ -35,7 +35,6 @@ The direct analysis commands can be classified into two types:
     - :ref:`Moment of inertia matrix`
     - :ref:`Gyration tensor`
     - :ref:`Stress Tensor`
-    - :ref:`Local Stress Tensor`
 
 - Analysis on stored configurations, added by :meth:`espressomd.analyze.Analysis.append`:
     - :ref:`Radial distribution function` with ``rdf_type='<rdf>'``
@@ -368,43 +367,6 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
     same aggregate. The second optional parameter enables one to consider
     aggregation state of only oppositely charged particles.
 
-    .. _Finding holes:
-
-    Finding holes
-    ~~~~~~~~~~~~~
-    .. todo:: This feature is not implemented
-
-    analyze holes
-
-    Function for the calculation of the unoccupied volume (often also called
-    free volume) in a system. Details can be found in
-    :cite:`schmitz00a`. It identifies free space in the
-    simulation box via a mesh based cluster algorithm. Free space is defined
-    via a probe particle and its interactions with other particles which
-    have to be defined through LJ interactions with the other existing
-    particle types via the inter command before calling this routine. A
-    point of the mesh is counted as free space if the distance of the point
-    is larger than LJ\_cut+LJ\_offset to any particle as defined by the LJ
-    interaction parameters between the probe particle type and other
-    particle types.How to use this function: Define interactions between all
-    (or the ones you are interested in) particle types in your system and a
-    fictitious particle type. Practically one uses the van der Waals radius
-    of the particles plus the size of the probe you want to use as the
-    Lennard-Jones cutoff. The mesh spacing is the box length divided by the
-    .
-
-    { { } { } { } }
-
-    A hole is defined as a continuous cluster of mesh elements that belong
-    to the unoccupied volume. Since the function is quite rudimentary it
-    gives back the whole information suitable for further processing on the
-    script level. and are given in number of mesh points, which means you
-    have to calculate the actual size via the corresponding volume or
-    surface elements yourself. The complete information is given in the
-    element\_lists for each hole. The element numbers give the position of a
-    mesh point in the linear representation of the 3D grid (coordinates are
-    in the order x, y, z). Attention: the algorithm assumes a cubic box.
-    Surface results have not been tested. .
 
 	.. _Temperature of the LB fluid:
 
@@ -467,7 +429,7 @@ Stress Tensor
 :meth:`espressomd.analyze.Analysis.stress_tensor`
 
 Computes the volume averaged instantaneous stress tensor of the system with options which are
-described by in :meth:`espressomd.System.analysis.stress_tensor`. It is called a stress tensor but the sign convention follows that of a pressure tensor.
+described by in :meth:`espressomd.analyze.Analysis.stress_tensor`. It is called a stress tensor but the sign convention follows that of a pressure tensor.
 In general do only use it for (on average) homogeneous systems. For inhomogeneous systems you need to use the local stress tensor.
 
 The instantaneous virial stress tensor is calculated by
@@ -487,7 +449,7 @@ The short ranged part is given by:
 
 .. math :: p^\text{Coulomb, P3M, dir}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2V} \sum_{\vec{n}}^* \sum_{i,j=1}^N q_i q_j \left( \frac{ \mathrm{erfc}(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^3} +\frac{2\beta \pi^{-1/2} \exp(-(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)^2)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^2} \right) (\vec{r}_j-\vec{r}_i+\vec{n})_k (\vec{r}_j-\vec{r}_i+\vec{n})_l,
 
-where :math:`\beta` is the P3M splitting parameter, :math:`\vec{n}` identifies the periodic images, the asterix denotes that terms with :math:`\vec{n}=\vec{0}` and i=j are omitted.
+where :math:`\beta` is the P3M splitting parameter, :math:`\vec{n}` identifies the periodic images, the asterisk denotes that terms with :math:`\vec{n}=\vec{0}` and i=j are omitted.
 The long ranged (k-space) part is given by:
 
 .. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 \cdot (\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),
@@ -500,35 +462,6 @@ That means the contributions are not easy to interpret! Those are the contributi
 
 Note that the angular velocities of the particles are not included in
 the calculation of the stress tensor.
-
-.. _Local Stress Tensor:
-
-Local Stress Tensor
-~~~~~~~~~~~~~~~~~~~
-
-.. todo:: This feature is not tested.
-
-:meth:`espressomd.analyze.Analysis.local_stress_tensor`
-
-A cuboid is defined in the system and divided into bins.
-For each of these bins an instantaneous stress tensor is calculated using the Irving Kirkwood method.
-That is, a given interaction contributes towards the stress tensor in a bin proportional to the fraction of the line connecting the two particles within that bin.
-
-If the P3M and MMM1D electrostatic methods are used, these interactions
-are not included in the local stress tensor. The DH and RF methods, in
-contrast, are included. Concerning bonded interactions only two body
-interactions (FENE, Harmonic) are included (angular and dihedral are
-not). For all electrostatic interactions only the real space part is
-included.
-
-Care should be taken when using constraints of any kind, since these are
-not accounted for in the local stress tensor calculations.
-
-The command is implemented in parallel.
-
-{ { LocalStressTensor } { { } { } } }
-
-specifying the local pressure tensor in each bin.
 
 .. _Chains:
 
@@ -695,11 +628,11 @@ the script level and back, which produces a significant overhead when
 performed too often.
 
 Some observables in the core have their corresponding counterparts in
-the :mod:`espressomd.analysis` module. However, only the core-observables can be used
+the :mod:`espressomd.analyze` module. However, only the core-observables can be used
 on the fly with the toolbox of the correlator and on the fly analysis of
 time series.
 Similarly, some special cases of using the correlator have
-their redundant counterparts in :mod:`espressomd.analysis`,
+their redundant counterparts in :mod:`espressomd.analyze`,
 but the correlator provides a general and
 versatile toolbox which can be used with any implemented
 core-observables.

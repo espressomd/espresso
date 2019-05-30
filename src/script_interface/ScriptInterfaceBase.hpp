@@ -24,31 +24,26 @@
 #include <memory>
 #include <type_traits>
 
-#include "utils/serialization/array.hpp"
+#include "utils/Span.hpp"
 
-#include "Parameter.hpp"
+#include <boost/utility/string_ref.hpp>
+
 #include "Variant.hpp"
 
 namespace ScriptInterface {
 /**
- * Convenience typedefs.
- */
-typedef std::map<std::string, Parameter> ParameterMap;
-
-/**
  * @brief Make a Variant from argument.
  *
- * This is a convenience function, so that
- * rather involved constructors from
- * boost::variant are not needed in the
- * script interfaces.
+ * This is a convenience function, so that rather involved constructors from
+ * boost::variant are not needed in the script interfaces.
  */
 template <typename T> Variant make_variant(const T &x) { return Variant(x); }
 
 /**
- * @brief Base class for generic script interface.
+ * @brief Base class for generic script interfaces.
  *
- * @todo Add extensive documentation.
+ * See section @ref script_interface_howto for detailed instructions on how to
+ * create derived classes.
  *
  */
 class ScriptInterfaceBase : public Utils::AutoObjectId<ScriptInterfaceBase> {
@@ -64,7 +59,7 @@ public:
   ScriptInterfaceBase(ScriptInterfaceBase &&) = delete;
   ScriptInterfaceBase &operator=(ScriptInterfaceBase const &) = delete;
   ScriptInterfaceBase &operator=(ScriptInterfaceBase &&) = delete;
-  virtual ~ScriptInterfaceBase() = default;
+  ~ScriptInterfaceBase() override = default;
 
   static std::weak_ptr<ScriptInterfaceBase> &get_instance(ObjectId id);
 
@@ -104,13 +99,15 @@ public:
    * is called before construct (only name() and valid_parameters()),
    * and it is only called once.
    *
-   * The default implementation just calls set_parameters.
+   * The default implementation just calls set_parameter for every parameter.
    *
    * @param params The parameters to the constructor. Only parameters that
    *               are valid for a default-constructed object are valid.
    */
   virtual void construct(VariantMap const &params) {
-    this->set_parameters(params);
+    for (auto const &p : params) {
+      set_parameter(p.first, p.second);
+    }
   }
 
 public:
@@ -122,7 +119,7 @@ public:
     VariantMap values;
 
     for (auto const &p : valid_parameters()) {
-      values[p.first] = get_parameter(p.first);
+      values[p.data()] = get_parameter(p.data());
     }
 
     return values;
@@ -135,7 +132,9 @@ public:
    *
    * @return Expected parameters.
    */
-  virtual ParameterMap valid_parameters() const { return {}; }
+  virtual Utils::Span<const boost::string_ref> valid_parameters() const {
+    return {};
+  }
 
   /**
    * @brief Get single parameter.
@@ -149,34 +148,16 @@ public:
 
   /**
    * @brief Set single parameter.
-   *
-   * @param name Name of the parameter
-   * @param value Set parameter to this value.
    */
-  virtual void set_parameter(const std::string &name, const Variant &value){};
-  /**
-   * @brief Set multiple parameters.
-   *
-   * The default implementation calls the implementation of set_parameter for
-   * every
-   * element of the map.
-   *
-   * @param parameters Parameters to set.
-   */
-  virtual void set_parameters(const VariantMap &parameters) {
-    for (auto const &it : parameters) {
-      set_parameter(it.first, it.second);
-    }
-  }
+  virtual void set_parameter(const std::string &, const Variant &) {}
 
   /**
    * @brief Call a method on the object.
    *
-   * If not overridden by the implementation,
-   * this does nothing.
+   * If not overridden by the implementation, this does nothing.
    */
   virtual Variant call_method(const std::string &, const VariantMap &) {
-    return true;
+    return none;
   }
 
   /**
@@ -208,11 +189,10 @@ public:
   template <typename T> std::shared_ptr<T> static make_shared() {
     std::shared_ptr<T> sp = std::make_shared<T>();
 
-    /* Id of the newly created instance */
+    /* id of the newly created instance */
     const auto id = sp->id();
 
-    /* Now get a reference to the corresponding weak_ptr in ObjectId and
-       update
+    /* get a reference to the corresponding weak_ptr in ObjectId and update
        it with our shared ptr, so that everybody uses the same ref count.
     */
     sp->get_instance(id) = std::static_pointer_cast<ScriptInterfaceBase>(sp);
@@ -229,23 +209,5 @@ public:
 protected:
   virtual void set_state(Variant const &state);
 };
-
-/**
- * @brief Tries to extract a value with the type of MEMBER_NAME from the
- * Variant.
- *
- * This will fail at compile time if the type of MEMBER_NAME is not one of the
- * possible types of Variant, and at runtime if the current type of the
- * variant is not that of MEMBER_NAME. remove_reference ensures that this also
- * works with member access by reference for example as returned by a
- * function.
- */
-#define SET_PARAMETER_HELPER(PARAMETER_NAME, MEMBER_NAME)                      \
-  if (name == PARAMETER_NAME) {                                                \
-    MEMBER_NAME =                                                              \
-        get_value<std::remove_reference<decltype(MEMBER_NAME)>::type>(value);  \
-  }
-
 } /* namespace ScriptInterface */
-
 #endif

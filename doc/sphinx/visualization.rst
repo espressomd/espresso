@@ -169,7 +169,7 @@ screenshots without blocking the simulation script::
     for i in range(1000):
         system.part.add(pos=[5, 5, 5])
 
-    system.thermostat.set_langevin(kT=1, gamma=1)
+    system.thermostat.set_langevin(kT=1, gamma=1, seed=42)
 
     visualizer = visualization.openGLLive(system, window_size=[500, 500])
 
@@ -207,7 +207,7 @@ used, which are indexed circularly by the numerical particle type::
                                           particle_type_colors=[[1, 1, 1], [0, 0, 1]],
                                           particle_type_materials=[steel, bright])
 
-Materials are stored in :attr:`espressomd.visualization.openGLLive().materials`.
+Materials are stored in :attr:`espressomd.visualization_opengl.openGLLive.materials`.
 
 .. _Visualize vectorial properties:
 
@@ -315,8 +315,8 @@ by a timer or keyboard input::
             print "T = 0"
 
     # Registers input-based calls
-    visualizer.keyboardManager.registerButton(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
-    visualizer.keyboardManager.registerButton(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
+    visualizer.keyboardManager.register_button(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
+    visualizer.keyboardManager.register_button(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
 Further examples can be found in samples/python/billard.py or samples/python/visualization\_interactive.py.
 

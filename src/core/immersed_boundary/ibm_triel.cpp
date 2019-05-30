@@ -17,15 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.hpp"
+#include "immersed_boundary/ibm_triel.hpp"
 
 #ifdef IMMERSED_BOUNDARY
-
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
-#include "immersed_boundary/ibm_triel.hpp"
 #include "particle_data.hpp"
+
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 namespace {
 /** Rotate calculated trielastic forces in the 2d plane back to the 3d plane
@@ -36,7 +37,8 @@ namespace {
  *consistent with the literature
  */
 void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
-                  double f2[3], const Vector3d &v12, const Vector3d &v13) {
+                  double f2[3], const Utils::Vector3d &v12,
+                  const Utils::Vector3d &v13) {
   // fRot is in the rotated system, i.e. in a system where the side lPrime of
   // the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is
   // perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).
@@ -48,7 +50,7 @@ void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
 
   // xu is simple: The x-axis in the rotated system is parallel to v12 --> xu =
   // v12 (+ normalization)
-  auto const xu = Vector3d(v12).normalize();
+  auto const xu = Utils::Vector3d(v12).normalize();
 
   // yu needs to be orthogonal to xu, and point in the direction of node 3 in
   // Krueger, Fig. 7.1b. Therefore: First get the projection of v13 onto v12:
@@ -89,7 +91,7 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
 
   // angles between these vectors; calculated directly via the products
   const double cosPhi = (vec1 * vec2) / (lp * l);
-  auto const vecpro = vec1.cross(vec2);
+  auto const vecpro = vector_product(vec1, vec2);
   const double sinPhi = vecpro.norm() / (l * lp);
 
   // Check for sanity
@@ -320,20 +322,17 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
 
   // Calculate equilibrium lengths and angle; Note the sequence of the points!
   // lo = length between 1 and 3
-  double templo[3];
-  get_mi_vector(templo, part3.r.p, part1.r.p);
-  const double l0 = sqrt(sqrlen(templo));
+  auto const templo = get_mi_vector(part3.r.p, part1.r.p);
+  const double l0 = templo.norm();
   // lpo = length between 1 and 2
-  double templpo[3];
-  get_mi_vector(templpo, part2.r.p, part1.r.p);
-  const double lp0 = sqrt(sqrlen(templpo));
+  auto const templpo = get_mi_vector(part2.r.p, part1.r.p);
+  const double lp0 = templpo.norm();
 
   // cospo / sinpo angle functions between these vectors; calculated directly
   // via the products
-  const double cosPhi0 = scalar(templo, templpo) / (l0 * lp0);
-  double vecpro[3];
-  vector_product(templo, templpo, vecpro);
-  const double sinPhi0 = sqrt(sqrlen(vecpro)) / (l0 * lp0);
+  const double cosPhi0 = (templo * templpo) / (l0 * lp0);
+  auto const vecpro = vector_product(templo, templpo);
+  const double sinPhi0 = vecpro.norm() / (l0 * lp0);
 
   // Use the values determined above for further constants of the stretch-force
   // calculation

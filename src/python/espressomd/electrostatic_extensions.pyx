@@ -311,7 +311,8 @@ IF ELECTROSTATICS and P3M:
 
             Returns
             -------
-            :obj:`int` : Number of iterations
+            iterations : :obj:`int`
+                Number of iterations
 
             """
             return iccp3m_cfg.citeration

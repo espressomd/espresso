@@ -17,11 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <algorithm>
+#include <memory>
 #include <numeric>
 #include <type_traits>
 #include <vector>
-
-#include "core/utils/make_unique.hpp"
 
 #define BOOST_TEST_MODULE ParticleIterator test
 #define BOOST_TEST_DYN_LINK
@@ -39,7 +38,7 @@ std::vector<std::unique_ptr<Cell>> make_cells(std::size_t n) {
   std::vector<std::unique_ptr<Cell>> cells(n);
 
   for (auto &c : cells) {
-    c = Utils::make_unique<Cell>();
+    c = std::make_unique<Cell>();
   }
 
   return cells;

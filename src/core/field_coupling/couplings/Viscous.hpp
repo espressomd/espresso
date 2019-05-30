@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_CONSTRAINTS_DETAIL_VISCOUS_HPP
 #define CORE_CONSTRAINTS_DETAIL_VISCOUS_HPP
 
-#include "Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace FieldCoupling {
 namespace Coupling {
@@ -34,7 +34,8 @@ public:
   double const &gamma() const { return m_gamma; }
 
   template <typename Particle>
-  Vector3d operator()(Particle const &p, Vector3d const &field) const {
+  Utils::Vector3d operator()(Particle const &p,
+                             Utils::Vector3d const &field) const {
     return m_gamma * (field - p.m.v);
   }
 };

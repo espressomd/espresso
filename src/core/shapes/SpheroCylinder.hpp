@@ -23,15 +23,15 @@
 #define __SPHEROCYLINDER_HPP
 
 #include "Shape.hpp"
-#include "Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Shapes {
 class SpheroCylinder : public Shape {
 public:
   /* center of the cylinder. */
-  Vector3d m_center;
+  Utils::Vector3d m_center;
   /* Axis of the cylinder. */
-  Vector3d m_axis;
+  Utils::Vector3d m_axis;
   /* cylinder radius. */
   double m_rad;
   /* cylinder length. */
@@ -42,10 +42,10 @@ public:
   /* direction -1: inside, +1 outside */
   double m_direction;
   /* Unit vector in z direction */
-  Vector3d e_z;
+  Utils::Vector3d e_z;
 
   /* Alternative e_r for corner case */
-  Vector3d e_r_axis;
+  Utils::Vector3d e_r_axis;
 
   /** @brief Calculate derived parameters. */
   void precalc() {
@@ -56,10 +56,12 @@ public:
     /* Find a vector orthogonal to e_z, since {1,0,0} and
        {0,1,0} are independent, e_z can not be parallel to both
        of them. Then we can do Gram-Schmidt */
-    if ((Vector3d{1., 0., 0} * e_z) < 1.)
-      e_r_axis = Vector3d{1., 0., 0} - (e_z * Vector3d{1., 0., 0}) * e_z;
+    if ((Utils::Vector3d{1., 0., 0} * e_z) < 1.)
+      e_r_axis =
+          Utils::Vector3d{1., 0., 0} - (e_z * Utils::Vector3d{1., 0., 0}) * e_z;
     else
-      e_r_axis = Vector3d{0., 1., 0} - (e_z * Vector3d{0., 1., 0}) * e_z;
+      e_r_axis =
+          Utils::Vector3d{0., 1., 0} - (e_z * Utils::Vector3d{0., 1., 0}) * e_z;
 
     e_r_axis.normalize();
   }
@@ -83,16 +85,16 @@ public:
     precalc();
   }
 
-  Vector3d const &axis() const { return m_axis; }
-  void set_axis(Vector3d const &axis) {
+  Utils::Vector3d const &axis() const { return m_axis; }
+  void set_axis(Utils::Vector3d const &axis) {
     m_axis = axis;
     precalc();
   }
 
-  Vector3d &center() { return m_center; }
+  Utils::Vector3d &center() { return m_center; }
   double &direction() { return m_direction; }
 
-  void calculate_dist(const Vector3d &pos, double *dist,
+  void calculate_dist(const Utils::Vector3d &pos, double *dist,
                       double *vec) const override;
 };
 } // namespace Shapes

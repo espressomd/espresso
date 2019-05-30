@@ -21,8 +21,9 @@
 
 /** \file
  *
- * Cuda (.cu) file for the P3M electrostatics method.
- * Header file \ref p3m_gpu.hpp .
+ *  P3M electrostatics on GPU.
+ *
+ *  The corresponding header file is p3m_gpu.hpp.
  */
 
 #include "config.hpp"
@@ -45,9 +46,14 @@
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
 #include "EspressoSystemInterface.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "global.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "p3m_gpu_common.hpp"
+
+#include <utils/math/int_pow.hpp>
+using Utils::int_pow;
+#include <utils/math/sinc.hpp>
+#include <utils/math/sqr.hpp>
+using Utils::sqr;
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -257,18 +263,18 @@ __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
 
   for (MX = -P3M_BRILLOUIN; MX <= P3M_BRILLOUIN; MX++) {
     NMX = ((NX > p.mesh[0] / 2) ? NX - p.mesh[0] : NX) + p.mesh[0] * MX;
-    S1 = int_pow<2 * cao>(csinc(Meshi[0] * NMX));
+    S1 = int_pow<2 * cao>(Utils::sinc(Meshi[0] * NMX));
     for (MY = -P3M_BRILLOUIN; MY <= P3M_BRILLOUIN; MY++) {
       NMY = ((NY > p.mesh[1] / 2) ? NY - p.mesh[1] : NY) + p.mesh[1] * MY;
-      S2 = S1 * int_pow<2 * cao>(csinc(Meshi[1] * NMY));
+      S2 = S1 * int_pow<2 * cao>(Utils::sinc(Meshi[1] * NMY));
       for (MZ = -P3M_BRILLOUIN; MZ <= P3M_BRILLOUIN; MZ++) {
         NMZ = ((NZ > p.mesh[2] / 2) ? NZ - p.mesh[2] : NZ) + p.mesh[2] * MZ;
-        S3 = S2 * int_pow<2 * cao>(csinc(Meshi[2] * NMZ));
+        S3 = S2 * int_pow<2 * cao>(Utils::sinc(Meshi[2] * NMZ));
 
         NM2 = sqr(NMX * Leni[0]) + sqr(NMY * Leni[1]) + sqr(NMZ * Leni[2]);
         *Nenner += S3;
 
-        TE = exp(-sqr(PI / (p.alpha)) * NM2);
+        TE = exp(-sqr(Utils::pi() / (p.alpha)) * NM2);
         zwi = S3 * TE / NM2;
         Zaehler[0] += NMX * zwi * Leni[0];
         Zaehler[1] += NMY * zwi * Leni[1];
@@ -314,7 +320,7 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
           Dnz * Zaehler[2] * Leni[2];
     zwi /= ((sqr(Dnx * Leni[0]) + sqr(Dny * Leni[1]) + sqr(Dnz * Leni[2])) *
             sqr(Nenner));
-    p.G_hat[ind] = 2.0 * zwi / PI;
+    p.G_hat[ind] = 2.0 * zwi / Utils::pi();
   }
 }
 
@@ -353,8 +359,8 @@ __global__ void apply_diff_op(const P3MGpuData p) {
 
   const FFT_TYPE_COMPLEX meshw = p.charge_mesh[linear_index];
   FFT_TYPE_COMPLEX buf;
-  buf.x = -2.0 * PI * meshw.y;
-  buf.y = 2.0 * PI * meshw.x;
+  buf.x = -2.0 * Utils::pi() * meshw.y;
+  buf.y = 2.0 * Utils::pi() * meshw.x;
 
   p.force_mesh_x[linear_index].x = nx * buf.x / p.box[0];
   p.force_mesh_x[linear_index].y = nx * buf.y / p.box[0];
@@ -652,14 +658,14 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
   _cuda_check_errors(block, grid, "assign_forces", __FILE__, __LINE__);
 }
 
-/* Init the internal datastructures of the P3M GPU.
+/* Init the internal data structures of the P3M GPU.
  * Mainly allocation on the device and influence function calculation.
  * Be advised: this needs mesh^3*5*sizeof(REAL_TYPE) of device memory.
  * We use real to complex FFTs, so the size of the reciprocal mesh
  * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
  */
 
-void p3m_gpu_init(int cao, int mesh[3], double alpha) {
+void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
   P3M_GPU_TRACE(printf("cao %d mesh %d %d %d, alpha %e, box (%e %e %e)\n", cao,
                        mesh[0], mesh[1], mesh[2], alpha, box_l[0], box_l[1],
                        box_l[2]));

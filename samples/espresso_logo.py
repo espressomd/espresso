@@ -19,6 +19,7 @@ import math
 import numpy as np
 
 import espressomd
+espressomd.assert_features(["MASS"])
 import espressomd.shapes
 from espressomd.visualization_opengl import openGLLive
 
@@ -98,8 +99,7 @@ posz = box_l / 2.0
 diam = 0.8
 mass = 0.01
 fl = -1
-harm = espressomd.interactions.HarmonicBond(
-    k=400.0, r_0=diam, r_cut=5.0)
+harm = espressomd.interactions.HarmonicBond(k=400.0, r_0=diam, r_cut=5.0)
 system.bonded_inter.add(harm)
 
 for i in range(n_pbody):
@@ -146,16 +146,18 @@ for i in range(n_steam):
 system.constraints.add(
     shape=espressomd.shapes.Cylinder(
         center=[box_l / 2.0, 1.0, box_l / 2.0],
-            axis=[0, 1, 0],
-            direction=1,
-            radius=7.5,
-            length=1), particle_type=0, penetrable=True)
+        axis=[0, 1, 0],
+        direction=1,
+        radius=7.5,
+        length=1),
+    particle_type=0,
+    penetrable=True)
 
 
 system.time_step = 0.00022
 system.cell_system.skin = 0.4
 
-system.thermostat.set_langevin(kT=0.0, gamma=0.02)
+system.thermostat.set_langevin(kT=0.0, gamma=0.02, seed=42)
 WCA_cut = 2.**(1. / 6.)
 
 lj_eps = 1.0
@@ -173,30 +175,29 @@ for i in range(3):
     system.non_bonded_inter[i, 2].lennard_jones.set_params(
         epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-visualizer = openGLLive(system,
-                        background_color=[
-                        0.2, 0.2, 0.3],
-                        camera_position=[box_l / 2.0, box_l / 4.0, 20 * 3],
-                        particle_sizes=[0.6, 0.75, 0.9, 0.2],
-                        particle_type_materials=[
-                        'silver', 'gold', 'greenplastic', 'chrome'],
-                        particle_type_colors=[[0.2, 0.2, 0.8, 1], [
-                            0.8, 0.2, 0.2, 1], [
-                                1, 1, 1, 1], [0.8, 0.8, 0.8, 1]],
-                        bond_type_materials=[
-                        'chrome'],
-                        bond_type_colors=[[0.2, 0.2, 0.2, 0.5]],
-                        bond_type_radius=[0.1],
-                        constraint_type_colors=[[1, 1, 1, 0.5]],
-                        constraint_type_materials=['ruby'],
-                        spotlight_brightness=5.0,
-                        spotlight_focus=100,
-                        spotlight_angle=60,
-                        light_brightness=1.0,
-                        ext_force_arrows=False,
-                        draw_axis=False,
-                        draw_box=False,
-                        drag_enabled=True)
+visualizer = openGLLive(
+    system,
+    background_color=[0.2, 0.2, 0.3],
+    camera_position=[box_l / 2.0, box_l / 4.0, 20 * 3],
+    particle_sizes=[0.6, 0.75, 0.9, 0.2],
+    particle_type_materials=['bright', 'bright', 'plastic', 'chrome'],
+    particle_type_colors=[[0.2, 0.2, 0.8, 1],
+                          [0.8, 0.2, 0.2, 1],
+                          [1, 1, 1, 1],
+                          [0.8, 0.8, 0.8, 1]],
+    bond_type_materials=['chrome'],
+    bond_type_colors=[[0.2, 0.2, 0.2, 0.5]],
+    bond_type_radius=[0.1],
+    constraint_type_colors=[[1, 1, 1, 0.5]],
+    constraint_type_materials=['chrome'],
+    spotlight_brightness=5.0,
+    spotlight_focus=100,
+    spotlight_angle=60,
+    light_brightness=1.0,
+    ext_force_arrows=False,
+    draw_axis=False,
+    draw_box=False,
+    drag_enabled=True)
 
 
 def rotate():

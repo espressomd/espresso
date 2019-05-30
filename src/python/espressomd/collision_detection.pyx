@@ -14,24 +14,23 @@ cdef extern from "collision.hpp":
 @script_interface_register
 class CollisionDetection(ScriptInterfaceHelper):
 
-    """Inteface to the collision detection / dynamic binding.
+    """
+    Inteface to the collision detection / dynamic binding.
 
-       See :ref:`Creating bonds when particles collide` for detailed instructions.
+    See :ref:`Creating bonds when particles collide` for detailed instructions.
+
+    This class should not be instanciated by the user. Instead, use
+    the :attr:`espressomd.system.System.collision_detection` attribute
+    of the system class to access the collision detection.
+
+    Use :meth:`espressomd.collision_detection.CollisionDetection.set_params`
+    to change the parameters of the collision detection.
 
     """
 
     _so_name = "CollisionDetection::CollisionDetection"
 
     def __init__(self, *args, **kwargs):
-        """
-        This class should not be instanced by the user. Instead, use
-        the :attr:`espressomd.system.System.collision_detection` attribute
-        of the system class to access the collision detection.
-
-        Use :meth:`espressomd.collision_detection.CollisionDetection.set_params`
-        to change the parameters of the collision detection.
-
-        """
         # If no mode is specified at construction, use off.
         if "mode" not in kwargs:
             kwargs["mode"] = "off"
@@ -196,5 +195,4 @@ class CollisionDetection(ScriptInterfaceHelper):
 
 
 def _restore_collision_detection(params):
-    print(params)
     return CollisionDetection(**params)

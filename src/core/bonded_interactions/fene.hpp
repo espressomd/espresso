@@ -28,28 +28,27 @@
 
 #include "bonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 /************************************************************/
 
-/// set the parameters for the fene potential
+/** set the parameters for the fene potential
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int fene_set_params(int bond_type, double k, double drmax, double r0);
 
-/** Computes the FENE pair force and adds this
-    force to the particle forces (see \ref bonded_interaction_data.cpp).
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param iaparams  bond type number of the angle interaction (see \ref
-   bonded_interaction_data.cpp).
-    @param dx        particle distance vector
-    @param force     returns force of particle 1
-    @return true if the bond is broken
-*/
-inline int calc_fene_pair_force(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *iaparams, double dx[3],
-                                double force[3]) {
-  const double len2 = sqrlen(dx);
-  const double len = sqrt(len2);
+/** Computes the FENE bond length force.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] force     Force.
+ *  @retval 1 if the bond is broken
+ *  @retval 0 otherwise
+ */
+inline int calc_fene_pair_force(Bonded_ia_parameters const *iaparams,
+                                Utils::Vector3d const &dx, double *force) {
+  auto const len = dx.norm();
+
   const double dr = len - iaparams->p.fene.r0;
 
   if (dr >= iaparams->p.fene.drmax)
@@ -69,11 +68,17 @@ inline int calc_fene_pair_force(Particle *p1, Particle *p2,
   return 0;
 }
 
-inline int fene_pair_energy(Particle *p1, Particle *p2,
-                            Bonded_ia_parameters *iaparams, double dx[3],
-                            double *_energy) {
+/** Computes the FENE bond length force.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] _energy   Energy.
+ *  @retval 1 if the bond is broken
+ *  @retval 0 otherwise
+ */
+inline int fene_pair_energy(Bonded_ia_parameters const *iaparams,
+                            Utils::Vector3d const &dx, double *_energy) {
   /* compute bond stretching (r-r0) */
-  double dr = sqrt(sqrlen(dx)) - iaparams->p.fene.r0;
+  double const dr = dx.norm() - iaparams->p.fene.r0;
 
   /* check bond stretching */
   if (dr >= iaparams->p.fene.drmax) {
