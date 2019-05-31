@@ -1372,6 +1372,25 @@ __device__ __inline__ float three_point_polynomial_larger_than_half(float u) {
          (5.f + -3 * fabsf(u) - sqrtf(-2.f + 6.f * fabsf(u) - 3.f * u * u));
 }
 
+/**
+ * @brief Get velocity of at index.
+ *
+ */
+__device__ __inline__ float3
+node_velocity(float rho_eq, LB_nodes_gpu n_a, int index) {
+  auto const boundary_index = n_a.boundary[index];
+
+  if(boundary_index) {
+    auto const& u = n_a.boundary_velocity[index];
+    return make_float3(u[0], u[1], u[2]);
+  }
+
+  auto const rho = rho_eq + calc_mode_x_from_n(n_a, index, 0);
+  return make_float3(calc_mode_x_from_n(n_a, index, 1) / rho,
+                     calc_mode_x_from_n(n_a, index, 2) / rho,
+                     calc_mode_x_from_n(n_a, index, 3) / rho );
+}
+
 __device__ __inline__ float3
 velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
                        float *lb_boundary_velocity,
@@ -1430,31 +1449,14 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
         auto const z =
             fold_if_necessary(center_node_index[2] - 1 + k, para->dim_z);
         delta[cnt] = temp_delta[i].x * temp_delta[j].y * temp_delta[k].z;
-        node_indices[cnt] = xyz_to_index(x, y, z);
-        auto const boundary_index = n_a.boundary[node_indices[cnt]];
-        if (not boundary_index) {
-          float totmass = 0.0f;
-          auto const mass_mode = calc_mode_x_from_n(n_a, node_indices[cnt], 0);
+        auto const index = xyz_to_index(x, y, z);
+        node_indices[cnt] = index;
 
-          totmass += mass_mode + para->rho;
+        auto const node_u = node_velocity(para->rho, n_a, index); 
+        interpolated_u.x += delta[cnt] * node_u.x;
+        interpolated_u.y += delta[cnt] * node_u.y;
+        interpolated_u.z += delta[cnt] * node_u.z;
 
-          auto const j_x = calc_mode_x_from_n(n_a, node_indices[cnt], 1);
-          auto const j_y = calc_mode_x_from_n(n_a, node_indices[cnt], 2);
-          auto const j_z = calc_mode_x_from_n(n_a, node_indices[cnt], 3);
-          interpolated_u.x += (j_x / totmass) * delta[cnt];
-          interpolated_u.y += (j_y / totmass) * delta[cnt];
-          interpolated_u.z += (j_z / totmass) * delta[cnt];
-        } else {
-          interpolated_u.x +=
-              lb_boundary_velocity[3 * (boundary_index - 1) + 0] * para->tau /
-              para->agrid * delta[cnt];
-          interpolated_u.y +=
-              lb_boundary_velocity[3 * (boundary_index - 1) + 1] * para->tau /
-              para->agrid * delta[cnt];
-          interpolated_u.z +=
-              lb_boundary_velocity[3 * (boundary_index - 1) + 2] * para->tau /
-              para->agrid * delta[cnt];
-        }
         ++cnt;
       }
     }
@@ -1496,9 +1498,9 @@ __device__ __inline__ float3 velocity_interpolation(
 
   // modulo for negative numbers is strange at best, shift to make sure we are
   // positive
-  int x = (left_node_index[0] + para->dim_x) % para->dim_x;
-  int y = (left_node_index[1] + para->dim_y) % para->dim_y;
-  int z = (left_node_index[2] + para->dim_z) % para->dim_z;
+  int const x = (left_node_index[0] + para->dim_x) % para->dim_x;
+  int const y = (left_node_index[1] + para->dim_y) % para->dim_y;
+  int const z = (left_node_index[2] + para->dim_z) % para->dim_z;
   auto xp1 = x + 1;
   auto yp1 = y + 1;
   auto zp1 = z + 1;
@@ -1520,30 +1522,10 @@ __device__ __inline__ float3 velocity_interpolation(
   float3 interpolated_u{0.0f, 0.0f, 0.0f};
 #pragma unroll
   for (int i = 0; i < 8; ++i) {
-    float totmass = 0.0f;
-    Utils::Array<float, 19> mode;
-
-    calc_m_from_n(n_a, node_index[i], mode);
-    auto const mass_mode = calc_mode_x_from_n(n_a, node_index[i], 0);
-
-    totmass += mass_mode + para->rho;
-
-    /* The boolean expression (n_a.boundary[node_index[i]] == 0) causes boundary
-       nodes to couple with velocity 0 to particles. This is necessary, since
-       boundary nodes undergo the same LB dynamics as fluid nodes do. The flow
-       within the boundaries does not interact with the physical fluid, since
-       these populations are overwritten by the bounce back kernel. Particles
-       close to walls can couple to this unphysical flow, though.
-    */
-    auto const j_x = calc_mode_x_from_n(n_a, node_index[i], 1);
-    auto const j_y = calc_mode_x_from_n(n_a, node_index[i], 2);
-    auto const j_z = calc_mode_x_from_n(n_a, node_index[i], 3);
-    interpolated_u.x +=
-        (j_x / totmass) * delta[i] * (n_a.boundary[node_index[i]] == 0);
-    interpolated_u.y +=
-        (j_y / totmass) * delta[i] * (n_a.boundary[node_index[i]] == 0);
-    interpolated_u.z +=
-        (j_z / totmass) * delta[i] * (n_a.boundary[node_index[i]] == 0);
+    auto const node_u = node_velocity(para->rho, n_a, node_index[i]); 
+    interpolated_u.x += delta[i] * node_u.x;
+    interpolated_u.y += delta[i] * node_u.y;
+    interpolated_u.z += delta[i] * node_u.z;
   }
   return interpolated_u;
 }
