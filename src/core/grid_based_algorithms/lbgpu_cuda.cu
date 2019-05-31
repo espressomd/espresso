@@ -2186,7 +2186,6 @@ __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
-                          EK_parameters *ek_parameters_gpu,
                           unsigned int philox_counter) {
   /*every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
@@ -2212,8 +2211,7 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
-                          LB_node_force_density_gpu node_f,
-                          EK_parameters *ek_parameters_gpu) {
+                          LB_node_force_density_gpu node_f) {
   /*every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
@@ -2935,11 +2933,11 @@ void lb_integrate_GPU() {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_fluid_gpu);
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-                 device_rho_v, node_f, lb_ek_parameters_gpu,
+                 device_rho_v, node_f,
                  rng_counter_fluid_gpu->value());
     } else {
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-                 device_rho_v, node_f, lb_ek_parameters_gpu);
+                 device_rho_v, node_f);
     }
     current_nodes = &nodes_b;
     intflag = false;
@@ -2947,11 +2945,11 @@ void lb_integrate_GPU() {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_fluid_gpu);
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-                 device_rho_v, node_f, lb_ek_parameters_gpu,
+                 device_rho_v, node_f,
                  rng_counter_fluid_gpu->value());
     } else {
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-                 device_rho_v, node_f, lb_ek_parameters_gpu);
+                 device_rho_v, node_f);
     }
     current_nodes = &nodes_a;
     intflag = true;
