@@ -47,7 +47,7 @@ REGISTER_CALLBACK(destruct_lb_walberla);
 
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau) {
-  Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity, density,
+  Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity, density*pow(agrid,3),
                                          agrid, tau, box_l, node_grid, skin);
   lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
 }

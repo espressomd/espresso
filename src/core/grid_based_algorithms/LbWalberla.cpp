@@ -125,8 +125,8 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       std::make_shared<field::communication::PackInfo<vector_field_t>>(
           m_force_field_id));
   m_reset_force =
-      std::make_shared<ResetForce<vector_field_t, Boundary_handling_t>>(
-          m_force_field_id, m_force_field_from_md_id, m_boundary_handling_id);
+      std::make_shared<ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>(
+          m_pdf_field_id, m_force_field_id, m_force_field_from_md_id, m_boundary_handling_id);
   m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
                      << timeloop::Sweep(Boundary_handling_t::getBlockSweep(
                                             m_boundary_handling_id),

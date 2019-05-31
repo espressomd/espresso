@@ -186,7 +186,10 @@ void lb_lbfluid_update() {
     }
 #endif
 #endif
-  }
+  } else if (lattice_switch == ActiveLB::WALBERLA) {
+     lb_walberla()->integrate();
+  } else
+    throw std::runtime_error("No LB active");
 }
 
 void lb_lbfluid_propagate() {
@@ -514,9 +517,11 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
 
 #endif //  CUDA
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.ext_force_density = force_density;
     mpi_bcast_lb_params(LBParam::EXTFORCE);
+  } else if (lattice_switch == ActiveLB::WALBERLA) {
+    Communication::mpiCallbacks().call_all(Walberla::set_ext_force_density,force_density);
   }
 }
 
@@ -1526,6 +1531,11 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
     mpi_gather_stats(6, fluid_momentum.data(), nullptr, nullptr, nullptr);
-  }
+  } else if (lattice_switch == ActiveLB::WALBERLA) {
+     fluid_momentum =  Communication::mpiCallbacks().call(
+         Communication::Result::Reduction(),std::plus<>(),
+         Walberla::get_momentum) * lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
+  } else throw std::runtime_error("No LB active.");
+
   return fluid_momentum;
 }

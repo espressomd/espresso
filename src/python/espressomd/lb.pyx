@@ -280,7 +280,7 @@ IF LB_WALBERLA:
         """
 
         def valid_keys(self):
-            return "agrid", "tau", "dens", "visc", "kT"
+            return "agrid", "tau", "dens", "visc", "kT", "ext_force_density"
 
         def validate_params(self):
             super(LBFluidWalberla, self).validate_params()
@@ -299,6 +299,10 @@ IF LB_WALBERLA:
             self.validate_params()
             mpi_init_lb_walberla(
                 self._params["visc"], self._params["dens"], self._params["agrid"], self._params["tau"])
+            python_lbfluid_set_ext_force_density(
+    self._params["ext_force_density"],
+    self._params["agrid"],
+    self._params["tau"])
 
         def _deactivate_method(self):
             mpi_destruct_lb_walberla()

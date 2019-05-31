@@ -34,12 +34,12 @@ inline walberla::Vector3<walberla::real_t> to_vector3(const Utils::Vector3d v) {
   return walberla::Vector3<walberla::real_t>{v[0], v[1], v[2]};
 }
 
-template <typename ForceField_T, typename BoundaryHandling_T> class ResetForce {
+template <typename PdfField_T, typename ForceField_T, typename BoundaryHandling_T> class ResetForce {
 public:
-  ResetForce(walberla::BlockDataID force_field_id,
+  ResetForce(walberla::BlockDataID pdf_field_id, walberla::BlockDataID force_field_id,
              walberla::BlockDataID force_field_from_md_id,
              walberla::BlockDataID boundary_handling_id)
-      : m_force_field_id(force_field_id),
+      : m_pdf_field_id(pdf_field_id), m_force_field_id(force_field_id),
         m_force_field_from_md_id(force_field_from_md_id),
         m_boundary_handling_id(boundary_handling_id),
         m_ext_force(walberla::Vector3<walberla::real_t>{0, 0, 0}) {}
@@ -51,6 +51,7 @@ public:
   Utils::Vector3d get_ext_force() const { return to_vector3d(m_ext_force); };
 
   void operator()(walberla::IBlock *block) {
+    PdfField_T *pdf_field = block->getData<PdfField_T>(m_pdf_field_id);
     ForceField_T *force_field = block->getData<ForceField_T>(m_force_field_id);
     ForceField_T *force_field_from_md =
         block->getData<ForceField_T>(m_force_field_from_md_id);
@@ -63,7 +64,7 @@ public:
       walberla::Cell cell(x, y, z);
       if (boundary_handling->isDomain(cell)) {
         force_field->get(cell) += m_ext_force;
-        auto v = force_field->get(cell);
+        force_field->get(cell) /= pdf_field->getDensity(cell);
       }
     });
     WALBERLA_FOR_ALL_CELLS_XYZ(force_field_from_md, {
@@ -75,7 +76,7 @@ public:
   }
 
 private:
-  walberla::BlockDataID m_force_field_id, m_force_field_from_md_id,
+  walberla::BlockDataID m_pdf_field_id, m_force_field_id, m_force_field_from_md_id,
       m_boundary_handling_id;
   walberla::Vector3<walberla::real_t> m_ext_force;
 };
@@ -106,7 +107,7 @@ class LbWalberla {
   using Boundary_handling_t =
       walberla::BoundaryHandling<Flag_field_t, Lattice_model_t::Stencil, UBB_t>;
 
-  std::shared_ptr<ResetForce<vector_field_t, Boundary_handling_t>>
+  std::shared_ptr<ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>
       m_reset_force;
 
   class LB_boundary_handling {

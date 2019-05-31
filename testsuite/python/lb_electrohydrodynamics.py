@@ -17,16 +17,15 @@
 import espressomd
 import unittest as ut
 import numpy as np
+import espressomd.lb as lb
 
 
-@ut.skipIf(not espressomd.has_features(["LB_ELECTROHYDRODYNAMICS"]),
-           "Features not available, skipping test!")
-class LBEHTest(ut.TestCase):
+class LBEHTest(object):
     from espressomd import lb
     s = espressomd.System(box_l=[6.0, 6.0, 6.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
 
-    def setUp(self):
+    def test(self):
         self.params = {'time_step': 0.01,
                        'tau': 0.02,
                        'agrid': 0.5,
@@ -44,7 +43,7 @@ class LBEHTest(ut.TestCase):
         for i in self.s.actors:
             self.s.actors.remove(i)
 
-        self.lbf = self.lb.LBFluid(
+        self.lbf = self.LBClass(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
@@ -57,7 +56,6 @@ class LBEHTest(ut.TestCase):
             LB_fluid=self.lbf,
             gamma=self.params['friction'])
 
-    def test(self):
         s = self.s
 
         s.part.add(pos=0.5 * s.box_l, mu_E=self.params['muE'])
@@ -71,6 +69,29 @@ class LBEHTest(ut.TestCase):
         s.integrator.run(steps=500)
 
         np.testing.assert_allclose(v_term, np.copy(s.part[0].v), atol=1e-5)
+
+@ut.skipIf(not espressomd.has_features(["LB_ELECTROHYDRODYNAMICS"]),
+           "Features not available, skipping test!")
+class LBEHCPU(LBEHTest,ut.TestCase):
+
+    def setUp(self):
+        self.LBClass =lb.LBFluid
+
+@ut.skipIf(not espressomd.has_features(["LB_WALBERLA", "LB_ELECTROHYDRODYNAMICS"]),
+           "Features not available, skipping test!")
+class LBEHCPU(LBEHTest,ut.TestCase):
+
+    def setUp(self):
+        self.LBClass =lb.LBFluidWalberla
+
+
+@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["LB_ELECTROHYDRODYNAMICS"]),
+           "Features not available, skipping test!")
+class LBEHCPU(LBEHTest,ut.TestCase):
+
+    def setUp(self):
+        self.LBClass =lb.LBFluidGPU
+
 
 if __name__ == "__main__":
     ut.main()
