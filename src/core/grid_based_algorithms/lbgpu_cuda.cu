@@ -38,7 +38,8 @@
 #include "cuda_utils.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
+
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb-d3q19.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
@@ -108,8 +109,6 @@ static int *boundary_node_list = nullptr;
 static int *boundary_index_list = nullptr;
 static size_t size_of_boundindex = 0;
 /*@}*/
-
-EK_parameters *lb_ek_parameters_gpu;
 
 /** @name pointers for additional cuda check flag */
 /*@{*/
@@ -3207,9 +3206,6 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter) {
 
 void lb_fluid_set_rng_state_gpu(uint64_t counter) {
   rng_counter_fluid_gpu = Utils::Counter<uint64_t>(counter);
-#ifdef ELECTROKINETICS
-  ek_set_rng_state(counter);
-#endif // ELECTROKINETICS
 }
 
 uint64_t lb_coupling_get_rng_state_gpu() {
