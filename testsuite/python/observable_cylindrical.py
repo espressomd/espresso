@@ -19,7 +19,6 @@ import numpy as np
 import unittest as ut
 import espressomd
 import espressomd.observables
-from espressomd import utils
 import tests_common
 
 

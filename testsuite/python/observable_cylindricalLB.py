@@ -20,7 +20,6 @@ import unittest as ut
 import espressomd
 import espressomd.observables
 import espressomd.lb
-from espressomd import utils
 import tests_common
 
 

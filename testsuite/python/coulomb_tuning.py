@@ -19,15 +19,12 @@
 #
 # Tests particle property setters/getters
 from __future__ import print_function
-import os
-import pickle
 import numpy as np
 import unittest as ut
 
 import espressomd
 import espressomd.cuda_init
 import espressomd.electrostatics
-from espressomd import scafacos
 import tests_common
 
 

@@ -20,7 +20,6 @@
 import unittest as ut
 import tests_common
 import espressomd
-import numpy as np
 
 if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
     from espressomd.electrostatics import MMM1D

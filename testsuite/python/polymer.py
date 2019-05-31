@@ -19,7 +19,6 @@ import sys
 import unittest as ut
 import numpy as np
 import espressomd
-from espressomd.interactions import FeneBond
 from espressomd import polymer
 from espressomd.shapes import Wall
 

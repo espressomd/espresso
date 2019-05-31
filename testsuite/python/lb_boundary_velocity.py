@@ -19,7 +19,6 @@ import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
 import unittest as ut
-import numpy as np
 
 
 @ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES"]),

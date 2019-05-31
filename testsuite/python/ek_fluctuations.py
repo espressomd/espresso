@@ -16,10 +16,8 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-import espressomd.electrokinetics
-from espressomd import *
+from espressomd import electrokinetics
 import numpy as np
-import sys
 import math
 
 ##########################################################################

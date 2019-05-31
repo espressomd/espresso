@@ -1,7 +1,5 @@
 from __future__ import print_function
-import math
 import numpy as np
-from numpy.random import seed, uniform
 import unittest as ut
 import espressomd
 import tests_common
@@ -28,7 +26,7 @@ class RotDiffAniso(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        seed(4)
+        np.random.seed(4)
 
     def setUp(self):
         self.system.time = 0.0
@@ -58,7 +56,7 @@ class RotDiffAniso(ut.TestCase):
 
         # NVT thermostat
         # Just some temperature range to cover by the test:
-        self.kT = uniform(1.5, 6.5)
+        self.kT = np.random.uniform(1.5, 6.5)
         # Note: here & hereinafter specific variations in the random parameter ranges are related to
         # the test execution duration to achieve the required statistical averages faster.
         # The friction gamma_global should be large enough in order to have the small enough D ~ kT / gamma and
@@ -70,7 +68,7 @@ class RotDiffAniso(ut.TestCase):
         # classical Einstein-Smoluchowski equations of the diffusion
         # in a contrast of the eq. (10.2.26) [N. Pottier,
         # https://doi.org/10.1007/s10955-010-0114-6 (2010)].
-        self.gamma_global = 1E2 * uniform(0.35, 1.05, (3))
+        self.gamma_global = 1E2 * np.random.uniform(0.35, 1.05, (3))
 
         # Particles
         # As far as the problem characteristic time is t0 ~ J / gamma
@@ -81,7 +79,7 @@ class RotDiffAniso(ut.TestCase):
         # It should be not very large, otherwise the thermalization will require
         # too much of the CPU time: the in silico time should clock over the
         # t0.
-        self.J = uniform(1.5, 16.5, (3))
+        self.J = np.random.uniform(1.5, 16.5, (3))
         for ind in range(n):
             part_pos = np.random.random(3) * box
             self.system.part.add(rotation=(1, 1, 1), id=ind, rinertia=self.J,

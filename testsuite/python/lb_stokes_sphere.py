@@ -30,7 +30,6 @@ import espressomd
 from espressomd import lb, lbboundaries, shapes, has_features
 import unittest as ut
 import numpy as np
-import sys
 
 # Define the LB Parameters
 TIME_STEP = 0.4

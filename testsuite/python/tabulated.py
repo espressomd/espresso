@@ -21,7 +21,6 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
-from time import time
 
 
 @ut.skipIf(not espressomd.has_features("TABULATED"), "Skipped because feature is disabled")

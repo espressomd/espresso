@@ -23,10 +23,7 @@ import numpy as np
 import unittest as ut
 
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
-from espressomd.interactions import *
+from espressomd.interactions import HarmonicBond
 from espressomd import reaction_ensemble
 from espressomd import system
 import numpy.testing as npt

@@ -30,7 +30,6 @@ import unittest as ut
 import random
 import os
 from argparse import Namespace
-#from tests_common import abspath
 
 # Number of particles
 npart = 1023

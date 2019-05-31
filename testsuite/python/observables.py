@@ -20,7 +20,6 @@ import unittest as ut
 import espressomd
 import numpy as np
 from numpy.random import random
-from espressomd.interactions import FeneBond
 import espressomd.observables
 
 

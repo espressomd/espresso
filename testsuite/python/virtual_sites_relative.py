@@ -24,7 +24,6 @@ import espressomd
 if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
     from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
 import numpy as np
-from espressomd.interactions import FeneBond
 
 from tests_common import verify_lj_forces
 from numpy import random

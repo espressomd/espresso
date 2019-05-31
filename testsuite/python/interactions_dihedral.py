@@ -21,7 +21,6 @@ import unittest as ut
 import numpy as np
 
 import espressomd
-import tests_common
 
 # Dihedral interaction needs more rigorous tests.
 # The geometry checked here is rather simple and special.

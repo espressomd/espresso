@@ -20,17 +20,13 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-from espressomd import System, lb, shapes, lbboundaries
+from espressomd import lb, shapes, lbboundaries
 import numpy as np
-from espressomd.interactions import FeneBond
 try:
     from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
 except:
     pass
 from espressomd.utils import handle_errors
-
-from tests_common import verify_lj_forces
-from numpy import random
 
 
 class VirtualSitesTracersCommon(object):

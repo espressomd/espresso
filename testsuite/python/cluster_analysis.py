@@ -22,7 +22,7 @@ import espressomd
 from espressomd.utils import handle_errors
 import numpy as np
 from espressomd.interactions import FeneBond
-from espressomd.pair_criteria import *
+from espressomd.pair_criteria import DistanceCriterion, BondCriterion
 from espressomd.cluster_analysis import ClusterStructure
 
 

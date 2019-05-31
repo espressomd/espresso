@@ -21,7 +21,6 @@ from __future__ import print_function
 import numpy as np
 import unittest as ut
 from itertools import product
-from time import time
 
 import espressomd
 from tests_common import single_component_maxwell

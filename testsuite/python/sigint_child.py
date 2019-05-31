@@ -1,7 +1,6 @@
 from __future__ import print_function
 import numpy as np
 import espressomd
-import time
 
 system = espressomd.System(box_l=[100, 100, 100])
 system.time_step = 0.01

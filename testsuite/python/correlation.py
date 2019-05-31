@@ -21,11 +21,9 @@ from __future__ import print_function
 
 import unittest as ut
 import numpy as np
-from numpy.random import random
 import pickle
 
 import espressomd
-from espressomd.interactions import FeneBond
 import espressomd.observables
 import espressomd.accumulators
 

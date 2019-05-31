@@ -20,7 +20,6 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-import numpy as np
 
 
 @ut.skipIf(not espressomd.has_features(['EXCLUSIONS']), "Skipping test")

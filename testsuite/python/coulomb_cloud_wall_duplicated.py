@@ -25,7 +25,6 @@ import numpy as np
 import espressomd
 import espressomd.cuda_init
 import espressomd.electrostatics
-from espressomd import scafacos
 from tests_common import abspath
 
 

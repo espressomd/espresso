@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 
-import math
 import unittest as ut
 import numpy as np
 from numpy import linalg as la
@@ -26,7 +25,6 @@ import espressomd
 import espressomd.magnetostatics
 import espressomd.analyze
 import espressomd.cuda_init
-import tests_common
 
 
 def stopAll(system):

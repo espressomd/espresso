@@ -22,7 +22,6 @@ import numpy as np
 
 import espressomd
 import espressomd.lb
-from tests_common import abspath
 from espressomd.observables import LBFluidStress
 import sys
 

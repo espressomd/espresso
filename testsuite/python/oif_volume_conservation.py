@@ -15,12 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd
-
-
-import numpy as np
-import os
-import sys
-
 import unittest as ut
 from tests_common import abspath
 

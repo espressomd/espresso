@@ -18,7 +18,6 @@ from __future__ import print_function
 
 import time as tm
 import unittest as ut
-import math
 import numpy as np
 from numpy import linalg as la
 from numpy.random import random, seed

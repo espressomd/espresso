@@ -20,8 +20,7 @@
 from __future__ import print_function
 import espressomd
 import unittest as ut
-import numpy as np
-from tests_common import *
+from tests_common import params_match
 
 
 @ut.skipIf(

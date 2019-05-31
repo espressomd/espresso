@@ -23,10 +23,8 @@ import unittest as ut
 import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd.interactions import FeneBond
-from espressomd import analyze
 from espressomd.observables import StressTensor
 
-import itertools
 from tests_common import fene_force, fene_potential, fene_force2
 
 import numpy as np

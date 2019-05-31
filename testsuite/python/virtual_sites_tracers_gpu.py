@@ -20,13 +20,8 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-from espressomd import System, lb, shapes, lbboundaries
-import numpy as np
-from espressomd.interactions import FeneBond
-from espressomd.utils import handle_errors
+from espressomd import lb
 
-from tests_common import verify_lj_forces
-from numpy import random
 from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 

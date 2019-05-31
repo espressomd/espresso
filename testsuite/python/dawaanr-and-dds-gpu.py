@@ -16,16 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
-from numpy import linalg as la
 from numpy.random import random
-import math
 import numpy as np
 
 import espressomd
 import espressomd.interactions
 import espressomd.magnetostatics
 import espressomd.analyze
-import tests_common
 
 
 @ut.skipIf(

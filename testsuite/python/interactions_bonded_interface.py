@@ -20,8 +20,6 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-import numpy as np
-from tests_common import abspath
 
 
 class ParticleProperties(ut.TestCase):

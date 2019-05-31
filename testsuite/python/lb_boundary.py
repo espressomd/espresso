@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
-import numpy as np
 import espressomd
 import espressomd.lb
 from espressomd.shapes import Wall

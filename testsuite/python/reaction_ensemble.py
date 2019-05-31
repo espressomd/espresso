@@ -19,8 +19,6 @@
 
 """Testmodule for the Reaction Ensemble.
 """
-import os
-import sys
 import unittest as ut
 import numpy as np
 import espressomd  # pylint: disable=import-error

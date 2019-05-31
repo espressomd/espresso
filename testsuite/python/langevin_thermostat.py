@@ -21,8 +21,6 @@ from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
-from espressomd.interactions import FeneBond
-from time import time
 from espressomd.accumulators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 from tests_common import single_component_maxwell

@@ -16,13 +16,8 @@
 from __future__ import print_function
 import unittest as ut
 import espressomd
-import espressomd.electrokinetics
-import espressomd.shapes
-from espressomd import *
-import numpy as np
-import sys
+from espressomd import electrokinetics
 import math
-from ek_common import *
 
 ##########################################################################
 #Set up the System #
