@@ -1366,19 +1366,19 @@ __device__ __inline__ float three_point_polynomial_larger_than_half(float u) {
  * @brief Get velocity of at index.
  *
  */
-__device__ __inline__ float3
-node_velocity(float rho_eq, LB_nodes_gpu n_a, int index) {
+__device__ __inline__ float3 node_velocity(float rho_eq, LB_nodes_gpu n_a,
+                                           int index) {
   auto const boundary_index = n_a.boundary[index];
 
-  if(boundary_index) {
-    auto const& u = n_a.boundary_velocity[index];
+  if (boundary_index) {
+    auto const &u = n_a.boundary_velocity[index];
     return make_float3(u[0], u[1], u[2]);
   }
 
   auto const rho = rho_eq + calc_mode_x_from_n(n_a, index, 0);
   return make_float3(calc_mode_x_from_n(n_a, index, 1) / rho,
                      calc_mode_x_from_n(n_a, index, 2) / rho,
-                     calc_mode_x_from_n(n_a, index, 3) / rho );
+                     calc_mode_x_from_n(n_a, index, 3) / rho);
 }
 
 __device__ __inline__ float3
@@ -1441,7 +1441,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
         auto const index = xyz_to_index(x, y, z);
         node_indices[cnt] = index;
 
-        auto const node_u = node_velocity(para->rho, n_a, index); 
+        auto const node_u = node_velocity(para->rho, n_a, index);
         interpolated_u.x += delta[cnt] * node_u.x;
         interpolated_u.y += delta[cnt] * node_u.y;
         interpolated_u.z += delta[cnt] * node_u.z;
@@ -1462,9 +1462,10 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @retval Interpolated velocity
  */
-__device__ __inline__ float3 velocity_interpolation(
-    LB_nodes_gpu n_a, float *particle_position,
-    Utils::Array<unsigned int, 8> &node_index, Utils::Array<float, 8> &delta) {
+__device__ __inline__ float3
+velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
+                       Utils::Array<unsigned int, 8> &node_index,
+                       Utils::Array<float, 8> &delta) {
   Utils::Array<int, 3> left_node_index;
   Utils::Array<float, 6> temp_delta;
   // see ahlrichs + duenweg page 8227 equ (10) and (11)
@@ -1511,7 +1512,7 @@ __device__ __inline__ float3 velocity_interpolation(
   float3 interpolated_u{0.0f, 0.0f, 0.0f};
 #pragma unroll
   for (int i = 0; i < 8; ++i) {
-    auto const node_u = node_velocity(para->rho, n_a, node_index[i]); 
+    auto const node_u = node_velocity(para->rho, n_a, node_index[i]);
     interpolated_u.x += delta[i] * node_u.x;
     interpolated_u.y += delta[i] * node_u.y;
     interpolated_u.z += delta[i] * node_u.z;
@@ -1537,14 +1538,12 @@ __device__ __inline__ float3 velocity_interpolation(
  * interpolation
  */
 template <std::size_t no_of_neighbours>
-__device__ void
-calc_viscous_force(LB_nodes_gpu n_a,
-                   Utils::Array<float, no_of_neighbours> &delta,
-                   CUDA_particle_data *particle_data, float *particle_force,
-                   unsigned int part_index, float *delta_j,
-                   Utils::Array<unsigned int, no_of_neighbours> &node_index,
-                   LB_rho_v_gpu *d_v, int flag_cs, uint64_t philox_counter,
-                   float friction) {
+__device__ void calc_viscous_force(
+    LB_nodes_gpu n_a, Utils::Array<float, no_of_neighbours> &delta,
+    CUDA_particle_data *particle_data, float *particle_force,
+    unsigned int part_index, float *delta_j,
+    Utils::Array<unsigned int, no_of_neighbours> &node_index, LB_rho_v_gpu *d_v,
+    int flag_cs, uint64_t philox_counter, float friction) {
 // Zero out workspace
 #pragma unroll
   for (int jj = 0; jj < 3; ++jj) {
@@ -1584,8 +1583,8 @@ calc_viscous_force(LB_nodes_gpu n_a,
       flag_cs * direction * particle_data[part_index].swim.director[2];
 #endif
 
-  float3 const interpolated_u = velocity_interpolation(
-      n_a, position, node_index, delta);
+  float3 const interpolated_u =
+      velocity_interpolation(n_a, position, node_index, delta);
 
 #ifdef ENGINE
   velocity[0] -= particle_data[part_index].swim.v_swim *
@@ -2212,10 +2211,11 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  * interpolation
  */
 template <std::size_t no_of_neighbours>
-__global__ void calc_fluid_particle_ia(
-    LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,
-    LB_node_force_density_gpu node_f, LB_rho_v_gpu *d_v, bool couple_virtual,
-    uint64_t philox_counter, float friction) {
+__global__ void
+calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data,
+                       float *particle_force, LB_node_force_density_gpu node_f,
+                       LB_rho_v_gpu *d_v, bool couple_virtual,
+                       uint64_t philox_counter, float friction) {
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
@@ -3126,13 +3126,13 @@ template <std::size_t no_of_neighbours> struct interpolation {
   LB_nodes_gpu current_nodes_gpu;
   LB_rho_v_gpu *d_v_gpu;
   interpolation(LB_nodes_gpu _current_nodes_gpu, LB_rho_v_gpu *_d_v_gpu)
-    : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu) {}
+      : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu) {}
   __device__ float3 operator()(const float3 &position) const {
     float _position[3] = {position.x, position.y, position.z};
     Utils::Array<unsigned int, no_of_neighbours> node_indices;
     Utils::Array<float, no_of_neighbours> delta;
-    return velocity_interpolation(current_nodes_gpu, _position,
-                                  node_indices, delta);
+    return velocity_interpolation(current_nodes_gpu, _position, node_indices,
+                                  delta);
   }
 };
 
@@ -3148,10 +3148,10 @@ void lb_get_interpolated_velocity_gpu(double const *positions,
   }
   thrust::device_vector<float3> positions_device = positions_host;
   thrust::device_vector<float3> velocities_device(length);
-  thrust::transform(positions_device.begin(), positions_device.end(),
-                    velocities_device.begin(),
-                    interpolation<no_of_neighbours>(
-                        *current_nodes, device_rho_v));
+  thrust::transform(
+      positions_device.begin(), positions_device.end(),
+      velocities_device.begin(),
+      interpolation<no_of_neighbours>(*current_nodes, device_rho_v));
   thrust::host_vector<float3> velocities_host = velocities_device;
   int index = 0;
   for (auto v : velocities_host) {
