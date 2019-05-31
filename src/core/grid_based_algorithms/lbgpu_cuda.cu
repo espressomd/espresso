@@ -1459,7 +1459,6 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *  @param[in]  particle_position  Particle position
  *  @param[out] node_index         Node index around (8) particle
  *  @param[out] delta              Weighting of particle position
- *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @retval Interpolated velocity
  */
 __device__ __inline__ float3
@@ -1533,7 +1532,6 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *  @param[in]  flag_cs            Determine if we are at the centre (0,
  *                                 typical) or at the source (1, swimmer only)
  *  @param[in]  friction           Friction constant for the particle coupling
- *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @tparam no_of_neighbours       The number of neighbours to consider for
  * interpolation
  */
@@ -2206,7 +2204,6 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[out] node_f              Local node force
  *  @param[in]  d_v                 Local device values
  *  @param[in]  friction            Friction constant for the particle coupling
- *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @tparam     no_of_neighbours    The number of neighbours to consider for
  * interpolation
  */
