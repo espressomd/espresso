@@ -39,8 +39,8 @@
 #include "debug.hpp"
 #include "errorhandling.hpp"
 
-#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb-d3q19.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include <utils/Array.hpp>
@@ -2932,8 +2932,7 @@ void lb_integrate_GPU() {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_fluid_gpu);
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-                 device_rho_v, node_f,
-                 rng_counter_fluid_gpu->value());
+                 device_rho_v, node_f, rng_counter_fluid_gpu->value());
     } else {
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
                  device_rho_v, node_f);
@@ -2944,8 +2943,7 @@ void lb_integrate_GPU() {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_fluid_gpu);
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-                 device_rho_v, node_f,
-                 rng_counter_fluid_gpu->value());
+                 device_rho_v, node_f, rng_counter_fluid_gpu->value());
     } else {
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
                  device_rho_v, node_f);
