@@ -142,7 +142,7 @@ def positions(**kwargs):
     validate_params(params, default_params)
 
     cdef vector[Vector3d] start_positions
-    if (params["start_positions"] != []):
+    if (params["start_positions"].size > 0):
         for i in range(len(params["start_positions"])):
             start_positions.push_back(
                 make_Vector3d(params["start_positions"][i]))
