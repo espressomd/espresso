@@ -2181,7 +2181,6 @@ __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
  *  @param[out]    n_b     Local node residing in array b
  *  @param[in,out] d_v     Local device values
  *  @param[in,out] node_f  Local node force density
- *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
@@ -2207,7 +2206,6 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[out]    n_b     Local node residing in array b
  *  @param[in,out] d_v     Local device values
  *  @param[in,out] node_f  Local node force density
- *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f) {
