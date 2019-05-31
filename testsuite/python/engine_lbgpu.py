@@ -89,24 +89,17 @@ class SwimmerTest(ut.TestCase):
         S.part[:].rotation = 1, 1, 1
 
     def run_and_check(self, S, lbm, vtk_name):
-        S.integrator.run(self.sampsteps)
+        S.integrator.run(2000)
 
-        if self.new_configuration:
-            lbm.print_vtk_velocity(vtk_name)
-            self.assertTrue(True)
-        else:
-            lbm.print_vtk_velocity("engine_test_tmp.vtk")
-            different, difference = tests_common.calculate_vtk_max_pointwise_difference(
-                vtk_name, "engine_test_tmp.vtk", tol=2.0e-7)
-            os.remove("engine_test_tmp.vtk")
-            print(
-                "Maximum deviation to the reference point is: {}".format(difference))
-            self.assertTrue(different)
+        lbm.print_vtk_velocity("engine_test_tmp.vtk")
+        different, difference = tests_common.calculate_vtk_max_pointwise_difference(
+            vtk_name, "engine_test_tmp.vtk", tol=2.0e-7)
+        os.remove("engine_test_tmp.vtk")
+        print(
+            "Maximum deviation to the reference point is: {}".format(difference))
+        self.assertTrue(different)
 
     def test(self):
-        self.new_configuration = False
-        self.sampsteps = 2000
-
         S = espressomd.System(box_l=[1.0, 1.0, 1.0])
         S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
         self.prepare(S)

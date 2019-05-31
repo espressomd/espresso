@@ -22,7 +22,6 @@ import numpy as np
 
 import espressomd
 from espressomd import electrostatics
-import tests_common
 
 
 @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
@@ -89,16 +88,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         # 1
         p3m_energy = -0.501062398379 * prefactor
         p3m_force = 2.48921612e-01 * prefactor
-        test_P3M = tests_common.generate_test_for_class(
-            self.system,
-            electrostatics.P3M,
-            dict(
-                accuracy=9.910945054074526e-08,
-                 mesh=[22, 22, 22],
-                 cao=7,
-                 r_cut=8.906249999999998,
-                 alpha=0.387611049779351,
-                 tune=False))
         p3m = espressomd.electrostatics.P3M(prefactor=prefactor,
                                             accuracy=9.910945054074526e-08,
                                             mesh=[22, 22, 22],
@@ -121,10 +110,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         dh_params = dict(prefactor=1.2,
                          kappa=0.8,
                          r_cut=2.0)
-        test_DH = tests_common.generate_test_for_class(
-            self.system,
-            electrostatics.DH,
-            dh_params)
         dh = espressomd.electrostatics.DH(
             prefactor=dh_params['prefactor'],
             kappa=dh_params['kappa'],
@@ -166,10 +151,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
                          epsilon1=1.0,
                          epsilon2=2.0,
                          r_cut=2.0)
-        test_RF = tests_common.generate_test_for_class(
-            self.system,
-            electrostatics.ReactionField,
-            rf_params)
         rf = espressomd.electrostatics.ReactionField(
             prefactor=rf_params['prefactor'],
             kappa=rf_params['kappa'],

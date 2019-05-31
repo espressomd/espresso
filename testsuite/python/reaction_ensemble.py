@@ -83,13 +83,6 @@ class ReactionEnsembleTest(ut.TestCase):
             product_coefficients=cls.product_coefficients,
             default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1}, check_for_electroneutrality=True)
 
-    @classmethod
-    def ideal_alpha(cls, gamma, N0, V, nubar):
-        # gamma = prod_i (N_i / V) = alpha^2 N0 / (1-alpha)*V**(-nubar)
-        # degree of dissociation alpha = N_A / N_HA = N_H / N_0
-        X = 2 * N0 / (gamma * V**nubar)
-        return (np.sqrt(1 + 2 * X) - 1) / X
-
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
         type_A = ReactionEnsembleTest.type_A
