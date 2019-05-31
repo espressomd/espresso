@@ -293,9 +293,6 @@ void set_resort_particles(Cells::Resort level);
  */
 unsigned const &get_resort_particles();
 
-/** Spread the particle resorting criterion across the nodes. */
-void announce_resort_particles();
-
 /** Check if a particle resorting is required. */
 void check_resort_particles();
 

@@ -171,10 +171,6 @@ void on_integration_start() {
     runtimeErrorMsg() << "Nodes disagree about cell system type.";
   }
 
-  if (!Utils::Mpi::all_compare(comm_cart, get_resort_particles())) {
-    runtimeErrorMsg() << "Nodes disagree about resort type.";
-  }
-
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }

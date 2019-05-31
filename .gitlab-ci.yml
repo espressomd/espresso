@@ -92,16 +92,16 @@ default:
     - docker
     - linux
 
-      #min_boost:
-      #  <<: *global_job_definition
-      #  stage: build
-      #  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:min_boost 
-      #  script:
-      #    - export with_cuda=false myconfig=maxset python_version=3
-      #    - bash maintainer/CI/build_cmake.sh
-      #  tags:
-      #    - docker
-      #    - linux
+min_boost:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:min_boost
+  script:
+    - export with_cuda=false myconfig=maxset python_version=3
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
 
 maxset:
   <<: *global_job_definition
@@ -149,12 +149,12 @@ debian:9:
     - docker
     - linux
 
-opensuse:15.0:
+opensuse:15.1:
   <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export with_cuda=false myconfig=maxset make_check=false
+    - export with_cuda=false myconfig=maxset make_check=false python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -163,9 +163,9 @@ opensuse:15.0:
 centos:7:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos-python3:7
   script:
-    - export with_cuda=false myconfig=maxset make_check=false
+    - export with_cuda=false myconfig=maxset make_check=true python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -174,9 +174,9 @@ centos:7:
 fedora:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:next
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos-python3:next
   script:
-    - export with_cuda=false myconfig=maxset make_check=false
+    - export with_cuda=false myconfig=maxset make_check=false python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
