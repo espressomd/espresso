@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
 import espressomd
@@ -218,8 +217,8 @@ class VirtualSites(ut.TestCase):
         self.assertLess(np.linalg.norm(v2 - system.part[2].v), 1E-6)
 
     def run_test_lj(self):
-        """This fills the system with vs-based dumbells, adds a lj potential
-          integrates and verifies forces. This is to make sure, that no pairs
+        """This fills the system with vs-based dumbells, adds a lj potential,
+          integrates and verifies forces. This is to make sure that no pairs
           get lost or are outdated in the short range loop"""
         system = self.system
         system.virtual_sites = VirtualSitesRelative(have_velocity=True)
@@ -245,7 +244,7 @@ class VirtualSites(ut.TestCase):
         system.thermostat.turn_off()
 
         # Dumbells consist of 2 virtual lj spheres + central particle w/o interactions
-        # For n sphers n/2 dumbells.
+        # For n spheres, n/2 dumbells.
         for i in range(int(n / 2)):
             # Type=1, i.e., no lj ia for the center of mass particles
             system.part.add(
@@ -288,7 +287,7 @@ class VirtualSites(ut.TestCase):
                 self.verify_vs(system.part[3 * j + 1])
                 self.verify_vs(system.part[3 * j + 2])
 
-            # Verify lj forces on the particles. The non-virtual particles are skipeed
+            # Verify lj forces on the particles. The non-virtual particles are skipped
             # because the forces on them originate from the vss and not the lj
             # interaction
             verify_lj_forces(system, 1E-10, 3 *

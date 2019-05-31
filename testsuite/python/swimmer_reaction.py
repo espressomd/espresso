@@ -45,8 +45,10 @@ class ReactionTest(ut.TestCase):
         Reaction(reactant_type=1, catalyzer_type=0,
                  product_type=2, ct_range=3.0, ct_rate=np.inf)
 
-        system.integrator.run(
-            2)  # run two reactions and MD. this also tests that the particles are not switched back after the first reaction (which should switch the particles)
+        # Run two reactions and MD
+        # This also tests that the particles are not switched back
+        # after the first reaction (which should switch the particles)
+        system.integrator.run(2)
 
         # Check that particles have switched type (due to the first reaction)
         # the second reaction may not change the particles back since they are

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
 
@@ -52,7 +51,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
         from Es actually match. Only keys which are present  in _params are checked
         1st and 2nd arg: Particle type ids to check on
         3rd: Class of the interaction to test, ie.e, FeneBond, HarmonicBond
-        4th: Interaction parameters as dictionary, i.e., {"k"=1.,"r_0"=0.
+        4th: Interaction parameters as dictionary, i.e., {"k"=1.,"r_0"=0}
         5th: Name of the interaction property to set (i.e. "lennardJones")
         """
         partType1 = _partType1

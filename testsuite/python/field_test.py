@@ -26,7 +26,7 @@ from espressomd import constraints
 
 class FieldTest(ut.TestCase):
 
-    """Tests for not space dependend external fields.
+    """Tests for not space-dependent external fields.
     """
     system = espressomd.System(box_l=[10, 10, 10], time_step=0.01)
     system.cell_system.skin = 0.
@@ -73,18 +73,13 @@ class FieldTest(ut.TestCase):
         self.system.constraints.add(electric_field)
 
         p = self.system.part.add(pos=[0.5, 0.5, 0.5])
-
-        if espressomd.has_features("ELECTROSTATICS"):
-            q_part = -3.1
-            p.q = q_part
-        else:
-            q_part = 0.0
+        p.q = -3.1
 
         self.system.integrator.run(0)
-        np.testing.assert_almost_equal(q_part * E, np.copy(p.f))
+        np.testing.assert_almost_equal(p.q * E, np.copy(p.f))
 
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
-                               q_part * (- np.dot(E, p.pos) + phi0))
+                               p.q * (- np.dot(E, p.pos) + phi0))
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
                                self.system.analysis.energy()['external_fields'])
 
@@ -173,11 +168,7 @@ class FieldTest(ut.TestCase):
                                           grid_spacing=h)
 
         p = self.system.part.add(pos=[0, 0, 0])
-        if espressomd.has_features("ELECTROSTATICS"):
-            q_part = -3.1
-            p.q = q_part
-        else:
-            q_part = 0.0
+        p.q = -3.1
 
         self.system.constraints.add(F)
 
@@ -189,9 +180,9 @@ class FieldTest(ut.TestCase):
 
             self.system.integrator.run(0)
             self.assertAlmostEqual(
-                self.system.analysis.energy()['total'], q_part * f_val, places=5)
+                self.system.analysis.energy()['total'], p.q * f_val, places=5)
             np.testing.assert_allclose(
-                np.copy(p.f), q_part * self.force(x), rtol=1e-5)
+                np.copy(p.f), p.q * self.force(x), rtol=1e-5)
 
     def test_force_field(self):
         h = np.array([.8, .8, .8])
@@ -242,5 +233,4 @@ class FieldTest(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

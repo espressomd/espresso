@@ -18,8 +18,6 @@ from __future__ import print_function
 
 import unittest as ut
 import numpy as np
-from numpy import linalg as la
-from numpy.random import random, seed
 
 import espressomd
 import espressomd.magnetostatics
@@ -40,12 +38,12 @@ class BHGPUTest(ut.TestCase):
 
     def vectorsTheSame(self, a, b):
         tol = 5E-2
-        vec_len = la.norm(a - b)
-        rel = 2 * vec_len / (la.norm(a) + la.norm(b))
+        vec_len = np.linalg.norm(a - b)
+        rel = 2 * vec_len / (np.linalg.norm(a) + np.linalg.norm(b))
         return rel <= tol
 
     def run_test_case(self):
-        seed(1)
+        np.random.seed(1)
         pf_bh_gpu = 2.34
         pf_dawaanr = 3.524
         ratio_dawaanr_bh_gpu = pf_dawaanr / pf_bh_gpu
@@ -63,10 +61,10 @@ class BHGPUTest(ut.TestCase):
             if n > 1000:
                 l *= (n / 541) ** (1 / 3.0)
             for i in range(n):
-                part_pos = np.array(random(3)) * l
-                costheta = 2 * random() - 1
+                part_pos = np.array(np.random.random(3)) * l
+                costheta = 2 * np.random.random() - 1
                 sintheta = np.sin(np.arcsin(costheta))
-                phi = 2 * np.pi * random()
+                phi = 2 * np.pi * np.random.random()
                 part_dip[0] = sintheta * np.cos(phi) * dipole_modulus
                 part_dip[1] = sintheta * np.sin(phi) * dipole_modulus
                 part_dip[2] = costheta * dipole_modulus

@@ -27,8 +27,8 @@ class LBBoundaryVelocityTest(ut.TestCase):
 
     """Test slip velocity of boundaries.
 
-       In this simple test add wall with a slip verlocity is
-       added and checkeckt if the fluid obtains the same velocity.
+       In this simple test, a wall with slip velocity is
+       added and the fluid is checked if it has the same velocity.
     """
 
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])

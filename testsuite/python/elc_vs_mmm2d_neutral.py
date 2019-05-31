@@ -77,7 +77,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             "const_pot_m1": {"prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": -1.0}
         }
 
-        self.system.box_l = [self.box_l, self.box_l, self.box_l]
+        self.system.box_l = 3 * [self.box_l]
         buf_node_grid = self.system.cell_system.node_grid
         self.system.cell_system.set_layered(
             n_layers=10, use_verlet_lists=False)

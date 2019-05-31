@@ -1,5 +1,4 @@
 # Copyright (C) 2010-2018 The ESPResSo project
-
 #
 # This file is part of ESPResSo.
 #
@@ -46,7 +45,7 @@ class Scafacos1d2d(ut.TestCase):
 
         #################################################
 
-        box_l = pow(((4 * n_particle * 3.141592654) / (3 * rho)),
+        box_l = pow(((4 * n_particle * np.pi) / (3 * rho)),
                     1.0 / 3.0) * particle_radius
         skin = 0.5
 
@@ -55,7 +54,7 @@ class Scafacos1d2d(ut.TestCase):
         # give Espresso some parameters
         s.time_step = 0.01
         s.cell_system.skin = skin
-        s.box_l = box_l, box_l, box_l
+        s.box_l = 3 * [box_l]
         for dim in 2, 1:
             print("Dimension", dim)
 
@@ -152,5 +151,4 @@ class Scafacos1d2d(ut.TestCase):
 
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

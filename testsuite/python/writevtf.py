@@ -42,7 +42,7 @@ class CommonTests(ut.TestCase):
     # positions are folded in the core when writing out and we cannot directly
     # compare positions in the dataset and where particles were set. One would
     # need to unfold the positions of the hdf5 file.
-    system.box_l = [npart, npart, npart]
+    system.box_l = 3 * [npart]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     written_pos = None
@@ -171,6 +171,5 @@ class VCFTestType(CommonTests):
 if __name__ == "__main__":
     suite = ut.TestLoader().loadTestsFromTestCase(VCFTestAll)
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(VCFTestType))
-
     result = ut.TextTestRunner(verbosity=4).run(suite)
     sys.exit(not result.wasSuccessful())

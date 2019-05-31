@@ -45,8 +45,7 @@ class LennardJonesTest(ut.TestCase):
         self.system.time_step = .1
 
         for i in range(self.data.shape[0]):
-            self.system.part.add(id=int(self.data[i][0]), pos=[
-                                 self.data[i][1], self.data[i][2], self.data[i][3]])
+            self.system.part.add(id=int(self.data[i][0]), pos=self.data[i][1:4])
 
     def check(self):
         rms = 0.0
@@ -83,5 +82,4 @@ class LennardJonesTest(ut.TestCase):
         self.check()
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()

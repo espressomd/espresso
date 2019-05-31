@@ -135,11 +135,10 @@ class VirialPressureConsistency(ut.TestCase):
                 self.system.analysis.pressure()['total'])
             pressure_via_volume_scaling.measure_pressure_via_volume_scaling()
         pressure_virial = np.mean(pressures_via_virial)
+        # deviation should be below 5%
         abs_deviation_in_percent = abs(
-            pressure_virial / pressure_via_volume_scaling.get_result() - 1.0) * 100.0  # should be 0% ideally
-        npt.assert_array_less(
-            abs_deviation_in_percent,
-            5.0)  # devation should be below 5%
+            pressure_virial / pressure_via_volume_scaling.get_result() - 1.0) * 100.0
+        npt.assert_array_less(abs_deviation_in_percent, 5.0)
 
 
 if __name__ == "__main__":

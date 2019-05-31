@@ -19,8 +19,6 @@ from __future__ import print_function
 import time as tm
 import unittest as ut
 import numpy as np
-from numpy import linalg as la
-from numpy.random import random, seed
 
 import espressomd
 import espressomd.magnetostatics
@@ -36,8 +34,8 @@ class BHGPUPerfTest(ut.TestCase):
 
     def vectorsTheSame(self, a, b):
         tol = 15E-2
-        vec_len = la.norm(a - b)
-        rel = 2 * vec_len / (la.norm(a) + la.norm(b))
+        vec_len = np.linalg.norm(a - b)
+        rel = 2 * vec_len / (np.linalg.norm(a) + np.linalg.norm(b))
         return rel <= tol
 
     def stopAll(self):
@@ -46,7 +44,7 @@ class BHGPUPerfTest(ut.TestCase):
             self.system.part[i].omega_body = np.array([0.0, 0.0, 0.0])
 
     def run_test_case(self):
-        seed(1)
+        np.random.seed(1)
     
         pf_bh_gpu = 2.34
         pf_dds_gpu = 3.524

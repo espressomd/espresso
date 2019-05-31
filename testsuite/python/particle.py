@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
 import espressomd
@@ -318,5 +317,4 @@ class ParticleProperties(ut.TestCase):
 
 
 if __name__ == "__main__":
-    # print("Features: ", espressomd.features())
     ut.main()

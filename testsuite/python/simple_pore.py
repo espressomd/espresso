@@ -20,10 +20,10 @@ import espressomd
 from espressomd.shapes import SimplePore, Cylinder
 
 # Integration test for simple pore
-# The radional is to hit the pore everywhere with particles
+# The rationale is to hit the pore everywhere with particles
 # and check that it does not blow up. The cylinder is needed
 # because the pore is tilted with respect to the box, without
-# it particles could enter the constraint over the periodic boundarys,
+# it particles could enter the constraint over the periodic boundaries,
 # leading to force jumps.
 
 

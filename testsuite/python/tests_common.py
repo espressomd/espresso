@@ -20,7 +20,7 @@ import numpy as np
 try:
     import vtk
     from vtk.util.numpy_support import vtk_to_numpy
-except BaseException:
+except ImportError:
     pass
 
 
@@ -45,7 +45,7 @@ def calculate_vtk_max_pointwise_difference(file1, file2, tol=1e-6):
 
 
 def params_match(inParams, outParams):
-    """Check, if the parameters set and gotten back match.
+    """Check if the parameters set and gotten back match.
     Only check keys present in inParams.
     """
 
@@ -70,7 +70,7 @@ def params_match(inParams, outParams):
 def generate_test_for_class(_system, _interClass, _params):
     """Generates test cases for checking interaction parameters set and gotten back
     from Es actually match. Only keys which are present  in _params are checked
-    1st: Interaction parameters as dictionary, i.e., {"k"=1.,"r_0"=0.
+    1st: Interaction parameters as dictionary, i.e., {"k": 1.,"r_0": 0}
     2nd: Name of the interaction property to set (i.e. "P3M")
     """
     params = _params
@@ -94,7 +94,7 @@ def generate_test_for_class(_system, _interClass, _params):
             params_match(
                 params,
                 outParams),
-            "Missmatch of parameters.\nParameters set " +
+            "Mismatch of parameters.\nParameters set " +
             params.__str__() +
             " vs. output parameters " +
             outParams.__str__())
@@ -150,7 +150,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
         f = lj_force_vector(v_d, d, lj_params[p0.type, p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
-    # Check actual forces agaisnt expected
+    # Check actual forces against expected
     for id in system.part[:].id:
         if id in ids_to_skip:
             continue

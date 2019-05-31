@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
 import espressomd
@@ -29,7 +28,7 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     def setUp(self):
-        self.system.box_l = 10, 10, 10
+        self.system.box_l = [10, 10, 10]
         if not self.system.part.exists(0):
             self.system.part.add(id=0, pos=(0.1, 0.1, 0.1), dip=(1.3, 2.1, -6))
         if not self.system.part.exists(1):
@@ -51,5 +50,4 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

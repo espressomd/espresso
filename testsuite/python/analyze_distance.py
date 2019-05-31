@@ -114,5 +114,4 @@ class AnalyzeDistance(ut.TestCase):
                                    self.dist_to_id(i))
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

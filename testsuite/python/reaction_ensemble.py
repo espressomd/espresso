@@ -30,17 +30,18 @@ class ReactionEnsembleTest(ut.TestCase):
     """Test the core implementation of the reaction ensemble."""
 
     # The reaction ensemble follows the ideal titration curve only if N>>1,
-    # Ideal curve is derived in the grandcanionical ensemble and for low N
+    # Ideal curve is derived in the grandcanonical ensemble and for low N
     # there are systematic devations caused by differences between the
     # ensembles. This is not an error but a fundamental difference (various
-    # ensembles are equivalent only in the thermodynamic limit N \to \infty
+    # ensembles are equivalent only in the thermodynamic limit N \to \infty)
     N0 = 40
     c0 = 0.00028
     type_HA = 0
     type_A = 1
     type_H = 2
     target_alpha = 0.6
-    # We get best statistics at alpha=0.5 Then the test is least sensistive to # the exact sequence of random numbers and does not require hard-coded
+    # We get best statistics at alpha=0.5 Then the test is less sensistive to
+    # the exact sequence of random numbers and does not require hard-coded
     # output values
     temperature = 1.0
     exclusion_radius = 1.0
@@ -66,7 +67,6 @@ class ReactionEnsembleTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Prepare a testsystem."""
         for i in range(0, 2 * cls.N0, 2):
             cls.system.part.add(id=i, pos=np.random.random(
                 3) * cls.system.box_l, type=cls.type_A)
@@ -174,5 +174,4 @@ class ReactionEnsembleTest(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

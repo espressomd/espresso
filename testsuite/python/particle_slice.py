@@ -29,10 +29,8 @@ class ParticleSliceTest(ut.TestCase):
     def __init__(self, *args, **kwargs):
         super(ParticleSliceTest, self).__init__(*args, **kwargs)
         self.system.part.clear()
-        self.system.part.add(pos=[0, 0, 0])
-        self.system.part.add(pos=[0, 0, 1])
-        self.system.part.add(pos=[0, 0, 2])
-        self.system.part.add(pos=[0, 0, 3])
+        for i in range(4):
+            self.system.part.add(pos=[0, 0, i])
 
         if has_features(["EXTERNAL_FORCES"]):
             self.system.part[1].fix = self.state[1]

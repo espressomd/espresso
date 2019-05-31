@@ -187,7 +187,7 @@ class ThermoTest(ut.TestCase):
 
         # Space
         box = 10.0
-        self.system.box_l = box, box, box
+        self.system.box_l = 3 * [box]
         if espressomd.has_features(("PARTIAL_PERIODIC",)):
             self.system.periodicity = 0, 0, 0
 
@@ -321,8 +321,8 @@ class ThermoTest(ut.TestCase):
                     dt = (int_steps * (i + 1) + therm_steps) * \
                         self.system.time_step
                     # translational diffusion variance: after a closed-form
-                    # integration of the Langevin EOM;
-                    # ref. the eq. (10.2.26) N. Pottier, https://doi.org/10.1007/s10955-010-0114-6 (2010)
+                    # integration of the Langevin EOM; ref. the eq. (10.2.26)
+                    # N. Pottier, doi:10.1007/s10955-010-0114-6 (2010)
                     # after simple transformations and the dimensional model
                     # matching (cf. eq. (10.1.1) there):
                     sigma2_tr[k] = 0.0

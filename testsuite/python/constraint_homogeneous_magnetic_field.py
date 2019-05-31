@@ -98,5 +98,4 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

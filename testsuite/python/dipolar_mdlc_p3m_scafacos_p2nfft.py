@@ -50,12 +50,12 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part.clear()
         rho = 0.3
 
-        # This is only for box size calculation. The actual particle numbwe is
+        # This is only for box size calculation. The actual particle number is
         # lower, because particles are removed from the mdlc gap region
         n_particle = 100
 
         particle_radius = 0.5
-        box_l = pow(((4 * n_particle * 3.141592654) / (3 * rho)),
+        box_l = pow(((4 * n_particle * np.pi) / (3 * rho)),
                     1.0 / 3.0) * particle_radius
         s.box_l = box_l, box_l, box_l
         f = open(abspath("data/mdlc_reference_data_energy.dat"))
@@ -105,9 +105,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         n_particle = 1000
 
         particle_radius = 1
-        box_l = pow(((4 * n_particle * 3.141592654) / (3 * rho)),
+        box_l = pow(((4 * n_particle * np.pi) / (3 * rho)),
                     1.0 / 3.0) * particle_radius
-        s.box_l = box_l, box_l, box_l
+        s.box_l = 3 * [box_l]
 
         # Particles
         data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
@@ -153,9 +153,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         n_particle = 1000
 
         particle_radius = 1
-        box_l = pow(((4 * n_particle * 3.141592654) / (3 * rho)),
+        box_l = pow(((4 * n_particle * np.pi) / (3 * rho)),
                     1.0 / 3.0) * particle_radius
-        s.box_l = box_l, box_l, box_l
+        s.box_l = 3 * [box_l]
 
         # Particles
         data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
@@ -201,5 +201,4 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

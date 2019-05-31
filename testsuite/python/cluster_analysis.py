@@ -35,7 +35,7 @@ class ClusterAnalysis(ut.TestCase):
     f = FeneBond(k=1, d_r_max=0.05)
     es.bonded_inter.add(f)
 
-    # Firt cluster
+    # 1st cluster
     es.part.add(id=0, pos=(0, 0, 0))
     es.part.add(id=1, pos=(0.91, 0, 0), bonds=((0, 0),))
     es.part.add(id=2, pos=(0, 0.2, 0))
@@ -188,5 +188,4 @@ class ClusterAnalysis(ut.TestCase):
 
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

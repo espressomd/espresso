@@ -57,9 +57,9 @@ class WidomInsertionTest(ut.TestCase):
     # numerical solution for V_lj=0 => corresponds to the volume (as exp(0)=1)
     integreateRest = (BOX_L**3 - 4.0 / 3.0 * np.pi * LJ_CUT**3)
                       
-    # calculate excess chemical potential of the system, see Frenkel Smith, p
-    # 174. Note: He uses scaled coordinates, which is why we need to divide by
-    # the Box volume
+    # calculate excess chemical potential of the system, see Frenkel Smith,
+    # p 174. Note: He uses scaled coordinates, which is why we need to divide
+    # by the box volume
     target_mu_ex = -TEMPERATURE * \
         np.log((integrateUpToCutOff + integreateRest) / BOX_L**3)
                                        
@@ -74,7 +74,6 @@ class WidomInsertionTest(ut.TestCase):
         temperature=TEMPERATURE, seed=1)    
 
     def setUp(self):
-        """Prepare a testsystem."""
         self.system.part.add(
             id=0,
             pos=0.5 *
@@ -119,5 +118,4 @@ class WidomInsertionTest(ut.TestCase):
         )
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

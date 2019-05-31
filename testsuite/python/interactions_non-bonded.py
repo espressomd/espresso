@@ -618,5 +618,4 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.assertEqual(self.system.analysis.energy()["non_bonded"], 0.0)
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()

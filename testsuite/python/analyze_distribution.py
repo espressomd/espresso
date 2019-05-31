@@ -156,5 +156,4 @@ class AnalyzeDistributions(ut.TestCase):
                                     np.cumsum(self.calc_min_distribution(bins, type_list_a=[0]))))
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

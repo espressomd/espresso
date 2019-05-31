@@ -30,7 +30,7 @@ import tests_common
 class TestCylindricalLBObservable(ut.TestCase):
 
     """
-    Testcase for the CylindricalFluxDensityObservable.
+    Testcase for the CylindricalLBObservable.
 
     """
     system = espressomd.System(box_l=(10, 10, 10))

@@ -214,5 +214,4 @@ class InteractionsAngleBondTest(ut.TestCase):
                           at_phi0)
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()

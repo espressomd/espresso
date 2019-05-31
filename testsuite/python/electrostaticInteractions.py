@@ -39,7 +39,6 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         if not self.system.part.exists(1):
             self.system.part.add(
                 id=1, pos=(3.0, 2.0, 2.0), q=-1)
-        print("ut.TestCase setUp")
 
     def calc_dh_potential(self, r, df_params):
         kT = 1.0
@@ -165,7 +164,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         u_rf = self.calc_rf_potential(r, rf_params)
         f_rf = -np.gradient(u_rf, dr)
         
-        # zero the discontinuity, and re-evaluate the derivitive as a backwards
+        # zero the discontinuity, and re-evaluate the derivative as a backwards
         # difference
         i_cut = np.argmin((rf_params['r_cut'] - r)**2)
         f_rf[i_cut] = 0
@@ -190,5 +189,4 @@ class ElectrostaticInteractionsTests(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

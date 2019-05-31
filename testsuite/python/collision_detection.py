@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
 import espressomd
@@ -121,7 +120,7 @@ class CollisionDetection(ut.TestCase):
                 raise Exception(
                     "Test particle too close to particle, which should not take part in collision")
 
-        # 2 non-virtual + 2 virtual + one that doesn't tkae part
+        # 2 non-virtual + 2 virtual + one that doesn't take part
         expected_np = 4 * len(positions) + 1
 
         self.s.collision_detection.set_params(
@@ -134,7 +133,7 @@ class CollisionDetection(ut.TestCase):
         self.s.integrator.run(0, recalc_forces=True)
         self.verify_state_after_bind_at_poc(expected_np)
 
-        # Check that nothing explodes, when the particles are moved.
+        # Check that nothing explodes when the particles are moved.
         # In particular for parallel simulations
         self.s.thermostat.set_langevin(kT=0, gamma=0.01, seed=42)
         self.s.part[:].v = 0.05, 0.01, 0.15
@@ -258,7 +257,7 @@ class CollisionDetection(ut.TestCase):
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1, sigma=0.1, cutoff=2**(1. / 6) * 0.1, shift="auto")
 
-        # Remove overalp between particles
+        # Remove overlap between particles
         self.s.integrator.set_steepest_descent(
             f_max=0,
             gamma=1,
@@ -310,7 +309,7 @@ class CollisionDetection(ut.TestCase):
         # Number of vs pairs = number of bonds?
         self.assertEqual(len(vs_pairs), len(bonds))
 
-        # Che3ck that vs pairs and bonds agree
+        # Check that vs pairs and bonds agree
         for vs_pair in vs_pairs:
             # Get corresponding non-virtual particles
             base_particles = tuple(sorted(
@@ -349,7 +348,7 @@ class CollisionDetection(ut.TestCase):
                 p1 = self.s.part.add(
                     pos=pos + (0, 0, 0), type=self.part_type_to_attach_vs_to)
 
-        # 2 non-virtual + 1 virtual + one that doesn't takekae part
+        # 2 non-virtual + 1 virtual + one that doesn't take part
         expected_np = 3 * len(positions) + 1
 
         self.s.collision_detection.set_params(
@@ -389,7 +388,7 @@ class CollisionDetection(ut.TestCase):
 
             # Get bound particle
             # There is a bond between the base particle and the bound particle
-            # but we have no guarantee, on where its stored
+            # but we have no guarantee, on where it is stored
             # 1. On the base particle of the vs
             p2 = None
             if len(base_p.bonds) == 1:
@@ -652,7 +651,7 @@ class CollisionDetection(ut.TestCase):
                     expected_pairs.append((i, j))
 
         # Find triangles
-        # Each elemtn is a particle id, a bond id and two bond partners in
+        # Each element is a particle id, a bond id and two bond partners in
         # ascending order
         expected_angle_bonds = []
         for i in range(n):
@@ -663,7 +662,7 @@ class CollisionDetection(ut.TestCase):
                     p_j = self.s.part[j]
                     p_k = self.s.part[k]
 
-                    # Normalized distnace vectors
+                    # Normalized distance vectors
                     d_ij = np.copy(p_j.pos - p_i.pos)
                     d_ik = np.copy(p_k.pos - p_i.pos)
                     d_jk = np.copy(p_k.pos - p_j.pos)
@@ -704,7 +703,7 @@ class CollisionDetection(ut.TestCase):
                     raise Exception(
                         "There should be only 2 and three particle bonds")
 
-        # The order between expected and found bonds does not malways match
+        # The order between expected and found bonds does not always match
         # because collisions occur in random order. Sort stuff
         found_pairs = sorted(found_pairs)
         found_angle_bonds = sorted(found_angle_bonds)

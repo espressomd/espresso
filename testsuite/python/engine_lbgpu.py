@@ -46,10 +46,9 @@ class SwimmerTest(ut.TestCase):
         S.cell_system.skin = 0.1
         S.time_step = tstep
 
-        S.part.add(id=0, pos=[6.0, 3.0, 2.0],
+        S.part.add(id=0, pos=[6.0, 3.0, 2.0], quat=np.sqrt([.5, .5, 0, 0]),
                    swimming={"mode": "pusher", "v_swim": 0.10,
-                             "dipole_length": 1.0, "rotational_friction": 2.0},
-                   quat=[np.sqrt(.5), np.sqrt(.5), 0, 0])
+                             "dipole_length": 1.0, "rotational_friction": 2.0})
         S.part.add(
             id=1,
             pos=[
@@ -61,11 +60,7 @@ class SwimmerTest(ut.TestCase):
                 "f_swim": 0.03,
                 "dipole_length": 2.0,
                 "rotational_friction": 20.0},
-            quat=[
-                np.sqrt(.5),
-                0,
-                np.sqrt(.5),
-                0])
+            quat=np.sqrt([.5, 0, .5, 0]))
         S.part.add(
             id=2,
             pos=[
@@ -77,15 +72,11 @@ class SwimmerTest(ut.TestCase):
                 "v_swim": 0.15,
                 "dipole_length": 0.5,
                 "rotational_friction": 15.0},
-            quat=[
-                np.sqrt(.5),
-                0,
-                0,
-                np.sqrt(.5)])
+            quat=np.sqrt([.5, 0, 0, .5]))
         S.part.add(id=3, pos=[3.0, 6.0, 2.0],
                    swimming={"mode": "puller", "f_swim": 0.05,
                              "dipole_length": 1.5, "rotational_friction": 6.0},
-                   quat=[0, 0, np.sqrt(.5), np.sqrt(.5)])
+                   quat=np.sqrt([0, 0, .5, .5]))
         S.part[:].rotation = 1, 1, 1
 
     def run_and_check(self, S, lbm, vtk_name):

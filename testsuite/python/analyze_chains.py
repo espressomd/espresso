@@ -129,5 +129,4 @@ class AnalyzeChain(ut.TestCase):
         self.system.part[:].pos = old_pos
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

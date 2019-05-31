@@ -28,8 +28,8 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
 
     """Test slip velocity of boundaries.
 
-       In this simple test add wall with a slip verlocity is
-       added and checkeckt if the fluid obtains the same velocity.
+       In this simple test, a wall with slip velocity is
+       added and the fluid is checked if it has the same velocity.
     """
 
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
@@ -73,11 +73,11 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
         s.actors.add(lb_fluid)
         s.thermostat.set_lb(LB_fluid=lb_fluid, gamma=1.0)
         virtual.pos = physical.pos
-        virtual.v = 1, 0, 0
-        physical.v = 1, 0, 0
+        virtual.v = [1, 0, 0]
+        physical.v = [1, 0, 0]
         s.integrator.run(1)
 
-        # The forces are not exactly -1. because the fluid is not at
+        # The forces are not exactly -1 because the fluid is not at
         # rest anymore because of the previous check.
         np.testing.assert_almost_equal(np.copy(physical.f), np.copy(virtual.f))
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])

@@ -155,5 +155,4 @@ class Exclusions(ut.TestCase):
             self.s.analysis.pressure()[('coulomb', 0)], pair_pressure, places=7)
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

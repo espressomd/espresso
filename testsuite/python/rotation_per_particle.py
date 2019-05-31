@@ -1,5 +1,3 @@
-
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -18,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
 import espressomd
@@ -59,7 +56,7 @@ class Rotation(ut.TestCase):
 
     @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"), "Requires EXTERNAL_FORCES")
     def test_axes_changes(self):
-        """Verifies that rotation axes in body and space frame stay the same and other axes dont"""
+        """Verifies that rotation axes in body and space frame stay the same and other axes don't"""
         s = self.s
         s.part.clear()
         s.part.add(id=0, pos=(0.9, 0.9, 0.9), ext_torque=(1, 1, 1))
@@ -129,8 +126,6 @@ class Rotation(ut.TestCase):
         self.assertAlmostEqual(np.dot(v, v), np.dot(v_r, v_r), delta=1e-10)
         np.testing.assert_allclose(
             p.convert_vector_space_to_body(v_r), v, atol=1E-10)
-
-        #
 
 
 if __name__ == "__main__":

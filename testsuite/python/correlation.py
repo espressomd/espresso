@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 
 import unittest as ut
@@ -34,7 +33,7 @@ class CorrelatorTest(ut.TestCase):
 
     def test(self):
         s = self.system
-        s.box_l = 10, 10, 10
+        s.box_l = [10, 10, 10]
         s.cell_system.skin = 0.4
         # s.periodicity=0,0,0
         s.time_step = 0.01

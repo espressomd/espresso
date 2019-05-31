@@ -54,7 +54,6 @@ class ReactionEnsembleTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Prepare a testsystem."""
         for i in range(0, 2 * cls.N0, 2):
             cls.system.part.add(id=i, pos=np.random.random(
                 3) * cls.system.box_l, type=cls.type_A)
@@ -124,5 +123,4 @@ class ReactionEnsembleTest(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

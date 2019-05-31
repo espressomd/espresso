@@ -93,7 +93,7 @@ class MPIIOTest(ut.TestCase):
     def setUp(self):
         """Sets up a system from test_particles and prepares environment
         for the tests."""
-        clean_files()  # Prior call might not have completed sucecssfully
+        clean_files()  # Prior call might not have completed successfully
         for p in self.test_particles:
             self.s.part.add(id=p.id, type=p.type, pos=p.pos, v=p.v)
             for b in p.bonds:

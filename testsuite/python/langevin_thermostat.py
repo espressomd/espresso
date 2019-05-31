@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
 import espressomd
@@ -42,7 +41,7 @@ class LangevinThermostat(ut.TestCase):
         np.random.seed(42)
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
-        """check the recorded particle distributions in vel againsta histogram with n_bins bins. Drop velocities outside minmax. Check individual histogram bins up to an accuracy of error_tol agaisnt the analytical result for kT."""
+        """check the recorded particle distributions in velocity against a histogram with n_bins bins. Drop velocities outside minmax. Check individual histogram bins up to an accuracy of error_tol against the analytical result for kT."""
         for i in range(3):
             hist = np.histogram(
                 vel[:, i], range=(-minmax, minmax), bins=n_bins, normed=False)
