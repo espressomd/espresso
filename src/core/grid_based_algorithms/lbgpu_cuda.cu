@@ -99,16 +99,6 @@ static LB_extern_nodeforcedensity_gpu *extern_node_force_densities = nullptr;
 /** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
 
-/** @brief Velocity at the boundary */
-static float *lb_boundary_velocity = nullptr;
-
-/** @name pointers for bound index array */
-/*@{*/
-static int *boundary_node_list = nullptr;
-static int *boundary_index_list = nullptr;
-static size_t size_of_boundindex = 0;
-/*@}*/
-
 EK_parameters *lb_ek_parameters_gpu;
 
 /** @name pointers for additional cuda check flag */
@@ -1393,7 +1383,6 @@ node_velocity(float rho_eq, LB_nodes_gpu n_a, int index) {
 
 __device__ __inline__ float3
 velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
-                       float *lb_boundary_velocity,
                        Utils::Array<unsigned int, 27> &node_indices,
                        Utils::Array<float, 27> &delta) {
   Utils::Array<int, 3> center_node_index{};
@@ -1474,7 +1463,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *  @retval Interpolated velocity
  */
 __device__ __inline__ float3 velocity_interpolation(
-    LB_nodes_gpu n_a, float *particle_position, float *lb_boundary_velocity,
+    LB_nodes_gpu n_a, float *particle_position,
     Utils::Array<unsigned int, 8> &node_index, Utils::Array<float, 8> &delta) {
   Utils::Array<int, 3> left_node_index;
   Utils::Array<float, 6> temp_delta;
@@ -1555,7 +1544,7 @@ calc_viscous_force(LB_nodes_gpu n_a,
                    unsigned int part_index, float *delta_j,
                    Utils::Array<unsigned int, no_of_neighbours> &node_index,
                    LB_rho_v_gpu *d_v, int flag_cs, uint64_t philox_counter,
-                   float friction, float *lb_boundary_velocity) {
+                   float friction) {
 // Zero out workspace
 #pragma unroll
   for (int jj = 0; jj < 3; ++jj) {
@@ -1596,7 +1585,7 @@ calc_viscous_force(LB_nodes_gpu n_a,
 #endif
 
   float3 const interpolated_u = velocity_interpolation(
-      n_a, position, lb_boundary_velocity, node_index, delta);
+      n_a, position, node_index, delta);
 
 #ifdef ENGINE
   velocity[0] -= particle_data[part_index].swim.v_swim *
@@ -2226,7 +2215,7 @@ template <std::size_t no_of_neighbours>
 __global__ void calc_fluid_particle_ia(
     LB_nodes_gpu n_a, CUDA_particle_data *particle_data, float *particle_force,
     LB_node_force_density_gpu node_f, LB_rho_v_gpu *d_v, bool couple_virtual,
-    uint64_t philox_counter, float friction, float *lb_boundary_velocity) {
+    uint64_t philox_counter, float friction) {
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
@@ -2242,14 +2231,14 @@ __global__ void calc_fluid_particle_ia(
        * force that acts back onto the fluid. */
       calc_viscous_force<no_of_neighbours>(
           n_a, delta, particle_data, particle_force, part_index, delta_j,
-          node_index, d_v, 0, philox_counter, friction, lb_boundary_velocity);
+          node_index, d_v, 0, philox_counter, friction);
       calc_node_force<no_of_neighbours>(delta, delta_j, node_index, node_f);
 
 #ifdef ENGINE
       if (particle_data[part_index].swim.swimming) {
         calc_viscous_force<no_of_neighbours>(
             n_a, delta, particle_data, particle_force, part_index, delta_j,
-            node_index, d_v, 1, philox_counter, friction, lb_boundary_velocity);
+            node_index, d_v, 1, philox_counter, friction);
         calc_node_force<no_of_neighbours>(delta, delta_j, node_index, node_f);
       }
 #endif
@@ -2538,6 +2527,11 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
   if (this_node != 0)
     return;
 
+  float *boundary_velocity = nullptr;
+  int *boundary_node_list = nullptr;
+  int *boundary_index_list = nullptr;
+  size_t size_of_boundindex = 0;
+
   size_of_boundindex = number_of_boundnodes * sizeof(int);
   cuda_safe_mem(cudaMalloc((void **)&boundary_node_list, size_of_boundindex));
   cuda_safe_mem(cudaMalloc((void **)&boundary_index_list, size_of_boundindex));
@@ -2547,10 +2541,10 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
                            size_of_boundindex, cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMalloc((void **)&lb_boundary_force,
                            3 * host_n_lb_boundaries * sizeof(float)));
-  cuda_safe_mem(cudaMalloc((void **)&lb_boundary_velocity,
+  cuda_safe_mem(cudaMalloc((void **)&boundary_velocity,
                            3 * host_n_lb_boundaries * sizeof(float)));
   cuda_safe_mem(
-      cudaMemcpy(lb_boundary_velocity, host_lb_boundary_velocity,
+      cudaMemcpy(boundary_velocity, host_lb_boundary_velocity,
                  3 * LBBoundaries::lbboundaries.size() * sizeof(float),
                  cudaMemcpyHostToDevice));
 
@@ -2583,9 +2577,13 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
         make_uint3(blocks_per_grid_bound_x, blocks_per_grid_bound_y, 1);
 
     KERNELCALL(init_boundaries, dim_grid_bound, threads_per_block_bound,
-               boundary_node_list, boundary_index_list, lb_boundary_velocity,
+               boundary_node_list, boundary_index_list, boundary_velocity,
                number_of_boundnodes, boundaries);
   }
+
+  cudaFree(boundary_velocity);
+  cudaFree(boundary_node_list);
+  cudaFree(boundary_index_list);
 
   cudaDeviceSynchronize();
 }
@@ -2667,15 +2665,13 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
                  node_f, device_rho_v, couple_virtual,
-                 rng_counter_coupling_gpu->value(), friction,
-                 lb_boundary_velocity);
+                 rng_counter_coupling_gpu->value(), friction);
     } else {
       // We use a dummy value for the RNG counter if no temperature is set.
       KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid_particles,
                  threads_per_block_particles, *current_nodes,
                  gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, device_rho_v, couple_virtual, 0, friction,
-                 lb_boundary_velocity);
+                 node_f, device_rho_v, couple_virtual, 0, friction);
     }
   }
 }
@@ -3129,17 +3125,14 @@ void lb_lbfluid_get_population(const Utils::Vector3i &xyz,
 template <std::size_t no_of_neighbours> struct interpolation {
   LB_nodes_gpu current_nodes_gpu;
   LB_rho_v_gpu *d_v_gpu;
-  float *lb_boundary_velocity;
-  interpolation(LB_nodes_gpu _current_nodes_gpu, LB_rho_v_gpu *_d_v_gpu,
-                float *lb_boundary_velocity)
-      : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu),
-        lb_boundary_velocity(lb_boundary_velocity){};
+  interpolation(LB_nodes_gpu _current_nodes_gpu, LB_rho_v_gpu *_d_v_gpu)
+    : current_nodes_gpu(_current_nodes_gpu), d_v_gpu(_d_v_gpu) {}
   __device__ float3 operator()(const float3 &position) const {
     float _position[3] = {position.x, position.y, position.z};
     Utils::Array<unsigned int, no_of_neighbours> node_indices;
     Utils::Array<float, no_of_neighbours> delta;
     return velocity_interpolation(current_nodes_gpu, _position,
-                                  lb_boundary_velocity, node_indices, delta);
+                                  node_indices, delta);
   }
 };
 
@@ -3158,7 +3151,7 @@ void lb_get_interpolated_velocity_gpu(double const *positions,
   thrust::transform(positions_device.begin(), positions_device.end(),
                     velocities_device.begin(),
                     interpolation<no_of_neighbours>(
-                        *current_nodes, device_rho_v, lb_boundary_velocity));
+                        *current_nodes, device_rho_v));
   thrust::host_vector<float3> velocities_host = velocities_device;
   int index = 0;
   for (auto v : velocities_host) {
