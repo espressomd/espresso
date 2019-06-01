@@ -28,15 +28,15 @@ class AnalyzeDistributions(ut.TestCase):
     num_part = 10
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         box_l = 20.0
         # start with a small bo
-        self.system.box_l = np.array([box_l, box_l, box_l])
-        self.system.cell_system.set_n_square(use_verlet_lists=False)
-        for p in range(self.num_part):
-            self.system.part.add(
+        cls.system.box_l = np.array([box_l, box_l, box_l])
+        cls.system.cell_system.set_n_square(use_verlet_lists=False)
+        for p in range(cls.num_part):
+            cls.system.part.add(
                 id=p,
-                pos=np.random.random() * self.system.box_l)
+                pos=np.random.random() * cls.system.box_l)
 
     def calc_rdf(self, r, bins):
         # this generates indices for all i<j combinations

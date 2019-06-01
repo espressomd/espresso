@@ -33,34 +33,34 @@ class AnalyzeChain(ut.TestCase):
     num_mono = 5
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         box_l = 20.0
         # start with a small bo
-        self.system.box_l = np.array([box_l, box_l, box_l])
-        self.system.cell_system.set_n_square(use_verlet_lists=False)
+        cls.system.box_l = np.array([box_l, box_l, box_l])
+        cls.system.cell_system.set_n_square(use_verlet_lists=False)
         fene = FeneBond(k=30, d_r_max=2)
-        self.system.bonded_inter.add(fene)
-        positions = polymer.positions(n_polymers=self.num_poly,
+        cls.system.bonded_inter.add(fene)
+        positions = polymer.positions(n_polymers=cls.num_poly,
                                       bond_length=0.9,
-                                      beads_per_chain=self.num_mono,
+                                      beads_per_chain=cls.num_mono,
                                       seed=42)
         for p in positions:
             for ndx, m in enumerate(p):
-                part_id = len(self.system.part)
-                self.system.part.add(id=part_id, pos=m)
+                part_id = len(cls.system.part)
+                cls.system.part.add(id=part_id, pos=m)
                 if ndx > 0:
-                    self.system.part[part_id].add_bond((fene, part_id - 1))
+                    cls.system.part[part_id].add_bond((fene, part_id - 1))
         # bring two polymers to opposite corners:
         # far in centre cell, but mirror images are close
         head_id = 0
-        tail_id = head_id + self.num_mono
-        cm = np.mean(self.system.part[head_id:tail_id].pos, axis=0)
-        self.system.part[head_id:tail_id].pos = self.system.part[
-            head_id:tail_id].pos - cm + self.system.box_l
-        head_id = self.num_mono + 1
-        tail_id = head_id + self.num_mono
-        cm = np.mean(self.system.part[head_id:tail_id].pos, axis=0)
-        self.system.part[head_id:tail_id].pos -= cm
+        tail_id = head_id + cls.num_mono
+        cm = np.mean(cls.system.part[head_id:tail_id].pos, axis=0)
+        cls.system.part[head_id:tail_id].pos = cls.system.part[
+            head_id:tail_id].pos - cm + cls.system.box_l
+        head_id = cls.num_mono + 1
+        tail_id = head_id + cls.num_mono
+        cm = np.mean(cls.system.part[head_id:tail_id].pos, axis=0)
+        cls.system.part[head_id:tail_id].pos -= cm
 
     # python version of the espresso core function,
     # does not check mirror distances

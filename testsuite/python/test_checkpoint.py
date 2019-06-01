@@ -37,12 +37,12 @@ EK = (espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') 
 class CheckpointTest(ut.TestCase):
 
     @classmethod
-    def setUpClass(self):
-        self.checkpoint = espressomd.checkpointing.Checkpoint(
+    def setUpClass(cls):
+        cls.checkpoint = espressomd.checkpointing.Checkpoint(
             checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
                 '.', '__'),
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
-        self.checkpoint.load(0)
+        cls.checkpoint.load(0)
 
     @ut.skipIf(not LB, "Skipping test due to missing features.")
     def test_LB(self):

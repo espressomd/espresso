@@ -28,22 +28,22 @@ class AnalyzeEnergy(ut.TestCase):
     harmonic = HarmonicBond(r_0=0.0, k=3)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         box_l = 20
-        self.system.box_l = [box_l, box_l, box_l]
-        self.system.cell_system.skin = 0.4
-        self.system.time_step = 0.01
-        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        cls.system.box_l = [box_l, box_l, box_l]
+        cls.system.cell_system.skin = 0.4
+        cls.system.time_step = 0.01
+        cls.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0,
             cutoff=2**(1. / 6.), shift="auto")
-        self.system.non_bonded_inter[0, 1].lennard_jones.set_params(
+        cls.system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0,
             cutoff=2**(1. / 6.), shift="auto")
-        self.system.non_bonded_inter[1, 1].lennard_jones.set_params(
+        cls.system.non_bonded_inter[1, 1].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0,
             cutoff=2**(1. / 6.), shift="auto")
-        self.system.thermostat.set_langevin(kT=0., gamma=1., seed=42)
-        self.system.bonded_inter.add(self.harmonic)
+        cls.system.thermostat.set_langevin(kT=0., gamma=1., seed=42)
+        cls.system.bonded_inter.add(cls.harmonic)
 
     def setUp(self):
         self.system.part.clear()

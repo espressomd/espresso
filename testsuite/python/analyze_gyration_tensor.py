@@ -28,23 +28,23 @@ class AnalyzeGyration(ut.TestCase):
     type_stick = 1
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         box_l = 20.0
-        cube_centre = 0.5 * (self.cube_len - 1)
-        self.system.box_l = np.array([box_l, box_l, box_l])
-        self.system.cell_system.set_n_square(use_verlet_lists=False)
+        cube_centre = 0.5 * (cls.cube_len - 1)
+        cls.system.box_l = np.array([box_l, box_l, box_l])
+        cls.system.cell_system.set_n_square(use_verlet_lists=False)
         #4x4 cube
-        for x, y, z in np.ndindex((self.cube_len, self.cube_len, self.cube_len)):
-            self.system.part.add(pos=[x, y, z], type=self.type_cube)
+        for x, y, z in np.ndindex((cls.cube_len, cls.cube_len, cls.cube_len)):
+            cls.system.part.add(pos=[x, y, z], type=cls.type_cube)
         # long stick in z, force z as principal axis
         for x, y, z in np.ndindex((1, 1, 10)):
-            self.system.part.add(
-                pos=[x + cube_centre, y + cube_centre, z + self.cube_len], type=self.type_stick)
+            cls.system.part.add(
+                pos=[x + cube_centre, y + cube_centre, z + cls.cube_len], type=cls.type_stick)
         # two small nubs in y, force y as secondary axis
-        self.system.part.add(
-            pos=[cube_centre, self.cube_len, cube_centre], type=self.type_stick)
-        self.system.part.add(
-            pos=[cube_centre, -1, cube_centre], type=self.type_stick)
+        cls.system.part.add(
+            pos=[cube_centre, cls.cube_len, cube_centre], type=cls.type_stick)
+        cls.system.part.add(
+            pos=[cube_centre, -1, cube_centre], type=cls.type_stick)
 
     def test_gyration_tensor_cube(self):
         # get results

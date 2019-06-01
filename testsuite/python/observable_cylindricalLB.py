@@ -51,11 +51,11 @@ class TestCylindricalLBObservable(ut.TestCase):
     }
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         if espressomd.gpu_available():
-            self.lbf_gpu = espressomd.lb.LBFluidGPU(
+            cls.lbf_gpu = espressomd.lb.LBFluidGPU(
                 agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
-        self.lbf_cpu = espressomd.lb.LBFluid(
+        cls.lbf_cpu = espressomd.lb.LBFluid(
             agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
 
     def tearDown(self):
