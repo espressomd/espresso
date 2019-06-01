@@ -24,13 +24,13 @@ from __future__ import print_function
 import os
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import espressomd.magnetostatics as magnetostatics
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["SCAFACOS_DIPOLES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["SCAFACOS_DIPOLES"])
 class Scafacos1d2d(ut.TestCase):
 
     def test_scafacos(self):

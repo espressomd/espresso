@@ -19,6 +19,7 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
     from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
@@ -28,8 +29,7 @@ from tests_common import verify_lj_forces
 from numpy import random
 
 
-@ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),
-           "Test requires VIRTUAL_SITES_RELATIVE")
+@utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
 class VirtualSites(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = range(system.cell_system.get_state()["n_nodes"])
@@ -309,7 +309,7 @@ class VirtualSites(ut.TestCase):
         system.cell_system.set_domain_decomposition(use_verlet_lists=False)
         self.run_test_lj()
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"), "skipped due to missing external forces.")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_zz_stress_tensor(self):
         system = self.system
         system.time_step = 0.01

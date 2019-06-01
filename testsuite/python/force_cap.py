@@ -18,12 +18,12 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
-           "Skipped because of LENNARD_JONES ")
+@utx.skipIfMissingFeatures("LENNARD_JONES")
 class ForceCap(ut.TestCase):
 
     """Tests the force capping mechanism.

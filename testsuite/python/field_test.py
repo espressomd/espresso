@@ -18,6 +18,7 @@ from __future__ import print_function
 from itertools import product
 
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -61,7 +62,7 @@ class FieldTest(ut.TestCase):
         np.testing.assert_almost_equal(g_const, np.copy(p.f) / p.mass)
         self.assertAlmostEqual(self.system.analysis.energy()['total'], 0.)
 
-    @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Skipping")
+    @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_linear_electric_potential(self):
         E = np.array([1., 2., 3.])
         phi0 = 4.
@@ -83,7 +84,7 @@ class FieldTest(ut.TestCase):
         self.assertAlmostEqual(self.system.analysis.energy()['total'],
                                self.system.analysis.energy()['external_fields'])
 
-    @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Skipping")
+    @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_electric_plane_wave(self):
         E0 = np.array([1., -2., 3.])
         k = np.array([-.1, .2, 0.3])
@@ -156,7 +157,7 @@ class FieldTest(ut.TestCase):
             np.testing.assert_allclose(
                 np.copy(p.f), scaling * self.force(x), rtol=1e-5)
 
-    @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Skipping")
+    @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_electric_potential_field(self):
         h = np.array([.2, .2, .2])
         box = np.array([10., 10., 10.])

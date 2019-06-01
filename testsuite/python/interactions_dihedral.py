@@ -18,6 +18,7 @@
 #
 from __future__ import print_function, division
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -167,8 +168,7 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_almost_equal(f2_sim_copy, f2_ref)
 
     # Test Tabulated Dihedral Angle
-    @ut.skipIf(not espressomd.has_features(["TABULATED"]),
-               "TABULATED feature is not available, skipping tabulated test.")
+    @utx.skipIfMissingFeatures(["TABULATED"])
     def test_tabulated_dihedral(self):
         N = 111
         d_phi = 2 * np.pi / N

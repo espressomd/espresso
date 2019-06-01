@@ -17,15 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+import unittest_decorators as utx
 import tests_common
 import espressomd
 
-if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
-    from espressomd.electrostatics import MMM1D
 
-
-@ut.skipIf(not espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"), "Skipped because of feature turned off.")
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
 class ElectrostaticInteractionsTests(ut.TestCase):
+    from espressomd.electrostatics import MMM1D
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
@@ -39,12 +38,11 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             self.system.part[0].q = 1
             self.system.part[1].q = -1
 
-    if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
-        test_mmm1d = tests_common.generate_test_for_class(system,
-            MMM1D, dict(prefactor=2.0,
-                        maxPWerror=0.001,
-                        far_switch_radius=3,
-                        tune=False))
+    test_mmm1d = tests_common.generate_test_for_class(system,
+        MMM1D, dict(prefactor=2.0,
+                    maxPWerror=0.001,
+                    far_switch_radius=3,
+                    tune=False))
 
 
 if __name__ == "__main__":

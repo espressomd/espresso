@@ -18,11 +18,12 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features("TABULATED"), "Skipped because feature is disabled")
+@utx.skipIfMissingFeatures("TABULATED")
 class TabulatedTest(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]

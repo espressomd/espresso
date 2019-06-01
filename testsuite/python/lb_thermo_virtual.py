@@ -19,11 +19,11 @@ import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features(["VIRTUAL_SITES"]),
-           "Features not available, skipping test.")
+@utx.skipIfMissingFeatures(["VIRTUAL_SITES"])
 class LBBoundaryThermoVirtualTest(ut.TestCase):
 
     """Test slip velocity of boundaries.
@@ -86,10 +86,7 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
     def test_lb_cpu(self):
         self.check_virtual(espressomd.lb.LBFluid)
 
-    @ut.skipIf(
-        not espressomd.gpu_available() or not espressomd.has_features(
-            ["CUDA"]),
-               "Features or gpu not available, skipping test.")
+    @utx.skipIfMissingGPU()
     def test_lb_gpu(self):
         self.check_virtual(espressomd.lb.LBFluidGPU)
 

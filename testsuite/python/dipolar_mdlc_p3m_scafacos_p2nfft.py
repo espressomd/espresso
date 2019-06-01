@@ -27,11 +27,11 @@ import espressomd.magnetostatics as magnetostatics
 import espressomd.magnetostatic_extensions as magnetostatic_extensions
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 from tests_common import abspath
 
 
-@ut.skipIf(not espressomd.has_features(["DIPOLES", "FFTW"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["DIPOLES", "FFTW"])
 class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
     """Tests mdlc (2d)  as well as dipolar p3m and dipolar p2nfft (3d) against stored data.
        Validity of the stored data:
@@ -141,8 +141,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part.clear()
         del s.actors[0]
 
-    @ut.skipIf(not espressomd.has_features("SCAFACOS_DIPOLES"),
-               "Skipped, because test requires SCAFACOS_DIPOLES")
+    @utx.skipIfMissingFeatures("SCAFACOS_DIPOLES")
     def test_scafacos_dipoles(self):
         s = self.s
         s.part.clear()

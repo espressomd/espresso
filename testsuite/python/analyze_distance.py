@@ -16,13 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 
 BOX_L = 50.
 
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
+@utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeDistance(ut.TestCase):
     system = espressomd.System(box_l=3 * [BOX_L])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]

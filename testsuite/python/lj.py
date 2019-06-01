@@ -20,11 +20,11 @@ from __future__ import print_function
 import espressomd
 import numpy
 import unittest as ut
+import unittest_decorators as utx
 from tests_common import abspath
 
 
-@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class LennardJonesTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     data = numpy.loadtxt(abspath('data/lj_system.dat'))

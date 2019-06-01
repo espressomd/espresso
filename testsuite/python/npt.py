@@ -18,14 +18,14 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 from espressomd import thermostat
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["NPT", "LENNARD_JONES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["NPT", "LENNARD_JONES"])
 class NPTintegrator(ut.TestCase):
 
     """This compares pressure and compressibility of a LJ system against expected values."""

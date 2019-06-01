@@ -19,13 +19,12 @@
 from __future__ import print_function
 import espressomd
 import unittest as ut
+import unittest_decorators as utx
 from tests_common import params_match
 
 
-@ut.skipIf(
-    not espressomd.gpu_available() or not espressomd.has_features(
-        ["ELECTROSTATICS", "CUDA"]),
-           "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures("ELECTROSTATICS")
 class P3MGPU_test(ut.TestCase):
 
     def test(self):

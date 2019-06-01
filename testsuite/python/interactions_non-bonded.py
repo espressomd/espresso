@@ -20,6 +20,7 @@ from __future__ import print_function
 import espressomd
 import numpy
 import unittest as ut
+import unittest_decorators as utx
 import tests_common
 
 
@@ -62,8 +63,7 @@ class InteractionsNonBondedTest(ut.TestCase):
     #
 
     # Test Generic Lennard-Jones Potential
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES_GENERIC"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("LENNARD_JONES_GENERIC")
     def test_lj_generic(self):
 
         lj_eps = 2.12
@@ -108,8 +108,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=0.)
 
     # Test WCA Potential
-    @ut.skipIf(not espressomd.has_features("WCA"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("WCA")
     def test_wca(self):
         wca_eps = 2.12
         wca_sig = 1.37
@@ -149,8 +148,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=0., sigma=1.)
 
     # Test Generic Lennard-Jones Softcore Potential
-    @ut.skipIf(not espressomd.has_features("LJGEN_SOFTCORE"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("LJGEN_SOFTCORE")
     def test_lj_generic_softcore(self):
 
         lj_eps = 2.12
@@ -196,8 +194,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=0.)
 
     # Test Lennard-Jones Potential
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_lj(self):
 
         lj_eps = 1.92
@@ -234,8 +231,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=0.)
 
     # Test Lennard-Jones Cosine Potential
-    @ut.skipIf(not espressomd.has_features("LJCOS"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("LJCOS")
     def test_lj_cos(self):
 
         ljcos_eps = 3.32
@@ -273,8 +269,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             0, 0].lennard_jones_cos.set_params(epsilon=0.)
 
     # Test Lennard-Jones Cosine^2 Potential
-    @ut.skipIf(not espressomd.has_features("LJCOS2"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("LJCOS2")
     def test_lj_cos2(self):
 
         ljcos2_eps = 0.31
@@ -312,8 +307,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             0, 0].lennard_jones_cos2.set_params(epsilon=0.)
 
     # Test Smooth-step Potential
-    @ut.skipIf(not espressomd.has_features("SMOOTH_STEP"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("SMOOTH_STEP")
     def test_smooth_step(self):
 
         sst_eps = 4.92
@@ -351,8 +345,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].smooth_step.set_params(d=0., eps=0.)
 
     # Test BMHTF Potential
-    @ut.skipIf(not espressomd.has_features("BMHTF_NACL"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("BMHTF_NACL")
     def test_bmhtf(self):
 
         bmhtf_a = 3.92
@@ -392,8 +385,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].bmhtf.set_params(a=0., c=0., d=0.)
 
     # Test Morse Potential
-    @ut.skipIf(not espressomd.has_features("MORSE"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("MORSE")
     def test_morse(self):
 
         m_eps = 1.92
@@ -431,8 +423,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].morse.set_params(eps=0.)
 
     # Test Buckingham Potential
-    @ut.skipIf(not espressomd.has_features("BUCKINGHAM"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("BUCKINGHAM")
     def test_buckingham(self):
 
         b_a = 3.71
@@ -475,8 +466,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             0, 0].buckingham.set_params(a=0., c=0., d=0., shift=0.)
 
     # Test Soft-sphere Potential
-    @ut.skipIf(not espressomd.has_features("SOFT_SPHERE"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("SOFT_SPHERE")
     def test_soft_sphere(self):
         ss_a = 1.92
         ss_n = 3.03
@@ -514,8 +504,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].soft_sphere.set_params(a=0.)
 
     # Test Hertzian Potential
-    @ut.skipIf(not espressomd.has_features("HERTZIAN"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("HERTZIAN")
     def test_hertzian(self):
 
         h_eps = 6.92
@@ -550,8 +539,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].hertzian.set_params(eps=0.)
 
     # Test Gaussian Potential
-    @ut.skipIf(not espressomd.has_features("GAUSSIAN"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("GAUSSIAN")
     def test_gaussian(self):
 
         g_eps = 6.92
@@ -586,7 +574,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         self.system.non_bonded_inter[0, 0].gaussian.set_params(eps=0.)
 
-    @ut.skipIf(not espressomd.has_features("GAY_BERNE"), "skipped for lack of Gay Berne")
+    @utx.skipIfMissingFeatures("GAY_BERNE")
     def test_gb(self):
         k_1 = 1.2
         k_2 = 2.4

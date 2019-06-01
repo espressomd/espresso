@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 from numpy.random import random
 import numpy as np
 
@@ -25,12 +26,8 @@ import espressomd.magnetostatics
 import espressomd.analyze
 
 
-@ut.skipIf(
-    not espressomd.gpu_available() or not espressomd.has_features(["DIPOLES",
-                                                                   "CUDA",
-                                                                   "PARTIAL_PERIODIC",
-                                                                   "ROTATION"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["DIPOLES", "PARTIAL_PERIODIC", "ROTATION"])
 class DDSGPUTest(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])

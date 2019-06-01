@@ -19,13 +19,14 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 from espressomd.interactions import HarmonicBond, AngleHarmonic
 import numpy as np
 from random import shuffle
 
 
-@ut.skipIf(not espressomd.has_features("COLLISION_DETECTION"), "Required features not compiled in")
+@utx.skipIfMissingFeatures("COLLISION_DETECTION")
 class CollisionDetection(ut.TestCase):
 
     """Tests interface and functionality of the collision detection / dynamic binding"""
@@ -219,7 +220,7 @@ class CollisionDetection(ut.TestCase):
             dist -= np.round(dist / self.s.box_l) * self.s.box_l
             self.assertLess(np.linalg.norm(dist), 1E-12)
 
-    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
+    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_bind_at_point_of_collision(self):
         # Single collision head node
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0, 0, 0)))
@@ -242,7 +243,7 @@ class CollisionDetection(ut.TestCase):
         self.run_test_bind_at_point_of_collision_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES", "VIRTUAL_SITES_RELATIVE"), "Skipping for lack of LJ potential")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES", "VIRTUAL_SITES_RELATIVE"])
     def test_bind_at_point_of_collision_random(self):
         """Integrate lj liquid and check that no double bonds are formed
            and the number of bonds fits the number of virtual sites
@@ -450,7 +451,7 @@ class CollisionDetection(ut.TestCase):
         self.assertGreater(np.dot(self.s.distance_vec(base_p, vs), self.s.distance_vec(base_p, bound_p))
                            / self.s.distance(base_p, vs) / self.s.distance(base_p, bound_p), 0.99)
 
-    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "Skipped due to missing VIRTUAL_SITES_RELATIVE")
+    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_glue_to_surface(self):
         # Single collision head node
         self.run_test_glue_to_surface_for_pos(np.array((0, 0, 0)))
@@ -472,7 +473,7 @@ class CollisionDetection(ut.TestCase):
         self.run_test_glue_to_surface_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
-    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
+    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_glue_to_surface_random(self):
         """Integrate lj liquid and check that no double bonds are formed
            and the number of bonds fits the number of virtual sites

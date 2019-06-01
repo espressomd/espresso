@@ -18,10 +18,11 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 
 
-@ut.skipIf(not espressomd.has_features("HAT"), "Skipped because feature is disabled")
+@utx.skipIfMissingFeatures("HAT")
 class HatTest(ut.TestCase):
 
     def force(self, F_max, r_cut, r):

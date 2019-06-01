@@ -19,13 +19,13 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 from espressomd.interactions import RigidBond
 
 
-@ut.skipIf(not espressomd.has_features("BOND_CONSTRAINT"),
-           "Test requires BOND_CONSTRAINT feature")
+@utx.skipIfMissingFeatures("BOND_CONSTRAINT")
 class RigidBondTest(ut.TestCase):
 
     def test(self):

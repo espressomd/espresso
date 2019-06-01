@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import division, print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 from espressomd.shapes import SimplePore, Cylinder
 
@@ -27,8 +28,7 @@ from espressomd.shapes import SimplePore, Cylinder
 # leading to force jumps.
 
 
-@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class SimplePoreConstraint(ut.TestCase):
 
     def test_orientation(self):

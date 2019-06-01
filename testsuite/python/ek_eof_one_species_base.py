@@ -17,6 +17,7 @@
 
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import sys
 import math
 import numpy as np
@@ -104,10 +105,8 @@ def bisection(params):
     return pntm
 
 
-@ut.skipIf(
-    not espressomd.gpu_available() or not espressomd.has_features(
-        ["ELECTROKINETICS", "EK_BOUNDARIES"]),
-           "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["ELECTROKINETICS", "EK_BOUNDARIES"])
 class ek_eof_one_species(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]

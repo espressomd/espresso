@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 from numpy.random import uniform
 import espressomd
@@ -23,11 +24,8 @@ import math
 import random
 
 
-@ut.skipIf(not espressomd.has_features(["MASS",
-                                        "PARTICLE_ANISOTROPY",
-                                        "ROTATIONAL_INERTIA",
-                                        "LANGEVIN_PER_PARTICLE"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["MASS", "PARTICLE_ANISOTROPY",
+                            "ROTATIONAL_INERTIA", "LANGEVIN_PER_PARTICLE"])
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system

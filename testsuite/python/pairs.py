@@ -16,11 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 
 
-@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class PairTest(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
@@ -77,8 +77,7 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
-    @ut.skipIf(not espressomd.has_features(["PARTIAL_PERIODIC"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_nsquare_partial_z(self):
         self.s.cell_system.set_n_square()
         self.s.periodicity = 1, 1, 0
@@ -98,8 +97,7 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
-    @ut.skipIf(not espressomd.has_features(["PARTIAL_PERIODIC"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_dd_partial_z(self):
         self.s.cell_system.set_domain_decomposition()
         self.s.periodicity = 1, 1, 0
@@ -118,8 +116,7 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
-    @ut.skipIf(not espressomd.has_features(["PARTIAL_PERIODIC"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_layered_partial_z(self):
         self.s.cell_system.set_layered()
         self.s.periodicity = 1, 1, 0

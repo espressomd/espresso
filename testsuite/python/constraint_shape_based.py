@@ -17,6 +17,7 @@
 from __future__ import division, print_function
 
 import unittest as ut
+import unittest_decorators as utx
 import numpy
 import math
 
@@ -26,8 +27,7 @@ import espressomd.shapes
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["LENNARD_JONES_GENERIC"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LENNARD_JONES_GENERIC"])
 class ShapeBasedConstraintTest(ut.TestCase):
 
     box_l = 30.

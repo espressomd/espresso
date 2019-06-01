@@ -23,6 +23,7 @@ Testmodule for the H5MD interface.
 import os
 import sys
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd  # pylint: disable=import-error
 import h5py  # h5py has to be imported *after* espressomd (MPI)
@@ -113,10 +114,7 @@ class CommonTests(ut.TestCase):
             np.array([x for (_, x) in sorted(zip(self.py_id, self.py_vel))])),
             msg="Velocities not written correctly by H5md!")
 
-    @ut.skipIf(
-        not espressomd.has_features(
-            ['EXTERNAL_FORCES']),
-        "EXTERNAL_FORCES not compiled in, can not check writing forces.")
+    @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
     def test_f(self):
         """Test if forces have been written properly."""
         self.assertTrue(np.allclose(
@@ -135,8 +133,7 @@ class CommonTests(ut.TestCase):
             self.assertEqual(bond[1], i + 1)
 
 
-@ut.skipIf(not espressomd.has_features(['H5MD']),
-           "H5MD not compiled in, can not check functionality.")
+@utx.skipIfMissingFeatures(['H5MD'])
 class H5mdTestOrdered(CommonTests):
 
     """
@@ -177,8 +174,7 @@ class H5mdTestOrdered(CommonTests):
             self.py_id), msg="ids correctly ordered and written by H5md!")
 
 
-@ut.skipIf(not espressomd.has_features(['H5MD']),
-           "H5MD not compiled in, can not check functionality.")
+@utx.skipIfMissingFeatures(['H5MD'])
 class H5mdTestUnordered(CommonTests):
 
     """

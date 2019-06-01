@@ -16,13 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["MASS", "ROTATIONAL_INERTIA"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["MASS", "ROTATIONAL_INERTIA"])
 class RotationalInertia(ut.TestCase):
     longMessage = True
     # Handle for espresso system

@@ -17,6 +17,7 @@
 
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 from espressomd import electrokinetics
 import numpy as np
@@ -28,10 +29,8 @@ import math
 #Build a fluctuating ek species.
 
 
-@ut.skipIf(not espressomd.gpu_available() or 
-           not espressomd.has_features(
-    ["ELECTROKINETICS"]),
-    "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["ELECTROKINETICS"])
 class ek_fluctuations(ut.TestCase):
 
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])

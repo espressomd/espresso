@@ -19,10 +19,10 @@ import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
 import unittest as ut
+import unittest_decorators as utx
 
 
-@ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES"]),
-           "Features not available, skipping test.")
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 class LBBoundaryVelocityTest(ut.TestCase):
 
     """Test slip velocity of boundaries.

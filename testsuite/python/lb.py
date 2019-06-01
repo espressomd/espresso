@@ -18,6 +18,7 @@ from __future__ import print_function
 
 import itertools
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -274,8 +275,7 @@ class TestLB(object):
         print("End of LB error messages", file=sys.stderr)
         sys.stderr.flush()
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
@@ -300,8 +300,7 @@ class TestLB(object):
         np.testing.assert_allclose(
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_a_ext_force_density(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
@@ -332,19 +331,14 @@ class TestLBCPU(TestLB, ut.TestCase):
         self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
 
 
-@ut.skipIf(
-    not espressomd.gpu_available() or 
-    not espressomd.has_features(
-        ["CUDA"]),
-    "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
 class TestLBGPU(TestLB, ut.TestCase):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidGPU
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling_higher_order_interpolation(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()

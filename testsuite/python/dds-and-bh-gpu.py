@@ -17,6 +17,7 @@
 from __future__ import print_function
 
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 from numpy import linalg as la
 from numpy.random import random, seed
@@ -32,7 +33,8 @@ def stopAll(system):
     system.part[:].omega_body = np.zeros(3)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["DIPOLAR_BARNES_HUT"]), "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["DIPOLAR_BARNES_HUT"])
 class BH_DDS_gpu_multCPU_test(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
     # just some seeding based on 14

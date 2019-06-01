@@ -17,6 +17,7 @@
 from __future__ import print_function
 
 import unittest as ut
+import unittest_decorators as utx
 import tests_common
 
 import espressomd
@@ -28,12 +29,11 @@ import numpy as np
 try:
     import vtk
 except ImportError:
-    print("Module \"vtk\" not available, skipping test!")
-    exit()
+    pass
 
 
-@ut.skipIf(not espressomd.has_features(["ENGINE"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["ENGINE"])
+@utx.skipIfMissingModules(['vtk'])
 class SwimmerTest(ut.TestCase):
 
     def prepare(self, S):

@@ -18,14 +18,14 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
 from espressomd import electrostatics
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -76,8 +76,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             ((1. / r[i] - B * np.square(r[i]) / (2. * r_cut**3)) - offset)
         return u
         
-    @ut.skipIf(not espressomd.has_features(["P3M"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["P3M"])
     def test_p3m(self):
         prefactor = 1.1
         self.system.part[0].pos = [1.0, 2.0, 2.0]

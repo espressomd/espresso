@@ -17,16 +17,13 @@
 import sys
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import espressomd.observables
 import espressomd.lb
 import tests_common
 
 
-@ut.skipIf(
-    not (espressomd.has_features(
-         'CUDA')),
-           "Both LB and CUDA not compiled in, can not check functionality.")
 class TestCylindricalLBObservable(ut.TestCase):
 
     """
@@ -55,7 +52,7 @@ class TestCylindricalLBObservable(ut.TestCase):
 
     @classmethod
     def setUpClass(self):
-        if espressomd.has_features('CUDA'):
+        if espressomd.gpu_available():
             self.lbf_gpu = espressomd.lb.LBFluidGPU(
                 agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
         self.lbf_cpu = espressomd.lb.LBFluid(
@@ -298,7 +295,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_velocity_profile_at_particle_positions_test()
         self.system.actors.remove(self.lbf)
 
-    @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features('CUDA'), "CUDA not compiled in, skipping test.")
+    @utx.skipIfMissingGPU()
     def test_x_axis_gpu(self):
         self.params['axis'] = 'x'
         self.lbf = self.lbf_gpu
@@ -308,7 +305,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_velocity_profile_test()
         self.system.actors.remove(self.lbf)
 
-    @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features('CUDA'), "CUDA not compiled in or no gpu present, skipping test.")
+    @utx.skipIfMissingGPU()
     def test_y_axis_gpu(self):
         self.params['axis'] = 'y'
         self.lbf = self.lbf_gpu
@@ -318,7 +315,7 @@ class TestCylindricalLBObservable(ut.TestCase):
         self.LB_velocity_profile_test()
         self.system.actors.remove(self.lbf)
 
-    @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features('CUDA'), "CUDA not compiled in, skipping test.")
+    @utx.skipIfMissingGPU()
     def test_z_axis_gpu(self):
         self.params['axis'] = 'z'
         self.lbf = self.lbf_gpu

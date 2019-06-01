@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -23,8 +24,7 @@ import espressomd.electrostatics
 from espressomd import electrostatic_extensions
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "PARTIAL_PERIODIC"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
 class ELC_vs_MMM2D_neutral(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])

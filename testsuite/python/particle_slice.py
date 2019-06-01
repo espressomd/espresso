@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 from espressomd import has_features
 import numpy as np
@@ -44,39 +45,27 @@ class ParticleSliceTest(ut.TestCase):
         for i in range(len(xs)):
             self.assertTrue(np.array_equal(xs[i], self.system.part[i].pos))
 
-    @ut.skipIf(
-        not has_features(
-            ["EXTERNAL_FORCES"]),
-        "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_1_set_different_values(self):
         self.state[0] = [1, 0, 0]
         self.state[1] = [1, 0, 0]
         self.system.part[:2].fix = self.state
         self.assertTrue(np.array_equal(self.system.part[:2].fix, self.state))
 
-    @ut.skipIf(
-        not has_features(
-            ["EXTERNAL_FORCES"]),
-        "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_2_set_same_value(self):
         self.state[0] = [0, 1, 0]
         self.state[1] = [0, 1, 0]
         self.system.part[:2].fix = self.state[1]
         self.assertTrue(np.array_equal(self.system.part[:2].fix, self.state))
 
-    @ut.skipIf(
-        not has_features(
-            ["EXTERNAL_FORCES"]),
-        "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_3_set_one_value(self):
         self.state[1] = [0, 0, 1]
         self.system.part[1:2].fix = self.state[1]
         self.assertTrue(np.array_equal(self.system.part[:2].fix, self.state))
 
-    @ut.skipIf(
-        not has_features(
-            ["EXTERNAL_FORCES"]),
-        "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_4_str(self):
         self.assertEqual(
             repr(self.system.part[0].fix), repr(np.array([0, 1, 0])))
@@ -91,10 +80,7 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(repr(self.system.part[:2].pos), repr(
             np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 1.0]])))
 
-    @ut.skipIf(
-        not has_features(
-            ["ELECTROSTATICS"]),
-        "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_scalar(self):
         self.system.part[:1].q = 1.3
         self.assertEqual(self.system.part[0].q, 1.3)
@@ -260,10 +246,7 @@ class ParticleSliceTest(ut.TestCase):
     def cmp_array_like(self, A, B):
         return all(a.tolist() == b for a, b in zip(A, B))
 
-    @ut.skipIf(
-        not has_features(
-            ["EXCLUSIONS"]),
-        "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["EXCLUSIONS"])
     def test_exclusions(self):
 
         # Setter
@@ -355,8 +338,7 @@ class ParticleSliceTest(ut.TestCase):
         self.assertTrue(self.cmp_array_like(
             self.system.part[:].exclusions, [[], [], [], []]))
 
-    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_vs_relative(self):
 
         self.system.part.clear()

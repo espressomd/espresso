@@ -16,11 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features(["LB_ELECTROHYDRODYNAMICS"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
 class LBEHTest(ut.TestCase):
     from espressomd import lb
     s = espressomd.System(box_l=[6.0, 6.0, 6.0])

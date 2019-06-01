@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 
 import espressomd
 import espressomd.electrostatics
@@ -23,9 +24,10 @@ import espressomd.interactions
 from espressomd import drude_helpers
 
 
+@utx.skipIfMissingFeatures(["P3M", "ELECTROSTATICS", "THOLE",
+                            "LANGEVIN_PER_PARTICLE", "MASS"])
 class Drude(ut.TestCase):
 
-    @ut.skipIf(not espressomd.has_features("P3M", "ELECTROSTATICS", "THOLE", "LANGEVIN_PER_PARTICLE", "MASS"), "Test needs P3M, ELECTROSTATICS, THOLE and LANGEVIN_PER_PARTICLE")
     def test(self):
         """
         Sets up a BMIM PF6 pair separated in y-direction with fixed cores.

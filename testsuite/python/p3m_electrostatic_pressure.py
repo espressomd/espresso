@@ -18,6 +18,7 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import numpy.testing as npt
 
@@ -66,8 +67,7 @@ class pressureViaVolumeScaling(object):
         return pressure
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "LENNARD_JONES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "LENNARD_JONES"])
 class VirialPressureConsistency(ut.TestCase):
 
     """Test the consistency of the core implementation of the virial pressure with an analytical relation which allows

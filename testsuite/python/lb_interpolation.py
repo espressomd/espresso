@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import itertools
 
@@ -100,7 +101,7 @@ class LBInterpolation(object):
             self.system.integrator.run(1)
         
 
-@ut.skipIf(not espressomd.has_features(['LB_BOUNDARIES']), "Skipped, features missing.")
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
 class LBInterpolationCPU(ut.TestCase, LBInterpolation):
 
     def setUp(self):
@@ -109,7 +110,8 @@ class LBInterpolationCPU(ut.TestCase, LBInterpolation):
         self.system.actors.add(self.lbf)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(['CUDA', 'LB_BOUNDARIES_GPU']), "Skipped, features or gpu missing.")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
 class LBInterpolationGPU(ut.TestCase, LBInterpolation):
 
     def setUp(self):

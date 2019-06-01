@@ -19,6 +19,7 @@
 from __future__ import print_function
 
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -79,8 +80,7 @@ class InteractionsBondedTest(ut.TestCase):
                       scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
                       0.01, fene_r_0 + fene_d_r_max, True)
 
-    @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
-               "ELECTROSTATICS feature is not available, skipping coulomb test.")
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_coulomb(self):
         coulomb_k = 1
         q1 = 1
@@ -93,8 +93,7 @@ class InteractionsBondedTest(ut.TestCase):
             lambda r: tests_common.coulomb_potential(r, coulomb_k, q1, q2),
             0.01, self.system.box_l[0] / 3)
         
-    @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
-               "ELECTROSTATICS feature is not available, skipping coulomb short range test.")
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_coulomb_sr(self):
         # with negated actual charges and only short range int: cancels out all
         # interactions

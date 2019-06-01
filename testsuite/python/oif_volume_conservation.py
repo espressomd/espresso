@@ -16,10 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd
 import unittest as ut
+import unittest_decorators as utx
 from tests_common import abspath
 
 
-@ut.skipIf(not espressomd.has_features("MEMBRANE_COLLISION", "OIF_LOCAL_FORCES", "OIF_GLOBAL_FORCES"), "OIF featues not compiled in.")
+@utx.skipIfMissingFeatures(["MEMBRANE_COLLISION", "OIF_LOCAL_FORCES",
+                            "OIF_GLOBAL_FORCES"])
 class OifVolumeConservation(ut.TestCase):
 
     """Loads a soft elastic sphere via object_in_fluid, stretches it and checks resotration of original volume due to elastic forces."""

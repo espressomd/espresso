@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 import espressomd.interactions
@@ -23,8 +24,7 @@ import espressomd.interactions
 COULOMB_PREFACTOR = 1.3
 
 
-@ut.skipIf(not espressomd.has_features(["THOLE", "EXTERNAL_FORCES", "P3M"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["THOLE", "EXTERNAL_FORCES", "P3M"])
 class TestThole(ut.TestCase):
 
     """

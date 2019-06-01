@@ -18,17 +18,14 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 from espressomd import lb
 
 from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
-required_features = "VIRTUAL_SITES_INERTIALESS_TRACERS"
-
-
-@ut.skipIf(not espressomd.has_features(required_features),
-           "Test requires VIRTUAL_SITES_INERTIALESS_TRACERS")
+@utx.skipIfMissingFeatures(['VIRTUAL_SITES_INERTIALESS_TRACERS'])
 class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
     
     def setUp(self):

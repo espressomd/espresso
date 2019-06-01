@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import itertools
 import numpy as np
 
@@ -115,10 +116,7 @@ class LBCPU(ut.TestCase, LBStreamingCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
 
 
-@ut.skipIf(not espressomd.gpu_available() or 
-           not espressomd.has_features(
-    'CUDA'),
-    "Skipping test due to missing features.")
+@utx.skipIfMissingGPU()
 class LBGPU(ut.TestCase, LBStreamingCommon):
 
     """Test for the GPU implementation of the LB."""

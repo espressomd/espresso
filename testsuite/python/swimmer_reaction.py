@@ -15,19 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
-from espressomd import has_features
-if(has_features(["SWIMMER_REACTIONS"])):
-    from espressomd.swimmer_reaction import Reaction
 
 
-@ut.skipIf(not has_features(["SWIMMER_REACTIONS"]),
-           "Features missing")
+@utx.skipIfMissingFeatures(["SWIMMER_REACTIONS"])
 class ReactionTest(ut.TestCase):
 
     def test_reaction(self):
+        from espressomd.swimmer_reaction import Reaction
         system = espressomd.System(box_l=[10.0, 10.0, 10.0])
         system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 

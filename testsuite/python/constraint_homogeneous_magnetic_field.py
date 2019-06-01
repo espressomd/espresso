@@ -17,6 +17,7 @@
 from __future__ import division, print_function
 
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -55,8 +56,7 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
             np.copy(H_constraint.H),
             H_field_default)
 
-    @ut.skipIf(not espressomd.has_features(["DIPOLES"]),
-               "Features DIPOLES not available, skipping test!")
+    @utx.skipIfMissingFeatures(["DIPOLES"])
     def test_add_energy_and_forces(self):
         H_field = [5.0, 3.0, 2.0]
         dip_mom0 = [2.0, 6.0, 1.]

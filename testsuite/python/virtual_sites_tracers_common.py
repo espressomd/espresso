@@ -17,13 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function
-import unittest as ut
+import unittest_decorators as utx
 import espressomd
 from espressomd import lb, shapes, lbboundaries
 import numpy as np
 try:
     from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
-except:
+except ImportError:
     pass
 from espressomd.utils import handle_errors
 
@@ -113,7 +113,7 @@ class VirtualSitesTracersCommon(object):
         alpha = np.arccos(np.dot(n1, n2))
         return alpha
 
-    @ut.skipIf(not espressomd.has_features("IMMERSED_BOUNDARY"), "skipped for lack of IMMERSED_BOUNDARY")
+    @utx.skipIfMissingFeatures("IMMERSED_BOUNDARY")
     def test_tribend(self):
         self.system.actors.clear()
         # two triangles with bending interaction
@@ -164,7 +164,7 @@ class VirtualSitesTracersCommon(object):
             last_angle = angle
         self.assertLess(angle, 0.03)
 
-    @ut.skipIf(not espressomd.has_features("IMMERSED_BOUNDARY"), "skipped for lack of IMMERSED_BOUNDARY")
+    @utx.skipIfMissingFeatures("IMMERSED_BOUNDARY")
     def test_triel(self):
         self.system.actors.clear()
         system = self.system

@@ -29,6 +29,7 @@
 import espressomd
 from espressomd import lb, lbboundaries, shapes, has_features
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 # Define the LB Parameters
@@ -120,16 +121,15 @@ class Stokes(object):
             atol=stokes_force * 0.03)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['CUDA', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
 class LBGPUStokes(ut.TestCase, Stokes):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
 class LBCPUStokes(ut.TestCase, Stokes):
 
     def setUp(self):

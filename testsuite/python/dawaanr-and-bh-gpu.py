@@ -17,6 +17,7 @@
 from __future__ import print_function
 
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -30,7 +31,8 @@ def stopAll(system):
     system.part[:].omega_body = np.zeros(3)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["DIPOLAR_BARNES_HUT"]), "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["DIPOLAR_BARNES_HUT"])
 class BHGPUTest(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]

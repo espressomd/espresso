@@ -18,6 +18,7 @@
 from __future__ import print_function
 
 import unittest as ut
+import unittest_decorators as utx
 
 import espressomd
 from espressomd.interactions import HarmonicBond
@@ -89,8 +90,7 @@ def stress_nonbonded_intra(particle_pairs, box_l):
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 
-@ut.skipIf(not espressomd.has_features(['LENNARD_JONES']),
-           'Features not available, skipping test!')
+@utx.skipIfMissingFeatures(['LENNARD_JONES'])
 class Stress(ut.TestCase):
 
     def test(self):
@@ -232,8 +232,7 @@ class Stress(ut.TestCase):
             atol=1E-10)
 
 
-@ut.skipIf(not espressomd.has_features(['EXTERNAL_FORCES']),
-           'Features not available, skipping test!')
+@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
 class StressFENE(ut.TestCase):
 
     def get_anal_stress_fene(self, pos_1, pos_2, k, d_r_max, r_0):

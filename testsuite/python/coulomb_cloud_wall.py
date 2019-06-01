@@ -20,6 +20,7 @@
 from __future__ import print_function
 import os
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -29,8 +30,7 @@ from espressomd import scafacos
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class CoulombCloudWall(ut.TestCase):
 
     """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft
@@ -103,41 +103,39 @@ class CoulombCloudWall(ut.TestCase):
 
     # Tests for individual methods
 
-    if espressomd.has_features(["P3M"]):
-        def test_p3m_direct_caf(self):
-            """
-            This checks P3M with using the charge assignment
-            function (window function) directly by setting the
-            `inter` parameter to zero.
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_p3m_direct_caf(self):
+        """
+        This checks P3M with using the charge assignment
+        function (window function) directly by setting the
+        `inter` parameter to zero.
 
-            """
+        """
 
-            self.S.actors.add(
-                espressomd.electrostatics.P3M(
-                    prefactor=3, r_cut=1.001, accuracy=1e-3,
-                                              mesh=64, cao=7, alpha=2.70746, tune=False, inter=0))
-            self.S.integrator.run(0)
-            self.compare("p3m", energy=True, prefactor=3)
+        self.S.actors.add(
+            espressomd.electrostatics.P3M(
+                prefactor=3, r_cut=1.001, accuracy=1e-3,
+                                          mesh=64, cao=7, alpha=2.70746, tune=False, inter=0))
+        self.S.integrator.run(0)
+        self.compare("p3m", energy=True, prefactor=3)
 
-        def test_p3m_interpolated_caf(self):
-            """
-            This checks P3M with using an interpolated charge assignment
-            function (window function), which is the default.
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_p3m_interpolated_caf(self):
+        """
+        This checks P3M with using an interpolated charge assignment
+        function (window function), which is the default.
 
-            """
+        """
 
-            self.S.actors.add(
-                espressomd.electrostatics.P3M(
-                    prefactor=3, r_cut=1.001, accuracy=1e-3,
-                                              mesh=64, cao=7, alpha=2.70746, tune=False))
-            self.S.integrator.run(0)
-            self.compare("p3m", energy=True, prefactor=3)
+        self.S.actors.add(
+            espressomd.electrostatics.P3M(
+                prefactor=3, r_cut=1.001, accuracy=1e-3,
+                                          mesh=64, cao=7, alpha=2.70746, tune=False))
+        self.S.integrator.run(0)
+        self.compare("p3m", energy=True, prefactor=3)
 
-    @ut.skipIf(not espressomd.gpu_available(), "no gpu")
+    @utx.skipIfMissingGPU(skip_ci_amd=True)
     def test_p3m_gpu(self):
-            if str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
-                print("skipping test on amd gpu")
-                return
             self.S.actors.add(
                 espressomd.electrostatics.P3MGPU(
                     prefactor=2.2,
@@ -150,32 +148,35 @@ class CoulombCloudWall(ut.TestCase):
             self.S.integrator.run(0)
             self.compare("p3m_gpu", energy=False, prefactor=2.2)
 
-    if espressomd.has_features(["SCAFACOS"]):
-        if "p3m" in scafacos.available_methods():
-            def test_scafacos_p3m(self):
-                self.S.actors.add(
-                    espressomd.electrostatics.Scafacos(
-                        prefactor=0.5,
-                        method_name="p3m",
-                        method_params={
-                            "p3m_r_cut": 1.001,
-                            "p3m_grid": 64,
-                            "p3m_cao": 7,
-                            "p3m_alpha": 2.70746}))
-                self.S.integrator.run(0)
-                self.compare("scafacos_p3m", energy=True, prefactor=0.5)
+    @ut.skipIf(not espressomd.has_features(["SCAFACOS"]) \
+               or 'p3m' not in scafacos.available_methods(),
+               'Skipping test: missing feature SCAFACOS or p3m method')
+    def test_scafacos_p3m(self):
+        self.S.actors.add(
+            espressomd.electrostatics.Scafacos(
+                prefactor=0.5,
+                method_name="p3m",
+                method_params={
+                    "p3m_r_cut": 1.001,
+                    "p3m_grid": 64,
+                    "p3m_cao": 7,
+                    "p3m_alpha": 2.70746}))
+        self.S.integrator.run(0)
+        self.compare("scafacos_p3m", energy=True, prefactor=0.5)
 
-        if "p2nfft" in scafacos.available_methods():
-            def test_scafacos_p2nfft(self):
-                self.S.actors.add(
-                    espressomd.electrostatics.Scafacos(
-                        prefactor=2.8,
-                        method_name="p2nfft",
-                        method_params={
-                            "p2nfft_r_cut": 1.001,
-                            "tolerance_field": 1E-4}))
-                self.S.integrator.run(0)
-                self.compare("scafacos_p2nfft", energy=True, prefactor=2.8)
+    @ut.skipIf(not espressomd.has_features("SCAFACOS") \
+               or 'p2nfft' not in scafacos.available_methods(),
+               'Skipping test: missing feature SCAFACOS or p2nfft method')
+    def test_scafacos_p2nfft(self):
+        self.S.actors.add(
+            espressomd.electrostatics.Scafacos(
+                prefactor=2.8,
+                method_name="p2nfft",
+                method_params={
+                    "p2nfft_r_cut": 1.001,
+                    "tolerance_field": 1E-4}))
+        self.S.integrator.run(0)
+        self.compare("scafacos_p2nfft", energy=True, prefactor=2.8)
 
     def test_zz_deactivation(self):
         # Is the energy and force 0, if no methods active

@@ -19,12 +19,13 @@
 from __future__ import print_function
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 from itertools import product
 
 import espressomd
 from tests_common import single_component_maxwell
 
-@ut.skipIf(not espressomd.has_features("DPD"), "Skipped because feature is disabled")
+@utx.skipIfMissingFeatures("DPD")
 class DPDThermostat(ut.TestCase):
     """Tests the velocity distribution created by the dpd thermostat against
        the single component Maxwell distribution."""

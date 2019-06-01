@@ -20,14 +20,14 @@
 """Testmodule for the Widom Insertion.
 """
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd  # pylint: disable=import-error
 from espressomd import reaction_ensemble
 from tests_common import lj_potential
 
 
-@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class WidomInsertionTest(ut.TestCase):
 
     """Test the implementation of the widom insertion.

@@ -16,14 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 import espressomd.lb
 from itertools import product
 
 
-@ut.skipIf(not espressomd.has_features(["EXTERNAL_FORCES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
 class LBSwitchActor(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 
@@ -84,9 +84,7 @@ class LBSwitchActor(ut.TestCase):
     def test_CPU_LB(self):
         self.switch_test()
 
-    @ut.skipIf((not espressomd.gpu_available() or not espressomd.has_features(["CUDA"])
-                ),
-               "CUDA not available or no gpu present, skipping test.")
+    @utx.skipIfMissingGPU()
     def test_GPU_LB(self):
         self.switch_test(GPU=True)
 

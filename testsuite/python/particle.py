@@ -18,6 +18,7 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 from espressomd.interactions import FeneBond
@@ -181,20 +182,18 @@ class ParticleProperties(ut.TestCase):
                 res[2], np.array(
                     (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
 
-    @ut.skipIf(not espressomd.has_features("DIPOLES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("DIPOLES")
     def test_contradicting_properties_dip_dipm(self):
         with self.assertRaises(ValueError):
             self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1], dipm=1.0)
 
-    @ut.skipIf(not espressomd.has_features("DIPOLES", "ROTATION"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["DIPOLES", "ROTATION"])
     def test_contradicting_properties_dip_quat(self):
         with self.assertRaises(ValueError):
             self.system.part.add(pos=[0, 0, 0], dip=[
                                  1, 1, 1], quat=[1.0, 1.0, 1.0, 1.0])
 
-    @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Test needs ELECTROSTATICS")
+    @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_particle_selection(self):
         s = self.system
         s.part.clear()

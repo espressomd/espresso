@@ -1,15 +1,13 @@
 from __future__ import print_function
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["ROTATION",
-                                        "PARTICLE_ANISOTROPY",
-                                        "ROTATIONAL_INERTIA",
-                                        "DIPOLES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["ROTATION", "PARTICLE_ANISOTROPY",
+                            "ROTATIONAL_INERTIA", "DIPOLES"])
 class RotDiffAniso(ut.TestCase):
     longMessage = True
     # Handle for espresso system

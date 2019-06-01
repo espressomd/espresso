@@ -18,13 +18,13 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 from numpy import random
 
 
-@ut.skipIf(not espressomd.has_features("ROTATION"),
-           "Test requires ROTATION")
+@utx.skipIfMissingFeatures("ROTATION")
 class Rotation(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
@@ -54,7 +54,7 @@ class Rotation(ut.TestCase):
             #self.assertEqual(self.s.part[0].torque_body[coord],0)
             self.assertEqual(self.s.part[0].omega_body[coord], 0)
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"), "Requires EXTERNAL_FORCES")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_axes_changes(self):
         """Verifies that rotation axes in body and space frame stay the same and other axes don't"""
         s = self.s

@@ -16,11 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 
 
-@ut.skipIf(not espressomd.has_features(["P3M", "EXTERNAL_FORCES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["P3M", "EXTERNAL_FORCES"])
 class test_icc(ut.TestCase):
 
     def runTest(self):

@@ -16,11 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 from espressomd.interactions import HarmonicBond
 
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
+@utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
@@ -154,10 +155,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part[3].remove()
         self.system.part[0].delete_all_bonds()
 
-    features = ["ELECTROSTATICS", "P3M"]
-
-    @ut.skipIf(not espressomd.has_features(*features),
-               "Missing features: " + ", ".join(espressomd.missing_features(*features)))
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "P3M"])
     def test_electrostatics(self):
 
         from espressomd import electrostatics

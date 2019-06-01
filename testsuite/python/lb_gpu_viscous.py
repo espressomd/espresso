@@ -17,16 +17,14 @@
 import sys
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 
 import espressomd
 import espressomd.lb
 
 
-@ut.skipIf(
-    not espressomd.gpu_available() or
-    not espressomd.has_features(
-        ['CUDA', 'EXTERNAL_FORCES']),
-           "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
 class LBGPUViscous(ut.TestCase):
     system = espressomd.System(box_l=[10.0] * 3)
     system.time_step = 0.01

@@ -18,6 +18,7 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 from espressomd.accumulators import Correlator
@@ -138,7 +139,7 @@ class LangevinThermostat(ut.TestCase):
                     np.testing.assert_allclose(
                         np.copy(system.part[0].v), v0 * np.exp(-gamma_t_i / system.part[0].mass * system.time), atol=45E-4)
 
-    @ut.skipIf(not espressomd.has_features("ROTATION"), "Skipped for lack of ROTATION")
+    @utx.skipIfMissingFeatures("ROTATION")
     def test_03__friction_rot(self):
         """Tests the rotational friction-only part of the thermostat."""
 
@@ -217,8 +218,7 @@ class LangevinThermostat(ut.TestCase):
             self.check_velocity_distribution(
                 omega_stored, v_minmax, bins, error_tol, kT)
 
-    @ut.skipIf(not espressomd.has_features("LANGEVIN_PER_PARTICLE"),
-               "Test requires LANGEVIN_PER_PARTICLE")
+    @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
     def test_05__langevin_per_particle(self):
         """Test for Langevin particle. Covers all combinations of
            particle specific gamma and temp set or not set.
@@ -452,7 +452,7 @@ class LangevinThermostat(ut.TestCase):
             ratio = I / (kT / gamma[coord - 1])
             self.assertAlmostEqual(ratio, 1., delta=0.07)
 
-    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES"), "Skipped for lack of VIRTUAL_SITES")
+    @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):
         system = self.system
         system.time_step = 0.01

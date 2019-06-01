@@ -18,6 +18,7 @@
 #
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 from espressomd.interactions import FeneBond
 from espressomd import pair_criteria
@@ -51,7 +52,7 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(dc.decide(self.p1, self.p2))
         self.assertTrue(dc.decide(self.p1.id, self.p2.id))
 
-    @ut.skipIf(not espressomd.has_features("PARTIAL_PERIODIC"), "skiped for lack of PARTIAL_PERIODIC")
+    @utx.skipIfMissingFeatures("PARTIAL_PERIODIC")
     def test_distance_crit_non_periodic(self):
         dc = pair_criteria.DistanceCriterion(cut_off=0.1)
 
@@ -60,7 +61,7 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(not dc.decide(self.p1, self.p2))
         self.assertTrue(not dc.decide(self.p1.id, self.p2.id))
 
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "skipped due to missing lj potential")
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_energy_crit(self):
         # Setup purely repulsive lj
         self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -76,9 +77,7 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(ec.decide(self.p1, self.p2))
         self.assertTrue(ec.decide(self.p1.id, self.p2.id))
 
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES") or
-               not espressomd.has_features("PARTIAL_PERIODIC"),
-               "skipped due to missing lj potential")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES", "PARTIAL_PERIODIC"])
     def test_energy_crit_non_periodic(self):
         # Setup purely repulsive lj
         self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
