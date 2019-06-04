@@ -667,7 +667,6 @@ void propagate_pos() {
         set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
-  announce_resort_particles();
 }
 
 void propagate_vel_pos() {
@@ -716,8 +715,6 @@ void propagate_vel_pos() {
         skin2)
       set_resort_particles(Cells::RESORT_LOCAL);
   }
-
-  announce_resort_particles();
 
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();

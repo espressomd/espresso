@@ -10,7 +10,7 @@ Advanced Methods
 Creating bonds when particles collide
 -------------------------------------
 
-Please cite :cite:`espresso2` when using dynamic bonding.
+Please cite :cite:`arnold13a` when using dynamic bonding.
 
 With the help of this feature, bonds between particles can be created
 automatically during the simulation, every time two particles collide.
@@ -314,7 +314,7 @@ University of Zilina:
 
 | ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
-  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zref.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zref.bib)
+  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zrefs.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zrefs.bib)
 
 | This documentation introduces the features of module Object-in-fluid
   (OIF). Even though ESPResSo was not primarily intended to work with closed
@@ -1948,7 +1948,7 @@ Combination of the Reaction Ensemble with the Wang-Landau algorithm
 allows for enhanced sampling of the reacting system, and
 and for the determination of the density of states with respect
 to the reaction coordinate or with respect to some other collective
-variable :cite:`landsgesell16a`. Here the 1/t Wang-Landau
+variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
 does not suffer from systematic errors. Additionally to the above
 commands for the reaction ensemble use the following commands for the
@@ -1970,7 +1970,7 @@ In the constant pH method due to Reed and Reed
 of :math:`H^{+}` ions, assuming that the simulated system is coupled to an
 infinite reservoir. This value is the used to simulate dissociation
 equilibrium of acids and bases. Under certain conditions, the constant
-pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell16b`. However, it
+pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell17b`. However, it
 treats the chemical potential of :math:`H^{+}` ions and their actual
 number in the simulation box as independent variables, which can lead to
 serious artifacts.

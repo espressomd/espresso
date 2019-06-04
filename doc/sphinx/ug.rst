@@ -21,5 +21,5 @@
     under_the_hood.rst
     contributing.rst
     appendix.rst
+    zreferences.rst
 
-.. bibliography:: zrefs.bib
