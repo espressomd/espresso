@@ -40,7 +40,7 @@ if(Sphinx_FIND_VERSION)
 
   set(SPHINX_VERSION_COMPATIBLE TRUE)
   # Blacklist broken version
-  if(${SPHINX_VERSION} VERSION_EQUAL "2.1.0")
+  if("${SPHINX_VERSION}" VERSION_EQUAL "2.1.0")
     message(WARNING "Sphinx version 2.1.0 is not compatible.")
     set(SPHINX_VERSION_COMPATIBLE FALSE)
   endif()
