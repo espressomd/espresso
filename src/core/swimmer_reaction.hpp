@@ -39,14 +39,5 @@ typedef struct {
 
 extern reaction_struct reaction;
 
-#ifdef SWIMMER_REACTIONS
-/** sanity checks for the reaction code */
-void reactions_sanity_checks();
-/** broadcasts reaction parameters and sets up an entry in the ia_params, so
-    that the Verlet radius is equal or bigger than the reaction range.
-**/
-void local_setup_reaction();
-void integrate_reaction();
-#endif
 
 #endif /* ifdef SWIMMER_REACTION_H */
