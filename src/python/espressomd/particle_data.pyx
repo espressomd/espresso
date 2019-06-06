@@ -34,7 +34,7 @@ import functools
 import types
 from espressomd.utils import nesting_level, array_locked, is_valid_type
 from espressomd.utils cimport make_array_locked
-from .grid cimport box_geo
+from .grid cimport box_geo, folded_position, unfolded_position
 
 PARTICLE_EXT_FORCE = 1
 
@@ -161,7 +161,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position(self.particle_data.r.p, self.particle_data.l.i, box_geo.length()))
+            return make_array_locked(<const Vector3d> unfolded_position(self.particle_data.r.p, self.particle_data.l.i, box_geo.length()))
 
     property pos_folded:
         """
@@ -204,7 +204,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(folded_position(self.particle_data.r.p))
+            return make_array_locked(<const Vector3d> folded_position(self.particle_data.r.p))
 
     property image_box:
         """

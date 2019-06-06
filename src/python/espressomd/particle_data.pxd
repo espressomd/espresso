@@ -229,7 +229,3 @@ cdef class ParticleHandle(object):
 cdef class _ParticleSliceImpl:
     cdef public id_selection
     cdef int _chunk_size
-
-cdef extern from "grid.hpp":
-    Vector3d folded_position(const Vector3d &)
-    Vector3d unfolded_position(const Vector3d &, const Vector3i &, const Vector3d &)
