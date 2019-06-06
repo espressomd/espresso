@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "particle_data.hpp"
 #include "rotation.hpp"
 
-#include <utils/vec_rotate.hpp>
+#include <utils/math/vec_rotate.hpp>
 
 #include <boost/mpi/collectives.hpp>
 

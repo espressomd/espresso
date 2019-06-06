@@ -22,7 +22,7 @@
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include <boost/range/algorithm/transform.hpp>
 #include <utils/Histogram.hpp>
-#include <utils/coordinate_transformation.hpp>
+#include <utils/math/coordinate_transformation.hpp>
 
 namespace Observables {
 
@@ -50,9 +50,9 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
   for (auto &p : folded_positions)
     p -= center;
   for (int ind = 0; ind < ids().size(); ++ind) {
-    histogram.update(Utils::transform_pos_to_cylinder_coordinates(
+    histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
                          folded_positions[ind], axis),
-                     Utils::transform_vel_to_cylinder_coordinates(
+                     Utils::transform_vector_cartesian_to_cylinder(
                          velocities[ind], axis, folded_positions[ind]));
   }
   auto hist_tmp = histogram.get_histogram();
