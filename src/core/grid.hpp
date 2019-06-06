@@ -215,6 +215,14 @@ inline Utils::Vector3d folded_position(const Utils::Vector3d &p) {
   return p_folded;
 }
 
+inline Utils::Vector3d image_shift(const Utils::Vector3i& image_box, const Utils::Vector3d &box) {
+  return {
+    image_box[0] * box[0],
+    image_box[1] * box[1],
+    image_box[2] * box[2]
+  };
+}
+
 /** unfold coordinates to physical position.
     \param pos the position
     \param vel the velocity
@@ -223,47 +231,16 @@ inline Utils::Vector3d folded_position(const Utils::Vector3d &p) {
     Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
     afterwards.
 */
-template <typename T1, typename T2, typename T3>
-void unfold_position(T1 &pos, T2 &vel, T3 &image_box) {
-  int i;
-  for (i = 0; i < 3; i++) {
-    pos[i] = pos[i] + image_box[i] * box_geo.length()[i];
-    image_box[i] = 0;
-  }
-}
 
 inline Utils::Vector3d unfolded_position(Particle const *p) {
-  Utils::Vector3d pos{p->r.p};
-  for (int i = 0; i < 3; i++) {
-    pos[i] += p->l.i[i] * box_geo.length()[i];
-  }
-
-  return pos;
+  return p->r.p + image_shift(p->l.i, box_geo.length());
 }
 
 inline Utils::Vector3d unfolded_position(Particle const &p) {
   return unfolded_position(&p);
 }
 
-/** unfold coordinates to physical position.
-    \param pos the position...
-    \param image_box and the box
 
-    Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
-    afterwards.
-*/
-template <typename T1, typename T2>
-void unfold_position(T1 &pos, T2 &image_box) {
-  double v[3];
-  unfold_position(pos, v, image_box);
-}
-
-class PositionUnfolder {
-public:
-  template <typename Particle> void operator()(Particle &p) const {
-    unfold_position(p.r.p, p.l.i);
-  }
-};
 
 /*@}*/
 #endif
