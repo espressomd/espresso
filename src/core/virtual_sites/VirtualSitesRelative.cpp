@@ -94,22 +94,22 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   double l = director.norm();
   // Division comes in the loop below
 
+  auto const box_l = box_geo.length();
+
   // Calculate the new position of the virtual sites from
   // position of real particle + director
-  int i;
   double new_pos[3];
-  double tmp;
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     new_pos[i] = p_real->r.p[i] + director[i] / l * p.p.vs_relative.distance;
     double old = p.r.p[i];
     // Handle the case that one of the particles had gone over the periodic
     // boundary and its coordinate has been folded
     if (box_geo.periodic(i)) {
-      tmp = p.r.p[i] - new_pos[i];
-      if (tmp > box_geo.length()[i] / 2.) {
-        p.r.p[i] = new_pos[i] + box_geo.length()[i];
-      } else if (tmp < -box_geo.length()[i] / 2.) {
-        p.r.p[i] = new_pos[i] - box_geo.length()[i];
+      auto const tmp = p.r.p[i] - new_pos[i];
+      if (tmp > box_l[i] / 2.) {
+        p.r.p[i] = new_pos[i] + box_l[i];
+      } else if (tmp < -box_l[i] / 2.) {
+        p.r.p[i] = new_pos[i] - box_l[i];
       } else
         p.r.p[i] = new_pos[i];
     } else
