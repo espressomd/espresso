@@ -336,7 +336,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     virtual_sites()->after_force_calc();
 #endif
 
-
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {

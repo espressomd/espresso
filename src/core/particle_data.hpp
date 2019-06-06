@@ -191,7 +191,6 @@ struct ParticleProperties {
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 
-
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space.
       Values:

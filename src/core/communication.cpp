@@ -115,7 +115,6 @@ int n_nodes = -1;
   CB(mpi_bcast_cell_structure_slave)                                           \
   CB(mpi_bcast_nptiso_geom_slave)                                              \
   CB(mpi_bcast_cuda_global_part_vars_slave)                                    \
-  CB(mpi_setup_reaction_slave)                                                 \
   CB(mpi_resort_particles_slave)                                               \
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
@@ -730,14 +729,6 @@ void mpi_galilei_transform() {
   auto const cmsvel = mpi_system_CMS_velocity();
 
   mpi_call_all(mpi_galilei_transform_slave, cmsvel);
-}
-
-/******************** REQ_SWIMMER_REACTIONS ********************/
-
-void mpi_setup_reaction() {
-}
-
-void mpi_setup_reaction_slave(int, int) {
 }
 
 /*********************** MAIN LOOP for slaves ****************/

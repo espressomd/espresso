@@ -270,7 +270,6 @@ struct IA_parameters {
   double THOLE_q1q2;
   /*@}*/
 #endif
-
 };
 
 extern std::vector<IA_parameters> ia_params;

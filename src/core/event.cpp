@@ -96,7 +96,6 @@ void on_program_start() {
   }
 #endif
 
-
   /*
     call all initializations to do only on the master node here.
   */

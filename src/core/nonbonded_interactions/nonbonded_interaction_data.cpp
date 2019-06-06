@@ -262,7 +262,6 @@ static void recalc_maximal_cutoff_nonbonded() {
       max_cut_current = std::max(max_cut_current, data->TAB.cutoff());
 #endif
 
-
 #ifdef THOLE
       // If THOLE is active, use p3m cutoff
       if (data->THOLE_scaling_coeff != 0)
