@@ -284,12 +284,5 @@ public:
   }
 };
 
-class PositionFolder {
-public:
-  template <typename Particle> void operator()(Particle &p) const {
-    fold_position(p.r.p, p.l.i, box_geo);
-  }
-};
-
 /*@}*/
 #endif
