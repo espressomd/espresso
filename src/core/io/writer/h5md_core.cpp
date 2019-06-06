@@ -23,6 +23,8 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "communication.hpp"
+
 #include <vector>
 
 namespace Writer {
