@@ -1029,7 +1029,7 @@ void bd_random_walk(Particle &p, double dt) {
   // Just a NAN setter, technical variable:
   extern Thermostat::GammaType brown_gammatype_nan;
   // first, set defaults
-  Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
+  Thermostat::GammaType brown_sigma_pos_temp_inv;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE

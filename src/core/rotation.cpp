@@ -574,7 +574,7 @@ void bd_random_walk_rot(Particle &p, double dt) {
   extern Thermostat::GammaType brown_sigma_pos_rotation_inv;
   extern Thermostat::GammaType brown_gammatype_nan;
   // first, set defaults
-  Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
+  Thermostat::GammaType brown_sigma_pos_temp_inv;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
@@ -660,7 +660,7 @@ void bd_random_walk_rot(Particle &p, double dt) {
 void bd_random_walk_vel_rot(Particle &p, double dt) {
   extern double brown_sigma_vel_rotation;
   // first, set defaults
-  double brown_sigma_vel_temp = brown_sigma_vel_rotation;
+  double brown_sigma_vel_temp;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
