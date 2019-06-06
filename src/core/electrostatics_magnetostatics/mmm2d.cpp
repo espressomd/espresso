@@ -36,6 +36,7 @@
 #include "mmm-common.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>

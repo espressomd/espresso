@@ -45,6 +45,7 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "tuning.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;

@@ -26,6 +26,7 @@
 
 #include "config.hpp"
 
+#include "errorhandling.hpp"
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"

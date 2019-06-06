@@ -29,6 +29,7 @@
 #include "domain_decomposition.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
+#include "errorhandling.hpp"
 
 #include <cstring>
 #include <mpi.h>

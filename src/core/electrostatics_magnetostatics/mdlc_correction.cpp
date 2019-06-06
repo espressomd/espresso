@@ -35,17 +35,17 @@
  */
 
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
+
+#if defined(DIPOLES) && defined(DP3M)
+#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-
-#include "electrostatics_magnetostatics/dipole.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-
-#if defined(DIPOLES) && defined(DP3M)
+#include "errorhandling.hpp"
 
 DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
 

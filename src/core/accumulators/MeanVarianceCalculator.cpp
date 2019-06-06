@@ -29,6 +29,8 @@
 #include "MeanVarianceCalculator.hpp"
 #include "partCfg_global.hpp"
 
+#include <sstream>
+
 namespace Accumulators {
 void MeanVarianceCalculator::update() { m_acc(m_obs->operator()(partCfg())); }
 

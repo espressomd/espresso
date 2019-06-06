@@ -45,9 +45,7 @@
  */
 
 #include "BoxGeometry.hpp"
-#include "RuntimeErrorStream.hpp"
 #include "algorithm/periodic_fold.hpp"
-#include "errorhandling.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>

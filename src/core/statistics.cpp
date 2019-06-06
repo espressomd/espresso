@@ -39,6 +39,7 @@
 #include "short_range_loop.hpp"
 #include "statistics_chain.hpp"
 #include "virtual_sites.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/constants.hpp>

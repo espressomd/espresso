@@ -28,6 +28,7 @@
 
 #include "debug.hpp"
 #include "grid.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/index.hpp>
 using Utils::get_linear_index;

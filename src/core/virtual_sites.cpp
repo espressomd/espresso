@@ -20,16 +20,17 @@
 */
 
 #include "virtual_sites.hpp"
+
+#ifdef VIRTUAL_SITES
 #include "communication.hpp"
 #include "config.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/constants.hpp>
-
-#ifdef VIRTUAL_SITES
 
 namespace {
 std::shared_ptr<VirtualSites> m_virtual_sites;

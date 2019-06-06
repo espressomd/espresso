@@ -35,6 +35,7 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "errorhandling.hpp"
 
 int regular_exit = 1;
 

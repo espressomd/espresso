@@ -23,9 +23,9 @@
  */
 
 #include "lbgpu.hpp"
-#include "lb-d3q19.hpp"
-
 #ifdef CUDA
+#include "lb-d3q19.hpp"
+#include "errorhandling.hpp"
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"

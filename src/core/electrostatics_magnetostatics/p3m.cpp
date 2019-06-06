@@ -39,6 +39,7 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "tuning.hpp"
+#include "errorhandling.hpp"
 #ifdef CUDA
 #include "p3m_gpu_error.hpp"
 #endif

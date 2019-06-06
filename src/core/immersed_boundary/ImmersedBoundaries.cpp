@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "communication.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
+#include "errorhandling.hpp"
 
 #include <utils/constants.hpp>
 
