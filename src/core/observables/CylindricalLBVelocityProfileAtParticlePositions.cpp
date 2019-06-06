@@ -39,7 +39,7 @@ operator()(PartCfg &partCfg) const {
   // get the fluid velocities only once).
   std::vector<Utils::Vector3d> folded_positions(ids().size());
   boost::transform(ids(), folded_positions.begin(),
-                   [&partCfg](int id) { return folded_position(partCfg[id]); });
+                   [&partCfg](int id) { return folded_position(partCfg[id].r.p); });
 
   std::vector<Utils::Vector3d> velocities(ids().size());
   boost::transform(

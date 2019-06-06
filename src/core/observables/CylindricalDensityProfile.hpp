@@ -37,7 +37,7 @@ public:
     std::vector<::Utils::Vector3d> folded_positions;
     std::transform(ids().begin(), ids().end(),
                    std::back_inserter(folded_positions), [&partCfg](int id) {
-                     return ::Utils::Vector3d(folded_position(partCfg[id]));
+                     return ::Utils::Vector3d(folded_position(partCfg[id].r.p));
                    });
     for (auto &p : folded_positions) {
       p -= center;
