@@ -30,6 +30,29 @@
 
 #ifdef ELECTROSTATICS
 
+#define _P3M_GPU_FLOAT
+//#define _P3M_GPU_REAL_DOUBLE
+
+#ifdef _P3M_GPU_FLOAT
+#define REAL_TYPE float
+#define FFT_TYPE_COMPLEX cufftComplex
+#define FFT_FORW_FFT cufftExecR2C
+#define FFT_BACK_FFT cufftExecC2R
+#define FFT_PLAN_FORW_FLAG CUFFT_R2C
+#define FFT_PLAN_BACK_FLAG CUFFT_C2R
+#endif
+
+#ifdef _P3M_GPU_REAL_DOUBLE
+#define REAL_TYPE double
+#define FFT_TYPE_COMPLEX cufftDoubleComplex
+#define FFT_FORW_FFT cufftExecD2Z
+#define FFT_BACK_FFT cufftExecZ2D
+#define FFT_PLAN_FORW_FLAG CUFFT_D2Z
+#define FFT_PLAN_BACK_FLAG CUFFT_Z2D
+#endif
+
+#include "BoxGeometry.hpp"
+
 #ifdef P3M_GPU_DEBUG
 #define P3M_GPU_TRACE(A) A
 #else
@@ -59,7 +82,7 @@ using Utils::sqr;
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-extern double box_l[3];
+extern BoxGeometry box_geo;
 
 struct P3MGpuData {
   /** Charge mesh */
@@ -695,10 +718,12 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
       reinit_if = 1;
     }
 
+    auto const box_l = box_geo.length();
+
     if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.box[0] != box_l[0]) ||
         (p3m_gpu_data.box[1] != box_l[1]) ||
         (p3m_gpu_data.box[2] != box_l[2])) {
-      std::copy(box_l, box_l + 3, p3m_gpu_data.box);
+      std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
       reinit_if = 1;
     }
 
