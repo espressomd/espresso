@@ -26,7 +26,6 @@
 
 #include "config.hpp"
 
-#include "errorhandling.hpp"
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
@@ -39,6 +38,7 @@
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/subt_lj.hpp"
 #include "bonded_interactions/umbrella.hpp"
+#include "errorhandling.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"

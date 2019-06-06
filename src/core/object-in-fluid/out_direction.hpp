@@ -56,8 +56,8 @@ inline int calc_out_direction(
     Bonded_ia_parameters * /* iaparams */) // first-fold-then-the-same approach
 {
   auto const fp2 = unfolded_position(p2->r.p, p2->l.i, box_geo.length());
-  auto const fp3 = fp2 + get_mi_vector(p3->r.p, fp2,box_geo);
-  auto const fp4 = fp2 + get_mi_vector(p4->r.p, fp2,box_geo);
+  auto const fp3 = fp2 + get_mi_vector(p3->r.p, fp2, box_geo);
+  auto const fp4 = fp2 + get_mi_vector(p4->r.p, fp2, box_geo);
 
   auto const n = get_n_triangle(fp2, fp3, fp4);
   auto const dn = n.norm();

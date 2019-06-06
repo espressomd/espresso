@@ -38,12 +38,12 @@
 
 #ifdef DIPOLES
 #include "cells.hpp"
+#include "communication.hpp"
 #include "dipole.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "communication.hpp"
-#include "errorhandling.hpp"
 
 #include <utils/constants.hpp>
 

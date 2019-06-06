@@ -194,7 +194,8 @@ int calc_cylindrical_average(
         &distribution);
 
 template <typename T>
-double min_distance2(Utils::Vector<T, 3> const &pos1, Utils::Vector<T, 3> const &pos2) {
+double min_distance2(Utils::Vector<T, 3> const &pos1,
+                     Utils::Vector<T, 3> const &pos2) {
   return get_mi_vector(pos1, pos2, box_geo).norm2();
 }
 

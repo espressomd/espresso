@@ -171,7 +171,8 @@ void integrate_ensemble_init() {
       errexit();
     }
 
-    nptiso.volume = pow(box_geo.length()[nptiso.non_const_dim], nptiso.dimension);
+    nptiso.volume =
+        pow(box_geo.length()[nptiso.non_const_dim], nptiso.dimension);
 
     if (recalc_forces) {
       nptiso.p_inst = 0.0;
@@ -526,7 +527,8 @@ void propagate_press_box_pos_and_rescale_npt() {
             << "your choice of piston= " << nptiso.piston
             << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
             << " just caused the volume to become negative, decrease dt";
-        nptiso.volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+        nptiso.volume =
+            box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
         scal[2] = 1;
       }
 
@@ -576,7 +578,7 @@ void propagate_press_box_pos_and_rescale_npt() {
     /* Apply new volume to the box-length, communicate it, and account for
      * necessary adjustments to the cell geometry */
     if (this_node == 0) {
-        Utils::Vector3d new_box = box_geo.length();
+      Utils::Vector3d new_box = box_geo.length();
 
       for (int i = 0; i < 3; i++) {
         if (nptiso.geometry & nptiso.nptgeom_dir[i]) {

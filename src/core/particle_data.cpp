@@ -1191,7 +1191,7 @@ Particle *local_place_particle(int part, const double p[3], int _new) {
 
   Utils::Vector3i i{};
   Utils::Vector3d pp = {p[0], p[1], p[2]};
-  fold_position(pp, i,box_geo);
+  fold_position(pp, i, box_geo);
 
   if (_new) {
     /* allocate particle anew */

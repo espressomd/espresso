@@ -69,7 +69,8 @@ Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn) {
 
 double mindist(PartCfg &partCfg, Utils::Vector3d const &pos) {
   if (partCfg.size() == 0) {
-    return std::min(std::min(box_geo.length()[0], box_geo.length()[1]), box_geo.length()[2]);
+    return std::min(std::min(box_geo.length()[0], box_geo.length()[1]),
+                    box_geo.length()[2]);
   }
 
   auto const mindist = std::accumulate(

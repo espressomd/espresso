@@ -39,11 +39,11 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "errorhandling.hpp"
 
 #include "short_range_loop.hpp"
 #include <utils/NoOp.hpp>

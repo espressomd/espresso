@@ -406,9 +406,9 @@ static double dipole_energy() {
     /* counter the P3M homogeneous background contribution to the
        boundaries.  We never need that, since a homogeneous background
        spanning the artificial boundary layers is aphysical. */
-    eng += pref *
-           (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
-            (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] * Utils::sqr(box_geo.length()[2]));
+    eng += pref * (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
+                   (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] *
+                       Utils::sqr(box_geo.length()[2]));
   }
 
   return this_node == 0 ? eng : 0;
@@ -569,8 +569,8 @@ static void add_z_force() {
 
 static void setup_P(int p, double omega) {
   int ic, o = (p - 1) * n_localpart;
-  double pref =
-      -coulomb.prefactor * 4 * M_PI * ux * uy / (expm1(omega * box_geo.length()[2]));
+  double pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
+                (expm1(omega * box_geo.length()[2]));
   double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
   int size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
@@ -676,8 +676,8 @@ static void setup_P(int p, double omega) {
 
 static void setup_Q(int q, double omega) {
   int ic, o = (q - 1) * n_localpart;
-  double pref =
-      -coulomb.prefactor * 4 * M_PI * ux * uy / (expm1(omega * box_geo.length()[2]));
+  double pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
+                (expm1(omega * box_geo.length()[2]));
   double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
   int size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
@@ -852,8 +852,8 @@ static double Q_energy(double omega) {
 
 static void setup_PQ(int p, int q, double omega) {
   int ic, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
-  double pref =
-      -coulomb.prefactor * 8 * M_PI * ux * uy / (expm1(omega * box_geo.length()[2]));
+  double pref = -coulomb.prefactor * 8 * M_PI * ux * uy /
+                (expm1(omega * box_geo.length()[2]));
   double pref_di = coulomb.prefactor * 8 * M_PI * ux * uy;
   int size = 8;
   double lclimgebot[8], lclimgetop[8], lclimge[8];
@@ -1327,7 +1327,7 @@ void ELC_P3M_self_forces() {
       pos[0] = p.r.p[0];
       pos[1] = p.r.p[1];
       pos[2] = -p.r.p[2];
-      auto const d = get_mi_vector(p.r.p, pos,box_geo);
+      auto const d = get_mi_vector(p.r.p, pos, box_geo);
 
       p3m_add_pair_force(q, d.data(), d.norm(), p.f.f.data());
     }
@@ -1336,7 +1336,7 @@ void ELC_P3M_self_forces() {
       pos[0] = p.r.p[0];
       pos[1] = p.r.p[1];
       pos[2] = 2 * elc_params.h - p.r.p[2];
-      auto const d = get_mi_vector(p.r.p, pos,box_geo);
+      auto const d = get_mi_vector(p.r.p, pos, box_geo);
 
       p3m_add_pair_force(q, d.data(), d.norm(), p.f.f.data());
     }
@@ -1423,7 +1423,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     pos[0] = p1->r.p[0];
     pos[1] = p1->r.p[1];
     pos[2] = -p1->r.p[2];
-    auto const d = get_mi_vector(p2->r.p, pos,box_geo);
+    auto const d = get_mi_vector(p2->r.p, pos, box_geo);
 
     p3m_add_pair_force(q, d.data(), d.norm(), force2);
   }
@@ -1433,7 +1433,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     pos[0] = p1->r.p[0];
     pos[1] = p1->r.p[1];
     pos[2] = 2 * elc_params.h - p1->r.p[2];
-    auto const d = get_mi_vector(p2->r.p, pos,box_geo);
+    auto const d = get_mi_vector(p2->r.p, pos, box_geo);
 
     p3m_add_pair_force(q, d.data(), d.norm(), force2);
   }
@@ -1443,7 +1443,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
     pos[2] = -p2->r.p[2];
-    auto const d = get_mi_vector(p1->r.p, pos,box_geo);
+    auto const d = get_mi_vector(p1->r.p, pos, box_geo);
 
     p3m_add_pair_force(q, d.data(), d.norm(), force1);
   }
@@ -1453,7 +1453,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     pos[0] = p2->r.p[0];
     pos[1] = p2->r.p[1];
     pos[2] = 2 * elc_params.h - p2->r.p[2];
-    auto const d = get_mi_vector(p1->r.p, pos,box_geo);
+    auto const d = get_mi_vector(p1->r.p, pos, box_geo);
 
     p3m_add_pair_force(q, d.data(), d.norm(), force1);
   }
@@ -1476,7 +1476,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
     pos[1] = p1->r.p[1];
     pos[2] = -p1->r.p[2];
 
-    eng += p3m_pair_energy(q, get_mi_vector(p2->r.p, pos,box_geo).norm());
+    eng += p3m_pair_energy(q, get_mi_vector(p2->r.p, pos, box_geo).norm());
   }
 
   if (p1->r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -1485,7 +1485,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
     pos[1] = p1->r.p[1];
     pos[2] = 2 * elc_params.h - p1->r.p[2];
 
-    eng += p3m_pair_energy(q, get_mi_vector(p2->r.p, pos,box_geo).norm());
+    eng += p3m_pair_energy(q, get_mi_vector(p2->r.p, pos, box_geo).norm());
   }
 
   if (tp2 < elc_params.space_layer) {
@@ -1494,7 +1494,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
     pos[1] = p2->r.p[1];
     pos[2] = -tp2;
 
-    eng += p3m_pair_energy(q, get_mi_vector(p1->r.p, pos,box_geo).norm());
+    eng += p3m_pair_energy(q, get_mi_vector(p1->r.p, pos, box_geo).norm());
   }
 
   if (tp2 > (elc_params.h - elc_params.space_layer)) {
@@ -1503,7 +1503,7 @@ double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
     pos[1] = p2->r.p[1];
     pos[2] = 2 * elc_params.h - tp2;
 
-    eng += p3m_pair_energy(q, get_mi_vector(p1->r.p, pos,box_geo).norm());
+    eng += p3m_pair_energy(q, get_mi_vector(p1->r.p, pos, box_geo).norm());
   }
 
   return (eng);
@@ -1526,7 +1526,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
       pos[1] = p.r.p[1];
       pos[2] = -p.r.p[2];
 
-      eng += p3m_pair_energy(q, get_mi_vector(p.r.p, pos,box_geo).norm());
+      eng += p3m_pair_energy(q, get_mi_vector(p.r.p, pos, box_geo).norm());
     }
 
     if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -1535,7 +1535,7 @@ double ELC_P3M_dielectric_layers_energy_self() {
       pos[1] = p.r.p[1];
       pos[2] = 2 * elc_params.h - p.r.p[2];
 
-      eng += p3m_pair_energy(q, get_mi_vector(p.r.p, pos,box_geo).norm());
+      eng += p3m_pair_energy(q, get_mi_vector(p.r.p, pos, box_geo).norm());
     }
   }
   return (eng);

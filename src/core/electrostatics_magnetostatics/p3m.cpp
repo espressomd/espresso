@@ -32,6 +32,7 @@
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "fft.hpp"
 #include "global.hpp"
@@ -39,7 +40,6 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "tuning.hpp"
-#include "errorhandling.hpp"
 #ifdef CUDA
 #include "p3m_gpu_error.hpp"
 #endif
@@ -813,7 +813,9 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
   P3M_TRACE(fprintf(stderr, "%d: p3m_perform:\n", this_node));
   //     fprintf(stderr, "calculating kspace forces\n");
 
-  force_prefac = coulomb.prefactor / (2 * box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
+  force_prefac =
+      coulomb.prefactor /
+      (2 * box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
 
   /* Gather information for FFT grid inside the nodes domain (inner local mesh)
    */
@@ -850,9 +852,9 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
       k_space_energy -= coulomb.prefactor *
                         (p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i());
       /* net charge correction */
-      k_space_energy -=
-          coulomb.prefactor * p3m.square_sum_q * Utils::pi() /
-          (2.0 * box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2] * Utils::sqr(p3m.params.alpha));
+      k_space_energy -= coulomb.prefactor * p3m.square_sum_q * Utils::pi() /
+                        (2.0 * box_geo.length()[0] * box_geo.length()[1] *
+                         box_geo.length()[2] * Utils::sqr(p3m.params.alpha));
     }
 
   } /* if (energy_flag) */
@@ -1155,7 +1157,8 @@ inline double perform_aliasing_sums_force(int const n[3], double numerator[3]) {
         nmz = p3m.meshift_z[n[KZ]] + p3m.params.mesh[RZ] * mz;
         sz = sy * int_pow<2 * cao>(sinc(nmz / (double)p3m.params.mesh[RZ]));
 
-        nm2 = Utils::sqr(nmx / box_geo.length()[RX]) + Utils::sqr(nmy / box_geo.length()[RY]) +
+        nm2 = Utils::sqr(nmx / box_geo.length()[RX]) +
+              Utils::sqr(nmy / box_geo.length()[RY]) +
               Utils::sqr(nmz / box_geo.length()[RZ]);
         expo = f1 * nm2;
         f2 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
@@ -1281,7 +1284,8 @@ template <int cao> inline double perform_aliasing_sums_energy(int const n[3]) {
         nmz = p3m.meshift_z[n[KZ]] + p3m.params.mesh[RZ] * mz;
         sz = sy * int_pow<2 * cao>(sinc(nmz / (double)p3m.params.mesh[RZ]));
         /* k = 2*pi * (nx/lx, ny/ly, nz/lz); expo = -k^2 / 4*alpha^2 */
-        nm2 = Utils::sqr(nmx / box_geo.length()[RX]) + Utils::sqr(nmy / box_geo.length()[RY]) +
+        nm2 = Utils::sqr(nmx / box_geo.length()[RX]) +
+              Utils::sqr(nmy / box_geo.length()[RY]) +
               Utils::sqr(nmz / box_geo.length()[RZ]);
         expo = f1 * nm2;
         f2 = (expo < limit) ? sz * exp(-expo) / nm2 : 0.0;
@@ -1415,8 +1419,9 @@ static double p3m_get_accuracy(const int mesh[3], int cao, double r_cut_iL,
                                 p3m.sum_q2, alpha_L);
 #ifdef CUDA
   if (coulomb.method == COULOMB_P3M_GPU)
-    ks_err = p3m_k_space_error_gpu(coulomb.prefactor, mesh, cao, p3m.sum_qpart,
-                                   p3m.sum_q2, alpha_L, box_geo.length().data());
+    ks_err =
+        p3m_k_space_error_gpu(coulomb.prefactor, mesh, cao, p3m.sum_qpart,
+                              p3m.sum_q2, alpha_L, box_geo.length().data());
   else
 #endif
     ks_err = p3m_k_space_error(coulomb.prefactor, mesh, cao, p3m.sum_qpart,
@@ -1504,9 +1509,10 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
   char b[5 * ES_DOUBLE_SPACE + 3 * ES_INTEGER_SPACE + 128];
 
   /* initial checks. */
-  auto const k_cut = std::max(box_geo.length()[0] * cao / (2.0 * mesh[0]),
-                              std::max(box_geo.length()[1] * cao / (2.0 * mesh[1]),
-                                       box_geo.length()[2] * cao / (2.0 * mesh[2])));
+  auto const k_cut =
+      std::max(box_geo.length()[0] * cao / (2.0 * mesh[0]),
+               std::max(box_geo.length()[1] * cao / (2.0 * mesh[1]),
+                        box_geo.length()[2] * cao / (2.0 * mesh[2])));
 
   P3M_TRACE(fprintf(
       stderr, "p3m_mc_time: mesh=(%d, %d, %d), cao=%d, rmin=%f, rmax=%f\n",
@@ -1573,7 +1579,8 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
    * than allowed */
   n_cells = 1;
   for (i = 0; i < 3; i++)
-    n_cells *= (int)(floor(local_box_l[i] / (r_cut_iL * box_geo.length()[0] + skin)));
+    n_cells *=
+        (int)(floor(local_box_l[i] / (r_cut_iL * box_geo.length()[0] + skin)));
   if (n_cells < min_num_cells) {
     P3M_TRACE(fprintf(
         stderr,
@@ -1792,7 +1799,8 @@ int p3m_adaptive_tune(char **log) {
   bool tune_mesh = false; // indicates if mesh should be tuned
 
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    if (!((box_geo.length()[0] == box_geo.length()[1]) && (box_geo.length()[1] == box_geo.length()[2]))) {
+    if (!((box_geo.length()[0] == box_geo.length()[1]) &&
+          (box_geo.length()[1] == box_geo.length()[2]))) {
       *log = strcat_alloc(
           *log, "{049 P3M_init: Nonmetallic epsilon requires cubic box} ");
       return ES_ERROR;
@@ -1831,8 +1839,12 @@ int p3m_adaptive_tune(char **log) {
       p3m.params.mesh[2] == 0) {
     /* Medium-educated guess for the minimal mesh */
     mesh_density_min =
-        pow(p3m.sum_qpart / (box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]), 1.0 / 3.0);
-    mesh_density_max = 512 / pow(box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2], 1.0 / 3.0);
+        pow(p3m.sum_qpart / (box_geo.length()[0] * box_geo.length()[1] *
+                             box_geo.length()[2]),
+            1.0 / 3.0);
+    mesh_density_max = 512 / pow(box_geo.length()[0] * box_geo.length()[1] *
+                                     box_geo.length()[2],
+                                 1.0 / 3.0);
     tune_mesh = true;
     /* this limits the tried meshes if the accuracy cannot
        be obtained with smaller meshes, but normally not all these
@@ -1858,7 +1870,8 @@ int p3m_adaptive_tune(char **log) {
             p3m.params.mesh[2]);
     *log = strcat_alloc(*log, b);
   } else {
-    mesh_density_min = mesh_density_max = p3m.params.mesh[0] / box_geo.length()[0];
+    mesh_density_min = mesh_density_max =
+        p3m.params.mesh[0] / box_geo.length()[0];
 
     sprintf(b, "fixed mesh %d %d %d\n", p3m.params.mesh[0], p3m.params.mesh[1],
             p3m.params.mesh[2]);
@@ -2029,8 +2042,8 @@ REGISTER_CALLBACK(p3m_count_charged_particles)
 double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                             double sum_q2, double alpha_L) {
   return (2.0 * prefac * sum_q2 * exp(-Utils::sqr(r_cut_iL * alpha_L))) /
-         sqrt((double)n_c_part * r_cut_iL * box_geo.length()[0] * box_geo.length()[0] * box_geo.length()[1] *
-              box_geo.length()[2]);
+         sqrt((double)n_c_part * r_cut_iL * box_geo.length()[0] *
+              box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
 }
 
 double p3m_k_space_error(double prefac, const int mesh[3], int cao,
@@ -2198,7 +2211,8 @@ bool p3m_sanity_checks_boxl() {
     /* check k-space cutoff */
     if (p3m.params.cao_cut[i] >= 0.5 * box_geo.length()[i]) {
       runtimeErrorMsg() << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
-                        << " is larger than half of box dimension " << box_geo.length()[i];
+                        << " is larger than half of box dimension "
+                        << box_geo.length()[i];
       ret = true;
     }
     if (p3m.params.cao_cut[i] >= local_box_l[i]) {
@@ -2397,17 +2411,22 @@ void p3m_calc_kspace_stress(double *stress) {
 
     p3m_gather_fft_grid(p3m.rs_mesh);
     fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
-    force_prefac = coulomb.prefactor / (2.0 * box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
+    force_prefac =
+        coulomb.prefactor /
+        (2.0 * box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
 
     for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
       for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
         for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
           kx = 2.0 * Utils::pi() *
-               p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] / box_geo.length()[RX];
+               p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
+               box_geo.length()[RX];
           ky = 2.0 * Utils::pi() *
-               p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] / box_geo.length()[RY];
+               p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
+               box_geo.length()[RY];
           kz = 2.0 * Utils::pi() *
-               p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] / box_geo.length()[RZ];
+               p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
+               box_geo.length()[RZ];
           sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
           if (sqk == 0) {
             node_k_space_energy = 0.0;

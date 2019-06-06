@@ -28,6 +28,7 @@
 
 #include "communication.hpp"
 #include "energy.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
@@ -39,7 +40,6 @@
 #include "short_range_loop.hpp"
 #include "statistics_chain.hpp"
 #include "virtual_sites.hpp"
-#include "errorhandling.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/constants.hpp>
@@ -181,9 +181,9 @@ IntList nbhood(PartCfg &partCfg, double pt_[3], double r,
   IntList ids;
 
   auto const r2 = r * r;
-    auto const pt = Utils::Vector3d{pt_[0], pt_[1], pt_[2]};
+  auto const pt = Utils::Vector3d{pt_[0], pt_[1], pt_[2]};
 
-    Utils::Vector3d d;
+  Utils::Vector3d d;
 
   for (auto const &p : partCfg) {
     if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
@@ -223,7 +223,8 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
   double inv_bin_width = 0.0;
   double min_dist, min_dist2 = 0.0, start_dist2;
 
-  start_dist2 = Utils::sqr(box_geo.length()[0] + box_geo.length()[1] + box_geo.length()[2]);
+  start_dist2 = Utils::sqr(box_geo.length()[0] + box_geo.length()[1] +
+                           box_geo.length()[2]);
   /* bin preparation */
   *low = 0.0;
   for (int i = 0; i < r_bins; i++)

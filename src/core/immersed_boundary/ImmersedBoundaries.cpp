@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-#include "errorhandling.hpp"
 
 #include <utils/constants.hpp>
 

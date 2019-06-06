@@ -30,13 +30,13 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
 #include "mmm-common.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
-#include "errorhandling.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
@@ -1329,8 +1329,8 @@ static int MMM2D_tune_near(double error) {
     sum = 0;
     for (p = 1; p <= P; p++)
       sum += p * exp(-exponent * p);
-    err =
-        pref * K1(box_geo.length()[1] * L) * (T * ((L + uy) / M_PI * box_geo.length()[0] - 1) + sum);
+    err = pref * K1(box_geo.length()[1] * L) *
+          (T * ((L + uy) / M_PI * box_geo.length()[0] - 1) + sum);
     P++;
   } while (err > part_error && (P - 1) < MAXIMAL_B_CUT);
   P--;
@@ -1344,7 +1344,8 @@ static int MMM2D_tune_near(double error) {
     besselCutoff[p - 1] = (int)floor(((double)P) / (2 * p)) + 1;
 
   /* complex sum, determine cutoffs (dist dependent) */
-  T = log(part_error / (16 * M_SQRT2) * box_geo.length()[0] * box_geo.length()[1]);
+  T = log(part_error / (16 * M_SQRT2) * box_geo.length()[0] *
+          box_geo.length()[1]);
   // for 0, the sum is exactly zero, so do not calculate anything
   complexCutoff[0] = 0;
   for (i = 1; i <= COMPLEX_STEP; i++)

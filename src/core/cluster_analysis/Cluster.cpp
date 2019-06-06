@@ -42,7 +42,8 @@ Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
   // are smaller than box_l/2 in a periodic system. The 1st particle
   // of the cluster is arbitrarily chosen as reference.
 
-  Utils::Vector3d reference_position = folded_position(partCfg()[particles[0]].r.p);
+  Utils::Vector3d reference_position =
+      folded_position(partCfg()[particles[0]].r.p);
   double total_mass = 0.;
   for (int pid :
        subcl_partcicle_ids) // iterate over all particle ids within a cluster

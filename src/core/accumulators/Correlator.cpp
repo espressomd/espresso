@@ -378,7 +378,8 @@ void Correlator::initialize() {
 
 void Correlator::update() {
   if (finalized) {
-    throw std::runtime_error("No data can be added after finalize() was called.");
+    throw std::runtime_error(
+        "No data can be added after finalize() was called.");
   }
   // We must now go through the hierarchy and make sure there is space for the
   // new

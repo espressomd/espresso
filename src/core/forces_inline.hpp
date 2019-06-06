@@ -470,7 +470,7 @@ inline void add_bonded_force(Particle *p1) {
          1->2 distance vector here. For many body interactions this vector is
          not needed,
          and the pressure calculation not yet clear. */
-        auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+      auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
       bond_broken = calc_bond_pair_force(p1, p2, iaparams, dx, force);
 
 #ifdef NPT

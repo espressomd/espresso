@@ -120,8 +120,8 @@ void calc_oif_global(double *area_volume,
         }
         // remaining neighbors fetched
         auto const p11 = unfolded_position(p1->r.p, p1->l.i, box_geo.length());
-        auto const p22 = p11 + get_mi_vector(p2->r.p, p11,box_geo);
-        auto const p33 = p11 + get_mi_vector(p3->r.p, p11,box_geo);
+        auto const p22 = p11 + get_mi_vector(p2->r.p, p11, box_geo);
+        auto const p33 = p11 + get_mi_vector(p3->r.p, p11, box_geo);
 
         // unfolded positions correct
         auto const VOL_A = area_triangle(p11, p22, p33);
@@ -187,8 +187,8 @@ void add_oif_global_forces(double const *area_volume,
         }
 
         auto const p11 = unfolded_position(p1->r.p, p1->l.i, box_geo.length());
-        auto const p22 = p11 + get_mi_vector(p2->r.p, p11,box_geo);
-        auto const p33 = p11 + get_mi_vector(p3->r.p, p11,box_geo);
+        auto const p22 = p11 + get_mi_vector(p2->r.p, p11, box_geo);
+        auto const p33 = p11 + get_mi_vector(p3->r.p, p11, box_geo);
 
         // unfolded positions correct
         /// starting code from volume force

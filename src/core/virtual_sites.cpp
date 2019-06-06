@@ -24,11 +24,11 @@
 #ifdef VIRTUAL_SITES
 #include "communication.hpp"
 #include "config.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
-#include "errorhandling.hpp"
 
 #include <utils/constants.hpp>
 

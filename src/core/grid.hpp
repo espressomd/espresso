@@ -169,7 +169,7 @@ Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
     i. e. a previously folded position will be folded correctly.
 */
 inline std::pair<double, int> fold_coordinate(double pos, int image_box,
-                                      double const &length) {
+                                              double const &length) {
   std::tie(pos, image_box) = Algorithm::periodic_fold(pos, image_box, length);
 
   if ((image_box == std::numeric_limits<int>::min()) ||
@@ -212,16 +212,14 @@ inline Utils::Vector3d folded_position(const Utils::Vector3d &p) {
   return p_folded;
 }
 
-inline Utils::Vector3d image_shift(const Utils::Vector3i& image_box, const Utils::Vector3d &box) {
-  return {
-    image_box[0] * box[0],
-    image_box[1] * box[1],
-    image_box[2] * box[2]
-  };
+inline Utils::Vector3d image_shift(const Utils::Vector3i &image_box,
+                                   const Utils::Vector3d &box) {
+  return {image_box[0] * box[0], image_box[1] * box[1], image_box[2] * box[2]};
 }
 
 inline Utils::Vector3d unfolded_position(const Utils::Vector3d &pos,
-                                         const Utils::Vector3i& image_box, const Utils::Vector3d &box) {
+                                         const Utils::Vector3i &image_box,
+                                         const Utils::Vector3d &box) {
   return pos + image_shift(image_box, box);
 }
 

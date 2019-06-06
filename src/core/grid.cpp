@@ -161,7 +161,8 @@ void calc_minimal_box_dimensions() {
 }
 
 void rescale_boxl(int dir, double d_new) {
-  double scale = (dir - 3) ? d_new / box_geo.length()[dir] : d_new / box_geo.length()[0];
+  double scale =
+      (dir - 3) ? d_new / box_geo.length()[dir] : d_new / box_geo.length()[0];
 
   /* If shrinking, rescale the particles first. */
   if (scale <= 1.) {
@@ -178,9 +179,9 @@ void rescale_boxl(int dir, double d_new) {
 
   mpi_bcast_parameter(FIELD_BOXL);
 
-if(scale > 1.) {
-  mpi_rescale_particles(dir, scale);
-}
+  if (scale > 1.) {
+    mpi_rescale_particles(dir, scale);
+  }
 }
 
 void map_node_array(int node, int pos[3]) {

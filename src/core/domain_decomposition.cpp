@@ -25,11 +25,11 @@
 
 #include "domain_decomposition.hpp"
 
+#include "communication.hpp"
+#include "debug.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "debug.hpp"
-#include "communication.hpp"
 
 #include "serialization/ParticleList.hpp"
 #include <utils/index.hpp>
@@ -303,7 +303,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           /* prepare folding of ghost positions */
           if ((data_parts & GHOSTTRANS_POSSHFTD) &&
               boundary[2 * dir + lr] != 0) {
-            comm->comm[cnt].shift[dir] = boundary[2 * dir + lr] * box_geo.length()[dir];
+            comm->comm[cnt].shift[dir] =
+                boundary[2 * dir + lr] * box_geo.length()[dir];
           }
 
           /* fill send comm cells */
@@ -551,12 +552,14 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
        the particle belongs here and could otherwise potentially be dismissed
        due to rouding errors. */
     if (cpos[i] < 1) {
-      if ((!box_geo.periodic(i) or (pos[i] >= box_geo.length()[i])) && boundary[2 * i])
+      if ((!box_geo.periodic(i) or (pos[i] >= box_geo.length()[i])) &&
+          boundary[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > dd.cell_grid[i]) {
-      if ((!box_geo.periodic(i) or (pos[i] < box_geo.length()[i])) && boundary[2 * i + 1])
+      if ((!box_geo.periodic(i) or (pos[i] < box_geo.length()[i])) &&
+          boundary[2 * i + 1])
         cpos[i] = dd.cell_grid[i];
       else
         return nullptr;
@@ -766,14 +769,16 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 
     assert(local_particles[src.part[i].p.identity] == nullptr);
 
-    if (get_mi_coord(part.r.p[dir], my_left[dir],box_geo.length()[dir],box_geo.periodic(dir)) < 0.0) {
+    if (get_mi_coord(part.r.p[dir], my_left[dir], box_geo.length()[dir],
+                     box_geo.periodic(dir)) < 0.0) {
       if (box_geo.periodic(dir) || (boundary[2 * dir] == 0)) {
 
         move_unindexed_particle(&left, &src, i);
         if (i < src.n)
           i--;
       }
-    } else if (get_mi_coord(part.r.p[dir], my_right[dir],box_geo.length()[dir],box_geo.periodic(dir)) >= 0.0) {
+    } else if (get_mi_coord(part.r.p[dir], my_right[dir], box_geo.length()[dir],
+                            box_geo.periodic(dir)) >= 0.0) {
       if (box_geo.periodic(dir) || (boundary[2 * dir + 1] == 0)) {
 
         move_unindexed_particle(&right, &src, i);

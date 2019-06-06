@@ -296,8 +296,7 @@ void integrate_reaction_swap() {
             // check if no reaction has taken place on the particle in
             // the current step
             if (get_mi_vector(p_local[catalyzer].r.p, p_neigh[i].r.p, box_geo)
-                        .norm2() <
-                    reaction.range * reaction.range &&
+                        .norm2() < reaction.range * reaction.range &&
                 p_neigh[i].p.catalyzer_count == 0) {
               // If the particle is of correct type AND resides in the
               // correct half space, append it to the lists of viable

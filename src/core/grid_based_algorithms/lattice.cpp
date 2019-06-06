@@ -27,8 +27,8 @@
 #include "grid_based_algorithms/lattice.hpp"
 
 #include "debug.hpp"
-#include "grid.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
 
 #include <utils/index.hpp>
 using Utils::get_linear_index;

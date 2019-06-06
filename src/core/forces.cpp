@@ -28,6 +28,7 @@
 #include "EspressoSystemInterface.hpp"
 
 #include "comfixed_global.hpp"
+#include "communication.hpp"
 #include "constraints.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
@@ -39,7 +40,6 @@
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"
 #include "short_range_loop.hpp"
-#include "communication.hpp"
 
 #include <profiler/profiler.hpp>
 

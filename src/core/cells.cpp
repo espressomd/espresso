@@ -29,6 +29,7 @@
 #include "communication.hpp"
 #include "debug.hpp"
 #include "domain_decomposition.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
@@ -37,7 +38,6 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
-#include "errorhandling.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -100,12 +100,12 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          });
     break;
   case CELL_STRUCTURE_NSQUARE:
-    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
-                         boost::make_indirect_iterator(local_cells.end()),
-                         Utils::NoOp{}, pair_kernel,
-                         [](Particle const &p1, Particle const &p2) {
-                           return get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
-                         });
+    Algorithm::link_cell(
+        boost::make_indirect_iterator(local_cells.begin()),
+        boost::make_indirect_iterator(local_cells.end()), Utils::NoOp{},
+        pair_kernel, [](Particle const &p1, Particle const &p2) {
+          return get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
+        });
     break;
   case CELL_STRUCTURE_LAYERED:
     Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
@@ -298,7 +298,7 @@ namespace {
  * @brief Fold coordinates to box and reset the old position.
  */
 void fold_and_reset(Particle &p) {
-  fold_position(p.r.p, p.l.i,box_geo);
+  fold_position(p.r.p, p.l.i, box_geo);
 
   p.l.p_old = p.r.p;
 }

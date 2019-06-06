@@ -71,10 +71,10 @@ public:
 */
 class PositionUnfolder {
 public:
-    template <typename Particle> void operator()(Particle &p) const {
-        p.r.p += image_shift(p.l.i, box_geo.length());
-        p.l.i = {};
-    }
+  template <typename Particle> void operator()(Particle &p) const {
+    p.r.p += image_shift(p.l.i, box_geo.length());
+    p.l.i = {};
+  }
 };
 
 /** @brief Cache of particles */

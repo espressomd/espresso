@@ -352,7 +352,8 @@ int mmm1d_tune(char **log) {
     return ES_ERROR;
   char buffer[32 + 2 * ES_DOUBLE_SPACE + ES_INTEGER_SPACE];
   double int_time, min_time = 1e200, min_rad = -1;
-  double maxrad = box_geo.length()[2]; /* N_psi = 2, theta=2/3 maximum for rho */
+  double maxrad =
+      box_geo.length()[2]; /* N_psi = 2, theta=2/3 maximum for rho */
   double switch_radius;
 
   if (mmm1d_params.far_switch_radius_2 < 0) {
