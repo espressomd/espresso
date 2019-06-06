@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "EspressoSystemInterface.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
+#include "communication.hpp"
 
 #ifdef DIPOLAR_DIRECT_SUM
 

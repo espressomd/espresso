@@ -42,6 +42,7 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "communication.hpp"
 
 #include <utils/constants.hpp>
 

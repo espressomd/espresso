@@ -30,6 +30,8 @@
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
+#include "communication.hpp"
+
 #include <cassert>
 
 #include "short_range_loop.hpp"

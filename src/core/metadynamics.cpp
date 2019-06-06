@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "communication.hpp"
 
 /** \file
  *

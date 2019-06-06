@@ -182,3 +182,13 @@ if(scale > 1.) {
   mpi_rescale_particles(dir, scale);
 }
 }
+
+void map_node_array(int node, int pos[3]) {
+  MPI_Cart_coords(comm_cart, node, 3, pos);
+}
+
+int map_array_node(Utils::Span<const int> pos) {
+  int rank;
+  MPI_Cart_rank(comm_cart, pos.data(), &rank);
+  return rank;
+}

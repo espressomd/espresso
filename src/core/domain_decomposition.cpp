@@ -29,6 +29,7 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "debug.hpp"
+#include "communication.hpp"
 
 #include "serialization/ParticleList.hpp"
 #include <utils/index.hpp>

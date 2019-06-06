@@ -28,6 +28,7 @@
 #include "npt.hpp"
 #include "pressure_inline.hpp"
 #include "virtual_sites.hpp"
+#include "communication.hpp"
 
 #include "short_range_loop.hpp"
 

@@ -47,8 +47,8 @@
 #include "BoxGeometry.hpp"
 #include "RuntimeErrorStream.hpp"
 #include "algorithm/periodic_fold.hpp"
-#include "communication.hpp"
 #include "errorhandling.hpp"
+#include "particle_data.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -103,20 +103,14 @@ void init_node_grid();
  * \param node   rank of the node you want to know the position for.
  * \param pos    position of the node in node grid.
  */
-inline void map_node_array(int node, int pos[3]) {
-  MPI_Cart_coords(comm_cart, node, 3, pos);
-}
+void map_node_array(int node, int pos[3]);
 
 /** node mapping: node -> array.
  *
  * \return      rank of the node at position pos.
  * \param pos   position of the node in node grid.
  */
-inline int map_array_node(Utils::Span<const int> pos) {
-  int rank;
-  MPI_Cart_rank(comm_cart, pos.data(), &rank);
-  return rank;
-}
+int map_array_node(Utils::Span<const int> pos);
 
 /** map a spatial position to the node grid */
 int map_position_node_array(const Utils::Vector3d &pos);
