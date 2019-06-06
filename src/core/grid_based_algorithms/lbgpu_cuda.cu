@@ -38,8 +38,9 @@
 #include "cuda_utils.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
+
 #include "grid_based_algorithms/lb-d3q19.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include <utils/Array.hpp>
@@ -108,8 +109,6 @@ static int *boundary_node_list = nullptr;
 static int *boundary_index_list = nullptr;
 static size_t size_of_boundindex = 0;
 /*@}*/
-
-EK_parameters *lb_ek_parameters_gpu;
 
 /** @name pointers for additional cuda check flag */
 /*@{*/
@@ -2182,11 +2181,9 @@ __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
  *  @param[out]    n_b     Local node residing in array b
  *  @param[in,out] d_v     Local device values
  *  @param[in,out] node_f  Local node force density
- *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
-                          EK_parameters *ek_parameters_gpu,
                           unsigned int philox_counter) {
   /*every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
@@ -2209,11 +2206,9 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[out]    n_b     Local node residing in array b
  *  @param[in,out] d_v     Local device values
  *  @param[in,out] node_f  Local node force density
- *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
-                          LB_node_force_density_gpu node_f,
-                          EK_parameters *ek_parameters_gpu) {
+                          LB_node_force_density_gpu node_f) {
   /*every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
@@ -2935,11 +2930,10 @@ void lb_integrate_GPU() {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_fluid_gpu);
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-                 device_rho_v, node_f, lb_ek_parameters_gpu,
-                 rng_counter_fluid_gpu->value());
+                 device_rho_v, node_f, rng_counter_fluid_gpu->value());
     } else {
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-                 device_rho_v, node_f, lb_ek_parameters_gpu);
+                 device_rho_v, node_f);
     }
     current_nodes = &nodes_b;
     intflag = false;
@@ -2947,11 +2941,10 @@ void lb_integrate_GPU() {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_fluid_gpu);
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-                 device_rho_v, node_f, lb_ek_parameters_gpu,
-                 rng_counter_fluid_gpu->value());
+                 device_rho_v, node_f, rng_counter_fluid_gpu->value());
     } else {
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-                 device_rho_v, node_f, lb_ek_parameters_gpu);
+                 device_rho_v, node_f);
     }
     current_nodes = &nodes_a;
     intflag = true;
@@ -3209,9 +3202,6 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter) {
 
 void lb_fluid_set_rng_state_gpu(uint64_t counter) {
   rng_counter_fluid_gpu = Utils::Counter<uint64_t>(counter);
-#ifdef ELECTROKINETICS
-  ek_set_rng_state(counter);
-#endif // ELECTROKINETICS
 }
 
 uint64_t lb_coupling_get_rng_state_gpu() {
