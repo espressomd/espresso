@@ -59,8 +59,8 @@
 
 #include "brownian_inline.hpp"
 #include <profiler/profiler.hpp>
-#include <utils/constants.hpp>
 #include <utils/Vector.hpp>
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -659,12 +659,12 @@ void propagate_vel() {
         } else
 #endif
 #ifdef BROWNIAN_DYNAMICS
-          if (!(thermo_switch & THERMO_BROWNIAN))
+            if (!(thermo_switch & THERMO_BROWNIAN))
 #endif // BROWNIAN_DYNAMICS
-          {
+        {
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
-            p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
-          }
+          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+        }
       }
 
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
@@ -1094,15 +1094,14 @@ void bd_random_walk(Particle &p, double dt) {
 #ifndef PARTICLE_ANISOTROPY
       if (brown_sigma_pos_temp_inv > 0.0) {
         delta_pos_body[j] =
-            (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt) *
-            noise[j];
+            (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt) * noise[j];
       } else {
         delta_pos_body[j] = 0.0;
       }
 #else
       if (brown_sigma_pos_temp_inv[j] > 0.0) {
-        delta_pos_body[j] = (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt) *
-                            noise[j];
+        delta_pos_body[j] =
+            (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt) * noise[j];
       } else {
         delta_pos_body[j] = 0.0;
       }

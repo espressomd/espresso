@@ -53,8 +53,8 @@
 #include "particle_data.hpp"
 #include "thermostat.hpp"
 
-#include <utils/constants.hpp>
 #include <utils/Vector.hpp>
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -345,8 +345,10 @@ void convert_torques_propagate_omega() {
 #endif // BROWNIAN_DYNAMICS
     {
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-          stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-          this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
+          stderr,
+          "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
+          this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1],
+          p.m.v[2]));
 
       // Propagation of angular velocities
       p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
@@ -367,9 +369,12 @@ void convert_torques_propagate_omega() {
       for (int times = 0; times <= 5; times++) {
         Utils::Vector3d Wd;
 
-        Wd[0] = p.m.omega[1] * p.m.omega[2] * rinertia_diff_12 / p.p.rinertia[0];
-        Wd[1] = p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
-        Wd[2] = p.m.omega[0] * p.m.omega[1] * rinertia_diff_01 / p.p.rinertia[2];
+        Wd[0] =
+            p.m.omega[1] * p.m.omega[2] * rinertia_diff_12 / p.p.rinertia[0];
+        Wd[1] =
+            p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
+        Wd[2] =
+            p.m.omega[0] * p.m.omega[1] * rinertia_diff_01 / p.p.rinertia[2];
 
         p.m.omega = omega_0 + time_step_half * Wd;
       }
@@ -430,8 +435,9 @@ void rotation_fix(Particle &p, Utils::Vector3d &rot_vector) {
 /** Rotate the particle p around the body-frame defined NORMALIZED axis
  * aBodyFrame by amount phi
  */
-void local_rotate_particle_body(Particle &p, const Utils::Vector3d &axis_body_frame,
-                           const double phi) {
+void local_rotate_particle_body(Particle &p,
+                                const Utils::Vector3d &axis_body_frame,
+                                const double phi) {
   Utils::Vector3d axis = axis_body_frame;
 
   // Rotation turned off entirely?
@@ -619,15 +625,13 @@ void bd_random_walk_rot(Particle &p, double dt) {
     {
 #ifndef PARTICLE_ANISOTROPY
       if (brown_sigma_pos_temp_inv > 0.0) {
-        dphi[j] =
-            noise[j] * (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt);
+        dphi[j] = noise[j] * (1.0 / brown_sigma_pos_temp_inv) * sqrt(dt);
       } else {
         dphi[j] = 0.0;
       }
 #else
       if (brown_sigma_pos_temp_inv[j] > 0.0) {
-        dphi[j] = noise[j] * (1.0 / brown_sigma_pos_temp_inv[j]) *
-                  sqrt(dt);
+        dphi[j] = noise[j] * (1.0 / brown_sigma_pos_temp_inv[j]) * sqrt(dt);
       } else {
         dphi[j] = 0.0;
       }
@@ -678,8 +682,7 @@ void bd_random_walk_vel_rot(Particle &p, double dt) {
     {
       // velocity is added here. It is already initialized in the terminal drag
       // part.
-      domega[j] =
-          brown_sigma_vel_temp * noise[j] / sqrt(p.p.rinertia[j]);
+      domega[j] = brown_sigma_vel_temp * noise[j] / sqrt(p.p.rinertia[j]);
     }
   }
   rotation_fix(p, domega);

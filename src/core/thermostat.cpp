@@ -103,8 +103,7 @@ void mpi_bcast_langevin_rng_counter(const uint64_t counter) {
 }
 
 void langevin_rng_counter_increment() {
-  if (thermo_switch &
-      (THERMO_LANGEVIN | THERMO_BROWNIAN))
+  if (thermo_switch & (THERMO_LANGEVIN | THERMO_BROWNIAN))
     langevin_rng_counter->increment();
 }
 

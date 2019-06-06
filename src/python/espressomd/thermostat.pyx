@@ -110,7 +110,7 @@ cdef class Thermostat(object):
             IF BROWNIAN_DYNAMICS:
                 if thmst["type"] == "BROWNIAN":
                     self.set_brownian(kT=thmst["kT"], gamma=thmst[
-                                      "gamma"], gamma_rotation=thmst["gamma_rotation"],act_on_virtual=thmst["act_on_virtual"], seed=thmst["seed"])
+                                      "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["seed"])
 
     def get_ts(self):
         return thermo_switch
@@ -160,9 +160,11 @@ cdef class Thermostat(object):
                     lang_dict["gamma"] = langevin_gamma
                 IF ROTATION:
                     IF PARTICLE_ANISOTROPY:
-                        lang_dict["gamma_rotation"] = [langevin_gamma_rotation[0],
-                                                       langevin_gamma_rotation[1],
-                                                       langevin_gamma_rotation[2]]
+                        lang_dict[
+                            "gamma_rotation"] = [langevin_gamma_rotation[0],
+                                                 langevin_gamma_rotation[
+                                                 1],
+                                                 langevin_gamma_rotation[2]]
                     ELSE:
                         lang_dict["gamma_rotation"] = langevin_gamma_rotation
                 ELSE:
@@ -512,7 +514,8 @@ cdef class Thermostat(object):
 
             self.set_langevin(kT, gamma, gamma_rotation, act_on_virtual, seed)
             global thermo_switch
-            # this is safe because this combination of thermostats is not allowed
+            # this is safe because this combination of thermostats is not
+            # allowed
             thermo_switch = (thermo_switch & (~THERMO_LANGEVIN))
             thermo_switch = (thermo_switch | THERMO_BROWNIAN)
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)

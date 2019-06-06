@@ -165,7 +165,7 @@ inline double gaussian_random_cut() {
 }
 
 /** @brief Generator for Gaussian random numbers.
- * 
+ *
  * Uses the Box-Muller
  * transformation to generate two Gaussian random numbers from two
  * uniform random numbers.
@@ -173,11 +173,12 @@ inline double gaussian_random_cut() {
  * @param d1 decorrelated uniform random from (0..1).
  * @param d2 decorrelated uniform random from (0..1).
  * @param &repeat_flag whether we need to calc new rnd numbers.
- * 
+ *
  * @return Gaussian random number.
  *
  */
-inline double gaussian_random_box_muller(double d1, double d2, int &repeat_flag) {
+inline double gaussian_random_box_muller(double d1, double d2,
+                                         int &repeat_flag) {
   double x1, x2, r2, fac;
   static int calc_new = 1;
   static double save;
@@ -190,9 +191,9 @@ inline double gaussian_random_box_muller(double d1, double d2, int &repeat_flag)
   if (calc_new) {
 
     /* draw two uniform random numbers in the unit circle */
-    x1 = 2.0*d1;
-    x2 = 2.0*d2;
-    r2 = x1*x1 + x2*x2;
+    x1 = 2.0 * d1;
+    x2 = 2.0 * d2;
+    r2 = x1 * x1 + x2 * x2;
     if ((r2 >= 1.0) || (r2 == 0.0)) {
       repeat_flag = 1;
       return NAN; // actually, no numbers
@@ -200,14 +201,14 @@ inline double gaussian_random_box_muller(double d1, double d2, int &repeat_flag)
       repeat_flag = 0;
 
       /* perform Box-Muller transformation */
-      fac = sqrt(-2.0*log(r2)/r2);
+      fac = sqrt(-2.0 * log(r2) / r2);
 
       /* save one number for later use */
-      save = x1*fac;
+      save = x1 * fac;
       calc_new = 0;
 
       /* return the second number */
-      return x2*fac;
+      return x2 * fac;
     }
 
   } else {
@@ -217,9 +218,7 @@ inline double gaussian_random_box_muller(double d1, double d2, int &repeat_flag)
 
     /* return the stored gaussian random number */
     return save;
-
   }
-
 }
 
 #endif

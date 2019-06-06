@@ -173,8 +173,7 @@ inline Utils::Vector3d v_noise(int particle_id, RNGSalt salt) {
   using ctr_type = rng_type::ctr_type;
   using key_type = rng_type::key_type;
 
-  ctr_type c{{langevin_rng_counter->value(),
-              static_cast<uint64_t>(salt)}};
+  ctr_type c{{langevin_rng_counter->value(), static_cast<uint64_t>(salt)}};
 
   key_type k{{static_cast<uint32_t>(particle_id)}};
 
@@ -187,14 +186,14 @@ inline Utils::Vector3d v_noise(int particle_id, RNGSalt salt) {
 }
 
 /** @brief Generator for Gaussian random 3d vector.
- * 
+ *
  * Box-Muller transformation uses two
  * uniform random numbers from the philox thermostat.
  * The standard deviation = 1.0.
  *
  * @param particle_id Particle ID (decorrelates particles)
  * @param the salt (decorrelates different thermostat types)
- * 
+ *
  * @return 3D vector of Gaussian random numbers.
  *
  */
@@ -202,7 +201,7 @@ inline Utils::Vector3d v_noise_g(int particle_id, RNGSalt salt) {
 
   Utils::Vector3d v_noise_gaussian = {NAN, NAN, NAN};
 
-  for (int j=0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
     int repeat_flag = 1;
     double s_noise_val = NAN; // scalar (component) noise value
     while (repeat_flag) /*means NAN*/ {
@@ -211,8 +210,7 @@ inline Utils::Vector3d v_noise_g(int particle_id, RNGSalt salt) {
       Utils::Vector3d v_noise_val = v_noise(particle_id, salt);
       // .. and we use these doubles by the box-muller
       // Gaussian number generator
-      s_noise_val = gaussian_random_box_muller(v_noise_val[0],
-                                               v_noise_val[1],
+      s_noise_val = gaussian_random_box_muller(v_noise_val[0], v_noise_val[1],
                                                repeat_flag);
       // brownian thermostat uses Langevin counter /
       // philox RNG as well
@@ -230,13 +228,14 @@ inline Utils::Vector3d v_noise_g(int particle_id, RNGSalt salt) {
  *
  * @param particle_id Particle ID (decorrelates particles)
  * @param the salt (decorrelates different thermostat types)
- * 
+ *
  * @return 3D vector of Gaussian random numbers.
  *
  */
 inline Utils::Vector3d v_noise_gcut(int particle_id, RNGSalt salt) {
 
-  Utils::Vector3d v_noise_gaussian_cut = {NAN, NAN, NAN};;
+  Utils::Vector3d v_noise_gaussian_cut = {NAN, NAN, NAN};
+  ;
 
   // a result of the probability distribution integral
   // (inculding the Dirac deltas at the cut points +-2*renorm_coef
@@ -245,7 +244,7 @@ inline Utils::Vector3d v_noise_gcut(int particle_id, RNGSalt salt) {
   double coef = 1.042267973;
 
   const Utils::Vector3d random_vector = coef * v_noise_g(particle_id, salt);
-  for (int j=0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
     if (fabs(random_vector[j]) > 2 * coef) {
       if (random_vector[j] > 0) {
         v_noise_gaussian_cut[j] = 2 * coef;
