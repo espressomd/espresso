@@ -3,7 +3,7 @@
 
 #include "utils/device_qualifier.hpp"
 
-#ifndef __CUDACC__
+#ifndef DEVICE_CODE
 #include <cmath>
 #endif
 
