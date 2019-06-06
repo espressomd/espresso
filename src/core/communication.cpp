@@ -58,7 +58,6 @@
 #include "rotation.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
-#include "swimmer_reaction.hpp"
 #include "virtual_sites.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"

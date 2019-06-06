@@ -53,7 +53,6 @@
 #include "rattle.hpp"
 #include "rotation.hpp"
 #include "signalhandling.hpp"
-#include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 

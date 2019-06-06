@@ -52,7 +52,6 @@
 #include "reaction_ensemble.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
-#include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
