@@ -168,10 +168,6 @@ Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
           get_mi_coord(a[2], b[2], box.length()[2], box.periodic(2))};
 }
 
-inline Utils::Vector3d get_mi_vector(const Utils::Vector3d &a, const Utils::Vector3d &b) {
-  return get_mi_vector(a, b, box_geo);
-}
-
 /** fold a coordinate to primary simulation box.
     \param pos         the position...
     \param image_box   and the box
