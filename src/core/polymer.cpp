@@ -47,7 +47,7 @@
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
-#include <utils/vec_rotate.hpp>
+#include <utils/math/vec_rotate.hpp>
 
 Utils::Vector3d random_position(std::function<double()> const &generate_rn) {
   Utils::Vector3d v;

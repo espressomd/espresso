@@ -118,7 +118,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                    ia_params
                        ->affinity_r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
-                                        // lets talk about creating a bond
+                                        // let's talk about creating a bond
           // This implementation creates bond always
           for (j = 0; j < 3; j++)
             p1->p.bond_site[j] = unfolded_pos[j] - d[j];
@@ -232,7 +232,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                    ia_params
                        ->affinity_r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
-                                        // lets talk about creating a bond
+                                        // let's talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -327,7 +327,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                    ia_params
                        ->affinity_r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
-                                        // lets talk about creating a bond
+                                        // let's talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -441,7 +441,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                    ia_params
                        ->affinity_r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
-                                        // lets talk about creating a bond
+                                        // let's talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -565,7 +565,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                    ia_params
                        ->affinity_r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
-                                        // lets talk about creating a bond
+                                        // let's talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -689,7 +689,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                    ia_params
                        ->affinity_r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
-                                        // lets talk about creating a bond
+                                        // let's talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.

@@ -371,7 +371,10 @@ class Analysis(object):
         return buffer
 
     def pressure(self, v_comp=False):
-        """Calculates the instantaneous pressure (in parallel). This is only sensible in an isotropic system which is homogeneous (on average)! Do not use this in an anisotropic or inhomogeneous system. In order to obtain the pressure the ensemble average needs to be calculated.
+        """Calculates the instantaneous pressure (in parallel). This is only
+        sensible in an isotropic system which is homogeneous (on average)! Do
+        not use this in an anisotropic or inhomogeneous system. In order to
+        obtain the pressure the ensemble average needs to be calculated.
 
         Returns
         -------
@@ -385,7 +388,9 @@ class Analysis(object):
         * "nonbonded", type_i, type_j, nonbonded pressure which arises from the interactions between type_i and type_j
         * "nonbonded_intra", type_i, type_j, nonbonded pressure between short ranged forces between type i and j and with the same mol_id
         * "nonbonded_inter" type_i, type_j", nonbonded pressure between short ranged forces between type i and j and different mol_ids
-        * "coulomb", Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the coulomb stress tensor. For how the stress tensor is calculated see below. The averaged value in an isotropic NVT simulation is equivalent to the average of :math:`E^{coulomb}/(3V)`, see :cite:`brown1995general`.
+        * "coulomb", Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the coulomb stress tensor.
+          For how the stress tensor is calculated see below. The averaged value in an isotropic NVT simulation is equivalent to the average of
+          :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
         * "dipolar", TODO
         * "virtual_sites", Stress contribution due to virtual sites
 

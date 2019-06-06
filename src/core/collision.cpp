@@ -687,7 +687,6 @@ void handle_collisions() {
 
     if (!gathered_queue.empty()) {
       on_particle_change();
-      announce_resort_particles();
       cells_update_ghosts();
     }
   }    // are we in one of the vs_based methods
