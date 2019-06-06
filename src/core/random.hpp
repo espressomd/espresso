@@ -182,6 +182,7 @@ inline double gaussian_random_box_muller(double d1, double d2,
   double x1, x2, r2, fac;
   static int calc_new = 1;
   static double save;
+  double res = NAN;
 
   /* On every second call two gaussian random numbers are calculated
      via the Box-Muller transformation. One is returned as the result
@@ -196,7 +197,7 @@ inline double gaussian_random_box_muller(double d1, double d2,
     r2 = x1 * x1 + x2 * x2;
     if ((r2 >= 1.0) || (r2 == 0.0)) {
       repeat_flag = 1;
-      return NAN; // actually, no numbers
+      res = NAN; // actually, no numbers
     } else {
       repeat_flag = 0;
 
@@ -208,7 +209,7 @@ inline double gaussian_random_box_muller(double d1, double d2,
       calc_new = 0;
 
       /* return the second number */
-      return x2 * fac;
+      res = x2 * fac;
     }
 
   } else {
@@ -217,8 +218,10 @@ inline double gaussian_random_box_muller(double d1, double d2,
     calc_new = 1;
 
     /* return the stored gaussian random number */
-    return save;
+    res = save;
   }
+
+  return res;
 }
 
 #endif
