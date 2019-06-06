@@ -115,7 +115,7 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
   // afterwards, Pottier2010
   extern double brown_sigma_vel;
   // first, set defaults
-  double brown_sigma_vel_temp = brown_sigma_vel;
+  double brown_sigma_vel_temp;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
