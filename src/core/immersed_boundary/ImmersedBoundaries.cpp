@@ -222,7 +222,7 @@ void ImmersedBoundaries::calc_volumes() {
             // Unfold position of first node
             // this is to get a continuous trajectory with no jumps when box
             // boundaries are crossed
-            auto const x1 = unfolded_position(p1);
+            auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
             auto const x2 = x1 + get_mi_vector(p2->r.p, x1, box_geo);
             auto const x3 = x1 + get_mi_vector(p3->r.p, x1, box_geo);
 
@@ -322,7 +322,7 @@ void ImmersedBoundaries::calc_volume_force() {
             // Unfold position of first node
             // this is to get a continuous trajectory with no jumps when box
             // boundaries are crossed
-            auto const x1 = unfolded_position(p1);
+            auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
 
             // Unfolding seems to work only for the first particle of a triel
             // so get the others from relative vectors considering PBC

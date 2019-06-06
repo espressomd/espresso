@@ -48,7 +48,6 @@
 #include "RuntimeErrorStream.hpp"
 #include "algorithm/periodic_fold.hpp"
 #include "errorhandling.hpp"
-#include "particle_data.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
@@ -223,24 +222,10 @@ inline Utils::Vector3d image_shift(const Utils::Vector3i& image_box, const Utils
   };
 }
 
-/** unfold coordinates to physical position.
-    \param pos the position
-    \param vel the velocity
-    \param image_box and the box
-
-    Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
-    afterwards.
-*/
-
-inline Utils::Vector3d unfolded_position(Particle const *p) {
-  return p->r.p + image_shift(p->l.i, box_geo.length());
+inline Utils::Vector3d unfolded_position(const Utils::Vector3d &pos,
+                                         const Utils::Vector3i& image_box, const Utils::Vector3d &box) {
+  return pos + image_shift(image_box, box);
 }
-
-inline Utils::Vector3d unfolded_position(Particle const &p) {
-  return unfolded_position(&p);
-}
-
-
 
 /*@}*/
 #endif
