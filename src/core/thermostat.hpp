@@ -192,7 +192,7 @@ inline Utils::Vector3d v_noise(int particle_id, RNGSalt salt) {
  * The standard deviation = 1.0.
  *
  * @param particle_id Particle ID (decorrelates particles)
- * @param the salt (decorrelates different thermostat types)
+ * @param salt (decorrelates different thermostat types)
  *
  * @return 3D vector of Gaussian random numbers.
  *
@@ -227,7 +227,7 @@ inline Utils::Vector3d v_noise_g(int particle_id, RNGSalt salt) {
  *  to have the unitary standard deviation.
  *
  * @param particle_id Particle ID (decorrelates particles)
- * @param the salt (decorrelates different thermostat types)
+ * @param salt (decorrelates different thermostat types)
  *
  * @return 3D vector of Gaussian random numbers.
  *
