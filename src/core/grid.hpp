@@ -177,13 +177,12 @@ Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
 */
-template <typename Float, typename Int>
-std::pair<Float, Int> fold_coordinate(Float pos, Int image_box,
-                                      Float const &length) {
+inline std::pair<double, int> fold_coordinate(double pos, int image_box,
+                                      double const &length) {
   std::tie(pos, image_box) = Algorithm::periodic_fold(pos, image_box, length);
 
-  if ((image_box == std::numeric_limits<Int>::min()) ||
-      (image_box == std::numeric_limits<Int>::max())) {
+  if ((image_box == std::numeric_limits<int>::min()) ||
+      (image_box == std::numeric_limits<int>::max())) {
     throw std::runtime_error(
         "Overflow in the image box count while folding a particle coordinate "
         "into the primary simulation box. Maybe a particle experienced a "
@@ -200,12 +199,12 @@ std::pair<Float, Int> fold_coordinate(Float pos, Int image_box,
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
 */
-template <size_t N, typename T1, typename T2>
-void fold_position(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box) {
+inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
+                          const BoxGeometry &box) {
   for (int i = 0; i < 3; i++)
-    if (box_geo.periodic(i)) {
+    if (box.periodic(i)) {
       std::tie(pos[i], image_box[i]) =
-          fold_coordinate(pos[i], image_box[i], box_geo.length()[i]);
+          fold_coordinate(pos[i], image_box[i], box.length()[i]);
     }
 }
 
@@ -288,7 +287,7 @@ public:
 class PositionFolder {
 public:
   template <typename Particle> void operator()(Particle &p) const {
-    fold_position(p.r.p, p.l.i);
+    fold_position(p.r.p, p.l.i, box_geo);
   }
 };
 

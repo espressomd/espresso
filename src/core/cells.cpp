@@ -297,7 +297,7 @@ namespace {
  * @brief Fold coordinates to box and reset the old position.
  */
 void fold_and_reset(Particle &p) {
-  fold_position(p.r.p, p.l.i);
+  fold_position(p.r.p, p.l.i,box_geo);
 
   p.l.p_old = p.r.p;
 }
