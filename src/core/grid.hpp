@@ -221,19 +221,6 @@ inline Utils::Vector3d folded_position(const Utils::Vector3d &p) {
   return p_folded;
 }
 
-/** fold particle coordinates to primary simulation box.
- * The particle is not changed.
- */
-inline Utils::Vector3d folded_position(Particle const &p) {
-  return folded_position(p.r.p);
-}
-
-/** @overload */
-inline Utils::Vector3d folded_position(const Particle *p) {
-  assert(p);
-  return folded_position(p->r.p);
-}
-
 /** unfold coordinates to physical position.
     \param pos the position
     \param vel the velocity

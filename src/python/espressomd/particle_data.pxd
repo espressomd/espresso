@@ -231,7 +231,5 @@ cdef class _ParticleSliceImpl:
     cdef int _chunk_size
 
 cdef extern from "grid.hpp":
-    Vector3d folded_position(const particle * )
+    Vector3d folded_position(const Vector3d &)
     Vector3d unfolded_position(const particle * )
-    cdef void fold_position(double * , int*)
-    void unfold_position(double pos[3], int image_box[3])
