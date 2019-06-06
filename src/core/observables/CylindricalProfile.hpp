@@ -24,18 +24,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 
 namespace Observables {
-class CylindricalProfileObservable {
+class CylindricalProfile {
 public:
-  ::Utils::Vector3d center;
-  std::string axis;
+  CylindricalProfile(Utils::Vector3d const &center, Utils::Vector3d const &axis,
+                     double min_r, double max_r, double min_phi, double max_phi,
+                     double min_z, double max_z, int n_r_bins, int n_phi_bins,
+                     int n_z_bins)
+      : center(center), axis(axis), min_r(min_r), max_r(max_r),
+        min_phi(min_phi), max_phi(max_phi), min_z(min_z), max_z(max_z),
+        n_r_bins(n_r_bins), n_phi_bins(n_phi_bins), n_z_bins(n_z_bins){};
+  Utils::Vector3d center;
+  Utils::Vector3d axis;
   double min_r, max_r;
   double min_phi, max_phi;
   double min_z, max_z;
   // Number of bins for each coordinate.
   int n_r_bins, n_phi_bins, n_z_bins;
-  double r_bin_size() const { return (max_r - min_r) / n_r_bins; }
-  double phi_bin_size() const { return (max_phi - min_phi) / n_phi_bins; }
-  double z_bin_size() const { return (max_z - min_z) / n_z_bins; }
 };
 
 } // Namespace Observables

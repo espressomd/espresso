@@ -24,6 +24,7 @@
 #define SCRIPT_INTERFACE_OBSERVABLES_PIDOBSERVABLE_HPP
 
 #include "ScriptInterface.hpp"
+#include "auto_parameters/AutoParameters.hpp"
 
 #include "Observable.hpp"
 #include "core/observables/PidObservable.hpp"
@@ -38,26 +39,25 @@ namespace Observables {
  *  @tparam CorePidObs Any core class derived from  @ref
  *                     ::Observables::PidObservable "Observables::PidObservable"
  */
-template <typename CorePidObs> class PidObservable : public Observable {
+template <typename CorePidObs>
+class PidObservable
+    : public AutoParameters<PidObservable<CorePidObs>, Observable> {
 public:
   static_assert(
       std::is_base_of<::Observables::PidObservable, CorePidObs>::value, "");
 
-  PidObservable() : m_observable(std::make_shared<CorePidObs>()) {}
-
-  VariantMap get_parameters() const override {
-    return {{"ids", m_observable->ids()}};
+  PidObservable() {
+    this->add_parameters({{"ids",
+                           [this](Variant const &v) {
+                             m_observable->ids() =
+                                 get_value<std::vector<int>>(v);
+                           },
+                           [this]() { return m_observable->ids(); }}});
   }
 
-  Utils::Span<const boost::string_ref> valid_parameters() const override {
-    static std::array<const boost::string_ref, 1> params{"ids"};
-    return params;
-  }
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    if ("ids" == name) {
-      m_observable->ids() = get_value<std::vector<int>>(value);
-    }
+  void construct(VariantMap const &params) override {
+    m_observable =
+        make_shared_from_args<CorePidObs, std::vector<int>>(params, "ids");
   }
 
   std::shared_ptr<::Observables::Observable> observable() const override {

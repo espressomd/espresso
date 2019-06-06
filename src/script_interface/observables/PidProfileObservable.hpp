@@ -37,7 +37,7 @@ template <typename CoreObs>
 class PidProfileObservable
     : public AutoParameters<PidProfileObservable<CoreObs>, Observable> {
 public:
-  PidProfileObservable() : m_observable(std::make_shared<CoreObs>()) {
+  PidProfileObservable() {
     this->add_parameters(
         {{"ids",
           [this](const Variant &v) {
@@ -89,6 +89,14 @@ public:
             pid_profile_observable()->max_z = get_value<double>(v);
           },
           [this]() { return pid_profile_observable()->max_z; }}});
+  }
+
+  void construct(VariantMap const &params) override {
+    m_observable =
+        make_shared_from_args<CoreObs, std::vector<int>, int, int, int, double,
+                              double, double, double, double, double>(
+            params, "ids", "n_x_bins", "n_y_bins", "n_z_bins", "min_x", "min_y",
+            "min_z", "max_x", "max_y", "max_z");
   }
 
   std::shared_ptr<::Observables::PidProfileObservable>

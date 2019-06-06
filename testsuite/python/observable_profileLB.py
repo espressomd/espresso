@@ -55,7 +55,8 @@ LB_VELOCITY_PROFILE_PARAMS = {
     'sampling_delta_z': AGRID,
     'sampling_offset_x': 0.5 * AGRID,
     'sampling_offset_y': 0.5 * AGRID,
-    'sampling_offset_z': 0.5 * AGRID}
+    'sampling_offset_z': 0.5 * AGRID,
+    'allow_empty_bins': False}
 
 
 class ObservableProfileLBCommon(object):
