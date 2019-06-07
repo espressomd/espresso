@@ -1,4 +1,3 @@
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -34,8 +33,7 @@ class Layered(ut.TestCase):
     def test_resort(self):
         n_part = 2351
 
-        # Add the particles on node 0, so that they have to be
-        # resorted
+        # Add the particles on node 0, so that they have to be resorted
         for i in range(n_part):
             self.S.part.add(id=i, pos=[0, 0, 0], type=1)
 

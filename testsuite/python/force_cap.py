@@ -54,8 +54,7 @@ class ForceCap(ut.TestCase):
         s.part.add(pos=10. * np.random.random((N, 3)))
 
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=1000., sigma=2.,
-            cutoff=1.5, shift=0.0)
+            epsilon=1000., sigma=2., cutoff=1.5, shift=0.0)
 
         self.s.integrator.run(0)
         # Check that there is sth to cap

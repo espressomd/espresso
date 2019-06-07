@@ -55,16 +55,16 @@ class ReactionEnsembleTest(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         for i in range(0, 2 * cls.N0, 2):
-            cls.system.part.add(id=i, pos=np.random.random(
-                3) * cls.system.box_l, type=cls.type_A)
+            cls.system.part.add(id=i, pos=np.random.random(3) *
+                                cls.system.box_l, type=cls.type_A)
             cls.system.part.add(id=i + 1, pos=np.random.random(3) *
                                 cls.system.box_l, type=cls.type_H)
 
         cls.RE.add_reaction(
-            gamma=cls.Ka, reactant_types=[
-                cls.type_HA], reactant_coefficients=[1], product_types=[
-                cls.type_A, cls.type_H], product_coefficients=[
-                1, 1], default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
+            gamma=cls.Ka, reactant_types=[cls.type_HA],
+            reactant_coefficients=[1], product_types=[cls.type_A, cls.type_H],
+            product_coefficients=[1, 1],
+            default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
         cls.RE.constant_pH = cls.pH
 
     @classmethod

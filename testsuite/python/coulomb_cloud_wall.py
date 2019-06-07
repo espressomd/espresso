@@ -74,15 +74,16 @@ class CoulombCloudWall(ut.TestCase):
         # Force
         force_abs_diff = 0.
         for p in self.S.part:
-            force_abs_diff += np.linalg.norm(p.f / prefactor - self.forces[p.id])
+            force_abs_diff += np.linalg.norm(
+                p.f / prefactor - self.forces[p.id])
         force_abs_diff /= len(self.S.part)
 
         print(method_name, "force difference", force_abs_diff)
 
         # Energy
         if energy:
-            energy_abs_diff = abs(self.S.analysis.energy()[
-                                  "total"] / prefactor - self.reference_energy)
+            energy_abs_diff = abs(self.S.analysis.energy()["total"] / prefactor
+                                  - self.reference_energy)
             print(method_name, "energy difference", energy_abs_diff)
             self.assertLessEqual(
                 energy_abs_diff,
@@ -113,7 +114,7 @@ class CoulombCloudWall(ut.TestCase):
         self.S.actors.add(
             espressomd.electrostatics.P3M(
                 prefactor=3, r_cut=1.001, accuracy=1e-3,
-                                          mesh=64, cao=7, alpha=2.70746, tune=False, inter=0))
+                mesh=64, cao=7, alpha=2.70746, tune=False, inter=0))
         self.S.integrator.run(0)
         self.compare("p3m", energy=True, prefactor=3)
 
@@ -128,7 +129,7 @@ class CoulombCloudWall(ut.TestCase):
         self.S.actors.add(
             espressomd.electrostatics.P3M(
                 prefactor=3, r_cut=1.001, accuracy=1e-3,
-                                          mesh=64, cao=7, alpha=2.70746, tune=False))
+                mesh=64, cao=7, alpha=2.70746, tune=False))
         self.S.integrator.run(0)
         self.compare("p3m", energy=True, prefactor=3)
 
@@ -146,7 +147,7 @@ class CoulombCloudWall(ut.TestCase):
             self.S.integrator.run(0)
             self.compare("p3m_gpu", energy=False, prefactor=2.2)
 
-    @ut.skipIf(not espressomd.has_features(["SCAFACOS"]) \
+    @ut.skipIf(not espressomd.has_features(["SCAFACOS"])
                or 'p3m' not in scafacos.available_methods(),
                'Skipping test: missing feature SCAFACOS or p3m method')
     def test_scafacos_p3m(self):
@@ -162,7 +163,7 @@ class CoulombCloudWall(ut.TestCase):
         self.S.integrator.run(0)
         self.compare("scafacos_p3m", energy=True, prefactor=0.5)
 
-    @ut.skipIf(not espressomd.has_features("SCAFACOS") \
+    @ut.skipIf(not espressomd.has_features("SCAFACOS")
                or 'p2nfft' not in scafacos.available_methods(),
                'Skipping test: missing feature SCAFACOS or p2nfft method')
     def test_scafacos_p2nfft(self):
@@ -170,9 +171,7 @@ class CoulombCloudWall(ut.TestCase):
             espressomd.electrostatics.Scafacos(
                 prefactor=2.8,
                 method_name="p2nfft",
-                method_params={
-                    "p2nfft_r_cut": 1.001,
-                    "tolerance_field": 1E-4}))
+                method_params={"p2nfft_r_cut": 1.001, "tolerance_field": 1E-4}))
         self.S.integrator.run(0)
         self.compare("scafacos_p2nfft", energy=True, prefactor=2.8)
 

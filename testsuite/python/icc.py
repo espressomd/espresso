@@ -77,10 +77,7 @@ class test_icc(ut.TestCase):
             n_icc=nicc_tot,
             convergence=1e-6,
             relaxation=0.75,
-            ext_field=[
-                0,
-                0,
-                0],
+            ext_field=[0, 0, 0],
             max_iterations=100,
             first_id=0,
             eps_out=1,

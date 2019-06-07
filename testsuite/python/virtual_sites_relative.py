@@ -1,4 +1,3 @@
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -42,14 +41,15 @@ class VirtualSites(ut.TestCase):
         return np.array(
             (a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
              a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
-                a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3],
-                a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1]))
+             a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3],
+             a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1]))
 
     def director_from_quaternion(self, quat):
         return np.array((
             2 * (quat[1] * quat[3] + quat[0] * quat[2]),
             2 * (quat[2] * quat[3] - quat[0] * quat[1]),
-            (quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] + quat[3] * quat[3])))
+            (quat[0] * quat[0] - quat[1] * quat[1]
+             - quat[2] * quat[2] + quat[3] * quat[3])))
 
     def verify_vs(self, vs, verify_velocity=True):
         """Verify vs position and (if compiled in) velocity."""
@@ -92,8 +92,8 @@ class VirtualSites(ut.TestCase):
         # have_quaterion is false.
         self.system.virtual_sites = VirtualSitesRelative(have_quaternion=False)
         self.assertEqual(self.system.virtual_sites.have_quaternion, False)
-        self.system.part.add(id=0, pos=[1, 1, 1], rotation=[
-                             1, 1, 1], omega_lab=[1, 1, 1])
+        self.system.part.add(id=0, pos=[1, 1, 1], rotation=[1, 1, 1],
+                             omega_lab=[1, 1, 1])
         self.system.part.add(id=1, pos=[1, 1, 1], rotation=[1, 1, 1])
         self.system.part[1].vs_auto_relate_to(0)
         np.testing.assert_array_equal(
@@ -134,7 +134,7 @@ class VirtualSites(ut.TestCase):
         system = self.system
         system.cell_system.skin = 0.3
         system.virtual_sites = VirtualSitesRelative(have_velocity=True)
-        system.box_l = 10, 10, 10
+        system.box_l = [10, 10, 10]
         system.part.clear()
         system.time_step = 0.004
         system.part.clear()
@@ -147,8 +147,8 @@ class VirtualSites(ut.TestCase):
         self.assertEqual(system.min_global_cut, 0.23)
 
         # Place central particle + 3 vs
-        system.part.add(rotation=(1, 1, 1), pos=(0.5, 0.5, 0.5), id=1, quat=(
-            1, 0, 0, 0), omega_lab=(1, 2, 3))
+        system.part.add(rotation=(1, 1, 1), pos=(0.5, 0.5, 0.5), id=1,
+                        quat=(1, 0, 0, 0), omega_lab=(1, 2, 3))
         pos2 = (0.5, 0.4, 0.5)
         pos3 = (0.3, 0.5, 0.4)
         pos4 = (0.5, 0.5, 0.5)
@@ -173,14 +173,14 @@ class VirtualSites(ut.TestCase):
         system.part[1].v = (0.45, 0.14, 0.447)
         system.part[1].omega_lab = (0.45, 0.14, 0.447)
         system.integrator.run(0, recalc_forces=True)
-        for i in 2, 3, 4:
+        for i in [2, 3, 4]:
             self.verify_vs(system.part[i])
 
         # Check if still true, when non-virtual particle has rotated and a
         # linear motion
-        system.part[1].omega_lab = -5, 3, 8.4
+        system.part[1].omega_lab = [-5, 3, 8.4]
         system.integrator.run(10)
-        for i in 2, 3, 4:
+        for i in [2, 3, 4]:
             self.verify_vs(system.part[i])
 
         if espressomd.has_features("EXTERNAL_FORCES"):
@@ -287,9 +287,9 @@ class VirtualSites(ut.TestCase):
                 self.verify_vs(system.part[3 * j + 1])
                 self.verify_vs(system.part[3 * j + 2])
 
-            # Verify lj forces on the particles. The non-virtual particles are skipped
-            # because the forces on them originate from the vss and not the lj
-            # interaction
+            # Verify lj forces on the particles. The non-virtual particles are
+            # skipped because the forces on them originate from the vss and not
+            # the lj interaction
             verify_lj_forces(system, 1E-10, 3 *
                              np.arange(int(n / 2), dtype=int))
 

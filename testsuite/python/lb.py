@@ -135,8 +135,8 @@ class TestLB(object):
             fluid_temp *= self.system.volume() / (3. * len(lb_nodes)**2)
 
             # check mass conversation
-            self.assertAlmostEqual(fluid_mass, self.params[
-                                   "dens"], delta=self.params["mass_prec_per_node"])
+            self.assertAlmostEqual(fluid_mass, self.params["dens"],
+                                   delta=self.params["mass_prec_per_node"])
 
             # check momentum conservation
             np.testing.assert_allclose(
@@ -152,10 +152,10 @@ class TestLB(object):
             all_temp_fluid.append(fluid_temp)
 
         # import scipy.stats
-        # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"], scale=np.std(all_temp_particle,ddof=1))[1] -self.params["temp"]
-        # temp_prec_fluid = scipy.stats.norm.interval(0.95,
-        # loc=self.params["temp"], scale=np.std(all_temp_fluid,ddof=1))[1]
-        # -self.params["temp"]
+        # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
+        #   scale=np.std(all_temp_particle,ddof=1))[1] - self.params["temp"]
+        # temp_prec_fluid = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
+        #   scale=np.std(all_temp_fluid,ddof=1))[1] -self.params["temp"]
         temp_prec_particle = 0.06 * self.params["temp"]
         temp_prec_fluid = 0.05 * self.params["temp"]
 
@@ -200,8 +200,7 @@ class TestLB(object):
         obs = LBFluidStress()
         obs_stress = obs.calculate()
         obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[3]],
-                               [obs_stress[1], obs_stress[
-                                2], obs_stress[4]],
+                               [obs_stress[1], obs_stress[2], obs_stress[4]],
                                [obs_stress[3], obs_stress[4], obs_stress[5]]])
         print(stress / obs_stress)
         np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
@@ -300,7 +299,8 @@ class TestLB(object):
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
         if self.interpolation:
-            v_fluid = self.lbf.get_interpolated_velocity(self.system.part[0].pos)
+            v_fluid = self.lbf.get_interpolated_velocity(
+                self.system.part[0].pos)
         self.system.integrator.run(1)
         np.testing.assert_allclose(
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)

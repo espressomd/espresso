@@ -38,11 +38,11 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             self.system.part[0].q = 1
             self.system.part[1].q = -1
 
-    test_mmm1d = tests_common.generate_test_for_class(system,
-        MMM1D, dict(prefactor=2.0,
-                    maxPWerror=0.001,
-                    far_switch_radius=3,
-                    tune=False))
+    test_mmm1d = tests_common.generate_test_for_class(
+        system, MMM1D, dict(prefactor=2.0,
+                            maxPWerror=0.001,
+                            far_switch_radius=3,
+                            tune=False))
 
 
 if __name__ == "__main__":

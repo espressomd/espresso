@@ -22,7 +22,8 @@ import espressomd.lb
 from tests_common import single_component_maxwell
 
 """
-Check the Lattice Boltzmann thermostat with respect to the particle velocity distribution.
+Check the Lattice Boltzmann thermostat with respect to the particle velocity
+distribution.
 
 
 """
@@ -69,8 +70,8 @@ class LBThermostatCommon(object):
         n_bins = 7
         error_tol = 0.01
         for i in range(3):
-            hist = np.histogram(v_stored[:, i], range=(
-                -minmax, minmax), bins=n_bins, normed=False)
+            hist = np.histogram(v_stored[:, i], range=(-minmax, minmax),
+                                bins=n_bins, normed=False)
             data = hist[0] / float(v_stored.shape[0])
             bins = hist[1]
             for j in range(n_bins):

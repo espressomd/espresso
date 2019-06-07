@@ -97,8 +97,7 @@ class CheckpointTest(ut.TestCase):
                 for k in range(nz):
                     np.testing.assert_almost_equal(
                         np.copy(ek_species[i, j, k].density),
-                                grid_3D[i, j, k],
-                                decimal=precision)
+                        grid_3D[i, j, k], decimal=precision)
         state = ek.get_params()
         reference = {'agrid': 0.5, 'lb_density': 26.15,
                      'viscosity': 1.7, 'friction': 0.0,
@@ -111,21 +110,13 @@ class CheckpointTest(ut.TestCase):
         for key, val in reference_species.items():
             self.assertTrue(key in state_species)
             self.assertAlmostEqual(
-                reference_species[key],
-                state_species[key],
-                delta=1E-5)
+                reference_species[key], state_species[key], delta=1E-5)
         self.assertAlmostEqual(
-            state_species['ext_force_density'][0],
-            0.01,
-            delta=1E-5)
+            state_species['ext_force_density'][0], 0.01, delta=1E-5)
         self.assertAlmostEqual(
-            state_species['ext_force_density'][1],
-            -0.08,
-            delta=1E-5)
+            state_species['ext_force_density'][1], -0.08, delta=1E-5)
         self.assertAlmostEqual(
-            state_species['ext_force_density'][2],
-            0.06,
-            delta=1E-5)
+            state_species['ext_force_density'][2], 0.06, delta=1E-5)
 
     def test_variables(self):
         self.assertEqual(system.cell_system.skin, 0.1)

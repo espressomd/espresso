@@ -79,8 +79,8 @@ class AnalyzeGyration(ut.TestCase):
         # the cube case should have zero as off- diagonal components
         self.assertTrue(
             np.allclose([mom_I[0, 1], mom_I[0, 2], mom_I[1, 2], mom_I[1, 0], mom_I[2, 0], mom_I[2, 1]], np.zeros(6), atol=1e-6))
-        self.assertTrue(np.allclose([mom_I[0, 0], mom_I[1, 1], mom_I[2, 2]], [
-                        sqr_dist[1] + sqr_dist[2], sqr_dist[0] + sqr_dist[2], sqr_dist[1] + sqr_dist[2]], atol=1e-6))
+        self.assertTrue(np.allclose([mom_I[0, 0], mom_I[1, 1], mom_I[2, 2]],
+                                    [sqr_dist[1] + sqr_dist[2], sqr_dist[0] + sqr_dist[2], sqr_dist[1] + sqr_dist[2]], atol=1e-6))
 
 
 if __name__ == "__main__":

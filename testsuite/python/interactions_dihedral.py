@@ -57,8 +57,7 @@ def dihedral_force(k, n, phase, p1, p2, p3, p4):
     if l_v12Xv23 <= 1e-8 or l_v23Xv34 <= 1e-8:
         return 0, 0, 0
     else:
-        cosphi = np.abs(np.dot(v12Xv23, v23Xv34)) / (
-            l_v12Xv23 * l_v23Xv34)
+        cosphi = np.abs(np.dot(v12Xv23, v23Xv34)) / (l_v12Xv23 * l_v23Xv34)
         phi = np.arccos(cosphi)
         f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23
         f4 = (v12Xv23 - cosphi * v23Xv34) / l_v23Xv34

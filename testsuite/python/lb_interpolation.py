@@ -46,9 +46,8 @@ def velocity_profile(x):
 class LBInterpolation(object):
 
     """
-    Couette flow profile along x in z-direction. Check that velocity at shear plane next to
-    the resting boundary is zero.
-
+    Couette flow profile along x in z-direction. Check that velocity at shear
+    plane next to the resting boundary is zero.
     """
     lbf = None
     system = espressomd.System(box_l=[BOX_L] * 3)
@@ -56,9 +55,7 @@ class LBInterpolation(object):
     system.time_step = TIME_STEP
 
     def set_boundaries(self, velocity):
-        """Place boundaries *not* exactly on a LB node.
-
-        """
+        """Place boundaries *not* exactly on a LB node."""
         wall_shape1 = espressomd.shapes.Wall(
             normal=[1, 0, 0], dist=0.6 * AGRID)
         wall_shape2 = espressomd.shapes.Wall(
@@ -72,20 +69,19 @@ class LBInterpolation(object):
         """
         Check that the interpolated LB fluid velocity is zero between boundary
         node and first fluid node.
-
         """
         self.system.lbboundaries.clear()
         self.set_boundaries([0.0, 0.0, V_BOUNDARY])
         self.system.integrator.run(1200)
         # Shear plane for boundary 1
-        #for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
-        #    np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
+        # for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
+        #     np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
         # Bulk
         for pos in itertools.product(np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
             np.testing.assert_almost_equal(
                 self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
         # Shear plane for boundary 2
-        #for pos in itertools.product((9 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
+        # for pos in itertools.product((9 * AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
         # np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2],
         # 1.0, decimal=4)
 

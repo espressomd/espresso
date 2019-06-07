@@ -42,7 +42,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
     s.seed  = s.cell_system.get_state()['n_nodes'] * [1234]
     s.time_step = 0.01
     s.cell_system.skin = .4
-    s.periodicity = 1, 1, 1
+    s.periodicity = [1, 1, 1]
     s.thermostat.turn_off()
 
     def test_mdlc(self):

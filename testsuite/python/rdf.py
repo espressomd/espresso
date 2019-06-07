@@ -77,7 +77,7 @@ class RdfTest(ut.TestCase):
         r_max = r_bins * dx
         rdf01 = s.analysis.rdf(
             rdf_type='rdf', type_list_a=[0], type_list_b=[1],
-                              r_min=r_min, r_max=r_max, r_bins=r_bins)
+            r_min=r_min, r_max=r_max, r_bins=r_bins)
         rv = self.bin_volumes(rdf01[0])
         rho = 0.5 * n_part / (s.box_l[0]**3)
 
@@ -91,7 +91,7 @@ class RdfTest(ut.TestCase):
         # Check symmetry
         rdf10 = s.analysis.rdf(
             rdf_type='rdf', type_list_a=[1], type_list_b=[0],
-                             r_min=r_min, r_max=r_max, r_bins=r_bins)
+            r_min=r_min, r_max=r_max, r_bins=r_bins)
 
         self.assertTrue(np.allclose(rdf10, rdf01))
 

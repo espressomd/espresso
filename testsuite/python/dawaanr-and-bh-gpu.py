@@ -72,19 +72,17 @@ class BHGPUTest(ut.TestCase):
                 part_dip[0] = sintheta * np.cos(phi) * dipole_modulus
                 part_dip[1] = sintheta * np.sin(phi) * dipole_modulus
                 part_dip[2] = costheta * dipole_modulus
-                self.system.part.add(id=i, type=0, pos=part_pos, dip=part_dip, v=np.array(
-                    [0, 0, 0]), omega_body=np.array([0, 0, 0]))
+                self.system.part.add(id=i, type=0, pos=part_pos, dip=part_dip,
+                                     v=np.array([0, 0, 0]), omega_body=np.array([0, 0, 0]))
 
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=10.0, sigma=0.5,
-                cutoff=0.55, shift="auto")
+                epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
             self.system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
             stopAll(self.system)
             self.system.integrator.set_vv()
 
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=0.0, sigma=0.0,
-                cutoff=-1, shift=0.0)
+                epsilon=0.0, sigma=0.0, cutoff=-1, shift=0.0)
 
             self.system.cell_system.skin = 0.0
             self.system.time_step = 0.01
@@ -130,20 +128,25 @@ class BHGPUTest(ut.TestCase):
             for i in range(n):
                 self.assertTrue(
                     self.vectorsTheSame(
-                        np.array(
-                            dawaanr_t[i]), ratio_dawaanr_bh_gpu * np.array(
-                                bhgpu_t[i])),
-                                msg='Torques on particle do not match. i={0} dawaanr_t={1} ratio_dawaanr_bh_gpu*bhgpu_t={2}'.format(i, np.array(dawaanr_t[i]), ratio_dawaanr_bh_gpu * np.array(bhgpu_t[i])))
+                        np.array(dawaanr_t[i]),
+                        ratio_dawaanr_bh_gpu * np.array(bhgpu_t[i])),
+                    msg='Torques on particle do not match. i={0} dawaanr_t={1} '
+                        'ratio_dawaanr_bh_gpu*bhgpu_t={2}'.format(
+                        i, np.array(dawaanr_t[i]),
+                        ratio_dawaanr_bh_gpu * np.array(bhgpu_t[i])))
                 self.assertTrue(
                     self.vectorsTheSame(
-                        np.array(
-                            dawaanr_f[i]), ratio_dawaanr_bh_gpu * np.array(
-                                bhgpu_f[i])),
-                                msg='Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_bh_gpu*bhgpu_f={2}'.format(i, np.array(dawaanr_f[i]), ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])))
+                        np.array(dawaanr_f[i]),
+                        ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])),
+                    msg='Forces on particle do not match: i={0} dawaanr_f={1} '
+                        'ratio_dawaanr_bh_gpu*bhgpu_f={2}'.format(
+                        i, np.array(dawaanr_f[i]),
+                        ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])))
             self.assertLessEqual(
-                abs(dawaanr_e - bhgpu_e * ratio_dawaanr_bh_gpu), abs(
-                    1E-3 * dawaanr_e),
-                            msg='Energies for dawaanr {0} and bh_gpu {1} do not match.'.format(dawaanr_e, ratio_dawaanr_bh_gpu * bhgpu_e))
+                abs(dawaanr_e - bhgpu_e * ratio_dawaanr_bh_gpu),
+                abs(1E-3 * dawaanr_e),
+                msg='Energies for dawaanr {0} and bh_gpu {1} do not match.'
+                    .format(dawaanr_e, ratio_dawaanr_bh_gpu * bhgpu_e))
 
             self.system.integrator.run(steps=0, recalc_forces=True)
 

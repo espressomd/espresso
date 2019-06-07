@@ -28,9 +28,8 @@ class GPUAvailability(ut.TestCase):
     def test(self):
         if "CUDA" in espressomd.features():
             system = espressomd.System(box_l=[1, 1, 1])
-            self.assertEqual(
-                system.cuda_init_handle.device_list != {},
-                espressomd.gpu_available())
+            self.assertEqual(system.cuda_init_handle.device_list != {},
+                             espressomd.gpu_available())
         else:
             self.assertFalse(espressomd.gpu_available())
 

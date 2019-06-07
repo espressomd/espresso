@@ -37,7 +37,7 @@ class RotDiffAniso(ut.TestCase):
     gamma_global = np.zeros((3))
 
     # Particle properties
-    J = 0.0, 0.0, 0.0
+    J = [0.0, 0.0, 0.0]
 
     @classmethod
     def setUpClass(cls):
@@ -67,29 +67,32 @@ class RotDiffAniso(ut.TestCase):
         box = 10.0
         self.system.box_l = box, box, box
         if espressomd.has_features(("PARTIAL_PERIODIC",)):
-            self.system.periodicity = 0, 0, 0
+            self.system.periodicity = [0, 0, 0]
 
         # NVT thermostat
         # Just some temperature range to cover by the test:
         self.kT = np.random.uniform(1.5, 6.5)
-        # Note: here & hereinafter specific variations in the random parameter ranges are related to
-        # the test execution duration to achieve the required statistical averages faster.
-        # The friction gamma_global should be large enough in order to have the small enough D ~ kT / gamma and
-        # to observe the details of the original rotational diffusion: the Perrin1936 (see the reference below) tests are visible
-        # only when the diffusive rotation is ~pi due to the exponential temporal dependencies (see the equations referred in the check_rot_diffusion()).
-        # Also, t0 ~ J / gamma should be small enough
-        # in order to remove the small-time-scale diffusion effects which do not fit the Perrin1936's
-        # tests which are based on the partial differential equation (eq. (68), Perrin1934) leading only to the simple
-        # classical Einstein-Smoluchowski equations of the diffusion
-        # in a contrast of the eq. (10.2.26) [N. Pottier,
-        # https://doi.org/10.1007/s10955-010-0114-6 (2010)].
+        # Note: here & hereinafter specific variations in the random parameter
+        # ranges are related to the test execution duration to achieve the
+        # required statistical averages faster. The friction gamma_global should
+        # be large enough in order to have the small enough D ~ kT / gamma and
+        # to observe the details of the original rotational diffusion: the
+        # Perrin1936 (see the reference below) tests are visible only when the
+        # diffusive rotation is ~pi due to the exponential temporal dependencies
+        # (see the equations referred in the check_rot_diffusion()).
+        # Also, t0 ~ J / gamma should be small enough in order to remove the
+        # small-time-scale diffusion effects which do not fit the Perrin1936's
+        # tests which are based on the partial differential equation
+        # (eq. (68), Perrin1934) leading only to the simple classical
+        # Einstein-Smoluchowski equations of the diffusion in a contrast of the
+        # eq. (10.2.26) [N. Pottier, doi:10.1007/s10955-010-0114-6 (2010)].
         self.gamma_global = 1E2 * np.random.uniform(0.35, 1.05, (3))
 
         # Particles
         # As far as the problem characteristic time is t0 ~ J / gamma
         # and the Langevin equation finite-difference approximation is stable
-        # only for time_step << t0, it is needed to set the moment of inertia higher than
-        # some minimal value.
+        # only for time_step << t0, it is needed to set the moment of inertia
+        # higher than some minimal value.
         # Also, it is expected to test the large enough J.
         # It should be not very large, otherwise the thermalization will require
         # too much of the CPU time: the in silico time should clock over the
@@ -100,14 +103,16 @@ class RotDiffAniso(ut.TestCase):
             self.system.part.add(rotation=(1, 1, 1), id=ind, rinertia=self.J,
                                  pos=part_pos)
             if "ROTATION" in espressomd.features():
-                self.system.part[ind].omega_body = 0.0, 0.0, 0.0
+                self.system.part[ind].omega_body = [0.0, 0.0, 0.0]
 
     def check_rot_diffusion(self, n):
         """
         The rotational diffusion tests based on the reference work
-        [Perrin, F. (1936) Journal de Physique et Le Radium, 7(1), 1-11. https://doi.org/10.1051/jphysrad:01936007010100]
+        [Perrin, F. (1936) Journal de Physique et Le Radium, 7(1), 1-11.
+        https://doi.org/10.1051/jphysrad:01936007010100]
         with a theoretical background of
-        [Perrin, F. (1934) Journal de Physique et Le Radium, 5(10), 497-511. https://doi.org/10.1051/jphysrad:01934005010049700]
+        [Perrin, F. (1934) Journal de Physique et Le Radium, 5(10), 497-511.
+        https://doi.org/10.1051/jphysrad:01934005010049700]
 
         Parameters
         ----------
@@ -125,11 +130,11 @@ class RotDiffAniso(ut.TestCase):
 
         # Measuring...
         # Set the initial conditions according to the [Perrin1936], p.3.
-        # The body angular velocity is rotated now, but there is
-        # only the thermal velocity, hence, this does not impact the test and
-        # its physical context.
+        # The body angular velocity is rotated now, but there is only the
+        # thermal velocity, hence, this does not impact the test and its
+        # physical context.
         for ind in range(n):
-            self.system.part[ind].quat = 1.0, 0.0, 0.0, 0.0
+            self.system.part[ind].quat = [1.0, 0.0, 0.0, 0.0]
         # Average direction cosines
         # Diagonal ones:
         dcosjj_validate = np.zeros((3))
@@ -168,15 +173,11 @@ class RotDiffAniso(ut.TestCase):
                     for i in range(3):
                         if i != j:
                             # the LHS of eq. (24) [Perrin1936].
-                            dcosijpp[i, j] += dir_cos[i, i] * \
-                                dir_cos[j, j] + \
-                                              dir_cos[i, j] * \
-                                              dir_cos[j, i]
+                            dcosijpp[i, j] += dir_cos[i, i] *  dir_cos[j, j] + \
+                                dir_cos[i, j] * dir_cos[j, i]
                             # the LHS of eq. (25) [Perrin1936].
-                            dcosijnn[i, j] += dir_cos[i, i] * \
-                                dir_cos[j, j] - \
-                                dir_cos[i, j] * \
-                                dir_cos[j, i]
+                            dcosijnn[i, j] += dir_cos[i, i] *  dir_cos[j, j] - \
+                                dir_cos[i, j] * dir_cos[j, i]
                             # the LHS of eq. (33) [Perrin1936].
                             dcosij2[i, j] += dir_cos[i, j]**2.0
             dcosjj /= n
@@ -282,39 +283,30 @@ class RotDiffAniso(ut.TestCase):
 
             for j in range(3):
                 self.assertLessEqual(
-                    abs(
-                        dcosjj_dev[j]),
-                    tolerance,
-                    msg='Relative deviation dcosjj_dev[{0}] in a rotational diffusion is too large: {1}'.format(
-                        j,
-                        dcosjj_dev[j]))
+                    abs(dcosjj_dev[j]), tolerance,
+                    msg='Relative deviation dcosjj_dev[{0}] in a rotational '
+                        'diffusion is too large: {1}'.format(j, dcosjj_dev[j]))
                 self.assertLessEqual(
-                    abs(
-                        dcosjj2_dev[j]),
-                    tolerance,
-                    msg='Relative deviation dcosjj2_dev[{0}] in a rotational diffusion is too large: {1}'.format(
-                        j,
-                        dcosjj2_dev[j]))
+                    abs(dcosjj2_dev[j]), tolerance,
+                    msg='Relative deviation dcosjj2_dev[{0}] in a rotational '
+                        'diffusion is too large: {1}'.format(j, dcosjj2_dev[j]))
                 for i in range(3):
                     if i != j:
                         self.assertLessEqual(
-                            abs(
-                                dcosijpp_dev[i, j]),
-                            tolerance,
-                            msg='Relative deviation dcosijpp_dev[{0},{1}] in a rotational diffusion is too large: {2}'.format(
-                                i, j, dcosijpp_dev[i, j]))
+                            abs(dcosijpp_dev[i, j]), tolerance,
+                            msg='Relative deviation dcosijpp_dev[{0},{1}] in a '
+                                'rotational diffusion is too large: {2}'
+                                .format(i, j, dcosijpp_dev[i, j]))
                         self.assertLessEqual(
-                            abs(
-                                dcosijnn_dev[i, j]),
-                            tolerance,
-                            msg='Relative deviation dcosijnn_dev[{0},{1}] in a rotational diffusion is too large: {2}'.format(
-                                i, j, dcosijnn_dev[i, j]))
+                            abs(dcosijnn_dev[i, j]), tolerance,
+                            msg='Relative deviation dcosijnn_dev[{0},{1}] in a '
+                                'rotational diffusion is too large: {2}'
+                                .format(i, j, dcosijnn_dev[i, j]))
                         self.assertLessEqual(
-                            abs(
-                                dcosij2_dev[i, j]),
-                            tolerance,
-                            msg='Relative deviation dcosij2_dev[{0},{1}] in a rotational diffusion is too large: {2}'.format(
-                                i, j, dcosij2_dev[i, j]))
+                            abs(dcosij2_dev[i, j]), tolerance,
+                            msg='Relative deviation dcosij2_dev[{0},{1}] in a '
+                                'rotational diffusion is too large: {2}'
+                                .format(i, j, dcosij2_dev[i, j]))
 
     def test_case_00(self):
         n = 800

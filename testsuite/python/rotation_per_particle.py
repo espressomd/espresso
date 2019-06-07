@@ -32,15 +32,17 @@ class Rotation(ut.TestCase):
     s.time_step = 0.01
 
     def test_langevin(self):
-        """Applies langevin thermostat and checks that correct axes get thermalized"""
+        """Applies langevin thermostat and checks that correct axes get
+           thermalized"""
         s = self.s
         s.thermostat.set_langevin(gamma=1, kT=1, seed=42)
         for x in 0, 1:
             for y in 0, 1:
                 for z in 0, 1:
                     s.part.clear()
-                    s.part.add(id=0, pos=(0, 0, 0), rotation=(x, y, z), quat=(
-                        1, 0, 0, 0), omega_body=(0, 0, 0), torque_lab=(0, 0, 0))
+                    s.part.add(id=0, pos=(0, 0, 0), rotation=(x, y, z),
+                               quat=(1, 0, 0, 0), omega_body=(0, 0, 0),
+                               torque_lab=(0, 0, 0))
                     s.integrator.run(500)
                     self.validate(x, 0)
                     self.validate(y, 1)
@@ -56,14 +58,15 @@ class Rotation(ut.TestCase):
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_axes_changes(self):
-        """Verifies that rotation axes in body and space frame stay the same and other axes don't"""
+        """Verifies that rotation axes in body and space frame stay the same
+           and other axes don't"""
         s = self.s
         s.part.clear()
         s.part.add(id=0, pos=(0.9, 0.9, 0.9), ext_torque=(1, 1, 1))
         s.thermostat.turn_off()
         for dir in 0, 1, 2:
             # Reset orientation
-            s.part[0].quat = 1, 0, 0, 0
+            s.part[0].quat = [1, 0, 0, 0]
 
             # Enable rotation in a single direction
             rot = [0, 0, 0]

@@ -62,12 +62,11 @@ class DDSGPUTest(ut.TestCase):
                 part_dip[0] = sintheta * np.cos(phi) * dipole_modulus
                 part_dip[1] = sintheta * np.sin(phi) * dipole_modulus
                 part_dip[2] = costheta * dipole_modulus
-                self.es.part.add(id=i, type=0, pos=part_pos, dip=part_dip, v=np.array(
-                    [0, 0, 0]), omega_body=np.array([0, 0, 0]))
+                self.es.part.add(id=i, type=0, pos=part_pos, dip=part_dip,
+                                 v=np.array([0, 0, 0]), omega_body=np.array([0, 0, 0]))
 
             self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=10.0, sigma=0.5,
-                cutoff=0.55, shift="auto")
+                epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
             self.es.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
 
             self.es.integrator.set_steepest_descent(
@@ -77,8 +76,7 @@ class DDSGPUTest(ut.TestCase):
             self.es.integrator.set_vv()
 
             self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=0.0, sigma=0.0,
-                cutoff=0.0, shift=0.0)
+                epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0.0)
 
             self.es.cell_system.skin = 0.0
             self.es.time_step = 0.01
@@ -120,23 +118,22 @@ class DDSGPUTest(ut.TestCase):
 
             # compare
             for i in range(n):
-                np.testing.assert_allclose(np.array(dawaanr_t[i]),
-                                           ratio_dawaanr_dds_gpu *
-                                           np.array(ddsgpu_t[i]),
-                                           err_msg='Torques on particle do not match for particle {}'.format(i), atol=3e-3)
-                np.testing.assert_allclose(np.array(dawaanr_f[i]),
-                                           ratio_dawaanr_dds_gpu *
-                                           np.array(ddsgpu_f[i]),
-                                           err_msg='Forces on particle do not match for particle i={}'.format(i), atol=3e-3)
+                np.testing.assert_allclose(
+                    np.array(dawaanr_t[i]),
+                    ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i]),
+                    err_msg='Torques on particle do not match for particle {}'
+                    .format(i), atol=3e-3)
+                np.testing.assert_allclose(
+                    np.array(dawaanr_f[i]),
+                    ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i]),
+                    err_msg='Forces on particle do not match for particle i={}'
+                    .format(i), atol=3e-3)
             self.assertAlmostEqual(
                 dawaanr_e,
-                ddsgpu_e *
-                ratio_dawaanr_dds_gpu,
+                ddsgpu_e * ratio_dawaanr_dds_gpu,
                 places=2,
-                msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(
-                    dawaanr_e,
-                    ratio_dawaanr_dds_gpu *
-                    ddsgpu_e))
+                msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'
+                .format(dawaanr_e, ratio_dawaanr_dds_gpu * ddsgpu_e))
 
             self.es.integrator.run(steps=0, recalc_forces=True)
 

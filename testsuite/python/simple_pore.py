@@ -32,8 +32,8 @@ from espressomd.shapes import SimplePore, Cylinder
 class SimplePoreConstraint(ut.TestCase):
 
     def test_orientation(self):
-        pore = SimplePore(
-            axis=[1., 0., 0.], radius=2., smoothing_radius=.1, length=2., center=[5., 5., 5.])
+        pore = SimplePore(axis=[1., 0., 0.], radius=2., smoothing_radius=.1,
+                          length=2., center=[5., 5., 5.])
 
         d, _ = pore.calc_distance(position=[.0, .0, .0])
         self.assertGreater(d, 0.)
@@ -54,14 +54,19 @@ class SimplePoreConstraint(ut.TestCase):
         lj_sig = 1.0
         lj_cut = lj_sig * 2**(1. / 6.)
 
-        s.constraints.add(particle_type=0, penetrable=False, only_positive=False, shape=SimplePore(
-            axis=[1., 0.5, 0.5], radius=3., smoothing_radius=.1, length=5, center=[.5 * box_x, .5 * box_yz, .5 * box_yz]))
-        s.constraints.add(particle_type=0, penetrable=False, only_positive=False, shape=Cylinder(
-            axis=[1., 0.0, 0], radius=0.5 * box_yz, length=4 * lj_cut + box_x, center=[.5 * box_x, .5 * box_yz, .5 * box_yz], direction=-1))
+        s.constraints.add(
+            particle_type=0, penetrable=False, only_positive=False,
+            shape=SimplePore(
+                axis=[1., 0.5, 0.5], radius=3., smoothing_radius=.1,
+                length=5, center=[.5 * box_x, .5 * box_yz, .5 * box_yz]))
+        s.constraints.add(
+            particle_type=0, penetrable=False, only_positive=False,
+            shape=Cylinder(
+                axis=[1., 0, 0], radius=0.5 * box_yz, length=4 * lj_cut + box_x,
+                center=[.5 * box_x, .5 * box_yz, .5 * box_yz], direction=-1))
 
         s.non_bonded_inter[0, 1].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig,
-            cutoff=lj_cut, shift="auto")
+            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
         for i in range(200):
             rpos = [i * (box_x / 200.), 0.5 * box_yz, 0.5 * box_yz]

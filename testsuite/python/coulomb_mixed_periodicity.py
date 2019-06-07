@@ -132,14 +132,16 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.S.integrator.run(0)
         if self.generate_data:
             n = len(self.S.part)
-            data = np.hstack((self.S.part[:].id.reshape((n, 1)), self.S.part[
-                             :].pos_folded, self.S.part[:].q.reshape((n, 1)), self.S.part[:].f))
+            data = np.hstack((self.S.part[:].id.reshape((n, 1)),
+                              self.S.part[:].pos_folded,
+                              self.S.part[:].q.reshape((n, 1)),
+                              self.S.part[:].f))
             np.savetxt(tests_common.abspath(
                 "data/coulomb_mixed_periodicity_system.data"), data)
         self.compare("mmm2d (compared to stored data)", energy=True)
         self.S.actors.remove(mmm2d)
 
-    @ut.skipIf(not espressomd.has_features("SCAFACOS") \
+    @ut.skipIf(not espressomd.has_features("SCAFACOS")
                or 'p2nfft' not in scafacos.available_methods(),
                'Skipping test: missing feature SCAFACOS or p2nfft method')
     def test_scafacos_p2nfft(self):
@@ -149,13 +151,13 @@ class CoulombMixedPeriodicity(ut.TestCase):
 
         scafacos = el.Scafacos(
             prefactor=1,
-                method_name="p2nfft",
-                method_params={
-                    "tolerance_field": 5E-5,
-                    "pnfft_n": "96,96,128",
-                    "pnfft_N": "96,96,128",
-                    "r_cut": 2.4,
-                    "pnfft_m": 3})
+            method_name="p2nfft",
+            method_params={
+                "tolerance_field": 5E-5,
+                "pnfft_n": "96,96,128",
+                "pnfft_N": "96,96,128",
+                "r_cut": 2.4,
+                "pnfft_m": 3})
         self.S.actors.add(scafacos)
         self.S.integrator.run(0)
         self.compare("scafacos_p2nfft", energy=True)

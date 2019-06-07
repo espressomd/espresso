@@ -32,7 +32,9 @@ class WidomInsertionTest(ut.TestCase):
 
     """Test the implementation of the widom insertion.
 
-       The excess chemical potential is calculated for identical particles in a 20 cubed box with a single particle, interacting via a LJ-potential (cut-off at 5 sigma)."""
+       The excess chemical potential is calculated for identical particles in
+       a 20 cubed box with a single particle, interacting via a LJ-potential
+       (cut-off at 5 sigma)."""
 
     N0 = 1
     TEMPERATURE = 0.5
@@ -74,16 +76,12 @@ class WidomInsertionTest(ut.TestCase):
         temperature=TEMPERATURE, seed=1)    
 
     def setUp(self):
-        self.system.part.add(
-            id=0,
-            pos=0.5 *
-            self.system.box_l,
-            type=self.TYPE_HA)
+        self.system.part.add(id=0, pos=0.5 * self.system.box_l,
+                             type=self.TYPE_HA)
         
         self.system.non_bonded_inter[self.TYPE_HA, self.TYPE_HA].lennard_jones.set_params(
-            epsilon=self.LJ_EPS,
-                                                           sigma=self.LJ_SIG,
-                                                           cutoff=self.LJ_CUT, shift="auto")
+            epsilon=self.LJ_EPS, sigma=self.LJ_SIG, cutoff=self.LJ_CUT,
+            shift="auto")
 
         self.Widom.add_reaction(
             reactant_types=[],
@@ -102,8 +100,8 @@ class WidomInsertionTest(ut.TestCase):
             'n_nodes'] * [np.random.randint(5)]
         num_samples = 100000
         for i in range(num_samples):
-            Widom.measure_excess_chemical_potential(
-                0)  # 0 for insertion reaction
+            # 0 for insertion reaction
+            Widom.measure_excess_chemical_potential(0)
         mu_ex = Widom.measure_excess_chemical_potential(0)
         deviation_mu_ex = abs(mu_ex[0] - target_mu_ex)
 

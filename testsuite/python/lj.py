@@ -38,14 +38,14 @@ class LennardJonesTest(ut.TestCase):
         lj_cut = 1.12246
 
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig,
-            cutoff=lj_cut, shift="auto")
+            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
 
         for i in range(self.data.shape[0]):
-            self.system.part.add(id=int(self.data[i][0]), pos=self.data[i][1:4])
+            self.system.part.add(
+                id=int(self.data[i][0]), pos=self.data[i][1:4])
 
     def check(self):
         rms = 0.0

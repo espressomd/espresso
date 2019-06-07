@@ -45,10 +45,8 @@ def calculate_vtk_max_pointwise_difference(file1, file2, tol=1e-6):
                               for n in range(data.GetNumberOfArrays())])
 
     try:
-        return np.allclose(
-            arrays[0], arrays[1], rtol=0, atol=tol), np.max(
-            np.abs(
-                arrays[0] - arrays[1]))
+        return np.allclose(arrays[0], arrays[1], rtol=0, atol=tol), np.max(
+            np.abs(arrays[0] - arrays[1]))
     except BaseException:
         return False, np.inf
 
@@ -70,35 +68,16 @@ class SwimmerTest(ut.TestCase):
         S.part.add(id=0, pos=[6.0, 3.0, 2.0], quat=np.sqrt([.5, .5, 0, 0]),
                    swimming={"mode": "pusher", "v_swim": 0.10,
                              "dipole_length": 1.0, "rotational_friction": 2.0})
-        S.part.add(
-            id=1,
-            pos=[
-                2.0,
-                3.0,
-                6.0],
-            swimming={
-                "mode": "pusher",
-                "f_swim": 0.03,
-                "dipole_length": 2.0,
-                "rotational_friction": 20.0},
-            quat=np.sqrt([.5, 0, .5, 0]))
-        S.part.add(
-            id=2,
-            pos=[
-                3.0,
-                2.0,
-                6.0],
-            swimming={
-                "mode": "puller",
-                "v_swim": 0.15,
-                "dipole_length": 0.5,
-                "rotational_friction": 15.0},
-            quat=np.sqrt([.5, 0, 0, .5]))
-        S.part.add(id=3, pos=[3.0, 6.0, 2.0],
+        S.part.add(id=1, pos=[2.0, 3.0, 6.0], quat=np.sqrt([.5, 0, .5, 0]),
+                   swimming={"mode": "pusher", "f_swim": 0.03,
+                             "dipole_length": 2.0, "rotational_friction": 20.})
+        S.part.add(id=2, pos=[3.0, 2.0, 6.0], quat=np.sqrt([.5, 0, 0, .5]),
+                   swimming={"mode": "puller", "v_swim": 0.15,
+                             "dipole_length": 0.5, "rotational_friction": 15.})
+        S.part.add(id=3, pos=[3.0, 6.0, 2.0], quat=np.sqrt([0, 0, .5, .5]),
                    swimming={"mode": "puller", "f_swim": 0.05,
-                             "dipole_length": 1.5, "rotational_friction": 6.0},
-                   quat=np.sqrt([0, 0, .5, .5]))
-        S.part[:].rotation = 1, 1, 1
+                             "dipole_length": 1.5, "rotational_friction": 6.0})
+        S.part[:].rotation = [1, 1, 1]
 
     def tearDown(self):
         self.S.part.clear()
@@ -110,7 +89,8 @@ class SwimmerTest(ut.TestCase):
         identical, err_max = calculate_vtk_max_pointwise_difference(
             vtk_ref, vtk_out, tol=tol)
         os.remove(vtk_out)
-        print("Maximum deviation to the reference point is: {}".format(err_max))
+        print(
+            "Maximum deviation to the reference point is: {}".format(err_max))
         self.assertTrue(identical)
 
 

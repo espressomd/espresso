@@ -81,9 +81,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         prefactor = 1.1
         self.system.part[0].pos = [1.0, 2.0, 2.0]
         self.system.part[1].pos = [3.0, 2.0, 2.0]
-        # results,
-        # reference values for energy and force only calculated for prefactor =
-        # 1
+        # results, reference values for energy and force only calculated for
+        # prefactor = 1
         p3m_energy = -0.501062398379 * prefactor
         p3m_force = 2.48921612e-01 * prefactor
         p3m = espressomd.electrostatics.P3M(prefactor=prefactor,
@@ -105,9 +104,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.system.actors.remove(p3m)
 
     def test_dh(self):
-        dh_params = dict(prefactor=1.2,
-                         kappa=0.8,
-                         r_cut=2.0)
+        dh_params = dict(prefactor=1.2, kappa=0.8, r_cut=2.0)
         dh = espressomd.electrostatics.DH(
             prefactor=dh_params['prefactor'],
             kappa=dh_params['kappa'],
@@ -133,16 +130,13 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             u_dh_core[i] = self.system.analysis.energy()['coulomb']
             f_dh_core[i] = self.system.part[0].f[0]
 
-        np.testing.assert_allclose(u_dh_core,
-                                   u_dh,
-                                   atol=1e-7)
-        np.testing.assert_allclose(f_dh_core,
-                                   -f_dh,
-                                   atol=1e-2)
+        np.testing.assert_allclose(u_dh_core, u_dh, atol=1e-7)
+        np.testing.assert_allclose(f_dh_core, -f_dh, atol=1e-2)
         self.system.actors.remove(dh)
     
     def test_rf(self):
-        """Tests the ReactionField coulomb interaction by comparing the potential and force against the analytic values"""
+        """Tests the ReactionField coulomb interaction by comparing the
+           potential and force against the analytic values"""
         
         rf_params = dict(prefactor=1.0,
                          kappa=2.0,
@@ -178,12 +172,8 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             u_rf_core[i] = self.system.analysis.energy()['coulomb']
             f_rf_core[i] = self.system.part[0].f[0]
         
-        np.testing.assert_allclose(u_rf_core,
-                                   u_rf,
-                                   atol=1e-7)
-        np.testing.assert_allclose(f_rf_core,
-                                   -f_rf,
-                                   atol=1e-2)
+        np.testing.assert_allclose(u_rf_core, u_rf, atol=1e-7)
+        np.testing.assert_allclose(f_rf_core, -f_rf, atol=1e-2)
         self.system.actors.remove(rf)
 
 

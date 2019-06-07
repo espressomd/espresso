@@ -35,8 +35,7 @@ class PairTest(ut.TestCase):
 
         # Force an appropriate cell grid
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=0.0, sigma=1.0,
-                cutoff=1.5, shift=0.0)
+            epsilon=0.0, sigma=1.0, cutoff=1.5, shift=0.0)
 
         vel = [1., 2., 3.]
 
@@ -70,7 +69,7 @@ class PairTest(ut.TestCase):
 
     def test_nsquare(self):
         self.s.cell_system.set_n_square()
-        self.s.periodicity = 1, 1, 1
+        self.s.periodicity = [1, 1, 1]
 
         self.s.integrator.run(0)
         self.check()
@@ -80,7 +79,7 @@ class PairTest(ut.TestCase):
     @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_nsquare_partial_z(self):
         self.s.cell_system.set_n_square()
-        self.s.periodicity = 1, 1, 0
+        self.s.periodicity = [1, 1, 0]
 
         self.s.integrator.run(0)
         self.check()
@@ -90,7 +89,7 @@ class PairTest(ut.TestCase):
     def test_dd(self):
         self.s.cell_system.set_domain_decomposition()
         self.s.cell_system.min_num_cells = 8
-        self.s.periodicity = 1, 1, 1
+        self.s.periodicity = [1, 1, 1]
 
         self.s.integrator.run(0)
         self.check()
@@ -100,7 +99,7 @@ class PairTest(ut.TestCase):
     @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_dd_partial_z(self):
         self.s.cell_system.set_domain_decomposition()
-        self.s.periodicity = 1, 1, 0
+        self.s.periodicity = [1, 1, 0]
 
         self.s.integrator.run(0)
         self.check()
@@ -109,7 +108,7 @@ class PairTest(ut.TestCase):
 
     def test_layered(self):
         self.s.cell_system.set_layered()
-        self.s.periodicity = 1, 1, 1
+        self.s.periodicity = [1, 1, 1]
 
         self.s.integrator.run(0)
         self.check()
@@ -119,7 +118,7 @@ class PairTest(ut.TestCase):
     @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_layered_partial_z(self):
         self.s.cell_system.set_layered()
-        self.s.periodicity = 1, 1, 0
+        self.s.periodicity = [1, 1, 0]
 
         self.s.integrator.run(0)
         self.check()

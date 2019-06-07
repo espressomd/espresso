@@ -22,8 +22,6 @@ import espressomd.lb
 
 """
 Check the Lattice Boltzmann mass conservation.
-
-
 """
 
 KT = 2.25

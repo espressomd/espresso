@@ -162,8 +162,8 @@ class VCFTestType(CommonTests):
                 usecols=[1])  # just the second bonded member
             fp.seek(0)
             cls.written_atoms = np.loadtxt(
-                fp, skiprows=1, comments="b", usecols=[
-                    1, 7])  # just the part_ID and type_ID
+                fp, skiprows=1, comments="b",
+                usecols=[1, 7])  # just the part_ID and type_ID
 
 
 if __name__ == "__main__":

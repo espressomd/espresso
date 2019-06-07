@@ -61,9 +61,9 @@ class Scafacos1d2d(ut.TestCase):
             # Read reference data
             if dim == 2:
                 file_prefix = "data/mdlc"
-                s.periodicity = 1, 1, 0
+                s.periodicity = [1, 1, 0]
             else:
-                s.periodicity = 1, 0, 0
+                s.periodicity = [1, 0, 0]
                 file_prefix = "data/scafacos_dipoles_1d"
 
             with open(abspath(file_prefix + "_reference_data_energy.dat")) as f:

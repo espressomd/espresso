@@ -27,7 +27,6 @@ import espressomd.shapes
 Check the Lattice Boltzmann 'pressure' driven flow in a slab system
 by comparing to the analytical solution.
 
-
 """
 
 

@@ -105,13 +105,15 @@ class FieldTest(ut.TestCase):
 
         self.system.integrator.run(0)
 
-        np.testing.assert_almost_equal(np.copy(p.f),
-                                       p.q * E0 * np.sin(np.dot(k, p.pos_folded) - omega * self.system.time + phi))
+        np.testing.assert_almost_equal(
+            np.copy(p.f), p.q * E0 * np.sin(np.dot(k, p.pos_folded)
+                                            - omega * self.system.time + phi))
 
         self.system.integrator.run(10)
 
-        np.testing.assert_almost_equal(np.copy(p.f),
-                                       p.q * E0 * np.sin(np.dot(k, p.pos_folded) - omega * self.system.time + phi))
+        np.testing.assert_almost_equal(
+            np.copy(p.f), p.q * E0 * np.sin(np.dot(k, p.pos_folded)
+                                            - omega * self.system.time + phi))
 
     def test_homogeneous_flow_field(self):
         u = np.array([1., 2., 3.])
@@ -138,8 +140,7 @@ class FieldTest(ut.TestCase):
         field_data = constraints.PotentialField.field_from_fn(
             box, h, self.potential)
 
-        F = constraints.PotentialField(field=field_data,
-                                       grid_spacing=h,
+        F = constraints.PotentialField(field=field_data, grid_spacing=h,
                                        default_scale=scaling)
 
         p = self.system.part.add(pos=[0, 0, 0])
@@ -152,8 +153,8 @@ class FieldTest(ut.TestCase):
             p.pos = x
 
             self.system.integrator.run(0)
-            self.assertAlmostEqual(
-                self.system.analysis.energy()['total'], scaling * f_val, places=5)
+            self.assertAlmostEqual(self.system.analysis.energy()['total'],
+                                   scaling * f_val, places=5)
             np.testing.assert_allclose(
                 np.copy(p.f), scaling * self.force(x), rtol=1e-5)
 
@@ -165,8 +166,7 @@ class FieldTest(ut.TestCase):
         field_data = constraints.ElectricPotential.field_from_fn(
             box, h, self.potential)
 
-        F = constraints.ElectricPotential(field=field_data,
-                                          grid_spacing=h)
+        F = constraints.ElectricPotential(field=field_data, grid_spacing=h)
 
         p = self.system.part.add(pos=[0, 0, 0])
         p.q = -3.1
@@ -180,8 +180,8 @@ class FieldTest(ut.TestCase):
             p.pos = x
 
             self.system.integrator.run(0)
-            self.assertAlmostEqual(
-                self.system.analysis.energy()['total'], p.q * f_val, places=5)
+            self.assertAlmostEqual(self.system.analysis.energy()['total'],
+                                   p.q * f_val, places=5)
             np.testing.assert_allclose(
                 np.copy(p.f), p.q * self.force(x), rtol=1e-5)
 
@@ -192,8 +192,7 @@ class FieldTest(ut.TestCase):
 
         field_data = constraints.ForceField.field_from_fn(box, h, self.force)
 
-        F = constraints.ForceField(field=field_data,
-                                   grid_spacing=h,
+        F = constraints.ForceField(field=field_data, grid_spacing=h,
                                    default_scale=scaling)
 
         p = self.system.part.add(pos=[0, 0, 0])
@@ -215,9 +214,10 @@ class FieldTest(ut.TestCase):
 
         field_data = constraints.FlowField.field_from_fn(box, h, self.force)
 
-        F = constraints.FlowField(field=field_data,
-                                  grid_spacing=h,
-                                  gamma=gamma)
+        F = constraints.FlowField(
+            field=field_data,
+            grid_spacing=h,
+            gamma=gamma)
 
         p = self.system.part.add(pos=[0, 0, 0], v=[1, 2, 3])
         self.system.constraints.add(F)

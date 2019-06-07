@@ -44,7 +44,10 @@ class DPDThermostat(ut.TestCase):
         s.part.clear()
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
-        """check the recorded particle distributions in velocity against a histogram with n_bins bins. Drop velocities outside minmax. Check individual histogram bins up to an accuracy of error_tol against the analytical result for kT."""
+        """check the recorded particle distributions in velocity against a
+           histogram with n_bins bins. Drop velocities outside minmax. Check
+           individual histogram bins up to an accuracy of error_tol against
+           the analytical result for kT."""
         for i in range(3):
             hist = np.histogram(vel[:, i], range=(-minmax, minmax), bins=n_bins, normed=False)
             data = hist[0]/float(vel.shape[0])
@@ -326,7 +329,6 @@ class DPDThermostat(ut.TestCase):
                     sgn = 1
                 else:
                     sgn = -1
-
                 self.assertAlmostEqual(sgn * 4.0, s.part[id].f[i])
             id += 1
 

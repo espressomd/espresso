@@ -83,15 +83,9 @@ class CommonTests(ut.TestCase):
 
     def test_pos(self):
         """Test if positions have been written properly."""
-        self.assertTrue(
-            np.allclose(
-                np.array(
-                    [3 * [float(i) % self.box_l] for i in range(npart)]), np.array(
-                    [
-                        x for (
-                            _, x) in sorted(
-                            zip(
-                                self.py_id, self.py_pos))])))
+        self.assertTrue(np.allclose(
+            np.array([3 * [float(i) % self.box_l] for i in range(npart)]),
+            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_pos))])))
 
     def test_img(self):
         """Test if images have been written properly."""
@@ -122,7 +116,6 @@ class CommonTests(ut.TestCase):
 
         for i in range(npart - 1):
             bond = [x for x in self.py_bonds if x[0] == i][0]
-
             self.assertEqual(bond[0], i + 0)
             self.assertEqual(bond[1], i + 1)
 
@@ -163,9 +156,8 @@ class H5mdTestOrdered(CommonTests):
 
     def test_ids(self):
         """Test if ids have been written properly."""
-        self.assertTrue(np.allclose(
-            np.array(range(npart)),
-            self.py_id), msg="ids incorrectly ordered and written by H5md!")
+        self.assertTrue(np.allclose(np.array(range(npart)), self.py_id),
+                        msg="ids incorrectly ordered and written by H5md!")
 
 
 @utx.skipIfMissingFeatures(['H5MD'])
