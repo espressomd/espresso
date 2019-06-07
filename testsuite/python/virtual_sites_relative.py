@@ -33,9 +33,7 @@ class VirtualSites(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = range(system.cell_system.get_state()["n_nodes"])
 
-    @classmethod
-    def setUpClass(cls):
-        np.random.seed(42)
+    np.random.seed(42)
 
     def multiply_quaternions(self, a, b):
         return np.array(

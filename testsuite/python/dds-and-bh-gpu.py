@@ -19,8 +19,7 @@ from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-from numpy import linalg as la
-from numpy.random import random, seed
+from numpy.random import random
 
 import espressomd
 import espressomd.magnetostatics
@@ -45,8 +44,8 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
 
     def vectorsTheSame(self, a, b):
         tol = 5E-2
-        vec_len = la.norm(a - b)
-        rel = 2 * vec_len / (la.norm(a) + la.norm(b))
+        vec_len = np.linalg.norm(a - b)
+        rel = 2 * vec_len / (np.linalg.norm(a) + np.linalg.norm(b))
         return rel <= tol
 
     def test(self):

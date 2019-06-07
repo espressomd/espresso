@@ -34,9 +34,7 @@ class ForceCap(ut.TestCase):
     s.cell_system.skin = 0.0
     s.seed = range(s.cell_system.get_state()["n_nodes"])
 
-    @classmethod
-    def setUpClass(cls):
-        np.random.seed(42)
+    np.random.seed(42)
 
     def calc_f_max(self):
         f = np.power(self.s.part[:].f, 2)

@@ -115,9 +115,8 @@ class ThermoTest(ut.TestCase):
         self.system.time_step = 0.007
 
         # Space
-        box = 1.0
-        self.system.box_l = box, box, box
-        if espressomd.has_features(("PARTIAL_PERIODIC",)):
+        self.system.box_l = 3 * [1.0]
+        if espressomd.has_features("PARTIAL_PERIODIC"):
             self.system.periodicity = [0, 0, 0]
 
         # NVT thermostat
@@ -164,7 +163,7 @@ class ThermoTest(ut.TestCase):
                 self.system.part.add(
                     rotation=(1, 1, 1), pos=(0.0, 0.0, 0.0), id=ind)
                 self.system.part[ind].v = [1.0, 1.0, 1.0]
-                if "ROTATION" in espressomd.features():
+                if espressomd.has_features("ROTATION"):
                     self.system.part[ind].omega_body = [1.0, 1.0, 1.0]
                 self.system.part[ind].mass = self.mass
                 self.system.part[ind].rinertia = self.J
@@ -186,7 +185,7 @@ class ThermoTest(ut.TestCase):
         # Space
         box = 10.0
         self.system.box_l = 3 * [box]
-        if espressomd.has_features(("PARTIAL_PERIODIC",)):
+        if espressomd.has_features("PARTIAL_PERIODIC"):
             self.system.periodicity = [0, 0, 0]
 
         # NVT thermostat
@@ -231,7 +230,7 @@ class ThermoTest(ut.TestCase):
                     rinertia=self.J,
                     pos=part_pos,
                     v=part_v)
-                if "ROTATION" in espressomd.features():
+                if espressomd.has_features("ROTATION"):
                     self.system.part[ind].omega_body = part_omega_body
 
     def check_dissipation(self, n):
@@ -258,7 +257,7 @@ class ThermoTest(ut.TestCase):
                         # tested here.
                         self.assertLess(abs(
                             self.system.part[ind].v[j] - math.exp(- self.gamma_tran_p_validate[k, j] * self.system.time / self.mass)), tol)
-                        if "ROTATION" in espressomd.features():
+                        if espressomd.has_features("ROTATION"):
                             self.assertLess(abs(
                                 self.system.part[ind].omega_body[j] - math.exp(- self.gamma_rot_p_validate[k, j] * self.system.time / self.J[j])), tol)
 
@@ -307,7 +306,7 @@ class ThermoTest(ut.TestCase):
                 for k in range(2):
                     ind = p + k * n
                     v = self.system.part[ind].v
-                    if "ROTATION" in espressomd.features():
+                    if espressomd.has_features("ROTATION"):
                         o = self.system.part[ind].omega_body
                         o2[k,:] = o2[k,:] + np.power(o[:], 2)
                     pos = self.system.part[ind].pos
@@ -348,7 +347,7 @@ class ThermoTest(ut.TestCase):
             self.assertLessEqual(
                 abs(dv[k]), tolerance, msg='Relative deviation in '
                 'translational energy too large: {0}'.format(dv[k]))
-            if "ROTATION" in espressomd.features():
+            if espressomd.has_features("ROTATION"):
                 self.assertLessEqual(
                     abs(do[k]), tolerance, msg='Relative deviation in '
                     'rotational energy too large: {0}'.format(do[k]))
@@ -385,7 +384,7 @@ class ThermoTest(ut.TestCase):
             for i in range(n):
                 ind = i + k * n
                 self.system.part[ind].gamma = self.gamma_tran_p[k,:]
-                if "ROTATION" in espressomd.features():
+                if espressomd.has_features("ROTATION"):
                     self.system.part[ind].gamma_rot = self.gamma_rot_p[k,:]
 
     def set_particle_specific_temperature(self, n):

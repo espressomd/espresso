@@ -33,10 +33,10 @@ from tests_common import abspath
 
 @utx.skipIfMissingFeatures(["DIPOLES", "FFTW"])
 class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
-    """Tests mdlc (2d)  as well as dipolar p3m and dipolar p2nfft (3d) against stored data.
-       Validity of the stored data:
-       2d: as long as this test AND the scafacos_dipolar_1d_2d test passes, we are save.
-       3d: As long as the independently written p3m and p2nfft agree, we are save.
+    """Tests mdlc (2d)  as well as dipolar p3m and dipolar p2nfft (3d) against
+       stored data. Validity of the stored data:
+       2d: as long as this test AND the scafacos_dipolar_1d_2d test passes, we are safe.
+       3d: as long as the independently written p3m and p2nfft agree, we are safe.
     """
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed  = s.cell_system.get_state()['n_nodes'] * [1234]
@@ -57,7 +57,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         particle_radius = 0.5
         box_l = pow(((4 * n_particle * np.pi) / (3 * rho)),
                     1.0 / 3.0) * particle_radius
-        s.box_l = box_l, box_l, box_l
+        s.box_l = 3 * [box_l]
         f = open(abspath("data/mdlc_reference_data_energy.dat"))
         ref_E = float(f.readline())
         f.close()

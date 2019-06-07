@@ -26,7 +26,7 @@ class GPUAvailability(ut.TestCase):
     """Tests consistency of GPU availability reporting."""
 
     def test(self):
-        if "CUDA" in espressomd.features():
+        if espressomd.has_features("CUDA"):
             system = espressomd.System(box_l=[1, 1, 1])
             self.assertEqual(system.cuda_init_handle.device_list != {},
                              espressomd.gpu_available())

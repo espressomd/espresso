@@ -29,7 +29,7 @@ class TestThole(ut.TestCase):
 
     """
     This testcase takes a large box to minimize periodic effects and tests the
-    thole damping nonbonded interaction forces agains the analytical result
+    thole damping nonbonded interaction forces against the analytical result.
     """
 
     box_l = 500.0

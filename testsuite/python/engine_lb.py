@@ -59,11 +59,9 @@ class SwimmerTest(ut.TestCase):
 
     def setUp(self):
         S = self.S
-        boxl = 12
-        tstep = 0.01
-        S.box_l = [boxl, boxl, boxl]
+        S.box_l = 3 * [12]
         S.cell_system.skin = 0.1
-        S.time_step = tstep
+        S.time_step = 0.01
 
         S.part.add(id=0, pos=[6.0, 3.0, 2.0], quat=np.sqrt([.5, .5, 0, 0]),
                    swimming={"mode": "pusher", "v_swim": 0.10,

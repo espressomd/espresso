@@ -39,9 +39,7 @@ class RotDiffAniso(ut.TestCase):
     # Particle properties
     J = [0.0, 0.0, 0.0]
 
-    @classmethod
-    def setUpClass(cls):
-        np.random.seed(4)
+    np.random.seed(4)
 
     def setUp(self):
         self.system.time = 0.0
@@ -102,7 +100,7 @@ class RotDiffAniso(ut.TestCase):
             part_pos = np.random.random(3) * box
             self.system.part.add(rotation=(1, 1, 1), id=ind, rinertia=self.J,
                                  pos=part_pos)
-            if "ROTATION" in espressomd.features():
+            if espressomd.has_features("ROTATION"):
                 self.system.part[ind].omega_body = [0.0, 0.0, 0.0]
 
     def check_rot_diffusion(self, n):
