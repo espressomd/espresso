@@ -66,6 +66,7 @@ class TestLB(object):
     system.time_step = params['time_step']
     system.cell_system.skin = params['skin']
     lbf = None
+    interpolation = False
 
     def test_mass_momentum_thermostat(self):
         self.system.actors.clear()
@@ -289,6 +290,8 @@ class TestLB(object):
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
+        if self.interpolation:
+            self.lbf.set_interpolation_order("quadratic")
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
             seed=3,
@@ -296,6 +299,8 @@ class TestLB(object):
         self.system.part.add(
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
+        if self.interpolation:
+            v_fluid = self.lbf.get_interpolated_velocity(self.system.part[0].pos)
         self.system.integrator.run(1)
         np.testing.assert_allclose(
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
@@ -340,30 +345,9 @@ class TestLBGPU(TestLB, ut.TestCase):
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling_higher_order_interpolation(self):
-        self.system.thermostat.turn_off()
-        self.system.actors.clear()
-        self.system.part.clear()
-        v_part = np.array([1, 2, 3])
-        v_fluid = np.array([1.2, 4.3, 0.2])
-        self.lbf = self.lb_class(
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
-            agrid=self.params['agrid'],
-            tau=self.system.time_step,
-            ext_force_density=[0, 0, 0])
-        self.system.actors.add(self.lbf)
-        self.lbf.set_interpolation_order("quadratic")
-        self.system.thermostat.set_lb(
-            LB_fluid=self.lbf,
-            seed=3,
-            gamma=self.params['friction'])
-        self.system.part.add(
-            pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
-        self.lbf[0, 0, 0].velocity = v_fluid
-        v_fluid = self.lbf.get_interpolated_velocity(self.system.part[0].pos)
-        self.system.integrator.run(1)
-        np.testing.assert_allclose(
-            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
+        self.interpolation = True
+        self.test_viscous_coupling()
+        self.interpolation = False
 
 
 if __name__ == "__main__":
