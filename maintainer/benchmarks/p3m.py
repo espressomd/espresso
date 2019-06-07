@@ -146,8 +146,9 @@ print("After Minimization: E_total = {}".format(energy["total"]))
 
 
 system.integrator.set_vv()
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
+# tuning and equilibration
 system.integrator.run(min(3 * measurement_steps, 1000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=0.4, max_skin=1.6, tol=0.05, int_steps=100)))

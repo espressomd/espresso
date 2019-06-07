@@ -127,9 +127,9 @@ while system.analysis.energy()["total"] > 3 * n_part:
 print()
 system.integrator.set_vv()
 
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
-# tune skin
+# tuning and equilibration
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
 system.integrator.run(min(5 * measurement_steps, 60000))
