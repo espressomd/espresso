@@ -38,7 +38,9 @@ class DDSGPUTest(ut.TestCase):
             self.es.part[i].v = np.array([0.0, 0.0, 0.0])
             self.es.part[i].omega_body = np.array([0.0, 0.0, 0.0])
 
-    def run_test_case(self):
+    @ut.skipIf(es.cell_system.get_state()["n_nodes"] > 1,
+               "Skipping test: only runs for n_nodes == 1")
+    def test(self):
         pf_dds_gpu = 2.34
         pf_dawaanr = 3.524
         ratio_dawaanr_dds_gpu = pf_dawaanr / pf_dds_gpu
@@ -141,12 +143,6 @@ class DDSGPUTest(ut.TestCase):
             del dds_gpu
             self.es.actors.clear()
             self.es.part.clear()
-
-    def test(self):
-        if (self.es.cell_system.get_state()["n_nodes"] > 1):
-            print("NOTE: Ignoring testcase for n_nodes > 1")
-        else:
-            self.run_test_case()
 
 if __name__ == '__main__':
     ut.main()

@@ -66,8 +66,7 @@ class test_minimize_energy(ut.TestCase):
                 p.dip = np.random.random(3)
                 p.dipm = 1
                 p.rotation = (1, 1, 1)
-        # Remove external magnetic field
-        
+
         self.assertNotAlmostEqual(
             self.system.analysis.energy()["total"], 0, places=10)
 

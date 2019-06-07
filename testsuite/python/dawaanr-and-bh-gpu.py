@@ -44,7 +44,9 @@ class BHGPUTest(ut.TestCase):
         rel = 2 * vec_len / (np.linalg.norm(a) + np.linalg.norm(b))
         return rel <= tol
 
-    def run_test_case(self):
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 1,
+               "Skipping test: only runs for n_nodes == 1")
+    def test(self):
         np.random.seed(1)
         pf_bh_gpu = 2.34
         pf_dawaanr = 3.524
@@ -138,8 +140,8 @@ class BHGPUTest(ut.TestCase):
                             dawaanr_f[i]), ratio_dawaanr_bh_gpu * np.array(
                                 bhgpu_f[i])),
                                 msg='Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_bh_gpu*bhgpu_f={2}'.format(i, np.array(dawaanr_f[i]), ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])))
-            self.assertTrue(
-                abs(dawaanr_e - bhgpu_e * ratio_dawaanr_bh_gpu) <= abs(
+            self.assertLessEqual(
+                abs(dawaanr_e - bhgpu_e * ratio_dawaanr_bh_gpu), abs(
                     1E-3 * dawaanr_e),
                             msg='Energies for dawaanr {0} and bh_gpu {1} do not match.'.format(dawaanr_e, ratio_dawaanr_bh_gpu * bhgpu_e))
 
@@ -148,12 +150,6 @@ class BHGPUTest(ut.TestCase):
             del bh_gpu
             self.system.actors.clear()
             self.system.part.clear()
-
-    def test(self):
-        if (self.system.cell_system.get_state()["n_nodes"] > 1):
-            print("NOTE: Ignoring testcase for n_nodes > 1")
-        else:
-            self.run_test_case()
 
 if __name__ == '__main__':
     ut.main()

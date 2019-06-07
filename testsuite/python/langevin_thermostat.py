@@ -156,7 +156,7 @@ class LangevinThermostat(ut.TestCase):
         system.part.add(
             pos=(0, 0, 0), omega_body=o0, rotation=(1, 1, 1))
         if espressomd.has_features("ROTATIONAL_INERTIA"):
-            system.part[0].rinertia = 2, 2, 2
+            system.part[0].rinertia = [2, 2, 2]
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
             system.thermostat.set_langevin(
                 kT=0, gamma=gamma_t_a, gamma_rotation=gamma_r_a, seed=41)
@@ -190,7 +190,7 @@ class LangevinThermostat(ut.TestCase):
 
         # Enable rotation if compiled in
         if espressomd.has_features("ROTATION"):
-            system.part[:].rotation = 1, 1, 1
+            system.part[:].rotation = [1, 1, 1]
 
         kT = 1.1
         gamma = 3.5
@@ -241,7 +241,7 @@ class LangevinThermostat(ut.TestCase):
         # Set different gamma on half of the partiles (overlap over both kTs)
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
             system.part[
-                int(N / 4):int(3 * N / 4)].gamma = gamma2, gamma2, gamma2
+                int(N / 4):int(3 * N / 4)].gamma = 3 * [gamma2]
         else:
             system.part[int(N / 4):int(3 * N / 4)].gamma = gamma2
 
@@ -289,7 +289,7 @@ class LangevinThermostat(ut.TestCase):
                 p.rinertia = 0.4, 0.4, 0.4
 
     def test_06__diffusion(self):
-        """This tests rotational and translational diffusion coeff via green-kubo"""
+        """This tests rotational and translational diffusion coeff via Green-Kubo"""
         system = self.system
         system.part.clear()
 
@@ -433,9 +433,9 @@ class LangevinThermostat(ut.TestCase):
                                       per_part_kT, eff_per_part_gamma_rot)
 
     def verify_diffusion(self, p, corr, kT, gamma):
-        """Verifify diffusion coeff.
+        """Verify diffusion coeff.
 
-           p: particle, corr: dict containing correltor with particle as key,
+           p: particle, corr: dict containing correlator with particle as key,
            kT=kT, gamma=gamma as 3 component vector.
         """
         c = corr

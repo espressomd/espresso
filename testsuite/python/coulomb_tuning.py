@@ -1,4 +1,3 @@
-
 #
 # Copyright (C) 2017-2018 The ESPResSo project
 #
@@ -59,7 +58,7 @@ class CoulombCloudWallTune(ut.TestCase):
         # Compare forces now in the system to stored ones
         force_abs_diff = 0.
         for p in self.system.part:
-            force_abs_diff += abs(np.sqrt(sum((p.f - self.forces[p.id])**2)))
+            force_abs_diff += np.linalg.norm(p.f - self.forces[p.id])
         force_abs_diff /= len(self.system.part)
         self.assertLessEqual(
             force_abs_diff,

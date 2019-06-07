@@ -24,7 +24,7 @@ from tests_common import abspath
                             "OIF_GLOBAL_FORCES"])
 class OifVolumeConservation(ut.TestCase):
 
-    """Loads a soft elastic sphere via object_in_fluid, stretches it and checks resotration of original volume due to elastic forces."""
+    """Loads a soft elastic sphere via object_in_fluid, stretches it and checks restoration of original volume due to elastic forces."""
 
     def test(self):
         import object_in_fluid as oif

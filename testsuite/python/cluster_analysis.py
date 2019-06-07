@@ -128,14 +128,14 @@ class ClusterAnalysis(ut.TestCase):
             c = c[1]
 
             # Center of mass should be at origin
-            self.assertTrue(
-                np.sqrt(np.sum(np.array(c.center_of_mass())**2)) <= 1E-8)
+            self.assertLess(np.linalg.norm(c.center_of_mass()), 1E-8)
 
             # Longest distance
-            self.assertTrue(
+            self.assertLess(
                 abs(c.longest_distance()
-                    - self.es.distance(self.es.part[0], self.es.part[len(self.es.part) - 1]))
-                <= 1E-8)
+                    - self.es.distance(self.es.part[0],
+                                       self.es.part[len(self.es.part) - 1])),
+                1E-8)
 
             # Radius of gyration
             rg = 0.

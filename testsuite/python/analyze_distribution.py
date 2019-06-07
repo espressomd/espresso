@@ -65,10 +65,7 @@ class AnalyzeDistributions(ut.TestCase):
         bin_width = (r_max - r_min) / r_bins
         bins = np.arange(r_min, r_max + bin_width, bin_width)
         bin_volume = 4. / 3. * np.pi * (bins[1:]**3 - bins[:-1]**3)
-        box_volume = self.system.box_l[
-            0] * self.system.box_l[
-                1] * self.system.box_l[
-            2]
+        box_volume = np.prod(self.system.box_l)
         # all the same type
         core_rdf = self.system.analysis.rdf(rdf_type='rdf',
                                             type_list_a=[0],
@@ -127,10 +124,7 @@ class AnalyzeDistributions(ut.TestCase):
         r_bins = 100
         bins = np.linspace(r_min, r_max, num=r_bins + 1, endpoint=True)
         bin_volume = 4. / 3. * np.pi * (bins[1:]**3 - bins[:-1]**3)
-        box_volume = self.system.box_l[
-            0] * self.system.box_l[
-                1] * self.system.box_l[
-            2]
+        box_volume = np.prod(self.system.box_l)
         # no int flag
         core_rdf = self.system.analysis.distribution(type_list_a=[0],
                                                      type_list_b=[0],

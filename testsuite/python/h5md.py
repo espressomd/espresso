@@ -48,9 +48,7 @@ class CommonTests(ut.TestCase):
     system.time_step = 0.01
 
     for i in range(npart):
-        system.part.add(id=i, pos=np.array([float(i),
-                                            float(i),
-                                            float(i)]),
+        system.part.add(id=i, pos=np.array(3 * [i], dtype=float),
                         v=np.array([1.0, 2.0, 3.0]), type=23)
         if espressomd.has_features(['MASS']):
             system.part[i].mass = 2.3
@@ -88,11 +86,7 @@ class CommonTests(ut.TestCase):
         self.assertTrue(
             np.allclose(
                 np.array(
-                    [
-                        (float(i) %
-                         self.box_l, float(i) %
-                         self.box_l, float(i) %
-                         self.box_l) for i in range(npart)]), np.array(
+                    [3 * [float(i) % self.box_l] for i in range(npart)]), np.array(
                     [
                         x for (
                             _, x) in sorted(
@@ -171,7 +165,7 @@ class H5mdTestOrdered(CommonTests):
         """Test if ids have been written properly."""
         self.assertTrue(np.allclose(
             np.array(range(npart)),
-            self.py_id), msg="ids correctly ordered and written by H5md!")
+            self.py_id), msg="ids incorrectly ordered and written by H5md!")
 
 
 @utx.skipIfMissingFeatures(['H5MD'])

@@ -135,7 +135,7 @@ class LBShearCommon(object):
                     np.copy(v_measured),
                     np.copy(v_expected[j]) * shear_direction, atol=3E-3)
 
-        # Test stedy state stress tensor on a node
+        # Test steady state stress tensor on a node
         p_eq = DENS * AGRID**2 / TIME_STEP**2 / 3
         p_expected = np.diag((p_eq, p_eq, p_eq))
         p_expected += -VISC * DENS * SHEAR_VELOCITY / H * (

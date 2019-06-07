@@ -26,7 +26,7 @@ from espressomd import pair_criteria
 
 class PairCriteria(ut.TestCase):
 
-    """Tests interface and implmentation of pair criteria"""
+    """Tests interface and implementation of pair criteria"""
 
     es = espressomd.System(box_l=[1., 1., 1.])
 

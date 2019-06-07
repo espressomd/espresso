@@ -55,7 +55,7 @@ class ParticleProperties(ut.TestCase):
         from Es actually match. Only keys which are present  in _params are checked
         1st arg: Id of the bonded ia in Espresso to test on, i.e., 0,2,1...
         2nd: Class of the bond potential to test, ie.e, FeneBond, HarmonicBond
-        3rd: Bond parameters as dictionary, i.e., {"k"=1.,"r_0"=0.
+        3rd: Bond parameters as dictionary, i.e., {"k"=1.,"r_0"=0}
         """
         bondId = _bondId
         bondClass = _bondClass

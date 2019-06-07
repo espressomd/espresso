@@ -107,63 +107,57 @@ class ParticleSliceTest(ut.TestCase):
         # tuple
         b = fene, 0
         self.system.part[2].bonds = b
-        self.assertTrue(
-            self.system.part[:].bonds == [(), (), ((fene, 0),), ()])
+        self.assertEqual(self.system.part[:].bonds, [(), (), ((fene, 0),), ()])
 
         # list
         self.system.part[:].bonds = []
         b = [fene, 0]
         self.system.part[2].bonds = b
-        self.assertTrue(
-            self.system.part[:].bonds == [(), (), ((fene, 0),), ()])
+        self.assertEqual(self.system.part[:].bonds, [(), (), ((fene, 0),), ()])
 
         # nested list single
         self.system.part[:].bonds = []
         b = [[fene, 0]]
         self.system.part[2].bonds = b
-        self.assertTrue(
-            self.system.part[:].bonds == [(), (), ((fene, 0),), ()])
+        self.assertEqual(self.system.part[:].bonds, [(), (), ((fene, 0),), ()])
 
         # nested list multi
         self.system.part[:].bonds = []
         b = [[fene, 0], [fene, 1]]
         self.system.part[2].bonds = b
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0), (fene, 1)), ()])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0), (fene, 1)), ()])
 
         # nested tuple single
         self.system.part[:].bonds = []
         b = ((fene, 0),)
         self.system.part[2].bonds = b
-        self.assertTrue(
-            self.system.part[:].bonds == [(), (), ((fene, 0),), ()])
+        self.assertEqual(self.system.part[:].bonds, [(), (), ((fene, 0),), ()])
 
         # nested tuple multi
         self.system.part[:].bonds = []
         b = ((fene, 0), (fene, 1))
         self.system.part[2].bonds = b
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0), (fene, 1)), ()])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0), (fene, 1)), ()])
 
         #Add/Del bonds
         self.system.part[:].bonds = []
         self.system.part[2].add_bond((fene, 0))
-        self.assertTrue(
-            self.system.part[:].bonds == [(), (), ((fene, 0),), ()])
+        self.assertEqual(self.system.part[:].bonds, [(), (), ((fene, 0),), ()])
         self.system.part[2].add_bond((fene, 1))
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0), (fene, 1)), ()])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0), (fene, 1)), ()])
         self.system.part[2].delete_bond((fene, 1))
-        self.assertTrue(
-            self.system.part[:].bonds == [(), (), ((fene, 0),), ()])
+        self.assertEqual(self.system.part[:].bonds, [(), (), ((fene, 0),), ()])
         self.system.part[2].delete_bond((fene, 0))
-        self.assertTrue(self.system.part[:].bonds == [(), (), (), ()])
+        self.assertEqual(self.system.part[:].bonds, [(), (), (), ()])
 
         self.system.part[:].bonds = []
         self.system.part[2].add_bond((fene, 0))
         self.system.part[2].add_bond((fene, 1))
         self.system.part[2].delete_all_bonds()
-        self.assertTrue(self.system.part[:].bonds == [(), (), (), ()])
+        self.assertEqual(self.system.part[:].bonds, [(), (), (), ()])
 
         # Slices
 
@@ -171,77 +165,77 @@ class ParticleSliceTest(ut.TestCase):
         self.system.part[:].bonds = []
         b = fene, 0
         self.system.part[2:].bonds = b
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0),), ((fene, 0),)])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0),), ((fene, 0),)])
 
         # list for all
         self.system.part[:].bonds = []
         b = [fene, 0]
         self.system.part[2:].bonds = b
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0),), ((fene, 0),)])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0),), ((fene, 0),)])
 
         # nested list single for all
         self.system.part[:].bonds = []
         b = [[fene, 0]]
         self.system.part[2:].bonds = b
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0),), ((fene, 0),)])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0),), ((fene, 0),)])
 
         # nested list multi for all
         self.system.part[:].bonds = []
         b = [[fene, 0], [fene, 1]]
         self.system.part[2:].bonds = b
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
+        self.assertEqual(self.system.part[:].bonds, [(), (),
+                         ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
 
         # tuples for each
         self.system.part[:].bonds = []
         b = (((fene, 0),), ((fene, 1),))
         self.system.part[2:].bonds = b
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0),), ((fene, 1),)])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0),), ((fene, 1),)])
 
         # lists for each
         self.system.part[:].bonds = []
         b = [[[fene, 0]], [[fene, 1]]]
         self.system.part[2:].bonds = b
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0),), ((fene, 1),)])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0),), ((fene, 1),)])
 
         # multi tuples for each
         self.system.part[:].bonds = []
         b = (((fene, 0), (fene, 1)), ((fene, 0), (fene, 1)))
         self.system.part[2:].bonds = b
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
+        self.assertEqual(self.system.part[:].bonds, [(), (),
+                         ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
 
         # multi lists for each
         self.system.part[:].bonds = []
         b = [[[fene, 0], [fene, 1]], [[fene, 0], [fene, 1]]]
         self.system.part[2:].bonds = b
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
+        self.assertEqual(self.system.part[:].bonds, [(), (),
+                         ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
 
         #Add/Del bonds
 
         self.system.part[:].bonds = []
         self.system.part[2:].add_bond((fene, 0))
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0),), ((fene, 0),)])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0),), ((fene, 0),)])
         self.system.part[2:].add_bond((fene, 1))
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
+        self.assertEqual(self.system.part[:].bonds, [(), (),
+                         ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
         self.system.part[2:].delete_bond((fene, 1))
-        self.assertTrue(self.system.part[:].bonds == [
-                        (), (), ((fene, 0),), ((fene, 0),)])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0),), ((fene, 0),)])
         self.system.part[2:].delete_bond((fene, 0))
-        self.assertTrue(self.system.part[:].bonds == [(), (), (), ()])
+        self.assertEqual(self.system.part[:].bonds, [(), (), (), ()])
 
         b = [[[fene, 0], [fene, 1]], [[fene, 0], [fene, 1]]]
         self.system.part[2:].bonds = b
         self.system.part[:].delete_all_bonds()
-        self.assertTrue(self.system.part[:].bonds == [(), (), (), ()])
+        self.assertEqual(self.system.part[:].bonds, [(), (), (), ()])
 
     def cmp_array_like(self, A, B):
         return all(a.tolist() == b for a, b in zip(A, B))
@@ -348,18 +342,18 @@ class ParticleSliceTest(ut.TestCase):
         self.system.part.add(pos=[0, 0, 0])
         self.system.part[0].vs_relative = [1, 1.0, (1.0, 1.0, 1.0, 1.0)]
 
-        self.assertTrue(repr(self.system.part[:].vs_relative) == repr([(1, 1.0, np.array([1., 1., 1., 1.])), (
+        self.assertEqual(repr(self.system.part[:].vs_relative), repr([(1, 1.0, np.array([1., 1., 1., 1.])), (
             0, 0.0, np.array([0., 0., 0., 0.])), (0, 0.0, np.array([0., 0., 0., 0.])), (0, 0.0, np.array([0., 0., 0., 0.]))]))
 
         self.system.part[:].vs_relative = [1, 1.0, (1.0, 1.0, 1.0, 1.0)]
 
-        self.assertTrue(repr(self.system.part[:].vs_relative) == repr([(1, 1.0, np.array([1., 1., 1., 1.])), (
+        self.assertEqual(repr(self.system.part[:].vs_relative), repr([(1, 1.0, np.array([1., 1., 1., 1.])), (
             1, 1.0, np.array([1., 1., 1., 1.])), (1, 1.0, np.array([1., 1., 1., 1.])), (1, 1.0, np.array([1., 1., 1., 1.]))]))
 
         self.system.part[:].vs_relative = [[1, 1.0, (1.0, 1.0, 1.0, 1.0)], [
             1, 2.0, (1.0, 1.0, 1.0, 1.0)], [1, 3.0, (1.0, 1.0, 1.0, 1.0)], [1, 4.0, (1.0, 1.0, 1.0, 1.0)]]
 
-        self.assertTrue(repr(self.system.part[:].vs_relative) == repr([(1, 1.0, np.array([1., 1., 1., 1.])), (
+        self.assertEqual(repr(self.system.part[:].vs_relative), repr([(1, 1.0, np.array([1., 1., 1., 1.])), (
             1, 2.0, np.array([1., 1., 1., 1.])), (1, 3.0, np.array([1., 1., 1., 1.])), (1, 4.0, np.array([1., 1., 1., 1.]))]))
 
     def test_multiadd(self):

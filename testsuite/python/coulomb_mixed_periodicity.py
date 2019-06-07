@@ -1,5 +1,3 @@
-
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -74,7 +72,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         # Force
         rms_force_diff = 0.
         for p in self.S.part:
-            rms_force_diff += np.sum((np.copy(p.f) - self.forces[p.id])**2)
+            rms_force_diff += np.sum((p.f - self.forces[p.id])**2)
         rms_force_diff = np.sqrt(rms_force_diff / len(self.S.part))
 
         print(method_name, "rms force difference", rms_force_diff)
@@ -112,7 +110,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.S.cell_system.set_domain_decomposition()
         self.S.cell_system.node_grid = sorted(
             self.S.cell_system.node_grid, key=lambda x: -x)
-        self.S.periodicity = 1, 1, 1
+        self.S.periodicity = [1, 1, 1]
         self.S.box_l = (10, 10, 10)
 
         p3m = el.P3M(prefactor=1, accuracy=1e-6, mesh=(64, 64, 64))
@@ -127,7 +125,7 @@ class CoulombMixedPeriodicity(ut.TestCase):
     def test_MMM2D(self):
         self.S.box_l = (10, 10, 10)
         self.S.cell_system.set_layered(n_layers=10, use_verlet_lists=False)
-        self.S.periodicity = 1, 1, 0
+        self.S.periodicity = [1, 1, 0]
         mmm2d = (el.MMM2D(prefactor=1, maxPWerror=1E-7))
 
         self.S.actors.add(mmm2d)
@@ -145,9 +143,9 @@ class CoulombMixedPeriodicity(ut.TestCase):
                or 'p2nfft' not in scafacos.available_methods(),
                'Skipping test: missing feature SCAFACOS or p2nfft method')
     def test_scafacos_p2nfft(self):
-        self.S.periodicity = 1, 1, 0
+        self.S.periodicity = [1, 1, 0]
         self.S.cell_system.set_domain_decomposition()
-        self.S.box_l = 10, 10, 10
+        self.S.box_l = [10, 10, 10]
 
         scafacos = el.Scafacos(
             prefactor=1,

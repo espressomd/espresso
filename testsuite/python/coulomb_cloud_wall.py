@@ -1,4 +1,3 @@
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -75,8 +74,7 @@ class CoulombCloudWall(ut.TestCase):
         # Force
         force_abs_diff = 0.
         for p in self.S.part:
-            force_abs_diff += abs(
-                np.sqrt(sum((p.f / prefactor - self.forces[p.id])**2)))
+            force_abs_diff += np.linalg.norm(p.f / prefactor - self.forces[p.id])
         force_abs_diff /= len(self.S.part)
 
         print(method_name, "force difference", force_abs_diff)

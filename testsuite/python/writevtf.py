@@ -51,9 +51,7 @@ class CommonTests(ut.TestCase):
 
     types_to_write = None
     for i in range(npart):
-        system.part.add(id=i, pos=np.array([float(i),
-                                            float(i),
-                                            float(i)]),
+        system.part.add(id=i, pos=np.array(3 * [i], dtype=float),
                         v=np.array([1.0, 2.0, 3.0]), type=1 + (-1)**i)
 
     system.bonded_inter.add(interactions.FeneBond(k=1., d_r_max=10.0))

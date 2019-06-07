@@ -49,7 +49,7 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
         rel = 2 * vec_len / (la.norm(a) + la.norm(b))
         return rel <= tol
 
-    def run_test_case(self):
+    def test(self):
         pf_bh_gpu = 2.34
         pf_dds_gpu = 3.524
         ratio_dawaanr_bh_gpu = pf_dds_gpu / pf_bh_gpu
@@ -139,8 +139,8 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
                             dawaanr_f[i]), ratio_dawaanr_bh_gpu * np.array(
                                 bhgpu_f[i])),
                                 msg='Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_bh_gpu*bhgpu_f={2}'.format(i, np.array(dawaanr_f[i]), ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])))
-            self.assertTrue(
-                abs(dawaanr_e - bhgpu_e * ratio_dawaanr_bh_gpu) <= abs(
+            self.assertLessEqual(
+                abs(dawaanr_e - bhgpu_e * ratio_dawaanr_bh_gpu), abs(
                     1E-3 * dawaanr_e),
                             msg='Energies for dawaanr {0} and bh_gpu {1} do not match.'.format(dawaanr_e, ratio_dawaanr_bh_gpu * bhgpu_e))
 
@@ -149,9 +149,6 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             del bh_gpu
             self.system.actors.clear()
             self.system.part.clear()
-
-    def test(self):
-        self.run_test_case()
 
 if __name__ == '__main__':
     ut.main()

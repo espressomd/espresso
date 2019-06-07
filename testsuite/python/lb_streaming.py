@@ -73,8 +73,7 @@ class LBStreamingCommon(object):
     system = espressomd.System(box_l=[3.0] * 3)
     system.cell_system.skin = 0.4 * AGRID
     system.time_step = TAU
-    grid = np.array([int(system.box_l[0] / AGRID),
-                     int(system.box_l[1] / AGRID), int(system.box_l[2] / AGRID)])
+    grid = np.array(system.box_l / AGRID, dtype=int)
 
     def prepare(self):
         self.system.actors.clear()
