@@ -45,6 +45,7 @@ args = parser.parse_args()
 n_proc = int(os.environ.get("OMPI_COMM_WORLD_SIZE", 1))
 n_part = n_proc * args.particles_per_core
 measurement_steps = int(np.round(5e6 / args.particles_per_core, -2))
+n_iterations = 30
 assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
@@ -148,7 +149,7 @@ if not args.visualizer:
     print("Timing every {} steps".format(measurement_steps))
     main_tick = time()
     all_t = []
-    for i in range(30):
+    for i in range(n_iterations):
         tick = time()
         system.integrator.run(measurement_steps)
         tock = time()
