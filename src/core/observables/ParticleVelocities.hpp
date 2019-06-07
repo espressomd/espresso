@@ -31,6 +31,7 @@ namespace Observables {
  */
 class ParticleVelocities : public PidObservable {
 public:
+  using PidObservable::PidObservable;
   std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {

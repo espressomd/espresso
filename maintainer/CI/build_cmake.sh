@@ -74,10 +74,11 @@ fi
 
 # If there are no user-provided flags they
 # are added according to with_coverage.
+nvcc_flags=${cxx_flags}
 if [ -z "$cxx_flags" ]; then
     if $with_coverage; then
         cxx_flags="-Og"
-        nvcc_flags="-G"
+        nvcc_flags="-O3"
     else
         if $run_checks; then
             cxx_flags="-O3"

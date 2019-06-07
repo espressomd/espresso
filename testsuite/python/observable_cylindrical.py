@@ -132,7 +132,14 @@ class TestCylindricalObservable(ut.TestCase):
     def density_profile_test(self):
         self.set_particles()
         # Set up the Observable.
-        obs = espressomd.observables.CylindricalDensityProfile(**self.params)
+        local_params = self.params.copy()
+        if self.params['axis'] == 'x':
+            local_params['axis'] = [1.0, 0.0, 0.0]
+        elif self.params['axis'] == 'y':
+            local_params['axis'] = [0.0, 1.0, 0.0]
+        else:
+            local_params['axis'] = [0.0, 0.0, 1.0]
+        obs = espressomd.observables.CylindricalDensityProfile(**local_params)
         core_hist = np.array(obs.calculate()).reshape(
             self.params['n_r_bins'],
             self.params['n_phi_bins'],
@@ -145,7 +152,14 @@ class TestCylindricalObservable(ut.TestCase):
     def velocity_profile_test(self):
         self.set_particles()
         # Set up the Observable.
-        obs = espressomd.observables.CylindricalVelocityProfile(**self.params)
+        local_params = self.params.copy()
+        if self.params['axis'] == 'x':
+            local_params['axis'] = [1.0, 0.0, 0.0]
+        elif self.params['axis'] == 'y':
+            local_params['axis'] = [0.0, 1.0, 0.0]
+        else:
+            local_params['axis'] = [0.0, 0.0, 1.0]
+        obs = espressomd.observables.CylindricalVelocityProfile(**local_params)
         core_hist = np.array(obs.calculate()).reshape(
             self.params['n_r_bins'],
             self.params['n_phi_bins'],
@@ -167,8 +181,15 @@ class TestCylindricalObservable(ut.TestCase):
     def flux_density_profile_test(self):
         self.set_particles()
         # Set up the Observable.
+        local_params = self.params.copy()
+        if self.params['axis'] == 'x':
+            local_params['axis'] = [1.0, 0.0, 0.0]
+        elif self.params['axis'] == 'y':
+            local_params['axis'] = [0.0, 1.0, 0.0]
+        else:
+            local_params['axis'] = [0.0, 0.0, 1.0]
         obs = espressomd.observables.CylindricalFluxDensityProfile(
-            **self.params)
+            **local_params)
         core_hist = np.array(obs.calculate()).reshape(
             self.params['n_r_bins'],
             self.params['n_phi_bins'],
