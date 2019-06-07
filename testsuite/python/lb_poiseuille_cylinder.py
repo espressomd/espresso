@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
@@ -27,7 +28,6 @@ import espressomd.accumulators
 """
 Check the Lattice Boltzmann 'pressure' driven flow in a cylindrical constraint
 by comparing to the analytical solution.
-
 
 """
 
@@ -95,20 +95,19 @@ class LBPoiseuilleCommon(object):
         self.lbf = self.lbf(**local_lb_params)
         self.system.actors.add(self.lbf)
         cylinder_shape = espressomd.shapes.Cylinder(
-            center=self.system.box_l / 2.0, axis=self.params['axis'], direction=-1, radius=BOX_L / 2.0 - 1.0, length=BOX_L * 1.5)
+            center=self.system.box_l / 2.0, axis=self.params['axis'],
+            direction=-1, radius=BOX_L / 2.0 - 1.0, length=BOX_L * 1.5)
         cylinder = espressomd.lbboundaries.LBBoundary(shape=cylinder_shape)
 
         self.system.lbboundaries.add(cylinder)
 
-        mid_indices = [int((BOX_L / AGRID) / 2),
-                       int((BOX_L / AGRID) / 2),
-                       int((BOX_L / AGRID) / 2)]
+        mid_indices = 3 * [int((BOX_L / AGRID) / 2)]
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
         while diff > 0.001:
             self.system.integrator.run(1)
-            new_val = self.lbf[mid_indices].velocity[np.nonzero(self.params['axis'])[
-                0]]
+            new_val = self.lbf[mid_indices].velocity[
+                np.nonzero(self.params['axis'])[0]]
             diff = abs(new_val - old_val)
             old_val = new_val
 
@@ -124,8 +123,8 @@ class LBPoiseuilleCommon(object):
         for y in range(velocities.shape[0]):
             v_tmp = []
             for z in range(int(BOX_L / AGRID)):
-                index = np.roll([int(BOX_L / AGRID / 2),
-                                 y, z], np.nonzero(self.params['axis'])[0] + 1)
+                index = np.roll([int(BOX_L / AGRID / 2), y, z],
+                                np.nonzero(self.params['axis'])[0] + 1)
                 v_tmp.append(
                     self.lbf[index].velocity[np.nonzero(self.params['axis'])[0]])
             velocities[y] = np.mean(np.array(v_tmp))
@@ -134,9 +133,9 @@ class LBPoiseuilleCommon(object):
         v_measured = velocities[1:-1]
         v_expected = poiseuille_flow(
             positions[1:-1] - 0.5 * BOX_L,
-                                     BOX_L / 2.0 - 1.0,
-                                     EXT_FORCE,
-                                     VISC * DENS)
+            BOX_L / 2.0 - 1.0,
+            EXT_FORCE,
+            VISC * DENS)
         rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
         self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
 
@@ -194,8 +193,7 @@ class LBPoiseuilleCommon(object):
         self.check_observable()
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_BOUNDARIES']), "Skipping test due to missing features.")
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -208,8 +206,8 @@ class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.system.lbboundaries.clear()
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['CUDA', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features or gpu.")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the GPU implementation of the LB."""
