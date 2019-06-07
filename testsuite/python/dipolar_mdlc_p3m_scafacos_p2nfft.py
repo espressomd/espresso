@@ -100,7 +100,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part.clear()
         rho = 0.09
 
-        # This is only for box size calculation. The actual particle numbwe is
+        # This is only for box size calculation. The actual particle number is
         # lower, because particles are removed from the mdlc gap region
         n_particle = 1000
 
@@ -147,7 +147,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part.clear()
         rho = 0.09
 
-        # This is only for box size calculation. The actual particle numbwe is
+        # This is only for box size calculation. The actual particle number is
         # lower, because particles are removed from the mdlc gap region
         n_particle = 1000
 

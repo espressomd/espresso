@@ -246,7 +246,7 @@ class VirtualSitesTracersCommon(object):
 
     def test_zz_without_lb(self):
         """Check behaviour without lb. Ignore non-virtual particles, complain on 
-        virutal ones.
+        virtual ones.
 
         """
         self.reset_lb()

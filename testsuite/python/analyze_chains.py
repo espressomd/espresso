@@ -35,7 +35,7 @@ class AnalyzeChain(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         box_l = 20.0
-        # start with a small bo
+        # start with a small box
         cls.system.box_l = np.array([box_l, box_l, box_l])
         cls.system.cell_system.set_n_square(use_verlet_lists=False)
         fene = FeneBond(k=30, d_r_max=2)
@@ -51,7 +51,7 @@ class AnalyzeChain(ut.TestCase):
                 if ndx > 0:
                     cls.system.part[part_id].add_bond((fene, part_id - 1))
         # bring two polymers to opposite corners:
-        # far in centre cell, but mirror images are close
+        # far in cell centre, but mirror images are close
         head_id = 0
         tail_id = head_id + cls.num_mono
         cm = np.mean(cls.system.part[head_id:tail_id].pos, axis=0)

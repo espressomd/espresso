@@ -40,7 +40,7 @@ class ReactionEnsembleTest(ut.TestCase):
     type_A = 1
     type_H = 2
     target_alpha = 0.6
-    # We get best statistics at alpha=0.5 Then the test is less sensistive to
+    # We get best statistics at alpha=0.5 Then the test is less sensitive to
     # the exact sequence of random numbers and does not require hard-coded
     # output values
     temperature = 1.0

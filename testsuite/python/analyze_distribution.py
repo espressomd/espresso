@@ -30,7 +30,7 @@ class AnalyzeDistributions(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         box_l = 20.0
-        # start with a small bo
+        # start with a small box
         cls.system.box_l = np.array([box_l, box_l, box_l])
         cls.system.cell_system.set_n_square(use_verlet_lists=False)
         for p in range(cls.num_part):

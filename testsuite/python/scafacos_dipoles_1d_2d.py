@@ -36,7 +36,7 @@ class Scafacos1d2d(ut.TestCase):
     def test_scafacos(self):
         rho = 0.3
 
-        # This is only for box size calculation. The actual particle numbwe is
+        # This is only for box size calculation. The actual particle number is
         # lower, because particles are removed from the mdlc gap region
         n_particle = 100
 

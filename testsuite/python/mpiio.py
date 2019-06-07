@@ -85,7 +85,7 @@ class MPIIOTest(ut.TestCase):
     particles.
     """
     s = espressomd.system.System(box_l=[1, 1, 1])
-    # Just a bunch of random interaction such that add_bond does not throw
+    # Just a bunch of random interactions such that add_bond does not throw
     for i in range(nbonds):
         s.bonded_inter[i] = AngleHarmonic(bend=i, phi0=i)
     test_particles = random_particles()
