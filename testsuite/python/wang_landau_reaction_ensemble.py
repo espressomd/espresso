@@ -77,7 +77,7 @@ class ReactionEnsembleTest(ut.TestCase):
     system.setup_type_map([0, 1, 2, 3])
     # initialize wang_landau
     # generate preliminary_energy_run_results here, this should be done in a
-    # seperate simulation without energy reweighting using the update energy
+    # separate simulation without energy reweighting using the update energy
     # functions
     np.savetxt("energy_boundaries.dat", np.c_[[0, 1], [0, 0], [9, 9]],
                delimiter='\t', header="nbar   E_potmin   E_potmax")
