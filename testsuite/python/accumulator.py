@@ -58,11 +58,11 @@ class AccumulatorTest(ut.TestCase):
             self.system.integrator.run(1)
         self.assertEqual(self.pos_obs, self.pos_obs_acc.get_params()['obs'])
         np.testing.assert_allclose(
-            self.pos_obs_acc.get_mean(), np.mean(
-                self.positions, axis=0), atol=1e-4)
+            self.pos_obs_acc.get_mean(),
+            np.mean(self.positions, axis=0), atol=1e-4)
         np.testing.assert_allclose(
-            self.pos_obs_acc.get_variance(), np.var(
-                self.positions, axis=0, ddof=1), atol=1e-4)
+            self.pos_obs_acc.get_variance(),
+            np.var(self.positions, axis=0, ddof=1), atol=1e-4)
 
 
 if __name__ == "__main__":

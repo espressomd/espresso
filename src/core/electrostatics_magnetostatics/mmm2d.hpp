@@ -95,11 +95,11 @@ inline void MMM2D_add_far_force() { MMM2D_add_far(1, 0); }
 inline double MMM2D_far_energy() { return MMM2D_add_far(0, 1); }
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-void add_mmm2d_coulomb_pair_force(double charge_factor, double const dv[3],
-                                  double d2, double d, double f[3]);
+void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
+                                  double force[3]);
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-double mmm2d_coulomb_pair_energy(double charge_factor, double dv[3], double d2,
+double mmm2d_coulomb_pair_energy(double charge_factor, const double dv[3],
                                  double d);
 
 /// check that MMM2D can run with the current parameters

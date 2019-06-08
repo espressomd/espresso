@@ -34,7 +34,6 @@ print("""
 Program Information:""")
 print(espressomd.features())
 
-dev = "cpu"
 
 # System parameters
 #############################################################
@@ -184,7 +183,7 @@ energies = system.analysis.energy()
 print(energies)
 
 j = 0
-for i in range(0, int_n_times):
+for i in range(int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
     system.integrator.run(int_steps)

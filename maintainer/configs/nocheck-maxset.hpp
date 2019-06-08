@@ -35,12 +35,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define NPT
 
-#define LB
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES

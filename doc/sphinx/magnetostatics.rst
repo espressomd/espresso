@@ -60,7 +60,7 @@ It is also possible to pass a subset of the method parameters such as ``mesh``. 
     p3m = magnetostatics.DipolarP3M(prefactor=1, mesh=32, accuracy=1E-4)
     system.actors.add(p3m)
 
-It is important to note that the error estimates given in :cite:`cerda08a` used in the tuning contain assumptions about the system. In particular, a homogeneous system is assumed. If this is no longer the case during the simulation, actual force and torque errors can be significantly larger.
+It is important to note that the error estimates given in :cite:`cerda08d` used in the tuning contain assumptions about the system. In particular, a homogeneous system is assumed. If this is no longer the case during the simulation, actual force and torque errors can be significantly larger.
 
 .. _Dipolar Layer Correction (DLC):
 
@@ -130,7 +130,7 @@ To use the methods, create an instance of either :class:`espressomd.magnetostati
   system.actors.add(dds)
 
 
-For testing purposes, a variant of the dipolar direct sum is available which adds periodic copies to the system in periodic directions (:class:`espressomd.magnetostatics.DipolarDirectSumWithReplica`).
+For testing purposes, a variant of the dipolar direct sum is available which adds periodic copies to the system in periodic directions (:class:`espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu`).
 
 As it is very slow, this method is not intended to do simulations, but
 rather to check the results you get from more efficient methods like
@@ -165,17 +165,18 @@ To use the method, create an instance of :class:`espressomd.magnetostatics.Dipol
 Scafacos Magnetostatics
 -----------------------
 
-Espresso can use the methods from the Scafacos *Scalable fast Coulomb
-solvers* library for dipoles, if the methods support dipolar
-calculations. The feature ``SCAFACOS_DIPOLES`` has to be added to
-:file:`myconfig.hpp` to activate this feature. At the time of this writing (Feb
-2018) dipolar calculations are only included in the ``dipolar`` branch of the Scafacos code.
+Espresso can use the methods from the Scafacos *Scalable fast Coulomb solvers*
+library for dipoles, if the methods support dipolar calculations. The feature
+``SCAFACOS_DIPOLES`` has to be added to :file:`myconfig.hpp` to activate this
+feature. Dipolar calculations are only included in the ``dipolar`` branch of
+the Scafacos code.
 
-To use SCAFACOS, create an instance of :attr:`espressomd.magnetostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+To use SCAFACOS, create an instance of :class:`espressomd.magnetostatics.Scafacos`
+and add it to the list of active actors. Three parameters have to be specified:
 
 * ``method_name``: name of the SCAFACOS method being used.
 * ``method_params``: dictionary containing the method-specific parameters
-* ``bjerrum_length``
+* ``prefactor``
 
 The method-specific parameters are described in the SCAFACOS manual.
 Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field

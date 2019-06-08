@@ -1,4 +1,3 @@
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -17,16 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 from espressomd.interactions import HarmonicBond, AngleHarmonic
 import numpy as np
 from random import shuffle
 
 
-@ut.skipIf(not espressomd.has_features("COLLISION_DETECTION"), "Required features not compiled in")
+@utx.skipIfMissingFeatures("COLLISION_DETECTION")
 class CollisionDetection(ut.TestCase):
 
     """Tests interface and functionality of the collision detection / dynamic binding"""
@@ -121,7 +120,7 @@ class CollisionDetection(ut.TestCase):
                 raise Exception(
                     "Test particle too close to particle, which should not take part in collision")
 
-        # 2 non-virtual + 2 virtual + one that doesn't tkae part
+        # 2 non-virtual + 2 virtual + one that doesn't take part
         expected_np = 4 * len(positions) + 1
 
         self.s.collision_detection.set_params(
@@ -134,10 +133,10 @@ class CollisionDetection(ut.TestCase):
         self.s.integrator.run(0, recalc_forces=True)
         self.verify_state_after_bind_at_poc(expected_np)
 
-        # Check that nothing explodes, when the particles are moved.
+        # Check that nothing explodes when the particles are moved.
         # In particular for parallel simulations
         self.s.thermostat.set_langevin(kT=0, gamma=0.01, seed=42)
-        self.s.part[:].v = 0.05, 0.01, 0.15
+        self.s.part[:].v = [0.05, 0.01, 0.15]
         self.s.integrator.run(3000)
         self.verify_state_after_bind_at_poc(expected_np)
 
@@ -220,7 +219,7 @@ class CollisionDetection(ut.TestCase):
             dist -= np.round(dist / self.s.box_l) * self.s.box_l
             self.assertLess(np.linalg.norm(dist), 1E-12)
 
-    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
+    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_bind_at_point_of_collision(self):
         # Single collision head node
         self.run_test_bind_at_point_of_collision_for_pos(np.array((0, 0, 0)))
@@ -243,7 +242,7 @@ class CollisionDetection(ut.TestCase):
         self.run_test_bind_at_point_of_collision_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES", "VIRTUAL_SITES_RELATIVE"), "Skipping for lack of LJ potential")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES", "VIRTUAL_SITES_RELATIVE"])
     def test_bind_at_point_of_collision_random(self):
         """Integrate lj liquid and check that no double bonds are formed
            and the number of bonds fits the number of virtual sites
@@ -258,7 +257,7 @@ class CollisionDetection(ut.TestCase):
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1, sigma=0.1, cutoff=2**(1. / 6) * 0.1, shift="auto")
 
-        # Remove overalp between particles
+        # Remove overlap between particles
         self.s.integrator.set_steepest_descent(
             f_max=0,
             gamma=1,
@@ -310,7 +309,7 @@ class CollisionDetection(ut.TestCase):
         # Number of vs pairs = number of bonds?
         self.assertEqual(len(vs_pairs), len(bonds))
 
-        # Che3ck that vs pairs and bonds agree
+        # Check that vs pairs and bonds agree
         for vs_pair in vs_pairs:
             # Get corresponding non-virtual particles
             base_particles = tuple(sorted(
@@ -349,7 +348,7 @@ class CollisionDetection(ut.TestCase):
                 p1 = self.s.part.add(
                     pos=pos + (0, 0, 0), type=self.part_type_to_attach_vs_to)
 
-        # 2 non-virtual + 1 virtual + one that doesn't takekae part
+        # 2 non-virtual + 1 virtual + one that doesn't take part
         expected_np = 3 * len(positions) + 1
 
         self.s.collision_detection.set_params(
@@ -365,7 +364,7 @@ class CollisionDetection(ut.TestCase):
         # Check that nothing explodes, when the particles are moved.
         # In particular for parallel simulations
         self.s.thermostat.set_langevin(kT=0, gamma=0.01, seed=42)
-        self.s.part[:].v = 0.05, 0.01, 0.15
+        self.s.part[:].v = [0.05, 0.01, 0.15]
         self.s.integrator.run(3000)
         self.verify_state_after_glue_to_surface(expected_np)
 
@@ -389,7 +388,7 @@ class CollisionDetection(ut.TestCase):
 
             # Get bound particle
             # There is a bond between the base particle and the bound particle
-            # but we have no guarantee, on where its stored
+            # but we have no guarantee, on where it is stored
             # 1. On the base particle of the vs
             p2 = None
             if len(base_p.bonds) == 1:
@@ -451,7 +450,7 @@ class CollisionDetection(ut.TestCase):
         self.assertGreater(np.dot(self.s.distance_vec(base_p, vs), self.s.distance_vec(base_p, bound_p))
                            / self.s.distance(base_p, vs) / self.s.distance(base_p, bound_p), 0.99)
 
-    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "Skipped due to missing VIRTUAL_SITES_RELATIVE")
+    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_glue_to_surface(self):
         # Single collision head node
         self.run_test_glue_to_surface_for_pos(np.array((0, 0, 0)))
@@ -473,7 +472,7 @@ class CollisionDetection(ut.TestCase):
         self.run_test_glue_to_surface_for_pos(
             np.array((0.2, 0, 0)), np.array((0.95, 0, 0)), np.array((0.7, 0, 0)))
 
-    @ut.skipIf(not espressomd.has_features("VIRTUAL_SITES_RELATIVE"), "VIRTUAL_SITES not compiled in")
+    @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_glue_to_surface_random(self):
         """Integrate lj liquid and check that no double bonds are formed
            and the number of bonds fits the number of virtual sites
@@ -652,7 +651,7 @@ class CollisionDetection(ut.TestCase):
                     expected_pairs.append((i, j))
 
         # Find triangles
-        # Each elemtn is a particle id, a bond id and two bond partners in
+        # Each element is a particle id, a bond id and two bond partners in
         # ascending order
         expected_angle_bonds = []
         for i in range(n):
@@ -663,7 +662,7 @@ class CollisionDetection(ut.TestCase):
                     p_j = self.s.part[j]
                     p_k = self.s.part[k]
 
-                    # Normalized distnace vectors
+                    # Normalized distance vectors
                     d_ij = np.copy(p_j.pos - p_i.pos)
                     d_ik = np.copy(p_k.pos - p_i.pos)
                     d_jk = np.copy(p_k.pos - p_j.pos)
@@ -704,7 +703,7 @@ class CollisionDetection(ut.TestCase):
                     raise Exception(
                         "There should be only 2 and three particle bonds")
 
-        # The order between expected and found bonds does not malways match
+        # The order between expected and found bonds does not always match
         # because collisions occur in random order. Sort stuff
         found_pairs = sorted(found_pairs)
         found_angle_bonds = sorted(found_angle_bonds)

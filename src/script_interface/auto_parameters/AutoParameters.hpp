@@ -32,25 +32,25 @@ namespace ScriptInterface {
  *
  * This class implements @c ScriptInterfaceBase, binding
  * the parameters added by add_parameters or by the constructor.
- * To use, derive from this class and add parameters. For example,
+ * To use it, derive from this class and add parameters. For example,
  * given a class A
  * ~~~{.cpp}
  * class A {
  * public:
- *  int i() { return m_i; }
+ *   int i() { return m_i; }
  * private:
- * int m_i;
+ *   int m_i;
  * };
  * ~~~
- * that should have i exposed, this can be achieved by extending it
+ * that should have @c i exposed, this can be achieved by extending it
  * like this:
  * ~~~{.cpp}
  * class A : public AutoParameters {
  * public:
- * A() : AutoParameters({"name_for_i", i}) {}
- *  int i() { return m_i; }
+ *   A() : AutoParameters({"name_for_i", i}) {}
+ *   int i() { return m_i; }
  * private:
- * int m_i;
+ *   int m_i;
  * };
  * ~~~
  *
@@ -59,27 +59,24 @@ namespace ScriptInterface {
  * ~~~{.cpp}
  * class B {
  * public:
- * void set_i(int);
- * int get_i();
+ *   void set_i(int);
+ *   int get_i();
  * private:
- * int m_i;
+ *   int m_i;
  * };
  * ~~~
  * we can use a lambdas to set and get the parameter like this:
  * ~~~{.cpp}
  * class B : public AutoParameters {
  * public:
- * B() : AutoParameters({"name_for_i",
- * [this](Variant const& v) {
- *   set_i(get_value<int>(v));
- *  },
- * [this]() {
- *   return get_i();
- * }}) {}
- * void set_i(int);
- * int get_i();
+ *   B() : AutoParameters({"name_for_i",
+ *                         [this](Variant const& v) {set_i(get_value<int>(v));},
+ *                         [this]() {return get_i();}
+ *                        }) {}
+ *   void set_i(int);
+ *   int get_i();
  * private:
- * int m_i;
+ *   int m_i;
  * };
  * ~~~
  * (this has to be captured in the lambdas to have access to the member

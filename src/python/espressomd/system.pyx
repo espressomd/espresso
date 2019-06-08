@@ -34,10 +34,9 @@ from . import particle_data
 from . import cuda_init
 from . import code_info
 from .utils cimport numeric_limits
-if LB or LB_GPU:
-    from .lb cimport lb_lbfluid_get_tau
-    from .lb cimport lb_lbfluid_get_lattice_switch
-    from .lb cimport NONE
+from .lb cimport lb_lbfluid_get_tau
+from .lb cimport lb_lbfluid_get_lattice_switch
+from .lb cimport NONE
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
@@ -160,11 +159,11 @@ cdef class System(object):
             self, "non_bonded_inter")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['part'] = System.__getattribute__(self, "part")
+        odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(
             self, "auto_update_accumulators")
-        odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
         odict['constraints'] = System.__getattribute__(self, "constraints")
         odict['galilei'] = System.__getattribute__(self, "galilei")
@@ -265,14 +264,15 @@ cdef class System(object):
         def __set__(self, double _time_step):
             if _time_step <= 0:
                 raise ValueError("Time Step must be positive")
-            IF LB or LB_GPU:
-                cdef double tau
-                if lb_lbfluid_get_lattice_switch() != NONE:
-                    tau = lb_lbfluid_get_tau()
-                    if (tau >= 0.0 and
-                            tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):
-                        raise ValueError(
-                            "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(tau) + ")")
+
+            cdef double tau
+            if lb_lbfluid_get_lattice_switch() != NONE:
+                tau = lb_lbfluid_get_tau()
+                if (tau >= 0.0 and
+                        tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):
+                    raise ValueError(
+                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(tau) + ")")
+
             self.globals.time_step = _time_step
 
         def __get__(self):

@@ -46,10 +46,12 @@
 #include "particle_data.hpp"
 #include "tuning.hpp"
 
-#include "utils/strcat_alloc.hpp"
+#include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
-#include "utils/math/sinc.hpp"
+#include <utils/math/sinc.hpp>
 using Utils::sinc;
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 #include <cstdio>
 #include <cstdlib>
@@ -86,8 +88,8 @@ dp3m_data_struct dp3m;
 static void dp3m_calc_send_mesh();
 
 /** Initialize for magnetic dipoles the (inverse) mesh constant @ref
- *  p3m_parameter_struct::a "a" (@ref p3m_parameter_struct::ai "ai") and the
- *  cutoff for charge assignment @ref p3m_parameter_struct::cao_cut "cao_cut".
+ *  P3MParameters::a "a" (@ref P3MParameters::ai "ai") and the
+ *  cutoff for charge assignment @ref P3MParameters::cao_cut "cao_cut".
  *
  *  Function called by @ref dp3m_init() once and by @ref
  *  dp3m_scaleby_box_l() whenever the @ref box_l changes.
@@ -118,9 +120,9 @@ static void dp3m_spread_force_grid(double *mesh);
 /** realloc charge assignment fields. */
 static void dp3m_realloc_ca_fields(int newsize);
 
-/** Initialize the (inverse) mesh constant @ref p3m_parameter_struct::a "a"
- *  (@ref p3m_parameter_struct::ai "ai") and the cutoff for charge assignment
- *  @ref p3m_parameter_struct::cao_cut "cao_cut".
+/** Initialize the (inverse) mesh constant @ref P3MParameters::a "a"
+ *  (@ref P3MParameters::ai "ai") and the cutoff for charge assignment
+ *  @ref P3MParameters::cao_cut "cao_cut".
  *
  *  Function called by @ref dp3m_init() once and by @ref dp3m_scaleby_box_l()
  *  whenever the @ref box_l changes.
@@ -809,7 +811,7 @@ static void P3M_assign_torques(double prefac, int d_rs) {
 
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
-      const Vector3d dip = p.calc_dip();
+      const Utils::Vector3d dip = p.calc_dip();
       q_ind = dp3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
@@ -873,7 +875,7 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs) {
 
   for (auto &p : local_cells.particles()) {
     if ((p.p.dipm) != 0.0) {
-      const Vector3d dip = p.calc_dip();
+      const Utils::Vector3d dip = p.calc_dip();
       q_ind = dp3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
         for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
@@ -1196,7 +1198,7 @@ double calc_surface_term(int force_flag, int energy_flag) {
 
   int ip = 0;
   for (auto const &p : local_cells.particles()) {
-    const Vector3d dip = p.calc_dip();
+    const Utils::Vector3d dip = p.calc_dip();
     mx[ip] = dip[0];
     my[ip] = dip[1];
     mz[ip] = dip[2];
@@ -1583,10 +1585,10 @@ double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]) {
  *  The real space error is tuned such that it contributes half of the
  *  total error, and then the Fourier space error is calculated.
  *  If an optimal alpha is not found, the value 0.1 is used as fallback.
- *  @param[in]  mesh       @copybrief p3m_parameter_struct::mesh
- *  @param[in]  cao        @copybrief p3m_parameter_struct::cao
- *  @param[in]  r_cut_iL   @copybrief p3m_parameter_struct::r_cut_iL
- *  @param[out] _alpha_L   @copybrief p3m_parameter_struct::alpha_L
+ *  @param[in]  mesh       @copybrief P3MParameters::mesh
+ *  @param[in]  cao        @copybrief P3MParameters::cao
+ *  @param[in]  r_cut_iL   @copybrief P3MParameters::r_cut_iL
+ *  @param[out] _alpha_L   @copybrief P3MParameters::alpha_L
  *  @param[out] _rs_err    real space error
  *  @param[out] _ks_err    Fourier space error
  *  @returns Error magnitude
@@ -1639,10 +1641,10 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
 
 /** @copybrief p3m_mcr_time
  *
- *  @param[in]  mesh            @copybrief p3m_parameter_struct::mesh
- *  @param[in]  cao             @copybrief p3m_parameter_struct::cao
- *  @param[in]  r_cut_iL        @copybrief p3m_parameter_struct::r_cut_iL
- *  @param[in]  alpha_L         @copybrief p3m_parameter_struct::alpha_L
+ *  @param[in]  mesh            @copybrief P3MParameters::mesh
+ *  @param[in]  cao             @copybrief P3MParameters::cao
+ *  @param[in]  r_cut_iL        @copybrief P3MParameters::r_cut_iL
+ *  @param[in]  alpha_L         @copybrief P3MParameters::alpha_L
  *
  *  @returns The integration time in case of success, otherwise
  *           -@ref P3M_TUNE_FAIL
@@ -1677,13 +1679,13 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
  *  The @p _r_cut_iL is determined via a simple bisection.
  *
  *  @param[out] log             log output
- *  @param[in]  mesh            @copybrief p3m_parameter_struct::mesh
- *  @param[in]  cao             @copybrief p3m_parameter_struct::cao
+ *  @param[in]  mesh            @copybrief P3MParameters::mesh
+ *  @param[in]  cao             @copybrief P3MParameters::cao
  *  @param[in]  r_cut_iL_min    lower bound for @p _r_cut_iL
  *  @param[in]  r_cut_iL_max    upper bound for @p _r_cut_iL
- *  @param[out] _r_cut_iL       @copybrief p3m_parameter_struct::r_cut_iL
- *  @param[out] _alpha_L        @copybrief p3m_parameter_struct::alpha_L
- *  @param[out] _accuracy       @copybrief p3m_parameter_struct::accuracy
+ *  @param[out] _r_cut_iL       @copybrief P3MParameters::r_cut_iL
+ *  @param[out] _alpha_L        @copybrief P3MParameters::alpha_L
+ *  @param[out] _accuracy       @copybrief P3MParameters::accuracy
  *
  *  @returns The integration time in case of success, otherwise
  *           -@ref P3M_TUNE_FAIL, -@ref P3M_TUNE_ACCURACY_TOO_LARGE,
@@ -1792,16 +1794,16 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
  *  up and down.
  *
  *  @param[out]     log             log output
- *  @param[in]      mesh            @copybrief p3m_parameter_struct::mesh
+ *  @param[in]      mesh            @copybrief P3MParameters::mesh
  *  @param[in]      cao_min         lower bound for @p _cao
  *  @param[in]      cao_max         upper bound for @p _cao
  *  @param[in,out]  _cao            initial guess for the
- *                                  @copybrief p3m_parameter_struct::cao
+ *                                  @copybrief P3MParameters::cao
  *  @param[in]      r_cut_iL_min    lower bound for @p _r_cut_iL
  *  @param[in]      r_cut_iL_max    upper bound for @p _r_cut_iL
- *  @param[out]     _r_cut_iL       @copybrief p3m_parameter_struct::r_cut_iL
- *  @param[out]     _alpha_L        @copybrief p3m_parameter_struct::alpha_L
- *  @param[out]     _accuracy       @copybrief p3m_parameter_struct::accuracy
+ *  @param[out]     _r_cut_iL       @copybrief P3MParameters::r_cut_iL
+ *  @param[out]     _alpha_L        @copybrief P3MParameters::alpha_L
+ *  @param[out]     _accuracy       @copybrief P3MParameters::accuracy
  *
  *  @returns The integration time in case of success, otherwise
  *           -@ref P3M_TUNE_FAIL or -@ref P3M_TUNE_CAO_TOO_LARGE */
@@ -2426,7 +2428,7 @@ bool dp3m_sanity_checks_boxl() {
 
 /*****************************************************************************/
 
-bool dp3m_sanity_checks(const Vector3i &grid) {
+bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
   bool ret = false;
 
   if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {

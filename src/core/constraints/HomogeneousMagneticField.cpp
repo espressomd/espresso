@@ -22,17 +22,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Constraints {
 
 ParticleForce HomogeneousMagneticField::force(const Particle &p,
-                                              const Vector3d &folded_pos,
+                                              const Utils::Vector3d &folded_pos,
                                               double t) {
 #if defined(ROTATION) && defined(DIPOLES)
-  return {Vector3d{}, vector_product(p.calc_dip(), m_field)};
+  return {{}, vector_product(p.calc_dip(), m_field)};
 #else
-  return {Vector3d{}};
+  return {};
 #endif
 }
 
 void HomogeneousMagneticField::add_energy(const Particle &p,
-                                          const Vector3d &folded_pos, double t,
+                                          const Utils::Vector3d &folded_pos,
+                                          double t,
                                           Observable_stat &energy) const {
 #ifdef DIPOLES
   energy.dipolar[0] += -1.0 * m_field * p.calc_dip();

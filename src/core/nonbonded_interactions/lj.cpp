@@ -19,12 +19,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.hpp"
-
-#ifdef LENNARD_JONES
 #include "lj.hpp"
 
+#ifdef LENNARD_JONES
 #include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
                              double sig, double cut, double shift,

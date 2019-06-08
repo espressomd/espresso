@@ -3,6 +3,12 @@
 
 #include "TabulatedPotential.hpp"
 #include "particle_data.hpp"
+
+/** @file
+ *  Data structures for bonded interactions.
+ *  For more information on how to add new interactions, see @ref bondedIA_new.
+ */
+
 /** \name Type codes of bonded interactions
  *  Enumeration of implemented bonded interactions.
  */
@@ -23,6 +29,8 @@ enum BondedInteraction {
   BONDED_IA_QUARTIC,
   /** Type of bonded interaction is a BONDED_COULOMB */
   BONDED_IA_BONDED_COULOMB,
+  /** Type of bonded interaction is a BONDED_COULOMB_SR */
+  BONDED_IA_BONDED_COULOMB_SR,
   /** Type of bonded interaction is a dihedral potential. */
   BONDED_IA_DIHEDRAL,
   /** Type of tabulated bonded interaction potential,
@@ -58,8 +66,6 @@ enum BondedInteraction {
   BONDED_IA_UMBRELLA,
   /** Type of bonded interaction is thermalized distance bond. */
   BONDED_IA_THERMALIZED_DIST,
-  /** Type of bonded interaction is a BONDED_COULOMB_P3M_SR */
-  BONDED_IA_BONDED_COULOMB_P3M_SR,
 };
 
 /** Specify tabulated bonded interactions  */
@@ -156,13 +162,11 @@ struct Bonded_coulomb_bond_parameters {
   double prefactor;
 };
 
-#ifdef P3M
-/** Parameters for Coulomb bond p3m short-range Potential */
-struct Bonded_coulomb_p3m_sr_bond_parameters {
+/** Parameters for Coulomb bond short-range Potential */
+struct Bonded_coulomb_sr_bond_parameters {
   /** charge factor */
   double q1q2;
 };
-#endif
 
 /** Parameters for three-body angular potential.
  *  @note
@@ -309,6 +313,7 @@ union Bond_parameters {
 #endif
   Quartic_bond_parameters quartic;
   Bonded_coulomb_bond_parameters bonded_coulomb;
+  Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr;
   Angle_bond_parameters angle;
   Angle_harmonic_bond_parameters angle_harmonic;
   Angle_cosine_bond_parameters angle_cosine;
@@ -321,9 +326,6 @@ union Bond_parameters {
   Umbrella_bond_parameters umbrella;
 #endif
   Thermalized_bond_parameters thermalized_bond;
-#ifdef P3M
-  Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr;
-#endif
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
   IBM_Triel_Parameters ibm_triel;
@@ -344,13 +346,18 @@ struct Bonded_ia_parameters {
 /** Field containing the parameters of the bonded ia types */
 extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 
-/** Maximal interaction cutoff (real space/short range bonded interactions). */
+/** @brief Maximal interaction cutoff for bonded interactions (real space).
+ *  This value must be as large as the maximal interaction range in the list
+ *  of bonded interactions. This is necessary to ensure that in a parallel
+ *  simulation, a compute node has access to both bond partners.
+ */
 extern double max_cut_bonded;
 
 /** Makes sure that \ref bonded_ia_params is large enough to cover the
-    parameters for the bonded interaction type. Attention: 1: There is
-    no initialization done here. 2: Use only in connection with
-    creating new or overwriting old bond types*/
+ *  parameters for the bonded interaction type.
+ *  Attention: 1: There is no initialization done here.
+ *  2: Use only in connection with creating new or overwriting old bond types
+ */
 void make_bond_type_exist(int type);
 
 /** @brief Checks if particle has a pair bond with a given partner
@@ -425,6 +432,21 @@ inline bool pair_bond_enum_exists_between(const Particle *const p1,
          (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
 }
 
+/** Calculate the maximal cutoff of bonded interactions, required to
+ *  determine the cell size for communication.
+ *
+ *  Bond angle and dihedral potentials do not contain a cutoff intrinsically.
+ *  The cutoff for these potentials depends on the bond length potentials
+ *  (it is assumed that particles participating in a bond angle or dihedral
+ *  potential are bound to each other by some bond length potential). For bond
+ *  angle potentials nothing has to be done. For dihedral potentials the cutoff
+ *  is set to twice the maximal cutoff because the particle in which the bond
+ *  is stored is only bonded to the first two partners, one of which has an
+ *  additional bond to the third partner.
+ *
+ *  The result is stored in global variable @ref max_cut_bonded.
+ */
 void recalc_maximal_cutoff_bonded();
+
 int virtual_set_params(int bond_type);
 #endif

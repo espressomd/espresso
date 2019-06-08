@@ -10,7 +10,7 @@ Advanced Methods
 Creating bonds when particles collide
 -------------------------------------
 
-Please cite :cite:`espresso2` when using dynamic bonding.
+Please cite :cite:`arnold13a` when using dynamic bonding.
 
 With the help of this feature, bonds between particles can be created
 automatically during the simulation, every time two particles collide.
@@ -161,10 +161,10 @@ with the reaction rate :math:`k_{\mathrm{ct}}` and the simulation time step :mat
 
 Self-propulsion is achieved by imposing an interaction asymmetry between the partners of a swapped pair. That is, the heterogeneous distribution of chemical species induced by the swapping leads to a net force on the particle, counter balanced by friction.
 
-To set up the system for catalytic reactions the class :class:`espressomd.reaction.Reaction`
+To set up the system for catalytic reactions the class :class:`espressomd.swimmer_reaction.Reaction`
 can be used. ::
 
-    from espressomd.reaction import Reaction
+    from espressomd.swimmer_reaction import Reaction
 
     system = espressomd.System()
 
@@ -314,7 +314,7 @@ University of Zilina:
 
 | ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
-  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zref.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zref.bib)
+  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zrefs.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zrefs.bib)
 
 | This documentation introduces the features of module Object-in-fluid
   (OIF). Even though ESPResSo was not primarily intended to work with closed
@@ -1451,7 +1451,7 @@ Initialization
         stencil='linkcentered', advection=True, fluid_coupling='friction')
     sys.actors.add(ek)
 
-.. note:: Features ``ELECTROKINETICS`` and ``LB_GPU`` required
+.. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
 
 The above is a minimal example how to initialize the LB fluid, and
 it is very similar to the lattice Boltzmann command in set-up. We
@@ -1527,13 +1527,16 @@ valency of the particles of that species ``valency``, and an optional external
 before, the LB density is completely decoupled from the electrokinetic
 densities. This has the advantage that greater freedom can be achieved
 in matching the internal parameters to an experimental system. Moreover,
-it is possible to choose parameters for which the LB is more stable. The species has to be added to a LB fluid::
+it is possible to choose parameters for which the LB is more stable. The species can be added to a LB fluid::
 
     ek.add_species(species)
 
-The LB fluid must be set up before using
-:class:`espressomd.electrokinetics.Electrokinetics` as shown above, before a
-diffusive species can be added. The variables ``density``, ``D``, and
+One can also add the species during the initialization step of the 
+:class:`espressomd.electrokinetics.Electrokinetics` by defining the list variable ``species``::
+
+    ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
+
+The variables ``density``, ``D``, and
 ``valency`` must be set to properly initialize the diffusive species; the
 ``ext_force_density`` is optional.
 
@@ -1561,6 +1564,22 @@ rhomboid and hollowcone. We refer to the documentation of the
 the options associated to these shapes. In order to properly set up the
 boundaries, the ``charge_density`` and ``shape``
 must be specified.
+
+.. _Checkpointing:
+
+Checkpointing
+^^^^^^^^^^^^^
+::
+
+    ek.save_checkpoint(path)
+
+Checkpointing in the EK works quite similar to checkpointing in the LB, because the density is not saved within the :class:`espressomd.checkpointing` object. However one should keep in mind, that the EK not only saves the density of the species but also saves the population of the LB fluid in a separate file. To load a checkpoint the :class:`espressomd.electrokinetics.Electrokinetics` should have the same name as in the script it was saved, but to use the species one need to extract them from the :class:`espressomd.electrokinetics.Electrokinetics` via ``species``.
+
+::
+
+    checkpoint.load(cpt_path)
+    species = ek.get_params()['species']
+    ek.load_checkpoint(path)
 
 .. _Output:
 
@@ -1929,7 +1948,7 @@ Combination of the Reaction Ensemble with the Wang-Landau algorithm
 allows for enhanced sampling of the reacting system, and
 and for the determination of the density of states with respect
 to the reaction coordinate or with respect to some other collective
-variable :cite:`landsgesell16a`. Here the 1/t Wang-Landau
+variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
 does not suffer from systematic errors. Additionally to the above
 commands for the reaction ensemble use the following commands for the
@@ -1951,7 +1970,7 @@ In the constant pH method due to Reed and Reed
 of :math:`H^{+}` ions, assuming that the simulated system is coupled to an
 infinite reservoir. This value is the used to simulate dissociation
 equilibrium of acids and bases. Under certain conditions, the constant
-pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell16b`. However, it
+pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell17b`. However, it
 treats the chemical potential of :math:`H^{+}` ions and their actual
 number in the simulation box as independent variables, which can lead to
 serious artifacts.

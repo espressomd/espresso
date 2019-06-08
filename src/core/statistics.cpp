@@ -25,6 +25,7 @@
  */
 
 #include "statistics.hpp"
+
 #include "communication.hpp"
 #include "energy.hpp"
 #include "event.hpp"
@@ -37,10 +38,11 @@
 #include "pressure.hpp"
 #include "short_range_loop.hpp"
 #include "statistics_chain.hpp"
-#include "utils.hpp"
-#include "utils/NoOp.hpp"
-#include "utils/contains.hpp"
 #include "virtual_sites.hpp"
+
+#include <utils/NoOp.hpp>
+#include <utils/constants.hpp>
+#include <utils/contains.hpp>
 
 #include <cstdlib>
 #include <cstring>
@@ -60,15 +62,13 @@ int n_part_conf = 0;
  ****************************************************************************************/
 
 double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
-  int in_set;
-
   auto mindist2 = std::numeric_limits<double>::infinity();
 
-  for (auto jt = partCfg.begin(); jt != (--partCfg.end()); ++jt) {
+  for (auto jt = partCfg.begin(); jt != partCfg.end(); ++jt) {
     /* check which sets particle j belongs to
        bit 0: set1, bit1: set2
     */
-    in_set = 0;
+    auto in_set = 0;
     if (set1.empty() || contains(set1, jt->p.type))
       in_set = 1;
     if (set2.empty() || contains(set2, jt->p.type))
@@ -101,23 +101,22 @@ void predict_momentum_particles(double *result) {
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
-  Vector3d linear_momentum{};
+Utils::Vector3d calc_linear_momentum(int include_particles,
+                                     int include_lbfluid) {
+  Utils::Vector3d linear_momentum{};
   if (include_particles) {
-    Vector3d momentum_particles{};
+    Utils::Vector3d momentum_particles{};
     mpi_gather_stats(4, momentum_particles.data(), nullptr, nullptr, nullptr);
     linear_momentum += momentum_particles;
   }
   if (include_lbfluid) {
-#if defined(LB) or defined(LB_GPU)
     linear_momentum += lb_lbfluid_calc_fluid_momentum();
-#endif
   }
   return linear_momentum;
 }
 
-Vector3d centerofmass(PartCfg &partCfg, int type) {
-  Vector3d com{};
+Utils::Vector3d centerofmass(PartCfg &partCfg, int type) {
+  Utils::Vector3d com{};
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
@@ -134,12 +133,11 @@ Vector3d centerofmass(PartCfg &partCfg, int type) {
 }
 
 void angularmomentum(PartCfg &partCfg, int type, double *com) {
-  double tmp[3];
   com[0] = com[1] = com[2] = 0.;
 
   for (auto const &p : partCfg) {
     if (type == p.p.type) {
-      vector_product(p.r.p, p.m.v, tmp);
+      auto const tmp = vector_product(p.r.p, p.m.v);
       for (int i = 0; i < 3; i++) {
         com[i] += tmp[i] * p.p.mass;
       }
@@ -180,7 +178,7 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
 IntList nbhood(PartCfg &partCfg, double pt[3], double r,
                int const planedims[3]) {
   IntList ids;
-  Vector3d d;
+  Utils::Vector3d d;
 
   auto const r2 = r * r;
 
@@ -521,8 +519,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{center_};
-  auto direction = Vector3d{direction_};
+  auto center = Utils::Vector3d{center_};
+  auto direction = Utils::Vector3d{direction_};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -558,7 +556,7 @@ int calc_cylindrical_average(
       if (types[type_id] == p.p.type || all_types) {
         auto const pos = folded_position(p);
 
-        Vector3d vel{p.m.v};
+        Utils::Vector3d vel{p.m.v};
 
         auto const diff = pos - center;
 

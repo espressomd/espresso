@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OBSERVABLES_PARTICLEDIHEDRALS_HPP
 
 #include "PidObservable.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <cmath>
 #include <vector>
@@ -40,7 +40,8 @@ namespace Observables {
  */
 class ParticleDihedrals : public PidObservable {
 public:
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  using PidObservable::PidObservable;
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     auto v1 = get_mi_vector(partCfg[ids()[1]].r.p, partCfg[ids()[0]].r.p);
     auto v2 = get_mi_vector(partCfg[ids()[2]].r.p, partCfg[ids()[1]].r.p);

@@ -21,6 +21,7 @@ from __future__ import division
 import numpy as np
 
 import espressomd
+espressomd.assert_features(["ELECTROSTATICS", "LENNARD_JONES"])
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
@@ -37,7 +38,7 @@ box_l = 60
 system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 # system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.random.seed(seed=system.seed)
+np.random.seed(seed=12)
 
 system.time_step = 0.02
 system.cell_system.skin = 0.4
@@ -66,13 +67,17 @@ for i in range(N0, 2 * N0):
 
 RE = None
 if(mode == "reaction_ensemble"):
-    RE = reaction_ensemble.ReactionEnsemble(temperature=1, exclusion_radius=1)
+    RE = reaction_ensemble.ReactionEnsemble(
+        temperature=1,
+        exclusion_radius=1,
+     seed=2)
 elif(mode == "constant_pH_ensemble"):
     RE = reaction_ensemble.ConstantpHEnsemble(
-        temperature=1, exclusion_radius=1)
+        temperature=1, exclusion_radius=1, seed=2)
     RE.constant_pH = 3
-RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
-    1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
+RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
+                product_types=[1, 2], product_coefficients=[1, 1],
+                default_charges={0: 0, 1: -1, 2: +1})
 print(RE.get_status())
 system.setup_type_map([0, 1, 2])
 
@@ -83,7 +88,8 @@ alpha = []
 for i in range(100):
     RE.reaction(100)
     print("HA", system.number_of_particles(type=0), "A-",
-          system.number_of_particles(type=1), "H+", system.number_of_particles(type=2))
+          system.number_of_particles(type=1), "H+",
+          system.number_of_particles(type=2))
     alpha.append(system.number_of_particles(type=1) / N0)
 
 alpha_av = np.mean(alpha)

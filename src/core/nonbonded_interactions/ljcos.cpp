@@ -20,10 +20,11 @@
 */
 
 #include "ljcos.hpp"
-#include "utils.hpp"
 
 #ifdef LJCOS
 #include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset) {

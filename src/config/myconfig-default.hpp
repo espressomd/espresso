@@ -51,10 +51,8 @@
 #define ENGINE
 
 // Hydrodynamics
-#define LB
 #define LB_BOUNDARIES
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #endif
 

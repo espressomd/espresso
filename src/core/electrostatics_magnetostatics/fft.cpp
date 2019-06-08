@@ -29,9 +29,9 @@
 
 #if defined(P3M) || defined(DP3M)
 
-#include "utils/math/permute_ifield.hpp"
+#include <utils/math/permute_ifield.hpp>
 using Utils::permute_ifield;
-#include "utils/index.hpp"
+#include <utils/index.hpp>
 using Utils::get_linear_index;
 #include <utils/memory.hpp>
 
@@ -80,7 +80,7 @@ using Utils::get_linear_index;
  */
 namespace {
 boost::optional<std::vector<int>>
-find_comm_groups(Vector3i const &grid1, Vector3i const &grid2,
+find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
                  int const *node_list1, int *node_list2, int *pos, int *my_pos,
                  const boost::mpi::communicator &comm) {
   int i;
@@ -363,10 +363,11 @@ void pack_block_permute2(double const *const in, double *const out,
 }
 
 /** Communicate the grid data according to the given forward FFT plan.
- * \param plan FFT communication plan.
- * \param in   input mesh.
- * \param out  output mesh.
- * \param fft    FFT communication plan.
+ *  \param plan   FFT communication plan.
+ *  \param in     input mesh.
+ *  \param out    output mesh.
+ *  \param fft    FFT communication plan.
+ *  \param comm   MPI communicator.
  */
 void forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
                     fft_data_struct &fft,
@@ -390,11 +391,12 @@ void forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
 }
 
 /** Communicate the grid data according to the given backward FFT plan.
- * \param plan_f Forward FFT plan.
- * \param plan_b Backward FFT plan.
- * \param in     input mesh.
- * \param out    output mesh.
- * \param fft    FFT communication plan.
+ *  \param plan_f Forward FFT plan.
+ *  \param plan_b Backward FFT plan.
+ *  \param in     input mesh.
+ *  \param out    output mesh.
+ *  \param fft    FFT communication plan.
+ *  \param comm   MPI communicator.
  */
 void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
                     const double *in, double *out, fft_data_struct &fft,
@@ -492,7 +494,7 @@ void calc_2d_grid(int n, int grid[3]) {
 
 int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft, const Vector3i &grid,
+             fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm) {
   int i, j;
   /* helpers */

@@ -5,7 +5,7 @@
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include "lb.hpp"
 #include "lb_interface.hpp"
@@ -20,8 +20,6 @@ void mpi_set_interpolation_order_slave(int, int) {
   boost::mpi::broadcast(comm_cart, interpolation_order, 0);
 }
 
-#if defined(LB) || defined(LB_GPU)
-
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &order) {
   interpolation_order = order;
@@ -35,10 +33,10 @@ InterpolationOrder lb_lbinterpolation_get_interpolation_order() {
 
 namespace {
 template <typename Op>
-void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
+void lattice_interpolation(Lattice const &lattice, Utils::Vector3d const &pos,
                            Op &&op) {
-  Vector<std::size_t, 8> node_index{};
-  Vector6d delta{};
+  Utils::Vector<std::size_t, 8> node_index{};
+  Utils::Vector6d delta{};
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
@@ -55,7 +53,7 @@ void lattice_interpolation(Lattice const &lattice, Vector3d const &pos,
   }
 }
 
-Vector3d node_u(Lattice::index_t index) {
+Utils::Vector3d node_u(Lattice::index_t index) {
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
     return lbfields[index].slip_velocity;
@@ -63,16 +61,15 @@ Vector3d node_u(Lattice::index_t index) {
 #endif // LB_BOUNDARIES
   auto const modes = lb_calc_modes(index);
   auto const local_rho = lbpar.rho + modes[0];
-  return Vector3d{modes[1], modes[2], modes[3]} / local_rho;
+  return Utils::Vector3d{modes[1], modes[2], modes[3]} / local_rho;
 }
 
 } // namespace
 
-const Vector3d
-lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos) {
+const Utils::Vector3d
+lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
   if (lattice_switch == ActiveLB::CPU) {
-#ifdef LB
-    Vector3d interpolated_u{};
+    Utils::Vector3d interpolated_u{};
 
     /* calculate fluid velocity at particle's position
        this is done by linear interpolation
@@ -84,16 +81,15 @@ lb_lbinterpolation_get_interpolated_velocity(const Vector3d &pos) {
 
     return interpolated_u;
   }
-#endif
   return {};
 }
 
-const Vector3d
-lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
+const Utils::Vector3d lb_lbinterpolation_get_interpolated_velocity_global(
+    const Utils::Vector3d &pos) {
   auto const folded_pos = folded_position(pos);
   if (lattice_switch == ActiveLB::GPU) {
-#ifdef LB_GPU
-    Vector3d interpolated_u{};
+#ifdef CUDA
+    Utils::Vector3d interpolated_u{};
     switch (interpolation_order) {
     case (InterpolationOrder::linear):
       lb_get_interpolated_velocity_gpu<8>(folded_pos.data(),
@@ -108,7 +104,6 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
-#ifdef LB
     switch (interpolation_order) {
     case (InterpolationOrder::quadratic):
       throw std::runtime_error("The non-linear interpolation scheme is not "
@@ -121,13 +116,11 @@ lb_lbinterpolation_get_interpolated_velocity_global(const Vector3d &pos) {
       return mpi_recv_lb_interpolated_velocity(node, folded_pos);
     }
   }
-#endif
   return {};
 }
 
-#ifdef LB
-void lb_lbinterpolation_add_force_density(const Vector3d &pos,
-                                          const Vector3d &force_density) {
+void lb_lbinterpolation_add_force_density(
+    const Utils::Vector3d &pos, const Utils::Vector3d &force_density) {
   switch (interpolation_order) {
   case (InterpolationOrder::quadratic):
     throw std::runtime_error("The non-linear interpolation scheme is not "
@@ -141,6 +134,3 @@ void lb_lbinterpolation_add_force_density(const Vector3d &pos,
     break;
   }
 }
-#endif
-
-#endif

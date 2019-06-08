@@ -57,7 +57,6 @@
 #include "integrate.hpp"
 #include "mpiio.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include <mpi.h>
 
@@ -312,10 +311,10 @@ static void read_head(const std::string &fn, int rank, unsigned *fields) {
       errexit();
     }
     MPI_Bcast(fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+    fclose(f);
   } else {
     MPI_Bcast(fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
   }
-  free(f);
 }
 
 /** Reads the pref file and fills pref and nlocalpart with their

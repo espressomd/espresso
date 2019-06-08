@@ -9,7 +9,7 @@
 namespace Dipole {
 // forces_inline
 inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
-                            double dist2, Vector3d &force) {
+                            double dist2, Utils::Vector3d &force) {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
@@ -31,8 +31,9 @@ inline void calc_pair_force(Particle *p1, Particle *p2, double *d, double dist,
 }
 
 // energy_inline
-inline void add_pair_energy(Particle *p1, Particle *p2, double *d, double dist,
-                            double dist2, Observable_stat &energy) {
+inline void add_pair_energy(const Particle *p1, const Particle *p2,
+                            const double *d, double dist, double dist2,
+                            Observable_stat &energy) {
   double ret = 0;
   if (dipole.method != DIPOLAR_NONE) {
     // ret=0;

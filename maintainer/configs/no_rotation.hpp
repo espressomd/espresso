@@ -42,10 +42,8 @@
 #endif
 
 // Hydrodynamics
-#define LB
 #define LB_BOUNDARIES
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #endif
 
@@ -70,12 +68,8 @@
 #define SMOOTH_STEP
 #define HERTZIAN
 #define SOFT_SPHERE
-
 #define WCA
-
-#ifdef P3M
 #define THOLE
-#endif
 
 // Further featuers
 #define VIRTUAL_SITES_INERTIALESS_TRACERS

@@ -38,8 +38,8 @@
 #include "nsquare.hpp"
 #include "particle_data.hpp"
 
-#include "utils/NoOp.hpp"
-#include "utils/mpi/gather_buffer.hpp"
+#include <utils/NoOp.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/iterator/indirect_iterator.hpp>
 
@@ -103,9 +103,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           double vec21[3];
-                           get_mi_vector(vec21, p1.r.p, p2.r.p);
-                           return sqrlen(vec21);
+                           return get_mi_vector(p1.r.p, p2.r.p).norm2();
                          });
     break;
   case CELL_STRUCTURE_LAYERED:
@@ -113,11 +111,10 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           double vec21[3];
-                           get_mi_vector(vec21, p1.r.p, p2.r.p);
+                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p);
                            vec21[2] = p1.r.p[2] - p2.r.p[2];
 
-                           return sqrlen(vec21);
+                           return vec21.norm2();
                          });
   }
 
@@ -213,6 +210,18 @@ void topology_init(int cs, CellPList *local) {
   }
 }
 
+bool topology_check_resort(int cs, bool local_resort) {
+  switch (cs) {
+  case CELL_STRUCTURE_DOMDEC:
+    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+  case CELL_STRUCTURE_NSQUARE:
+  case CELL_STRUCTURE_LAYERED:
+    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+  default:
+    return true;
+  }
+}
+
 /*@}*/
 
 /************************************************************
@@ -276,15 +285,6 @@ void set_resort_particles(Cells::Resort level) {
 }
 
 unsigned const &get_resort_particles() { return resort_particles; }
-
-void announce_resort_particles() {
-  MPI_Allreduce(MPI_IN_PLACE, &resort_particles, 1, MPI_UNSIGNED, MPI_BOR,
-                comm_cart);
-
-  INTEG_TRACE(fprintf(stderr,
-                      "%d: announce_resort_particles: resort_particles=%u\n",
-                      this_node, resort_particles));
-}
 
 /*************************************************/
 
@@ -441,13 +441,11 @@ void check_resort_particles() {
                                    }))
                           ? Cells::RESORT_LOCAL
                           : Cells::RESORT_NONE;
-
-  announce_resort_particles();
 }
 
 /*************************************************/
 void cells_update_ghosts() {
-  if (resort_particles) {
+  if (topology_check_resort(cell_structure.type, resort_particles)) {
     int global = (resort_particles & Cells::RESORT_GLOBAL)
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;

@@ -39,8 +39,8 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
 #include "metadynamics.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
@@ -54,10 +54,9 @@
 #include "statistics.hpp"
 #include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
 #include "virtual_sites.hpp"
 
-#include "utils/mpi/all_compare.hpp"
+#include <utils/mpi/all_compare.hpp>
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
@@ -92,7 +91,7 @@ void on_program_start() {
   /* initially go for domain decomposition */
   topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
 
-#ifdef LB_GPU
+#ifdef CUDA
   if (this_node == 0) {
     //   lb_pre_init_gpu();
   }
@@ -132,9 +131,7 @@ void on_integration_start() {
 #ifdef SWIMMER_REACTIONS
   reactions_sanity_checks();
 #endif
-#if defined(LB) || defined(LB_GPU)
   lb_lbfluid_on_integration_start();
-#endif
 
   /********************************************/
   /* end sanity checks                        */
@@ -172,10 +169,6 @@ void on_integration_start() {
 
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
     runtimeErrorMsg() << "Nodes disagree about cell system type.";
-  }
-
-  if (!Utils::Mpi::all_compare(comm_cart, get_resort_particles())) {
-    runtimeErrorMsg() << "Nodes disagree about resort type.";
   }
 
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
@@ -245,7 +238,7 @@ void on_particle_change() {
   reinit_electrostatics = 1;
   reinit_magnetostatics = 1;
 
-#ifdef LB_GPU
+#ifdef CUDA
   lb_lbfluid_invalidate_particle_allocation();
 #endif
 #ifdef CUDA
@@ -339,11 +332,9 @@ void on_boxl_change() {
   Dipole::on_boxl_change();
 #endif
 
-#ifdef LB
   lb_lbfluid_init();
 #ifdef LB_BOUNDARIES
   LBBoundaries::lb_init_boundaries();
-#endif
 #endif
 }
 
@@ -363,16 +354,15 @@ void on_cell_structure_change() {
   Dipole::init();
 #endif /* ifdef DIPOLES */
 
-#ifdef LB
-  lb_lbfluid_init();
-#endif
+  if (lattice_switch == ActiveLB::CPU) {
+    runtimeErrorMsg()
+        << "The CPU LB does not currently support handling changes of the MD "
+           "cell geometry. Setup the cell system, skin and interactions before "
+           "activating the CPU LB.";
+  }
 }
 
-void on_temperature_change() {
-#if defined(LB) || defined(LB_GPU)
-  lb_lbfluid_reinit_parameters();
-#endif
-}
+void on_temperature_change() { lb_lbfluid_reinit_parameters(); }
 
 void on_parameter_change(int field) {
   EVENT_TRACE(
@@ -418,9 +408,7 @@ void on_parameter_change(int field) {
     reinit_thermo = 1;
     break;
   case FIELD_TIMESTEP:
-#if defined(LB) || defined(LB_GPU)
     lb_lbfluid_reinit_parameters();
-#endif
   case FIELD_LANGEVIN_GAMMA:
   case FIELD_LANGEVIN_GAMMA_ROTATION:
   case FIELD_NPTISO_G0:
@@ -443,12 +431,10 @@ void on_parameter_change(int field) {
     }
 #endif
     break;
-#ifdef LB
   case FIELD_LATTICE_SWITCH:
     /* LB needs ghost velocities */
     on_ghost_flags_change();
     break;
-#endif
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
     invalidate_obs();
@@ -477,11 +463,9 @@ void on_ghost_flags_change() {
   ghosts_have_v = 0;
   ghosts_have_bonds = 0;
 
-/* DPD and LB need also ghost velocities */
-#ifdef LB
+  /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
     ghosts_have_v = 1;
-#endif
 #ifdef BOND_CONSTRAINT
   if (n_rigidbonds)
     ghosts_have_v = 1;

@@ -33,14 +33,18 @@
 #include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
+#include "forces.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
+#include "immersed_boundaries.hpp"
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -51,24 +55,16 @@
 #include "signalhandling.hpp"
 #include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
 #include "virtual_sites.hpp"
 
-#include "collision.hpp"
-#include "forces.hpp"
-#include "immersed_boundaries.hpp"
-#include "npt.hpp"
-
 #include <profiler/profiler.hpp>
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
-
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
@@ -202,7 +198,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
-  if (check_runtime_errors())
+  if (check_runtime_errors(comm_cart))
     return;
 
   /* Verlet list criterion */
@@ -225,9 +221,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     thermo_heat_up();
 
-#if defined(LB) || defined(LB_GPU)
     lb_lbcoupling_deactivate();
-#endif
 
     // Communication step: distribute ghost positions
     cells_update_ghosts();
@@ -263,7 +257,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
 
-  if (check_runtime_errors())
+  if (check_runtime_errors(comm_cart))
     return;
 
   n_verlet_updates = 0;
@@ -320,10 +314,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
 
-#if defined(LB) || defined(LB_GPU)
     if (n_part > 0)
       lb_lbcoupling_activate();
-#endif
 
     // Communication step: distribute ghost positions
     cells_update_ghosts();
@@ -368,10 +360,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-#if defined(LB) || defined(LB_GPU)
       lb_lbfluid_propagate();
       lb_lbcoupling_propagate();
-#endif // LB || LB_GPU
 
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation();
@@ -389,7 +379,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
     }
 
-    if (check_runtime_errors())
+    if (check_runtime_errors(comm_cart))
       break;
 
     // Check if SIGINT has been caught.
@@ -677,7 +667,6 @@ void propagate_pos() {
         set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
-  announce_resort_particles();
 }
 
 void propagate_vel_pos() {
@@ -727,8 +716,6 @@ void propagate_vel_pos() {
       set_resort_particles(Cells::RESORT_LOCAL);
   }
 
-  announce_resort_particles();
-
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();
 #endif
@@ -749,15 +736,11 @@ void force_and_velocity_display() {
 #endif
 }
 
-/** @todo This needs to go!! */
-
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   // Override the signal handler so that the integrator obeys Ctrl+C
   SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
 
-  int reuse_forces = 0;
-  reuse_forces = reuse_forces_par;
-  INTEG_TRACE(fprintf(stderr, "%d: integrate:\n", this_node));
+  int reuse_forces = reuse_forces_par;
 
   if (recalc_forces) {
     if (reuse_forces) {
@@ -783,22 +766,28 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
     mpi_bcast_parameter(FIELD_SKIN);
   }
 
-  /* perform integration */
-  if (!Accumulators::auto_update_enabled()) {
-    if (mpi_integrate(n_steps, reuse_forces))
+  using Accumulators::auto_update;
+  using Accumulators::auto_update_next_update;
+
+  for (int i = 0; i < n_steps;) {
+    /* Integrate to either the next accumulator update, or the
+     * end, depending on what comes first. */
+    auto const steps = std::min((n_steps - i), auto_update_next_update());
+    if (mpi_integrate(steps, reuse_forces))
       return ES_ERROR;
-  } else {
-    for (int i = 0; i < n_steps; i++) {
-      if (mpi_integrate(1, reuse_forces))
-        return ES_ERROR;
-      reuse_forces = 1;
-      Accumulators::auto_update();
-    }
-    if (n_steps == 0) {
-      if (mpi_integrate(0, reuse_forces))
-        return ES_ERROR;
-    }
+
+    reuse_forces = 1;
+
+    auto_update(steps);
+
+    i += steps;
   }
+
+  if (n_steps == 0) {
+    if (mpi_integrate(0, reuse_forces))
+      return ES_ERROR;
+  }
+
   return ES_OK;
 }
 
