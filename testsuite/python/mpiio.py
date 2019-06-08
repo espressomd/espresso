@@ -30,7 +30,6 @@ import unittest as ut
 import random
 import os
 from argparse import Namespace
-#from tests_common import abspath
 
 # Number of particles
 npart = 1023
@@ -86,7 +85,7 @@ class MPIIOTest(ut.TestCase):
     particles.
     """
     s = espressomd.system.System(box_l=[1, 1, 1])
-    # Just a bunch of random interaction such that add_bond does not throw
+    # Just a bunch of random interactions such that add_bond does not throw
     for i in range(nbonds):
         s.bonded_inter[i] = AngleHarmonic(bend=i, phi0=i)
     test_particles = random_particles()
@@ -94,7 +93,7 @@ class MPIIOTest(ut.TestCase):
     def setUp(self):
         """Sets up a system from test_particles and prepares environment
         for the tests."""
-        clean_files()  # Prior call might not have completed sucecssfully
+        clean_files()  # Prior call might not have completed successfully
         for p in self.test_particles:
             self.s.part.add(id=p.id, type=p.type, pos=p.pos, v=p.v)
             for b in p.bonds:

@@ -16,12 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 
 
-@ut.skipIf(not espressomd.has_features(["ENGINE"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["ENGINE"])
 class SwimmerTest(ut.TestCase):
 
     def test(self):
@@ -73,5 +73,4 @@ class SwimmerTest(ut.TestCase):
 
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()

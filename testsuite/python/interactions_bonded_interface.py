@@ -16,12 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
 import espressomd
-import numpy as np
-from tests_common import abspath
 
 
 class ParticleProperties(ut.TestCase):
@@ -55,19 +52,19 @@ class ParticleProperties(ut.TestCase):
 
     def generateTestForBondParams(_bondId, _bondClass, _params):
         """Generates test cases for checking bond parameters set and gotten back
-        from Es actually match. Only keys which are present  in _params are checked
+        from Es actually match. Only keys which are present in _params are checked
         1st arg: Id of the bonded ia in Espresso to test on, i.e., 0,2,1...
         2nd: Class of the bond potential to test, ie.e, FeneBond, HarmonicBond
-        3rd: Bond parameters as dictionary, i.e., {"k"=1.,"r_0"=0.
+        3rd: Bond parameters as dictionary, i.e., {"k"=1.,"r_0"=0}
         """
         bondId = _bondId
         bondClass = _bondClass
         params = _params
 
         def func(self):
-                # This code is run at the execution of the generated function.
-                # It will use the state of the variables in the outer function,
-                # which was there, when the outer function was called
+            # This code is run at the execution of the generated function.
+            # It will use the state of the variables in the outer function,
+            # which was there, when the outer function was called
             self.system.bonded_inter[bondId] = bondClass(**params)
             outBond = self.system.bonded_inter[bondId]
             tnIn = bondClass(**params).type_number()
@@ -79,8 +76,7 @@ class ParticleProperties(ut.TestCase):
                     tnOut,
                     params,
                     outParams),
-                bondClass(
-                    **params).type_name() +
+                bondClass(**params).type_name() +
                 ": value set and value gotten back differ for bond id " +
                 str(bondId) +
                 ": " +
