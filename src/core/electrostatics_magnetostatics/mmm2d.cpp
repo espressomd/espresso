@@ -40,6 +40,8 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <boost/range/algorithm/transform.hpp>
+
 #include <cmath>
 #include <mpi.h>
 #include <numeric>
@@ -227,7 +229,7 @@ static void prepareBernoulliNumbers(int nmax);
 static int MMM2D_tune_near(double error);
 
 /** energy of all local particles with their copies */
-void MMM2D_self_energy();
+double MMM2D_self_energy(const ParticleRange &particles);
 
 /*@}*/
 
@@ -305,19 +307,13 @@ template <size_t dir>
 static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
                              int n_sccache) {
   for (int freq = 1; freq <= n_sccache; freq++) {
-    auto const pref = C_2PI * u * freq;
-    auto const o = (freq - 1) * n_localpart;
+    auto const o = sccache.begin() + (freq - 1) * n_localpart;
 
-    int ic = 0;
-    for (int c = 1; c <= n_layers; c++) {
-      auto const np = cells[c].n;
-      auto part = cells[c].part;
-      for (int i = 0; i < np; i++) {
-        auto const arg = pref * part[i].r.p[dir];
-        sccache[o + ic] = sc(arg);
-        ic++;
-      }
-    }
+    boost::transform(local_cells.particles(), o,
+        [pref = C_2PI * u * freq](const Particle &p) {
+          auto const arg = pref * p.r.p[dir];
+          return sc(arg);
+    });
   }
 }
 
@@ -1212,7 +1208,7 @@ double MMM2D_add_far(int f, int e) {
   double R, dR, q2;
 
   // It's not really far...
-  auto eng = e ? self_energy : 0;
+  auto eng = e ? MMM2D_self_energy(local_cells.particles()) : 0;
 
   if (mmm2d_params.far_cut == 0.0)
     return 0.5 * eng;
@@ -1690,19 +1686,17 @@ double mmm2d_coulomb_pair_energy(double charge_factor, const double dv[3],
   return 0.0;
 }
 
-void MMM2D_self_energy() {
+double MMM2D_self_energy(const ParticleRange &particles) {
   double dv[3] = {0, 0, 0};
   double seng = coulomb.prefactor * calc_mmm2d_copy_pair_energy(dv);
 
   /* this one gives twice the real self energy, as it is used
      in the far formula which counts everything twice and in
      the end divides by two*/
-
-  auto parts = local_cells.particles();
-  self_energy = std::accumulate(parts.begin(), parts.end(), 0.0,
-                                [seng](double sum, Particle const &p) {
-                                  return sum + seng * Utils::sqr(p.p.q);
-                                });
+  return std::accumulate(particles.begin(), particles.end(), 0.0,
+                         [seng](double sum, Particle const &p) {
+                           return sum + seng * Utils::sqr(p.p.q);
+                         });
 }
 
 /****************************************
@@ -1839,7 +1833,7 @@ void MMM2D_on_resort_particles() {
     lclcblk = Utils::realloc(lclcblk, cells.size() * 8 * sizeof(double));
     gblcblk = Utils::realloc(gblcblk, n_layers * 8 * sizeof(double));
   }
-  MMM2D_self_energy();
+  MMM2D_self_energy(local_cells.particles());
 }
 
 void MMM2D_dielectric_layers_force_contribution() {
