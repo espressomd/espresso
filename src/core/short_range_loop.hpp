@@ -129,11 +129,9 @@ void short_range_loop(ParticleKernel &&particle_kernel,
                                      collision_detection_part_type1(),
                                      collision_detection_part_type2()};
 
-
-  detail::decide_distance(
-      first, last, std::forward<ParticleKernel>(particle_kernel),
-      std::forward<PairKernel>(pair_kernel),
-      verlet_crit);
+  detail::decide_distance(first, last,
+                          std::forward<ParticleKernel>(particle_kernel),
+                          std::forward<PairKernel>(pair_kernel), verlet_crit);
 
   rebuild_verletlist = 0;
 }
