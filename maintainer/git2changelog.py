@@ -82,8 +82,8 @@ for line in fin:
         elif len(line) == 4:
             messageFound = True
         else:
-            if len(message) == 0:
-                message = message + line.strip()
+            if not message:
+                message = line.strip()
             else:
                 message = message + " " + line.strip()
 
@@ -95,7 +95,7 @@ for line in fin:
     elif authorFound & dateFound & messageFound:
         fileList = re.split(' \| ', line, 2)
         if len(fileList) > 1:
-            if len(files) > 0:
+            if files:
                 files = files + ", " + fileList[0].strip()
             else:
                 files = fileList[0].strip()
@@ -105,7 +105,7 @@ for line in fin:
         # First the author line, only outputted if it is the first for that
         # author on this day
         authorLine = date + " " + author
-        if len(prevAuthorLine) == 0:
+        if not prevAuthorLine:
             print(authorLine)
         elif authorLine == prevAuthorLine:
             pass

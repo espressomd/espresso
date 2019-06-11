@@ -33,14 +33,13 @@ class PairCriterion : public AutoParameters<PairCriterion> {
 public:
   virtual std::shared_ptr<::PairCriteria::PairCriterion>
   pair_criterion() const = 0;
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
     if (method == "decide") {
       return pair_criterion()->decide(boost::get<int>(parameters.at("id1")),
                                       boost::get<int>(parameters.at("id2")));
-    } else {
-      throw std::runtime_error("Unknown method called.");
     }
+    throw std::runtime_error("Unknown method called.");
   }
 };
 

@@ -18,30 +18,31 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file domain_decomposition.cpp
+/** \file
  *
- *  This file contains everything related to the cell system: domain
- * decomposition.
- *  See also \ref domain_decomposition.hpp
+ *  Implementation of domain_decomposition.hpp.
  */
 
 #include "domain_decomposition.hpp"
+
+#include "debug.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-/** Returns pointer to the cell which corresponds to the position if
-    the position is in the nodes spatial domain otherwise a nullptr
-    pointer. */
-Cell *dd_save_position_to_cell(const double pos[3]);
+#include "serialization/ParticleList.hpp"
+#include <utils/index.hpp>
+#include <utils/mpi/sendrecv.hpp>
+using Utils::get_linear_index;
 
-/************************************************/
-/** \name Defines */
-/************************************************/
-/*@{*/
+#include "event.hpp"
 
-/** half the number of cell neighbors in 3 Dimensions. */
-#define CELLS_MAX_NEIGHBORS 14
+#include <boost/mpi/collectives.hpp>
 
-/*@}*/
+/** Returns pointer to the cell which corresponds to the position if the
+ *  position is in the nodes spatial domain otherwise a nullptr pointer.
+ */
+Cell *dd_save_position_to_cell(const Utils::Vector3d &pos);
 
 /************************************************/
 /** \name Variables */
@@ -54,39 +55,12 @@ int max_num_cells = CELLS_MAX_NUM_CELLS;
 int min_num_cells = 1;
 double max_skin = 0.0;
 
-// Full shell neighbor index offsets for dd_full_shell_neigh()
-std::vector<int> dd_fs_neigh;
-
 /*@}*/
 
 /************************************************************/
 /** \name Private Functions */
 /************************************************************/
 /*@{*/
-
-/** Convenient replace for loops over all cells. */
-#define DD_CELLS_LOOP(m, n, o)                                                 \
-  for (o = 0; o < dd.ghost_cell_grid[2]; o++)                                  \
-    for (n = 0; n < dd.ghost_cell_grid[1]; n++)                                \
-      for (m = 0; m < dd.ghost_cell_grid[0]; m++)
-
-/** Convenient replace for loops over Local cells. */
-#define DD_LOCAL_CELLS_LOOP(m, n, o)                                           \
-  for (o = 1; o < dd.cell_grid[2] + 1; o++)                                    \
-    for (n = 1; n < dd.cell_grid[1] + 1; n++)                                  \
-      for (m = 1; m < dd.cell_grid[0] + 1; m++)
-
-/** Convenient replace for inner cell check. usage: if(DD_IS_LOCAL_CELL(m,n,o))
- * {...} */
-#define DD_IS_LOCAL_CELL(m, n, o)                                              \
-  (m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&                          \
-   n < dd.ghost_cell_grid[1] - 1 && o > 0 && o < dd.ghost_cell_grid[2] - 1)
-
-/** Convenient replace for ghost cell check. usage: if(DD_IS_GHOST_CELL(m,n,o))
- * {...} */
-#define DD_IS_GHOST_CELL(m, n, o)                                              \
-  (m == 0 || m == dd.ghost_cell_grid[0] - 1 || n == 0 ||                       \
-   n >= dd.ghost_cell_grid[1] - 1 || o == 0 || o == dd.ghost_cell_grid[2] - 1)
 
 /** Calculate cell grid dimensions, cell sizes and number of cells.
  *  Calculates the cell grid, based on \ref local_box_l and \ref
@@ -95,8 +69,8 @@ std::vector<int> dd_fs_neigh;
  *  smaller or equal \ref max_num_cells. It sets: \ref
  *  DomainDecomposition::cell_grid, \ref
  *  DomainDecomposition::ghost_cell_grid, \ref
- *  DomainDecomposition::cell_size, \ref
- *  DomainDecomposition::inv_cell_size, and \ref n_cells.
+ *  DomainDecomposition::cell_size, and \ref
+ *  DomainDecomposition::inv_cell_size.
  */
 void dd_create_cell_grid() {
   int i, n_local_cells, new_cells;
@@ -216,33 +190,37 @@ void dd_create_cell_grid() {
 }
 
 /** Fill local_cells list and ghost_cells list for use with domain
-    decomposition.  \ref cells::cells is assumed to be a 3d grid with size
-    \ref DomainDecomposition::ghost_cell_grid . */
+ *  decomposition.  \ref cells::cells is assumed to be a 3d grid with size
+ *  \ref DomainDecomposition::ghost_cell_grid.
+ */
 void dd_mark_cells() {
-  int m, n, o, cnt_c = 0, cnt_l = 0, cnt_g = 0;
+  int cnt_c = 0, cnt_l = 0, cnt_g = 0;
 
-  DD_CELLS_LOOP(m, n, o) {
-
-    if (DD_IS_LOCAL_CELL(m, n, o))
-      local_cells.cell[cnt_l++] = &cells[cnt_c++];
-    else
-      ghost_cells.cell[cnt_g++] = &cells[cnt_c++];
-  }
+  for (int o = 0; o < dd.ghost_cell_grid[2]; o++)
+    for (int n = 0; n < dd.ghost_cell_grid[1]; n++)
+      for (int m = 0; m < dd.ghost_cell_grid[0]; m++) {
+        if ((m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&
+             n < dd.ghost_cell_grid[1] - 1 && o > 0 &&
+             o < dd.ghost_cell_grid[2] - 1))
+          local_cells.cell[cnt_l++] = &cells[cnt_c++];
+        else
+          ghost_cells.cell[cnt_g++] = &cells[cnt_c++];
+      }
 }
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
-    all cells which are inside a rectangular subgrid of the 3D cell
-    grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
-    lower left corner lc up to the high top corner hc. The cell
-    pointer list part_lists must already be large enough.
-    \param part_lists  List of cell pointers to store the result.
-    \param lc          lower left corner of the subgrid.
-    \param hc          high up corner of the subgrid.
+ *  all cells which are inside a rectangular subgrid of the 3D cell
+ *  grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
+ *  lower left corner lc up to the high top corner hc. The cell
+ *  pointer list part_lists must already be large enough.
+ *  \param part_lists  List of cell pointers to store the result.
+ *  \param lc          lower left corner of the subgrid.
+ *  \param hc          high up corner of the subgrid.
  */
-int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
-  int i, m, n, o, c = 0;
+int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
+                            int const hc[3]) {
   /* sanity check */
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     if (lc[i] < 0 || lc[i] >= dd.ghost_cell_grid[i])
       return 0;
     if (hc[i] < 0 || hc[i] >= dd.ghost_cell_grid[i])
@@ -251,12 +229,15 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
       return 0;
   }
 
-  for (o = lc[0]; o <= hc[0]; o++)
-    for (n = lc[1]; n <= hc[1]; n++)
-      for (m = lc[2]; m <= hc[2]; m++) {
-        i = get_linear_index(o, n, m, dd.ghost_cell_grid);
-        CELL_TRACE(fprintf(stderr, "%d: dd_fill_comm_cell_list: add cell %d\n",
-                           this_node, i));
+  int c = 0;
+  for (int o = lc[0]; o <= hc[0]; o++)
+    for (int n = lc[1]; n <= hc[1]; n++)
+      for (int m = lc[2]; m <= hc[2]; m++) {
+        auto const i =
+            get_linear_index(o, n, m,
+                             {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
+                              dd.ghost_cell_grid[2]});
+
         part_lists[c] = &cells[i];
         c++;
       }
@@ -264,8 +245,10 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
 }
 
 /** Create communicators for cell structure domain decomposition. (see \ref
- * GhostCommunicator) */
-void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
+ *  GhostCommunicator)
+ */
+void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
+                     const Utils::Vector3i &grid) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
@@ -275,7 +258,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
     for (lr = 0; lr < 2; lr++) {
       /* No communication for border of non periodic direction */
       if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
-        if (node_grid[dir] == 1)
+        if (grid[dir] == 1)
           num++;
         else
           num += 2;
@@ -306,7 +289,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
        communication, simply by taking the lr loop only over one
        value */
     for (lr = 0; lr < 2; lr++) {
-      if (node_grid[dir] == 1) {
+      if (grid[dir] == 1) {
         /* just copy cells on a single node */
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
           comm->comm[cnt].type = GHOST_LOCL;
@@ -397,8 +380,9 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts) {
 }
 
 /** Revert the order of a communicator: After calling this the
-    communicator is working in reverted order with exchanged
-    communication types GHOST_SEND <-> GHOST_RECV. */
+ *  communicator is working in reverted order with exchanged
+ *  communication types GHOST_SEND <-> GHOST_RECV.
+ */
 void dd_revert_comm_order(GhostCommunicator *comm) {
   int i, j, nlist2;
   GhostCommunication tmp;
@@ -430,7 +414,8 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
 }
 
 /** Of every two communication rounds, set the first receivers to prefetch and
- * poststore */
+ *  poststore
+ */
 void dd_assign_prefetches(GhostCommunicator *comm) {
   int cnt;
 
@@ -444,18 +429,19 @@ void dd_assign_prefetches(GhostCommunicator *comm) {
 }
 
 /** update the 'shift' member of those GhostCommunicators, which use
-    that value to speed up the folding process of its ghost members
-    (see \ref dd_prepare_comm for the original), i.e. all which have
-    GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
-    dd_prepare_comm. */
-void dd_update_communicators_w_boxl() {
+ *  that value to speed up the folding process of its ghost members
+ *  (see \ref dd_prepare_comm for the original), i.e. all which have
+ *  GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
+ *  dd_prepare_comm.
+ */
+void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
   int cnt = 0;
 
   /* direction loop: x, y, z */
   for (int dir = 0; dir < 3; dir++) {
     /* lr loop: left right */
     for (int lr = 0; lr < 2; lr++) {
-      if (node_grid[dir] == 1) {
+      if (grid[dir] == 1) {
         if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
@@ -492,133 +478,94 @@ void dd_update_communicators_w_boxl() {
 
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
- * created list of interacting neighbor cells is used by the verlet
+ * created list of interacting neighbor cells is used by the Verlet
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
-void dd_init_cell_interactions() {
+void dd_init_cell_interactions(const Utils::Vector3i &grid) {
   int m, n, o, p, q, r, ind1, ind2;
 
+  for (int i = 0; i < 3; i++) {
+    if (dd.fully_connected[i] and grid[i] != 1) {
+      runtimeErrorMsg()
+          << "Node grid not compatible with fully_connected property";
+    }
+  }
+
   /* loop all local cells */
-  DD_LOCAL_CELLS_LOOP(m, n, o) {
+  for (o = 1; o < dd.cell_grid[2] + 1; o++)
+    for (n = 1; n < dd.cell_grid[1] + 1; n++)
+      for (m = 1; m < dd.cell_grid[0] + 1; m++) {
 
-    ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
+        ind1 = get_linear_index(m, n, o,
+                                {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
+                                 dd.ghost_cell_grid[2]});
 
-    std::vector<Cell *> red_neighbors;
-    std::vector<Cell *> black_neighbors;
+        std::vector<Cell *> red_neighbors;
+        std::vector<Cell *> black_neighbors;
 
-    /* loop all neighbor cells */
-    for (p = o - 1; p <= o + 1; p++)
-      for (q = n - 1; q <= n + 1; q++)
-        for (r = m - 1; r <= m + 1; r++) {
-          ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
-          if (ind2 > ind1) {
-            red_neighbors.push_back(&cells[ind2]);
-          } else {
-            black_neighbors.push_back(&cells[ind2]);
+        /* loop all neighbor cells */
+        int lower_index[3] = {m - 1, n - 1, o - 1};
+        int upper_index[3] = {m + 1, n + 1, o + 1};
+
+        for (int i = 0; i < 3; i++) {
+          if (dd.fully_connected[i]) {
+            lower_index[i] = 0;
+            upper_index[i] = dd.ghost_cell_grid[i] - 1;
           }
         }
-    cells[ind1].m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
-  }
+
+        for (p = lower_index[2]; p <= upper_index[2]; p++)
+          for (q = lower_index[1]; q <= upper_index[1]; q++)
+            for (r = lower_index[0]; r <= upper_index[0]; r++) {
+              ind2 = get_linear_index(r, q, p,
+                                      {dd.ghost_cell_grid[0],
+                                       dd.ghost_cell_grid[1],
+                                       dd.ghost_cell_grid[2]});
+              if (ind2 > ind1) {
+                red_neighbors.push_back(&cells[ind2]);
+              } else {
+                black_neighbors.push_back(&cells[ind2]);
+              }
+            }
+        cells[ind1].m_neighbors =
+            Neighbors<Cell *>(red_neighbors, black_neighbors);
+      }
 }
 
 /*************************************************/
 
-/** Returns pointer to the cell which corresponds to the position if
-    the position is in the nodes spatial domain otherwise a nullptr
-    pointer. */
-Cell *dd_save_position_to_cell(const double pos[3]) {
-  int i, cpos[3];
+/** Returns pointer to the cell which corresponds to the position if the
+ *  position is in the nodes spatial domain otherwise a nullptr pointer.
+ */
+Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
+  int cpos[3];
 
-  for (i = 0; i < 3; i++) {
-    double lpos = pos[i] - my_left[i];
-
+  for (int i = 0; i < 3; i++) {
+    auto const lpos = pos[i] - my_left[i];
     cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
 
     /* particles outside our box. Still take them if
-       VERY close or nonperiodic boundary */
+       nonperiodic boundary. We also accept the particle if we are at
+       the box boundary, and the particle is within the box. In this case
+       the particle belongs here and could otherwise potentially be dismissed
+       due to rouding errors. */
     if (cpos[i] < 1) {
-      if (lpos > -ROUND_ERROR_PREC * box_l[i] ||
-          (!PERIODIC(i) && boundary[2 * i]))
+      if ((!PERIODIC(i) or (pos[i] >= box_l[i])) && boundary[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > dd.cell_grid[i]) {
-      if (lpos < local_box_l[i] + ROUND_ERROR_PREC * box_l[i] ||
-          (!PERIODIC(i) && boundary[2 * i + 1]))
+      if ((!PERIODIC(i) or (pos[i] < box_l[i])) && boundary[2 * i + 1])
         cpos[i] = dd.cell_grid[i];
       else
         return nullptr;
     }
   }
-  i = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
-  return &(cells[i]);
-}
 
-/*************************************************/
-
-/** Append the particles in pl to \ref local_cells and update \ref
-   local_particles.
-    @return 0 if all particles in pl reside in the nodes domain otherwise 1.*/
-int dd_append_particles(ParticleList *pl, int fold_dir) {
-  int p, dir, cpos[3], flag = 0, fold_coord = fold_dir / 2;
-
-  CELL_TRACE(fprintf(stderr, "%d: dd_append_particles %d\n", this_node, pl->n));
-
-  for (p = 0; p < pl->n; p++) {
-    if (boundary[fold_dir] != 0) {
-      fold_coordinate(pl->part[p].r.p, pl->part[p].m.v, pl->part[p].l.i,
-                      fold_coord);
-    }
-
-    for (dir = 0; dir < 3; dir++) {
-      auto lpos = pl->part[p].r.p[dir] - my_left[dir];
-      cpos[dir] =
-          static_cast<int>(std::floor(lpos * dd.inv_cell_size[dir])) + 1;
-
-      /* If the calculated cell for the particle does not belong to
-         this node, (cpos < 1 or cpos > dd.cell_grid), we still keep them
-         if the system is not periodic in dir and we are at the boundary.
-         These are particles that have left the box in a non-periodic direction,
-         which are kept on the boundary node. Otherwise we set flag = 1 to keep
-         sorting, these particles are the send to the left or right neighbor
-         of this node in the next round. */
-      if (cpos[dir] < 1) {
-        cpos[dir] = 1;
-        if (PERIODIC(dir) || !boundary[2 * dir]) {
-          flag = 1;
-          CELL_TRACE(if (fold_coord == 2) {
-            fprintf(stderr,
-                    "%d: dd_append_particles: particle %d (%f,%f,%f) "
-                    "not inside node domain.\n",
-                    this_node, pl->part[p].p.identity, pl->part[p].r.p[0],
-                    pl->part[p].r.p[1], pl->part[p].r.p[2]);
-          });
-        }
-      } else if (cpos[dir] > dd.cell_grid[dir]) {
-        cpos[dir] = dd.cell_grid[dir];
-        if (PERIODIC(dir) || !boundary[2 * dir + 1]) {
-          flag = 1;
-          CELL_TRACE(if (fold_coord == 2) {
-            fprintf(stderr,
-                    "%d: dd_append_particles: particle %d (%f,%f,%f) "
-                    "not inside node domain.\n",
-                    this_node, pl->part[p].p.identity, pl->part[p].r.p[0],
-                    pl->part[p].r.p[1], pl->part[p].r.p[2]);
-          });
-        }
-      }
-    }
-    int c = get_linear_index(cpos[0], cpos[1], cpos[2], dd.ghost_cell_grid);
-    CELL_TRACE(fprintf(
-        stderr,
-        "%d: dd_append_particles: Append Part id=%d to cell %d cpos %d %d %d\n",
-        this_node, pl->part[p].p.identity, c, cpos[0], cpos[1], cpos[2]));
-    append_indexed_particle(&cells[c], std::move(pl->part[p]));
-  }
-  CELL_TRACE(
-      fprintf(stderr, "%d: dd_append_particles: flag=%d\n", this_node, flag));
-
-  return flag;
+  auto const ind = get_linear_index(
+      cpos[0], cpos[1], cpos[2],
+      {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]});
+  return &(cells[ind]);
 }
 
 /*@}*/
@@ -627,7 +574,7 @@ int dd_append_particles(ParticleList *pl, int fold_dir) {
 /* Public Functions */
 /************************************************************/
 
-void dd_on_geometry_change(int flags) {
+void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
@@ -642,7 +589,7 @@ void dd_on_geometry_change(int flags) {
         fprintf(stderr, "%d: dd_on_geometry_change full redo\n", this_node));
 
     /* Reset min num cells to default */
-    min_num_cells = calc_processor_min_num_cells();
+    min_num_cells = calc_processor_min_num_cells(grid);
 
     cells_re_init(CELL_STRUCTURE_CURRENT);
     return;
@@ -677,7 +624,7 @@ void dd_on_geometry_change(int flags) {
   if (!(flags & CELL_FLAG_FAST) && max_range > 0) {
     int i;
     for (i = 0; i < 3; i++) {
-      int poss_size = (int)floor(local_box_l[i] / max_range);
+      auto poss_size = (int)floor(local_box_l[i] / max_range);
       if (poss_size > dd.cell_grid[i])
         break;
     }
@@ -688,11 +635,11 @@ void dd_on_geometry_change(int flags) {
       return;
     }
   }
-  dd_update_communicators_w_boxl();
+  dd_update_communicators_w_boxl(grid);
 }
 
 /************************************************************/
-void dd_topology_init(CellPList *old) {
+void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   int c, p;
   int exchange_data, update_data;
 
@@ -702,7 +649,7 @@ void dd_topology_init(CellPList *old) {
 
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
      but may be set to a larger value by the user for performance reasons. */
-  min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells());
+  min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.position_to_node = map_position_node_array;
@@ -714,15 +661,16 @@ void dd_topology_init(CellPList *old) {
   dd_mark_cells();
 
   /* create communicators */
-  dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
+  dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM, grid);
 
   exchange_data =
       (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
   update_data = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
 
-  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data);
-  dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data);
-  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data, grid);
+  dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data, grid);
+  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE,
+                  grid);
 
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
@@ -732,36 +680,14 @@ void dd_topology_init(CellPList *old) {
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
-#ifdef LB
-  dd_prepare_comm(&cell_structure.ghost_lbcoupling_comm, GHOSTTRANS_COUPLING);
-  dd_assign_prefetches(&cell_structure.ghost_lbcoupling_comm);
-#endif
-
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  // Inertialess tracers (and hence Immersed boundary) needs to communicate
-  // the forces from but also to the ghosts
-  // This is different than usual collect_ghost_force_comm (not in reverse
-  // order)
-  // Therefore we need our own communicator
-  dd_prepare_comm(&cell_structure.vs_inertialess_tracers_ghost_force_comm,
-                  GHOSTTRANS_FORCE);
-  dd_assign_prefetches(&cell_structure.vs_inertialess_tracers_ghost_force_comm);
-#endif
-
-#ifdef ENGINE
-  dd_prepare_comm(&cell_structure.ghost_swimming_comm, GHOSTTRANS_SWIMMING);
-  dd_assign_prefetches(&cell_structure.ghost_swimming_comm);
-#endif
-
-  /* initialize cell neighbor structures */
-  dd_init_cell_interactions();
+  dd_init_cell_interactions(grid);
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {
     Particle *part = old->cell[c]->part;
     int np = old->cell[c]->n;
     for (p = 0; p < np; p++) {
-      Cell *nc = dd_save_position_to_cell(part[p].r.p.data());
+      Cell *nc = dd_save_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
       if (nc == nullptr)
@@ -787,234 +713,146 @@ void dd_topology_release() {
   free_comm(&cell_structure.exchange_ghosts_comm);
   free_comm(&cell_structure.update_ghost_pos_comm);
   free_comm(&cell_structure.collect_ghost_force_comm);
-#ifdef LB
-  free_comm(&cell_structure.ghost_lbcoupling_comm);
-#endif
-#ifdef ENGINE
-  free_comm(&cell_structure.ghost_swimming_comm);
-#endif
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  free_comm(&cell_structure.vs_inertialess_tracers_ghost_force_comm);
-#endif
 }
 
-/************************************************************/
-void dd_exchange_and_sort_particles(int global_flag) {
-  int dir, c, p, i, finished = 0;
-  ParticleList *cell, *sort_cell, send_buf_l, send_buf_r, recv_buf_l,
-      recv_buf_r;
-  Particle *part;
-  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles(%d):\n",
-                     this_node, global_flag));
-  CELL_TRACE(fprintf(stderr, "%d: node_neighbors are %d %d %d %d %d %d\n",
-                     this_node, node_neighbors[0], node_neighbors[1],
-                     node_neighbors[2], node_neighbors[3], node_neighbors[4],
-                     node_neighbors[5]));
+namespace {
+/**
+ * @brief Move particles into the cell system if it belongs to this node.
+ *
+ * Moves all particles from src into the local cell
+ * system if they do belong here. Otherwise the
+ * particles are moved into rest.
+ *
+ * @param src Particles to move.
+ * @param rest Output list for left-over particles.
+ */
+void move_if_local(ParticleList &src, ParticleList &rest) {
+  for (int i = 0; i < src.n; i++) {
+    auto &part = src.part[i];
 
-  init_particlelist(&send_buf_l);
-  init_particlelist(&send_buf_r);
-  init_particlelist(&recv_buf_l);
-  init_particlelist(&recv_buf_r);
-  while (finished == 0) {
-    finished = 1;
-    /* direction loop: x, y, z */
-    for (dir = 0; dir < 3; dir++) {
-      if (node_grid[dir] > 1) {
-        /* Communicate particles that have left the node domain */
-        /* particle loop */
-        for (c = 0; c < local_cells.n; c++) {
-          cell = local_cells.cell[c];
-          for (p = 0; p < cell->n; p++) {
-            part = &cell->part[p];
-            /* Move particles to the left side */
-            // Without the factor 0.5 in front of ROUND_ERROR_PREC, particles
-            // sitting exactly on the boundary
-            // may be accepted (i.e. not sent) here and rejected later on by
-            // dd_save_position_to_cell
-            if (part->r.p[dir] - my_left[dir] <
-                -0.5 * ROUND_ERROR_PREC * box_l[dir]) {
-              if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
-                CELL_TRACE(fprintf(stderr,
-                                   "%d: dd_ex_and_sort_p: send part left %d\n",
-                                   this_node, part->p.identity));
-                local_particles[part->p.identity] = nullptr;
-                move_indexed_particle(&send_buf_l, cell, p);
-                if (p < cell->n)
-                  p--;
-              }
-            }
-            /* Move particles to the right side */
-            // Factor 0.5 see above
-            else if (part->r.p[dir] - my_right[dir] >=
-                     0.5 * ROUND_ERROR_PREC * box_l[dir]) {
-              if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
-                CELL_TRACE(fprintf(stderr,
-                                   "%d: dd_ex_and_sort_p: send part right %d\n",
-                                   this_node, part->p.identity));
-                local_particles[part->p.identity] = nullptr;
-                move_indexed_particle(&send_buf_r, cell, p);
-                if (p < cell->n)
-                  p--;
-              }
-            }
-            /* Sort particles in cells of this node during last direction */
-            else if (dir == 2) {
-              sort_cell = dd_save_position_to_cell(part->r.p.data());
-              if (sort_cell != cell) {
-                if (sort_cell == nullptr) {
-                  CELL_TRACE(fprintf(
-                      stderr,
-                      "%d: dd_exchange_and_sort_particles: Take another loop",
-                      this_node));
-                  CELL_TRACE(fprintf(stderr,
-                                     "%d: "
-                                     "dd_exchange_and_sort_particles: "
-                                     "CP1 Particle %d (%f,%f,%f) not "
-                                     "inside node domain.\n",
-                                     this_node, part->p.identity, part->r.p[0],
-                                     part->r.p[1], part->r.p[2]));
-                  finished = 0;
-                  sort_cell = local_cells.cell[0];
-                  if (sort_cell != cell) {
-                    move_indexed_particle(sort_cell, cell, p);
-                    if (p < cell->n)
-                      p--;
-                  }
-                } else {
-                  move_indexed_particle(sort_cell, cell, p);
-                  if (p < cell->n)
-                    p--;
-                }
-              }
-            }
-          }
-        }
+    assert(local_particles[src.part[i].p.identity] == nullptr);
 
-        CELL_TRACE(fprintf(stderr, "%d: send receive %d\n", this_node, dir));
+    auto target_cell = dd_save_position_to_cell(part.r.p);
 
-        if (node_pos[dir] % 2 == 0) {
-          send_particles(&send_buf_l, node_neighbors[2 * dir]);
-          recv_particles(&recv_buf_r, node_neighbors[2 * dir + 1]);
-          send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
-          recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
-        } else {
-          recv_particles(&recv_buf_r, node_neighbors[2 * dir + 1]);
-          send_particles(&send_buf_l, node_neighbors[2 * dir]);
-          recv_particles(&recv_buf_l, node_neighbors[2 * dir]);
-          send_particles(&send_buf_r, node_neighbors[2 * dir + 1]);
-        }
-
-        /* sort received particles to cells, folding of coordinates also happens
-         * in here. */
-        if (dd_append_particles(&recv_buf_l, 2 * dir) && dir == 2)
-          finished = 0;
-        if (dd_append_particles(&recv_buf_r, 2 * dir + 1) && dir == 2)
-          finished = 0;
-        /* reset send/recv buffers */
-        send_buf_l.n = 0;
-        send_buf_r.n = 0;
-        recv_buf_l.n = 0;
-        recv_buf_r.n = 0;
-      } else {
-        /* Single node direction case (no communication) */
-        /* Fold particles that have left the box */
-        /* particle loop */
-        for (c = 0; c < local_cells.n; c++) {
-          cell = local_cells.cell[c];
-          for (p = 0; p < cell->n; p++) {
-            part = &cell->part[p];
-            if (PERIODIC(dir)) {
-              fold_coordinate(part->r.p, part->m.v, part->l.i, dir);
-            }
-            if (dir == 2) {
-              sort_cell = dd_save_position_to_cell(part->r.p.data());
-              if (sort_cell != cell) {
-                if (sort_cell == nullptr) {
-                  CELL_TRACE(fprintf(stderr,
-                                     "%d: "
-                                     "dd_exchange_and_sort_particles: "
-                                     "CP2 Particle %d (%f,%f,%f) not "
-                                     "inside node domain.\n",
-                                     this_node, part->p.identity, part->r.p[0],
-                                     part->r.p[1], part->r.p[2]));
-                  finished = 0;
-                  sort_cell = local_cells.cell[0];
-                  if (sort_cell != cell) {
-                    move_indexed_particle(sort_cell, cell, p);
-                    if (p < cell->n)
-                      p--;
-                  }
-                } else {
-                  CELL_TRACE(fprintf(stderr,
-                                     "%d: "
-                                     "dd_exchange_and_sort_particles: "
-                                     "move particle id %d\n",
-                                     this_node, part->p.identity));
-                  move_indexed_particle(sort_cell, cell, p);
-                  if (p < cell->n)
-                    p--;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    /* Communicate whether particle exchange is finished */
-    if (global_flag == CELL_GLOBAL_EXCHANGE) {
-      if (this_node == 0) {
-        int sum;
-        MPI_Reduce(&finished, &sum, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-        if (sum < n_nodes)
-          finished = 0;
-        else
-          finished = sum;
-      } else {
-        MPI_Reduce(&finished, nullptr, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-      }
-      MPI_Bcast(&finished, 1, MPI_INT, 0, comm_cart);
+    if (target_cell) {
+      append_indexed_particle(target_cell, std::move(src.part[i]));
     } else {
-      if (finished == 0) {
-        runtimeErrorMsg() << "some particles moved more than min_local_box_l, "
-                             "reduce the time step";
-        /* the bad guys are all in cell 0, but probably their interactions are
-           of no importance anyways.
-           However, their positions have to be made valid again. */
-        finished = 1;
-        /* all out of range coordinates in the left overs cell are moved to
-         * (0,0,0) */
-        cell = local_cells.cell[0];
-        for (p = 0; p < cell->n; p++) {
-          part = &cell->part[p];
-          if (dir < 3 &&
-              (part->r.p[dir] < my_left[dir] || part->r.p[dir] > my_right[dir]))
-            for (i = 0; i < 3; i++)
-              part->r.p[i] = 0;
-        }
-      }
+
+      append_unindexed_particle(&rest, std::move(src.part[i]));
     }
-    CELL_TRACE(fprintf(
-        stderr, "%d: dd_exchange_and_sort_particles: finished value: %d\n",
-        this_node, finished));
   }
 
-  realloc_particlelist(&send_buf_l, 0);
-  realloc_particlelist(&send_buf_r, 0);
-  realloc_particlelist(&recv_buf_l, 0);
-  realloc_particlelist(&recv_buf_r, 0);
+  realloc_particlelist(&src, src.n = 0);
+}
 
-#ifdef ADDITIONAL_CHECKS
-  check_particle_consistency();
-#endif
+/**
+ * @brief Split particle list by direction.
+ *
+ * Moves all particles from src into left
+ * and right depending if they belong to
+ * the left or right side from local node
+ * in direction dir.
+ *
+ * @param src Particles to sort.
+ * @param left Particles that should go to the left
+ * @param right Particles that should go to the right
+ * @param dir Direction to consider.
+ */
+void move_left_or_right(ParticleList &src, ParticleList &left,
+                        ParticleList &right, int dir) {
+  for (int i = 0; i < src.n; i++) {
+    auto &part = src.part[i];
 
-  CELL_TRACE(fprintf(stderr, "%d: dd_exchange_and_sort_particles finished\n",
-                     this_node));
+    assert(local_particles[src.part[i].p.identity] == nullptr);
+
+    if (get_mi_coord(part.r.p[dir], my_left[dir], dir) < 0.0) {
+      if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
+
+        move_unindexed_particle(&left, &src, i);
+        if (i < src.n)
+          i--;
+      }
+    } else if (get_mi_coord(part.r.p[dir], my_right[dir], dir) >= 0.0) {
+      if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
+
+        move_unindexed_particle(&right, &src, i);
+        if (i < src.n)
+          i--;
+      }
+    }
+  }
+}
+
+void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
+  for (int dir = 0; dir < 3; dir++) {
+    /* Single node direction, no action needed. */
+    if (grid[dir] == 1) {
+      continue;
+      /* In this (common) case left and right neighbors are
+         the same, and we need only one communication */
+    }
+    if (grid[dir] == 2) {
+      ParticleList send_buf, recv_buf;
+      move_left_or_right(*pl, send_buf, send_buf, dir);
+
+      Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf,
+                           node_neighbors[2 * dir], 0, recv_buf);
+
+      realloc_particlelist(&send_buf, 0);
+
+      move_if_local(recv_buf, *pl);
+    } else {
+      using boost::mpi::request;
+      using Utils::Mpi::isendrecv;
+
+      ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
+
+      move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
+
+      auto req_l = isendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf_l,
+                             node_neighbors[2 * dir], 0, recv_buf_l);
+      auto req_r =
+          isendrecv(comm_cart, node_neighbors[2 * dir + 1], 0, send_buf_r,
+                    node_neighbors[2 * dir + 1], 0, recv_buf_r);
+
+      std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
+      boost::mpi::wait_all(reqs.begin(), reqs.end());
+
+      move_if_local(recv_buf_l, *pl);
+      move_if_local(recv_buf_r, *pl);
+
+      realloc_particlelist(&send_buf_l, 0);
+      realloc_particlelist(&send_buf_r, 0);
+    }
+  }
+}
+} // namespace
+
+void dd_exchange_and_sort_particles(int global, ParticleList *pl,
+                                    const Utils::Vector3i &grid) {
+  if (global) {
+    /* Worst case we need grid - 1 rounds per direction.
+     * This correctly implies that if there is only one node,
+     * no action should be taken. */
+    int rounds_left = grid[0] + grid[1] + grid[2] - 3;
+    for (; rounds_left > 0; rounds_left--) {
+      exchange_neighbors(pl, grid);
+
+      auto left_over =
+          boost::mpi::all_reduce(comm_cart, pl->n, std::plus<int>());
+
+      if (left_over == 0) {
+        break;
+      }
+    }
+  } else {
+    exchange_neighbors(pl, grid);
+  }
 }
 
 /*************************************************/
 
-int calc_processor_min_num_cells() {
+int calc_processor_min_num_cells(const Utils::Vector3i &grid) {
   int i, min = 1;
   /* the minimal number of cells can be lower if there are at least two nodes
      serving a direction,
@@ -1023,7 +861,7 @@ int calc_processor_min_num_cells() {
      only one processor for a direction, there have to be at least two cells for
      this direction. */
   for (i = 0; i < 3; i++)
-    if (node_grid[i] == 1)
+    if (grid[i] == 1)
       min *= 2;
   return min;
 }

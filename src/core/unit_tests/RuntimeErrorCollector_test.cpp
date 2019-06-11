@@ -19,8 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file RuntimeErrorCollector_test.cpp Unit tests for the
- * ErrorHandling::RuntimeErrorCollector class.
+/** \file
+ * Unit tests for the ErrorHandling::RuntimeErrorCollector class.
  *
  */
 
@@ -36,7 +36,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "../RuntimeErrorCollector.hpp"
+#include "RuntimeErrorCollector.hpp"
 
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);

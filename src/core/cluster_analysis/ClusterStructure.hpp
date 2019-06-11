@@ -26,13 +26,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 
 #include "Cluster.hpp"
-#include "interaction_data.hpp"
 #include "pair_criteria/pair_criteria.hpp"
 #include "particle_data.hpp"
 
 namespace ClusterAnalysis {
 
-/** @brief Represents a single cluster of particles */
 /** @brief Holds the result and parameters of a cluster analysis */
 class ClusterStructure {
 public:

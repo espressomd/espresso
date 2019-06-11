@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file tuning.hpp
+/** \file
     This contains a timing loop for the force calculation. Via the global
    variable timings you can specify how many
     force evaluations are sampled. Via \ref markTime and \ref diffTime you can

@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file None_test.cpp Unit tests for the
- * ScriptInterface::None class.
+/** \file
+ * Unit tests for the ScriptInterface::None class.
  *
  */
 
@@ -26,7 +26,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "script_interface/None.hpp"
+#include "None.hpp"
 using ScriptInterface::None;
 
 BOOST_AUTO_TEST_CASE(constructor_bool) {

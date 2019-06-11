@@ -20,11 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/field_coupling/couplings/Charge.hpp"
-#include "core/field_coupling/couplings/Direct.hpp"
-#include "core/field_coupling/couplings/Mass.hpp"
-#include "core/field_coupling/couplings/Scaled.hpp"
-#include "core/field_coupling/couplings/Viscous.hpp"
+#include "field_coupling/couplings/Charge.hpp"
+#include "field_coupling/couplings/Direct.hpp"
+#include "field_coupling/couplings/Mass.hpp"
+#include "field_coupling/couplings/Scaled.hpp"
+#include "field_coupling/couplings/Viscous.hpp"
 
 using namespace FieldCoupling::Coupling;
 
@@ -78,10 +78,12 @@ BOOST_AUTO_TEST_CASE(scaled) {
       const int m_id;
     };
 
-    BOOST_CHECK((1.23 * 2.) == scaled_coupling(Particle(0), 2.));
-    BOOST_CHECK((default_val * 3.) == scaled_coupling(Particle(1), 3.));
-    BOOST_CHECK((3.45 * 4.) == scaled_coupling(Particle(2), 4.));
-    BOOST_CHECK((default_val * 5.) == scaled_coupling(Particle(3), 5.));
+    BOOST_CHECK_CLOSE(1.23 * 2., scaled_coupling(Particle(0), 2.), 1e-14);
+    BOOST_CHECK_CLOSE(default_val * 3., scaled_coupling(Particle(1), 3.),
+                      1e-14);
+    BOOST_CHECK_CLOSE(3.45 * 4., scaled_coupling(Particle(2), 4.), 1e-14);
+    BOOST_CHECK_CLOSE(default_val * 5., scaled_coupling(Particle(3), 5.),
+                      1e-14);
   }
 }
 
@@ -97,11 +99,11 @@ BOOST_AUTO_TEST_CASE(viscous) {
   {
     struct {
       struct {
-        const Vector3d v = {1., 2., 3.};
+        const Utils::Vector3d v = {1., 2., 3.};
       } m;
     } p;
 
-    auto const u = Vector3d{4., 5., 6.};
+    auto const u = Utils::Vector3d{4., 5., 6.};
 
     BOOST_CHECK((-gamma * (p.m.v - u)) == viscous_coupling(p, u));
   }

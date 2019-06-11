@@ -40,7 +40,7 @@ CMake
     The build system is based on CMake
 
 C++ Compiler
-    C++11 capable C++ compiler (e.g., Gcc 4.8.1 or later)
+    C++14 capable C++ compiler (e.g., gcc 5 or later)
 
 Boost
     A number of advanced C++ features used by ESPResSo is provided by Boost.
@@ -60,10 +60,10 @@ Python
 Cython
     Cython is used for connecting the C++ core to Python
 
-.. _Installing Requirements on Ubuntu 16.04 LTS:
+.. _Installing Requirements on Ubuntu Linux:
 
-Installing Requirements on Ubuntu 16.04 LTS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing Requirements on Ubuntu Linux
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To make ESPResSo run on Ubuntu 16.04 LTS or 18.04 LTS, its dependencies can be
 installed with:
@@ -88,6 +88,23 @@ CUDA SDK to make use of GPU computation:
 
     sudo apt install nvidia-cuda-toolkit
 
+On Ubuntu 18.04, you need to modify a file to make CUDA work with the default compiler:
+
+.. code-block:: bash
+
+    sudo sed -i 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
+    sudo sed -i 's/than 6/than 7/g' /usr/include/crt/host_config.h
+
+If your computer has an AMD graphics card, you should also download and install the
+ROCm SDK to make use of GPU computation:
+
+.. code-block:: bash
+
+    wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
+    echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
+    sudo apt update
+    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand hip-thrust
+
 .. _Installing Requirements on Mac OS X:
 
 Installing Requirements on Mac OS X
@@ -109,7 +126,7 @@ following commands:
       doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
     sudo port select --set cython cython27
     sudo port select --set python python27
-    sudo port selet --set pip pip27
+    sudo port select --set pip pip27
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.
@@ -326,8 +343,6 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``INTER_RF``
-
 -  ``MMM1D_GPU``
 
 -  ``_P3M_GPU_FLOAT``
@@ -362,11 +377,6 @@ General features
    individually. Also allows to fix individual coordinates of particles,
    keep them at a fixed position or within a plane.
 
--  ``CONSTRAINTS`` Turns on various spatial constraints such as spherical compartments
-   or walls. This constraints interact with the particles through
-   regular short ranged potentials such as the Lennard-Jones potential.
-   See section for possible constraint forms.
-
 -  ``MASS`` Allows particles to have individual masses. Note that some analysis
    procedures have not yet been adapted to take the masses into account
    correctly.
@@ -376,7 +386,7 @@ General features
 -  ``EXCLUSIONS`` Allows to exclude specific short ranged interactions within
    molecules.
 
-   .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.exclude`
+   .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
@@ -422,11 +432,6 @@ General features
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
-..
-    -  ``NEMD`` Enables the non-equilbrium (shear) MD support.
-
-       .. seealso:: :ref:`\`\`nemd\`\`\: Setting up non-equilibrium MD`
-
 -  ``NPT`` Enables an on-the-fly NPT integration scheme.
 
    .. seealso:: :ref:`Isotropic NPT thermostat`
@@ -435,10 +440,6 @@ integrator or thermostat:
 -  ``MEMBRANE_COLLISION``
 
 -  ``REACTION_ENSEMBLE``
-
--  ``GHMC``
-
--  ``MULTI_TIMESTEP`` (experimental)
 
 -  ``ENGINE``
 
@@ -454,19 +455,9 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB`` Enables the lattice Boltzmann fluid code.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
-
--  ``LB_GPU`` Enables the lattice Boltzmann fluid code support for GPU.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
-
 -  ``LB_BOUNDARIES``
 
 -  ``LB_BOUNDARIES_GPU``
-
--  ``SHANCHEN`` (experimental) Enables the Shan Chen bicomponent fluid code on the GPU.
 
 -  ``AFFINITY``
 
@@ -476,8 +467,6 @@ Fluid dynamics and fluid structure interaction
 -  ``ELECTROKINETICS``
 
 -  ``EK_BOUNDARIES``
-
--  ``EK_ELECTROSTATIC_COUPLING``
 
 -  ``EK_DEBUG``
 
@@ -534,22 +523,12 @@ Some of the short range interactions have additional features:
    prints a warning if particles come too close so that the simulation
    becomes unphysical.
 
--  ``OLD_DIHEDRAL`` Switch the interface of the dihedral potential to its old, less
-   flexible form. Use this for older scripts that are not yet adapted to
-   the new interface of the dihedral potential.
-
 If you want to use bond-angle potentials (see section :ref:`Bond-angle interactions`), you need the
 following features.
 
 -  ``BOND_ANGLE``
 
--  ``BOND_ANGLEDIST``
-
--  ``BOND_ANGLEDIST_HARMONIC``
-
 -  ``LJGEN_SOFTCORE``
-
--  ``COS2``
 
 -  ``GAUSSIAN``
 
@@ -617,10 +596,6 @@ looking directly at the code.
 -  ``ESR_DEBUG`` debugging of P\ :math:`^3`\ Ms real space part.
 
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
-
--  ``FFT_DEBUG`` Output from the unified FFT code.
-
--  ``MAGGS_DEBUG``
 
 -  ``RANDOM_DEBUG``
 
@@ -869,7 +844,7 @@ simulation core which requires running the program in a debugger.  The
 which sets the Python path appropriately and starts the Python
 interpreter with your arguments.  Thus it is not possible to directly
 run ``pypresso`` in a debugger.  However, we provide some useful
-commandline options for the most common tools.
+command line options for the most common tools.
 
 .. code-block:: bash
 

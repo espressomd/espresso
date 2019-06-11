@@ -2,16 +2,15 @@ import numpy
 cimport numpy
 import os
 from libcpp cimport bool
-from espressomd.particle_data import ParticleHandle
-from particle_data cimport *
-from espressomd.interactions cimport *
-from espressomd.system cimport *
 from libcpp.vector cimport vector
+from .particle_data import ParticleHandle
+from .particle_data cimport *
+from .interactions cimport *
+from .system cimport *
+from .interactions import NonBondedInteractions
+from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
 
 include "myconfig.pxi"
-
-cdef extern from "utils.hpp":
-    void get_mi_vector(double * res, double * a, double * b)
 
 if not "ETS_TOOLKIT" in os.environ:
     os.environ["ETS_TOOLKIT"] = "wx"
@@ -22,7 +21,6 @@ from tvtk.tools import visual
 import atexit
 import threading
 
-from espressomd.interactions import NonBondedInteractions
 
 # workaround for https://github.com/enthought/mayavi/issues/3
 import vtk
@@ -39,8 +37,9 @@ cdef class mayaviLive(object):
 
     Parameters
     ----------
-    system : instance of espressomd.System
-    particle_sizes : (optional) function, list, or dict, which maps particle types to radii
+    system : :class:`espressomd.system.System`
+    particle_sizes : function, list, or dict (optional)
+        object which maps particle types to radii
 
     """
 
@@ -64,14 +63,15 @@ cdef class mayaviLive(object):
         self.particle_sizes = particle_sizes
 
         # objects drawn
-        self.points = mlab.quiver3d(
-            [], [], [], [], [], [], scalars=[], mode="sphere", scale_factor=1, name="Particles")
+        self.points = mlab.quiver3d([], [], [], [], [], [], scalars=[],
+                                    mode="sphere", scale_factor=1,
+                                    name="Particles")
         self.points.glyph.color_mode = 'color_by_scalar'
         self.points.glyph.glyph_source.glyph_source.center = [0, 0, 0]
-        self.box = mlab.outline(
-            extent=(0, 0, 0, 0, 0, 0), color=(1, 1, 1), name="Box")
-        self.arrows = mlab.quiver3d(
-            [], [], [], [], [], [], scalars=[], mode="2ddash", scale_factor=1, name="Bonds")
+        self.box = mlab.outline(extent=(0, 0, 0, 0, 0, 0), color=(1, 1, 1),
+                                name="Box")
+        self.arrows = mlab.quiver3d([], [], [], [], [], [], scalars=[],
+                                    mode="2ddash", scale_factor=1, name="Bonds")
         self.arrows.glyph.color_mode = 'color_by_scalar'
 
         # state
@@ -132,22 +132,29 @@ cdef class mayaviLive(object):
         if box_changed or not self.running:
             self.box.set(bounds=(0, boxl[0], 0, boxl[1], 0, boxl[2]))
         if not N_changed:
-            self.points.mlab_source.set(x=coords[:, 0] % boxl[0], y=coords[:, 1] % boxl[
-                                        1], z=coords[:, 2] % boxl[2], u=radii, v=radii, w=radii, scalars=types)
+            self.points.mlab_source.set(x=coords[:, 0] % boxl[0],
+                                        y=coords[:, 1] % boxl[1],
+                                        z=coords[:, 2] % boxl[2], u=radii,
+                                        v=radii, w=radii, scalars=types)
         else:
-            self.points.mlab_source.reset(x=coords[:, 0] % boxl[0], y=coords[:, 1] % boxl[
-                                          1], z=coords[:, 2] % boxl[2], u=radii, v=radii, w=radii, scalars=types)
+            self.points.mlab_source.reset(x=coords[:, 0] % boxl[0],
+                                          y=coords[:, 1] % boxl[1],
+                                          z=coords[:, 2] % boxl[2], u=radii,
+                                          v=radii, w=radii, scalars=types)
         if not self.running:
             f.scene.reset_zoom()
             self.running = True
 
         if not Nbonds_changed:
             if bonds.shape[0] > 0:
-                self.arrows.mlab_source.set(x=bonds[:, 0], y=bonds[:, 1], z=bonds[
-                                            :, 2], u=bonds[:, 3], v=bonds[:, 4], w=bonds[:, 5])
+                self.arrows.mlab_source.set(x=bonds[:, 0], y=bonds[:, 1],
+                                            z=bonds[:, 2], u=bonds[:, 3],
+                                            v=bonds[:, 4], w=bonds[:, 5])
         else:
-            self.arrows.mlab_source.reset(x=bonds[:, 0], y=bonds[:, 1], z=bonds[
-                                          :, 2], u=bonds[:, 3], v=bonds[:, 4], w=bonds[:, 5], scalars=bonds[:, 6])
+            self.arrows.mlab_source.reset(x=bonds[:, 0], y=bonds[:, 1],
+                                          z=bonds[:, 2], u=bonds[:, 3],
+                                          v=bonds[:, 4], w=bonds[:, 5],
+                                          scalars=bonds[:, 6])
 
     def update(self):
         """Pull the latest particle information from Espresso.
@@ -174,8 +181,8 @@ cdef class mayaviLive(object):
         cdef IA_parameters * ia
         cdef vector[int] bonds
 
-    # Using (additional) untyped variables and python constructs in the loop
-    # will slow it down considerably.
+        # Using (additional) untyped variables and python constructs in the loop
+        # will slow it down considerably.
         for i in range(N):
             p = get_particle_data_ptr(get_particle_data(i))
             if not p:
@@ -188,16 +195,28 @@ cdef class mayaviLive(object):
 
             # Iterate over bonds
             k = 0
-            while k < p.bl.n:
+            while k < p.bl.size():
                 # Bond type
-                t = p.bl.e[k]
+                t = p.bl[k]
                 k += 1
                 # Iterate over bond partners and store each connection
-                for l in range(bonded_ia_params[t].num):
-                    bonds.push_back(i)
-                    bonds.push_back(p.bl.e[k])
+                if bonded_ia_params[t].num == 3 and bonded_ia_params[t].type \
+                        in (BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED):
+                    for l in range(2):
+                        bonds.push_back(i)
+                        bonds.push_back(p.bl[k])
+                        bonds.push_back(t)
+                        k += 1
+                    bonds.push_back(p.bl[k - 1])
+                    bonds.push_back(p.bl[k])
                     bonds.push_back(t)
                     k += 1
+                else:
+                    for l in range(bonded_ia_params[t].num):
+                        bonds.push_back(i)
+                        bonds.push_back(p.bl[k])
+                        bonds.push_back(t)
+                        k += 1
             j += 1
         assert j == len(self.system.part)
         cdef int Nbonds = bonds.size() // 3
@@ -260,5 +279,26 @@ cdef class mayaviLive(object):
 
     def register_callback(self, cb, interval=1000):
         self.timers.append(Timer(interval, cb))
+
+    def run(self, integ_steps=1):
+        """Convenience method with a simple integration thread.
+        """
+
+        def main():
+            while True:
+
+                self.update()
+
+                try:
+                    self.system.integrator.run(integ_steps)
+                except Exception as e:
+                    print(e)
+                    os._exit(1)
+
+        t = threading.Thread(target=main)
+        t.daemon = True
+        t.start()
+
+        self.start()
 
 # TODO: constraints

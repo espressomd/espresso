@@ -1,8 +1,8 @@
+#include "cuda_wrapper.hpp"
 
 #include "config.hpp"
-#include "cuda.h"
-#include "thrust/device_ptr.h"
-#include "thrust/reduce.h"
+#include <thrust/device_ptr.h>
+#include <thrust/reduce.h>
 
 #ifdef DIPOLAR_DIRECT_SUM
 
@@ -248,7 +248,7 @@ __global__ void DipolarDirectSum_kernel_energy(dds_float pf, int n, float *pos,
 
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   dds_float sum = 0.0;
-  extern __shared__ dds_float res[];
+  HIP_DYNAMIC_SHARED(dds_float, res)
 
   // There is one thread per particle. Each thread computes interactions
   // with particles whose id is larger than the thread id.
@@ -305,8 +305,8 @@ void DipolarDirectSum_kernel_wrapper_force(dds_float k, int n, float *pos,
                            cudaMemcpyHostToDevice));
 
   // printf("box_l: %f %f %f\n",box_l[0],box_l[1],box_l[2]);
-  KERNELCALL(DipolarDirectSum_kernel_force, grid, block,
-             (k, n, pos, dip, f, torque, box_l_gpu, periodic_gpu));
+  KERNELCALL(DipolarDirectSum_kernel_force, grid, block, k, n, pos, dip, f,
+             torque, box_l_gpu, periodic_gpu);
   cudaFree(box_l_gpu);
   cudaFree(periodic_gpu);
 }
@@ -346,13 +346,13 @@ void DipolarDirectSum_kernel_wrapper_energy(dds_float k, int n, float *pos,
 
   // This will sum the energies up to the block level
   KERNELCALL_shared(DipolarDirectSum_kernel_energy, grid, block,
-                    bs * sizeof(dds_float),
-                    (k, n, pos, dip, box_l_gpu, periodic_gpu, energySum));
+                    bs * sizeof(dds_float), k, n, pos, dip, box_l_gpu,
+                    periodic_gpu, energySum);
 
   // printf(" Still here after energy kernel\n");
   // Sum the results of all blocks
   // One thread per block in the prev kernel
-  // KERNELCALL(sumKernel,1,1,(energySum,block.x,E));
+  // KERNELCALL(sumKernel,1,1,energySum,block.x,E);
   thrust::device_ptr<dds_float> t(energySum);
   float x = thrust::reduce(t, t + grid.x);
   cuda_safe_mem(cudaMemcpy(E, &x, sizeof(float), cudaMemcpyHostToDevice));

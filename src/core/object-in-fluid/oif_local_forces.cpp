@@ -17,14 +17,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file oif_local_forces.hpp
+/** \file
  *  Routines to calculate the OIF_LOCAL_FORCES
  *  for a particle quadruple (two neighboring triangles with common edge).
  * (Dupin2007) \ref forces.cpp
  */
 
 #include "oif_local_forces.hpp"
+
 #include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 /** set parameters for the OIF_LOCAL_FORCES potential.*/
 

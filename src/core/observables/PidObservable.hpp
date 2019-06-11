@@ -22,15 +22,28 @@
 #define OBSERVABLES_PIDOBSERVABLE_HPP
 
 #include "Observable.hpp"
+
+#include "PartCfg.hpp"
+
 #include <vector>
 
 namespace Observables {
 
-// Observable which acts on a given list of particle ids()
+/** %Particle-based observable.
+ *
+ *  Base class for observables extracting raw data from particle subsets and
+ *  returning either the data or a statistic derived from it.
+ */
 class PidObservable : virtual public Observable {
+  /** Identifiers of particles measured by this observable */
   std::vector<int> m_ids;
 
+  virtual std::vector<double> evaluate(PartCfg &partCfg) const = 0;
+
 public:
+  explicit PidObservable(std::vector<int> ids) : m_ids(std::move(ids)) {}
+  std::vector<double> operator()() const final;
+
   std::vector<int> &ids() { return m_ids; }
   std::vector<int> const &ids() const { return m_ids; }
 };

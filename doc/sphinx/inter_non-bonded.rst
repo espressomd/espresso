@@ -136,38 +136,6 @@ the cutoff into the minimum, choosing
 potential is purely repulsive, and is often used to mimic hard sphere
 repulsion.
 
-When coupling particles to a Shan-Chen fluid, if the *affinity* interaction is set,
-the Lennard-Jones potential is multiplied by the function
-
-.. math::
-
-   \label{eq:lj-affinity}
-     A(r) =
-       \begin{cases}
-         \frac{(1-\alpha_1)}{2} \left[1+\tanh(2\phi)\right]  +  \frac{(1-\alpha_2)}{2} \left[1+\tanh(-2\phi)\right]
-         & \mathrm{if~}  r > r_\mathrm{cut}+2^{\frac{1}{6}}\sigma \\
-         1
-         & \mathrm{otherwise}
-       \end{cases}\ ,
-
-where :math:`\alpha_i` is the affinity to the :math:`i`-th fluid
-component (see :ref:`Affinity interaction`), and the order parameter :math:`\phi` is
-calculated from the fluid component local density as
-:math:`\phi=\frac{\rho_1 -
-\rho_2}{\rho_1+\rho_2}`. For example, if the affinities are chosen so
-that the first component is a good solvent (:math:`\alpha_1=1`) and the
-second one is a bad solvent (:math:`\alpha_2=0`), then, if the two
-particles are both in a region rich in the first component, then
-:math:`\phi\simeq1`, and :math:`A(r)\simeq0` for
-:math:`r>r_\mathrm{cut}+2^{\frac{1}{6}}\sigma`. Therefore, the
-interaction potential will be very close to the WCA one. Conversely, if
-both particles are in a region rich in the second component, then
-:math:`\phi\simeq-1`, and :math:`A(r)\simeq 1`, so that the potential
-will be very close to the full LJ one. If the cutoff has been set large
-enough, the particle will experience the attractive part of the
-potential, mimicking the effective attraction induced by the bad solvent.
-
-
 .. _Generic Lennard-Jones interaction:
 
 Generic Lennard-Jones interaction
@@ -215,6 +183,40 @@ interaction, while :math:`\delta` varies how smoothly the potential goes to zero
 :math:`\lambda\rightarrow 0`. Such a feature allows one to perform
 alchemical transformations, where a group of atoms can be slowly turned
 on/off during a simulation.
+
+.. _Weeks-Chandler-Andersen interaction:
+
+Weeks-Chandler-Andersen interaction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+    Feature ``WCA`` required.
+
+
+The interface for the Weeks-Chandler-Andersen interactions is implemented in
+:class:`espressomd.interactions.WCAInteraction`. They
+are configured via the syntax::
+
+    system.non_bonded_inter[type1, type2].wca.set_params(**kwargs)
+
+This command defines a Weeks-Chandler-Andersen interaction between particles of the
+types ``type1`` and ``type2``. The potential is defined by
+
+.. math::
+
+   \label{eq:wca}
+     V_\mathrm{WCA}(r) =
+       \begin{cases}
+         4 \epsilon \left[ \left(\frac{\sigma}{r}\right)^{12}
+         - \left(\frac{\sigma}{r}\right)^6 + \frac{1}{4} \right]
+         & \mathrm{if~} r < \sigma 2^{\frac{1}{6}}\\
+         0
+         & \mathrm{otherwise}
+       \end{cases}.
+
+The net force on a particle can be capped by using
+force capping ``system.non_bonded_inter.set_force_cap(max)``, see
+section :ref:`Capping the force during warmup`
 
 .. _Lennard-Jones cosine interaction:
 
@@ -510,7 +512,7 @@ particles of the types ``type1`` and ``type2``. The Hertzian potential is define
      \end{cases}
 
 The potential has no singularity and is defined everywhere; the
-potential has a nondifferentiable maximum at :math:`r=0`, where the force
+potential has a non-differentiable maximum at :math:`r=0`, where the force
 is undefined.
 
 .. _Gaussian:
@@ -826,7 +828,7 @@ and
      \epsilon(\mathbf{\hat{r}}, \mathbf{\hat{u}}_i,
      \mathbf{\hat{u}}_j) = \\
      \epsilon_0 \left( 1- \chi^{2}(\mathbf{\hat{u}}_i
-       \cdot \mathbf{\hat{u}}_j) \right)^{-\frac {\nu}{2}} \left[1-\frac
+       \cdot \mathbf{\hat{u}}_j)^{2} \right)^{-\frac {\nu}{2}} \left[1-\frac
        {\chi'}{2} \left( \frac { (\mathbf{\hat{r}} \cdot
            \mathbf{\hat{u}}_i+ \mathbf{\hat{r}} \cdot
            \mathbf{\hat{u}}_j)^{2}} {1+\chi' \, \mathbf{\hat{u}}_i \cdot
@@ -843,26 +845,5 @@ side-by-side and end-to-end configurations. The exponents and are adjustable
 parameters of the potential. Several Gay-Berne parametrizations exist, the
 original one being :math:`k_1 = 3`, :math:`k_2 = 5`,
 :math:`\mu = 2` and :math:`\nu = 1`.
-
-.. _Affinity interaction:
-
-Affinity interaction
-~~~~~~~~~~~~~~~~~~~~
-
-.. todo::
-
-    Not implemented yet.
-
-inter affinity
-
-Instead of defining a new interaction, this command acts as a modifier
-for existing interactions, so that the conditions of good/bad solvent
-associated to the two components of a Shan-Chen fluid. The two types
-must match those of the interaction that one wants to modify, and the
-two affinity values and are values between 0 and 1. A value of 1 (of 0)
-indicates that the component acts as a good (bad) solvent. The specific
-functional form depends on the interaction type and is listed in the
-interaction section. So far, only the standard Lennard-Jones interaction
-is modified by the interaction.
 
 .. |image_directional_lj| image:: figures/hbond.pdf

@@ -20,19 +20,17 @@
 */
 
 #include "SpheroCylinder.hpp"
-#include "utils.hpp"
 #include <cmath>
 
 namespace Shapes {
 
-int SpheroCylinder::calculate_dist(const double *ppos, double *dist,
-                                   double *vec) const {
+void SpheroCylinder::calculate_dist(const Utils::Vector3d &pos, double *dist,
+                                    double *vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
 
-  Vector3d const ppos_v = Vector3d(ppos, ppos + 3);
   /* Vector cylinder center<->particle */
-  Vector3d const c_dist = ppos_v - m_center;
+  Utils::Vector3d const c_dist = pos - m_center;
 
   auto const z = e_z * c_dist;
   auto const r_vec = c_dist - z * e_z;
@@ -58,19 +56,19 @@ int SpheroCylinder::calculate_dist(const double *ppos, double *dist,
       double dir = 1;
       if (z < 0)
         dir = -1;
-      Vector3d c_dist_cap = ppos_v - (m_center + dir * e_z * m_half_length);
+      Utils::Vector3d c_dist_cap = pos - (m_center + dir * e_z * m_half_length);
       *dist = c_dist_cap.norm() - m_rad;
       c_dist_cap.normalize();
-      Vector3d v = *dist * c_dist_cap;
+      Utils::Vector3d v = *dist * c_dist_cap;
       for (int i = 0; i < 3; i++) {
         vec[i] = v[i];
       }
       *dist *= m_direction;
-      return 0;
-    } else {
-      /* Closest feature: cylinder */
-      dr = -(r - m_rad);
+      return;
     }
+    /* Closest feature: cylinder */
+    dr = -(r - m_rad);
+
   } else {
     side = -1;
     /* Inside */
@@ -82,15 +80,16 @@ int SpheroCylinder::calculate_dist(const double *ppos, double *dist,
       double dir = 1;
       if (z < 0)
         dir = -1;
-      Vector3d c_dist_cap = -(ppos_v - (m_center + dir * e_z * m_half_length));
+      Utils::Vector3d c_dist_cap =
+          -(pos - (m_center + dir * e_z * m_half_length));
       *dist = m_rad - c_dist_cap.norm();
       c_dist_cap.normalize();
-      Vector3d v = *dist * c_dist_cap;
+      Utils::Vector3d v = *dist * c_dist_cap;
       for (int i = 0; i < 3; i++) {
         vec[i] = v[i];
       }
       *dist *= -m_direction;
-      return 0;
+      return;
     }
   }
 
@@ -98,7 +97,5 @@ int SpheroCylinder::calculate_dist(const double *ppos, double *dist,
   for (int i = 0; i < 3; i++) {
     vec[i] = -dr * e_r[i];
   }
-
-  return 0;
 }
 } // namespace Shapes

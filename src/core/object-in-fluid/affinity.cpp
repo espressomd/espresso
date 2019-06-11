@@ -18,14 +18,16 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file affinity.cpp
+/** \file
  *
  *  Implementation of \ref affinity.hpp
  */
 #include "affinity.hpp"
-#include "../communication.hpp"
 
 #ifdef AFFINITY
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int affinity_set_params(int part_type_a, int part_type_b, int afftype,
                         double kappa, double r0, double Kon, double Koff,

@@ -1,3 +1,4 @@
+#include "cuda_wrapper.hpp"
 
 // *******
 // This is an internal file of the IMMERSED BOUNDARY implementation
@@ -6,12 +7,13 @@
 
 #include "config.hpp"
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) && defined(CUDA)
 
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
-#include "lbboundaries.hpp"
-#include "lbgpu.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
+#include "grid_based_algorithms/lbgpu.cuh"
+#include "grid_based_algorithms/lbgpu.hpp"
 #include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
@@ -32,7 +34,6 @@ __global__ void
 ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
                        LB_node_force_density_gpu node_f,
                        const LB_parameters_gpu *const paraP);
-__device__ inline void atomicadd(float *address, float value);
 
 // ***** Other functions for internal use *****
 void InitCUDA_IBM(const int numParticles);
@@ -51,7 +52,7 @@ extern LB_nodes_gpu *current_nodes;
 // ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them
 // here They are initialized in ForcesIntoFluid The pointers are on the host,
 // but point into device memory
-LB_parameters_gpu *paraIBM = nullptr;
+LB_parameters_gpu *para_gpu = nullptr;
 float *lb_boundary_velocity_IBM = nullptr;
 
 /****************
@@ -69,8 +70,8 @@ void IBM_ResetLBForces_GPU() {
                             (threads_per_block * blocks_per_grid_y);
     dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-    KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block,
-               (node_f, paraIBM));
+    KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block, node_f,
+               para_gpu);
   }
 }
 
@@ -119,8 +120,8 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
         make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
 
     KERNELCALL(ForcesIntoFluid_Kernel, dim_grid_particles,
-               threads_per_block_particles,
-               (IBM_ParticleDataInput_device, node_f, paraIBM));
+               threads_per_block_particles, IBM_ParticleDataInput_device,
+               node_f, para_gpu);
   }
 }
 
@@ -139,7 +140,6 @@ void InitCUDA_IBM(const int numParticles) {
       delete[] IBM_ParticleDataOutput_host;
       cuda_safe_mem(cudaFree(IBM_ParticleDataInput_device));
       cuda_safe_mem(cudaFree(IBM_ParticleDataOutput_device));
-      cuda_safe_mem(cudaFree(paraIBM));
       cuda_safe_mem(cudaFree(lb_boundary_velocity_IBM));
     }
 
@@ -153,12 +153,8 @@ void InitCUDA_IBM(const int numParticles) {
                    numParticles * sizeof(IBM_CUDA_ParticleDataOutput)));
     IBM_ParticleDataOutput_host = new IBM_CUDA_ParticleDataOutput[numParticles];
 
-    // Copy parameters to the GPU
-    LB_parameters_gpu *para_gpu;
+    // Use LB parameters
     lb_get_para_pointer(&para_gpu);
-    cuda_safe_mem(cudaMalloc((void **)&paraIBM, sizeof(LB_parameters_gpu)));
-    cuda_safe_mem(cudaMemcpy(paraIBM, para_gpu, sizeof(LB_parameters_gpu),
-                             cudaMemcpyHostToDevice));
 
     // Copy boundary velocities to the GPU
     // First put them into correct format
@@ -204,65 +200,61 @@ __device__ void Calc_m_from_n_IBM(const LB_nodes_gpu n_a,
                                   const unsigned int index, float *mode,
                                   const LB_parameters_gpu *const paraP) {
   const LB_parameters_gpu &para = *paraP;
-  const int ii = 0;
   // mass mode
-  mode[0 + ii * LBQ] = n_a.vd[(0 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(1 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(2 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(3 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(4 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(5 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(6 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(7 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(8 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(9 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(10 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(11 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(12 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(13 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(14 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(15 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(16 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(17 + ii * LBQ) * para.number_of_nodes + index] +
-                       n_a.vd[(18 + ii * LBQ) * para.number_of_nodes + index];
+  mode[0] = n_a.vd[0 * para.number_of_nodes + index] +
+            n_a.vd[1 * para.number_of_nodes + index] +
+            n_a.vd[2 * para.number_of_nodes + index] +
+            n_a.vd[3 * para.number_of_nodes + index] +
+            n_a.vd[4 * para.number_of_nodes + index] +
+            n_a.vd[5 * para.number_of_nodes + index] +
+            n_a.vd[6 * para.number_of_nodes + index] +
+            n_a.vd[7 * para.number_of_nodes + index] +
+            n_a.vd[8 * para.number_of_nodes + index] +
+            n_a.vd[9 * para.number_of_nodes + index] +
+            n_a.vd[10 * para.number_of_nodes + index] +
+            n_a.vd[11 * para.number_of_nodes + index] +
+            n_a.vd[12 * para.number_of_nodes + index] +
+            n_a.vd[13 * para.number_of_nodes + index] +
+            n_a.vd[14 * para.number_of_nodes + index] +
+            n_a.vd[15 * para.number_of_nodes + index] +
+            n_a.vd[16 * para.number_of_nodes + index] +
+            n_a.vd[17 * para.number_of_nodes + index] +
+            n_a.vd[18 * para.number_of_nodes + index];
 
   // momentum modes
 
-  mode[1 + ii * LBQ] =
-      (n_a.vd[(1 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(2 + ii * LBQ) * para.number_of_nodes + index]) +
-      (n_a.vd[(7 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(8 + ii * LBQ) * para.number_of_nodes + index]) +
-      (n_a.vd[(9 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(10 + ii * LBQ) * para.number_of_nodes + index]) +
-      (n_a.vd[(11 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(12 + ii * LBQ) * para.number_of_nodes + index]) +
-      (n_a.vd[(13 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(14 + ii * LBQ) * para.number_of_nodes + index]);
+  mode[1] = (n_a.vd[1 * para.number_of_nodes + index] -
+             n_a.vd[2 * para.number_of_nodes + index]) +
+            (n_a.vd[7 * para.number_of_nodes + index] -
+             n_a.vd[8 * para.number_of_nodes + index]) +
+            (n_a.vd[9 * para.number_of_nodes + index] -
+             n_a.vd[10 * para.number_of_nodes + index]) +
+            (n_a.vd[11 * para.number_of_nodes + index] -
+             n_a.vd[12 * para.number_of_nodes + index]) +
+            (n_a.vd[13 * para.number_of_nodes + index] -
+             n_a.vd[14 * para.number_of_nodes + index]);
 
-  mode[2 + ii * LBQ] =
-      (n_a.vd[(3 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(4 + ii * LBQ) * para.number_of_nodes + index]) +
-      (n_a.vd[(7 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(8 + ii * LBQ) * para.number_of_nodes + index]) -
-      (n_a.vd[(9 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(10 + ii * LBQ) * para.number_of_nodes + index]) +
-      (n_a.vd[(15 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(16 + ii * LBQ) * para.number_of_nodes + index]) +
-      (n_a.vd[(17 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(18 + ii * LBQ) * para.number_of_nodes + index]);
+  mode[2] = (n_a.vd[3 * para.number_of_nodes + index] -
+             n_a.vd[4 * para.number_of_nodes + index]) +
+            (n_a.vd[7 * para.number_of_nodes + index] -
+             n_a.vd[8 * para.number_of_nodes + index]) -
+            (n_a.vd[9 * para.number_of_nodes + index] -
+             n_a.vd[10 * para.number_of_nodes + index]) +
+            (n_a.vd[15 * para.number_of_nodes + index] -
+             n_a.vd[16 * para.number_of_nodes + index]) +
+            (n_a.vd[17 * para.number_of_nodes + index] -
+             n_a.vd[18 * para.number_of_nodes + index]);
 
-  mode[3 + ii * LBQ] =
-      (n_a.vd[(5 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(6 + ii * LBQ) * para.number_of_nodes + index]) +
-      (n_a.vd[(11 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(12 + ii * LBQ) * para.number_of_nodes + index]) -
-      (n_a.vd[(13 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(14 + ii * LBQ) * para.number_of_nodes + index]) +
-      (n_a.vd[(15 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(16 + ii * LBQ) * para.number_of_nodes + index]) -
-      (n_a.vd[(17 + ii * LBQ) * para.number_of_nodes + index] -
-       n_a.vd[(18 + ii * LBQ) * para.number_of_nodes + index]);
+  mode[3] = (n_a.vd[5 * para.number_of_nodes + index] -
+             n_a.vd[6 * para.number_of_nodes + index]) +
+            (n_a.vd[11 * para.number_of_nodes + index] -
+             n_a.vd[12 * para.number_of_nodes + index]) -
+            (n_a.vd[13 * para.number_of_nodes + index] -
+             n_a.vd[14 * para.number_of_nodes + index]) +
+            (n_a.vd[15 * para.number_of_nodes + index] -
+             n_a.vd[16 * para.number_of_nodes + index]) -
+            (n_a.vd[17 * para.number_of_nodes + index] -
+             n_a.vd[18 * para.number_of_nodes + index]);
 }
 
 /**************
@@ -292,10 +284,9 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
     dim3 dim_grid_particles =
         make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
     KERNELCALL(ParticleVelocitiesFromLB_Kernel, dim_grid_particles,
-               threads_per_block_particles,
-               (*current_nodes, IBM_ParticleDataInput_device,
-                IBM_ParticleDataOutput_device, node_f, lb_boundary_velocity_IBM,
-                paraIBM));
+               threads_per_block_particles, *current_nodes,
+               IBM_ParticleDataInput_device, IBM_ParticleDataOutput_device,
+               node_f, lb_boundary_velocity_IBM, para_gpu);
 
     // Copy velocities from device to host
     cuda_safe_mem(cudaMemcpy(IBM_ParticleDataOutput_host,
@@ -385,13 +376,13 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
     for (int i = 0; i < 8; ++i) {
 
       // Atomic add is essential because this runs in parallel!
-      atomicadd(
+      atomicAdd(
           &(node_f.force_density[0 * para.number_of_nodes + node_index[i]]),
           (particleForce[0] * delta[i]));
-      atomicadd(
+      atomicAdd(
           &(node_f.force_density[1 * para.number_of_nodes + node_index[i]]),
           (particleForce[1] * delta[i]));
-      atomicadd(
+      atomicAdd(
           &(node_f.force_density[2 * para.number_of_nodes + node_index[i]]),
           (particleForce[2] * delta[i]));
     }
@@ -424,8 +415,7 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
     float v[3] = {0};
 
     // ***** This part is copied from get_interpolated_velocity
-    // ***** + we add the force + we consider boundaries - we remove the
-    // Shan-Chen stuff
+    // ***** + we add the force + we consider boundaries
 
     float temp_delta[6];
     float delta[8];
@@ -482,20 +472,19 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
 
         // lb_boundary_velocity is given in MD units --> convert to LB and
         // reconvert back at the end of this function
-        local_rho = para.rho[0] * para.agrid * para.agrid * para.agrid;
-        local_j[0] = para.rho[0] * para.agrid * para.agrid * para.agrid *
-                     lb_boundary_velocity[3 * (boundary_index - 1) + 0];
-        local_j[1] = para.rho[0] * para.agrid * para.agrid * para.agrid *
-                     lb_boundary_velocity[3 * (boundary_index - 1) + 1];
-        local_j[2] = para.rho[0] * para.agrid * para.agrid * para.agrid *
-                     lb_boundary_velocity[3 * (boundary_index - 1) + 2];
+        local_rho = para.rho;
+        local_j[0] =
+            para.rho * lb_boundary_velocity[3 * (boundary_index - 1) + 0];
+        local_j[1] =
+            para.rho * lb_boundary_velocity[3 * (boundary_index - 1) + 1];
+        local_j[2] =
+            para.rho * lb_boundary_velocity[3 * (boundary_index - 1) + 2];
 
       } else
 #endif
       {
         Calc_m_from_n_IBM(n_curr, node_index[i], mode, paraP);
-        local_rho =
-            para.rho[0] * para.agrid * para.agrid * para.agrid + mode[0];
+        local_rho = para.rho + mode[0];
 
         // Add the +f/2 contribution!!
         local_j[0] =
@@ -538,53 +527,19 @@ __global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
 
   if (index < para.number_of_nodes) {
     const float force_factor = powf(para.agrid, 2) * para.tau * para.tau;
-    for (int ii = 0; ii < LB_COMPONENTS; ++ii) {
-#ifdef EXTERNAL_FORCES
-      if (para.external_force_density) {
-        node_f.force_density[(0 + ii * 3) * para.number_of_nodes + index] =
-            para.ext_force_density[0 + ii * 3] * force_factor;
-        node_f.force_density[(1 + ii * 3) * para.number_of_nodes + index] =
-            para.ext_force_density[1 + ii * 3] * force_factor;
-        node_f.force_density[(2 + ii * 3) * para.number_of_nodes + index] =
-            para.ext_force_density[2 + ii * 3] * force_factor;
-      } else
-#endif
-      {
-        node_f.force_density[(0 + ii * 3) * para.number_of_nodes + index] =
-            0.0f;
-        node_f.force_density[(1 + ii * 3) * para.number_of_nodes + index] =
-            0.0f;
-        node_f.force_density[(2 + ii * 3) * para.number_of_nodes + index] =
-            0.0f;
-      }
+    if (para.external_force_density) {
+      node_f.force_density[0 * para.number_of_nodes + index] =
+          para.ext_force_density[0] * force_factor;
+      node_f.force_density[1 * para.number_of_nodes + index] =
+          para.ext_force_density[1] * force_factor;
+      node_f.force_density[2 * para.number_of_nodes + index] =
+          para.ext_force_density[2] * force_factor;
+    } else {
+      node_f.force_density[0 * para.number_of_nodes + index] = 0.0f;
+      node_f.force_density[1 * para.number_of_nodes + index] = 0.0f;
+      node_f.force_density[2 * para.number_of_nodes + index] = 0.0f;
     }
   }
-}
-
-/************
-   atomicadd
-This is a copy of the atomicadd from lbgpu_cuda.cu
-*************/
-
-__device__ inline void atomicadd(float *address, float value) {
-
-#if !defined __CUDA_ARCH__ ||                                                  \
-    __CUDA_ARCH__ >= 200 // for Fermi, atomicAdd supports floats
-  atomicAdd(address, value);
-#elif __CUDA_ARCH__ >= 110
-
-#warning Using slower atomicAdd emulation
-
-  // float-atomic-add from
-  //[url="http://forums.nvidia.com/index.php?showtopic=158039&view=findpost&p=991561"]
-
-  float old = value;
-  while ((old = atomicExch(address, atomicExch(address, 0.0f) + old)) != 0.0f)
-    ;
-
-#else
-#error CUDA compute capability 1.1 or higher required
-#endif
 }
 
 #endif

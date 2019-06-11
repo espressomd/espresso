@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
-/** \file metadynamics.hpp
+/** \file
  *
  *  This file contains routines to perform metadynamics.  Right now, the
  *  reaction coordinate is defined between two particles (either distance
@@ -67,9 +67,9 @@ double *meta_acc_force = nullptr;
 /** Accumulated free energy profile */
 double *meta_acc_fprofile = nullptr;
 
-Vector3d meta_cur_xi;
+Utils::Vector3d meta_cur_xi;
 double meta_val_xi = 0.;
-Vector3d meta_apply_direction;
+Utils::Vector3d meta_apply_direction;
 
 void meta_init() {
   if (meta_switch == META_OFF)
@@ -85,7 +85,7 @@ void meta_init() {
                          sizeof *meta_acc_fprofile);
   }
 
-  /* Check that the simulation uses onle a single processor. Otherwise exit.
+  /* Check that the simulation uses only a single processor. Otherwise exit.
    *  MPI interface *not* implemented. */
   if (n_nodes != 1) {
     runtimeErrorMsg() << "Can't use metadynamics on more than one processor.\n";
@@ -101,7 +101,7 @@ void meta_init() {
  * - apply external force
  */
 void meta_perform() {
-  Vector3d ppos1, ppos2;
+  Utils::Vector3d ppos1, ppos2;
 
   if (meta_switch == META_OFF)
     return;
@@ -141,13 +141,13 @@ void meta_perform() {
 
   /* Now update free energy profile
    * Here, we're following the functional form of
-   * Marsili etal., J Comp. Chem, 31 (2009).
-   * Instead of gaussians, we use so-called Lucy's functions */
+   * Marsili et al., J Comp Chem, 31 (2009).
+   * Instead of Gaussians, we use so-called Lucy's functions */
 
   for (int i = 0; i < meta_xi_num_bins; ++i) {
     if (meta_switch == META_DIST) {
       // reaction coordinate value
-      meta_val_xi = sqrt(sqrlen(meta_cur_xi));
+      meta_val_xi = meta_cur_xi.norm();
       // Update free energy profile and biased force
       if (int(sim_time / time_step) % meta_num_relaxation_steps == 0) {
         meta_acc_fprofile[i] -=
@@ -191,7 +191,7 @@ void meta_perform() {
     factor = meta_f_bound * (meta_val_xi - meta_xi_max) / meta_xi_step;
   } else {
     // within the RC interval
-    int i = (int)dround((meta_val_xi - meta_xi_min) / meta_xi_step);
+    auto i = (int)std::round((meta_val_xi - meta_xi_min) / meta_xi_step);
     if (i < 0)
       i = 0;
     if (i >= meta_xi_num_bins)
@@ -212,8 +212,8 @@ double calculate_lucy(double xi, double xi_0) {
   if (dist <= meta_bias_width) {
     return meta_bias_height * (1 + 2 * dist / meta_bias_width) *
            pow(1 - dist / meta_bias_width, 2);
-  } else
-    return 0.;
+  }
+  return 0.;
 }
 
 /** Calculate derivative of Lucy function */
@@ -227,8 +227,8 @@ double calculate_deriv_lucy(double xi, double xi_0) {
     if (xi < xi_0)
       result *= -1.;
     return result;
-  } else
-    return 0.;
+  }
+  return 0.;
 }
 
 #endif

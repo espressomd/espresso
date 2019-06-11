@@ -16,8 +16,8 @@ means, the user's guide can always be found on the ESPResSo-Homepage at
 	http://espressomd.org/html/doc/
 
 
-QUICK START - CMake (Recommended)
----------------------------------
+QUICK START
+-----------
 The recommended way is to build by the cmake tool.
 CMake recommends to build in a build directory not inside the
 source. On Linux you can create and enter directory in a location
@@ -38,27 +38,7 @@ and modify the build options graphically by running
 When these steps have completed successfully, you can run Espresso with
 help of the command
 
-> ./Espresso
-
-QUICK START - Autotools (Deprecated)
-------------------------------------
-In most cases, once you have obtained the sources, compiling and
-running ESPResSo requires only two steps:
-
-> ./configure
-> make
- 
-If you have the development sources (obtained from out git source code
-repository), you first have to execute
-
-> ./bootstrap.sh
-
-to generate the required configure script. 
-
-When these steps have completed successfully, you can run Espresso with
-help of the command
-
-> ./Espresso
+> ./pypresso
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

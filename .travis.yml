@@ -1,11 +1,13 @@
 language: generic
 
+branches:
+  except:
+  - staging.tmp
+  - trying.tmp
+
+
 matrix:
   include:
-    - os: linux
-      sudo: required
-      services: docker
-      env: myconfig=maxset python_version=2
     - os: linux
       sudo: required
       services: docker

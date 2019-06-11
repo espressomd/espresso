@@ -84,9 +84,9 @@ void kernel(CellIterator first, CellIterator last,
 
 /**
  * @brief Iterates over all particles in the cell range
- *        and all pairs in the verlet list of the cells.
+ *        and all pairs in the Verlet list of the cells.
  *        If rebuild is true, all neighbor cells are iterated
- *        and the verlet lists are updated with the so found pairs.
+ *        and the Verlet lists are updated with the so found pairs.
  */
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename DistanceFunction, typename VerletCriterion>

@@ -26,7 +26,7 @@
 #ifdef H5MD
 #include "ScriptInterface.hpp"
 #include "auto_parameters/AutoParameters.hpp"
-#include "io/writer/h5md/h5md_core.hpp"
+#include "io/writer/h5md_core.hpp"
 #include <string>
 
 namespace ScriptInterface {

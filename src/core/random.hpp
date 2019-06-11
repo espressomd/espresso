@@ -22,7 +22,7 @@
 #ifndef RANDOM_H
 #define RANDOM_H
 
-/** \file random.hpp
+/** \file
 
     A random generator
 */
@@ -34,11 +34,24 @@
 #include <string>
 #include <vector>
 
+/*
+ * @brief Salt for the RNGs
+ *
+ * This is to avoid correlations between the
+ * noise on the particle coupling and the fluid
+ * thermalization.
+ */
+enum class RNGSalt { FLUID, PARTICLES, LANGEVIN };
+
 namespace Random {
 extern std::mt19937 generator;
 extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 extern bool user_has_seeded;
+inline void unseeded_error() {
+  runtimeErrorMsg() << "Please seed the random number generator.\nESPResSo "
+                       "can choose one for you with set_random_state_PRNG().";
+}
 
 /**
  * @brief checks the seeded state and throws error if unseeded
@@ -48,15 +61,14 @@ inline void check_user_has_seeded() {
   static bool unseeded_error_thrown = false;
   if (!user_has_seeded && !unseeded_error_thrown) {
     unseeded_error_thrown = true;
-    runtimeErrorMsg() << "Please seed the random number generator.\nESPResSo "
-                         "can choose one for you with set_random_state_PRNG().";
+    unseeded_error();
   }
-  return;
 }
 
 /**
  * @brief Set seed of random number generators on each node.
  *
+ * @param cnt   Unused.
  * @param seeds A vector of seeds, must be at least n_nodes long.
  **/
 void mpi_random_seed(int cnt, std::vector<int> &seeds);
@@ -84,7 +96,7 @@ int get_state_size_of_generator();
 /**
  * @brief Initialize PRNG with MPI rank as seed.
  */
-void init_random(void);
+void init_random();
 
 /**
  * @brief Initialize PRNG with user-provided seed.
@@ -123,7 +135,7 @@ inline int i_random(int maxint) {
  * @brief draws a random number from the normal distribution with mean 0 and
  * variance 1.
  */
-inline double gaussian_random(void) {
+inline double gaussian_random() {
   using namespace Random;
   check_user_has_seeded();
   return normal_distribution(generator);
@@ -138,7 +150,7 @@ inline double gaussian_random(void) {
  *
  * @return Gaussian random number.
  */
-inline double gaussian_random_cut(void) {
+inline double gaussian_random_cut() {
   using namespace Random;
   check_user_has_seeded();
   const double random_number = 1.042267973 * normal_distribution(generator);
@@ -146,9 +158,8 @@ inline double gaussian_random_cut(void) {
   if (fabs(random_number) > 2 * 1.042267973) {
     if (random_number > 0) {
       return 2 * 1.042267973;
-    } else {
-      return -2 * 1.042267973;
     }
+    return -2 * 1.042267973;
   }
   return random_number;
 }

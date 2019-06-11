@@ -27,15 +27,16 @@ namespace Observables {
 
 class Current : public PidObservable {
 public:
-  virtual int n_values() const override { return 3; };
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+  using PidObservable::PidObservable;
+  int n_values() const override { return 3; };
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
-    for (int i = 0; i < ids().size(); i++) {
+    for (int i : ids()) {
 #ifdef ELECTROSTATICS
-      double charge = partCfg[ids()[i]].p.q;
-      res[0] += charge * partCfg[ids()[i]].m.v[0];
-      res[1] += charge * partCfg[ids()[i]].m.v[1];
-      res[2] += charge * partCfg[ids()[i]].m.v[2];
+      double charge = partCfg[i].p.q;
+      res[0] += charge * partCfg[i].m.v[0];
+      res[1] += charge * partCfg[i].m.v[1];
+      res[2] += charge * partCfg[i].m.v[2];
 #endif
     };
     return res;

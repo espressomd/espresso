@@ -23,7 +23,7 @@ Using the tutorials
 For using the tutorials, you need ESPResSo running. For installation
 instructions, please see: http://espressomd.org/html/doc/installation.html
 
-Tutorials 1, 2, 4, and 5 are available as IPython notebooks. I.e., they consist of a `.ipynb` file which contains both, the source code and the corresponding explanations.
+Tutorials 1, 2, 4, 5, and 8 are available as IPython notebooks. I.e., they consist of a `.ipynb` file which contains both, the source code and the corresponding explanations.
 They can be viewed, changed and run interactively.
 
 
@@ -55,7 +55,7 @@ To view the tutorials, first change to the tutorials directory and then run the 
     /path_to_espresso_build/ipypresso notebook
 
 This will launch a web browser in which the notebooks for the tutorials can be viewed and run.
-For more details, please see: hppt://jupyter.readthedocs.io/en/latest/running.html
+For more details, please see: http://jupyter.readthedocs.io/en/latest/running.html
 Note that `Jupyter` is the successor of IPython.
 
 

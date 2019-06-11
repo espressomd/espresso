@@ -21,8 +21,9 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 
+from libcpp.vector cimport vector
+from .utils cimport Vector3d
 from .c_analyze cimport PartCfg, partCfg
 
 cdef extern from "polymer.hpp":
-    int polymerC(PartCfg &, int N_P, int MPC, double bond_length, int part_id, double * posed, int mode, double shield, int max_try, double val_cM, int cM_dist, int type_nM, int type_cM, int type_FENE, double angle, double angle2, double * posed2, int constr)
-    int diamondC(double a, double bond_length, int MPC, int N_CI, double val_nodes, double val_cM, double val_CI, int cM_dist, int nonet)
+    vector[vector[Vector3d]] draw_polymer_positions(PartCfg &, int n_polymers, int beads_per_polymer, double bond_length, vector[Vector3d] & start_positions, double min_distance, int max_tries, int use_bond_angle, double bond_angle, int respect_constraints, int seed) except +

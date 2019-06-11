@@ -18,12 +18,12 @@ from __future__ import print_function
 import espressomd.interactions
 from espressomd import has_features
 
-# Dict with drude type infos
+# Dict with Drude type infos
 drude_dict = {}
-# Lists with unique drude and core types
+# Lists with unique Drude and core types
 core_type_list = []
 drude_type_list = []
-# Get core id from drude id
+# Get core id from Drude id
 core_id_from_drude_id = {}
 # Drude IDs
 drude_id_list = []
@@ -34,29 +34,29 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
                                mass_drude, coulomb_prefactor,
                                thole_damping=2.6, verbose=False):
     """
-    Adds a drude particle with specified id, type, and mass to the system.
+    Adds a Drude particle with specified id, type, and mass to the system.
     Checks if different Drude particles have different types.
     Collects types/charges/polarizations/Thole factors for intramol. core-Drude short-range exclusion and Thole interaction.
 
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
-    harmonic_bond: This method adds this harmonic bond to between drude particle and core
-    thermalized_bond: This method adds this thermalizerd_bond to between drude particle and core
+    system : Instance of :attr:`espressomd.system.System`
+    harmonic_bond: This method adds this harmonic bond to between Drude particle and core
+    thermalized_bond: This method adds this thermalizerd_bond to between Drude particle and core
     p_core: The existing core particle
     id_drude: :obj:`int`
-              This method creates the drude particle and assigns this id.
+              This method creates the Drude particle and assigns this id.
     type_drude: :obj:`int`
-                The type of the newly created drude particle
+                The type of the newly created Drude particle
     alpha : :obj:`float`
-            The polarizability in units of inverse volume. Related to the charge of the drude particle.
+            The polarizability in units of inverse volume. Related to the charge of the Drude particle.
     mass_drude : :obj:`float`
-                 The mass of the newly created drude particle
+                 The mass of the newly created Drude particle
     coulomb_prefactor : :obj:`float`
-                        Required to calculate the charge of the drude particle.
+                        Required to calculate the charge of the Drude particle.
     thole_damping : :obj:`float`
-                    Thole damping factor of the drude pair. Comes to effect if add_all_thole() method is used.
+                    Thole damping factor of the Drude pair. Comes to effect if add_all_thole() method is used.
     verbose : :obj:`bool`
              Turns on verbosity.
 
@@ -92,8 +92,8 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
 
     core_id_from_drude_id[id_drude] = p_core.id
 
-    # Add new thole nonbonded interaction for D-D, D-C, C-C for all existing
-    # drude types if this type is seen for the first time
+    # Add new Thole nonbonded interaction for D-D, D-C, C-C for all existing
+    # Drude types if this type is seen for the first time
     if not type_drude in drude_dict:
 
         # Bookkeeping of q, alphas and damping parameter
@@ -111,7 +111,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
         drude_dict[p_core.type]["thole_damping"] = thole_damping
         drude_dict[p_core.type]["drude_type"] = type_drude
 
-    # Collect unique drude types
+    # Collect unique Drude types
     if not type_drude in drude_type_list:
         drude_type_list.append(type_drude)
 
@@ -119,7 +119,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     if not p_core.type in core_type_list:
         core_type_list.append(p_core.type)
 
-    # Collect unique drude ids
+    # Collect unique Drude ids
     if not id_drude in drude_id_list:
         drude_id_list.append(id_drude)
 
@@ -132,7 +132,7 @@ def add_thole_pair_damping(system, t1, t2, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     t1 : :obj:`int`
         Type 1
     t2 : :obj:`int`
@@ -160,13 +160,13 @@ def add_all_thole(system, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     verbose : :obj:`bool`
              Turns on verbosity.
 
     """
 
-    # drude <-> drude
+    # Drude <-> Drude
     for i in range(len(drude_type_list)):
         for j in range(i, len(drude_type_list)):
             add_thole_pair_damping(
@@ -176,7 +176,7 @@ def add_all_thole(system, verbose=False):
         for j in range(i, len(core_type_list)):
             add_thole_pair_damping(
                 system, core_type_list[i], core_type_list[j], verbose)
-    # drude <-> core
+    # Drude <-> core
     for i in drude_type_list:
         for j in core_type_list:
             add_thole_pair_damping(system, i, j, verbose)
@@ -191,34 +191,34 @@ def setup_and_add_drude_exclusion_bonds(system, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     verbose: :obj:`bool`
              Turns on verbosity.
 
     """
 
-    # All drude types need...
+    # All Drude types need...
     for td in drude_type_list:
 
         #...exclusions with core
         qd = drude_dict[td]["q"]  # Drude charge
         qc = drude_dict[td]["qc"]  # Core charge
-        subtr_p3m_sr_bond = espressomd.interactions.BondedCoulombP3MSRBond(
+        subtr_sr_bond = espressomd.interactions.BondedCoulombSRBond(
             q1q2=-qd * qc)
-        system.bonded_inter.add(subtr_p3m_sr_bond)
-        drude_dict[td]["subtr_p3m_sr_bonds_drude-core"] = subtr_p3m_sr_bond
+        system.bonded_inter.add(subtr_sr_bond)
+        drude_dict[td]["subtr_sr_bonds_drude-core"] = subtr_sr_bond
         if verbose:
-            print("Added drude-core p3m SR exclusion bond ",
-                  subtr_p3m_sr_bond, "for drude", qd, "<-> core", qc, "to system")
+            print("Added drude-core SR exclusion bond ",
+                  subtr_sr_bond, "for drude", qd, "<-> core", qc, "to system")
 
     for drude_id in drude_id_list:
         core_id = core_id_from_drude_id[drude_id]
         pd = system.part[drude_id]
         pc = system.part[core_id]
-        bond = drude_dict[pd.type]["subtr_p3m_sr_bonds_drude-core"]
+        bond = drude_dict[pd.type]["subtr_sr_bonds_drude-core"]
         pc.add_bond((bond, drude_id))
         if verbose:
-            print("Added drude-core p3m SR bond", bond,
+            print("Added drude-core SR bond", bond,
                   "between ids", drude_id, "and", core_id)
 
 
@@ -232,8 +232,8 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types,
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
-    mol_drude_types : List of types of drude particles within the molecule
+    system : Instance of :attr:`espressomd.system.System`
+    mol_drude_types : List of types of Drude particles within the molecule
     mol_core_types : List of types of core particles within the molecule
     mol_core_partial_charges : List of partial charges of core particles within the molecule
     verbose : :obj:`bool`
@@ -241,22 +241,22 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types,
 
     """
 
-    # All drude types need...
+    # All Drude types need...
     for td in mol_drude_types:
-        drude_dict[td]["subtr_p3m_sr_bonds_intramol"] = {}
+        drude_dict[td]["subtr_sr_bonds_intramol"] = {}
 
-        #...p3m sr exclusion bond with other partial core charges...
+        #... sr exclusion bond with other partial core charges...
         for tc, qp in zip(mol_core_types, mol_core_partial_charges):
-            #...excluding the drude core partner
+            #...excluding the Drude core partner
             if drude_dict[td]["core_type"] != tc:
                 qd = drude_dict[td]["q"]  # Drude charge
-                subtr_p3m_sr_bond = espressomd.interactions.BondedCoulombP3MSRBond(
+                subtr_sr_bond = espressomd.interactions.BondedCoulombSRBond(
                     q1q2=-qd * qp)
-                system.bonded_inter.add(subtr_p3m_sr_bond)
-                drude_dict[td]["subtr_p3m_sr_bonds_intramol"][
-                    tc] = subtr_p3m_sr_bond
+                system.bonded_inter.add(subtr_sr_bond)
+                drude_dict[td]["subtr_sr_bonds_intramol"][
+                    tc] = subtr_sr_bond
                 if verbose:
-                    print("Added intramolecular exclusion", subtr_p3m_sr_bond,
+                    print("Added intramolecular exclusion", subtr_sr_bond,
                           "for drude", qd, "<-> core", qp, "to system")
 
 
@@ -268,7 +268,7 @@ def add_intramol_exclusion_bonds(system, drude_ids, core_ids, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     drude_ids : IDs of Drude particles within a molecule.
     core_ids : IDs of core particles within a molecule.
     verbose : :obj:`bool`
@@ -282,8 +282,8 @@ def add_intramol_exclusion_bonds(system, drude_ids, core_ids, verbose=False):
                 pd = system.part[drude_id]
                 pc = system.part[core_id]
                 bond = drude_dict[pd.type][
-                    "subtr_p3m_sr_bonds_intramol"][pc.type]
+                    "subtr_sr_bonds_intramol"][pc.type]
                 pd.add_bond((bond, core_id))
                 if verbose:
-                    print("Added subtr_p3m_sr bond", bond,
+                    print("Added subtr_sr bond", bond,
                           "between ids", drude_id, "and", core_id)

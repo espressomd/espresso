@@ -29,7 +29,8 @@
 #include "core/accumulators/Correlator.hpp"
 #include "observables/Observable.hpp"
 
-#include "core/utils/as_const.hpp"
+#include "utils/Vector.hpp"
+#include "utils/as_const.hpp"
 
 #include <memory>
 
@@ -71,15 +72,15 @@ public:
         get_value_or<std::string>(args, "compress1", ""),
         get_value_or<std::string>(args, "compress2", ""),
         get_value<std::string>(args, "corr_operation"), m_obs1->observable(),
-        m_obs2->observable());
+        m_obs2->observable(), get_value_or<Utils::Vector3d>(args, "args", {}));
   }
 
   std::shared_ptr<::Accumulators::Correlator> correlator() {
     return m_correlator;
   }
 
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
     if (method == "update")
       correlator()->update();
     if (method == "finalize")

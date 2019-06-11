@@ -24,7 +24,7 @@
 void ActorList::add(Actor *actor) { this->push_back(actor); }
 
 void ActorList::remove(Actor *actor) {
-  iterator needle = std::find(this->begin(), this->end(), actor);
+  auto needle = std::find(this->begin(), this->end(), actor);
   assert(needle != this->end());
   this->erase(needle);
 }

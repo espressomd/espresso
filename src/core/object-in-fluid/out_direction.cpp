@@ -17,15 +17,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file out_direction.hpp Routines to calculate the outward direction of the
+/** \file
+ * Routines to calculate the outward direction of the
  * membrane using a particle quadruple (one particle and its 3 strategically
  * placed neighbors)
  */
 
 #include "out_direction.hpp"
-#include "../communication.hpp"
 
 #ifdef MEMBRANE_COLLISION
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 // set out_direction parameters
 int oif_out_direction_set_params(int bond_type) {

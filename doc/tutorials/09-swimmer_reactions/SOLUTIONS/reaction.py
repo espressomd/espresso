@@ -31,16 +31,14 @@ import sys
 import time
 import espressomd
 from espressomd import assert_features
-from espressomd.observables import ParticlePositions, ParticleBodyAngularVelocities
-from espressomd.accumulators import Correlator
-from espressomd.swimmer_reaction import Reaction
-
-
 assert_features(["ROTATION",
                  "ROTATIONAL_INERTIA",
                  "LANGEVIN_PER_PARTICLE",
                  "SWIMMER_REACTIONS",
                  "LENNARD_JONES"])
+from espressomd.observables import ParticlePositions, ParticleBodyAngularVelocities
+from espressomd.accumulators import Correlator
+from espressomd.swimmer_reaction import Reaction
 
 ##########################################################################
 
@@ -273,10 +271,10 @@ system.integrator.set_vv()
 
 ## Answer 6 ##
 # Because of the use of minimize_energy. Had we instead used force
-# capping, a separate integration loop with thermostating would have
+# capping, a separate integration loop with thermostatting would have
 # been used to remove offending configurations.
 
-system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid)
+system.thermostat.set_langevin(kT=temp, gamma=frict_trans_colloid, seed=42)
 
 ##########################################################################
 

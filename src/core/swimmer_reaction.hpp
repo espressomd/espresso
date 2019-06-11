@@ -20,12 +20,11 @@
 */
 #ifndef SWIMMER_REACTION_H
 #define SWIMMER_REACTION_H
-/** \file swimmer_reaction.hpp
+/** \file
  *
  */
 
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 typedef struct {
   int reactant_type;
@@ -44,7 +43,7 @@ extern reaction_struct reaction;
 /** sanity checks for the reaction code */
 void reactions_sanity_checks();
 /** broadcasts reaction parameters and sets up an entry in the ia_params, so
-    that the verlet radius is equal or bigger than the reaction range.
+    that the Verlet radius is equal or bigger than the reaction range.
 **/
 void local_setup_reaction();
 void integrate_reaction();

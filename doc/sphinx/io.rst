@@ -250,6 +250,16 @@ call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method withou
 After the last write call, you have to call the ``close()`` method to remove
 the backup file and to close the datasets etc.
 
+H5MD files can be read and modified with the python module h5py (for documentation see `h5py <http://docs.h5py.org/en/stable/>`_). For example all positions stored in the file called "h5mdfile.h5" can be read using
+
+.. code:: python
+    
+    import h5py
+    h5file = h5py.File("h5mdfile.h5", 'r')
+    positions = h5file['particles/atoms/position/value']
+
+Further the files can be inspected with the GUI tool hdfview.
+
 .. _Writing MPI-IO binary files:
 
 Writing MPI-IO binary files
@@ -317,7 +327,7 @@ a whole simulation in a single file. For more details on the format,
 refer to the VTF homepage (https://github.com/olenz/vtfplugin/wiki).
 
 Creating files in these formats from within is supported by the commands :meth:`espressomd.io.writer.vtf.writevsf`
-and :meth:`espressomd.io.writer.vtf.writevcf`, that write a structure and coordinate block (respectively ) to the
+and :meth:`espressomd.io.writer.vtf.writevcf`, that write a structure and coordinate block (respectively) to the
 given file. To create a standalone VTF file, first use ``writevsf`` at the beginning of
 the simulation to write the particle definitions as a header, and then ``writevcf``
 to generate a timeframe of the simulation state. For example:
@@ -334,7 +344,7 @@ A standalone VTF file can simply be
     # ... add particles here
 
     # write structure block as header
-    vtf.writevtf(system, fp)
+    vtf.writevsf(system, fp)
     # write initial positions as coordinate block
     vtf.writevcf(system, fp)
 
@@ -349,7 +359,7 @@ can easily add further structure lines to the VTF/VSF file after a
 structure block has been written to specify further particle properties
 for visualization.
 
-Note that the ``ids`` of the particles in and VMD may differ. VMD requires
+Note that the ``ids`` of the particles in |es| and VMD may differ. VMD requires
 the particle ids to be enumerated continuously without any holes, while
 this is not required in |es|. When using ``writevsf``
 and ``writevcf``, the particle ids are
@@ -370,8 +380,7 @@ timesteps. This is a restriction of VMD itself, not of the format.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :meth:`espressomd.io.writer.vtf.writevsf`
 
-Writes a structure block describing the system's structure to the given channel.
-for example
+Writes a structure block describing the system's structure to the given channel, for example:
 
 .. code:: python
 

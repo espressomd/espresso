@@ -20,14 +20,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OBSERVABLES_DENSITYPROFILE_HPP
 
 #include "PidProfileObservable.hpp"
-#include "utils/Histogram.hpp"
+#include <utils/Histogram.hpp>
 #include <vector>
 
 namespace Observables {
 
 class DensityProfile : public PidProfileObservable {
 public:
-  virtual std::vector<double> operator()(PartCfg &partCfg) const override {
+  using PidProfileObservable::PidProfileObservable;
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),
                                   static_cast<size_t>(n_y_bins),
                                   static_cast<size_t>(n_z_bins)}};
@@ -36,14 +37,12 @@ public:
          std::make_pair(min_z, max_z)}};
     Utils::Histogram<double, 3> histogram(n_bins, 1, limits);
     for (auto const &id : ids()) {
-      auto const ppos = ::Vector<3, double>(folded_position(partCfg[id]));
-      histogram.update(ppos);
+      histogram.update(folded_position(partCfg[id]));
     }
     histogram.normalize();
     return histogram.get_histogram();
   }
 };
-
 } // Namespace Observables
 
 #endif

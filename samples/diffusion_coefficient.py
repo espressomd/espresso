@@ -15,7 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This script compares the diffusion coefficient of a single thermalized particle obtained from the particle's mean square displacement and the auto correlation function of its velocity to the expected value. It uses the Observables/Correlators framework.
+This script compares the diffusion coefficient of a single thermalized particle
+obtained from the particle's mean square displacement and the auto correlation
+function of its velocity to the expected value. It uses the
+Observables/Correlators framework.
 """
 
 from __future__ import division, print_function
@@ -35,7 +38,7 @@ np.random.seed(seed=system.seed)
 
 p = system.part.add(pos=(0, 0, 0), id=0)
 system.time_step = dt
-system.thermostat.set_langevin(kT=kT, gamma=gamma)
+system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
 system.cell_system.skin = 0.4
 system.integrator.run(1000)
 
@@ -43,7 +46,8 @@ pos_obs = ParticlePositions(ids=(0,))
 vel_obs = ParticleVelocities(ids=(0,))
 
 c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
-                   corr_operation="square_distance_componentwise", compress1="discard1")
+                   corr_operation="square_distance_componentwise",
+                   compress1="discard1")
 c_vel = Correlator(obs1=vel_obs, tau_lin=16, tau_max=20., delta_N=1,
                    corr_operation="scalar_product", compress1="discard1")
 system.auto_update_accumulators.add(c_pos)
@@ -63,8 +67,9 @@ np.savetxt("vacf.dat", c_vel.result())
 vacf = c_vel.result()
 #Integrate with trapezoidal rule
 I = np.trapz(vacf[:, 2], vacf[:, 0])
+ratio = 1. / 3. * I / (kT / gamma)
 print("Ratio of measured and expected diffusion coefficients from Green-Kubo:",
-      1. / 3. * I / (kT / gamma))
+      ratio)
 
 # Check MSD
 msd = c_pos.result()

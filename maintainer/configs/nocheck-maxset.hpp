@@ -28,22 +28,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define MASS
 #define EXCLUSIONS
-#define MOLFORCES
 
 #define COLLISION_DETECTION
 #define LANGEVIN_PER_PARTICLE
 #define SWIMMER_REACTIONS
 
-#define NEMD
 #define NPT
-#define GHMC
 
-#define LB
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
@@ -65,13 +60,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define INTER_RF
 #define OVERLAPPED
 #define THOLE
-
-#define BOND_ANGLE
-#define BOND_ANGLEDIST
-#define BOND_ANGLEDIST_HARMONIC
 
 #define VIRTUAL_SITES_RELATIVE
 
@@ -90,7 +80,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define VERLET_DEBUG
 #define PARTICLE_DEBUG
 #define P3M_DEBUG
-#define FFT_DEBUG
 #define RANDOM_DEBUG
 #define FORCE_DEBUG
 #define THERMO_DEBUG
@@ -102,9 +91,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define GHOST_FORCE_DEBUG
 #define STAT_DEBUG
 #define POLY_DEBUG
-#define MOLFORCES_DEBUG
 #define PTENSOR_DEBUG
-#define MAGGS_DEBUG
 #define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
 #define LE_DEBUG

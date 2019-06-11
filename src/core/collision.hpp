@@ -33,6 +33,11 @@
 #define COLLISION_MODE_BIND_THREE_PARTICLES 16
 /*@}*/
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "integrate.hpp"
+#include "particle_data.hpp"
+#include "virtual_sites.hpp"
+
 class Collision_parameters {
 public:
   Collision_parameters()
@@ -78,15 +83,9 @@ public:
 /// Parameters for collision detection
 extern Collision_parameters collision_params;
 
-#include "integrate.hpp"
-#include "interaction_data.hpp"
-#include "particle_data.hpp"
-#include "virtual_sites.hpp"
-
 #ifdef COLLISION_DETECTION
 
 /** \name bits of possible modes for collision handling.
-    To be used with \ref collision_detection_set_params.
     The modes can be combined by or-ing together. Not all combinations are
    possible.
     COLLISION_MODE_ERROR|COLLISION_MODE_BOND.
@@ -107,7 +106,7 @@ bool validate_collision_parameters();
 
 /** @brief add the collision between the given particle ids to the collision
  * queue */
-void queue_collision(const int part1, const int part2);
+void queue_collision(int part1, int part2);
 
 /** @brief Check additional criteria for the glue_to_surface collision mode */
 inline bool glue_to_surface_criterion(const Particle *const p1,

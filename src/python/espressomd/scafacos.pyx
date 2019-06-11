@@ -72,7 +72,7 @@ IF SCAFACOS == 1:
                 if len(pvalues) == 1:
                     pvalues = pvalues[0]
                 else:
-                    # Cast array elements to strings and join them by commata
+                    # Cast array elements to strings and join them by commas
                     # to achieve consistency with setting array-likes
                     # such as "pnfft_n":"128,128,128"
                     for j in range(len(pvalues)):
@@ -85,7 +85,7 @@ IF SCAFACOS == 1:
             # Re-add the prefactor to the parameter set
             if self.dipolar:
                 IF DIPOLES == 1:
-                    res["prefactor"] = magnetostatics.coulomb.Dprefactor
+                    res["prefactor"] = magnetostatics.dipole.prefactor
                 pass
             else:
                 IF ELECTROSTATICS == 1:
@@ -102,7 +102,7 @@ IF SCAFACOS == 1:
                         "Scafacos cannot be used for dipoles and charges at the same time")
 
             IF DIPOLES == 1:
-                if not self.dipolar and < int > magnetostatics.coulomb.Dmethod == <int > magnetostatics.DIPOLAR_SCAFACOS:
+                if not self.dipolar and < int > magnetostatics.dipole.method == <int > magnetostatics.DIPOLAR_SCAFACOS:
                     raise Exception(
                         "Scafacos cannot be used for dipoles and charges at the same time")
 

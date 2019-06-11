@@ -19,7 +19,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file integrate.cpp   Molecular dynamics integrator.
+/** \file
+ *  Molecular dynamics integrator.
  *
  *  For more information about the integrator
  *  see \ref integrate.hpp "integrate.hpp".
@@ -27,38 +28,37 @@
 
 #include "integrate.hpp"
 #include "accumulators.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
-#include "electrokinetics.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
-#include "ghmc.hpp"
+#include "event.hpp"
+#include "forces.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
-#include "interaction_data.hpp"
-#include "lattice.hpp"
-#include "lb.hpp"
-#include "maggs.hpp"
+#include "grid_based_algorithms/electrokinetics.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
+#include "immersed_boundaries.hpp"
 #include "minimize_energy.hpp"
-#include "nemd.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
-#include "p3m.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
 #include "rotation.hpp"
+#include "signalhandling.hpp"
 #include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
 #include "virtual_sites.hpp"
 
-#include "collision.hpp"
-#include "forces.hpp"
-#include "immersed_boundaries.hpp"
-#include "npt.hpp"
+#include <profiler/profiler.hpp>
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -94,6 +94,11 @@ double verlet_reuse = 0.0;
 double db_max_force = 0.0, db_max_vel = 0.0;
 int db_maxf_id = 0, db_maxv_id = 0;
 #endif
+
+bool set_py_interrupt = false;
+namespace {
+volatile std::sig_atomic_t ctrl_C = 0;
+}
 
 /** \name Private Functions */
 /************************************************************/
@@ -141,39 +146,11 @@ void integrator_npt_sanity_checks() {
     }
 
 #ifdef ELECTROSTATICS
-
-    switch (coulomb.method) {
-    case COULOMB_NONE:
-      break;
-    case COULOMB_DH:
-      break;
-    case COULOMB_RF:
-      break;
-#ifdef P3M
-    case COULOMB_P3M:
-      break;
-#endif /*P3M*/
-    default: {
-      runtimeErrorMsg()
-          << "npt only works with P3M, Debye-Huckel or reaction field";
-    }
-    }
+    Coulomb::integrate_sanity_check();
 #endif /*ELECTROSTATICS*/
 
 #ifdef DIPOLES
-
-    switch (coulomb.Dmethod) {
-    case DIPOLAR_NONE:
-      break;
-#ifdef DP3M
-    case DIPOLAR_P3M:
-      break;
-#endif /* DP3M */
-    default: {
-      runtimeErrorMsg()
-          << "NpT does not work with your dipolar method, please use P3M.";
-    }
-    }
+    Dipole::integrate_sanity_check();
 #endif /* ifdef DIPOLES */
   }
 }
@@ -208,6 +185,8 @@ void integrate_ensemble_init() {
 /************************************************************/
 
 void integrate_vv(int n_steps, int reuse_forces) {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+
   /* Prepare the Integrator */
   on_integration_start();
 
@@ -219,7 +198,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
-  if (check_runtime_errors())
+  if (check_runtime_errors(comm_cart))
     return;
 
   /* Verlet list criterion */
@@ -239,24 +218,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
       1: do not recalculate forces. Mostly when reading checkpoints with forces
    */
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
+    ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
     thermo_heat_up();
 
-#ifdef LB
-    transfer_momentum = 0;
-    if (lattice_switch & LATTICE_LB && this_node == 0 && n_part)
-      runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                     "included in the particle force the first time step. This "
-                     "only matters if it happens frequently during "
-                     "sampling.\n");
-#endif
-#ifdef LB_GPU
-    transfer_momentum_gpu = 0;
-    if (lattice_switch & LATTICE_LB_GPU && this_node == 0 && n_part)
-      runtimeWarning("Recalculating forces, so the LB coupling forces are not "
-                     "included in the particle force the first time step. This "
-                     "only matters if it happens frequently during "
-                     "sampling.\n");
-#endif
+    lb_lbcoupling_deactivate();
 
     // Communication step: distribute ghost positions
     cells_update_ghosts();
@@ -268,6 +233,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Langevin philox rng counter
+    if (n_steps > 0) {
+      langevin_rng_counter_increment();
+    }
+
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -283,14 +254,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
       handle_collisions();
     }
 #endif
+    ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
 
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    ghmc_init();
-#endif
-
-  if (check_runtime_errors())
+  if (check_runtime_errors(comm_cart))
     return;
 
   n_verlet_updates = 0;
@@ -300,7 +267,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
   /* Integration loop */
+  ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   for (int step = 0; step < n_steps; step++) {
+    ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
 #ifdef BOND_CONSTRAINT
@@ -309,31 +278,26 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #endif
 
-#ifdef GHMC
-    if (thermo_switch & THERMO_GHMC) {
-      if (step % ghmc_nmd == 0)
-        ghmc_momentum_update();
-    }
-#endif
-
     /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
        v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
        p(t + dt)   = p(t) + dt * v(t+0.5*dt)
        NOTE: Depending on the integration method Step 1 and Step 2
        cannot be combined for the translation.
     */
-    if (integ_switch == INTEG_METHOD_NPT_ISO
-#ifdef NEMD
-        || nemd_method != NEMD_METHOD_OFF
-#endif
-    ) {
+    if (integ_switch == INTEG_METHOD_NPT_ISO) {
       propagate_vel();
       propagate_pos();
+
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
       if (steepest_descent_step())
         break;
     } else {
       propagate_vel_pos();
+
+      /* Propagate time: t = t+dt */
+      sim_time += time_step;
     }
 
 #ifdef BOND_CONSTRAINT
@@ -346,22 +310,12 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
-
     /* Integration Step: Step 3 of Velocity Verlet scheme:
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
 
-#ifdef LB
-    transfer_momentum = (n_part > 0);
-#endif
-#ifdef LB_GPU
-    transfer_momentum_gpu = (n_part > 0);
-#endif
+    if (n_part > 0)
+      lb_lbcoupling_activate();
 
     // Communication step: distribute ghost positions
     cells_update_ghosts();
@@ -373,6 +327,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Propagate langevin philox rng counter
+    langevin_rng_counter_increment();
+
     force_calc();
 
 #ifdef VIRTUAL_SITES
@@ -402,64 +360,41 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-#ifdef LB
-      if (lattice_switch & LATTICE_LB)
-        lattice_boltzmann_update();
-
-      if (check_runtime_errors())
-        break;
-#endif
-
-#ifdef LB_GPU
-      if (this_node == 0) {
-#ifdef ELECTROKINETICS
-        if (ek_initialized) {
-          ek_integrate();
-        } else {
-#endif
-          if (lattice_switch & LATTICE_LB_GPU)
-            lattice_boltzmann_update_gpu();
-#ifdef ELECTROKINETICS
-        }
-#endif
-      }
-#endif // LB_GPU
+      lb_lbfluid_propagate();
+      lb_lbcoupling_propagate();
 
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation();
 #endif
     }
 
-#ifdef ELECTROSTATICS
-    if (coulomb.method == COULOMB_MAGGS) {
-      maggs_propagate_B_field(0.5 * time_step);
-    }
-#endif
-
 #ifdef NPT
     if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))
       nptiso.p_inst_av += nptiso.p_inst;
 #endif
 
-#ifdef GHMC
-    if (thermo_switch & THERMO_GHMC) {
-      if (step % ghmc_nmd == ghmc_nmd - 1)
-        ghmc_mc();
-    }
-#endif
-
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      /* Propagate time: t = t+dt */
-      sim_time += time_step;
-
 #ifdef COLLISION_DETECTION
       handle_collisions();
 #endif
     }
 
-    if (check_runtime_errors())
+    if (check_runtime_errors(comm_cart))
       break;
+
+    // Check if SIGINT has been caught.
+    if (ctrl_C == 1) {
+      // Reset the flag.
+      ctrl_C = 0;
+
+      // Set global to notify Python of signal.
+      set_py_interrupt = true;
+
+      // Break the integration loop
+      break;
+    }
   }
+  ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
   if (virtual_sites()->need_ghost_comm_before_vel_update()) {
@@ -489,22 +424,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
-
-#ifdef GHMC
-  if (thermo_switch & THERMO_GHMC)
-    ghmc_close();
-#endif
 }
 
 /************************************************************/
-
-void rescale_velocities(double scale) {
-  for (auto &p : local_cells.particles()) {
-    p.m.v[0] *= scale;
-    p.m.v[1] *= scale;
-    p.m.v[2] *= scale;
-  }
-}
 
 /* Private functions */
 /************************************************************/
@@ -662,7 +584,7 @@ void propagate_press_box_pos_and_rescale_npt() {
         }
       }
     }
-    MPI_Bcast(box_l, 3, MPI_DOUBLE, 0, comm_cart);
+    MPI_Bcast(box_l.data(), 3, MPI_DOUBLE, 0, comm_cart);
 
     /* fast box length update */
     grid_changed_box_l();
@@ -704,12 +626,6 @@ void propagate_vel() {
 #endif
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
-
-/* SPECIAL TASKS in particle loop */
-#ifdef NEMD
-        if (j == 0)
-          nemd_get_velocity(p);
-#endif
       }
 
       ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
@@ -721,12 +637,6 @@ void propagate_vel() {
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();
 #endif
-
-/* SPECIAL TASKS after velocity propagation */
-#ifdef NEMD
-  nemd_change_momentum();
-  nemd_store_velocity_profile();
-#endif
 }
 
 void propagate_pos() {
@@ -734,7 +644,7 @@ void propagate_pos() {
   if (integ_switch == INTEG_METHOD_NPT_ISO)
     /* Special propagator for NPT ISOTROPIC */
     /* Propagate pressure, box_length (2 times) and positions, rescale
-       positions and velocities and check verlet list criterion (only NPT) */
+       positions and velocities and check Verlet list criterion (only NPT) */
     propagate_press_box_pos_and_rescale_npt();
   else {
     for (auto &p : local_cells.particles()) {
@@ -747,22 +657,16 @@ void propagate_pos() {
         if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
         {
-#ifdef NEMD
-          /* change momentum of each particle in top and bottom slab */
-          if (j == 0)
-            nemd_add_velocity(&p);
-#endif
           /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
            * v(t+0.5*dt) */
           p.r.p[j] += time_step * p.m.v[j];
         }
       }
       /* Verlet criterion check */
-      if (distance2(p.r.p, p.l.p_old) > skin2)
+      if ((p.r.p - p.l.p_old).norm2() > skin2)
         set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
-  announce_resort_particles();
 }
 
 void propagate_vel_pos() {
@@ -812,8 +716,6 @@ void propagate_vel_pos() {
       set_resort_particles(Cells::RESORT_LOCAL);
   }
 
-  announce_resort_particles();
-
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();
 #endif
@@ -834,12 +736,11 @@ void force_and_velocity_display() {
 #endif
 }
 
-/** @TODO: This needs to go!! */
-
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
-  int reuse_forces = 0;
-  reuse_forces = reuse_forces_par;
-  INTEG_TRACE(fprintf(stderr, "%d: integrate:\n", this_node));
+  // Override the signal handler so that the integrator obeys Ctrl+C
+  SignalHandler sa(SIGINT, [](int) { ctrl_C = 1; });
+
+  int reuse_forces = reuse_forces_par;
 
   if (recalc_forces) {
     if (reuse_forces) {
@@ -865,22 +766,28 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
     mpi_bcast_parameter(FIELD_SKIN);
   }
 
-  /* perform integration */
-  if (!Accumulators::auto_update_enabled()) {
-    if (mpi_integrate(n_steps, reuse_forces))
+  using Accumulators::auto_update;
+  using Accumulators::auto_update_next_update;
+
+  for (int i = 0; i < n_steps;) {
+    /* Integrate to either the next accumulator update, or the
+     * end, depending on what comes first. */
+    auto const steps = std::min((n_steps - i), auto_update_next_update());
+    if (mpi_integrate(steps, reuse_forces))
       return ES_ERROR;
-  } else {
-    for (int i = 0; i < n_steps; i++) {
-      if (mpi_integrate(1, reuse_forces))
-        return ES_ERROR;
-      reuse_forces = 1;
-      Accumulators::auto_update();
-    }
-    if (n_steps == 0) {
-      if (mpi_integrate(0, reuse_forces))
-        return ES_ERROR;
-    }
+
+    reuse_forces = 1;
+
+    auto_update(steps);
+
+    i += steps;
   }
+
+  if (n_steps == 0) {
+    if (mpi_integrate(0, reuse_forces))
+      return ES_ERROR;
+  }
+
   return ES_OK;
 }
 
@@ -950,7 +857,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 #endif
 
 #ifdef DIPOLES
-  if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.Dprefactor > 0) {
+  if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
                          "use the the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;

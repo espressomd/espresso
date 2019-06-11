@@ -14,7 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" Visualization of the system cells and MPI domains.
+"""
+Visualization of the system cells and MPI domains.
 """
 
 import espressomd
@@ -27,8 +28,14 @@ espressomd.assert_features(required_features)
 box = [40, 30, 20]
 system = espressomd.System(box_l=box)
 system.set_random_state_PRNG()
-visualizer = openGLLive(system, window_size=[800, 800], background_color=[0, 0, 0], camera_position=[
-                        20, 15, 80], particle_coloring='node', draw_nodes=True, draw_cells=True)
+visualizer = openGLLive(
+    system,
+    window_size=[800, 800],
+    background_color=[0, 0, 0],
+    camera_position=[20, 15, 80],
+    particle_coloring='node',
+    draw_nodes=True,
+    draw_cells=True)
 
 system.time_step = 0.0005
 system.cell_system.set_domain_decomposition(use_verlet_lists=True)
@@ -53,6 +60,6 @@ print("Tune skin")
 system.cell_system.tune_skin(0.1, 4.0, 1e-1, 1000)
 print(system.cell_system.get_state())
 
-system.thermostat.set_langevin(kT=1, gamma=1)
+system.thermostat.set_langevin(kT=1, gamma=1, seed=42)
 
 visualizer.run(1)

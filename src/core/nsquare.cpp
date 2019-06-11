@@ -18,9 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file nsquare.cpp
+/** \file
  *
- *  Implementation of  \ref nsquare.hpp "nsquare.h".
+ *  Implementation of nsquare.hpp.
  */
 
 #include "nsquare.hpp"
@@ -28,14 +28,14 @@
 #include "constraints.hpp"
 #include "debug.hpp"
 #include "ghosts.hpp"
-#include "utils.hpp"
 
 #include <cstring>
 #include <mpi.h>
 
 Cell *local;
 
-Cell *nsq_position_to_cell(const double pos[3]) { return local; }
+Cell *nsq_position_to_cell(const Utils::Vector3d &pos) { return local; }
+int nsq_position_to_node(const Utils::Vector3d &) { return this_node; }
 
 void nsq_topology_release() {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_release:\n", this_node));
@@ -69,7 +69,7 @@ void nsq_topology_init(CellPList *old) {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
-  cell_structure.position_to_node = map_position_node_array;
+  cell_structure.position_to_node = nsq_position_to_node;
   cell_structure.position_to_cell = nsq_position_to_cell;
 
   realloc_cells(n_nodes);
@@ -156,18 +156,13 @@ void nsq_topology_init(CellPList *old) {
 void nsq_balance_particles(int global_flag) {
   int i, n, surplus, s_node, tmp, lack, l_node, transfer;
 
-  /* Refold positions in any case, this is always safe. */
-  for (auto &p : local_cells.particles()) {
-    fold_position(p.r.p, p.l.i);
-  }
-
   /* we don't have the concept of neighbors, and therefore don't need that.
      However, if global particle changes happen, we might want to rebalance. */
   if (global_flag != CELL_GLOBAL_EXCHANGE)
     return;
 
   int pp = cells_get_n_particles();
-  int *ppnode = (int *)Utils::malloc(n_nodes * sizeof(int));
+  auto *ppnode = (int *)Utils::malloc(n_nodes * sizeof(int));
   /* minimal difference between node shares */
   int minshare = n_part / n_nodes;
   int maxshare = minshare + 1;
@@ -231,9 +226,11 @@ void nsq_balance_particles(int global_flag) {
       update_local_particles(local);
 
       send_particles(&send_buf, l_node);
+
 #ifdef ADDITIONAL_CHECKS
       check_particle_consistency();
 #endif
+
     } else if (l_node == this_node) {
       ParticleList recv_buf{};
 
@@ -243,10 +240,6 @@ void nsq_balance_particles(int global_flag) {
       }
 
       realloc_particlelist(&recv_buf, 0);
-
-#ifdef ADDITIONAL_CHECKS
-      check_particle_consistency();
-#endif
     }
     ppnode[s_node] -= transfer;
     ppnode[l_node] += transfer;

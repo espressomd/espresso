@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file polynom.hpp
+/** \file
     Datatypes and functions for polynomials.
     Evaluation possible both as Taylor and Chebychev series. Note that the
    length of the double list is equal to the order of the polynomial plus 1, so
@@ -27,7 +27,7 @@
 #ifndef POLYNOM_H
 #define POLYNOM_H
 
-#include "utils/List.hpp"
+#include <utils/List.hpp>
 
 /** basically, a polynomial is just a list of coefficients */
 typedef DoubleList Polynom;

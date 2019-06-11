@@ -19,7 +19,7 @@
 #ifndef ESPRESSOSYSTEMINTERFACE_H
 #define ESPRESSOSYSTEMINTERFACE_H
 
-#include <stdio.h>
+#include <cstdio>
 
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
@@ -96,16 +96,16 @@ public:
     return m_needsQGpu;
   };
 
-  float *quatuGpuBegin() override { return m_quatu_gpu_begin; };
-  float *quatuGpuEnd() override { return m_quatu_gpu_end; };
-  bool hasQuatuGpu() override { return true; };
-  bool requestQuatuGpu() override {
-    m_needsQuatuGpu = hasQuatuGpu();
-    m_splitParticleStructGpu |= m_needsQuatuGpu;
-    m_gpu |= m_needsQuatuGpu;
+  float *directorGpuBegin() override { return m_director_gpu_begin; };
+  float *directorGpuEnd() override { return m_director_gpu_end; };
+  bool hasDirectorGpu() override { return true; };
+  bool requestDirectorGpu() override {
+    m_needsDirectorGpu = hasDirectorGpu();
+    m_splitParticleStructGpu |= m_needsDirectorGpu;
+    m_gpu |= m_needsDirectorGpu;
     if (m_gpu)
       enableParticleCommunication();
-    return m_needsQuatuGpu;
+    return m_needsDirectorGpu;
   };
 
   bool requestParticleStructGpu() {
@@ -149,7 +149,7 @@ public:
 
 #endif
 
-  Vector3d box() const override;
+  Utils::Vector3d box() const override;
 
   unsigned int npart_gpu() override {
 #ifdef CUDA
@@ -162,11 +162,13 @@ public:
 protected:
   static EspressoSystemInterface *m_instance;
   EspressoSystemInterface()
-      : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0),
-        m_dip_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),
-        m_q_gpu_end(0), m_quatu_gpu_begin(0), m_quatu_gpu_end(0),
-        m_needsParticleStructGpu(false), m_splitParticleStructGpu(false){};
-  virtual ~EspressoSystemInterface() {}
+      : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(nullptr),
+        m_r_gpu_end(nullptr), m_dip_gpu_begin(nullptr), m_dip_gpu_end(nullptr),
+        m_v_gpu_begin(nullptr), m_v_gpu_end(nullptr), m_q_gpu_begin(nullptr),
+        m_q_gpu_end(nullptr), m_director_gpu_begin(nullptr),
+        m_director_gpu_end(nullptr), m_needsParticleStructGpu(false),
+        m_splitParticleStructGpu(false){};
+  ~EspressoSystemInterface() override = default;
 
   void gatherParticles();
   void split_particle_struct();
@@ -199,8 +201,8 @@ protected:
   float *m_q_gpu_begin;
   float *m_q_gpu_end;
 
-  float *m_quatu_gpu_begin;
-  float *m_quatu_gpu_end;
+  float *m_director_gpu_begin;
+  float *m_director_gpu_end;
 
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;

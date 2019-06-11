@@ -24,16 +24,17 @@
 
 #include "ScriptInterface.hpp"
 #include "core/cluster_analysis/Cluster.hpp"
-#include "core/utils/Factory.hpp"
+
+#include <utils/Factory.hpp>
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {
 
 class Cluster : public AutoParameters<Cluster> {
 public:
-  Cluster(){};
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  Cluster() = default;
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
     if (method == "particle_ids") {
       return m_cluster->particles;
     }

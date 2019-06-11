@@ -21,9 +21,9 @@
 from __future__ import print_function, absolute_import
 
 from libcpp.vector cimport vector
-
-from libcpp.vector cimport vector
 from libcpp.pair cimport pair
+
+from .utils cimport Vector3i
 
 cdef extern from "communication.hpp":
     void mpi_bcast_cell_structure(int cs)
@@ -41,9 +41,6 @@ cdef extern from "cells.hpp":
 cdef extern from "layered.hpp":
     int determine_n_layers
     int n_layers_ "n_layers"
-
-cdef extern from "grid.hpp":
-    int node_grid[3]
 
 cdef extern from "tuning.hpp":
     cdef void c_tune_skin "tune_skin" (double min, double max, double tol, int steps)

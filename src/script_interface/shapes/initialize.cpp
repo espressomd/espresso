@@ -21,7 +21,6 @@
 #include "Cylinder.hpp"
 #include "Ellipsoid.hpp"
 #include "HollowCone.hpp"
-#include "Maze.hpp"
 #include "NoWhere.hpp"
 #include "Rhomboid.hpp"
 #include "ScriptInterface.hpp"
@@ -30,6 +29,7 @@
 #include "Sphere.hpp"
 #include "SpheroCylinder.hpp"
 #include "Stomatocyte.hpp"
+#include "Torus.hpp"
 #include "Wall.hpp"
 
 namespace ScriptInterface {
@@ -46,7 +46,6 @@ void initialize() {
       "Shapes::Cylinder");
   ScriptInterface::register_new<ScriptInterface::Shapes::SpheroCylinder>(
       "Shapes::SpheroCylinder");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Maze>("Shapes::Maze");
   ScriptInterface::register_new<ScriptInterface::Shapes::HollowCone>(
       "Shapes::HollowCone");
   ScriptInterface::register_new<ScriptInterface::Shapes::Rhomboid>(
@@ -57,6 +56,8 @@ void initialize() {
       "Shapes::Stomatocyte");
   ScriptInterface::register_new<ScriptInterface::Shapes::SimplePore>(
       "Shapes::SimplePore");
+  ScriptInterface::register_new<ScriptInterface::Shapes::Torus>(
+      "Shapes::Torus");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */
