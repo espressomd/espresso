@@ -20,6 +20,7 @@ from __future__ import print_function
 import espressomd
 import numpy
 import unittest as ut
+import unittest_decorators as utx
 import tests_common
 
 
@@ -62,8 +63,7 @@ class InteractionsNonBondedTest(ut.TestCase):
     #
 
     # Test Generic Lennard-Jones Potential
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES_GENERIC"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("LENNARD_JONES_GENERIC")
     def test_lj_generic(self):
 
         lj_eps = 2.12
@@ -77,11 +77,13 @@ class InteractionsNonBondedTest(ut.TestCase):
         lj_shift = -0.13
 
         self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
+            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off,
+            b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
 
         E_ref = tests_common.lj_generic_potential(
             r=numpy.arange(1, 232) * self.step_width, eps=lj_eps, sig=lj_sig,
-            cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
+            cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
+            e2=lj_e2, shift=lj_shift)
 
         for i in range(231):
             self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -93,9 +95,10 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * tests_common.lj_generic_force(espressomd,
-                                                               r=(i + 1) * self.step_width, eps=lj_eps,
-                                                               sig=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2)
+            f1_ref = self.axis * tests_common.lj_generic_force(
+                espressomd, r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
+                cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
+                e2=lj_e2)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref[i])
@@ -108,15 +111,13 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=0.)
 
     # Test WCA Potential
-    @ut.skipIf(not espressomd.has_features("WCA"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("WCA")
     def test_wca(self):
         wca_eps = 2.12
         wca_sig = 1.37
         wca_cutoff = wca_sig * 2.**(1. / 6.)
 
-        wca_shift = -((wca_sig / wca_cutoff)**12 - (
-            wca_sig / wca_cutoff)**6)
+        wca_shift = -((wca_sig / wca_cutoff)**12 - (wca_sig / wca_cutoff)**6)
 
         self.system.non_bonded_inter[0, 0].wca.set_params(epsilon=wca_eps,
                                                           sigma=wca_sig)
@@ -135,9 +136,9 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * tests_common.lj_generic_force(espressomd,
-                                                               r=(i + 1) * self.step_width, eps=wca_eps,
-                                                               sig=wca_sig, cutoff=wca_cutoff)
+            f1_ref = self.axis * tests_common.lj_generic_force(
+                espressomd, r=(i + 1) * self.step_width, eps=wca_eps,
+                sig=wca_sig, cutoff=wca_cutoff)
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref[i])
             # force equals minus the counter-force  ...
@@ -145,12 +146,10 @@ class InteractionsNonBondedTest(ut.TestCase):
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
-        self.system.non_bonded_inter[0, 0].wca.set_params(
-            epsilon=0., sigma=1.)
+        self.system.non_bonded_inter[0, 0].wca.set_params(epsilon=0., sigma=1.)
 
     # Test Generic Lennard-Jones Softcore Potential
-    @ut.skipIf(not espressomd.has_features("LJGEN_SOFTCORE"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("LJGEN_SOFTCORE")
     def test_lj_generic_softcore(self):
 
         lj_eps = 2.12
@@ -166,7 +165,9 @@ class InteractionsNonBondedTest(ut.TestCase):
         lj_lam = 0.34
 
         self.system.non_bonded_inter[0, 0].generic_lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
+            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, offset=lj_off,
+            b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift,
+            delta=lj_delta, lam=lj_lam)
 
         for i in range(231):
             self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -175,15 +176,17 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
             E_ref = tests_common.lj_generic_potential(
-                r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig, cutoff=lj_cut,
-                offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
+                r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
+                cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
+                e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * tests_common.lj_generic_force(espressomd,
-                                                               r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
-                                                               cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, delta=lj_delta, lam=lj_lam)
+            f1_ref = self.axis * tests_common.lj_generic_force(
+                espressomd, r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
+                cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
+                e2=lj_e2, delta=lj_delta, lam=lj_lam)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -196,8 +199,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             epsilon=0.)
 
     # Test Lennard-Jones Potential
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_lj(self):
 
         lj_eps = 1.92
@@ -215,7 +217,8 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
             E_ref = tests_common.lj_potential(
-                (i + 1) * self.step_width, lj_eps, lj_sig, lj_cut, shift=lj_shift)
+                (i + 1) * self.step_width, lj_eps, lj_sig, lj_cut,
+                shift=lj_shift)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
@@ -234,8 +237,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=0.)
 
     # Test Lennard-Jones Cosine Potential
-    @ut.skipIf(not espressomd.has_features("LJCOS"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("LJCOS")
     def test_lj_cos(self):
 
         ljcos_eps = 3.32
@@ -244,7 +246,8 @@ class InteractionsNonBondedTest(ut.TestCase):
         ljcos_offset = 0.223
 
         self.system.non_bonded_inter[0, 0].lennard_jones_cos.set_params(
-            epsilon=ljcos_eps, sigma=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset)
+            epsilon=ljcos_eps, sigma=ljcos_sig, cutoff=ljcos_cut,
+            offset=ljcos_offset)
 
         for i in range(175):
             self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -253,14 +256,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
             E_ref = tests_common.lj_cos_potential(
-                (i + 1) * self.step_width, eps=ljcos_eps, sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset)
+                (i + 1) * self.step_width, eps=ljcos_eps, sig=ljcos_sig,
+                cutoff=ljcos_cut, offset=ljcos_offset)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * tests_common.lj_cos_force(
-                espressomd, (i + 1) * self.step_width,
-                                                   eps=ljcos_eps, sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset)
+                espressomd, (i + 1) * self.step_width, eps=ljcos_eps,
+                sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -273,8 +277,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             0, 0].lennard_jones_cos.set_params(epsilon=0.)
 
     # Test Lennard-Jones Cosine^2 Potential
-    @ut.skipIf(not espressomd.has_features("LJCOS2"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("LJCOS2")
     def test_lj_cos2(self):
 
         ljcos2_eps = 0.31
@@ -283,7 +286,8 @@ class InteractionsNonBondedTest(ut.TestCase):
         ljcos2_offset = 0.321
 
         self.system.non_bonded_inter[0, 0].lennard_jones_cos2.set_params(
-            epsilon=ljcos2_eps, sigma=ljcos2_sig, offset=ljcos2_offset, width=ljcos2_width)
+            epsilon=ljcos2_eps, sigma=ljcos2_sig, offset=ljcos2_offset,
+            width=ljcos2_width)
 
         for i in range(267):
             self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -292,14 +296,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
             E_ref = tests_common.lj_cos2_potential(
-                (i + 1) * self.step_width, eps=ljcos2_eps, sig=ljcos2_sig, offset=ljcos2_offset, width=ljcos2_width)
+                (i + 1) * self.step_width, eps=ljcos2_eps, sig=ljcos2_sig,
+                offset=ljcos2_offset, width=ljcos2_width)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * \
-                tests_common.lj_cos2_force(espressomd,
-                                           r=(i + 1) * self.step_width, eps=ljcos2_eps, sig=ljcos2_sig, offset=ljcos2_offset, width=ljcos2_width)
+            f1_ref = self.axis * tests_common.lj_cos2_force(
+                espressomd, r=(i + 1) * self.step_width, eps=ljcos2_eps,
+                sig=ljcos2_sig, offset=ljcos2_offset, width=ljcos2_width)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -312,8 +317,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             0, 0].lennard_jones_cos2.set_params(epsilon=0.)
 
     # Test Smooth-step Potential
-    @ut.skipIf(not espressomd.has_features("SMOOTH_STEP"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("SMOOTH_STEP")
     def test_smooth_step(self):
 
         sst_eps = 4.92
@@ -324,7 +328,8 @@ class InteractionsNonBondedTest(ut.TestCase):
         sst_k0 = 2.13
 
         self.system.non_bonded_inter[0, 0].smooth_step.set_params(
-            eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
+            eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n,
+            k0=sst_k0)
 
         for i in range(126):
             self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -333,13 +338,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
             E_ref = tests_common.smooth_step_potential(
-                r=(i + 1) * self.step_width, eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
+                r=(i + 1) * self.step_width, eps=sst_eps, sig=sst_sig,
+                cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
             f1_ref = self.axis * tests_common.smooth_step_force(
-                r=(i + 1) * self.step_width, eps=sst_eps, sig=sst_sig, cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
+                r=(i + 1) * self.step_width, eps=sst_eps, sig=sst_sig,
+                cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -351,8 +358,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].smooth_step.set_params(d=0., eps=0.)
 
     # Test BMHTF Potential
-    @ut.skipIf(not espressomd.has_features("BMHTF_NACL"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("BMHTF_NACL")
     def test_bmhtf(self):
 
         bmhtf_a = 3.92
@@ -363,7 +369,8 @@ class InteractionsNonBondedTest(ut.TestCase):
         bmhtf_cut = 1.253
 
         self.system.non_bonded_inter[0, 0].bmhtf.set_params(
-            a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
+            a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig,
+            cutoff=bmhtf_cut)
 
         for i in range(126):
             self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -372,15 +379,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
             E_ref = tests_common.bmhtf_potential(
-                r=(i + 1) * self.step_width, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
+                r=(i + 1) * self.step_width, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c,
+                d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * \
-                tests_common.bmhtf_force(
-                    r=(i + 1) * self.step_width, a=bmhtf_a,
-                                 b=bmhtf_b, c=bmhtf_c, d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
+            f1_ref = self.axis * tests_common.bmhtf_force(
+                r=(i + 1) * self.step_width, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c,
+                d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -392,8 +399,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].bmhtf.set_params(a=0., c=0., d=0.)
 
     # Test Morse Potential
-    @ut.skipIf(not espressomd.has_features("MORSE"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("MORSE")
     def test_morse(self):
 
         m_eps = 1.92
@@ -411,15 +417,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
             E_ref = tests_common.morse_potential(
-                r=(i + 1) * self.step_width, eps=m_eps, alpha=m_alpha, cutoff=m_cut, rmin=m_rmin)
+                r=(i + 1) * self.step_width, eps=m_eps, alpha=m_alpha,
+                cutoff=m_cut, rmin=m_rmin)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * \
-                tests_common.morse_force(
-                    r=(i + 1) * self.step_width, eps=m_eps,
-                                 alpha=m_alpha, cutoff=m_cut, rmin=m_rmin)
+            f1_ref = self.axis * tests_common.morse_force(
+                r=(i + 1) * self.step_width, eps=m_eps, alpha=m_alpha,
+                cutoff=m_cut, rmin=m_rmin)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -431,8 +437,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].morse.set_params(eps=0.)
 
     # Test Buckingham Potential
-    @ut.skipIf(not espressomd.has_features("BUCKINGHAM"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("BUCKINGHAM")
     def test_buckingham(self):
 
         b_a = 3.71
@@ -446,7 +451,8 @@ class InteractionsNonBondedTest(ut.TestCase):
         b_f2 = 0.123
 
         self.system.non_bonded_inter[0, 0].buckingham.set_params(
-            a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift)
+            a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut,
+            shift=b_shift)
 
         for i in range(226):
             self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -455,14 +461,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
             E_ref = tests_common.buckingham_potential(
-                r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift)
+                r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d,
+                discont=b_disc, cutoff=b_cut, shift=b_shift)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * \
-                tests_common.buckingham_force(
-                    r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut, shift=b_shift)
+            f1_ref = self.axis * tests_common.buckingham_force(
+                r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d,
+                discont=b_disc, cutoff=b_cut, shift=b_shift)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -475,8 +482,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             0, 0].buckingham.set_params(a=0., c=0., d=0., shift=0.)
 
     # Test Soft-sphere Potential
-    @ut.skipIf(not espressomd.has_features("SOFT_SPHERE"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("SOFT_SPHERE")
     def test_soft_sphere(self):
         ss_a = 1.92
         ss_n = 3.03
@@ -495,14 +501,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate energies
             E_sim = self.system.analysis.energy()["non_bonded"]
             E_ref = tests_common.soft_sphere_potential(
-                r=(i + 13) * self.step_width, a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off)
+                r=(i + 13) * self.step_width, a=ss_a, n=ss_n, cutoff=ss_cut,
+                offset=ss_off)
 
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * \
-                tests_common.soft_sphere_force(
-                    r=(i + 13) * self.step_width, a=ss_a, n=ss_n, cutoff=ss_cut, offset=ss_off)
+            f1_ref = self.axis * tests_common.soft_sphere_force(
+                r=(i + 13) * self.step_width, a=ss_a, n=ss_n, cutoff=ss_cut,
+                offset=ss_off)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -514,8 +521,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].soft_sphere.set_params(a=0.)
 
     # Test Hertzian Potential
-    @ut.skipIf(not espressomd.has_features("HERTZIAN"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("HERTZIAN")
     def test_hertzian(self):
 
         h_eps = 6.92
@@ -536,9 +542,8 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * \
-                tests_common.hertzian_force(
-                    r=(i + 1) * self.step_width, eps=h_eps, sig=h_sig)
+            f1_ref = self.axis * tests_common.hertzian_force(
+                r=(i + 1) * self.step_width, eps=h_eps, sig=h_sig)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -550,8 +555,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.non_bonded_inter[0, 0].hertzian.set_params(eps=0.)
 
     # Test Gaussian Potential
-    @ut.skipIf(not espressomd.has_features("GAUSSIAN"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("GAUSSIAN")
     def test_gaussian(self):
 
         g_eps = 6.92
@@ -573,9 +577,8 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Calculate forces
             f0_sim = self.system.part[0].f
             f1_sim = self.system.part[1].f
-            f1_ref = self.axis * \
-                tests_common.gaussian_force(r=(i + 1) * self.step_width,
-                                            eps=g_eps, sig=g_sig, cutoff=g_cut)
+            f1_ref = self.axis * tests_common.gaussian_force(
+                r=(i + 1) * self.step_width, eps=g_eps, sig=g_sig, cutoff=g_cut)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
@@ -586,7 +589,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         self.system.non_bonded_inter[0, 0].gaussian.set_params(eps=0.)
 
-    @ut.skipIf(not espressomd.has_features("GAY_BERNE"), "skipped for lack of Gay Berne")
+    @utx.skipIfMissingFeatures("GAY_BERNE")
     def test_gb(self):
         k_1 = 1.2
         k_2 = 2.4
@@ -607,9 +610,13 @@ class InteractionsNonBondedTest(ut.TestCase):
         r = self.system.distance_vec(p1, p2)
 
         r_cut = r * cut / numpy.linalg.norm(r)
-        self.assertAlmostEqual(self.system.analysis.energy()["non_bonded"],
-                               tests_common.gay_berne_potential(r, p1.director, p2.director, epsilon_0, sigma_0, mu, nu, k_1, k_2) -
-                               tests_common.gay_berne_potential(r_cut, p1.director, p2.director, epsilon_0, sigma_0, mu, nu, k_1, k_2), delta=1E-14)
+        self.assertAlmostEqual(
+            self.system.analysis.energy()["non_bonded"],
+            tests_common.gay_berne_potential(r, p1.director, p2.director, epsilon_0, sigma_0, mu, nu, k_1, k_2) -
+            tests_common.gay_berne_potential(
+                r_cut, p1.director, p2.director, epsilon_0, sigma_0, mu, nu,
+                k_1, k_2),
+            delta=1E-14)
 
         self.system.integrator.run(0)
         self.system.non_bonded_inter[0, 0].gay_berne.set_params(
@@ -618,5 +625,4 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.assertEqual(self.system.analysis.energy()["non_bonded"], 0.0)
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()

@@ -60,7 +60,7 @@ It is also possible to pass a subset of the method parameters such as ``mesh``. 
     p3m = magnetostatics.DipolarP3M(prefactor=1, mesh=32, accuracy=1E-4)
     system.actors.add(p3m)
 
-It is important to note that the error estimates given in :cite:`cerda08a` used in the tuning contain assumptions about the system. In particular, a homogeneous system is assumed. If this is no longer the case during the simulation, actual force and torque errors can be significantly larger.
+It is important to note that the error estimates given in :cite:`cerda08d` used in the tuning contain assumptions about the system. In particular, a homogeneous system is assumed. If this is no longer the case during the simulation, actual force and torque errors can be significantly larger.
 
 .. _Dipolar Layer Correction (DLC):
 

@@ -209,10 +209,10 @@ if(WITH_CUDA)
 
         set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
-        set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g -G")
+        set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g")
         set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -DNDEBUG")
         set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -Os -DNDEBUG")
-        set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -G -O2")
+        set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -O2")
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
         list(APPEND CUDA_NVCC_FLAGS "-std=c++14")
         SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
@@ -388,7 +388,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     set(BOOST_MINIMUM_VERSION "1.66.0")
   endif()
 else()
-  set(BOOST_MINIMUM_VERSION "1.53.0")
+  set(BOOST_MINIMUM_VERSION "1.55.0")
 endif()
 
 # old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures

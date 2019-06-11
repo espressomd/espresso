@@ -19,17 +19,16 @@ import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
 import unittest as ut
-import numpy as np
+import unittest_decorators as utx
 
 
-@ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES"]),
-           "Features not available, skipping test.")
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 class LBBoundaryVelocityTest(ut.TestCase):
 
     """Test slip velocity of boundaries.
 
-       In this simple test add wall with a slip verlocity is
-       added and checkeckt if the fluid obtains the same velocity.
+       In this simple test, a wall with slip velocity is
+       added and the fluid is checked if it has the same velocity.
     """
 
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])

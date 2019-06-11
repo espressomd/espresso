@@ -298,8 +298,6 @@ void Correlator::initialize() {
     m_correlation_args[0] = m_correlation_args[0] * m_correlation_args[0];
     m_correlation_args[1] = m_correlation_args[1] * m_correlation_args[1];
     m_correlation_args[2] = m_correlation_args[2] * m_correlation_args[2];
-    fprintf(stderr, "args2: %f %f %f\n", m_correlation_args[0],
-            m_correlation_args[1], m_correlation_args[2]);
     if (dim_A % 3)
       throw std::runtime_error(init_errors[18]);
     m_dim_corr = dim_A / 3;
