@@ -1,0 +1,81 @@
+#
+# Copyright (C) 2013-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+import unittest as ut
+import unittest_decorators as utx
+import tests_common
+import espressomd
+import numpy as np
+
+if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC", "MMM1D_GPU"):
+    from espressomd.electrostatics import MMM1DGPU
+
+
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC", "MMM1D_GPU"])
+class ElectrostaticInteractionsTests(ut.TestCase):
+    # Handle to espresso system
+    system = espressomd.System(box_l=[10.0]*3)
+    system.periodicity = [0, 0, 1]
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
+    system.cell_system.set_n_square()
+    mmm1d = MMM1DGPU(prefactor=1.0, maxPWerror=1e-4, far_switch_radius=6, bessel_cutoff=3, tune=False)
+#    mmm1d = MMM1DGPU(prefactor=1.0, maxPWerror=1e-4)
+    
+    pid_target, pos_x_target, pos_y_target, pos_z_target, q_target, f_x_target, f_y_target, f_z_target =np.loadtxt("mmm1d_data.txt", unpack=True)
+    vec_f_target=np.stack((f_x_target, f_y_target, f_z_target), axis=-1)
+    energy_target= -7.156365298205383
+    num_particles=pid_target.shape[0]
+    allowed_error=1e-4
+    
+    def setUp(self):
+        for i in range(self.num_particles):
+            self.system.part.add(pos=[self.pos_x_target[i], self.pos_y_target[i], self.pos_z_target[i]],q=self.q_target[i])
+        self.system.actors.clear() #tear down previous actors
+        self.system.actors.add(self.mmm1d)
+        self.system.integrator.run(steps=0)
+
+    def test_forces(self):
+        measured_f=self.system.part[:].f
+        for i in range(self.num_particles):
+            for comp in range(3):
+                self.assertLess(abs(measured_f[i,comp]-self.vec_f_target[i,comp]),self.allowed_error, msg="Measured force has a deviation which is too big for particle " +str(i)+" in component " +str(comp))
+            
+        
+    def test_energy(self):
+        measured_el_energy=self.system.analysis.energy()["total"]-self.system.analysis.energy()["kinetic"]
+        self.assertLess(abs(measured_el_energy-self.energy_target),self.allowed_error, msg="Measured energy has a deviation which is too big compared to stored result")
+
+    def test_with_analytical_result(self):
+        self.system.part.clear()
+        self.system.part.add(pos=[0,0,0],q=1)
+        self.system.part.add(pos=[0,0,1],q=1)
+        self.system.integrator.run(steps=0)
+        f_measured=self.system.part[0].f
+        
+        energy_measured=self.system.analysis.energy()["total"]
+        target_energy_config=1.00242505606
+        
+        self.assertLess(abs(f_measured[0]-0),self.allowed_error, msg="Measured force has a deviation which is too big compared to analytical result")
+        self.assertLess(abs(f_measured[1]-0),self.allowed_error, msg="Measured force has a deviation which is too big compared to analytical result")
+        self.assertLess(abs(f_measured[2]+0.99510759),self.allowed_error, msg="Measured force has a deviation which is too big compared to analytical result")
+        self.assertLess(abs(energy_measured-target_energy_config),self.allowed_error, msg="Measured energy has a deviation which is too big compared to analytical result")
+        
+
+if __name__ == "__main__":
+    ut.main()
