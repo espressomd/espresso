@@ -31,7 +31,7 @@ class ElectrostaticInteractionsTests(object):
     system.cell_system.set_n_square()
 
     
-    pid_target, pos_x_target, pos_y_target, pos_z_target, q_target, f_x_target, f_y_target, f_z_target =np.loadtxt("./data/mmm1d_data.txt", unpack=True)
+    pid_target, pos_x_target, pos_y_target, pos_z_target, q_target, f_x_target, f_y_target, f_z_target =np.loadtxt(tests_common.abspath("data/mmm1d_data.txt"), unpack=True)
     vec_f_target=np.stack((f_x_target, f_y_target, f_z_target), axis=-1)
     energy_target= -7.156365298205383
     num_particles=pid_target.shape[0]
