@@ -253,7 +253,6 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
  */
 inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
-
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
   Utils::Vector3d force{};
   double torque1[3] = {0., 0., 0.};
