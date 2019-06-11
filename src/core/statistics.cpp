@@ -178,22 +178,25 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
 IntList nbhood(PartCfg &partCfg, double pt[3], double r,
                int const planedims[3]) {
   IntList ids;
-  Utils::Vector3d d;
 
-  auto const r2 = r * r;
-
-  for (auto const &p : partCfg) {
-    if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      d = get_mi_vector(pt, p.r.p);
-    } else {
-      /* Calculate the in plane distance */
-      for (int j = 0; j < 3; j++) {
-        d[j] = planedims[j] * (p.r.p[j] - pt[j]);
-      }
+  if (planedims[0] + planedims[1] + planedims[2] == 3) {
+    for(auto id : cells_find_nearby_particles({pt, pt + 3}, r)) {
+      ids.push_back(id);
     }
+  } else {
+    auto const r2 = r * r;
 
-    if (d.norm2() < r2) {
-      ids.push_back(p.p.identity);
+    for (auto const &p : partCfg) {
+      Utils::Vector3d d;
+
+      /* Calculate the in plane distance */
+        for (int j = 0; j < 3; j++) {
+          d[j] = planedims[j] * (p.r.p[j] - pt[j]);
+        }
+
+      if (d.norm2() < r2) {
+        ids.push_back(p.p.identity);
+      }
     }
   }
 

@@ -291,7 +291,8 @@ int cells_get_n_particles();
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
 std::pair<double, int> cells_find_closest_particle(Utils::Vector3d const &pos);
-
+std::vector<int> cells_find_nearby_particles(Utils::Vector3d const &pos,
+                                             double radius);
 /**
  * @brief Increase the local resort level at least to level.
  *
