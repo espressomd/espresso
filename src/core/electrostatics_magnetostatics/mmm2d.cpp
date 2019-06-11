@@ -252,7 +252,8 @@ static void setup_Q(int q, double omega, double fac);
 static void add_Q_force();
 static double Q_energy(double omega);
 /** p,q <> 0 per frequency code */
-static void setup_PQ(int p, int q, double omega, double fac);
+static void setup_PQ(int p, int q, double omega, double fac,
+                     const int n_localpart);
 static void add_PQ_force(int p, int q, double omega);
 static double PQ_energy(double omega);
 
@@ -615,8 +616,8 @@ static double z_energy(const ParticleRange &particles) {
   return eng;
 }
 
-static void setup(int p, double omega, double fac, int n_sccache,
-                  Utils::Span<const SCCache> sccache) {
+static void setup(int p, double omega, double fac,
+                  Utils::Span<const SCCache> sccache, const int n_localpart) {
   int np, c, i, ic, o = (p - 1) * n_localpart;
   Particle *part;
   double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
@@ -737,12 +738,12 @@ static void setup(int p, double omega, double fac, int n_sccache,
 /* PoQ exp sum */
 /*****************************************************************/
 static void setup_P(int p, double omega, double fac) {
-  setup(p, omega, fac, n_scxcache, scxcache);
+  setup(p, omega, fac, scxcache, n_localpart);
 }
 
 /* compare setup_P */
 static void setup_Q(int q, double omega, double fac) {
-  setup(q, omega, fac, n_scycache, scycache);
+  setup(q, omega, fac, scycache, n_localpart);
 }
 
 template <size_t dir> static void add_force() {
@@ -821,7 +822,8 @@ static double Q_energy(double omega) {
 /*****************************************************************/
 
 /* compare setup_P */
-static void setup_PQ(int p, int q, double omega, double fac) {
+static void setup_PQ(int p, int q, double omega, double fac,
+                     const int n_localpart) {
   int np, c, i, ic, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
   Particle *part;
   double pref = coulomb.prefactor * 8 * M_PI * ux * uy * fac * fac;
@@ -1077,7 +1079,7 @@ static void add_force_contribution(int p, int q,
   } else {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
     fac = exp(-omega * layer_h);
-    setup_PQ(p, q, omega, fac);
+    setup_PQ(p, q, omega, fac, n_localpart);
     if (mmm2d_params.dielectric_contrast_on)
       gather_image_contributions(4);
     else
@@ -1122,7 +1124,7 @@ static double energy_contribution(int p, int q,
   } else {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
     fac = exp(-omega * layer_h);
-    setup_PQ(p, q, omega, fac);
+    setup_PQ(p, q, omega, fac, n_localpart);
     if (mmm2d_params.dielectric_contrast_on)
       gather_image_contributions(4);
     else
