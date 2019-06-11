@@ -253,7 +253,7 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
  */
 inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
-
+  std::cout << "non bonded pair force add called " <<std::endl;
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
   Utils::Vector3d force{};
   double torque1[3] = {0., 0., 0.};
@@ -309,6 +309,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   /***********************************************/
 
 #ifdef ELECTROSTATICS
+  std::cout<< "calc coulomb pair force" <<std::endl;
   Coulomb::calc_pair_force(p1, p2, d, dist, force);
 #endif
 
