@@ -22,20 +22,14 @@ import tests_common
 import espressomd
 import numpy as np
 
-if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
-    from espressomd.electrostatics import MMM1D
-
-
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
-class ElectrostaticInteractionsTests(ut.TestCase):
+class ElectrostaticInteractionsTests(object):
     # Handle to espresso system
     system = espressomd.System(box_l=[10.0]*3)
     system.periodicity = [0, 0, 1]
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     system.cell_system.set_n_square()
-    mmm1d = MMM1D(prefactor=1.0, maxPWerror=1e-4, far_switch_radius=6, bessel_cutoff=3, tune=False)
-#    mmm1d = MMM1D(prefactor=1.0, maxPWerror=1e-4)
+
     
     pid_target, pos_x_target, pos_y_target, pos_z_target, q_target, f_x_target, f_y_target, f_z_target =np.loadtxt("mmm1d_data.txt", unpack=True)
     vec_f_target=np.stack((f_x_target, f_y_target, f_z_target), axis=-1)
@@ -46,9 +40,12 @@ class ElectrostaticInteractionsTests(ut.TestCase):
     def setUp(self):
         for i in range(self.num_particles):
             self.system.part.add(pos=[self.pos_x_target[i], self.pos_y_target[i], self.pos_z_target[i]],q=self.q_target[i])
-        self.system.actors.clear() #tear down previous actors
         self.system.actors.add(self.mmm1d)
         self.system.integrator.run(steps=0)
+
+    def tearDown(self):
+        self.system.part.clear()
+        self.system.actors.clear() #tear down previous actors
 
     def test_forces(self):
         measured_f=self.system.part[:].f
@@ -76,6 +73,17 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         self.assertLess(abs(f_measured[2]+0.99510759),self.allowed_error, msg="Measured force has a deviation which is too big compared to analytical result")
         self.assertLess(abs(energy_measured-target_energy_config),self.allowed_error, msg="Measured energy has a deviation which is too big compared to analytical result")
         
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC", "MMM1D_GPU"])
+class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
+    from espressomd.electrostatics import MMM1DGPU
+    mmm1d = MMM1DGPU(prefactor=1.0, maxPWerror=1e-4, far_switch_radius=6, bessel_cutoff=3, tune=False)
+#    mmm1d = MMM1DGPU(prefactor=1.0, maxPWerror=1e-4)    
+
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
+class MMM1D_Test(ElectrostaticInteractionsTests, ut.TestCase):
+    from espressomd.electrostatics import MMM1D
+    mmm1d = MMM1D(prefactor=1.0, maxPWerror=1e-4, far_switch_radius=6, bessel_cutoff=3, tune=False)
+#    mmm1d = MMM1D(prefactor=1.0, maxPWerror=1e-4)
 
 if __name__ == "__main__":
     ut.main()
