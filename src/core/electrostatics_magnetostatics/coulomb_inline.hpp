@@ -29,7 +29,6 @@ inline Utils::Vector3d central_force(double const q1q2, const double *d,
     break;
 #endif
   case COULOMB_MMM1D:
-    std::cout<<"mmm1d pair forces add called" << std::endl;
     add_mmm1d_coulomb_pair_force(q1q2, d, dist, f.data());
     break;
   case COULOMB_MMM2D:

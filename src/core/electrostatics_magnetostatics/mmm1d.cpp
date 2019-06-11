@@ -42,7 +42,6 @@
 using Utils::strcat_alloc;
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
-#include <iostream>
 
 /** How many trial calculations */
 #define TEST_INTEGRATIONS 1000
@@ -183,7 +182,6 @@ void MMM1D_init() {
 
 void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
                                   double force[3]) {
-  std::cout << "added mmm1d pair forces" << std::endl;
   int dim;
   double F[3];
   double rxy2, rxy2_d, z_d;

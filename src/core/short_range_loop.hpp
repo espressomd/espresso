@@ -112,7 +112,6 @@ void short_range_loop(ParticleKernel &&particle_kernel,
 
 #ifdef ELECTROSTATICS
   auto const coulomb_cutoff = Coulomb::cutoff(box_l);
-  std::cout<< "shortrange loop cutoff "<< coulomb_cutoff<< std::endl;
 #else
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
