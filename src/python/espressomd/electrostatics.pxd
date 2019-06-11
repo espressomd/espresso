@@ -23,7 +23,7 @@ include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
 from espressomd.utils cimport *
-from espressomd.utils import is_valid_type
+from espressomd.utils import is_valid_type, to_str
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -135,7 +135,7 @@ IF ELECTROSTATICS:
             response = p3m_adaptive_tune(& log)
             handle_errors("Error in p3m_adaptive_tune")
             if log.strip():
-                print(log)
+                print(to_str(log))
             return response
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
@@ -224,9 +224,9 @@ IF ELECTROSTATICS:
         if MMM1D_sanity_checks() == 1:
             handle_errors(
                 "MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
-        resp = mmm1d_tune( & log)
+        resp = mmm1d_tune(& log)
         if resp:
-            print(log)
+            print(to_str(log))
         return resp
 
 IF ELECTROSTATICS:

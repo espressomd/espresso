@@ -28,7 +28,7 @@ IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
 from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type
+from espressomd.utils import is_valid_type, to_str
 from . cimport checks
 from .c_analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
@@ -66,7 +66,7 @@ IF ELECTROSTATICS == 1:
 
         def _deactivate_method(self):
             deactivate_method()
-            handle_errors("Coulom method deactivation")
+            handle_errors("Coulomb method deactivation")
 
         def tune(self, **tune_params_subset):
             if tune_params_subset is not None:
