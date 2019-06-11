@@ -115,10 +115,6 @@ int MMM2D_sanity_checks();
 /// initialize the MMM2D constants
 void MMM2D_init();
 
-/** if the number of particles has changed (even per node),
-    the particle buffers for the coefficients have to be resized. */
-void MMM2D_on_resort_particles(const ParticleRange &particles);
-
 /** energy contribution from dielectric layers */
 double MMM2D_dielectric_layers_energy_contribution();
 

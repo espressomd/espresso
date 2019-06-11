@@ -127,9 +127,6 @@ static double ux, ux2, uy, uy2, uz;
 static double max_near, min_far;
 /*@}*/
 
-///
-static double self_energy;
-
 MMM2D_struct mmm2d_params = {1e100, 10, 1, false, false, false, 0, 1, 1, 1};
 
 /** return codes for \ref MMM2D_tune_near and \ref MMM2D_tune_far */
@@ -232,8 +229,8 @@ double MMM2D_self_energy(const ParticleRange &particles);
 /*@{*/
 
 /** sin/cos storage */
-static void prepare_scx_cache();
-static void prepare_scy_cache();
+static void prepare_scx_cache(const ParticleRange &particles);
+static void prepare_scy_cache(const ParticleRange &particles);
 /** clear the image contributions if there is no dielectric contrast and no
  * image charges */
 static void clear_image_contributions(int size);
@@ -310,11 +307,13 @@ static SCCache sc(double arg) { return {sin(arg), cos(arg)}; }
 
 template <size_t dir>
 static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
-                             int n_sccache) {
-  for (int freq = 1; freq <= n_sccache; freq++) {
-    auto const o = sccache.begin() + (freq - 1) * n_localpart;
+                             int n_sccache, const ParticleRange &particles) {
+  sccache.resize(n_sccache * particles.size());
 
-    boost::transform(local_cells.particles(), o,
+  for (int freq = 1; freq <= n_sccache; freq++) {
+    auto const o = sccache.begin() + (freq - 1) * particles.size();
+
+    boost::transform(particles, o,
         [pref = C_2PI * u * freq](const Particle &p) {
           auto const arg = pref * p.r.p[dir];
           return sc(arg);
@@ -322,12 +321,12 @@ static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
   }
 }
 
-static void prepare_scx_cache() {
-  prepare_sc_cache<0>(scxcache, ux, n_scxcache);
+static void prepare_scx_cache(const ParticleRange &particles) {
+  prepare_sc_cache<0>(scxcache, ux, n_scxcache, particles);
 }
 
-static void prepare_scy_cache() {
-  prepare_sc_cache<1>(scycache, uy, n_scycache);
+static void prepare_scy_cache(const ParticleRange &particles) {
+  prepare_sc_cache<1>(scycache, uy, n_scycache, particles);
 }
 
 /*****************************************************************/
@@ -1138,6 +1137,14 @@ double MMM2D_add_far(int f, int e, const ParticleRange &particles) {
   int p, q;
   double R, dR, q2;
 
+  n_localpart = cells_get_n_particles();
+  n_scxcache = (int)(ceil(mmm2d_params.far_cut / ux) + 1);
+  n_scycache = (int)(ceil(mmm2d_params.far_cut / uy) + 1);
+
+  partblk.resize(n_localpart * 8);
+  lclcblk.resize(cells.size() * 8);
+  gblcblk.resize(n_layers * 8);
+
   // It's not really far...
   auto eng = e ? MMM2D_self_energy(local_cells.particles()) : 0;
 
@@ -1146,8 +1153,8 @@ double MMM2D_add_far(int f, int e, const ParticleRange &particles) {
 
   auto undone = std::vector<int>(n_scxcache + 1);
 
-  prepare_scx_cache();
-  prepare_scy_cache();
+  prepare_scx_cache(local_cells.particles());
+  prepare_scy_cache(local_cells.particles());
 
   /* complicated loop. We work through the p,q vectors in rings
      from outside to inside to avoid problems with cancellation */
@@ -1730,22 +1737,6 @@ void MMM2D_init() {
       }
     }
   }
-}
-
-void MMM2D_on_resort_particles(const ParticleRange &particles) {
-  /* if we need MMM2D far formula, allocate caches */
-  if (cell_structure.type == CELL_STRUCTURE_LAYERED) {
-    n_localpart = cells_get_n_particles();
-    n_scxcache = (int)(ceil(mmm2d_params.far_cut / ux) + 1);
-    n_scycache = (int)(ceil(mmm2d_params.far_cut / uy) + 1);
-    scxcache.resize(n_scxcache * n_localpart);
-    scycache.resize(n_scycache * n_localpart);
-
-    partblk.resize(n_localpart * 8);
-    lclcblk.resize(cells.size() * 8);
-    gblcblk.resize(n_layers * 8);
-  }
-  MMM2D_self_energy(particles);
 }
 
 void MMM2D_dielectric_layers_force_contribution() {
