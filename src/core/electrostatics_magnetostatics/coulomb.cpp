@@ -225,9 +225,6 @@ void on_resort_particles() {
     ELC_on_resort_particles();
     break;
 #endif
-  case COULOMB_MMM2D:
-    MMM2D_on_resort_particles();
-    break;
   default:
     break;
   }
