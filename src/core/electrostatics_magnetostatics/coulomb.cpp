@@ -118,6 +118,10 @@ double cutoff(const Utils::Vector3d &box_l) {
     return dh_params.r_cut;
   case COULOMB_RF:
     return rf_params.r_cut;
+  case COULOMB_MMM1D:
+    return std::sqrt(mmm1d_params.far_switch_radius_2);
+  case COULOMB_MMM1D_GPU:
+    return //XXX far_switch_radius needs to be fixed!
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     return Scafacos::get_r_cut();

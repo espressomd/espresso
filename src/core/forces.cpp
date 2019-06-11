@@ -116,8 +116,6 @@ void force_calc() {
   calc_long_range_forces();
 
   // Only calculate pair forces if the maximum cutoff is >0
-  //XXX YYY ZZZ max_cut is 0 in mmm1d, therefore  add_non_bonded_pair_force is not called and therefore Coulomb::calc_pair_force is not called
-    max_cut=1;
   if (max_cut > 0) {
     short_range_loop([](Particle &p) { add_single_particle_force(&p); },
                      [](Particle &p1, Particle &p2, Distance &d) {
