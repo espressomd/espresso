@@ -42,7 +42,7 @@ class CommonTests(ut.TestCase):
     # positions are folded in the core when writing out and we cannot directly
     # compare positions in the dataset and where particles were set. One would
     # need to unfold the positions of the hdf5 file.
-    system.box_l = [npart, npart, npart]
+    system.box_l = 3 * [npart]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     written_pos = None
@@ -51,9 +51,7 @@ class CommonTests(ut.TestCase):
 
     types_to_write = None
     for i in range(npart):
-        system.part.add(id=i, pos=np.array([float(i),
-                                            float(i),
-                                            float(i)]),
+        system.part.add(id=i, pos=np.array(3 * [i], dtype=float),
                         v=np.array([1.0, 2.0, 3.0]), type=1 + (-1)**i)
 
     system.bonded_inter.add(interactions.FeneBond(k=1., d_r_max=10.0))
@@ -164,13 +162,12 @@ class VCFTestType(CommonTests):
                 usecols=[1])  # just the second bonded member
             fp.seek(0)
             cls.written_atoms = np.loadtxt(
-                fp, skiprows=1, comments="b", usecols=[
-                    1, 7])  # just the part_ID and type_ID
+                fp, skiprows=1, comments="b",
+                usecols=[1, 7])  # just the part_ID and type_ID
 
 
 if __name__ == "__main__":
     suite = ut.TestLoader().loadTestsFromTestCase(VCFTestAll)
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(VCFTestType))
-
     result = ut.TextTestRunner(verbosity=4).run(suite)
     sys.exit(not result.wasSuccessful())

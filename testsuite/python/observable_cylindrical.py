@@ -19,7 +19,6 @@ import numpy as np
 import unittest as ut
 import espressomd
 import espressomd.observables
-from espressomd import utils
 import tests_common
 
 
@@ -87,24 +86,16 @@ class TestCylindricalObservable(ut.TestCase):
         self.v_phi = 2.5
         self.v_z = 1.5
         for i in range(len(self.params['ids'])):
-            position = np.array([a *
-                                 np.cos(i *
-                                        2.0 *
-                                        np.pi /
-                                        (len(self.params['ids']) +
-                                         1)), b *
-                                 np.sin(i *
-                                        2.0 *
-                                        np.pi /
-                                        (len(self.params['ids']) +
-                                         1)), i *
-                                 (self.params['max_z'] - self.params['min_z']) /
-                                 (len(self.params['ids']) +
-                                     1) - self.params['center'][2]])
-            v_y = (position[0] * np.sqrt(position[0]**2.0 + position[1]**2.0) *
-                   self.v_phi + position[1] * self.v_r) / np.sqrt(position[0]**2.0 + position[1]**2.0)
-            v_x = (self.v_r * np.sqrt(position[0]**2.0 + position[1] **
-                                      2.0) - position[1] * v_y) / position[0]
+            position = np.array(
+                [a * np.cos(i * 2.0 * np.pi / (len(self.params['ids']) + 1)),
+                 b * np.sin(i * 2.0 * np.pi / (len(self.params['ids']) + 1)),
+                 i * (self.params['max_z'] - self.params['min_z']) /
+                 (len(self.params['ids']) + 1) - self.params['center'][2]])
+            v_y = (position[0] * np.sqrt(position[0]**2 + position[1]**2) *
+                   self.v_phi + position[1] * self.v_r) / np.sqrt(
+                position[0]**2 + position[1]**2)
+            v_x = (self.v_r * np.sqrt(position[0]**2 + position[1]**2)
+                   - position[1] * v_y) / position[0]
             velocity = np.array([v_x, v_y, self.v_z])
             velocity = self.swap_axis(velocity, self.params['axis'])
             position = self.swap_axis(position, self.params['axis'])
@@ -114,13 +105,13 @@ class TestCylindricalObservable(ut.TestCase):
     def calculate_numpy_histogram(self):
         pol_positions = self.pol_coords()
         np_hist, _ = np.histogramdd(
-            pol_positions, bins=(
-                self.params[
-                    'n_r_bins'], self.params['n_phi_bins'], self.params['n_z_bins']),
-                                    range=[(
-                                        self.params[
-                                            'min_r'], self.params['max_r']), (self.params['min_phi'], self.params['max_phi']),
-                                           (self.params['min_z'], self.params['max_z'])])
+            pol_positions,
+            bins=(self.params['n_r_bins'],
+                  self.params['n_phi_bins'],
+                  self.params['n_z_bins']),
+            range=[(self.params['min_r'], self.params['max_r']),
+                   (self.params['min_phi'], self.params['max_phi']),
+                   (self.params['min_z'], self.params['max_z'])])
         return np_hist
 
     def normalize_with_bin_volume(self, histogram):
@@ -149,8 +140,7 @@ class TestCylindricalObservable(ut.TestCase):
         else:
             local_params['axis'] = [0.0, 0.0, 1.0]
         obs = espressomd.observables.CylindricalDensityProfile(**local_params)
-        core_hist = np.array(
-            obs.calculate()).reshape(
+        core_hist = np.array(obs.calculate()).reshape(
             self.params['n_r_bins'],
             self.params['n_phi_bins'],
             self.params['n_z_bins'])
@@ -170,8 +160,7 @@ class TestCylindricalObservable(ut.TestCase):
         else:
             local_params['axis'] = [0.0, 0.0, 1.0]
         obs = espressomd.observables.CylindricalVelocityProfile(**local_params)
-        core_hist = np.array(
-            obs.calculate()).reshape(
+        core_hist = np.array(obs.calculate()).reshape(
             self.params['n_r_bins'],
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
@@ -201,8 +190,7 @@ class TestCylindricalObservable(ut.TestCase):
             local_params['axis'] = [0.0, 0.0, 1.0]
         obs = espressomd.observables.CylindricalFluxDensityProfile(
             **local_params)
-        core_hist = np.array(
-            obs.calculate()).reshape(
+        core_hist = np.array(obs.calculate()).reshape(
             self.params['n_r_bins'],
             self.params['n_phi_bins'],
             self.params['n_z_bins'],
