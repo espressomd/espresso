@@ -38,14 +38,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DPD
 #define METADYNAMICS
 
-#define LB
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
 #define ENGINE
 
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
@@ -67,13 +65,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define INTER_RF
 #define OVERLAPPED
 #define WCA
-
-#ifdef P3M
 #define THOLE
-#endif
 
 #define EXPERIMENTAL_FEATURES
 

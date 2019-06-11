@@ -41,7 +41,6 @@ IF DIPOLES == 1:
 
         def validate_params(self):
             """Check validity of given parameters.
-
             """
             if not self._params["prefactor"] >= 0:
                 raise ValueError("prefactor should be a positive float")
@@ -51,7 +50,7 @@ IF DIPOLES == 1:
             Set the magnetostatics prefactor
 
             """
-            if dipolar_set_Dprefactor(self._params["prefactor"]):
+            if set_Dprefactor(self._params["prefactor"]):
                     raise Exception(
                         "Could not set magnetostatic prefactor")
             # also necessary on 1 CPU or GPU, does more than just broadcasting
@@ -62,11 +61,11 @@ IF DIPOLES == 1:
             return self._params
 
         def _get_active_method_from_es_core(self):
-            return coulomb.Dmethod
+            return dipole.method
 
         def _deactivate_method(self):
-            dipolar_set_Dprefactor(0.0)
-            coulomb.Dmethod = DIPOLAR_NONE
+            set_Dprefactor(0.0)
+            dipole.method = DIPOLAR_NONE
             mpi_bcast_coulomb_params()
 
 IF DP3M == 1:
@@ -85,7 +84,7 @@ IF DP3M == 1:
               Charge-assignment order, an integer between -1 and 7.
         mesh : :obj:`int` or array_like
                Number of mesh points.
-        mesh_off : array_like
+        mesh_off : array_like :obj:`float`
                    Mesh offset.
         r_cut : :obj:`float`
                 Real space cutoff.
@@ -149,11 +148,11 @@ IF DP3M == 1:
                     "epsilon": 0.0,
                     "mesh_off": [-1, -1, -1],
                     "tune": True}
-        
+
         def _get_params_from_es_core(self):
             params = {}
             params.update(dp3m.params)
-            params["prefactor"] = coulomb.Dprefactor
+            params["prefactor"] = dipole.prefactor
             params["tune"] = self._params["tune"]
             return params
 
@@ -183,7 +182,7 @@ IF DP3M == 1:
 
             self._set_params_in_es_core()
             mpi_bcast_coulomb_params()
-        
+
         def _deactivate_method(self):
             dp3m_deactivate()
             super(type(self), self)._deactivate_method()
@@ -262,7 +261,7 @@ IF DIPOLES == 1:
             return ("prefactor",)
 
         def _get_params_from_es_core(self):
-            return {"prefactor": coulomb.Dprefactor}
+            return {"prefactor": dipole.prefactor}
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -299,7 +298,7 @@ IF DIPOLES == 1:
             return ("prefactor", "n_replica")
 
         def _get_params_from_es_core(self):
-            return {"prefactor": coulomb.Dprefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
+            return {"prefactor": dipole.prefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -333,11 +332,11 @@ IF DIPOLES == 1:
                 Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
-                dipolar_set_Dprefactor(self._params["prefactor"])
+                set_Dprefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
 
             def _deactivate_method(self):
-                coulomb.Dmethod = DIPOLAR_NONE
+                dipole.method = DIPOLAR_NONE
                 scafacos.free_handle()
                 mpi_bcast_coulomb_params()
 
@@ -370,7 +369,7 @@ IF DIPOLES == 1:
                 return ("prefactor",)
 
             def _get_params_from_es_core(self):
-                return {"prefactor": coulomb.Dprefactor}
+                return {"prefactor": dipole.prefactor}
 
             def _activate_method(self):
                 self._set_params_in_es_core()
@@ -401,7 +400,7 @@ IF DIPOLES == 1:
                 return ("prefactor", "epssq", "itolsq")
 
             def _get_params_from_es_core(self):
-                return {"prefactor": coulomb.Dprefactor}
+                return {"prefactor": dipole.prefactor}
 
             def _activate_method(self):
                 self._set_params_in_es_core()

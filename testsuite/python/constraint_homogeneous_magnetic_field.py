@@ -17,17 +17,17 @@
 from __future__ import division, print_function
 
 import unittest as ut
+import unittest_decorators as utx
+import numpy as np
 
 import espressomd
-import numpy
-import sys
 
 
 class HomogeneousMagneticFieldTest(ut.TestCase):
 
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
     S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
-    numpy.random.seed(S.seed)
+    np.random.seed(S.seed)
 
     def setUp(self):
         self.S.box_l = [3.0, 3.0, 3.0]
@@ -38,24 +38,25 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
         self.S.constraints.clear()
 
     def test_setter_and_getter(self):
-        H_field1 = [0.0, 1.0, 0.0]
-        H_field2 = [3.533, 5.842, 0.127]
+        H_field1 = np.array([0.0, 1.0, 0.0])
+        H_field2 = np.array([3.533, 5.842, 0.127])
 
         H_constraint = espressomd.constraints.HomogeneousMagneticField(
             H=H_field1)
-        self.assertEqual(H_constraint.H, H_field1)
+
+        np.testing.assert_almost_equal(np.copy(H_constraint.H), H_field1)
 
         H_constraint.H = H_field2
-        for i in range(3):
-            self.assertAlmostEqual(H_constraint.H[i], H_field2[i])
+        np.testing.assert_almost_equal(np.copy(H_constraint.H), H_field2)
 
     def test_default_value(self):
-        H_field_default = [1.0, 0.0, 0.0]  # defined in C++ core
+        H_field_default = np.array([1.0, 0.0, 0.0])
         H_constraint = espressomd.constraints.HomogeneousMagneticField()
-        self.assertEqual(H_constraint.H, H_field_default)
+        np.testing.assert_almost_equal(
+            np.copy(H_constraint.H),
+            H_field_default)
 
-    @ut.skipIf(not espressomd.has_features(["DIPOLES"]),
-               "Features DIPOLES not available, skipping test!")
+    @utx.skipIfMissingFeatures(["DIPOLES"])
     def test_add_energy_and_forces(self):
         H_field = [5.0, 3.0, 2.0]
         dip_mom0 = [2.0, 6.0, 1.]
@@ -74,17 +75,17 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
         # check dipolar energy when adding dipole moments
         self.S.part.add(id=0, pos=[0, 0, 0], dip=dip_mom0, rotation=(1, 1, 1))
         self.assertEqual(self.S.analysis.energy()["dipolar"],
-                         -1.0 * numpy.dot(H_field, dip_mom0))
+                         -1.0 * np.dot(H_field, dip_mom0))
         self.S.part.add(id=1, pos=[1, 1, 1], dip=dip_mom1, rotation=(1, 1, 1))
         self.assertEqual(self.S.analysis.energy()["dipolar"],
-                         (-1.0 * numpy.dot(H_field, dip_mom0)
-                          - 1.0 * numpy.dot(H_field, dip_mom1)))
+                         (-1.0 * np.dot(H_field, dip_mom0)
+                          - 1.0 * np.dot(H_field, dip_mom1)))
 
         if espressomd.has_features(["ROTATION"]):
             # check that running the integrator leads to expected torques
             self.S.integrator.run(0)
-            torque_expected0 = numpy.cross(dip_mom0, H_field)
-            torque_expected1 = numpy.cross(dip_mom1, H_field)
+            torque_expected0 = np.cross(dip_mom0, H_field)
+            torque_expected1 = np.cross(dip_mom1, H_field)
             for i in range(3):
                 self.assertAlmostEqual(
                     self.S.part[0].torque_lab[i],
@@ -97,5 +98,4 @@ class HomogeneousMagneticFieldTest(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

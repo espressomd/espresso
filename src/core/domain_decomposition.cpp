@@ -31,26 +31,18 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "serialization/ParticleList.hpp"
-#include "utils/mpi/sendrecv.hpp"
+#include <utils/index.hpp>
+#include <utils/mpi/sendrecv.hpp>
+using Utils::get_linear_index;
 
-#include "initialize.hpp"
+#include "event.hpp"
 
 #include <boost/mpi/collectives.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
-Cell *dd_save_position_to_cell(const Vector3d &pos);
-
-/************************************************/
-/** \name Defines */
-/************************************************/
-/*@{*/
-
-/** half the number of cell neighbors in 3 Dimensions. */
-#define CELLS_MAX_NEIGHBORS 14
-
-/*@}*/
+Cell *dd_save_position_to_cell(const Utils::Vector3d &pos);
 
 /************************************************/
 /** \name Variables */
@@ -69,30 +61,6 @@ double max_skin = 0.0;
 /** \name Private Functions */
 /************************************************************/
 /*@{*/
-
-/** Convenient replace for loops over all cells. */
-#define DD_CELLS_LOOP(m, n, o)                                                 \
-  for (o = 0; o < dd.ghost_cell_grid[2]; o++)                                  \
-    for (n = 0; n < dd.ghost_cell_grid[1]; n++)                                \
-      for (m = 0; m < dd.ghost_cell_grid[0]; m++)
-
-/** Convenient replace for loops over Local cells. */
-#define DD_LOCAL_CELLS_LOOP(m, n, o)                                           \
-  for (o = 1; o < dd.cell_grid[2] + 1; o++)                                    \
-    for (n = 1; n < dd.cell_grid[1] + 1; n++)                                  \
-      for (m = 1; m < dd.cell_grid[0] + 1; m++)
-
-/** Convenient replace for inner cell check. usage: if(DD_IS_LOCAL_CELL(m,n,o))
- * {...} */
-#define DD_IS_LOCAL_CELL(m, n, o)                                              \
-  (m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&                          \
-   n < dd.ghost_cell_grid[1] - 1 && o > 0 && o < dd.ghost_cell_grid[2] - 1)
-
-/** Convenient replace for ghost cell check. usage: if(DD_IS_GHOST_CELL(m,n,o))
- * {...} */
-#define DD_IS_GHOST_CELL(m, n, o)                                              \
-  (m == 0 || m == dd.ghost_cell_grid[0] - 1 || n == 0 ||                       \
-   n >= dd.ghost_cell_grid[1] - 1 || o == 0 || o == dd.ghost_cell_grid[2] - 1)
 
 /** Calculate cell grid dimensions, cell sizes and number of cells.
  *  Calculates the cell grid, based on \ref local_box_l and \ref
@@ -226,15 +194,18 @@ void dd_create_cell_grid() {
  *  \ref DomainDecomposition::ghost_cell_grid.
  */
 void dd_mark_cells() {
-  int m, n, o, cnt_c = 0, cnt_l = 0, cnt_g = 0;
+  int cnt_c = 0, cnt_l = 0, cnt_g = 0;
 
-  DD_CELLS_LOOP(m, n, o) {
-
-    if (DD_IS_LOCAL_CELL(m, n, o))
-      local_cells.cell[cnt_l++] = &cells[cnt_c++];
-    else
-      ghost_cells.cell[cnt_g++] = &cells[cnt_c++];
-  }
+  for (int o = 0; o < dd.ghost_cell_grid[2]; o++)
+    for (int n = 0; n < dd.ghost_cell_grid[1]; n++)
+      for (int m = 0; m < dd.ghost_cell_grid[0]; m++) {
+        if ((m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&
+             n < dd.ghost_cell_grid[1] - 1 && o > 0 &&
+             o < dd.ghost_cell_grid[2] - 1))
+          local_cells.cell[cnt_l++] = &cells[cnt_c++];
+        else
+          ghost_cells.cell[cnt_g++] = &cells[cnt_c++];
+      }
 }
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
@@ -246,10 +217,10 @@ void dd_mark_cells() {
  *  \param lc          lower left corner of the subgrid.
  *  \param hc          high up corner of the subgrid.
  */
-int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
-  int i, m, n, o, c = 0;
+int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
+                            int const hc[3]) {
   /* sanity check */
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     if (lc[i] < 0 || lc[i] >= dd.ghost_cell_grid[i])
       return 0;
     if (hc[i] < 0 || hc[i] >= dd.ghost_cell_grid[i])
@@ -258,14 +229,15 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
       return 0;
   }
 
-  for (o = lc[0]; o <= hc[0]; o++)
-    for (n = lc[1]; n <= hc[1]; n++)
-      for (m = lc[2]; m <= hc[2]; m++) {
-        i = get_linear_index(o, n, m,
+  int c = 0;
+  for (int o = lc[0]; o <= hc[0]; o++)
+    for (int n = lc[1]; n <= hc[1]; n++)
+      for (int m = lc[2]; m <= hc[2]; m++) {
+        auto const i =
+            get_linear_index(o, n, m,
                              {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
                               dd.ghost_cell_grid[2]});
-        CELL_TRACE(fprintf(stderr, "%d: dd_fill_comm_cell_list: add cell %d\n",
-                           this_node, i));
+
         part_lists[c] = &cells[i];
         c++;
       }
@@ -276,7 +248,7 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int lc[3], int hc[3]) {
  *  GhostCommunicator)
  */
 void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
-                     const Vector3i &grid) {
+                     const Utils::Vector3i &grid) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
@@ -462,7 +434,7 @@ void dd_assign_prefetches(GhostCommunicator *comm) {
  *  GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
  *  dd_prepare_comm.
  */
-void dd_update_communicators_w_boxl(const Vector3i &grid) {
+void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
   int cnt = 0;
 
   /* direction loop: x, y, z */
@@ -509,51 +481,55 @@ void dd_update_communicators_w_boxl(const Vector3i &grid) {
  * created list of interacting neighbor cells is used by the Verlet
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
-void dd_init_cell_interactions(const Vector3i &grid) {
+void dd_init_cell_interactions(const Utils::Vector3i &grid) {
   int m, n, o, p, q, r, ind1, ind2;
 
   for (int i = 0; i < 3; i++) {
-    if (dd.fully_connected[i] == true and grid[i] != 1) {
+    if (dd.fully_connected[i] and grid[i] != 1) {
       runtimeErrorMsg()
           << "Node grid not compatible with fully_connected property";
     }
   }
 
   /* loop all local cells */
-  DD_LOCAL_CELLS_LOOP(m, n, o) {
+  for (o = 1; o < dd.cell_grid[2] + 1; o++)
+    for (n = 1; n < dd.cell_grid[1] + 1; n++)
+      for (m = 1; m < dd.cell_grid[0] + 1; m++) {
 
-    ind1 = get_linear_index(
-        m, n, o,
-        {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]});
+        ind1 = get_linear_index(m, n, o,
+                                {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
+                                 dd.ghost_cell_grid[2]});
 
-    std::vector<Cell *> red_neighbors;
-    std::vector<Cell *> black_neighbors;
+        std::vector<Cell *> red_neighbors;
+        std::vector<Cell *> black_neighbors;
 
-    /* loop all neighbor cells */
-    int lower_index[3] = {m - 1, n - 1, o - 1};
-    int upper_index[3] = {m + 1, n + 1, o + 1};
+        /* loop all neighbor cells */
+        int lower_index[3] = {m - 1, n - 1, o - 1};
+        int upper_index[3] = {m + 1, n + 1, o + 1};
 
-    for (int i = 0; i < 3; i++) {
-      if (dd.fully_connected[i] == true) {
-        lower_index[i] = 0;
-        upper_index[i] = dd.ghost_cell_grid[i] - 1;
-      }
-    }
-
-    for (p = lower_index[2]; p <= upper_index[2]; p++)
-      for (q = lower_index[1]; q <= upper_index[1]; q++)
-        for (r = lower_index[0]; r <= upper_index[0]; r++) {
-          ind2 = get_linear_index(r, q, p,
-                                  {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
-                                   dd.ghost_cell_grid[2]});
-          if (ind2 > ind1) {
-            red_neighbors.push_back(&cells[ind2]);
-          } else {
-            black_neighbors.push_back(&cells[ind2]);
+        for (int i = 0; i < 3; i++) {
+          if (dd.fully_connected[i]) {
+            lower_index[i] = 0;
+            upper_index[i] = dd.ghost_cell_grid[i] - 1;
           }
         }
-    cells[ind1].m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
-  }
+
+        for (p = lower_index[2]; p <= upper_index[2]; p++)
+          for (q = lower_index[1]; q <= upper_index[1]; q++)
+            for (r = lower_index[0]; r <= upper_index[0]; r++) {
+              ind2 = get_linear_index(r, q, p,
+                                      {dd.ghost_cell_grid[0],
+                                       dd.ghost_cell_grid[1],
+                                       dd.ghost_cell_grid[2]});
+              if (ind2 > ind1) {
+                red_neighbors.push_back(&cells[ind2]);
+              } else {
+                black_neighbors.push_back(&cells[ind2]);
+              }
+            }
+        cells[ind1].m_neighbors =
+            Neighbors<Cell *>(red_neighbors, black_neighbors);
+      }
 }
 
 /*************************************************/
@@ -561,7 +537,7 @@ void dd_init_cell_interactions(const Vector3i &grid) {
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
  */
-Cell *dd_save_position_to_cell(const Vector3d &pos) {
+Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
   int cpos[3];
 
   for (int i = 0; i < 3; i++) {
@@ -598,7 +574,7 @@ Cell *dd_save_position_to_cell(const Vector3d &pos) {
 /* Public Functions */
 /************************************************************/
 
-void dd_on_geometry_change(int flags, const Vector3i &grid) {
+void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_box_l[i] < max_range) {
@@ -663,7 +639,7 @@ void dd_on_geometry_change(int flags, const Vector3i &grid) {
 }
 
 /************************************************************/
-void dd_topology_init(CellPList *old, const Vector3i &grid) {
+void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   int c, p;
   int exchange_data, update_data;
 
@@ -807,14 +783,15 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
   }
 }
 
-void exchange_neighbors(ParticleList *pl, const Vector3i &grid) {
+void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
     if (grid[dir] == 1) {
       continue;
       /* In this (common) case left and right neighbors are
          the same, and we need only one communication */
-    } else if (grid[dir] == 2) {
+    }
+    if (grid[dir] == 2) {
       ParticleList send_buf, recv_buf;
       move_left_or_right(*pl, send_buf, send_buf, dir);
 
@@ -852,9 +829,9 @@ void exchange_neighbors(ParticleList *pl, const Vector3i &grid) {
 } // namespace
 
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    const Vector3i &grid) {
+                                    const Utils::Vector3i &grid) {
   if (global) {
-    /* Worst case we need node_grid - 1 rounds per direction.
+    /* Worst case we need grid - 1 rounds per direction.
      * This correctly implies that if there is only one node,
      * no action should be taken. */
     int rounds_left = grid[0] + grid[1] + grid[2] - 3;
@@ -875,7 +852,7 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
 
 /*************************************************/
 
-int calc_processor_min_num_cells(const Vector3i &grid) {
+int calc_processor_min_num_cells(const Utils::Vector3i &grid) {
   int i, min = 1;
   /* the minimal number of cells can be lower if there are at least two nodes
      serving a direction,

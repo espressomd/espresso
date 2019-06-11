@@ -198,7 +198,7 @@ if(WITH_CUDA)
         target_link_libraries(${ARGV0} PRIVATE "${ROCFFT_LIB}")
       endfunction()
     else()
-      find_package(CUDA 7.0)
+      find_package(CUDA 9.0)
       if(CUDA_FOUND)
         if(NOT CUDA_NVCC_EXECUTABLE STREQUAL "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
           get_filename_component(NVCC_EXECUTABLE_DIRNAME "${CUDA_NVCC_EXECUTABLE}" DIRECTORY)
@@ -209,15 +209,12 @@ if(WITH_CUDA)
 
         set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
-        set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g -G")
+        set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g")
         set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -DNDEBUG")
         set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -Os -DNDEBUG")
-        set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -G -O2")
+        set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -O2")
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
         list(APPEND CUDA_NVCC_FLAGS "-std=c++14")
-        if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
-          list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES")
-        endif()
         SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
         if (CMAKE_OSX_SYSROOT)
@@ -266,13 +263,17 @@ if(WITH_PYTHON)
   if(WARNINGS_ARE_ERRORS)
     set(CYTHON_FLAGS "--warning-errors;${CYTHON_FLAGS}")
   endif()
+
+  if(PYTHON_VERSION_MAJOR EQUAL 2)
+    find_program(IPYTHON_EXECUTABLE NAMES ipython2 ipython jupyter)
+  else()
+    find_program(IPYTHON_EXECUTABLE NAMES ipython3 ipython jupyter)
+  endif()
 endif(WITH_PYTHON)
 
 
 find_package(FFTW3)
 if(FFTW3_FOUND)
-  include_directories(SYSTEM ${FFTW3_INCLUDE_DIR})
-  list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
   set(FFTW 3)
 endif(FFTW3_FOUND)
 
@@ -387,7 +388,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     set(BOOST_MINIMUM_VERSION "1.66.0")
   endif()
 else()
-  set(BOOST_MINIMUM_VERSION "1.53.0")
+  set(BOOST_MINIMUM_VERSION "1.55.0")
 endif()
 
 # old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures
@@ -505,12 +506,17 @@ endif()
 
 if(WITH_CLANG_TIDY)
   string(REGEX
-         REPLACE "^([1-9]+\\.[0-9]+).*$"
+          REPLACE "^([1-9]+)\\.[0-9]+.*$"
+          "\\1"
+          CLANG_MAJOR_VERSION
+          "${CMAKE_CXX_COMPILER_VERSION}")
+  string(REGEX
+         REPLACE "^[1-9]+\\.([0-9]+).*$"
                  "\\1"
                  CLANG_MINOR_VERSION
                  "${CMAKE_CXX_COMPILER_VERSION}")
   find_program(CLANG_TIDY_EXE
-               NAMES "clang-tidy-${CLANG_MINOR_VERSION}" "clang-tidy"
+               NAMES "clang-tidy-${CLANG_MAJOR_VERSION}.${CLANG_MINOR_VERSION}" "clang-tidy-${CLANG_MAJOR_VERSION}" "clang-tidy"
                DOC "Path to clang-tidy executable")
   if(NOT CLANG_TIDY_EXE)
     message(STATUS "clang-tidy not found.")
@@ -519,9 +525,7 @@ if(WITH_CLANG_TIDY)
     set(
       CMAKE_CXX_CLANG_TIDY
       "${CLANG_TIDY_EXE}"
-      "-checks=*,-clang-analyzer-alpha.*,-misc-unused-*,-android-*,-fuchsia-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses,-clang-analyzer-security.FloatLoopCounter,-clang-analyzer-optin.mpi.MPI-Checker,-boost-use-to-string,-hicpp-*"
-      "-header-filter=.*"
-      "-warnings-as-errors=*")
+    )
   endif()
 endif()
 

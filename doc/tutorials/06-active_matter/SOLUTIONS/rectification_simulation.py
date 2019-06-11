@@ -1,6 +1,6 @@
 ################################################################################
 #                                                                              #
-# Copyright (C) 2010-2018 The ESPResSo project            #
+# Copyright (C) 2010-2018 The ESPResSo project                                 #
 #                                                                              #
 # This file is part of ESPResSo.                                               #
 #                                                                              #
@@ -63,7 +63,6 @@ def a2quat(phi, theta):
 ##########################################################################
 
 # Read in the active velocity from the command prompt
-
 if len(sys.argv) != 2:
     print("Usage:", sys.argv[0], "<vel> (0 <= vel < 10.0)")
     exit()
@@ -73,7 +72,6 @@ vel = float(sys.argv[1])
 ##########################################################################
 
 # create an output folder
-
 outdir = "./RESULTS_RECTIFICATION"
 try:
     os.makedirs(outdir)
@@ -82,7 +80,6 @@ except:
 
 # Setup the box (we pad the diameter to ensure that the LB boundaries
 # and therefore the constraints, are away from the edge of the box)
-
 length = 100
 diameter = 20
 prod_steps = 500
@@ -90,14 +87,13 @@ prod_length = 500
 dt = 0.01
 
 # Setup the MD parameters
-
 system = espressomd.System(box_l=[length, diameter + 4, diameter + 4])
 system.set_random_state_PRNG()
 system.box_l = [length, diameter + 4, diameter + 4]
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 ################################################################################
 #
@@ -110,14 +106,10 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 
 cylinder = Cylinder(
     center=[length / 2.0, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
-                    axis=[1, 0, 0],
-                    radius=diameter / 2.0,
-                    length=length,
-                    direction=-1)
+    axis=[1, 0, 0], radius=diameter / 2.0, length=length, direction=-1)
 system.constraints.add(shape=cylinder, particle_type=1)
 
 # Setup walls
-
 wall = Wall(dist=2, normal=[1, 0, 0])
 system.constraints.add(shape=wall, particle_type=2)
 
@@ -125,7 +117,6 @@ wall = Wall(dist=-(length - 2), normal=[-1, 0, 0])
 system.constraints.add(shape=wall, particle_type=3)
 
 # Setup cone
-
 irad = 4.0
 angle = pi / 4.0
 orad = (diameter - irad) / sin(angle)
@@ -134,11 +125,11 @@ shift = 0.25 * orad * cos(angle)
 hollow_cone = HollowCone(
     center=[length / 2.0 + shift, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
     axis=[-1, 0, 0],
-                         outer_radius=orad,
-                         inner_radius=irad,
-                         width=2.0,
-                         opening_angle=angle,
-                         direction=1)
+    outer_radius=orad,
+    inner_radius=irad,
+    width=2.0,
+    opening_angle=angle,
+    direction=1)
 system.constraints.add(shape=hollow_cone, particle_type=4)
 
 ################################################################################
@@ -187,28 +178,29 @@ for cntr in range(npart):
     phi = float(2 * np.random.random() * np.pi)
     quats = a2quat(theta, phi)
 
-    system.part.add(pos=[x, y, z], type=0, swimming={
-                    'v_swim': vel}, quat=quats, rotation=[1, 1, 1])
+    system.part.add(pos=[x, y, z], type=0, swimming={'v_swim': vel},
+                    quat=quats, rotation=[1, 1, 1])
 
 ##########################################################################
 
 # Equilibrate
-
 system.integrator.run(25 * prod_length)
 
 # Output the CMS coordinates
-
 with open("{}/CMS_{}.dat".format(outdir, vel), "w") as outfile:
     print("####################################################", file=outfile)
     print("#        time    CMS x coord    average CMS        #", file=outfile)
     print("####################################################", file=outfile)
 
     # Production run
-
     dev_sum = 0.0
     dev_av = 0.0
     time_0 = system.time
     for i in range(prod_steps):
+        if (i + 1) % 5 == 0:
+            print('\rprogress: %.0f%%' % ((i + 1) * 100. / prod_steps), end='')
+            sys.stdout.flush()
+
         # We output the coordinate of the center of mass in
         # the direction of the long axis, here we consider
         # the deviation from the center
@@ -226,5 +218,5 @@ with open("{}/CMS_{}.dat".format(outdir, vel), "w") as outfile:
         system.integrator.run(prod_length)
 
 # Output the final configuration
-
 system.part.writevtk("{}/points_{}.vtk".format(outdir, vel), types=[0])
+print()

@@ -15,22 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
 from tests_common import single_component_maxwell
 
 """
-Check the Lattice Boltzmann thermostat with respect to the particle velocity distribution.
+Check the Lattice Boltzmann thermostat with respect to the particle velocity
+distribution.
 
 
 """
 
-KT = 2.25
+KT = 0.25
 AGRID = 2.5
-VISC = .7
+VISC = 2.7
 DENS = 1.7
-TIME_STEP = 0.01
+TIME_STEP = 0.05
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
@@ -52,24 +54,24 @@ class LBThermostatCommon(object):
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
         self.system.part.add(
-            pos=np.random.random((250, 3)) * self.system.box_l)
+            pos=np.random.random((100, 3)) * self.system.box_l)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=2.0)
 
     def test_velocity_distribution(self):
         self.prepare()
-        self.system.integrator.run(200)
+        self.system.integrator.run(20)
         N = len(self.system.part)
         loops = 250
         v_stored = np.zeros((N * loops, 3))
         for i in range(loops):
-            self.system.integrator.run(15)
+            self.system.integrator.run(6)
             v_stored[i * N:(i + 1) * N, :] = self.system.part[:].v
         minmax = 5
-        n_bins = 5
+        n_bins = 7
         error_tol = 0.01
         for i in range(3):
-            hist = np.histogram(v_stored[:, i], range=(
-                -minmax, minmax), bins=n_bins, normed=False)
+            hist = np.histogram(v_stored[:, i], range=(-minmax, minmax),
+                                bins=n_bins, normed=False)
             data = hist[0] / float(v_stored.shape[0])
             bins = hist[1]
             for j in range(n_bins):
@@ -78,8 +80,6 @@ class LBThermostatCommon(object):
                 self.assertLessEqual(abs(found - expected), error_tol)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB']), "Skipping test due to missing features.")
 class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -88,8 +88,7 @@ class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_GPU']), "Skipping test due to missing features.")
+@utx.skipIfMissingGPU()
 class LBGPUThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the GPU implementation of the LB."""

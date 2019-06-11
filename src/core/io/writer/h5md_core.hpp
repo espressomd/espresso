@@ -22,22 +22,16 @@
 #ifndef ESPRESSO_H5MD_CORE_HPP
 #define ESPRESSO_H5MD_CORE_HPP
 
-#include "MpiCallbacks.hpp"
-#include "PartCfg.hpp"
-#include "cells.hpp"
-#include "global.hpp"
-
 #include <algorithm>
+#include <boost/filesystem.hpp>
 #include <fstream>
+#include <h5xx/h5xx.hpp>
 #include <iostream>
 #include <mpi.h>
 #include <string>
 #include <unordered_map>
-#define BOOST_NO_CXX11_SCOPED_ENUMS
-#include <boost/filesystem.hpp>
-#undef BOOST_NO_CXX11_SCOPED_ENUMS
-#include "communication.hpp"
-#include <h5xx/h5xx.hpp>
+
+#include "PartCfg.hpp"
 
 namespace Writer {
 namespace H5md {
@@ -196,13 +190,13 @@ private:
 };
 
 struct incompatible_h5mdfile : public std::exception {
-  const char *what() const noexcept {
+  const char *what() const noexcept override {
     return "The given hdf5 file does not have a valid h5md structure!";
   }
 };
 
 struct left_backupfile : public std::exception {
-  const char *what() const noexcept {
+  const char *what() const noexcept override {
     return "A backup of the .h5 file exists. This usually means \
 that either you forgot to call the 'close' method or your simulation \
 crashed.";

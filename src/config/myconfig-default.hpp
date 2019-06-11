@@ -51,10 +51,8 @@
 #define ENGINE
 
 // Hydrodynamics
-#define LB
 #define LB_BOUNDARIES
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #endif
 
@@ -78,7 +76,6 @@
 #define SMOOTH_STEP
 #define HERTZIAN
 #define SOFT_SPHERE
-#define INTER_RF
 #define WCA
 
 #ifdef P3M

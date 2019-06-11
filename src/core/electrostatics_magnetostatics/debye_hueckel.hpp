@@ -28,8 +28,7 @@
 
 #ifdef ELECTROSTATICS
 
-#include "debug.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 
 /** Structure to hold Debye-Hueckel Parameters. */
 typedef struct {
@@ -47,55 +46,38 @@ extern Debye_hueckel_params dh_params;
 /*@{*/
 
 int dh_set_params(double kappa, double r_cut);
-int dh_set_params_cdh(double kappa, double r_cut, double eps_int,
-                      double eps_ext, double r0, double r1, double alpha);
 
 /** Computes the Debye_Hueckel pair force and adds this
     force to the particle forces.
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
+    @param q1q2      Product of the charges on p1 and p2.
     @param d         Vector pointing from p1 to p2.
     @param dist      Distance between p1 and p2.
     @param force     returns the force on particle 1.
 */
-inline void add_dh_coulomb_pair_force(Particle *p1, Particle *p2, double d[3],
-                                      double dist, double force[3]) {
+inline void add_dh_coulomb_pair_force(double const q1q2, double const d[3],
+                                      double const dist, double force[3]) {
   if (dist < dh_params.r_cut) {
     double fac;
     if (dh_params.kappa > 0.0) {
       /* debye hueckel case: */
       double kappa_dist = dh_params.kappa * dist;
-      fac = coulomb.prefactor * p1->p.q * p2->p.q *
-            (exp(-kappa_dist) / (dist * dist * dist)) * (1.0 + kappa_dist);
+      fac =
+          q1q2 * (exp(-kappa_dist) / (dist * dist * dist)) * (1.0 + kappa_dist);
     } else {
       /* pure Coulomb case: */
-      fac = coulomb.prefactor * p1->p.q * p2->p.q / (dist * dist * dist);
+      fac = q1q2 / (dist * dist * dist);
     }
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
-
-    ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: DH   f = (%.3e,%.3e,%.3e) with "
-                              "part id=%d at dist %f fac %.3e\n",
-                              this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                              p2->p.identity, dist, fac));
-    ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: DH   f = (%.3e,%.3e,%.3e) with "
-                              "part id=%d at dist %f fac %.3e\n",
-                              this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                              p1->p.identity, dist, fac));
   }
 }
 
-inline double dh_coulomb_pair_energy(Particle *p1, Particle *p2, double dist) {
+inline double dh_coulomb_pair_energy(double const q1q2, double const dist) {
   if (dist < dh_params.r_cut) {
     if (dh_params.kappa > 0.0)
-      return coulomb.prefactor * p1->p.q * p2->p.q *
-             exp(-dh_params.kappa * dist) / dist;
-    else
-      return coulomb.prefactor * p1->p.q * p2->p.q / dist;
+      return q1q2 * exp(-dh_params.kappa * dist) / dist;
+
+    return q1q2 / dist;
   }
   return 0.0;
 }

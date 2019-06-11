@@ -1,7 +1,3 @@
-"""
-This sample sets up a diamond-structured polymer network.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -20,8 +16,12 @@ This sample sets up a diamond-structured polymer network.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample sets up a diamond-structured polymer network.
+"""
 from __future__ import print_function
 import espressomd
+espressomd.assert_features(["LENNARD_JONES"])
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import diamond
@@ -38,7 +38,7 @@ system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.seed = system.seed
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -60,7 +60,7 @@ system.bonded_inter.add(fene)
 # These polymers are initialized in a straight line connected to crosslink nodes
 # Furthermore they are connected to one another across simulation boxes in a periodic fashion.
 # It is crucial that the simulation box, chain length and a-parameters be
-# chosen such that the arangement will not break bonds.
+# chosen such that the arrangement will not break bonds.
 
 # monomers per chain
 MPC = 15
@@ -133,7 +133,7 @@ vtf.writevsf(system, outfile)
 vtf.writevcf(system, outfile)
 t_steps = 100
 for t in range(t_steps):
-    print("step {} of {}".format(t, t_steps))
+    print("step {} of {}".format(t + 1, t_steps))
     system.integrator.run(sim_steps)
     vtf.writevcf(system, outfile)
 outfile.close()

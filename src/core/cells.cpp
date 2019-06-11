@@ -29,9 +29,9 @@
 #include "communication.hpp"
 #include "debug.hpp"
 #include "domain_decomposition.hpp"
+#include "event.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -39,9 +39,9 @@
 #include "particle_data.hpp"
 #include "short_range_loop.hpp"
 
-#include "utils/NoOp.hpp"
-#include "utils/mpi/gather_buffer.hpp"
-#include "utils/Span.hpp"
+#include <utils/Span.hpp>
+#include <utils/NoOp.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/optional.hpp>
@@ -64,7 +64,7 @@ CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
 CellStructure cell_structure = {
-    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr, 0.0};
+    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, 0.0, nullptr};
 
 double max_range = 0.0;
 
@@ -84,7 +84,7 @@ int rebuild_verletlist = 1;
  * @param r Search radius.
  * @return  List of particles nearby.
  */
-std::vector<int> local_find_nearby_particles(const Vector3d &x, double r) {
+std::vector<int> local_find_nearby_particles(const Utils::Vector3d &x, double r) {
   using boost::accumulate;
   using Utils::Span;
 
@@ -109,14 +109,14 @@ std::vector<int> local_find_nearby_particles(const Vector3d &x, double r) {
 
 void cells_find_nearby_particles_slave(int pnode, int) {
   if (comm_cart.rank() == pnode) {
-    std::pair<Vector3d, double> params;
+    std::pair<Utils::Vector3d, double> params;
     comm_cart.recv(0, 52, params);
     comm_cart.send(0, 52,
                    local_find_nearby_particles(params.first, params.second));
   }
 }
 
-std::vector<int> cells_find_nearby_particles(Vector3d const &pos,
+std::vector<int> cells_find_nearby_particles(Utils::Vector3d const &pos,
                                              double radius) {
   auto const pnode = cell_structure.position_to_node(pos);
 
@@ -142,7 +142,7 @@ std::vector<int> cells_find_nearby_particles(Vector3d const &pos,
  * @return If a particle is found, the distance and id of the particle,
  *         otherwise +Inf and an invalid particle id.
  */
-std::pair<double, int> local_find_closest_particle(const Vector3d &pos) {
+std::pair<double, int> local_find_closest_particle(const Utils::Vector3d &pos) {
   using boost::accumulate;
   using Utils::Span;
   using DistId = std::pair<double, int>;
@@ -166,13 +166,13 @@ std::pair<double, int> local_find_closest_particle(const Vector3d &pos) {
 
 void cells_find_closest_particle_slave(int pnode, int) {
   if (comm_cart.rank() == pnode) {
-    Vector3d pos;
+    Utils::Vector3d pos;
     comm_cart.recv(0, 52, pos);
     comm_cart.send(0, 52, local_find_closest_particle(pos));
   }
 }
 
-std::pair<double, int> cells_find_closest_particle(Vector3d const &pos) {
+std::pair<double, int> cells_find_closest_particle(Utils::Vector3d const &pos) {
   auto const pnode = cell_structure.position_to_node(pos);
 
   if (comm_cart.rank() == pnode) {
@@ -216,7 +216,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           return distance2(p1.r.p, p2.r.p);
+                           return (p1.r.p - p2.r.p).norm2();
                          });
     break;
   case CELL_STRUCTURE_NSQUARE:
@@ -224,9 +224,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           double vec21[3];
-                           get_mi_vector(vec21, p1.r.p, p2.r.p);
-                           return sqrlen(vec21);
+                           return get_mi_vector(p1.r.p, p2.r.p).norm2();
                          });
     break;
   case CELL_STRUCTURE_LAYERED:
@@ -234,11 +232,10 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           double vec21[3];
-                           get_mi_vector(vec21, p1.r.p, p2.r.p);
+                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p);
                            vec21[2] = p1.r.p[2] - p2.r.p[2];
 
-                           return sqrlen(vec21);
+                           return vec21.norm2();
                          });
   }
 
@@ -334,6 +331,18 @@ void topology_init(int cs, CellPList *local) {
   }
 }
 
+bool topology_check_resort(int cs, bool local_resort) {
+  switch (cs) {
+  case CELL_STRUCTURE_DOMDEC:
+    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+  case CELL_STRUCTURE_NSQUARE:
+  case CELL_STRUCTURE_LAYERED:
+    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+  default:
+    return true;
+  }
+}
+
 /*@}*/
 
 /************************************************************
@@ -397,15 +406,6 @@ void set_resort_particles(Cells::Resort level) {
 }
 
 unsigned const &get_resort_particles() { return resort_particles; }
-
-void announce_resort_particles() {
-  MPI_Allreduce(MPI_IN_PLACE, &resort_particles, 1, MPI_UNSIGNED, MPI_BOR,
-                comm_cart);
-
-  INTEG_TRACE(fprintf(stderr,
-                      "%d: announce_resort_particles: resort_particles=%u\n",
-                      this_node, resort_particles));
-}
 
 /*************************************************/
 
@@ -556,17 +556,15 @@ void check_resort_particles() {
   resort_particles |= (std::any_of(local_cells.particles().begin(),
                                    local_cells.particles().end(),
                                    [&skin2](Particle const &p) {
-                                     return distance2(p.r.p, p.l.p_old) > skin2;
+                                     return (p.r.p - p.l.p_old).norm2() > skin2;
                                    }))
                           ? Cells::RESORT_LOCAL
                           : Cells::RESORT_NONE;
-
-  announce_resort_particles();
 }
 
 /*************************************************/
 void cells_update_ghosts() {
-  if (resort_particles) {
+  if (topology_check_resort(cell_structure.type, resort_particles)) {
     int global = (resort_particles & Cells::RESORT_GLOBAL)
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;

@@ -30,14 +30,17 @@
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef UMBRELLA
 
-///
+/** Set the parameters of an umbrella bond
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int umbrella_set_params(int bond_type, double k, int dir, double r);
 
-/** Resultant Force due to an umbrella potential */
+/** Resultant force due to an umbrella potential */
 inline double umbrella_force_r(double k, int dir, double r, double distn) {
   return -k * (distn - r);
 }

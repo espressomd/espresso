@@ -1,3 +1,4 @@
+
 /*
   Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
@@ -23,6 +24,7 @@
 #define SCRIPT_INTERFACE_OBSERVABLES_PIDOBSERVABLE_HPP
 
 #include "ScriptInterface.hpp"
+#include "auto_parameters/AutoParameters.hpp"
 
 #include "Observable.hpp"
 #include "core/observables/PidObservable.hpp"
@@ -33,29 +35,29 @@
 namespace ScriptInterface {
 namespace Observables {
 
-template <typename CorePidObs> class PidObservable : public Observable {
+/** Base class for script interfaces to particle-based observables
+ *  @tparam CorePidObs Any core class derived from  @ref
+ *                     ::Observables::PidObservable "Observables::PidObservable"
+ */
+template <typename CorePidObs>
+class PidObservable
+    : public AutoParameters<PidObservable<CorePidObs>, Observable> {
 public:
   static_assert(
       std::is_base_of<::Observables::PidObservable, CorePidObs>::value, "");
 
-  PidObservable() : m_observable(std::make_shared<CorePidObs>()) {}
-
-  VariantMap get_parameters() const override {
-    return {{"ids", m_observable->ids()}};
+  PidObservable() {
+    this->add_parameters({{"ids",
+                           [this](Variant const &v) {
+                             m_observable->ids() =
+                                 get_value<std::vector<int>>(v);
+                           },
+                           [this]() { return m_observable->ids(); }}});
   }
 
-  ParameterMap valid_parameters() const override {
-    return {{"ids", {ParameterType::INT_VECTOR, true}}};
-  }
-
-  void set_parameter(std::string const &name, Variant const &value) override {
-    if ("ids" == name) {
-      m_observable->ids() = get_value<std::vector<int>>(value);
-    }
-  }
-
-  virtual std::shared_ptr<::Observables::PidObservable> pid_observable() const {
-    return m_observable;
+  void construct(VariantMap const &params) override {
+    m_observable =
+        make_shared_from_args<CorePidObs, std::vector<int>>(params, "ids");
   }
 
   std::shared_ptr<::Observables::Observable> observable() const override {

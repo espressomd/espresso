@@ -46,13 +46,16 @@ class Constraints(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        Either an instance of :class:`espressomd.constraints.Constraint`, or
-        the parameters to construct an :class:`espressomd.constraints.ShapeBasedConstraint`.
+        constraint: :class:`espressomd.constraints.Constraint`
+            Either a constraint object...
+        \*\*kwargs : any
+            ... or parameters to construct an
+            :class:`espressomd.constraints.ShapeBasedConstraint`
 
         Returns
         ----------
-        constraint : Instance of :class:`espressomd.constraints.Constraint`
-                     The added constraint
+        constraint : :class:`espressomd.constraints.Constraint`
+            The added constraint
 
         """
 
@@ -148,7 +151,8 @@ class ShapeBasedConstraint(Constraint):
 
         Returns
         ----------
-        :obj:float: The minimum distance
+        :obj:`float` :
+            The minimum distance
         """
         return self.call_method("min_dist", object=self)
 
@@ -218,7 +222,7 @@ class _Interpolated(Constraint):
     The data has to have one point of halo in each direction,
     and is shifted by half a grid spacing in the +xyz direction,
     so that the element (0,0,0) has coordinates -0.5 * grid_spacing.
-    The numer of points has to be such that the data spanc the whole
+    The number of points has to be such that the data spans the whole
     box, e.g. the most up right back point has to be at least at
     box + 0.5 * grid_spacing. There are convenience functions on this
     class that can calculate the required grid dimensions and the coordinates.
@@ -461,7 +465,7 @@ class ElectricPlaneWave(Constraint):
     ----------
     E0 : array of :obj:`float`
         The amplitude of the electric field.
-    k  : array of :obj`float`
+    k  : array of :obj:`float`
         Wave vector of the wave
     omega : :obj:`float`
         Frequency of the wave
@@ -504,7 +508,7 @@ class FlowField(_Interpolated):
 
       F = -gamma * (u(r) - v)
 
-    wher v is the velocity of the particle.
+    where v is the velocity of the particle.
 
     """
 
@@ -524,7 +528,7 @@ class HomogeneousFlowField(Constraint):
 
       F = -gamma * (u - v)
 
-    wher v is the velocity of the particle.
+    where v is the velocity of the particle.
 
     Attributes
     ----------

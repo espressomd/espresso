@@ -67,21 +67,21 @@
 #include "Cell.hpp"
 #include "ParticleRange.hpp"
 
-/** \name Cell Structure */
-/*@{*/
-/** Flag indicating that there is no cell system yet. Only at the
- * VERY beginning of the code startup.
- */
-#define CELL_STRUCTURE_NONEYET -1
-/** Flag indicating that the current cell structure will be used further on */
-#define CELL_STRUCTURE_CURRENT 0
-/** cell structure domain decomposition */
-#define CELL_STRUCTURE_DOMDEC 1
-/** cell structure n square */
-#define CELL_STRUCTURE_NSQUARE 2
-/** cell structure layered */
-#define CELL_STRUCTURE_LAYERED 3
-/*@}*/
+/** Cell Structure */
+enum {
+  /** Flag indicating that there is no cell system yet. Only at the
+   *  VERY beginning of the code startup.
+   */
+  CELL_STRUCTURE_NONEYET = -1,
+  /** Flag indicating that the current cell structure will be used further on */
+  CELL_STRUCTURE_CURRENT = 0,
+  /** cell structure domain decomposition */
+  CELL_STRUCTURE_DOMDEC = 1,
+  /** cell structure n square */
+  CELL_STRUCTURE_NSQUARE = 2,
+  /** cell structure layered */
+  CELL_STRUCTURE_LAYERED = 3
+};
 
 /** \name Flags for exchange_and_sort_particles: whether to do a global
  *  exchange or assume that particles did not move much (faster, used
@@ -93,6 +93,8 @@
 #define CELL_GLOBAL_EXCHANGE 1
 /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
 #define CELL_NEIGHBOR_EXCHANGE 0
+
+/*@}*/
 
 namespace Cells {
 enum Resort : unsigned {
@@ -159,13 +161,12 @@ struct CellStructure {
    *  \param  pos Position of a particle.
    *  \return number of the node where to put the particle.
    */
-  int (*position_to_node)(const Vector3d &pos);
+  int (*position_to_node)(const Utils::Vector3d &pos);
   /** Cell system dependent function to find the right cell for a
    *  particle at position @p pos.
    *  \param  pos Position of a particle.
    *  \return pointer to cell  where to put the particle.
    */
-  Cell *(*position_to_cell)(const Vector3d &pos);
 
   /**
    * @brief Maximal search range.
@@ -175,6 +176,7 @@ struct CellStructure {
    * found by the pair finding algorithms.
    */
   double max_range;
+  Cell *(*position_to_cell)(const Utils::Vector3d &pos);
 };
 
 /*@}*/
@@ -288,7 +290,7 @@ int cells_get_n_particles();
  */
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
-std::pair<double, int> cells_find_closest_particle(Vector3d const &pos);
+std::pair<double, int> cells_find_closest_particle(Utils::Vector3d const &pos);
 
 /**
  * @brief Increase the local resort level at least to level.
@@ -301,9 +303,6 @@ void set_resort_particles(Cells::Resort level);
  * @brief Get the currently scheduled resort level.
  */
 unsigned const &get_resort_particles();
-
-/** Spread the particle resorting criterion across the nodes. */
-void announce_resort_particles();
 
 /** Check if a particle resorting is required. */
 void check_resort_particles();

@@ -29,23 +29,20 @@
 #define LB_H
 
 #include "config.hpp"
-
 #include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb-d3q19.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 
-void mpi_set_lb_fluid_counter(int high, int low);
-
-#ifdef LB
-
 #include <array>
+#include <boost/optional.hpp>
+#include <memory>
 
 #include "errorhandling.hpp"
 
 #include "halo.hpp"
-#include "utils.hpp"
 
-#include "utils/Counter.hpp"
-#include "utils/Span.hpp"
+#include <utils/Counter.hpp>
+#include <utils/Span.hpp>
 
 /** Some general remarks:
  *  This file implements the LB D3Q19 method to Espresso. The LB_Model
@@ -68,48 +65,23 @@ void mpi_set_lb_fluid_counter(int high, int low);
  *  velocity sub-lattice and the corresponding coefficients
  *  of the pseudo-equilibrium distribution
  */
-extern Utils::Counter<uint64_t> rng_counter_fluid;
-template <size_t N_vel = 19> struct LB_Model {
-  /** number of velocities */
-  static const constexpr int n_veloc = static_cast<int>(N_vel);
-
-  /** unit vectors of the velocity sublattice */
-  std::array<std::array<double, 3>, N_vel> c;
-
-  /** coefficients in the pseudo-equilibrium distribution */
-  std::array<std::array<double, 4>, N_vel> coeff;
-
-  /** weights in the functional for the equilibrium distribution */
-  std::array<double, N_vel> w;
-
-  /** basis of moment space */
-  std::array<std::array<int, N_vel>, N_vel> e_ki;
-
-  /** normalization factors for the moment basis */
-  std::array<double, N_vel> w_k;
-
-  /** speed of sound squared */
-  double c_sound_sq;
-
-  /** transposed basis of moment space */
-  std::array<std::array<int, N_vel>, N_vel> e_ki_transposed;
-};
+extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 /** Data structure for fluid on a local lattice site */
 struct LB_FluidNode {
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
   int boundary;
-  Vector3d slip_velocity = {};
+  Utils::Vector3d slip_velocity = {};
 #endif // LB_BOUNDARIES
 
   /** local force density */
-  Vector3d force_density;
+  Utils::Vector3d force_density;
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   // For particle update, we need the force on the nodes in LBM
   // Yet, Espresso resets the force immediately after the LBM update
   // Therefore we save it here
-  Vector3d force_density_buf;
+  Utils::Vector3d force_density_buf;
 #endif
 };
 
@@ -133,7 +105,7 @@ struct LB_Parameters {
 
   /** external force density applied to the fluid at each lattice site (LB
    * Units) */
-  Vector3d ext_force_density;
+  Utils::Vector3d ext_force_density;
 
   /** relaxation of the odd kinetic modes */
   double gamma_odd;
@@ -152,13 +124,15 @@ struct LB_Parameters {
 
   /** \name Derived parameters */
   /** amplitudes of the fluctuations of the modes */
-  Vector19d phi;
+  Utils::Vector19d phi;
   // Thermal energy
   double kT;
-};
 
-/** The DnQm model to be used. */
-extern LB_Model<> lbmodel;
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &rho &viscosity &bulk_viscosity &agrid &tau &ext_force_density &gamma_odd
+        &gamma_even &gamma_shear &gamma_bulk &is_TRT &phi &kT;
+  }
+};
 
 /** %Lattice Boltzmann parameters. */
 extern LB_Parameters lbpar;
@@ -227,8 +201,9 @@ void lb_sanity_checks();
     @param j local fluid speed
     @param pi local fluid pressure
 */
-void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             Vector3d const &j, Vector6d const &pi);
+void lb_calc_n_from_rho_j_pi(Lattice::index_t index, double rho,
+                             Utils::Vector3d const &j,
+                             Utils::Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif
@@ -243,15 +218,6 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
  */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index);
 
-/** Calculate the local fluid fields.
- * The calculation is implemented explicitly for the special case of D3Q19.
- *
- * @param index   Index of the local lattice site.
- * @param rho     local fluid density
- * @param j       local fluid speed
- * @param pi      local fluid pressure
- */
-
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
                                               int *boundary) {
@@ -260,21 +226,21 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 #endif
 
 inline void lb_get_populations(Lattice::index_t index, double *pop) {
-  for (int i = 0; i < lbmodel.n_veloc; ++i) {
-    pop[i] = lbfluid[i][index] + lbmodel.coeff[i][0] * lbpar.rho;
+  for (int i = 0; i < D3Q19::n_vel; ++i) {
+    pop[i] = lbfluid[i][index] + D3Q19::coefficients[i][0] * lbpar.rho;
   }
 }
 
-inline void lb_set_populations(Lattice::index_t index, const Vector19d &pop) {
-  for (int i = 0; i < lbmodel.n_veloc; ++i) {
-    lbfluid[i][index] = pop[i] - lbmodel.coeff[i][0] * lbpar.rho;
+inline void lb_set_populations(Lattice::index_t index,
+                               const Utils::Vector19d &pop) {
+  for (int i = 0; i < D3Q19::n_vel; ++i) {
+    lbfluid[i][index] = pop[i] - D3Q19::coefficients[i][0] * lbpar.rho;
   }
 }
 
 uint64_t lb_fluid_get_rng_state();
 void lb_fluid_set_rng_state(uint64_t counter);
 void lb_prepare_communication();
-#endif
 
 #ifdef LB_BOUNDARIES
 /** Bounce back boundary conditions.
@@ -288,9 +254,7 @@ void lb_bounce_back(LB_Fluid &lbfluid);
 
 #endif /* LB_BOUNDARIES */
 
-void lb_calc_fluid_mass(double *result);
 void lb_calc_fluid_momentum(double *result);
-void lb_calc_fluid_temp(double *result);
 void lb_collect_boundary_forces(double *result);
 
 /*@}*/

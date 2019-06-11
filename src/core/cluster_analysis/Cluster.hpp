@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CLUSTER_ANALYSIS_CLUSTER_HPP
 #define CLUSTER_ANALYSIS_CLUSTER_HPP
 
-#include "utils/Vector.hpp"
 #include <map>
 #include <string>
+#include <utils/Vector.hpp>
 #include <valarray>
 #include <vector>
 
@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace ClusterAnalysis {
 
 /** @brief Represents a single cluster of particles */
-/** @brief Represents a single cluster of particles */
 class Cluster {
 public:
   /** @brief Ids of the particles in the cluster */
@@ -39,8 +38,9 @@ public:
   /** @brief add a particle to the cluster */
   void add_particle(const Particle &p) { particles.push_back(p.p.identity); }
   /** @brief Calculate the center of mass of the cluster */
-  Vector3d center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids);
-  Vector3d center_of_mass();
+  Utils::Vector3d
+  center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids);
+  Utils::Vector3d center_of_mass();
   /** @brief Longest distance between any combination of two particles */
   double longest_distance();
   /** @brief Calculate radius of gyration of the cluster */

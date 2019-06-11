@@ -30,7 +30,6 @@
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -430,7 +429,8 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
   }
 }
 
-void reduce_forces_sum(void *add, void *to, int *len, MPI_Datatype *type) {
+void reduce_forces_sum(void *add, void *to, int const *const len,
+                       MPI_Datatype *type) {
   auto *cadd = static_cast<ParticleForce *>(add),
        *cto = static_cast<ParticleForce *>(to);
   int i, clen = *len / sizeof(ParticleForce);

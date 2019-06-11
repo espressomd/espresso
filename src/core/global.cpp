@@ -27,9 +27,9 @@
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "initialize.hpp"
 #include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -37,7 +37,7 @@
 #include "rattle.hpp"
 #include "thermostat.hpp"
 #include "tuning.hpp"
-#include "utils/mpi/all_compare.hpp"
+#include <utils/mpi/all_compare.hpp>
 
 #include <boost/functional/hash.hpp>
 
@@ -54,9 +54,9 @@ typedef struct {
   enum class Type { INT = 0, DOUBLE = 1, BOOL = 2 };
   /** Physical address of the variable. */
   void *data;
-  /** Type of the variable, either \ref TYPE_INT or \ref TYPE_DOUBLE.*/
+  /** Type of the variable. */
   Type type;
-  /** Dimension of the variable. Limited to \ref MAX_DIMENSION */
+  /** Dimension of the variable. Typically in the range 1-3. */
   int dimension;
   /** Name of the variable, mainly used for the front end and debugging */
   const char *name;
@@ -189,7 +189,7 @@ std::size_t hash_value(Datafield const &field) {
   }
   default:
     throw std::runtime_error("Unknown type.");
-  };
+  }
 }
 
 void common_bcast_parameter(int i) {
@@ -209,7 +209,6 @@ void common_bcast_parameter(int i) {
     break;
   default:
     throw std::runtime_error("Unknown type.");
-    break;
   }
 
   on_parameter_change(i);
@@ -239,15 +238,17 @@ void check_global_consistency() {
 
 /*************** REQ_BCAST_PAR ************/
 
-void mpi_bcast_parameter_slave(int, int i) {
+void mpi_bcast_parameter_slave(int i) {
   common_bcast_parameter(i);
-  check_runtime_errors();
+  check_runtime_errors(comm_cart);
 }
 
+REGISTER_CALLBACK(mpi_bcast_parameter_slave)
+
 int mpi_bcast_parameter(int i) {
-  mpi_call(mpi_bcast_parameter_slave, -1, i);
+  Communication::mpiCallbacks().call(mpi_bcast_parameter_slave, i);
 
   common_bcast_parameter(i);
 
-  return check_runtime_errors();
+  return check_runtime_errors(comm_cart);
 }

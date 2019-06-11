@@ -22,23 +22,25 @@
  *  The corresponding header file is lbgpu.hpp.
  */
 
-#include "config.hpp"
+#include "lbgpu.hpp"
+#include "lb-d3q19.hpp"
 
-#ifdef LB_GPU
+#ifdef CUDA
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "statistics.hpp"
-#include "utils.hpp"
+
+#include <utils/constants.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -103,14 +105,10 @@ LB_parameters_gpu lbpar_gpu = {
 LB_rho_v_pi_gpu *host_values = nullptr;
 
 static int max_ran = 1000000;
-/*@}*/
 // static double tau;
 
 /** measures the MD time since the last fluid update */
 static int fluidstep = 0;
-
-/** c_sound_square in LB units*/
-static float c_sound_sq = 1.0f / 3.0f;
 
 // clock_t start, end;
 int i;
@@ -211,7 +209,8 @@ void lb_reinit_parameters_gpu() {
     LB_TRACE(fprintf(stderr, "fluct on \n"));
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).*/
     /* Note that the modes are not normalized as in the paper here! */
-    lbpar_gpu.mu = lbpar_gpu.kT * lbpar_gpu.tau * lbpar_gpu.tau / c_sound_sq /
+    lbpar_gpu.mu = lbpar_gpu.kT * lbpar_gpu.tau * lbpar_gpu.tau /
+                   D3Q19::c_sound_sq<float> /
                    (lbpar_gpu.agrid * lbpar_gpu.agrid);
   }
   LB_TRACE(fprintf(stderr, "lb_reinit_prarameters_gpu \n"));
@@ -271,9 +270,7 @@ void lb_init_gpu() {
   LB_TRACE(printf("Initializing fluid on GPU successful\n"));
 }
 
-/*@}*/
-
-int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]) {
+int lb_lbnode_set_extforce_density_GPU(int const ind[3], double const f[3]) {
   if (ind[0] < 0 || ind[0] >= int(lbpar_gpu.dim_x) || ind[1] < 0 ||
       ind[1] >= int(lbpar_gpu.dim_y) || ind[2] < 0 ||
       ind[2] >= int(lbpar_gpu.dim_z))
@@ -325,7 +322,7 @@ void lb_GPU_sanity_checks() {
   }
 }
 
-void lb_lbfluid_particles_add_momentum(float momentum[3]) {
+void lb_lbfluid_particles_add_momentum(float const momentum[3]) {
   auto &parts = partCfg();
   auto const n_part = parts.size();
 
@@ -380,4 +377,4 @@ void lb_set_agrid_gpu(double agrid) {
       lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
 }
 
-#endif /* LB_GPU */
+#endif /*  CUDA */

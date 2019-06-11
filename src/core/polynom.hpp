@@ -27,7 +27,7 @@
 #ifndef POLYNOM_H
 #define POLYNOM_H
 
-#include "utils/List.hpp"
+#include <utils/List.hpp>
 
 /** basically, a polynomial is just a list of coefficients */
 typedef DoubleList Polynom;

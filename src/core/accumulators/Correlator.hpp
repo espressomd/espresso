@@ -129,8 +129,7 @@
 #include "AccumulatorBase.hpp"
 #include "integrate.hpp"
 #include "observables/Observable.hpp"
-#include "utils.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Accumulators {
 
@@ -167,12 +166,15 @@ public:
    *     the linear compression method)
    * @param compress2_ how the B values should be compressed (usually
    *     the linear compression method)
+   * @param correlation_args_ optional arguments for the correlation function
+   *     (currently only used when @p corr_operation is "fcs_acf")
    *
    */
   Correlator(int tau_lin, double tau_max, int delta_N, std::string compress1_,
              std::string compress2_, std::string corr_operation, obs_ptr obs1,
-             obs_ptr obs2)
-      : AccumulatorBase(delta_N), finalized(0), t(0), m_tau_lin(tau_lin),
+             obs_ptr obs2, Utils::Vector3d correlation_args_ = {})
+      : AccumulatorBase(delta_N), finalized(0), t(0),
+        m_correlation_args(correlation_args_), m_tau_lin(tau_lin),
         m_dt(delta_N * time_step), m_tau_max(tau_max),
         compressA_name(std::move(compress1_)),
         compressB_name(std::move(compress2_)),
@@ -244,8 +246,10 @@ public:
   int dim_corr() const { return m_dim_corr; }
   int n_result() const { return m_n_result; }
 
-  Vector3d const &correlation_args() const { return m_correlation_args; }
-  void set_correlation_args(Vector3d const &args) { m_correlation_args = args; }
+  Utils::Vector3d const &correlation_args() const { return m_correlation_args; }
+  void set_correlation_args(Utils::Vector3d const &args) {
+    m_correlation_args = args;
+  }
 
   std::string const &compress1() const { return compressA_name; }
   std::string const &compress2() const { return compressB_name; }
@@ -262,8 +266,9 @@ private:
   unsigned int finalized; // non-zero of correlation is finalized
   unsigned int t;         // global time in number of frames
 
-  Vector3d m_correlation_args; // additional arguments, which the correlation
-                               // may need (currently only used by fcs_acf)
+  Utils::Vector3d
+      m_correlation_args; // additional arguments, which the correlation
+                          // may need (currently only used by fcs_acf)
 
   int hierarchy_depth; // maximum level of data compression
   int m_tau_lin;       // number of frames in the linear correlation
@@ -304,8 +309,9 @@ private:
   unsigned int dim_A; // dimensionality of A
   unsigned int dim_B;
 
-  using correlation_operation_type = std::vector<double> (*)(
-      std::vector<double> const &, std::vector<double> const &, Vector3d);
+  using correlation_operation_type =
+      std::vector<double> (*)(std::vector<double> const &,
+                              std::vector<double> const &, Utils::Vector3d);
 
   correlation_operation_type corr_operation;
 

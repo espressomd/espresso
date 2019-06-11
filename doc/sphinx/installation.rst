@@ -343,8 +343,6 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``INTER_RF``
-
 -  ``MMM1D_GPU``
 
 -  ``_P3M_GPU_FLOAT``
@@ -388,7 +386,7 @@ General features
 -  ``EXCLUSIONS`` Allows to exclude specific short ranged interactions within
    molecules.
 
-   .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.exclude`
+   .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
@@ -443,8 +441,6 @@ integrator or thermostat:
 
 -  ``REACTION_ENSEMBLE``
 
--  ``MULTI_TIMESTEP`` (experimental)
-
 -  ``ENGINE``
 
 -  ``PARTICLE_ANISOTROPY``
@@ -458,14 +454,6 @@ Fluid dynamics and fluid structure interaction
 -  ``DPD`` Enables the dissipative particle dynamics thermostat and interaction.
 
    .. seealso:: :ref:`DPD interaction`
-
--  ``LB`` Enables the lattice Boltzmann fluid code.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
-
--  ``LB_GPU`` Enables the lattice Boltzmann fluid code support for GPU.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
 
 -  ``LB_BOUNDARIES``
 
@@ -535,18 +523,12 @@ Some of the short range interactions have additional features:
    prints a warning if particles come too close so that the simulation
    becomes unphysical.
 
--  ``OLD_DIHEDRAL`` Switch the interface of the dihedral potential to its old, less
-   flexible form. Use this for older scripts that are not yet adapted to
-   the new interface of the dihedral potential.
-
 If you want to use bond-angle potentials (see section :ref:`Bond-angle interactions`), you need the
 following features.
 
 -  ``BOND_ANGLE``
 
 -  ``LJGEN_SOFTCORE``
-
--  ``COS2``
 
 -  ``GAUSSIAN``
 
@@ -614,8 +596,6 @@ looking directly at the code.
 -  ``ESR_DEBUG`` debugging of P\ :math:`^3`\ Ms real space part.
 
 -  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
-
--  ``FFT_DEBUG`` Output from the unified FFT code.
 
 -  ``RANDOM_DEBUG``
 

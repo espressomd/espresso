@@ -88,8 +88,8 @@ class Analysis(object):
 
         """
 
-        cdef int_list set1
-        cdef int_list set2
+        cdef List[int] set1
+        cdef List[int] set2
 
         if p1 == 'default' and p2 == 'default':
             pass
@@ -199,8 +199,9 @@ class Analysis(object):
 
         Parameters
         ----------
-        p_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                    Particle type for which to calculate the center of mass.
+        p_type : :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` for
+            which to calculate the center of mass.
 
         Returns
         -------
@@ -242,7 +243,7 @@ class Analysis(object):
         """
 
         cdef int planedims[3]
-        cdef int_list ids
+        cdef List[int] ids
         cdef double c_pos[3]
 
         check_type_or_throw_except(
@@ -269,7 +270,7 @@ class Analysis(object):
 
         ids = c_analyze.nbhood(c_analyze.partCfg(), c_pos, r_catch, planedims)
 
-        return create_nparray_from_int_list( & ids)
+        return create_nparray_from_int_list(ids)
 
     def cylindrical_average(self, center=None, axis=None,
                             length=None, radius=None,
@@ -370,7 +371,10 @@ class Analysis(object):
         return buffer
 
     def pressure(self, v_comp=False):
-        """Calculates the instantaneous pressure (in parallel). This is only sensible in an isotropic system which is homogeneous (on average)! Do not use this in an anisotropic or inhomogeneous system. In order to obtain the pressure the ensemble average needs to be calculated.
+        """Calculates the instantaneous pressure (in parallel). This is only
+        sensible in an isotropic system which is homogeneous (on average)! Do
+        not use this in an anisotropic or inhomogeneous system. In order to
+        obtain the pressure the ensemble average needs to be calculated.
 
         Returns
         -------
@@ -384,7 +388,9 @@ class Analysis(object):
         * "nonbonded", type_i, type_j, nonbonded pressure which arises from the interactions between type_i and type_j
         * "nonbonded_intra", type_i, type_j, nonbonded pressure between short ranged forces between type i and j and with the same mol_id
         * "nonbonded_inter" type_i, type_j", nonbonded pressure between short ranged forces between type i and j and different mol_ids
-        * "coulomb", Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the coulomb stress tensor. For how the stress tensor is calculated see below. The averaged value in an isotropic NVT simulation is equivalent to the average of :math:`E^{coulomb}/(3V)`, see :cite:`brown1995general`.
+        * "coulomb", Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the coulomb stress tensor.
+          For how the stress tensor is calculated see below. The averaged value in an isotropic NVT simulation is equivalent to the average of
+          :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
         * "dipolar", TODO
         * "virtual_sites", Stress contribution due to virtual sites
 
@@ -701,10 +707,7 @@ class Analysis(object):
         This requires that a set of chains of equal length which start with the
         particle with particle number ``chain_start`` and are consecutively
         numbered, the last particle in that topology has id number
-
-        .. math::
-
-            ``chain_start`` + ``number_of_chains`` * ``chain_length`` -1.
+        ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
         ----------
@@ -717,7 +720,7 @@ class Analysis(object):
 
         Returns
         -------
-        array_like : :obj:`float`
+        array_like :obj:`float` :
                      Where [0] is the Mean end-to-end distance of chains
                      and [1] its standard deviation,
                      [2] the Mean Square end-to-end distance
@@ -744,16 +747,16 @@ class Analysis(object):
 
         Parameters
         ----------
-        chain_start : :obj:`int`.
+        chain_start : :obj:`int`
                       The id of the first monomer of the first chain.
-        number_of_chains : :obj:`int`.
+        number_of_chains : :obj:`int`
                            Number of chains contained in the range.
-        chain_length : :obj:`int`.
+        chain_length : :obj:`int`
                        The length of every chain.
 
         Returns
         -------
-        array_like : :obj:`float`
+        array_like :obj:`float` :
                      Where [0] is the Mean radius of gyration of the chains
                      and [1] its standard deviation,
                      [2] the Mean Square radius of gyration
@@ -773,22 +776,22 @@ class Analysis(object):
         Calculates the hydrodynamic mean radius of chains and its standard deviation.
 
         This requires that a set of chains of equal length which start with the
-        particle with particle number `chain_start` and are consecutively
+        particle with particle number ``chain_start`` and are consecutively
         numbered (the last particle in that topology has id number :
-        `chain_start`+ `number_of_chains`*`chain_length`-1.
+        ``chain_start + number_of_chains * chain_length - 1``).
 
         Parameters
         ----------
-        chain_start : :obj:`int`.
+        chain_start : :obj:`int`
                       The id of the first monomer of the first chain
-        number_of_chains : :obj:`int`.
+        number_of_chains : :obj:`int`
                            Number of chains contained in the range.
-        chain_length : :obj:`int`.
+        chain_length : :obj:`int`
                        The length of every chain.
 
         Returns
         -------
-        array_like
+        array_like :obj:`float`:
             Where [0] is the mean hydrodynamic radius of the chains
             and [1] its standard deviation,
 
@@ -998,19 +1001,19 @@ class Analysis(object):
             raise ValueError("r_bins has to be greater than zero!")
 
         cdef double low
-        cdef double * distribution = < double * > malloc(sizeof(double) * r_bins)
+        cdef vector[double] distribution
+        distribution.resize(r_bins)
+
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
         c_analyze.calc_part_distribution(
             c_analyze.partCfg(
                 ), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
-                                         r_min, r_max, r_bins, log_flag, & low, distribution)
+                                         r_min, r_max, r_bins, log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(
-            distribution, r_bins)
-
-        free(distribution)
+            distribution.data(), r_bins)
 
         if int_flag:
             np_distribution[0] += low

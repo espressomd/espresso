@@ -26,7 +26,7 @@
 using namespace std;
 
 namespace Shapes {
-void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
+void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double *dist,
                               double *vec) const {
   double axb[3], bxc[3], axc[3];
   double A, B, C;
@@ -581,7 +581,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
 
   *dist = (pos[0] - m_pos[0]) * axb[0] + (pos[1] - m_pos[1]) * axb[1] +
           (pos[2] - m_pos[2]) * axb[2];
-  *dist *= -1.;
+  if (c_dot_axb > 0.0)
+    *dist *= -1.;
 
   if (*dist >= 0) {
     tmp = sqrt(axb[0] * axb[0] + axb[1] * axb[1] + axb[2] * axb[2]);
@@ -590,6 +591,11 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[0] = -*dist * axb[0] / tmp;
     vec[1] = -*dist * axb[1] / tmp;
     vec[2] = -*dist * axb[2] / tmp;
+    if (c_dot_axb < 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
 
     *dist *= m_direction;
 
@@ -600,6 +606,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
 
   *dist = (pos[0] - m_pos[0]) * axc[0] + (pos[1] - m_pos[1]) * axc[1] +
           (pos[2] - m_pos[2]) * axc[2];
+  if (b_dot_axc > 0.0)
+    *dist *= -1.;
 
   if (*dist >= 0) {
     tmp = sqrt(axc[0] * axc[0] + axc[1] * axc[1] + axc[2] * axc[2]);
@@ -608,6 +616,11 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[0] = *dist * axc[0] / tmp;
     vec[1] = *dist * axc[1] / tmp;
     vec[2] = *dist * axc[2] / tmp;
+    if (b_dot_axc > 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
 
     *dist *= m_direction;
 
@@ -618,7 +631,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
 
   *dist = (pos[0] - m_pos[0]) * bxc[0] + (pos[1] - m_pos[1]) * bxc[1] +
           (pos[2] - m_pos[2]) * bxc[2];
-  *dist *= -1.;
+  if (a_dot_bxc > 0.0)
+    *dist *= -1.;
 
   if (*dist >= 0) {
     tmp = sqrt(bxc[0] * bxc[0] + bxc[1] * bxc[1] + bxc[2] * bxc[2]);
@@ -627,6 +641,11 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[0] = -*dist * bxc[0] / tmp;
     vec[1] = -*dist * bxc[1] / tmp;
     vec[2] = -*dist * bxc[2] / tmp;
+    if (a_dot_bxc < 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
 
     *dist *= m_direction;
 
@@ -638,6 +657,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
   *dist = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * axb[0] +
           (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * axb[1] +
           (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * axb[2];
+  if (c_dot_axb < 0.0)
+    *dist *= -1.;
 
   if (*dist >= 0) {
     tmp = sqrt(axb[0] * axb[0] + axb[1] * axb[1] + axb[2] * axb[2]);
@@ -646,6 +667,11 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[0] = *dist * axb[0] / tmp;
     vec[1] = *dist * axb[1] / tmp;
     vec[2] = *dist * axb[2] / tmp;
+    if (c_dot_axb < 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
 
     *dist *= m_direction;
 
@@ -657,7 +683,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
   *dist = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * axc[0] +
           (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * axc[1] +
           (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * axc[2];
-  *dist *= -1.;
+  if (b_dot_axc < 0.0)
+    *dist *= -1.;
 
   if (*dist >= 0) {
     tmp = sqrt(axc[0] * axc[0] + axc[1] * axc[1] + axc[2] * axc[2]);
@@ -666,6 +693,11 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[0] = -*dist * axc[0] / tmp;
     vec[1] = -*dist * axc[1] / tmp;
     vec[2] = -*dist * axc[2] / tmp;
+    if (b_dot_axc > 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
 
     *dist *= m_direction;
 
@@ -677,6 +709,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
   *dist = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * bxc[0] +
           (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * bxc[1] +
           (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * bxc[2];
+  if (a_dot_bxc < 0.0)
+    *dist *= -1.;
 
   if (*dist >= 0) {
     tmp = sqrt(bxc[0] * bxc[0] + bxc[1] * bxc[1] + bxc[2] * bxc[2]);
@@ -685,6 +719,11 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[0] = *dist * bxc[0] / tmp;
     vec[1] = *dist * bxc[1] / tmp;
     vec[2] = *dist * bxc[2] / tmp;
+    if (a_dot_bxc < 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
 
     *dist *= m_direction;
 
@@ -697,7 +736,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
 
   *dist = (pos[0] - m_pos[0]) * axb[0] + (pos[1] - m_pos[1]) * axb[1] +
           (pos[2] - m_pos[2]) * axb[2];
-  *dist *= -1.;
+  if (c_dot_axb > 0.0)
+    *dist *= -1.;
   tmp = sqrt(axb[0] * axb[0] + axb[1] * axb[1] + axb[2] * axb[2]);
   *dist /= tmp;
 
@@ -705,12 +745,20 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
   vec[1] = -*dist * axb[1] / tmp;
   vec[2] = -*dist * axb[2] / tmp;
 
+  if (c_dot_axb < 0.0) {
+    vec[0] *= -1.;
+    vec[1] *= -1.;
+    vec[2] *= -1.;
+  }
+
   *dist *= m_direction;
 
   // calculate distance to face with normal axc
 
   d = (pos[0] - m_pos[0]) * axc[0] + (pos[1] - m_pos[1]) * axc[1] +
       (pos[2] - m_pos[2]) * axc[2];
+  if (b_dot_axc > 0.0)
+    d *= -1.;
   tmp = sqrt(axc[0] * axc[0] + axc[1] * axc[1] + axc[2] * axc[2]);
   d /= tmp;
 
@@ -719,6 +767,12 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[1] = d * axc[1] / tmp;
     vec[2] = d * axc[2] / tmp;
 
+    if (b_dot_axc > 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
+
     *dist = m_direction * d;
   }
 
@@ -726,7 +780,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
 
   d = (pos[0] - m_pos[0]) * bxc[0] + (pos[1] - m_pos[1]) * bxc[1] +
       (pos[2] - m_pos[2]) * bxc[2];
-  d *= -1.;
+  if (a_dot_bxc > 0.0)
+    d *= -1.;
   tmp = sqrt(bxc[0] * bxc[0] + bxc[1] * bxc[1] + bxc[2] * bxc[2]);
   d /= tmp;
 
@@ -734,6 +789,12 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[0] = -d * bxc[0] / tmp;
     vec[1] = -d * bxc[1] / tmp;
     vec[2] = -d * bxc[2] / tmp;
+
+    if (a_dot_bxc < 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
 
     *dist = m_direction * d;
   }
@@ -743,6 +804,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
   d = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * axb[0] +
       (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * axb[1] +
       (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * axb[2];
+  if (c_dot_axb < 0.0)
+    d *= -1.;
   tmp = sqrt(axb[0] * axb[0] + axb[1] * axb[1] + axb[2] * axb[2]);
   d /= tmp;
 
@@ -750,6 +813,12 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[0] = d * axb[0] / tmp;
     vec[1] = d * axb[1] / tmp;
     vec[2] = d * axb[2] / tmp;
+
+    if (c_dot_axb < 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
 
     *dist = m_direction * d;
   }
@@ -759,7 +828,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
   d = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * axc[0] +
       (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * axc[1] +
       (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * axc[2];
-  d *= -1.;
+  if (b_dot_axc < 0.0)
+    d *= -1.;
   tmp = sqrt(axc[0] * axc[0] + axc[1] * axc[1] + axc[2] * axc[2]);
   d /= tmp;
 
@@ -767,6 +837,12 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[0] = -d * axc[0] / tmp;
     vec[1] = -d * axc[1] / tmp;
     vec[2] = -d * axc[2] / tmp;
+
+    if (b_dot_axc > 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
 
     *dist = m_direction * d;
   }
@@ -776,6 +852,8 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
   d = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * bxc[0] +
       (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * bxc[1] +
       (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * bxc[2];
+  if (a_dot_bxc < 0.0)
+    d *= -1.;
   tmp = sqrt(bxc[0] * bxc[0] + bxc[1] * bxc[1] + bxc[2] * bxc[2]);
   d /= tmp;
 
@@ -784,9 +862,14 @@ void Rhomboid::calculate_dist(const Vector3d &pos, double *dist,
     vec[1] = d * bxc[1] / tmp;
     vec[2] = d * bxc[2] / tmp;
 
+    if (a_dot_bxc < 0.0) {
+      vec[0] *= -1.;
+      vec[1] *= -1.;
+      vec[2] *= -1.;
+    }
+
     *dist = m_direction * d;
   }
-  return;
 }
 
 } // namespace Shapes

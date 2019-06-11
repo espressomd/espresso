@@ -6,6 +6,7 @@ set(EspressoCore_SRC
   communication.cpp
   constraints.cpp
   debug.cpp
+  diamond.cpp
   domain_decomposition.cpp
   dpd.cpp
   energy.cpp
@@ -18,12 +19,11 @@ set(EspressoCore_SRC
   global.cpp
   grid.cpp
   immersed_boundaries.cpp
-  initialize.cpp
+  event.cpp
   integrate.cpp
   layered.cpp
   metadynamics.cpp
   minimize_energy.cpp
-  MpiCallbacks.cpp
   npt.cpp
   nsquare.cpp
   partCfg_global.cpp
@@ -59,7 +59,7 @@ set(EspressoCore_SRC
   bonded_interactions/angle_cossquare.cpp
   bonded_interactions/angle_harmonic.cpp
   bonded_interactions/bonded_coulomb.cpp
-  bonded_interactions/bonded_coulomb_p3m_sr.cpp
+  bonded_interactions/bonded_coulomb_sr.cpp
   bonded_interactions/bonded_interaction_data.cpp
   bonded_interactions/bonded_tab.cpp
   bonded_interactions/dihedral.cpp
@@ -85,11 +85,13 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/p3m-dipolar.cpp
   electrostatics_magnetostatics/p3m_gpu.cpp
   electrostatics_magnetostatics/scafacos.cpp
-  electrostatics_magnetostatics/fft-common.cpp
   electrostatics_magnetostatics/fft.cpp
+  electrostatics_magnetostatics/coulomb.cpp
+  electrostatics_magnetostatics/dipole.cpp
+  electrostatics_magnetostatics/reaction_field.cpp
   grid_based_algorithms/halo.cpp
   grid_based_algorithms/lattice.cpp
-  grid_based_algorithms/lbboundaries.cpp
+  grid_based_algorithms/lb_boundaries.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/lb_interface.cpp
   grid_based_algorithms/lb_interpolation.cpp
@@ -99,7 +101,6 @@ set(EspressoCore_SRC
   immersed_boundary/ImmersedBoundaries.cpp
   nonbonded_interactions/bmhtf-nacl.cpp
   nonbonded_interactions/buckingham.cpp
-  nonbonded_interactions/cos2.cpp
   nonbonded_interactions/gaussian.cpp
   nonbonded_interactions/gb.cpp
   nonbonded_interactions/hat.cpp
@@ -111,7 +112,6 @@ set(EspressoCore_SRC
   nonbonded_interactions/morse.cpp
   nonbonded_interactions/nonbonded_interaction_data.cpp
   nonbonded_interactions/nonbonded_tab.cpp
-  nonbonded_interactions/reaction_field.cpp
   nonbonded_interactions/soft_sphere.cpp
   nonbonded_interactions/steppot.cpp
   nonbonded_interactions/thole.cpp
@@ -130,7 +130,8 @@ set(EspressoCore_SRC
   virtual_sites/virtual_sites_com.cpp
   virtual_sites/VirtualSitesInertialessTracers.cpp
   virtual_sites/VirtualSitesRelative.cpp
-  )
+  accumulators/TimeSeries.cpp
+        observables/PidObservable.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
@@ -151,7 +152,6 @@ if(CUDA)
     grid_based_algorithms/fd-electrostatics_cuda.cu
     virtual_sites/lb_inertialess_tracers_cuda.cu
     grid_based_algorithms/electrokinetics.cpp
-    grid_based_algorithms/electrokinetics_pdb_parse.cpp
     grid_based_algorithms/lbgpu.cpp
     )
 
@@ -176,7 +176,7 @@ if(WITH_COVERAGE)
   endif()
 endif()
 
-target_link_libraries(EspressoCore PUBLIC EspressoConfig)
+target_link_libraries(EspressoCore PUBLIC EspressoConfig utils)
 target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX Random123)
 target_link_libraries(EspressoCore PRIVATE Profiler)
 target_link_libraries(EspressoCore PRIVATE pdbparser)

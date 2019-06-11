@@ -22,8 +22,8 @@
 #define ANGLE_HARMONIC_H
 /** \file
  *  Routines to calculate the angle energy or/and and force
- *  for a particle triple.
- *  \ref forces.cpp
+ *  for a particle triple using the potential described in
+ *  @ref bondedIA_angle_harmonic.
  */
 
 #include "bonded_interaction_data.hpp"
@@ -31,66 +31,67 @@
 
 #include "angle_common.hpp"
 #include "grid.hpp"
+
+#include <utils/math/sqr.hpp>
+
 #include <tuple>
 
-/** set parameters for the angle potential.
- *
- *  \todo The type of the angle potential
- *  is chosen via config.hpp and cannot be changed at runtime.
- */
+/** Set parameters for the angle potential. */
 int angle_harmonic_set_params(int bond_type, double bend, double phi0);
 
-/************************************************************/
+/** Compute the three-body angle interaction force.
+ *  @param  p_mid     Second/middle particle.
+ *  @param  p_left    First/left particle.
+ *  @param  p_right   Third/right particle.
+ *  @param  iaparams  Bonded parameters for the angle interaction.
+ *  @return Forces on the second, first and third particles, in that order.
+ */
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+calc_angle_harmonic_3body_forces(Particle const *p_mid, Particle const *p_left,
+                                 Particle const *p_right,
+                                 Bonded_ia_parameters const *iaparams) {
 
-/** Computes the three-body angle interaction force.
+  auto forceFactor = [&iaparams](double const cos_phi) {
+    auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
+    auto const phi = acos(cos_phi);
+    auto const phi0 = iaparams->p.angle_harmonic.phi0;
+    auto const k = iaparams->p.angle_harmonic.bend;
+    return -k * (phi - phi0) / sin_phi;
+  };
+
+  return calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p,
+                                  forceFactor, true);
+}
+
+/** Compute the three-body angle interaction force.
  *  @param[in]  p_mid     Second/middle particle.
  *  @param[in]  p_left    First/left particle.
  *  @param[in]  p_right   Third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @param[out] force1    Force on particle 1.
- *  @param[out] force2    Force on particle 2.
+ *  @param[out] f_mid     Force on @p p_mid.
+ *  @param[out] f_left    Force on @p p_left.
+ *  @param[out] f_right   Force on @p p_right.
  *  @retval 0
  */
 inline int calc_angle_harmonic_force(Particle const *p_mid,
                                      Particle const *p_left,
                                      Particle const *p_right,
                                      Bonded_ia_parameters const *iaparams,
-                                     double force1[3], double force2[3]) {
+                                     double f_mid[3], double f_left[3],
+                                     double f_right[3]) {
 
-  auto forceFactor = [&iaparams](double const cos_phi) {
-    auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
-    auto const phi = acos(-cos_phi);
-    auto const phi0 = iaparams->p.angle_harmonic.phi0;
-    auto const K = iaparams->p.angle_harmonic.bend;
-    return K * (phi - phi0) / sin_phi;
-  };
-
-  calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor,
-                           force1, force2, true);
-
+  Utils::Vector3d f_mid_v, f_left_v, f_right_v;
+  std::tie(f_mid_v, f_left_v, f_right_v) =
+      calc_angle_harmonic_3body_forces(p_mid, p_left, p_right, iaparams);
+  for (int i = 0; i < 3; ++i) {
+    f_mid[i] = f_mid_v[i];
+    f_left[i] = f_left_v[i];
+    f_right[i] = f_right_v[i];
+  }
   return 0;
 }
 
-/* The force on each particle due to a three-body bonded potential
-   is computed. */
-inline void calc_angle_harmonic_3body_forces(
-    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
-    Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
-    Vector3d &force3) {
-
-  auto forceFactor = [&iaparams](double const cos_phi, double const sin_phi) {
-    auto const phi = acos(cos_phi);
-    auto const phi0 = iaparams->p.angle_harmonic.phi0;
-    auto const K = iaparams->p.angle_harmonic.bend;
-    // potential dependent term [dU/dphi = K * (phi - phi0)]
-    return K * (phi - phi0) / sin_phi;
-  };
-
-  std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
-      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor, true);
-}
-
-/** Computes the three-body angle interaction energy.
+/** Compute the three-body angle interaction energy.
  *  @param[in]  p_mid     Second/middle particle.
  *  @param[in]  p_left    First/left particle.
  *  @param[in]  p_right   Third/right particle.
@@ -105,10 +106,10 @@ inline int angle_harmonic_energy(Particle const *p_mid, Particle const *p_left,
   auto const vectors =
       calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
   auto const cos_phi = std::get<4>(vectors);
-  auto const phi = acos(-cos_phi);
+  auto const phi = acos(cos_phi);
   auto const phi0 = iaparams->p.angle_harmonic.phi0;
-  auto const K = iaparams->p.angle_harmonic.bend;
-  *_energy = 0.5 * K * Utils::sqr(phi - phi0);
+  auto const k = iaparams->p.angle_harmonic.bend;
+  *_energy = 0.5 * k * Utils::sqr(phi - phi0);
   return 0;
 }
 

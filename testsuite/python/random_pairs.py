@@ -25,11 +25,11 @@ import collections
 class RandomPairTest(ut.TestCase):
 
     """This test creates a system of random particles.
-       Then the interaction paris for a certain cutoff
+       Then the interaction pairs for a certain cutoff
        are calculated by brute force in python (pairs_n2),
        and compared to the pairs returned by the cell
        systems, which should be identical. This check is
-       repeated for all valid combination of periodicities.
+       repeated for all valid combinations of periodicities.
 
     """
     system = espressomd.System(box_l=3 * [10.])
@@ -107,5 +107,4 @@ class RandomPairTest(ut.TestCase):
 
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()

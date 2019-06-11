@@ -24,25 +24,17 @@
  *
  */
 
-#include "particle_data.hpp"
+#include <utils/Vector.hpp>
+
+#include <utility>
 
 /** broadcasts reaction parameters and sets up an entry in the ia_params, so
     that the Verlet radius is equal or bigger than the reaction range.
 **/
 void local_kill_particle_motion(int);
 void local_kill_particle_forces(int);
-void local_system_CMS(double *);
-void local_system_CMS_velocity(double *);
-void local_galilei_transform(double *);
-
-typedef struct {
-
-  double cms[3];
-  double cms_vel[3];
-
-} galilei_struct;
-
-/** Galilei parameters. */
-extern galilei_struct gal;
+std::pair<Utils::Vector3d, double> local_system_CMS();
+std::pair<Utils::Vector3d, double> local_system_CMS_velocity();
+void local_galilei_transform(const Utils::Vector3d &cmsvel);
 
 #endif
