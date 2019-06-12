@@ -158,7 +158,7 @@ Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
 /** fold a coordinate to primary simulation box.
     \param pos         the position...
     \param image_box   and the box
-    \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z
+    \param length the box length.
    coordinate.
 
     Both pos and image_box are I/O,
