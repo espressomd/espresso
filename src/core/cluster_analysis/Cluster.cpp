@@ -26,6 +26,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Cluster.hpp"
 
+#include "errorhandling.hpp"
+
 namespace ClusterAnalysis {
 
 // Center of mass of an aggregate
