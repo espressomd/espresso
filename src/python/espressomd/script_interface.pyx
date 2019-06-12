@@ -165,28 +165,34 @@ cdef variant_to_python_object(const Variant & value) except +:
         return make_array_locked(get_value[Vector3d](value))
     if is_type[ObjectId](value):
         # Get the id and build a corresponding object
-        try:
-            oid = get_value[ObjectId](value)
+        oid = get_value[ObjectId](value)
+
+        # ObjectId is nullable, and the default
+        # id corresponds to "null".
+        if oid != ObjectId():
             ptr = get_instance(oid).lock()
-            if ptr != shared_ptr[ScriptInterfaceBase]():
-                so_name = to_str(ptr.get().name())
-                if not so_name:
-                    raise Exception(
-                        "Script object without name returned from the core")
+
+            if not ptr:
+                raise Exception("Object failed to exist.")
+
+            so_name = to_str(ptr.get().name())
+            if not so_name:
+                raise Exception(
+                    "Script object without name returned from the core")
+
+            # Look up python type for object
+            try:
+                pclass = _python_class_by_so_name[so_name]
+            except KeyError:
                 # Fallback class, if nothing more specific is registered
                 # for the script object name
                 pclass = ScriptInterfaceHelper
-                # Look up class
-                if so_name in _python_class_by_so_name:
-                    pclass = _python_class_by_so_name[so_name]
-                pobj = pclass()
-                poid = PObjectId()
-                poid.id = ptr.get().id()
-                pobj.set_sip_via_oid(poid)
-                return pobj
-            else:
-                return None
-        except:
+
+            poid = PObjectId()
+            poid.id = ptr.get().id()
+
+            return pclass(oid=poid)
+        else:
             return None
     if is_type[vector[Variant]](value):
         vec = get_value[vector[Variant]](value)
