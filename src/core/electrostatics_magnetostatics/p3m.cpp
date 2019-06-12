@@ -402,7 +402,7 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
                          double accuracy, int n_interpol) {
   if (r_cut >= 0) {
     p3m.params.r_cut = r_cut;
-    p3m.params.r_cut_iL = r_cut * box_l_i[0];
+    p3m.params.r_cut_iL = r_cut * (1./box_geo.length()[0]);
   }
 
   if (mesh[0] >= 0) {
@@ -444,7 +444,7 @@ int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
     return -3;
 
   p3m.params.r_cut = r_cut;
-  p3m.params.r_cut_iL = r_cut * box_l_i[0];
+  p3m.params.r_cut_iL = r_cut * (1./box_geo.length()[0]);
   p3m.params.mesh[2] = mesh[2];
   p3m.params.mesh[1] = mesh[1];
   p3m.params.mesh[0] = mesh[0];
@@ -947,8 +947,8 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
 /************************************************************/
 
 double p3m_calc_dipole_term(int force_flag, int energy_flag) {
-  double pref = coulomb.prefactor * 4 * M_PI * box_l_i[0] * box_l_i[1] *
-                box_l_i[2] / (2 * p3m.params.epsilon + 1);
+  double pref = coulomb.prefactor * 4 * M_PI * (1./box_geo.length()[0]) * (1./box_geo.length()[1]) *
+                (1./box_geo.length()[2]) / (2 * p3m.params.epsilon + 1);
   double lcl_dm[3], gbl_dm[3];
   double en;
 
@@ -1463,7 +1463,7 @@ static double p3m_mcr_time(const int mesh[3], int cao, double r_cut_iL,
   p3m.params.mesh[2] = mesh[2];
   p3m.params.cao = cao;
   p3m.params.alpha_L = alpha_L;
-  p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
+  p3m.params.alpha = p3m.params.alpha_L * (1./box_geo.length()[0]);
 
   /* initialize p3m structures */
   mpi_bcast_coulomb_params();
@@ -1881,8 +1881,8 @@ int p3m_adaptive_tune(char **log) {
   if (p3m.params.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
     r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
-    r_cut_iL_min *= box_l_i[0];
-    r_cut_iL_max *= box_l_i[0];
+    r_cut_iL_min *= (1./box_geo.length()[0]);
+    r_cut_iL_max *= (1./box_geo.length()[0]);
   } else {
     r_cut_iL_min = r_cut_iL_max = p3m.params.r_cut_iL;
 
@@ -1986,7 +1986,7 @@ int p3m_adaptive_tune(char **log) {
   p3m.params.mesh[2] = mesh[2];
   p3m.params.cao = cao;
   p3m.params.alpha_L = alpha_L;
-  p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
+  p3m.params.alpha = p3m.params.alpha_L * (1./box_geo.length()[0]);
   p3m.params.accuracy = accuracy;
   /* broadcast tuned p3m parameters */
   P3M_TRACE(fprintf(stderr,
@@ -2378,7 +2378,7 @@ void p3m_scaleby_box_l() {
   }
 
   p3m.params.r_cut = p3m.params.r_cut_iL * box_geo.length()[0];
-  p3m.params.alpha = p3m.params.alpha_L * box_l_i[0];
+  p3m.params.alpha = p3m.params.alpha_L * (1./box_geo.length()[0]);
   p3m_init_a_ai_cao_cut();
   p3m_calc_lm_ld_pos();
   p3m_sanity_checks_boxl();

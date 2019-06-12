@@ -121,7 +121,6 @@ void grid_changed_box_l() {
     local_box_l[i] = box_geo.length()[i] / (double)node_grid[i];
     my_left[i] = node_pos[i] * local_box_l[i];
     my_right[i] = (node_pos[i] + 1) * local_box_l[i];
-    box_l_i[i] = 1 / box_geo.length()[i];
   }
 
   calc_minimal_box_dimensions();
