@@ -26,7 +26,7 @@ from espressomd import electrostatics, electrostatic_extensions, scafacos
 import tests_common
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
+@utx.skipIfMissingFeatures("ELECTROSTATICS")
 class CoulombMixedPeriodicity(ut.TestCase):
 
     """"Test mixed periodicity electrostatics"""

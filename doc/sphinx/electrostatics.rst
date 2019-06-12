@@ -261,7 +261,7 @@ MMM2D
 -----
 
 .. note::
-    Required features: ``ELECTROSTATICS``, ``PARTIAL_PERIODIC``.
+    Required features: ``ELECTROSTATICS``.
 
 MMM2D is an electrostatics solver for explicit 2D periodic systems.
 It can account for different dielectric jumps on both sides of the
@@ -402,7 +402,7 @@ MMM1D
 -----
 
 .. note::
-    Required features: ``ELECTROSTATICS``, ``PARTIAL_PERIODIC`` for MMM1D, the GPU version additionally needs
+    Required features: ``ELECTROSTATICS`` for MMM1D, the GPU version additionally needs
     the features ``CUDA`` and ``MMM1D_GPU``.
 
 ::

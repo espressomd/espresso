@@ -228,13 +228,7 @@ cdef class System(object):
             if len(_periodic) != 3:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
-            for i in range(3):
-                if _periodic[i] != 1:
-                    IF PARTIAL_PERIODIC:
-                        pass
-                    ELSE:
-                        raise ValueError(
-                            "The feature PARTIAL_PERIODIC needs to be activated in myconfig.hpp")
+
             self.globals.periodicity = _periodic
 
         def __get__(self):

@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /* maximal set of features usable at the same time plus all debug switches */
 /* Do not run the testsuite with this set, only compile it. */
-#define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define DIPOLES
 #define ROTATION

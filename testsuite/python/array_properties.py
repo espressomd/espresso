@@ -296,7 +296,7 @@ class ArrayPropertyTest(ut.TestCase):
         self.system.part[0].dip = [2, 2, 2]
         np.testing.assert_allclose(
             [2, 2, 2], np.copy(self.system.part[0].dip), atol=1E-15)
-        
+
         # Check if copy is settable
         # Particle
         self.set_copy(self.system.part[0].dip)
@@ -308,7 +308,6 @@ class ArrayPropertyTest(ut.TestCase):
         # Particle
         self.locked_operators(self.system.part[0].exclusions)
 
-    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_partial_periodic(self):
 
         # Check for exception for various operators

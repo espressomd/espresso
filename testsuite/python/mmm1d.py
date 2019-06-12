@@ -21,11 +21,9 @@ import unittest_decorators as utx
 import tests_common
 import espressomd
 
-if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
-    from espressomd.electrostatics import MMM1D
+from espressomd.electrostatics import MMM1D
 
-
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
+@utx.skipIfMissingFeatures("ELECTROSTATICS")
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -40,7 +38,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
             self.system.part[0].q = 1
             self.system.part[1].q = -1
 
-    if espressomd.has_features("ELECTROSTATICS", "PARTIAL_PERIODIC"):
+    if espressomd.has_features("ELECTROSTATICS"):
         test_mmm1d = tests_common.generate_test_for_class(
             system, MMM1D, dict(prefactor=2.0,
                                 maxPWerror=0.001,

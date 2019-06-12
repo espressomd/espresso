@@ -331,14 +331,6 @@ activate ``FEATURE``, add the following line to the header file:
 General features
 ^^^^^^^^^^^^^^^^
 
--  ``PARTIAL_PERIODIC`` By default, all coordinates in |es| are periodic. With
-   ``PARTIAL_PERIODIC`` turned on, the |es| global variable ``periodic``
-   controls the periodicity of the individual coordinates.
-
-   .. note:: This slows the integrator down by around :math:`10-30\%`.
-
-   .. seealso:: :ref:`Setting global variables in Python`
-
 -  ``ELECTROSTATICS`` This enables the use of the various electrostatics algorithms, such as P3M.
 
    .. seealso:: :ref:`Electrostatics`

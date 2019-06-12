@@ -53,8 +53,7 @@ cdef class Globals(object):
             for i in range(3):
                 grid.box_geo.set_periodic(i, _periodic[i])
 
-            IF PARTIAL_PERIODIC:
-                mpi_bcast_parameter(FIELD_PERIODIC)
+            mpi_bcast_parameter(FIELD_PERIODIC)
 
         def __get__(self):
             periodicity = np.zeros(3)

@@ -28,7 +28,6 @@
 
 // Geometry, equation of motion, thermostat/barostat
 #define MASS
-#define PARTIAL_PERIODIC
 #define EXTERNAL_FORCES
 #define LANGEVIN_PER_PARTICLE
 #define BOND_CONSTRAINT
