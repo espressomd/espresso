@@ -141,12 +141,12 @@ int Lattice::map_lattice_to_node(Utils::Vector3i &ind,
                                  const Utils::Vector3i &local_node_grid) const {
   /* determine coordinates in node_grid */
   Utils::Vector3i grid;
-  grid[0] =
-      (int)floor(ind[0] * this->agrid[0] * (1./box_geo.length()[0]) * local_node_grid[0]);
-  grid[1] =
-      (int)floor(ind[1] * this->agrid[1] * (1./box_geo.length()[1]) * local_node_grid[1]);
-  grid[2] =
-      (int)floor(ind[2] * this->agrid[2] * (1./box_geo.length()[2]) * local_node_grid[2]);
+  grid[0] = (int)floor(ind[0] * this->agrid[0] * (1. / box_geo.length()[0]) *
+                       local_node_grid[0]);
+  grid[1] = (int)floor(ind[1] * this->agrid[1] * (1. / box_geo.length()[1]) *
+                       local_node_grid[1]);
+  grid[2] = (int)floor(ind[2] * this->agrid[2] * (1. / box_geo.length()[2]) *
+                       local_node_grid[2]);
 
   /* change from global to local lattice coordinates */
   ind[0] = ind[0] - grid[0] * this->grid[0] + this->halo_size;

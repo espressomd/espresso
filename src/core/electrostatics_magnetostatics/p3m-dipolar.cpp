@@ -102,7 +102,7 @@ static void dp3m_init_a_ai_cao_cut();
  *  @ref p3m_local_mesh::ld_pos "ld_pos".
  *
  *  Function called by @ref dp3m_calc_local_ca_mesh() once and by
- *  @ref dp3m_scaleby_box_l() whenever the @ref box_l changes.
+ *  @ref dp3m_scaleby_box_l() whenever the box size changes.
  */
 static void dp3m_calc_lm_ld_pos();
 
@@ -126,7 +126,7 @@ static void dp3m_realloc_ca_fields(int newsize);
  *  @ref P3MParameters::cao_cut "cao_cut".
  *
  *  Function called by @ref dp3m_init() once and by @ref dp3m_scaleby_box_l()
- *  whenever the @ref box_l changes.
+ *  whenever the box length changes.
  */
 static void dp3m_init_a_ai_cao_cut();
 
@@ -521,7 +521,7 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
                           double accuracy, int n_interpol) {
   if (r_cut >= 0) {
     dp3m.params.r_cut = r_cut;
-    dp3m.params.r_cut_iL = r_cut * (1./box_geo.length()[0]);
+    dp3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
   }
 
   if (mesh >= 0)
@@ -559,7 +559,7 @@ int dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
     return -3;
 
   dp3m.params.r_cut = r_cut;
-  dp3m.params.r_cut_iL = r_cut * (1./box_geo.length()[0]);
+  dp3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
   dp3m.params.mesh[2] = dp3m.params.mesh[1] = dp3m.params.mesh[0] = mesh;
   dp3m.params.cao = cao;
 
@@ -990,7 +990,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
 #endif
         k_space_energy_dip -=
             dipole.prefactor *
-            (dp3m.sum_mu2 * 2 * pow(dp3m.params.alpha_L * (1./box_geo.length()[0]), 3) *
+            (dp3m.sum_mu2 * 2 *
+             pow(dp3m.params.alpha_L * (1. / box_geo.length()[0]), 3) *
              Utils::sqrt_pi_i() / 3.0);
 
         double volume =
@@ -1188,8 +1189,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
 /************************************************************/
 
 double calc_surface_term(int force_flag, int energy_flag) {
-  const double pref = dipole.prefactor * 4 * M_PI * (1./box_geo.length()[0]) * (1./box_geo.length()[1]) *
-                      (1./box_geo.length()[2]) / (2 * dp3m.params.epsilon + 1);
+  const double pref = dipole.prefactor * 4 * M_PI * (1. / box_geo.length()[0]) *
+                      (1. / box_geo.length()[1]) * (1. / box_geo.length()[2]) /
+                      (2 * dp3m.params.epsilon + 1);
   double suma, a[3];
   double en;
 
@@ -2039,8 +2041,8 @@ int dp3m_adaptive_tune(char **logger) {
   if (dp3m.params.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
     r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2) - skin;
-    r_cut_iL_min *= (1./box_geo.length()[0]);
-    r_cut_iL_max *= (1./box_geo.length()[0]);
+    r_cut_iL_min *= (1. / box_geo.length()[0]);
+    r_cut_iL_max *= (1. / box_geo.length()[0]);
   } else {
     r_cut_iL_min = r_cut_iL_max = dp3m.params.r_cut_iL;
 
@@ -2584,7 +2586,7 @@ void dp3m_scaleby_box_l() {
   }
 
   dp3m.params.r_cut = dp3m.params.r_cut_iL * box_geo.length()[0];
-  dp3m.params.alpha = dp3m.params.alpha_L * (1./box_geo.length()[0]);
+  dp3m.params.alpha = dp3m.params.alpha_L * (1. / box_geo.length()[0]);
   dp3m_init_a_ai_cao_cut();
   dp3m_calc_lm_ld_pos();
   dp3m_sanity_checks_boxl();

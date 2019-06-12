@@ -38,7 +38,7 @@
  *
  *  The Figure illustrates the direction convention used for arrays
  *  with 6 (e.g. \ref node_neighbors, \ref #boundary) and 3 entries
- *  (e.g \ref node_grid, \ref box_l , \ref my_left,...).
+ *  (e.g \ref node_grid, box length , \ref my_left,...).
  *
  *
  *  Implementation in grid.cpp.
@@ -68,7 +68,7 @@ extern Utils::Vector<int, 6> node_neighbors;
 /** where to fold particles that leave local box in direction i. */
 extern Utils::Vector<int, 6> boundary;
 
-/** Smallest simulation box dimension (\ref box_l).
+/** Smallest simulation box dimension.
     Remark: with PARTIAL_PERIODIC, only the periodic directions
     are taken into account! */
 extern double min_box_l;
@@ -128,8 +128,6 @@ void grid_changed_box_l();
 /** Calculates the smallest box and local box dimensions for periodic
  * directions.  This is needed to check if the interaction ranges are
  * compatible with the box dimensions and the node grid.
- * see also \ref box_l, \ref local_box_l, \ref min_box_l
- * and \ref min_local_box_l.
  * Remark: In the aperiodic case min_box_l is set to
  * 2 * \ref MAX_INTERACTION_RANGE . */
 void calc_minimal_box_dimensions();

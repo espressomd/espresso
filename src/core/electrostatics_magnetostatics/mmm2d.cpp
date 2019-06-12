@@ -297,17 +297,17 @@ void MMM2D_setup_constants() {
 }
 
 static void layered_get_mi_vector(double res[3], double const a[3],
-                           double const b[3]) {
-    int i;
+                                  double const b[3]) {
+  int i;
 
-    for (i = 0; i < 2; i++) {
-        res[i] = a[i] - b[i];
-        if (box_geo.periodic(i))
-            res[i] -= std::round(res[i] * (1. / box_geo.length()[i])) * box_geo.length()[i];
-    }
-    res[2] = a[2] - b[2];
+  for (i = 0; i < 2; i++) {
+    res[i] = a[i] - b[i];
+    if (box_geo.periodic(i))
+      res[i] -=
+          std::round(res[i] * (1. / box_geo.length()[i])) * box_geo.length()[i];
+  }
+  res[2] = a[2] - b[2];
 }
-
 
 /****************************************
  * FAR FORMULA

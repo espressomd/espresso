@@ -21,9 +21,9 @@
 
 #include "h5md_core.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "communication.hpp"
 
 #include <vector>
 

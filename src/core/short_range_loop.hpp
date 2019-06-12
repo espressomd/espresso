@@ -45,7 +45,7 @@ struct Distance {
 
 namespace detail {
 struct MinimalImageDistance {
-    const BoxGeometry box;
+  const BoxGeometry box;
 
   Distance operator()(Particle const &p1, Particle const &p2) const {
     return Distance(get_mi_vector(p1.r.p, p2.r.p, box));
@@ -53,7 +53,7 @@ struct MinimalImageDistance {
 };
 
 struct LayeredMinimalImageDistance {
-    const BoxGeometry box;
+  const BoxGeometry box;
 
   Distance operator()(Particle const &p1, Particle const &p2) const {
     auto mi_dist = get_mi_vector(p1.r.p, p2.r.p, box);
@@ -96,7 +96,8 @@ void decide_distance(CellIterator first, CellIterator last,
   case CELL_STRUCTURE_LAYERED:
     Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), LayeredMinimalImageDistance{box_geo},
+        std::forward<PairKernel>(pair_kernel),
+        LayeredMinimalImageDistance{box_geo},
         std::forward<VerletCriterion>(verlet_criterion),
         cell_structure.use_verlet_list, rebuild_verletlist);
     break;
