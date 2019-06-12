@@ -1,7 +1,11 @@
 #ifndef UTILS_DEVICE_QUALIFIER_HPP
 #define UTILS_DEVICE_QUALIFIER_HPP
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) || defined(__HIPCC__)
+#define GPUCOMPILER
+#endif
+
+#if defined(__CUDACC__) || defined(__HIPCC__)
 #define DEVICE_QUALIFIER __host__ __device__
 #define DEVICE_ASSERT(A) void((A))
 #else

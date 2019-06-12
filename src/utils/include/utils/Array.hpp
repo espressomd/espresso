@@ -42,24 +42,28 @@ template <typename T, std::size_t N> struct Array {
   detail::Storage<T, N> m_storage;
 
   DEVICE_QUALIFIER constexpr reference at(size_type i) {
+#if not defined(GPUCOMPILER)
     if (i >= N)
       throw std::out_of_range("Array access out of bounds.");
+#endif
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr const_reference at(size_type i) const {
+#if not defined(GPUCOMPILER)
     if (i >= N)
       throw std::out_of_range("Array access out of bounds.");
+#endif
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr reference operator[](size_type i) {
-    assert(i < N);
+    DEVICE_ASSERT(i < N);
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr const_reference operator[](size_type i) const {
-    assert(i < N);
+    DEVICE_ASSERT(i < N);
     return m_storage.m_data[i];
   }
 
