@@ -67,10 +67,10 @@ inline void convert_quat_to_director(const Utils::Vector4d &quat,
 }
 
 inline Utils::Vector3d convert_quat_to_director(const Utils::Vector4d &q) {
-    Utils::Vector3d  res;
-    convert_quat_to_director(q, res);
+  Utils::Vector3d res;
+  convert_quat_to_director(q, res);
 
-    return res;
+  return res;
 }
 
 /** Multiply two quaternions */
@@ -83,12 +83,12 @@ void multiply_quaternions(const T1 &a, const T2 &b, T3 &result) {
   result[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
 }
 
-inline
-Utils::Vector4d multiply_quaternions(const Utils::Vector4d &q, const Utils::Vector4d &p) {
-    Utils::Vector4d res;
-    multiply_quaternions(q, p, res);
+inline Utils::Vector4d multiply_quaternions(const Utils::Vector4d &q,
+                                            const Utils::Vector4d &p) {
+  Utils::Vector4d res;
+  multiply_quaternions(q, p, res);
 
-    return res;
+  return res;
 }
 
 /** Convert director to quaternions */

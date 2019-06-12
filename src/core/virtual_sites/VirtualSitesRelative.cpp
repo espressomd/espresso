@@ -92,8 +92,8 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
 
   auto const new_pos = p_real->r.p + director * p.p.vs_relative.distance;
   /* The shift has to respect periodic boundaries: if the reference particles
-   * is not in the same image box, we potentially avoid to shift to the other side
-   * of the box. */
+   * is not in the same image box, we potentially avoid to shift to the other
+   * side of the box. */
   auto const shift = get_mi_vector(new_pos, p.r.p);
 
   for (auto const &s : shift) {
