@@ -10,11 +10,11 @@ cdef extern from "grid.hpp":
     cppclass BoxGeometry:
         void set_periodic(unsigned coord, bool value)
         bool periodic(unsigned coord)
-        const Vector3d &length()
+        const Vector3d & length()
         void set_length(Vector3d)
 
     BoxGeometry box_geo
 
-    Vector3d get_mi_vector(const Vector3d &, const Vector3d &, const BoxGeometry &)
-    Vector3d folded_position(const Vector3d &)
-    Vector3d unfolded_position(const Vector3d &, const Vector3i &, const Vector3d &)
+    Vector3d get_mi_vector(const Vector3d & , const Vector3d & , const BoxGeometry & )
+    Vector3d folded_position(const Vector3d & )
+    Vector3d unfolded_position(const Vector3d & , const Vector3i & , const Vector3d & )
