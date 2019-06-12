@@ -89,7 +89,7 @@ bool is_valid_position(
     std::vector<std::vector<Utils::Vector3d>> const *positions,
     PartCfg &partCfg, double const min_distance,
     int const respect_constraints) {
-  Utils::Vector3d const folded_pos = folded_position(*pos,box_geo);
+  Utils::Vector3d const folded_pos = folded_position(*pos, box_geo);
   // check if constraint is violated
   if (respect_constraints) {
     for (auto &c : Constraints::constraints) {
@@ -118,7 +118,8 @@ bool is_valid_position(
     double h;
     for (auto const p : *positions) {
       for (auto m : p) {
-        h = (folded_position(*pos,box_geo) - folded_position(m,box_geo)).norm2();
+        h = (folded_position(*pos, box_geo) - folded_position(m, box_geo))
+                .norm2();
         buff_mindist = std::min(h, buff_mindist);
       }
     }

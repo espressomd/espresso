@@ -562,7 +562,7 @@ int calc_cylindrical_average(
   for (auto const &p : partCfg) {
     for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
       if (types[type_id] == p.p.type || all_types) {
-        auto const pos = folded_position(p.r.p,box_geo);
+        auto const pos = folded_position(p.r.p, box_geo);
 
         Utils::Vector3d vel{p.m.v};
 

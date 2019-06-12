@@ -38,7 +38,8 @@ public:
          std::make_pair(min_z, max_z)}};
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
     for (auto const &id : ids()) {
-      auto const ppos = ::Utils::Vector3d(folded_position(partCfg[id].r.p,box_geo));
+      auto const ppos =
+          ::Utils::Vector3d(folded_position(partCfg[id].r.p, box_geo));
       histogram.update(ppos, partCfg[id].f.f);
     }
     histogram.normalize();
