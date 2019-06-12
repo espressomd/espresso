@@ -284,8 +284,7 @@ void prepare_halo_communication(HaloCommunicator *const hc,
             hinfo->type = HALO_SEND;
           }
         }
-      } else
-      {
+      } else {
         if (local_node_grid[dir] == 1) {
           hc->halo_info[cnt].type = HALO_LOCL;
         } else {
