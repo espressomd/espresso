@@ -85,35 +85,25 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   // This is obtained, by multiplying the quaternion representing the director
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
-  Utils::Vector4d q;
-  multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation, q);
-  // Calculate the director resulting from the quaternions
-  Utils::Vector3d director = {0, 0, 0};
-  convert_quat_to_director(q, director);
-  // normalize
-  double l = director.norm();
-  // Division comes in the loop below
+  auto const director = convert_quat_to_director(multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation)).normalize();
 
   // Calculate the new position of the virtual sites from
   // position of real particle + director
-  int i;
-  double new_pos[3];
-  double tmp;
-  for (i = 0; i < 3; i++) {
-    new_pos[i] = p_real->r.p[i] + director[i] / l * p.p.vs_relative.distance;
-    double old = p.r.p[i];
+  for (int i = 0; i < 3; i++) {
+    auto const new_pos = p_real->r.p[i] + director[i] * p.p.vs_relative.distance;
+    auto const old = p.r.p[i];
     // Handle the case that one of the particles had gone over the periodic
     // boundary and its coordinate has been folded
     if (PERIODIC(i)) {
-      tmp = p.r.p[i] - new_pos[i];
+      auto const tmp = p.r.p[i] - new_pos;
       if (tmp > box_l[i] / 2.) {
-        p.r.p[i] = new_pos[i] + box_l[i];
+        p.r.p[i] = new_pos + box_l[i];
       } else if (tmp < -box_l[i] / 2.) {
-        p.r.p[i] = new_pos[i] - box_l[i];
+        p.r.p[i] = new_pos - box_l[i];
       } else
-        p.r.p[i] = new_pos[i];
+        p.r.p[i] = new_pos;
     } else
-      p.r.p[i] = new_pos[i];
+      p.r.p[i] = new_pos;
     // Has the vs moved by more than a skin
     if (fabs(old - p.r.p[i]) > skin) {
       runtimeErrorMsg() << "Virtual site " << p.p.identity
