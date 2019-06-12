@@ -23,6 +23,7 @@ import espressomd
 
 from espressomd.electrostatics import MMM1D
 
+
 @utx.skipIfMissingFeatures("ELECTROSTATICS")
 class ElectrostaticInteractionsTests(ut.TestCase):
     # Handle to espresso system
