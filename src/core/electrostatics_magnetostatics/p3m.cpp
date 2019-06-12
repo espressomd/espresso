@@ -87,10 +87,6 @@ p3m_data_struct p3m;
 
 #ifdef P3M_DEBUG
 static void p3m_print(void) {
-  fprintf(stderr,
-          "general information:\n\t node: %d\n\t box_l: (%lf, %lf, %lf)\n",
-          this_node, box_l[0], box_l[1], box_l[2]);
-
   fprintf(stderr, "p3m parameters:\n\t alpha_L: %lf\n\t r_cut_iL: %lf\n\t \
                    mesh: (%d, %d, %d)\n\t mesh_off: (%lf, %lf, %lf)\n\t \
                    cao: %d\n\t inter: %d\n\t accuracy: %lf\n\t epsilon: %lf\n\t \
