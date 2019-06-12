@@ -8,11 +8,11 @@
 #endif
 
 #if defined(DEVICE_COMPILER)
-#define DEVICE_THROW(E) throw(E)
+#define DEVICE_THROW(E)
 #define DEVICE_QUALIFIER __host__ __device__
 #define DEVICE_ASSERT(A) void((A))
 #else
-#define DEVICE_THROW(E)
+#define DEVICE_THROW(E) throw(E)
 #define DEVICE_QUALIFIER
 #define DEVICE_ASSERT(A) assert((A))
 #endif
