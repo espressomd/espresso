@@ -68,15 +68,13 @@ extern Utils::Vector<int, 6> node_neighbors;
 /** where to fold particles that leave local box in direction i. */
 extern Utils::Vector<int, 6> boundary;
 
-/** Smallest simulation box dimension.
-    Remark: with PARTIAL_PERIODIC, only the periodic directions
+/** Smallest simulation box dimension. Only periodic directions
     are taken into account! */
 extern double min_box_l;
 /** Dimensions of the box a single node is responsible for. */
 extern Utils::Vector3d local_box_l;
 /** Smallest local simulation box dimension (\ref local_box_l).
-    Remark: with PARTIAL_PERIODIC, only the periodic directions
-    are taken into account! */
+    Only the periodic directions are taken into account! */
 extern double min_local_box_l;
 /** Left (bottom, front) corner of this nodes local box. */
 extern Utils::Vector3d my_left;

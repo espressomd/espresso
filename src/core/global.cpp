@@ -125,11 +125,9 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_NPTISO_PISTON,
      {&nptiso.piston, Datafield::Type::DOUBLE, 1,
       "npt_piston"}}, /* 27 from pressure.cpp */
-#ifdef PARTIAL_PERIODIC
     {FIELD_PERIODIC,
      {&box_geo.m_periodic, Datafield::Type::INT, 1,
       "periodicity"}}, /* 28 from grid.cpp */
-#endif
     {FIELD_SKIN,
      {&skin, Datafield::Type::DOUBLE, 1, "skin"}}, /* 29 from integrate.cpp */
     {FIELD_TEMPERATURE,

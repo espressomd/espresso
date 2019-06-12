@@ -10,7 +10,6 @@
 #include <stdexcept>
 
 struct BoxGeometry {
-#ifdef PARTIAL_PERIODIC
   /** Flags for all three dimensions whether pbc are applied (default). */
   std::bitset<3> m_periodic = 0b111;
 
@@ -20,14 +19,6 @@ struct BoxGeometry {
     assert(coord <= 2);
     return m_periodic[coord];
   }
-#else
-  void set_periodic(unsigned, bool val) const {
-    if (!val)
-      throw std::runtime_error(
-          "Disabeling periodicity needs feature 'PARTIAL_PERIODIC'.");
-  }
-  constexpr bool periodic(int) { return true; }
-#endif
 
   Utils::Vector3d m_length = {1, 1, 1};
 

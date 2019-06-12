@@ -267,7 +267,6 @@ void prepare_halo_communication(HaloCommunicator *const hc,
       MPI_Type_vector(nblocks, stride, skip, datatype, &hinfo->datatype);
       MPI_Type_commit(&hinfo->datatype);
 
-#ifdef PARTIAL_PERIODIC
       if (!box_geo.periodic(dir) &&
           (boundary[2 * dir + lr] != 0 || boundary[2 * dir + 1 - lr] != 0)) {
         if (local_node_grid[dir] == 1) {
@@ -286,7 +285,6 @@ void prepare_halo_communication(HaloCommunicator *const hc,
           }
         }
       } else
-#endif
       {
         if (local_node_grid[dir] == 1) {
           hc->halo_info[cnt].type = HALO_LOCL;
