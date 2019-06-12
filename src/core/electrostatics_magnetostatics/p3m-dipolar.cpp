@@ -93,7 +93,7 @@ static void dp3m_calc_send_mesh();
  *  cutoff for charge assignment @ref P3MParameters::cao_cut "cao_cut".
  *
  *  Function called by @ref dp3m_init() once and by @ref
- *  dp3m_scaleby_box_l() whenever the @ref box_l changes.
+ *  dp3m_scaleby_box_l() whenever the box_length changes.
  */
 static void dp3m_init_a_ai_cao_cut();
 
