@@ -121,15 +121,6 @@ static void dp3m_spread_force_grid(double *mesh);
 /** realloc charge assignment fields. */
 static void dp3m_realloc_ca_fields(int newsize);
 
-/** Initialize the (inverse) mesh constant @ref P3MParameters::a "a"
- *  (@ref P3MParameters::ai "ai") and the cutoff for charge assignment
- *  @ref P3MParameters::cao_cut "cao_cut".
- *
- *  Function called by @ref dp3m_init() once and by @ref dp3m_scaleby_box_l()
- *  whenever the box length changes.
- */
-static void dp3m_init_a_ai_cao_cut();
-
 /** Checks for correctness for magnetic dipoles in P3M of the cao_cut,
  *  necessary when the box length changes
  */
