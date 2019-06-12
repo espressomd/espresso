@@ -24,7 +24,9 @@
  *  Common code for functions calculating angle forces.
  */
 
+#include "config.hpp"
 #include "grid.hpp"
+
 #include <tuple>
 
 /** Compute the cosine of the angle between three particles.
