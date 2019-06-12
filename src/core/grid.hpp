@@ -193,11 +193,12 @@ inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
     }
 }
 
-inline Utils::Vector3d folded_position(const Utils::Vector3d &p) {
+inline Utils::Vector3d folded_position(const Utils::Vector3d &p,
+                                       const BoxGeometry &box) {
   Utils::Vector3d p_folded;
   for (int i = 0; i < 3; i++) {
-    if (box_geo.periodic(i)) {
-      p_folded[i] = Algorithm::periodic_fold(p[i], box_geo.length()[i]);
+    if (box.periodic(i)) {
+      p_folded[i] = Algorithm::periodic_fold(p[i], box.length()[i]);
     } else {
       p_folded[i] = p[i];
     }

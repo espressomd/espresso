@@ -85,7 +85,7 @@ int ScafacosData::update_particle_data() {
   }
 
   for (auto const &p : local_cells.particles()) {
-    auto pos = folded_position(p.r.p);
+    auto pos = folded_position(p.r.p, box_geo);
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
     positions.push_back(pos[2]);

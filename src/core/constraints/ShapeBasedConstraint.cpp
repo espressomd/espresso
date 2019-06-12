@@ -45,7 +45,7 @@ double ShapeBasedConstraint::min_dist() {
         ia_params = get_ia_param(p.p.type, part_rep.p.type);
         if (checkIfInteraction(ia_params)) {
           double vec[3], dist;
-          m_shape->calculate_dist(folded_position(p.r.p), &dist, vec);
+          m_shape->calculate_dist(folded_position(p.r.p, box_geo), &dist, vec);
           return std::min(min, dist);
         }
         return min;

@@ -43,12 +43,13 @@ Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
   // of the cluster is arbitrarily chosen as reference.
 
   Utils::Vector3d reference_position =
-      folded_position(partCfg()[particles[0]].r.p);
+      folded_position(partCfg()[particles[0]].r.p, box_geo);
   double total_mass = 0.;
   for (int pid :
        subcl_partcicle_ids) // iterate over all particle ids within a cluster
   {
-    const Utils::Vector3d folded_pos = folded_position(partCfg()[pid].r.p);
+    const Utils::Vector3d folded_pos =
+        folded_position(partCfg()[pid].r.p, box_geo);
     auto const dist_to_reference =
         get_mi_vector(folded_pos, reference_position,
                       box_geo); // add current particle positions

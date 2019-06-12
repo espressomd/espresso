@@ -71,7 +71,7 @@ void init_node_grid() {
 }
 
 int map_position_node_array(const Utils::Vector3d &pos) {
-  auto const f_pos = folded_position(pos);
+  auto const f_pos = folded_position(pos, box_geo);
 
   Utils::Vector3i im;
   for (int i = 0; i < 3; i++) {
