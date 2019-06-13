@@ -62,7 +62,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define OVERLAPPED
 #define THOLE
 
 #define VIRTUAL_SITES_RELATIVE

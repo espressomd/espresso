@@ -1,5 +1,3 @@
-
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -18,18 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
-from espressomd.interactions import FeneBond
-from tests_common import verify_lj_forces
 from numpy import random
 
 
-@ut.skipIf(not espressomd.has_features("ROTATION"),
-           "Test requires ROTATION")
+@utx.skipIfMissingFeatures("ROTATION")
 class Rotation(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
@@ -37,15 +32,17 @@ class Rotation(ut.TestCase):
     s.time_step = 0.01
 
     def test_langevin(self):
-        """Applies langevin thermostat and checks that correct axes get thermalized"""
+        """Applies langevin thermostat and checks that correct axes get
+           thermalized"""
         s = self.s
         s.thermostat.set_langevin(gamma=1, kT=1, seed=42)
         for x in 0, 1:
             for y in 0, 1:
                 for z in 0, 1:
                     s.part.clear()
-                    s.part.add(id=0, pos=(0, 0, 0), rotation=(x, y, z), quat=(
-                        1, 0, 0, 0), omega_body=(0, 0, 0), torque_lab=(0, 0, 0))
+                    s.part.add(id=0, pos=(0, 0, 0), rotation=(x, y, z),
+                               quat=(1, 0, 0, 0), omega_body=(0, 0, 0),
+                               torque_lab=(0, 0, 0))
                     s.integrator.run(500)
                     self.validate(x, 0)
                     self.validate(y, 1)
@@ -59,16 +56,17 @@ class Rotation(ut.TestCase):
             #self.assertEqual(self.s.part[0].torque_body[coord],0)
             self.assertEqual(self.s.part[0].omega_body[coord], 0)
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"), "Requires EXTERNAL_FORCES")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_axes_changes(self):
-        """Verifies that rotation axes in body and space frame stay the same and other axes dont"""
+        """Verifies that rotation axes in body and space frame stay the same
+           and other axes don't"""
         s = self.s
         s.part.clear()
         s.part.add(id=0, pos=(0.9, 0.9, 0.9), ext_torque=(1, 1, 1))
         s.thermostat.turn_off()
         for dir in 0, 1, 2:
             # Reset orientation
-            s.part[0].quat = 1, 0, 0, 0
+            s.part[0].quat = [1, 0, 0, 0]
 
             # Enable rotation in a single direction
             rot = [0, 0, 0]
@@ -131,8 +129,6 @@ class Rotation(ut.TestCase):
         self.assertAlmostEqual(np.dot(v, v), np.dot(v_r, v_r), delta=1e-10)
         np.testing.assert_allclose(
             p.convert_vector_space_to_body(v_r), v, atol=1E-10)
-
-        #
 
 
 if __name__ == "__main__":

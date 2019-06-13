@@ -29,8 +29,8 @@
 import espressomd
 from espressomd import lb, lbboundaries, shapes, has_features
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
-import sys
 
 # Define the LB Parameters
 TIME_STEP = 0.4
@@ -66,32 +66,21 @@ class Stokes(object):
         # Setup walls
         walls = [None] * 4
         walls[0] = lbboundaries.LBBoundary(shape=shapes.Wall(
-                                           normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
-        walls[1] = lbboundaries.LBBoundary(
-            shape=shapes.Wall(
-                normal=[
-                    1,
-                    0,
-                    0],
-                dist=1),
-            velocity=v)
+            normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
+        walls[1] = lbboundaries.LBBoundary(shape=shapes.Wall(
+            normal=[1, 0, 0], dist=1), velocity=v)
         walls[2] = lbboundaries.LBBoundary(shape=shapes.Wall(
             normal=[0, -1, 0], dist=-(1 + box_width)), velocity=v)
-        walls[3] = lbboundaries.LBBoundary(
-            shape=shapes.Wall(
-                normal=[
-                    0,
-                    1,
-                    0],
-                dist=1),
-            velocity=v)
+        walls[3] = lbboundaries.LBBoundary(shape=shapes.Wall(
+            normal=[0, 1, 0], dist=1), velocity=v)
 
         for wall in walls:
             self.system.lbboundaries.add(wall)
 
         # setup sphere without slip in the middle
         sphere = lbboundaries.LBBoundary(shape=shapes.Sphere(
-            radius=radius, center=[real_width / 2] * 2 + [box_length / 2], direction=1))
+            radius=radius, center=[real_width / 2] * 2 + [box_length / 2],
+            direction=1))
 
         self.system.lbboundaries.add(sphere)
 
@@ -114,23 +103,20 @@ class Stokes(object):
         force = np.copy(sphere.get_force())
         np.testing.assert_allclose(
             force,
-            [0,
-             0,
-             stokes_force],
+            [0, 0, stokes_force],
             rtol=0.03,
             atol=stokes_force * 0.03)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['CUDA', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
 class LBGPUStokes(ut.TestCase, Stokes):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
 class LBCPUStokes(ut.TestCase, Stokes):
 
     def setUp(self):

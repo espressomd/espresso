@@ -16,17 +16,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 
-import math
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
-from numpy import linalg as la
-from numpy.random import random, seed
+from numpy.random import random
 
 import espressomd
 import espressomd.magnetostatics
 import espressomd.analyze
 import espressomd.cuda_init
-import tests_common
 
 
 def stopAll(system):
@@ -34,7 +32,8 @@ def stopAll(system):
     system.part[:].omega_body = np.zeros(3)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["DIPOLAR_BARNES_HUT"]), "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["DIPOLAR_BARNES_HUT"])
 class BH_DDS_gpu_multCPU_test(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
     # just some seeding based on 14
@@ -45,11 +44,11 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
 
     def vectorsTheSame(self, a, b):
         tol = 5E-2
-        vec_len = la.norm(a - b)
-        rel = 2 * vec_len / (la.norm(a) + la.norm(b))
+        vec_len = np.linalg.norm(a - b)
+        rel = 2 * vec_len / (np.linalg.norm(a) + np.linalg.norm(b))
         return rel <= tol
 
-    def run_test_case(self):
+    def test(self):
         pf_bh_gpu = 2.34
         pf_dds_gpu = 3.524
         ratio_dawaanr_bh_gpu = pf_dds_gpu / pf_bh_gpu
@@ -63,9 +62,6 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
 
         for n in [128, 541]:
             dipole_modulus = 1.3
-            # scale the box for a large number of particles:
-            if n > 1000:
-                l *= (n / 541) ** (1 / 3.0)
             for i in range(n):
                 part_pos = np.array(random(3)) * l
                 costheta = 2 * random() - 1
@@ -74,19 +70,17 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
                 part_dip[0] = sintheta * np.cos(phi) * dipole_modulus
                 part_dip[1] = sintheta * np.sin(phi) * dipole_modulus
                 part_dip[2] = costheta * dipole_modulus
-                self.system.part.add(id=i, type=0, pos=part_pos, dip=part_dip, v=np.array(
-                    [0, 0, 0]), omega_body=np.array([0, 0, 0]))
+                self.system.part.add(id=i, type=0, pos=part_pos, dip=part_dip,
+                                     v=np.array([0, 0, 0]), omega_body=np.array([0, 0, 0]))
 
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=10.0, sigma=0.5,
-                cutoff=0.55, shift="auto")
+                epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
             self.system.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
             stopAll(self.system)
             self.system.integrator.set_vv()
 
             self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=0.0, sigma=0.0,
-                cutoff=-1, shift=0.0)
+                epsilon=0.0, sigma=0.0, cutoff=-1, shift=0.0)
 
             self.system.cell_system.skin = 0.0
             self.system.time_step = 0.01
@@ -132,29 +126,31 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             for i in range(n):
                 self.assertTrue(
                     self.vectorsTheSame(
-                        np.array(
-                            dawaanr_t[i]), ratio_dawaanr_bh_gpu * np.array(
-                                bhgpu_t[i])),
-                                msg='Torques on particle do not match. i={0} dawaanr_t={1} ratio_dawaanr_bh_gpu*bhgpu_t={2}'.format(i, np.array(dawaanr_t[i]), ratio_dawaanr_bh_gpu * np.array(bhgpu_t[i])))
+                        np.array(dawaanr_t[i]),
+                        ratio_dawaanr_bh_gpu * np.array(bhgpu_t[i])),
+                    msg='Torques on particle do not match. i={0} dawaanr_t={1} '
+                        'ratio_dawaanr_bh_gpu*bhgpu_t={2}'.format(
+                        i, np.array(dawaanr_t[i]),
+                        ratio_dawaanr_bh_gpu * np.array(bhgpu_t[i])))
                 self.assertTrue(
                     self.vectorsTheSame(
-                        np.array(
-                            dawaanr_f[i]), ratio_dawaanr_bh_gpu * np.array(
-                                bhgpu_f[i])),
-                                msg='Forces on particle do not match: i={0} dawaanr_f={1} ratio_dawaanr_bh_gpu*bhgpu_f={2}'.format(i, np.array(dawaanr_f[i]), ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])))
-            self.assertTrue(
-                abs(dawaanr_e - bhgpu_e * ratio_dawaanr_bh_gpu) <= abs(
-                    1E-3 * dawaanr_e),
-                            msg='Energies for dawaanr {0} and bh_gpu {1} do not match.'.format(dawaanr_e, ratio_dawaanr_bh_gpu * bhgpu_e))
+                        np.array(dawaanr_f[i]),
+                        ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])),
+                    msg='Forces on particle do not match: i={0} dawaanr_f={1} '
+                        'ratio_dawaanr_bh_gpu*bhgpu_f={2}'.format(
+                        i, np.array(dawaanr_f[i]),
+                        ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])))
+            self.assertLessEqual(
+                abs(dawaanr_e - bhgpu_e * ratio_dawaanr_bh_gpu),
+                abs(1E-3 * dawaanr_e),
+                msg='Energies for dawaanr {0} and bh_gpu {1} do not match.'
+                    .format(dawaanr_e, ratio_dawaanr_bh_gpu * bhgpu_e))
 
             self.system.integrator.run(steps=0, recalc_forces=True)
 
             del bh_gpu
             self.system.actors.clear()
             self.system.part.clear()
-
-    def test(self):
-        self.run_test_case()
 
 if __name__ == '__main__':
     ut.main()

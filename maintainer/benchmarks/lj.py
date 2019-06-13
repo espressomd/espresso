@@ -45,6 +45,7 @@ args = parser.parse_args()
 n_proc = int(os.environ.get("OMPI_COMM_WORLD_SIZE", 1))
 n_part = n_proc * args.particles_per_core
 measurement_steps = int(np.round(5e6 / args.particles_per_core, -2))
+n_iterations = 30
 assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
@@ -127,9 +128,9 @@ while system.analysis.energy()["total"] > 3 * n_part:
 print()
 system.integrator.set_vv()
 
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
-# tune skin
+# tuning and equilibration
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=0.2, max_skin=1, tol=0.05, int_steps=100)))
 system.integrator.run(min(5 * measurement_steps, 60000))
@@ -148,7 +149,7 @@ if not args.visualizer:
     print("Timing every {} steps".format(measurement_steps))
     main_tick = time()
     all_t = []
-    for i in range(30):
+    for i in range(n_iterations):
         tick = time()
         system.integrator.run(measurement_steps)
         tock = time()

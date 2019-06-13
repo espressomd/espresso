@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(basic_test) {
   Vector3d const h{2., 3., 4.};
   Vector3i size{10, 11, 12};
 
-  auto const res = raster<Vector3d>(origin, h, size, [](auto i) { return i; });
+  auto const res = raster<double>(origin, h, size, [](auto i) { return i; });
 
   for (int i = 0; i < size[0]; i++)
     for (int j = 0; j < size[1]; j++)

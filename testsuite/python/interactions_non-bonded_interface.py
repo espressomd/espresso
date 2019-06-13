@@ -16,10 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import unittest as ut
-import numpy as np
 
 import espressomd
 import espressomd.interactions
@@ -29,8 +27,8 @@ class Non_bonded_interactionsTests(ut.TestCase):
     system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 
     def intersMatch(self, inType, outType, inParams, outParams):
-        """Check, if the interaction type set and gotten back as well as the bond
-        parameters set and gotten back match. Only check keys present in
+        """Check, if the interaction type set and gotten back as well as the
+        bond parameters set and gotten back match. Only check keys present in
         inParams.
         """
         if inType != outType:
@@ -50,10 +48,10 @@ class Non_bonded_interactionsTests(ut.TestCase):
     def generateTestForNon_bonded_interaction(
             _partType1, _partType2, _interClass, _params, _interName):
         """Generates test cases for checking interaction parameters set and gotten back
-        from Es actually match. Only keys which are present  in _params are checked
+        from Es actually match. Only keys which are present in _params are checked
         1st and 2nd arg: Particle type ids to check on
         3rd: Class of the interaction to test, ie.e, FeneBond, HarmonicBond
-        4th: Interaction parameters as dictionary, i.e., {"k"=1.,"r_0"=0.
+        4th: Interaction parameters as dictionary, i.e., {"k"=1.,"r_0"=0}
         5th: Name of the interaction property to set (i.e. "lennardJones")
         """
         partType1 = _partType1
@@ -68,8 +66,8 @@ class Non_bonded_interactionsTests(ut.TestCase):
             # which was there, when the outer function was called
 
             # Set parameters
-            getattr(self.system.non_bonded_inter[partType1, partType2], interName).set_params(
-                **params)
+            getattr(self.system.non_bonded_inter[partType1, partType2],
+                    interName).set_params(**params)
 
             # Read them out again
             outInter = getattr(
@@ -82,8 +80,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
                     type(outInter),
                     params,
                     outParams),
-                interClass(
-                    **params).type_name() +
+                interClass(**params).type_name() +
                 ": value set and value gotten back differ for particle types " +
                 str(partType1) +
                 " and " +
@@ -115,25 +112,25 @@ class Non_bonded_interactionsTests(ut.TestCase):
     if espressomd.has_features(["LENNARD_JONES_GENERIC"]):
         test_ljgen1 = generateTestForNon_bonded_interaction(
             0, 0, espressomd.interactions.GenericLennardJonesInteraction,
-            {"epsilon": 1., "sigma": 2., "cutoff": 3., "shift": 4., "offset": 5.,
-             "e1": 7, "e2": 8, "b1": 9., "b2": 10.},
+            {"epsilon": 1., "sigma": 2., "cutoff": 3., "shift": 4.,
+             "offset": 5., "e1": 7, "e2": 8, "b1": 9., "b2": 10.},
             "generic_lennard_jones")
         test_ljgen2 = generateTestForNon_bonded_interaction(
             0, 0, espressomd.interactions.GenericLennardJonesInteraction,
-            {"epsilon": 1.1, "sigma": 2.1, "cutoff": 3.1, "shift": 4.1, "offset": 5.1,
-             "e1": 71, "e2": 81, "b1": 9.1, "b2": 10.1},
+            {"epsilon": 1.1, "sigma": 2.1, "cutoff": 3.1, "shift": 4.1,
+             "offset": 5.1, "e1": 71, "e2": 81, "b1": 9.1, "b2": 10.1},
             "generic_lennard_jones")
         test_ljgen3 = generateTestForNon_bonded_interaction(
             0, 0, espressomd.interactions.GenericLennardJonesInteraction,
-            {"epsilon": 1.2, "sigma": 2.2, "cutoff": 3.2, "shift": 4.2, "offset": 5.2,
-             "e1": 72, "e2": 82, "b1": 9.2, "b2": 10.2},
+            {"epsilon": 1.2, "sigma": 2.2, "cutoff": 3.2, "shift": 4.2,
+             "offset": 5.2, "e1": 72, "e2": 82, "b1": 9.2, "b2": 10.2},
             "generic_lennard_jones")
 
     if espressomd.has_features(["GAY_BERNE"]):
         test_gb = generateTestForNon_bonded_interaction(
             0, 0, espressomd.interactions.GayBerneInteraction,
             {"eps": 1.0, "sig": 1.0, "cut": 4.0, "k1": 3.0,
-                "k2": 5.0, "mu": 2.0, "nu": 1.0},
+             "k2": 5.0, "mu": 2.0, "nu": 1.0},
             "gay_berne")
 
 if __name__ == "__main__":
