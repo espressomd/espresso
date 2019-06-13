@@ -50,8 +50,8 @@ IF DIPOLES == 1:
             Set the magnetostatics prefactor
 
             """
-            if set_Dprefactor(self._params["prefactor"]):
-                raise Exception("Could not set magnetostatic prefactor")
+            set_Dprefactor(self._params["prefactor"])
+            handle_errors("Could not set magnetostatic prefactor")
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
 
@@ -198,7 +198,7 @@ IF DP3M == 1:
         def python_dp3m_adaptive_tune(self):
             cdef char * log = NULL
             cdef int response
-            response = dp3m_adaptive_tune( & log)
+            response = dp3m_adaptive_tune(& log)
             handle_errors(
                 "dipolar P3M_init: k-space cutoff is larger than half of box dimension")
             return response, log
@@ -270,9 +270,9 @@ IF DIPOLES == 1:
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
-            if dawaanr_set_params():
-                raise Exception(
-                    "Could not activate magnetostatics method " + self.__class__.__name__)
+            dawaanr_set_params()
+            handle_errors("Could not activate magnetostatics method "
+                          + self.__class__.__name__)
 
     cdef class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
         """Calculate magnetostatic interactions by direct summation over all pairs.
@@ -307,9 +307,9 @@ IF DIPOLES == 1:
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
-            if mdds_set_params(self._params["n_replica"]):
-                raise Exception(
-                    "Could not activate magnetostatics method " + self.__class__.__name__)
+            mdds_set_params(self._params["n_replica"])
+            handle_errors("Could not activate magnetostatics method "
+                          + self.__class__.__name__)
 
     IF SCAFACOS_DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):
