@@ -225,7 +225,8 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(c0.particle_type, 17)
         
         self.assertEqual(type(c1.shape), Wall)
-        np.testing.assert_allclose(c1.shape.normal, [1. / np.sqrt(3)] * 3)
+        np.testing.assert_allclose(np.copy(c1.shape.normal),
+                                   [1. / np.sqrt(3)] * 3)
 
 if __name__ == '__main__':
     ut.main()

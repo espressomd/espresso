@@ -25,7 +25,8 @@ import espressomd.interactions
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
-from espressomd.lbboundaries import LBBoundary
+if espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
+    from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
 import espressomd.electrokinetics
 from espressomd.shapes import Wall, Sphere
@@ -104,11 +105,8 @@ acc.update()
 
 system.auto_update_accumulators.add(acc)
 
-system.constraints.add(
-    shape=Sphere(
-        center=system.box_l / 2,
-         radius=0.1),
-         particle_type=17)
+system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
+                       particle_type=17)
 system.constraints.add(shape=Wall(normal=[1. / np.sqrt(3)] * 3, dist=0.5))
 
 system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
