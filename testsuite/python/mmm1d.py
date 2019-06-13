@@ -24,9 +24,9 @@ import tests_common
 import espressomd
 
 
-
 if(not espressomd.has_features(("ELECTROSTATICS", "PARTIAL_PERIODIC"))):
     sys.exit()
+
 
 class ElectrostaticInteractionsTests(object):
     # Handle to espresso system
