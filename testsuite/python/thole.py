@@ -22,7 +22,7 @@ import numpy as np
 import math
 import espressomd.interactions
 
-COULOMB_PREFACTOR = 4.0
+COULOMB_PREFACTOR = 4.01
 
 
 @utx.skipIfMissingFeatures(["THOLE", "EXTERNAL_FORCES", "P3M"])
@@ -33,9 +33,9 @@ class TestThole(ut.TestCase):
     thole damping nonbonded interaction forces against the analytical result.
     """
 
-    q1 = 1.0
-    q2 = -1.0
-    thole_s = 2.0
+    q1 = 1.01
+    q2 = -1.01
+    thole_s = 1.99
 
     box_l = 500.0
     system = espressomd.System(box_l=[box_l] * 3)
