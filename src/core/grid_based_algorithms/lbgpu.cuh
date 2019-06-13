@@ -28,7 +28,7 @@
 #include "config.hpp"
 
 #ifdef CUDA
-#include "curand_wrapper.hpp"
+#include <curand_kernel.h>
 
 #include <utils/Array.hpp>
 

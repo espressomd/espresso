@@ -41,7 +41,7 @@
 
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
-#include "cufft_wrapper.hpp"
+#include <cufft.h>
 
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
@@ -426,7 +426,7 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
 
   const int ind = linear_index_r(par, nmp_x, nmp_y, nmp_z);
 
-  HIP_DYNAMIC_SHARED(float, weights);
+  DYNAMIC_SHARED(float, weights);
 
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
@@ -479,35 +479,35 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
 
   switch (cao) {
   case 1:
-    hipLaunchKernelGGL((assign_charge_kernel<1, false>), dim3(grid),
+    LaunchKernel((assign_charge_kernel<1, false>), dim3(grid),
                        dim3(block), 0, 0, pdata, p, parts_per_block);
     break;
   case 2:
-    hipLaunchKernelGGL((assign_charge_kernel<2, false>), dim3(grid),
+    LaunchKernel((assign_charge_kernel<2, false>), dim3(grid),
                        dim3(block), 0, 0, pdata, p, parts_per_block);
     break;
   case 3:
-    hipLaunchKernelGGL((assign_charge_kernel<3, true>), dim3(grid), dim3(block),
+    LaunchKernel((assign_charge_kernel<3, true>), dim3(grid), dim3(block),
                        3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
                        p, parts_per_block);
     break;
   case 4:
-    hipLaunchKernelGGL((assign_charge_kernel<4, true>), dim3(grid), dim3(block),
+    LaunchKernel((assign_charge_kernel<4, true>), dim3(grid), dim3(block),
                        3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
                        p, parts_per_block);
     break;
   case 5:
-    hipLaunchKernelGGL((assign_charge_kernel<5, true>), dim3(grid), dim3(block),
+    LaunchKernel((assign_charge_kernel<5, true>), dim3(grid), dim3(block),
                        3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
                        p, parts_per_block);
     break;
   case 6:
-    hipLaunchKernelGGL((assign_charge_kernel<6, true>), dim3(grid), dim3(block),
+    LaunchKernel((assign_charge_kernel<6, true>), dim3(grid), dim3(block),
                        3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
                        p, parts_per_block);
     break;
   case 7:
-    hipLaunchKernelGGL((assign_charge_kernel<7, true>), dim3(grid), dim3(block),
+    LaunchKernel((assign_charge_kernel<7, true>), dim3(grid), dim3(block),
                        3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
                        p, parts_per_block);
     break;
@@ -555,7 +555,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
   REAL_TYPE c;
   const int index = linear_index_r(par, nmp_x, nmp_y, nmp_z);
 
-  HIP_DYNAMIC_SHARED(float, weights);
+  DYNAMIC_SHARED(float, weights);
 
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
@@ -618,37 +618,37 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
    * > 2 */
   switch (cao) {
   case 1:
-    hipLaunchKernelGGL((assign_forces_kernel<1, false>), dim3(grid),
+    LaunchKernel((assign_forces_kernel<1, false>), dim3(grid),
                        dim3(block), 0, 0, pdata, p, lb_particle_force_gpu,
                        prefactor, parts_per_block);
     break;
   case 2:
-    hipLaunchKernelGGL((assign_forces_kernel<2, false>), dim3(grid),
+    LaunchKernel((assign_forces_kernel<2, false>), dim3(grid),
                        dim3(block), 0, 0, pdata, p, lb_particle_force_gpu,
                        prefactor, parts_per_block);
     break;
   case 3:
-    hipLaunchKernelGGL((assign_forces_kernel<3, true>), dim3(grid), dim3(block),
+    LaunchKernel((assign_forces_kernel<3, true>), dim3(grid), dim3(block),
                        3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
                        lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 4:
-    hipLaunchKernelGGL((assign_forces_kernel<4, true>), dim3(grid), dim3(block),
+    LaunchKernel((assign_forces_kernel<4, true>), dim3(grid), dim3(block),
                        3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
                        lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 5:
-    hipLaunchKernelGGL((assign_forces_kernel<5, true>), dim3(grid), dim3(block),
+    LaunchKernel((assign_forces_kernel<5, true>), dim3(grid), dim3(block),
                        3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
                        lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 6:
-    hipLaunchKernelGGL((assign_forces_kernel<6, true>), dim3(grid), dim3(block),
+    LaunchKernel((assign_forces_kernel<6, true>), dim3(grid), dim3(block),
                        3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
                        lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 7:
-    hipLaunchKernelGGL((assign_forces_kernel<7, true>), dim3(grid), dim3(block),
+    LaunchKernel((assign_forces_kernel<7, true>), dim3(grid), dim3(block),
                        3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
                        lb_particle_force_gpu, prefactor, parts_per_block);
     break;

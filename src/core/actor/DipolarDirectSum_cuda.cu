@@ -248,7 +248,7 @@ __global__ void DipolarDirectSum_kernel_energy(dds_float pf, int n, float *pos,
 
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   dds_float sum = 0.0;
-  HIP_DYNAMIC_SHARED(dds_float, res)
+  DYNAMIC_SHARED(dds_float, res)
 
   // There is one thread per particle. Each thread computes interactions
   // with particles whose id is larger than the thread id.

@@ -173,7 +173,7 @@ void gpu_change_number_of_part_to_comm() {
 
     global_part_vars_host.number_of_particles = n_part;
 
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(global_part_vars_device),
+    cuda_safe_mem(cudaMemcpyToSymbol(SYMBOL(global_part_vars_device),
                                      &global_part_vars_host,
                                      sizeof(CUDA_global_part_vars)));
 

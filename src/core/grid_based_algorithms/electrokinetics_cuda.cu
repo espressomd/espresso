@@ -23,7 +23,7 @@
 #ifdef CUDA            /* Terminates at end of file */
 #ifdef ELECTROKINETICS /* Terminates at end of file */
 
-#include "cufft_wrapper.hpp"
+#include <cufft.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -2296,7 +2296,7 @@ int ek_init() {
 
   if (!ek_initialized) {
     if (cudaGetSymbolAddress((void **)&ek_parameters_gpu_pointer,
-                             HIP_SYMBOL(ek_parameters_gpu)) != cudaSuccess) {
+                             SYMBOL(ek_parameters_gpu)) != cudaSuccess) {
       fprintf(stderr, "ERROR: Fetching constant memory pointer\n");
 
       return 1;
@@ -2382,7 +2382,7 @@ int ek_init() {
                    ek_parameters.number_of_nodes * 13 * sizeof(ekfloat)));
 #endif
 
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
+    cuda_safe_mem(cudaMemcpyToSymbol(SYMBOL(ek_parameters_gpu),
                                      &ek_parameters, sizeof(EK_parameters)));
 
     lb_get_para_pointer(&ek_lbparameters_gpu);
@@ -2438,7 +2438,7 @@ int ek_init() {
     }
 
     ek_parameters.charge_potential = electrostatics->getGrid().grid;
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
+    cuda_safe_mem(cudaMemcpyToSymbol(SYMBOL(ek_parameters_gpu),
                                      &ek_parameters, sizeof(EK_parameters)));
 
     // clear initial LB force and finish up
@@ -2466,7 +2466,7 @@ int ek_init() {
 
       return 1;
     } else {
-      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
+      cuda_safe_mem(cudaMemcpyToSymbol(SYMBOL(ek_parameters_gpu),
                                        &ek_parameters, sizeof(EK_parameters)));
 
       blocks_per_grid_x = (ek_parameters.number_of_nodes +
@@ -2481,7 +2481,7 @@ int ek_init() {
       LBBoundaries::lb_init_boundaries();
       lb_get_boundary_force_pointer(&ek_lb_boundary_force);
 
-      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
+      cuda_safe_mem(cudaMemcpyToSymbol(SYMBOL(ek_parameters_gpu),
                                        &ek_parameters, sizeof(EK_parameters)));
 #endif
 
