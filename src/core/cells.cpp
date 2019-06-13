@@ -58,7 +58,7 @@ CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
 CellStructure cell_structure = {
-    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr, nullptr};
+    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr};
 
 double max_range = 0.0;
 
@@ -66,8 +66,6 @@ double max_range = 0.0;
  */
 unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
-
-#include "utils/print.hpp"
 
 /**
  * @brief Get pairs closer than distance from the cells.
@@ -87,7 +85,6 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
     if (dist2 < cutoff2) {
-      Utils::print("Found pair", p1.p.identity, p2.p.identity);
       ret.emplace_back(p1.p.identity, p2.p.identity);
     }
   };

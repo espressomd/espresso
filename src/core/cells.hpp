@@ -66,10 +66,6 @@
 #include "ghosts.hpp"
 #include "particle_data.hpp"
 
-#include "utils/vector_traits.hpp"
-
-#include <boost/geometry/geometries/box.hpp>
-
 /** \name Cell Structure */
 /*@{*/
 /** Flag indicating that there is no cell system yet. Only at the
@@ -135,8 +131,6 @@ struct CellPList {
   int max;
 };
 
-using CellGeometry = boost::geometry::model::box<Vector3d>;
-
 /** Describes a cell structure / cell system. Contains information
  *  about the communication of cell contents (particles, ghosts, ...)
  *  between different nodes and the relation between particle
@@ -171,8 +165,6 @@ struct CellStructure {
    *  \return pointer to cell  where to put the particle.
    */
   Cell *(*position_to_cell)(const Vector3d &pos);
-
-  CellGeometry (*cell_geometry)(const Cell *);
 };
 
 /*@}*/
