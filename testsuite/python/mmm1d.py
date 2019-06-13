@@ -42,12 +42,6 @@ class ElectrostaticInteractionsTests(object):
     vec_f_target = np.stack((f_x_target, f_y_target, f_z_target), axis=-1)
     energy_target = -7.156365298205383
     num_particles = pid_target.shape[0]
-    pos_x_target = np.mod(pos_x_target, 10)
-    pos_y_target = np.mod(pos_y_target, 10)
-    pos_z_target = np.mod(pos_z_target, 10)
-#    pos_x_target+=100
-#    pos_y_target+=100
-#    pos_z_target+=100
 
     allowed_error = 1e-4
     
