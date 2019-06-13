@@ -132,7 +132,7 @@ IF ELECTROSTATICS:
         cdef inline python_p3m_adaptive_tune():
             cdef char * log = NULL
             cdef int response
-            response = p3m_adaptive_tune(& log)
+            response = p3m_adaptive_tune( & log)
             handle_errors("Error in p3m_adaptive_tune")
             if log.strip():
                 print(log)
@@ -224,7 +224,7 @@ IF ELECTROSTATICS:
         if MMM1D_sanity_checks() == 1:
             handle_errors(
                 "MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
-        resp = mmm1d_tune( & log)
+        resp = mmm1d_tune(& log)
         if resp:
             print(log)
         return resp
@@ -283,4 +283,3 @@ IF ELECTROSTATICS and MMM1D_GPU:
             void check_periodicity();
             void activate();
             void deactivate();
-        

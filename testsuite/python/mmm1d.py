@@ -30,16 +30,16 @@ class ElectrostaticInteractionsTests(object):
     system.time_step = 0.01
     system.cell_system.skin = 0.4
     system.cell_system.set_n_square()
-    system.thermostat.set_langevin(kT=0,gamma=1, seed=8)
+    system.thermostat.set_langevin(kT=0, gamma=1, seed=8)
 
     pid_target, pos_x_target, pos_y_target, pos_z_target, q_target, f_x_target, f_y_target, f_z_target = np.loadtxt(
         tests_common.abspath("data/mmm1d_data.txt"), unpack=True)
     vec_f_target = np.stack((f_x_target, f_y_target, f_z_target), axis=-1)
     energy_target = -7.156365298205383
     num_particles = pid_target.shape[0]
-    pos_x_target=np.mod(pos_x_target,10)
-    pos_y_target=np.mod(pos_y_target,10)
-    pos_z_target=np.mod(pos_z_target,10)
+    pos_x_target = np.mod(pos_x_target, 10)
+    pos_y_target = np.mod(pos_y_target, 10)
+    pos_z_target = np.mod(pos_z_target, 10)
 
     allowed_error = 1e-4
     
@@ -62,12 +62,12 @@ class ElectrostaticInteractionsTests(object):
         measured_f = self.system.part[:].f
         for i in range(self.num_particles):
             for comp in range(3):
-                abs_deviation=abs(measured_f[i,
-                                   comp] - self.vec_f_target[i,
-                                                             comp])
+                abs_deviation = abs(measured_f[i,
+                                               comp] - self.vec_f_target[i,
+                                                                         comp])
                 self.assertLess(abs_deviation,
-                    self.allowed_error,
-                    msg="Measured force has a deviation of " + str(abs_deviation)+ " which is too big for particle " + str(i) + " in component " + str(comp))
+                                self.allowed_error,
+                                msg="Measured force has a deviation of " + str(abs_deviation) + " which is too big for particle " + str(i) + " in component " + str(comp))
             
     def test_energy(self):
         measured_el_energy = self.system.analysis.energy()[
@@ -108,6 +108,7 @@ class ElectrostaticInteractionsTests(object):
 @utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC", "MMM1D_GPU"])
 class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
     from espressomd.electrostatics import MMM1D
+
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
 class MMM1D_Test(ElectrostaticInteractionsTests, ut.TestCase):
