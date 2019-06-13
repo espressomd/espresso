@@ -421,8 +421,6 @@ General features
 
    .. seealso:: :ref:`Swimmer reactions`
 
--  ``OVERLAPPED``
-
 -  ``COLLISION_DETECTION`` Allows particles to be bound on collision.
 
 -  ``H5MD`` Allows to write data to H5MD formatted hdf5 files.
@@ -471,8 +469,6 @@ Fluid dynamics and fluid structure interaction
 -  ``EK_DEBUG``
 
 -  ``EK_DOUBLE_PREC``
-
--  ``IMMERSED_BOUNDARY`` Immersed-Boundary Bayreuth version.
 
 -  ``OIF_LOCAL_FORCES``
 
@@ -535,18 +531,6 @@ following features.
 -  ``HAT``
 
 -  ``UMBRELLA`` (experimental)
-
-.. _Miscellaneous:
-
-Miscellaneous
-^^^^^^^^^^^^^
-
--  ``FLATNOISE`` Shape of the noise in the (LB) thermostat.
-
--  ``GAUSSRANDOM`` Shape of the noise in the (LB) thermostat.
-
--  ``GAUSSRANDOMCUT`` Shape of the noise in the (LB) thermostat.
-
 
 
 .. _Debug messages:

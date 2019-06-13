@@ -143,10 +143,6 @@ LB_Parameters lbpar = {
     // Thermal energy
     0.0};
 
-#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
-#define FLATNOISE
-#endif
-
 /** The underlying lattice structure */
 Lattice lblattice;
 
