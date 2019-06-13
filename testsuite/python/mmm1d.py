@@ -79,7 +79,7 @@ class ElectrostaticInteractionsTests(object):
             self.allowed_error,
             msg="Measured energy has a deviation which is too big compared to stored result")
 
-    def test_with_analytical_result(self, prefactor=1.0, accuracy=self.allowed_error):
+    def test_with_analytical_result(self, prefactor=1.0, accuracy=1e-4):
         self.system.part.clear()
         self.system.part.add(pos=[0, 0, 0], q=1)
         self.system.part.add(pos=[0, 0, 1], q=1)
