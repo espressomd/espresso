@@ -3,25 +3,52 @@
 Running the simulation
 ======================
 
-.. _Integrator:
-
-Integrator
-----------
-
 To run the integrator call the method
 :meth:`espressomd.integrate.Integrator.run`::
 
-    system.integrator.run(steps=number_of_steps, recalc_forces=False, reuse_forces=False)
+    system.integrator.run(number_of_steps, recalc_forces=False, reuse_forces=False)
 
 where ``number_of_steps`` is the number of time steps the integrator
-should perform.
+should perform. The basic integration scheme of |es| is the Velocity Verlet algorithm,
+but a steepest descent implementation is also available.
 
-|es| uses the Velocity Verlet algorithm for the integration of the equations
-of motion.
+.. _Velocity Verlet Algorithm:
+
+Velocity Verlet algorithm
+-------------------------
+
+:func:`espressomd.integrate.Integrator.set_vv`
+
+The equations of motion for the trajectory of pointlike particles read 
+
+.. math:: \dot v_i(t) = F_i(\{x_j\},v_i,t)/m_i \\ \dot x_i(t) = v_i(t),
+
+where :math:`x_i`, :math:`v_i`, :math:`m_i` are position, velocity and mass of
+particle :math:`i` and :math:`F_i(\{x_j\},v_i,t)` the forces acting on it. 
+These forces comprise all interactions with other particles and external fields
+as well as non-deterministic contributions described in TODO:ref:thermostats. 
+
+For numerical integration, this equation is discretized to the following steps:
+
+1. Calculate the velocity at the half step
+
+.. math:: v(t+dt/2) = v(t) + F(x(t),v(t-dt/2),t)/m dt/2
+
+2. Calculate the new position
+
+.. math:: x(t+dt) = x(t) + v(t+dt/2) dt
+
+3. Calculate the force based on the new position
+
+.. math:: F = F(x(t+dt), v(t+dt/2), t+dt)
+
+4. Calculate the new velocity
+
+.. math:: v(t+dt) = v(t+dt/2) + F(x(t+dt),t+dt)/m dt/2
 
 Note that this implementation of the Velocity Verlet algorithm reuses
-forces. That is, they are computed once in the middle of the time step,
-but used twice, at the beginning and end. In the first time
+forces in step 1. That is, they are computed once in step 3,
+but used twice, in step 4 and in step 1 of the next iteration. In the first time
 step after setting up, there are no forces present yet. Therefore, |es| has
 to compute them before the first time step. That has two consequences:
 first, random forces are redrawn, resulting in a narrower distribution
@@ -49,51 +76,19 @@ would like to recompute the forces, despite the fact that they are
 already correctly calculated. To this aim, the option ``recalc_forces`` can be used to
 enforce force recalculation.
 
-.. _Run steepest descent minimization:
-
-Run steepest descent minimization
----------------------------------
-
-:func:`espressomd.integrate.Integrator.set_steepest_descent`
 
 
+.. _Rotational degrees of freedom and particle anisotropy:
 
-This feature is used to propagate each particle by a small distance parallel to the force acting on it.
-When only conservative forces for which a potential exists are in use, this is equivalent to a steepest descent energy minimization.
-A common application is removing overlap between randomly placed particles.
+Rotational degrees of freedom and particle anisotropy
+-----------------------------------------------------
 
-Please note that the behavior is undefined if a thermostat is activated.
-It runs a simple steepest descent algorithm:
+When the feature ``ROTATION`` is compiled in, particles not only have a position, but also an orientation that changes with an angular velocity. A torque on a particle leads to a change in angular velocity depending on the particles rotational inertia. The property :attr:`espressomd.particle_data.ParticleHandle.rinertia` has to be specified as the three eigenvalues of the particles rotational inertia tensor.
 
-Iterate
-
-.. math:: p_i = p_i + \min(\texttt{gamma} \times F_i, \texttt{max_displacement}),
-
-while the maximal force is bigger than ``f_max`` or for at most ``max_steps`` times. The energy
-is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.
-The combination of ``gamma`` and ``max_displacement`` can be used to get a poor man's adaptive update.
-Rotational degrees of freedom are treated similarly: each particle is
-rotated around an axis parallel to the torque acting on the particle.
-Please be aware of the fact that this needs not to converge to a local
-minimum in periodic boundary conditions. Translational and rotational
-coordinates that are fixed using the ``fix`` and ``rotation`` attribute of particles are not altered.
-
-Usage example::
-
-        system.integrator.set_steepest_descent(
-            f_max=0, gamma=0.1, max_displacement=0.1)
-        system.integrator.run(20)
-        system.integrator.set_vv()  # to switch back to velocity verlet
-
-
-
-
-.. _Integrating rotational degrees of freedom:
-
-Integrating rotational degrees of freedom
------------------------------------------
-When the feature ``ROTATION`` is compiled in, Particles not only have a position, but also an orientation.
-Just as a force on a particle leads to an increase in linear velocity, a torque on a particle leads to an increase in angular velocity. The rotational degrees of freedom are also integrated using a velocity Verlet scheme.
+The rotational degrees of freedom are also integrated using a velocity Verlet scheme.
+The implementation is based on a quaternion representation of the particle orientation and described in TODO:ref:"On the numerical integration of motion for rigid polyatomics:
+The modified quaternion approach", Omeylan, Igor (1998), Eq. 12."
+   
 When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
 
 Whether or not rotational degrees of freedom are propagated, is controlled on a per-particle and per-axis level, where the axes are the Cartesian axes of the particle in its body-fixed frame.
@@ -129,3 +124,36 @@ The following particle properties are related to rotation:
 * :attr:`espressomd.particle_data.ParticleHandle.rotation`
 * :attr:`espressomd.particle_data.ParticleHandle.torque_lab`
 
+.. _Steepest descent:
+
+Steepest descent
+----------------
+
+:func:`espressomd.integrate.Integrator.set_steepest_descent`
+
+This feature is used to propagate each particle by a small distance parallel to the force acting on it.
+When only conservative forces for which a potential exists are in use, this is equivalent to a steepest descent energy minimization.
+A common application is removing overlap between randomly placed particles.
+
+Please note that the behavior is undefined if a thermostat is activated.
+It runs a simple steepest descent algorithm:
+
+Iterate
+
+.. math:: p_i = p_i + \min(\texttt{gamma} \times F_i, \texttt{max_displacement}),
+
+while the maximal force is bigger than ``f_max`` or for at most ``max_steps`` times. The energy
+is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.
+The combination of ``gamma`` and ``max_displacement`` can be used to get a poor man's adaptive update.
+Rotational degrees of freedom are treated similarly: each particle is
+rotated around an axis parallel to the torque acting on the particle.
+Please be aware of the fact that this needs not to converge to a local
+minimum in periodic boundary conditions. Translational and rotational
+coordinates that are fixed using the ``fix`` and ``rotation`` attribute of particles are not altered.
+
+Usage example::
+
+        system.integrator.set_steepest_descent(
+            f_max=0, gamma=0.1, max_displacement=0.1)
+        system.integrator.run(20)
+        system.integrator.set_vv()  # to switch back to velocity verlet

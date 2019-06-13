@@ -263,18 +263,23 @@ Best explained in an example::
     therm.set_langevin(kT=1.0, gamma=1.0, seed=41)
 
 As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`.
-The Langevin thermostat consists of a friction and noise term coupled
-via the fluctuation-dissipation theorem. The friction term is a function
-of the particle velocities. By specifying the diffusion coefficient for
-the particle becomes
 
-.. math:: D = \frac{\text{temperature}}{\text{gamma}}.
+The Langevin thermostat is based on an extension of the particles equation of motion to
 
-The relaxation time is given by :math:`\text{gamma}/\text{MASS}`, with
-``MASS`` the particle's mass.  For a more detailed explanation, refer to
-:cite:`grest86a`.  An anisotropic diffusion coefficient tensor is available to
-simulate anisotropic colloids (rods, etc.) properly. It can be enabled by the
-feature ``PARTICLE_ANISOTROPY``.
+.. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma v(t) + \eta(t).
+
+Here, :math:`f_i` are all deterministic forces from interactions, :math:`\gamma` the friction coefficient and :math:`\eta` a random, "thermal" force.
+The random force  mimics collisions of the particle with surrounding solvent molecules at temperature :math:`T` and satisfies
+
+.. math:: <\eta(t)> = 0 , <\eta_i(t)\eta_j(t')> = 2 k_B T \gamma \delta_{ij}\delta(t-t')
+
+(:math:`<\cdot>` denotes the ensemble average).
+
+In the Velocity Verlet discretisation scheme, this thermostat only enters in the force calculation. The random process :math:`\eta(t)` is realized by drawing an uncorrelated random number :math:`\eta*` from a uniform distribution for each component of all the particle forces. It is then scaled and shifted such that the mean and variance match the required properties
+
+.. math:: <\eta*> = 0 , <\eta*\eta*> = 2 k_B T \gamma \delta_{ij}/dt
+
+TODO:find paper/book that uses this approach
 
 The keyword ``seed`` controls the state of the random number generator (Philox
 Counter-based RNG) and is required on first activation of the thermostat. It
@@ -282,27 +287,33 @@ can be omitted in subsequent calls of ``set_langevin()``. It is the user's
 responsibility to decide whether the thermostat should be deterministic (by
 using a fixed seed) or not (by using a randomized seed).
 
-If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
-also coupled to the thermostat. If only the first two arguments are
-specified then the diffusion coefficient for the rotation is set to the
-same value as that for the translation.
-
-A separate rotational diffusion coefficient can be set by inputting
-``gamma_rotate``.  This also allows one to properly match the translational and
-rotational diffusion coefficients of a sphere. Feature ``ROTATIONAL_INERTIA``
-enables an anisotropic rotational diffusion coefficient tensor through
-corresponding friction coefficients.
-
-Finally, the two options allow one to switch the translational and rotational
-thermalization on or off separately, maintaining the frictional behavior. This
-can be useful, for instance, in high Péclet number active matter systems, where
-one only wants to thermalize the rotational degrees of freedom and
-translational motion is effected by the self-propulsion.
-
 Using the Langevin thermostat, it is possible to set a temperature and a
 friction coefficient for every particle individually via the feature
 ``LANGEVIN_PER_PARTICLE``.  Consult the reference of the ``part`` command
 (chapter :ref:`Setting up particles`) for information on how to achieve this.
+
+The diffusion coeffictient :math:`D` of the particle can be obtained by the Einstein-Smoluchowski relation
+
+.. math:: D = \frac{k_B T}{\gamma}.
+
+The relaxation time is given by :math:`\text{gamma}/\text{MASS}`, with
+``MASS`` the particle's mass.  For a more detailed explanation, refer to
+:cite:`grest86a`. 
+
+If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
+also coupled to the thermostat. If only the first two arguments are
+specified then the friction coefficient for the rotation is set to the
+same value as that for the translation.
+A separate rotational friction coefficient can be set by inputting
+``gamma_rotate``. The two options allow one to switch the translational and rotational
+thermalization on or off separately, maintaining the frictional behavior. This
+can be useful, for instance, in high Péclet number active matter systems, where
+one only wants to thermalize only the rotational degrees of freedom and
+translational motion is effected by the self-propulsion.
+
+The keywords ``gamma`` and ``gamma_rotate`` can be specified as a scalar, or, with feature ``PARTICLE_ANISOTROPY`` compiled in, as the three eigenvalues of the respective friction coefficient tensor. This is enables the simulation of the anisotropic diffusion of anisotropic colloids (rods, etc.).
+
+
 
 .. _Dissipative Particle Dynamics (DPD):
 
