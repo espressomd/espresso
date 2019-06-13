@@ -33,8 +33,11 @@ class TestThole(ut.TestCase):
     thole damping nonbonded interaction forces against the analytical result.
     """
 
-    box_l = 500.0
+    q1 = 1.0
+    q2 = -1.0
+    thole_s = 2.0
 
+    box_l = 500.0
     system = espressomd.System(box_l=[box_l] * 3)
 
     def setUp(self):
@@ -42,11 +45,6 @@ class TestThole(ut.TestCase):
 
         self.system.time_step = 0.01
         self.system.cell_system.skin = 0.4
-
-        q1 = 1.0
-        q2 = -1.0
-        thole_s = 2.0
-
         self.system.part.add(pos=[0, 0, 0], type=0, fix=[1, 1, 1], q=self.q1)
         self.system.part.add(pos=[2, 0, 0], type=0, fix=[1, 1, 1], q=self.q2)
 
@@ -60,7 +58,7 @@ class TestThole(ut.TestCase):
     def test(self):
         res_dForce = []
         res_dEnergy = []
-        Es=[]
+        Es = []
         ns = 100
         for i in range(1, ns):
             x = 20.0 * i / ns
@@ -69,11 +67,14 @@ class TestThole(ut.TestCase):
 
             sd = x * self.thole_s
             # Force is exact
-            F_calc = COULOMB_PREFACTOR * self.q1*self.q2 / x**2 * 0.5 * (2.0 - (np.exp(-sd) * (sd * (sd + 2.0) + 2.0)))
+            F_calc = COULOMB_PREFACTOR * self.q1*self.q2 / x**2 * \
+                0.5 * (2.0 - (np.exp(-sd) * (sd * (sd + 2.0) + 2.0)))
             # Energy is slightly off due to self-energy.
             # Error is approximated with ercf for given system parameters
-            E_calc = COULOMB_PREFACTOR * self.q1*self.q2 / x * (1.0 - np.exp(-sd) * (1.0 + sd / 2.0)) - 0.250088 * math.erfc(0.741426 * x) 
-            
+            E_calc = COULOMB_PREFACTOR * self.q1*self.q2 / x * \
+                (1.0 - np.exp(-sd) * (1.0 + sd / 2.0)) - \
+                0.250088 * math.erfc(0.741426 * x)
+
             E = self.system.analysis.energy()
             E_tot = E["total"]
             res_dForce.append(self.system.part[1].f[0] - F_calc)
@@ -82,7 +83,7 @@ class TestThole(ut.TestCase):
         for f in res_dForce:
             self.assertLess(
                 abs(f), 1e-3, msg="Deviation of thole interaction force (damped coulomb) from analytical result too large")
-        
+
         for e in res_dEnergy:
             self.assertLess(
                 abs(e), 0.012, msg="Deviation of thole interaction energy (damped coulomb) from analytical result too large")
@@ -90,4 +91,3 @@ class TestThole(ut.TestCase):
 
 if __name__ == "__main__":
     ut.main()
-

@@ -65,7 +65,7 @@ inline void add_thole_pair_force(const Particle *const p1,
 inline double thole_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {
-  
+
   double thole_s = ia_params->THOLE_scaling_coeff;
   double thole_q1q2 = ia_params->THOLE_q1q2;
 
@@ -74,8 +74,8 @@ inline double thole_pair_energy(const Particle *p1, const Particle *p2,
     double sd = thole_s * dist;
     double S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);
     // Subtract p3m shortrange energy and add thole energy
-    return Coulomb::pair_energy(p1, p2, thole_q1q2 * (-1.0+S_r), d,
-                                dist, dist*dist);
+    return Coulomb::pair_energy(p1, p2, thole_q1q2 * (-1.0 + S_r), d, dist,
+                                dist * dist);
   }
   return 0.0;
 }
