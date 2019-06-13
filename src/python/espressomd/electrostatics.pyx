@@ -579,6 +579,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             self.thisptr = new Mmm1dgpuForce(dereference(self.interface), 0.0, default_params["maxPWerror"])
             self.interface.update()
             self.interface.requestRGpu()
+            dereference(self.thisptr).activate()
 
         def __dealloc__(self):
             del self.thisptr
@@ -633,6 +634,9 @@ IF ELECTROSTATICS and MMM1D_GPU:
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
+        
+        def _deactivate_method(self):
+            dereference(self.thisptr).deactivate()
 
 IF ELECTROSTATICS:
     cdef class MMM2D(ElectrostaticInteraction):

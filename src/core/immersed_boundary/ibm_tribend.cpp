@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "immersed_boundary/ibm_tribend.hpp"
 
-#ifdef IMMERSED_BOUNDARY
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -198,5 +197,3 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
   mpi_bcast_ia_params(bond_type, -1);
   return ES_OK;
 }
-
-#endif

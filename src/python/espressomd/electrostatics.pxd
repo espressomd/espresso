@@ -132,7 +132,7 @@ IF ELECTROSTATICS:
         cdef inline python_p3m_adaptive_tune():
             cdef char * log = NULL
             cdef int response
-            response = p3m_adaptive_tune(& log)
+            response = p3m_adaptive_tune( & log)
             handle_errors("Error in p3m_adaptive_tune")
             if log.strip():
                 print(to_str(log))
@@ -281,3 +281,5 @@ IF ELECTROSTATICS and MMM1D_GPU:
             float force_benchmark(SystemInterface & s);
 
             void check_periodicity();
+            void activate();
+            void deactivate();
