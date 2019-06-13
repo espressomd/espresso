@@ -421,8 +421,6 @@ General features
 
    .. seealso:: :ref:`Swimmer reactions`
 
--  ``OVERLAPPED``
-
 -  ``COLLISION_DETECTION`` Allows particles to be bound on collision.
 
 -  ``H5MD`` Allows to write data to H5MD formatted hdf5 files.
@@ -471,8 +469,6 @@ Fluid dynamics and fluid structure interaction
 -  ``EK_DEBUG``
 
 -  ``EK_DOUBLE_PREC``
-
--  ``IMMERSED_BOUNDARY`` Immersed-Boundary Bayreuth version.
 
 -  ``OIF_LOCAL_FORCES``
 

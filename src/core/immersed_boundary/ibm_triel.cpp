@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "immersed_boundary/ibm_triel.hpp"
 
-#ifdef IMMERSED_BOUNDARY
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -367,4 +366,3 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
 
   return ES_OK;
 }
-#endif

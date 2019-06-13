@@ -101,8 +101,6 @@ MEMBRANE_COLLISION
 
 
 /* Immersed-Boundary Bayreuth version */
-IMMERSED_BOUNDARY
-IMMERSED_BOUNDARY               requires VIRTUAL_SITES
 SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
