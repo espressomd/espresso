@@ -75,6 +75,8 @@ public:
   std::vector<RuntimeError> gather();
   void gatherSlave();
 
+  const boost::mpi::communicator &comm() const { return m_comm; }
+
 private:
   std::vector<RuntimeError> m_errors;
   boost::mpi::communicator m_comm;

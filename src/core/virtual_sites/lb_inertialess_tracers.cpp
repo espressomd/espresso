@@ -102,7 +102,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
   if (lattice_switch == ActiveLB::CPU)
     ParticleVelocitiesFromLB_CPU();
-#ifdef LB_GPU
+#ifdef CUDA
   if (lattice_switch == ActiveLB::GPU)
     ParticleVelocitiesFromLB_GPU(particles);
 #endif
@@ -137,10 +137,6 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
         }
       }
   }
-
-  // This function spreads the resort_particles variable across the nodes
-  // If one node wants to resort, all nodes do it
-  announce_resort_particles();
 }
 
 /*************

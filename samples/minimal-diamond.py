@@ -133,7 +133,7 @@ vtf.writevsf(system, outfile)
 vtf.writevcf(system, outfile)
 t_steps = 100
 for t in range(t_steps):
-    print("step {} of {}".format(t, t_steps))
+    print("step {} of {}".format(t + 1, t_steps))
     system.integrator.run(sim_steps)
     vtf.writevcf(system, outfile)
 outfile.close()

@@ -189,7 +189,7 @@ std::size_t hash_value(Datafield const &field) {
   }
   default:
     throw std::runtime_error("Unknown type.");
-  };
+  }
 }
 
 void common_bcast_parameter(int i) {
@@ -209,7 +209,6 @@ void common_bcast_parameter(int i) {
     break;
   default:
     throw std::runtime_error("Unknown type.");
-    break;
   }
 
   on_parameter_change(i);
@@ -241,7 +240,7 @@ void check_global_consistency() {
 
 void mpi_bcast_parameter_slave(int i) {
   common_bcast_parameter(i);
-  check_runtime_errors();
+  check_runtime_errors(comm_cart);
 }
 
 REGISTER_CALLBACK(mpi_bcast_parameter_slave)
@@ -251,5 +250,5 @@ int mpi_bcast_parameter(int i) {
 
   common_bcast_parameter(i);
 
-  return check_runtime_errors();
+  return check_runtime_errors(comm_cart);
 }

@@ -23,7 +23,6 @@ Checks: |
    modernize-use-noexcept,
    modernize-use-nullptr,
    modernize-use-override,
-   modernize-use-transparent-functors,
    readability-avoid-const-params-in-decls,
    readability-container-size-empty,
    readability-delete-null-pointer,
@@ -36,7 +35,8 @@ Checks: |
    readability-static-accessed-through-instance,
    readability-static-definition-in-anonymous-namespace,
    readability-string-compare,
-   readability-uniqueptr-delete-release'
+   readability-uniqueptr-delete-release,
+   readability-function-size'
 WarningsAsErrors: '*'
 HeaderFilterRegex: '.*'
 AnalyzeTemporaryDtors: false
@@ -117,3 +117,6 @@ CheckOptions:
     value:           '0'
   - key:             readability-static-accessed-through-instance.NameSpecifierNestingThreshold
     value:           '3'
+  - key:             readability-function-size.BranchThreshold
+    value:           '3'
+    

@@ -121,10 +121,6 @@ bool steepest_descent_step() {
 
   set_resort_particles(Cells::RESORT_LOCAL);
 
-  MINIMIZE_ENERGY_TRACE(
-      printf("f_max %e resort_particles %d\n", f_max, resort_particles));
-  announce_resort_particles();
-
   // Synchronize maximum force/torque encountered
   namespace mpi = boost::mpi;
   auto const f_max_global =
@@ -146,7 +142,7 @@ void minimize_energy_init(const double f_max, const double gamma,
   params->max_displacement = max_displacement;
 }
 
-bool minimize_energy() {
+void minimize_energy() {
   if (!params)
     params = new MinimizeEnergyParameters;
 
@@ -155,6 +151,4 @@ bool minimize_energy() {
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   integrate_vv(params->max_steps, -1);
   integ_switch = integ_switch_old;
-
-  return true;
 }

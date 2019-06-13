@@ -32,6 +32,9 @@ unit_test(NAME Counter_test SRC Counter_test.cpp DEPENDS utils)
 unit_test(NAME RunningAverage_test SRC RunningAverage_test.cpp DEPENDS utils)
 unit_test(NAME for_each_pair_test SRC for_each_pair_test.cpp DEPENDS utils)
 unit_test(NAME raster_test SRC raster_test.cpp DEPENDS utils)
+unit_test(NAME make_lin_space_test SRC make_lin_space_test.cpp DEPENDS utils)
+unit_test(NAME sampling_test SRC sampling_test.cpp DEPENDS utils)
+unit_test(NAME coordinate_transformation_test SRC coordinate_transformation.cpp DEPENDS utils)
 
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX NUM_PROC 4)
 unit_test(NAME scatter_buffer_test SRC scatter_buffer_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX NUM_PROC 4)
@@ -39,4 +42,3 @@ unit_test(NAME all_compare_test SRC all_compare_test.cpp DEPENDS utils Boost::mp
 unit_test(NAME gatherv_test SRC gatherv_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX)
 unit_test(NAME all_gatherv_test SRC all_gatherv_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX)
 unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX utils NUM_PROC 3)
-

@@ -497,8 +497,6 @@ void mpi_who_has() {
 
   /* then fetch particle locations */
   for (int pnode = 0; pnode < n_nodes; pnode++) {
-    COMM_TRACE(
-        fprintf(stderr, "node %d reports %d particles\n", pnode, sizes[pnode]));
     if (pnode == this_node) {
       for (auto const &p : local_cells.particles())
         particle_node[p.p.identity] = this_node;
@@ -711,6 +709,18 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 
+boost::optional<const Particle &> get_particle_data_local(int id) {
+  auto p = local_particles[id];
+
+  if (p and (not p->l.ghost)) {
+    return *p;
+  }
+
+  return {};
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_particle_data_local)
+
 const Particle &get_particle_data(int part) {
   auto const pnode = get_particle_node(part);
 
@@ -727,8 +737,9 @@ const Particle &get_particle_data(int part) {
 
   /* Cache miss, fetch the particle,
    * put it into the cache and return a pointer into the cache. */
-  auto const cache_ptr =
-      particle_fetch_cache.put(part, mpi_recv_part(pnode, part));
+  auto const cache_ptr = particle_fetch_cache.put(
+      part, Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                               get_particle_data_local, part));
   return *cache_ptr;
 }
 
@@ -1062,7 +1073,9 @@ void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
-  auto const flag = (!torque.empty()) ? PARTICLE_EXT_TORQUE : 0;
+  // No lint because clang-tidy 6 wrongly detects this as size check.
+  auto const flag =
+      (torque != Utils::Vector3d{}) ? PARTICLE_EXT_TORQUE : 0; // NOLINT
   if (flag) {
     mpi_update_particle_property<Utils::Vector3d,
                                  &ParticleProperties::ext_torque>(part, torque);
@@ -1073,7 +1086,9 @@ void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
 #endif
 
 void set_particle_ext_force(int part, const Utils::Vector3d &force) {
-  auto const flag = (!force.empty()) ? PARTICLE_EXT_FORCE : 0;
+  // No lint because clang-tidy 6 wrongly detects this as size check.
+  auto const flag =
+      (force != Utils::Vector3d{}) ? PARTICLE_EXT_FORCE : 0; // NOLINT
   if (flag) {
     mpi_update_particle_property<Utils::Vector3d,
                                  &ParticleProperties::ext_force>(part, force);

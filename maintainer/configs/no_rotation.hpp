@@ -42,10 +42,8 @@
 #endif
 
 // Hydrodynamics
-#define LB
 #define LB_BOUNDARIES
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #endif
 
@@ -73,7 +71,6 @@
 #define WCA
 #define THOLE
 
-// Further featuers
+// Further features
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
-#define IMMERSED_BOUNDARY
 #define COLLISION_DETECTION

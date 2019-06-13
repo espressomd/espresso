@@ -386,7 +386,7 @@ General features
 -  ``EXCLUSIONS`` Allows to exclude specific short ranged interactions within
    molecules.
 
-   .. seealso:: :attr:`espressomd.particle_data.ParticleHandle.exclude`
+   .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
@@ -421,8 +421,6 @@ General features
 
    .. seealso:: :ref:`Swimmer reactions`
 
--  ``OVERLAPPED``
-
 -  ``COLLISION_DETECTION`` Allows particles to be bound on collision.
 
 -  ``H5MD`` Allows to write data to H5MD formatted hdf5 files.
@@ -455,14 +453,6 @@ Fluid dynamics and fluid structure interaction
 
    .. seealso:: :ref:`DPD interaction`
 
--  ``LB`` Enables the lattice Boltzmann fluid code.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
-
--  ``LB_GPU`` Enables the lattice Boltzmann fluid code support for GPU.
-
-   .. seealso:: :attr:`espressomd.lb`, :ref:`Lattice Boltzmann`
-
 -  ``LB_BOUNDARIES``
 
 -  ``LB_BOUNDARIES_GPU``
@@ -479,8 +469,6 @@ Fluid dynamics and fluid structure interaction
 -  ``EK_DEBUG``
 
 -  ``EK_DOUBLE_PREC``
-
--  ``IMMERSED_BOUNDARY`` Immersed-Boundary Bayreuth version.
 
 -  ``OIF_LOCAL_FORCES``
 
@@ -543,18 +531,6 @@ following features.
 -  ``HAT``
 
 -  ``UMBRELLA`` (experimental)
-
-.. _Miscellaneous:
-
-Miscellaneous
-^^^^^^^^^^^^^
-
--  ``FLATNOISE`` Shape of the noise in the (LB) thermostat.
-
--  ``GAUSSRANDOM`` Shape of the noise in the (LB) thermostat.
-
--  ``GAUSSRANDOMCUT`` Shape of the noise in the (LB) thermostat.
-
 
 
 .. _Debug messages:

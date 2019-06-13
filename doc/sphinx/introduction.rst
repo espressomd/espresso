@@ -383,7 +383,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * :file:`minimal-diamond.py`
 
 * :file:`minimal-polymer.py`
-   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.create_polymer`.
+   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.positions`.
 
 * :file:`minimal_random_number_generator.py`
 
@@ -459,7 +459,7 @@ everything in multiples of the van-der-Waals binding energy of the
 respective particles.
 
 The final choice is the time (or mass) scale. By default, |es| uses a reduced
-mass of 1, so that the mass unit is simply the mass of all particles.
+mass of 1 for all particles, so that the mass unit is simply the mass of one particle.
 Combined with the energy and length scale, this is sufficient to derive
 the resulting time scale:
 

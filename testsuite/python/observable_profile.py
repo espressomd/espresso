@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 import espressomd.observables
@@ -26,14 +27,8 @@ class ProfileObservablesTest(ut.TestCase):
     system.box_l = [10.0, 10.0, 10.0]
     system.cell_system.skin = 0.1
     system.time_step = 0.01
-    system.part.add(
-        id=0, pos=[
-            4.0, 4.0, 6.0], v=[
-            0.0, 0.0, 1.0])
-    system.part.add(
-        id=1, pos=[
-            4.0, 4.0, 6.0], v=[
-            0.0, 0.0, 1.0])
+    system.part.add(id=0, pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
+    system.part.add(id=1, pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
     flat_index = np.ravel_multi_index((0, 0, 1), (2, 2, 2))
     flat_index_3d = np.ravel_multi_index((0, 0, 1, 2), (2, 2, 2, 3))
     bin_volume = 5.0**3
@@ -52,12 +47,10 @@ class ProfileObservablesTest(ut.TestCase):
         density_profile = espressomd.observables.DensityProfile(**self.kwargs)
         self.assertEqual(density_profile.calculate()[
                          self.flat_index], 2.0 / self.bin_volume)
-        self.assertEqual(density_profile.n_values(), self.kwargs[
-                         'n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
+        self.assertEqual(density_profile.n_values(),
+                         self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
 
-    @ut.skipIf(
-        not espressomd.has_features("EXTERNAL_FORCES"),
-        "Can not check force density profile because EXT_FORCES not compiled in.")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_force_density_profile(self):
         density_profile = espressomd.observables.ForceDensityProfile(
             **self.kwargs)
@@ -66,8 +59,8 @@ class ProfileObservablesTest(ut.TestCase):
         self.system.integrator.run(0)
         self.assertEqual(density_profile.calculate()[
                          self.flat_index_3d], 2.0 / self.bin_volume)
-        self.assertEqual(density_profile.n_values(), 3 * self.kwargs[
-                         'n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
+        self.assertEqual(density_profile.n_values(),
+                         3 * self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
 
     def test_flux_density_profile(self):
         density_profile = espressomd.observables.FluxDensityProfile(
@@ -75,8 +68,8 @@ class ProfileObservablesTest(ut.TestCase):
         self.system.integrator.run(0)
         self.assertEqual(density_profile.calculate()[
                          self.flat_index_3d], 2.0 / self.bin_volume)
-        self.assertEqual(density_profile.n_values(), 3 * self.kwargs[
-                         'n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
+        self.assertEqual(density_profile.n_values(),
+                         3 * self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
 
 
 if __name__ == '__main__':

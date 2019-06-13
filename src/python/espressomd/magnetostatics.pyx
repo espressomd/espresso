@@ -26,7 +26,7 @@ IF SCAFACOS == 1:
     from . cimport scafacos
 
 from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type
+from espressomd.utils import is_valid_type, to_str
 
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):
@@ -84,7 +84,7 @@ IF DP3M == 1:
               Charge-assignment order, an integer between -1 and 7.
         mesh : :obj:`int` or array_like
                Number of mesh points.
-        mesh_off : array_like
+        mesh_off : array_like :obj:`float`
                    Mesh offset.
         r_cut : :obj:`float`
                 Real space cutoff.
@@ -173,7 +173,7 @@ IF DP3M == 1:
             if resp:
                 raise Exception(
                     "failed to tune dipolar P3M parameters to required accuracy")
-            print(log)
+            print(to_str(log))
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):

@@ -38,7 +38,7 @@ struct AutoParameter {
   /* Exception types */
   struct WriteError {};
 
-  /* Tag types */
+  /* Result types */
   struct ReadOnly {};
   static constexpr const ReadOnly read_only = ReadOnly{};
 
@@ -48,10 +48,6 @@ struct AutoParameter {
    *  @param obj     The object the parameter should be bound to.
    *  @param setter  The setter.
    *  @param getter  The getter.
-   *  @param type    The parameter type, by default this is deduced from the
-   *                 type of the reference.
-   *  @param length  The supposed length of the parameter, by default this this
-   *                 is deduced from the type of the reference.
    */
   template <typename T, class O>
   AutoParameter(const char *name, std::shared_ptr<O> &obj,
@@ -77,10 +73,6 @@ struct AutoParameter {
    *  @param name    The name the parameter should be bound to in the interface.
    *  @param obj     The object the parameter should be bound to.
    *  @param getter  The getter.
-   *  @param type    The parameter type, by default this is deduced from the
-   *                 type of the reference.
-   *  @param length  The supposed length of the parameter, by default this this
-   *                 is deduced from the type of the reference.
    */
   template <typename T, class O>
   AutoParameter(const char *name, std::shared_ptr<O> &obj,
@@ -121,10 +113,6 @@ struct AutoParameter {
    *
    *  @param name   The name the parameter should be bound to in the interface.
    *  @param binding  The reference the parameter should be bound to.
-   *  @param type   The parameter type, by default this is deduced from the
-   *                type of the reference.
-   *  @param length The supposed length of the parameter, by default it
-   *                is deduced from the type of the reference.
    */
   template <typename T>
   AutoParameter(const char *name, T &binding)
@@ -167,10 +155,6 @@ struct AutoParameter {
    * @param get A getter, which can be a Functor, a Lambda or a std::function
    *            that return the parameter. The return type must be convertible
    *            to Variant.
-   * @param type The parameter type, by default this is deduced from the return
-   *             type of the getter.
-   * @param length The supposed length of the parameter, by default this this
-   *               is deduced from the return type of the getter.
    */
   template <typename F, typename G,
             /* Try to guess the type from the return type of the getter */

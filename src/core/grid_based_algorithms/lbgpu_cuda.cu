@@ -27,7 +27,7 @@
 
 #include "config.hpp"
 
-#ifdef LB_GPU
+#ifdef CUDA
 #include <boost/optional.hpp>
 #include <cassert>
 #include <stdio.h>
@@ -38,7 +38,9 @@
 #include "cuda_utils.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
+
+#include "grid_based_algorithms/lb-d3q19.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include <utils/Array.hpp>
@@ -95,7 +97,6 @@ LB_node_force_density_gpu node_f = {
 
 static LB_extern_nodeforcedensity_gpu *extern_node_force_densities = nullptr;
 
-#ifdef LB_BOUNDARIES_GPU
 /** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
 
@@ -104,13 +105,10 @@ static float *lb_boundary_velocity = nullptr;
 
 /** @name pointers for bound index array */
 /*@{*/
-static int *boundary_node_list;
-static int *boundary_index_list;
-static size_t size_of_boundindex;
+static int *boundary_node_list = nullptr;
+static int *boundary_index_list = nullptr;
+static size_t size_of_boundindex = 0;
 /*@}*/
-#endif
-
-EK_parameters *lb_ek_parameters_gpu;
 
 /** @name pointers for additional cuda check flag */
 /*@{*/
@@ -132,8 +130,6 @@ static size_t size_of_extern_node_force_densities;
 
 /** Parameters residing in constant memory */
 __device__ __constant__ LB_parameters_gpu para[1];
-static const float c_sound_sq = 1.0f / 3.0f;
-
 /*-------------------------------------------------------*/
 /*********************************************************/
 /** \name device functions called by kernel functions */
@@ -558,7 +554,6 @@ __device__ void relax_modes(Utils::Array<float, 19> &mode, unsigned int index,
 /** Thermalization of the modes with Gaussian random numbers
  *  @param[in] index     Node index / thread index
  *  @param[in,out] mode  Local register values mode
- *  @param[in] philox_counter
  */
 __device__ void thermalize_modes(Utils::Array<float, 19> &mode,
                                  unsigned int index, uint64_t philox_counter) {
@@ -811,8 +806,7 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b,
  *  [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  *  @param[in]  index   Node index / thread index
  *  @param[in]  n_curr  Local node receiving the current node field
- *  @param[in]  lb_boundary_velocity  Constant velocity at the boundary,
- *                                    set by the user
+ *  @param[in]  boundaries  Constant velocity at the boundary, set by the user
  *  @param[out] lb_boundary_force     Force on the boundary nodes
  */
 __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
@@ -1565,7 +1559,6 @@ __device__ __inline__ float3 velocity_interpolation(
  *  @param[in]  d_v                Local device values
  *  @param[in]  flag_cs            Determine if we are at the centre (0,
  *                                 typical) or at the source (1, swimmer only)
- *  @param[in]  philox_counter
  *  @param[in]  friction           Friction constant for the particle coupling
  *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @tparam no_of_neighbours       The number of neighbours to consider for
@@ -1762,10 +1755,14 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
 
     float Rho = para->rho;
     Utils::Array<float, 3> v{};
-    Utils::Array<float, 6> pi = {
-        Rho * c_sound_sq, 0.0f, Rho * c_sound_sq, 0.0f, 0.0f, Rho * c_sound_sq};
+    Utils::Array<float, 6> pi = {Rho * D3Q19::c_sound_sq<float>,
+                                 0.0f,
+                                 Rho * D3Q19::c_sound_sq<float>,
+                                 0.0f,
+                                 0.0f,
+                                 Rho * D3Q19::c_sound_sq<float>};
     Utils::Array<float, 6> local_pi{};
-    float rhoc_sq = Rho * c_sound_sq;
+    float rhoc_sq = Rho * D3Q19::c_sound_sq<float>;
     float avg_rho = para->rho;
     float local_rho, trace;
     Utils::Array<float, 3> local_j{};
@@ -2147,8 +2144,6 @@ __global__ void set_rho(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
  *  @param[in]  boundary_node_list    Indices of the boundary nodes
  *  @param[in]  boundary_index_list   Flag for the corresponding boundary
  *  @param[in]  number_of_boundnodes  Number of boundary nodes
- *  @param[out] n_a                   Local node residing in array a
- *  @param[out] n_b                   Local node residing in array b
  */
 __global__ void init_boundaries(int *boundary_node_list,
                                 int *boundary_index_list,
@@ -2172,10 +2167,7 @@ __global__ void init_boundaries(int *boundary_node_list,
   }
 }
 
-/** Reset the boundary flag of every node
- *  @param[out] n_a   Local node residing in array a
- *  @param[out] n_b   Local node residing in array b
- */
+/** Reset the boundary flag of every node */
 __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
   size_t index = blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x +
                  threadIdx.x;
@@ -2189,12 +2181,9 @@ __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
  *  @param[out]    n_b     Local node residing in array b
  *  @param[in,out] d_v     Local device values
  *  @param[in,out] node_f  Local node force density
- *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
- *  @param[in]     philox_counter
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
-                          EK_parameters *ek_parameters_gpu,
                           unsigned int philox_counter) {
   /*every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
@@ -2217,11 +2206,9 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[out]    n_b     Local node residing in array b
  *  @param[in,out] d_v     Local device values
  *  @param[in,out] node_f  Local node force density
- *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
-                          LB_node_force_density_gpu node_f,
-                          EK_parameters *ek_parameters_gpu) {
+                          LB_node_force_density_gpu node_f) {
   /*every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
@@ -2243,8 +2230,6 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[in,out]  particle_force  Particle force
  *  @param[out] node_f              Local node force
  *  @param[in]  d_v                 Local device values
- *  @param[in]  couple_virtual
- *  @param[in]  philox_counter
  *  @param[in]  friction            Friction constant for the particle coupling
  *  @param[in]  lb_boundary_velocity Velocity at the boundary
  *  @tparam     no_of_neighbours    The number of neighbours to consider for
@@ -2288,8 +2273,7 @@ __global__ void calc_fluid_particle_ia(
 #ifdef LB_BOUNDARIES_GPU
 /** Bounce back boundary kernel
  *  @param[in]  n_curr  Pointer to local node receiving the current node field
- *  @param[in]  lb_boundary_velocity  Constant velocity at the boundary,
- *                                    set by the user
+ *  @param[in]  boundaries  Constant velocity at the boundary, set by the user
  *  @param[out] lb_boundary_force     Force on the boundary nodes
  */
 __global__ void apply_boundaries(LB_nodes_gpu n_curr,
@@ -2946,11 +2930,10 @@ void lb_integrate_GPU() {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_fluid_gpu);
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-                 device_rho_v, node_f, lb_ek_parameters_gpu,
-                 rng_counter_fluid_gpu->value());
+                 device_rho_v, node_f, rng_counter_fluid_gpu->value());
     } else {
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-                 device_rho_v, node_f, lb_ek_parameters_gpu);
+                 device_rho_v, node_f);
     }
     current_nodes = &nodes_b;
     intflag = false;
@@ -2958,11 +2941,10 @@ void lb_integrate_GPU() {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_fluid_gpu);
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-                 device_rho_v, node_f, lb_ek_parameters_gpu,
-                 rng_counter_fluid_gpu->value());
+                 device_rho_v, node_f, rng_counter_fluid_gpu->value());
     } else {
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-                 device_rho_v, node_f, lb_ek_parameters_gpu);
+                 device_rho_v, node_f);
     }
     current_nodes = &nodes_a;
     intflag = true;
@@ -3220,9 +3202,6 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter) {
 
 void lb_fluid_set_rng_state_gpu(uint64_t counter) {
   rng_counter_fluid_gpu = Utils::Counter<uint64_t>(counter);
-#ifdef ELECTROKINETICS
-  ek_set_rng_state(counter);
-#endif // ELECTROKINETICS
 }
 
 uint64_t lb_coupling_get_rng_state_gpu() {
@@ -3234,4 +3213,4 @@ uint64_t lb_fluid_get_rng_state_gpu() {
   return rng_counter_fluid_gpu->value();
 }
 
-#endif /* LB_GPU */
+#endif /* CUDA */

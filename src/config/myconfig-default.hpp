@@ -51,10 +51,8 @@
 #define ENGINE
 
 // Hydrodynamics
-#define LB
 #define LB_BOUNDARIES
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #endif
 
@@ -87,5 +85,4 @@
 // Further featuers
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
-#define IMMERSED_BOUNDARY
 #define COLLISION_DETECTION

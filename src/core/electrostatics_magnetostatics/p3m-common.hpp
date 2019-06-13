@@ -124,7 +124,7 @@ typedef struct {
   int s_ur[6][3];
   /** sizes for send buffers. */
   int s_size[6];
-  /** dimensionof sub meshes to recv. */
+  /** dimension of sub meshes to recv. */
   int r_dim[6][3];
   /** left down corners of sub meshes to recv. */
   int r_ld[6][3];
@@ -166,10 +166,10 @@ typedef struct {
   double a[3] = {};
   /** inverse mesh constant. */
   double ai[3] = {};
-  /** unscaled @ref p3m_parameter_struct::alpha_L "alpha_L" for use with fast
+  /** unscaled @ref P3MParameters::alpha_L "alpha_L" for use with fast
    *  inline functions only */
   double alpha = 0.0;
-  /** unscaled @ref p3m_parameter_struct::r_cut_iL "r_cut_iL" for use with fast
+  /** unscaled @ref P3MParameters::r_cut_iL "r_cut_iL" for use with fast
    *  inline functions only */
   double r_cut = -1.;
   /** full size of the interpolated assignment function */

@@ -58,7 +58,7 @@ class Ellipsoid(Shape, ScriptInterfaceHelper):
 
     Attributes
     ----------
-    center : :obj:`array_like`
+    center : array_like :obj:`float`
        Coordinates of the center of the ellipsoid.
     a : :obj:`float`
        Semiaxis along the axis of rotational symmetry.

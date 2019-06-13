@@ -28,7 +28,7 @@ IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
 from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type
+from espressomd.utils import is_valid_type, to_str
 from . cimport checks
 from .c_analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
@@ -66,7 +66,7 @@ IF ELECTROSTATICS == 1:
 
         def _deactivate_method(self):
             deactivate_method()
-            handle_errors("Coulom method deactivation")
+            handle_errors("Coulomb method deactivation")
 
         def tune(self, **tune_params_subset):
             if tune_params_subset is not None:
@@ -199,42 +199,42 @@ IF ELECTROSTATICS:
 
 IF P3M == 1:
     cdef class P3M(ElectrostaticInteraction):
+        """
+        P3M electrostatics solver.
+
+        Particle--Particle--Particle--Mesh (P3M) is a Fourier-based Ewald
+        summation method to calculate potentials in N-body simulation.
+
+        Parameters
+        ----------
+        prefactor : :obj:`float`
+            Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+        accuracy : :obj:`float`
+            P3M tunes its parameters to provide this target accuracy.
+        alpha : :obj:`float`, optional
+            The Ewald parameter.
+        cao : :obj:`float`, optional
+            The charge-assignment order, an integer between 0 and 7.
+        epsilon : :obj:`str`, optional
+            Use ``'metallic'`` to set the dielectric constant of the
+            surrounding medium to infinity (Default).
+        epsilon : :obj:`float`, optional
+            A positive number for the dielectric constant of the
+            surrounding medium.
+        mesh : :obj:`int`, optional
+            The number of mesh points.
+        mesh : array_like, optional
+            The number of mesh points in x, y and z direction. This is
+            relevant for noncubic boxes.
+        r_cut : :obj:`float`, optional
+            The real space cutoff.
+        tune : :obj:`bool`, optional
+            Used to activate/deactivate the tuning method on activation.
+            Defaults to True.
+
+        """
 
         def __init__(self, *args, **kwargs):
-            """
-            P3M electrostatics solver.
-
-            Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
-            summation method to calculate potentials in N-body simulation.
-
-            Parameters
-            ----------
-            prefactor : :obj:`float`
-                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-            accuracy : :obj:`float`
-                P3M tunes its parameters to provide this target accuracy.
-            alpha : :obj:`float`, optional
-                The Ewald parameter.
-            cao : :obj:`float`, optional
-                The charge-assignment order, an integer between 0 and 7.
-            epsilon : :obj:`str`, optional
-                Use 'metallic' to set the dielectric constant of the
-                surrounding medium to infinity (Default).
-            epsilon : :obj:`float`, optional
-                A positive number for the dielectric constant of the
-                surrounding medium.
-            mesh : :obj:`int`, optional
-                The number of mesh points.
-            mesh : array_like, optional
-                The number of mesh points in x, y and z direction. This is
-                relevant for noncubic boxes.
-            r_cut : :obj:`float`, optional
-                The real space cutoff.
-            tune : :obj:`bool`, optional
-                Used to activate/deactivate the tuning method on activation.
-                Defaults to True.
-
-            """
             super(type(self), self).__init__(*args, **kwargs)
 
         def validate_params(self):
@@ -341,42 +341,42 @@ IF P3M == 1:
 
     IF CUDA:
         cdef class P3MGPU(ElectrostaticInteraction):
+            """
+            P3M electrostatics solver with GPU support.
+
+            Particle--Particle--Particle--Mesh (P3M) is a Fourier-based Ewald
+            summation method to calculate potentials in N-body simulation.
+
+            Parameters
+            ----------
+            prefactor : :obj:`float`
+                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+            accuracy : :obj:`float`
+                P3M tunes its parameters to provide this target accuracy.
+            alpha : :obj:`float`, optional
+                The Ewald parameter.
+            cao : :obj:`float`, optional
+                The charge-assignment order, an integer between 0 and 7.
+            epsilon : :obj:`str`, optional
+                Use ``'metallic'`` to set the dielectric constant of the
+                surrounding medium to infinity (Default).
+            epsilon : :obj:`float`, optional
+                A positive number for the dielectric constant of the
+                surrounding medium.
+            mesh : :obj:`int`, optional
+                The number of mesh points.
+            mesh : array_like, optional
+                The number of mesh points in x, y and z direction. This is
+                relevant for noncubic boxes.
+            r_cut : :obj:`float`, optional
+                The real space cutoff
+            tune : :obj:`bool`, optional
+                Used to activate/deactivate the tuning method on activation.
+                Defaults to True.
+
+            """
 
             def __init__(self, *args, **kwargs):
-                """
-                P3M electrostatics solver with GPU support.
-
-                Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
-                summation method to calculate potentials in N-body simulation.
-
-                Parameters
-                ----------
-                prefactor : :obj:`float`
-                    Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-                accuracy : :obj:`float`
-                    P3M tunes its parameters to provide this target accuracy.
-                alpha : :obj:`float`, optional
-                    The Ewald parameter.
-                cao : :obj:`float`, optional
-                    The charge-assignment order, an integer between 0 and 7.
-                epsilon : :obj:`str`, optional
-                    Use 'metallic' to set the dielectric constant of the
-                    surrounding medium to infinity (Default).
-                epsilon : :obj:`float`, optional
-                    A positive number for the dielectric constant of the
-                    surrounding medium.
-                mesh : :obj:`int`, optional
-                    The number of mesh points.
-                mesh : array_like, optional
-                    The number of mesh points in x, y and z direction. This is
-                    relevant for noncubic boxes.
-                r_cut : :obj:`float`, optional
-                    The real space cutoff
-                tune : :obj:`bool`, optional
-                    Used to activate/deactivate the tuning method on activation.
-                    Defaults to True.
-
-                """
                 super(type(self), self).__init__(*args, **kwargs)
 
             def validate_params(self):

@@ -1105,20 +1105,6 @@ endmacro()
 
 ##############################################################################
 # Helper to add the include directory for CUDA only once
-function(CUDA_ADD_CUDA_INCLUDE_ONCE)
-  get_directory_property(_include_directories INCLUDE_DIRECTORIES)
-  set(_add TRUE)
-  if(_include_directories)
-    foreach(dir ${_include_directories})
-      if("${dir}" STREQUAL "${CUDA_INCLUDE_DIRS}")
-        set(_add FALSE)
-      endif()
-    endforeach()
-  endif()
-  if(_add)
-    include_directories(${CUDA_INCLUDE_DIRS})
-  endif()
-endfunction()
 
 function(CUDA_BUILD_SHARED_LIBRARY shared_flag)
   set(cmake_args ${ARGN})
@@ -1720,9 +1706,6 @@ endfunction()
 ###############################################################################
 ###############################################################################
 macro(CUDA_ADD_LIBRARY cuda_target)
-
-  CUDA_ADD_CUDA_INCLUDE_ONCE()
-
   # Separate the sources from the options
   CUDA_GET_SOURCES_AND_OPTIONS(_sources _cmake_options _options ${ARGN})
   CUDA_BUILD_SHARED_LIBRARY(_cuda_shared_flag ${ARGN})
@@ -1741,6 +1724,8 @@ macro(CUDA_ADD_LIBRARY cuda_target)
     ${_sources}
     ${link_file}
     )
+
+  target_include_directories(${cuda_target} PRIVATE ${CUDA_INCLUDE_DIRS})
 
   # Add a link phase for the separable compilation if it has been enabled.  If
   # it has been enabled then the ${cuda_target}_SEPARABLE_COMPILATION_OBJECTS
@@ -1773,9 +1758,6 @@ endmacro()
 ###############################################################################
 ###############################################################################
 macro(CUDA_ADD_EXECUTABLE cuda_target)
-
-  CUDA_ADD_CUDA_INCLUDE_ONCE()
-
   # Separate the sources from the options
   CUDA_GET_SOURCES_AND_OPTIONS(_sources _cmake_options _options ${ARGN})
   # Create custom commands and targets for each file.
@@ -1791,6 +1773,8 @@ macro(CUDA_ADD_EXECUTABLE cuda_target)
     ${_sources}
     ${link_file}
     )
+
+  target_include_directories(${cuda_target} PRIVATE ${CUDA_INCLUDE_DIRS})
 
   # Add a link phase for the separable compilation if it has been enabled.  If
   # it has been enabled then the ${cuda_target}_SEPARABLE_COMPILATION_OBJECTS

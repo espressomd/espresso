@@ -21,14 +21,15 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include <utils/Histogram.hpp>
-#include <utils/coordinate_transformation.hpp>
+#include <utils/math/coordinate_transformation.hpp>
 
 #include <boost/range/algorithm.hpp>
 
 namespace Observables {
 
-std::vector<double> CylindricalLBFluxDensityProfileAtParticlePositions::
-operator()(PartCfg &partCfg) const {
+std::vector<double>
+CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
+    PartCfg &partCfg) const {
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                                 static_cast<size_t>(n_phi_bins),
                                 static_cast<size_t>(n_z_bins)}};
@@ -45,19 +46,17 @@ operator()(PartCfg &partCfg) const {
                    });
 
   std::vector<Utils::Vector3d> velocities(folded_positions.size());
-#if defined(LB) || defined(LB_GPU)
   boost::transform(
       folded_positions, velocities.begin(), [](const Utils::Vector3d &pos) {
         return lb_lbinterpolation_get_interpolated_velocity_global(pos) *
                lb_lbfluid_get_lattice_speed();
       });
-#endif
   for (auto &p : folded_positions)
     p -= center;
   for (int ind = 0; ind < ids().size(); ++ind) {
-    histogram.update(Utils::transform_pos_to_cylinder_coordinates(
+    histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
                          folded_positions[ind], axis),
-                     Utils::transform_vel_to_cylinder_coordinates(
+                     Utils::transform_vector_cartesian_to_cylinder(
                          velocities[ind], axis, folded_positions[ind]));
   }
   histogram.normalize();

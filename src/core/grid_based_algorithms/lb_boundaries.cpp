@@ -21,7 +21,7 @@
 /** \file
  *
  * Boundary conditions for lattice Boltzmann fluid dynamics.
- * Header file for \ref lbboundaries.hpp.
+ * Header file for \ref lb_boundaries.hpp.
  *
  */
 
@@ -68,7 +68,7 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
   if (lattice_switch == ActiveLB::GPU) {
-#if defined(LB_GPU) && defined(LB_BOUNDARIES_GPU)
+#if defined(CUDA) && defined(LB_BOUNDARIES_GPU)
     if (this_node != 0) {
       return;
     }
@@ -220,9 +220,9 @@ void lb_init_boundaries() {
     }
 #endif
 
-#endif /* defined (LB_GPU) && defined (LB_BOUNDARIES_GPU) */
+#endif /* defined ( CUDA) && defined (LB_BOUNDARIES_GPU) */
   } else if (lattice_switch == ActiveLB::CPU) {
-#if defined(LB) && defined(LB_BOUNDARIES)
+#if defined(LB_BOUNDARIES)
     Utils::Vector3i node_domain_position, offset;
     int the_boundary = -1;
     map_node_array(this_node, node_domain_position.data());
@@ -297,14 +297,14 @@ int lbboundary_get_force(void *lbb, double *f) {
   std::vector<double> forces(3 * lbboundaries.size());
 
   if (lattice_switch == ActiveLB::GPU) {
-#if defined(LB_BOUNDARIES_GPU) && defined(LB_GPU)
+#if defined(LB_BOUNDARIES_GPU) && defined(CUDA)
     lb_gpu_get_boundary_forces(forces.data());
 
 #else
     return ES_ERROR;
 #endif
   } else {
-#if defined(LB_BOUNDARIES) && defined(LB)
+#if defined(LB_BOUNDARIES)
     mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
   }
   f[0] = forces[3 * no + 0];

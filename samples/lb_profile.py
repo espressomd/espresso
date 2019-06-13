@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 import espressomd
 
-required_features = ["LB_GPU", "LB_BOUNDARIES_GPU"]
+required_features = ["CUDA", "LB_BOUNDARIES_GPU"]
 espressomd.assert_features(required_features)
 
 import espressomd.lb

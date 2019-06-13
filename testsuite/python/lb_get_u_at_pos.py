@@ -16,13 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import numpy.testing
 import espressomd
 from espressomd import lb
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features("LB_GPU"), "LB_GPU feature or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
 class TestLBGetUAtPos(ut.TestCase):
 
     """
