@@ -18,7 +18,7 @@ class LinearMomentumTest(ut.TestCase):
         
     def test(self):
         self.system.part.add(pos=np.random.random((N_PART,3)), v=np.ones((N_PART, 3)) * VELOCITY, mass=np.ones((N_PART)) * MASS)
-        linear_momentum = self.system.analysis.analyze_linear_momentum()
+        linear_momentum = self.system.analysis.linear_momentum()
         np.testing.assert_allclose(linear_momentum, N_PART * MASS * VELOCITY)
 
 if __name__ == "__main__":

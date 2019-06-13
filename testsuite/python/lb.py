@@ -140,7 +140,7 @@ class TestLB(object):
 
             # check momentum conservation
             np.testing.assert_allclose(
-                self.system.analysis.analyze_linear_momentum(), self.tot_mom,
+                self.system.analysis.linear_momentum(), self.tot_mom,
                 atol=self.params['mom_prec'])
 
             # Calc particle temperature
