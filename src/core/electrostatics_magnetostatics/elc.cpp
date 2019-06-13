@@ -99,7 +99,7 @@ typedef struct {
 
 /** \name sin/cos caching */
 /*@{*/
-static std::vector<SCCache>scxcache;
+static std::vector<SCCache> scxcache;
 static int n_scxcache;
 static std::vector<SCCache> scycache;
 static int n_scycache;
@@ -248,7 +248,8 @@ static void checkpoint(char *text, int p, int q, int e_size) {
       fprintf(stderr, " %10.3g", block(partblk.data(), c, 2 * e_size)[i]);
     fprintf(stderr, " m");
     for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(partblk.data(), c, 2 * e_size)[i + e_size]);
+      fprintf(stderr, " %10.3g",
+              block(partblk.data(), c, 2 * e_size)[i + e_size]);
     fprintf(stderr, "\n");
   }
   fprintf(stderr, "\n");

@@ -276,7 +276,7 @@ p3m_data_struct::p3m_data_struct() {
 }
 
 void p3m_free() {
-/* free memory */
+  /* free memory */
   free(p3m.rs_mesh);
 }
 
@@ -2407,8 +2407,8 @@ void p3m_calc_kspace_stress(double *stress) {
       }
     }
 
-    MPI_Reduce(node_k_space_stress.data(), k_space_stress.data(), 9, MPI_DOUBLE, MPI_SUM, 0,
-               comm_cart);
+    MPI_Reduce(node_k_space_stress.data(), k_space_stress.data(), 9, MPI_DOUBLE,
+               MPI_SUM, 0, comm_cart);
     if (this_node == 0) {
       for (i = 0; i < 9; i++) {
         stress[i] = k_space_stress[i] * force_prefac;

@@ -486,7 +486,7 @@ void mpi_who_has_slave(int, int) {
 
 void mpi_who_has() {
   static auto *sizes = new int[n_nodes];
-  std::vector<int>pdata;
+  std::vector<int> pdata;
 
   mpi_call(mpi_who_has_slave, -1, 0);
 

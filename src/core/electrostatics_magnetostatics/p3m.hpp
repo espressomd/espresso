@@ -86,7 +86,7 @@ struct p3m_data_struct {
   double square_sum_q;
 
   /** interpolation of the charge assignment function. */
-  std::array<std::vector<double>,7> int_caf;
+  std::array<std::vector<double>, 7> int_caf;
 
   /** position shift for calc. of first assignment mesh point. */
   double pos_shift;
@@ -97,7 +97,7 @@ struct p3m_data_struct {
 
   /** Spatial differential operator in k-space. We use an i*k differentiation.
    */
-  std::array<std::vector<double>,3> d_op;
+  std::array<std::vector<double>, 3> d_op;
   /** Force optimised influence function (k-space) */
   std::vector<double> g_force;
   /** Energy optimised influence function (k-space) */
