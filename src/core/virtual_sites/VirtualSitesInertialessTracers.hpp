@@ -32,9 +32,8 @@ class VirtualSitesInertialessTracers : public VirtualSites {
   void back_transfer_forces_and_torques() const override{};
   void after_force_calc() override;
   void after_lb_propagation() override;
-  bool need_ghost_comm_after_pos_update() const override { return false; }
   bool need_ghost_comm_before_vel_update() const override { return false; };
-  bool need_ghost_comm_before_back_transfer() const override { return false; };
+  bool is_relative() const override { return false; }
 };
 
 #endif

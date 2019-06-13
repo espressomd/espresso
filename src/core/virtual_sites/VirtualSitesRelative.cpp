@@ -18,6 +18,7 @@
 */
 
 #include "VirtualSitesRelative.hpp"
+#include <utils/math/sqr.hpp>
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
@@ -95,15 +96,10 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
    * is not in the same image box, we potentially avoid to shift to the other
    * side of the box. */
   auto const shift = get_mi_vector(new_pos, p.r.p);
-
-  for (auto const &s : shift) {
-    if (s * s > skin * skin) {
-      runtimeErrorMsg() << "Virtual site " << p.p.identity
-                        << " moved more than skin.";
-    }
-  }
-
   p.r.p += shift;
+
+  if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
+    set_resort_particles(Cells::RESORT_LOCAL);
 }
 
 // Update the vel of the given virtual particle as defined by the real
