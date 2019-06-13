@@ -13,15 +13,17 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.KE
+
 import sys
+import subprocess
 import unittest as ut
-import unittest_decorators as utx
 import numpy as np
 
 import espressomd
 import espressomd.checkpointing
 import espressomd.virtual_sites
+from espressomd.shapes import Sphere, Wall
 import tests_common
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
@@ -37,12 +39,12 @@ EK = (espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') 
 class CheckpointTest(ut.TestCase):
 
     @classmethod
-    def setUpClass(cls):
-        cls.checkpoint = espressomd.checkpointing.Checkpoint(
+    def setUpClass(self):
+        self.checkpoint = espressomd.checkpointing.Checkpoint(
             checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
                 '.', '__'),
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
-        cls.checkpoint.load(0)
+        self.checkpoint.load(0)
 
     @ut.skipIf(not LB, "Skipping test due to missing features.")
     def test_LB(self):
@@ -97,7 +99,8 @@ class CheckpointTest(ut.TestCase):
                 for k in range(nz):
                     np.testing.assert_almost_equal(
                         np.copy(ek_species[i, j, k].density),
-                        grid_3D[i, j, k], decimal=precision)
+                                grid_3D[i, j, k],
+                                decimal=precision)
         state = ek.get_params()
         reference = {'agrid': 0.5, 'lb_density': 26.15,
                      'viscosity': 1.7, 'friction': 0.0,
@@ -110,13 +113,21 @@ class CheckpointTest(ut.TestCase):
         for key, val in reference_species.items():
             self.assertTrue(key in state_species)
             self.assertAlmostEqual(
-                reference_species[key], state_species[key], delta=1E-5)
+                reference_species[key],
+                state_species[key],
+                delta=1E-5)
         self.assertAlmostEqual(
-            state_species['ext_force_density'][0], 0.01, delta=1E-5)
+            state_species['ext_force_density'][0],
+            0.01,
+            delta=1E-5)
         self.assertAlmostEqual(
-            state_species['ext_force_density'][1], -0.08, delta=1E-5)
+            state_species['ext_force_density'][1],
+            -0.08,
+            delta=1E-5)
         self.assertAlmostEqual(
-            state_species['ext_force_density'][2], 0.06, delta=1E-5)
+            state_species['ext_force_density'][2],
+            0.06,
+            delta=1E-5)
 
     def test_variables(self):
         self.assertEqual(system.cell_system.skin, 0.1)
@@ -138,7 +149,8 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(system.thermostat.get_state()[
             0]['gamma'], np.array([2.0, 2.0, 2.0]))
 
-    @utx.skipIfMissingFeatures('LENNARD_JONES')
+    @ut.skipIf(not espressomd.has_features('LENNARD_JONES'),
+               "Skipping test due to missing features.")
     @ut.skipIf('LJ' not in modes,
                "Skipping test due to missing combination.")
     def test_non_bonded_inter(self):
@@ -161,7 +173,9 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(
             len(set(state.items()) & set(reference.items())), len(reference))
 
-    @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
+    @ut.skipIf(not espressomd.has_features(['VIRTUAL_SITES',
+                                            'VIRTUAL_SITES_RELATIVE']),
+               "Skipping test due to missing features.")
     def test_virtual_sites(self):
         self.assertEqual(system.part[1].virtual, 1)
         self.assertTrue(
@@ -174,22 +188,27 @@ class CheckpointTest(ut.TestCase):
             acc.get_mean(), np.array([1.0, 1.5, 2.0, 1.0, 1.0, 2.0]))
         np.testing.assert_array_equal(
             acc.get_variance(), np.array([0., 0.5, 2., 0., 0., 0.]))
-
-    @utx.skipIfMissingFeatures('ELECTROSTATICS')
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[0].get_variance(), np.array([0., 0.5, 2., 0., 0., 0.]))
+        
+    @ut.skipIf(not espressomd.has_features('ELECTROSTATICS'),
+               "Skipping test due to missing features.")
     @ut.skipIf('P3M.CPU' not in modes,
                "Skipping test due to missing combination.")
     def test_p3m(self):
         self.assertTrue(any(isinstance(actor, espressomd.electrostatics.P3M)
                             for actor in system.actors.active_actors))
     
-    @utx.skipIfMissingFeatures('COLLISION_DETECTION')
+    @ut.skipIf(not espressomd.has_features('COLLISION_DETECTION'),
+               "Skipping test due to missing features.")
     def test_collision_detection(self):
         coldet = system.collision_detection
         self.assertEqual(coldet.mode, "bind_centers")
         self.assertAlmostEqual(coldet.distance, 0.11, delta=1E-9)
         self.assertTrue(coldet.bond_centers, system.bonded_inter[0])
 
-    @utx.skipIfMissingFeatures('EXCLUSIONS')
+    @ut.skipIf(not espressomd.has_features('EXCLUSIONS'),
+               "Skipping test due to missing features.")
     def test_exclusions(self):
         self.assertTrue(tests_common.lists_contain_same_elements(
             system.part[0].exclusions, [2]))
@@ -198,6 +217,22 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue(tests_common.lists_contain_same_elements(
             system.part[2].exclusions, [0, 1]))
 
+    @ut.skipIf(not (espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing featuers")
+    def test_lb_boundaries(self):
+        self.assertEqual(len(system.lbboundaries), 1)
+        np.testing.assert_allclose(system.lbboundaries[0].velocity, [1, 1, 0])
+        self.assertEqual(type(system.lbboundaries[0].shape), Wall)
+
+    def test_constraints(self):
+        self.assertEqual(len(system.constraints), 2)
+        c0 = system.constraints[0]
+        c1 = system.constraints[1]
+        self.assertEqual(type(c0.shape), Sphere)
+        self.assertAlmostEqual(c0.shape.radius, 0.1, delta=1E-10)
+        self.assertEqual(c0.particle_type, 17)
+        
+        self.assertEqual(type(c1.shape), Wall)
+        np.testing.assert_allclose(c1.shape.normal, [1. / np.sqrt(3)] * 3)
 
 if __name__ == '__main__':
     ut.main()

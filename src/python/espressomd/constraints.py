@@ -15,14 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function, absolute_import
-from .script_interface import ScriptInterfaceHelper, script_interface_register
+from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 from espressomd.utils import is_valid_type
 import numpy as np
 from itertools import product
 
 
 @script_interface_register
-class Constraints(ScriptInterfaceHelper):
+class Constraints(ScriptObjectRegistry):
 
     """
     List of active constraints. Add a :class:`espressomd.constraints.Constraint`
@@ -31,14 +31,6 @@ class Constraints(ScriptInterfaceHelper):
     """
 
     _so_name = "Constraints::Constraints"
-
-    def __getitem__(self, key):
-        return self.call_method("get_elements")[key]
-
-    def __iter__(self):
-        elements = self.call_method("get_elements")
-        for e in elements:
-            yield e
 
     def add(self, *args, **kwargs):
         """

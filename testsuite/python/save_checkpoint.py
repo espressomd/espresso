@@ -25,8 +25,10 @@ import espressomd.interactions
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
+from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
 import espressomd.electrokinetics
+from espressomd.shapes import Wall, Sphere
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
@@ -51,6 +53,9 @@ elif espressomd.gpu_available() and espressomd.has_features('CUDA') and 'LB.GPU'
 if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
     system.actors.add(lbf)
+    if espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
+        system.lbboundaries.add(
+            LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1, 1, 0)))
 
 EK_implementation = None
 if espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') and 'EK.GPU' in modes:
@@ -95,6 +100,16 @@ acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc.update()
 system.part[0].pos = [1.0, 2.0, 3.0]
 acc.update()
+
+
+system.auto_update_accumulators.add(acc)
+
+system.constraints.add(
+    shape=Sphere(
+        center=system.box_l / 2,
+         radius=0.1),
+         particle_type=17)
+system.constraints.add(shape=Wall(normal=[1. / np.sqrt(3)] * 3, dist=0.5))
 
 system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
 
