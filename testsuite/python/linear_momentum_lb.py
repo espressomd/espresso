@@ -40,6 +40,7 @@ LB_PARAMS = {'agrid': AGRID,
              'tau': TIME_STEP,
              'ext_force_density': [0.1, 0.2, 0.3]}
 
+
 class LinearMomentumTest(object):
 
     """Base class of the test that holds the test logic."""
@@ -59,7 +60,6 @@ class LinearMomentumTest(object):
         for index in itertools.product(np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
             self.lbf[index].velocity = np.random.random(3) - 0.5
 
-
     def test(self):
         """
         Compare direct calculation of fluid momentum with analysis function.
@@ -69,9 +69,13 @@ class LinearMomentumTest(object):
         linear_momentum = np.zeros(3)
         for index in itertools.product(np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
             linear_momentum += DENS * AGRID**3.0 * self.lbf[index].velocity
-        analyze_linear_momentum = self.system.analysis.linear_momentum(True, #particles
-                                                                       True) #LB fluid
-        np.testing.assert_allclose(linear_momentum, analyze_linear_momentum, atol=1e-3)
+        analyze_linear_momentum = self.system.analysis.linear_momentum(True,  # particles
+                                                                       True)  # LB fluid
+        np.testing.assert_allclose(
+            linear_momentum,
+            analyze_linear_momentum,
+            atol=1e-3)
+
 
 @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
 class LBCPULinearMomentum(ut.TestCase, LinearMomentumTest):
@@ -80,6 +84,7 @@ class LBCPULinearMomentum(ut.TestCase, LinearMomentumTest):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid
+
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
