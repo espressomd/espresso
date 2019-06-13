@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "EspressoSystemInterface.hpp"
 #include "communication.hpp"
 #include "forces.hpp"
+#include "energy.hpp"
 #include "grid.hpp"
 
 #ifdef MMM1D_GPU
@@ -29,5 +30,15 @@ void Mmm1dgpuForce::check_periodicity() {
     throw std::runtime_error("MMM1D requires periodicity (0,0,1)");
   }
 }
+
+  void Mmm1dgpuForce::activate(){
+      forceActors.push_back(this);
+      energyActors.push_back(this);
+  }
+
+  void Mmm1dgpuForce::deactivate(){
+      forceActors.remove(this);
+      energyActors.remove(this);
+  }
 
 #endif

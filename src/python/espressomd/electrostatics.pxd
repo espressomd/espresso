@@ -281,3 +281,6 @@ IF ELECTROSTATICS and MMM1D_GPU:
             float force_benchmark(SystemInterface & s);
 
             void check_periodicity();
+            void activate();
+            void deactivate();
+        

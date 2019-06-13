@@ -44,13 +44,14 @@ class ElectrostaticInteractionsTests(object):
     allowed_error = 1e-4
     
     def setUp(self):
+        mmm1d = self.MMM1D(prefactor=1.0, maxPWerror=1e-20)
         for i in range(self.num_particles):
             self.system.part.add(
                 pos=[self.pos_x_target[i],
                      self.pos_y_target[i],
                      self.pos_z_target[i]],
                 q=self.q_target[i])
-        self.system.actors.add(self.mmm1d)
+        self.system.actors.add(mmm1d)
         self.system.integrator.run(steps=0)
 
     def tearDown(self):
@@ -106,26 +107,11 @@ class ElectrostaticInteractionsTests(object):
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC", "MMM1D_GPU"])
 class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
-    from espressomd.electrostatics import MMM1DGPU
-#    mmm1d = MMM1DGPU(
-#        prefactor=1.0,
-#        maxPWerror=1e-4,
-#     far_switch_radius=6,
-#     bessel_cutoff=3,
-#     tune=False)
-    mmm1d = MMM1DGPU(prefactor=1.0, maxPWerror=1e-20)
-
+    from espressomd.electrostatics import MMM1D
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
 class MMM1D_Test(ElectrostaticInteractionsTests, ut.TestCase):
     from espressomd.electrostatics import MMM1D
-#    mmm1d = MMM1D(
-#        prefactor=1.0,
-#        maxPWerror=1e-4,
-#     far_switch_radius=6,
-#     bessel_cutoff=3,
-#     tune=False)
-    mmm1d = MMM1D(prefactor=1, maxPWerror=1e-20)
 
 if __name__ == "__main__":
     ut.main()
