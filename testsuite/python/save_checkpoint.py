@@ -48,7 +48,7 @@ checkpoint = espressomd.checkpointing.Checkpoint(
 LB_implementation = None
 if 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
-elif espressomd.gpu_available() and espressomd.has_features('CUDA') and 'LB.GPU' in modes:
+elif 'LB.GPU' in modes and espressomd.gpu_available():
     LB_implementation = espressomd.lb.LBFluidGPU
 if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
@@ -58,7 +58,7 @@ if LB_implementation:
             LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1, 1, 0)))
 
 EK_implementation = None
-if espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') and 'EK.GPU' in modes:
+if 'EK.GPU' in modes and espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS'):
     EK_implementation = espressomd.electrokinetics
     ek = EK_implementation.Electrokinetics(
         agrid=0.5,
