@@ -17,10 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import numpy as np
+import sys
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
 import espressomd
+
+
+if(not espressomd.has_features(("ELECTROSTATICS", "PARTIAL_PERIODIC"))):
+    sys.exit()
 
 
 class ElectrostaticInteractionsTests(object):
