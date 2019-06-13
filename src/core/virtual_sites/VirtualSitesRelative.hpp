@@ -49,6 +49,7 @@ public:
   void
   pressure_and_stress_tensor_contribution(double *pressure,
                                           double *stress_tensor) const override;
+  bool is_relative() const override { return true; }
 
 private:
   void update_pos(Particle &p) const;

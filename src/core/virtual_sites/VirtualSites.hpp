@@ -69,6 +69,12 @@ public:
   virtual bool need_ghost_comm_before_vel_update() const = 0;
   /** Is a ghost comm needed before the back_transfer */
   virtual bool need_ghost_comm_before_back_transfer() const = 0;
+  /**
+   * @brief true if the implementation depends on the position of
+   *        real particles.
+   */
+  virtual bool is_relative() const = 0;
+
   virtual ~VirtualSites() = default;
 
 private:

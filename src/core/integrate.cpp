@@ -223,16 +223,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     lb_lbcoupling_deactivate();
 
-    // Communication step: distribute ghost positions
-    cells_update_ghosts();
-
-// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
     virtual_sites()->update();
     if (virtual_sites()->need_ghost_comm_after_pos_update()) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
 #endif
+
+    // Communication step: distribute ghost positions
+    cells_update_ghosts();
 
     // Langevin philox rng counter
     if (n_steps > 0) {
