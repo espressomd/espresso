@@ -76,15 +76,15 @@ int modpsi_init() {
       printf("ERROR: __constant__ device_linModPsi[] is not large enough\n");
       std::abort();
     }
-    cuda_safe_mem(cudaMemcpyToSymbol(SYMBOL(device_linModPsi_offsets),
+    cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(device_linModPsi_offsets),
                                      linModPsi_offsets,
                                      2 * n_modPsi * sizeof(int)));
-    cuda_safe_mem(cudaMemcpyToSymbol(SYMBOL(device_linModPsi_lengths),
+    cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(device_linModPsi_lengths),
                                      linModPsi_lengths,
                                      2 * n_modPsi * sizeof(int)));
-    cuda_safe_mem(cudaMemcpyToSymbol(SYMBOL(device_linModPsi), linModPsi,
+    cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(device_linModPsi), linModPsi,
                                      linModPsiSize * sizeof(mmm1dgpu_real)));
-    cuda_safe_mem(cudaMemcpyToSymbol(SYMBOL(device_n_modPsi), &n_modPsi,
+    cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(device_n_modPsi), &n_modPsi,
                                      sizeof(int)));
   }
 

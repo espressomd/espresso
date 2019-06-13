@@ -78,7 +78,7 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
     throw "Failed to allocate\n";
   }
 
-  cuda_safe_mem(cudaMemcpyToSymbol(SYMBOL(fde_parameters_gpu), &parameters,
+  cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(fde_parameters_gpu), &parameters,
                                    sizeof(Parameters)));
 
   int threads_per_block = 64;
