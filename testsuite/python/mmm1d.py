@@ -64,16 +64,16 @@ class ElectrostaticInteractionsTests(object):
         measured_f = self.system.part[:].f
         for i in range(self.num_particles):
             for comp in range(3):
-                abs_deviation = abs(measured_f[i,
-                                               comp] - self.vec_f_target[i,
-                                                                         comp])
+                abs_deviation = abs(measured_f[i, comp]
+                                    - self.vec_f_target[i, comp])
                 self.assertLess(abs_deviation,
                                 self.allowed_error,
-                                msg="Measured force has a deviation of " + str(abs_deviation) + " which is too big for particle " + str(i) + " in component " + str(comp))
+                                msg="Measured force has a deviation of {} which is too big for "
+                                    "particle {} in component {}".format(abs_deviation, i, comp))
             
     def test_energy(self):
-        measured_el_energy = self.system.analysis.energy()[
-            "total"] - self.system.analysis.energy()["kinetic"]
+        measured_el_energy = self.system.analysis.energy()["total"] \
+            - self.system.analysis.energy()["kinetic"]
         self.assertLess(
             abs(measured_el_energy - self.energy_target),
             self.allowed_error,
@@ -87,8 +87,8 @@ class ElectrostaticInteractionsTests(object):
         self.system.integrator.run(steps=0)
         f_measured = self.system.part[0].f
         energy_measured = self.system.analysis.energy()["total"]
-        target_energy_config = 1.00242505606*prefactor
-        target_force_z_config=-0.99510759*prefactor
+        target_energy_config = 1.00242505606 * prefactor
+        target_force_z_config = -0.99510759 * prefactor
         
         self.assertLess(
             abs(f_measured[0] - 0),
@@ -99,9 +99,10 @@ class ElectrostaticInteractionsTests(object):
             self.allowed_error,
             msg="Measured force in y has a deviation which is too big compared to analytical result")
         self.assertLess(
-            abs(f_measured[2] -target_force_z_config),
+            abs(f_measured[2] - target_force_z_config),
             accuracy,
-            msg="Measured force in z has a deviation which is too big compared to analytical result "+str(abs(f_measured[2] -target_force_z_config)))
+            msg="Measured force in z has a deviation which is too big compared to analytical result "
+                + str(abs(f_measured[2] - target_force_z_config)))
         self.assertLess(
             abs(energy_measured - target_energy_config),
             self.allowed_error,
@@ -110,7 +111,7 @@ class ElectrostaticInteractionsTests(object):
     def test_bjerrum_length_change(self):
         self.system.part.clear()
         self.system.actors.clear()  # tear down previous actors  
-        prefactor=2
+        prefactor = 2
         mmm1d = self.MMM1D(prefactor=prefactor, maxPWerror=1e-20)
         self.system.actors.add(mmm1d)  
         self.test_with_analytical_result(prefactor=prefactor, accuracy=0.0017)            
