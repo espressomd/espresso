@@ -130,8 +130,6 @@ void finalize_p_inst_npt();
 /*@}*/
 
 void integrator_sanity_checks() {
-  // char *errtext;
-
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
   }
