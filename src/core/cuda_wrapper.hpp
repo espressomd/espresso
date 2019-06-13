@@ -1,7 +1,7 @@
 #ifndef CUDA_WRAPPER_HPP
 #define CUDA_WRAPPER_HPP
 
-#define DEVICE_LAUNCH(kernel, blocks, threads, mem, stream, ...)          \
+#define DEVICE_LAUNCH(kernel, blocks, threads, mem, stream, ...)               \
   do {                                                                         \
     kernel<<<blocks, threads, mem, stream>>>(__VA_ARGS__);                     \
   } while (0)

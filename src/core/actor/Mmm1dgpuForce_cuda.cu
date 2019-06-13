@@ -232,7 +232,7 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
     int maxCut = 30;
     cuda_safe_mem(cudaMalloc((void **)&dev_cutoff, sizeof(int)));
     DEVICE_LAUNCH(besselTuneKernel, dim3(1), dim3(1), 0, 0, dev_cutoff,
-                       far_switch_radius, maxCut);
+                  far_switch_radius, maxCut);
     cuda_safe_mem(cudaMemcpy(&bessel_cutoff, dev_cutoff, sizeof(int),
                              cudaMemcpyDeviceToHost));
     cudaFree(dev_cutoff);
@@ -298,8 +298,8 @@ void Mmm1dgpuForce::set_params(mmm1dgpu_real _boxz,
     }
     if (_maxPWerror > 0) {
       mmm1d_params.maxPWerror = _maxPWerror;
-      cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(::maxPWerror), &_maxPWerror,
-                                       sizeof(mmm1dgpu_real)));
+      cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(::maxPWerror),
+                                       &_maxPWerror, sizeof(mmm1dgpu_real)));
       maxPWerror = _maxPWerror;
     }
   }

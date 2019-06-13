@@ -1186,10 +1186,10 @@ int energyBH(BHData *bh_data, dds_float k, float *E) {
 
 // Function to set the BH method parameters.
 void setBHPrecision(float *epssq, float *itolsq) {
-  cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(epssqd), epssq, sizeof(float), 0,
-                                   cudaMemcpyHostToDevice));
-  cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(itolsqd), itolsq, sizeof(float),
+  cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(epssqd), epssq, sizeof(float),
                                    0, cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(itolsqd), itolsq,
+                                   sizeof(float), 0, cudaMemcpyHostToDevice));
 }
 
 // An allocation of the GPU device memory and an initialization where it is
@@ -1289,8 +1289,8 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 // Populating of array pointers allocated in GPU device before.
 // Copy the particle data to the Barnes-Hut related arrays.
 void fillConstantPointers(float *r, float *dip, BHData bh_data) {
-  cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(bhpara), &bh_data, sizeof(BHData),
-                                   0, cudaMemcpyHostToDevice));
+  cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(bhpara), &bh_data,
+                                   sizeof(BHData), 0, cudaMemcpyHostToDevice));
   cuda_safe_mem(cudaMemcpy(bh_data.r, r, 3 * bh_data.nbodies * sizeof(float),
                            cudaMemcpyDeviceToDevice));
   cuda_safe_mem(cudaMemcpy(bh_data.u, dip, 3 * bh_data.nbodies * sizeof(float),

@@ -3,8 +3,8 @@
 // TODO: throw exceptions upon errors initialization
 
 #include "cuda_utils.hpp"
-#include <cufft.h>
 #include "grid_based_algorithms/fd-electrostatics.cuh"
+#include <cufft.h>
 #include <string>
 //#include <cuda_interface.hpp>
 #include <cstdio>
@@ -78,8 +78,8 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
     throw "Failed to allocate\n";
   }
 
-  cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(fde_parameters_gpu), &parameters,
-                                   sizeof(Parameters)));
+  cuda_safe_mem(cudaMemcpyToSymbol(DEVICE_SYMBOL(fde_parameters_gpu),
+                                   &parameters, sizeof(Parameters)));
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;

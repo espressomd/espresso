@@ -479,37 +479,37 @@ void assign_charges(const CUDA_particle_data *const pdata, const P3MGpuData p) {
 
   switch (cao) {
   case 1:
-    DEVICE_LAUNCH((assign_charge_kernel<1, false>), dim3(grid),
-                       dim3(block), 0, 0, pdata, p, parts_per_block);
+    DEVICE_LAUNCH((assign_charge_kernel<1, false>), dim3(grid), dim3(block), 0,
+                  0, pdata, p, parts_per_block);
     break;
   case 2:
-    DEVICE_LAUNCH((assign_charge_kernel<2, false>), dim3(grid),
-                       dim3(block), 0, 0, pdata, p, parts_per_block);
+    DEVICE_LAUNCH((assign_charge_kernel<2, false>), dim3(grid), dim3(block), 0,
+                  0, pdata, p, parts_per_block);
     break;
   case 3:
     DEVICE_LAUNCH((assign_charge_kernel<3, true>), dim3(grid), dim3(block),
-                       3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
-                       p, parts_per_block);
+                  3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata, p,
+                  parts_per_block);
     break;
   case 4:
     DEVICE_LAUNCH((assign_charge_kernel<4, true>), dim3(grid), dim3(block),
-                       3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
-                       p, parts_per_block);
+                  3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata, p,
+                  parts_per_block);
     break;
   case 5:
     DEVICE_LAUNCH((assign_charge_kernel<5, true>), dim3(grid), dim3(block),
-                       3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
-                       p, parts_per_block);
+                  3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata, p,
+                  parts_per_block);
     break;
   case 6:
     DEVICE_LAUNCH((assign_charge_kernel<6, true>), dim3(grid), dim3(block),
-                       3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
-                       p, parts_per_block);
+                  3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata, p,
+                  parts_per_block);
     break;
   case 7:
     DEVICE_LAUNCH((assign_charge_kernel<7, true>), dim3(grid), dim3(block),
-                       3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata,
-                       p, parts_per_block);
+                  3 * parts_per_block * cao * sizeof(REAL_TYPE), 0, pdata, p,
+                  parts_per_block);
     break;
   default:
     break;
@@ -618,39 +618,39 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
    * > 2 */
   switch (cao) {
   case 1:
-    DEVICE_LAUNCH((assign_forces_kernel<1, false>), dim3(grid),
-                       dim3(block), 0, 0, pdata, p, lb_particle_force_gpu,
-                       prefactor, parts_per_block);
+    DEVICE_LAUNCH((assign_forces_kernel<1, false>), dim3(grid), dim3(block), 0,
+                  0, pdata, p, lb_particle_force_gpu, prefactor,
+                  parts_per_block);
     break;
   case 2:
-    DEVICE_LAUNCH((assign_forces_kernel<2, false>), dim3(grid),
-                       dim3(block), 0, 0, pdata, p, lb_particle_force_gpu,
-                       prefactor, parts_per_block);
+    DEVICE_LAUNCH((assign_forces_kernel<2, false>), dim3(grid), dim3(block), 0,
+                  0, pdata, p, lb_particle_force_gpu, prefactor,
+                  parts_per_block);
     break;
   case 3:
     DEVICE_LAUNCH((assign_forces_kernel<3, true>), dim3(grid), dim3(block),
-                       3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
-                       lb_particle_force_gpu, prefactor, parts_per_block);
+                  3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
+                  lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 4:
     DEVICE_LAUNCH((assign_forces_kernel<4, true>), dim3(grid), dim3(block),
-                       3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
-                       lb_particle_force_gpu, prefactor, parts_per_block);
+                  3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
+                  lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 5:
     DEVICE_LAUNCH((assign_forces_kernel<5, true>), dim3(grid), dim3(block),
-                       3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
-                       lb_particle_force_gpu, prefactor, parts_per_block);
+                  3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
+                  lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 6:
     DEVICE_LAUNCH((assign_forces_kernel<6, true>), dim3(grid), dim3(block),
-                       3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
-                       lb_particle_force_gpu, prefactor, parts_per_block);
+                  3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
+                  lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   case 7:
     DEVICE_LAUNCH((assign_forces_kernel<7, true>), dim3(grid), dim3(block),
-                       3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
-                       lb_particle_force_gpu, prefactor, parts_per_block);
+                  3 * parts_per_block * cao * sizeof(float), 0, pdata, p,
+                  lb_particle_force_gpu, prefactor, parts_per_block);
     break;
   default:
     break;
