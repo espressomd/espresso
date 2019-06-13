@@ -94,7 +94,7 @@ system.set_random_state_PRNG()
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 system.cell_system.set_n_square(use_verlet_lists=False)
 
@@ -430,8 +430,8 @@ def main_loop():
         newVkappa = system.analysis.v_kappa('read')['Vk1']
         newVkappa = newVkappa if newVkappa > 0. else 4.0 / \
             (NPTGamma0 * NPTGamma0 * NPTInitPistonMass)
-        pistonMass = limit_range(
-            4.0 / (NPTGamma0 * NPTGamma0 * newVkappa), NPTMinPistonMass, NPTMaxPistonMass)
+        pistonMass = limit_range(4.0 / (NPTGamma0 * NPTGamma0 * newVkappa),
+                                 NPTMinPistonMass, NPTMaxPistonMass)
         system.integrator.set_isotropic_npt(
             controls.pressure, pistonMass, cubic_box=True)
 
@@ -444,8 +444,8 @@ def main_loop():
         new_box = np.ones(3) * controls.volume**(1. / 3.)
         if np.any(np.array(system.box_l) != new_box):
             for i in range(len(system.part)):
-                system.part[i].pos = system.part[
-                    i].pos * new_box / system.box_l[0]
+                system.part[i].pos = system.part[i].pos * \
+                    new_box / system.box_l[0]
             print("volume changed")
             system.force_cap = lj_cap
         system.box_l = new_box
@@ -468,8 +468,9 @@ def main_loop():
 
     plt1_x_data = np.append(
         plt1_x_data[-plot_max_data_len + 1:], system.time)
-    plt1_y_data = np.append(plt1_y_data[-plot_max_data_len + 1:], 2. / (
-        3. * len(system.part)) * system.analysis.energy()["kinetic"])
+    plt1_y_data = np.append(plt1_y_data[-plot_max_data_len + 1:],
+                            2. / (3. * len(system.part))
+                            * system.analysis.energy()["kinetic"])
     plt2_x_data = np.append(
         plt2_x_data[-plot_max_data_len + 1:], system.time)
     plt2_y_data = np.append(
@@ -477,7 +478,7 @@ def main_loop():
 
 
 def main_thread():
-    for i in range(0, int_n_times):
+    for i in range(int_n_times):
         main_loop()
 
 
@@ -551,7 +552,9 @@ def rotate_scene():
         else:
             current_view_vals = mlab.view()
             mlab.view(azimuth=mayavi_rotation_angle,
-                      elevation=current_view_vals[1], distance=current_view_vals[2], focalpoint=current_view_vals[3])
+                      elevation=current_view_vals[1],
+                      distance=current_view_vals[2],
+                      focalpoint=current_view_vals[3])
     mayavi_rotation_angle %= 360.
 
 
@@ -576,15 +579,15 @@ def update_plot():
     # rotate_scene()
     zoom_scene()
 
-    data_len = np.array([len(plt1_x_data), len(
-        plt1_y_data), len(plt2_x_data), len(plt2_y_data)]).min()
+    data_len = np.array([len(plt1_x_data), len(plt1_y_data),
+                         len(plt2_x_data), len(plt2_y_data)]).min()
     plot1.set_xdata(plt1_x_data[:data_len])
     plot1.set_ydata(plt1_y_data[:data_len])
     plot2.set_xdata(plt2_x_data[:data_len])
     plot2.set_ydata(plt2_y_data[:data_len])
 
     cursor.set_offsets([plt1_y_data[data_len - 1], plt2_y_data[data_len - 1]])
-#    cursor2.set_offsets([controls.temperature, controls.pressure])
+    # cursor2.set_offsets([controls.temperature, controls.pressure])
 
     current_time = plot1.get_xdata()[-1]
     if last_plotted == current_time:

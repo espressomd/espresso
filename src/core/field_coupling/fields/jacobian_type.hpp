@@ -19,24 +19,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef CORE_FIELD_COUPLING_GRADIENT_TYPE_HPP
 #define CORE_FIELD_COUPLING_GRADIENT_TYPE_HPP
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace FieldCoupling {
 namespace Fields {
 namespace detail {
 template <class T, size_t codim> struct jacobian_type_impl {
-  using type = Vector<codim, Vector<3, T>>;
+  using type = Utils::Vector<Utils::Vector<T, 3>, codim>;
 };
 
 template <class T> struct jacobian_type_impl<T, 1> {
-  using type = Vector<3, T>;
+  using type = Utils::Vector<T, 3>;
 };
 
 /**
  * @brief Deduce type for jacobian from codim.
  *
  * Small helper that returns Vector3d if codim = 1,
- * and Vector<codim, Vector<3, T>> otherwise to avoid
+ * and Utils::Vector<codim, Utils::Vector<3, T>> otherwise to avoid
  * using Vectors of size one, where scalars would do.
  */
 template <class T, size_t codim>

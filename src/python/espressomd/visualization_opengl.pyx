@@ -16,6 +16,7 @@ include "myconfig.pxi"
 from copy import deepcopy
 import espressomd
 from espressomd.particle_data import ParticleHandle
+from espressomd.interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
 
 
 class openGLLive(object):
@@ -30,7 +31,7 @@ class openGLLive(object):
     Parameters
     ----------
 
-    system : instance of :attr:`espressomd.System`
+    system : :class:`espressomd.system.System`
     window_size : array_like :obj:`int`, optional
                   Size of the visualizer window in pixels.
     name : :obj:`str`, optional
@@ -335,7 +336,7 @@ class openGLLive(object):
         IF not ROTATION:
             self.specs['director_arrows'] = False
 
-        IF not LB and not LB_GPU:
+        IF not CUDA:
             self.specs['LB_draw_velocity_plane'] = False
             self.specs['LB_draw_boundaries'] = False
             self.specs['LB_draw_nodes'] = False
@@ -463,7 +464,7 @@ class openGLLive(object):
             constraint_types.append(c.get_parameter('particle_type'))
         all_types.update(constraint_types)
 
-        # COLLECT ALL ACTIVCE NONBONDED INTERACTIONS
+        # COLLECT ALL ACTIVE NONBONDED INTERACTIONS
         all_non_bonded_inters = [x for x in dir(self.system.non_bonded_inter[0, 0]) if not x.startswith(
             '__') and not x == 'type1' and not x == 'type2']
         for t1 in all_types:
@@ -873,10 +874,16 @@ class openGLLive(object):
             for i, p in enumerate(self.system.part):
                 bs = p.bonds
                 for b in bs:
-                    t = b[0].type_number()
                     # b[0]: Bond, b[1:] Partners
-                    for p in b[1:]:
-                        self.bonds.append([i, p, t])
+                    t = b[0].type_number()
+                    if len(b) == 4 and t in (BONDED_IA_DIHEDRAL,
+                                             BONDED_IA_TABULATED):
+                        self.bonds.append([i, b[1], t])
+                        self.bonds.append([i, b[2], t])
+                        self.bonds.append([b[2], b[3], t])
+                    else:
+                        for p in b[1:]:
+                            self.bonds.append([i, p, t])
 
     def _draw_text(
             self,
@@ -1575,10 +1582,8 @@ class openGLLive(object):
         # LOOK FOR LB ACTOR
         if self.specs['LB_draw_velocity_plane'] or self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
             for a in self.system.actors:
-                types = []
-                IF LB:
-                    types.append(espressomd.lb.LBFluid)
-                IF LB_GPU:
+                types = [types.append(espressomd.lb.LBFluid)]
+                IF CUDA:
                     types.append(espressomd.lb.LBFluidGPU)
 
                 # if type(a) == espressomd.lb.LBFluidGPU or type(a) ==

@@ -85,42 +85,25 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   // This is obtained, by multiplying the quaternion representing the director
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
-  Vector<4, double> q;
-  multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation, q);
-  // Calculate the director resulting from the quaternions
-  Vector3d director = {0, 0, 0};
-  convert_quat_to_director(q, director);
-  // normalize
-  double l = sqrt(sqrlen(director));
-  // Division comes in the loop below
+  auto const director =
+      convert_quat_to_director(
+          multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation))
+          .normalize();
 
-  // Calculate the new position of the virtual sites from
-  // position of real particle + director
-  int i;
-  double new_pos[3];
-  double tmp;
-  for (i = 0; i < 3; i++) {
-    new_pos[i] = p_real->r.p[i] + director[i] / l * p.p.vs_relative.distance;
-    double old = p.r.p[i];
-    // Handle the case that one of the particles had gone over the periodic
-    // boundary and its coordinate has been folded
-    if (PERIODIC(i)) {
-      tmp = p.r.p[i] - new_pos[i];
-      if (tmp > box_l[i] / 2.) {
-        p.r.p[i] = new_pos[i] + box_l[i];
-      } else if (tmp < -box_l[i] / 2.) {
-        p.r.p[i] = new_pos[i] - box_l[i];
-      } else
-        p.r.p[i] = new_pos[i];
-    } else
-      p.r.p[i] = new_pos[i];
-    // Has the vs moved by more than a skin
-    if (fabs(old - p.r.p[i]) > skin) {
+  auto const new_pos = p_real->r.p + director * p.p.vs_relative.distance;
+  /* The shift has to respect periodic boundaries: if the reference particles
+   * is not in the same image box, we potentially avoid to shift to the other
+   * side of the box. */
+  auto const shift = get_mi_vector(new_pos, p.r.p);
+
+  for (auto const &s : shift) {
+    if (s * s > skin * skin) {
       runtimeErrorMsg() << "Virtual site " << p.p.identity
-                        << " has moved by more than the skin." << old << "->"
-                        << p.r.p[i];
+                        << " moved more than skin.";
     }
   }
+
+  p.r.p += shift;
 }
 
 // Update the vel of the given virtual particle as defined by the real
@@ -136,23 +119,14 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
     return;
   }
 
-  double d[3];
-  get_mi_vector(d, p.r.p, p_real->r.p);
+  auto const d = get_mi_vector(p.r.p, p_real->r.p);
 
   // Get omega of real particle in space-fixed frame
-  Vector3d omega_space_frame =
+  Utils::Vector3d omega_space_frame =
       convert_vector_body_to_space(*p_real, p_real->m.omega);
   // Obtain velocity from v=v_real particle + omega_real_particle \times
   // director
-  vector_product(omega_space_frame, d, p.m.v);
-
-  int i;
-  // Add prefactors and add velocity of real particle
-  for (i = 0; i < 3; i++) {
-    // Scale the velocity by the distance of virtual particle from the real
-    // particle Add velocity of real particle
-    p.m.v[i] += p_real->m.v[i];
-  }
+  p.m.v = vector_product(omega_space_frame, d) + p_real->m.v;
 }
 
 // Distribute forces that have accumulated on virtual particles to the
@@ -165,26 +139,15 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
       // First obtain the real particle responsible for this virtual particle:
       Particle *p_real = local_particles[p.p.vs_relative.to_particle_id];
 
-      // Get distance vector pointing from real to virtual particle, respecting
-      // periodic boundary i
-      // conditions
-      double d[3];
-      get_mi_vector(d, p.r.p, p_real->r.p);
-
       // The rules for transferring forces are:
       // F_realParticle +=F_virtualParticle
       // T_realParticle +=f_realParticle \times
       // (r_virtualParticle-r_realParticle)
 
-      // Calculate torque to be added on real particle
-      double tmp[3];
-      vector_product(d, p.f.f, tmp);
-
       // Add forces and torques
-      for (int j = 0; j < 3; j++) {
-        p_real->f.torque[j] += tmp[j] + p.f.torque[j];
-        p_real->f.f[j] += p.f.f[j];
-      }
+      p_real->f.torque +=
+          vector_product(get_mi_vector(p.r.p, p_real->r.p), p.f.f) + p.f.torque;
+      p_real->f.f += p.f.f;
     }
   }
 }

@@ -22,37 +22,22 @@
  *  Implementation in lbgpu.cpp.
  */
 
-#ifndef LB_GPU_H
-#define LB_GPU_H
+#ifndef LBGPU_HPP
+#define LBGPU_HPP
 
 #include "config.hpp"
-#include "utils/Counter.hpp"
 
-#ifdef LB_GPU
-#include "utils.hpp"
+#ifdef CUDA
+#include <boost/optional.hpp>
+
+#include <utils/Counter.hpp>
+#include <utils/Vector.hpp>
 
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
  * explicitly. This saves a lot of multiplications with 1's and 0's
  * thus making the code more efficient. */
 #define LBQ 19
-
-/** \name Parameter fields for lattice Boltzmann
- *  The numbers are referenced in \ref mpi_bcast_lb_params
- *  to determine what actions have to take place upon change
- *  of the respective parameter. */
-/*@{*/
-#define LBPAR_DENSITY 0   /**< fluid density */
-#define LBPAR_VISCOSITY 1 /**< fluid kinematic viscosity */
-#define LBPAR_AGRID 2     /**< grid constant for fluid lattice */
-#define LBPAR_TAU 3       /**< time step for fluid propagation */
-#define LBPAR_FRICTION                                                         \
-  4 /**< friction coefficient for viscous coupling between particles and fluid \
-     */
-#define LBPAR_EXTFORCE 5 /**< external force acting on the fluid */
-#define LBPAR_BULKVISC 6 /**< fluid bulk viscosity */
-#define LBPAR_BOUNDARY 7 /**< boundary parameters */
-/*@}*/
 
 #if defined(LB_DOUBLE_PREC) || defined(EK_DOUBLE_PREC)
 typedef double lbForceFloat;
@@ -150,7 +135,6 @@ typedef struct {
 typedef struct {
 
   lbForceFloat *force_density;
-  float *scforce_density;
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
 
   // We need the node forces for the velocity interpolation at the virtual
@@ -177,7 +161,6 @@ typedef struct {
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
 extern LB_rho_v_pi_gpu *host_values;
-extern LB_extern_nodeforcedensity_gpu *extern_node_force_densities_gpu;
 extern LB_particle_allocation_state lb_reinit_particles_gpu;
 #ifdef ELECTROKINETICS
 extern LB_node_force_density_gpu node_f;
@@ -195,12 +178,8 @@ void lb_GPU_sanity_checks();
 
 void lb_get_device_values_pointer(LB_rho_v_gpu **pointeradress);
 void lb_get_boundary_force_pointer(float **pointeradress);
-void lb_get_lbpar_pointer(LB_parameters_gpu **pointeradress);
 void lb_get_para_pointer(LB_parameters_gpu **pointeradress);
 void lattice_boltzmann_update_gpu();
-
-/** (Pre-)initialize data structures. */
-void lb_pre_init_gpu();
 
 /** Perform a full initialization of the lattice Boltzmann system.
  *  All derived parameters and the fluid are reset to their default values.
@@ -224,7 +203,7 @@ void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
 
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
-void lb_free_GPU();
+
 void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values);
 void lb_print_node_GPU(int single_nodeindex,
                        LB_rho_v_pi_gpu *host_print_values);
@@ -240,12 +219,12 @@ void lb_init_extern_nodeforcedensities_GPU(
     LB_parameters_gpu *lbpar_gpu);
 
 void lb_set_agrid_gpu(double agrid);
+
+template <std::size_t no_of_neighbours>
 void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction);
 
 void lb_calc_fluid_mass_GPU(double *mass);
 void lb_calc_fluid_momentum_GPU(double *host_mom);
-void lb_remove_fluid_momentum_GPU(void);
-void lb_calc_fluid_temperature_GPU(double *host_temp);
 void lb_get_boundary_flag_GPU(int single_nodeindex, unsigned int *host_flag);
 void lb_get_boundary_flags_GPU(unsigned int *host_bound_array);
 
@@ -255,32 +234,34 @@ void lb_set_node_rho_GPU(int single_nodeindex, float host_rho);
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
-int lb_lbnode_set_extforce_density_GPU(int ind[3], double f[3]);
 void lb_gpu_get_boundary_forces(double *forces);
-void lb_save_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
-void lb_load_checkpoint_GPU(float *host_checkpoint_vd,
-                            unsigned int *host_checkpoint_boundary,
-                            lbForceFloat *host_checkpoint_force);
+void lb_save_checkpoint_GPU(float *host_checkpoint_vd);
+void lb_load_checkpoint_GPU(float const *host_checkpoint_vd);
 
 void lb_lbfluid_remove_total_momentum();
 void lb_lbfluid_fluid_add_momentum(float momentum[3]);
 void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
                                      int include_lbfluid);
-void lb_lbfluid_particles_add_momentum(float velocity[3]);
+void lb_lbfluid_particles_add_momentum(float const velocity[3]);
 
-void lb_lbfluid_set_population(const Vector3i &, float[LBQ]);
-void lb_lbfluid_get_population(const Vector3i &, float[LBQ]);
+void lb_lbfluid_set_population(const Utils::Vector3i &, float[LBQ]);
+void lb_lbfluid_get_population(const Utils::Vector3i &, float[LBQ]);
 
+template <std::size_t no_of_neighbours>
 void lb_get_interpolated_velocity_gpu(double const *positions,
                                       double *velocities, int length);
+void linear_velocity_interpolation(double const *positions, double *velocities,
+                                   int length);
+void quadratic_velocity_interpolation(double const *positions,
+                                      double *velocities, int length);
+
 uint64_t lb_fluid_get_rng_state_gpu();
 void lb_fluid_set_rng_state_gpu(uint64_t counter);
 uint64_t lb_coupling_get_rng_state_gpu();
 void lb_coupling_set_rng_state_gpu(uint64_t counter);
-/*@{*/
-extern Utils::Counter<uint64_t> rng_counter_fluid_gpu;
-#endif /* LB_GPU */
+/*@}*/
+extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid_gpu;
+extern boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling_gpu;
+#endif /*  CUDA */
 
-#endif /* LB_GPU_H */
+#endif /*  CUDA_H */

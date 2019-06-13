@@ -29,7 +29,6 @@
 #include "communication.hpp"
 #include "debug.hpp"
 #include "global.hpp"
-#include "utils.hpp"
 
 #include <boost/algorithm/clamp.hpp>
 #include <mpi.h>
@@ -49,20 +48,20 @@
  * variables
  **********************************************/
 
-int node_grid[3] = {0, 0, 0};
-int node_pos[3] = {-1, -1, -1};
-int node_neighbors[6] = {0, 0, 0, 0, 0, 0};
-int boundary[6] = {0, 0, 0, 0, 0, 0};
+Utils::Vector3i node_grid{};
+Utils::Vector3i node_pos = {-1, -1, -1};
+Utils::Vector<int, 6> node_neighbors{};
+Utils::Vector<int, 6> boundary{};
 int periodic = 7;
 
-Vector3d box_l = {1, 1, 1};
-double half_box_l[3] = {.5, .5, .5};
-double box_l_i[3] = {1, 1, 1};
+Utils::Vector3d box_l = {1, 1, 1};
+Utils::Vector3d half_box_l = {0.5, 0.5, 0.5};
+Utils::Vector3d box_l_i = {1, 1, 1};
 double min_box_l;
-Vector3d local_box_l{1, 1, 1};
+Utils::Vector3d local_box_l{1, 1, 1};
 double min_local_box_l;
-Vector3d my_left = {0, 0, 0};
-Vector3d my_right = {1, 1, 1};
+Utils::Vector3d my_left{};
+Utils::Vector3d my_right{1, 1, 1};
 
 /************************************************************/
 
@@ -71,10 +70,10 @@ void init_node_grid() {
   cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
 }
 
-int map_position_node_array(const Vector3d &pos) {
+int map_position_node_array(const Utils::Vector3d &pos) {
   auto const f_pos = folded_position(pos);
 
-  Vector3i im;
+  Utils::Vector3i im;
   for (int i = 0; i < 3; i++) {
     im[i] = std::floor(f_pos[i] / local_box_l[i]);
     im[i] = boost::algorithm::clamp(im[i], 0, node_grid[i] - 1);
@@ -88,7 +87,7 @@ int calc_node_neighbors(int node) {
 
   int dir, neighbor_count;
 
-  map_node_array(node, node_pos);
+  map_node_array(node, node_pos.data());
   for (dir = 0; dir < 3; dir++) {
     int buf;
 
@@ -152,7 +151,7 @@ void grid_changed_n_nodes() {
   mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
                            {{1, 1, 1}});
 
-  MPI_Cart_coords(comm_cart, this_node, 3, node_pos);
+  MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
 
   calc_node_neighbors(this_node);
 
@@ -177,65 +176,6 @@ void calc_minimal_box_dimensions() {
     min_box_l = std::min(min_box_l, box_l[i]);
     min_local_box_l = std::min(min_local_box_l, local_box_l[i]);
   }
-}
-
-void calc_2d_grid(int n, int grid[3]) {
-  int i;
-  i = (int)sqrt((double)n);
-  while (i >= 1) {
-    if (n % i == 0) {
-      grid[0] = n / i;
-      grid[1] = i;
-      grid[2] = 1;
-      return;
-    }
-    i--;
-  }
-}
-
-int map_3don2d_grid(int g3d[3], int g2d[3], int mult[3]) {
-  int i, row_dir = -1;
-  /* trivial case */
-  if (g3d[2] == 1) {
-    for (i = 0; i < 3; i++)
-      mult[i] = 1;
-    return 2;
-  }
-  if (g2d[0] % g3d[0] == 0) {
-    if (g2d[1] % g3d[1] == 0) {
-      row_dir = 2;
-    } else if (g2d[1] % g3d[2] == 0) {
-      row_dir = 1;
-      g2d[2] = g2d[1];
-      g2d[1] = 1;
-    }
-  } else if (g2d[0] % g3d[1] == 0) {
-    if (g2d[1] % g3d[0] == 0) {
-      row_dir = 2;
-      i = g2d[0];
-      g2d[0] = g2d[1];
-      g2d[1] = i;
-    } else if (g2d[1] % g3d[2] == 0) {
-      row_dir = 0;
-      g2d[2] = g2d[1];
-      g2d[1] = g2d[0];
-      g2d[0] = 1;
-    }
-  } else if (g2d[0] % g3d[2] == 0) {
-    if (g2d[1] % g3d[0] == 0) {
-      row_dir = 1;
-      g2d[2] = g2d[0];
-      g2d[0] = g2d[1];
-      g2d[1] = 1;
-    } else if (g2d[1] % g3d[1] == 0) {
-      row_dir = 0;
-      g2d[2] = g2d[0];
-      g2d[0] = 1;
-    }
-  }
-  for (i = 0; i < 3; i++)
-    mult[i] = g2d[i] / g3d[i];
-  return row_dir;
 }
 
 void rescale_boxl(int dir, double d_new) {

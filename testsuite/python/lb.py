@@ -18,11 +18,13 @@ from __future__ import print_function
 
 import itertools
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
 import espressomd.lb
-from tests_common import abspath
+from espressomd.observables import LBFluidStress
+import sys
 
 
 class TestLB(object):
@@ -39,8 +41,7 @@ class TestLB(object):
     """
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     n_nodes = system.cell_system.get_state()["n_nodes"]
-    system.seed = range(n_nodes)
-    np.random.seed = 1
+    np.random.seed(1)
     params = {'int_steps': 15,
               'int_times': 20,
               'time_step': 0.01,
@@ -64,6 +65,8 @@ class TestLB(object):
     system.periodicity = [1, 1, 1]
     system.time_step = params['time_step']
     system.cell_system.skin = params['skin']
+    lbf = None
+    interpolation = False
 
     def test_mass_momentum_thermostat(self):
         self.system.actors.clear()
@@ -132,8 +135,8 @@ class TestLB(object):
             fluid_temp *= self.system.volume() / (3. * len(lb_nodes)**2)
 
             # check mass conversation
-            self.assertAlmostEqual(fluid_mass, self.params[
-                                   "dens"], delta=self.params["mass_prec_per_node"])
+            self.assertAlmostEqual(fluid_mass, self.params["dens"],
+                                   delta=self.params["mass_prec_per_node"])
 
             # check momentum conservation
             np.testing.assert_allclose(
@@ -149,10 +152,10 @@ class TestLB(object):
             all_temp_fluid.append(fluid_temp)
 
         # import scipy.stats
-        # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"], scale=np.std(all_temp_particle,ddof=1))[1] -self.params["temp"]
-        # temp_prec_fluid = scipy.stats.norm.interval(0.95,
-        # loc=self.params["temp"], scale=np.std(all_temp_fluid,ddof=1))[1]
-        # -self.params["temp"]
+        # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
+        #   scale=np.std(all_temp_particle,ddof=1))[1] - self.params["temp"]
+        # temp_prec_fluid = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
+        #   scale=np.std(all_temp_fluid,ddof=1))[1] -self.params["temp"]
         temp_prec_particle = 0.06 * self.params["temp"]
         temp_prec_fluid = 0.05 * self.params["temp"]
 
@@ -160,6 +163,47 @@ class TestLB(object):
             np.mean(all_temp_fluid), self.params["temp"], delta=temp_prec_fluid)
         self.assertAlmostEqual(
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
+
+    def test_stress_tensor(self):
+        """
+        Checks agreement between the LBFluidStress observable and per-node
+        stress summed up over the entire fluid.
+
+        """
+       
+        system = self.system
+        system.actors.clear()
+        system.part.clear()
+        self.n_col_part = 1000
+        system.part.add(pos=np.random.random(
+            (self.n_col_part, 3)) * self.params["box_l"], v=np.random.random((self.n_col_part, 3)))
+        system.thermostat.turn_off()
+
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=system.time_step,
+            kT=1, ext_force_density=[0, 0, 0], seed=1)
+        system.actors.add(self.lbf)
+        system.thermostat.set_lb(LB_fluid=self.lbf, seed=1)
+        system.integrator.run(10)
+        stress = np.zeros((3, 3))
+        agrid = self.params["agrid"]
+        for i in range(int(system.box_l[0] / agrid)):
+            for j in range(int(system.box_l[1] / agrid)):
+                for k in range(int(system.box_l[2] / agrid)):
+                    stress += self.lbf[i, j, k].stress
+
+        stress /= system.volume() / agrid**3
+
+        obs = LBFluidStress()
+        obs_stress = obs.calculate()
+        obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[3]],
+                               [obs_stress[1], obs_stress[2], obs_stress[4]],
+                               [obs_stress[3], obs_stress[4], obs_stress[5]]])
+        print(stress / obs_stress)
+        np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
 
     def test_lb_node_set_get(self):
         self.system.actors.clear()
@@ -178,6 +222,20 @@ class TestLB(object):
         density = 0.234
         self.lbf[0, 0, 0].density = density
         self.assertAlmostEqual(self.lbf[0, 0, 0].density, density, delta=1e-4)
+
+    def test_parameter_change_without_seed(self):
+        self.system.actors.clear()
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step,
+            ext_force_density=[0, 0, 0],
+            kT=1.0,
+            seed=42)
+        self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=23, gamma=2.0)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=3.0)
 
     def test_grid_index(self):
         self.system.actors.clear()
@@ -198,8 +256,26 @@ class TestLB(object):
             v = self.lbf[
                 0, 0, int(self.params['box_l'] / self.params['agrid']) + 1].velocity
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
-               "Features not available, skipping test!")
+    def test_incompatible_agrid(self):
+        """
+        LB lattice initialization must raise an exception when either box_l or
+        local_box_l aren't integer multiples of agrid.
+        """
+        self.system.actors.clear()
+        self.lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'] + 1e-5,
+            tau=self.system.time_step,
+            ext_force_density=[0, 0, 0])
+        print("\nTesting LB error messages:", file=sys.stderr)
+        sys.stderr.flush()
+        with self.assertRaises(Exception):
+            self.system.actors.add(self.lbf)
+        print("End of LB error messages", file=sys.stderr)
+        sys.stderr.flush()
+
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
@@ -213,6 +289,8 @@ class TestLB(object):
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
+        if self.interpolation:
+            self.lbf.set_interpolation_order("quadratic")
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
             seed=3,
@@ -220,12 +298,14 @@ class TestLB(object):
         self.system.part.add(
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
+        if self.interpolation:
+            v_fluid = self.lbf.get_interpolated_velocity(
+                self.system.part[0].pos)
         self.system.integrator.run(1)
         np.testing.assert_allclose(
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_a_ext_force_density(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
@@ -249,9 +329,6 @@ class TestLB(object):
                 np.copy(self.lbf[n].velocity), fluid_velocity, atol=1E-6)
 
 
-@ut.skipIf(
-    not espressomd.has_features(["LB"]),
-           "Features not available, skipping test!")
 class TestLBCPU(TestLB, ut.TestCase):
 
     def setUp(self):
@@ -259,16 +336,23 @@ class TestLBCPU(TestLB, ut.TestCase):
         self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
 
 
-@ut.skipIf(
-    not espressomd.has_features(
-        ["LB_GPU"]),
-    "Features not available, skipping test!")
+@utx.skipIfMissingGPU()
 class TestLBGPU(TestLB, ut.TestCase):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidGPU
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+    def test_viscous_coupling_higher_order_interpolation(self):
+        self.interpolation = True
+        self.test_viscous_coupling()
+        self.interpolation = False
+
 
 if __name__ == "__main__":
-    ut.main()
+    suite = ut.TestSuite()
+    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBCPU))
+    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBGPU))
+    result = ut.TextTestRunner(verbosity=4).run(suite)
+    sys.exit(not result.wasSuccessful())

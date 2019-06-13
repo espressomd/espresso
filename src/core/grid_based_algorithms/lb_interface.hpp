@@ -2,10 +2,15 @@
 #define CORE_LB_INTERFACE
 
 #include "config.hpp"
-#include "lattice.hpp"
-#include "utils/Vector.hpp"
+#include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
+#include <utils/Vector.hpp>
 
-#if defined(LB) || defined(LB_GPU)
+/** @brief LB implementation currently active. */
+enum class ActiveLB { NONE, CPU, GPU };
+
+/** @brief Switch determining the type of lattice dynamics. */
+extern ActiveLB lattice_switch;
 
 /**
  * @brief Propagate the LB fluid.
@@ -47,16 +52,14 @@ void lb_lbfluid_set_rng_state(uint64_t counter);
 const Lattice &lb_lbfluid_get_lattice();
 
 /**
- * @brief Get the global variable lattice_switch which defines wether NONE, CPU
- * or GPU LB is active.
+ * @brief Get the global variable @ref lattice_switch.
  */
-int lb_lbfluid_get_lattice_switch();
+ActiveLB lb_lbfluid_get_lattice_switch();
 
 /**
- * @brief Set the global variable lattice_switch which defines wether NONE, CPU
- * or GPU LB is active.
+ * @brief Set the global variable @ref lattice_switch.
  */
-void lb_lbfluid_set_lattice_switch(int local_lattice_switch);
+void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 
 /**
  * @brief Set the LB time step.
@@ -96,7 +99,7 @@ void lb_lbfluid_set_agrid(double p_agrid);
 /**
  * @brief Set the external force density acting on the LB fluid.
  */
-void lb_lbfluid_set_ext_force_density(const Vector3d &force_density);
+void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density);
 
 /**
  * @brief Set the LB fluid thermal energy.
@@ -111,17 +114,18 @@ void lb_lbfluid_invalidate_particle_allocation();
 /**
  * @brief Set the LB density for a single node.
  */
-void lb_lbnode_set_density(const Vector3i &ind, double density);
+void lb_lbnode_set_density(const Utils::Vector3i &ind, double density);
 
 /**
  * @brief Set the LB fluid velocity for a single node.
  */
-void lb_lbnode_set_velocity(const Vector3i &ind, const Vector3d &u);
+void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
+                            const Utils::Vector3d &u);
 
 /**
  * @brief Set the LB fluid populations for a single node.
  */
-void lb_lbnode_set_pop(const Vector3i &ind, const Vector<19, double> &pop);
+void lb_lbnode_set_pop(const Utils::Vector3i &ind, const Utils::Vector19d &pop);
 
 /**
  * @brief Get the LB time step.
@@ -156,7 +160,7 @@ double lb_lbfluid_get_density();
 /**
  * @brief Get the external force density acting on the LB fluid.
  */
-const Vector3d lb_lbfluid_get_ext_force_density();
+const Utils::Vector3d lb_lbfluid_get_ext_force_density();
 
 /**
  * @brief Get the thermal energy parameter of the LB fluid.
@@ -171,24 +175,29 @@ double lb_lbfluid_get_lattice_speed();
 /**
  * @brief Get the LB fluid density for a single node.
  */
-double lb_lbnode_get_density(const Vector3i &ind);
+double lb_lbnode_get_density(const Utils::Vector3i &ind);
 
 /**
  * @brief Get the LB fluid velocity for a single node.
  */
-const Vector3d lb_lbnode_get_velocity(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi(const Vector3i &ind);
-const Vector<6, double> lb_lbnode_get_pi_neq(const Vector3i &ind);
+const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
+const Utils::Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind);
+const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind);
+
+/** calculates the average stress of all nodes by iterating
+ * over all nodes and deviding by the number_of_nodes.
+ */
+const Utils::Vector6d lb_lbfluid_get_stress();
 
 /**
  * @brief Get the LB fluid boundary bool for a single node.
  */
-int lb_lbnode_get_boundary(const Vector3i &ind);
+int lb_lbnode_get_boundary(const Utils::Vector3i &ind);
 
 /**
  * @brief Get the LB fluid populations for a single node.
  */
-const Vector<19, double> lb_lbnode_get_pop(const Vector3i &ind);
+const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind);
 
 /* IO routines */
 void lb_lbfluid_print_vtk_boundary(const std::string &filename);
@@ -205,9 +214,10 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
 /**
  * @brief Checks whether the given node index is within the LB lattice.
  */
-bool lb_lbnode_is_index_valid(const Vector3i &ind);
+bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind);
 
-void lb_lbfluid_on_lb_params_change(int field);
-#endif
+void lb_lbfluid_on_lb_params_change(LBParam field);
+
+Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
 
 #endif

@@ -15,8 +15,10 @@ where
    C=\frac{1}{4\pi \epsilon_0 \epsilon_r}
    :label: coulomb_prefactor
 
-is a prefactor which can be set by the user.
-The commonly used Bdrm length :math:`l_B = e_o^2 / (4 \pi \epsilon_0 \epsilon_r k_B T)` is the length at which the Coulomb energy between two unit charges is equal to the thermal energy :math:`k_B T`.
+is a prefactor which can be set by the user. The commonly used Bjerrum length
+:math:`l_B = e_o^2 / (4 \pi \epsilon_0 \epsilon_r k_B T)` is the length at
+which the Coulomb energy between two unit charges is equal to the thermal
+energy :math:`k_B T`.
 Based on the this length, the prefactor is given by :math:`C=l_B k_B T`.
 
 Computing electrostatic interactions is computationally very expensive.
@@ -65,7 +67,7 @@ checking for the feature ``FFTW`` with ``espressomd.features``.
 P3M requires full periodicity (1 1 1). Make sure that you know the relevance of the
 P3M parameters before using P3M! If you are not sure, read the following
 references
-:cite:`ewald21,hockney88,kolafa92,deserno98,deserno98a,deserno00,deserno00a,cerda08a`.
+:cite:`ewald21,hockney88,kolafa92,deserno98a,deserno98b,deserno00,deserno00a,cerda08d`.
 
 .. _Tuning Coulomb P3M:
 
@@ -250,7 +252,7 @@ With each iteration, ICC has to solve electrostatics which can severely slow
 down the integration. The performance can be improved by using multiple cores,
 a minimal set of ICC particles and convergence and relaxation parameters that
 result in a minimal number of iterations. Also please make sure to read the
-corresponding articles, mainly :cite:`espresso2,tyagi10a,kesselheim11a` before
+corresponding articles, mainly :cite:`arnold13a,tyagi10a,kesselheim11a` before
 using it.
 
 .. _MMM2D:
@@ -332,8 +334,8 @@ algorithm is definitely faster than MMM2D for larger numbers of particles
 (:math:`>400` at reasonable accuracy requirements). The periodicity has to be
 set to ``1 1 1`` still, *ELC* cancels the electrostatic contribution of the
 periodic replica in **z-direction**. Make sure that you read the papers on ELC
-(:cite:`arnold02c,icelc`) before using it. ELC is an |es| actor and is used
-with::
+(:cite:`arnold02c,arnold02d,tyagi08a`) before using it. ELC is an |es| actor
+and is used with::
 
     elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.actors.add(elc)
@@ -356,7 +358,7 @@ Parameters are:
     * ``delta_mid_top``/``delta_mid_bot``:
         *ELC* can also be used to simulate 2D periodic systems with image charges,
         specified by dielectric contrasts on the non-periodic boundaries
-        (:cite:`icelc`).  Similar to *MMM2D*, these can be set with the
+        (:cite:`tyagi08a`).  Similar to *MMM2D*, these can be set with the
         keywords ``delta_mid_bot`` and ``delta_mid_top``, setting the dielectric
         jump from the simulation region (*middle*) to *bottom* (at ``z<0``) and
         from *middle* to *top* (``z > box_l[2] - gap_size``). The fully metallic case
@@ -457,9 +459,9 @@ Scafacos Electrostatics
 -----------------------
 
 Espresso can use the electrostatics methods from the SCAFACOS *Scalable
-fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :attr:`espressomd.scafacos.available_methods`
+fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :meth:`espressomd.scafacos.ScafacosConnector.available_methods`
 
-To use SCAFACOS, create an instance of :attr:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+To use SCAFACOS, create an instance of :class:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
 
 * ``method_name``: name of the SCAFACOS method being used.
 * ``method_params``: dictionary containing the method-specific parameters
@@ -472,10 +474,10 @@ To use the, e.g.,  ``ewald`` solver from SCAFACOS as electrostatics solver for y
 cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 :math:`10^{-3}`, use::
 
-  from espressomd.electrostatics import Scafacos
-  scafacos = Scafacos(prefactor=1, method_name="ewald",
-                      method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
-  system.actors.add(scafacos)
+   from espressomd.electrostatics import Scafacos
+   scafacos = Scafacos(prefactor=1, method_name="ewald",
+                       method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
+   system.actors.add(scafacos)
 
 
 For details of the various methods and their parameters please refer to

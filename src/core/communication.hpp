@@ -50,17 +50,18 @@
  *  in \ref anonymous_namespace{communication.cpp}::names "names".
  */
 
-#include <boost/mpi/communicator.hpp>
-
-#include <array>
-
 #include "MpiCallbacks.hpp"
 
 /** Included needed by callbacks. */
 #include "cuda_init.hpp"
+#include "grid_based_algorithms/lb_constants.hpp"
 #include "particle_data.hpp"
 
-#include "utils/serialization/array.hpp"
+#include <boost/mpi/communicator.hpp>
+#include <utils/serialization/array.hpp>
+
+#include <array>
+#include <vector>
 
 /**************************************************
  * exported variables
@@ -72,7 +73,7 @@
 extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
-// extern MPI_Comm comm_cart;
+/** The communicator */
 extern boost::mpi::communicator comm_cart;
 /*@}*/
 
@@ -96,18 +97,33 @@ MpiCallbacks &mpiCallbacks();
  * the slave nodes. It is denoted by *_slave.
  **************************************************/
 
-/**********************************************
- * slave callbacks.
- **********************************************/
-typedef void(SlaveCallback)(int node, int param);
-
 /** \name Exported Functions */
 /*@{*/
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
 void mpi_init();
 
 /* Call a slave function. */
-void mpi_call(SlaveCallback cb, int node, int param);
+template <class... Args, class... ArgRef>
+void mpi_call(void (*fp)(Args...), ArgRef &&... args) {
+  Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
+}
+
+template <class... Args, class... ArgRef>
+void mpi_call_all(void (*fp)(Args...), ArgRef &&... args) {
+  Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
+}
+
+template <class Tag, class R, class... Args, class... ArgRef>
+auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&... args) {
+  return Communication::mpiCallbacks().call(tag, fp,
+                                            std::forward<ArgRef>(args)...);
+}
+
+template <class Tag, class TagArg, class R, class... Args, class... ArgRef>
+auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
+  return Communication::mpiCallbacks().call(tag, std::forward<TagArg>(tag_arg),
+                                            fp, std::forward<ArgRef>(args)...);
+}
 
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
@@ -119,18 +135,6 @@ void mpi_loop();
 void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
                               std::array<int, 3> const &periodicity = {
                                   {1, 1, 1}});
-
-/** Issue REQ_EVENT: tells all clients of some system change.
- *  The events are:
- *  <ul>
- *  <li> PARTICLE_CHANGED
- *  <li> INTERACTION_CHANGED
- *  </ul>
- *  Then all nodes execute the respective on_* procedure from initialize.cpp.
- *  Note that not all of these codes are used. Since some actions (like placing
- *  a particle) include communication anyways, this is handled by the way.
- */
-void mpi_bcast_event(int event);
 
 /** Issue REQ_PLACE: move particle to a position on a node.
  *  Also calls \ref on_particle_change.
@@ -148,9 +152,6 @@ void mpi_place_particle(int node, int id, double pos[3]);
  */
 void mpi_place_new_particle(int node, int id, double pos[3]);
 
-#ifdef ROTATION
-#endif
-
 /** Issue REQ_SET_EXCLUSION: send exclusions.
  *  Also calls \ref on_particle_change.
  *  \param part     identity of first particle of the exclusion.
@@ -167,16 +168,6 @@ void mpi_send_exclusion(int part, int part2, int _delete);
  */
 void mpi_remove_particle(int node, int id);
 
-/** Issue REQ_GET_PART: recv particle data. The data has to be freed later
- *  using \ref free_particle, otherwise the dynamically allocated parts, bonds
- *  and exclusions are left over.
- *  \param part  the particle.
- *  \param node  the node it is attached to.
- *  \note Gets a copy of the particle data not a pointer to the actual particle
- *  used in integration
- */
-Particle mpi_recv_part(int node, int part);
-
 /** Issue REQ_INTEGRATE: start integrator.
  *  @param n_steps       how many steps to do.
  *  @param reuse_forces  whether to trust the old forces for the first half step
@@ -187,7 +178,7 @@ int mpi_integrate(int n_steps, int reuse_forces);
 /** Issue REQ_MIN_ENERGY: start energy minimization.
  *  @return nonzero on error
  */
-int mpi_minimize_energy(void);
+void mpi_minimize_energy();
 
 void mpi_bcast_all_ia_params();
 
@@ -211,43 +202,45 @@ void mpi_bcast_ia_params(int i, int j);
 void mpi_bcast_max_seen_particle_type(int s);
 
 /** Issue REQ_GATHER: gather data for analysis in analyze.
+ *  \todo update parameter descriptions
  *  \param job what to do:
- *  <ul>
- *      <li> 1 calculate and reduce (sum up) energies, using \ref energy_calc.
- *      <li> 2 calculate and reduce (sum up) pressure, stress tensor, using \ref
- * pressure_calc.
- *      <li> 3 calculate and reduce (sum up) instantaneous pressure, using \ref
- * pressure_calc.
- *  </ul>
+ *      \arg \c 1 calculate and reduce (sum up) energies,
+ *           using \ref energy_calc.
+ *      \arg \c 2 calculate and reduce (sum up) pressure, stress tensor,
+ *           using \ref pressure_calc.
+ *      \arg \c 3 calculate and reduce (sum up) instantaneous pressure,
+ *           using \ref pressure_calc.
+ *      \arg \c 4 use \ref predict_momentum_particles
+ *      \arg \c 6 use \ref lb_calc_fluid_momentum
+ *      \arg \c 8 use \ref lb_collect_boundary_forces
  *  \param result where to store the gathered value(s):
- *  <ul><li> job=1 unused (the results are stored in a global
+ *      \arg for \c job=1 unused (the results are stored in a global
  *           energy array of type \ref Observable_stat)
- *      <li> job=2 unused (the results are stored in a global
+ *      \arg for \c job=2 unused (the results are stored in a global
  *           virials array of type \ref Observable_stat)
- *      <li> job=3 unused (the results are stored in a global
+ *      \arg for \c job=3 unused (the results are stored in a global
  *           virials array of type \ref Observable_stat)
  *  \param result_t where to store the gathered value(s):
- *  <ul><li> job=1 unused (the results are stored in a global
+ *      \arg for \c job=1 unused (the results are stored in a global
  *           energy array of type \ref Observable_stat)
- *      <li> job=2 unused (the results are stored in a global
+ *      \arg for \c job=2 unused (the results are stored in a global
  *           p_tensor tensor of type \ref Observable_stat)
- *      <li> job=3 unused (the results are stored in a global
+ *      \arg for \c job=3 unused (the results are stored in a global
  *           p_tensor tensor of type \ref Observable_stat)
  *  \param result_nb where to store the gathered value(s):
- *  <ul><li> job=1 unused (the results are stored in a global
+ *      \arg for \c job=1 unused (the results are stored in a global
  *           energy array of type \ref Observable_stat_non_bonded)
- *      <li> job=2 unused (the results are stored in a global
+ *      \arg for \c job=2 unused (the results are stored in a global
  *           virials_non_bonded array of type \ref Observable_stat_non_bonded)
- *      <li> job=3 unused (the results are stored in a global
+ *      \arg for \c job=3 unused (the results are stored in a global
  *           virials_non_bonded array of type \ref Observable_stat_non_bonded)
  *  \param result_t_nb where to store the gathered value(s):
- *  <ul><li> job=1 unused (the results are stored in a global
+ *      \arg for \c job=1 unused (the results are stored in a global
  *           energy array of type \ref Observable_stat_non_bonded)
- *      <li> job=2 unused (the results are stored in a global
+ *      \arg for \c job=2 unused (the results are stored in a global
  *           p_tensor_non_bonded tensor of type \ref Observable_stat_non_bonded)
- *      <li> job=3 unused (the results are stored in a global
+ *      \arg for \c job=3 unused (the results are stored in a global
  *           p_tensor_non_bonded tensor of type \ref Observable_stat_non_bonded)
- *  </ul>
  */
 void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
                       void *result_t_nb);
@@ -271,85 +264,20 @@ void mpi_bcast_cell_structure(int cs);
 /** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all
  *  nodes.
  */
-void mpi_bcast_nptiso_geom(void);
-
-/** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
- *  in sync with the topology. Note that this only makes sense if you
- *  have a simple topology such that each particle can only belong to
- *  a single molecule */
-void mpi_update_mol_ids(void);
-
-/** Issue REQ_SYNC_TOPO: Update the molecules ids to that they correspond to
- *  the topology
- */
-int mpi_sync_topo_part_info(void);
-
-/** Issue REQ_BCAST_LBPAR: Broadcast a parameter for lattice Boltzmann.
- *  @param[in] field  References the parameter field to be broadcasted.
- *                    The references are defined in lb.hpp
- *  @param[in] value  Dummy value
- */
-void mpi_bcast_lb_params(int field, int value = -1);
+void mpi_bcast_nptiso_geom();
 
 void mpi_bcast_lb_particle_coupling();
 
-Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos);
+Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
+                                                  Utils::Vector3d const &pos);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();
-
-/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param rho    local fluid density
- *  @param j      local fluid velocity
- *  @param pi     local fluid pressure
- */
-void mpi_send_fluid(int node, int index, double rho,
-                    const std::array<double, 3> &j,
-                    const std::array<double, 6> &pi);
-
-/** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param rho    local fluid density
- *  @param j      local fluid velocity
- *  @param pi     local fluid pressure
- */
-void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi);
-
-/** Issue REQ_LB_GET_BOUNDARY_FLAG: Receive a single lattice sites boundary
- *  flag from a processor.
- *  @param node      processor to send to
- *  @param index     index of the lattice site
- *  @param boundary  local boundary flag
- */
-void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary);
-
-/** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
- *  @return nonzero on error
- */
-int mpi_iccp3m_iteration();
 
 /** Issue REQ_ICCP3M_INIT: performs iccp3m initialization
  *  @return nonzero on error
  */
 int mpi_iccp3m_init();
-
-/** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param pop    local fluid population
- */
-void mpi_recv_fluid_populations(int node, int index, double *pop);
-
-/** Issue REQ_SEND_FLUID_POPULATIONS: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param pop    local fluid population
- */
-void mpi_send_fluid_populations(int node, int index,
-                                const Vector<19, double> &pop);
 
 /** Part of MDLC */
 void mpi_bcast_max_mu();
@@ -363,20 +291,14 @@ void mpi_bcast_max_mu();
  */
 void mpi_kill_particle_motion(int rotation);
 void mpi_kill_particle_forces(int torque);
-void mpi_system_CMS();
-void mpi_system_CMS_velocity();
+Utils::Vector3d mpi_system_CMS();
+Utils::Vector3d mpi_system_CMS_velocity();
 void mpi_galilei_transform();
-void mpi_observable_lb_radial_velocity_profile();
 
 /** Issue REQ_SWIMMER_REACTIONS: notify the system of changes to the reaction
  *  parameters
  */
 void mpi_setup_reaction();
-
-#ifdef CUDA
-/** Gather CUDA devices from all nodes */
-std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
-#endif
 
 /**
  * @brief Resort the particles.
@@ -389,16 +311,6 @@ std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
  */
 std::vector<int> mpi_resort_particles(int global_flag);
 
-/*@}*/
-
-/** \name Event codes for \ref mpi_bcast_event
- *  These codes are used by \ref mpi_bcast_event to notify certain changes
- *  of doing something now.
- */
-/*@{*/
-#define P3M_COUNT_CHARGES 0
-#define CHECK_PARTICLES 2
-#define P3M_COUNT_DIPOLES 5
 /*@}*/
 
 #endif

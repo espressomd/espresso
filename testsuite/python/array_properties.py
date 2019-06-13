@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 from espressomd import lb
@@ -86,9 +87,8 @@ class ArrayPropertyTest(ut.TestCase):
     system.time_step = 0.01
     system.cell_system.skin = 0.01
     system.part.add(pos=[0, 0, 0])
-    if espressomd.has_features(["LB"]):
-        lbf = lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
-        system.actors.add(lbf)
+    lbf = lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
+    system.actors.add(lbf)
 
     def locked_operators(self, v):
         with self.assertRaises(ValueError):
@@ -160,8 +160,7 @@ class ArrayPropertyTest(ut.TestCase):
         # System
         self.set_copy(self.system.box_l)
 
-    @ut.skipIf(not espressomd.has_features(["ROTATION"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["ROTATION"])
     def test_rotation(self):
 
         # Check for exception for various operators
@@ -207,8 +206,7 @@ class ArrayPropertyTest(ut.TestCase):
         if espressomd.has_features("EXTERNAL_FORCES"):
             self.set_copy(self.system.part[0].ext_torque)
 
-    @ut.skipIf(not espressomd.has_features(["ROTATIONAL_INERTIA"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["ROTATIONAL_INERTIA"])
     def test_rotational_inertia(self):
 
         # Check for exception for various operators
@@ -224,8 +222,7 @@ class ArrayPropertyTest(ut.TestCase):
         # Particle
         self.set_copy(self.system.part[0].rinertia)
 
-    @ut.skipIf(not espressomd.has_features(["EXTERNAL_FORCES"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_external_forces(self):
 
         # Check for exception for various operators
@@ -246,9 +243,7 @@ class ArrayPropertyTest(ut.TestCase):
         self.set_copy(self.system.part[0].ext_force)
         self.set_copy(self.system.part[0].fix)
 
-    @ut.skipIf(
-        not espressomd.has_features(["ROTATION", "PARTICLE_ANISOTROPY"]),
-           "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["ROTATION", "PARTICLE_ANISOTROPY"])
     def test_rot_aniso(self):
 
         # Check for exception for various operators
@@ -264,19 +259,16 @@ class ArrayPropertyTest(ut.TestCase):
         # Particle
         self.set_copy(self.system.part[0].gamma_rot)
 
-    @ut.skipIf(not espressomd.has_features(["LB"]),
-               "Features not available, skipping test!")
     def test_lb(self):
         # Check for exception for various operators
         # LB
         self.locked_operators(self.lbf[0, 0, 0].velocity)
-        self.locked_operators(self.lbf[0, 0, 0].pi)
-        self.locked_operators(self.lbf[0, 0, 0].pi_neq)
+        self.locked_operators(self.lbf[0, 0, 0].stress)
+        self.locked_operators(self.lbf[0, 0, 0].stress_neq)
         self.locked_operators(self.lbf[0, 0, 0].population)
 
-    @ut.skipIf(not espressomd.has_features(["LANGEVIN_PER_PARTICLE",
-                                            "PARTICLE_ANISOTROPY"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["LANGEVIN_PER_PARTICLE",
+                                "PARTICLE_ANISOTROPY"])
     def test_langevinpp_aniso(self):
 
         # Check for exception for various operators
@@ -292,8 +284,7 @@ class ArrayPropertyTest(ut.TestCase):
         # Particle
         self.set_copy(self.system.part[0].gamma)
 
-    @ut.skipIf(not espressomd.has_features(["DIPOLES"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["DIPOLES"])
     def test_dipoles(self):
 
         # Check for exception for various operators
@@ -310,16 +301,14 @@ class ArrayPropertyTest(ut.TestCase):
         # Particle
         self.set_copy(self.system.part[0].dip)
 
-    @ut.skipIf(not espressomd.has_features(["EXCLUSIONS"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["EXCLUSIONS"])
     def test_exclusions(self):
 
         # Check for exception for various operators
         # Particle
         self.locked_operators(self.system.part[0].exclusions)
 
-    @ut.skipIf(not espressomd.has_features(["PARTIAL_PERIODIC"]),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_partial_periodic(self):
 
         # Check for exception for various operators

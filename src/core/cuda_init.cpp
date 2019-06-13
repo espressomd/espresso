@@ -18,16 +18,15 @@
 */
 
 #include "cuda_init.hpp"
+#ifdef CUDA
 #include "communication.hpp"
-#include "config.hpp"
-#include "utils.hpp"
 
+#include <utils/constants.hpp>
+
+#include <cstring>
 #include <iterator>
 #include <mpi.h>
 #include <set>
-#include <string.h>
-
-#ifdef CUDA
 
 /** Helper class force device set
  */
@@ -39,8 +38,8 @@ struct CompareDevices {
     /* Both devs are from the same node, order by id */
     if (name_comp == 0)
       return a.id < b.id;
-    else
-      return name_comp < 0;
+
+    return name_comp < 0;
   }
 };
 
@@ -50,7 +49,7 @@ struct CompareDevices {
     be more than one on one node.
  */
 
-std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
+std::vector<EspressoGpuDevice> cuda_gather_gpus() {
   int n_gpus = cuda_get_n_gpus();
   char proc_name[MPI_MAX_PROCESSOR_NAME];
   int proc_name_len;
@@ -58,7 +57,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
   std::vector<EspressoGpuDevice> devices;
   /* Global unique device list (only relevant on master) */
   std::vector<EspressoGpuDevice> g_devices;
-  int *n_gpu_array = 0;
+  int *n_gpu_array = nullptr;
 
   MPI_Get_processor_name(proc_name, &proc_name_len);
 
@@ -107,9 +106,8 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus(void) {
     /* Send number of devices to master */
     MPI_Gather(&n_gpus, 1, MPI_INT, n_gpu_array, 1, MPI_INT, 0, MPI_COMM_WORLD);
     /* Send devices to maser */
-    for (std::vector<EspressoGpuDevice>::iterator device = devices.begin();
-         device != devices.end(); ++device) {
-      MPI_Send(&(*device), sizeof(EspressoGpuDevice), MPI_BYTE, 0, 0,
+    for (auto &device : devices) {
+      MPI_Send(&device, sizeof(EspressoGpuDevice), MPI_BYTE, 0, 0,
                MPI_COMM_WORLD);
     }
   }

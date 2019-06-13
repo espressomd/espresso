@@ -16,7 +16,7 @@ geometries and boundary conditions are somewhat limited in comparison to
 Here we restrict the documentation to the interface. For a more detailed
 description of the method, please refer to the literature.
 
-.. note:: Please cite :cite:`espresso2` (Bibtex key espresso2 in :file:`doc/sphinx/zref.bib`) if you use the LB fluid and :cite:`lbgpu` (Bibtex key lbgpu in :file:`doc/sphinx/zref.bib`) if you use the GPU implementation.
+.. note:: Please cite :cite:`arnold13a` (Bibtex key ``arnold13a`` in :file:`doc/sphinx/zrefs.bib`) if you use the LB fluid and :cite:`rohm12a` (Bibtex key ``rohm12a`` in :file:`doc/sphinx/zrefs.bib`) if you use the GPU implementation.
 
 .. _Setting up a LB fluid:
 
@@ -30,19 +30,19 @@ The following minimal example illustrates how to use the LBM in |es|::
     sys.box_l = [10, 20, 30]
     sys.time_step = 0.01
     sys.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     sys.actors.add(lb)
     sys.integrator.run(100)
 
 To use the GPU accelerated variant, replace line 5 in the example above by::
 
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
 
-.. note:: Feature ``LB`` or ``LB_GPU`` required
+.. note:: Feature ``CUDA`` required for GPU accelerated variant
 
 To use the (much faster) GPU implementation of the LBM, use
 :class:`espressomd.lb.LBFluidGPU` in place of :class:`espressomd.lb.LBFluid`.
-Please note that the GPU implementation uses single precision floating point operations. This decreases the accuracy of calculations compared to the CPU implementation. In particular, due to rounding errors, the fluid density decreases over time, when external forces, coupling to particles, or thermalization is used. The loss of density is on the order of $10^-12$ per time step.
+Please note that the GPU implementation uses single precision floating point operations. This decreases the accuracy of calculations compared to the CPU implementation. In particular, due to rounding errors, the fluid density decreases over time, when external forces, coupling to particles, or thermalization is used. The loss of density is on the order of :math:`10^{-12}` per time step.
 
 The command initializes the fluid with a given set of parameters. It is
 also possible to change parameters on the fly, but this will only rarely
@@ -90,7 +90,7 @@ expert, leave their defaults unchanged. If you do change them, note that they
 are to be given in LB units.
 
 Before running a simulation at least the following parameters must be
-set up: ``agrid``, ``tau``, ``visc``, ``dens``, ``fric``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force_density=[0,0,0]``.
+set up: ``agrid``, ``tau``, ``visc``, ``dens``. For the other parameters, the following are taken: ``bulk_visc=0``, ``gamma_odd=0``, ``gamma_even=0``, ``ext_force_density=[0,0,0]``.
 
 .. _Checkpointing LB:
 
@@ -132,10 +132,11 @@ LB as a thermostat
 The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
 The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
 Temperature is set via the ``kT`` argument of the LB fluid. Furthermore a seed has to be given for the
-thermalization of the particle coupling.
+thermalization of the particle coupling. The magnitude of the fricitional coupling can be adjusted by
+the parameter ``gamma``.
 To enable the LB thermostat, use::
 
-    sys.thermostat.set_lb(LB_fluid=lbf, seed=123)
+    sys.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
 The LBM implementation in |es| uses Ahlrichs and Dünweg's point coupling
 method to couple MD particles the LB fluid. This coupling consists of a
@@ -163,6 +164,8 @@ nonconserved modes, including the pressure tensor, fluctuate correctly
 according to the given temperature and the relaxation parameters. All
 fluctuations can be switched off by setting the temperature to 0.
 
+.. note:: Coupling between LB and MD only happens if the LB thermostat is set with a :math:`\gamma \ge 0.0`.
+
 Regarding the unit of the temperature, please refer to
 Section :ref:`On units`.
 
@@ -173,7 +176,7 @@ Reading and setting properties of single lattice nodes
 
 Appending three indices to the ``lb`` object returns an object that represents the selected LB grid node and allows one to access all of its properties::
 
-    lb[x, y, z].density     # fluid density (one scalar for LB and LB_GPU)
+    lb[x, y, z].density     # fluid density (one scalar for LB and CUDA)
     lb[x, y, z].velocity    # fluid velocity (a numpy array of three floats)
     lb[x, y, z].pi          # fluid pressure tensor (a symmetric 3x3 numpy array of floats)
     lb[x, y, z].pi_neq      # nonequilbrium part of the pressure tensor (as above)
@@ -195,7 +198,7 @@ The first line prints the fluid velocity at node 0 0 0 to the screen. The second
 Removing total fluid momentum
 -----------------------------
 
-.. note:: Only available for ``LB_GPU``
+.. note:: Only available for ``CUDA``
 
 Some simulations require the net momentum of the system to vanish. Even if the
 physics of the system fulfills this condition, numerical errors can introduce
@@ -248,11 +251,11 @@ size is 10 in the :math:`x`- and :math:`y`-direction).
 Choosing between the GPU and CPU implementations
 ------------------------------------------------
 
-.. note:: Feature ``LB_GPU`` required
+.. note:: Feature ``CUDA`` required
 
 Espresso contains an implementation of the LBM for NVIDIA
 GPUs using the CUDA framework. On CUDA-supporting machines this can be
-activated by compiling with the feature ``LB_GPU``. Within the
+activated by compiling with the feature ``CUDA``. Within the
 Python script, the :class:`~espressomd.lb.LBFluid` object can be substituted with the :class:`~espressomd.lb.LBFluidGPU` object to switch from CPU based to GPU based execution. For further
 information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
 
@@ -263,13 +266,13 @@ The following minimal example demonstrates how to use the GPU implementation of 
     sys.box_l = [10, 20, 30]
     sys.time_step = 0.01
     sys.cell_system.skin = 0.4
-    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     sys.actors.add(lb)
     sys.integrator.run(100)
 
 For boundary conditions analogous to the CPU
 implementation, the feature ``LB_BOUNDARIES_GPU`` has to be activated.
-The feature ``LB_GPU`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
+The feature ``CUDA`` allows the use of Lees-Edwards boundary conditions. Our implementation follows the paper of :cite:`wagner02`. Note, that there is no extra python interface for the use of Lees-Edwards boundary conditions with the LB algorithm. All information are rather internally derived from the set of the Lees-Edwards offset in the system class. For further information Lees-Edwards boundary conditions please refer to section :ref:`Lees-Edwards boundary conditions`
 
 .. _Electrohydrodynamics:
 
@@ -345,7 +348,7 @@ The following example sets up a system consisting of a spherical boundary in the
     sys.time_step = 0.01
     sys.cell_system.skin = 0.4
 
-    lb = lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, fric=1.0, tau=0.01)
+    lb = lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
     sys.actors.add(lb)
 
     v = [0, 0, 0.01]  # the boundary slip

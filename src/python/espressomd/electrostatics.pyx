@@ -21,13 +21,14 @@ from cython.operator cimport dereference
 include "myconfig.pxi"
 from espressomd cimport actors
 from . import actors
+cimport grid
 cimport globals
 import numpy as np
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
 from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type
+from espressomd.utils import is_valid_type, to_str
 from . cimport checks
 from .c_analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
@@ -64,8 +65,8 @@ IF ELECTROSTATICS == 1:
                 _set_params_in_es_core() method.")
 
         def _deactivate_method(self):
-            deactivate_coulomb_method()
-            handle_errors("Coulom method deactivation")
+            deactivate_method()
+            handle_errors("Coulomb method deactivation")
 
         def tune(self, **tune_params_subset):
             if tune_params_subset is not None:
@@ -110,7 +111,7 @@ IF ELECTROSTATICS:
             return "prefactor", "kappa", "r_cut"
 
         def _set_params_in_es_core(self):
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             dh_set_params(self._params["kappa"], self._params["r_cut"])
 
         def _get_params_from_es_core(self):
@@ -129,45 +130,111 @@ IF ELECTROSTATICS:
                     "r_cut": -1,
                     "check_neutrality": True}
 
-
-IF P3M == 1:
-    cdef class P3M(ElectrostaticInteraction):
-
-        def __init__(self, *args, **kwargs):
+    cdef class ReactionField(ElectrostaticInteraction):
             """
-            P3M electrostatics solver.
-
-            Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
-            summation method to calculate potentials in N-body simulation.
+            Solve electrostatics in the Reaction-Field framework
 
             Parameters
             ----------
             prefactor : :obj:`float`
                 Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-            accuracy : :obj:`float`
-                P3M tunes its parameters to provide this target accuracy.
-            alpha : :obj:`float`, optional
-                The Ewald parameter.
-            cao : :obj:`float`, optional
-                The charge-assignment order, an integer between 0 and 7.
-            epsilon : :obj:`str`, optional
-                Use 'metallic' to set the dielectric constant of the
-                surrounding medium to infinity (Default).
-            epsilon : :obj:`float`, optional
-                A positive number for the dielectric constant of the
-                surrounding medium.
-            mesh : :obj:`int`, optional
-                The number of mesh points.
-            mesh : array_like, optional
-                The number of mesh points in x, y and z direction. This is
-                relevant for noncubic boxes.
-            r_cut : :obj:`float`, optional
-                The real space cutoff.
-            tune : :obj:`bool`, optional
-                Used to activate/deactivate the tuning method on activation.
-                Defaults to True.
+            kappa : :obj:`float`
+                Inverse Debye screening length.
+            epsilon1 : :obj:`float`
+                interior dielectric constant
+            epsilon2 : :obj:`float`
+                exterior dielectric constant
+            r_cut : :obj:`float`
+                Cut off radius for this interaction.
 
             """
+
+            def validate_params(self):
+                if (self._params["prefactor"] <= 0):
+                    raise ValueError(
+                        "prefactor should be a positive float")
+                if (self._params["kappa"] < 0):
+                    raise ValueError("kappa should be a non-negative double")
+                if (self._params["epsilon1"] < 0):
+                                    raise ValueError(
+                                        "epsilon1 should be a non-negative double")
+                if (self._params["epsilon2"] < 0):
+                                    raise ValueError(
+                                        "epsilon2 should be a non-negative double")
+                if (self._params["r_cut"] < 0):
+                    raise ValueError("r_cut should be a non-negative double")
+
+            def valid_keys(self):
+                return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut", "check_neutrality"
+
+            def required_keys(self):
+                return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"
+
+            def _set_params_in_es_core(self):
+                set_prefactor(self._params["prefactor"])
+                rf_set_params(
+                    self._params["kappa"],
+                    self._params["epsilon1"],
+                    self._params["epsilon2"],
+                    self._params["r_cut"])
+
+            def _get_params_from_es_core(self):
+                params = {}
+                params.update(rf_params)
+                return params
+
+            def _activate_method(self):
+                check_neutrality(self._params)
+                coulomb.method = COULOMB_RF
+                self._set_params_in_es_core()
+
+            def default_params(self):
+                return {"prefactor": -1,
+                        "kappa": -1,
+                        "epsilon1": -1,
+                        "epsilon2": -1,
+                        "r_cut": -1,
+                        "check_neutrality": True}
+
+
+IF P3M == 1:
+    cdef class P3M(ElectrostaticInteraction):
+        """
+        P3M electrostatics solver.
+
+        Particle--Particle--Particle--Mesh (P3M) is a Fourier-based Ewald
+        summation method to calculate potentials in N-body simulation.
+
+        Parameters
+        ----------
+        prefactor : :obj:`float`
+            Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+        accuracy : :obj:`float`
+            P3M tunes its parameters to provide this target accuracy.
+        alpha : :obj:`float`, optional
+            The Ewald parameter.
+        cao : :obj:`float`, optional
+            The charge-assignment order, an integer between 0 and 7.
+        epsilon : :obj:`str`, optional
+            Use ``'metallic'`` to set the dielectric constant of the
+            surrounding medium to infinity (Default).
+        epsilon : :obj:`float`, optional
+            A positive number for the dielectric constant of the
+            surrounding medium.
+        mesh : :obj:`int`, optional
+            The number of mesh points.
+        mesh : array_like, optional
+            The number of mesh points in x, y and z direction. This is
+            relevant for noncubic boxes.
+        r_cut : :obj:`float`, optional
+            The real space cutoff.
+        tune : :obj:`bool`, optional
+            Used to activate/deactivate the tuning method on activation.
+            Defaults to True.
+
+        """
+
+        def __init__(self, *args, **kwargs):
             super(type(self), self).__init__(*args, **kwargs)
 
         def validate_params(self):
@@ -200,7 +267,7 @@ IF P3M == 1:
             if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
 
-            if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
+            if not (self._params["inter"] == default_params["inter"] or self._params["inter"] >= 0):
                 raise ValueError("inter should be a positive integer")
 
             if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) != 3):
@@ -212,7 +279,7 @@ IF P3M == 1:
                     "alpha should be positive")
 
         def valid_keys(self):
-            return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune", "check_neutrality"
+            return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune", "check_neutrality", "inter"
 
         def required_keys(self):
             return ["prefactor", "accuracy"]
@@ -238,7 +305,7 @@ IF P3M == 1:
 
         def _set_params_in_es_core(self):
             #Sets lb, bcast, resets vars to zero if lb=0
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             #Sets cdef vars and calls p3m_set_params() in core
             python_p3m_set_params(self._params["r_cut"],
                                   self._params["mesh"], self._params["cao"],
@@ -253,7 +320,7 @@ IF P3M == 1:
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
         def _tune(self):
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             python_p3m_set_tune_params(self._params["r_cut"],
                                        self._params["mesh"],
                                        self._params["cao"],
@@ -274,42 +341,42 @@ IF P3M == 1:
 
     IF CUDA:
         cdef class P3MGPU(ElectrostaticInteraction):
+            """
+            P3M electrostatics solver with GPU support.
+
+            Particle--Particle--Particle--Mesh (P3M) is a Fourier-based Ewald
+            summation method to calculate potentials in N-body simulation.
+
+            Parameters
+            ----------
+            prefactor : :obj:`float`
+                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+            accuracy : :obj:`float`
+                P3M tunes its parameters to provide this target accuracy.
+            alpha : :obj:`float`, optional
+                The Ewald parameter.
+            cao : :obj:`float`, optional
+                The charge-assignment order, an integer between 0 and 7.
+            epsilon : :obj:`str`, optional
+                Use ``'metallic'`` to set the dielectric constant of the
+                surrounding medium to infinity (Default).
+            epsilon : :obj:`float`, optional
+                A positive number for the dielectric constant of the
+                surrounding medium.
+            mesh : :obj:`int`, optional
+                The number of mesh points.
+            mesh : array_like, optional
+                The number of mesh points in x, y and z direction. This is
+                relevant for noncubic boxes.
+            r_cut : :obj:`float`, optional
+                The real space cutoff
+            tune : :obj:`bool`, optional
+                Used to activate/deactivate the tuning method on activation.
+                Defaults to True.
+
+            """
 
             def __init__(self, *args, **kwargs):
-                """
-                P3M electrostatics solver with GPU support.
-
-                Particle–Particle-Particle–Mesh (P3M) is a Fourier-based Ewald
-                summation method to calculate potentials in N-body simulation.
-
-                Parameters
-                ----------
-                prefactor : :obj:`float`
-                    Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-                accuracy : :obj:`float`
-                    P3M tunes its parameters to provide this target accuracy.
-                alpha : :obj:`float`, optional
-                    The Ewald parameter.
-                cao : :obj:`float`, optional
-                    The charge-assignment order, an integer between 0 and 7.
-                epsilon : :obj:`str`, optional
-                    Use 'metallic' to set the dielectric constant of the
-                    surrounding medium to infinity (Default).
-                epsilon : :obj:`float`, optional
-                    A positive number for the dielectric constant of the
-                    surrounding medium.
-                mesh : :obj:`int`, optional
-                    The number of mesh points.
-                mesh : array_like, optional
-                    The number of mesh points in x, y and z direction. This is
-                    relevant for noncubic boxes.
-                r_cut : :obj:`float`, optional
-                    The real space cutoff
-                tune : :obj:`bool`, optional
-                    Used to activate/deactivate the tuning method on activation.
-                    Defaults to True.
-
-                """
                 super(type(self), self).__init__(*args, **kwargs)
 
             def validate_params(self):
@@ -374,7 +441,7 @@ IF P3M == 1:
                 return params
 
             def _tune(self):
-                coulomb_set_prefactor(self._params["prefactor"])
+                set_prefactor(self._params["prefactor"])
                 python_p3m_set_tune_params(self._params["r_cut"],
                                            self._params["mesh"],
                                            self._params["cao"],
@@ -397,7 +464,7 @@ IF P3M == 1:
                 self._set_params_in_es_core()
 
             def _set_params_in_es_core(self):
-                coulomb_set_prefactor(self._params["prefactor"])
+                set_prefactor(self._params["prefactor"])
                 python_p3m_set_params(self._params["r_cut"],
                                       self._params["mesh"],
                                       self._params["cao"],
@@ -463,7 +530,7 @@ IF ELECTROSTATICS:
             return params
 
         def _set_params_in_es_core(self):
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             MMM1D_set_params(
                 self._params["far_switch_radius"], self._params["maxPWerror"])
 
@@ -548,10 +615,10 @@ IF ELECTROSTATICS and MMM1D_GPU:
             return params
 
         def _set_params_in_es_core(self):
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             default_params = self.default_params()
 
-            self.thisptr.set_params(globals.box_l[2], coulomb.prefactor, self._params[
+            self.thisptr.set_params(grid.box_l[2], coulomb.prefactor, self._params[
                                     "maxPWerror"], self._params["far_switch_radius"], self._params["bessel_cutoff"])
 
         def _tune(self):
@@ -662,7 +729,7 @@ IF ELECTROSTATICS:
             return params
 
         def _set_params_in_es_core(self):
-            coulomb_set_prefactor(self._params["prefactor"])
+            set_prefactor(self._params["prefactor"])
             if self._params["dielectric"]:
                 self._params["delta_mid_top"] = (self._params[
                                                  "mid"] - self._params["top"]) / (self._params["mid"] + self._params["top"])
@@ -706,7 +773,7 @@ IF ELECTROSTATICS:
 
             def _activate_method(self):
                 check_neutrality(self._params)
-                coulomb_set_prefactor(self._params["prefactor"])
+                set_prefactor(self._params["prefactor"])
                 self._set_params_in_es_core()
                 mpi_bcast_coulomb_params()
 

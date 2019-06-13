@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "particle_data.hpp"
 
-#include "utils/Span.hpp"
+#include <utils/Span.hpp>
 
 #include <boost/range/iterator_range.hpp>
 

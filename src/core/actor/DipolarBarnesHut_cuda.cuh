@@ -26,8 +26,8 @@
 #ifdef DIPOLAR_BARNES_HUT
 
 #include <cstdio>
+#include <ctime>
 #include <iostream>
-#include <time.h>
 
 typedef float dds_float;
 
@@ -61,22 +61,24 @@ typedef struct {
   int *count;
   // Start indices for the per-cell sorting.
   int *start;
+  // trace the max loops for a threads' sync
+  int *max_lps;
 } BHData;
 
 // thread count for different kernels (see kernel calls from below functions).
 #define THREADS1 512
 #define THREADS2 1024
 #define THREADS3 1024
-#define THREADS4 256
-#define THREADS5 128 // 256
+#define THREADS4 1024
+#define THREADS5 256
 
 // block count = factor * #SMs
 // for different kernels (see kernel calls from below functions).
-#define FACTOR1 3
+#define FACTOR1 2
 #define FACTOR2 1
 #define FACTOR3 1 /* must all be resident at the same time */
 #define FACTOR4 1 /* must all be resident at the same time */
-#define FACTOR5 5
+#define FACTOR5 4
 
 // Warp size.
 #define WARPSIZE 32

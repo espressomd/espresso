@@ -106,7 +106,7 @@ bool validate_collision_parameters();
 
 /** @brief add the collision between the given particle ids to the collision
  * queue */
-void queue_collision(const int part1, const int part2);
+void queue_collision(int part1, int part2);
 
 /** @brief Check additional criteria for the glue_to_surface collision mode */
 inline bool glue_to_surface_criterion(const Particle *const p1,

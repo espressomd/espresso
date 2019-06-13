@@ -26,14 +26,13 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "event.hpp"
 #include "forces.hpp"
 #include "grid.hpp"
-#include "initialize.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
-#include "utils.hpp"
 
-#include "utils/math/sgn.hpp"
+#include <utils/math/sgn.hpp>
 
 #include <algorithm>
 #include <random>
@@ -88,7 +87,7 @@ void local_setup_reaction() {
 }
 
 void integrate_reaction_noswap() {
-  double dist2, vec21[3], ct_ratexp, eq_ratexp, rand, bernoulli;
+  double ct_ratexp, eq_ratexp, rand, bernoulli;
 
   if (reaction.ct_rate > 0.0) {
 
@@ -126,12 +125,11 @@ void integrate_reaction_noswap() {
                p2->p.type == reaction.catalyzer_type) ||
               (p2->p.type == reaction.reactant_type &&
                p1->p.type == reaction.catalyzer_type)) {
-            get_mi_vector(vec21, p1->r.p, p2->r.p);
-            dist2 = sqrlen(vec21);
 
             /* Count the number of times a reactant particle is
                checked against a catalyst */
-            if (dist2 < reaction.range * reaction.range) {
+            if (get_mi_vector(p1->r.p, p2->r.p).norm2() <
+                reaction.range * reaction.range) {
 
               if (p1->p.type == reaction.reactant_type) {
                 p1->p.catalyzer_count++;
@@ -230,7 +228,7 @@ void integrate_reaction_swap() {
   int np;
   Particle *p_local, *p_neigh;
   Cell *cell;
-  double dist2, vec21[3], ct_ratexp, rand;
+  double ct_ratexp, rand;
   int n_reactions;
 
 #ifdef ELECTROSTATICS
@@ -264,11 +262,10 @@ void integrate_reaction_swap() {
     on_observable_calc();
 
     // Iterate over all the local cells
-    for (std::vector<int>::iterator c = rand_cells.begin();
-         c != rand_cells.end(); c++) {
+    for (int &rand_cell : rand_cells) {
       // Take into account only those cell neighborhoods for which
       // the central cell contains a catalyzer particle
-      cell = local_cells.cell[*c];
+      cell = local_cells.cell[rand_cell];
       p_local = cell->part;
       np = cell->n;
 
@@ -283,40 +280,36 @@ void integrate_reaction_swap() {
       std::shuffle(catalyzers.begin(), catalyzers.end(), rng);
 
       // Loop cell neighbors
-      for (int n = 0; n < cells.size(); n++) {
-        cell = &cells[n];
+      for (auto &n : cells) {
+        cell = &n;
         p_neigh = cell->part;
         np = cell->n;
 
         // We loop over all the catalyzer particles
-        for (std::vector<int>::iterator id = catalyzers.begin();
-             id != catalyzers.end(); id++) {
+        for (int &catalyzer : catalyzers) {
           reactants.clear();
           products.clear();
 
           // Particle list loop
           for (int i = 0; i < np; i++) {
-            // Get the distance between a catalyst and another particle
-            get_mi_vector(vec21, p_local[*id].r.p, p_neigh[i].r.p);
-            dist2 = sqrlen(vec21);
-
             // Check if the distance is within the reaction range and
             // check if no reaction has taken place on the particle in
             // the current step
-            if (dist2 < reaction.range * reaction.range &&
+            if (get_mi_vector(p_local[catalyzer].r.p, p_neigh[i].r.p).norm2() <
+                    reaction.range * reaction.range &&
                 p_neigh[i].p.catalyzer_count == 0) {
               // If the particle is of correct type AND resides in the
               // correct half space, append it to the lists of viable
               // reaction candidates
               if (p_neigh[i].p.type == reaction.reactant_type &&
-                  in_lower_half_space(p_local[*id], p_neigh[i])) {
+                  in_lower_half_space(p_local[catalyzer], p_neigh[i])) {
                 reactants.push_back(i);
 #ifdef ELECTROSTATICS
                 reactant_q = p_neigh[i].p.q;
 #endif // ELECTROSTATICS
               }
               if (p_neigh[i].p.type == reaction.product_type &&
-                  !in_lower_half_space(p_local[*id], p_neigh[i]))
+                  !in_lower_half_space(p_local[catalyzer], p_neigh[i]))
                 products.push_back(i);
 #ifdef ELECTROSTATICS
               product_q = p_neigh[i].p.q;
@@ -325,7 +318,7 @@ void integrate_reaction_swap() {
           }
 
           // If reactants and products were found, perform the reaction
-          if (reactants.size() > 0 && products.size() > 0) {
+          if (!reactants.empty() && !products.empty()) {
             // There cannot be more reactions than the minimum of
             // the number of reactants and products.  Hence we need
             // to determine which number is smaller and also count
@@ -335,8 +328,7 @@ void integrate_reaction_swap() {
             // If there are more products than reactants...
             if (reactants.size() <= products.size()) {
               // ...iterate the reactant...
-              for (std::vector<int>::iterator rt = reactants.begin();
-                   rt < reactants.end(); rt++) {
+              for (auto rt = reactants.begin(); rt < reactants.end(); rt++) {
                 // ...draw a random number number and compare to the
                 // reaction rate...
                 rand = d_random();
@@ -355,8 +347,7 @@ void integrate_reaction_swap() {
             } else {
               // Same as above, but for the case that the number of
               // reactants is greater than the number of products
-              for (std::vector<int>::iterator pt = products.begin();
-                   pt < products.end(); pt++) {
+              for (auto pt = products.begin(); pt < products.end(); pt++) {
                 rand = d_random();
                 if (rand > ct_ratexp) {
                   p_neigh[*pt].p.catalyzer_count = 1;
@@ -375,9 +366,8 @@ void integrate_reaction_swap() {
 
     // Apply the changes to the tagged particles.  Therefore, again
     // loop over all cells
-    for (std::vector<int>::iterator c = rand_cells.begin();
-         c != rand_cells.end(); c++) {
-      cell = local_cells.cell[*c];
+    for (int &rand_cell : rand_cells) {
+      cell = local_cells.cell[rand_cell];
       p_local = cell->part;
       np = cell->n;
       // Particle list loop

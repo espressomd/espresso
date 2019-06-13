@@ -228,7 +228,7 @@ cellsystem. ::
 Thermostats
 -----------
 
-The thermostat can be controlled by the class :class:`espressomd.thermostat.Thermostat`
+The thermostat can be controlled by the class :class:`espressomd.thermostat.Thermostat`.
 
 The different available thermostats will be described in the following
 subsections. Note that for a simulation of the NPT ensemble, you need to
@@ -246,22 +246,6 @@ the temperature of a thermostat, you actually do not define the
 temperature, but the value of the thermal energy :math:`k_B T` in the
 current unit system (see the discussion on units, Section :ref:`On units`).
 
-Note that there are three different types of noise which can be used in
-|es|. The one used typically in simulations is flat noise with the correct
-variance and it is the default used in |es|, though it can be explicitly
-specified using the feature ``FLATNOISE``. You can also employ Gaussian noise which
-is, in some sense, more realistic. Notably Gaussian noise (activated
-using the feature ``GAUSSRANDOM``) does a superior job of reproducing higher order
-moments of the Maxwell--Boltzmann distribution. For typical generic
-coarse-grained polymers using FENE bonds the Gaussian noise tends to
-break the FENE bonds. We thus offer a third type of noise, activate
-using the feature ``GAUSSRANDOMCUT``, which produces Gaussian random numbers but takes
-anything which is two standard deviations (:math:`2\sigma`) below or
-above zero and set it to :math:`-2\sigma` or :math:`2\sigma`
-respectively. In all three cases the distribution is made such that the
-second moment of the distribution is the same and thus results in the
-same temperature.
-
 .. _Langevin thermostat:
 
 Langevin thermostat
@@ -276,7 +260,7 @@ Best explained in an example::
     system = espressomd.System()
     therm = system.Thermostat()
 
-    therm.set_langevin(kT=1.0, gamma=1.0)
+    therm.set_langevin(kT=1.0, gamma=1.0, seed=41)
 
 As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`.
 The Langevin thermostat consists of a friction and noise term coupled
@@ -291,6 +275,12 @@ The relaxation time is given by :math:`\text{gamma}/\text{MASS}`, with
 :cite:`grest86a`.  An anisotropic diffusion coefficient tensor is available to
 simulate anisotropic colloids (rods, etc.) properly. It can be enabled by the
 feature ``PARTICLE_ANISOTROPY``.
+
+The keyword ``seed`` controls the state of the random number generator (Philox
+Counter-based RNG) and is required on first activation of the thermostat. It
+can be omitted in subsequent calls of ``set_langevin()``. It is the user's
+responsibility to decide whether the thermostat should be deterministic (by
+using a fixed seed) or not (by using a randomized seed).
 
 If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
 also coupled to the thermostat. If only the first two arguments are
@@ -374,7 +364,7 @@ and set the following parameters:
     * ``gamma0``: (float) Friction coefficient of the bath
     * ``gammav``: (float) Artificial friction coefficient for the volume fluctuations.
 
-Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.system.integrator.set_isotropic_npt`
+Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
 and the parameters:
 
     * ``ext_pressure``:  (float) The external pressure as float variable.

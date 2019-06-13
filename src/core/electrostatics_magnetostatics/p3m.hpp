@@ -57,17 +57,19 @@
 
 #include "debug.hpp"
 #include "fft.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "p3m-common.hpp"
 
-#include "utils/math/AS_erfc_part.hpp"
+#include <utils/constants.hpp>
+#include <utils/math/AS_erfc_part.hpp>
 
 /************************************************
  * data types
  ************************************************/
 
-typedef struct {
-  p3m_parameter_struct params;
+struct p3m_data_struct {
+  p3m_data_struct();
+
+  P3MParameters params;
 
   /** local mesh. */
   p3m_local_mesh local_mesh;
@@ -122,22 +124,20 @@ typedef struct {
   double *recv_grid;
 
   fft_data_struct fft;
-} p3m_data_struct;
+};
 
 /** P3M parameters. */
 extern p3m_data_struct p3m;
 
-void p3m_pre_init(void);
-
 /** Tune P3M parameters to desired accuracy.
  *
  *  The parameters
- *  @ref p3m_parameter_struct::mesh "mesh",
- *  @ref p3m_parameter_struct::cao "cao",
- *  @ref p3m_parameter_struct::r_cut_iL "r_cut_iL" and
- *  @ref p3m_parameter_struct::alpha_L "alpha_L"
+ *  @ref P3MParameters::mesh "mesh",
+ *  @ref P3MParameters::cao "cao",
+ *  @ref P3MParameters::r_cut_iL "r_cut_iL" and
+ *  @ref P3MParameters::alpha_L "alpha_L"
  *  are tuned to obtain the target accuracy (initially stored in
- *  @ref p3m_parameter_struct::accuracy "accuracy") in optimal time.
+ *  @ref P3MParameters::accuracy "accuracy") in optimal time.
  *  These parameters are stored in the @ref p3m object.
  *
  *  The function utilizes the analytic expression of the error estimate
@@ -166,18 +166,19 @@ void p3m_pre_init(void);
  *  The function is based on routines of the program HE_Q.cpp written by M.
  *  Deserno.
  *
- *  @param[out]  log
- *  @return @ref ES_OK or @ref ES_ERROR
+ *  @param[out]  log  log output
+ *  @retval ES_OK
+ *  @retval ES_ERROR
  */
 int p3m_adaptive_tune(char **log);
 
 /** Initialize all structures, parameters and arrays needed for the
  *  P3M algorithm for charge-charge interactions.
  */
-void p3m_init(void);
+void p3m_init();
 
-/** Update @ref p3m_parameter_struct::alpha "alpha" and
- *  @ref p3m_parameter_struct::r_cut "r_cut" if @ref box_l changed
+/** Update @ref P3MParameters::alpha "alpha" and
+ *  @ref P3MParameters::r_cut "r_cut" if @ref box_l changed
  */
 void p3m_scaleby_box_l();
 
@@ -198,8 +199,8 @@ bool p3m_sanity_checks();
 void p3m_count_charged_particles();
 
 /** Assign the physical charges using the tabulated charge assignment function.
- *  If @ref STORE_CA_FRAC is true, then the charge fractions are buffered in
- *  @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
+ *  If @ref P3M_STORE_CA_FRAC is true, then the charge fractions are buffered
+ *  in @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
  *  "ca_frac".
  */
 void p3m_charge_assign();
@@ -213,7 +214,7 @@ void p3m_charge_assign();
  *                        is not stored in the @ref p3m_data_struct::ca_frac
  *                        "ca_frac" arrays
  */
-void p3m_assign_charge(double q, Vector3d &real_pos, int cp_cnt);
+void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
 
 /** Shrink wrap the charge grid */
 void p3m_shrink_wrap_charge_grid(int n_charges);
@@ -222,56 +223,51 @@ void p3m_shrink_wrap_charge_grid(int n_charges);
  *
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
-inline double p3m_add_pair_force(double chgfac, double *d, double dist2,
-                                 double dist, double force[3]) {
+inline void p3m_add_pair_force(double q1q2, double const *d, double dist,
+                               double *force) {
   if (dist < p3m.params.r_cut) {
-    if (dist > 0.0) { // Vincent
+    if (dist > 0.0) {
       double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-      double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-      double fac1 = coulomb.prefactor * chgfac * exp(-adist * adist);
-      double fac2 =
-          fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * wupii) / dist2;
+      auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
+      auto const fac1 = q1q2 * exp(-adist * adist);
+      auto const fac2 =
+          fac1 * (erfc_part_ri + 2.0 * p3m.params.alpha * Utils::sqrt_pi_i()) /
+          (dist * dist);
 #else
-      erfc_part_ri = erfc(adist) / dist;
-      double fac1 = coulomb.prefactor * chgfac;
-      double fac2 = fac1 *
-                    (erfc_part_ri +
-                     2.0 * p3m.params.alpha * wupii * exp(-adist * adist)) /
-                    dist2;
+      auto const erfc_part_ri = erfc(adist) / dist;
+      auto const fac1 = q1q2;
+      auto const fac2 =
+          fac1 *
+          (erfc_part_ri +
+           2.0 * p3m.params.alpha * Utils::sqrt_pi_i() * exp(-adist * adist)) /
+          (dist * dist);
 #endif
       for (int j = 0; j < 3; j++)
         force[j] += fac2 * d[j];
-      ESR_TRACE(
-          fprintf(stderr, "%d: RSE: Pair dist=%.3f: force (%.3e,%.3e,%.3e)\n",
-                  this_node, dist, fac2 * d[0], fac2 * d[1], fac2 * d[2]));
-#ifdef NPT
-      return fac1 * erfc_part_ri;
-#endif
     }
   }
-  return 0.0;
 }
 
 /** Set initial values for p3m_adaptive_tune()
  *
- *  @param[in]  r_cut        @copybrief p3m_parameter_struct::r_cut
- *  @param[in]  mesh         @copybrief p3m_parameter_struct::mesh
- *  @param[in]  cao          @copybrief p3m_parameter_struct::cao
- *  @param[in]  alpha        @copybrief p3m_parameter_struct::alpha
- *  @param[in]  accuracy     @copybrief p3m_parameter_struct::accuracy
- *  @param[in]  n_interpol   @copybrief p3m_parameter_struct::inter
+ *  @param[in]  r_cut        @copybrief P3MParameters::r_cut
+ *  @param[in]  mesh         @copybrief P3MParameters::mesh
+ *  @param[in]  cao          @copybrief P3MParameters::cao
+ *  @param[in]  alpha        @copybrief P3MParameters::alpha
+ *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
+ *  @param[in]  n_interpol   @copybrief P3MParameters::inter
  */
 void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
                          double accuracy, int n_interpol);
 
 /** Set custom parameters
  *
- *  @param[in]  r_cut        @copybrief p3m_parameter_struct::r_cut
- *  @param[in]  mesh         @copybrief p3m_parameter_struct::mesh
- *  @param[in]  cao          @copybrief p3m_parameter_struct::cao
- *  @param[in]  alpha        @copybrief p3m_parameter_struct::alpha
- *  @param[in]  accuracy     @copybrief p3m_parameter_struct::accuracy
+ *  @param[in]  r_cut        @copybrief P3MParameters::r_cut
+ *  @param[in]  mesh         @copybrief P3MParameters::mesh
+ *  @param[in]  cao          @copybrief P3MParameters::cao
+ *  @param[in]  alpha        @copybrief P3MParameters::alpha
+ *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
  *  @return Custom error code
  */
 int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
@@ -279,22 +275,20 @@ int p3m_set_params(double r_cut, const int *mesh, int cao, double alpha,
 
 /** Set mesh offset
  *
- *  Set x, y, z components of @ref p3m_parameter_struct::mesh_off "mesh off"
- *  @param[in]  x
- *  @param[in]  y
- *  @param[in]  z
+ *  @param[in]  x , y , z  Components of @ref P3MParameters::mesh_off
+ *                         "mesh_off"
  */
 int p3m_set_mesh_offset(double x, double y, double z);
 
-/** Set @ref p3m_parameter_struct::epsilon "epsilon" parameter
+/** Set @ref P3MParameters::epsilon "epsilon" parameter
  *
- *  @param[in]  eps          @copybrief p3m_parameter_struct::epsilon
+ *  @param[in]  eps          @copybrief P3MParameters::epsilon
  */
 int p3m_set_eps(double eps);
 
-/** Set @ref p3m_parameter_struct::inter "inter" parameter
+/** Set @ref P3MParameters::inter "inter" parameter
  *
- *  @param[in]  n            @copybrief p3m_parameter_struct::inter
+ *  @param[in]  n            @copybrief P3MParameters::inter
  */
 int p3m_set_ninterpol(int n);
 
@@ -304,10 +298,10 @@ inline double p3m_pair_energy(double chgfac, double dist) {
     double adist = p3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
     double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    return coulomb.prefactor * chgfac * erfc_part_ri * exp(-adist * adist);
+    return chgfac * erfc_part_ri * exp(-adist * adist);
 #else
     double erfc_part_ri = erfc(adist) / dist;
-    return coulomb.prefactor * chgfac * erfc_part_ri;
+    return chgfac * erfc_part_ri;
 #endif
   }
   return 0.0;

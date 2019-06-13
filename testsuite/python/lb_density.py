@@ -22,8 +22,6 @@ import espressomd.lb
 
 """
 Check the Lattice Boltzmann mass conservation.
-
-
 """
 
 KT = 2.25
@@ -43,7 +41,7 @@ class LBMassCommon(object):
 
     """Base class of the test that holds the test logic."""
     lbf = None
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[3.0, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
@@ -75,8 +73,6 @@ class LBMassCommon(object):
             atol=1e-7)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB']), "Skipping test due to missing features.")
 class LBCPUMass(ut.TestCase, LBMassCommon):
 
     """Test for the CPU implementation of the LB."""

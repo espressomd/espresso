@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "field_coupling/detail/BindCoupling.hpp"
 using namespace FieldCoupling;
 
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 template <bool linear> struct Id {
   static constexpr const bool is_linear = linear;
@@ -47,8 +47,8 @@ BOOST_AUTO_TEST_CASE(BindCoupling_test) {
 
   /* is_linear */
   {
-    static_assert(true == BindCoupling<Id<true>, Particle>::is_linear, "");
-    static_assert(false == BindCoupling<Id<false>, Particle>::is_linear, "");
+    static_assert(BindCoupling<Id<true>, Particle>::is_linear, "");
+    static_assert(!BindCoupling<Id<false>, Particle>::is_linear, "");
   }
 
   /* make_bind_coupling */
@@ -95,7 +95,6 @@ BOOST_AUTO_TEST_CASE(FieldBase_test) {
     int f = 2;
 
     auto base = Base<int, int>(c, f);
-    c = f = 0;
 
     BOOST_CHECK(1 == base.coupling());
     BOOST_CHECK(2 == base.field());
@@ -103,13 +102,15 @@ BOOST_AUTO_TEST_CASE(FieldBase_test) {
 }
 
 struct DummyVectorField {
-  Vector3d operator()(const Vector3d &x, double t) const { return t * x; }
+  Utils::Vector3d operator()(const Utils::Vector3d &x, double t) const {
+    return t * x;
+  }
 };
 
 BOOST_AUTO_TEST_CASE(ForceField_test) {
   auto ff =
       ForceField<Id<true>, DummyVectorField>(Id<true>{}, DummyVectorField{});
-  const Vector3d x{1., 2., 3.};
+  const Utils::Vector3d x{1., 2., 3.};
   const int p = 5;
 
   BOOST_CHECK((9. * x) == ff.force(5, x, 9.));
@@ -117,14 +118,18 @@ BOOST_AUTO_TEST_CASE(ForceField_test) {
 }
 
 struct DummyScalarField {
-  double operator()(const Vector3d &x, double t) const { return t * x.norm(); }
-  Vector3d jacobian(const Vector3d &x, double = {}) const { return 3. * x; }
+  double operator()(const Utils::Vector3d &x, double t) const {
+    return t * x.norm();
+  }
+  Utils::Vector3d jacobian(const Utils::Vector3d &x, double = {}) const {
+    return 3. * x;
+  }
 };
 
 BOOST_AUTO_TEST_CASE(PotentialField_test) {
   auto pf = PotentialField<Id<true>, DummyScalarField>(Id<true>{},
                                                        DummyScalarField{});
-  const Vector3d x{1., 2., 3.};
+  const Utils::Vector3d x{1., 2., 3.};
 
   BOOST_CHECK((2. * x.norm()) == pf.energy(5, x, 2.));
   BOOST_CHECK(1 == pf.coupling().count);

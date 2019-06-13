@@ -19,17 +19,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- * main header-file for MDLC (magnetic dipolar layer
- *correction).
+ *  main header-file for MDLC (magnetic dipolar layer correction).
  *
  *  Developer: Joan J. Cerda.
  *  Purpose:   get the corrections for dipolar 3D algorithms
  *             when applied to a slab geometry and dipolar
- *	      particles. DLC & co
+ *             particles. DLC & co
  *  Article:   A. Brodka, Chemical Physics Letters 400, 62-67 (2004).
  *
- *	      We also include a tuning function that returns the
- *	      cut-off necessary to attend a certain accuracy.
+ *             We also include a tuning function that returns the
+ *             cut-off necessary to attend a certain accuracy.
  *
  *  Restrictions: the slab must be such that the z is the short
  *                direction. Otherwise we get trash.
@@ -45,29 +44,34 @@
 #if defined(DIPOLES) && defined(DP3M)
 
 /** parameters for the MDLC method */
-typedef struct {
+struct DLC_struct {
   /** maximal pairwise error of the potential and force */
   double maxPWerror;
 
-  /** the cutoff of the exponential sum. Since in all other MMM methods this is
-      the far formula, we call it here the same, although in the ELC context it
-      does not make much sense. */
+  /** Cutoff of the exponential sum. Since in all other MMM methods this is
+   *  the far formula, we call it here the same, although in the ELC context
+   *  it does not make much sense.
+   */
   double far_cut;
 
-  /** size of the empty gap. Note that ELC relies on the user to make sure that
-      this condition is fulfilled. */
+  /** Size of the empty gap. Note that MDLC relies on the user to make sure
+   *  that this condition is fulfilled.
+   */
   double gap_size;
 
-  /** whether the cutoff was set by the user, or calculated by Espresso. In the
-     latter case, the
-      cutoff will be adapted if important parameters, such as the box
-     dimensions, change. */
+  /** Flag whether #far_cut was set by the user, or calculated by Espresso.
+   *  In the latter case, the cutoff will be adapted if important parameters,
+   *  such as the box dimensions, change.
+   */
   int far_calculated;
 
-  /** up to where particles can be found */
+  /** Up to where particles can be found */
   double h;
 
-} DLC_struct;
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &maxPWerror &far_cut &gap_size &far_calculated &h;
+  }
+};
 extern DLC_struct dlc_params;
 
 int mdlc_set_params(double maxPWerror, double gap_size, double far_cut);

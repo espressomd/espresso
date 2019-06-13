@@ -39,7 +39,6 @@ required_features = ["ENGINE", "ROTATION"]
 assert_features(required_features)
 
 # create an output folder
-
 outdir = "./RESULTS_ENHANCED_DIFFUSION/"
 try:
     os.makedirs(outdir)
@@ -49,7 +48,6 @@ except:
 ##########################################################################
 
 # Read in the active velocity from the command prompt
-
 if len(sys.argv) != 2:
     print("Usage:", sys.argv[0], "<vel> (0 <= vel < 10.0)")
     exit()
@@ -57,7 +55,6 @@ if len(sys.argv) != 2:
 vel = float(sys.argv[1])
 
 # Set the basic simulation parameters
-
 sampsteps = 5000
 samplength = 1000
 tstep = 0.01
@@ -76,20 +73,16 @@ system.time_step = tstep
 
 for run in range(5):
     # Set up a random seed (a new one for each run)
-
     system.seed = np.random.randint(0, 2**31 - 1)
 
     # Use the Langevin thermostat (no hydrodynamics)
-
-    system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
     # Place a single active particle (that can rotate freely! rotation=[1,1,1])
-
     system.part.add(pos=[5.0, 5.0, 5.0], swimming={
                     'v_swim': vel}, rotation=[1, 1, 1])
 
     # Initialize the mean squared displacement (MSD) correlator
-
     tmax = tstep * sampsteps
 
     pos_id = ParticlePositions(ids=[0])
@@ -101,7 +94,6 @@ for run in range(5):
     system.auto_update_accumulators.add(msd)
 
     # Initialize the velocity auto-correlation function (VACF) correlator
-
     vel_id = ParticleVelocities(ids=[0])
     vacf = Correlator(obs1=vel_id,
                       corr_operation="scalar_product",
@@ -112,7 +104,6 @@ for run in range(5):
 
     # Initialize the angular velocity auto-correlation function (AVACF)
     # correlator
-
     ang_id = ParticleAngularVelocities(ids=[0])
     avacf = Correlator(obs1=ang_id,
                        corr_operation="scalar_product",
@@ -122,12 +113,15 @@ for run in range(5):
     system.auto_update_accumulators.add(avacf)
 
     # Integrate 5,000,000 steps. This can be done in one go as well.
-
     for i in range(sampsteps):
+        if (i + 1) % 100 == 0:
+            print('\rrun %i: %.0f%%' % (run + 1, (i + 1) * 100. / sampsteps),
+                  end='')
+            sys.stdout.flush()
         system.integrator.run(samplength)
+    print()
 
     # Finalize the accumulators and write to disk
-
     system.auto_update_accumulators.remove(msd)
     msd.finalize()
     np.savetxt("{}/msd_{}_{}.dat".format(outdir, vel, run), msd.result())

@@ -17,7 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "RuntimeErrorStream.hpp"
+
 #include "RuntimeErrorCollector.hpp"
+#include <utility>
 
 namespace ErrorHandling {
 /** ostringstream is not copyable, but it is fine here to copy just the content.
@@ -30,10 +32,10 @@ RuntimeErrorStream::RuntimeErrorStream(const RuntimeErrorStream &rhs)
 
 RuntimeErrorStream::RuntimeErrorStream(RuntimeErrorCollector &ec,
                                        RuntimeError::ErrorLevel level,
-                                       const std::string &file, const int line,
-                                       const std::string &function)
-    : m_ec(ec), m_level(level), m_line(line), m_file(file),
-      m_function(function) {}
+                                       std::string file, const int line,
+                                       std::string function)
+    : m_ec(ec), m_level(level), m_line(line), m_file(std::move(file)),
+      m_function(std::move(function)) {}
 
 RuntimeErrorStream::~RuntimeErrorStream() {
   m_ec.message(m_level, m_buff.str(), m_function.c_str(), m_file.c_str(),

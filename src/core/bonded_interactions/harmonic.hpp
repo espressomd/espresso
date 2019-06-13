@@ -30,26 +30,26 @@
 
 #include "bonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
-/// set the parameters for the harmonic potential
+#include <utils/math/sqr.hpp>
+
+/** set the parameters for the harmonic potential
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int harmonic_set_params(int bond_type, double k, double r, double r_cut);
 
-/** Computes the HARMONIC pair force and adds this
-    force to the particle forces (see \ref bonded_interaction_data.cpp).
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param iaparams  bond type number of the angle interaction (see \ref
-   bonded_interaction_data.cpp).
-    @param dx        particle distance vector
-    @param force     returns force of particle 1
-    @return 0.
-*/
-inline int calc_harmonic_pair_force(Particle *p1, Particle *p2,
-                                    Bonded_ia_parameters *iaparams,
-                                    double dx[3], double force[3]) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
+/** Computes the harmonic bond length force.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] force     Force.
+ *  @retval 1 if the bond is broken
+ *  @retval 0 otherwise
+ */
+inline int calc_harmonic_pair_force(Bonded_ia_parameters const *iaparams,
+                                    Utils::Vector3d const &dx, double *force) {
+  auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic.r_cut > 0.0) && (dist > iaparams->p.harmonic.r_cut))
     return 1;
@@ -68,11 +68,16 @@ inline int calc_harmonic_pair_force(Particle *p1, Particle *p2,
   return 0;
 }
 
-inline int harmonic_pair_energy(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *iaparams, double dx[3],
-                                double *_energy) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
+/** Computes the harmonic bond length energy.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] _energy   Energy.
+ *  @retval 1 if the bond is broken
+ *  @retval 0 otherwise
+ */
+inline int harmonic_pair_energy(Bonded_ia_parameters const *iaparams,
+                                Utils::Vector3d const &dx, double *_energy) {
+  auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic.r_cut > 0.0) && (dist > iaparams->p.harmonic.r_cut))
     return 1;

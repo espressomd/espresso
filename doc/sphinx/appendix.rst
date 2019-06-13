@@ -294,7 +294,7 @@ In pseudo code, the far formula algorithm looks like:
          :math:`\xi^{(+,s/c,s/c)}_j\Xi^{(l,s/c,s/c)}_s` and
          :math:`\xi^{(-,s/c,s/c)}_j\Xi^{(h,s/c,s/c)}_s`
 
-For further details, see :cite:`arnold02a,arnold02b,arnold02c`.
+For further details, see :cite:`arnold02a,arnold02b,arnold02c,arnold02d`.
 
 .. _Dielectric contrast:
 
@@ -320,7 +320,7 @@ the lowest/topmost layer. This are all modifications necessary for the
 far formula part. In addition to the far formula part, there is an
 additional loop over the particles at the boundary to directly calculate
 their interactions with their images. For details, refer to
-:cite:`icmmm2d`.
+:cite:`tyagi07a`.
 
 .. _MMM1D theory:
 
@@ -471,7 +471,7 @@ Ewald methods, for which decreasing the error bound can lead to
 excessive computation time. For example, P3M cannot reach precisions
 above :math:`10^{-5}` in general. The precise form of the error
 estimates is of little importance here, for details see
-:cite:`arnold02c`.
+:cite:`arnold02c,arnold02d`.
 
 One important aspect is that the error estimates are also exponential in
 the non-periodic coordinate. Since the number of close by and far away

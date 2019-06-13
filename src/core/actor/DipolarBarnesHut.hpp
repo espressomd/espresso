@@ -26,9 +26,10 @@
 #include "EspressoSystemInterface.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
 #include <iostream>
 
 #ifndef ACTOR_DIPOLARBARNESHUT_HPP
@@ -40,7 +41,7 @@ typedef float dds_float;
 class DipolarBarnesHut : public Actor {
 public:
   DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq) {
-    k = coulomb.Dprefactor;
+    k = dipole.prefactor;
     m_epssq = epssq;
     m_itolsq = itolsq;
     setBHPrecision(&m_epssq, &m_itolsq);
@@ -59,7 +60,7 @@ public:
     allocBHmemCopy(s.npart_gpu(), &m_bh_data);
   };
 
-  void computeForces(SystemInterface &s) {
+  void computeForces(SystemInterface &s) override {
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
@@ -73,7 +74,7 @@ public:
       errexit();
     }
   };
-  void computeEnergy(SystemInterface &s) {
+  void computeEnergy(SystemInterface &s) override {
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
@@ -92,13 +93,15 @@ protected:
   float k;
   float m_epssq;
   float m_itolsq;
-  BHData m_bh_data = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  BHData m_bh_data = {0,       0,       0,       nullptr, nullptr,
+                      nullptr, nullptr, nullptr, nullptr, nullptr,
+                      nullptr, nullptr, nullptr, nullptr};
 };
 
 void activate_dipolar_barnes_hut(float epssq, float itolsq);
 void deactivate_dipolar_barnes_hut();
 
-extern DipolarBarnesHut *dipolarBarnesHut;
+extern std::unique_ptr<DipolarBarnesHut> dipolarBarnesHut;
 
 #endif
 

@@ -16,13 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import numpy.testing
 import espressomd
 from espressomd import lb
 
 
-@ut.skipIf(not espressomd.has_features("LB_GPU"), "LB_GPU feature not available, skipping test!")
+@utx.skipIfMissingGPU()
 class TestLBGetUAtPos(ut.TestCase):
 
     """
@@ -77,7 +78,7 @@ class TestLBGetUAtPos(ut.TestCase):
         numpy.testing.assert_allclose(
             self.interpolated_vels[:-1],
             self.lb_fluid.get_interpolated_fluid_velocity_at_positions(
-                self.system.part[:].pos)[:-1],
+                self.system.part[:].pos, False)[:-1],
             atol=1e-4)
 
 

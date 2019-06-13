@@ -31,7 +31,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "cuda_utils.hpp"
 #include "p3m_gpu_error.hpp"
 
-#include "p3m_gpu_common.hpp"
+#include <utils/math/int_pow.hpp>
+using Utils::int_pow;
+#include <utils/math/sinc.hpp>
+#include <utils/math/sqr.hpp>
+using Utils::sqr;
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -43,7 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 template <int cao>
 __device__ static double p3m_analytic_cotangent_sum(int n, double mesh_i) {
-  const double c = sqr(cos(PI * mesh_i * n));
+  const double c = sqr(cos(Utils::pi() * mesh_i * n));
 
   switch (cao) {
   case 1:
@@ -93,10 +97,12 @@ __global__ void p3m_k_space_error_gpu_kernel_ik(int3 mesh, double3 meshi,
     const double cs = p3m_analytic_cotangent_sum<cao>(nz, meshi.z) *
                       p3m_analytic_cotangent_sum<cao>(nx, meshi.x) *
                       p3m_analytic_cotangent_sum<cao>(ny, meshi.y);
-    const double ex = exp(-(PI * alpha_L_i) * (PI * alpha_L_i) * n2);
+    const double ex =
+        exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
     const double ex2 = sqr(ex);
-    const double U2 = int_pow<2 * cao>(
-        csinc(meshi.x * nx) * csinc(meshi.y * ny) * csinc(meshi.z * nz));
+    const double U2 =
+        int_pow<2 * cao>(Utils::sinc(meshi.x * nx) * Utils::sinc(meshi.y * ny) *
+                         Utils::sinc(meshi.z * nz));
     auto const alias1 = ex2 / n2;
     auto const d = alias1 - sqr(U2 * ex / cs) / n2;
 
@@ -138,12 +144,12 @@ __global__ void p3m_k_space_error_gpu_kernel_ad(const int3 mesh,
 
           n2 = sqr(nmx) + sqr(nmy) + sqr(nmz);
 
-          ex = exp(-(PI * alpha_L_i) * (PI * alpha_L_i) * n2);
+          ex = exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
 
           ex2 = sqr(ex);
 
-          U2 = pow((double)csinc(meshi.x * nmx) * csinc(meshi.y * nmy) *
-                       csinc(meshi.z * nmz),
+          U2 = pow((double)Utils::sinc(meshi.x * nmx) *
+                       Utils::sinc(meshi.y * nmy) * Utils::sinc(meshi.z * nmz),
                    2.0 * cao);
 
           alias1 += ex2 / n2;
@@ -197,12 +203,12 @@ __global__ void p3m_k_space_error_gpu_kernel_ik_i(const int3 mesh,
 
           n2 = sqr(nmx) + sqr(nmy) + sqr(nmz);
 
-          ex = exp(-(PI * alpha_L_i) * (PI * alpha_L_i) * n2);
+          ex = exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
 
           ex2 = sqr(ex);
 
-          U2 = pow((double)csinc(meshi.x * nmx) * csinc(meshi.y * nmy) *
-                       csinc(meshi.z * nmz),
+          U2 = pow((double)Utils::sinc(meshi.x * nmx) *
+                       Utils::sinc(meshi.y * nmy) * Utils::sinc(meshi.z * nmz),
                    2.0 * cao);
 
           alias1 += ex2 / n2;
@@ -260,12 +266,12 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(const int3 mesh,
 
           n2 = sqr(nmx) + sqr(nmy) + sqr(nmz);
 
-          ex = exp(-(PI * alpha_L_i) * (PI * alpha_L_i) * n2);
+          ex = exp(-(Utils::pi() * alpha_L_i) * (Utils::pi() * alpha_L_i) * n2);
 
           ex2 = sqr(ex);
 
-          U2 = pow((double)csinc(meshi.x * nmx) * csinc(meshi.y * nmy) *
-                       csinc(meshi.z * nmz),
+          U2 = pow((double)Utils::sinc(meshi.x * nmx) *
+                       Utils::sinc(meshi.y * nmy) * Utils::sinc(meshi.z * nmz),
                    2.0 * cao);
 
           alias1 += ex2 / n2;

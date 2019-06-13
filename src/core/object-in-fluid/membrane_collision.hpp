@@ -27,14 +27,15 @@
  *  \ref forces.cpp
  */
 
-#include "utils.hpp"
+#include "config.hpp"
 
 #ifdef MEMBRANE_COLLISION
 
-#include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
+
+#include <utils/Vector.hpp>
 
 int membrane_collision_set_params(int part_type_a, int part_type_b, double a,
                                   double n, double cut, double offset);
@@ -70,7 +71,7 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
 
   int j;
   double r_off, fac = 0.0, product, angle, ndir;
-  Vector3d out1, out2, dir;
+  Utils::Vector3d out1, out2, dir;
 
   if ((dist < ia_params->membrane_cut + ia_params->membrane_offset)) {
 
@@ -86,7 +87,7 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
       if (fabs(out1[0]) + fabs(out1[1]) + fabs(out1[2]) + fabs(out2[0]) +
               fabs(out2[1]) + fabs(out2[2]) <
           SMALL_OIF_MEMBRANE_CUTOFF) {
-        errexit();
+        throw std::runtime_error("out direction net set");
       }
 
       // this is the direction in which the repulsive forces will be applied and
@@ -96,7 +97,7 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
 
       // for very small angles the force should not be applied - these happen at
       // the crossing of the boundary and would result in oscillation
-      product = out1.dot(out2);
+      product = out1 * out2;
       angle = acos(product);
 
       if (fabs(angle) > SMALL_OIF_MEMBRANE_CUTOFF) {

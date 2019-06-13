@@ -29,76 +29,79 @@
 #define _ELC_H
 
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef P3M
 
-/** parameters for the ELC method */
+/** @brief Parameters for the ELC method */
 typedef struct {
-  /** maximal pairwise error of the potential and force */
+  /** @copybrief MMM2D_struct::maxPWerror */
   double maxPWerror;
-  /** the cutoff of the exponential sum. Since in all other MMM methods this is
-      the far formula, we call it here the same, although in the ELC context it
-      does not make much sense. */
-  double far_cut, far_cut2;
-  /** size of the empty gap. Note that ELC relies on the user to make sure that
-      this condition is fulfilled. */
+  /** Cutoff of the exponential sum. Since in all other MMM methods this is
+   *  the far formula, we call it here the same, although in the ELC context
+   *  it does not make much sense.
+   */
+  double far_cut;
+  /** Squared value of #far_cut. */
+  double far_cut2;
+  /** Size of the empty gap. Note that ELC relies on the user to make sure
+   *  that this condition is fulfilled.
+   */
   double gap_size;
-  /** whether the cutoff was set by the user, or calculated by Espresso. In the
-     latter case, the
-      cutoff will be adapted if important parameters, such as the box
-     dimensions, change. */
+  /** @copybrief MMM2D_struct::far_calculated */
   int far_calculated;
-  /** if true, use a homogeneous neutralizing background for nonneutral systems.
-     Unlike
-      the 3d case, this background adds an additional force pointing towards the
-     system
-      center, so be careful with this. */
-
-  /// neutralize the box by an homogeneous background
+  /** Flag whether the box is neutralized by an homogeneous background.
+   *  If true, use a homogeneous neutralizing background for nonneutral
+   *  systems. Unlike the 3D case, this background adds an additional
+   *  force pointing towards the system center, so be careful with this.
+   */
   int neutralize;
 
-  /// flag whether there is any dielectric contrast in the system
+  /// @copybrief MMM2D_struct::dielectric_contrast_on
   int dielectric_contrast_on;
 
-  /// dielectric prefactors
-  double delta_mid_top, delta_mid_bot;
+  /// @copybrief MMM2D_struct::delta_mid_top
+  double delta_mid_top;
+  /// @copybrief MMM2D_struct::delta_mid_bot
+  double delta_mid_bot;
 
-  /// const. potential parameters
+  /// @copybrief MMM2D_struct::const_pot_on
   int const_pot;
+  /// @copybrief MMM2D_struct::pot_diff
   double pot_diff;
 
-  /** minimal distance of two charges for which the far formula is used. For
-     plain ELC, this equals
-      gap_size, but for dielectric ELC it is only 1./3. of that. */
+  /** Minimal distance of two charges for which the far formula is used.
+   *  For plain ELC, this equals #gap_size, but for dielectric ELC it is
+   *  only 1/3 of that.
+   */
   double minimal_dist;
-  /** layer around the dielectric contrast in which we trick around */
+  /** Layer around the dielectric contrast in which we trick around. */
   double space_layer;
-  /** the space that is finally left */
+  /** The space that is finally left. */
   double space_box;
-  /** up to where particles can be found */
+  /** Up to where particles can be found. */
   double h;
 
 } ELC_struct;
 extern ELC_struct elc_params;
 
-/** set parameters for ELC.
-    @param maxPWerror the required accuracy of the potential and the force. Note
-   that this counts for the
-    plain 1/r contribution alone, without the prefactor and the charge
-   prefactor.
-    @param min_dist   the gap size.
-    @param far_cut    the cutoff of the exponential sum. If -1, the cutoff is
-   automatically calculated using
-    the error formulas.
-    @param neutralize whether to add a neutralizing background. WARNING: This
-   background exerts forces, which
-    are dependent on the simulation box; especially the gap size enters into the
-   value of the forces.
-    @param delta_mid_top dielectric constant of upper part
-    @param delta_mid_bot dielectric constant of center part
-    @param bottom  dielectric constant of lower part
-*/
+/** Set parameters for ELC.
+ *  @param maxPWerror    @copybrief ELC_struct::maxPWerror
+ *                       Note that this counts for the plain 1/r contribution
+ *                       alone, without the prefactor and the charge prefactor.
+ *  @param min_dist      @copybrief ELC_struct::minimal_dist
+ *  @param far_cut       @copybrief ELC_struct::far_cut
+ *                       If -1, the cutoff is automatically calculated using
+ *                       the error formulas.
+ *  @param neutralize    whether to add a neutralizing background.
+ *                       WARNING: This background exerts forces, which are
+ *                       dependent on the simulation box; especially the gap
+ *                       size enters into the value of the forces.
+ *  @param delta_mid_top @copybrief ELC_struct::delta_mid_top
+ *  @param delta_mid_bot @copybrief ELC_struct::delta_mid_bot
+ *  @param const_pot     @copybrief ELC_struct::const_pot
+ *  @param pot_diff      @copybrief ELC_struct::pot_diff
+ *  @retval ES_OK
+ */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
                    int neutralize, double delta_mid_top, double delta_mid_bot,
                    int const_pot, double pot_diff);
@@ -110,6 +113,8 @@ void ELC_add_force();
 double ELC_energy();
 
 /// check the ELC parameters
+/// @retval ES_OK
+/// @retval ES_ERROR
 int ELC_sanity_checks();
 
 /// initialize the ELC constants
@@ -119,12 +124,13 @@ void ELC_init();
 void ELC_on_resort_particles();
 
 /// pairwise contributions from the lowest and top layers to the energy
-double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
-                                                     Particle *p2);
+double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
+                                                     const Particle *p2);
 /// pairwise contributions from the lowest and top layers to the force
-void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
-                                                  double force1[3],
-                                                  double force2[3]);
+void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
+                                                  const Particle *p2,
+                                                  double *force1,
+                                                  double *force2);
 /// self energies of top and bottom layers with their virtual images
 double ELC_P3M_dielectric_layers_energy_self();
 /// forces of particles in border layers with themselves

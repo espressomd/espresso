@@ -29,7 +29,6 @@
 
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef SMOOTH_STEP
 
@@ -40,7 +39,7 @@ int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
 /** Calculate smooth step force between particle p1 and p2 */
 inline void add_SmSt_pair_force(const Particle *const p1,
                                 const Particle *const p2,
-                                IA_parameters *ia_params, double d[3],
+                                IA_parameters *ia_params, double const d[3],
                                 double dist, double dist2, double force[3]) {
   if (dist >= ia_params->SmSt_cut)
     return;
