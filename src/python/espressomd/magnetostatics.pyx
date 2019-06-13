@@ -56,10 +56,6 @@ IF DIPOLES == 1:
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
 
-        def get_params(self):
-            self._params = self._get_params_from_es_core()
-            return self._params
-
         def _get_active_method_from_es_core(self):
             return dipole.method
 
