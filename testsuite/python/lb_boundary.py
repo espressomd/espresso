@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
-import numpy as np
+import unittest_decorators as utx
 import espressomd
 import espressomd.lb
 from espressomd.shapes import Wall
@@ -101,8 +101,7 @@ class LBBoundariesBase(object):
             self.assertEqual(lbf[i].boundary, 0)
 
 
-@ut.skipIf(not espressomd.has_features(["LB_BOUNDARIES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
     lbf = None
 
@@ -121,10 +120,8 @@ class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
         self.system.actors.remove(self.lbf)
 
 
-@ut.skipIf(
-    not espressomd.gpu_available() or not espressomd.has_features(
-        ["LB_BOUNDARIES_GPU"]),
-           "Features or not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES_GPU"])
 class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
     lbf = None
 
