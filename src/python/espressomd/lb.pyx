@@ -278,10 +278,6 @@ IF CUDA:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
 
         """
-
-        def remove_total_momentum(self):
-            lb_lbfluid_remove_total_momentum()
-
         def _set_lattice_switch(self):
             lb_lbfluid_set_lattice_switch(GPU)
 
