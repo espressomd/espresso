@@ -66,6 +66,13 @@ inline void convert_quat_to_director(const Utils::Vector4d &quat,
                  quat[3] * quat[3]);
 }
 
+inline Utils::Vector3d convert_quat_to_director(const Utils::Vector4d &q) {
+  Utils::Vector3d res;
+  convert_quat_to_director(q, res);
+
+  return res;
+}
+
 /** Multiply two quaternions */
 template <typename T1, typename T2, typename T3>
 void multiply_quaternions(const T1 &a, const T2 &b, T3 &result) {
@@ -74,6 +81,14 @@ void multiply_quaternions(const T1 &a, const T2 &b, T3 &result) {
   result[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
   result[2] = a[0] * b[2] + a[2] * b[0] + a[3] * b[1] - a[1] * b[3];
   result[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
+}
+
+inline Utils::Vector4d multiply_quaternions(const Utils::Vector4d &q,
+                                            const Utils::Vector4d &p) {
+  Utils::Vector4d res;
+  multiply_quaternions(q, p, res);
+
+  return res;
 }
 
 /** Convert director to quaternions */

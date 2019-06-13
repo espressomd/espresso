@@ -16,11 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features(["LB_ELECTROHYDRODYNAMICS"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
 class LBEHTest(ut.TestCase):
     from espressomd import lb
     s = espressomd.System(box_l=[6.0, 6.0, 6.0])
@@ -65,8 +65,7 @@ class LBEHTest(ut.TestCase):
         mu_E = np.array(self.params['muE'])
         # Terminal velocity is mu_E minus the momentum the fluid
         # got by accelerating the particle in the beginning.
-        v_term = (
-            1. - 1. / (s.box_l[0] * s.box_l[1] * s.box_l[2] * self.params['dens'])) * mu_E
+        v_term = (1. - 1. / (np.prod(s.box_l) * self.params['dens'])) * mu_E
 
         s.integrator.run(steps=500)
 

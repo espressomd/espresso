@@ -16,13 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import espressomd.analyze
 import espressomd.lb
 import numpy as np
 
 
-@ut.skipIf((not espressomd.gpu_available() or not espressomd.has_features(["CUDA"])), "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
 class RemoveTotalMomentumTest(ut.TestCase):
 
     def test(self):

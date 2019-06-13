@@ -18,11 +18,11 @@ from __future__ import print_function
 
 import itertools
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
 import espressomd.lb
-from tests_common import abspath
 from espressomd.observables import LBFluidStress
 import sys
 
@@ -66,6 +66,7 @@ class TestLB(object):
     system.time_step = params['time_step']
     system.cell_system.skin = params['skin']
     lbf = None
+    interpolation = False
 
     def test_mass_momentum_thermostat(self):
         self.system.actors.clear()
@@ -134,8 +135,8 @@ class TestLB(object):
             fluid_temp *= self.system.volume() / (3. * len(lb_nodes)**2)
 
             # check mass conversation
-            self.assertAlmostEqual(fluid_mass, self.params[
-                                   "dens"], delta=self.params["mass_prec_per_node"])
+            self.assertAlmostEqual(fluid_mass, self.params["dens"],
+                                   delta=self.params["mass_prec_per_node"])
 
             # check momentum conservation
             np.testing.assert_allclose(
@@ -151,10 +152,10 @@ class TestLB(object):
             all_temp_fluid.append(fluid_temp)
 
         # import scipy.stats
-        # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"], scale=np.std(all_temp_particle,ddof=1))[1] -self.params["temp"]
-        # temp_prec_fluid = scipy.stats.norm.interval(0.95,
-        # loc=self.params["temp"], scale=np.std(all_temp_fluid,ddof=1))[1]
-        # -self.params["temp"]
+        # temp_prec_particle = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
+        #   scale=np.std(all_temp_particle,ddof=1))[1] - self.params["temp"]
+        # temp_prec_fluid = scipy.stats.norm.interval(0.95, loc=self.params["temp"],
+        #   scale=np.std(all_temp_fluid,ddof=1))[1] -self.params["temp"]
         temp_prec_particle = 0.06 * self.params["temp"]
         temp_prec_fluid = 0.05 * self.params["temp"]
 
@@ -199,8 +200,7 @@ class TestLB(object):
         obs = LBFluidStress()
         obs_stress = obs.calculate()
         obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[3]],
-                               [obs_stress[1], obs_stress[
-                                2], obs_stress[4]],
+                               [obs_stress[1], obs_stress[2], obs_stress[4]],
                                [obs_stress[3], obs_stress[4], obs_stress[5]]])
         print(stress / obs_stress)
         np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
@@ -275,8 +275,7 @@ class TestLB(object):
         print("End of LB error messages", file=sys.stderr)
         sys.stderr.flush()
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
@@ -290,6 +289,8 @@ class TestLB(object):
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
+        if self.interpolation:
+            self.lbf.set_interpolation_order("quadratic")
         self.system.thermostat.set_lb(
             LB_fluid=self.lbf,
             seed=3,
@@ -297,12 +298,14 @@ class TestLB(object):
         self.system.part.add(
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
+        if self.interpolation:
+            v_fluid = self.lbf.get_interpolated_velocity(
+                self.system.part[0].pos)
         self.system.integrator.run(1)
         np.testing.assert_allclose(
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_a_ext_force_density(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
@@ -333,44 +336,18 @@ class TestLBCPU(TestLB, ut.TestCase):
         self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
 
 
-@ut.skipIf(
-    not espressomd.gpu_available() or 
-    not espressomd.has_features(
-        ["CUDA"]),
-    "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
 class TestLBGPU(TestLB, ut.TestCase):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidGPU
         self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
 
-    @ut.skipIf(not espressomd.has_features("EXTERNAL_FORCES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling_higher_order_interpolation(self):
-        self.system.thermostat.turn_off()
-        self.system.actors.clear()
-        self.system.part.clear()
-        v_part = np.array([1, 2, 3])
-        v_fluid = np.array([1.2, 4.3, 0.2])
-        self.lbf = self.lb_class(
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
-            agrid=self.params['agrid'],
-            tau=self.system.time_step,
-            ext_force_density=[0, 0, 0])
-        self.system.actors.add(self.lbf)
-        self.lbf.set_interpolation_order("quadratic")
-        self.system.thermostat.set_lb(
-            LB_fluid=self.lbf,
-            seed=3,
-            gamma=self.params['friction'])
-        self.system.part.add(
-            pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
-        self.lbf[0, 0, 0].velocity = v_fluid
-        v_fluid = self.lbf.get_interpolated_velocity(self.system.part[0].pos)
-        self.system.integrator.run(1)
-        np.testing.assert_allclose(
-            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
+        self.interpolation = True
+        self.test_viscous_coupling()
+        self.interpolation = False
 
 
 if __name__ == "__main__":

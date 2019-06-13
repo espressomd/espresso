@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Observables {
 class CylindricalVelocityProfile : public CylindricalPidProfileObservable {
 public:
+  using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
   std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                                   static_cast<size_t>(n_phi_bins),
@@ -49,9 +50,9 @@ public:
       p -= center;
     // Write data to the histogram
     for (size_t ind = 0; ind < folded_positions.size(); ++ind) {
-      histogram.update(Utils::transform_pos_to_cylinder_coordinates(
+      histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
                            folded_positions[ind], axis),
-                       Utils::transform_vel_to_cylinder_coordinates(
+                       Utils::transform_vector_cartesian_to_cylinder(
                            velocities[ind], axis, folded_positions[ind]));
     }
     auto hist_tmp = histogram.get_histogram();

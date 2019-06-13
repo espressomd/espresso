@@ -20,8 +20,7 @@ particle is added and advected with and without volume conservation.
 """
 import espressomd
 
-required_features = ["LB_BOUNDARIES",
-                     "IMMERSED_BOUNDARY", "VIRTUAL_SITES_INERTIALESS_TRACERS"]
+required_features = ["LB_BOUNDARIES", "VIRTUAL_SITES_INERTIALESS_TRACERS"]
 espressomd.assert_features(required_features)
 
 from espressomd import System, lb, shapes, lbboundaries
