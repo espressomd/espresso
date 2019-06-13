@@ -196,6 +196,7 @@ python_test(FILE features.py MAX_NUM_PROC 1)
 python_test(FILE galilei.py MAX_NUM_PROC 32)
 python_test(FILE time_series.py MAX_NUM_PROC 1)
 python_test(FILE linear_momentum.py)
+python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
