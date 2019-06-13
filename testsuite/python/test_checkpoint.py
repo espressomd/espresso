@@ -13,11 +13,12 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.KE
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import sys
 import subprocess
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -39,12 +40,12 @@ EK = (espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') 
 class CheckpointTest(ut.TestCase):
 
     @classmethod
-    def setUpClass(self):
-        self.checkpoint = espressomd.checkpointing.Checkpoint(
+    def setUpClass(cls):
+        cls.checkpoint = espressomd.checkpointing.Checkpoint(
             checkpoint_id="mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(
                 '.', '__'),
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
-        self.checkpoint.load(0)
+        cls.checkpoint.load(0)
 
     @ut.skipIf(not LB, "Skipping test due to missing features.")
     def test_LB(self):
@@ -149,10 +150,7 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(system.thermostat.get_state()[
             0]['gamma'], np.array([2.0, 2.0, 2.0]))
 
-    @ut.skipIf(not espressomd.has_features('LENNARD_JONES'),
-               "Skipping test due to missing features.")
-    @ut.skipIf('LJ' not in modes,
-               "Skipping test due to missing combination.")
+    @utx.skipIfMissingFeatures('LENNARD_JONES')
     def test_non_bonded_inter(self):
         state = system.non_bonded_inter[
             0, 0].lennard_jones._get_params_from_es_core()
@@ -172,10 +170,7 @@ class CheckpointTest(ut.TestCase):
         reference = {'r_0': 0.0, 'k': 1.0}
         self.assertEqual(
             len(set(state.items()) & set(reference.items())), len(reference))
-
-    @ut.skipIf(not espressomd.has_features(['VIRTUAL_SITES',
-                                            'VIRTUAL_SITES_RELATIVE']),
-               "Skipping test due to missing features.")
+    @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
         self.assertEqual(system.part[1].virtual, 1)
         self.assertTrue(
@@ -190,25 +185,19 @@ class CheckpointTest(ut.TestCase):
             acc.get_variance(), np.array([0., 0.5, 2., 0., 0., 0.]))
         np.testing.assert_array_equal(
             system.auto_update_accumulators[0].get_variance(), np.array([0., 0.5, 2., 0., 0., 0.]))
-        
-    @ut.skipIf(not espressomd.has_features('ELECTROSTATICS'),
-               "Skipping test due to missing features.")
+    @utx.skipIfMissingFeatures('ELECTROSTATICS')        
     @ut.skipIf('P3M.CPU' not in modes,
                "Skipping test due to missing combination.")
     def test_p3m(self):
         self.assertTrue(any(isinstance(actor, espressomd.electrostatics.P3M)
                             for actor in system.actors.active_actors))
-    
-    @ut.skipIf(not espressomd.has_features('COLLISION_DETECTION'),
-               "Skipping test due to missing features.")
+    @utx.skipIfMissingFeatures('COLLISION_DETECTION')
     def test_collision_detection(self):
         coldet = system.collision_detection
         self.assertEqual(coldet.mode, "bind_centers")
         self.assertAlmostEqual(coldet.distance, 0.11, delta=1E-9)
         self.assertTrue(coldet.bond_centers, system.bonded_inter[0])
-
-    @ut.skipIf(not espressomd.has_features('EXCLUSIONS'),
-               "Skipping test due to missing features.")
+    @utx.skipIfMissingFeatures('EXCLUSIONS')
     def test_exclusions(self):
         self.assertTrue(tests_common.lists_contain_same_elements(
             system.part[0].exclusions, [2]))
