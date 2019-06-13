@@ -16,14 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import numpy as np
+import sys
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
 import espressomd
-import numpy as np
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
+
+if(not espressomd.has_features(("ELECTROSTATICS", "PARTIAL_PERIODIC"))):
+    sys.exit()
+
 class ElectrostaticInteractionsTests(object):
     # Handle to espresso system
     system = espressomd.System(box_l=[10.0] * 3)
@@ -41,6 +45,9 @@ class ElectrostaticInteractionsTests(object):
     pos_x_target = np.mod(pos_x_target, 10)
     pos_y_target = np.mod(pos_y_target, 10)
     pos_z_target = np.mod(pos_z_target, 10)
+#    pos_x_target+=100
+#    pos_y_target+=100
+#    pos_z_target+=100
 
     allowed_error = 1e-4
     
