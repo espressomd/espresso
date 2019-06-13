@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define PI_FLOAT 3.14159265358979323846f
 
+#include <cufft.h>
+
 class FdElectrostatics {
 public:
   struct InputParameters {
