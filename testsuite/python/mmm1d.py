@@ -22,6 +22,7 @@ import tests_common
 import espressomd
 import numpy as np
 
+
 @utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
 class ElectrostaticInteractionsTests(object):
     # Handle to espresso system
