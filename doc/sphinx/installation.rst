@@ -188,7 +188,9 @@ If you have installed the requirements (see section :ref:`Requirements
 create a build directory and call ``cmake`` and ``make`` (optional steps
 which modify the build process are commented out).
 To chose the correct Python version, run
+
 .. code-block:: bash
+
     python -V
     python3 -V
 
