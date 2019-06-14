@@ -55,8 +55,9 @@ if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
     system.actors.add(lbf)
     if espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
-        system.lbboundaries.add(
-            LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1, 1, 0)))
+        if not 'EK.GPU' in modes:
+            system.lbboundaries.add(
+                LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1, 1, 0)))
 
 EK_implementation = None
 if 'EK.GPU' in modes and espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS'):
