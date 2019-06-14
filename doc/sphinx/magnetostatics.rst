@@ -130,12 +130,15 @@ To use the methods, create an instance of either :class:`~espressomd.magnetostat
   system.actors.add(dds)
 
 
-For testing purposes, a variant of the dipolar direct sum is available which adds periodic copies to the system in periodic directions (:class:`~espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu`).
-
-The dipolar direct sum methods are very slow, and the CPU-based implementations
-do not support MPI parallelization. They are not intended to do simulations, but
+For testing purposes, a variant of the dipolar direct sum is available which
+adds periodic copies to the system in periodic directions:
+:class:`~espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu`.
+As it is very slow, this method is not intended to do simulations, but
 rather to check the results you get from more efficient methods like P3M.
 
+:class:`~espressomd.magnetostatics.DipolarDirectSumCpu` and
+:class:`~espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu`
+do not support MPI parallelization.
 
 
 
