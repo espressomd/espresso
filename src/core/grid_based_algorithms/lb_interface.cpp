@@ -1107,23 +1107,24 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
   }
 }
 
-bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind) {
-  auto within_bounds = [](const Utils::Vector3i &ind,
-                          const Utils::Vector3i &limits) {
-    return ind < limits && ind >= Utils::Vector3i{};
-  };
+Utils::Vector3i lb_lbfluid_get_shape() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    return within_bounds(ind, {static_cast<int>(lbpar_gpu.dim_x),
-                               static_cast<int>(lbpar_gpu.dim_y),
-                               static_cast<int>(lbpar_gpu.dim_z)});
+    return {static_cast<int>(lbpar_gpu.dim_x), static_cast<int>(lbpar_gpu.dim_y), static_cast<int>(lbpar_gpu.dim_z)};
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
-    return within_bounds(ind, lblattice.global_grid);
+    return lblattice.global_grid;
   }
-  return false;
+  throw std::runtime_error("No LB active");
 }
+
+bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind) {
+  auto const limit = lb_lbfluid_get_shape();
+  return ind < limit && ind >= Utils::Vector3i{};
+}
+
+
 
 double lb_lbnode_get_density(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {

@@ -111,10 +111,8 @@ class TestLB(object):
         # Cache the lb nodes
         lb_nodes = []
         n_nodes = int(self.params['box_l'] / self.params['agrid'])
-        for i in range(n_nodes):
-            for j in range(n_nodes):
-                for k in range(n_nodes):
-                    lb_nodes.append(self.lbf[i, j, k])
+        for n in self.lbf.nodes():
+            lb_nodes.append(n)
 
         # Integration
         for i in range(self.params['int_times']):
@@ -190,10 +188,8 @@ class TestLB(object):
         system.integrator.run(10)
         stress = np.zeros((3, 3))
         agrid = self.params["agrid"]
-        for i in range(int(system.box_l[0] / agrid)):
-            for j in range(int(system.box_l[1] / agrid)):
-                for k in range(int(system.box_l[2] / agrid)):
-                    stress += self.lbf[i, j, k].stress
+        for n in self.lbf.nodes():
+            stress += n.stress
 
         stress /= system.volume() / agrid**3
 
@@ -215,6 +211,13 @@ class TestLB(object):
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
+        
+        self.assertEqual(self.lbf.shape, 
+            (
+              int(self.system.box_l[0]/self.params["agrid"]),
+              int(self.system.box_l[1]/self.params["agrid"]),
+              int(self.system.box_l[2]/self.params["agrid"])))
+        
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid
         np.testing.assert_allclose(
@@ -222,6 +225,8 @@ class TestLB(object):
         density = 0.234
         self.lbf[0, 0, 0].density = density
         self.assertAlmostEqual(self.lbf[0, 0, 0].density, density, delta=1e-4)
+
+        self.assertEqual(self.lbf[3,2,1].index, (3,2,1))
 
     def test_parameter_change_without_seed(self):
         self.system.actors.clear()
@@ -324,9 +329,9 @@ class TestLB(object):
         # (force is applied only to the second half of the first integration step)
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
             n_time_steps - 0.5) / self.params['dens']
-        for n in list(itertools.combinations(range(int(self.system.box_l[0] / self.params['agrid'])), 3)):
+        for n in self.lbf.nodes():
             np.testing.assert_allclose(
-                np.copy(self.lbf[n].velocity), fluid_velocity, atol=1E-6)
+                np.copy(n.velocity), fluid_velocity, atol=1E-6)
 
 
 class TestLBCPU(TestLB, ut.TestCase):
