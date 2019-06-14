@@ -1110,7 +1110,9 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
 Utils::Vector3i lb_lbfluid_get_shape() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    return {static_cast<int>(lbpar_gpu.dim_x), static_cast<int>(lbpar_gpu.dim_y), static_cast<int>(lbpar_gpu.dim_z)};
+    return {static_cast<int>(lbpar_gpu.dim_x),
+            static_cast<int>(lbpar_gpu.dim_y),
+            static_cast<int>(lbpar_gpu.dim_z)};
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -1123,8 +1125,6 @@ bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind) {
   auto const limit = lb_lbfluid_get_shape();
   return ind < limit && ind >= Utils::Vector3i{};
 }
-
-
 
 double lb_lbnode_get_density(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {

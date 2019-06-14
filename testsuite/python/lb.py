@@ -138,7 +138,7 @@ class TestLB(object):
 
             # check momentum conservation
             np.testing.assert_allclose(
-                self.system.analysis.analyze_linear_momentum(), self.tot_mom,
+                self.system.analysis.linear_momentum(), self.tot_mom,
                 atol=self.params['mom_prec'])
 
             # Calc particle temperature
@@ -213,10 +213,10 @@ class TestLB(object):
         self.system.actors.add(self.lbf)
         
         self.assertEqual(self.lbf.shape, 
-            (
-              int(self.system.box_l[0]/self.params["agrid"]),
-              int(self.system.box_l[1]/self.params["agrid"]),
-              int(self.system.box_l[2]/self.params["agrid"])))
+                         (
+                         int(self.system.box_l[0] / self.params["agrid"]),
+                         int(self.system.box_l[1] / self.params["agrid"]),
+                             int(self.system.box_l[2] / self.params["agrid"])))
         
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid
@@ -226,7 +226,7 @@ class TestLB(object):
         self.lbf[0, 0, 0].density = density
         self.assertAlmostEqual(self.lbf[0, 0, 0].density, density, delta=1e-4)
 
-        self.assertEqual(self.lbf[3,2,1].index, (3,2,1))
+        self.assertEqual(self.lbf[3, 2, 1].index, (3, 2, 1))
 
     def test_parameter_change_without_seed(self):
         self.system.actors.clear()

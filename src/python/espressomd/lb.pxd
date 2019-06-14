@@ -100,7 +100,6 @@ cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     bool lb_lbcoupling_is_seed_required()
 
 cdef extern from "grid_based_algorithms/lbgpu.hpp":
-    int lb_lbfluid_remove_total_momentum()
     void linear_velocity_interpolation(double * positions, double * velocities, int length)
     void quadratic_velocity_interpolation(double * positions, double * velocities, int length)
 

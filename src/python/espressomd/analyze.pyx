@@ -167,7 +167,7 @@ class Analysis(object):
     # Analyze Linear Momentum
     #
 
-    def analyze_linear_momentum(self, include_particles=True,
+    def linear_momentum(self, include_particles=True,
                                 include_lbfluid=True):
         """
         Calculates the systems linear momentum.

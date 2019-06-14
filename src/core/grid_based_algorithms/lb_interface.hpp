@@ -217,7 +217,7 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
 bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind);
 
 /**
- * @brief returns the shape of the LB fluid lattice 
+ * @brief returns the shape of the LB fluid lattice
  */
 Utils::Vector3i lb_lbfluid_get_shape();
 
