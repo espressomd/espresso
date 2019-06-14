@@ -46,6 +46,8 @@ For numerical integration, this equation is discretized to the following steps:
 
 .. math:: v(t+dt) = v(t+dt/2) + F(x(t+dt),t+dt)/m dt/2
 
+TODO:ref:Rapaport 3.5.8-3.5.10 or https://en.wikipedia.org/wiki/Verlet_integration#Velocity_Verlet
+
 Note that this implementation of the Velocity Verlet algorithm reuses
 forces in step 1. That is, they are computed once in step 3,
 but used twice, in step 4 and in step 1 of the next iteration. In the first time

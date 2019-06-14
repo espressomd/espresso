@@ -275,7 +275,7 @@ The random force  mimics collisions of the particle with surrounding solvent mol
 
 (:math:`<\cdot>` denotes the ensemble average).
 
-In the Velocity Verlet discretisation scheme, this thermostat only enters in the force calculation. The random process :math:`\eta(t)` is realized by drawing an uncorrelated random number :math:`\eta*` from a uniform distribution for each component of all the particle forces. It is then scaled and shifted such that the mean and variance match the required properties
+In the Velocity Verlet discretisation scheme, this thermostat only enters in the force calculation. The random process :math:`\eta(t)` is dicretized by drawing an uncorrelated random number :math:`\eta*` from a uniform distribution for each component of all the particle forces. It is then scaled and shifted such that the mean and variance match the required properties TODO:ref:eqs12-14 in The Nature of Folded States of Globular Proteins J. D. HONEYCUTT’ and D. THlRUMALAl
 
 .. math:: <\eta*> = 0 , <\eta*\eta*> = 2 k_B T \gamma \delta_{ij}/dt
 
