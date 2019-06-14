@@ -27,10 +27,6 @@
 
 #include "PartCfg.hpp"
 
-#ifdef __ICC
-#pragma warning disable 1125
-#endif
-
 namespace Observables {
 
 /** Base class for observables.
