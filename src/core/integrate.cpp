@@ -190,12 +190,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Prepare the Integrator */
   on_integration_start();
 
-#ifdef IMMERSED_BOUNDARY
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them
   immersed_boundaries.init_volume_conservation();
-#endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
@@ -667,7 +665,6 @@ void propagate_pos() {
         set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
-  announce_resort_particles();
 }
 
 void propagate_vel_pos() {
@@ -716,8 +713,6 @@ void propagate_vel_pos() {
         skin2)
       set_resort_particles(Cells::RESORT_LOCAL);
   }
-
-  announce_resort_particles();
 
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();

@@ -19,22 +19,22 @@
 
 """Testmodule for the Widom Insertion.
 """
-import os
-import sys
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd  # pylint: disable=import-error
 from espressomd import reaction_ensemble
 from tests_common import lj_potential
 
 
-@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class WidomInsertionTest(ut.TestCase):
 
     """Test the implementation of the widom insertion.
 
-       The excess chemical potential is calculated for identical particles in a 20 cubed box with a single particle, interacting via a LJ-potential (cut-off at 5 sigma)."""
+       The excess chemical potential is calculated for identical particles in
+       a 20 cubed box with a single particle, interacting via a LJ-potential
+       (cut-off at 5 sigma)."""
 
     N0 = 1
     TEMPERATURE = 0.5
@@ -59,9 +59,9 @@ class WidomInsertionTest(ut.TestCase):
     # numerical solution for V_lj=0 => corresponds to the volume (as exp(0)=1)
     integreateRest = (BOX_L**3 - 4.0 / 3.0 * np.pi * LJ_CUT**3)
                       
-    # calculate excess chemical potential of the system, see Frenkel Smith, p
-    # 174. Note: He uses scaled coordinates, which is why we need to divide by
-    # the Box volume
+    # calculate excess chemical potential of the system, see Frenkel Smith,
+    # p 174. Note: He uses scaled coordinates, which is why we need to divide
+    # by the box volume
     target_mu_ex = -TEMPERATURE * \
         np.log((integrateUpToCutOff + integreateRest) / BOX_L**3)
                                        
@@ -76,17 +76,12 @@ class WidomInsertionTest(ut.TestCase):
         temperature=TEMPERATURE, seed=1)    
 
     def setUp(self):
-        """Prepare a testsystem."""
-        self.system.part.add(
-            id=0,
-            pos=0.5 *
-            self.system.box_l,
-            type=self.TYPE_HA)
-        
+        self.system.part.add(id=0, pos=0.5 * self.system.box_l,
+                             type=self.TYPE_HA)
+
         self.system.non_bonded_inter[self.TYPE_HA, self.TYPE_HA].lennard_jones.set_params(
-            epsilon=self.LJ_EPS,
-                                                           sigma=self.LJ_SIG,
-                                                           cutoff=self.LJ_CUT, shift="auto")
+            epsilon=self.LJ_EPS, sigma=self.LJ_SIG, cutoff=self.LJ_CUT,
+            shift="auto")
 
         self.Widom.add_reaction(
             reactant_types=[],
@@ -105,8 +100,8 @@ class WidomInsertionTest(ut.TestCase):
             'n_nodes'] * [np.random.randint(5)]
         num_samples = 100000
         for i in range(num_samples):
-            Widom.measure_excess_chemical_potential(
-                0)  # 0 for insertion reaction
+            # 0 for insertion reaction
+            Widom.measure_excess_chemical_potential(0)
         mu_ex = Widom.measure_excess_chemical_potential(0)
         deviation_mu_ex = abs(mu_ex[0] - target_mu_ex)
 
@@ -121,5 +116,4 @@ class WidomInsertionTest(ut.TestCase):
         )
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

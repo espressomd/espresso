@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
-import sys
 import unittest as ut
 import numpy as np
 import espressomd
@@ -30,18 +29,18 @@ class AnalyzeITensor(ut.TestCase):
     np.random.seed(seed=123)
 
     @classmethod
-    def setUpClass(self):
-        self.system.cell_system.skin = 0.4
-        self.system.time_step = 0.01
-        self.system.thermostat.turn_off()
+    def setUpClass(cls):
+        cls.system.cell_system.skin = 0.4
+        cls.system.time_step = 0.01
+        cls.system.thermostat.turn_off()
         for i in range(10):
-            self.system.part.add(
-                id=i, pos=np.random.random(3) * self.box_l, type=0)
+            cls.system.part.add(
+                id=i, pos=np.random.random(3) * cls.box_l, type=0)
         for i in range(20, 30, 1):
-            self.system.part.add(
-                id=i, pos=np.random.random(3) * self.box_l, type=1)
+            cls.system.part.add(
+                id=i, pos=np.random.random(3) * cls.box_l, type=1)
         if espressomd.has_features("MASS"):
-            self.system.part[:].mass = 0.5 + np.random.random(20)
+            cls.system.part[:].mass = 0.5 + np.random.random(20)
 
     def i_tensor(self, ids):
         pslice = self.system.part[ids]

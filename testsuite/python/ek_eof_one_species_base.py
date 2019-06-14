@@ -12,9 +12,12 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import sys
 import math
 import numpy as np
@@ -26,7 +29,7 @@ import ek_common
 from tests_common import DynamicDict
 
 ##########################################################################
-#                              Set up the System                               #
+#                          Set up the System                             #
 ##########################################################################
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field inside outside the slit
@@ -97,15 +100,13 @@ def bisection(params):
                 size = size / 2.0
                 pntm = pnt0 + size
         else:
-            sys.exit(
-                "Bisection method fails:\nTuning of domain boundaries may be required.")
+            sys.exit("Bisection method fails:\n"
+                     "Tuning of domain boundaries may be required.")
     return pntm
 
 
-@ut.skipIf(
-    not espressomd.gpu_available() or not espressomd.has_features(
-        ["ELECTROKINETICS", "EK_BOUNDARIES"]),
-           "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["ELECTROKINETICS", "EK_BOUNDARIES"])
 class ek_eof_one_species(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
@@ -178,8 +179,10 @@ class ek_eof_one_species(ut.TestCase):
                     params_base['width'] / 2.0 + params_base['agrid'] / 2.0
 
                 # density
-                index = np.array([int(system.box_l[params['periodic_dirs'][0]] / (2 * params_base['agrid'])), int(
-                    system.box_l[params['periodic_dirs'][1]] / (2 * params_base['agrid'])), i])
+                index = np.array([int(system.box_l[params['periodic_dirs'][0]] /
+                                      (2 * params_base['agrid'])),
+                                  int(system.box_l[params['periodic_dirs'][1]] /
+                                      (2 * params_base['agrid'])), i])
                 index = np.roll(index, params['n_roll_index'])
                 measured_density = counterions[index].density
                 calculated_density = ek_common.density(
@@ -210,8 +213,7 @@ class ek_eof_one_species(ut.TestCase):
                     position,
                     self.xi,
                     params_base['bjerrum_length'],
-                    (0,
-                     0),
+                    (0, 0),
                     system.box_l[params['periodic_dirs'][0]],
                     system.box_l[params['periodic_dirs'][1]],
                     params['box_z'],
@@ -222,8 +224,7 @@ class ek_eof_one_species(ut.TestCase):
                     position,
                     self.xi,
                     params_base['bjerrum_length'],
-                    (1,
-                     1),
+                    (1, 1),
                     system.box_l[params['periodic_dirs'][0]],
                     system.box_l[params['periodic_dirs'][1]],
                     params['box_z'],
@@ -234,8 +235,7 @@ class ek_eof_one_species(ut.TestCase):
                     position,
                     self.xi,
                     params_base['bjerrum_length'],
-                    (2,
-                     2),
+                    (2, 2),
                     system.box_l[params['periodic_dirs'][0]],
                     system.box_l[params['periodic_dirs'][1]],
                     params['box_z'],
@@ -277,7 +277,7 @@ class ek_eof_one_species(ut.TestCase):
                 total_pressure_difference_yz = total_pressure_difference_yz + \
                     pressure_difference_yz
 
-            # xz component pressure tensor
+                # xz component pressure tensor
                 measured_pressure_xz = ek[index].pressure[(0, 2)]
                 calculated_pressure_xz = 0.0
                 if 'calculated_pressure_xz' not in params:

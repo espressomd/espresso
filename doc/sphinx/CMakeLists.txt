@@ -22,6 +22,9 @@ if(SPHINX_FOUND)
     # Copy the figure directory to the build dir
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/figures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+    # Copy the _static directory to the build dir
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/_static DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
     # Files to be copied to the build directory
     set(FILE_LIST
         "${CMAKE_SOURCE_DIR}/doc/logo/logo_48x48.png"
@@ -47,6 +50,7 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/under_the_hood.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/visualization.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/zrefs.bib"
+        "${CMAKE_CURRENT_SOURCE_DIR}/zreferences.rst"
         )
 
     foreach(file ${FILE_LIST})

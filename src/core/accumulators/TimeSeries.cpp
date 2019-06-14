@@ -7,7 +7,7 @@
 #include <boost/serialization/vector.hpp>
 
 namespace Accumulators {
-void TimeSeries::update() { m_data.emplace_back(m_obs->evaluate()); }
+void TimeSeries::update() { m_data.emplace_back(m_obs->operator()()); }
 
 std::string TimeSeries::get_internal_state() const {
   std::stringstream ss;

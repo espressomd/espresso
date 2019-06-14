@@ -29,6 +29,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/range/numeric.hpp>
+#include <sstream>
 
 #include <algorithm>
 #include <complex>

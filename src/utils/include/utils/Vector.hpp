@@ -325,6 +325,6 @@ template <typename T, size_t N> struct decay_to_scalar<Vector<T, N>> {
 };
 
 template <typename T> struct decay_to_scalar<Vector<T, 1>> { using type = T; };
-} // namespace Utils
 
+} // namespace Utils
 #endif

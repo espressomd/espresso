@@ -29,7 +29,7 @@
 #include "MeanVarianceCalculator.hpp"
 
 namespace Accumulators {
-void MeanVarianceCalculator::update() { m_acc(m_obs->evaluate()); }
+void MeanVarianceCalculator::update() { m_acc(m_obs->operator()()); }
 
 std::vector<double> MeanVarianceCalculator::get_mean() {
   return m_acc.get_mean();

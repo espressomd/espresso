@@ -438,8 +438,8 @@ class CylindricalDensityProfile(Observable):
           The ids of (existing) particles to take into account.
     center : array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : :obj:`str` (``x``, ``y``, or ``z``)
-           Orientation of the ``z``-axis of the polar coordinate system for the histogram.
+    axis : array_like
+           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -474,8 +474,8 @@ class CylindricalFluxDensityProfile(Observable):
           The ids of (existing) particles to take into account.
     center : array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : :obj:`str` (``x``, ``y``, or ``z``)
-           Orientation of the ``z``-axis of the polar coordinate system for the histogram.
+    axis : array_like
+           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -510,8 +510,8 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
           The ids of (existing) particles to take into account.
     center : array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : :obj:`str` (``x``, ``y``, or ``z``)
-           Orientation of the ``z``-axis of the polar coordinate system for the histogram.
+    axis : array_like
+           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -546,8 +546,8 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
           The ids of (existing) particles to take into account.
     center : array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : :obj:`str` (``x``, ``y``, or ``z``)
-           Orientation of the ``z``-axis of the polar coordinate system for the histogram.
+    axis : array_like
+           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -582,8 +582,8 @@ class CylindricalVelocityProfile(Observable):
           The ids of (existing) particles to take into account.
     center : array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : :obj:`str` (``x``, ``y``, or ``z``)
-           Orientation of the ``z``-axis of the polar coordinate system for the histogram.
+    axis : array_like
+           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -620,8 +620,8 @@ class CylindricalLBVelocityProfile(Observable):
     ----------
     center : array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : :obj:`str` (``x``, ``y``, or ``z``)
-           Orientation of the ``z``-axis of the polar coordinate system for the histogram.
+    axis : array_like
+           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -640,20 +640,8 @@ class CylindricalLBVelocityProfile(Observable):
               Maximum ``phi`` to consider.
     max_z : :obj:`float`
             Maximum ``z`` to consider.
-    sampling_delta_x : :obj:`float`, default=1.0
-        Spacing for the sampling grid in ``x``-direction.
-    sampling_delta_y : :obj:`float`, default=1.0
-        Spacing for the sampling grid in ``y``-direction.
-    sampling_delta_z : :obj:`float`, default=1.0
-        Spacing for the sampling grid in ``z``-direction.
-    sampling_offset_x : :obj:`float`, default=0.0
-        Offset for the sampling grid in ``x``-direction.
-    sampling_offset_y : :obj:`float`, default=0.0
-        Offset for the sampling grid in ``y``-direction.
-    sampling_offset_z : :obj:`float`, default=0.0
-        Offset for the sampling grid in ``z``-direction.
-    allow_empty_bins : :obj:`bool`, default=False
-        Wether or not to allow bins that will not be sampled at all.
+    sampling_density : :obj:`float`
+        Samples per unit volume for the LB velocity interpolation.
 
     """
     _so_name = "Observables::CylindricalLBVelocityProfile"

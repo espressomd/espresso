@@ -71,8 +71,7 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
                       comm->data_parts));
 
   comm->num = num;
-  comm->comm =
-      (GhostCommunication *)Utils::malloc(num * sizeof(GhostCommunication));
+  comm->comm.resize(num);
   for (int i = 0; i < num; i++) {
     comm->comm[i].shift[0] = comm->comm[i].shift[1] = comm->comm[i].shift[2] =
         0.0;
@@ -87,7 +86,6 @@ void free_comm(GhostCommunicator *comm) {
                       this_node, (void *)comm, comm->num));
   for (n = 0; n < comm->num; n++)
     free(comm->comm[n].part_lists);
-  free(comm->comm);
 }
 
 int calc_transmit_size(GhostCommunication *gc, int data_parts) {

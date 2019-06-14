@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import copy
 
@@ -55,7 +56,8 @@ LB_VELOCITY_PROFILE_PARAMS = {
     'sampling_delta_z': AGRID,
     'sampling_offset_x': 0.5 * AGRID,
     'sampling_offset_y': 0.5 * AGRID,
-    'sampling_offset_z': 0.5 * AGRID}
+    'sampling_offset_z': 0.5 * AGRID,
+    'allow_empty_bins': False}
 
 
 class ObservableProfileLBCommon(object):
@@ -122,8 +124,7 @@ class LBCPU(ut.TestCase, ObservableProfileLBCommon):
         self.system.actors.add(self.lbf)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    'CUDA'), "Skipping test due to missing features or gpu.")
+@utx.skipIfMissingGPU()
 class LBGPU(ut.TestCase, ObservableProfileLBCommon):
 
     """Test for the GPU implementation of the LB."""

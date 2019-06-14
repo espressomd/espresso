@@ -28,5 +28,6 @@ macro(PYTHON_SCRIPTS_TEST)
   endif()
 endmacro(PYTHON_SCRIPTS_TEST)
 
+add_subdirectory(benchmarks)
 add_subdirectory(samples)
 add_subdirectory(tutorials)

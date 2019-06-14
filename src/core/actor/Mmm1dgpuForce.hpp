@@ -43,6 +43,8 @@ public:
   void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor,
                   mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius,
                   int _bessel_cutoff, bool manual = false);
+  void activate();
+  void deactivate();
 
 private:
   // CUDA parameters

@@ -17,61 +17,10 @@
 from __future__ import print_function
 import os
 import numpy as np
-try:
-    import vtk
-    from vtk.util.numpy_support import vtk_to_numpy
-except BaseException:
-    pass
-
-
-def calculate_vtk_max_pointwise_difference(file1, file2, tol=1e-6):
-    arrays = [0] * 2
-
-    reader = vtk.vtkStructuredPointsReader()
-    for i, fname in enumerate([file1, file2]):
-        reader.SetFileName(fname)
-        reader.Update()
-        data = reader.GetOutput().GetPointData()
-        arrays[i] = np.array([vtk_to_numpy(data.GetArray(n))
-                              for n in range(data.GetNumberOfArrays())])
-
-    try:
-        return np.allclose(
-            arrays[0], arrays[1], rtol=0, atol=tol), np.max(
-            np.abs(
-                arrays[0] - arrays[1]))
-    except BaseException:
-        return False, np.inf
-
-
-try:
-    import vtk
-    from vtk.util.numpy_support import vtk_to_numpy
-
-    def calculate_vtk_max_pointwise_difference(file1, file2, tol=1e-6):
-        arrays = [0] * 2
-
-        reader = vtk.vtkStructuredPointsReader()
-        for i, fname in enumerate([file1, file2]):
-            reader.SetFileName(fname)
-            reader.Update()
-            data = reader.GetOutput().GetPointData()
-            arrays[i] = np.array([vtk_to_numpy(data.GetArray(n))
-                                  for n in range(data.GetNumberOfArrays())])
-
-        try:
-            return np.allclose(
-                arrays[0], arrays[1], rtol=0, atol=tol), np.max(
-                np.abs(
-                    arrays[0] - arrays[1]))
-        except BaseException:
-            return False, np.inf
-except BaseException:
-    pass
 
 
 def params_match(inParams, outParams):
-    """Check, if the parameters set and gotten back match.
+    """Check if the parameters set and gotten back match.
     Only check keys present in inParams.
     """
 
@@ -95,8 +44,8 @@ def params_match(inParams, outParams):
 
 def generate_test_for_class(_system, _interClass, _params):
     """Generates test cases for checking interaction parameters set and gotten back
-    from Es actually match. Only keys which are present  in _params are checked
-    1st: Interaction parameters as dictionary, i.e., {"k"=1.,"r_0"=0.
+    from Es actually match. Only keys which are present in _params are checked
+    1st: Interaction parameters as dictionary, i.e., {"k": 1.,"r_0": 0}
     2nd: Name of the interaction property to set (i.e. "P3M")
     """
     params = _params
@@ -117,10 +66,8 @@ def generate_test_for_class(_system, _interClass, _params):
         del system.actors[0]
 
         self.assertTrue(
-            params_match(
-                params,
-                outParams),
-            "Missmatch of parameters.\nParameters set " +
+            params_match(params, outParams),
+            "Mismatch of parameters.\nParameters set " +
             params.__str__() +
             " vs. output parameters " +
             outParams.__str__())
@@ -176,7 +123,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=[]):
         f = lj_force_vector(v_d, d, lj_params[p0.type, p1.type])
         f_expected[p0.id] += f
         f_expected[p1.id] -= f
-    # Check actual forces agaisnt expected
+    # Check actual forces against expected
     for id in system.part[:].id:
         if id in ids_to_skip:
             continue
@@ -199,7 +146,7 @@ def transform_pos_from_cartesian_to_polar_coordinates(pos):
     Parameters
     ----------
     pos : array_like :obj:`float`
-          ``x``, ``y``, and ``z``-component of the cartesian position.
+        ``x``, ``y``, and ``z``-component of the cartesian position.
 
     Returns
     -------
@@ -216,17 +163,14 @@ def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
     Parameters
     ----------
     pos : array_like :obj:`float`
-          ``x``, ``y``, and ``z``-component of the cartesian position.
+        ``x``, ``y``, and ``z``-component of the cartesian position.
     vel : array_like :obj:`float`
-          ``x``, ``y``, and ``z``-component of the cartesian velocity.
+        ``x``, ``y``, and ``z``-component of the cartesian velocity.
 
     """
     return np.array([
-        (pos[0] * vel[0] + pos[1] *
-         vel[1]) / np.sqrt(pos[0]**2.0 + pos[1]**2.0),
-        (pos[0] * vel[1] - pos[1] *
-         vel[0]) / (pos[0]**2.0 + pos[1]**2.0),
-        vel[2]])
+        (pos[0] * vel[0] + pos[1] * vel[1]) / np.sqrt(pos[0]**2 + pos[1]**2),
+        (pos[0] * vel[1] - pos[1] * vel[0]) / (pos[0]**2 + pos[1]**2), vel[2]])
 
 
 def rotation_matrix(axis, theta):
@@ -237,9 +181,9 @@ def rotation_matrix(axis, theta):
     Parameters
     ----------
     axis : array_like :obj:`float`
-           Axis to rotate around.
+        Axis to rotate around.
     theta : :obj:`float`
-            Rotation angle.
+        Rotation angle.
 
     """
     axis = np.asarray(axis)
@@ -260,7 +204,7 @@ def rotation_matrix_quat(system, part):
     Parameters
     ----------
     part : :obj:`int`
-            Particle index.
+        Particle index.
 
     """
     A = np.zeros((3, 3))
@@ -298,27 +242,28 @@ def get_cylindrical_bin_volume(
     Parameters
     ----------
     n_r_bins : :obj:`float`
-               Number of bins in ``r`` direction.
+        Number of bins in ``r`` direction.
     n_phi_bins : :obj:`float`
-               Number of bins in ``phi`` direction.
+        Number of bins in ``phi`` direction.
     n_z_bins : :obj:`float`
-               Number of bins in ``z`` direction.
+        Number of bins in ``z`` direction.
     min_r : :obj:`float`
-            Minimum considered value in ``r`` direction.
+        Minimum considered value in ``r`` direction.
     max_r : :obj:`float`
-            Maximum considered value in ``r`` direction.
+        Maximum considered value in ``r`` direction.
     min_phi : :obj:`float`
-              Minimum considered value in ``phi`` direction.
+        Minimum considered value in ``phi`` direction.
     max_phi : :obj:`float`
-              Maximum considered value in ``phi`` direction.
+        Maximum considered value in ``phi`` direction.
     min_z : :obj:`float`
-            Minimum considered value in ``z`` direction.
+        Minimum considered value in ``z`` direction.
     max_z : :obj:`float`
-            Maximum considered value in ``z`` direction.
+        Maximum considered value in ``z`` direction.
 
     Returns
     -------
-    array_like : Bin volumes.
+    array_like
+        Bin volumes.
 
     """
     bin_volume = np.zeros(n_r_bins)
@@ -550,7 +495,7 @@ def morse_force(r, eps, alpha, cutoff, rmin=0):
             (np.exp((rmin - r) * alpha) - 1) * alpha * eps
     return f
 
-#  Buckingham
+# Buckingham
 
 
 def buckingham_potential(r, a, b, c, d, cutoff, discont, shift):
