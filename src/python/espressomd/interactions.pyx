@@ -876,12 +876,12 @@ IF DPD:
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
-                "weight_function": ia_params.dpd_wf,
-                "gamma": ia_params.dpd_gamma,
-                "r_cut": ia_params.dpd_r_cut,
-                "trans_weight_function": ia_params.dpd_twf,
-                "trans_gamma": ia_params.dpd_tgamma,
-                "trans_r_cut": ia_params.dpd_tr_cut
+                "weight_function": ia_params.dpd_radial.wf,
+                "gamma": ia_params.dpd_radial.gamma,
+                "r_cut": ia_params.dpd_radial.cutoff,
+                "trans_weight_function": ia_params.dpd_trans.wf,
+                "trans_gamma": ia_params.dpd_trans.gamma,
+                "trans_r_cut": ia_params.dpd_trans.cutoff
             }
 
         def is_active(self):
