@@ -108,12 +108,7 @@ class TestLB(object):
         all_temp_particle = []
         all_temp_fluid = []
 
-        # Cache the lb nodes
-        lb_nodes = []
-        n_nodes = int(self.params['box_l'] / self.params['agrid'])
-        for n in self.lbf.nodes():
-            lb_nodes.append(n)
-
+        
         # Integration
         for i in range(self.params['int_times']):
             self.system.integrator.run(self.params['int_steps'])
@@ -123,14 +118,14 @@ class TestLB(object):
             fluid_temp = 0.0
 
             # Go over lb lattice
-            for lb_node in lb_nodes:
+            for lb_node in self.lbf.nodes():
                 dens = lb_node.density
                 fluid_mass += dens
                 fluid_temp += np.sum(lb_node.velocity**2) * dens
 
             # Normalize
-            fluid_mass /= len(lb_nodes)
-            fluid_temp *= self.system.volume() / (3. * len(lb_nodes)**2)
+            fluid_mass /= np.product(self.lbf.shape)
+            fluid_temp *= self.system.volume() / (3. * np.product(self.lbf.shape)**2)
 
             # check mass conversation
             self.assertAlmostEqual(fluid_mass, self.params["dens"],
@@ -198,7 +193,6 @@ class TestLB(object):
         obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[3]],
                                [obs_stress[1], obs_stress[2], obs_stress[4]],
                                [obs_stress[3], obs_stress[4], obs_stress[5]]])
-        print(stress / obs_stress)
         np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
 
     def test_lb_node_set_get(self):
