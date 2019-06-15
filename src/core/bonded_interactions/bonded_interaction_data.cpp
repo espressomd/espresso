@@ -41,12 +41,10 @@ void recalc_maximal_cutoff_bonded() {
         max_cut_bonded = bonded_ia_params[i].p.tab.pot->cutoff();
       break;
 #endif
-#ifdef IMMERSED_BOUNDARY
     case BONDED_IA_IBM_TRIEL:
       if (max_cut_bonded < bonded_ia_params[i].p.ibm_triel.maxDist)
         max_cut_bonded = bonded_ia_params[i].p.ibm_triel.maxDist;
       break;
-#endif
     default:
       break;
     }

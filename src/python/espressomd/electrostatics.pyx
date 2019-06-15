@@ -28,7 +28,7 @@ IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
 from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type
+from espressomd.utils import is_valid_type, to_str
 from . cimport checks
 from .c_analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
@@ -66,7 +66,7 @@ IF ELECTROSTATICS == 1:
 
         def _deactivate_method(self):
             deactivate_method()
-            handle_errors("Coulom method deactivation")
+            handle_errors("Coulomb method deactivation")
 
         def tune(self, **tune_params_subset):
             if tune_params_subset is not None:
@@ -579,6 +579,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             self.thisptr = new Mmm1dgpuForce(dereference(self.interface), 0.0, default_params["maxPWerror"])
             self.interface.update()
             self.interface.requestRGpu()
+            dereference(self.thisptr).activate()
 
         def __dealloc__(self):
             del self.thisptr
@@ -633,6 +634,9 @@ IF ELECTROSTATICS and MMM1D_GPU:
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
+        
+        def _deactivate_method(self):
+            dereference(self.thisptr).deactivate()
 
 IF ELECTROSTATICS:
     cdef class MMM2D(ElectrostaticInteraction):
