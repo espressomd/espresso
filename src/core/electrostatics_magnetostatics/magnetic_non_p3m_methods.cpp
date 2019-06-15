@@ -389,7 +389,8 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
 
 int dawaanr_set_params() {
   if (n_nodes > 1) {
-    runtimeErrorMsg() << "MPI parallelization not supported by DAWAANR.";
+    runtimeErrorMsg() << "MPI parallelization not supported by "
+                      << "DipolarDirectSumCpu.";
     return ES_ERROR;
   }
   if (dipole.method != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA) {
@@ -403,7 +404,8 @@ int dawaanr_set_params() {
 
 int mdds_set_params(int n_cut) {
   if (n_nodes > 1) {
-    runtimeErrorMsg() << "MPI parallelization not supported by MDDS.";
+    runtimeErrorMsg() << "MPI parallelization not supported by "
+                      << "DipolarDirectSumWithReplicaCpu.";
     return ES_ERROR;
   }
 
