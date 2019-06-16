@@ -196,7 +196,10 @@ Variant ObjectHandle::get_state() const {
   std::vector<Variant> state;
 
   auto params = this->get_parameters();
-  state.reserve(params.size());
+  state.reserve(3 + params.size());
+
+  state.push_back(static_cast<int>(m_policy));
+  state.push_back(m_name);
 
   for (auto const &p : params) {
     state.push_back(std::vector<Variant>{
@@ -204,5 +207,26 @@ Variant ObjectHandle::get_state() const {
   }
 
   return state;
+}
+
+void ObjectHandle::set_state(Variant const &state) {
+  using boost::make_iterator_range;
+  using boost::get;
+  using std::vector;
+
+  auto const& state_ = get<vector<Variant>>(state);
+  auto const policy = CreationPolicy(get<int>(state_[0]));
+  auto const& name = get<std::string>(state_[1]);
+  auto const packed_params = make_iterator_range(state_.begin() + 2, state_.end());
+
+  UnSerializer u;
+  VariantMap params;
+
+  for (auto const &v : packed_params) {
+    auto const &p = get<vector<Variant>>(v);
+    params[get<std::string>(p.at(0))] = boost::apply_visitor(u, p.at(1));
+  }
+
+  this->construct(params, policy, name);
 }
 } /* namespace ScriptInterface */
