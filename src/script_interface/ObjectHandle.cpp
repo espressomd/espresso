@@ -191,4 +191,18 @@ ObjectHandle::~ObjectHandle() {
 void ObjectHandle::initialize(::Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;
 }
+
+Variant ObjectHandle::get_state() const {
+  std::vector<Variant> state;
+
+  auto params = this->get_parameters();
+  state.reserve(params.size());
+
+  for (auto const &p : params) {
+    state.push_back(std::vector<Variant>{
+        {p.first, boost::apply_visitor(Serializer{}, p.second)}});
+  }
+
+  return state;
+}
 } /* namespace ScriptInterface */
