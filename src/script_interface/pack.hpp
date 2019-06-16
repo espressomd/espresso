@@ -6,35 +6,10 @@
 #define ESPRESSO_PACK_HPP
 #include "get_value.hpp"
 
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/iostreams/device/array.hpp>
-#include <boost/iostreams/stream.hpp>
-
-#include <sstream>
 #include <unordered_map>
 #include <utility>
 
 namespace ScriptInterface {
-template <class T> std::string pack(T const &v) {
-  std::stringstream ss;
-  boost::archive::binary_oarchive(ss) << v;
-
-  return ss.str();
-}
-
-template <class T> T unpack(std::string const &state) {
-  namespace iostreams = boost::iostreams;
-
-  iostreams::array_source src(state.data(), state.size());
-  iostreams::stream<iostreams::array_source> ss(src);
-
-  T val;
-  boost::archive::binary_iarchive(ss) >> val;
-
-  return val;
-}
-
 template <typename T, typename U>
 std::vector<Variant> pack_pair(const std::pair<T, U> &pair) {
   return {{pair.first, pair.second}};

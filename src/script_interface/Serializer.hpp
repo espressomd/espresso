@@ -34,13 +34,17 @@ public:
     return std::vector<Variant>{{val}};
   }
 
-  Variant operator()(ObjectRef const &so_ptr) const {
+  Variant operator()(const ObjectHandle * so_ptr) const {
     if (so_ptr) {
       return std::vector<Variant>{{so_ptr->name(),
-                                   static_cast<int>(so_ptr->policy()),
-                                   so_ptr->get_state()}};
+                                      static_cast<int>(so_ptr->policy()),
+                                      so_ptr->get_state()}};
     }
     return std::vector<Variant>{None{}};
+  }
+
+  Variant operator()(ObjectRef const &so_ptr) const {
+    return this->operator()(so_ptr.get());
   }
 };
 
