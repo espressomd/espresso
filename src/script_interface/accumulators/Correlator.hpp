@@ -26,10 +26,9 @@
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
-#include "script_interface/pack.hpp"
+#include "script_interface/observables/Observable.hpp"
 
 #include "core/accumulators/Correlator.hpp"
-#include "script_interface/observables/Observable.hpp"
 
 #include "utils/Vector.hpp"
 #include "utils/as_const.hpp"
