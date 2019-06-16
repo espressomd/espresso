@@ -22,7 +22,6 @@
 #include "ObjectHandle.hpp"
 #include "ScriptInterface.hpp"
 #include "Serializer.hpp"
-#include "pack.hpp"
 #include "PackedVariant.hpp"
 
 #include <utils/serialization/pack.hpp>

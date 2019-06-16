@@ -23,6 +23,7 @@
 #define SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
 
 #include "AccumulatorBase.hpp"
+
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/pack.hpp"
