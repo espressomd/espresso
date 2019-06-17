@@ -30,21 +30,29 @@
 #include "config.hpp"
 
 #ifdef DPD
-
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
+
+#include <utils/Vector.hpp>
+
+struct IA_parameters;
+
+struct DPDParameters {
+  double gamma = 0.;
+  double cutoff = -1.;
+  int wf = 0;
+  double pref = 0.0;
+};
 
 void dpd_heat_up();
 void dpd_cool_down();
-void dpd_switch_off();
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
                    int wf, double tgamma, double tr_c, int twf);
 void dpd_init();
 void dpd_update_params(double pref2_scale);
 
 Utils::Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
-                               IA_parameters *ia_params, double const *d,
+                               const IA_parameters *ia_params, double const *d,
                                double dist, double dist2);
+Utils::Vector9d dpd_stress();
 #endif
-
 #endif
