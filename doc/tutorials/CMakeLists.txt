@@ -76,7 +76,6 @@ add_custom_target(tutorials
   tutorials_06
   tutorials_07
   tutorials_08
-  tutorials_09
   tutorials_10
   tutorials_11
   )
