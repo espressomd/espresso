@@ -43,9 +43,12 @@ std::unordered_map<ObjectId, ObjectRef> local_objects;
  */
 void make_remote_handle(ObjectId id, const std::string &name,
                         const PackedMap &parameters) {
-  local_objects[id] =
-      ObjectHandle::make_shared(name, ObjectHandle::CreationPolicy::LOCAL,
-                                unpack(parameters, local_objects));
+  try {
+    local_objects[id] =
+        ObjectHandle::make_shared(name, ObjectHandle::CreationPolicy::LOCAL,
+                                  unpack(parameters, local_objects));
+  } catch (std::runtime_error const &) {
+  }
 }
 
 /**
@@ -57,7 +60,10 @@ void make_remote_handle(ObjectId id, const std::string &name,
  */
 void remote_set_parameter(ObjectId id, std::string const &name,
                           PackedVariant const &value) {
-  local_objects.at(id)->set_parameter(name, unpack(value, local_objects));
+  try {
+    local_objects.at(id)->set_parameter(name, unpack(value, local_objects));
+  } catch (std::runtime_error const &) {
+  }
 }
 
 /**
@@ -69,7 +75,10 @@ void remote_set_parameter(ObjectId id, std::string const &name,
  */
 void remote_call_method(ObjectId id, std::string const &name,
                         PackedMap const &arguments) {
-  local_objects.at(id)->call_method(name, unpack(arguments, local_objects));
+  try {
+    local_objects.at(id)->call_method(name, unpack(arguments, local_objects));
+  } catch (std::runtime_error const &) {
+  }
 }
 
 /**
