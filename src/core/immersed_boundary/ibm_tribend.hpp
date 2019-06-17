@@ -22,8 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "config.hpp"
 
-#ifdef IMMERSED_BOUNDARY
-
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
 // This function is used to set the parameters
@@ -39,7 +37,5 @@ int IBM_Tribend_ResetParams(int bond_type, double kb);
 // This function calculates and adds the actual force
 void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
                            Particle *p4, const Bonded_ia_parameters &iaparams);
-
-#endif
 
 #endif

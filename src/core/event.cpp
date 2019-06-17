@@ -31,7 +31,6 @@
 #include "communication.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
-#include "dpd.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -415,11 +414,6 @@ void on_parameter_change(int field) {
   case FIELD_THERMO_SWITCH:
     /* DPD needs ghost velocities, other thermostats not */
     on_ghost_flags_change();
-#ifdef DPD
-    if (not(thermo_switch & THERMO_DPD)) {
-      dpd_switch_off();
-    }
-#endif
     break;
   case FIELD_LATTICE_SWITCH:
     /* LB needs ghost velocities */
@@ -460,12 +454,8 @@ void on_ghost_flags_change() {
   if (n_rigidbonds)
     ghosts_have_v = 1;
 #endif
-#ifdef DPD
-  // maybe we have to add a new global to differ between compile in and actual
-  // use.
   if (thermo_switch & THERMO_DPD)
     ghosts_have_v = 1;
-#endif
 #ifdef VIRTUAL_SITES
   // If they have velocities, VIRUTAL_SITES need v to update v of virtual sites
   if (virtual_sites()->get_have_velocity()) {

@@ -17,7 +17,8 @@
 from __future__ import division, print_function
 
 import unittest as ut
-import numpy
+import unittest_decorators as utx
+import numpy as np
 import math
 
 import espressomd
@@ -26,8 +27,7 @@ import espressomd.shapes
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["LENNARD_JONES_GENERIC"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LENNARD_JONES_GENERIC"])
 class ShapeBasedConstraintTest(ut.TestCase):
 
     box_l = 30.
@@ -38,18 +38,11 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.system.constraints.clear()
 
     def pos_on_surface(self, theta, v, semiaxis0, semiaxis1,
-                       semiaxis2, center=numpy.array([15, 15, 15])):
+                       semiaxis2, center=np.array([15, 15, 15])):
         """Return position on ellipsoid surface."""
-        pos = numpy.array([semiaxis0 *
-                           numpy.sqrt(1. -
-                                      v *
-                                      v) *
-                           numpy.cos(theta), semiaxis1 *
-                           numpy.sqrt(1. -
-                                      v *
-                                      v) *
-                           numpy.sin(theta), semiaxis2 *
-                           v])
+        pos = np.array([semiaxis0 * np.sqrt(1. - v**2) * np.cos(theta),
+                        semiaxis1 * np.sqrt(1. - v**2) * np.sin(theta),
+                        semiaxis2 * v])
         return pos + center
 
     def test_sphere(self):
@@ -58,9 +51,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         """
         rad = self.box_l / 2.0
         sphere_shape = espressomd.shapes.Sphere(
-            center=[self.box_l / 2.,
-                    self.box_l / 2.,
-                    self.box_l / 2.],
+            center=3 * [rad],
             radius=rad,
             direction=-1)
         phi_steps = 11
@@ -70,12 +61,12 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 phi_angle = phi / phi_steps * 2.0 * math.pi
                 for theta in range(theta_steps):
                     theta_angle = theta / theta_steps * math.pi
-                    pos = numpy.array(
+                    pos = np.array(
                         [math.cos(phi_angle) * math.sin(theta_angle)
-                         * (rad + distance) + self.box_l / 2.,
+                         * (rad + distance),
                          math.sin(phi_angle) * math.sin(theta_angle)
-                         * (rad + distance) + self.box_l / 2.,
-                         math.cos(theta_angle) * (rad + distance) + self.box_l / 2.])
+                         * (rad + distance),
+                         math.cos(theta_angle) * (rad + distance)]) + rad
 
                     shape_dist, shape_dist_vec = sphere_shape.call_method(
                         "calc_distance", position=pos.tolist())
@@ -103,10 +94,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         e = espressomd.shapes.Ellipsoid(
             a=semiaxes[0],
             b=semiaxes[1],
-            center=[
-                self.box_l / 2.,
-                self.box_l / 2.,
-                self.box_l / 2.],
+            center=3 * [self.box_l / 2.],
             direction=+1)
 
         constraint_e = espressomd.constraints.ShapeBasedConstraint(
@@ -115,7 +103,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         for i in range(N):
             for j in range(N):
-                theta = 2. * i / float(N) * numpy.pi
+                theta = 2. * i / float(N) * np.pi
                 v = j / float(N - 1) * 2. - 1
                 pos = self.pos_on_surface(
                     theta, v, semiaxes[0], semiaxes[1], semiaxes[1])
@@ -132,10 +120,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         e = espressomd.shapes.Ellipsoid(
             a=semiaxes[0],
             b=semiaxes[1],
-            center=[
-                self.box_l / 2.,
-                self.box_l / 2.,
-                self.box_l / 2.],
+            center=3 * [self.box_l / 2.],
             direction=+1)
 
         constraint_e = espressomd.constraints.ShapeBasedConstraint(
@@ -144,7 +129,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         for i in range(N):
             for j in range(N):
-                theta = 2. * i / float(N) * numpy.pi
+                theta = 2. * i / float(N) * np.pi
                 v = j / float(N - 1) * 2. - 1
                 pos = self.pos_on_surface(
                     theta, v, semiaxes[0], semiaxes[1], semiaxes[1])
@@ -159,11 +144,11 @@ class ShapeBasedConstraintTest(ut.TestCase):
         e.a = 1.
         e.b = 1.
 
-        radii = numpy.linspace(1., 6.5, 7)
+        radii = np.linspace(1., 6.5, 7)
 
         for i in range(N):
             for j in range(N):
-                theta = 2. * i / float(N) * numpy.pi
+                theta = 2. * i / float(N) * np.pi
                 v = j / float(N - 1) * 2. - 1
                 for r in radii:
                     pos = self.pos_on_surface(theta, v, r, r, r)
@@ -186,19 +171,18 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system = self.system
         system.time_step = 0.01
         system.cell_system.skin = 0.4
+        rad = self.box_l / 2.0
+        length = self.box_l / 2.0
 
-        system.part.add(
-            id=0, pos=[self.box_l / 2.0, 1.02, self.box_l / 2.0], type=0)
+        system.part.add(id=0, pos=[rad, 1.02, rad], type=0)
 
-        # check force calculation of cylinder constraint
+        # check force calculation of a cylinder without top and bottom
         interaction_dir = -1  # constraint is directed inwards
         cylinder_shape = espressomd.shapes.Cylinder(
-            center=[self.box_l / 2.0,
-                    self.box_l / 2.0,
-                    self.box_l / 2.0],
+            center=3 * [rad],
             axis=[0, 0, 1],
             direction=interaction_dir,
-            radius=self.box_l / 2.0,
+            radius=rad,
             length=self.box_l + 5)  # +5 in order to have no top or bottom
         penetrability = False  # impenetrable
         outer_cylinder_constraint = espressomd.constraints.ShapeBasedConstraint(
@@ -224,8 +208,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         # check whether total_summed_outer_normal_force is correct
         y_part2 = self.box_l - 1.02
-        system.part.add(
-            id=1, pos=[self.box_l / 2.0, y_part2, self.box_l / 2.0], type=0)
+        system.part.add(id=1, pos=[rad, y_part2, rad], type=0)
         system.integrator.run(0)
 
         dist_part2 = self.box_l - y_part2
@@ -241,13 +224,9 @@ class ShapeBasedConstraintTest(ut.TestCase):
                 sig=1.0,
                 r=dist_part2))
 
-        # Test the geometry of an cylinder with top and bottom
-        rad = self.box_l / 2.0
-        length = self.box_l / 2.0
+        # Test the geometry of a cylinder with top and bottom
         cylinder_shape_finite = espressomd.shapes.Cylinder(
-            center=[self.box_l / 2.0,
-                    self.box_l / 2.0,
-                    self.box_l / 2.0],
+            center=3 * [rad],
             axis=[0, 0, 1],
             direction=1,
             radius=rad,
@@ -256,42 +235,34 @@ class ShapeBasedConstraintTest(ut.TestCase):
         phi_steps = 11
         for distance in {-3.6, 2.8}:
             for z in range(int(self.box_l)):
-                center = numpy.array([self.box_l / 2.0,
-                                      self.box_l / 2.0,
-                                      z])
-                start_point = numpy.array([self.box_l / 2.0,
-                                           self.box_l / 2.0 + rad - distance,
-                                           z])
+                center = np.array([rad, rad, z])
+                start_point = np.array([rad, 2 * rad - distance, z])
                 for phi in range(phi_steps):
                     # Rotation around the axis of the cylinder
                     phi_angle = phi / phi_steps * 2.0 * math.pi
-                    phi_rot_matrix = numpy.array(
-                        [[math.cos(phi_angle),
-                          -1.0 * math.sin(phi_angle),
-                          0.0],
-                         [math.sin(phi_angle),
-                          math.cos(phi_angle),
-                          0.0],
+                    phi_rot_matrix = np.array(
+                        [[math.cos(phi_angle), -math.sin(phi_angle), 0.0],
+                         [math.sin(phi_angle), math.cos(phi_angle), 0.0],
                          [0.0, 0.0, 1.0]])
-                    phi_rot_point = numpy.dot(
+                    phi_rot_point = np.dot(
                         phi_rot_matrix, start_point - center) + center
 
                     shape_dist, shape_dist_vec = cylinder_shape_finite.call_method(
                         "calc_distance", position=phi_rot_point.tolist())
 
                     dist = -distance
-                    if(distance > 0.0):
-                        if(z < (self.box_l - length) / 2.0 + distance):
+                    if distance > 0.0:
+                        if z < (self.box_l - length) / 2.0 + distance:
                             dist = (self.box_l - length) / 2.0 - z
-                        elif(z > (self.box_l + length) / 2.0 - distance):
+                        elif z > (self.box_l + length) / 2.0 - distance:
                             dist = z - (self.box_l + length) / 2.0
                         else:
                             dist = -distance
                     else:
-                        if(z < (self.box_l - length) / 2.0):
+                        if z < (self.box_l - length) / 2.0:
                             z_dist = (self.box_l - length) / 2.0 - z
                             dist = math.sqrt(z_dist**2 + distance**2)
-                        elif(z > (self.box_l + length) / 2.0):
+                        elif z > (self.box_l + length) / 2.0:
                             z_dist = z - (self.box_l + length) / 2.0
                             dist = math.sqrt(z_dist**2 + distance**2)
                         else:
@@ -320,9 +291,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # (1) infinite cylinder
         interaction_dir = -1  # constraint is directed inwards
         spherocylinder_shape = espressomd.shapes.SpheroCylinder(
-            center=[self.box_l / 2.0,
-                    self.box_l / 2.0,
-                    self.box_l / 2.0],
+            center=3 * [self.box_l / 2.0],
             axis=[0, 0, 1],
             direction=interaction_dir,
             radius=self.box_l / 2.0,
@@ -359,8 +328,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
         self.assertAlmostEqual(outer_cylinder_constraint.total_force()[2], 0.0)
         self.assertAlmostEqual(outer_cylinder_constraint.total_normal_force(),
                                2 * tests_common.lj_force(
-                                   espressomd, cutoff=2.0,
-            offset=0., eps=1.0, sig=1.0, r=dist_part2))
+                                   espressomd, cutoff=2.0, offset=0.,
+                                   eps=1.0, sig=1.0, r=dist_part2))
 
         # Reset
         system.part.clear()
@@ -372,9 +341,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.part.clear()
         interaction_dir = -1  # constraint is directed inwards
         spherocylinder_shape = espressomd.shapes.SpheroCylinder(
-            center=[self.box_l / 2.0,
-                    self.box_l / 2.0,
-                    self.box_l / 2.0],
+            center=3 * [self.box_l / 2.0],
             axis=[0, 1, 0],
             direction=interaction_dir,
             radius=10.0,
@@ -390,11 +357,11 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         # check hemispherical caps (multiple distances from surface)
         N = 10
-        radii = numpy.linspace(1., 10., 10)
+        radii = np.linspace(1., 10., 10)
         system.part.add(pos=[0., 0., 0.], type=0)
         for i in range(6):
             for j in range(N):
-                theta = 2. * i / float(N) * numpy.pi
+                theta = 2. * i / float(N) * np.pi
                 v = j / float(N - 1) * 2. - 1
                 for r in radii:
                     pos = self.pos_on_surface(theta, v, r, r, r) + [0, 3, 0]
@@ -529,14 +496,12 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # check force calculation of hollowcone constraint
         interaction_dir = +1  # constraint is directed outwards
         hollowcone_shape = espressomd.shapes.HollowCone(
-            center=[self.box_l / 2.0,
-                    self.box_l / 2.0,
-                    self.box_l / 2.0],
+            center=3 * [self.box_l / 2.0],
             axis=[0, 0, 1],
             direction=interaction_dir,
             inner_radius=3.,
             outer_radius=6.,
-            opening_angle=numpy.pi / 5,
+            opening_angle=np.pi / 5,
             width=1.)
         hollowcone_constraint = espressomd.constraints.ShapeBasedConstraint(
             shape=hollowcone_shape, particle_type=1, penetrable=False)
@@ -604,8 +569,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
             system.part[0].pos = pos
             system.integrator.run(recalc_forces=True, steps=0)
             self.assertEqual(slitpore_constraint.min_dist(), ref_mindist)
-            numpy.testing.assert_almost_equal(
-                numpy.copy(slitpore_constraint.total_force()), ref_force, 10)
+            np.testing.assert_almost_equal(
+                np.copy(slitpore_constraint.total_force()), ref_force, 10)
 
         # Reset
         system.non_bonded_inter[0, 1].generic_lennard_jones.set_params(
@@ -624,10 +589,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # check force calculation of rhomboid constraint
         # (1) using a cuboid
         interaction_dir = +1  # constraint is directed outwards
-        length = numpy.array([-5.0, 6.0, 7.0])  # dimension of the cuboid
-        corner = numpy.array([self.box_l / 2.0,
-                              self.box_l / 2.0,
-                              self.box_l / 2.0])
+        length = np.array([-5.0, 6.0, 7.0])  # dimension of the cuboid
+        corner = np.array(3 * [self.box_l / 2.0])
         rhomboid_shape = espressomd.shapes.Rhomboid(
             corner=corner,
             a=[length[0], 0.0, 0.0],  # cube
@@ -677,10 +640,9 @@ class ShapeBasedConstraintTest(ut.TestCase):
         for x in range(x_range):
             for y in range(y_range):
                 for z in range(z_range):
-                    pos = numpy.array(
+                    pos = np.array(
                         [x + (self.box_l + length[0] - x_range) / 2.0,
-                         y + (self.box_l +
-                              length[1] - y_range) / 2.0,
+                         y + (self.box_l + length[1] - y_range) / 2.0,
                          z + (self.box_l + length[2] - z_range) / 2.0])
                     shape_dist, shape_dist_vec = rhomboid_shape.call_method(
                         "calc_distance",
@@ -688,7 +650,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
                     outside = False
                     edge_case = False
-                    dist_vec = numpy.array([0.0, 0.0, 0.0])
+                    dist_vec = np.array([0.0, 0.0, 0.0])
 
                     # check if outside or inside
                     if(pos[0] < (self.box_l + length[0] - abs(length[0])) / 2.0 or
@@ -699,41 +661,38 @@ class ShapeBasedConstraintTest(ut.TestCase):
                        pos[2] > (self.box_l + length[2] + abs(length[2])) / 2.0):
                         outside = True
 
-                    if(outside):
+                    if outside:
                         for i in range(3):
-                            if(pos[i] < (self.box_l + length[i] - abs(length[i])) / 2.0):
-                                dist_vec[i] = pos[i] - \
-                                    (self.box_l +
-                                     length[i] - abs(length[i])) / 2.0
-                            elif(pos[i] > (self.box_l + length[i] + abs(length[i])) / 2.0):
-                                dist_vec[i] = pos[i] - \
-                                    (self.box_l +
-                                     length[i] + abs(length[i])) / 2.0
+                            if pos[i] < (self.box_l + length[i] - abs(length[i])) / 2.0:
+                                dist_vec[i] = pos[i] - (
+                                    self.box_l + length[i] - abs(length[i])) / 2.0
+                            elif pos[i] > (self.box_l + length[i] + abs(length[i])) / 2.0:
+                                dist_vec[i] = pos[i] - (
+                                    self.box_l + length[i] + abs(length[i])) / 2.0
                             else:
                                 dist_vec[i] = 0.0
-                        dist = math.sqrt(
-                            dist_vec[0]**2 + dist_vec[1]**2 + dist_vec[2]**2)
+                        dist = np.linalg.norm(dist_vec)
                     else:
                         dist = self.box_l
                         c1 = pos - corner
                         c2 = corner + length - pos
-                        abs_c1c2 = numpy.abs(numpy.concatenate((c1, c2)))
-                        dist = numpy.amin(abs_c1c2)
-                        where = numpy.argwhere(dist == abs_c1c2)
-                        if(len(where) > 1):
+                        abs_c1c2 = np.abs(np.concatenate((c1, c2)))
+                        dist = np.amin(abs_c1c2)
+                        where = np.argwhere(dist == abs_c1c2)
+                        if len(where) > 1:
                             edge_case = True
                         for which in where:
-                            if(which < 3):
-                                dist_vec[which] = dist * numpy.sign(c1[which])
+                            if which < 3:
+                                dist_vec[which] = dist * np.sign(c1[which])
                             else:
                                 dist_vec[which - 3] = -dist * \
-                                    numpy.sign(c2[which - 3])
+                                    np.sign(c2[which - 3])
 
                         dist *= -interaction_dir
 
-                    if(edge_case):
+                    if edge_case:
                         for i in range(3):
-                            if(shape_dist_vec[i] != 0.0):
+                            if shape_dist_vec[i] != 0.0:
                                 self.assertAlmostEqual(
                                     abs(shape_dist_vec[i]), abs(dist_vec[i]))
                     else:
@@ -802,9 +761,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
         # check force calculation of cylinder constraint
         torus_shape = espressomd.shapes.Torus(
-            center=[self.box_l / 2.0,
-                    self.box_l / 2.0,
-                    self.box_l / 2.0],
+            center=3 * [self.box_l / 2.0],
             normal=[0, 0, 1],
             direction=interaction_dir,
             radius=radius,
@@ -846,45 +803,38 @@ class ShapeBasedConstraintTest(ut.TestCase):
         # Test the geometry of the shape directly
         phi_steps = 11
         theta_steps = 11
-        center = numpy.array([self.box_l / 2.0,
-                              self.box_l / 2.0,
-                              self.box_l / 2.0])
-        tube_center = numpy.array([self.box_l / 2.0,
-                                   self.box_l / 2.0 + radius,
-                                   self.box_l / 2.0])
+        center = np.array([self.box_l / 2.0,
+                           self.box_l / 2.0,
+                           self.box_l / 2.0])
+        tube_center = np.array([self.box_l / 2.0,
+                                self.box_l / 2.0 + radius,
+                                self.box_l / 2.0])
 
         for distance in {1.02, -0.7}:
-            start_point = numpy.array([self.box_l / 2.0,
-                                       self.box_l / 2.0 + radius -
-                                       tube_radius - distance,
-                                       self.box_l / 2.0])
+            start_point = np.array([self.box_l / 2.0,
+                                    self.box_l / 2.0 + radius -
+                                    tube_radius - distance,
+                                    self.box_l / 2.0])
             for phi in range(phi_steps):
                 for theta in range(theta_steps):
                     # Rotation around the tube
                     theta_angle = theta / theta_steps * 2.0 * math.pi
-                    theta_rot_matrix = numpy.array(
+                    theta_rot_matrix = np.array(
                         [[1.0, 0.0, 0.0],
-                         [0.0, math.cos(
-                          theta_angle), -1.0 * math.sin(
-                          theta_angle)],
+                         [0.0, math.cos(theta_angle), -math.sin(theta_angle)],
                          [0.0, math.sin(theta_angle), math.cos(theta_angle)]])
-                    theta_rot_point = numpy.dot(
+                    theta_rot_point = np.dot(
                         theta_rot_matrix,
                         start_point - tube_center)
                     theta_rot_point += tube_center
 
                     # Rotation around the center of the torus
                     phi_angle = phi / phi_steps * 2.0 * math.pi
-                    phi_rot_matrix = numpy.array(
-                        [[math.cos(
-                          phi_angle), -1.0 * math.sin(
-                          phi_angle), 0.0],
-                         [math.sin(
-                          phi_angle),
-                          math.cos(phi_angle),
-                             0.0],
-                            [0.0, 0.0, 1.0]])
-                    phi_rot_point = numpy.dot(
+                    phi_rot_matrix = np.array(
+                        [[math.cos(phi_angle), -math.sin(phi_angle), 0.0],
+                         [math.sin(phi_angle), math.cos(phi_angle), 0.0],
+                         [0.0, 0.0, 1.0]])
+                    phi_rot_point = np.dot(
                         phi_rot_matrix,
                         theta_rot_point - center) + center
 

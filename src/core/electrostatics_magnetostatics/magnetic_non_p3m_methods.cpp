@@ -135,12 +135,12 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
   double u;
 
   if (n_nodes != 1) {
-    fprintf(stderr, "error:  DAWAANR is just for one cpu .... \n");
+    fprintf(stderr, "error: DAWAANR is just for one cpu...\n");
     errexit();
   }
   if (!(force_flag) && !(energy_flag)) {
-    fprintf(stderr, " I don't know why you call dawaanr_caclulations with all "
-                    "flags zero \n");
+    fprintf(stderr, "I don't know why you call dawaanr_calculations() "
+                    "with all flags zero.\n");
     return 0;
   }
 
@@ -210,12 +210,12 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
   double u;
 
   if (n_nodes != 1) {
-    fprintf(stderr, "error: magnetic Direct Sum is just for one cpu .... \n");
+    fprintf(stderr, "error: magnetic Direct Sum is just for one cpu...\n");
     errexit();
   }
   if (!(force_flag) && !(energy_flag)) {
-    fprintf(stderr, " I don't know why you call dawaanr_caclulations with all "
-                    "flags zero \n");
+    fprintf(stderr, "I don't know why you call magnetic_dipolar_direct_sum_"
+                    "calculations() with all flags zero\n");
     return 0;
   }
 
@@ -389,6 +389,8 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
 
 int dawaanr_set_params() {
   if (n_nodes > 1) {
+    runtimeErrorMsg() << "MPI parallelization not supported by "
+                      << "DipolarDirectSumCpu.";
     return ES_ERROR;
   }
   if (dipole.method != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA) {
@@ -402,14 +404,16 @@ int dawaanr_set_params() {
 
 int mdds_set_params(int n_cut) {
   if (n_nodes > 1) {
+    runtimeErrorMsg() << "MPI parallelization not supported by "
+                      << "DipolarDirectSumWithReplicaCpu.";
     return ES_ERROR;
   }
 
   Ncut_off_magnetic_dipolar_direct_sum = n_cut;
 
   if (Ncut_off_magnetic_dipolar_direct_sum == 0) {
-    fprintf(stderr, "Careful:  the number of extra replicas to take into "
-                    "account during the direct sum calculation is zero \n");
+    fprintf(stderr, "Careful: the number of extra replicas to take into "
+                    "account during the direct sum calculation is zero\n");
   }
 
   if (dipole.method != DIPOLAR_DS && dipole.method != DIPOLAR_MDLC_DS) {

@@ -150,8 +150,7 @@ friction coefficient (this is different from the Object-in-Fluid method
 below). We implement these marker points as virtual tracer
 particles which are not integrated using the usual velocity-Verlet
 scheme, but instead are propagated using a simple Euler algorithm with
-the local fluid velocity (if the ``IMMERSED_BOUNDARY`` feature is turned
-on).
+the local fluid velocity.
 
 The immersed boundary method consists of two components, which can be used independently:
 

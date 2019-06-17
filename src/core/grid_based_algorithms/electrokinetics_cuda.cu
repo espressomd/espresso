@@ -54,7 +54,7 @@
 
 extern ActiveLB lattice_switch;
 extern bool ek_initialized;
-extern EK_parameters *lb_ek_parameters_gpu;
+EK_parameters *lb_ek_parameters_gpu;
 
 // Used to limit register use for the pressure calculation
 #define EK_LINK_U00_pressure 0
