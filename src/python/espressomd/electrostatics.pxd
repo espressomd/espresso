@@ -236,8 +236,8 @@ IF ELECTROSTATICS:
             double far_cut;
             double far_cut2;
             int far_calculated;
-            int dielectric_contrast_on;
-            int const_pot_on;
+            bool dielectric_contrast_on;
+            bool const_pot_on;
             double pot_diff;
             double delta_mid_top;
             double delta_mid_bot;
@@ -245,7 +245,7 @@ IF ELECTROSTATICS:
 
         cdef extern MMM2D_struct mmm2d_params;
 
-        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, int const_pot_on, double pot_diff);
+        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, bool const_pot_on, double pot_diff);
 
         void MMM2D_init();
 

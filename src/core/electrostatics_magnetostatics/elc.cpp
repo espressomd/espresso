@@ -58,7 +58,7 @@
 static double ux, ux2, uy, uy2, uz, height_inverse;
 /*@}*/
 
-ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0.0};
+ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, false, 0, 0, 0, 0, 0.0};
 
 /****************************************
  * LOCAL ARRAYS
@@ -1256,7 +1256,7 @@ void ELC_on_resort_particles() {
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
                    int neutralize, double delta_top, double delta_bot,
-                   int const_pot, double pot_diff) {
+                   bool const_pot, double pot_diff) {
   elc_params.maxPWerror = maxPWerror;
   elc_params.gap_size = gap_size;
   elc_params.h = box_l[2] - gap_size;
@@ -1280,7 +1280,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
     // Constant potential parameter setup
     if (const_pot) {
-      elc_params.const_pot = 1;
+      elc_params.const_pot = true;
       elc_params.pot_diff = pot_diff;
     }
   } else {

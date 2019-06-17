@@ -58,7 +58,7 @@ IF ELECTROSTATICS and P3M:
                                   This parameter sets the dielectric contrast
                                   between the lower boundary and the simulation
                                   box :math:`\\Delta_b`.
-        const_pot               : int, optional
+        const_pot               : bool, optional
                                   Selector parameter for setting a constant
                                   electric potential between the top and bottom
                                   of the simulation box.
@@ -109,7 +109,7 @@ IF ELECTROSTATICS and P3M:
                     "far_cut": -1,
                     "delta_mid_top": 0,
                     "delta_mid_bot": 0,
-                    "const_pot": 0,
+                    "const_pot": False,
                     "pot_diff": 0.0,
                     "neutralize": True,
                     "check_neutrality": True}
