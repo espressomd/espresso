@@ -18,10 +18,6 @@
 #
 # For C-extern Analysis
 
-#
-# TODO: Merge blocks of cdef extern for same headers.
-#
-
 from __future__ import print_function, absolute_import
 cimport numpy as np
 from espressomd.utils cimport *
@@ -41,10 +37,10 @@ cdef extern from "particle_data.hpp":
     int max_seen_particle_type
 
 cdef extern from "statistics.hpp":
-    cdef void calc_structurefactor(PartCfg &, int * p_types, int n_types, int order, double ** sf)
-    cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
+    int n_part
+    int n_part_conf
+    int n_configs
 
-cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat:
         int init_status
         List[double] data
@@ -59,9 +55,11 @@ cdef extern from "statistics.hpp":
         double * virtual_sites
         double * external_fields
 
-cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
+
+    cdef void calc_structurefactor(PartCfg &, int * p_types, int n_types, int order, double ** sf)
+    cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
     cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
     cdef double min_distance2(double pos1[3], double pos2[3])
     cdef List[int] nbhood(PartCfg &, double pos[3], double r_catch, int planedims[3])
@@ -78,6 +76,31 @@ cdef extern from "statistics.hpp":
                                       int bins_radial, vector[int] types,
                                       map[string, vector[vector[vector[double]]]] & distribution)
 
+    void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
+                  double r_min, double r_max, int r_bins, vector[double] rdf)
+
+    void calc_rdf_av(PartCfg &, vector[int] p1_types, vector[int] p2_types,
+                     double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+
+    void angularmomentum(PartCfg &, int p_type, double * com)
+
+    void momentofinertiamatrix(PartCfg &, int p_type, double * MofImatrix)
+
+    void analyze_append(PartCfg &)
+
+    void calc_part_distribution(
+        PartCfg & , int * p1_types, int n_p1, int * p2_types, int n_p2,
+                                double r_min, double r_max, int r_bins, int log_flag,
+                                double * low, double * dist)
+
+cdef extern from "statistics_chain.hpp":
+    int chain_start
+    int chain_n_chains
+    int chain_length
+    void calc_re(PartCfg & , double ** re)
+    void calc_rg(PartCfg & , double ** rg)
+    void calc_rh(PartCfg & , double ** rh)
+
 cdef extern from "pressure.hpp":
     cdef Observable_stat total_pressure
     cdef Observable_stat_non_bonded total_pressure_non_bonded
@@ -90,38 +113,6 @@ cdef extern from "energy.hpp":
     cdef Observable_stat_non_bonded total_energy_non_bonded
     cdef void master_energy_calc()
     cdef void init_energies(Observable_stat * stat)
-
-cdef extern from "statistics_chain.hpp":
-    int chain_start
-    int chain_n_chains
-    int chain_length
-    void calc_re(PartCfg & , double ** re)
-    void calc_rg(PartCfg & , double ** rg)
-    void calc_rh(PartCfg & , double ** rh)
-
-cdef extern from "statistics.hpp":
-    void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
-                  double r_min, double r_max, int r_bins, vector[double] rdf)
-
-    void calc_rdf_av(PartCfg &, vector[int] p1_types, vector[int] p2_types,
-                     double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
-
-    void angularmomentum(PartCfg &, int p_type, double * com)
-    void momentofinertiamatrix(PartCfg &, int p_type, double * MofImatrix)
-
-cdef extern from "statistics.hpp":
-    int n_part
-    int n_part_conf
-    int n_configs
-    void analyze_append(PartCfg &)
-
-cdef extern from "statistics.hpp":
-    void calc_part_distribution(
-        PartCfg & , int * p1_types, int n_p1, int * p2_types, int n_p2,
-                                double r_min, double r_max, int r_bins, int log_flag,
-                                double * low, double * dist)
-
-cdef extern from "energy.hpp":
     double calculate_current_potential_energy_of_system()
 
 cdef extern from "dpd.hpp":
