@@ -165,9 +165,6 @@ public:
   make_shared(std::string const &name, CreationPolicy policy,
               const VariantMap &parameters = {});
 
-    static std::shared_ptr<ObjectHandle>
-    make_shared(std::string const &name);
-
 public:
   virtual std::string serialize() const;
   static std::shared_ptr<ObjectHandle> unserialize(std::string const &state);

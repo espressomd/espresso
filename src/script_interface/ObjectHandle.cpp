@@ -22,7 +22,6 @@
 #include "ObjectHandle.hpp"
 #include "PackedVariant.hpp"
 #include "ScriptInterface.hpp"
-#include "Serializer.hpp"
 
 #include <utils/serialization/pack.hpp>
 
@@ -34,6 +33,13 @@ namespace {
 Communication::MpiCallbacks *m_callbacks = nullptr;
 std::unordered_map<ObjectId, ObjectRef> local_objects;
 
+/**
+ * @brief Callback for creating a local instance
+ *
+ * @param id Internal identifier of the instance
+ * @param name Class name
+ * @param parameters Constructor parameters.
+ */
 void make_remote_handle(ObjectId id, const std::string &name,
                         const PackedMap &parameters) {
   local_objects[id] =
@@ -41,16 +47,35 @@ void make_remote_handle(ObjectId id, const std::string &name,
                                 unpack(parameters, local_objects));
 }
 
+/**
+ * @brief Callback for setting a parameter on an instance
+ *
+ * @param id Internal identifier of the instance to be modified
+ * @param name Name of the parameter to change
+ * @param value Value to set it to
+ */
 void remote_set_parameter(ObjectId id, std::string const &name,
                           PackedVariant const &value) {
   local_objects.at(id)->set_parameter(name, unpack(value, local_objects));
 }
 
+/**
+ * @brief Callback for calling a method on an instance
+ *
+ * @param id Internal identified of the instance
+ * @param name Name of the method to call
+ * @param arguments Arguments to the call
+ */
 void remote_call_method(ObjectId id, std::string const &name,
                         PackedMap const &arguments) {
   local_objects.at(id)->call_method(name, unpack(arguments, local_objects));
 }
 
+/**
+ * @brief Callback for deleting an instance
+ *
+ * @param id Internal identified of the instance
+ */
 void delete_remote_handle(ObjectId id) { local_objects.erase(id); }
 
 REGISTER_CALLBACK(make_remote_handle)
@@ -61,20 +86,10 @@ REGISTER_CALLBACK(delete_remote_handle)
 
 Utils::Factory<ObjectHandle> factory;
 
-/**
- * @brief Make an unintialized object handle.
- * @param name Class name.
- * @return Pointer to the new object.
- */
-std::shared_ptr<ObjectHandle>
-ObjectHandle::make_shared(std::string const &name) {
-  return factory.make(name);
-}
-
 std::shared_ptr<ObjectHandle>
 ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
                           const VariantMap &parameters) {
-  auto sp = make_shared(name);
+  auto sp = factory.make(name);
 
   sp->construct(parameters, policy, name);
 
@@ -82,12 +97,49 @@ ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
 }
 
 /**
+ * @brief State of an object ready for serialization.
+ *
+ * This specifies the internal serialization format and
+ * should not be used outside of the class.
+ */
+struct ObjectState {
+  std::string name;
+  ObjectHandle::CreationPolicy policy;
+  PackedMap params;
+  std::vector<std::pair<ObjectId, std::string>> objects;
+
+  template <class Archive> void serialize(Archive &ar, long int) {
+    ar &name &policy &params &objects;
+  }
+};
+
+/**
  * @brief Returns a binary representation of the state often
  *        the instance, as returned by get_state().
  */
 std::string ObjectHandle::serialize() const {
-  // return Utils::pack(Serializer{}(this));
-  return {};
+  ObjectState state{
+    name(), policy(), {}, {}
+  };
+
+  auto const params = get_parameters();
+  state.params.resize(params.size());
+
+  PackVisitor v;
+
+  /* Pack parameters and keep track of ObjectRef parameters */
+  boost::transform(params, state.params.begin(),
+                   [&v](auto const &kv) -> PackedMap::value_type {
+                     return {kv.first, boost::apply_visitor(v, kv.second)};
+                   });
+
+  /* Packed Object parameters */
+  state.objects.resize(v.objects().size());
+  boost::transform(v.objects(), state.objects.begin(), [](auto const &kv) {
+    return std::make_pair(kv.first, kv.second->serialize());
+  });
+
+  return Utils::pack(state);
 }
 
 /**
@@ -95,8 +147,20 @@ std::string ObjectHandle::serialize() const {
  *        as returned by serialize().
  */
 std::shared_ptr<ObjectHandle>
-ObjectHandle::unserialize(std::string const &state) {
-  return {};
+ObjectHandle::unserialize(std::string const &state_) {
+  auto state = Utils::unpack<ObjectState>(state_);
+
+  std::unordered_map<ObjectId, ObjectRef> objects;
+  boost::transform(state.objects, std::inserter(objects, objects.end()), [](auto const& kv) {
+    return std::make_pair(kv.first, unserialize(kv.second));
+  });
+
+  VariantMap params;
+  for(auto const&kv: state.params) {
+    params[kv.first] = boost::apply_visitor(UnpackVisitor(objects), kv.second);
+  }
+
+  return make_shared(state.name, state.policy, params);
 }
 
 void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
@@ -139,42 +203,6 @@ void ObjectHandle::initialize(::Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;
 }
 
-PackedVariant ObjectHandle::get_state() const {
-  std::vector<PackedVariant> state;
-
-  auto params = this->get_parameters();
-  state.reserve(3 + params.size());
-
-  state.push_back(static_cast<int>(m_policy));
-  state.push_back(m_name);
-
-  for (auto const &p : params) {
-    state.push_back(std::vector<PackedVariant>{
-        {p.first, boost::apply_visitor(Serializer{}, p.second)}});
-  }
-
-  return state;
-}
-
-void ObjectHandle::set_state(Variant const &state) {
-  using boost::get;
-  using boost::make_iterator_range;
-  using std::vector;
-
-  auto const &state_ = get<vector<Variant>>(state);
-  auto const policy = CreationPolicy(get<int>(state_.at(0)));
-  auto const &name = get<std::string>(state_.at(1));
-
-  VariantMap params;
-
-  /*
-  UnSerializer u;
-  for (auto const &v : make_iterator_range(state_.begin() + 2, state_.end())) {
-    auto const &p = get<vector<Variant>>(v);
-    params[get<std::string>(p.at(0))] = boost::apply_visitor(u, p.at(1));
-  }
-  */
-
-  this->construct(params, policy, name);
-}
+PackedVariant ObjectHandle::get_state() const {}
+void ObjectHandle::set_state(Variant const &state) {}
 } /* namespace ScriptInterface */

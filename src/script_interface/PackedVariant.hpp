@@ -22,36 +22,40 @@ using PackedVariant = boost::make_recursive_variant<
 
 using PackedMap = std::vector<std::pair<std::string, PackedVariant>>;
 
-struct PackVisitor
-    : recursive_visitor<PackVisitor, Variant, PackedVariant> {
-  using recursive_visitor<PackVisitor, Variant, PackedVariant>::
-  operator();
+struct PackVisitor : recursive_visitor<PackVisitor, Variant, PackedVariant> {
+private:
+  mutable std::unordered_map<ObjectId, ObjectRef> m_objects;
 
+public:
+  auto const &objects() const { return m_objects; }
+
+  using recursive_visitor<PackVisitor, Variant, PackedVariant>::operator();
   template <class T> PackedVariant operator()(T &&val) const {
     return std::forward<T>(val);
   }
 
   PackedVariant operator()(const ObjectRef &so_ptr) const {
-    return object_id(so_ptr);
+    auto const oid = object_id(so_ptr);
+    m_objects[oid] = so_ptr;
+
+    return oid;
   }
 };
 
 struct UnpackVisitor
     : recursive_visitor<UnpackVisitor, PackedVariant, Variant> {
-  std::unordered_map<ObjectId, ObjectRef> const &local_objects;
+  std::unordered_map<ObjectId, ObjectRef> const &objects;
 
-  explicit UnpackVisitor(
-      std::unordered_map<ObjectId, ObjectRef> const &local_objects)
-      : local_objects(local_objects) {}
+  explicit UnpackVisitor(std::unordered_map<ObjectId, ObjectRef> const &objects)
+      : objects(objects) {}
 
-  using recursive_visitor<UnpackVisitor, PackedVariant, Variant>::
-  operator();
+  using recursive_visitor<UnpackVisitor, PackedVariant, Variant>::operator();
 
   template <class T> Variant operator()(T &&val) const {
     return std::forward<T>(val);
   }
 
-  Variant operator()(const ObjectId &id) const { return local_objects.at(id); }
+  Variant operator()(const ObjectId &id) const { return objects.at(id); }
 };
 
 inline PackedVariant pack(const Variant &v) {
@@ -59,8 +63,8 @@ inline PackedVariant pack(const Variant &v) {
 }
 
 inline Variant unpack(const PackedVariant &v,
-               std::unordered_map<ObjectId, ObjectRef> const &local_objects) {
-  return boost::apply_visitor(UnpackVisitor{local_objects}, v);
+                      std::unordered_map<ObjectId, ObjectRef> const &objects) {
+  return boost::apply_visitor(UnpackVisitor{objects}, v);
 }
 
 inline PackedMap pack(const VariantMap &v) {
@@ -73,14 +77,16 @@ inline PackedMap pack(const VariantMap &v) {
   return ret;
 }
 
-inline VariantMap unpack(const PackedMap &v,
-                  std::unordered_map<ObjectId, ObjectRef> const&local_objects) {
+inline VariantMap
+unpack(const PackedMap &v,
+       std::unordered_map<ObjectId, ObjectRef> const &objects) {
   VariantMap ret;
 
-  boost::transform(v, std::inserter(ret, ret.end()), [&local_objects](auto const &kv) {
-    return std::pair<std::string, Variant>{kv.first,
-                                           unpack(kv.second, local_objects)};
-  });
+  boost::transform(v, std::inserter(ret, ret.end()),
+                   [&objects](auto const &kv) {
+                     return std::pair<std::string, Variant>{
+                         kv.first, unpack(kv.second, objects)};
+                   });
 
   return ret;
 }
