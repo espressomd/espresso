@@ -166,19 +166,12 @@ public:
               const VariantMap &parameters = {});
 
 public:
-  virtual std::string serialize() const;
+  std::string serialize() const;
   static std::shared_ptr<ObjectHandle> unserialize(std::string const &state);
 
-/**
- * @brief  Return a Variant representation of the state of the object.
- *
- * This should return the internal state of the instance, so that
- * the instance can be restored from this information.  The default
- * implementation stores all the public parameters, including object
- * parameters that are captured by calling get_state on them.
- */
-  virtual PackedVariant get_state() const;
-  virtual void set_state(Variant const &state);
+private:
+  virtual std::string get_internal_state() const { return {}; }
+  virtual void set_internal_state(std::string const &state) {}
 };
 } /* namespace ScriptInterface */
 #endif

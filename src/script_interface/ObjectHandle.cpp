@@ -26,6 +26,7 @@
 #include <utils/serialization/pack.hpp>
 
 #include <boost/range/algorithm/for_each.hpp>
+#include <boost/range/algorithm/transform.hpp>
 #include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
@@ -107,9 +108,10 @@ struct ObjectState {
   ObjectHandle::CreationPolicy policy;
   PackedMap params;
   std::vector<std::pair<ObjectId, std::string>> objects;
+  std::string internal_state;
 
   template <class Archive> void serialize(Archive &ar, long int) {
-    ar &name &policy &params &objects;
+    ar &name &policy &params &objects &internal_state;
   }
 };
 
@@ -118,9 +120,7 @@ struct ObjectState {
  *        the instance, as returned by get_state().
  */
 std::string ObjectHandle::serialize() const {
-  ObjectState state{
-    name(), policy(), {}, {}
-  };
+  ObjectState state{name(), policy(), {}, {}, get_internal_state()};
 
   auto const params = get_parameters();
   state.params.resize(params.size());
@@ -151,16 +151,20 @@ ObjectHandle::unserialize(std::string const &state_) {
   auto state = Utils::unpack<ObjectState>(state_);
 
   std::unordered_map<ObjectId, ObjectRef> objects;
-  boost::transform(state.objects, std::inserter(objects, objects.end()), [](auto const& kv) {
-    return std::make_pair(kv.first, unserialize(kv.second));
-  });
+  boost::transform(state.objects, std::inserter(objects, objects.end()),
+                   [](auto const &kv) {
+                     return std::make_pair(kv.first, unserialize(kv.second));
+                   });
 
   VariantMap params;
-  for(auto const&kv: state.params) {
+  for (auto const &kv : state.params) {
     params[kv.first] = boost::apply_visitor(UnpackVisitor(objects), kv.second);
   }
 
-  return make_shared(state.name, state.policy, params);
+  auto so = make_shared(state.name, state.policy, params);
+  so->set_internal_state(state.internal_state);
+
+  return so;
 }
 
 void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
@@ -202,7 +206,4 @@ ObjectHandle::~ObjectHandle() {
 void ObjectHandle::initialize(::Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;
 }
-
-PackedVariant ObjectHandle::get_state() const {}
-void ObjectHandle::set_state(Variant const &state) {}
 } /* namespace ScriptInterface */

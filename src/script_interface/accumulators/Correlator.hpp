@@ -108,6 +108,14 @@ private:
 
   std::shared_ptr<Observables::Observable> m_obs1;
   std::shared_ptr<Observables::Observable> m_obs2;
+
+  std::string get_internal_state() const override {
+    return m_correlator->get_internal_state();
+  }
+
+  void set_internal_state(std::string const &state) {
+    m_correlator->set_internal_state(state);
+  }
 };
 
 } // namespace Accumulators

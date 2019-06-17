@@ -84,6 +84,14 @@ private:
   /* The actual accumulator */
   std::shared_ptr<::Accumulators::TimeSeries> m_accumulator;
   std::shared_ptr<Observables::Observable> m_obs;
+
+  std::string get_internal_state() const override {
+    return m_accumulator->get_internal_state();
+  }
+
+  void set_internal_state(std::string const &state) {
+    m_accumulator->set_internal_state(state);
+  }
 };
 
 } // namespace Accumulators

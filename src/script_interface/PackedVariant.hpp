@@ -13,8 +13,10 @@ using ObjectId = std::size_t;
 inline ObjectId object_id(const ObjectHandle *p) {
   return std::hash<const ObjectHandle *>{}(p);
 }
-inline ObjectId object_id(ObjectRef const &p) { return object_id(p.get()); }
 
+/**
+ * @brief Variant value with references replaced by ids.
+ */
 using PackedVariant = boost::make_recursive_variant<
     None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
     ObjectId, std::vector<boost::recursive_variant_>, Utils::Vector2d,
@@ -35,7 +37,7 @@ public:
   }
 
   PackedVariant operator()(const ObjectRef &so_ptr) const {
-    auto const oid = object_id(so_ptr);
+    auto const oid = object_id(so_ptr.get());
     m_objects[oid] = so_ptr;
 
     return oid;

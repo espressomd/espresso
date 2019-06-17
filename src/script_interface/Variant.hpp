@@ -24,11 +24,11 @@
 
 #include <boost/variant.hpp>
 
+#include <boost/range/algorithm/transform.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
-#include <boost/range/algorithm/transform.hpp>
 
 #include <unordered_map>
 
@@ -81,7 +81,8 @@ inline bool is_none(Variant const &v) { return is_type<None>(v); }
 
 template <class D, class V, class R>
 struct recursive_visitor : boost::static_visitor<R> {
-  std::enable_if_t<not std::is_void<R>::value, R> operator()(const std::vector<V> &vec) const {
+  std::enable_if_t<not std::is_void<R>::value, R>
+  operator()(const std::vector<V> &vec) const {
     std::vector<R> ret(vec.size());
 
     boost::transform(vec, ret.begin(),

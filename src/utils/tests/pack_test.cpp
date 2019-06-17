@@ -24,7 +24,7 @@
 #include <utils/serialization/pack.hpp>
 
 BOOST_AUTO_TEST_CASE(pack_unpack_test) {
-  int  const orig = 42;
+  int const orig = 42;
   auto const unpacked = Utils::unpack<int>(Utils::pack(orig));
 
   BOOST_CHECK_EQUAL(orig, unpacked);
