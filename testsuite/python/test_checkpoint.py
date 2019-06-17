@@ -213,7 +213,8 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(EK or not (espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
     def test_lb_boundaries(self):
         self.assertEqual(len(system.lbboundaries), 1)
-        np.testing.assert_allclose(system.lbboundaries[0].velocity, [1, 1, 0])
+        np.testing.assert_allclose(
+            np.copy(system.lbboundaries[0].velocity), [1, 1, 0])
         self.assertEqual(type(system.lbboundaries[0].shape), Wall)
 
     def test_constraints(self):
