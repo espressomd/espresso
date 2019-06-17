@@ -79,7 +79,7 @@ int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
 int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
                    int const MPC, int const N_CI, double const val_nodes,
                    double const val_cM, double const val_CI, int const cM_dist,
-                   int const nonet) {
+                   bool const nonet) {
   Utils::Vector3d pos;
   double const off = bond_length / sqrt(3);
   auto const dnodes =
@@ -127,7 +127,7 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
       int bond[2];
       bond[0] = type_bond;
       if (k == 1) {
-        if (nonet != 1) {
+        if (!nonet) {
           bond[1] = chain[0];
           add_particle_bond(part_id, bond);
         }
@@ -135,7 +135,7 @@ int create_diamond(PartCfg &partCfg, double const a, double const bond_length,
         bond[1] = part_id - 1;
         add_particle_bond(part_id, bond);
       }
-      if ((k == MPC) && (nonet != 1)) {
+      if ((k == MPC) && (!nonet)) {
         bond[1] = chain[1];
         add_particle_bond(part_id, bond);
       }

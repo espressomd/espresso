@@ -26,8 +26,8 @@ cdef class Diamond(object):
         Valency of the charge bearing monomers.
     val_CI : :obj:`float`, optional
         Valency of the counterions.
-    nonet : :obj:`int`, optional
-        0 creates network, 1 does not crosslink the individual polymers.
+    nonet : :obj:`bool`, optional
+        False creates network, True does not crosslink the individual polymers.
 
     """
 
@@ -80,7 +80,7 @@ cdef class Diamond(object):
             raise ValueError(
                 "The distance between two charged monomers' indices must be integer ", self._params[valid_keys[7]])
         if(self._params[valid_keys[7]] == "nonet"):
-            self._params[valid_keys[7]] = 1
+            self._params[valid_keys[7]] = True
         if(bonded_ia_params.size() == 0):
             raise ValueError(
                 "Please define a bonded interaction [0] before setting up polymers!")
