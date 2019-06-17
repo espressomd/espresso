@@ -38,6 +38,13 @@ cdef extern from "TabulatedPotential.hpp":
         vector[double] energy_tab
         vector[double] force_tab
 
+cdef extern from "dpd.hpp":
+    cdef struct DPDParameters:
+        double gamma
+        double cutoff
+        int wf
+        double pref
+
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef struct IA_parameters:
         double LJ_eps
@@ -134,16 +141,8 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double Gaussian_sig
         double Gaussian_cut
 
-        int dpd_wf
-        int dpd_twf
-        double dpd_gamma
-        double dpd_r_cut
-        double dpd_pref1
-        double dpd_pref2
-        double dpd_tgamma
-        double dpd_tr_cut
-        double dpd_pref3
-        double dpd_pref4
+        DPDParameters dpd_radial
+        DPDParameters dpd_trans
 
         double HAT_Fmax
         double HAT_r

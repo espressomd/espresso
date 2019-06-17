@@ -21,5 +21,10 @@
 from __future__ import print_function, absolute_import
 cimport numpy as np
 from espressomd.utils cimport *
+from .utils cimport Vector9d
+
 cdef extern from "energy.hpp":
     double calculate_current_potential_energy_of_system()
+
+cdef extern from "dpd.hpp":
+    Vector9d dpd_stress()
