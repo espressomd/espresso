@@ -30,7 +30,7 @@ IF SCAFACOS == 1:
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type, to_str
 from . cimport checks
-from .c_analyze cimport partCfg, PartCfg
+from .analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
 
 
