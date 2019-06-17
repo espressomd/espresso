@@ -67,11 +67,11 @@ class Analysis(object):
     #
 
     def min_dist2(self, p1, p2):
-        """Minimal distance between two three dimensional coordinates p1 and p2.
+        """Minimal distance between two three-dimensional coordinates p1 and p2.
 
         Parameters
         ----------
-        p1, p2
+        p1, p2 : arrays of :obj:`float`
 
         """
         cdef double p1c[3]
@@ -86,7 +86,9 @@ class Analysis(object):
 
         Parameters
         ----------
-        p1, p2 : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+        p1, p2 : lists of :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` in
+            both sets.
 
         """
 
@@ -123,10 +125,10 @@ class Analysis(object):
 
         Parameters
         ----------
-        id : :obj:`int`, optional (:attr:`espressomd.particle_data.ParticleHandle.id`)
-             Calculate distance to particle with id `id`.
+        id : :obj:`int`, optional
+            Calculate distance to particle with :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
         pos : array of :obj:`float`, optional
-              Calculate distance to position `pos`.
+            Calculate distance to position `pos`.
 
         Returns
         -------
@@ -177,11 +179,11 @@ class Analysis(object):
         Parameters
         ----------
         include_particles : :obj:`bool`, optional
-                            whether to include the particles contribution to the linear
-                            momentum.
+            whether to include the particles contribution to the linear
+            momentum.
         include_lbfluid : :obj:`bool`, optional
-                          whether to include the Lattice Boltzmann fluid
-                          contribution to the linear momentum.
+            whether to include the Lattice Boltzmann fluid contribution
+            to the linear momentum.
 
         Returns
         -------
@@ -231,11 +233,11 @@ class Analysis(object):
         Parameters
         ----------
         pos : array of :obj:`float`
-              Reference position for the neighborhood.
+            Reference position for the neighborhood.
         r_catch : :obj:`float`
-                  Radius of the region.
+            Radius of the region.
         plane : :obj:`str`, \{'xy', 'xz', 'yz'\}
-                If given, `r_catch` is the distance to the respective plane.
+            If given, `r_catch` is the distance to the respective plane.
 
         Returns
         -------
@@ -284,19 +286,19 @@ class Analysis(object):
         Parameters
         ----------
         center : array_like :obj:`float`
-                 Coordinates of the centre of the cylinder.
+            Coordinates of the centre of the cylinder.
         axis : array_like :obj:`float`
-               Axis vectory of the cylinder, does not need to be normalized.
+            Axis vectory of the cylinder, does not need to be normalized.
         length : :obj:`float`
-                 Length of the cylinder.
+            Length of the cylinder.
         radius : :obj:`float`
-                 Radius of the cylinder.
+            Radius of the cylinder.
         bins_axial : :obj:`int`
-                     Number of axial bins.
+            Number of axial bins.
         bins_radial : :obj:`int`
-                      Number of radial bins.
-        types : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                A list of type IDs.
+            Number of radial bins.
+        types : lists of :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type`
 
         Returns
         -------
@@ -380,21 +382,22 @@ class Analysis(object):
 
         Returns
         -------
-        A dictionary with the following keys:
+        dict
+            A dictionary with the following keys:
 
-        * "total", total pressure
-        * "kinetic", kinetic pressure
-        * "bonded" , total bonded pressure
-        * "bonded", bond_type , bonded pressure which arises from the given bond_type
-        * "nonbonded", total nonbonded pressure
-        * "nonbonded", type_i, type_j, nonbonded pressure which arises from the interactions between type_i and type_j
-        * "nonbonded_intra", type_i, type_j, nonbonded pressure between short ranged forces between type i and j and with the same mol_id
-        * "nonbonded_inter" type_i, type_j", nonbonded pressure between short ranged forces between type i and j and different mol_ids
-        * "coulomb", Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the coulomb stress tensor.
-          For how the stress tensor is calculated see below. The averaged value in an isotropic NVT simulation is equivalent to the average of
-          :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
-        * "dipolar", TODO
-        * "virtual_sites", Stress contribution due to virtual sites
+            * ``"total"``: total pressure
+            * ``"kinetic"``: kinetic pressure
+            * ``"bonded"``: total bonded pressure
+            * ``"bonded", <bond_type>``: bonded pressure which arises from the given bond_type
+            * ``"nonbonded"``: total nonbonded pressure
+            * ``"nonbonded", <type_i>, <type_j>``: nonbonded pressure which arises from the interactions between type_i and type_j
+            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and with the same mol_id
+            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and different mol_ids
+            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb stress tensor.
+              For how the stress tensor is calculated, see below. The averaged value in an isotropic NVT simulation is equivalent to the average of
+              :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
+            * ``"dipolar"``: TODO
+            * ``"virtual_sites"``: Stress contribution due to virtual sites
 
         """
         v_comp = int(v_comp)
@@ -483,23 +486,30 @@ class Analysis(object):
         return p
 
     def stress_tensor(self, v_comp=False):
-        """Calculates the instantaneous stress tensor (in parallel). This is sensible in an anisotropic system. Still it assumes that the system is homogeneous since the volume averaged stress tensor is used. Do not use this stress tensor in an (on average) inhomogeneous system. If the system is (on average inhomogeneous) then use a local stress tensor. In order to obtain the stress tensor the ensemble average needs to be calculated.
+        """Calculates the instantaneous stress tensor (in parallel). This is
+        sensible in an anisotropic system. Still it assumes that the system is
+        homogeneous since the volume averaged stress tensor is used. Do not use
+        this stress tensor in an (on average) inhomogeneous system. If the
+        system is (on average inhomogeneous) then use a local stress tensor.
+        In order to obtain the stress tensor the ensemble average needs to be
+        calculated.
 
         Returns
         -------
-        a dictionary with the following keys:
+        dict
+            A dictionary with the following keys:
 
-        * "total", total stress tensor
-        * "kinetic", kinetic stress tensor
-        * "bonded" , total bonded stress tensor
-        * "{bonded, bond_type}" , bonded stress tensor which arises from the given bond_type
-        * "nonbonded", total nonbonded stress tensor
-        * "nonbonded type_i", type_j, nonbonded stress tensor which arises from the interactions between type_i and type_j
-        * "nonbonded_intra type_i" type_j, nonbonded stress tensor between short ranged forces between type i and j and with the same mol_id
-        * "nonbonded_inter type_i", type_j, nonbonded stress tensor between short ranged forces between type i and j and different mol_ids
-        * "coulomb", Maxwell stress tensor, how it is calculated depends on the method
-        * "dipolar", TODO
-        * "virtual_sites", Stress tensor contribution for virtual sites
+            * ``"total"``: total stress tensor
+            * ``"kinetic"``: kinetic stress tensor
+            * ``"bonded"``: total bonded stress tensor
+            * ``"bonded", <bond_type>``: bonded stress tensor which arises from the given bond_type
+            * ``"nonbonded"``: total nonbonded stress tensor
+            * ``"nonbonded", <type_i>, <type_j>``: nonbonded stress tensor which arises from the interactions between type_i and type_j
+            * ``"nonbonded_intra" <type_i>, <type_j>``: nonbonded stress tensor between short ranged forces between type i and j and with the same mol_id
+            * ``"nonbonded_inter" <type_i>, <type_j>``: nonbonded stress tensor between short ranged forces between type i and j and different mol_ids
+            * ``"coulomb"``: Maxwell stress tensor, how it is calculated depends on the method
+            * ``"dipolar"``: TODO
+            * ``"virtual_sites"``: Stress tensor contribution for virtual sites
 
         """
         v_comp = int(v_comp)
@@ -620,7 +630,9 @@ class Analysis(object):
 
         Returns
         -------
-        :obj:`dict` {'total', 'kinetic', 'bonded', 'nonbonded', ['coulomb'], 'external_fields'}
+        :obj:`dict`
+            A dictionary with keys `total`, `kinetic`, `bonded`, `nonbonded`,
+            `coulomb`, `external_fields`.
 
 
         Examples
@@ -723,19 +735,18 @@ class Analysis(object):
         Parameters
         ----------
         chain_start : :obj:`int`
-                      The id of the first monomer of the first chain.
+            The id of the first monomer of the first chain.
         number_of_chains : :obj:`int`
-                           Number of chains contained in the range.
+            Number of chains contained in the range.
         chain_length : :obj:`int`
-                       The length of every chain.
+            The length of every chain.
 
         Returns
         -------
-        array_like :obj:`float` :
-                     Where [0] is the Mean end-to-end distance of chains
-                     and [1] its standard deviation,
-                     [2] the Mean Square end-to-end distance
-                     and [3] its standard deviation.
+        array_like :obj:`float`
+            Where [0] is the Mean end-to-end distance of chains and [1] its
+            standard deviation, [2] the Mean Square end-to-end distance and
+            [3] its standard deviation.
 
         """
         cdef double * re = NULL
@@ -759,19 +770,18 @@ class Analysis(object):
         Parameters
         ----------
         chain_start : :obj:`int`
-                      The id of the first monomer of the first chain.
+            The id of the first monomer of the first chain.
         number_of_chains : :obj:`int`
-                           Number of chains contained in the range.
+            Number of chains contained in the range.
         chain_length : :obj:`int`
-                       The length of every chain.
+            The length of every chain.
 
         Returns
         -------
-        array_like :obj:`float` :
-                     Where [0] is the Mean radius of gyration of the chains
-                     and [1] its standard deviation,
-                     [2] the Mean Square radius of gyration
-                     and [3] its standard deviation.
+        array_like :obj:`float`
+            Where [0] is the Mean radius of gyration of the chains and [1] its
+            standard deviation, [2] the Mean Square radius of gyration and [3]
+            its standard deviation.
 
         """
         cdef double * rg = NULL
@@ -794,17 +804,17 @@ class Analysis(object):
         Parameters
         ----------
         chain_start : :obj:`int`
-                      The id of the first monomer of the first chain
+            The id of the first monomer of the first chain
         number_of_chains : :obj:`int`
-                           Number of chains contained in the range.
+            Number of chains contained in the range.
         chain_length : :obj:`int`
-                       The length of every chain.
+            The length of every chain.
 
         Returns
         -------
         array_like :obj:`float`:
             Where [0] is the mean hydrodynamic radius of the chains
-            and [1] its standard deviation,
+            and [1] its standard deviation.
 
         """
 
@@ -847,16 +857,17 @@ class Analysis(object):
 
         Parameters
         ----------
-        sf_types : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-            Specifies which particle type should be considered.
+        sf_types : list of :obj:`int`
+            Specifies which particle :attr:`~espressomd.particle_data.ParticleHandle.type`
+            should be considered.
         sf_order : :obj:`int`
             Specifies the maximum wavevector.
 
         Returns
         -------
         array_like
-          Where [0] contains q
-          and [1] contains the structure factor s(q)
+            Where [0] contains q
+            and [1] contains the structure factor s(q)
 
         """
 
@@ -887,26 +898,26 @@ class Analysis(object):
         Parameters
         ----------
         rdf_type : :obj:`str`
-                   'rdf' or '<rdf>'.
-        type_list_a : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                      Left types of the rdf.
-        type_list_b : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`), optional
-                      Right types of the rdf.
+            ``'rdf'`` or ``'<rdf>'``.
+        type_list_a : lists of :obj:`int`
+            Left :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
+        type_list_b : lists of :obj:`int`, optional
+            Right :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
         r_min : :obj:`float`
-                Minimal distance to consider.
+            Minimal distance to consider.
         r_max : :obj:`float`
-                Maximal distance to consider
+            Maximal distance to consider
         r_bins : :obj:`int`
-                 Number of bins.
+            Number of bins.
         n_conf : :obj:`int`, optional
-                 If rdf_type is '<rdf>' this determines
-                 the number of stored configs that are used.
+            If rdf_type is ``'<rdf>'`` this determines
+            the number of stored configs that are used.
 
         Returns
         -------
         array_like
-          Where [0] contains the midpoints of the bins,
-          and [1] contains the values of the rdf.
+            Where [0] contains the midpoints of the bins,
+            and [1] contains the values of the rdf.
 
         """
 
@@ -972,27 +983,29 @@ class Analysis(object):
 
         Parameters
         ----------
-        type_list_a : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                      List of particle types, only consider distances from these types.
-        type_list_b : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                      List of particle types, only consider distances to these types.
+        type_list_a : list of :obj:`int`
+            List of particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
+            only consider distances from these types.
+        type_list_b : list of :obj:`int`
+            List of particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
+            only consider distances to these types.
         r_min : :obj:`float`
-                Minimum distance.
+            Minimum distance.
         r_max : :obj:`float`
-                Maximum distance.
+            Maximum distance.
         r_bins : :obj:`int`
-                 Number of bins.
+            Number of bins.
         log_flag : :obj:`int`
-                   When set to 0, the bins are linearly equidistant; when set
-                   to 1, the bins are logarithmically equidistant.
+            When set to 0, the bins are linearly equidistant; when set to 1,
+            the bins are logarithmically equidistant.
         int_flag : :obj:`int`
-                   When set to 1, the result is an integrated distribution.
+            When set to 1, the result is an integrated distribution.
 
         Returns
         -------
         array_like
-          Where [0] contains the midpoints of the bins,
-          and [1] contains the values of the rdf.
+            Where [0] contains the midpoints of the bins,
+            and [1] contains the values of the rdf.
 
         """
 
@@ -1071,19 +1084,22 @@ class Analysis(object):
 
         Parameters
         ----------
-        p_type : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`), optional
-                 A particle type, or list of all particle types to be considered.
+        p_type : list of :obj:`int`, optional
+            A particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
+            or list of all particle types to be considered.
 
         Returns
         -------
-        A dictionary with the following keys:
+        dict
+            A dictionary with the following keys:
 
-        * "Rg^2", squared radius of gyration
-        * "shape", three shape descriptors (asphericity, acylindricity, and relative shape anisotropy)
-        * "eva0", eigenvalue 0 of the gyration tensor and its corresponding eigenvector.
-        * "eva1", eigenvalue 1 of the gyration tensor and its corresponding eigenvector.
-        * "eva2", eigenvalue 2 of the gyration tensor and its corresponding eigenvector.
-        The eigenvalues are sorted in descending order.
+            * ``"Rg^2"``: squared radius of gyration
+            * ``"shape"``: three shape descriptors (asphericity, acylindricity, and relative shape anisotropy)
+            * ``"eva0"``: eigenvalue 0 of the gyration tensor and its corresponding eigenvector.
+            * ``"eva1"``: eigenvalue 1 of the gyration tensor and its corresponding eigenvector.
+            * ``"eva2"``: eigenvalue 2 of the gyration tensor and its corresponding eigenvector.
+
+            The eigenvalues are sorted in descending order.
 
         """
         if p_type is None:
@@ -1129,8 +1145,8 @@ class Analysis(object):
 
         Parameters
         ----------
-        p_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                 A particle type
+        p_type : :obj:`int`
+            A particle :attr:`~espressomd.particle_data.ParticleHandle.type`
 
         Returns
         -------
@@ -1176,13 +1192,13 @@ class Analysis(object):
         Parameters
         ----------
         mode : :obj:`str`
-               One of `read`, `set` or `reset`.
+            One of ```read```, ```set``` or ```reset```.
         Vk1 : :obj:`float`
-              Volume.
+            Volume.
         Vk2 : :obj:`float`
-              Volume squared.
+            Volume squared.
         avk : :obj:`float`
-              Number of averages.
+            Number of averages.
 
         """
 

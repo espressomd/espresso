@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 # For C-extern Analysis
 
 from __future__ import print_function, absolute_import
@@ -70,17 +71,17 @@ cdef extern from "statistics.hpp":
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef vector[double] centerofmass(PartCfg &, int part_type)
-    cdef int calc_cylindrical_average(PartCfg & , vector[double] center,
-                                      vector[double] direction, double length,
-                                      double radius, int bins_axial,
-                                      int bins_radial, vector[int] types,
-                                      map[string, vector[vector[vector[double]]]] & distribution)
+    cdef int calc_cylindrical_average(
+        PartCfg &, vector[double] center, vector[double] direction,
+        double length, double radius, int bins_axial, int bins_radial,
+        vector[int] types, map[string, vector[vector[vector[double]]]] & distribution)
 
     void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
                   double r_min, double r_max, int r_bins, vector[double] rdf)
 
     void calc_rdf_av(PartCfg &, vector[int] p1_types, vector[int] p2_types,
-                     double r_min, double r_max, int r_bins, vector[double] rdf, int n_conf)
+                     double r_min, double r_max, int r_bins, vector[double] rdf,
+                     int n_conf)
 
     void angularmomentum(PartCfg &, int p_type, double * com)
 
@@ -90,8 +91,8 @@ cdef extern from "statistics.hpp":
 
     void calc_part_distribution(
         PartCfg & , int * p1_types, int n_p1, int * p2_types, int n_p2,
-                                double r_min, double r_max, int r_bins, int log_flag,
-                                double * low, double * dist)
+        double r_min, double r_max, int r_bins, int log_flag, double * low,
+        double * dist)
 
 cdef extern from "statistics_chain.hpp":
     int chain_start
