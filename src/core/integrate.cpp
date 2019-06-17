@@ -53,7 +53,6 @@
 #include "rattle.hpp"
 #include "rotation.hpp"
 #include "signalhandling.hpp"
-#include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
@@ -330,10 +329,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
-#endif
-
-#ifdef SWIMMER_REACTIONS
-    integrate_reaction();
 #endif
 
     /* Integration Step: Step 4 of Velocity Verlet scheme:

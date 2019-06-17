@@ -297,7 +297,6 @@ Currently, the following tutorials are available:
 * :file:`06-active_matter`: Modelling of self-propelling particles.
 * :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`08-visualization`: Using the online visualizers of |es|.
-* :file:`09-swimmer_reactions`: Further modelling of self-propelling particles.
 * :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble.
 
 .. _Sample scripts:

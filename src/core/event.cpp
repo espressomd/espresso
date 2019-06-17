@@ -51,7 +51,6 @@
 #include "reaction_ensemble.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
-#include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
@@ -96,12 +95,6 @@ void on_program_start() {
   }
 #endif
 
-#ifdef SWIMMER_REACTIONS
-  reaction.eq_rate = 0.0;
-  reaction.sing_mult = 0;
-  reaction.swap = 0;
-#endif
-
   /*
     call all initializations to do only on the master node here.
   */
@@ -127,9 +120,6 @@ void on_integration_start() {
   integrator_npt_sanity_checks();
 #endif
   interactions_sanity_checks();
-#ifdef SWIMMER_REACTIONS
-  reactions_sanity_checks();
-#endif
   lb_lbfluid_on_integration_start();
 
   /********************************************/
