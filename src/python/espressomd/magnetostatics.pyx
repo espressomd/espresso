@@ -77,8 +77,9 @@ IF DP3M == 1:
             Ewald parameter.
         cao : :obj:`int`
             Charge-assignment order, an integer between -1 and 7.
-        mesh : :obj:`int` or array_like
-            Number of mesh points.
+        mesh : :obj:`int` or array_like of :obj:`int`
+            The number of mesh points in x, y and z direction. Use a single
+            value for cubic boxes.
         mesh_off : array_like :obj:`float`
             Mesh offset.
         r_cut : :obj:`float`
@@ -99,7 +100,7 @@ IF DP3M == 1:
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"])):
+            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"]) == 3):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
