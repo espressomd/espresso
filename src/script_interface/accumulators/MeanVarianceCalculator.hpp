@@ -92,11 +92,11 @@ private:
   std::shared_ptr<Observables::Observable> m_obs;
 
   std::string get_internal_state() const override {
-      return m_accumulator->get_internal_state();
+    return m_accumulator->get_internal_state();
   }
 
-  void set_internal_state(std::string const& state) {
-      m_accumulator->set_internal_state(state);
+  void set_internal_state(std::string const &state) override {
+    m_accumulator->set_internal_state(state);
   }
 };
 

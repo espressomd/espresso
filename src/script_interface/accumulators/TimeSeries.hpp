@@ -89,7 +89,7 @@ private:
     return m_accumulator->get_internal_state();
   }
 
-  void set_internal_state(std::string const &state) {
+  void set_internal_state(std::string const &state) override {
     m_accumulator->set_internal_state(state);
   }
 };

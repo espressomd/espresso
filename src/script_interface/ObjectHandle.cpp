@@ -20,6 +20,7 @@
 */
 
 #include "ObjectHandle.hpp"
+#include "MpiCallbacks.hpp"
 #include "PackedVariant.hpp"
 #include "ScriptInterface.hpp"
 
@@ -206,11 +207,13 @@ Variant ObjectHandle::call_method(const std::string &name,
   return this->do_call_method(name, params);
 }
 
-ObjectHandle::~ObjectHandle() {
+void ObjectHandle::delete_remote() {
   if (m_policy == CreationPolicy::GLOBAL) {
     m_callbacks->call(delete_remote_handle, object_id(this));
   }
 }
+
+ObjectHandle::~ObjectHandle() { this->do_destroy(); }
 
 void ObjectHandle::initialize(::Communication::MpiCallbacks &cb) {
   m_callbacks = &cb;

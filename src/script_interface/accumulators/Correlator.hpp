@@ -113,7 +113,7 @@ private:
     return m_correlator->get_internal_state();
   }
 
-  void set_internal_state(std::string const &state) {
+  void set_internal_state(std::string const &state) override {
     m_correlator->set_internal_state(state);
   }
 };

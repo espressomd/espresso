@@ -19,18 +19,15 @@
 
 #ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
 #define SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
-
-#include "MpiCallbacks.hpp"
-#include "PackedVariant.hpp"
 #include "Variant.hpp"
 
 #include <utils/Span.hpp>
 
-#include <boost/optional.hpp>
 #include <boost/utility/string_ref.hpp>
 
-#include <map>
-#include <memory>
+namespace Communication {
+class MpiCallbacks;
+}
 
 namespace ScriptInterface {
 /**
@@ -72,6 +69,10 @@ public:
    */
   CreationPolicy policy() const { return m_policy; }
 
+private:
+  void construct(VariantMap const &params, CreationPolicy policy,
+                 const std::string &name);
+
   /**
    * @brief Constructor
    *
@@ -88,10 +89,6 @@ public:
    * @param params The parameters to the constructor. Only parameters that
    *               are valid for a default-constructed object are valid.
    */
-  void construct(VariantMap const &params, CreationPolicy policy,
-                 const std::string &name);
-
-private:
   virtual void do_construct(VariantMap const &params) {
     for (auto const &p : params) {
       do_set_parameter(p.first, p.second);
@@ -172,6 +169,25 @@ public:
 private:
   virtual std::string get_internal_state() const { return {}; }
   virtual void set_internal_state(std::string const &state) {}
+
+  /**
+   * @brief Call from the destructor of the Handle.
+   *
+   * This can use to customize the deletion of objects, e.g.
+   * to change when the remote objects if any are deleted.
+   * The default implementation just delets all remote instances.
+   *
+   */
+  virtual void do_destroy() { delete_remote(); }
+
+protected:
+  /**
+   * @brief Delete remote instance of this object.
+   *
+   * Explicitly delete instances on other nodes, if any.
+   * This can only be called once.
+   */
+  void delete_remote();
 };
 } /* namespace ScriptInterface */
 #endif
