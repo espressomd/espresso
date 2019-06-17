@@ -108,7 +108,6 @@ class TestLB(object):
         all_temp_particle = []
         all_temp_fluid = []
 
-        
         # Integration
         for i in range(self.params['int_times']):
             self.system.integrator.run(self.params['int_steps'])
@@ -125,7 +124,8 @@ class TestLB(object):
 
             # Normalize
             fluid_mass /= np.product(self.lbf.shape)
-            fluid_temp *= self.system.volume() / (3. * np.product(self.lbf.shape)**2)
+            fluid_temp *= self.system.volume() / (
+                3. * np.product(self.lbf.shape)**2)
 
             # check mass conversation
             self.assertAlmostEqual(fluid_mass, self.params["dens"],
