@@ -200,7 +200,7 @@ cdef class CellSystem(object):
 
         """
 
-        return mpi_resort_particles(global_flag)
+        return mpi_resort_particles(int(global_flag))
 
     property max_num_cells:
         """
