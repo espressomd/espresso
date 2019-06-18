@@ -56,7 +56,7 @@ cdef class Globals(object):
 
         def __get__(self):
             global periodic
-            periodicity = np.zeros(3, dtype=bool)
+            periodicity = np.zeros(3, dtype=np.bool)
             periodicity[0] = periodic % 2
             periodicity[1] = int(periodic / 2) % 2
             periodicity[2] = int(periodic / 4) % 2
