@@ -175,7 +175,7 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_array_equal(
             acc.get_variance(), np.array([0., 0.5, 2., 0., 0., 0.]))
 
-    @utx.skipIfMissingFeatures('ELECTROSTATICS')
+    @utx.skipIfMissingFeatures('P3M')
     @ut.skipIf('P3M.CPU' not in modes,
                "Skipping test due to missing combination.")
     def test_p3m(self):

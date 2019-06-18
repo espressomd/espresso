@@ -66,7 +66,7 @@ class pressureViaVolumeScaling(object):
         return pressure
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "LENNARD_JONES"])
+@utx.skipIfMissingFeatures(["P3M", "LENNARD_JONES"])
 class VirialPressureConsistency(ut.TestCase):
 
     """Test the consistency of the core implementation of the virial pressure
