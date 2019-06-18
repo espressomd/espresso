@@ -70,9 +70,6 @@ public:
   CreationPolicy policy() const { return m_policy; }
 
 private:
-  void construct(VariantMap const &params, CreationPolicy policy,
-                 const std::string &name);
-
   /**
    * @brief Constructor
    *
@@ -135,17 +132,23 @@ public:
   void set_parameter(const std::string &name, const Variant &value);
 
 private:
+  /**
+   * @brief Local implementation of @function set_parameter
+   */
   virtual void do_set_parameter(const std::string &, const Variant &) {}
 
 public:
   /**
    * @brief Call a method on the object.
-   *
-   * If not overridden by the implementation, this does nothing.
    */
   Variant call_method(const std::string &name, const VariantMap &params);
 
 private:
+  /**
+   * @brief Local implementation of @do_call_method
+   *
+   * If not overridden by the implementation, this does nothing.
+   */
   virtual Variant do_call_method(const std::string &, const VariantMap &) {
     return none;
   }
@@ -163,7 +166,15 @@ public:
               const VariantMap &parameters = {});
 
 public:
+  /**
+   * @brief Returns a binary representation of the state of the object.
+   */
   std::string serialize() const;
+
+  /**
+   * @brief Creates a new instance from a binary state,
+   *        as returned by @function serialize.
+   */
   static std::shared_ptr<ObjectHandle> unserialize(std::string const &state);
 
 private:
@@ -174,8 +185,8 @@ private:
    * @brief Call from the destructor of the Handle.
    *
    * This can use to customize the deletion of objects, e.g.
-   * to change when the remote objects if any are deleted.
-   * The default implementation just delets all remote instances.
+   * to change when the remote objects are deleted.
+   * The default implementation just deletes all remote instances.
    *
    */
   virtual void do_destroy() { delete_remote(); }

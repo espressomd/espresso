@@ -102,7 +102,14 @@ ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
                           const VariantMap &parameters) {
   auto sp = factory.make(name);
 
-  sp->construct(parameters, policy, name);
+  sp->m_name = name;
+  sp->m_policy = policy;
+
+  if (sp->m_policy == CreationPolicy::GLOBAL) {
+    m_callbacks->call(make_remote_handle, object_id(sp.get()), name, pack(parameters));
+  }
+
+  sp->do_construct(parameters);
 
   return sp;
 }
@@ -125,10 +132,6 @@ struct ObjectState {
   }
 };
 
-/**
- * @brief Returns a binary representation of the state often
- *        the instance, as returned by get_state().
- */
 std::string ObjectHandle::serialize() const {
   ObjectState state{name(), policy(), {}, {}, get_internal_state()};
 
@@ -152,10 +155,6 @@ std::string ObjectHandle::serialize() const {
   return Utils::pack(state);
 }
 
-/**
- * @brief Creates a new instance from a binary state,
- *        as returned by serialize().
- */
 std::shared_ptr<ObjectHandle>
 ObjectHandle::unserialize(std::string const &state_) {
   auto state = Utils::unpack<ObjectState>(state_);
@@ -175,18 +174,6 @@ ObjectHandle::unserialize(std::string const &state_) {
   so->set_internal_state(state.internal_state);
 
   return so;
-}
-
-void ObjectHandle::construct(VariantMap const &params, CreationPolicy policy,
-                             const std::string &name) {
-  m_name = name;
-  m_policy = policy;
-
-  if (m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(make_remote_handle, object_id(this), name, pack(params));
-  }
-
-  this->do_construct(params);
 }
 
 void ObjectHandle::set_parameter(const std::string &name,

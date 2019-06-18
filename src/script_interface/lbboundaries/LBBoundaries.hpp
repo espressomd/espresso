@@ -20,12 +20,13 @@
 #define SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARIES_HPP
 
 #include "LBBoundary.hpp"
+
 #include "core/grid_based_algorithms/lb_boundaries.hpp"
 #include "script_interface/ScriptInterface.hpp"
-#include "script_interface/ScriptObjectRegistry.hpp"
+#include "script_interface/ObjectList.hpp"
 namespace ScriptInterface {
 namespace LBBoundaries {
-class LBBoundaries : public ScriptObjectRegistry<LBBoundary> {
+class LBBoundaries : public ObjectList<LBBoundary> {
   void add_in_core(std::shared_ptr<LBBoundary> obj_ptr) override {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
     ::LBBoundaries::add(obj_ptr->lbboundary());

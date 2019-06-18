@@ -25,12 +25,13 @@
 #include "Constraint.hpp"
 
 #include "core/constraints.hpp"
+
 #include "script_interface/ScriptInterface.hpp"
-#include "script_interface/ScriptObjectRegistry.hpp"
+#include "script_interface/ObjectList.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {
-class Constraints : public ScriptObjectRegistry<Constraint> {
+class Constraints : public ObjectList<Constraint> {
   void add_in_core(std::shared_ptr<Constraint> obj_ptr) override {
     ::Constraints::constraints.add(obj_ptr->constraint());
   }

@@ -23,7 +23,8 @@
 #define SCRIPT_INTERFACE_SHAPES_SHAPE_UNION_HPP
 
 #include "Shape.hpp"
-#include "script_interface/ScriptObjectRegistry.hpp"
+#include "script_interface/ObjectList.hpp"
+
 #include <shapes/Union.hpp>
 
 namespace ScriptInterface {

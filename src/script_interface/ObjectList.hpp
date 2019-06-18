@@ -23,11 +23,18 @@
 #define SCRIPT_INTERFACE_REGISTRY_HPP
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/get_value.hpp"
 
 namespace ScriptInterface {
-
-template <typename ManagedType>
-class ScriptObjectRegistry : public ObjectHandle {
+/**
+ * @brief Owning list of ObjectHandles
+ * @tparam ManagedType Type of the managed objects, needs to be
+ *         derived from ObjectHandle
+ */
+template <
+    typename ManagedType,
+    class = std::enable_if_t<std::is_base_of<ObjectHandle, ManagedType>::value>>
+class ObjectList : public ObjectHandle {
 public:
   virtual void add_in_core(std::shared_ptr<ManagedType> obj_ptr) = 0;
   virtual void remove_in_core(std::shared_ptr<ManagedType> obj_ptr) = 0;
