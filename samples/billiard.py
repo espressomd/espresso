@@ -25,10 +25,6 @@ from threading import Thread
 
 import espressomd
 from espressomd import thermostat
-from espressomd import analyze
-from espressomd import integrate
-from espressomd import electrostatics
-from espressomd import minimize_energy
 import espressomd.interactions
 import espressomd.visualization_opengl
 import espressomd.shapes
