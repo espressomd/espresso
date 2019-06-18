@@ -216,10 +216,10 @@ cdef class System(object):
 
     property periodicity:
         """
-        list of three integers
+        list of three booleans
         [x, y, z]
-        zero for no periodicity in this direction
-        one for periodicity
+        False for no periodicity in this direction
+        True for periodicity
 
         """
 
@@ -229,7 +229,7 @@ cdef class System(object):
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
             for i in range(3):
-                if _periodic[i] != 1:
+                if not _periodic[i]:
                     IF PARTIAL_PERIODIC:
                         pass
                     ELSE:
