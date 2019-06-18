@@ -23,9 +23,6 @@ from __future__ import print_function
 import numpy as np
 
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
 from espressomd import reaction_ensemble
 from espressomd.interactions import HarmonicBond
 
