@@ -39,7 +39,7 @@ class pressureViaVolumeScaling(object):
         self.new_box_l = (self.new_volume)**(1. / 3.)
 
         self.list_of_previous_values = []
-    
+
     def measure_pressure_via_volume_scaling(self):
         # taken from "Efficient pressure estimation in molecular simulations
         # without evaluating the virial" only works so far for isotropic volume
@@ -58,7 +58,7 @@ class pressureViaVolumeScaling(object):
         current_value = (self.new_volume / self.old_volume)**particle_number * \
             np.exp(-DeltaEpot / self.kbT)
         self.list_of_previous_values.append(current_value)
-    
+
     def get_result(self):
         average_value = np.mean(self.list_of_previous_values)
 
@@ -90,7 +90,7 @@ class VirialPressureConsistency(ut.TestCase):
             epsilon=1.0, sigma=1.0, cutoff=2**(1.0 / 6.0), shift="auto")
         num_part = 40
         mass = 1
-        
+
         for i in range(num_part):
             self.system.part.add(
                 pos=np.random.random(3) * self.system.box_l, q=1,
