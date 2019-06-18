@@ -29,11 +29,11 @@
 namespace ScriptInterface {
 namespace Accumulators {
 class AutoUpdateAccumulators : public ObjectList<AccumulatorBase> {
-  void add_in_core(std::shared_ptr<AccumulatorBase> obj_ptr) override {
+  void add_in_core(std::shared_ptr<AccumulatorBase> const& obj_ptr) override {
     ::Accumulators::auto_update_add(obj_ptr->accumulator().get());
   }
 
-  void remove_in_core(std::shared_ptr<AccumulatorBase> obj_ptr) override {
+  void remove_in_core(std::shared_ptr<AccumulatorBase> const& obj_ptr) override {
     ::Accumulators::auto_update_remove(obj_ptr->accumulator().get());
   }
 };

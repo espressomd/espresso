@@ -27,13 +27,13 @@
 namespace ScriptInterface {
 namespace LBBoundaries {
 class LBBoundaries : public ObjectList<LBBoundary> {
-  void add_in_core(std::shared_ptr<LBBoundary> obj_ptr) override {
+  void add_in_core(std::shared_ptr<LBBoundary> const& obj_ptr) override {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
     ::LBBoundaries::add(obj_ptr->lbboundary());
 #endif
   }
 
-  void remove_in_core(std::shared_ptr<LBBoundary> obj_ptr) override {
+  void remove_in_core(std::shared_ptr<LBBoundary> const& obj_ptr) override {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
     ::LBBoundaries::remove(obj_ptr->lbboundary());
 #endif
