@@ -193,8 +193,8 @@ html_show_sourcelink = False
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 html_show_sphinx = False
 
-# If true, "(C) Copyright (C) 2018 The ESPResSo project
-# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+# If true, "(C) Copyright (C) 2018 The ESPResSo project" is shown
+# in the HTML footer. Default is True.
 html_show_copyright = True
 
 # If true, an OpenSearch description file will be output, and all pages will
@@ -241,6 +241,9 @@ rst_prolog = """
 rst_epilog = """
 .. |es| replace:: `ESPResSo`
 """
+# Re-enable grouping of arguments in numpydoc
+# https://github.com/sphinx-doc/sphinx/issues/2227
+napoleon_use_param = False
 
 
 # -- Other options --------------------------------------------------------

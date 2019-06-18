@@ -48,7 +48,7 @@ cdef class Diamond(object):
 
     def default_params(self):
         return {"a": 0.0, "bond_length": 0.0, "MPC": 0, "N_CI": 0,
-                "val_nodes": 0.0, "val_cM": 0.0, "val_CI": 0.0, "cM_dist": 1, "nonet": 0}
+                "val_nodes": 0.0, "val_cM": 0.0, "val_CI": 0.0, "cM_dist": 1, "nonet": False}
 
     def required_keys(self):
         return "a", "bond_length", "MPC"
@@ -89,7 +89,7 @@ cdef class Diamond(object):
         return create_diamond(
             partCfg(), self._params["a"], self._params[
                 "bond_length"], self._params["MPC"], self._params["N_CI"],
-                        self._params["val_nodes"], self._params["val_cM"], self._params["val_CI"], self._params["cM_dist"], self._params["nonet"])
+                        self._params["val_nodes"], self._params["val_cM"], self._params["val_CI"], self._params["cM_dist"], int(self._params["nonet"]))
 
     def _set_params_in_es_core(self):
         error_code = self.__set_params_in_es_core()

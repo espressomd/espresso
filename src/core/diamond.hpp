@@ -53,6 +53,6 @@ int create_counterions(PartCfg &, int N_CI, int part_id, int mode,
 /** C implementation of 'diamond \<a\> \<bond_length\> \<MPC\> [options]' */
 int create_diamond(PartCfg &, double a, double bond_length, int MPC, int N_CI,
                    double val_nodes, double val_cM, double val_CI, int cM_dist,
-                   bool nonet);
+                   int nonet);
 
 #endif

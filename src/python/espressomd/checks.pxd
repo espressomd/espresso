@@ -1,4 +1,4 @@
-from .c_analyze cimport PartCfg, partCfg
+from .analyze cimport PartCfg, partCfg
 from libcpp cimport bool
 
 cdef extern from "utils/checks/charge_neutrality.hpp" namespace "Utils":
