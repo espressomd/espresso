@@ -106,7 +106,8 @@ ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
   sp->m_policy = policy;
 
   if (sp->m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(make_remote_handle, object_id(sp.get()), name, pack(parameters));
+    m_callbacks->call(make_remote_handle, object_id(sp.get()), name,
+                      pack(parameters));
   }
 
   sp->do_construct(parameters);
