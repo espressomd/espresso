@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 from numpy.random import random
-from espressomd.interactions import FeneBond
 import espressomd.observables
 
 
@@ -114,15 +114,16 @@ class Observables(ut.TestCase):
         test_lab_angular_velocity = generate_test_for_pid_observable(
             espressomd.observables.ParticleAngularVelocities, "omega_lab")
 
-        def test_particle_body_velocities(self):
-            obs = espressomd.observables.ParticleBodyVelocities(
-                ids=range(self.N_PART))
-            obs_data = obs.calculate()
-            part_data = np.array([p.convert_vector_space_to_body(p.v)
-                                 for p in self.system.part])
-            np.testing.assert_array_almost_equal(part_data.flatten(), obs_data,
-                                                 err_msg="Data did not agree for observable ParticleBodyVelocities and particle derived values.",
-                                                 decimal=9)
+    @utx.skipIfMissingFeatures(['ROTATION'])
+    def test_particle_body_velocities(self):
+        obs = espressomd.observables.ParticleBodyVelocities(
+            ids=range(self.N_PART))
+        obs_data = obs.calculate()
+        part_data = np.array([p.convert_vector_space_to_body(p.v)
+                             for p in self.system.part])
+        np.testing.assert_array_almost_equal(part_data.flatten(), obs_data,
+                                             err_msg="Data did not agree for observable ParticleBodyVelocities and particle derived values.",
+                                             decimal=9)
 
     def test_stress_tensor(self):
         s = self.system.analysis.stress_tensor()["total"].reshape(9)
@@ -135,7 +136,7 @@ class Observables(ut.TestCase):
             err_msg="Stress tensor from analysis and observable did not agree",
             decimal=9)
 
-    @ut.skipIf(not espressomd.has_features('ELECTROSTATICS'), "Skipping test for Current observable due to missing features.")
+    @utx.skipIfMissingFeatures('ELECTROSTATICS')
     def test_current(self):
         obs_data = espressomd.observables.Current(
             ids=range(self.N_PART)).calculate()
@@ -145,7 +146,7 @@ class Observables(ut.TestCase):
         np.testing.assert_array_almost_equal(
             obs_data, part_data, err_msg="Data did not agree for observable 'Current'", decimal=9)
 
-    @ut.skipIf(not espressomd.has_features('ELECTROSTATICS'), "Skipping test for DipoleMoment observable due to missing features.")
+    @utx.skipIfMissingFeatures('ELECTROSTATICS')
     def test_dipolemoment(self):
         obs = espressomd.observables.DipoleMoment(ids=range(self.N_PART))
         obs_data = obs.calculate()

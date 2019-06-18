@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
@@ -134,7 +135,7 @@ class LBShearCommon(object):
                     np.copy(v_measured),
                     np.copy(v_expected[j]) * shear_direction, atol=3E-3)
 
-        # Test stedy state stress tensor on a node
+        # Test steady state stress tensor on a node
         p_eq = DENS * AGRID**2 / TIME_STEP**2 / 3
         p_expected = np.diag((p_eq, p_eq, p_eq))
         p_expected += -VISC * DENS * SHEAR_VELOCITY / H * (
@@ -164,8 +165,7 @@ class LBShearCommon(object):
         self.check_profile(y, -z)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_BOUNDARIES']), "Skipping test due to missing features.")
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
 class LBCPUShear(ut.TestCase, LBShearCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -174,8 +174,8 @@ class LBCPUShear(ut.TestCase, LBShearCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['CUDA', 'LB_BOUNDARIES_GPU']), "Skipping test due to missing features or gpu.")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
 class LBGPUShear(ut.TestCase, LBShearCommon):
 
     """Test for the GPU implementation of the LB."""

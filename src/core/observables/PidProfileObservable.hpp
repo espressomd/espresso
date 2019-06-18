@@ -20,6 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
 
 #include "Observable.hpp"
+#include "PidObservable.hpp"
+#include "ProfileObservable.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include <vector>
@@ -27,13 +29,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 namespace Observables {
 
 // Observable which acts on a given list of particle ids
-class PidProfileObservable : public PidObservable {
+class PidProfileObservable : public PidObservable, public ProfileObservable {
 public:
-  double min_x, max_x;
-  double min_y, max_y;
-  double min_z, max_z;
-  int n_x_bins, n_y_bins, n_z_bins;
-  int n_values() const override { return n_x_bins * n_y_bins * n_z_bins; };
+  PidProfileObservable(std::vector<int> const &ids, int n_x_bins, int n_y_bins,
+                       int n_z_bins, double min_x, double min_y, double min_z,
+                       double max_x, double max_y, double max_z)
+      : PidObservable(ids),
+        ProfileObservable(min_x, max_x, min_y, max_y, min_z, max_z, n_x_bins,
+                          n_y_bins, n_z_bins) {}
 };
 
 } // Namespace Observables

@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/espressomd/espresso/branch/python/graph/badge.svg)](https://codecov.io/gh/espressomd/espresso)
 
 This is the Molecular Dynamics software ESPResSo ("Extensible
-Simulation Package for the Research on Soft Matter Systems").
+Simulation Package for Research on Soft Matter Systems").
 
 ESPResSo is a highly versatile software package for performing and
 analyzing scientific Molecular Dynamics many-particle simulations of

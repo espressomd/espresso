@@ -32,7 +32,12 @@
 #include "core/observables/ComPosition.hpp"
 #include "core/observables/ComVelocity.hpp"
 #include "core/observables/Current.hpp"
+#include "core/observables/CylindricalDensityProfile.hpp"
+#include "core/observables/CylindricalFluxDensityProfile.hpp"
+#include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
 #include "core/observables/CylindricalLBVelocityProfile.hpp"
+#include "core/observables/CylindricalLBVelocityProfileAtParticlePositions.hpp"
+#include "core/observables/CylindricalVelocityProfile.hpp"
 #include "core/observables/DipoleMoment.hpp"
 #include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/MagneticDipoleMoment.hpp"
@@ -140,6 +145,9 @@ void initialize() {
   REGISTER_CYLPID_PROFILE_OBS(CylindricalDensityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
+#ifdef DPD
+  REGISTER(DPDStress)
+#endif
 
   REGISTER(LBFluidStress);
   REGISTER_CYLPID_PROFILE_OBS(

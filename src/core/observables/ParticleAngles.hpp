@@ -33,6 +33,7 @@ namespace Observables {
  */
 class ParticleAngles : public PidObservable {
 public:
+  using PidObservable::PidObservable;
   std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     auto v1 = get_mi_vector(partCfg[ids()[1]].r.p, partCfg[ids()[0]].r.p);

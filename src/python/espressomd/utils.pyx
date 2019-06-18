@@ -61,7 +61,7 @@ cpdef check_type_or_throw_except(x, n, t, msg):
     checking is done on the elements, and all elements are checked. Integers
     are accepted when a float was asked for.
 
-     """
+    """
     # Check whether x is an array/list/tuple or a single value
     if n > 1:
         if hasattr(x, "__getitem__"):
@@ -254,13 +254,15 @@ cpdef handle_errors(msg):
 
     """
     errors = mpi_gather_runtime_errors()
+    # print all errors and warnings
     for err in errors:
         err.print()
 
+    # raise an exception with the first error
     for err in errors:
-    # Cast because cython does not support typed enums completely
-        if < int > err.level() == <int > ERROR:
-            raise Exception("{}: {}".format(msg, err.format()))
+        # Cast because cython does not support typed enums completely
+        if < int > err.level() == < int > ERROR:
+            raise Exception("{}: {}".format(msg, to_str(err.format())))
 
 
 def nesting_level(obj):
