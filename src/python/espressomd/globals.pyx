@@ -50,8 +50,8 @@ cdef class Globals(object):
     property periodicity:
         def __set__(self, _periodic):
             global periodic
-            periodic = 4 * int(_periodic[2]) + 2 * int(_periodic[1]) + int(_periodic[0])
             # first 3 bits of periodic determine the periodicity
+            periodic = np.sum(_periodic * 2 ** np.array([0, 1, 2]))
             mpi_bcast_parameter(FIELD_PERIODIC)
 
         def __get__(self):
