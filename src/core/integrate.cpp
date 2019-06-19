@@ -350,8 +350,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      lb_lbfluid_propagate();
-      lb_lbcoupling_propagate();
+      if (lattice_switch != ActiveLB::NONE) {
+        lb_lbfluid_propagate();
+        lb_lbcoupling_propagate();
+      }
 
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation();

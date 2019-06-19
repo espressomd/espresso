@@ -1146,7 +1146,6 @@ Utils::Vector3i lb_lbfluid_get_shape() {
 bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind) {
   auto const limit = lb_lbfluid_get_shape();
   return ind < limit && ind >= Utils::Vector3i{};
->>>>>>> ad319c06f88cbbe43ab66cee5f85635a2a01a923
 }
 
 double lb_lbnode_get_density(const Utils::Vector3i &ind) {

@@ -61,7 +61,7 @@ class Momentum(object):
             self.system.integrator.run(300)
             print(i, p.v * p.mass, -
                     np.array(
-                        self.system.analysis.analyze_linear_momentum(
+                        self.system.analysis.linear_momentum(
                             include_particles=False)))
 
             # Check that particle momentum =-fluid momenum
@@ -69,7 +69,7 @@ class Momentum(object):
             np.testing.assert_allclose(
                 p.v * p.mass, -
                     np.array(
-                        self.system.analysis.analyze_linear_momentum(
+                        self.system.analysis.linear_momentum(
                             include_particles=False)),
                 atol=np.linalg.norm(applied_force) * TIME_STEP * 0.55)
 

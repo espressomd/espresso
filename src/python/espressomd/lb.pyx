@@ -268,17 +268,6 @@ cdef class HydrodynamicInteraction(Actor):
         for i, j, k in itertools.product(range(shape[0]), range(shape[1]), range(shape[2])):
             yield self[i, j, k]
 
-    property stress:
-        def __get__(self):
-            cdef Vector6d res
-            res = lb_lbfluid_get_stress()
-            return array_locked((
-                res[0], res[1], res[2], res[3], res[4], res[5]))
-
-        def __set__(self, value):
-            raise NotImplementedError
-
-
 # LBFluid main class
 #
 cdef class LBFluid(HydrodynamicInteraction):

@@ -40,9 +40,8 @@ class LBEHTest(object):
         self.s.periodicity = [1, 1, 1]
         self.s.time_step = self.params['time_step']
         self.s.cell_system.skin = self.params['skin']
+        self.s.actors.clear()
 
-        for i in self.s.actors:
-            self.s.actors.remove(i)
 
         self.lbf = self.LBClass(
             visc=self.params['viscosity'],
@@ -57,18 +56,17 @@ class LBEHTest(object):
             LB_fluid=self.lbf,
             gamma=self.params['friction'])
 
-        s = self.s
-
-        s.part.add(pos=0.5 * s.box_l, mu_E=self.params['muE'])
+        self.s.part.add(pos=0.5 * self.s.box_l, mu_E=self.params['muE'])
 
         mu_E = np.array(self.params['muE'])
         # Terminal velocity is mu_E minus the momentum the fluid
         # got by accelerating the particle in the beginning.
-        v_term = (1. - 1. / (np.prod(s.box_l) * self.params['dens'])) * mu_E
+        v_term = (1. - 1. / (np.prod(self.s.box_l) * self.params['dens'])) * mu_E
 
-        s.integrator.run(steps=500)
+        self.s.integrator.run(steps=500)
+        self.s.actors.clear()
 
-        np.testing.assert_allclose(v_term, np.copy(s.part[0].v), atol=1e-5)
+        np.testing.assert_allclose(v_term, np.copy(self.s.part[0].v), atol=5e-5)
 
 @utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
 class LBEHCPU(LBEHTest,ut.TestCase):
@@ -77,14 +75,14 @@ class LBEHCPU(LBEHTest,ut.TestCase):
         self.LBClass =lb.LBFluid
 
 @utx.skipIfMissingFeatures(["LB_WALBERLA", "LB_ELECTROHYDRODYNAMICS"])
-class LBEHCPU(LBEHTest,ut.TestCase):
+class LBEHWalberla(LBEHTest,ut.TestCase):
 
     def setUp(self):
         self.LBClass =lb.LBFluidWalberla
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["LB_GPU", "LB_ELECTROHYDRODYNAMICS"])
-class LBEHCPU(LBEHTest,ut.TestCase):
+@utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
+class LBEHGPU(LBEHTest,ut.TestCase):
 
     def setUp(self):
         self.LBClass =lb.LBFluidGPU
