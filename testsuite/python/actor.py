@@ -102,10 +102,10 @@ class ActorTest(ut.TestCase):
         a._deactivate()
         self.assertFalse(a.is_active())
 
-        parms = a.get_params()
-        self.assertTrue(parms["a"])
-        self.assertFalse(parms["b"])
-        self.assertTrue(parms["c"])
+        params = a.get_params()
+        self.assertTrue(params["a"])
+        self.assertFalse(params["b"])
+        self.assertTrue(params["c"])
 
 if __name__ == "__main__":
     ut.main()

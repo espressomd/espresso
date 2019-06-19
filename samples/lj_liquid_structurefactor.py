@@ -24,7 +24,6 @@ required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
-from espressomd import analyze
 
 print("""
 =======================================================

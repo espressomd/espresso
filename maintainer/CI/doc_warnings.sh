@@ -32,7 +32,7 @@
 regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|bool|str|object|list|tuple|dict)<)[^<>]+?</span></code>(?!</a>)'
 
 # list of espresso modules not compiled in CI (visualization, scafacos)
-regex_ignored_es_features_ci='^(espressomd\.)?(visualization|([a-z]+\.)?[sS]cafacos)'
+regex_ignored_es_features_ci='(espressomd\.)?(visualization|([a-z]+\.)?[sS]cafacos)'
 
 if [ ! -f doc/sphinx/html/index.html ]; then
     echo "Please run Sphinx first."
@@ -57,7 +57,7 @@ if [ $? = "0" ]; then
         # skip espresso modules not compiled in CI (visualization, scafacos)
         is_es_feature_skipped="false"
         if [ "${CI}" != "" ]; then
-            grep -Pq "${regex_ignored_es_features_ci}" <<< "${reference}"
+            grep -Pq "^${regex_ignored_es_features_ci}" <<< "${reference}"
             [ "$?" = "0" ] && is_es_feature_skipped="true"
         fi
         # private objects are not documented and cannot be linked
