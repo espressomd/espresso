@@ -396,9 +396,9 @@ private:
   }
 
 public:
-  explicit MpiCallbacks(boost::mpi::communicator &comm,
+  explicit MpiCallbacks(boost::mpi::communicator comm,
                         bool abort_on_exit = true)
-      : m_abort_on_exit(abort_on_exit), m_comm(comm) {
+      : m_abort_on_exit(abort_on_exit), m_comm(std::move(comm)) {
     /** Add a dummy at id 0 for loop abort. */
     m_callback_map.add(nullptr);
 
@@ -724,7 +724,7 @@ private:
   /**
    * The MPI communicator used for the callbacks.
    */
-  boost::mpi::communicator &m_comm;
+  boost::mpi::communicator m_comm;
 
   /**
    * Internal storage for the callback functions.

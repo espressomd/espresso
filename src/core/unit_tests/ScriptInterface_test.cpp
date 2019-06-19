@@ -21,11 +21,14 @@
 
 #include <type_traits>
 
+#define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ScriptInterface test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
+#include <boost/mpi.hpp>
 
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/ObjectManager.hpp"
 
 using std::map;
 using std::string;
@@ -33,68 +36,42 @@ using std::vector;
 
 using namespace ScriptInterface;
 
-namespace Testing {
-
 /**
  * @brief Mock to test ScriptInterface.
  */
 struct ScriptInterfaceTest : public ScriptInterface::ObjectHandle {
   Variant get_parameter(const std::string &name) const override {
-    VariantMap ret;
-
-    ret["bool_opt"] = bool_opt;
-    ret["integer"] = integer;
-    ret["bool_req"] = bool_req;
-    ret["vec_double"] = vec_double;
-    ret["vec_int"] = vec_int;
-
-    return ret.at(name);
+    if(name == "test_parameter") {
+      return test_parameter;
+    } else {
+      return none;
+    }
   }
 
   /* Not needed for testing */
   Utils::Span<const boost::string_ref> valid_parameters() const override {
-    return {};
+    static std::array<const boost::string_ref, 1> params = {"test_parameter"};
+    return params;
   }
 
   void do_set_parameter(const string &name, const Variant &value) override {
-    if (name == "bool_opt") {
-      bool_opt =
-          get_value<std::remove_reference<decltype(bool_opt)>::type>(value);
-    };
-    if (name == "integer") {
-      integer =
-          get_value<std::remove_reference<decltype(integer)>::type>(value);
-    };
-    if (name == "bool_req") {
-      bool_req =
-          get_value<std::remove_reference<decltype(bool_req)>::type>(value);
-    };
-    if (name == "vec_double") {
-      vec_double =
-          get_value<std::remove_reference<decltype(vec_double)>::type>(value);
-    };
-    if (name == "vec_int") {
-      vec_int =
-          get_value<std::remove_reference<decltype(vec_int)>::type>(value);
-    };
+    if(name == "test_parameter") {
+      test_parameter = boost::get<int>(value);
+    }
   }
 
   Variant do_call_method(const std::string &name,
                          const VariantMap &params) override {
     if (name == "test_method") {
+      test_method_called = true;
     }
 
-    return true;
+    return none;
   }
 
-  bool bool_opt, bool_req;
-  int integer;
-  vector<double> vec_double;
-  vector<int> vec_int;
+  int test_parameter = -1;
+  bool test_method_called = false;
 };
-} /* namespace Testing */
-
-using namespace Testing;
 
 BOOST_AUTO_TEST_CASE(non_copyable) {
   static_assert(!std::is_copy_constructible<ObjectHandle>::value, "");
@@ -110,4 +87,24 @@ BOOST_AUTO_TEST_CASE(default_implementation) {
   ScriptInterfaceTest si_test;
 
   si_test.do_call_method("test_method", {});
+}
+
+BOOST_AUTO_TEST_CASE(set_parameter_test) {
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cb{world};
+  ObjectManager om(&cb);
+
+  if(world.rank() == 0) {
+  } else {
+    cb.loop();
+  }
+
+}
+
+int main(int argc, char **argv) {
+boost::mpi::environment mpi_env(argc, argv);
+
+register_new<ScriptInterfaceTest>("TestClass");
+
+return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }

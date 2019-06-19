@@ -2,19 +2,23 @@
 #define ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
 
 #include "MpiCallbacks.hpp"
-#include "Variant.hpp"
 #include "PackedVariant.hpp"
+#include "Variant.hpp"
 
 #include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
-  class ObjectManager {
+class ObjectManager {
   using ObjectId = std::size_t;
 
   /* Instances on this node that are managed by the
    * head node. */
-  std::unordered_map<ObjectId, ObjectRef> local_objects;
+  std::unordered_map<ObjectId, ObjectRef> m_local_objects;
 
+public:
+  auto const &local_objects() const { return m_local_objects; }
+
+private:
   Communication::CallbackHandle<ObjectId, const std::string &,
                                 const PackedMap &>
       cb_make_handle;
@@ -46,12 +50,17 @@ public:
         cb_delete_handle(callbacks,
                          [this](ObjectId id) { delete_handle(id); }) {}
 
+  std::shared_ptr<ObjectHandle>
+  make_shared(std::string const &name, CreationPolicy policy,
+              const VariantMap &parameters = {});
+
 private:
   /**
    * @brief Callback for @function remote_make_handle
    */
   void make_handle(ObjectId id, const std::string &name,
                    const PackedMap &parameters);
+
 public:
   /**
    * @brief Create remote instances
@@ -62,12 +71,14 @@ public:
    */
   void remote_make_handle(ObjectId id, const std::string &name,
                           const VariantMap &parameters);
+
 private:
   /**
    * @brief Callback for @function remote_set_parameter
    */
   void set_parameter(ObjectId id, std::string const &name,
                      PackedVariant const &value);
+
 public:
   /**
    * @brief Set a parameter on remote instances
@@ -78,6 +89,7 @@ public:
    */
   void remote_set_parameter(ObjectId id, std::string const &name,
                             Variant const &value);
+
 private:
   /**
    * @brief Callback for @function remote_call_method
@@ -95,11 +107,12 @@ public:
    */
   void remote_call_method(ObjectId id, std::string const &name,
                           VariantMap const &arguments);
+
 private:
   /**
    * @brief Callback for @function remote_delete_handle
    */
-  void delete_handle(ObjectId id) { local_objects.erase(id); }
+  void delete_handle(ObjectId id) { m_local_objects.erase(id); }
 
 public:
   /**

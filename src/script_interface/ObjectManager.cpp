@@ -6,44 +6,44 @@
 
 namespace ScriptInterface {
 void ObjectManager::make_handle(ObjectId id, const std::string &name,
-                 const PackedMap &parameters) {
+                                const PackedMap &parameters) {
   try {
-    local_objects[id] =
+    m_local_objects[id] =
         ObjectHandle::make_shared(name, ObjectHandle::CreationPolicy::LOCAL,
-                                  unpack(parameters, local_objects));
+                                  unpack(parameters, m_local_objects));
   } catch (std::runtime_error const &) {
   }
 }
 
 void ObjectManager::remote_make_handle(ObjectId id, const std::string &name,
-                        const VariantMap &parameters) {
+                                       const VariantMap &parameters) {
   cb_make_handle(id, name, pack(parameters));
 }
 
 void ObjectManager::set_parameter(ObjectId id, std::string const &name,
-                   PackedVariant const &value) {
+                                  PackedVariant const &value) {
   try {
-    local_objects.at(id)->set_parameter(name, unpack(value, local_objects));
+    m_local_objects.at(id)->set_parameter(name, unpack(value, m_local_objects));
   } catch (std::runtime_error const &) {
   }
 }
 
 void ObjectManager::remote_set_parameter(ObjectId id, std::string const &name,
-                          Variant const &value) {
+                                         Variant const &value) {
   cb_set_parameter(id, name, pack(value));
 }
 
 void ObjectManager::call_method(ObjectId id, std::string const &name,
-                 PackedMap const &arguments) {
+                                PackedMap const &arguments) {
   try {
-    local_objects.at(id)->call_method(name, unpack(arguments, local_objects));
+    m_local_objects.at(id)->call_method(name, unpack(arguments, m_local_objects));
   } catch (std::runtime_error const &) {
   }
 }
 
 void ObjectManager::remote_call_method(ObjectId id, std::string const &name,
-                        VariantMap const &arguments) {
+                                       VariantMap const &arguments) {
   cb_call_method(id, name, pack(arguments));
 }
 
-}
+} // namespace ScriptInterface

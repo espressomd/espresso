@@ -23,14 +23,14 @@
 
 #include "MpiCallbacks.hpp"
 #include "ObjectManager.hpp"
-#include "ScriptInterface.hpp"
 #include "PackedVariant.hpp"
+#include "ScriptInterface.hpp"
 
 #include <utils/serialization/pack.hpp>
 
-#include <boost/serialization/utility.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/algorithm/transform.hpp>
+#include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
 namespace {

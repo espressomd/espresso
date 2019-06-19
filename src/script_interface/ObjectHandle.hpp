@@ -59,7 +59,7 @@ private:
 
 public:
   /**
-   * @brief Resposible manager.
+   * @brief Responsible manager.
    */
   ObjectManager *manager() const { return assert(m_manager), m_manager; }
 

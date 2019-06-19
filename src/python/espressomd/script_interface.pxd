@@ -34,7 +34,7 @@ cdef extern from "scipt_interface/ObjectManager.hpp" namespace "ScriptInterface"
         ObjectManager(MpiCallbacks *)
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
-    void initialize()
+    void initialize(MpiCallbacks &)
     cdef cppclass Variant:
         Variant()
         Variant(const Variant & )
@@ -73,3 +73,5 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ObjectHandle::CreationPolicy":
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
+
+cdef void init(MpiCallbacks &)

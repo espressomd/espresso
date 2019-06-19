@@ -6,7 +6,7 @@ cdef extern from "MpiCallbacks.hpp" namespace "Communication":
         pass
 
 cdef extern from "communication.hpp":
-    shared_ptr[environment] mpi_init()
+    void mpi_init()
     void mpi_loop()
     int this_node
 

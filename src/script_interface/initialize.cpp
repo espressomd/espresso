@@ -40,8 +40,8 @@
 
 namespace ScriptInterface {
 
-void initialize() {
-  ObjectHandle::initialize(Communication::mpiCallbacks());
+void initialize(Communication::MpiCallbacks &cb) {
+  ObjectHandle::initialize(cb);
 
   Shapes::initialize();
   Constraints::initialize();

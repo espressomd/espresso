@@ -20,10 +20,10 @@
 #ifndef SCRIPT_INTERFACE_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_INITIALIZE_HPP
 
+#include "MpiCallbacks.hpp"
+
 namespace ScriptInterface {
-
-void initialize();
-
+void initialize(Communication::MpiCallbacks &cb);
 } /* namespace ScriptInterface */
 
 #endif
