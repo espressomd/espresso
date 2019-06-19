@@ -185,7 +185,8 @@ cdef class System(object):
 
     property box_l:
         """
-        Array like, list of three floats
+        array_like of :obj:`float`:
+            Dimensions of the simulation box
 
         """
 
@@ -201,10 +202,9 @@ cdef class System(object):
 
     property force_cap:
         """
-        If > 0, the magnitude of the force on the particles
-        are capped to this value.
-
-        type : float
+        :obj:`float`:
+            If > 0, the magnitude of the force on the particles
+            are capped to this value.
 
         """
 
@@ -216,10 +216,9 @@ cdef class System(object):
 
     property periodicity:
         """
-        list of three booleans
-        [x, y, z]
-        False for no periodicity in this direction
-        True for periodicity
+        array_like of :obj:`bool`:
+            System periodicity in ``[x, y, z]``, ``False`` for no periodicity
+            in this direction, ``True`` for periodicity
 
         """
 
@@ -302,7 +301,7 @@ cdef class System(object):
 
     def _get_PRNG_state_size(self):
         """
-        Returns the state of the pseudo random number generator.
+        Returns the state size of the pseudo random number generator.
         """
 
         return get_state_size_of_generator()
@@ -325,7 +324,8 @@ cdef class System(object):
 
     property seed:
         """
-        Sets the seed of the pseudo random number with a list of seeds which is as long as the number of used nodes.
+        Sets the seed of the pseudo random number with a list of seeds which is
+        as long as the number of used nodes.
         """
 
         def __set__(self, _seed):
@@ -351,7 +351,8 @@ cdef class System(object):
             return self.__seed
 
     property random_number_generator_state:
-        """Sets the random number generator state in the core. this is of interest for deterministic checkpointing
+        """Sets the random number generator state in the core. This is of
+        interest for deterministic checkpointing.
         """
 
         def __set__(self, rng_state):
@@ -365,7 +366,10 @@ cdef class System(object):
                 mpi_random_set_stat(states)
             else:
                 raise ValueError(
-                    "Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
+                    "Wrong number of arguments: Usage: 'system.random_number_generator_state = "
+                    "[<state(1)>, ..., <state(n_nodes*(state_size+1))>], where each <state(i)> "
+                    "is an integer. The state size of the PRNG can be obtained by calling "
+                    "system._get_PRNG_state_size().")
 
         def __get__(self):
             rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
@@ -448,8 +452,8 @@ cdef class System(object):
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
 
-           If ROTATION is activated, the internal rotation degrees of
-           freedom are rotated accordingly.
+        If ``ROTATION`` is activated, the internal rotation degrees of
+        freedom are rotated accordingly.
 
         Parameters
         ----------

@@ -108,17 +108,17 @@ class ShapeBasedConstraint(Constraint):
 
     Attributes
     ----------
-    only_positive : bool
+    only_positive : :obj:`bool`
       Act only in the direction of positive normal,
-      only useful if penetrable is True.
+      only useful if penetrable is ``True``.
     particle_type : int
       Interaction type of the constraint.
     particle_velocity : array of :obj:`float`
       Interaction velocity of the boundary
-    penetrable : bool
+    penetrable : :obj:`bool`
       Whether particles are allowed to penetrate the
       constraint.
-    shape : object
+    shape : :class:`espressomd.shapes.Shape`
       One of the shapes from :mod:`espressomd.shapes`
 
     See Also
@@ -135,10 +135,10 @@ class ShapeBasedConstraint(Constraint):
     >>> spherical_cavity = shapes.Sphere(center=[5,5,5], radius=5.0, direction=-1.0)
     >>>
     >>> # now create an un-penetrable shape-based constraint of type 0
-    >>> spherical_constraint = system.constraints.add(particle_type=0, penetrable=0, shape=spherical_cavity)
+    >>> spherical_constraint = system.constraints.add(particle_type=0, penetrable=False, shape=spherical_cavity)
     >>>
-    >>> #place a trapped particle inside this sphere
-    >>> system.part.add(id=0, pos=[5,5,5], type=1)
+    >>> # place a trapped particle inside this sphere
+    >>> system.part.add(id=0, pos=[5, 5, 5], type=1)
     >>>
 
     """
@@ -171,19 +171,19 @@ class ShapeBasedConstraint(Constraint):
         >>> system.thermostat.set_langevin(kT=0.0, gamma=1.0)
         >>> system.cell_system.set_n_square(use_verlet_lists=False)
         >>> system.non_bonded_inter[0, 0].lennard_jones.set_params(
-        >>>     epsilon=1, sigma=1,
-        >>>     cutoff=2**(1. / 6), shift="auto")
+        ...     epsilon=1, sigma=1,
+        ...     cutoff=2**(1. / 6), shift="auto")
         >>>
         >>>
         >>> floor = system.constraints.add(shape=shapes.Wall(normal=[0, 0, 1], dist=0.0),
-        >>>    particle_type=0, penetrable=0, only_positive=0)
+        ...    particle_type=0, penetrable=False, only_positive=False)
 
-        >>> system.part.add(id=0, pos=[0,0,1.5], type=0, ext_force=[0,0,-.1])
+        >>> system.part.add(id=0, pos=[0,0,1.5], type=0, ext_force=[0, 0, -.1])
         >>> # print the particle position as it falls
         >>> # and print the force it applies on the floor
         >>> for t in range(10):
-        >>>     system.integrator.run(100)
-        >>>     print(system.part[0].pos, floor.total_force())
+        ...     system.integrator.run(100)
+        ...     print(system.part[0].pos, floor.total_force())
 
         """
         return self.call_method("total_force", constraint=self)
