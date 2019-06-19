@@ -1,7 +1,7 @@
 #ifndef TENSOR_HPP
 #define TENSOR_HPP
 
-#include <algoritm>
+#include <algorithm>
 #include <array>
 #include <numeric>
 #include <vector>
@@ -34,7 +34,7 @@ public:
                                        std::multiplies<std::size_t>()));
 
     boost::transform(dimensions, std::back_inserter(m_strides),
-                     [stride = 1](size_t dim) mutable {
+                     [stride = std::size_t(1)](std::size_t dim) mutable {
                        auto const old = stride;
                        stride *= dim;
 
