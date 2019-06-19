@@ -26,10 +26,21 @@ BOOST_AUTO_TEST_CASE(data) {
   BOOST_CHECK_EQUAL(*test_tensor.data(), 0.3);
 }
 
-BOOST_AUTO_TEST_CASE(assign) {
+BOOST_AUTO_TEST_CASE(assign_initializer_list) {
   auto test_tensor = Tensor<double>({4, 6, 7, 8});
   test_tensor({0, 1, 3, 2}) = 2.3;
   BOOST_CHECK_EQUAL(test_tensor({0, 1, 3, 2}), 2.3);
+}
+
+BOOST_AUTO_TEST_CASE(assign_variadic) {
+  auto test_tensor = Tensor<double>({4, 6, 7, 8});
+  test_tensor(0, 1, 3, 2) = 2.3;
+  BOOST_CHECK_EQUAL(test_tensor(0, 1, 3, 2), 2.3);
+}
+
+BOOST_AUTO_TEST_CASE(wrong_number_of_indices) {
+  auto test_tensor = Tensor<double>({4, 6, 7, 8});
+  BOOST_CHECK_THROW(test_tensor(0, 1, 3), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(iterator) {
