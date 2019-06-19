@@ -121,53 +121,53 @@ load in the particles with the correct forces, and use::
 
     sys.integrator.run(steps=number_of_steps, reuse_forces=True)
 
-upon the first call to :ref:`run <Integrator>`. This causes the
+upon the first call ``integrator.run``. This causes the
 old forces to be reused and thus conserves momentum.
 
-.. _LB as a thermostat:
+.. _Interpolating velocities:
 
-LB as a thermostat
-------------------
+Interpolating velocities
+------------------------
 
-The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
-The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
-Temperature is set via the ``kT`` argument of the LB fluid. Furthermore a seed has to be given for the
-thermalization of the particle coupling. The magnitude of the fricitional coupling can be adjusted by
-the parameter ``gamma``.
-To enable the LB thermostat, use::
+To get interpolated velocity values between lattice nodes, the function::
+
+    lb.get_interpolated_velocity(pos = [1.1,1.2,1.3])
+    
+with a single position  ``pos`` as an argument can be used. 
+For the GPU fluid :class:`espressomd.lb.LBFluidGPU`
+also :py:attr:`espressomd.lb.LBFluidGPU.get_interpolated_fluid_velocity_at_positions()`
+is available, which expects a numpy array of positions as an argument.
+
+By default, the interpolation is done linearly between the nearest 8 LB nodes,
+but for the GPU implementation also a quadratic scheme involving 27 nodes is implemented 
+(see eqs. 297 and 301 in :cite:`duenweg08a`). 
+You can choose by calling 
+one of::
+
+    lb.set_interpolation_order('linear')
+    lb.set_interpolation_order('quadratic')
+
+.. _Coupling LB to a MD simulation:
+
+Coupling LB to a MD simulation
+------------------------------
+
+MD particles can be coupled to a LB fluid through frictional coupling. The friction force
+
+  .. math:: F_{i,\text{frict}} = - \gamma (v_i(t)-u(x_i(t),t))
+
+depends on the particle velocity :math:`v` and the fluid velocity :math:`u`. It acts both
+on the particle and the fluid (in opposite direction). Because the fluid is also affected,
+multiple particles can interact via hydrodynamic interactions. As friction in molecular systems is
+accompanied by fluctuations, the particle-fluid coupling has to be activated through
+the :ref:`LB thermostat` (See more detailed description there). A short example is::
 
     sys.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
-The LBM implementation in |es| uses Ahlrichs and Dünweg's point coupling
-method to couple MD particles the LB fluid. This coupling consists of a
-frictional and a random force, similar to the :ref:`Langevin thermostat`:
+where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`, 
+``gamma`` the friction coefficient and ``seed`` the seed for the random number generator involved 
+in the thermalization.
 
-.. math:: \vec{F} = -\gamma \left(\vec{v}-\vec{u}\right) + \vec{F}_R.
-
-The momentum acquired by the particles is then transferred back to the
-fluid using a linear interpolation scheme, to preserve total momentum.
-In the GPU implementation the force can alternatively be interpolated
-using a three point scheme which couples the particles to the nearest 27
-LB nodes. This can be called using "lbfluid 3pt" and is described in
-Dünweg and Ladd by equation 301 :cite:`duenweg08a`.
-
-The frictional force tends to decrease the relative
-velocity between the fluid and the particle whereas the random forces
-are chosen so large that the average kinetic energy per particle
-corresponds to the given temperature, according to a fluctuation
-dissipation theorem. No other thermostatting mechanism is necessary
-then. Please switch off any other thermostat before starting the LB
-thermostatting mechanism.
-
-The LBM implementation provides a fully thermalized LB fluid, all
-nonconserved modes, including the pressure tensor, fluctuate correctly
-according to the given temperature and the relaxation parameters. All
-fluctuations can be switched off by setting the temperature to 0.
-
-.. note:: Coupling between LB and MD only happens if the LB thermostat is set with a :math:`\gamma \ge 0.0`.
-
-Regarding the unit of the temperature, please refer to
-Section :ref:`On units`.
 
 .. _Reading and setting properties of single lattice nodes:
 
