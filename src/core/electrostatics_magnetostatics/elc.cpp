@@ -58,8 +58,8 @@
 static double ux, ux2, uy, uy2, uz, height_inverse;
 /*@}*/
 
-ELC_struct elc_params = {1e100, 10,    1, 0, 1, 1, 0,  1,
-                         1,     false, 0, 0, 0, 0, 0.0};
+ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, false, 1,
+                         1, false, 0, 0, 0, 0, 0.0};
 
 /****************************************
  * LOCAL ARRAYS
@@ -1263,7 +1263,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
   elc_params.h = box_l[2] - gap_size;
 
   if (delta_top != 0.0 || delta_bot != 0.0) {
-    elc_params.dielectric_contrast_on = 1;
+    elc_params.dielectric_contrast_on = true;
 
     elc_params.delta_mid_top = delta_top;
     elc_params.delta_mid_bot = delta_bot;
@@ -1286,8 +1286,8 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
     }
   } else {
     // setup without dielectric contrast
-    elc_params.dielectric_contrast_on = 0;
-    elc_params.const_pot = 0;
+    elc_params.dielectric_contrast_on = false;
+    elc_params.const_pot = false;
     elc_params.delta_mid_top = 0;
     elc_params.delta_mid_bot = 0;
     elc_params.neutralize = neutralize;

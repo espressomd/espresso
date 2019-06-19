@@ -57,7 +57,7 @@ typedef struct {
   int neutralize;
 
   /// @copybrief MMM2D_struct::dielectric_contrast_on
-  int dielectric_contrast_on;
+  bool dielectric_contrast_on;
 
   /// @copybrief MMM2D_struct::delta_mid_top
   double delta_mid_top;
