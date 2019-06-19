@@ -1,6 +1,7 @@
 #ifndef TENSOR_HPP
 #define TENSOR_HPP
 
+#include <algoritm>
 #include <array>
 #include <numeric>
 #include <vector>
@@ -59,6 +60,9 @@ public:
     if (indices.size() != m_dimensions.size()) {
       throw std::runtime_error("Number of indices have to match rank");
     }
+    if (not indices_valid(indices)) {
+      throw std::out_of_range("invalid index");
+    }
     auto const index = boost::inner_product(m_strides, indices, 0);
     assert(index < m_data.size());
     return m_data[index];
@@ -67,6 +71,9 @@ public:
   reference operator()(std::initializer_list<std::size_t> const &indices) {
     if (indices.size() != m_dimensions.size()) {
       throw std::runtime_error("Number of indices have to match rank");
+    }
+    if (not indices_valid(indices)) {
+      throw std::out_of_range("invalid index");
     }
     auto const index = boost::inner_product(m_strides, indices, 0);
     assert(index < m_data.size());
@@ -102,6 +109,12 @@ public:
   auto dimensions() const noexcept { return m_dimensions; }
 
 private:
+  bool indices_valid(std::initializer_list<std::size_t> const &indices) const {
+    auto res =
+        std::mismatch(indices.begin(), indices.end(), m_dimensions.begin(),
+                      [](std::size_t a, std::size_t b) { return a < b; });
+    return res.first == indices.end();
+  }
   std::vector<T> m_data;
   std::vector<std::size_t> m_dimensions;
   std::vector<std::size_t> m_strides;

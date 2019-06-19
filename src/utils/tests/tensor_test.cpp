@@ -43,6 +43,11 @@ BOOST_AUTO_TEST_CASE(wrong_number_of_indices) {
   BOOST_CHECK_THROW(test_tensor(0, 1, 3), std::runtime_error);
 }
 
+BOOST_AUTO_TEST_CASE(out_of_bounds) {
+  auto test_tensor = Tensor<double>({4, 6, 7, 8});
+  BOOST_CHECK_THROW(test_tensor(4, 1, 3, 2), std::out_of_range);
+}
+
 BOOST_AUTO_TEST_CASE(iterator) {
   auto test_tensor = Tensor<double>({4, 6, 7, 8});
   for (auto &t : test_tensor) {
