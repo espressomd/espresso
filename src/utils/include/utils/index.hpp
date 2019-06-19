@@ -23,11 +23,13 @@ inline size_t ravel_index(const T &unravelled_indices, const U &dimensions) {
     throw std::invalid_argument(
         "Index vector and dimenions vector must have same dimensions.");
   }
-  std::size_t res = unravelled_indices.back();
+  std::size_t res = *std::rbegin(unravelled_indices);
   std::size_t temp_prod = 1;
-  for (int i = unravelled_indices.size() - 2; i >= 0; --i) {
-    temp_prod *= dimensions[i + 1];
-    res += unravelled_indices[i] * temp_prod;
+  auto it = std::rbegin(dimensions) + 1;
+  auto it2 = std::rbegin(unravelled_indices) + 1;
+  for (; it != std::rend(dimensions); ++it, ++it2) {
+    temp_prod *= *std::prev(it, 1);
+    res += (*it2) * temp_prod;
   }
   return res;
 }
