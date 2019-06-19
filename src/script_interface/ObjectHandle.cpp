@@ -20,80 +20,22 @@
 */
 
 #include "ObjectHandle.hpp"
+
 #include "MpiCallbacks.hpp"
-#include "PackedVariant.hpp"
+#include "ObjectManager.hpp"
 #include "ScriptInterface.hpp"
+#include "PackedVariant.hpp"
 
 #include <utils/serialization/pack.hpp>
 
+#include <boost/serialization/utility.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/algorithm/transform.hpp>
-#include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
 namespace {
-Communication::MpiCallbacks *m_callbacks = nullptr;
-std::unordered_map<ObjectId, ObjectRef> local_objects;
-
-/**
- * @brief Callback for creating a local instance
- *
- * @param id Internal identifier of the instance
- * @param name Class name
- * @param parameters Constructor parameters.
- */
-void make_remote_handle(ObjectId id, const std::string &name,
-                        const PackedMap &parameters) {
-  try {
-    local_objects[id] =
-        ObjectHandle::make_shared(name, ObjectHandle::CreationPolicy::LOCAL,
-                                  unpack(parameters, local_objects));
-  } catch (std::runtime_error const &) {
-  }
+std::unique_ptr<ObjectManager> m_om;
 }
-
-/**
- * @brief Callback for setting a parameter on an instance
- *
- * @param id Internal identifier of the instance to be modified
- * @param name Name of the parameter to change
- * @param value Value to set it to
- */
-void remote_set_parameter(ObjectId id, std::string const &name,
-                          PackedVariant const &value) {
-  try {
-    local_objects.at(id)->set_parameter(name, unpack(value, local_objects));
-  } catch (std::runtime_error const &) {
-  }
-}
-
-/**
- * @brief Callback for calling a method on an instance
- *
- * @param id Internal identified of the instance
- * @param name Name of the method to call
- * @param arguments Arguments to the call
- */
-void remote_call_method(ObjectId id, std::string const &name,
-                        PackedMap const &arguments) {
-  try {
-    local_objects.at(id)->call_method(name, unpack(arguments, local_objects));
-  } catch (std::runtime_error const &) {
-  }
-}
-
-/**
- * @brief Callback for deleting an instance
- *
- * @param id Internal identified of the instance
- */
-void delete_remote_handle(ObjectId id) { local_objects.erase(id); }
-
-REGISTER_CALLBACK(make_remote_handle)
-REGISTER_CALLBACK(remote_set_parameter)
-REGISTER_CALLBACK(remote_call_method)
-REGISTER_CALLBACK(delete_remote_handle)
-} // namespace
 
 Utils::Factory<ObjectHandle> factory;
 
@@ -106,8 +48,7 @@ ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
   sp->m_policy = policy;
 
   if (sp->m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(make_remote_handle, object_id(sp.get()), name,
-                      pack(parameters));
+    m_om->remote_make_handle(object_id(sp.get()), name, parameters);
   }
 
   sp->do_construct(parameters);
@@ -180,7 +121,7 @@ ObjectHandle::unserialize(std::string const &state_) {
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(remote_set_parameter, object_id(this), name, pack(value));
+    assert(m_om), m_om->remote_set_parameter(object_id(this), name, value);
   }
 
   this->do_set_parameter(name, value);
@@ -189,7 +130,7 @@ void ObjectHandle::set_parameter(const std::string &name,
 Variant ObjectHandle::call_method(const std::string &name,
                                   const VariantMap &params) {
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(remote_call_method, object_id(this), name, pack(params));
+    m_om->remote_call_method(object_id(this), name, params);
   }
 
   return this->do_call_method(name, params);
@@ -197,13 +138,13 @@ Variant ObjectHandle::call_method(const std::string &name,
 
 void ObjectHandle::delete_remote() {
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_callbacks->call(delete_remote_handle, object_id(this));
+    m_om->remote_delete_handle(object_id(this));
   }
 }
 
 ObjectHandle::~ObjectHandle() { this->do_destroy(); }
 
 void ObjectHandle::initialize(::Communication::MpiCallbacks &cb) {
-  m_callbacks = &cb;
+  m_om = std::make_unique<ObjectManager>(&cb);
 }
 } /* namespace ScriptInterface */

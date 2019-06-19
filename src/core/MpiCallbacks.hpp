@@ -368,7 +368,8 @@ public:
         -> std::enable_if_t<
             std::is_void<decltype(std::declval<void (*)(Args...)>()(
                 std::forward<ArgRef>(args)...))>::value> {
-      assert(m_cb), m_cb->call(m_id, std::forward<ArgRef>(args)...);
+      if (m_cb)
+        m_cb->call(m_id, std::forward<ArgRef>(args)...);
     }
 
     ~CallbackHandle() {

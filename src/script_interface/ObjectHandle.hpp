@@ -30,6 +30,8 @@ class MpiCallbacks;
 }
 
 namespace ScriptInterface {
+class ObjectManager;
+
 /**
  * @brief Base class for generic script interfaces.
  *
@@ -51,6 +53,7 @@ public:
   virtual ~ObjectHandle();
 
 private:
+  const ObjectManager *m_manager;
   std::string m_name;
   CreationPolicy m_policy = CreationPolicy::LOCAL;
 

@@ -1,4 +1,4 @@
-add_library(ScriptInterface SHARED initialize.cpp ObjectHandle.cpp)
+add_library(ScriptInterface SHARED initialize.cpp ObjectHandle.cpp ObjectManager.cpp)
 
 add_subdirectory(accumulators)
 add_subdirectory(collision_detection)
