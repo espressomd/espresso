@@ -26,7 +26,6 @@ public:
   /**
    * @brief Creates a tensor of given rank and sizes
    * @param dimensions Size for each dimension
-   * @param rank Rank of the tensor
    */
   explicit Tensor(std::initializer_list<std::size_t> const &dimensions)
       : m_rank(dimensions.size()),
