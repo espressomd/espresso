@@ -46,8 +46,10 @@ cdef extern from "get_value.hpp" namespace "ScriptInterface":
 
 cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectId:
+        ObjectId()
         string to_string()
         bool operator == (const ObjectId & rhs)
+        bool operator != (const ObjectId & rhs)
 
     Variant make_variant[T](const T & x)
 

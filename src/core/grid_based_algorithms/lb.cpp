@@ -143,10 +143,6 @@ LB_Parameters lbpar = {
     // Thermal energy
     0.0};
 
-#if (!defined(FLATNOISE) && !defined(GAUSSRANDOMCUT) && !defined(GAUSSRANDOM))
-#define FLATNOISE
-#endif
-
 /** The underlying lattice structure */
 Lattice lblattice;
 
@@ -1447,7 +1443,7 @@ void lb_calc_fluid_momentum(double *result) {
         index = get_linear_index(x, y, z, lblattice.halo_grid);
 
         j = lb_calc_local_j(index);
-        momentum += j + lbfields[index].force_density/2.;
+        momentum += j + .5 * lbfields[index].force_density;
       }
     }
   }

@@ -35,20 +35,17 @@ public:
   void update(bool recalc_positions) const override;
   /** @copydoc VirtualSites::back_transfer_forces_and_torques */
   void back_transfer_forces_and_torques() const override;
-  /** @copydoc VirtualSites::need_ghost_comm_after_pos_update */
-  bool need_ghost_comm_after_pos_update() const override { return true; }
   /** @copydoc VirtualSites::need_ghost_comm_before_vel_update */
   bool need_ghost_comm_before_vel_update() const override {
     return (n_nodes > 1) && get_have_velocity();
   };
-  /** @copydoc VirtualSites::need_ghost_comm_before_back_transfer */
-  bool need_ghost_comm_before_back_transfer() const override { return true; };
   /** @copydoc VirtualSites::n_pressure_contribs */
   int n_pressure_contribs() const override { return 1; };
   /** @copydoc VirtualSites::pressure_and_stress_tensor_contribution */
   void
   pressure_and_stress_tensor_contribution(double *pressure,
                                           double *stress_tensor) const override;
+  bool is_relative() const override { return true; }
 
 private:
   void update_pos(Particle &p) const;

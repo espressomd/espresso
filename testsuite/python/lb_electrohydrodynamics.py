@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd.lb as lb
 
@@ -63,30 +64,26 @@ class LBEHTest(object):
         mu_E = np.array(self.params['muE'])
         # Terminal velocity is mu_E minus the momentum the fluid
         # got by accelerating the particle in the beginning.
-        v_term = (
-            1. - 1. / (s.box_l[0] * s.box_l[1] * s.box_l[2] * self.params['dens'])) * mu_E
+        v_term = (1. - 1. / (np.prod(s.box_l) * self.params['dens'])) * mu_E
 
         s.integrator.run(steps=500)
 
         np.testing.assert_allclose(v_term, np.copy(s.part[0].v), atol=1e-5)
 
-@ut.skipIf(not espressomd.has_features(["LB_ELECTROHYDRODYNAMICS"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
 class LBEHCPU(LBEHTest,ut.TestCase):
 
     def setUp(self):
         self.LBClass =lb.LBFluid
 
-@ut.skipIf(not espressomd.has_features(["LB_WALBERLA", "LB_ELECTROHYDRODYNAMICS"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "LB_ELECTROHYDRODYNAMICS"])
 class LBEHCPU(LBEHTest,ut.TestCase):
 
     def setUp(self):
         self.LBClass =lb.LBFluidWalberla
 
-
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(["LB_ELECTROHYDRODYNAMICS"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["LB_GPU", "LB_ELECTROHYDRODYNAMICS"])
 class LBEHCPU(LBEHTest,ut.TestCase):
 
     def setUp(self):

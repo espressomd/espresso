@@ -10,7 +10,7 @@ Advanced Methods
 Creating bonds when particles collide
 -------------------------------------
 
-Please cite :cite:`espresso2` when using dynamic bonding.
+Please cite :cite:`arnold13a` when using dynamic bonding.
 
 With the help of this feature, bonds between particles can be created
 automatically during the simulation, every time two particles collide.
@@ -119,109 +119,6 @@ The following limitations currently apply for the collision detection:
 * The ``"bind at point of collision"`` approach cannot handle collisions
   between virtual sites
 
-.. _Swimmer Reactions:
-
-Swimmer Reactions
------------------
-
-
-With the help of the feature ``SWIMMER_REACTIONS``, one can define three particle types to act as reactant (e.g. :math:`\mathrm{H_2 O_2}`), catalyzer (e.g. platinum), and product (e.g. :math:`\mathrm{O_2}` and :math:`\mathrm{H_2 O}`). The current setup allows one to simulate active swimmers and their chemical propulsion.
-
-For a Janus swimmer consisting of platinum on one hemisphere and gold on the other hemisphere, both surfaces catalytically induce a reaction. We assume an initial abundance of hydrogen peroxide and absence of products, so that back (recombination) reactions seldom occur at the surface. A typical model for the propulsion of such a particle assumes
-
-.. math::
-
-    \begin{aligned}
-      \mathrm{H_2 O_2} &\xrightarrow{\text{Pt}} \mathrm{2 H^{+} + 2 e^{-} + O_2} \\
-      \mathrm{2 H^{+} + 2 e^{-} + H_2 O_2} &\xrightarrow{\text{Au}} \mathrm{2 H_2 O}
-    \end{aligned}
-
-That is, catalytic surfaces induce a reactions that produce charged species by consuming hydrogen peroxide. It is the change in distribution of charged species that leads to motion of the swimmer, a process referred to as self-electrophoresis. A minimal model for this would be
-
-.. math::
-
-    \begin{aligned}
-      A &\xrightarrow{C^{+}} B \\
-      B &\xrightarrow{C^{-}} A
-    \end{aligned}
-
-where on the upper half of the catalyst :math:`C^{+}` a species :math:`A` is converted into :math:`B`, and on the lower half :math:`C^{-}` the opposite reaction takes place. Note that when :math:`A` and :math:`B` are charged, this reaction conserves charge, provided the rates are equal. Note that this feature uses the word catalyst in a meaning which cannot be brought into agreement with the definition of a catalyst. If the catalyst :math:`C^{+}` catalyzes (on average) the reaction, where :math:`A` is converted to :math:`B`, then it is impossible that a catalyst :math:`C^{-}` performs (on average) the reverse reaction. For the example with hydrogen peroxide this would mean that hydrogen peroxide is created spontaneously using a catalyst (under the same environment where another catalyst wants to split hydrogen peroxide). This is chemically impossible. What is meant to be modeled is that hydrogen peroxide is constantly flowing into the system from the bulk and therefore it is not depleted. This behaviour cannot be modeled using a catalyst (in the defined meaning of the word catalyst).
-
-In |es| the orientation of a catalyzer particle is used to define hemispheres; half spaces going through the particle's center. The reaction region is bounded by the *reaction range*: :math:`r`. Inside the reaction range, we react only reactant-product pairs. The particles in a pair are swapped from hemisphere to another with a rate prescribed by
-
-.. math::
-
-    P_{\text{move}} = 1 - \mathrm{e}^{-k_{\mathrm{ct}}\,\Delta t} ,
-
-with the reaction rate :math:`k_{\mathrm{ct}}` and the simulation time step :math:`\Delta t`. A pair may be swapped only once per MD time step, to avoid a no-net-effect situation. That is, we allow an exchange move only when the following conditions are met:
-
-1. Both partners of the reactant-product pair have to reside within the reaction range.
-2. The product has to reside in the upper half-space of the reaction range.
-3. The reactant has to reside in the lower half-space of the reaction range.
-
-Self-propulsion is achieved by imposing an interaction asymmetry between the partners of a swapped pair. That is, the heterogeneous distribution of chemical species induced by the swapping leads to a net force on the particle, counter balanced by friction.
-
-To set up the system for catalytic reactions the class :class:`espressomd.swimmer_reaction.Reaction`
-can be used. ::
-
-    from espressomd.swimmer_reaction import Reaction
-
-    system = espressomd.System()
-
-    # setting up particles etc
-
-    r = Reaction(product_type=1, reactant_type=2, catalyzer_type=0,
-                 ct_range=2, ct_rate=0.2, eq_rate=0)
-    r.start()
-    r.stop()
-
-    print r
-
-* the first invocation of ``Reaction``, in the above example,  defines a
-  reaction with particles of type number 2 as reactant, type 0 as catalyzer and
-  type 1 as product [#1]_. The catalytic reaction rate constant is given by :math:`\mathrm{ct\_rate}`
-  [#2]_ and to override the default rate constant for the equilibrium reaction
-  ( = 0), one can specify it by as ``eq_rata``.  By default each reactant particle is checked
-  against each catalyst particle (``react_once=False``). However, when creating
-  smooth surfaces using many catalyst particles, it can be desirable to let the
-  reaction rate be independent of the surface density of these particles. That
-  is, each particle has a likelihood of reacting in the vicinity of the surface
-  (distance is less than :math:`r`) as specified by the rate constant, i.e.,
-  *not* according to :math:`P_{\text{cvt}} = 1 - \exp \left( - n k\Delta t
-  \right)`, with :math:`n` the number of local catalysts. To accomplish this,
-  each reactant is considered only once each time step by using the option
-  ``react_once=True`` . The reaction command is set up such that the different
-  properties may be influenced individually.
-
-*  ``r.stop()`` disables the reaction. Note that at the moment, there can
-   only be one reaction in the simulation.
-
-*  ``print r``  returns the current reaction parameters.
-
-In future versions of |es| the capabilities of the ``SWIMMER_REACTIONS`` feature may be generalized
-to handle multiple reactant, catalyzer, and product types, as well as
-more general reaction schemes. Other changes may involve merging the
-current implementation with the ``COLLISION_DETECTION`` feature.
-
-.. rubric:: Footnotes
-
-.. [#1]
-   Only one type of particle can be assigned to each of these three
-   reaction species and no particle type may be assigned to multiple
-   species. That is, currently does not support particles of type 1 and
-   2 both to be reactants, nor can particles of type 1 be a reactant as
-   well as a catalyst. Moreover, only one of these reactions can be
-   implemented in a single Tcl script. If, for instance, there is a
-   reaction involving particle types 1, 2, and 4, there cannot be a
-   second reaction involving particles of type 5, 6, and 8. It is
-   however possible to modify the reaction properties for a given set of
-   types during the simulation.
-
-.. [#2]
-   Currently only strictly positive values of the catalytic conversion
-   rate constant are allowed. Setting the value to zero is equivalent to
-   ``r.stop()``.
-
 ..
 .. _Lees-Edwards boundary conditions:
 
@@ -253,8 +150,7 @@ friction coefficient (this is different from the Object-in-Fluid method
 below). We implement these marker points as virtual tracer
 particles which are not integrated using the usual velocity-Verlet
 scheme, but instead are propagated using a simple Euler algorithm with
-the local fluid velocity (if the ``IMMERSED_BOUNDARY`` feature is turned
-on).
+the local fluid velocity.
 
 The immersed boundary method consists of two components, which can be used independently:
 
@@ -314,7 +210,7 @@ University of Zilina:
 
 | ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
-  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zref.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zref.bib)
+  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zrefs.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zrefs.bib)
 
 | This documentation introduces the features of module Object-in-fluid
   (OIF). Even though ESPResSo was not primarily intended to work with closed
@@ -1948,7 +1844,7 @@ Combination of the Reaction Ensemble with the Wang-Landau algorithm
 allows for enhanced sampling of the reacting system, and
 and for the determination of the density of states with respect
 to the reaction coordinate or with respect to some other collective
-variable :cite:`landsgesell16a`. Here the 1/t Wang-Landau
+variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
 does not suffer from systematic errors. Additionally to the above
 commands for the reaction ensemble use the following commands for the
@@ -1970,7 +1866,7 @@ In the constant pH method due to Reed and Reed
 of :math:`H^{+}` ions, assuming that the simulated system is coupled to an
 infinite reservoir. This value is the used to simulate dissociation
 equilibrium of acids and bases. Under certain conditions, the constant
-pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell16b`. However, it
+pH method can yield equivalent results as the reaction ensemble :cite:`landsgesell17b`. However, it
 treats the chemical potential of :math:`H^{+}` ions and their actual
 number in the simulation box as independent variables, which can lead to
 serious artifacts.

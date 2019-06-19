@@ -60,6 +60,7 @@ function end {
 [ -z "$check_skip_long" ] && check_skip_long="false"
 [ -z "$make_check_tutorials" ] && make_check_tutorials="false"
 [ -z "$make_check_samples" ] && make_check_samples="false"
+[ -z "$make_check_benchmarks" ] && make_check_benchmarks="false"
 [ -z "$python_version" ] && python_version="2"
 [ -z "$with_cuda" ] && with_cuda="true"
 [ -z "$build_type" ] && build_type="Debug"
@@ -68,20 +69,24 @@ function end {
 [ -z "$test_timeout" ] && test_timeout="300"
 [ -z "$hide_gpu" ] && hide_gpu="false" 
 
-if [ $make_check ] || [ $make_check_tutorials ] || [ $make_check_samples ]; then
+if [ $make_check ] || [ $make_check_tutorials ] || [ $make_check_samples ] || [ $make_check_benchmarks ]; then
   run_checks="true"
 fi
 
 # If there are no user-provided flags they
 # are added according to with_coverage.
+nvcc_flags=${cxx_flags}
 if [ -z "$cxx_flags" ]; then
     if $with_coverage; then
         cxx_flags="-Og"
+        nvcc_flags="-O3"
     else
         if $run_checks; then
             cxx_flags="-O3"
+            nvcc_flags="-O3"
         else
             cxx_flags="-O0"
+            nvcc_flags="-O0"
         fi
     fi
 fi
@@ -91,7 +96,7 @@ if [ ! -z ${with_coverage+x} ]; then
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=$build_type -DPYTHON_EXECUTABLE=$(which python$python_version) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=$check_procs $cmake_params -DWITH_SCAFACOS=ON"
-cmake_params="$cmake_params -DCMAKE_CXX_FLAGS=$cxx_flags"
+cmake_params="$cmake_params -DCMAKE_CXX_FLAGS=$cxx_flags -DCUDA_NVCC_FLAGS=$nvcc_flags"
 cmake_params="$cmake_params -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="$cmake_params -DTEST_TIMEOUT=$test_timeout"
 if $with_ccache; then
@@ -114,7 +119,7 @@ elif [ -z "$builddir" ]; then
 fi
 
 outp insource srcdir builddir \
-    make_check make_check_tutorials make_check_samples \
+    make_check make_check_tutorials make_check_samples make_check_benchmarks \
     cmake_params with_fftw \
     with_python_interface with_coverage \
     with_ubsan with_asan \
@@ -129,6 +134,10 @@ pep8_command () {
         pep8 "$@"
     elif hash pycodestyle 2> /dev/null; then
         pycodestyle "$@"
+    elif hash pycodestyle-2 2> /dev/null; then
+        pycodestyle-2 "$@"
+    elif hash pycodestyle-3 2> /dev/null; then
+        pycodestyle-3 "$@"
     else
         echo "pep8 not found";
         exit 1
@@ -287,6 +296,11 @@ if $run_checks; then
     # sample tests
     if $make_check_samples; then
         make -j${build_procs} check_samples $make_params || exit 1
+    fi
+
+    # benchmark tests
+    if $make_check_benchmarks; then
+        make -j${build_procs} check_benchmarks $make_params || exit 1
     fi
 
     # installation tests

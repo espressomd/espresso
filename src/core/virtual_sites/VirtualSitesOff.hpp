@@ -27,9 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class VirtualSitesOff : public VirtualSites {
   void update(bool) const override{};
   void back_transfer_forces_and_torques() const override{};
-  bool need_ghost_comm_after_pos_update() const override { return false; }
   bool need_ghost_comm_before_vel_update() const override { return false; };
-  bool need_ghost_comm_before_back_transfer() const override { return false; };
+  bool is_relative() const override { return false; }
 };
 
 #endif

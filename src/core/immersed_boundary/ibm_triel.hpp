@@ -20,11 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef IBM_TRIEL_H
 #define IBM_TRIEL_H
 
-#include "config.hpp"
-
-#ifdef IMMERSED_BOUNDARY
-
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "config.hpp"
 
 // This function is used to set the parameters
 // Also calculates and stores the reference state
@@ -40,7 +37,5 @@ int IBM_Triel_ResetParams(int bond_type, double k1, double l0);
 // This function calculates and adds the actual force
 int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
                         Bonded_ia_parameters *iaparams);
-
-#endif
 
 #endif

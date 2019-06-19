@@ -26,6 +26,7 @@ namespace Observables {
 class CylindricalLBVelocityProfileAtParticlePositions
     : public CylindricalPidProfileObservable {
 public:
+  using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
   std::vector<double> evaluate(PartCfg &partCfg) const override;
   int n_values() const override { return 3 * n_r_bins * n_phi_bins * n_z_bins; }
 };

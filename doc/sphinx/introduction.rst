@@ -297,7 +297,6 @@ Currently, the following tutorials are available:
 * :file:`06-active_matter`: Modelling of self-propelling particles.
 * :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`08-visualization`: Using the online visualizers of |es|.
-* :file:`09-swimmer_reactions`: Further modelling of self-propelling particles.
 * :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble.
 
 .. _Sample scripts:
@@ -459,7 +458,7 @@ everything in multiples of the van-der-Waals binding energy of the
 respective particles.
 
 The final choice is the time (or mass) scale. By default, |es| uses a reduced
-mass of 1, so that the mass unit is simply the mass of all particles.
+mass of 1 for all particles, so that the mass unit is simply the mass of one particle.
 Combined with the energy and length scale, this is sufficient to derive
 the resulting time scale:
 

@@ -17,6 +17,7 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@SAMPLES_DIR@/observables_correlators.py")
@@ -25,6 +26,10 @@ sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 @skipIfMissingFeatures
 class Sample(ut.TestCase):
     system = sample.system
+
+    def test_fcs_acf(self):
+        fcs_acf_weights = np.copy(sample.fcs.get_params()['args'])
+        np.testing.assert_allclose(fcs_acf_weights, [100., 100., 100.])
 
 
 if __name__ == "__main__":

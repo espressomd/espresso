@@ -25,7 +25,7 @@ espressomd.assert_features(["LENNARD_JONES"])
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
-from espressomd.io.writer import vtf
+from espressomd.io.writer import vtf  # pylint: disable=import-error
 import numpy as np
 
 # System parameters

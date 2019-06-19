@@ -20,7 +20,7 @@ This sample demonstrates how to checkpoint a simulation.
 
 import espressomd
 
-required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+required_features = ["P3M", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import electrostatics

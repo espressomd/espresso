@@ -21,8 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "config.hpp"
 #include "immersed_boundary/ImmersedBoundaries.hpp"
 
-#ifdef IMMERSED_BOUNDARY
 extern ImmersedBoundaries immersed_boundaries;
 
-#endif
 #endif

@@ -92,6 +92,17 @@ default:
     - docker
     - linux
 
+min_boost:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:min_boost
+  script:
+    - export with_cuda=false myconfig=maxset python_version=3
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
 maxset:
   <<: *global_job_definition
   stage: build
@@ -148,12 +159,12 @@ debian:9:
     - docker
     - linux
 
-opensuse:15.0:
+opensuse:15.1:
   <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export with_cuda=false myconfig=maxset make_check=false
+    - export with_cuda=false myconfig=maxset make_check=false python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -162,9 +173,9 @@ opensuse:15.0:
 centos:7:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos-python3:7
   script:
-    - export with_cuda=false myconfig=maxset make_check=false
+    - export with_cuda=false myconfig=maxset make_check=true python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -173,17 +184,17 @@ centos:7:
 fedora:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos:next
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos-python3:next
   script:
-    - export with_cuda=false myconfig=maxset make_check=false
+    - export with_cuda=false myconfig=maxset make_check=false python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
     - linux
 
-#ubuntu:1404 not needed: used in cuda:8.0
 #ubuntu:1604 not needed: used in cuda:9.0
 #ubuntu:1804 not needed: default used in non-CUDA builds
+#ubuntu:1904 not needed: base image for builds on different architectures
 
 ### Builds with CUDA
 
@@ -208,7 +219,8 @@ tutorials-samples-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
   script:
-    - export myconfig=maxset with_coverage=false python_version=3 make_check=false make_check_tutorials=true make_check_samples=true test_timeout=1200
+    - export myconfig=maxset with_coverage=false python_version=3 make_check=false
+    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -220,7 +232,8 @@ tutorials-samples-default:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
   script:
-    - export myconfig=default with_coverage=false python_version=3 make_check=false make_check_tutorials=true make_check_samples=true test_timeout=1200
+    - export myconfig=default with_coverage=false python_version=3 make_check=false
+    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -234,7 +247,8 @@ tutorials-samples-empty:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
   script:
-    - export myconfig=empty with_coverage=false python_version=3 make_check=false make_check_tutorials=true make_check_samples=true test_timeout=1200
+    - export myconfig=empty with_coverage=false python_version=3 make_check=false
+    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -248,7 +262,8 @@ tutorials-samples-no-gpu:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
   script:
-    - export myconfig=maxset with_coverage=false python_version=3 make_check=false make_check_tutorials=true make_check_samples=true test_timeout=1200 hide_gpu=true
+    - export myconfig=maxset with_coverage=false python_version=3 make_check=false
+    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200 hide_gpu=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -314,7 +329,7 @@ rocm-maxset:
   script:
     - export with_cuda=false test_timeout=900 check_skip_long=true
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
-    - export myconfig=maxset
+    - export myconfig=maxset python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker

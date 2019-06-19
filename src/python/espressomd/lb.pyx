@@ -20,6 +20,7 @@ from __future__ import print_function, absolute_import, division
 include "myconfig.pxi"
 import os
 import cython
+import itertools
 import numpy as np
 cimport numpy as np
 from libc cimport stdint
@@ -244,6 +245,28 @@ cdef class HydrodynamicInteraction(Actor):
 
     def _deactivate_method(self):
         lb_lbfluid_set_lattice_switch(NONE)
+    
+    property shape:
+        def __get__(self):
+            cdef Vector3i shape = lb_lbfluid_get_shape()
+            return (shape[0], shape[1], shape[2])
+
+    property stress:
+        def __get__(self):
+            cdef Vector6d res
+            res = lb_lbfluid_get_stress() 
+            return array_locked((
+                res[0], res[1], res[2], res[3], res[4], res[5]))
+
+        def __set__(self, value):
+            raise NotImplementedError
+
+    def nodes(self):
+        """Provides a generator for iterating over all lb nodes"""
+        
+        shape = self.shape
+        for i, j, k in itertools.product(range(shape[0]), range(shape[1]), range(shape[2])):
+            yield self[i, j, k]
 
     property stress:
         def __get__(self):
@@ -315,9 +338,6 @@ IF CUDA:
 
         """
 
-        def remove_total_momentum(self):
-            lb_lbfluid_remove_total_momentum()
-
         def _set_lattice_switch(self):
             lb_lbfluid_set_lattice_switch(GPU)
 
@@ -369,6 +389,10 @@ cdef class LBFluidRoutines(object):
         self.node[2] = key[2]
         if not lb_lbnode_is_index_valid(self.node):
             raise ValueError("LB node index out of bounds")
+    
+    property index:
+        def __get__(self):
+            return (self.node[0], self.node[1], self.node[2])
 
     property velocity:
         def __get__(self):

@@ -130,19 +130,6 @@ cdef extern from "npt.hpp":
 cdef extern from "statistics.hpp":
     extern int n_configs
 
-cdef extern from "swimmer_reaction.hpp":
-    ctypedef struct  reaction_struct:
-        int reactant_type
-        int product_type
-        int catalyzer_type
-        double range
-        double ct_rate
-        double eq_rate
-        int sing_mult
-        int swap
-
-    cdef extern reaction_struct reaction
-
 cdef extern from "immersed_boundaries.hpp":
     extern ImmersedBoundaries immersed_boundaries
 

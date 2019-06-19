@@ -15,13 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
 from tests_common import single_component_maxwell
 
 """
-Check the Lattice Boltzmann thermostat with respect to the particle velocity distribution.
+Check the Lattice Boltzmann thermostat with respect to the particle velocity
+distribution.
 
 
 """
@@ -68,8 +70,8 @@ class LBThermostatCommon(object):
         n_bins = 7
         error_tol = 0.01
         for i in range(3):
-            hist = np.histogram(v_stored[:, i], range=(
-                -minmax, minmax), bins=n_bins, normed=False)
+            hist = np.histogram(v_stored[:, i], range=(-minmax, minmax),
+                                bins=n_bins, normed=False)
             data = hist[0] / float(v_stored.shape[0])
             bins = hist[1]
             for j in range(n_bins):
@@ -86,8 +88,7 @@ class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['CUDA']), "Skipping test due to missing features or gpu.")
+@utx.skipIfMissingGPU()
 class LBGPUThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the GPU implementation of the LB."""

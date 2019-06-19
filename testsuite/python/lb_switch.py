@@ -16,15 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 import espressomd.lb
-from tests_common import abspath
 from itertools import product
 
 
-@ut.skipIf(not espressomd.has_features(["EXTERNAL_FORCES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
 class LBSwitchActor(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 
@@ -37,8 +36,7 @@ class LBSwitchActor(ut.TestCase):
         system.part.add(pos=[1., 1., 1.], v=[1., 0, 0], fix=[1, 1, 1])
         ext_force_density = [0.2, 0.3, 0.15]
 
-        lb_fluid_params = {
-            'agrid': 2.0, 'dens': 1.0, 'visc': 1.0, 'tau': 0.03}
+        lb_fluid_params = {'agrid': 2.0, 'dens': 1.0, 'visc': 1.0, 'tau': 0.03}
         friction_1 = 1.5
         friction_2 = 4.0
 
@@ -85,9 +83,7 @@ class LBSwitchActor(ut.TestCase):
     def test_CPU_LB(self):
         self.switch_test()
 
-    @ut.skipIf((not espressomd.gpu_available() or not espressomd.has_features(["CUDA"])
-                ),
-               "CUDA not available or no gpu present, skipping test.")
+    @utx.skipIfMissingGPU()
     def test_GPU_LB(self):
         self.switch_test(GPU=True)
 
