@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(iterators) {
   BOOST_CHECK(*(a.end() - 1) == 4);
   BOOST_CHECK(*(a.cend() - 1) == 4);
   BOOST_CHECK(*(a.rbegin()) == 4);
-  BOOST_CHECK(*(a.rend()+1) == 1);
+  BOOST_CHECK(*(a.rend() + 1) == 1);
 }
 
 BOOST_AUTO_TEST_CASE(element_access) {

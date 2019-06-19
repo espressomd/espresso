@@ -94,15 +94,15 @@ template <typename T, std::size_t N> struct Array {
   };
 
   DEVICE_QUALIFIER constexpr iterator rbegin() noexcept {
-    return &m_storage.m_data[N-1];
+    return &m_storage.m_data[N - 1];
   };
 
   DEVICE_QUALIFIER constexpr const_iterator rbegin() const noexcept {
-    return &m_storage.m_data[N-1];
+    return &m_storage.m_data[N - 1];
   };
 
   DEVICE_QUALIFIER constexpr const_iterator crbegin() const noexcept {
-    return &m_storage.m_data[N-1];
+    return &m_storage.m_data[N - 1];
   };
 
   DEVICE_QUALIFIER constexpr iterator end() noexcept {
@@ -118,15 +118,15 @@ template <typename T, std::size_t N> struct Array {
   };
 
   DEVICE_QUALIFIER constexpr iterator rend() noexcept {
-    return &m_storage.m_data[0] -1;
+    return &m_storage.m_data[0] - 1;
   };
 
   DEVICE_QUALIFIER constexpr const_iterator rend() const noexcept {
-    return &m_storage.m_data[0] -1;
+    return &m_storage.m_data[0] - 1;
   };
 
   DEVICE_QUALIFIER constexpr const_iterator crend() const noexcept {
-    return &m_storage.m_data[0] -1;
+    return &m_storage.m_data[0] - 1;
   };
 
   DEVICE_QUALIFIER constexpr bool empty() const noexcept { return size() == 0; }
