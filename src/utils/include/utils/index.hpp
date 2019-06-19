@@ -25,11 +25,11 @@ inline size_t ravel_index(const T &unravelled_indices, const U &dimensions) {
   }
   std::size_t res = *std::rbegin(unravelled_indices);
   std::size_t temp_prod = 1;
-  auto it = std::rbegin(dimensions) + 1;
-  auto it2 = std::rbegin(unravelled_indices) + 1;
+  auto it = std::rbegin(dimensions);
+  auto it2 = std::rbegin(unravelled_indices);
   for (; it != std::rend(dimensions); ++it, ++it2) {
-    temp_prod *= *std::prev(it, 1);
-    res += (*it2) * temp_prod;
+    temp_prod *= *it;
+    res += *std::next(it2, 1) * temp_prod;
   }
   return res;
 }

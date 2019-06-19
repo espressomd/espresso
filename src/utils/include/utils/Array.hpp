@@ -93,6 +93,18 @@ template <typename T, std::size_t N> struct Array {
     return &m_storage.m_data[0];
   };
 
+  DEVICE_QUALIFIER constexpr iterator rbegin() noexcept {
+    return &m_storage.m_data[N-1];
+  };
+
+  DEVICE_QUALIFIER constexpr const_iterator rbegin() const noexcept {
+    return &m_storage.m_data[N-1];
+  };
+
+  DEVICE_QUALIFIER constexpr const_iterator crbegin() const noexcept {
+    return &m_storage.m_data[N-1];
+  };
+
   DEVICE_QUALIFIER constexpr iterator end() noexcept {
     return &m_storage.m_data[N];
   };
