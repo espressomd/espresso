@@ -44,11 +44,12 @@ ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
                           const VariantMap &parameters) {
   auto sp = factory.make(name);
 
+  sp->m_manager = m_om.get();
   sp->m_name = name;
   sp->m_policy = policy;
 
   if (sp->m_policy == CreationPolicy::GLOBAL) {
-    m_om->remote_make_handle(object_id(sp.get()), name, parameters);
+    sp->manager()->remote_make_handle(object_id(sp.get()), name, parameters);
   }
 
   sp->do_construct(parameters);
@@ -121,7 +122,7 @@ ObjectHandle::unserialize(std::string const &state_) {
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {
   if (m_policy == CreationPolicy::GLOBAL) {
-    assert(m_om), m_om->remote_set_parameter(object_id(this), name, value);
+    manager()->remote_set_parameter(object_id(this), name, value);
   }
 
   this->do_set_parameter(name, value);
@@ -130,7 +131,7 @@ void ObjectHandle::set_parameter(const std::string &name,
 Variant ObjectHandle::call_method(const std::string &name,
                                   const VariantMap &params) {
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_om->remote_call_method(object_id(this), name, params);
+    manager()->remote_call_method(object_id(this), name, params);
   }
 
   return this->do_call_method(name, params);
@@ -138,7 +139,7 @@ Variant ObjectHandle::call_method(const std::string &name,
 
 void ObjectHandle::delete_remote() {
   if (m_policy == CreationPolicy::GLOBAL) {
-    m_om->remote_delete_handle(object_id(this));
+    manager()->remote_delete_handle(object_id(this));
   }
 }
 

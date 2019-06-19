@@ -4,8 +4,6 @@
 
 #include <utils/serialization/pack.hpp>
 
-#include <boost/serialization/utility.hpp>
-
 namespace ScriptInterface {
 void ObjectManager::make_handle(ObjectId id, const std::string &name,
                  const PackedMap &parameters) {

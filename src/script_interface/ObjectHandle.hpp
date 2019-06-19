@@ -53,11 +53,16 @@ public:
   virtual ~ObjectHandle();
 
 private:
-  const ObjectManager *m_manager;
+  ObjectManager *m_manager = nullptr;
   std::string m_name;
   CreationPolicy m_policy = CreationPolicy::LOCAL;
 
 public:
+  /**
+   * @brief Resposible manager.
+   */
+  ObjectManager *manager() const { return assert(m_manager), m_manager; }
+
   /**
    * @brief Name of the object.
    *

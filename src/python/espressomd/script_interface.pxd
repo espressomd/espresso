@@ -21,13 +21,17 @@ from libcpp.map cimport map
 from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
 from libcpp.string cimport string
-from libcpp.memory cimport shared_ptr
-from libcpp.memory cimport weak_ptr
+from libcpp.memory cimport shared_ptr, unique_ptr, weak_ptr
 from libcpp cimport bool
 
 from boost cimport string_ref
 
 from .utils cimport Span
+from .communication cimport MpiCallbacks
+
+cdef extern from "scipt_interface/ObjectManager.hpp" namespace "ScriptInterface":
+    cppclass ObjectManager:
+        ObjectManager(MpiCallbacks *)
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     void initialize()

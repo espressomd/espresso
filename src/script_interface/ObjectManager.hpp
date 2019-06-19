@@ -5,6 +5,8 @@
 #include "Variant.hpp"
 #include "PackedVariant.hpp"
 
+#include <boost/serialization/utility.hpp>
+
 namespace ScriptInterface {
   class ObjectManager {
   using ObjectId = std::size_t;

@@ -365,6 +365,5 @@ def script_interface_register(c):
     _python_class_by_so_name[c._so_name] = c
     return c
 
-
 def init():
     initialize()
