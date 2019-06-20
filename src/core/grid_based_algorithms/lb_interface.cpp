@@ -174,7 +174,8 @@ void mpi_recv_fluid_populations(int node, int index, double *pop) {
 void lb_lbfluid_update() {
   if (lattice_switch == ActiveLB::CPU) {
     lattice_boltzmann_update();
-  } else if (lattice_switch == ActiveLB::GPU and this_node == 0) {
+  } else if (lattice_switch == ActiveLB::GPU) {
+    if (this_node == 0) {
 #ifdef CUDA
 #ifdef ELECTROKINETICS
     if (ek_initialized) {
@@ -183,13 +184,14 @@ void lb_lbfluid_update() {
 #endif
       lattice_boltzmann_update_gpu();
 #ifdef ELECTROKINETICS
+  }
     }
 #endif
 #endif
   } else if (lattice_switch == ActiveLB::WALBERLA) {
      lb_walberla()->integrate();
   } else
-    throw std::runtime_error("No LB active");
+    throw std::runtime_error("No LB active (update)i");
 }
 
 void lb_lbfluid_propagate() {
@@ -515,6 +517,7 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
       lbpar_gpu.external_force_density = 0;
     }
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
+    reset_LB_force_densities_GPU(false);
 
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
@@ -1140,7 +1143,7 @@ Utils::Vector3i lb_lbfluid_get_shape() {
   }
 #endif
 
-  throw std::runtime_error("No LB active");
+  throw std::runtime_error("No LB active (get_shape)");
 }
 
 bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind) {
@@ -1537,7 +1540,7 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
      fluid_momentum =  Communication::mpiCallbacks().call(
          Communication::Result::Reduction(),std::plus<>(),
          Walberla::get_momentum) * lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
-  } else throw std::runtime_error("No LB active.");
+  } else throw std::runtime_error("No LB active (calc_fluid_momentum).");
 
   return fluid_momentum;
 }

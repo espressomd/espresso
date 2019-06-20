@@ -88,7 +88,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
-      uint_c(1));
+      uint_c(0));
   m_force_field_from_md_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
       uint_c(1));
@@ -99,7 +99,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_pdf_field_id =
       lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model,
-                                to_vector3(m_velocity), (real_t)m_density);
+                                to_vector3(m_velocity), (real_t)m_density,int_c(skin/agrid +1));
 
   m_flag_field_id =
       field::addFlagFieldToStorage<Flag_field_t>(m_blocks, "flag field");
@@ -121,9 +121,6 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   communication.addPackInfo(
       std::make_shared<field::communication::PackInfo<Pdf_field_t>>(
           m_pdf_field_id));
-  communication.addPackInfo(
-      std::make_shared<field::communication::PackInfo<vector_field_t>>(
-          m_force_field_id));
   m_reset_force =
       std::make_shared<ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>(
           m_pdf_field_id, m_force_field_id, m_force_field_from_md_id, m_boundary_handling_id);

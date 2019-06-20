@@ -2049,9 +2049,9 @@ __global__ void reinit_node_force(LB_node_force_density_gpu node_f) {
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index < para->number_of_nodes) {
-    node_f.force_density[0 * para->number_of_nodes + index] = 0.0f;
-    node_f.force_density[1 * para->number_of_nodes + index] = 0.0f;
-    node_f.force_density[2 * para->number_of_nodes + index] = 0.0f;
+    node_f.force_density[0 * para->number_of_nodes + index] = 0.f;
+    node_f.force_density[1 * para->number_of_nodes + index] = 0.f;
+    node_f.force_density[2 * para->number_of_nodes + index] = 0.f;
   }
 }
 

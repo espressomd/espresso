@@ -95,13 +95,13 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
 cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     void lb_lbcoupling_set_rng_state(stdint.uint64_t)
     stdint.uint64_t lb_lbcoupling_get_rng_state() except +
-    void lb_lbcoupling_set_gamma(double)
+    void lb_lbcoupling_set_gamma(double) except +
     double lb_lbcoupling_get_gamma() except +
     bool lb_lbcoupling_is_seed_required()
 
 cdef extern from "grid_based_algorithms/lbgpu.hpp":
-    void linear_velocity_interpolation(double * positions, double * velocities, int length)
-    void quadratic_velocity_interpolation(double * positions, double * velocities, int length)
+    void linear_velocity_interpolation(double * positions, double * velocities, int length) except +
+    void quadratic_velocity_interpolation(double * positions, double * velocities, int length) except +
 
 cdef extern from "grid_based_algorithms/lb_interpolation.hpp":
     const Vector3d lb_lbinterpolation_get_interpolated_velocity_global(Vector3d & p) except +

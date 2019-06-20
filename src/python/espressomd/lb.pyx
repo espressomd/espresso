@@ -311,7 +311,9 @@ IF LB_WALBERLA:
             self.validate_params()
             mpi_init_lb_walberla(
                 self._params["visc"], self._params["dens"], self._params["agrid"], self._params["tau"])
+            utils.handle_errors("LB fluid activation")
             python_lbfluid_set_ext_force_density(
+    
     self._params["ext_force_density"],
     self._params["agrid"],
     self._params["tau"])

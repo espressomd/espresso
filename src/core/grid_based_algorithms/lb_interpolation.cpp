@@ -88,7 +88,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
      auto folded_pos = folded_position(pos);
      auto res =lb_walberla()->get_velocity_at_pos(folded_pos/lb_lbfluid_get_agrid());
      if (!res) {
-       printf("positoin: %g %g %g\n",folded_pos[0],folded_pos[1],folded_pos[2]);
+       printf("%d: positoin: %g %g %g\n",this_node,folded_pos[0],folded_pos[1],folded_pos[2]);
        throw std::runtime_error("Interpolated velocity could not be obtained from Walberla");
      }
      return *res;
