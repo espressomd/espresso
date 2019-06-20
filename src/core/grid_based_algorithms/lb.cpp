@@ -225,7 +225,6 @@ void lb_reinit_fluid() {
        ++index) {
     // calculate equilibrium distribution
     lb_calc_n_from_rho_j_pi(index, lbpar.rho, j, pi);
-    
 
 #ifdef LB_BOUNDARIES
     lbfields[index].boundary = 0;
@@ -291,12 +290,11 @@ void lb_reinit_parameters() {
     for (int i = 0; i < D3Q19::n_vel; i++)
       lbpar.phi[i] = 0.0;
   }
-  
+
   // Update external forces on the nodes
   for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
     lbfields[i].force_density = lbpar.ext_force_density;
   }
-
 }
 
 /* Halo communication for push scheme */

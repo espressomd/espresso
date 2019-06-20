@@ -34,9 +34,12 @@ inline walberla::Vector3<walberla::real_t> to_vector3(const Utils::Vector3d v) {
   return walberla::Vector3<walberla::real_t>{v[0], v[1], v[2]};
 }
 
-template <typename PdfField_T, typename ForceField_T, typename BoundaryHandling_T> class ResetForce {
+template <typename PdfField_T, typename ForceField_T,
+          typename BoundaryHandling_T>
+class ResetForce {
 public:
-  ResetForce(walberla::BlockDataID pdf_field_id, walberla::BlockDataID force_field_id,
+  ResetForce(walberla::BlockDataID pdf_field_id,
+             walberla::BlockDataID force_field_id,
              walberla::BlockDataID force_field_from_md_id,
              walberla::BlockDataID boundary_handling_id)
       : m_pdf_field_id(pdf_field_id), m_force_field_id(force_field_id),
@@ -76,8 +79,8 @@ public:
   }
 
 private:
-  walberla::BlockDataID m_pdf_field_id, m_force_field_id, m_force_field_from_md_id,
-      m_boundary_handling_id;
+  walberla::BlockDataID m_pdf_field_id, m_force_field_id,
+      m_force_field_from_md_id, m_boundary_handling_id;
   walberla::Vector3<walberla::real_t> m_ext_force;
 };
 /** Class that runs and controls the LB on WaLBerla

@@ -60,9 +60,9 @@ class Momentum(object):
         for i in range(3):
             self.system.integrator.run(300)
             print(i, p.v * p.mass, -
-                    np.array(
-                        self.system.analysis.linear_momentum(
-                            include_particles=False)))
+                  np.array(
+                  self.system.analysis.linear_momentum(
+                  include_particles=False)))
 
             # Check that particle momentum =-fluid momenum
             # up to the momentum trnasferred in 1/2 time step
@@ -93,6 +93,7 @@ class LBCPUMomentum(ut.TestCase, Momentum):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+
 
 @ut.skipIf(not espressomd.has_features(
     ['LB_WALBERLA', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")

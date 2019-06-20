@@ -163,7 +163,7 @@ class TestLB(object):
         stress summed up over the entire fluid.
 
         """
-       
+
         system = self.system
         system.actors.clear()
         system.part.clear()
@@ -205,14 +205,19 @@ class TestLB(object):
             tau=self.system.time_step,
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
-        self.assertAlmostEqual(self.lbf[0, 0, 0].density, self.params['dens'], delta=1e-4)
-        
-        self.assertEqual(self.lbf.shape, 
+        self.assertAlmostEqual(
+            self.lbf[0,
+                     0,
+                     0].density,
+            self.params['dens'],
+            delta=1e-4)
+
+        self.assertEqual(self.lbf.shape,
                          (
                          int(self.system.box_l[0] / self.params["agrid"]),
                          int(self.system.box_l[1] / self.params["agrid"]),
                              int(self.system.box_l[2] / self.params["agrid"])))
-        
+
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid
         np.testing.assert_allclose(
@@ -277,7 +282,7 @@ class TestLB(object):
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):
-        self.system.cell_system.skin=.01
+        self.system.cell_system.skin = .01
         self.system.thermostat.turn_off()
         self.system.actors.clear()
         self.system.part.clear()
@@ -309,7 +314,7 @@ class TestLB(object):
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_a_ext_force_density(self):
         self.system.thermostat.turn_off()
-        self.system.cell_system.skin=0.4*self.params['agrid']
+        self.system.cell_system.skin = 0.4 * self.params['agrid']
         self.system.actors.clear()
         self.system.part.clear()
         ext_force_density = [2.3, 1.2, 0.1]
@@ -320,19 +325,19 @@ class TestLB(object):
             tau=self.system.time_step,
             ext_force_density=ext_force_density)
         self.system.actors.add(self.lbf)
-        n_time_steps = 1 
+        n_time_steps = 1
         self.system.integrator.run(n_time_steps)
         # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps - 0.5)
         # (force is applied only to the second half of the first integration step)
-        # velocity includes half of the forces applied in the prev. 
+        # velocity includes half of the forces applied in the prev.
         # integration step
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
-            n_time_steps + 0.5) / self.params['dens'] 
+            n_time_steps + 0.5) / self.params['dens']
         for n in list(itertools.combinations(range(int(self.system.box_l[0] / self.params['agrid'])), 3)):
             np.testing.assert_allclose(
                 np.copy(self.lbf[n].velocity), fluid_velocity, atol=1E-6)
         np.testing.assert_allclose(
-            self.system.analysis.linear_momentum()/self.system.volume()/self.params['dens'], fluid_velocity, atol=1E-6)
+            self.system.analysis.linear_momentum() / self.system.volume() / self.params['dens'], fluid_velocity, atol=1E-6)
 
 
 class TestLBCPU(TestLB, ut.TestCase):
@@ -382,16 +387,16 @@ class TestLBWalberla(TestLB, ut.TestCase):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidWalberla
+
     def test_stress_tensor(self):
         print("stress tensor not implemented for walberla. skipping test.")
-    
+
     def test_mass_momentum_thermostat(self):
         print("Thermalization not implemented for Walberla. skipping test")
-    
+
     def test_parameter_change_without_seed(self):
         print("Thermalization not implemented for Walberla. skipping test")
-        
+
 
 if __name__ == "__main__":
-  ut.main()
-
+    ut.main()

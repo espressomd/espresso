@@ -196,7 +196,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
       }
     }
 #endif
-  } else if (lattice_switch == ActiveLB::CPU or lattice_switch == ActiveLB::WALBERLA) {
+  } else if (lattice_switch == ActiveLB::CPU or
+             lattice_switch == ActiveLB::WALBERLA) {
     if (lb_particle_coupling.couple_to_md) {
       switch (lb_lbinterpolation_get_interpolation_order()) {
       case (InterpolationOrder::quadratic):
@@ -275,7 +276,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 
 void lb_lbcoupling_propagate() {
   if (lb_lbfluid_get_kT() > 0.0) {
-    if (lattice_switch == ActiveLB::CPU or lattice_switch == ActiveLB::WALBERLA) {
+    if (lattice_switch == ActiveLB::CPU or
+        lattice_switch == ActiveLB::WALBERLA) {
       lb_particle_coupling.rng_counter_coupling->increment();
     } else if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA

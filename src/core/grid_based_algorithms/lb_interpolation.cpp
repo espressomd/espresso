@@ -9,9 +9,9 @@
 
 #include "lb.hpp"
 #include "lb_interface.hpp"
-#include "lbgpu.hpp"
 #include "lb_walberla_instance.hpp"
 #include "lb_walberla_interface.hpp"
+#include "lbgpu.hpp"
 
 namespace {
 
@@ -82,18 +82,18 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
                           });
 
     return interpolated_u;
-  }
-  else
-  if (lattice_switch==ActiveLB::WALBERLA) {
-     auto folded_pos = folded_position(pos);
-     auto res =lb_walberla()->get_velocity_at_pos(folded_pos/lb_lbfluid_get_agrid());
-     if (!res) {
-       printf("%d: positoin: %g %g %g\n",this_node,folded_pos[0],folded_pos[1],folded_pos[2]);
-       throw std::runtime_error("Interpolated velocity could not be obtained from Walberla");
-     }
-     return *res;
-  }
-  else
+  } else if (lattice_switch == ActiveLB::WALBERLA) {
+    auto folded_pos = folded_position(pos);
+    auto res =
+        lb_walberla()->get_velocity_at_pos(folded_pos / lb_lbfluid_get_agrid());
+    if (!res) {
+      printf("%d: positoin: %g %g %g\n", this_node, folded_pos[0],
+             folded_pos[1], folded_pos[2]);
+      throw std::runtime_error(
+          "Interpolated velocity could not be obtained from Walberla");
+    }
+    return *res;
+  } else
     throw std::runtime_error("No LB active.");
 
   return {};
@@ -137,8 +137,10 @@ const Utils::Vector3d lb_lbinterpolation_get_interpolated_velocity_global(
       throw std::runtime_error("The non-linear interpolation scheme is not "
                                "implemented for the CPU LB.");
     case (InterpolationOrder::linear):
-       return Communication::mpiCallbacks().call(Communication::Result::one_rank, Walberla::get_velocity_at_pos, pos/lb_lbfluid_get_agrid());
-  }
+      return Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                                Walberla::get_velocity_at_pos,
+                                                pos / lb_lbfluid_get_agrid());
+    }
   }
   return {};
 }
@@ -151,15 +153,14 @@ void lb_lbinterpolation_add_force_density(
                              "implemented for the CPU LB.");
   case (InterpolationOrder::linear):
     if (lattice_switch == ActiveLB::CPU) {
-    lattice_interpolation(lblattice, pos,
-                          [&force_density](Lattice::index_t index, double w) {
-                            auto &field = lbfields[index];
-                            field.force_density += w * force_density;
-                          });
-    } 
-    else
-    if (lattice_switch == ActiveLB::WALBERLA) {
-      lb_walberla()->add_force_at_pos(pos/lb_lbfluid_get_agrid(),force_density);
+      lattice_interpolation(lblattice, pos,
+                            [&force_density](Lattice::index_t index, double w) {
+                              auto &field = lbfields[index];
+                              field.force_density += w * force_density;
+                            });
+    } else if (lattice_switch == ActiveLB::WALBERLA) {
+      lb_walberla()->add_force_at_pos(pos / lb_lbfluid_get_agrid(),
+                                      force_density);
     }
     break;
   }

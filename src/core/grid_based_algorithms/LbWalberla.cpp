@@ -97,9 +97,9 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
           lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
       force_model_t(m_force_field_id)));
 
-  m_pdf_field_id =
-      lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model,
-                                to_vector3(m_velocity), (real_t)m_density,int_c(skin/agrid +1));
+  m_pdf_field_id = lbm::addPdfFieldToStorage(
+      m_blocks, "pdf field", *m_lattice_model, to_vector3(m_velocity),
+      (real_t)m_density, int_c(skin / agrid + 1));
 
   m_flag_field_id =
       field::addFlagFieldToStorage<Flag_field_t>(m_blocks, "flag field");
@@ -121,9 +121,10 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   communication.addPackInfo(
       std::make_shared<field::communication::PackInfo<Pdf_field_t>>(
           m_pdf_field_id));
-  m_reset_force =
-      std::make_shared<ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>(
-          m_pdf_field_id, m_force_field_id, m_force_field_from_md_id, m_boundary_handling_id);
+  m_reset_force = std::make_shared<
+      ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>(
+      m_pdf_field_id, m_force_field_id, m_force_field_from_md_id,
+      m_boundary_handling_id);
   m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
                      << timeloop::Sweep(Boundary_handling_t::getBlockSweep(
                                             m_boundary_handling_id),
