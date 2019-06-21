@@ -9,6 +9,8 @@
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/numeric.hpp>
 
+namespace Utils {
+
 /**
  * @brief Heap-allocated tensor class.
  * @tparam T data type
@@ -118,4 +120,5 @@ private:
   std::vector<std::size_t> m_strides;
 };
 
+} // namespace Utils
 #endif

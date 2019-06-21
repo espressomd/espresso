@@ -6,6 +6,8 @@
 
 #include <utils/tensor.hpp>
 
+template <typename T> using Tensor = Utils::Tensor<T>;
+
 BOOST_AUTO_TEST_CASE(ctor) {
   auto const extends = std::initializer_list<std::size_t>{4, 5, 6, 7};
   auto test_tensor = Tensor<double>(extends);
