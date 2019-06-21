@@ -105,13 +105,13 @@ fi
 command -v nvidia-smi && nvidia-smi
 if [ ${hide_gpu} = "true" ]; then
   echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
-  export CUDA_VISIBLE_DEVICES=
+  export CUDA_VISIBLE_DEVICES=""
 fi
 
 if ${insource}; then
-    builddir=${srcdir}
+    builddir="${srcdir}"
 elif [ -z "${builddir}" ]; then
-    builddir=${srcdir}/build
+    builddir="${srcdir}/build"
 fi
 
 outp insource srcdir builddir \
@@ -140,7 +140,7 @@ pep8_command () {
     fi
 }
 
-pep8_command --filename=*.pyx,*.pxd,*.py --select=E111 ${srcdir}/src/python/espressomd/
+pep8_command --filename=*.pyx,*.pxd,*.py --select=E111 "${srcdir}/src/python/espressomd/"
 ec=$?
 if [ ${ec} -eq 0 ]; then
     echo ""
@@ -175,14 +175,14 @@ fi
 pylint_command ${score_option} --reports=no --disable=all --enable=C1001 $(find . -name '*.py*') || { echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1; }
 
 if ! ${insource}; then
-    if [ ! -d ${builddir} ]; then
+    if [ ! -d "${builddir}" ]; then
         echo "Creating ${builddir}..."
-        mkdir -p ${builddir}
+        mkdir -p "${builddir}"
     fi
 fi
 
 if ! ${insource}; then
-    cd ${builddir}
+    cd "${builddir}"
 fi
 
 # load MPI module if necessary
@@ -228,20 +228,20 @@ else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
 fi
 
-MYCONFIG_DIR=${srcdir}/maintainer/configs
+MYCONFIG_DIR="${srcdir}/maintainer/configs"
 if [ "${myconfig}" = "default" ]; then
     echo "Using default myconfig."
 else
-    myconfig_file=${MYCONFIG_DIR}/${myconfig}.hpp
+    myconfig_file="${MYCONFIG_DIR}/${myconfig}.hpp"
     if [ ! -e "${myconfig_file}" ]; then
         echo "${myconfig_file} does not exist!"
         exit 1
     fi
     echo "Copying ${myconfig}.hpp to ${builddir}/myconfig.hpp..."
-    cp ${myconfig_file} ${builddir}/myconfig.hpp
+    cp "${myconfig_file}" "${builddir}/myconfig.hpp"
 fi
 
-cmake ${cmake_params} ${srcdir} || exit 1
+cmake ${cmake_params} "${srcdir}" || exit 1
 end "CONFIGURE"
 
 # BUILD
@@ -307,14 +307,14 @@ else
     start "TEST"
 
     if [ "${HIP_PLATFORM}" != "hcc" ]; then
-      mpiexec -n ${check_procs} ./pypresso ${srcdir}/testsuite/python/particle.py || exit 1
+      mpiexec -n ${check_procs} ./pypresso "${srcdir}/testsuite/python/particle.py" || exit 1
     fi
 
     end "TEST"
 fi
 
 if ${with_coverage}; then
-    cd ${builddir}
+    cd "${builddir}"
     lcov -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
     lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
     lcov -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
