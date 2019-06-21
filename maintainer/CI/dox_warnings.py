@@ -41,7 +41,8 @@ def read_warnings():
         source_code_ext = set(['.hpp', '.cpp', '.hh', '.cc', '.h', '.c',
                                '.cuh', '.cu', '.dox'])
         for line in content.strip().split('\n'):
-            m = re.search(r'^(.+):(\d+):[\s\*]*([@\\]t?param).*\s(\S+)\s*$', line)
+            m = re.search(r'^(.+):(\d+):[\s\*]*([@\\]t?param).*\s(\S+)\s*$',
+                          line)
             filepath, lineno, paramtype, varname = m.groups()
             ext = os.path.splitext(filepath)[1]
             if ext.lower() not in source_code_ext:
@@ -80,10 +81,12 @@ def is_argument_not_found_false_positive(argument_name, filepath, lineno_warn):
     for xml_file in classes[filepath]:
         with open(xml_file) as f:
             content = f.read()
-        memberdefs = re.findall('<memberdef .+?</memberdef>', content, re.DOTALL)
+        memberdefs = re.findall('<memberdef .+?</memberdef>',
+                                content, re.DOTALL)
         membderdefs_lineno = []
         for node in memberdefs:
-            m = re.search('<location file="' + re.escape(filepath) + '" line="(\d+)"', node)
+            m = re.search('<location file="' + re.escape(filepath) +
+                          '" line="(\d+)"', node)
             if m:
                 membderdefs_lineno.append((int(m.group(1)), node))
         for node_lineno, node in sorted(membderdefs_lineno):
