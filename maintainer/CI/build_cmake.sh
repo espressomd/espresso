@@ -58,14 +58,14 @@ function set_default_value {
     if [ "${default}" = true -o "${default}" = false ]; then
         # cast boolean values to true/false
         local -r val=$(echo "${value}" | tr '[:upper:]' '[:lower:]')
-        if [ "${val}" = false -o "${val}" = "off" -o "${val}" = 0 ]; then
+        if [ "${val}" = false -o "${val}" = "off" -o "${val}" = 0 -o "${val}" = "no" ]; then
             eval "${varname}=false"
-        elif [ "${val}" = true -o "${val}" = "on" -o "${val}" = 1 ]; then
+        elif [ "${val}" = true -o "${val}" = "on" -o "${val}" = 1 -o "${val}" = "yes" ]; then
             eval "${varname}=true"
         elif [ -z "${val}" ]; then
             eval "${varname}='${default}'"
         else
-            echo "Cannot cast '${value}' to boolean"
+            echo "Cannot interpret '${value}' as a true/false value in variable '${varname}'"
             exit 1
         fi
     elif [ -z "${value}" ]; then
