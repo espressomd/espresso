@@ -66,6 +66,14 @@ fi
 # find @param without description
 grep -Prn '^[\ \t]*(?:\*?[\ \t]+)?[@\\]t?param(?:\[[in, out]+\])?[\ \t]+[a-zA-Z0-9_\*]+[\ \t]*$' "${srcdir}/src" > doc/doxygen/empty-params.log
 
+# find @param of arguments not recognized in class methods
+rm -f doc/doxygen/class_methods.log
+for source_file in $(grep -P "^doxygen:.+?:\d+: warning: argument '\S+' of command [@\\\\]param is not found in the argument list of " doc/doxygen/warnings.log \
+    | sed -r 's/^doxygen:(.+?):([0-9]+): warning: .+$/\1/' | sort | uniq); do
+  echo "warning:${source_file}" >> doc/doxygen/class_methods.log
+  grep -Fl "<location file=\"${source_file}\" " doc/doxygen/xml/*.xml >> doc/doxygen/class_methods.log
+done
+
 rm -f dox_warnings.log
 
 # process warnings
