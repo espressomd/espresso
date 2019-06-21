@@ -7,11 +7,11 @@
 #include <utils/tensor.hpp>
 
 BOOST_AUTO_TEST_CASE(ctor) {
-  auto const dimensions = std::initializer_list<std::size_t>{4, 5, 6, 7};
-  auto test_tensor = Tensor<double>(dimensions);
+  auto const extends = std::initializer_list<std::size_t>{4, 5, 6, 7};
+  auto test_tensor = Tensor<double>(extends);
   for (int i = 0; i < 4; ++i) {
-    BOOST_CHECK_EQUAL(*(std::begin(test_tensor.dimensions()) + i),
-                      *(std::begin(dimensions) + i));
+    BOOST_CHECK_EQUAL(*(std::begin(test_tensor.extends()) + i),
+                      *(std::begin(extends) + i));
   }
 }
 

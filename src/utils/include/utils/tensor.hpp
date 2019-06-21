@@ -24,16 +24,15 @@ public:
   using const_iterator = typename std::vector<T>::const_iterator;
 
   /**
-   * @brief Creates a tensor with given dimensions
-   * @param dimensions Size for each dimension
+   * @brief Creates a tensor with given extends
+   * @param extends Size for each dimension
    */
-  explicit Tensor(std::initializer_list<std::size_t> const &dimensions)
-      : m_dimensions(dimensions.begin(), dimensions.end()) {
-    m_data =
-        std::vector<T>(std::accumulate(dimensions.begin(), dimensions.end(), 1,
-                                       std::multiplies<std::size_t>()));
+  explicit Tensor(std::initializer_list<std::size_t> const &extends)
+      : m_extends(extends.begin(), extends.end()) {
+    m_data = std::vector<T>(std::accumulate(extends.begin(), extends.end(), 1,
+                                            std::multiplies<std::size_t>()));
 
-    boost::transform(dimensions, std::back_inserter(m_strides),
+    boost::transform(extends, std::back_inserter(m_strides),
                      [stride = std::size_t(1)](std::size_t dim) mutable {
                        auto const old = stride;
                        stride *= dim;
@@ -57,27 +56,13 @@ public:
 
   const_reference
   operator()(std::initializer_list<std::size_t> const &indices) const {
-    if (indices.size() != m_dimensions.size()) {
-      throw std::runtime_error("Number of indices have to match rank");
-    }
-    if (not indices_valid(indices)) {
-      throw std::out_of_range("invalid index");
-    }
-    auto const index = boost::inner_product(m_strides, indices, 0);
-    assert(index < m_data.size());
-    return m_data[index];
+    validate_indices(indices);
+    return m_data[calc_linear_index(indices)];
   }
 
   reference operator()(std::initializer_list<std::size_t> const &indices) {
-    if (indices.size() != m_dimensions.size()) {
-      throw std::runtime_error("Number of indices have to match rank");
-    }
-    if (not indices_valid(indices)) {
-      throw std::out_of_range("invalid index");
-    }
-    auto const index = boost::inner_product(m_strides, indices, 0);
-    assert(index < m_data.size());
-    return m_data[index];
+    validate_indices(indices);
+    return m_data[calc_linear_index(indices)];
   }
 
   reference front() { return *begin(); }
@@ -104,19 +89,32 @@ public:
 
   const_pointer data() const noexcept { return m_data.data(); }
 
-  auto rank() const noexcept { return m_dimensions.size(); }
+  auto rank() const noexcept { return m_extends.size(); }
 
-  auto dimensions() const noexcept { return m_dimensions; }
+  auto extends() const noexcept { return m_extends; }
 
 private:
-  bool indices_valid(std::initializer_list<std::size_t> const &indices) const {
-    auto res =
-        std::mismatch(indices.begin(), indices.end(), m_dimensions.begin(),
+  void
+  validate_indices(std::initializer_list<std::size_t> const &indices) const {
+    if (indices.size() != m_extends.size()) {
+      throw std::runtime_error("Number of indices have to match rank");
+    }
+    // check if any index exceeds an extend.
+    auto const res =
+        std::mismatch(indices.begin(), indices.end(), m_extends.begin(),
                       [](std::size_t a, std::size_t b) { return a < b; });
-    return res.first == indices.end();
+    if (not(res.first == indices.end())) {
+      throw std::out_of_range("invalid index");
+    }
   }
+
+  std::size_t
+  calc_linear_index(std::initializer_list<std::size_t> const &indices) {
+    return boost::inner_product(m_strides, indices, 0);
+  }
+
   std::vector<T> m_data;
-  std::vector<std::size_t> m_dimensions;
+  std::vector<std::size_t> m_extends;
   std::vector<std::size_t> m_strides;
 };
 
