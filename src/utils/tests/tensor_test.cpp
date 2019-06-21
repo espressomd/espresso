@@ -9,11 +9,20 @@
 template <typename T> using Tensor = Utils::Tensor<T>;
 
 BOOST_AUTO_TEST_CASE(ctor) {
-  auto const extends = std::initializer_list<std::size_t>{4, 5, 6, 7};
-  auto test_tensor = Tensor<double>(extends);
+  auto const extents = std::initializer_list<std::size_t>{4, 5, 6, 7};
+  auto test_tensor = Tensor<double>(extents);
   for (int i = 0; i < 4; ++i) {
-    BOOST_CHECK_EQUAL(*(std::begin(test_tensor.extends()) + i),
-                      *(std::begin(extends) + i));
+    BOOST_CHECK_EQUAL(*(std::begin(test_tensor.extents()) + i),
+                      *(std::begin(extents) + i));
+  }
+}
+
+BOOST_AUTO_TEST_CASE(ctor_iterator) {
+  auto const extents = std::array<std::size_t, 4>{4, 5, 6, 7};
+  auto test_tensor = Tensor<double>(extents.begin(), extents.end());
+  for (int i = 0; i < 4; ++i) {
+    BOOST_CHECK_EQUAL(*(std::begin(test_tensor.extents()) + i),
+                      *(std::begin(extents) + i));
   }
 }
 

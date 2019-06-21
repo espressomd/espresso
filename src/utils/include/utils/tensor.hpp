@@ -26,15 +26,19 @@ public:
   using const_iterator = typename std::vector<T>::const_iterator;
 
   /**
-   * @brief Creates a tensor with given extends
-   * @param extends Size for each dimension
+   * @brief Creates a tensor with given extents
+   * @param extents Size for each dimension
    */
-  explicit Tensor(std::initializer_list<std::size_t> const &extends)
-      : m_extends(extends.begin(), extends.end()) {
-    m_data = std::vector<T>(std::accumulate(extends.begin(), extends.end(), 1,
-                                            std::multiplies<std::size_t>()));
+  explicit Tensor(std::initializer_list<std::size_t> const &extents)
+      : Tensor(std::begin(extents), std::end(extents)) {}
 
-    boost::transform(extends, std::back_inserter(m_strides),
+  template <typename Iter>
+  Tensor(Iter extents_begin, Iter extents_end)
+      : m_extents(extents_begin, extents_end) {
+    m_data = std::vector<T>(std::accumulate(m_extents.begin(), m_extents.end(),
+                                            1, std::multiplies<std::size_t>()));
+
+    boost::transform(m_extents, std::back_inserter(m_strides),
                      [stride = std::size_t(1)](std::size_t dim) mutable {
                        auto const old = stride;
                        stride *= dim;
@@ -91,19 +95,19 @@ public:
 
   const_pointer data() const noexcept { return m_data.data(); }
 
-  auto rank() const noexcept { return m_extends.size(); }
+  auto rank() const noexcept { return m_extents.size(); }
 
-  auto extends() const noexcept { return m_extends; }
+  auto extents() const noexcept { return m_extents; }
 
 private:
   void
   validate_indices(std::initializer_list<std::size_t> const &indices) const {
-    if (indices.size() != m_extends.size()) {
+    if (indices.size() != m_extents.size()) {
       throw std::runtime_error("Number of indices have to match rank");
     }
     // check if any index exceeds an extend.
     auto const res =
-        std::mismatch(indices.begin(), indices.end(), m_extends.begin(),
+        std::mismatch(indices.begin(), indices.end(), m_extents.begin(),
                       [](std::size_t a, std::size_t b) { return a < b; });
     if (not(res.first == indices.end())) {
       throw std::out_of_range("invalid index");
@@ -116,7 +120,7 @@ private:
   }
 
   std::vector<T> m_data;
-  std::vector<std::size_t> m_extends;
+  std::vector<std::size_t> m_extents;
   std::vector<std::size_t> m_strides;
 };
 
