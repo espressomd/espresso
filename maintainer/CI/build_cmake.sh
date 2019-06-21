@@ -40,36 +40,71 @@ function end {
     echo "=================================================="
 }
 
-# execute and output a command
-# handle environment variables
-[ -z "${insource}" ] && insource="false"
-[ -z "${srcdir}" ] && srcdir=`pwd`
-[ -z "${cmake_params}" ] && cmake_params=""
-[ -z "${with_fftw}" ] && with_fftw="true"
-[ -z "${with_python_interface}" ] && with_python_interface="true"
-[ -z "${with_coverage}" ] && with_coverage="false"
-[ -z "${with_ubsan}" ] && with_ubsan="false"
-[ -z "${with_asan}" ] && with_asan="false"
-[ -z "${with_static_analysis}" ] && with_static_analysis="false"
-[ -z "${myconfig}" ] && myconfig="default"
-[ -z "${build_procs}" ] && build_procs=2
-[ -z "${check_procs}" ] && check_procs=${build_procs}
-[ -z "${make_check}" ] && make_check="true"
-[ -z "${check_odd_only}" ] && check_odd_only="false"
-[ -z "${check_gpu_only}" ] && check_gpu_only="false"
-[ -z "${check_skip_long}" ] && check_skip_long="false"
-[ -z "${make_check_tutorials}" ] && make_check_tutorials="false"
-[ -z "${make_check_samples}" ] && make_check_samples="false"
-[ -z "${make_check_benchmarks}" ] && make_check_benchmarks="false"
-[ -z "${python_version}" ] && python_version="2"
-[ -z "${with_cuda}" ] && with_cuda="true"
-[ -z "${build_type}" ] && build_type="Debug"
-[ -z "${with_ccache}" ] && with_ccache="false"
-[ -z "${test_timeout}" ] && test_timeout="300"
-[ -z "${hide_gpu}" ] && hide_gpu="false" 
+# set a default value to empty environment variables
+# cast boolean values to true/false
+function set_default_value {
+    if [ "$#" != 2 ]; then
+        echo "set_default_value() takes 2 arguments (varname, default), got $#"
+        exit 1
+    fi
+    local -r varname="$1"
+    local -r default="$2"
+    local -r varname_alphabet=$(echo "${varname}" | tr -d '[:alnum:]_')
+    if [ ! -z "${varname_alphabet}" ]; then
+        echo "variable name '${varname}' contains unauthorized symbols"
+        exit 1
+    fi
+    local -r value="${!varname}"
+    if [ "${default}" = true -o "${default}" = false ]; then
+        # cast boolean values to true/false
+        local -r val=$(echo "${value}" | tr '[:upper:]' '[:lower:]')
+        if [ "${val}" = false -o "${val}" = "off" -o "${val}" = 0 ]; then
+            eval "${varname}=false"
+        elif [ "${val}" = true -o "${val}" = "on" -o "${val}" = 1 ]; then
+            eval "${varname}=true"
+        elif [ -z "${val}" ]; then
+            eval "${varname}='${default}'"
+        else
+            echo "Cannot cast '${value}' to boolean"
+            exit 1
+        fi
+    elif [ -z "${value}" ]; then
+        eval "${varname}='${default}'"
+    fi
+}
 
-if [ ${make_check} ] || [ ${make_check_tutorials} ] || [ ${make_check_samples} ] || [ ${make_check_benchmarks} ]; then
-  run_checks="true"
+
+# handle environment variables
+set_default_value insource false
+set_default_value srcdir $(pwd)
+set_default_value cmake_params ""
+set_default_value with_fftw true
+set_default_value with_python_interface true
+set_default_value with_coverage false
+set_default_value with_ubsan false
+set_default_value with_asan false
+set_default_value with_static_analysis false
+set_default_value myconfig "default"
+set_default_value build_procs 2
+set_default_value check_procs ${build_procs}
+set_default_value make_check true
+set_default_value check_odd_only false
+set_default_value check_gpu_only false
+set_default_value check_skip_long false
+set_default_value make_check_tutorials false
+set_default_value make_check_samples false
+set_default_value make_check_benchmarks false
+set_default_value python_version 2
+set_default_value with_cuda true
+set_default_value build_type "Debug"
+set_default_value with_ccache false
+set_default_value test_timeout 300
+set_default_value hide_gpu false
+
+if [ ${make_check} = true -o ${make_check_tutorials} = true -o ${make_check_samples} = true -o ${make_check_benchmarks} = true ]; then
+    run_checks=true
+else
+    run_checks=false
 fi
 
 # If there are no user-provided flags they
@@ -80,7 +115,7 @@ if [ -z "${cxx_flags}" ]; then
         cxx_flags="-Og"
         nvcc_flags="-O3"
     else
-        if ${run_checks}; then
+        if [ ${run_checks} = true ]; then
             cxx_flags="-O3"
             nvcc_flags="-O3"
         else
@@ -90,25 +125,25 @@ if [ -z "${cxx_flags}" ]; then
     fi
 fi
 
-if [ ! -z ${with_coverage+x} ]; then
-  bash <(curl -s https://codecov.io/env) &> /dev/null;
+if [ ${with_coverage} = true ]; then
+    bash <(curl -s https://codecov.io/env) &> /dev/null;
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DPYTHON_EXECUTABLE=$(which python${python_version}) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params} -DWITH_SCAFACOS=ON"
 cmake_params="${cmake_params} -DCMAKE_CXX_FLAGS=${cxx_flags} -DCUDA_NVCC_FLAGS=${nvcc_flags}"
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
-if ${with_ccache}; then
-  cmake_params="${cmake_params} -DWITH_CCACHE=ON"
+if [ ${with_ccache} = true ]; then
+    cmake_params="${cmake_params} -DWITH_CCACHE=ON"
 fi
 
 command -v nvidia-smi && nvidia-smi
-if [ ${hide_gpu} = "true" ]; then
-  echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
-  export CUDA_VISIBLE_DEVICES=""
+if [ ${hide_gpu} = true ]; then
+    echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
+    export CUDA_VISIBLE_DEVICES=""
 fi
 
-if ${insource}; then
+if [ ${insource} = true ]; then
     builddir="${srcdir}"
 elif [ -z "${builddir}" ]; then
     builddir="${srcdir}/build"
@@ -174,14 +209,14 @@ else
 fi
 pylint_command ${score_option} --reports=no --disable=all --enable=C1001 $(find . -name '*.py*') || { echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1; }
 
-if ! ${insource}; then
+if [ ${insource} = false ]; then
     if [ ! -d "${builddir}" ]; then
         echo "Creating ${builddir}..."
         mkdir -p "${builddir}"
     fi
 fi
 
-if ! ${insource}; then
+if [ ${insource} = false ]; then
     cd "${builddir}"
 fi
 
@@ -194,35 +229,35 @@ fi
 # CONFIGURE
 start "CONFIGURE"
 
-if [ ${with_fftw} = "true" ]; then
+if [ ${with_fftw} = true ]; then
     :
 else
     cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON ${cmake_params}"
 fi
 
-if [ ${with_python_interface} = "true" ]; then
+if [ ${with_python_interface} = true ]; then
     cmake_params="-DWITH_PYTHON=ON ${cmake_params}"
 else
     cmake_params="-DWITH_PYTHON=OFF ${cmake_params}"
 fi
 
-if [ ${with_coverage} = "true" ]; then
+if [ ${with_coverage} = true ]; then
     cmake_params="-DWITH_COVERAGE=ON ${cmake_params}"
 fi
 
-if [ ${with_asan} = "true" ]; then
+if [ ${with_asan} = true ]; then
     cmake_params="-DWITH_ASAN=ON ${cmake_params}"
 fi
 
-if [ ${with_ubsan} = "true" ]; then
+if [ ${with_ubsan} = true ]; then
     cmake_params="-DWITH_UBSAN=ON ${cmake_params}"
 fi
 
-if [ ${with_static_analysis} = "true" ]; then
+if [ ${with_static_analysis} = true ]; then
     cmake_params="-DWITH_CLANG_TIDY=ON ${cmake_params}"
 fi
 
-if [ ${with_cuda} = "true" ]; then
+if [ ${with_cuda} = true ]; then
     :
 else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
@@ -253,24 +288,24 @@ end "BUILD"
 
 # check for exit function, which should never be called from shared library
 # can't do this on CUDA though because nvcc creates a host function that just calls exit for each device funtion
-if [ ${with_cuda} != "true" -o "$(echo ${NVCC} | grep -o clang)" = "clang" ]; then
+if [ ${with_cuda} = false -o "$(echo ${NVCC} | grep -o clang)" = "clang" ]; then
     if nm -o -C $(find . -name *.so) | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
         exit 1
     fi
 fi
 
-if ${run_checks}; then
+if [ ${run_checks} = true ]; then
     start "TEST"
 
     # integration and unit tests
-    if ${make_check}; then
+    if [ ${make_check} = true ]; then
         if [ -z "${run_tests}" ]; then
-            if ${check_odd_only}; then
+            if [ ${check_odd_only} = true ]; then
                 make -j${build_procs} check_python_parallel_odd ${make_params} || exit 1
-            elif ${check_gpu_only}; then
+            elif [ ${check_gpu_only} = true ]; then
                 make -j${build_procs} check_python_gpu ${make_params} || exit 1
-            elif ${check_skip_long}; then
+            elif [ ${check_skip_long} = true ]; then
                 make -j${build_procs} check_python_skip_long ${make_params} || exit 1
             else
                 make -j${build_procs} check_python ${make_params} || exit 1
@@ -285,17 +320,17 @@ if ${run_checks}; then
     fi
 
     # tutorial tests
-    if ${make_check_tutorials}; then
+    if [ ${make_check_tutorials} = true ]; then
         make -j${build_procs} check_tutorials ${make_params} || exit 1
     fi
 
     # sample tests
-    if ${make_check_samples}; then
+    if [ ${make_check_samples} = true ]; then
         make -j${build_procs} check_samples ${make_params} || exit 1
     fi
 
     # benchmark tests
-    if ${make_check_benchmarks}; then
+    if [ ${make_check_benchmarks} = true ]; then
         make -j${build_procs} check_benchmarks ${make_params} || exit 1
     fi
 
@@ -313,7 +348,7 @@ else
     end "TEST"
 fi
 
-if ${with_coverage}; then
+if [ ${with_coverage} = true ]; then
     cd "${builddir}"
     lcov -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
     lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
