@@ -23,9 +23,12 @@
  *  Implementation of \ref gb.hpp
  */
 #include "gb.hpp"
-#include "communication.hpp"
 
 #ifdef GAY_BERNE
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double sig, double cut, double k1, double k2,

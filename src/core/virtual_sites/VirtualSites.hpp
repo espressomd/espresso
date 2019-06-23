@@ -39,11 +39,10 @@
 class VirtualSites {
 public:
   VirtualSites() : m_have_velocity(true), m_have_quaternion(false){};
-  /** @brief Update positions and/or velocities of virtual sites
-
-  * Velocities are only updated if have_velocity() returns true.
-  * @param recalc_positions can be used to skip the recalculation of positions.
-  */
+  /** @brief Update positions and/or velocities of virtual sites.
+   *  Velocities are only updated if get_have_velocity() returns true.
+   *  @param recalc_positions  Skip the recalculation of positions if false.
+   */
   virtual void update(bool recalc_positions = true) const = 0;
   /** Back-transfer forces (and torques) to non-virtual particles. */
   virtual void back_transfer_forces_and_torques() const = 0;
@@ -52,7 +51,7 @@ public:
   virtual void after_lb_propagation(){};
   /** @brief Number of pressure contributions */
   virtual int n_pressure_contribs() const { return 0; };
-  /** @brief Pressure contribution(). */
+  /** @brief Pressure contribution. */
   virtual void
   pressure_and_stress_tensor_contribution(double *pressure,
                                           double *stress_tensor) const {};
@@ -64,13 +63,15 @@ public:
     m_have_quaternion = have_quaternion;
   };
   bool get_have_quaternion() const { return m_have_quaternion; };
-  /** @brief Is a ghost communication needed after position updates */
-  virtual bool need_ghost_comm_after_pos_update() const = 0;
   /** Is a ghost comm needed before a velocity update */
   virtual bool need_ghost_comm_before_vel_update() const = 0;
-  /** Is a ghost comm needed before the back_transfer */
-  virtual bool need_ghost_comm_before_back_transfer() const = 0;
-  virtual ~VirtualSites() {}
+  /**
+   * @brief true if the implementation depends on the position of
+   *        real particles.
+   */
+  virtual bool is_relative() const = 0;
+
+  virtual ~VirtualSites() = default;
 
 private:
   bool m_have_velocity;

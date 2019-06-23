@@ -24,23 +24,15 @@ namespace Accumulators {
 class AccumulatorBase {
 public:
   explicit AccumulatorBase(int delta_N = 1) : m_delta_N(delta_N){};
-  void auto_update();
   int &delta_N() { return m_delta_N; };
-  virtual ~AccumulatorBase() {}
+  virtual ~AccumulatorBase() = default;
+
+  virtual void update() = 0;
 
 private:
-  virtual void update() = 0;
   // Number of timesteps between automatic updates.
   int m_delta_N;
-  int m_counter = 0;
 };
-
-inline void AccumulatorBase::auto_update() {
-  if (m_counter % m_delta_N == 0) {
-    update();
-  }
-  ++m_counter;
-}
 } // namespace Accumulators
 
 #endif

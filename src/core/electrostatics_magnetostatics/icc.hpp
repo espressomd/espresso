@@ -18,37 +18,35 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-//
-
 /** \file
-
-    ICCP3M is a method that allows to take into account the influence
-    of arbitrarily shaped dielectric interfaces.  The dielectric
-    properties of a dielectric medium in the bulk of the simulation
-    box are taken into account by reproducing the jump in the electric
-    field at the inface with charge surface segments. The charge
-    density of the surface segments have to be determined
-    self-consistently using an iterative scheme.  It can at presently
-    - despite its name - be used with P3M, ELCP3M, MMM2D and MMM1D.
-    For details see:<br> S. Tyagi, M. Suzen, M. Sega, C. Holm,
-    M. Barbosa: A linear-scaling method for computing induced charges
-    on arbitrary dielectric boundaries in large system simulations
-    (Preprint)
-
-    To set up ICCP3M first the dielectric boundary has to be modelled
-    by espresso particles 0..n where n has to be passed as a parameter
-    to ICCP3M. This is still a bit inconvenient, as it forces the user
-    to reserve the first n particle ids to wall charges, but as the
-    other parts of espresso do not suffer from a limitation like this,
-    it can be tolerated.
-
-    For the determination of the induced charges only the forces
-    acting on the induced charges has to be determined. As P3M and the
-    other Coulomb solvers calculate all mutual forces, the force
-    calculation was modified to avoid the calculation of the short
-    range part of the source-source force calculation.  For different
-    particle data organisation schemes this is performed differently.
-    */
+ *
+ *  ICCP3M is a method that allows to take into account the influence
+ *  of arbitrarily shaped dielectric interfaces.  The dielectric
+ *  properties of a dielectric medium in the bulk of the simulation
+ *  box are taken into account by reproducing the jump in the electric
+ *  field at the inface with charge surface segments. The charge
+ *  density of the surface segments have to be determined
+ *  self-consistently using an iterative scheme.  It can at presently
+ *  - despite its name - be used with P3M, ELCP3M, MMM2D and MMM1D. For
+ *  details see: S. Tyagi, M. Suzen, M. Sega, M. Barbosa, S. S. Kantorovich,
+ *  C. Holm: An iterative, fast, linear-scaling method for computing induced
+ *  charges on arbitrary dielectric boundaries, J. Chem. Phys. 2010, 132,
+ *  p. 154112, doi:10.1063/1.3376011
+ *
+ *  To set up ICCP3M first the dielectric boundary has to be modelled
+ *  by espresso particles 0..n where n has to be passed as a parameter
+ *  to ICCP3M. This is still a bit inconvenient, as it forces the user
+ *  to reserve the first n particle ids to wall charges, but as the
+ *  other parts of espresso do not suffer from a limitation like this,
+ *  it can be tolerated.
+ *
+ *  For the determination of the induced charges only the forces
+ *  acting on the induced charges has to be determined. As P3M and the
+ *  other Coulomb solvers calculate all mutual forces, the force
+ *  calculation was modified to avoid the calculation of the short
+ *  range part of the source-source force calculation.  For different
+ *  particle data organisation schemes this is performed differently.
+ */
 
 #ifndef CORE_ICCP3M_HPP
 #define CORE_ICCP3M_HPP
@@ -57,7 +55,7 @@
 
 #if defined(ELECTROSTATICS)
 
-#include "Vector.hpp"
+#include <utils/Vector.hpp>
 
 /* iccp3m data structures*/
 struct iccp3m_struct {
@@ -69,10 +67,10 @@ struct iccp3m_struct {
       ein; /* Array of dielectric constants at each surface element */
   std::vector<double> sigma; /* Surface Charge density */
   double convergence = 1e-2; /* Convergence criterion                       */
-  std::vector<Vector3d> normals;  /* Surface normal vectors */
-  Vector3d ext_field = {0, 0, 0}; /* External field */
-  double relax = 0.7;             /* relaxation parameter for iterative */
-  int citeration = 0;             /* current number of iterations*/
+  std::vector<Utils::Vector3d> normals;  /* Surface normal vectors */
+  Utils::Vector3d ext_field = {0, 0, 0}; /* External field */
+  double relax = 0.7; /* relaxation parameter for iterative */
+  int citeration = 0; /* current number of iterations*/
   int first_id = 0;
 
   template <typename Archive>

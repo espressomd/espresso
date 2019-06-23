@@ -19,34 +19,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /// \file
 /// \brief Main of the Bayreuth Immersed-Boundary implementation
 
-#include "config.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-
 #include "cells.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
-#include "halo.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
+#include "lb_inertialess_tracers_cuda_interface.hpp"
 #include "particle_data.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
-#include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
+
+#include <utils/math/sqr.hpp>
 
 // ****** Functions for internal use ********
 
 void CoupleIBMParticleToFluid(Particle *p);
 void ParticleVelocitiesFromLB_CPU();
-bool IsHalo(const int indexCheck);
-void GetIBMInterpolatedVelocity(double *p, double *const v,
-                                double *const forceAdded);
+bool IsHalo(int indexCheck);
+void GetIBMInterpolatedVelocity(const Utils::Vector3d &p, double *v,
+                                double *forceAdded);
 
 // ***** Internal variables ******
 
 bool *isHaloCache = nullptr;
-
-// ******** Variables from other espresso files *****
-extern HaloCommunicator update_halo_comm;
 
 /****************
   IBM_ForcesIntoFluid_CPU
@@ -58,13 +55,6 @@ updating the lbfields structure
 *****************/
 
 void IBM_ForcesIntoFluid_CPU() {
-
-  // Halo has already been sent. Check for safety
-  if (lbpar.resend_halo) {
-    printf("Error. Halo should already be sent!\n");
-    exit(1);
-  }
-
   // Update the forces on the ghost particles
   ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
 
@@ -102,25 +92,6 @@ void IBM_ForcesIntoFluid_CPU() {
   }
 }
 
-/***************
-  IBM_ResetLBForces_CPU
-Called from the integrate loop directly after the IBM particle update
-Usually the reset would be done by Espresso after the LB update. But we need to
-keep the forces till after the position update for the f/2 term
-****************/
-
-void IBM_ResetLBForces_CPU() {
-  for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-    // unit conversion: force density
-    lbfields[i].force_density[0] = lbpar.ext_force_density[0] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[i].force_density[1] = lbpar.ext_force_density[1] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[i].force_density[2] = lbpar.ext_force_density[2] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-  }
-}
-
 /*************
   IBM_UpdateParticlePositions
 This function is called from the integrate right after the LB update
@@ -129,10 +100,10 @@ Interpolates LB velocity at the particle positions and propagates the particles
 
 void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
-  if (lattice_switch & LATTICE_LB)
+  if (lattice_switch == ActiveLB::CPU)
     ParticleVelocitiesFromLB_CPU();
-#ifdef LB_GPU
-  if (lattice_switch & LATTICE_LB_GPU)
+#ifdef CUDA
+  if (lattice_switch == ActiveLB::GPU)
     ParticleVelocitiesFromLB_GPU(particles);
 #endif
 
@@ -160,16 +131,12 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
         // Check if the particle might have crossed a box border (criterion see
         // e-mail Axel 28.8.2014)
         // if possible resort_particles = 1
-        const double dist2 = distance2(p[j].r.p, p[j].l.p_old);
+        const double dist2 = (p[j].r.p - p[j].l.p_old).norm2();
         if (dist2 > skin2) {
           set_resort_particles(Cells::RESORT_LOCAL);
         }
       }
   }
-
-  // This function spreads the resort_particles variable across the nodes
-  // If one node wants to resort, all nodes do it
-  announce_resort_particles();
 }
 
 /*************
@@ -186,9 +153,10 @@ void CoupleIBMParticleToFluid(Particle *p) {
   delta_j[2] = p->f.f[2] * lbpar.tau * lbpar.tau / lbpar.agrid;
 
   // Get indices and weights of affected nodes using discrete delta function
-  Lattice::index_t node_index[8];
-  double delta[6];
-  lblattice.map_position_to_lattice(p->r.p, node_index, delta);
+  Utils::Vector<std::size_t, 8> node_index{};
+  Utils::Vector6d delta{};
+  lblattice.map_position_to_lattice(p->r.p, node_index, delta, my_left,
+                                    local_box_l);
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {
@@ -197,7 +165,7 @@ void CoupleIBMParticleToFluid(Particle *p) {
         // Do not put force into a halo node
         if (!IsHalo(node_index[(z * 2 + y) * 2 + x])) {
           // Add force into the lbfields structure
-          double *local_f =
+          auto &local_f =
               lbfields[node_index[(z * 2 + y) * 2 + x]].force_density;
 
           local_f[0] += delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2] *
@@ -218,70 +186,44 @@ Very similar to the velocity interpolation done in standard Espresso, except
 that we add the f/2 contribution - only for CPU
 *******************/
 
-void GetIBMInterpolatedVelocity(double *p, double *const v,
-                                double *const forceAdded) {
-  Lattice::index_t node_index[8], index;
-  double delta[6];
-  double local_rho, local_j[3], interpolated_u[3];
-  double modes[19];
-  int x, y, z;
-  double *f;
-
-  double lbboundary_mindist, distvec[3];
-  Vector3d pos;
-
-#ifdef LB_BOUNDARIES
-  pos[0] = p[0];
-  pos[1] = p[1];
-  pos[2] = p[2];
-
-#else
-  pos[0] = p[0];
-  pos[1] = p[1];
-  pos[2] = p[2];
-#endif
-
+void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
+                                double *forceAdded) {
   /* determine elementary lattice cell surrounding the particle
    and the relative position of the particle in this cell */
-  lblattice.map_position_to_lattice(pos, node_index, delta);
+  Utils::Vector<std::size_t, 8> node_index{};
+  Utils::Vector6d delta{};
+  lblattice.map_position_to_lattice(pos, node_index, delta, my_left,
+                                    local_box_l);
 
   /* calculate fluid velocity at particle's position
    this is done by linear interpolation
    (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0;
+  Utils::Vector3d interpolated_u = {};
   // This for the f/2 contribution to the velocity
   forceAdded[0] = forceAdded[1] = forceAdded[2] = 0;
 
-  for (z = 0; z < 2; z++) {
-    for (y = 0; y < 2; y++) {
-      for (x = 0; x < 2; x++) {
+  for (int z = 0; z < 2; z++) {
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 2; x++) {
+        auto const index = node_index[(z * 2 + y) * 2 + x];
+        const auto &f = lbfields[index].force_density_buf;
 
-        index = node_index[(z * 2 + y) * 2 + x];
-        f = lbfields[index].force_density_buf;
+        double local_rho;
+        Utils::Vector3d local_j;
 
 // This can be done easier without copying the code twice
 // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
-          local_rho = lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid;
-          local_j[0] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[0];
-          local_j[1] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[1];
-          local_j[2] =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[2];
+          local_rho = lbpar.rho;
+          local_j = lbpar.rho *
+                    (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
+                        .velocity();
         } else
 #endif
         {
-          lb_calc_modes(index, modes);
-          local_rho =
-              lbpar.rho * lbpar.agrid * lbpar.agrid * lbpar.agrid + modes[0];
+          auto const modes = lb_calc_modes(index);
+          local_rho = lbpar.rho + modes[0];
 
           // Add the +f/2 contribution!!
           // Guo et al. PRE 2002
@@ -322,15 +264,11 @@ void GetIBMInterpolatedVelocity(double *p, double *const v,
       }
     }
   }
-#ifdef LB_BOUNDARIES
+
   v[0] = interpolated_u[0];
   v[1] = interpolated_u[1];
   v[2] = interpolated_u[2];
-#else
-  v[0] = interpolated_u[0];
-  v[1] = interpolated_u[1];
-  v[2] = interpolated_u[2];
-#endif
+
   v[0] *= lbpar.agrid / lbpar.tau;
   v[1] *= lbpar.agrid / lbpar.tau;
   v[2] *= lbpar.agrid / lbpar.tau;
@@ -375,12 +313,6 @@ structure
 *****************/
 
 void ParticleVelocitiesFromLB_CPU() {
-  // Exchange halo. This is necessary because we have done LB collide-stream
-  if (lbpar.resend_halo) {
-    halo_communication(&update_halo_comm, (char *)lbfluid[0].data());
-    lbpar.resend_halo = 0;
-  }
-
   // Loop over particles in local cells
   // Here all contributions are included: velocity, external force and particle
   // force
@@ -392,7 +324,7 @@ void ParticleVelocitiesFromLB_CPU() {
         double dummy[3];
         // Get interpolated velocity and store in the force (!) field
         // for later communication (see below)
-        GetIBMInterpolatedVelocity(p[j].r.p.data(), p[j].f.f.data(), dummy);
+        GetIBMInterpolatedVelocity(p[j].r.p, p[j].f.f.data(), dummy);
       }
   }
 
@@ -415,7 +347,7 @@ void ParticleVelocitiesFromLB_CPU() {
           double dummy[3];
           double force[3] = {0, 0,
                              0}; // The force stemming from the ghost particle
-          GetIBMInterpolatedVelocity(p[j].r.p.data(), dummy, force);
+          GetIBMInterpolatedVelocity(p[j].r.p, dummy, force);
 
           // Rescale and store in the force field of the particle (for
           // communication, see below)

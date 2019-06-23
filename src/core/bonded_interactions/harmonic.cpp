@@ -25,6 +25,8 @@
 #include "harmonic.hpp"
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+
 int harmonic_set_params(int bond_type, double k, double r, double r_cut) {
   if (bond_type < 0)
     return ES_ERROR;

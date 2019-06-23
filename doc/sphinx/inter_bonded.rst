@@ -11,7 +11,7 @@ the following syntax to activate and assign a bonded interaction::
     system.bonded_inter.add(bond)
     system.part[pid1].add_bond((bond, pid2...))
 
-In general, one instantiates an interaction object *bond* and subsequently passes it
+In general, one instantiates an interaction object ``bond`` and subsequently passes it
 to :meth:`espressomd.interactions.BondedInteractions.add`. This will enable the
 bonded interaction and allows the user to assign bonds between particle ids *pidX*.
 Bonded interactions are identified by either their *bondid* or their appropriate object.
@@ -28,9 +28,13 @@ is provided in subsection :ref:`FENE bond`) between them using::
     system.part[12].add_bond((fene, 43))
 
 This will set up a FENE bond between particles 42 and 43, 42 and 12, and 12 and 43.
-Note that the *fene* object specifies the type of bond and its parameters,
-the specific bonds are stored within the particles. you can find more
+Note that the ``fene`` object specifies the type of bond and its parameters,
+the specific bonds are stored within the particles. You can find more
 information regarding particle properties in :ref:`Setting up particles`.
+
+To delete the FENE bond between particles 12 and 43::
+
+    system.part[12].delete_bond((fene, 43))
 
 .. _Distance-dependent bonds:
 
@@ -93,7 +97,7 @@ Harmonic Dumbbell Bond
     Requires ``ROTATION`` feature.
 
 
-A harmonic bond can be instantiated via
+A harmonic Dumbbell bond can be instantiated via
 :class:`espressomd.interactions.HarmonicDumbbellBond`::
 
     from espressomd.interactions import HarmonicDumbbellBond
@@ -104,11 +108,11 @@ This bond is similar to the normal harmonic bond in such a way that it
 sets up a harmonic potential, i.e. a spring, between the two particles.
 Additionally the orientation of the first particle in the bond will be aligned along
 the distance vector between both particles. This alignment can be
-controlled by the second harmonic constant :math:`k2`. Keep in mind that orientation will
+controlled by the second harmonic constant :math:`k_2`. Keep in mind that orientation will
 oscillate around the distance vector and some kind of
 friction needs to be present for it to relax.
 
-The roles of the parameters :math:`k1, r_0, r_\mathrm{cut}` are exactly the same as for the
+The roles of the parameters :math:`k_1, r_0, r_\mathrm{cut}` are exactly the same as for the
 harmonic bond.
 
 ..
@@ -154,7 +158,7 @@ It is given by
 
 .. math:: V(r) = \frac{\alpha q_1 q_2}{r},
 
-where :math:`q1` and :math:`q2` are the charges of the bound particles and :math:`\alpha` is the
+where :math:`q_1` and :math:`q_2` are the charges of the bound particles and :math:`\alpha` is the
 Coulomb prefactor. This interaction has no cutoff and acts independently of other
 Coulomb interactions.
 
@@ -168,10 +172,10 @@ Subtract P3M short-range bond
     Requires the ``P3M`` feature.
 
 This bond can be instantiated via
-:class:`espressomd.interactions.BondedCoulombP3MSRBond`::
+:class:`espressomd.interactions.BondedCoulombSRBond`::
 
-    from espressomd.interactions import BondedCoulombP3MSRBond
-    subtr_p3m_sr = BondedCoulombP3MSRBond(q1q2=<float>)
+    from espressomd.interactions import BondedCoulombSRBond
+    subtr_p3m_sr = BondedCoulombSRBond(q1q2=<float>)
 
 The parameter ``q1q2`` sets the charge factor of the short-range P3M interaction.
 It can differ from the actual particle charges.  This specialized bond can be
@@ -272,7 +276,7 @@ The potential is calculated as follows:
 -  ``type="dihedral"``: tabulates a torsional
    dihedral angle potential. It is assumed
    that the potential is tabulated for all angles between 0 and
-   :math:`2\pi`. *This potential is not tested yet! Use on own risk, and
+   :math:`2\pi`. *This potential is not tested yet! Use at your own risk, and
    please report your findings and eventually necessary fixes.*
 
 .. _Virtual bonds:
@@ -536,12 +540,9 @@ in the correct order. Command
 
 calculates the outward normal vector of triangle defined by particles 1,
 2, 3 (these should be selected in such a way that particle 0 lies
-approximately at its centroid - for OIF objects, this is automatically
-handled by oif_create_template command, see Section
-[ssec:oif-create-template]). In order for the direction to be outward
+approximately at its centroid). In order for the direction to be outward
 with respect to the underlying object, the triangle 123 needs to be
-properly oriented (as explained in the section on volume in
-oif_global_forces interaction).
+properly oriented (as explained in paragraph `Volume conservation`_).
 
 
 
@@ -549,8 +550,6 @@ oif_global_forces interaction).
 
 Bond-angle interactions
 -----------------------
-.. note::
-    Feature ``BOND_ANGLE`` required.
 
 Bond-angle interactions involve three particles forming the angle :math:`\phi`, as shown in the schematic below.
 
@@ -560,82 +559,99 @@ Bond-angle interactions involve three particles forming the angle :math:`\phi`, 
    :align: center
    :height: 12.00cm
 
-This allows for a bond type having an angle-dependent potential.
-This potential is defined between three particles.
-The particle for which the bond is created, is the central particle, and the
-angle :math:`\phi` between the vectors from this particle to the two
-others determines the interaction.
+This allows for a bond type having an angle-dependent potential. This potential
+is defined between three particles and depends on the angle :math:`\phi`
+between the vectors from the central particle to the two other particles.
 
-Similar to other bonded interactions, these are defined for every particle triplet and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`).
-For example, for the schematic with particles ``id=0``, ``1`` and ``2`` the bond was defined using ::
+Similar to other bonded interactions, these are defined for every particle triplet and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`), in this case the central one.
+For example, for the schematic with particles ``id=0``, ``1`` (central particle) and ``2`` the bond was defined using ::
 
     >>> system.part[1].add_bond((bond_angle, 0, 2))
 
-The parameter ``bond_angle`` is a bond type identifier of three possible bond-angle classes, described below.
+The parameter ``bond_angle`` is an instance of one of four possible bond-angle
+classes, described below.
 
+
+Harmonic angle potential
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`espressomd.interactions.AngleHarmonic`
-    A classical harmonic potential of the form:
 
-    .. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
+Equation:
 
-    :math:`K` is the bending constant,
-    and the optional parameter :math:`\phi_0` is the equilibrium bond angle in
-    radians ranging from 0 to :math:`\pi`.
+.. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
 
-    If this parameter is not given, it defaults to :math:`\phi_0 = \pi`,
-    which corresponds to a stretched conformation.
+:math:`K` is the bending constant and :math:`\phi_0` is the equilibrium bond
+angle in radians ranging from 0 to :math:`\pi`.
 
-    Unlike the two other variants, this potential has a kink at
-    :math:`\phi=\phi_0+\pi` and accordingly a discontinuity in the
-    force, and should therefore be used with caution.
+Example::
 
-    example ::
-
-        >>> angle_harmonic = AngleHarmonic(bend=1.0, phi0=np.pi)
-        >>> system.bonded_inter.add(angle_harmonic)
-        >>> system.part[1].add_bond((angle_harmonic, 0, 2))
+    >>> angle_harmonic = AngleHarmonic(bend=1.0, phi0=2 * np.pi / 3)
+    >>> system.bonded_inter.add(angle_harmonic)
+    >>> system.part[1].add_bond((angle_harmonic, 0, 2))
 
 
+Cosine angle potential
+~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`espressomd.interactions.AngleCosine`
 
-    Cosine bond angle potential of the form:
+Equation:
 
-    .. math:: V(\phi) = K \left[1 - \cos(\phi - \phi0)\right]
+.. math:: V(\phi) = K \left[1 - \cos(\phi - \phi_0)\right]
 
-    :math:`K` is the bending constant,
-    and the optional parameter :math:`\phi_0` is the equilibrium bond angle in
-    radians ranging from 0 to :math:`\pi`.
+:math:`K` is the bending constant and :math:`\phi_0` is the equilibrium bond
+angle in radians ranging from 0 to :math:`\pi`.
 
-    If this parameter is not given, it defaults to :math:`\phi_0 = \pi`,
-    which corresponds to a stretched conformation.
+Around :math:`\phi_0`, this potential is close to a harmonic one
+(both are :math:`1/2(\phi-\phi_0)^2` in leading order), but it is
+periodic and smooth for all angles :math:`\phi`.
 
-    Around :math:`\phi_0`, this potential is close to a harmonic one
-    (both are :math:`1/2(\phi-\phi_0)^2` in leading order), but it is
-    periodic and smooth for all angles :math:`\phi`.
+Example::
 
-    example ::
+    >>> angle_cosine = AngleCosine(bend=1.0, phi0=2 * np.pi / 3)
+    >>> system.bonded_inter.add(angle_cosine)
+    >>> system.part[1].add_bond((angle_cosine, 0, 2))
 
-        >>> angle_cosine = AngleCosine(bend=1.0, phi0=np.pi)
-        >>> system.bonded_inter.add(angle_cosine)
-        >>> system.part[1].add_bond((angle_cosine, 0, 2))
+
+Harmonic cosine potential
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`espressomd.interactions.AngleCossquare`
 
-    Cosine square bond angle potential of the form:
+Equation:
 
-    .. math:: V(\phi) = \frac{K}{2} \left[\cos(\phi) - \cos(\phi_0)\right]^2
+.. math:: V(\phi) = \frac{K}{2} \left[\cos(\phi) - \cos(\phi_0)\right]^2
 
-    This form is used for example in the GROMOS96 force field. The
-    potential is :math:`1/8(\phi-\phi_0)^4` around :math:`\phi_0`, and
-    therefore much flatter than the two potentials before.
+:math:`K` is the bending constant and :math:`\phi_0` is the equilibrium bond
+angle in radians ranging from 0 to :math:`\pi`.
 
-    example ::
+This form is used for example in the GROMOS96 force field. The
+potential is :math:`1/8(\phi-\phi_0)^4` around :math:`\phi_0`, and
+therefore much flatter than the two aforementioned potentials.
 
-        >>> angle_cossquare = AngleCossquare(bend=1.0, phi0=np.pi)
-        >>> system.bonded_inter.add(angle_cossquare)
-        >>> system.part[1].add_bond((angle_cossquare, 0, 2))
+Example::
+
+    >>> angle_cossquare = AngleCossquare(bend=1.0, phi0=2 * np.pi / 3)
+    >>> system.bonded_inter.add(angle_cossquare)
+    >>> system.part[1].add_bond((angle_cossquare, 0, 2))
+
+
+Tabulated bond
+~~~~~~~~~~~~~~
+
+:class:`espressomd.interactions.Tabulated`
+
+Custom bond angle potential.
+
+Example::
+
+    >>> theta = np.linspace(0, np.pi, num=91, endpoint=True)
+    >>> angle_tabulated = Tabulated(type='angle', min=0, max=np.pi,
+    ...                             energy=0.5 * 10 * (theta - 2 * np.pi / 3)**2,
+    ...                             force=10 * (theta - 2 * np.pi / 3))
+    >>> system.bonded_inter.add(angle_tabulated)
+    >>> system.part[1].add_bond((angle_tabulated, 0, 2))
 
 
 .. _Dihedral interactions:
@@ -662,12 +678,14 @@ angle between the planes defined by the particle triples :math:`p_1`,
 :math:`p_2` and :math:`p_3` and :math:`p_2`, :math:`p_3` and
 :math:`p_4`:
 
-|image_dihedral|
+.. _inter_dihedral:
+.. figure:: figures/dihedral-angle.pdf
+   :alt: Dihedral interaction
+   :align: center
+   :height: 12.00cm
 
 Together with appropriate Lennard-Jones interactions, this potential can
 mimic a large number of atomic torsion potentials.
-
-.. |image_dihedral| image:: figures/dihedral-angle.pdf
 
 
 .. _Thermalized distance bond:

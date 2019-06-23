@@ -29,19 +29,20 @@
 #include <iostream>
 
 void HarmonicOrientationWell_kernel_wrapper(float x, float y, float z, float k,
-                                            int n, float *quatu, float *torque);
+                                            int n, float *director,
+                                            float *torque);
 
 class HarmonicOrientationWell : public Actor {
 public:
   HarmonicOrientationWell(float x1, float x2, float x3, float _k,
                           SystemInterface &s);
 
-  virtual void computeTorques(SystemInterface &s) {
+  void computeTorques(SystemInterface &s) override {
     HarmonicOrientationWell_kernel_wrapper(
-        x, y, z, k, s.npart_gpu(), s.quatuGpuBegin(), s.torqueGpuBegin());
+        x, y, z, k, s.npart_gpu(), s.directorGpuBegin(), s.torqueGpuBegin());
   };
 
-  virtual ~HarmonicOrientationWell() {}
+  ~HarmonicOrientationWell() override = default;
 
 protected:
   float x, y, z;

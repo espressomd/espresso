@@ -17,8 +17,9 @@
 # Initializing espresso modules and the numpy package
 import sys
 import numpy as np
-from espressomd import electrokinetics, shapes
 import espressomd
+espressomd.assert_features(["ELECTROKINETICS"])
+from espressomd import electrokinetics, shapes
 
 # Set the slit pore geometry the width is the non-periodic part of the geometry
 # the padding is used to ensure that there is no field outside the slit
@@ -50,7 +51,7 @@ ext_force_density = 0.1
 system.time_step = dt
 system.cell_system.skin = 0.2
 system.thermostat.turn_off()
-integration_length = int(2e3)
+integration_length = 2000
 
 # Set up the (LB) electrokinetics fluid
 viscosity_kinematic = viscosity_dynamic / density_water
@@ -84,10 +85,8 @@ system.actors.add(ek)
 # Integrate the system
 for i in range(100):
     system.integrator.run(integration_length)
-    sys.stdout.write("\rintegration step: %03i" % i)
+    sys.stdout.write("\rintegration: %i%%" % (i + 1))
     sys.stdout.flush()
-
-print("Integration finished.")
 
 # Output
 position_list = []

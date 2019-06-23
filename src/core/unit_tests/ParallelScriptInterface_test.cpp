@@ -23,11 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
+#include <memory>
 
-#include "core/MpiCallbacks.hpp"
-#include "core/utils/make_unique.hpp"
+#include "MpiCallbacks.hpp"
 
-#include "../../script_interface/ParallelScriptInterface.hpp"
+#include "ParallelScriptInterface.hpp"
 
 namespace mpi = boost::mpi;
 std::unique_ptr<Communication::MpiCallbacks> callbacks;
@@ -36,7 +36,7 @@ using namespace ScriptInterface;
 
 struct TestClass : public ScriptInterfaceBase {
   TestClass() { constructed = true; }
-  ~TestClass() { destructed = true; }
+  ~TestClass() override { destructed = true; }
 
   void set_parameter(const std::string &name, const Variant &value) override {
     last_parameter = make_pair(name, value);
@@ -49,9 +49,8 @@ struct TestClass : public ScriptInterfaceBase {
   Variant get_parameter(std::string const &name) const override {
     if (name == "obj_param") {
       return obj_param->id();
-    } else {
-      return last_parameter.second;
     }
+    return last_parameter.second;
   }
 
   Variant call_method(const std::string &method,
@@ -176,7 +175,7 @@ BOOST_AUTO_TEST_CASE(parameter_lifetime) {
 int main(int argc, char **argv) {
   mpi::environment mpi_env(argc, argv);
   mpi::communicator world;
-  callbacks = Utils::make_unique<Communication::MpiCallbacks>(
+  callbacks = std::make_unique<Communication::MpiCallbacks>(
       world, /* abort_on_exit */ false);
 
   ParallelScriptInterface::initialize(*callbacks);

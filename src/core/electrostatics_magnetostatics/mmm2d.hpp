@@ -1,4 +1,4 @@
-/*
+/*#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
   Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
@@ -35,44 +35,53 @@
 
 #ifdef ELECTROSTATICS
 
-/** error messages, see above */
+/** MMM2D error messages */
 extern char const *mmm2d_errors[];
 
-/** parameters for the MMM2D method for electrostatics. */
+/** @brief Parameters for the MMM2D method for electrostatics. */
 typedef struct {
-  /** maximal error of a pairwise interaction. Used at least by the
-      near formula, since this does the error control at run time */
+  /** Maximal allowed pairwise error for the potential and force.
+   *  Used at least by the near formula, since this does the error control at
+   *  runtime.
+   */
   double maxPWerror;
-  /** far formula cutoff and its square */
-  double far_cut, far_cut2;
-  /** if nonzero, \ref MMM2D_struct::far_cut has been calculated by \ref
-     MMM2D_tune_far, and will be recalculated automatically, if important
-     parameters, such as the number of cells, change. If this is zero, the far
-     cutoff has been set explicitly by the user and will not be touched by
-     Espresso. */
+  /** far formula cutoff in inverse lengths. */
+  double far_cut;
+  /** squared value of #far_cut. */
+  double far_cut2;
+  /** Flag whether #far_cut was set by the user, or calculated by Espresso.
+   *  In the latter case, the cutoff will be adapted if important parameters,
+   *  such as the box dimensions, change.
+   */
   int far_calculated;
-  /// whether there is dielectric contrast
+  /// flag whether there is any dielectric contrast in the system.
   int dielectric_contrast_on;
-  /// cont. potential parameters
+  /// @brief Flag whether a const. potential is applied.
   int const_pot_on;
+  /// @brief Const. potential.
   double pot_diff;
-  /** dielectric contrasts at the bottom and top of the simulation cell */
-  double delta_mid_top, delta_mid_bot, delta_mult;
+  /// dielectric contrast in the upper part of the simulation cell.
+  double delta_mid_top;
+  /// dielectric contrast in the lower part of the simulation cell.
+  double delta_mid_bot;
+  /// #delta_mid_top times #delta_mid_bot
+  double delta_mult;
 } MMM2D_struct;
 extern MMM2D_struct mmm2d_params;
 
-/** set parameters for MMM2D. This assumes that the particles do NOT leave the
-   box. For the near formula (nsquared cell structure), precision might be lost,
-   while the far formula might have problems with overflows.
-    @param maxPWerror   the maximal error for the pairwise interactions. Both
-   for potential and force components. The potential is therefore always
-   slightly more precise
-    @param far_cut      sets the cutoff for the far formula in inverse lengths.
-                        If -1, the far cutoff is determined by maxPWerror.
-                        Manual setting is probably only good for testing
-    @param delta_top    dielectric contrast at top of the simulation box
-    @param delta_mid    dielectric contrast in the middle of the simulation box
-*/
+/** Set parameters for MMM2D.
+ *  This assumes that the particles do NOT leave the box. For the near formula
+ *  (nsquared cell structure), precision might be lost, while the far formula
+ *  might have problems with overflows.
+ *  @param maxPWerror    @copydoc MMM2D_struct::maxPWerror
+ *  @param far_cut       sets the @copybrief MMM2D_struct::far_cut cutoff.
+ *                       If -1, the far cutoff is determined by maxPWerror.
+ *                       Manual setting is probably only good for testing.
+ *  @param delta_top     @copybrief MMM2D_struct::delta_mid_top
+ *  @param delta_bot     @copybrief MMM2D_struct::delta_mid_bot
+ *  @param const_pot_on  @copybrief MMM2D_struct::const_pot_on
+ *  @param pot_diff      @copybrief MMM2D_struct::pot_diff
+ */
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
                      double delta_bot, int const_pot_on, double pot_diff);
 
@@ -86,11 +95,11 @@ inline void MMM2D_add_far_force() { MMM2D_add_far(1, 0); }
 inline double MMM2D_far_energy() { return MMM2D_add_far(0, 1); }
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-void add_mmm2d_coulomb_pair_force(double charge_factor, double dv[3], double d2,
-                                  double d, double f[3]);
+void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
+                                  double force[3]);
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-double mmm2d_coulomb_pair_energy(double charge_factor, double dv[3], double d2,
+double mmm2d_coulomb_pair_energy(double charge_factor, const double dv[3],
                                  double d);
 
 /// check that MMM2D can run with the current parameters

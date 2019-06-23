@@ -23,6 +23,10 @@ include "myconfig.pxi"
 from globals cimport *
 import numpy as np
 from . cimport utils
+from .lb cimport *
+from .lb import HydrodynamicInteraction
+from .lb cimport lb_lbcoupling_set_gamma
+from .lb cimport lb_lbcoupling_get_gamma
 
 
 def AssertThermostatType(*allowedthermostats):
@@ -93,10 +97,11 @@ cdef class Thermostat(object):
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
                 self.set_langevin(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"])
+                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["seed"])
             if thmst["type"] == "LB":
                 self.set_lb(
-                    kT=thmst["kT"], act_on_virtual=thmst["act_on_virtual"])
+                    act_on_virtual=thmst["act_on_virtual"],
+                    seed=thmst["rng_counter_fluid"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
@@ -118,6 +123,7 @@ cdef class Thermostat(object):
             lang_dict["type"] = "LANGEVIN"
             lang_dict["kT"] = temperature
             lang_dict["act_on_virtual"] = thermo_virtual
+            lang_dict["seed"] = int(langevin_get_rng_state())
             IF PARTICLE_ANISOTROPY:
                 lang_dict["gamma"] = [langevin_gamma[0],
                                       langevin_gamma[1],
@@ -135,11 +141,13 @@ cdef class Thermostat(object):
                 lang_dict["gamma_rotation"] = None
 
             thermo_list.append(lang_dict)
+
         if thermo_switch & THERMO_LB:
             lb_dict = {}
+            lb_dict["gamma"] = lb_lbcoupling_get_gamma()
             lb_dict["type"] = "LB"
-            lb_dict["kT"] = temperature
             lb_dict["act_on_virtual"] = thermo_virtual
+            lb_dict["rng_counter_fluid"] = lb_lbcoupling_get_rng_state()
             thermo_list.append(lb_dict)
         if thermo_switch & THERMO_NPT_ISO:
             npt_dict = {}
@@ -192,11 +200,12 @@ cdef class Thermostat(object):
         global thermo_switch
         thermo_switch = THERMO_OFF
         mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+        lb_lbcoupling_set_gamma(0.0)
         return True
 
     @AssertThermostatType(THERMO_LANGEVIN)
     def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
-                     act_on_virtual=False):
+                     act_on_virtual=False, seed=None):
         """
         Sets the Langevin thermostat with required parameters 'kT' 'gamma'
         and optional parameter 'gamma_rotation'.
@@ -215,6 +224,9 @@ cdef class Thermostat(object):
                          if 'PARTICLE_ANISOTROPY' is also compiled in.
         act_on_virtual : :obj:`bool`, optional
                 If true the thermostat will act on virtual sites, default is off.
+        seed : :obj:`int`, required
+                Initial counter value (or seed) of the philox RNG.
+                Required on first activation of the langevin thermostat.
 
         """
 
@@ -267,6 +279,16 @@ cdef class Thermostat(object):
                 if float(gamma_rotation[0]) < 0. or float(gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
                     raise ValueError(
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
+
+        #Seed is required if the rng is not initialized
+        if not seed and langevin_is_seed_required():
+            raise ValueError(
+                "A seed has to be given as keyword argument on first activation of the thermostat")
+
+        if seed:
+            utils.check_type_or_throw_except(
+                seed, 1, int, "seed must be a positive integer")
+            langevin_set_rng_state(seed)
 
         global temperature
         temperature = float(kT)
@@ -328,42 +350,50 @@ cdef class Thermostat(object):
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
-    IF LB_GPU or LB:
-        @AssertThermostatType(THERMO_LB)
-        def set_lb(self, kT=None, act_on_virtual=True):
-            """
-            Sets the LB thermostat with required parameter 'kT'.
+    @AssertThermostatType(THERMO_LB)
+    def set_lb(
+        self,
+        seed=None,
+        act_on_virtual=True,
+        LB_fluid=None,
+            gamma=0.0):
+        """
+        Sets the LB thermostat.
 
-            This thermostat requires the feature LB or LB_GPU.
+        This thermostat requires the feature LBFluid or LBFluidGPU.
 
-            Parameters
-            ----------
-            kT : :obj:`float`
-                 Specifies the thermal energy of the heat bath.
-            act_on_virtual : :obj:`bool`, optional
-                If true the thermostat will act on virtual sites, default is on.
+        Parameters
+        ----------
+        LB_fluid : instance of :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`
+        seed : :obj:`int`
+             Seed for the random number generator, required
+             if kT > 0.
+        act_on_virtual : :obj:`bool`, optional
+            If true the thermostat will act on virtual sites, default is on.
+        gamma : :obj:`float`
+            Frictional coupling constant for the MD particle coupling.
 
-            """
+        """
+        if not isinstance(LB_fluid, HydrodynamicInteraction):
+            raise ValueError(
+                "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
-            if kT is None:
+        if lb_lbfluid_get_kT() > 0.:
+            if not seed and lb_lbcoupling_is_seed_required():
                 raise ValueError(
-                    "kT has to be given as keyword arg")
-            utils.check_type_or_throw_except(
-                kT, 1, float, "kT must be a number")
-            if float(kT) < 0.:
-                raise ValueError("temperature must be non-negative")
-            global temperature
-            temperature = float(kT)
-            global thermo_switch
-            thermo_switch = (thermo_switch or THERMO_LB)
-            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-            mpi_bcast_parameter(FIELD_TEMPERATURE)
+                    "seed has to be given as keyword arg")
+            elif seed:
+                lb_lbcoupling_set_rng_state(seed)
 
-            global thermo_virtual
-            thermo_virtual = act_on_virtual
-            mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+        global thermo_switch
+        thermo_switch = (thermo_switch or THERMO_LB)
+        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
 
-            return True
+        global thermo_virtual
+        thermo_virtual = act_on_virtual
+        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+        lb_lbcoupling_set_gamma(gamma)
+        return True
 
     IF NPT:
         @AssertThermostatType(THERMO_NPT_ISO)

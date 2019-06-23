@@ -47,6 +47,10 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double LJ_offset
         double LJ_min
 
+        double WCA_eps
+        double WCA_sig
+        double WCA_cut
+
         double LJCOS_eps
         double LJCOS_sig
         double LJCOS_cut
@@ -151,6 +155,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     cdef IA_parameters * get_ia_param_safe(int i, int j)
     cdef string ia_params_get_state()
     cdef void ia_params_set_state(string)
+    cdef void reset_ia_params()
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef void make_bond_type_exist(int type)
@@ -160,6 +165,10 @@ cdef extern from "nonbonded_interactions/lj.hpp":
                                       double eps, double sig, double cut,
                                       double shift, double offset,
                                       double min)
+
+cdef extern from "nonbonded_interactions/wca.hpp":
+    cdef int wca_set_params(int part_type_a, int part_type_b,
+                            double eps, double sig)
 IF LJCOS:
     cdef extern from "nonbonded_interactions/ljcos.hpp":
         cdef int ljcos_set_params(int part_type_a, int part_type_b,
@@ -296,13 +305,13 @@ ELSE:
         int type
         TabulatedPotential * pot
 
-IF P3M:
+IF ELECTROSTATICS:
     cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         #* Parameters for Bonded Coulomb p3m sr */
-        cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
+        cdef struct Bonded_coulomb_sr_bond_parameters:
             double q1q2
 ELSE:
-    cdef struct Bonded_coulomb_p3m_sr_bond_parameters:
+    cdef struct Bonded_coulomb_sr_bond_parameters:
         double q1q2
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
@@ -420,17 +429,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         #*Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
         double v_tol
 
-#* Parameters for three body angular potential (bond-angle potentials) that
-    cdef struct Angledist_bond_parameters:
-        double bend
-        double phimin
-        double distmin
-        double phimax
-        double distmax
-        double cos_phi0
-        double sin_phi0
-
-
 #* Parameters for IBM Triel  */
     cdef cppclass tElasticLaw:
         pass
@@ -461,6 +459,12 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double kappaV
         double volRef
 
+#* Parameters for Quartic   */
+    cdef struct Quartic_bond_parameters:
+        double k0, k1
+        double r
+        double r_cut
+
 #* Union in which to store the parameters of an individual bonded interaction */
     cdef union Bond_parameters:
         Fene_bond_parameters fene
@@ -468,7 +472,7 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         Oif_local_forces_bond_parameters oif_local_forces
         Thermalized_bond_parameters thermalized_bond
         Bonded_coulomb_bond_parameters bonded_coulomb
-        Bonded_coulomb_p3m_sr_bond_parameters bonded_coulomb_p3m_sr
+        Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr
         Harmonic_bond_parameters harmonic
         Harmonic_dumbbell_bond_parameters harmonic_dumbbell
         Angle_bond_parameters angle
@@ -480,10 +484,10 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         Overlap_bond_parameters overlap
         Subt_lj_bond_parameters subt_lj
         Rigid_bond_parameters rigid_bond
-        Angledist_bond_parameters angledist
         IBM_Triel_Parameters ibm_triel
         IBM_Tribend_Parameters ibm_tribend
         IBM_VolCons_Parameters ibmVolConsParameters
+        Quartic_bond_parameters quartic
 
     cdef struct Bonded_ia_parameters:
         int type
@@ -523,14 +527,12 @@ cdef extern from "bonded_interactions/thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
 cdef extern from "bonded_interactions/bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
-cdef extern from "bonded_interactions/bonded_coulomb_p3m_sr.hpp":
-    int bonded_coulomb_p3m_sr_set_params(int bond_type, double q1q2)
-
+cdef extern from "bonded_interactions/quartic.hpp":
+    int quartic_set_params(int bond_type, double k0, double k1, double r, double r_cut)
 
 cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
     cppclass ImmersedBoundaries:
         void volume_conservation_set_params(const int bond_type, const int softID, const double kappaV)
-
 
 cdef extern from "immersed_boundary/ibm_triel.hpp":
     int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
@@ -552,10 +554,11 @@ IF ELECTROSTATICS:
     cdef extern from "bonded_interactions/bonded_coulomb.hpp":
         int bonded_coulomb_set_params(int bond_type, double prefactor)
 
+    cdef extern from "bonded_interactions/bonded_coulomb_sr.hpp":
+        int bonded_coulomb_sr_set_params(int bond_type, double q1q2)
 
-cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     int virtual_set_params(int bond_type)
-
 
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef enum enum_bonded_interaction "BondedInteraction":
@@ -564,14 +567,12 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_HARMONIC,
         BONDED_IA_HARMONIC_DUMBBELL,
         BONDED_IA_BONDED_COULOMB,
-        BONDED_IA_BONDED_COULOMB_P3M_SR,
-        BONDED_IA_ANGLE_OLD,
+        BONDED_IA_BONDED_COULOMB_SR,
         BONDED_IA_DIHEDRAL,
         BONDED_IA_TABULATED,
         BONDED_IA_SUBT_LJ,
         BONDED_IA_RIGID_BOND,
         BONDED_IA_VIRTUAL_BOND,
-        BONDED_IA_ANGLEDIST,
         BONDED_IA_ANGLE_HARMONIC,
         BONDED_IA_ANGLE_COSINE,
         BONDED_IA_ANGLE_COSSQUARE,
@@ -583,3 +584,4 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_IBM_VOLUME_CONSERVATION,
         BONDED_IA_UMBRELLA,
         BONDED_IA_THERMALIZED_DIST
+        BONDED_IA_QUARTIC

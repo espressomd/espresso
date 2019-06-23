@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This samples demonstrates how to checkpoint a simulation.
+This sample demonstrates how to checkpoint a simulation.
 """
 
 import espressomd
@@ -52,7 +52,7 @@ system.cell_system.skin = 0.4
 checkpoint.register("system")
 
 # test for "system.thermostat"
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # test for "system.non_bonded_inter"
 lj_eps = 1.0

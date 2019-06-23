@@ -35,41 +35,47 @@
  */
 
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
-#include "cells.hpp"
-#include "grid.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "thermostat.hpp"
 
 #ifdef DIPOLES
+#include "cells.hpp"
+#include "dipole.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+#include "grid.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
+#include <utils/constants.hpp>
 
 // Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag) {
+double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
+                             Particle *p2, int force_flag) {
   double u, r, pe1, pe2, pe3, pe4, r3, r5, r2, r7, a, b, cc, d, ab;
 #ifdef ROTATION
   double bx, by, bz, ax, ay, az;
 #endif
   double ffx, ffy, ffz;
-  double dr[3];
+
+  // Cache dipole momente
+  const Utils::Vector3d dip2 = p2->calc_dip();
 
   // Distance between particles
+  Utils::Vector3d dr;
   get_mi_vector(dr, p1->r.p, p2->r.p);
 
   // Powers of distance
-  r2 = dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2];
+  r2 = dr * dr;
   r = sqrt(r2);
   r3 = r2 * r;
   r5 = r3 * r2;
   r7 = r5 * r2;
 
   // Dot products
-  pe1 = p1->r.dip[0] * p2->r.dip[0] + p1->r.dip[1] * p2->r.dip[1] +
-        p1->r.dip[2] * p2->r.dip[2];
-  pe2 = p1->r.dip[0] * dr[0] + p1->r.dip[1] * dr[1] + p1->r.dip[2] * dr[2];
-  pe3 = p2->r.dip[0] * dr[0] + p2->r.dip[1] * dr[1] + p2->r.dip[2] * dr[2];
+  pe1 = dip1 * dip2;
+  pe2 = dip1 * dr;
+  pe3 = dip2 * dr;
   pe4 = 3.0 / r5;
 
   // Energy, if requested
-  u = coulomb.Dprefactor * (pe1 / r3 - pe4 * pe2 * pe3);
+  u = dipole.prefactor * (pe1 / r3 - pe4 * pe2 * pe3);
 
   // Force, if requested
   if (force_flag) {
@@ -80,51 +86,39 @@ double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag) {
     d = pe4 * pe2;
 
     //  Result
-    ffx = ab * dr[0] + cc * p1->r.dip[0] + d * p2->r.dip[0];
-    ffy = ab * dr[1] + cc * p1->r.dip[1] + d * p2->r.dip[1];
-    ffz = ab * dr[2] + cc * p1->r.dip[2] + d * p2->r.dip[2];
+    ffx = ab * dr[0] + cc * dip1[0] + d * dip2[0];
+    ffy = ab * dr[1] + cc * dip1[1] + d * dip2[1];
+    ffz = ab * dr[2] + cc * dip1[2] + d * dip2[2];
     // Add the force to the particles
-    p1->f.f[0] += coulomb.Dprefactor * ffx;
-    p1->f.f[1] += coulomb.Dprefactor * ffy;
-    p1->f.f[2] += coulomb.Dprefactor * ffz;
-    p2->f.f[0] -= coulomb.Dprefactor * ffx;
-    p2->f.f[1] -= coulomb.Dprefactor * ffy;
-    p2->f.f[2] -= coulomb.Dprefactor * ffz;
-//    if (p1->p.identity==248)
-//    {
-//      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
-//      printf("%d %g %g %g - %g %g
-//      %g\n",p2->p.identity,ffx,ffy,ffz,p2->r.p[0],p2->r.p[1],p2->r.p[2]);
-//     }
-//    if (p2->p.identity==248)
-//   {
-//      printf("xxx %g %g %g\n", dr[0],dr[1],dr[2]);
-//      printf("%d %g %g %g - %g %g
-//      %g\n",p1->p.identity,-ffx,-ffy,-ffz,p1->r.p[0],p1->r.p[1],p1->r.p[2]);
-//     }
+    p1->f.f[0] += dipole.prefactor * ffx;
+    p1->f.f[1] += dipole.prefactor * ffy;
+    p1->f.f[2] += dipole.prefactor * ffz;
+    p2->f.f[0] -= dipole.prefactor * ffx;
+    p2->f.f[1] -= dipole.prefactor * ffy;
+    p2->f.f[2] -= dipole.prefactor * ffz;
 
 // Torques
 #ifdef ROTATION
-    ax = p1->r.dip[1] * p2->r.dip[2] - p2->r.dip[1] * p1->r.dip[2];
-    ay = p2->r.dip[0] * p1->r.dip[2] - p1->r.dip[0] * p2->r.dip[2];
-    az = p1->r.dip[0] * p2->r.dip[1] - p2->r.dip[0] * p1->r.dip[1];
+    ax = dip1[1] * dip2[2] - dip2[1] * dip1[2];
+    ay = dip2[0] * dip1[2] - dip1[0] * dip2[2];
+    az = dip1[0] * dip2[1] - dip2[0] * dip1[1];
 
-    bx = p1->r.dip[1] * dr[2] - dr[1] * p1->r.dip[2];
-    by = dr[0] * p1->r.dip[2] - p1->r.dip[0] * dr[2];
-    bz = p1->r.dip[0] * dr[1] - dr[0] * p1->r.dip[1];
+    bx = dip1[1] * dr[2] - dr[1] * dip1[2];
+    by = dr[0] * dip1[2] - dip1[0] * dr[2];
+    bz = dip1[0] * dr[1] - dr[0] * dip1[1];
 
-    p1->f.torque[0] += coulomb.Dprefactor * (-ax / r3 + bx * cc);
-    p1->f.torque[1] += coulomb.Dprefactor * (-ay / r3 + by * cc);
-    p1->f.torque[2] += coulomb.Dprefactor * (-az / r3 + bz * cc);
+    p1->f.torque[0] += dipole.prefactor * (-ax / r3 + bx * cc);
+    p1->f.torque[1] += dipole.prefactor * (-ay / r3 + by * cc);
+    p1->f.torque[2] += dipole.prefactor * (-az / r3 + bz * cc);
 
     // 2nd particle
-    bx = p2->r.dip[1] * dr[2] - dr[1] * p2->r.dip[2];
-    by = dr[0] * p2->r.dip[2] - p2->r.dip[0] * dr[2];
-    bz = p2->r.dip[0] * dr[1] - dr[0] * p2->r.dip[1];
+    bx = dip2[1] * dr[2] - dr[1] * dip2[2];
+    by = dr[0] * dip2[2] - dip2[0] * dr[2];
+    bz = dip2[0] * dr[1] - dr[0] * dip2[1];
 
-    p2->f.torque[0] += coulomb.Dprefactor * (ax / r3 + bx * d);
-    p2->f.torque[1] += coulomb.Dprefactor * (ay / r3 + by * d);
-    p2->f.torque[2] += coulomb.Dprefactor * (az / r3 + bz * d);
+    p2->f.torque[0] += dipole.prefactor * (ax / r3 + bx * d);
+    p2->f.torque[1] += dipole.prefactor * (ay / r3 + by * d);
+    p2->f.torque[2] += dipole.prefactor * (az / r3 + bz * d);
 #endif
   }
 
@@ -161,6 +155,7 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
     if (it->p.dipm == 0.0)
       continue;
 
+    const Utils::Vector3d dip1 = it->calc_dip();
     auto jt = it;
     /* Skip diagonal */
     ++jt;
@@ -169,7 +164,7 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
       if (jt->p.dipm == 0.0)
         continue;
       // Calculate energy and/or force between the particles
-      u += calc_dipole_dipole_ia(&(*it), &(*jt), force_flag);
+      u += calc_dipole_dipole_ia(&(*it), dip1, &(*jt), force_flag);
     }
   }
 
@@ -212,8 +207,6 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
   std::vector<double> tx, ty, tz;
 #endif
   int dip_particles, dip_particles2;
-  double ppos[3];
-  int img[3];
   double u;
 
   if (n_nodes != 1) {
@@ -249,21 +242,14 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
   dip_particles = 0;
   for (auto const &p : local_cells.particles()) {
     if (p.p.dipm != 0.0) {
+      const Utils::Vector3d dip = p.calc_dip();
 
-      mx[dip_particles] = p.r.dip[0];
-      my[dip_particles] = p.r.dip[1];
-      mz[dip_particles] = p.r.dip[2];
+      mx[dip_particles] = dip[0];
+      my[dip_particles] = dip[1];
+      mz[dip_particles] = dip[2];
 
       /* here we wish the coordinates to be folded into the primary box */
-
-      ppos[0] = p.r.p[0];
-      ppos[1] = p.r.p[1];
-      ppos[2] = p.r.p[2];
-      img[0] = p.l.i[0];
-      img[1] = p.l.i[1];
-      img[2] = p.l.i[2];
-      fold_position(ppos, img);
-
+      auto const ppos = folded_position(p.r.p);
       x[dip_particles] = ppos[0];
       y[dip_particles] = ppos[1];
       z[dip_particles] = ppos[2];
@@ -384,29 +370,29 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
     for (auto &p : local_cells.particles()) {
       if (p.p.dipm != 0.0) {
 
-        p.f.f[0] += coulomb.Dprefactor * fx[dip_particles2];
-        p.f.f[1] += coulomb.Dprefactor * fy[dip_particles2];
-        p.f.f[2] += coulomb.Dprefactor * fz[dip_particles2];
+        p.f.f[0] += dipole.prefactor * fx[dip_particles2];
+        p.f.f[1] += dipole.prefactor * fy[dip_particles2];
+        p.f.f[2] += dipole.prefactor * fz[dip_particles2];
 
 #ifdef ROTATION
-        p.f.torque[0] += coulomb.Dprefactor * tx[dip_particles2];
-        p.f.torque[1] += coulomb.Dprefactor * ty[dip_particles2];
-        p.f.torque[2] += coulomb.Dprefactor * tz[dip_particles2];
+        p.f.torque[0] += dipole.prefactor * tx[dip_particles2];
+        p.f.torque[1] += dipole.prefactor * ty[dip_particles2];
+        p.f.torque[2] += dipole.prefactor * tz[dip_particles2];
 #endif
         dip_particles2++;
       }
     }
   } /*of if force_flag */
 
-  return 0.5 * coulomb.Dprefactor * u;
+  return 0.5 * dipole.prefactor * u;
 }
 
 int dawaanr_set_params() {
   if (n_nodes > 1) {
     return ES_ERROR;
   }
-  if (coulomb.Dmethod != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA) {
-    set_dipolar_method_local(DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA);
+  if (dipole.method != DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA) {
+    Dipole::set_method_local(DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA);
   }
   // also necessary on 1 CPU, does more than just broadcasting
   mpi_bcast_coulomb_params();
@@ -426,8 +412,8 @@ int mdds_set_params(int n_cut) {
                     "account during the direct sum calculation is zero \n");
   }
 
-  if (coulomb.Dmethod != DIPOLAR_DS && coulomb.Dmethod != DIPOLAR_MDLC_DS) {
-    set_dipolar_method_local(DIPOLAR_DS);
+  if (dipole.method != DIPOLAR_DS && dipole.method != DIPOLAR_MDLC_DS) {
+    Dipole::set_method_local(DIPOLAR_DS);
   }
 
   // also necessary on 1 CPU, does more than just broadcasting

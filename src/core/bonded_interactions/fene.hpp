@@ -27,34 +27,28 @@
  */
 
 #include "bonded_interaction_data.hpp"
-#include "debug.hpp"
-#include "errorhandling.hpp"
 #include "particle_data.hpp"
-#include "random.hpp"
-#include "utils.hpp"
 
 /************************************************************/
 
-/// set the parameters for the fene potential
+/** set the parameters for the fene potential
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int fene_set_params(int bond_type, double k, double drmax, double r0);
 
-/** Computes the FENE pair force and adds this
-    force to the particle forces (see \ref bonded_interaction_data.cpp).
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param iaparams  bond type number of the angle interaction (see \ref
-   bonded_interaction_data.cpp).
-    @param dx        particle distance vector
-    @param force     returns force of particle 1
-    @return true if the bond is broken
-*/
-inline int calc_fene_pair_force(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *iaparams, double dx[3],
-                                double force[3]) {
-  int i;
+/** Computes the FENE bond length force.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] force     Force.
+ *  @retval 1 if the bond is broken
+ *  @retval 0 otherwise
+ */
+inline int calc_fene_pair_force(Bonded_ia_parameters const *iaparams,
+                                Utils::Vector3d const &dx, double *force) {
+  auto const len = dx.norm();
 
-  const double len2 = sqrlen(dx);
-  const double len = sqrt(len2);
   const double dr = len - iaparams->p.fene.r0;
 
   if (dr >= iaparams->p.fene.drmax)
@@ -62,54 +56,32 @@ inline int calc_fene_pair_force(Particle *p1, Particle *p2,
 
   double fac =
       -iaparams->p.fene.k * dr / ((1.0 - dr * dr * iaparams->p.fene.drmax2i));
-  if (fabs(dr) > ROUND_ERROR_PREC) {
-    if (len > ROUND_ERROR_PREC) { /* Regular case */
-      fac /= len;
-    } else { /* dx[] == 0: the force is undefined. Let's use a random direction
-              */
-      for (int i = 0; i < 3; i++)
-        dx[i] = d_random() - 0.5;
-      fac /= sqrt(sqrlen(dx));
-    }
+  if (len > ROUND_ERROR_PREC) {
+    fac /= len;
   } else {
     fac = 0.0;
   }
 
-  FENE_TRACE(if (fac > 50)
-                 fprintf(stderr,
-                         "WARNING: FENE force factor between Pair (%d,%d) "
-                         "large: %f at distance %f\n",
-                         p1->p.identity, p2->p.identity, fac, sqrt(len2)));
-
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     force[i] = fac * dx[i];
-
-  ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: FENE f = (%.3e,%.3e,%.3e) with part "
-                            "id=%d at dist %f fac %.3e\n",
-                            this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                            p2->p.identity, sqrt(len2), fac));
-  ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: FENE f = (%.3e,%.3e,%.3e) with part "
-                            "id=%d at dist %f fac %.3e\n",
-                            this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                            p1->p.identity, sqrt(len2), fac));
 
   return 0;
 }
 
-inline int fene_pair_energy(Particle *p1, Particle *p2,
-                            Bonded_ia_parameters *iaparams, double dx[3],
-                            double *_energy) {
+/** Computes the FENE bond length force.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] _energy   Energy.
+ *  @retval 1 if the bond is broken
+ *  @retval 0 otherwise
+ */
+inline int fene_pair_energy(Bonded_ia_parameters const *iaparams,
+                            Utils::Vector3d const &dx, double *_energy) {
   /* compute bond stretching (r-r0) */
-  double dr = sqrt(sqrlen(dx)) - iaparams->p.fene.r0;
+  double const dr = dx.norm() - iaparams->p.fene.r0;
 
   /* check bond stretching */
   if (dr >= iaparams->p.fene.drmax) {
-    runtimeErrorMsg() << "FENE bond broken between particles " << p1->p.identity
-                      << " and " << p2->p.identity;
     return 1;
   }
 

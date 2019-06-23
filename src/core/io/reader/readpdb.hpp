@@ -16,7 +16,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/* vim: set ts=8 sts=2 sw=2 et: */
 
 #ifndef __READ_PDB_HPP
 #define __READ_PDB_HPP
@@ -36,13 +35,15 @@ struct PdbLJInteraction {
     @param pdb_file Filename of the pdb file.
     @param first_id Id of the first particle to add.
     @param type Type for the particles.
-    @param lennard_jones Should lj interactions be added from the itp file.
+    @param ljInteractions LJ interactions vector.
+    @param lj_rel_cutoff LJ cutoff, as a multiple of the read LJ sigma value.
+    @param itp_file Optional ITP file.
+    @param first_type Number of atom types to skip in the ITP file.
     @param fit Should the box be rescaled to hold the particles.
     @param lj_internal Should LJ interactions within the molecule be added.
-    @param lj_diagonal Just the diagonal interaction terms of lj_internal.
+    @param lj_diagonal Just the diagonal interaction terms of @p lj_internal.
     @return Number of particles that were added.
  */
-
 int pdb_add_particles_from_file(char *pdb_file, int first_id, int type,
                                 std::vector<PdbLJInteraction> &ljInteractions,
                                 double lj_rel_cutoff = 2.5,

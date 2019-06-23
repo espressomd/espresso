@@ -41,16 +41,21 @@ else()
 endif()
 
 # Check version
-if(CYTHON_EXECUTABLE)
-  execute_process(COMMAND ${CYTHON_EXECUTABLE} -V
-    ERROR_VARIABLE CYTHON_OUTPUT OUTPUT_QUIET)
-  string(REGEX REPLACE "^Cython version ([0-9]+\\.[0-9]+).*" "\\1" CYTHON_VERSION "${CYTHON_OUTPUT}")
+if(NOT CYTHON_EXECUTABLE)
+  set(CYTHON_EXECUTABLE ${PYTHON_EXECUTABLE} -m cython)
+endif()
+execute_process(COMMAND ${CYTHON_EXECUTABLE} -V
+                ERROR_VARIABLE CYTHON_OUTPUT RESULT_VARIABLE CYTHON_STATUS OUTPUT_QUIET)
+if(CYTHON_STATUS EQUAL 0)
+  string(REGEX REPLACE "^Cython version ([0-9]+\\.[0-9\\.]+).*" "\\1" CYTHON_VERSION "${CYTHON_OUTPUT}")
 
   if(${CYTHON_VERSION} VERSION_LESS ${CYTHON_REQUIRED_VERSION})
-    message(FATAL_ERROR "Espresso needs at least Cython version ${CYTHON_REQUIRED_VERSION}, found verson ${CYTHON_VERSION}")
+    message(FATAL_ERROR "Espresso needs at least Cython version ${CYTHON_REQUIRED_VERSION}, found version ${CYTHON_VERSION}")
   else()
     message(STATUS "Found Cython version ${CYTHON_VERSION}")
   endif()
+else()
+  message(FATAL_ERROR "Espresso needs at least Cython version ${CYTHON_REQUIRED_VERSION}, but could not find it")
 endif()
 
 include( FindPackageHandleStandardArgs )

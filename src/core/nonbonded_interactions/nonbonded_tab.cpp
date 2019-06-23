@@ -27,6 +27,8 @@
 #ifdef TABULATED
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+
 int tabulated_set_params(int part_type_a, int part_type_b, double min,
                          double max, std::vector<double> const &energy,
                          std::vector<double> const &force) {
@@ -47,7 +49,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
 
   mpi_bcast_ia_params(part_type_a, part_type_b);
 
-  return 0;
+  return ES_OK;
 }
 
 #endif

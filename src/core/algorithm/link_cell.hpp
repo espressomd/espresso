@@ -19,8 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef ALGORITHM_LINK_CELL_HPP
 #define ALGORITHM_LINK_CELL_HPP
 
-#include "utils/print.hpp"
-
 namespace Algorithm {
 
 /**
@@ -34,9 +32,6 @@ void link_cell(CellIterator first, CellIterator last,
                ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
                DistanceFunction &&distance_function) {
   for (; first != last; ++first) {
-    Utils::print("left", first->local_position[0], first->local_position[1],
-                 first->local_position[2]);
-
     for (int i = 0; i != first->n; i++) {
       auto &p1 = first->part[i];
 
@@ -50,9 +45,6 @@ void link_cell(CellIterator first, CellIterator last,
 
       /* Pairs with neighbors */
       for (auto &neighbor : first->neighbors().red()) {
-        Utils::print("right", neighbor->local_position[0],
-                     neighbor->local_position[1], neighbor->local_position[2]);
-
         for (int j = 0; j < neighbor->n; j++) {
           auto &p2 = neighbor->part[j];
           auto dist = distance_function(p1, p2);

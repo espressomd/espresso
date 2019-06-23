@@ -24,14 +24,10 @@
  */
 #include "angle_cosine.hpp"
 
-#ifdef BOND_ANGLE
 #include "communication.hpp"
 
-/** set parameters for the angle potential.
+#include <utils/constants.hpp>
 
-    \todo The type of the angle potential
-    is chosen via config.hpp and cannot be changed at runtime.
-*/
 int angle_cosine_set_params(int bond_type, double bend, double phi0) {
   if (bond_type < 0)
     return ES_ERROR;
@@ -50,5 +46,3 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0) {
 
   return ES_OK;
 }
-
-#endif

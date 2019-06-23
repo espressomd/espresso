@@ -20,7 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include <boost/range/algorithm/find.hpp>
+
+#include "auto_parameters/AutoParameters.hpp"
 
 using ScriptInterface::AutoParameters;
 
@@ -34,10 +36,11 @@ struct A : AutoParameters<A> {
 BOOST_AUTO_TEST_CASE(basic) {
   A a{0, 42};
 
-  auto valid_parameters = a.valid_parameters();
+  auto const &valid_parameters = a.valid_parameters();
+
   BOOST_CHECK(valid_parameters.size() == 2);
-  BOOST_CHECK(valid_parameters.find("i") != valid_parameters.end());
-  BOOST_CHECK(valid_parameters.find("j") != valid_parameters.end());
+  BOOST_CHECK(boost::find(valid_parameters, "i") != valid_parameters.end());
+  BOOST_CHECK(boost::find(valid_parameters, "j") != valid_parameters.end());
 
   BOOST_CHECK(0 == boost::get<int>(a.get_parameter("i")));
   BOOST_CHECK(42 == boost::get<int>(a.get_parameter("j")));

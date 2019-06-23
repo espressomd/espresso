@@ -1,0 +1,153 @@
+/*
+  Copyright (C) 2016-2019 The ESPResSo project
+
+  This file is part of ESPResSo.
+
+  ESPResSo is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  ESPResSo is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/// @page script_interface Script interface
+///
+/// @section script_interface_purpose Purpose
+///
+/// The generic script interface makes common tasks like setting and getting
+/// parameters from objects easier. It provides facilities to set parameters
+/// on data structures on all nodes, and call methods on all nodes.
+///
+///
+/// @section script_interface_howto Steps to add a new interface class for parameter setting
+///
+/// 1. Create file for a new class implementation in
+///    <tt>src/script_interface/\<namespace\>/</tt>
+/// 2. Add <tt>\#include "ScriptInterface.hpp"</tt>
+/// 3. Create a new class that derives from
+///    @ref ScriptInterface::ScriptInterfaceBase "ScriptInterfaceBase"
+/// 4. Implement the required methods:
+///    - @ref ScriptInterface::ScriptInterfaceBase::name "name()" should return
+///      the full name for the class
+///    - @ref ScriptInterface::ScriptInterfaceBase::valid_parameters
+///      "valid_parameters()" should return a list of all accepted parameters
+///      (e.g. @ref src/script_interface/observables/PidObservable.hpp
+///      "PidObservable.hpp"). Alternatively, use
+///      @ref ScriptInterface::AutoParameters::add_parameters "add_parameters()"
+///      in the class constructor
+///      (e.g. @ref src/script_interface/shapes/Wall.hpp "Wall.hpp").
+///    - @ref ScriptInterface::ScriptInterfaceBase::get_parameters "get_parameters()"
+///      should return a map of parameters.
+///    - @ref ScriptInterface::ScriptInterfaceBase::set_parameter "set_parameter()"
+///      should set the named parameter.
+///    - optionally, add implementations for
+///      @ref ScriptInterface::ScriptInterfaceBase::get_parameter "get_parameter()",
+///      @ref ScriptInterface::ScriptInterfaceBase::call_method "call_method()".
+/// 5. Add the new class to the initialization functions
+///    - if they don't exist, create initialization files
+///      (<tt>src/script_interface/\<namespace\>/initialize\.{hpp,cpp}</tt>)
+///    - include the header for your new class
+///    - register the class using @ref ScriptInterface::register_new<T>()
+///
+/// After these steps the new class is available from Python. Instances
+/// can be created by @c script_interface.PScriptInterface(name) (using
+/// <tt>import espressomd.script_interface</tt>). The Python class exposes the
+/// following methods: @c valid_parameters, @c set_parameter, @c get_parameter,
+/// @c get_parameters and @c call_method.
+///
+///
+/// @subsection script_interface_example Example class
+///
+/// As a first example we implement a hello world script object, that does not
+/// interact with the Espresso core. This class has one parameter, a single
+/// string @c m_name, and has one callable method: @c greet().
+///
+/// @code{.cpp}
+/// #include "ScriptInterface.hpp"
+///
+/// namespace ScriptInterface {
+///
+/// class HelloWorld : public ScriptInterfaceBase {
+/// public:
+///   HelloWorld() : m_name("John Doe") {}
+///
+///   // Returns the name of the class
+///   const std::string name() const { return "ScriptInterface::HelloWorld"; }
+///
+///   // All accepted parameters, in this case only one
+///   Utils::Span<const boost::string_ref> valid_parameters() const override {
+///     static std::array<const boost::string_ref, 1> params{"name"};
+///     return params;
+///   }
+///
+///   // Returns all current values
+///   VariantMap get_parameters() const override {
+///     return {{"name", m_name}};
+///   }
+///
+///   // Set the name
+///   void set_parameter(const std::string &name, const Variant &value) override {
+///     if(name == "name")
+///       m_name = boost::get<std::string>(value);
+///   }
+///
+///   // This class has only one function, "greet", which does not take parameters.
+///   Variant call_method(const std::string &name,
+///                       const VariantMap & /* parameters */) override {
+///     if (name == "greet") {
+///       return std::string("Hello, ") + m_name + "!";
+///     }
+///   }
+///
+/// private:
+///   std::string m_name;
+/// };
+/// }
+/// @endcode
+///
+/// If added to the initialization function, this class can be used from Python
+/// like this:
+///
+/// @code{.py}
+/// from espressomd import script_interface
+/// greeter = script_interface.PScriptInterface("ScriptInterface::HelloWorld")
+/// greeter.set_parameters(name='Peter')
+/// print(greeter.greet())
+/// @endcode
+///
+/// For a more elaborate example that creates a C++ class, have a look at
+/// @ref src/script_interface/shapes/Wall.hpp.
+///
+///
+/// @section script_interface_variant Variant
+///
+/// The implementation uses a specialization of @c boost::variant to hand over
+/// parameters and return values of different types. It currently supports the
+/// type @c bool, @c int, @c double, @c string, @c vector<int>,
+/// @c vector<double> and @c object. The latter means that this parameter is
+/// another script object.
+///
+/// In C++ the variants can simply assigned a value of any supported type. To
+/// get the value back, it has to be fetched via @c boost::get<T>(Variant).
+///
+/// Example:
+/// @code{.cpp}
+/// Variant v;
+/// v = 5; // v now holds an int
+/// int i = boost::get<int>(v); // i now holds 5
+/// /* std::string s = boost::get<std::string>(v); Raises an exception,
+///                                                v does not hold a string. */
+/// @endcode
+///
+/// @section script_interface_objects Other objects as parameters
+///
+/// The interface supports handing other objects as parameters to classes.
+/// See @ref src/script_interface/constraints/Constraint.hpp for an example.
+/// @todo Add actual description...

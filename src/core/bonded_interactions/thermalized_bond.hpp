@@ -34,9 +34,12 @@ extern int n_thermalized_bonds;
 #include "debug.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
-#include "utils.hpp"
 
-// Set the parameters for the thermalized bond
+/** Set the parameters of a thermalized bond
+ *
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int thermalized_bond_set_params(int bond_type, double temp_com,
                                 double gamma_com, double temp_distance,
                                 double gamma_distance, double r_cut);
@@ -46,24 +49,23 @@ void thermalized_bond_cool_down();
 void thermalized_bond_update_params(double pref_scale);
 void thermalized_bond_init();
 
-/** Separately thermalizes the com and distance of a particle pair
-    and adds this force to the particle forces.
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param iaparams  Parameters of interaction
-    @param dx        change in position
-    @param force1 and force2     force on particles
-    @return true if bond is broken
-*/
-
-inline int calc_thermalized_bond_forces(Particle *p1, Particle *p2,
-                                        Bonded_ia_parameters *iaparams,
-                                        double dx[3], double force1[3],
+/** Separately thermalizes the com and distance of a particle pair.
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] force1    Force on particle @p p1
+ *  @param[out] force2    Force on particle @p p2
+ *  @retval 1 if the bond is broken
+ *  @retval 0 otherwise
+ */
+inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
+                                        const Bonded_ia_parameters *iaparams,
+                                        double const dx[3], double force1[3],
                                         double force2[3]) {
   // Bond broke?
-  double dist = Utils::veclen(dx);
   if (iaparams->p.thermalized_bond.r_cut > 0.0 &&
-      dist > iaparams->p.thermalized_bond.r_cut) {
+      Utils::Vector3d(dx, dx + 3).norm() > iaparams->p.thermalized_bond.r_cut) {
     return 1;
   }
 
@@ -106,12 +108,6 @@ inline int calc_thermalized_bond_forces(Particle *p1, Particle *p2,
   ONEPART_TRACE(if (p2->p.identity == check_id) fprintf(
       stderr, "%d: OPT: THERMALIZED BOND f = (%.3e,%.3e,%.3e)\n", this_node,
       p2->f.f[0] + force2[0], p2->f.f[1] + force2[1], p2->f.f[2] + force2[2]));
-  return 0;
-}
-
-inline int thermalized_bond_energy(const Particle *p1, const Particle *p2,
-                                   const Bonded_ia_parameters *iaparams,
-                                   double dx[3], double *_energy) {
   return 0;
 }
 

@@ -25,15 +25,29 @@
 #include <string>
 #include <vector>
 
-#include "core/PartCfg.hpp"
+#include "PartCfg.hpp"
 
 namespace Observables {
+
+/** Base class for observables.
+ *
+ *  An observable extracts raw data from a system or compute a statistic based
+ *  on the state of a system, and returns an array of doubles.
+ *
+ *  %Observables typically don't have setters or getters to access and modify
+ *  their member variables, and usually only have a default constructor with no
+ *  argument. Each observable class has a corresponding interface in
+ *  @ref ScriptInterface::Observables, where setters and getters are defined.
+ */
 class Observable {
 public:
   Observable() = default;
   virtual ~Observable() = default;
-  // In the call operator the calculation is performed.
-  virtual std::vector<double> operator()(PartCfg &partCfg) const = 0;
+  /** Calculate the set of values measured by the observable
+   */
+  virtual std::vector<double> operator()() const = 0;
+
+  /** Size of the array returned by the observable */
   virtual int n_values() const = 0;
 };
 

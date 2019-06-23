@@ -28,20 +28,18 @@
 #include <stdexcept>
 
 #include "core/observables/Observable.hpp"
-#include "partCfg_global.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
-typedef ::Observables::Observable CoreObs;
-
+/** Base class for script interfaces to core %Observables classes */
 class Observable : public ScriptInterfaceBase {
 public:
-  virtual std::shared_ptr<CoreObs> observable() const = 0;
+  virtual std::shared_ptr<::Observables::Observable> observable() const = 0;
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "calculate") {
-      return observable()->operator()(partCfg());
+      return observable()->operator()();
     }
     if (method == "n_values") {
       return observable()->n_values();

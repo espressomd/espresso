@@ -21,9 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
-#include "utils/for_each_pair.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include <utils/for_each_pair.hpp>
 
 namespace ClusterAnalysis {
 
@@ -36,9 +36,7 @@ void ClusterStructure::clear() {
 }
 
 inline bool ClusterStructure::part_of_cluster(const Particle &p) {
-  if (cluster_id.find(p.p.identity) == cluster_id.end())
-    return false;
-  return true;
+  return cluster_id.find(p.p.identity) != cluster_id.end();
 }
 
 // Analyze the cluster structure of the given particles
@@ -57,7 +55,7 @@ void ClusterStructure::run_for_all_pairs() {
 void ClusterStructure::run_for_bonded_particles() {
   clear();
   partCfg().update_bonds();
-  for (auto p : partCfg()) {
+  for (const auto &p : partCfg()) {
     int j = 0;
     while (j < p.bl.n) {
       int bond_type = p.bl.e[j];
@@ -142,7 +140,7 @@ void ClusterStructure::merge_clusters() {
     const int cid = find_id_for(it.second);
     // We note the list of changes here, so we don't modify the map
     // while iterating
-    to_be_changed.push_back({it.first, cid});
+    to_be_changed.emplace_back(it.first, cid);
     // Empty cluster object
     if (clusters.find(cid) == clusters.end()) {
       clusters[cid] = std::make_shared<Cluster>();
@@ -167,7 +165,7 @@ void ClusterStructure::merge_clusters() {
   }
 
   // Sort particles ids in the clusters
-  for (auto c : clusters) {
+  for (const auto &c : clusters) {
     std::sort(c.second->particles.begin(), c.second->particles.end());
   }
 }

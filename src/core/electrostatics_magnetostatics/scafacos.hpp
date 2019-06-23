@@ -36,10 +36,9 @@
 namespace Scafacos {
 #if defined(SCAFACOS)
 /** Near-field pair force */
-void add_pair_force(Particle *p1, Particle *p2, double *d, double dist,
-                    double *force);
+void add_pair_force(double q1q2, const double *d, double dist, double *force);
 /** Near-field pair energy */
-double pair_energy(Particle *p1, Particle *p2, double dist);
+double pair_energy(double q1q2, double dist);
 /** Long range part */
 void add_long_range_force();
 /** Calculate long range energy contribution */
@@ -65,12 +64,5 @@ void update_system_params();
 std::list<std::string> available_methods();
 
 void free_handle();
-
 } // namespace Scafacos
-
-/** Parameter callback */
-void mpi_scafacos_set_parameters_slave(int n_method, int n_params);
-void mpi_scafacos_set_r_cut_and_tune_slave(int a, int b);
-void mpi_scafacos_free_slave(int a, int b);
-
 #endif
