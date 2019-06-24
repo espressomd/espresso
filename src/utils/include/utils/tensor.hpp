@@ -62,13 +62,27 @@ public:
 
   const_reference
   operator()(std::initializer_list<std::size_t> const &indices) const {
-    validate_indices(indices);
+    assert(valid_indices(indices));
     return m_data[calc_linear_index(indices)];
   }
 
   reference operator()(std::initializer_list<std::size_t> const &indices) {
-    validate_indices(indices);
+    assert(valid_indices(indices));
     return m_data[calc_linear_index(indices)];
+  }
+
+  const_reference at(std::initializer_list<std::size_t> const &indices) const {
+    if (not valid_indices(indices)) {
+      throw std::runtime_error("Invalid indices given");
+    }
+    return operator()(indices);
+  }
+
+  reference at(std::initializer_list<std::size_t> const &indices) {
+    if (not valid_indices(indices)) {
+      throw std::runtime_error("Invalid indices given");
+    }
+    return operator()(indices);
   }
 
   reference front() { return *begin(); }
@@ -100,18 +114,18 @@ public:
   auto extents() const noexcept { return m_extents; }
 
 private:
-  void
-  validate_indices(std::initializer_list<std::size_t> const &indices) const {
+  bool valid_indices(std::initializer_list<std::size_t> const &indices) const {
     if (indices.size() != m_extents.size()) {
-      throw std::runtime_error("Number of indices have to match rank");
+      return false;
     }
     // check if any index exceeds an extend.
-    auto const res =
-        std::mismatch(indices.begin(), indices.end(), m_extents.begin(),
-                      [](std::size_t a, std::size_t b) { return a < b; });
+    auto const res = std::mismatch(indices.begin(), indices.end(),
+                                   m_extents.begin(), std::less<std::size_t>());
     if (not(res.first == indices.end())) {
+      return false;
       throw std::out_of_range("invalid index");
     }
+    return true;
   }
 
   std::size_t
