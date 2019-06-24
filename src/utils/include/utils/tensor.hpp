@@ -165,10 +165,7 @@ private:
     // check if any index exceeds an extend.
     auto const res =
         boost::mismatch(indices, m_extents, std::less<std::size_t>());
-    if (not(res.first == indices.end())) {
-      return false;
-    }
-    return true;
+    return res.first == indices.end();
   }
 
   template <typename Container>
