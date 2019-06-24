@@ -6,6 +6,7 @@
 #include <numeric>
 #include <vector>
 
+#include <boost/range/algorithm/mismatch.hpp>
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/numeric.hpp>
 
@@ -119,11 +120,10 @@ private:
       return false;
     }
     // check if any index exceeds an extend.
-    auto const res = std::mismatch(indices.begin(), indices.end(),
-                                   m_extents.begin(), std::less<std::size_t>());
+    auto const res =
+        boost::mismatch(indices, m_extents, std::less<std::size_t>());
     if (not(res.first == indices.end())) {
       return false;
-      throw std::out_of_range("invalid index");
     }
     return true;
   }
