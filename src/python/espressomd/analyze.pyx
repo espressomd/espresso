@@ -750,7 +750,7 @@ class Analysis(object):
 
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
-        re=analyze.calc_re(analyze.partCfg())
+        re = analyze.calc_re(analyze.partCfg())
         tuple_re = (re[0], re[1], re[2], re[3])
         return tuple_re
 
@@ -783,7 +783,7 @@ class Analysis(object):
 
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
-        rg=analyze.calc_rg(analyze.partCfg())
+        rg = analyze.calc_rg(analyze.partCfg())
         tuple_rg = (rg[0], rg[1], rg[2], rg[3])
         return tuple_rg
 
@@ -872,7 +872,11 @@ class Analysis(object):
 
         p_types = create_int_list_from_python_object(sf_types)
 
-        sf =analyze.calc_structurefactor(analyze.partCfg(), p_types.e, p_types.n, sf_order)
+        sf = analyze.calc_structurefactor(
+    analyze.partCfg(),
+     p_types.e,
+     p_types.n,
+     sf_order)
 
         return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
 
