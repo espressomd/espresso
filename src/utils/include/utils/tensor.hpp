@@ -22,8 +22,8 @@ public:
   using const_reference = T const &;
   using pointer = T *;
   using const_pointer = const value_type *;
-  using iterator = typename std::vector<T>::iterator;
-  using const_iterator = typename std::vector<T>::const_iterator;
+  using iterator = pointer;
+  using const_iterator = const_pointer;
 
   /**
    * @brief Creates a tensor with given extents
@@ -75,21 +75,21 @@ public:
 
   const_reference front() const { return *cbegin(); }
 
-  reference back() { return *(end() - 1); }
+  reference back() { return m_data.back(); }
 
-  const_reference back() const { return *(cend() - 1); }
+  const_reference back() const { return m_data.back(); }
 
-  iterator begin() noexcept { return m_data.begin(); };
+  iterator begin() noexcept { return &(*m_data.begin()); };
 
-  const_iterator begin() const noexcept { return m_data.begin(); };
+  const_iterator begin() const noexcept { return &(*m_data.begin()); };
 
-  const_iterator cbegin() const noexcept { return m_data.begin(); };
+  const_iterator cbegin() const noexcept { return &(*m_data.begin()); };
 
-  iterator end() noexcept { return m_data.end(); };
+  iterator end() noexcept { return &(*m_data.end()); };
 
-  const_iterator end() const noexcept { return m_data.end(); };
+  const_iterator end() const noexcept { return &(*m_data.end()); };
 
-  const_iterator cend() const noexcept { return m_data.end(); };
+  const_iterator cend() const noexcept { return &(*m_data.end()); };
 
   pointer data() noexcept { return m_data.data(); }
 
