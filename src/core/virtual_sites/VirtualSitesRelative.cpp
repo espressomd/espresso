@@ -142,7 +142,8 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
       // Add forces and torques
       p_real->f.torque +=
-          vector_product(get_mi_vector(p.r.p, p_real->r.p, box_geo), p.f.f) + p.f.torque;
+          vector_product(get_mi_vector(p.r.p, p_real->r.p, box_geo), p.f.f) +
+          p.f.torque;
       p_real->f.f += p.f.f;
     }
   }
@@ -169,7 +170,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     // Get distance vector pointing from real to virtual particle, respecting
     // periodic boundary i
     // conditions
-    auto const d =  get_mi_vector(p_real->r.p, p.r.p, box_geo);
+    auto const d = get_mi_vector(p_real->r.p, p.r.p, box_geo);
 
     // Stress tensor contribution
     for (int k = 0; k < 3; k++)
