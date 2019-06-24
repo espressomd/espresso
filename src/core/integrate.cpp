@@ -432,7 +432,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 void propagate_vel_finalize_p_inst() {
 
 #ifdef LEES_EDWARDS
-double le_vel = lees_edwards_get_velocity(sim_time + time_step);
+double le_vel = lees_edwards_get_velocity(sim_time + time_step) / 2.0;
 #endif
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -469,7 +469,7 @@ double le_vel = lees_edwards_get_velocity(sim_time + time_step);
 #ifdef LEES_EDWARDS
         if (j == lees_edwards_protocol.sheardir && p.p.lees_edwards_flag != 0) {
           p.m.v[lees_edwards_protocol.sheardir] += p.p.lees_edwards_flag *
-                      le_vel / 2.0;
+                      le_vel;
         }
 #endif
 
@@ -684,7 +684,7 @@ void propagate_pos() {
 void propagate_vel_pos() {
   INTEG_TRACE(fprintf(stderr, "%d: propagate_vel_pos:\n", this_node));
 #ifdef LEES_EDWARDS
-double shear_velocity = lees_edwards_get_velocity(sim_time);
+double shear_velocity = lees_edwards_get_velocity(sim_time)/2.0;
 double offset_at_time_step =
           lees_edwards_get_offset(sim_time + time_step/2.0);
 #endif
@@ -734,14 +734,14 @@ double offset_at_time_step =
       // The update of the velocity at the end of the time step is triggered by
       // the flag and occurs in propagate_vel_finalize_p_inst
       if (p.r.p[lees_edwards_protocol.shearplanenormal] >= box_l[lees_edwards_protocol.shearplanenormal]) {
-        p.m.v[lees_edwards_protocol.sheardir] -= shear_velocity / 2.0;
+        p.m.v[lees_edwards_protocol.sheardir] -= shear_velocity;
         p.r.p[lees_edwards_protocol.sheardir] -= offset_at_time_step ;
 	p.p.lees_edwards_offset -= offset_at_time_step ;
 	Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir], &dummy_i, box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
                                     // propagate_vel_finalize_p_inst
-      } else if (p.r.p[lees_edwards_protocol.shearplanenormal] <= 0.) {
-        p.m.v[lees_edwards_protocol.sheardir] += shear_velocity / 2.0;
+      } else if (p.r.p[lees_edwards_protocol.shearplanenormal] < 0.) {
+        p.m.v[lees_edwards_protocol.sheardir] += shear_velocity;
         p.r.p[lees_edwards_protocol.sheardir] += offset_at_time_step ;
 	p.p.lees_edwards_offset += offset_at_time_step ;
 	Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir], &dummy_i, box_l[lees_edwards_protocol.sheardir]);
