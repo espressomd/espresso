@@ -41,7 +41,7 @@
  */
 /************************************************************/
 /*@{*/
-extern double **configs;
+extern std::vector<std::vector<double>>configs;
 extern int n_configs;
 extern int n_part_conf;
 /*@}*/
@@ -180,8 +180,7 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
  *  @param order     the maximum wave vector length in 2PI/L
  *  @param sf        array containing the result (size: 2*order^2).
  */
-void calc_structurefactor(PartCfg &, int const *p_types, int n_types, int order,
-                          double **sf);
+std::vector<double> calc_structurefactor(PartCfg &, int const *p_types, int n_types, int order);
 
 std::vector<std::vector<double>> modify_stucturefactor(int order,
                                                        double const *sf);

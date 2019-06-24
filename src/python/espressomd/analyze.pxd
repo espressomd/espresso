@@ -59,7 +59,7 @@ cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
 
-    cdef void calc_structurefactor(PartCfg &, int * p_types, int n_types, int order, double ** sf)
+    cdef vector[double] calc_structurefactor(PartCfg &, int * p_types, int n_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
     cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
     cdef double min_distance2(double pos1[3], double pos2[3])

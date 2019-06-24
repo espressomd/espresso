@@ -138,7 +138,6 @@ unsigned int Mmm1dgpuForce::numBlocks(SystemInterface &s) {
 }
 
 Mmm1dgpuForce::~Mmm1dgpuForce() {
-  modpsi_destroy();
   cudaFree(dev_forcePairs);
 }
 

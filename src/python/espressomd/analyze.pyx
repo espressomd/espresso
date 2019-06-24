@@ -876,12 +876,11 @@ class Analysis(object):
         check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
-        cdef double * sf
         p_types = create_int_list_from_python_object(sf_types)
 
-        analyze.calc_structurefactor(analyze.partCfg(), p_types.e, p_types.n, sf_order, & sf)
+        sf =analyze.calc_structurefactor(analyze.partCfg(), p_types.e, p_types.n, sf_order)
 
-        return np.transpose(analyze.modify_stucturefactor(sf_order, sf))
+        return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
 
     #
     # RDF
