@@ -135,10 +135,10 @@ void calc_minimal_box_dimensions();
 void rescale_boxl(int dir, double d_new);
 
 template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
-  auto dx = a - b;
+  auto const dx = a - b;
 
   if (periodic && (std::fabs(dx) > (0.5 * box_length))) {
-    return dx - std::round(dx / box_length) * box_length;
+    return dx - std::round(dx * (1. / box_length)) * box_length;
   }
 
   return dx;
@@ -186,11 +186,12 @@ inline std::pair<double, int> fold_coordinate(double pos, int image_box,
 */
 inline void fold_position(Utils::Vector3d &pos, Utils::Vector3i &image_box,
                           const BoxGeometry &box) {
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++) {
     if (box.periodic(i)) {
       std::tie(pos[i], image_box[i]) =
           fold_coordinate(pos[i], image_box[i], box.length()[i]);
     }
+  }
 }
 
 inline Utils::Vector3d folded_position(const Utils::Vector3d &p,
