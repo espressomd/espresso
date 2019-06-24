@@ -91,13 +91,15 @@ typedef struct {
 
 /** Structure holding a set of \ref HaloInfo which comprise a certain
  *  parallelization scheme */
-typedef struct {
+class HaloCommunicator {
+  public:
+  HaloCommunicator(int num):num(num){};
 
   int num; /**< number of halo communications in the scheme */
 
-  HaloInfo *halo_info; /**< set of halo communications */
+  std::vector<HaloInfo> halo_info; /**< set of halo communications */
 
-} HaloCommunicator;
+};
 
 /** Creates a fieldtype describing the data layout
  *  @param      count   number of subtypes

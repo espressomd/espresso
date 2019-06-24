@@ -114,7 +114,7 @@ static int fluidstep = 0;
 int i;
 
 int n_extern_node_force_densities = 0;
-LB_extern_nodeforcedensity_gpu *host_extern_node_force_densities = nullptr;
+std::vector<LB_extern_nodeforcedensity_gpu>host_extern_node_force_densities;
 bool ek_initialized = false;
 
 /*-----------------------------------------------------------*/
@@ -281,9 +281,7 @@ int lb_lbnode_set_extforce_density_GPU(int const ind[3], double const f[3]) {
 
   size_t size_of_extforces = (n_extern_node_force_densities + 1) *
                              sizeof(LB_extern_nodeforcedensity_gpu);
-  host_extern_node_force_densities =
-      (LB_extern_nodeforcedensity_gpu *)Utils::realloc(
-          host_extern_node_force_densities, size_of_extforces);
+  host_extern_node_force_densities.resize(size_of_extforces);
 
   host_extern_node_force_densities[n_extern_node_force_densities]
       .force_density[0] = (float)f[0];
@@ -299,7 +297,7 @@ int lb_lbnode_set_extforce_density_GPU(int const ind[3], double const f[3]) {
     lbpar_gpu.external_force_density = 1;
 
   lb_init_extern_nodeforcedensities_GPU(n_extern_node_force_densities,
-                                        host_extern_node_force_densities,
+                                        host_extern_node_force_densities.data(),
                                         &lbpar_gpu);
 
   return ES_OK;
