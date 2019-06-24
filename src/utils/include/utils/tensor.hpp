@@ -111,7 +111,7 @@ public:
 
   auto rank() const noexcept { return m_extents.size(); }
 
-  auto const& extents() const noexcept { return m_extents; }
+  auto const &extents() const noexcept { return m_extents; }
 
 private:
   bool valid_indices(std::initializer_list<std::size_t> const &indices) const {
