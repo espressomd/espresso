@@ -24,7 +24,7 @@ import espressomd.electrostatics
 from espressomd import electrostatic_extensions
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+@utx.skipIfMissingFeatures(["P3M", "PARTIAL_PERIODIC"])
 class ELC_vs_MMM2D_neutral(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])

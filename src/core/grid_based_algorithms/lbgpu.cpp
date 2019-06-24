@@ -325,28 +325,6 @@ void lb_GPU_sanity_checks() {
   }
 }
 
-void lb_lbfluid_particles_add_momentum(float const momentum[3]) {
-  auto &parts = partCfg();
-  auto const n_part = parts.size();
-
-  // set_particle_v invalidates the parts pointer, so we need to defer setting
-  // the new values
-  std::vector<std::pair<int, double[3]>> new_velocity(n_part);
-
-  size_t i = 0;
-  for (auto const &p : parts) {
-    new_velocity[i].first = p.p.identity;
-    const auto factor = 1 / (p.p.mass * n_part);
-    new_velocity[i].second[0] = p.m.v[0] + momentum[0] * factor;
-    new_velocity[i].second[1] = p.m.v[1] + momentum[1] * factor;
-    new_velocity[i].second[2] = p.m.v[2] + momentum[2] * factor;
-    ++i;
-  }
-  for (auto &p : new_velocity) {
-    set_particle_v(p.first, p.second);
-  }
-}
-
 void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
                                      int include_lbfluid) {
   auto linear_momentum =

@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ImmersedBoundaries.hpp"
 
-#ifdef IMMERSED_BOUNDARY
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -376,5 +375,3 @@ void ImmersedBoundaries::calc_volume_force() {
     }
   }
 }
-
-#endif

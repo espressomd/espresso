@@ -76,7 +76,7 @@ struct p3m_data_struct {
   /** real space mesh (local) for CA/FFT.*/
   double *rs_mesh;
   /** k-space mesh (local) for k-space calculation and FFT.*/
-  double *ks_mesh;
+  std::vector<double> ks_mesh;
 
   /** number of charged particles (only on master node). */
   int sum_qpart;
@@ -86,30 +86,30 @@ struct p3m_data_struct {
   double square_sum_q;
 
   /** interpolation of the charge assignment function. */
-  double *int_caf[7];
+  std::array<std::vector<double>, 7> int_caf;
 
   /** position shift for calc. of first assignment mesh point. */
   double pos_shift;
   /** help variable for calculation of aliasing sums */
-  double *meshift_x;
-  double *meshift_y;
-  double *meshift_z;
+  std::vector<double> meshift_x;
+  std::vector<double> meshift_y;
+  std::vector<double> meshift_z;
 
   /** Spatial differential operator in k-space. We use an i*k differentiation.
    */
-  double *d_op[3];
+  std::array<std::vector<double>, 3> d_op;
   /** Force optimised influence function (k-space) */
-  double *g_force;
+  std::vector<double> g_force;
   /** Energy optimised influence function (k-space) */
-  double *g_energy;
+  std::vector<double> g_energy;
 
 #ifdef P3M_STORE_CA_FRAC
   /** number of charged particles on the node. */
   int ca_num;
   /** Charge fractions for mesh assignment. */
-  double *ca_frac;
+  std::vector<double> ca_frac;
   /** index of first mesh point for charge assignment. */
-  int *ca_fmp;
+  std::vector<int> ca_fmp;
 #endif
 
   /** number of permutations in k_space */
@@ -118,10 +118,10 @@ struct p3m_data_struct {
   /** send/recv mesh sizes */
   p3m_send_mesh sm;
 
-  /** Field to store grid points to send. */
-  double *send_grid;
-  /** Field to store grid points to recv */
-  double *recv_grid;
+  /** vector to store grid points to send. */
+  std::vector<double> send_grid;
+  /** vector to store grid points to recv */
+  std::vector<double> recv_grid;
 
   fft_data_struct fft;
 };

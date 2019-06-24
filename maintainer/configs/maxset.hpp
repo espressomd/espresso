@@ -64,7 +64,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define OVERLAPPED
 #define WCA
 #define THOLE
 
@@ -72,8 +71,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
-#define IMMERSED_BOUNDARY
-#define FLATNOISE
 #define OIF_GLOBAL_FORCES
 #define OIF_LOCAL_FORCES
 #define MEMBRANE_COLLISION

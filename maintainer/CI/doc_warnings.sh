@@ -32,7 +32,7 @@
 regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|bool|str|object|list|tuple|dict)<)[^<>]+?</span></code>(?!</a>)'
 
 # list of espresso modules not compiled in CI (visualization, scafacos)
-regex_ignored_es_features_ci='(visualization|[a-z]+\.[sS]cafacos)'
+regex_ignored_es_features_ci='(espressomd\.)?(visualization|([a-z]+\.)?[sS]cafacos)'
 
 if [ ! -f doc/sphinx/html/index.html ]; then
     echo "Please run Sphinx first."
@@ -57,7 +57,7 @@ if [ $? = "0" ]; then
         # skip espresso modules not compiled in CI (visualization, scafacos)
         is_es_feature_skipped="false"
         if [ "${CI}" != "" ]; then
-            grep -Pq "^espressomd\.${regex_ignored_es_features_ci}" <<< "${reference}"
+            grep -Pq "^${regex_ignored_es_features_ci}" <<< "${reference}"
             [ "$?" = "0" ] && is_es_feature_skipped="true"
         fi
         # private objects are not documented and cannot be linked
@@ -77,10 +77,21 @@ if [ $? = "0" ]; then
         filepath_rst=$(echo "${filepath_html}" | sed 's|/html/|/|')
         filepath_rst="${filepath_rst%.html}.rst"
         if [ -f "${filepath_rst}" ]; then
+            # look for the reference
             grep -q -F "\`${reference}\`" "${filepath_rst}"
             if [ $? = "0" ]; then
                 grep --color -FnHo -m 1 "\`${reference}\`" "${filepath_rst}" | tee -a doc_warnings.log~
                 continue
+            fi
+            # if not found, check if reference was shortened, for example
+            # :class:`~espressomd.system.System` outputs a link named `System`
+            grep -q -P "^[a-zA-Z0-9_]+$" <<< "${reference}"
+            if [ $? = "0" ]; then
+                grep -q -P "\`~.+${reference}\`" "${filepath_rst}"
+                if [ $? = "0" ]; then
+                    grep --color -PnHo -m 1 "\`~.+${reference}\`" "${filepath_rst}" | tee -a doc_warnings.log~
+                    continue
+                fi
             fi
         fi
         # if not in a .rst file, show the .html file without line number
@@ -92,7 +103,7 @@ if [ $? = "0" ]; then
     cat doc_warnings.log~ >> doc_warnings.log
     rm doc_warnings.log~
     # warn user about ignored features in CI
-    grep -Pq "espressomd\.${regex_ignored_es_features_ci}" doc_warnings.log
+    grep -Pq "${regex_ignored_es_features_ci}" doc_warnings.log
     if [ "$?" = "0" ] && [ "${CI}" = "" ]; then
         echo "(Note that features visualization and Scafacos are ignored in CI)"
     fi

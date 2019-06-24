@@ -88,10 +88,9 @@ void integrate_sanity_check() {
   case DIPOLAR_P3M:
     break;
 #endif /* DP3M */
-  default: {
+  default:
     runtimeErrorMsg()
         << "NpT does not work with your dipolar method, please use P3M.";
-  }
   }
 }
 
@@ -340,7 +339,7 @@ void bcast_params(const boost::mpi::communicator &comm) {
 
 int set_Dprefactor(double prefactor) {
   if (prefactor < 0.0) {
-    runtimeErrorMsg() << "Dipolar prefactor has to be >=0";
+    runtimeErrorMsg() << "Dipolar prefactor has to be >= 0";
     return ES_ERROR;
   }
 

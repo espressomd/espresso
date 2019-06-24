@@ -145,6 +145,9 @@ void initialize() {
   REGISTER_CYLPID_PROFILE_OBS(CylindricalDensityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
+#ifdef DPD
+  REGISTER(DPDStress)
+#endif
 
   REGISTER(LBFluidStress);
   REGISTER_CYLPID_PROFILE_OBS(

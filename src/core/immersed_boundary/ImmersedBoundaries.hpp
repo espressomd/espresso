@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "config.hpp"
 #include <vector>
 
-#ifdef IMMERSED_BOUNDARY
 class ImmersedBoundaries {
 public:
   ImmersedBoundaries() : MaxNumIBM(1000), VolumeInitDone(false) {
@@ -42,5 +41,4 @@ private:
   bool BoundariesFound = false;
 };
 
-#endif
 #endif

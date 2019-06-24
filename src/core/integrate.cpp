@@ -53,7 +53,6 @@
 #include "rattle.hpp"
 #include "rotation.hpp"
 #include "signalhandling.hpp"
-#include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
@@ -130,8 +129,6 @@ void finalize_p_inst_npt();
 /*@}*/
 
 void integrator_sanity_checks() {
-  // char *errtext;
-
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
   }
@@ -191,12 +188,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Prepare the Integrator */
   on_integration_start();
 
-#ifdef IMMERSED_BOUNDARY
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them
   immersed_boundaries.init_volume_conservation();
-#endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
@@ -224,16 +219,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     lb_lbcoupling_deactivate();
 
-    // Communication step: distribute ghost positions
-    cells_update_ghosts();
-
-// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update();
-    if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+    if (virtual_sites()->is_relative()) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
+    virtual_sites()->update();
 #endif
+
+    // Communication step: distribute ghost positions
+    cells_update_ghosts();
 
     // Langevin philox rng counter
     if (n_steps > 0) {
@@ -318,16 +312,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (n_part > 0)
       lb_lbcoupling_activate();
 
-    // Communication step: distribute ghost positions
-    cells_update_ghosts();
-
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update();
-    if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+    if (virtual_sites()->is_relative()) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
+    virtual_sites()->update();
 #endif
+
+    // Communication step: distribute ghost positions
+    cells_update_ghosts();
 
     // Propagate langevin philox rng counter
     langevin_rng_counter_increment();
@@ -336,10 +330,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
-#endif
-
-#ifdef SWIMMER_REACTIONS
-    integrate_reaction();
 #endif
 
     /* Integration Step: Step 4 of Velocity Verlet scheme:

@@ -71,7 +71,7 @@ static double uz, L2, uz2, prefuz2, prefL3_i;
 MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
 /** From which distance a certain Bessel cutoff is valid. Can't be part of the
     params since these get broadcasted. */
-static double *bessel_radii;
+static std::vector<double> bessel_radii;
 
 static double far_error(int P, double minrad) {
   // this uses an upper bound to all force components and the potential
@@ -110,7 +110,7 @@ static double determine_minrad(double maxPWerror, int P) {
 }
 
 static void determine_bessel_radii(double maxPWerror, int maxP) {
-  bessel_radii = Utils::realloc(bessel_radii, sizeof(double) * maxP);
+  bessel_radii.resize(maxP);
   for (int P = 1; P <= maxP; ++P) {
     bessel_radii[P - 1] = determine_minrad(maxPWerror, P);
     // printf("cutoff %d %f\n", P, bessel_radii[P-1]);

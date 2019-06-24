@@ -43,8 +43,6 @@ class Tutorial(ut.TestCase):
             1)
         self.assertAlmostEqual(
             tutorial.chi, reference_chi, delta=0.45)
-        self.assertGreater(
-            tutorial.chi, tutorial.chi_L)
 
 
 if __name__ == "__main__":
