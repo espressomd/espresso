@@ -55,7 +55,7 @@ int modpsi_init() {
     linModPsi_lengths[i] = modPsi[i].n;
   }
   linModPsi.resize(linModPsi_offsets[2 * n_modPsi - 1] +
-                                          linModPsi_lengths[2 * n_modPsi - 1]);
+                   linModPsi_lengths[2 * n_modPsi - 1]);
   for (int i = 0; i < 2 * n_modPsi; i++) {
     for (int j = 0; j < modPsi[i].n; j++) {
       linModPsi[linModPsi_offsets[i] + j] =
@@ -80,7 +80,8 @@ int modpsi_init() {
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi_lengths),
                                      linModPsi_lengths.data(),
                                      2 * n_modPsi * sizeof(int)));
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi), linModPsi.data(),
+    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi),
+                                     linModPsi.data(),
                                      linModPsiSize * sizeof(mmm1dgpu_real)));
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_n_modPsi), &n_modPsi,
                                      sizeof(int)));

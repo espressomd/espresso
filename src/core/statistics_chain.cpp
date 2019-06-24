@@ -115,8 +115,7 @@ std::vector<double> calc_rg(PartCfg &partCfg) {
 }
 
 std::vector<double> calc_rh(PartCfg &partCfg) {
-  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, ri = 0.0, prefac,
-                     tmp;
+  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, ri = 0.0, prefac, tmp;
   std::vector<double> rh(2);
 
   prefac = 0.5 * chain_length *

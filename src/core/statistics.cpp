@@ -50,7 +50,7 @@
 
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis) */
-std::vector<std::vector<double>>configs;
+std::vector<std::vector<double>> configs;
 int n_configs = 0;
 int n_part_conf = 0;
 
@@ -423,14 +423,14 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
   free(rdf_tmp);
 }
 
-std::vector<double> calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
-                          int order) {
+std::vector<double> calc_structurefactor(PartCfg &partCfg, int const *p_types,
+                                         int n_types, int order) {
   int i, j, k, n, qi, t, order2;
   double qr, twoPI_L, C_sum, S_sum;
 
   order2 = order * order;
-  std::vector<double > ff;
-  ff.resize( 2 * order2);
+  std::vector<double> ff;
+  ff.resize(2 * order2);
   ff[2 * order2] = 0;
   twoPI_L = 2 * Utils::pi() / box_l[0];
 
