@@ -332,6 +332,10 @@ ubuntu:arm64:
 
 ubuntu:armhf:
   <<: *arch_definition
+  tags:
+    - docker
+    - linux
+    - icp
 
 ubuntu:i386:
   <<: *arch_definition
