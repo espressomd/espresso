@@ -17,6 +17,15 @@ BOOST_AUTO_TEST_CASE(ctor) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(ctor_from_container) {
+  auto const extents = std::vector<std::size_t>{4, 5, 6, 7};
+  auto test_tensor = Tensor<double>(extents);
+  for (int i = 0; i < 4; ++i) {
+    BOOST_CHECK_EQUAL(*(std::begin(test_tensor.extents()) + i),
+                      *(std::begin(extents) + i));
+  }
+}
+
 BOOST_AUTO_TEST_CASE(ctor_iterator) {
   auto const extents = std::array<std::size_t, 4>{4, 5, 6, 7};
   auto test_tensor = Tensor<double>(extents.begin(), extents.end());
@@ -33,7 +42,7 @@ BOOST_AUTO_TEST_CASE(rank) {
 
 BOOST_AUTO_TEST_CASE(data) {
   auto test_tensor = Tensor<double>({4, 6, 7, 8});
-  test_tensor({0, 0, 0, 0}) = 0.3;
+  test_tensor(0, 0, 0, 0) = 0.3;
   BOOST_CHECK_EQUAL(*test_tensor.data(), 0.3);
 }
 
@@ -51,12 +60,12 @@ BOOST_AUTO_TEST_CASE(assign_variadic) {
 
 BOOST_AUTO_TEST_CASE(wrong_number_of_indices) {
   auto test_tensor = Tensor<double>({4, 6, 7, 8});
-  BOOST_CHECK_THROW(test_tensor.at({0, 1, 3}), std::runtime_error);
+  BOOST_CHECK_THROW(test_tensor.at(0, 1, 3), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(out_of_bounds) {
   auto test_tensor = Tensor<double>({4, 6, 7, 8});
-  BOOST_CHECK_THROW(test_tensor.at({4, 1, 3, 2}), std::runtime_error);
+  BOOST_CHECK_THROW(test_tensor.at(4, 1, 3, 2), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(iterator) {
@@ -71,12 +80,12 @@ BOOST_AUTO_TEST_CASE(iterator) {
 
 BOOST_AUTO_TEST_CASE(front) {
   auto test_tensor = Tensor<double>({4, 6, 7, 8});
-  test_tensor({0, 0, 0, 0}) = 1.6;
+  test_tensor(0, 0, 0, 0) = 1.6;
   BOOST_CHECK_EQUAL(test_tensor.front(), 1.6);
 }
 
 BOOST_AUTO_TEST_CASE(back) {
   auto test_tensor = Tensor<double>({1, 2, 2, 2});
-  test_tensor({0, 1, 1, 1}) = 1.6;
+  test_tensor(0, 1, 1, 1) = 1.6;
   BOOST_CHECK_EQUAL(test_tensor.back(), 1.6);
 }

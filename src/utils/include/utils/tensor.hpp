@@ -33,6 +33,10 @@ public:
   explicit Tensor(std::initializer_list<std::size_t> const &extents)
       : Tensor(std::begin(extents), std::end(extents)) {}
 
+  template <typename Container>
+  Tensor(Container const &extents)
+      : Tensor(std::begin(extents), std::end(extents)) {}
+
   template <typename Iter>
   Tensor(Iter extents_begin, Iter extents_end)
       : m_extents(extents_begin, extents_end) {
@@ -61,6 +65,17 @@ public:
     return operator()({static_cast<std::size_t>(indices)...});
   }
 
+  template <typename Container>
+  const_reference operator()(Container const &indices) const {
+    assert(valid_indices(indices));
+    return m_data[calc_linear_index(indices)];
+  }
+
+  template <typename Container> reference operator()(Container const &indices) {
+    assert(valid_indices(indices));
+    return m_data[calc_linear_index(indices)];
+  }
+
   const_reference
   operator()(std::initializer_list<std::size_t> const &indices) const {
     assert(valid_indices(indices));
@@ -72,16 +87,43 @@ public:
     return m_data[calc_linear_index(indices)];
   }
 
+  /**
+   * @brief Bounds checked element access.
+   * @param indices index for each dimension
+   */
+  template <typename... size_ts> const_reference at(size_ts... indices) const {
+    return at({static_cast<std::size_t>(indices)...});
+  }
+
+  template <typename... size_ts> reference at(size_ts... indices) {
+    return at({static_cast<std::size_t>(indices)...});
+  }
+
+  template <typename Container>
+  const_reference at(Container const &indices) const {
+    if (not valid_indices(indices)) {
+      throw std::runtime_error("Invalid indices");
+    }
+    return operator()(indices);
+  }
+
+  template <typename Container> reference at(Container const &indices) {
+    if (not valid_indices(indices)) {
+      throw std::runtime_error("Invalid indices");
+    }
+    return operator()(indices);
+  }
+
   const_reference at(std::initializer_list<std::size_t> const &indices) const {
     if (not valid_indices(indices)) {
-      throw std::runtime_error("Invalid indices given");
+      throw std::runtime_error("Invalid indices");
     }
     return operator()(indices);
   }
 
   reference at(std::initializer_list<std::size_t> const &indices) {
     if (not valid_indices(indices)) {
-      throw std::runtime_error("Invalid indices given");
+      throw std::runtime_error("Invalid indices");
     }
     return operator()(indices);
   }
@@ -115,7 +157,8 @@ public:
   auto const &extents() const noexcept { return m_extents; }
 
 private:
-  bool valid_indices(std::initializer_list<std::size_t> const &indices) const {
+  template <typename Container>
+  bool valid_indices(Container const &indices) const {
     if (indices.size() != m_extents.size()) {
       return false;
     }
@@ -128,8 +171,8 @@ private:
     return true;
   }
 
-  std::size_t
-  calc_linear_index(std::initializer_list<std::size_t> const &indices) {
+  template <typename Container>
+  std::size_t calc_linear_index(Container const &indices) {
     return boost::inner_product(m_strides, indices, 0);
   }
 
