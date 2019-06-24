@@ -98,9 +98,9 @@ cdef extern from "statistics_chain.hpp":
     int chain_start
     int chain_n_chains
     int chain_length
-    void calc_re(PartCfg & , double ** re)
-    void calc_rg(PartCfg & , double ** rg)
-    void calc_rh(PartCfg & , double ** rh)
+    vector[double] calc_re(PartCfg &)
+    vector[double] calc_rg(PartCfg &)
+    vector[double] calc_rh(PartCfg &)
 
 cdef extern from "pressure.hpp":
     cdef Observable_stat total_pressure

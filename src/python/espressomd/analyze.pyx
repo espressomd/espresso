@@ -749,11 +749,9 @@ class Analysis(object):
             [3] its standard deviation.
 
         """
-        cdef double * re = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        analyze.calc_re(analyze.partCfg(), & re)
+        re=analyze.calc_re(analyze.partCfg())
         tuple_re = (re[0], re[1], re[2], re[3])
-        free(re)
         return tuple_re
 
     def calc_rg(self, chain_start=None, number_of_chains=None,
@@ -784,11 +782,9 @@ class Analysis(object):
             its standard deviation.
 
         """
-        cdef double * rg = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        analyze.calc_rg(analyze.partCfg(), & rg)
+        rg=analyze.calc_rg(analyze.partCfg())
         tuple_rg = (rg[0], rg[1], rg[2], rg[3])
-        free(rg)
         return tuple_rg
 
     def calc_rh(self, chain_start=None, number_of_chains=None,
@@ -820,9 +816,8 @@ class Analysis(object):
 
         cdef double * rh = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        analyze.calc_rh(analyze.partCfg(), & rh)
+        rh = analyze.calc_rh(analyze.partCfg())
         tuple_rh = (rh[0], rh[1])
-        free(rh)
         return tuple_rh
 
     def check_topology(self, chain_start=None, number_of_chains=None,
