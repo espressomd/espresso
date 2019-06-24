@@ -85,7 +85,13 @@ BOOST_AUTO_TEST_CASE(front) {
 }
 
 BOOST_AUTO_TEST_CASE(back) {
-  auto test_tensor = Tensor<double>({1, 2, 2, 2});
-  test_tensor(0, 1, 1, 1) = 1.6;
+  auto test_tensor = Tensor<double>({1, 3, 4, 5});
+  test_tensor(0, 2, 3, 4) = 1.6;
   BOOST_CHECK_EQUAL(test_tensor.back(), 1.6);
+}
+
+BOOST_AUTO_TEST_CASE(row_major) {
+  auto test_tensor = Tensor<double>({3, 4});
+  test_tensor(1, 0) = 1.6;
+  BOOST_CHECK_EQUAL(*(test_tensor.begin() + 1), 1.6);
 }
