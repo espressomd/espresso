@@ -178,7 +178,6 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
  *  @param p_types   list with types of particles to be analyzed
  *  @param n_types   length of @p p_types
  *  @param order     the maximum wave vector length in 2PI/L
- *  @param sf        array containing the result (size: 2*order^2).
  */
 std::vector<double> calc_structurefactor(PartCfg &, int const *p_types, int n_types, int order);
 
