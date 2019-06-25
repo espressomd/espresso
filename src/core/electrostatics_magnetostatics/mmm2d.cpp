@@ -377,15 +377,15 @@ inline void scale_vec(double scale, double *pdc, int size) {
    e_size is the size of only the top or bottom half, i.e. half of size.
 */
 
-inline double *block(double *p, int index, int size) {
+inline double *block(std::vector<double>& p, int index, int size) {
   return &p[index * size];
 }
 
-inline double *blwentry(double *p, int index, int e_size) {
+inline double *blwentry(std::vector<double>& p, int index, int e_size) {
   return &p[2 * index * e_size];
 }
 
-inline double *abventry(double *p, int index, int e_size) {
+inline double *abventry(std::vector<double>& p, int index, int e_size) {
   return &p[(2 * index + 1) * e_size];
 }
 
@@ -397,11 +397,11 @@ void clear_image_contributions(int e_size) {
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
-    clear_vec(blwentry(gblcblk.data(), 0, e_size), e_size);
+    clear_vec(blwentry(gblcblk, 0, e_size), e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(gblcblk.data(), n_layers - 1, e_size), e_size);
+    clear_vec(abventry(gblcblk, n_layers - 1, e_size), e_size);
 }
 
 void gather_image_contributions(int e_size) {
@@ -415,11 +415,11 @@ void gather_image_contributions(int e_size) {
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
-    copy_vec(blwentry(gblcblk.data(), 0, e_size), recvbuf, e_size);
+    copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    copy_vec(abventry(gblcblk.data(), n_layers - 1, e_size), recvbuf + e_size,
+    copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size,
              e_size);
 }
 
@@ -437,45 +437,45 @@ void distribute(int e_size, double fac) {
     if (node == this_node) {
       /* calculate sums of cells below */
       for (c = 1; c < n_layers; c++)
-        addscale_vec(blwentry(gblcblk.data(), c, e_size), fac,
-                     blwentry(gblcblk.data(), c - 1, e_size),
-                     blwentry(lclcblk.data(), c - 1, e_size), e_size);
+        addscale_vec(blwentry(gblcblk, c, e_size), fac,
+                     blwentry(gblcblk, c - 1, e_size),
+                     blwentry(lclcblk, c - 1, e_size), e_size);
 
       /* calculate my ghost contribution only if a node above exists */
       if (node + 1 < n_nodes) {
         addscale_vec(sendbuf, fac,
-                     blwentry(gblcblk.data(), n_layers - 1, e_size),
-                     blwentry(lclcblk.data(), n_layers - 1, e_size), e_size);
-        copy_vec(sendbuf + e_size, blwentry(lclcblk.data(), n_layers, e_size),
+                     blwentry(gblcblk, n_layers - 1, e_size),
+                     blwentry(lclcblk, n_layers - 1, e_size), e_size);
+        copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size),
                  e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     } else if (node + 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, node, 0, comm_cart, &status);
-      copy_vec(blwentry(gblcblk.data(), 0, e_size), recvbuf, e_size);
-      copy_vec(blwentry(lclcblk.data(), 0, e_size), recvbuf + e_size, e_size);
+      copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
+      copy_vec(blwentry(lclcblk, 0, e_size), recvbuf + e_size, e_size);
     }
 
     /* down */
     if (inv_node == this_node) {
       /* calculate sums of all cells above */
       for (c = n_layers + 1; c > 2; c--)
-        addscale_vec(abventry(gblcblk.data(), c - 3, e_size), fac,
-                     abventry(gblcblk.data(), c - 2, e_size),
-                     abventry(lclcblk.data(), c, e_size), e_size);
+        addscale_vec(abventry(gblcblk, c - 3, e_size), fac,
+                     abventry(gblcblk, c - 2, e_size),
+                     abventry(lclcblk, c, e_size), e_size);
 
       /* calculate my ghost contribution only if a node below exists */
       if (inv_node - 1 >= 0) {
-        addscale_vec(sendbuf, fac, abventry(gblcblk.data(), 0, e_size),
-                     abventry(lclcblk.data(), 2, e_size), e_size);
-        copy_vec(sendbuf + e_size, abventry(lclcblk.data(), 1, e_size), e_size);
+        addscale_vec(sendbuf, fac, abventry(gblcblk, 0, e_size),
+                     abventry(lclcblk, 2, e_size), e_size);
+        copy_vec(sendbuf + e_size, abventry(lclcblk, 1, e_size), e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, inv_node - 1, 0, comm_cart);
       }
     } else if (inv_node - 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, inv_node, 0, comm_cart,
                &status);
-      copy_vec(abventry(gblcblk.data(), n_layers - 1, e_size), recvbuf, e_size);
-      copy_vec(abventry(lclcblk.data(), n_layers + 1, e_size), recvbuf + e_size,
+      copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf, e_size);
+      copy_vec(abventry(lclcblk, n_layers + 1, e_size), recvbuf + e_size,
                e_size);
     }
   }
@@ -501,16 +501,16 @@ static void checkpoint(char *text, int p, int q, int e_size) {
   fprintf(stderr, "lclcblk\n");
   fprintf(stderr, "0");
   for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g", block(lclcblk.data(), 0, 2 * e_size)[i]);
+    fprintf(stderr, " %10.3g", block(lclcblk, 0, 2 * e_size)[i]);
   fprintf(stderr, "\n");
   for (c = 1; c <= n_layers; c++) {
     fprintf(stderr, "%d", c);
     for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(lclcblk.data(), c, 2 * e_size)[i]);
+      fprintf(stderr, " %10.3g", block(lclcblk, c, 2 * e_size)[i]);
     fprintf(stderr, " m");
     for (i = 0; i < e_size; i++)
       fprintf(stderr, " %10.3g",
-              block(lclcblk.data(), c, 2 * e_size)[i + e_size]);
+              block(lclcblk, c, 2 * e_size)[i + e_size]);
     fprintf(stderr, "\n");
   }
   fprintf(stderr, "%d", n_layers + 1);
@@ -520,18 +520,18 @@ static void checkpoint(char *text, int p, int q, int e_size) {
 
   for (i = 0; i < e_size; i++)
     fprintf(stderr, " %10.3g",
-            block(lclcblk.data(), n_layers + 1, 2 * e_size)[i + e_size]);
+            block(lclcblk, n_layers + 1, 2 * e_size)[i + e_size]);
   fprintf(stderr, "\n");
 
   fprintf(stderr, "gblcblk\n");
   for (c = 0; c < n_layers; c++) {
     fprintf(stderr, "%d", c + 1);
     for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(gblcblk.data(), c, 2 * e_size)[i]);
+      fprintf(stderr, " %10.3g", block(gblcblk, c, 2 * e_size)[i]);
     fprintf(stderr, " m");
     for (i = 0; i < e_size; i++)
       fprintf(stderr, " %10.3g",
-              block(gblcblk.data(), c, 2 * e_size)[i + e_size]);
+              block(gblcblk, c, 2 * e_size)[i + e_size]);
     fprintf(stderr, "\n");
   }
   fprintf(stderr, "\n");
@@ -555,11 +555,11 @@ static void setup_z_force() {
      article of Arnold, Kesselheim, Breitsprecher et al, 2013, for details. */
 
   if (this_node == 0) {
-    clear_vec(blwentry(lclcblk.data(), 0, e_size), e_size);
+    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
 
   if (this_node == n_nodes - 1) {
-    clear_vec(abventry(lclcblk.data(), n_layers + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
   /* calculate local cellblks. partblks don't make sense */
@@ -598,7 +598,7 @@ static void add_z_force() {
   }
 
   for (int c = 1; c <= n_layers; c++) {
-    othcblk = block(gblcblk.data(), c - 1, size);
+    othcblk = block(gblcblk, c - 1, size);
     add = othcblk[QQEQQP] - othcblk[QQEQQM];
     auto np = cells[c].n;
     auto part = cells[c].part;
@@ -620,26 +620,26 @@ static void setup_z_energy() {
   if (this_node == 0)
     /* the lowest lclcblk does not contain anything, since there are no charges
        below the simulation box, at least for this term. */
-    clear_vec(blwentry(lclcblk.data(), 0, e_size), e_size);
+    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(lclcblk.data(), n_layers + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
 
   /* calculate local cellblks. partblks don't make sense */
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    clear_vec(blwentry(lclcblk.data(), c, e_size), e_size);
+    clear_vec(blwentry(lclcblk, c, e_size), e_size);
     for (i = 0; i < np; i++) {
       lclcblk[size * c + ABEQQP] += part[i].p.q;
       lclcblk[size * c + ABEQZP] += part[i].p.q * part[i].r.p[2];
     }
-    scale_vec(pref, blwentry(lclcblk.data(), c, e_size), e_size);
+    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
     /* just to be able to use the standard distribution. Here below
        and above terms are the same */
-    copy_vec(abventry(lclcblk.data(), c, e_size),
-             blwentry(lclcblk.data(), c, e_size), e_size);
+    copy_vec(abventry(lclcblk, c, e_size),
+             blwentry(lclcblk, c, e_size), e_size);
   }
 }
 
@@ -650,7 +650,7 @@ static double z_energy() {
   int size = 4;
   double eng = 0;
   for (c = 1; c <= n_layers; c++) {
-    othcblk = block(gblcblk.data(), c - 1, size);
+    othcblk = block(gblcblk, c - 1, size);
     np = cells[c].n;
     part = cells[c].part;
     for (i = 0; i < np; i++) {
@@ -703,13 +703,13 @@ static void setup(int p, double omega, double fac, int n_sccache,
     /* on the lowest node, clear the lclcblk below, which only contains the
        images of the lowest layer
        if there is dielectric contrast, otherwise it is empty */
-    lclimgebot = block(lclcblk.data(), 0, size);
-    clear_vec(blwentry(lclcblk.data(), 0, e_size), e_size);
+    lclimgebot = block(lclcblk, 0, size);
+    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
   if (this_node == n_nodes - 1) {
     /* same for the top node */
-    lclimgetop = block(lclcblk.data(), n_layers + 1, size);
-    clear_vec(abventry(lclcblk.data(), n_layers + 1, e_size), e_size);
+    lclimgetop = block(lclcblk, n_layers + 1, size);
+    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
   layer_top = my_left[2] + layer_h;
@@ -717,7 +717,7 @@ static void setup(int p, double omega, double fac, int n_sccache,
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    llclcblk = block(lclcblk.data(), c, size);
+    llclcblk = block(lclcblk, c, size);
 
     clear_vec(llclcblk, size);
 
@@ -780,11 +780,11 @@ static void setup(int p, double omega, double fac, int n_sccache,
         lclimge[POQECM] += part[i].p.q * sccache[o + ic].c * e_di_h;
       }
 
-      add_vec(llclcblk, llclcblk, block(partblk.data(), ic, size), size);
+      add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
       ic++;
     }
-    scale_vec(pref, blwentry(lclcblk.data(), c, e_size), e_size);
-    scale_vec(pref, abventry(lclcblk.data(), c, e_size), e_size);
+    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
+    scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
 
     layer_top += layer_h;
   }
@@ -792,9 +792,9 @@ static void setup(int p, double omega, double fac, int n_sccache,
   if (mmm2d_params.dielectric_contrast_on) {
     scale_vec(pref, lclimge, size);
     if (this_node == 0)
-      scale_vec(pref, blwentry(lclcblk.data(), 0, e_size), e_size);
+      scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk.data(), n_layers + 1, e_size), e_size);
+      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 }
 
@@ -817,7 +817,7 @@ template <size_t dir> static void add_force() {
   for (int c = 1; c <= n_layers; c++) {
     auto const np = cells[c].n;
     auto const part = cells[c].part;
-    auto const othcblk = block(gblcblk.data(), c - 1, size);
+    auto const othcblk = block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
       part[i].f.f[dir] += partblk[size * ic + POQESM] * othcblk[POQECP] -
@@ -850,7 +850,7 @@ static double P_energy(double omega) {
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
-    othcblk = block(gblcblk.data(), c - 1, size);
+    othcblk = block(gblcblk, c - 1, size);
     for (i = 0; i < np; i++) {
       eng += pref * (partblk[size * ic + POQECM] * othcblk[POQECP] +
                      partblk[size * ic + POQESM] * othcblk[POQESP] +
@@ -872,7 +872,7 @@ static double Q_energy(double omega) {
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
-    othcblk = block(gblcblk.data(), c - 1, size);
+    othcblk = block(gblcblk, c - 1, size);
 
     for (i = 0; i < np; i++) {
       eng += pref * (partblk[size * ic + POQECM] * othcblk[POQECP] +
@@ -909,13 +909,13 @@ static void setup_PQ(int p, int q, double omega, double fac) {
     clear_vec(lclimge, size);
 
   if (this_node == 0) {
-    lclimgebot = block(lclcblk.data(), 0, size);
-    clear_vec(blwentry(lclcblk.data(), 0, e_size), e_size);
+    lclimgebot = block(lclcblk, 0, size);
+    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
 
   if (this_node == n_nodes - 1) {
-    lclimgetop = block(lclcblk.data(), n_layers + 1, size);
-    clear_vec(abventry(lclcblk.data(), n_layers + 1, e_size), e_size);
+    lclimgetop = block(lclcblk, n_layers + 1, size);
+    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
   layer_top = my_left[2] + layer_h;
@@ -923,7 +923,7 @@ static void setup_PQ(int p, int q, double omega, double fac) {
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    llclcblk = block(lclcblk.data(), c, size);
+    llclcblk = block(lclcblk, c, size);
 
     clear_vec(llclcblk, size);
 
@@ -1013,11 +1013,11 @@ static void setup_PQ(int p, int q, double omega, double fac) {
             scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_h;
       }
 
-      add_vec(llclcblk, llclcblk, block(partblk.data(), ic, size), size);
+      add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
       ic++;
     }
-    scale_vec(pref, blwentry(lclcblk.data(), c, e_size), e_size);
-    scale_vec(pref, abventry(lclcblk.data(), c, e_size), e_size);
+    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
+    scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
 
     layer_top += layer_h;
   }
@@ -1026,9 +1026,9 @@ static void setup_PQ(int p, int q, double omega, double fac) {
     scale_vec(pref, lclimge, size);
 
     if (this_node == 0)
-      scale_vec(pref, blwentry(lclcblk.data(), 0, e_size), e_size);
+      scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk.data(), n_layers + 1, e_size), e_size);
+      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 }
 
@@ -1044,7 +1044,7 @@ static void add_PQ_force(int p, int q, double omega) {
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    othcblk = block(gblcblk.data(), c - 1, size);
+    othcblk = block(gblcblk, c - 1, size);
 
     for (i = 0; i < np; i++) {
       part[i].f.f[0] +=
@@ -1090,7 +1090,7 @@ static double PQ_energy(double omega) {
   int ic = 0;
   for (int c = 1; c <= n_layers; c++) {
     int np = cells[c].n;
-    double *othcblk = block(gblcblk.data(), c - 1, size);
+    double *othcblk = block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
       eng += pref * (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
