@@ -63,7 +63,7 @@ cdef extern from "statistics.hpp":
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
     cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
     cdef double min_distance2(Vector3d pos1, Vector3d pos2)
-    cdef List[int] nbhood(PartCfg &, double pos[3], double r_catch, int planedims[3])
+    cdef List[int] nbhood(PartCfg &, const Vector3d &pos, double r_catch, const Vector3i &planedims)
     cdef double distto(PartCfg &, double pos[3], int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)

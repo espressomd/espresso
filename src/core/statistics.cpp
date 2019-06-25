@@ -176,12 +176,12 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   MofImatrix[7] = MofImatrix[5];
 }
 
-IntList nbhood(PartCfg &partCfg, double pt_[3], double r,
-               int const planedims[3]) {
+IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
+               const Utils::Vector3i &planedims) {
   IntList ids;
 
-  auto const r2 = r * r;
-  auto const pt = Utils::Vector3d{pt_[0], pt_[1], pt_[2]};
+  auto const r2 = r_catch * r_catch;
+  auto const pt = Utils::Vector3d{pos[0], pos[1], pos[2]};
 
   Utils::Vector3d d;
 

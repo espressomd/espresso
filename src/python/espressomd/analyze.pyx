@@ -246,9 +246,9 @@ class Analysis(object):
 
         """
 
-        cdef int planedims[3]
+        cdef Vector3i planedims
         cdef List[int] ids
-        cdef double c_pos[3]
+        cdef Vector3d c_pos
 
         check_type_or_throw_except(
             pos, 3, float, "_pos=(float,float,float) must be passed to nbhood")

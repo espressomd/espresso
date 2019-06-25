@@ -66,8 +66,8 @@ double mindist(PartCfg &, IntList const &set1, IntList const &set2);
  *
  *  @return List of ids close to @p pos.
  */
-IntList nbhood(PartCfg &partCfg, double pos[3], double r_catch,
-               int const planedims[3]);
+IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
+               const Utils::Vector3i &planedims);
 
 /** Calculate minimal distance to point.
  *  @param pos  point
