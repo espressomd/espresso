@@ -382,13 +382,13 @@ void cells_resort_particles(int global_flag) {
       resort_particles = Cells::RESORT_GLOBAL;
       append_indexed_particle(local_cells.cell[0], std::move(part));
     }
-  }
-
+  } else {
 #ifdef ADDITIONAL_CHECKS
-  /* at the end of the day, everything should be consistent again */
-  check_particle_consistency();
-  check_particle_sorting();
+    /* at the end of the day, everything should be consistent again */
+    check_particle_consistency();
+    check_particle_sorting();
 #endif
+  }
 
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);

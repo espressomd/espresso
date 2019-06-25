@@ -295,11 +295,6 @@ Utils::Vector3d mpi_system_CMS();
 Utils::Vector3d mpi_system_CMS_velocity();
 void mpi_galilei_transform();
 
-/** Issue REQ_SWIMMER_REACTIONS: notify the system of changes to the reaction
- *  parameters
- */
-void mpi_setup_reaction();
-
 /**
  * @brief Resort the particles.
  *

@@ -77,7 +77,7 @@ system.part.add(pos=[1.0, 1.0, 2.0])
 if espressomd.has_features('EXCLUSIONS'):
     system.part.add(pos=[2.0] * 3, exclusions=[0, 1])
 
-if espressomd.has_features('ELECTROSTATICS') and 'P3M.CPU' in modes:
+if espressomd.has_features('P3M') and 'P3M.CPU' in modes:
     system.part[0].q = 1
     system.part[1].q = -1
     p3m = espressomd.electrostatics.P3M(

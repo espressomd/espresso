@@ -191,10 +191,6 @@ struct ParticleProperties {
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 
-#ifdef SWIMMER_REACTIONS
-  int catalyzer_count = 0;
-#endif
-
 #ifdef EXTERNAL_FORCES
   /** flag whether to fix a particle in space.
       Values:

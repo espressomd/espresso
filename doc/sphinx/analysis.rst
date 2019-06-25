@@ -62,7 +62,7 @@ For example, ::
 
 Momentum of the System
 ~~~~~~~~~~~~~~~~~~~~~~
-:meth:`espressomd.analyze.Analysis.analyze_linear_momentum`
+:meth:`espressomd.analyze.Analysis.linear_momentum`
 
 This command returns the total linear momentum of the particles and the
 lattice Boltzmann (LB) fluid, if one exists. Giving the optional
