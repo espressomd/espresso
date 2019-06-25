@@ -270,14 +270,20 @@ The Langevin thermostat is based on an extension of Newton's equation of motion 
 
 Here, :math:`f_i` are all deterministic forces from interactions, 
 :math:`\gamma` the bare friction coefficient and :math:`\eta` a random, "thermal" force. 
-The friction term accounts for dissipation in a surrounding fluid (the actual force
-response of a particle will also depend on the interaction with other particles).
-The random force  mimics collisions of the particle with surrounding solvent molecules 
+The friction term accounts for dissipation in a surrounding fluid whereas
+the random force  mimics collisions of the particle with solvent molecules 
 at temperature :math:`T` and satisfies
 
 .. math:: <\eta(t)> = 0 , <\eta^\alpha_i(t)\eta^\beta_j(t')> = \delta_{\alpha\beta} \delta_{ij}\delta(t-t')
 
 (:math:`<\cdot>` denotes the ensemble average and :math:`\alpha,\beta` are spatial coordinates). 
+
+In a system where particles only interact with the implicitly 
+modelled surrounding fluid, the diffusion constant :math:`D`
+is determined only by the bare friction and the temperature through
+the Einstein-Smoluchowski relation
+
+.. math:: D = \frac{k_B T}{\gamma}.
 
 In the |es| implementation of the Langevin thermostat,
 the additional terms only enter in the force calculation.
