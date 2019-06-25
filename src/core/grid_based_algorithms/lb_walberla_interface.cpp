@@ -3,6 +3,7 @@
 #ifdef LB_WALBERLA
 
 #include "MpiCallbacks.hpp"
+#include "lb_interface.hpp"
 #include "lb_walberla_instance.hpp"
 #include "utils/Vector.hpp"
 
@@ -44,6 +45,12 @@ void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u) {
 
 REGISTER_CALLBACK(set_node_velocity)
 
+void set_ext_force_density(Utils::Vector3d f) {
+  lb_walberla()->set_external_force(f);
+}
+REGISTER_CALLBACK(set_ext_force_density)
+
+
 void set_node_density(Utils::Vector3i ind, double density) {
   lb_walberla()->set_node_density(ind, density);
 }
@@ -55,6 +62,17 @@ void set_node_pop(Utils::Vector3i ind, Utils::Vector19d pop) {
 }
 
 REGISTER_CALLBACK(set_node_pop)
+
+Utils::Vector3d get_momentum() { return lb_walberla()->get_momentum(); }
+
+REGISTER_CALLBACK_REDUCTION(get_momentum, std::plus<>())
+
+boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos) {
+  auto res = lb_walberla()->get_velocity_at_pos(pos);
+  return res;
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_velocity_at_pos)
 
 } // namespace Walberla
 #endif

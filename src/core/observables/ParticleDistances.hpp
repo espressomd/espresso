@@ -32,6 +32,7 @@ namespace Observables {
  */
 class ParticleDistances : public PidObservable {
 public:
+  using PidObservable::PidObservable;
   std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0, end = n_values(); i < end; i++) {

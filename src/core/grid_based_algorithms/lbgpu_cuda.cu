@@ -38,8 +38,9 @@
 #include "cuda_utils.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
+
 #include "grid_based_algorithms/lb-d3q19.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include <utils/Array.hpp>
@@ -108,8 +109,6 @@ static int *boundary_node_list = nullptr;
 static int *boundary_index_list = nullptr;
 static size_t size_of_boundindex = 0;
 /*@}*/
-
-EK_parameters *lb_ek_parameters_gpu;
 
 /** @name pointers for additional cuda check flag */
 /*@{*/
@@ -2050,9 +2049,9 @@ __global__ void reinit_node_force(LB_node_force_density_gpu node_f) {
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index < para->number_of_nodes) {
-    node_f.force_density[0 * para->number_of_nodes + index] = 0.0f;
-    node_f.force_density[1 * para->number_of_nodes + index] = 0.0f;
-    node_f.force_density[2 * para->number_of_nodes + index] = 0.0f;
+    node_f.force_density[0 * para->number_of_nodes + index] = 0.f;
+    node_f.force_density[1 * para->number_of_nodes + index] = 0.f;
+    node_f.force_density[2 * para->number_of_nodes + index] = 0.f;
   }
 }
 
@@ -2182,11 +2181,9 @@ __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
  *  @param[out]    n_b     Local node residing in array b
  *  @param[in,out] d_v     Local device values
  *  @param[in,out] node_f  Local node force density
- *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
-                          EK_parameters *ek_parameters_gpu,
                           unsigned int philox_counter) {
   /*every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
@@ -2209,11 +2206,9 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  *  @param[out]    n_b     Local node residing in array b
  *  @param[in,out] d_v     Local device values
  *  @param[in,out] node_f  Local node force density
- *  @param[in]     ek_parameters_gpu  Parameters for the electrokinetics
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
-                          LB_node_force_density_gpu node_f,
-                          EK_parameters *ek_parameters_gpu) {
+                          LB_node_force_density_gpu node_f) {
   /*every node is connected to a thread via the index*/
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
@@ -2359,9 +2354,12 @@ __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
 
     calc_mode(mode, n_a, index);
 
-    j[0] += mode[1] + node_f.force_density[0 * para->number_of_nodes + index];
-    j[1] += mode[2] + node_f.force_density[1 * para->number_of_nodes + index];
-    j[2] += mode[3] + node_f.force_density[2 * para->number_of_nodes + index];
+    j[0] += mode[1] +
+            0.5f * node_f.force_density[0 * para->number_of_nodes + index];
+    j[1] += mode[2] +
+            0.5f * node_f.force_density[1 * para->number_of_nodes + index];
+    j[2] += mode[3] +
+            0.5f * node_f.force_density[2 * para->number_of_nodes + index];
 
 #ifdef LB_BOUNDARIES_GPU
     if (n_a.boundary[index])
@@ -2371,19 +2369,6 @@ __global__ void momentum(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
     atomicAdd(&(sum[0]), j[0]);
     atomicAdd(&(sum[1]), j[1]);
     atomicAdd(&(sum[2]), j[2]);
-  }
-}
-__global__ void remove_momentum(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
-                                LB_node_force_density_gpu node_f, float *sum) {
-  unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
-                       blockDim.x * blockIdx.x + threadIdx.x;
-  if (index < para->number_of_nodes) {
-    node_f.force_density[0 * para->number_of_nodes + index] -=
-        sum[0] / para->number_of_nodes;
-    node_f.force_density[1 * para->number_of_nodes + index] -=
-        sum[1] / para->number_of_nodes;
-    node_f.force_density[2 * para->number_of_nodes + index] -=
-        sum[2] / para->number_of_nodes;
   }
 }
 
@@ -2935,11 +2920,10 @@ void lb_integrate_GPU() {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_fluid_gpu);
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-                 device_rho_v, node_f, lb_ek_parameters_gpu,
-                 rng_counter_fluid_gpu->value());
+                 device_rho_v, node_f, rng_counter_fluid_gpu->value());
     } else {
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_a, nodes_b,
-                 device_rho_v, node_f, lb_ek_parameters_gpu);
+                 device_rho_v, node_f);
     }
     current_nodes = &nodes_b;
     intflag = false;
@@ -2947,11 +2931,10 @@ void lb_integrate_GPU() {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_fluid_gpu);
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-                 device_rho_v, node_f, lb_ek_parameters_gpu,
-                 rng_counter_fluid_gpu->value());
+                 device_rho_v, node_f, rng_counter_fluid_gpu->value());
     } else {
       KERNELCALL(integrate, dim_grid, threads_per_block, nodes_b, nodes_a,
-                 device_rho_v, node_f, lb_ek_parameters_gpu);
+                 device_rho_v, node_f);
     }
     current_nodes = &nodes_a;
     intflag = true;
@@ -2990,83 +2973,6 @@ struct lb_lbfluid_mass_of_particle {
 #endif
   };
 };
-
-void lb_lbfluid_remove_total_momentum() {
-  // calculate momentum of fluid and particles
-  float total_momentum[3] = {0.0f, 0.0f, 0.0f};
-  lb_lbfluid_calc_linear_momentum(total_momentum, /*include_particles*/ 1,
-                                  /*include_lbfluid*/ 1);
-
-  thrust::device_ptr<CUDA_particle_data> ptr(gpu_get_particle_pointer());
-  float particles_mass = thrust::transform_reduce(
-      ptr, ptr + lbpar_gpu.number_of_particles, lb_lbfluid_mass_of_particle(),
-      0.0f, thrust::plus<float>());
-
-  // lb_calc_fluid_mass_GPU has to be called with double but we don't
-  // want narrowing warnings, that's why we narrow it down by hand.
-  double lb_calc_fluid_mass_res;
-  lb_calc_fluid_mass_GPU(&lb_calc_fluid_mass_res);
-  float fluid_mass = lb_calc_fluid_mass_res;
-
-  /* Momentum fraction of the particles */
-  auto const part_frac = particles_mass / (fluid_mass + particles_mass);
-  /* Momentum per particle */
-  float momentum_particles[3] = {-total_momentum[0] * part_frac,
-                                 -total_momentum[1] * part_frac,
-                                 -total_momentum[2] * part_frac};
-
-  auto const fluid_frac = fluid_mass / (fluid_mass + particles_mass);
-  float momentum_fluid[3] = {-total_momentum[0] * fluid_frac,
-                             -total_momentum[1] * fluid_frac,
-                             -total_momentum[2] * fluid_frac};
-
-  lb_lbfluid_particles_add_momentum(momentum_particles);
-  lb_lbfluid_fluid_add_momentum(momentum_fluid);
-}
-
-__global__ void
-lb_lbfluid_fluid_add_momentum_kernel(float momentum[3], LB_nodes_gpu n_a,
-                                     LB_node_force_density_gpu node_f,
-                                     LB_rho_v_gpu *d_v) {
-  unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
-                       blockDim.x * blockIdx.x + threadIdx.x;
-  unsigned int number_of_nodes = para->number_of_nodes;
-#ifdef LB_BOUNDARIES_GPU
-  number_of_nodes -= para->number_of_boundnodes;
-#endif
-  if (index < para->number_of_nodes) {
-    if (n_a.boundary[index] == 0) {
-      float force_factor = powf(para->agrid, 2) * para->tau * para->tau;
-      // add force density onto each node (momentum / time_step / Volume)
-      node_f.force_density[0 * para->number_of_nodes + index] +=
-          momentum[0] / para->tau / (number_of_nodes * powf(para->agrid, 3)) *
-          force_factor;
-      node_f.force_density[1 * para->number_of_nodes + index] +=
-          momentum[1] / para->tau / (number_of_nodes * powf(para->agrid, 3)) *
-          force_factor;
-      node_f.force_density[2 * para->number_of_nodes + index] +=
-          momentum[2] / para->tau / (number_of_nodes * powf(para->agrid, 3)) *
-          force_factor;
-    }
-  }
-}
-
-void lb_lbfluid_fluid_add_momentum(float momentum_host[3]) {
-  float *momentum_device;
-  cuda_safe_mem(cudaMalloc((void **)&momentum_device, 3 * sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(momentum_device, momentum_host, 3 * sizeof(float),
-                           cudaMemcpyHostToDevice));
-
-  int threads_per_block = 64;
-  int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
-      (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
-  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-
-  KERNELCALL(lb_lbfluid_fluid_add_momentum_kernel, dim_grid, threads_per_block,
-             momentum_device, *current_nodes, node_f, device_rho_v);
-}
 
 /** Set the populations of a specific node on the GPU
  *  @param[out] n_a         Local node residing in array a
@@ -3209,9 +3115,6 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter) {
 
 void lb_fluid_set_rng_state_gpu(uint64_t counter) {
   rng_counter_fluid_gpu = Utils::Counter<uint64_t>(counter);
-#ifdef ELECTROKINETICS
-  ek_set_rng_state(counter);
-#endif // ELECTROKINETICS
 }
 
 uint64_t lb_coupling_get_rng_state_gpu() {

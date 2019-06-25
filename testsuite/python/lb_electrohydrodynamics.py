@@ -16,17 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
+import espressomd.lb as lb
 
 
-@ut.skipIf(not espressomd.has_features(["LB_ELECTROHYDRODYNAMICS"]),
-           "Features not available, skipping test!")
-class LBEHTest(ut.TestCase):
+class LBEHTest(object):
     from espressomd import lb
     s = espressomd.System(box_l=[6.0, 6.0, 6.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
 
-    def setUp(self):
+    def test(self):
         self.params = {'time_step': 0.01,
                        'tau': 0.02,
                        'agrid': 0.5,
@@ -40,11 +40,9 @@ class LBEHTest(ut.TestCase):
         self.s.periodicity = [1, 1, 1]
         self.s.time_step = self.params['time_step']
         self.s.cell_system.skin = self.params['skin']
+        self.s.actors.clear()
 
-        for i in self.s.actors:
-            self.s.actors.remove(i)
-
-        self.lbf = self.lb.LBFluid(
+        self.lbf = self.LBClass(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
             agrid=self.params['agrid'],
@@ -57,20 +55,44 @@ class LBEHTest(ut.TestCase):
             LB_fluid=self.lbf,
             gamma=self.params['friction'])
 
-    def test(self):
-        s = self.s
-
-        s.part.add(pos=0.5 * s.box_l, mu_E=self.params['muE'])
+        self.s.part.add(pos=0.5 * self.s.box_l, mu_E=self.params['muE'])
 
         mu_E = np.array(self.params['muE'])
         # Terminal velocity is mu_E minus the momentum the fluid
         # got by accelerating the particle in the beginning.
         v_term = (
-            1. - 1. / (s.box_l[0] * s.box_l[1] * s.box_l[2] * self.params['dens'])) * mu_E
+            1. - 1. / (np.prod(self.s.box_l) * self.params['dens'])) * mu_E
 
-        s.integrator.run(steps=500)
+        self.s.integrator.run(steps=500)
+        self.s.actors.clear()
 
-        np.testing.assert_allclose(v_term, np.copy(s.part[0].v), atol=1e-5)
+        np.testing.assert_allclose(
+            v_term,
+            np.copy(self.s.part[0].v),
+            atol=5e-5)
+
+
+@utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
+class LBEHCPU(LBEHTest, ut.TestCase):
+
+    def setUp(self):
+        self.LBClass = lb.LBFluid
+
+
+@utx.skipIfMissingFeatures(["LB_WALBERLA", "LB_ELECTROHYDRODYNAMICS"])
+class LBEHWalberla(LBEHTest, ut.TestCase):
+
+    def setUp(self):
+        self.LBClass = lb.LBFluidWalberla
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
+class LBEHGPU(LBEHTest, ut.TestCase):
+
+    def setUp(self):
+        self.LBClass = lb.LBFluidGPU
+
 
 if __name__ == "__main__":
     ut.main()

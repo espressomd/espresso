@@ -466,7 +466,7 @@ void auto_exclusion(int distance);
 void free_particle(Particle *part) { part->~Particle(); }
 
 void mpi_who_has_slave(int, int) {
-  static int *sendbuf;
+  static std::vector<int> sendbuf;
   int n_part;
 
   n_part = cells_get_n_particles();
@@ -474,20 +474,19 @@ void mpi_who_has_slave(int, int) {
   if (n_part == 0)
     return;
 
-  sendbuf = Utils::realloc(sendbuf, sizeof(int) * n_part);
+  sendbuf.resize(n_part);
 
   auto end = std::transform(local_cells.particles().begin(),
-                            local_cells.particles().end(), sendbuf,
+                            local_cells.particles().end(), sendbuf.data(),
                             [](Particle const &p) { return p.p.identity; });
 
-  auto npart = std::distance(sendbuf, end);
-  MPI_Send(sendbuf, npart, MPI_INT, 0, SOME_TAG, comm_cart);
+  auto npart = std::distance(sendbuf.data(), end);
+  MPI_Send(sendbuf.data(), npart, MPI_INT, 0, SOME_TAG, comm_cart);
 }
 
 void mpi_who_has() {
   static auto *sizes = new int[n_nodes];
-  int *pdata = nullptr;
-  int pdata_s = 0;
+  std::vector<int> pdata;
 
   mpi_call(mpi_who_has_slave, -1, 0);
 
@@ -502,17 +501,15 @@ void mpi_who_has() {
         particle_node[p.p.identity] = this_node;
 
     } else if (sizes[pnode] > 0) {
-      if (pdata_s < sizes[pnode]) {
-        pdata_s = sizes[pnode];
-        pdata = Utils::realloc(pdata, sizeof(int) * pdata_s);
+      if (pdata.size() < sizes[pnode]) {
+        pdata.resize(sizes[pnode]);
       }
-      MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
+      MPI_Recv(pdata.data(), sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
       for (int i = 0; i < sizes[pnode]; i++)
         particle_node[pdata[i]] = pnode;
     }
   }
-  free(pdata);
 }
 
 /**
@@ -1073,7 +1070,9 @@ void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
-  auto const flag = (!torque.empty()) ? PARTICLE_EXT_TORQUE : 0;
+  // No lint because clang-tidy 6 wrongly detects this as size check.
+  auto const flag =
+      (torque != Utils::Vector3d{}) ? PARTICLE_EXT_TORQUE : 0; // NOLINT
   if (flag) {
     mpi_update_particle_property<Utils::Vector3d,
                                  &ParticleProperties::ext_torque>(part, torque);
@@ -1084,7 +1083,9 @@ void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
 #endif
 
 void set_particle_ext_force(int part, const Utils::Vector3d &force) {
-  auto const flag = (!force.empty()) ? PARTICLE_EXT_FORCE : 0;
+  // No lint because clang-tidy 6 wrongly detects this as size check.
+  auto const flag =
+      (force != Utils::Vector3d{}) ? PARTICLE_EXT_FORCE : 0; // NOLINT
   if (flag) {
     mpi_update_particle_property<Utils::Vector3d,
                                  &ParticleProperties::ext_force>(part, force);

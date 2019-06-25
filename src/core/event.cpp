@@ -31,7 +31,6 @@
 #include "communication.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
-#include "dpd.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
 #include "forces.hpp"
@@ -52,7 +51,6 @@
 #include "reaction_ensemble.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
-#include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
@@ -97,12 +95,6 @@ void on_program_start() {
   }
 #endif
 
-#ifdef SWIMMER_REACTIONS
-  reaction.eq_rate = 0.0;
-  reaction.sing_mult = 0;
-  reaction.swap = 0;
-#endif
-
   /*
     call all initializations to do only on the master node here.
   */
@@ -128,9 +120,6 @@ void on_integration_start() {
   integrator_npt_sanity_checks();
 #endif
   interactions_sanity_checks();
-#ifdef SWIMMER_REACTIONS
-  reactions_sanity_checks();
-#endif
   lb_lbfluid_on_integration_start();
 
   /********************************************/
@@ -169,10 +158,6 @@ void on_integration_start() {
 
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.type)) {
     runtimeErrorMsg() << "Nodes disagree about cell system type.";
-  }
-
-  if (!Utils::Mpi::all_compare(comm_cart, get_resort_particles())) {
-    runtimeErrorMsg() << "Nodes disagree about resort type.";
   }
 
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
@@ -429,11 +414,6 @@ void on_parameter_change(int field) {
   case FIELD_THERMO_SWITCH:
     /* DPD needs ghost velocities, other thermostats not */
     on_ghost_flags_change();
-#ifdef DPD
-    if (not(thermo_switch & THERMO_DPD)) {
-      dpd_switch_off();
-    }
-#endif
     break;
   case FIELD_LATTICE_SWITCH:
     /* LB needs ghost velocities */
@@ -475,12 +455,8 @@ void on_ghost_flags_change() {
   if (n_rigidbonds)
     ghosts_have_v = 1;
 #endif
-#ifdef DPD
-  // maybe we have to add a new global to differ between compile in and actual
-  // use.
   if (thermo_switch & THERMO_DPD)
     ghosts_have_v = 1;
-#endif
 #ifdef VIRTUAL_SITES
   // If they have velocities, VIRUTAL_SITES need v to update v of virtual sites
   if (virtual_sites()->get_have_velocity()) {

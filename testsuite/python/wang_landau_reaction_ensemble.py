@@ -23,10 +23,7 @@ import numpy as np
 import unittest as ut
 
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
-from espressomd.interactions import *
+from espressomd.interactions import HarmonicBond
 from espressomd import reaction_ensemble
 from espressomd import system
 import numpy.testing as npt
@@ -73,20 +70,24 @@ class ReactionEnsembleTest(ut.TestCase):
     system.part[0].add_bond((h, 1))
     WLRE = reaction_ensemble.WangLandauReactionEnsemble(
         temperature=temperature, exclusion_radius=0, seed=69)
-    WLRE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[
-        1], product_types=[1, 2], product_coefficients=[1, 1], default_charges={0: 0, 1: -1, 2: +1})
+    WLRE.add_reaction(
+        gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
+        product_types=[1, 2], product_coefficients=[1, 1],
+        default_charges={0: 0, 1: -1, 2: +1})
     system.setup_type_map([0, 1, 2, 3])
     # initialize wang_landau
     # generate preliminary_energy_run_results here, this should be done in a
-    # seperate simulation without energy reweighting using the update energy
+    # separate simulation without energy reweighting using the update energy
     # functions
-    np.savetxt("energy_boundaries.dat", np.c_[
-               [0, 1], [0, 0], [9, 9]], delimiter='\t', header="nbar   E_potmin   E_potmax")
+    np.savetxt("energy_boundaries.dat", np.c_[[0, 1], [0, 0], [9, 9]],
+               delimiter='\t', header="nbar   E_potmin   E_potmax")
 
     WLRE.add_collective_variable_degree_of_association(
         associated_type=0, min=0, max=1, corresponding_acid_types=[0, 1])
     WLRE.set_wang_landau_parameters(
-        final_wang_landau_parameter=1e-2, do_not_sample_reaction_partition_function=True, full_path_to_output_filename="WL_potential_out.dat")
+        final_wang_landau_parameter=1e-2,
+        do_not_sample_reaction_partition_function=True,
+        full_path_to_output_filename="WL_potential_out.dat")
 
     def test_wang_landau_energy_recording(self):
         self.WLRE.update_maximum_and_minimum_energies_at_current_state()
@@ -160,5 +161,4 @@ class ReactionEnsembleTest(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

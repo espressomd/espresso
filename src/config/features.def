@@ -99,10 +99,7 @@ OIF_GLOBAL_FORCES
 AFFINITY
 MEMBRANE_COLLISION
 
-
 /* Immersed-Boundary Bayreuth version */
-IMMERSED_BOUNDARY
-IMMERSED_BOUNDARY               requires VIRTUAL_SITES
 SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
@@ -110,12 +107,6 @@ SCAFACOS                        requires ELECTROSTATICS
 LB_WALBERLA                     requires EXPERIMENTAL_FEATURES
 
 EXPERIMENTAL_FEATURES
-
-// Shape of the noise in the (Langevin) thermostat
-FLATNOISE                       requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
-GAUSSRANDOM                     requires not FLATNOISE and not GAUSSRANDOM_CUT
-GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
-
 
 /* Strange features. Use only if you know what you are doing! */
 /* turn off certain nonbonded interactions within molecules */

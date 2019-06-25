@@ -210,6 +210,18 @@ void topology_init(int cs, CellPList *local) {
   }
 }
 
+bool topology_check_resort(int cs, bool local_resort) {
+  switch (cs) {
+  case CELL_STRUCTURE_DOMDEC:
+    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+  case CELL_STRUCTURE_NSQUARE:
+  case CELL_STRUCTURE_LAYERED:
+    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+  default:
+    return true;
+  }
+}
+
 /*@}*/
 
 /************************************************************
@@ -273,15 +285,6 @@ void set_resort_particles(Cells::Resort level) {
 }
 
 unsigned const &get_resort_particles() { return resort_particles; }
-
-void announce_resort_particles() {
-  MPI_Allreduce(MPI_IN_PLACE, &resort_particles, 1, MPI_UNSIGNED, MPI_BOR,
-                comm_cart);
-
-  INTEG_TRACE(fprintf(stderr,
-                      "%d: announce_resort_particles: resort_particles=%u\n",
-                      this_node, resort_particles));
-}
 
 /*************************************************/
 
@@ -379,13 +382,13 @@ void cells_resort_particles(int global_flag) {
       resort_particles = Cells::RESORT_GLOBAL;
       append_indexed_particle(local_cells.cell[0], std::move(part));
     }
-  }
-
+  } else {
 #ifdef ADDITIONAL_CHECKS
-  /* at the end of the day, everything should be consistent again */
-  check_particle_consistency();
-  check_particle_sorting();
+    /* at the end of the day, everything should be consistent again */
+    check_particle_consistency();
+    check_particle_sorting();
 #endif
+  }
 
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
@@ -438,13 +441,11 @@ void check_resort_particles() {
                                    }))
                           ? Cells::RESORT_LOCAL
                           : Cells::RESORT_NONE;
-
-  announce_resort_particles();
 }
 
 /*************************************************/
 void cells_update_ghosts() {
-  if (resort_particles) {
+  if (topology_check_resort(cell_structure.type, resort_particles)) {
     int global = (resort_particles & Cells::RESORT_GLOBAL)
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;

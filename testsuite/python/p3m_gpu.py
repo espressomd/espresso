@@ -16,21 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 import espressomd
 import unittest as ut
-import numpy as np
-from tests_common import *
+import unittest_decorators as utx
+from tests_common import params_match
 
 
-@ut.skipIf(
-    not espressomd.gpu_available() or not espressomd.has_features(
-        ["ELECTROSTATICS", "CUDA"]),
-           "Features or gpu not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures("ELECTROSTATICS")
 class P3MGPU_test(ut.TestCase):
 
-    def runTest(self):
+    def test(self):
         from espressomd.electrostatics import P3MGPU
 
         es = espressomd.System(box_l=[10.0, 10.0, 10.0])
@@ -47,10 +44,8 @@ class P3MGPU_test(ut.TestCase):
 
         p3m = P3MGPU(**test_params)
         es.actors.add(p3m)
-        self.assertTrue(params_match(
-            test_params, p3m._get_params_from_es_core()))
+        self.assertTrue(params_match(test_params, p3m.get_params()))
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

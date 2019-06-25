@@ -876,12 +876,12 @@ IF DPD:
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
-                "weight_function": ia_params.dpd_wf,
-                "gamma": ia_params.dpd_gamma,
-                "r_cut": ia_params.dpd_r_cut,
-                "trans_weight_function": ia_params.dpd_twf,
-                "trans_gamma": ia_params.dpd_tgamma,
-                "trans_r_cut": ia_params.dpd_tr_cut
+                "weight_function": ia_params.dpd_radial.wf,
+                "gamma": ia_params.dpd_radial.gamma,
+                "r_cut": ia_params.dpd_radial.cutoff,
+                "trans_weight_function": ia_params.dpd_trans.wf,
+                "trans_gamma": ia_params.dpd_trans.gamma,
+                "trans_r_cut": ia_params.dpd_trans.cutoff
             }
 
         def is_active(self):
@@ -3037,165 +3037,157 @@ class AngleCossquare(BondedInteraction):
     def _set_params_in_es_core(self):
         angle_cossquare_set_params(
             self._bond_id, self._params["bend"], self._params["phi0"])
+
+
 # IBM triel
-IF IMMERSED_BOUNDARY:
-    class IBM_Triel(BondedInteraction):
+class IBM_Triel(BondedInteraction):
 
-        """
-        IBM Triel bond.
+    """
+    IBM Triel bond.
 
-        Parameters
-        ----------
-        indX : :obj:`int`
-            Specify first, second and third bonding partner. Used for
-            initializing reference state
-        k1 : :obj:`float`
-            Specifies shear elasticity for Skalak and Neo-Hookean
-        k2 : :obj:`float`
-            Specifies area resistance for Skalak
-        maxDist : :obj:`float`
-            Gives an error if an edge becomes longer than maxDist
-        elasticLaw : :obj:`str`
-            Specify NeoHookean or Skalak
+    Parameters
+    ----------
+    indX : :obj:`int`
+        Specify first, second and third bonding partner. Used for
+        initializing reference state
+    k1 : :obj:`float`
+        Specifies shear elasticity for Skalak and Neo-Hookean
+    k2 : :obj:`float`
+        Specifies area resistance for Skalak
+    maxDist : :obj:`float`
+        Gives an error if an edge becomes longer than maxDist
+    elasticLaw : :obj:`str`
+        Specify NeoHookean or Skalak
 
-        """
+    """
 
-        def __init__(self, *args, **kwargs):
-            super(IBM_Triel, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(IBM_Triel, self).__init__(*args, **kwargs)
 
-        def type_number(self):
-            return BONDED_IA_IBM_TRIEL
+    def type_number(self):
+        return BONDED_IA_IBM_TRIEL
 
-        def type_name(self):
-            return "IBM_Triel"
+    def type_name(self):
+        return "IBM_Triel"
 
-        def valid_keys(self):
-            return "ind1", "ind2", "ind3", "k1", "k2", "maxDist", "elasticLaw"
+    def valid_keys(self):
+        return "ind1", "ind2", "ind3", "k1", "k2", "maxDist", "elasticLaw"
 
-        def required_keys(self):
-            return "ind1", "ind2", "ind3", "k1", "maxDist", "elasticLaw"
+    def required_keys(self):
+        return "ind1", "ind2", "ind3", "k1", "maxDist", "elasticLaw"
 
-        def set_default_params(self):
-            self._params = {"k2": 0}
+    def set_default_params(self):
+        self._params = {"k2": 0}
 
-        def _get_params_from_es_core(self):
-            return \
-                {"maxDist": bonded_ia_params[self._bond_id].p.ibm_triel.maxDist,
-                 "k1": bonded_ia_params[self._bond_id].p.ibm_triel.k1,
-                 "k2": bonded_ia_params[self._bond_id].p.ibm_triel.k2,
-                 "elasticLaw": < int > bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
+    def _get_params_from_es_core(self):
+        return \
+            {"maxDist": bonded_ia_params[self._bond_id].p.ibm_triel.maxDist,
+             "k1": bonded_ia_params[self._bond_id].p.ibm_triel.k1,
+             "k2": bonded_ia_params[self._bond_id].p.ibm_triel.k2,
+             "elasticLaw": < int > bonded_ia_params[self._bond_id].p.ibm_triel.elasticLaw}
 
-        def _set_params_in_es_core(self):
-            cdef tElasticLaw el
-            if self._params["elasticLaw"] == "NeoHookean":
-                el = NeoHookean
-            if self._params["elasticLaw"] == "Skalak":
-                el = Skalak
-            IBM_Triel_SetParams(self._bond_id, self._params["ind1"], self._params["ind2"], self._params[
-                                "ind3"], self._params["maxDist"], el, self._params["k1"], self._params["k2"])
-ELSE:
-    class IBM_Triel(BondedInteractionNotDefined):
-        name = "IBM_TRIEL"
+    def _set_params_in_es_core(self):
+        cdef tElasticLaw el
+        if self._params["elasticLaw"] == "NeoHookean":
+            el = NeoHookean
+        if self._params["elasticLaw"] == "Skalak":
+            el = Skalak
+        IBM_Triel_SetParams(self._bond_id, self._params["ind1"], self._params["ind2"], self._params[
+                            "ind3"], self._params["maxDist"], el, self._params["k1"], self._params["k2"])
+
 
 # IBM tribend
-IF IMMERSED_BOUNDARY == 1:
-    class IBM_Tribend(BondedInteraction):
+class IBM_Tribend(BondedInteraction):
 
-        """
-        IBM Tribend bond.
+    """
+    IBM Tribend bond.
 
-        Parameters
-        ----------
-        indX : :obj:`int`
-            Specify first, second, third and fourth bonding partner. Used for
-            initializing reference state
-        kb : :obj:`float`
-            Specifies bending modulus
-        refShape : :obj:`str`
-            Flat or Initial
+    Parameters
+    ----------
+    indX : :obj:`int`
+        Specify first, second, third and fourth bonding partner. Used for
+        initializing reference state
+    kb : :obj:`float`
+        Specifies bending modulus
+    refShape : :obj:`str`
+        Flat or Initial
 
-        """
+    """
 
-        def __init__(self, *args, **kwargs):
-            super(IBM_Tribend, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(IBM_Tribend, self).__init__(*args, **kwargs)
 
-        def type_number(self):
-            return BONDED_IA_IBM_TRIBEND
+    def type_number(self):
+        return BONDED_IA_IBM_TRIBEND
 
-        def type_name(self):
-            return "IBM_Tribend"
+    def type_name(self):
+        return "IBM_Tribend"
 
-        def valid_keys(self):
-            return "ind1", "ind2", "ind3", "ind4", "kb", "refShape"
+    def valid_keys(self):
+        return "ind1", "ind2", "ind3", "ind4", "kb", "refShape"
 
-        def required_keys(self):
-            return "ind1", "ind2", "ind3", "ind4", "kb"
+    def required_keys(self):
+        return "ind1", "ind2", "ind3", "ind4", "kb"
 
-        def set_default_params(self):
-            self._params = {"flat": False}
+    def set_default_params(self):
+        self._params = {"flat": False}
 
-        def _get_params_from_es_core(self):
-            return \
-                {"kb": bonded_ia_params[self._bond_id].p.ibm_tribend.kb,
-                 "theta0": bonded_ia_params[self._bond_id].p.ibm_tribend.theta0}
+    def _get_params_from_es_core(self):
+        return \
+            {"kb": bonded_ia_params[self._bond_id].p.ibm_tribend.kb,
+             "theta0": bonded_ia_params[self._bond_id].p.ibm_tribend.theta0}
 
-        def _set_params_in_es_core(self):
-            if self._params["refShape"] == "Flat":
-                flat = True
-            if self._params["refShape"] == "Initial":
-                flat = False
-            IBM_Tribend_SetParams(self._bond_id, self._params["ind1"], self._params[
-                                  "ind2"], self._params["ind3"], self._params["ind4"], self._params["kb"], flat)
-ELSE:
-    class IBM_Tribend(BondedInteractionNotDefined):
-        name = "IBM_TRIBEND"
+    def _set_params_in_es_core(self):
+        if self._params["refShape"] == "Flat":
+            flat = True
+        if self._params["refShape"] == "Initial":
+            flat = False
+        IBM_Tribend_SetParams(self._bond_id, self._params["ind1"], self._params[
+                              "ind2"], self._params["ind3"], self._params["ind4"], self._params["kb"], flat)
+
 
 # IBM VolCons
-IF IMMERSED_BOUNDARY == 1:
-    class IBM_VolCons(BondedInteraction):
+class IBM_VolCons(BondedInteraction):
 
-        """
-        IBM VolCons bond.
+    """
+    IBM VolCons bond.
 
-        Parameters
-        ----------
-        softID : :obj:`int`
-            Used to identify the object to which this bond belongs. Each object
-            (cell) needs its own ID
-        kappaV : :obj:`float`
-            Modulus for volume force
+    Parameters
+    ----------
+    softID : :obj:`int`
+        Used to identify the object to which this bond belongs. Each object
+        (cell) needs its own ID
+    kappaV : :obj:`float`
+        Modulus for volume force
 
-        """
+    """
 
-        def __init__(self, *args, **kwargs):
-            super(IBM_VolCons, self).__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(IBM_VolCons, self).__init__(*args, **kwargs)
 
-        def type_number(self):
-            return BONDED_IA_IBM_VOLUME_CONSERVATION
+    def type_number(self):
+        return BONDED_IA_IBM_VOLUME_CONSERVATION
 
-        def type_name(self):
-            return "IBM_VolCons"
+    def type_name(self):
+        return "IBM_VolCons"
 
-        def valid_keys(self):
-            return "softID", "kappaV"
+    def valid_keys(self):
+        return "softID", "kappaV"
 
-        def required_keys(self):
-            return "softID", "kappaV"
+    def required_keys(self):
+        return "softID", "kappaV"
 
-        def set_default_params(self):
-            self._params = {}
+    def set_default_params(self):
+        self._params = {}
 
-        def _get_params_from_es_core(self):
-            return \
-                {"softID": bonded_ia_params[self._bond_id].p.ibmVolConsParameters.softID,
-                 "kappaV": bonded_ia_params[self._bond_id].p.ibmVolConsParameters.kappaV}
+    def _get_params_from_es_core(self):
+        return \
+            {"softID": bonded_ia_params[self._bond_id].p.ibmVolConsParameters.softID,
+             "kappaV": bonded_ia_params[self._bond_id].p.ibmVolConsParameters.kappaV}
 
-        def _set_params_in_es_core(self):
-            immersed_boundaries.volume_conservation_set_params(
-                self._bond_id, self._params["softID"], self._params["kappaV"])
-ELSE:
-    class IBM_VolCons(BondedInteractionNotDefined):
-        name = "IBM_VOLCONS"
+    def _set_params_in_es_core(self):
+        immersed_boundaries.volume_conservation_set_params(
+            self._bond_id, self._params["softID"], self._params["kappaV"])
 
 
 class OifGlobalForces(BondedInteraction):

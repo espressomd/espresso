@@ -37,8 +37,14 @@ LbWalberla *lb_walberla() {
 void init_lb_walberla(double viscosity, double density, double agrid,
                       double tau, const Utils::Vector3d &box_dimensions,
                       const Utils::Vector3i &node_grid, double skin) {
-  lb_walberla_instance = std::make_unique<LbWalberla>(LbWalberla{
-      viscosity, density, agrid, tau, box_dimensions, node_grid, skin});
+  // Exceptions need to be converted to runtime erros so they can be
+  // handled from Python in a parallel simulation
+  try {
+    lb_walberla_instance = std::make_unique<LbWalberla>(LbWalberla{
+        viscosity, density, agrid, tau, box_dimensions, node_grid, skin});
+  } catch (const std::exception &e) {
+    runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
+  }
 }
 REGISTER_CALLBACK(init_lb_walberla)
 
@@ -47,8 +53,9 @@ REGISTER_CALLBACK(destruct_lb_walberla)
 
 void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau) {
-  Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity, density,
-                                         agrid, tau, box_l, node_grid, skin);
+  Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity,
+                                         density * pow(agrid, 3), agrid, tau,
+                                         box_l, node_grid, skin);
   lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
 }
 

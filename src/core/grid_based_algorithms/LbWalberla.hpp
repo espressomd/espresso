@@ -26,6 +26,63 @@
 const walberla::FlagUID Fluid_flag("fluid");
 const walberla::FlagUID UBB_flag("velocity bounce back");
 
+inline Utils::Vector3d
+to_vector3d(const walberla::Vector3<walberla::real_t> v) {
+  return Utils::Vector3d{v[0], v[1], v[2]};
+}
+inline walberla::Vector3<walberla::real_t> to_vector3(const Utils::Vector3d v) {
+  return walberla::Vector3<walberla::real_t>{v[0], v[1], v[2]};
+}
+
+template <typename PdfField_T, typename ForceField_T,
+          typename BoundaryHandling_T>
+class ResetForce {
+public:
+  ResetForce(walberla::BlockDataID pdf_field_id,
+             walberla::BlockDataID force_field_id,
+             walberla::BlockDataID force_field_from_md_id,
+             walberla::BlockDataID boundary_handling_id)
+      : m_pdf_field_id(pdf_field_id), m_force_field_id(force_field_id),
+        m_force_field_from_md_id(force_field_from_md_id),
+        m_boundary_handling_id(boundary_handling_id),
+        m_ext_force(walberla::Vector3<walberla::real_t>{0, 0, 0}) {}
+
+  void set_ext_force(const Utils::Vector3d &ext_force) {
+    m_ext_force = to_vector3(ext_force);
+  }
+
+  Utils::Vector3d get_ext_force() const { return to_vector3d(m_ext_force); };
+
+  void operator()(walberla::IBlock *block) {
+    PdfField_T *pdf_field = block->getData<PdfField_T>(m_pdf_field_id);
+    ForceField_T *force_field = block->getData<ForceField_T>(m_force_field_id);
+    ForceField_T *force_field_from_md =
+        block->getData<ForceField_T>(m_force_field_from_md_id);
+    BoundaryHandling_T *boundary_handling =
+        block->getData<BoundaryHandling_T>(m_boundary_handling_id);
+
+    force_field->swapDataPointers(force_field_from_md);
+
+    WALBERLA_FOR_ALL_CELLS_XYZ(force_field, {
+      walberla::Cell cell(x, y, z);
+      if (boundary_handling->isDomain(cell)) {
+        force_field->get(cell) += m_ext_force;
+        force_field->get(cell) /= pdf_field->getDensity(cell);
+      }
+    });
+    WALBERLA_FOR_ALL_CELLS_XYZ(force_field_from_md, {
+      walberla::Cell cell(x, y, z);
+      if (boundary_handling->isDomain(cell)) {
+        force_field_from_md->get(cell) = walberla::Vector3<walberla::real_t>{0};
+      }
+    });
+  }
+
+private:
+  walberla::BlockDataID m_pdf_field_id, m_force_field_id,
+      m_force_field_from_md_id, m_boundary_handling_id;
+  walberla::Vector3<walberla::real_t> m_ext_force;
+};
 /** Class that runs and controls the LB on WaLBerla
  */
 class LbWalberla {
@@ -34,7 +91,6 @@ class LbWalberla {
   double m_tau;
   double m_density;           // initial density
   Utils::Vector3d m_velocity; // initial velocity
-  Utils::Vector3d m_ext_force;
   Utils::Vector3i m_grid_dimensions;
 
   // Type definitions
@@ -53,6 +109,10 @@ class LbWalberla {
   using UBB_t = walberla::lbm::UBB<Lattice_model_t, walberla::uint8_t>;
   using Boundary_handling_t =
       walberla::BoundaryHandling<Flag_field_t, Lattice_model_t::Stencil, UBB_t>;
+
+  std::shared_ptr<ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>
+      m_reset_force;
+
   class LB_boundary_handling {
   public:
     LB_boundary_handling(const walberla::BlockDataID &flag_field_id,
@@ -117,9 +177,11 @@ public:
   void print_vtk_boundary(char *filename);
 
   void set_external_force(const Utils::Vector3d &ext_force) {
-    m_ext_force = ext_force;
+    m_reset_force->set_ext_force(ext_force);
   }
-  Utils::Vector3d get_external_force() { return m_ext_force; }
+  Utils::Vector3d get_external_force() {
+    return m_reset_force->get_ext_force();
+  }
 
   void set_viscosity(double viscosity);
   double get_viscosity();

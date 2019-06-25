@@ -45,55 +45,6 @@
 
 using namespace walberla;
 
-inline Utils::Vector3d to_vector3d(const Vector3<real_t> v) {
-  return Utils::Vector3d{v[0], v[1], v[2]};
-}
-Vector3<real_t> to_vector3(const Utils::Vector3d v) {
-  return Vector3<real_t>{v[0], v[1], v[2]};
-}
-
-template <typename ForceField_T, typename BoundaryHandling_T> class ResetForce {
-public:
-  ResetForce(BlockDataID force_field_id, BlockDataID force_field_from_md_id,
-             BlockDataID boundary_handling_id)
-      : m_force_field_id(force_field_id),
-        m_force_field_from_md_id(force_field_from_md_id),
-        m_boundary_handling_id(boundary_handling_id),
-        m_ext_force(Vector3<real_t>{0, 0, 0}) {}
-
-  void set_ext_force(Vector3<real_t> ext_force) const {
-    m_ext_force = ext_force;
-  }
-
-  void operator()(IBlock *block) {
-    ForceField_T *force_field = block->getData<ForceField_T>(m_force_field_id);
-    ForceField_T *force_field_from_md =
-        block->getData<ForceField_T>(m_force_field_from_md_id);
-    BoundaryHandling_T *boundary_handling =
-        block->getData<BoundaryHandling_T>(m_boundary_handling_id);
-
-    force_field->swapDataPointers(force_field_from_md);
-
-    WALBERLA_FOR_ALL_CELLS_XYZ(force_field, {
-      Cell cell(x, y, z);
-      if (boundary_handling->isDomain(cell)) {
-        force_field->get(cell) += m_ext_force;
-      }
-    });
-    WALBERLA_FOR_ALL_CELLS_XYZ(force_field_from_md, {
-      Cell cell(x, y, z);
-      if (boundary_handling->isDomain(cell)) {
-        force_field_from_md->get(cell) = Vector3<real_t>{0};
-      }
-    });
-  }
-
-private:
-  BlockDataID m_force_field_id, m_force_field_from_md_id,
-      m_boundary_handling_id;
-  Vector3<real_t> m_ext_force;
-};
-
 LbWalberla::LbWalberla(double viscosity, double density, double agrid,
                        double tau, const Utils::Vector3d &box_dimensions,
                        const Utils::Vector3i &node_grid, double skin) {
@@ -137,7 +88,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
-      uint_c(1));
+      uint_c(0));
   m_force_field_from_md_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
       uint_c(1));
@@ -146,9 +97,9 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
           lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
       force_model_t(m_force_field_id)));
 
-  m_pdf_field_id =
-      lbm::addPdfFieldToStorage(m_blocks, "pdf field", *m_lattice_model,
-                                to_vector3(m_velocity), (real_t)m_density);
+  m_pdf_field_id = lbm::addPdfFieldToStorage(
+      m_blocks, "pdf field", *m_lattice_model, to_vector3(m_velocity),
+      (real_t)m_density, int_c(skin / agrid + 1));
 
   m_flag_field_id =
       field::addFlagFieldToStorage<Flag_field_t>(m_blocks, "flag field");
@@ -170,15 +121,16 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   communication.addPackInfo(
       std::make_shared<field::communication::PackInfo<Pdf_field_t>>(
           m_pdf_field_id));
-
+  m_reset_force = std::make_shared<
+      ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>(
+      m_pdf_field_id, m_force_field_id, m_force_field_from_md_id,
+      m_boundary_handling_id);
   m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
                      << timeloop::Sweep(Boundary_handling_t::getBlockSweep(
                                             m_boundary_handling_id),
-                                        "boundary handling")
-                     << timeloop::Sweep(
-                            ResetForce<vector_field_t, Boundary_handling_t>(
-                                m_force_field_id, m_force_field_from_md_id,
-                                m_boundary_handling_id));
+                                        "boundary handling");
+  m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
+                                        "Reset force fields");
   m_time_loop->add() << timeloop::Sweep(
       domain_decomposition::makeSharedSweep(
           lbm::makeCellwiseSweep<Lattice_model_t, Flag_field_t>(
@@ -220,7 +172,7 @@ void LbWalberla::print_vtk_density(char *filename) {
   output.execute();
 }
 
-void LbWalberla::integrate() { m_time_loop->run(); }
+void LbWalberla::integrate() { m_time_loop->singleStep(); }
 
 boost::optional<LbWalberla::BlockAndCell>
 LbWalberla::get_block_and_cell(const Utils::Vector3i &node) const {
@@ -326,6 +278,18 @@ LbWalberla::create_fluid_field_vtk_writer(
   pdf_field_vtk_writer->addCellDataWriter(density_writer);
 
   return pdf_field_vtk_writer;
+}
+
+bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
+                                  const Utils::Vector3d &force) {
+  auto block = m_blocks->getBlock(to_vector3(pos));
+  if (!block)
+    return false;
+  auto *force_distributor =
+      block->getData<Vector_field_distributor_t>(m_force_distributor_id);
+  auto f = to_vector3(force);
+  force_distributor->distribute(to_vector3(pos), &f);
+  return true;
 }
 
 boost::optional<Utils::Vector3d>

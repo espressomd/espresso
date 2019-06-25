@@ -18,10 +18,10 @@
 #
 from __future__ import print_function, division
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
-import tests_common
 
 # Dihedral interaction needs more rigorous tests.
 # The geometry checked here is rather simple and special.
@@ -57,8 +57,7 @@ def dihedral_force(k, n, phase, p1, p2, p3, p4):
     if l_v12Xv23 <= 1e-8 or l_v23Xv34 <= 1e-8:
         return 0, 0, 0
     else:
-        cosphi = np.abs(np.dot(v12Xv23, v23Xv34)) / (
-            l_v12Xv23 * l_v23Xv34)
+        cosphi = np.abs(np.dot(v12Xv23, v23Xv34)) / (l_v12Xv23 * l_v23Xv34)
         phi = np.arccos(cosphi)
         f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23
         f4 = (v12Xv23 - cosphi * v23Xv34) / l_v23Xv34
@@ -168,8 +167,7 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_almost_equal(f2_sim_copy, f2_ref)
 
     # Test Tabulated Dihedral Angle
-    @ut.skipIf(not espressomd.has_features(["TABULATED"]),
-               "TABULATED feature is not available, skipping tabulated test.")
+    @utx.skipIfMissingFeatures(["TABULATED"])
     def test_tabulated_dihedral(self):
         N = 111
         d_phi = 2 * np.pi / N

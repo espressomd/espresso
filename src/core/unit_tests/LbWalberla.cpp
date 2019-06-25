@@ -115,45 +115,58 @@ BOOST_AUTO_TEST_CASE(total_momentum) {
   lb.set_node_velocity(Vector3i{3, 5, 7}, v);
   auto mom = lb.get_momentum();
   auto mom_exp = 2 * density * v;
-  MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3 * sizeof(double), MPI_BYTE, MPI_SUM,
+  MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                 MPI_COMM_WORLD);
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
 }
 
-// BOOST_AUTO_TEST_CASE(mpi_collector) {
-//  init_lb_walberla(viscosity, agrid, box_dimensions, node_grid, skin);
-//  for (Vector3i node : std::vector<Vector3i>{
-//           {9, 9, 9}, {2, 2, 3}, {1, 0, 0}, {0, 1, 2}, {3, 2, 3}, {3, 2, 3}})
-//           {
-//    const Vector3d v{{double(node[0]) + 1, -1, 2.5 - double(node[2])}};
-//    double eps = 1E-8;
-//    if (lb_walberla()->node_in_local_domain(node)) {
-//      BOOST_CHECK(lb_walberla()->set_node_velocity(node, v));
-//    }
-//    Vector3d res = lb_lbnode_get_velocity(node);
-//    if (comm_cart.rank() == 0) {
-//      BOOST_CHECK((res - v).norm() < eps);
-//    }
-//  }
-//  Vector3d vel = {0.2, 3.8, 4.2};
-//  for (Vector3i node : std::vector<Vector3i>{{0, 0, 0}, {0, 1,
-//  2}, {9, 9, 9}}) {
-//    if (lb_walberla()->node_in_local_domain(node)) {
-//      BOOST_CHECK(lb_walberla()->set_node_velocity_at_boundary(node, vel));
-//    }
-//    int is_boundary = lb_lbnode_get_boundary(node);
-//    if (comm_cart.rank() == 0) {
-//      BOOST_CHECK(is_boundary);
-//    }
-//    if (lb_walberla()->node_in_local_domain(node)) {
-//      BOOST_CHECK(lb_walberla()->remove_node_from_boundary(node));
-//    }
-//    is_boundary = lb_lbnode_get_boundary(node);
-//    if (comm_cart.rank() == 0) {
-//      BOOST_CHECK(!is_boundary);
-//    }
-//  }
-//}
+BOOST_AUTO_TEST_CASE(integrate_with_volume_force) {
+  LbWalberla lb = LbWalberla(viscosity, density, agrid, tau, box_dimensions,
+                             node_grid, skin);
+  auto f = Vector3d{0.15, 0.25, -0.22};
+  lb.set_external_force(f);
+  BOOST_CHECK_SMALL(lb.get_momentum().norm(), 1E-10);
+
+  for (int i = 1; i < 30; i++) {
+    lb.integrate();
+    auto mom = lb.get_momentum();
+    auto mom_exp = (i + .5) * f * density * grid_dimensions[0] *
+                   grid_dimensions[1] * grid_dimensions[2];
+    MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
+                  MPI_COMM_WORLD);
+    BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-7);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(integrate_with_point_forces) {
+  LbWalberla lb = LbWalberla(viscosity, density, agrid, tau, box_dimensions,
+                             node_grid, skin);
+  // auto f = Vector3d{0.15, 0.25, -0.22};
+  auto f = Vector3d{0.0006, -0.0013, 0.000528};
+  auto f2 = Vector3d{0.095, 0.23, -0.52};
+  lb.set_external_force(f);
+  lb.add_force_at_pos(Utils::Vector3d{2, 2, 2}, f2);
+  BOOST_CHECK_SMALL(lb.get_momentum().norm(), 1E-10);
+  lb.integrate();
+  auto mom = lb.get_momentum();
+  auto mom_exp = 1.5 * f * density * grid_dimensions[0] * grid_dimensions[1] *
+                     grid_dimensions[2] +
+                 1.5 * f2 * density;
+  MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
+                MPI_COMM_WORLD);
+  BOOST_CHECK_SMALL((mom - mom_exp).norm(), 4E-6);
+
+  for (int i = 1; i < 30; i++) {
+    lb.integrate();
+    auto mom_exp = (i + 1.5) * f * density * grid_dimensions[0] *
+                       grid_dimensions[1] * grid_dimensions[2] +
+                   f2 * density;
+    auto mom = lb.get_momentum();
+    MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
+                  MPI_COMM_WORLD);
+    BOOST_CHECK_SMALL((mom - mom_exp).norm(), 8E-5);
+  }
+}
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
