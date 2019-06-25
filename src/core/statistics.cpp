@@ -203,12 +203,12 @@ IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
   return ids;
 }
 
-double distto(PartCfg &partCfg, double p[3], int pid) {
+double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
   auto mindist = std::numeric_limits<double>::infinity();
 
   for (auto const &part : partCfg) {
     if (pid != part.p.identity) {
-      auto const d = get_mi_vector({p[0], p[1], p[2]}, part.r.p, box_geo);
+      auto const d = get_mi_vector({pos[0], pos[1], pos[2]}, part.r.p, box_geo);
       mindist = std::min(mindist, d.norm2());
     }
   }

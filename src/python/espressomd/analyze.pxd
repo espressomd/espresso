@@ -64,7 +64,7 @@ cdef extern from "statistics.hpp":
     cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
     cdef double min_distance2(Vector3d pos1, Vector3d pos2)
     cdef List[int] nbhood(PartCfg &, const Vector3d &pos, double r_catch, const Vector3i &planedims)
-    cdef double distto(PartCfg &, double pos[3], int pid)
+    cdef double distto(PartCfg &, const Vector3d & pos, int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
     cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)

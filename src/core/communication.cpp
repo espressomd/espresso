@@ -250,13 +250,13 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
 
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/
 
-void mpi_place_particle(int pnode, int part, double p[3]) {
-  mpi_call(mpi_place_particle_slave, pnode, part);
+void mpi_place_particle(int node, int id, const double *pos) {
+  mpi_call(mpi_place_particle_slave, node, id);
 
-  if (pnode == this_node)
-    local_place_particle(part, p, 0);
+  if (node == this_node)
+    local_place_particle(id, pos, 0);
   else
-    MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(pos, 3, MPI_DOUBLE, node, SOME_TAG, comm_cart);
 
   set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
@@ -274,14 +274,14 @@ void mpi_place_particle_slave(int pnode, int part) {
   on_particle_change();
 }
 
-void mpi_place_new_particle(int pnode, int part, double p[3]) {
-  mpi_call(mpi_place_new_particle_slave, pnode, part);
-  added_particle(part);
+void mpi_place_new_particle(int node, int id, const double *pos) {
+  mpi_call(mpi_place_new_particle_slave, node, id);
+  added_particle(id);
 
-  if (pnode == this_node)
-    local_place_particle(part, p, 1);
+  if (node == this_node)
+    local_place_particle(id, pos, 1);
   else
-    MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+    MPI_Send(pos, 3, MPI_DOUBLE, node, SOME_TAG, comm_cart);
 
   on_particle_change();
 }

@@ -833,7 +833,7 @@ void prefetch_particle_data(std::vector<int> ids) {
                            std::make_move_iterator(parts.begin()));
 }
 
-int place_particle(int part, double p[3]) {
+int place_particle(int part, const double *p) {
   int retcode = ES_PART_OK;
 
   int pnode;

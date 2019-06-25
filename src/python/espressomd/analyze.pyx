@@ -145,7 +145,7 @@ class Analysis(object):
             raise Exception(
                 "Only one of id or pos may be specified\n" + __doc__)
 
-        cdef double cpos[3]
+        cdef Vector3d cpos
         if len(self._system.part) == 0:
             raise Exception("no particles")
 

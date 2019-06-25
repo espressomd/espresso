@@ -587,7 +587,7 @@ void invalidate_fetch_cache();
  *  @retval ES_PART_CREATED if created
  *  @retval ES_PART_ERROR if id is illegal
  */
-int place_particle(int part, double p[3]);
+int place_particle(int part, const double *p);
 
 /** Call only on the master node: set particle velocity.
  *  @param part the particle.

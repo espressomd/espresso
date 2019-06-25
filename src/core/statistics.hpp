@@ -76,7 +76,7 @@ IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
  *              position of a particle).
  *  @return the minimal distance of a particle to coordinates @p pos
  */
-double distto(PartCfg &, double pos[3], int pid);
+double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid);
 
 /** Append particles' positions in %p partCfg to #configs
  *  @param partCfg  @copybrief PartCfg
