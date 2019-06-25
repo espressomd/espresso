@@ -335,7 +335,7 @@ static void halo_push_communication(LB_Fluid &lbfluid,
                  rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                  comm_cart, &status);
   } else {
-    memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
+    rbuf = sbuf;
   }
 
   buffer = rbuf.data();
@@ -377,7 +377,7 @@ static void halo_push_communication(LB_Fluid &lbfluid,
                  rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                  comm_cart, &status);
   } else {
-    memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
+    rbuf = sbuf;
   }
 
   buffer = rbuf.data();
@@ -427,7 +427,7 @@ static void halo_push_communication(LB_Fluid &lbfluid,
                  rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                  comm_cart, &status);
   } else {
-    memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
+    rbuf = sbuf;
   }
 
   buffer = rbuf.data();
@@ -471,7 +471,7 @@ static void halo_push_communication(LB_Fluid &lbfluid,
                  rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                  comm_cart, &status);
   } else {
-    memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
+    rbuf = sbuf;
   }
 
   buffer = rbuf.data();
@@ -521,7 +521,7 @@ static void halo_push_communication(LB_Fluid &lbfluid,
                  rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                  comm_cart, &status);
   } else {
-    memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
+    rbuf = sbuf;
   }
 
   buffer = rbuf.data();
@@ -563,7 +563,7 @@ static void halo_push_communication(LB_Fluid &lbfluid,
                  rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
                  comm_cart, &status);
   } else {
-    memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
+    rbuf = sbuf;
   }
 
   buffer = rbuf.data();

@@ -377,15 +377,15 @@ inline void scale_vec(double scale, double *pdc, int size) {
    e_size is the size of only the top or bottom half, i.e. half of size.
 */
 
-inline double *block(std::vector<double>& p, int index, int size) {
+inline double *block(std::vector<double> &p, int index, int size) {
   return &p[index * size];
 }
 
-inline double *blwentry(std::vector<double>& p, int index, int e_size) {
+inline double *blwentry(std::vector<double> &p, int index, int e_size) {
   return &p[2 * index * e_size];
 }
 
-inline double *abventry(std::vector<double>& p, int index, int e_size) {
+inline double *abventry(std::vector<double> &p, int index, int e_size) {
   return &p[(2 * index + 1) * e_size];
 }
 
@@ -419,8 +419,7 @@ void gather_image_contributions(int e_size) {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size,
-             e_size);
+    copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size, e_size);
 }
 
 /* the data transfer routine for the lclcblks itself */
@@ -443,11 +442,9 @@ void distribute(int e_size, double fac) {
 
       /* calculate my ghost contribution only if a node above exists */
       if (node + 1 < n_nodes) {
-        addscale_vec(sendbuf, fac,
-                     blwentry(gblcblk, n_layers - 1, e_size),
+        addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size),
                      blwentry(lclcblk, n_layers - 1, e_size), e_size);
-        copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size),
-                 e_size);
+        copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     } else if (node + 1 == this_node) {
@@ -509,8 +506,7 @@ static void checkpoint(char *text, int p, int q, int e_size) {
       fprintf(stderr, " %10.3g", block(lclcblk, c, 2 * e_size)[i]);
     fprintf(stderr, " m");
     for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g",
-              block(lclcblk, c, 2 * e_size)[i + e_size]);
+      fprintf(stderr, " %10.3g", block(lclcblk, c, 2 * e_size)[i + e_size]);
     fprintf(stderr, "\n");
   }
   fprintf(stderr, "%d", n_layers + 1);
@@ -530,8 +526,7 @@ static void checkpoint(char *text, int p, int q, int e_size) {
       fprintf(stderr, " %10.3g", block(gblcblk, c, 2 * e_size)[i]);
     fprintf(stderr, " m");
     for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g",
-              block(gblcblk, c, 2 * e_size)[i + e_size]);
+      fprintf(stderr, " %10.3g", block(gblcblk, c, 2 * e_size)[i + e_size]);
     fprintf(stderr, "\n");
   }
   fprintf(stderr, "\n");
@@ -638,8 +633,8 @@ static void setup_z_energy() {
     scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
     /* just to be able to use the standard distribution. Here below
        and above terms are the same */
-    copy_vec(abventry(lclcblk, c, e_size),
-             blwentry(lclcblk, c, e_size), e_size);
+    copy_vec(abventry(lclcblk, c, e_size), blwentry(lclcblk, c, e_size),
+             e_size);
   }
 }
 
