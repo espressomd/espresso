@@ -102,7 +102,7 @@ LB_parameters_gpu lbpar_gpu = {
     0.0};
 
 /** this is the array that stores the hydrodynamic fields for the output */
-LB_rho_v_pi_gpu *host_values = nullptr;
+std::vector<LB_rho_v_pi_gpu> host_values(0);
 
 static int max_ran = 1000000;
 // static double tau;
@@ -158,19 +158,6 @@ void lb_reinit_fluid_gpu() {
   LB_TRACE(fprintf(stderr, "lb_reinit_fluid_gpu \n"));
 }
 
-/** Release the fluid. */
-/*not needed in Espresso but still not deleted.
-  Despite the name (TODO: change it), it releases
-  only the fluid-related memory on the gpu.*/
-void lb_release_gpu() {
-
-  if (host_values != nullptr) {
-    free(host_values);
-    host_values = nullptr;
-  }
-  //  if(host_forces!=nullptr) free(host_forces);
-  //  if(host_data  !=nullptr) free(host_data);
-}
 /** (Re-)initialize the fluid. */
 void lb_reinit_parameters_gpu() {
   lbpar_gpu.time_step = (float)time_step;
