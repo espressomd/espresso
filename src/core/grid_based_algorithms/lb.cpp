@@ -161,7 +161,7 @@ LB_Fluid lbfluid_post;
 std::vector<LB_FluidNode> lbfields;
 
 /** Communicator for halo exchange between processors */
-HaloCommunicator update_halo_comm =HaloCommunicator(0);
+HaloCommunicator update_halo_comm = HaloCommunicator(0);
 
 /** measures the MD time since the last fluid update */
 static double fluidstep = 0.0;
@@ -298,7 +298,7 @@ static void halo_push_communication(LB_Fluid &lbfluid,
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
-  double* buffer;
+  double *buffer;
   MPI_Status status;
 
   int yperiod = lblattice.halo_grid[0];
@@ -308,8 +308,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
    * X direction *
    ***************/
   count = 5 * lblattice.halo_grid[1] * lblattice.halo_grid[2];
-  std::vector<double>sbuf(count);
-  std::vector<double>rbuf(count);
+  std::vector<double> sbuf(count);
+  std::vector<double> rbuf(count);
 
   /* send to right, recv from left i = 1, 7, 9, 11, 13 */
   snode = node_neighbors[1];
@@ -331,8 +331,9 @@ static void halo_push_communication(LB_Fluid &lbfluid,
   }
 
   if (local_node_grid[0] > 1) {
-    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+                 rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+                 comm_cart, &status);
   } else {
     memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
   }
@@ -372,8 +373,9 @@ static void halo_push_communication(LB_Fluid &lbfluid,
   }
 
   if (local_node_grid[0] > 1) {
-    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+                 rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+                 comm_cart, &status);
   } else {
     memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
   }
@@ -421,8 +423,9 @@ static void halo_push_communication(LB_Fluid &lbfluid,
   }
 
   if (local_node_grid[1] > 1) {
-    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+                 rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+                 comm_cart, &status);
   } else {
     memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
   }
@@ -464,8 +467,9 @@ static void halo_push_communication(LB_Fluid &lbfluid,
   }
 
   if (local_node_grid[1] > 1) {
-    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+                 rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+                 comm_cart, &status);
   } else {
     memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
   }
@@ -513,8 +517,9 @@ static void halo_push_communication(LB_Fluid &lbfluid,
   }
 
   if (local_node_grid[2] > 1) {
-    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+                 rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+                 comm_cart, &status);
   } else {
     memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
   }
@@ -554,8 +559,9 @@ static void halo_push_communication(LB_Fluid &lbfluid,
   }
 
   if (local_node_grid[2] > 1) {
-    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+    MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+                 rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+                 comm_cart, &status);
   } else {
     memmove(rbuf.data(), sbuf.data(), count * sizeof(double));
   }
@@ -574,7 +580,6 @@ static void halo_push_communication(LB_Fluid &lbfluid,
       ++index;
     }
   }
-
 }
 
 /***********************************************************************/
@@ -647,7 +652,7 @@ void lb_realloc_fluid() {
  */
 void lb_prepare_communication() {
   int i;
-  HaloCommunicator comm=HaloCommunicator(0);
+  HaloCommunicator comm = HaloCommunicator(0);
 
   /* since the data layout is a structure of arrays, we have to
    * generate a communication for this structure: first we generate

@@ -105,8 +105,8 @@ void lb_init_boundaries() {
           break;
         }
 
-      ek_gather_wallcharge_species_density(host_wallcharge_species_density.data(),
-                                           wallcharge_species);
+      ek_gather_wallcharge_species_density(
+          host_wallcharge_species_density.data(), wallcharge_species);
 
       if (wallcharge_species == -1 && charged_boundaries) {
         runtimeErrorMsg()
@@ -187,7 +187,7 @@ void lb_init_boundaries() {
     }
 
     /**call of cuda fkt*/
-    std::vector<float>boundary_velocity(3 * (lbboundaries.size() + 1));
+    std::vector<float> boundary_velocity(3 * (lbboundaries.size() + 1));
     int n = 0;
     for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end();
          ++lbb, n++) {
@@ -201,8 +201,8 @@ void lb_init_boundaries() {
     boundary_velocity[3 * lbboundaries.size() + 2] = 0.0f;
 
     lb_init_boundaries_GPU(lbboundaries.size(), number_of_boundnodes,
-                           host_boundary_node_list.data(), host_boundary_index_list,
-                           boundary_velocity.data());
+                           host_boundary_node_list.data(),
+                           host_boundary_index_list, boundary_velocity.data());
 
 #ifdef EK_BOUNDARIES
     if (ek_initialized) {

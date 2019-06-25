@@ -114,7 +114,7 @@ static int fluidstep = 0;
 int i;
 
 int n_extern_node_force_densities = 0;
-std::vector<LB_extern_nodeforcedensity_gpu>host_extern_node_force_densities;
+std::vector<LB_extern_nodeforcedensity_gpu> host_extern_node_force_densities;
 bool ek_initialized = false;
 
 /*-----------------------------------------------------------*/
