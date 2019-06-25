@@ -771,7 +771,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
         if (i < src.n)
           i--;
       }
-    } else if (get_mi_coord(part.r.p[dir], my_right_global_abcd[dir], box_geo.length()[dir],
+    } else if (get_mi_coord(part.r.p[dir], local_geo.my_right()[dir], box_geo.length()[dir],
                             box_geo.periodic(dir)) >= 0.0) {
       if (box_geo.periodic(dir) || (boundary[2 * dir + 1] == 0)) {
 

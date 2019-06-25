@@ -2313,11 +2313,11 @@ void dp3m_calc_local_ca_mesh() {
   /* inner up right grid point (global index) */
   for (i = 0; i < 3; i++)
     dp3m.local_mesh.in_ur[i] =
-        (int)floor(my_right_global_abcd[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
+        (int)floor(local_geo.my_right()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
 
   /* correct roundof errors at boundary */
   for (i = 0; i < 3; i++) {
-    if ((my_right_global_abcd[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]) -
+    if ((local_geo.my_right()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]) -
             dp3m.local_mesh.in_ur[i] <
         ROUND_ERROR_PREC)
       dp3m.local_mesh.in_ur[i]--;
@@ -2343,11 +2343,11 @@ void dp3m_calc_local_ca_mesh() {
         dp3m.local_mesh.in_ld[i] - dp3m.local_mesh.ld_ind[i];
   /* up right grid point */
   for (i = 0; i < 3; i++)
-    ind[i] = (int)floor((my_right_global_abcd[i] + full_skin[i]) * dp3m.params.ai[i] -
+    ind[i] = (int)floor((local_geo.my_right()[i] + full_skin[i]) * dp3m.params.ai[i] -
                         dp3m.params.mesh_off[i]);
   /* correct roundof errors at up right boundary */
   for (i = 0; i < 3; i++)
-    if (((my_right_global_abcd[i] + full_skin[i]) * dp3m.params.ai[i] -
+    if (((local_geo.my_right()[i] + full_skin[i]) * dp3m.params.ai[i] -
          dp3m.params.mesh_off[i]) -
             ind[i] ==
         0)

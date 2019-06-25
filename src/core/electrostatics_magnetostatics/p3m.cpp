@@ -605,13 +605,13 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
       fprintf(stderr, "%d: rs_mesh underflow! (pos %f)\n", this_node,
               real_pos[d]);
       fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-              local_geo.my_left()[d] - skin, my_right_global_abcd[d] + skin);
+              local_geo.my_left()[d] - skin, local_geo.my_right()[d] + skin);
     }
     if ((nmp + cao) > p3m.local_mesh.dim[d]) {
       fprintf(stderr, "%d: rs_mesh overflow! (pos %f, nmp=%d)\n", this_node,
               real_pos[d], nmp);
       fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-              local_geo.my_left()[d] - skin, my_right_global_abcd[d] + skin);
+              local_geo.my_left()[d] - skin, local_geo.my_right()[d] + skin);
     }
 #endif
   }
@@ -2086,11 +2086,11 @@ void p3m_calc_local_ca_mesh() {
   /* inner up right grid point (global index) */
   for (i = 0; i < 3; i++)
     p3m.local_mesh.in_ur[i] =
-        (int)floor(my_right_global_abcd[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
+        (int)floor(local_geo.my_right()[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
 
   /* correct roundof errors at boundary */
   for (i = 0; i < 3; i++) {
-    if ((my_right_global_abcd[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
+    if ((local_geo.my_right()[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
             p3m.local_mesh.in_ur[i] <
         ROUND_ERROR_PREC)
       p3m.local_mesh.in_ur[i]--;
@@ -2114,11 +2114,11 @@ void p3m_calc_local_ca_mesh() {
         p3m.local_mesh.in_ld[i] - p3m.local_mesh.ld_ind[i];
   /* up right grid point */
   for (i = 0; i < 3; i++)
-    ind[i] = (int)floor((my_right_global_abcd[i] + full_skin[i]) * p3m.params.ai[i] -
+    ind[i] = (int)floor((local_geo.my_right()[i] + full_skin[i]) * p3m.params.ai[i] -
                         p3m.params.mesh_off[i]);
   /* correct roundof errors at up right boundary */
   for (i = 0; i < 3; i++)
-    if (((my_right_global_abcd[i] + full_skin[i]) * p3m.params.ai[i] -
+    if (((local_geo.my_right()[i] + full_skin[i]) * p3m.params.ai[i] -
          p3m.params.mesh_off[i]) -
             ind[i] ==
         0)

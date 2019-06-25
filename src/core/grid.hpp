@@ -79,8 +79,6 @@ extern Utils::Vector3d local_box_l;
 /** Smallest local simulation box dimension (\ref local_box_l).
     Only the periodic directions are taken into account! */
 extern double min_local_box_l;
-/** Right (top, back) corner of this nodes local box. */
-extern Utils::Vector3d my_right_global_abcd;
 
 /*@}*/
 

@@ -61,7 +61,6 @@ Utils::Vector3d box_l_i = {1, 1, 1};
 double min_box_l;
 Utils::Vector3d local_box_l{1, 1, 1};
 double min_local_box_l;
-Utils::Vector3d my_right_global_abcd{1, 1, 1};
 
 /************************************************************/
 
@@ -117,7 +116,7 @@ void grid_changed_box_l() {
   for (int i = 0; i < 3; i++) {
     local_box_l[i] = box_geo.length()[i] / (double)node_grid[i];
     local_geo.my_left_[i] = node_pos[i] * local_box_l[i];
-    my_right_global_abcd[i] = (node_pos[i] + 1) * local_box_l[i];
+    local_geo.my_right_[i] = (node_pos[i] + 1) * local_box_l[i];
   }
 
   calc_minimal_box_dimensions();

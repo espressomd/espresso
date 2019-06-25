@@ -150,11 +150,11 @@ namespace {
 bool in_local_domain(Utils::Vector3d const &pos) {
   auto const lblattice = lb_lbfluid_get_lattice();
   return (pos[0] >= local_geo.my_left()[0] - 0.5 * lblattice.agrid[0] &&
-          pos[0] < my_right_global_abcd[0] + 0.5 * lblattice.agrid[0] &&
+          pos[0] < local_geo.my_right()[0] + 0.5 * lblattice.agrid[0] &&
           pos[1] >= local_geo.my_left()[1] - 0.5 * lblattice.agrid[1] &&
-          pos[1] < my_right_global_abcd[1] + 0.5 * lblattice.agrid[1] &&
+          pos[1] < local_geo.my_right()[1] + 0.5 * lblattice.agrid[1] &&
           pos[2] >= local_geo.my_left()[2] - 0.5 * lblattice.agrid[2] &&
-          pos[2] < my_right_global_abcd[2] + 0.5 * lblattice.agrid[2]);
+          pos[2] < local_geo.my_right()[2] + 0.5 * lblattice.agrid[2]);
 }
 
 #ifdef ENGINE

@@ -11,6 +11,7 @@ public:
   Utils::Vector<T, 3> my_left_ = {0, 0, 0};
 
   auto const& my_left() const { return my_left_; }
+  auto const& my_right() const { return my_right_; }
 
   /** Right (top, back) corner of this nodes local box. */
   Utils::Vector<T, 3> my_right_ = {1, 1, 1};
