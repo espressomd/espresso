@@ -126,39 +126,11 @@ template <typename T, std::size_t N> struct Array {
   }
 
 #ifdef __HCC__
+  // workaround for https://github.com/RadeonOpenCompute/hcc/issues/860
   __attribute__((annotate("serialize"))) void
-  __cxxamp_serialize(Kalmar::Serialize &s) const {
-    for (int i = 0; i < N; ++i)
-      s.Append(sizeof(T), &m_storage[i]);
-    for (int i = N; i < 10; ++i)
-      s.Append(sizeof(T), T());
-  }
-
+  __cxxamp_serialize(Kalmar::Serialize &s) const;
   __attribute__((annotate("user_deserialize"))) void
-  Foo(T x0, T x1, T x2, T x3, T x4, T x5, T x6, T x7, T x8, T x9)[[cpu]][[hc]] {
-    if (N > 0)
-      m_storage[0] = x0;
-    if (N > 1)
-      m_storage[1] = x1;
-    if (N > 2)
-      m_storage[2] = x2;
-    if (N > 3)
-      m_storage[3] = x3;
-    if (N > 4)
-      m_storage[4] = x4;
-    if (N > 5)
-      m_storage[5] = x5;
-    if (N > 6)
-      m_storage[6] = x6;
-    if (N > 7)
-      m_storage[7] = x7;
-    if (N > 8)
-      m_storage[8] = x8;
-    if (N > 9)
-      m_storage[9] = x9;
-    static_assert(N <= 10, "custom serialization function is only implemented "
-                           "for arrays of sizes up to 10");
-  }
+  cxxamp_deserialize()[[cpu]][[hc]];
 #endif
 
 private:
