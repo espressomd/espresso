@@ -101,30 +101,22 @@ public:
 
   template <typename Container>
   const_reference at(Container const &indices) const {
-    if (not valid_indices(indices)) {
-      throw std::runtime_error("Invalid indices");
-    }
+    validate_indices(indices);
     return operator()(indices);
   }
 
   template <typename Container> reference at(Container const &indices) {
-    if (not valid_indices(indices)) {
-      throw std::runtime_error("Invalid indices");
-    }
+    validate_indices(indices);
     return operator()(indices);
   }
 
   const_reference at(std::initializer_list<std::size_t> const &indices) const {
-    if (not valid_indices(indices)) {
-      throw std::runtime_error("Invalid indices");
-    }
+    validate_indices(indices);
     return operator()(indices);
   }
 
   reference at(std::initializer_list<std::size_t> const &indices) {
-    if (not valid_indices(indices)) {
-      throw std::runtime_error("Invalid indices");
-    }
+    validate_indices(indices);
     return operator()(indices);
   }
 
@@ -157,6 +149,13 @@ public:
   auto const &extents() const noexcept { return m_extents; }
 
 private:
+  /**
+   * @brief Check that indices are valid.
+   * The number of given indices as well as being within the extents is checked.
+   * @param indices Indices to be checked.
+   * @returns boolean true if valid, false else.
+   * @tparam Type of container holding the indices.
+   */
   template <typename Container>
   bool valid_indices(Container const &indices) const {
     if (indices.size() != m_extents.size()) {
@@ -166,6 +165,19 @@ private:
     auto const res =
         boost::mismatch(indices, m_extents, std::less<std::size_t>());
     return res.first == indices.end();
+  }
+
+  /**
+   * @brief Throw if invalid indices.
+   * @param indices Indices to be checked.
+   * @tparam Type of container holding the indices.
+   * @throws std::runtime_error if indices are invalid.
+   */
+  template <typename Container>
+  void validate_indices(Container const &indices) const {
+    if (not valid_indices(indices)) {
+      throw std::runtime_error("Invalid indices");
+    }
   }
 
   template <typename Container>
