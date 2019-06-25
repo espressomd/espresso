@@ -33,7 +33,6 @@
 #include <boost/algorithm/clamp.hpp>
 #include <mpi.h>
 
-#include <boost/range/algorithm/min_element.hpp>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -109,8 +108,6 @@ void grid_changed_box_l() {
     local_geo.my_left_[i] = node_pos[i] * local_geo.length()[i];
     local_geo.my_right_[i] = (node_pos[i] + 1) * local_geo.length()[i];
   }
-
-  calc_minimal_box_dimensions();
 }
 
 void grid_changed_n_nodes() {
@@ -122,11 +119,6 @@ void grid_changed_n_nodes() {
   calc_node_neighbors(this_node);
 
   grid_changed_box_l();
-}
-
-void calc_minimal_box_dimensions() {
-  min_box_l = *boost::min_element(box_geo.length());
-  min_local_box_l = *boost::min_element(local_geo.length());
 }
 
 void rescale_boxl(int dir, double d_new) {

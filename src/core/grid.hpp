@@ -69,13 +69,6 @@ extern Utils::Vector3i node_pos;
 /** the six nearest neighbors of a node in the node grid. */
 extern Utils::Vector<int, 6> node_neighbors;
 
-/** Smallest simulation box dimension. Only periodic directions
-    are taken into account! */
-extern double min_box_l;
-/** Smallest local simulation box dimension (\ref local_box_l).
-    Only the periodic directions are taken into account! */
-extern double min_local_box_l;
-
 /*@}*/
 
 /** \name Exported Functions */
@@ -117,13 +110,6 @@ void grid_changed_n_nodes();
 
 /** called from \ref mpi_bcast_parameter . */
 void grid_changed_box_l();
-
-/** Calculates the smallest box and local box dimensions for periodic
- * directions.  This is needed to check if the interaction ranges are
- * compatible with the box dimensions and the node grid.
- * Remark: In the aperiodic case min_box_l is set to
- * 2 * \ref MAX_INTERACTION_RANGE . */
-void calc_minimal_box_dimensions();
 
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales
  * the particles accordingly */

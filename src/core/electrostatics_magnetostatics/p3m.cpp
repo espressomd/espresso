@@ -52,6 +52,7 @@ using Utils::strcat_alloc;
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <boost/range/algorithm/min_element.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -1473,9 +1474,9 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
                std::max(box_geo.length()[1] * cao / (2.0 * mesh[1]),
                         box_geo.length()[2] * cao / (2.0 * mesh[2])));
 
-  P3M_TRACE(fprintf(
-      stderr, "p3m_mc_time: mesh=(%d, %d, %d), cao=%d, rmin=%f, rmax=%f\n",
-      mesh[0], mesh[1], mesh[2], cao, r_cut_iL_min, r_cut_iL_max));
+    auto const min_box_l = *boost::min_element(box_geo.length());
+    auto const min_local_box_l = *boost::min_element(local_geo.length());
+
   if (cao >= std::min(mesh[0], std::min(mesh[1], mesh[2])) ||
       k_cut >= (std::min(min_box_l, min_local_box_l) - skin)) {
     sprintf(b, "%-4d %-3d cao too large for this mesh\n", mesh[0], cao);
@@ -1838,6 +1839,9 @@ int p3m_adaptive_tune(char **log) {
   }
 
   if (p3m.params.r_cut_iL == 0.0) {
+      auto const min_box_l = *boost::min_element(box_geo.length());
+      auto const min_local_box_l = *boost::min_element(local_geo.length());
+
     r_cut_iL_min = 0;
     r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
     r_cut_iL_min *= (1. / box_geo.length()[0]);
