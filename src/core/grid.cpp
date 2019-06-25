@@ -33,6 +33,7 @@
 #include <boost/algorithm/clamp.hpp>
 #include <mpi.h>
 
+#include <boost/range/algorithm/min_element.hpp>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -129,27 +130,12 @@ void grid_changed_n_nodes() {
 
   calc_node_neighbors(this_node);
 
-#ifdef GRID_DEBUG
-  fprintf(stderr, "%d: node_pos=(%d,%d,%d)\n", this_node, node_pos[0],
-          node_pos[1], node_pos[2]);
-  fprintf(stderr, "%d: node_neighbors=(%d,%d,%d,%d,%d,%d)\n", this_node,
-          node_neighbors[0], node_neighbors[1], node_neighbors[2],
-          node_neighbors[3], node_neighbors[4], node_neighbors[5]);
-  fprintf(stderr, "%d: boundary=(%d,%d,%d,%d,%d,%d)\n", this_node, boundary[0],
-          boundary[1], boundary[2], boundary[3], boundary[4], boundary[5]);
-#endif
-
   grid_changed_box_l();
 }
 
 void calc_minimal_box_dimensions() {
-  int i;
-  min_box_l = 2 * MAX_INTERACTION_RANGE;
-  min_local_box_l = MAX_INTERACTION_RANGE;
-  for (i = 0; i < 3; i++) {
-    min_box_l = std::min(min_box_l, box_geo.length()[i]);
-    min_local_box_l = std::min(min_local_box_l, local_geo.length()[i]);
-  }
+  min_box_l = *boost::min_element(box_geo.length());
+  min_local_box_l = *boost::min_element(local_geo.length());
 }
 
 void rescale_boxl(int dir, double d_new) {
