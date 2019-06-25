@@ -432,39 +432,9 @@ void on_parameter_change(int field) {
     /* Thermalized distance bonds needs ghost velocities */
     on_ghost_flags_change();
     break;
-<<<<<<< HEAD:src/core/event.cpp
   case FIELD_SIMTIME:
     recalc_forces = 1;
     break;
-=======
-  }
-}
-
-#ifdef LB
-void on_lb_params_change(int field) {
-  EVENT_TRACE(fprintf(stderr, "%d: on_lb_params_change\n", this_node));
-
-  if (field == LBPAR_AGRID) {
-    lb_init();
-  }
-  if (field == LBPAR_DENSITY) {
-    lb_reinit_fluid();
-  }
-  lb_reinit_parameters();
-}
-#endif
-
-#if defined(LB) || defined(LB_GPU)
-void on_lb_params_change_gpu(int field) {
-  EVENT_TRACE(fprintf(stderr, "%d: on_lb_params_change_gpu\n", this_node));
-
-#ifdef LB_GPU
-  if (field == LBPAR_AGRID) {
-    lb_init_gpu();
-#ifdef LB_BOUNDARIES_GPU
-    LBBoundaries::lb_init_boundaries();
-#endif
->>>>>>> remove unnecessary lees-edwards code:src/core/initialize.cpp
   }
 }
 

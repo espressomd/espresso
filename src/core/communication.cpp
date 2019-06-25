@@ -125,7 +125,8 @@ int n_nodes = -1;
   CB(mpi_update_particle_slave)                                                \
   CB(mpi_bcast_lb_particle_coupling_slave)                                     \
   CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
-  CB(mpi_set_interpolation_order_slave)
+  CB(mpi_set_interpolation_order_slave)                                        \
+  CB(mpi_lees_edwards_image_reset_slave)                                       \
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -705,6 +706,21 @@ struct pair_sum {
   }
 };
 
+/****************** LEES_EDWARDS_IMAGE_RESET *******************/
+
+#ifdef LEES_EDWARDS
+void mpi_lees_edwards_image_reset() {
+  mpi_call(mpi_lees_edwards_image_reset_slave, -1, 0);
+  local_lees_edwards_image_reset();
+  on_particle_change();
+}
+
+void mpi_lees_edwards_image_reset_slave(int, int) {
+  local_lees_edwards_image_reset();
+  on_particle_change();
+}
+#endif
+
 Utils::Vector3d mpi_system_CMS() {
   auto const data =
       mpi_call(Communication::Result::reduction, pair_sum{}, local_system_CMS);
@@ -756,3 +772,5 @@ void mpi_resort_particles_slave(int global_flag, int) {
 
   boost::mpi::gather(comm_cart, cells_get_n_particles(), 0);
 }
+
+

@@ -766,7 +766,6 @@ double offset_at_time_step =
         skin2)
       set_resort_particles(Cells::RESORT_LOCAL);
   }
-  announce_resort_particles();
 
 #ifdef ADDITIONAL_CHECKS
   force_and_velocity_display();

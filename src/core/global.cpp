@@ -39,10 +39,6 @@
 #include "tuning.hpp"
 #include <utils/mpi/all_compare.hpp>
 
-#ifdef LEES_EDWARDS
-#include "lees_edwards.hpp"
-#endif
-
 #include <boost/functional/hash.hpp>
 
 #include <functional>
