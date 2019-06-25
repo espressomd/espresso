@@ -68,8 +68,6 @@ extern Utils::Vector3i node_grid;
 extern Utils::Vector3i node_pos;
 /** the six nearest neighbors of a node in the node grid. */
 extern Utils::Vector<int, 6> node_neighbors;
-/** where to fold particles that leave local box in direction i. */
-extern Utils::Vector<int, 6> boundary;
 
 /** Smallest simulation box dimension. Only periodic directions
     are taken into account! */

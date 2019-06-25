@@ -39,12 +39,6 @@
 #include <cstdlib>
 #include <cstring>
 
-/************************************************
- * defines
- ************************************************/
-
-#define MAX_INTERACTION_RANGE 1e100
-
 /**********************************************
  * variables
  **********************************************/
@@ -55,7 +49,6 @@ LocalBox<double> local_geo;
 Utils::Vector3i node_grid{};
 Utils::Vector3i node_pos = {-1, -1, -1};
 Utils::Vector<int, 6> node_neighbors{};
-Utils::Vector<int, 6> boundary{};
 
 double min_box_l;
 double min_local_box_l;
@@ -93,15 +86,15 @@ int calc_node_neighbors(int node) {
 
     /* left boundary ? */
     if (node_pos[dir] == 0) {
-      boundary[2 * dir] = 1;
+      local_geo.boundary_[2 * dir] = 1;
     } else {
-      boundary[2 * dir] = 0;
+      local_geo.boundary_[2 * dir] = 0;
     }
     /* right boundary ? */
     if (node_pos[dir] == node_grid[dir] - 1) {
-      boundary[2 * dir + 1] = -1;
+      local_geo.boundary_[2 * dir + 1] = -1;
     } else {
-      boundary[2 * dir + 1] = 0;
+      local_geo.boundary_[2 * dir + 1] = 0;
     }
   }
 
@@ -121,8 +114,6 @@ void grid_changed_box_l() {
 }
 
 void grid_changed_n_nodes() {
-  GRID_TRACE(fprintf(stderr, "%d: grid_changed_n_nodes:\n", this_node));
-
   mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
                            {{1, 1, 1}});
 

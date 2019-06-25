@@ -16,6 +16,9 @@ public:
 
   /** Right (top, back) corner of this nodes local box. */
   Utils::Vector<T, 3> my_right_ = {1, 1, 1};
+
+  Utils::Vector<int, 6> boundary_ = {};
+  auto const&boundary() const { return boundary_; }
 };
 
 #endif // ESPRESSO_LOCALBOX_HPP
