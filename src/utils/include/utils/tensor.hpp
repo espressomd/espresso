@@ -134,11 +134,11 @@ public:
 
   const_iterator cbegin() const noexcept { return &(*m_data.begin()); };
 
-  iterator end() noexcept { return &(*m_data.end()); };
+  iterator end() noexcept { return begin() + m_data.size(); };
 
-  const_iterator end() const noexcept { return &(*m_data.end()); };
+  const_iterator end() const noexcept { return begin() + m_data.size(); };
 
-  const_iterator cend() const noexcept { return &(*m_data.end()); };
+  const_iterator cend() const noexcept { return begin() + m_data.size(); };
 
   pointer data() noexcept { return m_data.data(); }
 
