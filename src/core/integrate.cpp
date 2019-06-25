@@ -686,6 +686,10 @@ void propagate_vel_pos() {
   INTEG_TRACE(fprintf(stderr, "%d: propagate_vel_pos:\n", this_node));
 #ifdef LEES_EDWARDS
 double shear_velocity = lees_edwards_get_velocity(sim_time)/2.0;
+/* For the offset, we set the value at half the time step as a "midpoint rule". The
+   particles that will cross a Lees-Edwards boundary are not known beforehand, so we had to
+   make this choice, the alternative being to compute the crossing time for all particles.
+*/
 double offset_at_time_step =
           lees_edwards_get_offset(sim_time + time_step/2.0);
 #endif
