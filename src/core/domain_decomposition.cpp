@@ -37,7 +37,6 @@ using Utils::get_linear_index;
 
 #include "event.hpp"
 
-#include <boost/algorithm/clamp.hpp>
 #include <boost/mpi/collectives.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
@@ -182,11 +181,12 @@ void dd_create_cell_grid() {
   realloc_cellplist(&local_cells, local_cells.n = n_local_cells);
   realloc_cellplist(&ghost_cells, ghost_cells.n = new_cells - n_local_cells);
 
-  CELL_TRACE(fprintf(
-      stderr, "%d: dd_create_cell_grid, n_cells=%lu, local_cells.n=%d, "
-              "ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n",
-      this_node, (unsigned long)cells.size(), local_cells.n, ghost_cells.n,
-      dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]));
+  CELL_TRACE(fprintf(stderr,
+                     "%d: dd_create_cell_grid, n_cells=%lu, local_cells.n=%d, "
+                     "ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n",
+                     this_node, (unsigned long)cells.size(), local_cells.n,
+                     ghost_cells.n, dd.ghost_cell_grid[0],
+                     dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]));
 }
 
 /** Fill local_cells list and ghost_cells list for use with domain
@@ -347,8 +347,9 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
 
               dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
 
-              CELL_TRACE(fprintf(stderr, "%d: prep_comm %d send to   node %d "
-                                         "grid (%d,%d,%d)-(%d,%d,%d)\n",
+              CELL_TRACE(fprintf(stderr,
+                                 "%d: prep_comm %d send to   node %d "
+                                 "grid (%d,%d,%d)-(%d,%d,%d)\n",
                                  this_node, cnt, comm->comm[cnt].node, lc[0],
                                  lc[1], lc[2], hc[0], hc[1], hc[2]));
               cnt++;
@@ -364,8 +365,9 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
               dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
-              CELL_TRACE(fprintf(stderr, "%d: prep_comm %d recv from node %d "
-                                         "grid (%d,%d,%d)-(%d,%d,%d)\n",
+              CELL_TRACE(fprintf(stderr,
+                                 "%d: prep_comm %d recv from node %d "
+                                 "grid (%d,%d,%d)-(%d,%d,%d)\n",
                                  this_node, cnt, comm->comm[cnt].node, lc[0],
                                  lc[1], lc[2], hc[0], hc[1], hc[2]));
               cnt++;
@@ -474,16 +476,11 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
   }
 }
 
-#include "utils/print.hpp"
-
-#include <boost/container/flat_map.hpp>
-
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
  * created list of interacting neighbor cells is used by the Verlet
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
-
 void dd_init_cell_interactions(const Utils::Vector3i &grid) {
   int m, n, o, p, q, r, ind1, ind2;
 
@@ -610,8 +607,9 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
       std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
   max_skin = min_cell_size - max_cut;
 
-  CELL_TRACE(fprintf(stderr, "%d: dd_on_geometry_change: max_range = %f, "
-                             "min_cell_size = %f, max_skin = %f\n",
+  CELL_TRACE(fprintf(stderr,
+                     "%d: dd_on_geometry_change: max_range = %f, "
+                     "min_cell_size = %f, max_skin = %f\n",
                      this_node, max_range, min_cell_size, max_skin));
 
   if (max_range > min_cell_size) {
@@ -665,8 +663,9 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   /* create communicators */
   dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM, grid);
 
-  exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-  update_data = (GHOSTTRANS_POSITION);
+  exchange_data =
+      (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
+  update_data = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
 
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data, grid);
   dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data, grid);
@@ -738,6 +737,7 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
     if (target_cell) {
       append_indexed_particle(target_cell, std::move(src.part[i]));
     } else {
+
       append_unindexed_particle(&rest, std::move(src.part[i]));
     }
   }
