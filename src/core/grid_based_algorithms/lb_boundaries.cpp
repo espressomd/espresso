@@ -202,7 +202,7 @@ void lb_init_boundaries() {
 
     lb_init_boundaries_GPU(lbboundaries.size(), number_of_boundnodes,
                            host_boundary_node_list.data(),
-                           host_boundary_index_list, boundary_velocity.data());
+                           host_boundary_index_list,.data() boundary_velocity.data());
 
 #ifdef EK_BOUNDARIES
     if (ek_initialized) {
