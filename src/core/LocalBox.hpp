@@ -12,6 +12,7 @@ public:
 
   auto const& my_left() const { return my_left_; }
   auto const& my_right() const { return my_right_; }
+  auto const& length() const { return local_box_l; }
 
   /** Right (top, back) corner of this nodes local box. */
   Utils::Vector<T, 3> my_right_ = {1, 1, 1};

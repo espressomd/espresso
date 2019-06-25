@@ -1539,7 +1539,7 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
   n_cells = 1;
   for (i = 0; i < 3; i++)
     n_cells *=
-        (int)(floor(local_box_l[i] / (r_cut_iL * box_geo.length()[0] + skin)));
+        (int)(floor(local_geo.length()[i] / (r_cut_iL * box_geo.length()[0] + skin)));
   if (n_cells < min_num_cells) {
     P3M_TRACE(fprintf(
         stderr,
@@ -2174,10 +2174,10 @@ bool p3m_sanity_checks_boxl() {
                         << box_geo.length()[i];
       ret = true;
     }
-    if (p3m.params.cao_cut[i] >= local_box_l[i]) {
+    if (p3m.params.cao_cut[i] >= local_geo.length()[i]) {
       runtimeErrorMsg() << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
                         << " is larger than local box dimension "
-                        << local_box_l[i];
+                        << local_geo.length()[i];
       ret = true;
     }
   }

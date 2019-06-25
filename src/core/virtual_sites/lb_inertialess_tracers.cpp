@@ -156,7 +156,7 @@ void CoupleIBMParticleToFluid(Particle *p) {
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
   lblattice.map_position_to_lattice(p->r.p, node_index, delta, local_geo.my_left(),
-                                    local_box_l);
+                                    local_geo.length());
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {
@@ -193,7 +193,7 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
   lblattice.map_position_to_lattice(pos, node_index, delta, local_geo.my_left(),
-                                    local_box_l);
+                                    local_geo.length());
 
   /* calculate fluid velocity at particle's position
    this is done by linear interpolation

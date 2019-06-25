@@ -56,10 +56,7 @@ Utils::Vector3i node_pos = {-1, -1, -1};
 Utils::Vector<int, 6> node_neighbors{};
 Utils::Vector<int, 6> boundary{};
 
-Utils::Vector3d half_box_l = {0.5, 0.5, 0.5};
-Utils::Vector3d box_l_i = {1, 1, 1};
 double min_box_l;
-Utils::Vector3d local_box_l{1, 1, 1};
 double min_local_box_l;
 
 /************************************************************/
@@ -74,7 +71,7 @@ int map_position_node_array(const Utils::Vector3d &pos) {
 
   Utils::Vector3i im;
   for (int i = 0; i < 3; i++) {
-    im[i] = std::floor(f_pos[i] / local_box_l[i]);
+    im[i] = std::floor(f_pos[i] / local_geo.length()[i]);
     im[i] = boost::algorithm::clamp(im[i], 0, node_grid[i] - 1);
   }
 
@@ -114,9 +111,9 @@ int calc_node_neighbors(int node) {
 
 void grid_changed_box_l() {
   for (int i = 0; i < 3; i++) {
-    local_box_l[i] = box_geo.length()[i] / (double)node_grid[i];
-    local_geo.my_left_[i] = node_pos[i] * local_box_l[i];
-    local_geo.my_right_[i] = (node_pos[i] + 1) * local_box_l[i];
+    local_geo.local_box_l[i] = box_geo.length()[i] / (double)node_grid[i];
+    local_geo.my_left_[i] = node_pos[i] * local_geo.length()[i];
+    local_geo.my_right_[i] = (node_pos[i] + 1) * local_geo.length()[i];
   }
 
   calc_minimal_box_dimensions();
@@ -151,7 +148,7 @@ void calc_minimal_box_dimensions() {
   min_local_box_l = MAX_INTERACTION_RANGE;
   for (i = 0; i < 3; i++) {
     min_box_l = std::min(min_box_l, box_geo.length()[i]);
-    min_local_box_l = std::min(min_local_box_l, local_box_l[i]);
+    min_local_box_l = std::min(min_local_box_l, local_geo.length()[i]);
   }
 }
 

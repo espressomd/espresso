@@ -91,25 +91,25 @@ void dd_create_cell_grid() {
     n_local_cells = dd.cell_grid[0] * dd.cell_grid[1] * dd.cell_grid[2];
   } else {
     /* Calculate initial cell grid */
-    double volume = local_box_l[0];
+    double volume = local_geo.length()[0];
     for (i = 1; i < 3; i++)
-      volume *= local_box_l[i];
+      volume *= local_geo.length()[i];
     double scale = pow(max_num_cells / volume, 1. / 3.);
     for (i = 0; i < 3; i++) {
       /* this is at least 1 */
-      dd.cell_grid[i] = (int)ceil(local_box_l[i] * scale);
-      cell_range[i] = local_box_l[i] / dd.cell_grid[i];
+      dd.cell_grid[i] = (int)ceil(local_geo.length()[i] * scale);
+      cell_range[i] = local_geo.length()[i] / dd.cell_grid[i];
 
       if (cell_range[i] < max_range) {
         /* ok, too many cells for this direction, set to minimum */
-        dd.cell_grid[i] = (int)floor(local_box_l[i] / max_range);
+        dd.cell_grid[i] = (int)floor(local_geo.length()[i] / max_range);
         if (dd.cell_grid[i] < 1) {
           runtimeErrorMsg()
               << "interaction range " << max_range << " in direction " << i
-              << " is larger than the local box size " << local_box_l[i];
+              << " is larger than the local box size " << local_geo.length()[i];
           dd.cell_grid[i] = 1;
         }
-        cell_range[i] = local_box_l[i] / dd.cell_grid[i];
+        cell_range[i] = local_geo.length()[i] / dd.cell_grid[i];
       }
     }
 
@@ -140,7 +140,7 @@ void dd_create_cell_grid() {
                          this_node, min_ind, min_size, dd.cell_grid[min_ind]));
 
       dd.cell_grid[min_ind]--;
-      cell_range[min_ind] = local_box_l[min_ind] / dd.cell_grid[min_ind];
+      cell_range[min_ind] = local_geo.length()[min_ind] / dd.cell_grid[min_ind];
     }
     CELL_TRACE(fprintf(stderr, "%d: final %d %d %d\n", this_node,
                        dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]));
@@ -164,7 +164,7 @@ void dd_create_cell_grid() {
   for (i = 0; i < 3; i++) {
     dd.ghost_cell_grid[i] = dd.cell_grid[i] + 2;
     new_cells *= dd.ghost_cell_grid[i];
-    dd.cell_size[i] = local_box_l[i] / (double)dd.cell_grid[i];
+    dd.cell_size[i] = local_geo.length()[i] / (double)dd.cell_grid[i];
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
   }
   max_skin =
@@ -575,7 +575,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
 void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
-    if (local_box_l[i] < max_range) {
+    if (local_geo.length()[i] < max_range) {
       runtimeErrorMsg() << "box_l in direction " << i << " is too small";
     }
 
@@ -597,7 +597,7 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
      (in addition to the general ones that \ref grid_changed_box_l
      takes care of) */
   for (int i = 0; i < 3; i++) {
-    dd.cell_size[i] = local_box_l[i] / (double)dd.cell_grid[i];
+    dd.cell_size[i] = local_geo.length()[i] / (double)dd.cell_grid[i];
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
   }
 
@@ -622,7 +622,7 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
   if (!(flags & CELL_FLAG_FAST) && max_range > 0) {
     int i;
     for (i = 0; i < 3; i++) {
-      auto poss_size = (int)floor(local_box_l[i] / max_range);
+      auto poss_size = (int)floor(local_geo.length()[i] / max_range);
       if (poss_size > dd.cell_grid[i])
         break;
     }

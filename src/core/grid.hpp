@@ -74,8 +74,6 @@ extern Utils::Vector<int, 6> boundary;
 /** Smallest simulation box dimension. Only periodic directions
     are taken into account! */
 extern double min_box_l;
-/** Dimensions of the box a single node is responsible for. */
-extern Utils::Vector3d local_box_l;
 /** Smallest local simulation box dimension (\ref local_box_l).
     Only the periodic directions are taken into account! */
 extern double min_local_box_l;

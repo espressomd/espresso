@@ -311,10 +311,10 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
 
   if (this_node == 0 && determine_n_layers) {
     if (max_range > 0) {
-      n_layers = (int)floor(local_box_l[2] / max_range);
+      n_layers = (int)floor(local_geo.length()[2] / max_range);
       if (n_layers < 1) {
         runtimeErrorMsg() << "layered: maximal interaction range " << max_range
-                          << " larger than local box length " << local_box_l[2];
+                          << " larger than local box length " << local_geo.length()[2];
         n_layers = 1;
       }
       if (n_layers > max_num_cells - 2)
@@ -341,7 +341,7 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   if ((btm == -1) && (layered_flags & LAYERED_PERIODIC))
     btm = n_nodes - 1;
 
-  layer_h = local_box_l[2] / (double)(n_layers);
+  layer_h = local_geo.length()[2] / (double)(n_layers);
   layer_h_i = 1 / layer_h;
 
   if (layer_h < max_range) {

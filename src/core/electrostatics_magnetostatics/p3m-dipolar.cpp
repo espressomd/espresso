@@ -1728,7 +1728,7 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
   n_cells = 1;
   for (i = 0; i < 3; i++)
     n_cells *=
-        (int)(floor(local_box_l[i] / (r_cut_iL * box_geo.length()[0] + skin)));
+        (int)(floor(local_geo.length()[i] / (r_cut_iL * box_geo.length()[0] + skin)));
   if (n_cells < min_num_cells) {
     P3M_TRACE(fprintf(
         stderr, "dp3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n",
@@ -2388,11 +2388,11 @@ bool dp3m_sanity_checks_boxl() {
                         << box_geo.length()[i];
       ret = true;
     }
-    if (dp3m.params.cao_cut[i] >= local_box_l[i]) {
+    if (dp3m.params.cao_cut[i] >= local_geo.length()[i]) {
       runtimeErrorMsg() << "dipolar P3M_init: k-space cutoff "
                         << dp3m.params.cao_cut[i]
                         << " is larger than local box dimension "
-                        << local_box_l[i];
+                        << local_geo.length()[i];
       ret = true;
     }
   }
