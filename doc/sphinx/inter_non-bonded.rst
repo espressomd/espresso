@@ -577,7 +577,7 @@ to a temperature set by :py:attr:`espressomd.thermostat.Thermostat.set_dpd()`
 * ``trans_r_cut``
 
 which will be explained below. The interaction
-only has an effect if the DPD thermostat activated.
+only has an effect if the DPD thermostat is activated.
 
 The interaction consists of a friction force :math:`\vec{F}_{ij}^{D}` and
 a random force :math:`\vec{F}_{ij}^R` added to the other interactions

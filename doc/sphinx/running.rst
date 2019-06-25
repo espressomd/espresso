@@ -170,7 +170,8 @@ The discretisation consists of the following steps (see :cite:`kolb99a` for a fu
 
 Notes:
 
-* The for the instantaneous pressure the same limitations of applicability hold as described in :ref:`Pressure`
+* In step 4, only those coordinates are scaled for which ``direction`` is set.
+* The for the instantaneous pressure the same limitations of applicability hold as described in :ref:`Pressure`.
 * The particle forces :math:`F` include interactions as well as a friction and noise term analogous to the terms in the :ref:`Langevin thermostat`.
 * The particle forces are only calculated in step 5 and then reused in step 1 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
 
