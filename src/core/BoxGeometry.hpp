@@ -19,7 +19,7 @@ public:
    * @param coord The coordinate to set the periodicity for.
    * @param val True if this direction should be periodic.
    */
-  void set_periodic(unsigned coord, bool val) { m_periodic[coord] = val; }
+  void set_periodic(unsigned coord, bool val) { m_periodic.set(coord, val); }
 
   /**
    * @brief Check periodicity in direction.
