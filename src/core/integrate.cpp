@@ -192,7 +192,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Prepare the Integrator */
   on_integration_start();
 #ifdef LEES_EDWARDS
-  setup_lees_edwards_protocol(0.);
+  lees_edwards_protocol.offset =  lees_edwards_get_offset(sim_time);
+  lees_edwards_protocol.velocity =  lees_edwards_get_velocity(sim_time);
 #endif
 
   // Here we initialize volume conservation
