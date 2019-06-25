@@ -566,8 +566,8 @@ The parameters can be set via::
 
 This command defines an interaction between particles of the types ``type1`` and ``type2``
 that contains velocity-dependent friction and noise according 
-to a temperature set by :py:attr:`espressomd.thermostat.Thermostat.set_dpd()`
-. The parameters are
+to a temperature set by :py:meth:`espressomd.thermostat.Thermostat.set_dpd()`. 
+The parameters for the interaction are
 
 * ``gamma``
 * ``weight_function``
@@ -592,7 +592,9 @@ for the dissipative force and
 .. math:: \vec{F}_{ij}^R = \sqrt{2 k_B T \gamma_\parallel w_\parallel (r_{ij}) }  \eta_{ij}(t) \hat{r}_{ij}
 
 for the random force. This introduces the friction coefficient :math:`\gamma_\parallel` (parameter ``gamma``) and the weight function
-:math:`w_\parallel`. The weight function can be specified via the ``weight_function`` switch. 
+:math:`w_\parallel`. The thermal energy :math:`k_B T` is not set by the interaction, 
+but by the DPD thermostat (:py:meth:`espressomd.thermostat.Thermostat.set_dpd()`) 
+to be equal for all particles. The weight function can be specified via the ``weight_function`` switch. 
 The possible values for ``weight_function`` are 0 and 1, corresponding to the
 order of :math:`w_\parallel`:
 

@@ -141,7 +141,7 @@ Details about the cell system can be obtained by :meth:`espressomd.System().cell
 Domain decomposition
 ~~~~~~~~~~~~~~~~~~~~
 
-Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_domain_decomposition`
+Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_domain_decomposition`
 selects the domain decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
 domain decomposition is used, but not the Verlet lists. ::
@@ -167,7 +167,7 @@ calculate all pair interactions.
 N-squared
 ~~~~~~~~~
 
-Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_n_square`
+Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_n_square`
 selects the very primitive nsquared cellsystem, which calculates
 the interactions for all particle pairs. Therefore it loops over all
 particles, giving an unfavorable computation time scaling of
@@ -206,7 +206,7 @@ odd number of nodes, if with multiple processors at all.
 Layered cell system
 ~~~~~~~~~~~~~~~~~~~
 
-Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_layered`
+Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_layered`
 selects the layered cell system, which is specifically designed for
 the needs of the MMM2D algorithm. Basically it consists of a nsquared
 algorithm in x and y, but a domain decomposition along z, i.e. the
@@ -252,7 +252,7 @@ Langevin thermostat
 ~~~~~~~~~~~~~~~~~~~
 
 In order to activate the Langevin thermostat the member function
-:py:attr:`~espressomd.thermostat.Thermostat.set_langevin` of the thermostat
+:py:meth:`~espressomd.thermostat.Thermostat.set_langevin` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
 Best explained in an example::
 
@@ -380,7 +380,7 @@ interaction between the particles that make up the fluid,
 see :ref:`DPD interaction`, and a repulsive conservative force.
 
 The temperature is set via
-:py:attr:`espressomd.thermostat.Thermostat.set_dpd`
+:py:meth:`espressomd.thermostat.Thermostat.set_dpd`
 which takes ``kT`` as the only argument.
 
 The friction coefficients and cutoff are controlled via the
@@ -451,7 +451,7 @@ behavior, please contribute to solving the problem.
 CUDA
 ----
 
-:py:attr:`~espressomd.cuda_init.CudaInitHandle()` command can be used to choose the GPU for all subsequent
+:py:meth:`~espressomd.cuda_init.CudaInitHandle()` command can be used to choose the GPU for all subsequent
 GPU-computations. Note that due to driver limitations, the GPU cannot be
 changed anymore after the first GPU-using command has been issued, for
 example ``lbfluid``. If you do not choose the GPU manually before that,
