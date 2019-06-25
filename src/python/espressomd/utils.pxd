@@ -126,5 +126,5 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         double & operator[](int i)
         double * data()
 
-cdef make_array_locked(const Vector3d &)
+cdef make_array_locked(Vector3d)
 cdef Vector3d make_Vector3d(a)
