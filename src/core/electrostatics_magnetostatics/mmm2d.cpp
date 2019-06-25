@@ -721,7 +721,7 @@ static void setup(int p, double omega, double fac, int n_sccache,
     clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
-  layer_top = my_left[2] + layer_h;
+  layer_top = local_geo.my_left()[2] + layer_h;
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
@@ -927,7 +927,7 @@ static void setup_PQ(int p, int q, double omega, double fac) {
     clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
-  layer_top = my_left[2] + layer_h;
+  layer_top = local_geo.my_left()[2] + layer_h;
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;

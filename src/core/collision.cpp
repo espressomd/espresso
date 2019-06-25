@@ -578,7 +578,7 @@ void handle_collisions() {
         // Use initial position for new vs, which is in the local node's
         // domain
         // Vs is moved afterwards and resorted after all collision s are handled
-        const Utils::Vector3d initial_pos{my_left[0], my_left[1], my_left[2]};
+        const Utils::Vector3d initial_pos{local_geo.my_left()};
 
         // If we are in the two vs mode
         // Virtual site related to first particle in the collision

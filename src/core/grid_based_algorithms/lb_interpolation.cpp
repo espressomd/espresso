@@ -40,7 +40,7 @@ void lattice_interpolation(Lattice const &lattice, Utils::Vector3d const &pos,
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
-  lattice.map_position_to_lattice(pos, node_index, delta, my_left, local_box_l);
+  lattice.map_position_to_lattice(pos, node_index, delta, local_geo.my_left(), local_box_l);
   for (int z = 0; z < 2; z++) {
     for (int y = 0; y < 2; y++) {
       for (int x = 0; x < 2; x++) {

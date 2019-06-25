@@ -49,6 +49,7 @@
  **********************************************/
 
 BoxGeometry box_geo;
+LocalBox<double> local_geo;
 
 Utils::Vector3i node_grid{};
 Utils::Vector3i node_pos = {-1, -1, -1};
@@ -60,8 +61,7 @@ Utils::Vector3d box_l_i = {1, 1, 1};
 double min_box_l;
 Utils::Vector3d local_box_l{1, 1, 1};
 double min_local_box_l;
-Utils::Vector3d my_left{};
-Utils::Vector3d my_right{1, 1, 1};
+Utils::Vector3d my_right_global_abcd{1, 1, 1};
 
 /************************************************************/
 
@@ -109,9 +109,6 @@ int calc_node_neighbors(int node) {
   }
 
   neighbor_count = 6;
-  GRID_TRACE(printf("%d: node_grid %d %d %d, pos %d %d %d, node_neighbors ",
-                    this_node, node_grid[0], node_grid[1], node_grid[2],
-                    node_pos[0], node_pos[1], node_pos[2]));
 
   return (neighbor_count);
 }
@@ -119,8 +116,8 @@ int calc_node_neighbors(int node) {
 void grid_changed_box_l() {
   for (int i = 0; i < 3; i++) {
     local_box_l[i] = box_geo.length()[i] / (double)node_grid[i];
-    my_left[i] = node_pos[i] * local_box_l[i];
-    my_right[i] = (node_pos[i] + 1) * local_box_l[i];
+    local_geo.my_left_[i] = node_pos[i] * local_box_l[i];
+    my_right_global_abcd[i] = (node_pos[i] + 1) * local_box_l[i];
   }
 
   calc_minimal_box_dimensions();

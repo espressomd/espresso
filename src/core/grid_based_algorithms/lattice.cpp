@@ -45,7 +45,7 @@ int Lattice::init(double *agrid, double const *offset, int halo_size,
     this->global_grid[d] = (int)std::round(box_length[d] / agrid[d]);
     this->offset[d] = offset[d];
     this->local_index_offset[d] =
-        (int)ceil((my_left[d] - this->offset[d]) / this->agrid[d]);
+        (int)ceil((local_geo.my_left()[d] - this->offset[d]) / this->agrid[d]);
     this->local_offset[d] =
         this->offset[d] + this->local_index_offset[d] * this->agrid[d];
     this->grid[d] = (int)ceil((myright[d] - this->local_offset[d] - epsilon) /

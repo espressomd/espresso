@@ -76,12 +76,6 @@ double max_skin = 0.0;
 void dd_create_cell_grid() {
   int i, n_local_cells, new_cells;
   double cell_range[3];
-  CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: max_range %f\n",
-                     this_node, max_range));
-  CELL_TRACE(fprintf(
-      stderr, "%d: dd_create_cell_grid: local_box %f-%f, %f-%f, %f-%f,\n",
-      this_node, my_left[0], my_right[0], my_left[1], my_right[1], my_left[2],
-      my_right[2]));
 
   /* initialize */
   cell_range[0] = cell_range[1] = cell_range[2] = max_range;
@@ -543,7 +537,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
   int cpos[3];
 
   for (int i = 0; i < 3; i++) {
-    auto const lpos = pos[i] - my_left[i];
+    auto const lpos = pos[i] - local_geo.my_left()[i];
     cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
 
     /* particles outside our box. Still take them if
@@ -769,7 +763,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 
     assert(local_particles[src.part[i].p.identity] == nullptr);
 
-    if (get_mi_coord(part.r.p[dir], my_left[dir], box_geo.length()[dir],
+    if (get_mi_coord(part.r.p[dir], local_geo.my_left()[dir], box_geo.length()[dir],
                      box_geo.periodic(dir)) < 0.0) {
       if (box_geo.periodic(dir) || (boundary[2 * dir] == 0)) {
 
@@ -777,7 +771,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
         if (i < src.n)
           i--;
       }
-    } else if (get_mi_coord(part.r.p[dir], my_right[dir], box_geo.length()[dir],
+    } else if (get_mi_coord(part.r.p[dir], my_right_global_abcd[dir], box_geo.length()[dir],
                             box_geo.periodic(dir)) >= 0.0) {
       if (box_geo.periodic(dir) || (boundary[2 * dir + 1] == 0)) {
 

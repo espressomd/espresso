@@ -693,22 +693,8 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
       dist[d] = (pos - nmp) - 0.5;
       /* 3d-array index of nearest mesh point */
       q_ind = (d == 0) ? nmp : nmp + dp3m.local_mesh.dim[d] * q_ind;
-
-#ifdef ADDITIONAL_CHECKS
-      if (pos < -skin * dp3m.params.ai[d]) {
-        fprintf(stderr, "%d: dipolar dp3m.rs_mesh underflow! (pos %f)\n",
-                this_node, real_pos[d]);
-        fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-                my_left[d] - skin, my_right[d] + skin);
-      }
-      if ((nmp + dp3m.params.cao) > dp3m.local_mesh.dim[d]) {
-        fprintf(stderr, "%d: dipolar dp3m.rs_mesh overflow! (pos %f, nmp=%d)\n",
-                this_node, real_pos[d], nmp);
-        fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-                my_left[d] - skin, my_right[d] + skin);
-      }
-#endif
     }
+
     if (cp_cnt >= 0)
       dp3m.ca_fmp[cp_cnt] = q_ind;
 
@@ -741,21 +727,6 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
       /* for the first dimension, q_ind is always zero, so this shifts correctly
        */
       q_ind = nmp + dp3m.local_mesh.dim[d] * q_ind;
-
-#ifdef ADDITIONAL_CHECKS
-      if (pos < -skin * dp3m.params.ai[d]) {
-        fprintf(stderr, "%d: dipolar dp3m.rs_mesh underflow! (pos %f)\n",
-                this_node, real_pos[d]);
-        fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-                my_left[d] - skin, my_right[d] + skin);
-      }
-      if ((nmp + dp3m.params.cao) > dp3m.local_mesh.dim[d]) {
-        fprintf(stderr, "%d: dipolar dp3m.rs_mesh overflow! (pos %f, nmp=%d)\n",
-                this_node, real_pos[d], nmp);
-        fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-                my_left[d] - skin, my_right[d] + skin);
-      }
-#endif
     }
     if (cp_cnt >= 0)
       dp3m.ca_fmp[cp_cnt] = q_ind;
@@ -2338,19 +2309,19 @@ void dp3m_calc_local_ca_mesh() {
   /* inner left down grid point (global index) */
   for (i = 0; i < 3; i++)
     dp3m.local_mesh.in_ld[i] =
-        (int)ceil(my_left[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
+        (int)ceil(local_geo.my_left()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
   /* inner up right grid point (global index) */
   for (i = 0; i < 3; i++)
     dp3m.local_mesh.in_ur[i] =
-        (int)floor(my_right[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
+        (int)floor(my_right_global_abcd[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
 
   /* correct roundof errors at boundary */
   for (i = 0; i < 3; i++) {
-    if ((my_right[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]) -
+    if ((my_right_global_abcd[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]) -
             dp3m.local_mesh.in_ur[i] <
         ROUND_ERROR_PREC)
       dp3m.local_mesh.in_ur[i]--;
-    if (1.0 + (my_left[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]) -
+    if (1.0 + (local_geo.my_left()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]) -
             dp3m.local_mesh.in_ld[i] <
         ROUND_ERROR_PREC)
       dp3m.local_mesh.in_ld[i]--;
@@ -2362,7 +2333,7 @@ void dp3m_calc_local_ca_mesh() {
   /* index of left down grid point in global mesh */
   for (i = 0; i < 3; i++)
     dp3m.local_mesh.ld_ind[i] =
-        (int)ceil((my_left[i] - full_skin[i]) * dp3m.params.ai[i] -
+        (int)ceil((local_geo.my_left()[i] - full_skin[i]) * dp3m.params.ai[i] -
                   dp3m.params.mesh_off[i]);
   /* spacial position of left down mesh point */
   dp3m_calc_lm_ld_pos();
@@ -2372,11 +2343,11 @@ void dp3m_calc_local_ca_mesh() {
         dp3m.local_mesh.in_ld[i] - dp3m.local_mesh.ld_ind[i];
   /* up right grid point */
   for (i = 0; i < 3; i++)
-    ind[i] = (int)floor((my_right[i] + full_skin[i]) * dp3m.params.ai[i] -
+    ind[i] = (int)floor((my_right_global_abcd[i] + full_skin[i]) * dp3m.params.ai[i] -
                         dp3m.params.mesh_off[i]);
   /* correct roundof errors at up right boundary */
   for (i = 0; i < 3; i++)
-    if (((my_right[i] + full_skin[i]) * dp3m.params.ai[i] -
+    if (((my_right_global_abcd[i] + full_skin[i]) * dp3m.params.ai[i] -
          dp3m.params.mesh_off[i]) -
             ind[i] ==
         0)
