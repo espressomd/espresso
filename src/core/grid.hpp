@@ -48,8 +48,9 @@
 #include "algorithm/periodic_fold.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "utils.hpp"
-#include "utils/math/sgn.hpp"
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
+#include <utils/math/sgn.hpp>
 #ifdef LEES_EDWARDS
 #include "lees_edwards.hpp"
 #endif
@@ -302,8 +303,8 @@ inline Utils::Vector3d unfolded_position(Particle const &p) {
 }
 
 /** Calculate the velocity difference including the Lees Edwards velocity*/
-inline Vector3d vel_diff(Vector3d const &x, Vector3d const &y,
-                                Vector3d const &u, Vector3d const &v) {
+inline Utils::Vector3d vel_diff(Utils::Vector3d const &x, Utils::Vector3d const &y,
+                                Utils::Vector3d const &u, Utils::Vector3d const &v) {
 
   auto ret = u - v;
 
