@@ -269,7 +269,9 @@ The Langevin thermostat is based on an extension of Newton's equation of motion 
 .. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma v_i(t) + \sqrt{2\gamma k_B T} \eta_i(t).
 
 Here, :math:`f_i` are all deterministic forces from interactions, 
-:math:`\gamma` the friction coefficient and :math:`\eta` a random, "thermal" force. 
+:math:`\gamma` the bare friction coefficient and :math:`\eta` a random, "thermal" force. 
+The friction term accounts for dissipation in a surrounding fluid (the actual force
+response of a particle will also depend on the interaction with other particles).
 The random force  mimics collisions of the particle with surrounding solvent molecules 
 at temperature :math:`T` and satisfies
 
@@ -293,14 +295,6 @@ Counter-based RNG) and is required on first activation of the thermostat. It
 can be omitted in subsequent calls of ``set_langevin()``. It is the user's
 responsibility to decide whether the thermostat should be deterministic (by
 using a fixed seed) or not (by using a randomized seed).
-
-The diffusion coeffictient :math:`D` of the particle can be obtained by the Einstein-Smoluchowski relation
-
-.. math:: D = \frac{k_B T}{\gamma}.
-
-The relaxation time is given by :math:`\text{gamma}/\text{MASS}`, with
-``MASS`` the particle's mass.  For a more detailed explanation, refer to
-:cite:`grest86a`. 
 
 If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
 also coupled to the thermostat. If only the first two arguments are
