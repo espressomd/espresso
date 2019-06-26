@@ -142,7 +142,3 @@ void rescale_boxl(int dir, double d_new) {
     mpi_rescale_particles(dir, scale);
   }
 }
-
-int map_array_node(const Utils::Vector3i &pos) {
-  return Utils::Mpi::cart_rank(comm_cart, pos);
-}

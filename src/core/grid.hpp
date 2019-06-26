@@ -76,13 +76,6 @@ extern Utils::Vector3i node_grid;
     determine one automatically. */
 void init_node_grid();
 
-/** node mapping: node -> array.
- *
- * \return      rank of the node at position pos.
- * \param pos   position of the node in node grid.
- */
-int map_array_node(const Utils::Vector3i &pos);
-
 /** map a spatial position to the node grid */
 int map_position_node_array(const Utils::Vector3d &pos);
 
