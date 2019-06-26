@@ -13,7 +13,7 @@ class LeesEdwards(ut.TestCase):
 
     system = espressomd.System(box_l=[5.0, 5.0, 5.0])
     system.cell_system.skin = 0.0
-    system.cell_system.set_n_square()
+    system.cell_system.set_n_square(use_verlet_lists = False)
     system.set_random_state_PRNG()
 
     time_step = 0.5
@@ -52,7 +52,7 @@ class LeesEdwards(ut.TestCase):
         system.time = 0.0
 
         # Check if the offset is determined correctly
-        frequency = 3.5
+        frequency = np.sqrt(2.0)
         omega = 2 * np.pi * frequency
         amplitude = 1.3
         sheardir = 0
@@ -64,6 +64,8 @@ class LeesEdwards(ut.TestCase):
             system.integrator.run(10)
             offset = amplitude * np.sin(omega * time)
             velocity = omega * amplitude * np.cos(omega * time)
+
+            print(system.lees_edwards.velocity, velocity)
 
             self.assertAlmostEqual(system.lees_edwards.velocity, velocity)
             self.assertAlmostEqual(system.lees_edwards.offset, offset)
@@ -227,6 +229,18 @@ class LeesEdwards(ut.TestCase):
         np.testing.assert_array_equal(vel_diff, system.part[0].v-system.part[1].v)
 
         system.part.clear()
+
+    def test_e_VerletLists(self):
+        """ It is not possible to use Verlet lists with Lees Edwards in the current implementation
+        we are checking if the correct runtime error message is raised"""
+
+        system = self.system
+        system.cell_system.set_domain_decomposition(use_verlet_lists = True)
+        system.lees_edwards.set_params(
+            type="steady_shear", velocity=1.2, sheardir=2, shearplanenormal=0)
+
+        with self.assertRaises(Exception):
+            system.integrator.run(steps=10)
 
 if __name__ == "__main__":
     ut.main()

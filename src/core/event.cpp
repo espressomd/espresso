@@ -63,6 +63,10 @@
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #endif
 
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
+
 /** whether the thermostat has to be reinitialized before integration */
 static int reinit_thermo = 1;
 static int reinit_electrostatics = 0;
@@ -136,6 +140,14 @@ void on_integration_start() {
 
 #ifdef METADYNAMICS
   meta_init();
+#endif
+
+#ifdef LEES_EDWARDS
+    if (lees_edwards_protocol.type != LEES_EDWARDS_PROTOCOL_OFF &&
+        less_edwards_supports_verlet_list() == false &&
+        cell_structure.use_verlet_list) {
+        runtimeErrorMsg() << "It is not possible to use Lees Edwards with Verlet lists.";
+    }
 #endif
 
   /* Prepare the thermostat */

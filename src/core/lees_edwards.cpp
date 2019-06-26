@@ -55,6 +55,11 @@ double lees_edwards_get_velocity(double time) {
     return 0.0;
   }  
 }
+
+bool less_edwards_supports_verlet_list() {
+    return false;
+    }
+
 #ifdef LEES_EDWARDS
 void local_lees_edwards_image_reset() {
   for (auto &p : local_cells.particles()) {

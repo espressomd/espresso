@@ -36,6 +36,8 @@ typedef struct {
   int shearplanenormal; 
 } lees_edwards_protocol_struct;
 
+bool less_edwards_supports_verlet_list();
+/** Checks if Lees Edwards supports Verlet lists*/
 extern lees_edwards_protocol_struct lees_edwards_protocol;
 /** Calculation of current offset*/
 double lees_edwards_get_offset(double time);

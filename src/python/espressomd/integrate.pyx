@@ -98,6 +98,7 @@ cdef class Integrator(object):
 
         handle_errors("Encountered errors during integrate")
 
+
     def set_steepest_descent(self, *args, **kwargs):
         """
         Set parameters for steepest descent.
