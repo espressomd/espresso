@@ -84,19 +84,29 @@ void calc_node_neighbors() {
   }
 }
 
-void grid_changed_box_l(const BoxGeometry &box) {
-  for (int i = 0; i < 3; i++) {
-    local_geo.local_box_l[i] = box.length()[i] / (double)node_grid[i];
-    local_geo.my_left_[i] = node_pos[i] * local_geo.length()[i];
-    local_geo.my_right_[i] = (node_pos[i] + 1) * local_geo.length()[i];
+LocalBox<double> regular_decomposition(const BoxGeometry &box,
+                                       Utils::Vector3i const &node_pos,
+                                       Utils::Vector3i const &node_grid) {
+  LocalBox<double> local_box;
 
-    for(int dir  = 0; dir <3 ; dir++) {
-      /* left boundary ? */
-      local_geo.boundary_[2 * dir] = (node_pos[dir] == 0);
-      /* right boundary ? */
-      local_geo.boundary_[2 * dir + 1] = -(node_pos[dir] == node_grid[dir] - 1);
-    }
+  for (int i = 0; i < 3; i++) {
+    local_box.local_box_l[i] = box.length()[i] / node_grid[i];
+    local_box.my_left_[i] = node_pos[i] * local_box.length()[i];
+    local_box.my_right_[i] = (node_pos[i] + 1) * local_box.length()[i];
   }
+
+  for (int dir = 0; dir < 3; dir++) {
+    /* left boundary ? */
+    local_box.boundary_[2 * dir] = (node_pos[dir] == 0);
+    /* right boundary ? */
+    local_box.boundary_[2 * dir + 1] = -(node_pos[dir] == node_grid[dir] - 1);
+  }
+
+  return local_box;
+}
+
+void grid_changed_box_l(const BoxGeometry &box) {
+  local_geo = regular_decomposition(box, node_pos, node_grid);
 }
 
 void grid_changed_n_nodes() {
