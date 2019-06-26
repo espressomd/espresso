@@ -685,7 +685,7 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
   Utils::Vector3i pos;
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    host_values.resize(lbpar_gpu.number_of_nodes) ;
+    host_values.resize(lbpar_gpu.number_of_nodes);
     lb_get_values_GPU(host_values.data());
     auto const lattice_speed = lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
     fprintf(fp,
@@ -1121,7 +1121,7 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     static std::vector<LB_rho_v_pi_gpu> host_print_values(0);
 
-    if (host_print_values.size()==0)
+    if (host_print_values.size() == 0)
       host_print_values.resize(1);
     lb_print_node_GPU(single_nodeindex, host_print_values.data());
     return host_print_values.data()->rho;
