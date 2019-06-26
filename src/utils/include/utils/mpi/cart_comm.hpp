@@ -10,8 +10,7 @@
 
 namespace Utils {
 namespace Mpi {
-template <size_t dim>
-Vector3i dims_create(int nodes) {
+template <size_t dim> Vector3i dims_create(int nodes) {
   Vector<int, dim> dims;
   BOOST_MPI_CHECK_RESULT(MPI_Dims_create,
                          (nodes, static_cast<int>(dim), dims.data()));
@@ -40,7 +39,8 @@ Vector3i cart_coords(boost::mpi::communicator const &comm, int rank) {
 }
 
 template <size_t dims>
-int cart_rank(boost::mpi::communicator const &comm, const Vector<int, dims> &pos) {
+int cart_rank(boost::mpi::communicator const &comm,
+              const Vector<int, dims> &pos) {
   int rank;
   BOOST_MPI_CHECK_RESULT(MPI_Cart_rank, (comm, pos.data(), &rank))
   return rank;

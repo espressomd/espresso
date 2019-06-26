@@ -133,8 +133,7 @@ void mpi_loop();
  * and node grid.
  */
 void mpi_reshape_communicator(const Utils::Vector3i &node_grid,
-                              const Utils::Vector3i &periodicity = {
-                                  {1, 1, 1}});
+                              const Utils::Vector3i &periodicity = {{1, 1, 1}});
 
 /** Issue REQ_PLACE: move particle to a position on a node.
  *  Also calls \ref on_particle_change.

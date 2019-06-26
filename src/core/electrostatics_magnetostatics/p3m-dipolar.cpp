@@ -1234,7 +1234,8 @@ void dp3m_gather_fft_grid(double *themesh) {
 
   P3M_TRACE(fprintf(stderr, "%d: dp3m_gather_fft_grid:\n", this_node));
 
-    auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
 
   /* direction loop */
   for (s_dir = 0; s_dir < 6; s_dir++) {
@@ -1283,6 +1284,7 @@ void dp3m_spread_force_grid(double *themesh) {
   P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_spread_force_grid:\n", this_node));
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
 
   /* direction loop */
   for (s_dir = 5; s_dir >= 0; s_dir--) {
@@ -1734,8 +1736,8 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
    * than allowed */
   n_cells = 1;
   for (i = 0; i < 3; i++)
-    n_cells *=
-        (int)(floor(local_geo.length()[i] / (r_cut_iL * box_geo.length()[0] + skin)));
+    n_cells *= (int)(floor(local_geo.length()[i] /
+                           (r_cut_iL * box_geo.length()[0] + skin)));
   if (n_cells < min_num_cells) {
     P3M_TRACE(fprintf(
         stderr, "dp3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n",
@@ -2318,20 +2320,23 @@ void dp3m_calc_local_ca_mesh() {
 
   /* inner left down grid point (global index) */
   for (i = 0; i < 3; i++)
-    dp3m.local_mesh.in_ld[i] =
-        (int)ceil(local_geo.my_left()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
+    dp3m.local_mesh.in_ld[i] = (int)ceil(
+        local_geo.my_left()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
   /* inner up right grid point (global index) */
   for (i = 0; i < 3; i++)
-    dp3m.local_mesh.in_ur[i] =
-        (int)floor(local_geo.my_right()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
+    dp3m.local_mesh.in_ur[i] = (int)floor(
+        local_geo.my_right()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
 
   /* correct roundof errors at boundary */
   for (i = 0; i < 3; i++) {
-    if ((local_geo.my_right()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]) -
+    if ((local_geo.my_right()[i] * dp3m.params.ai[i] -
+         dp3m.params.mesh_off[i]) -
             dp3m.local_mesh.in_ur[i] <
         ROUND_ERROR_PREC)
       dp3m.local_mesh.in_ur[i]--;
-    if (1.0 + (local_geo.my_left()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]) -
+    if (1.0 +
+            (local_geo.my_left()[i] * dp3m.params.ai[i] -
+             dp3m.params.mesh_off[i]) -
             dp3m.local_mesh.in_ld[i] <
         ROUND_ERROR_PREC)
       dp3m.local_mesh.in_ld[i]--;
@@ -2353,7 +2358,8 @@ void dp3m_calc_local_ca_mesh() {
         dp3m.local_mesh.in_ld[i] - dp3m.local_mesh.ld_ind[i];
   /* up right grid point */
   for (i = 0; i < 3; i++)
-    ind[i] = (int)floor((local_geo.my_right()[i] + full_skin[i]) * dp3m.params.ai[i] -
+    ind[i] = (int)floor((local_geo.my_right()[i] + full_skin[i]) *
+                            dp3m.params.ai[i] -
                         dp3m.params.mesh_off[i]);
   /* correct roundof errors at up right boundary */
   for (i = 0; i < 3; i++)
@@ -2501,6 +2507,7 @@ void dp3m_calc_send_mesh() {
   }
   /* communication */
   auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
 
   for (i = 0; i < 6; i++) {
     if (i % 2 == 0)

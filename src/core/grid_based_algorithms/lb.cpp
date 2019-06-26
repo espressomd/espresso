@@ -192,7 +192,8 @@ void lb_init() {
   /* initialize the local lattice domain */
 
   int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1,
-                                   local_geo.length(), local_geo.my_right(), box_geo.length());
+                                   local_geo.length(), local_geo.my_right(),
+                                   box_geo.length());
 
   if (check_runtime_errors(comm_cart) || init_status != ES_OK)
     return;

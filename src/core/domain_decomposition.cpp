@@ -236,6 +236,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
 
   /* calculate number of communications */
   num = 0;
@@ -273,7 +274,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
     for (lr = 0; lr < 2; lr++) {
       if (grid[dir] == 1) {
         /* just copy cells on a single node */
-        if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + lr] == 0)) {
+        if (box_geo.periodic(dir) ||
+            (local_geo.boundary()[2 * dir + lr] == 0)) {
           comm->comm[cnt].type = GHOST_LOCL;
           comm->comm[cnt].node = this_node;
 
@@ -305,7 +307,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
       } else {
         /* i: send/recv loop */
         for (i = 0; i < 2; i++) {
-          if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + lr] == 0))
+          if (box_geo.periodic(dir) ||
+              (local_geo.boundary()[2 * dir + lr] == 0))
             if ((node_pos[dir] + i) % 2 == 0) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
@@ -330,7 +333,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
                                  lc[1], lc[2], hc[0], hc[1], hc[2]));
               cnt++;
             }
-          if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
+          if (box_geo.periodic(dir) ||
+              (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
@@ -418,7 +422,8 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
     /* lr loop: left right */
     for (int lr = 0; lr < 2; lr++) {
       if (grid[dir] == 1) {
-        if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + lr] == 0)) {
+        if (box_geo.periodic(dir) ||
+            (local_geo.boundary()[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (local_geo.boundary()[2 * dir + lr] != 0) {
             cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
@@ -429,9 +434,11 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
           cnt++;
         }
       } else {
+        auto const node_pos = calc_node_pos(comm_cart);
         /* i: send/recv loop */
         for (int i = 0; i < 2; i++) {
-          if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + lr] == 0))
+          if (box_geo.periodic(dir) ||
+              (local_geo.boundary()[2 * dir + lr] == 0))
             if ((node_pos[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
               if (local_geo.boundary()[2 * dir + lr] != 0) {
@@ -442,7 +449,8 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
               }
               cnt++;
             }
-          if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
+          if (box_geo.periodic(dir) ||
+              (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               cnt++;
             }
@@ -743,15 +751,16 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 
     assert(local_particles[src.part[i].p.identity] == nullptr);
 
-    if (get_mi_coord(part.r.p[dir], local_geo.my_left()[dir], box_geo.length()[dir],
-                     box_geo.periodic(dir)) < 0.0) {
+    if (get_mi_coord(part.r.p[dir], local_geo.my_left()[dir],
+                     box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) {
       if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0)) {
 
         move_unindexed_particle(&left, &src, i);
         if (i < src.n)
           i--;
       }
-    } else if (get_mi_coord(part.r.p[dir], local_geo.my_right()[dir], box_geo.length()[dir],
+    } else if (get_mi_coord(part.r.p[dir], local_geo.my_right()[dir],
+                            box_geo.length()[dir],
                             box_geo.periodic(dir)) >= 0.0) {
       if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + 1] == 0)) {
 
@@ -764,7 +773,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 }
 
 void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
-    auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
 
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */

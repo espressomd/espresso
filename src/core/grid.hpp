@@ -65,8 +65,6 @@ extern LocalBox<double> local_geo;
 
 /** The number of nodes in each spatial dimension. */
 extern Utils::Vector3i node_grid;
-/** position of node in node grid */
-extern Utils::Vector3i node_pos;
 
 /*@}*/
 
@@ -95,6 +93,14 @@ int map_position_node_array(const Utils::Vector3d &pos);
  * \return Ranks of neighbors
  */
 Utils::Vector<int, 6> calc_node_neighbors(const boost::mpi::communicator &comm);
+
+/**
+ * @brief Calculate the position of node in topoliogy.
+ *
+ * @param comm Cartesian communicator
+ * @return Index of node in grid.
+ */
+Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm);
 
 /** called from \ref mpi_bcast_parameter . */
 void grid_changed_n_nodes();

@@ -239,8 +239,9 @@ void mpi_init() {
 
 void mpi_reshape_communicator(const Utils::Vector3i &node_grid,
                               const Utils::Vector3i &periodicity) {
-  comm_cart = Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
-  node_pos = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
+  comm_cart =
+      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
+  Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
   this_node = comm_cart.rank();
 }
 

@@ -270,7 +270,8 @@ void prepare_halo_communication(HaloCommunicator *const hc,
       MPI_Type_commit(&hinfo->datatype);
 
       if (!box_geo.periodic(dir) &&
-          (local_geo.boundary()[2 * dir + lr] != 0 || local_geo.boundary()[2 * dir + 1 - lr] != 0)) {
+          (local_geo.boundary()[2 * dir + lr] != 0 ||
+           local_geo.boundary()[2 * dir + 1 - lr] != 0)) {
         if (local_node_grid[dir] == 1) {
           hinfo->type = HALO_OPEN;
         } else if (lr == 0) {
