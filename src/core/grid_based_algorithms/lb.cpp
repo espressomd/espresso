@@ -293,8 +293,7 @@ void lb_reinit_parameters() {
 }
 
 /* Halo communication for push scheme */
-static void halo_push_communication(LB_Fluid &lbfluid,
-                                    const Utils::Vector3i &local_node_grid) {
+static void halo_push_communication(LB_Fluid &lbfluid) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
@@ -330,12 +329,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     }
   }
 
-  if (local_node_grid[0] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(1, 0, 0, lblattice.halo_grid);
@@ -371,12 +366,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     }
   }
 
-  if (local_node_grid[0] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(lblattice.grid[0], 0, 0, lblattice.halo_grid);
@@ -420,12 +411,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  if (local_node_grid[1] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(0, 1, 0, lblattice.halo_grid);
@@ -463,12 +450,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  if (local_node_grid[1] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(0, lblattice.grid[1], 0, lblattice.halo_grid);
@@ -512,12 +495,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     }
   }
 
-  if (local_node_grid[2] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(0, 0, 1, lblattice.halo_grid);
@@ -553,12 +532,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     }
   }
 
-  if (local_node_grid[2] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(0, 0, lblattice.grid[2], lblattice.halo_grid);
@@ -1000,7 +975,7 @@ inline void lb_collide_stream() {
   }
 
   /* exchange halo regions */
-  halo_push_communication(lbfluid_post, node_grid);
+  halo_push_communication(lbfluid_post);
 
 #ifdef LB_BOUNDARIES
   /* boundary conditions for links */
