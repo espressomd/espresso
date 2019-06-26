@@ -47,11 +47,6 @@ BoxGeometry box_geo;
 LocalBox<double> local_geo;
 
 Utils::Vector3i node_grid{};
-Utils::Vector3i node_pos = {-1, -1, -1};
-Utils::Vector<int, 6> node_neighbors{};
-
-double min_box_l;
-double min_local_box_l;
 
 /************************************************************/
 
