@@ -1234,6 +1234,8 @@ void dp3m_gather_fft_grid(double *themesh) {
 
   P3M_TRACE(fprintf(stderr, "%d: dp3m_gather_fft_grid:\n", this_node));
 
+    auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   /* direction loop */
   for (s_dir = 0; s_dir < 6; s_dir++) {
     if (s_dir % 2 == 0)
@@ -1279,6 +1281,8 @@ void dp3m_spread_force_grid(double *themesh) {
   MPI_Status status;
   double *tmp_ptr;
   P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_spread_force_grid:\n", this_node));
+
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
 
   /* direction loop */
   for (s_dir = 5; s_dir >= 0; s_dir--) {
@@ -2496,6 +2500,8 @@ void dp3m_calc_send_mesh() {
       dp3m.sm.max = dp3m.sm.s_size[i];
   }
   /* communication */
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   for (i = 0; i < 6; i++) {
     if (i % 2 == 0)
       j = i + 1;

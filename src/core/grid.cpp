@@ -115,7 +115,7 @@ void grid_changed_box_l(const BoxGeometry &box) {
 void grid_changed_n_nodes() {
   mpi_reshape_communicator(node_grid, {{1, 1, 1}});
 
-  node_neighbors = calc_node_neighbors(comm_cart);
+  calc_node_neighbors(comm_cart);
 
   grid_changed_box_l(box_geo);
 }

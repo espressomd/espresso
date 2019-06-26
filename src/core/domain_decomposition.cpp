@@ -235,6 +235,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   int dir, lr, i, cnt, num, n_comm_cells[3];
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   /* calculate number of communications */
   num = 0;
   for (dir = 0; dir < 3; dir++) {
@@ -250,9 +252,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   }
 
   /* prepare communicator */
-  CELL_TRACE(fprintf(stderr,
-                     "%d Create Communicator: prep_comm data_parts %d num %d\n",
-                     this_node, data_parts, num));
   prepare_comm(comm, data_parts, num);
 
   /* number of cells to communicate in a direction */
@@ -293,10 +292,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
           dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
-          CELL_TRACE(fprintf(
-              stderr,
-              "%d: prep_comm %d copy to          grid (%d,%d,%d)-(%d,%d,%d)\n",
-              this_node, cnt, lc[0], lc[1], lc[2], hc[0], hc[1], hc[2]));
 
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
@@ -304,10 +299,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           /* place receive cells after send cells */
           dd_fill_comm_cell_lists(
               &comm->comm[cnt].part_lists[n_comm_cells[dir]], lc, hc);
-          CELL_TRACE(fprintf(
-              stderr,
-              "%d: prep_comm %d copy from        grid (%d,%d,%d)-(%d,%d,%d)\n",
-              this_node, cnt, lc[0], lc[1], lc[2], hc[0], hc[1], hc[2]));
+
           cnt++;
         }
       } else {
@@ -772,6 +764,8 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 }
 
 void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
+    auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
     if (grid[dir] == 1) {

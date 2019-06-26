@@ -301,6 +301,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
   double *buffer = nullptr, *sbuf = nullptr, *rbuf = nullptr;
   MPI_Status status;
 
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
 
@@ -1069,6 +1071,8 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   int i, x, y, z, s_node, r_node, count = D3Q19::n_vel;
   double *s_buffer, *r_buffer;
   MPI_Status status[2];
+
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
 
   r_buffer = (double *)Utils::malloc(count * sizeof(double));
   s_buffer = (double *)Utils::malloc(count * sizeof(double));

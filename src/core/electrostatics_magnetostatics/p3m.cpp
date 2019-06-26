@@ -958,6 +958,8 @@ void p3m_gather_fft_grid(double *themesh) {
 
   P3M_TRACE(fprintf(stderr, "%d: p3m_gather_fft_grid:\n", this_node));
 
+    auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   /* direction loop */
   for (s_dir = 0; s_dir < 6; s_dir++) {
     if (s_dir % 2 == 0)
@@ -1000,6 +1002,8 @@ void p3m_spread_force_grid(double *themesh) {
   MPI_Status status;
   std::vector<double> tmp_vec;
   P3M_TRACE(fprintf(stderr, "%d: p3m_spread_force_grid:\n", this_node));
+
+    auto const node_neighbors = calc_node_neighbors(comm_cart);
 
   /* direction loop */
   for (s_dir = 5; s_dir >= 0; s_dir--) {
@@ -2285,6 +2289,7 @@ void p3m_calc_send_mesh() {
       p3m.sm.max = p3m.sm.s_size[i];
   }
   /* communication */
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
   for (i = 0; i < 6; i++) {
     if (i % 2 == 0)
       j = i + 1;

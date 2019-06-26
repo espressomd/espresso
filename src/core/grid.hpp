@@ -67,8 +67,6 @@ extern LocalBox<double> local_geo;
 extern Utils::Vector3i node_grid;
 /** position of node in node grid */
 extern Utils::Vector3i node_pos;
-/** the six nearest neighbors of a node in the node grid. */
-extern Utils::Vector<int, 6> node_neighbors;
 
 /*@}*/
 

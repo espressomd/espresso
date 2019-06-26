@@ -229,6 +229,8 @@ void prepare_halo_communication(HaloCommunicator *const hc,
 
   int extent = fieldtype->extent;
 
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   cnt = 0;
   for (dir = 0; dir < 3; dir++) {
     for (lr = 0; lr < 2; lr++) {

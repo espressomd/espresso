@@ -225,7 +225,7 @@ void lb_init_boundaries() {
 #if defined(LB_BOUNDARIES)
     Utils::Vector3i offset;
     int the_boundary = -1;
-
+    
     const auto lblattice = lb_lbfluid_get_lattice();
     offset[0] = node_pos[0] * lblattice.grid[0];
     offset[1] = node_pos[1] * lblattice.grid[1];
