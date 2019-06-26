@@ -135,7 +135,7 @@ static double max_near, min_far;
 ///
 static double self_energy;
 
-MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1};
+MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
 
 /** return codes for \ref MMM2D_tune_near and \ref MMM2D_tune_far */
 /*@{*/
@@ -1725,7 +1725,7 @@ void MMM2D_self_energy() {
  ****************************************/
 
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
-                     double delta_bot, int const_pot_on, double pot_diff) {
+                     double delta_bot, bool const_pot_on, double pot_diff) {
   int err;
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
@@ -1735,25 +1735,25 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
 
   mmm2d_params.maxPWerror = maxPWerror;
 
-  if (const_pot_on == 1) {
-    mmm2d_params.dielectric_contrast_on = 1;
+  if (const_pot_on) {
+    mmm2d_params.dielectric_contrast_on = true;
     mmm2d_params.delta_mid_top = -1;
     mmm2d_params.delta_mid_bot = -1;
     mmm2d_params.delta_mult = 1;
-    mmm2d_params.const_pot_on = 1;
+    mmm2d_params.const_pot_on = true;
     mmm2d_params.pot_diff = pot_diff;
   } else if (delta_top != 0.0 || delta_bot != 0.0) {
-    mmm2d_params.dielectric_contrast_on = 1;
+    mmm2d_params.dielectric_contrast_on = true;
     mmm2d_params.delta_mid_top = delta_top;
     mmm2d_params.delta_mid_bot = delta_bot;
     mmm2d_params.delta_mult = delta_top * delta_bot;
-    mmm2d_params.const_pot_on = 0;
+    mmm2d_params.const_pot_on = false;
   } else {
-    mmm2d_params.dielectric_contrast_on = 0;
+    mmm2d_params.dielectric_contrast_on = false;
     mmm2d_params.delta_mid_top = 0;
     mmm2d_params.delta_mid_bot = 0;
     mmm2d_params.delta_mult = 0;
-    mmm2d_params.const_pot_on = 0;
+    mmm2d_params.const_pot_on = false;
   }
 
   MMM2D_setup_constants();

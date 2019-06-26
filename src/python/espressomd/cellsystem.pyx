@@ -184,7 +184,7 @@ cdef class CellSystem(object):
     def get_pairs_(self, distance):
         return mpi_get_pairs(distance)
 
-    def resort(self, global_flag=1):
+    def resort(self, global_flag=True):
         """
         Resort the particles in the cellsystem.
         Returns the particle numbers on the nodes
@@ -192,13 +192,13 @@ cdef class CellSystem(object):
 
         Parameters
         ----------
-        global_flag : :obj:`int`
+        global_flag : :obj:`bool`
                       If true, a global resorting is done, otherwise particles
                       are only exchanged between neighboring nodes.
 
         """
 
-        return mpi_resort_particles(global_flag)
+        return mpi_resort_particles(int(global_flag))
 
     property max_num_cells:
         """

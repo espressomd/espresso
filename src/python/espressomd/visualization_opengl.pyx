@@ -520,7 +520,7 @@ class openGLLive(object):
                 OpenGL.GL.GL_RENDERBUFFER, OpenGL.GL.GL_DEPTH_COMPONENT,
                 self.specs['window_size'][0], self.specs['window_size'][1])
             OpenGL.GL.glFramebufferRenderbuffer(
-                OpenGL.GL.GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, OpenGL.GL.GL_RENDERBUFFER, dbo)
+                OpenGL.GL.GL_FRAMEBUFFER, OpenGL.GL.GL_DEPTH_ATTACHMENT, OpenGL.GL.GL_RENDERBUFFER, dbo)
 
             self._reshape_window(
                 self.specs['window_size'][0], self.specs['window_size'][1])

@@ -204,7 +204,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(folded_position(self.particle_data.r.p, box_geo))
+            return make_array_locked(folded_position(Vector3d(self.particle_data.r.p), box_geo))
 
     property image_box:
         """
