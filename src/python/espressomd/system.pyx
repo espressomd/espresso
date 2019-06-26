@@ -433,7 +433,7 @@ cdef class System(object):
 
         """
 
-        cdef Vector3d mi_vec = get_mi_vector( < const Vector3d > make_Vector3d(p2.pos), < const Vector3d > make_Vector3d(p1.pos), box_geo)
+        cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
 
         return make_array_locked(mi_vec)
 
