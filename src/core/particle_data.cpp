@@ -1188,44 +1188,30 @@ void local_remove_particle(int part) {
 }
 
 Particle *local_place_particle(int part, const double p[3], int _new) {
-  Particle *pt;
-
-  Utils::Vector3i i{};
-  Utils::Vector3d pp = {p[0], p[1], p[2]};
+  auto pp = Utils::Vector3d{p[0], p[1], p[2]};
+  auto i = Utils::Vector3i{};
   fold_position(pp, i);
 
   if (_new) {
+    Particle new_part;
+    new_part.p.identity = part;
+    new_part.r.p = pp;
+    new_part.r.p_old = new_part.r.p;
+    new_part.l.i = i;
+
     /* allocate particle anew */
-    auto cell = cell_structure.position_to_cell(pp);
+    auto cell = cell_structure.position_to_cell(new_part);
     if (!cell) {
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
-              "does not belong on this node\n",
-              this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
-      errexit();
+      return nullptr;
     }
-    auto rl = realloc_particlelist(cell, ++cell->n);
-    pt = new (&cell->part[cell->n - 1]) Particle;
 
-    pt->p.identity = part;
-    if (rl)
-      update_local_particles(cell);
-    else
-      local_particles[pt->p.identity] = pt;
-  } else
-    pt = local_particles[part];
+    return append_indexed_particle(cell, std::move(new_part));
+  }
 
-  PART_TRACE(fprintf(
-      stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
-      this_node, part, p[0], p[1], p[2]));
-
+  auto pt = local_particles[part];
   pt->r.p = pp;
   pt->l.i = i;
-#ifdef BOND_CONSTRAINT
   pt->r.p_old = pp;
-#endif
-
-  assert(local_particles[part] == pt);
 
   return pt;
 }

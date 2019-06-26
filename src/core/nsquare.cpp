@@ -70,7 +70,9 @@ void nsq_topology_init(CellPList *old) {
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
   cell_structure.position_to_node = nsq_position_to_node;
-  cell_structure.position_to_cell = nsq_position_to_cell;
+  cell_structure.position_to_cell = [](const Particle &p) {
+    return nsq_position_to_cell(p.r.p);
+  };
 
   realloc_cells(n_nodes);
 
