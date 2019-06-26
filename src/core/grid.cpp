@@ -69,19 +69,22 @@ int map_position_node_array(const Utils::Vector3d &pos) {
     im[i] = boost::algorithm::clamp(im[i], 0, node_grid[i] - 1);
   }
 
-  auto const node = map_array_node(im);
-  return node;
+  return Utils::Mpi::cart_rank(comm_cart, im);
 }
 
-void calc_node_neighbors() {
+Utils::Vector<int, 6>
+calc_node_neighbors(const boost::mpi::communicator &comm) {
   using Utils::Mpi::cart_shift;
+  using std::get;
 
-  for (int dir = 0; dir < 3; dir++) {
-    std::tie(std::ignore, node_neighbors[2 * dir + 0]) =
-        cart_shift(comm_cart, dir, -1);
-    std::tie(std::ignore, node_neighbors[2 * dir + 1]) =
-        cart_shift(comm_cart, dir, +1);
-  }
+  return {
+      get<1>(cart_shift(comm, 0, -1)),
+      get<1>(cart_shift(comm, 0, +1)),
+      get<1>(cart_shift(comm, 1, -1)),
+      get<1>(cart_shift(comm, 1, +1)),
+      get<1>(cart_shift(comm, 2, -1)),
+      get<1>(cart_shift(comm, 2, +1)),
+  };
 }
 
 LocalBox<double> regular_decomposition(const BoxGeometry &box,
@@ -112,7 +115,7 @@ void grid_changed_box_l(const BoxGeometry &box) {
 void grid_changed_n_nodes() {
   mpi_reshape_communicator(node_grid, {{1, 1, 1}});
 
-  calc_node_neighbors();
+  node_neighbors = calc_node_neighbors(comm_cart);
 
   grid_changed_box_l(box_geo);
 }

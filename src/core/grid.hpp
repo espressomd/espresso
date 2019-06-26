@@ -52,6 +52,7 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <boost/mpi/communicator.hpp>
 #include <cassert>
 #include <limits>
 
@@ -91,12 +92,11 @@ int map_position_node_array(const Utils::Vector3d &pos);
 
 /** fill neighbor lists of node.
  *
- * Calculates the numbers of the nearest neighbors for a node and
- * stores them in \ref node_neighbors.
+ * Calculates the numbers of the nearest neighbors for a node.
  *
- * \return     the number of neighbors
- * \param node number of the node.  */
-void calc_node_neighbors();
+ * \return Ranks of neighbors
+ */
+Utils::Vector<int, 6> calc_node_neighbors(const boost::mpi::communicator &comm);
 
 /** called from \ref mpi_bcast_parameter . */
 void grid_changed_n_nodes();
