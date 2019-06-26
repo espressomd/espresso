@@ -58,7 +58,7 @@ cdef class Globals(object):
 
             for i in range(3):
                 periodicity[i] = grid.box_geo.periodic(i)
-
+                
             return array_locked(periodicity)
 
     property time:
