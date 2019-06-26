@@ -102,7 +102,7 @@ void calc_node_neighbors();
 void grid_changed_n_nodes();
 
 /** called from \ref mpi_bcast_parameter . */
-void grid_changed_box_l();
+void grid_changed_box_l(const BoxGeometry &box);
 
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales
  * the particles accordingly */

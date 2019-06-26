@@ -81,19 +81,21 @@ void calc_node_neighbors() {
         cart_shift(comm_cart, dir, -1);
     std::tie(std::ignore, node_neighbors[2 * dir + 1]) =
         cart_shift(comm_cart, dir, +1);
-
-    /* left boundary ? */
-    local_geo.boundary_[2 * dir] = (node_pos[dir] == 0);
-    /* right boundary ? */
-    local_geo.boundary_[2 * dir + 1] = -(node_pos[dir] == node_grid[dir] - 1);
   }
 }
 
-void grid_changed_box_l() {
+void grid_changed_box_l(const BoxGeometry &box) {
   for (int i = 0; i < 3; i++) {
-    local_geo.local_box_l[i] = box_geo.length()[i] / (double)node_grid[i];
+    local_geo.local_box_l[i] = box.length()[i] / (double)node_grid[i];
     local_geo.my_left_[i] = node_pos[i] * local_geo.length()[i];
     local_geo.my_right_[i] = (node_pos[i] + 1) * local_geo.length()[i];
+
+    for(int dir  = 0; dir <3 ; dir++) {
+      /* left boundary ? */
+      local_geo.boundary_[2 * dir] = (node_pos[dir] == 0);
+      /* right boundary ? */
+      local_geo.boundary_[2 * dir + 1] = -(node_pos[dir] == node_grid[dir] - 1);
+    }
   }
 }
 
@@ -102,7 +104,7 @@ void grid_changed_n_nodes() {
 
   calc_node_neighbors();
 
-  grid_changed_box_l();
+  grid_changed_box_l(box_geo);
 }
 
 void rescale_boxl(int dir, double d_new) {
