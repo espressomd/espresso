@@ -219,10 +219,12 @@ void mpi_init() {
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-  MPI_Dims_create(n_nodes, 3, node_grid.data());
+  node_grid = Utils::Mpi::dims_create<3>(n_nodes);
 
-  mpi_reshape_communicator(node_grid,
-                           /* periodicity */ {{1, 1, 1}});
+  comm_cart =
+      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
+
+  this_node = comm_cart.rank();
 
   Communication::m_callbacks =
       std::make_unique<Communication::MpiCallbacks>(comm_cart);
@@ -235,14 +237,6 @@ void mpi_init() {
   partCfg(std::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
 
   on_program_start();
-}
-
-void mpi_reshape_communicator(const Utils::Vector3i &node_grid,
-                              const Utils::Vector3i &periodicity) {
-  comm_cart =
-      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
-  Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
-  this_node = comm_cart.rank();
 }
 
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/

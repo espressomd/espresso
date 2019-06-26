@@ -114,7 +114,10 @@ void grid_changed_box_l(const BoxGeometry &box) {
 }
 
 void grid_changed_n_nodes() {
-  mpi_reshape_communicator(node_grid, {{1, 1, 1}});
+  comm_cart =
+      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
+
+  this_node = comm_cart.rank();
 
   calc_node_neighbors(comm_cart);
 
