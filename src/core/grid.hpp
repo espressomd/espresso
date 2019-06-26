@@ -79,19 +79,12 @@ extern Utils::Vector<int, 6> node_neighbors;
     determine one automatically. */
 void init_node_grid();
 
-/** node mapping: array -> node.
- *
- * \param node   rank of the node you want to know the position for.
- * \param pos    position of the node in node grid.
- */
-void map_node_array(int node, int pos[3]);
-
 /** node mapping: node -> array.
  *
  * \return      rank of the node at position pos.
  * \param pos   position of the node in node grid.
  */
-int map_array_node(Utils::Span<const int> pos);
+int map_array_node(const Utils::Vector3i &pos);
 
 /** map a spatial position to the node grid */
 int map_position_node_array(const Utils::Vector3d &pos);
@@ -103,7 +96,7 @@ int map_position_node_array(const Utils::Vector3d &pos);
  *
  * \return     the number of neighbors
  * \param node number of the node.  */
-void calc_node_neighbors(int node);
+void calc_node_neighbors();
 
 /** called from \ref mpi_bcast_parameter . */
 void grid_changed_n_nodes();

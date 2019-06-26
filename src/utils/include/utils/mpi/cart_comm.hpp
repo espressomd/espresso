@@ -40,7 +40,7 @@ Vector3i cart_coords(boost::mpi::communicator const &comm, int rank) {
 }
 
 template <size_t dims>
-int cart_rank(boost::mpi::communicator const &comm, const Vector3i &pos) {
+int cart_rank(boost::mpi::communicator const &comm, const Vector<int, dims> &pos) {
   int rank;
   BOOST_MPI_CHECK_RESULT(MPI_Cart_rank, (comm, pos.data(), &rank))
   return rank;

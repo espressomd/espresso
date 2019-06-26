@@ -76,6 +76,7 @@
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/utility.hpp>
+#include <utils/mpi/cart_comm.hpp>
 
 using namespace std;
 
@@ -222,7 +223,6 @@ void mpi_init() {
 
   mpi_reshape_communicator(node_grid,
                            /* periodicity */ {{1, 1, 1}});
-  MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
 
   Communication::m_callbacks =
       std::make_unique<Communication::MpiCallbacks>(comm_cart);
@@ -239,12 +239,8 @@ void mpi_init() {
 
 void mpi_reshape_communicator(const Utils::Vector3i &node_grid,
                               const Utils::Vector3i &periodicity) {
-  MPI_Comm temp_comm;
-  MPI_Cart_create(MPI_COMM_WORLD, 3, const_cast<int *>(node_grid.data()),
-                  const_cast<int *>(periodicity.data()), 0, &temp_comm);
-  comm_cart =
-      boost::mpi::communicator(temp_comm, boost::mpi::comm_take_ownership);
-
+  comm_cart = Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
+  node_pos = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
   this_node = comm_cart.rank();
 }
 

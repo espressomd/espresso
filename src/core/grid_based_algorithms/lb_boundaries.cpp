@@ -223,13 +223,13 @@ void lb_init_boundaries() {
 #endif /* defined ( CUDA) && defined (LB_BOUNDARIES_GPU) */
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
-    Utils::Vector3i node_domain_position, offset;
+    Utils::Vector3i offset;
     int the_boundary = -1;
-    map_node_array(this_node, node_domain_position.data());
+
     const auto lblattice = lb_lbfluid_get_lattice();
-    offset[0] = node_domain_position[0] * lblattice.grid[0];
-    offset[1] = node_domain_position[1] * lblattice.grid[1];
-    offset[2] = node_domain_position[2] * lblattice.grid[2];
+    offset[0] = node_pos[0] * lblattice.grid[0];
+    offset[1] = node_pos[1] * lblattice.grid[1];
+    offset[2] = node_pos[2] * lblattice.grid[2];
 
     for (int n = 0; n < lblattice.halo_grid_volume; n++) {
       lbfields.at(n).boundary = 0;

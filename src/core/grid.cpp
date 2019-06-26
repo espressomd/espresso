@@ -73,10 +73,9 @@ int map_position_node_array(const Utils::Vector3d &pos) {
   return node;
 }
 
-void calc_node_neighbors(int node) {
+void calc_node_neighbors() {
   using Utils::Mpi::cart_shift;
 
-  map_node_array(node, node_pos.data());
   for (int dir = 0; dir < 3; dir++) {
     std::tie(std::ignore, node_neighbors[2 * dir + 0]) =
         cart_shift(comm_cart, dir, -1);
@@ -101,9 +100,7 @@ void grid_changed_box_l() {
 void grid_changed_n_nodes() {
   mpi_reshape_communicator(node_grid, {{1, 1, 1}});
 
-  node_pos = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
-
-  calc_node_neighbors(comm_cart.rank());
+  calc_node_neighbors();
 
   grid_changed_box_l();
 }
@@ -132,12 +129,6 @@ void rescale_boxl(int dir, double d_new) {
   }
 }
 
-void map_node_array(int node, int pos[3]) {
-  MPI_Cart_coords(comm_cart, node, 3, pos);
-}
-
-int map_array_node(Utils::Span<const int> pos) {
-  int rank;
-  MPI_Cart_rank(comm_cart, pos.data(), &rank);
-  return rank;
+int map_array_node(const Utils::Vector3i &pos) {
+  return Utils::Mpi::cart_rank(comm_cart, pos);
 }

@@ -154,5 +154,5 @@ int Lattice::map_lattice_to_node(Utils::Vector3i &ind,
   ind[2] = ind[2] - grid[2] * this->grid[2] + this->halo_size;
 
   /* return linear index into node array */
-  return map_array_node({grid.data(), 3});
+  return map_array_node(grid);
 }
