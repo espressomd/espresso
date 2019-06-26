@@ -11,10 +11,10 @@
 namespace Utils {
 namespace Mpi {
 template <size_t dim>
-Vector3i dims_create(boost::mpi::communicator const &comm) {
+Vector3i dims_create(int nodes) {
   Vector<int, dim> dims;
   BOOST_MPI_CHECK_RESULT(MPI_Dims_create,
-                         (comm.size(), static_cast<int>(dim), dims.data()));
+                         (nodes, static_cast<int>(dim), dims.data()));
 
   return dims;
 }
