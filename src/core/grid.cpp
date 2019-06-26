@@ -32,6 +32,7 @@
 
 #include <boost/algorithm/clamp.hpp>
 #include <mpi.h>
+#include <utils/mpi/cart_comm.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -72,34 +73,21 @@ int map_position_node_array(const Utils::Vector3d &pos) {
   return node;
 }
 
-int calc_node_neighbors(int node) {
-
-  int dir, neighbor_count;
+void calc_node_neighbors(int node) {
+  using Utils::Mpi::cart_shift;
 
   map_node_array(node, node_pos.data());
-  for (dir = 0; dir < 3; dir++) {
-    int buf;
-
-    MPI_Cart_shift(comm_cart, dir, -1, &buf, &(node_neighbors[2 * dir]));
-    MPI_Cart_shift(comm_cart, dir, 1, &buf, &(node_neighbors[2 * dir + 1]));
+  for (int dir = 0; dir < 3; dir++) {
+    std::tie(std::ignore, node_neighbors[2 * dir + 0]) =
+        cart_shift(comm_cart, dir, -1);
+    std::tie(std::ignore, node_neighbors[2 * dir + 1]) =
+        cart_shift(comm_cart, dir, +1);
 
     /* left boundary ? */
-    if (node_pos[dir] == 0) {
-      local_geo.boundary_[2 * dir] = 1;
-    } else {
-      local_geo.boundary_[2 * dir] = 0;
-    }
+    local_geo.boundary_[2 * dir] = (node_pos[dir] == 0);
     /* right boundary ? */
-    if (node_pos[dir] == node_grid[dir] - 1) {
-      local_geo.boundary_[2 * dir + 1] = -1;
-    } else {
-      local_geo.boundary_[2 * dir + 1] = 0;
-    }
+    local_geo.boundary_[2 * dir + 1] = -(node_pos[dir] == node_grid[dir] - 1);
   }
-
-  neighbor_count = 6;
-
-  return (neighbor_count);
 }
 
 void grid_changed_box_l() {
@@ -111,12 +99,11 @@ void grid_changed_box_l() {
 }
 
 void grid_changed_n_nodes() {
-  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
-                           {{1, 1, 1}});
+  mpi_reshape_communicator(node_grid, {{1, 1, 1}});
 
-  MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
+  node_pos = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
 
-  calc_node_neighbors(this_node);
+  calc_node_neighbors(comm_cart.rank());
 
   grid_changed_box_l();
 }

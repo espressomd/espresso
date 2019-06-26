@@ -103,7 +103,7 @@ int map_position_node_array(const Utils::Vector3d &pos);
  *
  * \return     the number of neighbors
  * \param node number of the node.  */
-int calc_node_neighbors(int node);
+void calc_node_neighbors(int node);
 
 /** called from \ref mpi_bcast_parameter . */
 void grid_changed_n_nodes();
