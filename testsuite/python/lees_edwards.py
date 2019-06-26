@@ -49,9 +49,10 @@ class LeesEdwards(ut.TestCase):
         self.assertEqual(system.lees_edwards.sheardir, 0)
         self.assertEqual(system.lees_edwards.shearplanenormal, 1)
 
+        # Check if the offset is determined correctly
+
         system.time = 0.0
 
-        # Check if the offset is determined correctly
         frequency = np.sqrt(2.0)
         omega = 2 * np.pi * frequency
         amplitude = 1.3
@@ -59,16 +60,23 @@ class LeesEdwards(ut.TestCase):
         shearplanenormal = 1
         system.lees_edwards.set_params(type="oscillatory_shear", frequency=omega,
                                        amplitude=amplitude, sheardir=sheardir, shearplanenormal=shearplanenormal)
-        self.assertEqual(system.lees_edwards.type, "oscillatory_shear")
-        for time in np.arange(system.time_step*10.0, 100.0, system.time_step*10):
-            system.integrator.run(10)
+
+        for time in np.arange(0.0, 100.0, system.time_step*10):
+
+            system.integrator.run(0)
+
             offset = amplitude * np.sin(omega * time)
             velocity = omega * amplitude * np.cos(omega * time)
 
-            print(system.lees_edwards.velocity, velocity)
+            #print(system.time, time)
+            #print(system.lees_edwards.velocity, velocity)
+            #print(system.lees_edwards.offset, offset)
+            #print("\n")
 
             self.assertAlmostEqual(system.lees_edwards.velocity, velocity)
             self.assertAlmostEqual(system.lees_edwards.offset, offset)
+
+            system.integrator.run(10)
 
     def test_b_BoundaryCrossing(self):
         """A particle crosses the upper and lower boundary to test if position

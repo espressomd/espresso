@@ -334,6 +334,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Propagate langevin philox rng counter
     langevin_rng_counter_increment();
 
+#ifdef LEES_EDWARDS
+    lees_edwards_protocol.velocity =  lees_edwards_get_velocity(sim_time+0.5);
+#endif
+
     force_calc();
 
 #ifdef VIRTUAL_SITES
@@ -423,6 +427,13 @@ void integrate_vv(int n_steps, int reuse_forces) {
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
+
+#ifdef LEES_EDWARDS
+  // Necessary so that the Python interface is up-to-date
+  lees_edwards_protocol.offset =  lees_edwards_get_offset(sim_time);
+  lees_edwards_protocol.velocity =  lees_edwards_get_velocity(sim_time);
+#endif
+
 }
 
 /************************************************************/

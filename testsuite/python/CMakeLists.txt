@@ -196,7 +196,7 @@ python_test(FILE time_series.py MAX_NUM_PROC 1)
 python_test(FILE linear_momentum.py)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2 LABELS gpu)
-python_test(FILE lees_edwards.py)
+python_test(FILE lees_edwards.py MAX_NUM_PROC 2)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
