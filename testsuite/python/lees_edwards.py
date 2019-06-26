@@ -68,11 +68,6 @@ class LeesEdwards(ut.TestCase):
             offset = amplitude * np.sin(omega * time)
             velocity = omega * amplitude * np.cos(omega * time)
 
-            #print(system.time, time)
-            #print(system.lees_edwards.velocity, velocity)
-            #print(system.lees_edwards.offset, offset)
-            #print("\n")
-
             self.assertAlmostEqual(system.lees_edwards.velocity, velocity)
             self.assertAlmostEqual(system.lees_edwards.offset, offset)
 
