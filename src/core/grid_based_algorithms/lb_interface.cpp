@@ -7,6 +7,7 @@
 #include "lb-d3q19.hpp"
 #include "lb.hpp"
 #include "lbgpu.hpp"
+#include "MpiCallbacks.hpp"
 
 #include <utils/index.hpp>
 using Utils::get_linear_index;
@@ -36,7 +37,7 @@ void mpi_send_fluid(int node, int index, double rho, Utils::Vector3d const &j,
 REGISTER_CALLBACK(mpi_send_fluid)
 
 template <typename Kernel>
-auto lb_calc(Utils::Vector3i const &index, Kernel kernel) {
+auto lb_calc(Utils::Vector3i const &index, Kernel &&kernel) {
   using R = decltype(kernel(index));
   if (lblattice.is_local(index)) {
     return boost::optional<R>(kernel(index));
@@ -1152,7 +1153,7 @@ Utils::Vector3i lb_lbfluid_get_shape() {
   throw std::runtime_error("No LB active");
 }
 
-bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind) {
+bool lb_lbnode_is_index_valid(Utils::Vector3i const &ind) {
   auto const limit = lb_lbfluid_get_shape();
   return ind < limit && ind >= Utils::Vector3i{};
 }
@@ -1174,7 +1175,7 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
-    return *mpi_lb_calc_rho(ind);
+    return ::Communication::mpiCallbacks().call(::Communication::Result::one_rank, mpi_lb_calc_rho, ind);
   }
   throw std::runtime_error("LB not activated.");
 }

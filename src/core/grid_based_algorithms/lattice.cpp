@@ -31,9 +31,6 @@
 
 #include <utils/index.hpp>
 using Utils::get_linear_index;
-using Utils::Vector3d;
-using Utils::Vector3i;
-using Utils::Vector6d;
 #include <utils/constants.hpp>
 
 bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
