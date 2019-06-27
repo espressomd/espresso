@@ -833,16 +833,17 @@ void prefetch_particle_data(std::vector<int> ids) {
                            std::make_move_iterator(parts.begin()));
 }
 
-int place_particle(int part, double p[3]) {
+int place_particle(int part, const double *p_) {
+  Utils::Vector3d p{p_[0], p_[1], p_[2]};
+
   if (particle_exists(part)) {
-    mpi_place_particle(get_particle_node(part), part, p);
+    mpi_place_particle(get_particle_node(part), part, p.data());
 
     return ES_PART_OK;
-  } else {
-    particle_node[part] = mpi_place_new_particle(part, p);
-
-    return ES_PART_CREATED;
   }
+  particle_node[part] = mpi_place_new_particle(part, p);
+
+  return ES_PART_CREATED;
 }
 
 void set_particle_v(int part, double *v) {

@@ -149,7 +149,7 @@ void mpi_place_particle(int node, int id, double pos[3]);
  *  \param id    the particle to create.
  *  \param pos   the particles position.
  */
-int mpi_place_new_particle(int id, double *pos);
+int mpi_place_new_particle(int id, const Utils::Vector3d &pos);
 
 /** Issue REQ_SET_EXCLUSION: send exclusions.
  *  Also calls \ref on_particle_change.

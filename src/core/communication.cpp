@@ -290,9 +290,9 @@ boost::optional<int> mpi_place_new_particle_slave(int part,
 
 REGISTER_CALLBACK_ONE_RANK(mpi_place_new_particle_slave)
 
-int mpi_place_new_particle(int id, double *pos) {
+int mpi_place_new_particle(int id, const Utils::Vector3d &pos) {
   return mpi_call(Communication::Result::one_rank, mpi_place_new_particle_slave,
-                  id, Utils::Vector3d{pos[0], pos[1], pos[2]});
+                  id, pos);
 }
 
 /****************** REQ_REM_PART ************/
