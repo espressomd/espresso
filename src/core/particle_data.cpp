@@ -1187,7 +1187,6 @@ Particle *local_place_particle(int part, const double p[3], int _new) {
     Particle new_part;
     new_part.p.identity = part;
     new_part.r.p = pp;
-    new_part.r.p_old = new_part.r.p;
     new_part.l.i = i;
 
     /* allocate particle anew */
@@ -1202,7 +1201,6 @@ Particle *local_place_particle(int part, const double p[3], int _new) {
   auto pt = local_particles[part];
   pt->r.p = pp;
   pt->l.i = i;
-  pt->r.p_old = pp;
 
   return pt;
 }
