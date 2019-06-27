@@ -834,25 +834,15 @@ void prefetch_particle_data(std::vector<int> ids) {
 }
 
 int place_particle(int part, double p[3]) {
-  int retcode = ES_PART_OK;
-
-  int pnode;
   if (particle_exists(part)) {
-    pnode = get_particle_node(part);
-    mpi_place_particle(pnode, part, p);
+    mpi_place_particle(get_particle_node(part), part, p);
+
+    return ES_PART_OK;
   } else {
-    /* new particle, node by spatial position */
-    pnode = cell_structure.position_to_node(Utils::Vector3d{p, p + 3});
+    particle_node[part] = mpi_place_new_particle(part, p);
 
-    /* master node specific stuff */
-    particle_node[part] = pnode;
-
-    retcode = ES_PART_CREATED;
-
-    mpi_place_new_particle(pnode, part, p);
+    return ES_PART_CREATED;
   }
-
-  return retcode;
 }
 
 void set_particle_v(int part, double *v) {

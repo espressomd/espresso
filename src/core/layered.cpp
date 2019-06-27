@@ -308,7 +308,6 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
       this_node, old->n, max_range));
 
   cell_structure.type = CELL_STRUCTURE_LAYERED;
-  cell_structure.position_to_node = map_position_node_array;
   cell_structure.position_to_cell = [](const Particle &p) {
     return layered_position_to_cell(p.r.p);
   };

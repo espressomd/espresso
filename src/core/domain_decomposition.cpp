@@ -648,7 +648,6 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
-  cell_structure.position_to_node = map_position_node_array;
   cell_structure.position_to_cell = [](const Particle &p) {
     return dd_save_position_to_cell(p.r.p);
   };

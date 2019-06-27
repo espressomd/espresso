@@ -109,7 +109,6 @@ int n_nodes = -1;
   CB(mpi_bcast_ia_params_slave)                                                \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
-  CB(mpi_place_new_particle_slave)                                             \
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
@@ -274,29 +273,26 @@ void mpi_place_particle_slave(int pnode, int part) {
   on_particle_change();
 }
 
-void mpi_place_new_particle(int pnode, int part, double p[3]) {
-  mpi_call(mpi_place_new_particle_slave, pnode, part);
+boost::optional<int> mpi_place_new_particle_slave(int part,
+                                                  Utils::Vector3d const &pos) {
   added_particle(part);
 
-  if (pnode == this_node)
-    local_place_particle(part, p, 1);
-  else
-    MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  auto p = local_place_particle(part, pos.data(), 1);
 
   on_particle_change();
-}
 
-void mpi_place_new_particle_slave(int pnode, int part) {
-
-  added_particle(part);
-
-  if (pnode == this_node) {
-    double p[3];
-    MPI_Recv(p, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    local_place_particle(part, p, 1);
+  if (p) {
+    return comm_cart.rank();
   }
 
-  on_particle_change();
+  return {};
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_place_new_particle_slave)
+
+int mpi_place_new_particle(int id, double *pos) {
+  return mpi_call(Communication::Result::one_rank, mpi_place_new_particle_slave,
+                  id, Utils::Vector3d{pos[0], pos[1], pos[2]});
 }
 
 /****************** REQ_REM_PART ************/
