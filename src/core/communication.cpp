@@ -249,24 +249,24 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
 
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/
 
-void mpi_place_particle(int pnode, int part, double p[3]) {
-  mpi_call(mpi_place_particle_slave, pnode, part);
+void mpi_place_particle(int node, int id, const Utils::Vector3d &pos) {
+  mpi_call(mpi_place_particle_slave, node, id);
 
-  if (pnode == this_node)
-    local_place_particle(part, p, 0);
-  else
-    MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  if (node == this_node)
+    local_place_particle(id, pos, 0);
+  else {
+    comm_cart.send(node, SOME_TAG, pos);
+  }
 
   set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
 void mpi_place_particle_slave(int pnode, int part) {
-
   if (pnode == this_node) {
-    double p[3];
-    MPI_Recv(p, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    local_place_particle(part, p, 0);
+    Utils::Vector3d pos;
+    comm_cart.recv(0, SOME_TAG, pos);
+    local_place_particle(part, pos, 0);
   }
 
   set_resort_particles(Cells::RESORT_GLOBAL);
@@ -277,7 +277,7 @@ boost::optional<int> mpi_place_new_particle_slave(int part,
                                                   Utils::Vector3d const &pos) {
   added_particle(part);
 
-  auto p = local_place_particle(part, pos.data(), 1);
+  auto p = local_place_particle(part, pos, 1);
 
   on_particle_change();
 

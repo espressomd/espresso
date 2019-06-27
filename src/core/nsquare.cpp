@@ -34,7 +34,7 @@
 
 Cell *local;
 
-Cell *nsq_position_to_cell(int id) {
+static Cell *nsq_id_to_cell(int id) {
   return ((id % n_nodes) == this_node) ? local : nullptr;
 }
 
@@ -71,7 +71,7 @@ void nsq_topology_init(CellPList *old) {
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
   cell_structure.particle_to_cell = [](const Particle &p) {
-    return nsq_position_to_cell(p.identity());
+    return nsq_id_to_cell(p.identity());
   };
 
   realloc_cells(n_nodes);

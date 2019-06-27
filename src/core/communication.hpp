@@ -142,7 +142,7 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
  *  \param node  the node to attach it to.
  *  \param pos   the particles position.
  */
-void mpi_place_particle(int node, int id, double pos[3]);
+void mpi_place_particle(int node, int id, const Utils::Vector3d &pos);
 
 /** Issue REQ_PLACE: create particle at a position on a node.
  *  Also calls \ref on_particle_change.

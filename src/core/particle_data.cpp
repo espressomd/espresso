@@ -833,11 +833,11 @@ void prefetch_particle_data(std::vector<int> ids) {
                            std::make_move_iterator(parts.begin()));
 }
 
-int place_particle(int part, const double *p_) {
-  Utils::Vector3d p{p_[0], p_[1], p_[2]};
+int place_particle(int part, const double *pos) {
+  Utils::Vector3d p{pos[0], pos[1], pos[2]};
 
   if (particle_exists(part)) {
-    mpi_place_particle(get_particle_node(part), part, p.data());
+    mpi_place_particle(get_particle_node(part), part, p);
 
     return ES_PART_OK;
   }
@@ -1178,14 +1178,14 @@ void local_remove_particle(int part) {
   Particle p_destroy = extract_indexed_particle(cell, n);
 }
 
-Particle *local_place_particle(int part, const double p[3], int _new) {
-  auto pp = Utils::Vector3d{p[0], p[1], p[2]};
+Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
+  auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
   auto i = Utils::Vector3i{};
   fold_position(pp, i);
 
   if (_new) {
     Particle new_part;
-    new_part.p.identity = part;
+    new_part.p.identity = id;
     new_part.r.p = pp;
     new_part.l.i = i;
 
@@ -1198,7 +1198,7 @@ Particle *local_place_particle(int part, const double p[3], int _new) {
     return append_indexed_particle(cell, std::move(new_part));
   }
 
-  auto pt = local_particles[part];
+  auto pt = local_particles[id];
   pt->r.p = pp;
   pt->l.i = i;
 
