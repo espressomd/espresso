@@ -544,8 +544,8 @@ public:
    *
    * This method can only be called on the head node.
    */
-  template <class R, class... Args>
-  auto call(Result::OneRank, boost::optional<R> (*fp)(Args...),
+  template <class R, class... FArgs, class... Args>
+  auto call(Result::OneRank, boost::optional<R> (*fp)(FArgs...),
             Args... args) const -> std::remove_reference_t<R> {
 
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
