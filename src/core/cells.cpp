@@ -326,7 +326,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
 
       fold_and_reset(p);
 
-      auto target_cell = cs.position_to_cell(p);
+      auto target_cell = cs.particle_to_cell(p);
 
       if (target_cell == nullptr) {
         append_unindexed_particle(&displaced_parts,
@@ -365,7 +365,7 @@ void cells_resort_particles(int global_flag) {
     layered_exchange_and_sort_particles(global_flag, &displaced_parts);
   } break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_balance_particles(global_flag, &displaced_parts);
+    nsq_exchange_particles(global_flag, &displaced_parts);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid);
@@ -464,5 +464,5 @@ Cell *find_current_cell(const Particle &p) {
     return nullptr;
   }
 
-  return cell_structure.position_to_cell(p);
+  return cell_structure.particle_to_cell(p);
 }

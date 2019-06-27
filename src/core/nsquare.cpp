@@ -37,7 +37,6 @@ Cell *local;
 Cell *nsq_position_to_cell(int id) {
   return ((id % n_nodes) == this_node) ? local : nullptr;
 }
-int nsq_position_to_node(const Utils::Vector3d &) { return this_node; }
 
 void nsq_topology_release() {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_release:\n", this_node));
@@ -71,7 +70,7 @@ void nsq_topology_init(CellPList *old) {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
-  cell_structure.position_to_cell = [](const Particle &p) {
+  cell_structure.particle_to_cell = [](const Particle &p) {
     return nsq_position_to_cell(p.identity());
   };
 
@@ -156,7 +155,7 @@ void nsq_topology_init(CellPList *old) {
   update_local_particles(local);
 }
 
-void nsq_balance_particles(int global_flag, ParticleList *displaced_parts) {
+void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts) {
   if (not global_flag) {
     assert(displaced_parts->n == 0);
     return;
@@ -168,7 +167,7 @@ void nsq_balance_particles(int global_flag, ParticleList *displaced_parts) {
     auto const target_node = (p.identity() % n_nodes);
     send_buf.at(target_node).emplace_back(std::move(p));
   }
-  displaced_parts->n = 0;
+  realloc_particlelist(displaced_parts, displaced_parts->n = 0);
 
   /* Exchange particles */
   std::vector<std::vector<Particle>> recv_buf(n_nodes);

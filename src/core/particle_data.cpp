@@ -1190,7 +1190,7 @@ Particle *local_place_particle(int part, const double p[3], int _new) {
     new_part.l.i = i;
 
     /* allocate particle anew */
-    auto cell = cell_structure.position_to_cell(new_part);
+    auto cell = cell_structure.particle_to_cell(new_part);
     if (!cell) {
       return nullptr;
     }

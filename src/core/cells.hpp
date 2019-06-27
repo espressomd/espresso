@@ -157,11 +157,12 @@ struct CellStructure {
   GhostCommunicator collect_ghost_force_comm;
 
   /** Cell system dependent function to find the right cell for a
-   *  particle at position @p pos.
-   *  \param  p Position of a particle.
-   *  \return pointer to cell  where to put the particle.
+   *  particle.
+   *  \param  p Particle.
+   *  \return pointer to cell  where to put the particle, nullptr
+   *          if the particle does not belong on this node.
    */
-  Cell *(*position_to_cell)(const Particle &p) = nullptr;
+  Cell *(*particle_to_cell)(const Particle &p) = nullptr;
 };
 
 /*@}*/
