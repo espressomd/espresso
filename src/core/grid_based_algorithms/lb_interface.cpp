@@ -1121,7 +1121,7 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     static std::vector<LB_rho_v_pi_gpu> host_print_values(0);
 
-    if (host_print_values.size() == 0)
+    if (host_print_values.empty())
       host_print_values.resize(1);
     lb_print_node_GPU(single_nodeindex, host_print_values.data());
     return host_print_values.data()->rho;
@@ -1150,7 +1150,7 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     static std::vector<LB_rho_v_pi_gpu> host_print_values(0);
-    if (host_print_values.size() == 0)
+    if (host_print_values.empty())
       host_print_values.resize(1);
 
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
