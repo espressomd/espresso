@@ -1228,6 +1228,69 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   free(s_buffer);
 }
 
+double lb_calc_rho(std::array<double, 19> const &modes) {
+  return modes[0] + lbpar.rho;
+}
+
+Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
+                          Utils::Vector3d const &force_density) {
+  return Utils::Vector3d{{modes[1] + 0.5 * force_density[0],
+                          modes[2] + 0.5 * force_density[1],
+                          modes[3] + 0.5 * force_density[2]}};
+}
+
+Utils::Vector6d lb_calc_pi(std::array<double, 19> const &modes,
+                           Utils::Vector3d const &force_density) {
+  auto const j = lb_calc_j(modes, force_density);
+  auto const rho = lb_calc_rho(modes);
+  using Utils::sqr;
+  auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
+  /* equilibrium part of the stress modes */
+  Utils::Vector6d modes_from_pi_eq{};
+  modes_from_pi_eq[0] = j2 / rho;
+  modes_from_pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / rho;
+  modes_from_pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / rho;
+  modes_from_pi_eq[3] = j[0] * j[1] / rho;
+  modes_from_pi_eq[4] = j[0] * j[2] / rho;
+  modes_from_pi_eq[5] = j[1] * j[2] / rho;
+
+  /* Now we must predict the outcome of the next collision */
+  /* We immediately average pre- and post-collision. */
+
+  Utils::Vector6d avg_modes;
+  avg_modes[0] = modes_from_pi_eq[0] + (0.5 + 0.5 * lbpar.gamma_bulk) *
+                                           (modes[4] - modes_from_pi_eq[0]);
+  avg_modes[1] = modes_from_pi_eq[1] + (0.5 + 0.5 * lbpar.gamma_shear) *
+                                           (modes[5] - modes_from_pi_eq[1]);
+  avg_modes[2] = modes_from_pi_eq[2] + (0.5 + 0.5 * lbpar.gamma_shear) *
+                                           (modes[6] - modes_from_pi_eq[2]);
+  avg_modes[3] = modes_from_pi_eq[3] + (0.5 + 0.5 * lbpar.gamma_shear) *
+                                           (modes[7] - modes_from_pi_eq[3]);
+  avg_modes[4] = modes_from_pi_eq[4] + (0.5 + 0.5 * lbpar.gamma_shear) *
+                                           (modes[8] - modes_from_pi_eq[4]);
+  avg_modes[5] = modes_from_pi_eq[5] + (0.5 + 0.5 * lbpar.gamma_shear) *
+                                           (modes[9] - modes_from_pi_eq[5]);
+
+  // Transform the stress tensor components according to the modes that
+  // correspond to those used by U. Schiller. In terms of populations this
+  // expression then corresponds exactly to those in Eqs. 116 - 121 in the
+  // Duenweg and Ladd paper, when these are written out in populations.
+  // But to ensure this, the expression in Schiller's modes has to be different!
+
+  Utils::Vector6d pi;
+  pi[0] =
+      (2.0 * (modes[0] + avg_modes[0]) + avg_modes[2] + 3.0 * avg_modes[1]) /
+      6.0;              // xx
+  pi[1] = avg_modes[3]; // xy
+  pi[2] =
+      (2.0 * (modes[0] + avg_modes[0]) + avg_modes[2] - 3.0 * avg_modes[1]) /
+      6.0;                                                // yy
+  pi[3] = avg_modes[4];                                   // xz
+  pi[4] = avg_modes[5];                                   // yz
+  pi[5] = (modes[0] + avg_modes[0] - avg_modes[2]) / 3.0; // zz
+  return pi;
+}
+
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                           double *pi) {
 #ifdef LB_BOUNDARIES

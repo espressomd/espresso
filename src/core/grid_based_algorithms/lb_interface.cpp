@@ -35,6 +35,37 @@ void mpi_send_fluid(int node, int index, double rho, Utils::Vector3d const &j,
 
 REGISTER_CALLBACK(mpi_send_fluid)
 
+template <typename Kernel>
+auto lb_calc(Utils::Vector3i const &index, Kernel kernel) {
+  using R = decltype(kernel(index));
+  if (lblattice.is_local(index)) {
+    return boost::optional<R>(kernel(index));
+  }
+  return boost::optional<R>();
+}
+
+template <class Kernel>
+auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel &&kernel) {
+  return lb_calc(index, [&](auto index) {
+    auto local_index = index;
+    lblattice.map_lattice_to_node(local_index,
+                                  node_grid); // TODO: Factor out this call.
+    auto const linear_index = get_linear_index(
+        local_index[0], local_index[1], local_index[2], lblattice.halo_grid);
+    auto const force_density = lbfields[linear_index].force_density;
+    auto const modes = lb_calc_modes(linear_index);
+    return kernel(modes, force_density);
+  });
+}
+
+auto mpi_lb_calc_rho(Utils::Vector3i const &index) {
+  return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
+    return lb_calc_rho(modes);
+  });
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_calc_rho)
+
 void mpi_recv_fluid_slave(int node, int index) {
   if (node == this_node) {
     double data[10];
@@ -1143,18 +1174,7 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
-    Lattice::index_t index;
-    int node;
-    double rho;
-    double j[3];
-    double pi[6];
-
-    auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
-    index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
-                             lblattice.halo_grid);
-    mpi_recv_fluid(node, index, &rho, j, pi);
-    return rho;
+    return *mpi_lb_calc_rho(ind);
   }
   throw std::runtime_error("LB not activated.");
 }

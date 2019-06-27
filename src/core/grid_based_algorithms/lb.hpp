@@ -211,6 +211,12 @@ void lb_calc_n_from_rho_j_pi(Lattice::index_t index, double rho,
 void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
                           double *pi);
 
+double lb_calc_rho(std::array<double, 19> const &modes);
+Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
+                          Utils::Vector3d const &force_density);
+Utils::Vector6d lb_calc_pi(std::array<double, 19> const &modes,
+                           Utils::Vector3d const &force_density);
+
 /** Calculation of hydrodynamic modes.
  *
  *  @param index number of the node to calculate the modes for

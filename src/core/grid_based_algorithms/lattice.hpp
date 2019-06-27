@@ -105,6 +105,7 @@ public:
    */
   int map_lattice_to_node(Utils::Vector3i &ind,
                           const Utils::Vector3i &local_node_grid) const;
+  bool is_local(Utils::Vector3i const &index) const noexcept;
 };
 
 #endif /* CORE_LB_LATTICE_HPP */
