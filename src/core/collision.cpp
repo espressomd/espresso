@@ -366,16 +366,13 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void place_vs_and_relate_to_particle(const int current_vs_pid,
-                                     const Utils::Vector3d &pos, int relate_to,
-                                     const Utils::Vector3d &initial_pos) {
-
-  // The virtual site is placed at initial_pos which will be in the local
-  // node's domain. It will then be moved to its final position.
-  // A resort occurs after vs-based collisions anyway, which will move the vs
-  // into the right cell.
+                                     const Utils::Vector3d &pos,
+                                     int relate_to) {
   added_particle(current_vs_pid);
-  auto p_vs = local_place_particle(current_vs_pid, initial_pos.data(), 1);
-  p_vs->r.p = pos;
+  Particle new_part;
+  new_part.p.identity = current_vs_pid;
+  new_part.r.p = pos;
+  auto p_vs = append_indexed_particle(local_cells.cell[0], std::move(new_part));
 
   local_vs_relate_to(p_vs, &get_part(relate_to));
 
@@ -577,12 +574,6 @@ void handle_collisions() {
 
       } else { // We consider the pair because one particle
                // is local to the node and the other is local or ghost
-
-        // Use initial position for new vs, which is in the local node's
-        // domain
-        // Vs is moved afterwards and resorted after all collision s are handled
-        const Utils::Vector3d initial_pos{my_left[0], my_left[1], my_left[2]};
-
         // If we are in the two vs mode
         // Virtual site related to first particle in the collision
         if (collision_params.mode & COLLISION_MODE_VS) {
@@ -598,7 +589,7 @@ void handle_collisions() {
           auto handle_particle = [&](Particle *p, Utils::Vector3d const &pos) {
             if (not p->l.ghost) {
               place_vs_and_relate_to_particle(current_vs_pid, pos,
-                                              p->identity(), initial_pos);
+                                              p->identity());
               // Particle storage locations may have changed due to
               // added particle
               p1 = local_particles[c.pp1];
@@ -661,8 +652,8 @@ void handle_collisions() {
 
           // Vs placement happens on the node that has p1
           if (!attach_vs_to.l.ghost) {
-            place_vs_and_relate_to_particle(
-                current_vs_pid, pos, attach_vs_to.identity(), initial_pos);
+            place_vs_and_relate_to_particle(current_vs_pid, pos,
+                                            attach_vs_to.identity());
             // Particle storage locations may have changed due to
             // added particle
             p1 = local_particles[c.pp1];
@@ -685,11 +676,9 @@ void handle_collisions() {
     }
 #endif
 
-    // If any node had a collision, all nodes need to do on_particle_change
-    // and resort
-
+    // If any node had a collision, all nodes need to resort
     if (!gathered_queue.empty()) {
-      on_particle_change();
+      set_resort_particles(Cells::RESORT_GLOBAL);
       cells_update_ghosts();
     }
   }    // are we in one of the vs_based methods
