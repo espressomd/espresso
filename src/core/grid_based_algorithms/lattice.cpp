@@ -34,7 +34,16 @@ using Utils::get_linear_index;
 #include <utils/constants.hpp>
 
 bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
-  return index >= local_index_offset and index < (grid + local_index_offset);
+  bool greater_equal_left_bound = false;
+  bool smaller_right_bound = false;
+  double x;
+  for (int i = 0; i < index.size(); ++i) {
+    x = offset[i] + index[i] * agrid[i];
+    greater_equal_left_bound = (x >= my_left[i]);
+    smaller_right_bound = (x < my_right[i]);
+  }
+
+  return greater_equal_left_bound and smaller_right_bound;
 }
 
 int Lattice::init(double *agrid, double const *offset, int halo_size,
