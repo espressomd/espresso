@@ -8,6 +8,47 @@
 *
 */
 
+class LeesEdwardsProtocol {
+ public:
+ virtual double velocity(double time) const = 0;
+ virtual double offset(double time) const = 0;
+};
+
+class LeesEdwardsProtocolConstShearVelocity : LeesEdwardsProtocol {
+ public:
+   double velocity(double time) const override { return shear_velocity; };
+   double offset(double time) const override
+     {
+       return (time-time0) * shear_velocity;
+     }
+   double shear_velocity;
+   double time0;
+};
+
+class LeesEdwardsProtocolConstOffset : LeesEdwardsProtocol {
+ public:
+   double velocity(double time) const override { return 0.; };
+   double offset(double time) const override { return step; };
+   double step;
+   double time0;
+};
+
+class LeesEdwardsProtocolOscillatoryShear : LeesEdwardsProtocol {
+ public:
+   double velocity(double time) const override
+     {
+       return amplitude * std::sin(frequency * (time - time0));
+     }
+   double offset(double time) const override
+     {
+       return frequency * amplitude * std::cos(frequency * (time - time0));
+     }
+   double amplitude;
+   double frequency;
+   double time0;
+};
+
+
 /** Enum for the different Lees Edwards Protocols: Off, Step. Steady Shear and Oscillatory shear  */
 enum LeesEdwardsProtocolType {
     LEES_EDWARDS_PROTOCOL_OFF,
