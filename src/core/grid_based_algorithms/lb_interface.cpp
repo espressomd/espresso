@@ -1,4 +1,5 @@
 #include "lb_interface.hpp"
+#include "MpiCallbacks.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "electrokinetics.hpp"
@@ -7,7 +8,6 @@
 #include "lb-d3q19.hpp"
 #include "lb.hpp"
 #include "lbgpu.hpp"
-#include "MpiCallbacks.hpp"
 
 #include <utils/index.hpp>
 using Utils::get_linear_index;
@@ -1175,7 +1175,8 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
-    return ::Communication::mpiCallbacks().call(::Communication::Result::one_rank, mpi_lb_calc_rho, ind);
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, mpi_lb_calc_rho, ind);
   }
   throw std::runtime_error("LB not activated.");
 }
