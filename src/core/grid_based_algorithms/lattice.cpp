@@ -86,10 +86,8 @@ Lattice::Lattice(double agrid, double offset, int halo_size,
 
   /* determine the number of total nodes including halo */
   halo_grid = grid + Utils::Vector3i::broadcast(2 * halo_size);
-
   halo_grid_volume = boost::accumulate(halo_grid, 1, std::multiplies<int>());
-  this->halo_offset =
-      get_linear_index(halo_size, halo_size, halo_size, this->halo_grid);
+  halo_offset = get_linear_index(halo_size, halo_size, halo_size, halo_grid);
 }
 
 void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
@@ -151,5 +149,5 @@ int Lattice::map_lattice_to_node(Utils::Vector3i &ind) const noexcept {
   ind[2] = ind[2] - index_grid[2] * grid[2] + halo_size;
 
   /* return linear index into node array */
-  return map_array_node({grid.data(), 3});
+  return map_array_node({index_grid.data(), 3});
 }
