@@ -441,17 +441,21 @@ void dd_init_cell_interactions(const DomainDecomposition &dd) {
       hadamard_product(node_pos, dd.cell_grid) - halo;
   auto const global_size = hadamard_product(node_grid, dd.cell_grid);
 
+  /* Tanslate a node local index (relative to the origin of the local grid)
+   * to a global index. */
   auto global_index =
       [&](Utils::Vector3i const &local_index) -> Utils::Vector3i {
     return (global_halo_offset + local_index);
   };
 
+  /* Linear index in the global cell grid. */
   auto folded_linear_index = [&](Utils::Vector3i const &global_index) {
     auto const folded_index = (global_index + global_size) % global_size;
 
     return get_linear_index(folded_index, global_size);
   };
 
+  /* Translate a global index into a local one */
   auto local_index =
       [&](Utils::Vector3i const &global_index) -> Utils::Vector3i {
     return (global_index - global_halo_offset);
