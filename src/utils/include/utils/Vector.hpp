@@ -307,9 +307,8 @@ auto operator%(Vector<T, N> const &a, Vector<U, N> const &b) {
   using R = decltype(declval<T>() % declval<U>());
   Vector<R, N> ret;
 
-  std::transform(std::begin(a), std::end(a), std::begin(b),
-                        std::begin(ret),
-                        [](T const &ai, U const &bi) { return ai % bi; });
+  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
+                 [](T const &ai, U const &bi) { return ai % bi; });
 
   return ret;
 }
