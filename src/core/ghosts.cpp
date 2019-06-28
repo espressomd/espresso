@@ -73,8 +73,6 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
   comm->num = num;
   comm->comm.resize(num);
   for (int i = 0; i < num; i++) {
-    comm->comm[i].shift[0] = comm->comm[i].shift[1] = comm->comm[i].shift[2] =
-        0.0;
     comm->comm[i].n_part_lists = 0;
     comm->comm[i].part_lists = nullptr;
   }
@@ -175,15 +173,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 #endif
           }
         }
-        if (data_parts & GHOSTTRANS_POSSHFTD) {
-          /* ok, this is not nice, but perhaps fast */
-          auto *pp = reinterpret_cast<ParticlePosition *>(insert);
-          int i;
-          *pp = pt->r;
-          for (i = 0; i < 3; i++)
-            pp->p[i] += gc->shift[i];
-          insert += sizeof(ParticlePosition);
-        } else if (data_parts & GHOSTTRANS_POSITION) {
+        if (data_parts & GHOSTTRANS_POSITION) {
           memcpy(insert, &pt->r, sizeof(ParticlePosition));
           insert += sizeof(ParticlePosition);
         }
@@ -404,13 +394,7 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
 #endif
           }
         }
-        if (data_parts & GHOSTTRANS_POSSHFTD) {
-          /* ok, this is not nice, but perhaps fast */
-          int i;
-          pt2->r = pt1->r;
-          for (i = 0; i < 3; i++)
-            pt2->r.p[i] += gc->shift[i];
-        } else if (data_parts & GHOSTTRANS_POSITION)
+        if (data_parts & GHOSTTRANS_POSITION)
           pt2->r = pt1->r;
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           pt2->m = pt1->m;
@@ -474,12 +458,6 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
     int prefetch = gcn->type & GHOST_PREFETCH;
     int poststore = gcn->type & GHOST_PSTSTORE;
     int node = gcn->node;
-
-    GHOST_TRACE(fprintf(stderr, "%d: ghost_comm round %d, job %x\n", this_node,
-                        n, gc->comm[n].type));
-    GHOST_TRACE(fprintf(stderr, "%d: ghost_comm shift %f %f %f\n", this_node,
-                        gc->comm[n].shift[0], gc->comm[n].shift[1],
-                        gc->comm[n].shift[2]));
 
     if (comm_type == GHOST_LOCL)
       cell_cell_transfer(gcn, data_parts);
