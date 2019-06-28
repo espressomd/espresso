@@ -37,21 +37,8 @@ using Utils::get_linear_index;
 #include <utils/constants.hpp>
 
 bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
-  std::bitset<3> greater_equal_left_bound;
-  std::bitset<3> smaller_right_bound;
-  double x;
-  for (int i = 0; i < index.size(); ++i) {
-    x = offset + index[i] * agrid;
-    if (x >= my_left[i] + offset) {
-      greater_equal_left_bound.set(i);
-    }
-    if (x < my_right[i] + offset) {
-      smaller_right_bound.set(i);
-    }
-  }
-  auto const res =
-      (greater_equal_left_bound.all() and smaller_right_bound.all());
-  return res;
+  auto const x = index * agrid;
+  return x >= my_left and x < my_right;
 }
 
 Lattice::Lattice(double agrid, double offset, int halo_size,
