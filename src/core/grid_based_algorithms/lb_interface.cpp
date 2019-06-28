@@ -67,6 +67,22 @@ auto mpi_lb_calc_rho(Utils::Vector3i const &index) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_calc_rho)
 
+auto mpi_lb_calc_j(Utils::Vector3i const &index) {
+  return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
+    return lb_calc_j(modes, force_density);
+  });
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_calc_j)
+
+auto mpi_lb_calc_pi(Utils::Vector3i const &index) {
+  return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
+    return lb_calc_pi(modes, force_density);
+  });
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_calc_pi)
+
 void mpi_recv_fluid_slave(int node, int index) {
   if (node == this_node) {
     double data[10];
@@ -1197,18 +1213,10 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
-    Lattice::index_t index;
-    int node;
-    auto ind_shifted = ind;
-    double rho;
-    Utils::Vector3d j;
-    Utils::Vector6d pi;
-
-    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
-    index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
-                             lblattice.halo_grid);
-
-    mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
+    auto const rho = ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, mpi_lb_calc_rho, ind);
+    auto const j = ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, mpi_lb_calc_j, ind);
     return j / rho;
   }
   throw std::runtime_error("LB not activated.");
@@ -1217,10 +1225,10 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
 }
 
 const Utils::Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind) {
-  Utils::Vector6d p_pi = lb_lbnode_get_pi_neq(ind);
+  auto p_pi = lb_lbnode_get_pi_neq(ind);
 
   // Add equilibrium stress to the diagonal (in LB units)
-  double const p0 = lb_lbfluid_get_density() * D3Q19::c_sound_sq<double>;
+  auto const p0 = lb_lbfluid_get_density() * D3Q19::c_sound_sq<double>;
 
   p_pi[0] += p0;
   p_pi[2] += p0;
@@ -1246,18 +1254,8 @@ const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
     }
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
-    Lattice::index_t index;
-    int node;
-    double rho;
-    double j[3];
-    Utils::Vector6d pi{};
-
-    auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
-    index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
-                             lblattice.halo_grid);
-
-    mpi_recv_fluid(node, index, &rho, j, p_pi.data());
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, mpi_lb_calc_pi, ind);
   }
   return p_pi;
 }
