@@ -90,13 +90,6 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
-                         boost::make_indirect_iterator(local_cells.end()),
-                         Utils::NoOp{}, pair_kernel,
-                         [](Particle const &p1, Particle const &p2) {
-                           return (p1.r.p - p2.r.p).norm2();
-                         });
-    break;
   case CELL_STRUCTURE_NSQUARE:
     Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
                          boost::make_indirect_iterator(local_cells.end()),
