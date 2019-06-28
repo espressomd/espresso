@@ -48,10 +48,8 @@ auto lb_calc(Utils::Vector3i const &index, Kernel &&kernel) {
 template <class Kernel>
 auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel &&kernel) {
   return lb_calc(index, [&](auto index) {
-    auto local_index = index;
-    lblattice.map_lattice_to_node(local_index); // TODO: Factor out this call.
-    auto const linear_index = get_linear_index(
-        local_index[0], local_index[1], local_index[2], lblattice.halo_grid);
+    auto const linear_index =
+        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
     auto const force_density = lbfields[linear_index].force_density;
     auto const modes = lb_calc_modes(linear_index);
     return kernel(modes, force_density);
@@ -1320,13 +1318,9 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
-    Lattice::index_t index;
-    int node;
-    auto ind_shifted = ind;
-
-    node = lblattice.map_lattice_to_node(ind_shifted);
-    index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
-                             lblattice.halo_grid);
+    auto const node = lblattice.map_lattice_to_node(ind);
+    auto const index =
+        get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
     int p_boundary = {};
     mpi_recv_fluid_boundary_flag(node, index, &p_boundary);
     return p_boundary;
@@ -1349,13 +1343,9 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
-    Lattice::index_t index;
-    int node;
-    auto ind_shifted = ind;
-
-    node = lblattice.map_lattice_to_node(ind_shifted);
-    index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
-                             lblattice.halo_grid);
+    auto const node = lblattice.map_lattice_to_node(ind);
+    auto const index =
+        get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
     Utils::Vector19d p_pop;
     mpi_recv_fluid_populations(node, index, p_pop.data());
     return p_pop;
@@ -1372,16 +1362,13 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
     lb_set_node_rho_GPU(single_nodeindex, host_rho);
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
-    Lattice::index_t index;
-    int node;
     double rho;
     Utils::Vector3d j;
     Utils::Vector6d pi;
 
-    auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
-    index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
-                             lblattice.halo_grid);
+    auto const node = lblattice.map_lattice_to_node(ind);
+    auto const index =
+        get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
 
     mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
     mpi_send_fluid(node, index, p_rho, j, pi);
@@ -1403,13 +1390,9 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
     lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
 #endif //  CUDA
   } else {
-    Lattice::index_t index;
-    int node;
-
-    auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
-    index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
-                             lblattice.halo_grid);
+    auto const node = lblattice.map_lattice_to_node(ind);
+    auto const index =
+        get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
 
     double rho;
     Utils::Vector3d j;
@@ -1435,13 +1418,9 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
     lb_lbfluid_set_population(ind, population);
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
-    Lattice::index_t index;
-    int node;
-
-    auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted);
-    index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
-                             lblattice.halo_grid);
+    auto const node = lblattice.map_lattice_to_node(ind);
+    auto const index =
+        get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
   } else {
     throw std::runtime_error("LB not activated.");

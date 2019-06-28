@@ -63,12 +63,12 @@ Lattice::Lattice(double agrid, double offset, int halo_size,
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
-    global_grid[d] = static_cast<int>(std::round(box_length[d] / agrid));
     local_index_offset[d] =
         static_cast<int>(ceil((my_left[d] - offset) / agrid));
     local_offset[d] = offset + local_index_offset[d] * agrid;
     grid[d] = static_cast<int>(
         ceil((myright[d] - local_offset[d] - epsilon) / agrid));
+    global_grid[d] = node_grid[d] * grid[d];
   }
 
   // sanity checks
@@ -133,7 +133,7 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
   node_index[7] = node_index[4] + halo_grid[0] + 1;
 }
 
-int Lattice::map_lattice_to_node(Utils::Vector3i &ind) const noexcept {
+int Lattice::map_lattice_to_node(Utils::Vector3i const &ind) const noexcept {
   /* determine coordinates in node_grid */
   Utils::Vector3i index_grid;
   index_grid[0] =
@@ -143,11 +143,13 @@ int Lattice::map_lattice_to_node(Utils::Vector3i &ind) const noexcept {
   index_grid[2] =
       static_cast<int>(floor(ind[2] * agrid / box_l[2] * node_grid[2]));
 
-  /* change from global to local lattice coordinates */
-  ind[0] = ind[0] - index_grid[0] * grid[0] + halo_size;
-  ind[1] = ind[1] - index_grid[1] * grid[1] + halo_size;
-  ind[2] = ind[2] - index_grid[2] * grid[2] + halo_size;
-
   /* return linear index into node array */
   return map_array_node({index_grid.data(), 3});
+}
+
+Utils::Vector3i Lattice::local_index(Utils::Vector3i const &global_index) const
+    noexcept {
+  return {global_index[0] - node_pos[0] * grid[0] + halo_size,
+          global_index[1] - node_pos[1] * grid[1] + halo_size,
+          global_index[2] - node_pos[2] * grid[2] + halo_size};
 }

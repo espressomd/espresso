@@ -104,10 +104,20 @@ public:
    *
    *  \param ind              global coordinates of the lattice site
    *  \param local_node_grid  number of nodes in each spatial dimension
-   *  \return index of the node for the lattice site
+   *  \return node for the lattice site
    */
-  int map_lattice_to_node(Utils::Vector3i &ind) const noexcept;
+  int map_lattice_to_node(Utils::Vector3i const &ind) const noexcept;
+  /**
+   * @brief Determine if given global index is node-local.
+   * @param index Global lattice index.
+   */
   bool is_local(Utils::Vector3i const &index) const noexcept;
+  /**
+   * @brief Calculate the node-local index.
+   * @param global_index Index into global lattice.
+   */
+  Utils::Vector3i local_index(Utils::Vector3i const &global_index) const
+      noexcept;
 };
 
 #endif /* CORE_LB_LATTICE_HPP */
