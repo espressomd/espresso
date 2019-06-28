@@ -70,7 +70,7 @@ class DPDThermostat(ut.TestCase):
 
     def test_single(self):
         """Test velocity distribution of a dpd fluid with a single type."""
-        N = 200
+        N = 250
         s = self.s
         s.part.add(pos=s.box_l * np.random.random((N, 3)))
         kT = 2.3
