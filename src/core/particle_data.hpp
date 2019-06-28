@@ -582,7 +582,7 @@ void invalidate_fetch_cache();
  *  Move a particle to a new position.
  *  If it does not exist, it is created.
  *  @param part the identity of the particle to move
- *  @param p    its new position
+ *  @param p_    its new position
  *  @retval ES_PART_OK if particle existed
  *  @retval ES_PART_CREATED if created
  *  @retval ES_PART_ERROR if id is illegal
@@ -838,13 +838,13 @@ void remove_all_bonds_to(int part);
  *  Move a particle to a new position. If it does not exist, it is created.
  *  The position must be on the local node!
  *
- *  @param part the identity of the particle to move
- *  @param p    its new position
+ *  @param id the identity of the particle to move
+ *  @param pos    its new position
  *  @param _new  if true, the particle is allocated, else has to exists already
  *
  *  @return Pointer to the particle.
  */
-Particle *local_place_particle(int part, const double p[3], int _new);
+Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
 
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
  *  Called if on a different node a new particle was added.

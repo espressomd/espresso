@@ -833,26 +833,17 @@ void prefetch_particle_data(std::vector<int> ids) {
                            std::make_move_iterator(parts.begin()));
 }
 
-int place_particle(int part, const double *p) {
-  int retcode = ES_PART_OK;
+int place_particle(int part, const double *pos) {
+  Utils::Vector3d p{pos[0], pos[1], pos[2]};
 
-  int pnode;
   if (particle_exists(part)) {
-    pnode = get_particle_node(part);
-    mpi_place_particle(pnode, part, p);
-  } else {
-    /* new particle, node by spatial position */
-    pnode = cell_structure.position_to_node(Utils::Vector3d{p, p + 3});
+    mpi_place_particle(get_particle_node(part), part, p);
 
-    /* master node specific stuff */
-    particle_node[part] = pnode;
-
-    retcode = ES_PART_CREATED;
-
-    mpi_place_new_particle(pnode, part, p);
+    return ES_PART_OK;
   }
+  particle_node[part] = mpi_place_new_particle(part, p);
 
-  return retcode;
+  return ES_PART_CREATED;
 }
 
 void set_particle_v(int part, double *v) {
@@ -1187,45 +1178,29 @@ void local_remove_particle(int part) {
   Particle p_destroy = extract_indexed_particle(cell, n);
 }
 
-Particle *local_place_particle(int part, const double p[3], int _new) {
-  Particle *pt;
-
-  Utils::Vector3i i{};
-  Utils::Vector3d pp = {p[0], p[1], p[2]};
+Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
+  auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
+  auto i = Utils::Vector3i{};
   fold_position(pp, i, box_geo);
 
   if (_new) {
+    Particle new_part;
+    new_part.p.identity = id;
+    new_part.r.p = pp;
+    new_part.l.i = i;
+
     /* allocate particle anew */
-    auto cell = cell_structure.position_to_cell(pp);
+    auto cell = cell_structure.particle_to_cell(new_part);
     if (!cell) {
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
-              "does not belong on this node\n",
-              this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
-      errexit();
+      return nullptr;
     }
-    auto rl = realloc_particlelist(cell, ++cell->n);
-    pt = new (&cell->part[cell->n - 1]) Particle;
 
-    pt->p.identity = part;
-    if (rl)
-      update_local_particles(cell);
-    else
-      local_particles[pt->p.identity] = pt;
-  } else
-    pt = local_particles[part];
+    return append_indexed_particle(cell, std::move(new_part));
+  }
 
-  PART_TRACE(fprintf(
-      stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
-      this_node, part, p[0], p[1], p[2]));
-
+  auto pt = local_particles[id];
   pt->r.p = pp;
   pt->l.i = i;
-#ifdef BOND_CONSTRAINT
-  pt->r.p_old = pp;
-#endif
-
-  assert(local_particles[part] == pt);
 
   return pt;
 }

@@ -647,17 +647,14 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   int c, p;
   int exchange_data, update_data;
 
-  CELL_TRACE(fprintf(stderr,
-                     "%d: dd_topology_init: Number of recieved cells=%d\n",
-                     this_node, old->n));
-
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
-     but may be set to a larger value by the user for performance reasons. */
+    but may be set to a larger value by the user for performance reasons. */
   min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
-  cell_structure.position_to_node = map_position_node_array;
-  cell_structure.position_to_cell = dd_save_position_to_cell;
+  cell_structure.particle_to_cell = [](const Particle &p) {
+    return dd_save_position_to_cell(p.r.p);
+  };
 
   /* set up new domain decomposition cell structure */
   dd_create_cell_grid();
