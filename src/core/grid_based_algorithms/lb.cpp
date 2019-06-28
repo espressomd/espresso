@@ -191,11 +191,13 @@ void lb_init() {
 
   /* initialize the local lattice domain */
 
-  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1,
-                                   local_box_l, my_right, box_l);
-
-  if (check_runtime_errors(comm_cart) || init_status != ES_OK)
+  try {
+    lblattice = Lattice(temp_agrid.data(), temp_offset.data(), 1, local_box_l,
+                        my_right, box_l, node_grid);
+  } catch (const std::runtime_error &e) {
+    runtimeErrorMsg() << e.what();
     return;
+  }
 
   /* allocate memory for data structures */
   lb_realloc_fluid();
@@ -208,8 +210,6 @@ void lb_init() {
 
   /* setup the initial populations */
   lb_reinit_fluid();
-
-  LB_TRACE(printf("Initializing fluid on CPU successful\n"));
 }
 
 void lb_reinit_fluid() {
@@ -217,9 +217,6 @@ void lb_reinit_fluid() {
   /* default values for fields in lattice units */
   Utils::Vector3d j{};
   Utils::Vector6d pi{};
-
-  LB_TRACE(fprintf(stderr,
-                   "Initializing the fluid with equilibrium populations\n"););
 
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        ++index) {

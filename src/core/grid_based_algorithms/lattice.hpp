@@ -47,13 +47,15 @@ public:
   Utils::Vector3d offset; /**< global offset */
   Utils::Vector3d local_offset;
   Utils::Vector3i local_index_offset;
+  Utils::Vector3i node_grid;
 
   index_t halo_grid_volume; /**< total number (volume) of lattice sites
                              *   (including halo) */
   index_t halo_offset; /**< offset for number of halo sites stored in front of
                         *   the local lattice sites */
 
-  /** Initialize lattice.
+  Lattice() = default;
+  /** @brief Lattice constructor.
    *
    *  This function initializes the variables describing the lattice
    *  layout. Important: The lattice data is <em>not</em> allocated here!
@@ -65,9 +67,9 @@ public:
    *  \param myright     right (top, back) corner of the local box
    *  \param box_length  lengths of the local box
    */
-  int init(double *agrid, double const *offset, int halo_size,
-           const Utils::Vector3d &local_box, const Utils::Vector3d &myright,
-           const Utils::Vector3d &box_length);
+  Lattice(double *agrid, double const *offset, int halo_size,
+          const Utils::Vector3d &local_box, const Utils::Vector3d &myright,
+          const Utils::Vector3d &box_length, Utils::Vector3i const &node_grid);
 
   /** Map a spatial position to the surrounding lattice sites.
    *
@@ -103,8 +105,7 @@ public:
    *  \param local_node_grid  number of nodes in each spatial dimension
    *  \return index of the node for the lattice site
    */
-  int map_lattice_to_node(Utils::Vector3i &ind,
-                          const Utils::Vector3i &local_node_grid) const;
+  int map_lattice_to_node(Utils::Vector3i &ind) const noexcept;
   bool is_local(Utils::Vector3i const &index) const noexcept;
 };
 

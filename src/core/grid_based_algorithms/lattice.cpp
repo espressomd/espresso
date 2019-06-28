@@ -53,10 +53,12 @@ bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
   return res;
 }
 
-int Lattice::init(double *agrid, double const *offset, int halo_size,
-                  const Utils::Vector3d &local_box,
-                  const Utils::Vector3d &myright,
-                  const Utils::Vector3d &box_length) {
+Lattice::Lattice(double *agrid, double const *offset, int halo_size,
+                 Utils::Vector3d const &local_box,
+                 Utils::Vector3d const &myright,
+                 Utils::Vector3d const &box_length,
+                 Utils::Vector3i const &node_grid)
+    : node_grid(node_grid) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
@@ -76,22 +78,14 @@ int Lattice::init(double *agrid, double const *offset, int halo_size,
     // check if local_box_l is compatible with lattice spacing
     if (fabs(local_box[dir] - this->grid[dir] * agrid[dir]) >
         epsilon * box_length[dir]) {
-      runtimeErrorMsg() << "Lattice spacing agrid[" << dir << "]=" << agrid[dir]
-                        << " is incompatible with local_box_l[" << dir
-                        << "]=" << local_box[dir] << " ( box_l[" << dir
-                        << "]=" << box_length[dir] << " )";
-      return ES_ERROR;
+      throw std::runtime_error(
+          "Lattice spacing agrid[" + std::to_string(dir) +
+          "]=" + std::to_string(agrid[dir]) +
+          " is incompatible with local_box_l[" + std::to_string(dir) +
+          "]=" + std::to_string(local_box[dir]) + " ( box_l[" +
+          std::to_string(dir) + "]=" + std::to_string(box_length[dir]) + " )");
     }
   }
-
-  LATTICE_TRACE(fprintf(stderr,
-                        "%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) "
-                        "node_neighbors (%d,%d,%d,%d,%d,%d)\n",
-                        this_node, local_box[0], local_box[1], local_box[2],
-                        this->grid[0], this->grid[1], this->grid[2],
-                        node_neighbors[0], node_neighbors[1], node_neighbors[2],
-                        node_neighbors[3], node_neighbors[4],
-                        node_neighbors[5]));
 
   this->halo_size = halo_size;
   /* determine the number of total nodes including halo */
@@ -103,8 +97,6 @@ int Lattice::init(double *agrid, double const *offset, int halo_size,
       this->halo_grid[0] * this->halo_grid[1] * this->halo_grid[2];
   this->halo_offset =
       get_linear_index(halo_size, halo_size, halo_size, this->halo_grid);
-
-  return ES_OK;
 }
 
 void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
@@ -156,16 +148,12 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
   node_index[7] = node_index[4] + this->halo_grid[0] + 1;
 }
 
-int Lattice::map_lattice_to_node(Utils::Vector3i &ind,
-                                 const Utils::Vector3i &local_node_grid) const {
+int Lattice::map_lattice_to_node(Utils::Vector3i &ind) const noexcept {
   /* determine coordinates in node_grid */
   Utils::Vector3i grid;
-  grid[0] =
-      (int)floor(ind[0] * this->agrid[0] * box_l_i[0] * local_node_grid[0]);
-  grid[1] =
-      (int)floor(ind[1] * this->agrid[1] * box_l_i[1] * local_node_grid[1]);
-  grid[2] =
-      (int)floor(ind[2] * this->agrid[2] * box_l_i[2] * local_node_grid[2]);
+  grid[0] = (int)floor(ind[0] * this->agrid[0] * box_l_i[0] * node_grid[0]);
+  grid[1] = (int)floor(ind[1] * this->agrid[1] * box_l_i[1] * node_grid[1]);
+  grid[2] = (int)floor(ind[2] * this->agrid[2] * box_l_i[2] * node_grid[2]);
 
   /* change from global to local lattice coordinates */
   ind[0] = ind[0] - grid[0] * this->grid[0] + this->halo_size;

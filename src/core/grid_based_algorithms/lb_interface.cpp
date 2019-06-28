@@ -49,8 +49,7 @@ template <class Kernel>
 auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel &&kernel) {
   return lb_calc(index, [&](auto index) {
     auto local_index = index;
-    lblattice.map_lattice_to_node(local_index,
-                                  node_grid); // TODO: Factor out this call.
+    lblattice.map_lattice_to_node(local_index); // TODO: Factor out this call.
     auto const linear_index = get_linear_index(
         local_index[0], local_index[1], local_index[2], lblattice.halo_grid);
     auto const force_density = lbfields[linear_index].force_density;
@@ -1326,7 +1325,7 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
     int node;
     auto ind_shifted = ind;
 
-    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     int p_boundary = {};
@@ -1355,7 +1354,7 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
     int node;
     auto ind_shifted = ind;
 
-    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     Utils::Vector19d p_pop;
@@ -1381,7 +1380,7 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
     Utils::Vector6d pi;
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1409,7 +1408,7 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
     int node;
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
 
@@ -1441,7 +1440,7 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
     int node;
 
     auto ind_shifted = ind;
-    node = lblattice.map_lattice_to_node(ind_shifted, node_grid);
+    node = lblattice.map_lattice_to_node(ind_shifted);
     index = get_linear_index(ind_shifted[0], ind_shifted[1], ind_shifted[2],
                              lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
