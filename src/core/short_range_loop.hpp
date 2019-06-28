@@ -58,13 +58,6 @@ struct LayeredMinimalImageDistance {
     return Distance(mi_dist);
   }
 };
-
-struct EuclidianDistance {
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(p1.r.p - p2.r.p);
-  }
-};
-
 /**
  * @brief Decided which distance function to use depending on the
           cell system, and call the pair code.
