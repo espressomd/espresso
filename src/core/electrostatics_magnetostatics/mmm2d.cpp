@@ -1869,11 +1869,9 @@ void MMM2D_dielectric_layers_force_contribution() {
       force[2] = 0;
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = -pl[j].r.p[2];
-        Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1], -pl[j].r.p[2]};
+        auto const d = get_mi_vector(p1->r.p, a);
+
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
         charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_bot;
@@ -1899,11 +1897,10 @@ void MMM2D_dielectric_layers_force_contribution() {
       force[2] = 0;
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = 2 * box_l[2] - pl[j].r.p[2];
-        Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1],
+                                2 * box_l[2] - pl[j].r.p[2]};
+        auto const d = get_mi_vector(p1->r.p, a);
+
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
         charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_top;
@@ -1924,7 +1921,6 @@ double MMM2D_dielectric_layers_energy_contribution() {
   int npl;
   Particle *pl, *p1;
   double charge_factor;
-  double a[3];
   double eng = 0.0;
   double pref = coulomb.prefactor * C_2PI * ux * uy;
 
@@ -1940,11 +1936,8 @@ double MMM2D_dielectric_layers_energy_contribution() {
     for (i = 0; i < npl; i++) {
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = -pl[j].r.p[2];
-        Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1], -pl[j].r.p[2]};
+        auto const d = get_mi_vector(p1->r.p, a);
         auto const dist2 = d.norm2();
         charge_factor = mmm2d_params.delta_mid_bot * p1->p.q * pl[j].p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
@@ -1963,11 +1956,9 @@ double MMM2D_dielectric_layers_energy_contribution() {
     for (i = 0; i < npl; i++) {
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = 2 * box_l[2] - pl[j].r.p[2];
-        Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1],
+                                2 * box_l[2] - pl[j].r.p[2]};
+        auto const d = get_mi_vector(p1->r.p, a);
         auto const dist2 = d.norm2();
         charge_factor = mmm2d_params.delta_mid_top * p1->p.q * pl[j].p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge

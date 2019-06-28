@@ -46,8 +46,4 @@ void layered_topology_init(CellPList *local, Utils::Vector3i &grid);
 /// distribute all particles such that they are in their dedicated cell
 void layered_exchange_and_sort_particles(int global_flag,
                                          ParticleList *displaced_parts);
-
-/// calculate the minimum image vector
-void layered_get_mi_vector(double res[3], double const a[3], double const b[3]);
-
 #endif
