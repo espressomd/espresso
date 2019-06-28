@@ -72,7 +72,7 @@ const std::unordered_map<int, Datafield> fields{
      {box_l.data(), Datafield::Type::DOUBLE, 3,
       "box_l"}}, /* 0  from grid.cpp */
     {FIELD_CELLGRID,
-     {dd.cell_grid, Datafield::Type::INT, 3,
+     {dd.cell_grid.data(), Datafield::Type::INT, 3,
       "cell_grid"}}, /* 1  from cells.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA,

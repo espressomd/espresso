@@ -482,8 +482,6 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
  * algorithm (see verlet.cpp) to build the verlet lists.
  */
 void dd_init_cell_interactions(const Utils::Vector3i &grid) {
-  int m, n, o, p, q, r, ind1, ind2;
-
   for (int i = 0; i < 3; i++) {
     if (dd.fully_connected[i] and grid[i] != 1) {
       runtimeErrorMsg()
@@ -492,16 +490,11 @@ void dd_init_cell_interactions(const Utils::Vector3i &grid) {
   }
 
   /* loop all local cells */
-  for (o = 1; o < dd.cell_grid[2] + 1; o++)
-    for (n = 1; n < dd.cell_grid[1] + 1; n++)
-      for (m = 1; m < dd.cell_grid[0] + 1; m++) {
+  for (int o = 1; o < dd.cell_grid[2] + 1; o++)
+    for (int n = 1; n < dd.cell_grid[1] + 1; n++)
+      for (int m = 1; m < dd.cell_grid[0] + 1; m++) {
 
-        ind1 = get_linear_index(m, n, o,
-                                {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
-                                 dd.ghost_cell_grid[2]});
-
-        std::vector<Cell *> red_neighbors;
-        std::vector<Cell *> black_neighbors;
+        auto const ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
 
         /* loop all neighbor cells */
         int lower_index[3] = {m - 1, n - 1, o - 1};
@@ -514,13 +507,13 @@ void dd_init_cell_interactions(const Utils::Vector3i &grid) {
           }
         }
 
-        for (p = lower_index[2]; p <= upper_index[2]; p++)
-          for (q = lower_index[1]; q <= upper_index[1]; q++)
-            for (r = lower_index[0]; r <= upper_index[0]; r++) {
-              ind2 = get_linear_index(r, q, p,
-                                      {dd.ghost_cell_grid[0],
-                                       dd.ghost_cell_grid[1],
-                                       dd.ghost_cell_grid[2]});
+        std::vector<Cell *> red_neighbors;
+        std::vector<Cell *> black_neighbors;
+
+        for (int p = lower_index[2]; p <= upper_index[2]; p++)
+          for (int q = lower_index[1]; q <= upper_index[1]; q++)
+            for (int r = lower_index[0]; r <= upper_index[0]; r++) {
+              auto const ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
               if (ind2 > ind1) {
                 red_neighbors.push_back(&cells[ind2]);
               } else {
