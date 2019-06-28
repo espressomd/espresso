@@ -24,6 +24,8 @@
  *
  */
 
+#include <bitset>
+
 #include "grid_based_algorithms/lattice.hpp"
 
 #include "debug.hpp"
@@ -34,16 +36,21 @@ using Utils::get_linear_index;
 #include <utils/constants.hpp>
 
 bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
-  bool greater_equal_left_bound = false;
-  bool smaller_right_bound = false;
+  std::bitset<3> greater_equal_left_bound;
+  std::bitset<3> smaller_right_bound;
   double x;
   for (int i = 0; i < index.size(); ++i) {
     x = offset[i] + index[i] * agrid[i];
-    greater_equal_left_bound = (x >= my_left[i]);
-    smaller_right_bound = (x < my_right[i]);
+    if (x >= my_left[i] + offset[i]) {
+      greater_equal_left_bound.set(i);
+    }
+    if (x < my_right[i] + offset[i]) {
+      smaller_right_bound.set(i);
+    }
   }
-
-  return greater_equal_left_bound and smaller_right_bound;
+  auto const res =
+      (greater_equal_left_bound.all() and smaller_right_bound.all());
+  return res;
 }
 
 int Lattice::init(double *agrid, double const *offset, int halo_size,
