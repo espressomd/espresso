@@ -88,17 +88,12 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
       ret.emplace_back(p1.p.identity, p2.p.identity);
   };
 
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_DOMDEC:
-  case CELL_STRUCTURE_NSQUARE:
-  case CELL_STRUCTURE_LAYERED:
-    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
-                         boost::make_indirect_iterator(local_cells.end()),
-                         Utils::NoOp{}, pair_kernel,
-                         [](Particle const &p1, Particle const &p2) {
-                           return get_mi_vector(p1.r.p, p2.r.p).norm2();
-                         });
-  }
+  Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
+                       boost::make_indirect_iterator(local_cells.end()),
+                       Utils::NoOp{}, pair_kernel,
+                       [](Particle const &p1, Particle const &p2) {
+                         return get_mi_vector(p1.r.p, p2.r.p).norm2();
+                       });
 
   /* Sort pairs */
   for (auto &pair : ret) {
