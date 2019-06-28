@@ -37,10 +37,10 @@ using Utils::get_linear_index;
 
 #include "event.hpp"
 
+#include <boost/container/flat_set.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/range/algorithm/transform.hpp>
-#include <boost/container/flat_set.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
