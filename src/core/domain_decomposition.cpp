@@ -298,11 +298,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           comm->comm[cnt].part_lists =
               (Cell **)Utils::malloc(2 * n_comm_cells[dir] * sizeof(Cell *));
           comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
-          /* prepare folding of ghost positions */
-          if ((data_parts & GHOSTTRANS_POSSHFTD) &&
-              boundary[2 * dir + lr] != 0) {
-            comm->comm[cnt].shift[dir] = boundary[2 * dir + lr] * box_l[dir];
-          }
 
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
@@ -335,12 +330,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
               comm->comm[cnt].part_lists =
                   (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
               comm->comm[cnt].n_part_lists = n_comm_cells[dir];
-              /* prepare folding of ghost positions */
-              if ((data_parts & GHOSTTRANS_POSSHFTD) &&
-                  boundary[2 * dir + lr] != 0) {
-                comm->comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
-              }
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
@@ -423,54 +412,6 @@ void dd_assign_prefetches(GhostCommunicator *comm) {
         comm->comm[cnt + 1].type == GHOST_SEND) {
       comm->comm[cnt].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
       comm->comm[cnt + 1].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-    }
-  }
-}
-
-/** update the 'shift' member of those GhostCommunicators, which use
- *  that value to speed up the folding process of its ghost members
- *  (see \ref dd_prepare_comm for the original), i.e. all which have
- *  GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
- *  dd_prepare_comm.
- */
-void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
-  int cnt = 0;
-
-  /* direction loop: x, y, z */
-  for (int dir = 0; dir < 3; dir++) {
-    /* lr loop: left right */
-    for (int lr = 0; lr < 2; lr++) {
-      if (grid[dir] == 1) {
-        if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
-          /* prepare folding of ghost positions */
-          if (boundary[2 * dir + lr] != 0) {
-            cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                boundary[2 * dir + lr] * box_l[dir];
-            cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                boundary[2 * dir + lr] * box_l[dir];
-          }
-          cnt++;
-        }
-      } else {
-        /* i: send/recv loop */
-        for (int i = 0; i < 2; i++) {
-          if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0))
-            if ((node_pos[dir] + i) % 2 == 0) {
-              /* prepare folding of ghost positions */
-              if (boundary[2 * dir + lr] != 0) {
-                cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
-                cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
-              }
-              cnt++;
-            }
-          if (PERIODIC(dir) || (boundary[2 * dir + (1 - lr)] == 0))
-            if ((node_pos[dir] + (1 - i)) % 2 == 0) {
-              cnt++;
-            }
-        }
-      }
     }
   }
 }
@@ -680,7 +621,6 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
       return;
     }
   }
-  dd_update_communicators_w_boxl(grid);
 }
 
 /************************************************************/
