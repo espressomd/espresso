@@ -183,17 +183,11 @@ void lb_init() {
   if (check_runtime_errors(comm_cart))
     return;
 
-  Utils::Vector3d temp_agrid, temp_offset;
-  for (int i = 0; i < 3; i++) {
-    temp_agrid[i] = lbpar.agrid;
-    temp_offset[i] = 0.5;
-  }
-
   /* initialize the local lattice domain */
 
   try {
-    lblattice = Lattice(temp_agrid.data(), temp_offset.data(), 1, local_box_l,
-                        my_right, box_l, node_grid);
+    lblattice = Lattice(lbpar.agrid, 0.5 /*offset*/, 1 /*halo size*/,
+                        local_box_l, my_right, box_l, node_grid);
   } catch (const std::runtime_error &e) {
     runtimeErrorMsg() << e.what();
     return;

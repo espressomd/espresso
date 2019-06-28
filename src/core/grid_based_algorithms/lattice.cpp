@@ -25,6 +25,7 @@
  */
 
 #include <bitset>
+#include <boost/range/numeric.hpp>
 
 #include "grid_based_algorithms/lattice.hpp"
 
@@ -40,11 +41,11 @@ bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
   std::bitset<3> smaller_right_bound;
   double x;
   for (int i = 0; i < index.size(); ++i) {
-    x = offset[i] + index[i] * agrid[i];
-    if (x >= my_left[i] + offset[i]) {
+    x = offset + index[i] * agrid;
+    if (x >= my_left[i] + offset) {
       greater_equal_left_bound.set(i);
     }
-    if (x < my_right[i] + offset[i]) {
+    if (x < my_right[i] + offset) {
       smaller_right_bound.set(i);
     }
   }
@@ -53,48 +54,40 @@ bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
   return res;
 }
 
-Lattice::Lattice(double *agrid, double const *offset, int halo_size,
+Lattice::Lattice(double agrid, double offset, int halo_size,
                  Utils::Vector3d const &local_box,
                  Utils::Vector3d const &myright,
                  Utils::Vector3d const &box_length,
                  Utils::Vector3i const &node_grid)
-    : node_grid(node_grid) {
+    : agrid(agrid), halo_size(halo_size), offset(offset), node_grid(node_grid) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
-    this->agrid[d] = agrid[d];
-    this->global_grid[d] = (int)std::round(box_length[d] / agrid[d]);
-    this->offset[d] = offset[d];
-    this->local_index_offset[d] =
-        (int)ceil((my_left[d] - this->offset[d]) / this->agrid[d]);
-    this->local_offset[d] =
-        this->offset[d] + this->local_index_offset[d] * this->agrid[d];
-    this->grid[d] = (int)ceil((myright[d] - this->local_offset[d] - epsilon) /
-                              this->agrid[d]);
+    global_grid[d] = static_cast<int>(std::round(box_length[d] / agrid));
+    local_index_offset[d] =
+        static_cast<int>(ceil((my_left[d] - offset) / agrid));
+    local_offset[d] = offset + local_index_offset[d] * agrid;
+    grid[d] = static_cast<int>(
+        ceil((myright[d] - local_offset[d] - epsilon) / agrid));
   }
 
   // sanity checks
   for (int dir = 0; dir < 3; dir++) {
     // check if local_box_l is compatible with lattice spacing
-    if (fabs(local_box[dir] - this->grid[dir] * agrid[dir]) >
-        epsilon * box_length[dir]) {
+    if (fabs(local_box[dir] - grid[dir] * agrid) > epsilon * box_length[dir]) {
       throw std::runtime_error(
           "Lattice spacing agrid[" + std::to_string(dir) +
-          "]=" + std::to_string(agrid[dir]) +
-          " is incompatible with local_box_l[" + std::to_string(dir) +
-          "]=" + std::to_string(local_box[dir]) + " ( box_l[" +
-          std::to_string(dir) + "]=" + std::to_string(box_length[dir]) + " )");
+          "]=" + std::to_string(agrid) + " is incompatible with local_box_l[" +
+          std::to_string(dir) + "]=" + std::to_string(local_box[dir]) +
+          " ( box_l[" + std::to_string(dir) +
+          "]=" + std::to_string(box_length[dir]) + " )");
     }
   }
 
-  this->halo_size = halo_size;
   /* determine the number of total nodes including halo */
-  this->halo_grid[0] = this->grid[0] + 2 * halo_size;
-  this->halo_grid[1] = this->grid[1] + 2 * halo_size;
-  this->halo_grid[2] = this->grid[2] + 2 * halo_size;
+  halo_grid = grid + Utils::Vector3i::broadcast(2 * halo_size);
 
-  this->halo_grid_volume =
-      this->halo_grid[0] * this->halo_grid[1] * this->halo_grid[2];
+  halo_grid_volume = boost::accumulate(halo_grid, 1, std::multiplies<int>());
   this->halo_offset =
       get_linear_index(halo_size, halo_size, halo_size, this->halo_grid);
 }
@@ -111,7 +104,7 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
      and the relative position of the particle in this cell */
   for (int dir = 0; dir < 3; dir++) {
     auto const lpos = pos[dir] - myLeft[dir];
-    auto const rel = lpos / this->agrid[dir] + 0.5; // +1 for halo offset
+    auto const rel = lpos / agrid + offset;
     ind[dir] = static_cast<int>(floor(rel));
 
     /* surrounding elementary cell is not completely inside this box,
@@ -120,45 +113,42 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
       if (fabs(rel) < epsilon) {
         ind[dir] = 0; // TODO
       } else {
-        fprintf(stderr,
-                "%d: map_position_to_lattice: position (%f,%f,%f) not inside a "
-                "local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",
-                this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
+        throw std::runtime_error("position not inside a local plaquette");
       }
     } else if (ind[dir] > this->grid[dir]) {
       if (lpos - local_box[dir] < epsilon * local_box[dir])
         ind[dir] = this->grid[dir];
       else
-        fprintf(stderr,
-                "%d: map_position_to_lattice: position (%f,%f,%f) not inside a "
-                "local plaquette in dir %d ind[dir]=%d rel=%f lpos=%f.\n",
-                this_node, pos[0], pos[1], pos[2], dir, ind[dir], rel, lpos);
+        throw std::runtime_error("position not inside a local plaquette");
     }
 
     delta[3 + dir] = rel - ind[dir]; // delta_x/a
     delta[dir] = 1.0 - delta[3 + dir];
   }
-  node_index[0] = get_linear_index(ind, this->halo_grid);
+  node_index[0] = get_linear_index(ind, halo_grid);
   node_index[1] = node_index[0] + 1;
-  node_index[2] = node_index[0] + this->halo_grid[0];
-  node_index[3] = node_index[0] + this->halo_grid[0] + 1;
-  node_index[4] = node_index[0] + this->halo_grid[0] * this->halo_grid[1];
+  node_index[2] = node_index[0] + halo_grid[0];
+  node_index[3] = node_index[0] + halo_grid[0] + 1;
+  node_index[4] = node_index[0] + halo_grid[0] * halo_grid[1];
   node_index[5] = node_index[4] + 1;
-  node_index[6] = node_index[4] + this->halo_grid[0];
-  node_index[7] = node_index[4] + this->halo_grid[0] + 1;
+  node_index[6] = node_index[4] + halo_grid[0];
+  node_index[7] = node_index[4] + halo_grid[0] + 1;
 }
 
 int Lattice::map_lattice_to_node(Utils::Vector3i &ind) const noexcept {
   /* determine coordinates in node_grid */
-  Utils::Vector3i grid;
-  grid[0] = (int)floor(ind[0] * this->agrid[0] * box_l_i[0] * node_grid[0]);
-  grid[1] = (int)floor(ind[1] * this->agrid[1] * box_l_i[1] * node_grid[1]);
-  grid[2] = (int)floor(ind[2] * this->agrid[2] * box_l_i[2] * node_grid[2]);
+  Utils::Vector3i index_grid;
+  index_grid[0] =
+      static_cast<int>(floor(ind[0] * agrid / box_l[0] * node_grid[0]));
+  index_grid[1] =
+      static_cast<int>(floor(ind[1] * agrid / box_l[1] * node_grid[1]));
+  index_grid[2] =
+      static_cast<int>(floor(ind[2] * agrid / box_l[2] * node_grid[2]));
 
   /* change from global to local lattice coordinates */
-  ind[0] = ind[0] - grid[0] * this->grid[0] + this->halo_size;
-  ind[1] = ind[1] - grid[1] * this->grid[1] + this->halo_size;
-  ind[2] = ind[2] - grid[2] * this->grid[2] + this->halo_size;
+  ind[0] = ind[0] - index_grid[0] * grid[0] + halo_size;
+  ind[1] = ind[1] - index_grid[1] * grid[1] + halo_size;
+  ind[2] = ind[2] - index_grid[2] * grid[2] + halo_size;
 
   /* return linear index into node array */
   return map_array_node({grid.data(), 3});

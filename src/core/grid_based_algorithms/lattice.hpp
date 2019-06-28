@@ -38,13 +38,13 @@ public:
   Utils::Vector3i grid; /**< number of local lattice sites in each direction
                          *   (excluding halo) */
   Utils::Vector3i global_grid;
-  Utils::Vector3d agrid; /**< lattice constant */
+  double agrid; /**< lattice constant */
 
   Utils::Vector3i halo_grid; /**< number of lattice sites in each direction
                               *   (including halo) */
   index_t halo_size;         /**< halo size in all directions */
 
-  Utils::Vector3d offset; /**< global offset */
+  double offset; /**< global offset */
   Utils::Vector3d local_offset;
   Utils::Vector3i local_index_offset;
   Utils::Vector3i node_grid;
@@ -60,14 +60,15 @@ public:
    *  This function initializes the variables describing the lattice
    *  layout. Important: The lattice data is <em>not</em> allocated here!
    *
-   *  \param agrid       lattice spacing
-   *  \param offset      lattice offset
-   *  \param halo_size   halo size
-   *  \param local_box   dimensions of the local box
-   *  \param myright     right (top, back) corner of the local box
-   *  \param box_length  lengths of the local box
+   *  @param agrid       lattice spacing
+   *  @param offset      lattice offset
+   *  @param halo_size   halo size
+   *  @param local_box   dimensions of the local box
+   *  @param myright     right (top, back) corner of the local box
+   *  @param box_length  lengths of the local box
+   *  @param node_grid   node_grid of domain decomposition
    */
-  Lattice(double *agrid, double const *offset, int halo_size,
+  Lattice(double agrid, double offset, int halo_size,
           const Utils::Vector3d &local_box, const Utils::Vector3d &myright,
           const Utils::Vector3d &box_length, Utils::Vector3i const &node_grid);
 

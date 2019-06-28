@@ -683,9 +683,9 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
             "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
             "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
             "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
-            grid_size[0], grid_size[1], grid_size[2], lblattice.agrid[0] * 0.5,
-            lblattice.agrid[1] * 0.5, lblattice.agrid[2] * 0.5,
-            lblattice.agrid[0], lblattice.agrid[1], lblattice.agrid[2],
+            grid_size[0], grid_size[1], grid_size[2], lblattice.agrid * 0.5,
+            lblattice.agrid * 0.5, lblattice.agrid * 0.5, lblattice.agrid,
+            lblattice.agrid, lblattice.agrid,
             grid_size[0] * grid_size[1] * grid_size[2]);
 
     for (pos[2] = 0; pos[2] < grid_size[2]; pos[2]++) {
@@ -769,10 +769,10 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
             "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
             "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
             bb_high[0] - bb_low[0] + 1, bb_high[1] - bb_low[1] + 1,
-            bb_high[2] - bb_low[2] + 1, (bb_low[0] + 0.5) * lblattice.agrid[0],
-            (bb_low[1] + 0.5) * lblattice.agrid[1],
-            (bb_low[2] + 0.5) * lblattice.agrid[2], lblattice.agrid[0],
-            lblattice.agrid[1], lblattice.agrid[2],
+            bb_high[2] - bb_low[2] + 1, (bb_low[0] + 0.5) * lblattice.agrid,
+            (bb_low[1] + 0.5) * lblattice.agrid,
+            (bb_low[2] + 0.5) * lblattice.agrid, lblattice.agrid,
+            lblattice.agrid, lblattice.agrid,
             (bb_high[0] - bb_low[0] + 1) * (bb_high[1] - bb_low[1] + 1) *
                 (bb_high[2] - bb_low[2] + 1));
 
@@ -819,18 +819,18 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
     Utils::Vector3i pos;
     Utils::Vector3i gridsize;
 
-    gridsize[0] = box_l[0] / lblattice.agrid[0];
-    gridsize[1] = box_l[1] / lblattice.agrid[1];
-    gridsize[2] = box_l[2] / lblattice.agrid[2];
+    gridsize[0] = box_l[0] / lblattice.agrid;
+    gridsize[1] = box_l[1] / lblattice.agrid;
+    gridsize[2] = box_l[2] / lblattice.agrid;
 
     for (pos[2] = 0; pos[2] < gridsize[2]; pos[2]++) {
       for (pos[1] = 0; pos[1] < gridsize[1]; pos[1]++) {
         for (pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
           auto boundary = lb_lbnode_get_boundary(pos);
           boundary = (boundary != 0 ? 1 : 0);
-          fprintf(fp, "%f %f %f %d\n", (pos[0] + 0.5) * lblattice.agrid[0],
-                  (pos[1] + 0.5) * lblattice.agrid[1],
-                  (pos[2] + 0.5) * lblattice.agrid[2], boundary);
+          fprintf(fp, "%f %f %f %d\n", (pos[0] + 0.5) * lblattice.agrid,
+                  (pos[1] + 0.5) * lblattice.agrid,
+                  (pos[2] + 0.5) * lblattice.agrid, boundary);
         }
       }
     }
@@ -873,18 +873,17 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     Utils::Vector3i pos;
     Utils::Vector3i gridsize;
 
-    gridsize[0] = box_l[0] / lblattice.agrid[0];
-    gridsize[1] = box_l[1] / lblattice.agrid[1];
-    gridsize[2] = box_l[2] / lblattice.agrid[2];
+    gridsize[0] = box_l[0] / lblattice.agrid;
+    gridsize[1] = box_l[1] / lblattice.agrid;
+    gridsize[2] = box_l[2] / lblattice.agrid;
 
     for (pos[2] = 0; pos[2] < gridsize[2]; pos[2]++) {
       for (pos[1] = 0; pos[1] < gridsize[1]; pos[1]++) {
         for (pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
           auto const u = lb_lbnode_get_velocity(pos) * lattice_speed;
-          fprintf(fp, "%f %f %f %f %f %f\n",
-                  (pos[0] + 0.5) * lblattice.agrid[0],
-                  (pos[1] + 0.5) * lblattice.agrid[1],
-                  (pos[2] + 0.5) * lblattice.agrid[2], u[0], u[1], u[2]);
+          fprintf(fp, "%f %f %f %f %f %f\n", (pos[0] + 0.5) * lblattice.agrid,
+                  (pos[1] + 0.5) * lblattice.agrid,
+                  (pos[2] + 0.5) * lblattice.agrid, u[0], u[1], u[2]);
         }
       }
     }

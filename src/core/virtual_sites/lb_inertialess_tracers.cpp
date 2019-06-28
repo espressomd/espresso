@@ -78,12 +78,12 @@ void IBM_ForcesIntoFluid_CPU() {
     for (int i = 0; i < np; i++) {
       // for ghost particles we have to check if they lie
       // in the range of the local lattice nodes
-      if (p[i].r.p[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-          p[i].r.p[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-          p[i].r.p[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-          p[i].r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-          p[i].r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-          p[i].r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
+      if (p[i].r.p[0] >= my_left[0] - 0.5 * lblattice.agrid &&
+          p[i].r.p[0] < my_right[0] + 0.5 * lblattice.agrid &&
+          p[i].r.p[1] >= my_left[1] - 0.5 * lblattice.agrid &&
+          p[i].r.p[1] < my_right[1] + 0.5 * lblattice.agrid &&
+          p[i].r.p[2] >= my_left[2] - 0.5 * lblattice.agrid &&
+          p[i].r.p[2] < my_right[2] + 0.5 * lblattice.agrid) {
 
         if (p[i].p.is_virtual)
           CoupleIBMParticleToFluid(&p[i]);
@@ -337,12 +337,12 @@ void ParticleVelocitiesFromLB_CPU() {
       // This criterion include the halo on the left, but excludes the halo on
       // the right
       // Try if we have to use *1.5 on the right
-      if (p[j].r.p[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-          p[j].r.p[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-          p[j].r.p[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-          p[j].r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-          p[j].r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-          p[j].r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
+      if (p[j].r.p[0] >= my_left[0] - 0.5 * lblattice.agrid &&
+          p[j].r.p[0] < my_right[0] + 0.5 * lblattice.agrid &&
+          p[j].r.p[1] >= my_left[1] - 0.5 * lblattice.agrid &&
+          p[j].r.p[1] < my_right[1] + 0.5 * lblattice.agrid &&
+          p[j].r.p[2] >= my_left[2] - 0.5 * lblattice.agrid &&
+          p[j].r.p[2] < my_right[2] + 0.5 * lblattice.agrid) {
         if (p[j].p.is_virtual) {
           double dummy[3];
           double force[3] = {0, 0,
