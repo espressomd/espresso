@@ -582,7 +582,7 @@ void invalidate_fetch_cache();
  *  Move a particle to a new position.
  *  If it does not exist, it is created.
  *  @param part the identity of the particle to move
- *  @param p_    its new position
+ *  @param p    its new position
  *  @retval ES_PART_OK if particle existed
  *  @retval ES_PART_CREATED if created
  *  @retval ES_PART_ERROR if id is illegal
