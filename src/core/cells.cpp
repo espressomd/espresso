@@ -91,22 +91,12 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
   case CELL_STRUCTURE_NSQUARE:
-    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
-                         boost::make_indirect_iterator(local_cells.end()),
-                         Utils::NoOp{}, pair_kernel,
-                         [](Particle const &p1, Particle const &p2) {
-                           return get_mi_vector(p1.r.p, p2.r.p).norm2();
-                         });
-    break;
   case CELL_STRUCTURE_LAYERED:
     Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p);
-                           vec21[2] = p1.r.p[2] - p2.r.p[2];
-
-                           return vec21.norm2();
+                           return get_mi_vector(p1.r.p, p2.r.p).norm2();
                          });
   }
 

@@ -50,14 +50,6 @@ struct MinimalImageDistance {
   }
 };
 
-struct LayeredMinimalImageDistance {
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    auto mi_dist = get_mi_vector(p1.r.p, p2.r.p);
-    mi_dist[2] = p1.r.p[2] - p2.r.p[2];
-
-    return Distance(mi_dist);
-  }
-};
 /**
  * @brief Decided which distance function to use depending on the
           cell system, and call the pair code.
@@ -70,16 +62,10 @@ void decide_distance(CellIterator first, CellIterator last,
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
   case CELL_STRUCTURE_NSQUARE:
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), MinimalImageDistance{},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
   case CELL_STRUCTURE_LAYERED:
     Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), LayeredMinimalImageDistance{},
+        std::forward<PairKernel>(pair_kernel), MinimalImageDistance{},
         std::forward<VerletCriterion>(verlet_criterion),
         cell_structure.use_verlet_list, rebuild_verletlist);
     break;
