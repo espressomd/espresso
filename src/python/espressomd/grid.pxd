@@ -15,4 +15,4 @@ cdef extern from "grid.hpp":
 
     Vector3d get_mi_vector(Vector3d, Vector3d, const BoxGeometry & )
     Vector3d folded_position(Vector3d, const BoxGeometry &)
-    Vector3d unfolded_position(const Vector3d &, const Vector3i & , const Vector3d & )
+    Vector3d unfolded_position(Vector3d, Vector3i, const Vector3d & )
