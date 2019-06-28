@@ -38,6 +38,8 @@ using Utils::get_linear_index;
 #include "event.hpp"
 
 #include <boost/mpi/collectives.hpp>
+#include <boost/range/algorithm/copy.hpp>
+#include <boost/range/algorithm/transform.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
@@ -233,10 +235,7 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
   for (int o = lc[0]; o <= hc[0]; o++)
     for (int n = lc[1]; n <= hc[1]; n++)
       for (int m = lc[2]; m <= hc[2]; m++) {
-        auto const i =
-            get_linear_index(o, n, m,
-                             {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
-                              dd.ghost_cell_grid[2]});
+        auto const i = get_linear_index(o, n, m, dd.ghost_cell_grid);
 
         part_lists[c] = &cells[i];
         c++;
@@ -476,52 +475,116 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
   }
 }
 
+#include <boost/container/flat_set.hpp>
+
+template <class K, class Comparator> auto make_flat_set(Comparator &&comp) {
+  return boost::container::flat_set<K, std::remove_reference_t<Comparator>>(
+      std::forward<Comparator>(comp));
+}
+
 /** Init cell interactions for cell system domain decomposition.
  * initializes the interacting neighbor cell list of a cell The
  * created list of interacting neighbor cells is used by the Verlet
- * algorithm (see verlet.cpp) to build the verlet lists.
+ * algorithm to build the verlet lists.
  */
-void dd_init_cell_interactions(const Utils::Vector3i &grid) {
+void dd_init_cell_interactions(const DomainDecomposition &dd) {
   for (int i = 0; i < 3; i++) {
-    if (dd.fully_connected[i] and grid[i] != 1) {
+    if (dd.fully_connected[i] and node_grid[i] != 1) {
       runtimeErrorMsg()
           << "Node grid not compatible with fully_connected property";
+      return;
     }
   }
 
+  auto const halo = Utils::Vector3i{1, 1, 1};
+  auto const global_halo_offset =
+      hadamard_product(node_pos, dd.cell_grid) - halo;
+  auto const global_size = hadamard_product(node_grid, dd.cell_grid);
+
+  auto global_index =
+      [&](Utils::Vector3i const &local_index) -> Utils::Vector3i {
+    return (global_halo_offset + local_index);
+  };
+
+  auto folded_linear_index = [&](Utils::Vector3i const &global_index) {
+    auto const folded_index = (global_index + global_size) % global_size;
+
+    return get_linear_index(folded_index, global_size);
+  };
+
+  auto local_index =
+      [&](Utils::Vector3i const &global_index) -> Utils::Vector3i {
+    return (global_index - global_halo_offset);
+  };
+
+  /* We only consider local cells (e.g. not halo cells), which
+   * span the range [(1,1,1), dd.cell_grid) in local coordinates. */
+  auto const start = global_index(Utils::Vector3i{1, 1, 1});
+  auto const end = start + dd.cell_grid;
+
   /* loop all local cells */
-  for (int o = 1; o < dd.cell_grid[2] + 1; o++)
-    for (int n = 1; n < dd.cell_grid[1] + 1; n++)
-      for (int m = 1; m < dd.cell_grid[0] + 1; m++) {
+  for (int o = start[2]; o < end[2]; o++)
+    for (int n = start[1]; n < end[1]; n++)
+      for (int m = start[0]; m < end[0]; m++) {
+        /* next-nearest neighbors in every direction */
+        Utils::Vector3i lower_index = {m - 1, n - 1, o - 1};
+        Utils::Vector3i upper_index = {m + 1, n + 1, o + 1};
 
-        auto const ind1 = get_linear_index(m, n, o, dd.ghost_cell_grid);
-
-        /* loop all neighbor cells */
-        int lower_index[3] = {m - 1, n - 1, o - 1};
-        int upper_index[3] = {m + 1, n + 1, o + 1};
-
+        /* In the fully connected case, we consider all cells
+         * in the direction as neighbors, not only the nearest ones. */
         for (int i = 0; i < 3; i++) {
           if (dd.fully_connected[i]) {
             lower_index[i] = 0;
-            upper_index[i] = dd.ghost_cell_grid[i] - 1;
+            upper_index[i] = global_size[i] - 1;
           }
         }
 
-        std::vector<Cell *> red_neighbors;
-        std::vector<Cell *> black_neighbors;
+        /* In non-periodic directions, the halo needs not
+         * be considered. */
+        for (int i = 0; i < 3; i++) {
+          if (not PERIODIC(i)) {
+            lower_index[i] = std::max(0, lower_index[i]);
+            upper_index[i] = std::min(global_size[i] - 1, upper_index[i]);
+          }
+        }
 
+        /* Unique set of neighbors, cells are compared by their linear
+         * index in the global cell grid. */
+        auto neighbors = make_flat_set<Utils::Vector3i>(
+            [&](Utils::Vector3i const &a, Utils::Vector3i const &b) {
+              return true;
+              // return folded_linear_index(a) < folded_linear_index(b);
+            });
+
+        /* Collect neighbors */
         for (int p = lower_index[2]; p <= upper_index[2]; p++)
           for (int q = lower_index[1]; q <= upper_index[1]; q++)
             for (int r = lower_index[0]; r <= upper_index[0]; r++) {
-              auto const ind2 = get_linear_index(r, q, p, dd.ghost_cell_grid);
-              if (ind2 > ind1) {
-                red_neighbors.push_back(&cells[ind2]);
-              } else {
-                black_neighbors.push_back(&cells[ind2]);
-              }
+              neighbors.insert(Utils::Vector3i{r, q, p});
             }
-        cells[ind1].m_neighbors =
-            Neighbors<Cell *>(red_neighbors, black_neighbors);
+
+        /* Red-black partition by global index. */
+        auto const ind1 = folded_linear_index({m, n, o});
+
+        std::vector<Cell *> red_neighbors;
+        std::vector<Cell *> black_neighbors;
+        for (auto const &neighbor : neighbors) {
+          auto const ind2 = folded_linear_index(neighbor);
+          /* Exclude cell itself */
+          if (ind1 == ind2)
+            continue;
+
+          auto cell = &cells.at(
+              get_linear_index(local_index(neighbor), dd.ghost_cell_grid));
+          if (ind2 > ind1) {
+            red_neighbors.push_back(cell);
+          } else {
+            black_neighbors.push_back(cell);
+          }
+        }
+
+        cells.at(get_linear_index(local_index({m, n, o}), dd.ghost_cell_grid))
+            .m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
       }
 }
 
@@ -574,13 +637,8 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
       runtimeErrorMsg() << "box_l in direction " << i << " is too small";
     }
 
-  /* A full resorting is necessary if the grid has changed. We simply
-     don't have anything fast for this case. Probably also not
-     necessary. */
+  /* A full resorting is necessary if the grid has changed. */
   if (flags & CELL_FLAG_GRIDCHANGED) {
-    CELL_TRACE(
-        fprintf(stderr, "%d: dd_on_geometry_change full redo\n", this_node));
-
     /* Reset min num cells to default */
     min_num_cells = calc_processor_min_num_cells(grid);
 
@@ -599,11 +657,6 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
   double min_cell_size =
       std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
   max_skin = min_cell_size - max_cut;
-
-  CELL_TRACE(fprintf(stderr,
-                     "%d: dd_on_geometry_change: max_range = %f, "
-                     "min_cell_size = %f, max_skin = %f\n",
-                     this_node, max_range, min_cell_size, max_skin));
 
   if (max_range > min_cell_size) {
     /* if new box length leads to too small cells, redo cell structure
@@ -670,7 +723,7 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
-  dd_init_cell_interactions(grid);
+  dd_init_cell_interactions(dd);
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {
