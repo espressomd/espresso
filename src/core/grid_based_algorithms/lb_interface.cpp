@@ -350,6 +350,11 @@ double lb_lbfluid_get_density() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.rho;
   }
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return 0.0;
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 
@@ -1276,6 +1281,12 @@ const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
 
     mpi_recv_fluid(node, index, &rho, j, p_pi.data());
   }
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    p_pi = Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                              Walberla::get_node_pressure_tensor, ind);
+  }
+#endif
   return p_pi;
 }
 

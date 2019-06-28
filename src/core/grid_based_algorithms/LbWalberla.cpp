@@ -88,7 +88,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
-      uint_c(0));
+      uint_c(1));
   m_force_field_from_md_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
       uint_c(1));
@@ -391,6 +391,16 @@ LbWalberla::get_node_pop(const Utils::Vector3i node) const {
   }
 
   return {pop};
+}
+
+boost::optional<Utils::Vector6d>
+LbWalberla::get_node_pressure_tensor(const Utils::Vector3i node) const {
+  auto bc = get_block_and_cell(node);
+  if (!bc)
+    return {boost::none};
+  auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
+
+  return to_vector6d(pdf_field->getPressureTensor((*bc).cell));
 }
 
 void LbWalberla::set_viscosity(double viscosity) {

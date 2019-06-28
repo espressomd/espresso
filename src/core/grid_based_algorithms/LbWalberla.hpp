@@ -33,6 +33,11 @@ to_vector3d(const walberla::Vector3<walberla::real_t> v) {
 inline walberla::Vector3<walberla::real_t> to_vector3(const Utils::Vector3d v) {
   return walberla::Vector3<walberla::real_t>{v[0], v[1], v[2]};
 }
+inline Utils::Vector6d
+to_vector6d(const walberla::Matrix3<walberla::real_t> m) {
+  return Utils::Vector6d{m[0], m[3], m[4],
+                         m[6], m[7], m[8]};
+}
 
 template <typename PdfField_T, typename ForceField_T,
           typename BoundaryHandling_T>
@@ -163,8 +168,13 @@ public:
 
   boost::optional<double> get_node_density(const Utils::Vector3i node) const;
   bool set_node_density(const Utils::Vector3i node, const double density);
+
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const;
+
+  boost::optional<Utils::Vector6d>
+  get_node_pressure_tensor(const Utils::Vector3i node) const;
+
   bool set_node_velocity_at_boundary(const Utils::Vector3i node,
                                      const Utils::Vector3d v);
   bool remove_node_from_boundary(const Utils::Vector3i &node);

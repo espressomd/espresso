@@ -39,6 +39,13 @@ boost::optional<Utils::Vector19d> get_node_pop(Utils::Vector3i ind) {
 
 REGISTER_CALLBACK_ONE_RANK(get_node_pop)
 
+boost::optional<Utils::Vector6d> get_node_pressure_tensor(Utils::Vector3i ind) {
+  auto res = lb_walberla()->get_node_pressure_tensor(ind);
+  return res;
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_node_pressure_tensor)
+
 void set_node_velocity(Utils::Vector3i ind, Utils::Vector3d u) {
   lb_walberla()->set_node_velocity(ind, u);
 }
