@@ -103,7 +103,6 @@ public:
    *  taken as global coordinates.
    *
    *  \param ind              global coordinates of the lattice site
-   *  \param local_node_grid  number of nodes in each spatial dimension
    *  \return node for the lattice site
    */
   int map_lattice_to_node(Utils::Vector3i const &ind) const noexcept;
