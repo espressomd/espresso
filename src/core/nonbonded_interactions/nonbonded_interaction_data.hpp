@@ -263,10 +263,6 @@ struct IA_parameters {
   double THOLE_q1q2;
   /*@}*/
 #endif
-
-#ifdef SWIMMER_REACTIONS
-  double REACTION_range = INACTIVE_CUTOFF;
-#endif
 };
 
 extern std::vector<IA_parameters> ia_params;

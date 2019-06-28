@@ -142,15 +142,14 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
  *  \param node  the node to attach it to.
  *  \param pos   the particles position.
  */
-void mpi_place_particle(int node, int id, double pos[3]);
+void mpi_place_particle(int node, int id, const Utils::Vector3d &pos);
 
 /** Issue REQ_PLACE: create particle at a position on a node.
  *  Also calls \ref on_particle_change.
  *  \param id    the particle to create.
- *  \param node  the node to attach it to.
  *  \param pos   the particles position.
  */
-void mpi_place_new_particle(int node, int id, double pos[3]);
+int mpi_place_new_particle(int id, const Utils::Vector3d &pos);
 
 /** Issue REQ_SET_EXCLUSION: send exclusions.
  *  Also calls \ref on_particle_change.
@@ -294,11 +293,6 @@ void mpi_kill_particle_forces(int torque);
 Utils::Vector3d mpi_system_CMS();
 Utils::Vector3d mpi_system_CMS_velocity();
 void mpi_galilei_transform();
-
-/** Issue REQ_SWIMMER_REACTIONS: notify the system of changes to the reaction
- *  parameters
- */
-void mpi_setup_reaction();
 
 /**
  * @brief Resort the particles.

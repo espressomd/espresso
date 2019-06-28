@@ -50,8 +50,8 @@ IF DIPOLES == 1:
             Set the magnetostatics prefactor
 
             """
-            if set_Dprefactor(self._params["prefactor"]):
-                raise Exception("Could not set magnetostatic prefactor")
+            set_Dprefactor(self._params["prefactor"])
+            handle_errors("Could not set magnetostatic prefactor")
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
 
@@ -77,8 +77,9 @@ IF DP3M == 1:
             Ewald parameter.
         cao : :obj:`int`
             Charge-assignment order, an integer between -1 and 7.
-        mesh : :obj:`int` or array_like
-            Number of mesh points.
+        mesh : :obj:`int` or array_like of :obj:`int`
+            The number of mesh points in x, y and z direction. Use a single
+            value for cubic boxes.
         mesh_off : array_like :obj:`float`
             Mesh offset.
         r_cut : :obj:`float`
@@ -99,7 +100,7 @@ IF DP3M == 1:
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"])):
+            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"]) == 3):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
@@ -198,7 +199,7 @@ IF DP3M == 1:
         def python_dp3m_adaptive_tune(self):
             cdef char * log = NULL
             cdef int response
-            response = dp3m_adaptive_tune( & log)
+            response = dp3m_adaptive_tune(& log)
             handle_errors(
                 "dipolar P3M_init: k-space cutoff is larger than half of box dimension")
             return response, log
@@ -270,9 +271,9 @@ IF DIPOLES == 1:
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
-            if dawaanr_set_params():
-                raise Exception(
-                    "Could not activate magnetostatics method " + self.__class__.__name__)
+            dawaanr_set_params()
+            handle_errors("Could not activate magnetostatics method "
+                          + self.__class__.__name__)
 
     cdef class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
         """Calculate magnetostatic interactions by direct summation over all pairs.
@@ -307,9 +308,9 @@ IF DIPOLES == 1:
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
-            if mdds_set_params(self._params["n_replica"]):
-                raise Exception(
-                    "Could not activate magnetostatics method " + self.__class__.__name__)
+            mdds_set_params(self._params["n_replica"])
+            handle_errors("Could not activate magnetostatics method "
+                          + self.__class__.__name__)
 
     IF SCAFACOS_DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):
