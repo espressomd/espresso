@@ -58,8 +58,7 @@ CellPList local_cells = {nullptr, 0, 0};
 CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
-CellStructure cell_structure = {
-    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr};
+CellStructure cell_structure;
 
 double max_range = 0.0;
 
@@ -327,7 +326,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
 
       fold_and_reset(p);
 
-      auto target_cell = cs.position_to_cell(p.r.p);
+      auto target_cell = cs.particle_to_cell(p);
 
       if (target_cell == nullptr) {
         append_unindexed_particle(&displaced_parts,
@@ -366,7 +365,7 @@ void cells_resort_particles(int global_flag) {
     layered_exchange_and_sort_particles(global_flag, &displaced_parts);
   } break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_balance_particles(global_flag);
+    nsq_exchange_particles(global_flag, &displaced_parts);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid);
@@ -382,13 +381,13 @@ void cells_resort_particles(int global_flag) {
       resort_particles = Cells::RESORT_GLOBAL;
       append_indexed_particle(local_cells.cell[0], std::move(part));
     }
-  }
-
+  } else {
 #ifdef ADDITIONAL_CHECKS
-  /* at the end of the day, everything should be consistent again */
-  check_particle_consistency();
-  check_particle_sorting();
+    /* at the end of the day, everything should be consistent again */
+    check_particle_consistency();
+    check_particle_sorting();
 #endif
+  }
 
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
@@ -465,5 +464,5 @@ Cell *find_current_cell(const Particle &p) {
     return nullptr;
   }
 
-  return cell_structure.position_to_cell(p.l.p_old);
+  return cell_structure.particle_to_cell(p);
 }

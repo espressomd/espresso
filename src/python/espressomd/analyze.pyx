@@ -19,7 +19,7 @@
 # For C-extern Analysis
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from . cimport c_analyze
+from . cimport analyze
 from . cimport utils
 from . cimport particle_data
 from . import utils
@@ -33,6 +33,8 @@ from espressomd.interactions cimport *
 import numpy as np
 cimport numpy as np
 from globals cimport n_configs
+
+from .utils import array_locked
 
 from collections import OrderedDict
 from .system import System
@@ -52,24 +54,24 @@ class Analysis(object):
 
     def append(self):
         """Append configuration for averaged analysis."""
-        if c_analyze.n_part == 0:
+        if analyze.n_part == 0:
             raise Exception("No particles to append!")
-        if (c_analyze.n_configs > 0) and (c_analyze.n_part_conf != c_analyze.n_part):
+        if (analyze.n_configs > 0) and (analyze.n_part_conf != analyze.n_part):
             raise Exception(
                 "All configurations stored must have the same length")
 
-        c_analyze.analyze_append(c_analyze.partCfg())
+        analyze.analyze_append(analyze.partCfg())
 
     #
     # Minimal distance between particles
     #
 
     def min_dist2(self, p1, p2):
-        """Minimal distance between two three dimensional coordinates p1 and p2.
+        """Minimal distance between two three-dimensional coordinates p1 and p2.
 
         Parameters
         ----------
-        p1, p2
+        p1, p2 : arrays of :obj:`float`
 
         """
         cdef double p1c[3]
@@ -77,14 +79,16 @@ class Analysis(object):
         for i in range(3):
             p1c[i] = p1[i]
             p2c[i] = p2[i]
-        return c_analyze.min_distance2(p1c, p2c)
+        return analyze.min_distance2(p1c, p2c)
 
     def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particles.
 
         Parameters
         ----------
-        p1, p2 : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
+        p1, p2 : lists of :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` in
+            both sets.
 
         """
 
@@ -109,7 +113,7 @@ class Analysis(object):
 
             set1 = create_int_list_from_python_object(p1)
             set2 = create_int_list_from_python_object(p2)
-        return c_analyze.mindist(c_analyze.partCfg(), set1, set2)
+        return analyze.mindist(analyze.partCfg(), set1, set2)
 
     #
     # Distance to particle or point
@@ -121,10 +125,10 @@ class Analysis(object):
 
         Parameters
         ----------
-        id : :obj:`int`, optional (:attr:`espressomd.particle_data.ParticleHandle.id`)
-             Calculate distance to particle with id `id`.
+        id : :obj:`int`, optional
+            Calculate distance to particle with :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
         pos : array of :obj:`float`, optional
-              Calculate distance to position `pos`.
+            Calculate distance to position `pos`.
 
         Returns
         -------
@@ -161,13 +165,13 @@ class Analysis(object):
             for i in range(3):
                 cpos[i] = pos[i]
             _id = -1
-        return c_analyze.distto(c_analyze.partCfg(), cpos, _id)
+        return analyze.distto(analyze.partCfg(), cpos, _id)
 
     #
     # Analyze Linear Momentum
     #
 
-    def analyze_linear_momentum(self, include_particles=True,
+    def linear_momentum(self, include_particles=True,
                                 include_lbfluid=True):
         """
         Calculates the systems linear momentum.
@@ -175,11 +179,11 @@ class Analysis(object):
         Parameters
         ----------
         include_particles : :obj:`bool`, optional
-                            whether to include the particles contribution to the linear
-                            momentum.
+            whether to include the particles contribution to the linear
+            momentum.
         include_lbfluid : :obj:`bool`, optional
-                          whether to include the Lattice Boltzmann fluid
-                          contribution to the linear momentum.
+            whether to include the Lattice Boltzmann fluid contribution
+            to the linear momentum.
 
         Returns
         -------
@@ -187,7 +191,7 @@ class Analysis(object):
             The linear momentum of the system.
 
         """
-        return c_analyze.calc_linear_momentum(include_particles, include_lbfluid)
+        return analyze.calc_linear_momentum(include_particles, include_lbfluid)
 
     #
     # Analyze center of mass
@@ -213,10 +217,10 @@ class Analysis(object):
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
-        if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
+        if (p_type < 0 or p_type >= analyze.max_seen_particle_type):
             raise ValueError("Particle type", p_type, "does not exist!")
 
-        return c_analyze.centerofmass(c_analyze.partCfg(), p_type)
+        return analyze.centerofmass(analyze.partCfg(), p_type)
 
     # get all particles in neighborhood r_catch of pos and return their ids
     # in il. plane can be used to specify the distance in the xy, xz or yz
@@ -229,11 +233,11 @@ class Analysis(object):
         Parameters
         ----------
         pos : array of :obj:`float`
-              Reference position for the neighborhood.
+            Reference position for the neighborhood.
         r_catch : :obj:`float`
-                  Radius of the region.
+            Radius of the region.
         plane : :obj:`str`, \{'xy', 'xz', 'yz'\}
-                If given, `r_catch` is the distance to the respective plane.
+            If given, `r_catch` is the distance to the respective plane.
 
         Returns
         -------
@@ -268,7 +272,7 @@ class Analysis(object):
         for i in range(3):
             c_pos[i] = pos[i]
 
-        ids = c_analyze.nbhood(c_analyze.partCfg(), c_pos, r_catch, planedims)
+        ids = analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
 
         return create_nparray_from_int_list(ids)
 
@@ -282,19 +286,19 @@ class Analysis(object):
         Parameters
         ----------
         center : array_like :obj:`float`
-                 Coordinates of the centre of the cylinder.
+            Coordinates of the centre of the cylinder.
         axis : array_like :obj:`float`
-               Axis vectory of the cylinder, does not need to be normalized.
+            Axis vectory of the cylinder, does not need to be normalized.
         length : :obj:`float`
-                 Length of the cylinder.
+            Length of the cylinder.
         radius : :obj:`float`
-                 Radius of the cylinder.
+            Radius of the cylinder.
         bins_axial : :obj:`int`
-                     Number of axial bins.
+            Number of axial bins.
         bins_radial : :obj:`int`
-                      Number of radial bins.
-        types : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                A list of type IDs.
+            Number of radial bins.
+        types : lists of :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type`
 
         Returns
         -------
@@ -328,8 +332,8 @@ class Analysis(object):
         cdef vector[int] c_types = types
 
         cdef map[string, vector[vector[vector[double]]]] distribution
-        c_analyze.calc_cylindrical_average(
-            c_analyze.partCfg(), c_center, c_direction, c_length,
+        analyze.calc_cylindrical_average(
+            analyze.partCfg(), c_center, c_direction, c_length,
                                            c_radius, c_bins_axial, c_bins_radial, c_types,
                                            distribution)
 
@@ -378,21 +382,22 @@ class Analysis(object):
 
         Returns
         -------
-        A dictionary with the following keys:
+        dict
+            A dictionary with the following keys:
 
-        * "total", total pressure
-        * "kinetic", kinetic pressure
-        * "bonded" , total bonded pressure
-        * "bonded", bond_type , bonded pressure which arises from the given bond_type
-        * "nonbonded", total nonbonded pressure
-        * "nonbonded", type_i, type_j, nonbonded pressure which arises from the interactions between type_i and type_j
-        * "nonbonded_intra", type_i, type_j, nonbonded pressure between short ranged forces between type i and j and with the same mol_id
-        * "nonbonded_inter" type_i, type_j", nonbonded pressure between short ranged forces between type i and j and different mol_ids
-        * "coulomb", Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the coulomb stress tensor.
-          For how the stress tensor is calculated see below. The averaged value in an isotropic NVT simulation is equivalent to the average of
-          :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
-        * "dipolar", TODO
-        * "virtual_sites", Stress contribution due to virtual sites
+            * ``"total"``: total pressure
+            * ``"kinetic"``: kinetic pressure
+            * ``"bonded"``: total bonded pressure
+            * ``"bonded", <bond_type>``: bonded pressure which arises from the given bond_type
+            * ``"nonbonded"``: total nonbonded pressure
+            * ``"nonbonded", <type_i>, <type_j>``: nonbonded pressure which arises from the interactions between type_i and type_j
+            * ``"nonbonded_intra", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and with the same mol_id
+            * ``"nonbonded_inter", <type_i>, <type_j>``: nonbonded pressure between short ranged forces between type i and j and different mol_ids
+            * ``"coulomb"``: Coulomb pressure, how it is calculated depends on the method. It is equivalent to 1/3 of the trace of the Coulomb stress tensor.
+              For how the stress tensor is calculated, see below. The averaged value in an isotropic NVT simulation is equivalent to the average of
+              :math:`E^{coulomb}/(3V)`, see :cite:`brown95a`.
+            * ``"dipolar"``: TODO
+            * ``"virtual_sites"``: Stress contribution due to virtual sites
 
         """
         v_comp = int(v_comp)
@@ -403,29 +408,29 @@ class Analysis(object):
         p = OrderedDict()
 
         # Update in espresso core if necessary
-        if (c_analyze.total_pressure.init_status != 1 + v_comp):
-            c_analyze.update_pressure(v_comp)
+        if (analyze.total_pressure.init_status != 1 + v_comp):
+            analyze.update_pressure(v_comp)
 
         # Individual components of the pressure
 
         # Total pressure
         cdef int i
         total = 0
-        for i in range(c_analyze.total_pressure.data.n):
-            total += c_analyze.total_pressure.data.e[i]
+        for i in range(analyze.total_pressure.data.n):
+            total += analyze.total_pressure.data.e[i]
 
         p["total"] = total
 
         # kinetic
-        p["kinetic"] = c_analyze.total_pressure.data.e[0]
+        p["kinetic"] = analyze.total_pressure.data.e[0]
 
         # Bonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if (bonded_ia_params[i].type != BONDED_IA_NONE):
-                p["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_pressure, i)[0]
-                total_bonded += c_analyze.obsstat_bonded( & c_analyze.total_pressure, i)[0]
+                p["bonded", i] = analyze.obsstat_bonded(& analyze.total_pressure, i)[0]
+                total_bonded += analyze.obsstat_bonded(& analyze.total_pressure, i)[0]
         p["bonded"] = total_bonded
 
         # Non-Bonded interactions, total as well as intra and inter molecular
@@ -437,15 +442,15 @@ class Analysis(object):
         total_intra = 0
         total_non_bonded = 0
 
-        for i in range(c_analyze.max_seen_particle_type):
-            for j in range(i, c_analyze.max_seen_particle_type):
+        for i in range(analyze.max_seen_particle_type):
+            for j in range(i, analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
-                p["non_bonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
-                total_non_bonded += c_analyze.obsstat_nonbonded( & c_analyze.total_pressure, i, j)[0]
-                total_intra += c_analyze.obsstat_nonbonded_intra( & c_analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_intra", i, j] = c_analyze.obsstat_nonbonded_intra( & c_analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_inter", i, j] = c_analyze.obsstat_nonbonded_inter( & c_analyze.total_pressure_non_bonded, i, j)[0]
-                total_inter += c_analyze.obsstat_nonbonded_inter( & c_analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_pressure, i, j)[0]
+                total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_pressure, i, j)[0]
+                total_intra += analyze.obsstat_nonbonded_intra(& analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_intra", i, j] = analyze.obsstat_nonbonded_intra(& analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_inter", i, j] = analyze.obsstat_nonbonded_inter(& analyze.total_pressure_non_bonded, i, j)[0]
+                total_inter += analyze.obsstat_nonbonded_inter(& analyze.total_pressure_non_bonded, i, j)[0]
         p["non_bonded_intra"] = total_intra
         p["non_bonded_inter"] = total_inter
         p["non_bonded"] = total_non_bonded
@@ -454,50 +459,57 @@ class Analysis(object):
         IF ELECTROSTATICS == 1:
             cdef double total_coulomb
             total_coulomb = 0
-            for i in range(c_analyze.total_pressure.n_coulomb):
-                total_coulomb += c_analyze.total_pressure.coulomb[i]
-                p["coulomb", i] = c_analyze.total_pressure.coulomb[i]
+            for i in range(analyze.total_pressure.n_coulomb):
+                total_coulomb += analyze.total_pressure.coulomb[i]
+                p["coulomb", i] = analyze.total_pressure.coulomb[i]
             p["coulomb"] = total_coulomb
 
         # Dipoles
         IF DIPOLES == 1:
             cdef double total_dipolar
             total_dipolar = 0
-            for i in range(c_analyze.total_pressure.n_dipolar):
-                total_dipolar += c_analyze.total_pressure.dipolar[i]
-                p["dipolar", i] = c_analyze.total_pressure.coulomb[i]
+            for i in range(analyze.total_pressure.n_dipolar):
+                total_dipolar += analyze.total_pressure.dipolar[i]
+                p["dipolar", i] = analyze.total_pressure.coulomb[i]
             p["dipolar"] = total_dipolar
 
         # virtual sites
         IF VIRTUAL_SITES == 1:
             p_vs = 0.
-            for i in range(c_analyze.total_pressure.n_virtual_sites):
-                p_vs += c_analyze.total_pressure.virtual_sites[i]
-                p["virtual_sites", i] = c_analyze.total_pressure.virtual_sites[
+            for i in range(analyze.total_pressure.n_virtual_sites):
+                p_vs += analyze.total_pressure.virtual_sites[i]
+                p["virtual_sites", i] = analyze.total_pressure.virtual_sites[
                     0]
-            if c_analyze.total_pressure.n_virtual_sites:
+            if analyze.total_pressure.n_virtual_sites:
                 p["virtual_sites"] = p_vs
 
         return p
 
     def stress_tensor(self, v_comp=False):
-        """Calculates the instantaneous stress tensor (in parallel). This is sensible in an anisotropic system. Still it assumes that the system is homogeneous since the volume averaged stress tensor is used. Do not use this stress tensor in an (on average) inhomogeneous system. If the system is (on average inhomogeneous) then use a local stress tensor. In order to obtain the stress tensor the ensemble average needs to be calculated.
+        """Calculates the instantaneous stress tensor (in parallel). This is
+        sensible in an anisotropic system. Still it assumes that the system is
+        homogeneous since the volume averaged stress tensor is used. Do not use
+        this stress tensor in an (on average) inhomogeneous system. If the
+        system is (on average inhomogeneous) then use a local stress tensor.
+        In order to obtain the stress tensor the ensemble average needs to be
+        calculated.
 
         Returns
         -------
-        a dictionary with the following keys:
+        dict
+            A dictionary with the following keys:
 
-        * "total", total stress tensor
-        * "kinetic", kinetic stress tensor
-        * "bonded" , total bonded stress tensor
-        * "{bonded, bond_type}" , bonded stress tensor which arises from the given bond_type
-        * "nonbonded", total nonbonded stress tensor
-        * "nonbonded type_i", type_j, nonbonded stress tensor which arises from the interactions between type_i and type_j
-        * "nonbonded_intra type_i" type_j, nonbonded stress tensor between short ranged forces between type i and j and with the same mol_id
-        * "nonbonded_inter type_i", type_j, nonbonded stress tensor between short ranged forces between type i and j and different mol_ids
-        * "coulomb", Maxwell stress tensor, how it is calculated depends on the method
-        * "dipolar", TODO
-        * "virtual_sites", Stress tensor contribution for virtual sites
+            * ``"total"``: total stress tensor
+            * ``"kinetic"``: kinetic stress tensor
+            * ``"bonded"``: total bonded stress tensor
+            * ``"bonded", <bond_type>``: bonded stress tensor which arises from the given bond_type
+            * ``"nonbonded"``: total nonbonded stress tensor
+            * ``"nonbonded", <type_i>, <type_j>``: nonbonded stress tensor which arises from the interactions between type_i and type_j
+            * ``"nonbonded_intra" <type_i>, <type_j>``: nonbonded stress tensor between short ranged forces between type i and j and with the same mol_id
+            * ``"nonbonded_inter" <type_i>, <type_j>``: nonbonded stress tensor between short ranged forces between type i and j and different mol_ids
+            * ``"coulomb"``: Maxwell stress tensor, how it is calculated depends on the method
+            * ``"dipolar"``: TODO
+            * ``"virtual_sites"``: Stress tensor contribution for virtual sites
 
         """
         v_comp = int(v_comp)
@@ -508,8 +520,8 @@ class Analysis(object):
         p = OrderedDict()
 
         # Update in espresso core if necessary
-        if (c_analyze.total_p_tensor.init_status != 1 + v_comp):
-            c_analyze.update_pressure(v_comp)
+        if (analyze.total_p_tensor.init_status != 1 + v_comp):
+            analyze.update_pressure(v_comp)
 
         # Individual components of the pressure
 
@@ -517,14 +529,14 @@ class Analysis(object):
         cdef int i
         total = np.zeros(9)
         for i in range(9):
-            for k in range(c_analyze.total_p_tensor.data.n // 9):
-                total[i] += c_analyze.total_p_tensor.data.e[9 * k + i]
+            for k in range(analyze.total_p_tensor.data.n // 9):
+                total[i] += analyze.total_p_tensor.data.e[9 * k + i]
 
         p["total"] = total.reshape((3, 3))
 
         # kinetic
         p["kinetic"] = create_nparray_from_double_array(
-            c_analyze.total_p_tensor.data.e, 9)
+            analyze.total_p_tensor.data.e, 9)
         p["kinetic"] = p["kinetic"].reshape((3, 3))
 
         # Bonded
@@ -532,7 +544,7 @@ class Analysis(object):
         for i in range(bonded_ia_params.size()):
             if (bonded_ia_params[i].type != BONDED_IA_NONE):
                 p["bonded", i] = np.reshape(create_nparray_from_double_array(
-                    c_analyze.obsstat_bonded( & c_analyze.total_p_tensor, i), 9),
+                    analyze.obsstat_bonded(& analyze.total_p_tensor, i), 9),
                     (3, 3))
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
@@ -543,24 +555,24 @@ class Analysis(object):
         total_non_bonded_intra = np.zeros((3, 3))
         total_non_bonded_inter = np.zeros((3, 3))
 
-        for i in range(c_analyze.max_seen_particle_type):
-            for j in range(i, c_analyze.max_seen_particle_type):
+        for i in range(analyze.max_seen_particle_type):
+            for j in range(i, analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = np.reshape(
-                    create_nparray_from_double_array(c_analyze.obsstat_nonbonded(
-                        & c_analyze.total_p_tensor, i, j), 9), (3, 3))
+                    create_nparray_from_double_array(analyze.obsstat_nonbonded(
+                        & analyze.total_p_tensor, i, j), 9), (3, 3))
                 total_non_bonded += p["non_bonded", i, j]
 
                 p["non_bonded_intra", i, j] = np.reshape(
                     create_nparray_from_double_array(
-                        c_analyze.obsstat_nonbonded_intra(
-                            & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                        analyze.obsstat_nonbonded_intra(
+                            & analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
                 total_non_bonded_intra += p["non_bonded_intra", i, j]
 
                 p["non_bonded_inter", i, j] = np.reshape(
                     create_nparray_from_double_array(
-                        c_analyze.obsstat_nonbonded_inter(
-                            & c_analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                        analyze.obsstat_nonbonded_inter(
+                            & analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
 
         p["non_bonded_intra"] = total_non_bonded_intra
@@ -570,35 +582,44 @@ class Analysis(object):
         # Electrostatics
         IF ELECTROSTATICS == 1:
             total_coulomb = np.zeros((3, 3))
-            for i in range(c_analyze.total_p_tensor.n_coulomb):
+            for i in range(analyze.total_p_tensor.n_coulomb):
                 p["coulomb", i] = np.reshape(
                     create_nparray_from_double_array(
-                        c_analyze.total_p_tensor.coulomb + 9 * i, 9), (3, 3))
+                        analyze.total_p_tensor.coulomb + 9 * i, 9), (3, 3))
                 total_coulomb += p["coulomb", i]
             p["coulomb"] = total_coulomb
 
         # Dipoles
         IF DIPOLES == 1:
             total_dipolar = np.zeros((3, 3))
-            for i in range(c_analyze.total_p_tensor.n_dipolar):
+            for i in range(analyze.total_p_tensor.n_dipolar):
                 p["dipolar", i] = np.reshape(
                     create_nparray_from_double_array(
-                        c_analyze.total_p_tensor.dipolar + 9 * i, 9), (3, 3))
+                        analyze.total_p_tensor.dipolar + 9 * i, 9), (3, 3))
                 total_dipolar += p["dipolar", i]
             p["dipolar"] = total_dipolar
 
         # virtual sites
         IF VIRTUAL_SITES_RELATIVE == 1:
             total_vs = np.zeros((3, 3))
-            for i in range(c_analyze.total_p_tensor.n_virtual_sites):
+            for i in range(analyze.total_p_tensor.n_virtual_sites):
                 p["virtual_sites", i] = np.reshape(
                     create_nparray_from_double_array(
-                        c_analyze.total_p_tensor.virtual_sites + 9 * i, 9), (3, 3))
+                        analyze.total_p_tensor.virtual_sites + 9 * i, 9), (3, 3))
                 total_vs += p["virtual_sites", i]
-            if c_analyze.total_p_tensor.n_virtual_sites:
+            if analyze.total_p_tensor.n_virtual_sites:
                 p["virtual_sites"] = total_vs
 
         return p
+
+    IF DPD == 1:
+        def dpd_stress(self):
+            cdef Vector9d p
+            p = dpd_stress()
+            return array_locked((
+                p[0], p[1], p[2],
+                p[3], p[4], p[5],
+                p[6], p[7], p[8])).reshape((3, 3))
 
     #
     # Energy analysis
@@ -609,7 +630,9 @@ class Analysis(object):
 
         Returns
         -------
-        :obj:`dict` {'total', 'kinetic', 'bonded', 'nonbonded', ['coulomb'], 'external_fields'}
+        :obj:`dict`
+            A dictionary with keys `total`, `kinetic`, `bonded`, `nonbonded`,
+            `coulomb`, `external_fields`.
 
 
         Examples
@@ -627,31 +650,31 @@ class Analysis(object):
 
         e = OrderedDict()
 
-        if c_analyze.total_energy.init_status == 0:
-            c_analyze.init_energies( & c_analyze.total_energy)
-            c_analyze.master_energy_calc()
+        if analyze.total_energy.init_status == 0:
+            analyze.init_energies(& analyze.total_energy)
+            analyze.master_energy_calc()
             handle_errors("calc_long_range_energies failed")
 
         # Individual components of the pressure
 
         # Total energy
         cdef int i
-        total = c_analyze.total_energy.data.e[0]  # kinetic energy
+        total = analyze.total_energy.data.e[0]  # kinetic energy
         total += calculate_current_potential_energy_of_system()
 
         e["total"] = total
-        e["external_fields"] = c_analyze.total_energy.external_fields[0]
+        e["external_fields"] = analyze.total_energy.external_fields[0]
 
         # Kinetic energy
-        e["kinetic"] = c_analyze.total_energy.data.e[0]
+        e["kinetic"] = analyze.total_energy.data.e[0]
 
         # Nonbonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if (bonded_ia_params[i].type != BONDED_IA_NONE):
-                e["bonded", i] = c_analyze.obsstat_bonded( & c_analyze.total_energy, i)[0]
-                total_bonded += c_analyze.obsstat_bonded( & c_analyze.total_energy, i)[0]
+                e["bonded", i] = analyze.obsstat_bonded(& analyze.total_energy, i)[0]
+                total_bonded += analyze.obsstat_bonded(& analyze.total_energy, i)[0]
         e["bonded"] = total_bonded
 
         # Non-Bonded interactions, total as well as intra and inter molecular
@@ -663,16 +686,16 @@ class Analysis(object):
         total_intra = 0
         total_non_bonded = 0.
 
-        for i in range(c_analyze.max_seen_particle_type):
-            for j in range(c_analyze.max_seen_particle_type):
+        for i in range(analyze.max_seen_particle_type):
+            for j in range(analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
-                e["non_bonded", i, j] = c_analyze.obsstat_nonbonded( & c_analyze.total_energy, i, j)[0]
+                e["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
                 if i <= j:
-                    total_non_bonded += c_analyze.obsstat_nonbonded( & c_analyze.total_energy, i, j)[0]
-    #        total_intra +=c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
-    #        e["non_bonded_intra",i,j] =c_analyze.obsstat_nonbonded_intra(&c_analyze.total_energy_non_bonded, i, j)[0]
-    #        e["nonBondedInter",i,j] =c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
-    #        total_inter+= c_analyze.obsstat_nonbonded_inter(&c_analyze.total_energy_non_bonded, i, j)[0]
+                    total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
+    #        total_intra +=analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
+    #        e["non_bonded_intra",i,j] =analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
+    #        e["nonBondedInter",i,j] =analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
+    #        total_inter+= analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
     #  e["nonBondedIntra"]=total_intra
     #  e["nonBondedInter"]=total_inter
         e["non_bonded"] = total_non_bonded
@@ -681,18 +704,18 @@ class Analysis(object):
         IF ELECTROSTATICS == 1:
             cdef double total_coulomb
             total_coulomb = 0
-            for i in range(c_analyze.total_energy.n_coulomb):
-                total_coulomb += c_analyze.total_energy.coulomb[i]
-                e["coulomb", i] = c_analyze.total_energy.coulomb[i]
+            for i in range(analyze.total_energy.n_coulomb):
+                total_coulomb += analyze.total_energy.coulomb[i]
+                e["coulomb", i] = analyze.total_energy.coulomb[i]
             e["coulomb"] = total_coulomb
 
         # Dipoles
         IF DIPOLES == 1:
             cdef double total_dipolar
             total_dipolar = 0
-            for i in range(c_analyze.total_energy.n_dipolar):
-                total_dipolar += c_analyze.total_energy.dipolar[i]
-                e["dipolar", i] = c_analyze.total_energy.dipolar[i]
+            for i in range(analyze.total_energy.n_dipolar):
+                total_dipolar += analyze.total_energy.dipolar[i]
+                e["dipolar", i] = analyze.total_energy.dipolar[i]
             e["dipolar"] = total_dipolar
 
         return e
@@ -712,24 +735,23 @@ class Analysis(object):
         Parameters
         ----------
         chain_start : :obj:`int`
-                      The id of the first monomer of the first chain.
+            The id of the first monomer of the first chain.
         number_of_chains : :obj:`int`
-                           Number of chains contained in the range.
+            Number of chains contained in the range.
         chain_length : :obj:`int`
-                       The length of every chain.
+            The length of every chain.
 
         Returns
         -------
-        array_like :obj:`float` :
-                     Where [0] is the Mean end-to-end distance of chains
-                     and [1] its standard deviation,
-                     [2] the Mean Square end-to-end distance
-                     and [3] its standard deviation.
+        array_like :obj:`float`
+            Where [0] is the Mean end-to-end distance of chains and [1] its
+            standard deviation, [2] the Mean Square end-to-end distance and
+            [3] its standard deviation.
 
         """
         cdef double * re = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        c_analyze.calc_re(c_analyze.partCfg(), & re)
+        analyze.calc_re(analyze.partCfg(), & re)
         tuple_re = (re[0], re[1], re[2], re[3])
         free(re)
         return tuple_re
@@ -748,24 +770,23 @@ class Analysis(object):
         Parameters
         ----------
         chain_start : :obj:`int`
-                      The id of the first monomer of the first chain.
+            The id of the first monomer of the first chain.
         number_of_chains : :obj:`int`
-                           Number of chains contained in the range.
+            Number of chains contained in the range.
         chain_length : :obj:`int`
-                       The length of every chain.
+            The length of every chain.
 
         Returns
         -------
-        array_like :obj:`float` :
-                     Where [0] is the Mean radius of gyration of the chains
-                     and [1] its standard deviation,
-                     [2] the Mean Square radius of gyration
-                     and [3] its standard deviation.
+        array_like :obj:`float`
+            Where [0] is the Mean radius of gyration of the chains and [1] its
+            standard deviation, [2] the Mean Square radius of gyration and [3]
+            its standard deviation.
 
         """
         cdef double * rg = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        c_analyze.calc_rg(c_analyze.partCfg(), & rg)
+        analyze.calc_rg(analyze.partCfg(), & rg)
         tuple_rg = (rg[0], rg[1], rg[2], rg[3])
         free(rg)
         return tuple_rg
@@ -783,23 +804,23 @@ class Analysis(object):
         Parameters
         ----------
         chain_start : :obj:`int`
-                      The id of the first monomer of the first chain
+            The id of the first monomer of the first chain
         number_of_chains : :obj:`int`
-                           Number of chains contained in the range.
+            Number of chains contained in the range.
         chain_length : :obj:`int`
-                       The length of every chain.
+            The length of every chain.
 
         Returns
         -------
         array_like :obj:`float`:
             Where [0] is the mean hydrodynamic radius of the chains
-            and [1] its standard deviation,
+            and [1] its standard deviation.
 
         """
 
         cdef double * rh = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        c_analyze.calc_rh(c_analyze.partCfg(), & rh)
+        analyze.calc_rh(analyze.partCfg(), & rh)
         tuple_rh = (rh[0], rh[1])
         free(rh)
         return tuple_rh
@@ -818,9 +839,9 @@ class Analysis(object):
             if (not self._system.part.exists(i)):
                 raise ValueError('particle with id {0:.0f} does not exist\ncannot perform analysis on the range chain_start={1:.0f}, n_chains={2:.0f}, chain_length={3:.0f}\nplease provide a contiguous range of particle ids'.format(
                     i, chain_start, number_of_chains, chain_length));
-        c_analyze.chain_start = chain_start
-        c_analyze.chain_n_chains = number_of_chains
-        c_analyze.chain_length = chain_length
+        analyze.chain_start = chain_start
+        analyze.chain_n_chains = number_of_chains
+        analyze.chain_length = chain_length
 
     #
     # Structure factor
@@ -836,16 +857,17 @@ class Analysis(object):
 
         Parameters
         ----------
-        sf_types : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-            Specifies which particle type should be considered.
+        sf_types : list of :obj:`int`
+            Specifies which particle :attr:`~espressomd.particle_data.ParticleHandle.type`
+            should be considered.
         sf_order : :obj:`int`
             Specifies the maximum wavevector.
 
         Returns
         -------
         array_like
-          Where [0] contains q
-          and [1] contains the structure factor s(q)
+            Where [0] contains q
+            and [1] contains the structure factor s(q)
 
         """
 
@@ -857,9 +879,9 @@ class Analysis(object):
         cdef double * sf
         p_types = create_int_list_from_python_object(sf_types)
 
-        c_analyze.calc_structurefactor(c_analyze.partCfg(), p_types.e, p_types.n, sf_order, & sf)
+        analyze.calc_structurefactor(analyze.partCfg(), p_types.e, p_types.n, sf_order, & sf)
 
-        return np.transpose(c_analyze.modify_stucturefactor(sf_order, sf))
+        return np.transpose(analyze.modify_stucturefactor(sf_order, sf))
 
     #
     # RDF
@@ -876,26 +898,26 @@ class Analysis(object):
         Parameters
         ----------
         rdf_type : :obj:`str`
-                   'rdf' or '<rdf>'.
-        type_list_a : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                      Left types of the rdf.
-        type_list_b : lists of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`), optional
-                      Right types of the rdf.
+            ``'rdf'`` or ``'<rdf>'``.
+        type_list_a : lists of :obj:`int`
+            Left :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
+        type_list_b : lists of :obj:`int`, optional
+            Right :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
         r_min : :obj:`float`
-                Minimal distance to consider.
+            Minimal distance to consider.
         r_max : :obj:`float`
-                Maximal distance to consider
+            Maximal distance to consider
         r_bins : :obj:`int`
-                 Number of bins.
+            Number of bins.
         n_conf : :obj:`int`, optional
-                 If rdf_type is '<rdf>' this determines
-                 the number of stored configs that are used.
+            If rdf_type is ``'<rdf>'`` this determines
+            the number of stored configs that are used.
 
         Returns
         -------
         array_like
-          Where [0] contains the midpoints of the bins,
-          and [1] contains the values of the rdf.
+            Where [0] contains the midpoints of the bins,
+            and [1] contains the values of the rdf.
 
         """
 
@@ -925,11 +947,11 @@ class Analysis(object):
         cdef vector[int] p2_types = type_list_b
 
         if rdf_type == 'rdf':
-            c_analyze.calc_rdf(c_analyze.partCfg(), p1_types,
+            analyze.calc_rdf(analyze.partCfg(), p1_types,
                                p2_types, r_min, r_max, r_bins, rdf)
         elif rdf_type == '<rdf>':
-            c_analyze.calc_rdf_av(
-                c_analyze.partCfg(), p1_types, p2_types, r_min,
+            analyze.calc_rdf_av(
+                analyze.partCfg(), p1_types, p2_types, r_min,
                                   r_max, r_bins, rdf, n_conf)
         else:
             raise Exception(
@@ -961,27 +983,29 @@ class Analysis(object):
 
         Parameters
         ----------
-        type_list_a : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                      List of particle types, only consider distances from these types.
-        type_list_b : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                      List of particle types, only consider distances to these types.
+        type_list_a : list of :obj:`int`
+            List of particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
+            only consider distances from these types.
+        type_list_b : list of :obj:`int`
+            List of particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
+            only consider distances to these types.
         r_min : :obj:`float`
-                Minimum distance.
+            Minimum distance.
         r_max : :obj:`float`
-                Maximum distance.
+            Maximum distance.
         r_bins : :obj:`int`
-                 Number of bins.
+            Number of bins.
         log_flag : :obj:`int`
-                   When set to 0, the bins are linearly equidistant; when set
-                   to 1, the bins are logarithmically equidistant.
+            When set to 0, the bins are linearly equidistant; when set to 1,
+            the bins are logarithmically equidistant.
         int_flag : :obj:`int`
-                   When set to 1, the result is an integrated distribution.
+            When set to 1, the result is an integrated distribution.
 
         Returns
         -------
         array_like
-          Where [0] contains the midpoints of the bins,
-          and [1] contains the values of the rdf.
+            Where [0] contains the midpoints of the bins,
+            and [1] contains the values of the rdf.
 
         """
 
@@ -1007,8 +1031,8 @@ class Analysis(object):
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
-        c_analyze.calc_part_distribution(
-            c_analyze.partCfg(
+        analyze.calc_part_distribution(
+            analyze.partCfg(
                 ), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
                                          r_min, r_max, r_bins, log_flag, & low, distribution.data())
 
@@ -1045,7 +1069,7 @@ class Analysis(object):
         cdef double[3] com
         cdef int p1 = p_type
 
-        c_analyze.angularmomentum(c_analyze.partCfg(), p1, com)
+        analyze.angularmomentum(analyze.partCfg(), p1, com)
 
         return np.array([com[0], com[1], com[2]])
 
@@ -1060,19 +1084,22 @@ class Analysis(object):
 
         Parameters
         ----------
-        p_type : list of :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`), optional
-                 A particle type, or list of all particle types to be considered.
+        p_type : list of :obj:`int`, optional
+            A particle :attr:`~espressomd.particle_data.ParticleHandle.type`,
+            or list of all particle types to be considered.
 
         Returns
         -------
-        A dictionary with the following keys:
+        dict
+            A dictionary with the following keys:
 
-        * "Rg^2", squared radius of gyration
-        * "shape", three shape descriptors (asphericity, acylindricity, and relative shape anisotropy)
-        * "eva0", eigenvalue 0 of the gyration tensor and its corresponding eigenvector.
-        * "eva1", eigenvalue 1 of the gyration tensor and its corresponding eigenvector.
-        * "eva2", eigenvalue 2 of the gyration tensor and its corresponding eigenvector.
-        The eigenvalues are sorted in descending order.
+            * ``"Rg^2"``: squared radius of gyration
+            * ``"shape"``: three shape descriptors (asphericity, acylindricity, and relative shape anisotropy)
+            * ``"eva0"``: eigenvalue 0 of the gyration tensor and its corresponding eigenvector.
+            * ``"eva1"``: eigenvalue 1 of the gyration tensor and its corresponding eigenvector.
+            * ``"eva2"``: eigenvalue 2 of the gyration tensor and its corresponding eigenvector.
+
+            The eigenvalues are sorted in descending order.
 
         """
         if p_type is None:
@@ -1083,7 +1110,7 @@ class Analysis(object):
         for type in p_type:
             check_type_or_throw_except(
                 type, 1, int, "particle type has to be an int")
-            if (type < 0 or type >= c_analyze.max_seen_particle_type):
+            if (type < 0 or type >= analyze.max_seen_particle_type):
                 raise ValueError("Particle type", type, "does not exist!")
         selection = np.in1d(self._system.part[:].type, p_type)
 
@@ -1118,8 +1145,8 @@ class Analysis(object):
 
         Parameters
         ----------
-        p_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                 A particle type
+        p_type : :obj:`int`
+            A particle :attr:`~espressomd.particle_data.ParticleHandle.type`
 
         Returns
         -------
@@ -1134,11 +1161,11 @@ class Analysis(object):
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
-        if (p_type < 0 or p_type >= c_analyze.max_seen_particle_type):
+        if (p_type < 0 or p_type >= analyze.max_seen_particle_type):
             raise ValueError("Particle type", p_type, "does not exist!")
 
-        c_analyze.momentofinertiamatrix(
-            c_analyze.partCfg(), p_type, MofImatrix)
+        analyze.momentofinertiamatrix(
+            analyze.partCfg(), p_type, MofImatrix)
 
         MofImatrix_np = np.empty((9))
         for i in range(9):
@@ -1165,13 +1192,13 @@ class Analysis(object):
         Parameters
         ----------
         mode : :obj:`str`
-               One of `read`, `set` or `reset`.
+            One of ```read```, ```set``` or ```reset```.
         Vk1 : :obj:`float`
-              Volume.
+            Volume.
         Vk2 : :obj:`float`
-              Volume squared.
+            Volume squared.
         avk : :obj:`float`
-              Number of averages.
+            Number of averages.
 
         """
 

@@ -37,6 +37,8 @@
 #include "bonded_interactions/umbrella.hpp"
 #include "collision.hpp"
 #include "forces.hpp"
+#include "immersed_boundary/ibm_tribend.hpp"
+#include "immersed_boundary/ibm_triel.hpp"
 #include "metadynamics.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
@@ -70,10 +72,6 @@
 #include "bonded_interactions/bonded_coulomb.hpp"
 #include "bonded_interactions/bonded_coulomb_sr.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
-#endif
-#ifdef IMMERSED_BOUNDARY
-#include "immersed_boundary/ibm_tribend.hpp"
-#include "immersed_boundary/ibm_triel.hpp"
 #endif
 #ifdef DPD
 #include "dpd.hpp"
@@ -253,7 +251,6 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
  */
 inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
                                       double dist, double dist2) {
-
   IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
   Utils::Vector3d force{};
   double torque1[3] = {0., 0., 0.};
@@ -518,11 +515,9 @@ inline void add_bonded_force(Particle *p1) {
               calc_tab_angle_force(p1, p2, p3, iaparams, force, force2, force3);
         break;
 #endif
-#ifdef IMMERSED_BOUNDARY
       case BONDED_IA_IBM_TRIEL:
         bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
         break;
-#endif
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                           << p1->p.identity << " unknown " << type << ","
@@ -543,15 +538,13 @@ inline void add_bonded_force(Particle *p1) {
                                      force3, force4);
         break;
 #endif
-// IMMERSED_BOUNDARY
-#ifdef IMMERSED_BOUNDARY
+      // IMMERSED_BOUNDARY
       case BONDED_IA_IBM_TRIBEND: {
         IBM_Tribend_CalcForce(p1, p2, p3, p4, *iaparams);
         bond_broken = 0;
 
         break;
       }
-#endif
       case BONDED_IA_DIHEDRAL:
         bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force,
                                           force2, force3);

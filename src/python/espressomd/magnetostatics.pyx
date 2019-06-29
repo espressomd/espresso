@@ -26,7 +26,7 @@ IF SCAFACOS == 1:
     from . cimport scafacos
 
 from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type
+from espressomd.utils import is_valid_type, to_str
 
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):
@@ -35,7 +35,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
 
         """
 
@@ -50,15 +50,10 @@ IF DIPOLES == 1:
             Set the magnetostatics prefactor
 
             """
-            if set_Dprefactor(self._params["prefactor"]):
-                    raise Exception(
-                        "Could not set magnetostatic prefactor")
+            set_Dprefactor(self._params["prefactor"])
+            handle_errors("Could not set magnetostatic prefactor")
             # also necessary on 1 CPU or GPU, does more than just broadcasting
             mpi_bcast_coulomb_params()
-
-        def get_params(self):
-            self._params = self._get_params_from_es_core()
-            return self._params
 
         def _get_active_method_from_es_core(self):
             return dipole.method
@@ -75,22 +70,23 @@ IF DP3M == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
         accuracy : :obj:`float`
-                   P3M tunes its parameters to provide this target accuracy.
+            P3M tunes its parameters to provide this target accuracy.
         alpha : :obj:`float`
-                Ewald parameter.
+            Ewald parameter.
         cao : :obj:`int`
-              Charge-assignment order, an integer between -1 and 7.
-        mesh : :obj:`int` or array_like
-               Number of mesh points.
+            Charge-assignment order, an integer between -1 and 7.
+        mesh : :obj:`int` or array_like of :obj:`int`
+            The number of mesh points in x, y and z direction. Use a single
+            value for cubic boxes.
         mesh_off : array_like :obj:`float`
-                   Mesh offset.
+            Mesh offset.
         r_cut : :obj:`float`
-                Real space cutoff.
+            Real space cutoff.
         tune : :obj:`bool`, optional
-               Activate/deactivate the tuning method on activation
-               (default is True, i.e., activated).
+            Activate/deactivate the tuning method on activation
+            (default is True, i.e., activated).
 
         """
 
@@ -104,12 +100,14 @@ IF DP3M == 1:
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"])):
+            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"]) == 3):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
             if (isinstance(self._params["mesh"], basestring) and len(self._params["mesh"]) == 3):
-                if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
+                if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
+                   (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
+                   (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
                     raise ValueError(
                         "P3M requires an even number of mesh points in all directions")
 
@@ -134,7 +132,9 @@ IF DP3M == 1:
                     "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
         def valid_keys(self):
-            return "prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off", "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai", "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "tune"
+            return ["prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
+                    "cao", "inter", "accuracy", "epsilon", "cao_cut", "a", "ai",
+                    "alpha", "r_cut", "inter2", "cao3", "additional_mesh", "tune"]
 
         def required_keys(self):
             return ["accuracy", ]
@@ -161,19 +161,21 @@ IF DP3M == 1:
             dp3m_set_eps(self._params["epsilon"])
             dp3m_set_ninterpol(self._params["inter"])
             self.python_dp3m_set_mesh_offset(self._params["mesh_off"])
-            self.python_dp3m_set_params(self._params["r_cut"], self._params["mesh"], self._params[
-                "cao"], self._params["alpha"], self._params["accuracy"])
+            self.python_dp3m_set_params(
+                self._params["r_cut"], self._params["mesh"],
+                self._params["cao"], self._params["alpha"], self._params["accuracy"])
 
         def _tune(self):
             self.set_magnetostatics_prefactor()
             dp3m_set_eps(self._params["epsilon"])
-            self.python_dp3m_set_tune_params(self._params["r_cut"], self._params["mesh"], self._params[
-                "cao"], -1.0, self._params["accuracy"], self._params["inter"])
+            self.python_dp3m_set_tune_params(
+                self._params["r_cut"], self._params["mesh"],
+                self._params["cao"], -1., self._params["accuracy"], self._params["inter"])
             resp, log = self.python_dp3m_adaptive_tune()
             if resp:
                 raise Exception(
                     "failed to tune dipolar P3M parameters to required accuracy")
-            print(log)
+            print(to_str(log))
             self._params.update(self._get_params_from_es_core())
 
         def _activate_method(self):
@@ -240,14 +242,14 @@ IF DIPOLES == 1:
     cdef class DipolarDirectSumCpu(MagnetostaticInteraction):
         """Calculate magnetostatic interactions by direct summation over all pairs.
 
-        If the system has periodic boundaries, the minimum image convention is applied
-        in the respective directions.
+        If the system has periodic boundaries, the minimum image convention is
+        applied in the respective directions.
 
         Attributes
         ----------
 
         prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
 
         """
 
@@ -269,9 +271,9 @@ IF DIPOLES == 1:
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
-            if dawaanr_set_params():
-                raise Exception(
-                    "Could not activate magnetostatics method " + self.__class__.__name__)
+            dawaanr_set_params()
+            handle_errors("Could not activate magnetostatics method "
+                          + self.__class__.__name__)
 
     cdef class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
         """Calculate magnetostatic interactions by direct summation over all pairs.
@@ -282,9 +284,9 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
         n_replica : :obj:`int`
-                    Number of replicas to be taken into account at periodic boundaries.
+            Number of replicas to be taken into account at periodic boundaries.
 
         """
 
@@ -306,22 +308,26 @@ IF DIPOLES == 1:
 
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
-            if mdds_set_params(self._params["n_replica"]):
-                raise Exception(
-                    "Could not activate magnetostatics method " + self.__class__.__name__)
+            mdds_set_params(self._params["n_replica"])
+            handle_errors("Could not activate magnetostatics method "
+                          + self.__class__.__name__)
+
     IF SCAFACOS_DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):
 
             """
             Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library.
+
+            Attributes
+            ----------
             prefactor : :obj:`float`
                 Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
             method_name : :obj:`str`
                 Name of the method as defined in Scafacos
             method_params : :obj:`dict`
-                Dictionary with the key-value pairs of the method parameters as defined in Scafacos. Note that the values are cast to strings to match Scafacos' interface
-
-
+                Dictionary with the key-value pairs of the method parameters as
+                defined in Scafacos. Note that the values are cast to strings
+                to match Scafacos' interface
 
             """
 
@@ -347,10 +353,11 @@ IF DIPOLES == 1:
         cdef class DipolarDirectSumGpu(MagnetostaticInteraction):
             """Calculate magnetostatic interactions by direct summation over all pairs.
 
-            If the system has periodic boundaries, the minimum image convention is applied
-            in the respective directions.
+            If the system has periodic boundaries, the minimum image convention
+            is applied in the respective directions.
 
-            This is the GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu` but uses floating point precision.
+            This is the GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu`
+            but uses floating point precision.
 
             Attributes
             ----------

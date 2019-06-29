@@ -42,8 +42,7 @@ set(EspressoCore_SRC
   specfunc.cpp
   statistics_chain.cpp
   statistics.cpp
-  swimmer_reaction.cpp
-  SystemInterface.cpp
+        SystemInterface.cpp
   thermostat.cpp
   tuning.cpp
   virtual_sites.cpp

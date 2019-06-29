@@ -78,11 +78,11 @@ The extra argument ``particle_type`` specifies the non-bonded interaction to be 
 that constraint.
 
 There are two additional optional parameters
-to fine tune the behavior of the constraint. If ``penetrable`` is
-set to ``True`` then particles can move through the constraint. In this case the
-other option ``only_positive`` controls whether the particle is subject to the interaction
-potential of the wall. If set to ``False``, then the constraint will only act in
-the direction of the normal vector.
+to fine tune the behavior of the constraint. If ``penetrable`` is set to
+``True`` then particles can move through the constraint. In this case the
+other option ``only_positive`` controls whether the particle is subject to the
+interaction potential of the wall. If set to ``False``, then the constraint
+will only act in the direction of the normal vector.
 
 If we wanted to add a non-penetrable pore constraint to our simulation,
 we could do the following::
@@ -90,7 +90,7 @@ we could do the following::
     pore = espressomd.shapes.SimplePore(
         axis=[1, 0, 0], length=2, pos=[15, 15, 15], radius=1, smoothing_radius=0.5)
     pore_constraint = espressomd.constraints.ShapeBasedConstraint(
-        shape=pore, penetrable=0, particle_type=1)
+        shape=pore, penetrable=False, particle_type=1)
     system.constraints.add(pore_constraint)
 
 Interactions between the pore and other particles are then defined
@@ -197,11 +197,11 @@ Pictured is an example constraint with a ``Wall`` shape created with ::
     wall = Wall(dist=20, normal=[0.1, 0.0, 1])
     system.constraints.add(shape=wall, particle_type=0)
 
-In variant (1) if the ``only_positive`` flag is set to 1, interactions are only calculated if
-the particle is on the side of the wall in which the normal vector is
-pointing.
+In variant (1) if the ``only_positive`` flag is set to ``True``, interactions
+are only calculated if the particle is on the side of the wall in which the
+normal vector is pointing.
 This has only an effect for penetrable walls. If the flag is
-set to 1, then slip boundary interactions apply that are essential for
+set to ``True``, then slip boundary interactions apply that are essential for
 microchannel flows like the Plane Poiseuille or Plane Couette Flow.
 You also need to use the tunable_slip interaction (see [sec:tunableSlip])
 for this too work.
@@ -211,7 +211,8 @@ for this too work.
     A sphere.
 
 The resulting surface is a sphere with center ``center`` and radius ``radius``.
-The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
+The direction ``direction`` determines the force direction, ``-1`` for inward
+and ``+1`` for outward.
 
 .. _shape-sphere:
 
@@ -287,7 +288,7 @@ The direction ``direction`` determines the force direction, ``-1`` for inward an
                         b=[0.0, 0.0, 1.0],
                         c=[0.0, 1.0, 0.0],
                         direction=1)
-    system.constraints.add(shape=rhomboid, particle_type=0, penetrable=1)
+    system.constraints.add(shape=rhomboid, particle_type=0, penetrable=True)
 
 creates a rhomboid defined by one corner located at ``[5.0, 5.0, 5.0]`` and three
 adjacent edges, defined by the three vectors connecting the corner with its three neighboring corners, ``(1,1,0)`` , ``(0,0,1)`` and ``(0,1,0)``.
@@ -313,7 +314,7 @@ Pictured is an example constraint with a ``SimplePore`` shape created with ::
                       radius=12.5,
                       smoothing_radius=2,
                       center=[25, 25, 25])
-    system.constraints.add(shape=pore, particle_type=0, penetrable=1)
+    system.constraints.add(shape=pore, particle_type=0, penetrable=True)
 
 
 :class:`espressomd.shapes.Stomatocyte`
@@ -352,7 +353,7 @@ Pictured is an example constraint with a ``Stomatocyte`` shape (with a closeup o
                               center=[25, 25, 25],
                               layer_width=3,
                               direction=1)
-    system.constraints.add(shape=stomatocyte, particle_type=0, penetrable=1)
+    system.constraints.add(shape=stomatocyte, particle_type=0, penetrable=True)
 
 
 
@@ -399,7 +400,7 @@ Pictured is an example constraint with a ``Slitpore`` shape created with ::
                         pore_width=5,
                         dividing_plane=40)
 
-    system.constraints.add(shape=slitpore, particle_type=0, penetrable=1)
+    system.constraints.add(shape=slitpore, particle_type=0, penetrable=True)
 
 
 :class:`espressomd.shapes.SpheroCylinder`
@@ -457,11 +458,12 @@ Pictured is an example constraint with a ``Hollowcone`` shape created with ::
                             center=[25, 25, 25],
                             width=2,
                             direction=1)
-    system.constraints.add(shape=hollowcone, particle_type=0, penetrable=1)
+    system.constraints.add(shape=hollowcone, particle_type=0, penetrable=True)
 
 
-For the shapes ``wall``; ``sphere``; ``cylinder``; ``rhomboid``; ``maze``; ``pore`` and ``stomatocyte``, constraints are able to be penetrated if ``penetrable`` is set to ``True``.
-Otherwise, when the ``penetrable`` option is
+For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``, ``maze``,
+``pore`` and ``stomatocyte``, constraints are able to be penetrated if
+``penetrable`` is set to ``True``. Otherwise, when the ``penetrable`` option is
 ignored or is set to ``False``, the constraint cannot be violated, i.e. no
 particle can go through the constraint surface (|es| will exit if it does).
 
@@ -506,7 +508,7 @@ words, this option helps defines the sign of the normal surface vector.
 
 For now, this may not sound useful but it can be practical when used with
 together with constraint options such as ``penetrable`` or ``only_positive``.
-In the former case, using non-penetrable surfaces with ``penetrable=0`` will
+In the former case, using non-penetrable surfaces with ``penetrable=False`` will
 cause |es| to throw an error is any distances between interacting particles and
 constraints are found to be negative. This can be used to stop a simulation if
 for one reason or another particles end up in an unwanted location.
@@ -514,11 +516,11 @@ for one reason or another particles end up in an unwanted location.
 The ``only_positive`` constraint option is used to define if a force should be
 applied to a particle that has a negative distance. For example, consider the
 same probe particle as in the previous case. The plot below shows the particle
-force with ``only_positive=1``. Notice that when the distance is negative,
+force with ``only_positive=True``. Notice that when the distance is negative,
 forces are not applied at all to the particle. Thus the constraint surface is
 either purely radially outwards (when ``direction=1``) or radially inwards
 (when ``direction=-1``). Note that in both cases the constraint was set to be
-penetrable with ``penetrable=1`` or else the simulation would crash whenever
+penetrable with ``penetrable=True`` or else the simulation would crash whenever
 the particle was found in any location that yields a negative distance.
 
 .. figure:: figures/constraint-force.png
@@ -527,7 +529,7 @@ the particle was found in any location that yields a negative distance.
    :height: 8.00000cm
 
 The next figure shows what happens if we turn off the ``only_positive`` flag by
-setting ``only_positive=0``. In this case the particle is pushed radially
+setting ``only_positive=False``. In this case the particle is pushed radially
 inward if it is inside the sphere and radially outward if it is outside. As
 with the previous example, the constraint was set to be penetrable for this to
 make sense.

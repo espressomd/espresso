@@ -58,7 +58,8 @@
 static double ux, ux2, uy, uy2, uz, height_inverse;
 /*@}*/
 
-ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0.0};
+ELC_struct elc_params = {1e100, 10,    1, 0, 1, 1, false, 1,
+                         1,     false, 0, 0, 0, 0, 0.0};
 
 /****************************************
  * LOCAL ARRAYS
@@ -88,7 +89,7 @@ ELC_struct elc_params = {1e100, 10, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0.0};
 static int n_localpart = 0;
 
 /** temporary buffers for product decomposition */
-static double *partblk = nullptr;
+static std::vector<double> partblk;
 /** collected data from the other cells */
 static double gblcblk[8];
 
@@ -99,9 +100,9 @@ typedef struct {
 
 /** \name sin/cos caching */
 /*@{*/
-static SCCache *scxcache = nullptr;
+static std::vector<SCCache> scxcache;
 static int n_scxcache;
-static SCCache *scycache = nullptr;
+static std::vector<SCCache> scycache;
 static int n_scycache;
 /*@}*/
 
@@ -245,10 +246,11 @@ static void checkpoint(char *text, int p, int q, int e_size) {
   for (c = 0; c < n_localpart; c++) {
     fprintf(stderr, "%d", c);
     for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(partblk, c, 2 * e_size)[i]);
+      fprintf(stderr, " %10.3g", block(partblk.data(), c, 2 * e_size)[i]);
     fprintf(stderr, " m");
     for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(partblk, c, 2 * e_size)[i + e_size]);
+      fprintf(stderr, " %10.3g",
+              block(partblk.data(), c, 2 * e_size)[i + e_size]);
     fprintf(stderr, "\n");
   }
   fprintf(stderr, "\n");
@@ -598,7 +600,7 @@ static void setup_P(int p, double omega) {
     partblk[size * ic + POQECM] = p.p.q * scxcache[o + ic].c / e;
     partblk[size * ic + POQECP] = p.p.q * scxcache[o + ic].c * e;
 
-    add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
+    add_vec(gblcblk, gblcblk, block(partblk.data(), ic, size), size);
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
@@ -704,7 +706,7 @@ static void setup_Q(int q, double omega) {
     partblk[size * ic + POQECM] = p.p.q * scycache[o + ic].c / e;
     partblk[size * ic + POQECP] = p.p.q * scycache[o + ic].c * e;
 
-    add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
+    add_vec(gblcblk, gblcblk, block(partblk.data(), ic, size), size);
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
@@ -893,7 +895,7 @@ static void setup_PQ(int p, int q, double omega) {
     partblk[size * ic + PQECCP] =
         scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e;
 
-    add_vec(gblcblk, gblcblk, block(partblk, ic, size), size);
+    add_vec(gblcblk, gblcblk, block(partblk.data(), ic, size), size);
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
@@ -1247,23 +1249,21 @@ void ELC_on_resort_particles() {
   n_localpart = cells_get_n_particles();
   n_scxcache = (int)(ceil(elc_params.far_cut / ux) + 1);
   n_scycache = (int)(ceil(elc_params.far_cut / uy) + 1);
-  scxcache =
-      Utils::realloc(scxcache, n_scxcache * n_localpart * sizeof(SCCache));
-  scycache =
-      Utils::realloc(scycache, n_scycache * n_localpart * sizeof(SCCache));
+  scxcache.resize(n_scxcache * n_localpart);
+  scycache.resize(n_scycache * n_localpart);
 
-  partblk = Utils::realloc(partblk, n_localpart * 8 * sizeof(double));
+  partblk.resize(n_localpart * 8);
 }
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
                    int neutralize, double delta_top, double delta_bot,
-                   int const_pot, double pot_diff) {
+                   bool const_pot, double pot_diff) {
   elc_params.maxPWerror = maxPWerror;
   elc_params.gap_size = gap_size;
   elc_params.h = box_l[2] - gap_size;
 
   if (delta_top != 0.0 || delta_bot != 0.0) {
-    elc_params.dielectric_contrast_on = 1;
+    elc_params.dielectric_contrast_on = true;
 
     elc_params.delta_mid_top = delta_top;
     elc_params.delta_mid_bot = delta_bot;
@@ -1281,13 +1281,13 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
 
     // Constant potential parameter setup
     if (const_pot) {
-      elc_params.const_pot = 1;
+      elc_params.const_pot = true;
       elc_params.pot_diff = pot_diff;
     }
   } else {
     // setup without dielectric contrast
-    elc_params.dielectric_contrast_on = 0;
-    elc_params.const_pot = 0;
+    elc_params.dielectric_contrast_on = false;
+    elc_params.const_pot = false;
     elc_params.delta_mid_top = 0;
     elc_params.delta_mid_bot = 0;
     elc_params.neutralize = neutralize;
