@@ -136,7 +136,7 @@ void propagate_vel_pos_sd() {
       double v[] = {v_sd[6 * i + 0], v_sd[6 * i + 1], v_sd[6 * i + 2]};
       set_particle_v(id[i], v);
 
-      Vector3d omega = {v_sd[6 * i + 3], v_sd[6 * i + 4], v_sd[6 * i + 5]};
+      Utils::Vector3d omega = {v_sd[6 * i + 3], v_sd[6 * i + 4], v_sd[6 * i + 5]};
       set_particle_omega_body(id[i], omega);
 
       // integrate and set new positions

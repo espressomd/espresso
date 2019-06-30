@@ -3,7 +3,7 @@ target_include_directories(sd_interface PRIVATE
   ${CMAKE_SOURCE_DIR}/src/core
   ${CMAKE_BINARY_DIR}/src/core
 )
-target_link_libraries(sd_interface PUBLIC EspressoConfig Boost::mpi MPI::MPI_CXX Random123)
+target_link_libraries(sd_interface PUBLIC EspressoConfig Boost::mpi MPI::MPI_CXX Random123 utils)
 
 if (CUDA)
   cuda_add_library(sd_gpu SHARED sd_gpu.cu)
