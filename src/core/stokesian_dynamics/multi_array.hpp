@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -32,19 +33,6 @@ struct product<T, dim0, dim...> {
 template <typename T>
 struct product<T> {
     static constexpr T const value = 1;
-};
-
-// pack_element
-
-template <std::size_t index, typename T, T head, T... pack>
-struct pack_element {
-    static_assert(index < sizeof...(pack) + 1, "index out of bounds");
-    static constexpr T const value = pack_element<index - 1, T, pack...>::value;
-};
-
-template <typename T, T head, T... pack>
-struct pack_element<0, T, head, pack...> {
-    static constexpr T const value = head;
 };
 
 // all
@@ -140,9 +128,6 @@ private:
     template <size_type... s>
     using size_product = meta::product<size_type, s...>;
 
-    template <size_type i, size_type... pack>
-    using size_element = meta::pack_element<i, size_type, pack...>;
-
     // Storage
     value_type m_data[size_product<N...>::value];
 
@@ -234,7 +219,8 @@ public:
     template <size_type i>
     DEVICE_FUNC constexpr size_type size() const noexcept {
         static_assert(i < sizeof...(N), "index out of bounds");
-        return size_element<i, N...>::value;
+        using unpack = std::size_t[];
+        return unpack{std::size_t(N)...}[i];
     }
 
     /// returns the number of elements
@@ -244,9 +230,8 @@ public:
 };
 
 template <typename T, std::size_t M, std::size_t N>
-DEVICE_FUNC multi_array<T, M, N> outer(multi_array<T, M> const &a,
-                                       multi_array<T, N> const &b) {
-    multi_array<T, M, N> c;
+DEVICE_FUNC CXX14_CONSTEXPR multi_array<T,M,N> outer(multi_array<T,M> const & a, multi_array<T,N> const & b) {
+    multi_array<T,M,N> c;
     for (std::size_t i = 0; i < M; ++i) {
         for (std::size_t j = 0; j < N; ++j) {
             c(i, j) = a(i) * b(j);

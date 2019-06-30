@@ -18,6 +18,12 @@
 #define DEVICE_FUNC
 #endif
 
+#ifdef __GNUC__
+#define MAYBE_UNUSED __attribute__((unused))
+#else
+#define MAYBE_UNUSED
+#endif
+
 namespace policy {
 
 struct host {
@@ -85,7 +91,7 @@ struct cublas<policy::device, double> {
         double const alpha = 1;
         double const beta = 0;
 
-        cublasStatus_t stat;
+        MAYBE_UNUSED cublasStatus_t stat;
         cublasHandle_t handle;
         stat = cublasCreate(&handle);
         assert(CUBLAS_STATUS_SUCCESS == stat);
@@ -95,7 +101,6 @@ struct cublas<policy::device, double> {
         assert(CUBLAS_STATUS_SUCCESS == stat);
 
         cublasDestroy(handle);
-        static_cast<void>(stat);
     }
 
     static void gemm(const double *A, const double *B, double *C, int m, int k,
@@ -104,7 +109,7 @@ struct cublas<policy::device, double> {
         double alpha = 1;
         double beta = 0;
 
-        cublasStatus_t stat;
+        MAYBE_UNUSED cublasStatus_t stat;
         cublasHandle_t handle;
         stat = cublasCreate(&handle);
         assert(CUBLAS_STATUS_SUCCESS == stat);
@@ -114,7 +119,6 @@ struct cublas<policy::device, double> {
         assert(CUBLAS_STATUS_SUCCESS == stat);
 
         cublasDestroy(handle);
-        static_cast<void>(stat);
     }
 
     static void gemv(const double *A, const double *x, double *y, int m,
@@ -125,7 +129,7 @@ struct cublas<policy::device, double> {
         int incx = 1;
         int incy = 1;
 
-        cublasStatus_t stat;
+        MAYBE_UNUSED cublasStatus_t stat;
         cublasHandle_t handle;
         stat = cublasCreate(&handle);
         assert(CUBLAS_STATUS_SUCCESS == stat);
@@ -135,7 +139,6 @@ struct cublas<policy::device, double> {
         assert(CUBLAS_STATUS_SUCCESS == stat);
 
         cublasDestroy(handle);
-        static_cast<void>(stat);
     }
 };
 #else
@@ -184,7 +187,7 @@ struct cusolver;
 template <>
 struct cusolver<policy::device, double> {
     static void potrf(double *A, double *B, int N) {
-        cusolverStatus_t stat;
+        MAYBE_UNUSED cusolverStatus_t stat;
         cusolverDnHandle_t handle;
         stat = cusolverDnCreate(&handle);
         assert(CUSOLVER_STATUS_SUCCESS == stat);
@@ -210,7 +213,6 @@ struct cusolver<policy::device, double> {
         assert(info[0] == 0);
 
         cusolverDnDestroy(handle);
-        static_cast<void>(stat);
     }
 };
 #else
@@ -597,3 +599,4 @@ std::ostream &operator<<(std::ostream &os, device_matrix<T, Policy> const &m) {
 }
 
 #undef DEVICE_FUNC
+#undef MAYBE_UNUSED
