@@ -84,7 +84,6 @@ inline int get_linear_index(int a, int b, int c, const Vector3i &adim,
   return a + adim[0] * (b + adim[1] * c);
 }
 
-
 /** get the linear index from the position (@p a,@p b,@p c) in a 3D grid
  *  of dimensions @p adim, , usiung row major memory order.
  *
