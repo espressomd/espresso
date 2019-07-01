@@ -229,6 +229,7 @@ ubuntu:wo-dependencies:
   tags:
     - docker
     - linux
+  when: manual
 
 ubuntu:arm64:
   <<: *arch_definition
@@ -296,6 +297,7 @@ intel:15:
     - linux
     - cuda
     - icp
+  when: manual
 
 intel:17:
   stage: build
@@ -309,6 +311,7 @@ intel:17:
     - linux
     - cuda
     - icp
+  when: manual
 
 check_sphinx:
   stage: additional_checks
