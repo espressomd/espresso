@@ -26,6 +26,7 @@
 #ifdef DPD
 #include "communication.hpp"
 #include "event.hpp"
+#include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 #include "short_range_loop.hpp"
@@ -118,7 +119,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     return {};
   }
 
-  auto const v21 = p1->m.v - p2->m.v;
+  auto const v21 = vel_diff(p1->r.p, p2->r.p, p1->m.v, p2->m.v);
   auto const noise_vec =
       (ia_params->dpd_radial.pref > 0.0 || ia_params->dpd_trans.pref > 0.0)
           ? Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5}
@@ -142,7 +143,7 @@ static auto dpd_viscous_stress_local() {
   short_range_loop(
       Utils::NoOp{},
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
-        auto const v21 = p1.m.v - p2.m.v;
+        auto const v21 = vel_diff(p1.r.p, p2.r.p, p1.m.v, p2.m.v);
 
         auto ia_params = get_ia_param(p1.p.type, p2.p.type);
         auto const dist = std::sqrt(d.dist2);
