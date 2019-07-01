@@ -231,10 +231,12 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 }
 #endif
 
-inline void lb_get_populations(Lattice::index_t index, double *pop) {
+inline Utils::Vector19d lb_get_populations(Lattice::index_t index) {
+  Utils::Vector19d pop{};
   for (int i = 0; i < D3Q19::n_vel; ++i) {
     pop[i] = lbfluid[i][index] + D3Q19::coefficients[i][0] * lbpar.rho;
   }
+  return pop;
 }
 
 inline void lb_set_populations(Lattice::index_t index,

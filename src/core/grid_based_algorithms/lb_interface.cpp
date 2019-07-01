@@ -64,6 +64,16 @@ auto mpi_lb_calc_rho(Utils::Vector3i const &index) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_calc_rho)
 
+auto mpi_lb_get_populations(Utils::Vector3i const &index) {
+  return lb_calc(index, [&](auto index) {
+    auto const linear_index =
+        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
+    return lb_get_populations(linear_index);
+  });
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_populations)
+
 auto mpi_lb_calc_j(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
     return lb_calc_j(modes, force_density);
@@ -191,29 +201,6 @@ void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
 #endif
 }
 
-void mpi_recv_fluid_populations_slave(int node, int index) {
-  if (node == this_node) {
-    double data[19];
-    lb_get_populations(index, data);
-    MPI_Send(data, 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-  }
-}
-
-REGISTER_CALLBACK(mpi_recv_fluid_populations_slave)
-
-/** Issue REQ_RECV_FLUID_POPULATIONS: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param pop    local fluid population
- */
-void mpi_recv_fluid_populations(int node, int index, double *pop) {
-  if (node == this_node) {
-    lb_get_populations(index, pop);
-  } else {
-    mpi_call(mpi_recv_fluid_populations_slave, node, index);
-    MPI_Recv(pop, 19, MPI_DOUBLE, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-  }
-}
 } // namespace
 
 void lb_lbfluid_update() {
@@ -948,7 +935,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
           ind[0] = i;
           ind[1] = j;
           ind[2] = k;
-          auto pop = lb_lbnode_get_pop(ind);
+          auto pop = mpi_call(::Communication::Result::one_rank, mpi_lb_get_populations, ind);
           if (!binary) {
             for (int n = 0; n < 19; n++) {
               cpfile << pop[n] << "\n";
@@ -1343,12 +1330,7 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
-    auto const node = lblattice.map_lattice_to_node(ind);
-    auto const index =
-        get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
-    Utils::Vector19d p_pop;
-    mpi_recv_fluid_populations(node, index, p_pop.data());
-    return p_pop;
+    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_populations, ind);
   }
   throw std::runtime_error("LB not activated.");
 }
@@ -1419,6 +1401,8 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     auto const node = lblattice.map_lattice_to_node(ind);
+    auto const local_index = lblattice.local_index(ind);
+    auto const local_index_new = lblattice.local_index_new(ind);
     auto const index =
         get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
