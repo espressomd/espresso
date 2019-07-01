@@ -78,7 +78,7 @@ installed with:
 
 .. code-block:: bash
 
-    sudo apt install build-essential cmake cython python3-numpy \
+    sudo apt install build-essential cmake cython3 python3-numpy \
     libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
     doxygen python3-opengl python3-sphinx python3-pip libgsl-dev
 
@@ -88,6 +88,13 @@ Optionally the ccmake utility can be installed for easier configuration:
 .. code-block:: bash
 
     sudo apt install cmake-curses-gui
+
+To run the tutorials and generate the documentation, additional Python packages
+are required:
+
+.. code-block:: bash
+
+    pip3 install --upgrade jupyter scipy matplotlib sphinxcontrib-bibtex numpydoc
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
