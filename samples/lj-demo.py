@@ -184,7 +184,7 @@ class Controls(HasTraits):
         outputs) > 1 else through_port_output
 
     if default_input is None or default_output is None:
-        raise RuntimeError('Cannot connect to any MIDI device')
+        print('Cannot connect to any MIDI device')
 
     input_device = List(value=default_input,
                         editor=CheckListEditor(values=inputs))
