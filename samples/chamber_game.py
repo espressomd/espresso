@@ -21,6 +21,7 @@ ESPResSo as a game engine.
 from __future__ import print_function
 from threading import Thread
 import numpy as np
+import time
 
 import espressomd
 from espressomd import thermostat
@@ -95,7 +96,6 @@ pore_radius = snake_head_sigma * 1.3
 
 # CONTROL
 move_force = 70000.0
-
 expl_range = 200.0
 expl_force = 20000.0
 
