@@ -129,12 +129,12 @@ following commands:
     sudo xcode-select --install
     sudo xcodebuild -license accept
     sudo port selfupdate
-    sudo port install cmake python27 py27-cython py27-numpy \
-      openmpi-default fftw-3 +openmpi boost +openmpi +python27 \
-      doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
-    sudo port select --set cython cython27
-    sudo port select --set python python27
-    sudo port select --set pip pip27
+    sudo port install cmake python37 py37-cython py37-numpy \
+      openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
+      doxygen py37-opengl py37-sphinx py37-pip gsl hdf5 +openmpi
+    sudo port select --set cython cython37
+    sudo port select --set python3 python37
+    sudo port select --set pip pip37
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.
