@@ -80,9 +80,6 @@ void calc_oif_global(double *area_volume,
 
   /* loop over particles */
   Particle *p1, *p2, *p3;
-  Utils::Vector3d p11, p22, p33;
-  int img[3];
-  double AA[3], BB[3];
   Bonded_ia_parameters *iaparams;
   int type_num, n_partners, id;
   BondedInteraction type;
@@ -126,6 +123,7 @@ void calc_oif_global(double *area_volume,
         }
         // remaining neighbors fetched
 
+        Utils::Vector3d p11, p22, p33;
         // getting unfolded positions of all particles
         // first find out which particle out of p1, p2 (possibly p3, p4) is not
         // a ghost particle. In almost all cases it is p1, however, it might be
@@ -136,39 +134,23 @@ void calc_oif_global(double *area_volume,
           p11 = unfolded_position(p1);
           // other coordinates are obtained from its relative positions to the
           // reference particle
-          get_mi_vector(AA, p2->r.p, p11);
-          get_mi_vector(BB, p3->r.p, p11);
-          for (int i = 0; i < 3; i++) {
-            p22[i] = p11[i] + AA[i];
-            p33[i] = p11[i] + BB[i];
-          }
-        } else {
+          p22 = p11 + get_mi_vector(p2->r.p, p11);
+          p33 = p11 + get_mi_vector(p3->r.p, p11);
+        } else if (p2->l.ghost != 1) {
           // in case the first particle is a ghost particle
-          if (p2->l.ghost != 1) {
-            p22 = unfolded_position(p2);
-            get_mi_vector(AA, p1->r.p, p22);
-            get_mi_vector(BB, p3->r.p, p22);
-            for (int i = 0; i < 3; i++) {
-              p11[i] = p22[i] + AA[i];
-              p33[i] = p22[i] + BB[i];
-            }
-          } else {
-            // in case the first and the second particle are ghost particles
-            if (p3->l.ghost != 1) {
-              p33 = unfolded_position(p3);
-              get_mi_vector(AA, p1->r.p, p33);
-              get_mi_vector(BB, p2->r.p, p33);
-              for (int i = 0; i < 3; i++) {
-                p11[i] = p33[i] + AA[i];
-                p22[i] = p33[i] + BB[i];
-              }
-            } else {
-              printf("Something wrong in oif_global_forces.hpp: All particles "
-                     "in a bond are ghost particles, impossible to unfold the "
-                     "positions...");
-              return;
-            }
-          }
+          p22 = unfolded_position(p2);
+          p11 = p22 + get_mi_vector(p1->r.p, p22);
+          p33 = p22 + get_mi_vector(p3->r.p, p22);
+        } else if (p3->l.ghost != 1) {
+          // in case the first and the second particle are ghost particles
+          p33 = unfolded_position(p3);
+          p11 = p33 + get_mi_vector(p1->r.p, p33);
+          p22 = p33 + get_mi_vector(p2->r.p, p33);
+        } else {
+          printf("Something wrong in oif_global_forces.hpp: All particles "
+                 "in a bond are ghost particles, impossible to unfold the "
+                 "positions...");
+          return;
         }
 
         // unfolded positions correct

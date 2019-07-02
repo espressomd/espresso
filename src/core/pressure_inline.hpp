@@ -193,12 +193,10 @@ inline void add_bonded_virials(Particle *p1) {
       return;
     }
 
-    double a[3] = {p1->r.p[0], p1->r.p[1], p1->r.p[2]};
-    double b[3] = {p2->r.p[0], p2->r.p[1], p2->r.p[2]};
-    auto dx = get_mi_vector(a, b);
-    calc_bond_pair_force(p1, p2, iaparams, dx.data(), force);
+    auto const dx = get_mi_vector(p1->r.p, p2->r.p);
+    calc_bond_pair_force(p1, p2, iaparams, dx, force);
     *obsstat_bonded(&virials, type_num) +=
-        dx[0] * force[0] + dx[1] * force[1] + dx[2] * force[2];
+        dx * Utils::Vector3d{force, force + 3};
 
     /* stress tensor part */
     for (k = 0; k < 3; k++)

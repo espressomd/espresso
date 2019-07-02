@@ -189,10 +189,10 @@ Utils::Vector3d get_mi_vector(T const &a, U const &b) {
 }
 
 /** fold a coordinate to primary simulation box.
-    \param pos         the position...
-    \param image_box   and the box
-    \param dir         the coordinate to fold: dir = 0,1,2 for x, y and z
-   coordinate.
+    \param[in,out] pos         the position...
+    \param[in,out] image_box   and the box
+    \param[in] dir             the coordinate to fold: dir = 0,1,2 for x, y and
+                               z coordinate.
 
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
@@ -215,8 +215,8 @@ void fold_coordinate(Utils::Vector<T1, N> &pos, Utils::Vector<T2, N> &image_box,
 }
 
 /** fold particle coordinates to primary simulation box.
-    \param pos the position...
-    \param image_box and the box
+    \param[in,out] pos the position...
+    \param[in,out] image_box and the box
 
     Both pos and image_box are I/O,
     i. e. a previously folded position will be folded correctly.
@@ -254,9 +254,9 @@ inline Utils::Vector3d folded_position(const Particle *p) {
 }
 
 /** unfold coordinates to physical position.
-    \param pos the position
-    \param vel the velocity
-    \param image_box and the box
+    \param[in,out] pos the position
+    \param[in] vel the velocity
+    \param[in,out] image_box and the box
 
     Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
     afterwards.
@@ -284,8 +284,8 @@ inline Utils::Vector3d unfolded_position(Particle const &p) {
 }
 
 /** unfold coordinates to physical position.
-    \param pos the position...
-    \param image_box and the box
+    \param[in,out] pos the position...
+    \param[in,out] image_box and the box
 
     Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
     afterwards.

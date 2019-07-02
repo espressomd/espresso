@@ -48,47 +48,41 @@
 // Calculates dipolar energy and/or force between two particles
 double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
                              Particle *p2, int force_flag) {
-  double u, r, pe1, pe2, pe3, pe4, r3, r5, r2, r7, a, b, cc, d, ab;
-#ifdef ROTATION
-  double bx, by, bz, ax, ay, az;
-#endif
-  double ffx, ffy, ffz;
 
-  // Cache dipole momente
-  const Utils::Vector3d dip2 = p2->calc_dip();
+  // Cache dipole moment
+  auto const dip2 = p2->calc_dip();
 
   // Distance between particles
-  Utils::Vector3d dr;
-  get_mi_vector(dr, p1->r.p, p2->r.p);
+  auto const dr = get_mi_vector(p1->r.p, p2->r.p);
 
   // Powers of distance
-  r2 = dr * dr;
-  r = sqrt(r2);
-  r3 = r2 * r;
-  r5 = r3 * r2;
-  r7 = r5 * r2;
+  auto const r2 = dr.norm2();
+  auto const r = sqrt(r2);
+  auto const r3 = r2 * r;
+  auto const r5 = r3 * r2;
+  auto const r7 = r5 * r2;
 
   // Dot products
-  pe1 = dip1 * dip2;
-  pe2 = dip1 * dr;
-  pe3 = dip2 * dr;
-  pe4 = 3.0 / r5;
+  auto const pe1 = dip1 * dip2;
+  auto const pe2 = dip1 * dr;
+  auto const pe3 = dip2 * dr;
+  auto const pe4 = 3.0 / r5;
 
   // Energy, if requested
-  u = dipole.prefactor * (pe1 / r3 - pe4 * pe2 * pe3);
+  auto const u = dipole.prefactor * (pe1 / r3 - pe4 * pe2 * pe3);
 
   // Force, if requested
   if (force_flag) {
-    a = pe4 * pe1;
-    b = -15.0 * pe2 * pe3 / r7;
-    ab = a + b;
-    cc = pe4 * pe3;
-    d = pe4 * pe2;
+    auto const a = pe4 * pe1;
+    auto const b = -15.0 * pe2 * pe3 / r7;
+    auto const ab = a + b;
+    auto const cc = pe4 * pe3;
+    auto const d = pe4 * pe2;
 
     //  Result
-    ffx = ab * dr[0] + cc * dip1[0] + d * dip2[0];
-    ffy = ab * dr[1] + cc * dip1[1] + d * dip2[1];
-    ffz = ab * dr[2] + cc * dip1[2] + d * dip2[2];
+    auto const ffx = ab * dr[0] + cc * dip1[0] + d * dip2[0];
+    auto const ffy = ab * dr[1] + cc * dip1[1] + d * dip2[1];
+    auto const ffz = ab * dr[2] + cc * dip1[2] + d * dip2[2];
     // Add the force to the particles
     p1->f.f[0] += dipole.prefactor * ffx;
     p1->f.f[1] += dipole.prefactor * ffy;
@@ -99,13 +93,13 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
 
 // Torques
 #ifdef ROTATION
-    ax = dip1[1] * dip2[2] - dip2[1] * dip1[2];
-    ay = dip2[0] * dip1[2] - dip1[0] * dip2[2];
-    az = dip1[0] * dip2[1] - dip2[0] * dip1[1];
+    auto const ax = dip1[1] * dip2[2] - dip2[1] * dip1[2];
+    auto const ay = dip2[0] * dip1[2] - dip1[0] * dip2[2];
+    auto const az = dip1[0] * dip2[1] - dip2[0] * dip1[1];
 
-    bx = dip1[1] * dr[2] - dr[1] * dip1[2];
-    by = dr[0] * dip1[2] - dip1[0] * dr[2];
-    bz = dip1[0] * dr[1] - dr[0] * dip1[1];
+    auto bx = dip1[1] * dr[2] - dr[1] * dip1[2];
+    auto by = dr[0] * dip1[2] - dip1[0] * dr[2];
+    auto bz = dip1[0] * dr[1] - dr[0] * dip1[1];
 
     p1->f.torque[0] += dipole.prefactor * (-ax / r3 + bx * cc);
     p1->f.torque[1] += dipole.prefactor * (-ay / r3 + by * cc);
@@ -132,7 +126,6 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
 */
 
 double dawaanr_calculations(int force_flag, int energy_flag) {
-  double u;
 
   if (n_nodes != 1) {
     fprintf(stderr, "error: DAWAANR is just for one cpu...\n");
@@ -145,7 +138,7 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
   }
 
   // Variable to sum up the energy
-  u = 0;
+  double u = 0;
 
   auto parts = local_cells.particles();
 
@@ -171,15 +164,6 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
   // Return energy
   return u;
 }
-
-/************************************************************/
-
-/*=================== */
-/*=================== */
-/*=================== */
-/*=================== */
-/*=================== */
-/*=================== */
 
 /* =============================================================================
                   DIRECT SUM FOR MAGNETIC SYSTEMS
