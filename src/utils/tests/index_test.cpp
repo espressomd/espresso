@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(get_linear_index) {
   /* 3 ints version, row major */
   {
     auto const linear_index = get_linear_index(
-        index[0], index[1], index[2], grid_size, Utils::MemoryOrder::row_major);
+        index[0], index[1], index[2], grid_size, Utils::MemoryOrder::ROW_MAJOR);
     BOOST_CHECK_EQUAL(linear_index,
                       ((5 * 3) * index[0] + 3 * index[1] + index[2]));
   }

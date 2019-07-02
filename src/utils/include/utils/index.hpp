@@ -58,10 +58,7 @@ inline void unravel_index(InputIterator dimensions_begin,
   }
 }
 
-namespace MemoryOrder {
-constexpr struct RowMajor {
-} row_major;
-constexpr struct ColumnMajor { } coulumn_major; } // namespace MemoryOrder
+enum class MemoryOrder { COLUMN_MAJOR, ROW_MAJOR };
 
 /*************************************************************/
 /** \name Three dimensional grid operations                  */
@@ -74,35 +71,27 @@ constexpr struct ColumnMajor { } coulumn_major; } // namespace MemoryOrder
  * @return           The linear index
  * @param a , b , c  Position in 3D space
  * @param adim       Dimensions of the underlying grid
+ * @param memory_order Row- or column-major
  */
-inline int get_linear_index(int a, int b, int c, const Vector3i &adim,
-                            MemoryOrder::ColumnMajor = {}) {
+inline int
+get_linear_index(int a, int b, int c, const Vector3i &adim,
+                 MemoryOrder memory_order = MemoryOrder::COLUMN_MAJOR) {
   assert((a >= 0) && (a < adim[0]));
   assert((b >= 0) && (b < adim[1]));
   assert((c >= 0) && (c < adim[2]));
 
-  return a + adim[0] * (b + adim[1] * c);
+  switch (memory_order) {
+  case MemoryOrder::COLUMN_MAJOR:
+    return a + adim[0] * (b + adim[1] * c);
+  case MemoryOrder::ROW_MAJOR:
+    return adim[1] * adim[2] * a + adim[2] * b + c;
+  }
 }
 
-/** get the linear index from the position (@p a,@p b,@p c) in a 3D grid
- *  of dimensions @p adim, , usiung row major memory order.
- *
- * @return           The linear index
- * @param a , b , c  Position in 3D space
- * @param adim       Dimensions of the underlying grid
- */
-inline int get_linear_index(int a, int b, int c, const Vector3i &adim,
-                            MemoryOrder::RowMajor) {
-  assert((a >= 0) && (a < adim[0]));
-  assert((b >= 0) && (b < adim[1]));
-  assert((c >= 0) && (c < adim[2]));
-
-  return adim[1] * adim[2] * a + adim[2] * b + c;
-}
-
-template <class MemoryOrder = MemoryOrder::ColumnMajor>
-int get_linear_index(const Vector3i &ind, const Vector3i &adim) {
-  return get_linear_index(ind[0], ind[1], ind[2], adim, MemoryOrder{});
+inline int
+get_linear_index(const Vector3i &ind, const Vector3i &adim,
+                 MemoryOrder memory_order = MemoryOrder::COLUMN_MAJOR) {
+  return get_linear_index(ind[0], ind[1], ind[2], adim, memory_order);
 }
 
 /*@}*/
