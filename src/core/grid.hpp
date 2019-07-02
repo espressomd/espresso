@@ -188,7 +188,7 @@ inline void get_mi_vector(T &res, U const &a, V const &b) {
     for (int i = 0; i < 3; i++) {
 #ifdef LEES_EDWARDS
         if (i == lees_edwards_protocol.sheardir
-            && dist >= half_box_l[lees_edwards_protocol.shearplanenormal]) {
+            && std::fabs(dist) > half_box_l[lees_edwards_protocol.shearplanenormal]) {
             shift = Utils::sgn(dist) *
                    (offset - round(offset * box_l_i[lees_edwards_protocol.sheardir]) *
                     box_l[lees_edwards_protocol.sheardir]);
