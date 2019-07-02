@@ -66,7 +66,7 @@ enum class MemoryOrder { COLUMN_MAJOR, ROW_MAJOR };
 /*@{*/
 
 /** get the linear index from the position (@p a,@p b,@p c) in a 3D grid
- *  of dimensions @p adim, usiung column major memory order.
+ *  of dimensions @p adim.
  *
  * @return           The linear index
  * @param a , b , c  Position in 3D space
