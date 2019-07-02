@@ -299,6 +299,20 @@ auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
   return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
 }
 
+template <size_t N, typename T, class U,
+          class = std::enable_if_t<std::is_integral<T>::value &&
+                                   std::is_integral<U>::value>>
+auto operator%(Vector<T, N> const &a, Vector<U, N> const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() % declval<U>());
+  Vector<R, N> ret;
+
+  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
+                 [](T const &ai, U const &bi) { return ai % bi; });
+
+  return ret;
+}
+
 /* Componentwise square root */
 template <size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
   using std::sqrt;
@@ -314,6 +328,18 @@ template <class T>
 Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
   return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
           a[0] * b[1] - a[1] * b[0]};
+}
+
+template <class T, class U, size_t N>
+auto hadamard_product(Vector<T, N> const &a, Vector<U, N> const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() * declval<U>());
+
+  Vector<R, N> ret;
+  std::transform(a.cbegin(), a.cend(), b.cbegin(), ret.begin(),
+                 [](auto ai, auto bi) { return ai * bi; });
+
+  return ret;
 }
 
 /**

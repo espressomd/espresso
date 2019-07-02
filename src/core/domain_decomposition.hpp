@@ -63,21 +63,19 @@
  *  decomposition.
  */
 struct DomainDecomposition {
-  DomainDecomposition()
-      : cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{0, 0, 0},
-        inv_cell_size{0, 0, 0} {}
+  DomainDecomposition() = default;
   /** linked cell grid in nodes spatial domain. */
-  int cell_grid[3];
+  Utils::Vector3i cell_grid = {};
   /** linked cell grid with ghost frame. */
-  int ghost_cell_grid[3];
+  Utils::Vector3i ghost_cell_grid = {};
   /** cell size.
    *  Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range);
    * \endverbatim
    */
-  double cell_size[3];
+  Utils::Vector3d cell_size = {};
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
-  double inv_cell_size[3];
-  bool fully_connected[3];
+  Utils::Vector3d inv_cell_size = {};
+  bool fully_connected[3] = {false, false, false};
 };
 
 /************************************************************/

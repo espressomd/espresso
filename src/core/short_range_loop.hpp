@@ -50,54 +50,6 @@ struct MinimalImageDistance {
   }
 };
 
-struct LayeredMinimalImageDistance {
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    auto mi_dist = get_mi_vector(p1.r.p, p2.r.p);
-    mi_dist[2] = p1.r.p[2] - p2.r.p[2];
-
-    return Distance(mi_dist);
-  }
-};
-
-struct EuclidianDistance {
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(p1.r.p - p2.r.p);
-  }
-};
-
-/**
- * @brief Decided which distance function to use depending on the
-          cell system, and call the pair code.
-*/
-template <typename CellIterator, typename ParticleKernel, typename PairKernel,
-          typename VerletCriterion>
-void decide_distance(CellIterator first, CellIterator last,
-                     ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
-                     VerletCriterion &&verlet_criterion) {
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_DOMDEC:
-    // Algorithm::for_each_pair(
-    //     first, last, std::forward<ParticleKernel>(particle_kernel),
-    //     std::forward<PairKernel>(pair_kernel), EuclidianDistance{},
-    //     std::forward<VerletCriterion>(verlet_criterion),
-    //     cell_structure.use_verlet_list, rebuild_verletlist);
-    // break;
-  case CELL_STRUCTURE_NSQUARE:
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), MinimalImageDistance{},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
-  case CELL_STRUCTURE_LAYERED:
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), LayeredMinimalImageDistance{},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
-  }
-}
 } // namespace detail
 
 template <typename ParticleKernel, typename PairKernel>
@@ -122,11 +74,18 @@ void short_range_loop(ParticleKernel &&particle_kernel,
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
 
-  detail::decide_distance(
-      first, last, std::forward<ParticleKernel>(particle_kernel),
-      std::forward<PairKernel>(pair_kernel),
+  ParticleKernel &&particleKernel =
+      std::forward<ParticleKernel>(particle_kernel);
+  PairKernel &&pairKernel = std::forward<PairKernel>(pair_kernel);
+  VerletCriterion &&verletCriterion =
       VerletCriterion{skin, max_cut, coulomb_cutoff, dipole_cutoff,
-                      collision_detection_cutoff()});
+                      collision_detection_cutoff()};
+
+  Algorithm::for_each_pair(
+      first, last, std::forward<ParticleKernel>(particleKernel),
+      std::forward<PairKernel>(pairKernel), detail::MinimalImageDistance{},
+      std::forward<VerletCriterion>(verletCriterion),
+      cell_structure.use_verlet_list, rebuild_verletlist);
 
   rebuild_verletlist = 0;
 }

@@ -134,7 +134,7 @@ static double max_near, min_far;
 ///
 static double self_energy;
 
-MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1};
+MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
 
 /** return codes for \ref MMM2D_tune_near and \ref MMM2D_tune_far */
 /*@{*/
@@ -1710,7 +1710,7 @@ void MMM2D_self_energy() {
  ****************************************/
 
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
-                     double delta_bot, int const_pot_on, double pot_diff) {
+                     double delta_bot, bool const_pot_on, double pot_diff) {
   int err;
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
@@ -1720,25 +1720,25 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
 
   mmm2d_params.maxPWerror = maxPWerror;
 
-  if (const_pot_on == 1) {
-    mmm2d_params.dielectric_contrast_on = 1;
+  if (const_pot_on) {
+    mmm2d_params.dielectric_contrast_on = true;
     mmm2d_params.delta_mid_top = -1;
     mmm2d_params.delta_mid_bot = -1;
     mmm2d_params.delta_mult = 1;
-    mmm2d_params.const_pot_on = 1;
+    mmm2d_params.const_pot_on = true;
     mmm2d_params.pot_diff = pot_diff;
   } else if (delta_top != 0.0 || delta_bot != 0.0) {
-    mmm2d_params.dielectric_contrast_on = 1;
+    mmm2d_params.dielectric_contrast_on = true;
     mmm2d_params.delta_mid_top = delta_top;
     mmm2d_params.delta_mid_bot = delta_bot;
     mmm2d_params.delta_mult = delta_top * delta_bot;
-    mmm2d_params.const_pot_on = 0;
+    mmm2d_params.const_pot_on = false;
   } else {
-    mmm2d_params.dielectric_contrast_on = 0;
+    mmm2d_params.dielectric_contrast_on = false;
     mmm2d_params.delta_mid_top = 0;
     mmm2d_params.delta_mid_bot = 0;
     mmm2d_params.delta_mult = 0;
-    mmm2d_params.const_pot_on = 0;
+    mmm2d_params.const_pot_on = false;
   }
 
   MMM2D_setup_constants();
@@ -1869,11 +1869,9 @@ void MMM2D_dielectric_layers_force_contribution() {
       force[2] = 0;
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = -pl[j].r.p[2];
-        Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1], -pl[j].r.p[2]};
+        auto const d = get_mi_vector(p1->r.p, a);
+
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
         charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_bot;
@@ -1899,11 +1897,10 @@ void MMM2D_dielectric_layers_force_contribution() {
       force[2] = 0;
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = 2 * box_l[2] - pl[j].r.p[2];
-        Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1],
+                                2 * box_l[2] - pl[j].r.p[2]};
+        auto const d = get_mi_vector(p1->r.p, a);
+
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
         charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_top;
@@ -1924,7 +1921,6 @@ double MMM2D_dielectric_layers_energy_contribution() {
   int npl;
   Particle *pl, *p1;
   double charge_factor;
-  double a[3];
   double eng = 0.0;
   double pref = coulomb.prefactor * C_2PI * ux * uy;
 
@@ -1940,11 +1936,8 @@ double MMM2D_dielectric_layers_energy_contribution() {
     for (i = 0; i < npl; i++) {
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = -pl[j].r.p[2];
-        Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1], -pl[j].r.p[2]};
+        auto const d = get_mi_vector(p1->r.p, a);
         auto const dist2 = d.norm2();
         charge_factor = mmm2d_params.delta_mid_bot * p1->p.q * pl[j].p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
@@ -1963,11 +1956,9 @@ double MMM2D_dielectric_layers_energy_contribution() {
     for (i = 0; i < npl; i++) {
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = 2 * box_l[2] - pl[j].r.p[2];
-        Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1],
+                                2 * box_l[2] - pl[j].r.p[2]};
+        auto const d = get_mi_vector(p1->r.p, a);
         auto const dist2 = d.norm2();
         charge_factor = mmm2d_params.delta_mid_top * p1->p.q * pl[j].p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge

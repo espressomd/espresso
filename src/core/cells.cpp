@@ -58,8 +58,7 @@ CellPList local_cells = {nullptr, 0, 0};
 CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
-CellStructure cell_structure = {
-    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr};
+CellStructure cell_structure;
 
 double max_range = 0.0;
 
@@ -93,37 +92,12 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
     }
   };
 
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_DOMDEC:
-    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
-                         boost::make_indirect_iterator(local_cells.end()),
-                         Utils::NoOp{}, pair_kernel,
-                         [](Particle const &p1, Particle const &p2) {
-                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p);
-                           vec21[2] = p1.r.p[2] - p2.r.p[2];
-
-                           return vec21.norm2();
-                         });
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
-                         boost::make_indirect_iterator(local_cells.end()),
-                         Utils::NoOp{}, pair_kernel,
-                         [](Particle const &p1, Particle const &p2) {
-                           return get_mi_vector(p1.r.p, p2.r.p).norm2();
-                         });
-    break;
-  case CELL_STRUCTURE_LAYERED:
-    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
-                         boost::make_indirect_iterator(local_cells.end()),
-                         Utils::NoOp{}, pair_kernel,
-                         [](Particle const &p1, Particle const &p2) {
-                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p);
-                           vec21[2] = p1.r.p[2] - p2.r.p[2];
-
-                           return vec21.norm2();
-                         });
-  }
+  Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
+                       boost::make_indirect_iterator(local_cells.end()),
+                       Utils::NoOp{}, pair_kernel,
+                       [](Particle const &p1, Particle const &p2) {
+                         return get_mi_vector(p1.r.p, p2.r.p).norm2();
+                       });
 
   /* Sort pairs */
   for (auto &pair : ret) {
@@ -332,7 +306,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
 
       fold_and_reset(p);
 
-      auto target_cell = cs.position_to_cell(p.r.p);
+      auto target_cell = cs.particle_to_cell(p);
 
       if (target_cell == nullptr) {
         append_unindexed_particle(&displaced_parts,
@@ -371,7 +345,7 @@ void cells_resort_particles(int global_flag) {
     layered_exchange_and_sort_particles(global_flag, &displaced_parts);
   } break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_balance_particles(global_flag);
+    nsq_exchange_particles(global_flag, &displaced_parts);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid);
@@ -470,5 +444,5 @@ Cell *find_current_cell(const Particle &p) {
     return nullptr;
   }
 
-  return cell_structure.position_to_cell(p.l.p_old);
+  return cell_structure.particle_to_cell(p);
 }

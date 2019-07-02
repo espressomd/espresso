@@ -35,8 +35,8 @@ def AssertThermostatType(*allowedthermostats):
     Decorator class to assure that only a given thermostat is active
     at a time.  Usage:
 
-        @AssertThermostatType(THERMO_LANGEVIN)
-        def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
+        >>> @AssertThermostatType(THERMO_LANGEVIN)
+        >>> def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
 
     This will prefix an assertion for THERMO_LANGEVIN to the call.
 
@@ -75,7 +75,7 @@ cdef class Thermostat(object):
     def recover(self):
         """Recover a suspended thermostat
 
-        If the thermostat had been suspended using .suspend(), it can
+        If the thermostat had been suspended using :meth:`suspend`, it can
         be recovered with this method.
 
         """
@@ -207,26 +207,27 @@ cdef class Thermostat(object):
     def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
                      act_on_virtual=False, seed=None):
         """
-        Sets the Langevin thermostat with required parameters 'kT' 'gamma'
-        and optional parameter 'gamma_rotation'.
+        Sets the Langevin thermostat.
 
         Parameters
         -----------
         kT : :obj:`float`
              Thermal energy of the simulated heat bath.
         gamma : :obj:`float`
-                Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
-                is compiled in then 'gamma' can be a list of three positive floats, for the friction
-                coefficient in each cardinal direction.
+            Contains the friction coefficient of the bath. If the feature
+            ``PARTICLE_ANISOTROPY`` is compiled in then ``gamma`` can be a list
+            of three positive floats, for the friction coefficient in each
+            cardinal direction.
         gamma_rotation : :obj:`float`, optional
-                         The same applies to 'gamma_rotation', which requires the feature
-                         'ROTATION' to work properly. But also accepts three floating point numbers
-                         if 'PARTICLE_ANISOTROPY' is also compiled in.
+            The same applies to ``gamma_rotation``, which requires the feature
+            ``ROTATION`` to work properly. But also accepts three floats
+            if ``PARTICLE_ANISOTROPY`` is also compiled in.
         act_on_virtual : :obj:`bool`, optional
-                If true the thermostat will act on virtual sites, default is off.
-        seed : :obj:`int`, required
-                Initial counter value (or seed) of the philox RNG.
-                Required on first activation of the langevin thermostat.
+            If ``True`` the thermostat will act on virtual sites, default is
+            ``False``.
+        seed : :obj:`int`
+            Initial counter value (or seed) of the philox RNG.
+            Required on first activation of the langevin thermostat.
 
         """
 
@@ -360,16 +361,16 @@ cdef class Thermostat(object):
         """
         Sets the LB thermostat.
 
-        This thermostat requires the feature LBFluid or LBFluidGPU.
+        This thermostat requires the feature ``LBFluid`` or ``LBFluidGPU``.
 
         Parameters
         ----------
-        LB_fluid : instance of :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`
+        LB_fluid : :class:`~espressomd.lb.LBFluid` or :class:`~espressomd.lb.LBFluidGPU`
         seed : :obj:`int`
              Seed for the random number generator, required
              if kT > 0.
         act_on_virtual : :obj:`bool`, optional
-            If true the thermostat will act on virtual sites, default is on.
+            If ``True`` the thermostat will act on virtual sites (default).
         gamma : :obj:`float`
             Frictional coupling constant for the MD particle coupling.
 
@@ -399,17 +400,17 @@ cdef class Thermostat(object):
         @AssertThermostatType(THERMO_NPT_ISO)
         def set_npt(self, kT=None, gamma0=None, gammav=None):
             """
-            Sets the NPT thermostat with required parameters 'temperature', 'gamma0', 'gammav'.
+            Sets the NPT thermostat.
 
             Parameters
             ----------
             kT : :obj:`float`
-                 Thermal energy of the heat bath
+                Thermal energy of the heat bath
             gamma0 : :obj:`float`
-                     Friction coefficient of the bath
+                Friction coefficient of the bath
             gammav : :obj:`float`
-                     Artificial friction coefficient for the volume
-                     fluctuations. Mass of the artificial piston.
+                Artificial friction coefficient for the volume fluctuations.
+                Mass of the artificial piston.
 
             """
 
@@ -434,19 +435,17 @@ cdef class Thermostat(object):
     IF DPD:
         def set_dpd(self, kT=None):
             """
-            Sets the DPD thermostat with required parameters 'kT'.
-            This also activates the DPD interactions.
+            Sets the DPD thermostat. This also activates the DPD interactions.
 
             Parameters
             ----------
-            'kT' : float
-                Thermal energy of the heat bath, floating point number
+            kT : :obj:`float`
+                Thermal energy of the heat bath.
 
             """
 
             if kT is None:
-                raise ValueError(
-                    "kT has to be given as keyword args")
+                raise ValueError("kT has to be given as keyword args")
             if not isinstance(kT, float):
                 raise ValueError("temperature must be a positive number")
             global temperature

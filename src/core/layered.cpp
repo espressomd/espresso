@@ -81,18 +81,6 @@ double layer_h = 0, layer_h_i = 0;
 
 static int btm, top;
 
-void layered_get_mi_vector(double res[3], double const a[3],
-                           double const b[3]) {
-  int i;
-
-  for (i = 0; i < 2; i++) {
-    res[i] = a[i] - b[i];
-    if (PERIODIC(i))
-      res[i] -= std::round(res[i] * box_l_i[i]) * box_l[i];
-  }
-  res[2] = a[2] - b[2];
-}
-
 Cell *layered_position_to_cell(const Utils::Vector3d &pos) {
   int cpos =
       static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
@@ -161,17 +149,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
                              this_node, btm));
         } else {
           comm->comm[c].part_lists[0] = &cells[1];
-
-          /* if periodic and bottom or top, send shifted */
-          comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-          if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
-              (data_parts & GHOSTTRANS_POSITION)) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
-            comm->comm[c].shift[2] = box_l[2];
-          } else
-            comm->comm[c].shift[2] = 0;
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n",
-                             this_node, btm, comm->comm[c].shift[2]));
         }
         c++;
       }
@@ -213,17 +190,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
                              this_node, top));
         } else {
           comm->comm[c].part_lists[0] = &cells[n_layers];
-
-          /* if periodic and bottom or top, send shifted */
-          comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-          if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) &&
-              (data_parts & GHOSTTRANS_POSITION)) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
-            comm->comm[c].shift[2] = -box_l[2];
-          } else
-            comm->comm[c].shift[2] = 0;
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f topl\n",
-                             this_node, top, comm->comm[c].shift[2]));
         }
         c++;
       }
@@ -274,11 +240,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       } else {
         comm->comm[c].part_lists[0] = &cells[1];
         comm->comm[c].part_lists[1] = &cells[n_layers + 1];
-        /* here it is periodic */
-        if (data_parts & GHOSTTRANS_POSITION)
-          comm->data_parts |= GHOSTTRANS_POSSHFTD;
-        comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-        comm->comm[c].shift[2] = box_l[2];
       }
       c++;
 
@@ -290,11 +251,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       } else {
         comm->comm[c].part_lists[0] = &cells[n_layers];
         comm->comm[c].part_lists[1] = &cells[0];
-        /* here it is periodic */
-        if (data_parts & GHOSTTRANS_POSITION)
-          comm->data_parts |= GHOSTTRANS_POSSHFTD;
-        comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-        comm->comm[c].shift[2] = -box_l[2];
       }
     }
   }
@@ -308,8 +264,9 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
       this_node, old->n, max_range));
 
   cell_structure.type = CELL_STRUCTURE_LAYERED;
-  cell_structure.position_to_node = map_position_node_array;
-  cell_structure.position_to_cell = layered_position_to_cell;
+  cell_structure.particle_to_cell = [](const Particle &p) {
+    return layered_position_to_cell(p.r.p);
+  };
 
   /* check node grid. All we can do is 1x1xn. */
   if (grid[0] != 1 || grid[1] != 1) {
