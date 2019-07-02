@@ -85,6 +85,8 @@ get_linear_index(int a, int b, int c, const Vector3i &adim,
     return a + adim[0] * (b + adim[1] * c);
   case MemoryOrder::ROW_MAJOR:
     return adim[1] * adim[2] * a + adim[2] * b + c;
+  default:
+    throw std::runtime_error("Unknown memory order");
   }
 }
 
