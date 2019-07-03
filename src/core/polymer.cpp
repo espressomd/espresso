@@ -68,7 +68,7 @@ Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn) {
 }
 
 double mindist(PartCfg &partCfg, Utils::Vector3d const &pos) {
-  if (partCfg.size() == 0) {
+  if (partCfg.empty()) {
     return std::min(std::min(box_l[0], box_l[1]), box_l[2]);
   }
 
