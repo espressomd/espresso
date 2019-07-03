@@ -934,38 +934,24 @@ void p3m_gather_fft_grid(double *data, const p3m_local_mesh &local_mesh,
 }
 
 void p3m_spread_force_grid(double *themesh) {
-  int s_dir, r_dir, evenodd;
-  MPI_Status status;
-  std::vector<double> tmp_vec;
-  P3M_TRACE(fprintf(stderr, "%d: p3m_spread_force_grid:\n", this_node));
-
   /* direction loop */
-  for (s_dir = 5; s_dir >= 0; s_dir--) {
-    if (s_dir % 2 == 0)
-      r_dir = s_dir + 1;
-    else
-      r_dir = s_dir - 1;
+  for (int s_dir = 5; s_dir >= 0; s_dir--) {
+    auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
+
     /* pack send block */
     if (p3m.sm.s_size[s_dir] > 0)
       fft_pack_block(themesh, p3m.send_grid.data(), p3m.sm.r_ld[r_dir],
                      p3m.sm.r_dim[r_dir], p3m.local_mesh.dim, 1);
     /* communication */
     if (node_neighbors[r_dir] != this_node) {
-      for (evenodd = 0; evenodd < 2; evenodd++) {
-        if ((node_pos[r_dir / 2] + evenodd) % 2 == 0) {
-          if (p3m.sm.r_size[r_dir] > 0)
-            MPI_Send(p3m.send_grid.data(), p3m.sm.r_size[r_dir], MPI_DOUBLE,
-                     node_neighbors[r_dir], REQ_P3M_SPREAD, comm_cart);
-        } else {
-          if (p3m.sm.s_size[s_dir] > 0)
-            MPI_Recv(p3m.recv_grid.data(), p3m.sm.s_size[s_dir], MPI_DOUBLE,
-                     node_neighbors[s_dir], REQ_P3M_SPREAD, comm_cart, &status);
-        }
-      }
+      MPI_Sendrecv(
+          p3m.send_grid.data(), p3m.sm.r_size[r_dir], MPI_DOUBLE,
+          node_neighbors[r_dir], REQ_P3M_SPREAD,
+          p3m.recv_grid.data(), p3m.sm.s_size[s_dir], MPI_DOUBLE,
+          node_neighbors[s_dir], REQ_P3M_SPREAD, comm_cart, MPI_STATUS_IGNORE
+          );
     } else {
-      tmp_vec = p3m.recv_grid;
-      p3m.recv_grid = p3m.send_grid;
-      p3m.send_grid = tmp_vec;
+      std::swap(p3m.recv_grid, p3m.send_grid);
     }
     /* un pack recv block */
     if (p3m.sm.s_size[s_dir] > 0) {
