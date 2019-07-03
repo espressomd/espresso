@@ -97,13 +97,13 @@ auto mpi_lb_get_j(Utils::Vector3i const &index) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_j)
 
-auto mpi_lb_get_pi(Utils::Vector3i const &index) {
+auto mpi_lb_get_stress(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_pi(modes, force_density);
+    return lb_calc_stress(modes, force_density);
   });
 }
 
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_pi)
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_stress)
 
 void mpi_bcast_lb_params_slave(LBParam field, const LB_Parameters &params_) {
   lbpar = params_;
@@ -1128,21 +1128,20 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   return {};
 }
 
-const Utils::Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind) {
-  auto p_pi = lb_lbnode_get_pi_neq(ind);
-
+const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
   // Add equilibrium stress to the diagonal (in LB units)
   auto const p0 = lb_lbfluid_get_density() * D3Q19::c_sound_sq<double>;
 
-  p_pi[0] += p0;
-  p_pi[2] += p0;
-  p_pi[5] += p0;
+  auto stress= lb_lbnode_get_stress_neq(ind);
+  stress[0] += p0;
+  stress[2] += p0;
+  stress[5] += p0;
 
-  return p_pi;
+  return stress;
 }
 
-const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
-  Utils::Vector6d p_pi{};
+const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
+  Utils::Vector6d stress{};
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     static LB_rho_v_pi_gpu *host_print_values = nullptr;
@@ -1154,20 +1153,20 @@ const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, host_print_values);
     for (int i = 0; i < 6; i++) {
-      p_pi[i] = host_print_values->pi[i];
+      stress[i] = host_print_values->pi[i];
     }
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
-    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_pi, ind);
+    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_stress, ind);
   }
-  return p_pi;
+  return stress;
 }
 
 /** calculates the average stress of all nodes by iterating
  * over all nodes and deviding by the number_of_nodes.
  */
 const Utils::Vector6d lb_lbfluid_get_stress() {
-  Utils::Vector6d p{0, 0, 0, 0, 0, 0};
+  Utils::Vector6d stress{};
 
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
@@ -1175,20 +1174,20 @@ const Utils::Vector6d lb_lbfluid_get_stress() {
     std::vector<LB_rho_v_pi_gpu> host_values(lbpar_gpu.number_of_nodes);
     lb_get_values_GPU(host_values.data());
     std::for_each(host_values.begin(), host_values.end(),
-                  [&p](LB_rho_v_pi_gpu &v) {
+                  [&stress](LB_rho_v_pi_gpu &v) {
                     for (int i = 0; i < 6; i++)
-                      p[i] += v.pi[i];
+                      stress[i] += v.pi[i];
                   });
 
     // Normalize
-    p *= (1. / lbpar_gpu.number_of_nodes);
+    stress /= static_cast<double>(lbpar_gpu.number_of_nodes);
 
     // Add equilibrium stress to the diagonal (in LB units)
     double const p0 = lb_lbfluid_get_density() * D3Q19::c_sound_sq<double>;
 
-    p[0] += p0;
-    p[2] += p0;
-    p[5] += p0;
+    stress[0] += p0;
+    stress[2] += p0;
+    stress[5] += p0;
 
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
@@ -1196,20 +1195,20 @@ const Utils::Vector6d lb_lbfluid_get_stress() {
       for (int j = 0; j < lblattice.global_grid[1]; j++) {
         for (int k = 0; k < lblattice.global_grid[2]; k++) {
           const Utils::Vector3i node{{i, j, k}};
-          p += lb_lbnode_get_pi(node);
+          stress += lb_lbnode_get_stress(node);
         }
       }
     }
 
-    int const number_of_nodes = lblattice.global_grid[0] *
+    auto const number_of_nodes = lblattice.global_grid[0] *
                                 lblattice.global_grid[1] *
                                 lblattice.global_grid[2];
 
-    p *= 1. / number_of_nodes;
+    stress /= static_cast<double>(number_of_nodes);
   } else {
     throw std::runtime_error("LB method called on inactive LB");
   }
-  return p;
+  return stress;
 }
 
 int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
@@ -1261,11 +1260,11 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
     lb_set_node_rho_GPU(single_nodeindex, host_density);
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
-    auto const stress = lb_lbnode_get_pi(ind);
+    auto const stress = lb_lbnode_get_stress(ind);
     auto const flux_density =
         lb_lbnode_get_velocity(ind) * lb_lbnode_get_density(ind);
     auto const population =
-        lb_get_population_from_density_j_pi(p_density, flux_density, stress);
+        lb_get_population_from_density_j_stress(p_density, flux_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
   } else {
     throw std::runtime_error("LB not activated.");
@@ -1287,8 +1286,8 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
   } else {
     auto const density = lb_lbnode_get_density(ind);
     auto const j = u * density;
-    auto const pi = lb_lbnode_get_pi(ind);
-    auto const population = lb_get_population_from_density_j_pi(density, j, pi);
+    auto const stress = lb_lbnode_get_stress(ind);
+    auto const population = lb_get_population_from_density_j_stress(density, j, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
   }
 }

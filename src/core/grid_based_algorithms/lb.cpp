@@ -210,12 +210,12 @@ void lb_reinit_fluid() {
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   Utils::Vector3d j{};
-  Utils::Vector6d pi{};
+  Utils::Vector6d stress{};
 
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        ++index) {
     // sets equilibrium distribution
-    lb_set_population_from_density_j_pi(index, lbpar.density, j, pi);
+    lb_set_population_from_density_j_stress(index, lbpar.density, j, stress);
 
 #ifdef LB_BOUNDARIES
     lbfields[index].boundary = 0;
@@ -668,10 +668,10 @@ void lb_prepare_communication() {
 /***********************************************************************/
 /*@{*/
 Utils::Vector19d
-lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
-                                    Utils::Vector6d const &pi) {
+lb_get_population_from_density_j_stress(double density, Utils::Vector3d const &j,
+                                    Utils::Vector6d const &stress) {
   Utils::Vector19d population{};
-  auto const trace = pi[0] + pi[2] + pi[5];
+  auto const trace = stress[0] + stress[2] + stress[5];
 
   /* update the q=0 sublattice */
   population[0] = 1. / 3. * density - 1. / 2. * trace;
@@ -680,23 +680,23 @@ lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
   auto density_times_coeff = 1. / 18. * density;
 
   population[1] =
-      density_times_coeff + 1. / 6. * j[0] + 1. / 4. * pi[0] - 1. / 12. * trace;
+      density_times_coeff + 1. / 6. * j[0] + 1. / 4. * stress[0] - 1. / 12. * trace;
   population[2] =
-      density_times_coeff - 1. / 6. * j[0] + 1. / 4. * pi[0] - 1. / 12. * trace;
+      density_times_coeff - 1. / 6. * j[0] + 1. / 4. * stress[0] - 1. / 12. * trace;
   population[3] =
-      density_times_coeff + 1. / 6. * j[1] + 1. / 4. * pi[2] - 1. / 12. * trace;
+      density_times_coeff + 1. / 6. * j[1] + 1. / 4. * stress[2] - 1. / 12. * trace;
   population[4] =
-      density_times_coeff - 1. / 6. * j[1] + 1. / 4. * pi[2] - 1. / 12. * trace;
+      density_times_coeff - 1. / 6. * j[1] + 1. / 4. * stress[2] - 1. / 12. * trace;
   population[5] =
-      density_times_coeff + 1. / 6. * j[2] + 1. / 4. * pi[5] - 1. / 12. * trace;
+      density_times_coeff + 1. / 6. * j[2] + 1. / 4. * stress[5] - 1. / 12. * trace;
   population[6] =
-      density_times_coeff - 1. / 6. * j[2] + 1. / 4. * pi[5] - 1. / 12. * trace;
+      density_times_coeff - 1. / 6. * j[2] + 1. / 4. * stress[5] - 1. / 12. * trace;
 
   /* update the q=2 sublattice */
   density_times_coeff = 1. / 36. * density;
 
-  auto tmp1 = pi[0] + pi[2];
-  auto tmp2 = 2.0 * pi[1];
+  auto tmp1 = stress[0] + stress[2];
+  auto tmp2 = 2.0 * stress[1];
 
   population[7] = density_times_coeff + 1. / 12. * (j[0] + j[1]) +
                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
@@ -707,8 +707,8 @@ lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
   population[10] = density_times_coeff - 1. / 12. * (j[0] - j[1]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
-  tmp1 = pi[0] + pi[5];
-  tmp2 = 2.0 * pi[3];
+  tmp1 = stress[0] + stress[5];
+  tmp2 = 2.0 * stress[3];
 
   population[11] = density_times_coeff + 1. / 12. * (j[0] + j[2]) +
                    1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
@@ -719,8 +719,8 @@ lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
   population[14] = density_times_coeff - 1. / 12. * (j[0] - j[2]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
-  tmp1 = pi[2] + pi[5];
-  tmp2 = 2.0 * pi[4];
+  tmp1 = stress[2] + stress[5];
+  tmp2 = 2.0 * stress[4];
 
   population[15] = density_times_coeff + 1. / 12. * (j[1] + j[2]) +
                    1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
@@ -733,11 +733,11 @@ lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
   return population;
 }
 
-void lb_set_population_from_density_j_pi(Lattice::index_t const index,
+void lb_set_population_from_density_j_stress(Lattice::index_t const index,
                                          double density,
                                          Utils::Vector3d const &j,
-                                         Utils::Vector6d const &pi) {
-  auto const population = lb_get_population_from_density_j_pi(density, j, pi);
+                                         Utils::Vector6d const &stress) {
+  auto const population = lb_get_population_from_density_j_stress(density, j, stress);
   lb_set_population(index, population);
 }
 /*@}*/
@@ -753,7 +753,7 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index) {
 template <typename T>
 inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
                                         const std::array<T, 19> &modes) {
-  T density, j[3], pi_eq[6];
+  T density, j[3], stress_eq[6];
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
@@ -768,21 +768,21 @@ inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
   auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
 
   /* equilibrium part of the stress modes */
-  pi_eq[0] = j2 / density;
-  pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / density;
-  pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / density;
-  pi_eq[3] = j[0] * j[1] / density;
-  pi_eq[4] = j[0] * j[2] / density;
-  pi_eq[5] = j[1] * j[2] / density;
+  stress_eq[0] = j2 / density;
+  stress_eq[1] = (sqr(j[0]) - sqr(j[1])) / density;
+  stress_eq[2] = (j2 - 3.0 * sqr(j[2])) / density;
+  stress_eq[3] = j[0] * j[1] / density;
+  stress_eq[4] = j[0] * j[2] / density;
+  stress_eq[5] = j[1] * j[2] / density;
 
   return {{modes[0], modes[1], modes[2], modes[3],
            /* relax the stress modes */
-           pi_eq[0] + lbpar.gamma_bulk * (modes[4] - pi_eq[0]),
-           pi_eq[1] + lbpar.gamma_shear * (modes[5] - pi_eq[1]),
-           pi_eq[2] + lbpar.gamma_shear * (modes[6] - pi_eq[2]),
-           pi_eq[3] + lbpar.gamma_shear * (modes[7] - pi_eq[3]),
-           pi_eq[4] + lbpar.gamma_shear * (modes[8] - pi_eq[4]),
-           pi_eq[5] + lbpar.gamma_shear * (modes[9] - pi_eq[5]),
+           stress_eq[0] + lbpar.gamma_bulk * (modes[4] - stress_eq[0]),
+           stress_eq[1] + lbpar.gamma_shear * (modes[5] - stress_eq[1]),
+           stress_eq[2] + lbpar.gamma_shear * (modes[6] - stress_eq[2]),
+           stress_eq[3] + lbpar.gamma_shear * (modes[7] - stress_eq[3]),
+           stress_eq[4] + lbpar.gamma_shear * (modes[8] - stress_eq[4]),
+           stress_eq[5] + lbpar.gamma_shear * (modes[9] - stress_eq[5]),
            /* relax the ghost modes (project them out) */
            /* ghost modes have no equilibrium part due to orthogonality */
            lbpar.gamma_odd * modes[10], lbpar.gamma_odd * modes[11],
@@ -1226,37 +1226,37 @@ Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
                           modes[3] + 0.5 * force_density[2]}};
 }
 
-Utils::Vector6d lb_calc_pi(std::array<double, 19> const &modes,
+Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
                            Utils::Vector3d const &force_density) {
   auto const j = lb_calc_j(modes, force_density);
   auto const density = lb_calc_density(modes);
   using Utils::sqr;
   auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
   /* equilibrium part of the stress modes */
-  Utils::Vector6d modes_from_pi_eq{};
-  modes_from_pi_eq[0] = j2 / density;
-  modes_from_pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / density;
-  modes_from_pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / density;
-  modes_from_pi_eq[3] = j[0] * j[1] / density;
-  modes_from_pi_eq[4] = j[0] * j[2] / density;
-  modes_from_pi_eq[5] = j[1] * j[2] / density;
+  Utils::Vector6d modes_from_stress_eq{};
+  modes_from_stress_eq[0] = j2 / density;
+  modes_from_stress_eq[1] = (sqr(j[0]) - sqr(j[1])) / density;
+  modes_from_stress_eq[2] = (j2 - 3.0 * sqr(j[2])) / density;
+  modes_from_stress_eq[3] = j[0] * j[1] / density;
+  modes_from_stress_eq[4] = j[0] * j[2] / density;
+  modes_from_stress_eq[5] = j[1] * j[2] / density;
 
   /* Now we must predict the outcome of the next collision */
   /* We immediately average pre- and post-collision. */
 
   Utils::Vector6d avg_modes;
-  avg_modes[0] = modes_from_pi_eq[0] + (0.5 + 0.5 * lbpar.gamma_bulk) *
-                                           (modes[4] - modes_from_pi_eq[0]);
-  avg_modes[1] = modes_from_pi_eq[1] + (0.5 + 0.5 * lbpar.gamma_shear) *
-                                           (modes[5] - modes_from_pi_eq[1]);
-  avg_modes[2] = modes_from_pi_eq[2] + (0.5 + 0.5 * lbpar.gamma_shear) *
-                                           (modes[6] - modes_from_pi_eq[2]);
-  avg_modes[3] = modes_from_pi_eq[3] + (0.5 + 0.5 * lbpar.gamma_shear) *
-                                           (modes[7] - modes_from_pi_eq[3]);
-  avg_modes[4] = modes_from_pi_eq[4] + (0.5 + 0.5 * lbpar.gamma_shear) *
-                                           (modes[8] - modes_from_pi_eq[4]);
-  avg_modes[5] = modes_from_pi_eq[5] + (0.5 + 0.5 * lbpar.gamma_shear) *
-                                           (modes[9] - modes_from_pi_eq[5]);
+  avg_modes[0] = modes_from_stress_eq[0] + (0.5 + 0.5 * lbpar.gamma_bulk) *
+                                           (modes[4] - modes_from_stress_eq[0]);
+  avg_modes[1] = modes_from_stress_eq[1] + (0.5 + 0.5 * lbpar.gamma_shear) *
+                                           (modes[5] - modes_from_stress_eq[1]);
+  avg_modes[2] = modes_from_stress_eq[2] + (0.5 + 0.5 * lbpar.gamma_shear) *
+                                           (modes[6] - modes_from_stress_eq[2]);
+  avg_modes[3] = modes_from_stress_eq[3] + (0.5 + 0.5 * lbpar.gamma_shear) *
+                                           (modes[7] - modes_from_stress_eq[3]);
+  avg_modes[4] = modes_from_stress_eq[4] + (0.5 + 0.5 * lbpar.gamma_shear) *
+                                           (modes[8] - modes_from_stress_eq[4]);
+  avg_modes[5] = modes_from_stress_eq[5] + (0.5 + 0.5 * lbpar.gamma_shear) *
+                                           (modes[9] - modes_from_stress_eq[5]);
 
   // Transform the stress tensor components according to the modes that
   // correspond to those used by U. Schiller. In terms of populations this
@@ -1264,88 +1264,18 @@ Utils::Vector6d lb_calc_pi(std::array<double, 19> const &modes,
   // Duenweg and Ladd paper, when these are written out in populations.
   // But to ensure this, the expression in Schiller's modes has to be different!
 
-  Utils::Vector6d pi;
-  pi[0] =
+  Utils::Vector6d stress;
+  stress[0] =
       (2.0 * (modes[0] + avg_modes[0]) + avg_modes[2] + 3.0 * avg_modes[1]) /
       6.0;              // xx
-  pi[1] = avg_modes[3]; // xy
-  pi[2] =
+  stress[1] = avg_modes[3]; // xy
+  stress[2] =
       (2.0 * (modes[0] + avg_modes[0]) + avg_modes[2] - 3.0 * avg_modes[1]) /
       6.0;                                                // yy
-  pi[3] = avg_modes[4];                                   // xz
-  pi[4] = avg_modes[5];                                   // yz
-  pi[5] = (modes[0] + avg_modes[0] - avg_modes[2]) / 3.0; // zz
-  return pi;
-}
-
-void lb_calc_local_fields(Lattice::index_t index, double *density, double *j,
-                          double *pi) {
-#ifdef LB_BOUNDARIES
-  if (lbfields[index].boundary) {
-    *density = lbpar.density;
-    j[0] = 0.;
-    j[1] = 0.;
-    j[2] = 0.;
-    if (pi) {
-      pi[0] = 0.;
-      pi[1] = 0.;
-      pi[2] = 0.;
-      pi[3] = 0.;
-      pi[4] = 0.;
-      pi[5] = 0.;
-    }
-    return;
-  }
-#endif
-  auto modes = lb_calc_modes(index);
-  *density = modes[0] + lbpar.density;
-
-  j[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
-  j[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
-  j[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
-
-  if (!pi)
-    return;
-
-  using Utils::sqr;
-  auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
-
-  /* equilibrium part of the stress modes */
-  Utils::Vector6d modes_from_pi_eq{};
-  modes_from_pi_eq[0] = j2 / *density;
-  modes_from_pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / *density;
-  modes_from_pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / *density;
-  modes_from_pi_eq[3] = j[0] * j[1] / *density;
-  modes_from_pi_eq[4] = j[0] * j[2] / *density;
-  modes_from_pi_eq[5] = j[1] * j[2] / *density;
-
-  /* Now we must predict the outcome of the next collision */
-  /* We immediately average pre- and post-collision. */
-  modes[4] = modes_from_pi_eq[0] +
-             (0.5 + 0.5 * lbpar.gamma_bulk) * (modes[4] - modes_from_pi_eq[0]);
-  modes[5] = modes_from_pi_eq[1] +
-             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[5] - modes_from_pi_eq[1]);
-  modes[6] = modes_from_pi_eq[2] +
-             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[6] - modes_from_pi_eq[2]);
-  modes[7] = modes_from_pi_eq[3] +
-             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[7] - modes_from_pi_eq[3]);
-  modes[8] = modes_from_pi_eq[4] +
-             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[8] - modes_from_pi_eq[4]);
-  modes[9] = modes_from_pi_eq[5] +
-             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[9] - modes_from_pi_eq[5]);
-
-  // Transform the stress tensor components according to the modes that
-  // correspond to those used by U. Schiller. In terms of populations this
-  // expression then corresponds exactly to those in Eqs. 116 - 121 in the
-  // Duenweg and Ladd paper, when these are written out in populations.
-  // But to ensure this, the expression in Schiller's modes has to be different!
-
-  pi[0] = (2.0 * (modes[0] + modes[4]) + modes[6] + 3.0 * modes[5]) / 6.0; // xx
-  pi[1] = modes[7];                                                        // xy
-  pi[2] = (2.0 * (modes[0] + modes[4]) + modes[6] - 3.0 * modes[5]) / 6.0; // yy
-  pi[3] = modes[8];                                                        // xz
-  pi[4] = modes[9];                                                        // yz
-  pi[5] = (modes[0] + modes[4] - modes[6]) / 3.0;                          // zz
+  stress[3] = avg_modes[4];                                   // xz
+  stress[4] = avg_modes[5];                                   // yz
+  stress[5] = (modes[0] + avg_modes[0] - avg_modes[2]) / 3.0; // zz
+  return stress;
 }
 
 #ifdef LB_BOUNDARIES

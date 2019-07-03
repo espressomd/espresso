@@ -199,22 +199,19 @@ void lb_sanity_checks();
     @param index Index of the local site
     @param density local fluid density
     @param j local fluid speed
-    @param pi local fluid stress
+    @param stress local fluid stress
 */
-void lb_set_population_from_density_j_pi(Lattice::index_t index, double density,
+void lb_set_population_from_density_j_stress(Lattice::index_t index, double density,
                                          Utils::Vector3d const &j,
-                                         Utils::Vector6d const &pi);
+                                         Utils::Vector6d const &stress);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif
 
-void lb_calc_local_fields(Lattice::index_t index, double *density, double *j,
-                          double *pi);
-
 double lb_calc_density(std::array<double, 19> const &modes);
 Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
                           Utils::Vector3d const &force_density);
-Utils::Vector6d lb_calc_pi(std::array<double, 19> const &modes,
+Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
                            Utils::Vector3d const &force_density);
 
 /** Calculation of hydrodynamic modes.
@@ -235,12 +232,12 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
  * @brief Get the populations as a function of density, flux density and stress.
  * @param density fluid density
  * @param j       fluid flux density
- * @param pi      fluid stress
+ * @param stress      fluid stress
  * @return 19 populations (including equilibrium density contribution).
  **/
-Utils::Vector19d lb_get_population_from_density_j_pi(double density,
+Utils::Vector19d lb_get_population_from_density_j_stress(double density,
                                                      Utils::Vector3d const &j,
-                                                     Utils::Vector6d const &pi);
+                                                     Utils::Vector6d const &stress);
 
 inline Utils::Vector19d lb_get_population(Lattice::index_t index) {
   Utils::Vector19d pop{};
