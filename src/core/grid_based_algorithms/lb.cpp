@@ -215,7 +215,7 @@ void lb_reinit_fluid() {
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        ++index) {
     // sets equilibrium distribution
-    lb_set_n_from_rho_j_pi(index, lbpar.rho, j, pi);
+    lb_set_population_from_density_j_pi(index, lbpar.rho, j, pi);
 
 #ifdef LB_BOUNDARIES
     lbfields[index].boundary = 0;
@@ -732,7 +732,7 @@ Utils::Vector19d lb_get_population_from_density_j_pi(double density, Utils::Vect
   return population;
 }
 
-void lb_set_population_from_rho_j_pi(Lattice::index_t const index, double density,
+void lb_set_population_from_density_j_pi(Lattice::index_t const index, double density,
                             Utils::Vector3d const &j,
                             Utils::Vector6d const &pi) {
   auto const population = lb_get_population_from_density_j_pi(density, j, pi);

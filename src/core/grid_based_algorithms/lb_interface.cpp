@@ -28,7 +28,7 @@ namespace {
 void mpi_send_fluid(int node, int index, double rho, Utils::Vector3d const &j,
                     Utils::Vector6d const &pi) {
   if (node == this_node) {
-    lb_set_n_from_rho_j_pi(index, rho, j, pi);
+    lb_set_population_from_density_j_pi(index, rho, j, pi);
   } else if (0 == this_node) {
     mpi_call(mpi_send_fluid, node, index, rho, j, pi);
   }
@@ -1344,19 +1344,11 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
     lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
 #endif //  CUDA
   } else {
-    auto const node = lblattice.map_lattice_to_node(ind);
-    auto const index =
-        get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
-
-    double rho;
-    Utils::Vector3d j;
-    Utils::Vector6d pi;
-
-    mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
-
-    /* transform to lattice units */
-    j = rho * u;
-    mpi_send_fluid(node, index, rho, j, pi);
+    auto const density = lb_lbnode_get_density(ind);
+    auto const j = u * density;
+    auto const pi = lb_lbnode_get_pi(ind);
+    auto const population = lb_get_population_from_density_j_pi(density, j, pi);
+    mpi_call_all(mpi_lb_set_population, ind, population);
   }
 }
 

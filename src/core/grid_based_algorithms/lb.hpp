@@ -197,11 +197,11 @@ void lb_sanity_checks();
 
 /** Sets the equilibrium distributions.
     @param index Index of the local site
-    @param rho local fluid density
+    @param density local fluid density
     @param j local fluid speed
-    @param pi local fluid pressure
+    @param pi local fluid stress
 */
-void lb_set_n_from_rho_j_pi(Lattice::index_t index, double rho,
+void lb_set_population_from_density_j_pi(Lattice::index_t index, double density,
                             Utils::Vector3d const &j,
                             Utils::Vector6d const &pi);
 
