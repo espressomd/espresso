@@ -85,12 +85,10 @@ public:
    * <li>The lattice sites of the elementary cell are returned as local
    * indices</li>
    * </ul>
-   * \param pos        spatial position (Input)
-   * \param node_index local indices of the surrounding lattice sites (Output)
-   * \param delta      distance fraction of %p pos from the surrounding
+   * @param pos        spatial position (Input)
+   * @param node_index local indices of the surrounding lattice sites (Output)
+   * @param delta      distance fraction of %p pos from the surrounding
    *                   elementary cell, 6 directions (Output)
-   * \param myLeft     left (bottom, front) corner of the local box
-   * \param local_box  dimensions of the local box
    */
   void map_position_to_lattice(Utils::Vector3d const &pos,
                                Utils::Vector<std::size_t, 8> &node_index,
