@@ -2013,83 +2013,82 @@ void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
 }
 /**@}*/
 
-void calc_local_ca_mesh() {
-  int i;
-  int ind[3];
+p3m_local_mesh calc_local_mesh(const P3MParameters &params, const double skin,
+                               const Utils::Vector3d &my_left,
+                               const Utils::Vector3d &vector) {
+  /* return value */
+  p3m_local_mesh local_mesh{};
+
   /* total skin size */
   double full_skin[3];
-
-  for (i = 0; i < 3; i++)
-    full_skin[i] = p3m.params.cao_cut[i] + skin + p3m.params.additional_mesh[i];
+  for (int i = 0; i < 3; i++)
+    full_skin[i] = params.cao_cut[i] + skin + params.additional_mesh[i];
 
   /* inner left down grid point (global index) */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ld[i] =
-        (int)ceil(my_left[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
+  for (int i = 0; i < 3; i++)
+    local_mesh.in_ld[i] =
+        (int)ceil(my_left[i] * params.ai[i] - params.mesh_off[i]);
   /* inner up right grid point (global index) */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ur[i] =
-        (int)floor(my_right[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
+  for (int i = 0; i < 3; i++)
+    local_mesh.in_ur[i] =
+        (int)floor(vector[i] * params.ai[i] - params.mesh_off[i]);
 
   /* correct roundof errors at boundary */
-  for (i = 0; i < 3; i++) {
-    if ((my_right[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
-        p3m.local_mesh.in_ur[i] <
+  for (int i = 0; i < 3; i++) {
+    if ((vector[i] * params.ai[i] - params.mesh_off[i]) -
+            local_mesh.in_ur[i] <
         ROUND_ERROR_PREC)
-      p3m.local_mesh.in_ur[i]--;
-    if (1.0 + (my_left[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
-        p3m.local_mesh.in_ld[i] <
+      local_mesh.in_ur[i]--;
+    if (1.0 + (my_left[i] * params.ai[i] - params.mesh_off[i]) -
+            local_mesh.in_ld[i] <
         ROUND_ERROR_PREC)
-      p3m.local_mesh.in_ld[i]--;
+      local_mesh.in_ld[i]--;
   }
   /* inner grid dimensions */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.inner[i] =
-        p3m.local_mesh.in_ur[i] - p3m.local_mesh.in_ld[i] + 1;
+  for (int i = 0; i < 3; i++)
+    local_mesh.inner[i] = local_mesh.in_ur[i] - local_mesh.in_ld[i] + 1;
   /* index of left down grid point in global mesh */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.ld_ind[i] =
-        (int)ceil((my_left[i] - full_skin[i]) * p3m.params.ai[i] -
-                  p3m.params.mesh_off[i]);
+  for (int i = 0; i < 3; i++)
+    local_mesh.ld_ind[i] =
+        (int)ceil((my_left[i] - full_skin[i]) * params.ai[i] - params.mesh_off[i]);
   /* left down margin */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.margin[i * 2] =
-        p3m.local_mesh.in_ld[i] - p3m.local_mesh.ld_ind[i];
+  for (int i = 0; i < 3; i++)
+    local_mesh.margin[i * 2] = local_mesh.in_ld[i] - local_mesh.ld_ind[i];
   /* up right grid point */
-  for (i = 0; i < 3; i++)
-    ind[i] = (int)floor((my_right[i] + full_skin[i]) * p3m.params.ai[i] -
-                        p3m.params.mesh_off[i]);
+  int ind[3];
+  for (int i = 0; i < 3; i++)
+    ind[i] = (int)floor((vector[i] + full_skin[i]) * params.ai[i] -
+                        params.mesh_off[i]);
   /* correct roundof errors at up right boundary */
-  for (i = 0; i < 3; i++)
-    if (((my_right[i] + full_skin[i]) * p3m.params.ai[i] -
-         p3m.params.mesh_off[i]) -
+  for (int i = 0; i < 3; i++)
+    if (((vector[i] + full_skin[i]) * params.ai[i] - params.mesh_off[i]) -
         ind[i] ==
         0)
       ind[i]--;
   /* up right margin */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.margin[(i * 2) + 1] = ind[i] - p3m.local_mesh.in_ur[i];
+  for (int i = 0; i < 3; i++)
+    local_mesh.margin[(i * 2) + 1] = ind[i] - local_mesh.in_ur[i];
 
   /* grid dimension */
-  p3m.local_mesh.size = 1;
-  for (i = 0; i < 3; i++) {
-    p3m.local_mesh.dim[i] = ind[i] - p3m.local_mesh.ld_ind[i] + 1;
-    p3m.local_mesh.size *= p3m.local_mesh.dim[i];
+  local_mesh.size = 1;
+  for (int i = 0; i < 3; i++) {
+    local_mesh.dim[i] = ind[i] - local_mesh.ld_ind[i] + 1;
+    local_mesh.size *= local_mesh.dim[i];
   }
   /* reduce inner grid indices from global to local */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ld[i] = p3m.local_mesh.margin[i * 2];
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ur[i] =
-        p3m.local_mesh.margin[i * 2] + p3m.local_mesh.inner[i];
+  for (int i = 0; i < 3; i++)
+    local_mesh.in_ld[i] = local_mesh.margin[i * 2];
+  for (int i = 0; i < 3; i++)
+    local_mesh.in_ur[i] = local_mesh.margin[i * 2] + local_mesh.inner[i];
 
-  p3m.local_mesh.q_2_off = p3m.local_mesh.dim[2] - p3m.params.cao;
-  p3m.local_mesh.q_21_off =
-      p3m.local_mesh.dim[2] * (p3m.local_mesh.dim[1] - p3m.params.cao);
+  local_mesh.q_2_off = local_mesh.dim[2] - params.cao;
+  local_mesh.q_21_off = local_mesh.dim[2] * (local_mesh.dim[1] - params.cao);
+
+  return local_mesh;
 }
 
 void p3m_calc_local_ca_mesh() {
-calc_local_ca_mesh();
+  p3m.local_mesh = calc_local_mesh(p3m.params, skin, my_left, my_right);
 }
 
 void p3m_calc_lm_ld_pos() {
