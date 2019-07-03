@@ -722,15 +722,10 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
 #endif //  CUDA
   } else {
     Utils::Vector3i pos;
-    Utils::Vector3i gridsize;
 
-    gridsize[0] = box_l[0] / lblattice.agrid;
-    gridsize[1] = box_l[1] / lblattice.agrid;
-    gridsize[2] = box_l[2] / lblattice.agrid;
-
-    for (pos[2] = 0; pos[2] < gridsize[2]; pos[2]++) {
-      for (pos[1] = 0; pos[1] < gridsize[1]; pos[1]++) {
-        for (pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
+    for (pos[2] = 0; pos[2] < lblattice.global_grid[2]; pos[2]++) {
+      for (pos[1] = 0; pos[1] < lblattice.global_grid[1]; pos[1]++) {
+        for (pos[0] = 0; pos[0] < lblattice.global_grid[0]; pos[0]++) {
           auto boundary = lb_lbnode_get_boundary(pos);
           boundary = (boundary != 0 ? 1 : 0);
           fprintf(fp, "%f %f %f %d\n", (pos[0] + 0.5) * lblattice.agrid,
@@ -776,15 +771,10 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
 #endif //  CUDA
   } else {
     Utils::Vector3i pos;
-    Utils::Vector3i gridsize;
 
-    gridsize[0] = box_l[0] / lblattice.agrid;
-    gridsize[1] = box_l[1] / lblattice.agrid;
-    gridsize[2] = box_l[2] / lblattice.agrid;
-
-    for (pos[2] = 0; pos[2] < gridsize[2]; pos[2]++) {
-      for (pos[1] = 0; pos[1] < gridsize[1]; pos[1]++) {
-        for (pos[0] = 0; pos[0] < gridsize[0]; pos[0]++) {
+    for (pos[2] = 0; pos[2] < lblattice.global_grid[2]; pos[2]++) {
+      for (pos[1] = 0; pos[1] < lblattice.global_grid[1]; pos[1]++) {
+        for (pos[0] = 0; pos[0] < lblattice.global_grid[0]; pos[0]++) {
           auto const u = lb_lbnode_get_velocity(pos) * lattice_speed;
           fprintf(fp, "%f %f %f %f %f %f\n", (pos[0] + 0.5) * lblattice.agrid,
                   (pos[1] + 0.5) * lblattice.agrid,
