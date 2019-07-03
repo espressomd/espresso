@@ -930,7 +930,8 @@ void p3m_gather_fft_grid(double *data, const p3m_local_mesh &local_mesh,
     }
     /* add recv block */
     if (sm.r_size[r_dir] > 0) {
-      p3m_add_block(p3m.recv_grid.data(), data, sm.r_ld[r_dir], sm.r_dim[r_dir], local_mesh.dim);
+      fft_unpack_block(p3m.recv_grid.data(), data, sm.r_ld[r_dir],
+                       sm.r_dim[r_dir], local_mesh.dim, 1, std::plus<>());
     }
   }
 }

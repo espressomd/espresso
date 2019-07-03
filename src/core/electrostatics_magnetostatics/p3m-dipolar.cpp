@@ -1214,8 +1214,8 @@ void dp3m_gather_fft_grid(double *themesh) {
     }
     /* add recv block */
     if (dp3m.sm.r_size[r_dir] > 0) {
-      p3m_add_block(dp3m.recv_grid, themesh, dp3m.sm.r_ld[r_dir],
-                    dp3m.sm.r_dim[r_dir], dp3m.local_mesh.dim);
+      fft_unpack_block(dp3m.recv_grid, themesh, dp3m.sm.r_ld[r_dir],
+                       dp3m.sm.r_dim[r_dir], dp3m.local_mesh.dim, 1, std::plus<>());
     }
   }
 }

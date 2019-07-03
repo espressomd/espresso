@@ -817,33 +817,4 @@ void fft_pack_block(double const *const in, double *const out,
   }
 }
 
-void fft_unpack_block(double const *const in, double *const out,
-                      int const start[3], int const size[3], int const dim[3],
-                      int element) {
-  /* mid and slow changing indices */
-  int m, s;
-  /* linear index of in grid, linear index of out grid */
-  int li_in = 0, li_out;
-  /* copy size */
-  int copy_size;
-  /* offset for indices in input grid */
-  int m_in_offset;
-  /* offsets for indices in output grid */
-  int m_out_offset, s_out_offset;
-
-  copy_size = element * (size[2] * sizeof(double));
-  m_out_offset = element * dim[2];
-  s_out_offset = element * (dim[2] * (dim[1] - size[1]));
-  m_in_offset = element * size[2];
-  li_out = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
-
-  for (s = 0; s < size[0]; s++) {
-    for (m = 0; m < size[1]; m++) {
-      memmove(&(out[li_out]), &(in[li_in]), copy_size);
-      li_in += m_in_offset;
-      li_out += m_out_offset;
-    }
-    li_out += s_out_offset;
-  }
-}
 #endif

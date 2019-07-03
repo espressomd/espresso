@@ -70,30 +70,6 @@ void p3m_p3m_print_send_mesh(p3m_send_mesh sm) {
   }
 }
 
-void p3m_add_block(double const *in, double *out, int const start[3],
-                   int const size[3], int const dim[3]) {
-  /* fast,mid and slow changing indices */
-  int f, m, s;
-  /* linear index of in grid, linear index of out grid */
-  int li_in = 0, li_out = 0;
-  /* offsets for indices in output grid */
-  int m_out_offset, s_out_offset;
-
-  li_out = start[2] + (dim[2] * (start[1] + (dim[1] * start[0])));
-  m_out_offset = dim[2] - size[2];
-  s_out_offset = (dim[2] * (dim[1] - size[1]));
-
-  for (s = 0; s < size[0]; s++) {
-    for (m = 0; m < size[1]; m++) {
-      for (f = 0; f < size[2]; f++) {
-        out[li_out++] += in[li_in++];
-      }
-      li_out += m_out_offset;
-    }
-    li_out += s_out_offset;
-  }
-}
-
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
   double c, res = 0.0;
   c = Utils::sqr(cos(Utils::pi() * mesh_i * (double)n));

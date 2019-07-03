@@ -200,18 +200,6 @@ void p3m_p3m_print_local_mesh(p3m_local_mesh l);
  */
 void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
 
-/** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
- *  output array with dimension dim[3] at start position start[3].
- *
- *  \param in          Pointer to first element of input block data.
- *  \param out         Pointer to first element of output grid.
- *  \param start       Start position of block in output grid.
- *  \param size        Dimensions of the block
- *  \param dim         Dimensions of the output grid.
- */
-void p3m_add_block(double const *in, double *out, int const start[3],
-                   int const size[3], int const dim[3]);
-
 /** One of the aliasing sums used by \ref p3m_k_space_error.
  *  Fortunately the one which is most important (because it converges
  *  most slowly, since it is not damped exponentially) can be
