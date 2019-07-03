@@ -43,10 +43,9 @@ Lattice::Lattice(double agrid, double offset, int halo_size,
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
     local_index_offset[d] =
-        static_cast<int>(ceil((my_left[d] - offset) / agrid));
+        static_cast<int>(ceil(((my_right[d] - local_box[d]) - offset) / agrid));
     local_offset[d] = offset + local_index_offset[d] * agrid;
-    grid[d] = static_cast<int>(
-        ceil((my_right[d] - local_offset[d] - epsilon) / agrid));
+    grid[d] = static_cast<int>(ceil(local_box[d] / agrid));
     global_grid[d] = node_grid[d] * grid[d];
   }
 
