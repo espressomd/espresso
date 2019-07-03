@@ -24,29 +24,20 @@
  *
  */
 
-#include <bitset>
 #include <boost/range/numeric.hpp>
 
 #include "grid_based_algorithms/lattice.hpp"
-
 #include "debug.hpp"
 #include "grid.hpp"
-
 #include <utils/index.hpp>
-using Utils::get_linear_index;
 #include <utils/constants.hpp>
-
-bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
-  auto const x = index * agrid;
-  return x >= my_left and x < my_right;
-}
 
 Lattice::Lattice(double agrid, double offset, int halo_size,
                  Utils::Vector3d const &local_box,
-                 Utils::Vector3d const &myright,
+                 Utils::Vector3d const &my_right,
                  Utils::Vector3d const &box_length,
                  Utils::Vector3i const &node_grid)
-    : agrid(agrid), halo_size(halo_size), offset(offset), node_grid(node_grid) {
+    : agrid(agrid), halo_size(halo_size), offset(offset), node_grid(node_grid), local_box(local_box), my_right(my_right) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
@@ -54,7 +45,7 @@ Lattice::Lattice(double agrid, double offset, int halo_size,
         static_cast<int>(ceil((my_left[d] - offset) / agrid));
     local_offset[d] = offset + local_index_offset[d] * agrid;
     grid[d] = static_cast<int>(
-        ceil((myright[d] - local_offset[d] - epsilon) / agrid));
+        ceil((my_right[d] - local_offset[d] - epsilon) / agrid));
     global_grid[d] = node_grid[d] * grid[d];
   }
 
@@ -74,7 +65,12 @@ Lattice::Lattice(double agrid, double offset, int halo_size,
   /* determine the number of total nodes including halo */
   halo_grid = grid + Utils::Vector3i::broadcast(2 * halo_size);
   halo_grid_volume = boost::accumulate(halo_grid, 1, std::multiplies<int>());
-  halo_offset = get_linear_index(halo_size, halo_size, halo_size, halo_grid);
+  halo_offset = Utils::get_linear_index(halo_size, halo_size, halo_size, halo_grid);
+}
+
+bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
+  auto const x = index * agrid;
+  return x >= my_right - local_box and x < my_right;
 }
 
 void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
@@ -110,7 +106,7 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
     delta[3 + dir] = rel - ind[dir]; // delta_x/a
     delta[dir] = 1.0 - delta[3 + dir];
   }
-  node_index[0] = get_linear_index(ind, halo_grid);
+  node_index[0] = Utils::get_linear_index(ind, halo_grid);
   node_index[1] = node_index[0] + 1;
   node_index[2] = node_index[0] + halo_grid[0];
   node_index[3] = node_index[0] + halo_grid[0] + 1;

@@ -48,6 +48,8 @@ public:
   Utils::Vector3d local_offset;
   Utils::Vector3i local_index_offset;
   Utils::Vector3i node_grid;
+  Utils::Vector3d local_box;
+  Utils::Vector3d my_right;
 
   index_t halo_grid_volume; /**< total number (volume) of lattice sites
                              *   (including halo) */
