@@ -201,9 +201,10 @@ void lb_sanity_checks();
     @param j local fluid speed
     @param stress local fluid stress
 */
-void lb_set_population_from_density_j_stress(Lattice::index_t index, double density,
-                                         Utils::Vector3d const &j,
-                                         Utils::Vector6d const &stress);
+void lb_set_population_from_density_j_stress(Lattice::index_t index,
+                                             double density,
+                                             Utils::Vector3d const &j,
+                                             Utils::Vector6d const &stress);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif
@@ -212,7 +213,7 @@ double lb_calc_density(std::array<double, 19> const &modes);
 Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
                           Utils::Vector3d const &force_density);
 Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
-                           Utils::Vector3d const &force_density);
+                               Utils::Vector3d const &force_density);
 
 /** Calculation of hydrodynamic modes.
  *
@@ -235,9 +236,8 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
  * @param stress      fluid stress
  * @return 19 populations (including equilibrium density contribution).
  **/
-Utils::Vector19d lb_get_population_from_density_j_stress(double density,
-                                                     Utils::Vector3d const &j,
-                                                     Utils::Vector6d const &stress);
+Utils::Vector19d lb_get_population_from_density_j_stress(
+    double density, Utils::Vector3d const &j, Utils::Vector6d const &stress);
 
 inline Utils::Vector19d lb_get_population(Lattice::index_t index) {
   Utils::Vector19d pop{};

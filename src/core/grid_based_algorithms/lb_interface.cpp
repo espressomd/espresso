@@ -1132,7 +1132,7 @@ const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
   // Add equilibrium stress to the diagonal (in LB units)
   auto const p0 = lb_lbfluid_get_density() * D3Q19::c_sound_sq<double>;
 
-  auto stress= lb_lbnode_get_stress_neq(ind);
+  auto stress = lb_lbnode_get_stress_neq(ind);
   stress[0] += p0;
   stress[2] += p0;
   stress[5] += p0;
@@ -1201,8 +1201,8 @@ const Utils::Vector6d lb_lbfluid_get_stress() {
     }
 
     auto const number_of_nodes = lblattice.global_grid[0] *
-                                lblattice.global_grid[1] *
-                                lblattice.global_grid[2];
+                                 lblattice.global_grid[1] *
+                                 lblattice.global_grid[2];
 
     stress /= static_cast<double>(number_of_nodes);
   } else {
@@ -1263,8 +1263,8 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
     auto const stress = lb_lbnode_get_stress(ind);
     auto const flux_density =
         lb_lbnode_get_velocity(ind) * lb_lbnode_get_density(ind);
-    auto const population =
-        lb_get_population_from_density_j_stress(p_density, flux_density, stress);
+    auto const population = lb_get_population_from_density_j_stress(
+        p_density, flux_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
   } else {
     throw std::runtime_error("LB not activated.");
@@ -1287,7 +1287,8 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
     auto const density = lb_lbnode_get_density(ind);
     auto const j = u * density;
     auto const stress = lb_lbnode_get_stress(ind);
-    auto const population = lb_get_population_from_density_j_stress(density, j, stress);
+    auto const population =
+        lb_get_population_from_density_j_stress(density, j, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
   }
 }

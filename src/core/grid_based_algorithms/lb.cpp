@@ -667,9 +667,8 @@ void lb_prepare_communication() {
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
 /*@{*/
-Utils::Vector19d
-lb_get_population_from_density_j_stress(double density, Utils::Vector3d const &j,
-                                    Utils::Vector6d const &stress) {
+Utils::Vector19d lb_get_population_from_density_j_stress(
+    double density, Utils::Vector3d const &j, Utils::Vector6d const &stress) {
   Utils::Vector19d population{};
   auto const trace = stress[0] + stress[2] + stress[5];
 
@@ -679,18 +678,18 @@ lb_get_population_from_density_j_stress(double density, Utils::Vector3d const &j
   /* update the q=1 sublattice */
   auto density_times_coeff = 1. / 18. * density;
 
-  population[1] =
-      density_times_coeff + 1. / 6. * j[0] + 1. / 4. * stress[0] - 1. / 12. * trace;
-  population[2] =
-      density_times_coeff - 1. / 6. * j[0] + 1. / 4. * stress[0] - 1. / 12. * trace;
-  population[3] =
-      density_times_coeff + 1. / 6. * j[1] + 1. / 4. * stress[2] - 1. / 12. * trace;
-  population[4] =
-      density_times_coeff - 1. / 6. * j[1] + 1. / 4. * stress[2] - 1. / 12. * trace;
-  population[5] =
-      density_times_coeff + 1. / 6. * j[2] + 1. / 4. * stress[5] - 1. / 12. * trace;
-  population[6] =
-      density_times_coeff - 1. / 6. * j[2] + 1. / 4. * stress[5] - 1. / 12. * trace;
+  population[1] = density_times_coeff + 1. / 6. * j[0] + 1. / 4. * stress[0] -
+                  1. / 12. * trace;
+  population[2] = density_times_coeff - 1. / 6. * j[0] + 1. / 4. * stress[0] -
+                  1. / 12. * trace;
+  population[3] = density_times_coeff + 1. / 6. * j[1] + 1. / 4. * stress[2] -
+                  1. / 12. * trace;
+  population[4] = density_times_coeff - 1. / 6. * j[1] + 1. / 4. * stress[2] -
+                  1. / 12. * trace;
+  population[5] = density_times_coeff + 1. / 6. * j[2] + 1. / 4. * stress[5] -
+                  1. / 12. * trace;
+  population[6] = density_times_coeff - 1. / 6. * j[2] + 1. / 4. * stress[5] -
+                  1. / 12. * trace;
 
   /* update the q=2 sublattice */
   density_times_coeff = 1. / 36. * density;
@@ -734,10 +733,11 @@ lb_get_population_from_density_j_stress(double density, Utils::Vector3d const &j
 }
 
 void lb_set_population_from_density_j_stress(Lattice::index_t const index,
-                                         double density,
-                                         Utils::Vector3d const &j,
-                                         Utils::Vector6d const &stress) {
-  auto const population = lb_get_population_from_density_j_stress(density, j, stress);
+                                             double density,
+                                             Utils::Vector3d const &j,
+                                             Utils::Vector6d const &stress) {
+  auto const population =
+      lb_get_population_from_density_j_stress(density, j, stress);
   lb_set_population(index, population);
 }
 /*@}*/
@@ -1227,7 +1227,7 @@ Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
 }
 
 Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
-                           Utils::Vector3d const &force_density) {
+                               Utils::Vector3d const &force_density) {
   auto const j = lb_calc_j(modes, force_density);
   auto const density = lb_calc_density(modes);
   using Utils::sqr;
@@ -1245,18 +1245,24 @@ Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
   /* We immediately average pre- and post-collision. */
 
   Utils::Vector6d avg_modes;
-  avg_modes[0] = modes_from_stress_eq[0] + (0.5 + 0.5 * lbpar.gamma_bulk) *
-                                           (modes[4] - modes_from_stress_eq[0]);
-  avg_modes[1] = modes_from_stress_eq[1] + (0.5 + 0.5 * lbpar.gamma_shear) *
-                                           (modes[5] - modes_from_stress_eq[1]);
-  avg_modes[2] = modes_from_stress_eq[2] + (0.5 + 0.5 * lbpar.gamma_shear) *
-                                           (modes[6] - modes_from_stress_eq[2]);
-  avg_modes[3] = modes_from_stress_eq[3] + (0.5 + 0.5 * lbpar.gamma_shear) *
-                                           (modes[7] - modes_from_stress_eq[3]);
-  avg_modes[4] = modes_from_stress_eq[4] + (0.5 + 0.5 * lbpar.gamma_shear) *
-                                           (modes[8] - modes_from_stress_eq[4]);
-  avg_modes[5] = modes_from_stress_eq[5] + (0.5 + 0.5 * lbpar.gamma_shear) *
-                                           (modes[9] - modes_from_stress_eq[5]);
+  avg_modes[0] =
+      modes_from_stress_eq[0] +
+      (0.5 + 0.5 * lbpar.gamma_bulk) * (modes[4] - modes_from_stress_eq[0]);
+  avg_modes[1] =
+      modes_from_stress_eq[1] +
+      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[5] - modes_from_stress_eq[1]);
+  avg_modes[2] =
+      modes_from_stress_eq[2] +
+      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[6] - modes_from_stress_eq[2]);
+  avg_modes[3] =
+      modes_from_stress_eq[3] +
+      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[7] - modes_from_stress_eq[3]);
+  avg_modes[4] =
+      modes_from_stress_eq[4] +
+      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[8] - modes_from_stress_eq[4]);
+  avg_modes[5] =
+      modes_from_stress_eq[5] +
+      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[9] - modes_from_stress_eq[5]);
 
   // Transform the stress tensor components according to the modes that
   // correspond to those used by U. Schiller. In terms of populations this
@@ -1267,11 +1273,11 @@ Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
   Utils::Vector6d stress;
   stress[0] =
       (2.0 * (modes[0] + avg_modes[0]) + avg_modes[2] + 3.0 * avg_modes[1]) /
-      6.0;              // xx
+      6.0;                  // xx
   stress[1] = avg_modes[3]; // xy
   stress[2] =
       (2.0 * (modes[0] + avg_modes[0]) + avg_modes[2] - 3.0 * avg_modes[1]) /
-      6.0;                                                // yy
+      6.0;                                                    // yy
   stress[3] = avg_modes[4];                                   // xz
   stress[4] = avg_modes[5];                                   // yz
   stress[5] = (modes[0] + avg_modes[0] - avg_modes[2]) / 3.0; // zz
