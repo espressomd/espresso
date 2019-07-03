@@ -78,7 +78,7 @@ installed with:
 
 .. code-block:: bash
 
-    sudo apt install build-essential cmake cython python3-numpy \
+    sudo apt install build-essential cmake cython3 python3-numpy \
     libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
     doxygen python3-opengl python3-sphinx python3-pip libgsl-dev
 
@@ -88,6 +88,13 @@ Optionally the ccmake utility can be installed for easier configuration:
 .. code-block:: bash
 
     sudo apt install cmake-curses-gui
+
+To run the tutorials and generate the documentation, additional Python packages
+are required:
+
+.. code-block:: bash
+
+    pip3 install --upgrade jupyter scipy matplotlib sphinxcontrib-bibtex numpydoc
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
@@ -129,12 +136,12 @@ following commands:
     sudo xcode-select --install
     sudo xcodebuild -license accept
     sudo port selfupdate
-    sudo port install cmake python27 py27-cython py27-numpy \
-      openmpi-default fftw-3 +openmpi boost +openmpi +python27 \
-      doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
-    sudo port select --set cython cython27
-    sudo port select --set python python27
-    sudo port select --set pip pip27
+    sudo port install cmake python37 py37-cython py37-numpy \
+      openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
+      doxygen py37-opengl py37-sphinx py37-pip gsl hdf5 +openmpi
+    sudo port select --set cython cython37
+    sudo port select --set python3 python37
+    sudo port select --set pip pip37
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.
