@@ -231,7 +231,17 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 }
 #endif
 
-inline Utils::Vector19d lb_get_populations(Lattice::index_t index) {
+/**
+ * @brief Get the populations as a function of density, flux density and stress.
+ * @param density fluid density
+ * @param j       fluid flux density
+ * @param pi      fluid stress
+ * @return 19 populations (including equilibrium density contribution).
+ **/
+Utils::Vector19d lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
+                                        Utils::Vector6d const &pi);
+
+inline Utils::Vector19d lb_get_population(Lattice::index_t index) {
   Utils::Vector19d pop{};
   for (int i = 0; i < D3Q19::n_vel; ++i) {
     pop[i] = lbfluid[i][index] + D3Q19::coefficients[i][0] * lbpar.rho;
@@ -239,7 +249,7 @@ inline Utils::Vector19d lb_get_populations(Lattice::index_t index) {
   return pop;
 }
 
-inline void lb_set_populations(Lattice::index_t index,
+inline void lb_set_population(Lattice::index_t index,
                                const Utils::Vector19d &pop) {
   for (int i = 0; i < D3Q19::n_vel; ++i) {
     lbfluid[i][index] = pop[i] - D3Q19::coefficients[i][0] * lbpar.rho;

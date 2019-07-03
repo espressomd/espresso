@@ -667,70 +667,77 @@ void lb_prepare_communication() {
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
 /*@{*/
-void lb_set_n_from_rho_j_pi(Lattice::index_t const index, double rho,
-                            Utils::Vector3d const &j,
-                            Utils::Vector6d const &pi) {
+Utils::Vector19d lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
+                                        Utils::Vector6d const &pi) {
+  Utils::Vector19d population{};
   auto const trace = pi[0] + pi[2] + pi[5];
 
   /* update the q=0 sublattice */
-  lbfluid[0][index] = 1. / 3. * (rho - lbpar.rho) - 1. / 2. * trace;
+  population[0] = 1. / 3. * density - 1. / 2. * trace;
 
   /* update the q=1 sublattice */
-  auto rho_times_coeff = 1. / 18. * (rho - lbpar.rho);
+  auto rho_times_coeff = 1. / 18. * density;
 
-  lbfluid[1][index] =
+  population[1] =
       rho_times_coeff + 1. / 6. * j[0] + 1. / 4. * pi[0] - 1. / 12. * trace;
-  lbfluid[2][index] =
+  population[2] =
       rho_times_coeff - 1. / 6. * j[0] + 1. / 4. * pi[0] - 1. / 12. * trace;
-  lbfluid[3][index] =
+  population[3] =
       rho_times_coeff + 1. / 6. * j[1] + 1. / 4. * pi[2] - 1. / 12. * trace;
-  lbfluid[4][index] =
+  population[4] =
       rho_times_coeff - 1. / 6. * j[1] + 1. / 4. * pi[2] - 1. / 12. * trace;
-  lbfluid[5][index] =
+  population[5] =
       rho_times_coeff + 1. / 6. * j[2] + 1. / 4. * pi[5] - 1. / 12. * trace;
-  lbfluid[6][index] =
+  population[6] =
       rho_times_coeff - 1. / 6. * j[2] + 1. / 4. * pi[5] - 1. / 12. * trace;
 
   /* update the q=2 sublattice */
-  rho_times_coeff = 1. / 36. * (rho - lbpar.rho);
+  rho_times_coeff = 1. / 36. * density;
 
   auto tmp1 = pi[0] + pi[2];
   auto tmp2 = 2.0 * pi[1];
 
-  lbfluid[7][index] = rho_times_coeff + 1. / 12. * (j[0] + j[1]) +
-                      1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[8][index] = rho_times_coeff - 1. / 12. * (j[0] + j[1]) +
-                      1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[9][index] = rho_times_coeff + 1. / 12. * (j[0] - j[1]) +
-                      1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid[10][index] = rho_times_coeff - 1. / 12. * (j[0] - j[1]) +
-                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[7] = rho_times_coeff + 1. / 12. * (j[0] + j[1]) +
+                  1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[8] = rho_times_coeff - 1. / 12. * (j[0] + j[1]) +
+                  1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[9] = rho_times_coeff + 1. / 12. * (j[0] - j[1]) +
+                  1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[10] = rho_times_coeff - 1. / 12. * (j[0] - j[1]) +
+                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
   tmp1 = pi[0] + pi[5];
   tmp2 = 2.0 * pi[3];
 
-  lbfluid[11][index] = rho_times_coeff + 1. / 12. * (j[0] + j[2]) +
-                       1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[12][index] = rho_times_coeff - 1. / 12. * (j[0] + j[2]) +
-                       1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[13][index] = rho_times_coeff + 1. / 12. * (j[0] - j[2]) +
-                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid[14][index] = rho_times_coeff - 1. / 12. * (j[0] - j[2]) +
-                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[11] = rho_times_coeff + 1. / 12. * (j[0] + j[2]) +
+                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[12] = rho_times_coeff - 1. / 12. * (j[0] + j[2]) +
+                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[13] = rho_times_coeff + 1. / 12. * (j[0] - j[2]) +
+                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[14] = rho_times_coeff - 1. / 12. * (j[0] - j[2]) +
+                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
   tmp1 = pi[2] + pi[5];
   tmp2 = 2.0 * pi[4];
 
-  lbfluid[15][index] = rho_times_coeff + 1. / 12. * (j[1] + j[2]) +
-                       1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[16][index] = rho_times_coeff - 1. / 12. * (j[1] + j[2]) +
-                       1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[17][index] = rho_times_coeff + 1. / 12. * (j[1] - j[2]) +
-                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid[18][index] = rho_times_coeff - 1. / 12. * (j[1] - j[2]) +
-                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[15] = rho_times_coeff + 1. / 12. * (j[1] + j[2]) +
+                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[16] = rho_times_coeff - 1. / 12. * (j[1] + j[2]) +
+                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[17] = rho_times_coeff + 1. / 12. * (j[1] - j[2]) +
+                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[18] = rho_times_coeff - 1. / 12. * (j[1] - j[2]) +
+                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  return population;
 }
 
+void lb_set_population_from_rho_j_pi(Lattice::index_t const index, double density,
+                            Utils::Vector3d const &j,
+                            Utils::Vector6d const &pi) {
+  auto const population = lb_get_population_from_density_j_pi(density, j, pi);
+  lb_set_population(index, population);
+}
 /*@}*/
 
 #include <boost/range/numeric.hpp>

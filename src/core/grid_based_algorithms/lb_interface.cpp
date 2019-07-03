@@ -75,7 +75,7 @@ auto mpi_lb_get_populations(Utils::Vector3i const &index) {
   return lb_calc(index, [&](auto index) {
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
-    return lb_get_populations(linear_index);
+    return lb_get_population(linear_index);
   });
 }
 
@@ -95,16 +95,16 @@ auto mpi_lb_get_boundary_flag(Utils::Vector3i const &index) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_boundary_flag)
 
-void mpi_lb_set_populations(Utils::Vector3i const &index,
-                            Utils::Vector19d const &populations) {
+void mpi_lb_set_population(Utils::Vector3i const &index,
+                            Utils::Vector19d const &population) {
   lb_set(index, [&](auto index) {
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
-    lb_set_populations(linear_index, populations);
+    lb_set_population(linear_index, population);
   });
 }
 
-REGISTER_CALLBACK(mpi_lb_set_populations)
+REGISTER_CALLBACK(mpi_lb_set_population)
 
 auto mpi_lb_get_j(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
@@ -1372,7 +1372,7 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
     lb_lbfluid_set_population(ind, population);
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
-    mpi_call_all(mpi_lb_set_populations, ind, p_pop);
+    mpi_call_all(mpi_lb_set_population, ind, p_pop);
   } else {
     throw std::runtime_error("LB not activated.");
   }
