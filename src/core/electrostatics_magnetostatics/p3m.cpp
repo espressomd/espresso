@@ -148,7 +148,9 @@ static void p3m_gather_fft_grid(double *data, const p3m_local_mesh &local_mesh,
  *  information to reassign the forces from the grid to the
  *  particles.
  */
-static void p3m_spread_force_grid(double *mesh);
+static void p3m_spread_force_grid(double *data,
+                                  const p3m_local_mesh &local_mesh,
+                                  const p3m_send_mesh &send_mesh);
 
 #ifdef P3M_STORE_CA_FRAC
 /** Realloc charge assignment fields. */
@@ -832,7 +834,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
       fft_perform_back(p3m.rs_mesh, /* check_complex */ !p3m.params.tuning,
                        p3m.fft, comm_cart);
       /* redistribute force component mesh */
-      p3m_spread_force_grid(p3m.rs_mesh);
+      p3m_spread_force_grid(p3m.rs_mesh, p3m.local_mesh, p3m.sm);
       /* Assign force component from mesh to particle */
       switch (p3m.params.cao) {
       case 1:
@@ -933,30 +935,32 @@ void p3m_gather_fft_grid(double *data, const p3m_local_mesh &local_mesh,
   }
 }
 
-void p3m_spread_force_grid(double *themesh) {
+void p3m_spread_force_grid(double *data, const p3m_local_mesh &local_mesh,
+                           const p3m_send_mesh &send_mesh) {
   /* direction loop */
   for (int s_dir = 5; s_dir >= 0; s_dir--) {
     auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
 
     /* pack send block */
-    if (p3m.sm.s_size[s_dir] > 0)
-      fft_pack_block(themesh, p3m.send_grid.data(), p3m.sm.r_ld[r_dir],
-                     p3m.sm.r_dim[r_dir], p3m.local_mesh.dim, 1);
+    if (send_mesh.s_size[s_dir] > 0)
+      fft_pack_block(data, p3m.send_grid.data(), send_mesh.r_ld[r_dir],
+                     send_mesh.r_dim[r_dir], local_mesh.dim, 1);
     /* communication */
     if (node_neighbors[r_dir] != this_node) {
       MPI_Sendrecv(
-          p3m.send_grid.data(), p3m.sm.r_size[r_dir], MPI_DOUBLE,
+          p3m.send_grid.data(), send_mesh.r_size[r_dir], MPI_DOUBLE,
           node_neighbors[r_dir], REQ_P3M_SPREAD,
-          p3m.recv_grid.data(), p3m.sm.s_size[s_dir], MPI_DOUBLE,
+          p3m.recv_grid.data(),
+                   send_mesh.s_size[s_dir], MPI_DOUBLE,
           node_neighbors[s_dir], REQ_P3M_SPREAD, comm_cart, MPI_STATUS_IGNORE
           );
     } else {
       std::swap(p3m.recv_grid, p3m.send_grid);
     }
     /* un pack recv block */
-    if (p3m.sm.s_size[s_dir] > 0) {
-      fft_unpack_block(p3m.recv_grid.data(), themesh, p3m.sm.s_ld[s_dir],
-                       p3m.sm.s_dim[s_dir], p3m.local_mesh.dim, 1);
+    if (send_mesh.s_size[s_dir] > 0) {
+      fft_unpack_block(p3m.recv_grid.data(), data, send_mesh.s_ld[s_dir],
+                       send_mesh.s_dim[s_dir], local_mesh.dim, 1);
     }
   }
 }
