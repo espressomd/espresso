@@ -1272,8 +1272,8 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     unsigned int host_flag;
-    int single_nodeindex = Utils::get_linear_index(
-        ind, {lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z});
+    int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
+                           ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_get_boundary_flag_GPU(single_nodeindex, &host_flag);
     return host_flag;
 #else
