@@ -28,13 +28,20 @@ namespace {
 void mpi_send_fluid(int node, int index, double rho, Utils::Vector3d const &j,
                     Utils::Vector6d const &pi) {
   if (node == this_node) {
-    lb_calc_n_from_rho_j_pi(index, rho, j, pi);
+    lb_set_n_from_rho_j_pi(index, rho, j, pi);
   } else if (0 == this_node) {
     mpi_call(mpi_send_fluid, node, index, rho, j, pi);
   }
 }
 
 REGISTER_CALLBACK(mpi_send_fluid)
+
+template <typename Kernel>
+void lb_set(Utils::Vector3i const &index, Kernel &&kernel) {
+  if (lblattice.is_local(index)) {
+    kernel(index);
+  }
+}
 
 template <typename Kernel>
 auto lb_calc(Utils::Vector3i const &index, Kernel &&kernel) {
@@ -56,13 +63,13 @@ auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel &&kernel) {
   });
 }
 
-auto mpi_lb_calc_rho(Utils::Vector3i const &index) {
+auto mpi_lb_get_rho(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
     return lb_calc_rho(modes);
   });
 }
 
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_calc_rho)
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_rho)
 
 auto mpi_lb_get_populations(Utils::Vector3i const &index) {
   return lb_calc(index, [&](auto index) {
@@ -74,21 +81,46 @@ auto mpi_lb_get_populations(Utils::Vector3i const &index) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_populations)
 
-auto mpi_lb_calc_j(Utils::Vector3i const &index) {
+auto mpi_lb_get_boundary_flag(Utils::Vector3i const &index) {
+  return lb_calc(index, [&](auto index) {
+    auto const linear_index =
+        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
+#ifdef LB_BOUNDARIES
+    return lbfields[linear_index].boundary;
+#else
+    return false;
+#endif
+  });
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_boundary_flag)
+
+void mpi_lb_set_populations(Utils::Vector3i const &index,
+                            Utils::Vector19d const &populations) {
+  lb_set(index, [&](auto index) {
+    auto const linear_index =
+        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
+    lb_set_populations(linear_index, populations);
+  });
+}
+
+REGISTER_CALLBACK(mpi_lb_set_populations)
+
+auto mpi_lb_get_j(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
     return lb_calc_j(modes, force_density);
   });
 }
 
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_calc_j)
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_j)
 
-auto mpi_lb_calc_pi(Utils::Vector3i const &index) {
+auto mpi_lb_get_pi(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
     return lb_calc_pi(modes, force_density);
   });
 }
 
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_calc_pi)
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_pi)
 
 void mpi_recv_fluid_slave(int node, int index) {
   if (node == this_node) {
@@ -128,32 +160,6 @@ void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
   }
 }
 
-void mpi_send_fluid_populations_slave(int node, int index) {
-  if (node == this_node) {
-    Utils::Vector19d populations;
-    MPI_Recv(populations.data(), 19, MPI_DOUBLE, 0, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
-    lb_set_populations(index, populations);
-  }
-}
-
-REGISTER_CALLBACK(mpi_send_fluid_populations_slave)
-
-/** Issue REQ_SEND_FLUID_POPULATIONS: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param pop    local fluid population
- */
-void mpi_send_fluid_populations(int node, int index,
-                                const Utils::Vector19d &pop) {
-  if (node == this_node) {
-    lb_set_populations(index, pop);
-  } else {
-    mpi_call(mpi_send_fluid_populations_slave, node, index);
-    MPI_Send(pop.data(), 19, MPI_DOUBLE, node, SOME_TAG, comm_cart);
-  }
-}
-
 void mpi_bcast_lb_params_slave(LBParam field, const LB_Parameters &params_) {
   lbpar = params_;
   lb_lbfluid_on_lb_params_change(field);
@@ -168,37 +174,6 @@ REGISTER_CALLBACK(mpi_bcast_lb_params_slave)
 void mpi_bcast_lb_params(LBParam field) {
   mpi_call(mpi_bcast_lb_params_slave, field, lbpar);
   lb_lbfluid_on_lb_params_change(field);
-}
-
-void mpi_recv_fluid_boundary_flag_slave(int node, int index) {
-#ifdef LB_BOUNDARIES
-  if (node == this_node) {
-    int data;
-    lb_local_fields_get_boundary_flag(index, &data);
-    MPI_Send(&data, 1, MPI_INT, 0, SOME_TAG, comm_cart);
-  }
-#endif
-}
-
-REGISTER_CALLBACK(mpi_recv_fluid_boundary_flag_slave)
-
-/** Issue REQ_LB_GET_BOUNDARY_FLAG: Receive a single lattice sites boundary
- *  flag from a processor.
- *  @param node      processor to send to
- *  @param index     index of the lattice site
- *  @param boundary  local boundary flag
- */
-void mpi_recv_fluid_boundary_flag(int node, int index, int *boundary) {
-#ifdef LB_BOUNDARIES
-  if (node == this_node) {
-    lb_local_fields_get_boundary_flag(index, boundary);
-  } else {
-    int data = 0;
-    mpi_call(mpi_recv_fluid_boundary_flag_slave, node, index);
-    MPI_Recv(&data, 1, MPI_INT, node, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    *boundary = data;
-  }
-#endif
 }
 
 } // namespace
@@ -935,7 +910,8 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
           ind[0] = i;
           ind[1] = j;
           ind[2] = k;
-          auto pop = mpi_call(::Communication::Result::one_rank, mpi_lb_get_populations, ind);
+          auto pop = mpi_call(::Communication::Result::one_rank,
+                              mpi_lb_get_populations, ind);
           if (!binary) {
             for (int n = 0; n < 19; n++) {
               cpfile << pop[n] << "\n";
@@ -1175,7 +1151,7 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
   }
   if (lattice_switch == ActiveLB::CPU) {
     return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, mpi_lb_calc_rho, ind);
+        ::Communication::Result::one_rank, mpi_lb_get_rho, ind);
   }
   throw std::runtime_error("LB not activated.");
 }
@@ -1197,9 +1173,9 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   }
   if (lattice_switch == ActiveLB::CPU) {
     auto const rho = ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, mpi_lb_calc_rho, ind);
+        ::Communication::Result::one_rank, mpi_lb_get_rho, ind);
     auto const j = ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, mpi_lb_calc_j, ind);
+        ::Communication::Result::one_rank, mpi_lb_get_j, ind);
     return j / rho;
   }
   throw std::runtime_error("LB not activated.");
@@ -1237,8 +1213,8 @@ const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
     }
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, mpi_lb_calc_pi, ind);
+    return mpi_call(
+        ::Communication::Result::one_rank, mpi_lb_get_pi, ind;
   }
   return p_pi;
 }
@@ -1296,8 +1272,8 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     unsigned int host_flag;
-    int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
-                           ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
+    int single_nodeindex = Utils::get_linear_index(
+        ind, {lbpar_gpu.dim_x, lbpar_gpu.dim_y, lbpar_gpu.dim_z});
     lb_get_boundary_flag_GPU(single_nodeindex, &host_flag);
     return host_flag;
 #else
@@ -1305,12 +1281,8 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
-    auto const node = lblattice.map_lattice_to_node(ind);
-    auto const index =
-        get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
-    int p_boundary = {};
-    mpi_recv_fluid_boundary_flag(node, index, &p_boundary);
-    return p_boundary;
+    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_boundary_flag,
+                    ind);
   }
   throw std::runtime_error("LB not activated.");
 }
@@ -1330,7 +1302,8 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
-    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_populations, ind);
+    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_populations,
+                    ind);
   }
   throw std::runtime_error("LB not activated.");
 }
@@ -1400,10 +1373,7 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
     lb_lbfluid_set_population(ind, population);
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
-    auto const node = lblattice.map_lattice_to_node(ind);
-    auto const index =
-        get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
-    mpi_send_fluid_populations(node, index, p_pop);
+    mpi_call_all(mpi_lb_set_populations, ind, p_pop);
   } else {
     throw std::runtime_error("LB not activated.");
   }

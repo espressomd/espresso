@@ -214,8 +214,8 @@ void lb_reinit_fluid() {
 
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        ++index) {
-    // calculate equilibrium distribution
-    lb_calc_n_from_rho_j_pi(index, lbpar.rho, j, pi);
+    // sets equilibrium distribution
+    lb_set_n_from_rho_j_pi(index, lbpar.rho, j, pi);
 
 #ifdef LB_BOUNDARIES
     lbfields[index].boundary = 0;
@@ -667,80 +667,67 @@ void lb_prepare_communication() {
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
 /*@{*/
-void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             Utils::Vector3d const &j,
-                             Utils::Vector6d const &pi) {
-  double local_rho, local_j[3], local_pi[6], trace;
-  local_rho = rho;
-
-  local_j[0] = j[0];
-  local_j[1] = j[1];
-  local_j[2] = j[2];
-
-  for (int i = 0; i < 6; i++)
-    local_pi[i] = pi[i];
-
-  trace = local_pi[0] + local_pi[2] + local_pi[5];
-
-  double rho_times_coeff;
-  double tmp1, tmp2;
+void lb_set_n_from_rho_j_pi(Lattice::index_t const index, double rho,
+                            Utils::Vector3d const &j,
+                            Utils::Vector6d const &pi) {
+  auto const trace = pi[0] + pi[2] + pi[5];
 
   /* update the q=0 sublattice */
-  lbfluid[0][index] = 1. / 3. * (local_rho - lbpar.rho) - 1. / 2. * trace;
+  lbfluid[0][index] = 1. / 3. * (rho - lbpar.rho) - 1. / 2. * trace;
 
   /* update the q=1 sublattice */
-  rho_times_coeff = 1. / 18. * (local_rho - lbpar.rho);
+  auto rho_times_coeff = 1. / 18. * (rho - lbpar.rho);
 
-  lbfluid[1][index] = rho_times_coeff + 1. / 6. * local_j[0] +
-                      1. / 4. * local_pi[0] - 1. / 12. * trace;
-  lbfluid[2][index] = rho_times_coeff - 1. / 6. * local_j[0] +
-                      1. / 4. * local_pi[0] - 1. / 12. * trace;
-  lbfluid[3][index] = rho_times_coeff + 1. / 6. * local_j[1] +
-                      1. / 4. * local_pi[2] - 1. / 12. * trace;
-  lbfluid[4][index] = rho_times_coeff - 1. / 6. * local_j[1] +
-                      1. / 4. * local_pi[2] - 1. / 12. * trace;
-  lbfluid[5][index] = rho_times_coeff + 1. / 6. * local_j[2] +
-                      1. / 4. * local_pi[5] - 1. / 12. * trace;
-  lbfluid[6][index] = rho_times_coeff - 1. / 6. * local_j[2] +
-                      1. / 4. * local_pi[5] - 1. / 12. * trace;
+  lbfluid[1][index] =
+      rho_times_coeff + 1. / 6. * j[0] + 1. / 4. * pi[0] - 1. / 12. * trace;
+  lbfluid[2][index] =
+      rho_times_coeff - 1. / 6. * j[0] + 1. / 4. * pi[0] - 1. / 12. * trace;
+  lbfluid[3][index] =
+      rho_times_coeff + 1. / 6. * j[1] + 1. / 4. * pi[2] - 1. / 12. * trace;
+  lbfluid[4][index] =
+      rho_times_coeff - 1. / 6. * j[1] + 1. / 4. * pi[2] - 1. / 12. * trace;
+  lbfluid[5][index] =
+      rho_times_coeff + 1. / 6. * j[2] + 1. / 4. * pi[5] - 1. / 12. * trace;
+  lbfluid[6][index] =
+      rho_times_coeff - 1. / 6. * j[2] + 1. / 4. * pi[5] - 1. / 12. * trace;
 
   /* update the q=2 sublattice */
-  rho_times_coeff = 1. / 36. * (local_rho - lbpar.rho);
+  rho_times_coeff = 1. / 36. * (rho - lbpar.rho);
 
-  tmp1 = local_pi[0] + local_pi[2];
-  tmp2 = 2.0 * local_pi[1];
+  auto tmp1 = pi[0] + pi[2];
+  auto tmp2 = 2.0 * pi[1];
 
-  lbfluid[7][index] = rho_times_coeff + 1. / 12. * (local_j[0] + local_j[1]) +
+  lbfluid[7][index] = rho_times_coeff + 1. / 12. * (j[0] + j[1]) +
                       1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[8][index] = rho_times_coeff - 1. / 12. * (local_j[0] + local_j[1]) +
+  lbfluid[8][index] = rho_times_coeff - 1. / 12. * (j[0] + j[1]) +
                       1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[9][index] = rho_times_coeff + 1. / 12. * (local_j[0] - local_j[1]) +
+  lbfluid[9][index] = rho_times_coeff + 1. / 12. * (j[0] - j[1]) +
                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid[10][index] = rho_times_coeff - 1. / 12. * (local_j[0] - local_j[1]) +
+  lbfluid[10][index] = rho_times_coeff - 1. / 12. * (j[0] - j[1]) +
                        1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
-  tmp1 = local_pi[0] + local_pi[5];
-  tmp2 = 2.0 * local_pi[3];
+  tmp1 = pi[0] + pi[5];
+  tmp2 = 2.0 * pi[3];
 
-  lbfluid[11][index] = rho_times_coeff + 1. / 12. * (local_j[0] + local_j[2]) +
+  lbfluid[11][index] = rho_times_coeff + 1. / 12. * (j[0] + j[2]) +
                        1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[12][index] = rho_times_coeff - 1. / 12. * (local_j[0] + local_j[2]) +
+  lbfluid[12][index] = rho_times_coeff - 1. / 12. * (j[0] + j[2]) +
                        1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[13][index] = rho_times_coeff + 1. / 12. * (local_j[0] - local_j[2]) +
+  lbfluid[13][index] = rho_times_coeff + 1. / 12. * (j[0] - j[2]) +
                        1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid[14][index] = rho_times_coeff - 1. / 12. * (local_j[0] - local_j[2]) +
+  lbfluid[14][index] = rho_times_coeff - 1. / 12. * (j[0] - j[2]) +
                        1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
-  tmp1 = local_pi[2] + local_pi[5];
-  tmp2 = 2.0 * local_pi[4];
+  tmp1 = pi[2] + pi[5];
+  tmp2 = 2.0 * pi[4];
 
-  lbfluid[15][index] = rho_times_coeff + 1. / 12. * (local_j[1] + local_j[2]) +
+  lbfluid[15][index] = rho_times_coeff + 1. / 12. * (j[1] + j[2]) +
                        1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[16][index] = rho_times_coeff - 1. / 12. * (local_j[1] + local_j[2]) +
+  lbfluid[16][index] = rho_times_coeff - 1. / 12. * (j[1] + j[2]) +
                        1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[17][index] = rho_times_coeff + 1. / 12. * (local_j[1] - local_j[2]) +
+  lbfluid[17][index] = rho_times_coeff + 1. / 12. * (j[1] - j[2]) +
                        1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid[18][index] = rho_times_coeff - 1. / 12. * (local_j[1] - local_j[2]) +
+  lbfluid[18][index] = rho_times_coeff - 1. / 12. * (j[1] - j[2]) +
                        1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 }
 

@@ -195,15 +195,15 @@ void lattice_boltzmann_update();
 
 void lb_sanity_checks();
 
-/** Calculates the equilibrium distributions.
+/** Sets the equilibrium distributions.
     @param index Index of the local site
     @param rho local fluid density
     @param j local fluid speed
     @param pi local fluid pressure
 */
-void lb_calc_n_from_rho_j_pi(Lattice::index_t index, double rho,
-                             Utils::Vector3d const &j,
-                             Utils::Vector6d const &pi);
+void lb_set_n_from_rho_j_pi(Lattice::index_t index, double rho,
+                            Utils::Vector3d const &j,
+                            Utils::Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif
