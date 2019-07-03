@@ -1401,8 +1401,6 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     auto const node = lblattice.map_lattice_to_node(ind);
-    auto const local_index = lblattice.local_index(ind);
-    auto const local_index_new = lblattice.local_index_new(ind);
     auto const index =
         get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
     mpi_send_fluid_populations(node, index, p_pop);
