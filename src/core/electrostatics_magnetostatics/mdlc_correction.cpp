@@ -35,17 +35,17 @@
  */
 
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
+
+#if defined(DIPOLES) && defined(DP3M)
 #include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
+#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
+#include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-
-#include "electrostatics_magnetostatics/dipole.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-
-#if defined(DIPOLES) && defined(DP3M)
 
 DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
 
@@ -150,8 +150,8 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
   double energy, piarea, facux, facuy;
   int j;
 
-  facux = 2.0 * M_PI / box_l[0];
-  facuy = 2.0 * M_PI / box_l[1];
+  facux = 2.0 * M_PI / box_geo.length()[0];
+  facuy = 2.0 * M_PI / box_geo.length()[1];
 
   energy = 0.0;
 
@@ -164,7 +164,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
         gr = sqrt(gx * gx + gy * gy);
 
         fa1 =
-            1. / (gr * (exp(gr * box_l[2]) -
+            1. / (gr * (exp(gr * box_geo.length()[2]) -
                         1.0)); // We assume short slab direction is z direction
 
         // ... Compute S+,(S+)*,S-,(S-)*, and Spj,Smj for the current g
@@ -284,7 +284,7 @@ double get_DLC_dipolar(int kcut, std::vector<double> &fx,
 
   // printf("box_l: %le %le %le \n",box_l[0],box_l[1],box_l[2]);
 
-  piarea = M_PI / (box_l[0] * box_l[1]);
+  piarea = M_PI / (box_geo.length()[0] * box_geo.length()[1]);
 
   for (j = 0; j < n_local_particles; j++) {
     fx[j] *= piarea;
@@ -324,8 +324,8 @@ double get_DLC_energy_dipolar(int kcut) {
 
   n_local_particles = local_cells.particles().size();
 
-  facux = 2.0 * M_PI / box_l[0];
-  facuy = 2.0 * M_PI / box_l[1];
+  facux = 2.0 * M_PI / box_geo.length()[0];
+  facuy = 2.0 * M_PI / box_geo.length()[1];
 
   energy = 0.0;
 
@@ -339,7 +339,7 @@ double get_DLC_energy_dipolar(int kcut) {
         gr = sqrt(gx * gx + gy * gy);
 
         fa1 =
-            1. / (gr * (exp(gr * box_l[2]) -
+            1. / (gr * (exp(gr * box_geo.length()[2]) -
                         1.0)); // We assume short slab direction is z direction
 
         // ... Compute S+,(S+)*,S-,(S-)*, and Spj,Smj for the current g
@@ -384,7 +384,7 @@ double get_DLC_energy_dipolar(int kcut) {
 
   // Multiply by the factors we have left during the loops
 
-  piarea = M_PI / (box_l[0] * box_l[1]);
+  piarea = M_PI / (box_geo.length()[0] * box_geo.length()[1]);
   energy *= (-piarea);
   return (this_node == 0) ? energy : 0.0;
 }
@@ -411,7 +411,7 @@ void add_mdlc_force_corrections() {
 
   n_local_particles = local_cells.particles().size();
 
-  volume = box_l[0] * box_l[1] * box_l[2];
+  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
 
   // --- Create arrays that should contain the corrections to
   //     the forces and torques, and set them to zero.
@@ -505,7 +505,7 @@ double add_mdlc_energy_corrections() {
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
   int dip_DLC_kcut;
 
-  volume = box_l[0] * box_l[1] * box_l[2];
+  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
 
   dip_DLC_kcut = dlc_params.far_cut;
 
@@ -579,9 +579,9 @@ int mdlc_tune(double error) {
   MDLC_TRACE(fprintf(stderr, "%d: mdlc_tune().\n", this_node));
 
   n = (double)n_part;
-  lz = box_l[2];
+  lz = box_geo.length()[2];
 
-  a = box_l[0] * box_l[1];
+  a = box_geo.length()[0] * box_geo.length()[1];
   mpi_bcast_max_mu(); /* we take the maximum dipole in the system, to be sure
                          that the errors in the other case
                          will be equal or less than for this one */
@@ -596,14 +596,14 @@ int mdlc_tune(double error) {
     errexit();
   }
 
-  if (fabs(box_l[0] - box_l[1]) > 0.001) {
+  if (fabs(box_geo.length()[0] - box_geo.length()[1]) > 0.001) {
     fprintf(stderr, "tune DLC dipolar: box size in x direction is different "
                     "from y direction !!! \n");
     fprintf(stderr, "The tuning formula requires both to be equal. \n");
     errexit();
   }
 
-  lx = box_l[0];
+  lx = box_geo.length()[0];
 
   flag = 0;
   for (kc = 1; kc < limitkc; kc++) {
@@ -639,7 +639,7 @@ int mdlc_tune(double error) {
 //======================================================================================================================
 
 int mdlc_sanity_checks() {
-  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
+  if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "mdlc requires periodicity 1 1 1";
     return 1;
   }
@@ -658,7 +658,7 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
 
   dlc_params.maxPWerror = maxPWerror;
   dlc_params.gap_size = gap_size;
-  dlc_params.h = box_l[2] - gap_size;
+  dlc_params.h = box_geo.length()[2] - gap_size;
 
   if (Dipole::set_mesh()) {
     // if Dipole::set_mesh fails

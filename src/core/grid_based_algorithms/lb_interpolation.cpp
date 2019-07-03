@@ -86,7 +86,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
 const Utils::Vector3d lb_lbinterpolation_get_interpolated_velocity_global(
     const Utils::Vector3d &pos) {
-  auto const folded_pos = folded_position(pos);
+  auto const folded_pos = folded_position(pos, box_geo);
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     Utils::Vector3d interpolated_u{};

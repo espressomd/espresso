@@ -92,10 +92,7 @@ class RandomPairTest(ut.TestCase):
         self.check_pairs(n2_pairs)
 
     def test(self):
-        if espressomd.has_features("PARTIAL_PERIODIC"):
-            periods = [0, 1]
-        else:
-            periods = [1]
+        periods = [0, 1]
 
         for periodicity in itertools.product(periods, periods, periods):
             self.system.periodicity = periodicity

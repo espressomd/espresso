@@ -131,12 +131,12 @@ void compute_pos_corr_vec(int *repeat_) {
           return;
         }
 
-        auto const r_ij = get_mi_vector(p1->r.p, p2->r.p);
+        auto const r_ij = get_mi_vector(p1->r.p, p2->r.p, box_geo);
         auto const r_ij2 = r_ij.norm2();
 
         if (fabs(1.0 - r_ij2 / ia_params->p.rigid_bond.d2) >
             ia_params->p.rigid_bond.p_tol) {
-          auto const r_ij_t = get_mi_vector(p1->r.p_old, p2->r.p_old);
+          auto const r_ij_t = get_mi_vector(p1->r.p_old, p2->r.p_old, box_geo);
           auto const r_ij_dot = r_ij_t * r_ij;
           auto const G = 0.50 * (ia_params->p.rigid_bond.d2 - r_ij2) /
                          r_ij_dot / (p1->p.mass + p2->p.mass);
@@ -236,7 +236,7 @@ void compute_vel_corr_vec(int *repeat_) {
         }
 
         auto const v_ij = p1->m.v - p2->m.v;
-        auto const r_ij = get_mi_vector(p1->r.p, p2->r.p);
+        auto const r_ij = get_mi_vector(p1->r.p, p2->r.p, box_geo);
 
         auto const v_proj = v_ij * r_ij;
         if (std::abs(v_proj) > ia_params->p.rigid_bond.v_tol) {
