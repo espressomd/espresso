@@ -224,7 +224,7 @@ ubuntu:wo-dependencies:
   script:
     - export with_cuda=false
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
-    - export myconfig=maxset
+    - export myconfig=maxset python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
