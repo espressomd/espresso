@@ -26,18 +26,19 @@
 
 #include <boost/range/numeric.hpp>
 
-#include "grid_based_algorithms/lattice.hpp"
 #include "debug.hpp"
 #include "grid.hpp"
-#include <utils/index.hpp>
+#include "grid_based_algorithms/lattice.hpp"
 #include <utils/constants.hpp>
+#include <utils/index.hpp>
 
 Lattice::Lattice(double agrid, double offset, int halo_size,
                  Utils::Vector3d const &local_box,
                  Utils::Vector3d const &my_right,
                  Utils::Vector3d const &box_length,
                  Utils::Vector3i const &node_grid)
-    : agrid(agrid), halo_size(halo_size), offset(offset), node_grid(node_grid), local_box(local_box), my_right(my_right) {
+    : agrid(agrid), halo_size(halo_size), offset(offset), node_grid(node_grid),
+      local_box(local_box), my_right(my_right) {
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
@@ -65,7 +66,8 @@ Lattice::Lattice(double agrid, double offset, int halo_size,
   /* determine the number of total nodes including halo */
   halo_grid = grid + Utils::Vector3i::broadcast(2 * halo_size);
   halo_grid_volume = boost::accumulate(halo_grid, 1, std::multiplies<int>());
-  halo_offset = Utils::get_linear_index(halo_size, halo_size, halo_size, halo_grid);
+  halo_offset =
+      Utils::get_linear_index(halo_size, halo_size, halo_size, halo_grid);
 }
 
 bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
