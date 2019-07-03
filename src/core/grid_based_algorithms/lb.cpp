@@ -209,13 +209,13 @@ void lb_init() {
 void lb_reinit_fluid() {
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
-  Utils::Vector3d j{};
+  Utils::Vector3d flux_density{};
   Utils::Vector6d stress{};
 
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        ++index) {
     // sets equilibrium distribution
-    lb_set_population_from_density_j_stress(index, lbpar.density, j, stress);
+    lb_set_population_from_density_flux_density_stress(index, lbpar.density, flux_density, stress);
 
 #ifdef LB_BOUNDARIES
     lbfields[index].boundary = 0;
@@ -667,8 +667,8 @@ void lb_prepare_communication() {
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
 /*@{*/
-Utils::Vector19d lb_get_population_from_density_j_stress(
-    double density, Utils::Vector3d const &j, Utils::Vector6d const &stress) {
+Utils::Vector19d lb_get_population_from_density_flux_density_stress(
+    double density, Utils::Vector3d const &flux_density, Utils::Vector6d const &stress) {
   Utils::Vector19d population{};
   auto const trace = stress[0] + stress[2] + stress[5];
 
@@ -678,17 +678,17 @@ Utils::Vector19d lb_get_population_from_density_j_stress(
   /* update the q=1 sublattice */
   auto density_times_coeff = 1. / 18. * density;
 
-  population[1] = density_times_coeff + 1. / 6. * j[0] + 1. / 4. * stress[0] -
+  population[1] = density_times_coeff + 1. / 6. * flux_density[0] + 1. / 4. * stress[0] -
                   1. / 12. * trace;
-  population[2] = density_times_coeff - 1. / 6. * j[0] + 1. / 4. * stress[0] -
+  population[2] = density_times_coeff - 1. / 6. * flux_density[0] + 1. / 4. * stress[0] -
                   1. / 12. * trace;
-  population[3] = density_times_coeff + 1. / 6. * j[1] + 1. / 4. * stress[2] -
+  population[3] = density_times_coeff + 1. / 6. * flux_density[1] + 1. / 4. * stress[2] -
                   1. / 12. * trace;
-  population[4] = density_times_coeff - 1. / 6. * j[1] + 1. / 4. * stress[2] -
+  population[4] = density_times_coeff - 1. / 6. * flux_density[1] + 1. / 4. * stress[2] -
                   1. / 12. * trace;
-  population[5] = density_times_coeff + 1. / 6. * j[2] + 1. / 4. * stress[5] -
+  population[5] = density_times_coeff + 1. / 6. * flux_density[2] + 1. / 4. * stress[5] -
                   1. / 12. * trace;
-  population[6] = density_times_coeff - 1. / 6. * j[2] + 1. / 4. * stress[5] -
+  population[6] = density_times_coeff - 1. / 6. * flux_density[2] + 1. / 4. * stress[5] -
                   1. / 12. * trace;
 
   /* update the q=2 sublattice */
@@ -697,47 +697,47 @@ Utils::Vector19d lb_get_population_from_density_j_stress(
   auto tmp1 = stress[0] + stress[2];
   auto tmp2 = 2.0 * stress[1];
 
-  population[7] = density_times_coeff + 1. / 12. * (j[0] + j[1]) +
+  population[7] = density_times_coeff + 1. / 12. * (flux_density[0] + flux_density[1]) +
                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[8] = density_times_coeff - 1. / 12. * (j[0] + j[1]) +
+  population[8] = density_times_coeff - 1. / 12. * (flux_density[0] + flux_density[1]) +
                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[9] = density_times_coeff + 1. / 12. * (j[0] - j[1]) +
+  population[9] = density_times_coeff + 1. / 12. * (flux_density[0] - flux_density[1]) +
                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[10] = density_times_coeff - 1. / 12. * (j[0] - j[1]) +
+  population[10] = density_times_coeff - 1. / 12. * (flux_density[0] - flux_density[1]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
   tmp1 = stress[0] + stress[5];
   tmp2 = 2.0 * stress[3];
 
-  population[11] = density_times_coeff + 1. / 12. * (j[0] + j[2]) +
+  population[11] = density_times_coeff + 1. / 12. * (flux_density[0] + flux_density[2]) +
                    1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[12] = density_times_coeff - 1. / 12. * (j[0] + j[2]) +
+  population[12] = density_times_coeff - 1. / 12. * (flux_density[0] + flux_density[2]) +
                    1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[13] = density_times_coeff + 1. / 12. * (j[0] - j[2]) +
+  population[13] = density_times_coeff + 1. / 12. * (flux_density[0] - flux_density[2]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[14] = density_times_coeff - 1. / 12. * (j[0] - j[2]) +
+  population[14] = density_times_coeff - 1. / 12. * (flux_density[0] - flux_density[2]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
   tmp1 = stress[2] + stress[5];
   tmp2 = 2.0 * stress[4];
 
-  population[15] = density_times_coeff + 1. / 12. * (j[1] + j[2]) +
+  population[15] = density_times_coeff + 1. / 12. * (flux_density[1] + flux_density[2]) +
                    1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[16] = density_times_coeff - 1. / 12. * (j[1] + j[2]) +
+  population[16] = density_times_coeff - 1. / 12. * (flux_density[1] + flux_density[2]) +
                    1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[17] = density_times_coeff + 1. / 12. * (j[1] - j[2]) +
+  population[17] = density_times_coeff + 1. / 12. * (flux_density[1] - flux_density[2]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[18] = density_times_coeff - 1. / 12. * (j[1] - j[2]) +
+  population[18] = density_times_coeff - 1. / 12. * (flux_density[1] - flux_density[2]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
   return population;
 }
 
-void lb_set_population_from_density_j_stress(Lattice::index_t const index,
+void lb_set_population_from_density_flux_density_stress(Lattice::index_t const index,
                                              double density,
-                                             Utils::Vector3d const &j,
+                                             Utils::Vector3d const &flux_density,
                                              Utils::Vector6d const &stress) {
   auto const population =
-      lb_get_population_from_density_j_stress(density, j, stress);
+      lb_get_population_from_density_flux_density_stress(density, flux_density, stress);
   lb_set_population(index, population);
 }
 /*@}*/
@@ -753,27 +753,27 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index) {
 template <typename T>
 inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
                                         const std::array<T, 19> &modes) {
-  T density, j[3], stress_eq[6];
+  T density, flux_density[3], stress_eq[6];
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
    * equilibrium value */
   density = modes[0] + lbpar.density;
 
-  j[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
-  j[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
-  j[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
+  flux_density[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
+  flux_density[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
+  flux_density[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
 
   using Utils::sqr;
-  auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
+  auto const flux_density2 = sqr(flux_density[0]) + sqr(flux_density[1]) + sqr(flux_density[2]);
 
   /* equilibrium part of the stress modes */
-  stress_eq[0] = j2 / density;
-  stress_eq[1] = (sqr(j[0]) - sqr(j[1])) / density;
-  stress_eq[2] = (j2 - 3.0 * sqr(j[2])) / density;
-  stress_eq[3] = j[0] * j[1] / density;
-  stress_eq[4] = j[0] * j[2] / density;
-  stress_eq[5] = j[1] * j[2] / density;
+  stress_eq[0] = flux_density2 / density;
+  stress_eq[1] = (sqr(flux_density[0]) - sqr(flux_density[1])) / density;
+  stress_eq[2] = (flux_density2 - 3.0 * sqr(flux_density[2])) / density;
+  stress_eq[3] = flux_density[0] * flux_density[1] / density;
+  stress_eq[4] = flux_density[0] * flux_density[2] / density;
+  stress_eq[5] = flux_density[1] * flux_density[2] / density;
 
   return {{modes[0], modes[1], modes[2], modes[3],
            /* relax the stress modes */
@@ -1219,7 +1219,7 @@ double lb_calc_density(std::array<double, 19> const &modes) {
   return modes[0] + lbpar.density;
 }
 
-Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
+Utils::Vector3d lb_calc_flux_density(std::array<double, 19> const &modes,
                           Utils::Vector3d const &force_density) {
   return Utils::Vector3d{{modes[1] + 0.5 * force_density[0],
                           modes[2] + 0.5 * force_density[1],
@@ -1228,18 +1228,18 @@ Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
 
 Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
                                Utils::Vector3d const &force_density) {
-  auto const j = lb_calc_j(modes, force_density);
+  auto const flux_density = lb_calc_flux_density(modes, force_density);
   auto const density = lb_calc_density(modes);
   using Utils::sqr;
-  auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
+  auto const flux_density2 = sqr(flux_density[0]) + sqr(flux_density[1]) + sqr(flux_density[2]);
   /* equilibrium part of the stress modes */
   Utils::Vector6d modes_from_stress_eq{};
-  modes_from_stress_eq[0] = j2 / density;
-  modes_from_stress_eq[1] = (sqr(j[0]) - sqr(j[1])) / density;
-  modes_from_stress_eq[2] = (j2 - 3.0 * sqr(j[2])) / density;
-  modes_from_stress_eq[3] = j[0] * j[1] / density;
-  modes_from_stress_eq[4] = j[0] * j[2] / density;
-  modes_from_stress_eq[5] = j[1] * j[2] / density;
+  modes_from_stress_eq[0] = flux_density2 / density;
+  modes_from_stress_eq[1] = (sqr(flux_density[0]) - sqr(flux_density[1])) / density;
+  modes_from_stress_eq[2] = (flux_density2 - 3.0 * sqr(flux_density[2])) / density;
+  modes_from_stress_eq[3] = flux_density[0] * flux_density[1] / density;
+  modes_from_stress_eq[4] = flux_density[0] * flux_density[2] / density;
+  modes_from_stress_eq[5] = flux_density[1] * flux_density[2] / density;
 
   /* Now we must predict the outcome of the next collision */
   /* We immediately average pre- and post-collision. */
@@ -1366,7 +1366,7 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
  *  @param[in]  index  Local lattice site
  *  @retval The local fluid momentum.
  */
-inline Utils::Vector3d lb_calc_local_j(Lattice::index_t index) {
+inline Utils::Vector3d lb_calc_local_flux_density(Lattice::index_t index) {
   return {{lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
                lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
                lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
@@ -1389,15 +1389,15 @@ inline Utils::Vector3d lb_calc_local_j(Lattice::index_t index) {
 void lb_calc_fluid_momentum(double *result) {
 
   int x, y, z, index;
-  Utils::Vector3d j{}, momentum{};
+  Utils::Vector3d flux_density{}, momentum{};
 
   for (x = 1; x <= lblattice.grid[0]; x++) {
     for (y = 1; y <= lblattice.grid[1]; y++) {
       for (z = 1; z <= lblattice.grid[2]; z++) {
         index = get_linear_index(x, y, z, lblattice.halo_grid);
 
-        j = lb_calc_local_j(index);
-        momentum += j + .5 * lbfields[index].force_density;
+        flux_density = lb_calc_local_flux_density(index);
+        momentum += flux_density + .5 * lbfields[index].force_density;
       }
     }
   }

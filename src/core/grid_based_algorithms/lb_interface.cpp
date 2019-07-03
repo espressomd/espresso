@@ -89,13 +89,13 @@ void mpi_lb_set_population(Utils::Vector3i const &index,
 
 REGISTER_CALLBACK(mpi_lb_set_population)
 
-auto mpi_lb_get_j(Utils::Vector3i const &index) {
+auto mpi_lb_get_flux_density(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_j(modes, force_density);
+    return lb_calc_flux_density(modes, force_density);
   });
 }
 
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_j)
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_flux_density)
 
 auto mpi_lb_get_stress(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
@@ -1119,9 +1119,9 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::CPU) {
     auto const density = ::Communication::mpiCallbacks().call(
         ::Communication::Result::one_rank, mpi_lb_get_density, ind);
-    auto const j = ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, mpi_lb_get_j, ind);
-    return j / density;
+    auto const flux_density = ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, mpi_lb_get_flux_density, ind);
+    return flux_density / density;
   }
   throw std::runtime_error("LB not activated.");
 
@@ -1263,7 +1263,7 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
     auto const stress = lb_lbnode_get_stress(ind);
     auto const flux_density =
         lb_lbnode_get_velocity(ind) * lb_lbnode_get_density(ind);
-    auto const population = lb_get_population_from_density_j_stress(
+    auto const population = lb_get_population_from_density_flux_density_stress(
         p_density, flux_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
   } else {
@@ -1285,10 +1285,10 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
 #endif //  CUDA
   } else {
     auto const density = lb_lbnode_get_density(ind);
-    auto const j = u * density;
+    auto const flux_density = u * density;
     auto const stress = lb_lbnode_get_stress(ind);
     auto const population =
-        lb_get_population_from_density_j_stress(density, j, stress);
+        lb_get_population_from_density_flux_density_stress(density, flux_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
   }
 }
