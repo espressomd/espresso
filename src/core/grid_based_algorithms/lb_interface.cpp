@@ -1213,8 +1213,7 @@ const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
     }
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
-    return mpi_call(
-        ::Communication::Result::one_rank, mpi_lb_get_pi, ind;
+    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_pi, ind);
   }
   return p_pi;
 }
