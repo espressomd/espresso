@@ -2025,7 +2025,7 @@ void p3m_calc_local_ca_mesh() {
 void p3m_calc_lm_ld_pos() {
   int i;
   /* spatial position of left down mesh point */
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     p3m.local_mesh.ld_pos[i] =
         (p3m.local_mesh.ld_ind[i] + p3m.params.mesh_off[i]) * p3m.params.a[i];
   }
@@ -2121,35 +2121,34 @@ bool p3m_sanity_checks() {
   return ret;
 }
 
-void p3m_calc_send_mesh() {
-  int i, j, evenodd;
+void calc_send_mesh(const p3m_local_mesh &mesh) {
   int done[3] = {0, 0, 0};
-  MPI_Status status;
   /* send grids */
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
+  for (int i = 0; i < 3; i++) {
+    for(int j = 0; j < 3; j++) {
       /* left */
-      p3m.sm.s_ld[i * 2][j] = 0 + done[j] * p3m.local_mesh.margin[j * 2];
+      p3m.sm.s_ld[i * 2][j] = 0 + done[j] * mesh.margin[j * 2];
       if (j == i)
-        p3m.sm.s_ur[i * 2][j] = p3m.local_mesh.margin[j * 2];
+        p3m.sm.s_ur[i * 2][j] = mesh.margin[j * 2];
       else
-        p3m.sm.s_ur[i * 2][j] = p3m.local_mesh.dim[j] -
-                                done[j] * p3m.local_mesh.margin[(j * 2) + 1];
+        p3m.sm.s_ur[i * 2][j] =
+            mesh.dim[j] -
+                                done[j] * mesh.margin[(j * 2) + 1];
       /* right */
       if (j == i)
-        p3m.sm.s_ld[(i * 2) + 1][j] = p3m.local_mesh.in_ur[j];
+        p3m.sm.s_ld[(i * 2) + 1][j] = mesh.in_ur[j];
       else
         p3m.sm.s_ld[(i * 2) + 1][j] =
-            0 + done[j] * p3m.local_mesh.margin[j * 2];
+            0 + done[j] * mesh.margin[j * 2];
       p3m.sm.s_ur[(i * 2) + 1][j] =
-          p3m.local_mesh.dim[j] - done[j] * p3m.local_mesh.margin[(j * 2) + 1];
+          mesh.dim[j] - done[j] * mesh.margin[(j * 2) + 1];
     }
     done[i] = 1;
   }
   p3m.sm.max = 0;
-  for (i = 0; i < 6; i++) {
+  for (int i = 0; i < 6; i++) {
     p3m.sm.s_size[i] = 1;
-    for (j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
       p3m.sm.s_dim[i][j] = p3m.sm.s_ur[i][j] - p3m.sm.s_ld[i][j];
       p3m.sm.s_size[i] *= p3m.sm.s_dim[i][j];
     }
@@ -2157,37 +2156,36 @@ void p3m_calc_send_mesh() {
       p3m.sm.max = p3m.sm.s_size[i];
   }
   /* communication */
-  for (i = 0; i < 6; i++) {
-    if (i % 2 == 0)
-      j = i + 1;
-    else
-      j = i - 1;
+  int r_margin[6];
+  for (int i = 0; i < 6; i++) {
+    auto const j = (i % 2 == 0) ? i + 1 : i - 1;
+
     if (node_neighbors[i] != this_node) {
       /* two step communication: first all even positions than all odd */
-      for (evenodd = 0; evenodd < 2; evenodd++) {
+      for (int evenodd = 0; evenodd < 2; evenodd++) {
         if ((node_pos[i / 2] + evenodd) % 2 == 0)
-          MPI_Send(&(p3m.local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i],
+          MPI_Send(&(mesh.margin[i]), 1, MPI_INT, node_neighbors[i],
                    REQ_P3M_INIT, comm_cart);
         else
-          MPI_Recv(&(p3m.local_mesh.r_margin[j]), 1, MPI_INT, node_neighbors[j],
-                   REQ_P3M_INIT, comm_cart, &status);
+          MPI_Recv(&(r_margin[j]), 1, MPI_INT, node_neighbors[j],
+                   REQ_P3M_INIT, comm_cart, MPI_STATUS_IGNORE);
       }
     } else {
-      p3m.local_mesh.r_margin[j] = p3m.local_mesh.margin[i];
+      r_margin[j] = mesh.margin[i];
     }
   }
   /* recv grids */
-  for (i = 0; i < 3; i++)
-    for (j = 0; j < 3; j++) {
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++) {
       if (j == i) {
         p3m.sm.r_ld[i * 2][j] =
-            p3m.sm.s_ld[i * 2][j] + p3m.local_mesh.margin[2 * j];
+            p3m.sm.s_ld[i * 2][j] + mesh.margin[2 * j];
         p3m.sm.r_ur[i * 2][j] =
-            p3m.sm.s_ur[i * 2][j] + p3m.local_mesh.r_margin[2 * j];
+            p3m.sm.s_ur[i * 2][j] + r_margin[2 * j];
         p3m.sm.r_ld[(i * 2) + 1][j] =
-            p3m.sm.s_ld[(i * 2) + 1][j] - p3m.local_mesh.r_margin[(2 * j) + 1];
+            p3m.sm.s_ld[(i * 2) + 1][j] - r_margin[(2 * j) + 1];
         p3m.sm.r_ur[(i * 2) + 1][j] =
-            p3m.sm.s_ur[(i * 2) + 1][j] - p3m.local_mesh.margin[(2 * j) + 1];
+            p3m.sm.s_ur[(i * 2) + 1][j] - mesh.margin[(2 * j) + 1];
       } else {
         p3m.sm.r_ld[i * 2][j] = p3m.sm.s_ld[i * 2][j];
         p3m.sm.r_ur[i * 2][j] = p3m.sm.s_ur[i * 2][j];
@@ -2195,15 +2193,18 @@ void p3m_calc_send_mesh() {
         p3m.sm.r_ur[(i * 2) + 1][j] = p3m.sm.s_ur[(i * 2) + 1][j];
       }
     }
-  for (i = 0; i < 6; i++) {
+  for (int i = 0; i < 6; i++) {
     p3m.sm.r_size[i] = 1;
-    for (j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
       p3m.sm.r_dim[i][j] = p3m.sm.r_ur[i][j] - p3m.sm.r_ld[i][j];
       p3m.sm.r_size[i] *= p3m.sm.r_dim[i][j];
     }
     if (p3m.sm.r_size[i] > p3m.sm.max)
       p3m.sm.max = p3m.sm.r_size[i];
   }
+}
+
+void p3m_calc_send_mesh() { calc_send_mesh(p3m.local_mesh);
 }
 
 void p3m_scaleby_box_l() {
