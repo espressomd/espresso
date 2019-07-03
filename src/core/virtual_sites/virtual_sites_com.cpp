@@ -126,6 +126,7 @@ Utils::Vector3d calc_mol_pos(Particle *p_com) {
   if (count != topology[mol_id].part.n - 1) {
     runtimeErrorMsg() << "There is more than one COM in calc_mol_pos! mol_id= "
                       << mol_id << "\n";
+    return r_com;
   }
 #endif
   return r_com;
