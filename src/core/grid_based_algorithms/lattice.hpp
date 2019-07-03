@@ -92,22 +92,10 @@ public:
    * \param myLeft     left (bottom, front) corner of the local box
    * \param local_box  dimensions of the local box
    */
-  void map_position_to_lattice(const Utils::Vector3d &pos,
+  void map_position_to_lattice(Utils::Vector3d const &pos,
                                Utils::Vector<std::size_t, 8> &node_index,
-                               Utils::Vector6d &delta,
-                               const Utils::Vector3d &myLeft,
-                               const Utils::Vector3d &local_box) const;
+                               Utils::Vector6d &delta) const;
 
-  /** Map a global lattice site to the node grid.
-   *
-   *  This function determines the processor responsible for
-   *  the specified lattice site. The coordinates of the site are
-   *  taken as global coordinates.
-   *
-   *  \param ind              global coordinates of the lattice site
-   *  \return node for the lattice site
-   */
-  int map_lattice_to_node(Utils::Vector3i const &ind) const noexcept;
   /**
    * @brief Determine if given global index is node-local.
    * @param index Global lattice index.

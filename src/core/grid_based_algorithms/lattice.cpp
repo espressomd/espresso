@@ -76,16 +76,14 @@ bool Lattice::is_local(Utils::Vector3i const &index) const noexcept {
 
 void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
                                       Utils::Vector<std::size_t, 8> &node_index,
-                                      Utils::Vector6d &delta,
-                                      const Utils::Vector3d &myLeft,
-                                      const Utils::Vector3d &local_box) const {
+                                      Utils::Vector6d &delta) const {
   Utils::Vector3i ind{};
   auto const epsilon = std::numeric_limits<double>::epsilon();
 
   /* determine the elementary lattice cell containing the particle
      and the relative position of the particle in this cell */
   for (int dir = 0; dir < 3; dir++) {
-    auto const lpos = pos[dir] - myLeft[dir];
+    auto const lpos = pos[dir] - (my_right[dir] - local_box[dir]);
     auto const rel = lpos / agrid + offset;
     ind[dir] = static_cast<int>(floor(rel));
 
@@ -97,9 +95,9 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
       } else {
         throw std::runtime_error("position not inside a local plaquette");
       }
-    } else if (ind[dir] > this->grid[dir]) {
+    } else if (ind[dir] > grid[dir]) {
       if (lpos - local_box[dir] < epsilon * local_box[dir])
-        ind[dir] = this->grid[dir];
+        ind[dir] = grid[dir];
       else
         throw std::runtime_error("position not inside a local plaquette");
     }
@@ -115,20 +113,6 @@ void Lattice::map_position_to_lattice(const Utils::Vector3d &pos,
   node_index[5] = node_index[4] + 1;
   node_index[6] = node_index[4] + halo_grid[0];
   node_index[7] = node_index[4] + halo_grid[0] + 1;
-}
-
-int Lattice::map_lattice_to_node(Utils::Vector3i const &ind) const noexcept {
-  /* determine coordinates in node_grid */
-  Utils::Vector3i index_grid;
-  index_grid[0] =
-      static_cast<int>(floor(ind[0] * agrid / box_l[0] * node_grid[0]));
-  index_grid[1] =
-      static_cast<int>(floor(ind[1] * agrid / box_l[1] * node_grid[1]));
-  index_grid[2] =
-      static_cast<int>(floor(ind[2] * agrid / box_l[2] * node_grid[2]));
-
-  /* return linear index into node array */
-  return map_array_node({index_grid.data(), 3});
 }
 
 Utils::Vector3i Lattice::local_index(Utils::Vector3i const &global_index) const
