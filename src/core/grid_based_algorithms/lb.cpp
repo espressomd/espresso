@@ -116,7 +116,7 @@ boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 /** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
-    // rho
+    // density
     0.0,
     // viscosity
     0.0,
@@ -215,7 +215,7 @@ void lb_reinit_fluid() {
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        ++index) {
     // sets equilibrium distribution
-    lb_set_population_from_density_j_pi(index, lbpar.rho, j, pi);
+    lb_set_population_from_density_j_pi(index, lbpar.density, j, pi);
 
 #ifdef LB_BOUNDARIES
     lbfields[index].boundary = 0;
@@ -556,7 +556,7 @@ void lb_sanity_checks() {
   if (lbpar.tau <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann time step not set";
   }
-  if (lbpar.rho <= 0.0) {
+  if (lbpar.density <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann fluid density not set";
   }
   if (lbpar.viscosity <= 0.0) {
@@ -677,58 +677,58 @@ lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
   population[0] = 1. / 3. * density - 1. / 2. * trace;
 
   /* update the q=1 sublattice */
-  auto rho_times_coeff = 1. / 18. * density;
+  auto density_times_coeff = 1. / 18. * density;
 
   population[1] =
-      rho_times_coeff + 1. / 6. * j[0] + 1. / 4. * pi[0] - 1. / 12. * trace;
+      density_times_coeff + 1. / 6. * j[0] + 1. / 4. * pi[0] - 1. / 12. * trace;
   population[2] =
-      rho_times_coeff - 1. / 6. * j[0] + 1. / 4. * pi[0] - 1. / 12. * trace;
+      density_times_coeff - 1. / 6. * j[0] + 1. / 4. * pi[0] - 1. / 12. * trace;
   population[3] =
-      rho_times_coeff + 1. / 6. * j[1] + 1. / 4. * pi[2] - 1. / 12. * trace;
+      density_times_coeff + 1. / 6. * j[1] + 1. / 4. * pi[2] - 1. / 12. * trace;
   population[4] =
-      rho_times_coeff - 1. / 6. * j[1] + 1. / 4. * pi[2] - 1. / 12. * trace;
+      density_times_coeff - 1. / 6. * j[1] + 1. / 4. * pi[2] - 1. / 12. * trace;
   population[5] =
-      rho_times_coeff + 1. / 6. * j[2] + 1. / 4. * pi[5] - 1. / 12. * trace;
+      density_times_coeff + 1. / 6. * j[2] + 1. / 4. * pi[5] - 1. / 12. * trace;
   population[6] =
-      rho_times_coeff - 1. / 6. * j[2] + 1. / 4. * pi[5] - 1. / 12. * trace;
+      density_times_coeff - 1. / 6. * j[2] + 1. / 4. * pi[5] - 1. / 12. * trace;
 
   /* update the q=2 sublattice */
-  rho_times_coeff = 1. / 36. * density;
+  density_times_coeff = 1. / 36. * density;
 
   auto tmp1 = pi[0] + pi[2];
   auto tmp2 = 2.0 * pi[1];
 
-  population[7] = rho_times_coeff + 1. / 12. * (j[0] + j[1]) +
+  population[7] = density_times_coeff + 1. / 12. * (j[0] + j[1]) +
                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[8] = rho_times_coeff - 1. / 12. * (j[0] + j[1]) +
+  population[8] = density_times_coeff - 1. / 12. * (j[0] + j[1]) +
                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[9] = rho_times_coeff + 1. / 12. * (j[0] - j[1]) +
+  population[9] = density_times_coeff + 1. / 12. * (j[0] - j[1]) +
                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[10] = rho_times_coeff - 1. / 12. * (j[0] - j[1]) +
+  population[10] = density_times_coeff - 1. / 12. * (j[0] - j[1]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
   tmp1 = pi[0] + pi[5];
   tmp2 = 2.0 * pi[3];
 
-  population[11] = rho_times_coeff + 1. / 12. * (j[0] + j[2]) +
+  population[11] = density_times_coeff + 1. / 12. * (j[0] + j[2]) +
                    1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[12] = rho_times_coeff - 1. / 12. * (j[0] + j[2]) +
+  population[12] = density_times_coeff - 1. / 12. * (j[0] + j[2]) +
                    1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[13] = rho_times_coeff + 1. / 12. * (j[0] - j[2]) +
+  population[13] = density_times_coeff + 1. / 12. * (j[0] - j[2]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[14] = rho_times_coeff - 1. / 12. * (j[0] - j[2]) +
+  population[14] = density_times_coeff - 1. / 12. * (j[0] - j[2]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
   tmp1 = pi[2] + pi[5];
   tmp2 = 2.0 * pi[4];
 
-  population[15] = rho_times_coeff + 1. / 12. * (j[1] + j[2]) +
+  population[15] = density_times_coeff + 1. / 12. * (j[1] + j[2]) +
                    1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[16] = rho_times_coeff - 1. / 12. * (j[1] + j[2]) +
+  population[16] = density_times_coeff - 1. / 12. * (j[1] + j[2]) +
                    1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  population[17] = rho_times_coeff + 1. / 12. * (j[1] - j[2]) +
+  population[17] = density_times_coeff + 1. / 12. * (j[1] - j[2]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  population[18] = rho_times_coeff - 1. / 12. * (j[1] - j[2]) +
+  population[18] = density_times_coeff - 1. / 12. * (j[1] - j[2]) +
                    1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
   return population;
 }
@@ -753,12 +753,12 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index) {
 template <typename T>
 inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
                                         const std::array<T, 19> &modes) {
-  T rho, j[3], pi_eq[6];
+  T density, j[3], pi_eq[6];
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
    * equilibrium value */
-  rho = modes[0] + lbpar.rho;
+  density = modes[0] + lbpar.density;
 
   j[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
   j[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
@@ -768,12 +768,12 @@ inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
   auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
 
   /* equilibrium part of the stress modes */
-  pi_eq[0] = j2 / rho;
-  pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / rho;
-  pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / rho;
-  pi_eq[3] = j[0] * j[1] / rho;
-  pi_eq[4] = j[0] * j[2] / rho;
-  pi_eq[5] = j[1] * j[2] / rho;
+  pi_eq[0] = j2 / density;
+  pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / density;
+  pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / density;
+  pi_eq[3] = j[0] * j[1] / density;
+  pi_eq[4] = j[0] * j[2] / density;
+  pi_eq[5] = j[1] * j[2] / density;
 
   return {{modes[0], modes[1], modes[2], modes[3],
            /* relax the stress modes */
@@ -802,8 +802,8 @@ inline std::array<T, 19> lb_thermalize_modes(Lattice::index_t index,
 
     const r123::Philox4x64::ctr_type c{
         {rng_counter_fluid->value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
-    const T rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
-    auto const pref = std::sqrt(12.) * rootrho;
+    const T rootdensity = std::sqrt(std::fabs(modes[0] + lbpar.density));
+    auto const pref = std::sqrt(12.) * rootdensity;
 
     const ctr_type noise[4] = {
         rng_type{}(c, {{static_cast<uint64_t>(index), 0ul}}),
@@ -842,12 +842,12 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
                                   const std::array<T, 19> &modes) {
   const auto &f = lbfields[index].force_density;
 
-  auto const rho = modes[0] + lbpar.rho;
+  auto const density = modes[0] + lbpar.density;
 
   /* hydrodynamic momentum density is redefined when external forces present */
   auto const u = Utils::Vector3d{modes[1] + 0.5 * f[0], modes[2] + 0.5 * f[1],
                                  modes[3] + 0.5 * f[2]} /
-                 rho;
+                 density;
 
   double C[6];
   C[0] = (1. + lbpar.gamma_bulk) * u[0] * f[0] +
@@ -1215,8 +1215,8 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   free(s_buffer);
 }
 
-double lb_calc_rho(std::array<double, 19> const &modes) {
-  return modes[0] + lbpar.rho;
+double lb_calc_density(std::array<double, 19> const &modes) {
+  return modes[0] + lbpar.density;
 }
 
 Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
@@ -1229,17 +1229,17 @@ Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
 Utils::Vector6d lb_calc_pi(std::array<double, 19> const &modes,
                            Utils::Vector3d const &force_density) {
   auto const j = lb_calc_j(modes, force_density);
-  auto const rho = lb_calc_rho(modes);
+  auto const density = lb_calc_density(modes);
   using Utils::sqr;
   auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
   /* equilibrium part of the stress modes */
   Utils::Vector6d modes_from_pi_eq{};
-  modes_from_pi_eq[0] = j2 / rho;
-  modes_from_pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / rho;
-  modes_from_pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / rho;
-  modes_from_pi_eq[3] = j[0] * j[1] / rho;
-  modes_from_pi_eq[4] = j[0] * j[2] / rho;
-  modes_from_pi_eq[5] = j[1] * j[2] / rho;
+  modes_from_pi_eq[0] = j2 / density;
+  modes_from_pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / density;
+  modes_from_pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / density;
+  modes_from_pi_eq[3] = j[0] * j[1] / density;
+  modes_from_pi_eq[4] = j[0] * j[2] / density;
+  modes_from_pi_eq[5] = j[1] * j[2] / density;
 
   /* Now we must predict the outcome of the next collision */
   /* We immediately average pre- and post-collision. */
@@ -1278,11 +1278,11 @@ Utils::Vector6d lb_calc_pi(std::array<double, 19> const &modes,
   return pi;
 }
 
-void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
+void lb_calc_local_fields(Lattice::index_t index, double *density, double *j,
                           double *pi) {
 #ifdef LB_BOUNDARIES
   if (lbfields[index].boundary) {
-    *rho = lbpar.rho;
+    *density = lbpar.density;
     j[0] = 0.;
     j[1] = 0.;
     j[2] = 0.;
@@ -1298,7 +1298,7 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   }
 #endif
   auto modes = lb_calc_modes(index);
-  *rho = modes[0] + lbpar.rho;
+  *density = modes[0] + lbpar.density;
 
   j[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
   j[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
@@ -1312,12 +1312,12 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
 
   /* equilibrium part of the stress modes */
   Utils::Vector6d modes_from_pi_eq{};
-  modes_from_pi_eq[0] = j2 / *rho;
-  modes_from_pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / *rho;
-  modes_from_pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / *rho;
-  modes_from_pi_eq[3] = j[0] * j[1] / *rho;
-  modes_from_pi_eq[4] = j[0] * j[2] / *rho;
-  modes_from_pi_eq[5] = j[1] * j[2] / *rho;
+  modes_from_pi_eq[0] = j2 / *density;
+  modes_from_pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / *density;
+  modes_from_pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / *density;
+  modes_from_pi_eq[3] = j[0] * j[1] / *density;
+  modes_from_pi_eq[4] = j[0] * j[2] / *density;
+  modes_from_pi_eq[5] = j[1] * j[2] / *density;
 
   /* Now we must predict the outcome of the next collision */
   /* We immediately average pre- and post-collision. */
@@ -1394,8 +1394,8 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
           for (i = 0; i < 19; i++) {
             population_shift = 0;
             for (l = 0; l < 3; l++) {
-              population_shift -= lbpar.rho * 2 * D3Q19::c[i][l] * D3Q19::w[i] *
-                                  lbfields[k].slip_velocity[l] /
+              population_shift -= lbpar.density * 2 * D3Q19::c[i][l] *
+                                  D3Q19::w[i] * lbfields[k].slip_velocity[l] /
                                   D3Q19::c_sound_sq<double>;
             }
 

@@ -88,7 +88,7 @@ struct LB_FluidNode {
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
 struct LB_Parameters {
   /** number density (LB units) */
-  double rho;
+  double density;
 
   /** kinematic viscosity (LB units) */
   double viscosity;
@@ -129,8 +129,8 @@ struct LB_Parameters {
   double kT;
 
   template <class Archive> void serialize(Archive &ar, long int) {
-    ar &rho &viscosity &bulk_viscosity &agrid &tau &ext_force_density &gamma_odd
-        &gamma_even &gamma_shear &gamma_bulk &is_TRT &phi &kT;
+    ar &density &viscosity &bulk_viscosity &agrid &tau &ext_force_density
+        &gamma_odd &gamma_even &gamma_shear &gamma_bulk &is_TRT &phi &kT;
   }
 };
 
@@ -208,10 +208,10 @@ void lb_set_population_from_density_j_pi(Lattice::index_t index, double density,
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif
 
-void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
+void lb_calc_local_fields(Lattice::index_t index, double *density, double *j,
                           double *pi);
 
-double lb_calc_rho(std::array<double, 19> const &modes);
+double lb_calc_density(std::array<double, 19> const &modes);
 Utils::Vector3d lb_calc_j(std::array<double, 19> const &modes,
                           Utils::Vector3d const &force_density);
 Utils::Vector6d lb_calc_pi(std::array<double, 19> const &modes,
@@ -245,7 +245,7 @@ Utils::Vector19d lb_get_population_from_density_j_pi(double density,
 inline Utils::Vector19d lb_get_population(Lattice::index_t index) {
   Utils::Vector19d pop{};
   for (int i = 0; i < D3Q19::n_vel; ++i) {
-    pop[i] = lbfluid[i][index] + D3Q19::coefficients[i][0] * lbpar.rho;
+    pop[i] = lbfluid[i][index] + D3Q19::coefficients[i][0] * lbpar.density;
   }
   return pop;
 }
@@ -253,7 +253,7 @@ inline Utils::Vector19d lb_get_population(Lattice::index_t index) {
 inline void lb_set_population(Lattice::index_t index,
                               const Utils::Vector19d &pop) {
   for (int i = 0; i < D3Q19::n_vel; ++i) {
-    lbfluid[i][index] = pop[i] - D3Q19::coefficients[i][0] * lbpar.rho;
+    lbfluid[i][index] = pop[i] - D3Q19::coefficients[i][0] * lbpar.density;
   }
 }
 

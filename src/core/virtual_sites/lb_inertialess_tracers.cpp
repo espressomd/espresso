@@ -208,22 +208,22 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
         auto const index = node_index[(z * 2 + y) * 2 + x];
         const auto &f = lbfields[index].force_density_buf;
 
-        double local_rho;
+        double local_density;
         Utils::Vector3d local_j;
 
 // This can be done easier without copying the code twice
 // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
-          local_rho = lbpar.rho;
-          local_j = lbpar.rho *
+          local_density = lbpar.density;
+          local_j = lbpar.density *
                     (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
                         .velocity();
         } else
 #endif
         {
           auto const modes = lb_calc_modes(index);
-          local_rho = lbpar.rho + modes[0];
+          local_density = lbpar.density + modes[0];
 
           // Add the +f/2 contribution!!
           // Guo et al. PRE 2002
@@ -245,22 +245,22 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
 
           forceAdded[0] += delta[3 * x + 0] * delta[3 * y + 1] *
                            delta[3 * z + 2] * (f[0] - fExt[0]) / 2 /
-                           (local_rho);
+                           (local_density);
           forceAdded[1] += delta[3 * x + 0] * delta[3 * y + 1] *
                            delta[3 * z + 2] * (f[1] - fExt[1]) / 2 /
-                           (local_rho);
+                           (local_density);
           forceAdded[2] += delta[3 * x + 0] * delta[3 * y + 1] *
                            delta[3 * z + 2] * (f[2] - fExt[2]) / 2 /
-                           (local_rho);
+                           (local_density);
         }
 
         // Interpolate velocity
         interpolated_u[0] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[0] / (local_rho);
+                             delta[3 * z + 2] * local_j[0] / (local_density);
         interpolated_u[1] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[1] / (local_rho);
+                             delta[3 * z + 2] * local_j[1] / (local_density);
         interpolated_u[2] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[2] / (local_rho);
+                             delta[3 * z + 2] * local_j[2] / (local_density);
       }
     }
   }

@@ -18,23 +18,6 @@ ActiveLB lattice_switch = ActiveLB::NONE;
 
 /* LB CPU callback interface */
 namespace {
-/** Issue REQ_SEND_FLUID: Send a single lattice site to a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param rho    local fluid density
- *  @param j      local fluid velocity
- *  @param pi     local fluid pressure
- */
-void mpi_send_fluid(int node, int index, double rho, Utils::Vector3d const &j,
-                    Utils::Vector6d const &pi) {
-  if (node == this_node) {
-    lb_set_population_from_density_j_pi(index, rho, j, pi);
-  } else if (0 == this_node) {
-    mpi_call(mpi_send_fluid, node, index, rho, j, pi);
-  }
-}
-
-REGISTER_CALLBACK(mpi_send_fluid)
 
 template <typename Kernel>
 void lb_set(Utils::Vector3i const &index, Kernel &&kernel) {
@@ -63,13 +46,13 @@ auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel &&kernel) {
   });
 }
 
-auto mpi_lb_get_rho(Utils::Vector3i const &index) {
+auto mpi_lb_get_density(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_rho(modes);
+    return lb_calc_density(modes);
   });
 }
 
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_rho)
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_density)
 
 auto mpi_lb_get_populations(Utils::Vector3i const &index) {
   return lb_calc(index, [&](auto index) {
@@ -240,7 +223,7 @@ void lb_lbfluid_reinit_parameters() {
   }
 }
 
-/** (Re-)initialize the fluid according to the value of rho. */
+/** (Re-)initialize the fluid according to the value of density. */
 
 void lb_lbfluid_reinit_fluid() {
   if (lattice_switch == ActiveLB::GPU) {
@@ -298,7 +281,7 @@ void lb_lbfluid_set_density(double p_dens) {
     lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
 #endif //  CUDA
   } else {
-    lbpar.rho = p_dens;
+    lbpar.density = p_dens;
     mpi_bcast_lb_params(LBParam::DENSITY);
   }
 }
@@ -312,7 +295,7 @@ double lb_lbfluid_get_density() {
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
-    return lbpar.rho;
+    return lbpar.density;
   }
   throw std::runtime_error("LB not activated.");
 }
@@ -1113,7 +1096,7 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
   }
   if (lattice_switch == ActiveLB::CPU) {
     return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, mpi_lb_get_rho, ind);
+        ::Communication::Result::one_rank, mpi_lb_get_density, ind);
   }
   throw std::runtime_error("LB not activated.");
 }
@@ -1134,11 +1117,11 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
-    auto const rho = ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, mpi_lb_get_rho, ind);
+    auto const density = ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, mpi_lb_get_density, ind);
     auto const j = ::Communication::mpiCallbacks().call(
         ::Communication::Result::one_rank, mpi_lb_get_j, ind);
-    return j / rho;
+    return j / density;
   }
   throw std::runtime_error("LB not activated.");
 
@@ -1269,20 +1252,20 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
   throw std::runtime_error("LB not activated.");
 }
 
-void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
+void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
-    auto const host_rho = static_cast<float>(p_rho);
-    lb_set_node_rho_GPU(single_nodeindex, host_rho);
+    auto const host_density = static_cast<float>(p_density);
+    lb_set_node_rho_GPU(single_nodeindex, host_density);
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     auto const stress = lb_lbnode_get_pi(ind);
     auto const flux_density =
         lb_lbnode_get_velocity(ind) * lb_lbnode_get_density(ind);
     auto const population =
-        lb_get_population_from_density_j_pi(p_rho, flux_density, stress);
+        lb_get_population_from_density_j_pi(p_density, flux_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
   } else {
     throw std::runtime_error("LB not activated.");
