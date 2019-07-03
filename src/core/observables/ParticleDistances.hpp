@@ -36,7 +36,8 @@ public:
   std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i = 0, end = n_values(); i < end; i++) {
-      auto v = get_mi_vector(partCfg[ids()[i]].r.p, partCfg[ids()[i + 1]].r.p);
+      auto v = get_mi_vector(partCfg[ids()[i]].r.p, partCfg[ids()[i + 1]].r.p,
+                             box_geo);
       res[i] = v.norm();
     }
     return res;

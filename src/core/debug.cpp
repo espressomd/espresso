@@ -33,6 +33,7 @@
 
 #include "cells.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 
@@ -63,9 +64,10 @@ void check_particle_consistency() {
         errexit();
       }
       for (dir = 0; dir < 3; dir++) {
-        if (PERIODIC(dir) &&
-            (part[n].r.p[dir] < -ROUND_ERROR_PREC * box_l[dir] ||
-             part[n].r.p[dir] - box_l[dir] > ROUND_ERROR_PREC * box_l[dir])) {
+        if (box_geo.periodic(dir) &&
+            (part[n].r.p[dir] < -ROUND_ERROR_PREC * box_geo.length()[dir] ||
+             part[n].r.p[dir] - box_geo.length()[dir] >
+                 ROUND_ERROR_PREC * box_geo.length()[dir])) {
           fprintf(stderr,
                   "%d: check_particle_consistency: ERROR: illegal "
                   "pos[%d]=%f of part %d id=%d in cell %d\n",
@@ -181,8 +183,9 @@ void check_particles() {
       }
 
       for (dir = 0; dir < 3; dir++) {
-        if (PERIODIC(dir) && (part[n].r.p[dir] < -skin2 ||
-                              part[n].r.p[dir] > box_l[dir] + skin2)) {
+        if (box_geo.periodic(dir) &&
+            (part[n].r.p[dir] < -skin2 ||
+             part[n].r.p[dir] > box_geo.length()[dir] + skin2)) {
           fprintf(stderr,
                   "%d: check_particles: ERROR: illegal pos[%d]=%f of "
                   "part %d id=%d in cell %d\n",

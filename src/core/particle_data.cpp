@@ -1181,7 +1181,7 @@ void local_remove_particle(int part) {
 Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
   auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
   auto i = Utils::Vector3i{};
-  fold_position(pp, i);
+  fold_position(pp, i, box_geo);
 
   if (_new) {
     Particle new_part;

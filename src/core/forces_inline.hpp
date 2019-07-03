@@ -357,11 +357,9 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 }
 
 inline int calc_bond_pair_force(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *iaparams, double *dx_,
-                                double *force) {
+                                Bonded_ia_parameters *iaparams,
+                                const Utils::Vector3d &dx, double *force) {
   int bond_broken = 0;
-
-  auto const dx = Utils::Vector3d{dx_, dx_ + 3};
 
   switch (iaparams->type) {
   case BONDED_IA_FENE:
@@ -420,7 +418,6 @@ inline void add_bonded_force(Particle *p1) {
 
   int i = 0;
   while (i < p1->bl.n) {
-    double dx[3] = {0., 0., 0.};
     double force[3] = {0., 0., 0.};
     double force2[3] = {0., 0., 0.};
     double force3[3] = {0., 0., 0.};
@@ -470,7 +467,7 @@ inline void add_bonded_force(Particle *p1) {
          1->2 distance vector here. For many body interactions this vector is
          not needed,
          and the pressure calculation not yet clear. */
-      get_mi_vector(dx, p1->r.p, p2->r.p);
+      auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
       bond_broken = calc_bond_pair_force(p1, p2, iaparams, dx, force);
 
 #ifdef NPT
@@ -568,9 +565,7 @@ inline void add_bonded_force(Particle *p1) {
     case 1:
       if (bond_broken) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                          << " and " << p2->p.identity
-                          << ". Distance vector: " << dx[0] << " " << dx[1]
-                          << " " << dx[2];
+                          << " and " << p2->p.identity;
         continue;
       }
 

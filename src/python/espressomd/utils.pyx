@@ -232,7 +232,7 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
         raise ValueError(array_locked.ERR_MSG)
 
 
-cdef make_array_locked(const Vector3d & v):
+cdef make_array_locked(Vector3d v):
     return array_locked([v[0], v[1], v[2]])
 
 

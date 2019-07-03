@@ -24,7 +24,9 @@
  *  Common code for functions calculating angle forces.
  */
 
+#include "config.hpp"
 #include "grid.hpp"
+
 #include <tuple>
 
 /** Compute the cosine of the angle between three particles.
@@ -48,11 +50,11 @@ calc_vectors_and_cosine(Utils::Vector3d const &r_mid,
                         Utils::Vector3d const &r_right,
                         bool sanitize_cosine = false) {
   /* normalized vector from p_mid to p_left */
-  auto vec1 = get_mi_vector(r_left, r_mid);
+  auto vec1 = get_mi_vector(r_left, r_mid, box_geo);
   auto const d1i = 1.0 / vec1.norm();
   vec1 *= d1i;
   /* normalized vector from p_mid to p_right */
-  auto vec2 = get_mi_vector(r_right, r_mid);
+  auto vec2 = get_mi_vector(r_right, r_mid, box_geo);
   auto const d2i = 1.0 / vec2.norm();
   vec2 *= d2i;
   /* cosine of the angle between vec1 and vec2 */
