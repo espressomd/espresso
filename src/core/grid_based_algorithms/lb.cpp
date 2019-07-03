@@ -667,8 +667,9 @@ void lb_prepare_communication() {
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
 /*@{*/
-Utils::Vector19d lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
-                                        Utils::Vector6d const &pi) {
+Utils::Vector19d
+lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
+                                    Utils::Vector6d const &pi) {
   Utils::Vector19d population{};
   auto const trace = pi[0] + pi[2] + pi[5];
 
@@ -732,9 +733,10 @@ Utils::Vector19d lb_get_population_from_density_j_pi(double density, Utils::Vect
   return population;
 }
 
-void lb_set_population_from_density_j_pi(Lattice::index_t const index, double density,
-                            Utils::Vector3d const &j,
-                            Utils::Vector6d const &pi) {
+void lb_set_population_from_density_j_pi(Lattice::index_t const index,
+                                         double density,
+                                         Utils::Vector3d const &j,
+                                         Utils::Vector6d const &pi) {
   auto const population = lb_get_population_from_density_j_pi(density, j, pi);
   lb_set_population(index, population);
 }

@@ -202,8 +202,8 @@ void lb_sanity_checks();
     @param pi local fluid stress
 */
 void lb_set_population_from_density_j_pi(Lattice::index_t index, double density,
-                            Utils::Vector3d const &j,
-                            Utils::Vector6d const &pi);
+                                         Utils::Vector3d const &j,
+                                         Utils::Vector6d const &pi);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif
@@ -238,8 +238,9 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
  * @param pi      fluid stress
  * @return 19 populations (including equilibrium density contribution).
  **/
-Utils::Vector19d lb_get_population_from_density_j_pi(double density, Utils::Vector3d const &j,
-                                        Utils::Vector6d const &pi);
+Utils::Vector19d lb_get_population_from_density_j_pi(double density,
+                                                     Utils::Vector3d const &j,
+                                                     Utils::Vector6d const &pi);
 
 inline Utils::Vector19d lb_get_population(Lattice::index_t index) {
   Utils::Vector19d pop{};
@@ -250,7 +251,7 @@ inline Utils::Vector19d lb_get_population(Lattice::index_t index) {
 }
 
 inline void lb_set_population(Lattice::index_t index,
-                               const Utils::Vector19d &pop) {
+                              const Utils::Vector19d &pop) {
   for (int i = 0; i < D3Q19::n_vel; ++i) {
     lbfluid[i][index] = pop[i] - D3Q19::coefficients[i][0] * lbpar.rho;
   }

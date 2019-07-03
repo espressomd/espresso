@@ -96,7 +96,7 @@ auto mpi_lb_get_boundary_flag(Utils::Vector3i const &index) {
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_boundary_flag)
 
 void mpi_lb_set_population(Utils::Vector3i const &index,
-                            Utils::Vector19d const &population) {
+                           Utils::Vector19d const &population) {
   lb_set(index, [&](auto index) {
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
@@ -121,44 +121,6 @@ auto mpi_lb_get_pi(Utils::Vector3i const &index) {
 }
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_pi)
-
-void mpi_recv_fluid_slave(int node, int index) {
-  if (node == this_node) {
-    double data[10];
-    lb_calc_local_fields(index, &data[0], &data[1], &data[4]);
-    MPI_Send(data, 10, MPI_DOUBLE, 0, SOME_TAG, comm_cart);
-  }
-}
-
-REGISTER_CALLBACK(mpi_recv_fluid_slave)
-
-/** Issue REQ_GET_FLUID: Receive a single lattice site from a processor.
- *  @param node   processor to send to
- *  @param index  index of the lattice site
- *  @param rho    local fluid density
- *  @param j      local fluid velocity
- *  @param pi     local fluid pressure
- */
-void mpi_recv_fluid(int node, int index, double *rho, double *j, double *pi) {
-  if (node == this_node) {
-    lb_calc_local_fields(index, rho, j, pi);
-  } else {
-    double data[10];
-    mpi_call(mpi_recv_fluid_slave, node, index);
-    MPI_Recv(data, 10, MPI_DOUBLE, node, SOME_TAG, comm_cart,
-             MPI_STATUS_IGNORE);
-    *rho = data[0];
-    j[0] = data[1];
-    j[1] = data[2];
-    j[2] = data[3];
-    pi[0] = data[4];
-    pi[1] = data[5];
-    pi[2] = data[6];
-    pi[3] = data[7];
-    pi[4] = data[8];
-    pi[5] = data[9];
-  }
-}
 
 void mpi_bcast_lb_params_slave(LBParam field, const LB_Parameters &params_) {
   lbpar = params_;
@@ -1316,16 +1278,12 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_rho) {
     lb_set_node_rho_GPU(single_nodeindex, host_rho);
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
-    double rho;
-    Utils::Vector3d j;
-    Utils::Vector6d pi;
-
-    auto const node = lblattice.map_lattice_to_node(ind);
-    auto const index =
-        get_linear_index(lblattice.local_index(ind), lblattice.halo_grid);
-
-    mpi_recv_fluid(node, index, &rho, j.data(), pi.data());
-    mpi_send_fluid(node, index, p_rho, j, pi);
+    auto const stress = lb_lbnode_get_pi(ind);
+    auto const flux_density =
+        lb_lbnode_get_velocity(ind) * lb_lbnode_get_density(ind);
+    auto const population =
+        lb_get_population_from_density_j_pi(p_rho, flux_density, stress);
+    mpi_call_all(mpi_lb_set_population, ind, population);
   } else {
     throw std::runtime_error("LB not activated.");
   }
