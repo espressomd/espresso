@@ -198,20 +198,19 @@ void lb_sanity_checks();
 /** Sets the equilibrium distributions.
     @param index Index of the local site
     @param density local fluid density
-    @param flux_density local fluid flux density
+    @param momentum_density local fluid flux density
     @param stress local fluid stress
 */
-void lb_set_population_from_density_flux_density_stress(Lattice::index_t index,
-                                             double density,
-                                             Utils::Vector3d const &flux_density,
-                                             Utils::Vector6d const &stress);
+void lb_set_population_from_density_momentum_density_stress(
+    Lattice::index_t index, double density,
+    Utils::Vector3d const &momentum_density, Utils::Vector6d const &stress);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif
 
 double lb_calc_density(std::array<double, 19> const &modes);
-Utils::Vector3d lb_calc_flux_density(std::array<double, 19> const &modes,
-                          Utils::Vector3d const &force_density);
+Utils::Vector3d lb_calc_momentum_density(std::array<double, 19> const &modes,
+                                         Utils::Vector3d const &force_density);
 Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
                                Utils::Vector3d const &force_density);
 
@@ -232,12 +231,13 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 /**
  * @brief Get the populations as a function of density, flux density and stress.
  * @param density fluid density
- * @param flux_density       fluid flux density
+ * @param momentum_density       fluid flux density
  * @param stress      fluid stress
  * @return 19 populations (including equilibrium density contribution).
  **/
-Utils::Vector19d lb_get_population_from_density_flux_density_stress(
-    double density, Utils::Vector3d const &flux_density, Utils::Vector6d const &stress);
+Utils::Vector19d lb_get_population_from_density_momentum_density_stress(
+    double density, Utils::Vector3d const &momentum_density,
+    Utils::Vector6d const &stress);
 
 inline Utils::Vector19d lb_get_population(Lattice::index_t index) {
   Utils::Vector19d pop{};

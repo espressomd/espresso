@@ -89,13 +89,13 @@ void mpi_lb_set_population(Utils::Vector3i const &index,
 
 REGISTER_CALLBACK(mpi_lb_set_population)
 
-auto mpi_lb_get_flux_density(Utils::Vector3i const &index) {
+auto mpi_lb_get_momentum_density(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_flux_density(modes, force_density);
+    return lb_calc_momentum_density(modes, force_density);
   });
 }
 
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_flux_density)
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_momentum_density)
 
 auto mpi_lb_get_stress(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
@@ -1119,9 +1119,9 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::CPU) {
     auto const density = ::Communication::mpiCallbacks().call(
         ::Communication::Result::one_rank, mpi_lb_get_density, ind);
-    auto const flux_density = ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, mpi_lb_get_flux_density, ind);
-    return flux_density / density;
+    auto const momentum_density = ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, mpi_lb_get_momentum_density, ind);
+    return momentum_density / density;
   }
   throw std::runtime_error("LB not activated.");
 
@@ -1261,10 +1261,11 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     auto const stress = lb_lbnode_get_stress(ind);
-    auto const flux_density =
+    auto const momentum_density =
         lb_lbnode_get_velocity(ind) * lb_lbnode_get_density(ind);
-    auto const population = lb_get_population_from_density_flux_density_stress(
-        p_density, flux_density, stress);
+    auto const population =
+        lb_get_population_from_density_momentum_density_stress(
+            p_density, momentum_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
   } else {
     throw std::runtime_error("LB not activated.");
@@ -1285,10 +1286,11 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
 #endif //  CUDA
   } else {
     auto const density = lb_lbnode_get_density(ind);
-    auto const flux_density = u * density;
+    auto const momentum_density = u * density;
     auto const stress = lb_lbnode_get_stress(ind);
     auto const population =
-        lb_get_population_from_density_flux_density_stress(density, flux_density, stress);
+        lb_get_population_from_density_momentum_density_stress(
+            density, momentum_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
   }
 }
