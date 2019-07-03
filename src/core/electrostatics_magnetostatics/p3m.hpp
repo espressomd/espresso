@@ -307,9 +307,6 @@ inline double p3m_pair_energy(double chgfac, double dist) {
   return 0.0;
 }
 
-/** Clean up P3M memory allocations. */
-void p3m_free();
-
 #endif /* of ifdef P3M */
 
 #endif /*of ifndef P3M_H */

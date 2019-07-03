@@ -275,45 +275,14 @@ p3m_data_struct::p3m_data_struct() {
   ks_pnum = 0;
 }
 
-void p3m_free() {
-  /* free memory */
-  free(p3m.rs_mesh);
-}
-
-void p3m_set_prefactor() {
-  p3m.params.alpha = 0.0;
-  p3m.params.alpha_L = 0.0;
-  p3m.params.r_cut = 0.0;
-  p3m.params.r_cut_iL = 0.0;
-  p3m.params.mesh[0] = 0;
-  p3m.params.mesh[1] = 0;
-  p3m.params.mesh[2] = 0;
-  p3m.params.cao = 0;
-}
-
 void p3m_init() {
   if (coulomb.prefactor <= 0.0) {
     p3m.params.r_cut = 0.0;
     p3m.params.r_cut_iL = 0.0;
-
-    if (this_node == 0) {
-      P3M_TRACE(fprintf(stderr, "0: P3M_init: prefactor is "
-                                "zero.\nElectrostatics switched off!\n"););
-    }
-
   } else {
-    P3M_TRACE(fprintf(stderr, "%d: p3m_init:\n", this_node));
-
     if (p3m_sanity_checks()) {
       return;
     }
-
-    P3M_TRACE(fprintf(stderr, "%d: p3m_init: starting\n", this_node));
-
-    P3M_TRACE(fprintf(stderr, "%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",
-                      this_node, p3m.params.mesh[0], p3m.params.cao,
-                      p3m.params.mesh_off[0], p3m.params.mesh_off[1],
-                      p3m.params.mesh_off[2]));
     p3m.params.cao3 = p3m.params.cao * p3m.params.cao * p3m.params.cao;
 
     /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and
@@ -329,24 +298,15 @@ void p3m_init() {
     p3m_calc_local_ca_mesh();
 
     p3m_calc_send_mesh();
-    P3M_TRACE(p3m_p3m_print_local_mesh(p3m.local_mesh));
-    P3M_TRACE(p3m_p3m_print_send_mesh(p3m.sm));
     p3m.send_grid.resize(p3m.sm.max);
     p3m.recv_grid.resize(p3m.sm.max);
 
     /* FFT */
-    P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
-                      (void *)p3m.rs_mesh));
-
     int ca_mesh_size =
         fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
                  p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft,
                  node_grid, comm_cart);
     p3m.ks_mesh.resize(ca_mesh_size);
-
-    P3M_TRACE(fprintf(stderr, "%d: p3m.rs_mesh ADR=%p\n", this_node,
-                      (void *)p3m.rs_mesh));
-
     /* k-space part: */
     p3m_calc_differential_operator();
 
@@ -359,12 +319,7 @@ void p3m_init() {
     /* position offset for calc. of first meshpoint */
     p3m.pos_shift =
         std::floor((p3m.params.cao - 1) / 2.0) - (p3m.params.cao % 2) / 2.0;
-    P3M_TRACE(
-        fprintf(stderr, "%d: p3m.pos_shift = %f\n", this_node, p3m.pos_shift));
-
     p3m_count_charged_particles();
-
-    P3M_TRACE(fprintf(stderr, "%d: p3m-charges  initialized\n", this_node));
   }
 }
 
@@ -1332,7 +1287,6 @@ void p3m_calc_influence_function_energy() {
  * This tuning is based on P3M_tune by M. Deserno
  */
 /**@{*/
-#define P3M_TUNE_MAX_CUTS 50
 
 /** Get the minimal error for this combination of parameters.
  *
@@ -2059,7 +2013,7 @@ void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
 }
 /**@}*/
 
-void p3m_calc_local_ca_mesh() {
+void calc_local_ca_mesh() {
   int i;
   int ind[3];
   /* total skin size */
@@ -2080,11 +2034,11 @@ void p3m_calc_local_ca_mesh() {
   /* correct roundof errors at boundary */
   for (i = 0; i < 3; i++) {
     if ((my_right[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
-            p3m.local_mesh.in_ur[i] <
+        p3m.local_mesh.in_ur[i] <
         ROUND_ERROR_PREC)
       p3m.local_mesh.in_ur[i]--;
     if (1.0 + (my_left[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
-            p3m.local_mesh.in_ld[i] <
+        p3m.local_mesh.in_ld[i] <
         ROUND_ERROR_PREC)
       p3m.local_mesh.in_ld[i]--;
   }
@@ -2109,7 +2063,7 @@ void p3m_calc_local_ca_mesh() {
   for (i = 0; i < 3; i++)
     if (((my_right[i] + full_skin[i]) * p3m.params.ai[i] -
          p3m.params.mesh_off[i]) -
-            ind[i] ==
+        ind[i] ==
         0)
       ind[i]--;
   /* up right margin */
@@ -2132,6 +2086,10 @@ void p3m_calc_local_ca_mesh() {
   p3m.local_mesh.q_2_off = p3m.local_mesh.dim[2] - p3m.params.cao;
   p3m.local_mesh.q_21_off =
       p3m.local_mesh.dim[2] * (p3m.local_mesh.dim[1] - p3m.params.cao);
+}
+
+void p3m_calc_local_ca_mesh() {
+calc_local_ca_mesh();
 }
 
 void p3m_calc_lm_ld_pos() {

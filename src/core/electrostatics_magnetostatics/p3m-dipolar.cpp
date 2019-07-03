@@ -218,74 +218,6 @@ double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
 static double dp3m_average_dipolar_self_energy(double box_l, int mesh);
 static double dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3]);
 
-/************************************************************/
-/* functions related to the correction of the dipolar p3m-energy */
-
-/*
-
-// Do the sum over k<>0 where k={kx,ky,kz} with kx,ky,kz INTEGERS, of
-// exp(-Utils::pi()**2*k**2/alpha**2/L**2)
-static double dp3m_sumi1(double alpha_L){
-       int k2,kx,ky,kz,kx2,ky2,limit=60;
-       double suma,alpha_L2;
-
-       alpha_L2= alpha_L* alpha_L;
-
-       //fprintf(stderr,"alpha_L=%le\n",alpha_L);
-       //fprintf(stderr,"Utils::pi()=%le\n",Utils::pi());
-
-
-       suma=0.0;
-       for(kx=-limit;kx<=limit;kx++){
-         kx2=kx*kx;
-       for(ky=-limit;ky<=limit;ky++){
-         ky2=ky*ky;
-       for(kz=-limit;kz<=limit;kz++){
-           k2=kx2+ky2+kz*kz;
-           suma+=exp(-Utils::pi()*Utils::pi()*k2/(alpha_L*alpha_L));
-       }}}
-       suma-=1; //It's easier to subtract the term k=0 later than put an if
-inside the loops
-
-
-         //fprintf(stderr,"suma=%le\n",suma);
-
-
-   return suma;
-}
-
-*/
-
-/************************************************************/
-
-/*
-// Do the sum over n<>0 where n={nx*L,ny*L,nz*L} with nx,ny,nz INTEGERS, of
-// exp(-alpha_iL**2*n**2)
-static double dp3m_sumi2(double alpha_L){
-       int n2,nx,ny,nz,nx2,ny2,limit=60;
-       double suma;
-
-
-
-       suma=0.0;
-       for(nx=-limit;nx<=limit;nx++){
-         nx2=nx*nx;
-       for(ny=-limit;ny<=limit;ny++){
-         ny2=ny*ny;
-       for(nz=-limit;nz<=limit;nz++){
-           n2=nx2+ny2+nz*nz;
-           suma+=exp(-alpha_L*alpha_L*n2);
-       }}}
-       suma-=1; //It's easier to subtract the term n=0 later than put an if
-inside the loops
-
-
-
-   return suma;
-}
-
-*/
-
 dp3m_data_struct::dp3m_data_struct() {
   params.epsilon = P3M_EPSILON_MAGNETIC;
 
@@ -429,17 +361,6 @@ void dp3m_init() {
 
     P3M_TRACE(fprintf(stderr, "%d: p3m initialized\n", this_node));
   }
-}
-
-void dp3m_free_dipoles() {
-  for (auto &i : dp3m.rs_mesh_dip)
-    free(i);
-  free(dp3m.ca_frac);
-  free(dp3m.ca_fmp);
-  free(dp3m.send_grid);
-  free(dp3m.recv_grid);
-  free(dp3m.rs_mesh);
-  free(dp3m.ks_mesh);
 }
 
 double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
@@ -666,9 +587,6 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
                         double const dip[3], int cp_cnt) {
   /* we do not really want to export these, but this function should be inlined
    */
-  double p3m_caf(int i, double x, int cao_value);
-  void dp3m_realloc_ca_fields(int size);
-
   int d, i0, i1, i2;
   double tmp0, tmp1;
   /* position of a particle in local mesh units */
@@ -1575,8 +1493,6 @@ double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]) {
  * This tuning is based on the P3M tuning of the charges
  * which in turn is based on the P3M_tune by M. Deserno
  ************************************************/
-
-#define P3M_TUNE_MAX_CUTS 50
 
 /*****************************************************************************/
 

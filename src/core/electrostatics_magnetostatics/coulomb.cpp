@@ -193,31 +193,7 @@ void on_observable_calc() {
 }
 
 void on_coulomb_change() {
-  switch (coulomb.method) {
-  case COULOMB_DH:
-    break;
-#ifdef P3M
-#ifdef CUDA
-  case COULOMB_P3M_GPU:
-    p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
-    break;
-#endif
-  case COULOMB_ELC_P3M:
-    ELC_init();
-    // fall through
-  case COULOMB_P3M:
-    p3m_init();
-    break;
-#endif
-  case COULOMB_MMM1D:
-    MMM1D_init();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
-  default:
-    break;
-  }
+    init();
 }
 
 void on_resort_particles() {
