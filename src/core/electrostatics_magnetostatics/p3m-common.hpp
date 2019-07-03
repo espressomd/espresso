@@ -53,6 +53,7 @@
 #include "config.hpp"
 
 #if defined(P3M) || defined(DP3M)
+#include <utils/Vector.hpp>
 
 /** Error Codes for p3m tuning (version 2) */
 enum P3M_TUNE_ERROR {
@@ -226,6 +227,10 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
  */
 double p3m_caf(int i, double x, int cao_value);
 
+p3m_local_mesh calc_local_mesh(const P3MParameters &params,
+                               const Utils::Vector3d &my_left,
+                               const Utils::Vector3d &my_right,
+                               const Utils::Vector3d &halo);
 #endif /* P3M || DP3M */
 
 #endif /* _P3M_COMMON_H */

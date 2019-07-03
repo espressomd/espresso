@@ -316,4 +316,75 @@ double p3m_caf(int i, double x, int cao_value) {
   }
   }
 }
+
+p3m_local_mesh calc_local_mesh(const P3MParameters &params,
+                               const Utils::Vector3d &my_left,
+                               const Utils::Vector3d &my_right,
+                               const Utils::Vector3d &halo) {
+  /* return value */
+  p3m_local_mesh local_mesh{};
+
+  /* inner left down grid point (global index) */
+  for (int i = 0; i < 3; i++)
+    local_mesh.in_ld[i] =
+        (int)ceil(my_left[i] * params.ai[i] - params.mesh_off[i]);
+  /* inner up right grid point (global index) */
+  for (int i = 0; i < 3; i++)
+    local_mesh.in_ur[i] =
+        (int)floor(my_right[i] * params.ai[i] - params.mesh_off[i]);
+
+  /* correct roundof errors at boundary */
+  for (int i = 0; i < 3; i++) {
+    if ((my_right[i] * params.ai[i] - params.mesh_off[i]) -
+        local_mesh.in_ur[i] <
+        ROUND_ERROR_PREC)
+      local_mesh.in_ur[i]--;
+    if (1.0 + (my_left[i] * params.ai[i] - params.mesh_off[i]) -
+        local_mesh.in_ld[i] <
+        ROUND_ERROR_PREC)
+      local_mesh.in_ld[i]--;
+  }
+  /* inner grid dimensions */
+  for (int i = 0; i < 3; i++)
+    local_mesh.inner[i] = local_mesh.in_ur[i] - local_mesh.in_ld[i] + 1;
+  /* index of left down grid point in global mesh */
+  for (int i = 0; i < 3; i++)
+    local_mesh.ld_ind[i] =
+        (int)ceil((my_left[i] - halo[i]) * params.ai[i] - params.mesh_off[i]);
+  /* left down margin */
+  for (int i = 0; i < 3; i++)
+    local_mesh.margin[i * 2] = local_mesh.in_ld[i] - local_mesh.ld_ind[i];
+  /* up right grid point */
+  int ind[3];
+  for (int i = 0; i < 3; i++)
+    ind[i] = (int)floor((my_right[i] + halo[i]) * params.ai[i] -
+                        params.mesh_off[i]);
+  /* correct roundof errors at up right boundary */
+  for (int i = 0; i < 3; i++)
+    if (((my_right[i] + halo[i]) * params.ai[i] - params.mesh_off[i]) -
+        ind[i] ==
+        0)
+      ind[i]--;
+  /* up right margin */
+  for (int i = 0; i < 3; i++)
+    local_mesh.margin[(i * 2) + 1] = ind[i] - local_mesh.in_ur[i];
+
+  /* grid dimension */
+  local_mesh.size = 1;
+  for (int i = 0; i < 3; i++) {
+    local_mesh.dim[i] = ind[i] - local_mesh.ld_ind[i] + 1;
+    local_mesh.size *= local_mesh.dim[i];
+  }
+  /* reduce inner grid indices from global to local */
+  for (int i = 0; i < 3; i++)
+    local_mesh.in_ld[i] = local_mesh.margin[i * 2];
+  for (int i = 0; i < 3; i++)
+    local_mesh.in_ur[i] = local_mesh.margin[i * 2] + local_mesh.inner[i];
+
+  local_mesh.q_2_off = local_mesh.dim[2] - params.cao;
+  local_mesh.q_21_off = local_mesh.dim[2] * (local_mesh.dim[1] - params.cao);
+
+  return local_mesh;
+}
+
 #endif /* defined(P3M) || defined(DP3M) */
