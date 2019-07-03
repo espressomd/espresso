@@ -2013,16 +2013,12 @@ void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
 }
 /**@}*/
 
-p3m_local_mesh calc_local_mesh(const P3MParameters &params, const double skin,
+p3m_local_mesh calc_local_mesh(const P3MParameters &params,
                                const Utils::Vector3d &my_left,
-                               const Utils::Vector3d &vector) {
+                               const Utils::Vector3d &my_right,
+                               const Utils::Vector3d &halo) {
   /* return value */
   p3m_local_mesh local_mesh{};
-
-  /* total skin size */
-  double full_skin[3];
-  for (int i = 0; i < 3; i++)
-    full_skin[i] = params.cao_cut[i] + skin + params.additional_mesh[i];
 
   /* inner left down grid point (global index) */
   for (int i = 0; i < 3; i++)
@@ -2031,11 +2027,11 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params, const double skin,
   /* inner up right grid point (global index) */
   for (int i = 0; i < 3; i++)
     local_mesh.in_ur[i] =
-        (int)floor(vector[i] * params.ai[i] - params.mesh_off[i]);
+        (int)floor(my_right[i] * params.ai[i] - params.mesh_off[i]);
 
   /* correct roundof errors at boundary */
   for (int i = 0; i < 3; i++) {
-    if ((vector[i] * params.ai[i] - params.mesh_off[i]) -
+    if ((my_right[i] * params.ai[i] - params.mesh_off[i]) -
             local_mesh.in_ur[i] <
         ROUND_ERROR_PREC)
       local_mesh.in_ur[i]--;
@@ -2050,18 +2046,18 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params, const double skin,
   /* index of left down grid point in global mesh */
   for (int i = 0; i < 3; i++)
     local_mesh.ld_ind[i] =
-        (int)ceil((my_left[i] - full_skin[i]) * params.ai[i] - params.mesh_off[i]);
+        (int)ceil((my_left[i] - halo[i]) * params.ai[i] - params.mesh_off[i]);
   /* left down margin */
   for (int i = 0; i < 3; i++)
     local_mesh.margin[i * 2] = local_mesh.in_ld[i] - local_mesh.ld_ind[i];
   /* up right grid point */
   int ind[3];
   for (int i = 0; i < 3; i++)
-    ind[i] = (int)floor((vector[i] + full_skin[i]) * params.ai[i] -
+    ind[i] = (int)floor((my_right[i] + halo[i]) * params.ai[i] -
                         params.mesh_off[i]);
   /* correct roundof errors at up right boundary */
   for (int i = 0; i < 3; i++)
-    if (((vector[i] + full_skin[i]) * params.ai[i] - params.mesh_off[i]) -
+    if (((my_right[i] + halo[i]) * params.ai[i] - params.mesh_off[i]) -
         ind[i] ==
         0)
       ind[i]--;
@@ -2088,7 +2084,12 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params, const double skin,
 }
 
 void p3m_calc_local_ca_mesh() {
-  p3m.local_mesh = calc_local_mesh(p3m.params, skin, my_left, my_right);
+  /* total skin size */
+  Utils::Vector3d halo;
+  for (int i = 0; i < 3; i++)
+    halo[i] = p3m.params.cao_cut[i] + skin + p3m.params.additional_mesh[i];
+
+  p3m.local_mesh = calc_local_mesh(p3m.params, my_left, my_right, halo);
 }
 
 void p3m_calc_lm_ld_pos() {
