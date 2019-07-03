@@ -11,7 +11,7 @@ cat > myconfig-minimal.hpp << EOF
 #define LENNARD_JONES
 #define MASS
 EOF
-cp ../src/core/myconfig-default.hpp myconfig-default.hpp
+cp ../src/config/myconfig-default.hpp myconfig-default.hpp
 sed 's/#define ADDITIONAL_CHECKS//' ../maintainer/configs/maxset.hpp > myconfig-maxset.hpp
 
 # prepare build area
