@@ -137,12 +137,11 @@ void ScafacosData::update_particle_forces() const {
       // 1 3 4
       // 2 4 5
       // where the numbers refer to indices in the "field" output from scafacos
-      Utils::Vector3d const f =
-          Utils::Vector<Utils::Vector3d, 3>{
-              {fields[it_f + 0], fields[it_f + 1], fields[it_f + 2]},
-              {fields[it_f + 1], fields[it_f + 3], fields[it_f + 4]},
-              {fields[it_f + 2], fields[it_f + 4], fields[it_f + 5]}} *
-          dip;
+      auto const G = Utils::Vector<Utils::Vector3d, 3>{
+          {fields[it_f + 0], fields[it_f + 1], fields[it_f + 2]},
+          {fields[it_f + 1], fields[it_f + 3], fields[it_f + 4]},
+          {fields[it_f + 2], fields[it_f + 4], fields[it_f + 5]}};
+      auto const f = G * dip;
 
       // Add to particles
       p.f.f += dipole.prefactor * f;
