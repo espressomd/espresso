@@ -66,9 +66,9 @@ REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_populations)
 
 auto mpi_lb_get_boundary_flag(Utils::Vector3i const &index) {
   return lb_calc(index, [&](auto index) {
+#ifdef LB_BOUNDARIES
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
-#ifdef LB_BOUNDARIES
     return lbfields[linear_index].boundary;
 #else
     return false;
@@ -105,8 +105,8 @@ auto mpi_lb_get_stress(Utils::Vector3i const &index) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_stress)
 
-void mpi_bcast_lb_params_slave(LBParam field, const LB_Parameters &params_) {
-  lbpar = params_;
+void mpi_bcast_lb_params_slave(LBParam field, LB_Parameters const &params) {
+  lbpar = params;
   lb_lbfluid_on_lb_params_change(field);
 }
 
@@ -272,16 +272,16 @@ void lb_lbfluid_set_rng_state(uint64_t counter) {
   }
 }
 
-void lb_lbfluid_set_density(double p_dens) {
-  if (p_dens <= 0)
+void lb_lbfluid_set_density(double density) {
+  if (density <= 0)
     throw std::invalid_argument("Density has to be > 0.");
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    lbpar_gpu.rho = static_cast<float>(p_dens);
+    lbpar_gpu.rho = static_cast<float>(density);
     lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
 #endif //  CUDA
   } else {
-    lbpar.density = p_dens;
+    lbpar.density = density;
     mpi_bcast_lb_params(LBParam::DENSITY);
   }
 }
@@ -300,16 +300,16 @@ double lb_lbfluid_get_density() {
   throw std::runtime_error("LB not activated.");
 }
 
-void lb_lbfluid_set_viscosity(double p_visc) {
-  if (p_visc <= 0)
+void lb_lbfluid_set_viscosity(double viscosity) {
+  if (viscosity <= 0)
     throw std::invalid_argument("Viscosity has to be >0.");
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    lbpar_gpu.viscosity = static_cast<float>(p_visc);
+    lbpar_gpu.viscosity = static_cast<float>(viscosity);
     lb_lbfluid_on_lb_params_change(LBParam::VISCOSITY);
 #endif //  CUDA
   } else {
-    lbpar.viscosity = p_visc;
+    lbpar.viscosity = viscosity;
     mpi_bcast_lb_params(LBParam::VISCOSITY);
   }
 }
@@ -328,17 +328,17 @@ double lb_lbfluid_get_viscosity() {
   throw std::runtime_error("LB not activated.");
 }
 
-void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc) {
-  if (p_bulk_visc <= 0)
+void lb_lbfluid_set_bulk_viscosity(double bulk_viscosity) {
+  if (bulk_viscosity <= 0)
     throw std::invalid_argument("Bulk viscosity has to be >0.");
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    lbpar_gpu.bulk_viscosity = static_cast<float>(p_bulk_visc);
+    lbpar_gpu.bulk_viscosity = static_cast<float>(bulk_viscosity);
     lbpar_gpu.is_TRT = false;
     lb_lbfluid_on_lb_params_change(LBParam::BULKVISC);
 #endif //  CUDA
   } else {
-    lbpar.bulk_viscosity = p_bulk_visc;
+    lbpar.bulk_viscosity = bulk_viscosity;
     lbpar.is_TRT = false;
     mpi_bcast_lb_params(LBParam::BULKVISC);
   }
@@ -358,19 +358,19 @@ double lb_lbfluid_get_bulk_viscosity() {
   throw std::runtime_error("LB not activated.");
 }
 
-void lb_lbfluid_set_gamma_odd(double p_gamma_odd) {
-  if (fabs(p_gamma_odd) > 1)
+void lb_lbfluid_set_gamma_odd(double gamma_odd) {
+  if (fabs(gamma_odd) > 1)
     throw std::invalid_argument("Gamma odd has to be <= 1.");
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    lbpar_gpu.gamma_odd = static_cast<float>(p_gamma_odd);
+    lbpar_gpu.gamma_odd = static_cast<float>(gamma_odd);
     lbpar_gpu.is_TRT = false;
     lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
 #endif //  CUDA
   } else {
-    lbpar.gamma_odd = p_gamma_odd;
+    lbpar.gamma_odd = gamma_odd;
     lbpar.is_TRT = false;
-    mpi_bcast_lb_params(LBParam::DENSITY);
+    mpi_bcast_lb_params(LBParam::GAMMA_ODD);
   }
 }
 
@@ -388,17 +388,17 @@ double lb_lbfluid_get_gamma_odd() {
   throw std::runtime_error("LB not activated.");
 }
 
-void lb_lbfluid_set_gamma_even(double p_gamma_even) {
-  if (fabs(p_gamma_even) > 1)
+void lb_lbfluid_set_gamma_even(double gamma_even) {
+  if (fabs(gamma_even) > 1)
     throw std::invalid_argument("gamma_even has to be <= 1.");
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    lbpar_gpu.gamma_even = static_cast<float>(p_gamma_even);
+    lbpar_gpu.gamma_even = static_cast<float>(gamma_even);
     lbpar_gpu.is_TRT = false;
-    lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
+    lb_lbfluid_on_lb_params_change(LBParam::GAMMA_EVEN);
 #endif //  CUDA
   } else {
-    lbpar.gamma_even = p_gamma_even;
+    lbpar.gamma_even = gamma_even;
     lbpar.is_TRT = false;
     mpi_bcast_lb_params(LBParam::DENSITY);
   }
@@ -463,7 +463,7 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
 #endif //  CUDA
   } else {
     lbpar.ext_force_density = force_density;
-    mpi_bcast_lb_params(LBParam::EXTFORCE);
+    mpi_bcast_lb_params(LBParam::EXT_FORCE_DENSITY);
   }
 }
 
@@ -480,17 +480,17 @@ const Utils::Vector3d lb_lbfluid_get_ext_force_density() {
   return {};
 }
 
-void lb_lbfluid_set_tau(double p_tau) {
-  if (p_tau <= 0)
+void lb_lbfluid_set_tau(double tau) {
+  if (tau <= 0)
     throw std::invalid_argument("tau has to be positive.");
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    lbpar_gpu.tau = static_cast<float>(p_tau);
+    lbpar_gpu.tau = static_cast<float>(tau);
     lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
 #endif //  CUDA
   } else {
-    lbpar.tau = p_tau;
-    mpi_bcast_lb_params(LBParam::DENSITY);
+    lbpar.tau = tau;
+    mpi_bcast_lb_params(LBParam::TAU);
   }
 }
 
@@ -557,12 +557,9 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
 
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    unsigned int *bound_array;
-    bound_array = (unsigned int *)Utils::malloc(lbpar_gpu.number_of_nodes *
-                                                sizeof(unsigned int));
-    lb_get_boundary_flags_GPU(bound_array);
+    std::vector<unsigned int> bound_array(lbpar_gpu.number_of_nodes);
+    lb_get_boundary_flags_GPU(bound_array.data());
 
-    int j;
     /** print of the calculated phys values */
     fprintf(fp,
             "# vtk DataFile Version 2.0\nlbboundaries\n"
@@ -573,11 +570,10 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
             lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5, lbpar_gpu.agrid * 0.5,
             lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
             lbpar_gpu.number_of_nodes);
-    for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
+    for (int j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
       /** print of the calculated phys values */
       fprintf(fp, "%d \n", bound_array[j]);
     }
-    free(bound_array);
 #endif //  CUDA
   } else {
     Utils::Vector3i pos;
@@ -700,14 +696,11 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
 
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    unsigned int *bound_array;
-    bound_array = (unsigned int *)Utils::malloc(lbpar_gpu.number_of_nodes *
-                                                sizeof(unsigned int));
-    lb_get_boundary_flags_GPU(bound_array);
+    std::vector<unsigned int> bound_array(lbpar_gpu.number_of_nodes);
+    lb_get_boundary_flags_GPU(bound_array.data());
 
     Utils::Vector3i xyz;
-    int j;
-    for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
+    for (int j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j % lbpar_gpu.dim_x;
       int k = j / lbpar_gpu.dim_x;
       xyz[1] = k % lbpar_gpu.dim_y;
@@ -718,7 +711,6 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
               (xyz[1] + 0.5) * lbpar_gpu.agrid,
               (xyz[2] + 0.5) * lbpar_gpu.agrid, bound_array[j]);
     }
-    free(bound_array);
 #endif //  CUDA
   } else {
     Utils::Vector3i pos;
@@ -749,9 +741,8 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
   auto const agrid = lb_lbfluid_get_agrid();
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    size_t size_of_values = lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu);
-    host_values = (LB_rho_v_pi_gpu *)Utils::malloc(size_of_values);
-    lb_get_values_GPU(host_values);
+    std::vector<LB_rho_v_pi_gpu> host_values(lbpar_gpu.number_of_nodes);
+    lb_get_values_GPU(host_values.data());
     Utils::Vector3i xyz;
     int j;
     for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
@@ -767,7 +758,6 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
               host_values[j].v[1] * lattice_speed,
               host_values[j].v[2] * lattice_speed);
     }
-    free(host_values);
 #endif //  CUDA
   } else {
     Utils::Vector3i pos;
@@ -790,9 +780,8 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
 void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    auto *host_checkpoint_vd =
-        (float *)Utils::malloc(lbpar_gpu.number_of_nodes * 19 * sizeof(float));
-    lb_save_checkpoint_GPU(host_checkpoint_vd);
+    std::vector<float> host_checkpoint_vd(19 * lbpar_gpu.number_of_nodes);
+    lb_save_checkpoint_GPU(host_checkpoint_vd.data());
     if (!binary) {
       std::fstream cpfile(filename, std::ios::out);
       cpfile << std::fixed;
@@ -812,11 +801,10 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
                    sizeof(lbpar_gpu.dim_y));
       cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim_z),
                    sizeof(lbpar_gpu.dim_z));
-      cpfile.write(reinterpret_cast<char *>(host_checkpoint_vd),
+      cpfile.write(reinterpret_cast<char *>(host_checkpoint_vd.data()),
                    19 * sizeof(float) * lbpar_gpu.number_of_nodes);
       cpfile.close();
     }
-    free(host_checkpoint_vd);
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     std::fstream cpfile;
@@ -828,8 +816,6 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
       cpfile << std::fixed;
     }
 
-    double pop[19];
-    Utils::Vector3i ind;
     auto const gridsize = lblattice.global_grid;
 
     if (!binary) {
@@ -842,18 +828,16 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
         for (int k = 0; k < gridsize[2]; k++) {
-          ind[0] = i;
-          ind[1] = j;
-          ind[2] = k;
-          auto pop = mpi_call(::Communication::Result::one_rank,
-                              mpi_lb_get_populations, ind);
+          Utils::Vector3i ind{{i, j, k}};
+          auto const pop = mpi_call(::Communication::Result::one_rank,
+                                    mpi_lb_get_populations, ind);
           if (!binary) {
-            for (int n = 0; n < 19; n++) {
-              cpfile << pop[n] << "\n";
+            for (auto const &p : pop) {
+              cpfile << p << "\n";
             }
           } else {
-            cpfile.write(reinterpret_cast<char *>(&pop[0]),
-                         19 * sizeof(double));
+            cpfile.write(reinterpret_cast<const char *>(&pop[0]),
+                         pop.size() * sizeof(double));
           }
         }
       }
@@ -911,8 +895,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
         }
       }
     } else {
-      int saved_gridsize[3];
-      if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
+      Utils::Vector3i saved_gridsize;
+      if (fread(saved_gridsize.data(), sizeof(int), 3, cpfile) != 3) {
         fclose(cpfile);
         throw std::runtime_error(err_msg + "incorrectly formatted data.");
       }
@@ -960,8 +944,6 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       throw std::runtime_error(err_msg + "could not open file for reading.");
     }
 
-    Utils::Vector19d pop;
-    Utils::Vector3i ind;
     auto const gridsize = lblattice.global_grid;
     int saved_gridsize[3];
     mpi_bcast_lb_params(LBParam::DENSITY);
@@ -998,9 +980,8 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
     for (int i = 0; i < gridsize[0]; i++) {
       for (int j = 0; j < gridsize[1]; j++) {
         for (int k = 0; k < gridsize[2]; k++) {
-          ind[0] = i;
-          ind[1] = j;
-          ind[2] = k;
+          Utils::Vector3i ind{{i, j, k}};
+          Utils::Vector19d pop;
           if (!binary) {
             res = fscanf(cpfile,
                          "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf "
@@ -1324,9 +1305,12 @@ void lb_lbfluid_on_lb_params_change(LBParam field) {
     lb_lbfluid_reinit_fluid();
     break;
   case LBParam::VISCOSITY:
-  case LBParam::EXTFORCE:
+  case LBParam::EXT_FORCE_DENSITY:
   case LBParam::BULKVISC:
   case LBParam::KT:
+  case LBParam::GAMMA_ODD:
+  case LBParam::GAMMA_EVEN:
+  case LBParam::TAU:
     break;
   }
   lb_lbfluid_reinit_parameters();
