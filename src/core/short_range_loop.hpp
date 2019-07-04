@@ -45,14 +45,18 @@ struct Distance {
 
 namespace detail {
 struct MinimalImageDistance {
+  const BoxGeometry box;
+
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(get_mi_vector(p1.r.p, p2.r.p));
+    return Distance(get_mi_vector(p1.r.p, p2.r.p, box));
   }
 };
 
 struct LayeredMinimalImageDistance {
+  const BoxGeometry box;
+
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    auto mi_dist = get_mi_vector(p1.r.p, p2.r.p);
+    auto mi_dist = get_mi_vector(p1.r.p, p2.r.p, box);
     mi_dist[2] = p1.r.p[2] - p2.r.p[2];
 
     return Distance(mi_dist);
@@ -85,14 +89,15 @@ void decide_distance(CellIterator first, CellIterator last,
   case CELL_STRUCTURE_NSQUARE:
     Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), MinimalImageDistance{},
+        std::forward<PairKernel>(pair_kernel), MinimalImageDistance{box_geo},
         std::forward<VerletCriterion>(verlet_criterion),
         cell_structure.use_verlet_list, rebuild_verletlist);
     break;
   case CELL_STRUCTURE_LAYERED:
     Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), LayeredMinimalImageDistance{},
+        std::forward<PairKernel>(pair_kernel),
+        LayeredMinimalImageDistance{box_geo},
         std::forward<VerletCriterion>(verlet_criterion),
         cell_structure.use_verlet_list, rebuild_verletlist);
     break;
@@ -111,13 +116,13 @@ void short_range_loop(ParticleKernel &&particle_kernel,
   auto last = boost::make_indirect_iterator(local_cells.end());
 
 #ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = Coulomb::cutoff(box_l);
+  auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
 #else
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipole::cutoff(box_l);
+  auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif

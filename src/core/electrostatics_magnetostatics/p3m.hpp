@@ -148,7 +148,7 @@ extern p3m_data_struct p3m;
  *
  *  Parameter ranges if not given explicit values via p3m_set_tune_params():
  *  - @p r_cut_iL starts from (@ref min_local_box_l - @ref #skin) / (
- *    n * @ref box_l), with n an integer (this implies @p r_cut_iL is the
+ *    n * box_length), with n an integer (this implies @p r_cut_iL is the
  *    largest cutoff in the system!)
  *  - @p mesh is set up such that the number of mesh points is equal to the
  *    number of charged particles
@@ -178,7 +178,7 @@ int p3m_adaptive_tune(char **log);
 void p3m_init();
 
 /** Update @ref P3MParameters::alpha "alpha" and
- *  @ref P3MParameters::r_cut "r_cut" if @ref box_l changed
+ *  @ref P3MParameters::r_cut "r_cut" if box length changed
  */
 void p3m_scaleby_box_l();
 

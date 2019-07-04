@@ -24,7 +24,7 @@ import tests_common
 import espressomd
 
 
-if(not espressomd.has_features(("ELECTROSTATICS", "PARTIAL_PERIODIC"))):
+if(not espressomd.has_features(("ELECTROSTATICS"))):
     sys.exit()
 
 
@@ -117,12 +117,12 @@ class ElectrostaticInteractionsTests(object):
         self.test_with_analytical_result(prefactor=prefactor, accuracy=0.0017)            
                 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC", "MMM1D_GPU"])
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])
 class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
     from espressomd.electrostatics import MMM1D
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
+@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class MMM1D_Test(ElectrostaticInteractionsTests, ut.TestCase):
     from espressomd.electrostatics import MMM1D
 

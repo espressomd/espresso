@@ -39,7 +39,7 @@ struct Scafacos {
   std::string get_method();
 
   /** Set parameters common to all methods */
-  void set_common_parameters(double *box_l, int *periodicity,
+  void set_common_parameters(const double *box_l, const int *periodicity,
                              int total_particles);
   /** Calculate short range pair force if supported by the method */
   inline double pair_force(double dist) const {

@@ -21,8 +21,10 @@
 
 #include "h5md_core.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+
 #include <vector>
 
 namespace Writer {
@@ -300,7 +302,8 @@ void File::create_new_file(const std::string &filename) {
 
   // write time independent datasets
   // write box information
-  std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
+  std::vector<double> boxvec = {box_geo.length()[0], box_geo.length()[1],
+                                box_geo.length()[2]};
   auto group = h5xx::group(m_h5md_file, "particles/atoms/box");
   h5xx::write_attribute(group, "dimension", 3);
   h5xx::write_attribute(group, "boundary", "periodic");
@@ -344,7 +347,7 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   if (write_pos) {
     Utils::Vector3d p = current_particle.r.p;
     Utils::Vector3i i = current_particle.l.i;
-    fold_position(p, i);
+    fold_position(p, i, box_geo);
 
     pos[0][particle_index][0] = p[0];
     pos[0][particle_index][1] = p[1];

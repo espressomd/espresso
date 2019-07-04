@@ -29,7 +29,7 @@ import espressomd.shapes
 from espressomd import electrostatics
 from espressomd import visualization
 
-required_features = ["PARTIAL_PERIODIC", "ELECTROSTATICS", "LENNARD_JONES"]
+required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 box_l = 20

@@ -147,11 +147,11 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
      but the method not yet reinitialized.
    */
 #ifdef ELECTROSTATICS
-  max_cut_global = std::max(max_cut_global, Coulomb::cutoff(box_l));
+  max_cut_global = std::max(max_cut_global, Coulomb::cutoff(box_geo.length()));
 #endif
 
 #ifdef DIPOLES
-  max_cut_global = std::max(max_cut_global, Dipole::cutoff(box_l));
+  max_cut_global = std::max(max_cut_global, Dipole::cutoff(box_geo.length()));
 #endif
 }
 
@@ -266,7 +266,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #ifdef THOLE
       // If THOLE is active, use p3m cutoff
       if (data->THOLE_scaling_coeff != 0)
-        max_cut_current = std::max(max_cut_current, Coulomb::cutoff(box_l));
+        max_cut_current =
+            std::max(max_cut_current, Coulomb::cutoff(box_geo.length()));
 #endif
 
       IA_parameters *data_sym = get_ia_param(j, i);
