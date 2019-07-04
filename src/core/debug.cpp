@@ -247,10 +247,10 @@ void check_particle_sorting() {
     auto cell = local_cells.cell[c];
     for (int n = 0; n < cell->n; n++) {
       auto p = cell->part[n];
-      if (cell_structure.position_to_cell(p.r.p) != cell) {
+      if (cell_structure.particle_to_cell(p) != cell) {
         fprintf(stderr, "%d: misplaced part id %d. %p != %p\n", this_node,
                 p.p.identity, (void *)cell,
-                (void *)cell_structure.position_to_cell(p.r.p));
+                (void *)cell_structure.particle_to_cell(p));
         errexit();
       }
     }

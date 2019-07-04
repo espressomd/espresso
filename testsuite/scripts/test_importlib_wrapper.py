@@ -192,6 +192,24 @@ except ImportError:
 """.format(mock_module)
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
+        statement = "from espressomd.visualization_mayavi import a as b, c"
+        expected = """
+try:
+    from espressomd.visualization_mayavi import a as b
+except ImportError:
+    from unittest.mock import MagicMock
+    import espressomd
+    b = MagicMock()
+
+try:
+    from espressomd.visualization_mayavi import c
+except ImportError:
+    from unittest.mock import MagicMock
+    import espressomd
+    c = MagicMock()
+""".format(mock_module)
+        self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
+
         statement = "from espressomd.visualization import openGLLive"
         expected = """
 try:

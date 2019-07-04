@@ -139,8 +139,7 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
             &p, &part_rep, ia_params, vec, -1.0 * dist, dist * dist);
       }
     } else {
-      runtimeErrorMsg() << "Constraint "
-                        << " violated by particle " << p.p.identity;
+      runtimeErrorMsg() << "Constraint violated by particle " << p.p.identity;
     }
   }
   if (part_rep.p.type >= 0)

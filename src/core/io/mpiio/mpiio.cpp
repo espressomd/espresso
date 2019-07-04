@@ -396,7 +396,9 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
                              3 * pref, MPI_DOUBLE);
 
     for (int i = 0; i < nlocalpart; ++i) {
-      local_place_particle(id[i], &pos[3 * i], 1);
+      local_place_particle(
+          id[i],
+          Utils::Vector3d{pos[3 * i + 0], pos[3 * i + 1], pos[3 * i + 2]}, 1);
     }
   }
 
