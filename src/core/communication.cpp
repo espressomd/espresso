@@ -76,6 +76,7 @@
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/utility.hpp>
+#include <utils/mpi/cart_comm.hpp>
 
 using namespace std;
 
@@ -217,11 +218,12 @@ void mpi_init() {
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-  MPI_Dims_create(n_nodes, 3, node_grid.data());
+  node_grid = Utils::Mpi::dims_create<3>(n_nodes);
 
-  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
-                           /* periodicity */ {{1, 1, 1}});
-  MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
+  comm_cart =
+      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
+
+  this_node = comm_cart.rank();
 
   Communication::m_callbacks =
       std::make_unique<Communication::MpiCallbacks>(comm_cart);
@@ -234,17 +236,6 @@ void mpi_init() {
   partCfg(std::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
 
   on_program_start();
-}
-
-void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity) {
-  MPI_Comm temp_comm;
-  MPI_Cart_create(MPI_COMM_WORLD, 3, const_cast<int *>(node_grid.data()),
-                  const_cast<int *>(periodicity.data()), 0, &temp_comm);
-  comm_cart =
-      boost::mpi::communicator(temp_comm, boost::mpi::comm_take_ownership);
-
-  this_node = comm_cart.rank();
 }
 
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/

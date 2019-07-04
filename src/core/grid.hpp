@@ -52,6 +52,7 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <boost/mpi/communicator.hpp>
 #include <cassert>
 #include <limits>
 
@@ -64,10 +65,6 @@ extern LocalBox<double> local_geo;
 
 /** The number of nodes in each spatial dimension. */
 extern Utils::Vector3i node_grid;
-/** position of node in node grid */
-extern Utils::Vector3i node_pos;
-/** the six nearest neighbors of a node in the node grid. */
-extern Utils::Vector<int, 6> node_neighbors;
 
 /*@}*/
 
@@ -79,37 +76,30 @@ extern Utils::Vector<int, 6> node_neighbors;
     determine one automatically. */
 void init_node_grid();
 
-/** node mapping: array -> node.
- *
- * \param node   rank of the node you want to know the position for.
- * \param pos    position of the node in node grid.
- */
-void map_node_array(int node, int pos[3]);
-
-/** node mapping: node -> array.
- *
- * \return      rank of the node at position pos.
- * \param pos   position of the node in node grid.
- */
-int map_array_node(Utils::Span<const int> pos);
-
 /** map a spatial position to the node grid */
 int map_position_node_array(const Utils::Vector3d &pos);
 
 /** fill neighbor lists of node.
  *
- * Calculates the numbers of the nearest neighbors for a node and
- * stores them in \ref node_neighbors.
+ * Calculates the numbers of the nearest neighbors for a node.
  *
- * \return     the number of neighbors
- * \param node number of the node.  */
-int calc_node_neighbors(int node);
+ * \return Ranks of neighbors
+ */
+Utils::Vector<int, 6> calc_node_neighbors(const boost::mpi::communicator &comm);
+
+/**
+ * @brief Calculate the position of node in topoliogy.
+ *
+ * @param comm Cartesian communicator
+ * @return Index of node in grid.
+ */
+Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm);
 
 /** called from \ref mpi_bcast_parameter . */
 void grid_changed_n_nodes();
 
 /** called from \ref mpi_bcast_parameter . */
-void grid_changed_box_l();
+void grid_changed_box_l(const BoxGeometry &box);
 
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales
  * the particles accordingly */

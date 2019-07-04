@@ -155,8 +155,8 @@ void CoupleIBMParticleToFluid(Particle *p) {
   // Get indices and weights of affected nodes using discrete delta function
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
-  lblattice.map_position_to_lattice(p->r.p, node_index, delta, local_geo.my_left(),
-                                    local_geo.length());
+  lblattice.map_position_to_lattice(p->r.p, node_index, delta,
+                                    local_geo.my_left(), local_geo.length());
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {

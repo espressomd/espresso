@@ -32,7 +32,9 @@
 
 #include <utils/index.hpp>
 using Utils::get_linear_index;
+#include <communication.hpp>
 #include <utils/constants.hpp>
+#include <utils/mpi/cart_comm.hpp>
 
 int Lattice::init(double *agrid, double const *offset, int halo_size,
                   const Utils::Vector3d &local_box,
@@ -64,15 +66,6 @@ int Lattice::init(double *agrid, double const *offset, int halo_size,
       return ES_ERROR;
     }
   }
-
-  LATTICE_TRACE(fprintf(stderr,
-                        "%d: box_l (%.3f,%.3f,%.3f) grid (%d,%d,%d) "
-                        "node_neighbors (%d,%d,%d,%d,%d,%d)\n",
-                        this_node, local_box[0], local_box[1], local_box[2],
-                        this->grid[0], this->grid[1], this->grid[2],
-                        node_neighbors[0], node_neighbors[1], node_neighbors[2],
-                        node_neighbors[3], node_neighbors[4],
-                        node_neighbors[5]));
 
   this->halo_size = halo_size;
   /* determine the number of total nodes including halo */
@@ -141,18 +134,18 @@ int Lattice::map_lattice_to_node(Utils::Vector3i &ind,
                                  const Utils::Vector3i &local_node_grid) const {
   /* determine coordinates in node_grid */
   Utils::Vector3i grid;
-  grid[0] = (int)floor(ind[0] * this->agrid[0] * (1. / box_geo.length()[0]) *
+  grid[0] = (int)floor(ind[0] * agrid[0] * (1. / box_geo.length()[0]) *
                        local_node_grid[0]);
-  grid[1] = (int)floor(ind[1] * this->agrid[1] * (1. / box_geo.length()[1]) *
+  grid[1] = (int)floor(ind[1] * agrid[1] * (1. / box_geo.length()[1]) *
                        local_node_grid[1]);
-  grid[2] = (int)floor(ind[2] * this->agrid[2] * (1. / box_geo.length()[2]) *
+  grid[2] = (int)floor(ind[2] * agrid[2] * (1. / box_geo.length()[2]) *
                        local_node_grid[2]);
 
   /* change from global to local lattice coordinates */
-  ind[0] = ind[0] - grid[0] * this->grid[0] + this->halo_size;
-  ind[1] = ind[1] - grid[1] * this->grid[1] + this->halo_size;
-  ind[2] = ind[2] - grid[2] * this->grid[2] + this->halo_size;
+  ind[0] = ind[0] - grid[0] * Lattice::grid[0] + halo_size;
+  ind[1] = ind[1] - grid[1] * Lattice::grid[1] + halo_size;
+  ind[2] = ind[2] - grid[2] * Lattice::grid[2] + halo_size;
 
   /* return linear index into node array */
-  return map_array_node({grid.data(), 3});
+  return Utils::Mpi::cart_rank(comm_cart, grid);
 }
