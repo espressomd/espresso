@@ -23,7 +23,7 @@
 
 #if defined(SCAFACOS)
 
-#include <vector>
+#include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -31,6 +31,7 @@
 #include <limits>
 #include <memory>
 #include <numeric>
+#include <vector>
 
 #include "Scafacos.hpp"
 #include "cells.hpp"
