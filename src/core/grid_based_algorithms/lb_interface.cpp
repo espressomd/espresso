@@ -20,14 +20,14 @@ ActiveLB lattice_switch = ActiveLB::NONE;
 namespace {
 
 template <typename Kernel>
-void lb_set(Utils::Vector3i const &index, Kernel &&kernel) {
+void lb_set(Utils::Vector3i const &index, Kernel kernel) {
   if (lblattice.is_local(index)) {
     kernel(index);
   }
 }
 
 template <typename Kernel>
-auto lb_calc(Utils::Vector3i const &index, Kernel &&kernel) {
+auto lb_calc(Utils::Vector3i const &index, Kernel kernel) {
   using R = decltype(kernel(index));
   if (lblattice.is_local(index)) {
     return boost::optional<R>(kernel(index));
@@ -36,7 +36,7 @@ auto lb_calc(Utils::Vector3i const &index, Kernel &&kernel) {
 }
 
 template <class Kernel>
-auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel &&kernel) {
+auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel kernel) {
   return lb_calc(index, [&](auto index) {
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
