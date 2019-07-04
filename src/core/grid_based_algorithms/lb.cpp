@@ -321,8 +321,9 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
   buffer = rbuf.data();
   index = get_linear_index(1, 0, 0, lblattice.halo_grid);
@@ -358,8 +359,9 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
   buffer = rbuf.data();
   index = get_linear_index(lblattice.grid[0], 0, 0, lblattice.halo_grid);
@@ -403,8 +405,9 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
   buffer = rbuf.data();
   index = get_linear_index(0, 1, 0, lblattice.halo_grid);
@@ -442,8 +445,9 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
   buffer = rbuf.data();
   index = get_linear_index(0, lblattice.grid[1], 0, lblattice.halo_grid);
@@ -487,8 +491,9 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
   buffer = rbuf.data();
   index = get_linear_index(0, 0, 1, lblattice.halo_grid);
@@ -524,8 +529,9 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf.data(), count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
   buffer = rbuf.data();
   index = get_linear_index(0, 0, lblattice.grid[2], lblattice.halo_grid);
