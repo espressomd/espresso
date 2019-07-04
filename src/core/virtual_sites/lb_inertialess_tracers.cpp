@@ -58,7 +58,7 @@ bool in_local_domain(Utils::Vector3d const &pos) {
           pos[2] >= my_left[2] - 0.5 * lblattice.agrid &&
           pos[2] < my_right[2] + 0.5 * lblattice.agrid);
 }
-}
+} // namespace
 
 /****************
   IBM_ForcesIntoFluid_CPU
@@ -93,7 +93,7 @@ void IBM_ForcesIntoFluid_CPU() {
     for (int i = 0; i < np; i++) {
       // for ghost particles we have to check if they lie
       // in the range of the local lattice nodes
-      if (in_local_domain(p[i].r.p) ) {
+      if (in_local_domain(p[i].r.p)) {
         if (p[i].p.is_virtual)
           CoupleIBMParticleToFluid(&p[i]);
       }
