@@ -54,17 +54,6 @@ inline std::pair<int, int> cart_shift(boost::mpi::communicator const &comm,
 
   return {src, dst};
 }
-
-template <size_t dims>
-std::tuple<Vector<int, dims>, Vector<int, dims>, Vector<int, dims>>
-cart_get(boost::mpi::communicator const &comm) {
-  using std::get;
-  std::tuple<Vector<int, dims>, Vector<int, dims>, Vector<int, dims>> ret;
-
-  BOOST_MPI_CHECK_RESULT(MPI_Cart_get, (comm, dims, get<0>(ret).data(),
-                                        get<1>(ret).data(), get<2>(ret).data()))
-  return ret;
-}
 } // namespace Mpi
 } // namespace Utils
 
