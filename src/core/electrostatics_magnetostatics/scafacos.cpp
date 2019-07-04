@@ -85,7 +85,7 @@ int ScafacosData::update_particle_data() {
   }
 
   for (auto const &p : local_cells.particles()) {
-    auto pos = folded_position(p.r.p, box_geo);
+    auto const pos = folded_position(p.r.p, box_geo);
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
     positions.push_back(pos[2]);
@@ -93,7 +93,7 @@ int ScafacosData::update_particle_data() {
       charges.push_back(p.p.q);
     } else {
 #ifdef SCAFACOS_DIPOLES
-      const Vector3d dip = p.calc_dip();
+      auto const dip = p.calc_dip();
       dipoles.push_back(dip[0]);
       dipoles.push_back(dip[1]);
       dipoles.push_back(dip[2]);
@@ -113,43 +113,39 @@ void ScafacosData::update_particle_forces() const {
 
   for (auto &p : local_cells.particles()) {
     if (!dipolar()) {
-      p.f.f[0] += coulomb.prefactor * p.p.q * fields[it++];
-      p.f.f[1] += coulomb.prefactor * p.p.q * fields[it++];
-      p.f.f[2] += coulomb.prefactor * p.p.q * fields[it++];
+      p.f.f += coulomb.prefactor * p.p.q *
+               Utils::Vector3d(Utils::Span<const double>(&(fields[it]), 3));
+      it += 3;
     } else {
 #ifdef SCAFACOS_DIPOLES
       // Indices
       // 3 "potential" values per particles (see below)
-      int it_p = 3 * it;
+      int const it_p = 3 * it;
       // 6 "field" values per particles (see below)
-      int it_f = 6 * it;
+      int const it_f = 6 * it;
 
       // The scafacos term "potential" here in fact refers to the magnetic
       // field
       // So, the torques are given by m \times B
-      const Vector3d dip = p.calc_dip();
-      auto const t = dip.cross(
-          Vector3d(Utils::Span<const double>(&(potentials[it_p]), 3)));
+      auto const dip = p.calc_dip();
+      auto const t = vector_product(
+          dip,
+          Utils::Vector3d(Utils::Span<const double>(&(potentials[it_p]), 3)));
       // The force is given by G m, where G is a matrix
       // which comes from the "fields" output of scafacos like this
       // 0 1 2
       // 1 3 4
       // 2 4 5
-      // where the numbers refer to indices in the "field" output from
-      // scafacos
-      double f[3];
-      f[0] = fields[it_f + 0] * dip[0] + fields[it_f + 1] * dip[1] +
-             fields[it_f + 2] * dip[2];
-      f[1] = fields[it_f + 1] * dip[0] + fields[it_f + 3] * dip[1] +
-             fields[it_f + 4] * dip[2];
-      f[2] = fields[it_f + 2] * dip[0] + fields[it_f + 4] * dip[1] +
-             fields[it_f + 5] * dip[2];
+      // where the numbers refer to indices in the "field" output from scafacos
+      auto const G = Utils::Vector<Utils::Vector3d, 3>{
+          {fields[it_f + 0], fields[it_f + 1], fields[it_f + 2]},
+          {fields[it_f + 1], fields[it_f + 3], fields[it_f + 4]},
+          {fields[it_f + 2], fields[it_f + 4], fields[it_f + 5]}};
+      auto const f = G * dip;
 
       // Add to particles
-      for (int j = 0; j < 3; j++) {
-        p.f.f[j] += dipole.prefactor * f[j];
-        p.f.torque[j] += dipole.prefactor * t[j];
-      }
+      p.f.f += dipole.prefactor * f;
+      p.f.torque += dipole.prefactor * t;
       it++;
 #endif
     }
