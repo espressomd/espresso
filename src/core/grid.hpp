@@ -36,11 +36,6 @@
  *
  *  \image html directions.gif "Convention for the order of the directions"
  *
- *  The Figure illustrates the direction convention used for arrays
- *  with 6 (e.g. \ref node_neighbors, \ref #boundary) and 3 entries
- *  (e.g \ref node_grid, box length , \ref my_left,...).
- *
- *
  *  Implementation in grid.cpp.
  */
 

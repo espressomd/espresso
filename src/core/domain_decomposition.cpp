@@ -64,7 +64,7 @@ double max_skin = 0.0;
 /*@{*/
 
 /** Calculate cell grid dimensions, cell sizes and number of cells.
- *  Calculates the cell grid, based on \ref local_box_l and \ref
+ *  Calculates the cell grid, based on \ref local_geo and \ref
  *  max_range. If the number of cells is larger than \ref
  *  max_num_cells, it increases max_range until the number of cells is
  *  smaller or equal \ref max_num_cells. It sets: \ref
