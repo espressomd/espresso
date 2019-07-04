@@ -10,6 +10,12 @@
 
 namespace Utils {
 namespace Mpi {
+
+/**
+ * @brief Wrapper around MPI_Dims_create.
+ *
+ * @tparam dim Number of dimensions
+ */
 template <size_t dim> Vector<int, dim> dims_create(int nodes) {
   Vector<int, dim> dims{};
   BOOST_MPI_CHECK_RESULT(MPI_Dims_create,
@@ -18,6 +24,11 @@ template <size_t dim> Vector<int, dim> dims_create(int nodes) {
   return dims;
 }
 
+/**
+ * @brief Wrapper around MPI_Cart_create.
+ *
+ * @tparam dim Number of dimensions
+ */
 template <size_t dim>
 boost::mpi::communicator cart_create(
     boost::mpi::communicator const &comm, Vector<int, dim> const &dims,
@@ -31,6 +42,11 @@ boost::mpi::communicator cart_create(
   return boost::mpi::communicator(temp_comm, boost::mpi::comm_take_ownership);
 }
 
+/**
+ * @brief Wrapper around MPI_Cart_coords.
+ *
+ * @tparam dim Number of dimensions
+ */
 template <size_t dims>
 Vector3i cart_coords(boost::mpi::communicator const &comm, int rank) {
   Vector3i pos;
@@ -38,6 +54,11 @@ Vector3i cart_coords(boost::mpi::communicator const &comm, int rank) {
   return pos;
 }
 
+/**
+ * @brief Wrapper around MPI_Cart_rank.
+ *
+ * @tparam dim Number of dimensions
+ */
 template <size_t dims>
 int cart_rank(boost::mpi::communicator const &comm,
               const Vector<int, dims> &pos) {
@@ -46,6 +67,11 @@ int cart_rank(boost::mpi::communicator const &comm,
   return rank;
 }
 
+/**
+ * @brief Wrapper around MPI_Cart_shift.
+ *
+ * @return pair of source and destination rank.
+ */
 inline std::pair<int, int> cart_shift(boost::mpi::communicator const &comm,
                                       int direction, int displacement) {
   int src = -1, dst = -1;
