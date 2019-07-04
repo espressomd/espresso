@@ -102,7 +102,8 @@ add_particles(PdbParser::PdbParser &parser, int first_id, int default_type,
 #endif
   PdbParser::BoundingBox bb;
   bb.llx = bb.lly = bb.llz = 0.0;
-  double bb_l[3] = {box_l[0], box_l[1], box_l[2]};
+  double bb_l[3] = {box_geo.length()[0], box_geo.length()[1],
+                    box_geo.length()[2]};
 
   bb = parser.calc_bounding_box();
 
@@ -117,7 +118,7 @@ add_particles(PdbParser::PdbParser &parser, int first_id, int default_type,
     READPDB_TRACE(printf("bb ur (%f %f %f)\n", bb.urx, bb.ury, bb.urz));
 
     for (int i = 0; i < 3; i++) {
-      if (bb_l[i] > box_l[i]) {
+      if (bb_l[i] > box_geo.length()[i]) {
         rescale_boxl(i, bb_l[i]);
       }
     }

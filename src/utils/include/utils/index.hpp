@@ -58,6 +58,8 @@ inline void unravel_index(InputIterator dimensions_begin,
   }
 }
 
+enum class MemoryOrder { COLUMN_MAJOR, ROW_MAJOR };
+
 /*************************************************************/
 /** \name Three dimensional grid operations                  */
 /*************************************************************/
@@ -69,17 +71,29 @@ inline void unravel_index(InputIterator dimensions_begin,
  * @return           The linear index
  * @param a , b , c  Position in 3D space
  * @param adim       Dimensions of the underlying grid
+ * @param memory_order Row- or column-major
  */
-inline int get_linear_index(int a, int b, int c, const Vector3i &adim) {
+inline int
+get_linear_index(int a, int b, int c, const Vector3i &adim,
+                 MemoryOrder memory_order = MemoryOrder::COLUMN_MAJOR) {
   assert((a >= 0) && (a < adim[0]));
   assert((b >= 0) && (b < adim[1]));
   assert((c >= 0) && (c < adim[2]));
 
-  return (a + adim[0] * (b + adim[1] * c));
+  switch (memory_order) {
+  case MemoryOrder::COLUMN_MAJOR:
+    return a + adim[0] * (b + adim[1] * c);
+  case MemoryOrder::ROW_MAJOR:
+    return adim[1] * adim[2] * a + adim[2] * b + c;
+  default:
+    throw std::runtime_error("Unknown memory order");
+  }
 }
 
-inline int get_linear_index(const Vector3i &ind, const Vector3i &adim) {
-  return get_linear_index(ind[0], ind[1], ind[2], adim);
+inline int
+get_linear_index(const Vector3i &ind, const Vector3i &adim,
+                 MemoryOrder memory_order = MemoryOrder::COLUMN_MAJOR) {
+  return get_linear_index(ind[0], ind[1], ind[2], adim, memory_order);
 }
 
 /*@}*/

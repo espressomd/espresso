@@ -285,7 +285,7 @@ The camera can be controlled via mouse and keyboard:
 Additional input functionality for mouse and keyboard is possible by assigning
 callbacks to specified keyboard or mouse buttons. This may be useful for
 realtime adjustment of system parameters (temperature, interactions, particle
-properties etc) or for demonstration purposes. The callbacks can be triggered
+properties, etc.) or for demonstration purposes. The callbacks can be triggered
 by a timer or keyboard input::
 
     def foo():
@@ -318,7 +318,7 @@ by a timer or keyboard input::
     visualizer.keyboardManager.register_button(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
     visualizer.keyboardManager.register_button(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
-Further examples can be found in samples/python/billard.py or samples/python/visualization\_interactive.py.
+Further examples can be found in :file:`samples/billiard.py` or :file:`samples/visualization_interactive.py`.
 
 .. _Dragging particles:
 
@@ -334,5 +334,5 @@ distance of particle and mouse cursor).
 Visualization example scripts
 -----------------------------
 
-Various :ref:`Sample Scripts` can be found in :file:`samples/python/visualization*`
+Various :ref:`Sample Scripts` can be found in :file:`samples/visualization*`
 or in the :ref:`Tutorials` "Visualization" and "Charged Systems".

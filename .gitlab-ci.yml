@@ -324,8 +324,7 @@ rocm-maxset:
   tags:
     - docker
     - linux
-  only:
-    - schedules
+  when: manual
 
 ubuntu:arm64:
   <<: *arch_definition
@@ -395,6 +394,7 @@ intel:18:
     - linux
     - cuda
     - icp
+  when: manual
 
 check_sphinx:
   <<: *global_job_definition

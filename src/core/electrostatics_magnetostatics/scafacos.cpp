@@ -85,7 +85,7 @@ int ScafacosData::update_particle_data() {
   }
 
   for (auto const &p : local_cells.particles()) {
-    auto pos = folded_position(p);
+    auto pos = folded_position(p.r.p, box_geo);
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
     positions.push_back(pos[2]);
@@ -159,7 +159,6 @@ void ScafacosData::update_particle_forces() const {
   if (!dipolar()) {
     assert(it == fields.size());
   } else {
-    int tmp = positions.size() / 3;
     assert(it == positions.size() / 3);
   }
 }
@@ -192,12 +191,11 @@ bool check_position_validity(const std::vector<double> &pos) {
   assert(pos.size() % 3 == 0);
   for (int i = 0; i < pos.size() / 3; i++) {
     for (int j = 0; j < 3; j++) {
-      if (pos[3 * i + j] < 0 || pos[3 * i + j] > box_l[j]) {
+      if (pos[3 * i + j] < 0 || pos[3 * i + j] > box_geo.length()[j]) {
         // Throwing exception rather than runtime error, because continuing will
         // result in mpi deadlock
         throw std::runtime_error("Particle position outside the box domain not "
                                  "allowed for scafacos-based methods.");
-        return false;
       }
     }
   }
@@ -206,10 +204,6 @@ bool check_position_validity(const std::vector<double> &pos) {
 
 void add_long_range_force() {
   particles.update_particle_data();
-
-  if (!check_position_validity(particles.positions)) {
-    return;
-  }
 
   if (scafacos) {
     if (!dipolar()) {
@@ -254,9 +248,6 @@ double long_range_energy() {
 }
 void set_r_cut_and_tune_local(double r_cut) {
   particles.update_particle_data();
-  if (!check_position_validity(particles.positions)) {
-    return;
-  }
 
   scafacos->set_r_cut(r_cut);
   scafacos->tune(particles.charges, particles.positions);
@@ -309,9 +300,6 @@ void tune_r_cut() {
 
 void tune() {
   particles.update_particle_data();
-  if (!check_position_validity(particles.positions)) {
-    return;
-  }
 
   /** Check whether we have to do a bisection for the short range cutoff */
   /** Check if there is a user supplied cutoff */
@@ -338,7 +326,8 @@ static void set_params_safe(const std::string &method,
 
   scafacos = new Scafacos(method, comm_cart, params);
 
-  int per[3] = {PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0};
+  int per[3] = {box_geo.periodic(0) != 0, box_geo.periodic(1) != 0,
+                box_geo.periodic(2) != 0};
 
   scafacos->set_dipolar(dipolar_ia);
 #ifdef DIPOLES
@@ -351,7 +340,7 @@ static void set_params_safe(const std::string &method,
     coulomb.method = COULOMB_SCAFACOS;
   }
 #endif
-  scafacos->set_common_parameters(box_l.data(), per, n_part);
+  scafacos->set_common_parameters(box_geo.length().data(), per, n_part);
 
   on_coulomb_change();
 
@@ -420,12 +409,13 @@ void update_system_params() {
     throw std::runtime_error("Scafacos object not there");
   }
 
-  int per[3] = {PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0};
+  int per[3] = {box_geo.periodic(0) != 0, box_geo.periodic(1) != 0,
+                box_geo.periodic(2) != 0};
 
   int tmp;
   MPI_Allreduce(&n_part, &tmp, 1, MPI_INT, MPI_MAX, comm_cart);
   n_part = tmp;
-  scafacos->set_common_parameters(box_l.data(), per, n_part);
+  scafacos->set_common_parameters(box_geo.length().data(), per, n_part);
 }
 
 } // namespace Scafacos

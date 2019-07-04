@@ -222,8 +222,7 @@ def mock_es_visualization(code):
     re_es_vis_import = re.compile(r"""
  ^from\ espressomd\ import\ (?:visualization(?:_opengl|_mayavi)?)\ as\ (\S+)
 |^from\ espressomd\ import\ (visualization(?:_opengl|_mayavi)?)
-|^from\ espressomd\.visualization(?:_opengl|_mayavi)?\ import\ \S+\ as\ (\S+)
-|^from\ espressomd\.visualization(?:_opengl|_mayavi)?\ import\ (\S+)
+|^from\ espressomd\.visualization(?:_opengl|_mayavi)?\ import\ ([^\n]+)
 |^import\ espressomd\.visualization(?:_opengl|_mayavi)?\ as\ (\S+)
 |^import\ (espressomd\.visualization(?:_opengl|_mayavi)?)
 """.replace(r"\ ", r"[\t\ ]+"), re.VERBOSE | re.M)
@@ -243,9 +242,9 @@ except ImportError:
     m = re_es_vis_import_namespace.search(code)
     assert m is None, "cannot use MagicMock() at line '" + m.group(0) + "'"
 
-    def check_for_deferred_ImportError(s, alias):
-        if "_opengl" not in s and "_mayavi" not in s:
-            if "openGLLive" in s or "mayaviLive" in s:
+    def check_for_deferred_ImportError(line, alias):
+        if "_opengl" not in line and "_mayavi" not in line:
+            if "openGLLive" in line or "mayaviLive" in line:
                 return """
     if hasattr({0}, 'deferred_ImportError'):
         raise {0}.deferred_ImportError""".format(alias)
@@ -259,9 +258,19 @@ except ImportError:
 
     def substitution_es_vis_import(m):
         mock_module = "unittest.mock" if sys.version_info >= (3, 3) else "mock"
-        alias = [x for x in m.groups() if x is not None][0]
-        checks = check_for_deferred_ImportError(m.group(0), alias)
-        return r_es_vis_mock.format(m.group(0), checks, mock_module, alias)
+        aliases = [x for x in m.groups() if x is not None][0].split(',')
+        guards = []
+        for alias in aliases:
+            line = m.group(0)
+            if len(aliases) >= 2 and 'from espressomd.visualization' in line:
+                line = line.split('import')[0] + 'import ' + alias.strip()
+            if ' as ' in alias:
+                alias = alias.split(' as ')[1]
+            alias = alias.strip()
+            checks = check_for_deferred_ImportError(line, alias)
+            s = r_es_vis_mock.format(line, checks, mock_module, alias)
+            guards.append(s)
+        return '\n'.join(guards)
 
     # handle deferred ImportError
     code = re_es_vis_import.sub(substitution_es_vis_import, code)

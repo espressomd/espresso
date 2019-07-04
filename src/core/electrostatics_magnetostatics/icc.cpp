@@ -39,6 +39,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"

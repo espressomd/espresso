@@ -29,6 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef CUDA
 double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,
                              int npart, double sum_q2, double alpha_L,
-                             double *box);
+                             const double *box);
 #endif
 #endif

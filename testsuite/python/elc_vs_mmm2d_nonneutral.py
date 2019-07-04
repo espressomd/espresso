@@ -45,17 +45,17 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             "const_pot_0": {
                 "gap_size": self.elc_gap,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 0.0},
             "const_pot_1": {
                 "gap_size": self.elc_gap,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 1.0},
             "const_pot_m1": {
                 "gap_size": self.elc_gap,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": -1.0}
         }
 
@@ -67,17 +67,17 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             "const_pot_0": {
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 0.0},
             "const_pot_1": {
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 1.0},
             "const_pot_m1": {
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": -1.0}
         }
 

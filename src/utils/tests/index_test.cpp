@@ -48,11 +48,19 @@ BOOST_AUTO_TEST_CASE(get_linear_index) {
   auto const grid_size = Utils::Vector3i{7, 5, 3};
   auto const index = Utils::Vector3i{5, 4, 2};
 
-  /* 3 ints version */
+  /* 3 ints version, column major (default) */
   {
     auto const linear_index =
         get_linear_index(index[0], index[1], index[2], grid_size);
     BOOST_CHECK_EQUAL(linear_index, (5 + 4 * 7 + 2 * (7 * 5)));
+  }
+
+  /* 3 ints version, row major */
+  {
+    auto const linear_index = get_linear_index(
+        index[0], index[1], index[2], grid_size, Utils::MemoryOrder::ROW_MAJOR);
+    BOOST_CHECK_EQUAL(linear_index,
+                      ((5 * 3) * index[0] + 3 * index[1] + index[2]));
   }
 
   /* Vector version */

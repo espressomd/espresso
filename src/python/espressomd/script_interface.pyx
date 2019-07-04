@@ -261,6 +261,44 @@ class ScriptInterfaceHelper(PScriptInterface):
         for method_name in self._so_bind_methods:
             setattr(self, method_name, self.generate_caller(method_name))
 
+
+class ScriptObjectRegistry(ScriptInterfaceHelper):
+
+    """
+    Base class for container-like things such as Constraints and LbBoundaires.
+    Derived classes must implement an an add() method which adds a single item
+    to the container.
+    The core class should be derived from ScriptObjectRegistry or provide
+    "get_elements" and "size" as callable methods
+
+    """
+
+    def __getitem__(self, key):
+        return self.call_method("get_elements")[key]
+
+    def __iter__(self):
+        elements = self.call_method("get_elements")
+        for e in elements:
+            yield e
+
+    def __len__(self):
+        return self.call_method("size")
+    
+    def __reduce__(self):
+        res = []
+        for item in self.__iter__():
+            res.append(item)
+
+        return (_unpickle_script_object_registry, (self._so_name, self.get_params(), res))
+
+
+def _unpickle_script_object_registry(so_name, params, items):
+    so = _python_class_by_so_name[so_name](**params)
+    for item in items:
+        so.add(item)
+    return so       
+
+
 # Map from script object names to corresponding python classes
 _python_class_by_so_name = {}
 

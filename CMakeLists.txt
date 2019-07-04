@@ -22,6 +22,9 @@ cmake_minimum_required(VERSION 3.4)
 include(FeatureSummary)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
+if(NOT ${CMAKE_VERSION} VERSION_LESS "3.12")
+  cmake_policy(SET CMP0074 NEW)
+endif()
 
 enable_language(CXX)
 

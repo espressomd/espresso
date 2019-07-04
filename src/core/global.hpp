@@ -54,7 +54,6 @@ void check_global_consistency();
  *  for use with \ref mpi_bcast_parameter.
  */
 enum Fields {
-  /** index of \ref box_l */
   FIELD_BOXL = 0,
   /** index of \ref DomainDecomposition::cell_grid */
   FIELD_CELLGRID,
@@ -88,7 +87,6 @@ enum Fields {
   FIELD_NPTISO_PDIFF,
   /** index of \ref nptiso_struct::piston */
   FIELD_NPTISO_PISTON,
-  /** index of \ref #periodic */
   FIELD_PERIODIC,
   /** index of \ref #skin */
   FIELD_SKIN,

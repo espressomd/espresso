@@ -74,8 +74,8 @@ class Analysis(object):
         p1, p2 : arrays of :obj:`float`
 
         """
-        cdef double p1c[3]
-        cdef double p2c[3]
+        cdef Vector3d p1c
+        cdef Vector3d p2c
         for i in range(3):
             p1c[i] = p1[i]
             p2c[i] = p2[i]
@@ -145,7 +145,7 @@ class Analysis(object):
             raise Exception(
                 "Only one of id or pos may be specified\n" + __doc__)
 
-        cdef double cpos[3]
+        cdef Vector3d cpos
         if len(self._system.part) == 0:
             raise Exception("no particles")
 
@@ -246,9 +246,9 @@ class Analysis(object):
 
         """
 
-        cdef int planedims[3]
+        cdef Vector3i planedims
         cdef List[int] ids
-        cdef double c_pos[3]
+        cdef Vector3d c_pos
 
         check_type_or_throw_except(
             pos, 3, float, "_pos=(float,float,float) must be passed to nbhood")

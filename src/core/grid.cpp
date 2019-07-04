@@ -48,13 +48,13 @@
  * variables
  **********************************************/
 
+BoxGeometry box_geo;
+
 Utils::Vector3i node_grid{};
 Utils::Vector3i node_pos = {-1, -1, -1};
 Utils::Vector<int, 6> node_neighbors{};
 Utils::Vector<int, 6> boundary{};
-int periodic = 7;
 
-Utils::Vector3d box_l = {1, 1, 1};
 Utils::Vector3d half_box_l = {0.5, 0.5, 0.5};
 Utils::Vector3d box_l_i = {1, 1, 1};
 double min_box_l;
@@ -71,7 +71,7 @@ void init_node_grid() {
 }
 
 int map_position_node_array(const Utils::Vector3d &pos) {
-  auto const f_pos = folded_position(pos);
+  auto const f_pos = folded_position(pos, box_geo);
 
   Utils::Vector3i im;
   for (int i = 0; i < 3; i++) {
@@ -117,32 +117,13 @@ int calc_node_neighbors(int node) {
 }
 
 void grid_changed_box_l() {
-  int i;
-
-  GRID_TRACE(fprintf(stderr, "%d: grid_changed_box_l:\n", this_node));
-  GRID_TRACE(fprintf(stderr, "%d: node_pos %d %d %d\n", this_node, node_pos[0],
-                     node_pos[1], node_pos[2]));
-  GRID_TRACE(fprintf(stderr, "%d: node_grid %d %d %d\n", this_node,
-                     node_grid[0], node_grid[1], node_grid[2]));
-  for (i = 0; i < 3; i++) {
-    local_box_l[i] = box_l[i] / (double)node_grid[i];
+  for (int i = 0; i < 3; i++) {
+    local_box_l[i] = box_geo.length()[i] / (double)node_grid[i];
     my_left[i] = node_pos[i] * local_box_l[i];
     my_right[i] = (node_pos[i] + 1) * local_box_l[i];
-    box_l_i[i] = 1 / box_l[i];
-    half_box_l[i] = 0.5 * box_l[i];
   }
 
   calc_minimal_box_dimensions();
-
-#ifdef GRID_DEBUG
-  fprintf(stderr, "%d: local_box_l = (%.3f, %.3f, %.3f)\n", this_node,
-          local_box_l[0], local_box_l[1], local_box_l[2]);
-  fprintf(stderr,
-          "%d: coordinates: x in [%.3f, %.3f], y in [%.3f, %.3f], z in "
-          "[%.3f, %.3f]\n",
-          this_node, my_left[0], my_right[0], my_left[1], my_right[1],
-          my_left[2], my_right[2]);
-#endif
 }
 
 void grid_changed_n_nodes() {
@@ -173,26 +154,41 @@ void calc_minimal_box_dimensions() {
   min_box_l = 2 * MAX_INTERACTION_RANGE;
   min_local_box_l = MAX_INTERACTION_RANGE;
   for (i = 0; i < 3; i++) {
-    min_box_l = std::min(min_box_l, box_l[i]);
+    min_box_l = std::min(min_box_l, box_geo.length()[i]);
     min_local_box_l = std::min(min_local_box_l, local_box_l[i]);
   }
 }
 
 void rescale_boxl(int dir, double d_new) {
-  double scale = (dir - 3) ? d_new / box_l[dir] : d_new / box_l[0];
-  if (scale < 1.) {
-    mpi_rescale_particles(dir, scale);
-    if (dir < 3)
-      box_l[dir] = d_new;
-    else
-      box_l[0] = box_l[1] = box_l[2] = d_new;
-    mpi_bcast_parameter(FIELD_BOXL);
-  } else if (scale > 1.) {
-    if (dir < 3)
-      box_l[dir] = d_new;
-    else
-      box_l[0] = box_l[1] = box_l[2] = d_new;
-    mpi_bcast_parameter(FIELD_BOXL);
+  double scale =
+      (dir - 3) ? d_new / box_geo.length()[dir] : d_new / box_geo.length()[0];
+
+  /* If shrinking, rescale the particles first. */
+  if (scale <= 1.) {
     mpi_rescale_particles(dir, scale);
   }
+
+  if (dir < 3) {
+    auto box_l = box_geo.length();
+    box_l[dir] = d_new;
+    box_geo.set_length(box_l);
+  } else {
+    box_geo.set_length({d_new, d_new, d_new});
+  }
+
+  mpi_bcast_parameter(FIELD_BOXL);
+
+  if (scale > 1.) {
+    mpi_rescale_particles(dir, scale);
+  }
+}
+
+void map_node_array(int node, int pos[3]) {
+  MPI_Cart_coords(comm_cart, node, 3, pos);
+}
+
+int map_array_node(Utils::Span<const int> pos) {
+  int rank;
+  MPI_Cart_rank(comm_cart, pos.data(), &rank);
+  return rank;
 }

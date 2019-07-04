@@ -42,7 +42,7 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
   std::vector<Utils::Vector3d> folded_positions(ids().size());
   boost::transform(ids(), folded_positions.begin(),
                    [&partCfg](int id) -> Utils::Vector3d {
-                     return folded_position(partCfg[id]);
+                     return folded_position(partCfg[id].r.p, box_geo);
                    });
 
   std::vector<Utils::Vector3d> velocities(folded_positions.size());
