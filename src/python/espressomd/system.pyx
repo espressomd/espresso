@@ -24,7 +24,7 @@ from globals cimport *
 import numpy as np
 import collections
 
-from grid cimport get_mi_vector, box_geo
+from core.grid cimport get_mi_vector, box_geo
 from . cimport integrate
 from . import interactions
 from . import integrate

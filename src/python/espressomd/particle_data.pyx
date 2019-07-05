@@ -34,7 +34,8 @@ import functools
 import types
 from espressomd.utils import nesting_level, array_locked, is_valid_type
 from espressomd.utils cimport make_array_locked
-from .grid cimport box_geo, folded_position, unfolded_position
+from core.grid cimport box_geo, folded_position, unfolded_position
+from core.utils cimport make_const_span
 
 PARTICLE_EXT_FORCE = 1
 

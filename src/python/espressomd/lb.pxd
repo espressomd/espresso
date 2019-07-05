@@ -26,10 +26,10 @@ from libcpp.string cimport string
 from libc cimport stdint
 
 from .actors cimport Actor
-from .utils cimport Vector3d
-from .utils cimport Vector3i
-from .utils cimport Vector6d
-from .utils cimport Vector19d
+from core.utils cimport Vector3d
+from core.utils cimport Vector3i
+from core.utils cimport Vector6d
+from core.utils cimport Vector19d
 
 cdef class HydrodynamicInteraction(Actor):
     pass
@@ -75,7 +75,7 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) except +
     ActiveLB lb_lbfluid_get_lattice_switch() except +
     Vector6d lb_lbfluid_get_stress() except +
-    bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
+    bool lb_lbnode_is_index_valid(Vector3i & ind) except +
     Vector3i lb_lbfluid_get_shape() except +
     const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
     void lb_lbnode_set_velocity(const Vector3i & ind, const Vector3d & u) except +

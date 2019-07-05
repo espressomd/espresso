@@ -27,7 +27,7 @@ from libcpp cimport bool
 
 from boost cimport string_ref
 
-from utils cimport Span
+from core.utils cimport Span
 
 cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     void initialize()

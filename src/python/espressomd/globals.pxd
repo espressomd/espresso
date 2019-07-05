@@ -19,7 +19,7 @@
 include "myconfig.pxi"
 from libcpp cimport bool
 from interactions cimport ImmersedBoundaries
-from utils cimport Vector3i
+from core.utils cimport Vector3i
 
 cdef extern from "global.hpp":
     int FIELD_BOXL

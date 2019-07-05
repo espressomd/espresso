@@ -11,7 +11,7 @@ from . import utils
 import os
 import tempfile
 import shutil
-from .utils cimport Vector6d
+from core.utils cimport Vector6d
 import numpy as np
 from espressomd.utils import is_valid_type
 

@@ -49,6 +49,7 @@ configure_file(MDA_ESP/__init__.py ${CMAKE_CURRENT_BINARY_DIR}/MDA_ESP/__init__.
 SET(cython_AUX  "${cython_AUX}" CACHE INTERNAL "cython_AUX")
 
 add_subdirectory(io)
+add_subdirectory(core)
 
 list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
 list(REMOVE_DUPLICATES cython_SRC)

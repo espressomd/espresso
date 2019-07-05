@@ -1,7 +1,7 @@
 include "myconfig.pxi"
 from libcpp cimport bool
 
-from .utils cimport Vector3i
+from core.utils cimport Vector3i
 
 IF ELECTROKINETICS and CUDA:
     cdef extern from "grid_based_algorithms/electrokinetics.hpp":

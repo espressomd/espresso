@@ -23,7 +23,7 @@ from __future__ import print_function, absolute_import
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
-from .utils cimport Vector3i
+from core.utils cimport Vector3i
 
 cdef extern from "communication.hpp":
     void mpi_bcast_cell_structure(int cs)

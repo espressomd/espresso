@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .interactions cimport bonded_ia_params
+from core.partCfg_global cimport partCfg
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
 

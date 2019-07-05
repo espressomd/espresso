@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-from grid cimport local_box_l, node_grid
+from core.grid cimport local_box_l, node_grid
 from . cimport cellsystem
 from . cimport integrate
 from globals cimport *

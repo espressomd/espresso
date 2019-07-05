@@ -1,41 +1,9 @@
-#
-# Copyright (C) 2013-2018 The ESPResSo project
-#
-# This file is part of ESPResSo.
-#
-# ESPResSo is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# ESPResSo is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-
-# For C-extern Analysis
-
-from __future__ import print_function, absolute_import
-cimport numpy as np
-from espressomd.utils cimport *
-from .utils cimport Vector9d
-from libcpp.string cimport string  # import std::string as string
-from libcpp.vector cimport vector  # import std::vector as vector
-from libcpp.map cimport map  # import std::map as map
-
-cdef extern from "PartCfg.hpp":
-    cppclass PartCfg:
-        pass
-
-cdef extern from "partCfg_global.hpp":
-    PartCfg & partCfg()
-
-cdef extern from "particle_data.hpp":
-    int max_seen_particle_type
+from core.PartCfg cimport PartCfg
+from core.utils cimport List
+from core.utils cimport Vector3d, Vector3i
+from libcpp.vector cimport vector
+from libcpp.map cimport map
+from libcpp.string cimport string
 
 cdef extern from "statistics.hpp":
     int n_part
@@ -62,7 +30,7 @@ cdef extern from "statistics.hpp":
     cdef void calc_structurefactor(PartCfg & , int * p_types, int n_types, int order, double ** sf)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
     cdef double mindist(PartCfg & , const List[int] & set1, const List[int] & set2)
-    cdef double min_distance2(Vector3d pos1, Vector3d pos2)
+    cdef double min_distance2(Vector3d &pos1, Vector3d &pos2)
     cdef List[int] nbhood(PartCfg & , const Vector3d & pos, double r_catch, const Vector3i & planedims)
     cdef double distto(PartCfg & , const Vector3d & pos, int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
@@ -94,27 +62,4 @@ cdef extern from "statistics.hpp":
         double r_min, double r_max, int r_bins, int log_flag, double * low,
         double * dist)
 
-cdef extern from "statistics_chain.hpp":
-    int chain_start
-    int chain_n_chains
-    int chain_length
-    void calc_re(PartCfg &, double ** re)
-    void calc_rg(PartCfg &, double ** rg)
-    void calc_rh(PartCfg &, double ** rh)
 
-cdef extern from "pressure.hpp":
-    cdef Observable_stat total_pressure
-    cdef Observable_stat_non_bonded total_pressure_non_bonded
-    cdef Observable_stat total_p_tensor
-    cdef Observable_stat_non_bonded total_p_tensor_non_bonded
-    cdef void update_pressure(int)
-
-cdef extern from "energy.hpp":
-    cdef Observable_stat total_energy
-    cdef Observable_stat_non_bonded total_energy_non_bonded
-    cdef void master_energy_calc()
-    cdef void init_energies(Observable_stat * stat)
-    double calculate_current_potential_energy_of_system()
-
-cdef extern from "dpd.hpp":
-    Vector9d dpd_stress()

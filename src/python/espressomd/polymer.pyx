@@ -20,6 +20,7 @@
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport polymer
+from core.partCfg_global cimport partCfg
 import numpy as np
 from espressomd.utils import is_valid_type, array_locked
 from espressomd.utils cimport make_Vector3d

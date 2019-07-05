@@ -21,7 +21,6 @@ from cython.operator cimport dereference
 include "myconfig.pxi"
 from espressomd cimport actors
 from . import actors
-cimport grid
 cimport globals
 import numpy as np
 IF SCAFACOS == 1:
@@ -30,7 +29,9 @@ IF SCAFACOS == 1:
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type, to_str
 from . cimport checks
-from .analyze cimport partCfg, PartCfg
+from core.partCfg_global cimport partCfg
+from core.PartCfg cimport PartCfg
+from core.grid cimport box_geo
 from .particle_data cimport particle
 
 
@@ -622,7 +623,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             default_params = self.default_params()
 
             self.thisptr.set_params(
-                grid.box_geo.length()[
+                box_geo.length()[
                     2], coulomb.prefactor, self._params["maxPWerror"],
                 self._params["far_switch_radius"], self._params["bessel_cutoff"])
 

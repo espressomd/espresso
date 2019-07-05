@@ -23,7 +23,7 @@ include "myconfig.pxi"
 
 from libcpp.vector cimport vector
 from .utils cimport Vector3d
-from .analyze cimport PartCfg, partCfg
+from core.PartCfg cimport PartCfg
 
 cdef extern from "polymer.hpp":
     vector[vector[Vector3d]] draw_polymer_positions(PartCfg &, int n_polymers, int beads_per_polymer, double bond_length, vector[Vector3d] & start_positions, double min_distance, int max_tries, int use_bond_angle, double bond_angle, int respect_constraints, int seed) except +

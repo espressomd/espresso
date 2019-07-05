@@ -19,12 +19,18 @@
 # For C-extern Analysis
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from . cimport analyze
+from core.partCfg_global cimport partCfg
+from core.statistics cimport analyze_append
+from core.utils cimport Vector3i, Vector3d, Vector9d
+cimport core.statistics
+cimport core.pressure
+cimport core.dpd
+cimport core.energy
+cimport core.statistics_chain
+cimport core.particle_data
 from . cimport utils
-from . cimport particle_data
 from . import utils
 from . import code_info
-from . import particle_data
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp.map cimport map  # import std::map as map
@@ -54,13 +60,13 @@ class Analysis(object):
 
     def append(self):
         """Append configuration for averaged analysis."""
-        if analyze.n_part == 0:
+        if core.statistics.n_part == 0:
             raise Exception("No particles to append!")
-        if (analyze.n_configs > 0) and (analyze.n_part_conf != analyze.n_part):
+        if (core.statistics.n_configs > 0) and (core.statistics.n_part_conf != core.statistics.n_part):
             raise Exception(
                 "All configurations stored must have the same length")
 
-        analyze.analyze_append(analyze.partCfg())
+        analyze_append(partCfg())
 
     #
     # Minimal distance between particles
@@ -79,7 +85,7 @@ class Analysis(object):
         for i in range(3):
             p1c[i] = p1[i]
             p2c[i] = p2[i]
-        return analyze.min_distance2(p1c, p2c)
+        return core.statistics.min_distance2(p1c, p2c)
 
     def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particles.
@@ -113,7 +119,7 @@ class Analysis(object):
 
             set1 = create_int_list_from_python_object(p1)
             set2 = create_int_list_from_python_object(p2)
-        return analyze.mindist(analyze.partCfg(), set1, set2)
+        return core.statistics.mindist(partCfg(), set1, set2)
 
     #
     # Distance to particle or point
@@ -165,7 +171,7 @@ class Analysis(object):
             for i in range(3):
                 cpos[i] = pos[i]
             _id = -1
-        return analyze.distto(analyze.partCfg(), cpos, _id)
+        return core.statistics.distto(partCfg(), cpos, _id)
 
     #
     # Analyze Linear Momentum
@@ -191,7 +197,7 @@ class Analysis(object):
             The linear momentum of the system.
 
         """
-        return analyze.calc_linear_momentum(include_particles, include_lbfluid)
+        return core.statistics.calc_linear_momentum(include_particles, include_lbfluid)
 
     #
     # Analyze center of mass
@@ -217,10 +223,10 @@ class Analysis(object):
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
-        if (p_type < 0 or p_type >= analyze.max_seen_particle_type):
+        if (p_type < 0 or p_type >= core.particle_data.max_seen_particle_type):
             raise ValueError("Particle type", p_type, "does not exist!")
 
-        return analyze.centerofmass(analyze.partCfg(), p_type)
+        return core.statistics.centerofmass(partCfg(), p_type)
 
     # get all particles in neighborhood r_catch of pos and return their ids
     # in il. plane can be used to specify the distance in the xy, xz or yz
@@ -272,7 +278,7 @@ class Analysis(object):
         for i in range(3):
             c_pos[i] = pos[i]
 
-        ids = analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
+        ids = core.statistics.nbhood(partCfg(), c_pos, r_catch, planedims)
 
         return create_nparray_from_int_list(ids)
 
@@ -332,8 +338,8 @@ class Analysis(object):
         cdef vector[int] c_types = types
 
         cdef map[string, vector[vector[vector[double]]]] distribution
-        analyze.calc_cylindrical_average(
-            analyze.partCfg(), c_center, c_direction, c_length,
+        core.statistics.calc_cylindrical_average(
+            partCfg(), c_center, c_direction, c_length,
                                            c_radius, c_bins_axial, c_bins_radial, c_types,
                                            distribution)
 
@@ -408,29 +414,29 @@ class Analysis(object):
         p = OrderedDict()
 
         # Update in espresso core if necessary
-        if (analyze.total_pressure.init_status != 1 + v_comp):
-            analyze.update_pressure(v_comp)
+        if (core.pressure.total_pressure.init_status != 1 + v_comp):
+            core.pressure.update_pressure(v_comp)
 
         # Individual components of the pressure
 
         # Total pressure
         cdef int i
         total = 0
-        for i in range(analyze.total_pressure.data.n):
-            total += analyze.total_pressure.data.e[i]
+        for i in range(core.pressure.total_pressure.data.n):
+            total += core.pressure.total_pressure.data.e[i]
 
         p["total"] = total
 
         # kinetic
-        p["kinetic"] = analyze.total_pressure.data.e[0]
+        p["kinetic"] = core.pressure.total_pressure.data.e[0]
 
         # Bonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if (bonded_ia_params[i].type != BONDED_IA_NONE):
-                p["bonded", i] = analyze.obsstat_bonded(& analyze.total_pressure, i)[0]
-                total_bonded += analyze.obsstat_bonded(& analyze.total_pressure, i)[0]
+                p["bonded", i] = core.statistics.obsstat_bonded(& core.pressure.total_pressure, i)[0]
+                total_bonded += core.statistics.obsstat_bonded(& core.pressure.total_pressure, i)[0]
         p["bonded"] = total_bonded
 
         # Non-Bonded interactions, total as well as intra and inter molecular
@@ -442,15 +448,15 @@ class Analysis(object):
         total_intra = 0
         total_non_bonded = 0
 
-        for i in range(analyze.max_seen_particle_type):
-            for j in range(i, analyze.max_seen_particle_type):
+        for i in range(core.particle_data.max_seen_particle_type):
+            for j in range(i, core.particle_data.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
-                p["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_pressure, i, j)[0]
-                total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_pressure, i, j)[0]
-                total_intra += analyze.obsstat_nonbonded_intra(& analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_intra", i, j] = analyze.obsstat_nonbonded_intra(& analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_inter", i, j] = analyze.obsstat_nonbonded_inter(& analyze.total_pressure_non_bonded, i, j)[0]
-                total_inter += analyze.obsstat_nonbonded_inter(& analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded", i, j] = core.statistics.obsstat_nonbonded(& core.pressure.total_pressure, i, j)[0]
+                total_non_bonded += core.statistics.obsstat_nonbonded(& core.pressure.total_pressure, i, j)[0]
+                total_intra += core.statistics.obsstat_nonbonded_intra(& core.pressure.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_intra", i, j] = core.statistics.obsstat_nonbonded_intra(& core.pressure.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_inter", i, j] = core.statistics.obsstat_nonbonded_inter(& core.pressure.total_pressure_non_bonded, i, j)[0]
+                total_inter += core.statistics.obsstat_nonbonded_inter(& core.pressure.total_pressure_non_bonded, i, j)[0]
         p["non_bonded_intra"] = total_intra
         p["non_bonded_inter"] = total_inter
         p["non_bonded"] = total_non_bonded
@@ -459,28 +465,28 @@ class Analysis(object):
         IF ELECTROSTATICS == 1:
             cdef double total_coulomb
             total_coulomb = 0
-            for i in range(analyze.total_pressure.n_coulomb):
-                total_coulomb += analyze.total_pressure.coulomb[i]
-                p["coulomb", i] = analyze.total_pressure.coulomb[i]
+            for i in range(core.pressure.total_pressure.n_coulomb):
+                total_coulomb += core.pressure.total_pressure.coulomb[i]
+                p["coulomb", i] = core.pressure.total_pressure.coulomb[i]
             p["coulomb"] = total_coulomb
 
         # Dipoles
         IF DIPOLES == 1:
             cdef double total_dipolar
             total_dipolar = 0
-            for i in range(analyze.total_pressure.n_dipolar):
-                total_dipolar += analyze.total_pressure.dipolar[i]
-                p["dipolar", i] = analyze.total_pressure.coulomb[i]
+            for i in range(core.pressure.total_pressure.n_dipolar):
+                total_dipolar += core.pressure.total_pressure.dipolar[i]
+                p["dipolar", i] = core.pressure.total_pressure.coulomb[i]
             p["dipolar"] = total_dipolar
 
         # virtual sites
         IF VIRTUAL_SITES == 1:
             p_vs = 0.
-            for i in range(analyze.total_pressure.n_virtual_sites):
-                p_vs += analyze.total_pressure.virtual_sites[i]
-                p["virtual_sites", i] = analyze.total_pressure.virtual_sites[
+            for i in range(core.pressure.total_pressure.n_virtual_sites):
+                p_vs += core.pressure.total_pressure.virtual_sites[i]
+                p["virtual_sites", i] = core.pressure.total_pressure.virtual_sites[
                     0]
-            if analyze.total_pressure.n_virtual_sites:
+            if core.pressure.total_pressure.n_virtual_sites:
                 p["virtual_sites"] = p_vs
 
         return p
@@ -520,8 +526,8 @@ class Analysis(object):
         p = OrderedDict()
 
         # Update in espresso core if necessary
-        if (analyze.total_p_tensor.init_status != 1 + v_comp):
-            analyze.update_pressure(v_comp)
+        if (core.pressure.total_p_tensor.init_status != 1 + v_comp):
+            core.pressure.update_pressure(v_comp)
 
         # Individual components of the pressure
 
@@ -529,14 +535,14 @@ class Analysis(object):
         cdef int i
         total = np.zeros(9)
         for i in range(9):
-            for k in range(analyze.total_p_tensor.data.n // 9):
-                total[i] += analyze.total_p_tensor.data.e[9 * k + i]
+            for k in range(core.pressure.total_p_tensor.data.n // 9):
+                total[i] += core.pressure.total_p_tensor.data.e[9 * k + i]
 
         p["total"] = total.reshape((3, 3))
 
         # kinetic
         p["kinetic"] = create_nparray_from_double_array(
-            analyze.total_p_tensor.data.e, 9)
+            core.pressure.total_p_tensor.data.e, 9)
         p["kinetic"] = p["kinetic"].reshape((3, 3))
 
         # Bonded
@@ -544,7 +550,7 @@ class Analysis(object):
         for i in range(bonded_ia_params.size()):
             if (bonded_ia_params[i].type != BONDED_IA_NONE):
                 p["bonded", i] = np.reshape(create_nparray_from_double_array(
-                    analyze.obsstat_bonded(& analyze.total_p_tensor, i), 9),
+                    core.statistics.obsstat_bonded(& core.pressure.total_p_tensor, i), 9),
                     (3, 3))
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
@@ -555,24 +561,24 @@ class Analysis(object):
         total_non_bonded_intra = np.zeros((3, 3))
         total_non_bonded_inter = np.zeros((3, 3))
 
-        for i in range(analyze.max_seen_particle_type):
-            for j in range(i, analyze.max_seen_particle_type):
+        for i in range(core.particle_data.max_seen_particle_type):
+            for j in range(i, core.particle_data.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
                 p["non_bonded", i, j] = np.reshape(
-                    create_nparray_from_double_array(analyze.obsstat_nonbonded(
-                        & analyze.total_p_tensor, i, j), 9), (3, 3))
+                    create_nparray_from_double_array(core.statistics.obsstat_nonbonded(
+                        & core.pressure.total_p_tensor, i, j), 9), (3, 3))
                 total_non_bonded += p["non_bonded", i, j]
 
                 p["non_bonded_intra", i, j] = np.reshape(
                     create_nparray_from_double_array(
-                        analyze.obsstat_nonbonded_intra(
-                            & analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                        core.statistics.obsstat_nonbonded_intra(
+                            & core.pressure.total_p_tensor_non_bonded, i, j), 9), (3, 3))
                 total_non_bonded_intra += p["non_bonded_intra", i, j]
 
                 p["non_bonded_inter", i, j] = np.reshape(
                     create_nparray_from_double_array(
-                        analyze.obsstat_nonbonded_inter(
-                            & analyze.total_p_tensor_non_bonded, i, j), 9), (3, 3))
+                        core.statistics.obsstat_nonbonded_inter(
+                            & core.pressure.total_p_tensor_non_bonded, i, j), 9), (3, 3))
                 total_non_bonded_inter += p["non_bonded_inter", i, j]
 
         p["non_bonded_intra"] = total_non_bonded_intra
@@ -582,32 +588,32 @@ class Analysis(object):
         # Electrostatics
         IF ELECTROSTATICS == 1:
             total_coulomb = np.zeros((3, 3))
-            for i in range(analyze.total_p_tensor.n_coulomb):
+            for i in range(core.pressure.total_p_tensor.n_coulomb):
                 p["coulomb", i] = np.reshape(
                     create_nparray_from_double_array(
-                        analyze.total_p_tensor.coulomb + 9 * i, 9), (3, 3))
+                        core.pressure.total_p_tensor.coulomb + 9 * i, 9), (3, 3))
                 total_coulomb += p["coulomb", i]
             p["coulomb"] = total_coulomb
 
         # Dipoles
         IF DIPOLES == 1:
             total_dipolar = np.zeros((3, 3))
-            for i in range(analyze.total_p_tensor.n_dipolar):
+            for i in range(core.pressure.total_p_tensor.n_dipolar):
                 p["dipolar", i] = np.reshape(
                     create_nparray_from_double_array(
-                        analyze.total_p_tensor.dipolar + 9 * i, 9), (3, 3))
+                        core.pressure.total_p_tensor.dipolar + 9 * i, 9), (3, 3))
                 total_dipolar += p["dipolar", i]
             p["dipolar"] = total_dipolar
 
         # virtual sites
         IF VIRTUAL_SITES_RELATIVE == 1:
             total_vs = np.zeros((3, 3))
-            for i in range(analyze.total_p_tensor.n_virtual_sites):
+            for i in range(core.pressure.total_p_tensor.n_virtual_sites):
                 p["virtual_sites", i] = np.reshape(
                     create_nparray_from_double_array(
-                        analyze.total_p_tensor.virtual_sites + 9 * i, 9), (3, 3))
+                        core.pressure.total_p_tensor.virtual_sites + 9 * i, 9), (3, 3))
                 total_vs += p["virtual_sites", i]
-            if analyze.total_p_tensor.n_virtual_sites:
+            if core.pressure.total_p_tensor.n_virtual_sites:
                 p["virtual_sites"] = total_vs
 
         return p
@@ -615,7 +621,7 @@ class Analysis(object):
     IF DPD == 1:
         def dpd_stress(self):
             cdef Vector9d p
-            p = dpd_stress()
+            p = core.dpd.dpd_stress()
             return array_locked((
                 p[0], p[1], p[2],
                 p[3], p[4], p[5],
@@ -650,31 +656,31 @@ class Analysis(object):
 
         e = OrderedDict()
 
-        if analyze.total_energy.init_status == 0:
-            analyze.init_energies(& analyze.total_energy)
-            analyze.master_energy_calc()
+        if core.energy.total_energy.init_status == 0:
+            core.energy.init_energies(& core.energy.total_energy)
+            core.energy.master_energy_calc()
             handle_errors("calc_long_range_energies failed")
 
         # Individual components of the pressure
 
         # Total energy
         cdef int i
-        total = analyze.total_energy.data.e[0]  # kinetic energy
-        total += calculate_current_potential_energy_of_system()
+        total = core.energy.total_energy.data.e[0]  # kinetic energy
+        total += core.energy.calculate_current_potential_energy_of_system()
 
         e["total"] = total
-        e["external_fields"] = analyze.total_energy.external_fields[0]
+        e["external_fields"] = core.energy.total_energy.external_fields[0]
 
         # Kinetic energy
-        e["kinetic"] = analyze.total_energy.data.e[0]
+        e["kinetic"] = core.energy.total_energy.data.e[0]
 
         # Nonbonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if (bonded_ia_params[i].type != BONDED_IA_NONE):
-                e["bonded", i] = analyze.obsstat_bonded(& analyze.total_energy, i)[0]
-                total_bonded += analyze.obsstat_bonded(& analyze.total_energy, i)[0]
+                e["bonded", i] = core.statistics.obsstat_bonded(& core.energy.total_energy, i)[0]
+                total_bonded += core.statistics.obsstat_bonded(& core.energy.total_energy, i)[0]
         e["bonded"] = total_bonded
 
         # Non-Bonded interactions, total as well as intra and inter molecular
@@ -686,16 +692,16 @@ class Analysis(object):
         total_intra = 0
         total_non_bonded = 0.
 
-        for i in range(analyze.max_seen_particle_type):
-            for j in range(analyze.max_seen_particle_type):
+        for i in range(core.particle_data.max_seen_particle_type):
+            for j in range(core.particle_data.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
-                e["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
+                e["non_bonded", i, j] = core.statistics.obsstat_nonbonded(& core.energy.total_energy, i, j)[0]
                 if i <= j:
-                    total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
-    #        total_intra +=analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
-    #        e["non_bonded_intra",i,j] =analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
-    #        e["nonBondedInter",i,j] =analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
-    #        total_inter+= analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
+                    total_non_bonded += core.statistics.obsstat_nonbonded(& core.energy.total_energy, i, j)[0]
+    #        total_intra +=core.statistics.obsstat_nonbonded_intra(&core.energy.total_energy_non_bonded, i, j)[0]
+    #        e["non_bonded_intra",i,j] =core.statistics.obsstat_nonbonded_intra(&core.energy.total_energy_non_bonded, i, j)[0]
+    #        e["nonBondedInter",i,j] =core.statistics.obsstat_nonbonded_inter(&core.energy.total_energy_non_bonded, i, j)[0]
+    #        total_inter+= core.statistics.obsstat_nonbonded_inter(&core.energy.total_energy_non_bonded, i, j)[0]
     #  e["nonBondedIntra"]=total_intra
     #  e["nonBondedInter"]=total_inter
         e["non_bonded"] = total_non_bonded
@@ -704,18 +710,18 @@ class Analysis(object):
         IF ELECTROSTATICS == 1:
             cdef double total_coulomb
             total_coulomb = 0
-            for i in range(analyze.total_energy.n_coulomb):
-                total_coulomb += analyze.total_energy.coulomb[i]
-                e["coulomb", i] = analyze.total_energy.coulomb[i]
+            for i in range(core.energy.total_energy.n_coulomb):
+                total_coulomb += core.energy.total_energy.coulomb[i]
+                e["coulomb", i] = core.energy.total_energy.coulomb[i]
             e["coulomb"] = total_coulomb
 
         # Dipoles
         IF DIPOLES == 1:
             cdef double total_dipolar
             total_dipolar = 0
-            for i in range(analyze.total_energy.n_dipolar):
-                total_dipolar += analyze.total_energy.dipolar[i]
-                e["dipolar", i] = analyze.total_energy.dipolar[i]
+            for i in range(core.energy.total_energy.n_dipolar):
+                total_dipolar += core.energy.total_energy.dipolar[i]
+                e["dipolar", i] = core.energy.total_energy.dipolar[i]
             e["dipolar"] = total_dipolar
 
         return e
@@ -751,7 +757,7 @@ class Analysis(object):
         """
         cdef double * re = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        analyze.calc_re(analyze.partCfg(), & re)
+        core.statistics_chain.calc_re(partCfg(), & re)
         tuple_re = (re[0], re[1], re[2], re[3])
         free(re)
         return tuple_re
@@ -786,7 +792,7 @@ class Analysis(object):
         """
         cdef double * rg = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        analyze.calc_rg(analyze.partCfg(), & rg)
+        core.statistics_chain.calc_rg(partCfg(), & rg)
         tuple_rg = (rg[0], rg[1], rg[2], rg[3])
         free(rg)
         return tuple_rg
@@ -820,7 +826,7 @@ class Analysis(object):
 
         cdef double * rh = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        analyze.calc_rh(analyze.partCfg(), & rh)
+        core.statistics_chain.calc_rh(partCfg(), & rh)
         tuple_rh = (rh[0], rh[1])
         free(rh)
         return tuple_rh
@@ -839,9 +845,9 @@ class Analysis(object):
             if (not self._system.part.exists(i)):
                 raise ValueError('particle with id {0:.0f} does not exist\ncannot perform analysis on the range chain_start={1:.0f}, n_chains={2:.0f}, chain_length={3:.0f}\nplease provide a contiguous range of particle ids'.format(
                     i, chain_start, number_of_chains, chain_length));
-        analyze.chain_start = chain_start
-        analyze.chain_n_chains = number_of_chains
-        analyze.chain_length = chain_length
+        core.statistics_chain.chain_start = chain_start
+        core.statistics_chain.chain_n_chains = number_of_chains
+        core.statistics_chain.chain_length = chain_length
 
     #
     # Structure factor
@@ -879,9 +885,9 @@ class Analysis(object):
         cdef double * sf
         p_types = create_int_list_from_python_object(sf_types)
 
-        analyze.calc_structurefactor(analyze.partCfg(), p_types.e, p_types.n, sf_order, & sf)
+        core.statistics.calc_structurefactor(partCfg(), p_types.e, p_types.n, sf_order, & sf)
 
-        return np.transpose(analyze.modify_stucturefactor(sf_order, sf))
+        return np.transpose(core.statistics.modify_stucturefactor(sf_order, sf))
 
     #
     # RDF
@@ -947,11 +953,11 @@ class Analysis(object):
         cdef vector[int] p2_types = type_list_b
 
         if rdf_type == 'rdf':
-            analyze.calc_rdf(analyze.partCfg(), p1_types,
+            core.statistics.calc_rdf(partCfg(), p1_types,
                                p2_types, r_min, r_max, r_bins, rdf)
         elif rdf_type == '<rdf>':
-            analyze.calc_rdf_av(
-                analyze.partCfg(), p1_types, p2_types, r_min,
+            core.statistics.calc_rdf_av(
+                partCfg(), p1_types, p2_types, r_min,
                                   r_max, r_bins, rdf, n_conf)
         else:
             raise Exception(
@@ -1031,8 +1037,8 @@ class Analysis(object):
         p1_types = create_int_list_from_python_object(type_list_a)
         p2_types = create_int_list_from_python_object(type_list_b)
 
-        analyze.calc_part_distribution(
-            analyze.partCfg(
+        core.statistics.calc_part_distribution(
+            partCfg(
                 ), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
                                          r_min, r_max, r_bins, log_flag, & low, distribution.data())
 
@@ -1069,7 +1075,7 @@ class Analysis(object):
         cdef double[3] com
         cdef int p1 = p_type
 
-        analyze.angularmomentum(analyze.partCfg(), p1, com)
+        core.statistics.angularmomentum(partCfg(), p1, com)
 
         return np.array([com[0], com[1], com[2]])
 
@@ -1110,7 +1116,7 @@ class Analysis(object):
         for type in p_type:
             check_type_or_throw_except(
                 type, 1, int, "particle type has to be an int")
-            if (type < 0 or type >= analyze.max_seen_particle_type):
+            if (type < 0 or type >= core.particle_data.max_seen_particle_type):
                 raise ValueError("Particle type", type, "does not exist!")
         selection = np.in1d(self._system.part[:].type, p_type)
 
@@ -1161,11 +1167,11 @@ class Analysis(object):
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
-        if (p_type < 0 or p_type >= analyze.max_seen_particle_type):
+        if (p_type < 0 or p_type >= core.particle_data.max_seen_particle_type):
             raise ValueError("Particle type", p_type, "does not exist!")
 
-        analyze.momentofinertiamatrix(
-            analyze.partCfg(), p_type, MofImatrix)
+        core.statistics.momentofinertiamatrix(
+            partCfg(), p_type, MofImatrix)
 
         MofImatrix_np = np.empty((9))
         for i in range(9):

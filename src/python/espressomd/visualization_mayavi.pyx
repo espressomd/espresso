@@ -9,7 +9,7 @@ from .interactions cimport *
 from .system cimport *
 from .interactions import NonBondedInteractions
 from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
-from .grid cimport get_mi_vector, box_geo
+from core.grid cimport get_mi_vector, box_geo
 
 include "myconfig.pxi"
 
