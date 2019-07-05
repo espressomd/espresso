@@ -25,7 +25,6 @@ import numpy as np
 cimport numpy as np
 from libc cimport stdint
 from .actors cimport Actor
-from . cimport cuda_init
 from . import cuda_init
 from copy import deepcopy
 from . import utils

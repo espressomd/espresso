@@ -29,7 +29,6 @@ from . cimport integrate
 from . import interactions
 from . import integrate
 from .actors import Actors
-from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info

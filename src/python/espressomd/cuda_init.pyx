@@ -18,7 +18,7 @@
 #
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from . cimport cuda_init
+cimport core.cuda_init
 
 cdef class CudaInitHandle(object):
     def __init__(self):
@@ -37,7 +37,7 @@ cdef class CudaInitHandle(object):
                 Id of current set device.
 
             """
-            dev = cuda_get_device()
+            dev = core.cuda_init.cuda_get_device()
             if dev == -1:
                 raise Exception("cuda device get error")
             return dev
@@ -53,7 +53,7 @@ cdef class CudaInitHandle(object):
                 Set the device id of the graphics card to use.
 
             """
-            cuda_set_device(_dev)
+            core.cuda_init.cuda_set_device(_dev)
 
     IF CUDA == 1:
         @property
@@ -69,8 +69,8 @@ cdef class CudaInitHandle(object):
             """
             cdef char gpu_name_buffer[4 + 64]
             devices = dict()
-            for i in range(cuda_get_n_gpus()):
-                cuda_get_gpu_name(i, gpu_name_buffer)
+            for i in range(core.cuda_init.cuda_get_n_gpus()):
+                core.cuda_init.cuda_get_gpu_name(i, gpu_name_buffer)
                 devices[i] = gpu_name_buffer
             return devices
 
@@ -81,7 +81,7 @@ cdef class CudaInitHandle(object):
 
 IF CUDA:
     def gpu_available():
-        return cuda_get_n_gpus() > 0
+        return core.cuda_init.cuda_get_n_gpus() > 0
 ELSE:
     def gpu_available():
         return False
