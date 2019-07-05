@@ -201,8 +201,8 @@ struct CopyRight {
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-double * fft_pack_block(double const *in, double *out, const int *start,
-                    const int *size, const int *dim, int element);
+double *fft_pack_block(double const *in, double *out, const int *start,
+                       const int *size, const int *dim, int element);
 
 /** unpack a 3d-grid input block (size[3]) into an output 3d-grid
  *  with dimension dim[3] at start position start[3].
@@ -217,34 +217,27 @@ double * fft_pack_block(double const *in, double *out, const int *start,
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
 template <class BinaryOp = CopyRight>
-void fft_unpack_block(double const * in, double * out,
-                      int const start[3], int const size[3], int const dim[3],
-                      int element, BinaryOp op = {}) {
-  /* mid and slow changing indices */
-  int m, s;
-  /* linear index of in grid, linear index of out grid */
-  int li_in = 0, li_out;
-  /* offset for indices in input grid */
-  int m_in_offset;
-  /* offsets for indices in output grid */
-  int m_out_offset, s_out_offset;
-
+const double *fft_unpack_block(double const *in, double *out, const int *start,
+                               const int *size, const int *dim, int element,
+                               BinaryOp op = {}) {
   /* copy size */
   auto const copy_size = element * size[2];
-  m_out_offset = element * dim[2];
-  s_out_offset = element * (dim[2] * (dim[1] - size[1]));
-  m_in_offset = element * size[2];
-  li_out = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
+  /* offsets for indices in output grid */
+  auto const m_out_offset = element * dim[2];
+  auto const s_out_offset = element * (dim[2] * (dim[1] - size[1]));
+  /* Jump to the start of the block */
+  out += element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
 
-  for (s = 0; s < size[0]; s++) {
-    for (m = 0; m < size[1]; m++) {
-      std::transform(out + li_out, out + li_out + copy_size, in + li_in,
-                     out + li_out, op);
-      li_in += m_in_offset;
-      li_out += m_out_offset;
+  for (int s = 0; s < size[0]; s++) {
+    for (int m = 0; m < size[1]; m++) {
+      std::transform(out, out + copy_size, in, out, op);
+      in += copy_size;
+      out += m_out_offset;
     }
-    li_out += s_out_offset;
+    out += s_out_offset;
   }
+
+  return in;
 }
 /*@}*/
 #endif

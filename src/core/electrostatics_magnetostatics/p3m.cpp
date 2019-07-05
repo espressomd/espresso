@@ -34,7 +34,6 @@
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "fft.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
