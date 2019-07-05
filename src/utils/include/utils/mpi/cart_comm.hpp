@@ -95,15 +95,15 @@ inline std::pair<int, int> cart_shift(boost::mpi::communicator const &comm,
  * @return Array of neighbor ranks
  */
 template <size_t dim>
-Utils::Vector<int, 2*dim>
+Utils::Vector<int, 2 * dim>
 calc_face_neighbors(const boost::mpi::communicator &comm) {
   using std::get;
 
-  auto ret = Utils::Vector<int, 2*dim>::broadcast(-1);
+  auto ret = Utils::Vector<int, 2 * dim>::broadcast(-1);
 
-  for(int i = 0; i < static_cast<int>(dim); i++) {
-    ret[2*i + 0] = get<1>(cart_shift(comm, i, -1));
-    ret[2*i + 1] = get<1>(cart_shift(comm, i, +1));
+  for (int i = 0; i < static_cast<int>(dim); i++) {
+    ret[2 * i + 0] = get<1>(cart_shift(comm, i, -1));
+    ret[2 * i + 1] = get<1>(cart_shift(comm, i, +1));
   }
 
   return ret;

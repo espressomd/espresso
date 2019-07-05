@@ -435,7 +435,8 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
           cnt++;
         }
       } else {
-        auto const node_pos = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
+        auto const node_pos =
+            Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
         /* i: send/recv loop */
         for (int i = 0; i < 2; i++) {
           if (box_geo.periodic(dir) ||

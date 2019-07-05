@@ -313,11 +313,11 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params,
   /* correct roundof errors at boundary */
   for (int i = 0; i < 3; i++) {
     if ((my_right[i] * params.ai[i] - params.mesh_off[i]) -
-        local_mesh.in_ur[i] <
+            local_mesh.in_ur[i] <
         ROUND_ERROR_PREC)
       local_mesh.in_ur[i]--;
     if (1.0 + (my_left[i] * params.ai[i] - params.mesh_off[i]) -
-        local_mesh.in_ld[i] <
+            local_mesh.in_ld[i] <
         ROUND_ERROR_PREC)
       local_mesh.in_ld[i]--;
   }
@@ -334,12 +334,12 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params,
   /* up right grid point */
   int ind[3];
   for (int i = 0; i < 3; i++)
-    ind[i] = (int)floor((my_right[i] + halo[i]) * params.ai[i] -
-                        params.mesh_off[i]);
+    ind[i] =
+        (int)floor((my_right[i] + halo[i]) * params.ai[i] - params.mesh_off[i]);
   /* correct roundof errors at up right boundary */
   for (int i = 0; i < 3; i++)
     if (((my_right[i] + halo[i]) * params.ai[i] - params.mesh_off[i]) -
-        ind[i] ==
+            ind[i] ==
         0)
       ind[i]--;
   /* up right margin */
@@ -365,86 +365,84 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params,
 }
 
 p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
-                                    const boost::mpi::communicator &comm) {
-    p3m_send_mesh send_mesh;
+                             const boost::mpi::communicator &comm) {
+  p3m_send_mesh send_mesh;
 
-    send_mesh.comm = comm;
+  send_mesh.comm = comm;
 
-    int done[3] = {0, 0, 0};
-    /* send grids */
-    for (int i = 0; i < 3; i++) {
-      send_mesh.dim[i] = local_mesh.dim[i];
+  int done[3] = {0, 0, 0};
+  /* send grids */
+  for (int i = 0; i < 3; i++) {
+    send_mesh.dim[i] = local_mesh.dim[i];
 
-        for(int j = 0; j < 3; j++) {
-            /* left */
-            send_mesh.s_ld[i * 2][j] = 0 + done[j] * local_mesh.margin[j * 2];
-            if (j == i)
-                send_mesh.s_ur[i * 2][j] = local_mesh.margin[j * 2];
-            else
-                send_mesh.s_ur[i * 2][j] =
-                        local_mesh.dim[j] -
-                        done[j] * local_mesh.margin[(j * 2) + 1];
-            /* right */
-            if (j == i)
-                send_mesh.s_ld[(i * 2) + 1][j] = local_mesh.in_ur[j];
-            else
-                send_mesh.s_ld[(i * 2) + 1][j] =
-                        0 + done[j] * local_mesh.margin[j * 2];
-            send_mesh.s_ur[(i * 2) + 1][j] =
-                    local_mesh.dim[j] - done[j] * local_mesh.margin[(j * 2) + 1];
-        }
-        done[i] = 1;
+    for (int j = 0; j < 3; j++) {
+      /* left */
+      send_mesh.s_ld[i * 2][j] = 0 + done[j] * local_mesh.margin[j * 2];
+      if (j == i)
+        send_mesh.s_ur[i * 2][j] = local_mesh.margin[j * 2];
+      else
+        send_mesh.s_ur[i * 2][j] =
+            local_mesh.dim[j] - done[j] * local_mesh.margin[(j * 2) + 1];
+      /* right */
+      if (j == i)
+        send_mesh.s_ld[(i * 2) + 1][j] = local_mesh.in_ur[j];
+      else
+        send_mesh.s_ld[(i * 2) + 1][j] = 0 + done[j] * local_mesh.margin[j * 2];
+      send_mesh.s_ur[(i * 2) + 1][j] =
+          local_mesh.dim[j] - done[j] * local_mesh.margin[(j * 2) + 1];
     }
-    send_mesh.max = 0;
-    for (int i = 0; i < 6; i++) {
-        send_mesh.s_size[i] = 1;
-        for (int j = 0; j < 3; j++) {
-            send_mesh.s_dim[i][j] = send_mesh.s_ur[i][j] - send_mesh.s_ld[i][j];
-            send_mesh.s_size[i] *= send_mesh.s_dim[i][j];
-        }
-        if (send_mesh.s_size[i] > send_mesh.max)
-            send_mesh.max = send_mesh.s_size[i];
+    done[i] = 1;
+  }
+  send_mesh.max = 0;
+  for (int i = 0; i < 6; i++) {
+    send_mesh.s_size[i] = 1;
+    for (int j = 0; j < 3; j++) {
+      send_mesh.s_dim[i][j] = send_mesh.s_ur[i][j] - send_mesh.s_ld[i][j];
+      send_mesh.s_size[i] *= send_mesh.s_dim[i][j];
     }
-    /* communication */
-    auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm);
+    if (send_mesh.s_size[i] > send_mesh.max)
+      send_mesh.max = send_mesh.s_size[i];
+  }
+  /* communication */
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm);
 
-    int r_margin[6];
-    for (int i = 0; i < 6; i++) {
-        auto const j = (i % 2 == 0) ? i + 1 : i - 1;
+  int r_margin[6];
+  for (int i = 0; i < 6; i++) {
+    auto const j = (i % 2 == 0) ? i + 1 : i - 1;
 
-        MPI_Sendrecv(&(local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i],
-                     REQ_P3M_INIT, &(r_margin[j]), 1, MPI_INT, node_neighbors[j],
-                     REQ_P3M_INIT, comm, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(&(local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i],
+                 REQ_P3M_INIT, &(r_margin[j]), 1, MPI_INT, node_neighbors[j],
+                 REQ_P3M_INIT, comm, MPI_STATUS_IGNORE);
+  }
+  /* recv grids */
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++) {
+      if (j == i) {
+        send_mesh.r_ld[i * 2][j] =
+            send_mesh.s_ld[i * 2][j] + local_mesh.margin[2 * j];
+        send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j] + r_margin[2 * j];
+        send_mesh.r_ld[(i * 2) + 1][j] =
+            send_mesh.s_ld[(i * 2) + 1][j] - r_margin[(2 * j) + 1];
+        send_mesh.r_ur[(i * 2) + 1][j] =
+            send_mesh.s_ur[(i * 2) + 1][j] - local_mesh.margin[(2 * j) + 1];
+      } else {
+        send_mesh.r_ld[i * 2][j] = send_mesh.s_ld[i * 2][j];
+        send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j];
+        send_mesh.r_ld[(i * 2) + 1][j] = send_mesh.s_ld[(i * 2) + 1][j];
+        send_mesh.r_ur[(i * 2) + 1][j] = send_mesh.s_ur[(i * 2) + 1][j];
+      }
     }
-    /* recv grids */
-    for (int i = 0; i < 3; i++)
-        for (int j = 0; j < 3; j++) {
-            if (j == i) {
-                send_mesh.r_ld[i * 2][j] =
-                        send_mesh.s_ld[i * 2][j] + local_mesh.margin[2 * j];
-                send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j] + r_margin[2 * j];
-                send_mesh.r_ld[(i * 2) + 1][j] =
-                        send_mesh.s_ld[(i * 2) + 1][j] - r_margin[(2 * j) + 1];
-                send_mesh.r_ur[(i * 2) + 1][j] =
-                        send_mesh.s_ur[(i * 2) + 1][j] - local_mesh.margin[(2 * j) + 1];
-            } else {
-                send_mesh.r_ld[i * 2][j] = send_mesh.s_ld[i * 2][j];
-                send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j];
-                send_mesh.r_ld[(i * 2) + 1][j] = send_mesh.s_ld[(i * 2) + 1][j];
-                send_mesh.r_ur[(i * 2) + 1][j] = send_mesh.s_ur[(i * 2) + 1][j];
-            }
-        }
-    for (int i = 0; i < 6; i++) {
-        send_mesh.r_size[i] = 1;
-        for (int j = 0; j < 3; j++) {
-            send_mesh.r_dim[i][j] = send_mesh.r_ur[i][j] - send_mesh.r_ld[i][j];
-            send_mesh.r_size[i] *= send_mesh.r_dim[i][j];
-        }
-        if (send_mesh.r_size[i] > send_mesh.max)
-            send_mesh.max = send_mesh.r_size[i];
+  for (int i = 0; i < 6; i++) {
+    send_mesh.r_size[i] = 1;
+    for (int j = 0; j < 3; j++) {
+      send_mesh.r_dim[i][j] = send_mesh.r_ur[i][j] - send_mesh.r_ld[i][j];
+      send_mesh.r_size[i] *= send_mesh.r_dim[i][j];
     }
+    if (send_mesh.r_size[i] > send_mesh.max)
+      send_mesh.max = send_mesh.r_size[i];
+  }
 
-    return send_mesh;
+  return send_mesh;
 }
 
 #endif /* defined(P3M) || defined(DP3M) */

@@ -187,7 +187,8 @@ void lb_init() {
   /* initialize the local lattice domain */
 
   try {
-    auto const node_pos = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
+    auto const node_pos =
+        Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
     lblattice = Lattice(lbpar.agrid, 0.5 /*offset*/, 1 /*halo size*/,
                         local_geo.length(), local_geo.my_right(),
                         box_geo.length(), node_pos, node_grid);

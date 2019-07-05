@@ -62,18 +62,6 @@ using Utils::sinc;
 #include <mpi.h>
 
 /************************************************
- * DEFINES
- ************************************************/
-
-/* MPI tags for the dipole-dipole p3m communications: */
-/** Tag for communication in dp3m_init() -> dp3m_calc_send_mesh(). */
-#define REQ_P3M_INIT_D 2001
-/** Tag for communication in dp3m_gather_fft_grid(). */
-#define REQ_P3M_GATHER_D 2011
-/** Tag for communication in dp3m_spread_force_grid(). */
-#define REQ_P3M_SPREAD_D 2021
-
-/************************************************
  * variables
  ************************************************/
 
@@ -107,18 +95,6 @@ static void dp3m_init_a_ai_cao_cut();
  *  @ref dp3m_scaleby_box_l() whenever the box size changes.
  */
 static void dp3m_calc_lm_ld_pos();
-
-/** Gather FFT grid.
- *  After the charge assignment Each node needs to gather the
- *  information for the FFT grid in his spatial domain.
- */
-static void dp3m_gather_fft_grid(double *mesh);
-
-/** Spread force grid.
- *  After the k-space calculations each node needs to get all force
- *  information to reassign the forces from the grid to the particles.
- */
-static void dp3m_spread_force_grid(double *mesh);
 
 /** realloc charge assignment fields. */
 static void dp3m_realloc_ca_fields(int newsize);
@@ -804,9 +780,10 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
   if (dp3m.sum_mu2 > 0) {
     /* Gather information for FFT grid inside the nodes domain (inner local
      * mesh) and Perform forward 3D FFT (Charge Assignment Mesh). */
-    dp3m_gather_fft_grid(dp3m.rs_mesh_dip[0]);
-    dp3m_gather_fft_grid(dp3m.rs_mesh_dip[1]);
-    dp3m_gather_fft_grid(dp3m.rs_mesh_dip[2]);
+    p3m_gather_halo(dp3m.rs_mesh_dip[0], dp3m.sm);
+    p3m_gather_halo(dp3m.rs_mesh_dip[1], dp3m.sm);
+    p3m_gather_halo(dp3m.rs_mesh_dip[2], dp3m.sm);
+
     fft_perform_forw(dp3m.rs_mesh_dip[0], dp3m.fft, comm_cart);
     fft_perform_forw(dp3m.rs_mesh_dip[1], dp3m.fft, comm_cart);
     fft_perform_forw(dp3m.rs_mesh_dip[2], dp3m.fft, comm_cart);
@@ -959,7 +936,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         /* Back FFT force component mesh */
         fft_perform_back(dp3m.rs_mesh, false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
-        dp3m_spread_force_grid(dp3m.rs_mesh);
+        p3m_spread_halo(dp3m.rs_mesh, dp3m.sm);
         /* Assign force component from mesh to particle */
         P3M_assign_torques(
             dipole_prefac * (2 * Utils::pi() / box_geo.length()[0]), d_rs);
@@ -1043,9 +1020,10 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         fft_perform_back(dp3m.rs_mesh_dip[1], false, dp3m.fft, comm_cart);
         fft_perform_back(dp3m.rs_mesh_dip[2], false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
-        dp3m_spread_force_grid(dp3m.rs_mesh_dip[0]);
-        dp3m_spread_force_grid(dp3m.rs_mesh_dip[1]);
-        dp3m_spread_force_grid(dp3m.rs_mesh_dip[2]);
+        p3m_spread_halo(dp3m.rs_mesh_dip[0], dp3m.sm);
+        p3m_spread_halo(dp3m.rs_mesh_dip[1], dp3m.sm);
+        p3m_spread_halo(dp3m.rs_mesh_dip[2], dp3m.sm);
+
         /* Assign force component from mesh to particle */
         dp3m_assign_forces_dip(
             dipole_prefac * pow(2 * Utils::pi() / box_geo.length()[0], 2),
@@ -1143,103 +1121,6 @@ double calc_surface_term(int force_flag, int energy_flag) {
 #endif
 
   return en;
-}
-
-/************************************************************/
-void dp3m_gather_fft_grid(double *themesh) {
-  int s_dir, r_dir, evenodd;
-  MPI_Status status;
-  double *tmp_ptr;
-
-  P3M_TRACE(fprintf(stderr, "%d: dp3m_gather_fft_grid:\n", this_node));
-
-  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm_cart);
-  auto const node_pos = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
-
-  /* direction loop */
-  for (s_dir = 0; s_dir < 6; s_dir++) {
-    if (s_dir % 2 == 0)
-      r_dir = s_dir + 1;
-    else
-      r_dir = s_dir - 1;
-    /* pack send block */
-    if (dp3m.sm.s_size[s_dir] > 0)
-      fft_pack_block(themesh, dp3m.send_grid, dp3m.sm.s_ld[s_dir],
-                     dp3m.sm.s_dim[s_dir], dp3m.local_mesh.dim, 1);
-
-    /* communication */
-    if (node_neighbors[s_dir] != this_node) {
-      for (evenodd = 0; evenodd < 2; evenodd++) {
-        if ((node_pos[s_dir / 2] + evenodd) % 2 == 0) {
-          if (dp3m.sm.s_size[s_dir] > 0)
-            MPI_Send(dp3m.send_grid, dp3m.sm.s_size[s_dir], MPI_DOUBLE,
-                     node_neighbors[s_dir], REQ_P3M_GATHER_D, comm_cart);
-        } else {
-          if (dp3m.sm.r_size[r_dir] > 0)
-            MPI_Recv(dp3m.recv_grid, dp3m.sm.r_size[r_dir], MPI_DOUBLE,
-                     node_neighbors[r_dir], REQ_P3M_GATHER_D, comm_cart,
-                     &status);
-        }
-      }
-    } else {
-      tmp_ptr = dp3m.recv_grid;
-      dp3m.recv_grid = dp3m.send_grid;
-      dp3m.send_grid = tmp_ptr;
-    }
-    /* add recv block */
-    if (dp3m.sm.r_size[r_dir] > 0) {
-      fft_unpack_block(dp3m.recv_grid, themesh, dp3m.sm.r_ld[r_dir],
-                       dp3m.sm.r_dim[r_dir], dp3m.local_mesh.dim, 1, std::plus<>());
-    }
-  }
-}
-
-/************************************************************/
-
-void dp3m_spread_force_grid(double *themesh) {
-  int s_dir, r_dir, evenodd;
-  MPI_Status status;
-  double *tmp_ptr;
-  P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_spread_force_grid:\n", this_node));
-
-  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm_cart);
-  auto const node_pos =  Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
-
-  /* direction loop */
-  for (s_dir = 5; s_dir >= 0; s_dir--) {
-    if (s_dir % 2 == 0)
-      r_dir = s_dir + 1;
-    else
-      r_dir = s_dir - 1;
-    /* pack send block */
-    if (dp3m.sm.s_size[s_dir] > 0)
-      fft_pack_block(themesh, dp3m.send_grid, dp3m.sm.r_ld[r_dir],
-                     dp3m.sm.r_dim[r_dir], dp3m.local_mesh.dim, 1);
-    /* communication */
-    if (node_neighbors[r_dir] != this_node) {
-      for (evenodd = 0; evenodd < 2; evenodd++) {
-        if ((node_pos[r_dir / 2] + evenodd) % 2 == 0) {
-          if (dp3m.sm.r_size[r_dir] > 0)
-            MPI_Send(dp3m.send_grid, dp3m.sm.r_size[r_dir], MPI_DOUBLE,
-                     node_neighbors[r_dir], REQ_P3M_SPREAD_D, comm_cart);
-        } else {
-          if (dp3m.sm.s_size[s_dir] > 0)
-            MPI_Recv(dp3m.recv_grid, dp3m.sm.s_size[s_dir], MPI_DOUBLE,
-                     node_neighbors[s_dir], REQ_P3M_SPREAD_D, comm_cart,
-                     &status);
-        }
-      }
-    } else {
-      tmp_ptr = dp3m.recv_grid;
-      dp3m.recv_grid = dp3m.send_grid;
-      dp3m.send_grid = tmp_ptr;
-    }
-    /* un pack recv block */
-    if (dp3m.sm.s_size[s_dir] > 0) {
-      fft_unpack_block(dp3m.recv_grid, themesh, dp3m.sm.s_ld[s_dir],
-                       dp3m.sm.s_dim[s_dir], dp3m.local_mesh.dim, 1);
-    }
-  }
 }
 
 /*****************************************************************************/
@@ -2231,7 +2112,8 @@ void dp3m_calc_local_ca_mesh(P3MParameters &params, double skin) {
   for (int i = 0; i < 3; i++)
     halo[i] = params.cao_cut[i] + skin + params.additional_mesh[i];
 
-  dp3m.local_mesh = calc_local_mesh(params, local_geo.my_left() ,local_geo.my_right(), halo);
+  dp3m.local_mesh =
+      calc_local_mesh(params, local_geo.my_left(), local_geo.my_right(), halo);
 }
 
 /*****************************************************************************/

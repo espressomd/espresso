@@ -192,9 +192,7 @@ void on_observable_calc() {
   }
 }
 
-void on_coulomb_change() {
-    init();
-}
+void on_coulomb_change() { init(); }
 
 void on_resort_particles() {
   switch (coulomb.method) {
