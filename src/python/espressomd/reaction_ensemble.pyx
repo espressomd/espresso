@@ -4,6 +4,7 @@ from libcpp.string cimport string
 from libcpp.memory cimport unique_ptr
 from cython.operator cimport dereference as deref
 import numpy as np
+from core.reaction_ensemble cimport *
 
 
 class WangLandauHasConverged(Exception):
