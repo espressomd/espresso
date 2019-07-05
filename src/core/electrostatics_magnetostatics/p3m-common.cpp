@@ -368,9 +368,13 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
                                     const boost::mpi::communicator &comm) {
     p3m_send_mesh send_mesh;
 
+    send_mesh.comm = comm;
+
     int done[3] = {0, 0, 0};
     /* send grids */
     for (int i = 0; i < 3; i++) {
+      send_mesh.dim[i] = local_mesh.dim[i];
+
         for(int j = 0; j < 3; j++) {
             /* left */
             send_mesh.s_ld[i * 2][j] = 0 + done[j] * local_mesh.margin[j * 2];

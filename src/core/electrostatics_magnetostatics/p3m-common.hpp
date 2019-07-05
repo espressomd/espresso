@@ -121,6 +121,8 @@ typedef struct {
 
 /** Structure for send/recv meshes. */
 struct  p3m_send_mesh {
+  /** dimensions of the mesh */
+  int dim[3];
   /** dimension of sub meshes to send. */
   int s_dim[6][3];
   /** left down corners of sub meshes to send. */
@@ -140,10 +142,13 @@ struct  p3m_send_mesh {
   /** maximal size for send/recv buffers. */
   int max;
 
+  /** MPI communicator for this halo comm */
+  boost::mpi::communicator comm;
+
   /** vector to store grid points to send. */
-  mutable std::vector<double> send_grid;
+  mutable std::vector<double> send_buffer;
   /** vector to store grid points to recv */
-  mutable std::vector<double> recv_grid;
+  mutable std::vector<double> recv_buffer;
 };
 
 /** Structure to hold P3M parameters and some dependent variables. */
