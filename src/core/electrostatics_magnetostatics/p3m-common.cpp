@@ -383,7 +383,8 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
             local_mesh.dim[j] - done[j] * local_mesh.margin[(j * 2) + 1];
       /* right */
       if (j == i)
-        send_mesh.s_ld[(i * 2) + 1][j] = (local_mesh.dim[j] - local_mesh.margin[j]);
+        send_mesh.s_ld[(i * 2) + 1][j] =
+            (local_mesh.dim[j] - local_mesh.margin[j]);
       else
         send_mesh.s_ld[(i * 2) + 1][j] = 0 + done[j] * local_mesh.margin[j * 2];
       send_mesh.s_ur[(i * 2) + 1][j] =
@@ -408,8 +409,9 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
   for (int i = 0; i < 6; i++) {
     auto const j = (i % 2 == 0) ? i + 1 : i - 1;
 
-    MPI_Sendrecv(&(local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i], 200, &(r_margin[j]), 1, MPI_INT, node_neighbors[j],
-                 200, comm, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(&(local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i], 200,
+                 &(r_margin[j]), 1, MPI_INT, node_neighbors[j], 200, comm,
+                 MPI_STATUS_IGNORE);
   }
   /* recv grids */
   for (int i = 0; i < 3; i++)
@@ -442,42 +444,58 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
   return send_mesh;
 }
 
-void p3m_gather_halo(double *data, const p3m_send_mesh &send_mesh) {
+void p3m_gather_halo(Utils::Span<double *const> data,
+                     const p3m_send_mesh &send_mesh) {
   auto const node_neighbors =
       Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
 
-  send_mesh.send_buffer.resize(send_mesh.max);
-  send_mesh.recv_buffer.resize(send_mesh.max);
+  auto const buf_size = send_mesh.max * data.size();
+  send_mesh.send_buffer.resize(buf_size);
+  send_mesh.recv_buffer.resize(buf_size);
 
   /* direction loop */
   for (int s_dir = 0; s_dir < 6; s_dir++) {
     auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
 
     /* pack send block */
-    if (send_mesh.s_size[s_dir] > 0)
-      fft_pack_block(data, send_mesh.send_buffer.data(), send_mesh.s_ld[s_dir],
-                     send_mesh.s_dim[s_dir], send_mesh.dim, 1);
+    if (send_mesh.s_size[s_dir] > 0) {
+      auto send_buf = send_mesh.send_buffer.data();
+
+      for (auto d : data) {
+        send_buf = fft_pack_block(d, send_buf, send_mesh.s_ld[s_dir],
+                                  send_mesh.s_dim[s_dir], send_mesh.dim, 1);
+      }
+    }
 
     /* communication */
     if (node_neighbors[s_dir] != send_mesh.comm.rank()) {
-      MPI_Sendrecv(send_mesh.send_buffer.data(), send_mesh.s_size[s_dir],
-                   MPI_DOUBLE, node_neighbors[s_dir], 201,
-                   send_mesh.recv_buffer.data(), send_mesh.r_size[r_dir],
-                   MPI_DOUBLE, node_neighbors[r_dir], 201,
-                   send_mesh.comm, MPI_STATUS_IGNORE);
+      MPI_Sendrecv(
+          send_mesh.send_buffer.data(), data.size() * send_mesh.s_size[s_dir],
+          MPI_DOUBLE, node_neighbors[s_dir], 201, send_mesh.recv_buffer.data(),
+          data.size() * send_mesh.r_size[r_dir], MPI_DOUBLE,
+          node_neighbors[r_dir], 201, send_mesh.comm, MPI_STATUS_IGNORE);
     } else {
       std::swap(send_mesh.send_buffer, send_mesh.recv_buffer);
     }
     /* add recv block */
     if (send_mesh.r_size[r_dir] > 0) {
-      fft_unpack_block(send_mesh.recv_buffer.data(), data,
-                       send_mesh.r_ld[r_dir], send_mesh.r_dim[r_dir],
-                       send_mesh.dim, 1, std::plus<>());
+      const double *recv_buf = send_mesh.recv_buffer.data();
+
+      for (auto d : data) {
+        recv_buf = fft_unpack_block(recv_buf, d, send_mesh.r_ld[r_dir],
+                                    send_mesh.r_dim[r_dir], send_mesh.dim, 1,
+                                    std::plus<>());
+      }
     }
   }
 }
 
-void p3m_spread_halo(double *data, const p3m_send_mesh &send_mesh) {
+void p3m_gather_halo(double *data, const p3m_send_mesh &send_mesh) {
+  p3m_gather_halo(Utils::make_const_span(&data, 1), send_mesh);
+}
+
+void p3m_spread_halo(Utils::Span<double *const> data,
+                     const p3m_send_mesh &send_mesh) {
   auto const node_neighbors =
       Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
 
@@ -490,27 +508,39 @@ void p3m_spread_halo(double *data, const p3m_send_mesh &send_mesh) {
     auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
 
     /* pack send block */
-    if (send_mesh.s_size[s_dir] > 0)
-      fft_pack_block(data, send_mesh.send_buffer.data(), send_mesh.r_ld[r_dir],
-                     send_mesh.r_dim[r_dir], send_mesh.dim, 1);
+    if (send_mesh.s_size[s_dir] > 0) {
+      auto send_buf = send_mesh.send_buffer.data();
+
+      for (auto d : data) {
+        send_buf = fft_pack_block(d, send_buf, send_mesh.r_ld[r_dir],
+                                  send_mesh.r_dim[r_dir], send_mesh.dim, 1);
+      }
+    }
+
     /* communication */
     if (node_neighbors[r_dir] != send_mesh.comm.rank()) {
       MPI_Sendrecv(send_mesh.send_buffer.data(), send_mesh.r_size[r_dir],
                    MPI_DOUBLE, node_neighbors[r_dir], 202,
                    send_mesh.recv_buffer.data(), send_mesh.s_size[s_dir],
-                   MPI_DOUBLE, node_neighbors[s_dir], 202,
-                   send_mesh.comm, MPI_STATUS_IGNORE);
+                   MPI_DOUBLE, node_neighbors[s_dir], 202, send_mesh.comm,
+                   MPI_STATUS_IGNORE);
     } else {
       std::swap(send_mesh.recv_buffer, send_mesh.send_buffer);
     }
     /* un pack recv block */
     if (send_mesh.s_size[s_dir] > 0) {
-      fft_unpack_block(send_mesh.recv_buffer.data(), data,
-                       send_mesh.s_ld[s_dir], send_mesh.s_dim[s_dir],
-                       send_mesh.dim, 1);
+      const double *recv_buf = send_mesh.recv_buffer.data();
+
+      for (auto d : data) {
+        recv_buf = fft_unpack_block(recv_buf, d, send_mesh.s_ld[s_dir],
+                                    send_mesh.s_dim[s_dir], send_mesh.dim, 1);
+      }
     }
   }
 }
 
+void p3m_spread_halo(double *data, const p3m_send_mesh &send_mesh) {
+  p3m_spread_halo(Utils::make_const_span(&data, 1), send_mesh);
+}
 
 #endif /* defined(P3M) || defined(DP3M) */
