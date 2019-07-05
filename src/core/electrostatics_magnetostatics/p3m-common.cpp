@@ -382,7 +382,7 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
             local_mesh.dim[j] - done[j] * local_mesh.margin[(j * 2) + 1];
       /* right */
       if (j == i)
-        send_mesh.s_ld[(i * 2) + 1][j] = local_mesh.in_ur[j];
+        send_mesh.s_ld[(i * 2) + 1][j] = (local_mesh.dim[j] - local_mesh.margin[j]);
       else
         send_mesh.s_ld[(i * 2) + 1][j] = 0 + done[j] * local_mesh.margin[j * 2];
       send_mesh.s_ur[(i * 2) + 1][j] =
