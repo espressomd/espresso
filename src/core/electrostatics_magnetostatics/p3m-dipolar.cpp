@@ -780,9 +780,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
   if (dp3m.sum_mu2 > 0) {
     /* Gather information for FFT grid inside the nodes domain (inner local
      * mesh) and Perform forward 3D FFT (Charge Assignment Mesh). */
-    p3m_gather_halo(dp3m.rs_mesh_dip[0], dp3m.sm);
-    p3m_gather_halo(dp3m.rs_mesh_dip[1], dp3m.sm);
-    p3m_gather_halo(dp3m.rs_mesh_dip[2], dp3m.sm);
+    p3m_gather_halo(dp3m.rs_mesh_dip, dp3m.sm);
 
     fft_perform_forw(dp3m.rs_mesh_dip[0], dp3m.fft, comm_cart);
     fft_perform_forw(dp3m.rs_mesh_dip[1], dp3m.fft, comm_cart);
@@ -1020,9 +1018,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         fft_perform_back(dp3m.rs_mesh_dip[1], false, dp3m.fft, comm_cart);
         fft_perform_back(dp3m.rs_mesh_dip[2], false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
-        p3m_spread_halo(dp3m.rs_mesh_dip[0], dp3m.sm);
-        p3m_spread_halo(dp3m.rs_mesh_dip[1], dp3m.sm);
-        p3m_spread_halo(dp3m.rs_mesh_dip[2], dp3m.sm);
+        p3m_spread_halo(dp3m.rs_mesh_dip, dp3m.sm);
 
         /* Assign force component from mesh to particle */
         dp3m_assign_forces_dip(

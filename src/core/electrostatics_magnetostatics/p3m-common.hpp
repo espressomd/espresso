@@ -55,13 +55,14 @@
 #if defined(P3M) || defined(DP3M)
 #include "fft.hpp"
 
-#include <utils/mpi/cart_comm.hpp>
 #include <utils/Vector.hpp>
+#include <utils/mpi/cart_comm.hpp>
 
 #include <boost/mpi/communicator.hpp>
 
-#include <vector>
 #include <functional>
+#include <utils/Span.hpp>
+#include <vector>
 
 /** Error Codes for p3m tuning (version 2) */
 enum P3M_TUNE_ERROR {
@@ -245,6 +246,8 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
  * @param send_mesh Halo plan
  */
 void p3m_gather_halo(double *data, const p3m_send_mesh &send_mesh);
+void p3m_gather_halo(Utils::Span<double *const> data,
+                     const p3m_send_mesh &send_mesh);
 
 /**
  * @brief Overwrite halo regions with their original images.
@@ -252,6 +255,8 @@ void p3m_gather_halo(double *data, const p3m_send_mesh &send_mesh);
  * @param send_mesh Halo plan
  */
 void p3m_spread_halo(double *data, const p3m_send_mesh &send_mesh);
+void p3m_spread_halo(Utils::Span<double *const> data,
+                     const p3m_send_mesh &send_mesh);
 
 #endif /* P3M || DP3M */
 
