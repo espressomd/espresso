@@ -57,6 +57,7 @@ using Utils::strcat_alloc;
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
+#include <utils/mpi/cart_comm.hpp>
 
 /************************************************
  * variables
@@ -901,7 +902,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
 
 void p3m_gather_fft_grid(double *data, const p3m_local_mesh &local_mesh,
                          const p3m_send_mesh &sm) {
-  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm_cart);
 
   sm.send_grid.resize(sm.max);
   sm.recv_grid.resize(sm.max);
@@ -934,7 +935,7 @@ void p3m_gather_fft_grid(double *data, const p3m_local_mesh &local_mesh,
 
 void p3m_spread_force_grid(double *data, const p3m_local_mesh &local_mesh,
                            const p3m_send_mesh &send_mesh) {
-  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm_cart);
   send_mesh.send_grid.resize(send_mesh.max);
   send_mesh.recv_grid.resize(send_mesh.max);
 

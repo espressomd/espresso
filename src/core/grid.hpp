@@ -66,14 +66,6 @@ void init_node_grid();
 /** map a spatial position to the node grid */
 int map_position_node_array(const Utils::Vector3d &pos);
 
-/** fill neighbor lists of node.
- *
- * Calculates the numbers of the nearest neighbors for a node.
- *
- * \return Ranks of neighbors
- */
-Utils::Vector<int, 6> calc_node_neighbors(const boost::mpi::communicator &comm);
-
 /**
  * @brief Calculate the position of node in topology.
  *

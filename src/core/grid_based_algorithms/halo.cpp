@@ -27,6 +27,7 @@
 
 #include "config.hpp"
 #include <cstring>
+#include <utils/mpi/cart_comm.hpp>
 
 #include "communication.hpp"
 #include "debug.hpp"
@@ -229,7 +230,7 @@ void prepare_halo_communication(HaloCommunicator *const hc,
 
   int extent = fieldtype->extent;
 
-  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm_cart);
 
   cnt = 0;
   for (dir = 0; dir < 3; dir++) {

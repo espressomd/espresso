@@ -71,18 +71,6 @@ Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm) {
   return Utils::Mpi::cart_coords<3>(comm, comm.rank());
 }
 
-Utils::Vector<int, 6>
-calc_node_neighbors(const boost::mpi::communicator &comm) {
-  using std::get;
-  using Utils::Mpi::cart_shift;
-
-  return {
-      get<1>(cart_shift(comm, 0, -1)), get<1>(cart_shift(comm, 0, +1)),
-      get<1>(cart_shift(comm, 1, -1)), get<1>(cart_shift(comm, 1, +1)),
-      get<1>(cart_shift(comm, 2, -1)), get<1>(cart_shift(comm, 2, +1)),
-  };
-}
-
 LocalBox<double> regular_decomposition(const BoxGeometry &box,
                                        Utils::Vector3i const &node_pos,
                                        Utils::Vector3i const &node_grid) {
@@ -114,8 +102,6 @@ void grid_changed_n_nodes() {
       Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
 
   this_node = comm_cart.rank();
-
-  calc_node_neighbors(comm_cart);
 
   grid_changed_box_l(box_geo);
 }

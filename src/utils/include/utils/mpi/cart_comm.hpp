@@ -8,6 +8,8 @@
 
 #include <mpi.h>
 
+#include <utility>
+
 namespace Utils {
 namespace Mpi {
 
@@ -80,6 +82,28 @@ inline std::pair<int, int> cart_shift(boost::mpi::communicator const &comm,
 
   return {src, dst};
 }
+
+/**
+ * @brief Calculate face neighbors in cartesian communicator.
+ *
+ * This calculates the ranks of neighbors with shift
+ * (+/- 1, 0, 0), (0, +/-1, 0), ... in a cartesian communicator.
+ * This is also the order in which they are returned.
+ *
+ * @param comm Cartesian communicator
+ * @return Array of neighbor ranks
+ */
+Utils::Vector<int, 6>
+inline calc_face_neighbors(const boost::mpi::communicator &comm) {
+  using std::get;
+
+  return {
+      get<1>(cart_shift(comm, 0, -1)), get<1>(cart_shift(comm, 0, +1)),
+      get<1>(cart_shift(comm, 1, -1)), get<1>(cart_shift(comm, 1, +1)),
+      get<1>(cart_shift(comm, 2, -1)), get<1>(cart_shift(comm, 2, +1)),
+  };
+}
+
 } // namespace Mpi
 } // namespace Utils
 
