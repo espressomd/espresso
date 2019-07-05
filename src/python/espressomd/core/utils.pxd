@@ -1,3 +1,7 @@
+from libcpp cimport bool
+
+from core.partCfg_global cimport partCfg
+
 cdef extern from "utils/List.hpp" namespace "Utils":
     cppclass List[T]:
         List()
@@ -64,3 +68,5 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         double & operator[](int i)
         double * data()
 
+cdef extern from "utils/checks/charge_neutrality.hpp" namespace "Utils":
+    bool check_charge_neutrality[ParticleRange](ParticleRange & partCfg)

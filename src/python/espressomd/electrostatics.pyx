@@ -28,10 +28,10 @@ IF SCAFACOS == 1:
     from . cimport scafacos
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type, to_str
-from . cimport checks
 from core.partCfg_global cimport partCfg
 from core.PartCfg cimport PartCfg
 from core.grid cimport box_geo
+cimport core.utils
 from .particle_data cimport particle
 
 
@@ -39,7 +39,7 @@ IF ELECTROSTATICS == 1:
     def check_neutrality(_params):
         if "check_neutrality" in _params:
             if(_params["check_neutrality"]):
-                if not checks.check_charge_neutrality[PartCfg](partCfg()):
+                if not core.utils.check_charge_neutrality[PartCfg](partCfg()):
                     raise Exception("""
                     The system is not charge neutral. Please
                     neutralize the system before adding a new actor by adding
