@@ -81,7 +81,7 @@ IF ELECTROSTATICS == 1:
 IF ELECTROSTATICS:
     cdef class DH(ElectrostaticInteraction):
         """
-        Solve electrostatics in the Debye-Hueckel framework see
+        Electrostatics solver based on the Debye-Hueckel framework. See
         :ref:`Debye-Hückel potential` for more details.
 
         Parameters
@@ -131,7 +131,7 @@ IF ELECTROSTATICS:
 
     cdef class ReactionField(ElectrostaticInteraction):
         """
-        Solve electrostatics in the Reaction-Field framework
+        Electrostatics solver based on the Reaction-Field framework.
 
         Parameters
         ----------
@@ -476,7 +476,7 @@ IF P3M == 1:
 IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
         """
-        Electrostatics solver for Systems with one periodic direction.
+        Electrostatics solver for systems with one periodic direction.
         See :ref:`MMM1D Theory` for more details.
 
         Parameters
@@ -490,6 +490,7 @@ IF ELECTROSTATICS:
         bessel_cutoff : :obj:`int`, optional
         tune : :obj:`bool`, optional
             Specify whether to automatically tune ore not. The default is True.
+
         """
 
         def validate_params(self):
@@ -551,8 +552,8 @@ IF ELECTROSTATICS:
 IF ELECTROSTATICS and MMM1D_GPU:
     cdef class MMM1DGPU(ElectrostaticInteraction):
         """
-        Electrostatics solver for Systems with one periodic direction.
-        See :ref:`MMM1D Theory` for more details.
+        Electrostatics solver with GPU support for systems with one periodic
+        direction. See :ref:`MMM1D Theory` for more details.
 
         Parameters
         ----------
@@ -770,8 +771,10 @@ IF ELECTROSTATICS:
 
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
+            """
+            Calculate the Coulomb interaction using the ScaFaCoS library.
+            """
 
-            """Calculates Coulomb interactions using method from the SCAFACOs library."""
             dipolar = False
 
             # Explicit constructor needed due to multiple inheritance
