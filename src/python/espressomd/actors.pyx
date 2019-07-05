@@ -71,8 +71,8 @@ cdef class Actor(object):
 
     def get_params(self):
         """Get interaction parameters"""
-        # If this instance refers to an actual interaction defined in the es core, load
-        # current parameters from there
+        # If this instance refers to an actual interaction defined in the es
+        # core, load current parameters from there
         if self.is_active():
             update = self._get_params_from_es_core()
             self._params.update(update)
@@ -198,10 +198,7 @@ class Actors(object):
         self.active_actors.remove(actor)
 
     def clear(self):
-        """
-        Remove all actors.
-
-        """
+        """Remove all actors."""
         for a in self.active_actors:
             self.remove(a)
 

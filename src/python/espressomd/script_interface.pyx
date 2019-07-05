@@ -121,9 +121,8 @@ cdef Variant python_object_to_variant(value):
     if value is None:
         return Variant()
 
-    # The order is important, the object character should
-    # be preserved even if the PScriptInterface derived class
-    # is iterable.
+    # The order is important, the object character should be preserved
+    # even if the PScriptInterface derived class is iterable.
     if isinstance(value, PScriptInterface):
         # Map python object do id
         oid = value.id()
@@ -167,8 +166,7 @@ cdef variant_to_python_object(const Variant & value) except +:
         # Get the id and build a corresponding object
         oid = get_value[ObjectId](value)
 
-        # ObjectId is nullable, and the default
-        # id corresponds to "null".
+        # ObjectId is nullable, and the default id corresponds to "null".
         if oid != ObjectId():
             ptr = get_instance(oid).lock()
 
@@ -304,13 +302,14 @@ _python_class_by_so_name = {}
 
 
 def script_interface_register(c):
-    """Decorator used to register script interface classes
-       This will store a name<->class relationship in a registry, so that parameters
-       of type object can be instantiated as the correct python class
+    """
+    Decorator used to register script interface classes
+    This will store a name<->class relationship in a registry, so that
+    parameters of type object can be instantiated as the correct python class
     """
     if not hasattr(c, "_so_name"):
-        raise Exception(
-            "Python classes representing a script object must define an _so_name attribute at class level")
+        raise Exception("Python classes representing a script object must "
+                        "define an _so_name attribute at class level")
     _python_class_by_so_name[c._so_name] = c
     return c
 
