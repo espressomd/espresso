@@ -230,7 +230,7 @@ void prepare_halo_communication(HaloCommunicator *const hc,
 
   int extent = fieldtype->extent;
 
-  auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm_cart);
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm_cart);
 
   cnt = 0;
   for (dir = 0; dir < 3; dir++) {

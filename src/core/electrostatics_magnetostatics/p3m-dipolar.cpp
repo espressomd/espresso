@@ -1153,7 +1153,7 @@ void dp3m_gather_fft_grid(double *themesh) {
 
   P3M_TRACE(fprintf(stderr, "%d: dp3m_gather_fft_grid:\n", this_node));
 
-  auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm_cart);
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);
 
   /* direction loop */
@@ -1202,7 +1202,7 @@ void dp3m_spread_force_grid(double *themesh) {
   double *tmp_ptr;
   P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_spread_force_grid:\n", this_node));
 
-  auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm_cart);
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);
 
   /* direction loop */

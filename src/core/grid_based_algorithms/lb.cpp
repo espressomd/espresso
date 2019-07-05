@@ -297,7 +297,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   auto const yperiod = lblattice.halo_grid[0];
   auto const zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
 
-  auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm_cart);
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm_cart);
 
   /***************
    * X direction *
@@ -1056,7 +1056,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   r_buffer = (double *)Utils::malloc(count * sizeof(double));
   s_buffer = (double *)Utils::malloc(count * sizeof(double));
 
-  auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm_cart);
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm_cart);
 
   if (box_geo.periodic(0)) {
     for (z = 0; z < lblattice.halo_grid[2]; ++z) {

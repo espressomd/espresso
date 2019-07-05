@@ -402,7 +402,7 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
             send_mesh.max = send_mesh.s_size[i];
     }
     /* communication */
-    auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm);
+    auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm);
 
     int r_margin[6];
     for (int i = 0; i < 6; i++) {

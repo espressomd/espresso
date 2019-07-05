@@ -236,7 +236,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   int dir, lr, i, cnt, num, n_comm_cells[3];
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
-  auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm_cart);
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);
 
   /* calculate number of communications */
@@ -771,7 +771,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 }
 
 void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
-  auto const node_neighbors = Utils::Mpi::calc_face_neighbors(comm_cart);
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm_cart);
 
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */

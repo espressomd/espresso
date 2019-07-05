@@ -90,18 +90,23 @@ inline std::pair<int, int> cart_shift(boost::mpi::communicator const &comm,
  * (+/- 1, 0, 0), (0, +/-1, 0), ... in a cartesian communicator.
  * This is also the order in which they are returned.
  *
+ * @tparam dim Number of dimensions
  * @param comm Cartesian communicator
  * @return Array of neighbor ranks
  */
-Utils::Vector<int, 6>
-inline calc_face_neighbors(const boost::mpi::communicator &comm) {
+template <size_t dim>
+Utils::Vector<int, 2*dim>
+calc_face_neighbors(const boost::mpi::communicator &comm) {
   using std::get;
 
-  return {
-      get<1>(cart_shift(comm, 0, -1)), get<1>(cart_shift(comm, 0, +1)),
-      get<1>(cart_shift(comm, 1, -1)), get<1>(cart_shift(comm, 1, +1)),
-      get<1>(cart_shift(comm, 2, -1)), get<1>(cart_shift(comm, 2, +1)),
-  };
+  auto ret = Utils::Vector<int, 2*dim>::broadcast(-1);
+
+  for(int i = 0; i < static_cast<int>(dim); i++) {
+    ret[2*i + 0] = get<1>(cart_shift(comm, i, -1));
+    ret[2*i + 1] = get<1>(cart_shift(comm, i, +1));
+  }
+
+  return ret;
 }
 
 } // namespace Mpi
