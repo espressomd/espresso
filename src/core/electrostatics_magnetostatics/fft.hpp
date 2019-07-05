@@ -201,8 +201,8 @@ struct CopyRight {
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
-void fft_pack_block(double const *in, double *out, int const start[3],
-                    int const size[3], int const dim[3], int element);
+double * fft_pack_block(double const *in, double *out, const int *start,
+                    const int *size, const int *dim, int element);
 
 /** unpack a 3d-grid input block (size[3]) into an output 3d-grid
  *  with dimension dim[3] at start position start[3].
@@ -217,7 +217,7 @@ void fft_pack_block(double const *in, double *out, int const start[3],
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
  */
 template <class BinaryOp = CopyRight>
-void fft_unpack_block(double const *const in, double *const out,
+void fft_unpack_block(double const * in, double * out,
                       int const start[3], int const size[3], int const dim[3],
                       int element, BinaryOp op = {}) {
   /* mid and slow changing indices */

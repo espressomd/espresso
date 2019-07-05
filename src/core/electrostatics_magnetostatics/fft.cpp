@@ -650,7 +650,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   }
   (*ks_pnum) = 6;
   if (fft.plan[1].row_dir == 2) {
-    fft.plan[1].pack_function = fft_pack_block;
+    fft.plan[1].pack_function = [](auto... args) { fft_pack_block(args...); };
     (*ks_pnum) = 4;
   } else if (fft.plan[1].row_dir == 1) {
     fft.plan[1].pack_function = pack_block_permute1;
@@ -704,7 +704,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     fft.back[i].pack_function = pack_block_permute1;
   }
   if (fft.plan[1].row_dir == 2) {
-    fft.back[1].pack_function = fft_pack_block;
+    fft.back[1].pack_function = [](auto... args) { fft_pack_block(args...); };
   } else if (fft.plan[1].row_dir == 1) {
     fft.back[1].pack_function = pack_block_permute2;
   }
@@ -789,32 +789,23 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
   /* REMARK: Result has to be in data. */
 }
 
-void fft_pack_block(double const *const in, double *const out,
-                    int const start[3], int const size[3], int const dim[3],
-                    int element) {
-  /* linear index of in grid, linear index of out grid */
-  int li_in, li_out = 0;
-  /* copy size */
-  int copy_size;
+double *fft_pack_block(double const *in, double *out, const int *start,
+                       const int *size, const int *dim, int element) {
   /* offsets for indices in input grid */
-  int m_in_offset, s_in_offset;
-  /* offsets for indices in output grid */
-  int m_out_offset;
-
-  copy_size = element * size[2] * sizeof(double);
-  m_in_offset = element * dim[2];
-  s_in_offset = element * (dim[2] * (dim[1] - size[1]));
-  m_out_offset = element * size[2];
-  li_in = element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
+  auto const m_in_offset = element * dim[2];
+  auto const s_in_offset = element * (dim[2] * (dim[1] - size[1]));
+  /* Jump to start position */
+  in += element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
 
   for (int s = 0; s < size[0]; s++) {
     for (int m = 0; m < size[1]; m++) {
-      memmove(&(out[li_out]), &(in[li_in]), copy_size);
-      li_in += m_in_offset;
-      li_out += m_out_offset;
+      out = std::copy_n(in, element * size[2], out);
+      in += m_in_offset;
     }
-    li_in += s_in_offset;
+    in += s_in_offset;
   }
+
+  return out;
 }
 
 #endif

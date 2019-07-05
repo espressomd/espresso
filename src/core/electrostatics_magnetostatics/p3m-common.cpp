@@ -26,6 +26,7 @@
 #if defined(P3M) || defined(DP3M)
 #include "errorhandling.hpp"
 
+#include <utils/Span.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/cart_comm.hpp>
@@ -440,5 +441,76 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
 
   return send_mesh;
 }
+
+void p3m_gather_halo(double *data, const p3m_send_mesh &send_mesh) {
+  auto const node_neighbors =
+      Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
+
+  send_mesh.send_buffer.resize(send_mesh.max);
+  send_mesh.recv_buffer.resize(send_mesh.max);
+
+  /* direction loop */
+  for (int s_dir = 0; s_dir < 6; s_dir++) {
+    auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
+
+    /* pack send block */
+    if (send_mesh.s_size[s_dir] > 0)
+      fft_pack_block(data, send_mesh.send_buffer.data(), send_mesh.s_ld[s_dir],
+                     send_mesh.s_dim[s_dir], send_mesh.dim, 1);
+
+    /* communication */
+    if (node_neighbors[s_dir] != send_mesh.comm.rank()) {
+      MPI_Sendrecv(send_mesh.send_buffer.data(), send_mesh.s_size[s_dir],
+                   MPI_DOUBLE, node_neighbors[s_dir], 201,
+                   send_mesh.recv_buffer.data(), send_mesh.r_size[r_dir],
+                   MPI_DOUBLE, node_neighbors[r_dir], 201,
+                   send_mesh.comm, MPI_STATUS_IGNORE);
+    } else {
+      std::swap(send_mesh.send_buffer, send_mesh.recv_buffer);
+    }
+    /* add recv block */
+    if (send_mesh.r_size[r_dir] > 0) {
+      fft_unpack_block(send_mesh.recv_buffer.data(), data,
+                       send_mesh.r_ld[r_dir], send_mesh.r_dim[r_dir],
+                       send_mesh.dim, 1, std::plus<>());
+    }
+  }
+}
+
+void p3m_spread_halo(double *data, const p3m_send_mesh &send_mesh) {
+  auto const node_neighbors =
+      Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
+
+  /* Make sure the buffers are large enough */
+  send_mesh.send_buffer.resize(send_mesh.max);
+  send_mesh.recv_buffer.resize(send_mesh.max);
+
+  /* direction loop */
+  for (int s_dir = 5; s_dir >= 0; s_dir--) {
+    auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
+
+    /* pack send block */
+    if (send_mesh.s_size[s_dir] > 0)
+      fft_pack_block(data, send_mesh.send_buffer.data(), send_mesh.r_ld[r_dir],
+                     send_mesh.r_dim[r_dir], send_mesh.dim, 1);
+    /* communication */
+    if (node_neighbors[r_dir] != send_mesh.comm.rank()) {
+      MPI_Sendrecv(send_mesh.send_buffer.data(), send_mesh.r_size[r_dir],
+                   MPI_DOUBLE, node_neighbors[r_dir], 202,
+                   send_mesh.recv_buffer.data(), send_mesh.s_size[s_dir],
+                   MPI_DOUBLE, node_neighbors[s_dir], 202,
+                   send_mesh.comm, MPI_STATUS_IGNORE);
+    } else {
+      std::swap(send_mesh.recv_buffer, send_mesh.send_buffer);
+    }
+    /* un pack recv block */
+    if (send_mesh.s_size[s_dir] > 0) {
+      fft_unpack_block(send_mesh.recv_buffer.data(), data,
+                       send_mesh.s_ld[s_dir], send_mesh.s_dim[s_dir],
+                       send_mesh.dim, 1);
+    }
+  }
+}
+
 
 #endif /* defined(P3M) || defined(DP3M) */
