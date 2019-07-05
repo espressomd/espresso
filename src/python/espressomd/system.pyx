@@ -24,7 +24,7 @@ from globals cimport *
 import numpy as np
 import collections
 
-from grid cimport box_l
+from grid cimport get_mi_vector, box_geo
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -33,7 +33,7 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
-from .utils cimport numeric_limits
+from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
 from .lb cimport lb_lbfluid_get_tau
 from .lb cimport lb_lbfluid_get_lattice_switch
 from .lb cimport NONE
@@ -227,13 +227,6 @@ cdef class System(object):
             if len(_periodic) != 3:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
-            for i in range(3):
-                if not _periodic[i]:
-                    IF PARTIAL_PERIODIC:
-                        pass
-                    ELSE:
-                        raise ValueError(
-                            "The feature PARTIAL_PERIODIC needs to be activated in myconfig.hpp")
             self.globals.periodicity = _periodic
 
         def __get__(self):
@@ -442,12 +435,10 @@ cdef class System(object):
         """Return the distance vector between the particles, respecting periodic boundaries.
 
         """
-        cdef double[3] res, a, b
-        a = p1.pos
-        b = p2.pos
 
-        get_mi_vector(res, b, a)
-        return np.array((res[0], res[1], res[2]))
+        cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
+
+        return make_array_locked(mi_vec)
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.

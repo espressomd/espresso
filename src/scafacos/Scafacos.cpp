@@ -151,7 +151,8 @@ void Scafacos::tune(std::vector<double> &charges,
       fcs_tune(handle, charges.size(), &(positions[0]), &(charges[0])));
 }
 
-void Scafacos::set_common_parameters(double *box_l, int *periodicity,
+void Scafacos::set_common_parameters(const double *box_l,
+                                     const int *periodicity,
                                      int total_particles) {
   double boxa[3] = {0., 0., 0.}, boxb[3] = {0., 0., 0.}, boxc[3] = {0., 0., 0.},
          off[3] = {0., 0., 0.};

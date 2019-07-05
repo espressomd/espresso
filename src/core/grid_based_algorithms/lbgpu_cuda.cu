@@ -1733,12 +1733,9 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
 
     float Rho = para->rho;
     Utils::Array<float, 3> v{};
-    Utils::Array<float, 6> pi = {Rho * D3Q19::c_sound_sq<float>,
-                                 0.0f,
-                                 Rho * D3Q19::c_sound_sq<float>,
-                                 0.0f,
-                                 0.0f,
-                                 Rho * D3Q19::c_sound_sq<float>};
+    Utils::Array<float, 6> pi = {{Rho * D3Q19::c_sound_sq<float>, 0.0f,
+                                  Rho * D3Q19::c_sound_sq<float>, 0.0f, 0.0f,
+                                  Rho * D3Q19::c_sound_sq<float>}};
     Utils::Array<float, 6> local_pi{};
     float rhoc_sq = Rho * D3Q19::c_sound_sq<float>;
     float avg_rho = para->rho;

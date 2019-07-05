@@ -75,8 +75,8 @@ python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=1000;--volume_fracti
 python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=1000;--volume_fraction=0.02")
 python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=10000;--volume_fraction=0.50")
 python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=10000;--volume_fraction=0.02")
-python_benchmark(FILE p3m.py ARGUMENTS "--particles_per_core=1000;--volume_fraction=0.25;--bjerrum_length=4")
-python_benchmark(FILE p3m.py ARGUMENTS "--particles_per_core=10000;--volume_fraction=0.25;--bjerrum_length=4")
+python_benchmark(FILE p3m.py ARGUMENTS "--particles_per_core=1000;--volume_fraction=0.25;--prefactor=4")
+python_benchmark(FILE p3m.py ARGUMENTS "--particles_per_core=10000;--volume_fraction=0.25;--prefactor=4")
 
 add_custom_target(benchmark_python_serial COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} $(ARGS) -C serial --output-on-failure)
 add_dependencies(benchmark_python_serial pypresso)

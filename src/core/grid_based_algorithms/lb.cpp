@@ -116,7 +116,7 @@ boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 /** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
-    // rho
+    // density
     0.0,
     // viscosity
     0.0,
@@ -183,19 +183,15 @@ void lb_init() {
   if (check_runtime_errors(comm_cart))
     return;
 
-  Utils::Vector3d temp_agrid, temp_offset;
-  for (int i = 0; i < 3; i++) {
-    temp_agrid[i] = lbpar.agrid;
-    temp_offset[i] = 0.5;
-  }
-
   /* initialize the local lattice domain */
 
-  int init_status = lblattice.init(temp_agrid.data(), temp_offset.data(), 1,
-                                   local_box_l, my_right, box_l);
-
-  if (check_runtime_errors(comm_cart) || init_status != ES_OK)
+  try {
+    lblattice = Lattice(lbpar.agrid, 0.5 /*offset*/, 1 /*halo size*/,
+                        local_box_l, my_right, box_geo.length(), node_grid);
+  } catch (const std::runtime_error &e) {
+    runtimeErrorMsg() << e.what();
     return;
+  }
 
   /* allocate memory for data structures */
   lb_realloc_fluid();
@@ -208,23 +204,19 @@ void lb_init() {
 
   /* setup the initial populations */
   lb_reinit_fluid();
-
-  LB_TRACE(printf("Initializing fluid on CPU successful\n"));
 }
 
 void lb_reinit_fluid() {
   std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
-  Utils::Vector3d j{};
-  Utils::Vector6d pi{};
-
-  LB_TRACE(fprintf(stderr,
-                   "Initializing the fluid with equilibrium populations\n"););
+  Utils::Vector3d momentum_density{};
+  Utils::Vector6d stress{};
 
   for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
        ++index) {
-    // calculate equilibrium distribution
-    lb_calc_n_from_rho_j_pi(index, lbpar.rho, j, pi);
+    // sets equilibrium distribution
+    lb_set_population_from_density_momentum_density_stress(
+        index, lbpar.density, momentum_density, stress);
 
 #ifdef LB_BOUNDARIES
     lbfields[index].boundary = 0;
@@ -293,8 +285,7 @@ void lb_reinit_parameters() {
 }
 
 /* Halo communication for push scheme */
-static void halo_push_communication(LB_Fluid &lbfluid,
-                                    const Utils::Vector3i &local_node_grid) {
+static void halo_push_communication(LB_Fluid &lbfluid) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
@@ -330,12 +321,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     }
   }
 
-  if (local_node_grid[0] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(1, 0, 0, lblattice.halo_grid);
@@ -371,12 +358,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     }
   }
 
-  if (local_node_grid[0] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(lblattice.grid[0], 0, 0, lblattice.halo_grid);
@@ -420,12 +403,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  if (local_node_grid[1] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(0, 1, 0, lblattice.halo_grid);
@@ -463,12 +442,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  if (local_node_grid[1] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(0, lblattice.grid[1], 0, lblattice.halo_grid);
@@ -512,12 +487,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     }
   }
 
-  if (local_node_grid[2] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(0, 0, 1, lblattice.halo_grid);
@@ -553,12 +524,8 @@ static void halo_push_communication(LB_Fluid &lbfluid,
     }
   }
 
-  if (local_node_grid[2] > 1) {
-    MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-                 MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
-  } else {
-    memmove(rbuf, sbuf, count * sizeof(double));
-  }
+  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
+               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
 
   buffer = rbuf;
   index = get_linear_index(0, 0, lblattice.grid[2], lblattice.halo_grid);
@@ -590,7 +557,7 @@ void lb_sanity_checks() {
   if (lbpar.tau <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann time step not set";
   }
-  if (lbpar.rho <= 0.0) {
+  if (lbpar.density <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann fluid density not set";
   }
   if (lbpar.viscosity <= 0.0) {
@@ -701,83 +668,92 @@ void lb_prepare_communication() {
 /** \name Mapping between hydrodynamic fields and particle populations */
 /***********************************************************************/
 /*@{*/
-void lb_calc_n_from_rho_j_pi(const Lattice::index_t index, const double rho,
-                             Utils::Vector3d const &j,
-                             Utils::Vector6d const &pi) {
-  double local_rho, local_j[3], local_pi[6], trace;
-  local_rho = rho;
-
-  local_j[0] = j[0];
-  local_j[1] = j[1];
-  local_j[2] = j[2];
-
-  for (int i = 0; i < 6; i++)
-    local_pi[i] = pi[i];
-
-  trace = local_pi[0] + local_pi[2] + local_pi[5];
-
-  double rho_times_coeff;
-  double tmp1, tmp2;
+Utils::Vector19d lb_get_population_from_density_momentum_density_stress(
+    double density, Utils::Vector3d const &momentum_density,
+    Utils::Vector6d const &stress) {
+  Utils::Vector19d population{};
+  auto const trace = stress[0] + stress[2] + stress[5];
 
   /* update the q=0 sublattice */
-  lbfluid[0][index] = 1. / 3. * (local_rho - lbpar.rho) - 1. / 2. * trace;
+  population[0] = 1. / 3. * density - 1. / 2. * trace;
 
   /* update the q=1 sublattice */
-  rho_times_coeff = 1. / 18. * (local_rho - lbpar.rho);
+  auto density_times_coeff = 1. / 18. * density;
 
-  lbfluid[1][index] = rho_times_coeff + 1. / 6. * local_j[0] +
-                      1. / 4. * local_pi[0] - 1. / 12. * trace;
-  lbfluid[2][index] = rho_times_coeff - 1. / 6. * local_j[0] +
-                      1. / 4. * local_pi[0] - 1. / 12. * trace;
-  lbfluid[3][index] = rho_times_coeff + 1. / 6. * local_j[1] +
-                      1. / 4. * local_pi[2] - 1. / 12. * trace;
-  lbfluid[4][index] = rho_times_coeff - 1. / 6. * local_j[1] +
-                      1. / 4. * local_pi[2] - 1. / 12. * trace;
-  lbfluid[5][index] = rho_times_coeff + 1. / 6. * local_j[2] +
-                      1. / 4. * local_pi[5] - 1. / 12. * trace;
-  lbfluid[6][index] = rho_times_coeff - 1. / 6. * local_j[2] +
-                      1. / 4. * local_pi[5] - 1. / 12. * trace;
+  population[1] = density_times_coeff + 1. / 6. * momentum_density[0] +
+                  1. / 4. * stress[0] - 1. / 12. * trace;
+  population[2] = density_times_coeff - 1. / 6. * momentum_density[0] +
+                  1. / 4. * stress[0] - 1. / 12. * trace;
+  population[3] = density_times_coeff + 1. / 6. * momentum_density[1] +
+                  1. / 4. * stress[2] - 1. / 12. * trace;
+  population[4] = density_times_coeff - 1. / 6. * momentum_density[1] +
+                  1. / 4. * stress[2] - 1. / 12. * trace;
+  population[5] = density_times_coeff + 1. / 6. * momentum_density[2] +
+                  1. / 4. * stress[5] - 1. / 12. * trace;
+  population[6] = density_times_coeff - 1. / 6. * momentum_density[2] +
+                  1. / 4. * stress[5] - 1. / 12. * trace;
 
   /* update the q=2 sublattice */
-  rho_times_coeff = 1. / 36. * (local_rho - lbpar.rho);
+  density_times_coeff = 1. / 36. * density;
 
-  tmp1 = local_pi[0] + local_pi[2];
-  tmp2 = 2.0 * local_pi[1];
+  auto tmp1 = stress[0] + stress[2];
+  auto tmp2 = 2.0 * stress[1];
 
-  lbfluid[7][index] = rho_times_coeff + 1. / 12. * (local_j[0] + local_j[1]) +
-                      1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[8][index] = rho_times_coeff - 1. / 12. * (local_j[0] + local_j[1]) +
-                      1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[9][index] = rho_times_coeff + 1. / 12. * (local_j[0] - local_j[1]) +
-                      1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid[10][index] = rho_times_coeff - 1. / 12. * (local_j[0] - local_j[1]) +
-                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[7] = density_times_coeff +
+                  1. / 12. * (momentum_density[0] + momentum_density[1]) +
+                  1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[8] = density_times_coeff -
+                  1. / 12. * (momentum_density[0] + momentum_density[1]) +
+                  1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[9] = density_times_coeff +
+                  1. / 12. * (momentum_density[0] - momentum_density[1]) +
+                  1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[10] = density_times_coeff -
+                   1. / 12. * (momentum_density[0] - momentum_density[1]) +
+                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
-  tmp1 = local_pi[0] + local_pi[5];
-  tmp2 = 2.0 * local_pi[3];
+  tmp1 = stress[0] + stress[5];
+  tmp2 = 2.0 * stress[3];
 
-  lbfluid[11][index] = rho_times_coeff + 1. / 12. * (local_j[0] + local_j[2]) +
-                       1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[12][index] = rho_times_coeff - 1. / 12. * (local_j[0] + local_j[2]) +
-                       1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[13][index] = rho_times_coeff + 1. / 12. * (local_j[0] - local_j[2]) +
-                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid[14][index] = rho_times_coeff - 1. / 12. * (local_j[0] - local_j[2]) +
-                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[11] = density_times_coeff +
+                   1. / 12. * (momentum_density[0] + momentum_density[2]) +
+                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[12] = density_times_coeff -
+                   1. / 12. * (momentum_density[0] + momentum_density[2]) +
+                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[13] = density_times_coeff +
+                   1. / 12. * (momentum_density[0] - momentum_density[2]) +
+                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[14] = density_times_coeff -
+                   1. / 12. * (momentum_density[0] - momentum_density[2]) +
+                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
 
-  tmp1 = local_pi[2] + local_pi[5];
-  tmp2 = 2.0 * local_pi[4];
+  tmp1 = stress[2] + stress[5];
+  tmp2 = 2.0 * stress[4];
 
-  lbfluid[15][index] = rho_times_coeff + 1. / 12. * (local_j[1] + local_j[2]) +
-                       1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[16][index] = rho_times_coeff - 1. / 12. * (local_j[1] + local_j[2]) +
-                       1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
-  lbfluid[17][index] = rho_times_coeff + 1. / 12. * (local_j[1] - local_j[2]) +
-                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
-  lbfluid[18][index] = rho_times_coeff - 1. / 12. * (local_j[1] - local_j[2]) +
-                       1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[15] = density_times_coeff +
+                   1. / 12. * (momentum_density[1] + momentum_density[2]) +
+                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[16] = density_times_coeff -
+                   1. / 12. * (momentum_density[1] + momentum_density[2]) +
+                   1. / 8. * (tmp1 + tmp2) - 1. / 24. * trace;
+  population[17] = density_times_coeff +
+                   1. / 12. * (momentum_density[1] - momentum_density[2]) +
+                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  population[18] = density_times_coeff -
+                   1. / 12. * (momentum_density[1] - momentum_density[2]) +
+                   1. / 8. * (tmp1 - tmp2) - 1. / 24. * trace;
+  return population;
 }
 
+void lb_set_population_from_density_momentum_density_stress(
+    Lattice::index_t const index, double density,
+    Utils::Vector3d const &momentum_density, Utils::Vector6d const &stress) {
+  auto const population =
+      lb_get_population_from_density_momentum_density_stress(
+          density, momentum_density, stress);
+  lb_set_population(index, population);
+}
 /*@}*/
 
 #include <boost/range/numeric.hpp>
@@ -791,36 +767,39 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index) {
 template <typename T>
 inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
                                         const std::array<T, 19> &modes) {
-  T rho, j[3], pi_eq[6];
+  T density, momentum_density[3], stress_eq[6];
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
    * equilibrium value */
-  rho = modes[0] + lbpar.rho;
+  density = modes[0] + lbpar.density;
 
-  j[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
-  j[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
-  j[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
+  momentum_density[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
+  momentum_density[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
+  momentum_density[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
 
   using Utils::sqr;
-  auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
+  auto const momentum_density2 = sqr(momentum_density[0]) +
+                                 sqr(momentum_density[1]) +
+                                 sqr(momentum_density[2]);
 
   /* equilibrium part of the stress modes */
-  pi_eq[0] = j2 / rho;
-  pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / rho;
-  pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / rho;
-  pi_eq[3] = j[0] * j[1] / rho;
-  pi_eq[4] = j[0] * j[2] / rho;
-  pi_eq[5] = j[1] * j[2] / rho;
+  stress_eq[0] = momentum_density2 / density;
+  stress_eq[1] =
+      (sqr(momentum_density[0]) - sqr(momentum_density[1])) / density;
+  stress_eq[2] = (momentum_density2 - 3.0 * sqr(momentum_density[2])) / density;
+  stress_eq[3] = momentum_density[0] * momentum_density[1] / density;
+  stress_eq[4] = momentum_density[0] * momentum_density[2] / density;
+  stress_eq[5] = momentum_density[1] * momentum_density[2] / density;
 
   return {{modes[0], modes[1], modes[2], modes[3],
            /* relax the stress modes */
-           pi_eq[0] + lbpar.gamma_bulk * (modes[4] - pi_eq[0]),
-           pi_eq[1] + lbpar.gamma_shear * (modes[5] - pi_eq[1]),
-           pi_eq[2] + lbpar.gamma_shear * (modes[6] - pi_eq[2]),
-           pi_eq[3] + lbpar.gamma_shear * (modes[7] - pi_eq[3]),
-           pi_eq[4] + lbpar.gamma_shear * (modes[8] - pi_eq[4]),
-           pi_eq[5] + lbpar.gamma_shear * (modes[9] - pi_eq[5]),
+           stress_eq[0] + lbpar.gamma_bulk * (modes[4] - stress_eq[0]),
+           stress_eq[1] + lbpar.gamma_shear * (modes[5] - stress_eq[1]),
+           stress_eq[2] + lbpar.gamma_shear * (modes[6] - stress_eq[2]),
+           stress_eq[3] + lbpar.gamma_shear * (modes[7] - stress_eq[3]),
+           stress_eq[4] + lbpar.gamma_shear * (modes[8] - stress_eq[4]),
+           stress_eq[5] + lbpar.gamma_shear * (modes[9] - stress_eq[5]),
            /* relax the ghost modes (project them out) */
            /* ghost modes have no equilibrium part due to orthogonality */
            lbpar.gamma_odd * modes[10], lbpar.gamma_odd * modes[11],
@@ -840,8 +819,8 @@ inline std::array<T, 19> lb_thermalize_modes(Lattice::index_t index,
 
     const r123::Philox4x64::ctr_type c{
         {rng_counter_fluid->value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
-    const T rootrho = std::sqrt(std::fabs(modes[0] + lbpar.rho));
-    auto const pref = std::sqrt(12.) * rootrho;
+    const T rootdensity = std::sqrt(std::fabs(modes[0] + lbpar.density));
+    auto const pref = std::sqrt(12.) * rootdensity;
 
     const ctr_type noise[4] = {
         rng_type{}(c, {{static_cast<uint64_t>(index), 0ul}}),
@@ -880,12 +859,12 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
                                   const std::array<T, 19> &modes) {
   const auto &f = lbfields[index].force_density;
 
-  auto const rho = modes[0] + lbpar.rho;
+  auto const density = modes[0] + lbpar.density;
 
   /* hydrodynamic momentum density is redefined when external forces present */
   auto const u = Utils::Vector3d{modes[1] + 0.5 * f[0], modes[2] + 0.5 * f[1],
                                  modes[3] + 0.5 * f[2]} /
-                 rho;
+                 density;
 
   double C[6];
   C[0] = (1. + lbpar.gamma_bulk) * u[0] * f[0] +
@@ -1000,7 +979,7 @@ inline void lb_collide_stream() {
   }
 
   /* exchange halo regions */
-  halo_push_communication(lbfluid_post, node_grid);
+  halo_push_communication(lbfluid_post);
 
 #ifdef LB_BOUNDARIES
   /* boundary conditions for links */
@@ -1073,7 +1052,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   r_buffer = (double *)Utils::malloc(count * sizeof(double));
   s_buffer = (double *)Utils::malloc(count * sizeof(double));
 
-  if (PERIODIC(0)) {
+  if (box_geo.periodic(0)) {
     for (z = 0; z < lblattice.halo_grid[2]; ++z) {
       for (y = 0; y < lblattice.halo_grid[1]; ++y) {
         index = get_linear_index(0, y, z, lblattice.halo_grid);
@@ -1130,7 +1109,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
     }
   }
 
-  if (PERIODIC(1)) {
+  if (box_geo.periodic(1)) {
     for (z = 0; z < lblattice.halo_grid[2]; ++z) {
       for (x = 0; x < lblattice.halo_grid[0]; ++x) {
         index = get_linear_index(x, 0, z, lblattice.halo_grid);
@@ -1188,7 +1167,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
     }
   }
 
-  if (PERIODIC(2)) {
+  if (box_geo.periodic(2)) {
     for (y = 0; y < lblattice.halo_grid[1]; ++y) {
       for (x = 0; x < lblattice.halo_grid[0]; ++x) {
         index = get_linear_index(x, y, 0, lblattice.halo_grid);
@@ -1253,61 +1232,58 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   free(s_buffer);
 }
 
-void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                          double *pi) {
-#ifdef LB_BOUNDARIES
-  if (lbfields[index].boundary) {
-    *rho = lbpar.rho;
-    j[0] = 0.;
-    j[1] = 0.;
-    j[2] = 0.;
-    if (pi) {
-      pi[0] = 0.;
-      pi[1] = 0.;
-      pi[2] = 0.;
-      pi[3] = 0.;
-      pi[4] = 0.;
-      pi[5] = 0.;
-    }
-    return;
-  }
-#endif
-  auto modes = lb_calc_modes(index);
-  *rho = modes[0] + lbpar.rho;
+double lb_calc_density(std::array<double, 19> const &modes) {
+  return modes[0] + lbpar.density;
+}
 
-  j[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
-  j[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
-  j[2] = modes[3] + 0.5 * lbfields[index].force_density[2];
+Utils::Vector3d lb_calc_momentum_density(std::array<double, 19> const &modes,
+                                         Utils::Vector3d const &force_density) {
+  return Utils::Vector3d{{modes[1] + 0.5 * force_density[0],
+                          modes[2] + 0.5 * force_density[1],
+                          modes[3] + 0.5 * force_density[2]}};
+}
 
-  if (!pi)
-    return;
-
+Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
+                               Utils::Vector3d const &force_density) {
+  auto const momentum_density = lb_calc_momentum_density(modes, force_density);
+  auto const density = lb_calc_density(modes);
   using Utils::sqr;
-  auto const j2 = sqr(j[0]) + sqr(j[1]) + sqr(j[2]);
-
+  auto const momentum_density2 = sqr(momentum_density[0]) +
+                                 sqr(momentum_density[1]) +
+                                 sqr(momentum_density[2]);
   /* equilibrium part of the stress modes */
-  Utils::Vector6d modes_from_pi_eq{};
-  modes_from_pi_eq[0] = j2 / *rho;
-  modes_from_pi_eq[1] = (sqr(j[0]) - sqr(j[1])) / *rho;
-  modes_from_pi_eq[2] = (j2 - 3.0 * sqr(j[2])) / *rho;
-  modes_from_pi_eq[3] = j[0] * j[1] / *rho;
-  modes_from_pi_eq[4] = j[0] * j[2] / *rho;
-  modes_from_pi_eq[5] = j[1] * j[2] / *rho;
+  Utils::Vector6d modes_from_stress_eq{};
+  modes_from_stress_eq[0] = momentum_density2 / density;
+  modes_from_stress_eq[1] =
+      (sqr(momentum_density[0]) - sqr(momentum_density[1])) / density;
+  modes_from_stress_eq[2] =
+      (momentum_density2 - 3.0 * sqr(momentum_density[2])) / density;
+  modes_from_stress_eq[3] = momentum_density[0] * momentum_density[1] / density;
+  modes_from_stress_eq[4] = momentum_density[0] * momentum_density[2] / density;
+  modes_from_stress_eq[5] = momentum_density[1] * momentum_density[2] / density;
 
   /* Now we must predict the outcome of the next collision */
   /* We immediately average pre- and post-collision. */
-  modes[4] = modes_from_pi_eq[0] +
-             (0.5 + 0.5 * lbpar.gamma_bulk) * (modes[4] - modes_from_pi_eq[0]);
-  modes[5] = modes_from_pi_eq[1] +
-             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[5] - modes_from_pi_eq[1]);
-  modes[6] = modes_from_pi_eq[2] +
-             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[6] - modes_from_pi_eq[2]);
-  modes[7] = modes_from_pi_eq[3] +
-             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[7] - modes_from_pi_eq[3]);
-  modes[8] = modes_from_pi_eq[4] +
-             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[8] - modes_from_pi_eq[4]);
-  modes[9] = modes_from_pi_eq[5] +
-             (0.5 + 0.5 * lbpar.gamma_shear) * (modes[9] - modes_from_pi_eq[5]);
+
+  Utils::Vector6d avg_modes;
+  avg_modes[0] =
+      modes_from_stress_eq[0] +
+      (0.5 + 0.5 * lbpar.gamma_bulk) * (modes[4] - modes_from_stress_eq[0]);
+  avg_modes[1] =
+      modes_from_stress_eq[1] +
+      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[5] - modes_from_stress_eq[1]);
+  avg_modes[2] =
+      modes_from_stress_eq[2] +
+      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[6] - modes_from_stress_eq[2]);
+  avg_modes[3] =
+      modes_from_stress_eq[3] +
+      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[7] - modes_from_stress_eq[3]);
+  avg_modes[4] =
+      modes_from_stress_eq[4] +
+      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[8] - modes_from_stress_eq[4]);
+  avg_modes[5] =
+      modes_from_stress_eq[5] +
+      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[9] - modes_from_stress_eq[5]);
 
   // Transform the stress tensor components according to the modes that
   // correspond to those used by U. Schiller. In terms of populations this
@@ -1315,12 +1291,18 @@ void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
   // Duenweg and Ladd paper, when these are written out in populations.
   // But to ensure this, the expression in Schiller's modes has to be different!
 
-  pi[0] = (2.0 * (modes[0] + modes[4]) + modes[6] + 3.0 * modes[5]) / 6.0; // xx
-  pi[1] = modes[7];                                                        // xy
-  pi[2] = (2.0 * (modes[0] + modes[4]) + modes[6] - 3.0 * modes[5]) / 6.0; // yy
-  pi[3] = modes[8];                                                        // xz
-  pi[4] = modes[9];                                                        // yz
-  pi[5] = (modes[0] + modes[4] - modes[6]) / 3.0;                          // zz
+  Utils::Vector6d stress;
+  stress[0] =
+      (2.0 * (modes[0] + avg_modes[0]) + avg_modes[2] + 3.0 * avg_modes[1]) /
+      6.0;                  // xx
+  stress[1] = avg_modes[3]; // xy
+  stress[2] =
+      (2.0 * (modes[0] + avg_modes[0]) + avg_modes[2] - 3.0 * avg_modes[1]) /
+      6.0;                                                    // yy
+  stress[3] = avg_modes[4];                                   // xz
+  stress[4] = avg_modes[5];                                   // yz
+  stress[5] = (modes[0] + avg_modes[0] - avg_modes[2]) / 3.0; // zz
+  return stress;
 }
 
 #ifdef LB_BOUNDARIES
@@ -1369,8 +1351,8 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
           for (i = 0; i < 19; i++) {
             population_shift = 0;
             for (l = 0; l < 3; l++) {
-              population_shift -= lbpar.rho * 2 * D3Q19::c[i][l] * D3Q19::w[i] *
-                                  lbfields[k].slip_velocity[l] /
+              population_shift -= lbpar.density * 2 * D3Q19::c[i][l] *
+                                  D3Q19::w[i] * lbfields[k].slip_velocity[l] /
                                   D3Q19::c_sound_sq<double>;
             }
 
@@ -1405,7 +1387,7 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
  *  @param[in]  index  Local lattice site
  *  @retval The local fluid momentum.
  */
-inline Utils::Vector3d lb_calc_local_j(Lattice::index_t index) {
+inline Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index) {
   return {{lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
                lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
                lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
@@ -1428,15 +1410,15 @@ inline Utils::Vector3d lb_calc_local_j(Lattice::index_t index) {
 void lb_calc_fluid_momentum(double *result) {
 
   int x, y, z, index;
-  Utils::Vector3d j{}, momentum{};
+  Utils::Vector3d momentum_density{}, momentum{};
 
   for (x = 1; x <= lblattice.grid[0]; x++) {
     for (y = 1; y <= lblattice.grid[1]; y++) {
       for (z = 1; z <= lblattice.grid[2]; z++) {
         index = get_linear_index(x, y, z, lblattice.halo_grid);
 
-        j = lb_calc_local_j(index);
-        momentum += j + .5 * lbfields[index].force_density;
+        momentum_density = lb_calc_local_momentum_density(index);
+        momentum += momentum_density + .5 * lbfields[index].force_density;
       }
     }
   }

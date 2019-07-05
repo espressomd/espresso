@@ -23,6 +23,7 @@
  */
 
 #include "EspressoSystemInterface.hpp"
+#include "communication.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
@@ -30,6 +31,7 @@
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
+
 #include <cassert>
 
 #include "short_range_loop.hpp"

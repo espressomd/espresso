@@ -69,7 +69,8 @@ inline double thole_pair_energy(const Particle *p1, const Particle *p2,
   double thole_s = ia_params->THOLE_scaling_coeff;
   double thole_q1q2 = ia_params->THOLE_q1q2;
 
-  if (thole_s != 0 && thole_q1q2 != 0 && dist < Coulomb::cutoff(box_l) &&
+  if (thole_s != 0 && thole_q1q2 != 0 &&
+      dist < Coulomb::cutoff(box_geo.length()) &&
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
     double sd = thole_s * dist;
     double S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);

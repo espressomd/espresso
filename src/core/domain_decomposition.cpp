@@ -25,6 +25,7 @@
 
 #include "domain_decomposition.hpp"
 
+#include "communication.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
@@ -85,7 +86,7 @@ void dd_create_cell_grid() {
   /* initialize */
   cell_range[0] = cell_range[1] = cell_range[2] = max_range;
 
-  if (max_range < ROUND_ERROR_PREC * box_l[0]) {
+  if (max_range < ROUND_ERROR_PREC * box_geo.length()[0]) {
     /* this is the non-interacting case */
     const int cells_per_dir = std::ceil(std::pow(min_num_cells, 1. / 3.));
 
@@ -257,7 +258,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   for (dir = 0; dir < 3; dir++) {
     for (lr = 0; lr < 2; lr++) {
       /* No communication for border of non periodic direction */
-      if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
+      if (box_geo.periodic(dir) || (boundary[2 * dir + lr] == 0)) {
         if (grid[dir] == 1)
           num++;
         else
@@ -291,7 +292,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
     for (lr = 0; lr < 2; lr++) {
       if (grid[dir] == 1) {
         /* just copy cells on a single node */
-        if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
+        if (box_geo.periodic(dir) || (boundary[2 * dir + lr] == 0)) {
           comm->comm[cnt].type = GHOST_LOCL;
           comm->comm[cnt].node = this_node;
 
@@ -302,7 +303,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           /* prepare folding of ghost positions */
           if ((data_parts & GHOSTTRANS_POSSHFTD) &&
               boundary[2 * dir + lr] != 0) {
-            comm->comm[cnt].shift[dir] = boundary[2 * dir + lr] * box_l[dir];
+            comm->comm[cnt].shift[dir] =
+                boundary[2 * dir + lr] * box_geo.length()[dir];
           }
 
           /* fill send comm cells */
@@ -329,7 +331,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
       } else {
         /* i: send/recv loop */
         for (i = 0; i < 2; i++) {
-          if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0))
+          if (box_geo.periodic(dir) || (boundary[2 * dir + lr] == 0))
             if ((node_pos[dir] + i) % 2 == 0) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
@@ -340,7 +342,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
               if ((data_parts & GHOSTTRANS_POSSHFTD) &&
                   boundary[2 * dir + lr] != 0) {
                 comm->comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
+                    boundary[2 * dir + lr] * box_geo.length()[dir];
               }
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
@@ -354,7 +356,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
                                  lc[1], lc[2], hc[0], hc[1], hc[2]));
               cnt++;
             }
-          if (PERIODIC(dir) || (boundary[2 * dir + (1 - lr)] == 0))
+          if (box_geo.periodic(dir) || (boundary[2 * dir + (1 - lr)] == 0))
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
@@ -442,31 +444,31 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
     /* lr loop: left right */
     for (int lr = 0; lr < 2; lr++) {
       if (grid[dir] == 1) {
-        if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
+        if (box_geo.periodic(dir) || (boundary[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (boundary[2 * dir + lr] != 0) {
             cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                boundary[2 * dir + lr] * box_l[dir];
+                boundary[2 * dir + lr] * box_geo.length()[dir];
             cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                boundary[2 * dir + lr] * box_l[dir];
+                boundary[2 * dir + lr] * box_geo.length()[dir];
           }
           cnt++;
         }
       } else {
         /* i: send/recv loop */
         for (int i = 0; i < 2; i++) {
-          if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0))
+          if (box_geo.periodic(dir) || (boundary[2 * dir + lr] == 0))
             if ((node_pos[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
               if (boundary[2 * dir + lr] != 0) {
                 cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
+                    boundary[2 * dir + lr] * box_geo.length()[dir];
                 cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
+                    boundary[2 * dir + lr] * box_geo.length()[dir];
               }
               cnt++;
             }
-          if (PERIODIC(dir) || (boundary[2 * dir + (1 - lr)] == 0))
+          if (box_geo.periodic(dir) || (boundary[2 * dir + (1 - lr)] == 0))
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               cnt++;
             }
@@ -550,12 +552,14 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
        the particle belongs here and could otherwise potentially be dismissed
        due to rouding errors. */
     if (cpos[i] < 1) {
-      if ((!PERIODIC(i) or (pos[i] >= box_l[i])) && boundary[2 * i])
+      if ((!box_geo.periodic(i) or (pos[i] >= box_geo.length()[i])) &&
+          boundary[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > dd.cell_grid[i]) {
-      if ((!PERIODIC(i) or (pos[i] < box_l[i])) && boundary[2 * i + 1])
+      if ((!box_geo.periodic(i) or (pos[i] < box_geo.length()[i])) &&
+          boundary[2 * i + 1])
         cpos[i] = dd.cell_grid[i];
       else
         return nullptr;
@@ -762,15 +766,17 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 
     assert(local_particles[src.part[i].p.identity] == nullptr);
 
-    if (get_mi_coord(part.r.p[dir], my_left[dir], dir) < 0.0) {
-      if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
+    if (get_mi_coord(part.r.p[dir], my_left[dir], box_geo.length()[dir],
+                     box_geo.periodic(dir)) < 0.0) {
+      if (box_geo.periodic(dir) || (boundary[2 * dir] == 0)) {
 
         move_unindexed_particle(&left, &src, i);
         if (i < src.n)
           i--;
       }
-    } else if (get_mi_coord(part.r.p[dir], my_right[dir], dir) >= 0.0) {
-      if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
+    } else if (get_mi_coord(part.r.p[dir], my_right[dir], box_geo.length()[dir],
+                            box_geo.periodic(dir)) >= 0.0) {
+      if (box_geo.periodic(dir) || (boundary[2 * dir + 1] == 0)) {
 
         move_unindexed_particle(&right, &src, i);
         if (i < src.n)

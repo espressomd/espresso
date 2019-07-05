@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
 
@@ -221,24 +222,9 @@ void ImmersedBoundaries::calc_volumes() {
             // Unfold position of first node
             // this is to get a continuous trajectory with no jumps when box
             // boundaries are crossed
-            double x1[3] = {p1.r.p[0], p1.r.p[1], p1.r.p[2]};
-            int img[3] = {p1.l.i[0], p1.l.i[1], p1.l.i[2]};
-            unfold_position(x1, img);
-
-            // Unfolding seems to work only for the first particle of a triel
-            // so get the others from relative vectors considering PBC
-            double a12[3];
-            get_mi_vector(a12, p2->r.p, x1);
-            double a13[3];
-            get_mi_vector(a13, p3->r.p, x1);
-
-            double x2[3];
-            double x3[3];
-
-            for (int i = 0; i < 3; i++) {
-              x2[i] = x1[i] + a12[i];
-              x3[i] = x1[i] + a13[i];
-            }
+            auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+            auto const x2 = x1 + get_mi_vector(p2->r.p, x1, box_geo);
+            auto const x3 = x1 + get_mi_vector(p3->r.p, x1, box_geo);
 
             // Volume of this tetrahedron
             // See Cha Zhang et.al. 2001, doi:10.1109/ICIP.2001.958278
@@ -336,14 +322,12 @@ void ImmersedBoundaries::calc_volume_force() {
             // Unfold position of first node
             // this is to get a continuous trajectory with no jumps when box
             // boundaries are crossed
-            double x1[3] = {p1.r.p[0], p1.r.p[1], p1.r.p[2]};
-            int img[3] = {p1.l.i[0], p1.l.i[1], p1.l.i[2]};
-            unfold_position(x1, img);
+            auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
 
             // Unfolding seems to work only for the first particle of a triel
             // so get the others from relative vectors considering PBC
-            auto const a12 = get_mi_vector(p2->r.p, x1);
-            auto const a13 = get_mi_vector(p3->r.p, x1);
+            auto const a12 = get_mi_vector(p2->r.p, x1, box_geo);
+            auto const a13 = get_mi_vector(p3->r.p, x1, box_geo);
 
             // Now we have the true and good coordinates
             // Compute force according to eq. C.46 Krüger thesis

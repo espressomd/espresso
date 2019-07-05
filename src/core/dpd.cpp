@@ -181,6 +181,7 @@ REGISTER_CALLBACK_REDUCTION(dpd_viscous_stress_local, std::plus<>())
 Utils::Vector9d dpd_stress() {
   auto const stress = mpi_call(Communication::Result::reduction, std::plus<>(),
                                dpd_viscous_stress_local);
+  auto const box_l = box_geo.length();
 
   return Utils::Vector9d{stress[0][0], stress[0][1], stress[0][2],
                          stress[1][0], stress[1][1], stress[1][2],

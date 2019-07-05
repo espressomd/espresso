@@ -41,6 +41,7 @@ create a wall shape you could do::
 
 Available shapes are listed below.
 
+    - :class:`espressomd.shapes.Wall`
     - :class:`espressomd.shapes.Cylinder`
     - :class:`espressomd.shapes.Ellipsoid`
     - :class:`espressomd.shapes.HollowCone`
@@ -64,12 +65,12 @@ The module :mod:`espressomd.constraints` provides the class
     shape_constraint = espressomd.constraints.ShapeBasedConstraint(shape=my_shape)
 
 In order to add the constraint to the system
-invoke the :meth:`espressomd.constraints.Constraints.add` method::
+invoke the :meth:`~espressomd.constraints.Constraints.add` method::
 
     system.constraints.add(shape_constraint)
 
 All previously listed shapes can be added to the system constraints
-by passing an initialized shape object to :meth:`system.constraints.add`, returning a constraint object ::
+by passing an initialized shape object to :meth:`~espressomd.constraints.Constraints.add`, returning a constraint object ::
 
     misshaped = Wall(dist=20, normal=[0.1, 0.0, 1])
     myConstraint = system.constraints.add(shape=myShape, particle_type=p_type)
@@ -80,7 +81,7 @@ that constraint.
 There are two additional optional parameters
 to fine tune the behavior of the constraint. If ``penetrable`` is set to
 ``True`` then particles can move through the constraint. In this case the
-other option ``only_positive`` controls whether the particle is subject to the
+other option ``only_positive`` controls whether the particle is subjected to the
 interaction potential of the wall. If set to ``False``, then the constraint
 will only act in the direction of the normal vector.
 
@@ -197,14 +198,9 @@ Pictured is an example constraint with a ``Wall`` shape created with ::
     wall = Wall(dist=20, normal=[0.1, 0.0, 1])
     system.constraints.add(shape=wall, particle_type=0)
 
-In variant (1) if the ``only_positive`` flag is set to ``True``, interactions
+For penetrable walls, if the ``only_positive`` flag is set to ``True``, interactions
 are only calculated if the particle is on the side of the wall in which the
 normal vector is pointing.
-This has only an effect for penetrable walls. If the flag is
-set to ``True``, then slip boundary interactions apply that are essential for
-microchannel flows like the Plane Poiseuille or Plane Couette Flow.
-You also need to use the tunable_slip interaction (see [sec:tunableSlip])
-for this too work.
 
 
 :class:`espressomd.shapes.Sphere`
@@ -407,7 +403,7 @@ Pictured is an example constraint with a ``Slitpore`` shape created with ::
     A capsule, pill, or spherocylinder.
 
 The resulting surface is a cylinder capped by hemispheres on both ends.
-Similar to `espressomd.shapes::Cylinder`, it is positioned at ``center`` and has a radius ``radius``.
+Similar to :class:`espressomd.shapes.Cylinder`, it is positioned at ``center`` and has a radius ``radius``.
 The ``length`` parameter is **half** of the cylinder length, and does not include the contribution from the hemispherical ends.
 The ``axis`` parameter is a vector along the cylinder axis, which is normalized in the program.
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.

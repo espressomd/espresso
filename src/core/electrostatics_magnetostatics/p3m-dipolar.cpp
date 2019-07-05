@@ -40,6 +40,7 @@
 #include "communication.hpp"
 #include "debug.hpp"
 #include "domain_decomposition.hpp"
+#include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -92,7 +93,7 @@ static void dp3m_calc_send_mesh();
  *  cutoff for charge assignment @ref P3MParameters::cao_cut "cao_cut".
  *
  *  Function called by @ref dp3m_init() once and by @ref
- *  dp3m_scaleby_box_l() whenever the @ref box_l changes.
+ *  dp3m_scaleby_box_l() whenever the box_length changes.
  */
 static void dp3m_init_a_ai_cao_cut();
 
@@ -101,7 +102,7 @@ static void dp3m_init_a_ai_cao_cut();
  *  @ref p3m_local_mesh::ld_pos "ld_pos".
  *
  *  Function called by @ref dp3m_calc_local_ca_mesh() once and by
- *  @ref dp3m_scaleby_box_l() whenever the @ref box_l changes.
+ *  @ref dp3m_scaleby_box_l() whenever the box size changes.
  */
 static void dp3m_calc_lm_ld_pos();
 
@@ -119,15 +120,6 @@ static void dp3m_spread_force_grid(double *mesh);
 
 /** realloc charge assignment fields. */
 static void dp3m_realloc_ca_fields(int newsize);
-
-/** Initialize the (inverse) mesh constant @ref P3MParameters::a "a"
- *  (@ref P3MParameters::ai "ai") and the cutoff for charge assignment
- *  @ref P3MParameters::cao_cut "cao_cut".
- *
- *  Function called by @ref dp3m_init() once and by @ref dp3m_scaleby_box_l()
- *  whenever the @ref box_l changes.
- */
-static void dp3m_init_a_ai_cao_cut();
 
 /** Checks for correctness for magnetic dipoles in P3M of the cao_cut,
  *  necessary when the box length changes
@@ -520,7 +512,7 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
                           double accuracy, int n_interpol) {
   if (r_cut >= 0) {
     dp3m.params.r_cut = r_cut;
-    dp3m.params.r_cut_iL = r_cut * box_l_i[0];
+    dp3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
   }
 
   if (mesh >= 0)
@@ -531,7 +523,7 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
 
   if (alpha >= 0) {
     dp3m.params.alpha = alpha;
-    dp3m.params.alpha_L = alpha * box_l[0];
+    dp3m.params.alpha_L = alpha * box_geo.length()[0];
   }
 
   if (accuracy >= 0)
@@ -558,13 +550,13 @@ int dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
     return -3;
 
   dp3m.params.r_cut = r_cut;
-  dp3m.params.r_cut_iL = r_cut * box_l_i[0];
+  dp3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
   dp3m.params.mesh[2] = dp3m.params.mesh[1] = dp3m.params.mesh[0] = mesh;
   dp3m.params.cao = cao;
 
   if (alpha > 0) {
     dp3m.params.alpha = alpha;
-    dp3m.params.alpha_L = alpha * box_l[0];
+    dp3m.params.alpha_L = alpha * box_geo.length()[0];
   } else if (alpha != -1.0)
     return -4;
 
@@ -970,7 +962,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
           }
         }
       }
-      node_k_space_energy_dip *= dipole_prefac * Utils::pi() / box_l[0];
+      node_k_space_energy_dip *=
+          dipole_prefac * Utils::pi() / box_geo.length()[0];
       MPI_Reduce(&node_k_space_energy_dip, &k_space_energy_dip, 1, MPI_DOUBLE,
                  MPI_SUM, 0, comm_cart);
 
@@ -988,10 +981,12 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
 #endif
         k_space_energy_dip -=
             dipole.prefactor *
-            (dp3m.sum_mu2 * 2 * pow(dp3m.params.alpha_L * box_l_i[0], 3) *
+            (dp3m.sum_mu2 * 2 *
+             pow(dp3m.params.alpha_L * (1. / box_geo.length()[0]), 3) *
              Utils::sqrt_pi_i() / 3.0);
 
-        double volume = box_l[0] * box_l[1] * box_l[2];
+        double volume =
+            box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
         k_space_energy_dip += dipole.prefactor * dp3m.energy_correction /
                               volume; /* add the dipolar energy correction due
                                          to systematic Madelung-Self effects */
@@ -1075,7 +1070,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         /* redistribute force component mesh */
         dp3m_spread_force_grid(dp3m.rs_mesh);
         /* Assign force component from mesh to particle */
-        P3M_assign_torques(dipole_prefac * (2 * Utils::pi() / box_l[0]), d_rs);
+        P3M_assign_torques(
+            dipole_prefac * (2 * Utils::pi() / box_geo.length()[0]), d_rs);
       }
       P3M_TRACE(fprintf(stderr, "%d: done torque calculation.\n", this_node));
 #endif /*if def ROTATION */
@@ -1161,7 +1157,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[2]);
         /* Assign force component from mesh to particle */
         dp3m_assign_forces_dip(
-            dipole_prefac * pow(2 * Utils::pi() / box_l[0], 2), d_rs);
+            dipole_prefac * pow(2 * Utils::pi() / box_geo.length()[0], 2),
+            d_rs);
       }
 
       P3M_TRACE(fprintf(stderr,
@@ -1183,8 +1180,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
 /************************************************************/
 
 double calc_surface_term(int force_flag, int energy_flag) {
-  const double pref = dipole.prefactor * 4 * M_PI * box_l_i[0] * box_l_i[1] *
-                      box_l_i[2] / (2 * dp3m.params.epsilon + 1);
+  const double pref = dipole.prefactor * 4 * M_PI * (1. / box_geo.length()[0]) *
+                      (1. / box_geo.length()[1]) * (1. / box_geo.length()[2]) /
+                      (2 * dp3m.params.epsilon + 1);
   double suma, a[3];
   double en;
 
@@ -1410,7 +1408,7 @@ void dp3m_calc_influence_function_force() {
   }
   dp3m.g_force = Utils::realloc(dp3m.g_force, size * sizeof(double));
   fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
-         (box_l[0] * box_l[0]);
+         (box_geo.length()[0] * box_geo.length()[0]);
 
   for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
     for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++)
@@ -1498,7 +1496,7 @@ void dp3m_calc_influence_function_energy() {
   }
   dp3m.g_energy = Utils::realloc(dp3m.g_energy, size * sizeof(double));
   fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
-         (box_l[0] * box_l[0]);
+         (box_geo.length()[0] * box_geo.length()[0]);
 
   for (n[0] = dp3m.fft.plan[3].start[0]; n[0] < end[0]; n[0]++)
     for (n[1] = dp3m.fft.plan[3].start[1]; n[1] < end[1]; n[1]++)
@@ -1604,14 +1602,16 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
 
   // Alpha cannot be zero in the dipolar case because real_space formula breaks
   // down
-  rs_err = P3M_DIPOLAR_real_space_error(box_l[0], dipole.prefactor, r_cut_iL,
-                                        dp3m.sum_dip_part, dp3m.sum_mu2, 0.001);
+  rs_err = P3M_DIPOLAR_real_space_error(box_geo.length()[0], dipole.prefactor,
+                                        r_cut_iL, dp3m.sum_dip_part,
+                                        dp3m.sum_mu2, 0.001);
 
   if (M_SQRT2 * rs_err > dp3m.params.accuracy) {
     /* assume rs_err = ks_err -> rs_err = accuracy/sqrt(2.0) -> alpha_L */
     alpha_L = dp3m_rtbisection(
-        box_l[0], dipole.prefactor, r_cut_iL, dp3m.sum_dip_part, dp3m.sum_mu2,
-        0.0001 * box_l[0], 5.0 * box_l[0], 0.0001, dp3m.params.accuracy);
+        box_geo.length()[0], dipole.prefactor, r_cut_iL, dp3m.sum_dip_part,
+        dp3m.sum_mu2, 0.0001 * box_geo.length()[0], 5.0 * box_geo.length()[0],
+        0.0001, dp3m.params.accuracy);
 
   }
 
@@ -1624,10 +1624,10 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
   *_alpha_L = alpha_L;
   /* calculate real space and k-space error for this alpha_L */
 
-  rs_err =
-      P3M_DIPOLAR_real_space_error(box_l[0], dipole.prefactor, r_cut_iL,
-                                   dp3m.sum_dip_part, dp3m.sum_mu2, alpha_L);
-  ks_err = dp3m_k_space_error(box_l[0], dipole.prefactor, mesh, cao,
+  rs_err = P3M_DIPOLAR_real_space_error(box_geo.length()[0], dipole.prefactor,
+                                        r_cut_iL, dp3m.sum_dip_part,
+                                        dp3m.sum_mu2, alpha_L);
+  ks_err = dp3m_k_space_error(box_geo.length()[0], dipole.prefactor, mesh, cao,
                               dp3m.sum_dip_part, dp3m.sum_mu2, alpha_L);
 
   *_rs_err = rs_err;
@@ -1702,7 +1702,7 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
   char b[3 * ES_INTEGER_SPACE + 3 * ES_DOUBLE_SPACE + 128];
 
   /* initial checks. */
-  mesh_size = box_l[0] / (double)mesh;
+  mesh_size = box_geo.length()[0] / (double)mesh;
   k_cut = mesh_size * cao / 2.0;
   P3M_TRACE(fprintf(stderr, "dp3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
                     mesh, cao, r_cut_iL_min, r_cut_iL_max));
@@ -1756,7 +1756,8 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
    * than allowed */
   n_cells = 1;
   for (i = 0; i < 3; i++)
-    n_cells *= (int)(floor(local_box_l[i] / (r_cut_iL * box_l[0] + skin)));
+    n_cells *=
+        (int)(floor(local_box_l[i] / (r_cut_iL * box_geo.length()[0] + skin)));
   if (n_cells < min_num_cells) {
     P3M_TRACE(fprintf(
         stderr, "dp3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n",
@@ -1999,7 +2000,7 @@ int dp3m_adaptive_tune(char **logger) {
           dp3m.params.accuracy, dipole.prefactor);
   *logger = strcat_alloc(*logger, b);
   sprintf(b, "System: box_l = %.5e # charged part = %d Sum[q_i^2] = %.5e\n",
-          box_l[0], dp3m.sum_dip_part, dp3m.sum_mu2);
+          box_geo.length()[0], dp3m.sum_dip_part, dp3m.sum_mu2);
   *logger = strcat_alloc(*logger, b);
 
   if (dp3m.sum_dip_part == 0) {
@@ -2031,8 +2032,8 @@ int dp3m_adaptive_tune(char **logger) {
   if (dp3m.params.r_cut_iL == 0.0) {
     r_cut_iL_min = 0;
     r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2) - skin;
-    r_cut_iL_min *= box_l_i[0];
-    r_cut_iL_max *= box_l_i[0];
+    r_cut_iL_min *= (1. / box_geo.length()[0]);
+    r_cut_iL_max *= (1. / box_geo.length()[0]);
   } else {
     r_cut_iL_min = r_cut_iL_max = dp3m.params.r_cut_iL;
 
@@ -2316,7 +2317,7 @@ void dp3m_calc_lm_ld_pos() {
 void dp3m_init_a_ai_cao_cut() {
   int i;
   for (i = 0; i < 3; i++) {
-    dp3m.params.ai[i] = (double)dp3m.params.mesh[i] / box_l[i];
+    dp3m.params.ai[i] = (double)dp3m.params.mesh[i] / box_geo.length()[i];
     dp3m.params.a[i] = 1.0 / dp3m.params.ai[i];
     dp3m.params.cao_cut[i] = 0.5 * dp3m.params.a[i] * dp3m.params.cao;
   }
@@ -2409,10 +2410,11 @@ bool dp3m_sanity_checks_boxl() {
   bool ret = false;
   for (i = 0; i < 3; i++) {
     /* check k-space cutoff */
-    if (dp3m.params.cao_cut[i] >= 0.5 * box_l[i]) {
+    if (dp3m.params.cao_cut[i] >= 0.5 * box_geo.length()[i]) {
       runtimeErrorMsg() << "dipolar P3M_init: k-space cutoff "
                         << dp3m.params.cao_cut[i]
-                        << " is larger than half of box dimension " << box_l[i];
+                        << " is larger than half of box dimension "
+                        << box_geo.length()[i];
       ret = true;
     }
     if (dp3m.params.cao_cut[i] >= local_box_l[i]) {
@@ -2431,7 +2433,7 @@ bool dp3m_sanity_checks_boxl() {
 bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
   bool ret = false;
 
-  if (!PERIODIC(0) || !PERIODIC(1) || !PERIODIC(2)) {
+  if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "dipolar P3M requires periodicity 1 1 1";
     ret = true;
   }
@@ -2446,7 +2448,8 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
     ret = true;
   }
 
-  if ((box_l[0] != box_l[1]) || (box_l[1] != box_l[2])) {
+  if ((box_geo.length()[0] != box_geo.length()[1]) ||
+      (box_geo.length()[1] != box_geo.length()[2])) {
     runtimeErrorMsg() << "dipolar P3M requires a cubic box";
     ret = true;
   }
@@ -2573,8 +2576,8 @@ void dp3m_scaleby_box_l() {
     return;
   }
 
-  dp3m.params.r_cut = dp3m.params.r_cut_iL * box_l[0];
-  dp3m.params.alpha = dp3m.params.alpha_L * box_l_i[0];
+  dp3m.params.r_cut = dp3m.params.r_cut_iL * box_geo.length()[0];
+  dp3m.params.alpha = dp3m.params.alpha_L * (1. / box_geo.length()[0]);
   dp3m_init_a_ai_cao_cut();
   dp3m_calc_lm_ld_pos();
   dp3m_sanity_checks_boxl();
@@ -2595,9 +2598,11 @@ void dp3m_compute_constants_energy_dipolar() {
   P3M_TRACE(fprintf(stderr, "%d: dp3m_compute_constants_energy_dipolar().\n",
                     this_node));
 
-  double volume = box_l[0] * box_l[1] * box_l[2];
-  Ukp3m =
-      dp3m_average_dipolar_self_energy(box_l[0], dp3m.params.mesh[0]) * volume;
+  double volume =
+      box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+  Ukp3m = dp3m_average_dipolar_self_energy(box_geo.length()[0],
+                                           dp3m.params.mesh[0]) *
+          volume;
 
   P3M_TRACE(
       fprintf(stderr, "%d: Average Dipolar Energy = %lf.\n", this_node, Ukp3m));

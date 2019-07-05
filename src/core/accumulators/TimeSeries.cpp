@@ -6,6 +6,8 @@
 #include <boost/iostreams/stream.hpp>
 #include <boost/serialization/vector.hpp>
 
+#include <sstream>
+
 namespace Accumulators {
 void TimeSeries::update() { m_data.emplace_back(m_obs->operator()()); }
 

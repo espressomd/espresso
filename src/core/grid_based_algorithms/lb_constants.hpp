@@ -29,12 +29,15 @@
  *  parameter.
  */
 enum class LBParam {
-  DENSITY,   /**< fluid density */
-  VISCOSITY, /**< fluid kinematic viscosity */
-  AGRID,     /**< grid constant for fluid lattice */
-  EXTFORCE,  /**< external force density acting on the fluid */
-  BULKVISC,  /**< fluid bulk viscosity */
-  KT         /**< thermal energy */
+  DENSITY,           /**< fluid density */
+  VISCOSITY,         /**< fluid kinematic viscosity */
+  AGRID,             /**< grid constant for fluid lattice */
+  EXT_FORCE_DENSITY, /**< external force density acting on the fluid */
+  BULKVISC,          /**< fluid bulk viscosity */
+  KT,                /**< thermal energy */
+  GAMMA_ODD,         /**< Relaxation constant for odd modes */
+  GAMMA_EVEN,        /**< Relaxation constant for even modes */
+  TAU                /**< LB time step */
 };
 
 #endif /* LB_CONSTANTS_HPP */
