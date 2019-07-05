@@ -17,9 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-from core.grid cimport local_box_l, node_grid
-from . cimport cellsystem
 from . cimport integrate
+cimport core.communication
+cimport core.cells
+cimport core.tuning
+cimport core.layered
+cimport core.grid
 from globals cimport *
 import numpy as np
 from espressomd.utils cimport handle_errors
@@ -46,7 +49,7 @@ cdef class CellSystem(object):
         cell_structure.use_verlet_list = use_verlet_lists
         dd.fully_connected = fully_connected
         # grid.h::node_grid
-        mpi_bcast_cell_structure(CELL_STRUCTURE_DOMDEC)
+        core.communication.mpi_bcast_cell_structure(core.cells.CELL_STRUCTURE_DOMDEC)
 
         handle_errors("Error while initializing the cell system.")
         return True
@@ -64,7 +67,7 @@ cdef class CellSystem(object):
         """
         cell_structure.use_verlet_list = use_verlet_lists
 
-        mpi_bcast_cell_structure(CELL_STRUCTURE_NSQUARE)
+        core.communication.mpi_bcast_cell_structure(core.cells.CELL_STRUCTURE_NSQUARE)
         # @TODO: gathering should be interface independent
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
@@ -92,24 +95,19 @@ cdef class CellSystem(object):
             if not n_layers > 0:
                 raise ValueError("the number of layers has to be >0")
 
-            global n_layers_
-            n_layers_ = int(n_layers)
-            global determine_n_layers
-            determine_n_layers = 0
+            core.layered.n_layers_ = int(n_layers)
+            core.layered.determine_n_layers = 0
 
-        if (node_grid[0] != 1 or node_grid[1] != 1):
-            node_grid[0] = node_grid[1] = 1
-            node_grid[2] = n_nodes
+        if (core.grid.node_grid[0] != 1 or core.grid.node_grid[1] != 1):
+            core.grid.node_grid[0] = core.grid.node_grid[1] = 1
+            core.grid.node_grid[2] = n_nodes
             mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
             handle_errors("mpi_bcast_parameter failed")
         else:
             mpi_err = 0
 
         if not mpi_err:
-            mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED)
-
-        # @TODO: gathering should be interface independent
-        # return mpi_gather_runtime_errors(interp, TCL_OK)
+            core.communication.mpi_bcast_cell_structure(core.cells.CELL_STRUCTURE_LAYERED)
 
         if mpi_err:
             raise Exception("Broadcasting the node grid failed")
@@ -118,24 +116,24 @@ cdef class CellSystem(object):
     def get_state(self):
         s = {"use_verlet_list": cell_structure.use_verlet_list}
 
-        if cell_structure.type == CELL_STRUCTURE_LAYERED:
+        if cell_structure.type == core.cells.CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
             s["n_layers"] = n_layers
-        if cell_structure.type == CELL_STRUCTURE_DOMDEC:
+        if cell_structure.type == core.cells.CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
-        if cell_structure.type == CELL_STRUCTURE_NSQUARE:
+        if cell_structure.type == core.cells.CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
 
         s["skin"] = skin
         s["local_box_l"] = np.array(
-            [local_box_l[0], local_box_l[1], local_box_l[2]])
+            [core.grid.local_box_l[0], core.grid.local_box_l[1], core.grid.local_box_l[2]])
         s["max_cut"] = max_cut
         s["max_range"] = max_range
         s["max_skin"] = max_skin
-        s["n_layers"] = n_layers_
+        s["n_layers"] = core.layered.n_layers_
         s["verlet_reuse"] = verlet_reuse
         s["n_nodes"] = n_nodes
-        s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
+        s["node_grid"] = np.array([core.grid.node_grid[0], core.grid.node_grid[1], core.grid.node_grid[2]])
         s["cell_grid"] = np.array(
             [dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]])
         s["cell_size"] = np.array(
@@ -149,16 +147,16 @@ cdef class CellSystem(object):
     def __getstate__(self):
         s = {"use_verlet_list": cell_structure.use_verlet_list}
 
-        if cell_structure.type == CELL_STRUCTURE_LAYERED:
+        if cell_structure.type == core.cells.CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
             s["n_layers"] = n_layers
-        if cell_structure.type == CELL_STRUCTURE_DOMDEC:
+        if cell_structure.type == core.cells.CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
-        if cell_structure.type == CELL_STRUCTURE_NSQUARE:
+        if cell_structure.type == core.cells.CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
 
         s["skin"] = skin
-        s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
+        s["node_grid"] = np.array([core.grid.node_grid[0], core.grid.node_grid[1], core.grid.node_grid[2]])
         s["max_num_cells"] = max_num_cells
         s["min_num_cells"] = min_num_cells
         s["fully_connected"] = dd.fully_connected
@@ -184,7 +182,7 @@ cdef class CellSystem(object):
         self.min_num_cells = d['min_num_cells']
 
     def get_pairs_(self, distance):
-        return mpi_get_pairs(distance)
+        return core.cells.mpi_get_pairs(distance)
 
     def resort(self, global_flag=True):
         """
@@ -200,7 +198,7 @@ cdef class CellSystem(object):
 
         """
 
-        return mpi_resort_particles(int(global_flag))
+        return core.communication.mpi_resort_particles(int(global_flag))
 
     property max_num_cells:
         """
@@ -227,7 +225,7 @@ cdef class CellSystem(object):
 
         def __set__(self, int _min_num_cells):
             global min_num_cells
-            min = calc_processor_min_num_cells(node_grid)
+            min = calc_processor_min_num_cells(core.grid.node_grid)
             if _min_num_cells < min:
                 raise ValueError(
                     "min_num_cells must be >= processor_min_num_cells (currently " + str(min) + ")")
@@ -252,16 +250,16 @@ cdef class CellSystem(object):
                 raise ValueError("Number of available nodes " + str(
                     n_nodes) + " and imposed node grid " + str(_node_grid) + " do not agree.")
             else:
-                node_grid[0] = _node_grid[0]
-                node_grid[1] = _node_grid[1]
-                node_grid[2] = _node_grid[2]
+                core.grid.node_grid[0] = _node_grid[0]
+                core.grid.node_grid[1] = _node_grid[1]
+                core.grid.node_grid[2] = _node_grid[2]
                 mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
                 handle_errors("mpi_bcast_parameter for node_grid failed")
                 if mpi_err:
                     raise Exception("Broadcasting the node grid failed")
 
         def __get__(self):
-            return np.array([node_grid[0], node_grid[1], node_grid[2]])
+            return np.array([core.grid.node_grid[0], core.grid.node_grid[1], core.grid.node_grid[2]])
 
     property skin:
         """
@@ -304,5 +302,5 @@ cdef class CellSystem(object):
         :attr:`skin`
 
         """
-        c_tune_skin(min_skin, max_skin, tol, int_steps)
+        core.tuning.c_tune_skin(min_skin, max_skin, tol, int_steps)
         return self.skin
