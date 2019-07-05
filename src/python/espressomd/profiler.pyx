@@ -1,4 +1,4 @@
-cimport c_profiler
+cimport core.c_profiler as c_profiler
 
 
 def begin_section(name):
