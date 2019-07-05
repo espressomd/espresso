@@ -771,6 +771,7 @@ IF ELECTROSTATICS:
 
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
+
             """
             Calculate the Coulomb interaction using the ScaFaCoS library.
             """
