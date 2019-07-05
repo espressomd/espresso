@@ -55,6 +55,10 @@
 #if defined(P3M) || defined(DP3M)
 #include <utils/Vector.hpp>
 
+#include <boost/mpi/communicator.hpp>
+
+#include <vector>
+
 /** Error Codes for p3m tuning (version 2) */
 enum P3M_TUNE_ERROR {
   /** force evaluation failed */
@@ -116,7 +120,7 @@ typedef struct {
 } p3m_local_mesh;
 
 /** Structure for send/recv meshes. */
-typedef struct {
+struct  p3m_send_mesh {
   /** dimension of sub meshes to send. */
   int s_dim[6][3];
   /** left down corners of sub meshes to send. */
@@ -135,7 +139,12 @@ typedef struct {
   int r_size[6];
   /** maximal size for send/recv buffers. */
   int max;
-} p3m_send_mesh;
+
+  /** vector to store grid points to send. */
+  mutable std::vector<double> send_grid;
+  /** vector to store grid points to recv */
+  mutable std::vector<double> recv_grid;
+};
 
 /** Structure to hold P3M parameters and some dependent variables. */
 typedef struct {
@@ -219,6 +228,17 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params,
                                const Utils::Vector3d &my_left,
                                const Utils::Vector3d &my_right,
                                const Utils::Vector3d &halo);
+
+/* MPI tags for the charge-charge p3m communications: */
+/** Tag for communication in calc_send_mesh. */
+#define REQ_P3M_INIT 200
+/** Tag for communication in gather_fft_grid. */
+#define REQ_P3M_GATHER 201
+/** Tag for communication in spread_force_grid. */
+#define REQ_P3M_SPREAD 202
+
+p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
+                             const boost::mpi::communicator &comm);
 #endif /* P3M || DP3M */
 
 #endif /* _P3M_COMMON_H */

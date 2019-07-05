@@ -63,14 +63,6 @@ using Utils::strcat_alloc;
  ************************************************/
 p3m_data_struct p3m;
 
-/* MPI tags for the charge-charge p3m communications: */
-/** Tag for communication in p3m_init() -> p3m_calc_send_mesh(). */
-#define REQ_P3M_INIT 200
-/** Tag for communication in p3m_gather_fft_grid(). */
-#define REQ_P3M_GATHER 201
-/** Tag for communication in p3m_spread_force_grid(). */
-#define REQ_P3M_SPREAD 202
-
 /* Index helpers for direct and reciprocal space
  * After the FFT the data is in order YZX, which
  * means that Y is the slowest changing index.
@@ -299,8 +291,6 @@ void p3m_init() {
     p3m_calc_local_ca_mesh();
 
     p3m_calc_send_mesh();
-    p3m.send_grid.resize(p3m.sm.max);
-    p3m.recv_grid.resize(p3m.sm.max);
 
     /* FFT */
     int ca_mesh_size =
@@ -913,27 +903,30 @@ void p3m_gather_fft_grid(double *data, const p3m_local_mesh &local_mesh,
                          const p3m_send_mesh &sm) {
   auto const node_neighbors = calc_node_neighbors(comm_cart);
 
+  sm.send_grid.resize(sm.max);
+  sm.recv_grid.resize(sm.max);
+
   /* direction loop */
   for (int s_dir = 0; s_dir < 6; s_dir++) {
     auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
 
     /* pack send block */
     if (sm.s_size[s_dir] > 0)
-      fft_pack_block(data, p3m.send_grid.data(), sm.s_ld[s_dir],
+      fft_pack_block(data, sm.send_grid.data(), sm.s_ld[s_dir],
                      sm.s_dim[s_dir], local_mesh.dim, 1);
 
     /* communication */
     if (node_neighbors[s_dir] != this_node) {
-      MPI_Sendrecv(p3m.send_grid.data(), sm.s_size[s_dir], MPI_DOUBLE,
+      MPI_Sendrecv(sm.send_grid.data(), sm.s_size[s_dir], MPI_DOUBLE,
                    node_neighbors[s_dir], REQ_P3M_GATHER,
-                   p3m.recv_grid.data(), sm.r_size[r_dir], MPI_DOUBLE,
+                   sm.recv_grid.data(), sm.r_size[r_dir], MPI_DOUBLE,
                    node_neighbors[r_dir], REQ_P3M_GATHER, comm_cart, MPI_STATUS_IGNORE);
     } else {
-      std::swap(p3m.send_grid, p3m.recv_grid);
+      std::swap(sm.send_grid, sm.recv_grid);
     }
     /* add recv block */
     if (sm.r_size[r_dir] > 0) {
-      fft_unpack_block(p3m.recv_grid.data(), data, sm.r_ld[r_dir],
+      fft_unpack_block(sm.recv_grid.data(), data, sm.r_ld[r_dir],
                        sm.r_dim[r_dir], local_mesh.dim, 1, std::plus<>());
     }
   }
@@ -942,6 +935,8 @@ void p3m_gather_fft_grid(double *data, const p3m_local_mesh &local_mesh,
 void p3m_spread_force_grid(double *data, const p3m_local_mesh &local_mesh,
                            const p3m_send_mesh &send_mesh) {
   auto const node_neighbors = calc_node_neighbors(comm_cart);
+  send_mesh.send_grid.resize(send_mesh.max);
+  send_mesh.recv_grid.resize(send_mesh.max);
 
   /* direction loop */
   for (int s_dir = 5; s_dir >= 0; s_dir--) {
@@ -949,23 +944,23 @@ void p3m_spread_force_grid(double *data, const p3m_local_mesh &local_mesh,
 
     /* pack send block */
     if (send_mesh.s_size[s_dir] > 0)
-      fft_pack_block(data, p3m.send_grid.data(), send_mesh.r_ld[r_dir],
+      fft_pack_block(data, send_mesh.send_grid.data(), send_mesh.r_ld[r_dir],
                      send_mesh.r_dim[r_dir], local_mesh.dim, 1);
     /* communication */
     if (node_neighbors[r_dir] != this_node) {
       MPI_Sendrecv(
-          p3m.send_grid.data(), send_mesh.r_size[r_dir], MPI_DOUBLE,
+          send_mesh.send_grid.data(), send_mesh.r_size[r_dir], MPI_DOUBLE,
           node_neighbors[r_dir], REQ_P3M_SPREAD,
-          p3m.recv_grid.data(),
+          send_mesh.recv_grid.data(),
                    send_mesh.s_size[s_dir], MPI_DOUBLE,
           node_neighbors[s_dir], REQ_P3M_SPREAD, comm_cart, MPI_STATUS_IGNORE
           );
     } else {
-      std::swap(p3m.recv_grid, p3m.send_grid);
+      std::swap(send_mesh.recv_grid, send_mesh.send_grid);
     }
     /* un pack recv block */
     if (send_mesh.s_size[s_dir] > 0) {
-      fft_unpack_block(p3m.recv_grid.data(), data, send_mesh.s_ld[s_dir],
+      fft_unpack_block(send_mesh.recv_grid.data(), data, send_mesh.s_ld[s_dir],
                        send_mesh.s_dim[s_dir], local_mesh.dim, 1);
     }
   }
@@ -2115,86 +2110,8 @@ bool p3m_sanity_checks() {
   return ret;
 }
 
-p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh) {
-  p3m_send_mesh send_mesh;
-
-  int done[3] = {0, 0, 0};
-  /* send grids */
-  for (int i = 0; i < 3; i++) {
-    for(int j = 0; j < 3; j++) {
-      /* left */
-      send_mesh.s_ld[i * 2][j] = 0 + done[j] * local_mesh.margin[j * 2];
-      if (j == i)
-        send_mesh.s_ur[i * 2][j] = local_mesh.margin[j * 2];
-      else
-        send_mesh.s_ur[i * 2][j] =
-            local_mesh.dim[j] -
-                                done[j] * local_mesh.margin[(j * 2) + 1];
-      /* right */
-      if (j == i)
-        send_mesh.s_ld[(i * 2) + 1][j] = local_mesh.in_ur[j];
-      else
-        send_mesh.s_ld[(i * 2) + 1][j] =
-            0 + done[j] * local_mesh.margin[j * 2];
-      send_mesh.s_ur[(i * 2) + 1][j] =
-          local_mesh.dim[j] - done[j] * local_mesh.margin[(j * 2) + 1];
-    }
-    done[i] = 1;
-  }
-  send_mesh.max = 0;
-  for (int i = 0; i < 6; i++) {
-    send_mesh.s_size[i] = 1;
-    for (int j = 0; j < 3; j++) {
-      send_mesh.s_dim[i][j] = send_mesh.s_ur[i][j] - send_mesh.s_ld[i][j];
-      send_mesh.s_size[i] *= send_mesh.s_dim[i][j];
-    }
-    if (send_mesh.s_size[i] > send_mesh.max)
-      send_mesh.max = send_mesh.s_size[i];
-  }
-  /* communication */
-  auto const node_neighbors = calc_node_neighbors(comm_cart);
-  
-  int r_margin[6];
-  for (int i = 0; i < 6; i++) {
-    auto const j = (i % 2 == 0) ? i + 1 : i - 1;
-
-    MPI_Sendrecv(&(local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i],
-                 REQ_P3M_INIT, &(r_margin[j]), 1, MPI_INT, node_neighbors[j],
-                 REQ_P3M_INIT, comm_cart, MPI_STATUS_IGNORE);
-  }
-  /* recv grids */
-  for (int i = 0; i < 3; i++)
-    for (int j = 0; j < 3; j++) {
-      if (j == i) {
-        send_mesh.r_ld[i * 2][j] =
-            send_mesh.s_ld[i * 2][j] + local_mesh.margin[2 * j];
-        send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j] + r_margin[2 * j];
-        send_mesh.r_ld[(i * 2) + 1][j] =
-            send_mesh.s_ld[(i * 2) + 1][j] - r_margin[(2 * j) + 1];
-        send_mesh.r_ur[(i * 2) + 1][j] =
-            send_mesh.s_ur[(i * 2) + 1][j] - local_mesh.margin[(2 * j) + 1];
-      } else {
-        send_mesh.r_ld[i * 2][j] = send_mesh.s_ld[i * 2][j];
-        send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j];
-        send_mesh.r_ld[(i * 2) + 1][j] = send_mesh.s_ld[(i * 2) + 1][j];
-        send_mesh.r_ur[(i * 2) + 1][j] = send_mesh.s_ur[(i * 2) + 1][j];
-      }
-    }
-  for (int i = 0; i < 6; i++) {
-    send_mesh.r_size[i] = 1;
-    for (int j = 0; j < 3; j++) {
-      send_mesh.r_dim[i][j] = send_mesh.r_ur[i][j] - send_mesh.r_ld[i][j];
-      send_mesh.r_size[i] *= send_mesh.r_dim[i][j];
-    }
-    if (send_mesh.r_size[i] > send_mesh.max)
-      send_mesh.max = send_mesh.r_size[i];
-  }
-
-  return send_mesh;
-}
-
 void p3m_calc_send_mesh() {
-  p3m.sm = calc_send_mesh(p3m.local_mesh);
+  p3m.sm = calc_send_mesh(p3m.local_mesh, comm_cart);
 }
 
 void p3m_scaleby_box_l() {

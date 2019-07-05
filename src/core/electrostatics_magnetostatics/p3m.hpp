@@ -118,11 +118,6 @@ struct p3m_data_struct {
   /** send/recv mesh sizes */
   p3m_send_mesh sm;
 
-  /** vector to store grid points to send. */
-  std::vector<double> send_grid;
-  /** vector to store grid points to recv */
-  std::vector<double> recv_grid;
-
   fft_data_struct fft;
 };
 
