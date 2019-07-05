@@ -177,5 +177,16 @@ inline Utils::Vector3d unfolded_position(const Utils::Vector3d &pos,
   return pos + image_shift(image_box, box);
 }
 
+/**
+ * @brief Composition of the simulation box into equal parts for each node.
+ *
+ * @param box Geometry of the simulation box
+ * @param node_pos Position of node in the node grid
+ * @param node_grid Nodes in each direction
+ * @return Geometry for the node
+ */
+LocalBox<double> regular_decomposition(const BoxGeometry &box,
+                                       Utils::Vector3i const &node_pos,
+                                       Utils::Vector3i const &node_grid);
 /*@}*/
 #endif
