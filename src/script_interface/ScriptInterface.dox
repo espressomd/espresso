@@ -186,9 +186,12 @@
 ///
 /// The implementation uses a specialization of @c boost::variant to hand over
 /// parameters and return values of different types. It currently supports the
-/// type @c bool, @c int, @c double, @c string, @c vector<int>,
-/// @c vector<double> and @c object. The latter means that this parameter is
-/// another script object.
+/// types @c bool, @c int, @c double, @c string, @c vector<int>,
+/// @c vector<double> and @c object. The latter means that this parameter can
+/// be another script object, see for example the implementation details of the
+/// @c %get_elements() method in class
+/// @ref ScriptInterface::ScriptObjectRegistry "ScriptObjectRegistry", which
+/// stores @ref Utils::ObjectId "ObjectId<T>" objects as Variants.
 ///
 /// In C++ the variants can simply assigned a value of any supported type. To
 /// get the value back, it has to be fetched via @c boost::get<T>(Variant).
@@ -202,8 +205,3 @@
 ///                                                v does not hold a string. */
 /// @endcode
 ///
-/// @section script_interface_objects Other objects as parameters
-///
-/// The interface supports handing other objects as parameters to classes.
-/// See @ref src/script_interface/constraints/Constraint.hpp for an example.
-/// @todo Add actual description...

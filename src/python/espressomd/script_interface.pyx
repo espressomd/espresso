@@ -162,6 +162,7 @@ cdef class PScriptInterface(object):
         return odict
 
 cdef Variant python_object_to_variant(value):
+    """Convert Python objects to C++ Variant objects."""
     cdef Variant v
     cdef vector[Variant] vec
     cdef PObjectId oid
@@ -172,7 +173,7 @@ cdef Variant python_object_to_variant(value):
     # The order is important, the object character should be preserved
     # even if the PScriptInterface derived class is iterable.
     if isinstance(value, PScriptInterface):
-        # Map python object do id
+        # Map python object to id
         oid = value.id()
         return make_variant[ObjectId](oid.id)
     elif hasattr(value, '__iter__') and not(type(value) == str):
@@ -191,6 +192,7 @@ cdef Variant python_object_to_variant(value):
         raise TypeError("Unknown type for conversion to Variant")
 
 cdef variant_to_python_object(const Variant & value) except +:
+    """Convert C++ Variant objects to Python objects."""
     cdef ObjectId oid
     cdef vector[Variant] vec
     cdef shared_ptr[ScriptInterfaceBase] ptr
