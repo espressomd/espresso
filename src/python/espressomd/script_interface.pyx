@@ -317,11 +317,12 @@ class ScriptInterfaceHelper(PScriptInterface):
 class ScriptObjectRegistry(ScriptInterfaceHelper):
 
     """
-    Base class for container-like things such as Constraints and LbBoundaires.
-    Derived classes must implement an an add() method which adds a single item
-    to the container.
-    The core class should be derived from ScriptObjectRegistry or provide
-    "get_elements" and "size" as callable methods
+    Base class for container-like classes such as :class:`Constraints` and
+    :class:`LBBoundaries`. Derived classes must implement an ``add()`` method
+    which adds a single item to the container.
+
+    The core class should derive from ScriptObjectRegistry or provide
+    ``"get_elements"`` and ``"size"`` as callable methods.
     """
 
     def __getitem__(self, key):

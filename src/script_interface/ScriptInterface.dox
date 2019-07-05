@@ -136,6 +136,52 @@
 /// @ref src/script_interface/shapes/Wall.hpp.
 ///
 ///
+/// @section script_object_registry_howto Steps to add a new interface class for object registry
+///
+/// The @ref ScriptInterface::ScriptObjectRegistry "ScriptObjectRegistry" class
+/// inherits from the @ref ScriptInterface::ScriptInterfaceBase
+/// "ScriptInterfaceBase" class and acts as a container of objects deriving
+/// from @ref ScriptInterface::ScriptInterfaceBase "ScriptInterfaceBase".
+///
+/// 1. Create a file for a new class implementation in
+///    <tt>src/script_interface/\<namespace\>/\<MyClass\>.hpp</tt>
+/// 2. Add <tt>\#include "ScriptInterface.hpp"</tt>
+///    and <tt>\#include "auto_parameters/AutoParameters.hpp"</tt>
+/// 3. Create a new interface class that derives from
+///    @ref ScriptInterface::ScriptInterfaceBase "ScriptInterfaceBase" via
+///    @ref ScriptInterface::AutoParameters "AutoParameters".
+/// 4. Implement a @c call_method() method if any method of the interfaced core
+///    class needs to be exposed
+/// 5. Create a file for a new registry class implementation in
+///    <tt>src/script_interface/\<namespace\>/\<MyClasses\>.hpp</tt>
+/// 6. Add <tt>\#include "ScriptObjectRegistry.hpp"</tt> and the header file
+///    for the previously created interface class
+/// 7. Create a new registry class that derives from
+///    @ref ScriptInterface::ScriptObjectRegistry "ScriptObjectRegistry"
+/// 8. Implement the required methods:
+///    - @ref ScriptInterface::ScriptObjectRegistry::add_in_core
+///      "add_in_core()" should send the passed object to the
+///      @c %add() method
+///    - @ref ScriptInterface::ScriptObjectRegistry::remove_in_core
+///      "remove_in_core()" should send the passed object to the
+///      @c %remove() method
+/// 9. Add the new class to the initialization functions
+///    - if they don't exist, create initialization files
+///      (<tt>src/script_interface/\<namespace\>/initialize\.{hpp,cpp}</tt>)
+///    - include the header for your new interface and registry class
+///    - register the classes using @ref ScriptInterface::register_new<T>()
+///
+/// For a simple example, have a look at
+/// @ref src/script_interface/lbboundaries/LBBoundary.hpp and
+/// @ref src/script_interface/lbboundaries/LBBoundaries.hpp.
+///
+/// After these steps the new registry class and the classes it contains are
+/// available from Python via a shared_ptr stored in a @c %ScriptObjectRegistry
+/// class resp. @c %ScriptInterfaceHelper classes. These Python classes both
+/// inherit from the Python class @c %PScriptInterface, whose functionality is
+/// described in the paragraph @ref PScriptInterface_howto "PScriptInterface".
+///
+///
 /// @section script_interface_variant Variant
 ///
 /// The implementation uses a specialization of @c boost::variant to hand over
