@@ -46,9 +46,6 @@ void p3m_p3m_print_local_mesh(p3m_local_mesh l) {
   fprintf(stderr, "%d:    margin = (%d,%d, %d,%d, %d,%d)\n", this_node,
           l.margin[0], l.margin[1], l.margin[2], l.margin[3], l.margin[4],
           l.margin[5]);
-  fprintf(stderr, "%d:    r_margin=(%d,%d, %d,%d, %d,%d)\n", this_node,
-          l.r_margin[0], l.r_margin[1], l.r_margin[2], l.r_margin[3],
-          l.r_margin[4], l.r_margin[5]);
 }
 
 /* Debug function printing p3m structures */
@@ -410,9 +407,8 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
   for (int i = 0; i < 6; i++) {
     auto const j = (i % 2 == 0) ? i + 1 : i - 1;
 
-    MPI_Sendrecv(&(local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i],
-                 REQ_P3M_INIT, &(r_margin[j]), 1, MPI_INT, node_neighbors[j],
-                 REQ_P3M_INIT, comm, MPI_STATUS_IGNORE);
+    MPI_Sendrecv(&(local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i], 200, &(r_margin[j]), 1, MPI_INT, node_neighbors[j],
+                 200, comm, MPI_STATUS_IGNORE);
   }
   /* recv grids */
   for (int i = 0; i < 3; i++)

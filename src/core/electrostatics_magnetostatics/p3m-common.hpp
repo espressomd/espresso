@@ -115,8 +115,6 @@ typedef struct {
   int in_ur[3];
   /** number of margin mesh points. */
   int margin[6];
-  /** number of margin mesh points from neighbour nodes */
-  int r_margin[6];
   /** offset between mesh lines of the last dimension */
   int q_2_off;
   /** offset between mesh lines of the two last dimensions */
@@ -238,14 +236,6 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params,
                                const Utils::Vector3d &my_right,
                                const Utils::Vector3d &halo);
 
-/* MPI tags for the charge-charge p3m communications: */
-/** Tag for communication in calc_send_mesh. */
-#define REQ_P3M_INIT 200
-/** Tag for communication in gather_fft_grid. */
-#define REQ_P3M_GATHER 201
-/** Tag for communication in spread_force_grid. */
-#define REQ_P3M_SPREAD 202
-
 p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
                              const boost::mpi::communicator &comm);
 
@@ -268,9 +258,9 @@ inline void p3m_gather_halo(double *data, const p3m_send_mesh &send_mesh) {
     /* communication */
     if (node_neighbors[s_dir] != send_mesh.comm.rank()) {
       MPI_Sendrecv(send_mesh.send_buffer.data(), send_mesh.s_size[s_dir],
-                   MPI_DOUBLE, node_neighbors[s_dir], REQ_P3M_GATHER,
+                   MPI_DOUBLE, node_neighbors[s_dir], 201,
                    send_mesh.recv_buffer.data(), send_mesh.r_size[r_dir],
-                   MPI_DOUBLE, node_neighbors[r_dir], REQ_P3M_GATHER,
+                   MPI_DOUBLE, node_neighbors[r_dir], 201,
                    send_mesh.comm, MPI_STATUS_IGNORE);
     } else {
       std::swap(send_mesh.send_buffer, send_mesh.recv_buffer);
@@ -303,9 +293,9 @@ inline void p3m_spread_halo(double *data, const p3m_send_mesh &send_mesh) {
     /* communication */
     if (node_neighbors[r_dir] != send_mesh.comm.rank()) {
       MPI_Sendrecv(send_mesh.send_buffer.data(), send_mesh.r_size[r_dir],
-                   MPI_DOUBLE, node_neighbors[r_dir], REQ_P3M_SPREAD,
+                   MPI_DOUBLE, node_neighbors[r_dir], 202,
                    send_mesh.recv_buffer.data(), send_mesh.s_size[s_dir],
-                   MPI_DOUBLE, node_neighbors[s_dir], REQ_P3M_SPREAD,
+                   MPI_DOUBLE, node_neighbors[s_dir], 202,
                    send_mesh.comm, MPI_STATUS_IGNORE);
     } else {
       std::swap(send_mesh.recv_buffer, send_mesh.send_buffer);
