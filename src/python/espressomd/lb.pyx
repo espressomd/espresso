@@ -30,6 +30,8 @@ from copy import deepcopy
 from . import utils
 from .utils import array_locked, is_valid_type
 from .utils cimport make_array_locked
+cimport core.lb_interface
+from core.lb_interface cimport (lb_lbnode_get_boundary, lb_lbnode_get_pop, lb_lbnode_set_pop, lb_lbnode_is_index_valid, lb_lbfluid_set_rng_state, lb_lbfluid_set_kT, lb_lbfluid_set_tau, lb_lbfluid_get_kT, lb_lbfluid_get_rng_state, lb_lbfluid_get_lattice_speed, lb_lbfluid_print_vtk_velocity, lb_lbfluid_print_vtk_boundary, lb_lbfluid_print_velocity, lb_lbfluid_print_boundary, lb_lbfluid_save_checkpoint, lb_lbfluid_load_checkpoint, lb_lbfluid_set_lattice_switch, lb_lbfluid_get_shape, lb_lbfluid_get_stress)
 
 # Actor class
 ####################################################
@@ -243,7 +245,7 @@ cdef class HydrodynamicInteraction(Actor):
 "Subclasses of HydrodynamicInteraction have to implement _activate_method.") 
 
     def _deactivate_method(self):
-        lb_lbfluid_set_lattice_switch(NONE)
+        lb_lbfluid_set_lattice_switch(core.lb_interface.NONE)
     
     property shape:
         def __get__(self):
@@ -277,7 +279,7 @@ cdef class LBFluid(HydrodynamicInteraction):
     """
 
     def _set_lattice_switch(self):
-        lb_lbfluid_set_lattice_switch(CPU)
+        lb_lbfluid_set_lattice_switch(core.lb_interface.CPU)
 
     def _activate_method(self):
         self.validate_params()
@@ -292,7 +294,7 @@ IF CUDA:
         """
 
         def _set_lattice_switch(self):
-            lb_lbfluid_set_lattice_switch(GPU)
+            lb_lbfluid_set_lattice_switch(core.lb_interface.GPU)
 
         def _activate_method(self):
             self.validate_params()

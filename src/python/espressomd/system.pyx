@@ -33,15 +33,13 @@ from . import particle_data
 from . import cuda_init
 from . import code_info
 from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
-from .lb cimport lb_lbfluid_get_tau
-from .lb cimport lb_lbfluid_get_lattice_switch
-from .lb cimport NONE
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
 from .analyze import Analysis
 from .galilei import GalileiTransform
 from .constraints import Constraints
+cimport core.lb_interface
 
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
@@ -257,8 +255,8 @@ cdef class System(object):
                 raise ValueError("Time Step must be positive")
 
             cdef double tau
-            if lb_lbfluid_get_lattice_switch() != NONE:
-                tau = lb_lbfluid_get_tau()
+            if core.lb_interface.lb_lbfluid_get_lattice_switch() != core.lb_interface.NONE:
+                tau = core.lb_interface.lb_lbfluid_get_tau()
                 if (tau >= 0.0 and
                         tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):
                     raise ValueError(

@@ -2,11 +2,11 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 IF CUDA:
     from .lb cimport HydrodynamicInteraction
-    from .lb cimport lb_lbfluid_print_vtk_boundary
+    from core.lb_interface cimport lb_lbfluid_print_vtk_boundary
     from .lb cimport python_lbnode_get_stress
-    from .lb cimport lb_lbnode_is_index_valid
-    from .lb cimport lb_lbfluid_set_lattice_switch
-    from .lb cimport GPU
+    from core.lb_interface cimport lb_lbnode_is_index_valid
+    from core.lb_interface cimport lb_lbfluid_set_lattice_switch
+    from core.lb_interface cimport GPU
 from . import utils
 import os
 import tempfile

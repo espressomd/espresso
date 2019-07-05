@@ -27,7 +27,7 @@ from .lb cimport *
 from .lb import HydrodynamicInteraction
 from .lb cimport lb_lbcoupling_set_gamma
 from .lb cimport lb_lbcoupling_get_gamma
-
+cimport core.lb_interface
 
 def AssertThermostatType(*allowedthermostats):
     """Assert that only a certain thermostat is active
@@ -379,7 +379,7 @@ cdef class Thermostat(object):
             raise ValueError(
                 "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
-        if lb_lbfluid_get_kT() > 0.:
+        if core.lb_interface.lb_lbfluid_get_kT() > 0.:
             if not seed and lb_lbcoupling_is_seed_required():
                 raise ValueError(
                     "seed has to be given as keyword arg")
