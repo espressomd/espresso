@@ -59,4 +59,3 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     void lb_lbfluid_set_kT(double) except +
     double lb_lbfluid_get_kT() except +
     double lb_lbfluid_get_lattice_speed() except +
-

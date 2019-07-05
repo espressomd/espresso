@@ -97,18 +97,22 @@ IF ELECTROKINETICS:
                 fluid_coupling = "estatics"
 
             return {"agrid": core.electrokinetics.ek_parameters.agrid,
-                    "lb_density": core.electrokinetics.ek_parameters.lb_density,
+                    "lb_density":
+                        core.electrokinetics.ek_parameters.lb_density,
                     "viscosity": core.electrokinetics.ek_parameters.viscosity,
-                    "bulk_viscosity": core.electrokinetics.ek_parameters.bulk_viscosity,
+                    "bulk_viscosity":
+                        core.electrokinetics.ek_parameters.bulk_viscosity,
                     "gamma_odd": core.electrokinetics.ek_parameters.gamma_odd,
-                    "gamma_even": core.electrokinetics.ek_parameters.gamma_even,
+                    "gamma_even":
+                        core.electrokinetics.ek_parameters.gamma_even,
                     "friction": core.electrokinetics.ek_parameters.friction,
                     "T": core.electrokinetics.ek_parameters.T,
                     "prefactor": core.electrokinetics.ek_parameters.prefactor,
                     "stencil": stencil,
                     "advection": core.electrokinetics.ek_parameters.advection,
                     "fluid_coupling": fluid_coupling,
-                    "fluctuations": core.electrokinetics.ek_parameters.fluctuations,
+                    "fluctuations":
+                        core.electrokinetics.ek_parameters.fluctuations,
                     "fluctuation_amplitude":
                         core.electrokinetics.ek_parameters.fluctuation_amplitude,
                     "es_coupling": core.electrokinetics.ek_parameters.es_coupling}
@@ -130,13 +134,17 @@ IF ELECTROKINETICS:
             core.electrokinetics.ek_set_friction(self._params["friction"])
             core.electrokinetics.ek_set_T(self._params["T"])
             core.electrokinetics.ek_set_prefactor(self._params["prefactor"])
-            core.electrokinetics.ek_set_bulk_viscosity(self._params["bulk_viscosity"])
+            core.electrokinetics.ek_set_bulk_viscosity(
+                self._params["bulk_viscosity"])
             core.electrokinetics.ek_set_gamma_odd(self._params["gamma_odd"])
             core.electrokinetics.ek_set_gamma_even(self._params["gamma_even"])
             core.electrokinetics.ek_set_advection(self._params["advection"])
-            core.electrokinetics.ek_set_fluctuations(self._params["fluctuations"])
-            core.electrokinetics.ek_set_fluctuation_amplitude(self._params["fluctuation_amplitude"])
-            core.electrokinetics.ek_set_electrostatics_coupling(self._params["es_coupling"])
+            core.electrokinetics.ek_set_fluctuations(
+                self._params["fluctuations"])
+            core.electrokinetics.ek_set_fluctuation_amplitude(
+                self._params["fluctuation_amplitude"])
+            core.electrokinetics.ek_set_electrostatics_coupling(
+                self._params["es_coupling"])
 
         def set_density(self, species=None, density=None, node=None):
             """
@@ -263,7 +271,8 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the velocity is written to.
 
             """
-            core.electrokinetics.ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
+            core.electrokinetics.ek_lb_print_vtk_velocity(
+                utils.to_char_pointer(path))
 
         def print_vtk_density(self, path):
             """
@@ -275,7 +284,8 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the LB density is written to.
 
             """
-            core.electrokinetics.ek_lb_print_vtk_density(utils.to_char_pointer(path))
+            core.electrokinetics.ek_lb_print_vtk_density(
+                utils.to_char_pointer(path))
 
         def print_vtk_potential(self, path):
             """
@@ -287,7 +297,8 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the electrostatic potential is written to.
 
             """
-            core.electrokinetics.ek_print_vtk_potential(utils.to_char_pointer(path))
+            core.electrokinetics.ek_print_vtk_potential(
+                utils.to_char_pointer(path))
 
         def print_vtk_lbforce(self, path):
             """
@@ -299,7 +310,8 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the LB force is written to.
 
             """
-            core.electrokinetics.ek_print_vtk_lbforce_density(utils.to_char_pointer(path))
+            core.electrokinetics.ek_print_vtk_lbforce_density(
+                utils.to_char_pointer(path))
 
         def print_vtk_particle_potential(self, path):
             """
@@ -315,7 +327,8 @@ IF ELECTROKINETICS:
             """
 
             if(self._params["es_coupling"]):
-                core.electrokinetics.ek_print_vtk_particle_potential(utils.to_char_pointer(path))
+                core.electrokinetics.ek_print_vtk_particle_potential(
+                    utils.to_char_pointer(path))
             else:
                 raise Exception("'es_coupling' is not active.")
 
@@ -323,7 +336,8 @@ IF ELECTROKINETICS:
             tmp_path = path + ".__tmp__"
             tmpfile_ek = tempfile.NamedTemporaryFile(mode='w+b')
             tmpfile_lb = tempfile.NamedTemporaryFile(mode='w+b')
-            core.electrokinetics.ek_save_checkpoint(utils.to_char_pointer(tmpfile_ek.name),
+            core.electrokinetics.ek_save_checkpoint(
+                utils.to_char_pointer(tmpfile_ek.name),
                                utils.to_char_pointer(tmpfile_lb.name))
             ek_path = tmp_path + ".ek"
             lb_path = tmp_path + ".lb"
@@ -332,7 +346,8 @@ IF ELECTROKINETICS:
 
         def load_checkpoint(self, path):
             self._activate_method()
-            core.electrokinetics.ek_load_checkpoint(utils.to_char_pointer(path))
+            core.electrokinetics.ek_load_checkpoint(
+                utils.to_char_pointer(path))
 
         def add_reaction(self, shape):
             raise Exception("This method is not implemented yet.")
@@ -458,9 +473,12 @@ IF ELECTROKINETICS:
             return {
                 "density": core.electrokinetics.ek_parameters.density[
                     core.electrokinetics.ek_parameters.species_index[self.id]],
-                    "D": core.electrokinetics.ek_parameters.D[core.electrokinetics.ek_parameters.species_index[self.id]],
+                    "D": core.electrokinetics.ek_parameters.D[
+                        core.electrokinetics.ek_parameters.species_index[
+                            self.id]],
                     "valency": core.electrokinetics.ek_parameters.valency[
-                        core.electrokinetics.ek_parameters.species_index[self.id]],
+                        core.electrokinetics.ek_parameters.species_index[
+                            self.id]],
                     "ext_force_density": [core.electrokinetics.ek_parameters.ext_force_density[0][core.electrokinetics.ek_parameters.species_index[self.id]],
                                           core.electrokinetics.ek_parameters.ext_force_density[1][
                                           core.electrokinetics.ek_parameters.species_index[
@@ -469,10 +487,12 @@ IF ELECTROKINETICS:
 
         def _set_params_in_es_core(self):
             core.electrokinetics.ek_set_D(self.id, self._params["D"])
-            core.electrokinetics.ek_set_valency(self.id, self._params["valency"])
-            core.electrokinetics.ek_set_density(self.id, self._params["density"])
+            core.electrokinetics.ek_set_valency(
+                self.id, self._params["valency"])
+            core.electrokinetics.ek_set_density(
+                self.id, self._params["density"])
             core.electrokinetics.ek_set_ext_force_density(self.id, self._params["ext_force_density"][
-                                     0], self._params["ext_force_density"][1], self._params["ext_force_density"][2])
+                0], self._params["ext_force_density"][1], self._params["ext_force_density"][2])
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -495,7 +515,8 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the species density is written to.
 
             """
-            core.electrokinetics.ek_print_vtk_density(self.id, utils.to_char_pointer(path))
+            core.electrokinetics.ek_print_vtk_density(
+                self.id, utils.to_char_pointer(path))
 
         def print_vtk_flux(self, path):
             """
@@ -507,13 +528,16 @@ IF ELECTROKINETICS:
                    The path and vtk-file name the species flux is written to.
 
             """
-            core.electrokinetics.ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
+            core.electrokinetics.ek_print_vtk_flux(
+                self.id, utils.to_char_pointer(path))
 
         def print_vtk_flux_fluc(self, path):
-            core.electrokinetics.ek_print_vtk_flux_fluc(self.id, utils.to_char_pointer(path))
+            core.electrokinetics.ek_print_vtk_flux_fluc(
+                self.id, utils.to_char_pointer(path))
 
         def print_vtk_flux_link(self, path):
-            core.electrokinetics.ek_print_vtk_flux_link(self.id, utils.to_char_pointer(path))
+            core.electrokinetics.ek_print_vtk_flux_link(
+                self.id, utils.to_char_pointer(path))
 
     cdef class SpecieRoutines(object):
         cdef Vector3i node

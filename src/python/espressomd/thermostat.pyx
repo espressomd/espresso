@@ -29,6 +29,7 @@ from .lb cimport lb_lbcoupling_set_gamma
 from .lb cimport lb_lbcoupling_get_gamma
 cimport core.lb_interface
 
+
 def AssertThermostatType(*allowedthermostats):
     """Assert that only a certain thermostat is active
 

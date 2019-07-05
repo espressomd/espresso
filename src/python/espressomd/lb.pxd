@@ -31,7 +31,7 @@ from core.utils cimport Vector3i
 from core.utils cimport Vector6d
 from core.utils cimport Vector19d
 
-from core.lb_interface cimport (lb_lbfluid_set_density,
+from core.lb_interface cimport(lb_lbfluid_set_density,
                                lb_lbfluid_set_viscosity,
                                lb_lbfluid_set_agrid,
                                lb_lbfluid_set_bulk_viscosity,
