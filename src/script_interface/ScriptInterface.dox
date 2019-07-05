@@ -28,8 +28,8 @@
 ///
 /// @section script_interface_howto Steps to add a new interface class for parameter setting
 ///
-/// 1. Create file for a new class implementation in
-///    <tt>src/script_interface/\<namespace\>/</tt>
+/// 1. Create a file for a new class implementation in
+///    <tt>src/script_interface/\<namespace\>/\<MyClass\>.hpp</tt>
 /// 2. Add <tt>\#include "ScriptInterface.hpp"</tt>
 /// 3. Create a new class that derives from
 ///    @ref ScriptInterface::ScriptInterfaceBase "ScriptInterfaceBase"
@@ -56,11 +56,21 @@
 ///    - include the header for your new class
 ///    - register the class using @ref ScriptInterface::register_new<T>()
 ///
-/// After these steps the new class is available from Python. Instances
-/// can be created by @c script_interface.PScriptInterface(name) (using
-/// <tt>import espressomd.script_interface</tt>). The Python class exposes the
-/// following methods: @c valid_parameters, @c set_parameter, @c get_parameter,
-/// @c get_parameters and @c call_method.
+/// \anchor PScriptInterface_howto
+/// After these steps the new class is available from Python via a shared_ptr
+/// stored in a @c %PScriptInterface Cython class. The shared_ptr exposes the
+/// following methods: @c %name(), @c %valid_parameters(), @c %set_parameter(),
+/// @c %get_parameter(), @c %get_parameters(), @c %id(), @c %call_method() and
+/// @c %serialize(). The @c PScriptInterface class constructor either accepts
+/// the object id of a pre-existing core class, or the arguments for the core
+/// class constructor, in which case a core class is instantiated first and then
+/// the Python class is constructed. For the latter method, a new core instance
+/// can be created simply with @c script_interface.PScriptInterface(name). The
+/// minimal example in the subsection below illustrates this method. In
+/// practice, the Cython class @c %PScriptInterface is seldom used directly,
+/// instead the helper Python class @c %ScriptInterfaceHelper is used as the
+/// base class for most Python classes mirroring classes derived from
+/// @ref ScriptInterface::ScriptInterfaceBase "ScriptInterfaceBase".
 ///
 ///
 /// @subsection script_interface_example Example class

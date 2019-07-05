@@ -4,6 +4,8 @@ from espressomd.utils import is_valid_type, array_locked
 from espressomd.utils cimport Vector3d, make_array_locked
 
 cdef class PObjectId(object):
+    """Python interface to a core ObjectId object."""
+
     cdef ObjectId id
 
     def __richcmp__(PObjectId a, PObjectId b, op):
@@ -13,6 +15,37 @@ cdef class PObjectId(object):
             raise NotImplementedError
 
 cdef class PScriptInterface(object):
+
+    """
+    Python interface to a core ScriptInterface object. The core ScriptInterface
+    class is itself an interface for other core classes, such as constraints,
+    shapes, observables, etc.
+
+    This class can be instantiated in two ways: (1) with the object id of an
+    existing core ScriptInterface object, or (2) with parameters to construct
+    a new ScriptInterface object in the core.
+
+    Parameters
+    ----------
+    name : :obj:`str`
+        Name of the core class to instantiate (method 1).
+    \*\*kwargs
+        Parameters for the core class constructor (method 1).
+    oid : :class:`PObjectId`
+        Object id of an existing core object (method 2).
+    policy : :obj:`str`, \{'GLOBAL', 'LOCAL'\}
+        Creation policy.
+
+    Attributes
+    ----------
+
+    sip: shared_ptr
+        Pointer to a ScriptInterface object in the core.
+    policy_: :obj:`str`
+        Creation policy.
+
+    """
+
     def __init__(self, name=None, policy="GLOBAL", oid=None, **kwargs):
         cdef CreationPolicy policy_
 
@@ -45,7 +78,9 @@ cdef class PScriptInterface(object):
         self.sip = sip
 
     def set_sip_via_oid(self, PObjectId id):
-        """Set the shared_ptr to the script object in the core via the object id"""
+        """Set the shared_ptr to an existing core ScriptInterface object via
+        its object id.
+        """
         oid = id.id
         try:
             ptr = get_instance(oid).lock()
@@ -54,11 +89,23 @@ cdef class PScriptInterface(object):
             raise Exception("Could not get sip for given_id")
 
     def id(self):
+        """Return the core class object id (:class:`PObjectId`)."""
         oid = PObjectId()
         oid.id = self.sip.get().id()
         return oid
 
     def call_method(self, method, **kwargs):
+        """
+        Call a method of the core class.
+
+        Parameters
+        ----------
+        method : Creation policy.
+            Name of the core method.
+        \*\*kwargs
+            Arguments for the method.
+
+        """
         cdef VariantMap parameters
 
         for name in kwargs:
@@ -71,6 +118,7 @@ cdef class PScriptInterface(object):
         return res
 
     def name(self):
+        """Return name of the core class."""
         return to_str(self.sip.get().name())
 
     def _serialize(self):
@@ -217,6 +265,12 @@ def _unpickle_so_class(so_name, state):
 
 
 class ScriptInterfaceHelper(PScriptInterface):
+
+    """
+    Base class from which to derive most interfaces to core ScriptInterface
+    classes.
+    """
+
     _so_name = None
     _so_bind_methods = ()
     _so_creation_policy = "GLOBAL"
@@ -268,7 +322,6 @@ class ScriptObjectRegistry(ScriptInterfaceHelper):
     to the container.
     The core class should be derived from ScriptObjectRegistry or provide
     "get_elements" and "size" as callable methods
-
     """
 
     def __getitem__(self, key):
@@ -297,14 +350,14 @@ def _unpickle_script_object_registry(so_name, params, items):
     return so       
 
 
-# Map from script object names to corresponding python classes
+# Map from script object names to their corresponding python classes
 _python_class_by_so_name = {}
 
 
 def script_interface_register(c):
     """
-    Decorator used to register script interface classes
-    This will store a name<->class relationship in a registry, so that
+    Decorator used to register script interface classes.
+    This will store a name-to-class relationship in a registry, so that
     parameters of type object can be instantiated as the correct python class
     """
     if not hasattr(c, "_so_name"):
