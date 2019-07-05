@@ -26,6 +26,7 @@
 #if defined(P3M) || defined(DP3M)
 #include "errorhandling.hpp"
 
+#include <boost/range/numeric.hpp>
 #include <utils/Span.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
@@ -459,12 +460,12 @@ void p3m_gather_halo(Utils::Span<double *const> data,
 
     /* pack send block */
     if (send_mesh.s_size[s_dir] > 0) {
-      auto send_buf = send_mesh.send_buffer.data();
-
-      for (auto d : data) {
-        send_buf = fft_pack_block(d, send_buf, send_mesh.s_ld[s_dir],
-                                  send_mesh.s_dim[s_dir], send_mesh.dim, 1);
-      }
+      boost::accumulate(data, send_mesh.send_buffer.data(),
+                        [&](double *send_buf, double const *in_buf) {
+                          return fft_pack_block(
+                              in_buf, send_buf, send_mesh.s_ld[s_dir],
+                              send_mesh.s_dim[s_dir], send_mesh.dim, 1);
+                        });
     }
 
     /* communication */
@@ -477,15 +478,16 @@ void p3m_gather_halo(Utils::Span<double *const> data,
     } else {
       std::swap(send_mesh.send_buffer, send_mesh.recv_buffer);
     }
-    /* add recv block */
-    if (send_mesh.r_size[r_dir] > 0) {
-      const double *recv_buf = send_mesh.recv_buffer.data();
 
-      for (auto d : data) {
-        recv_buf = fft_unpack_block(recv_buf, d, send_mesh.r_ld[r_dir],
+    /* add recv blocks */
+    if (send_mesh.r_size[r_dir] > 0) {
+      boost::accumulate(
+          data, static_cast<const double *>(send_mesh.recv_buffer.data()),
+          [&](const double *recv_buf, double *out_buf) {
+            return fft_unpack_block(recv_buf, out_buf, send_mesh.r_ld[r_dir],
                                     send_mesh.r_dim[r_dir], send_mesh.dim, 1,
                                     std::plus<>());
-      }
+          });
     }
   }
 }
@@ -509,12 +511,12 @@ void p3m_spread_halo(Utils::Span<double *const> data,
 
     /* pack send block */
     if (send_mesh.s_size[s_dir] > 0) {
-      auto send_buf = send_mesh.send_buffer.data();
-
-      for (auto d : data) {
-        send_buf = fft_pack_block(d, send_buf, send_mesh.r_ld[r_dir],
-                                  send_mesh.r_dim[r_dir], send_mesh.dim, 1);
-      }
+      boost::accumulate(data, send_mesh.send_buffer.data(),
+                        [&](double *send_buf, const double *in_buf) {
+                          return fft_pack_block(
+                              in_buf, send_buf, send_mesh.r_ld[r_dir],
+                              send_mesh.r_dim[r_dir], send_mesh.dim, 1);
+                        });
     }
 
     /* communication */
@@ -529,12 +531,12 @@ void p3m_spread_halo(Utils::Span<double *const> data,
     }
     /* un pack recv block */
     if (send_mesh.s_size[s_dir] > 0) {
-      const double *recv_buf = send_mesh.recv_buffer.data();
-
-      for (auto d : data) {
-        recv_buf = fft_unpack_block(recv_buf, d, send_mesh.s_ld[s_dir],
+      boost::accumulate(
+          data, static_cast<const double *>(send_mesh.recv_buffer.data()),
+          [&](const double *recv_buf, double *out_buf) {
+            return fft_unpack_block(recv_buf, out_buf, send_mesh.s_ld[s_dir],
                                     send_mesh.s_dim[s_dir], send_mesh.dim, 1);
-      }
+          });
     }
   }
 }
