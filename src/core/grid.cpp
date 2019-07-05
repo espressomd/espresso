@@ -67,10 +67,6 @@ int map_position_node_array(const Utils::Vector3d &pos) {
   return Utils::Mpi::cart_rank(comm_cart, im);
 }
 
-Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm) {
-  return Utils::Mpi::cart_coords<3>(comm, comm.rank());
-}
-
 LocalBox<double> regular_decomposition(const BoxGeometry &box,
                                        Utils::Vector3i const &node_pos,
                                        Utils::Vector3i const &node_grid) {
@@ -94,7 +90,8 @@ LocalBox<double> regular_decomposition(const BoxGeometry &box,
 }
 
 void grid_changed_box_l(const BoxGeometry &box) {
-  local_geo = regular_decomposition(box, calc_node_pos(comm_cart), node_grid);
+  auto const node_pos = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
+  local_geo = regular_decomposition(box, node_pos, node_grid);
 }
 
 void grid_changed_n_nodes() {

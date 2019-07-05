@@ -237,7 +237,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
   auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm_cart);
-  auto const node_pos = calc_node_pos(comm_cart);
+  auto const node_pos = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
 
   /* calculate number of communications */
   num = 0;
@@ -435,7 +435,7 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
           cnt++;
         }
       } else {
-        auto const node_pos = calc_node_pos(comm_cart);
+        auto const node_pos = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
         /* i: send/recv loop */
         for (int i = 0; i < 2; i++) {
           if (box_geo.periodic(dir) ||

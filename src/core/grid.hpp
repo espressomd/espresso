@@ -66,14 +66,6 @@ void init_node_grid();
 /** map a spatial position to the node grid */
 int map_position_node_array(const Utils::Vector3d &pos);
 
-/**
- * @brief Calculate the position of node in topology.
- *
- * @param comm Cartesian communicator
- * @return Index of node in grid.
- */
-Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm);
-
 /** called from \ref mpi_bcast_parameter . */
 void grid_changed_n_nodes();
 

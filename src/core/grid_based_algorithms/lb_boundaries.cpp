@@ -44,6 +44,7 @@ using Utils::get_linear_index;
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <utils/mpi/cart_comm.hpp>
 #include <vector>
 
 namespace LBBoundaries {
@@ -226,7 +227,9 @@ void lb_init_boundaries() {
     Utils::Vector3i offset;
     int the_boundary = -1;
 
-    auto const node_pos = calc_node_pos(comm_cart);
+    Utils::Vector3i result;
+    result = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
+    auto const node_pos = result;
 
     const auto lblattice = lb_lbfluid_get_lattice();
     offset[0] = node_pos[0] * lblattice.grid[0];
