@@ -149,6 +149,9 @@ Utils::Vector3d lb_viscous_coupling(Particle *p,
 namespace {
 bool in_local_domain(Utils::Vector3d const &pos) {
   auto const lblattice = lb_lbfluid_get_lattice();
+  auto const my_left = local_geo.my_left();
+  auto const my_right = local_geo.my_right();
+
   return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid &&
           pos[0] < my_right[0] + 0.5 * lblattice.agrid &&
           pos[1] >= my_left[1] - 0.5 * lblattice.agrid &&

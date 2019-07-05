@@ -52,6 +52,7 @@ using Utils::strcat_alloc;
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <boost/range/algorithm/min_element.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -563,13 +564,13 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
       fprintf(stderr, "%d: rs_mesh underflow! (pos %f)\n", this_node,
               real_pos[d]);
       fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-              my_left[d] - skin, my_right[d] + skin);
+              local_geo.my_left()[d] - skin, local_geo.my_right()[d] + skin);
     }
     if ((nmp + cao) > p3m.local_mesh.dim[d]) {
       fprintf(stderr, "%d: rs_mesh overflow! (pos %f, nmp=%d)\n", this_node,
               real_pos[d], nmp);
       fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-              my_left[d] - skin, my_right[d] + skin);
+              local_geo.my_left()[d] - skin, local_geo.my_right()[d] + skin);
     }
 #endif
   }
@@ -910,6 +911,8 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
 
 void p3m_gather_fft_grid(double *data, const p3m_local_mesh &local_mesh,
                          const p3m_send_mesh &sm) {
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   /* direction loop */
   for (int s_dir = 0; s_dir < 6; s_dir++) {
     auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
@@ -938,6 +941,8 @@ void p3m_gather_fft_grid(double *data, const p3m_local_mesh &local_mesh,
 
 void p3m_spread_force_grid(double *data, const p3m_local_mesh &local_mesh,
                            const p3m_send_mesh &send_mesh) {
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   /* direction loop */
   for (int s_dir = 5; s_dir >= 0; s_dir--) {
     auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
@@ -1402,9 +1407,9 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
                std::max(box_geo.length()[1] * cao / (2.0 * mesh[1]),
                         box_geo.length()[2] * cao / (2.0 * mesh[2])));
 
-  P3M_TRACE(fprintf(
-      stderr, "p3m_mc_time: mesh=(%d, %d, %d), cao=%d, rmin=%f, rmax=%f\n",
-      mesh[0], mesh[1], mesh[2], cao, r_cut_iL_min, r_cut_iL_max));
+  auto const min_box_l = *boost::min_element(box_geo.length());
+  auto const min_local_box_l = *boost::min_element(local_geo.length());
+
   if (cao >= std::min(mesh[0], std::min(mesh[1], mesh[2])) ||
       k_cut >= (std::min(min_box_l, min_local_box_l) - skin)) {
     sprintf(b, "%-4d %-3d cao too large for this mesh\n", mesh[0], cao);
@@ -1467,8 +1472,8 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
    * than allowed */
   n_cells = 1;
   for (i = 0; i < 3; i++)
-    n_cells *=
-        (int)(floor(local_box_l[i] / (r_cut_iL * box_geo.length()[0] + skin)));
+    n_cells *= (int)(floor(local_geo.length()[i] /
+                           (r_cut_iL * box_geo.length()[0] + skin)));
   if (n_cells < min_num_cells) {
     P3M_TRACE(fprintf(
         stderr,
@@ -1767,6 +1772,9 @@ int p3m_adaptive_tune(char **log) {
   }
 
   if (p3m.params.r_cut_iL == 0.0) {
+    auto const min_box_l = *boost::min_element(box_geo.length());
+    auto const min_local_box_l = *boost::min_element(local_geo.length());
+
     r_cut_iL_min = 0;
     r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
     r_cut_iL_min *= (1. / box_geo.length()[0]);
@@ -2005,7 +2013,7 @@ void p3m_calc_local_ca_mesh() {
   for (int i = 0; i < 3; i++)
     halo[i] = p3m.params.cao_cut[i] + skin + p3m.params.additional_mesh[i];
 
-  p3m.local_mesh = calc_local_mesh(p3m.params, my_left, my_right, halo);
+  p3m.local_mesh = calc_local_mesh(p3m.params, local_geo.my_left() ,local_geo.my_right(), halo);
 }
 
 void p3m_calc_lm_ld_pos() {
@@ -2036,10 +2044,10 @@ bool p3m_sanity_checks_boxl() {
                         << box_geo.length()[i];
       ret = true;
     }
-    if (p3m.params.cao_cut[i] >= local_box_l[i]) {
+    if (p3m.params.cao_cut[i] >= local_geo.length()[i]) {
       runtimeErrorMsg() << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
                         << " is larger than local box dimension "
-                        << local_box_l[i];
+                        << local_geo.length()[i];
       ret = true;
     }
   }
@@ -2144,6 +2152,9 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh) {
       send_mesh.max = send_mesh.s_size[i];
   }
   /* communication */
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
+
   int r_margin[6];
   for (int i = 0; i < 6; i++) {
     auto const j = (i % 2 == 0) ? i + 1 : i - 1;

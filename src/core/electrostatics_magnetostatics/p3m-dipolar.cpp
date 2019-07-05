@@ -54,6 +54,7 @@ using Utils::sinc;
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <boost/range/algorithm/min_element.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -611,22 +612,8 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
       dist[d] = (pos - nmp) - 0.5;
       /* 3d-array index of nearest mesh point */
       q_ind = (d == 0) ? nmp : nmp + dp3m.local_mesh.dim[d] * q_ind;
-
-#ifdef ADDITIONAL_CHECKS
-      if (pos < -skin * dp3m.params.ai[d]) {
-        fprintf(stderr, "%d: dipolar dp3m.rs_mesh underflow! (pos %f)\n",
-                this_node, real_pos[d]);
-        fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-                my_left[d] - skin, my_right[d] + skin);
-      }
-      if ((nmp + dp3m.params.cao) > dp3m.local_mesh.dim[d]) {
-        fprintf(stderr, "%d: dipolar dp3m.rs_mesh overflow! (pos %f, nmp=%d)\n",
-                this_node, real_pos[d], nmp);
-        fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-                my_left[d] - skin, my_right[d] + skin);
-      }
-#endif
     }
+
     if (cp_cnt >= 0)
       dp3m.ca_fmp[cp_cnt] = q_ind;
 
@@ -659,21 +646,6 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
       /* for the first dimension, q_ind is always zero, so this shifts correctly
        */
       q_ind = nmp + dp3m.local_mesh.dim[d] * q_ind;
-
-#ifdef ADDITIONAL_CHECKS
-      if (pos < -skin * dp3m.params.ai[d]) {
-        fprintf(stderr, "%d: dipolar dp3m.rs_mesh underflow! (pos %f)\n",
-                this_node, real_pos[d]);
-        fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-                my_left[d] - skin, my_right[d] + skin);
-      }
-      if ((nmp + dp3m.params.cao) > dp3m.local_mesh.dim[d]) {
-        fprintf(stderr, "%d: dipolar dp3m.rs_mesh overflow! (pos %f, nmp=%d)\n",
-                this_node, real_pos[d], nmp);
-        fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-                my_left[d] - skin, my_right[d] + skin);
-      }
-#endif
     }
     if (cp_cnt >= 0)
       dp3m.ca_fmp[cp_cnt] = q_ind;
@@ -1180,6 +1152,9 @@ void dp3m_gather_fft_grid(double *themesh) {
 
   P3M_TRACE(fprintf(stderr, "%d: dp3m_gather_fft_grid:\n", this_node));
 
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
+
   /* direction loop */
   for (s_dir = 0; s_dir < 6; s_dir++) {
     if (s_dir % 2 == 0)
@@ -1225,6 +1200,9 @@ void dp3m_spread_force_grid(double *themesh) {
   MPI_Status status;
   double *tmp_ptr;
   P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_spread_force_grid:\n", this_node));
+
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
 
   /* direction loop */
   for (s_dir = 5; s_dir >= 0; s_dir--) {
@@ -1620,8 +1598,10 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
   /* initial checks. */
   mesh_size = box_geo.length()[0] / (double)mesh;
   k_cut = mesh_size * cao / 2.0;
-  P3M_TRACE(fprintf(stderr, "dp3m_mc_time: mesh=%d, cao=%d, rmin=%f, rmax=%f\n",
-                    mesh, cao, r_cut_iL_min, r_cut_iL_max));
+
+  auto const min_box_l = *boost::min_element(box_geo.length());
+  auto const min_local_box_l = *boost::min_element(local_geo.length());
+
   if (cao >= mesh || k_cut >= std::min(min_box_l, min_local_box_l) - skin) {
     /* print result */
     sprintf(b, "%-4d %-3d  cao too large for this mesh\n", mesh, cao);
@@ -1672,8 +1652,8 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
    * than allowed */
   n_cells = 1;
   for (i = 0; i < 3; i++)
-    n_cells *=
-        (int)(floor(local_box_l[i] / (r_cut_iL * box_geo.length()[0] + skin)));
+    n_cells *= (int)(floor(local_geo.length()[i] /
+                           (r_cut_iL * box_geo.length()[0] + skin)));
   if (n_cells < min_num_cells) {
     P3M_TRACE(fprintf(
         stderr, "dp3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n",
@@ -1946,6 +1926,9 @@ int dp3m_adaptive_tune(char **logger) {
   }
 
   if (dp3m.params.r_cut_iL == 0.0) {
+    auto const min_box_l = *boost::min_element(box_geo.length());
+    auto const min_local_box_l = *boost::min_element(local_geo.length());
+
     r_cut_iL_min = 0;
     r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2) - skin;
     r_cut_iL_min *= (1. / box_geo.length()[0]);
@@ -2247,7 +2230,7 @@ void dp3m_calc_local_ca_mesh(P3MParameters &params, double skin) {
   for (int i = 0; i < 3; i++)
     halo[i] = params.cao_cut[i] + skin + params.additional_mesh[i];
 
-  dp3m.local_mesh = calc_local_mesh(params, my_left, my_right, halo);
+  dp3m.local_mesh = calc_local_mesh(params, local_geo.my_left() ,local_geo.my_right(), halo);
 }
 
 /*****************************************************************************/
@@ -2264,11 +2247,11 @@ bool dp3m_sanity_checks_boxl() {
                         << box_geo.length()[i];
       ret = true;
     }
-    if (dp3m.params.cao_cut[i] >= local_box_l[i]) {
+    if (dp3m.params.cao_cut[i] >= local_geo.length()[i]) {
       runtimeErrorMsg() << "dipolar P3M_init: k-space cutoff "
                         << dp3m.params.cao_cut[i]
                         << " is larger than local box dimension "
-                        << local_box_l[i];
+                        << local_geo.length()[i];
       ret = true;
     }
   }
@@ -2366,6 +2349,9 @@ void dp3m_calc_send_mesh() {
       dp3m.sm.max = dp3m.sm.s_size[i];
   }
   /* communication */
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
+
   for (i = 0; i < 6; i++) {
     if (i % 2 == 0)
       j = i + 1;

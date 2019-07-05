@@ -555,12 +555,6 @@ void propagate_press_box_pos_and_rescale_npt() {
         }
 #endif
       }
-      ONEPART_TRACE(if (p.p.identity == check_id)
-                        fprintf(stderr, "%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",
-                                this_node, p.m.v[0], p.m.v[1], p.m.v[2]));
-      ONEPART_TRACE(if (p.p.identity == check_id)
-                        fprintf(stderr, "%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",
-                                this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
     }
 
     set_resort_particles(Cells::RESORT_LOCAL);
@@ -584,7 +578,7 @@ void propagate_press_box_pos_and_rescale_npt() {
     MPI_Bcast(box_geo.m_length.data(), 3, MPI_DOUBLE, 0, comm_cart);
 
     /* fast box length update */
-    grid_changed_box_l();
+    grid_changed_box_l(box_geo);
     recalc_maximal_cutoff();
     cells_on_geometry_change(CELL_FLAG_FAST);
   }

@@ -23,7 +23,7 @@
 
 #if defined(SCAFACOS)
 
-#include <vector>
+#include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -31,6 +31,7 @@
 #include <limits>
 #include <memory>
 #include <numeric>
+#include <vector>
 
 #include "Scafacos.hpp"
 #include "cells.hpp"
@@ -263,6 +264,10 @@ double time_r_cut(double r_cut) {
 /** Determine the optimal cutoff by bisection */
 void tune_r_cut() {
   const double tune_limit = 1e-3;
+
+  auto const min_box_l = *boost::min_element(box_geo.length());
+  auto const min_local_box_l = *boost::min_element(local_geo.length());
+
   /** scafacos p3m and Ewald do not accept r_cut 0 for no good reason */
   double r_min = 1.0;
   double r_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;

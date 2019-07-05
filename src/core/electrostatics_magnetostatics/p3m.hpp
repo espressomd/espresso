@@ -147,9 +147,6 @@ extern p3m_data_struct p3m;
  *  For the real space error the estimate of Kolafa/Perram is used.
  *
  *  Parameter ranges if not given explicit values via p3m_set_tune_params():
- *  - @p r_cut_iL starts from (@ref min_local_box_l - @ref #skin) / (
- *    n * box_length), with n an integer (this implies @p r_cut_iL is the
- *    largest cutoff in the system!)
  *  - @p mesh is set up such that the number of mesh points is equal to the
  *    number of charged particles
  *  - @p cao explores all possible values

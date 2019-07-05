@@ -740,7 +740,7 @@ class openGLLive(object):
 
     def _update_nodes(self):
         self.node_box_origins = []
-        self.local_box_l = self.system.cell_system.get_state()['local_box_l']
+        self.local_box_l = np.array([0, 0, 0])
         for i in range(self.system.cell_system.node_grid[0]):
             for j in range(self.system.cell_system.node_grid[1]):
                 for k in range(self.system.cell_system.node_grid[2]):

@@ -128,14 +128,6 @@ auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/**
- * @brief Replace the MPI communicator by a new one with the given periodicity
- * and node grid.
- */
-void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {
-                                  {1, 1, 1}});
-
 /** Issue REQ_PLACE: move particle to a position on a node.
  *  Also calls \ref on_particle_change.
  *  \param id    the particle to move.
