@@ -60,10 +60,6 @@
 
 #include <boost/mpi/communicator.hpp>
 
-#include <functional>
-#include <utils/Span.hpp>
-#include <vector>
-
 /** Error Codes for p3m tuning (version 2) */
 enum P3M_TUNE_ERROR {
   /** force evaluation failed */

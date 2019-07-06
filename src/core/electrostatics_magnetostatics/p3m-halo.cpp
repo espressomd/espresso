@@ -22,16 +22,13 @@ p3m_halo_comm calc_send_mesh(const boost::mpi::communicator &comm,
       if (j == i)
         send_mesh.s_ur[i * 2][j] = margin[j * 2];
       else
-        send_mesh.s_ur[i * 2][j] =
-            dim[j] - done[j] * margin[(j * 2) + 1];
+        send_mesh.s_ur[i * 2][j] = dim[j] - done[j] * margin[(j * 2) + 1];
       /* right */
       if (j == i)
-        send_mesh.s_ld[(i * 2) + 1][j] =
-            (dim[j] - margin[j]);
+        send_mesh.s_ld[(i * 2) + 1][j] = (dim[j] - margin[j]);
       else
         send_mesh.s_ld[(i * 2) + 1][j] = 0 + done[j] * margin[j * 2];
-      send_mesh.s_ur[(i * 2) + 1][j] =
-          dim[j] - done[j] * margin[(j * 2) + 1];
+      send_mesh.s_ur[(i * 2) + 1][j] = dim[j] - done[j] * margin[(j * 2) + 1];
     }
     done[i] = 1;
   }
@@ -60,8 +57,7 @@ p3m_halo_comm calc_send_mesh(const boost::mpi::communicator &comm,
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++) {
       if (j == i) {
-        send_mesh.r_ld[i * 2][j] =
-            send_mesh.s_ld[i * 2][j] + margin[2 * j];
+        send_mesh.r_ld[i * 2][j] = send_mesh.s_ld[i * 2][j] + margin[2 * j];
         send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j] + r_margin[2 * j];
         send_mesh.r_ld[(i * 2) + 1][j] =
             send_mesh.s_ld[(i * 2) + 1][j] - r_margin[(2 * j) + 1];
@@ -144,8 +140,9 @@ void p3m_spread_halo(Utils::Span<double *const> data,
       Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
 
   /* Make sure the buffers are large enough */
-  send_mesh.send_buffer.resize(send_mesh.max);
-  send_mesh.recv_buffer.resize(send_mesh.max);
+  auto const buf_size = send_mesh.max * data.size();
+  send_mesh.send_buffer.resize(buf_size);
+  send_mesh.recv_buffer.resize(buf_size);
 
   /* direction loop */
   for (int s_dir = 5; s_dir >= 0; s_dir--) {
@@ -163,11 +160,11 @@ void p3m_spread_halo(Utils::Span<double *const> data,
 
     /* communication */
     if (node_neighbors[r_dir] != send_mesh.comm.rank()) {
-      MPI_Sendrecv(send_mesh.send_buffer.data(), send_mesh.r_size[r_dir],
-                   MPI_DOUBLE, node_neighbors[r_dir], 202,
-                   send_mesh.recv_buffer.data(), send_mesh.s_size[s_dir],
-                   MPI_DOUBLE, node_neighbors[s_dir], 202, send_mesh.comm,
-                   MPI_STATUS_IGNORE);
+      MPI_Sendrecv(
+          send_mesh.send_buffer.data(), data.size() * send_mesh.r_size[r_dir],
+          MPI_DOUBLE, node_neighbors[r_dir], 202, send_mesh.recv_buffer.data(),
+          data.size() * send_mesh.s_size[s_dir], MPI_DOUBLE,
+          node_neighbors[s_dir], 202, send_mesh.comm, MPI_STATUS_IGNORE);
     } else {
       std::swap(send_mesh.recv_buffer, send_mesh.send_buffer);
     }
