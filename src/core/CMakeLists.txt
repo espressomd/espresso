@@ -80,6 +80,7 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/mmm2d.cpp
   electrostatics_magnetostatics/mmm-common.cpp
   electrostatics_magnetostatics/p3m-common.cpp
+  electrostatics_magnetostatics/p3m-halo.cpp
   electrostatics_magnetostatics/p3m.cpp
   electrostatics_magnetostatics/p3m-dipolar.cpp
   electrostatics_magnetostatics/p3m_gpu.cpp

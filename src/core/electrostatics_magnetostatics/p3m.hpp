@@ -58,6 +58,7 @@
 #include "debug.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
+#include "p3m-halo.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
