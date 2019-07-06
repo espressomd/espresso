@@ -25,50 +25,13 @@
 
 #if defined(P3M) || defined(DP3M)
 #include "errorhandling.hpp"
+#include "pack_block.hpp"
 
 #include <boost/range/numeric.hpp>
 #include <utils/Span.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 #include <utils/mpi/cart_comm.hpp>
-
-/* For debug messages */
-extern int this_node;
-
-/* Debug function printing p3m structures */
-void p3m_p3m_print_local_mesh(p3m_local_mesh l) {
-  fprintf(stderr, "%d: p3m_local_mesh: dim=(%d,%d,%d), size=%d\n", this_node,
-          l.dim[0], l.dim[1], l.dim[2], l.size);
-  fprintf(stderr, "%d:    ld_ind=(%d,%d,%d), ld_pos=(%f,%f,%f)\n", this_node,
-          l.ld_ind[0], l.ld_ind[1], l.ld_ind[2], l.ld_pos[0], l.ld_pos[1],
-          l.ld_pos[2]);
-  fprintf(stderr, "%d:    inner=(%d,%d,%d) [(%d,%d,%d)-(%d,%d,%d)]\n",
-          this_node, l.inner[0], l.inner[1], l.inner[2], l.in_ld[0], l.in_ld[1],
-          l.in_ld[2], l.in_ur[0], l.in_ur[1], l.in_ur[2]);
-  fprintf(stderr, "%d:    margin = (%d,%d, %d,%d, %d,%d)\n", this_node,
-          l.margin[0], l.margin[1], l.margin[2], l.margin[3], l.margin[4],
-          l.margin[5]);
-}
-
-/* Debug function printing p3m structures */
-void p3m_p3m_print_send_mesh(p3m_send_mesh sm) {
-  int i;
-  fprintf(stderr, "%d: p3m_send_mesh: max=%d\n", this_node, sm.max);
-  for (i = 0; i < 6; i++) {
-    fprintf(stderr,
-            "%d:  dir=%d: s_dim (%d,%d,%d)  s_ld (%d,%d,%d) s_ur (%d,%d,%d) "
-            "s_size=%d\n",
-            this_node, i, sm.s_dim[i][0], sm.s_dim[i][1], sm.s_dim[i][2],
-            sm.s_ld[i][0], sm.s_ld[i][1], sm.s_ld[i][2], sm.s_ur[i][0],
-            sm.s_ur[i][1], sm.s_ur[i][2], sm.s_size[i]);
-    fprintf(stderr,
-            "%d:         r_dim (%d,%d,%d)  r_ld (%d,%d,%d) r_ur (%d,%d,%d) "
-            "r_size=%d\n",
-            this_node, sm.r_dim[i][0], sm.r_dim[i][1], sm.r_dim[i][2],
-            sm.r_ld[i][0], sm.r_ld[i][1], sm.r_ld[i][2], sm.r_ur[i][0],
-            sm.r_ur[i][1], sm.r_ur[i][2], sm.r_size[i]);
-  }
-}
 
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
   double c, res = 0.0;
@@ -112,11 +75,7 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
     break;
   }
   default: {
-    fprintf(stderr,
-            "%d: INTERNAL_ERROR: The value %d for the interpolation order "
-            "should not occur!\n",
-            this_node, cao);
-    errexit();
+    throw std::runtime_error("Unknown interpolation order");
   }
   }
 
@@ -134,10 +93,7 @@ double p3m_caf(int i, double x, int cao_value) {
     case 1:
       return 0.5 + x;
     default:
-      fprintf(stderr,
-              "%d: Tried to access charge assignment function of degree %d in "
-              "scheme of order %d.\n",
-              this_node, i, cao_value);
+      throw std::runtime_error("Unknown interpolation order");
       return 0.0;
     }
   }
@@ -150,10 +106,7 @@ double p3m_caf(int i, double x, int cao_value) {
     case 2:
       return 0.5 * Utils::sqr(0.5 + x);
     default:
-      fprintf(stderr,
-              "%d: Tried to access charge assignment function of degree %d in "
-              "scheme of order %d.\n",
-              this_node, i, cao_value);
+      throw std::runtime_error("Unknown interpolation order");
       return 0.0;
     }
   case 4: {
@@ -167,10 +120,7 @@ double p3m_caf(int i, double x, int cao_value) {
     case 3:
       return (1.0 + x * (6.0 + x * (12.0 + x * 8.0))) / 48.0;
     default:
-      fprintf(stderr,
-              "%d: Tried to access charge assignment function of degree %d in "
-              "scheme of order %d.\n",
-              this_node, i, cao_value);
+      throw std::runtime_error("Unknown interpolation order");
       return 0.0;
     }
   }
@@ -187,10 +137,7 @@ double p3m_caf(int i, double x, int cao_value) {
     case 4:
       return (1.0 + x * (8.0 + x * (24.0 + x * (32.0 + x * 16.0)))) / 384.0;
     default:
-      fprintf(stderr,
-              "%d: Tried to access charge assignment function of degree %d in "
-              "scheme of order %d.\n",
-              this_node, i, cao_value);
+      throw std::runtime_error("Unknown interpolation order");
       return 0.0;
     }
   }
@@ -225,10 +172,7 @@ double p3m_caf(int i, double x, int cao_value) {
               x * (10.0 + x * (40.0 + x * (80.0 + x * (80.0 + x * 32.0))))) /
              3840.0;
     default:
-      fprintf(stderr,
-              "%d: Tried to access charge assignment function of degree %d in "
-              "scheme of order %d.\n",
-              this_node, i, cao_value);
+      throw std::runtime_error("Unknown interpolation order");
       return 0.0;
     }
   }
@@ -277,16 +221,12 @@ double p3m_caf(int i, double x, int cao_value) {
                         x * (160.0 + x * (240.0 + x * (192.0 + x * 64.0)))))) /
              46080.0;
     default:
-      fprintf(stderr,
-              "%d: Tried to access charge assignment function of degree %d in "
-              "scheme of order %d.\n",
-              this_node, i, cao_value);
+      throw std::runtime_error("Unknown interpolation order");
       return 0.0;
     }
   }
   default: {
-    fprintf(stderr, "%d: Charge assignment order %d unknown.\n", this_node,
-            cao_value);
+    throw std::runtime_error("Unknown interpolation order");
     return 0.0;
   }
   }
@@ -363,9 +303,9 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params,
   return local_mesh;
 }
 
-p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
+p3m_halo_comm calc_send_mesh(const p3m_local_mesh &local_mesh,
                              const boost::mpi::communicator &comm) {
-  p3m_send_mesh send_mesh;
+  p3m_halo_comm send_mesh;
 
   send_mesh.comm = comm;
 
@@ -446,7 +386,7 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
 }
 
 void p3m_gather_halo(Utils::Span<double *const> data,
-                     const p3m_send_mesh &send_mesh) {
+                     const p3m_halo_comm &send_mesh) {
   auto const node_neighbors =
       Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
 
@@ -462,7 +402,7 @@ void p3m_gather_halo(Utils::Span<double *const> data,
     if (send_mesh.s_size[s_dir] > 0) {
       boost::accumulate(data, send_mesh.send_buffer.data(),
                         [&](double *send_buf, double const *in_buf) {
-                          return fft_pack_block(
+                          return pack_block(
                               in_buf, send_buf, send_mesh.s_ld[s_dir],
                               send_mesh.s_dim[s_dir], send_mesh.dim, 1);
                         });
@@ -484,20 +424,20 @@ void p3m_gather_halo(Utils::Span<double *const> data,
       boost::accumulate(
           data, static_cast<const double *>(send_mesh.recv_buffer.data()),
           [&](const double *recv_buf, double *out_buf) {
-            return fft_unpack_block(recv_buf, out_buf, send_mesh.r_ld[r_dir],
-                                    send_mesh.r_dim[r_dir], send_mesh.dim, 1,
-                                    std::plus<>());
+            return unpack_block(recv_buf, out_buf, send_mesh.r_ld[r_dir],
+                                send_mesh.r_dim[r_dir], send_mesh.dim, 1,
+                                std::plus<>());
           });
     }
   }
 }
 
-void p3m_gather_halo(double *data, const p3m_send_mesh &send_mesh) {
+void p3m_gather_halo(double *data, const p3m_halo_comm &send_mesh) {
   p3m_gather_halo(Utils::make_const_span(&data, 1), send_mesh);
 }
 
 void p3m_spread_halo(Utils::Span<double *const> data,
-                     const p3m_send_mesh &send_mesh) {
+                     const p3m_halo_comm &send_mesh) {
   auto const node_neighbors =
       Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
 
@@ -513,7 +453,7 @@ void p3m_spread_halo(Utils::Span<double *const> data,
     if (send_mesh.s_size[s_dir] > 0) {
       boost::accumulate(data, send_mesh.send_buffer.data(),
                         [&](double *send_buf, const double *in_buf) {
-                          return fft_pack_block(
+                          return pack_block(
                               in_buf, send_buf, send_mesh.r_ld[r_dir],
                               send_mesh.r_dim[r_dir], send_mesh.dim, 1);
                         });
@@ -534,14 +474,14 @@ void p3m_spread_halo(Utils::Span<double *const> data,
       boost::accumulate(
           data, static_cast<const double *>(send_mesh.recv_buffer.data()),
           [&](const double *recv_buf, double *out_buf) {
-            return fft_unpack_block(recv_buf, out_buf, send_mesh.s_ld[s_dir],
-                                    send_mesh.s_dim[s_dir], send_mesh.dim, 1);
+            return unpack_block(recv_buf, out_buf, send_mesh.s_ld[s_dir],
+                                send_mesh.s_dim[s_dir], send_mesh.dim, 1);
           });
     }
   }
 }
 
-void p3m_spread_halo(double *data, const p3m_send_mesh &send_mesh) {
+void p3m_spread_halo(double *data, const p3m_halo_comm &send_mesh) {
   p3m_spread_halo(Utils::make_const_span(&data, 1), send_mesh);
 }
 

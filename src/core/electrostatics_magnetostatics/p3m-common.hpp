@@ -123,7 +123,7 @@ typedef struct {
 } p3m_local_mesh;
 
 /** Structure for send/recv meshes. */
-struct p3m_send_mesh {
+struct p3m_halo_comm {
   /** dimensions of the mesh */
   int dim[3];
   /** dimension of sub meshes to send. */
@@ -207,16 +207,6 @@ typedef struct {
 
 } P3MParameters;
 
-/** Print local mesh content.
- *  \param l local mesh structure.
- */
-void p3m_p3m_print_local_mesh(p3m_local_mesh l);
-
-/** Print send mesh content.
- *  \param sm send mesh structure.
- */
-void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
-
 /** One of the aliasing sums used by \ref p3m_k_space_error.
  *  Fortunately the one which is most important (because it converges
  *  most slowly, since it is not damped exponentially) can be
@@ -237,7 +227,7 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params,
                                const Utils::Vector3d &my_right,
                                const Utils::Vector3d &halo);
 
-p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
+p3m_halo_comm calc_send_mesh(const p3m_local_mesh &local_mesh,
                              const boost::mpi::communicator &comm);
 
 /**
@@ -245,18 +235,18 @@ p3m_send_mesh calc_send_mesh(const p3m_local_mesh &local_mesh,
  * @param data The mesh data
  * @param send_mesh Halo plan
  */
-void p3m_gather_halo(double *data, const p3m_send_mesh &send_mesh);
+void p3m_gather_halo(double *data, const p3m_halo_comm &send_mesh);
 void p3m_gather_halo(Utils::Span<double *const> data,
-                     const p3m_send_mesh &send_mesh);
+                     const p3m_halo_comm &send_mesh);
 
 /**
  * @brief Overwrite halo regions with their original images.
  * @param data The mesh data
  * @param send_mesh Halo plan
  */
-void p3m_spread_halo(double *data, const p3m_send_mesh &send_mesh);
+void p3m_spread_halo(double *data, const p3m_halo_comm &send_mesh);
 void p3m_spread_halo(Utils::Span<double *const> data,
-                     const p3m_send_mesh &send_mesh);
+                     const p3m_halo_comm &send_mesh);
 
 #endif /* P3M || DP3M */
 

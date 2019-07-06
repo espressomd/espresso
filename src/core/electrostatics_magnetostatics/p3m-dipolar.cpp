@@ -273,15 +273,6 @@ void dp3m_init() {
     dp3m_calc_local_ca_mesh(dp3m.params, skin);
 
     dp3m_calc_send_mesh();
-    P3M_TRACE(p3m_p3m_print_local_mesh(dp3m.local_mesh));
-
-    /* DEBUG */
-    for (n = 0; n < n_nodes; n++) {
-      /* MPI_Barrier(comm_cart); */
-      if (n == this_node) {
-        P3M_TRACE(p3m_p3m_print_send_mesh(dp3m.sm));
-      }
-    }
 
     dp3m.send_grid =
         Utils::realloc(dp3m.send_grid, sizeof(double) * dp3m.sm.max);
@@ -1886,22 +1877,6 @@ int dp3m_adaptive_tune(char **logger) {
           mesh, cao, r_cut_iL, alpha_L, accuracy, time_best);
   *logger = strcat_alloc(*logger, b);
   return ES_OK;
-}
-
-/*****************************************************************************/
-
-void p3m_print_dp3m_struct(P3MParameters ps) {
-  fprintf(stderr, "%d: dipolar P3MParameters:\n", this_node);
-  fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f\n", ps.alpha_L, ps.r_cut_iL);
-  fprintf(stderr, "   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n", ps.mesh[0],
-          ps.mesh[1], ps.mesh[2], ps.mesh_off[0], ps.mesh_off[1],
-          ps.mesh_off[2]);
-  fprintf(stderr, "   Dcao=%d, Dinter=%d, Depsilon=%f\n", ps.cao, ps.inter,
-          ps.epsilon);
-  fprintf(stderr, "   Dcao_cut=(%f,%f,%f)\n", ps.cao_cut[0], ps.cao_cut[1],
-          ps.cao_cut[2]);
-  fprintf(stderr, "   Da=(%f,%f,%f), Dai=(%f,%f,%f)\n", ps.a[0], ps.a[1],
-          ps.a[2], ps.ai[0], ps.ai[1], ps.ai[2]);
 }
 
 /*****************************************************************************/

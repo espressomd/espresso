@@ -93,7 +93,7 @@ struct dp3m_data_struct {
   int ks_pnum;
 
   /** send/recv mesh sizes */
-  p3m_send_mesh sm;
+  p3m_halo_comm sm;
 
   /** Field to store grid points to send. */
   double *send_grid;

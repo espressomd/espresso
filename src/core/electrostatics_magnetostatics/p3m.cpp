@@ -78,28 +78,6 @@ p3m_data_struct p3m;
 
 /*@{*/
 
-#ifdef P3M_DEBUG
-static void p3m_print(void) {
-  fprintf(stderr, "p3m parameters:\n\t alpha_L: %lf\n\t r_cut_iL: %lf\n\t \
-                   mesh: (%d, %d, %d)\n\t mesh_off: (%lf, %lf, %lf)\n\t \
-                   cao: %d\n\t inter: %d\n\t accuracy: %lf\n\t epsilon: %lf\n\t \
-                   cao_cut: (%lf, %lf, %lf)\n\t a: (%lf,%lf,%lf)\n\t \
-                   ai: (%lf,%lf,%lf)\n\t alpha: %lf\n\t r_cut: %lf\n\t \
-                   inter2: %d\n\t cao3: %d\n\t additional_mesh: (%lf,%lf,%lf)\n",
-          p3m.params.alpha_L, p3m.params.r_cut_iL, p3m.params.mesh[0],
-          p3m.params.mesh[1], p3m.params.mesh[2], p3m.params.mesh_off[0],
-          p3m.params.mesh_off[1], p3m.params.mesh_off[2], p3m.params.cao,
-          p3m.params.inter, p3m.params.accuracy, p3m.params.epsilon,
-          p3m.params.cao_cut[0], p3m.params.cao_cut[1], p3m.params.cao_cut[2],
-          p3m.params.a[0], p3m.params.a[1], p3m.params.a[2], p3m.params.ai[0],
-          p3m.params.ai[1], p3m.params.ai[2], p3m.params.alpha,
-          p3m.params.r_cut, p3m.params.inter2, p3m.params.cao3,
-          p3m.params.additional_mesh[0], p3m.params.additional_mesh[1],
-          p3m.params.additional_mesh[2]);
-}
-
-#endif
-
 /** Calculate for charges the properties of the send/recv sub-meshes of the
  *  local FFT mesh.
  *  In order to calculate the recv sub-meshes there is a communication of
@@ -1805,8 +1783,6 @@ int p3m_adaptive_tune(char **log) {
                     p3m.params.accuracy));
   mpi_bcast_coulomb_params();
 
-  P3M_TRACE(p3m_print());
-
   /* Tell the user about the outcome */
   sprintf(b,
           "\nresulting parameters: mesh: (%d %d %d), cao: %d, r_cut_iL: %.4e,"
@@ -2134,21 +2110,6 @@ void p3m_calc_kspace_stress(double *stress) {
       }
     }
   }
-}
-
-/** Debug function to print p3m parameters */
-void p3m_p3m_print_struct(P3MParameters ps) {
-  fprintf(stderr, "%d: P3MParameters:\n", this_node);
-  fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f\n", ps.alpha_L, ps.r_cut_iL);
-  fprintf(stderr, "   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n", ps.mesh[0],
-          ps.mesh[1], ps.mesh[2], ps.mesh_off[0], ps.mesh_off[1],
-          ps.mesh_off[2]);
-  fprintf(stderr, "   cao=%d, inter=%d, epsilon=%f\n", ps.cao, ps.inter,
-          ps.epsilon);
-  fprintf(stderr, "   cao_cut=(%f,%f,%f)\n", ps.cao_cut[0], ps.cao_cut[1],
-          ps.cao_cut[2]);
-  fprintf(stderr, "   a=(%f,%f,%f), ai=(%f,%f,%f)\n", ps.a[0], ps.a[1], ps.a[2],
-          ps.ai[0], ps.ai[1], ps.ai[2]);
 }
 
 #endif /* of P3M */

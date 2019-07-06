@@ -29,6 +29,8 @@
 
 #if defined(P3M) || defined(DP3M)
 
+#include "pack_block.hpp"
+
 #include <utils/math/permute_ifield.hpp>
 using Utils::permute_ifield;
 #include <utils/index.hpp>
@@ -384,9 +386,8 @@ void forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
     } else { /* Self communication... */
       std::swap(fft.send_buf, fft.recv_buf);
     }
-    fft_unpack_block(fft.recv_buf, out, &(plan.recv_block[6 * i]),
-                     &(plan.recv_block[6 * i + 3]), plan.new_mesh,
-                     plan.element);
+    unpack_block(fft.recv_buf, out, &(plan.recv_block[6 * i]),
+                 &(plan.recv_block[6 * i + 3]), plan.new_mesh, plan.element);
   }
 }
 
@@ -418,9 +419,9 @@ void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
     } else { /* Self communication... */
       std::swap(fft.send_buf, fft.recv_buf);
     }
-    fft_unpack_block(fft.recv_buf, out, &(plan_f.send_block[6 * i]),
-                     &(plan_f.send_block[6 * i + 3]), plan_f.old_mesh,
-                     plan_f.element);
+    unpack_block(fft.recv_buf, out, &(plan_f.send_block[6 * i]),
+                 &(plan_f.send_block[6 * i + 3]), plan_f.old_mesh,
+                 plan_f.element);
   }
 }
 
@@ -650,7 +651,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   }
   (*ks_pnum) = 6;
   if (fft.plan[1].row_dir == 2) {
-    fft.plan[1].pack_function = [](auto... args) { fft_pack_block(args...); };
+    fft.plan[1].pack_function = [](auto... args) { pack_block(args...); };
     (*ks_pnum) = 4;
   } else if (fft.plan[1].row_dir == 1) {
     fft.plan[1].pack_function = pack_block_permute1;
@@ -704,7 +705,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     fft.back[i].pack_function = pack_block_permute1;
   }
   if (fft.plan[1].row_dir == 2) {
-    fft.back[1].pack_function = [](auto... args) { fft_pack_block(args...); };
+    fft.back[1].pack_function = [](auto... args) { pack_block(args...); };
   } else if (fft.plan[1].row_dir == 1) {
     fft.back[1].pack_function = pack_block_permute2;
   }
@@ -788,24 +789,4 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
 
   /* REMARK: Result has to be in data. */
 }
-
-double *fft_pack_block(double const *in, double *out, const int *start,
-                       const int *size, const int *dim, int element) {
-  /* offsets for indices in input grid */
-  auto const m_in_offset = element * dim[2];
-  auto const s_in_offset = element * (dim[2] * (dim[1] - size[1]));
-  /* Jump to start position */
-  in += element * (start[2] + dim[2] * (start[1] + dim[1] * start[0]));
-
-  for (int s = 0; s < size[0]; s++) {
-    for (int m = 0; m < size[1]; m++) {
-      out = std::copy_n(in, element * size[2], out);
-      in += m_in_offset;
-    }
-    in += s_in_offset;
-  }
-
-  return out;
-}
-
 #endif
