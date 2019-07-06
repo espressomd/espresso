@@ -227,8 +227,8 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params,
                                const Utils::Vector3d &my_right,
                                const Utils::Vector3d &halo);
 
-p3m_halo_comm calc_send_mesh(const p3m_local_mesh &local_mesh,
-                             const boost::mpi::communicator &comm);
+p3m_halo_comm calc_send_mesh(const boost::mpi::communicator &comm,
+                             const int dim[3], const int margin[6]);
 
 /**
  * @brief Add halo regions to their original images.

@@ -303,8 +303,8 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params,
   return local_mesh;
 }
 
-p3m_halo_comm calc_send_mesh(const p3m_local_mesh &local_mesh,
-                             const boost::mpi::communicator &comm) {
+p3m_halo_comm calc_send_mesh(const boost::mpi::communicator &comm,
+                             const int dim[3], const int margin[6]) {
   p3m_halo_comm send_mesh;
 
   send_mesh.comm = comm;
@@ -312,24 +312,24 @@ p3m_halo_comm calc_send_mesh(const p3m_local_mesh &local_mesh,
   int done[3] = {0, 0, 0};
   /* send grids */
   for (int i = 0; i < 3; i++) {
-    send_mesh.dim[i] = local_mesh.dim[i];
+    send_mesh.dim[i] = dim[i];
 
     for (int j = 0; j < 3; j++) {
       /* left */
-      send_mesh.s_ld[i * 2][j] = 0 + done[j] * local_mesh.margin[j * 2];
+      send_mesh.s_ld[i * 2][j] = 0 + done[j] * margin[j * 2];
       if (j == i)
-        send_mesh.s_ur[i * 2][j] = local_mesh.margin[j * 2];
+        send_mesh.s_ur[i * 2][j] = margin[j * 2];
       else
         send_mesh.s_ur[i * 2][j] =
-            local_mesh.dim[j] - done[j] * local_mesh.margin[(j * 2) + 1];
+            dim[j] - done[j] * margin[(j * 2) + 1];
       /* right */
       if (j == i)
         send_mesh.s_ld[(i * 2) + 1][j] =
-            (local_mesh.dim[j] - local_mesh.margin[j]);
+            (dim[j] - margin[j]);
       else
-        send_mesh.s_ld[(i * 2) + 1][j] = 0 + done[j] * local_mesh.margin[j * 2];
+        send_mesh.s_ld[(i * 2) + 1][j] = 0 + done[j] * margin[j * 2];
       send_mesh.s_ur[(i * 2) + 1][j] =
-          local_mesh.dim[j] - done[j] * local_mesh.margin[(j * 2) + 1];
+          dim[j] - done[j] * margin[(j * 2) + 1];
     }
     done[i] = 1;
   }
@@ -350,7 +350,7 @@ p3m_halo_comm calc_send_mesh(const p3m_local_mesh &local_mesh,
   for (int i = 0; i < 6; i++) {
     auto const j = (i % 2 == 0) ? i + 1 : i - 1;
 
-    MPI_Sendrecv(&(local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i], 200,
+    MPI_Sendrecv(&(margin[i]), 1, MPI_INT, node_neighbors[i], 200,
                  &(r_margin[j]), 1, MPI_INT, node_neighbors[j], 200, comm,
                  MPI_STATUS_IGNORE);
   }
@@ -359,12 +359,12 @@ p3m_halo_comm calc_send_mesh(const p3m_local_mesh &local_mesh,
     for (int j = 0; j < 3; j++) {
       if (j == i) {
         send_mesh.r_ld[i * 2][j] =
-            send_mesh.s_ld[i * 2][j] + local_mesh.margin[2 * j];
+            send_mesh.s_ld[i * 2][j] + margin[2 * j];
         send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j] + r_margin[2 * j];
         send_mesh.r_ld[(i * 2) + 1][j] =
             send_mesh.s_ld[(i * 2) + 1][j] - r_margin[(2 * j) + 1];
         send_mesh.r_ur[(i * 2) + 1][j] =
-            send_mesh.s_ur[(i * 2) + 1][j] - local_mesh.margin[(2 * j) + 1];
+            send_mesh.s_ur[(i * 2) + 1][j] - margin[(2 * j) + 1];
       } else {
         send_mesh.r_ld[i * 2][j] = send_mesh.s_ld[i * 2][j];
         send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j];
