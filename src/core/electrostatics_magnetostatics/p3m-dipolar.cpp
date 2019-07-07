@@ -216,9 +216,6 @@ dp3m_data_struct::dp3m_data_struct() {
   ca_fmp = nullptr;
   ks_pnum = 0;
 
-  send_grid = nullptr;
-  recv_grid = nullptr;
-
   energy_correction = 0.0;
 }
 
@@ -273,11 +270,6 @@ void dp3m_init() {
     dp3m_calc_local_ca_mesh(dp3m.params, skin);
 
     dp3m_calc_send_mesh();
-
-    dp3m.send_grid =
-        Utils::realloc(dp3m.send_grid, sizeof(double) * dp3m.sm.max);
-    dp3m.recv_grid =
-        Utils::realloc(dp3m.recv_grid, sizeof(double) * dp3m.sm.max);
 
     /* fix box length dependent constants */
     dp3m_scaleby_box_l();

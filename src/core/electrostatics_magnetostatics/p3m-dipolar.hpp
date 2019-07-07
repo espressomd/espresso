@@ -96,11 +96,6 @@ struct dp3m_data_struct {
   /** send/recv mesh sizes */
   p3m_halo_comm sm;
 
-  /** Field to store grid points to send. */
-  double *send_grid;
-  /** Field to store grid points to recv */
-  double *recv_grid;
-
   /* Stores the value of the energy correction due to MS effects */
   double energy_correction;
 
