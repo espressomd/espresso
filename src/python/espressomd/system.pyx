@@ -17,29 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-from libcpp cimport bool
 include "myconfig.pxi"
 
-from globals cimport *
+import sys
+import random  # for true random numbers from os.urandom()
 import numpy as np
 import collections
 
-from core.grid cimport get_mi_vector, box_geo
-from . cimport integrate
-from . import interactions
-from . import integrate
-from .actors import Actors
-from . import particle_data
-from . import cuda_init
-from . import code_info
-from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
-from .thermostat import Thermostat
-from .cellsystem import CellSystem
-from .minimize_energy import MinimizeEnergy
-from .analyze import Analysis
-from .galilei import GalileiTransform
-from .constraints import Constraints
-cimport core.lb_interface
+from libcpp cimport bool
+from libcpp.vector cimport vector
+from libcpp.string cimport string
 
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
@@ -55,8 +42,32 @@ IF VIRTUAL_SITES:
 IF COLLISION_DETECTION == 1:
     from .collision_detection import CollisionDetection
 
-import sys
-import random  # for true random numbers from os.urandom()
+from . import interactions
+from . import integrate
+from .actors import Actors
+from . import particle_data
+from . import cuda_init
+from . import code_info
+from .thermostat import Thermostat
+from .cellsystem import CellSystem
+from .minimize_energy import MinimizeEnergy
+from .analyze import Analysis
+from .galilei import GalileiTransform
+from .constraints import Constraints
+
+from globals cimport *
+from core.grid cimport get_mi_vector, box_geo
+from . cimport integrate
+from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
+cimport core.lb_interface
+from core.random cimport get_state_size_of_generator, mpi_random_set_stat, mpi_random_get_stat
+from core.communication cimport mpi_random_seed
+from core.grid cimport rescale_boxl
+from core.rotate_system cimport rotate_system
+IF EXCLUSIONS:
+    from core.particle_data cimport auto_exclusions
+from core.particle_data cimport init_type_map, number_of_particles_with_type, get_random_p_id
+
 cimport tuning
 
 
@@ -71,6 +82,7 @@ if OIF_GLOBAL_FORCES:
     setable_properties.append("max_oif_objects")
 
 cdef bool _system_created = False
+cdef bool skin_set
 
 cdef class System(object):
     """ The base class for espressomd.system.System().
@@ -302,7 +314,7 @@ cdef class System(object):
         """
 
         _state_size_plus_one = self._get_PRNG_state_size() + 1
-        states = string_vec(n_nodes)
+        states = vector[string](n_nodes)
         rng = random.SystemRandom()  # true RNG that uses os.urandom()
         for i in range(n_nodes):
             states_on_node_i = []
@@ -348,7 +360,7 @@ cdef class System(object):
         def __set__(self, rng_state):
             _state_size_plus_one = self._get_PRNG_state_size() + 1
             if(len(rng_state) == n_nodes * _state_size_plus_one):
-                states = string_vec(n_nodes)
+                states = vector[string](n_nodes)
                 for i in range(n_nodes):
                     states[i] = (" ".join(map(str,
                                  rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])

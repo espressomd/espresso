@@ -17,13 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
 from core.utils cimport Vector3d, Vector3i, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
+from libcpp.vector cimport vector
 
 include "myconfig.pxi"
 

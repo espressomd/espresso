@@ -3,6 +3,8 @@ from libcpp cimport bool
 from core.utils cimport Vector3i, Vector3d
 
 cdef extern from "grid.hpp":
+    cdef void rescale_boxl(int dir, double d_new)
+
     Vector3i node_grid
 
     cppclass BoxGeometry:

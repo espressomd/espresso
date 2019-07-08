@@ -19,15 +19,11 @@
 # Handling of interactions
 
 from __future__ import print_function, absolute_import
+include "myconfig.pxi"
 
 from libcpp.string cimport string
+from libcpp cimport bool
 
-include "myconfig.pxi"
-from espressomd.system cimport *
-cimport numpy as np
-#force include of config.hpp
-cdef extern from "config.hpp":
-    pass
 
 from espressomd.utils cimport *
 

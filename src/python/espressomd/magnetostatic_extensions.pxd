@@ -20,8 +20,6 @@
 
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from espressomd.system cimport *
-from espressomd.utils cimport *
 
 IF DIPOLES and DP3M:
 

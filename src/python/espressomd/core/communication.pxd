@@ -16,6 +16,9 @@ cdef extern from "communication.hpp":
     void mpi_loop()
     int this_node
 
+cdef extern from "communication.hpp" namespace "Random":
+    void mpi_random_seed(int cnt, vector[int] & seed)
+
 
 IF ELECTROSTATICS and P3M:
     cdef extern from "communication.hpp":
