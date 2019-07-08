@@ -16,8 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "ScriptInterface.hpp"
 #include "initialize.hpp"
+#include "ScriptInterface.hpp"
 
 #include "LeesEdwards.hpp"
 
@@ -26,8 +26,7 @@ namespace LeesEdwards {
 
 void initialize() {
 #ifdef LEES_EDWARDS
-  ScriptInterface::register_new<
-      ScriptInterface::LeesEdwards::LeesEdwards>(
+  ScriptInterface::register_new<ScriptInterface::LeesEdwards::LeesEdwards>(
       "LeesEdwards::LeesEdwards");
 #endif
 }

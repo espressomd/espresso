@@ -95,9 +95,14 @@ class LeesEdwards(ScriptInterfaceHelper):
                 raise Exception('No velocity given for steady shear')
         elif kwargs['type'] == 'oscillatory_shear':
             if 'amplitude' not in kwargs or 'frequency' not in kwargs:
-                raise Exception('No amplitude or frequency given for oscillatory shear')
+                raise Exception(
+                    'No amplitude or frequency given for oscillatory shear')
         else:
-            raise Exception('Lees-Edwards protocol '+ kwargs['type'] +' unknown')
+            raise Exception(
+                'Lees-Edwards protocol ' +
+                kwargs[
+                    'type'] +
+                ' unknown')
 
         if 'sheardir' not in kwargs:
             kwargs['sheardir'] = 0
@@ -170,4 +175,6 @@ class LeesEdwards(ScriptInterfaceHelper):
         for key in lees_edwards_type_dict:
             if lees_edwards_type_dict[key] == int_type:
                 return key
-        raise Exception("Unknown integer Lees-Edwards protocol type %d" % int_type)
+        raise Exception(
+            "Unknown integer Lees-Edwards protocol type %d" %
+            int_type)

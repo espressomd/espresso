@@ -143,11 +143,12 @@ void on_integration_start() {
 #endif
 
 #ifdef LEES_EDWARDS
-    if (lees_edwards_protocol.type != LEES_EDWARDS_PROTOCOL_OFF &&
-        less_edwards_supports_verlet_list() == false &&
-        cell_structure.use_verlet_list) {
-        runtimeErrorMsg() << "It is not possible to use Lees Edwards with Verlet lists.";
-    }
+  if (lees_edwards_protocol.type != LEES_EDWARDS_PROTOCOL_OFF &&
+      less_edwards_supports_verlet_list() == false &&
+      cell_structure.use_verlet_list) {
+    runtimeErrorMsg()
+        << "It is not possible to use Lees Edwards with Verlet lists.";
+  }
 #endif
 
   /* Prepare the thermostat */

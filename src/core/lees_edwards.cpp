@@ -19,13 +19,15 @@
 /** \file lees_edwards.cpp
  */
 
-#include <cmath>
 #include "lees_edwards.hpp"
 #include "integrate.hpp"
+#include <cmath>
 
-lees_edwards_protocol_struct lees_edwards_protocol = {LEES_EDWARDS_PROTOCOL_OFF, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 1};
+lees_edwards_protocol_struct lees_edwards_protocol = {
+    LEES_EDWARDS_PROTOCOL_OFF, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 1};
 
-/* Functions to determine the current offset and shear rate with respect to the chosen protocol */
+/* Functions to determine the current offset and shear rate with respect to the
+ * chosen protocol */
 
 double lees_edwards_get_offset(double time) {
 
@@ -34,12 +36,15 @@ double lees_edwards_get_offset(double time) {
   } else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_STEP) {
     return lees_edwards_protocol.offset;
   } else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_STEADY_SHEAR) {
-    return lees_edwards_protocol.velocity * (time-lees_edwards_protocol.time0);
+    return lees_edwards_protocol.velocity *
+           (time - lees_edwards_protocol.time0);
   } else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_OSC_SHEAR) {
-    return lees_edwards_protocol.amplitude * std::sin(lees_edwards_protocol.frequency*(time-lees_edwards_protocol.time0));
+    return lees_edwards_protocol.amplitude *
+           std::sin(lees_edwards_protocol.frequency *
+                    (time - lees_edwards_protocol.time0));
   } else {
     return 0.0;
-  }  
+  }
 }
 
 double lees_edwards_get_velocity(double time) {
@@ -50,15 +55,15 @@ double lees_edwards_get_velocity(double time) {
   } else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_STEADY_SHEAR) {
     return lees_edwards_protocol.velocity;
   } else if (lees_edwards_protocol.type == LEES_EDWARDS_PROTOCOL_OSC_SHEAR) {
-    return lees_edwards_protocol.frequency * lees_edwards_protocol.amplitude * std::cos(lees_edwards_protocol.frequency*(time-lees_edwards_protocol.time0));
+    return lees_edwards_protocol.frequency * lees_edwards_protocol.amplitude *
+           std::cos(lees_edwards_protocol.frequency *
+                    (time - lees_edwards_protocol.time0));
   } else {
     return 0.0;
-  }  
+  }
 }
 
-bool less_edwards_supports_verlet_list() {
-    return false;
-    }
+bool less_edwards_supports_verlet_list() { return false; }
 
 #ifdef LEES_EDWARDS
 void local_lees_edwards_image_reset() {
@@ -67,6 +72,6 @@ void local_lees_edwards_image_reset() {
     p.l.i[1] = 0;
     p.l.i[2] = 0;
     p.p.lees_edwards_offset = 0;
-    }
+  }
 }
 #endif

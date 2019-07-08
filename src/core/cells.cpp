@@ -154,8 +154,9 @@ static void topology_release(int cs) {
     layered_topology_release();
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an "
-                    "unknown way (%d)\n",
+    fprintf(stderr,
+            "INTERNAL ERROR: attempting to sort the particles in an "
+            "unknown way (%d)\n",
             cs);
     errexit();
   }
@@ -182,8 +183,9 @@ void topology_init(int cs, CellPList *local) {
     layered_topology_init(local, node_grid);
     break;
   default:
-    fprintf(stderr, "INTERNAL ERROR: attempting to sort the particles in an "
-                    "unknown way (%d)\n",
+    fprintf(stderr,
+            "INTERNAL ERROR: attempting to sort the particles in an "
+            "unknown way (%d)\n",
             cs);
     errexit();
   }

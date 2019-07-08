@@ -13,7 +13,7 @@ class LeesEdwards(ut.TestCase):
 
     system = espressomd.System(box_l=[5.0, 5.0, 5.0])
     system.cell_system.skin = 0.0
-    system.cell_system.set_n_square(use_verlet_lists = False)
+    system.cell_system.set_n_square(use_verlet_lists=False)
     system.set_random_state_PRNG()
 
     time_step = 0.5
@@ -58,10 +58,11 @@ class LeesEdwards(ut.TestCase):
         amplitude = 1.3
         sheardir = 0
         shearplanenormal = 1
-        system.lees_edwards.set_params(type="oscillatory_shear", frequency=omega,
+        system.lees_edwards.set_params(
+            type="oscillatory_shear", frequency=omega,
                                        amplitude=amplitude, sheardir=sheardir, shearplanenormal=shearplanenormal)
 
-        for time in np.arange(0.0, 100.0, system.time_step*10):
+        for time in np.arange(0.0, 100.0, system.time_step * 10):
 
             system.integrator.run(0)
 
@@ -96,14 +97,17 @@ class LeesEdwards(ut.TestCase):
                         type="steady_shear", velocity=velocity, sheardir=sheardir, shearplanenormal=shearplanenormal)
 
                     pos = np.full([3], 2.5)
-                    pos[shearplanenormal] = system.box_l[shearplanenormal] - 0.05
+                    pos[shearplanenormal] = system.box_l[
+                        shearplanenormal] - 0.05
                     vel = np.zeros([3])
                     vel[shearplanenormal] = 0.2
                     system.part.add(pos=pos, v=vel, id=0, type=0)
 
                     pos_change = np.zeros([3])
-                    pos_change[sheardir] = -system.time_step*0.5*velocity
-                    pos_change[shearplanenormal] = vel[shearplanenormal]*system.time_step
+                    pos_change[sheardir] = -system.time_step * 0.5 * velocity
+                    pos_change[
+                        shearplanenormal] = vel[
+                            shearplanenormal] * system.time_step
                     vel_change = np.zeros([3])
                     vel_change[sheardir] = -velocity
 
@@ -129,8 +133,10 @@ class LeesEdwards(ut.TestCase):
                     system.part.add(pos=pos, v=vel, id=0, type=0)
 
                     pos_change = np.zeros([3])
-                    pos_change[sheardir] = system.time_step*0.5*velocity
-                    pos_change[shearplanenormal] = vel[shearplanenormal]*system.time_step
+                    pos_change[sheardir] = system.time_step * 0.5 * velocity
+                    pos_change[
+                        shearplanenormal] = vel[
+                            shearplanenormal] * system.time_step
                     vel_change = np.zeros([3])
                     vel_change[sheardir] = velocity
 
@@ -194,13 +200,14 @@ class LeesEdwards(ut.TestCase):
                     analytical_bondedstress = np.zeros([3, 3])
                     for i in range(3):
                         for j in range(3):
-                            analytical_bondedstress[i, j] += k*r[i]*r[j]
+                            analytical_bondedstress[i, j] += k * r[i] * r[j]
                     analytical_bondedstress /= (system.box_l[0]**3.0)
 
                     analytical_nonbondedstress = np.zeros([3, 3])
                     for i in range(3):
                         for j in range(3):
-                            analytical_nonbondedstress[i, j] += 2*k*r[i]*r[j]
+                            analytical_nonbondedstress[
+                                i, j] += 2 * k * r[i] * r[j]
                     analytical_nonbondedstress /= (system.box_l[0]**3.0)
 
                     np.testing.assert_array_equal(
@@ -217,8 +224,8 @@ class LeesEdwards(ut.TestCase):
 
         system.lees_edwards.set_params(
             type="steady_shear", velocity=1.5, sheardir=0, shearplanenormal=2)
-        system.part.add(id=0, pos=[1, 1, 0.9*system.box_l[2]])
-        system.part.add(id=1, pos=[1, 1, 0.1*system.box_l[2]])
+        system.part.add(id=0, pos=[1, 1, 0.9 * system.box_l[2]])
+        system.part.add(id=1, pos=[1, 1, 0.1 * system.box_l[2]])
 
         vel_diff = system.velocity_difference(system.part[0], system.part[1])
         np.testing.assert_array_equal(vel_diff, [1.5, 0, 0])
@@ -229,7 +236,9 @@ class LeesEdwards(ut.TestCase):
         system.part.add(id=0, pos=[1, 1, 0.5], v=[0.4, 0.4, 0.4])
         system.part.add(id=1, pos=[1, 1, 1.0], v=[0.1, 0.1, 0.1])
         vel_diff = system.velocity_difference(system.part[0], system.part[1])
-        np.testing.assert_array_equal(vel_diff, system.part[0].v-system.part[1].v)
+        np.testing.assert_array_equal(
+            vel_diff,
+            system.part[0].v - system.part[1].v)
 
         system.part.clear()
 
@@ -238,7 +247,7 @@ class LeesEdwards(ut.TestCase):
         we are checking if the correct runtime error message is raised"""
 
         system = self.system
-        system.cell_system.set_domain_decomposition(use_verlet_lists = True)
+        system.cell_system.set_domain_decomposition(use_verlet_lists=True)
         system.lees_edwards.set_params(
             type="steady_shear", velocity=1.2, sheardir=2, shearplanenormal=0)
 

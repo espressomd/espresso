@@ -192,8 +192,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Prepare the Integrator */
   on_integration_start();
 #ifdef LEES_EDWARDS
-  lees_edwards_protocol.offset =  lees_edwards_get_offset(sim_time);
-  lees_edwards_protocol.velocity =  lees_edwards_get_velocity(sim_time);
+  lees_edwards_protocol.offset = lees_edwards_get_offset(sim_time);
+  lees_edwards_protocol.velocity = lees_edwards_get_velocity(sim_time);
 #endif
 
   // Here we initialize volume conservation
@@ -335,7 +335,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     langevin_rng_counter_increment();
 
 #ifdef LEES_EDWARDS
-    lees_edwards_protocol.velocity =  lees_edwards_get_velocity(sim_time+0.5);
+    lees_edwards_protocol.velocity = lees_edwards_get_velocity(sim_time + 0.5);
 #endif
 
     force_calc();
@@ -430,10 +430,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef LEES_EDWARDS
   // Necessary so that the Python interface is up-to-date
-  lees_edwards_protocol.offset =  lees_edwards_get_offset(sim_time);
-  lees_edwards_protocol.velocity =  lees_edwards_get_velocity(sim_time);
+  lees_edwards_protocol.offset = lees_edwards_get_offset(sim_time);
+  lees_edwards_protocol.velocity = lees_edwards_get_velocity(sim_time);
 #endif
-
 }
 
 /************************************************************/
@@ -444,7 +443,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 void propagate_vel_finalize_p_inst() {
 
 #ifdef LEES_EDWARDS
-double le_vel = lees_edwards_get_velocity(sim_time + time_step) / 2.0;
+  double le_vel = lees_edwards_get_velocity(sim_time + time_step) / 2.0;
 #endif
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -480,8 +479,8 @@ double le_vel = lees_edwards_get_velocity(sim_time + time_step) / 2.0;
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 #ifdef LEES_EDWARDS
         if (j == lees_edwards_protocol.sheardir && p.p.lees_edwards_flag != 0) {
-          p.m.v[lees_edwards_protocol.sheardir] += p.p.lees_edwards_flag *
-                      le_vel;
+          p.m.v[lees_edwards_protocol.sheardir] +=
+              p.p.lees_edwards_flag * le_vel;
         }
 #endif
 
@@ -490,7 +489,9 @@ double le_vel = lees_edwards_get_velocity(sim_time + time_step) / 2.0;
 #endif
     }
 #ifdef LEES_EDWARDS
-      p.p.lees_edwards_offset -= (0.5 * time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * le_vel);
+    p.p.lees_edwards_offset -=
+        (0.5 * time_step * p.l.i[lees_edwards_protocol.shearplanenormal] *
+         le_vel);
 #endif
 
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
@@ -696,13 +697,14 @@ void propagate_pos() {
 void propagate_vel_pos() {
   INTEG_TRACE(fprintf(stderr, "%d: propagate_vel_pos:\n", this_node));
 #ifdef LEES_EDWARDS
-double shear_velocity = lees_edwards_get_velocity(sim_time)/2.0;
-/* For the offset, we set the value at half the time step as a "midpoint rule". The
-   particles that will cross a Lees-Edwards boundary are not known beforehand, so we had to
-   make this choice, the alternative being to compute the crossing time for all particles.
-*/
-double offset_at_time_step =
-          lees_edwards_get_offset(sim_time + time_step/2.0);
+  double shear_velocity = lees_edwards_get_velocity(sim_time) / 2.0;
+  /* For the offset, we set the value at half the time step as a "midpoint
+     rule". The particles that will cross a Lees-Edwards boundary are not known
+     beforehand, so we had to make this choice, the alternative being to compute
+     the crossing time for all particles.
+  */
+  double offset_at_time_step =
+      lees_edwards_get_offset(sim_time + time_step / 2.0);
 #endif
 #ifdef ADDITIONAL_CHECKS
   db_max_force = db_max_vel = 0;
@@ -749,24 +751,31 @@ double offset_at_time_step =
       //
       // The update of the velocity at the end of the time step is triggered by
       // the flag and occurs in propagate_vel_finalize_p_inst
-      if (p.r.p[lees_edwards_protocol.shearplanenormal] >= box_l[lees_edwards_protocol.shearplanenormal]) {
+      if (p.r.p[lees_edwards_protocol.shearplanenormal] >=
+          box_l[lees_edwards_protocol.shearplanenormal]) {
         p.m.v[lees_edwards_protocol.sheardir] -= shear_velocity;
-        p.r.p[lees_edwards_protocol.sheardir] -= offset_at_time_step ;
-	p.p.lees_edwards_offset -= offset_at_time_step ;
-	Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir], &dummy_i, box_l[lees_edwards_protocol.sheardir]);
+        p.r.p[lees_edwards_protocol.sheardir] -= offset_at_time_step;
+        p.p.lees_edwards_offset -= offset_at_time_step;
+        Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir],
+                                 &dummy_i,
+                                 box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
                                     // propagate_vel_finalize_p_inst
       } else if (p.r.p[lees_edwards_protocol.shearplanenormal] < 0.) {
         p.m.v[lees_edwards_protocol.sheardir] += shear_velocity;
-        p.r.p[lees_edwards_protocol.sheardir] += offset_at_time_step ;
-	p.p.lees_edwards_offset += offset_at_time_step ;
-	Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir], &dummy_i, box_l[lees_edwards_protocol.sheardir]);
+        p.r.p[lees_edwards_protocol.sheardir] += offset_at_time_step;
+        p.p.lees_edwards_offset += offset_at_time_step;
+        Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir],
+                                 &dummy_i,
+                                 box_l[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
                                    // propagate_vel_finalize_p_inst
       } else {
         p.p.lees_edwards_flag = 0;
       }
-      p.p.lees_edwards_offset -= (0.5 * time_step * p.l.i[lees_edwards_protocol.shearplanenormal] * shear_velocity);
+      p.p.lees_edwards_offset -=
+          (0.5 * time_step * p.l.i[lees_edwards_protocol.shearplanenormal] *
+           shear_velocity);
     }
 #endif
 

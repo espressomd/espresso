@@ -179,23 +179,25 @@ template <typename T> T get_mi_coord(T a, T b, int dir) {
 
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b) {
-    double shift = 0.0;
+  double shift = 0.0;
 #ifdef LEES_EDWARDS
-    double offset = lees_edwards_protocol.offset;
-    double dist = a[lees_edwards_protocol.shearplanenormal]-
-                  b[lees_edwards_protocol.shearplanenormal];
+  double offset = lees_edwards_protocol.offset;
+  double dist = a[lees_edwards_protocol.shearplanenormal] -
+                b[lees_edwards_protocol.shearplanenormal];
 #endif
-    for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
 #ifdef LEES_EDWARDS
-        if (i == lees_edwards_protocol.sheardir
-            && std::fabs(dist) > half_box_l[lees_edwards_protocol.shearplanenormal]) {
-            shift = Utils::sgn(dist) *
-                   (offset - round(offset * box_l_i[lees_edwards_protocol.sheardir]) *
-                    box_l[lees_edwards_protocol.sheardir]);
-        } else {shift = 0.0;
-          }
+    if (i == lees_edwards_protocol.sheardir &&
+        std::fabs(dist) > half_box_l[lees_edwards_protocol.shearplanenormal]) {
+      shift =
+          Utils::sgn(dist) *
+          (offset - round(offset * box_l_i[lees_edwards_protocol.sheardir]) *
+                        box_l[lees_edwards_protocol.sheardir]);
+    } else {
+      shift = 0.0;
+    }
 #endif
-        res[i] = get_mi_coord(a[i] - shift, b[i], i);
+    res[i] = get_mi_coord(a[i] - shift, b[i], i);
   }
 }
 
@@ -303,8 +305,10 @@ inline Utils::Vector3d unfolded_position(Particle const &p) {
 }
 
 /** Calculate the velocity difference including the Lees Edwards velocity*/
-inline Utils::Vector3d vel_diff(Utils::Vector3d const &x, Utils::Vector3d const &y,
-                                Utils::Vector3d const &u, Utils::Vector3d const &v) {
+inline Utils::Vector3d vel_diff(Utils::Vector3d const &x,
+                                Utils::Vector3d const &y,
+                                Utils::Vector3d const &u,
+                                Utils::Vector3d const &v) {
 
   auto ret = u - v;
 

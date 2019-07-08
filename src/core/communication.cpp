@@ -125,7 +125,7 @@ int n_nodes = -1;
   CB(mpi_bcast_lb_particle_coupling_slave)                                     \
   CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
   CB(mpi_set_interpolation_order_slave)                                        \
-  CB(mpi_lees_edwards_image_reset_slave)                                       \
+  CB(mpi_lees_edwards_image_reset_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -770,5 +770,3 @@ void mpi_resort_particles_slave(int global_flag, int) {
 
   boost::mpi::gather(comm_cart, cells_get_n_particles(), 0);
 }
-
-

@@ -60,7 +60,9 @@ pos = system.box_l * np.random.random((n_part, 3))
 system.part.add(pos=pos)
 
 if args.protocol == 'steady_shear':
-    system.lees_edwards.set_params(type=args.protocol, velocity=args.parameters[0])
+    system.lees_edwards.set_params(
+        type=args.protocol,
+        velocity=args.parameters[0])
 else:
     raise Exception('not impl')
 
