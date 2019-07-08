@@ -156,3 +156,38 @@ BOOST_AUTO_TEST_CASE(fold_coordinate_test) {
   BOOST_CHECK_THROW(fold_coordinate(0., std::numeric_limits<int>::min(), 1.),
                     std::runtime_error);
 }
+
+BOOST_AUTO_TEST_CASE(regular_decomposition_test) {
+  auto const eps = std::numeric_limits<double>::epsilon();
+
+  auto const box_l = Utils::Vector3d{10, 20, 30};
+  auto box = BoxGeometry();
+  box.set_length(box_l);
+  auto const node_grid = Utils::Vector3i{1, 2, 3};
+
+  /* check length */
+  {
+    auto const result = regular_decomposition(box, {0, 0, 0}, node_grid);
+    auto const local_box_l = result.length();
+
+    BOOST_CHECK_CLOSE(box_l[0], local_box_l[0] * node_grid[0], eps);
+    BOOST_CHECK_CLOSE(box_l[1], local_box_l[1] * node_grid[1], eps);
+    BOOST_CHECK_CLOSE(box_l[2], local_box_l[2] * node_grid[2], eps);
+  }
+
+  /* check corners */
+  {
+    Utils::Vector3i node_pos;
+    for (node_pos[0] = 0; node_pos[0] < node_grid[0]; node_pos[0]++)
+      for (node_pos[1] = 0; node_pos[1] < node_grid[1]; node_pos[1]++)
+        for (node_pos[2] = 0; node_pos[2] < node_grid[2]; node_pos[2]++) {
+          auto const result = regular_decomposition(box, node_pos, node_grid);
+          auto const local_box_l = result.length();
+          auto const lower_corner = result.my_left();
+
+          BOOST_CHECK_CLOSE(lower_corner[0], local_box_l[0] * node_pos[0], eps);
+          BOOST_CHECK_CLOSE(lower_corner[1], local_box_l[1] * node_pos[1], eps);
+          BOOST_CHECK_CLOSE(lower_corner[2], local_box_l[2] * node_pos[2], eps);
+        }
+  }
+}

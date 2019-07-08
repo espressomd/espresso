@@ -229,6 +229,8 @@ void prepare_halo_communication(HaloCommunicator *const hc,
 
   int extent = fieldtype->extent;
 
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   cnt = 0;
   for (dir = 0; dir < 3; dir++) {
     for (lr = 0; lr < 2; lr++) {
@@ -268,17 +270,18 @@ void prepare_halo_communication(HaloCommunicator *const hc,
       MPI_Type_commit(&hinfo->datatype);
 
       if (!box_geo.periodic(dir) &&
-          (boundary[2 * dir + lr] != 0 || boundary[2 * dir + 1 - lr] != 0)) {
+          (local_geo.boundary()[2 * dir + lr] != 0 ||
+           local_geo.boundary()[2 * dir + 1 - lr] != 0)) {
         if (local_node_grid[dir] == 1) {
           hinfo->type = HALO_OPEN;
         } else if (lr == 0) {
-          if (boundary[2 * dir + lr] == 1) {
+          if (local_geo.boundary()[2 * dir + lr] == 1) {
             hinfo->type = HALO_RECV;
           } else {
             hinfo->type = HALO_SEND;
           }
         } else {
-          if (boundary[2 * dir + lr] == -1) {
+          if (local_geo.boundary()[2 * dir + lr] == -1) {
             hinfo->type = HALO_RECV;
           } else {
             hinfo->type = HALO_SEND;

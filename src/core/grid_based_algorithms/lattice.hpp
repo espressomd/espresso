@@ -45,7 +45,6 @@ public:
   index_t halo_size;         /**< halo size in all directions */
 
   double offset; /**< global offset */
-  Utils::Vector3d local_offset;
   Utils::Vector3i local_index_offset;
   Utils::Vector3i node_grid;
   Utils::Vector3d local_box;
@@ -68,11 +67,13 @@ public:
    *  @param local_box   dimensions of the local box
    *  @param myright     right (top, back) corner of the local box
    *  @param box_length  lengths of the local box
+   *  @param node_pos    position of this node in the domain decomposition
    *  @param node_grid   node_grid of domain decomposition
    */
   Lattice(double agrid, double offset, int halo_size,
           const Utils::Vector3d &local_box, const Utils::Vector3d &myright,
-          const Utils::Vector3d &box_length, Utils::Vector3i const &node_grid);
+          const Utils::Vector3d &box_length, Utils::Vector3i const &node_pos,
+          Utils::Vector3i const &node_grid);
 
   /** Map a spatial position to the surrounding lattice sites.
    *
