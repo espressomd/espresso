@@ -25,7 +25,7 @@ p3m_halo_comm calc_send_mesh(const boost::mpi::communicator &comm,
         send_mesh.s_ur[i * 2][j] = dim[j] - done[j] * margin[(j * 2) + 1];
       /* right */
       if (j == i)
-        send_mesh.s_ld[(i * 2) + 1][j] = (dim[j] - margin[j]);
+        send_mesh.s_ld[(i * 2) + 1][j] = (dim[j] - margin[j * 2 + 1]);
       else
         send_mesh.s_ld[(i * 2) + 1][j] = 0 + done[j] * margin[j * 2];
       send_mesh.s_ur[(i * 2) + 1][j] = dim[j] - done[j] * margin[(j * 2) + 1];
