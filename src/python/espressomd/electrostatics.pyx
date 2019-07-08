@@ -81,7 +81,7 @@ IF ELECTROSTATICS == 1:
 IF ELECTROSTATICS:
     cdef class DH(ElectrostaticInteraction):
         """
-        Solve electrostatics in the Debye-Hueckel framework see
+        Electrostatics solver based on the Debye-Hueckel framework. See
         :ref:`Debye-Hückel potential` for more details.
 
         Parameters
@@ -96,12 +96,11 @@ IF ELECTROSTATICS:
         """
 
         def validate_params(self):
-            if (self._params["prefactor"] <= 0):
-                raise ValueError(
-                    "prefactor should be a positive float")
-            if (self._params["kappa"] < 0):
+            if self._params["prefactor"] <= 0:
+                raise ValueError("prefactor should be a positive float")
+            if self._params["kappa"] < 0:
                 raise ValueError("kappa should be a non-negative double")
-            if (self._params["r_cut"] < 0):
+            if self._params["r_cut"] < 0:
                 raise ValueError("r_cut should be a non-negative double")
 
         def valid_keys(self):
@@ -131,70 +130,67 @@ IF ELECTROSTATICS:
                     "check_neutrality": True}
 
     cdef class ReactionField(ElectrostaticInteraction):
-            """
-            Solve electrostatics in the Reaction-Field framework
+        """
+        Electrostatics solver based on the Reaction-Field framework.
 
-            Parameters
-            ----------
-            prefactor : :obj:`float`
-                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-            kappa : :obj:`float`
-                Inverse Debye screening length.
-            epsilon1 : :obj:`float`
-                interior dielectric constant
-            epsilon2 : :obj:`float`
-                exterior dielectric constant
-            r_cut : :obj:`float`
-                Cut off radius for this interaction.
+        Parameters
+        ----------
+        prefactor : :obj:`float`
+            Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+        kappa : :obj:`float`
+            Inverse Debye screening length.
+        epsilon1 : :obj:`float`
+            interior dielectric constant
+        epsilon2 : :obj:`float`
+            exterior dielectric constant
+        r_cut : :obj:`float`
+            Cut off radius for this interaction.
 
-            """
+        """
 
-            def validate_params(self):
-                if (self._params["prefactor"] <= 0):
-                    raise ValueError(
-                        "prefactor should be a positive float")
-                if (self._params["kappa"] < 0):
-                    raise ValueError("kappa should be a non-negative double")
-                if (self._params["epsilon1"] < 0):
-                                    raise ValueError(
-                                        "epsilon1 should be a non-negative double")
-                if (self._params["epsilon2"] < 0):
-                                    raise ValueError(
-                                        "epsilon2 should be a non-negative double")
-                if (self._params["r_cut"] < 0):
-                    raise ValueError("r_cut should be a non-negative double")
+        def validate_params(self):
+            if self._params["prefactor"] <= 0:
+                raise ValueError("prefactor should be a positive float")
+            if self._params["kappa"] < 0:
+                raise ValueError("kappa should be a non-negative double")
+            if self._params["epsilon1"] < 0:
+                raise ValueError("epsilon1 should be a non-negative double")
+            if self._params["epsilon2"] < 0:
+                raise ValueError("epsilon2 should be a non-negative double")
+            if self._params["r_cut"] < 0:
+                raise ValueError("r_cut should be a non-negative double")
 
-            def valid_keys(self):
-                return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut", "check_neutrality"
+        def valid_keys(self):
+            return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut", "check_neutrality"
 
-            def required_keys(self):
-                return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"
+        def required_keys(self):
+            return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"
 
-            def _set_params_in_es_core(self):
-                set_prefactor(self._params["prefactor"])
-                rf_set_params(
-                    self._params["kappa"],
-                    self._params["epsilon1"],
-                    self._params["epsilon2"],
-                    self._params["r_cut"])
+        def _set_params_in_es_core(self):
+            set_prefactor(self._params["prefactor"])
+            rf_set_params(
+                self._params["kappa"],
+                self._params["epsilon1"],
+                self._params["epsilon2"],
+                self._params["r_cut"])
 
-            def _get_params_from_es_core(self):
-                params = {}
-                params.update(rf_params)
-                return params
+        def _get_params_from_es_core(self):
+            params = {}
+            params.update(rf_params)
+            return params
 
-            def _activate_method(self):
-                check_neutrality(self._params)
-                coulomb.method = COULOMB_RF
-                self._set_params_in_es_core()
+        def _activate_method(self):
+            check_neutrality(self._params)
+            coulomb.method = COULOMB_RF
+            self._set_params_in_es_core()
 
-            def default_params(self):
-                return {"prefactor": -1,
-                        "kappa": -1,
-                        "epsilon1": -1,
-                        "epsilon2": -1,
-                        "r_cut": -1,
-                        "check_neutrality": True}
+        def default_params(self):
+            return {"prefactor": -1,
+                    "kappa": -1,
+                    "epsilon1": -1,
+                    "epsilon2": -1,
+                    "r_cut": -1,
+                    "check_neutrality": True}
 
 
 IF P3M == 1:
@@ -480,7 +476,7 @@ IF P3M == 1:
 IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
         """
-        Electrostatics solver for Systems with one periodic direction.
+        Electrostatics solver for systems with one periodic direction.
         See :ref:`MMM1D Theory` for more details.
 
         Parameters
@@ -494,6 +490,7 @@ IF ELECTROSTATICS:
         bessel_cutoff : :obj:`int`, optional
         tune : :obj:`bool`, optional
             Specify whether to automatically tune ore not. The default is True.
+
         """
 
         def validate_params(self):
@@ -555,8 +552,8 @@ IF ELECTROSTATICS:
 IF ELECTROSTATICS and MMM1D_GPU:
     cdef class MMM1DGPU(ElectrostaticInteraction):
         """
-        Electrostatics solver for Systems with one periodic direction.
-        See :ref:`MMM1D Theory` for more details.
+        Electrostatics solver with GPU support for systems with one periodic
+        direction. See :ref:`MMM1D Theory` for more details.
 
         Parameters
         ----------
@@ -622,9 +619,9 @@ IF ELECTROSTATICS and MMM1D_GPU:
             default_params = self.default_params()
 
             self.thisptr.set_params(
-                grid.box_geo.length()[
-                    2], coulomb.prefactor, self._params["maxPWerror"],
-                self._params["far_switch_radius"], self._params["bessel_cutoff"])
+                grid.box_geo.length()[2], coulomb.prefactor,
+                self._params["maxPWerror"], self._params["far_switch_radius"],
+                self._params["bessel_cutoff"])
 
         def _tune(self):
             self.thisptr.setup(dereference(self.interface))
@@ -775,7 +772,10 @@ IF ELECTROSTATICS:
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
 
-            """Calculates Coulomb interactions using method from the SCAFACOs library."""
+            """
+            Calculate the Coulomb interaction using the ScaFaCoS library.
+            """
+
             dipolar = False
 
             # Explicit constructor needed due to multiple inheritance
