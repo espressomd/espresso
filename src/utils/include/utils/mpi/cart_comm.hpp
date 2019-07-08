@@ -88,6 +88,7 @@ inline std::pair<int, int> cart_shift(boost::mpi::communicator const &comm,
  *
  * This calculates the ranks of neighbors with shift
  * (+/- 1, 0, 0), (0, +/-1, 0), ... in a cartesian communicator.
+ * \image html directions.gif "Convention for the order of the directions"
  * This is also the order in which they are returned.
  *
  * @tparam dim Number of dimensions
