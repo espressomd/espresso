@@ -9,3 +9,7 @@ cdef extern from "communication.hpp":
 IF ELECTROSTATICS and P3M:
     cdef extern from "communication.hpp":
         int mpi_iccp3m_init()
+
+IF ELECTROSTATICS:
+    cdef extern from "communication.hpp":
+        void mpi_bcast_coulomb_params()
