@@ -19,12 +19,7 @@
 from __future__ import print_function, absolute_import
 import sys
 from . import script_interface
-
-cdef extern from "communication.hpp":
-    void mpi_init()
-    void mpi_loop()
-    int this_node
-
+from core.communication cimport mpi_init, mpi_loop, this_node
 # Main code
 mpi_init()
 

@@ -12,6 +12,10 @@ cdef extern from "communication.hpp":
     Vector3d mpi_system_CMS()
     Vector3d mpi_system_CMS_velocity()
     void mpi_galilei_transform()
+    void mpi_init()
+    void mpi_loop()
+    int this_node
+
 
 IF ELECTROSTATICS and P3M:
     cdef extern from "communication.hpp":
