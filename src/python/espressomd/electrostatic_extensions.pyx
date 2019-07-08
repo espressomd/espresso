@@ -29,6 +29,7 @@ IF ELECTROSTATICS:
     from core.coulomb cimport coulomb, COULOMB_P3M_GPU
 
 IF ELECTROSTATICS and P3M:
+    from core.communication cimport mpi_iccp3m_init
     from core.elc cimport elc_params, ELC_set_params
     from core.icc cimport iccp3m_cfg, iccp3m_alloc_lists
     from espressomd.electrostatics import check_neutrality
