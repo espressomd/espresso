@@ -128,8 +128,6 @@ cdef class CellSystem(object):
             s["type"] = "nsquare"
 
         s["skin"] = skin
-        s["local_box_l"] = np.array(
-            [core.grid.local_box_l[0], core.grid.local_box_l[1], core.grid.local_box_l[2]])
         s["max_cut"] = max_cut
         s["max_range"] = max_range
         s["max_skin"] = max_skin

@@ -26,20 +26,7 @@
  *  The primary simulation box is divided into orthogonal rectangular
  *  subboxes which are assigned to the different nodes (or processes
  *  or threads if you want). This grid is described in \ref
- *  node_grid. Each node has a number \ref this_node and a position
- *  \ref node_pos in that grid. Each node has also 6 nearest neighbors
- *  \ref node_neighbors which are necessary for the communication
- *  between the nodes (see also \ref ghosts.cpp and \ref p3m.cpp for more
- *  details about the communication.
- *
- *  For the 6 directions \anchor directions we have the following convention:
- *
- *  \image html directions.gif "Convention for the order of the directions"
- *
- *  The Figure illustrates the direction convention used for arrays
- *  with 6 (e.g. \ref node_neighbors, \ref #boundary) and 3 entries
- *  (e.g \ref node_grid, box length , \ref my_left,...).
- *
+ *  node_grid.
  *
  *  Implementation in grid.cpp.
  */
@@ -47,13 +34,17 @@
 #include "BoxGeometry.hpp"
 #include "algorithm/periodic_fold.hpp"
 
+#include "LocalBox.hpp"
+
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include <boost/mpi/communicator.hpp>
 #include <cassert>
 #include <limits>
 
 extern BoxGeometry box_geo;
+extern LocalBox<double> local_geo;
 
 /** \name Exported Variables */
 /************************************************************/
@@ -61,25 +52,6 @@ extern BoxGeometry box_geo;
 
 /** The number of nodes in each spatial dimension. */
 extern Utils::Vector3i node_grid;
-/** position of node in node grid */
-extern Utils::Vector3i node_pos;
-/** the six nearest neighbors of a node in the node grid. */
-extern Utils::Vector<int, 6> node_neighbors;
-/** where to fold particles that leave local box in direction i. */
-extern Utils::Vector<int, 6> boundary;
-
-/** Smallest simulation box dimension. Only periodic directions
-    are taken into account! */
-extern double min_box_l;
-/** Dimensions of the box a single node is responsible for. */
-extern Utils::Vector3d local_box_l;
-/** Smallest local simulation box dimension (\ref local_box_l).
-    Only the periodic directions are taken into account! */
-extern double min_local_box_l;
-/** Left (bottom, front) corner of this nodes local box. */
-extern Utils::Vector3d my_left;
-/** Right (top, back) corner of this nodes local box. */
-extern Utils::Vector3d my_right;
 
 /*@}*/
 
@@ -91,44 +63,30 @@ extern Utils::Vector3d my_right;
     determine one automatically. */
 void init_node_grid();
 
-/** node mapping: array -> node.
- *
- * \param node   rank of the node you want to know the position for.
- * \param pos    position of the node in node grid.
- */
-void map_node_array(int node, int pos[3]);
-
-/** node mapping: node -> array.
- *
- * \return      rank of the node at position pos.
- * \param pos   position of the node in node grid.
- */
-int map_array_node(Utils::Span<const int> pos);
-
 /** map a spatial position to the node grid */
 int map_position_node_array(const Utils::Vector3d &pos);
 
 /** fill neighbor lists of node.
  *
- * Calculates the numbers of the nearest neighbors for a node and
- * stores them in \ref node_neighbors.
+ * Calculates the numbers of the nearest neighbors for a node.
  *
- * \return     the number of neighbors
- * \param node number of the node.  */
-int calc_node_neighbors(int node);
+ * \return Ranks of neighbors
+ */
+Utils::Vector<int, 6> calc_node_neighbors(const boost::mpi::communicator &comm);
+
+/**
+ * @brief Calculate the position of node in topology.
+ *
+ * @param comm Cartesian communicator
+ * @return Index of node in grid.
+ */
+Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm);
 
 /** called from \ref mpi_bcast_parameter . */
 void grid_changed_n_nodes();
 
 /** called from \ref mpi_bcast_parameter . */
-void grid_changed_box_l();
-
-/** Calculates the smallest box and local box dimensions for periodic
- * directions.  This is needed to check if the interaction ranges are
- * compatible with the box dimensions and the node grid.
- * Remark: In the aperiodic case min_box_l is set to
- * 2 * \ref MAX_INTERACTION_RANGE . */
-void calc_minimal_box_dimensions();
+void grid_changed_box_l(const BoxGeometry &box);
 
 /** rescales the box in dimension 'dir' to the new value 'd_new', and rescales
  * the particles accordingly */
@@ -219,5 +177,16 @@ inline Utils::Vector3d unfolded_position(const Utils::Vector3d &pos,
   return pos + image_shift(image_box, box);
 }
 
+/**
+ * @brief Composition of the simulation box into equal parts for each node.
+ *
+ * @param box Geometry of the simulation box
+ * @param node_pos Position of node in the node grid
+ * @param node_grid Nodes in each direction
+ * @return Geometry for the node
+ */
+LocalBox<double> regular_decomposition(const BoxGeometry &box,
+                                       Utils::Vector3i const &node_pos,
+                                       Utils::Vector3i const &node_grid);
 /*@}*/
 #endif

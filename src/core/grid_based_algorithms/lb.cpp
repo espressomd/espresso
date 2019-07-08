@@ -187,7 +187,8 @@ void lb_init() {
 
   try {
     lblattice = Lattice(lbpar.agrid, 0.5 /*offset*/, 1 /*halo size*/,
-                        local_box_l, my_right, box_geo.length(), node_grid);
+                        local_geo.length(), local_geo.my_right(),
+                        box_geo.length(), calc_node_pos(comm_cart), node_grid);
   } catch (const std::runtime_error &e) {
     runtimeErrorMsg() << e.what();
     return;
@@ -292,8 +293,10 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   double *buffer = nullptr, *sbuf = nullptr, *rbuf = nullptr;
   MPI_Status status;
 
-  int yperiod = lblattice.halo_grid[0];
-  int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
+  auto const yperiod = lblattice.halo_grid[0];
+  auto const zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
+
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
 
   /***************
    * X direction *
@@ -1051,6 +1054,8 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
 
   r_buffer = (double *)Utils::malloc(count * sizeof(double));
   s_buffer = (double *)Utils::malloc(count * sizeof(double));
+
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
 
   if (box_geo.periodic(0)) {
     for (z = 0; z < lblattice.halo_grid[2]; ++z) {
