@@ -2,19 +2,14 @@
 #define ESPRESSO_P3M_HALO_HPP
 
 #include <utils/Span.hpp>
+#include <utils/index.hpp>
 
 #include <boost/mpi/communicator.hpp>
 
-#include <utils/index.hpp>
 #include <vector>
 
 /** Structure for send/recv meshes. */
-struct halo_comm {
-  halo_comm() = default;
-  halo_comm(const boost::mpi::communicator &comm,
-  const Utils::Vector3i &dim,
-  const Utils::Array<int, 6> &margin);
-
+class halo_comm {
   /** dimensions of the mesh */
   int dim[3];
   /** dimension of sub meshes to send. */
@@ -43,28 +38,36 @@ struct halo_comm {
   mutable std::vector<double> send_buffer;
   /** vector to store grid points to recv */
   mutable std::vector<double> recv_buffer;
+
+
+public:
+  halo_comm() = default;
+  /**
+   * @param comm Valid cartesian communicator
+   * @param dim Local grid dimenstions including halo.
+   * @param margin Size of the halo in each of the face directions.
+   */
+  halo_comm(const boost::mpi::communicator &comm, const Utils::Vector3i &dim,
+            const Utils::Array<int, 6> &margin);
+
+  /**
+   * @brief Overwrite halo regions with their original images.
+   * @param data The mesh data
+   * @param memory_order row- or coulumn-major
+   */
+  void spread(double *data, Utils::MemoryOrder memory_order) const {
+    spread(Utils::make_const_span(&data, 1), memory_order);
+  }
+  void spread(Utils::Span<double *const> data,
+              Utils::MemoryOrder memory_order) const;
+
+  /**
+   * @brief Add halo regions to their original images.
+   * @param data The mesh data
+   * @param memory_order row- or coulumn-major
+   */
+  void gather(double *data, Utils::MemoryOrder memory_order) const;
+  void gather(Utils::Span<double *const> data,
+              Utils::MemoryOrder memory_order) const;
 };
-
-/**
- * @brief Add halo regions to their original images.
- * @param data The mesh data
- * @param send_mesh Halo plan
- */
-void p3m_gather_halo(double *data, const halo_comm &send_mesh,
-                     Utils::MemoryOrder memory_order);
-void p3m_gather_halo(Utils::Span<double *const> data,
-                     const halo_comm &send_mesh,
-                     Utils::MemoryOrder memory_order);
-
-/**
- * @brief Overwrite halo regions with their original images.
- * @param data The mesh data
- * @param send_mesh Halo plan
- */
-void p3m_spread_halo(double *data, const halo_comm &send_mesh,
-                     Utils::MemoryOrder memory_order);
-void p3m_spread_halo(Utils::Span<double *const> data,
-                     const halo_comm &send_mesh,
-                     Utils::MemoryOrder memory_order);
-
 #endif // ESPRESSO_P3M_HALO_HPP

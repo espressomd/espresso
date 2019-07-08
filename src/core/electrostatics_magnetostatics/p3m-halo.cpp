@@ -6,8 +6,8 @@
 #include <boost/range/numeric.hpp>
 
 halo_comm::halo_comm(const boost::mpi::communicator &comm_,
-                         const Utils::Vector3i &dim_,
-                         const Utils::Array<int, 6> &margin) {
+                     const Utils::Vector3i &dim_,
+                     const Utils::Array<int, 6> &margin) {
   comm = comm_;
 
   int done[3] = {0, 0, 0};
@@ -58,10 +58,8 @@ halo_comm::halo_comm(const boost::mpi::communicator &comm_,
       if (j == i) {
         r_ld[i * 2][j] = s_ld[i * 2][j] + margin[2 * j];
         r_ur[i * 2][j] = s_ur[i * 2][j] + r_margin[2 * j];
-        r_ld[(i * 2) + 1][j] =
-            s_ld[(i * 2) + 1][j] - r_margin[(2 * j) + 1];
-        r_ur[(i * 2) + 1][j] =
-            s_ur[(i * 2) + 1][j] - margin[(2 * j) + 1];
+        r_ld[(i * 2) + 1][j] = s_ld[(i * 2) + 1][j] - r_margin[(2 * j) + 1];
+        r_ur[(i * 2) + 1][j] = s_ur[(i * 2) + 1][j] - margin[(2 * j) + 1];
       } else {
         r_ld[i * 2][j] = s_ld[i * 2][j];
         r_ur[i * 2][j] = s_ur[i * 2][j];
@@ -80,110 +78,92 @@ halo_comm::halo_comm(const boost::mpi::communicator &comm_,
   }
 }
 
-void p3m_gather_halo(Utils::Span<double *const> data,
-                     const halo_comm &send_mesh,
-                     Utils::MemoryOrder memory_order) {
-  auto const node_neighbors =
-      Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
+void halo_comm::gather(Utils::Span<double *const> data,
+                       Utils::MemoryOrder memory_order) const {
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm);
 
-  auto const buf_size = send_mesh.max * data.size();
-  send_mesh.send_buffer.resize(buf_size);
-  send_mesh.recv_buffer.resize(buf_size);
+  auto const buf_size = max * data.size();
+  send_buffer.resize(buf_size);
+  recv_buffer.resize(buf_size);
 
   /* direction loop */
   for (int s_dir = 0; s_dir < 6; s_dir++) {
     auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
 
     /* pack send block */
-    if (send_mesh.s_size[s_dir] > 0) {
-      boost::accumulate(data, send_mesh.send_buffer.data(),
+    if (s_size[s_dir] > 0) {
+      boost::accumulate(data, send_buffer.data(),
                         [&](double *send_buf, double const *in_buf) {
-                          return pack_block(in_buf, send_buf,
-                                            send_mesh.s_ld[s_dir],
-                                            send_mesh.s_dim[s_dir],
-                                            send_mesh.dim, 1, memory_order);
+                          return pack_block(in_buf, send_buf, s_ld[s_dir],
+                                            s_dim[s_dir], dim, 1, memory_order);
                         });
     }
 
     /* communication */
-    if (node_neighbors[s_dir] != send_mesh.comm.rank()) {
-      MPI_Sendrecv(
-          send_mesh.send_buffer.data(), data.size() * send_mesh.s_size[s_dir],
-          MPI_DOUBLE, node_neighbors[s_dir], 201, send_mesh.recv_buffer.data(),
-          data.size() * send_mesh.r_size[r_dir], MPI_DOUBLE,
-          node_neighbors[r_dir], 201, send_mesh.comm, MPI_STATUS_IGNORE);
+    if (node_neighbors[s_dir] != comm.rank()) {
+      MPI_Sendrecv(send_buffer.data(), data.size() * s_size[s_dir], MPI_DOUBLE,
+                   node_neighbors[s_dir], 201, recv_buffer.data(),
+                   data.size() * r_size[r_dir], MPI_DOUBLE,
+                   node_neighbors[r_dir], 201, comm, MPI_STATUS_IGNORE);
     } else {
-      std::swap(send_mesh.send_buffer, send_mesh.recv_buffer);
+      std::swap(send_buffer, recv_buffer);
     }
 
     /* add recv blocks */
-    if (send_mesh.r_size[r_dir] > 0) {
-      boost::accumulate(
-          data, static_cast<const double *>(send_mesh.recv_buffer.data()),
-          [&](const double *recv_buf, double *out_buf) {
-            return unpack_block(recv_buf, out_buf, send_mesh.r_ld[r_dir],
-                                send_mesh.r_dim[r_dir], send_mesh.dim, 1,
-                                memory_order, std::plus<>());
-          });
+    if (r_size[r_dir] > 0) {
+      boost::accumulate(data, static_cast<const double *>(recv_buffer.data()),
+                        [&](const double *recv_buf, double *out_buf) {
+                          return unpack_block(recv_buf, out_buf, r_ld[r_dir],
+                                              r_dim[r_dir], dim, 1,
+                                              memory_order, std::plus<>());
+                        });
     }
   }
 }
 
-void p3m_gather_halo(double *data, const halo_comm &send_mesh,
-                     Utils::MemoryOrder memory_order) {
-  p3m_gather_halo(Utils::make_const_span(&data, 1), send_mesh, memory_order);
+void halo_comm::gather(double *data, Utils::MemoryOrder memory_order) const {
+  gather(Utils::make_const_span(&data, 1), memory_order);
 }
 
-void p3m_spread_halo(Utils::Span<double *const> data,
-                     const halo_comm &send_mesh,
-                     Utils::MemoryOrder memory_order) {
-  auto const node_neighbors =
-      Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
+void halo_comm::spread(Utils::Span<double *const> data,
+                       Utils::MemoryOrder memory_order) const {
+  auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm);
 
   /* Make sure the buffers are large enough */
-  auto const buf_size = send_mesh.max * data.size();
-  send_mesh.send_buffer.resize(buf_size);
-  send_mesh.recv_buffer.resize(buf_size);
+  auto const buf_size = max * data.size();
+  send_buffer.resize(buf_size);
+  recv_buffer.resize(buf_size);
 
   /* direction loop */
   for (int s_dir = 5; s_dir >= 0; s_dir--) {
     auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
 
     /* pack send block */
-    if (send_mesh.s_size[s_dir] > 0) {
-      boost::accumulate(data, send_mesh.send_buffer.data(),
+    if (s_size[s_dir] > 0) {
+      boost::accumulate(data, send_buffer.data(),
                         [&](double *send_buf, const double *in_buf) {
-                          return pack_block(in_buf, send_buf,
-                                            send_mesh.r_ld[r_dir],
-                                            send_mesh.r_dim[r_dir],
-                                            send_mesh.dim, 1, memory_order);
+                          return pack_block(in_buf, send_buf, r_ld[r_dir],
+                                            r_dim[r_dir], dim, 1, memory_order);
                         });
     }
 
     /* communication */
-    if (node_neighbors[r_dir] != send_mesh.comm.rank()) {
-      MPI_Sendrecv(
-          send_mesh.send_buffer.data(), data.size() * send_mesh.r_size[r_dir],
-          MPI_DOUBLE, node_neighbors[r_dir], 202, send_mesh.recv_buffer.data(),
-          data.size() * send_mesh.s_size[s_dir], MPI_DOUBLE,
-          node_neighbors[s_dir], 202, send_mesh.comm, MPI_STATUS_IGNORE);
+    if (node_neighbors[r_dir] != comm.rank()) {
+      MPI_Sendrecv(send_buffer.data(), data.size() * r_size[r_dir], MPI_DOUBLE,
+                   node_neighbors[r_dir], 202, recv_buffer.data(),
+                   data.size() * s_size[s_dir], MPI_DOUBLE,
+                   node_neighbors[s_dir], 202, comm, MPI_STATUS_IGNORE);
     } else {
-      std::swap(send_mesh.recv_buffer, send_mesh.send_buffer);
+      std::swap(recv_buffer, send_buffer);
     }
     /* un pack recv block */
-    if (send_mesh.s_size[s_dir] > 0) {
-      boost::accumulate(
-          data, static_cast<const double *>(send_mesh.recv_buffer.data()),
-          [&](const double *recv_buf, double *out_buf) {
-            return unpack_block(recv_buf, out_buf, send_mesh.s_ld[s_dir],
-                                send_mesh.s_dim[s_dir], send_mesh.dim, 1,
-                                memory_order);
-          });
+    if (s_size[s_dir] > 0) {
+      boost::accumulate(data, static_cast<const double *>(recv_buffer.data()),
+                        [&](const double *recv_buf, double *out_buf) {
+                          return unpack_block(recv_buf, out_buf, s_ld[s_dir],
+                                              s_dim[s_dir], dim, 1,
+                                              memory_order);
+                        });
     }
   }
-}
-
-void p3m_spread_halo(double *data, const halo_comm &send_mesh,
-                     Utils::MemoryOrder memory_order) {
-  p3m_spread_halo(Utils::make_const_span(&data, 1), send_mesh, memory_order);
 }

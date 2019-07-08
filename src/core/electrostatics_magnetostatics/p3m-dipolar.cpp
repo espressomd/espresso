@@ -764,7 +764,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
   if (dp3m.sum_mu2 > 0) {
     /* Gather information for FFT grid inside the nodes domain (inner local
      * mesh) and Perform forward 3D FFT (Charge Assignment Mesh). */
-    p3m_gather_halo(dp3m.rs_mesh_dip, dp3m.sm, Utils::MemoryOrder::ROW_MAJOR);
+    dp3m.sm.gather(dp3m.rs_mesh_dip, Utils::MemoryOrder::ROW_MAJOR);
 
     fft_perform_forw(dp3m.rs_mesh_dip[0], dp3m.fft, comm_cart);
     fft_perform_forw(dp3m.rs_mesh_dip[1], dp3m.fft, comm_cart);
@@ -918,7 +918,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         /* Back FFT force component mesh */
         fft_perform_back(dp3m.rs_mesh, false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
-        p3m_spread_halo(dp3m.rs_mesh, dp3m.sm,Utils::MemoryOrder::ROW_MAJOR);
+        dp3m.sm.spread(dp3m.rs_mesh, Utils::MemoryOrder::ROW_MAJOR);
         /* Assign force component from mesh to particle */
         P3M_assign_torques(
             dipole_prefac * (2 * Utils::pi() / box_geo.length()[0]), d_rs);
@@ -1002,7 +1002,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         fft_perform_back(dp3m.rs_mesh_dip[1], false, dp3m.fft, comm_cart);
         fft_perform_back(dp3m.rs_mesh_dip[2], false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
-        p3m_spread_halo(dp3m.rs_mesh_dip, dp3m.sm,
+          dp3m.sm.spread(dp3m.rs_mesh_dip,
                         Utils::MemoryOrder::ROW_MAJOR);
 
         /* Assign force component from mesh to particle */
