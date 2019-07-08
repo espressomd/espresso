@@ -102,7 +102,8 @@ void p3m_gather_halo(Utils::Span<double *const> data,
                         [&](double *send_buf, double const *in_buf) {
                           return pack_block(
                               in_buf, send_buf, send_mesh.s_ld[s_dir],
-                              send_mesh.s_dim[s_dir], send_mesh.dim, 1);
+                              send_mesh.s_dim[s_dir], send_mesh.dim, 1,
+                              Utils::MemoryOrder::ROW_MAJOR);
                         });
     }
 
@@ -124,7 +125,7 @@ void p3m_gather_halo(Utils::Span<double *const> data,
           [&](const double *recv_buf, double *out_buf) {
             return unpack_block(recv_buf, out_buf, send_mesh.r_ld[r_dir],
                                 send_mesh.r_dim[r_dir], send_mesh.dim, 1,
-                                std::plus<>());
+                                Utils::MemoryOrder::ROW_MAJOR, std::plus<>());
           });
     }
   }
@@ -154,7 +155,8 @@ void p3m_spread_halo(Utils::Span<double *const> data,
                         [&](double *send_buf, const double *in_buf) {
                           return pack_block(
                               in_buf, send_buf, send_mesh.r_ld[r_dir],
-                              send_mesh.r_dim[r_dir], send_mesh.dim, 1);
+                              send_mesh.r_dim[r_dir], send_mesh.dim, 1,
+                              Utils::MemoryOrder::ROW_MAJOR);
                         });
     }
 
@@ -174,7 +176,8 @@ void p3m_spread_halo(Utils::Span<double *const> data,
           data, static_cast<const double *>(send_mesh.recv_buffer.data()),
           [&](const double *recv_buf, double *out_buf) {
             return unpack_block(recv_buf, out_buf, send_mesh.s_ld[s_dir],
-                                send_mesh.s_dim[s_dir], send_mesh.dim, 1);
+                                send_mesh.s_dim[s_dir], send_mesh.dim, 1,
+                                Utils::MemoryOrder::ROW_MAJOR);
           });
     }
   }

@@ -387,7 +387,8 @@ void forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
       std::swap(fft.send_buf, fft.recv_buf);
     }
     unpack_block(fft.recv_buf, out, &(plan.recv_block[6 * i]),
-                 &(plan.recv_block[6 * i + 3]), plan.new_mesh, plan.element);
+                 &(plan.recv_block[6 * i + 3]), plan.new_mesh, plan.element,
+                 Utils::MemoryOrder::ROW_MAJOR);
   }
 }
 
@@ -421,7 +422,7 @@ void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
     }
     unpack_block(fft.recv_buf, out, &(plan_f.send_block[6 * i]),
                  &(plan_f.send_block[6 * i + 3]), plan_f.old_mesh,
-                 plan_f.element);
+                 plan_f.element, Utils::MemoryOrder::ROW_MAJOR);
   }
 }
 
@@ -651,7 +652,9 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   }
   (*ks_pnum) = 6;
   if (fft.plan[1].row_dir == 2) {
-    fft.plan[1].pack_function = [](auto... args) { pack_block(args...); };
+    fft.plan[1].pack_function = [](auto... args) {
+      pack_block(args..., Utils::MemoryOrder::ROW_MAJOR);
+    };
     (*ks_pnum) = 4;
   } else if (fft.plan[1].row_dir == 1) {
     fft.plan[1].pack_function = pack_block_permute1;
@@ -705,7 +708,9 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     fft.back[i].pack_function = pack_block_permute1;
   }
   if (fft.plan[1].row_dir == 2) {
-    fft.back[1].pack_function = [](auto... args) { pack_block(args...); };
+    fft.back[1].pack_function = [](auto... args) {
+      pack_block(args..., Utils::MemoryOrder::ROW_MAJOR);
+    };
   } else if (fft.plan[1].row_dir == 1) {
     fft.back[1].pack_function = pack_block_permute2;
   }
