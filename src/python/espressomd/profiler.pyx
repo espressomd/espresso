@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 cimport core.c_profiler as c_profiler
 
 
