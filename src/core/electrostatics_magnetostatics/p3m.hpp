@@ -117,7 +117,7 @@ struct p3m_data_struct {
   int ks_pnum;
 
   /** send/recv mesh sizes */
-  halo_comm sm;
+  HaloComm sm;
 
   fft_data_struct fft;
 };

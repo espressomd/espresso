@@ -5,7 +5,7 @@
 
 #include <boost/range/numeric.hpp>
 
-halo_comm::halo_comm(const boost::mpi::communicator &comm_,
+HaloComm::HaloComm(const boost::mpi::communicator &comm_,
                      const Utils::Vector3i &dim_,
                      const Utils::Array<int, 6> &margin) {
   comm = comm_;
@@ -78,7 +78,7 @@ halo_comm::halo_comm(const boost::mpi::communicator &comm_,
   }
 }
 
-void halo_comm::gather(Utils::Span<double *const> data,
+void HaloComm::gather(Utils::Span<double *const> data,
                        Utils::MemoryOrder memory_order) const {
   auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm);
 
@@ -121,11 +121,11 @@ void halo_comm::gather(Utils::Span<double *const> data,
   }
 }
 
-void halo_comm::gather(double *data, Utils::MemoryOrder memory_order) const {
+void HaloComm::gather(double *data, Utils::MemoryOrder memory_order) const {
   gather(Utils::make_const_span(&data, 1), memory_order);
 }
 
-void halo_comm::spread(Utils::Span<double *const> data,
+void HaloComm::spread(Utils::Span<double *const> data,
                        Utils::MemoryOrder memory_order) const {
   auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm);
 

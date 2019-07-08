@@ -9,7 +9,7 @@
 #include <vector>
 
 /** Structure for send/recv meshes. */
-class halo_comm {
+class HaloComm {
   /** dimensions of the mesh */
   int dim[3];
   /** dimension of sub meshes to send. */
@@ -41,19 +41,19 @@ class halo_comm {
 
 
 public:
-  halo_comm() = default;
+  HaloComm() = default;
   /**
    * @param comm Valid cartesian communicator
-   * @param dim Local grid dimenstions including halo.
+   * @param dim Local grid dimensions including halo.
    * @param margin Size of the halo in each of the face directions.
    */
-  halo_comm(const boost::mpi::communicator &comm, const Utils::Vector3i &dim,
+  HaloComm(const boost::mpi::communicator &comm, const Utils::Vector3i &dim,
             const Utils::Array<int, 6> &margin);
 
   /**
    * @brief Overwrite halo regions with their original images.
    * @param data The mesh data
-   * @param memory_order row- or coulumn-major
+   * @param memory_order row- or column-major
    */
   void spread(double *data, Utils::MemoryOrder memory_order) const {
     spread(Utils::make_const_span(&data, 1), memory_order);
@@ -64,7 +64,7 @@ public:
   /**
    * @brief Add halo regions to their original images.
    * @param data The mesh data
-   * @param memory_order row- or coulumn-major
+   * @param memory_order row- or column-major
    */
   void gather(double *data, Utils::MemoryOrder memory_order) const;
   void gather(Utils::Span<double *const> data,

@@ -2005,7 +2005,7 @@ bool p3m_sanity_checks() {
 }
 
 void p3m_calc_send_mesh() {
-  p3m.sm = halo_comm(comm_cart, p3m.local_mesh.dim, p3m.local_mesh.margin);
+  p3m.sm = HaloComm(comm_cart, p3m.local_mesh.dim, p3m.local_mesh.margin);
 }
 
 void p3m_scaleby_box_l() {

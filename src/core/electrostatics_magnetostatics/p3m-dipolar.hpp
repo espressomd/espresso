@@ -94,7 +94,7 @@ struct dp3m_data_struct {
   int ks_pnum;
 
   /** send/recv mesh sizes */
-  halo_comm sm;
+  HaloComm sm;
 
   /* Stores the value of the energy correction due to MS effects */
   double energy_correction;
