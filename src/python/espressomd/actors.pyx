@@ -4,6 +4,13 @@ from .highlander import ThereCanOnlyBeOne
 from .utils import handle_errors
 
 cdef class Actor(object):
+
+    """
+    Abstract base class for interactions affecting particles in the system,
+    such as electrostatics, magnetostatics or LB fluids. Derived classes must
+    implement the interface to the relevant core objects and global variables.
+    """
+
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
                        MagnetostaticInteraction=False,
@@ -57,11 +64,14 @@ cdef class Actor(object):
         if inter in Actor.active_list:
             if not Actor.active_list[inter]:
                 raise Exception(
-                    "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
+                    "Class not registered in Actor.active_list " + self.__class__.__bases__[0])
             Actor.active_list[inter] = False
 
     def is_valid(self):
-        """Check, if the data stored in the instance still matches what is in Espresso"""
+        """
+        Check if the data stored in this instance still matches the
+        corresponding data in the core.
+        """
         temp_params = self._get_params_from_es_core()
         if self._params != temp_params:
             return False
@@ -71,8 +81,8 @@ cdef class Actor(object):
 
     def get_params(self):
         """Get interaction parameters"""
-        # If this instance refers to an actual interaction defined in the es core, load
-        # current parameters from there
+        # If this instance refers to an actual interaction defined in the es
+        # core, load current parameters from there
         if self.is_active():
             update = self._get_params_from_es_core()
             self._params.update(update)
@@ -80,7 +90,7 @@ cdef class Actor(object):
 
     def set_params(self, **p):
         """Update the given parameters."""
-        # Check, if any key was passed, which is not known
+        # Check if keys are valid
         for k in p.keys():
             if k not in self.valid_keys():
                 raise ValueError(
@@ -161,6 +171,11 @@ cdef class Actor(object):
 
 
 class Actors(object):
+
+    """
+    Container for :class:`Actor` objects.
+    """
+
     active_actors = []
 
     def __getstate__(self):
@@ -176,7 +191,8 @@ class Actors(object):
         """
         Parameters
         ----------
-        actor : instance of :class:`espressomd.actors.Actor`
+        actor : :class:`Actor`
+            Actor to add to this container.
 
         """
         if not actor in Actors.active_actors:
@@ -189,7 +205,8 @@ class Actors(object):
         """
         Parameters
         ----------
-        actor : instance of :class:`espressomd.actors.Actor`
+        actor : :class:`Actor`
+            Actor to remove from this container.
 
         """
         if not actor in self.active_actors:
@@ -198,10 +215,7 @@ class Actors(object):
         self.active_actors.remove(actor)
 
     def clear(self):
-        """
-        Remove all actors.
-
-        """
+        """Remove all actors."""
         for a in self.active_actors:
             self.remove(a)
 
