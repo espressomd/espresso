@@ -2,6 +2,7 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .interactions cimport bonded_ia_params
 from core.partCfg_global cimport partCfg
+from core.diamond cimport create_diamond
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
 
