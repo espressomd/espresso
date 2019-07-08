@@ -36,9 +36,11 @@ from core.coulomb cimport coulomb, deactivate_method, set_prefactor, COULOMB_DH,
 from core.communication cimport mpi_bcast_coulomb_params
 cimport core.utils
 from .particle_data cimport particle
+IF ELECTROSTATICS:
+    from core.p3m cimport p3m, p3m_set_eps, p3m_set_ninterpol
 
 
-IF ELECTROSTATICS == 1:
+IF ELECTROSTATICS:
     def check_neutrality(_params):
         if "check_neutrality" in _params:
             if(_params["check_neutrality"]):

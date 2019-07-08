@@ -20,49 +20,18 @@
 
 from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from espressomd.system cimport *
 cimport numpy as np
+from libcpp cimport bool
+
 from core.SystemInterface cimport SystemInterface
-from espressomd.utils cimport *
 from espressomd.utils import is_valid_type, to_str
+from espressomd.utils cimport handle_errors
+from core.p3m_common cimport P3MParameters
+from core.p3m cimport p3m_set_mesh_offset, p3m_adaptive_tune, p3m_set_params, p3m_set_tune_params
 
 
 IF ELECTROSTATICS:
     IF P3M:
-        from p3m_common cimport P3MParameters
-        cdef extern from "electrostatics_magnetostatics/p3m-common.hpp":
-            ctypedef struct P3MParameters:
-                double alpha_L
-                double r_cut_iL
-                int    mesh[3]
-                double mesh_off[3]
-                int    cao
-                int    inter
-                double accuracy
-                double epsilon
-                double cao_cut[3]
-                double a[3]
-                double ai[3]
-                double alpha
-                double r_cut
-                int    inter2
-                int    cao3
-                double additional_mesh[3]
-
-        cdef extern from "electrostatics_magnetostatics/p3m.hpp":
-            int p3m_set_params(double r_cut, int * mesh, int cao, double alpha, double accuracy)
-            void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha, double accuracy, int n_interpol)
-            int p3m_set_mesh_offset(double x, double y, double z)
-            int p3m_set_eps(double eps)
-            int p3m_set_ninterpol(int n)
-            int p3m_adaptive_tune(char ** log)
-
-            ctypedef struct p3m_data_struct:
-                P3MParameters params
-
-            # links intern C-struct with python object
-            cdef extern p3m_data_struct p3m
-
         IF CUDA:
             cdef extern from "electrostatics_magnetostatics/p3m_gpu.hpp":
                 void p3m_gpu_init(int cao, int * mesh, double alpha)
