@@ -19,7 +19,7 @@ class HaloComm {
   /** up right corners of sub meshes to send. */
   int s_ur[6][3];
   /** sizes for send buffers. */
-  int s_size[6];
+  int s_size[6] = {};
   /** dimension of sub meshes to recv. */
   int r_dim[6][3];
   /** left down corners of sub meshes to recv. */
@@ -27,9 +27,9 @@ class HaloComm {
   /** up right corners of sub meshes to recv. */
   int r_ur[6][3];
   /** sizes for recv buffers. */
-  int r_size[6];
+  int r_size[6] = {};
   /** maximal size for send/recv buffers. */
-  int max;
+  int max = 0;
 
   /** MPI communicator for this halo comm */
   boost::mpi::communicator comm;

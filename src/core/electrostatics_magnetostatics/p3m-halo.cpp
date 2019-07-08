@@ -139,7 +139,7 @@ void HaloComm::spread(Utils::Span<double *const> data,
     auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
 
     /* pack send block */
-    if (s_size[s_dir] > 0) {
+    if (r_size[s_dir] > 0) {
       boost::accumulate(data, send_buffer.data(),
                         [&](double *send_buf, const double *in_buf) {
                           return pack_block(in_buf, send_buf, r_ld[r_dir],
