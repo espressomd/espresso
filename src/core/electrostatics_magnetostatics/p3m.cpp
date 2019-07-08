@@ -698,7 +698,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
    */
   /* and Perform forward 3D FFT (Charge Assignment Mesh). */
   if (p3m.sum_q2 > 0) {
-    p3m_gather_halo(p3m.rs_mesh, p3m.sm);
+    p3m_gather_halo(p3m.rs_mesh, p3m.sm,Utils::MemoryOrder::ROW_MAJOR);
     fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
   }
   // Note: after these calls, the grids are in the order yzx and not xyz
@@ -786,7 +786,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
       fft_perform_back(p3m.rs_mesh, /* check_complex */ !p3m.params.tuning,
                        p3m.fft, comm_cart);
       /* redistribute force component mesh */
-      p3m_spread_halo(p3m.rs_mesh, p3m.sm);
+      p3m_spread_halo(p3m.rs_mesh, p3m.sm, Utils::MemoryOrder::ROW_MAJOR);
       /* Assign force component from mesh to particle */
       switch (p3m.params.cao) {
       case 1:
@@ -2046,7 +2046,7 @@ void p3m_calc_kspace_stress(double *stress) {
       k_space_stress[i] = 0.0;
     }
 
-    p3m_gather_halo(p3m.rs_mesh, p3m.sm);
+    p3m_gather_halo(p3m.rs_mesh, p3m.sm,Utils::MemoryOrder::ROW_MAJOR);
     fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
     force_prefac =
         coulomb.prefactor /

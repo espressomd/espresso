@@ -84,7 +84,8 @@ p3m_halo_comm calc_send_mesh(const boost::mpi::communicator &comm,
 }
 
 void p3m_gather_halo(Utils::Span<double *const> data,
-                     const p3m_halo_comm &send_mesh) {
+                     const p3m_halo_comm &send_mesh,
+                     Utils::MemoryOrder memory_order) {
   auto const node_neighbors =
       Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
 
@@ -102,8 +103,7 @@ void p3m_gather_halo(Utils::Span<double *const> data,
                         [&](double *send_buf, double const *in_buf) {
                           return pack_block(
                               in_buf, send_buf, send_mesh.s_ld[s_dir],
-                              send_mesh.s_dim[s_dir], send_mesh.dim, 1,
-                              Utils::MemoryOrder::ROW_MAJOR);
+                              send_mesh.s_dim[s_dir], send_mesh.dim, 1, memory_order);
                         });
     }
 
@@ -125,18 +125,21 @@ void p3m_gather_halo(Utils::Span<double *const> data,
           [&](const double *recv_buf, double *out_buf) {
             return unpack_block(recv_buf, out_buf, send_mesh.r_ld[r_dir],
                                 send_mesh.r_dim[r_dir], send_mesh.dim, 1,
-                                Utils::MemoryOrder::ROW_MAJOR, std::plus<>());
+                                memory_order, std::plus<>());
           });
     }
   }
 }
 
-void p3m_gather_halo(double *data, const p3m_halo_comm &send_mesh) {
-  p3m_gather_halo(Utils::make_const_span(&data, 1), send_mesh);
+void p3m_gather_halo(double *data, const p3m_halo_comm &send_mesh,
+                     Utils::MemoryOrder memory_order) {
+  p3m_gather_halo(Utils::make_const_span(&data, 1), send_mesh,
+                  memory_order);
 }
 
 void p3m_spread_halo(Utils::Span<double *const> data,
-                     const p3m_halo_comm &send_mesh) {
+                     const p3m_halo_comm &send_mesh,
+                     Utils::MemoryOrder memory_order) {
   auto const node_neighbors =
       Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
 
@@ -153,10 +156,10 @@ void p3m_spread_halo(Utils::Span<double *const> data,
     if (send_mesh.s_size[s_dir] > 0) {
       boost::accumulate(data, send_mesh.send_buffer.data(),
                         [&](double *send_buf, const double *in_buf) {
-                          return pack_block(
-                              in_buf, send_buf, send_mesh.r_ld[r_dir],
-                              send_mesh.r_dim[r_dir], send_mesh.dim, 1,
-                              Utils::MemoryOrder::ROW_MAJOR);
+                          return pack_block(in_buf, send_buf,
+                                            send_mesh.r_ld[r_dir],
+                                            send_mesh.r_dim[r_dir],
+                                            send_mesh.dim, 1, memory_order);
                         });
     }
 
@@ -177,12 +180,14 @@ void p3m_spread_halo(Utils::Span<double *const> data,
           [&](const double *recv_buf, double *out_buf) {
             return unpack_block(recv_buf, out_buf, send_mesh.s_ld[s_dir],
                                 send_mesh.s_dim[s_dir], send_mesh.dim, 1,
-                                Utils::MemoryOrder::ROW_MAJOR);
+                                memory_order);
           });
     }
   }
 }
 
-void p3m_spread_halo(double *data, const p3m_halo_comm &send_mesh) {
-  p3m_spread_halo(Utils::make_const_span(&data, 1), send_mesh);
+void p3m_spread_halo(double *data, const p3m_halo_comm &send_mesh,
+                     Utils::MemoryOrder memory_order) {
+  p3m_spread_halo(Utils::make_const_span(&data, 1), send_mesh,
+                  memory_order);
 }
