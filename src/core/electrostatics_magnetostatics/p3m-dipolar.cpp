@@ -287,10 +287,10 @@ void dp3m_init() {
     P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node,
                       (void *)dp3m.rs_mesh));
 
-    int ca_mesh_size =
-        fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim.data(), dp3m.local_mesh.margin.data(),
-                 dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
-                 dp3m.fft, node_grid, comm_cart);
+    int ca_mesh_size = fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim.data(),
+                                dp3m.local_mesh.margin.data(), dp3m.params.mesh,
+                                dp3m.params.mesh_off, &dp3m.ks_pnum, dp3m.fft,
+                                node_grid, comm_cart);
     dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
 
     for (n = 0; n < 3; n++)
@@ -555,6 +555,11 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
   int q_ind = 0;
   double cur_ca_frac_val, *cur_ca_frac;
 
+  /* Distances between rows for the first two dimensions */
+  auto const q_2_off = dp3m.local_mesh.dim[2] - dp3m.params.cao;
+  auto const q_21_off =
+      dp3m.local_mesh.dim[2] * (dp3m.local_mesh.dim[1] - dp3m.params.cao);
+
   // make sure we have enough space
   if (cp_cnt >= dp3m.ca_num)
     dp3m_realloc_ca_fields(cp_cnt + 1);
@@ -593,9 +598,9 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
           }
           q_ind++;
         }
-        q_ind += dp3m.local_mesh.q_2_off;
+        q_ind += q_2_off;
       }
-      q_ind += dp3m.local_mesh.q_21_off;
+      q_ind += q_21_off;
     }
   } else {
     /* particle position in mesh coordinates */
@@ -626,9 +631,9 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
           }
           q_ind++;
         }
-        q_ind += dp3m.local_mesh.q_2_off;
+        q_ind += q_2_off;
       }
-      q_ind += dp3m.local_mesh.q_21_off;
+      q_ind += q_21_off;
     }
   }
 }
@@ -1002,8 +1007,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag) {
         fft_perform_back(dp3m.rs_mesh_dip[1], false, dp3m.fft, comm_cart);
         fft_perform_back(dp3m.rs_mesh_dip[2], false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
-          dp3m.sm.spread(dp3m.rs_mesh_dip,
-                        Utils::MemoryOrder::ROW_MAJOR);
+        dp3m.sm.spread(dp3m.rs_mesh_dip, Utils::MemoryOrder::ROW_MAJOR);
 
         /* Assign force component from mesh to particle */
         dp3m_assign_forces_dip(
@@ -2161,8 +2165,7 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
 /*****************************************************************************/
 
 void dp3m_calc_send_mesh() {
-  dp3m.sm =
-      HaloComm(comm_cart, dp3m.local_mesh.dim, dp3m.local_mesh.margin);
+  dp3m.sm = HaloComm(comm_cart, dp3m.local_mesh.dim, dp3m.local_mesh.margin);
 }
 
 /************************************************/

@@ -255,10 +255,10 @@ void p3m_init() {
     p3m_calc_send_mesh();
 
     /* FFT */
-    int ca_mesh_size =
-        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim.data(), p3m.local_mesh.margin.data(),
-                 p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft,
-                 node_grid, comm_cart);
+    int ca_mesh_size = fft_init(&p3m.rs_mesh, p3m.local_mesh.dim.data(),
+                                p3m.local_mesh.margin.data(), p3m.params.mesh,
+                                p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft,
+                                node_grid, comm_cart);
     p3m.ks_mesh.resize(ca_mesh_size);
     /* k-space part: */
     p3m_calc_differential_operator();
@@ -494,6 +494,11 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
   double *cur_ca_frac = p3m.ca_frac.data() + cao * cao * cao * cp_cnt;
 #endif
 
+  /* Distances between rows for the first two dimensions */
+  auto const q_2_off = p3m.local_mesh.dim[2] - p3m.params.cao;
+  auto const q_21_off =
+      p3m.local_mesh.dim[2] * (p3m.local_mesh.dim[1] - p3m.params.cao);
+
   for (int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
     auto const pos =
@@ -547,9 +552,9 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
 #endif
           q_ind++;
         }
-        q_ind += p3m.local_mesh.q_2_off;
+        q_ind += q_2_off;
       }
-      q_ind += p3m.local_mesh.q_21_off;
+      q_ind += q_21_off;
     }
   } else {
     for (int i0 = 0; i0 < cao; i0++) {
@@ -566,9 +571,9 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
 #endif
           q_ind++;
         }
-        q_ind += p3m.local_mesh.q_2_off;
+        q_ind += q_2_off;
       }
-      q_ind += p3m.local_mesh.q_21_off;
+      q_ind += q_21_off;
     }
   }
 }
@@ -597,6 +602,11 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
   /* index, index jumps for rs_mesh array */
   int q_ind = 0;
 
+  /* Distances between rows for the first two dimensions */
+  auto const q_2_off = p3m.local_mesh.dim[2] - p3m.params.cao;
+  auto const q_21_off =
+      p3m.local_mesh.dim[2] * (p3m.local_mesh.dim[1] - p3m.params.cao);
+
   for (auto &p : local_cells.particles()) {
     auto const q = p.p.q;
     if (q != 0.0) {
@@ -610,9 +620,9 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
             q_ind++;
             cf_cnt++;
           }
-          q_ind += p3m.local_mesh.q_2_off;
+          q_ind += q_2_off;
         }
-        q_ind += p3m.local_mesh.q_21_off;
+        q_ind += q_21_off;
       }
       cp_cnt++;
 #else
@@ -648,9 +658,9 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
                   force_prefac * cur_ca_frac_val * p3m.rs_mesh[q_ind];
               q_ind++;
             }
-            q_ind += p3m.local_mesh.q_2_off;
+            q_ind += q_2_off;
           }
-          q_ind += p3m.local_mesh.q_21_off;
+          q_ind += q_21_off;
         }
       } else {
         for (int i0 = 0; i0 < cao; i0++) {
@@ -663,9 +673,9 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
                   force_prefac * cur_ca_frac_val * p3m.rs_mesh[q_ind];
               q_ind++;
             }
-            q_ind += p3m.local_mesh.q_2_off;
+            q_ind += q_2_off;
           }
-          q_ind += p3m.local_mesh.q_21_off;
+          q_ind += q_21_off;
         }
       }
 #endif

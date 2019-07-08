@@ -297,9 +297,6 @@ p3m_local_mesh calc_local_mesh(const P3MParameters &params,
   for (int i = 0; i < 3; i++)
     local_mesh.in_ur[i] = local_mesh.margin[i * 2] + local_mesh.inner[i];
 
-  local_mesh.q_2_off = local_mesh.dim[2] - params.cao;
-  local_mesh.q_21_off = local_mesh.dim[2] * (local_mesh.dim[1] - params.cao);
-
   return local_mesh;
 }
 

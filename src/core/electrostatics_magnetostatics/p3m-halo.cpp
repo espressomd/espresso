@@ -6,8 +6,8 @@
 #include <boost/range/numeric.hpp>
 
 HaloComm::HaloComm(const boost::mpi::communicator &comm_,
-                     const Utils::Vector3i &dim_,
-                     const Utils::Array<int, 6> &margin) {
+                   const Utils::Vector3i &dim_,
+                   const Utils::Array<int, 6> &margin) {
   comm = comm_;
 
   int done[3] = {0, 0, 0};
@@ -79,7 +79,7 @@ HaloComm::HaloComm(const boost::mpi::communicator &comm_,
 }
 
 void HaloComm::gather(Utils::Span<double *const> data,
-                       Utils::MemoryOrder memory_order) const {
+                      Utils::MemoryOrder memory_order) const {
   auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm);
 
   auto const buf_size = max * data.size();
@@ -126,7 +126,7 @@ void HaloComm::gather(double *data, Utils::MemoryOrder memory_order) const {
 }
 
 void HaloComm::spread(Utils::Span<double *const> data,
-                       Utils::MemoryOrder memory_order) const {
+                      Utils::MemoryOrder memory_order) const {
   auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm);
 
   /* Make sure the buffers are large enough */

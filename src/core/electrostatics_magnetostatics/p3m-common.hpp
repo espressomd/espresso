@@ -112,10 +112,6 @@ typedef struct {
   int in_ur[3];
   /** number of margin mesh points. */
   Utils::Array<int, 6> margin;
-  /** offset between mesh lines of the last dimension */
-  int q_2_off;
-  /** offset between mesh lines of the two last dimensions */
-  int q_21_off;
 } p3m_local_mesh;
 
 /** Structure to hold P3M parameters and some dependent variables. */

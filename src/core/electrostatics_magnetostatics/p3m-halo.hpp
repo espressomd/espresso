@@ -39,7 +39,6 @@ class HaloComm {
   /** vector to store grid points to recv */
   mutable std::vector<double> recv_buffer;
 
-
 public:
   HaloComm() = default;
   /**
@@ -48,7 +47,7 @@ public:
    * @param margin Size of the halo in each of the face directions.
    */
   HaloComm(const boost::mpi::communicator &comm, const Utils::Vector3i &dim,
-            const Utils::Array<int, 6> &margin);
+           const Utils::Array<int, 6> &margin);
 
   /**
    * @brief Overwrite halo regions with their original images.
