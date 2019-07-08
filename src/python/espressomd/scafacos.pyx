@@ -2,6 +2,7 @@
 
 
 from __future__ import print_function, absolute_import
+include "myconfig.pxi"
 from espressomd.actors cimport Actor
 from libcpp.string cimport string  # import std::string
 cimport electrostatics
@@ -9,9 +10,9 @@ cimport magnetostatics
 from espressomd.utils import to_char_pointer, to_str
 
 from espressomd.utils cimport handle_errors
+IF ELECTROSTATICS:
+    from core.coulomb cimport coulomb
 
-
-include "myconfig.pxi"
 
 # Interface to the scafacos library. These are the methods shared between
 # dipolar and electrostatics methods
@@ -89,7 +90,7 @@ IF SCAFACOS == 1:
                 pass
             else:
                 IF ELECTROSTATICS == 1:
-                    res["prefactor"] = electrostatics.coulomb.prefactor
+                    res["prefactor"] = coulomb.prefactor
                 pass
             return res
 
@@ -97,7 +98,7 @@ IF SCAFACOS == 1:
             # Verify that scafacos is not used for electrostatics and dipoles
             # at the same time
             IF ELECTROSTATICS == 1:
-                if self.dipolar and < int > electrostatics.coulomb.method == <int > electrostatics.COULOMB_SCAFACOS:
+                if self.dipolar and < int > coulomb.method == <int > coulomb.COULOMB_SCAFACOS:
                     raise Exception(
                         "Scafacos cannot be used for dipoles and charges at the same time")
 
