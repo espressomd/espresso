@@ -26,9 +26,10 @@ from libcpp cimport bool
 from core.SystemInterface cimport SystemInterface
 from espressomd.utils import is_valid_type, to_str
 from espressomd.utils cimport handle_errors
-from core.p3m_common cimport P3MParameters
-from core.p3m cimport p3m_set_mesh_offset, p3m_adaptive_tune, p3m_set_params, p3m_set_tune_params
-from core.mmm1d cimport MMM1D_init, MMM1D_sanity_checks, mmm1d_tune
+IF ELECTROSTATICS:
+    from core.p3m_common cimport P3MParameters
+    from core.p3m cimport p3m_set_mesh_offset, p3m_adaptive_tune, p3m_set_params, p3m_set_tune_params
+    from core.mmm1d cimport MMM1D_init, MMM1D_sanity_checks, mmm1d_tune
 
 
 IF ELECTROSTATICS:

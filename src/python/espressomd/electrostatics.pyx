@@ -32,11 +32,11 @@ from core.partCfg_global cimport partCfg
 from core.PartCfg cimport PartCfg
 from core.EspressoSystemInterface cimport EspressoSystemInterface
 from core.grid cimport box_geo
-from core.coulomb cimport coulomb, deactivate_method, set_prefactor, COULOMB_DH, COULOMB_RF, COULOMB_P3M_GPU, COULOMB_MMM1D, COULOMB_MMM1D_GPU, COULOMB_MMM2D
-from core.communication cimport mpi_bcast_coulomb_params
 cimport core.utils
 from .particle_data cimport particle
 IF ELECTROSTATICS:
+    from core.communication cimport mpi_bcast_coulomb_params
+    from core.coulomb cimport coulomb, deactivate_method, set_prefactor, COULOMB_DH, COULOMB_RF, COULOMB_P3M_GPU, COULOMB_MMM1D, COULOMB_MMM1D_GPU, COULOMB_MMM2D
     from core.p3m cimport p3m, p3m_set_eps, p3m_set_ninterpol
     from core.debye_hueckel cimport dh_set_params, dh_params
     from core.mmm1d cimport mmm1d_params, MMM1D_set_params

@@ -23,13 +23,14 @@ from . cimport utils
 include "myconfig.pxi"
 from espressomd cimport actors
 from . import actors
-from core.elc cimport elc_params, ELC_set_params
-from core.icc cimport iccp3m_cfg, iccp3m_alloc_lists
-from core.communication cimport mpi_iccp3m_init
-from core.coulomb cimport coulomb, COULOMB_P3M_GPU
 from espressomd.utils cimport handle_errors, check_type_or_throw_except, check_range_or_except
 
+IF ELECTROSTATICS:
+    from core.coulomb cimport coulomb, COULOMB_P3M_GPU
+
 IF ELECTROSTATICS and P3M:
+    from core.elc cimport elc_params, ELC_set_params
+    from core.icc cimport iccp3m_cfg, iccp3m_alloc_lists
     from espressomd.electrostatics import check_neutrality
 
     cdef class ElectrostaticExtensions(actors.Actor):
