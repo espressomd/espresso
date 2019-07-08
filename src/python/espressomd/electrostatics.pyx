@@ -23,7 +23,7 @@ from espressomd cimport actors
 from . import actors
 cimport globals
 import numpy as np
-IF SCAFACOS == 1:
+IF SCAFACOS:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
 from espressomd.utils cimport handle_errors
@@ -38,6 +38,12 @@ cimport core.utils
 from .particle_data cimport particle
 IF ELECTROSTATICS:
     from core.p3m cimport p3m, p3m_set_eps, p3m_set_ninterpol
+    from core.debye_hueckel cimport dh_set_params, dh_params
+    from core.mmm1d cimport mmm1d_params, MMM1D_set_params
+    from core.reaction_field cimport rf_set_params, rf_params
+    from core.mmm2d cimport mmm2d_params, MMM2D_set_params, MMM2D_init, MMM2D_sanity_checks
+IF ELECTROSTATICS and MMM1D_GPU:
+    from core.Mmm1dgpuForce cimport Mmm1dgpuForce
 
 
 IF ELECTROSTATICS:
@@ -203,7 +209,7 @@ IF ELECTROSTATICS:
                         "check_neutrality": True}
 
 
-IF P3M == 1:
+IF P3M:
     cdef class P3M(ElectrostaticInteraction):
         """
         P3M electrostatics solver.
@@ -778,7 +784,7 @@ IF ELECTROSTATICS:
             mpi_bcast_coulomb_params()
             handle_errors("MMM2d setup")
 
-    IF SCAFACOS == 1:
+    IF SCAFACOS:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
 
             """Calculates Coulomb interactions using method from the SCAFACOs library."""
