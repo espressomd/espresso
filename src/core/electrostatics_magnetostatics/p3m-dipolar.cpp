@@ -2082,7 +2082,8 @@ void dp3m_calc_local_ca_mesh(P3MParameters &params, double skin) {
     halo[i] = params.cao_cut[i] + skin + params.additional_mesh[i];
 
   dp3m.local_mesh =
-      calc_local_mesh(params, local_geo.my_left(), local_geo.my_right(), halo);
+      LocalMesh(local_geo.my_left(), local_geo.my_right(), halo,
+                Utils::Vector3d{params.ai}, Utils::Vector3d{params.mesh_off});
 }
 
 /*****************************************************************************/

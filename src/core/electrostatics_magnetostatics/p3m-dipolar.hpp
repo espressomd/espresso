@@ -39,6 +39,7 @@
 #include "config.hpp"
 
 #ifdef DP3M
+#include "LocalMesh.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
@@ -54,7 +55,7 @@ struct dp3m_data_struct {
   P3MParameters params;
 
   /** local mesh. */
-  p3m_local_mesh local_mesh;
+  LocalMesh local_mesh;
   /** real space mesh (local) for CA/FFT.*/
   double *rs_mesh;
   /** real space mesh (local) for CA/FFT of the dipolar field.*/

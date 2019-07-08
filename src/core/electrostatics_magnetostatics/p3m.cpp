@@ -1911,8 +1911,9 @@ void p3m_calc_local_ca_mesh() {
   for (int i = 0; i < 3; i++)
     halo[i] = p3m.params.cao_cut[i] + skin + p3m.params.additional_mesh[i];
 
-  p3m.local_mesh = calc_local_mesh(p3m.params, local_geo.my_left(),
-                                   local_geo.my_right(), halo);
+  p3m.local_mesh = LocalMesh(local_geo.my_left(), local_geo.my_right(), halo,
+                             Utils::Vector3d{p3m.params.ai},
+                             Utils::Vector3d{p3m.params.mesh_off});
 }
 
 void p3m_calc_lm_ld_pos() {

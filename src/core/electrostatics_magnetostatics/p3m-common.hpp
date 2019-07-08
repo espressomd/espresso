@@ -92,28 +92,6 @@ enum P3M_TUNE_ERROR {
  * data types
  ************************************************/
 
-/** Structure for local mesh parameters. */
-typedef struct {
-  /* local mesh characterization. */
-  /** dimension (size) of local mesh. */
-  Utils::Vector3i dim;
-  /** number of local mesh points. */
-  int size;
-  /** index of lower left corner of the
-      local mesh in the global mesh. */
-  int ld_ind[3];
-  /** position of the first local mesh point. */
-  double ld_pos[3];
-  /** dimension of mesh inside node domain. */
-  int inner[3];
-  /** inner left down grid point */
-  int in_ld[3];
-  /** inner up right grid point + (1,1,1) */
-  int in_ur[3];
-  /** number of margin mesh points. */
-  Utils::Array<int, 6> margin;
-} p3m_local_mesh;
-
 /** Structure to hold P3M parameters and some dependent variables. */
 typedef struct {
   /** tuning or production? */
@@ -181,11 +159,6 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
  *  at value \a x.
  */
 double p3m_caf(int i, double x, int cao_value);
-
-p3m_local_mesh calc_local_mesh(const P3MParameters &params,
-                               const Utils::Vector3d &my_left,
-                               const Utils::Vector3d &my_right,
-                               const Utils::Vector3d &halo);
 
 #endif /* P3M || DP3M */
 

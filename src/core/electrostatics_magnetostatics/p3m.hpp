@@ -55,6 +55,7 @@
 
 #ifdef P3M
 
+#include "LocalMesh.hpp"
 #include "debug.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
@@ -73,7 +74,7 @@ struct p3m_data_struct {
   P3MParameters params;
 
   /** local mesh. */
-  p3m_local_mesh local_mesh;
+  LocalMesh local_mesh;
   /** real space mesh (local) for CA/FFT.*/
   double *rs_mesh;
   /** k-space mesh (local) for k-space calculation and FFT.*/
