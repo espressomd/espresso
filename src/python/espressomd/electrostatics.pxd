@@ -22,18 +22,9 @@ from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
+from core.SystemInterface cimport SystemInterface
 from espressomd.utils cimport *
 from espressomd.utils import is_valid_type, to_str
-
-cdef extern from "SystemInterface.hpp":
-    cdef cppclass SystemInterface:
-        pass
-cdef extern from "EspressoSystemInterface.hpp":
-    cdef cppclass EspressoSystemInterface(SystemInterface):
-        @staticmethod
-        EspressoSystemInterface * _Instance()
-        bool requestRGpu()
-        void update()
 
 
 IF ELECTROSTATICS:

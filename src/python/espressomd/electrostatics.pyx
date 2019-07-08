@@ -30,6 +30,7 @@ from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type, to_str
 from core.partCfg_global cimport partCfg
 from core.PartCfg cimport PartCfg
+from core.EspressoSystemInterface cimport EspressoSystemInterface
 from core.grid cimport box_geo
 cimport core.utils
 from .particle_data cimport particle
