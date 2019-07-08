@@ -18,8 +18,9 @@
 #
 
 from __future__ import print_function, absolute_import
-from . cimport galilei
 from .utils cimport make_array_locked
+from core.utils cimport Vector3d
+from core.communication cimport mpi_kill_particle_motion, mpi_kill_particle_forces, mpi_system_CMS, mpi_system_CMS_velocity, mpi_galilei_transform
 
 cdef class GalileiTransform(object):
 
