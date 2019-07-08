@@ -2162,7 +2162,7 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
 
 void dp3m_calc_send_mesh() {
   dp3m.sm =
-      plan_halo_comm(comm_cart, dp3m.local_mesh.dim, dp3m.local_mesh.margin);
+      halo_comm(comm_cart, dp3m.local_mesh.dim, dp3m.local_mesh.margin);
 }
 
 /************************************************/

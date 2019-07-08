@@ -10,6 +10,11 @@
 
 /** Structure for send/recv meshes. */
 struct halo_comm {
+  halo_comm() = default;
+  halo_comm(const boost::mpi::communicator &comm,
+  const Utils::Vector3i &dim,
+  const Utils::Array<int, 6> &margin);
+
   /** dimensions of the mesh */
   int dim[3];
   /** dimension of sub meshes to send. */
@@ -39,10 +44,6 @@ struct halo_comm {
   /** vector to store grid points to recv */
   mutable std::vector<double> recv_buffer;
 };
-
-halo_comm plan_halo_comm(const boost::mpi::communicator &comm,
-                         const Utils::Vector3i &dim,
-                         const Utils::Array<int, 6> &margin);
 
 /**
  * @brief Add halo regions to their original images.

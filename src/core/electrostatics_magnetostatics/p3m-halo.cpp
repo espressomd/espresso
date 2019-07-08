@@ -5,43 +5,41 @@
 
 #include <boost/range/numeric.hpp>
 
-halo_comm plan_halo_comm(const boost::mpi::communicator &comm,
-                         const Utils::Vector3i &dim,
+halo_comm::halo_comm(const boost::mpi::communicator &comm_,
+                         const Utils::Vector3i &dim_,
                          const Utils::Array<int, 6> &margin) {
-  halo_comm send_mesh;
-
-  send_mesh.comm = comm;
+  comm = comm_;
 
   int done[3] = {0, 0, 0};
   /* send grids */
   for (int i = 0; i < 3; i++) {
-    send_mesh.dim[i] = dim[i];
+    dim[i] = dim_[i];
 
     for (int j = 0; j < 3; j++) {
       /* left */
-      send_mesh.s_ld[i * 2][j] = 0 + done[j] * margin[j * 2];
+      s_ld[i * 2][j] = 0 + done[j] * margin[j * 2];
       if (j == i)
-        send_mesh.s_ur[i * 2][j] = margin[j * 2];
+        s_ur[i * 2][j] = margin[j * 2];
       else
-        send_mesh.s_ur[i * 2][j] = dim[j] - done[j] * margin[(j * 2) + 1];
+        s_ur[i * 2][j] = dim[j] - done[j] * margin[(j * 2) + 1];
       /* right */
       if (j == i)
-        send_mesh.s_ld[(i * 2) + 1][j] = (dim[j] - margin[j * 2 + 1]);
+        s_ld[(i * 2) + 1][j] = (dim[j] - margin[j * 2 + 1]);
       else
-        send_mesh.s_ld[(i * 2) + 1][j] = 0 + done[j] * margin[j * 2];
-      send_mesh.s_ur[(i * 2) + 1][j] = dim[j] - done[j] * margin[(j * 2) + 1];
+        s_ld[(i * 2) + 1][j] = 0 + done[j] * margin[j * 2];
+      s_ur[(i * 2) + 1][j] = dim[j] - done[j] * margin[(j * 2) + 1];
     }
     done[i] = 1;
   }
-  send_mesh.max = 0;
+  max = 0;
   for (int i = 0; i < 6; i++) {
-    send_mesh.s_size[i] = 1;
+    s_size[i] = 1;
     for (int j = 0; j < 3; j++) {
-      send_mesh.s_dim[i][j] = send_mesh.s_ur[i][j] - send_mesh.s_ld[i][j];
-      send_mesh.s_size[i] *= send_mesh.s_dim[i][j];
+      s_dim[i][j] = s_ur[i][j] - s_ld[i][j];
+      s_size[i] *= s_dim[i][j];
     }
-    if (send_mesh.s_size[i] > send_mesh.max)
-      send_mesh.max = send_mesh.s_size[i];
+    if (s_size[i] > max)
+      max = s_size[i];
   }
   /* communication */
   auto const node_neighbors = Utils::Mpi::calc_face_neighbors<3>(comm);
@@ -58,30 +56,28 @@ halo_comm plan_halo_comm(const boost::mpi::communicator &comm,
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++) {
       if (j == i) {
-        send_mesh.r_ld[i * 2][j] = send_mesh.s_ld[i * 2][j] + margin[2 * j];
-        send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j] + r_margin[2 * j];
-        send_mesh.r_ld[(i * 2) + 1][j] =
-            send_mesh.s_ld[(i * 2) + 1][j] - r_margin[(2 * j) + 1];
-        send_mesh.r_ur[(i * 2) + 1][j] =
-            send_mesh.s_ur[(i * 2) + 1][j] - margin[(2 * j) + 1];
+        r_ld[i * 2][j] = s_ld[i * 2][j] + margin[2 * j];
+        r_ur[i * 2][j] = s_ur[i * 2][j] + r_margin[2 * j];
+        r_ld[(i * 2) + 1][j] =
+            s_ld[(i * 2) + 1][j] - r_margin[(2 * j) + 1];
+        r_ur[(i * 2) + 1][j] =
+            s_ur[(i * 2) + 1][j] - margin[(2 * j) + 1];
       } else {
-        send_mesh.r_ld[i * 2][j] = send_mesh.s_ld[i * 2][j];
-        send_mesh.r_ur[i * 2][j] = send_mesh.s_ur[i * 2][j];
-        send_mesh.r_ld[(i * 2) + 1][j] = send_mesh.s_ld[(i * 2) + 1][j];
-        send_mesh.r_ur[(i * 2) + 1][j] = send_mesh.s_ur[(i * 2) + 1][j];
+        r_ld[i * 2][j] = s_ld[i * 2][j];
+        r_ur[i * 2][j] = s_ur[i * 2][j];
+        r_ld[(i * 2) + 1][j] = s_ld[(i * 2) + 1][j];
+        r_ur[(i * 2) + 1][j] = s_ur[(i * 2) + 1][j];
       }
     }
   for (int i = 0; i < 6; i++) {
-    send_mesh.r_size[i] = 1;
+    r_size[i] = 1;
     for (int j = 0; j < 3; j++) {
-      send_mesh.r_dim[i][j] = send_mesh.r_ur[i][j] - send_mesh.r_ld[i][j];
-      send_mesh.r_size[i] *= send_mesh.r_dim[i][j];
+      r_dim[i][j] = r_ur[i][j] - r_ld[i][j];
+      r_size[i] *= r_dim[i][j];
     }
-    if (send_mesh.r_size[i] > send_mesh.max)
-      send_mesh.max = send_mesh.r_size[i];
+    if (r_size[i] > max)
+      max = r_size[i];
   }
-
-  return send_mesh;
 }
 
 void p3m_gather_halo(Utils::Span<double *const> data,
