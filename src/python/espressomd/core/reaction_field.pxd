@@ -1,7 +1,7 @@
 include "myconfig.pxi"
 
 IF ELECTROSTATICS:
-     cdef extern from "electrostatics_magnetostatics/reaction_field.hpp":
+    cdef extern from "electrostatics_magnetostatics/reaction_field.hpp":
         ctypedef struct Reaction_field_params:
             double kappa
             double epsilon1
@@ -12,4 +12,3 @@ IF ELECTROSTATICS:
 
         int rf_set_params(double kappa, double epsilon1, double epsilon2,
                           double r_cut)
-

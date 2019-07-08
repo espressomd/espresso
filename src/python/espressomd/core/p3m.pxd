@@ -15,4 +15,3 @@ IF ELECTROSTATICS:
 
             # links intern C-struct with python object
             cdef extern p3m_data_struct p3m
-

@@ -44,4 +44,3 @@ IF ELECTROSTATICS and P3M:
         iccp3m_struct iccp3m_cfg
 
         void iccp3m_alloc_lists()
-
