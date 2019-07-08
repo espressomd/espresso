@@ -288,7 +288,7 @@ void dp3m_init() {
                       (void *)dp3m.rs_mesh));
 
     int ca_mesh_size =
-        fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
+        fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim.data(), dp3m.local_mesh.margin.data(),
                  dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
                  dp3m.fft, node_grid, comm_cart);
     dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
@@ -2162,7 +2162,7 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
 
 void dp3m_calc_send_mesh() {
   dp3m.sm =
-      calc_send_mesh(comm_cart, dp3m.local_mesh.dim, dp3m.local_mesh.margin);
+      plan_halo_comm(comm_cart, dp3m.local_mesh.dim, dp3m.local_mesh.margin);
 }
 
 /************************************************/

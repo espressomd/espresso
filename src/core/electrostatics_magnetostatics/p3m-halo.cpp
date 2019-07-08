@@ -5,9 +5,10 @@
 
 #include <boost/range/numeric.hpp>
 
-p3m_halo_comm calc_send_mesh(const boost::mpi::communicator &comm,
-                             const int dim[3], const int margin[6]) {
-  p3m_halo_comm send_mesh;
+halo_comm plan_halo_comm(const boost::mpi::communicator &comm,
+                         const Utils::Vector3i &dim,
+                         const Utils::Array<int, 6> &margin) {
+  halo_comm send_mesh;
 
   send_mesh.comm = comm;
 
@@ -84,7 +85,7 @@ p3m_halo_comm calc_send_mesh(const boost::mpi::communicator &comm,
 }
 
 void p3m_gather_halo(Utils::Span<double *const> data,
-                     const p3m_halo_comm &send_mesh,
+                     const halo_comm &send_mesh,
                      Utils::MemoryOrder memory_order) {
   auto const node_neighbors =
       Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
@@ -131,14 +132,14 @@ void p3m_gather_halo(Utils::Span<double *const> data,
   }
 }
 
-void p3m_gather_halo(double *data, const p3m_halo_comm &send_mesh,
+void p3m_gather_halo(double *data, const halo_comm &send_mesh,
                      Utils::MemoryOrder memory_order) {
   p3m_gather_halo(Utils::make_const_span(&data, 1), send_mesh,
                   memory_order);
 }
 
 void p3m_spread_halo(Utils::Span<double *const> data,
-                     const p3m_halo_comm &send_mesh,
+                     const halo_comm &send_mesh,
                      Utils::MemoryOrder memory_order) {
   auto const node_neighbors =
       Utils::Mpi::calc_face_neighbors<3>(send_mesh.comm);
@@ -186,7 +187,7 @@ void p3m_spread_halo(Utils::Span<double *const> data,
   }
 }
 
-void p3m_spread_halo(double *data, const p3m_halo_comm &send_mesh,
+void p3m_spread_halo(double *data, const halo_comm &send_mesh,
                      Utils::MemoryOrder memory_order) {
   p3m_spread_halo(Utils::make_const_span(&data, 1), send_mesh,
                   memory_order);

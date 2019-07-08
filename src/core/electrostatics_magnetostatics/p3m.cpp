@@ -256,7 +256,7 @@ void p3m_init() {
 
     /* FFT */
     int ca_mesh_size =
-        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
+        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim.data(), p3m.local_mesh.margin.data(),
                  p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft,
                  node_grid, comm_cart);
     p3m.ks_mesh.resize(ca_mesh_size);
@@ -2005,7 +2005,7 @@ bool p3m_sanity_checks() {
 }
 
 void p3m_calc_send_mesh() {
-  p3m.sm = calc_send_mesh(comm_cart, p3m.local_mesh.dim, p3m.local_mesh.margin);
+  p3m.sm = plan_halo_comm(comm_cart, p3m.local_mesh.dim, p3m.local_mesh.margin);
 }
 
 void p3m_scaleby_box_l() {

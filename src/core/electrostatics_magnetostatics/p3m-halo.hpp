@@ -9,7 +9,7 @@
 #include <utils/index.hpp>
 
 /** Structure for send/recv meshes. */
-struct p3m_halo_comm {
+struct halo_comm {
   /** dimensions of the mesh */
   int dim[3];
   /** dimension of sub meshes to send. */
@@ -40,18 +40,19 @@ struct p3m_halo_comm {
   mutable std::vector<double> recv_buffer;
 };
 
-p3m_halo_comm calc_send_mesh(const boost::mpi::communicator &comm,
-                             const int dim[3], const int margin[6]);
+halo_comm plan_halo_comm(const boost::mpi::communicator &comm,
+                         const Utils::Vector3i &dim,
+                         const Utils::Array<int, 6> &margin);
 
 /**
  * @brief Add halo regions to their original images.
  * @param data The mesh data
  * @param send_mesh Halo plan
  */
-void p3m_gather_halo(double *data, const p3m_halo_comm &send_mesh,
+void p3m_gather_halo(double *data, const halo_comm &send_mesh,
                      Utils::MemoryOrder memory_order);
 void p3m_gather_halo(Utils::Span<double *const> data,
-                     const p3m_halo_comm &send_mesh,
+                     const halo_comm &send_mesh,
                      Utils::MemoryOrder memory_order);
 
 /**
@@ -59,8 +60,8 @@ void p3m_gather_halo(Utils::Span<double *const> data,
  * @param data The mesh data
  * @param send_mesh Halo plan
  */
-void p3m_spread_halo(double *data, const p3m_halo_comm &send_mesh,
+void p3m_spread_halo(double *data, const halo_comm &send_mesh,
                      Utils::MemoryOrder memory_order);
-void p3m_spread_halo(Utils::Span<double *const> data, const p3m_halo_comm & send_mesh, Utils::MemoryOrder memory_order);
+void p3m_spread_halo(Utils::Span<double *const> data, const halo_comm & send_mesh, Utils::MemoryOrder memory_order);
 
 #endif // ESPRESSO_P3M_HALO_HPP

@@ -96,7 +96,7 @@ enum P3M_TUNE_ERROR {
 typedef struct {
   /* local mesh characterization. */
   /** dimension (size) of local mesh. */
-  int dim[3];
+  Utils::Vector3i dim;
   /** number of local mesh points. */
   int size;
   /** index of lower left corner of the
@@ -111,7 +111,7 @@ typedef struct {
   /** inner up right grid point + (1,1,1) */
   int in_ur[3];
   /** number of margin mesh points. */
-  int margin[6];
+  Utils::Array<int, 6> margin;
   /** offset between mesh lines of the last dimension */
   int q_2_off;
   /** offset between mesh lines of the two last dimensions */
