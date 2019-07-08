@@ -1,14 +1,7 @@
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .utils import handle_errors, to_str
 from .interactions import BondedInteraction, BondedInteractions
-
-
-cdef extern from "collision.hpp":
-    const int COLLISION_MODE_OFF
-    const int COLLISION_MODE_BOND
-    const int COLLISION_MODE_VS
-    const int COLLISION_MODE_GLUE_TO_SURF
-    const int COLLISION_MODE_BIND_THREE_PARTICLES
+from core.collision cimport COLLISION_MODE_OFF, COLLISION_MODE_BOND, COLLISION_MODE_VS, COLLISION_MODE_GLUE_TO_SURF, COLLISION_MODE_BIND_THREE_PARTICLES
 
 
 @script_interface_register
