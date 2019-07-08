@@ -5,8 +5,8 @@
 
 #include <boost/mpi/communicator.hpp>
 
-#include <vector>
 #include <utils/index.hpp>
+#include <vector>
 
 /** Structure for send/recv meshes. */
 struct halo_comm {
@@ -62,6 +62,8 @@ void p3m_gather_halo(Utils::Span<double *const> data,
  */
 void p3m_spread_halo(double *data, const halo_comm &send_mesh,
                      Utils::MemoryOrder memory_order);
-void p3m_spread_halo(Utils::Span<double *const> data, const halo_comm & send_mesh, Utils::MemoryOrder memory_order);
+void p3m_spread_halo(Utils::Span<double *const> data,
+                     const halo_comm &send_mesh,
+                     Utils::MemoryOrder memory_order);
 
 #endif // ESPRESSO_P3M_HALO_HPP
