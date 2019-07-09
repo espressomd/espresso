@@ -22,9 +22,9 @@
 #define _GB_HPP
 
 /** \file
- *  Routines to calculate the Gay-Berne energy and force
- *  for a pair of particles.
- *  \ref forces.cpp
+ *  Routines to calculate the Gay-Berne potential between particle pairs.
+ *
+ *  Implementation in \ref gb.cpp.
  */
 
 #include "nonbonded_interaction_data.hpp"
@@ -34,7 +34,6 @@
 
 #ifdef GAY_BERNE
 
-///
 int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double sig, double cut, double k1, double k2,
                          double mu, double nu);

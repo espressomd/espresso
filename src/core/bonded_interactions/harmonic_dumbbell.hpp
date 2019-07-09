@@ -21,9 +21,10 @@
 #ifndef _HARMONIC_DUMBBELL_HPP
 #define _HARMONIC_DUMBBELL_HPP
 /** \file
- *  Routines to calculate the HARMONIC Energy or/and HARMONIC force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the harmonic dumbbell bond potential between particle
+ *  pairs.
+ *
+ *  Implementation in \ref harmonic_dumbbell.cpp.
  */
 
 /************************************************************/
@@ -36,7 +37,7 @@
 
 #include <utils/math/sqr.hpp>
 
-/** set the parameters for the harmonic potential
+/** Set the parameters for the harmonic dumbbell bond potential
  *
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
@@ -44,7 +45,7 @@
 int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
                                  double r_cut);
 
-/** Computes the harmonic dumbbell bond length force and update torque.
+/** Compute the harmonic dumbbell bond force and update torque.
  *  @param[in,out]  p1        First particle, torque gets updated.
  *  @param[in]      iaparams  Bonded parameters for the pair interaction.
  *  @param[in]      dx        %Distance between the particles.
@@ -75,7 +76,7 @@ calc_harmonic_dumbbell_pair_force(Particle *p1,
   return 0;
 }
 
-/** Computes the harmonic dumbbell bond length energy.
+/** Compute the harmonic dumbbell bond energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.

@@ -21,29 +21,32 @@
 #ifndef _INTERACTION_DATA_H
 #define _INTERACTION_DATA_H
 /** \file
-    Various procedures concerning interactions between particles.
-*/
+ *  Various procedures concerning interactions between particles.
+ */
 
 #include "particle_data.hpp"
 #include <dpd.hpp>
 
 #include "TabulatedPotential.hpp"
 
-/** cutoff for deactivated interactions. Below 0, so that even particles on
-    top of each other don't interact by chance. */
+/** Cutoff for deactivated interactions. Must be negative, so that even
+ *  particles on top of each other don't interact by chance.
+ */
 constexpr double INACTIVE_CUTOFF = -1.;
 
 /* Data Types */
 /************************************************************/
 
-/** field containing the interaction parameters for
- *  nonbonded interactions. Access via
- * get_ia_param(i, j), i,j < max_seen_particle_type */
+/** Data structure containing the interaction parameters for non-bonded
+ *  interactions.
+ *  Access via <tt>get_ia_param(i, j)</tt> with
+ *  <tt>i</tt>, <tt>j</tt> \< \ref max_seen_particle_type
+ */
 struct IA_parameters {
   /** maximal cutoff for this pair of particle types. This contains
-      contributions from the short-ranged interactions, plus any
-      cutoffs from global interactions like electrostatics.
-  */
+   *  contributions from the short-ranged interactions, plus any
+   *  cutoffs from global interactions like electrostatics.
+   */
   double max_cut = INACTIVE_CUTOFF;
 
 #ifdef LENNARD_JONES
@@ -69,10 +72,10 @@ struct IA_parameters {
 #endif
 
   /** flag that tells whether there is any short-ranged interaction,
-      i.e. one that contributes to the "nonbonded" section of the
-      energy/pressure. Note that even if there is no short-ranged
-      interaction present, the \ref max_cut can be non-zero due to
-      e.g. electrostatics. */
+   *  i.e. one that contributes to the "nonbonded" section of the
+   *  energy/pressure. Note that even if there is no short-ranged
+   *  interaction present, the \ref max_cut can be non-zero due to
+   *  e.g. electrostatics. */
   int particlesInteract;
 
 #ifdef LENNARD_JONES_GENERIC
@@ -89,7 +92,7 @@ struct IA_parameters {
   double LJGEN_b2 = 0.0;
   double LJGEN_lambda = 1.0;
   double LJGEN_softrad = 0.0;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef SMOOTH_STEP
@@ -101,7 +104,7 @@ struct IA_parameters {
   double SmSt_d = 0.0;
   int SmSt_n = 0;
   double SmSt_k0 = 0.0;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef HERTZIAN
@@ -109,7 +112,7 @@ struct IA_parameters {
   /*@{*/
   double Hertzian_eps = 0.0;
   double Hertzian_sig = INACTIVE_CUTOFF;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef GAUSSIAN
@@ -118,7 +121,7 @@ struct IA_parameters {
   double Gaussian_eps = 0.0;
   double Gaussian_sig = 1.0;
   double Gaussian_cut = INACTIVE_CUTOFF;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef BMHTF_NACL
@@ -131,7 +134,7 @@ struct IA_parameters {
   double BMHTF_sig = 0.0;
   double BMHTF_cut = INACTIVE_CUTOFF;
   double BMHTF_computed_shift = 0.0;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef MORSE
@@ -142,7 +145,7 @@ struct IA_parameters {
   double MORSE_rmin = INACTIVE_CUTOFF;
   double MORSE_cut = INACTIVE_CUTOFF;
   double MORSE_rest = INACTIVE_CUTOFF;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef BUCKINGHAM
@@ -157,7 +160,7 @@ struct IA_parameters {
   double BUCK_shift = 0.0;
   double BUCK_F1 = 0.0;
   double BUCK_F2 = 0.0;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef SOFT_SPHERE
@@ -167,7 +170,7 @@ struct IA_parameters {
   double soft_n = 0.0;
   double soft_cut = INACTIVE_CUTOFF;
   double soft_offset = 0.0;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef AFFINITY
@@ -180,7 +183,7 @@ struct IA_parameters {
   double affinity_Koff = INACTIVE_CUTOFF;
   double affinity_maxBond = INACTIVE_CUTOFF;
   double affinity_cut = INACTIVE_CUTOFF;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef MEMBRANE_COLLISION
@@ -190,7 +193,7 @@ struct IA_parameters {
   double membrane_n = 0.0;
   double membrane_cut = INACTIVE_CUTOFF;
   double membrane_offset = 0.0;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef HAT
@@ -198,7 +201,7 @@ struct IA_parameters {
   /*@{*/
   double HAT_Fmax = 0.0;
   double HAT_r = INACTIVE_CUTOFF;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef LJCOS
@@ -211,7 +214,7 @@ struct IA_parameters {
   double LJCOS_alfa = 0.0;
   double LJCOS_beta = 0.0;
   double LJCOS_rmin = 0.0;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef LJCOS2
@@ -223,7 +226,7 @@ struct IA_parameters {
   double LJCOS2_offset = 0.0;
   double LJCOS2_w = 0.0;
   double LJCOS2_rchange = 0.0;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef GAY_BERNE
@@ -238,14 +241,14 @@ struct IA_parameters {
   double GB_nu = 0.0;
   double GB_chi1 = 0.0;
   double GB_chi2 = 0.0;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef TABULATED
   /** \name Tabulated potential */
   /*@{*/
   TabulatedPotential TAB;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef DPD
@@ -253,7 +256,7 @@ struct IA_parameters {
   /*@{*/
   DPDParameters dpd_radial;
   DPDParameters dpd_trans;
-/*@}*/
+  /*@}*/
 #endif
 
 #ifdef THOLE
@@ -267,8 +270,6 @@ struct IA_parameters {
 
 extern std::vector<IA_parameters> ia_params;
 
-/** thermodynamic force parameters */
-
 /************************************************
  * exported variables
  ************************************************/
@@ -278,13 +279,15 @@ extern int max_seen_particle_type;
 
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
-/** Maximal interaction cutoff (real space/short range non-bonded interactions).
+/** Maximal interaction cutoff (real space/short range non-bonded
+ *  interactions).
  */
 extern double max_cut_nonbonded;
 
 /** Minimal global interaction cutoff. Particles with a distance
-    smaller than this are guaranteed to be available on the same node
-    (through ghosts).  */
+ *  smaller than this are guaranteed to be available on the same node
+ *  (through ghosts).
+ */
 extern double min_global_cut;
 
 /*****************
@@ -292,16 +295,17 @@ extern double min_global_cut;
 * exported functions
 ************************************************/
 
-/** get interaction parameters between particle sorts i and j */
+/** Get interaction parameters between particle sorts i and j */
 inline IA_parameters *get_ia_param(int i, int j) {
   extern std::vector<IA_parameters> ia_params;
   extern int max_seen_particle_type;
   return &ia_params[i * max_seen_particle_type + j];
 }
 
-/** get interaction parameters between particle sorts i and j.
-    Slower than @ref get_ia_param, but can also be used on not
-    yet present particle types*/
+/** Get interaction parameters between particle sorts i and j.
+ *  Slower than @ref get_ia_param, but can also be used on not
+ *  yet present particle types
+ */
 IA_parameters *get_ia_param_safe(int i, int j);
 
 /** @brief Get the state of all non bonded interactions.
@@ -313,25 +317,27 @@ std::string ia_params_get_state();
 void ia_params_set_state(std::string const &);
 
 bool is_new_particle_type(int type);
-/** Makes sure that ia_params is large enough to cover interactions
-    for this particle type. The interactions are initialized with values
-    such that no physical interaction occurs. */
+/** Make sure that ia_params is large enough to cover interactions
+ *  for this particle type. The interactions are initialized with values
+ *  such that no physical interaction occurs.
+ */
 void make_particle_type_exist(int type);
 
 void make_particle_type_exist_local(int type);
 
-/** This function increases the LOCAL ia_params field
-    to the given size. Better use
-    \ref make_particle_type_exist since it takes care of
-    the other nodes.  */
+/** This function increases the LOCAL ia_params field to the given size.
+ *  Better use \ref make_particle_type_exist since it takes care of
+ *  the other nodes.
+ */
 void realloc_ia_params(int nsize);
 
-/** calculates the maximal cutoff of all real space
-    interactions. these are: bonded, non bonded + real space
-    electrostatics. The result is stored in the global variable
-    max_cut. The maximal cutoff of the non-bonded + real space
-    electrostatic interactions is stored in max_cut_non_bonded. This
-    value is used in the Verlet pair list algorithm. */
+/** Calculate the maximal cutoff of all real space interactions.
+ *  These are: bonded, non bonded + real space electrostatics.
+ *  The result is stored in the global variable \ref max_cut.
+ *  The maximal cutoff of the non-bonded + real space electrostatic
+ *  interactions is stored in \ref max_cut_nonbonded. This
+ *  value is used in the Verlet pair list algorithm.
+ */
 void recalc_maximal_cutoff();
 
 /**
@@ -339,16 +345,17 @@ void recalc_maximal_cutoff();
  */
 void reset_ia_params();
 
-/** check whether all force calculation routines are properly initialized. */
+/** Check whether all force calculation routines are properly initialized. */
 int interactions_sanity_checks();
 
-/**  check if a non bonded interaction is defined */
+/** Check if a non bonded interaction is defined */
 inline int checkIfInteraction(IA_parameters *data) {
   return data->particlesInteract;
 }
 
-/** check if the types of particles i and j have any non bonded
-    interaction defined. */
+/** Check if the types of particles i and j have any non bonded
+ *  interaction defined.
+ */
 inline int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
@@ -356,7 +363,8 @@ inline int checkIfParticlesInteract(int i, int j) {
 #include <utils/math/sqr.hpp>
 
 /** Returns true if the particles are to be considered for short range
-    interactions */
+ *  interactions.
+ */
 class VerletCriterion {
   const double m_skin;
   const double m_eff_max_cut2;

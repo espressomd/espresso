@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of nonbonded_interaction_data.hpp
+ *  Implementation of nonbonded_interaction_data.hpp
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "actor/DipolarDirectSum.hpp"

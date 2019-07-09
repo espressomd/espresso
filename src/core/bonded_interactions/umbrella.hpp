@@ -22,10 +22,11 @@
 #define umbrella_H
 
 /** \file
- *  Routines to calculate the umbrella energy and/or  force
- *  for a particle pair: harmonic interaction in only one
- *  Cartesian direction. Useful for umbrella sampling simulations.
- *  \ref forces.cpp
+ *  Routines to calculate the umbrella potential (harmonic interaction in only
+ *  one Cartesian direction) between particle pairs. Useful for umbrella
+ *  sampling simulations.
+ *
+ *  Implementation in \ref umbrella.cpp.
  */
 
 #include "bonded_interactions/bonded_interaction_data.hpp"

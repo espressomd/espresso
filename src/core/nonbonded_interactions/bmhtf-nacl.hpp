@@ -21,9 +21,10 @@
 #ifndef BMHTF_NACL_H
 #define BMHTF_NACL_H
 /** \file
- *  Routines to calculate the Born-Meyer-Huggins-Tosi-Fumi energy and/or force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the Born-Meyer-Huggins-Tosi-Fumi potential
+ *  between particle pairs.
+ *
+ *  Implementation in \ref bmhtf-nacl.cpp.
  */
 
 #include "nonbonded_interaction_data.hpp"
@@ -31,7 +32,6 @@
 
 #ifdef BMHTF_NACL
 
-///
 int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
                      double C, double D, double sig, double cut);
 
@@ -52,7 +52,7 @@ inline void add_BMHTF_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate smooth step potential energy between particle p1 and p2. */
+/** Calculate smooth step potential energy between particle p1 and p2. */
 inline double BMHTF_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist, double dist2) {

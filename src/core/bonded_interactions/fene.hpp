@@ -21,9 +21,9 @@
 #ifndef _FENE_HPP
 #define _FENE_HPP
 /** \file
- *  Routines to calculate the FENE Energy or/and FENE force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the FENE potential between particle pairs.
+ *
+ *  Implementation in \ref fene.cpp.
  */
 
 #include "bonded_interaction_data.hpp"
@@ -31,14 +31,14 @@
 
 /************************************************************/
 
-/** set the parameters for the fene potential
+/** Set the parameters for the FENE potential
  *
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
  */
 int fene_set_params(int bond_type, double k, double drmax, double r0);
 
-/** Computes the FENE bond length force.
+/** Compute the FENE bond force.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
@@ -68,7 +68,7 @@ inline int calc_fene_pair_force(Bonded_ia_parameters const *iaparams,
   return 0;
 }
 
-/** Computes the FENE bond length force.
+/** Compute the FENE bond energy.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.

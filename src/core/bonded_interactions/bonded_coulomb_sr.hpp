@@ -21,10 +21,11 @@
 #ifndef _BONDED_COULOMB_SR_HPP
 #define _BONDED_COULOMB_SR_HPP
 /** \file
- *  Routines to calculate the BONDED_COULOMB_SR Energy or/and
- * BONDED_COULOMB_SR force for a particle pair. This is only the shortrange
- * part of any coulomb interaction and first used to subtract certain
- * intramolecular interactions in combination with Thole damping \ref forces.cpp
+ *  Routines to calculate the short-range part of the bonded Coulomb potential
+ *  between particle pairs. Can be used to subtract certain intramolecular
+ *  interactions in combination with Thole damping.
+ *
+ *  Implementation in \ref bonded_coulomb_sr.cpp.
  */
 
 /************************************************************/
@@ -38,14 +39,14 @@
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #include "particle_data.hpp"
 
-/** set the parameters for the bonded_coulomb potential
+/** Set the parameters for the short-range bonded Coulomb potential
  *
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
  */
 int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
 
-/** Computes the BONDED_COULOMB_SR pair force.
+/** Compute the short-range bonded Coulomb pair force.
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
@@ -66,7 +67,7 @@ calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *iaparams,
   return 0;
 }
 
-/** Computes the BONDED_COULOMB_SR pair energy.
+/** Compute the short-range bonded Coulomb pair energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.

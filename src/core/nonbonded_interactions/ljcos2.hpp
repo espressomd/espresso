@@ -22,10 +22,12 @@
 #define _LJCOS2_H
 
 /** \file
- *  Routines to calculate the Lennard-Jones with cosine tail energy and/or force
- *  for a particle pair.  Cosine tail is different from that in ljcos.hpp
- *  Used for attractive tail/tail interactions in lipid bilayer calculations
- *  \ref forces.cpp
+ *  Routines to calculate the Lennard-Jones with cosine tail potential
+ *  between particle pairs. Cosine tail is different from that in
+ *  \ref ljcos.hpp. Used for attractive tail/tail interactions in lipid
+ *  bilayer calculations.
+ *
+ *  Implementation in \ref ljcos2.cpp.
  */
 
 #include "config.hpp"
@@ -41,7 +43,7 @@
 int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
                       double offset, double w);
 
-/** Calculate lj-cos2 force between particle p1 and p2 */
+/** Calculate lj-cos2 force between particle p1 and p2. */
 inline void add_ljcos2_pair_force(const Particle *const p1,
                                   const Particle *const p2,
                                   IA_parameters *ia_params, double const d[3],
@@ -89,7 +91,7 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate lj-cos2 energy between particle p1 and p2. */
+/** Calculate lj-cos2 energy between particle p1 and p2. */
 inline double ljcos2_pair_energy(const Particle *p1, const Particle *p2,
                                  const IA_parameters *ia_params,
                                  const double d[3], double dist) {

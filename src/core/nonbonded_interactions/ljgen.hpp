@@ -26,13 +26,18 @@
 #ifdef LENNARD_JONES_GENERIC
 
 /** \file
- *  Routines to calculate the generalized Lennard-Jones
- *  energy and/or force for a particle pair. "Generalized" here means
- *  that the LJ energy is of the form
+ *  Routines to calculate the generalized Lennard-Jones potential between
+ *  particle pairs. "Generalized" here means that the LJ energy is of the form
+ *  @f[
+ *      \varepsilon \cdot
+ *      \left[
+ *            b_1 \left(\frac{\sigma}{r-r_{\text{offset}}}\right)^{a_1}
+ *          - b_2 \left(\frac{\sigma}{r-r_{\text{offset}}}\right)^{a_2}
+ *          + \text{shift}
+ *      \right]
+ *  @f]
  *
- *  eps * [ b1 * (sigma/(r-r_offset))^a1 - b2 * (sigma/(r-r_offset))^a2 + shift]
- *
- *  \ref forces.cpp
+ *  Implementation in \ref ljgen.cpp.
  */
 
 #include "debug.hpp"
@@ -107,7 +112,7 @@ inline void add_ljgen_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate Lennard-Jones energy between particle p1 and p2. */
+/** Calculate Lennard-Jones energy between particle p1 and p2. */
 inline double ljgen_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {

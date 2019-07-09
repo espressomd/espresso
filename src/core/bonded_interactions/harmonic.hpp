@@ -21,9 +21,9 @@
 #ifndef _HARMONIC_HPP
 #define _HARMONIC_HPP
 /** \file
- *  Routines to calculate the HARMONIC Energy or/and HARMONIC force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the harmonic bond potential between particle pairs.
+ *
+ *  Implementation in \ref harmonic.cpp.
  */
 
 /************************************************************/
@@ -33,14 +33,14 @@
 
 #include <utils/math/sqr.hpp>
 
-/** set the parameters for the harmonic potential
+/** Set the parameters for the harmonic potential
  *
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
  */
 int harmonic_set_params(int bond_type, double k, double r, double r_cut);
 
-/** Computes the harmonic bond length force.
+/** Compute the harmonic bond force.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
@@ -68,7 +68,7 @@ inline int calc_harmonic_pair_force(Bonded_ia_parameters const *iaparams,
   return 0;
 }
 
-/** Computes the harmonic bond length energy.
+/** Compute the harmonic bond energy.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.

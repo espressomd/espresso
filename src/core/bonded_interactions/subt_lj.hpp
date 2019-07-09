@@ -21,9 +21,9 @@
 #ifndef SUBT_LJ_H
 #define SUBT_LJ_H
 /** \file
- *  Routines to subtract the LENNARD-JONES Energy and/or the LENNARD-JONES force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to subtract the Lennard-Jones potential between particle pairs.
+ *
+ *  Implementation in \ref subt_lj.cpp.
  */
 
 #include "config.hpp"
@@ -34,21 +34,21 @@
 #include "debug.hpp"
 #include "nonbonded_interactions/lj.hpp"
 
-/** set the parameters for the subtract LJ potential
+/** Set the parameters for the subtracted LJ potential
  *
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
  */
 int subt_lj_set_params(int bond_type);
 
-/** Computes the negative of the LENNARD-JONES pair forces
-    and adds this force to the particle forces.
-    @param p1        Pointer to first particle.
-    @param p2        Pointer to second/middle particle.
-    @param dx        change in position
-    @param force     force on particles
-    @return true if bond is broken
-*/
+/** Compute the negative of the Lennard-Jones pair forces
+ *  and adds this force to the particle forces.
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] force     Force.
+ *  @retval 0
+ */
 inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
                                    Bonded_ia_parameters *,
                                    Utils::Vector3d const &dx, double *force) {
@@ -61,6 +61,13 @@ inline int calc_subt_lj_pair_force(Particle *p1, Particle *p2,
   return 0;
 }
 
+/** Computes the negative of the Lennard-Jones pair energy.
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  dx        %Distance between the particles.
+ *  @param[out] _energy   Energy.
+ *  @retval 0
+ */
 inline int subt_lj_pair_energy(const Particle *p1, const Particle *p2,
                                Bonded_ia_parameters *,
                                Utils::Vector3d const &dx, double *_energy) {

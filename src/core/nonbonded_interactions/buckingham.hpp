@@ -21,9 +21,9 @@
 #ifndef BUCKINGHAM_H
 #define BUCKINGHAM_H
 /** \file
- *  Routines to calculate the Buckingham energy and/or  force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the Buckingham potential between particle pairs.
+ *
+ *  Implementation in \ref buckingham.cpp.
  */
 
 #include "config.hpp"

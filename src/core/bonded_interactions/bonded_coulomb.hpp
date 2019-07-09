@@ -21,9 +21,10 @@
 #ifndef _BONDED_COULOMB_HPP
 #define _BONDED_COULOMB_HPP
 /** \file
- *  Routines to calculate the BONDED_COULOMB Energy or/and BONDED_COULOMB force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the bonded Coulomb potential between
+ *  particle pairs.
+ *
+ *  Implementation in \ref bonded_coulomb.cpp
  */
 
 /************************************************************/
@@ -36,14 +37,14 @@
 #include "debug.hpp"
 #include "particle_data.hpp"
 
-/** set the parameters for the bonded_coulomb potential
+/** Set the parameters for the bonded Coulomb potential
  *
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
  */
 int bonded_coulomb_set_params(int bond_type, double prefactor);
 
-/** Computes the BONDED_COULOMB pair force.
+/** Compute the bonded Coulomb pair force.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.
@@ -70,7 +71,7 @@ inline int calc_bonded_coulomb_pair_force(Particle const *p1,
   return 0;
 }
 
-/** Computes the BONDED_COULOMB pair energy.
+/** Compute the bonded Coulomb pair energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.

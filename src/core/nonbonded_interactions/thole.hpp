@@ -21,9 +21,9 @@
 #ifndef _THOLE_H
 #define _THOLE_H
 /** \file
- *  Routines to calculate the Thole damping energy and/or force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the Thole damping potential between particle pairs.
+ *
+ *  Implementation in \ref thole.cpp.
  */
 
 #include "config.hpp"

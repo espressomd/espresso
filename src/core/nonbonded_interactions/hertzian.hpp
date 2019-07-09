@@ -22,9 +22,9 @@
 #define HERTZIAN_H
 
 /** \file
- *  Routines to calculate the Hertzian energy and/or force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the Hertzian potential between particle pairs.
+ *
+ *  Implementation in \ref hertzian.cpp.
  */
 
 #include "nonbonded_interaction_data.hpp"
@@ -32,7 +32,6 @@
 
 #ifdef HERTZIAN
 
-///
 int hertzian_set_params(int part_type_a, int part_type_b, double eps,
                         double sig);
 
@@ -51,7 +50,7 @@ inline void add_hertzian_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate Lennard-Jones energy between particle p1 and p2. */
+/** Calculate Hertzian energy between particle p1 and p2. */
 inline double hertzian_pair_energy(const Particle *p1, const Particle *p2,
                                    const IA_parameters *ia_params,
                                    const double d[3], double dist,

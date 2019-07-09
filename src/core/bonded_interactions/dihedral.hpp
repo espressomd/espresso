@@ -24,7 +24,9 @@
  *  Routines to calculate the dihedral energy or/and
  *  force for a particle quadruple.  Note that usage of dihedrals
  *  increases the interaction range of bonded interactions to 2 times
- *  the maximal bond length!  \ref forces.cpp
+ *  the maximal bond length!
+ *
+ *  Implementation in \ref dihedral.cpp.
  */
 
 #include "bonded_interaction_data.hpp"
@@ -100,10 +102,18 @@ inline void calc_dihedral_angle(Particle const *p1, Particle const *p2,
     *phi = (2.0 * Utils::pi()) - *phi;
 }
 
-/** calculate dihedral force between particles p1, p2 p3 and p4
-    Written by Arijit Maitra, adapted to new force interface by Hanjo,
-    more general new dihedral form by Ana.
-*/
+/** Compute the four-body dihedral interaction force.
+ *
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p3        Third particle.
+ *  @param[in]  p4        Fourth particle.
+ *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
+ *  @param[out] force2    Force on particle 2.
+ *  @param[out] force1    Force on particle 1.
+ *  @param[out] force3    Force on particle 3.
+ *  @return false
+ */
 inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
                                Particle const *p3, Particle const *p4,
                                Bonded_ia_parameters const *iaparams,
@@ -167,8 +177,16 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
   return 0;
 }
 
-/** calculate dihedral energy between particles p1, p2 p3 and p4
-    Written by Arijit Maitra, adapted to new force interface by Hanjo */
+/** Compute the four-body dihedral interaction energy.
+ *
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p3        Third particle.
+ *  @param[in]  p4        Fourth particle.
+ *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
+ *  @param[out] _energy   Energy.
+ *  @return false
+ */
 inline int dihedral_energy(Particle const *p1, Particle const *p2,
                            Particle const *p3, Particle const *p4,
                            Bonded_ia_parameters const *iaparams,

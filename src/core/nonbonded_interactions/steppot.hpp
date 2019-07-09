@@ -22,9 +22,9 @@
 #define STEPPOT_H
 
 /** \file
- *  Routines to calculate the smooth step potential energy and/or force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the smooth step potential between particle pairs.
+ *
+ *  Implementation in \ref steppot.cpp.
  */
 
 #include "nonbonded_interaction_data.hpp"
@@ -32,7 +32,6 @@
 
 #ifdef SMOOTH_STEP
 
-///
 int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
                            double eps, double k0, double sig, double cut);
 
@@ -58,7 +57,7 @@ inline void add_SmSt_pair_force(const Particle *const p1,
     force[j] += fac * d[j];
 }
 
-/** calculate smooth step potential energy between particle p1 and p2. */
+/** Calculate smooth step energy between particle p1 and p2. */
 inline double SmSt_pair_energy(const Particle *p1, const Particle *p2,
                                const IA_parameters *ia_params,
                                const double d[3], double dist, double dist2) {

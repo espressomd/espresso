@@ -22,9 +22,9 @@
 #define _MORSE_H
 
 /** \file
- *  Routines to calculate the Lennard-Jones energy and/or  force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the Morse potential between particle pairs.
+ *
+ *  Implementation in \ref morse.cpp.
  */
 
 #include "config.hpp"
@@ -77,7 +77,7 @@ inline void add_morse_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate Morse energy between particle p1 and p2. */
+/** Calculate Morse energy between particle p1 and p2. */
 inline double morse_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {

@@ -21,9 +21,9 @@
 #ifndef _QUARTIC_HPP
 #define _QUARTIC_HPP
 /** \file
- *  Routines to calculate the HARMONIC Energy or/and HARMONIC force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the quartic potential between particle pairs.
+ *
+ *  Implementation in \ref quartic.cpp.
  */
 
 /************************************************************/
@@ -35,7 +35,7 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
-/** set the parameters for the quartic potential
+/** Set the parameters for the quartic potential
  *
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
@@ -43,7 +43,7 @@
 int quartic_set_params(int bond_type, double k0, double k1, double r,
                        double r_cut);
 
-/** Computes the quartic bond length force.
+/** Compute the quartic bond force.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
@@ -68,7 +68,7 @@ inline int calc_quartic_pair_force(Bonded_ia_parameters const *iaparams,
   return 0;
 }
 
-/** Computes the quartic bond length energy.
+/** Compute the quartic bond energy.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.

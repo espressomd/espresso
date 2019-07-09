@@ -23,8 +23,9 @@
 #ifndef THERMALIZED_DIST_H
 #define THERMALIZED_DIST_H
 /** \file
- *  Routines to thermalize the com and distance of a particle pair.
- *  \ref forces.cpp
+ *  Routines to thermalize the center of mass and distance of a particle pair.
+ *
+ *  Implementation in \ref thermalized_bond.cpp.
  */
 
 /** number of thermalized bonds */
@@ -49,7 +50,7 @@ void thermalized_bond_cool_down();
 void thermalized_bond_update_params(double pref_scale);
 void thermalized_bond_init();
 
-/** Separately thermalizes the com and distance of a particle pair.
+/** Separately thermalize the COM and distance of a particle pair.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.

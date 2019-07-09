@@ -18,6 +18,12 @@
 */
 #ifndef WCA_HPP
 #define WCA_HPP
+/** \file
+ *  Routines to calculate the Weeks-Chandler-Andersen potential between
+ *  particle pairs.
+ *
+ *  Implementation in \ref wca.cpp.
+ */
 
 #include "config.hpp"
 
@@ -43,7 +49,7 @@ inline void add_wca_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate WCA energy between particle p1 and p2. */
+/** Calculate WCA energy between particle p1 and p2. */
 inline double wca_pair_energy(const Particle *p1, const Particle *p2,
                               const IA_parameters *ia_params, const double d[3],
                               double dist) {

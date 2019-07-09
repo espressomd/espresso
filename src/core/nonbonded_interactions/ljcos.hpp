@@ -21,9 +21,10 @@
 #ifndef _LJCOS_H
 #define _LJCOS_H
 /** \file
- *  Routines to calculate the Lennard-Jones+cosine energy and/or force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the Lennard-Jones+cosine potential between
+ *  particle pairs.
+ *
+ *  Implementation in \ref ljcos.cpp.
  */
 
 #include "config.hpp"
@@ -90,7 +91,6 @@ inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
               1.);
     }
     /* this should not happen! */
-
     fprintf(stderr, "this is the distance, which is negative %.3e\n", r_off);
   }
   return 0.0;

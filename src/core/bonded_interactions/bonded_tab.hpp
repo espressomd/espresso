@@ -24,6 +24,8 @@
 /** \file
  *  Routines to calculate the energy and/or force for particle bonds, angles
  *  and dihedrals via interpolation of lookup tables.
+ *
+ *  Implementation in \ref bonded_tab.cpp.
  */
 
 #include "config.hpp"
