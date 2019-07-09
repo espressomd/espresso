@@ -1418,9 +1418,11 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
 
   int cnt = 0;
   float3 interpolated_u{0.0f, 0.0f, 0.0f};
-#pragma unroll
+#pragma unroll 1
   for (int i = 0; i < 3; ++i) {
+#pragma unroll 1
     for (int j = 0; j < 3; ++j) {
+#pragma unroll 3
       for (int k = 0; k < 3; ++k) {
         auto const x =
             fold_if_necessary(center_node_index[0] - 1 + i, para->dim_x);
