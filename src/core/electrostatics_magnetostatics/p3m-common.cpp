@@ -74,9 +74,7 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao) {
         6081075.0;
     break;
   }
-  default: {
-    throw std::runtime_error("Unknown interpolation order");
-  }
+  default: { throw std::runtime_error("Unknown interpolation order"); }
   }
 
   return res;
@@ -219,9 +217,7 @@ double p3m_caf(int i, double x, int cao_value) {
       throw std::runtime_error("Unknown interpolation order");
     }
   }
-  default: {
-    throw std::runtime_error("Unknown interpolation order");
-  }
+  default: { throw std::runtime_error("Unknown interpolation order"); }
   }
   }
 }
