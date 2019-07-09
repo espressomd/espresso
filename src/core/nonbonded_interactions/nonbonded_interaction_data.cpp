@@ -156,14 +156,12 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
 }
 
 static void recalc_maximal_cutoff_nonbonded() {
-  int i, j;
-
   recalc_global_maximal_nonbonded_and_long_range_cutoff();
 
   max_cut_nonbonded = max_cut_global;
 
-  for (i = 0; i < max_seen_particle_type; i++)
-    for (j = i; j < max_seen_particle_type; j++) {
+  for (int i = 0; i < max_seen_particle_type; i++)
+    for (int j = i; j < max_seen_particle_type; j++) {
       double max_cut_current = INACTIVE_CUTOFF;
 
       IA_parameters *data = get_ia_param(i, j);

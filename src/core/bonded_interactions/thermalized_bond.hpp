@@ -70,13 +70,13 @@ inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
     return 1;
   }
 
-  double force_lv_com, force_lv_dist, com_vel, dist_vel;
-  double mass_tot = p1->p.mass + p2->p.mass;
-  double mass_tot_inv = 1.0 / mass_tot;
-  double sqrt_mass_tot = sqrt(mass_tot);
-  double sqrt_mass_red = sqrt(p1->p.mass * p2->p.mass / mass_tot);
+  auto const mass_tot = p1->p.mass + p2->p.mass;
+  auto const mass_tot_inv = 1.0 / mass_tot;
+  auto const sqrt_mass_tot = sqrt(mass_tot);
+  auto const sqrt_mass_red = sqrt(p1->p.mass * p2->p.mass / mass_tot);
 
   for (int i = 0; i < 3; i++) {
+    double force_lv_com, force_lv_dist, com_vel, dist_vel;
 
     // Langevin thermostat for center of mass
     com_vel =

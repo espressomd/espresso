@@ -57,10 +57,8 @@ inline double umbrella_force_r(double k, int dir, double r, double distn) {
 inline int calc_umbrella_pair_force(Particle const *p1, Particle const *p2,
                                     Bonded_ia_parameters const *ia_params,
                                     double const d[3], double force[3]) {
-  double distn;
-  double fac = 0.0;
-  distn = d[ia_params->p.umbrella.dir];
-  fac = -ia_params->p.umbrella.k * (distn - ia_params->p.umbrella.r);
+  auto const distn = d[ia_params->p.umbrella.dir];
+  auto const fac = -ia_params->p.umbrella.k * (distn - ia_params->p.umbrella.r);
   force[ia_params->p.umbrella.dir] += fac;
 
   ONEPART_TRACE(if (p1->p.identity == check_id)
@@ -89,8 +87,7 @@ inline int calc_umbrella_pair_force(Particle const *p1, Particle const *p2,
 inline int umbrella_pair_energy(Particle const *p1, Particle const *p2,
                                 Bonded_ia_parameters const *ia_params,
                                 double const d[3], double *_energy) {
-  double distn;
-  distn = d[ia_params->p.umbrella.dir];
+  auto const distn = d[ia_params->p.umbrella.dir];
   *_energy = 0.5 * ia_params->p.umbrella.k *
              Utils::sqr(distn - ia_params->p.umbrella.r);
   return 0;

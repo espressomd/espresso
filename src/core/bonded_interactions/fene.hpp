@@ -48,14 +48,14 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
 inline int calc_fene_pair_force(Bonded_ia_parameters const *iaparams,
                                 Utils::Vector3d const &dx, double *force) {
   auto const len = dx.norm();
+  auto const dr = len - iaparams->p.fene.r0;
 
-  const double dr = len - iaparams->p.fene.r0;
-
-  if (dr >= iaparams->p.fene.drmax)
+  if (dr >= iaparams->p.fene.drmax) {
     return 1;
+  }
 
-  double fac =
-      -iaparams->p.fene.k * dr / ((1.0 - dr * dr * iaparams->p.fene.drmax2i));
+  auto fac =
+      -iaparams->p.fene.k * dr / (1.0 - dr * dr * iaparams->p.fene.drmax2i);
   if (len > ROUND_ERROR_PREC) {
     fac /= len;
   } else {
@@ -85,7 +85,7 @@ inline int fene_pair_energy(Bonded_ia_parameters const *iaparams,
     return 1;
   }
 
-  double energy = -0.5 * iaparams->p.fene.k * iaparams->p.fene.drmax2;
+  auto energy = -0.5 * iaparams->p.fene.k * iaparams->p.fene.drmax2;
   energy *= log((1.0 - dr * dr * iaparams->p.fene.drmax2i));
   *_energy = energy;
   return 0;

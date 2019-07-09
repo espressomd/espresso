@@ -68,7 +68,7 @@ inline void add_hat_pair_force(const Particle *const p1,
 inline double hat_pair_energy(const Particle *p1, const Particle *p2,
                               const IA_parameters *ia_params, const double d[3],
                               double dist) {
-  if ((dist < ia_params->HAT_r)) {
+  if (dist < ia_params->HAT_r) {
     return hat_energy_r(ia_params->HAT_Fmax, ia_params->HAT_r, dist);
   }
   return 0.0;

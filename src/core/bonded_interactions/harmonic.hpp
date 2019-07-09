@@ -51,8 +51,10 @@ inline int calc_harmonic_pair_force(Bonded_ia_parameters const *iaparams,
                                     Utils::Vector3d const &dx, double *force) {
   auto const dist = dx.norm();
 
-  if ((iaparams->p.harmonic.r_cut > 0.0) && (dist > iaparams->p.harmonic.r_cut))
+  if ((iaparams->p.harmonic.r_cut > 0.0) &&
+      (dist > iaparams->p.harmonic.r_cut)) {
     return 1;
+  }
 
   auto const dr = dist - iaparams->p.harmonic.r;
   auto fac = -iaparams->p.harmonic.k * dr;
@@ -79,8 +81,10 @@ inline int harmonic_pair_energy(Bonded_ia_parameters const *iaparams,
                                 Utils::Vector3d const &dx, double *_energy) {
   auto const dist = dx.norm();
 
-  if ((iaparams->p.harmonic.r_cut > 0.0) && (dist > iaparams->p.harmonic.r_cut))
+  if ((iaparams->p.harmonic.r_cut > 0.0) &&
+      (dist > iaparams->p.harmonic.r_cut)) {
     return 1;
+  }
 
   *_energy =
       0.5 * iaparams->p.harmonic.k * Utils::sqr(dist - iaparams->p.harmonic.r);

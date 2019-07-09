@@ -59,8 +59,9 @@ calc_harmonic_dumbbell_pair_force(Particle *p1,
   auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
-      (dist > iaparams->p.harmonic_dumbbell.r_cut))
+      (dist > iaparams->p.harmonic_dumbbell.r_cut)) {
     return 1;
+  }
 
   auto const dr = dist - iaparams->p.harmonic_dumbbell.r;
   auto const normalizer = (dist > ROUND_ERROR_PREC) ? 1. / dist : 0.0;
@@ -90,8 +91,9 @@ inline int harmonic_dumbbell_pair_energy(Particle const *p1,
   auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
-      (dist > iaparams->p.harmonic_dumbbell.r_cut))
+      (dist > iaparams->p.harmonic_dumbbell.r_cut)) {
     return 1;
+  }
 
   double dhat[3];
   dhat[0] = dx[0] / dist;

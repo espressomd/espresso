@@ -53,8 +53,9 @@ inline int calc_quartic_pair_force(Bonded_ia_parameters const *iaparams,
                                    Utils::Vector3d const &dx, double *force) {
   auto const dist = dx.norm();
 
-  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut))
+  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
     return 1;
+  }
 
   auto const dr = dist - iaparams->p.quartic.r;
 
@@ -78,8 +79,9 @@ inline int quartic_pair_energy(Bonded_ia_parameters const *iaparams,
                                Utils::Vector3d const &dx, double *_energy) {
   auto const dist = dx.norm();
 
-  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut))
+  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
     return 1;
+  }
 
   double dr2 = Utils::sqr(dist - iaparams->p.quartic.r);
 

@@ -57,14 +57,13 @@ inline void add_soft_pair_force(const Particle *const p1,
                                 const Particle *const p2,
                                 IA_parameters *ia_params, double const d[3],
                                 double dist, double force[3]) {
-  int j;
-  double r_off, fac = 0.0;
-  if ((dist < ia_params->soft_cut + ia_params->soft_offset)) {
+  if (dist < (ia_params->soft_cut + ia_params->soft_offset)) {
     /* normal case: resulting force/energy smaller than zero. */
-    r_off = dist - ia_params->soft_offset;
+    auto const r_off = dist - ia_params->soft_offset;
     if (r_off > 0.0) {
-      fac = soft_force_r(ia_params->soft_a, ia_params->soft_n, r_off) / dist;
-      for (j = 0; j < 3; j++)
+      auto const fac =
+          soft_force_r(ia_params->soft_a, ia_params->soft_n, r_off) / dist;
+      for (int j = 0; j < 3; j++)
         force[j] += fac * d[j];
 
 #ifdef LJ_WARN_WHEN_CLOSE
@@ -94,10 +93,8 @@ inline void add_soft_pair_force(const Particle *const p1,
 inline double soft_pair_energy(const Particle *p1, const Particle *p2,
                                const IA_parameters *ia_params,
                                const double d[3], double dist) {
-  double r_off;
-
-  if ((dist < ia_params->soft_cut + ia_params->soft_offset)) {
-    r_off = dist - ia_params->soft_offset;
+  if (dist < (ia_params->soft_cut + ia_params->soft_offset)) {
+    auto const r_off = dist - ia_params->soft_offset;
     /* normal case: resulting force/energy smaller than zero. */
 
     return soft_energy_r(ia_params->soft_a, ia_params->soft_n, r_off);

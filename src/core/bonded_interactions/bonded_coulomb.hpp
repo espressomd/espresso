@@ -57,15 +57,13 @@ inline int calc_bonded_coulomb_pair_force(Particle const *p1,
                                           Bonded_ia_parameters const *iaparams,
                                           Utils::Vector3d const &dx,
                                           double *force) {
-  int i;
-  double fac;
   auto const dist2 = dx.norm2();
   auto const dist = std::sqrt(dist2);
 
-  fac =
+  auto const fac =
       iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / (dist * dist2);
 
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     force[i] = fac * dx[i];
 
   return 0;

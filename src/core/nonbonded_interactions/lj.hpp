@@ -46,9 +46,9 @@ inline void add_lj_pair_force(IA_parameters *ia_params, const double d[3],
                               double dist, double force[3]) {
   if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
       (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
-    double r_off = dist - ia_params->LJ_offset;
-    double frac6 = Utils::int_pow<6>(ia_params->LJ_sig / r_off);
-    double fac =
+    auto const r_off = dist - ia_params->LJ_offset;
+    auto const frac6 = Utils::int_pow<6>(ia_params->LJ_sig / r_off);
+    auto const fac =
         48.0 * ia_params->LJ_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
@@ -59,10 +59,11 @@ inline void add_lj_pair_force(IA_parameters *ia_params, const double d[3],
 inline double lj_pair_energy(const IA_parameters *ia_params, double dist) {
   if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
       (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
-    double r_off = dist - ia_params->LJ_offset;
-    double frac6 = Utils::int_pow<6>(ia_params->LJ_sig / r_off);
-    return 4.0 * ia_params->LJ_eps *
-           (Utils::sqr(frac6) - frac6 + ia_params->LJ_shift);
+    auto const r_off = dist - ia_params->LJ_offset;
+    auto const frac6 = Utils::int_pow<6>(ia_params->LJ_sig / r_off);
+    auto const fac = 4.0 * ia_params->LJ_eps *
+                     (Utils::sqr(frac6) - frac6 + ia_params->LJ_shift);
+    return fac;
   }
   return 0.0;
 }

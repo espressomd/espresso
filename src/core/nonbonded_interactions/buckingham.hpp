@@ -55,7 +55,7 @@ inline void add_buck_pair_force(const Particle *const p1,
                                 const Particle *const p2,
                                 IA_parameters *ia_params, double const d[3],
                                 double dist, double force[3]) {
-  if ((dist < ia_params->BUCK_cut)) {
+  if (dist < ia_params->BUCK_cut) {
     /* case: resulting force/energy greater than discontinuity and
              less than cutoff (true Buckingham region) */
     double fac;
@@ -103,16 +103,17 @@ inline void add_buck_pair_force(const Particle *const p1,
 inline double buck_pair_energy(const Particle *p1, const Particle *p2,
                                const IA_parameters *ia_params,
                                const double d[3], double dist) {
-  if ((dist < ia_params->BUCK_cut)) {
+  if (dist < ia_params->BUCK_cut) {
     /* case: resulting force/energy greater than discont and
              less than cutoff (true Buckingham region) */
-    if (dist > ia_params->BUCK_discont)
+    if (dist > ia_params->BUCK_discont) {
       return buck_energy_r(ia_params->BUCK_A, ia_params->BUCK_B,
                            ia_params->BUCK_C, ia_params->BUCK_D,
                            ia_params->BUCK_shift, dist);
+    }
 
     /* resulting force/energy in the linear region*/
-    return (ia_params->BUCK_F1 + ia_params->BUCK_F2 * dist);
+    return ia_params->BUCK_F1 + ia_params->BUCK_F2 * dist;
   }
   return 0.0;
 }
