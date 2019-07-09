@@ -52,11 +52,11 @@ inline double umbrella_force_r(double k, int dir, double r, double distn) {
  *  @param[in]  ia_params Bonded parameters for the pair interaction.
  *  @param[in]  d         %Distance between the particles.
  *  @param[out] force     Force.
- *  @retval 0
+ *  @retval false
  */
-inline int calc_umbrella_pair_force(Particle const *p1, Particle const *p2,
-                                    Bonded_ia_parameters const *ia_params,
-                                    double const d[3], double force[3]) {
+inline bool calc_umbrella_pair_force(Particle const *p1, Particle const *p2,
+                                     Bonded_ia_parameters const *ia_params,
+                                     double const d[3], double force[3]) {
   auto const distn = d[ia_params->p.umbrella.dir];
   auto const fac = -ia_params->p.umbrella.k * (distn - ia_params->p.umbrella.r);
   force[ia_params->p.umbrella.dir] += fac;
@@ -73,7 +73,7 @@ inline int calc_umbrella_pair_force(Particle const *p1, Particle const *p2,
                             "id=%d at dist %f fac %.3e\n",
                             this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                             p1->p.identity, distn, fac));
-  return 0;
+  return false;
 }
 
 /** Compute the umbrella bond length energy.
@@ -82,15 +82,15 @@ inline int calc_umbrella_pair_force(Particle const *p1, Particle const *p2,
  *  @param[in]  ia_params Bonded parameters for the pair interaction.
  *  @param[in]  d         %Distance between the particles.
  *  @param[out] _energy   Energy.
- *  @retval 0
+ *  @retval false
  */
-inline int umbrella_pair_energy(Particle const *p1, Particle const *p2,
-                                Bonded_ia_parameters const *ia_params,
-                                double const d[3], double *_energy) {
+inline bool umbrella_pair_energy(Particle const *p1, Particle const *p2,
+                                 Bonded_ia_parameters const *ia_params,
+                                 double const d[3], double *_energy) {
   auto const distn = d[ia_params->p.umbrella.dir];
   *_energy = 0.5 * ia_params->p.umbrella.k *
              Utils::sqr(distn - ia_params->p.umbrella.r);
-  return 0;
+  return false;
 }
 
 #endif /* ifdef UMBRELLA */

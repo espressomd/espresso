@@ -42,16 +42,15 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
- *  @retval 1 if the bond is broken
- *  @retval 0 otherwise
+ *  @return whether the bond is broken
  */
-inline int calc_fene_pair_force(Bonded_ia_parameters const *iaparams,
-                                Utils::Vector3d const &dx, double *force) {
+inline bool calc_fene_pair_force(Bonded_ia_parameters const *iaparams,
+                                 Utils::Vector3d const &dx, double *force) {
   auto const len = dx.norm();
   auto const dr = len - iaparams->p.fene.r0;
 
   if (dr >= iaparams->p.fene.drmax) {
-    return 1;
+    return true;
   }
 
   auto fac =
@@ -65,30 +64,29 @@ inline int calc_fene_pair_force(Bonded_ia_parameters const *iaparams,
   for (int i = 0; i < 3; i++)
     force[i] = fac * dx[i];
 
-  return 0;
+  return false;
 }
 
 /** Compute the FENE bond energy.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.
- *  @retval 1 if the bond is broken
- *  @retval 0 otherwise
+ *  @return whether the bond is broken
  */
-inline int fene_pair_energy(Bonded_ia_parameters const *iaparams,
-                            Utils::Vector3d const &dx, double *_energy) {
+inline bool fene_pair_energy(Bonded_ia_parameters const *iaparams,
+                             Utils::Vector3d const &dx, double *_energy) {
   /* compute bond stretching (r-r0) */
   double const dr = dx.norm() - iaparams->p.fene.r0;
 
   /* check bond stretching */
   if (dr >= iaparams->p.fene.drmax) {
-    return 1;
+    return true;
   }
 
   auto energy = -0.5 * iaparams->p.fene.k * iaparams->p.fene.drmax2;
   energy *= log((1.0 - dr * dr * iaparams->p.fene.drmax2i));
   *_energy = energy;
-  return 0;
+  return false;
 }
 
 #endif

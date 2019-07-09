@@ -114,11 +114,11 @@ inline void calc_dihedral_angle(Particle const *p1, Particle const *p2,
  *  @param[out] force3    Force on particle 3.
  *  @return false
  */
-inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
-                               Particle const *p3, Particle const *p4,
-                               Bonded_ia_parameters const *iaparams,
-                               double force2[3], double force1[3],
-                               double force3[3]) {
+inline bool calc_dihedral_force(Particle const *p2, Particle const *p1,
+                                Particle const *p3, Particle const *p4,
+                                Bonded_ia_parameters const *iaparams,
+                                double force2[3], double force1[3],
+                                double force3[3]) {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -137,7 +137,7 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
       force2[i] = 0.0;
       force3[i] = 0.0;
     }
-    return 0;
+    return false;
   }
 
   auto const f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23;
@@ -174,7 +174,7 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
     force2[i] = fac * (v34Xf4[i] - v12Xf1[i] - v23Xf1[i]);
     force3[i] = fac * (v12Xf1[i] - v23Xf4[i] - v34Xf4[i]);
   }
-  return 0;
+  return false;
 }
 
 /** Compute the four-body dihedral interaction energy.
@@ -187,10 +187,10 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
  *  @param[out] _energy   Energy.
  *  @return false
  */
-inline int dihedral_energy(Particle const *p1, Particle const *p2,
-                           Particle const *p3, Particle const *p4,
-                           Bonded_ia_parameters const *iaparams,
-                           double *_energy) {
+inline bool dihedral_energy(Particle const *p1, Particle const *p2,
+                            Particle const *p3, Particle const *p4,
+                            Bonded_ia_parameters const *iaparams,
+                            double *_energy) {
   /* vectors for dihedral calculations. */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -204,7 +204,7 @@ inline int dihedral_energy(Particle const *p1, Particle const *p2,
       iaparams->p.dihedral.bend *
       (1. - cos(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase));
 
-  return 0;
+  return false;
 }
 
 #endif

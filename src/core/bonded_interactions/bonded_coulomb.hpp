@@ -50,13 +50,13 @@ int bonded_coulomb_set_params(int bond_type, double prefactor);
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
- *  @retval 0
+ *  @retval false
  */
-inline int calc_bonded_coulomb_pair_force(Particle const *p1,
-                                          Particle const *p2,
-                                          Bonded_ia_parameters const *iaparams,
-                                          Utils::Vector3d const &dx,
-                                          double *force) {
+inline bool calc_bonded_coulomb_pair_force(Particle const *p1,
+                                           Particle const *p2,
+                                           Bonded_ia_parameters const *iaparams,
+                                           Utils::Vector3d const &dx,
+                                           double *force) {
   auto const dist2 = dx.norm2();
   auto const dist = std::sqrt(dist2);
 
@@ -66,7 +66,7 @@ inline int calc_bonded_coulomb_pair_force(Particle const *p1,
   for (int i = 0; i < 3; i++)
     force[i] = fac * dx[i];
 
-  return 0;
+  return false;
 }
 
 /** Compute the bonded Coulomb pair energy.
@@ -75,16 +75,16 @@ inline int calc_bonded_coulomb_pair_force(Particle const *p1,
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.
- *  @retval 0
+ *  @retval false
  */
-inline int bonded_coulomb_pair_energy(Particle const *p1, Particle const *p2,
-                                      Bonded_ia_parameters const *iaparams,
-                                      Utils::Vector3d const &dx,
-                                      double *_energy) {
+inline bool bonded_coulomb_pair_energy(Particle const *p1, Particle const *p2,
+                                       Bonded_ia_parameters const *iaparams,
+                                       Utils::Vector3d const &dx,
+                                       double *_energy) {
   auto const dist = dx.norm();
 
   *_energy = iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / dist;
-  return 0;
+  return false;
 }
 
 #endif

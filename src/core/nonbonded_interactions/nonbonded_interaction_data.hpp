@@ -76,7 +76,7 @@ struct IA_parameters {
    *  energy/pressure. Note that even if there is no short-ranged
    *  interaction present, the \ref max_cut can be non-zero due to
    *  e.g. electrostatics. */
-  int particlesInteract;
+  bool particlesInteract;
 
 #ifdef LENNARD_JONES_GENERIC
   /** \name Generic Lennard-Jones with shift */
@@ -349,14 +349,14 @@ void reset_ia_params();
 int interactions_sanity_checks();
 
 /** Check if a non bonded interaction is defined */
-inline int checkIfInteraction(IA_parameters *data) {
+inline bool checkIfInteraction(IA_parameters *data) {
   return data->particlesInteract;
 }
 
 /** Check if the types of particles i and j have any non bonded
  *  interaction defined.
  */
-inline int checkIfParticlesInteract(int i, int j) {
+inline bool checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
 

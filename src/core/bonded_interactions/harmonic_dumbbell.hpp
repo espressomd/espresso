@@ -50,9 +50,9 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
  *  @param[in]      iaparams  Bonded parameters for the pair interaction.
  *  @param[in]      dx        %Distance between the particles.
  *  @param[out]     force     Force.
- *  @retval 0
+ *  @return whether the bond is broken
  */
-inline int
+inline bool
 calc_harmonic_dumbbell_pair_force(Particle *p1,
                                   Bonded_ia_parameters const *iaparams,
                                   Utils::Vector3d const &dx, double *force) {
@@ -60,7 +60,7 @@ calc_harmonic_dumbbell_pair_force(Particle *p1,
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic_dumbbell.r_cut)) {
-    return 1;
+    return true;
   }
 
   auto const dr = dist - iaparams->p.harmonic_dumbbell.r;
@@ -74,7 +74,7 @@ calc_harmonic_dumbbell_pair_force(Particle *p1,
   auto const da = vector_product(dhat, p1->r.calc_director());
 
   p1->f.torque += iaparams->p.harmonic_dumbbell.k2 * da;
-  return 0;
+  return false;
 }
 
 /** Compute the harmonic dumbbell bond energy.
@@ -82,17 +82,17 @@ calc_harmonic_dumbbell_pair_force(Particle *p1,
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.
- *  @retval 0
+ *  @return whether the bond is broken
  */
-inline int harmonic_dumbbell_pair_energy(Particle const *p1,
-                                         Bonded_ia_parameters const *iaparams,
-                                         Utils::Vector3d const &dx,
-                                         double *_energy) {
+inline bool harmonic_dumbbell_pair_energy(Particle const *p1,
+                                          Bonded_ia_parameters const *iaparams,
+                                          Utils::Vector3d const &dx,
+                                          double *_energy) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic_dumbbell.r_cut)) {
-    return 1;
+    return true;
   }
 
   double dhat[3];
@@ -121,7 +121,7 @@ inline int harmonic_dumbbell_pair_energy(Particle const *p1,
           Utils::sqr(dist - iaparams->p.harmonic.r) +
       0.5 * iaparams->p.harmonic_dumbbell.k2 *
           (torque[0] * diff[0] + torque[1] * diff[1] + torque[2] * diff[2]);
-  return 0;
+  return false;
 }
 
 #endif // ROTATION

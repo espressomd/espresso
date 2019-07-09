@@ -50,9 +50,9 @@ int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
- *  @retval 0
+ *  @retval false
  */
-inline int
+inline bool
 calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *iaparams,
                                   Utils::Vector3d const &dx, double *force) {
   auto const dist = dx.norm();
@@ -64,7 +64,7 @@ calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *iaparams,
   force[1] = forcevec[1];
   force[2] = forcevec[2];
 
-  return 0;
+  return false;
 }
 
 /** Compute the short-range bonded Coulomb pair energy.
@@ -73,18 +73,19 @@ calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *iaparams,
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.
- *  @retval 0
+ *  @retval false
  */
-inline int bonded_coulomb_sr_pair_energy(const Particle *p1, const Particle *p2,
-                                         Bonded_ia_parameters const *iaparams,
-                                         Utils::Vector3d const &dx,
-                                         double *_energy) {
+inline bool bonded_coulomb_sr_pair_energy(const Particle *p1,
+                                          const Particle *p2,
+                                          Bonded_ia_parameters const *iaparams,
+                                          Utils::Vector3d const &dx,
+                                          double *_energy) {
   auto const dist2 = dx.norm2();
   auto const dist = sqrt(dist2);
 
   *_energy = Coulomb::pair_energy(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2,
                                   dx.data(), dist, dist2);
-  return 0;
+  return false;
 }
 
 #endif

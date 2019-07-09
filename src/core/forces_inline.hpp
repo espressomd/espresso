@@ -356,10 +356,10 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
   }
 }
 
-inline int calc_bond_pair_force(Particle *p1, Particle *p2,
-                                Bonded_ia_parameters *iaparams,
-                                const Utils::Vector3d &dx, double *force) {
-  int bond_broken = 0;
+inline bool calc_bond_pair_force(Particle *p1, Particle *p2,
+                                 Bonded_ia_parameters *iaparams,
+                                 const Utils::Vector3d &dx, double *force) {
+  bool bond_broken = false;
 
   switch (iaparams->type) {
   case BONDED_IA_FENE:
@@ -401,7 +401,7 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
     break;
 #endif
   default:
-    bond_broken = 0;
+    bond_broken = false;
     break;
 
   } // switch type
@@ -414,7 +414,7 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
  */
 inline void add_bonded_force(Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
-  int bond_broken = 1;
+  bool bond_broken = true;
 
   int i = 0;
   while (i < p1->bl.n) {
@@ -502,7 +502,7 @@ inline void add_bonded_force(Particle *p1) {
         break;
 #ifdef OIF_GLOBAL_FORCES
       case BONDED_IA_OIF_GLOBAL_FORCES:
-        bond_broken = 0;
+        bond_broken = false;
         break;
 #endif
 #ifdef TABULATED
@@ -538,7 +538,7 @@ inline void add_bonded_force(Particle *p1) {
       // IMMERSED_BOUNDARY
       case BONDED_IA_IBM_TRIBEND: {
         IBM_Tribend_CalcForce(p1, p2, p3, p4, *iaparams);
-        bond_broken = 0;
+        bond_broken = false;
 
         break;
       }

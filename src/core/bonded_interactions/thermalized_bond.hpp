@@ -60,14 +60,14 @@ void thermalized_bond_init();
  *  @retval 1 if the bond is broken
  *  @retval 0 otherwise
  */
-inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
-                                        const Bonded_ia_parameters *iaparams,
-                                        const Utils::Vector3d &dx,
-                                        double *force1, double *force2) {
+inline bool calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
+                                         const Bonded_ia_parameters *iaparams,
+                                         const Utils::Vector3d &dx,
+                                         double *force1, double *force2) {
   // Bond broke?
   if (iaparams->p.thermalized_bond.r_cut > 0.0 &&
       dx.norm() > iaparams->p.thermalized_bond.r_cut) {
-    return 1;
+    return true;
   }
 
   auto const mass_tot = p1->p.mass + p2->p.mass;
@@ -109,7 +109,7 @@ inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
   ONEPART_TRACE(if (p2->p.identity == check_id) fprintf(
       stderr, "%d: OPT: THERMALIZED BOND f = (%.3e,%.3e,%.3e)\n", this_node,
       p2->f.f[0] + force2[0], p2->f.f[1] + force2[1], p2->f.f[2] + force2[2]));
-  return 0;
+  return false;
 }
 
 #endif
