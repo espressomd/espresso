@@ -1,7 +1,3 @@
-//
-// Created by florian on 09.07.19.
-//
-
 #ifndef ESPRESSO_P3M_LOCALMESH_HPP
 #define ESPRESSO_P3M_LOCALMESH_HPP
 

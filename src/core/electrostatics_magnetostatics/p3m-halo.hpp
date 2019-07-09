@@ -8,7 +8,9 @@
 
 #include <vector>
 
-/** Structure for send/recv meshes. */
+/**
+ * @brief Halo communication plan for regular meshes.
+ */
 class HaloComm {
   /** dimensions of the mesh */
   int dim[3];
@@ -57,6 +59,13 @@ public:
   void spread(double *data, Utils::MemoryOrder memory_order) const {
     spread(Utils::make_const_span(&data, 1), memory_order);
   }
+
+  /**
+   * @brief Overwrite halo regions on multiple meshes with their original
+   * images.
+   * @param data Multiple meshes to update
+   * @param memory_order row- or column-major
+   */
   void spread(Utils::Span<double *const> data,
               Utils::MemoryOrder memory_order) const;
 
@@ -66,6 +75,12 @@ public:
    * @param memory_order row- or column-major
    */
   void gather(double *data, Utils::MemoryOrder memory_order) const;
+
+  /**
+   * @brief Add halo regions to their original images on multiple meshes.
+   * @param data Multiple meshes to update
+   * @param memory_order row- or column-major
+   */
   void gather(Utils::Span<double *const> data,
               Utils::MemoryOrder memory_order) const;
 };
