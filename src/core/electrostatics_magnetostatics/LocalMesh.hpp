@@ -78,15 +78,15 @@ struct LocalMesh {
   int size = 0;
   /** index of lower left corner of the
       local mesh in the global mesh. */
-  int ld_ind[3] = {};
+  Utils::Vector3i ld_ind = {};
   /** position of the first local mesh point. */
-  double ld_pos[3] = {};
+  Utils::Vector3d ld_pos = {};
   /** dimension of mesh inside node domain. */
-  int inner[3] = {};
+  Utils::Vector3i inner = {};
   /** inner left down grid point */
-  int in_ld[3] = {};
+  Utils::Vector3i in_ld = {};
   /** inner up right grid point + (1,1,1) */
-  int in_ur[3] = {};
+  Utils::Vector3i in_ur = {};
   /** number of margin mesh points. */
   Utils::Array<int, 6> margin{};
 };
