@@ -227,9 +227,8 @@ void lb_init_boundaries() {
     Utils::Vector3i offset;
     int the_boundary = -1;
 
-    Utils::Vector3i result;
-    result = Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
-    auto const node_pos = result;
+    auto const node_pos =
+        Utils::Mpi::cart_coords<3>(comm_cart, comm_cart.rank());
 
     const auto lblattice = lb_lbfluid_get_lattice();
     offset[0] = node_pos[0] * lblattice.grid[0];
