@@ -66,6 +66,7 @@ if(SPHINX_FOUND)
     set(EXCLUDE
         "${SPHINX_PYTHON_DIR}/gen_code_info.py"
         "${SPHINX_PYTHON_DIR}/gen_pxiconfig*"
+        "${SPHINX_PYTHON_DIR}/core/*"
     )
 
     add_custom_target(sphinx
