@@ -94,7 +94,6 @@ double p3m_caf(int i, double x, int cao_value) {
       return 0.5 + x;
     default:
       throw std::runtime_error("Unknown interpolation order");
-      return 0.0;
     }
   }
   case 3: {
@@ -107,7 +106,6 @@ double p3m_caf(int i, double x, int cao_value) {
       return 0.5 * Utils::sqr(0.5 + x);
     default:
       throw std::runtime_error("Unknown interpolation order");
-      return 0.0;
     }
   case 4: {
     switch (i) {
@@ -121,7 +119,6 @@ double p3m_caf(int i, double x, int cao_value) {
       return (1.0 + x * (6.0 + x * (12.0 + x * 8.0))) / 48.0;
     default:
       throw std::runtime_error("Unknown interpolation order");
-      return 0.0;
     }
   }
   case 5: {
@@ -138,7 +135,6 @@ double p3m_caf(int i, double x, int cao_value) {
       return (1.0 + x * (8.0 + x * (24.0 + x * (32.0 + x * 16.0)))) / 384.0;
     default:
       throw std::runtime_error("Unknown interpolation order");
-      return 0.0;
     }
   }
   case 6: {
@@ -173,7 +169,6 @@ double p3m_caf(int i, double x, int cao_value) {
              3840.0;
     default:
       throw std::runtime_error("Unknown interpolation order");
-      return 0.0;
     }
   }
   case 7: {
@@ -222,12 +217,10 @@ double p3m_caf(int i, double x, int cao_value) {
              46080.0;
     default:
       throw std::runtime_error("Unknown interpolation order");
-      return 0.0;
     }
   }
   default: {
     throw std::runtime_error("Unknown interpolation order");
-    return 0.0;
   }
   }
   }
