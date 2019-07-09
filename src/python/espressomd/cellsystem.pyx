@@ -17,16 +17,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
+from libcpp cimport bool
 from . cimport integrate
 cimport core.communication
 cimport core.cells
 cimport core.tuning
 cimport core.layered
 cimport core.grid
-from globals cimport *
 import numpy as np
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
+from core.integrate cimport verlet_reuse, skin
+from globals cimport cell_structure, dd, n_nodes, mpi_bcast_parameter, FIELD_NODEGRID, FIELD_SKIN, FIELD_MINNUMCELLS, calc_processor_min_num_cells, FIELD_MAXNUMCELLS, max_skin, max_range, max_cut, FIELD_NODEGRID, max_num_cells, min_num_cells
 
 cdef class CellSystem(object):
     def set_domain_decomposition(
@@ -97,7 +99,7 @@ cdef class CellSystem(object):
             if not n_layers > 0:
                 raise ValueError("the number of layers has to be >0")
 
-            core.layered.n_layers_ = int(n_layers)
+            core.layered.n_layers = int(n_layers)
             core.layered.determine_n_layers = 0
 
         if (core.grid.node_grid[0] != 1 or core.grid.node_grid[1] != 1):
@@ -121,7 +123,7 @@ cdef class CellSystem(object):
 
         if cell_structure.type == core.cells.CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
-            s["n_layers"] = n_layers
+            s["n_layers"] = core.layered.n_layers
         if cell_structure.type == core.cells.CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
         if cell_structure.type == core.cells.CELL_STRUCTURE_NSQUARE:
@@ -131,7 +133,6 @@ cdef class CellSystem(object):
         s["max_cut"] = max_cut
         s["max_range"] = max_range
         s["max_skin"] = max_skin
-        s["n_layers"] = core.layered.n_layers_
         s["verlet_reuse"] = verlet_reuse
         s["n_nodes"] = n_nodes
         s["node_grid"] = np.array(
@@ -153,7 +154,7 @@ cdef class CellSystem(object):
 
         if cell_structure.type == core.cells.CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
-            s["n_layers"] = n_layers
+            s["n_layers"] = core.layered.n_layers
         if cell_structure.type == core.cells.CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
         if cell_structure.type == core.cells.CELL_STRUCTURE_NSQUARE:
@@ -309,5 +310,5 @@ cdef class CellSystem(object):
         :attr:`skin`
 
         """
-        core.tuning.c_tune_skin(min_skin, max_skin, tol, int_steps)
+        core.tuning.tune_skin(min_skin, max_skin, tol, int_steps)
         return self.skin

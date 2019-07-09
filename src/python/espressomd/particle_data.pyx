@@ -28,7 +28,7 @@ from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from globals cimport max_seen_particle, time_step, n_part, n_rigidbonds, max_seen_particle_type, swimming_particles_exist, FIELD_SWIMMING_PARTICLES_EXIST, mpi_bcast_parameter
+from globals cimport max_seen_particle, n_rigidbonds, max_seen_particle_type, FIELD_SWIMMING_PARTICLES_EXIST, mpi_bcast_parameter
 import collections
 import functools
 import types
@@ -36,6 +36,7 @@ from espressomd.utils import nesting_level, array_locked, is_valid_type
 from espressomd.utils cimport make_array_locked
 from core.grid cimport box_geo, folded_position, unfolded_position
 from core.utils cimport make_const_span
+from core.particle_data cimport n_part, swimming_particles_exist
 
 PARTICLE_EXT_FORCE = 1
 

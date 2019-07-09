@@ -54,7 +54,7 @@ cdef List[int] create_int_list_from_python_object(obj):
 
     return il
 
-cpdef check_type_or_throw_except(x, n, t, msg):
+cdef check_type_or_throw_except(x, n, t, msg):
     """
     Checks that x is of type t and that n values are given, otherwise throws
     ValueError with the message msg. If x is an array/list/tuple, the type

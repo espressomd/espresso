@@ -29,7 +29,7 @@ from . import cuda_init
 from copy import deepcopy
 from . import utils
 from .utils import array_locked, is_valid_type
-from .utils cimport make_array_locked
+from .utils cimport make_array_locked, check_type_or_throw_except
 cimport core.lb_interface
 from core.lb_interface cimport(lb_lbnode_get_boundary,
                                 lb_lbnode_get_pop,
@@ -81,7 +81,7 @@ cdef class HydrodynamicInteraction(Actor):
     def validate_params(self):
         default_params = self.default_params()
 
-        utils.check_type_or_throw_except(
+        check_type_or_throw_except(
             self._params["kT"], 1, float, "kT must be a number")
         if self._params["kT"] > 0. and not self._params["seed"]:
             raise ValueError(
@@ -355,7 +355,7 @@ cdef class LBFluidRoutines(object):
     cdef Vector3i node
 
     def __init__(self, key):
-        utils.check_type_or_throw_except(
+        check_type_or_throw_except(
             key, 3, int, "The index of an lb fluid node consists of three integers.")
         self.node[0] = key[0]
         self.node[1] = key[1]

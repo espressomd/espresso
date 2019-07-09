@@ -21,7 +21,7 @@ from __future__ import print_function, absolute_import
 from . cimport utils
 include "myconfig.pxi"
 from .actors import Actor
-from utils cimport check_type_or_throw_except, check_range_or_except, handle_errors
+from .utils cimport check_type_or_throw_except, check_range_or_except, handle_errors
 
 IF DIPOLES and DP3M:
     class MagnetostaticExtension(Actor):

@@ -67,8 +67,7 @@ from core.rotate_system cimport rotate_system
 IF EXCLUSIONS:
     from core.particle_data cimport auto_exclusions
 from core.particle_data cimport init_type_map, number_of_particles_with_type, get_random_p_id
-
-cimport tuning
+from core.integrate cimport integ_switch, time_step, sim_time
 
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",

@@ -1,11 +1,10 @@
 import numpy as np
 
 from core.grid cimport box_geo
-from globals cimport time_step
 from globals cimport mpi_set_time_step
 from globals cimport min_global_cut
-from globals cimport sim_time
-from globals cimport timing_samples
+from core.integrate cimport sim_time, time_step
+from core.tuning cimport timing_samples
 from globals cimport forcecap_set
 from globals cimport forcecap_get
 from espressomd.utils import array_locked, is_valid_type

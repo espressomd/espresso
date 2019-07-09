@@ -31,7 +31,7 @@ cdef extern from "stdlib.h":
 cdef List[int] create_int_list_from_python_object(obj)
 cdef np.ndarray create_nparray_from_int_list(const List[int] & il)
 cdef np.ndarray create_nparray_from_double_array(double * x, int n)
-cpdef check_type_or_throw_except(x, n, t, msg)
+cdef check_type_or_throw_except(x, n, t, msg)
 cdef check_range_or_except(D, x, v_min, incl_min, v_max, incl_max)
 
 cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":

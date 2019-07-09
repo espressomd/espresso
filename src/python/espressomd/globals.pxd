@@ -50,14 +50,6 @@ cdef extern from "communication.hpp":
     extern int n_nodes
     void mpi_set_time_step(double time_step)
 
-cdef extern from "integrate.hpp":
-    double time_step
-    extern int integ_switch
-    extern double sim_time
-    extern double verlet_reuse
-    extern double skin
-    extern bool set_py_interrupt
-
 cdef extern from "domain_decomposition.hpp":
     ctypedef struct  DomainDecomposition:
         int cell_grid[3]
@@ -70,10 +62,6 @@ cdef extern from "domain_decomposition.hpp":
     extern double max_skin
     int calc_processor_min_num_cells(const Vector3i & grid)
 
-
-cdef extern from "particle_data.hpp":
-    extern int n_part
-    extern bool swimming_particles_exist
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     double dpd_gamma
@@ -107,16 +95,8 @@ cdef extern from "cells.hpp":
 
     CellStructure cell_structure
 
-cdef extern from "layered.hpp":
-    extern int n_layers
-
 cdef extern from "rattle.hpp":
     extern int n_rigidbonds
-
-
-cdef extern from "tuning.hpp":
-    extern int timing_samples
-
 
 cdef extern from "npt.hpp":
     ctypedef struct nptiso_struct:
