@@ -29,12 +29,12 @@ from boost cimport string_ref
 from .utils cimport Span
 from .communication cimport MpiCallbacks
 
-cdef extern from "scipt_interface/ObjectManager.hpp" namespace "ScriptInterface":
+cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface":
     cppclass ObjectManager:
         ObjectManager(MpiCallbacks *)
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
-    void initialize(MpiCallbacks &)
+    shared_ptr[ObjectManager] initialize(MpiCallbacks &)
     cdef cppclass Variant:
         Variant()
         Variant(const Variant & )
@@ -46,7 +46,6 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 
 cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
     T get_value[T](const Variant T)
-
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     Variant make_variant[T](const T & x)
@@ -73,5 +72,11 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ObjectHandle::CreationPolicy":
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
+
+cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface":
+    cppclass ObjectManager:
+        shared_ptr[ObjectHandle] make_shared(const string &, CreationPolicy, const VariantMap &) except +
+
+cdef shared_ptr[ObjectManager] _om
 
 cdef void init(MpiCallbacks &)

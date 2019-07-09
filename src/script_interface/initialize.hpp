@@ -21,9 +21,10 @@
 #define SCRIPT_INTERFACE_INITIALIZE_HPP
 
 #include "MpiCallbacks.hpp"
+#include "ObjectManager.hpp"
 
 namespace ScriptInterface {
-void initialize(Communication::MpiCallbacks &cb);
+std::shared_ptr<ObjectManager> initialize(Communication::MpiCallbacks &cb);
 } /* namespace ScriptInterface */
 
 #endif

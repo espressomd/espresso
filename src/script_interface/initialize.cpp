@@ -42,11 +42,11 @@
 
 namespace ScriptInterface {
 namespace {
-std::unique_ptr<ObjectManager> m_om;
+std::shared_ptr<ObjectManager> m_om;
 }
 
-void initialize(Communication::MpiCallbacks &cb) {
-  m_om = std::make_unique<ObjectManager>(&cb);
+std::shared_ptr<ObjectManager> initialize(Communication::MpiCallbacks &cb) {
+  m_om = std::make_shared<ObjectManager>(&cb);
   auto om = m_om.get();
 
   ObjectHandle::initialize(om);
@@ -66,6 +66,8 @@ void initialize(Communication::MpiCallbacks &cb) {
   CollisionDetection::initialize(om);
 
   om->register_new<ComFixed>("ComFixed");
+
+  return m_om;
 }
 
 } /* namespace ScriptInterface */

@@ -3,9 +3,15 @@
 
 #include "MpiCallbacks.hpp"
 #include "PackedVariant.hpp"
-#include "ScriptInterface.hpp"
+#include "ObjectHandle.hpp"
+
+#include <utils/Factory.hpp>
 
 #include <boost/serialization/utility.hpp>
+
+namespace ScriptInterface {
+extern Utils::Factory<ObjectHandle> factory;
+} /* namespace ScriptInterface */
 
 namespace ScriptInterface {
 class ObjectManager {
@@ -128,10 +134,6 @@ public:
     /* Register with the factory */
     factory.register_new<T>(name);
   }
-
-    std::shared_ptr<ObjectHandle>
-    make_shared(std::string const &name, ObjectHandle::CreationPolicy policy,
-                               const VariantMap &parameters);
 };
 } // namespace ScriptInterface
 
