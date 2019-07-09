@@ -35,6 +35,8 @@
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
+#include <utils/math/int_pow.hpp>
+
 int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset);
 
@@ -55,8 +57,7 @@ inline void add_ljcos_pair_force(const Particle *const p1,
     }
     /* Lennard-Jones part of the potential. */
     else if (dist > 0) {
-      double frac2 = Utils::sqr(ia_params->LJCOS_sig / r_off);
-      double frac6 = frac2 * frac2 * frac2;
+      double frac6 = Utils::int_pow<6>(ia_params->LJCOS_sig / r_off);
       double fac =
           48.0 * ia_params->LJCOS_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
 
@@ -79,8 +80,7 @@ inline double ljcos_pair_energy(const Particle *p1, const Particle *p2,
     double r_off = dist - ia_params->LJCOS_offset;
     /* Lennard-Jones part of the potential. */
     if (dist < (ia_params->LJCOS_rmin + ia_params->LJCOS_offset)) {
-      double frac2 = Utils::sqr(ia_params->LJCOS_sig / r_off);
-      double frac6 = frac2 * frac2 * frac2;
+      double frac6 = Utils::int_pow<6>(ia_params->LJCOS_sig / r_off);
       return 4.0 * ia_params->LJCOS_eps * (Utils::sqr(frac6) - frac6);
     }
     /* cosine part of the potential. */

@@ -32,6 +32,8 @@
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
+#include <utils/math/int_pow.hpp>
+
 int wca_set_params(int part_type_a, int part_type_b, double eps, double sig);
 
 /** Calculate WCA force between particle p1 and p2 */
@@ -40,8 +42,7 @@ inline void add_wca_pair_force(const Particle *const p1,
                                IA_parameters *ia_params, double const d[3],
                                double dist, double force[3]) {
   if (dist < ia_params->WCA_cut) {
-    auto const frac2 = Utils::sqr(ia_params->WCA_sig / dist);
-    auto const frac6 = frac2 * frac2 * frac2;
+    auto const frac6 = Utils::int_pow<6>(ia_params->WCA_sig / dist);
     auto const fac =
         48.0 * ia_params->WCA_eps * frac6 * (frac6 - 0.5) / (dist * dist);
     for (int j = 0; j < 3; j++)
@@ -54,8 +55,7 @@ inline double wca_pair_energy(const Particle *p1, const Particle *p2,
                               const IA_parameters *ia_params, const double d[3],
                               double dist) {
   if (dist < ia_params->WCA_cut) {
-    auto const frac2 = Utils::sqr(ia_params->WCA_sig / dist);
-    auto const frac6 = frac2 * frac2 * frac2;
+    auto const frac6 = Utils::int_pow<6>(ia_params->WCA_sig / dist);
     return 4.0 * ia_params->WCA_eps * (Utils::sqr(frac6) - frac6 + .25);
   }
   return 0.0;

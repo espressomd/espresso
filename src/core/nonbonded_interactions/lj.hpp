@@ -34,6 +34,7 @@
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
+#include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
 int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
@@ -46,8 +47,7 @@ inline void add_lj_pair_force(IA_parameters *ia_params, const double d[3],
   if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
       (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
     double r_off = dist - ia_params->LJ_offset;
-    double frac2 = Utils::sqr(ia_params->LJ_sig / r_off);
-    double frac6 = frac2 * frac2 * frac2;
+    double frac6 = Utils::int_pow<6>(ia_params->LJ_sig / r_off);
     double fac =
         48.0 * ia_params->LJ_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
     for (int j = 0; j < 3; j++)
@@ -60,8 +60,7 @@ inline double lj_pair_energy(const IA_parameters *ia_params, double dist) {
   if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
       (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
     double r_off = dist - ia_params->LJ_offset;
-    double frac2 = Utils::sqr(ia_params->LJ_sig / r_off);
-    double frac6 = frac2 * frac2 * frac2;
+    double frac6 = Utils::int_pow<6>(ia_params->LJ_sig / r_off);
     return 4.0 * ia_params->LJ_eps *
            (Utils::sqr(frac6) - frac6 + ia_params->LJ_shift);
   }

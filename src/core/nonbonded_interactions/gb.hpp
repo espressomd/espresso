@@ -44,6 +44,9 @@ add_gb_pair_force(const Particle *const p1, const Particle *const p2,
                   double force[3], double torque1[3], double torque2[3])
 
 {
+  using Utils::int_pow;
+  using Utils::sqr;
+
   if (!(dist < ia_params->GB_cut))
     return;
 
@@ -78,7 +81,7 @@ add_gb_pair_force(const Particle *const p1, const Particle *const p2,
       (ia_params->GB_chi1 / dist / dist) * (Plus1 * (a + b) + Minus1 * (a - b));
   Sigma = ia_params->GB_sig / sqrt(1 - 0.5 * Brhi1);
   Koef1 = ia_params->GB_mu / E2;
-  Koef2 = Sigma * Sigma * Sigma * 0.5;
+  Koef2 = int_pow<3>(Sigma) * 0.5;
 
   X = ia_params->GB_sig / (dist - Sigma + ia_params->GB_sig);
   Xcut = ia_params->GB_sig / (ia_params->GB_cut - Sigma + ia_params->GB_sig);
@@ -88,35 +91,31 @@ add_gb_pair_force(const Particle *const p1, const Particle *const p2,
                     If they are not that close, the GB forces and torques are
                     calculated */
 
-    Brack = X * X * X;
-    BrackCut = Xcut * Xcut * Xcut;
-    Brack = Brack * Brack;
-    BrackCut = BrackCut * BrackCut;
+    auto const X6 = int_pow<6>(X);
+    auto const Xcut6 = int_pow<6>(Xcut);
 
-    Bra12 = 6 * Brack * X * (2 * Brack - 1);
-    Bra12Cut = 6 * BrackCut * Xcut * (2 * BrackCut - 1);
-    Brack = Brack * (Brack - 1);
-    BrackCut = BrackCut * (BrackCut - 1);
+    Bra12 = 6 * X6 * X * (2 * X6 - 1);
+    Bra12Cut = 6 * Xcut6 * Xcut * (2 * Xcut6 - 1);
+    Brack = X6 * (X6 - 1);
+    BrackCut = Xcut6 * (Xcut6 - 1);
 
     /*-------- Here we calculate derivatives -----------------------------*/
 
     dU_dr = E *
             (Koef1 * Brhi2 * (Brack - BrackCut) -
-             Koef2 * Brhi1 * (Bra12 - Bra12Cut) - Bra12 * dist) /
-            dist / dist;
-    Koef1 = Koef1 * ia_params->GB_chi2 / dist / dist;
-    Koef2 = Koef2 * ia_params->GB_chi1 / dist / dist;
+             Koef2 * Brhi1 * (Bra12 - Bra12Cut) - Bra12 * dist) / sqr(dist);
+    Koef1 = Koef1 * ia_params->GB_chi2 / sqr(dist);
+    Koef2 = Koef2 * ia_params->GB_chi1 / sqr(dist);
     dU_da = E * (Koef1 * (Minus2 + Plus2) * (BrackCut - Brack) +
                  Koef2 * (Plus1 + Minus1) * (Bra12 - Bra12Cut));
     dU_db = E * (Koef1 * (Minus2 - Plus2) * (Brack - BrackCut) +
                  Koef2 * (Plus1 - Minus1) * (Bra12 - Bra12Cut));
     dU_dc = E * ((Brack - BrackCut) *
-                     (ia_params->GB_nu * E1 * E1 * ia_params->GB_chi1 *
-                          ia_params->GB_chi1 * c +
+                     (ia_params->GB_nu * sqr(E1 * ia_params->GB_chi1) * c +
                       0.5 * Koef1 * ia_params->GB_chi2 *
-                          (Plus2 * Plus2 - Minus2 * Minus2)) -
+                          (sqr(Plus2) - sqr(Minus2))) -
                  (Bra12 - Bra12Cut) * 0.5 * Koef2 * ia_params->GB_chi1 *
-                     (Plus1 * Plus1 - Minus1 * Minus1));
+                     (sqr(Plus1) - sqr(Minus1)));
 
     /*--------------------------------------------------------------------*/
 
