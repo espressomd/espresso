@@ -11,13 +11,13 @@ from espressomd.utils import to_char_pointer, to_str
 
 from espressomd.utils cimport handle_errors
 IF ELECTROSTATICS:
-    from core.coulomb cimport coulomb
+    from core.coulomb cimport coulomb, COULOMB_SCAFACOS
 
 
 # Interface to the scafacos library. These are the methods shared between
 # dipolar and electrostatics methods
 
-IF SCAFACOS == 1:
+IF SCAFACOS:
     class ScafacosConnector(Actor):
 
         """Scafacos interface class shared by charge and dipole methods. Do not use directly.
@@ -97,8 +97,8 @@ IF SCAFACOS == 1:
         def _set_params_in_es_core(self):
             # Verify that scafacos is not used for electrostatics and dipoles
             # at the same time
-            IF ELECTROSTATICS == 1:
-                if self.dipolar and < int > coulomb.method == <int > coulomb.COULOMB_SCAFACOS:
+            IF ELECTROSTATICS:
+                if self.dipolar and < int > coulomb.method == <int > COULOMB_SCAFACOS:
                     raise Exception(
                         "Scafacos cannot be used for dipoles and charges at the same time")
 

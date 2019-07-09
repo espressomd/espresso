@@ -1,7 +1,7 @@
 include "myconfig.pxi"
-from core.p3m_common cimport P3MParameters
 IF ELECTROSTATICS:
     IF P3M:
+        from core.p3m_common cimport P3MParameters
         cdef extern from "electrostatics_magnetostatics/p3m.hpp":
             int p3m_set_params(double r_cut, int * mesh, int cao, double alpha, double accuracy)
             void p3m_set_tune_params(double r_cut, int mesh[3], int cao, double alpha, double accuracy, int n_interpol)
