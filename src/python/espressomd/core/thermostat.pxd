@@ -18,16 +18,16 @@
 #
 from __future__ import print_function, absolute_import
 
-from libcpp cimport bool as cbool
+from libcpp cimport bool
 from libc cimport stdint
 
 include "myconfig.pxi"
-from .utils cimport Vector3d
+from core.utils cimport Vector3d
 
 cdef extern from "thermostat.hpp":
     double temperature
     int thermo_switch
-    cbool thermo_virtual
+    bool thermo_virtual
     int THERMO_OFF
     int THERMO_LANGEVIN
     int THERMO_LB
@@ -42,6 +42,6 @@ cdef extern from "thermostat.hpp":
         double langevin_gamma
 
     void langevin_set_rng_state(stdint.uint64_t counter)
-    cbool langevin_is_seed_required()
+    bool langevin_is_seed_required()
 
     stdint.uint64_t langevin_get_rng_state()

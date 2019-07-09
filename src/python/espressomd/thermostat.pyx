@@ -18,9 +18,9 @@
 #
 from __future__ import print_function, absolute_import
 from functools import wraps
-from . cimport thermostat
+cimport core.thermostat
 include "myconfig.pxi"
-from globals cimport *
+cimport globals
 import numpy as np
 from . cimport utils
 from .lb cimport *
@@ -45,8 +45,8 @@ def AssertThermostatType(*allowedthermostats):
     def decoratorfunction(function):
         @wraps(function, assigned=('__name__', '__doc__'))
         def wrapper(*args, **kwargs):
-            if (not (thermo_switch in allowedthermostats) and
-                    (thermo_switch != THERMO_OFF)):
+            if (not (core.thermostat.thermo_switch in allowedthermostats) and
+                    (core.thermostat.thermo_switch != core.thermostat.THERMO_OFF)):
                 raise Exception(
                     "This combination of thermostats is not allowed!")
             function(*args, **kwargs)
@@ -110,63 +110,59 @@ cdef class Thermostat(object):
                 self.set_dpd(kT=thmst["kT"])
 
     def get_ts(self):
-        return thermo_switch
+        return core.thermostat.thermo_switch
 
     def get_state(self):
         """Returns the thermostat status."""
         thermo_list = []
-        if temperature == -1:
+        if core.thermostat.temperature == -1:
             raise Exception("Thermostat is not initialized")
-        if thermo_switch == THERMO_OFF:
+        if core.thermostat.thermo_switch == core.thermostat.THERMO_OFF:
             return [{"type": "OFF"}]
-        if thermo_switch & THERMO_LANGEVIN:
+        if core.thermostat.thermo_switch & core.thermostat.THERMO_LANGEVIN:
             lang_dict = {}
             lang_dict["type"] = "LANGEVIN"
-            lang_dict["kT"] = temperature
-            lang_dict["act_on_virtual"] = thermo_virtual
-            lang_dict["seed"] = int(langevin_get_rng_state())
+            lang_dict["kT"] = core.thermostat.temperature
+            lang_dict["act_on_virtual"] = core.thermostat.thermo_virtual
+            lang_dict["seed"] = int(core.thermostat.langevin_get_rng_state())
             IF PARTICLE_ANISOTROPY:
-                lang_dict["gamma"] = [langevin_gamma[0],
-                                      langevin_gamma[1],
-                                      langevin_gamma[2]]
+                lang_dict["gamma"] = [core.thermostat.langevin_gamma[0],
+                                      core.thermostat.langevin_gamma[1],
+                                      core.thermostat.langevin_gamma[2]]
             ELSE:
-                lang_dict["gamma"] = langevin_gamma
+                lang_dict["gamma"] = core.thermostat.langevin_gamma
             IF ROTATION:
                 IF PARTICLE_ANISOTROPY:
-                    lang_dict["gamma_rotation"] = [langevin_gamma_rotation[0],
-                                                   langevin_gamma_rotation[1],
-                                                   langevin_gamma_rotation[2]]
+                    lang_dict[
+                        "gamma_rotation"] = [core.thermostat.langevin_gamma_rotation[0],
+                                             core.thermostat.langevin_gamma_rotation[
+                                             1],
+                                             core.thermostat.langevin_gamma_rotation[2]]
                 ELSE:
-                    lang_dict["gamma_rotation"] = langevin_gamma_rotation
+                    lang_dict[
+                        "gamma_rotation"] = core.thermostat.langevin_gamma_rotation
             ELSE:
                 lang_dict["gamma_rotation"] = None
 
             thermo_list.append(lang_dict)
 
-        if thermo_switch & THERMO_LB:
+        if core.thermostat.thermo_switch & core.thermostat.THERMO_LB:
             lb_dict = {}
             lb_dict["gamma"] = lb_lbcoupling_get_gamma()
             lb_dict["type"] = "LB"
-            lb_dict["act_on_virtual"] = thermo_virtual
+            lb_dict["act_on_virtual"] = core.thermostat.thermo_virtual
             lb_dict["rng_counter_fluid"] = lb_lbcoupling_get_rng_state()
             thermo_list.append(lb_dict)
-        if thermo_switch & THERMO_NPT_ISO:
+        if core.thermostat.thermo_switch & core.thermostat.THERMO_NPT_ISO:
             npt_dict = {}
             npt_dict["type"] = "NPT_ISO"
-            npt_dict["kT"] = temperature
-            npt_dict.update(nptiso)
-            # thermo_dict["gamma0"] = nptiso_gamma0
-            # thermo_dict["gammav"] = nptiso_gammav
-            # thermo_dict["p_ext"] = nptiso.p_ext
-            # thermo_dict["p_inst"] = nptiso.p_inst
-            # thermo_dict["p_inst_av"] = nptiso.p_inst_av
-            # thermo_dict["piston"] = nptiso.piston
-            # thermo_dict["p_diff"] = nptiso.p_diff
+            npt_dict["kT"] = core.thermostat.temperature
+            npt_dict.update(globals.nptiso)
             thermo_list.append(npt_dict)
-        if (thermo_switch & THERMO_DPD):
+        if (core.thermostat.thermo_switch & core.thermostat.THERMO_DPD):
             dpd_dict = {}
             dpd_dict["type"] = "DPD"
-            dpd_dict["kT"] = temperature
+            dpd_dict["kT"] = core.thermostat.temperature
             thermo_list.append(dpd_dict)
         return thermo_list
 
@@ -175,36 +171,30 @@ cdef class Thermostat(object):
         Turns off all the thermostat and sets all the thermostat variables to zero.
 
         """
-
-        global temperature
-        global thermo_virtual
-        thermo_virtual = True
-        temperature = 0.
-        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
-        mpi_bcast_parameter(FIELD_TEMPERATURE)
-        global langevin_gamma
+        core.thermostat.thermo_virtual = True
+        core.thermostat.temperature = 0.
+        globals.mpi_bcast_parameter(globals.FIELD_THERMO_VIRTUAL)
+        globals.mpi_bcast_parameter(globals.FIELD_TEMPERATURE)
         IF PARTICLE_ANISOTROPY:
             for i in range(3):
-                langevin_gamma[i] = 0.
+                core.thermostat.langevin_gamma[i] = 0.
         ELSE:
-            langevin_gamma = 0.
-        mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
-        global langevin_gamma_rotation
+            core.thermostat.langevin_gamma = 0.
+        globals.mpi_bcast_parameter(globals.FIELD_LANGEVIN_GAMMA)
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
                 for i in range(3):
-                    langevin_gamma_rotation[i] = 0.
+                    core.thermostat.langevin_gamma_rotation[i] = 0.
             ELSE:
-                langevin_gamma_rotation = 0.
-            mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
+                core.thermostat.langevin_gamma_rotation = 0.
+            globals.mpi_bcast_parameter(globals.FIELD_LANGEVIN_GAMMA_ROTATION)
 
-        global thermo_switch
-        thermo_switch = THERMO_OFF
-        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+        core.thermostat.thermo_switch = core.thermostat.THERMO_OFF
+        globals.mpi_bcast_parameter(globals.FIELD_THERMO_SWITCH)
         lb_lbcoupling_set_gamma(0.0)
         return True
 
-    @AssertThermostatType(THERMO_LANGEVIN)
+    @AssertThermostatType(core.thermostat.THERMO_LANGEVIN)
     def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
                      act_on_virtual=False, seed=None):
         """
@@ -283,76 +273,78 @@ cdef class Thermostat(object):
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
 
         #Seed is required if the rng is not initialized
-        if not seed and langevin_is_seed_required():
+        if not seed and core.thermostat.langevin_is_seed_required():
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermostat")
 
         if seed:
             utils.check_type_or_throw_except(
                 seed, 1, int, "seed must be a positive integer")
-            langevin_set_rng_state(seed)
+            core.thermostat.langevin_set_rng_state(seed)
 
-        global temperature
-        temperature = float(kT)
-        global langevin_gamma
+        core.thermostat.temperature = float(kT)
         IF PARTICLE_ANISOTROPY:
             if scalar_gamma_def:
-                langevin_gamma[0] = gamma
-                langevin_gamma[1] = gamma
-                langevin_gamma[2] = gamma
+                core.thermostat.langevin_gamma[0] = gamma
+                core.thermostat.langevin_gamma[1] = gamma
+                core.thermostat.langevin_gamma[2] = gamma
             else:
-                langevin_gamma[0] = gamma[0]
-                langevin_gamma[1] = gamma[1]
-                langevin_gamma[2] = gamma[2]
+                core.thermostat.langevin_gamma[0] = gamma[0]
+                core.thermostat.langevin_gamma[1] = gamma[1]
+                core.thermostat.langevin_gamma[2] = gamma[2]
         ELSE:
-            langevin_gamma = float(gamma)
+            core.thermostat.langevin_gamma = float(gamma)
 
-        global langevin_gamma_rotation
         IF ROTATION:
             if gamma_rotation is not None:
                 IF PARTICLE_ANISOTROPY:
                     if scalar_gamma_rot_def:
-                        langevin_gamma_rotation[0] = gamma_rotation
-                        langevin_gamma_rotation[1] = gamma_rotation
-                        langevin_gamma_rotation[2] = gamma_rotation
+                        core.thermostat.langevin_gamma_rotation[
+                            0] = gamma_rotation
+                        core.thermostat.langevin_gamma_rotation[
+                            1] = gamma_rotation
+                        core.thermostat.langevin_gamma_rotation[
+                            2] = gamma_rotation
                     else:
-                        langevin_gamma_rotation[0] = gamma_rotation[0]
-                        langevin_gamma_rotation[1] = gamma_rotation[1]
-                        langevin_gamma_rotation[2] = gamma_rotation[2]
+                        core.thermostat.langevin_gamma_rotation[
+                            0] = gamma_rotation[0]
+                        core.thermostat.langevin_gamma_rotation[
+                            1] = gamma_rotation[1]
+                        core.thermostat.langevin_gamma_rotation[
+                            2] = gamma_rotation[2]
                 ELSE:
                     if scalar_gamma_rot_def:
-                        langevin_gamma_rotation = gamma_rotation
+                        core.thermostat.langevin_gamma_rotation = gamma_rotation
                     else:
                         raise ValueError(
                             "gamma_rotation must be a scalar since feature PARTICLE_ANISOTROPY is disabled")
             else:
                 IF PARTICLE_ANISOTROPY:
                     if scalar_gamma_def:
-                        langevin_gamma_rotation[0] = gamma
-                        langevin_gamma_rotation[1] = gamma
-                        langevin_gamma_rotation[2] = gamma
+                        core.thermostat.langevin_gamma_rotation[0] = gamma
+                        core.thermostat.langevin_gamma_rotation[1] = gamma
+                        core.thermostat.langevin_gamma_rotation[2] = gamma
                     else:
-                        langevin_gamma_rotation[0] = gamma[0]
-                        langevin_gamma_rotation[1] = gamma[1]
-                        langevin_gamma_rotation[2] = gamma[2]
+                        core.thermostat.langevin_gamma_rotation[0] = gamma[0]
+                        core.thermostat.langevin_gamma_rotation[1] = gamma[1]
+                        core.thermostat.langevin_gamma_rotation[2] = gamma[2]
                 ELSE:
-                    langevin_gamma_rotation = langevin_gamma
+                    core.thermostat.langevin_gamma_rotation = langevin_gamma
 
-        global thermo_switch
-        thermo_switch = (thermo_switch | THERMO_LANGEVIN)
-        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-        mpi_bcast_parameter(FIELD_TEMPERATURE)
-        mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+        core.thermostat.thermo_switch = (
+            core.thermostat.thermo_switch | core.thermostat.THERMO_LANGEVIN)
+        globals.mpi_bcast_parameter(globals.FIELD_THERMO_SWITCH)
+        globals.mpi_bcast_parameter(globals.FIELD_TEMPERATURE)
+        globals.mpi_bcast_parameter(globals.FIELD_LANGEVIN_GAMMA)
 
-        global thermo_virtual
-        thermo_virtual = act_on_virtual
-        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+        core.thermostat.thermo_virtual = act_on_virtual
+        globals.mpi_bcast_parameter(globals.FIELD_THERMO_VIRTUAL)
 
         IF ROTATION:
-            mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
+            globals.mpi_bcast_parameter(globals.FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
-    @AssertThermostatType(THERMO_LB)
+    @AssertThermostatType(core.thermostat.THERMO_LB)
     def set_lb(
         self,
         seed=None,
@@ -387,18 +379,17 @@ cdef class Thermostat(object):
             elif seed:
                 lb_lbcoupling_set_rng_state(seed)
 
-        global thermo_switch
-        thermo_switch = (thermo_switch or THERMO_LB)
-        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+        core.thermostat.thermo_switch = (
+            core.thermostat.thermo_switch or core.thermostat.THERMO_LB)
+        globals.mpi_bcast_parameter(globals.FIELD_THERMO_SWITCH)
 
-        global thermo_virtual
-        thermo_virtual = act_on_virtual
-        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+        core.thermostat.thermo_virtual = act_on_virtual
+        globals.mpi_bcast_parameter(globals.FIELD_THERMO_VIRTUAL)
         lb_lbcoupling_set_gamma(gamma)
         return True
 
     IF NPT:
-        @AssertThermostatType(THERMO_NPT_ISO)
+        @AssertThermostatType(core.thermostat.THERMO_NPT_ISO)
         def set_npt(self, kT=None, gamma0=None, gammav=None):
             """
             Sets the NPT thermostat.
@@ -420,18 +411,15 @@ cdef class Thermostat(object):
                     "kT, gamma0 and gammav have to be given as keyword args")
             if not isinstance(kT, float):
                 raise ValueError("temperature must be a positive number")
-            global temperature
-            temperature = float(kT)
-            global thermo_switch
-            thermo_switch = (thermo_switch | THERMO_NPT_ISO)
-            global nptiso_gamma0
-            nptiso_gamma0 = gamma0
-            global nptiso_gammav
-            nptiso_gammav = gammav
-            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-            mpi_bcast_parameter(FIELD_TEMPERATURE)
-            mpi_bcast_parameter(FIELD_NPTISO_G0)
-            mpi_bcast_parameter(FIELD_NPTISO_GV)
+            core.thermostat.temperature = float(kT)
+            core.thermostat.thermo_switch = (
+                core.thermostat.thermo_switch | core.thermostat.THERMO_NPT_ISO)
+            globals.nptiso_gamma0 = gamma0
+            globals.nptiso_gammav = gammav
+            globals.mpi_bcast_parameter(globals.FIELD_THERMO_SWITCH)
+            globals.mpi_bcast_parameter(globals.FIELD_TEMPERATURE)
+            globals.mpi_bcast_parameter(globals.FIELD_NPTISO_G0)
+            globals.mpi_bcast_parameter(globals.FIELD_NPTISO_GV)
 
     IF DPD:
         def set_dpd(self, kT=None):
@@ -449,10 +437,9 @@ cdef class Thermostat(object):
                 raise ValueError("kT has to be given as keyword args")
             if not isinstance(kT, float):
                 raise ValueError("temperature must be a positive number")
-            global temperature
-            temperature = float(kT)
-            global thermo_switch
-            thermo_switch = (thermo_switch | THERMO_DPD)
+            core.thermostat.temperature = float(kT)
+            core.thermostat.thermo_switch = (
+                core.thermostat.thermo_switch | core.thermostat.THERMO_DPD)
 
-            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-            mpi_bcast_parameter(FIELD_TEMPERATURE)
+            globals.mpi_bcast_parameter(globals.FIELD_THERMO_SWITCH)
+            globals.mpi_bcast_parameter(globals.FIELD_TEMPERATURE)
