@@ -7,5 +7,6 @@ target_include_directories(H5mdCore SYSTEM PUBLIC
 
 add_dependencies(H5mdCore EspressoConfig)
 target_include_directories(H5mdCore PRIVATE ${CMAKE_SOURCE_DIR}/src/core ${CMAKE_BINARY_DIR}/src/core)
+set_target_properties(H5mdCore PROPERTIES SOVERSION ${SOVERSION})
 install(TARGETS H5mdCore LIBRARY DESTINATION ${LIBDIR})
 endif()
