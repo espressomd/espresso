@@ -63,7 +63,7 @@ const T *unpack_block(T const *in, T *out, const int *start, const int *size,
  *  with dimension dim[3] into an output 3d-block with dimension size[3].
  *
  *    The block with dimensions (size[0], size[1], size[2]) is stored
- *    according to @param memory_order. The
+ *    according to the specified memory order. The
  *    element (i0 (slow), i1 (mid), i2 (fast)) has the linear index
  *    li = i2 + size[2] * (i1 + (size[1]*i0))
  *

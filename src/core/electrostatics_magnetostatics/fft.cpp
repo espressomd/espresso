@@ -267,7 +267,7 @@ int calc_send_block(const int *pos1, const int *grid1, const int *pos2,
  * i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br> li_out = i2_out +
  * size[0] * (i1_out + (size[2]*i0_out))
  *
- * For index definition see \ref fft_pack_block.
+ * For index definition see \ref pack_block.
  *
  *  \param[in]  in      pointer to input 3d-grid.
  *  \param[out] out     pointer to output 3d-grid (block).
@@ -321,7 +321,7 @@ void pack_block_permute1(double const *const in, double *const out,
  * i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br> li_out = i2_out +
  * size[0] * (i1_out + (size[2]*i0_out))
  *
- * For index definition see \ref fft_pack_block.
+ * For index definition see \ref pack_block.
  *
  *  \param[in]  in      pointer to input 3d-grid.
  *  \param[out] out     pointer to output 3d-grid (block).

@@ -90,7 +90,7 @@ static void dp3m_init_a_ai_cao_cut();
 
 /** Calculate for magnetic dipoles the spatial position of the left down mesh
  *  point of the local mesh, to be stored in
- *  @ref p3m_local_mesh::ld_pos "ld_pos".
+ *  @ref LocalMesh::ld_pos "ld_pos".
  *
  *  Function called by @ref dp3m_calc_local_ca_mesh() once and by
  *  @ref dp3m_scaleby_box_l() whenever the box size changes.

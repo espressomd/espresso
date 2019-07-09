@@ -94,7 +94,7 @@ static void p3m_calc_send_mesh();
 static void p3m_init_a_ai_cao_cut();
 
 /** Calculate the spatial position of the left down mesh point of the local
- *  mesh, to be stored in @ref p3m_local_mesh::ld_pos "ld_pos".
+ *  mesh, to be stored in @ref LocalMesh::ld_pos "ld_pos".
  *
  *  Function called by @ref p3m_calc_local_ca_mesh() once and by
  *  @ref p3m_scaleby_box_l() whenever the box length changes.
