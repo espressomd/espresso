@@ -53,6 +53,7 @@ public:
   virtual ~ObjectHandle();
 
 private:
+  friend class ObjectManager;
   ObjectManager *m_manager = nullptr;
   std::string m_name;
   CreationPolicy m_policy = CreationPolicy::LOCAL;
@@ -162,7 +163,7 @@ private:
   }
 
 public:
-  static void initialize(Communication::MpiCallbacks &cb);
+  static void initialize(ObjectManager *om);
 
   /**
    * @brief Get a new reference counted instance of a script interface by

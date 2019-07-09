@@ -26,6 +26,7 @@
 
 #include "Variant.hpp"
 #include "ObjectHandle.hpp"
+#include "ObjectManager.hpp"
 #include "auto_parameters/AutoParameters.hpp"
 #include "get_value.hpp"
 #include "initialize.hpp"
@@ -38,14 +39,6 @@
  */
 namespace ScriptInterface {
 extern Utils::Factory<ObjectHandle> factory;
-
-template <typename T> static void register_new(std::string const &name) {
-  static_assert(std::is_base_of<ObjectHandle, T>::value, "");
-
-  /* Register with the factory */
-  factory.register_new<T>(name);
-}
-
 } /* namespace ScriptInterface */
 
 #endif

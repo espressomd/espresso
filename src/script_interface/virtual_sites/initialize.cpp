@@ -29,22 +29,17 @@
 namespace ScriptInterface {
 namespace VirtualSites {
 
-void initialize() {
+void initialize(ObjectManager *om) {
 #ifdef VIRTUAL_SITES
-  ScriptInterface::register_new<ScriptInterface::VirtualSites::VirtualSitesOff>(
-      "VirtualSites::VirtualSitesOff");
+  om->register_new<VirtualSitesOff>("VirtualSites::VirtualSitesOff");
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  ScriptInterface::register_new<
-      ScriptInterface::VirtualSites::VirtualSitesInertialessTracers>(
+  om->register_new<VirtualSitesInertialessTracers>(
       "VirtualSites::VirtualSitesInertialessTracers");
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-  ScriptInterface::register_new<
-      ScriptInterface::VirtualSites::VirtualSitesRelative>(
-      "VirtualSites::VirtualSitesRelative");
+  om->register_new<VirtualSitesRelative>("VirtualSites::VirtualSitesRelative");
 #endif
-  ScriptInterface::register_new<
-      ScriptInterface::VirtualSites::ActiveVirtualSitesHandle>(
+  om->register_new<ActiveVirtualSitesHandle>(
       "VirtualSites::ActiveVirtualSitesHandle");
 #endif
 }

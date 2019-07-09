@@ -34,7 +34,7 @@
 
 namespace ScriptInterface {
 namespace {
-std::unique_ptr<ObjectManager> m_om;
+ObjectManager *m_om = nullptr;
 }
 
 Utils::Factory<ObjectHandle> factory;
@@ -44,7 +44,7 @@ ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
                           const VariantMap &parameters) {
   auto sp = factory.make(name);
 
-  sp->m_manager = m_om.get();
+  sp->m_manager = m_om;
   sp->m_name = name;
   sp->m_policy = policy;
 
@@ -145,7 +145,5 @@ void ObjectHandle::delete_remote() {
 
 ObjectHandle::~ObjectHandle() { this->do_destroy(); }
 
-void ObjectHandle::initialize(::Communication::MpiCallbacks &cb) {
-  m_om = std::make_unique<ObjectManager>(&cb);
-}
+void ObjectHandle::initialize(ObjectManager *om) { m_om = om; }
 } /* namespace ScriptInterface */

@@ -20,10 +20,12 @@
 #ifndef SCRIPT_INTERFACE_VIRTUAL_SITES_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_INITIALIZE_HPP
 
+#include <script_interface/ObjectManager.hpp>
+
 namespace ScriptInterface {
 namespace VirtualSites {
 
-void initialize();
+void initialize(ObjectManager *om);
 
 } /* namespace VirtualSites */
 } /* namespace ScriptInterface */

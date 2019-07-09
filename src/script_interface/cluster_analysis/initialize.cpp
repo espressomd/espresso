@@ -24,13 +24,9 @@
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {
-
-void initialize() {
-  ScriptInterface::register_new<
-      ScriptInterface::ClusterAnalysis::ClusterStructure>(
-      "ClusterAnalysis::ClusterStructure");
-  ScriptInterface::register_new<ScriptInterface::ClusterAnalysis::Cluster>(
-      "ClusterAnalysis::Cluster");
+void initialize(ObjectManager *om) {
+  om->register_new<ClusterStructure>("ClusterAnalysis::ClusterStructure");
+  om->register_new<ClusterAnalysis::Cluster>("ClusterAnalysis::Cluster");
 }
 } /* namespace ClusterAnalysis */
 } /* namespace ScriptInterface */

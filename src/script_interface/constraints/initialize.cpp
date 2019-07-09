@@ -52,34 +52,26 @@ using ElectricPotential = ExternalPotential<Charge, Interpolated<double, 1>>;
 using LinearElectricPotential = ExternalPotential<Charge, AffineMap<double, 1>>;
 using ElectricPlaneWave = ExternalField<Charge, PlaneWave<double, 3>>;
 
-void initialize() {
-  ScriptInterface::register_new<ScriptInterface::Constraints::Constraints>(
-      "Constraints::Constraints");
+void initialize(ObjectManager *om) {
+  om->register_new<Constraints>("Constraints::Constraints");
 
-  ScriptInterface::register_new<
-      ScriptInterface::Constraints::ShapeBasedConstraint>(
-      "Constraints::ShapeBasedConstraint");
+  om->register_new<ShapeBasedConstraint>("Constraints::ShapeBasedConstraint");
 
-  ScriptInterface::register_new<
-      ScriptInterface::Constraints::HomogeneousMagneticField>(
+  om->register_new<HomogeneousMagneticField>(
       "Constraints::HomogeneousMagneticField");
 
-  ScriptInterface::register_new<TabulatedForceField>("Constraints::ForceField");
-  ScriptInterface::register_new<TabulatedPotentialField>(
-      "Constraints::PotentialField");
+  om->register_new<TabulatedForceField>("Constraints::ForceField");
+  om->register_new<TabulatedPotentialField>("Constraints::PotentialField");
 
-  ScriptInterface::register_new<Gravity>("Constraints::Gravity");
-  ScriptInterface::register_new<FlowField>("Constraints::FlowField");
-  ScriptInterface::register_new<HomogeneousFlowField>(
-      "Constraints::HomogeneousFlowField");
+  om->register_new<Gravity>("Constraints::Gravity");
+  om->register_new<FlowField>("Constraints::FlowField");
+  om->register_new<HomogeneousFlowField>("Constraints::HomogeneousFlowField");
 
 #ifdef ELECTROSTATICS
-  ScriptInterface::register_new<ElectricPotential>(
-      "Constraints::ElectricPotential");
-  ScriptInterface::register_new<LinearElectricPotential>(
+  om->register_new<ElectricPotential>("Constraints::ElectricPotential");
+  om->register_new<LinearElectricPotential>(
       "Constraints::LinearElectricPotential");
-  ScriptInterface::register_new<ElectricPlaneWave>(
-      "Constraints::ElectricPlaneWave");
+  om->register_new<ElectricPlaneWave>("Constraints::ElectricPlaneWave");
 #endif
 }
 } /* namespace Constraints */

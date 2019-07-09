@@ -26,12 +26,9 @@
 namespace ScriptInterface {
 namespace LBBoundaries {
 
-void initialize() {
-  ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundaries>(
-      "LBBoundaries::LBBoundaries");
-
-  ScriptInterface::register_new<ScriptInterface::LBBoundaries::LBBoundary>(
-      "LBBoundaries::LBBoundary");
+void initialize(ObjectManager *om) {
+  om->register_new<LBBoundaries>("LBBoundaries::LBBoundaries");
+  om->register_new<LBBoundary>("LBBoundaries::LBBoundary");
 }
 } /* namespace LBBoundaries */
 } /* namespace ScriptInterface */

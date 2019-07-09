@@ -38,26 +38,34 @@
 #include "core/communication.hpp"
 #include "virtual_sites/initialize.hpp"
 
+#include "ObjectManager.hpp"
+
 namespace ScriptInterface {
+namespace {
+std::unique_ptr<ObjectManager> m_om;
+}
 
 void initialize(Communication::MpiCallbacks &cb) {
-  ObjectHandle::initialize(cb);
+  m_om = std::make_unique<ObjectManager>(&cb);
+  auto om = m_om.get();
 
-  Shapes::initialize();
-  Constraints::initialize();
+  ObjectHandle::initialize(om);
+
+  Shapes::initialize(om);
+  Constraints::initialize(om);
 #ifdef H5MD
-  Writer::initialize();
+  Writer::initialize(om);
 #endif
-  Accumulators::initialize();
-  Observables::initialize();
-  ClusterAnalysis::initialize();
-  LBBoundaries::initialize();
-  PairCriteria::initialize();
-  VirtualSites::initialize();
-  MPIIO::initialize();
-  CollisionDetection::initialize();
+  Accumulators::initialize(om);
+  Observables::initialize(om);
+  ClusterAnalysis::initialize(om);
+  LBBoundaries::initialize(om);
+  PairCriteria::initialize(om);
+  VirtualSites::initialize(om);
+  MPIIO::initialize(om);
+  CollisionDetection::initialize(om);
 
-  ScriptInterface::register_new<ComFixed>("ComFixed");
+  om->register_new<ComFixed>("ComFixed");
 }
 
 } /* namespace ScriptInterface */

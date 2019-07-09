@@ -23,14 +23,10 @@
 
 namespace ScriptInterface {
 namespace PairCriteria {
-void initialize() {
-  ScriptInterface::register_new<
-      ScriptInterface::PairCriteria::DistanceCriterion>(
-      "PairCriteria::DistanceCriterion");
-  ScriptInterface::register_new<ScriptInterface::PairCriteria::EnergyCriterion>(
-      "PairCriteria::EnergyCriterion");
-  ScriptInterface::register_new<ScriptInterface::PairCriteria::BondCriterion>(
-      "PairCriteria::BondCriterion");
+void initialize(ObjectManager *om) {
+  om->register_new<DistanceCriterion>("PairCriteria::DistanceCriterion");
+  om->register_new<EnergyCriterion>("PairCriteria::EnergyCriterion");
+  om->register_new<BondCriterion>("PairCriteria::BondCriterion");
 }
 } /* namespace PairCriteria */
 } /* namespace ScriptInterface */

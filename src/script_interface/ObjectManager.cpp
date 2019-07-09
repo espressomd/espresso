@@ -46,4 +46,23 @@ void ObjectManager::remote_call_method(ObjectId id, std::string const &name,
   cb_call_method(id, name, pack(arguments));
 }
 
+    std::shared_ptr<ObjectHandle>
+    ObjectManager::make_shared(std::string const &name, ObjectHandle::CreationPolicy policy,
+                              const VariantMap &parameters) {
+        auto sp = factory.make(name);
+
+        sp->m_manager = this;
+        sp->m_name = name;
+        sp->m_policy = policy;
+
+        if (sp->m_policy == ObjectHandle::CreationPolicy::GLOBAL) {
+            remote_make_handle(object_id(sp.get()), name, parameters);
+        }
+
+        sp->do_construct(parameters);
+
+        return sp;
+    }
+
+
 } // namespace ScriptInterface

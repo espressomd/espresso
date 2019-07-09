@@ -3,7 +3,7 @@
 
 #include "MpiCallbacks.hpp"
 #include "PackedVariant.hpp"
-#include "Variant.hpp"
+#include "ScriptInterface.hpp"
 
 #include <boost/serialization/utility.hpp>
 
@@ -51,7 +51,7 @@ public:
                          [this](ObjectId id) { delete_handle(id); }) {}
 
   std::shared_ptr<ObjectHandle>
-  make_shared(std::string const &name, CreationPolicy policy,
+  make_shared(std::string const &name, ObjectHandle::CreationPolicy policy,
               const VariantMap &parameters = {});
 
 private:
@@ -121,6 +121,17 @@ public:
    * @param id Internal identified of the instance
    */
   void remote_delete_handle(ObjectId id) { cb_delete_handle(id); }
+
+  template <typename T> static void register_new(std::string const &name) {
+    static_assert(std::is_base_of<ObjectHandle, T>::value, "");
+
+    /* Register with the factory */
+    factory.register_new<T>(name);
+  }
+
+    std::shared_ptr<ObjectHandle>
+    make_shared(std::string const &name, ObjectHandle::CreationPolicy policy,
+                               const VariantMap &parameters);
 };
 } // namespace ScriptInterface
 

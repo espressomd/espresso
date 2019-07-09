@@ -26,10 +26,9 @@
 namespace ScriptInterface {
 namespace CollisionDetection {
 
-void initialize() {
+void initialize(ObjectManager *om) {
 #ifdef COLLISION_DETECTION
-  ScriptInterface::register_new<
-      ScriptInterface::CollisionDetection::CollisionDetection>(
+  om->register_new<CollisionDetection>(
       "CollisionDetection::CollisionDetection");
 #endif
 }

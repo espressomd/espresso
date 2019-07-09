@@ -34,30 +34,21 @@
 
 namespace ScriptInterface {
 namespace Shapes {
-void initialize() {
-  ScriptInterface::register_new<ScriptInterface::Shapes::HollowConicalFrustum>(
+void initialize(ObjectManager *om) {
+  om->register_new<ScriptInterface::Shapes::HollowConicalFrustum>(
       "Shapes::HollowConicalFrustum");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Union>(
-      "Shapes::Union");
-  ScriptInterface::register_new<ScriptInterface::Shapes::NoWhere>(
-      "Shapes::NoWhere");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Wall>("Shapes::Wall");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Ellipsoid>(
-      "Shapes::Ellipsoid");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Sphere>(
-      "Shapes::Sphere");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Cylinder>(
-      "Shapes::Cylinder");
-  ScriptInterface::register_new<ScriptInterface::Shapes::SpheroCylinder>(
+  om->register_new<ScriptInterface::Shapes::Union>("Shapes::Union");
+  om->register_new<ScriptInterface::Shapes::NoWhere>("Shapes::NoWhere");
+  om->register_new<ScriptInterface::Shapes::Wall>("Shapes::Wall");
+  om->register_new<ScriptInterface::Shapes::Ellipsoid>("Shapes::Ellipsoid");
+  om->register_new<ScriptInterface::Shapes::Sphere>("Shapes::Sphere");
+  om->register_new<ScriptInterface::Shapes::Cylinder>("Shapes::Cylinder");
+  om->register_new<ScriptInterface::Shapes::SpheroCylinder>(
       "Shapes::SpheroCylinder");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Rhomboid>(
-      "Shapes::Rhomboid");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Slitpore>(
-      "Shapes::Slitpore");
-  ScriptInterface::register_new<ScriptInterface::Shapes::SimplePore>(
-      "Shapes::SimplePore");
-  ScriptInterface::register_new<ScriptInterface::Shapes::Torus>(
-      "Shapes::Torus");
+  om->register_new<ScriptInterface::Shapes::Rhomboid>("Shapes::Rhomboid");
+  om->register_new<ScriptInterface::Shapes::Slitpore>("Shapes::Slitpore");
+  om->register_new<ScriptInterface::Shapes::SimplePore>("Shapes::SimplePore");
+  om->register_new<ScriptInterface::Shapes::Torus>("Shapes::Torus");
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

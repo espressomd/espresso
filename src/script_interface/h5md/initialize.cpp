@@ -25,9 +25,8 @@
 
 namespace ScriptInterface {
 namespace Writer {
-void initialize() {
-  ScriptInterface::register_new<ScriptInterface::Writer::H5md>(
-      "ScriptInterface::Writer::H5md");
+void initialize(ObjectManager *om) {
+  om->register_new<H5md>("ScriptInterface::Writer::H5md");
 }
 } /* namespace Writer */
 } /* namespace ScriptInterface */

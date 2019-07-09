@@ -28,20 +28,16 @@
 namespace ScriptInterface {
 namespace Accumulators {
 
-void initialize() {
-  ScriptInterface::register_new<
-      ScriptInterface::Accumulators::AutoUpdateAccumulators>(
+void initialize(ObjectManager *om) {
+  om->register_new<AutoUpdateAccumulators>(
       "Accumulators::AutoUpdateAccumulators");
 
-  ScriptInterface::register_new<
-      ScriptInterface::Accumulators::MeanVarianceCalculator>(
+  om->register_new<MeanVarianceCalculator>(
       "Accumulators::MeanVarianceCalculator");
 
-  ScriptInterface::register_new<ScriptInterface::Accumulators::TimeSeries>(
-      "Accumulators::TimeSeries");
+  om->register_new<TimeSeries>("Accumulators::TimeSeries");
 
-  ScriptInterface::register_new<ScriptInterface::Accumulators::Correlator>(
-      "Accumulators::Correlator");
+  om->register_new<Correlator>("Accumulators::Correlator");
 }
 } /* namespace Accumulators */
 } /* namespace ScriptInterface */
