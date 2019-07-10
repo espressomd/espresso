@@ -1379,7 +1379,6 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
   Utils::Array<int, 3> center_node_index{};
   Utils::Array<float3, 3> temp_delta{};
 
-#pragma unroll
   for (int i = 0; i < 3; ++i) {
     // position of particle in units of agrid.
     auto const scaled_pos = particle_position[i] / para->agrid - 0.5f;
@@ -1422,7 +1421,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
   for (int i = 0; i < 3; ++i) {
 #pragma unroll 1
     for (int j = 0; j < 3; ++j) {
-#pragma unroll 3
+#pragma unroll 1
       for (int k = 0; k < 3; ++k) {
         auto const x =
             fold_if_necessary(center_node_index[0] - 1 + i, para->dim_x);
@@ -1519,7 +1518,6 @@ __device__ __inline__ float3 velocity_interpolation(
   node_index[7] = xyz_to_index(xp1, yp1, zp1);
 
   float3 interpolated_u{0.0f, 0.0f, 0.0f};
-#pragma unroll
   for (int i = 0; i < 8; ++i) {
     float totmass = 0.0f;
     Utils::Array<float, 19> mode;
