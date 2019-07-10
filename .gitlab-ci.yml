@@ -371,7 +371,7 @@ osx-cuda:
 clang:6.0:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang-python3:6
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang-python3:6.0
   script:
     - export myconfig=maxset with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true test_timeout=900
     - bash maintainer/CI/build_cmake.sh
