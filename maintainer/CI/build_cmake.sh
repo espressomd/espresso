@@ -94,7 +94,6 @@ set_default_value check_skip_long false
 set_default_value make_check_tutorials false
 set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
-set_default_value python_version 3
 set_default_value with_cuda true
 set_default_value build_type "Debug"
 set_default_value with_ccache false
@@ -129,7 +128,7 @@ if [ ${with_coverage} = true ]; then
     bash <(curl -s https://codecov.io/env) &> /dev/null;
 fi
 
-cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DPYTHON_EXECUTABLE=$(which python${python_version}) -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params} -DWITH_SCAFACOS=ON"
+cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params} -DWITH_SCAFACOS=ON"
 cmake_params="${cmake_params} -DCMAKE_CXX_FLAGS=${cxx_flags} -DCUDA_NVCC_FLAGS=${nvcc_flags}"
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
@@ -157,7 +156,7 @@ outp insource srcdir builddir \
     check_odd_only \
     with_static_analysis myconfig \
     build_procs check_procs \
-    python_version with_cuda with_ccache
+    with_cuda with_ccache
 
 # check indentation of python files
 pep8_command () {
