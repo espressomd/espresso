@@ -56,9 +56,11 @@ inline double KS(double lambda) { // Defined by (19) from Dupin2007
  *  @return false
  */
 inline bool
-calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
-               Bonded_ia_parameters *iaparams, Utils::Vector3d &force1,
-               Utils::Vector3d &force2, Utils::Vector3d &force3,
+calc_oif_local(Particle const *const p2, Particle const *const p1,
+               Particle const *const p3, Particle const *const p4,
+               Bonded_ia_parameters const *const iaparams,
+               Utils::Vector3d &force1, Utils::Vector3d &force2,
+               Utils::Vector3d &force3,
                Utils::Vector3d &force4) { // first-fold-then-the-same approach
 
   auto const fp2 = unfolded_position(p2->r.p, p2->l.i, box_geo.length());

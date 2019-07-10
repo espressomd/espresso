@@ -37,7 +37,7 @@ namespace {
  */
 void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
                   Utils::Vector3d &f1, Utils::Vector3d &f2,
-                  const Utils::Vector3d &v12, const Utils::Vector3d &v13) {
+                  Utils::Vector3d const &v12, Utils::Vector3d const &v13) {
   // fRot is in the rotated system, i.e. in a system where the side lPrime of
   // the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is
   // perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).
@@ -70,8 +70,9 @@ void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 Calculate the repulsion and add it to the particle
  **************/
 
-int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
-                        Bonded_ia_parameters *iaparams) {
+int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
+                        Particle *const p3,
+                        Bonded_ia_parameters const *const iaparams) {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3

@@ -39,8 +39,8 @@ int affinity_set_params(int part_type_a, int part_type_b, int afftype,
                         double maxBond, double cut);
 
 /** Calculate soft-sphere potential force between particle p1 and p2 */
-inline void add_affinity_pair_force(Particle *p1, Particle *p2,
-                                    IA_parameters *ia_params,
+inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
+                                    IA_parameters const *const ia_params,
                                     Utils::Vector3d const &d, double dist,
                                     Utils::Vector3d &force) {
 

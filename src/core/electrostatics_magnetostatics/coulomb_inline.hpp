@@ -90,9 +90,9 @@ inline void calc_pair_force(Particle *p1, Particle *p2,
  * @param dist |d|
  * @return Contribution to the pressure tensor.
  */
-inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(const Particle *p1,
-                                                       const Particle *p2,
-                                                       const Utils::Vector3d &d,
+inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const *const p1,
+                                                       Particle const *const p2,
+                                                       Utils::Vector3d const &d,
                                                        double dist) {
   switch (coulomb.method) {
   case COULOMB_NONE:
@@ -118,7 +118,7 @@ inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(const Particle *p1,
 }
 
 // energy_inline
-inline double pair_energy(const Particle *p1, const Particle *p2,
+inline double pair_energy(Particle const *const p1, Particle const *const p2,
                           double const q1q2, Utils::Vector3d const &d,
                           double dist, double dist2) {
   /* real space Coulomb */

@@ -36,6 +36,6 @@ int IBM_Triel_ResetParams(int bond_type, double k1, double l0);
 
 // This function calculates and adds the actual force
 int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
-                        Bonded_ia_parameters *iaparams);
+                        Bonded_ia_parameters const *iaparams);
 
 #endif

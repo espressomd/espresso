@@ -118,10 +118,10 @@ inline ParticleForce init_local_particle_force(const Particle *part) {
 }
 
 inline void calc_non_bonded_pair_force_parts(
-    const Particle *const p1, const Particle *const p2,
-    IA_parameters *ia_params, Utils::Vector3d const &d, double dist,
-    double dist2, Utils::Vector3d &force, Utils::Vector3d *torque1 = nullptr,
-    Utils::Vector3d *torque2 = nullptr) {
+    Particle const *const p1, Particle const *const p2,
+    IA_parameters const *const ia_params, Utils::Vector3d const &d,
+    double const dist, double const dist2, Utils::Vector3d &force,
+    Utils::Vector3d *torque1 = nullptr, Utils::Vector3d *torque2 = nullptr) {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id == p2->p.mol_id)
     return;
@@ -199,8 +199,9 @@ inline void calc_non_bonded_pair_force_parts(
 #endif
 }
 
-inline void calc_non_bonded_pair_force(const Particle *p1, const Particle *p2,
-                                       IA_parameters *ia_params,
+inline void calc_non_bonded_pair_force(Particle const *const p1,
+                                       Particle const *const p2,
+                                       IA_parameters const *const ia_params,
                                        Utils::Vector3d const &d, double dist,
                                        double dist2, Utils::Vector3d &force,
                                        Utils::Vector3d *torque1 = nullptr,
@@ -209,10 +210,10 @@ inline void calc_non_bonded_pair_force(const Particle *p1, const Particle *p2,
                                    torque1, torque2);
 }
 
-inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2,
+inline void calc_non_bonded_pair_force(Particle *const p1, Particle *const p2,
                                        Utils::Vector3d const &d, double dist,
                                        double dist2, Utils::Vector3d &force) {
-  IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
+  IA_parameters const *const ia_params = get_ia_param(p1->p.type, p2->p.type);
   calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 }
 
@@ -223,10 +224,10 @@ inline void calc_non_bonded_pair_force(Particle *p1, Particle *p2,
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
  */
-inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
+inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
                                       Utils::Vector3d const &d, double dist,
                                       double dist2) {
-  IA_parameters *ia_params = get_ia_param(p1->p.type, p2->p.type);
+  IA_parameters const *ia_params = get_ia_param(p1->p.type, p2->p.type);
   Utils::Vector3d force{};
   Utils::Vector3d *torque1 = nullptr;
   Utils::Vector3d *torque2 = nullptr;
@@ -333,8 +334,8 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2,
 #endif
 }
 
-inline bool calc_bond_pair_force(Particle *p1, Particle *p2,
-                                 Bonded_ia_parameters *iaparams,
+inline bool calc_bond_pair_force(Particle *const p1, Particle const *const p2,
+                                 Bonded_ia_parameters const *const iaparams,
                                  Utils::Vector3d const &dx,
                                  Utils::Vector3d &force) {
   bool bond_broken = false;
@@ -388,10 +389,7 @@ inline bool calc_bond_pair_force(Particle *p1, Particle *p2,
 /** Calculate bonded forces for one particle.
  *  @param p1   particle for which to calculate forces
  */
-inline void add_bonded_force(Particle *p1) {
-  Particle *p3 = nullptr, *p4 = nullptr;
-  bool bond_broken = true;
-
+inline void add_bonded_force(Particle *const p1) {
   int i = 0;
   while (i < p1->bl.n) {
     Utils::Vector3d force1{};
@@ -400,10 +398,13 @@ inline void add_bonded_force(Particle *p1) {
 #if defined(OIF_LOCAL_FORCES)
     Utils::Vector3d force4{};
 #endif
+    Particle *p3 = nullptr;
+    Particle *p4 = nullptr;
     int type_num = p1->bl.e[i++];
-    auto iaparams = &bonded_ia_params[type_num];
+    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
     int type = iaparams->type;
     int n_partners = iaparams->num;
+    bool bond_broken = true;
 
     Particle *p2 = nullptr;
     if (n_partners) {
@@ -594,7 +595,7 @@ inline void add_bonded_force(Particle *p1) {
   }   // loop over the particle's bond list
 }
 
-inline void check_particle_force(Particle *part) {
+inline void check_particle_force(Particle const *const part) {
   for (int i = 0; i < 3; i++) {
     if (std::isnan(part->f.f[i])) {
       runtimeErrorMsg() << "force on particle " << part->p.identity
@@ -612,7 +613,7 @@ inline void check_particle_force(Particle *part) {
 #endif
 }
 
-inline void add_single_particle_force(Particle *p) {
+inline void add_single_particle_force(Particle *const p) {
   if (p->bl.n) {
     add_bonded_force(p);
   }

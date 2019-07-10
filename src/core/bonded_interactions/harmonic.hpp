@@ -46,7 +46,7 @@ int harmonic_set_params(int bond_type, double k, double r, double r_cut);
  *  @param[out] force     Force.
  *  @return whether the bond is broken
  */
-inline bool calc_harmonic_pair_force(Bonded_ia_parameters const *iaparams,
+inline bool calc_harmonic_pair_force(Bonded_ia_parameters const *const iaparams,
                                      Utils::Vector3d const &dx,
                                      Utils::Vector3d &force) {
   auto const dist = dx.norm();
@@ -74,7 +74,7 @@ inline bool calc_harmonic_pair_force(Bonded_ia_parameters const *iaparams,
  *  @param[out] _energy   Energy.
  *  @return whether the bond is broken
  */
-inline bool harmonic_pair_energy(Bonded_ia_parameters const *iaparams,
+inline bool harmonic_pair_energy(Bonded_ia_parameters const *const iaparams,
                                  Utils::Vector3d const &dx, double *_energy) {
   auto const dist = dx.norm();
 

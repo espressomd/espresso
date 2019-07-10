@@ -51,9 +51,9 @@ inline double buck_energy_r(double A, double B, double C, double D,
 
 /** Calculate Buckingham force between particle p1 and p2 and add
     it to their force. */
-inline void add_buck_pair_force(const Particle *const p1,
-                                const Particle *const p2,
-                                IA_parameters *ia_params,
+inline void add_buck_pair_force(Particle const *const p1,
+                                Particle const *const p2,
+                                IA_parameters const *const ia_params,
                                 Utils::Vector3d const &d, double dist,
                                 Utils::Vector3d &force) {
   if (dist < ia_params->BUCK_cut) {
@@ -97,8 +97,9 @@ inline void add_buck_pair_force(const Particle *const p1,
 }
 
 /** calculate Buckingham energy between particle p1 and p2. */
-inline double buck_pair_energy(const Particle *p1, const Particle *p2,
-                               const IA_parameters *ia_params,
+inline double buck_pair_energy(Particle const *const p1,
+                               Particle const *const p2,
+                               IA_parameters const *const ia_params,
                                Utils::Vector3d const &d, double dist) {
   if (dist < ia_params->BUCK_cut) {
     /* case: resulting force/energy greater than discont and

@@ -38,7 +38,7 @@
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
  */
-inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2,
+inline void add_non_bonded_pair_virials(Particle *const p1, Particle *const p2,
                                         Utils::Vector3d const &d, double dist,
                                         double dist2) {
   int p1molid, p2molid, k, l;
@@ -114,9 +114,9 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2,
  *  @param[out] f_right   Force on @p p_right.
  */
 inline void calc_three_body_bonded_forces(
-    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
-    Bonded_ia_parameters const *iaparams, Utils::Vector3d &f_mid,
-    Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
+    Particle const *const p_mid, Particle const *const p_left,
+    Particle const *const p_right, Bonded_ia_parameters const *const iaparams,
+    Utils::Vector3d &f_mid, Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
   switch (iaparams->type) {
   case BONDED_IA_ANGLE_HARMONIC:
     std::tie(f_mid, f_left, f_right) =
@@ -158,11 +158,9 @@ inline void calc_three_body_bonded_forces(
  *  the forces.
  *  @param p1 particle for which to calculate virials
  */
-inline void add_bonded_virials(Particle *p1) {
+inline void add_bonded_virials(Particle *const p1) {
   Utils::Vector3d force{};
   // char *errtxt;
-  Particle *p2;
-  Bonded_ia_parameters *iaparams;
 
   int i, k, l;
   int type_num;
@@ -170,14 +168,14 @@ inline void add_bonded_virials(Particle *p1) {
   i = 0;
   while (i < p1->bl.n) {
     type_num = p1->bl.e[i++];
-    iaparams = &bonded_ia_params[type_num];
+    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
     if (iaparams->num != 1) {
       i += iaparams->num;
       continue;
     }
 
     /* fetch particle 2 */
-    p2 = local_particles[p1->bl.e[i++]];
+    Particle const *const p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       // for harmonic spring:
       // if cutoff was defined and p2 is not there it is anyway outside the
@@ -206,7 +204,7 @@ inline void add_bonded_virials(Particle *p1) {
  *  for the contribution of the entire interaction - this is the coding
  *  not the physics.
  */
-inline void add_three_body_bonded_stress(Particle *p1) {
+inline void add_three_body_bonded_stress(Particle const *const p1) {
   int i = 0;
   while (i < p1->bl.n) {
     /* scan bond list for angular interactions */
@@ -219,8 +217,8 @@ inline void add_three_body_bonded_stress(Particle *p1) {
       i += 1 + iaparams->num;
       continue;
     }
-    auto p2 = local_particles[p1->bl.e[i + 1]];
-    auto p3 = local_particles[p1->bl.e[i + 2]];
+    Particle const *const p2 = local_particles[p1->bl.e[i + 1]];
+    Particle const *const p3 = local_particles[p1->bl.e[i + 2]];
 
     auto const dx21 = -get_mi_vector(p1->r.p, p2->r.p, box_geo);
     auto const dx31 = get_mi_vector(p3->r.p, p1->r.p, box_geo);
@@ -246,7 +244,7 @@ inline void add_three_body_bonded_stress(Particle *p1) {
  *                (hence it only works with domain decomposition); naturally it
  *                therefore doesn't make sense to use it without NpT.
  */
-inline void add_kinetic_virials(Particle *p1, int v_comp) {
+inline void add_kinetic_virials(Particle const *const p1, int v_comp) {
   int k, l;
   /* kinetic energy */
   {

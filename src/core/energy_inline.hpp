@@ -78,11 +78,12 @@
  *  @param dist2      distance squared between p1 and p2.
  *  @return the short ranged interaction energy between the two particles
  */
-inline double calc_non_bonded_pair_energy(const Particle *p1,
-                                          const Particle *p2,
-                                          const IA_parameters *ia_params,
-                                          Utils::Vector3d const &d, double dist,
-                                          double dist2) {
+inline double calc_non_bonded_pair_energy(Particle const *const p1,
+                                          Particle const *const p2,
+                                          IA_parameters const *const ia_params,
+                                          Utils::Vector3d const &d,
+                                          double const dist,
+                                          double const dist2) {
   double ret = 0;
 
 #ifdef NO_INTRA_NB
@@ -179,10 +180,11 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
  */
-inline void add_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
-                                       Utils::Vector3d const &d, double dist,
-                                       double dist2) {
-  IA_parameters const *ia_params = get_ia_param(p1->p.type, p2->p.type);
+inline void add_non_bonded_pair_energy(Particle const *const p1,
+                                       Particle const *const p2,
+                                       Utils::Vector3d const &d,
+                                       double const dist, double const dist2) {
+  IA_parameters const *const ia_params = get_ia_param(p1->p.type, p2->p.type);
 
 #if defined(ELECTROSTATICS) || defined(DIPOLES)
 #endif
@@ -206,22 +208,20 @@ inline void add_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
 /** Calculate bonded energies for one particle.
  *  @param p1 particle for which to calculate energies
  */
-inline void add_bonded_energy(const Particle *p1) {
-  Particle *p3 = nullptr, *p4 = nullptr;
-  Bonded_ia_parameters *iaparams;
-  int i;
-  bool bond_broken = true;
-  double ret = 0;
-
-  i = 0;
+inline void add_bonded_energy(Particle const *const p1) {
+  int i = 0;
   while (i < p1->bl.n) {
+    Particle const *p3 = nullptr;
+    Particle const *p4 = nullptr;
     int type_num = p1->bl.e[i++];
-    iaparams = &bonded_ia_params[type_num];
+    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
     int type = iaparams->type;
     int n_partners = iaparams->num;
+    bool bond_broken = true;
+    double ret = 0;
 
     /* fetch particle 2, which is always needed */
-    Particle *p2 = local_particles[p1->bl.e[i++]];
+    Particle const *const p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                         << " and " << p1->bl.e[i - 1]
@@ -376,7 +376,7 @@ inline void add_bonded_energy(const Particle *p1) {
 /** Calculate kinetic energies for one particle.
  *  @param p1 particle for which to calculate energies
  */
-inline void add_kinetic_energy(const Particle *p1) {
+inline void add_kinetic_energy(Particle const *const p1) {
 #ifdef VIRTUAL_SITES
   if (p1->p.is_virtual)
     return;
@@ -397,7 +397,7 @@ inline void add_kinetic_energy(const Particle *p1) {
 #endif
 }
 
-inline void add_single_particle_energy(const Particle *p) {
+inline void add_single_particle_energy(Particle const *const p) {
   add_kinetic_energy(p);
   add_bonded_energy(p);
 }

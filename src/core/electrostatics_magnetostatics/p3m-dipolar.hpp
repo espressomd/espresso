@@ -285,7 +285,8 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
 }
 
 /** Calculate real space contribution of dipolar pair energy. */
-inline double dp3m_pair_energy(const Particle *p1, const Particle *p2,
+inline double dp3m_pair_energy(Particle const *const p1,
+                               Particle const *const p2,
                                Utils::Vector3d const &d, double dist2,
                                double dist) {
   auto const dip1 = p1->calc_dip();

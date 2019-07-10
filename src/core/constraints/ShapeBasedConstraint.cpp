@@ -56,14 +56,15 @@ double ShapeBasedConstraint::min_dist(const ParticleRange &particles) {
   return global_mindist;
 }
 
-ParticleForce ShapeBasedConstraint::force(const Particle &p,
-                                          const Utils::Vector3d &folded_pos,
+ParticleForce ShapeBasedConstraint::force(Particle const &p,
+                                          Utils::Vector3d const &folded_pos,
                                           double t) {
 
   double dist = 0.;
   Utils::Vector3d dist_vec, force1{}, torque1{}, torque2{}, outer_normal_vec;
 
-  IA_parameters *ia_params = get_ia_param(p.p.type, part_rep.p.type);
+  IA_parameters const *const ia_params =
+      get_ia_param(p.p.type, part_rep.p.type);
 
   if (checkIfInteraction(ia_params)) {
     m_shape->calculate_dist(folded_pos, dist, dist_vec);

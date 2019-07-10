@@ -47,9 +47,10 @@ int angle_cossquare_set_params(int bond_type, double bend, double phi0);
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_cossquare_3body_forces(Particle const *p_mid, Particle const *p_left,
-                                  Particle const *p_right,
-                                  Bonded_ia_parameters const *iaparams) {
+calc_angle_cossquare_3body_forces(Particle const *const p_mid,
+                                  Particle const *const p_left,
+                                  Particle const *const p_right,
+                                  Bonded_ia_parameters const *const iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
@@ -72,9 +73,9 @@ calc_angle_cossquare_3body_forces(Particle const *p_mid, Particle const *p_left,
  *  @retval false
  */
 inline bool calc_angle_cossquare_force(
-    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
-    Bonded_ia_parameters const *iaparams, Utils::Vector3d &f_mid,
-    Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
+    Particle const *const p_mid, Particle const *const p_left,
+    Particle const *const p_right, Bonded_ia_parameters const *const iaparams,
+    Utils::Vector3d &f_mid, Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
   std::tie(f_mid, f_left, f_right) =
       calc_angle_cossquare_3body_forces(p_mid, p_left, p_right, iaparams);
   return false;
@@ -88,10 +89,10 @@ inline bool calc_angle_cossquare_force(
  *  @param[out] _energy   Energy.
  *  @retval false
  */
-inline bool angle_cossquare_energy(Particle const *p_mid,
-                                   Particle const *p_left,
-                                   Particle const *p_right,
-                                   Bonded_ia_parameters const *iaparams,
+inline bool angle_cossquare_energy(Particle const *const p_mid,
+                                   Particle const *const p_left,
+                                   Particle const *const p_right,
+                                   Bonded_ia_parameters const *const iaparams,
                                    double *_energy) {
   auto const vectors =
       calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);

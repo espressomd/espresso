@@ -38,9 +38,9 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double sig, double cut, double k1, double k2,
                          double mu, double nu);
 
-inline void add_gb_pair_force(const Particle *const p1,
-                              const Particle *const p2,
-                              IA_parameters *ia_params,
+inline void add_gb_pair_force(Particle const *const p1,
+                              Particle const *const p2,
+                              IA_parameters const *const ia_params,
                               Utils::Vector3d const &d, double dist,
                               Utils::Vector3d &force,
                               Utils::Vector3d *const torque1,
@@ -131,8 +131,8 @@ inline void add_gb_pair_force(const Particle *const p1,
   }
 }
 
-inline double gb_pair_energy(const Particle *p1, const Particle *p2,
-                             const IA_parameters *ia_params,
+inline double gb_pair_energy(Particle const *const p1, Particle const *const p2,
+                             IA_parameters const *const ia_params,
                              Utils::Vector3d const &d, double dist) {
   using Utils::int_pow;
   using Utils::sqr;

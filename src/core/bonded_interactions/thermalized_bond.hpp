@@ -60,11 +60,11 @@ void thermalized_bond_init();
  *  @retval 1 if the bond is broken
  *  @retval 0 otherwise
  */
-inline bool calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
-                                         const Bonded_ia_parameters *iaparams,
-                                         const Utils::Vector3d &dx,
-                                         Utils::Vector3d &force1,
-                                         Utils::Vector3d &force2) {
+inline bool
+calc_thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
+                             Bonded_ia_parameters const *const iaparams,
+                             const Utils::Vector3d &dx, Utils::Vector3d &force1,
+                             Utils::Vector3d &force2) {
   // Bond broke?
   if (iaparams->p.thermalized_bond.r_cut > 0.0 &&
       dx.norm() > iaparams->p.thermalized_bond.r_cut) {

@@ -32,7 +32,7 @@ inline void calc_pair_force(Particle *p1, Particle *p2,
 }
 
 // energy_inline
-inline void add_pair_energy(const Particle *p1, const Particle *p2,
+inline void add_pair_energy(Particle const *const p1, Particle const *const p2,
                             Utils::Vector3d const &d, double dist, double dist2,
                             Observable_stat &energy) {
   double ret = 0;

@@ -45,9 +45,9 @@ int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
                       double offset, double w);
 
 /** Calculate lj-cos2 force between particle p1 and p2. */
-inline void add_ljcos2_pair_force(const Particle *const p1,
-                                  const Particle *const p2,
-                                  IA_parameters *ia_params,
+inline void add_ljcos2_pair_force(Particle const *const p1,
+                                  Particle const *const p2,
+                                  IA_parameters const *const ia_params,
                                   Utils::Vector3d const &d, double dist,
                                   Utils::Vector3d &force) {
   if (dist < (ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
@@ -91,8 +91,9 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
 }
 
 /** Calculate lj-cos2 energy between particle p1 and p2. */
-inline double ljcos2_pair_energy(const Particle *p1, const Particle *p2,
-                                 const IA_parameters *ia_params,
+inline double ljcos2_pair_energy(Particle const *const p1,
+                                 Particle const *const p2,
+                                 IA_parameters const *const ia_params,
                                  Utils::Vector3d const &d, double dist) {
   if (dist < (ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
     auto const r_off = dist - ia_params->LJCOS2_offset;

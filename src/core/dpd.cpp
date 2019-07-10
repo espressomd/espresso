@@ -159,8 +159,8 @@ static double weight(int type, double r_cut, double r) {
   return 1. - r / r_cut;
 }
 
-Vector3d dpd_pair_force(DPDParameters const &params, const Vector3d &v,
-                        double dist, const Vector3d &noise) {
+Vector3d dpd_pair_force(DPDParameters const &params, Vector3d const &v,
+                        double dist, Vector3d const &noise) {
   if (dist < params.cutoff) {
     auto const omega = weight(params.wf, params.cutoff, dist);
     auto const omega2 = Utils::sqr(omega);
@@ -174,9 +174,11 @@ Vector3d dpd_pair_force(DPDParameters const &params, const Vector3d &v,
   return {};
 }
 
-Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
-                        const IA_parameters *ia_params,
-                        Utils::Vector3d const &d, double dist, double dist2) {
+Utils::Vector3d dpd_pair_force(Particle const *const p1,
+                               Particle const *const p2,
+                               IA_parameters const *const ia_params,
+                               Utils::Vector3d const &d, double dist,
+                               double dist2) {
   if (ia_params->dpd_radial.cutoff <= 0.0 &&
       ia_params->dpd_trans.cutoff <= 0.0) {
     return {};
