@@ -86,7 +86,7 @@ for type_1 in types:
             cutoff=lj_cut, shift="auto")
 
 RE = reaction_ensemble.ReactionEnsemble(
-    temperature=temperature, exclusion_radius=1.0, seed=3)
+    temperature=temperature, exclusion_radius=8.0, seed=3)
 RE.add_reaction(
     gamma=cs_bulk**2 * np.exp(excess_chemical_potential_pair / temperature),
     reactant_types=[], reactant_coefficients=[], product_types=[1, 2],
@@ -97,7 +97,7 @@ system.setup_type_map([0, 1, 2])
 
 RE.reaction(10000)
 
-p3m = electrostatics.P3M(prefactor=0.9, accuracy=1e-3)
+p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
 for key in list(p3m_params.keys()):
@@ -133,7 +133,7 @@ system.force_cap = 0
 RE.reaction(1000)
 
 n_int_cycles = 10000
-n_int_steps = 300
+n_int_steps = 600
 num_As = []
 deviation = None
 for i in range(n_int_cycles):
@@ -146,8 +146,8 @@ for i in range(n_int_cycles):
               system.number_of_particles(type=2))
         concentration_in_box = np.mean(num_As) / box_l**3
         deviation = (concentration_in_box - cs_bulk) / cs_bulk * 100
-        print("average num A {:.1f} +/- {:.1f}, average concentration {:.3f}, "
-              "deviation to target concentration {:.1f}%".format(
+        print("average num A {:.1f} +/- {:.1f}, average concentration {:.8f}, "
+              "deviation to target concentration {:.2f}%".format(
                   np.mean(num_As),
                   np.sqrt(np.var(num_As, ddof=1) / len(num_As)),
                   concentration_in_box, deviation))

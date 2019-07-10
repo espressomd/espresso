@@ -436,7 +436,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   SingleReaction &current_reaction = reactions[reaction_id];
   current_reaction.tried_moves += 1;
   bool reaction_is_accepted = false;
-  particle_inserted_too_close_to_another_one = false;
+  particle_inside_exclusion_radius_was_touched = false;
   int old_state_index = -1; // for Wang-Landau algorithm
   on_reaction_entry(old_state_index);
   if (!all_reactant_particles_exist(reaction_id)) {
@@ -475,7 +475,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
                         p_ids_created_particles, hidden_particles_properties);
 
   double E_pot_new;
-  if (particle_inserted_too_close_to_another_one)
+  if (particle_inside_exclusion_radius_was_touched)
     E_pot_new = std::numeric_limits<double>::max();
   else
     E_pot_new = calculate_current_potential_energy_of_system();
@@ -583,6 +583,16 @@ void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
  *there would be a need for a rule for such "collision" reactions (a reaction
  *like the one above).
  */
+ 
+  auto part = get_particle_data(p_id);
+  std::vector<double> pos_of_to_be_hidden_particle(3);
+  pos_of_to_be_hidden_particle[0]=part.r.p[0];
+  pos_of_to_be_hidden_particle[1]=part.r.p[1];
+  pos_of_to_be_hidden_particle[2]=part.r.p[2];
+  double d_min = distto(partCfg(), part.r.p, p_id);
+  if (d_min < exclusion_radius)
+      particle_inside_exclusion_radius_was_touched = true;
+
 #ifdef ELECTROSTATICS
   // set charge
   set_particle_q(p_id, 0.0);
@@ -737,7 +747,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   set_particle_v(p_id, vel);
   double d_min = distto(partCfg(), pos_vec, p_id);
   if (d_min < exclusion_radius)
-    particle_inserted_too_close_to_another_one =
+    particle_inside_exclusion_radius_was_touched =
         true; // setting of a minimal
               // distance is allowed to
               // avoid overlapping
@@ -781,7 +791,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     int type, int particle_number_of_type_to_be_changed, bool use_wang_landau) {
   m_tried_configurational_MC_moves += 1;
   bool got_accepted = false;
-  particle_inserted_too_close_to_another_one = false;
+  particle_inside_exclusion_radius_was_touched = false;
 
   int old_state_index = -1;
   if (use_wang_landau) {
@@ -840,11 +850,11 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     place_particle(p_id, new_pos.data());
     double d_min = distto(partCfg(), new_pos, p_id);
     if (d_min < exclusion_radius)
-      particle_inserted_too_close_to_another_one = true;
+      particle_inside_exclusion_radius_was_touched = true;
   }
 
   double E_pot_new;
-  if (particle_inserted_too_close_to_another_one)
+  if (particle_inside_exclusion_radius_was_touched)
     E_pot_new = std::numeric_limits<double>::max();
   else
     E_pot_new = calculate_current_potential_energy_of_system();
