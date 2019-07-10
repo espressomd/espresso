@@ -94,7 +94,7 @@ set_default_value check_skip_long false
 set_default_value make_check_tutorials false
 set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
-set_default_value python_version 2
+set_default_value python_version 3
 set_default_value with_cuda true
 set_default_value build_type "Debug"
 set_default_value with_ccache false
