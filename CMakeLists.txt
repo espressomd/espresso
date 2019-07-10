@@ -235,7 +235,7 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp REQUIRED)
+find_package(PythonInterp 3 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
