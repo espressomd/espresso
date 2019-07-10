@@ -81,7 +81,7 @@
 inline double calc_non_bonded_pair_energy(const Particle *p1,
                                           const Particle *p2,
                                           const IA_parameters *ia_params,
-                                          const double d[3], double dist,
+                                          Utils::Vector3d const &d, double dist,
                                           double dist2) {
   double ret = 0;
 
@@ -180,7 +180,7 @@ inline double calc_non_bonded_pair_energy(const Particle *p1,
  *  @param dist2     distance squared between p1 and p2.
  */
 inline void add_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
-                                       const double *d, double dist,
+                                       Utils::Vector3d const &d, double dist,
                                        double dist2) {
   IA_parameters const *ia_params = get_ia_param(p1->p.type, p2->p.type);
 

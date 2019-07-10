@@ -38,23 +38,21 @@ int hertzian_set_params(int part_type_a, int part_type_b, double eps,
 /** Calculate Hertzian force between particle p1 and p2 */
 inline void add_hertzian_pair_force(const Particle *const p1,
                                     Particle const *const p2,
-                                    IA_parameters *ia_params, double const d[3],
-                                    double dist, double dist2,
-                                    double force[3]) {
+                                    IA_parameters *ia_params,
+                                    Utils::Vector3d const &d, double dist,
+                                    double dist2, Utils::Vector3d &force) {
   if (dist < ia_params->Hertzian_sig) {
     auto const fac = 5. / 2. * ia_params->Hertzian_eps /
                      ia_params->Hertzian_sig *
                      pow(1 - dist / ia_params->Hertzian_sig, 3. / 2.) / dist;
-
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
+    force += fac * d;
   }
 }
 
 /** Calculate Hertzian energy between particle p1 and p2. */
 inline double hertzian_pair_energy(const Particle *p1, const Particle *p2,
                                    const IA_parameters *ia_params,
-                                   const double d[3], double dist,
+                                   Utils::Vector3d const &d, double dist,
                                    double dist2) {
   if (dist < ia_params->Hertzian_sig) {
     return ia_params->Hertzian_eps *

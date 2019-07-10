@@ -219,19 +219,17 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
 /** Calculate real space contribution of p3m dipolar pair forces and torques.
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
-inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
-                                  double dist2, double dist, double force[3]) {
+inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
+                                  Utils::Vector3d const &d, double dist2,
+                                  double dist, Utils::Vector3d &force) {
   if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
     return 0.;
 
   double coeff, exp_adist2;
-  const Utils::Vector3d dip1 = p1->calc_dip();
-  const Utils::Vector3d dip2 = p2->calc_dip();
+  auto const dip1 = p1->calc_dip();
+  auto const dip2 = p2->calc_dip();
   double B_r, C_r, D_r;
   double alpsq = dp3m.params.alpha * dp3m.params.alpha;
-#ifdef ROTATION
-  double mixmj[3], mixr[3], mjxr[3];
-#endif
 
   if (dist < dp3m.params.r_cut && dist > 0) {
     double adist = dp3m.params.alpha * dist;
@@ -242,10 +240,10 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
 #endif
 
     // Calculate scalar multiplications for vectors mi, mj, rij
-    double mimj = dip1 * dip2;
+    auto const mimj = dip1 * dip2;
 
-    double mir = dip1 * Utils::Vector3d{d[0], d[1], d[2]};
-    double mjr = dip2 * Utils::Vector3d{d[0], d[1], d[2]};
+    auto const mir = dip1 * d;
+    auto const mjr = dip2 * d;
 
     coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
     double dist2i = 1 / dist2;
@@ -260,32 +258,18 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
     D_r = (5 * C_r + 4 * coeff * alpsq * alpsq * exp_adist2) * dist2i;
 
     // Calculate real-space forces
-    for (int j = 0; j < 3; j++)
-      force[j] += dipole.prefactor *
-                  ((mimj * d[j] + dip1[j] * mjr + dip2[j] * mir) * C_r -
-                   mir * mjr * D_r * d[j]);
+    force += dipole.prefactor *
+             ((mimj * d + dip1 * mjr + dip2 * mir) * C_r - mir * mjr * D_r * d);
 
 #ifdef ROTATION
     // Calculate vector multiplications for vectors mi, mj, rij
-    mixmj[0] = dip1[1] * dip2[2] - dip1[2] * dip2[1];
-    mixmj[1] = dip1[2] * dip2[0] - dip1[0] * dip2[2];
-    mixmj[2] = dip1[0] * dip2[1] - dip1[1] * dip2[0];
-
-    mixr[0] = dip1[1] * d[2] - dip1[2] * d[1];
-    mixr[1] = dip1[2] * d[0] - dip1[0] * d[2];
-    mixr[2] = dip1[0] * d[1] - dip1[1] * d[0];
-
-    mjxr[0] = dip2[1] * d[2] - dip2[2] * d[1];
-    mjxr[1] = dip2[2] * d[0] - dip2[0] * d[2];
-    mjxr[2] = dip2[0] * d[1] - dip2[1] * d[0];
+    auto const mixmj = vector_product(dip1, dip2);
+    auto const mixr = vector_product(dip1, d);
+    auto const mjxr = vector_product(dip2, d);
 
     // Calculate real-space torques
-    for (int j = 0; j < 3; j++) {
-      p1->f.torque[j] +=
-          dipole.prefactor * (-mixmj[j] * B_r + mixr[j] * mjr * C_r);
-      p2->f.torque[j] +=
-          dipole.prefactor * (mixmj[j] * B_r + mjxr[j] * mir * C_r);
-    }
+    p1->f.torque += dipole.prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
+    p2->f.torque += dipole.prefactor * (mixmj * B_r + mjxr * (mir * C_r));
 #endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
@@ -302,10 +286,10 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2, double const *d,
 
 /** Calculate real space contribution of dipolar pair energy. */
 inline double dp3m_pair_energy(const Particle *p1, const Particle *p2,
-                               double const *const d, double dist2,
+                               Utils::Vector3d const &d, double dist2,
                                double dist) {
-  const Utils::Vector3d dip1 = p1->calc_dip();
-  const Utils::Vector3d dip2 = p2->calc_dip();
+  auto const dip1 = p1->calc_dip();
+  auto const dip2 = p2->calc_dip();
   double /* fac1,*/ adist, erfc_part_ri, coeff, exp_adist2, dist2i;
   double mimj, mir, mjr;
   double B_r, C_r;
@@ -325,9 +309,9 @@ inline double dp3m_pair_energy(const Particle *p1, const Particle *p2,
 #endif
 
     // Calculate scalar multiplications for vectors mi, mj, rij
-    mimj = dip1 * dip2;
-    mir = dip1 * Utils::Vector3d{d[0], d[1], d[2]};
-    mjr = dip2 * Utils::Vector3d{d[0], d[1], d[2]};
+    auto const mimj = dip1 * dip2;
+    auto const mir = dip1 * d;
+    auto const mjr = dip2 * d;
 
     coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
     dist2i = 1 / dist2;

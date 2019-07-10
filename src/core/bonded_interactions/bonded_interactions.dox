@@ -63,10 +63,10 @@
  *    @code{.cpp}
  *    inline bool calc_fene_pair_force(Particle *p1, Particle *p2,
  *                                     Bonded_ia_parameters *iaparams,
- *                                     double const dx[3], double force[3]);
+ *                                     Vector3d const &dx, Vector3d &force);
  *    inline bool fene_pair_energy(Particle *p1, Particle *p2,
  *                                 Bonded_ia_parameters *iaparams,
- *                                 double const dx[3], double energy[3]);
+ *                                 Vector3d const &dx, double *energy);
  *    @endcode
  *  * The setter function gets a \p bond_type which is a numerical id
  *    identifying the number of the bond type in the simulation.

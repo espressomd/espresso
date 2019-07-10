@@ -74,21 +74,12 @@ calc_angle_cosine_3body_forces(Particle const *p_mid, Particle const *p_left,
  *  @param[out] f_right   Force on @p p_right.
  *  @retval false
  */
-inline bool calc_angle_cosine_force(Particle const *p_mid,
-                                    Particle const *p_left,
-                                    Particle const *p_right,
-                                    Bonded_ia_parameters const *iaparams,
-                                    double f_mid[3], double f_left[3],
-                                    double f_right[3]) {
-
-  Utils::Vector3d f_mid_v, f_left_v, f_right_v;
-  std::tie(f_mid_v, f_left_v, f_right_v) =
+inline bool calc_angle_cosine_force(
+    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
+    Bonded_ia_parameters const *iaparams, Utils::Vector3d &f_mid,
+    Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
+  std::tie(f_mid, f_left, f_right) =
       calc_angle_cosine_3body_forces(p_mid, p_left, p_right, iaparams);
-  for (int i = 0; i < 3; ++i) {
-    f_mid[i] = f_mid_v[i];
-    f_left[i] = f_left_v[i];
-    f_right[i] = f_right_v[i];
-  }
   return false;
 }
 

@@ -38,18 +38,18 @@
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
  */
-inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
-                                        double dist, double dist2) {
+inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2,
+                                        Utils::Vector3d const &d, double dist,
+                                        double dist2) {
   int p1molid, p2molid, k, l;
-  double force[3] = {0, 0, 0};
+  Utils::Vector3d force{};
 
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
   {
     calc_non_bonded_pair_force(p1, p2, d, dist, dist2, force);
-    *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) +=
-        d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
+    *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d * force;
 
     /* stress tensor part */
     for (k = 0; k < 3; k++)
@@ -61,7 +61,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
     p2molid = p2->p.mol_id;
     if (p1molid == p2molid) {
       *obsstat_nonbonded_intra(&virials_non_bonded, p1->p.type, p2->p.type) +=
-          d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
+          d * force;
 
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
@@ -70,7 +70,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
     }
     if (p1molid != p2molid) {
       *obsstat_nonbonded_inter(&virials_non_bonded, p1->p.type, p2->p.type) +=
-          d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
+          d * force;
 
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
@@ -81,8 +81,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 
 #ifdef ELECTROSTATICS
   /* real space Coulomb */
-  auto const p_coulomb =
-      Coulomb::pair_pressure(p1, p2, Utils::Vector3d{d, d + 3}, dist);
+  auto const p_coulomb = Coulomb::pair_pressure(p1, p2, d, dist);
 
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 3; j++) {
@@ -160,7 +159,7 @@ inline void calc_three_body_bonded_forces(
  *  @param p1 particle for which to calculate virials
  */
 inline void add_bonded_virials(Particle *p1) {
-  double force[3] = {0, 0, 0};
+  Utils::Vector3d force{};
   // char *errtxt;
   Particle *p2;
   Bonded_ia_parameters *iaparams;
@@ -193,8 +192,7 @@ inline void add_bonded_virials(Particle *p1) {
 
     auto dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
     calc_bond_pair_force(p1, p2, iaparams, dx, force);
-    *obsstat_bonded(&virials, type_num) +=
-        dx[0] * force[0] + dx[1] * force[1] + dx[2] * force[2];
+    *obsstat_bonded(&virials, type_num) += dx * force;
 
     /* stress tensor part */
     for (k = 0; k < 3; k++)
@@ -254,18 +252,12 @@ inline void add_kinetic_virials(Particle *p1, int v_comp) {
   {
     if (v_comp)
       virials.data.e[0] +=
-          (Utils::sqr(p1->m.v[0] * time_step -
-                      p1->f.f[0] * 0.5 * time_step * time_step / p1->p.mass) +
-           Utils::sqr(p1->m.v[1] * time_step -
-                      p1->f.f[1] * 0.5 * time_step * time_step / p1->p.mass) +
-           Utils::sqr(p1->m.v[2] * time_step -
-                      p1->f.f[2] * 0.5 * time_step * time_step / p1->p.mass)) *
-          (*p1).p.mass;
+          ((p1->m.v * time_step) -
+           (p1->f.f * (0.5 * Utils::sqr(time_step) / p1->p.mass)))
+              .norm2() *
+          p1->p.mass;
     else
-      virials.data.e[0] += (Utils::sqr(p1->m.v[0] * time_step) +
-                            Utils::sqr(p1->m.v[1] * time_step) +
-                            Utils::sqr(p1->m.v[2] * time_step)) *
-                           (*p1).p.mass;
+      virials.data.e[0] += Utils::sqr(time_step) * p1->m.v.norm2() * p1->p.mass;
   }
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step'

@@ -35,9 +35,9 @@ namespace {
  *calculated here but is implicitly calculated by f3 = -(f1+f2) which is
  *consistent with the literature
  */
-void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
-                  double f2[3], const Utils::Vector3d &v12,
-                  const Utils::Vector3d &v13) {
+void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
+                  Utils::Vector3d &f1, Utils::Vector3d &f2,
+                  const Utils::Vector3d &v12, const Utils::Vector3d &v13) {
   // fRot is in the rotated system, i.e. in a system where the side lPrime of
   // the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is
   // perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).
@@ -60,13 +60,8 @@ void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
   auto const yu = (v13 - (v13 * xu) * xu).normalize();
 
   // Calculate forces in 3D
-  f1[0] = (f1_rot[0] * xu[0]) + (f1_rot[1] * yu[0]);
-  f1[1] = (f1_rot[0] * xu[1]) + (f1_rot[1] * yu[1]);
-  f1[2] = (f1_rot[0] * xu[2]) + (f1_rot[1] * yu[2]);
-
-  f2[0] = (f2_rot[0] * xu[0]) + (f2_rot[1] * yu[0]);
-  f2[1] = (f2_rot[0] * xu[1]) + (f2_rot[1] * yu[1]);
-  f2[2] = (f2_rot[0] * xu[2]) + (f2_rot[1] * yu[2]);
+  f1 = f1_rot[0] * xu + f1_rot[1] * yu;
+  f2 = f2_rot[0] * xu + f2_rot[1] * yu;
 }
 } // namespace
 
@@ -183,8 +178,8 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   // 8 terms (done here). Krueger exploits the symmetry of the G-matrix, which
   // results in 6 elements, but with an additional factor 2 for the xy-elements
   // (see also above at the definition of dI2dGxy).
-  double f1_rot[2] = {0., 0.};
-  double f2_rot[2] = {0., 0.};
+  Utils::Vector2d f1_rot{};
+  Utils::Vector2d f2_rot{};
   f1_rot[0] = -(dEdI1 * dI1dGxx * dGxxdV1x) - (dEdI1 * dI1dGxy * dGxydV1x) -
               (dEdI1 * dI1dGyx * dGyxdV1x) - (dEdI1 * dI1dGyy * dGyydV1x) -
               (dEdI2 * dI2dGxx * dGxxdV1x) - (dEdI2 * dI2dGxy * dGxydV1x) -
@@ -203,10 +198,8 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
               (dEdI2 * dI2dGyx * dGyxdV2y) - (dEdI2 * dI2dGyy * dGyydV2y);
 
   // Multiply by undeformed area
-  f1_rot[0] *= A0;
-  f1_rot[1] *= A0;
-  f2_rot[0] *= A0;
-  f2_rot[1] *= A0;
+  f1_rot *= A0;
+  f2_rot *= A0;
 
   // ****************** Wolfgang's version ***********
   /*
@@ -237,16 +230,14 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
    */
 
   // Rotate forces back into original position of triangle
-  double force1[3] = {0, 0, 0};
-  double force2[3] = {0, 0, 0};
+  Utils::Vector3d force1{};
+  Utils::Vector3d force2{};
   RotateForces(f1_rot, f2_rot, force1, force2, vec1, vec2);
 
   // Calculate f3 from equilibrium and add
-  for (int i = 0; i < 3; i++) {
-    p1->f.f[i] += force1[i];
-    p2->f.f[i] += force2[i];
-    p3->f.f[i] += -force1[i] - force2[i];
-  }
+  p1->f.f += force1;
+  p2->f.f += force2;
+  p3->f.f -= force1 + force2;
 
   return 0;
 }

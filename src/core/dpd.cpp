@@ -175,8 +175,8 @@ Vector3d dpd_pair_force(DPDParameters const &params, const Vector3d &v,
 }
 
 Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
-                        const IA_parameters *ia_params, double const *d,
-                        double dist, double dist2) {
+                        const IA_parameters *ia_params,
+                        Utils::Vector3d const &d, double dist, double dist2) {
   if (ia_params->dpd_radial.cutoff <= 0.0 &&
       ia_params->dpd_trans.cutoff <= 0.0) {
     return {};

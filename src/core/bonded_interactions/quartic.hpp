@@ -50,7 +50,8 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,
  *  @return whether the bond is broken
  */
 inline bool calc_quartic_pair_force(Bonded_ia_parameters const *iaparams,
-                                    Utils::Vector3d const &dx, double *force) {
+                                    Utils::Vector3d const &dx,
+                                    Utils::Vector3d &force) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
@@ -58,13 +59,10 @@ inline bool calc_quartic_pair_force(Bonded_ia_parameters const *iaparams,
   }
 
   auto const dr = dist - iaparams->p.quartic.r;
-
   auto const fac =
       (iaparams->p.quartic.k0 * dr + iaparams->p.quartic.k1 * dr * dr * dr) /
       dist;
-
-  for (int i = 0; i < 3; i++)
-    force[i] = -fac * dx[i];
+  force = -fac * dx;
 
   return false;
 }

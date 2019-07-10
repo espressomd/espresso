@@ -94,8 +94,8 @@ public:
 
   Utils::Vector3d &center() { return m_center; }
 
-  void calculate_dist(const Utils::Vector3d &pos, double *dist,
-                      double *vec) const override;
+  void calculate_dist(const Utils::Vector3d &pos, double &dist,
+                      Utils::Vector3d &vec) const override;
 };
 } // namespace Shapes
 

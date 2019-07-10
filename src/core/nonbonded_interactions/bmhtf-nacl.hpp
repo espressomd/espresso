@@ -38,24 +38,24 @@ int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
 /** Calculate smooth step force between particle p1 and p2 */
 inline void add_BMHTF_pair_force(const Particle *const p1,
                                  const Particle *const p2,
-                                 IA_parameters *ia_params, double const d[3],
-                                 double dist, double dist2, double force[3]) {
+                                 IA_parameters *ia_params,
+                                 Utils::Vector3d const &d, double dist,
+                                 double dist2, Utils::Vector3d &force) {
   if (dist < ia_params->BMHTF_cut) {
     auto const pw8 = dist2 * dist2 * dist2 * dist2;
     auto const fac =
         ia_params->BMHTF_A * ia_params->BMHTF_B *
             exp(ia_params->BMHTF_B * (ia_params->BMHTF_sig - dist)) / dist -
         6 * ia_params->BMHTF_C / pw8 - 8 * ia_params->BMHTF_D / pw8 / dist2;
-
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
+    force += fac * d;
   }
 }
 
 /** Calculate smooth step potential energy between particle p1 and p2. */
 inline double BMHTF_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
-                                const double d[3], double dist, double dist2) {
+                                Utils::Vector3d const &d, double dist,
+                                double dist2) {
   if (dist < ia_params->BMHTF_cut) {
     auto const pw6 = dist2 * dist2 * dist2;
     return ia_params->BMHTF_A *

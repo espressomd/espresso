@@ -40,8 +40,9 @@ int affinity_set_params(int part_type_a, int part_type_b, int afftype,
 
 /** Calculate soft-sphere potential force between particle p1 and p2 */
 inline void add_affinity_pair_force(Particle *p1, Particle *p2,
-                                    IA_parameters *ia_params, double const d[3],
-                                    double dist, double force[3]) {
+                                    IA_parameters *ia_params,
+                                    Utils::Vector3d const &d, double dist,
+                                    Utils::Vector3d &force) {
 
   // The affinity potential has the first argument affinity_type. This is to
   // differentiate between different implementations. For example one
@@ -88,7 +89,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      * - if bond length reaches maxBond, the bond immediately ruptures,
      *   no probability is involved
      *********************/
-    int j;
     double fac = 0.0;
     if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
                                             // interaction cut-off radius.
@@ -101,18 +101,16 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           if (len > ia_params->affinity_r0) {
             fac = ia_params->affinity_kappa * (len - ia_params->affinity_r0);
             // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
-          } else
+          } else {
             fac = 0.0;
-          // double ftemp = 0;
-          for (j = 0; j < 3; j++) {
-            force[j] += fac * vec[j] / len;
           }
+          // double ftemp = 0;
+          force += (fac / len) * vec;
           // printf("%f ",ftemp);
           // Decision whether I should break the bond: if the bond length is
           // greater than maxBond, it breaks.
           if (len > ia_params->affinity_maxBond) {
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = -1;
+            p1->p.bond_site = {-1, -1, -1};
           }
         } else if (dist <
                    ia_params
@@ -120,8 +118,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                         // of possible bond creation area,
                                         // let's talk about creating a bond
           // This implementation creates bond always
-          for (j = 0; j < 3; j++)
-            p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+          p1->p.bond_site = unfolded_pos - d;
         }
       }
     }
@@ -163,7 +160,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *   cut-off radius and the bond remains active is replaced with fixed
      *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
-    int j;
     double fac = 0.0;
     if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
                                             // interaction cut-off radius.
@@ -176,13 +172,12 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           if (len > ia_params->affinity_r0) {
             fac = ia_params->affinity_kappa * (len - ia_params->affinity_r0);
             // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
-          } else
+          } else {
             fac = 0.0;
-          // double ftemp = 0;
-          for (j = 0; j < 3; j++) {
-            force[j] += fac * vec[j] / len;
-            // ftemp += abs(fac * vec[j] / len);
           }
+          // double ftemp = 0;
+          force += (fac / len) * vec;
+          // ftemp += abs((fac / len) * vec);
           // if (ftemp > 0.000000000000001) printf("%f ",fac);
           // Decision whether I should break the bond:
           // First, force exerted on bond is stored in fac
@@ -204,12 +199,10 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                              // for setting detachment force F_d
             double decide = d_random();
             if (decide < Poff) {
-              for (j = 0; j < 3; j++)
-                p1->p.bond_site[j] = -1;
+              p1->p.bond_site = {-1, -1, -1};
             }
           } else {
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = -1;
+            p1->p.bond_site = {-1, -1, -1};
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
@@ -239,8 +232,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           double decide = d_random();
           if (decide <
               Pon) { // the bond will be created only with probability Pon.
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+            p1->p.bond_site = unfolded_pos - d;
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -283,7 +275,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *   cut-off radius and the bond remains active
      * - maxBond should be always less than cut_off radius
      *********************/
-    int j;
     double fac = 0.0;
     if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside
                                             // the interaction cut-off radius.
@@ -300,9 +291,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           } else
             fac = 0.0;
           // double ftemp = 0;
-          for (j = 0; j < 3; j++) {
-            force[j] += fac * vec[j];
-          }
+          force += fac * vec;
           // printf("%f ",ftemp);
           // Decision whether I should break the bond:
           // The random decision algorithm is much more complicated with Fd
@@ -314,13 +303,11 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           if (len < ia_params->affinity_maxBond) {
             double decide = d_random();
             if (decide < Poff) {
-              for (j = 0; j < 3; j++)
-                p1->p.bond_site[j] = -1;
+              p1->p.bond_site = {-1, -1, -1};
             }
 
           } else {
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = -1;
+            p1->p.bond_site = {-1, -1, -1};
             // printf("breaking: out of cut");
           }
         } else if (dist <
@@ -334,9 +321,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           double decide = d_random();
           if (decide <
               Pon) { // the bond will be created only with probability Pon.
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = unfolded_pos[j] - d[j];
-          } else {
+            p1->p.bond_site = unfolded_pos - d;
           }
         }
       }
@@ -378,7 +363,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *   cut-off radius and the bond remains active is replaced with fixed
      *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
-    int j;
     double fac = 0.0;
     if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
                                             // interaction cut-off radius.
@@ -390,9 +374,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
         {                              // Bond exists
           fac = ia_params->affinity_kappa * len;
           // double ftemp = 0;
-          for (j = 0; j < 3; j++) {
-            force[j] += fac * vec[j] / len;
-          }
+          force += (fac / len) * vec;
           // Decision whether I should break the bond:
           // First, force exerted on bond is stored in fac
           double tmpF = fac;
@@ -413,13 +395,11 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                              // for setting detachment force F_d
             double decide = d_random();
             if (decide < Poff) {
-              for (j = 0; j < 3; j++)
-                p1->p.bond_site[j] = -1;
+              p1->p.bond_site = {-1, -1, -1};
             }
 
           } else {
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = -1;
+            p1->p.bond_site = {-1, -1, -1};
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
@@ -448,8 +428,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           double decide = d_random();
           if (decide <
               Pon) { // the bond will be created only with probability Pon.
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+            p1->p.bond_site = unfolded_pos - d;
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -495,7 +474,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *   cut-off radius and the bond remains active is replaced with fixed
      *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
-    int j;
     double fac = 0.0;
     if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
                                             // interaction cut-off radius.
@@ -512,9 +490,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           } else
             fac = 0.0;
           // double ftemp = 0;
-          for (j = 0; j < 3; j++) {
-            force[j] += fac * vec[j] / len;
-          }
+          force += (fac / len) * vec;
           // if (ftemp > 0.000000000000001) printf("%f ",fac);
           // Decision whether I should break the bond:
           // First, force exerted on bond is stored in fac
@@ -536,13 +512,11 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                              // for setting detachment force F_d
             double decide = d_random();
             if (decide < Poff) {
-              for (j = 0; j < 3; j++)
-                p1->p.bond_site[j] = -1;
+              p1->p.bond_site = {-1, -1, -1};
             }
 
           } else {
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = -1;
+            p1->p.bond_site = {-1, -1, -1};
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
@@ -572,8 +546,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           double decide = d_random();
           if (decide <
               Pon) { // the bond will be created only with probability Pon.
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+            p1->p.bond_site = unfolded_pos - d;
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);
@@ -619,7 +592,6 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *   cut-off radius and the bond remains active is replaced with fixed
      *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
-    int j;
     double fac = 0.0;
     if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
                                             // interaction cut-off radius.
@@ -636,9 +608,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           } else
             fac = 0.0;
           // double ftemp = 0;
-          for (j = 0; j < 3; j++) {
-            force[j] += fac * vec[j] / len;
-          }
+          force += (fac / len) * vec;
           // if (ftemp > 0.000000000000001) printf("%f ",fac);
           // Decision whether I should break the bond:
           // First, force exerted on bond is stored in fac
@@ -660,13 +630,11 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                              // for setting detachment force F_d
             double decide = d_random();
             if (decide < Poff) {
-              for (j = 0; j < 3; j++)
-                p1->p.bond_site[j] = -1;
+              p1->p.bond_site = {-1, -1, -1};
             }
 
           } else {
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = -1;
+            p1->p.bond_site = {-1, -1, -1};
             // printf("breaking: out of cut");
           }
           // Checkpoint output:
@@ -696,8 +664,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           double decide = d_random();
           if (decide <
               Pon) { // the bond will be created only with probability Pon.
-            for (j = 0; j < 3; j++)
-              p1->p.bond_site[j] = unfolded_pos[j] - d[j];
+            p1->p.bond_site = unfolded_pos - d;
           } else {
             // printf("In range, not creating: Pon = %f, decide = %f", Pon,
             // decide);

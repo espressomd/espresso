@@ -123,7 +123,7 @@ void lb_init_boundaries() {
 
           double dist = 1e99;
           double dist_tmp = 0.0;
-          double dist_vec[3];
+          Utils::Vector3d dist_vec{};
 
 #ifdef EK_BOUNDARIES
           if (ek_initialized) {
@@ -135,7 +135,7 @@ void lb_init_boundaries() {
           int n = 0;
           for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end();
                ++lbb, n++) {
-            (**lbb).calc_dist(pos, &dist_tmp, dist_vec);
+            (**lbb).calc_dist(pos, dist_tmp, dist_vec);
 
             if (dist > dist_tmp || n == 0) {
               dist = dist_tmp;
@@ -242,12 +242,12 @@ void lb_init_boundaries() {
 
           double dist = 1e99;
           double dist_tmp = 0.0;
-          double dist_vec[3];
+          Utils::Vector3d dist_vec{};
 
           int n = 0;
           for (auto it = lbboundaries.begin(); it != lbboundaries.end();
                ++it, ++n) {
-            (**it).calc_dist(pos, &dist_tmp, dist_vec);
+            (**it).calc_dist(pos, dist_tmp, dist_vec);
 
             if (dist_tmp < dist || n == 0) {
               dist = dist_tmp;

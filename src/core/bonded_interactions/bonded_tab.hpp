@@ -72,16 +72,14 @@ int tabulated_bonded_set_params(int bond_type,
  *  @return whether the bond is broken
  */
 inline bool calc_tab_bond_force(Bonded_ia_parameters const *iaparams,
-                                const Utils::Vector3d &dx, double *force) {
+                                const Utils::Vector3d &dx,
+                                Utils::Vector3d &force) {
   auto const *tab_pot = iaparams->p.tab.pot;
   auto const dist = dx.norm();
 
   if (dist < tab_pot->cutoff()) {
     auto const fac = tab_pot->force(dist) / dist;
-
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * dx[j];
-
+    force = fac * dx;
     return false;
   }
   return true;
@@ -151,17 +149,12 @@ calc_angle_3body_tabulated_forces(Particle const *p_mid, Particle const *p_left,
 inline bool calc_tab_angle_force(Particle const *p_mid, Particle const *p_left,
                                  Particle const *p_right,
                                  Bonded_ia_parameters const *iaparams,
-                                 double f_mid[3], double f_left[3],
-                                 double f_right[3]) {
+                                 Utils::Vector3d &f_mid,
+                                 Utils::Vector3d &f_left,
+                                 Utils::Vector3d &f_right) {
 
-  Utils::Vector3d f_mid_v, f_left_v, f_right_v;
-  std::tie(f_mid_v, f_left_v, f_right_v) =
+  std::tie(f_mid, f_left, f_right) =
       calc_angle_3body_tabulated_forces(p_mid, p_left, p_right, iaparams);
-  for (int i = 0; i < 3; ++i) {
-    f_mid[i] = f_mid_v[i];
-    f_left[i] = f_left_v[i];
-    f_right[i] = f_right_v[i];
-  }
   return false;
 }
 
@@ -209,8 +202,9 @@ inline bool tab_angle_energy(Particle const *p_mid, Particle const *p_left,
 inline bool calc_tab_dihedral_force(Particle const *p2, Particle const *p1,
                                     Particle const *p3, Particle const *p4,
                                     Bonded_ia_parameters const *iaparams,
-                                    double force2[3], double force1[3],
-                                    double force3[3]) {
+                                    Utils::Vector3d &force2,
+                                    Utils::Vector3d &force1,
+                                    Utils::Vector3d &force3) {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -224,11 +218,9 @@ inline bool calc_tab_dihedral_force(Particle const *p2, Particle const *p1,
                       v23Xv34, &l_v23Xv34, &cos_phi, &phi);
   /* dihedral angle not defined - force zero */
   if (phi == -1.0) {
-    for (int i = 0; i < 3; i++) {
-      force1[i] = 0.0;
-      force2[i] = 0.0;
-      force3[i] = 0.0;
-    }
+    force1 = {};
+    force2 = {};
+    force3 = {};
     return false;
   }
 
@@ -245,11 +237,9 @@ inline bool calc_tab_dihedral_force(Particle const *p2, Particle const *p1,
   auto const fac = tab_pot->force(phi);
 
   /* store dihedral forces */
-  for (int i = 0; i < 3; i++) {
-    force1[i] = fac * v23Xf1[i];
-    force2[i] = fac * (v34Xf4[i] - v12Xf1[i] - v23Xf1[i]);
-    force3[i] = fac * (v12Xf1[i] - v23Xf4[i] - v34Xf4[i]);
-  }
+  force1 = fac * v23Xf1;
+  force2 = fac * (v34Xf4 - v12Xf1 - v23Xf1);
+  force3 = fac * (v12Xf1 - v23Xf4 - v34Xf4);
 
   return false;
 }

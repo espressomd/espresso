@@ -41,16 +41,16 @@ int morse_set_params(int part_type_a, int part_type_b, double eps, double alpha,
 /** Calculate Morse force between particle p1 and p2 */
 inline void add_morse_pair_force(const Particle *const p1,
                                  const Particle *const p2,
-                                 IA_parameters *ia_params, double const d[3],
-                                 double dist, double force[3]) {
+                                 IA_parameters *ia_params,
+                                 Utils::Vector3d const &d, double dist,
+                                 Utils::Vector3d &force) {
   if (dist < ia_params->MORSE_cut) {
     auto const add =
         exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
     double fac = -ia_params->MORSE_eps * 2.0 * ia_params->MORSE_alpha *
                  (add - Utils::sqr(add)) / dist;
+    force += fac * d;
 
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
 #ifdef MORSE_WARN_WHEN_CLOSE
     if (fac * dist > 1000)
       fprintf(stderr, "%d: Morse-Warning: Pair (%d-%d) force=%f dist=%f\n",
@@ -79,7 +79,7 @@ inline void add_morse_pair_force(const Particle *const p1,
 /** Calculate Morse energy between particle p1 and p2. */
 inline double morse_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
-                                const double d[3], double dist) {
+                                Utils::Vector3d const &d, double dist) {
   if (dist < ia_params->MORSE_cut) {
     auto const add =
         exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));

@@ -41,7 +41,8 @@ int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
 inline void add_thole_pair_force(const Particle *const p1,
                                  const Particle *const p2,
                                  const IA_parameters *ia_params,
-                                 const double *d, double dist, double *force) {
+                                 Utils::Vector3d const &d, double dist,
+                                 Utils::Vector3d &force) {
   auto const thole_q1q2 = ia_params->THOLE_q1q2;
   auto const thole_s = ia_params->THOLE_scaling_coeff;
 
@@ -55,16 +56,13 @@ inline void add_thole_pair_force(const Particle *const p1,
     double sr = thole_s * dist;
     double dS_r = 0.5 * (2.0 - (exp(-sr) * (sr * (sr + 2.0) + 2.0)));
     auto const f = Coulomb::central_force(thole_q1q2 * (-1. + dS_r), d, dist);
-
-    force[0] += f[0];
-    force[1] += f[1];
-    force[2] += f[2];
+    force += f;
   }
 }
 
 inline double thole_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
-                                const double d[3], double dist) {
+                                Utils::Vector3d const &d, double dist) {
 
   auto const thole_s = ia_params->THOLE_scaling_coeff;
   auto const thole_q1q2 = ia_params->THOLE_q1q2;

@@ -68,8 +68,8 @@ std::pair<double, double> SimplePore::dist_half_pore(double r, double z) const {
   return {fac * dr, fac * dz};
 }
 
-void SimplePore::calculate_dist(const Utils::Vector3d &pos, double *dist,
-                                double *vec) const {
+void SimplePore::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                                Utils::Vector3d &vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
   Utils::Vector3d const c_dist = pos - m_center;
@@ -107,9 +107,7 @@ void SimplePore::calculate_dist(const Utils::Vector3d &pos, double *dist,
     dz *= -1;
   }
 
-  *dist = std::sqrt(dr * dr + dz * dz) * side;
-  for (int i = 0; i < 3; i++) {
-    vec[i] = -dr * e_r[i] + -dz * e_z[i];
-  }
+  dist = std::sqrt(dr * dr + dz * dz) * side;
+  vec = -dr * e_r - dz * e_z;
 }
 } // namespace Shapes

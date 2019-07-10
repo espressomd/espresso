@@ -53,8 +53,9 @@ inline double buck_energy_r(double A, double B, double C, double D,
     it to their force. */
 inline void add_buck_pair_force(const Particle *const p1,
                                 const Particle *const p2,
-                                IA_parameters *ia_params, double const d[3],
-                                double dist, double force[3]) {
+                                IA_parameters *ia_params,
+                                Utils::Vector3d const &d, double dist,
+                                Utils::Vector3d &force) {
   if (dist < ia_params->BUCK_cut) {
     /* case: resulting force/energy greater than discontinuity and
              less than cutoff (true Buckingham region) */
@@ -63,9 +64,7 @@ inline void add_buck_pair_force(const Particle *const p1,
       fac = buck_force_r(ia_params->BUCK_A, ia_params->BUCK_B,
                          ia_params->BUCK_C, ia_params->BUCK_D, dist) /
             dist;
-      for (int j = 0; j < 3; j++) {
-        force[j] += fac * d[j];
-      }
+      force += fac * d;
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)
         fprintf(stderr, "%d: BUCK-Warning: Pair (%d-%d) force=%f dist=%f\n",
@@ -74,9 +73,7 @@ inline void add_buck_pair_force(const Particle *const p1,
     } else {
       /* resulting force/energy in the linear region*/
       fac = -ia_params->BUCK_F2 / dist;
-      for (int j = 0; j < 3; j++) {
-        force[j] += fac * d[j];
-      }
+      force += fac * d;
     }
 
     ONEPART_TRACE(if (p1->p.identity == check_id)
@@ -102,7 +99,7 @@ inline void add_buck_pair_force(const Particle *const p1,
 /** calculate Buckingham energy between particle p1 and p2. */
 inline double buck_pair_energy(const Particle *p1, const Particle *p2,
                                const IA_parameters *ia_params,
-                               const double d[3], double dist) {
+                               Utils::Vector3d const &d, double dist) {
   if (dist < ia_params->BUCK_cut) {
     /* case: resulting force/energy greater than discont and
              less than cutoff (true Buckingham region) */
