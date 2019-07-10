@@ -45,4 +45,5 @@ unit_test(NAME periodic_fold_test SRC periodic_fold_test.cpp)
 unit_test(NAME None_test SRC None_test.cpp DEPENDS EspressoScriptInterface)
 unit_test(NAME grid_test SRC grid_test.cpp DEPENDS EspressoCore)
 unit_test(NAME BoxGeometry_test SRC BoxGeometry_test.cpp DEPENDS EspressoCore)
+unit_test(NAME LocalBox_test SRC LocalBox_test.cpp DEPENDS EspressoCore)
 

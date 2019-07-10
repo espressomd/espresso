@@ -52,6 +52,7 @@ using Utils::strcat_alloc;
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <boost/range/algorithm/min_element.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -605,13 +606,13 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
       fprintf(stderr, "%d: rs_mesh underflow! (pos %f)\n", this_node,
               real_pos[d]);
       fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-              my_left[d] - skin, my_right[d] + skin);
+              local_geo.my_left()[d] - skin, local_geo.my_right()[d] + skin);
     }
     if ((nmp + cao) > p3m.local_mesh.dim[d]) {
       fprintf(stderr, "%d: rs_mesh overflow! (pos %f, nmp=%d)\n", this_node,
               real_pos[d], nmp);
       fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-              my_left[d] - skin, my_right[d] + skin);
+              local_geo.my_left()[d] - skin, local_geo.my_right()[d] + skin);
     }
 #endif
   }
@@ -957,6 +958,9 @@ void p3m_gather_fft_grid(double *themesh) {
 
   P3M_TRACE(fprintf(stderr, "%d: p3m_gather_fft_grid:\n", this_node));
 
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
+
   /* direction loop */
   for (s_dir = 0; s_dir < 6; s_dir++) {
     if (s_dir % 2 == 0)
@@ -999,6 +1003,9 @@ void p3m_spread_force_grid(double *themesh) {
   MPI_Status status;
   std::vector<double> tmp_vec;
   P3M_TRACE(fprintf(stderr, "%d: p3m_spread_force_grid:\n", this_node));
+
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
 
   /* direction loop */
   for (s_dir = 5; s_dir >= 0; s_dir--) {
@@ -1473,9 +1480,9 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
                std::max(box_geo.length()[1] * cao / (2.0 * mesh[1]),
                         box_geo.length()[2] * cao / (2.0 * mesh[2])));
 
-  P3M_TRACE(fprintf(
-      stderr, "p3m_mc_time: mesh=(%d, %d, %d), cao=%d, rmin=%f, rmax=%f\n",
-      mesh[0], mesh[1], mesh[2], cao, r_cut_iL_min, r_cut_iL_max));
+  auto const min_box_l = *boost::min_element(box_geo.length());
+  auto const min_local_box_l = *boost::min_element(local_geo.length());
+
   if (cao >= std::min(mesh[0], std::min(mesh[1], mesh[2])) ||
       k_cut >= (std::min(min_box_l, min_local_box_l) - skin)) {
     sprintf(b, "%-4d %-3d cao too large for this mesh\n", mesh[0], cao);
@@ -1538,8 +1545,8 @@ static double p3m_mc_time(char **log, const int mesh[3], int cao,
    * than allowed */
   n_cells = 1;
   for (i = 0; i < 3; i++)
-    n_cells *=
-        (int)(floor(local_box_l[i] / (r_cut_iL * box_geo.length()[0] + skin)));
+    n_cells *= (int)(floor(local_geo.length()[i] /
+                           (r_cut_iL * box_geo.length()[0] + skin)));
   if (n_cells < min_num_cells) {
     P3M_TRACE(fprintf(
         stderr,
@@ -1838,6 +1845,9 @@ int p3m_adaptive_tune(char **log) {
   }
 
   if (p3m.params.r_cut_iL == 0.0) {
+    auto const min_box_l = *boost::min_element(box_geo.length());
+    auto const min_local_box_l = *boost::min_element(local_geo.length());
+
     r_cut_iL_min = 0;
     r_cut_iL_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
     r_cut_iL_min *= (1. / box_geo.length()[0]);
@@ -2081,20 +2091,22 @@ void p3m_calc_local_ca_mesh() {
 
   /* inner left down grid point (global index) */
   for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ld[i] =
-        (int)ceil(my_left[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
+    p3m.local_mesh.in_ld[i] = (int)ceil(
+        local_geo.my_left()[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
   /* inner up right grid point (global index) */
   for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ur[i] =
-        (int)floor(my_right[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
+    p3m.local_mesh.in_ur[i] = (int)floor(
+        local_geo.my_right()[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
 
   /* correct roundof errors at boundary */
   for (i = 0; i < 3; i++) {
-    if ((my_right[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
+    if ((local_geo.my_right()[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
             p3m.local_mesh.in_ur[i] <
         ROUND_ERROR_PREC)
       p3m.local_mesh.in_ur[i]--;
-    if (1.0 + (my_left[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
+    if (1.0 +
+            (local_geo.my_left()[i] * p3m.params.ai[i] -
+             p3m.params.mesh_off[i]) -
             p3m.local_mesh.in_ld[i] <
         ROUND_ERROR_PREC)
       p3m.local_mesh.in_ld[i]--;
@@ -2106,7 +2118,7 @@ void p3m_calc_local_ca_mesh() {
   /* index of left down grid point in global mesh */
   for (i = 0; i < 3; i++)
     p3m.local_mesh.ld_ind[i] =
-        (int)ceil((my_left[i] - full_skin[i]) * p3m.params.ai[i] -
+        (int)ceil((local_geo.my_left()[i] - full_skin[i]) * p3m.params.ai[i] -
                   p3m.params.mesh_off[i]);
   /* left down margin */
   for (i = 0; i < 3; i++)
@@ -2114,11 +2126,12 @@ void p3m_calc_local_ca_mesh() {
         p3m.local_mesh.in_ld[i] - p3m.local_mesh.ld_ind[i];
   /* up right grid point */
   for (i = 0; i < 3; i++)
-    ind[i] = (int)floor((my_right[i] + full_skin[i]) * p3m.params.ai[i] -
-                        p3m.params.mesh_off[i]);
+    ind[i] =
+        (int)floor((local_geo.my_right()[i] + full_skin[i]) * p3m.params.ai[i] -
+                   p3m.params.mesh_off[i]);
   /* correct roundof errors at up right boundary */
   for (i = 0; i < 3; i++)
-    if (((my_right[i] + full_skin[i]) * p3m.params.ai[i] -
+    if (((local_geo.my_right()[i] + full_skin[i]) * p3m.params.ai[i] -
          p3m.params.mesh_off[i]) -
             ind[i] ==
         0)
@@ -2174,10 +2187,10 @@ bool p3m_sanity_checks_boxl() {
                         << box_geo.length()[i];
       ret = true;
     }
-    if (p3m.params.cao_cut[i] >= local_box_l[i]) {
+    if (p3m.params.cao_cut[i] >= local_geo.length()[i]) {
       runtimeErrorMsg() << "P3M_init: k-space cutoff " << p3m.params.cao_cut[i]
                         << " is larger than local box dimension "
-                        << local_box_l[i];
+                        << local_geo.length()[i];
       ret = true;
     }
   }
@@ -2281,6 +2294,9 @@ void p3m_calc_send_mesh() {
       p3m.sm.max = p3m.sm.s_size[i];
   }
   /* communication */
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
+
   for (i = 0; i < 6; i++) {
     if (i % 2 == 0)
       j = i + 1;
