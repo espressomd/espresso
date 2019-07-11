@@ -20,22 +20,9 @@
 */
 
 #include "ObjectHandle.hpp"
-
-#include "MpiCallbacks.hpp"
 #include "ObjectManager.hpp"
-#include "PackedVariant.hpp"
-#include "ScriptInterface.hpp"
-#include "ObjectState.hpp"
-
-#include <utils/serialization/pack.hpp>
-
-#include <boost/range/algorithm/for_each.hpp>
-#include <boost/range/algorithm/transform.hpp>
-#include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
-Utils::Factory<ObjectHandle> factory;
-
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {
   if (m_policy == CreationPolicy::GLOBAL) {

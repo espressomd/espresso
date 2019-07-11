@@ -51,7 +51,7 @@ std::shared_ptr<ObjectHandle>
 ObjectManager::make_shared(std::string const &name,
                            CreationPolicy policy,
                            const VariantMap &parameters) {
-  auto sp = factory.make(name);
+  auto sp = m_factory.make(name);
 
   sp->m_manager = this;
   sp->m_name = name;

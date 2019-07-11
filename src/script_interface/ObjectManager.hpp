@@ -10,16 +10,13 @@
 #include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
-extern Utils::Factory<ObjectHandle> factory;
-} /* namespace ScriptInterface */
-
-namespace ScriptInterface {
 class ObjectManager {
   using ObjectId = std::size_t;
 
   /* Instances on this node that are managed by the
    * head node. */
   std::unordered_map<ObjectId, ObjectRef> m_local_objects;
+  Utils::Factory<ObjectHandle> m_factory;
 
 public:
   auto const &local_objects() const { return m_local_objects; }
@@ -124,11 +121,11 @@ public:
    */
   void remote_delete_handle(ObjectId id) { cb_delete_handle(id); }
 
-  template <typename T> static void register_new(std::string const &name) {
+  template <typename T> void register_new(std::string const &name) {
     static_assert(std::is_base_of<ObjectHandle, T>::value, "");
 
     /* Register with the factory */
-    factory.register_new<T>(name);
+    m_factory.register_new<T>(name);
   }
 
   /**
