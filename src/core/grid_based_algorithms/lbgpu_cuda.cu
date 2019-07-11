@@ -100,16 +100,6 @@ static LB_extern_nodeforcedensity_gpu *extern_node_force_densities = nullptr;
 /** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
 
-/** @brief Velocity at the boundary */
-static float *lb_boundary_velocity = nullptr;
-
-/** @name pointers for bound index array */
-/*@{*/
-static int *boundary_node_list = nullptr;
-static int *boundary_index_list = nullptr;
-static size_t size_of_boundindex = 0;
-/*@}*/
-
 /** @name pointers for additional cuda check flag */
 /*@{*/
 static int *gpu_check = nullptr;
@@ -2521,9 +2511,8 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
   float *boundary_velocity = nullptr;
   int *boundary_node_list = nullptr;
   int *boundary_index_list = nullptr;
-  size_t size_of_boundindex = 0;
 
-  size_of_boundindex = number_of_boundnodes * sizeof(int);
+  auto const size_of_boundindex = number_of_boundnodes * sizeof(int);
   cuda_safe_mem(cudaMalloc((void **)&boundary_node_list, size_of_boundindex));
   cuda_safe_mem(cudaMalloc((void **)&boundary_index_list, size_of_boundindex));
   cuda_safe_mem(cudaMemcpy(boundary_index_list, host_boundary_index_list,
