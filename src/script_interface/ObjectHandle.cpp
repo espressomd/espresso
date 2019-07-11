@@ -65,7 +65,7 @@ ObjectHandle::make_shared(std::string const &name, CreationPolicy policy,
  */
 struct ObjectState {
   std::string name;
-  ObjectHandle::CreationPolicy policy;
+  CreationPolicy policy;
   PackedMap params;
   std::vector<std::pair<ObjectId, std::string>> objects;
   std::string internal_state;

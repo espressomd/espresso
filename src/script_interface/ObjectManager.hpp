@@ -56,10 +56,6 @@ public:
         cb_delete_handle(callbacks,
                          [this](ObjectId id) { delete_handle(id); }) {}
 
-  std::shared_ptr<ObjectHandle>
-  make_shared(std::string const &name, ObjectHandle::CreationPolicy policy,
-              const VariantMap &parameters = {});
-
 private:
   /**
    * @brief Callback for @function remote_make_handle
@@ -134,6 +130,10 @@ public:
     /* Register with the factory */
     factory.register_new<T>(name);
   }
+
+    std::shared_ptr<ObjectHandle>
+    make_shared(std::string const &name, CreationPolicy policy,
+                               const VariantMap &parameters = {});
 };
 } // namespace ScriptInterface
 

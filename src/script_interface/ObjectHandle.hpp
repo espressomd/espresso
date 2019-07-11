@@ -40,9 +40,6 @@ class ObjectManager;
  *
  */
 class ObjectHandle {
-public:
-  enum class CreationPolicy { LOCAL, GLOBAL };
-
 protected:
   ObjectHandle() = default;
 

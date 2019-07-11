@@ -9,7 +9,7 @@ void ObjectManager::make_handle(ObjectId id, const std::string &name,
                                 const PackedMap &parameters) {
   try {
     m_local_objects[id] =
-        ObjectHandle::make_shared(name, ObjectHandle::CreationPolicy::LOCAL,
+        ObjectHandle::make_shared(name, CreationPolicy::LOCAL,
                                   unpack(parameters, m_local_objects));
   } catch (std::runtime_error const &) {
   }
@@ -48,7 +48,7 @@ void ObjectManager::remote_call_method(ObjectId id, std::string const &name,
 
 std::shared_ptr<ObjectHandle>
 ObjectManager::make_shared(std::string const &name,
-                           ObjectHandle::CreationPolicy policy,
+                           CreationPolicy policy,
                            const VariantMap &parameters) {
   auto sp = factory.make(name);
 
@@ -56,7 +56,7 @@ ObjectManager::make_shared(std::string const &name,
   sp->m_name = name;
   sp->m_policy = policy;
 
-  if (sp->m_policy == ObjectHandle::CreationPolicy::GLOBAL) {
+  if (sp->m_policy == CreationPolicy::GLOBAL) {
     remote_make_handle(object_id(sp.get()), name, parameters);
   }
 

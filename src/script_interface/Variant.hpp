@@ -33,7 +33,9 @@
 #include <unordered_map>
 
 namespace ScriptInterface {
-class ObjectHandle;
+    enum class CreationPolicy { LOCAL, GLOBAL };
+
+    class ObjectHandle;
 using ObjectRef = std::shared_ptr<ObjectHandle>;
 /**
  * @brief None-"literal".

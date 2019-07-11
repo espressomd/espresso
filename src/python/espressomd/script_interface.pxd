@@ -64,12 +64,12 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         @staticmethod
         shared_ptr[ObjectHandle] unserialize(const string & state) except +
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ObjectHandle":
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass CreationPolicy:
         pass
     shared_ptr[ObjectHandle] make_shared(const string &, CreationPolicy, const VariantMap &) except +
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ObjectHandle::CreationPolicy":
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::CreationPolicy":
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
 
