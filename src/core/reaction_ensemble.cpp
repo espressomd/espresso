@@ -572,22 +572,22 @@ void ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
  * here.
  */
 void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
-/**
- *remove_charge and put type to a non existing one --> no interactions anymore
- *it is as if the particle was non existing (currently only type-based
- *interactions are switched off, as well as the electrostatic interaction)
- *hide_particle() does not break bonds for simple reactions. as long as there
- *are no reactions like 2A -->B where one of the reacting A particles occurs in
- *the polymer (think of bond breakages if the monomer in the polymer gets
- *deleted in the reaction). This constraint is not of fundamental reason, but
- *there would be a need for a rule for such "collision" reactions (a reaction
- *like the one above).
- */
- 
+  /**
+   *remove_charge and put type to a non existing one --> no interactions anymore
+   *it is as if the particle was non existing (currently only type-based
+   *interactions are switched off, as well as the electrostatic interaction)
+   *hide_particle() does not break bonds for simple reactions. as long as there
+   *are no reactions like 2A -->B where one of the reacting A particles occurs
+   *in the polymer (think of bond breakages if the monomer in the polymer gets
+   *deleted in the reaction). This constraint is not of fundamental reason, but
+   *there would be a need for a rule for such "collision" reactions (a reaction
+   *like the one above).
+   */
+
   auto part = get_particle_data(p_id);
   double d_min = distto(partCfg(), part.r.p, p_id);
   if (d_min < exclusion_radius)
-      particle_inside_exclusion_radius_was_touched = true;
+    particle_inside_exclusion_radius_was_touched = true;
 
 #ifdef ELECTROSTATICS
   // set charge

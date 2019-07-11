@@ -68,7 +68,7 @@ system.cell_system.max_num_cells = 2744
 # type 1 = A-
 # type 2 = H+
 
-for i in range(int(cs_bulk*box_l**3)):
+for i in range(int(cs_bulk * box_l**3)):
     system.part.add(pos=np.random.random(3) * system.box_l, type=1, q=-1)
     system.part.add(pos=np.random.random(3) * system.box_l, type=2, q=1)
 
