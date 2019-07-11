@@ -282,7 +282,7 @@ void lb_init_boundaries() {
   }
 }
 
-Utils::Vector3d lbboundary_get_force(LBBoundary const *const lbb) {
+Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
   Utils::Vector3d force{};
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
   auto const it = std::find_if(
