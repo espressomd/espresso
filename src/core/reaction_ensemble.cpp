@@ -585,10 +585,6 @@ void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
  */
  
   auto part = get_particle_data(p_id);
-  std::vector<double> pos_of_to_be_hidden_particle(3);
-  pos_of_to_be_hidden_particle[0]=part.r.p[0];
-  pos_of_to_be_hidden_particle[1]=part.r.p[1];
-  pos_of_to_be_hidden_particle[2]=part.r.p[2];
   double d_min = distto(partCfg(), part.r.p, p_id);
   if (d_min < exclusion_radius)
       particle_inside_exclusion_radius_was_touched = true;
