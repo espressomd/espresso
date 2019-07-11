@@ -11,7 +11,6 @@ with_coverage=$with_coverage
 myconfig=$myconfig
 check_procs=$check_procs
 make_check=$make_check
-python_version=$python_version
 EOF
 
 if [ -z "$image" ]; then
