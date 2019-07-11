@@ -59,10 +59,6 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         Variant call_method(const string & name, const VariantMap & parameters) except +
         void set_state(map[string, Variant]) except +
         map[string, Variant] get_state() except +
-        string serialize() except +
-
-        @staticmethod
-        shared_ptr[ObjectHandle] unserialize(const string & state) except +
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass CreationPolicy:
@@ -76,7 +72,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
 cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface":
     cppclass ObjectManager:
         shared_ptr[ObjectHandle] make_shared(const string &, CreationPolicy, const VariantMap &) except +
-
-cdef shared_ptr[ObjectManager] _om
+        string serialize(const shared_ptr[ObjectHandle] &) except +
+        shared_ptr[ObjectHandle] unserialize(const string & state) except +
 
 cdef void init(MpiCallbacks &)

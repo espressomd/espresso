@@ -2,8 +2,8 @@
 #define ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
 
 #include "MpiCallbacks.hpp"
-#include "PackedVariant.hpp"
 #include "ObjectHandle.hpp"
+#include "PackedVariant.hpp"
 
 #include <utils/Factory.hpp>
 
@@ -131,9 +131,25 @@ public:
     factory.register_new<T>(name);
   }
 
-    std::shared_ptr<ObjectHandle>
-    make_shared(std::string const &name, CreationPolicy policy,
-                               const VariantMap &parameters = {});
+  /**
+   * @brief Get a new reference counted instance of a script interface by
+   * name.
+   *
+   */
+  std::shared_ptr<ObjectHandle> make_shared(std::string const &name,
+                                            CreationPolicy policy,
+                                            const VariantMap &parameters = {});
+
+  /**
+   * @brief Returns a binary representation of the state of a object.
+   */
+  std::string serialize(const ObjectRef &o) const;
+
+  /**
+   * @brief Creates a new instance from a binary state,
+   *        as returned by @function serialize.
+   */
+  std::shared_ptr<ObjectHandle> unserialize(std::string const &state_);
 };
 } // namespace ScriptInterface
 

@@ -159,30 +159,6 @@ private:
     return none;
   }
 
-public:
-  static void initialize(ObjectManager *om);
-
-  /**
-   * @brief Get a new reference counted instance of a script interface by
-   * name.
-   *
-   */
-  static std::shared_ptr<ObjectHandle>
-  make_shared(std::string const &name, CreationPolicy policy,
-              const VariantMap &parameters = {});
-
-public:
-  /**
-   * @brief Returns a binary representation of the state of the object.
-   */
-  std::string serialize() const;
-
-  /**
-   * @brief Creates a new instance from a binary state,
-   *        as returned by @function serialize.
-   */
-  static std::shared_ptr<ObjectHandle> unserialize(std::string const &state);
-
 private:
   virtual std::string get_internal_state() const { return {}; }
   virtual void set_internal_state(std::string const &state) {}

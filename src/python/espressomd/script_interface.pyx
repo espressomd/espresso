@@ -18,6 +18,10 @@ import numpy as np
 from .utils import to_char_pointer, to_str
 from .utils cimport Vector3d, make_array_locked, handle_errors
 
+from libc.stdint cimport uintptr_t
+
+cdef shared_ptr[ObjectManager] _om
+
 cdef class PObjectRef(object):
     def __richcmp__(a, b, op):
         cdef PObjectRef b_ = b
@@ -80,6 +84,7 @@ cdef class PScriptInterface:
             sip_ = sip
             self.sip = sip_.sip
         else:
+            print("_om", <uintptr_t> _om.get())
             self.set_sip(_om.get().make_shared(to_char_pointer(name), policy_, self._sanitize_params(kwargs)))
 
     def __richcmp__(a, b, op):
@@ -130,10 +135,10 @@ cdef class PScriptInterface:
         return to_str(self.sip.get().name())
 
     def _serialize(self):
-        return self.sip.get().serialize()
+        return _om.get().serialize(self.sip)
 
     def _unserialize(self, state):
-        cdef shared_ptr[ObjectHandle] so_ptr = ObjectHandle.unserialize(state)
+        cdef shared_ptr[ObjectHandle] so_ptr = _om.get().unserialize(state)
         self.set_sip(so_ptr)
 
     cdef VariantMap _sanitize_params(self, in_params) except *:
@@ -252,7 +257,7 @@ cdef variant_to_python_object(const Variant & value) except +:
 def _unpickle_so_class(so_name, state):
     cdef PObjectRef so_ptr
     so_ptr = PObjectRef()
-    so_ptr.sip = ObjectHandle.unserialize(state)
+    so_ptr.sip = _om.get().unserialize(state)
 
     so = _python_class_by_so_name[so_name](sip=so_ptr)
     so.define_bound_methods()
@@ -366,4 +371,7 @@ def script_interface_register(c):
     return c
 
 cdef void init(MpiCallbacks &cb):
+    print("script_interface.init()")
+    global _om
     _om = initialize(cb)
+    print("script_interface.init() _om =", <uintptr_t> _om.get())

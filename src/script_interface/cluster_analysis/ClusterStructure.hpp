@@ -47,11 +47,10 @@ public:
   Variant do_call_method(std::string const &method,
                          VariantMap const &parameters) override {
     if (method == "get_cluster") {
-
       // Note: Cluster objects are generated on the fly, to avoid having to
       // store a script interface object for all clusters (which can by
       // thousands)
-      auto c = std::dynamic_pointer_cast<Cluster>(ObjectHandle::make_shared(
+      auto c = std::dynamic_pointer_cast<Cluster>(manager()->make_shared(
           "ClusterAnalysis::Cluster", CreationPolicy::LOCAL));
       c->set_cluster(
           m_cluster_structure.clusters.at(get_value<int>(parameters.at("id"))));
