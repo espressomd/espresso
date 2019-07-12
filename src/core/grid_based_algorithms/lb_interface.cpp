@@ -344,7 +344,7 @@ double lb_lbfluid_get_density() {
 #ifdef CUDA
     return static_cast<double>(lbpar_gpu.rho);
 #else
-      return {};
+    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -377,7 +377,7 @@ double lb_lbfluid_get_viscosity() {
 #ifdef CUDA
     return static_cast<double>(lbpar_gpu.viscosity);
 #else
-      return {};
+    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -407,7 +407,7 @@ double lb_lbfluid_get_bulk_viscosity() {
 #ifdef CUDA
     return lbpar_gpu.bulk_viscosity;
 #else
-      return {};
+    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -437,7 +437,7 @@ double lb_lbfluid_get_gamma_odd() {
 #ifdef CUDA
     return lbpar_gpu.gamma_odd;
 #else
-      return {};
+    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -566,7 +566,7 @@ double lb_lbfluid_get_tau() {
 #ifdef CUDA
     return lbpar_gpu.tau;
 #else
-      return {};
+    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -685,9 +685,13 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
             "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %d %d %d\n"
             "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
             "SCALARS boundary float 1\nLOOKUP_TABLE default\n",
-            grid_size[0], grid_size[1], grid_size[2], lb_walberla()->get_grid_spacing() * 0.5,
-            lb_walberla()->get_grid_spacing() * 0.5, lb_walberla()->get_grid_spacing() * 0.5,
-            lb_walberla()->get_grid_spacing(), lb_walberla()->get_grid_spacing(), lb_walberla()->get_grid_spacing(),
+            grid_size[0], grid_size[1], grid_size[2],
+            lb_walberla()->get_grid_spacing() * 0.5,
+            lb_walberla()->get_grid_spacing() * 0.5,
+            lb_walberla()->get_grid_spacing() * 0.5,
+            lb_walberla()->get_grid_spacing(),
+            lb_walberla()->get_grid_spacing(),
+            lb_walberla()->get_grid_spacing(),
             grid_size[0] * grid_size[1] * grid_size[2]);
 
     for (pos[2] = 0; pos[2] < grid_size[2]; pos[2]++) {
@@ -727,7 +731,7 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
       } else if (lattice_switch == ActiveLB::CPU) {
         bb_high = {lblattice.global_grid[0] - 1, lblattice.global_grid[1] - 1,
                    lblattice.global_grid[2] - 1};
-      } 
+      }
 #ifdef LB_WALBERLA
       else if (lattice_switch == ActiveLB::WALBERLA) {
         bb_high = {lb_walberla()->get_grid_dimensions()[0] - 1,
@@ -801,18 +805,21 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
             "ORIGIN %f %f %f\nSPACING %f %f %f\nPOINT_DATA %d\n"
             "SCALARS velocity float 3\nLOOKUP_TABLE default\n",
             bb_high[0] - bb_low[0] + 1, bb_high[1] - bb_low[1] + 1,
-            bb_high[2] - bb_low[2] + 1, (bb_low[0] + 0.5) * lb_walberla()->get_grid_spacing(),
+            bb_high[2] - bb_low[2] + 1,
+            (bb_low[0] + 0.5) * lb_walberla()->get_grid_spacing(),
             (bb_low[1] + 0.5) * lb_walberla()->get_grid_spacing(),
-            (bb_low[2] + 0.5) * lb_walberla()->get_grid_spacing(), lb_walberla()->get_grid_spacing(),
-            lb_walberla()->get_grid_spacing(), lb_walberla()->get_grid_spacing(),
+            (bb_low[2] + 0.5) * lb_walberla()->get_grid_spacing(),
+            lb_walberla()->get_grid_spacing(),
+            lb_walberla()->get_grid_spacing(),
+            lb_walberla()->get_grid_spacing(),
             (bb_high[0] - bb_low[0] + 1) * (bb_high[1] - bb_low[1] + 1) *
                 (bb_high[2] - bb_low[2] + 1));
 
     for (pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
       for (pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
         for (pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++) {
-          auto u = lb_lbnode_get_velocity(pos) * lb_walberla()->get_grid_spacing() /
-                   lb_walberla()->get_tau();
+          auto u = lb_lbnode_get_velocity(pos) *
+                   lb_walberla()->get_grid_spacing() / lb_walberla()->get_tau();
           fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
         }
   }
@@ -1226,7 +1233,7 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
     lb_print_node_GPU(single_nodeindex, host_print_values);
     return host_print_values->rho;
 #else
-      return {};
+    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -1339,8 +1346,9 @@ const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind) {
   }
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    p_pi = Communication::mpiCallbacks().call(Communication::Result::one_rank,
-                                              Walberla::get_node_pressure_tensor, ind);
+    p_pi = Communication::mpiCallbacks().call(
+        Communication::Result::one_rank, Walberla::get_node_pressure_tensor,
+        ind);
   }
 #endif
   return p_pi;
@@ -1404,7 +1412,7 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
     lb_get_boundary_flag_GPU(single_nodeindex, &host_flag);
     return host_flag;
 #else
-      return {};
+    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -1439,7 +1447,7 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
       p_pop[i] = population[i];
     return p_pop;
 #else
-      return {};
+    return {};
 #endif //  CUDA
   }
   if (lattice_switch == ActiveLB::CPU) {

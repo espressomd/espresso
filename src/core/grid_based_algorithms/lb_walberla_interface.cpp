@@ -57,7 +57,6 @@ void set_ext_force_density(Utils::Vector3d f) {
 }
 REGISTER_CALLBACK(set_ext_force_density)
 
-
 void set_node_density(Utils::Vector3i ind, double density) {
   lb_walberla()->set_node_density(ind, density);
 }

@@ -34,8 +34,7 @@ inline walberla::Vector3<walberla::real_t> to_vector3(const Utils::Vector3d v) {
 }
 inline Utils::Vector6d
 to_vector6d(const walberla::Matrix3<walberla::real_t> m) {
-  return Utils::Vector6d{m[0], m[3], m[4],
-                         m[6], m[7], m[8]};
+  return Utils::Vector6d{m[0], m[3], m[4], m[6], m[7], m[8]};
 }
 
 template <typename PdfField_T, typename ForceField_T,
@@ -181,7 +180,6 @@ public:
 
   Utils::Vector3d get_momentum() const;
 
-
   void set_external_force(const Utils::Vector3d &ext_force) {
     m_reset_force->set_ext_force(ext_force);
   }
@@ -265,7 +263,6 @@ private:
       boundary_handling->fillWithDomain(domain_bb);
     }
   }
-
 };
 
 #endif // LB_WALBERLA
