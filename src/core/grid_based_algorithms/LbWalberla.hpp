@@ -21,7 +21,6 @@
 #include "lbm/field/PdfField.h"
 #include "lbm/lattice_model/D3Q19.h"
 #include "timeloop/SweepTimeloop.h"
-#include "vtk/VTKOutput.h"
 
 const walberla::FlagUID Fluid_flag("fluid");
 const walberla::FlagUID UBB_flag("velocity bounce back");
@@ -182,9 +181,6 @@ public:
 
   Utils::Vector3d get_momentum() const;
 
-  void print_vtk_velocity(char *filename);
-  void print_vtk_density(char *filename);
-  void print_vtk_boundary(char *filename);
 
   void set_external_force(const Utils::Vector3d &ext_force) {
     m_reset_force->set_ext_force(ext_force);
@@ -270,10 +266,6 @@ private:
     }
   }
 
-  std::shared_ptr<walberla::vtk::VTKOutput> create_fluid_field_vtk_writer(
-      std::shared_ptr<walberla::blockforest::StructuredBlockForest> &blocks,
-      const walberla::BlockDataID &pdf_field_id,
-      const walberla::BlockDataID &flag_field_id);
 };
 
 #endif // LB_WALBERLA

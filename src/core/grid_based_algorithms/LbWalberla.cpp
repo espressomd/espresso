@@ -13,6 +13,7 @@
 
 #include "core/mpi/Environment.h"
 #include "core/mpi/MPIManager.h"
+#include "core/mpi/MPITextFile.h"
 #include "core/mpi/Reduce.h"
 
 #include "domain_decomposition/SharedSweep.h"
@@ -23,8 +24,6 @@
 #include "field/communication/PackInfo.h"
 #include "field/distributors/DistributorCreators.h"
 #include "field/interpolators/FieldInterpolatorCreators.h"
-#include "field/vtk/FlagFieldCellFilter.h"
-#include "field/vtk/VTKWriter.h"
 #include "lbm/boundary/NoSlip.h"
 #include "lbm/boundary/UBB.h"
 #include "lbm/communication/PdfFieldPackInfo.h"
@@ -32,8 +31,6 @@
 #include "lbm/field/PdfField.h"
 #include "lbm/lattice_model/D3Q19.h"
 #include "lbm/sweeps/CellwiseSweep.h"
-#include "lbm/vtk/Density.h"
-#include "lbm/vtk/Velocity.h"
 
 #include "stencil/D3Q27.h"
 
@@ -163,15 +160,6 @@ Utils::Vector3d LbWalberla::get_momentum() const {
   return to_vector3d(mom);
 }
 
-void LbWalberla::print_vtk_density(char *filename) {
-  // TODO: set the output file name to filename
-  auto pdf_field_vtk_writer =
-      create_fluid_field_vtk_writer(m_blocks, m_pdf_field_id, m_flag_field_id);
-  vtk::VTKOutput::Write output = vtk::writeFiles(pdf_field_vtk_writer);
-  output.forceWriteNextStep();
-  output.execute();
-}
-
 void LbWalberla::integrate() { m_time_loop->singleStep(); }
 
 boost::optional<LbWalberla::BlockAndCell>
@@ -247,37 +235,6 @@ LbWalberla::get_node_is_boundary(const Utils::Vector3i &node) const {
   Boundary_handling_t *boundary_handling =
       (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
   return {boundary_handling->isBoundary((*bc).cell)};
-}
-
-std::shared_ptr<walberla::vtk::VTKOutput>
-LbWalberla::create_fluid_field_vtk_writer(
-    std::shared_ptr<walberla::blockforest::StructuredBlockForest> &blocks,
-    const walberla::BlockDataID &pdf_field_id,
-    const walberla::BlockDataID &flag_field_id) {
-  using namespace walberla;
-  auto pdf_field_vtk_writer = vtk::createVTKOutput_BlockData(
-      blocks, "fluid_field", uint_c(1), uint_c(1), true);
-
-  blockforest::communication::UniformBufferedScheme<stencil::D3Q27>
-      pdf_ghost_layer_sync(blocks);
-  pdf_ghost_layer_sync.addPackInfo(
-      make_shared<field::communication::PackInfo<Pdf_field_t>>(pdf_field_id));
-  pdf_field_vtk_writer->addBeforeFunction(pdf_ghost_layer_sync);
-
-  field::FlagFieldCellFilter<Flag_field_t> fluid_filter(flag_field_id);
-  fluid_filter.addFlag(Fluid_flag);
-  pdf_field_vtk_writer->addCellInclusionFilter(fluid_filter);
-
-  auto velocity_writer =
-      make_shared<lbm::VelocityVTKWriter<Lattice_model_t, float>>(
-          pdf_field_id, "VelocityFromPDF");
-  auto density_writer =
-      make_shared<lbm::DensityVTKWriter<Lattice_model_t, float>>(
-          pdf_field_id, "DensityFromPDF");
-  pdf_field_vtk_writer->addCellDataWriter(velocity_writer);
-  pdf_field_vtk_writer->addCellDataWriter(density_writer);
-
-  return pdf_field_vtk_writer;
 }
 
 bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
