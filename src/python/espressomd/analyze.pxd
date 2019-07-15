@@ -30,11 +30,11 @@ from libcpp.map cimport map  # import std::map as map
 cdef extern from "<array>" namespace "std" nogil:
     cdef cppclass array4 "std::array<double, 4>":
         array4() except+
-        int & operator[](size_t)
+        double & operator[](size_t)
 
     cdef cppclass array2 "std::array<double, 2>":
         array2() except+
-        int & operator[](size_t)
+        double & operator[](size_t)
 
 cdef extern from "PartCfg.hpp":
     cppclass PartCfg:

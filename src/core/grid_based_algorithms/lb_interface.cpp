@@ -1052,9 +1052,9 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
 #ifdef CUDA
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
-    static std::array<LB_rho_v_pi_gpu, 1> host_print_values;
-    lb_print_node_GPU(single_nodeindex, host_print_values.data());
-    return host_print_values.data()->rho;
+    static LB_rho_v_pi_gpu host_print_values;
+    lb_print_node_GPU(single_nodeindex, &host_print_values);
+    return host_print_values.rho;
 #else
     return {};
 #endif //  CUDA
@@ -1069,12 +1069,12 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
 const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    static std::array<LB_rho_v_pi_gpu, 1> host_print_values;
+    static LB_rho_v_pi_gpu host_print_values;
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
-    lb_print_node_GPU(single_nodeindex, host_print_values.data());
-    return {{host_print_values.data()->v[0], host_print_values.data()->v[1],
-             host_print_values.data()->v[2]}};
+    lb_print_node_GPU(single_nodeindex, &host_print_values);
+    return {{host_print_values.v[0], host_print_values.v[1],
+             host_print_values.v[2]}};
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
@@ -1105,12 +1105,12 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
   Utils::Vector6d stress{};
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    static std::array<LB_rho_v_pi_gpu, 1> host_print_values;
+    static LB_rho_v_pi_gpu host_print_values;
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
-    lb_print_node_GPU(single_nodeindex, host_print_values.data());
+    lb_print_node_GPU(single_nodeindex, &host_print_values);
     for (int i = 0; i < 6; i++) {
-      stress[i] = host_print_values.data()->pi[i];
+      stress[i] = host_print_values.pi[i];
     }
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
