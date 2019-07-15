@@ -84,7 +84,6 @@ cdef class PScriptInterface:
             sip_ = sip
             self.sip = sip_.sip
         else:
-            print("_om", <uintptr_t> _om.get())
             self.set_sip(_om.get().make_shared(to_char_pointer(name), policy_, self._sanitize_params(kwargs)))
 
     def __richcmp__(a, b, op):
@@ -371,7 +370,5 @@ def script_interface_register(c):
     return c
 
 cdef void init(MpiCallbacks &cb):
-    print("script_interface.init()")
     global _om
     _om = initialize(cb)
-    print("script_interface.init() _om =", <uintptr_t> _om.get())
