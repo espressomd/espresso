@@ -54,7 +54,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
   } else
     aff_type_extracted = ia_params->affinity_type;
 
-  auto const unfolded_pos = unfolded_position(p1);
+  auto const unfolded_pos =
+      unfolded_position(p1->r.p, p1->l.i, box_geo.length());
   auto const vec = p1->p.bond_site - unfolded_pos;
   auto const len = vec.norm();
 

@@ -27,6 +27,7 @@
 #include "constraints.hpp"
 #include "debug.hpp"
 #include "domain_decomposition.hpp"
+#include "errorhandling.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
 
@@ -80,18 +81,6 @@ int n_layers = -1, determine_n_layers = 1;
 double layer_h = 0, layer_h_i = 0;
 
 static int btm, top;
-
-void layered_get_mi_vector(double res[3], double const a[3],
-                           double const b[3]) {
-  int i;
-
-  for (i = 0; i < 2; i++) {
-    res[i] = a[i] - b[i];
-    if (PERIODIC(i))
-      res[i] -= std::round(res[i] * box_l_i[i]) * box_l[i];
-  }
-  res[2] = a[2] - b[2];
-}
 
 Cell *layered_position_to_cell(const Utils::Vector3d &pos) {
   int cpos =
@@ -167,7 +156,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
               (data_parts & GHOSTTRANS_POSITION)) {
             comm->data_parts |= GHOSTTRANS_POSSHFTD;
-            comm->comm[c].shift[2] = box_l[2];
+            comm->comm[c].shift[2] = box_geo.length()[2];
           } else
             comm->comm[c].shift[2] = 0;
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n",
@@ -219,7 +208,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) &&
               (data_parts & GHOSTTRANS_POSITION)) {
             comm->data_parts |= GHOSTTRANS_POSSHFTD;
-            comm->comm[c].shift[2] = -box_l[2];
+            comm->comm[c].shift[2] = -box_geo.length()[2];
           } else
             comm->comm[c].shift[2] = 0;
           CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f topl\n",
@@ -278,7 +267,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (data_parts & GHOSTTRANS_POSITION)
           comm->data_parts |= GHOSTTRANS_POSSHFTD;
         comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-        comm->comm[c].shift[2] = box_l[2];
+        comm->comm[c].shift[2] = box_geo.length()[2];
       }
       c++;
 
@@ -294,7 +283,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (data_parts & GHOSTTRANS_POSITION)
           comm->data_parts |= GHOSTTRANS_POSSHFTD;
         comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-        comm->comm[c].shift[2] = -box_l[2];
+        comm->comm[c].shift[2] = -box_geo.length()[2];
       }
     }
   }
@@ -308,8 +297,9 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
       this_node, old->n, max_range));
 
   cell_structure.type = CELL_STRUCTURE_LAYERED;
-  cell_structure.position_to_node = map_position_node_array;
-  cell_structure.position_to_cell = layered_position_to_cell;
+  cell_structure.particle_to_cell = [](const Particle &p) {
+    return layered_position_to_cell(p.r.p);
+  };
 
   /* check node grid. All we can do is 1x1xn. */
   if (grid[0] != 1 || grid[1] != 1) {
@@ -342,7 +332,7 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   if (this_node == n_nodes - 1)
     layered_flags |= LAYERED_TOP;
 
-  if (PERIODIC(2))
+  if (box_geo.periodic(2))
     layered_flags |= LAYERED_PERIODIC;
 
   top = this_node + 1;
@@ -412,15 +402,18 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
 
   CELL_TRACE(fprintf(stderr, "%d: sorting in %d\n", this_node, pl->n));
   for (p = 0; p < pl->n; p++) {
-    fold_position(pl->part[p].r.p, pl->part[p].l.i);
+    fold_position(pl->part[p].r.p, pl->part[p].l.i, box_geo);
 
     if (LAYERED_BTM_NEIGHBOR &&
-        (get_mi_coord(pl->part[p].r.p[2], my_left[2], 2) < 0.0)) {
+        (get_mi_coord(pl->part[p].r.p[2], my_left[2], box_geo.length()[2],
+                      box_geo.periodic(2)) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node below\n",
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(dn, pl, p);
     } else if (LAYERED_TOP_NEIGHBOR &&
-               (get_mi_coord(pl->part[p].r.p[2], my_right[2], 2) >= 0.0)) {
+               (get_mi_coord(pl->part[p].r.p[2], my_right[2],
+                             box_geo.length()[2],
+                             box_geo.periodic(2)) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node above\n",
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(up, pl, p);
@@ -449,14 +442,16 @@ void layered_exchange_and_sort_particles(int global_flag,
     part = &displaced_parts->part[p];
 
     if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR &&
-        (get_mi_coord(part->r.p[2], my_left[2], 2) < 0.0)) {
+        (get_mi_coord(part->r.p[2], my_left[2], box_geo.length()[2],
+                      box_geo.periodic(2)) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: send part %d down\n", this_node,
                          part->p.identity));
       move_indexed_particle(&send_buf_dn, displaced_parts, p);
       if (p < displaced_parts->n)
         p--;
     } else if (n_nodes != 1 && LAYERED_TOP_NEIGHBOR &&
-               (get_mi_coord(part->r.p[2], my_right[2], 2) >= 0.0)) {
+               (get_mi_coord(part->r.p[2], my_right[2], box_geo.length()[2],
+                             box_geo.periodic(2)) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: send part %d up\n", this_node,
                          part->p.identity));
       move_indexed_particle(&send_buf_up, displaced_parts, p);

@@ -62,6 +62,21 @@ public:
   }
 };
 
+/** unfold coordinates to physical position.
+    \param pos the position...
+    \param image_box and the box
+
+    Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
+    afterwards.
+*/
+class PositionUnfolder {
+public:
+  template <typename Particle> void operator()(Particle &p) const {
+    p.r.p += image_shift(p.l.i, box_geo.length());
+    p.l.i = {};
+  }
+};
+
 /** @brief Cache of particles */
 using PartCfg = ParticleCache<GetLocalParts, PositionUnfolder>;
 #endif

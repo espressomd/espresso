@@ -38,8 +38,9 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
   std::vector<Utils::Vector3d> folded_positions(ids().size());
-  boost::transform(ids(), folded_positions.begin(),
-                   [&partCfg](int id) { return folded_position(partCfg[id]); });
+  boost::transform(ids(), folded_positions.begin(), [&partCfg](int id) {
+    return folded_position(partCfg[id].r.p, box_geo);
+  });
 
   std::vector<Utils::Vector3d> velocities(ids().size());
   boost::transform(

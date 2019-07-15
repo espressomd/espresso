@@ -34,8 +34,9 @@
 
 Cell *local;
 
-Cell *nsq_position_to_cell(const Utils::Vector3d &pos) { return local; }
-int nsq_position_to_node(const Utils::Vector3d &) { return this_node; }
+static Cell *nsq_id_to_cell(int id) {
+  return ((id % n_nodes) == this_node) ? local : nullptr;
+}
 
 void nsq_topology_release() {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_release:\n", this_node));
@@ -69,8 +70,9 @@ void nsq_topology_init(CellPList *old) {
   CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
 
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
-  cell_structure.position_to_node = nsq_position_to_node;
-  cell_structure.position_to_cell = nsq_position_to_cell;
+  cell_structure.particle_to_cell = [](const Particle &p) {
+    return nsq_id_to_cell(p.identity());
+  };
 
   realloc_cells(n_nodes);
 
@@ -153,98 +155,28 @@ void nsq_topology_init(CellPList *old) {
   update_local_particles(local);
 }
 
-void nsq_balance_particles(int global_flag) {
-  int i, n, surplus, s_node, tmp, lack, l_node, transfer;
-
-  /* we don't have the concept of neighbors, and therefore don't need that.
-     However, if global particle changes happen, we might want to rebalance. */
-  if (global_flag != CELL_GLOBAL_EXCHANGE)
+void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts) {
+  if (not global_flag) {
+    assert(displaced_parts->n == 0);
     return;
-
-  int pp = cells_get_n_particles();
-  auto *ppnode = (int *)Utils::malloc(n_nodes * sizeof(int));
-  /* minimal difference between node shares */
-  int minshare = n_part / n_nodes;
-  int maxshare = minshare + 1;
-
-  CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: load %d-%d\n",
-                     this_node, minshare, maxshare));
-
-  MPI_Allgather(&pp, 1, MPI_INT, ppnode, 1, MPI_INT, comm_cart);
-  for (;;) {
-    /* find node with most excessive particles */
-    surplus = -1;
-    s_node = -1;
-    for (n = 0; n < n_nodes; n++) {
-      tmp = ppnode[n] - minshare;
-      CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: node %d has %d\n",
-                         this_node, n, ppnode[n]));
-      if (tmp > surplus) {
-        surplus = tmp;
-        s_node = n;
-      }
-    }
-    CELL_TRACE(fprintf(stderr,
-                       "%d: nsq_balance_particles: excess %d on node %d\n",
-                       this_node, surplus, s_node));
-
-    /* find node with most lacking particles */
-    lack = -1;
-    l_node = -1;
-    for (n = 0; n < n_nodes; n++) {
-      tmp = maxshare - ppnode[n];
-      if (tmp > lack) {
-        lack = tmp;
-        l_node = n;
-      }
-    }
-    CELL_TRACE(fprintf(stderr,
-                       "%d: nsq_balance_particles: lack %d on node %d\n",
-                       this_node, lack, l_node));
-
-    /* should not happen: minshare or maxshare wrong or more likely,
-       the algorithm */
-    if (s_node == -1 || l_node == -1) {
-      fprintf(stderr, "%d: Particle load balancing failed\n", this_node);
-      break;
-    }
-
-    /* exit if all nodes load is withing min and max share */
-    if (lack <= 1 && surplus <= 1)
-      break;
-
-    transfer = lack < surplus ? lack : surplus;
-
-    if (s_node == this_node) {
-      ParticleList send_buf;
-      init_particlelist(&send_buf);
-      realloc_particlelist(&send_buf, send_buf.n = transfer);
-      for (i = 0; i < transfer; i++) {
-        send_buf.part[i] = std::move(local->part[--local->n]);
-      }
-      realloc_particlelist(local, local->n);
-      update_local_particles(local);
-
-      send_particles(&send_buf, l_node);
-
-#ifdef ADDITIONAL_CHECKS
-      check_particle_consistency();
-#endif
-
-    } else if (l_node == this_node) {
-      ParticleList recv_buf{};
-
-      recv_particles(&recv_buf, s_node);
-      for (int i = 0; i < recv_buf.n; i++) {
-        append_indexed_particle(local, std::move(recv_buf.part[i]));
-      }
-
-      realloc_particlelist(&recv_buf, 0);
-    }
-    ppnode[s_node] -= transfer;
-    ppnode[l_node] += transfer;
   }
-  CELL_TRACE(fprintf(stderr, "%d: nsq_balance_particles: done\n", this_node));
 
-  free(ppnode);
+  /* Sort displaced particles by the node they belong to. */
+  std::vector<std::vector<Particle>> send_buf(n_nodes);
+  for (auto &p : Utils::make_span(displaced_parts->part, displaced_parts->n)) {
+    auto const target_node = (p.identity() % n_nodes);
+    send_buf.at(target_node).emplace_back(std::move(p));
+  }
+  realloc_particlelist(displaced_parts, displaced_parts->n = 0);
+
+  /* Exchange particles */
+  std::vector<std::vector<Particle>> recv_buf(n_nodes);
+  boost::mpi::all_to_all(comm_cart, send_buf, recv_buf);
+
+  /* Add new particles belonging to this node */
+  for (auto &parts : recv_buf) {
+    for (auto &p : parts) {
+      append_indexed_particle(local, std::move(p));
+    }
+  }
 }

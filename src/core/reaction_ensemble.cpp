@@ -210,7 +210,7 @@ void ReactionAlgorithm::check_reaction_ensemble() {
  */
 void ReactionAlgorithm::set_cuboid_reaction_ensemble_volume() {
   if (volume < 0)
-    volume = box_l[0] * box_l[1] * box_l[2];
+    volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
 }
 
 /**
@@ -629,8 +629,9 @@ int ReactionAlgorithm::delete_particle(int p_id) {
 /**
  * Writes a random position inside the central box into the provided array.
  */
-std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
-  std::vector<double> out_pos(3);
+Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
+  Utils::Vector3d out_pos{};
+
   if (box_is_cylindric_around_z_axis) {
     // see http://mathworld.wolfram.com/DiskPointPicking.html
     double random_radius =
@@ -649,17 +650,17 @@ std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
     }
     out_pos[0] += cyl_x;
     out_pos[1] += cyl_y;
-    out_pos[2] = box_l[2] * m_uniform_real_distribution(m_generator);
+    out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   } else if (box_has_wall_constraints) {
-    out_pos[0] = box_l[0] * m_uniform_real_distribution(m_generator);
-    out_pos[1] = box_l[1] * m_uniform_real_distribution(m_generator);
+    out_pos[0] = box_geo.length()[0] * m_uniform_real_distribution(m_generator);
+    out_pos[1] = box_geo.length()[1] * m_uniform_real_distribution(m_generator);
     out_pos[2] = slab_start_z + (slab_end_z - slab_start_z) *
                                     m_uniform_real_distribution(m_generator);
   } else {
     // cubic case
-    out_pos[0] = box_l[0] * m_uniform_real_distribution(m_generator);
-    out_pos[1] = box_l[1] * m_uniform_real_distribution(m_generator);
-    out_pos[2] = box_l[2] * m_uniform_real_distribution(m_generator);
+    out_pos[0] = box_geo.length()[0] * m_uniform_real_distribution(m_generator);
+    out_pos[1] = box_geo.length()[1] * m_uniform_real_distribution(m_generator);
+    out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   }
   return out_pos;
 }
@@ -693,7 +694,7 @@ std::vector<double> ReactionAlgorithm::
   }
   out_pos[0] += cyl_x;
   out_pos[1] += cyl_y;
-  out_pos[2] = box_l[2] * m_uniform_real_distribution(m_generator);
+  out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   return out_pos;
 }
 
@@ -711,7 +712,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   } else {
     p_id = max_seen_particle + 1;
   }
-  std::vector<double> pos_vec;
+  Utils::Vector3d pos_vec;
 
   // create random velocity vector according to Maxwell Boltzmann distribution
   // for components
@@ -734,12 +735,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
 #endif
   // set velocities
   set_particle_v(p_id, vel);
-  double d_min = distto(partCfg(), pos_vec.data(),
-                        p_id); // TODO also catch constraints with an IFDEF
-                               // CONSTRAINTS here, but only interesting,
-                               // when doing MD/ HMC because then the system
-                               // might explode easily here due to high
-                               // forces
+  double d_min = distto(partCfg(), pos_vec, p_id);
   if (d_min < exclusion_radius)
     particle_inserted_too_close_to_another_one =
         true; // setting of a minimal
@@ -826,11 +822,10 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   }
 
   // propose new positions
-  std::vector<double> new_pos(3);
   for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
     p_id = p_id_s_changed_particles[i];
     // change particle position
-    new_pos = get_random_position_in_box();
+    auto const new_pos = get_random_position_in_box();
     double vel[3];
     auto const &p = get_particle_data(p_id);
     vel[0] =
@@ -843,12 +838,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
     // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
     // //enhanced proposal of small radii
     place_particle(p_id, new_pos.data());
-    double d_min = distto(partCfg(), new_pos.data(),
-                          p_id); // TODO also catch constraints with an IFDEF
-                                 // CONSTRAINTS here, but only interesting,
-                                 // when doing MD/ HMC because then the system
-                                 // might explode easily here due to high
-
+    double d_min = distto(partCfg(), new_pos, p_id);
     if (d_min < exclusion_radius)
       particle_inserted_too_close_to_another_one = true;
   }

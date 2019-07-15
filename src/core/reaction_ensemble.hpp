@@ -218,7 +218,7 @@ private:
   };
 
   void add_types_to_index(std::vector<int> &type_list);
-  std::vector<double> get_random_position_in_box();
+  Utils::Vector3d get_random_position_in_box();
   std::vector<double>
   get_random_position_in_box_enhanced_proposal_of_small_radii();
 };

@@ -169,7 +169,7 @@ void dp3m_deactivate();
  *
  *  Parameter ranges if not given explicit values via dp3m_set_tune_params():
  *  - @p r_cut_iL starts from (@ref min_local_box_l - @ref #skin) / (
- *    n * @ref box_l), with n an integer (this implies @p r_cut_iL is the
+ *    n * box_length), with n an integer (this implies @p r_cut_iL is the
  *    largest cutoff in the system!)
  *  - @p mesh is set up such that the number of mesh points is equal to the
  *    number of magnetic dipolar particles

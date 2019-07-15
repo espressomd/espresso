@@ -234,9 +234,9 @@ void lb_init_boundaries() {
       for (int y = 0; y < lblattice.grid[1] + 2; y++) {
         for (int x = 0; x < lblattice.grid[0] + 2; x++) {
           Utils::Vector3d pos;
-          pos[0] = (offset[0] + (x - 0.5)) * lblattice.agrid[0];
-          pos[1] = (offset[1] + (y - 0.5)) * lblattice.agrid[1];
-          pos[2] = (offset[2] + (z - 0.5)) * lblattice.agrid[2];
+          pos[0] = (offset[0] + (x - 0.5)) * lblattice.agrid;
+          pos[1] = (offset[1] + (y - 0.5)) * lblattice.agrid;
+          pos[2] = (offset[2] + (z - 0.5)) * lblattice.agrid;
 
           double dist = 1e99;
           double dist_tmp = 0.0;

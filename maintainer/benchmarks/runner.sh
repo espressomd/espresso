@@ -11,12 +11,12 @@ cat > myconfig-minimal.hpp << EOF
 #define LENNARD_JONES
 #define MASS
 EOF
-cp ../src/core/myconfig-default.hpp myconfig-default.hpp
+cp ../src/config/myconfig-default.hpp myconfig-default.hpp
 sed 's/#define ADDITIONAL_CHECKS//' ../maintainer/configs/maxset.hpp > myconfig-maxset.hpp
 
 # prepare build area
 rm -rf src/ maintainer/
-cmake -DWITH_BENCHMARKS=ON ..
+cmake -DWITH_BENCHMARKS=ON -DTEST_TIMEOUT=600 -DWITH_CUDA=OFF -DWITH_CCACHE=OFF ..
 cat > benchmarks.csv << EOF
 "config","script","arguments","cores","MPI","mean","ci","steps_per_tick","duration","E1","E2","E3"
 EOF
@@ -29,7 +29,7 @@ do
   make -j$(nproc)
   rm -f benchmarks.csv.part
   touch benchmarks.csv.part
-  make benchmark 2>&1 | tee -a benchmarks.log
+  make -j$(nproc) benchmark 2>&1 | tee -a benchmarks.log
   sed -ri "s/^/\"$(basename ${config})\",/" benchmarks.csv.part
   cat benchmarks.csv.part >> benchmarks.csv
 done
