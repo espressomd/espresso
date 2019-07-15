@@ -57,12 +57,12 @@ std::array<double, 4> calc_re(PartCfg &);
 /** Calculate the radius of gyration.
  *  Chain information \ref chain_start etc. must be set!
  */
-std::array<double,4> calc_rg(PartCfg &);
+std::array<double, 4> calc_rg(PartCfg &);
 
 /** Calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory).
  *  Chain information \ref chain_start etc. must be set!
  */
-std::array<double,2> calc_rh(PartCfg &);
+std::array<double, 2> calc_rh(PartCfg &);
 
 /*@}*/
 

@@ -1052,7 +1052,7 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
 #ifdef CUDA
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
-    static std::array<LB_rho_v_pi_gpu,1> host_print_values;
+    static std::array<LB_rho_v_pi_gpu, 1> host_print_values;
     lb_print_node_GPU(single_nodeindex, host_print_values.data());
     return host_print_values.data()->rho;
 #else
@@ -1105,7 +1105,7 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
   Utils::Vector6d stress{};
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    static std::array<LB_rho_v_pi_gpu,1> host_print_values;
+    static std::array<LB_rho_v_pi_gpu, 1> host_print_values;
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, host_print_values.data());
