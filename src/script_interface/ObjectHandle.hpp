@@ -25,10 +25,6 @@
 
 #include <boost/utility/string_ref.hpp>
 
-namespace Communication {
-class MpiCallbacks;
-}
-
 namespace ScriptInterface {
 class ObjectManager;
 

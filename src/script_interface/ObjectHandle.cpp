@@ -26,7 +26,7 @@ namespace ScriptInterface {
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {
   if (m_policy == CreationPolicy::GLOBAL) {
-    manager()->remote_set_parameter(object_id(this), name, value);
+    manager()->remote_set_parameter(this, name, value);
   }
 
   this->do_set_parameter(name, value);
@@ -35,7 +35,7 @@ void ObjectHandle::set_parameter(const std::string &name,
 Variant ObjectHandle::call_method(const std::string &name,
                                   const VariantMap &params) {
   if (m_policy == CreationPolicy::GLOBAL) {
-    manager()->remote_call_method(object_id(this), name, params);
+    manager()->remote_call_method(this, name, params);
   }
 
   return this->do_call_method(name, params);
@@ -43,7 +43,7 @@ Variant ObjectHandle::call_method(const std::string &name,
 
 void ObjectHandle::delete_remote() {
   if (m_policy == CreationPolicy::GLOBAL) {
-    manager()->remote_delete_handle(object_id(this));
+    manager()->remote_delete_handle(this);
   }
 }
 

@@ -21,3 +21,5 @@ target_link_libraries(
   PRIVATE cxx_interface)
 
 target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)
+
+add_subdirectory(tests)

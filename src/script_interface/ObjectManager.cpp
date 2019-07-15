@@ -20,6 +20,9 @@ void ObjectManager::remote_make_handle(ObjectId id, const std::string &name,
   cb_make_handle(id, name, pack(parameters));
 }
 
+void ObjectManager::remote_delete_handle(ObjectHandle *o) { cb_delete_handle(object_id(o)); }
+
+
 void ObjectManager::set_parameter(ObjectId id, std::string const &name,
                                   PackedVariant const &value) {
   try {
@@ -28,9 +31,10 @@ void ObjectManager::set_parameter(ObjectId id, std::string const &name,
   }
 }
 
-void ObjectManager::remote_set_parameter(ObjectId id, std::string const &name,
+void ObjectManager::remote_set_parameter(ObjectHandle *o,
+                                         std::string const &name,
                                          Variant const &value) {
-  cb_set_parameter(id, name, pack(value));
+  cb_set_parameter(object_id(o), name, pack(value));
 }
 
 void ObjectManager::call_method(ObjectId id, std::string const &name,
@@ -42,9 +46,9 @@ void ObjectManager::call_method(ObjectId id, std::string const &name,
   }
 }
 
-void ObjectManager::remote_call_method(ObjectId id, std::string const &name,
+void ObjectManager::remote_call_method(ObjectHandle *o, std::string const &name,
                                        VariantMap const &arguments) {
-  cb_call_method(id, name, pack(arguments));
+  cb_call_method(object_id(o), name, pack(arguments));
 }
 
 std::shared_ptr<ObjectHandle>

@@ -82,11 +82,11 @@ public:
   /**
    * @brief Set a parameter on remote instances
    *
-   * @param id Internal identifier of the instance to be modified
+   * @param o Internal identifier of the instance to be modified
    * @param name Name of the parameter to change
    * @param value Value to set it to
    */
-  void remote_set_parameter(ObjectId id, std::string const &name,
+  void remote_set_parameter(ObjectHandle *o, std::string const &name,
                             Variant const &value);
 
 private:
@@ -100,11 +100,11 @@ public:
   /**
    * @brief Call method on remote instances
    *
-   * @param id Internal identified of the instance
+   * @param o Internal identified of the instance
    * @param name Name of the method to call
    * @param arguments Arguments to the call
    */
-  void remote_call_method(ObjectId id, std::string const &name,
+  void remote_call_method(ObjectHandle *o, std::string const &name,
                           VariantMap const &arguments);
 
 private:
@@ -117,9 +117,9 @@ public:
   /**
    * @brief Delete remote instances
    *
-   * @param id Internal identified of the instance
+   * @param o Internal identified of the instance
    */
-  void remote_delete_handle(ObjectId id) { cb_delete_handle(id); }
+  void remote_delete_handle(ObjectHandle *o);
 
   template <typename T> void register_new(std::string const &name) {
     static_assert(std::is_base_of<ObjectHandle, T>::value, "");
