@@ -751,7 +751,7 @@ class Analysis(object):
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
         re = analyze.calc_re(analyze.partCfg())
-        return np.array(re)
+        return np.array([re[0], re[1], re[2], re[3]])
 
     def calc_rg(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
@@ -783,7 +783,7 @@ class Analysis(object):
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
         rg = analyze.calc_rg(analyze.partCfg())
-        return np.array(rg)
+        return np.array([rg[0], rg[1], rg[2], rg[3]])
 
     def calc_rh(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
@@ -814,7 +814,7 @@ class Analysis(object):
 
         self.check_topology(chain_start, number_of_chains, chain_length)
         rh = analyze.calc_rh(analyze.partCfg())
-        return np.array(rh)
+        return np.array([rh[0], rh[1]])
 
     def check_topology(self, chain_start=None, number_of_chains=None,
                        chain_length=None):

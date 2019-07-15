@@ -46,10 +46,10 @@ void update_mol_ids_setchains() {
   }
 }
 
-std::vector<double> calc_re(PartCfg &partCfg) {
+std::array<double,4> calc_re(PartCfg &partCfg) {
   double dx, dy, dz, tmp;
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
-  std::vector<double> re(4);
+  std::array<double,4> re;
 
   for (int i = 0; i < chain_n_chains; i++) {
     dx = partCfg[chain_start + i * chain_length + chain_length - 1].r.p[0] -
@@ -71,13 +71,13 @@ std::vector<double> calc_re(PartCfg &partCfg) {
   return re;
 }
 
-std::vector<double> calc_rg(PartCfg &partCfg) {
+std::array<double,4> calc_rg(PartCfg &partCfg) {
   int p;
   double dx, dy, dz, r_CM_x, r_CM_y, r_CM_z;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
   double IdoubMPC, tmp;
   double M;
-  std::vector<double> rg(4);
+  std::array<double,4> rg;
 
   for (int i = 0; i < chain_n_chains; i++) {
     M = 0.0;
@@ -114,9 +114,9 @@ std::vector<double> calc_rg(PartCfg &partCfg) {
   return rg;
 }
 
-std::vector<double> calc_rh(PartCfg &partCfg) {
+std::array<double,2> calc_rh(PartCfg &partCfg) {
   double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, ri = 0.0, prefac, tmp;
-  std::vector<double> rh(2);
+  std::array<double,2> rh;
 
   prefac = 0.5 * chain_length *
            (chain_length - 1); /* 1/N^2 is not a normalization factor */

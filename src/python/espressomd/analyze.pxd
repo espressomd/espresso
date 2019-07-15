@@ -27,6 +27,15 @@ from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp.map cimport map  # import std::map as map
 
+cdef extern from "<array>" namespace "std" nogil:
+  cdef cppclass array4 "std::array<double, 4>":
+    array4() except+
+    int& operator[](size_t)
+
+  cdef cppclass array2 "std::array<double, 2>":
+    array2() except+
+    int& operator[](size_t)
+
 cdef extern from "PartCfg.hpp":
     cppclass PartCfg:
         pass
@@ -98,9 +107,9 @@ cdef extern from "statistics_chain.hpp":
     int chain_start
     int chain_n_chains
     int chain_length
-    vector[double] calc_re(PartCfg &)
-    vector[double] calc_rg(PartCfg &)
-    vector[double] calc_rh(PartCfg &)
+    array4 calc_re(PartCfg &)
+    array4 calc_rg(PartCfg &)
+    array2 calc_rh(PartCfg &)
 
 cdef extern from "pressure.hpp":
     cdef Observable_stat total_pressure
