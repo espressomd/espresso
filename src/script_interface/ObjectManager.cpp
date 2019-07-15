@@ -9,9 +9,8 @@ namespace ScriptInterface {
 void ObjectManager::make_handle(ObjectId id, const std::string &name,
                                 const PackedMap &parameters) {
   try {
-    m_local_objects[id] =
-        make_shared(name, CreationPolicy::LOCAL,
-                                  unpack(parameters, m_local_objects));
+    m_local_objects[id] = make_shared(name, CreationPolicy::LOCAL,
+                                      unpack(parameters, m_local_objects));
   } catch (std::runtime_error const &) {
   }
 }
@@ -37,7 +36,8 @@ void ObjectManager::remote_set_parameter(ObjectId id, std::string const &name,
 void ObjectManager::call_method(ObjectId id, std::string const &name,
                                 PackedMap const &arguments) {
   try {
-    m_local_objects.at(id)->call_method(name, unpack(arguments, m_local_objects));
+    m_local_objects.at(id)->call_method(name,
+                                        unpack(arguments, m_local_objects));
   } catch (std::runtime_error const &) {
   }
 }
@@ -48,8 +48,7 @@ void ObjectManager::remote_call_method(ObjectId id, std::string const &name,
 }
 
 std::shared_ptr<ObjectHandle>
-ObjectManager::make_shared(std::string const &name,
-                           CreationPolicy policy,
+ObjectManager::make_shared(std::string const &name, CreationPolicy policy,
                            const VariantMap &parameters) {
   auto sp = m_factory.make(name);
 

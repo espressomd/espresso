@@ -20,14 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __UTILS_FACTORY_HPP
-#define __UTILS_FACTORY_HPP
+#ifndef UTILS_FACTORY_HPP
+#define UTILS_FACTORY_HPP
 
 #include <exception>
 #include <memory>
 #include <string>
-
-#include <boost/container/flat_map.hpp>
+#include <unordered_map>
 
 namespace Utils {
 
@@ -113,9 +112,18 @@ public:
     m_map[name] = []() { return pointer_type(new Derived()); };
   }
 
+  /**
+   * @brief Stable reference to class name.
+   *
+   */
+  const std::string &stable_name(const std::string &name) const {
+    assert(m_map.find(name) != m_map.end());
+    return m_map.find(name)->first;
+  }
+
 private:
   /** Maps names to construction functions. */
-  boost::container::flat_map<std::string, builder_type> m_map;
+  std::unordered_map<std::string, builder_type> m_map;
 };
 
 } /* namespace Utils */

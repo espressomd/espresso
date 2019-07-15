@@ -24,8 +24,8 @@
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE ScriptInterface test
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
 #include <boost/mpi.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/ObjectManager.hpp"
@@ -41,7 +41,7 @@ using namespace ScriptInterface;
  */
 struct ScriptInterfaceTest : public ScriptInterface::ObjectHandle {
   Variant get_parameter(const std::string &name) const override {
-    if(name == "test_parameter") {
+    if (name == "test_parameter") {
       return test_parameter;
     } else {
       return none;
@@ -55,7 +55,7 @@ struct ScriptInterfaceTest : public ScriptInterface::ObjectHandle {
   }
 
   void do_set_parameter(const string &name, const Variant &value) override {
-    if(name == "test_parameter") {
+    if (name == "test_parameter") {
       test_parameter = boost::get<int>(value);
     }
   }
@@ -94,17 +94,16 @@ BOOST_AUTO_TEST_CASE(set_parameter_test) {
   Communication::MpiCallbacks cb{world};
   ObjectManager om(&cb);
 
-  if(world.rank() == 0) {
+  if (world.rank() == 0) {
   } else {
     cb.loop();
   }
-
 }
 
 int main(int argc, char **argv) {
-boost::mpi::environment mpi_env(argc, argv);
+  boost::mpi::environment mpi_env(argc, argv);
 
-register_new<ScriptInterfaceTest>("TestClass");
+  register_new<ScriptInterfaceTest>("TestClass");
 
-return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+  return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
