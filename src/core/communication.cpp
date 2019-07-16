@@ -410,7 +410,7 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     break;
   case 4:
     mpi_call(mpi_gather_stats_slave, -1, 4);
-    predict_momentum_particles((double *)result);
+    predict_momentum_particles((double *)result, local_cells.particles());
     break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
@@ -450,7 +450,7 @@ void mpi_gather_stats_slave(int, int job) {
     pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
     break;
   case 4:
-    predict_momentum_particles(nullptr);
+    predict_momentum_particles(nullptr, local_cells.particles());
     break;
   case 6:
     lb_calc_fluid_momentum(nullptr);
