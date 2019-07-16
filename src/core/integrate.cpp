@@ -234,7 +234,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
       langevin_rng_counter_increment();
     }
 
-    force_calc();
+    force_calc(local_cells.particles());
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -269,7 +269,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
-      save_old_pos();
+      save_old_pos(local_cells.particles(), ghost_cells.particles());
 
 #endif
 
@@ -301,7 +301,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (n_rigidbonds) {
       cells_update_ghosts();
 
-      correct_pos_shake();
+      correct_pos_shake(local_cells.particles());
     }
 #endif
 
@@ -326,7 +326,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Propagate langevin philox rng counter
     langevin_rng_counter_increment();
 
-    force_calc();
+    force_calc(local_cells.particles());
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
@@ -344,7 +344,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
-      correct_vel_shake();
+      correct_vel_shake(local_cells.particles(), ghost_cells.particles());
     }
 #endif
 

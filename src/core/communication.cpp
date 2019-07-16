@@ -394,7 +394,7 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
   switch (job) {
   case 1:
     mpi_call(mpi_gather_stats_slave, -1, 1);
-    energy_calc((double *)result);
+    energy_calc((double *)result, local_cells.particles());
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or
@@ -437,7 +437,7 @@ void mpi_gather_stats_slave(int, int job) {
   switch (job) {
   case 1:
     /* calculate and reduce (sum up) energies */
-    energy_calc(nullptr);
+    energy_calc(nullptr, local_cells.particles());
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze
