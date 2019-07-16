@@ -44,7 +44,8 @@ enum MPIIOOutputFields : unsigned int {
  * \param filename A null-terminated filename prefix.
  * \param fields Output specifier which fields to dump.
  */
-void mpi_mpiio_common_write(const char *filename, unsigned fields);
+void mpi_mpiio_common_write(const char *filename, unsigned fields,
+                            const ParticleRange &particles);
 
 /** Parallel binary input using MPI-IO. To be called by all MPI
  * processes. Aborts ESPResSo if an error occurs.

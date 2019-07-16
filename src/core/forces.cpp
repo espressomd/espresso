@@ -140,10 +140,10 @@ void force_calc() {
     area_volume[0] = 0.0;
     area_volume[1] = 0.0;
     for (int i = 0; i < max_oif_objects; i++) {
-      calc_oif_global(area_volume, i);
+      calc_oif_global(area_volume, i, local_cells.particles());
       if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100)
         break;
-      add_oif_global_forces(area_volume, i);
+      add_oif_global_forces(area_volume, i, local_cells.particles());
     }
   }
 #endif
