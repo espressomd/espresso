@@ -34,7 +34,7 @@ class Sample(ut.TestCase):
         gradient = np.mean(np.gradient(sample.f_list.T, axis=1), axis=1)
         self.assertAlmostEqual(gradient[0], 0.0, places=11)
         self.assertAlmostEqual(gradient[1], 0.0, places=11)
-        self.assertAlmostEqual(gradient[2], -7.66981e-7, places=11)
+        self.assertAlmostEqual(gradient[2], -7.72896462e-07, places=11)
 
 
 if __name__ == "__main__":
