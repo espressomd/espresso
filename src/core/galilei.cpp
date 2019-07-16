@@ -31,8 +31,8 @@
 
 /* Stop the particle motion by setting the
    velocity of each particle to zero */
-void local_kill_particle_motion(int omega, const ParticleRange &particles) {
-  for (auto &p : particles) {
+void local_kill_particle_motion(int omega) {
+  for (auto &p : local_cells.particles()) {
     if (omega) {
       p.m = {};
     } else {
@@ -43,8 +43,8 @@ void local_kill_particle_motion(int omega, const ParticleRange &particles) {
 
 /* Set all the forces acting on the particles
    to zero */
-void local_kill_particle_forces(int torque, const ParticleRange &particles) {
-  for (auto &p : particles) {
+void local_kill_particle_forces(int torque) {
+  for (auto &p : local_cells.particles()) {
     if (torque) {
       p.f = {};
     } else {
@@ -75,9 +75,8 @@ std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
 }
 
 /* Remove the CMS velocity */
-void local_galilei_transform(const Utils::Vector3d &cmsvel,
-                             const ParticleRange &particles) {
-  for (auto &p : particles) {
+void local_galilei_transform(const Utils::Vector3d &cmsvel) {
+  for (auto &p : local_cells.particles()) {
     p.m.v -= cmsvel;
   }
 }

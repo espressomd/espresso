@@ -301,7 +301,7 @@ void mpi_remove_particle_slave(int pnode, int part) {
 
     remove_all_bonds_to(part);
   } else
-    local_remove_all_particles(local_cells.n);
+    local_remove_all_particles();
 
   on_particle_change();
 }
@@ -394,23 +394,23 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
   switch (job) {
   case 1:
     mpi_call(mpi_gather_stats_slave, -1, 1);
-    energy_calc((double *)result, local_cells.particles());
+    energy_calc((double *)result);
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or
        'analyze stress_tensor' */
     mpi_call(mpi_gather_stats_slave, -1, 2);
     pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
-                  (double *)result_t_nb, 0, local_cells.particles());
+                  (double *)result_t_nb, 0);
     break;
   case 3:
     mpi_call(mpi_gather_stats_slave, -1, 3);
     pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
-                  (double *)result_t_nb, 1, local_cells.particles());
+                  (double *)result_t_nb, 1);
     break;
   case 4:
     mpi_call(mpi_gather_stats_slave, -1, 4);
-    predict_momentum_particles((double *)result, local_cells.particles());
+    predict_momentum_particles((double *)result);
     break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
@@ -437,22 +437,20 @@ void mpi_gather_stats_slave(int, int job) {
   switch (job) {
   case 1:
     /* calculate and reduce (sum up) energies */
-    energy_calc(nullptr, local_cells.particles());
+    energy_calc(nullptr);
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze
      * stress_tensor'*/
-    pressure_calc(nullptr, nullptr, nullptr, nullptr, 0,
-                  local_cells.particles());
+    pressure_calc(nullptr, nullptr, nullptr, nullptr, 0);
     break;
   case 3:
     /* calculate and reduce (sum up) virials, revert velocities half a timestep
      * for 'analyze p_inst' */
-    pressure_calc(nullptr, nullptr, nullptr, nullptr, 1,
-                  local_cells.particles());
+    pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
     break;
   case 4:
-    predict_momentum_particles(nullptr, local_cells.particles());
+    predict_momentum_particles(nullptr);
     break;
   case 6:
     lb_calc_fluid_momentum(nullptr);
@@ -663,7 +661,7 @@ void mpi_bcast_max_mu() {
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
 void mpi_kill_particle_motion_slave(int rotation) {
-  local_kill_particle_motion(rotation, local_cells.particles());
+  local_kill_particle_motion(rotation);
   on_particle_change();
 }
 
@@ -674,7 +672,7 @@ void mpi_kill_particle_motion(int rotation) {
 }
 
 void mpi_kill_particle_forces_slave(int torque) {
-  local_kill_particle_forces(torque, local_cells.particles());
+  local_kill_particle_forces(torque);
   on_particle_change();
 }
 
@@ -708,7 +706,7 @@ Utils::Vector3d mpi_system_CMS_velocity() {
 REGISTER_CALLBACK_REDUCTION(local_system_CMS, pair_sum{})
 
 void mpi_galilei_transform_slave(Utils::Vector3d const &cmsvel) {
-  local_galilei_transform(cmsvel, local_cells.particles());
+  local_galilei_transform(cmsvel);
   on_particle_change();
 }
 

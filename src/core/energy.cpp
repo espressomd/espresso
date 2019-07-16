@@ -76,7 +76,7 @@ void master_energy_calc() {
 
 /************************************************************/
 
-void energy_calc(double *result, const ParticleRange &particles) {
+void energy_calc(double *result) {
   if (!interactions_sanity_checks())
     return;
 
@@ -104,13 +104,14 @@ void energy_calc(double *result, const ParticleRange &particles) {
         });
   } else {
     // Otherwise, only do the single-particle contribution
-    for (auto &p : particles) {
+    for (auto &p : local_cells.particles()) {
       add_single_particle_energy(&p);
     }
   }
   calc_long_range_energies();
 
-  Constraints::constraints.add_energy(particles, sim_time, energy);
+  auto local_parts = local_cells.particles();
+  Constraints::constraints.add_energy(local_parts, sim_time, energy);
 
 #ifdef CUDA
   copy_energy_from_GPU();

@@ -60,8 +60,7 @@ void master_pressure_calc(int v_comp);
  *                    make sense to use it without NpT.
  */
 void pressure_calc(double *result, double *result_t, double *result_nb,
-                   double *result_t_nb, int v_comp,
-                   const ParticleRange &particles);
+                   double *result_t_nb, int v_comp);
 
 /** Function to calculate stress tensor for the observables */
 int observable_compute_stress_tensor(int v_comp, double *A);

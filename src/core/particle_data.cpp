@@ -1205,14 +1205,14 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
   return pt;
 }
 
-void local_remove_all_particles(const int n_particles) {
+void local_remove_all_particles() {
   Cell *cell;
   int c;
   n_part = 0;
   max_seen_particle = -1;
   std::fill(local_particles, local_particles + max_local_particles, nullptr);
 
-  for (c = 0; c < n_particles; c++) {
+  for (c = 0; c < local_cells.n; c++) {
     Particle *p;
     int i, np;
     cell = local_cells.cell[c];

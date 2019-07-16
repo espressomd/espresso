@@ -88,11 +88,10 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
   return std::sqrt(mindist2);
 }
 
-void predict_momentum_particles(double *result,
-                                const ParticleRange &particles) {
+void predict_momentum_particles(double *result) {
   double momentum[3] = {0.0, 0.0, 0.0};
 
-  for (auto const &p : particles) {
+  for (auto const &p : local_cells.particles()) {
     auto const mass = p.p.mass;
 
     momentum[0] += mass * (p.m.v[0] + p.f.f[0] * 0.5 * time_step / p.p.mass);

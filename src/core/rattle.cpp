@@ -49,7 +49,7 @@ int n_rigidbonds = 0;
 
 /** Calculates the corrections required for each of the particle coordinates
     according to the RATTLE algorithm. Invoked from \ref correct_pos_shake()*/
-void compute_pos_corr_vec(int *repeat_);
+void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles);
 
 /** Positional Corrections are added to the current particle positions. Invoked
  * from \ref correct_pos_shake() */
@@ -100,13 +100,13 @@ void save_old_pos(const ParticleRange &particles,
 
 /**Initialize the correction vector. The correction vector is stored in f.f of
  * particle structure. */
-void init_correction_vector() {
+void init_correction_vector(const ParticleRange &particles) {
   auto reset_force = [](Particle &p) {
     for (int j = 0; j < 3; j++)
       p.f.f[j] = 0.0;
   };
 
-  for (auto &p : local_cells.particles())
+  for (auto &p : particles)
     reset_force(p);
 
   for (auto &p : ghost_cells.particles())
@@ -114,12 +114,12 @@ void init_correction_vector() {
 }
 
 /**Compute positional corrections*/
-void compute_pos_corr_vec(int *repeat_) {
+void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles) {
   Bonded_ia_parameters *ia_params;
   int j, k, cnt = -1;
   Particle *p1, *p2;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     p1 = &p;
     k = 0;
     while (k < p1->bl.n) {
@@ -175,9 +175,9 @@ void correct_pos_shake(const ParticleRange &particles) {
   int repeat = 1;
 
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
-    init_correction_vector();
+    init_correction_vector(local_cells.particles());
     repeat_ = 0;
-    compute_pos_corr_vec(&repeat_);
+    compute_pos_corr_vec(&repeat_, local_cells.particles());
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
     app_pos_correction(particles);
     /**Ghost Positions Update*/
@@ -294,7 +294,7 @@ void correct_vel_shake(const ParticleRange &particles,
   structure  */
   transfer_force_init_vel(particles, ghost_particles);
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
-    init_correction_vector();
+    init_correction_vector(local_cells.particles());
     repeat_ = 0;
     compute_vel_corr_vec(&repeat_);
     ghost_communicator(&cell_structure.collect_ghost_force_comm);

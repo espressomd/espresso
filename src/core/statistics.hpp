@@ -221,7 +221,7 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
 /** Calculate momentum of all particles in the simulation box.
  *  \param result Momentum of particles.
  */
-void predict_momentum_particles(double *result, const ParticleRange &particles);
+void predict_momentum_particles(double *result);
 
 /** Calculate total momentum of the system (particles & LB fluid).
  *  Inputs are bools to include particles and fluid in the linear momentum
