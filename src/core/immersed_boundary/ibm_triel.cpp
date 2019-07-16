@@ -28,12 +28,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <utils/math/sqr.hpp>
 
 namespace {
-/** Rotate calculated trielastic forces in the 2d plane back to the 3d plane
- *Use knowledge that the x-axis in rotated system is parallel to r(p1->p2) in
- *original system; To find the corresponding unit vector to y in the rotated
- *system, construct vector perpendicular to r(p1->p2); note that f3 is not
- *calculated here but is implicitly calculated by f3 = -(f1+f2) which is
- *consistent with the literature
+/** Rotate calculated trielastic forces in the 2d plane back to the 3d plane.
+ *  Use knowledge that the x-axis in rotated system is parallel to r(p1->p2) in
+ *  original system; To find the corresponding unit vector to y in the rotated
+ *  system, construct vector perpendicular to r(p1->p2); note that f3 is not
+ *  calculated here but is implicitly calculated by f3 = -(f1+f2) which is
+ *  consistent with the literature
  */
 void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
                   Utils::Vector3d &f1, Utils::Vector3d &f2,
@@ -55,7 +55,7 @@ void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
   // Krueger, Fig. 7.1b. Therefore: First get the projection of v13 onto v12:
   // The direction is definied by xu, the length by the scalar product (scalar
   // product can be interpreted as a projection, after all). --> sca * xu Then:
-  // v13 - sca * xu gives the component of v13 orthogonal to v12, i..e.
+  // v13 - sca * xu gives the component of v13 orthogonal to v12, i.e.
   // perpendicular to the x-axis --> yu Last: Normalize yu.
   auto const yu = (v13 - (v13 * xu) * xu).normalize();
 
@@ -64,11 +64,6 @@ void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
   f2 = f2_rot[0] * xu + f2_rot[1] * yu;
 }
 } // namespace
-
-/*************
-   IBM_Triel_CalcForce
-Calculate the repulsion and add it to the particle
- **************/
 
 int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
                         Particle *const p3,
@@ -243,10 +238,6 @@ int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
   return 0;
 }
 
-/****************
-  IBM_Triel_ResetParams
- *****************/
-
 int IBM_Triel_ResetParams(const int bond_type, const double k1,
                           const double l0) {
 
@@ -294,10 +285,6 @@ int IBM_Triel_ResetParams(const int bond_type, const double k1,
 
   return ES_OK;
 }
-
-/***********
-   IBM_Triel_SetParams
-************/
 
 int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
                         const int ind3, const double maxDist,

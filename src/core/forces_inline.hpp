@@ -217,12 +217,13 @@ inline void calc_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
 }
 
-/** Calculate non bonded forces between a pair of particles.
- *  @param p1        pointer to particle 1.
- *  @param p2        pointer to particle 2.
- *  @param d         vector between p1 and p2.
- *  @param dist      distance between p1 and p2.
- *  @param dist2     distance squared between p1 and p2.
+/** Calculate non-bonded forces between a pair of particles and update their
+ *  forces and torques.
+ *  @param[in,out] p1   particle 1.
+ *  @param[in,out] p2   particle 2.
+ *  @param[in] d        vector between @p p1 and @p p2.
+ *  @param dist         distance between @p p1 and @p p2.
+ *  @param dist2        distance squared between @p p1 and @p p2.
  */
 inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
                                       Utils::Vector3d const &d, double dist,
@@ -238,7 +239,7 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   torque2 = &_torque2;
 #endif
 
-  // Early exit if there is no interactoin to calculate
+  // Early exit if there is no interaction to calculate
   // The exception for MMM2d is there, because the method assumes that
   // pairs within a cell system layer but outside the cutoff are considered
 
@@ -259,8 +260,8 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
     detect_collision(p1, p2, dist);
 #endif
 
-/*affinity potential*/
 #ifdef AFFINITY
+  /* affinity potential */
   // Prevent jump to non-inlined function
   if (dist < ia_params->affinity_cut) {
     add_affinity_pair_force(p1, p2, ia_params, d, dist, force);
@@ -271,7 +272,7 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
                       p1->p.identity, p2->p.identity, dist));
 
   /***********************************************/
-  /* non bonded pair potentials                  */
+  /* non-bonded pair potentials                  */
   /***********************************************/
 
   if (dist < ia_params->max_cut) {
@@ -283,17 +284,17 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   }
 
   /***********************************************/
-  /* short range electrostatics                  */
+  /* short-range electrostatics                  */
   /***********************************************/
 
 #ifdef ELECTROSTATICS
   Coulomb::calc_pair_force(p1, p2, d, dist, force);
 #endif
 
-/*********************************************************************/
-/* everything before this contributes to the virial pressure in NpT, */
-/* but nothing afterwards                                            */
-/*********************************************************************/
+  /*********************************************************************/
+  /* everything before this contributes to the virial pressure in NpT, */
+  /* but nothing afterwards                                            */
+  /*********************************************************************/
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     for (int j = 0; j < 3; j++) {
@@ -302,11 +303,11 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   }
 #endif
 
-/***********************************************/
-/* thermostat                                  */
-/***********************************************/
+  /***********************************************/
+  /* thermostat                                  */
+  /***********************************************/
 
-/** The inter dpd force should not be part of the virial */
+  /** The inter dpd force should not be part of the virial */
 #ifdef DPD
   if (thermo_switch & THERMO_DPD) {
     force += dpd_pair_force(p1, p2, ia_params, d, dist, dist2);
@@ -314,7 +315,7 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
 #endif
 
   /***********************************************/
-  /* long range magnetostatics                   */
+  /* long-range magnetostatics                   */
   /***********************************************/
 
 #ifdef DIPOLES
@@ -323,7 +324,7 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
 #endif /* ifdef DIPOLES */
 
   /***********************************************/
-  /* add total nonbonded forces to particle      */
+  /* add total non-bonded forces to particle     */
   /***********************************************/
 
   p1->f.f += force;
@@ -334,6 +335,15 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
 #endif
 }
 
+/** Compute the bonded interaction force between particle pairs.
+ *
+ *  @param[in,out] p1      First particle.
+ *  @param[in] p2          Second particle.
+ *  @param[in] iaparams    Bonded parameters for the interaction.
+ *  @param[in] dx          Vector between @p p1 and @p p2.
+ *  @param[out] force      Force between @p p1 and @p p2.
+ *  @return whether the bond is broken
+ */
 inline bool calc_bond_pair_force(Particle *const p1, Particle const *const p2,
                                  Bonded_ia_parameters const *const iaparams,
                                  Utils::Vector3d const &dx,

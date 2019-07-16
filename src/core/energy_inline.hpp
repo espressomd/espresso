@@ -69,14 +69,14 @@
 #include "electrostatics_magnetostatics/dipole_inline.hpp"
 #endif
 
-/** Calculate non bonded energies between a pair of particles.
- *  @param p1         pointer to particle 1.
- *  @param p2         pointer to particle 2.
+/** Calculate non-bonded energies between a pair of particles.
+ *  @param p1         particle 1.
+ *  @param p2         particle 2.
  *  @param ia_params  the interaction parameters between the two particles
  *  @param d          vector between p1 and p2.
  *  @param dist       distance between p1 and p2.
  *  @param dist2      distance squared between p1 and p2.
- *  @return the short ranged interaction energy between the two particles
+ *  @return the short-range interaction energy between the two particles
  */
 inline double calc_non_bonded_pair_energy(Particle const *const p1,
                                           Particle const *const p2,
@@ -173,9 +173,10 @@ inline double calc_non_bonded_pair_energy(Particle const *const p1,
   return ret;
 }
 
-/** Add non bonded energies and short range Coulomb between a pair of particles.
- *  @param p1        pointer to particle 1.
- *  @param p2        pointer to particle 2.
+/** Add non-bonded and short-range Coulomb energies between a pair of particles
+ *  to the @ref energy observable.
+ *  @param p1        particle 1.
+ *  @param p2        particle 2.
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
@@ -202,8 +203,8 @@ inline void add_non_bonded_pair_energy(Particle const *const p1,
 #endif
 }
 
-/** Calculate bonded energies for one particle.
- *  @param p1 particle for which to calculate energies
+/** Add bonded energies for one particle to the @ref energy observable.
+ *  @param[in] p1   particle for which to calculate energies
  */
 inline void add_bonded_energy(Particle const *const p1) {
   int i = 0;
@@ -371,8 +372,8 @@ inline void add_bonded_energy(Particle const *const p1) {
   }
 }
 
-/** Calculate kinetic energies for one particle.
- *  @param p1 particle for which to calculate energies
+/** Add kinetic energies for one particle to the @ref energy observable.
+ *  @param[in] p1   particle for which to calculate energies
  */
 inline void add_kinetic_energy(Particle const *const p1) {
 #ifdef VIRTUAL_SITES
@@ -395,6 +396,10 @@ inline void add_kinetic_energy(Particle const *const p1) {
 #endif
 }
 
+/** Add kinetic and bonded energies for one particle to the @ref energy
+ *  observable.
+ *  @param[in] p   particle for which to calculate energies
+ */
 inline void add_single_particle_energy(Particle const *const p) {
   add_kinetic_energy(p);
   add_bonded_energy(p);

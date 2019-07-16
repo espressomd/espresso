@@ -19,15 +19,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- * code for calculating the MDLC (magnetic dipolar layer
- *correction).
+ *  code for calculating the MDLC (magnetic dipolar layer correction).
  *  Purpose:   get the corrections for dipolar 3D algorithms
  *             when applied to a slab geometry and dipolar
- *	      particles. DLC & co
+ *             particles. DLC & co
  *  Article:   A. Brodka, Chemical Physics Letters 400, 62-67 (2004).
  *
- *	      We also include a tuning function that returns the
- *	      cut-off necessary to attend a certain accuracy.
+ *             We also include a tuning function that returns the
+ *             cut-off necessary to attend a certain accuracy.
  *
  *  Restrictions: the slab must be such that the z is the short
  *                direction. Otherwise we get trash.
@@ -60,8 +59,6 @@ void calc_mu_max() {
   MPI_Allreduce(MPI_IN_PLACE, &mu_max, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
 }
 
-/* ******************************************************************* */
-
 inline double g1_DLC_dip(double g, double x) {
   double a, c, cc2, x3;
   c = g / x;
@@ -70,7 +67,6 @@ inline double g1_DLC_dip(double g, double x) {
   a = g * g * g / x + 1.5 * cc2 + 1.5 * g / x3 + 0.75 / (x3 * x);
   return a;
 }
-/* ******************************************************************* */
 
 inline double g2_DLC_dip(double g, double x) {
   double a, x2;
@@ -78,7 +74,6 @@ inline double g2_DLC_dip(double g, double x) {
   a = g * g / x + 2.0 * g / x2 + 2.0 / (x2 * x);
   return a;
 }
-/* ******************************************************************* */
 
 /* Compute Mx, My, Mz and Mtotal */
 double slab_dip_count_mu(double *mt, double *mx, double *my) {
@@ -105,14 +100,12 @@ double slab_dip_count_mu(double *mt, double *mx, double *my) {
 
   return Mz;
 }
-/* ******************************************************************* */
 
-/* ****************************************************************************************************
+/**
    Compute the dipolar DLC corrections for forces and torques.
    Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
    Lett. 400, 62-67, (2004).
-   ****************************************************************************************************
-   */
+ */
 double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
                        std::vector<Utils::Vector3d> &ts) {
 
@@ -267,15 +260,12 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
 
   return energy;
 }
-/* ******************************************************************* */
 
-/* ****************************************************************************************************
+/**
    Compute the dipolar DLC corrections
    Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
    Lett. 400, 62-67, (2004).
-   ****************************************************************************************************
-   */
-
+ */
 double get_DLC_energy_dipolar(int kcut) {
 
   int ix, iy, ip;
@@ -352,13 +342,10 @@ double get_DLC_energy_dipolar(int kcut) {
   energy *= (-piarea);
   return (this_node == 0) ? energy : 0.0;
 }
-/* ***************************************************************** */
 
-/* **************************************************************************
-********** Compute and add the terms needed to correct the 3D dipolar*****
-********** methods when we have an slab geometry *************************
-************************************************************************** */
-
+/** Compute and add the terms needed to correct the 3D dipolar
+ *  methods when we have an slab geometry
+ */
 void add_mdlc_force_corrections() {
   int dip_DLC_kcut = dlc_params.far_cut;
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
@@ -390,7 +377,7 @@ void add_mdlc_force_corrections() {
   mz = slab_dip_count_mu(&mtot, &mx, &my);
 
   // --- Transfer the computed corrections to the Forces, Energy and torques
-  //	of the particles
+  //     of the particles
 
   int ip = 0;
   for (auto &p : local_cells.particles()) {
@@ -418,13 +405,10 @@ void add_mdlc_force_corrections() {
     ip++;
   }
 }
-/* ***************************************************************** */
 
-/* **************************************************************************
-********** Compute and add the terms needed to correct the energy of *****
-********** 3D dipolar methods when we have an slab geometry          *****
-************************************************************************** */
-
+/** Compute and add the terms needed to correct the energy of
+ *  3D dipolar methods when we have an slab geometry
+ */
 double add_mdlc_energy_corrections() {
   double dip_DLC_energy = 0.0;
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
@@ -476,9 +460,8 @@ double add_mdlc_energy_corrections() {
   }
   return 0.0;
 }
-/* ***************************************************************** */
 
-/* -------------------------------------------------------------------------------
+/**
    Subroutine to compute the cut-off (NCUT) necessary in the DLC dipolar part
    to get a certain accuracy (acc). We assume particles to have all them a
    same
@@ -493,10 +476,7 @@ double add_mdlc_energy_corrections() {
    direction
    (2) You must also tune the other 3D method to the same accuracy, otherwise
    it has no sense to have a good accurate result for DLC-dipolar.
-
-   ----------------------------------------------------------------------------------
-   */
-
+ */
 int mdlc_tune(double error) {
   double de, n, gc, lz, lx, a, fa1, fa2, fa0, h;
   int kc, limitkc = 200, flag;
@@ -560,9 +540,6 @@ int mdlc_tune(double error) {
   return ES_OK;
 }
 
-//======================================================================================================================
-//======================================================================================================================
-
 int mdlc_sanity_checks() {
   if (!box_geo.periodic(0) || !box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "mdlc requires periodicity 1 1 1";
@@ -576,7 +553,6 @@ int mdlc_sanity_checks() {
 
   return 0;
 }
-/* ***************************************************************** */
 
 int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
   MDLC_TRACE(fprintf(stderr, "%d: mdlc_set_params().\n", this_node));
@@ -603,6 +579,5 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
 
   return ES_OK;
 }
-/* ***************************************************************** */
 
 #endif

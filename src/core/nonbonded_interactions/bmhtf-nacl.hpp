@@ -35,7 +35,7 @@
 int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
                      double C, double D, double sig, double cut);
 
-/** Calculate smooth step force between particle p1 and p2 */
+/** Calculate BMHTF force between particle p1 and p2 */
 inline void add_BMHTF_pair_force(Particle const *const p1,
                                  Particle const *const p2,
                                  IA_parameters const *const ia_params,
@@ -51,7 +51,7 @@ inline void add_BMHTF_pair_force(Particle const *const p1,
   }
 }
 
-/** Calculate smooth step potential energy between particle p1 and p2. */
+/** Calculate BMHTF potential energy between particles p1 and p2. */
 inline double BMHTF_pair_energy(Particle const *const p1,
                                 Particle const *const p2,
                                 IA_parameters const *const ia_params,

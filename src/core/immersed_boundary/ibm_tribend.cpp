@@ -26,11 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <utils/constants.hpp>
 
-/*************
-   IBM_Tribend_CalcForce
-Calculate the bending force and add it to the particles
- **************/
-
 void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
                            Particle *p4,
                            Bonded_ia_parameters const *const iaparams) {
@@ -90,19 +85,15 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   p2->f.f +=
       Pre * (vector_product(get_mi_vector(p3->r.p, p1->r.p, box_geo), v1) / Ai);
 
-  // Force for Particle 3:
+  // Force for particle 3:
   p3->f.f +=
       Pre * (vector_product(get_mi_vector(p1->r.p, p2->r.p, box_geo), v1) / Ai +
              vector_product(get_mi_vector(p4->r.p, p1->r.p, box_geo), v2) / Aj);
 
-  // Force for Particle 4:
+  // Force for particle 4:
   p4->f.f +=
       Pre * (vector_product(get_mi_vector(p1->r.p, p3->r.p, box_geo), v2) / Aj);
 }
-
-/***********
-   IBM_Tribend_SetParams
-************/
 
 int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
                           const int ind3, const int ind4, const double kb,
