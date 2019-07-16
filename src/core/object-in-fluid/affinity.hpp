@@ -52,8 +52,9 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
   if (ia_params->affinity_type > 10) {
     aff_type_extracted = ia_params->affinity_type % 10;
     period_for_output = ia_params->affinity_type - aff_type_extracted;
-  } else
+  } else {
     aff_type_extracted = ia_params->affinity_type;
+  }
 
   auto const unfolded_pos =
       unfolded_position(p1->r.p, p1->l.i, box_geo.length());
@@ -90,8 +91,8 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
      *   no probability is involved
      *********************/
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
-                                            // interaction cut-off radius.
+    if (dist < ia_params->affinity_cut) { // Checking whether I am inside the
+                                          // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
         // %f\n",p1->p.bond_site[0],p1->p.bond_site[1],p1->p.bond_site[2]);
@@ -161,8 +162,8 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
      *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
-                                            // interaction cut-off radius.
+    if (dist < ia_params->affinity_cut) { // Checking whether I am inside the
+                                          // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
         // %f\n",p1->p.bond_site[0],p1->p.bond_site[1],p1->p.bond_site[2]);
@@ -364,8 +365,8 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
      *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
-                                            // interaction cut-off radius.
+    if (dist < ia_params->affinity_cut) { // Checking whether I am inside the
+                                          // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
         // %f\n",p1->p.bond_site[0],p1->p.bond_site[1],p1->p.bond_site[2]);
@@ -475,8 +476,8 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
      *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
-                                            // interaction cut-off radius.
+    if (dist < ia_params->affinity_cut) { // Checking whether I am inside the
+                                          // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
         // %f\n",p1->p.bond_site[0],p1->p.bond_site[1],p1->p.bond_site[2]);
@@ -593,8 +594,8 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
      *   check, that bond length must not be greater that 0.8 cut_off
      *********************/
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
-                                            // interaction cut-off radius.
+    if (dist < ia_params->affinity_cut) { // Checking whether I am inside the
+                                          // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
         // %f\n",p1->p.bond_site[0],p1->p.bond_site[1],p1->p.bond_site[2]);

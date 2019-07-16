@@ -84,12 +84,12 @@ inline double calc_non_bonded_pair_energy(Particle const *const p1,
                                           Utils::Vector3d const &d,
                                           double const dist,
                                           double const dist2) {
-  double ret = 0;
-
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id == p2->p.mol_id)
     return 0;
 #endif
+
+  double ret = 0;
 
 #ifdef LENNARD_JONES
   /* Lennard-Jones */
@@ -186,9 +186,6 @@ inline void add_non_bonded_pair_energy(Particle const *const p1,
                                        double const dist, double const dist2) {
   IA_parameters const *const ia_params = get_ia_param(p1->p.type, p2->p.type);
 
-#if defined(ELECTROSTATICS) || defined(DIPOLES)
-#endif
-
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
@@ -217,8 +214,6 @@ inline void add_bonded_energy(Particle const *const p1) {
     Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
     int type = iaparams->type;
     int n_partners = iaparams->num;
-    bool bond_broken = true;
-    double ret = 0;
 
     /* fetch particle 2, which is always needed */
     Particle const *const p2 = local_particles[p1->bl.e[i++]];
@@ -252,6 +247,9 @@ inline void add_bonded_energy(Particle const *const p1) {
         return;
       }
     }
+
+    bool bond_broken = true;
+    double ret = 0;
 
     if (n_partners == 1) {
       auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);

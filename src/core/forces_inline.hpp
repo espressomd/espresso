@@ -227,7 +227,7 @@ inline void calc_non_bonded_pair_force(Particle *const p1, Particle *const p2,
 inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
                                       Utils::Vector3d const &d, double dist,
                                       double dist2) {
-  IA_parameters const *ia_params = get_ia_param(p1->p.type, p2->p.type);
+  IA_parameters const *const ia_params = get_ia_param(p1->p.type, p2->p.type);
   Utils::Vector3d force{};
   Utils::Vector3d *torque1 = nullptr;
   Utils::Vector3d *torque2 = nullptr;
@@ -513,7 +513,7 @@ inline void add_bonded_force(Particle *const p1) {
 #endif
       // IMMERSED_BOUNDARY
       case BONDED_IA_IBM_TRIBEND: {
-        IBM_Tribend_CalcForce(p1, p2, p3, p4, *iaparams);
+        IBM_Tribend_CalcForce(p1, p2, p3, p4, iaparams);
         bond_broken = false;
 
         break;

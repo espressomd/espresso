@@ -84,16 +84,16 @@ int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
   auto const vec1 = get_mi_vector(p2->r.p, p1->r.p, box_geo);
   auto const lp = vec1.norm();
 
-  // angles between these vectors; calculated directly via the products
-  const double cosPhi = (vec1 * vec2) / (lp * l);
-  auto const vecpro = vector_product(vec1, vec2);
-  const double sinPhi = vecpro.norm() / (l * lp);
-
   // Check for sanity
   if ((lp - iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxDist) ||
       (l - iaparams->p.ibm_triel.l0 > iaparams->p.ibm_triel.maxDist)) {
     return 1;
   }
+
+  // angles between these vectors; calculated directly via the products
+  auto const cosPhi = (vec1 * vec2) / (lp * l);
+  auto const vecpro = vector_product(vec1, vec2);
+  auto const sinPhi = vecpro.norm() / (l * lp);
 
   // Variables in the reference state
   const double l0 = iaparams->p.ibm_triel.l0;

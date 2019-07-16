@@ -193,12 +193,12 @@ Utils::Vector3d dpd_pair_force(Particle const *const p1,
   auto const f_r = dpd_pair_force(ia_params->dpd_radial, v21, dist, noise_vec);
   auto const f_t = dpd_pair_force(ia_params->dpd_trans, v21, dist, noise_vec);
 
-  auto const d21 = Vector3d{d[0], d[1], d[2]};
   /* Projection operator to radial direction */
-  auto const P = tensor_product(d21 / dist2, d21);
+  auto const P = tensor_product(d / dist2, d);
   /* This is equivalent to P * f_r + (1 - P) * f_t, but with
    * doing only one matrix-vector multiplication */
-  return P * (f_r - f_t) + f_t;
+  auto const force = P * (f_r - f_t) + f_t;
+  return force;
 }
 
 static auto dpd_viscous_stress_local() {

@@ -105,8 +105,8 @@ inline void add_ljgen_pair_force(Particle const *const p1,
     LJ_TRACE(fprintf(
         stderr,
         "%d: LJGEN: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
-        this_node, p1->p.identity, p2->p.identity, dist, fac * d[0], fac * d[1],
-        fac * d[2]));
+        this_node, p1->p.identity, p2->p.identity, dist, force[0], force[1],
+        force[2]));
   }
 }
 

@@ -32,7 +32,8 @@ Calculate the bending force and add it to the particles
  **************/
 
 void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
-                           Particle *p4, const Bonded_ia_parameters &iaparams) {
+                           Particle *p4,
+                           Bonded_ia_parameters const *const iaparams) {
   assert(p1);
   assert(p2);
   assert(p3);
@@ -57,26 +58,25 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   n2 /= Aj;
 
   // Get the prefactor for the force term
-  double sc = n1 * n2;
+  auto sc = n1 * n2;
   if (sc > 1.0)
     sc = 1.0;
 
   // Get theta as angle between normals
-  double theta = acos(sc);
+  auto theta = acos(sc);
 
   auto const direc = vector_product(n1, n2);
-  const double desc = (dx1 * direc);
+  auto const desc = (dx1 * direc);
 
   if (desc < 0)
-    theta = -1.0 * theta;
-  const double DTh = theta - iaparams.p.ibm_tribend.theta0;
+    theta *= -1;
 
-  double Pre;
+  auto const DTh = theta - iaparams->p.ibm_tribend.theta0;
+
+  auto Pre = iaparams->p.ibm_tribend.kb * DTh;
   // Correct version with linearized sin
-  if (theta > 0)
-    Pre = 1.0 * iaparams.p.ibm_tribend.kb * DTh;
-  else
-    Pre = -1.0 * iaparams.p.ibm_tribend.kb * DTh;
+  if (theta < 0)
+    Pre *= -1;
 
   auto const v1 = (n2 - sc * n1).normalize();
   auto const v2 = (n1 - sc * n2).normalize();
@@ -142,7 +142,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
       auto const n2 = n2l / n2l.norm();
 
       // calculate theta by taking the acos of the scalar n1*n2
-      double sc = n1 * n2;
+      auto sc = n1 * n2;
       if (sc > 1.0)
         sc = 1.0;
 

@@ -225,18 +225,15 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
   if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
     return 0.;
 
-  double coeff, exp_adist2;
-  auto const dip1 = p1->calc_dip();
-  auto const dip2 = p2->calc_dip();
-  double B_r, C_r, D_r;
-  double alpsq = dp3m.params.alpha * dp3m.params.alpha;
-
   if (dist < dp3m.params.r_cut && dist > 0) {
-    double adist = dp3m.params.alpha * dist;
+    auto const dip1 = p1->calc_dip();
+    auto const dip2 = p2->calc_dip();
+    auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
+    auto const adist = dp3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
-    double erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
+    auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
 #else
-    double erfc_part_ri = erfc(adist) / dist;
+    auto const erfc_part_ri = erfc(adist) / dist;
 #endif
 
     // Calculate scalar multiplications for vectors mi, mj, rij
@@ -245,10 +242,11 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
     auto const mir = dip1 * d;
     auto const mjr = dip2 * d;
 
-    coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
-    double dist2i = 1 / dist2;
-    exp_adist2 = exp(-adist * adist);
+    auto const coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
+    auto const dist2i = 1 / dist2;
+    auto const exp_adist2 = exp(-adist * adist);
 
+    double B_r, C_r, D_r;
     if (dp3m.params.accuracy > 5e-06)
       B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
     else
@@ -273,12 +271,11 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
 #endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
-    double fac1 =
-        dipole.prefactor * p1->p.dipm * p2->p.dipm * exp(-adist * adist);
+    auto const fac = dipole.prefactor * p1->p.dipm * p2->p.dipm * exp_adist2;
 #else
-    double fac1 = dipole.prefactor * p1->p.dipm * p2->p.dipm;
+    auto const fac = dipole.prefactor * p1->p.dipm * p2->p.dipm;
 #endif
-    return fac1 * (mimj * B_r - mir * mjr * C_r);
+    return fac * (mimj * B_r - mir * mjr * C_r);
 #endif
   }
   return 0.0;
@@ -291,21 +288,18 @@ inline double dp3m_pair_energy(Particle const *const p1,
                                double dist) {
   auto const dip1 = p1->calc_dip();
   auto const dip2 = p2->calc_dip();
-  double /* fac1,*/ adist, erfc_part_ri, coeff, exp_adist2, dist2i;
-  double mimj, mir, mjr;
-  double B_r, C_r;
-  double alpsq = dp3m.params.alpha * dp3m.params.alpha;
 
   if (dist < dp3m.params.r_cut && dist > 0) {
-    adist = dp3m.params.alpha * dist;
+    auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
+    auto const adist = dp3m.params.alpha * dist;
     /*fac1 = dipole.prefactor;*/
 
 #if USE_ERFC_APPROXIMATION
-    erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
+    auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
     /*  fac1 = dipole.prefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */
     /* *exp(-adist*adist); */
 #else
-    erfc_part_ri = erfc(adist) / dist;
+    auto const erfc_part_ri = erfc(adist) / dist;
     /* fac1 = dipole.prefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/
 #endif
 
@@ -314,16 +308,17 @@ inline double dp3m_pair_energy(Particle const *const p1,
     auto const mir = dip1 * d;
     auto const mjr = dip2 * d;
 
-    coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
-    dist2i = 1 / dist2;
-    exp_adist2 = exp(-adist * adist);
+    auto const coeff = 2.0 * dp3m.params.alpha * Utils::sqrt_pi_i();
+    auto const dist2i = 1 / dist2;
+    auto const exp_adist2 = exp(-adist * adist);
 
+    double B_r;
     if (dp3m.params.accuracy > 5e-06)
       B_r = (erfc_part_ri + coeff) * exp_adist2 * dist2i;
     else
       B_r = (erfc(adist) / dist + coeff * exp_adist2) * dist2i;
 
-    C_r = (3 * B_r + 2 * alpsq * coeff * exp_adist2) * dist2i;
+    auto const C_r = (3 * B_r + 2 * alpsq * coeff * exp_adist2) * dist2i;
 
     /*
       printf("(%4i %4i) pair energy = %f (B_r=%15.12f C_r=%15.12f)\n",

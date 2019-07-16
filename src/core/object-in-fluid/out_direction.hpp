@@ -41,14 +41,14 @@ int oif_out_direction_set_params(int bond_type);
 /** Computes the outward direction of the membrane from one particle and its
  *  three neighbors
  *
- *  @param[out] p1            The central particle.
+ *  @param[in,out] p1         The central particle.
  *  @param[in]  p2 , p3 , p4  The neighboring particles.
  *
  *  Computes the normal of triangle p2p3p4. This triangle was initially
  *  oriented in such a way that its normal already points out of the object.
  *  Normalizes and stores the result as @ref ParticleProperties::out_direction
  *  "out_direction" in @p p1.
- *  @return 0
+ *  @retval 0
  */
 inline int calc_out_direction(Particle *const p1, Particle const *const p2,
                               Particle const *const p3,
