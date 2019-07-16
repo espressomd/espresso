@@ -86,7 +86,7 @@ public:
    * @param name Name of the parameter to change
    * @param value Value to set it to
    */
-  void remote_set_parameter(ObjectHandle *o, std::string const &name,
+  void remote_set_parameter(const ObjectHandle *o, std::string const &name,
                             Variant const &value);
 
 private:
@@ -104,7 +104,7 @@ public:
    * @param name Name of the method to call
    * @param arguments Arguments to the call
    */
-  void remote_call_method(ObjectHandle *o, std::string const &name,
+  void remote_call_method(const ObjectHandle *o, std::string const &name,
                           VariantMap const &arguments);
 
 private:
@@ -119,7 +119,7 @@ public:
    *
    * @param o Internal identified of the instance
    */
-  void remote_delete_handle(ObjectHandle *o);
+  void remote_delete_handle(const ObjectHandle *o);
 
   template <typename T> void register_new(std::string const &name) {
     static_assert(std::is_base_of<ObjectHandle, T>::value, "");
