@@ -43,6 +43,7 @@
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
+
 #include <utils/Array.hpp>
 #include <utils/Counter.hpp>
 
@@ -1375,9 +1376,13 @@ __device__ __inline__ float3 node_velocity(float rho_eq, LB_nodes_gpu n_a,
   }
 
   auto const rho = rho_eq + calc_mode_x_from_n(n_a, index, 0);
-  return make_float3(calc_mode_x_from_n(n_a, index, 1) / rho,
-                     calc_mode_x_from_n(n_a, index, 2) / rho,
-                     calc_mode_x_from_n(n_a, index, 3) / rho);
+  return make_float3(
+      (calc_mode_x_from_n(n_a, index, 1) + 0.5 * para->ext_force_density[0]) /
+          rho,
+      (calc_mode_x_from_n(n_a, index, 2) + 0.5 * para->ext_force_density[1]) /
+          rho,
+      (calc_mode_x_from_n(n_a, index, 3) + 0.5 * para->ext_force_density[2]) /
+          rho);
 }
 
 __device__ __inline__ float3

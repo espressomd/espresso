@@ -326,6 +326,9 @@ class TestLB(object):
         for n in self.lbf.nodes():
             np.testing.assert_allclose(
                 np.copy(n.velocity), fluid_velocity, atol=1E-6)
+            position = (np.array(n.index) + 0.5) * self.params['agrid']
+            np.testing.assert_allclose(
+                np.copy(self.lbf.get_interpolated_velocity(position)), fluid_velocity, atol=1E-6)
 
 
 class TestLBCPU(TestLB, ut.TestCase):
