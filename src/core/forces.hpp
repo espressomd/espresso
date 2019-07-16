@@ -30,6 +30,7 @@
  *  Implementation in forces.cpp.
  */
 
+#include "ParticleRange.hpp"
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
