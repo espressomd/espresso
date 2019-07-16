@@ -286,7 +286,7 @@ class TestLB(object):
             dens=self.params['dens'],
             agrid=self.params['agrid'],
             tau=self.system.time_step,
-            ext_force_density=[0, 0, 0])
+            ext_force_density=[0, 0, 0.2])
         self.system.actors.add(self.lbf)
         if self.interpolation:
             self.lbf.set_interpolation_order("quadratic")
@@ -297,8 +297,7 @@ class TestLB(object):
         self.system.part.add(
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
-        if self.interpolation:
-            v_fluid = self.lbf.get_interpolated_velocity(
+        v_fluid = self.lbf.get_interpolated_velocity(
                 self.system.part[0].pos)
         self.system.integrator.run(1)
         np.testing.assert_allclose(
