@@ -9,8 +9,11 @@ namespace ScriptInterface {
 void ObjectManager::make_handle(ObjectId id, const std::string &name,
                                 const PackedMap &parameters) {
   try {
-    m_local_objects[id] = make_shared(name, CreationPolicy::LOCAL,
-                                      unpack(parameters, m_local_objects));
+    ObjectRef so = m_factory.make(name);
+    so->m_manager = this;
+    so->do_construct(unpack(parameters, m_local_objects));
+
+    m_local_objects.emplace(std::make_pair(id, std::move(so)));
   } catch (std::runtime_error const &) {
   }
 }
@@ -21,7 +24,9 @@ void ObjectManager::remote_make_handle(ObjectId id, const std::string &name,
 }
 
 void ObjectManager::remote_delete_handle(const ObjectHandle *o) {
-  cb_delete_handle(object_id(o));
+  if (o->m_policy == CreationPolicy::GLOBAL) {
+    cb_delete_handle(object_id(o));
+  }
 }
 
 void ObjectManager::set_parameter(ObjectId id, std::string const &name,
@@ -36,7 +41,9 @@ void ObjectManager::set_parameter(ObjectId id, std::string const &name,
 void ObjectManager::remote_set_parameter(const ObjectHandle *o,
                                          std::string const &name,
                                          Variant const &value) {
-  cb_set_parameter(object_id(o), name, pack(value));
+  if (o->m_policy == CreationPolicy::GLOBAL) {
+    cb_set_parameter(object_id(o), name, pack(value));
+  }
 }
 
 void ObjectManager::call_method(ObjectId id, std::string const &name,
@@ -51,7 +58,9 @@ void ObjectManager::call_method(ObjectId id, std::string const &name,
 void ObjectManager::remote_call_method(const ObjectHandle *o,
                                        std::string const &name,
                                        VariantMap const &arguments) {
-  cb_call_method(object_id(o), name, pack(arguments));
+  if (o->m_policy == CreationPolicy::GLOBAL) {
+    cb_call_method(object_id(o), name, pack(arguments));
+  }
 }
 
 std::shared_ptr<ObjectHandle>
@@ -59,12 +68,14 @@ ObjectManager::make_shared(std::string const &name, CreationPolicy policy,
                            const VariantMap &parameters) {
   auto sp = m_factory.make(name);
 
+  auto const id = object_id(sp.get());
+
   sp->m_manager = this;
   sp->m_name = name;
   sp->m_policy = policy;
 
   if (policy == CreationPolicy::GLOBAL) {
-    remote_make_handle(object_id(sp.get()), name, parameters);
+    remote_make_handle(id, name, parameters);
   }
 
   sp->do_construct(parameters);

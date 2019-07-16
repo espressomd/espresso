@@ -25,27 +25,19 @@
 namespace ScriptInterface {
 void ObjectHandle::set_parameter(const std::string &name,
                                  const Variant &value) {
-  if (m_policy == CreationPolicy::GLOBAL) {
-    manager()->remote_set_parameter(this, name, value);
-  }
+  manager()->remote_set_parameter(this, name, value);
 
   this->do_set_parameter(name, value);
 }
 
 Variant ObjectHandle::call_method(const std::string &name,
                                   const VariantMap &params) {
-  if (m_policy == CreationPolicy::GLOBAL) {
-    manager()->remote_call_method(this, name, params);
-  }
+  manager()->remote_call_method(this, name, params);
 
   return this->do_call_method(name, params);
 }
 
-void ObjectHandle::delete_remote() {
-  if (m_policy == CreationPolicy::GLOBAL) {
-    manager()->remote_delete_handle(this);
-  }
-}
+void ObjectHandle::delete_remote() { manager()->remote_delete_handle(this); }
 
 ObjectHandle::~ObjectHandle() { this->do_destroy(); }
 } /* namespace ScriptInterface */
