@@ -155,7 +155,7 @@ void force_calc() {
 
 #ifdef METADYNAMICS
   /* Metadynamics main function */
-  meta_perform();
+  meta_perform(local_cells.particles());
 #endif
 
 #ifdef CUDA

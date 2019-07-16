@@ -301,7 +301,7 @@ void mpi_remove_particle_slave(int pnode, int part) {
 
     remove_all_bonds_to(part);
   } else
-    local_remove_all_particles();
+    local_remove_all_particles(local_cells.n);
 
   on_particle_change();
 }
@@ -401,12 +401,12 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
        'analyze stress_tensor' */
     mpi_call(mpi_gather_stats_slave, -1, 2);
     pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
-                  (double *)result_t_nb, 0);
+                  (double *)result_t_nb, 0, local_cells.particles());
     break;
   case 3:
     mpi_call(mpi_gather_stats_slave, -1, 3);
     pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
-                  (double *)result_t_nb, 1);
+                  (double *)result_t_nb, 1, local_cells.particles());
     break;
   case 4:
     mpi_call(mpi_gather_stats_slave, -1, 4);
@@ -442,12 +442,14 @@ void mpi_gather_stats_slave(int, int job) {
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze
      * stress_tensor'*/
-    pressure_calc(nullptr, nullptr, nullptr, nullptr, 0);
+    pressure_calc(nullptr, nullptr, nullptr, nullptr, 0,
+                  local_cells.particles());
     break;
   case 3:
     /* calculate and reduce (sum up) virials, revert velocities half a timestep
      * for 'analyze p_inst' */
-    pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
+    pressure_calc(nullptr, nullptr, nullptr, nullptr, 1,
+                  local_cells.particles());
     break;
   case 4:
     predict_momentum_particles(nullptr, local_cells.particles());
@@ -706,7 +708,7 @@ Utils::Vector3d mpi_system_CMS_velocity() {
 REGISTER_CALLBACK_REDUCTION(local_system_CMS, pair_sum{})
 
 void mpi_galilei_transform_slave(Utils::Vector3d const &cmsvel) {
-  local_galilei_transform(cmsvel);
+  local_galilei_transform(cmsvel, local_cells.particles());
   on_particle_change();
 }
 

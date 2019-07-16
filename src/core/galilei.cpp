@@ -75,8 +75,9 @@ std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
 }
 
 /* Remove the CMS velocity */
-void local_galilei_transform(const Utils::Vector3d &cmsvel) {
-  for (auto &p : local_cells.particles()) {
+void local_galilei_transform(const Utils::Vector3d &cmsvel,
+                             const ParticleRange &particles) {
+  for (auto &p : particles) {
     p.m.v -= cmsvel;
   }
 }

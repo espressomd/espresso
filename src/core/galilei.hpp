@@ -36,6 +36,7 @@ void local_kill_particle_motion(int, const ParticleRange &particles);
 void local_kill_particle_forces(int, const ParticleRange &particles);
 std::pair<Utils::Vector3d, double> local_system_CMS();
 std::pair<Utils::Vector3d, double> local_system_CMS_velocity();
-void local_galilei_transform(const Utils::Vector3d &cmsvel);
+void local_galilei_transform(const Utils::Vector3d &cmsvel,
+                             const ParticleRange &particles);
 
 #endif

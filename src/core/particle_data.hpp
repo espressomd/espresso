@@ -869,7 +869,7 @@ void local_remove_particle(int part);
 /** Used by \ref mpi_remove_particle, should not be used elsewhere.
  *  Locally remove all particles.
  */
-void local_remove_all_particles();
+void local_remove_all_particles(const int n_particles);
 
 /** Used by \ref mpi_rescale_particles, should not be used elsewhere.
  *  Locally rescale all particles on current node.

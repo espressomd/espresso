@@ -25,6 +25,7 @@
 #ifndef _MPIIO_HPP
 #define _MPIIO_HPP
 
+#include "ParticleRange.hpp"
 namespace Mpiio {
 
 /** Constants which indicate what to output. To indicate the output of

@@ -347,7 +347,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   int nproc, nglobalpart, pref, nlocalpart, nlocalbond, bpref;
   unsigned avail_fields;
 
-  local_remove_all_particles();
+  local_remove_all_particles(local_cells.n);
 
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

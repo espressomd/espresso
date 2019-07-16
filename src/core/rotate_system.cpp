@@ -29,12 +29,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace mpi = boost::mpi;
 
-void local_rotate_system(double phi, double theta, double alpha) {
+void local_rotate_system(double phi, double theta, double alpha,
+                         const ParticleRange &particles) {
   // Calculate center of mass
   Utils::Vector3d local_com{};
   double local_mass = 0.0;
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : particles) {
     for (int j = 0; j < 3; j++) {
       local_com[j] += p.p.mass * p.r.p[j];
     }
@@ -52,7 +53,7 @@ void local_rotate_system(double phi, double theta, double alpha) {
   axis[2] = cos(theta);
 
   // Rotate particle coordinates
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     // Move the center of mass of the system to the origin
     for (int j = 0; j < 3; j++) {
       p.r.p[j] -= com[j];
@@ -72,7 +73,7 @@ void mpi_rotate_system_slave(int, int) {
   std::array<double, 3> params;
   mpi::broadcast(comm_cart, params, 0);
 
-  local_rotate_system(params[0], params[1], params[2]);
+  local_rotate_system(params[0], params[1], params[2], local_cells.particles());
 }
 
 void mpi_rotate_system(double phi, double theta, double alpha) {
@@ -81,7 +82,7 @@ void mpi_rotate_system(double phi, double theta, double alpha) {
   std::array<double, 3> params{{phi, theta, alpha}};
   mpi::broadcast(comm_cart, params, 0);
 
-  local_rotate_system(params[0], params[1], params[2]);
+  local_rotate_system(params[0], params[1], params[2], local_cells.particles());
 }
 
 /** Rotate all particle coordinates around an axis given by phi,theta through
