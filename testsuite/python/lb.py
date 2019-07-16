@@ -298,7 +298,7 @@ class TestLB(object):
             pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
         self.lbf[0, 0, 0].velocity = v_fluid
         v_fluid = self.lbf.get_interpolated_velocity(
-                self.system.part[0].pos)
+            self.system.part[0].pos)
         self.system.integrator.run(1)
         np.testing.assert_allclose(
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
