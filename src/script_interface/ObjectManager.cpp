@@ -20,13 +20,15 @@ void ObjectManager::remote_make_handle(ObjectId id, const std::string &name,
   cb_make_handle(id, name, pack(parameters));
 }
 
-void ObjectManager::remote_delete_handle(const ObjectHandle *o) { cb_delete_handle(object_id(o)); }
-
+void ObjectManager::remote_delete_handle(const ObjectHandle *o) {
+  cb_delete_handle(object_id(o));
+}
 
 void ObjectManager::set_parameter(ObjectId id, std::string const &name,
                                   PackedVariant const &value) {
   try {
-    m_local_objects.at(id)->set_parameter(name, unpack(value, m_local_objects));
+    m_local_objects.at(id)->do_set_parameter(name,
+                                             unpack(value, m_local_objects));
   } catch (std::runtime_error const &) {
   }
 }
@@ -40,8 +42,8 @@ void ObjectManager::remote_set_parameter(const ObjectHandle *o,
 void ObjectManager::call_method(ObjectId id, std::string const &name,
                                 PackedMap const &arguments) {
   try {
-    m_local_objects.at(id)->call_method(name,
-                                        unpack(arguments, m_local_objects));
+    m_local_objects.at(id)->do_call_method(name,
+                                           unpack(arguments, m_local_objects));
   } catch (std::runtime_error const &) {
   }
 }
