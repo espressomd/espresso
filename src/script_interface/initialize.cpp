@@ -41,10 +41,7 @@
 #include "ObjectManager.hpp"
 
 namespace ScriptInterface {
-std::shared_ptr<ObjectManager> initialize(Communication::MpiCallbacks &cb) {
-  auto shared_om = std::make_shared<ObjectManager>(&cb);
-  auto om = shared_om.get();
-
+void initialize(ObjectManager *om) {
   Shapes::initialize(om);
   Constraints::initialize(om);
 #ifdef H5MD
@@ -60,8 +57,5 @@ std::shared_ptr<ObjectManager> initialize(Communication::MpiCallbacks &cb) {
   CollisionDetection::initialize(om);
 
   om->register_new<ComFixed>("ComFixed");
-
-  return shared_om;
 }
-
 } /* namespace ScriptInterface */

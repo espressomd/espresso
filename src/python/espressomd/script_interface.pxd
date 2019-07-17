@@ -35,6 +35,7 @@ cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface
 
 cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     shared_ptr[ObjectManager] initialize(MpiCallbacks &)
+    void initialize(ObjectManager *)
     cdef cppclass Variant:
         Variant()
         Variant(const Variant & )

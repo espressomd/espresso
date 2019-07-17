@@ -24,7 +24,7 @@
 #include "ObjectManager.hpp"
 
 namespace ScriptInterface {
-std::shared_ptr<ObjectManager> initialize(Communication::MpiCallbacks &cb);
+void initialize(ObjectManager *om);
 } /* namespace ScriptInterface */
 
 #endif

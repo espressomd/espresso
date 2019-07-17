@@ -10,7 +10,7 @@
 #include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
-class ObjectManager {
+class ObjectManager : public std::enable_shared_from_this<ObjectManager> {
   using ObjectId = std::size_t;
 
   /* Instances on this node that are managed by the
@@ -34,23 +34,23 @@ private:
   Communication::CallbackHandle<ObjectId> cb_delete_handle;
 
 public:
-  explicit ObjectManager(Communication::MpiCallbacks *callbacks)
-      : cb_make_handle(callbacks,
+  explicit ObjectManager(Communication::MpiCallbacks &callbacks)
+      : cb_make_handle(&callbacks,
                        [this](ObjectId id, const std::string &name,
                               const PackedMap &parameters) {
                          make_handle(id, name, parameters);
                        }),
-        cb_set_parameter(callbacks,
+        cb_set_parameter(&callbacks,
                          [this](ObjectId id, std::string const &name,
                                 PackedVariant const &value) {
                            set_parameter(id, name, value);
                          }),
-        cb_call_method(callbacks,
+        cb_call_method(&callbacks,
                        [this](ObjectId id, std::string const &name,
                               PackedMap const &arguments) {
                          call_method(id, name, arguments);
                        }),
-        cb_delete_handle(callbacks,
+        cb_delete_handle(&callbacks,
                          [this](ObjectId id) { delete_handle(id); }) {}
 
 private:

@@ -23,6 +23,7 @@
 
 #include <utils/Span.hpp>
 
+#include <boost/mpi/communicator.hpp>
 #include <boost/utility/string_ref.hpp>
 
 namespace ScriptInterface {
@@ -47,7 +48,7 @@ public:
 
 private:
   friend class ObjectManager;
-  ObjectManager *m_manager = nullptr;
+  std::shared_ptr<ObjectManager> m_manager = {};
   std::string m_name;
   CreationPolicy m_policy = CreationPolicy::LOCAL;
 
@@ -55,7 +56,10 @@ public:
   /**
    * @brief Responsible manager.
    */
-  ObjectManager *manager() const { return assert(m_manager), m_manager; }
+  ObjectManager *manager() const {
+    Utils::print(__PRETTY_FUNCTION__, boost::mpi::communicator().rank());
+    auto const ptr = m_manager.get();
+    return ptr; }
 
   /**
    * @brief Name of the object.

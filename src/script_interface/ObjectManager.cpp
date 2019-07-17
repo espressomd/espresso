@@ -8,9 +8,12 @@
 namespace ScriptInterface {
 void ObjectManager::make_handle(ObjectId id, const std::string &name,
                                 const PackedMap &parameters) {
+  Utils::print(__PRETTY_FUNCTION__);
   try {
     ObjectRef so = m_factory.make(name);
-    so->m_manager = this;
+
+    so->m_manager = shared_from_this();
+    so->m_name = name;
     so->do_construct(unpack(parameters, m_local_objects));
 
     m_local_objects.emplace(std::make_pair(id, std::move(so)));
@@ -24,6 +27,8 @@ void ObjectManager::remote_make_handle(ObjectId id, const std::string &name,
 }
 
 void ObjectManager::remote_delete_handle(const ObjectHandle *o) {
+  Utils::print(__PRETTY_FUNCTION__);
+
   if (o->m_policy == CreationPolicy::GLOBAL) {
     cb_delete_handle(object_id(o));
   }
@@ -66,11 +71,17 @@ void ObjectManager::remote_call_method(const ObjectHandle *o,
 std::shared_ptr<ObjectHandle>
 ObjectManager::make_shared(std::string const &name, CreationPolicy policy,
                            const VariantMap &parameters) {
+  Utils::print(__PRETTY_FUNCTION__);
+
   auto sp = m_factory.make(name);
 
   auto const id = object_id(sp.get());
 
-  sp->m_manager = this;
+  Utils::print(cb_call_method.cb()->comm().rank(),
+      "make_shared", "name =", name, "id =", id, "so =", sp.get(),
+      "this =", this);
+
+  sp->m_manager = shared_from_this();
   sp->m_name = name;
   sp->m_policy = policy;
 
