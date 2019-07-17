@@ -19,26 +19,28 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
 
 */
-/** \mainpage ESPResSo Code documentation
+/**
+
+@mainpage ESPResSo code documentation
 
 This is the code documentation of ESPResSo. It is primarily intended
-for people that want to extend or just understand the C-code of
+for people that want to extend or just understand the C++ core of
 ESPResSo.
 
-If you just have obtained a release of ESPResSo, and you are looking
-for documentation on how to use ESPResSo, you might first want to have
-a look at the User's Guide, which is to be found in \c doc/ug/ug.pdf
-in the ESPResSo release.
+If you just have obtained a release of ESPResSo, and you are looking for
+documentation on how to use the software, you might first want to have a look
+at the User's Guide, which is available at <http://espressomd.org/html/doc/>.
 
 If you want to start developing code for ESPResSo, you might first
-want to have a look at the Developer's Guide (DG). You can find the
-most recent version of the DG at the <a
-href="http://espressomd.org/html/doc/dg.html">ESPResSo
-homepage</a>. The DG explains
+want to have a look at the Developer's Guide on the GitHub wiki at
+<https://github.com/espressomd/espresso/wiki>. The wiki explains:
 
 - how to obtain the development code
 - what tools are required to develop the code
 - how to get your modifications into the main code repository
 - how the documentation is updated
+
+If you need to develop new features in the core, you can find detailed
+instructions in the [Related Pages](pages.html).
 
 */
