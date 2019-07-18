@@ -325,15 +325,6 @@ void lb_GPU_sanity_checks() {
   }
 }
 
-void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
-                                     int include_lbfluid) {
-  auto linear_momentum =
-      calc_linear_momentum(include_particles, include_lbfluid);
-  momentum[0] = linear_momentum[0];
-  momentum[1] = linear_momentum[1];
-  momentum[2] = linear_momentum[2];
-}
-
 void lb_set_agrid_gpu(double agrid) {
   lbpar_gpu.agrid = static_cast<float>(agrid);
 
