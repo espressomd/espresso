@@ -18,7 +18,7 @@ sed 's/#define ADDITIONAL_CHECKS//' ../maintainer/configs/maxset.hpp > myconfig-
 rm -rf src/ maintainer/
 cmake -DWITH_BENCHMARKS=ON -DTEST_TIMEOUT=600 -DWITH_CUDA=OFF -DWITH_CCACHE=OFF ..
 cat > benchmarks.csv << EOF
-"config","script","arguments","cores","MPI","mean","ci","steps_per_tick","duration","E1","E2","E3"
+"config","script","arguments","cores","MPI","mean","ci","steps_per_tick","duration"
 EOF
 
 # run benchmarks

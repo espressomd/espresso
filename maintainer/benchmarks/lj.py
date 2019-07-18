@@ -186,16 +186,13 @@ if not args.visualizer:
     # write report
     cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
     report = ('"{script}","{arguments}",{cores},"{mpi}",{mean:.3e},'
-              '{ci:.3e},{n},{dur:.1f},{E1:.5e},{E2:.5e},{E3:.5e}\n'.format(
+              '{ci:.3e},{n},{dur:.1f}\n'.format(
                   script=os.path.basename(sys.argv[0]), arguments=cmd,
                   cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
-                  mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci,
-                  E1=system.analysis.energy()["total"],
-                  E2=system.analysis.energy()["kinetic"],
-                  E3=system.analysis.energy()["non_bonded"]))
+                  mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci))
     if not os.path.isfile(args.output):
         report = ('"script","arguments","cores","MPI","mean","ci",'
-                  '"steps_per_tick","duration","E1","E2","E3"\n' + report)
+                  '"steps_per_tick","duration"\n' + report)
     with open(args.output, "a") as f:
         f.write(report)
 else:
