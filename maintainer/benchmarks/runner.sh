@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cd "$(git rev-parse --show-toplevel)"
-mkdir -p build
-cd build
+# move to build directory
+build_dir="$1"
+cd "${build_dir}"
 
 # manage configuration files with different features
 configs="empty.hpp default.hpp maxset.hpp"
