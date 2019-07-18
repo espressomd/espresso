@@ -6,10 +6,20 @@ commits="HEAD"
 # list of directories to checkout
 directories="../src ../libs"
 
+abort() {
+    echo "An error occurred in suite.sh, exiting now" >&2
+    echo "Command that failed: ${BASH_COMMAND}" >&2
+    cleanup
+    exit 1
+}
+
 cleanup() {
     # restore files
     git checkout HEAD ${directories}
 }
+
+trap abort EXIT
+set -e
 
 # move to top-level directory
 cd "$(git rev-parse --show-toplevel)"
@@ -40,4 +50,5 @@ done
 
 rm benchmarks.csv
 
+trap : EXIT
 cleanup

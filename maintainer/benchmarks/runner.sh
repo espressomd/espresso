@@ -1,5 +1,14 @@
 #!/bin/bash
 
+abort() {
+    echo "An error occurred in runner.sh, exiting now" >&2
+    echo "Command that failed: ${BASH_COMMAND}" >&2
+    exit 1
+}
+
+trap abort EXIT
+set -e
+
 # move to build directory
 build_dir="$1"
 cd "${build_dir}"
@@ -39,3 +48,4 @@ done
 
 rm benchmarks.csv.part
 
+trap : EXIT
