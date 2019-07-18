@@ -52,7 +52,6 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
     Variant make_variant[T](const T & x)
 
     cdef cppclass ObjectHandle:
-        const string name()
         VariantMap get_parameters() except +
         Span[const string_ref] valid_parameters() except +
         Variant get_parameter(const string & name) except +
@@ -75,5 +74,6 @@ cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface
         shared_ptr[ObjectHandle] make_shared(const string &, CreationPolicy, const VariantMap &) except +
         string serialize(const shared_ptr[ObjectHandle] &) except +
         shared_ptr[ObjectHandle] unserialize(const string & state) except +
+        string_ref name(const ObjectHandle *)
 
 cdef void init(MpiCallbacks &)

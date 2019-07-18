@@ -13,12 +13,26 @@ namespace ScriptInterface {
 class ObjectManager : public std::enable_shared_from_this<ObjectManager> {
   using ObjectId = std::size_t;
 
+  struct Meta {
+    CreationPolicy policy;
+    boost::string_ref class_name;
+  };
+
   /* Instances on this node that are managed by the
    * head node. */
   std::unordered_map<ObjectId, ObjectRef> m_local_objects;
+  std::unordered_map<const ObjectHandle *, Meta> m_meta;
   Utils::Factory<ObjectHandle> m_factory;
 
+  const Meta &meta(const ObjectHandle *o) const { return m_meta.at(o); }
+
+  CreationPolicy policy(const ObjectHandle *o) const { return meta(o).policy; }
+
 public:
+  boost::string_ref name(const ObjectHandle *o) const {
+    return meta(o).class_name;
+  }
+
   auto const &local_objects() const { return m_local_objects; }
 
 private:

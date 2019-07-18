@@ -172,7 +172,7 @@ struct get_value_helper<
   std::shared_ptr<T> operator()(Variant const &v) const {
     auto so_ptr = boost::get<ObjectRef>(v);
     if (!so_ptr) {
-      throw std::runtime_error("Unknown Object.");
+      throw std::runtime_error("Unknown Object");
     }
 
     auto t_ptr = std::dynamic_pointer_cast<T>(so_ptr);
@@ -181,7 +181,7 @@ struct get_value_helper<
       return t_ptr;
     }
 
-    throw std::runtime_error("Wrong type: " + so_ptr->name());
+    throw std::runtime_error("Wrong type");
   }
 };
 } // namespace detail

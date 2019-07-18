@@ -49,31 +49,14 @@ public:
 private:
   friend class ObjectManager;
   std::shared_ptr<ObjectManager> m_manager = {};
-  std::string m_name;
-  CreationPolicy m_policy = CreationPolicy::LOCAL;
 
 public:
   /**
    * @brief Responsible manager.
    */
   ObjectManager *manager() const {
-    Utils::print(__PRETTY_FUNCTION__, boost::mpi::communicator().rank());
-    auto const ptr = m_manager.get();
-    return ptr; }
-
-  /**
-   * @brief Name of the object.
-   *
-   * This is the name by which this instance was constructed.
-   *
-   * @return Name of the object.
-   */
-  std::string const &name() const { return m_name; }
-
-  /**
-   * @brief The construction policy of this instance.
-   */
-  CreationPolicy policy() const { return m_policy; }
+    return m_manager.get();
+  }
 
 private:
   /**

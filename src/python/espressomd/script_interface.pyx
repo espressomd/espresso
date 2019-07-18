@@ -133,7 +133,7 @@ cdef class PScriptInterface:
 
     def name(self):
         """Return name of the core class."""
-        return to_str(self.sip.get().name())
+        return to_str(_om.get().name(self.sip.get()).data())
 
     def _serialize(self):
         global _om
@@ -226,7 +226,7 @@ cdef variant_to_python_object(const Variant & value) except +:
         ptr = get_value[shared_ptr[ObjectHandle]](value)
 
         if ptr:
-            so_name = to_str(ptr.get().name())
+            so_name = to_str(_om.get().name(ptr.get()).data()) 
             if not so_name:
                 raise Exception(
                     "Script object without name returned from the core")

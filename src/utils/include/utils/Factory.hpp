@@ -117,8 +117,13 @@ public:
    *
    */
   const std::string &stable_name(const std::string &name) const {
-    assert(m_map.find(name) != m_map.end());
-    return m_map.find(name)->first;
+    auto it = m_map.find(name);
+
+    if (it != m_map.end()) {
+      return it->first;
+    }
+
+    throw std::out_of_range{"Unknown name"};
   }
 
 private:
