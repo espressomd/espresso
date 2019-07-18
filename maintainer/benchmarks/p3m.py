@@ -65,7 +65,7 @@ if args.visualizer:
     from espressomd import visualization
     from threading import Thread
 
-required_features = ["ELECTROSTATICS", "LENNARD_JONES", "MASS"]
+required_features = ["P3M", "LENNARD_JONES", "MASS"]
 espressomd.assert_features(required_features)
 
 print(espressomd.features())
