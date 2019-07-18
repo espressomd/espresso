@@ -10,7 +10,67 @@
 #include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
-class ObjectManager : public std::enable_shared_from_this<ObjectManager> {
+
+class Context {
+  /**
+   * @brief Call method on remote instances
+   *
+   * @param o Internal identified of the instance
+   * @param name Name of the method to call
+   * @param arguments Arguments to the call
+   */
+  virtual void nofity_call_method(const ObjectHandle *o,
+                                  std::string const &name,
+                                  VariantMap const &arguments) = 0;
+
+  /**
+   * @brief Set a parameter on remote instances
+   *
+   * @param o Internal identifier of the instance to be modified
+   * @param name Name of the parameter to change
+   * @param value Value to set it to
+   */
+  virtual void notify_set_parameter(const ObjectHandle *o,
+                                    std::string const &name,
+                                    Variant const &value) = 0;
+
+/**
+   * @brief Delete remote instances
+   *
+   * @param o Internal identified of the instance
+   */
+  virtual void nofity_delete_handle(const ObjectHandle *o) = 0;
+
+  /**
+   * @brief Returns a binary representation of the state of a object.
+   */
+  virtual std::string serialize(const ObjectRef &o) const = 0;
+
+  /**
+   * @brief Creates a new instance from a binary state,
+   *        as returned by @function serialize.
+   */
+  virtual std::shared_ptr<ObjectHandle> unserialize(std::string const &state_) = 0;
+  
+public:
+  template <typename T> void register_new(std::string const &name) {
+    static_assert(std::is_base_of<ObjectHandle, T>::value, "");
+
+    /* Register with the factory */
+    m_factory.register_new<T>(name);
+  }
+
+  virtual ~Context() = default;
+  auto const& factory() const {
+    return m_factory;
+  }
+
+private:
+  Utils::Factory<ObjectHandle> m_factory;
+};
+
+class ObjectManager : public Context,
+                      public std::enable_shared_from_this<ObjectManager> {
   using ObjectId = std::size_t;
 
   struct Meta {
@@ -22,7 +82,6 @@ class ObjectManager : public std::enable_shared_from_this<ObjectManager> {
    * head node. */
   std::unordered_map<ObjectId, ObjectRef> m_local_objects;
   std::unordered_map<const ObjectHandle *, Meta> m_meta;
-  Utils::Factory<ObjectHandle> m_factory;
 
   const Meta &meta(const ObjectHandle *o) const { return m_meta.at(o); }
 
@@ -93,15 +152,8 @@ private:
                      PackedVariant const &value);
 
 public:
-  /**
-   * @brief Set a parameter on remote instances
-   *
-   * @param o Internal identifier of the instance to be modified
-   * @param name Name of the parameter to change
-   * @param value Value to set it to
-   */
-  void remote_set_parameter(const ObjectHandle *o, std::string const &name,
-                            Variant const &value);
+  void notify_set_parameter(const ObjectHandle *o, std::string const &name,
+                            Variant const &value) override;
 
 private:
   /**
@@ -111,15 +163,8 @@ private:
                    PackedMap const &arguments);
 
 public:
-  /**
-   * @brief Call method on remote instances
-   *
-   * @param o Internal identified of the instance
-   * @param name Name of the method to call
-   * @param arguments Arguments to the call
-   */
-  void remote_call_method(const ObjectHandle *o, std::string const &name,
-                          VariantMap const &arguments);
+  void nofity_call_method(const ObjectHandle *o, std::string const &name,
+                          VariantMap const &arguments) override;
 
 private:
   /**
@@ -133,14 +178,7 @@ public:
    *
    * @param o Internal identified of the instance
    */
-  void remote_delete_handle(const ObjectHandle *o);
-
-  template <typename T> void register_new(std::string const &name) {
-    static_assert(std::is_base_of<ObjectHandle, T>::value, "");
-
-    /* Register with the factory */
-    m_factory.register_new<T>(name);
-  }
+  void nofity_delete_handle(const ObjectHandle *o) override;
 
   /**
    * @brief Get a new reference counted instance of a script interface by
@@ -154,13 +192,13 @@ public:
   /**
    * @brief Returns a binary representation of the state of a object.
    */
-  std::string serialize(const ObjectRef &o) const;
+  std::string serialize(const ObjectRef &o) const override;
 
   /**
    * @brief Creates a new instance from a binary state,
    *        as returned by @function serialize.
    */
-  std::shared_ptr<ObjectHandle> unserialize(std::string const &state_);
+  std::shared_ptr<ObjectHandle> unserialize(std::string const &state_) override;
 };
 } // namespace ScriptInterface
 
