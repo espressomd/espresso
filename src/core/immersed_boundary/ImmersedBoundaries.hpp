@@ -29,7 +29,6 @@ public:
   }
   void init_volume_conservation();
   void volume_conservation();
-  int volume_conservation_reset_params(int bond_type, double volRef);
   int volume_conservation_set_params(int bond_type, int softID, double kappaV);
   void calc_volumes();
   void calc_volume_force();
