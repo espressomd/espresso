@@ -32,6 +32,8 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     type=float, default=0.50, required=False,
                     help="Fraction of the simulation box volume occupied by "
                     "particles (range: [0.01-0.74], default: 0.50)")
+parser.add_argument("--bonds", action="store_true",
+                    help="Add bonds between particle pairs, default: false")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--output", metavar="FILEPATH", action="store",
                    type=str, required=False, default="benchmarks.csv",
@@ -49,6 +51,8 @@ n_iterations = 30
 assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
+assert not (args.bonds and args.volume_fraction > 0.5), \
+    "volume_fraction too dense (>0.50) for a diatomic liquid, risk of bonds breaking"
 if not args.visualizer:
     assert(measurement_steps >= 100), \
         "{} steps per tick are too short".format(measurement_steps)
@@ -109,8 +113,17 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 # Particle setup
 #############################################################
 
-for i in range(n_part):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+if not args.bonds:
+    for i in range(n_part):
+        system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+else:
+    hb = espressomd.interactions.HarmonicBond(r_0=lj_cut, k=2)
+    system.bonded_inter.add(hb)
+    for i in range(0, n_part, 2):
+        pos = np.random.random(3) * system.box_l
+        system.part.add(id=i, pos=pos)
+        system.part.add(id=i + 1, pos=pos + np.random.random(3) / np.sqrt(3))
+        system.part[i].add_bond((hb, i + 1))
 
 #############################################################
 #  Warmup Integration                                       #

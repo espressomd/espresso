@@ -75,6 +75,8 @@ python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=1000;--volume_fracti
 python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=1000;--volume_fraction=0.02")
 python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=10000;--volume_fraction=0.50")
 python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=10000;--volume_fraction=0.02")
+python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=1000;--volume_fraction=0.10;--bonds" RUN_WITH_MPI FALSE)
+python_benchmark(FILE lj.py ARGUMENTS "--particles_per_core=10000;--volume_fraction=0.10;--bonds" RUN_WITH_MPI FALSE)
 python_benchmark(FILE p3m.py ARGUMENTS "--particles_per_core=1000;--volume_fraction=0.25;--prefactor=4")
 python_benchmark(FILE p3m.py ARGUMENTS "--particles_per_core=10000;--volume_fraction=0.25;--prefactor=4")
 
@@ -85,10 +87,7 @@ add_custom_target(benchmark_python_parallel COMMAND ${CMAKE_CTEST_COMMAND} --tim
 add_dependencies(benchmark_python_parallel pypresso)
 
 add_custom_target(benchmark_python)
-if(EXISTS ${MPIEXEC})
-  add_dependencies(benchmark_python pypresso benchmark_python_parallel)
-else()
-  add_dependencies(benchmark_python pypresso benchmark_python_serial)
-endif()
+add_dependencies(benchmark_python pypresso benchmark_python_parallel)
+add_dependencies(benchmark_python pypresso benchmark_python_serial)
 
 add_dependencies(benchmark benchmark_python)
