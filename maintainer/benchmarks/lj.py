@@ -124,7 +124,8 @@ system.integrator.set_steepest_descent(
 # warmup
 while system.analysis.energy()["total"] > 3 * n_part:
     print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
-    system.integrator.run(10)
+    system.integrator.run(20)
+print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
 print()
 system.integrator.set_vv()
 
@@ -154,8 +155,9 @@ if not args.visualizer:
         system.integrator.run(measurement_steps)
         tock = time()
         t = (tock - tick) / measurement_steps
-        print("step {}, time = {:.2e}, verlet: {:.2f}"
-              .format(i, t, system.cell_system.get_state()["verlet_reuse"]))
+        print("step {}, time = {:.2e}, verlet: {:.2f}, energy: {:.2e}"
+              .format(i, t, system.cell_system.get_state()["verlet_reuse"],
+                      system.analysis.energy()["total"]))
         all_t.append(t)
     main_tock = time()
     # average time
