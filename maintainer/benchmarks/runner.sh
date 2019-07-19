@@ -23,17 +23,16 @@ for config in ${configs}; do
   sed -ri "s/#define ADDITIONAL_CHECKS//" "${config}"
 done
 
-# prepare build area
-rm -rf src/ maintainer/
-cmake -DWITH_BENCHMARKS=ON -DTEST_TIMEOUT=600 -DWITH_CUDA=OFF -DWITH_CCACHE=OFF ..
 cat > benchmarks.csv << EOF
 "config","script","arguments","cores","MPI","mean","ci","nsteps","duration"
 EOF
 
 # run benchmarks
 for config in ${configs}; do
-  echo "### ${config}" >> benchmarks.log
+  echo "### ${config}" | tee -a benchmarks.log
   cp ${config} myconfig.hpp
+  rm -rf src/ maintainer/
+  cmake -DWITH_BENCHMARKS=ON -DTEST_TIMEOUT=600 -DWITH_CUDA=OFF -DWITH_CCACHE=OFF ..
   make -j$(nproc)
   rm -f benchmarks.csv.part
   touch benchmarks.csv.part
