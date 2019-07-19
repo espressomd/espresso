@@ -18,7 +18,7 @@ cp ../maintainer/configs/maxset.hpp .
 # process configuration files
 for config in ${configs}; do
   # add minimal features for the benchmarks to run
-  echo -e "#define ELECTROSTATICS\n#define LENNARD_JONES\n#define MASS\n$(cat ${config})" > "${config}"
+  sed -i '1 i\#define ELECTROSTATICS\n#define LENNARD_JONES\n#define MASS\n' "${config}"
   # remove checks
   sed -ri "s/#define ADDITIONAL_CHECKS//" "${config}"
 done
