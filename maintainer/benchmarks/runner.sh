@@ -37,7 +37,7 @@ for config in ${configs}; do
   make -j$(nproc)
   rm -f benchmarks.csv.part
   touch benchmarks.csv.part
-  make -j$(nproc) benchmark 2>&1 | tee -a benchmarks.log
+  make benchmark 2>&1 | tee -a benchmarks.log
   sed -ri "s/^/\"$(basename ${config})\",/" benchmarks.csv.part
   cat benchmarks.csv.part >> benchmarks.csv
 done
