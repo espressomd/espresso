@@ -35,7 +35,7 @@ cd "${build_dir}"
 # prepare output files
 rm -f benchmarks.log
 cat > benchmarks_suite.csv << EOF
-"commit","config","script","arguments","cores","MPI","mean","ci","steps_per_tick","duration"
+"commit","config","script","arguments","cores","MPI","mean","ci","nsteps","duration"
 EOF
 
 # run benchmarks

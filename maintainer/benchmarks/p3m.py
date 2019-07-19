@@ -199,7 +199,7 @@ if not args.visualizer:
                   mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci))
     if not os.path.isfile(args.output):
         report = ('"script","arguments","cores","MPI","mean","ci",'
-                  '"steps_per_tick","duration"\n' + report)
+                  '"nsteps","duration"\n' + report)
     with open(args.output, "a") as f:
         f.write(report)
 else:

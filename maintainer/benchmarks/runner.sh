@@ -27,7 +27,7 @@ done
 rm -rf src/ maintainer/
 cmake -DWITH_BENCHMARKS=ON -DTEST_TIMEOUT=600 -DWITH_CUDA=OFF -DWITH_CCACHE=OFF ..
 cat > benchmarks.csv << EOF
-"config","script","arguments","cores","MPI","mean","ci","steps_per_tick","duration"
+"config","script","arguments","cores","MPI","mean","ci","nsteps","duration"
 EOF
 
 # run benchmarks
