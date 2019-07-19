@@ -38,33 +38,6 @@
 struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,
                                       0, 0,       0,       nullptr};
 
-void halo_create_fieldtype(int count, int const *const lengths,
-                           int const *const disps, int extent,
-                           Fieldtype *const newtype) {
-  Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
-
-  ntype->subtype = nullptr;
-  ntype->vflag = 0;
-
-  ntype->vblocks = 1;
-  ntype->vstride = 1;
-  ntype->vskip = 1;
-
-  ntype->count = count;
-  ntype->extent = extent;
-
-  if (count > 0) {
-
-    ntype->lengths = (int *)Utils::malloc(count * 2 * sizeof(int));
-    ntype->disps = (int *)((char *)ntype->lengths + count * sizeof(int));
-
-    for (int i = 0; i < count; i++) {
-      ntype->disps[i] = disps[i];
-      ntype->lengths[i] = lengths[i];
-    }
-  }
-}
-
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
                               Fieldtype oldtype, Fieldtype *const newtype) {
   int i;
