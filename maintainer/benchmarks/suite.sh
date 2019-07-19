@@ -6,16 +6,16 @@ commits="HEAD"
 # list of directories to checkout
 directories="../src ../libs"
 
-abort() {
-    echo "An error occurred in suite.sh, exiting now" >&2
-    echo "Command that failed: ${BASH_COMMAND}" >&2
-    cleanup
-    exit 1
+cleanup() {
+  # empty for now
+  :
 }
 
-cleanup() {
-    # restore files
-    git checkout HEAD ${directories}
+abort() {
+  echo "An error occurred in suite.sh, exiting now" >&2
+  echo "Command that failed: ${BASH_COMMAND}" >&2
+  cleanup
+  exit 1
 }
 
 trap abort EXIT
@@ -32,6 +32,11 @@ fi
 mkdir "${build_dir}"
 cd "${build_dir}"
 
+cleanup() {
+  # restore files in source directory
+  git checkout HEAD ${directories}
+}
+
 # prepare output files
 rm -f benchmarks.log
 cat > benchmarks_suite.csv << EOF
@@ -39,8 +44,7 @@ cat > benchmarks_suite.csv << EOF
 EOF
 
 # run benchmarks
-for commit in ${commits}
-do
+for commit in ${commits}; do
   echo "### commit ${commit}" >> benchmarks.log
   git checkout ${commit} ${directories}
   bash ../maintainer/benchmarks/runner.sh

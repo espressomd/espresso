@@ -1,9 +1,9 @@
 #!/bin/bash
 
 abort() {
-    echo "An error occurred in runner.sh, exiting now" >&2
-    echo "Command that failed: ${BASH_COMMAND}" >&2
-    exit 1
+  echo "An error occurred in runner.sh, exiting now" >&2
+  echo "Command that failed: ${BASH_COMMAND}" >&2
+  exit 1
 }
 
 trap abort EXIT
