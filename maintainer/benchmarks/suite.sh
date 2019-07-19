@@ -35,7 +35,7 @@ cd "${build_dir}"
 # prepare output files
 rm -f benchmarks.log
 cat > benchmarks_suite.csv << EOF
-"commit","config","script","arguments","cores","MPI","mean","ci","steps_per_tick","duration","E1","E2","E3"
+"commit","config","script","arguments","cores","MPI","mean","ci","steps_per_tick","duration"
 EOF
 
 # run benchmarks
@@ -43,7 +43,7 @@ for commit in ${commits}
 do
   echo "### commit ${commit}" >> benchmarks.log
   git checkout ${commit} ${directories}
-  bash ../maintainer/benchmarks/runner.sh "${build_dir}"
+  bash ../maintainer/benchmarks/runner.sh
   sed -ri "s/^/\"${commit}\",/" benchmarks.csv
   tail -n +2 benchmarks.csv >> benchmarks_suite.csv
 done

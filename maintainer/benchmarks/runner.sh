@@ -9,10 +9,6 @@ abort() {
 trap abort EXIT
 set -e
 
-# move to build directory
-build_dir="$1"
-cd "${build_dir}"
-
 # manage configuration files with different features
 configs="empty.hpp default.hpp maxset.hpp"
 cp ../maintainer/configs/empty.hpp .
