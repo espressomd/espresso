@@ -6,12 +6,16 @@ try:
         from .visualization_mayavi import mayaviLive
     else:
         raise ImportError("Cannot connect to X server")
-except ImportError as e:
-    class mayaviLive(object):
-        deferred_ImportError = e
+except BaseException as e:
+    if isinstance(e, ImportError) or isinstance(e, RuntimeError) and \
+            e.args[0] == 'No pyface.toolkits plugin could be loaded for wx':
+        class mayaviLive(object):
+            deferred_ImportError = e
 
-        def __init__(self, *args, **kwargs):
-            raise self.deferred_ImportError
+            def __init__(self, *args, **kwargs):
+                raise self.deferred_ImportError
+    else:
+        raise e
 
 try:
     from .visualization_opengl import openGLLive
