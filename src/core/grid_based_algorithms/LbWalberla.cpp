@@ -85,10 +85,10 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
-      uint_c(1));
+      n_ghost_layers());
   m_force_field_from_md_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
-      uint_c(1));
+      n_ghost_layers());
   m_lattice_model = std::make_shared<Lattice_model_t>(Lattice_model_t(
       lbm::collision_model::TRT::constructWithMagicNumber(
           lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
@@ -96,7 +96,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_pdf_field_id = lbm::addPdfFieldToStorage(
       m_blocks, "pdf field", *m_lattice_model, to_vector3(m_velocity),
-      (real_t)m_density, int_c(skin / agrid + 1));
+      (real_t)m_density, n_ghost_layers());
 
   m_flag_field_id =
       field::addFlagFieldToStorage<Flag_field_t>(m_blocks, "flag field");
@@ -122,13 +122,14 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>(
       m_pdf_field_id, m_force_field_id, m_force_field_from_md_id,
       m_boundary_handling_id);
-  m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
-                     << timeloop::Sweep(Boundary_handling_t::getBlockSweep(
+  m_time_loop->add() << // timeloop::BeforeFunction(communication, "communication")
+                     timeloop::Sweep(Boundary_handling_t::getBlockSweep(
                                             m_boundary_handling_id),
                                         "boundary handling");
   m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                         "Reset force fields");
-  m_time_loop->add() << timeloop::Sweep(
+  m_time_loop->add() << timeloop::AfterFunction(communication, "communication")
+     << timeloop::Sweep(
       domain_decomposition::makeSharedSweep(
           lbm::makeCellwiseSweep<Lattice_model_t, Flag_field_t>(
               m_pdf_field_id, m_flag_field_id, Fluid_flag)),
@@ -144,6 +145,8 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   m_velocity_interpolator_id =
       field::addFieldInterpolator<VectorFieldAdaptorInterpolator, Flag_field_t>(
           m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
+
+  communication();
 }
 
 Utils::Vector3d LbWalberla::get_momentum() const {
@@ -163,11 +166,20 @@ Utils::Vector3d LbWalberla::get_momentum() const {
 void LbWalberla::integrate() { m_time_loop->singleStep(); }
 
 boost::optional<LbWalberla::BlockAndCell>
-LbWalberla::get_block_and_cell(const Utils::Vector3i &node) const {
+LbWalberla::get_block_and_cell(const Utils::Vector3i &node, bool consider_ghost_layers) const {
   // Get block and local cell
   Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
   auto block = m_blocks->getBlock(global_cell, 0);
   // Return if we don't have the cell
+  if (consider_ghost_layers and !block) {
+    // Try to find a block which has the cell as ghost layer
+    for (auto b = m_blocks->begin(); b!=m_blocks->end(); ++b) {
+      if (b->getAABB().getExtended(1.0 *n_ghost_layers()).contains(real_c(node[0]),real_c(node[1]),real_c(node[2]))) {
+        block=&(*b);
+        break;
+      }
+    }
+  }
   if (!block)
     return {boost::none};
 
@@ -239,11 +251,11 @@ LbWalberla::get_node_is_boundary(const Utils::Vector3i &node) const {
 
 bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
                                   const Utils::Vector3d &force) {
-  auto block = m_blocks->getBlock(to_vector3(pos));
-  if (!block)
+  auto bc = get_block_and_cell(Utils::Vector3i{int(pos[0]),int(pos[1]),int(pos[2])},true);
+  if (!bc)
     return false;
   auto *force_distributor =
-      block->getData<Vector_field_distributor_t>(m_force_distributor_id);
+      bc->block->getData<Vector_field_distributor_t>(m_force_distributor_id);
   auto f = to_vector3(force);
   force_distributor->distribute(to_vector3(pos), &f);
   return true;
@@ -263,11 +275,11 @@ LbWalberla::get_node_velocity(const Utils::Vector3i node) const {
 
 boost::optional<Utils::Vector3d>
 LbWalberla::get_velocity_at_pos(const Utils::Vector3d &pos) const {
-  auto block = m_blocks->getBlock(to_vector3(pos));
-  if (!block)
+  auto bc = get_block_and_cell(Utils::Vector3i{int(pos[0]),int(pos[1]),int(pos[2])}, true);
+  if (!bc)
     return {boost::none};
 
-  auto *velocity_interpolator = block->getData<VectorFieldAdaptorInterpolator>(
+  auto *velocity_interpolator = bc->block->getData<VectorFieldAdaptorInterpolator>(
       m_velocity_interpolator_id);
   Vector3<real_t> v;
   velocity_interpolator->get(to_vector3(pos), &v);

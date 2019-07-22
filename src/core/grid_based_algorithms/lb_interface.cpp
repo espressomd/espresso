@@ -352,7 +352,7 @@ double lb_lbfluid_get_density() {
   }
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return 0.0;
+    return lb_walberla()->get_density();
   }
 #endif
   throw std::runtime_error("LB not activated.");
@@ -1615,8 +1615,7 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
   } else if (lattice_switch == ActiveLB::WALBERLA) {
     fluid_momentum = Communication::mpiCallbacks().call(
                          Communication::Result::Reduction(), std::plus<>(),
-                         Walberla::get_momentum) *
-                     lb_lbfluid_get_agrid() / lb_lbfluid_get_tau();
+                         Walberla::get_momentum) *(lb_lbfluid_get_agrid() /lb_lbfluid_get_tau()); 
   } else
     throw std::runtime_error("No LB active (calc_fluid_momentum).");
 

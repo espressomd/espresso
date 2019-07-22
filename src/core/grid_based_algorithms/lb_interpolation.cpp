@@ -92,6 +92,9 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
       throw std::runtime_error(
           "Interpolated velocity could not be obtained from Walberla");
     }
+    extern double sim_time;
+//    printf("%d: %g, pos: %g %g %g, v= %g %g %g\n",
+//      this_node, sim_time, folded_pos[0],folded_pos[1],folded_pos[2], (*res)[0], (*res)[1], (*res)[2]);
     return *res;
   } else
     throw std::runtime_error("No LB active.");

@@ -23,12 +23,12 @@ import sys
 
 # Define the LB Parameters
 TIME_STEP = 0.01
-AGRID = 0.8 
+AGRID = 1.0 
 KVISC = 6 
-DENS = 1.3 
+DENS = 1 
+BOX_SIZE = 20 * AGRID
+F = 1. /BOX_SIZE**3
 
-F = 0.013
-BOX_SIZE = 10 * AGRID
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -44,6 +44,7 @@ class Momentum(object):
     system.cell_system.skin = 0.01
 
     def test(self):
+        last_mom=np.zeros(3)
         self.system.actors.clear()
         self.system.part.clear()
         self.system.actors.add(self.lbf)
@@ -54,29 +55,32 @@ class Momentum(object):
         p = self.system.part.add(pos=(0, 0, 0), ext_force=-applied_force)
 
         # Reach steady state
-        self.system.integrator.run(700)
+        self.system.integrator.run(1)
         v_final = np.copy(p.v)
 
-        for i in range(3):
-            self.system.integrator.run(300)
-            print(i, p.v * p.mass, -
-                  np.array(
-                  self.system.analysis.linear_momentum(
-                  include_particles=False)))
+        for i in range(30):
+            self.system.integrator.run(1)
+#            print(i, p.v * p.mass , -
+#                  np.array(
+#                  self.system.analysis.linear_momentum(
+#                  include_particles=False)))
 
+            mom =self.system.analysis.linear_momentum()
+            print(i,mom-last_mom)
+            lsat_mom=mom
             # Check that particle momentum =-fluid momenum
             # up to the momentum trnasferred in 1/2 time step
-            np.testing.assert_allclose(
-                p.v * p.mass, -
-                    np.array(
-                        self.system.analysis.linear_momentum(
-                            include_particles=False)),
-                atol=np.linalg.norm(applied_force) * TIME_STEP * 0.55)
+#            np.testing.assert_allclose(
+#                p.v * p.mass, -
+#                    np.array(
+#                        self.system.analysis.linear_momentum(
+#                            include_particles=False)),
+#                atol=np.linalg.norm(applied_force) * TIME_STEP * 0.55)
 
             # Check that particle velocity is stationary
             # up to the acceleration of 1/2 time step
-            np.testing.assert_allclose(np.copy(p.v), v_final, 
-                                       atol=np.linalg.norm(applied_force) / p.mass * TIME_STEP * 0.55)
+#            np.testing.assert_allclose(np.copy(p.v), v_final, 
+#                                       atol=np.linalg.norm(applied_force) / p.mass * TIME_STEP * 0.55)
            
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
