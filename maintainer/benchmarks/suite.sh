@@ -32,6 +32,13 @@ fi
 mkdir "${build_dir}"
 cd "${build_dir}"
 
+# check for unstaged changes
+if [ "$(git diff-index HEAD -- ${directories})" ]; then
+  echo "fatal: you have unstaged changes, please commit or stash them:"
+  git diff-index --name-only HEAD -- ${directories}
+  exit 1
+fi
+
 cleanup() {
   # restore files in source directory
   git checkout HEAD ${directories}
