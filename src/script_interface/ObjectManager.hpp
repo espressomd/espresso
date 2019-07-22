@@ -1,97 +1,27 @@
 #ifndef ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
 #define ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
 
+#include "Context.hpp"
 #include "MpiCallbacks.hpp"
 #include "ObjectHandle.hpp"
 #include "PackedVariant.hpp"
-
-#include <utils/Factory.hpp>
 
 #include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
 
-class Context {
-  /**
-   * @brief Call method on remote instances
-   *
-   * @param o Internal identified of the instance
-   * @param name Name of the method to call
-   * @param arguments Arguments to the call
-   */
-  virtual void nofity_call_method(const ObjectHandle *o,
-                                  std::string const &name,
-                                  VariantMap const &arguments) = 0;
-
-  /**
-   * @brief Set a parameter on remote instances
-   *
-   * @param o Internal identifier of the instance to be modified
-   * @param name Name of the parameter to change
-   * @param value Value to set it to
-   */
-  virtual void notify_set_parameter(const ObjectHandle *o,
-                                    std::string const &name,
-                                    Variant const &value) = 0;
-
-/**
-   * @brief Delete remote instances
-   *
-   * @param o Internal identified of the instance
-   */
-  virtual void nofity_delete_handle(const ObjectHandle *o) = 0;
-
-  /**
-   * @brief Returns a binary representation of the state of a object.
-   */
-  virtual std::string serialize(const ObjectRef &o) const = 0;
-
-  /**
-   * @brief Creates a new instance from a binary state,
-   *        as returned by @function serialize.
-   */
-  virtual std::shared_ptr<ObjectHandle> unserialize(std::string const &state_) = 0;
-  
-public:
-  template <typename T> void register_new(std::string const &name) {
-    static_assert(std::is_base_of<ObjectHandle, T>::value, "");
-
-    /* Register with the factory */
-    m_factory.register_new<T>(name);
-  }
-
-  virtual ~Context() = default;
-  auto const& factory() const {
-    return m_factory;
-  }
-
-private:
-  Utils::Factory<ObjectHandle> m_factory;
-};
-
-class ObjectManager : public Context,
-                      public std::enable_shared_from_this<ObjectManager> {
+class ObjectManager : public Context {
   using ObjectId = std::size_t;
-
-  struct Meta {
-    CreationPolicy policy;
-    boost::string_ref class_name;
-  };
 
   /* Instances on this node that are managed by the
    * head node. */
   std::unordered_map<ObjectId, ObjectRef> m_local_objects;
-  std::unordered_map<const ObjectHandle *, Meta> m_meta;
+  /* Meta information about objects */
+  std::unordered_map<const ObjectHandle *, CreationPolicy> m_policy;
 
-  const Meta &meta(const ObjectHandle *o) const { return m_meta.at(o); }
-
-  CreationPolicy policy(const ObjectHandle *o) const { return meta(o).policy; }
+  CreationPolicy policy(const ObjectHandle *o) const { return m_policy.at(o); }
 
 public:
-  boost::string_ref name(const ObjectHandle *o) const {
-    return meta(o).class_name;
-  }
-
   auto const &local_objects() const { return m_local_objects; }
 
 private:
@@ -198,7 +128,7 @@ public:
    * @brief Creates a new instance from a binary state,
    *        as returned by @function serialize.
    */
-  std::shared_ptr<ObjectHandle> unserialize(std::string const &state_) override;
+  std::shared_ptr<ObjectHandle> unserialize(std::string const &state_);
 };
 } // namespace ScriptInterface
 

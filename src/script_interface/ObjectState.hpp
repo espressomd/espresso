@@ -1,7 +1,7 @@
 #ifndef ESPRESSO_SCRIPT_INTERFACE_OBJECTSTATE_HPP
 #define ESPRESSO_SCRIPT_INTERFACE_OBJECTSTATE_HPP
 
-#include "Variant.hpp"
+#include "PackedVariant.hpp"
 
 #include <string>
 #include <utility>
@@ -16,13 +16,12 @@ namespace ScriptInterface {
  */
 struct ObjectState {
   std::string name;
-  CreationPolicy policy;
   PackedMap params;
   std::vector<std::pair<ObjectId, std::string>> objects;
   std::string internal_state;
 
   template <class Archive> void serialize(Archive &ar, long int) {
-    ar &name &policy &params &objects &internal_state;
+    ar &name &params &objects &internal_state;
   }
 };
 } // namespace ScriptInterface
