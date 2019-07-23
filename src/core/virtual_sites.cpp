@@ -20,16 +20,17 @@
 */
 
 #include "virtual_sites.hpp"
+
+#ifdef VIRTUAL_SITES
 #include "communication.hpp"
 #include "config.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
 
 #include <utils/constants.hpp>
-
-#ifdef VIRTUAL_SITES
 
 namespace {
 std::shared_ptr<VirtualSites> m_virtual_sites;
@@ -50,7 +51,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
                                    const Particle &p_relate_to, double &l,
                                    Utils::Vector4d &quat) {
   // get the distance between the particles
-  Utils::Vector3d d = get_mi_vector(p_current.r.p, p_relate_to.r.p);
+  Utils::Vector3d d = get_mi_vector(p_current.r.p, p_relate_to.r.p, box_geo);
 
   // Check, if the distance between virtual and non-virtual particles is larger
   // htan minimum global cutoff If so, warn user

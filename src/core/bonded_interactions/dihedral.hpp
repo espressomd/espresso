@@ -67,9 +67,9 @@ inline void calc_dihedral_angle(Particle const *p1, Particle const *p2,
                                 Utils::Vector3d &c, Utils::Vector3d &aXb,
                                 double *l_aXb, Utils::Vector3d &bXc,
                                 double *l_bXc, double *cosphi, double *phi) {
-  a = get_mi_vector(p2->r.p, p1->r.p);
-  b = get_mi_vector(p3->r.p, p2->r.p);
-  c = get_mi_vector(p4->r.p, p3->r.p);
+  a = get_mi_vector(p2->r.p, p1->r.p, box_geo);
+  b = get_mi_vector(p3->r.p, p2->r.p, box_geo);
+  c = get_mi_vector(p4->r.p, p3->r.p, box_geo);
 
   /* calculate vector product a X b and b X c */
   aXb = vector_product(a, b);

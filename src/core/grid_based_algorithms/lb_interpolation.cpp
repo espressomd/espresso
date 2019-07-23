@@ -42,7 +42,7 @@ void lattice_interpolation(Lattice const &lattice, Utils::Vector3d const &pos,
 
   /* determine elementary lattice cell surrounding the particle
      and the relative position of the particle in this cell */
-  lattice.map_position_to_lattice(pos, node_index, delta, my_left, local_box_l);
+  lattice.map_position_to_lattice(pos, node_index, delta);
   for (int z = 0; z < 2; z++) {
     for (int y = 0; y < 2; y++) {
       for (int x = 0; x < 2; x++) {
@@ -62,8 +62,8 @@ Utils::Vector3d node_u(Lattice::index_t index) {
   }
 #endif // LB_BOUNDARIES
   auto const modes = lb_calc_modes(index);
-  auto const local_rho = lbpar.rho + modes[0];
-  return Utils::Vector3d{modes[1], modes[2], modes[3]} / local_rho;
+  auto const local_density = lbpar.density + modes[0];
+  return Utils::Vector3d{modes[1], modes[2], modes[3]} / local_density;
 }
 
 } // namespace
@@ -83,9 +83,9 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
     return interpolated_u;
   } else if (lattice_switch == ActiveLB::WALBERLA) {
-    auto folded_pos = folded_position(pos);
+    auto folded_pos = folded_position(pos,box_geo);
     auto res =
-        lb_walberla()->get_velocity_at_pos(folded_pos / lb_lbfluid_get_agrid());
+        lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid());
     if (!res) {
       printf("%d: positoin: %g %g %g\n", this_node, folded_pos[0],
              folded_pos[1], folded_pos[2]);
@@ -104,7 +104,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
 const Utils::Vector3d lb_lbinterpolation_get_interpolated_velocity_global(
     const Utils::Vector3d &pos) {
-  auto const folded_pos = folded_position(pos);
+  auto const folded_pos = folded_position(pos, box_geo);
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     Utils::Vector3d interpolated_u{};

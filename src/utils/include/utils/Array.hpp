@@ -43,23 +43,23 @@ template <typename T, std::size_t N> struct Array {
 
   DEVICE_QUALIFIER constexpr reference at(size_type i) {
     if (i >= N)
-      throw std::out_of_range("Array access out of bounds.");
+      DEVICE_THROW(std::out_of_range("Array access out of bounds."));
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr const_reference at(size_type i) const {
     if (i >= N)
-      throw std::out_of_range("Array access out of bounds.");
+      DEVICE_THROW(std::out_of_range("Array access out of bounds."));
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr reference operator[](size_type i) {
-    assert(i < N);
+    DEVICE_ASSERT(i < N);
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr const_reference operator[](size_type i) const {
-    assert(i < N);
+    DEVICE_ASSERT(i < N);
     return m_storage.m_data[i];
   }
 
@@ -124,6 +124,14 @@ template <typename T, std::size_t N> struct Array {
     }
     return ret;
   }
+
+#ifdef __HCC__
+  // workaround for https://github.com/RadeonOpenCompute/hcc/issues/860
+  __attribute__((annotate("serialize"))) void
+  __cxxamp_serialize(Kalmar::Serialize &s) const;
+  __attribute__((annotate("user_deserialize"))) void
+  cxxamp_deserialize()[[cpu]][[hc]];
+#endif
 
 private:
   friend boost::serialization::access;

@@ -25,6 +25,7 @@
 
 #include "domain_decomposition.hpp"
 
+#include "communication.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
@@ -63,7 +64,7 @@ double max_skin = 0.0;
 /*@{*/
 
 /** Calculate cell grid dimensions, cell sizes and number of cells.
- *  Calculates the cell grid, based on \ref local_box_l and \ref
+ *  Calculates the cell grid, based on \ref local_geo and \ref
  *  max_range. If the number of cells is larger than \ref
  *  max_num_cells, it increases max_range until the number of cells is
  *  smaller or equal \ref max_num_cells. It sets: \ref
@@ -75,17 +76,11 @@ double max_skin = 0.0;
 void dd_create_cell_grid() {
   int i, n_local_cells, new_cells;
   double cell_range[3];
-  CELL_TRACE(fprintf(stderr, "%d: dd_create_cell_grid: max_range %f\n",
-                     this_node, max_range));
-  CELL_TRACE(fprintf(
-      stderr, "%d: dd_create_cell_grid: local_box %f-%f, %f-%f, %f-%f,\n",
-      this_node, my_left[0], my_right[0], my_left[1], my_right[1], my_left[2],
-      my_right[2]));
 
   /* initialize */
   cell_range[0] = cell_range[1] = cell_range[2] = max_range;
 
-  if (max_range < ROUND_ERROR_PREC * box_l[0]) {
+  if (max_range < ROUND_ERROR_PREC * box_geo.length()[0]) {
     /* this is the non-interacting case */
     const int cells_per_dir = std::ceil(std::pow(min_num_cells, 1. / 3.));
 
@@ -96,25 +91,25 @@ void dd_create_cell_grid() {
     n_local_cells = dd.cell_grid[0] * dd.cell_grid[1] * dd.cell_grid[2];
   } else {
     /* Calculate initial cell grid */
-    double volume = local_box_l[0];
+    double volume = local_geo.length()[0];
     for (i = 1; i < 3; i++)
-      volume *= local_box_l[i];
+      volume *= local_geo.length()[i];
     double scale = pow(max_num_cells / volume, 1. / 3.);
     for (i = 0; i < 3; i++) {
       /* this is at least 1 */
-      dd.cell_grid[i] = (int)ceil(local_box_l[i] * scale);
-      cell_range[i] = local_box_l[i] / dd.cell_grid[i];
+      dd.cell_grid[i] = (int)ceil(local_geo.length()[i] * scale);
+      cell_range[i] = local_geo.length()[i] / dd.cell_grid[i];
 
       if (cell_range[i] < max_range) {
         /* ok, too many cells for this direction, set to minimum */
-        dd.cell_grid[i] = (int)floor(local_box_l[i] / max_range);
+        dd.cell_grid[i] = (int)floor(local_geo.length()[i] / max_range);
         if (dd.cell_grid[i] < 1) {
           runtimeErrorMsg()
               << "interaction range " << max_range << " in direction " << i
-              << " is larger than the local box size " << local_box_l[i];
+              << " is larger than the local box size " << local_geo.length()[i];
           dd.cell_grid[i] = 1;
         }
-        cell_range[i] = local_box_l[i] / dd.cell_grid[i];
+        cell_range[i] = local_geo.length()[i] / dd.cell_grid[i];
       }
     }
 
@@ -140,15 +135,10 @@ void dd_create_cell_grid() {
           min_size = cell_range[i];
         }
       }
-      CELL_TRACE(fprintf(stderr,
-                         "%d: minimal coordinate %d, size %f, grid %d\n",
-                         this_node, min_ind, min_size, dd.cell_grid[min_ind]));
 
       dd.cell_grid[min_ind]--;
-      cell_range[min_ind] = local_box_l[min_ind] / dd.cell_grid[min_ind];
+      cell_range[min_ind] = local_geo.length()[min_ind] / dd.cell_grid[min_ind];
     }
-    CELL_TRACE(fprintf(stderr, "%d: final %d %d %d\n", this_node,
-                       dd.cell_grid[0], dd.cell_grid[1], dd.cell_grid[2]));
 
     /* sanity check */
     if (n_local_cells < min_num_cells) {
@@ -169,7 +159,7 @@ void dd_create_cell_grid() {
   for (i = 0; i < 3; i++) {
     dd.ghost_cell_grid[i] = dd.cell_grid[i] + 2;
     new_cells *= dd.ghost_cell_grid[i];
-    dd.cell_size[i] = local_box_l[i] / (double)dd.cell_grid[i];
+    dd.cell_size[i] = local_geo.length()[i] / (double)dd.cell_grid[i];
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
   }
   max_skin =
@@ -180,13 +170,6 @@ void dd_create_cell_grid() {
   realloc_cells(new_cells);
   realloc_cellplist(&local_cells, local_cells.n = n_local_cells);
   realloc_cellplist(&ghost_cells, ghost_cells.n = new_cells - n_local_cells);
-
-  CELL_TRACE(fprintf(stderr,
-                     "%d: dd_create_cell_grid, n_cells=%lu, local_cells.n=%d, "
-                     "ghost_cells.n=%d, dd.ghost_cell_grid=(%d,%d,%d)\n",
-                     this_node, (unsigned long)cells.size(), local_cells.n,
-                     ghost_cells.n, dd.ghost_cell_grid[0],
-                     dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]));
 }
 
 /** Fill local_cells list and ghost_cells list for use with domain
@@ -252,12 +235,15 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   int dir, lr, i, cnt, num, n_comm_cells[3];
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+  auto const node_pos = calc_node_pos(comm_cart);
+
   /* calculate number of communications */
   num = 0;
   for (dir = 0; dir < 3; dir++) {
     for (lr = 0; lr < 2; lr++) {
       /* No communication for border of non periodic direction */
-      if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
+      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + lr] == 0)) {
         if (grid[dir] == 1)
           num++;
         else
@@ -267,9 +253,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   }
 
   /* prepare communicator */
-  CELL_TRACE(fprintf(stderr,
-                     "%d Create Communicator: prep_comm data_parts %d num %d\n",
-                     this_node, data_parts, num));
   prepare_comm(comm, data_parts, num);
 
   /* number of cells to communicate in a direction */
@@ -291,7 +274,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
     for (lr = 0; lr < 2; lr++) {
       if (grid[dir] == 1) {
         /* just copy cells on a single node */
-        if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
+        if (box_geo.periodic(dir) ||
+            (local_geo.boundary()[2 * dir + lr] == 0)) {
           comm->comm[cnt].type = GHOST_LOCL;
           comm->comm[cnt].node = this_node;
 
@@ -301,18 +285,15 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
           /* prepare folding of ghost positions */
           if ((data_parts & GHOSTTRANS_POSSHFTD) &&
-              boundary[2 * dir + lr] != 0) {
-            comm->comm[cnt].shift[dir] = boundary[2 * dir + lr] * box_l[dir];
+              local_geo.boundary()[2 * dir + lr] != 0) {
+            comm->comm[cnt].shift[dir] =
+                local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
           }
 
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
           dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
-          CELL_TRACE(fprintf(
-              stderr,
-              "%d: prep_comm %d copy to          grid (%d,%d,%d)-(%d,%d,%d)\n",
-              this_node, cnt, lc[0], lc[1], lc[2], hc[0], hc[1], hc[2]));
 
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
@@ -320,16 +301,14 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           /* place receive cells after send cells */
           dd_fill_comm_cell_lists(
               &comm->comm[cnt].part_lists[n_comm_cells[dir]], lc, hc);
-          CELL_TRACE(fprintf(
-              stderr,
-              "%d: prep_comm %d copy from        grid (%d,%d,%d)-(%d,%d,%d)\n",
-              this_node, cnt, lc[0], lc[1], lc[2], hc[0], hc[1], hc[2]));
+
           cnt++;
         }
       } else {
         /* i: send/recv loop */
         for (i = 0; i < 2; i++) {
-          if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0))
+          if (box_geo.periodic(dir) ||
+              (local_geo.boundary()[2 * dir + lr] == 0))
             if ((node_pos[dir] + i) % 2 == 0) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
@@ -338,9 +317,9 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
               comm->comm[cnt].n_part_lists = n_comm_cells[dir];
               /* prepare folding of ghost positions */
               if ((data_parts & GHOSTTRANS_POSSHFTD) &&
-                  boundary[2 * dir + lr] != 0) {
+                  local_geo.boundary()[2 * dir + lr] != 0) {
                 comm->comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
+                    local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
               }
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
@@ -354,7 +333,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
                                  lc[1], lc[2], hc[0], hc[1], hc[2]));
               cnt++;
             }
-          if (PERIODIC(dir) || (boundary[2 * dir + (1 - lr)] == 0))
+          if (box_geo.periodic(dir) ||
+              (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
@@ -442,31 +422,35 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
     /* lr loop: left right */
     for (int lr = 0; lr < 2; lr++) {
       if (grid[dir] == 1) {
-        if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0)) {
+        if (box_geo.periodic(dir) ||
+            (local_geo.boundary()[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
-          if (boundary[2 * dir + lr] != 0) {
+          if (local_geo.boundary()[2 * dir + lr] != 0) {
             cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                boundary[2 * dir + lr] * box_l[dir];
+                local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
             cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                boundary[2 * dir + lr] * box_l[dir];
+                local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
           }
           cnt++;
         }
       } else {
+        auto const node_pos = calc_node_pos(comm_cart);
         /* i: send/recv loop */
         for (int i = 0; i < 2; i++) {
-          if (PERIODIC(dir) || (boundary[2 * dir + lr] == 0))
+          if (box_geo.periodic(dir) ||
+              (local_geo.boundary()[2 * dir + lr] == 0))
             if ((node_pos[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
-              if (boundary[2 * dir + lr] != 0) {
+              if (local_geo.boundary()[2 * dir + lr] != 0) {
                 cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
+                    local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
                 cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                    boundary[2 * dir + lr] * box_l[dir];
+                    local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
               }
               cnt++;
             }
-          if (PERIODIC(dir) || (boundary[2 * dir + (1 - lr)] == 0))
+          if (box_geo.periodic(dir) ||
+              (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               cnt++;
             }
@@ -541,7 +525,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
   int cpos[3];
 
   for (int i = 0; i < 3; i++) {
-    auto const lpos = pos[i] - my_left[i];
+    auto const lpos = pos[i] - local_geo.my_left()[i];
     cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
 
     /* particles outside our box. Still take them if
@@ -550,12 +534,14 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
        the particle belongs here and could otherwise potentially be dismissed
        due to rouding errors. */
     if (cpos[i] < 1) {
-      if ((!PERIODIC(i) or (pos[i] >= box_l[i])) && boundary[2 * i])
+      if ((!box_geo.periodic(i) or (pos[i] >= box_geo.length()[i])) &&
+          local_geo.boundary()[2 * i])
         cpos[i] = 1;
       else
         return nullptr;
     } else if (cpos[i] > dd.cell_grid[i]) {
-      if ((!PERIODIC(i) or (pos[i] < box_l[i])) && boundary[2 * i + 1])
+      if ((!box_geo.periodic(i) or (pos[i] < box_geo.length()[i])) &&
+          local_geo.boundary()[2 * i + 1])
         cpos[i] = dd.cell_grid[i];
       else
         return nullptr;
@@ -577,7 +563,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
 void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
-    if (local_box_l[i] < max_range) {
+    if (local_geo.length()[i] < max_range) {
       runtimeErrorMsg() << "box_l in direction " << i << " is too small";
     }
 
@@ -599,7 +585,7 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
      (in addition to the general ones that \ref grid_changed_box_l
      takes care of) */
   for (int i = 0; i < 3; i++) {
-    dd.cell_size[i] = local_box_l[i] / (double)dd.cell_grid[i];
+    dd.cell_size[i] = local_geo.length()[i] / (double)dd.cell_grid[i];
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
   }
 
@@ -624,7 +610,7 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
   if (!(flags & CELL_FLAG_FAST) && max_range > 0) {
     int i;
     for (i = 0; i < 3; i++) {
-      auto poss_size = (int)floor(local_box_l[i] / max_range);
+      auto poss_size = (int)floor(local_geo.length()[i] / max_range);
       if (poss_size > dd.cell_grid[i])
         break;
     }
@@ -643,17 +629,14 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   int c, p;
   int exchange_data, update_data;
 
-  CELL_TRACE(fprintf(stderr,
-                     "%d: dd_topology_init: Number of recieved cells=%d\n",
-                     this_node, old->n));
-
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
-     but may be set to a larger value by the user for performance reasons. */
+    but may be set to a larger value by the user for performance reasons. */
   min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
-  cell_structure.position_to_node = map_position_node_array;
-  cell_structure.position_to_cell = dd_save_position_to_cell;
+  cell_structure.particle_to_cell = [](const Particle &p) {
+    return dd_save_position_to_cell(p.r.p);
+  };
 
   /* set up new domain decomposition cell structure */
   dd_create_cell_grid();
@@ -765,15 +748,18 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 
     assert(local_particles[src.part[i].p.identity] == nullptr);
 
-    if (get_mi_coord(part.r.p[dir], my_left[dir], dir) < 0.0) {
-      if (PERIODIC(dir) || (boundary[2 * dir] == 0)) {
+    if (get_mi_coord(part.r.p[dir], local_geo.my_left()[dir],
+                     box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) {
+      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0)) {
 
         move_unindexed_particle(&left, &src, i);
         if (i < src.n)
           i--;
       }
-    } else if (get_mi_coord(part.r.p[dir], my_right[dir], dir) >= 0.0) {
-      if (PERIODIC(dir) || (boundary[2 * dir + 1] == 0)) {
+    } else if (get_mi_coord(part.r.p[dir], local_geo.my_right()[dir],
+                            box_geo.length()[dir],
+                            box_geo.periodic(dir)) >= 0.0) {
+      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + 1] == 0)) {
 
         move_unindexed_particle(&right, &src, i);
         if (i < src.n)
@@ -784,6 +770,8 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 }
 
 void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
     if (grid[dir] == 1) {

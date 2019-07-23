@@ -81,7 +81,7 @@ IF ELECTROSTATICS == 1:
 IF ELECTROSTATICS:
     cdef class DH(ElectrostaticInteraction):
         """
-        Solve electrostatics in the Debye-Hueckel framework see
+        Electrostatics solver based on the Debye-Hueckel framework. See
         :ref:`Debye-Hückel potential` for more details.
 
         Parameters
@@ -96,12 +96,11 @@ IF ELECTROSTATICS:
         """
 
         def validate_params(self):
-            if (self._params["prefactor"] <= 0):
-                raise ValueError(
-                    "prefactor should be a positive float")
-            if (self._params["kappa"] < 0):
+            if self._params["prefactor"] <= 0:
+                raise ValueError("prefactor should be a positive float")
+            if self._params["kappa"] < 0:
                 raise ValueError("kappa should be a non-negative double")
-            if (self._params["r_cut"] < 0):
+            if self._params["r_cut"] < 0:
                 raise ValueError("r_cut should be a non-negative double")
 
         def valid_keys(self):
@@ -131,70 +130,67 @@ IF ELECTROSTATICS:
                     "check_neutrality": True}
 
     cdef class ReactionField(ElectrostaticInteraction):
-            """
-            Solve electrostatics in the Reaction-Field framework
+        """
+        Electrostatics solver based on the Reaction-Field framework.
 
-            Parameters
-            ----------
-            prefactor : :obj:`float`
-                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-            kappa : :obj:`float`
-                Inverse Debye screening length.
-            epsilon1 : :obj:`float`
-                interior dielectric constant
-            epsilon2 : :obj:`float`
-                exterior dielectric constant
-            r_cut : :obj:`float`
-                Cut off radius for this interaction.
+        Parameters
+        ----------
+        prefactor : :obj:`float`
+            Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+        kappa : :obj:`float`
+            Inverse Debye screening length.
+        epsilon1 : :obj:`float`
+            interior dielectric constant
+        epsilon2 : :obj:`float`
+            exterior dielectric constant
+        r_cut : :obj:`float`
+            Cut off radius for this interaction.
 
-            """
+        """
 
-            def validate_params(self):
-                if (self._params["prefactor"] <= 0):
-                    raise ValueError(
-                        "prefactor should be a positive float")
-                if (self._params["kappa"] < 0):
-                    raise ValueError("kappa should be a non-negative double")
-                if (self._params["epsilon1"] < 0):
-                                    raise ValueError(
-                                        "epsilon1 should be a non-negative double")
-                if (self._params["epsilon2"] < 0):
-                                    raise ValueError(
-                                        "epsilon2 should be a non-negative double")
-                if (self._params["r_cut"] < 0):
-                    raise ValueError("r_cut should be a non-negative double")
+        def validate_params(self):
+            if self._params["prefactor"] <= 0:
+                raise ValueError("prefactor should be a positive float")
+            if self._params["kappa"] < 0:
+                raise ValueError("kappa should be a non-negative double")
+            if self._params["epsilon1"] < 0:
+                raise ValueError("epsilon1 should be a non-negative double")
+            if self._params["epsilon2"] < 0:
+                raise ValueError("epsilon2 should be a non-negative double")
+            if self._params["r_cut"] < 0:
+                raise ValueError("r_cut should be a non-negative double")
 
-            def valid_keys(self):
-                return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut", "check_neutrality"
+        def valid_keys(self):
+            return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut", "check_neutrality"
 
-            def required_keys(self):
-                return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"
+        def required_keys(self):
+            return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"
 
-            def _set_params_in_es_core(self):
-                set_prefactor(self._params["prefactor"])
-                rf_set_params(
-                    self._params["kappa"],
-                    self._params["epsilon1"],
-                    self._params["epsilon2"],
-                    self._params["r_cut"])
+        def _set_params_in_es_core(self):
+            set_prefactor(self._params["prefactor"])
+            rf_set_params(
+                self._params["kappa"],
+                self._params["epsilon1"],
+                self._params["epsilon2"],
+                self._params["r_cut"])
 
-            def _get_params_from_es_core(self):
-                params = {}
-                params.update(rf_params)
-                return params
+        def _get_params_from_es_core(self):
+            params = {}
+            params.update(rf_params)
+            return params
 
-            def _activate_method(self):
-                check_neutrality(self._params)
-                coulomb.method = COULOMB_RF
-                self._set_params_in_es_core()
+        def _activate_method(self):
+            check_neutrality(self._params)
+            coulomb.method = COULOMB_RF
+            self._set_params_in_es_core()
 
-            def default_params(self):
-                return {"prefactor": -1,
-                        "kappa": -1,
-                        "epsilon1": -1,
-                        "epsilon2": -1,
-                        "r_cut": -1,
-                        "check_neutrality": True}
+        def default_params(self):
+            return {"prefactor": -1,
+                    "kappa": -1,
+                    "epsilon1": -1,
+                    "epsilon2": -1,
+                    "r_cut": -1,
+                    "check_neutrality": True}
 
 
 IF P3M == 1:
@@ -480,7 +476,7 @@ IF P3M == 1:
 IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
         """
-        Electrostatics solver for Systems with one periodic direction.
+        Electrostatics solver for systems with one periodic direction.
         See :ref:`MMM1D Theory` for more details.
 
         Parameters
@@ -494,6 +490,7 @@ IF ELECTROSTATICS:
         bessel_cutoff : :obj:`int`, optional
         tune : :obj:`bool`, optional
             Specify whether to automatically tune ore not. The default is True.
+
         """
 
         def validate_params(self):
@@ -555,8 +552,8 @@ IF ELECTROSTATICS:
 IF ELECTROSTATICS and MMM1D_GPU:
     cdef class MMM1DGPU(ElectrostaticInteraction):
         """
-        Electrostatics solver for Systems with one periodic direction.
-        See :ref:`MMM1D Theory` for more details.
+        Electrostatics solver with GPU support for systems with one periodic
+        direction. See :ref:`MMM1D Theory` for more details.
 
         Parameters
         ----------
@@ -622,8 +619,9 @@ IF ELECTROSTATICS and MMM1D_GPU:
             default_params = self.default_params()
 
             self.thisptr.set_params(
-                grid.box_l[2], coulomb.prefactor, self._params["maxPWerror"],
-                self._params["far_switch_radius"], self._params["bessel_cutoff"])
+                grid.box_geo.length()[2], coulomb.prefactor,
+                self._params["maxPWerror"], self._params["far_switch_radius"],
+                self._params["bessel_cutoff"])
 
         def _tune(self):
             self.thisptr.setup(dereference(self.interface))
@@ -654,7 +652,7 @@ IF ELECTROSTATICS:
             Electrostatics prefactor (see :eq:`coulomb_prefactor`).
         maxWPerror : :obj:`float`
             Maximal pairwise error.
-        dielectric : :obj:`int`, optional
+        dielectric : :obj:`bool`, optional
             Selector parameter for setting the dielectric constants manually
             (top, mid, bottom), mutually exclusive with dielectric-contrast
         top : :obj:`float`, optional
@@ -668,7 +666,7 @@ IF ELECTROSTATICS:
             If dielectric is specified this parameter sets the dielectric
             constant *below* the simulation box
             :math:`\\varepsilon_\\mathrm{bot}`.
-        dielectric_contrast_on : :obj:`int`, optional
+        dielectric_contrast_on : :obj:`bool`, optional
             Selector parameter for setting a dielectric contrast between the
             upper simulation boundary and the simulation box, and between the
             lower simulation boundary and the simulation box, respectively.
@@ -680,7 +678,7 @@ IF ELECTROSTATICS:
             If dielectric-contrast mode is selected, then this parameter sets
             the dielectric contrast between the lower boundary and the
             simulation box :math:`\\Delta_b`.
-        const_pot : :obj:`int`, optional
+        const_pot : :obj:`bool`, optional
             Selector parameter for setting a constant electric potential
             between the top and bottom of the simulation box.
         pot_diff : :obj:`float`, optional
@@ -701,7 +699,7 @@ IF ELECTROSTATICS:
                 raise ValueError("Dielectric constants should be > 0!")
             if self._params["dielectric_contrast_on"] == 1 and (self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
                 raise ValueError("Dielectric constrast not set!")
-            if self._params["dielectric"] == 1 and self._params["dielectric_contrast_on"] == 1:
+            if self._params["dielectric"] and self._params["dielectric_contrast_on"]:
                 raise ValueError(
                     "dielectric and dielectric_contrast are mutually exclusive!")
 
@@ -712,9 +710,9 @@ IF ELECTROSTATICS:
                     "top": 0,
                     "mid": 0,
                     "bot": 0,
-                    "dielectric": 0,
-                    "dielectric_contrast_on": 0,
-                    "const_pot": 0,
+                    "dielectric": False,
+                    "dielectric_contrast_on": False,
+                    "const_pot": False,
                     "delta_mid_top": 0,
                     "delta_mid_bot": 0,
                     "pot_diff": 0,
@@ -730,10 +728,10 @@ IF ELECTROSTATICS:
             params = {}
             params.update(mmm2d_params)
             params["prefactor"] = coulomb.prefactor
-            if params["dielectric_contrast_on"] == 1 or params["const_pot"] == 1:
-                params["dielectric"] = 1
+            if params["dielectric_contrast_on"] or params["const_pot"]:
+                params["dielectric"] = True
             else:
-                params["dielectric"] = 0
+                params["dielectric"] = False
             return params
 
         def _set_params_in_es_core(self):
@@ -774,7 +772,10 @@ IF ELECTROSTATICS:
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
 
-            """Calculates Coulomb interactions using method from the SCAFACOs library."""
+            """
+            Calculate the Coulomb interaction using the ScaFaCoS library.
+            """
+
             dipolar = False
 
             # Explicit constructor needed due to multiple inheritance

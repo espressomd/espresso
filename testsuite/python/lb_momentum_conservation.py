@@ -43,7 +43,7 @@ class Momentum(object):
     system.cell_system.skin = 0.01
 
     def test(self):
-        last_mom=np.zeros(3)
+        print(self.system.cell_system.get_state())
         self.system.actors.clear()
         self.system.part.clear()
         self.system.actors.add(self.lbf)
@@ -54,17 +54,21 @@ class Momentum(object):
         p = self.system.part.add(pos=(0,0,0), ext_force=-applied_force)
 
         # Reach steady state
-        self.system.integrator.run(2000)
+        self.system.integrator.run(3000)
         v_final = np.copy(p.v)
 
         for i in range(30):
-            self.system.integrator.run(100)
+            self.system.integrator.run(1000)
             np.testing.assert_allclose(
-                p.v * p.mass, -
-                    np.array(
-                        self.system.analysis.linear_momentum(
-                            include_particles=False)),
-                atol=np.linalg.norm(applied_force) * TIME_STEP * 0.55)
+              self.system.analysis.linear_momentum(),
+              [0,0,0],atol=1E-8)
+#            np.testing.assert_allclose(
+#                p.v * p.mass, -
+#                    np.array(
+#                        self.system.analysis.linear_momentum(
+#                            include_particles=False))
+#                            +np.array((0,F *AGRID/ TIME_STEP /2 ,0)),
+#                atol=np.linalg.norm(applied_force) * TIME_STEP * 0.55)
 
             # Check that particle velocity is stationary
             # up to the acceleration of 1/2 time step

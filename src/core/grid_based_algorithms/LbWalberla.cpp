@@ -62,6 +62,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
     }
     grid_dimensions[i] = int(std::round(box_dimensions[i] / agrid));
     if (grid_dimensions[i] % node_grid[i] != 0) {
+      printf("Grid dimension: %d, node grid %d\n",grid_dimensions[i],node_grid[i]);
       throw std::runtime_error(
           "LB grid dimensions and mpi node grid are not compatible.");
     }
@@ -174,7 +175,7 @@ LbWalberla::get_block_and_cell(const Utils::Vector3i &node, bool consider_ghost_
   if (consider_ghost_layers and !block) {
     // Try to find a block which has the cell as ghost layer
     for (auto b = m_blocks->begin(); b!=m_blocks->end(); ++b) {
-      if (b->getAABB().getExtended(1.0 *n_ghost_layers()).contains(real_c(node[0]),real_c(node[1]),real_c(node[2]))) {
+      if (b->getAABB().getExtended(m_skin/m_agrid).contains(real_c(node[0]),real_c(node[1]),real_c(node[2]))) {
         block=&(*b);
         break;
       }
@@ -187,6 +188,27 @@ LbWalberla::get_block_and_cell(const Utils::Vector3i &node, bool consider_ghost_
   Cell local_cell;
   m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
   return {{block, local_cell}};
+}
+
+IBlock* 
+LbWalberla::get_block(const Utils::Vector3d &pos, bool consider_ghost_layers) const {
+  // Get block and local cell
+  auto block = m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
+  if (consider_ghost_layers and !block) {
+    // Try to find a block which has the cell as ghost layer
+    for (auto b = m_blocks->begin(); b!=m_blocks->end(); ++b) {
+      auto ab =b->getAABB().getExtended(1.0 *n_ghost_layers());
+      printf("%d: %g %g %g, %g %g %g\n",this_node, ab.min()[0],ab.min()[1],ab.min()[2],ab.max()[0],ab.max()[1],ab.max()[2]);
+      printf("%d: pos %g %g %g\n",this_node, pos[0],pos[1],pos[2]);
+      if (ab.contains(pos[0],pos[1],pos[2])) {
+        block=&(*b);
+        printf("%d: block selected\n",this_node);
+        break;
+      }
+    }
+  }
+
+  return block;
 }
 
 bool LbWalberla::set_node_velocity_at_boundary(const Utils::Vector3i node,
@@ -251,11 +273,11 @@ LbWalberla::get_node_is_boundary(const Utils::Vector3i &node) const {
 
 bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
                                   const Utils::Vector3d &force) {
-  auto bc = get_block_and_cell(Utils::Vector3i{int(pos[0]),int(pos[1]),int(pos[2])},true);
-  if (!bc)
+  auto block = get_block(pos,true);
+  if (!block)
     return false;
   auto *force_distributor =
-      bc->block->getData<Vector_field_distributor_t>(m_force_distributor_id);
+      block->getData<Vector_field_distributor_t>(m_force_distributor_id);
   auto f = to_vector3(force);
   force_distributor->distribute(to_vector3(pos), &f);
   return true;
@@ -275,11 +297,11 @@ LbWalberla::get_node_velocity(const Utils::Vector3i node) const {
 
 boost::optional<Utils::Vector3d>
 LbWalberla::get_velocity_at_pos(const Utils::Vector3d &pos) const {
-  auto bc = get_block_and_cell(Utils::Vector3i{int(pos[0]),int(pos[1]),int(pos[2])}, true);
-  if (!bc)
+  auto block = get_block(pos,true);
+  if (!block)
     return {boost::none};
 
-  auto *velocity_interpolator = bc->block->getData<VectorFieldAdaptorInterpolator>(
+  auto *velocity_interpolator = block->getData<VectorFieldAdaptorInterpolator>(
       m_velocity_interpolator_id);
   Vector3<real_t> v;
   velocity_interpolator->get(to_vector3(pos), &v);

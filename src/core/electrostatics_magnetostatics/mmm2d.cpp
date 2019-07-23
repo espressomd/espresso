@@ -30,6 +30,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
@@ -134,7 +135,7 @@ static double max_near, min_far;
 ///
 static double self_energy;
 
-MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, 0, 0, 0, 1, 1, 1};
+MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
 
 /** return codes for \ref MMM2D_tune_near and \ref MMM2D_tune_far */
 /*@{*/
@@ -270,15 +271,15 @@ static int MMM2D_tune_far(double error);
 
 ///
 void MMM2D_setup_constants() {
-  ux = 1 / box_l[0];
+  ux = 1 / box_geo.length()[0];
   ux2 = ux * ux;
-  uy = 1 / box_l[1];
+  uy = 1 / box_geo.length()[1];
   uy2 = uy * uy;
-  uz = 1 / box_l[2];
+  uz = 1 / box_geo.length()[2];
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
-    max_near = box_l[2];
+    max_near = box_geo.length()[2];
     /* not used */
     min_far = 0.0;
     break;
@@ -293,6 +294,19 @@ void MMM2D_setup_constants() {
         this_node);
     errexit();
   }
+}
+
+static void layered_get_mi_vector(double res[3], double const a[3],
+                                  double const b[3]) {
+  int i;
+
+  for (i = 0; i < 2; i++) {
+    res[i] = a[i] - b[i];
+    if (box_geo.periodic(i))
+      res[i] -=
+          std::round(res[i] * (1. / box_geo.length()[i])) * box_geo.length()[i];
+  }
+  res[2] = a[2] - b[2];
 }
 
 /****************************************
@@ -581,7 +595,7 @@ static void add_z_force() {
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
     for (auto const &p : local_cells.particles()) {
-      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_l[2]);
+      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_geo.length()[2]);
     }
 
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
@@ -660,7 +674,7 @@ static double z_energy() {
     double lcl_dm_z = 0;
 
     for (auto &p : local_cells.particles()) {
-      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_l[2]);
+      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_geo.length()[2]);
     }
 
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
@@ -680,7 +694,7 @@ static void setup(int p, double omega, double fac, int n_sccache,
   int np, c, i, ic, o = (p - 1) * n_localpart;
   Particle *part;
   double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
-  double h = box_l[2];
+  double h = box_geo.length()[2];
   double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
   double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
   double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
@@ -707,7 +721,7 @@ static void setup(int p, double omega, double fac, int n_sccache,
     clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
-  layer_top = my_left[2] + layer_h;
+  layer_top = local_geo.my_left()[2] + layer_h;
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
@@ -889,7 +903,7 @@ static void setup_PQ(int p, int q, double omega, double fac) {
   int np, c, i, ic, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
   Particle *part;
   double pref = coulomb.prefactor * 8 * M_PI * ux * uy * fac * fac;
-  double h = box_l[2];
+  double h = box_geo.length()[2];
   double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
   double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
   double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
@@ -913,7 +927,7 @@ static void setup_PQ(int p, int q, double omega, double fac) {
     clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
-  layer_top = my_left[2] + layer_h;
+  layer_top = local_geo.my_left()[2] + layer_h;
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
@@ -1232,7 +1246,7 @@ double MMM2D_add_far(int f, int e) {
     else {
       q2 = mmm2d_params.far_cut2 - Utils::sqr(ux * (p - 1));
       if (q2 > 0)
-        q = 1 + (int)ceil(box_l[1] * sqrt(q2));
+        q = 1 + (int)ceil(box_geo.length()[1] * sqrt(q2));
       else
         q = 1;
       /* just to be on the safe side... */
@@ -1306,11 +1320,11 @@ static int MMM2D_tune_near(double error) {
   double L, sum;
 
   /* yes, it's y only... */
-  if (max_near > box_l[1] / 2)
+  if (max_near > box_geo.length()[1] / 2)
     return ERROR_LARGE;
   if (min_far < 0)
     return ERROR_SMALL;
-  if (ux * box_l[1] >= 3 / M_SQRT2)
+  if (ux * box_geo.length()[1] >= 3 / M_SQRT2)
     return ERROR_BOXL;
 
   /* error is split into three parts:
@@ -1320,7 +1334,7 @@ static int MMM2D_tune_near(double error) {
 
   /* Bessel sum, determine cutoff */
   P = 2;
-  exponent = M_PI * ux * box_l[1];
+  exponent = M_PI * ux * box_geo.length()[1];
   T = exp(exponent) / exponent;
   pref = 8 * ux * std::max(C_2PI * ux, 1.0);
   do {
@@ -1328,8 +1342,8 @@ static int MMM2D_tune_near(double error) {
     sum = 0;
     for (p = 1; p <= P; p++)
       sum += p * exp(-exponent * p);
-    err =
-        pref * K1(box_l[1] * L) * (T * ((L + uy) / M_PI * box_l[0] - 1) + sum);
+    err = pref * K1(box_geo.length()[1] * L) *
+          (T * ((L + uy) / M_PI * box_geo.length()[0] - 1) + sum);
     P++;
   } while (err > part_error && (P - 1) < MAXIMAL_B_CUT);
   P--;
@@ -1343,7 +1357,8 @@ static int MMM2D_tune_near(double error) {
     besselCutoff[p - 1] = (int)floor(((double)P) / (2 * p)) + 1;
 
   /* complex sum, determine cutoffs (dist dependent) */
-  T = log(part_error / (16 * M_SQRT2) * box_l[0] * box_l[1]);
+  T = log(part_error / (16 * M_SQRT2) * box_geo.length()[0] *
+          box_geo.length()[1]);
   // for 0, the sum is exactly zero, so do not calculate anything
   complexCutoff[0] = 0;
   for (i = 1; i <= COMPLEX_STEP; i++)
@@ -1352,7 +1367,7 @@ static int MMM2D_tune_near(double error) {
 
   /* polygamma, determine order */
   n = 1;
-  uxrhomax2 = Utils::sqr(ux * box_l[1]) / 2;
+  uxrhomax2 = Utils::sqr(ux * box_geo.length()[1]) / 2;
   uxrho2m2max = 1.0;
   do {
     create_mod_psi_up_to(n + 1);
@@ -1411,7 +1426,7 @@ void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
   int i;
 
 #ifdef ADDITIONAL_CHECKS
-  if (d[2] > box_l[1] / 2) {
+  if (d[2] > box_geo.length()[1] / 2) {
     runtimeErrorMsg() << "near formula called for too distant particle pair";
     return;
   }
@@ -1436,7 +1451,7 @@ void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
       freq = C_2PI * ux * p;
 
       for (l = 1; l < besselCutoff.e[p - 1]; l++) {
-        ypl = d[1] + l * box_l[1];
+        ypl = d[1] + l * box_geo.length()[1];
         rho_l = sqrt(ypl * ypl + z2);
 #ifdef BESSEL_MACHINE_PREC
         k0 = K0(freq * rho_l);
@@ -1449,7 +1464,7 @@ void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
         k1Sum += k1;
         k1ySum += k1 * ypl;
 
-        ypl = d[1] - l * box_l[1];
+        ypl = d[1] - l * box_geo.length()[1];
         rho_l = sqrt(ypl * ypl + z2);
 #ifdef BESSEL_MACHINE_PREC
         k0 = K0(freq * rho_l);
@@ -1546,14 +1561,14 @@ void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
 
   /* explicitly added potentials r_{-1,0} and r_{1,0} */
   {
-    double cx = d[0] + box_l[0];
+    double cx = d[0] + box_geo.length()[0];
     double rinv2 = 1.0 / (cx * cx + rho2), rinv = sqrt(rinv2);
     double rinv3 = rinv * rinv2;
     F[0] += cx * rinv3;
     F[1] += d[1] * rinv3;
     F[2] += d[2] * rinv3;
 
-    cx = d[0] - box_l[0];
+    cx = d[0] - box_geo.length()[0];
     rinv2 = 1.0 / (cx * cx + rho2);
     rinv = sqrt(rinv2);
     rinv3 = rinv * rinv2;
@@ -1577,7 +1592,7 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
   double rho2 = d[1] * d[1] + z2;
 
   /* the ux is multiplied in below */
-  eng = -2 * log(4 * M_PI * uy * box_l[0]);
+  eng = -2 * log(4 * M_PI * uy * box_geo.length()[0]);
 
   /* Bessel sum */
   {
@@ -1593,11 +1608,11 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
       freq = C_2PI * ux * p;
 
       for (l = 1; l < besselCutoff.e[p - 1]; l++) {
-        ypl = d[1] + l * box_l[1];
+        ypl = d[1] + l * box_geo.length()[1];
         rho_l = sqrt(ypl * ypl + z2);
         k0Sum += K0(freq * rho_l);
 
-        ypl = d[1] - l * box_l[1];
+        ypl = d[1] - l * box_geo.length()[1];
         rho_l = sqrt(ypl * ypl + z2);
         k0Sum += K0(freq * rho_l);
       }
@@ -1634,7 +1649,7 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
     }
     end = complexCutoff[end];
     for (n = 1; n <= end; n++) {
-      eng -= box_l[1] / (2 * n) * bon.e[n - 1] * ztn_r;
+      eng -= box_geo.length()[1] / (2 * n) * bon.e[n - 1] * ztn_r;
 
       tmp_r = ztn_r * zet2_r - ztn_i * zet2_i;
       ztn_i = ztn_r * zet2_i + ztn_i * zet2_r;
@@ -1670,11 +1685,11 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
 
   /* explicitly added potentials r_{-1,0} and r_{1,0} */
   {
-    double cx = d[0] + box_l[0];
+    double cx = d[0] + box_geo.length()[0];
     double rinv = sqrt(1.0 / (cx * cx + rho2));
     eng += rinv;
 
-    cx = d[0] - box_l[0];
+    cx = d[0] - box_geo.length()[0];
     rinv = sqrt(1.0 / (cx * cx + rho2));
     eng += rinv;
   }
@@ -1710,7 +1725,7 @@ void MMM2D_self_energy() {
  ****************************************/
 
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
-                     double delta_bot, int const_pot_on, double pot_diff) {
+                     double delta_bot, bool const_pot_on, double pot_diff) {
   int err;
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
@@ -1720,25 +1735,25 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
 
   mmm2d_params.maxPWerror = maxPWerror;
 
-  if (const_pot_on == 1) {
-    mmm2d_params.dielectric_contrast_on = 1;
+  if (const_pot_on) {
+    mmm2d_params.dielectric_contrast_on = true;
     mmm2d_params.delta_mid_top = -1;
     mmm2d_params.delta_mid_bot = -1;
     mmm2d_params.delta_mult = 1;
-    mmm2d_params.const_pot_on = 1;
+    mmm2d_params.const_pot_on = true;
     mmm2d_params.pot_diff = pot_diff;
   } else if (delta_top != 0.0 || delta_bot != 0.0) {
-    mmm2d_params.dielectric_contrast_on = 1;
+    mmm2d_params.dielectric_contrast_on = true;
     mmm2d_params.delta_mid_top = delta_top;
     mmm2d_params.delta_mid_bot = delta_bot;
     mmm2d_params.delta_mult = delta_top * delta_bot;
-    mmm2d_params.const_pot_on = 0;
+    mmm2d_params.const_pot_on = false;
   } else {
-    mmm2d_params.dielectric_contrast_on = 0;
+    mmm2d_params.dielectric_contrast_on = false;
     mmm2d_params.delta_mid_top = 0;
     mmm2d_params.delta_mid_bot = 0;
     mmm2d_params.delta_mult = 0;
-    mmm2d_params.const_pot_on = 0;
+    mmm2d_params.const_pot_on = false;
   }
 
   MMM2D_setup_constants();
@@ -1775,7 +1790,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
 
 int MMM2D_sanity_checks() {
 
-  if (!PERIODIC(0) || !PERIODIC(1) || PERIODIC(2)) {
+  if (!box_geo.periodic(0) || !box_geo.periodic(1) || box_geo.periodic(2)) {
     runtimeErrorMsg() << "MMM2D requires periodicity 1 1 0";
     return 1;
   }
@@ -1901,7 +1916,7 @@ void MMM2D_dielectric_layers_force_contribution() {
       for (j = 0; j < npl; j++) {
         a[0] = pl[j].r.p[0];
         a[1] = pl[j].r.p[1];
-        a[2] = 2 * box_l[2] - pl[j].r.p[2];
+        a[2] = 2 * box_geo.length()[2] - pl[j].r.p[2];
         Utils::Vector3d d;
         layered_get_mi_vector(d.data(), p1->r.p.data(), a);
         auto const dist2 = d.norm2();
@@ -1965,7 +1980,7 @@ double MMM2D_dielectric_layers_energy_contribution() {
       for (j = 0; j < npl; j++) {
         a[0] = pl[j].r.p[0];
         a[1] = pl[j].r.p[1];
-        a[2] = 2 * box_l[2] - pl[j].r.p[2];
+        a[2] = 2 * box_geo.length()[2] - pl[j].r.p[2];
         Utils::Vector3d d;
         layered_get_mi_vector(d.data(), p1->r.p.data(), a);
         auto const dist2 = d.norm2();

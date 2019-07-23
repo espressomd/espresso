@@ -76,7 +76,6 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
-    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_nsquare_partial_z(self):
         self.s.cell_system.set_n_square()
         self.s.periodicity = [1, 1, 0]
@@ -96,7 +95,6 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
-    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_dd_partial_z(self):
         self.s.cell_system.set_domain_decomposition()
         self.s.periodicity = [1, 1, 0]
@@ -115,7 +113,6 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
-    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_layered_partial_z(self):
         self.s.cell_system.set_layered()
         self.s.periodicity = [1, 1, 0]

@@ -92,7 +92,7 @@ class LbWalberla {
   double m_skin;
   double m_agrid;
   walberla::uint_t n_ghost_layers() const {
-    return walberla::uint_c(m_skin/m_agrid +2);
+    return walberla::uint_c(m_skin/m_agrid +1);
   }
   double m_tau;
   double m_density;           // initial density
@@ -227,6 +227,7 @@ public:
 private:
   boost::optional<BlockAndCell>
   get_block_and_cell(const Utils::Vector3i &node, bool consider_ghost_layers=false) const;
+  walberla::IBlock* get_block(const Utils::Vector3d &pos, bool consider_ghost_layers) const;
   walberla::BlockDataID m_pdf_field_id;
   walberla::BlockDataID m_flag_field_id;
   walberla::BlockDataID m_force_field_id;

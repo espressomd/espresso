@@ -306,7 +306,7 @@ void on_resort_particles() {
 void on_boxl_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_boxl_change\n", this_node));
 
-  grid_changed_box_l();
+  grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
      therefore recalculate them. */
   recalc_maximal_cutoff();

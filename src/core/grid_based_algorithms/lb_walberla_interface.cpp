@@ -33,8 +33,7 @@ boost::optional<bool> get_node_is_boundary(Utils::Vector3i ind) {
 REGISTER_CALLBACK_ONE_RANK(get_node_is_boundary)
 
 boost::optional<Utils::Vector19d> get_node_pop(Utils::Vector3i ind) {
-  auto res = lb_walberla()->get_node_pop(ind);
-  return res;
+  return lb_walberla()->get_node_pop(ind);
 }
 
 REGISTER_CALLBACK_ONE_RANK(get_node_pop)
