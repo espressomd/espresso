@@ -259,6 +259,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
           /* for ghost particles we have to check if they lie
            * in the range of the local lattice nodes */
           if (in_local_domain(p.r.p)) {
+            if (lattice_switch == ActiveLB::WALBERLA and !local_particles[p.p.identity]->l.ghost)
+              continue;
             if (!p.p.is_virtual || couple_virtual) {
               lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
 #ifdef ENGINE
