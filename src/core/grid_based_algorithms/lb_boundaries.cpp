@@ -215,13 +215,15 @@ void lb_init_boundaries() {
 #endif /* defined ( CUDA) && defined (LB_BOUNDARIES_GPU) */
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
-    Utils::Vector3i node_domain_position, offset;
+    Utils::Vector3i offset;
     int the_boundary = -1;
-    map_node_array(this_node, node_domain_position.data());
+
+    auto const node_pos = calc_node_pos(comm_cart);
+
     const auto lblattice = lb_lbfluid_get_lattice();
-    offset[0] = node_domain_position[0] * lblattice.grid[0];
-    offset[1] = node_domain_position[1] * lblattice.grid[1];
-    offset[2] = node_domain_position[2] * lblattice.grid[2];
+    offset[0] = node_pos[0] * lblattice.grid[0];
+    offset[1] = node_pos[1] * lblattice.grid[1];
+    offset[2] = node_pos[2] * lblattice.grid[2];
 
     for (int n = 0; n < lblattice.halo_grid_volume; n++) {
       lbfields.at(n).boundary = 0;
@@ -272,42 +274,32 @@ void lb_init_boundaries() {
   }
 }
 
-// TODO dirty hack. please someone get rid of void*
-int lbboundary_get_force(void *lbb, double *f) {
+Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
+  Utils::Vector3d force{};
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-
-  int no = 0;
-  for (auto it = lbboundaries.begin(); it != lbboundaries.end(); ++it, ++no) {
-    if (&(**it) == lbb)
-      break;
-  }
-  if (no == lbboundaries.size())
+  auto const it = std::find_if(
+      lbboundaries.begin(), lbboundaries.end(),
+      [lbb](std::shared_ptr<LBBoundary> const &i) { return i.get() == lbb; });
+  if (it == lbboundaries.end())
     throw std::runtime_error("You probably tried to get the force of an "
                              "lbboundary that was not added to "
                              "system.lbboundaries.");
-
   std::vector<double> forces(3 * lbboundaries.size());
-
   if (lattice_switch == ActiveLB::GPU) {
 #if defined(LB_BOUNDARIES_GPU) && defined(CUDA)
     lb_gpu_get_boundary_forces(forces.data());
-
-#else
-    return ES_ERROR;
 #endif
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
     mpi_gather_stats(8, forces.data(), nullptr, nullptr, nullptr);
+#endif
   }
-  f[0] = forces[3 * no + 0];
-  f[1] = forces[3 * no + 1];
-  f[2] = forces[3 * no + 2];
-#else
-    return ES_ERROR;
+  auto const container_index = std::distance(lbboundaries.begin(), it);
+  force[0] = forces[3 * container_index + 0];
+  force[1] = forces[3 * container_index + 1];
+  force[2] = forces[3 * container_index + 2];
 #endif
-
-#endif
-  return 0;
+  return force;
 }
 
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */

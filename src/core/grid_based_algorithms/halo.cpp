@@ -38,33 +38,6 @@
 struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,
                                       0, 0,       0,       nullptr};
 
-void halo_create_fieldtype(int count, int const *const lengths,
-                           int const *const disps, int extent,
-                           Fieldtype *const newtype) {
-  Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
-
-  ntype->subtype = nullptr;
-  ntype->vflag = 0;
-
-  ntype->vblocks = 1;
-  ntype->vstride = 1;
-  ntype->vskip = 1;
-
-  ntype->count = count;
-  ntype->extent = extent;
-
-  if (count > 0) {
-
-    ntype->lengths = (int *)Utils::malloc(count * 2 * sizeof(int));
-    ntype->disps = (int *)((char *)ntype->lengths + count * sizeof(int));
-
-    for (int i = 0; i < count; i++) {
-      ntype->disps[i] = disps[i];
-      ntype->lengths[i] = lengths[i];
-    }
-  }
-}
-
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
                               Fieldtype oldtype, Fieldtype *const newtype) {
   int i;
@@ -229,6 +202,8 @@ void prepare_halo_communication(HaloCommunicator *const hc,
 
   int extent = fieldtype->extent;
 
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
+
   cnt = 0;
   for (dir = 0; dir < 3; dir++) {
     for (lr = 0; lr < 2; lr++) {
@@ -268,17 +243,18 @@ void prepare_halo_communication(HaloCommunicator *const hc,
       MPI_Type_commit(&hinfo->datatype);
 
       if (!box_geo.periodic(dir) &&
-          (boundary[2 * dir + lr] != 0 || boundary[2 * dir + 1 - lr] != 0)) {
+          (local_geo.boundary()[2 * dir + lr] != 0 ||
+           local_geo.boundary()[2 * dir + 1 - lr] != 0)) {
         if (local_node_grid[dir] == 1) {
           hinfo->type = HALO_OPEN;
         } else if (lr == 0) {
-          if (boundary[2 * dir + lr] == 1) {
+          if (local_geo.boundary()[2 * dir + lr] == 1) {
             hinfo->type = HALO_RECV;
           } else {
             hinfo->type = HALO_SEND;
           }
         } else {
-          if (boundary[2 * dir + lr] == -1) {
+          if (local_geo.boundary()[2 * dir + lr] == -1) {
             hinfo->type = HALO_RECV;
           } else {
             hinfo->type = HALO_SEND;

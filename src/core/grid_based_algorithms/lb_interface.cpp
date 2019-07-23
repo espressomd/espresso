@@ -764,9 +764,9 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
       for (pos[1] = 0; pos[1] < lblattice.global_grid[1]; pos[1]++) {
         for (pos[0] = 0; pos[0] < lblattice.global_grid[0]; pos[0]++) {
           auto const u = lb_lbnode_get_velocity(pos) * lattice_speed;
-          fprintf(fp, "%f %f %f %f %f %f\n", (pos[0] + 0.5) * lblattice.agrid,
-                  (pos[1] + 0.5) * lblattice.agrid,
-                  (pos[2] + 0.5) * lblattice.agrid, u[0], u[1], u[2]);
+          fprintf(fp, "%f %f %f %f %f %f\n", (pos[0] + 0.5) * agrid,
+                  (pos[1] + 0.5) * agrid, (pos[2] + 0.5) * agrid, u[0], u[1],
+                  u[2]);
         }
       }
     }

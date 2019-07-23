@@ -32,36 +32,21 @@
 
 #include <boost/algorithm/clamp.hpp>
 #include <mpi.h>
+#include <utils/mpi/cart_comm.hpp>
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
-/************************************************
- * defines
- ************************************************/
-
-#define MAX_INTERACTION_RANGE 1e100
-
 /**********************************************
  * variables
  **********************************************/
 
 BoxGeometry box_geo;
+LocalBox<double> local_geo;
 
 Utils::Vector3i node_grid{};
-Utils::Vector3i node_pos = {-1, -1, -1};
-Utils::Vector<int, 6> node_neighbors{};
-Utils::Vector<int, 6> boundary{};
-
-Utils::Vector3d half_box_l = {0.5, 0.5, 0.5};
-Utils::Vector3d box_l_i = {1, 1, 1};
-double min_box_l;
-Utils::Vector3d local_box_l{1, 1, 1};
-double min_local_box_l;
-Utils::Vector3d my_left{};
-Utils::Vector3d my_right{1, 1, 1};
 
 /************************************************************/
 
@@ -75,88 +60,64 @@ int map_position_node_array(const Utils::Vector3d &pos) {
 
   Utils::Vector3i im;
   for (int i = 0; i < 3; i++) {
-    im[i] = std::floor(f_pos[i] / local_box_l[i]);
+    im[i] = std::floor(f_pos[i] / local_geo.length()[i]);
     im[i] = boost::algorithm::clamp(im[i], 0, node_grid[i] - 1);
   }
 
-  auto const node = map_array_node(im);
-  return node;
+  return Utils::Mpi::cart_rank(comm_cart, im);
 }
 
-int calc_node_neighbors(int node) {
-
-  int dir, neighbor_count;
-
-  map_node_array(node, node_pos.data());
-  for (dir = 0; dir < 3; dir++) {
-    int buf;
-
-    MPI_Cart_shift(comm_cart, dir, -1, &buf, &(node_neighbors[2 * dir]));
-    MPI_Cart_shift(comm_cart, dir, 1, &buf, &(node_neighbors[2 * dir + 1]));
-
-    /* left boundary ? */
-    if (node_pos[dir] == 0) {
-      boundary[2 * dir] = 1;
-    } else {
-      boundary[2 * dir] = 0;
-    }
-    /* right boundary ? */
-    if (node_pos[dir] == node_grid[dir] - 1) {
-      boundary[2 * dir + 1] = -1;
-    } else {
-      boundary[2 * dir + 1] = 0;
-    }
-  }
-
-  neighbor_count = 6;
-  GRID_TRACE(printf("%d: node_grid %d %d %d, pos %d %d %d, node_neighbors ",
-                    this_node, node_grid[0], node_grid[1], node_grid[2],
-                    node_pos[0], node_pos[1], node_pos[2]));
-
-  return (neighbor_count);
+Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm) {
+  return Utils::Mpi::cart_coords<3>(comm, comm.rank());
 }
 
-void grid_changed_box_l() {
+Utils::Vector<int, 6>
+calc_node_neighbors(const boost::mpi::communicator &comm) {
+  using std::get;
+  using Utils::Mpi::cart_shift;
+
+  return {
+      get<1>(cart_shift(comm, 0, -1)), get<1>(cart_shift(comm, 0, +1)),
+      get<1>(cart_shift(comm, 1, -1)), get<1>(cart_shift(comm, 1, +1)),
+      get<1>(cart_shift(comm, 2, -1)), get<1>(cart_shift(comm, 2, +1)),
+  };
+}
+
+LocalBox<double> regular_decomposition(const BoxGeometry &box,
+                                       Utils::Vector3i const &node_pos,
+                                       Utils::Vector3i const &node_grid) {
+  Utils::Vector3d local_length;
+  Utils::Vector3d my_left;
+
   for (int i = 0; i < 3; i++) {
-    local_box_l[i] = box_geo.length()[i] / (double)node_grid[i];
-    my_left[i] = node_pos[i] * local_box_l[i];
-    my_right[i] = (node_pos[i] + 1) * local_box_l[i];
+    local_length[i] = box.length()[i] / node_grid[i];
+    my_left[i] = node_pos[i] * local_length[i];
   }
 
-  calc_minimal_box_dimensions();
+  Utils::Array<int, 6> boundaries;
+  for (int dir = 0; dir < 3; dir++) {
+    /* left boundary ? */
+    boundaries[2 * dir] = (node_pos[dir] == 0);
+    /* right boundary ? */
+    boundaries[2 * dir + 1] = -(node_pos[dir] == node_grid[dir] - 1);
+  }
+
+  return {my_left, local_length, boundaries};
+}
+
+void grid_changed_box_l(const BoxGeometry &box) {
+  local_geo = regular_decomposition(box, calc_node_pos(comm_cart), node_grid);
 }
 
 void grid_changed_n_nodes() {
-  GRID_TRACE(fprintf(stderr, "%d: grid_changed_n_nodes:\n", this_node));
+  comm_cart =
+      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
 
-  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
-                           {{1, 1, 1}});
+  this_node = comm_cart.rank();
 
-  MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
+  calc_node_neighbors(comm_cart);
 
-  calc_node_neighbors(this_node);
-
-#ifdef GRID_DEBUG
-  fprintf(stderr, "%d: node_pos=(%d,%d,%d)\n", this_node, node_pos[0],
-          node_pos[1], node_pos[2]);
-  fprintf(stderr, "%d: node_neighbors=(%d,%d,%d,%d,%d,%d)\n", this_node,
-          node_neighbors[0], node_neighbors[1], node_neighbors[2],
-          node_neighbors[3], node_neighbors[4], node_neighbors[5]);
-  fprintf(stderr, "%d: boundary=(%d,%d,%d,%d,%d,%d)\n", this_node, boundary[0],
-          boundary[1], boundary[2], boundary[3], boundary[4], boundary[5]);
-#endif
-
-  grid_changed_box_l();
-}
-
-void calc_minimal_box_dimensions() {
-  int i;
-  min_box_l = 2 * MAX_INTERACTION_RANGE;
-  min_local_box_l = MAX_INTERACTION_RANGE;
-  for (i = 0; i < 3; i++) {
-    min_box_l = std::min(min_box_l, box_geo.length()[i]);
-    min_local_box_l = std::min(min_local_box_l, local_box_l[i]);
-  }
+  grid_changed_box_l(box_geo);
 }
 
 void rescale_boxl(int dir, double d_new) {
@@ -181,14 +142,4 @@ void rescale_boxl(int dir, double d_new) {
   if (scale > 1.) {
     mpi_rescale_particles(dir, scale);
   }
-}
-
-void map_node_array(int node, int pos[3]) {
-  MPI_Cart_coords(comm_cart, node, 3, pos);
-}
-
-int map_array_node(Utils::Span<const int> pos) {
-  int rank;
-  MPI_Cart_rank(comm_cart, pos.data(), &rank);
-  return rank;
 }

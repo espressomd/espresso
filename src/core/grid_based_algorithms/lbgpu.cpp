@@ -260,39 +260,6 @@ void lb_init_gpu() {
   LB_TRACE(printf("Initializing fluid on GPU successful\n"));
 }
 
-int lb_lbnode_set_extforce_density_GPU(int const ind[3], double const f[3]) {
-  if (ind[0] < 0 || ind[0] >= int(lbpar_gpu.dim_x) || ind[1] < 0 ||
-      ind[1] >= int(lbpar_gpu.dim_y) || ind[2] < 0 ||
-      ind[2] >= int(lbpar_gpu.dim_z))
-    return ES_ERROR;
-
-  unsigned int index = ind[0] + ind[1] * lbpar_gpu.dim_x +
-                       ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
-
-  size_t size_of_extforces = (n_extern_node_force_densities + 1) *
-                             sizeof(LB_extern_nodeforcedensity_gpu);
-  host_extern_node_force_densities.resize(size_of_extforces);
-
-  host_extern_node_force_densities[n_extern_node_force_densities]
-      .force_density[0] = (float)f[0];
-  host_extern_node_force_densities[n_extern_node_force_densities]
-      .force_density[1] = (float)f[1];
-  host_extern_node_force_densities[n_extern_node_force_densities]
-      .force_density[2] = (float)f[2];
-
-  host_extern_node_force_densities[n_extern_node_force_densities].index = index;
-  n_extern_node_force_densities++;
-
-  if (lbpar_gpu.external_force_density == 0)
-    lbpar_gpu.external_force_density = 1;
-
-  lb_init_extern_nodeforcedensities_GPU(n_extern_node_force_densities,
-                                        host_extern_node_force_densities.data(),
-                                        &lbpar_gpu);
-
-  return ES_OK;
-}
-
 void lb_GPU_sanity_checks() {
   if (this_node == 0) {
     if (lbpar_gpu.agrid < 0.0) {
@@ -308,15 +275,6 @@ void lb_GPU_sanity_checks() {
       runtimeErrorMsg() << "Lattice Boltzmann fluid viscosity not set";
     }
   }
-}
-
-void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
-                                     int include_lbfluid) {
-  auto linear_momentum =
-      calc_linear_momentum(include_particles, include_lbfluid);
-  momentum[0] = linear_momentum[0];
-  momentum[1] = linear_momentum[1];
-  momentum[2] = linear_momentum[2];
 }
 
 void lb_set_agrid_gpu(double agrid) {

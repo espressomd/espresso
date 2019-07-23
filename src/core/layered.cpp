@@ -83,8 +83,9 @@ double layer_h = 0, layer_h_i = 0;
 static int btm, top;
 
 Cell *layered_position_to_cell(const Utils::Vector3d &pos) {
-  int cpos =
-      static_cast<int>(std::floor((pos[2] - my_left[2]) * layer_h_i)) + 1;
+  int cpos = static_cast<int>(
+                 std::floor((pos[2] - local_geo.my_left()[2]) * layer_h_i)) +
+             1;
   if (cpos < 1) {
     if (!LAYERED_BTM_NEIGHBOR)
       cpos = 1;
@@ -312,10 +313,11 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
 
   if (this_node == 0 && determine_n_layers) {
     if (max_range > 0) {
-      n_layers = (int)floor(local_box_l[2] / max_range);
+      n_layers = (int)floor(local_geo.length()[2] / max_range);
       if (n_layers < 1) {
         runtimeErrorMsg() << "layered: maximal interaction range " << max_range
-                          << " larger than local box length " << local_box_l[2];
+                          << " larger than local box length "
+                          << local_geo.length()[2];
         n_layers = 1;
       }
       if (n_layers > max_num_cells - 2)
@@ -342,7 +344,7 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   if ((btm == -1) && (layered_flags & LAYERED_PERIODIC))
     btm = n_nodes - 1;
 
-  layer_h = local_box_l[2] / (double)(n_layers);
+  layer_h = local_geo.length()[2] / (double)(n_layers);
   layer_h_i = 1 / layer_h;
 
   if (layer_h < max_range) {
@@ -405,13 +407,13 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
     fold_position(pl->part[p].r.p, pl->part[p].l.i, box_geo);
 
     if (LAYERED_BTM_NEIGHBOR &&
-        (get_mi_coord(pl->part[p].r.p[2], my_left[2], box_geo.length()[2],
-                      box_geo.periodic(2)) < 0.0)) {
+        (get_mi_coord(pl->part[p].r.p[2], local_geo.my_left()[2],
+                      box_geo.length()[2], box_geo.periodic(2)) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node below\n",
                          this_node, pl->part[p].p.identity));
       move_indexed_particle(dn, pl, p);
     } else if (LAYERED_TOP_NEIGHBOR &&
-               (get_mi_coord(pl->part[p].r.p[2], my_right[2],
+               (get_mi_coord(pl->part[p].r.p[2], local_geo.my_right()[2],
                              box_geo.length()[2],
                              box_geo.periodic(2)) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: leaving part %d for node above\n",
@@ -442,7 +444,7 @@ void layered_exchange_and_sort_particles(int global_flag,
     part = &displaced_parts->part[p];
 
     if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR &&
-        (get_mi_coord(part->r.p[2], my_left[2], box_geo.length()[2],
+        (get_mi_coord(part->r.p[2], local_geo.my_left()[2], box_geo.length()[2],
                       box_geo.periodic(2)) < 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: send part %d down\n", this_node,
                          part->p.identity));
@@ -450,7 +452,8 @@ void layered_exchange_and_sort_particles(int global_flag,
       if (p < displaced_parts->n)
         p--;
     } else if (n_nodes != 1 && LAYERED_TOP_NEIGHBOR &&
-               (get_mi_coord(part->r.p[2], my_right[2], box_geo.length()[2],
+               (get_mi_coord(part->r.p[2], local_geo.my_right()[2],
+                             box_geo.length()[2],
                              box_geo.periodic(2)) >= 0.0)) {
       CELL_TRACE(fprintf(stderr, "%d: send part %d up\n", this_node,
                          part->p.identity));
