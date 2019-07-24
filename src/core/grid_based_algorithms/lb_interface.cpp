@@ -194,6 +194,27 @@ void lb_lbfluid_sanity_checks() {
     lb_sanity_checks();
     lb_boundary_mach_check();
   }
+  if (lattice_switch == ActiveLB::WALBERLA) { 
+   // Make sure, Walberla and Espresso agree on domain decomposition
+   auto walberla_domain = lb_walberla()->get_local_domain();
+   // Unit conversion
+   auto const agrid = lb_lbfluid_get_agrid();
+   walberla_domain.first *= agrid;
+   walberla_domain.second *= agrid;
+
+   auto const tol=lb_lbfluid_get_agrid()/1E6;
+   if (
+     (walberla_domain.first-local_geo.my_left()).norm2()>tol or
+     (walberla_domain.second-local_geo.my_right()).norm2()>tol) {
+     printf("%d: %g %g %g, %g %g %g\n",this_node, 
+       local_geo.my_left()[0], local_geo.my_left()[1], local_geo.my_left()[2],
+       walberla_domain.first[0],walberla_domain.first[1],walberla_domain.first[2]);
+     printf("%d: %g %g %g, %g %g %g\n",this_node, 
+       local_geo.my_right()[0], local_geo.my_right()[1], local_geo.my_right()[2],
+       walberla_domain.second[0],walberla_domain.second[1],walberla_domain.second[2]);
+     throw std::runtime_error("Walberla and Espresso disagree about domain decomposition.");
+  }
+  }
 }
 
 void lb_lbfluid_on_integration_start() {

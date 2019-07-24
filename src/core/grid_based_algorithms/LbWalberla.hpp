@@ -153,6 +153,14 @@ public:
              const Utils::Vector3i &node_grid, double skin);
 
   void integrate();
+  std::pair<Utils::Vector3d, Utils::Vector3d> get_local_domain() {
+    // We only have one block per mpi rank
+    assert(m_blocks->begin()++ == m_blocks->end());
+    
+    auto const ab=m_blocks->begin()->getAABB();
+    return 
+      {to_vector3d(ab.min()),to_vector3d(ab.max())};
+  }
   boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i node) const;
   bool set_node_velocity(const Utils::Vector3i &node, const Utils::Vector3d v);
