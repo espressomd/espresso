@@ -48,7 +48,7 @@ class LbWalberlaTest(ut.TestCase):
                     assert np.linalg.norm(lbf[i, j, k].velocity - v) < 1E-10
 
                     assert abs(
-                        lbf[i, j, k].density - dens_init / 0.6**3) < 1E-10
+                        lbf[i, j, k].density - dens_init) < 1E-10
                     rho = i * j * k * 0.5 + 0.8
                     lbf[i, j, k].density = rho
                     assert abs(lbf[i, j, k].density - rho) < 1E-10
