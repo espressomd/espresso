@@ -103,11 +103,12 @@ void sanity_checks(int &state) {
 }
 
 double cutoff(const Utils::Vector3d &box_l) {
+  fprintf(stderr, "skin=%f, meth: %d \n",skin, coulomb.method);
   switch (coulomb.method) {
   case COULOMB_MMM1D:
     return std::numeric_limits<double>::infinity();
   case COULOMB_MMM2D:
-    return layer_h - skin;
+    return 1e-40;
 #ifdef P3M
   case COULOMB_ELC_P3M:
     return std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);

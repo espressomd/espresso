@@ -366,7 +366,6 @@ void on_parameter_change(int field) {
     cells_on_geometry_change(0);
     break;
   case FIELD_SKIN:
-    recalc_maximal_cutoff();
     cells_on_geometry_change(0);
     break;
   case FIELD_PERIODIC:
