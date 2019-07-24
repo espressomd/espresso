@@ -87,26 +87,6 @@ void ImmersedBoundaries::init_volume_conservation() {
   IBM_VolumeConservation_ResetParams
  *****************/
 
-int ImmersedBoundaries::volume_conservation_reset_params(const int bond_type,
-                                                         const double volRef) {
-
-  // Check if bond exists and is of correct type
-  if (bond_type >= bonded_ia_params.size())
-    return ES_ERROR;
-  if (bonded_ia_params[bond_type].type != BONDED_IA_IBM_VOLUME_CONSERVATION)
-    return ES_ERROR;
-
-  // Specific stuff
-  // We need to set this here, since it is not re-calculated at the restarting
-  // of a sim as, e.g., triel
-  bonded_ia_params[bond_type].p.ibmVolConsParameters.volRef = volRef;
-
-  // Communicate this to whoever is interested
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
-}
-
 /***********
    IBM_VolumeConservation_SetParams
 ************/
