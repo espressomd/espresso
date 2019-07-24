@@ -23,7 +23,7 @@
 
 #if defined(SCAFACOS)
 
-#include <vector>
+#include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -31,6 +31,7 @@
 #include <limits>
 #include <memory>
 #include <numeric>
+#include <vector>
 
 #include "Scafacos.hpp"
 #include "cells.hpp"
@@ -85,7 +86,7 @@ int ScafacosData::update_particle_data() {
   }
 
   for (auto const &p : local_cells.particles()) {
-    auto pos = folded_position(p);
+    auto const pos = folded_position(p.r.p, box_geo);
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
     positions.push_back(pos[2]);
@@ -93,7 +94,7 @@ int ScafacosData::update_particle_data() {
       charges.push_back(p.p.q);
     } else {
 #ifdef SCAFACOS_DIPOLES
-      const Vector3d dip = p.calc_dip();
+      auto const dip = p.calc_dip();
       dipoles.push_back(dip[0]);
       dipoles.push_back(dip[1]);
       dipoles.push_back(dip[2]);
@@ -113,43 +114,39 @@ void ScafacosData::update_particle_forces() const {
 
   for (auto &p : local_cells.particles()) {
     if (!dipolar()) {
-      p.f.f[0] += coulomb.prefactor * p.p.q * fields[it++];
-      p.f.f[1] += coulomb.prefactor * p.p.q * fields[it++];
-      p.f.f[2] += coulomb.prefactor * p.p.q * fields[it++];
+      p.f.f += coulomb.prefactor * p.p.q *
+               Utils::Vector3d(Utils::Span<const double>(&(fields[it]), 3));
+      it += 3;
     } else {
 #ifdef SCAFACOS_DIPOLES
       // Indices
       // 3 "potential" values per particles (see below)
-      int it_p = 3 * it;
+      int const it_p = 3 * it;
       // 6 "field" values per particles (see below)
-      int it_f = 6 * it;
+      int const it_f = 6 * it;
 
       // The scafacos term "potential" here in fact refers to the magnetic
       // field
       // So, the torques are given by m \times B
-      const Vector3d dip = p.calc_dip();
-      auto const t = dip.cross(
-          Vector3d(Utils::Span<const double>(&(potentials[it_p]), 3)));
+      auto const dip = p.calc_dip();
+      auto const t = vector_product(
+          dip,
+          Utils::Vector3d(Utils::Span<const double>(&(potentials[it_p]), 3)));
       // The force is given by G m, where G is a matrix
       // which comes from the "fields" output of scafacos like this
       // 0 1 2
       // 1 3 4
       // 2 4 5
-      // where the numbers refer to indices in the "field" output from
-      // scafacos
-      double f[3];
-      f[0] = fields[it_f + 0] * dip[0] + fields[it_f + 1] * dip[1] +
-             fields[it_f + 2] * dip[2];
-      f[1] = fields[it_f + 1] * dip[0] + fields[it_f + 3] * dip[1] +
-             fields[it_f + 4] * dip[2];
-      f[2] = fields[it_f + 2] * dip[0] + fields[it_f + 4] * dip[1] +
-             fields[it_f + 5] * dip[2];
+      // where the numbers refer to indices in the "field" output from scafacos
+      auto const G = Utils::Vector<Utils::Vector3d, 3>{
+          {fields[it_f + 0], fields[it_f + 1], fields[it_f + 2]},
+          {fields[it_f + 1], fields[it_f + 3], fields[it_f + 4]},
+          {fields[it_f + 2], fields[it_f + 4], fields[it_f + 5]}};
+      auto const f = G * dip;
 
       // Add to particles
-      for (int j = 0; j < 3; j++) {
-        p.f.f[j] += dipole.prefactor * f[j];
-        p.f.torque[j] += dipole.prefactor * t[j];
-      }
+      p.f.f += dipole.prefactor * f;
+      p.f.torque += dipole.prefactor * t;
       it++;
 #endif
     }
@@ -159,7 +156,6 @@ void ScafacosData::update_particle_forces() const {
   if (!dipolar()) {
     assert(it == fields.size());
   } else {
-    int tmp = positions.size() / 3;
     assert(it == positions.size() / 3);
   }
 }
@@ -192,12 +188,11 @@ bool check_position_validity(const std::vector<double> &pos) {
   assert(pos.size() % 3 == 0);
   for (int i = 0; i < pos.size() / 3; i++) {
     for (int j = 0; j < 3; j++) {
-      if (pos[3 * i + j] < 0 || pos[3 * i + j] > box_l[j]) {
+      if (pos[3 * i + j] < 0 || pos[3 * i + j] > box_geo.length()[j]) {
         // Throwing exception rather than runtime error, because continuing will
         // result in mpi deadlock
         throw std::runtime_error("Particle position outside the box domain not "
                                  "allowed for scafacos-based methods.");
-        return false;
       }
     }
   }
@@ -206,10 +201,6 @@ bool check_position_validity(const std::vector<double> &pos) {
 
 void add_long_range_force() {
   particles.update_particle_data();
-
-  if (!check_position_validity(particles.positions)) {
-    return;
-  }
 
   if (scafacos) {
     if (!dipolar()) {
@@ -254,9 +245,6 @@ double long_range_energy() {
 }
 void set_r_cut_and_tune_local(double r_cut) {
   particles.update_particle_data();
-  if (!check_position_validity(particles.positions)) {
-    return;
-  }
 
   scafacos->set_r_cut(r_cut);
   scafacos->tune(particles.charges, particles.positions);
@@ -276,6 +264,10 @@ double time_r_cut(double r_cut) {
 /** Determine the optimal cutoff by bisection */
 void tune_r_cut() {
   const double tune_limit = 1e-3;
+
+  auto const min_box_l = *boost::min_element(box_geo.length());
+  auto const min_local_box_l = *boost::min_element(local_geo.length());
+
   /** scafacos p3m and Ewald do not accept r_cut 0 for no good reason */
   double r_min = 1.0;
   double r_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
@@ -309,9 +301,6 @@ void tune_r_cut() {
 
 void tune() {
   particles.update_particle_data();
-  if (!check_position_validity(particles.positions)) {
-    return;
-  }
 
   /** Check whether we have to do a bisection for the short range cutoff */
   /** Check if there is a user supplied cutoff */
@@ -338,7 +327,8 @@ static void set_params_safe(const std::string &method,
 
   scafacos = new Scafacos(method, comm_cart, params);
 
-  int per[3] = {PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0};
+  int per[3] = {box_geo.periodic(0) != 0, box_geo.periodic(1) != 0,
+                box_geo.periodic(2) != 0};
 
   scafacos->set_dipolar(dipolar_ia);
 #ifdef DIPOLES
@@ -351,7 +341,7 @@ static void set_params_safe(const std::string &method,
     coulomb.method = COULOMB_SCAFACOS;
   }
 #endif
-  scafacos->set_common_parameters(box_l.data(), per, n_part);
+  scafacos->set_common_parameters(box_geo.length().data(), per, n_part);
 
   on_coulomb_change();
 
@@ -420,12 +410,13 @@ void update_system_params() {
     throw std::runtime_error("Scafacos object not there");
   }
 
-  int per[3] = {PERIODIC(0) != 0, PERIODIC(1) != 0, PERIODIC(2) != 0};
+  int per[3] = {box_geo.periodic(0) != 0, box_geo.periodic(1) != 0,
+                box_geo.periodic(2) != 0};
 
   int tmp;
   MPI_Allreduce(&n_part, &tmp, 1, MPI_INT, MPI_MAX, comm_cart);
   n_part = tmp;
-  scafacos->set_common_parameters(box_l.data(), per, n_part);
+  scafacos->set_common_parameters(box_geo.length().data(), per, n_part);
 }
 
 } // namespace Scafacos

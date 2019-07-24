@@ -52,7 +52,7 @@ static void pack_particles(ParticleRange particles,
 
   int i = 0;
   for (auto const &part : particles) {
-    buffer[i].p = static_cast<Vector3f>(folded_position(part));
+    buffer[i].p = static_cast<Vector3f>(folded_position(part.r.p, box_geo));
 
 #ifdef CUDA
     buffer[i].identity = part.p.identity;

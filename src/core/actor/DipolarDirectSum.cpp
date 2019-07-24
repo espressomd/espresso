@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "DipolarDirectSum.hpp"
 #include "EspressoSystemInterface.hpp"
+#include "communication.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 

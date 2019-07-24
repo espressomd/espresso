@@ -29,7 +29,7 @@ import espressomd.shapes
 from espressomd import electrostatics
 from espressomd import visualization
 
-required_features = ["PARTIAL_PERIODIC", "ELECTROSTATICS", "LENNARD_JONES"]
+required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 box_l = 20
@@ -75,7 +75,7 @@ print("After Minimization: E_total=", energy['total'])
 system.thermostat.set_langevin(kT=0.1, gamma=1.0, seed=42)
 
 mmm2d = electrostatics.MMM2D(
-    prefactor=10.0, maxPWerror=1e-3, const_pot=1, pot_diff=50.0)
+    prefactor=10.0, maxPWerror=1e-3, const_pot=True, pot_diff=50.0)
 system.actors.add(mmm2d)
 
 visualizer.run(1)

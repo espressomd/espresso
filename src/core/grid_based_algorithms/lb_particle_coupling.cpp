@@ -149,12 +149,15 @@ Utils::Vector3d lb_viscous_coupling(Particle *p,
 namespace {
 bool in_local_domain(Utils::Vector3d const &pos) {
   auto const lblattice = lb_lbfluid_get_lattice();
-  return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-          pos[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-          pos[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-          pos[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-          pos[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-          pos[2] < my_right[2] + 0.5 * lblattice.agrid[2]);
+  auto const my_left = local_geo.my_left();
+  auto const my_right = local_geo.my_right();
+
+  return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid &&
+          pos[0] < my_right[0] + 0.5 * lblattice.agrid &&
+          pos[1] >= my_left[1] - 0.5 * lblattice.agrid &&
+          pos[1] < my_right[1] + 0.5 * lblattice.agrid &&
+          pos[2] >= my_left[2] - 0.5 * lblattice.agrid &&
+          pos[2] < my_right[2] +0.5 * lblattice.agrid);
 }
 
 #ifdef ENGINE
@@ -259,6 +262,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
           /* for ghost particles we have to check if they lie
            * in the range of the local lattice nodes */
           if (in_local_domain(p.r.p)) {
+            if (lattice_switch == ActiveLB::WALBERLA and !local_particles[p.p.identity]->l.ghost)
+              continue;
             if (!p.p.is_virtual || couple_virtual) {
               lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
 #ifdef ENGINE

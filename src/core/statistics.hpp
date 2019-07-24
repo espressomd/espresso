@@ -66,8 +66,8 @@ double mindist(PartCfg &, IntList const &set1, IntList const &set2);
  *
  *  @return List of ids close to @p pos.
  */
-IntList nbhood(PartCfg &partCfg, double pos[3], double r_catch,
-               int const planedims[3]);
+IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
+               const Utils::Vector3i &planedims);
 
 /** Calculate minimal distance to point.
  *  @param pos  point
@@ -76,7 +76,7 @@ IntList nbhood(PartCfg &partCfg, double pos[3], double r_catch,
  *              position of a particle).
  *  @return the minimal distance of a particle to coordinates @p pos
  */
-double distto(PartCfg &, double pos[3], int pid);
+double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid);
 
 /** Append particles' positions in %p partCfg to #configs
  *  @param partCfg  @copybrief PartCfg
@@ -193,9 +193,10 @@ int calc_cylindrical_average(
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution);
 
-template <typename T1, typename T2>
-double min_distance2(T1 const pos1, T2 const pos2) {
-  return get_mi_vector(pos1, pos2).norm2();
+template <typename T>
+double min_distance2(Utils::Vector<T, 3> const &pos1,
+                     Utils::Vector<T, 3> const &pos2) {
+  return get_mi_vector(pos1, pos2, box_geo).norm2();
 }
 
 /** Calculate the center of mass of a special type of the current configuration.

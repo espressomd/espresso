@@ -24,27 +24,6 @@
  *  Implementation in p3m_gpu_cuda.cu.
  */
 
-#define _P3M_GPU_FLOAT
-//#define _P3M_GPU_REAL_DOUBLE
-
-#ifdef _P3M_GPU_FLOAT
-#define REAL_TYPE float
-#define FFT_TYPE_COMPLEX cufftComplex
-#define FFT_FORW_FFT cufftExecR2C
-#define FFT_BACK_FFT cufftExecC2R
-#define FFT_PLAN_FORW_FLAG CUFFT_R2C
-#define FFT_PLAN_BACK_FLAG CUFFT_C2R
-#endif
-
-#ifdef _P3M_GPU_REAL_DOUBLE
-#define REAL_TYPE double
-#define FFT_TYPE_COMPLEX cufftDoubleComplex
-#define FFT_FORW_FFT cufftExecD2Z
-#define FFT_BACK_FFT cufftExecZ2D
-#define FFT_PLAN_FORW_FLAG CUFFT_D2Z
-#define FFT_PLAN_BACK_FLAG CUFFT_Z2D
-#endif
-
 void p3m_gpu_init(int cao, const int mesh[3], double alpha);
 void p3m_gpu_add_farfield_force();
 

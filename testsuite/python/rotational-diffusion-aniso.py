@@ -64,8 +64,7 @@ class RotDiffAniso(ut.TestCase):
         # Space
         box = 10.0
         self.system.box_l = box, box, box
-        if espressomd.has_features(("PARTIAL_PERIODIC",)):
-            self.system.periodicity = [0, 0, 0]
+        self.system.periodicity = [0, 0, 0]
 
         # NVT thermostat
         # Just some temperature range to cover by the test:

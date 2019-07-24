@@ -28,7 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace LBBoundaries {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-int lbboundary_get_force(void *lbb, double *f);
+class LBBoundary;
+Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb);
 void lb_init_boundaries();
 #endif
 class LBBoundary {
@@ -63,11 +64,9 @@ public:
   Shapes::Shape const &shape() const { return *m_shape; }
   Utils::Vector3d &velocity() { return m_velocity; }
   Utils::Vector3d &force() { return m_force; }
-  Utils::Vector3d get_force() {
+  Utils::Vector3d get_force() const {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-    double tmp_force[3];
-    lbboundary_get_force(this, tmp_force);
-    return Utils::Vector3d{tmp_force[0], tmp_force[1], tmp_force[2]};
+    return lbboundary_get_force(this);
 #else
     throw std::runtime_error("Needs LB_BOUNDARIES or LB_BOUNDARIES_GPU.");
 #endif

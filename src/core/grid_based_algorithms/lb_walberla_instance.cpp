@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include "errorhandling.hpp"
 
 #ifdef LB_WALBERLA
 #include "LbWalberla.hpp"
@@ -55,7 +56,7 @@ void mpi_init_lb_walberla(double viscosity, double density, double agrid,
                           double tau) {
   Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity,
                                          density * pow(agrid, 3), agrid, tau,
-                                         box_l, node_grid, skin);
+                                         box_geo.length(), node_grid, skin);
   lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
 }
 

@@ -43,17 +43,6 @@
  *  This means, that each communication cycle, 1 processor is idle, which is
  *  pretty ineffective.
  *
- *  The second main part of this cell system is a load balancer which
- *  at the beginning of the integration is called and balances the
- *  numbers of particles between the nodes. This means that the number
- *  of particles per node should be around \f$N/P\f$, so the goal is to
- *  let every processor have a number of particles which is one of the
- *  two integers closest to \f$N/P\f$. The algorithm is greedy, i. e. it
- *  searches for the node with most and least particles and transfers
- *  as much as possible particles between them so that at least one of
- *  them satisfies the constraints. Of course the algorithm terminates
- *  if both satisfy the condition without transfer.
- *
  *  The calculations themselves are just simple loops over all
  *  appropriate particle pairs.
  *
@@ -69,5 +58,5 @@ void nsq_topology_release();
 void nsq_topology_init(CellPList *local);
 
 /** implements the load balancing as described above. */
-void nsq_balance_particles(int global_flag);
+void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts);
 #endif

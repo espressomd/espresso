@@ -206,6 +206,5 @@ target_include_directories(EspressoCore PUBLIC ${CMAKE_SOURCE_DIR}/libs/walberla
 target_include_directories(EspressoCore PUBLIC ${CMAKE_BINARY_DIR}/external/walberla/src)
 endif(WALBERLA)
 
-add_subdirectory(grid_based_algorithms)
 add_subdirectory(shapes)
 add_subdirectory(cluster_analysis)

@@ -62,6 +62,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
     }
     grid_dimensions[i] = int(std::round(box_dimensions[i] / agrid));
     if (grid_dimensions[i] % node_grid[i] != 0) {
+      printf("Grid dimension: %d, node grid %d\n",grid_dimensions[i],node_grid[i]);
       throw std::runtime_error(
           "LB grid dimensions and mpi node grid are not compatible.");
     }
@@ -85,10 +86,10 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
-      uint_c(1));
+      n_ghost_layers());
   m_force_field_from_md_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
-      uint_c(1));
+      n_ghost_layers());
   m_lattice_model = std::make_shared<Lattice_model_t>(Lattice_model_t(
       lbm::collision_model::TRT::constructWithMagicNumber(
           lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
@@ -96,7 +97,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_pdf_field_id = lbm::addPdfFieldToStorage(
       m_blocks, "pdf field", *m_lattice_model, to_vector3(m_velocity),
-      (real_t)m_density, int_c(skin / agrid + 1));
+      (real_t)m_density, n_ghost_layers());
 
   m_flag_field_id =
       field::addFlagFieldToStorage<Flag_field_t>(m_blocks, "flag field");
@@ -122,13 +123,14 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>(
       m_pdf_field_id, m_force_field_id, m_force_field_from_md_id,
       m_boundary_handling_id);
-  m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
-                     << timeloop::Sweep(Boundary_handling_t::getBlockSweep(
+  m_time_loop->add() << // timeloop::BeforeFunction(communication, "communication")
+                     timeloop::Sweep(Boundary_handling_t::getBlockSweep(
                                             m_boundary_handling_id),
                                         "boundary handling");
   m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                         "Reset force fields");
-  m_time_loop->add() << timeloop::Sweep(
+  m_time_loop->add() << timeloop::AfterFunction(communication, "communication")
+     << timeloop::Sweep(
       domain_decomposition::makeSharedSweep(
           lbm::makeCellwiseSweep<Lattice_model_t, Flag_field_t>(
               m_pdf_field_id, m_flag_field_id, Fluid_flag)),
@@ -144,6 +146,8 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   m_velocity_interpolator_id =
       field::addFieldInterpolator<VectorFieldAdaptorInterpolator, Flag_field_t>(
           m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
+
+  communication();
 }
 
 Utils::Vector3d LbWalberla::get_momentum() const {
@@ -163,11 +167,20 @@ Utils::Vector3d LbWalberla::get_momentum() const {
 void LbWalberla::integrate() { m_time_loop->singleStep(); }
 
 boost::optional<LbWalberla::BlockAndCell>
-LbWalberla::get_block_and_cell(const Utils::Vector3i &node) const {
+LbWalberla::get_block_and_cell(const Utils::Vector3i &node, bool consider_ghost_layers) const {
   // Get block and local cell
   Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
   auto block = m_blocks->getBlock(global_cell, 0);
   // Return if we don't have the cell
+  if (consider_ghost_layers and !block) {
+    // Try to find a block which has the cell as ghost layer
+    for (auto b = m_blocks->begin(); b!=m_blocks->end(); ++b) {
+      if (b->getAABB().getExtended(m_skin/m_agrid).contains(real_c(node[0]),real_c(node[1]),real_c(node[2]))) {
+        block=&(*b);
+        break;
+      }
+    }
+  }
   if (!block)
     return {boost::none};
 
@@ -175,6 +188,27 @@ LbWalberla::get_block_and_cell(const Utils::Vector3i &node) const {
   Cell local_cell;
   m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
   return {{block, local_cell}};
+}
+
+IBlock* 
+LbWalberla::get_block(const Utils::Vector3d &pos, bool consider_ghost_layers) const {
+  // Get block and local cell
+  auto block = m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
+  if (consider_ghost_layers and !block) {
+    // Try to find a block which has the cell as ghost layer
+    for (auto b = m_blocks->begin(); b!=m_blocks->end(); ++b) {
+      auto ab =b->getAABB().getExtended(1.0 *n_ghost_layers());
+      printf("%d: %g %g %g, %g %g %g\n",this_node, ab.min()[0],ab.min()[1],ab.min()[2],ab.max()[0],ab.max()[1],ab.max()[2]);
+      printf("%d: pos %g %g %g\n",this_node, pos[0],pos[1],pos[2]);
+      if (ab.contains(pos[0],pos[1],pos[2])) {
+        block=&(*b);
+        printf("%d: block selected\n",this_node);
+        break;
+      }
+    }
+  }
+
+  return block;
 }
 
 bool LbWalberla::set_node_velocity_at_boundary(const Utils::Vector3i node,
@@ -239,7 +273,7 @@ LbWalberla::get_node_is_boundary(const Utils::Vector3i &node) const {
 
 bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
                                   const Utils::Vector3d &force) {
-  auto block = m_blocks->getBlock(to_vector3(pos));
+  auto block = get_block(pos,true);
   if (!block)
     return false;
   auto *force_distributor =
@@ -263,7 +297,7 @@ LbWalberla::get_node_velocity(const Utils::Vector3i node) const {
 
 boost::optional<Utils::Vector3d>
 LbWalberla::get_velocity_at_pos(const Utils::Vector3d &pos) const {
-  auto block = m_blocks->getBlock(to_vector3(pos));
+  auto block = get_block(pos,true);
   if (!block)
     return {boost::none};
 

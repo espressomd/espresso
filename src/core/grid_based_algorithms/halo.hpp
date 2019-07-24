@@ -50,7 +50,7 @@
 
 /** Layout of the lattice data.
  *  The description is similar to MPI datatypes but a bit more compact.
- *  See \ref halo_create_fieldtype, \ref halo_create_field_vector and \ref
+ *  See \ref halo_create_field_vector and \ref
  *  halo_dtcopy to understand how it works.
  */
 typedef struct _Fieldtype *Fieldtype;
@@ -98,16 +98,6 @@ typedef struct {
   HaloInfo *halo_info; /**< set of halo communications */
 
 } HaloCommunicator;
-
-/** Creates a fieldtype describing the data layout
- *  @param      count   number of subtypes
- *  @param[in]  lengths array of lengths of the subtypes
- *  @param[in]  disps   array of displacements the subtypes
- *  @param      extent  extent of the whole new fieldtype
- *  @param[out] newtype newly created fieldtype
- */
-void halo_create_fieldtype(int count, int const *lengths, int const *disps,
-                           int extent, Fieldtype *newtype);
 
 /** Creates a field vector layout
  *  @param vblocks       number of vector blocks

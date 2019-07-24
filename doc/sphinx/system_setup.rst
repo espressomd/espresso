@@ -31,9 +31,8 @@ for further calculations, you should explicitly make a copy e.g. via
 
 * :py:attr:`~espressomd.system.System.periodicity`
 
-    (int[3]) Specifies periodicity for the three directions. If the feature
-    ``PARTIAL_PERIODIC`` is set, |es| can be instructed to treat some
-    dimensions as non-periodic. Per default espresso assumes periodicity in
+    (int[3]) Specifies periodicity for the three directions. |es| can be instructed
+    to treat some dimensions as non-periodic. Per default espresso assumes periodicity in
     all directions which equals setting this variable to [1,1,1]. A
     dimension is specified as non-periodic via setting the periodicity
     variable for this dimension to 0. E.g. Periodicity only in z-direction
