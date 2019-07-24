@@ -46,6 +46,8 @@ checkpoint = espressomd.checkpointing.Checkpoint(
 LB_implementation = None
 if 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
+elif espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes:
+    LB_implementation = espressomd.lb.LBFluidWalberla
 elif espressomd.gpu_available() and espressomd.has_features('CUDA') and 'LB.GPU' in modes:
     LB_implementation = espressomd.lb.LBFluidGPU
 if LB_implementation:

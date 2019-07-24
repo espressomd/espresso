@@ -74,10 +74,6 @@ cdef class HydrodynamicInteraction(Actor):
             if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
                 raise ValueError("Density must be one positive double")
 
-    # list of valid keys for parameters
-    #
-    def valid_keys(self):
-        return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
     # list of essential keys required for the fluid
     #
@@ -122,11 +118,12 @@ cdef class HydrodynamicInteraction(Actor):
     self._params["agrid"],
     self._params["tau"])
 
-        if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
-            python_lbfluid_set_bulk_viscosity(
-    self._params["bulk_visc"],
-    self._params["agrid"],
-    self._params["tau"])
+        IF not LB_WALBERLA:
+            if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
+                python_lbfluid_set_bulk_viscosity(
+        self._params["bulk_visc"],
+        self._params["agrid"],
+        self._params["tau"])
 
         python_lbfluid_set_agrid(self._params["agrid"])
 
@@ -135,11 +132,13 @@ cdef class HydrodynamicInteraction(Actor):
     self._params["agrid"],
     self._params["tau"])
 
-        if "gamma_odd" in self._params:
-            python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
+        IF not LB_WALBERLA:
+          if "gamma_odd" in self._params:
+              python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
 
-        if "gamma_even" in self._params:
-            python_lbfluid_set_gamma_even(self._params["gamma_even"])
+        IF not LB_WALBERLA:
+          if "gamma_even" in self._params:
+              python_lbfluid_set_gamma_even(self._params["gamma_even"])
 
         utils.handle_errors("LB fluid activation")
 
@@ -161,9 +160,10 @@ cdef class HydrodynamicInteraction(Actor):
         if python_lbfluid_get_viscosity(self._params["visc"], self._params["agrid"], self._params["tau"]):
             raise Exception("lb_lbfluid_set_viscosity error")
 
-        if not self._params["bulk_visc"] == default_params["bulk_visc"]:
-            if python_lbfluid_get_bulk_viscosity(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
-                raise Exception("lb_lbfluid_set_bulk_viscosity error")
+        IF not LB_WALBERLA:
+            if not self._params["bulk_visc"] == default_params["bulk_visc"]:
+                if python_lbfluid_get_bulk_viscosity(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
+                    raise Exception("lb_lbfluid_set_bulk_viscosity error")
 
         if python_lbfluid_get_agrid(self._params["agrid"]):
             raise Exception("lb_lbfluid_set_agrid error")
@@ -276,6 +276,11 @@ cdef class LBFluid(HydrodynamicInteraction):
 
     """
 
+    # list of valid keys for parameters
+    #
+    def valid_keys(self):
+        return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
+
     def _set_lattice_switch(self):
         lb_lbfluid_set_lattice_switch(CPU)
 
@@ -300,6 +305,16 @@ IF LB_WALBERLA:
             if float(self._params["kT"]) != 0.:
                 raise ValueError(
                     "The Walberla interface does not currently support thermalization (kT>0).")
+
+        def default_params(self):
+            return {"agrid": -1.0,
+                    "dens": -1.0,
+                    "ext_force_density": [0.0, 0.0, 0.0],
+                    "visc": -1.0,
+#                    "bulk_visc": -1.0,
+                    "tau": -1.0,
+#                    "seed": None,
+                    "kT": 0.}
 
         def _set_lattice_switch(self):
             raise Exception("This may not be called")
@@ -328,6 +343,11 @@ IF CUDA:
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
 
         """
+
+        # list of valid keys for parameters
+        #
+        def valid_keys(self):
+            return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
         def _set_lattice_switch(self):
             lb_lbfluid_set_lattice_switch(GPU)

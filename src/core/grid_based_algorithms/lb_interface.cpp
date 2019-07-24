@@ -285,7 +285,13 @@ void lb_lbfluid_reinit_fluid() {
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
     lb_reinit_fluid();
-  } else {
+  }
+#ifdef LB_WALBERLA
+  else if (lattice_switch == ActiveLB::WALBERLA) {
+
+  }
+#endif
+  else {
     throw std::runtime_error("LB not activated.");
   }
 }
@@ -383,6 +389,11 @@ double lb_lbfluid_get_viscosity() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.viscosity;
   }
+#ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    return lb_walberla()->get_viscosity();
+  }
+#endif
   throw std::runtime_error("LB not activated.");
 }
 
@@ -1006,6 +1017,49 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
     }
     cpfile.close();
   }
+#ifdef LB_WALBERLA
+  else if (lattice_switch == ActiveLB::WALBERLA) {
+    std::fstream cpfile;
+    if (binary) {
+      cpfile.open(filename, std::ios::out | std::ios::binary);
+    } else {
+      cpfile.open(filename, std::ios::out);
+      cpfile.precision(16);
+      cpfile << std::fixed;
+    }
+
+    double pop[19];
+    Utils::Vector3i ind;
+    auto const gridsize = lb_walberla()->get_grid_dimensions();
+
+    if (!binary) {
+      cpfile << gridsize[0] << " " << gridsize[1] << " " << gridsize[2] << "\n";
+    } else {
+      cpfile.write(reinterpret_cast<const char *>(gridsize.data()),
+                   3 * sizeof(gridsize[0]));
+    }
+
+    for (int i = 0; i < gridsize[0]; i++) {
+      for (int j = 0; j < gridsize[1]; j++) {
+        for (int k = 0; k < gridsize[2]; k++) {
+          ind[0] = i;
+          ind[1] = j;
+          ind[2] = k;
+          auto pop = lb_lbnode_get_pop(ind);
+          if (!binary) {
+            for (int n = 0; n < 19; n++) {
+              cpfile << pop[n] << "\n";
+            }
+          } else {
+            cpfile.write(reinterpret_cast<char *>(&pop[0]),
+                         19 * sizeof(double));
+          }
+        }
+      }
+    }
+    cpfile.close();
+  }
+#endif
 }
 
 void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
@@ -1188,7 +1242,100 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
     fclose(cpfile);
-  } else {
+  }
+#ifdef LB_WALBERLA
+  else if (lattice_switch == ActiveLB::WALBERLA) {
+    FILE *cpfile;
+    cpfile = fopen(filename.c_str(), "r");
+    if (!cpfile) {
+      throw std::runtime_error(err_msg + "could not open file for reading.");
+    }
+
+    Utils::Vector19d pop;
+    Utils::Vector3i ind;
+    auto const gridsize = lb_walberla()->get_grid_dimensions();
+    int saved_gridsize[3];
+    mpi_bcast_lb_params(LBParam::DENSITY);
+
+    if (!binary) {
+      res = fscanf(cpfile, "%i %i %i\n", &saved_gridsize[0], &saved_gridsize[1],
+                   &saved_gridsize[2]);
+      if (res == EOF) {
+        fclose(cpfile);
+        throw std::runtime_error(err_msg + "EOF found.");
+      }
+      if (res != 3) {
+        fclose(cpfile);
+        throw std::runtime_error(err_msg + "incorrectly formatted data.");
+      }
+    } else {
+      if (fread(&saved_gridsize[0], sizeof(int), 3, cpfile) != 3) {
+        fclose(cpfile);
+        throw std::runtime_error(err_msg + "incorrectly formatted data.");
+      }
+    }
+    if (saved_gridsize[0] != gridsize[0] || saved_gridsize[1] != gridsize[1] ||
+        saved_gridsize[2] != gridsize[2]) {
+      fclose(cpfile);
+      throw std::runtime_error(err_msg + "grid dimensions mismatch, read [" +
+                               std::to_string(saved_gridsize[0]) + ' ' +
+                               std::to_string(saved_gridsize[1]) + ' ' +
+                               std::to_string(saved_gridsize[2]) +
+                               "], expected [" + std::to_string(gridsize[0]) +
+                               ' ' + std::to_string(gridsize[1]) + ' ' +
+                               std::to_string(gridsize[2]) + "].");
+    }
+
+    for (int i = 0; i < gridsize[0]; i++) {
+      for (int j = 0; j < gridsize[1]; j++) {
+        for (int k = 0; k < gridsize[2]; k++) {
+          ind[0] = i;
+          ind[1] = j;
+          ind[2] = k;
+          if (!binary) {
+            res = fscanf(cpfile,
+                         "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf "
+                         "%lf %lf %lf %lf %lf %lf \n",
+                         &pop[0], &pop[1], &pop[2], &pop[3], &pop[4], &pop[5],
+                         &pop[6], &pop[7], &pop[8], &pop[9], &pop[10], &pop[11],
+                         &pop[12], &pop[13], &pop[14], &pop[15], &pop[16],
+                         &pop[17], &pop[18]);
+            if (res == EOF) {
+              fclose(cpfile);
+              throw std::runtime_error(err_msg + "EOF found.");
+            }
+            if (res != 19) {
+              fclose(cpfile);
+              throw std::runtime_error(err_msg + "incorrectly formatted data.");
+            }
+          } else {
+            if (fread(pop.data(), sizeof(double), 19, cpfile) != 19) {
+              fclose(cpfile);
+              throw std::runtime_error(err_msg + "incorrectly formatted data.");
+            }
+          }
+          lb_lbnode_set_pop(ind, pop);
+        }
+      }
+    }
+    if (!binary) {
+      // skip spaces
+      for (int n = 0; n < 2; ++n) {
+        res = fgetc(cpfile);
+        if (res != (int)' ' && res != (int)'\n')
+          break;
+      }
+    } else {
+      res = fgetc(cpfile);
+    }
+    if (res != EOF) {
+      fclose(cpfile);
+      throw std::runtime_error(err_msg + "extra data found, expected EOF.");
+    }
+    fclose(cpfile);
+  }
+#endif
+  else {
     throw std::runtime_error(
         "To load an LB checkpoint one needs to have already "
         "initialized the LB fluid with the same grid size.");

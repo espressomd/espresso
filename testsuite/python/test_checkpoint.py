@@ -28,6 +28,7 @@ modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
 
 LB = ('LB.CPU' in modes or
+      espressomd.has_features('LB_WALBERLA') and 'LB.WALBERLA' in modes or
       espressomd.gpu_available() and espressomd.has_features('CUDA') and 'LB.GPU' in modes)
 
 EK = (espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') and 'EK.GPU'

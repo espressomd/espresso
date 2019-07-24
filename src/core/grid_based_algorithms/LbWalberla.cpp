@@ -323,7 +323,7 @@ bool LbWalberla::set_node_pop(const Utils::Vector3i &node,
     return false;
 
   auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
-  auto &xyz0 = (*pdf_field)(node[0], node[1], node[2], 0);
+  auto &xyz0 = (*pdf_field)(bc->cell[0], bc->cell[1], bc->cell[2], 0);
 
   for (int i = 0; i < 19; i++) {
     pdf_field->getF(&xyz0, es_pop_index_to_walberla_pop_index[i]) = pop[i];
@@ -339,7 +339,7 @@ LbWalberla::get_node_pop(const Utils::Vector3i node) const {
     return {boost::none};
 
   auto pdf_field = (*bc).block->getData<Pdf_field_t>(m_pdf_field_id);
-  const auto &xyz0 = (*pdf_field)(node[0], node[1], node[2], 0);
+  const auto &xyz0 = (*pdf_field)(bc->cell[0], bc->cell[1], bc->cell[2], 0);
 
   Utils::Vector19d pop;
 
