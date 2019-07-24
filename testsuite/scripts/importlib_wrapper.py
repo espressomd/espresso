@@ -163,14 +163,17 @@ def set_cmd(code, filepath, cmd_arguments):
     return code, old_sys_argv
 
 
-def substitute_variable_values(code, **parameters):
+def substitute_variable_values(code, strings_as_is=False, keep_original=True,
+                               **parameters):
     for variable, value in parameters.items():
         assert variable in code, "variable {} not found".format(variable)
         re_var = re.compile("^(\t|\ {,4})(" + variable + ")(?= *=[^=])", re.M)
         assert re_var.search(code) is not None, \
             "variable {} has no assignment".format(variable)
-        code = re_var.sub(
-            r"\g<1>\g<2> = " + repr(value) + r"; _\g<2>__original", code)
+        val = strings_as_is and value or repr(value)
+        code = re_var.sub(r"\g<1>\g<2> = " + val + r"; _\g<2>__original", code)
+        if not keep_original:
+            code = re.sub(r"; _" + variable + "__original.+", "", code)
     return code
 
 
