@@ -103,7 +103,6 @@ void sanity_checks(int &state) {
 }
 
 double cutoff(const Utils::Vector3d &box_l) {
-  fprintf(stderr, "skin=%f, meth: %d \n",skin, coulomb.method);
   switch (coulomb.method) {
   case COULOMB_MMM1D:
     return std::numeric_limits<double>::infinity();
