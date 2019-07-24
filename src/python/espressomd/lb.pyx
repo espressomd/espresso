@@ -74,7 +74,6 @@ cdef class HydrodynamicInteraction(Actor):
             if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
                 raise ValueError("Density must be one positive double")
 
-
     # list of essential keys required for the fluid
     #
     def required_keys(self):
@@ -133,12 +132,12 @@ cdef class HydrodynamicInteraction(Actor):
     self._params["tau"])
 
         IF not LB_WALBERLA:
-          if "gamma_odd" in self._params:
-              python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
+            if "gamma_odd" in self._params:
+                python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
 
         IF not LB_WALBERLA:
-          if "gamma_even" in self._params:
-              python_lbfluid_set_gamma_even(self._params["gamma_even"])
+            if "gamma_even" in self._params:
+                python_lbfluid_set_gamma_even(self._params["gamma_even"])
 
         utils.handle_errors("LB fluid activation")
 
@@ -245,7 +244,7 @@ cdef class HydrodynamicInteraction(Actor):
 
     def _deactivate_method(self):
         lb_lbfluid_set_lattice_switch(NONE)
-    
+
     property shape:
         def __get__(self):
             cdef Vector3i shape = lb_lbfluid_get_shape()
@@ -254,7 +253,7 @@ cdef class HydrodynamicInteraction(Actor):
     property stress:
         def __get__(self):
             cdef Vector6d res
-            res = lb_lbfluid_get_stress() 
+            res = lb_lbfluid_get_stress()
             return array_locked((
                 res[0], res[1], res[2], res[3], res[4], res[5]))
 
@@ -263,7 +262,7 @@ cdef class HydrodynamicInteraction(Actor):
 
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
-        
+
         shape = self.shape
         for i, j, k in itertools.product(range(shape[0]), range(shape[1]), range(shape[2])):
             yield self[i, j, k]
@@ -278,6 +277,7 @@ cdef class LBFluid(HydrodynamicInteraction):
 
     # list of valid keys for parameters
     #
+
     def valid_keys(self):
         return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
@@ -328,7 +328,7 @@ IF LB_WALBERLA:
                 self._params["visc"], self._params["dens"], self._params["agrid"], self._params["tau"])
             utils.handle_errors("LB fluid activation")
             python_lbfluid_set_ext_force_density(
-    
+
     self._params["ext_force_density"],
     self._params["agrid"],
     self._params["tau"])
@@ -346,6 +346,7 @@ IF CUDA:
 
         # list of valid keys for parameters
         #
+
         def valid_keys(self):
             return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
@@ -384,9 +385,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines(object):
@@ -400,7 +401,7 @@ cdef class LBFluidRoutines(object):
         self.node[2] = key[2]
         if not lb_lbnode_is_index_valid(self.node):
             raise ValueError("LB node index out of bounds")
-    
+
     property index:
         def __get__(self):
             return (self.node[0], self.node[1], self.node[2])

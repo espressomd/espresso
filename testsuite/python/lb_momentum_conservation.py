@@ -27,7 +27,7 @@ AGRID = 1.0
 KVISC = 7 
 DENS = 1 
 BOX_SIZE = 6 * AGRID
-F = 1. /BOX_SIZE**3
+F = 1. / BOX_SIZE**3
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -51,7 +51,7 @@ class Momentum(object):
 
         applied_force = self.system.volume() * np.array(
             LB_PARAMS['ext_force_density'])
-        p = self.system.part.add(pos=(0,0,0), ext_force=-applied_force)
+        p = self.system.part.add(pos=(0, 0, 0), ext_force=-applied_force)
 
         # Reach steady state
         self.system.integrator.run(3000)
@@ -60,8 +60,8 @@ class Momentum(object):
         for i in range(30):
             self.system.integrator.run(1000)
             np.testing.assert_allclose(
-              self.system.analysis.linear_momentum(),
-              [0,0,0],atol=1E-8)
+                self.system.analysis.linear_momentum(),
+              [0, 0, 0], atol=1E-8)
 #            np.testing.assert_allclose(
 #                p.v * p.mass, -
 #                    np.array(
