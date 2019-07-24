@@ -27,6 +27,13 @@ class importlib_wrapper(ut.TestCase):
         str_exp = "n_steps = 10; _n_steps__original=5000\nnsteps == 5\n"
         str_out = iw.substitute_variable_values(str_inp, n_steps=10)
         self.assertEqual(str_out, str_exp)
+        str_out = iw.substitute_variable_values(str_inp, n_steps='10',
+                                                strings_as_is=True)
+        self.assertEqual(str_out, str_exp)
+        str_inp = "N=5000\nnsteps == 5\n"
+        str_exp = "N = 10\nnsteps == 5\n"
+        str_out = iw.substitute_variable_values(str_inp, N=10, keep_original=0)
+        self.assertEqual(str_out, str_exp)
         # test exceptions
         str_inp = "n_steps=5000\nnsteps == 5\n"
         self.assertRaises(AssertionError, iw.substitute_variable_values,
