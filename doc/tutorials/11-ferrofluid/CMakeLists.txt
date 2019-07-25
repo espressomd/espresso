@@ -10,7 +10,3 @@ add_custom_target(tutorials_11)
 html_export(TUTORIAL tutorials_11_1 FILE "11-ferrofluid_part1.ipynb")
 html_export(TUTORIAL tutorials_11_2 FILE "11-ferrofluid_part2.ipynb")
 html_export(TUTORIAL tutorials_11_3 FILE "11-ferrofluid_part3.ipynb")
-
-python_export(TUTORIAL tutorials_11_1 FILE "11-ferrofluid_part1.ipynb")
-python_export(TUTORIAL tutorials_11_2 FILE "11-ferrofluid_part2.ipynb")
-python_export(TUTORIAL tutorials_11_3 FILE "11-ferrofluid_part3.ipynb")
