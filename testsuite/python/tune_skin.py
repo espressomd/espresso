@@ -18,17 +18,33 @@
 import unittest as ut
 import espressomd
 
+
 class TuneSkin(ut.TestCase):
     system = espressomd.System(box_l=[1.35, 2.4, 1.7])
     system.time_step = 0.01
-    system.non_bonded_inter[0, 0].lennard_jones.set_params(epsilon=1, sigma=0.2, cutoff=0.3, shift="auto")
+    system.non_bonded_inter[
+        0,
+        0].lennard_jones.set_params(
+        epsilon=1,
+         sigma=0.2,
+         cutoff=0.3,
+         shift="auto")
 
     def test_fails_without_adjustment(self):
         with self.assertRaisesRegex(Exception, 'Error during tune_skin'):
-            self.system.cell_system.tune_skin(min_skin=0.1, max_skin=0.6, tol=0.05, int_steps=3)
+            self.system.cell_system.tune_skin(
+                min_skin=0.1,
+                max_skin=0.6,
+                tol=0.05,
+                int_steps=3)
 
     def test_works_with_adjustment(self):
-        self.system.cell_system.tune_skin(min_skin=0.1, max_skin=0.6, tol=0.05, int_steps=3, adjust_max_skin=True)
+        self.system.cell_system.tune_skin(
+            min_skin=0.1,
+            max_skin=0.6,
+            tol=0.05,
+            int_steps=3,
+            adjust_max_skin=True)
 
 if __name__ == "__main__":
     ut.main()
