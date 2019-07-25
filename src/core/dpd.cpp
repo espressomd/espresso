@@ -62,8 +62,8 @@ Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
       {dpd_rng_counter->value(), static_cast<uint64_t>(RNGSalt::SALT_DPD)}};
 
   uint64_t merged_ids;
-  uint32_t id1 = static_cast<uint32_t>(pid1);
-  uint32_t id2 = static_cast<uint32_t>(pid2);
+  auto const id1 = static_cast<uint32_t>(pid1);
+  auto const id2 = static_cast<uint32_t>(pid2);
 
   if (id1 > id2) {
     merged_ids = Utils::u32_to_u64(id1, id2);
