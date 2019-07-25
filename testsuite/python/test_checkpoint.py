@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 import subprocess
 import unittest as ut
 import unittest_decorators as utx
@@ -53,9 +52,7 @@ class CheckpointTest(ut.TestCase):
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
         with self.assertRaises(RuntimeError):
             lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
-        assertRaisesRegex = self.assertRaisesRegexp if sys.version_info < (
-            3, 2) else self.assertRaisesRegex
-        with assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
             lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
