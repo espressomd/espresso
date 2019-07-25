@@ -68,7 +68,6 @@ double max_range = 0.0;
 unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
 
-
 ParticleRange CellStructure::get_local_particles() const {
   return local_cells.particles();
 }
