@@ -489,10 +489,8 @@ void distribute(int e_size, double fac) {
 /*****************************************************************/
 
 static void setup_z_force() {
-  int np, c, i;
-  double pref = coulomb.prefactor * C_2PI * ux * uy;
-  Particle *part;
-  int e_size = 1, size = 2;
+  const double pref = coulomb.prefactor * C_2PI * ux * uy;
+  constexpr int e_size = 1, size = 2;
 
   /* there is NO contribution from images here, unlike claimed in Tyagi et al.
      Please refer to the Entropy
@@ -507,11 +505,11 @@ static void setup_z_force() {
   }
 
   /* calculate local cellblks. partblks don't make sense */
-  for (c = 1; c <= local_cells.n; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto np = cells[c].n;
+    auto part = cells[c].part;
     lclcblk[size * c] = 0;
-    for (i = 0; i < np; i++) {
+    for (int i = 0; i < np; i++) {
       lclcblk[size * c] += part[i].p.q;
     }
     lclcblk[size * c] *= pref;

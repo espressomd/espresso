@@ -449,6 +449,8 @@ struct ParticleList {
   int n;
   /** Number of particles that fit in until a resize is needed */
   int max;
+
+  Utils::Span<Particle> particles() { return {part, static_cast<size_t>(n)}; }
 };
 
 /************************************************
