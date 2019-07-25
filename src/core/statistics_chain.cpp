@@ -39,8 +39,8 @@ int chain_n_chains = 0;
 int chain_length = 0;
 /*@}*/
 
-void update_mol_ids_setchains() {
-  for (auto &p : local_cells.particles()) {
+void update_mol_ids_setchains(const ParticleRange &particles) {
+  for (auto &p : particles) {
     p.p.mol_id = floor((p.p.identity - chain_start) / (double)chain_length);
   }
 }

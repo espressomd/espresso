@@ -61,7 +61,8 @@ public:
       return shape_based_constraint()->total_force();
     }
     if (name == "min_dist") {
-      return shape_based_constraint()->min_dist();
+      return shape_based_constraint()->min_dist(
+          cell_structure.local_cells().particles());
     }
     if (name == "total_normal_force") {
       return shape_based_constraint()->total_normal_force();
