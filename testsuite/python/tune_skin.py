@@ -25,8 +25,8 @@ class TuneSkin(ut.TestCase):
     system = espressomd.System(box_l=[1.35, 2.4, 1.7])
     system.time_step = 0.01
 
-    def setUpClass(cls):
-        cls.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+    def setUp(self):
+        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1,
             sigma=0.2,
             cutoff=0.3,
