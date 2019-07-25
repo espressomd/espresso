@@ -278,13 +278,6 @@ at temperature :math:`T` and satisfies
 
 (:math:`<\cdot>` denotes the ensemble average and :math:`\alpha,\beta` are spatial coordinates). 
 
-In a system where particles only interact with the implicitly 
-modelled surrounding fluid, the diffusion constant :math:`D`
-is determined only by the bare friction and the temperature through
-the Einstein-Smoluchowski relation
-
-.. math:: D = \frac{k_B T}{\gamma}.
-
 In the |es| implementation of the Langevin thermostat,
 the additional terms only enter in the force calculation.
 This reduces the accuracy of the Velocity Verlet integrator

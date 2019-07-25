@@ -170,6 +170,7 @@ The discretisation consists of the following steps (see :cite:`kolb99a` for a fu
 
 Notes:
 
+* The NPT algorithm is only tested for all 3 directions enabled for scaling. Usage of ``direction`` is considered an experimental feature.
 * In step 4, only those coordinates are scaled for which ``direction`` is set.
 * The for the instantaneous pressure the same limitations of applicability hold as described in :ref:`Pressure`.
 * The particle forces :math:`F` include interactions as well as a friction and noise term analogous to the terms in the :ref:`Langevin thermostat`.
