@@ -1063,7 +1063,7 @@ void ELC_add_force() {
     setup_P(p, omega);
     distribute(4);
     add_P_force();
-    checkpoint("************distri p", p, 0, 2);
+    ;
   }
 
   for (q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
@@ -1071,7 +1071,7 @@ void ELC_add_force() {
     setup_Q(q, omega);
     distribute(4);
     add_Q_force();
-    checkpoint("************distri q", 0, q, 2);
+    ;
   }
 
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
@@ -1083,7 +1083,7 @@ void ELC_add_force() {
       setup_PQ(p, q, omega);
       distribute(8);
       add_PQ_force(p, q, omega);
-      checkpoint("************distri pq", p, q, 4);
+      ;
     }
   }
 
@@ -1106,14 +1106,14 @@ double ELC_energy() {
     setup_P(p, omega);
     distribute(4);
     eng += P_energy(omega);
-    checkpoint("E************distri p", p, 0, 2);
+    ;
   }
   for (q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
     omega = C_2PI * uy * q;
     setup_Q(q, omega);
     distribute(4);
     eng += Q_energy(omega);
-    checkpoint("E************distri q", 0, q, 2);
+    ;
   }
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
     for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
@@ -1124,7 +1124,7 @@ double ELC_energy() {
       setup_PQ(p, q, omega);
       distribute(8);
       eng += PQ_energy(omega);
-      checkpoint("E************distri pq", p, q, 4);
+      ;
     }
   }
   /* we count both i<->j and j<->i, so return just half of it */

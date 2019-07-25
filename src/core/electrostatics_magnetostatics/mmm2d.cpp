@@ -65,13 +65,6 @@ char const *mmm2d_errors[] = {
     definitely enough for daily life. */
 #undef BESSEL_MACHINE_PREC
 
-// #define CHECKPOINTS
-#if 0
-#define LOG_FORCES(x) x
-#else
-#define LOG_FORCES(x)
-#endif
-
 #ifndef BESSEL_MACHINE_PREC
 #define K0 LPK0
 #define K1 LPK1
@@ -489,63 +482,6 @@ void distribute(int e_size, double fac) {
   }
 }
 
-#ifdef CHECKPOINTS
-static void checkpoint(char *text, int p, int q, int e_size) {
-  int c, i;
-  fprintf(stderr, "%d: %s %d %d\n", this_node, text, p, q);
-
-  fprintf(stderr, "partblk\n");
-  for (c = 0; c < n_localpart; c++) {
-    fprintf(stderr, "%d", c);
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(partblk, c, 2 * e_size)[i]);
-    fprintf(stderr, " m");
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(partblk, c, 2 * e_size)[i + e_size]);
-    fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "\n");
-
-  fprintf(stderr, "lclcblk\n");
-  fprintf(stderr, "0");
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g", block(lclcblk, 0, 2 * e_size)[i]);
-  fprintf(stderr, "\n");
-  for (c = 1; c <= n_layers; c++) {
-    fprintf(stderr, "%d", c);
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(lclcblk, c, 2 * e_size)[i]);
-    fprintf(stderr, " m");
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(lclcblk, c, 2 * e_size)[i + e_size]);
-    fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "%d", n_layers + 1);
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, "           ");
-  fprintf(stderr, " m");
-
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g",
-            block(lclcblk, n_layers + 1, 2 * e_size)[i + e_size]);
-  fprintf(stderr, "\n");
-
-  fprintf(stderr, "gblcblk\n");
-  for (c = 0; c < n_layers; c++) {
-    fprintf(stderr, "%d", c + 1);
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(gblcblk, c, 2 * e_size)[i]);
-    fprintf(stderr, " m");
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(gblcblk, c, 2 * e_size)[i + e_size]);
-    fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "\n");
-}
-#else
-#define checkpoint(text, p, q, size)
-#endif
-
 /*****************************************************************/
 /* 2 pi (sign)(z) */
 /*****************************************************************/
@@ -610,9 +546,7 @@ static void add_z_force() {
     auto part = cells[c].part;
     for (int i = 0; i < np; i++) {
       part[i].f.f[2] += part[i].p.q * (add + field_tot);
-      LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
+      ;
     }
   }
 }
@@ -835,9 +769,7 @@ template <size_t dir> static void add_force() {
                         partblk[size * ic + POQECP] * othcblk[POQECM] -
                         partblk[size * ic + POQESP] * othcblk[POQESM];
 
-      LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
+      ;
       ic++;
     }
   }
@@ -1081,9 +1013,7 @@ static void add_PQ_force(int p, int q, double omega) {
                          partblk[size * ic + PQESCP] * othcblk[PQESCM] -
                          partblk[size * ic + PQESSP] * othcblk[PQESSM]);
 
-      LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
+      ;
       ic++;
     }
   }
@@ -1131,7 +1061,7 @@ static void add_force_contribution(int p, int q) {
       distribute(1, 1.);
 
       add_z_force();
-      checkpoint("************2piz", 0, 0, 1);
+      ;
 
     } else {
       omega = C_2PI * ux * p;
@@ -1143,7 +1073,7 @@ static void add_force_contribution(int p, int q) {
         clear_image_contributions(2);
       distribute(2, fac);
       add_P_force();
-      checkpoint("************distri p", p, 0, 2);
+      ;
     }
   } else if (p == 0) {
     omega = C_2PI * uy * q;
@@ -1155,7 +1085,7 @@ static void add_force_contribution(int p, int q) {
       clear_image_contributions(2);
     distribute(2, fac);
     add_Q_force();
-    checkpoint("************distri q", 0, q, 2);
+    ;
   } else {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
     fac = exp(-omega * layer_h);
@@ -1166,7 +1096,7 @@ static void add_force_contribution(int p, int q) {
       clear_image_contributions(4);
     distribute(4, fac);
     add_PQ_force(p, q, omega);
-    checkpoint("************distri pq", p, q, 4);
+    ;
   }
 }
 
@@ -1180,7 +1110,7 @@ static double energy_contribution(int p, int q) {
       clear_image_contributions(2);
       distribute(2, 1.);
       eng = z_energy();
-      checkpoint("E************2piz", 0, 0, 2);
+      ;
     } else {
       omega = C_2PI * ux * p;
       fac = exp(-omega * layer_h);
@@ -1191,7 +1121,7 @@ static double energy_contribution(int p, int q) {
         clear_image_contributions(2);
       distribute(2, fac);
       eng = P_energy(omega);
-      checkpoint("************distri p", p, 0, 2);
+      ;
     }
   } else if (p == 0) {
     omega = C_2PI * uy * q;
@@ -1203,7 +1133,7 @@ static double energy_contribution(int p, int q) {
       clear_image_contributions(2);
     distribute(2, fac);
     eng = Q_energy(omega);
-    checkpoint("************distri q", 0, q, 2);
+    ;
   } else {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
     fac = exp(-omega * layer_h);
@@ -1214,7 +1144,7 @@ static double energy_contribution(int p, int q) {
       clear_image_contributions(4);
     distribute(4, fac);
     eng = PQ_energy(omega);
-    checkpoint("************distri pq", p, q, 4);
+    ;
   }
   return eng;
 }
