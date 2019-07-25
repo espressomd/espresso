@@ -73,7 +73,7 @@ void mpi_rotate_system_slave(int, int) {
   std::array<double, 3> params;
   mpi::broadcast(comm_cart, params, 0);
 
-  local_rotate_system(params[0], params[1], params[2], local_cells.particles());
+  local_rotate_system(params[0], params[1], params[2], cell_structure.local_cells().particles());
 }
 
 void mpi_rotate_system(double phi, double theta, double alpha) {
@@ -82,7 +82,7 @@ void mpi_rotate_system(double phi, double theta, double alpha) {
   std::array<double, 3> params{{phi, theta, alpha}};
   mpi::broadcast(comm_cart, params, 0);
 
-  local_rotate_system(params[0], params[1], params[2], local_cells.particles());
+  local_rotate_system(params[0], params[1], params[2], cell_structure.local_cells().particles());
 }
 
 /** Rotate all particle coordinates around an axis given by phi,theta through
