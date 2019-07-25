@@ -130,10 +130,12 @@ BOOST_AUTO_TEST_CASE(integrate_with_volume_force) {
   for (int i = 1; i < 30; i++) {
     lb.integrate();
     auto mom = lb.get_momentum();
-    auto mom_exp = (i + .5) * f  *grid_dimensions[0]*grid_dimensions[1]*grid_dimensions[2];
+    auto mom_exp = (i + .5) * f * grid_dimensions[0] * grid_dimensions[1] *
+                   grid_dimensions[2];
     MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                   MPI_COMM_WORLD);
-//    printf("%d, %g %g %g, %g %g %g\n",i,mom[0],mom[1],mom[2],mom_exp[0],mom_exp[1],mom_exp[2]);
+    //    printf("%d, %g %g %g, %g %g
+    //    %g\n",i,mom[0],mom[1],mom[2],mom_exp[0],mom_exp[1],mom_exp[2]);
     BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-7);
   }
 }
@@ -149,18 +151,18 @@ BOOST_AUTO_TEST_CASE(integrate_with_point_forces) {
   BOOST_CHECK_SMALL(lb.get_momentum().norm(), 1E-10);
   lb.integrate();
   auto mom = lb.get_momentum();
-  auto mom_exp = 1.5 * f * grid_dimensions[0] * grid_dimensions[1] *
-                     grid_dimensions[2] +
-                 1.5 * f2;
+  auto mom_exp =
+      1.5 * f * grid_dimensions[0] * grid_dimensions[1] * grid_dimensions[2] +
+      1.5 * f2;
   MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                 MPI_COMM_WORLD);
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 4E-6);
 
   for (int i = 1; i < 30; i++) {
     lb.integrate();
-    auto mom_exp = (i + 1.5) * (f * grid_dimensions[0] *
-                       grid_dimensions[1] * grid_dimensions[2]) 
-                   +f2;
+    auto mom_exp = (i + 1.5) * (f * grid_dimensions[0] * grid_dimensions[1] *
+                                grid_dimensions[2]) +
+                   f2;
     auto mom = lb.get_momentum();
     MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                   MPI_COMM_WORLD);

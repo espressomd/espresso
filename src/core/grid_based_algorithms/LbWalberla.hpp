@@ -92,7 +92,7 @@ class LbWalberla {
   double m_skin;
   double m_agrid;
   walberla::uint_t n_ghost_layers() const {
-    return walberla::uint_c(m_skin/m_agrid +1);
+    return walberla::uint_c(m_skin / m_agrid + 1);
   }
   double m_tau;
   double m_density;           // initial density
@@ -156,10 +156,9 @@ public:
   std::pair<Utils::Vector3d, Utils::Vector3d> get_local_domain() {
     // We only have one block per mpi rank
     assert(m_blocks->begin()++ == m_blocks->end());
-    
-    auto const ab=m_blocks->begin()->getAABB();
-    return 
-      {to_vector3d(ab.min()),to_vector3d(ab.max())};
+
+    auto const ab = m_blocks->begin()->getAABB();
+    return {to_vector3d(ab.min()), to_vector3d(ab.max())};
   }
   boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i node) const;
@@ -234,8 +233,10 @@ public:
 
 private:
   boost::optional<BlockAndCell>
-  get_block_and_cell(const Utils::Vector3i &node, bool consider_ghost_layers=false) const;
-  walberla::IBlock* get_block(const Utils::Vector3d &pos, bool consider_ghost_layers) const;
+  get_block_and_cell(const Utils::Vector3i &node,
+                     bool consider_ghost_layers = false) const;
+  walberla::IBlock *get_block(const Utils::Vector3d &pos,
+                              bool consider_ghost_layers) const;
   walberla::BlockDataID m_pdf_field_id;
   walberla::BlockDataID m_flag_field_id;
   walberla::BlockDataID m_force_field_id;

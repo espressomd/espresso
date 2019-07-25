@@ -113,7 +113,7 @@ void mpi_bcast_lb_params_slave(LBParam field, LB_Parameters const &params) {
 }
 
 REGISTER_CALLBACK(mpi_bcast_lb_params_slave)
-}
+} // namespace
 
 /** @brief Broadcast a parameter for lattice Boltzmann.
  *  @param[in] field  References the parameter field to be broadcasted.
@@ -194,26 +194,28 @@ void lb_lbfluid_sanity_checks() {
     lb_sanity_checks();
     lb_boundary_mach_check();
   }
-  if (lattice_switch == ActiveLB::WALBERLA) { 
-   // Make sure, Walberla and Espresso agree on domain decomposition
-   auto walberla_domain = lb_walberla()->get_local_domain();
-   // Unit conversion
-   auto const agrid = lb_lbfluid_get_agrid();
-   walberla_domain.first *= agrid;
-   walberla_domain.second *= agrid;
+  if (lattice_switch == ActiveLB::WALBERLA) {
+    // Make sure, Walberla and Espresso agree on domain decomposition
+    auto walberla_domain = lb_walberla()->get_local_domain();
+    // Unit conversion
+    auto const agrid = lb_lbfluid_get_agrid();
+    walberla_domain.first *= agrid;
+    walberla_domain.second *= agrid;
 
-   auto const tol=lb_lbfluid_get_agrid()/1E6;
-   if (
-     (walberla_domain.first-local_geo.my_left()).norm2()>tol or
-     (walberla_domain.second-local_geo.my_right()).norm2()>tol) {
-     printf("%d: %g %g %g, %g %g %g\n",this_node, 
-       local_geo.my_left()[0], local_geo.my_left()[1], local_geo.my_left()[2],
-       walberla_domain.first[0],walberla_domain.first[1],walberla_domain.first[2]);
-     printf("%d: %g %g %g, %g %g %g\n",this_node, 
-       local_geo.my_right()[0], local_geo.my_right()[1], local_geo.my_right()[2],
-       walberla_domain.second[0],walberla_domain.second[1],walberla_domain.second[2]);
-     throw std::runtime_error("Walberla and Espresso disagree about domain decomposition.");
-  }
+    auto const tol = lb_lbfluid_get_agrid() / 1E6;
+    if ((walberla_domain.first - local_geo.my_left()).norm2() > tol or
+        (walberla_domain.second - local_geo.my_right()).norm2() > tol) {
+      printf("%d: %g %g %g, %g %g %g\n", this_node, local_geo.my_left()[0],
+             local_geo.my_left()[1], local_geo.my_left()[2],
+             walberla_domain.first[0], walberla_domain.first[1],
+             walberla_domain.first[2]);
+      printf("%d: %g %g %g, %g %g %g\n", this_node, local_geo.my_right()[0],
+             local_geo.my_right()[1], local_geo.my_right()[2],
+             walberla_domain.second[0], walberla_domain.second[1],
+             walberla_domain.second[2]);
+      throw std::runtime_error(
+          "Walberla and Espresso disagree about domain decomposition.");
+    }
   }
 }
 
@@ -504,7 +506,7 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
     mpi_bcast_lb_params(LBParam::EXT_FORCE_DENSITY);
   } else if (lattice_switch == ActiveLB::WALBERLA) {
     ::Communication::mpiCallbacks().call_all(Walberla::set_ext_force_density,
-                                           force_density);
+                                             force_density);
   }
 }
 
@@ -1187,8 +1189,8 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
   }
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(::Communication::Result::one_rank,
-                                              Walberla::get_node_density, ind);
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, Walberla::get_node_density, ind);
   }
 #endif
   throw std::runtime_error("LB not activated.");
@@ -1218,8 +1220,8 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   }
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(::Communication::Result::one_rank,
-                                              Walberla::get_node_velocity, ind);
+    return ::Communication::mpiCallbacks().call(
+        ::Communication::Result::one_rank, Walberla::get_node_velocity, ind);
   }
 #endif
 
@@ -1391,10 +1393,11 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
 #ifdef LB_WALBERLA
   else if (lattice_switch == ActiveLB::WALBERLA) {
     ::Communication::mpiCallbacks().call_all(Walberla::set_node_density, ind,
-                                           p_density);
+                                             p_density);
   }
 #endif
-  else throw std::runtime_error("LB not activated.");
+  else
+    throw std::runtime_error("LB not activated.");
 }
 
 void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
@@ -1420,10 +1423,12 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
   }
 #ifdef LB_WALBERLA
   else if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::set_node_velocity, ind, u);
+    ::Communication::mpiCallbacks().call_all(Walberla::set_node_velocity, ind,
+                                             u);
   }
 #endif
-  else throw std::runtime_error("No LB active.");
+  else
+    throw std::runtime_error("No LB active.");
 }
 
 void lb_lbnode_set_pop(const Utils::Vector3i &ind,
@@ -1440,13 +1445,14 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
   }
 #ifdef LB_WALBERLA
   else if (lattice_switch == ActiveLB::WALBERLA) {
-    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind, p_pop);
+    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind,
+                                             p_pop);
   }
 #endif
   else if (lattice_switch == ActiveLB::CPU) {
     mpi_call_all(mpi_lb_set_population, ind, p_pop);
-  } 
-  else throw std::runtime_error("LB not activated.");
+  } else
+    throw std::runtime_error("LB not activated.");
 }
 
 const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
@@ -1492,8 +1498,10 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
   } else if (lattice_switch == ActiveLB::WALBERLA) {
     fluid_momentum = ::Communication::mpiCallbacks().call(
                          ::Communication::Result::Reduction(), std::plus<>(),
-                         Walberla::get_momentum) *(lb_lbfluid_get_agrid() /lb_lbfluid_get_tau()); 
-  } else throw std::runtime_error("No LB active (calc_fluid_momentum).");
+                         Walberla::get_momentum) *
+                     (lb_lbfluid_get_agrid() / lb_lbfluid_get_tau());
+  } else
+    throw std::runtime_error("No LB active (calc_fluid_momentum).");
 
   return fluid_momentum;
 }

@@ -28,7 +28,7 @@ import numpy as np
 class LbWalberlaTest(ut.TestCase):
 
     def test(self):
-        s = espressomd.System(box_l=(12*.6,18*.6,12*.6))
+        s = espressomd.System(box_l=(12 * .6, 18 * .6, 12 * .6))
         s.time_step = 0.2
         s.cell_system.skin = 0.
         dens_init = 1.3
@@ -42,17 +42,20 @@ class LbWalberlaTest(ut.TestCase):
         for i in range(int(max_ind[0])):
             for j in range(int(max_ind[1])):
                 for k in range(int(max_ind[2])):
-                    print(i,j,k)
-                    np.testing.assert_allclose(lbf[i, j, k].velocity, [0,0,0], atol=1E-15)
+                    print(i, j, k)
+                    np.testing.assert_allclose(
+                        lbf[i, j, k].velocity, [0, 0, 0], atol=1E-15)
                     v = np.array((i * .5, j * 1.5, k * 2.5))
                     lbf[i, j, k].velocity = v
-                    np.testing.assert_allclose(lbf[i,j,k].velocity,v,atol=1E-10)
+                    np.testing.assert_allclose(
+                        lbf[i, j, k].velocity, v, atol=1E-10)
 
                     self.assertAlmostEqual( 
                         lbf[i, j, k].density, dens_init, delta=1E-10)
                     rho = i * j * k * 0.5 + 0.8
                     lbf[i, j, k].density = rho
-                    self.assertAlmostEqual(lbf[i, j, k].density, rho, delta=1E-10)
+                    self.assertAlmostEqual(
+                        lbf[i, j, k].density, rho, delta=1E-10)
 
                     pop = np.array((i * j * k, i, -i, j, -j, k, -k,
                                     i + j, i - j, -i + j, -i - j, i + k, i - k, -i + k, -i - k, j + k, j - k, -j + k, -j - k))

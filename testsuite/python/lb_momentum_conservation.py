@@ -27,7 +27,7 @@ AGRID = 1.0
 KVISC = 7 
 DENS = 1 
 BOX_SIZE = 6 * AGRID
-F = 1. /BOX_SIZE**3
+F = 1. / BOX_SIZE**3
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -51,7 +51,8 @@ class Momentum(object):
 
         applied_force = self.system.volume() * np.array(
             LB_PARAMS['ext_force_density'])
-        p = self.system.part.add(pos=(0,0,0), ext_force=-applied_force, v=[.1,.2,.3])
+        p = self.system.part.add(
+            pos=(0, 0, 0), ext_force=-applied_force, v=[.1, .2, .3])
 
         # Reach steady state
         self.system.integrator.run(1500)
@@ -62,12 +63,13 @@ class Momentum(object):
             self.system.integrator.run(100)
             # check that momentum stays constant
             np.testing.assert_allclose(
-              self.system.analysis.linear_momentum(),
-              momentum,atol=4E-4)
+                self.system.analysis.linear_momentum(),
+              momentum, atol=4E-4)
             
             # Check that particle velocity is stationary
             # up to the acceleration of 1/2 time step
-            np.testing.assert_allclose(np.copy(p.v), v_final,atol=3E-3)
+            np.testing.assert_allclose(np.copy(p.v), v_final, atol=3E-3)
+
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
     ['EXTERNAL_FORCES']), "Skipping test due to missing features.")
