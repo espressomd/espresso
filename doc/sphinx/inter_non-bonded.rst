@@ -559,59 +559,79 @@ DPD interaction
     Feature ``DPD`` required.
 
 This is a special interaction that is to be used in conjunction with the
-`Dissipative Particle Dynamics (DPD)` thermostat, for a general description
-of the algorithm see there. The parameters can be set via::
+:ref:`Dissipative Particle Dynamics (DPD)` thermostat.
+The parameters can be set via::
 
     system.non_bonded_inter[type1, type2].dpd.set_params(**kwargs)
 
-This command defines a velocity-dependent interaction
-between particles of the types ``type1`` and ``type2``. For a description of the input arguments
-see :class:`espressomd.interactions.DPDInteraction`. The interaction
-only has an effect if the DPD thermostat activated, and acts according to the
-temperature of the thermostat.
+This command defines an interaction between particles of the types ``type1`` and ``type2``
+that contains velocity-dependent friction and noise according 
+to a temperature set by :py:meth:`espressomd.thermostat.Thermostat.set_dpd()`. 
+The parameters for the interaction are
 
-The interaction consists of a dissipative force :math:`\vec{F}_{ij}^{D}` and
-a random force :math:`\vec{F}_{ij}^R`, and is decomposed into a component
-parallel and perpendicular to the distance vector of the particle pair :math:`\vec{F}_{ij}`.
-The parameters for the two parts can be chosen independently.
-The force contributions of the parallel part are
+* ``gamma``
+* ``weight_function``
+* ``r_cut``
+* ``trans_gamma``
+* ``trans_weight_function``
+* ``trans_r_cut``
 
-.. math:: \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
+which will be explained below. The interaction
+only has an effect if the DPD thermostat is activated.
+
+The interaction consists of a friction force :math:`\vec{F}_{ij}^{D}` and
+a random force :math:`\vec{F}_{ij}^R` added to the other interactions
+between particles :math:`i` and :math:`j`. It is decomposed into a component
+parallel and perpendicular to the distance vector :math:`\vec{r}_{ij}` of the particle pair .
+The friction force contributions of the parallel part are
+
+.. math:: \vec{F}_{ij}^{D} = -\gamma_\parallel w_\parallel (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
 
 for the dissipative force and
 
-.. math:: \vec{F}_{ij}^R = \sigma w^R (r_{ij}) \Theta_{ij} \hat{r}_{ij}
+.. math:: \vec{F}_{ij}^R = \sqrt{2 k_B T \gamma_\parallel w_\parallel (r_{ij}) }  \eta_{ij}(t) \hat{r}_{ij}
 
-for the random force. Here :math:`w^D` and :math:`w^R` are weight functions that
-can be specified via the weight_function parameter of the interaction. The dissipative
-and random weight function are related by the dissipation-fluctuation theorem:
-
-.. math:: (\sigma w^R (r_{ij}))^2=\zeta w^D (r_{ij}) \text{k}_\text{B} T
-
-The possible values for weight_function are 0 and 1, corresponding to the
-order of :math:`w^D`:
+for the random force. This introduces the friction coefficient :math:`\gamma_\parallel` (parameter ``gamma``) and the weight function
+:math:`w_\parallel`. The thermal energy :math:`k_B T` is not set by the interaction, 
+but by the DPD thermostat (:py:meth:`espressomd.thermostat.Thermostat.set_dpd()`) 
+to be equal for all particles. The weight function can be specified via the ``weight_function`` switch. 
+The possible values for ``weight_function`` are 0 and 1, corresponding to the
+order of :math:`w_\parallel`:
 
 .. math::
 
-   w^D (r_{ij}) = ( w^R (r_{ij})) ^2 =
-      \left\{
+   w_\parallel (r_{ij}) =  \left\{
    \begin{array}{clcr}
                 1                      & , \; \text{weight_function} = 0 \\
-                {( 1 - \frac{r_{ij}}{r_c}} )^2 & , \; \text{weight_function} = 1
+                {( 1 - \frac{r_{ij}}{r^\text{cut}_\parallel}} )^2 & , \; \text{weight_function} = 1
       \end{array}
       \right.
+      
+Both weight functions are set to zero for :math:`r_{ij}>r^\text{cut}_\parallel` (parameter ``r_cut``).
 
-For the perpendicular part, the dissipative force is calculated by
+The random force has the properties
 
-.. math:: \vec{F}_{ij}^{D} = -\zeta w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}
+.. math:: <\eta_{ij}(t)> = 0 , <\eta_{ij}^\alpha(t)\eta_{kl}^\beta(t')> = \delta_{\alpha\beta} \delta_{ik}\delta_{jl}\delta(t-t')
 
-The random force by
+and is numerically discretized to a random number :math:`\overline{\eta}` for each spatial 
+component for each particle pair drawn from a uniform distribution
+with properties
 
-.. math:: \vec{F}_{ij}^R = \sigma w^R (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\Theta}_{ij}
+.. math:: <\overline{\eta}> = 0 , <\overline{\eta}\overline{\eta}> = 1/dt
+    
+For the perpendicular part, the dissipative and random force are calculated analogously
 
-The parameters define the strength of the friction and the cutoff in the
-same way as above. Note: This interaction does *not* conserve angular
+.. math:: \vec{F}_{ij}^{D} = -\gamma_\bot w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}
+.. math:: \vec{F}_{ij}^R = \sqrt{2 k_B T \gamma_\bot w_\bot (r_{ij})} (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\eta}_{ij}
+
+and introduce the second set of parameters prefixed with ``trans_``.
+For :math:`w_\bot (r_{ij})` (parameter ``trans_weight_function``)
+the same options are available as for :math:`w_\parallel (r_{ij})`.
+
+Note: This interaction does *not* conserve angular
 momentum.
+
+A more detailed description of the interaction can be found in :cite:`soddeman03a`.
 
 .. _Thole correction:
 
