@@ -57,6 +57,7 @@ cdef class Thermostat(object):
 
     # We have to cdef the state variable because it is a cdef class
     cdef _state
+    cdef _LB_fluid
 
     def __init__(self):
         self._state = None
@@ -100,6 +101,7 @@ cdef class Thermostat(object):
                                   "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["seed"])
             if thmst["type"] == "LB":
                 self.set_lb(
+                    LB_fluid=thmst["LB_fluid"],
                     act_on_virtual=thmst["act_on_virtual"],
                     seed=thmst["rng_counter_fluid"])
             if thmst["type"] == "NPT_ISO":
@@ -144,6 +146,7 @@ cdef class Thermostat(object):
 
         if thermo_switch & THERMO_LB:
             lb_dict = {}
+            lb_dict["LB_fluid"] = self._LB_fluid
             lb_dict["gamma"] = lb_lbcoupling_get_gamma()
             lb_dict["type"] = "LB"
             lb_dict["act_on_virtual"] = thermo_virtual
@@ -379,6 +382,7 @@ cdef class Thermostat(object):
             raise ValueError(
                 "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
+        self._LB_fluid = LB_fluid
         if lb_lbfluid_get_kT() > 0.:
             if not seed and lb_lbcoupling_is_seed_required():
                 raise ValueError(
