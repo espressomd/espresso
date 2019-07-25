@@ -16,19 +16,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 
 
+@utx.skipIfMissingFeatures("LENNARD_JONES")
 class TuneSkin(ut.TestCase):
     system = espressomd.System(box_l=[1.35, 2.4, 1.7])
     system.time_step = 0.01
-    system.non_bonded_inter[
-        0,
-        0].lennard_jones.set_params(
-        epsilon=1,
-         sigma=0.2,
-         cutoff=0.3,
-         shift="auto")
+
+    def setUpClass(cls):
+        cls.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1,
+            sigma=0.2,
+            cutoff=0.3,
+            shift="auto")
 
     def test_fails_without_adjustment(self):
         with self.assertRaisesRegex(Exception, 'Error during tune_skin'):
