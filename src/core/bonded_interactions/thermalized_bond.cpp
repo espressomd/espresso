@@ -27,14 +27,33 @@
 #include "bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "global.hpp"
+#include "random.hpp"
 
 #include <utils/constants.hpp>
+
+
+void thermalized_bond_rng_counter_increment(Thermalized_bond_parameters &t) {
+   t.rng_counter->increment();
+}
+
+bool thermalized_bond_is_seed_required(Thermalized_bond_parameters &t) {
+   /* Seed is required if rng is not initialized */
+   return t.rng_counter == nullptr;
+}
+
+void thermalized_bond_set_rng_state(Thermalized_bond_parameters &t, const uint64_t counter) {
+   t.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+}
+
+uint64_t thermalized_bond_get_rng_state(Thermalized_bond_parameters &t) { 
+   return t.rng_counter->value();
+}
 
 int n_thermalized_bonds = 0;
 
 int thermalized_bond_set_params(int bond_type, double temp_com,
                                 double gamma_com, double temp_distance,
-                                double gamma_distance, double r_cut) {
+                                double gamma_distance, double r_cut, int seed) {
   if (bond_type < 0)
     return ES_ERROR;
 
@@ -57,6 +76,8 @@ int thermalized_bond_set_params(int bond_type, double temp_com,
   bonded_ia_params[bond_type].type = BONDED_IA_THERMALIZED_DIST;
 
   bonded_ia_params[bond_type].num = 1;
+
+  thermalized_bond_set_rng_state(bonded_ia_params[bond_type].p.thermalized_bond, seed);
 
   n_thermalized_bonds += 1;
   mpi_bcast_ia_params(bond_type, -1);

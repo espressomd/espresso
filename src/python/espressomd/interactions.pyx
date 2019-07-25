@@ -2255,6 +2255,8 @@ class ThermalizedBond(BondedInteraction):
         distance vector of the particle pair.
     r_cut: :obj:`float`, optional
         Specifies maximum distance beyond which the bond is considered broken.
+    seed : :obj:`int`
+        Initial counter value (or seed) of the philox RNG.
     """
 
     def __init__(self, *args, **kwargs):
@@ -2267,14 +2269,14 @@ class ThermalizedBond(BondedInteraction):
         return "THERMALIZED_DIST"
 
     def valid_keys(self):
-        return "temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut"
+        return "temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut", "seed"
 
     def required_keys(self):
-        return "temp_com", "gamma_com", "temp_distance", "gamma_distance"
+        return "temp_com", "gamma_com", "temp_distance", "gamma_distance", "seed"
 
     def set_default_params(self):
         self._params = {"temp_com": 1., "gamma_com": 1.,
-                        "temp_distance": 1., "gamma_distance": 1., "r_cut": 0.}
+                        "temp_distance": 1., "gamma_distance": 1., "r_cut": 0., "seed": 41}
 
     def _get_params_from_es_core(self):
         return \
@@ -2287,11 +2289,13 @@ class ThermalizedBond(BondedInteraction):
              "gamma_distance":
                  bonded_ia_params[
                      self._bond_id].p.thermalized_bond.gamma_distance,
-             "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut}
+             "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut,
+             "seed": thermalized_bond_get_rng_state(bonded_ia_params[self._bond_id].p.thermalized_bond)
+             }
 
     def _set_params_in_es_core(self):
         thermalized_bond_set_params(
-            self._bond_id, self._params["temp_com"], self._params["gamma_com"], self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"])
+            self._bond_id, self._params["temp_com"], self._params["gamma_com"], self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"], self._params["seed"])
 
 IF THOLE:
     cdef class TholeInteraction(NonBondedInteraction):

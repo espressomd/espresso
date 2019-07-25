@@ -35,6 +35,16 @@ extern int n_thermalized_bonds;
 #include "integrate.hpp"
 #include "random.hpp"
 
+#include <utils/Counter.hpp>
+#include <utils/Vector.hpp>
+
+/** philox interface */
+void thermalized_bond_set_rng_statm(Thermalized_bond_parameters &t, uint64_t counter);
+uint64_t thermalized_bond_get_rng_state(Thermalized_bond_parameters &t);
+
+/** Called in integration loop */
+void thermalized_bonds_rng_counter_increment(Thermalized_bond_parameters &t);
+
 /** Set the parameters of a thermalized bond
  *
  *  @retval ES_OK on success
@@ -42,18 +52,50 @@ extern int n_thermalized_bonds;
  */
 int thermalized_bond_set_params(int bond_type, double temp_com,
                                 double gamma_com, double temp_distance,
-                                double gamma_distance, double r_cut);
+                                double gamma_distance, double r_cut, int seed);
 
 void thermalized_bond_heat_up();
 void thermalized_bond_cool_down();
 void thermalized_bond_update_params(double pref_scale);
 void thermalized_bond_init();
 
+/** Return a random 3d vector with the philox thermostat.
+    Random numbers depend on
+    1. rng_counter (initialized by seed) which is increased on
+   integration
+    2. Salt (decorrelates different counter)
+    3. Particle ID, Partner ID and Bond ID 
+*/
+
+inline Utils::Vector3d v_noise(int particle_id, int partner_id, int bond_id) {
+
+  using rng_type = r123::Philox4x64;
+  using ctr_type = rng_type::ctr_type;
+  using key_type = rng_type::key_type;
+
+  ctr_type c{{langevin_rng_counter->value(),
+              static_cast<uint64_t>(RNGSalt::THERMALIZED_BOND)}};
+
+  uint32_t p1id = static_cast<uint32_t>(particle_id);
+  uint32_t p2id = static_cast<uint32_t>(partner_id);
+  uint32_t bid  = static_cast<uint32_t>(bond_id);
+  uint64_t hash = (((((23 + p1id) * 29) + p2id) * 31) + bid) * 37;
+
+  key_type k{hash};
+
+  auto const noise = rng_type{}(c, k);
+
+  using Utils::uniform;
+  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
+                         uniform(noise[2])} -
+         Utils::Vector3d::broadcast(0.5);
+}
+
 /** Separately thermalizes the com and distance of a particle pair.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
- *  @param[in]  dx        %Distance between the particles.
+ *  @param[in]  dx        Distance between the particles.
  *  @param[out] force1    Force on particle @p p1
  *  @param[out] force2    Force on particle @p p2
  *  @retval 1 if the bond is broken
@@ -74,6 +116,8 @@ inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
   double mass_tot_inv = 1.0 / mass_tot;
   double sqrt_mass_tot = sqrt(mass_tot);
   double sqrt_mass_red = sqrt(p1->p.mass * p2->p.mass / mass_tot);
+
+  Utils::Vector3d noise = v_noise(p1->p.identity, p2->p.identity, p1->bl.e[i] TODO: conintue here  )   
 
   for (int i = 0; i < 3; i++) {
 
