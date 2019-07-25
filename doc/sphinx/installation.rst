@@ -521,24 +521,20 @@ section :ref:`Isotropic non-bonded interactions`):
 -  ``BMHTF_NACL`` Enable the Born-Meyer-Huggins-Tosi-Fumi potential, which can be used
    to model salt melts.
 
-Some of the short range interactions have additional features:
-
--  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard-Jones potentials that
-   prints a warning if particles come too close so that the simulation
-   becomes unphysical.
-
-If you want to use bond-angle potentials (see section :ref:`Bond-angle interactions`), you need the
-following features.
-
--  ``BOND_ANGLE``
-
--  ``LJGEN_SOFTCORE``
-
 -  ``GAUSSIAN``
 
 -  ``HAT``
 
 -  ``UMBRELLA`` (experimental)
+
+Some of the short-range interactions have additional features:
+
+-  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard-Jones
+   potentials that prints a warning if particles come so close to each other
+   that the simulation becomes unphysical.
+
+-  ``LJGEN_SOFTCORE`` This modifies the generic Lennard-Jones potential
+   (``LENNARD_JONES_GENERIC``) with tunable parameters.
 
 
 .. _Debug messages:
