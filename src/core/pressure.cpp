@@ -23,6 +23,7 @@
  */
 
 #include "cells.hpp"
+#include "communication.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
@@ -105,7 +106,8 @@ inline void add_single_particle_virials(int v_comp, Particle &p) {
 void pressure_calc(double *result, double *result_t, double *result_nb,
                    double *result_t_nb, int v_comp) {
   int n, i;
-  double volume = box_l[0] * box_l[1] * box_l[2];
+  double volume =
+      box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
 
   if (!interactions_sanity_checks())
     return;

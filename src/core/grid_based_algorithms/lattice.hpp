@@ -38,36 +38,42 @@ public:
   Utils::Vector3i grid; /**< number of local lattice sites in each direction
                          *   (excluding halo) */
   Utils::Vector3i global_grid;
-  Utils::Vector3d agrid; /**< lattice constant */
+  double agrid; /**< lattice constant */
 
   Utils::Vector3i halo_grid; /**< number of lattice sites in each direction
                               *   (including halo) */
   index_t halo_size;         /**< halo size in all directions */
 
-  Utils::Vector3d offset; /**< global offset */
-  Utils::Vector3d local_offset;
+  double offset; /**< global offset */
   Utils::Vector3i local_index_offset;
+  Utils::Vector3i node_grid;
+  Utils::Vector3d local_box;
+  Utils::Vector3d my_right;
 
   index_t halo_grid_volume; /**< total number (volume) of lattice sites
                              *   (including halo) */
   index_t halo_offset; /**< offset for number of halo sites stored in front of
                         *   the local lattice sites */
 
-  /** Initialize lattice.
+  Lattice() = default;
+  /** @brief Lattice constructor.
    *
    *  This function initializes the variables describing the lattice
    *  layout. Important: The lattice data is <em>not</em> allocated here!
    *
-   *  \param agrid       lattice spacing
-   *  \param offset      lattice offset
-   *  \param halo_size   halo size
-   *  \param local_box   dimensions of the local box
-   *  \param myright     right (top, back) corner of the local box
-   *  \param box_length  lengths of the local box
+   *  @param agrid       lattice spacing
+   *  @param offset      lattice offset
+   *  @param halo_size   halo size
+   *  @param local_box   dimensions of the local box
+   *  @param myright     right (top, back) corner of the local box
+   *  @param box_length  lengths of the local box
+   *  @param node_pos    position of this node in the domain decomposition
+   *  @param node_grid   node_grid of domain decomposition
    */
-  int init(double *agrid, double const *offset, int halo_size,
-           const Utils::Vector3d &local_box, const Utils::Vector3d &myright,
-           const Utils::Vector3d &box_length);
+  Lattice(double agrid, double offset, int halo_size,
+          const Utils::Vector3d &local_box, const Utils::Vector3d &myright,
+          const Utils::Vector3d &box_length, Utils::Vector3i const &node_pos,
+          Utils::Vector3i const &node_grid);
 
   /** Map a spatial position to the surrounding lattice sites.
    *
@@ -80,31 +86,26 @@ public:
    * <li>The lattice sites of the elementary cell are returned as local
    * indices</li>
    * </ul>
-   * \param pos        spatial position (Input)
-   * \param node_index local indices of the surrounding lattice sites (Output)
-   * \param delta      distance fraction of %p pos from the surrounding
+   * @param pos        spatial position (Input)
+   * @param node_index local indices of the surrounding lattice sites (Output)
+   * @param delta      distance fraction of %p pos from the surrounding
    *                   elementary cell, 6 directions (Output)
-   * \param myLeft     left (bottom, front) corner of the local box
-   * \param local_box  dimensions of the local box
    */
-  void map_position_to_lattice(const Utils::Vector3d &pos,
+  void map_position_to_lattice(Utils::Vector3d const &pos,
                                Utils::Vector<std::size_t, 8> &node_index,
-                               Utils::Vector6d &delta,
-                               const Utils::Vector3d &myLeft,
-                               const Utils::Vector3d &local_box) const;
+                               Utils::Vector6d &delta) const;
 
-  /** Map a global lattice site to the node grid.
-   *
-   *  This function determines the processor responsible for
-   *  the specified lattice site. The coordinates of the site are
-   *  taken as global coordinates.
-   *
-   *  \param ind              global coordinates of the lattice site
-   *  \param local_node_grid  number of nodes in each spatial dimension
-   *  \return index of the node for the lattice site
+  /**
+   * @brief Determine if given global index is node-local.
+   * @param index Global lattice index.
    */
-  int map_lattice_to_node(Utils::Vector3i &ind,
-                          const Utils::Vector3i &local_node_grid) const;
+  bool is_local(Utils::Vector3i const &index) const noexcept;
+  /**
+   * @brief Calculate the node-local index.
+   * @param global_index Index into global lattice.
+   */
+  Utils::Vector3i local_index(Utils::Vector3i const &global_index) const
+      noexcept;
 };
 
 #endif /* CORE_LB_LATTICE_HPP */

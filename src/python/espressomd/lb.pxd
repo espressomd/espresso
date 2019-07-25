@@ -76,12 +76,13 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     ActiveLB lb_lbfluid_get_lattice_switch() except +
     Vector6d lb_lbfluid_get_stress() except +
     bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
+    Vector3i lb_lbfluid_get_shape() except +
     const Vector3d lb_lbnode_get_velocity(const Vector3i & ind) except +
     void lb_lbnode_set_velocity(const Vector3i & ind, const Vector3d & u) except +
     double lb_lbnode_get_density(const Vector3i & ind) except +
     void lb_lbnode_set_density(const Vector3i & ind, double density) except +
-    const Vector6d lb_lbnode_get_pi(const Vector3i & ind) except +
-    const Vector6d lb_lbnode_get_pi_neq(const Vector3i & ind) except +
+    const Vector6d lb_lbnode_get_stress(const Vector3i & ind) except +
+    const Vector6d lb_lbnode_get_stress_neq(const Vector3i & ind) except +
     const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
     void lb_lbnode_set_pop(const Vector3i & ind, const Vector19d & populations) except +
     int lb_lbnode_get_boundary(const Vector3i & ind) except +
@@ -99,7 +100,6 @@ cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     bool lb_lbcoupling_is_seed_required()
 
 cdef extern from "grid_based_algorithms/lbgpu.hpp":
-    int lb_lbfluid_remove_total_momentum()
     void linear_velocity_interpolation(double * positions, double * velocities, int length)
     void quadratic_velocity_interpolation(double * positions, double * velocities, int length)
 
@@ -290,16 +290,16 @@ cdef inline double python_lbnode_get_density(Vector3i node):
     cdef double c_density = lb_lbnode_get_density(node)
     return c_density / agrid / agrid / agrid
 
-cdef inline Vector6d python_lbnode_get_pi(Vector3i node):
+cdef inline Vector6d python_lbnode_get_stress(Vector3i node):
     cdef double tau = lb_lbfluid_get_tau()
     cdef double agrid = lb_lbfluid_get_agrid()
     cdef double unit_conversion = 1.0 / (tau * tau * agrid)
-    cdef Vector6d c_pi = lb_lbnode_get_pi(node)
-    return c_pi * unit_conversion
+    cdef Vector6d c_stress = lb_lbnode_get_stress(node)
+    return c_stress * unit_conversion
 
-cdef inline Vector6d python_lbnode_get_pi_neq(Vector3i node):
+cdef inline Vector6d python_lbnode_get_stress_neq(Vector3i node):
     cdef double tau = lb_lbfluid_get_tau()
     cdef double agrid = lb_lbfluid_get_agrid()
     cdef double unit_conversion = 1.0 / (tau * tau * agrid)
-    cdef Vector6d c_pi = lb_lbnode_get_pi_neq(node)
-    return c_pi * unit_conversion
+    cdef Vector6d c_stress = lb_lbnode_get_stress_neq(node)
+    return c_stress * unit_conversion

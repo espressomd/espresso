@@ -30,7 +30,7 @@ cdef extern from "utils/List.hpp" namespace "Utils":
     cppclass List[T]:
         List()
         List(size_t)
-        List(size_t, const T & )
+        List(size_t, const T &)
 
         T & operator[](size_t)
         void resize(size_t)
@@ -45,7 +45,7 @@ cdef extern from "utils/List.hpp" namespace "Utils":
 cdef extern from "utils/Span.hpp" namespace "Utils":
     cppclass Span[T]:
         Span()
-        Span(T *, size_t)
+        Span(T * , size_t)
 
         T & operator[](size_t)
 
@@ -55,7 +55,7 @@ cdef extern from "utils/Span.hpp" namespace "Utils":
         T * data()
         size_t size()
 
-    Span[const T] make_const_span[T](T *, size_t)
+    Span[const T] make_const_span[T](T * , size_t)
 
 cdef List[int] create_int_list_from_python_object(obj)
 cdef np.ndarray create_nparray_from_int_list(const List[int] & il)
@@ -102,6 +102,9 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         int * data()
 
     cppclass Vector3d:
+        Vector3d()
+        Vector3d(const Vector3d &)
+
         double & operator[](int i)
         double * data()
         Vector3d operator * (double i)
@@ -113,9 +116,15 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
         Vector6d operator * (double i)
         Vector6d operator / (double i)
 
+    cppclass Vector9d:
+        double & operator[](int i)
+        double * data()
+        Vector9d operator * (double i)
+        Vector9d operator / (double i)
+
     cppclass Vector19d:
         double & operator[](int i)
         double * data()
 
-cdef make_array_locked(const Vector3d & v)
+cdef make_array_locked(Vector3d)
 cdef Vector3d make_Vector3d(a)

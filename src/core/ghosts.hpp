@@ -182,7 +182,7 @@ typedef struct {
   int num;
 
   /** List of ghost communications. */
-  GhostCommunication *comm;
+  std::vector<GhostCommunication> comm;
 
 } GhostCommunicator;
 

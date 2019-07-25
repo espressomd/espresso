@@ -18,6 +18,7 @@
 */
 
 #include "VirtualSitesRelative.hpp"
+#include <utils/math/sqr.hpp>
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
@@ -85,42 +86,20 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   // This is obtained, by multiplying the quaternion representing the director
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
-  Utils::Vector4d q;
-  multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation, q);
-  // Calculate the director resulting from the quaternions
-  Utils::Vector3d director = {0, 0, 0};
-  convert_quat_to_director(q, director);
-  // normalize
-  double l = director.norm();
-  // Division comes in the loop below
+  auto const director =
+      convert_quat_to_director(
+          multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation))
+          .normalize();
 
-  // Calculate the new position of the virtual sites from
-  // position of real particle + director
-  int i;
-  double new_pos[3];
-  double tmp;
-  for (i = 0; i < 3; i++) {
-    new_pos[i] = p_real->r.p[i] + director[i] / l * p.p.vs_relative.distance;
-    double old = p.r.p[i];
-    // Handle the case that one of the particles had gone over the periodic
-    // boundary and its coordinate has been folded
-    if (PERIODIC(i)) {
-      tmp = p.r.p[i] - new_pos[i];
-      if (tmp > box_l[i] / 2.) {
-        p.r.p[i] = new_pos[i] + box_l[i];
-      } else if (tmp < -box_l[i] / 2.) {
-        p.r.p[i] = new_pos[i] - box_l[i];
-      } else
-        p.r.p[i] = new_pos[i];
-    } else
-      p.r.p[i] = new_pos[i];
-    // Has the vs moved by more than a skin
-    if (fabs(old - p.r.p[i]) > skin) {
-      runtimeErrorMsg() << "Virtual site " << p.p.identity
-                        << " has moved by more than the skin." << old << "->"
-                        << p.r.p[i];
-    }
-  }
+  auto const new_pos = p_real->r.p + director * p.p.vs_relative.distance;
+  /* The shift has to respect periodic boundaries: if the reference particles
+   * is not in the same image box, we potentially avoid to shift to the other
+   * side of the box. */
+  auto const shift = get_mi_vector(new_pos, p.r.p, box_geo);
+  p.r.p += shift;
+
+  if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
+    set_resort_particles(Cells::RESORT_LOCAL);
 }
 
 // Update the vel of the given virtual particle as defined by the real
@@ -136,7 +115,7 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
     return;
   }
 
-  auto const d = get_mi_vector(p.r.p, p_real->r.p);
+  auto const d = get_mi_vector(p.r.p, p_real->r.p, box_geo);
 
   // Get omega of real particle in space-fixed frame
   Utils::Vector3d omega_space_frame =
@@ -163,7 +142,8 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
       // Add forces and torques
       p_real->f.torque +=
-          vector_product(get_mi_vector(p.r.p, p_real->r.p), p.f.f) + p.f.torque;
+          vector_product(get_mi_vector(p.r.p, p_real->r.p, box_geo), p.f.f) +
+          p.f.torque;
       p_real->f.f += p.f.f;
     }
   }
@@ -190,8 +170,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     // Get distance vector pointing from real to virtual particle, respecting
     // periodic boundary i
     // conditions
-    double d[3];
-    get_mi_vector(d, p_real->r.p, p.r.p);
+    auto const d = get_mi_vector(p_real->r.p, p.r.p, box_geo);
 
     // Stress tensor contribution
     for (int k = 0; k < 3; k++)

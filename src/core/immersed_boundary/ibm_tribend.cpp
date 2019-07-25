@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "immersed_boundary/ibm_tribend.hpp"
 
-#ifdef IMMERSED_BOUNDARY
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -40,9 +39,9 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   assert(p4);
 
   // Get vectors making up the two triangles
-  auto const dx1 = get_mi_vector(p1->r.p, p3->r.p);
-  auto const dx2 = get_mi_vector(p2->r.p, p3->r.p);
-  auto const dx3 = get_mi_vector(p4->r.p, p3->r.p);
+  auto const dx1 = get_mi_vector(p1->r.p, p3->r.p, box_geo);
+  auto const dx2 = get_mi_vector(p2->r.p, p3->r.p, box_geo);
+  auto const dx3 = get_mi_vector(p4->r.p, p3->r.p, box_geo);
 
   // Get normals on triangle; pointing outwards by definition of indices
   // sequence
@@ -83,49 +82,22 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   auto const v2 = (n1 - sc * n2).normalize();
 
   // Force for particle 1:
-  p1->f.f += Pre * (vector_product(get_mi_vector(p2->r.p, p3->r.p), v1) / Ai +
-                    vector_product(get_mi_vector(p3->r.p, p4->r.p), v2) / Aj);
+  p1->f.f +=
+      Pre * (vector_product(get_mi_vector(p2->r.p, p3->r.p, box_geo), v1) / Ai +
+             vector_product(get_mi_vector(p3->r.p, p4->r.p, box_geo), v2) / Aj);
 
   // Force for particle 2:
-  p2->f.f += Pre * (vector_product(get_mi_vector(p3->r.p, p1->r.p), v1) / Ai);
+  p2->f.f +=
+      Pre * (vector_product(get_mi_vector(p3->r.p, p1->r.p, box_geo), v1) / Ai);
 
   // Force for Particle 3:
-  p3->f.f += Pre * (vector_product(get_mi_vector(p1->r.p, p2->r.p), v1) / Ai +
-                    vector_product(get_mi_vector(p4->r.p, p1->r.p), v2) / Aj);
+  p3->f.f +=
+      Pre * (vector_product(get_mi_vector(p1->r.p, p2->r.p, box_geo), v1) / Ai +
+             vector_product(get_mi_vector(p4->r.p, p1->r.p, box_geo), v2) / Aj);
 
   // Force for Particle 4:
-  p4->f.f += Pre * (vector_product(get_mi_vector(p1->r.p, p3->r.p), v2) / Aj);
-}
-
-/****************
-  IBM_Tribend_ResetParams
- *****************/
-
-int IBM_Tribend_ResetParams(const int bond_type, const double kb) {
-
-  // Check if bond exists and is of correct type
-  if (bond_type >= bonded_ia_params.size()) {
-    printf("bond does not exist while reading tribend checkpoint\n");
-    return ES_ERROR;
-  }
-  if (bonded_ia_params[bond_type].type != BONDED_IA_IBM_TRIBEND) {
-    printf(
-        "interaction type does not match while reading tribend checkpoint!\n");
-    return ES_ERROR;
-  }
-
-  // Check if k is correct
-  if (fabs(bonded_ia_params[bond_type].p.ibm_tribend.kb - kb) > 1e-6) {
-    printf("kb does not match while reading tribend checkpoint. It is %.12e "
-           "and read was %.12e\n",
-           bonded_ia_params[bond_type].p.ibm_tribend.kb, kb);
-    return ES_ERROR;
-  }
-
-  // Communicate this to whoever is interested
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
+  p4->f.f +=
+      Pre * (vector_product(get_mi_vector(p1->r.p, p3->r.p, box_geo), v2) / Aj);
 }
 
 /***********
@@ -157,9 +129,9 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
       auto p4 = get_particle_data(ind4);
 
       // Get vectors of triangles
-      auto const dx1 = get_mi_vector(p1.r.p, p3.r.p);
-      auto const dx2 = get_mi_vector(p2.r.p, p3.r.p);
-      auto const dx3 = get_mi_vector(p4.r.p, p3.r.p);
+      auto const dx1 = get_mi_vector(p1.r.p, p3.r.p, box_geo);
+      auto const dx2 = get_mi_vector(p2.r.p, p3.r.p, box_geo);
+      auto const dx3 = get_mi_vector(p4.r.p, p3.r.p, box_geo);
 
       // Get normals on triangle; pointing outwards by definition of indices
       // sequence
@@ -198,5 +170,3 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
   mpi_bcast_ia_params(bond_type, -1);
   return ES_OK;
 }
-
-#endif

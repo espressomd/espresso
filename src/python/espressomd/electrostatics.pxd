@@ -132,7 +132,7 @@ IF ELECTROSTATICS:
         cdef inline python_p3m_adaptive_tune():
             cdef char * log = NULL
             cdef int response
-            response = p3m_adaptive_tune(& log)
+            response = p3m_adaptive_tune( & log)
             handle_errors("Error in p3m_adaptive_tune")
             if log.strip():
                 print(to_str(log))
@@ -236,8 +236,8 @@ IF ELECTROSTATICS:
             double far_cut;
             double far_cut2;
             int far_calculated;
-            int dielectric_contrast_on;
-            int const_pot_on;
+            bool dielectric_contrast_on;
+            bool const_pot_on;
             double pot_diff;
             double delta_mid_top;
             double delta_mid_bot;
@@ -245,7 +245,7 @@ IF ELECTROSTATICS:
 
         cdef extern MMM2D_struct mmm2d_params;
 
-        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, int const_pot_on, double pot_diff);
+        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, bool const_pot_on, double pot_diff);
 
         void MMM2D_init();
 
@@ -281,3 +281,5 @@ IF ELECTROSTATICS and MMM1D_GPU:
             float force_benchmark(SystemInterface & s);
 
             void check_periodicity();
+            void activate();
+            void deactivate();

@@ -14,7 +14,6 @@
 # Lines commented with '#' are ignored
 
 /* Generic features */
-PARTIAL_PERIODIC
 EXTERNAL_FORCES
 MASS
 EXCLUSIONS
@@ -34,8 +33,7 @@ ROTATIONAL_INERTIA              implies ROTATION
 /* Electrostatics */
 ELECTROSTATICS
 P3M                             equals ELECTROSTATICS and FFTW
-MMM1D_GPU                       requires CUDA and PARTIAL_PERIODIC and ELECTROSTATICS
-EWALD_GPU                       requires CUDA and ELECTROSTATICS
+MMM1D_GPU                       requires CUDA and ELECTROSTATICS
 _P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
 
 /* Magnetostatics */
@@ -99,21 +97,12 @@ OIF_GLOBAL_FORCES
 AFFINITY
 MEMBRANE_COLLISION
 
-
 /* Immersed-Boundary Bayreuth version */
-IMMERSED_BOUNDARY
-IMMERSED_BOUNDARY               requires VIRTUAL_SITES
 SCAFACOS_DIPOLES                requires SCAFACOS
 SCAFACOS_DIPOLES                implies DIPOLES
 SCAFACOS                        requires ELECTROSTATICS
 
 EXPERIMENTAL_FEATURES
-
-// Shape of the noise in the (Langevin) thermostat
-FLATNOISE                       requires not GAUSSRANDOM and not GAUSSRANDOM_CUT
-GAUSSRANDOM                     requires not FLATNOISE and not GAUSSRANDOM_CUT
-GAUSSRANDOMCUT                  requires not GAUSSRANDOM and not FLATNOISE
-
 
 /* Strange features. Use only if you know what you are doing! */
 /* turn off certain nonbonded interactions within molecules */

@@ -53,7 +53,6 @@
 #include "rattle.hpp"
 #include "rotation.hpp"
 #include "signalhandling.hpp"
-#include "swimmer_reaction.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
@@ -130,8 +129,6 @@ void finalize_p_inst_npt();
 /*@}*/
 
 void integrator_sanity_checks() {
-  // char *errtext;
-
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
   }
@@ -171,7 +168,8 @@ void integrate_ensemble_init() {
       errexit();
     }
 
-    nptiso.volume = pow(box_l[nptiso.non_const_dim], nptiso.dimension);
+    nptiso.volume =
+        pow(box_geo.length()[nptiso.non_const_dim], nptiso.dimension);
 
     if (recalc_forces) {
       nptiso.p_inst = 0.0;
@@ -190,12 +188,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Prepare the Integrator */
   on_integration_start();
 
-#ifdef IMMERSED_BOUNDARY
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them
   immersed_boundaries.init_volume_conservation();
-#endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
@@ -223,16 +219,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     lb_lbcoupling_deactivate();
 
-    // Communication step: distribute ghost positions
-    cells_update_ghosts();
-
-// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update();
-    if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+    if (virtual_sites()->is_relative()) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
+    virtual_sites()->update();
 #endif
+
+    // Communication step: distribute ghost positions
+    cells_update_ghosts();
 
     // Langevin philox rng counter
     if (n_steps > 0) {
@@ -317,16 +312,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (n_part > 0)
       lb_lbcoupling_activate();
 
-    // Communication step: distribute ghost positions
-    cells_update_ghosts();
-
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update();
-    if (virtual_sites()->need_ghost_comm_after_pos_update()) {
+    if (virtual_sites()->is_relative()) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
     }
+    virtual_sites()->update();
 #endif
+
+    // Communication step: distribute ghost positions
+    cells_update_ghosts();
 
     // Propagate langevin philox rng counter
     langevin_rng_counter_increment();
@@ -335,10 +330,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
-#endif
-
-#ifdef SWIMMER_REACTIONS
-    integrate_reaction();
 #endif
 
     /* Integration Step: Step 4 of Velocity Verlet scheme:
@@ -517,7 +508,7 @@ void propagate_press_box_pos_and_rescale_npt() {
      */
     if (this_node == 0) {
       nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
-      scal[2] = Utils::sqr(box_l[nptiso.non_const_dim]) /
+      scal[2] = Utils::sqr(box_geo.length()[nptiso.non_const_dim]) /
                 pow(nptiso.volume, 2.0 / nptiso.dimension);
       nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
       if (nptiso.volume < 0.0) {
@@ -526,7 +517,8 @@ void propagate_press_box_pos_and_rescale_npt() {
             << "your choice of piston= " << nptiso.piston
             << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
             << " just caused the volume to become negative, decrease dt";
-        nptiso.volume = box_l[0] * box_l[1] * box_l[2];
+        nptiso.volume =
+            box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
         scal[2] = 1;
       }
 
@@ -535,7 +527,7 @@ void propagate_press_box_pos_and_rescale_npt() {
       // nptiso.volume, nptiso.dimension,nptiso.p_inst );
       // fflush(stdout);
 
-      scal[1] = L_new / box_l[nptiso.non_const_dim];
+      scal[1] = L_new / box_geo.length()[nptiso.non_const_dim];
       scal[0] = 1 / scal[1];
     }
     MPI_Bcast(scal, 3, MPI_DOUBLE, 0, comm_cart);
@@ -563,12 +555,6 @@ void propagate_press_box_pos_and_rescale_npt() {
         }
 #endif
       }
-      ONEPART_TRACE(if (p.p.identity == check_id)
-                        fprintf(stderr, "%d: OPT:PV_1 v_new=(%.3e,%.3e,%.3e)\n",
-                                this_node, p.m.v[0], p.m.v[1], p.m.v[2]));
-      ONEPART_TRACE(if (p.p.identity == check_id)
-                        fprintf(stderr, "%d: OPT:PPOS p=(%.3f,%.3f,%.3f)\n",
-                                this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
     }
 
     set_resort_particles(Cells::RESORT_LOCAL);
@@ -576,18 +562,23 @@ void propagate_press_box_pos_and_rescale_npt() {
     /* Apply new volume to the box-length, communicate it, and account for
      * necessary adjustments to the cell geometry */
     if (this_node == 0) {
+      Utils::Vector3d new_box = box_geo.length();
+
       for (int i = 0; i < 3; i++) {
         if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
-          box_l[i] = L_new;
+          new_box[i] = L_new;
         } else if (nptiso.cubic_box) {
-          box_l[i] = L_new;
+          new_box[i] = L_new;
         }
       }
+
+      box_geo.set_length(new_box);
     }
-    MPI_Bcast(box_l.data(), 3, MPI_DOUBLE, 0, comm_cart);
+
+    MPI_Bcast(box_geo.m_length.data(), 3, MPI_DOUBLE, 0, comm_cart);
 
     /* fast box length update */
-    grid_changed_box_l();
+    grid_changed_box_l(box_geo);
     recalc_maximal_cutoff();
     cells_on_geometry_change(CELL_FLAG_FAST);
   }

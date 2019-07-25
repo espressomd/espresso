@@ -71,7 +71,7 @@ static double uz, L2, uz2, prefuz2, prefL3_i;
 MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
 /** From which distance a certain Bessel cutoff is valid. Can't be part of the
     params since these get broadcasted. */
-static double *bessel_radii;
+static std::vector<double> bessel_radii;
 
 static double far_error(int P, double minrad) {
   // this uses an upper bound to all force components and the potential
@@ -83,9 +83,9 @@ static double far_error(int P, double minrad) {
 
 static double determine_minrad(double maxPWerror, int P) {
   // bisection to search for where the error is maxPWerror
-  double rgranularity = MIN_RAD * box_l[2];
+  double rgranularity = MIN_RAD * box_geo.length()[2];
   double rmin = rgranularity;
-  double rmax = std::min(box_l[0], box_l[1]);
+  double rmax = std::min(box_geo.length()[0], box_geo.length()[1]);
   double errmin = far_error(P, rmin);
   double errmax = far_error(P, rmax);
   if (errmin < maxPWerror) {
@@ -94,7 +94,7 @@ static double determine_minrad(double maxPWerror, int P) {
   }
   if (errmax > maxPWerror) {
     // make sure that this switching radius cannot be reached
-    return 2 * std::max(box_l[0], box_l[1]);
+    return 2 * std::max(box_geo.length()[0], box_geo.length()[1]);
   }
 
   while (rmax - rmin > rgranularity) {
@@ -110,7 +110,7 @@ static double determine_minrad(double maxPWerror, int P) {
 }
 
 static void determine_bessel_radii(double maxPWerror, int maxP) {
-  bessel_radii = Utils::realloc(bessel_radii, sizeof(double) * maxP);
+  bessel_radii.resize(maxP);
   for (int P = 1; P <= maxP; ++P) {
     bessel_radii[P - 1] = determine_minrad(maxPWerror, P);
     // printf("cutoff %d %f\n", P, bessel_radii[P-1]);
@@ -150,7 +150,7 @@ int MMM1D_set_params(double switch_rad, double maxPWerror) {
 
 int MMM1D_sanity_checks() {
   // char *errtxt;
-  if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2)) {
+  if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "MMM1D requires periodicity 0 0 1";
     return 1;
   }
@@ -166,11 +166,11 @@ void MMM1D_init() {
   if (MMM1D_sanity_checks())
     return;
 
-  if (mmm1d_params.far_switch_radius_2 >= Utils::sqr(box_l[2]))
-    mmm1d_params.far_switch_radius_2 = 0.8 * Utils::sqr(box_l[2]);
+  if (mmm1d_params.far_switch_radius_2 >= Utils::sqr(box_geo.length()[2]))
+    mmm1d_params.far_switch_radius_2 = 0.8 * Utils::sqr(box_geo.length()[2]);
 
-  uz = 1 / box_l[2];
-  L2 = box_l[2] * box_l[2];
+  uz = 1 / box_geo.length()[2];
+  L2 = box_geo.length()[2] * box_geo.length()[2];
   uz2 = uz * uz;
   prefuz2 = coulomb.prefactor * uz2;
   prefL3_i = prefuz2 * uz;
@@ -229,7 +229,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
     Fy += pref * d[1];
     Fz += pref * d[2];
 
-    shift_z = d[2] + box_l[2];
+    shift_z = d[2] + box_geo.length()[2];
     rt2 = rxy2 + shift_z * shift_z;
     rt = sqrt(rt2);
     pref = 1. / (rt2 * rt);
@@ -237,7 +237,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
     Fy += pref * d[1];
     Fz += pref * shift_z;
 
-    shift_z = d[2] - box_l[2];
+    shift_z = d[2] - box_geo.length()[2];
     rt2 = rxy2 + shift_z * shift_z;
     rt = sqrt(rt2);
     pref = 1. / (rt2 * rt);
@@ -319,11 +319,11 @@ double mmm1d_coulomb_pair_energy(double const chpref, double const d[3],
 
     E += 1 / r;
 
-    shift_z = d[2] + box_l[2];
+    shift_z = d[2] + box_geo.length()[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
     E += 1 / rt;
 
-    shift_z = d[2] - box_l[2];
+    shift_z = d[2] - box_geo.length()[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
     E += 1 / rt;
   } else {
@@ -352,7 +352,8 @@ int mmm1d_tune(char **log) {
     return ES_ERROR;
   char buffer[32 + 2 * ES_DOUBLE_SPACE + ES_INTEGER_SPACE];
   double int_time, min_time = 1e200, min_rad = -1;
-  double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */
+  double maxrad =
+      box_geo.length()[2]; /* N_psi = 2, theta=2/3 maximum for rho */
   double switch_radius;
 
   if (mmm1d_params.far_switch_radius_2 < 0) {

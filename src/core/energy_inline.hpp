@@ -38,6 +38,7 @@
 #include "bonded_interactions/quartic.hpp"
 #include "bonded_interactions/subt_lj.hpp"
 #include "bonded_interactions/umbrella.hpp"
+#include "errorhandling.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -252,7 +253,7 @@ inline void add_bonded_energy(const Particle *p1) {
     }
 
     if (n_partners == 1) {
-      auto const dx = get_mi_vector(p1->r.p, p2->r.p);
+      auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
       switch (type) {
       case BONDED_IA_FENE:
         bond_broken = fene_pair_energy(iaparams, dx, &ret);

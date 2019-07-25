@@ -28,6 +28,7 @@
 #include "EspressoSystemInterface.hpp"
 
 #include "comfixed_global.hpp"
+#include "communication.hpp"
 #include "constraints.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
@@ -147,10 +148,8 @@ void force_calc() {
   }
 #endif
 
-#ifdef IMMERSED_BOUNDARY
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation();
-#endif
 
   lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
 
@@ -165,7 +164,7 @@ void force_calc() {
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-  if (virtual_sites()->need_ghost_comm_before_back_transfer()) {
+  if (virtual_sites()->is_relative()) {
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
     init_forces_ghosts();
   }

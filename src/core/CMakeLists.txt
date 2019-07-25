@@ -42,8 +42,7 @@ set(EspressoCore_SRC
   specfunc.cpp
   statistics_chain.cpp
   statistics.cpp
-  swimmer_reaction.cpp
-  SystemInterface.cpp
+        SystemInterface.cpp
   thermostat.cpp
   tuning.cpp
   virtual_sites.cpp
@@ -198,6 +197,5 @@ if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
 
-add_subdirectory(grid_based_algorithms)
 add_subdirectory(shapes)
 add_subdirectory(cluster_analysis)

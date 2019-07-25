@@ -54,9 +54,9 @@ int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
   int max_cnt = 0;
   for (int n = 0; n < N_CI; ++n) {
     for (cnt1 = 0; cnt1 < max_try; ++cnt1) {
-      pos[0] = box_l[0] * d_random();
-      pos[1] = box_l[1] * d_random();
-      pos[2] = box_l[2] * d_random();
+      pos[0] = box_geo.length()[0] * d_random();
+      pos[1] = box_geo.length()[1] * d_random();
+      pos[2] = box_geo.length()[2] * d_random();
       if ((mode != 0) or (mindist(partCfg, pos) > shield))
         break;
     }

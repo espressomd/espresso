@@ -23,9 +23,9 @@
  */
 
 #include "lbgpu.hpp"
-#include "lb-d3q19.hpp"
-
 #ifdef CUDA
+#include "errorhandling.hpp"
+#include "lb-d3q19.hpp"
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"
@@ -158,19 +158,6 @@ void lb_reinit_fluid_gpu() {
   LB_TRACE(fprintf(stderr, "lb_reinit_fluid_gpu \n"));
 }
 
-/** Release the fluid. */
-/*not needed in Espresso but still not deleted.
-  Despite the name (TODO: change it), it releases
-  only the fluid-related memory on the gpu.*/
-void lb_release_gpu() {
-
-  if (host_values != nullptr) {
-    free(host_values);
-    host_values = nullptr;
-  }
-  //  if(host_forces!=nullptr) free(host_forces);
-  //  if(host_data  !=nullptr) free(host_data);
-}
 /** (Re-)initialize the fluid. */
 void lb_reinit_parameters_gpu() {
   lbpar_gpu.time_step = (float)time_step;
@@ -218,9 +205,12 @@ void lb_reinit_parameters_gpu() {
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
     lbpar_gpu.dim_x = (unsigned int)round(
-        box_l[0] / lbpar_gpu.agrid); // TODO code duplication with lb.c start
-    lbpar_gpu.dim_y = (unsigned int)round(box_l[1] / lbpar_gpu.agrid);
-    lbpar_gpu.dim_z = (unsigned int)round(box_l[2] / lbpar_gpu.agrid);
+        box_geo.length()[0] /
+        lbpar_gpu.agrid); // TODO code duplication with lb.c start
+    lbpar_gpu.dim_y =
+        (unsigned int)round(box_geo.length()[1] / lbpar_gpu.agrid);
+    lbpar_gpu.dim_z =
+        (unsigned int)round(box_geo.length()[2] / lbpar_gpu.agrid);
 
     unsigned int tmp[3];
 
@@ -233,10 +223,10 @@ void lb_reinit_parameters_gpu() {
 
     for (dir = 0; dir < 3; dir++) {
       /* check if box_l is compatible with lattice spacing */
-      if (fabs(box_l[dir] - tmp[dir] * lbpar_gpu.agrid) > 1.0e-3) {
+      if (fabs(box_geo.length()[dir] - tmp[dir] * lbpar_gpu.agrid) > 1.0e-3) {
         runtimeErrorMsg() << "Lattice spacing lbpar_gpu.agrid= "
                           << lbpar_gpu.agrid << " is incompatible with box_l["
-                          << dir << "]=" << box_l[dir];
+                          << dir << "]=" << box_geo.length()[dir];
       }
     }
 
@@ -270,41 +260,6 @@ void lb_init_gpu() {
   LB_TRACE(printf("Initializing fluid on GPU successful\n"));
 }
 
-int lb_lbnode_set_extforce_density_GPU(int const ind[3], double const f[3]) {
-  if (ind[0] < 0 || ind[0] >= int(lbpar_gpu.dim_x) || ind[1] < 0 ||
-      ind[1] >= int(lbpar_gpu.dim_y) || ind[2] < 0 ||
-      ind[2] >= int(lbpar_gpu.dim_z))
-    return ES_ERROR;
-
-  unsigned int index = ind[0] + ind[1] * lbpar_gpu.dim_x +
-                       ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
-
-  size_t size_of_extforces = (n_extern_node_force_densities + 1) *
-                             sizeof(LB_extern_nodeforcedensity_gpu);
-  host_extern_node_force_densities =
-      (LB_extern_nodeforcedensity_gpu *)Utils::realloc(
-          host_extern_node_force_densities, size_of_extforces);
-
-  host_extern_node_force_densities[n_extern_node_force_densities]
-      .force_density[0] = (float)f[0];
-  host_extern_node_force_densities[n_extern_node_force_densities]
-      .force_density[1] = (float)f[1];
-  host_extern_node_force_densities[n_extern_node_force_densities]
-      .force_density[2] = (float)f[2];
-
-  host_extern_node_force_densities[n_extern_node_force_densities].index = index;
-  n_extern_node_force_densities++;
-
-  if (lbpar_gpu.external_force_density == 0)
-    lbpar_gpu.external_force_density = 1;
-
-  lb_init_extern_nodeforcedensities_GPU(n_extern_node_force_densities,
-                                        host_extern_node_force_densities,
-                                        &lbpar_gpu);
-
-  return ES_OK;
-}
-
 void lb_GPU_sanity_checks() {
   if (this_node == 0) {
     if (lbpar_gpu.agrid < 0.0) {
@@ -322,43 +277,15 @@ void lb_GPU_sanity_checks() {
   }
 }
 
-void lb_lbfluid_particles_add_momentum(float const momentum[3]) {
-  auto &parts = partCfg();
-  auto const n_part = parts.size();
-
-  // set_particle_v invalidates the parts pointer, so we need to defer setting
-  // the new values
-  std::vector<std::pair<int, double[3]>> new_velocity(n_part);
-
-  size_t i = 0;
-  for (auto const &p : parts) {
-    new_velocity[i].first = p.p.identity;
-    const auto factor = 1 / (p.p.mass * n_part);
-    new_velocity[i].second[0] = p.m.v[0] + momentum[0] * factor;
-    new_velocity[i].second[1] = p.m.v[1] + momentum[1] * factor;
-    new_velocity[i].second[2] = p.m.v[2] + momentum[2] * factor;
-    ++i;
-  }
-  for (auto &p : new_velocity) {
-    set_particle_v(p.first, p.second);
-  }
-}
-
-void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
-                                     int include_lbfluid) {
-  auto linear_momentum =
-      calc_linear_momentum(include_particles, include_lbfluid);
-  momentum[0] = linear_momentum[0];
-  momentum[1] = linear_momentum[1];
-  momentum[2] = linear_momentum[2];
-}
-
 void lb_set_agrid_gpu(double agrid) {
   lbpar_gpu.agrid = static_cast<float>(agrid);
 
-  lbpar_gpu.dim_x = static_cast<unsigned int>(rint(box_l[0] / agrid));
-  lbpar_gpu.dim_y = static_cast<unsigned int>(rint(box_l[1] / agrid));
-  lbpar_gpu.dim_z = static_cast<unsigned int>(rint(box_l[2] / agrid));
+  lbpar_gpu.dim_x =
+      static_cast<unsigned int>(rint(box_geo.length()[0] / agrid));
+  lbpar_gpu.dim_y =
+      static_cast<unsigned int>(rint(box_geo.length()[1] / agrid));
+  lbpar_gpu.dim_z =
+      static_cast<unsigned int>(rint(box_geo.length()[2] / agrid));
   unsigned int tmp[3];
   tmp[0] = lbpar_gpu.dim_x;
   tmp[1] = lbpar_gpu.dim_y;
@@ -366,11 +293,12 @@ void lb_set_agrid_gpu(double agrid) {
   /* sanity checks */
   for (int dir = 0; dir < 3; dir++) {
     /* check if box_l is compatible with lattice spacing */
-    if (fabs(box_l[dir] - tmp[dir] * agrid) > ROUND_ERROR_PREC) {
+    if (fabs(box_geo.length()[dir] - tmp[dir] * agrid) > ROUND_ERROR_PREC) {
       runtimeErrorMsg() << "Lattice spacing p_agrid= " << agrid
                         << " is incompatible with box_l[" << dir
-                        << "]=" << box_l[dir] << ", factor=" << tmp[dir]
-                        << " err= " << fabs(box_l[dir] - tmp[dir] * agrid);
+                        << "]=" << box_geo.length()[dir]
+                        << ", factor=" << tmp[dir] << " err= "
+                        << fabs(box_geo.length()[dir] - tmp[dir] * agrid);
     }
   }
   lbpar_gpu.number_of_nodes =

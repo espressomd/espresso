@@ -55,9 +55,9 @@ typedef struct {
    */
   int far_calculated;
   /// flag whether there is any dielectric contrast in the system.
-  int dielectric_contrast_on;
+  bool dielectric_contrast_on;
   /// @brief Flag whether a const. potential is applied.
-  int const_pot_on;
+  bool const_pot_on;
   /// @brief Const. potential.
   double pot_diff;
   /// dielectric contrast in the upper part of the simulation cell.
@@ -83,7 +83,7 @@ extern MMM2D_struct mmm2d_params;
  *  @param pot_diff      @copybrief MMM2D_struct::pot_diff
  */
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
-                     double delta_bot, int const_pot_on, double pot_diff);
+                     double delta_bot, bool const_pot_on, double pot_diff);
 
 /** the general long range force/energy calculation */
 double MMM2D_add_far(int f, int e);

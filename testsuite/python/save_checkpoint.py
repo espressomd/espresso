@@ -25,8 +25,11 @@ import espressomd.interactions
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
+if espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
+    from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
 import espressomd.electrokinetics
+from espressomd.shapes import Wall, Sphere
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
@@ -46,14 +49,18 @@ checkpoint = espressomd.checkpointing.Checkpoint(
 LB_implementation = None
 if 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
-elif espressomd.gpu_available() and espressomd.has_features('CUDA') and 'LB.GPU' in modes:
+elif 'LB.GPU' in modes and espressomd.gpu_available():
     LB_implementation = espressomd.lb.LBFluidGPU
 if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
     system.actors.add(lbf)
+    if espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
+        if not 'EK.GPU' in modes:
+            system.lbboundaries.add(
+                LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1, 1, 0)))
 
 EK_implementation = None
-if espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') and 'EK.GPU' in modes:
+if 'EK.GPU' in modes and espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS'):
     EK_implementation = espressomd.electrokinetics
     ek = EK_implementation.Electrokinetics(
         agrid=0.5,
@@ -77,7 +84,7 @@ system.part.add(pos=[1.0, 1.0, 2.0])
 if espressomd.has_features('EXCLUSIONS'):
     system.part.add(pos=[2.0] * 3, exclusions=[0, 1])
 
-if espressomd.has_features('ELECTROSTATICS') and 'P3M.CPU' in modes:
+if espressomd.has_features('P3M') and 'P3M.CPU' in modes:
     system.part[0].q = 1
     system.part[1].q = -1
     p3m = espressomd.electrostatics.P3M(
@@ -95,6 +102,13 @@ acc = espressomd.accumulators.MeanVarianceCalculator(obs=obs)
 acc.update()
 system.part[0].pos = [1.0, 2.0, 3.0]
 acc.update()
+
+
+system.auto_update_accumulators.add(acc)
+
+system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
+                       particle_type=17)
+system.constraints.add(shape=Wall(normal=[1. / np.sqrt(3)] * 3, dist=0.5))
 
 system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
 

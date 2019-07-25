@@ -45,7 +45,7 @@ double ShapeBasedConstraint::min_dist() {
         ia_params = get_ia_param(p.p.type, part_rep.p.type);
         if (checkIfInteraction(ia_params)) {
           double vec[3], dist;
-          m_shape->calculate_dist(folded_position(p), &dist, vec);
+          m_shape->calculate_dist(folded_position(p.r.p, box_geo), &dist, vec);
           return std::min(min, dist);
         }
         return min;
@@ -139,8 +139,7 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
             &p, &part_rep, ia_params, vec, -1.0 * dist, dist * dist);
       }
     } else {
-      runtimeErrorMsg() << "Constraint "
-                        << " violated by particle " << p.p.identity;
+      runtimeErrorMsg() << "Constraint violated by particle " << p.p.identity;
     }
   }
   if (part_rep.p.type >= 0)

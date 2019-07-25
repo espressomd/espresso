@@ -20,6 +20,7 @@ from __future__ import print_function, absolute_import, division
 include "myconfig.pxi"
 import os
 import cython
+import itertools
 import numpy as np
 cimport numpy as np
 from libc cimport stdint
@@ -244,6 +245,28 @@ cdef class HydrodynamicInteraction(Actor):
 
     def _deactivate_method(self):
         lb_lbfluid_set_lattice_switch(NONE)
+    
+    property shape:
+        def __get__(self):
+            cdef Vector3i shape = lb_lbfluid_get_shape()
+            return (shape[0], shape[1], shape[2])
+
+    property stress:
+        def __get__(self):
+            cdef Vector6d res
+            res = lb_lbfluid_get_stress() 
+            return array_locked((
+                res[0], res[1], res[2], res[3], res[4], res[5]))
+
+        def __set__(self, value):
+            raise NotImplementedError
+
+    def nodes(self):
+        """Provides a generator for iterating over all lb nodes"""
+        
+        shape = self.shape
+        for i, j, k in itertools.product(range(shape[0]), range(shape[1]), range(shape[2])):
+            yield self[i, j, k]
 
 
 # LBFluid main class
@@ -261,26 +284,13 @@ cdef class LBFluid(HydrodynamicInteraction):
         self.validate_params()
         self._set_lattice_switch()
         self._set_params_in_es_core()
-
-    property stress:
-        def __get__(self):
-            cdef Vector6d res
-            res = lb_lbfluid_get_stress() 
-            return array_locked((
-                res[0], res[1], res[2], res[3], res[4], res[5]))
-
-        def __set__(self, value):
-            raise NotImplementedError
-
+    
 IF CUDA:
     cdef class LBFluidGPU(HydrodynamicInteraction):
         """
         Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
 
         """
-
-        def remove_total_momentum(self):
-            lb_lbfluid_remove_total_momentum()
 
         def _set_lattice_switch(self):
             lb_lbfluid_set_lattice_switch(GPU)
@@ -317,9 +327,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines(object):
@@ -333,6 +343,10 @@ cdef class LBFluidRoutines(object):
         self.node[2] = key[2]
         if not lb_lbnode_is_index_valid(self.node):
             raise ValueError("LB node index out of bounds")
+    
+    property index:
+        def __get__(self):
+            return (self.node[0], self.node[1], self.node[2])
 
     property velocity:
         def __get__(self):
@@ -357,20 +371,20 @@ cdef class LBFluidRoutines(object):
 
     property stress:
         def __get__(self):
-            cdef Vector6d pi = python_lbnode_get_pi(self.node)
-            return array_locked(np.array([[pi[0], pi[1], pi[3]],
-                                          [pi[1], pi[2], pi[4]],
-                                          [pi[3], pi[4], pi[5]]]))
+            cdef Vector6d stress = python_lbnode_get_stress(self.node)
+            return array_locked(np.array([[stress[0], stress[1], stress[3]],
+                                          [stress[1], stress[2], stress[4]],
+                                          [stress[3], stress[4], stress[5]]]))
 
         def __set__(self, value):
             raise NotImplementedError
 
     property stress_neq:
         def __get__(self):
-            cdef Vector6d pi = python_lbnode_get_pi_neq(self.node)
-            return array_locked(np.array([[pi[0], pi[1], pi[3]],
-                                          [pi[1], pi[2], pi[4]],
-                                          [pi[3], pi[4], pi[5]]]))
+            cdef Vector6d stress = python_lbnode_get_stress_neq(self.node)
+            return array_locked(np.array([[stress[0], stress[1], stress[3]],
+                                          [stress[1], stress[2], stress[4]],
+                                          [stress[3], stress[4], stress[5]]]))
 
         def __set__(self, value):
             raise NotImplementedError

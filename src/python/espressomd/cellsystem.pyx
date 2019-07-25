@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from __future__ import print_function, absolute_import
-from grid cimport local_box_l, node_grid
+from grid cimport node_grid
 from . cimport cellsystem
 from . cimport integrate
 from globals cimport *
@@ -127,8 +127,6 @@ cdef class CellSystem(object):
             s["type"] = "nsquare"
 
         s["skin"] = skin
-        s["local_box_l"] = np.array(
-            [local_box_l[0], local_box_l[1], local_box_l[2]])
         s["max_cut"] = max_cut
         s["max_range"] = max_range
         s["max_skin"] = max_skin
@@ -186,7 +184,7 @@ cdef class CellSystem(object):
     def get_pairs_(self, distance):
         return mpi_get_pairs(distance)
 
-    def resort(self, global_flag=1):
+    def resort(self, global_flag=True):
         """
         Resort the particles in the cellsystem.
         Returns the particle numbers on the nodes
@@ -194,13 +192,13 @@ cdef class CellSystem(object):
 
         Parameters
         ----------
-        global_flag : :obj:`int`
+        global_flag : :obj:`bool`
                       If true, a global resorting is done, otherwise particles
                       are only exchanged between neighboring nodes.
 
         """
 
-        return mpi_resort_particles(global_flag)
+        return mpi_resort_particles(int(global_flag))
 
     property max_num_cells:
         """

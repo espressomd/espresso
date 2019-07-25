@@ -18,8 +18,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "immersed_boundaries.hpp"
 
-#ifdef IMMERSED_BOUNDARY
-
 ImmersedBoundaries immersed_boundaries;
-
-#endif

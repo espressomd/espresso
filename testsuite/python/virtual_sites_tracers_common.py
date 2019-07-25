@@ -114,7 +114,6 @@ class VirtualSitesTracersCommon(object):
         alpha = np.arccos(np.dot(n1, n2))
         return alpha
 
-    @utx.skipIfMissingFeatures("IMMERSED_BOUNDARY")
     def test_tribend(self):
         self.system.actors.clear()
         # two triangles with bending interaction
@@ -165,7 +164,6 @@ class VirtualSitesTracersCommon(object):
             last_angle = angle
         self.assertLess(angle, 0.03)
 
-    @utx.skipIfMissingFeatures("IMMERSED_BOUNDARY")
     def test_triel(self):
         self.system.actors.clear()
         system = self.system

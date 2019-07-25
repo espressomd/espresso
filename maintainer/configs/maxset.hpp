@@ -17,9 +17,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /* maximal set of features usable at the same time */
-#define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define DIPOLES
+#ifdef SCAFACOS
+#define SCAFACOS_DIPOLES
+#endif
 #define ROTATION
 #define ROTATIONAL_INERTIA
 #define PARTICLE_ANISOTROPY
@@ -65,7 +67,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define OVERLAPPED
 #define WCA
 #define THOLE
 
@@ -73,8 +74,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
-#define IMMERSED_BOUNDARY
-#define FLATNOISE
 #define OIF_GLOBAL_FORCES
 #define OIF_LOCAL_FORCES
 #define MEMBRANE_COLLISION
