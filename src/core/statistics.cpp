@@ -51,7 +51,7 @@
 
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis) */
-double **configs = nullptr;
+std::vector<std::vector<double>> configs;
 int n_configs = 0;
 int n_part_conf = 0;
 
@@ -395,8 +395,8 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
 
                 auto const dist =
                     get_mi_vector(
-                        Vector3d{make_const_span(configs[k] + 3 * i, 3)},
-                        Vector3d{make_const_span(configs[k] + 3 * j, 3)},
+                        Vector3d{make_const_span(configs[k].data() + 3 * i, 3)},
+                        Vector3d{make_const_span(configs[k].data() + 3 * j, 3)},
                         box_geo)
                         .norm();
                 if (dist > r_min && dist < r_max) {
@@ -431,13 +431,14 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
   free(rdf_tmp);
 }
 
-void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
-                          int order, double **_ff) {
+std::vector<double> calc_structurefactor(PartCfg &partCfg, int const *p_types,
+                                         int n_types, int order) {
   int i, j, k, n, qi, t, order2;
-  double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
+  double qr, twoPI_L, C_sum, S_sum;
 
   order2 = order * order;
-  *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
+  std::vector<double> ff;
+  ff.resize(2 * order2);
   ff[2 * order2] = 0;
   twoPI_L = 2 * Utils::pi() / box_geo.length()[0];
 
@@ -486,6 +487,7 @@ void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
       if (ff[2 * qi + 1] != 0)
         ff[2 * qi] /= n * ff[2 * qi + 1];
   }
+  return ff;
 }
 
 std::vector<std::vector<double>> modify_stucturefactor(int order,
@@ -633,9 +635,8 @@ int calc_cylindrical_average(
 
 void analyze_append(PartCfg &partCfg) {
   n_part_conf = partCfg.size();
-  configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
-  configs[n_configs] =
-      (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
+  configs.resize(n_configs + 1);
+  configs[n_configs].resize(3 * n_part_conf);
   int i = 0;
   for (auto const &p : partCfg) {
     configs[n_configs][3 * i + 0] = p.r.p[0];
@@ -649,9 +650,8 @@ void analyze_append(PartCfg &partCfg) {
 void analyze_configs(double const *tmp_config, int count) {
   int i;
   n_part_conf = count;
-  configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
-  configs[n_configs] =
-      (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
+  configs.resize(n_configs + 1);
+  configs[n_configs].resize(3 * n_part_conf);
   for (i = 0; i < n_part_conf; i++) {
     configs[n_configs][3 * i] = tmp_config[3 * i];
     configs[n_configs][3 * i + 1] = tmp_config[3 * i + 1];

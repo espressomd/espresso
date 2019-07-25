@@ -2536,7 +2536,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, boundaries);
 
-  if (LBBoundaries::lbboundaries.size() == 0) {
+  if (LBBoundaries::lbboundaries.empty()) {
     cudaDeviceSynchronize();
     return;
   }
