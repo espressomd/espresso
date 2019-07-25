@@ -120,7 +120,6 @@ static double ux, ux2, uy, uy2, uz;
 /*@}*/
 
 static double layer_h;
-extern int n_layers;
 
 /** maximal z for near formula, minimal z for far formula.
     Is identical in the theory, but with the Verlet tricks
@@ -256,7 +255,7 @@ static void add_Q_force();
 static double Q_energy(double omega);
 /** p,q <> 0 per frequency code */
 static void setup_PQ(int p, int q, double omega, double fac,
-                     const int n_localpart);
+                     int n_localpart);
 static void add_PQ_force(int p, int q, double omega);
 static double PQ_energy(double omega);
 
@@ -408,7 +407,7 @@ void clear_image_contributions(int e_size) {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(gblcblk, n_layers - 1, e_size), e_size);
+    clear_vec(abventry(gblcblk, local_cells.n - 1, e_size), e_size);
 }
 
 void gather_image_contributions(int e_size) {
@@ -426,7 +425,7 @@ void gather_image_contributions(int e_size) {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size, e_size);
+    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf + e_size, e_size);
 }
 
 /* the data transfer routine for the lclcblks itself */
@@ -442,16 +441,16 @@ void distribute(int e_size, double fac) {
     /* up */
     if (node == this_node) {
       /* calculate sums of cells below */
-      for (c = 1; c < n_layers; c++)
+      for (c = 1; c < local_cells.n; c++)
         addscale_vec(blwentry(gblcblk, c, e_size), fac,
                      blwentry(gblcblk, c - 1, e_size),
                      blwentry(lclcblk, c - 1, e_size), e_size);
 
       /* calculate my ghost contribution only if a node above exists */
       if (node + 1 < n_nodes) {
-        addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size),
-                     blwentry(lclcblk, n_layers - 1, e_size), e_size);
-        copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
+        addscale_vec(sendbuf, fac, blwentry(gblcblk, local_cells.n - 1, e_size),
+                     blwentry(lclcblk, local_cells.n - 1, e_size), e_size);
+        copy_vec(sendbuf + e_size, blwentry(lclcblk, local_cells.n, e_size), e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     } else if (node + 1 == this_node) {
@@ -463,7 +462,7 @@ void distribute(int e_size, double fac) {
     /* down */
     if (inv_node == this_node) {
       /* calculate sums of all cells above */
-      for (c = n_layers + 1; c > 2; c--)
+      for (c = local_cells.n + 1; c > 2; c--)
         addscale_vec(abventry(gblcblk, c - 3, e_size), fac,
                      abventry(gblcblk, c - 2, e_size),
                      abventry(lclcblk, c, e_size), e_size);
@@ -478,8 +477,8 @@ void distribute(int e_size, double fac) {
     } else if (inv_node - 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, inv_node, 0, comm_cart,
                &status);
-      copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf, e_size);
-      copy_vec(abventry(lclcblk, n_layers + 1, e_size), recvbuf + e_size,
+      copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf, e_size);
+      copy_vec(abventry(lclcblk, local_cells.n + 1, e_size), recvbuf + e_size,
                e_size);
     }
   }
@@ -504,11 +503,11 @@ static void setup_z_force() {
   }
 
   if (this_node == n_nodes - 1) {
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 
   /* calculate local cellblks. partblks don't make sense */
-  for (c = 1; c <= n_layers; c++) {
+  for (c = 1; c <= local_cells.n; c++) {
     np = cells[c].n;
     part = cells[c].part;
     lclcblk[size * c] = 0;
@@ -542,7 +541,7 @@ static void add_z_force() {
     field_tot = coulomb.field_induced + coulomb.field_applied;
   }
 
-  for (int c = 1; c <= n_layers; c++) {
+  for (int c = 1; c <= local_cells.n; c++) {
     othcblk = block(gblcblk, c - 1, size);
     add = othcblk[QQEQQP] - othcblk[QQEQQM];
     auto np = cells[c].n;
@@ -567,10 +566,10 @@ static void setup_z_energy() {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
 
   /* calculate local cellblks. partblks don't make sense */
-  for (c = 1; c <= n_layers; c++) {
+  for (c = 1; c <= local_cells.n; c++) {
     np = cells[c].n;
     part = cells[c].part;
     clear_vec(blwentry(lclcblk, c, e_size), e_size);
@@ -592,7 +591,7 @@ static double z_energy() {
   double *othcblk;
   int size = 4;
   double eng = 0;
-  for (c = 1; c <= n_layers; c++) {
+  for (c = 1; c <= local_cells.n; c++) {
     othcblk = block(gblcblk, c - 1, size);
     np = cells[c].n;
     part = cells[c].part;
@@ -651,13 +650,13 @@ static void setup(int p, double omega, double fac,
   }
   if (this_node == n_nodes - 1) {
     /* same for the top node */
-    lclimgetop = block(lclcblk, n_layers + 1, size);
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    lclimgetop = block(lclcblk, local_cells.n + 1, size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 
   layer_top = local_geo.my_left()[2] + layer_h;
   ic = 0;
-  for (c = 1; c <= n_layers; c++) {
+  for (c = 1; c <= local_cells.n; c++) {
     np = cells[c].n;
     part = cells[c].part;
     llclcblk = block(lclcblk, c, size);
@@ -694,7 +693,7 @@ static void setup(int p, double omega, double fac,
                         mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
 
-        if (c == n_layers && this_node == n_nodes - 1) {
+        if (c == local_cells.n && this_node == n_nodes - 1) {
           /* There are image charges at (3h-z) and (h+z) from the top layer etc.
              layer_h included due to the shift in z */
           e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
@@ -737,7 +736,7 @@ static void setup(int p, double omega, double fac,
     if (this_node == 0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
+      scale_vec(pref, abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 }
 
@@ -757,7 +756,7 @@ template <size_t dir> static void add_force() {
   constexpr const auto size = 4;
 
   auto ic = 0;
-  for (int c = 1; c <= n_layers; c++) {
+  for (int c = 1; c <= local_cells.n; c++) {
     auto const np = cells[c].n;
     auto const part = cells[c].part;
     auto const othcblk = block(gblcblk, c - 1, size);
@@ -789,7 +788,7 @@ static double P_energy(double omega) {
   double pref = 1 / omega;
 
   ic = 0;
-  for (c = 1; c <= n_layers; c++) {
+  for (c = 1; c <= local_cells.n; c++) {
     np = cells[c].n;
     othcblk = block(gblcblk, c - 1, size);
     for (i = 0; i < np; i++) {
@@ -811,7 +810,7 @@ static double Q_energy(double omega) {
   double pref = 1 / omega;
 
   ic = 0;
-  for (c = 1; c <= n_layers; c++) {
+  for (c = 1; c <= local_cells.n; c++) {
     np = cells[c].n;
     othcblk = block(gblcblk, c - 1, size);
 
@@ -856,13 +855,13 @@ static void setup_PQ(int p, int q, double omega, double fac,
   }
 
   if (this_node == n_nodes - 1) {
-    lclimgetop = block(lclcblk, n_layers + 1, size);
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    lclimgetop = block(lclcblk, local_cells.n + 1, size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 
   layer_top = local_geo.my_left()[2] + layer_h;
   ic = 0;
-  for (c = 1; c <= n_layers; c++) {
+  for (c = 1; c <= local_cells.n; c++) {
     np = cells[c].n;
     part = cells[c].part;
     llclcblk = block(lclcblk, c, size);
@@ -913,7 +912,7 @@ static void setup_PQ(int p, int q, double omega, double fac,
                         mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
 
-        if (c == n_layers && this_node == n_nodes - 1) {
+        if (c == local_cells.n && this_node == n_nodes - 1) {
           e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_top +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
@@ -970,7 +969,7 @@ static void setup_PQ(int p, int q, double omega, double fac,
     if (this_node == 0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
+      scale_vec(pref, abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 }
 
@@ -983,7 +982,7 @@ static void add_PQ_force(int p, int q, double omega) {
   int size = 8;
 
   ic = 0;
-  for (c = 1; c <= n_layers; c++) {
+  for (c = 1; c <= local_cells.n; c++) {
     np = cells[c].n;
     part = cells[c].part;
     othcblk = block(gblcblk, c - 1, size);
@@ -1028,7 +1027,7 @@ static double PQ_energy(double omega) {
   double pref = 1 / omega;
 
   int ic = 0;
-  for (int c = 1; c <= n_layers; c++) {
+  for (int c = 1; c <= local_cells.n; c++) {
     int np = cells[c].n;
     double *othcblk = block(gblcblk, c - 1, size);
 
@@ -1162,7 +1161,7 @@ double MMM2D_add_far(int f, int e) {
 
   partblk = Utils::realloc(partblk, n_localpart * 8 * sizeof(double));
   lclcblk = Utils::realloc(lclcblk, cells.size() * 8 * sizeof(double));
-  gblcblk = Utils::realloc(gblcblk, n_layers * 8 * sizeof(double));
+  gblcblk = Utils::realloc(gblcblk, local_cells.n * 8 * sizeof(double));
 
   // It's not really far...
   auto eng = e ? MMM2D_self_energy(local_cells.particles()) : 0;
@@ -1701,7 +1700,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
   /* if we cannot do the far formula, force off */
   if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
       (cell_structure.type == CELL_STRUCTURE_LAYERED &&
-       n_nodes * n_layers < 3)) {
+       n_nodes * local_cells.n < 3)) {
     mmm2d_params.far_cut = 0.0;
     if (mmm2d_params.dielectric_contrast_on) {
       return ERROR_ICL;
@@ -1761,7 +1760,7 @@ void MMM2D_init() {
   }
   if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
       (cell_structure.type == CELL_STRUCTURE_LAYERED &&
-       n_nodes * n_layers < 3)) {
+       n_nodes * local_cells.n < 3)) {
     mmm2d_params.far_cut = 0.0;
     if (mmm2d_params.dielectric_contrast_on) {
       runtimeErrorMsg() << "MMM2D auto-retuning: IC requires layered "
@@ -1825,7 +1824,7 @@ void MMM2D_dielectric_layers_force_contribution() {
 
   if (this_node == n_nodes - 1) {
 
-    c = n_layers;
+    c = local_cells.n;
     celll = &cells[c];
     pl = celll->part;
     npl = celll->n;
@@ -1892,7 +1891,7 @@ double MMM2D_dielectric_layers_energy_contribution() {
   }
 
   if (this_node == n_nodes - 1) {
-    c = n_layers;
+    c = local_cells.n;
     celll = &cells[c];
     pl = celll->part;
     npl = celll->n;
