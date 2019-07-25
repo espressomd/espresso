@@ -69,11 +69,11 @@ unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
 
 CellPList CellStructure::local_cells() const {
-  return local_cells;
+  return ::local_cells;
 }
 
 CellPList CellStructure::ghost_cells() const {
-  return ghost_cells;
+  return ::ghost_cells;
 }
 
 /**
