@@ -94,7 +94,7 @@ void check_forces(const ParticleRange &particles,
   }
 }
 
-void force_calc(CellStructure &cellStructure) {
+void force_calc(const ParticleRange &particles) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   espressoSystemInterface.update();
@@ -103,7 +103,6 @@ void force_calc(CellStructure &cellStructure) {
   prepare_local_collision_queue();
 #endif
 
-  auto particles = cellStructure.get_local_cells();
 #ifdef ELECTROSTATICS
   iccp3m_iteration(particles);
 #endif
@@ -131,8 +130,8 @@ void force_calc(CellStructure &cellStructure) {
       add_single_particle_force(&p);
     }
   }
-
-  Constraints::constraints.add_forces(particles, sim_time);
+  auto local_parts = particles;
+  Constraints::constraints.add_forces(local_parts, sim_time);
 
 #ifdef OIF_GLOBAL_FORCES
   if (max_oif_objects) {
@@ -167,18 +166,18 @@ void force_calc(CellStructure &cellStructure) {
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
   if (virtual_sites()->is_relative()) {
-    ghost_communicator(&cellStructure.collect_ghost_force_comm);
-    init_forces_ghosts(cellStructure.get_ghost_cells());
+    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    init_forces_ghosts(ghost_cells.particles());
   }
   virtual_sites()->back_transfer_forces_and_torques();
 #endif
 
   // Communication Step: ghost forces
-  ghost_communicator(&cellStructure.collect_ghost_force_comm);
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
-  particles = cellStructure.get_local_cells();
+  auto local_particles = particles;
   // should be pretty late, since it needs to zero out the total force
-  comfixed.apply(comm_cart, particles);
+  comfixed.apply(comm_cart, local_particles);
 
   // Needs to be the last one to be effective
   forcecap_cap(particles);

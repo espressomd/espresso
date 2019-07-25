@@ -61,7 +61,7 @@ void init_forces_ghosts(const ParticleRange &particles);
  *  <li> Calculate long range interaction forces
  *  </ol>
  */
-void force_calc(const CellStructure &cellStructure);
+void force_calc(const ParticleRange &particles);
 
 /** Check if forces are NAN */
 void check_forces(const ParticleRange &particles,
