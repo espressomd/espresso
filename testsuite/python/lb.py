@@ -347,8 +347,8 @@ class TestLB(object):
         self.system.integrator.run(
             int(round(sim_time / self.system.time_step)))
         probe_pos = np.array(self.system.box_l) / 2.
-        v1 = lbf.get_interpolated_velocity(probe_pos)
-        f1 = self.system.part[0].f
+        v1 = np.copy(lbf.get_interpolated_velocity(probe_pos))
+        f1 = np.copy(self.system.part[0].f)
         self.system.actors.clear()
         #get fresh LBfluid and change time steps
         lbf = self.lb_class(
@@ -373,8 +373,8 @@ class TestLB(object):
         self.system.integrator.run(
             int(round(sim_time / self.system.time_step)))
         self.system.time_step = self.params['time_step']
-        v2 = lbf.get_interpolated_velocity(probe_pos)
-        f2 = self.system.part[0].f
+        v2 = np.copy(lbf.get_interpolated_velocity(probe_pos))
+        f2 = np.copy( self.system.part[0].f)
         np.testing.assert_allclose(v1, v2, rtol=1e-5)
         np.testing.assert_allclose(f1, f2, rtol=1e-5)
 
