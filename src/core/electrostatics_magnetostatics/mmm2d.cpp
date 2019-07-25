@@ -33,7 +33,6 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "layered.hpp"
 #include "mmm-common.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
@@ -119,6 +118,9 @@ static DoubleList bon;
 /*@{*/
 static double ux, ux2, uy, uy2, uz;
 /*@}*/
+
+static double layer_h;
+extern int n_layers;
 
 /** maximal z for near formula, minimal z for far formula.
     Is identical in the theory, but with the Verlet tricks
@@ -269,6 +271,7 @@ void MMM2D_setup_constants() {
   uy = 1 / box_geo.length()[1];
   uy2 = uy * uy;
   uz = 1 / box_geo.length()[2];
+  layer_h = local_geo.length()[2] / local_cells.n;
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
