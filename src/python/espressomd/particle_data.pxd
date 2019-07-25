@@ -20,7 +20,7 @@ from __future__ import print_function, absolute_import
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport Vector3d, List, Span
+from espressomd.utils cimport Vector3d, Vector3i, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
@@ -53,7 +53,7 @@ cdef extern from "particle_data.hpp":
         Vector3d v
 
     ctypedef struct particle_local "ParticleLocal":
-        int i[3]
+        Vector3i i
 
     ctypedef struct particle "Particle":
         particle_properties p
@@ -66,21 +66,15 @@ cdef extern from "particle_data.hpp":
         Vector3d calc_dip()
 
     IF ENGINE:
-        IF LB or LB_GPU:
-            ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
-                bool swimming
-                double f_swim
-                double v_swim
-                int push_pull
-                double dipole_length
-                double v_center[3]
-                double v_source[3]
-                double rotational_friction
-        ELSE:
-            ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
-                bool swimming
-                double f_swim
-                double v_swim
+        ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
+            bool swimming
+            double f_swim
+            double v_swim
+            int push_pull
+            double dipole_length
+            double v_center[3]
+            double v_source[3]
+            double rotational_friction
 
     # Setter/getter/modifier functions functions
     void prefetch_particle_data(vector[int] ids)
@@ -235,9 +229,3 @@ cdef class ParticleHandle(object):
 cdef class _ParticleSliceImpl:
     cdef public id_selection
     cdef int _chunk_size
-
-cdef extern from "grid.hpp":
-    Vector3d folded_position(const particle * )
-    Vector3d unfolded_position(const particle * )
-    cdef void fold_position(double * , int*)
-    void unfold_position(double pos[3], int image_box[3])

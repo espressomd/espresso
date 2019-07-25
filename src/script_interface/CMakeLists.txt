@@ -11,8 +11,8 @@ set(EspressoScriptInterface_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/mpiio/initialize.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/shapes/initialize.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/ParallelScriptInterface.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ParallelScriptInterface.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"
 )
 
 if(H5MD)
@@ -34,7 +34,7 @@ endif()
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
 install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 set_target_properties(EspressoScriptInterface PROPERTIES SOVERSION ${SOVERSION})
-target_link_libraries(EspressoScriptInterface PRIVATE EspressoConfig PUBLIC EspressoCore Shapes LBBoundaries cluster_analysis mpiio pdbreader)
+target_link_libraries(EspressoScriptInterface PRIVATE EspressoConfig PUBLIC EspressoCore Shapes cluster_analysis mpiio pdbreader)
 if(HDF5_FOUND)
  target_link_libraries(EspressoScriptInterface PRIVATE H5mdCore)
 endif()

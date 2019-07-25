@@ -29,10 +29,7 @@
 #define _HALO_HPP
 
 #include "grid_based_algorithms/lattice.hpp"
-#include "utils.hpp"
 #include <mpi.h>
-
-#ifdef LATTICE
 
 /** \name Types of halo communications */
 /*@{*/
@@ -53,7 +50,7 @@
 
 /** Layout of the lattice data.
  *  The description is similar to MPI datatypes but a bit more compact.
- *  See \ref halo_create_fieldtype, \ref halo_create_field_vector and \ref
+ *  See \ref halo_create_field_vector and \ref
  *  halo_dtcopy to understand how it works.
  */
 typedef struct _Fieldtype *Fieldtype;
@@ -102,16 +99,6 @@ typedef struct {
 
 } HaloCommunicator;
 
-/** Creates a fieldtype describing the data layout
- *  @param      count   number of subtypes
- *  @param[in]  lengths array of lengths of the subtypes
- *  @param[in]  disps   array of displacements the subtypes
- *  @param      extent  extent of the whole new fieldtype
- *  @param[out] newtype newly created fieldtype
- */
-void halo_create_fieldtype(int count, int const *lengths, int const *disps,
-                           int extent, Fieldtype *newtype);
-
 /** Creates a field vector layout
  *  @param vblocks       number of vector blocks
  *  @param vstride       size of strides in field vector
@@ -139,7 +126,7 @@ void halo_free_fieldtype(Fieldtype *ftype);
  */
 void prepare_halo_communication(HaloCommunicator *hc, Lattice const *lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype,
-                                const Vector3i &local_node_grid);
+                                const Utils::Vector3i &local_node_grid);
 
 /** Frees datastructures associated with a halo communicator
  *  @param[in,out] hc  halo communicator to be released
@@ -152,7 +139,5 @@ void release_halo_communication(HaloCommunicator *hc);
  *  @param[in]  base  base plane of local node
  */
 void halo_communication(HaloCommunicator const *hc, char *base);
-
-#endif /* LATTICE */
 
 #endif /* HALO_H */

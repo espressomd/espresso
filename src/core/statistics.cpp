@@ -25,8 +25,10 @@
  */
 
 #include "statistics.hpp"
+
 #include "communication.hpp"
 #include "energy.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
@@ -37,10 +39,11 @@
 #include "pressure.hpp"
 #include "short_range_loop.hpp"
 #include "statistics_chain.hpp"
-#include "utils.hpp"
-#include "utils/NoOp.hpp"
-#include "utils/contains.hpp"
 #include "virtual_sites.hpp"
+
+#include <utils/NoOp.hpp>
+#include <utils/constants.hpp>
+#include <utils/contains.hpp>
 
 #include <cstdlib>
 #include <cstring>
@@ -60,15 +63,13 @@ int n_part_conf = 0;
  ****************************************************************************************/
 
 double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
-  int in_set;
-
   auto mindist2 = std::numeric_limits<double>::infinity();
 
-  for (auto jt = partCfg.begin(); jt != (--partCfg.end()); ++jt) {
+  for (auto jt = partCfg.begin(); jt != partCfg.end(); ++jt) {
     /* check which sets particle j belongs to
        bit 0: set1, bit1: set2
     */
-    in_set = 0;
+    auto in_set = 0;
     if (set1.empty() || contains(set1, jt->p.type))
       in_set = 1;
     if (set2.empty() || contains(set2, jt->p.type))
@@ -101,23 +102,22 @@ void predict_momentum_particles(double *result) {
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
-  Vector3d linear_momentum{};
+Utils::Vector3d calc_linear_momentum(int include_particles,
+                                     int include_lbfluid) {
+  Utils::Vector3d linear_momentum{};
   if (include_particles) {
-    Vector3d momentum_particles{};
+    Utils::Vector3d momentum_particles{};
     mpi_gather_stats(4, momentum_particles.data(), nullptr, nullptr, nullptr);
     linear_momentum += momentum_particles;
   }
   if (include_lbfluid) {
-#if defined(LB) or defined(LB_GPU)
     linear_momentum += lb_lbfluid_calc_fluid_momentum();
-#endif
   }
   return linear_momentum;
 }
 
-Vector3d centerofmass(PartCfg &partCfg, int type) {
-  Vector3d com{};
+Utils::Vector3d centerofmass(PartCfg &partCfg, int type) {
+  Utils::Vector3d com{};
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
@@ -134,12 +134,11 @@ Vector3d centerofmass(PartCfg &partCfg, int type) {
 }
 
 void angularmomentum(PartCfg &partCfg, int type, double *com) {
-  double tmp[3];
   com[0] = com[1] = com[2] = 0.;
 
   for (auto const &p : partCfg) {
     if (type == p.p.type) {
-      vector_product(p.r.p, p.m.v, tmp);
+      auto const tmp = vector_product(p.r.p, p.m.v);
       for (int i = 0; i < 3; i++) {
         com[i] += tmp[i] * p.p.mass;
       }
@@ -177,16 +176,18 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   MofImatrix[7] = MofImatrix[5];
 }
 
-IntList nbhood(PartCfg &partCfg, double pt[3], double r,
-               int const planedims[3]) {
+IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
+               const Utils::Vector3i &planedims) {
   IntList ids;
-  Vector3d d;
 
-  auto const r2 = r * r;
+  auto const r2 = r_catch * r_catch;
+  auto const pt = Utils::Vector3d{pos[0], pos[1], pos[2]};
+
+  Utils::Vector3d d;
 
   for (auto const &p : partCfg) {
     if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      d = get_mi_vector(pt, p.r.p);
+      d = get_mi_vector(pt, p.r.p, box_geo);
     } else {
       /* Calculate the in plane distance */
       for (int j = 0; j < 3; j++) {
@@ -202,12 +203,12 @@ IntList nbhood(PartCfg &partCfg, double pt[3], double r,
   return ids;
 }
 
-double distto(PartCfg &partCfg, double p[3], int pid) {
+double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
   auto mindist = std::numeric_limits<double>::infinity();
 
   for (auto const &part : partCfg) {
     if (pid != part.p.identity) {
-      auto const d = get_mi_vector(p, part.r.p);
+      auto const d = get_mi_vector({pos[0], pos[1], pos[2]}, part.r.p, box_geo);
       mindist = std::min(mindist, d.norm2());
     }
   }
@@ -222,7 +223,8 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
   double inv_bin_width = 0.0;
   double min_dist, min_dist2 = 0.0, start_dist2;
 
-  start_dist2 = Utils::sqr(box_l[0] + box_l[1] + box_l[2]);
+  start_dist2 = Utils::sqr(box_geo.length()[0] + box_geo.length()[1] +
+                           box_geo.length()[2]);
   /* bin preparation */
   *low = 0.0;
   for (int i = 0; i < r_bins; i++)
@@ -242,7 +244,8 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
           if (p1 != p2) {
             for (t2 = 0; t2 < n_p2; t2++) {
               if (p2.p.type == p2_types[t2]) {
-                auto const act_dist2 = get_mi_vector(p1.r.p, p2.r.p).norm2();
+                auto const act_dist2 =
+                    get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
                 if (act_dist2 < min_dist2) {
                   min_dist2 = act_dist2;
                 }
@@ -314,7 +317,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
         for (; jt != partCfg.end(); ++jt) {
           for (t2 = 0; t2 < n_p2; t2++) {
             if (jt->p.type == p2_types[t2]) {
-              auto const dist = get_mi_vector(it->r.p, jt->r.p).norm();
+              auto const dist = get_mi_vector(it->r.p, jt->r.p, box_geo).norm();
               if (dist > r_min && dist < r_max) {
                 ind = (int)((dist - r_min) * inv_bin_width);
                 rdf[ind]++;
@@ -328,12 +331,12 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
   }
 
   /* normalization */
-  volume = box_l[0] * box_l[1] * box_l[2];
+  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
   for (i = 0; i < r_bins; i++) {
     r_in = i * bin_width + r_min;
     r_out = r_in + bin_width;
-    bin_volume =
-        (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
+    bin_volume = (4.0 / 3.0) * Utils::pi() *
+                 ((r_out * r_out * r_out) - (r_in * r_in * r_in));
     rdf[i] *= volume / (bin_volume * cnt);
   }
 }
@@ -366,7 +369,7 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
 
   bin_width = (r_max - r_min) / (double)r_bins;
   inv_bin_width = 1.0 / bin_width;
-  volume = box_l[0] * box_l[1] * box_l[2];
+  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
   for (int l = 0; l < r_bins; l++)
     rdf_tmp[l] = rdf[l] = 0.0;
 
@@ -388,10 +391,13 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
             for (int t2 = 0; t2 < n_p2; t2++) {
               if (jt->p.type == p2_types[t2]) {
                 using Utils::make_const_span;
+                using Utils::Vector3d;
 
                 auto const dist =
-                    get_mi_vector(make_const_span(configs[k] + 3 * i, 3),
-                                  make_const_span(configs[k] + 3 * j, 3))
+                    get_mi_vector(
+                        Vector3d{make_const_span(configs[k] + 3 * i, 3)},
+                        Vector3d{make_const_span(configs[k] + 3 * j, 3)},
+                        box_geo)
                         .norm();
                 if (dist > r_min && dist < r_max) {
                   auto const ind =
@@ -412,8 +418,8 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
     for (int i = 0; i < r_bins; i++) {
       r_in = i * bin_width + r_min;
       r_out = r_in + bin_width;
-      bin_volume =
-          (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
+      bin_volume = (4.0 / 3.0) * Utils::pi() *
+                   ((r_out * r_out * r_out) - (r_in * r_in * r_in));
       rdf[i] += rdf_tmp[i] * volume / (bin_volume * cnt);
     }
 
@@ -433,7 +439,7 @@ void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
   order2 = order * order;
   *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
   ff[2 * order2] = 0;
-  twoPI_L = 2 * PI / box_l[0];
+  twoPI_L = 2 * Utils::pi() / box_geo.length()[0];
 
   if ((n_types < 0) || (n_types > max_seen_particle_type)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
@@ -492,7 +498,7 @@ std::vector<std::vector<double>> modify_stucturefactor(int order,
     }
   }
 
-  double qfak = 2.0 * PI / box_l[0];
+  double qfak = 2.0 * Utils::pi() / box_geo.length()[0];
   std::vector<double> intern;
   intern.assign(2, 0.0);
   std::vector<std::vector<double>> structure_factor;
@@ -521,8 +527,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{center_};
-  auto direction = Vector3d{direction_};
+  auto center = Utils::Vector3d{center_};
+  auto direction = Utils::Vector3d{direction_};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -556,9 +562,9 @@ int calc_cylindrical_average(
   for (auto const &p : partCfg) {
     for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
       if (types[type_id] == p.p.type || all_types) {
-        auto const pos = folded_position(p);
+        auto const pos = folded_position(p.r.p, box_geo);
 
-        Vector3d vel{p.m.v};
+        Utils::Vector3d vel{p.m.v};
 
         auto const diff = pos - center;
 

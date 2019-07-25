@@ -57,7 +57,6 @@
 #include "integrate.hpp"
 #include "mpiio.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include <mpi.h>
 
@@ -312,10 +311,10 @@ static void read_head(const std::string &fn, int rank, unsigned *fields) {
       errexit();
     }
     MPI_Bcast(fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+    fclose(f);
   } else {
     MPI_Bcast(fields, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
   }
-  free(f);
 }
 
 /** Reads the pref file and fills pref and nlocalpart with their
@@ -397,7 +396,9 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
                              3 * pref, MPI_DOUBLE);
 
     for (int i = 0; i < nlocalpart; ++i) {
-      local_place_particle(id[i], &pos[3 * i], 1);
+      local_place_particle(
+          id[i],
+          Utils::Vector3d{pos[3 * i + 0], pos[3 * i + 1], pos[3 * i + 2]}, 1);
     }
   }
 

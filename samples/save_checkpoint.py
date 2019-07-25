@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This samples demonstrates how to checkpoint a simulation.
+This sample demonstrates how to checkpoint a simulation.
 """
 
 import espressomd
 
-required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+required_features = ["P3M", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import electrostatics

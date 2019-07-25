@@ -24,7 +24,6 @@ required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
-from espressomd import analyze
 
 print("""
 =======================================================
@@ -34,7 +33,6 @@ print("""
 Program Information:""")
 print(espressomd.features())
 
-dev = "cpu"
 
 # System parameters
 #############################################################
@@ -184,7 +182,7 @@ energies = system.analysis.energy()
 print(energies)
 
 j = 0
-for i in range(0, int_n_times):
+for i in range(int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
     system.integrator.run(int_steps)
@@ -195,7 +193,7 @@ for i in range(0, int_n_times):
     energies = system.analysis.energy()
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
-    linear_momentum = system.analysis.analyze_linear_momentum()
+    linear_momentum = system.analysis.linear_momentum()
     print(linear_momentum)
 
 

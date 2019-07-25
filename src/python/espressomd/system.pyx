@@ -24,7 +24,7 @@ from globals cimport *
 import numpy as np
 import collections
 
-from grid cimport box_l
+from grid cimport get_mi_vector, box_geo
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -33,11 +33,10 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
-from .utils cimport numeric_limits
-if LB or LB_GPU:
-    from .lb cimport lb_lbfluid_get_tau
-    from .lb cimport lb_lbfluid_get_lattice_switch
-    from .lb cimport NONE
+from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
+from .lb cimport lb_lbfluid_get_tau
+from .lb cimport lb_lbfluid_get_lattice_switch
+from .lb cimport NONE
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .minimize_energy import MinimizeEnergy
@@ -160,11 +159,11 @@ cdef class System(object):
             self, "non_bonded_inter")
         odict['bonded_inter'] = System.__getattribute__(self, "bonded_inter")
         odict['part'] = System.__getattribute__(self, "part")
+        odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['actors'] = System.__getattribute__(self, "actors")
         odict['analysis'] = System.__getattribute__(self, "analysis")
         odict['auto_update_accumulators'] = System.__getattribute__(
             self, "auto_update_accumulators")
-        odict['cell_system'] = System.__getattribute__(self, "cell_system")
         odict['comfixed'] = System.__getattribute__(self, "comfixed")
         odict['constraints'] = System.__getattribute__(self, "constraints")
         odict['galilei'] = System.__getattribute__(self, "galilei")
@@ -186,7 +185,8 @@ cdef class System(object):
 
     property box_l:
         """
-        Array like, list of three floats
+        array_like of :obj:`float`:
+            Dimensions of the simulation box
 
         """
 
@@ -202,10 +202,9 @@ cdef class System(object):
 
     property force_cap:
         """
-        If > 0, the magnitude of the force on the particles
-        are capped to this value.
-
-        type : float
+        :obj:`float`:
+            If > 0, the magnitude of the force on the particles
+            are capped to this value.
 
         """
 
@@ -217,10 +216,9 @@ cdef class System(object):
 
     property periodicity:
         """
-        list of three integers
-        [x, y, z]
-        zero for no periodicity in this direction
-        one for periodicity
+        array_like of :obj:`bool`:
+            System periodicity in ``[x, y, z]``, ``False`` for no periodicity
+            in this direction, ``True`` for periodicity
 
         """
 
@@ -229,13 +227,6 @@ cdef class System(object):
             if len(_periodic) != 3:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
-            for i in range(3):
-                if _periodic[i] != 1:
-                    IF PARTIAL_PERIODIC:
-                        pass
-                    ELSE:
-                        raise ValueError(
-                            "The feature PARTIAL_PERIODIC needs to be activated in myconfig.hpp")
             self.globals.periodicity = _periodic
 
         def __get__(self):
@@ -265,14 +256,15 @@ cdef class System(object):
         def __set__(self, double _time_step):
             if _time_step <= 0:
                 raise ValueError("Time Step must be positive")
-            IF LB or LB_GPU:
-                cdef double tau
-                if lb_lbfluid_get_lattice_switch() != NONE:
-                    tau = lb_lbfluid_get_tau()
-                    if (tau >= 0.0 and
-                            tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):
-                        raise ValueError(
-                            "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(tau) + ")")
+
+            cdef double tau
+            if lb_lbfluid_get_lattice_switch() != NONE:
+                tau = lb_lbfluid_get_tau()
+                if (tau >= 0.0 and
+                        tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):
+                    raise ValueError(
+                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(tau) + ")")
+
             self.globals.time_step = _time_step
 
         def __get__(self):
@@ -302,7 +294,7 @@ cdef class System(object):
 
     def _get_PRNG_state_size(self):
         """
-        Returns the state of the pseudo random number generator.
+        Returns the state size of the pseudo random number generator.
         """
 
         return get_state_size_of_generator()
@@ -325,7 +317,8 @@ cdef class System(object):
 
     property seed:
         """
-        Sets the seed of the pseudo random number with a list of seeds which is as long as the number of used nodes.
+        Sets the seed of the pseudo random number with a list of seeds which is
+        as long as the number of used nodes.
         """
 
         def __set__(self, _seed):
@@ -351,7 +344,8 @@ cdef class System(object):
             return self.__seed
 
     property random_number_generator_state:
-        """Sets the random number generator state in the core. this is of interest for deterministic checkpointing
+        """Sets the random number generator state in the core. This is of
+        interest for deterministic checkpointing.
         """
 
         def __set__(self, rng_state):
@@ -365,7 +359,10 @@ cdef class System(object):
                 mpi_random_set_stat(states)
             else:
                 raise ValueError(
-                    "Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
+                    "Wrong number of arguments: Usage: 'system.random_number_generator_state = "
+                    "[<state(1)>, ..., <state(n_nodes*(state_size+1))>], where each <state(i)> "
+                    "is an integer. The state size of the PRNG can be obtained by calling "
+                    "system._get_PRNG_state_size().")
 
         def __get__(self):
             rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
@@ -438,18 +435,16 @@ cdef class System(object):
         """Return the distance vector between the particles, respecting periodic boundaries.
 
         """
-        cdef double[3] res, a, b
-        a = p1.pos
-        b = p2.pos
 
-        get_mi_vector(res, b, a)
-        return np.array((res[0], res[1], res[2]))
+        cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
+
+        return make_array_locked(mi_vec)
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
 
-           If ROTATION is activated, the internal rotation degrees of
-           freedom are rotated accordingly.
+        If ``ROTATION`` is activated, the internal rotation degrees of
+        freedom are rotated accordingly.
 
         Parameters
         ----------

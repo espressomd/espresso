@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OBSERVABLES_PARTICLEANGLES_HPP
 
 #include "PidObservable.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 #include <cmath>
 #include <vector>
@@ -33,13 +33,15 @@ namespace Observables {
  */
 class ParticleAngles : public PidObservable {
 public:
-  std::vector<double> operator()(PartCfg &partCfg) const override {
+  using PidObservable::PidObservable;
+  std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
-    auto v1 = get_mi_vector(partCfg[ids()[1]].r.p, partCfg[ids()[0]].r.p);
+    auto v1 =
+        get_mi_vector(partCfg[ids()[1]].r.p, partCfg[ids()[0]].r.p, box_geo);
     auto n1 = v1.norm();
     for (int i = 0, end = n_values(); i < end; i++) {
-      auto v2 =
-          get_mi_vector(partCfg[ids()[i + 2]].r.p, partCfg[ids()[i + 1]].r.p);
+      auto v2 = get_mi_vector(partCfg[ids()[i + 2]].r.p,
+                              partCfg[ids()[i + 1]].r.p, box_geo);
       auto n2 = v2.norm();
       auto cosine = (v1 * v2) / (n1 * n2);
       // sanitize cosine value

@@ -20,14 +20,14 @@
 */
 
 #include "ljcos.hpp"
-#include "utils.hpp"
 
 #ifdef LJCOS
 #include "communication.hpp"
 
+#include <utils/constants.hpp>
+
 int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset) {
-  double facsq;
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
   if (!data)
@@ -39,11 +39,12 @@ int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
   data->LJCOS_offset = offset;
 
   /* Calculate dependent parameters */
-  facsq = driwu2 * Utils::sqr(sig);
+  auto const driwu2 = 1.25992104989487316476721060728;
+  auto const facsq = driwu2 * Utils::sqr(sig);
   data->LJCOS_rmin = sqrt(driwu2) * sig;
-  data->LJCOS_alfa = PI / (Utils::sqr(data->LJCOS_cut) - facsq);
+  data->LJCOS_alfa = Utils::pi() / (Utils::sqr(data->LJCOS_cut) - facsq);
   data->LJCOS_beta =
-      PI * (1. - (1. / (Utils::sqr(data->LJCOS_cut) / facsq - 1.)));
+      Utils::pi() * (1. - (1. / (Utils::sqr(data->LJCOS_cut) / facsq - 1.)));
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

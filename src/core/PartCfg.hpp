@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "grid.hpp"
 #include "particle_data.hpp"
 #include "serialization/Particle.hpp"
-#include "utils/SkipIterator.hpp"
+#include <utils/SkipIterator.hpp>
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -59,6 +59,21 @@ public:
                 local_particles + max_seen_particle + 1, SkipIfNullOrGhost());
 
     return {make_indirect_iterator(begin), make_indirect_iterator(end)};
+  }
+};
+
+/** unfold coordinates to physical position.
+    \param pos the position...
+    \param image_box and the box
+
+    Both pos and image_box are I/O, i.e. image_box will be (0,0,0)
+    afterwards.
+*/
+class PositionUnfolder {
+public:
+  template <typename Particle> void operator()(Particle &p) const {
+    p.r.p += image_shift(p.l.i, box_geo.length());
+    p.l.i = {};
   }
 };
 

@@ -16,19 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
 
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 
 import espressomd
 from tests_common import single_component_maxwell
 
-@ut.skipIf(not espressomd.has_features(["MASS"]), "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["MASS"])
 class ThermalizedBond(ut.TestCase):
-    """Tests the two velocity distributions for COM and distance created by the thermalized bond independently against 
-the single component Maxwell distribution. Adapted from langevin_thermostat testcase."""
+    """Tests the two velocity distributions for COM and distance created by the
+       thermalized bond independently against the single component Maxwell
+       distribution. Adapted from langevin_thermostat testcase."""
 
     box_l = 10.0
     system = espressomd.System(box_l=[box_l]*3)
@@ -41,7 +42,10 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         np.random.seed(42)
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
-        """check the recorded particle distributions in vel againsta histogram with n_bins bins. Drop velocities outside minmax. Check individual histogram bins up to an accuracy of error_tol agaisnt the analytical result for kT."""
+        """check the recorded particle distributions in velocity against a
+           histogram with n_bins bins. Drop velocities outside minmax. Check
+           individual histogram bins up to an accuracy of error_tol against the
+           analytical result for kT."""
 
         for i in range(3):
             hist = np.histogram(
@@ -51,8 +55,7 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
             
             for j in range(n_bins):
                 found = data[j]
-                expected = single_component_maxwell(
-                    bins[j], bins[j + 1], kT)
+                expected = single_component_maxwell(bins[j], bins[j + 1], kT)
                 self.assertLessEqual(abs(found - expected), error_tol)
 
     def test_com_langevin(self):
@@ -62,23 +65,23 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         N2 = int(N/2)
         self.system.part.clear()
         self.system.time_step = 0.02
-        
-        if espressomd.has_features("PARTIAL_PERIODIC"):
-            self.system.periodicity = 0, 0, 0
-        
+        self.system.periodicity = [0, 0, 0]
+
         m1 = 1.0
         m2 = 10.0
         # Place particles
         for i in range(0, N, 2):
-            self.system.part.add(pos=np.random.random(3), mass = m1)
-            self.system.part.add(pos=np.random.random(3), mass = m2)
+            self.system.part.add(pos=np.random.random(3), mass=m1)
+            self.system.part.add(pos=np.random.random(3), mass=m2)
 
         t_dist = 0
         g_dist = 0
         t_com = 2.0
         g_com = 4.0
        
-        thermalized_dist_bond = espressomd.interactions.ThermalizedBond(temp_com = t_com, gamma_com = g_com, temp_distance = t_dist, gamma_distance = g_dist, r_cut = 2.0)
+        thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
+            temp_com=t_com, gamma_com=g_com, temp_distance=t_dist,
+            gamma_distance=g_dist, r_cut=2.0)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
         for i in range(0, N, 2):
@@ -92,7 +95,7 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         v_stored = np.zeros((N2 * loops, 3))
         for i in range(loops):
             self.system.integrator.run(12)
-            v_com = 1.0/(m1+m2)*(m1*self.system.part[::2].v+m2*self.system.part[1::2].v)
+            v_com = 1.0 / (m1 + m2) * (m1 * self.system.part[::2].v + m2 * self.system.part[1::2].v)
             v_stored[i * N2:(i + 1) * N2,:] = v_com 
 
         v_minmax = 5
@@ -108,21 +111,23 @@ the single component Maxwell distribution. Adapted from langevin_thermostat test
         N2 = int(N/2)
         self.system.part.clear()
         self.system.time_step = 0.02
-        self.system.periodicity = 1, 1, 1
+        self.system.periodicity = [1, 1, 1]
         
         m1 = 1.0
         m2 = 10.0
         # Place particles
         for i in range(0, N, 2):
-            self.system.part.add(pos=np.random.random(3), mass = m1)
-            self.system.part.add(pos=np.random.random(3), mass = m2)
+            self.system.part.add(pos=np.random.random(3), mass=m1)
+            self.system.part.add(pos=np.random.random(3), mass=m2)
 
         t_dist = 2.0
         g_dist = 4.0
         t_com = 0.0
         g_com = 0.0
        
-        thermalized_dist_bond = espressomd.interactions.ThermalizedBond(temp_com = t_com, gamma_com = g_com, temp_distance = t_dist, gamma_distance = g_dist, r_cut = 9)
+        thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
+            temp_com=t_com, gamma_com=g_com, temp_distance=t_dist,
+            gamma_distance=g_dist, r_cut=9)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
         for i in range(0, N, 2):

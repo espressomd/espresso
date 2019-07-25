@@ -15,35 +15,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
-import sys
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 from espressomd.interactions import HarmonicBond
 
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
+@utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeEnergy(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
     harmonic = HarmonicBond(r_0=0.0, k=3)
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         box_l = 20
-        self.system.box_l = [box_l, box_l, box_l]
-        self.system.cell_system.skin = 0.4
-        self.system.time_step = 0.01
-        self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        cls.system.box_l = [box_l, box_l, box_l]
+        cls.system.cell_system.skin = 0.4
+        cls.system.time_step = 0.01
+        cls.system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0,
             cutoff=2**(1. / 6.), shift="auto")
-        self.system.non_bonded_inter[0, 1].lennard_jones.set_params(
+        cls.system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0,
             cutoff=2**(1. / 6.), shift="auto")
-        self.system.non_bonded_inter[1, 1].lennard_jones.set_params(
+        cls.system.non_bonded_inter[1, 1].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0,
             cutoff=2**(1. / 6.), shift="auto")
-        self.system.thermostat.set_langevin(kT=0., gamma=1., seed=42)
-        self.system.bonded_inter.add(self.harmonic)
+        cls.system.thermostat.set_langevin(kT=0., gamma=1., seed=42)
+        cls.system.bonded_inter.add(cls.harmonic)
 
     def setUp(self):
         self.system.part.clear()
@@ -155,10 +155,7 @@ class AnalyzeEnergy(ut.TestCase):
         self.system.part[3].remove()
         self.system.part[0].delete_all_bonds()
 
-    features = ["ELECTROSTATICS", "P3M"]
-
-    @ut.skipIf(not espressomd.has_features(*features),
-               "Missing features: " + ", ".join(espressomd.missing_features(*features)))
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS", "P3M"])
     def test_electrostatics(self):
 
         from espressomd import electrostatics
@@ -192,5 +189,4 @@ class AnalyzeEnergy(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

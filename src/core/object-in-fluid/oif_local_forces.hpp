@@ -28,8 +28,8 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
-#include "utils/Vector.hpp"
-#include "utils/math/triangle_functions.hpp"
+#include <utils/Vector.hpp>
+#include <utils/math/triangle_functions.hpp>
 
 // set parameters for local forces
 int oif_local_forces_set_params(int bond_type, double r0, double ks,
@@ -61,10 +61,10 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
                           double force4[3]) // first-fold-then-the-same approach
 {
 
-  auto const fp2 = unfolded_position(*p2);
-  auto const fp1 = fp2 + get_mi_vector(p1->r.p, fp2);
-  auto const fp3 = fp2 + get_mi_vector(p3->r.p, fp2);
-  auto const fp4 = fp2 + get_mi_vector(p4->r.p, fp2);
+  auto const fp2 = unfolded_position(p2->r.p, p2->l.i, box_geo.length());
+  auto const fp1 = fp2 + get_mi_vector(p1->r.p, fp2, box_geo);
+  auto const fp3 = fp2 + get_mi_vector(p3->r.p, fp2, box_geo);
+  auto const fp4 = fp2 + get_mi_vector(p4->r.p, fp2, box_geo);
 
   for (int i = 0; i < 3; i++) {
     force[i] = 0;
@@ -177,10 +177,10 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
   */
   if (iaparams->p.oif_local_forces.kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
 
-    auto handle_triangle = [](double kal, double A0, Vector3d const &fp1,
-                              Vector3d const &fp2, Vector3d const &fp3,
-                              double force1[3], double force2[3],
-                              double force3[3]) {
+    auto handle_triangle = [](double kal, double A0, Utils::Vector3d const &fp1,
+                              Utils::Vector3d const &fp2,
+                              Utils::Vector3d const &fp3, double force1[3],
+                              double force2[3], double force3[3]) {
       auto const h = (1. / 3.) * (fp1 + fp2 + fp3);
       auto const A = Utils::area_triangle(fp1, fp2, fp3);
       auto const t = sqrt(A / A0) - 1.0;

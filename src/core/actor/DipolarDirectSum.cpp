@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "DipolarDirectSum.hpp"
 #include "EspressoSystemInterface.hpp"
+#include "communication.hpp"
 #include "energy.hpp"
 #include "forces.hpp"
 
@@ -30,7 +31,7 @@ std::unique_ptr<DipolarDirectSum> dipolarDirectSum;
 
 void activate_dipolar_direct_sum_gpu() {
   // also necessary on 1 CPU or GPU, does more than just broadcasting
-  coulomb.Dmethod = DIPOLAR_DS_GPU;
+  dipole.method = DIPOLAR_DS_GPU;
   mpi_bcast_coulomb_params();
 
   dipolarDirectSum =

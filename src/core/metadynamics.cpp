@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "metadynamics.hpp"
 #include "cells.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
@@ -67,9 +68,9 @@ double *meta_acc_force = nullptr;
 /** Accumulated free energy profile */
 double *meta_acc_fprofile = nullptr;
 
-Vector3d meta_cur_xi;
+Utils::Vector3d meta_cur_xi;
 double meta_val_xi = 0.;
-Vector3d meta_apply_direction;
+Utils::Vector3d meta_apply_direction;
 
 void meta_init() {
   if (meta_switch == META_OFF)
@@ -101,7 +102,7 @@ void meta_init() {
  * - apply external force
  */
 void meta_perform() {
-  Vector3d ppos1, ppos2;
+  Utils::Vector3d ppos1, ppos2;
 
   if (meta_switch == META_OFF)
     return;
@@ -113,7 +114,7 @@ void meta_perform() {
     if (p.p.identity == meta_pid1) {
       flag1 = 1;
       p1 = &p;
-      ppos1 = unfolded_position(p);
+      ppos1 = unfolded_position(p.r.p, p.l.i, box_geo.length());
 
       if (flag1 && flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
@@ -124,7 +125,7 @@ void meta_perform() {
     if (p.p.identity == meta_pid2) {
       flag2 = 1;
       p2 = &p;
-      ppos2 = unfolded_position(p);
+      ppos2 = unfolded_position(p.r.p, p.l.i, box_geo.length());
 
       if (flag1 && flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
@@ -147,7 +148,7 @@ void meta_perform() {
   for (int i = 0; i < meta_xi_num_bins; ++i) {
     if (meta_switch == META_DIST) {
       // reaction coordinate value
-      meta_val_xi = sqrt(sqrlen(meta_cur_xi));
+      meta_val_xi = meta_cur_xi.norm();
       // Update free energy profile and biased force
       if (int(sim_time / time_step) % meta_num_relaxation_steps == 0) {
         meta_acc_fprofile[i] -=

@@ -44,7 +44,7 @@ completely unphysical simulations.
 Dipolar P3M
 ~~~~~~~~~~~
 This is the dipolar version of the P3M algorithm, described in :cite:`cerda08d`.
-It is interfaced via :class:`espressomd.magnetostatics.DipolarP3M`.
+It is interfaced via :class:`~espressomd.magnetostatics.DipolarP3M`.
 
 Make sure that you know the relevance of the P3M parameters before using
 P3M! If you are not sure, read the following references
@@ -60,7 +60,7 @@ It is also possible to pass a subset of the method parameters such as ``mesh``. 
     p3m = magnetostatics.DipolarP3M(prefactor=1, mesh=32, accuracy=1E-4)
     system.actors.add(p3m)
 
-It is important to note that the error estimates given in :cite:`cerda08a` used in the tuning contain assumptions about the system. In particular, a homogeneous system is assumed. If this is no longer the case during the simulation, actual force and torque errors can be significantly larger.
+It is important to note that the error estimates given in :cite:`cerda08d` used in the tuning contain assumptions about the system. In particular, a homogeneous system is assumed. If this is no longer the case during the simulation, actual force and torque errors can be significantly larger.
 
 .. _Dipolar Layer Correction (DLC):
 
@@ -94,7 +94,7 @@ The method is used as follows::
 
 
 
-.. _Dipolar direct sum on gpu:
+.. _Dipolar direct sum:
 
 Dipolar direct sum
 ------------------
@@ -111,11 +111,11 @@ Due to the long-range nature of dipolar interactions, Direct summation with mini
 
 Two methods are available:
 
-* :class:`espressomd.magnetostatics.DipolarDirectSumCpu`
+* :class:`~espressomd.magnetostatics.DipolarDirectSumCpu`
   performs the calculation in double precision on the Cpu.
 
 
-* :class:`espressomd.magnetostatics.DipolarDirectSumGpu`
+* :class:`~espressomd.magnetostatics.DipolarDirectSumGpu`
   performs the calculations in single precision on a Cuda-capable graphics card.
   The implementation is optimized for large systems of several thousand
   particles. It makes use of one thread per particle. When there are fewer
@@ -123,19 +123,22 @@ Two methods are available:
   the rest of the gpu remains idle. Hence, the method will perform poorly
   for small systems.
 
-To use the methods, create an instance of either :class:`espressomd.magnetostatics.DipolarDirectSumCpu` or :class:`espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the system's list of active actors. The only required parameter is the Prefactor :eq:`dipolar_prefactor`::
+To use the methods, create an instance of either :class:`~espressomd.magnetostatics.DipolarDirectSumCpu` or :class:`~espressomd.magnetostatics.DipolarDirectSumGpu` and add it to the system's list of active actors. The only required parameter is the Prefactor :eq:`dipolar_prefactor`::
 
   from espressomd.magnetostatics import DipolarDirectSumGpu
   dds = DipolarDirectSumGpu(bjerrum_length=1)
   system.actors.add(dds)
 
 
-For testing purposes, a variant of the dipolar direct sum is available which adds periodic copies to the system in periodic directions (:class:`espressomd.magnetostatics.DipolarDirectSumWithReplica`).
-
+For testing purposes, a variant of the dipolar direct sum is available which
+adds periodic copies to the system in periodic directions:
+:class:`~espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu`.
 As it is very slow, this method is not intended to do simulations, but
-rather to check the results you get from more efficient methods like
-P3M.
+rather to check the results you get from more efficient methods like P3M.
 
+:class:`~espressomd.magnetostatics.DipolarDirectSumCpu` and
+:class:`~espressomd.magnetostatics.DipolarDirectSumWithReplicaCpu`
+do not support MPI parallelization.
 
 
 
@@ -154,7 +157,7 @@ an additive distance respectively. For the detailed description of the
 Barnes-Hut method application to the dipole-dipole interactions, please
 refer to :cite:`Polyakov2013`.
 
-To use the method, create an instance of :class:`espressomd.magnetostatics.DipolarBarnesHutGpu` and add it to the system's list of active actors::
+To use the method, create an instance of :class:`~espressomd.magnetostatics.DipolarBarnesHutGpu` and add it to the system's list of active actors::
 
   from espressomd.magnetostatics import DipolarBarnesHutGpu
   bh = DipolarBarnesHutGpu(prefactor=pf_dds_gpu, epssq=200.0, itolsq=8.0)
@@ -165,17 +168,18 @@ To use the method, create an instance of :class:`espressomd.magnetostatics.Dipol
 Scafacos Magnetostatics
 -----------------------
 
-Espresso can use the methods from the Scafacos *Scalable fast Coulomb
-solvers* library for dipoles, if the methods support dipolar
-calculations. The feature ``SCAFACOS_DIPOLES`` has to be added to
-:file:`myconfig.hpp` to activate this feature. At the time of this writing (Feb
-2018) dipolar calculations are only included in the ``dipolar`` branch of the Scafacos code.
+Espresso can use the methods from the Scafacos *Scalable fast Coulomb solvers*
+library for dipoles, if the methods support dipolar calculations. The feature
+``SCAFACOS_DIPOLES`` has to be added to :file:`myconfig.hpp` to activate this
+feature. Dipolar calculations are only included in the ``dipolar`` branch of
+the Scafacos code.
 
-To use SCAFACOS, create an instance of :attr:`espressomd.magnetostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+To use SCAFACOS, create an instance of :class:`~espressomd.magnetostatics.Scafacos`
+and add it to the list of active actors. Three parameters have to be specified:
 
 * ``method_name``: name of the SCAFACOS method being used.
 * ``method_params``: dictionary containing the method-specific parameters
-* ``bjerrum_length``
+* ``prefactor``
 
 The method-specific parameters are described in the SCAFACOS manual.
 Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field

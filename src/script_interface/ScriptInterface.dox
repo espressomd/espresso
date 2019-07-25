@@ -28,44 +28,49 @@
 ///
 /// @section script_interface_howto Steps to add a new interface class for parameter setting
 ///
-/// 1. Create file for a new class implementation in
-///    <tt>src/script_interface/\<namespace\>/</tt>
+/// 1. Create a file for a new class implementation in
+///    <tt>src/script_interface/\<namespace\>/\<MyClass\>.hpp</tt>
 /// 2. Add <tt>\#include "ScriptInterface.hpp"</tt>
 /// 3. Create a new class that derives from
 ///    @ref ScriptInterface::ScriptInterfaceBase "ScriptInterfaceBase"
 /// 4. Implement the required methods:
 ///    - @ref ScriptInterface::ScriptInterfaceBase::name "name()" should return
 ///      the full name for the class
-///    - @ref ScriptInterface::ScriptInterfaceBase::valid_parameters "valid_parameters()"
-///      should return a list of all accepted parameters. @ref
-///      ScriptInterface::ParameterMap "ParameterMap" is an associative
-///      array of parameter names and their corresponding description. For a
-///      list of supported parameter types, see
-///      @ref src/script_interface/Parameter.hpp. A compact form for this
-///      implementation uses curly braces initialization as shown in the
-///      @c HelloWorld example below and e.g. in
-///      @ref src/script_interface/shapes/Wall.hpp.
+///    - @ref ScriptInterface::ScriptInterfaceBase::valid_parameters
+///      "valid_parameters()" should return a list of all accepted parameters
+///      (e.g. @ref src/script_interface/observables/PidObservable.hpp
+///      "PidObservable.hpp"). Alternatively, use
+///      @ref ScriptInterface::AutoParameters::add_parameters "add_parameters()"
+///      in the class constructor
+///      (e.g. @ref src/script_interface/shapes/Wall.hpp "Wall.hpp").
 ///    - @ref ScriptInterface::ScriptInterfaceBase::get_parameters "get_parameters()"
-///      should return a map of parameters. Again, curly braces initialization
-///      can be used for a short notation.
+///      should return a map of parameters.
 ///    - @ref ScriptInterface::ScriptInterfaceBase::set_parameter "set_parameter()"
 ///      should set the named parameter.
 ///    - optionally, add implementations for
 ///      @ref ScriptInterface::ScriptInterfaceBase::get_parameter "get_parameter()",
-///      @ref ScriptInterface::ScriptInterfaceBase::set_parameters "set_parameters()",
 ///      @ref ScriptInterface::ScriptInterfaceBase::call_method "call_method()".
 /// 5. Add the new class to the initialization functions
-///    - if they don't exist, add <tt>initialize.{hpp,cpp}</tt> to
-///      <tt> src/script_interface/\<namespace\>/</tt>
-///    - if it does not exist, add a function initialize (c.f.
-///      <tt>src/script_interface/shapes/initialize\.{hpp,cpp}</tt>)
+///    - if they don't exist, create initialization files
+///      (<tt>src/script_interface/\<namespace\>/initialize\.{hpp,cpp}</tt>)
 ///    - include the header for your new class
 ///    - register the class using @ref ScriptInterface::register_new<T>()
 ///
-/// After these steps the new class is available from Python. Instances
-/// can be created by @c script_interface.PScriptInterface(name), from
-/// @c espressomd.script_interface. The Python class exposes the
-/// @c get_parameters(), @c set_parameters() and @c call_method() methods.
+/// \anchor PScriptInterface_howto
+/// After these steps the new class is available from Python via a shared_ptr
+/// stored in a @c %PScriptInterface Cython class. The shared_ptr exposes the
+/// following methods: @c %name(), @c %valid_parameters(), @c %set_parameter(),
+/// @c %get_parameter(), @c %get_parameters(), @c %id(), @c %call_method() and
+/// @c %serialize(). The @c PScriptInterface class constructor either accepts
+/// the object id of a pre-existing core class, or the arguments for the core
+/// class constructor, in which case a core class is instantiated first and then
+/// the Python class is constructed. For the latter method, a new core instance
+/// can be created simply with @c script_interface.PScriptInterface(name). The
+/// minimal example in the subsection below illustrates this method. In
+/// practice, the Cython class @c %PScriptInterface is seldom used directly,
+/// instead the helper Python class @c %ScriptInterfaceHelper is used as the
+/// base class for most Python classes mirroring classes derived from
+/// @ref ScriptInterface::ScriptInterfaceBase "ScriptInterfaceBase".
 ///
 ///
 /// @subsection script_interface_example Example class
@@ -86,13 +91,14 @@
 ///   // Returns the name of the class
 ///   const std::string name() const { return "ScriptInterface::HelloWorld"; }
 ///
-///   // All the excepted parameters, in this case only one
-///   ParameterMap valid_parameters() const override {
-///     return {{"name", {ParameterType::STRING, true}}};
+///   // All accepted parameters, in this case only one
+///   Utils::Span<const boost::string_ref> valid_parameters() const override {
+///     static std::array<const boost::string_ref, 1> params{"name"};
+///     return params;
 ///   }
 ///
 ///   // Returns all current values
-///   Variant get_parameters() const override {
+///   VariantMap get_parameters() const override {
 ///     return {{"name", m_name}};
 ///   }
 ///
@@ -130,13 +136,62 @@
 /// @ref src/script_interface/shapes/Wall.hpp.
 ///
 ///
+/// @section script_object_registry_howto Steps to add a new interface class for object registry
+///
+/// The @ref ScriptInterface::ScriptObjectRegistry "ScriptObjectRegistry" class
+/// inherits from the @ref ScriptInterface::ScriptInterfaceBase
+/// "ScriptInterfaceBase" class and acts as a container of objects deriving
+/// from @ref ScriptInterface::ScriptInterfaceBase "ScriptInterfaceBase".
+///
+/// 1. Create a file for a new class implementation in
+///    <tt>src/script_interface/\<namespace\>/\<MyClass\>.hpp</tt>
+/// 2. Add <tt>\#include "ScriptInterface.hpp"</tt>
+///    and <tt>\#include "auto_parameters/AutoParameters.hpp"</tt>
+/// 3. Create a new interface class that derives from
+///    @ref ScriptInterface::ScriptInterfaceBase "ScriptInterfaceBase" via
+///    @ref ScriptInterface::AutoParameters "AutoParameters".
+/// 4. Implement a @c call_method() method if any method of the interfaced core
+///    class needs to be exposed
+/// 5. Create a file for a new registry class implementation in
+///    <tt>src/script_interface/\<namespace\>/\<MyClasses\>.hpp</tt>
+/// 6. Add <tt>\#include "ScriptObjectRegistry.hpp"</tt> and the header file
+///    for the previously created interface class
+/// 7. Create a new registry class that derives from
+///    @ref ScriptInterface::ScriptObjectRegistry "ScriptObjectRegistry"
+/// 8. Implement the required methods:
+///    - @ref ScriptInterface::ScriptObjectRegistry::add_in_core
+///      "add_in_core()" should send the passed object to the
+///      @c %add() method
+///    - @ref ScriptInterface::ScriptObjectRegistry::remove_in_core
+///      "remove_in_core()" should send the passed object to the
+///      @c %remove() method
+/// 9. Add the new class to the initialization functions
+///    - if they don't exist, create initialization files
+///      (<tt>src/script_interface/\<namespace\>/initialize\.{hpp,cpp}</tt>)
+///    - include the header for your new interface and registry class
+///    - register the classes using @ref ScriptInterface::register_new<T>()
+///
+/// For a simple example, have a look at
+/// @ref src/script_interface/lbboundaries/LBBoundary.hpp and
+/// @ref src/script_interface/lbboundaries/LBBoundaries.hpp.
+///
+/// After these steps the new registry class and the classes it contains are
+/// available from Python via a shared_ptr stored in a @c %ScriptObjectRegistry
+/// class resp. @c %ScriptInterfaceHelper classes. These Python classes both
+/// inherit from the Python class @c %PScriptInterface, whose functionality is
+/// described in the paragraph @ref PScriptInterface_howto "PScriptInterface".
+///
+///
 /// @section script_interface_variant Variant
 ///
 /// The implementation uses a specialization of @c boost::variant to hand over
 /// parameters and return values of different types. It currently supports the
-/// type @c bool, @c int, @c double, @c string, @c vector<int>,
-/// @c vector<double> and @c object. The latter means that this parameter is an
-/// other script object.
+/// types @c bool, @c int, @c double, @c string, @c vector<int>,
+/// @c vector<double> and @c object. The latter means that this parameter can
+/// be another script object, see for example the implementation details of the
+/// @c %get_elements() method in class
+/// @ref ScriptInterface::ScriptObjectRegistry "ScriptObjectRegistry", which
+/// stores @ref Utils::ObjectId "ObjectId<T>" objects as Variants.
 ///
 /// In C++ the variants can simply assigned a value of any supported type. To
 /// get the value back, it has to be fetched via @c boost::get<T>(Variant).
@@ -150,23 +205,3 @@
 ///                                                v does not hold a string. */
 /// @endcode
 ///
-/// To reduce boiler plate, there is a macro @ref SET_PARAMETER_HELPER(NAME,
-/// MEMBER) is to be used in the @c set_parameter() implementation.
-/// It gets the value of the variant variable called value and assigns it to
-/// @p MEMBER if <tt>name == NAME</tt>. Member can also be a reference,
-/// so that the helper can be used with setters.
-///
-/// With the macro, the @c set_parameter() method of the example class could
-/// read:
-///
-/// @code{.cpp}
-/// void set_parameter(const std::string &name, const Variant &value) override {
-///   SET_PARAMETER_HELPER("name", m_name);
-/// }
-/// @endcode
-///
-/// @section script_interface_objects Other objects as parameters
-///
-/// The interface supports handing other objects as parameters to classes.
-/// See @ref src/script_interface/constraints/Constraint.hpp for an example.
-/// @todo Add actual description...

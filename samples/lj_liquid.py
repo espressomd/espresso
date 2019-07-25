@@ -1,6 +1,3 @@
-"""
-This sample simulates a Lennard-Jones fluid maintained at a fixed temperature by a Langevin thermostat.
-"""
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -19,6 +16,10 @@ This sample simulates a Lennard-Jones fluid maintained at a fixed temperature by
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This sample simulates a Lennard-Jones fluid maintained at a fixed temperature
+by a Langevin thermostat.
+"""
 from __future__ import print_function
 import numpy as np
 import espressomd
@@ -177,7 +178,7 @@ energies = system.analysis.energy()
 print(energies)
 
 j = 0
-for i in range(0, int_n_times):
+for i in range(int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
     system.integrator.run(steps=int_steps)
@@ -185,7 +186,7 @@ for i in range(0, int_n_times):
     energies = system.analysis.energy()
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
-    linear_momentum = system.analysis.analyze_linear_momentum()
+    linear_momentum = system.analysis.linear_momentum()
     print(linear_momentum)
 
 #   write observables

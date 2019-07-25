@@ -80,10 +80,8 @@ struct fft_forw_plan {
   /** size of new mesh (number of mesh points). */
   int new_size;
 
-  /** number of nodes which have to communicate with each other. */
-  int g_size;
   /** group of nodes which have to communicate with each other. */
-  int *group = nullptr;
+  std::vector<int> group;
 
   /** packing function for send blocks. */
   void (*pack_function)(double const *const, double *const, int const *,
@@ -156,19 +154,19 @@ struct fft_data_struct {
  *  \param ks_pnum         Number of permutations in k-space.
  *  \param fft             FFT plan.
  *  \param grid            Number of nodes in each spatial dimension.
- *  \param comm            MPI communicator
+ *  \param comm            MPI communicator.
  *  \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  */
 int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
-             fft_data_struct &fft, const Vector3i &grid,
+             fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm);
 
 /** Perform an in-place forward 3D FFT.
  *  \warning The content of \a data is overwritten.
  *  \param[in,out] data  Mesh.
- *  \param         fft   FFT plan.
- *  \param comm            MPI communicator
+ *  \param fft           FFT plan.
+ *  \param comm          MPI communicator
  */
 void fft_perform_forw(double *data, fft_data_struct &fft,
                       const boost::mpi::communicator &comm);
@@ -177,7 +175,8 @@ void fft_perform_forw(double *data, fft_data_struct &fft,
  *  \warning The content of \a data is overwritten.
  *  \param[in,out] data   Mesh.
  *  \param check_complex  Throw an error if the complex component is non-zero.
- *  \param         fft    FFT plan.
+ *  \param fft            FFT plan.
+ *  \param comm           MPI communicator.
  */
 void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
                       const boost::mpi::communicator &comm);
@@ -197,7 +196,6 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
  *  \param[in]  size    size of the block (=dimension of the out-grid).
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
- *  \param comm         MPI communicator
  */
 void fft_pack_block(double const *in, double *out, int const start[3],
                     int const size[3], int const dim[3], int element);

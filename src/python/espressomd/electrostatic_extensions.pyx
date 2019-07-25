@@ -58,7 +58,7 @@ IF ELECTROSTATICS and P3M:
                                   This parameter sets the dielectric contrast
                                   between the lower boundary and the simulation
                                   box :math:`\\Delta_b`.
-        const_pot               : int, optional
+        const_pot               : bool, optional
                                   Selector parameter for setting a constant
                                   electric potential between the top and bottom
                                   of the simulation box.
@@ -75,7 +75,7 @@ IF ELECTROSTATICS and P3M:
                                   energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
                                   explicitly as constraints, you have to disable the neutralization.
                                   When using a dielectric contrast or full metallic walls (`delta_mid_top
-                                  != 0` or `delta_mid_bot != 0` or `const_pot_on=1`), `neutralize` is
+                                  != 0` or `delta_mid_bot != 0` or `const_pot=True`), `neutralize` is
                                   overwritten and switched off internally. Note that the special case of
                                   non-neutral systems with a *non-metallic* dielectric jump (eg.
                                   `delta_mid_top` or `delta_mid_bot` in `]-1,1[`) is not covered by the
@@ -109,7 +109,7 @@ IF ELECTROSTATICS and P3M:
                     "far_cut": -1,
                     "delta_mid_top": 0,
                     "delta_mid_bot": 0,
-                    "const_pot": 0,
+                    "const_pot": False,
                     "pot_diff": 0.0,
                     "neutralize": True,
                     "check_neutrality": True}
@@ -311,7 +311,8 @@ IF ELECTROSTATICS and P3M:
 
             Returns
             -------
-            :obj:`int` : Number of iterations
+            iterations : :obj:`int`
+                Number of iterations
 
             """
             return iccp3m_cfg.citeration

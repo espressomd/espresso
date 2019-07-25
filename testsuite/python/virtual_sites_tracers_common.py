@@ -16,24 +16,49 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
 from __future__ import print_function
-import unittest as ut
+import unittest_decorators as utx
 import espressomd
-from espressomd import System, lb, shapes, lbboundaries
+from espressomd import lb, shapes, lbboundaries
 import numpy as np
-from espressomd.interactions import FeneBond
 try:
     from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
-except:
+except ImportError:
     pass
 from espressomd.utils import handle_errors
 
-from tests_common import verify_lj_forces
-from numpy import random
-
 
 class VirtualSitesTracersCommon(object):
+    box_height = 10.
+    box_lw = 8.
+    system = espressomd.System(box_l=(box_lw, box_lw, box_height))
+    system.time_step = 0.05
+    system.cell_system.skin = 0.1
+    
+    def reset_lb(self, ext_force_density=[0, 0, 0]):
+        box_height = 10 
+        box_lw = 8
+        self.system.actors.clear()
+        self.system.lbboundaries.clear()
+        self.lbf = self.LBClass(
+            kT=0.0, agrid=1, dens=1, visc=1.8,
+            tau=self.system.time_step, ext_force_density=ext_force_density)
+        self.system.actors.add(self.lbf)
+        self.system.thermostat.set_lb(
+            LB_fluid=self.lbf,
+            act_on_virtual=False,
+            gamma=1)
+
+        # Setup boundaries
+        walls = [lbboundaries.LBBoundary() for k in range(2)]
+        walls[0].set_params(shape=shapes.Wall(normal=[0, 0, 1], dist=0.5))
+        walls[1].set_params(shape=shapes.Wall(normal=[0, 0, -1],
+                                              dist=-box_height - 0.5))
+
+        for wall in walls:
+            self.system.lbboundaries.add(wall)
+
+        handle_errors("setup")
 
     def test_aa_method_switching(self):
         # Virtual sites should be disabled by default
@@ -46,14 +71,13 @@ class VirtualSitesTracersCommon(object):
         self.assertEqual(self.system.virtual_sites.have_velocity, True)
 
     def test_advection(self):
-
+        self.reset_lb(ext_force_density=[0.1, 0, 0])
         # System setup
         system = self.system
         box_lw = self.box_lw
         box_height = self.box_height
 
         system.virtual_sites = VirtualSitesInertialessTracers()
-        self.lbf.set_params(ext_force_density=(0.1, 0., 0.))
 
         # Establish steady state flow field
         system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=1)
@@ -61,8 +85,8 @@ class VirtualSitesTracersCommon(object):
 
         system.part[0].pos = (0, 5.5, 5.5)
         system.time = 0
-        ## Perform integration
 
+        # Perform integration
         for i in range(3):
             system.integrator.run(100)
             # compute expected position
@@ -70,13 +94,6 @@ class VirtualSitesTracersCommon(object):
                 system.part[0].pos)[0] * system.time
             self.assertAlmostEqual(
                 system.part[0].pos[0] / X - 1, 0, delta=0.005)
-
-    def stop_fluid(self):
-        system = self.system
-        for i in range(int(system.box_l[0])):
-            for j in range(int(system.box_l[1])):
-                for k in range(int(system.box_l[2])):
-                    self.lbf[i, j, k].velocity = (0., 0., 0.)
 
     def compute_angle(self):
         system = self.system
@@ -97,49 +114,48 @@ class VirtualSitesTracersCommon(object):
         alpha = np.arccos(np.dot(n1, n2))
         return alpha
 
-    @ut.skipIf(not espressomd.has_features("IMMERSED_BOUNDARY"), "skipped for lack of IMMERSED_BOUNDARY")
     def test_tribend(self):
-
+        self.system.actors.clear()
         # two triangles with bending interaction
         # move nodes, should relax back
 
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
-        self.lbf.set_params(ext_force_density=(0.0, 0., 0.))
-        self.stop_fluid()
 
         system.part.clear()
 
-        ## Add four particles
+        # Add four particles
         system.part.add(id=0, pos=[5, 5, 5], virtual=1)
         system.part.add(id=1, pos=[5, 5, 6], virtual=1)
         system.part.add(id=2, pos=[5, 6, 6], virtual=1)
         system.part.add(id=3, pos=[5, 6, 5], virtual=1)
 
-        ## Add first triel, weak modulus
+        # Add first triel, weak modulus
         from espressomd.interactions import IBM_Triel
         tri1 = IBM_Triel(
             ind1=0, ind2=1, ind3=2, elasticLaw="Skalak", k1=0.1, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri1)
         system.part[0].add_bond((tri1, 1, 2))
 
-        ## Add second triel
+        # Add second triel
         tri2 = IBM_Triel(
             ind1=0, ind2=2, ind3=3, elasticLaw="Skalak", k1=10, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri2)
         system.part[0].add_bond((tri2, 2, 3))
 
-        ## Add bending
+        # Add bending
         from espressomd.interactions import IBM_Tribend
         tribend = IBM_Tribend(
             ind1=0, ind2=1, ind3=2, ind4=3, kb=1, refShape="Initial")
         system.bonded_inter.add(tribend)
         system.part[0].add_bond((tribend, 1, 2, 3))
 
-        ## twist
+        # twist
         system.part[1].pos = [5.2, 5, 6]
 
-        ## Perform integrat[ion
+        self.reset_lb()
+
+        # Perform integration
         last_angle = self.compute_angle()
         for i in range(6):
             system.integrator.run(430)
@@ -148,12 +164,10 @@ class VirtualSitesTracersCommon(object):
             last_angle = angle
         self.assertLess(angle, 0.03)
 
-    @ut.skipIf(not espressomd.has_features("IMMERSED_BOUNDARY"), "skipped for lack of IMMERSED_BOUNDARY")
     def test_triel(self):
+        self.system.actors.clear()
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
-        self.lbf.set_params(ext_force_density=(0.1, 0., 0.))
-        self.stop_fluid()
         system.virtual_sites = VirtualSitesInertialessTracers()
 
         system.part.clear()
@@ -171,19 +185,21 @@ class VirtualSitesTracersCommon(object):
         system.part.add(id=7, pos=[4, 7, 8], virtual=1)
         system.part.add(id=8, pos=[4, 8, 8], virtual=1)
 
-        ## Add triel, weak modulus for 3-5
+        # Add triel, weak modulus for 3-5
         from espressomd.interactions import IBM_Triel
         triWeak = IBM_Triel(
             ind1=3, ind2=4, ind3=5, elasticLaw="Skalak", k1=5, k2=0, maxDist=2.4)
         system.bonded_inter.add(triWeak)
         system.part[3].add_bond((triWeak, 4, 5))
 
-        ## Add triel, strong modulus for 6-8
+        # Add triel, strong modulus for 6-8
         triStrong = IBM_Triel(
             ind1=6, ind2=7, ind3=8, elasticLaw="Skalak", k1=15, k2=0, maxDist=2.4)
         system.bonded_inter.add(triStrong)
         system.part[6].add_bond((triStrong, 7, 8))
-        ## Perform integration
+
+        self.reset_lb(ext_force_density=[0.1, 0, 0])
+        # Perform integration
         system.integrator.run(4500)
 
         # For the cpu variant, check particle velocities
@@ -229,9 +245,10 @@ class VirtualSitesTracersCommon(object):
 
     def test_zz_without_lb(self):
         """Check behaviour without lb. Ignore non-virtual particles, complain on 
-        virutal ones.
+        virtual ones.
 
         """
+        self.reset_lb()
         system = self.system
         system.virtual_sites = VirtualSitesInertialessTracers()
         system.actors.clear()

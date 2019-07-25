@@ -50,10 +50,6 @@
  *  in \ref anonymous_namespace{communication.cpp}::names "names".
  */
 
-#include <boost/mpi/communicator.hpp>
-
-#include <array>
-
 #include "MpiCallbacks.hpp"
 
 /** Included needed by callbacks. */
@@ -61,7 +57,11 @@
 #include "grid_based_algorithms/lb_constants.hpp"
 #include "particle_data.hpp"
 
-#include "utils/serialization/array.hpp"
+#include <boost/mpi/communicator.hpp>
+#include <utils/serialization/array.hpp>
+
+#include <array>
+#include <vector>
 
 /**************************************************
  * exported variables
@@ -73,7 +73,7 @@
 extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
-// extern MPI_Comm comm_cart;
+/** The communicator */
 extern boost::mpi::communicator comm_cart;
 /*@}*/
 
@@ -97,11 +97,6 @@ MpiCallbacks &mpiCallbacks();
  * the slave nodes. It is denoted by *_slave.
  **************************************************/
 
-/**********************************************
- * slave callbacks.
- **********************************************/
-typedef void(SlaveCallback)(int node, int param);
-
 /** \name Exported Functions */
 /*@{*/
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
@@ -113,16 +108,25 @@ void mpi_call(void (*fp)(Args...), ArgRef &&... args) {
   Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
 }
 
+template <class... Args, class... ArgRef>
+void mpi_call_all(void (*fp)(Args...), ArgRef &&... args) {
+  Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
+}
+
+template <class Tag, class R, class... Args, class... ArgRef>
+auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&... args) {
+  return Communication::mpiCallbacks().call(tag, fp,
+                                            std::forward<ArgRef>(args)...);
+}
+
+template <class Tag, class TagArg, class R, class... Args, class... ArgRef>
+auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
+  return Communication::mpiCallbacks().call(tag, std::forward<TagArg>(tag_arg),
+                                            fp, std::forward<ArgRef>(args)...);
+}
+
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
-
-/**
- * @brief Replace the MPI communicator by a new one with the given periodicity
- * and node grid.
- */
-void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {
-                                  {1, 1, 1}});
 
 /** Issue REQ_PLACE: move particle to a position on a node.
  *  Also calls \ref on_particle_change.
@@ -130,15 +134,14 @@ void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
  *  \param node  the node to attach it to.
  *  \param pos   the particles position.
  */
-void mpi_place_particle(int node, int id, double pos[3]);
+void mpi_place_particle(int node, int id, const Utils::Vector3d &pos);
 
 /** Issue REQ_PLACE: create particle at a position on a node.
  *  Also calls \ref on_particle_change.
  *  \param id    the particle to create.
- *  \param node  the node to attach it to.
  *  \param pos   the particles position.
  */
-void mpi_place_new_particle(int node, int id, double pos[3]);
+int mpi_place_new_particle(int id, const Utils::Vector3d &pos);
 
 /** Issue REQ_SET_EXCLUSION: send exclusions.
  *  Also calls \ref on_particle_change.
@@ -156,16 +159,6 @@ void mpi_send_exclusion(int part, int part2, int _delete);
  */
 void mpi_remove_particle(int node, int id);
 
-/** Issue REQ_GET_PART: recv particle data. The data has to be freed later
- *  using \ref free_particle, otherwise the dynamically allocated parts, bonds
- *  and exclusions are left over.
- *  \param part  the particle.
- *  \param node  the node it is attached to.
- *  \note Gets a copy of the particle data not a pointer to the actual particle
- *  used in integration
- */
-Particle mpi_recv_part(int node, int part);
-
 /** Issue REQ_INTEGRATE: start integrator.
  *  @param n_steps       how many steps to do.
  *  @param reuse_forces  whether to trust the old forces for the first half step
@@ -176,7 +169,7 @@ int mpi_integrate(int n_steps, int reuse_forces);
 /** Issue REQ_MIN_ENERGY: start energy minimization.
  *  @return nonzero on error
  */
-int mpi_minimize_energy();
+void mpi_minimize_energy();
 
 void mpi_bcast_all_ia_params();
 
@@ -264,23 +257,13 @@ void mpi_bcast_cell_structure(int cs);
  */
 void mpi_bcast_nptiso_geom();
 
-/** Issue REQ_UPDATE_MOL_IDS: Update the molecule ids so that they are
- *  in sync with the topology. Note that this only makes sense if you
- *  have a simple topology such that each particle can only belong to
- *  a single molecule */
-void mpi_update_mol_ids();
-
 void mpi_bcast_lb_particle_coupling();
 
-Vector3d mpi_recv_lb_interpolated_velocity(int node, Vector3d const &pos);
+Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
+                                                  Utils::Vector3d const &pos);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();
-
-/** Issue REQ_ICCP3M_ITERATION: performs iccp3m iteration.
- *  @return nonzero on error
- */
-int mpi_iccp3m_iteration();
 
 /** Issue REQ_ICCP3M_INIT: performs iccp3m initialization
  *  @return nonzero on error
@@ -299,20 +282,9 @@ void mpi_bcast_max_mu();
  */
 void mpi_kill_particle_motion(int rotation);
 void mpi_kill_particle_forces(int torque);
-void mpi_system_CMS();
-void mpi_system_CMS_velocity();
+Utils::Vector3d mpi_system_CMS();
+Utils::Vector3d mpi_system_CMS_velocity();
 void mpi_galilei_transform();
-void mpi_observable_lb_radial_velocity_profile();
-
-/** Issue REQ_SWIMMER_REACTIONS: notify the system of changes to the reaction
- *  parameters
- */
-void mpi_setup_reaction();
-
-#ifdef CUDA
-/** Gather CUDA devices from all nodes */
-std::vector<EspressoGpuDevice> mpi_gather_cuda_devices();
-#endif
 
 /**
  * @brief Resort the particles.

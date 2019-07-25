@@ -31,9 +31,8 @@ for further calculations, you should explicitly make a copy e.g. via
 
 * :py:attr:`~espressomd.system.System.periodicity`
 
-    (int[3]) Specifies periodicity for the three directions. If the feature
-    ``PARTIAL_PERIODIC`` is set, |es| can be instructed to treat some
-    dimensions as non-periodic. Per default espresso assumes periodicity in
+    (int[3]) Specifies periodicity for the three directions. |es| can be instructed
+    to treat some dimensions as non-periodic. Per default espresso assumes periodicity in
     all directions which equals setting this variable to [1,1,1]. A
     dimension is specified as non-periodic via setting the periodicity
     variable for this dimension to 0. E.g. Periodicity only in z-direction
@@ -279,7 +278,7 @@ feature ``PARTICLE_ANISOTROPY``.
 The keyword ``seed`` controls the state of the random number generator (Philox
 Counter-based RNG) and is required on first activation of the thermostat. It
 can be omitted in subsequent calls of ``set_langevin()``. It is the user's
-responsibility to decide wether the thermostat should be deterministic (by
+responsibility to decide whether the thermostat should be deterministic (by
 using a fixed seed) or not (by using a randomized seed).
 
 If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
@@ -364,7 +363,7 @@ and set the following parameters:
     * ``gamma0``: (float) Friction coefficient of the bath
     * ``gammav``: (float) Artificial friction coefficient for the volume fluctuations.
 
-Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.system.integrator.set_isotropic_npt`
+Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
 and the parameters:
 
     * ``ext_pressure``:  (float) The external pressure as float variable.

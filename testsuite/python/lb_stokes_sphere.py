@@ -29,24 +29,25 @@
 import espressomd
 from espressomd import lb, lbboundaries, shapes, has_features
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
-import sys
 
 # Define the LB Parameters
 TIME_STEP = 0.4
-AGRID = 1.0
-KVISC = 5.0
-DENS = 1.0
+AGRID = 0.6 
+KVISC = 6 
+DENS = 2.3 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'tau': TIME_STEP}
 # System setup
-radius = 5.4
-box_width = 36 
+radius = 8 * AGRID 
+box_width = 62 * AGRID
 real_width = box_width + 2 * AGRID
-box_length = 36
-v = [0, 0, 0.01]  # The boundary slip
+box_length = 62 * AGRID
+c_s = np.sqrt(1. / 3. * AGRID**2 / TIME_STEP**2)
+v = [0, 0, 0.2 * c_s]  # The boundary slip
 
 
 class Stokes(object):
@@ -54,7 +55,7 @@ class Stokes(object):
     system = espressomd.System(box_l=[real_width, real_width, box_length])
     system.box_l = [real_width, real_width, box_length]
     system.time_step = TIME_STEP
-    system.cell_system.skin = 0.4
+    system.cell_system.skin = 0.01
 
     def test_stokes(self):
         self.system.actors.clear()
@@ -65,32 +66,21 @@ class Stokes(object):
         # Setup walls
         walls = [None] * 4
         walls[0] = lbboundaries.LBBoundary(shape=shapes.Wall(
-                                           normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
-        walls[1] = lbboundaries.LBBoundary(
-            shape=shapes.Wall(
-                normal=[
-                    1,
-                    0,
-                    0],
-                dist=1),
-            velocity=v)
+            normal=[-1, 0, 0], dist=-(1 + box_width)), velocity=v)
+        walls[1] = lbboundaries.LBBoundary(shape=shapes.Wall(
+            normal=[1, 0, 0], dist=1), velocity=v)
         walls[2] = lbboundaries.LBBoundary(shape=shapes.Wall(
             normal=[0, -1, 0], dist=-(1 + box_width)), velocity=v)
-        walls[3] = lbboundaries.LBBoundary(
-            shape=shapes.Wall(
-                normal=[
-                    0,
-                    1,
-                    0],
-                dist=1),
-            velocity=v)
+        walls[3] = lbboundaries.LBBoundary(shape=shapes.Wall(
+            normal=[0, 1, 0], dist=1), velocity=v)
 
         for wall in walls:
             self.system.lbboundaries.add(wall)
 
         # setup sphere without slip in the middle
         sphere = lbboundaries.LBBoundary(shape=shapes.Sphere(
-            radius=radius, center=[real_width / 2] * 2 + [box_length / 2], direction=1))
+            radius=radius, center=[real_width / 2] * 2 + [box_length / 2],
+            direction=1))
 
         self.system.lbboundaries.add(sphere)
 
@@ -100,36 +90,33 @@ class Stokes(object):
                 tmp += k * k
             return np.sqrt(tmp)
 
-        self.system.integrator.run(200)
-
+        last_force = -1000.
         stokes_force = 6 * np.pi * KVISC * radius * size(v)
+        self.system.integrator.run(35)
+        while True:
+            self.system.integrator.run(10)
+            force = np.linalg.norm(sphere.get_force())
+            if np.abs(last_force - force) < 0.01 * stokes_force:
+                break
+            last_force = force
 
-        # get force that is exerted on the sphere
         force = np.copy(sphere.get_force())
         np.testing.assert_allclose(
             force,
-            [0,
-             0,
-             stokes_force],
-            rtol=0.06,
-            atol=stokes_force * 0.06)
-        self.system.integrator.run(300)
-        np.testing.assert_allclose(
-            np.copy(sphere.get_force()),
-            force,
-            atol=0.02)
+            [0, 0, stokes_force],
+            rtol=0.03,
+            atol=stokes_force * 0.03)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
 class LBGPUStokes(ut.TestCase, Stokes):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
 class LBCPUStokes(ut.TestCase, Stokes):
 
     def setUp(self):

@@ -33,9 +33,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
-#include "random.hpp"
 
-#include "utils/index.hpp"
+#include <utils/constants.hpp>
+#include <utils/index.hpp>
 
 #include <cstdio>
 #include <fstream>
@@ -210,7 +210,7 @@ void ReactionAlgorithm::check_reaction_ensemble() {
  */
 void ReactionAlgorithm::set_cuboid_reaction_ensemble_volume() {
   if (volume < 0)
-    volume = box_l[0] * box_l[1] * box_l[2];
+    volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
 }
 
 /**
@@ -493,7 +493,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
       exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
   current_reaction.accumulator_exponentials(exponential);
 
-  if (d_random() < bf) {
+  if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
     accepted_state = new_state_index;
 
@@ -629,34 +629,38 @@ int ReactionAlgorithm::delete_particle(int p_id) {
 /**
  * Writes a random position inside the central box into the provided array.
  */
-std::vector<double> ReactionAlgorithm::get_random_position_in_box() {
-  std::vector<double> out_pos(3);
+Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
+  Utils::Vector3d out_pos{};
+
   if (box_is_cylindric_around_z_axis) {
     // see http://mathworld.wolfram.com/DiskPointPicking.html
     double random_radius =
         cyl_radius *
-        std::sqrt(d_random()); // for uniform disk point picking in cylinder
-    double phi = 2.0 * PI * d_random();
+        std::sqrt(m_uniform_real_distribution(
+            m_generator)); // for uniform disk point picking in cylinder
+    double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
     out_pos[0] = random_radius * cos(phi);
     out_pos[1] = random_radius * sin(phi);
     while (std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) <=
            std::pow(exclusion_radius, 2)) {
-      random_radius = cyl_radius * std::sqrt(d_random());
+      random_radius =
+          cyl_radius * std::sqrt(m_uniform_real_distribution(m_generator));
       out_pos[0] = random_radius * cos(phi);
       out_pos[1] = random_radius * sin(phi);
     }
     out_pos[0] += cyl_x;
     out_pos[1] += cyl_y;
-    out_pos[2] = box_l[2] * d_random();
+    out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   } else if (box_has_wall_constraints) {
-    out_pos[0] = box_l[0] * d_random();
-    out_pos[1] = box_l[1] * d_random();
-    out_pos[2] = slab_start_z + (slab_end_z - slab_start_z) * d_random();
+    out_pos[0] = box_geo.length()[0] * m_uniform_real_distribution(m_generator);
+    out_pos[1] = box_geo.length()[1] * m_uniform_real_distribution(m_generator);
+    out_pos[2] = slab_start_z + (slab_end_z - slab_start_z) *
+                                    m_uniform_real_distribution(m_generator);
   } else {
     // cubic case
-    out_pos[0] = box_l[0] * d_random();
-    out_pos[1] = box_l[1] * d_random();
-    out_pos[2] = box_l[2] * d_random();
+    out_pos[0] = box_geo.length()[0] * m_uniform_real_distribution(m_generator);
+    out_pos[1] = box_geo.length()[1] * m_uniform_real_distribution(m_generator);
+    out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   }
   return out_pos;
 }
@@ -670,11 +674,13 @@ std::vector<double> ReactionAlgorithm::
     get_random_position_in_box_enhanced_proposal_of_small_radii() {
   double random_radius =
       cyl_radius *
-      d_random(); // for enhanced proposal of small radii, needs correction
-                  // within Metropolis hasting algorithm, proposal density is
-                  // p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small radii
-                  // are proposed more often
-  double phi = 2.0 * PI * d_random();
+      m_uniform_real_distribution(
+          m_generator); // for enhanced proposal of small radii, needs
+                        // correction within Metropolis hasting algorithm,
+                        // proposal density is
+                        // p(x,y)=1/(2*pi*cyl_radius*r(x,y)), that means small
+                        // radii are proposed more often
+  double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
   std::vector<double> out_pos(3);
   out_pos[0] = random_radius * cos(phi);
   out_pos[1] = random_radius * sin(phi);
@@ -682,13 +688,13 @@ std::vector<double> ReactionAlgorithm::
              std::pow(exclusion_radius, 2) or
          std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) >
              std::pow(cyl_radius, 2)) {
-    random_radius = cyl_radius * d_random();
+    random_radius = cyl_radius * m_uniform_real_distribution(m_generator);
     out_pos[0] = random_radius * cos(phi);
     out_pos[1] = random_radius * sin(phi);
   }
   out_pos[0] += cyl_x;
   out_pos[1] += cyl_y;
-  out_pos[2] = box_l[2] * d_random();
+  out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   return out_pos;
 }
 
@@ -706,15 +712,15 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   } else {
     p_id = max_seen_particle + 1;
   }
-  std::vector<double> pos_vec;
+  Utils::Vector3d pos_vec;
 
   // create random velocity vector according to Maxwell Boltzmann distribution
   // for components
   double vel[3];
   // we use mass=1 for all particles, think about adapting this
-  vel[0] = std::sqrt(temperature) * gaussian_random();
-  vel[1] = std::sqrt(temperature) * gaussian_random();
-  vel[2] = std::sqrt(temperature) * gaussian_random();
+  vel[0] = std::sqrt(temperature) * m_normal_distribution(m_generator);
+  vel[1] = std::sqrt(temperature) * m_normal_distribution(m_generator);
+  vel[2] = std::sqrt(temperature) * m_normal_distribution(m_generator);
 #ifdef ELECTROSTATICS
   double charge = charges_of_types[desired_type];
 #endif
@@ -729,12 +735,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
 #endif
   // set velocities
   set_particle_v(p_id, vel);
-  double d_min = distto(partCfg(), pos_vec.data(),
-                        p_id); // TODO also catch constraints with an IFDEF
-                               // CONSTRAINTS here, but only interesting,
-                               // when doing MD/ HMC because then the system
-                               // might explode easily here due to high
-                               // forces
+  double d_min = distto(partCfg(), pos_vec, p_id);
   if (d_min < exclusion_radius)
     particle_inserted_too_close_to_another_one =
         true; // setting of a minimal
@@ -821,26 +822,23 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   }
 
   // propose new positions
-  std::vector<double> new_pos(3);
   for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
     p_id = p_id_s_changed_particles[i];
     // change particle position
-    new_pos = get_random_position_in_box();
+    auto const new_pos = get_random_position_in_box();
     double vel[3];
     auto const &p = get_particle_data(p_id);
-    vel[0] = std::sqrt(temperature / p.p.mass) * gaussian_random();
-    vel[1] = std::sqrt(temperature / p.p.mass) * gaussian_random();
-    vel[2] = std::sqrt(temperature / p.p.mass) * gaussian_random();
+    vel[0] =
+        std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
+    vel[1] =
+        std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
+    vel[2] =
+        std::sqrt(temperature / p.p.mass) * m_normal_distribution(m_generator);
     set_particle_v(p_id, vel);
     // new_pos=get_random_position_in_box_enhanced_proposal_of_small_radii();
     // //enhanced proposal of small radii
     place_particle(p_id, new_pos.data());
-    double d_min = distto(partCfg(), new_pos.data(),
-                          p_id); // TODO also catch constraints with an IFDEF
-                                 // CONSTRAINTS here, but only interesting,
-                                 // when doing MD/ HMC because then the system
-                                 // might explode easily here due to high
-
+    double d_min = distto(partCfg(), new_pos, p_id);
     if (d_min < exclusion_radius)
       particle_inserted_too_close_to_another_one = true;
   }
@@ -882,7 +880,7 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   // bf*exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
   ////Metropolis-Hastings Algorithm for asymmetric proposal density
 
-  if (d_random() < bf) {
+  if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
     m_accepted_configurational_MC_moves += 1;
     got_accepted = true;

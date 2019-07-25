@@ -20,7 +20,7 @@
 #define SYSTEMINTERFACE_H
 
 #include "config.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 #include <vector>
 
 /** @todo: Turn needsXY in getter/setter **/
@@ -31,7 +31,7 @@ public:
       : m_needsRGpu(false), m_needsVGpu(false), m_needsQGpu(false),
         m_needsDirectorGpu(false), m_needsFGpu(false), m_needsDipGpu(false),
         m_needsTorqueGpu(false){};
-  typedef Vector3d Vector3;
+  typedef Utils::Vector3d Vector3;
   typedef double Real;
 
   virtual void init() = 0;

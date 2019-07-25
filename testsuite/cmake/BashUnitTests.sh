@@ -21,7 +21,6 @@
 ##    function set_up() {
 ##      cat >> myconfig.hpp << EOF
 ##      /* global features */
-##      #define PARTIAL_PERIODIC
 ##      #define ELECTROSTATICS
 ##      #define EXTERNAL_FORCES
 ##    EOF

@@ -15,7 +15,6 @@ physical systems. Currently, the following tutorials are available:
 * :file:`06-active_matter`: Modelling of self-propelling particles
 * :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions
 * :file:`08-visualization`: Using the online visualizers of ESPResSo
-* :file:`09-swimmer_reactions`: Further modelling of self-propelling particles
 * :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble
 
 Using the tutorials
@@ -23,7 +22,7 @@ Using the tutorials
 For using the tutorials, you need ESPResSo running. For installation
 instructions, please see: http://espressomd.org/html/doc/installation.html
 
-Tutorials 1, 2, 4, and 5 are available as IPython notebooks. I.e., they consist of a `.ipynb` file which contains both, the source code and the corresponding explanations.
+Tutorials 1, 2, 4, 5, and 8 are available as IPython notebooks. I.e., they consist of a `.ipynb` file which contains both, the source code and the corresponding explanations.
 They can be viewed, changed and run interactively.
 
 

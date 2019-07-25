@@ -35,7 +35,7 @@ template <typename CoreObs>
 class ProfileObservable
     : public AutoParameters<ProfileObservable<CoreObs>, Observable> {
 public:
-  ProfileObservable() : m_observable(std::make_shared<CoreObs>()) {
+  ProfileObservable() {
     this->add_parameters({{"n_x_bins",
                            [this](const Variant &v) {
                              profile_observable()->n_x_bins = get_value<int>(v);
@@ -82,6 +82,8 @@ public:
                            },
                            [this]() { return profile_observable()->max_z; }}});
   }
+
+  void construct(VariantMap const &params) override {}
 
   std::shared_ptr<::Observables::ProfileObservable> profile_observable() const {
     return m_observable;

@@ -143,9 +143,9 @@ struct CellPList {
  */
 struct CellStructure {
   /** type descriptor */
-  int type;
+  int type = CELL_STRUCTURE_NONEYET;
 
-  bool use_verlet_list;
+  bool use_verlet_list = true;
 
   /** Communicator to exchange ghost cell information. */
   GhostCommunicator ghost_cells_comm;
@@ -156,18 +156,13 @@ struct CellStructure {
   /** Communicator to collect ghost forces. */
   GhostCommunicator collect_ghost_force_comm;
 
-  /** Cell system dependent function to find the right node for a
-   *  particle at position @p pos.
-   *  \param  pos Position of a particle.
-   *  \return number of the node where to put the particle.
-   */
-  int (*position_to_node)(const Vector3d &pos);
   /** Cell system dependent function to find the right cell for a
-   *  particle at position @p pos.
-   *  \param  pos Position of a particle.
-   *  \return pointer to cell  where to put the particle.
+   *  particle.
+   *  \param  p Particle.
+   *  \return pointer to cell  where to put the particle, nullptr
+   *          if the particle does not belong on this node.
    */
-  Cell *(*position_to_cell)(const Vector3d &pos);
+  Cell *(*particle_to_cell)(const Particle &p) = nullptr;
 };
 
 /*@}*/
@@ -292,9 +287,6 @@ void set_resort_particles(Cells::Resort level);
  * @brief Get the currently scheduled resort level.
  */
 unsigned const &get_resort_particles();
-
-/** Spread the particle resorting criterion across the nodes. */
-void announce_resort_particles();
 
 /** Check if a particle resorting is required. */
 void check_resort_particles();

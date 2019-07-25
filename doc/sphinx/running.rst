@@ -54,7 +54,7 @@ enforce force recalculation.
 Run steepest descent minimization
 ---------------------------------
 
-:func:`espressomd.espresso.thermostat.Thermostat.set_steepest_descent`
+:func:`espressomd.integrate.Integrator.set_steepest_descent`
 
 
 

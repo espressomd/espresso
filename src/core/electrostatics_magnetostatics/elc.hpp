@@ -29,7 +29,6 @@
 #define _ELC_H
 
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef P3M
 
@@ -58,7 +57,7 @@ typedef struct {
   int neutralize;
 
   /// @copybrief MMM2D_struct::dielectric_contrast_on
-  int dielectric_contrast_on;
+  bool dielectric_contrast_on;
 
   /// @copybrief MMM2D_struct::delta_mid_top
   double delta_mid_top;
@@ -66,7 +65,7 @@ typedef struct {
   double delta_mid_bot;
 
   /// @copybrief MMM2D_struct::const_pot_on
-  int const_pot;
+  bool const_pot;
   /// @copybrief MMM2D_struct::pot_diff
   double pot_diff;
 
@@ -105,7 +104,7 @@ extern ELC_struct elc_params;
  */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
                    int neutralize, double delta_mid_top, double delta_mid_bot,
-                   int const_pot, double pot_diff);
+                   bool const_pot, double pot_diff);
 
 /// the force calculation
 void ELC_add_force();
@@ -125,12 +124,13 @@ void ELC_init();
 void ELC_on_resort_particles();
 
 /// pairwise contributions from the lowest and top layers to the energy
-double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
-                                                     Particle *p2);
+double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
+                                                     const Particle *p2);
 /// pairwise contributions from the lowest and top layers to the force
-void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
-                                                  double force1[3],
-                                                  double force2[3]);
+void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
+                                                  const Particle *p2,
+                                                  double *force1,
+                                                  double *force2);
 /// self energies of top and bottom layers with their virtual images
 double ELC_P3M_dielectric_layers_energy_self();
 /// forces of particles in border layers with themselves

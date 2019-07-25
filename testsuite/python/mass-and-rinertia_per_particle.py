@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 from numpy.random import uniform
 import espressomd
@@ -23,11 +24,8 @@ import math
 import random
 
 
-@ut.skipIf(not espressomd.has_features(["MASS",
-                                        "PARTICLE_ANISOTROPY",
-                                        "ROTATIONAL_INERTIA",
-                                        "LANGEVIN_PER_PARTICLE"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["MASS", "PARTICLE_ANISOTROPY",
+                            "ROTATIONAL_INERTIA", "LANGEVIN_PER_PARTICLE"])
 class ThermoTest(ut.TestCase):
     longMessage = True
     # Handle for espresso system
@@ -42,7 +40,7 @@ class ThermoTest(ut.TestCase):
 
     # Particle properties
     mass = 0.0
-    J = 0.0, 0.0, 0.0
+    J = [0.0, 0.0, 0.0]
 
     # Per-particle type parameters.
     # 2 different langevin parameters for particles.
@@ -53,9 +51,9 @@ class ThermoTest(ut.TestCase):
     gamma_rot_p = np.zeros((2, 3))
 
     # These variables will take the values to compare with.
-    # Depending on the test case following matrices either equals to the previous
-    # or the global corresponding parameters. The corresponding setting effect is an essence of
-    # all the test cases' differentiation here.
+    # Depending on the test case following matrices either equals to the
+    # previous or the global corresponding parameters. The corresponding
+    # setting effect is an essence of all the test cases' differentiation here.
     halfkT_p_validate = np.zeros((2))
     gamma_tran_p_validate = np.zeros((2, 3))
     gamma_rot_p_validate = np.zeros((2, 3))
@@ -117,10 +115,8 @@ class ThermoTest(ut.TestCase):
         self.system.time_step = 0.007
 
         # Space
-        box = 1.0
-        self.system.box_l = box, box, box
-        if espressomd.has_features(("PARTIAL_PERIODIC",)):
-            self.system.periodicity = 0, 0, 0
+        self.system.box_l = 3 * [1.0]
+        self.system.periodicity = [0, 0, 0]
 
         # NVT thermostat
         self.kT = 0.0
@@ -131,17 +127,17 @@ class ThermoTest(ut.TestCase):
         # and the Langevin equation finite-difference approximation is stable
         # only for time_step << t0, it is needed to set the gamma less than
         # some maximal value according to the value gamma_max.
-        # Also, it cannot be very small (gamma_min), otherwise the thermalization will require
-        # too much of the CPU time. Same: for all such gamma assignments throughout the test.
-        #
+        # Also, it cannot be very small (gamma_min), otherwise the
+        # thermalization will require too much of the CPU time. Same: for all
+        # such gamma assignments throughout the test.
         gamma_min = self.gamma_min
         gamma_max = self.gamma_max
         gamma_rnd = uniform(gamma_min, gamma_max)
         self.gamma_global = gamma_rnd, gamma_rnd, gamma_rnd
         # Additional test case for the specific global rotational gamma set.
         self.gamma_global_rot = uniform(gamma_min, gamma_max, 3)
-        # Per-paricle values:
-        self.kT_p = 0.0, 0.0
+        # Per-particle values:
+        self.kT_p = [0.0, 0.0]
         # Either translational friction isotropy is required
         # or both translational and rotational ones.
         # Otherwise these types of motion will interfere.
@@ -159,15 +155,15 @@ class ThermoTest(ut.TestCase):
 
         # Particles
         self.mass = 12.74
-        self.J = 10.0, 10.0, 10.0
+        self.J = [10.0, 10.0, 10.0]
         for i in range(n):
             for k in range(2):
                 ind = i + k * n
                 self.system.part.add(
                     rotation=(1, 1, 1), pos=(0.0, 0.0, 0.0), id=ind)
-                self.system.part[ind].v = 1.0, 1.0, 1.0
-                if "ROTATION" in espressomd.features():
-                    self.system.part[ind].omega_body = 1.0, 1.0, 1.0
+                self.system.part[ind].v = [1.0, 1.0, 1.0]
+                if espressomd.has_features("ROTATION"):
+                    self.system.part[ind].omega_body = [1.0, 1.0, 1.0]
                 self.system.part[ind].mass = self.mass
                 self.system.part[ind].rinertia = self.J
 
@@ -187,23 +183,22 @@ class ThermoTest(ut.TestCase):
 
         # Space
         box = 10.0
-        self.system.box_l = box, box, box
-        if espressomd.has_features(("PARTIAL_PERIODIC",)):
-            self.system.periodicity = 0, 0, 0
+        self.system.box_l = 3 * [box]
+        self.system.periodicity = [0, 0, 0]
 
         # NVT thermostat
         # Just some temperature range to cover by the test:
         self.kT = uniform(1.5, 5.)
         # See the above comment regarding the gamma assignments.
-        # Note: here & hereinafter specific variations in these ranges are related to
-        # the test execution duration to achieve the required statistical
-        # averages faster.
+        # Note: here & hereinafter specific variations in these ranges are
+        # related to the test execution duration to achieve the required
+        # statistical averages faster.
         gamma_min = self.gamma_min
         gamma_max = self.gamma_max
         self.gamma_global = uniform(gamma_min, gamma_max, 3)
         self.gamma_global_rot = uniform(gamma_min, gamma_max, 3)
         # Per-particle parameters
-        self.kT_p = 2.5, 2.0
+        self.kT_p = [2.5, 2.0]
         for k in range(2):
             self.gamma_tran_p[k,:] = uniform(gamma_min, gamma_max, 3)
             self.gamma_rot_p[k,:] = uniform(gamma_min, gamma_max, 3)
@@ -224,19 +219,16 @@ class ThermoTest(ut.TestCase):
             for k in range(2):
                 ind = i + k * n
                 part_pos = np.random.random(3) * box
-                part_v = 0.0, 0.0, 0.0
-                part_omega_body = 0.0, 0.0, 0.0
+                part_v = [0.0, 0.0, 0.0]
+                part_omega_body = [0.0, 0.0, 0.0]
                 self.system.part.add(
-                    rotation=(
-                        1,
-                        1,
-                        1),
+                    rotation=(1, 1, 1),
                     id=ind,
                     mass=self.mass,
                     rinertia=self.J,
                     pos=part_pos,
                     v=part_v)
-                if "ROTATION" in espressomd.features():
+                if espressomd.has_features("ROTATION"):
                     self.system.part[ind].omega_body = part_omega_body
 
     def check_dissipation(self, n):
@@ -257,13 +249,13 @@ class ThermoTest(ut.TestCase):
                 for k in range(2):
                     ind = i + k * n
                     for j in range(3):
-                        # Note: velocity is defined in the lab frame of reference
-                        # while gamma_tr is defined in the body one.
+                        # Note: velocity is defined in the lab frame of
+                        # reference while gamma_tr is defined in the body one.
                         # Hence, only isotropic gamma_tran_p_validate could be
                         # tested here.
                         self.assertLess(abs(
                             self.system.part[ind].v[j] - math.exp(- self.gamma_tran_p_validate[k, j] * self.system.time / self.mass)), tol)
-                        if "ROTATION" in espressomd.features():
+                        if espressomd.has_features("ROTATION"):
                             self.assertLess(abs(
                                 self.system.part[ind].omega_body[j] - math.exp(- self.gamma_rot_p_validate[k, j] * self.system.time / self.J[j])), tol)
 
@@ -312,7 +304,7 @@ class ThermoTest(ut.TestCase):
                 for k in range(2):
                     ind = p + k * n
                     v = self.system.part[ind].v
-                    if "ROTATION" in espressomd.features():
+                    if espressomd.has_features("ROTATION"):
                         o = self.system.part[ind].omega_body
                         o2[k,:] = o2[k,:] + np.power(o[:], 2)
                     pos = self.system.part[ind].pos
@@ -321,8 +313,8 @@ class ThermoTest(ut.TestCase):
                     dt = (int_steps * (i + 1) + therm_steps) * \
                         self.system.time_step
                     # translational diffusion variance: after a closed-form
-                    # integration of the Langevin EOM;
-                    # ref. the eq. (10.2.26) N. Pottier, https://doi.org/10.1007/s10955-010-0114-6 (2010)
+                    # integration of the Langevin EOM; ref. the eq. (10.2.26)
+                    # N. Pottier, doi:10.1007/s10955-010-0114-6 (2010)
                     # after simple transformations and the dimensional model
                     # matching (cf. eq. (10.1.1) there):
                     sigma2_tr[k] = 0.0
@@ -351,30 +343,27 @@ class ThermoTest(ut.TestCase):
 
         for k in range(2):
             self.assertLessEqual(
-                abs(
-                    dv[k]),
-                tolerance,
-                msg='Relative deviation in translational energy too large: {0}'.format(
-                    dv[k]))
-            if "ROTATION" in espressomd.features():
+                abs(dv[k]), tolerance, msg='Relative deviation in '
+                'translational energy too large: {0}'.format(dv[k]))
+            if espressomd.has_features("ROTATION"):
                 self.assertLessEqual(
-                    abs(
-                        do[k]),
-                    tolerance,
-                    msg='Relative deviation in rotational energy too large: {0}'.format(
-                        do[k]))
+                    abs(do[k]), tolerance, msg='Relative deviation in '
+                    'rotational energy too large: {0}'.format(do[k]))
                 self.assertLessEqual(abs(
-                    do_vec[k, 0]), tolerance, msg='Relative deviation in rotational energy per the body axis X is too large: {0}'.format(do_vec[k, 0]))
+                    do_vec[k, 0]), tolerance, msg='Relative deviation in '
+                    'rotational energy per the body axis X is too large: {0}'
+                    .format(do_vec[k, 0]))
                 self.assertLessEqual(abs(
-                    do_vec[k, 1]), tolerance, msg='Relative deviation in rotational energy per the body axis Y is too large: {0}'.format(do_vec[k, 1]))
+                    do_vec[k, 1]), tolerance, msg='Relative deviation in '
+                    'rotational energy per the body axis Y is too large: {0}'
+                    .format(do_vec[k, 1]))
                 self.assertLessEqual(abs(
-                    do_vec[k, 2]), tolerance, msg='Relative deviation in rotational energy per the body axis Z is too large: {0}'.format(do_vec[k, 2]))
+                    do_vec[k, 2]), tolerance, msg='Relative deviation in '
+                    'rotational energy per the body axis Z is too large: {0}'
+                    .format(do_vec[k, 2]))
             self.assertLessEqual(
-                abs(
-                    dr_norm[k]),
-                tolerance,
-                msg='Relative deviation in translational diffusion is too large: {0}'.format(
-                    dr_norm[k]))
+                abs(dr_norm[k]), tolerance, msg='Relative deviation in '
+                'translational diffusion is too large: {0}'.format(dr_norm[k]))
 
     def set_particle_specific_gamma(self, n):
         """
@@ -393,7 +382,7 @@ class ThermoTest(ut.TestCase):
             for i in range(n):
                 ind = i + k * n
                 self.system.part[ind].gamma = self.gamma_tran_p[k,:]
-                if "ROTATION" in espressomd.features():
+                if espressomd.has_features("ROTATION"):
                     self.system.part[ind].gamma_rot = self.gamma_rot_p[k,:]
 
     def set_particle_specific_temperature(self, n):

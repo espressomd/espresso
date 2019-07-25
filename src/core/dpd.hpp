@@ -30,10 +30,18 @@
 #include "config.hpp"
 
 #ifdef DPD
-
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "random.hpp"
+
+#include <utils/Vector.hpp>
+
+struct IA_parameters;
+
+struct DPDParameters {
+  double gamma = 0.;
+  double cutoff = -1.;
+  int wf = 0;
+  double pref = 0.0;
+};
 
 #include "utils/uniform.hpp"
 #include "utils/u32_to_u64.hpp"
@@ -46,18 +54,18 @@ void dpd_rng_counter_increment();
 void dpd_set_rng_state(uint64_t counter);
 uint64_t dpd_get_rng_state();
 
+
 void dpd_heat_up();
 void dpd_cool_down();
-void dpd_switch_off();
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
                    int wf, double tgamma, double tr_c, int twf);
 void dpd_init();
 void dpd_update_params(double pref2_scale);
 
-Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
-                        IA_parameters *ia_params, double const *d, double dist,
-                        double dist2);
-
+Utils::Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
+                               const IA_parameters *ia_params, double const *d,
+                               double dist, double dist2);
+Utils::Vector9d dpd_stress();
 
 /** Return a random 4d vector with the philox thermostat.
     Random numbers depend on
@@ -91,5 +99,4 @@ inline Vector4d dpd_noise(int pid1, int pid2) {
 }
 
 #endif
-
 #endif

@@ -25,7 +25,7 @@
 */
 
 #include "particle_data.hpp"
-#include "utils.hpp"
+#include <dpd.hpp>
 
 #include "TabulatedPotential.hpp"
 #include "utils/Counter.hpp"
@@ -33,59 +33,6 @@
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */
 constexpr double INACTIVE_CUTOFF = -1.;
-
-/** \name Type codes for the type of Coulomb interaction
-    Enumeration of implemented methods for the electrostatic
-    interaction.
-*/
-/************************************************************/
-/*@{*/
-
-#ifdef ELECTROSTATICS
-enum CoulombMethod {
-  COULOMB_NONE,      ///< Coulomb interaction switched off
-  COULOMB_DH,        ///< Coulomb method is Debye-Hueckel
-  COULOMB_P3M,       ///< Coulomb method is P3M
-  COULOMB_MMM1D,     ///< Coulomb method is one-dimensional MMM
-  COULOMB_MMM2D,     ///< Coulomb method is two-dimensional MMM
-  COULOMB_ELC_P3M,   ///< Coulomb method is P3M plus ELC
-  COULOMB_RF,        ///< Coulomb method is Reaction-Field
-  COULOMB_INTER_RF,  ///< Coulomb method is Reaction-Field BUT as interaction
-  COULOMB_P3M_GPU,   ///< Coulomb method is P3M with GPU-based long-range part
-                     ///  calculation
-  COULOMB_MMM1D_GPU, ///< Coulomb method is one-dimensional MMM running on GPU
-  COULOMB_EK,        ///< Coulomb method is electrokinetics
-  COULOMB_SCAFACOS,  ///< Coulomb method is scafacos
-};
-
-#endif
-/*@}*/
-
-#ifdef DIPOLES
-/** @brief Implemented methods for the magnetostatic interaction. */
-enum DipolarInteraction {
-  /** dipolar interaction switched off (NONE). */
-  DIPOLAR_NONE = 0,
-  /** dipolar method is P3M. */
-  DIPOLAR_P3M,
-  /** Dipolar method is P3M plus DLC. */
-  DIPOLAR_MDLC_P3M,
-  /** Dipolar method is all with all and no replicas */
-  DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
-  /** Dipolar method is magnetic dipolar direct sum */
-  DIPOLAR_DS,
-  /** Dipolar method is direct sum plus DLC. */
-  DIPOLAR_MDLC_DS,
-  /** Direct summation on gpu */
-  DIPOLAR_DS_GPU,
-#ifdef DIPOLAR_BARNES_HUT
-  /** Direct summation on gpu by Barnes-Hut algorithm */
-  DIPOLAR_BH_GPU,
-#endif
-  /** Scafacos library */
-  DIPOLAR_SCAFACOS
-};
-#endif
 
 /* Data Types */
 /************************************************************/
@@ -280,16 +227,6 @@ struct IA_parameters {
 /*@}*/
 #endif
 
-#ifdef COS2
-  /** \name Cos2 potential */
-  /*@{*/
-  double COS2_eps = INACTIVE_CUTOFF;
-  double COS2_cut = INACTIVE_CUTOFF;
-  double COS2_offset = INACTIVE_CUTOFF;
-  double COS2_w = INACTIVE_CUTOFF;
-/*@}*/
-#endif
-
 #ifdef GAY_BERNE
   /** \name Gay-Berne potential */
   /*@{*/
@@ -315,21 +252,9 @@ struct IA_parameters {
 #ifdef DPD
   /** \name DPD as interaction */
   /*@{*/
-  int dpd_wf = 0;
-  int dpd_twf = 0;
-  double dpd_gamma = 0.0;
-  double dpd_r_cut = INACTIVE_CUTOFF;
-  double dpd_pref1 = 0.0;
-  double dpd_pref2 = 0.0;
-  double dpd_tgamma = 0.0;
-  double dpd_tr_cut = INACTIVE_CUTOFF;
-  double dpd_pref3 = 0.0;
-  double dpd_pref4 = 0.0;
+  DPDParameters dpd_radial;
+  DPDParameters dpd_trans;
 /*@}*/
-#endif
-
-#ifdef INTER_RF
-  int rf_on = 0;
 #endif
 
 #ifdef THOLE
@@ -339,45 +264,11 @@ struct IA_parameters {
   double THOLE_q1q2;
   /*@}*/
 #endif
-
-#ifdef SWIMMER_REACTIONS
-  double REACTION_range = INACTIVE_CUTOFF;
-#endif
 };
 
 extern std::vector<IA_parameters> ia_params;
 
 /** thermodynamic force parameters */
-
-/** \name Compounds for Coulomb interactions */
-/*@{*/
-
-/** @brief Parameters for the Coulomb interaction. */
-struct Coulomb_parameters {
-
-#ifdef ELECTROSTATICS
-  /** Bjerrum length times temperature. */
-  double prefactor;
-
-  /** Method to treat Coulomb interaction. */
-  CoulombMethod method;
-#endif
-
-#ifdef DIPOLES
-  double Dprefactor;
-  DipolarInteraction Dmethod;
-#endif
-};
-
-#ifdef ELECTROSTATICS
-
-/** Induced field (for const. potential feature). **/
-extern double field_induced;
-/** Applied field (for const. potential feature) **/
-extern double field_applied;
-
-#endif
-/*@}*/
 
 /************************************************
  * exported variables
@@ -386,42 +277,21 @@ extern double field_applied;
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
 
-/** Structure containing the Coulomb parameters. */
-extern Coulomb_parameters coulomb;
-
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded interactions).
  */
 extern double max_cut_nonbonded;
-/** Cutoff of Coulomb real space part */
-extern double coulomb_cutoff;
-/** Cutoff of dipolar real space part */
-extern double dipolar_cutoff;
 
 /** Minimal global interaction cutoff. Particles with a distance
     smaller than this are guaranteed to be available on the same node
     (through ghosts).  */
 extern double min_global_cut;
 
-/************************************************
- * exported functions
- ************************************************/
-
-#ifdef ELECTROSTATICS
-/** @brief Set the electrostatics prefactor */
-int coulomb_set_prefactor(double prefactor);
-
-/** @brief Deactivates the current Coulomb method
-    This was part of coulomb_set_bjerrum()
-*/
-void deactivate_coulomb_method();
-#endif
-
-#ifdef DIPOLES
-/** @brief Set the dipolar prefactor */
-int dipolar_set_Dprefactor(double prefactor);
-#endif
+/*****************
+*******************************
+* exported functions
+************************************************/
 
 /** get interaction parameters between particle sorts i and j */
 inline IA_parameters *get_ia_param(int i, int j) {
@@ -484,13 +354,7 @@ inline int checkIfParticlesInteract(int i, int j) {
   return checkIfInteraction(get_ia_param(i, j));
 }
 
-int virtual_set_params(int bond_type);
-
-#ifdef DIPOLES
-void set_dipolar_method_local(DipolarInteraction method);
-#endif
-
-#include "utils/math/sqr.hpp"
+#include <utils/math/sqr.hpp>
 
 /** Returns true if the particles are to be considered for short range
     interactions */

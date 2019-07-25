@@ -34,6 +34,7 @@ import functools
 import types
 from espressomd.utils import nesting_level, array_locked, is_valid_type
 from espressomd.utils cimport make_array_locked
+from .grid cimport box_geo, folded_position, unfolded_position
 
 PARTICLE_EXT_FORCE = 1
 
@@ -160,7 +161,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position(self.particle_data))
+            return make_array_locked(unfolded_position( < Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
 
     property pos_folded:
         """
@@ -203,7 +204,7 @@ cdef class ParticleHandle(object):
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(folded_position(self.particle_data))
+            return make_array_locked(folded_position(Vector3d(self.particle_data.r.p), box_geo))
 
     property image_box:
         """
@@ -284,8 +285,8 @@ cdef class ParticleHandle(object):
 
         See Also
         --------
-        add_bond() : Method to add bonds to a `Particle`
-        delete_bond() : Method to remove bonds from a `Particle`
+        espressomd.particle_data.ParticleHandle.add_bond : Method to add bonds to a `Particle`
+        espressomd.particle_data.ParticleHandle.delete_bond : Method to remove bonds from a `Particle`
 
         .. note::
            Bond ids have to be an integer >= 0.
@@ -494,10 +495,6 @@ cdef class ParticleHandle(object):
                (:attr:`espressomd.particle_data.ParticleHandle.quat`) must be
                set before setting this property, otherwise the conversion from
                lab to body frame will not be handled properly.
-
-            See also
-            --------
-            :attr:`espressomd.particle_data.ParticleHandle.torque_body`
 
             """
 
@@ -1210,7 +1207,7 @@ cdef class ParticleHandle(object):
             -----
             This needs the feature ENGINE.  The keys 'mode',
             'dipole_length', and 'rotational_friction' are only
-            available if ENGINE is used with LB or LB_GPU.
+            available if ENGINE is used with LB or CUDA.
 
             Examples
             --------
@@ -1233,11 +1230,10 @@ cdef class ParticleHandle(object):
                 swim.swimming = True
                 swim.v_swim = 0.0
                 swim.f_swim = 0.0
-                IF LB or LB_GPU:
-                    swim.push_pull = 0
-                    swim.dipole_length = 0.0
-                    swim.rotational_friction = 0.0
-
+                swim.push_pull = 0
+                swim.dipole_length = 0.0
+                swim.rotational_friction = 0.0
+ 
                 if type(_params) == type(True):
                     if _params:
                         raise Exception(
@@ -1258,28 +1254,27 @@ cdef class ParticleHandle(object):
                             _params['v_swim'], 1, float, "v_swim has to be a float.")
                         swim.v_swim = _params['v_swim']
 
-                    IF LB or LB_GPU:
-                        if 'mode' in _params:
-                            if _params['mode'] == "pusher":
-                                swim.push_pull = -1
-                            elif _params['mode'] == "puller":
-                                swim.push_pull = 1
-                            elif _params['mode'] == "N/A":
-                                swim.push_pull = 0
-                            else:
-                                raise Exception(
-                                    "'mode' has to be either 'pusher' or 'puller'.")
+                    if 'mode' in _params:
+                        if _params['mode'] == "pusher":
+                            swim.push_pull = -1
+                        elif _params['mode'] == "puller":
+                            swim.push_pull = 1
+                        elif _params['mode'] == "N/A":
+                            swim.push_pull = 0
+                        else:
+                            raise Exception(
+                                "'mode' has to be either 'pusher' or 'puller'.")
 
-                        if 'dipole_length' in _params:
-                            check_type_or_throw_except(
-                                _params['dipole_length'], 1, float, "dipole_length has to be a float.")
-                            swim.dipole_length = _params['dipole_length']
+                    if 'dipole_length' in _params:
+                        check_type_or_throw_except(
+                            _params['dipole_length'], 1, float, "dipole_length has to be a float.")
+                        swim.dipole_length = _params['dipole_length']
 
-                        if 'rotational_friction' in _params:
-                            check_type_or_throw_except(
-                                _params['rotational_friction'], 1, float, "rotational_friction has to be a float.")
-                            swim.rotational_friction = _params[
-                                'rotational_friction']
+                    if 'rotational_friction' in _params:
+                        check_type_or_throw_except(
+                            _params['rotational_friction'], 1, float, "rotational_friction has to be a float.")
+                        swim.rotational_friction = _params[
+                            'rotational_friction']
 
                 if swim.f_swim != 0 or swim.v_swim != 0:
                     swimming_particles_exist = True
@@ -1293,23 +1288,19 @@ cdef class ParticleHandle(object):
                 mode = "N/A"
                 cdef const particle_parameters_swimming * _swim = NULL
                 pointer_to_swimming(self.particle_data, _swim)
-                IF LB or LB_GPU:
-                    if _swim.push_pull == -1:
-                        mode = 'pusher'
-                    elif _swim.push_pull == 1:
-                        mode = 'puller'
-                    swim = {
-                        'v_swim': _swim.v_swim,
-                        'f_swim': _swim.f_swim,
-                        'mode': mode,
-                        'dipole_length': _swim.dipole_length,
-                        'rotational_friction': _swim.rotational_friction
-                    }
-                ELSE:
-                    swim = {
-                        'v_swim': _swim.v_swim,
-                        'f_swim': _swim.f_swim,
-                    }
+
+                if _swim.push_pull == -1:
+                    mode = 'pusher'
+                elif _swim.push_pull == 1:
+                    mode = 'puller'
+                swim = {
+                    'v_swim': _swim.v_swim,
+                    'f_swim': _swim.f_swim,
+                    'mode': mode,
+                    'dipole_length': _swim.dipole_length,
+                    'rotational_friction': _swim.rotational_friction
+                }
+
                 return swim
 
     def remove(self):
@@ -1318,8 +1309,8 @@ cdef class ParticleHandle(object):
 
         See Also
         --------
-        add
-        clear
+        espressomd.particle_data.ParticleList.add
+        espressomd.particle_data.ParticleList.clear
 
         """
         if remove_particle(self._id):

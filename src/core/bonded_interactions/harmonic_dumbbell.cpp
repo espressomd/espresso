@@ -23,9 +23,11 @@
  *  Implementation of \ref harmonic_dumbbell.hpp
  */
 #include "harmonic_dumbbell.hpp"
-#include "communication.hpp"
 
 #ifdef ROTATION
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
                                  double r_cut) {

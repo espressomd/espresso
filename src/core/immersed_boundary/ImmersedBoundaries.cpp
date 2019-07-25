@@ -17,16 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.hpp"
-
-#ifdef IMMERSED_BOUNDARY
-
 #include "ImmersedBoundaries.hpp"
+
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
+
+#include <utils/constants.hpp>
 
 /************
   IBM_VolumeConservation
@@ -86,26 +86,6 @@ void ImmersedBoundaries::init_volume_conservation() {
 /****************
   IBM_VolumeConservation_ResetParams
  *****************/
-
-int ImmersedBoundaries::volume_conservation_reset_params(const int bond_type,
-                                                         const double volRef) {
-
-  // Check if bond exists and is of correct type
-  if (bond_type >= bonded_ia_params.size())
-    return ES_ERROR;
-  if (bonded_ia_params[bond_type].type != BONDED_IA_IBM_VOLUME_CONSERVATION)
-    return ES_ERROR;
-
-  // Specific stuff
-  // We need to set this here, since it is not re-calculated at the restarting
-  // of a sim as, e.g., triel
-  bonded_ia_params[bond_type].p.ibmVolConsParameters.volRef = volRef;
-
-  // Communicate this to whoever is interested
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
-}
 
 /***********
    IBM_VolumeConservation_SetParams
@@ -222,24 +202,9 @@ void ImmersedBoundaries::calc_volumes() {
             // Unfold position of first node
             // this is to get a continuous trajectory with no jumps when box
             // boundaries are crossed
-            double x1[3] = {p1.r.p[0], p1.r.p[1], p1.r.p[2]};
-            int img[3] = {p1.l.i[0], p1.l.i[1], p1.l.i[2]};
-            unfold_position(x1, img);
-
-            // Unfolding seems to work only for the first particle of a triel
-            // so get the others from relative vectors considering PBC
-            double a12[3];
-            get_mi_vector(a12, p2->r.p, x1);
-            double a13[3];
-            get_mi_vector(a13, p3->r.p, x1);
-
-            double x2[3];
-            double x3[3];
-
-            for (int i = 0; i < 3; i++) {
-              x2[i] = x1[i] + a12[i];
-              x3[i] = x1[i] + a13[i];
-            }
+            auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+            auto const x2 = x1 + get_mi_vector(p2->r.p, x1, box_geo);
+            auto const x3 = x1 + get_mi_vector(p3->r.p, x1, box_geo);
 
             // Volume of this tetrahedron
             // See Cha Zhang et.al. 2001, doi:10.1109/ICIP.2001.958278
@@ -337,16 +302,12 @@ void ImmersedBoundaries::calc_volume_force() {
             // Unfold position of first node
             // this is to get a continuous trajectory with no jumps when box
             // boundaries are crossed
-            double x1[3] = {p1.r.p[0], p1.r.p[1], p1.r.p[2]};
-            int img[3] = {p1.l.i[0], p1.l.i[1], p1.l.i[2]};
-            unfold_position(x1, img);
+            auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
 
             // Unfolding seems to work only for the first particle of a triel
             // so get the others from relative vectors considering PBC
-            double a12[3];
-            get_mi_vector(a12, p2->r.p, x1);
-            double a13[3];
-            get_mi_vector(a13, p3->r.p, x1);
+            auto const a12 = get_mi_vector(p2->r.p, x1, box_geo);
+            auto const a13 = get_mi_vector(p3->r.p, x1, box_geo);
 
             // Now we have the true and good coordinates
             // Compute force according to eq. C.46 Krüger thesis
@@ -373,28 +334,18 @@ void ImmersedBoundaries::calc_volume_force() {
 
             // This is Dupin 2008. I guess the result will be very similar as
             // the code above
-            double n[3];
-            vector_product(a12, a13, n);
-            const double ln = sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+            auto const n = vector_product(a12, a13);
+            const double ln = n.norm();
             const double A = 0.5 * ln;
             const double fact = kappaV * (VolumesCurrent[softID] - volRef) /
                                 VolumesCurrent[softID];
-            double nHat[3];
-            nHat[0] = n[0] / ln;
-            nHat[1] = n[1] / ln;
-            nHat[2] = n[2] / ln;
 
-            double force[3];
-            force[0] = -fact * A * nHat[0];
-            force[1] = -fact * A * nHat[1];
-            force[2] = -fact * A * nHat[2];
+            auto const nHat = n / ln;
+            auto const force = -fact * A * nHat;
 
-            // Add forces
-            for (int k = 0; k < 3; k++) {
-              p1.f.f[k] += force[k];
-              p2->f.f[k] += force[k];
-              p3->f.f[k] += force[k];
-            }
+            p1.f.f += force;
+            p2->f.f += force;
+            p3->f.f += force;
           }
           // Iterate, increase by the number of partners of this bond + 1 for
           // bond type
@@ -404,5 +355,3 @@ void ImmersedBoundaries::calc_volume_force() {
     }
   }
 }
-
-#endif

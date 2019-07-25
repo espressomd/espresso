@@ -20,14 +20,17 @@
 */
 
 #include "virtual_sites.hpp"
+
+#ifdef VIRTUAL_SITES
 #include "communication.hpp"
 #include "config.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
 
-#ifdef VIRTUAL_SITES
+#include <utils/constants.hpp>
 
 namespace {
 std::shared_ptr<VirtualSites> m_virtual_sites;
@@ -46,14 +49,13 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
 
 void calculate_vs_relate_to_params(const Particle &p_current,
                                    const Particle &p_relate_to, double &l,
-                                   Vector4d &quat) {
+                                   Utils::Vector4d &quat) {
   // get the distance between the particles
-  Vector3d d;
-  get_mi_vector(d, p_current.r.p, p_relate_to.r.p);
+  Utils::Vector3d d = get_mi_vector(p_current.r.p, p_relate_to.r.p, box_geo);
 
   // Check, if the distance between virtual and non-virtual particles is larger
   // htan minimum global cutoff If so, warn user
-  l = sqrt(sqrlen(d));
+  l = d.norm();
   if (l > min_global_cut && n_nodes > 1) {
     runtimeErrorMsg()
         << "Warning: The distance between virtual and non-virtual particle ("
@@ -87,7 +89,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
       d[i] /= l;
 
     // Obtain quaternions from desired director
-    Vector4d quat_director;
+    Utils::Vector4d quat_director;
     convert_director_to_quat(d, quat_director);
 
     // Define quat as described above:
@@ -132,7 +134,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
 // both particles to be accessible through local_particles and only executes the
 // changes on the virtual site locally
 int local_vs_relate_to(Particle *p_current, const Particle *p_relate_to) {
-  Vector4d quat;
+  Utils::Vector4d quat;
 
   double l;
   calculate_vs_relate_to_params(*p_current, *p_relate_to, l, quat);
@@ -154,7 +156,7 @@ int vs_relate_to(int part_num, int relate_to) {
   auto const &p_current = get_particle_data(part_num);
   auto const &p_relate_to = get_particle_data(relate_to);
 
-  Vector4d quat;
+  Utils::Vector4d quat;
   double l;
   calculate_vs_relate_to_params(p_current, p_relate_to, l, quat);
 

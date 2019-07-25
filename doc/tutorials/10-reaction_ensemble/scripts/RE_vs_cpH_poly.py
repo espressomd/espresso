@@ -21,13 +21,13 @@ from __future__ import division
 import numpy as np
 
 import espressomd
+espressomd.assert_features(["ELECTROSTATICS", "LENNARD_JONES"])
 from espressomd import code_info
 from espressomd import analyze
 from espressomd import integrate
 from espressomd.interactions import *
 from espressomd import reaction_ensemble
 from espressomd import polymer
-from espressomd.polymer import create_polymer
 from espressomd import interactions
 from espressomd import electrostatics
 import sys
@@ -49,7 +49,7 @@ system.time_step = 0.01
 system.cell_system.skin = 10.  # only for tutorial purposes
 system.cell_system.max_num_cells = 2744
 
-system.thermostat.set_langevin(kT=temperature, gamma=1.0)
+system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
 
 
 #
@@ -100,9 +100,14 @@ lj_shift = 0.0
 
 
 # setting up the polymer
-polymer.create_polymer(
-    N_P=N_P, bond_length=bond_l, MPC=MPC, start_id=0, bond=harmonic_bond,
-                       type_poly_neutral=type_HA, type_poly_charged=type_A, mode=0, val_poly=charges[type_A])
+positions = polymer.positions(
+    n_polymers=N_P, beads_per_chain=MPC, bond_length=bond_l, seed=13)
+for polymer in positions:
+    for i, pos in enumerate(polymer):
+        id = len(system.part)
+        system.part.add(id=id, pos=pos, type=type_A, q=charges[type_A])
+        if i > 0:
+            system.part[id].add_bond((harmonic_bond, id - 1))
 # setting up counterions
 for i in range(N0):
     system.part.add(pos=np.random.random(3) *
@@ -143,19 +148,24 @@ K_w = 10.**(-14) * 0.02694**2
 RE = None
 if(mode == "reaction_ensemble"):
     RE = reaction_ensemble.ReactionEnsemble(
-        temperature=temperature, exclusion_radius=1)
+        temperature=temperature, exclusion_radius=1, seed=3)
 elif(mode == "constant_pH_ensemble"):
     RE = reaction_ensemble.ConstantpHEnsemble(
-        temperature=temperature, exclusion_radius=1)
+        temperature=temperature, exclusion_radius=1, seed=3)
     RE.constant_pH = 0
 
 # HA <--> A- + H+
-RE.add_reaction(gamma=K_diss, reactant_types=[type_HA], reactant_coefficients=[1], product_types=[
-                type_A, type_H], product_coefficients=[1, 1], default_charges={type_HA: charges[type_HA], type_A: charges[type_A], type_H: charges[type_H]})
+RE.add_reaction(
+    gamma=K_diss, reactant_types=[type_HA], reactant_coefficients=[1],
+    product_types=[type_A, type_H], product_coefficients=[1, 1],
+    default_charges={type_HA: charges[type_HA], type_A: charges[type_A],
+                     type_H: charges[type_H]})
 
 # H2O autoprotolysis
-RE.add_reaction(gamma=(1 / K_w), reactant_types=[type_H, type_OH], reactant_coefficients=[
-                1, 1], product_types=[], product_coefficients=[], default_charges={type_H: charges[type_H], type_OH: charges[type_OH]})
+RE.add_reaction(
+    gamma=(1 / K_w), reactant_types=[type_H, type_OH],
+    reactant_coefficients=[1, 1], product_types=[], product_coefficients=[],
+    default_charges={type_H: charges[type_H], type_OH: charges[type_OH]})
 
 
 print(RE.get_status())
@@ -169,16 +179,20 @@ nH = []
 nOH = []
 qdist = np.zeros(N0)
 c = 0
+n_iterations = 500  # this is for tutorial only, too few integration steps
+n_steps_production = 10000
+n_steps_thermalization = 2000
 
-for i in range(12000):
+for i in range(n_steps_thermalization + n_steps_production):
     RE.reaction()
-    system.integrator.run(
-        500)  # this is for tutorial only, too few integration steps
-    print(
-        i, ") HA", system.number_of_particles(type=type_HA), "A-", system.number_of_particles(
-            type=type_A), "H+", system.number_of_particles(type=type_H),
-          'OH-', system.number_of_particles(type=type_OH), 'Cl-', system.number_of_particles(type=type_Cl), 'NA+', system.number_of_particles(type=type_Na))
-    if (i > 2000):  # just a bit of thermalization before starting to gain informations about the properties of the system
+    system.integrator.run(n_iterations)
+    print(i, ") HA", system.number_of_particles(type=type_HA), "A-",
+          system.number_of_particles(type=type_A), "H+",
+          system.number_of_particles(type=type_H), 'OH-',
+          system.number_of_particles(type=type_OH), 'Cl-',
+          system.number_of_particles(type=type_Cl), 'NA+',
+          system.number_of_particles(type=type_Na))
+    if (i > n_steps_thermalization):  # just a bit of thermalization before starting to gain informations about the properties of the system
         alpha.append(system.number_of_particles(type=type_A) / N0)
         nHA.append(system.number_of_particles(type=type_HA))
         nA.append(system.number_of_particles(type=type_A))

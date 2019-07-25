@@ -148,9 +148,6 @@ public:
 
   /**
    * @brief Set single parameter.
-   *
-   * @param name Name of the parameter
-   * @param value Set parameter to this value.
    */
   virtual void set_parameter(const std::string &, const Variant &) {}
 

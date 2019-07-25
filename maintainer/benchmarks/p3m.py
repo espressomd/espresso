@@ -32,9 +32,9 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     type=float, default=0.25, required=False,
                     help="Fraction of the simulation box volume occupied by "
                     "particles (range: [0.01-0.74], default: 0.25)")
-parser.add_argument("--bjerrum_length", metavar="LENGTH", action="store",
+parser.add_argument("--prefactor", metavar="PREFACTOR", action="store",
                     type=float, default=4., required=False,
-                    help="Bjerrum length (default: 4)")
+                    help="P3M prefactor (default: 4)")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--output", metavar="FILEPATH", action="store",
                    type=str, required=False, default="benchmarks.csv",
@@ -48,7 +48,8 @@ args = parser.parse_args()
 n_proc = int(os.environ.get("OMPI_COMM_WORLD_SIZE", 1))
 n_part = n_proc * args.particles_per_core
 measurement_steps = int(np.round(5e5 / args.particles_per_core, -1))
-assert args.bjerrum_length > 0, "bjerrum_length must be a positive number"
+n_iterations = 30
+assert args.prefactor > 0, "prefactor must be a positive number"
 assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
@@ -146,14 +147,15 @@ print("After Minimization: E_total = {}".format(energy["total"]))
 
 
 system.integrator.set_vv()
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
+# tuning and equilibration
 system.integrator.run(min(3 * measurement_steps, 1000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
     min_skin=0.4, max_skin=1.6, tol=0.05, int_steps=100)))
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune p3m")
-p3m = electrostatics.P3M(prefactor=args.bjerrum_length, accuracy=1e-4)
+p3m = electrostatics.P3M(prefactor=args.prefactor, accuracy=1e-4)
 system.actors.add(p3m)
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
@@ -169,7 +171,7 @@ if not args.visualizer:
     print("Timing every {} steps".format(measurement_steps))
     main_tick = time()
     all_t = []
-    for i in range(30):
+    for i in range(n_iterations):
         tick = time()
         system.integrator.run(measurement_steps)
         tock = time()
