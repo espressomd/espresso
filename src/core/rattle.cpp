@@ -64,7 +64,7 @@ void transfer_force_init_vel(const ParticleRange &particles,
 /** Calculates corrections of the  current particle velocities according to
    RATTLE
     algorithm. Invoked from \ref correct_vel_shake()*/
-void compute_vel_corr_vec(int *repeat_);
+void compute_vel_corr_vec(int *repeat_, const ParticleRange &particles);
 
 /** Velocity corrections are added to the current particle velocities. Invoked
    from
@@ -175,9 +175,9 @@ void correct_pos_shake(const ParticleRange &particles) {
   int repeat = 1;
 
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
-    init_correction_vector(local_cells.particles());
+    init_correction_vector(cell_structure.local_cells().particles());
     repeat_ = 0;
-    compute_pos_corr_vec(&repeat_, local_cells.particles());
+    compute_pos_corr_vec(&repeat_, cell_structure.local_cells().particles());
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
     app_pos_correction(particles);
     /**Ghost Positions Update*/
@@ -220,12 +220,12 @@ void transfer_force_init_vel(const ParticleRange &particles,
 }
 
 /** Velocity correction vectors are computed*/
-void compute_vel_corr_vec(int *repeat_) {
+void compute_vel_corr_vec(int *repeat_, const ParticleRange &particles) {
   Bonded_ia_parameters *ia_params;
   int j, k;
   Particle *p1, *p2;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     p1 = &p;
     k = 0;
     while (k < p1->bl.n) {
@@ -286,22 +286,22 @@ void revert_force(const ParticleRange &particles,
     revert(p);
 }
 
-void correct_vel_shake(CellStructure &cellStructure) {
+void correct_vel_shake(CellStructure &cell_structure) {
   int repeat_, repeat = 1, cnt = 0;
   /**transfer the current forces to r.p_old of the particle structure so that
   velocity corrections can be stored temporarily at the f.f[3] of the particle
   structure  */
-  auto particles = cellStructure.get_local_particles();
-  auto ghost_particles = cellStructure.get_ghost_particles();
+  auto particles = cell_structure.local_cells().particles();
+  auto ghost_particles = cell_structure.ghost_cells().particles();
 
   transfer_force_init_vel(particles, ghost_particles);
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(particles);
     repeat_ = 0;
-    compute_vel_corr_vec(&repeat_);
-    ghost_communicator(&cellStructure.collect_ghost_force_comm);
+    compute_vel_corr_vec(&repeat_, cell_structure.local_cells().particles());
+    ghost_communicator(&cell_structure.collect_ghost_force_comm);
     apply_vel_corr(particles);
-    ghost_communicator(&cellStructure.update_ghost_pos_comm);
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else
