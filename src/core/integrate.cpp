@@ -229,16 +229,18 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts();
 
+    auto particles = local_cells.particles();
+
     // Langevin philox rng counter
     if (n_steps > 0) {
       langevin_rng_counter_increment();
     }
 
-    force_calc(local_cells.particles());
+    force_calc(particles);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
-      convert_initial_torques(local_cells.particles());
+      convert_initial_torques(particles);
 #endif
     }
 
@@ -267,9 +269,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
+    auto particles = local_cells.particles();
+
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
-      save_old_pos(local_cells.particles(), ghost_cells.particles());
+      save_old_pos(particles, ghost_cells.particles());
 
 #endif
 
@@ -280,16 +284,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
        cannot be combined for the translation.
     */
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      propagate_vel(local_cells.particles());
-      propagate_pos(local_cells.particles());
+      propagate_vel(particles);
+      propagate_pos(particles);
 
       /* Propagate time: t = t+dt */
       sim_time += time_step;
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-      if (steepest_descent_step(local_cells.particles()))
+      if (steepest_descent_step(particles))
         break;
     } else {
-      propagate_vel_pos(local_cells.particles());
+      propagate_vel_pos(particles);
 
       /* Propagate time: t = t+dt */
       sim_time += time_step;
@@ -326,7 +330,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Propagate langevin philox rng counter
     langevin_rng_counter_increment();
 
-    force_calc(local_cells.particles());
+    particles = local_cells.particles();
+
+    force_calc(particles);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
@@ -335,16 +341,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      propagate_vel_finalize_p_inst(local_cells.particles());
+      propagate_vel_finalize_p_inst(particles);
 #ifdef ROTATION
-      convert_torques_propagate_omega(local_cells.particles());
+      convert_torques_propagate_omega(particles);
 #endif
     }
 // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
-      correct_vel_shake(local_cells.particles(), ghost_cells.particles());
+      correct_vel_shake(particles, ghost_cells.particles());
     }
 #endif
 
