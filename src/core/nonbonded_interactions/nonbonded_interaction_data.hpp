@@ -24,9 +24,9 @@
     Various procedures concerning interactions between particles.
 */
 
-#include "particle_data.hpp"
-#include "dpd.hpp"
 #include "TabulatedPotential.hpp"
+#include "dpd.hpp"
+#include "particle_data.hpp"
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */

@@ -32,8 +32,8 @@
 #ifdef DPD
 #include "particle_data.hpp"
 
-#include <utils/Vector.hpp>
 #include <utils/Counter.hpp>
+#include <utils/Vector.hpp>
 
 struct IA_parameters;
 

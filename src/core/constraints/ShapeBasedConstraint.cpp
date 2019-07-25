@@ -85,7 +85,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
         force += dpd_pair_force(&p, &part_rep, ia_params, dist_vec.data(), dist,
                                 dist2);
         // Additional use of DPD here requires counter increase
-        dpd_rng_counter_increment();        
+        dpd_rng_counter_increment();
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
@@ -99,7 +99,7 @@ ParticleForce ShapeBasedConstraint::force(const Particle &p,
           force += dpd_pair_force(&p, &part_rep, ia_params, dist_vec.data(),
                                   dist, dist2);
           // Additional use of DPD here requires counter increase
-          dpd_rng_counter_increment();        
+          dpd_rng_counter_increment();
         }
 #endif
       }

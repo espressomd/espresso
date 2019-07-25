@@ -235,9 +235,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     // Philox rng counter
     if (n_steps > 0) {
-        philox_counter_increment();
+      philox_counter_increment();
     }
-    
+
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -426,8 +426,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 /* Private functions */
 /************************************************************/
 
-void philox_counter_increment()
-{
+void philox_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN) {
     langevin_rng_counter_increment();
   } else if (thermo_switch & THERMO_DPD) {

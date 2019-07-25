@@ -26,19 +26,19 @@
 #ifdef DPD
 #include "communication.hpp"
 #include "event.hpp"
+#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "random.hpp"
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
-#include "integrate.hpp"
-#include "random.hpp"
 
-#include <boost/mpi/collectives/reduce.hpp>
-#include <utils/uniform.hpp>
-#include <utils/u32_to_u64.hpp>
-#include <utils/constants.hpp>
-#include <utils/NoOp.hpp>
-#include <utils/math/tensor_product.hpp>
 #include <Random123/philox.h>
+#include <boost/mpi/collectives/reduce.hpp>
+#include <utils/NoOp.hpp>
+#include <utils/constants.hpp>
+#include <utils/math/tensor_product.hpp>
+#include <utils/u32_to_u64.hpp>
+#include <utils/uniform.hpp>
 
 using Utils::Vector3d;
 
@@ -47,7 +47,8 @@ using Utils::Vector3d;
     1. dpd_rng_counter (initialized by seed) which is increased on
    integration
     2. Salt (decorrelates different counter)
-    3. Two particle IDs (order-independent, decorrelates particles, gets rid of seed-per-node)
+    3. Two particle IDs (order-independent, decorrelates particles, gets rid of
+   seed-per-node)
 */
 inline Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
 
@@ -62,20 +63,19 @@ inline Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
   uint32_t id1 = static_cast<uint32_t>(pid1);
   uint32_t id2 = static_cast<uint32_t>(pid2);
 
-  if (id1 > id2)  {
+  if (id1 > id2) {
     merged_ids = Utils::u32_to_u64(id1, id2);
   } else {
     merged_ids = Utils::u32_to_u64(id2, id1);
   }
   key_type k{merged_ids};
-  
+
   auto const noise = rng_type{}(c, k);
 
   using Utils::uniform;
   return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
          Vector3d::broadcast(0.5);
 }
-
 
 std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
 
@@ -89,9 +89,7 @@ void mpi_bcast_dpd_rng_counter(const uint64_t counter) {
   mpi_call(mpi_bcast_dpd_rng_counter_slave, counter);
 }
 
-void dpd_rng_counter_increment() {
-    dpd_rng_counter->increment();
-}
+void dpd_rng_counter_increment() { dpd_rng_counter->increment(); }
 
 bool dpd_is_seed_required() {
   /* Seed is required if rng is not initialized */
@@ -187,9 +185,9 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   auto const v21 = p1->m.v - p2->m.v;
   auto const noise_vec =
       (ia_params->dpd_radial.pref > 0.0 || ia_params->dpd_trans.pref > 0.0)
-          ? dpd_noise(p1->p.identity, p2->p.identity) 
+          ? dpd_noise(p1->p.identity, p2->p.identity)
           : Vector3d{};
-  
+
   auto const f_r = dpd_pair_force(ia_params->dpd_radial, v21, dist, noise_vec);
   auto const f_t = dpd_pair_force(ia_params->dpd_trans, v21, dist, noise_vec);
 
