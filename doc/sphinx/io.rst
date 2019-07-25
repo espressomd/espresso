@@ -8,17 +8,17 @@ Input and Output
 Checkpointing and restoring a simulation
 ----------------------------------------
 
-One of the most asked-for feature that seems to be missing in is
-*checkpointing*, a simple way to tell to store and restore the current
+One of the most asked-for feature that seems to be missing is
+*checkpointing*, a simple way to store and restore the current
 state of the simulation, and to be able to write this state to or read
 it from a file. This would be most useful to be able to restart a
 simulation from a specific point in time.
 
 Unfortunately, it is impossible to provide a simple command
-(``checkpoint``), out of two reasons. The main reason is that has no way
-to determine what information constitutes the actual state of the
-simulation. On the one hand, scripts sometimes use variables that
-contain essential information about a simulation, the stored values of
+(``checkpoint``), out of two reasons. The main reason is that it has no
+way to determine what information constitutes the actual state of the
+simulation. Scripts sometimes use variables that
+contain essential information about a simulation: the stored values of
 an observable that was computed in previous time steps, counters, etc.
 These would have to be contained in a checkpoint. However, not all
 variables are of interest. 
@@ -26,8 +26,8 @@ variables are of interest.
 Another problem with a generic checkpoint would be the control flow of
 the script. In principle, the checkpoint would have to store where in
 the script the checkpointing function was called to be able to return
-there. All this is even further complicated by the fact that is running
-in parallel.
+there. All this is even further complicated by the fact that |es| is
+running in parallel.
 
 Having said that, |es| does provide functionality which aims to store the state of the simulation engine.
 In addition, variables declared in the simulation script can be added to the checkpoint.
@@ -42,7 +42,7 @@ The checkpointing functionality is difficult to test for all possible simulation
 It is strongly recommended to keep track of the times in the simulation run where a checkpoint was written and restored and manually verify that the observables of interest do not jump or drift after restoring the checkpoint.
 Moreover, please carefully read the limitations mentioned below.
 
-Checkpointing is implemented by the :cls:`espressomd.checkpointing.Checkpointing` class. I is instanced as follows::
+Checkpointing is implemented by the :class:`espressomd.checkpointing.Checkpoint` class. It is instanced as follows::
     
     from espressomd import checkpointing
     checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path=".")
@@ -55,7 +55,7 @@ stored. The current working directory is assumed, when this parameter is skipped
 After the simulation system and user variables are set up, they can be
 registered for checkpointing.
 Name the string of the object or user variable that should be registered for
-checkpointing. 
+checkpointing.
 
 To give an example::
 
@@ -71,7 +71,7 @@ will register the user variable `my_var` and the instance of the simulation syst
 
     checkpoint.save()
 
-To trigger the checkpoint when Ctrl-C is pressed during a running simulation, the corresponding signal has to be registered:::
+To trigger the checkpoint when Ctrl+C is pressed during a running simulation, the corresponding signal has to be registered::
 
 
     import signal
@@ -101,18 +101,18 @@ Be aware of the following limitations:
   * Pickling support of the Espresso system instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms then can be tested.
 
   * The active actors, i.e., the content of `system.actors`, are checkpointed. For lattice Boltzmann fluids, this only includes the parameters such as the lattice constant (`agrid`). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods 
-    `:meth:espressomd.lb.HydrodynamicInteraction.save_checkpoint`
-    and loaded via `:meth:espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint
+    :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
+    and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint
 
   * References between Python objects are not maintained during checkpointing. For example, if an instance of a shape and an instance of a constraint containing the shape are checkpointed, these two objects are equal before checkpointing but independent copies which have the same parameters after restoring the checkpoint. Changing one will no longer afect the other.
       
   * The state of the cell system as well as the MPI node grid are checkpointed. Therefore, checkpoints can only be loaded, when the script runs on the same number of MPI ranks.
 
-  * Checkpoints are not compatible between different Espresso versions.
+  * Checkpoints are not compatible between different |es| versions.
 
   * Checkpoints may depend on the presence of other Python modules at specific versions. It may therefore not be possible to load a checkpoint in a different environment than where it was loaded. 
 
-For additional methods of the checkpointing class, see :cls:`espressomd.checkpointing.Checkpointing`.
+For additional methods of the checkpointing class, see :class:`espressomd.checkpointing.Checkpoint`.
 
 .. _Writing H5MD-Files:
 
