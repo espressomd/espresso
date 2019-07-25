@@ -169,8 +169,7 @@ cdef class HydrodynamicInteraction(Actor):
             raise Exception("lb_lbfluid_set_agrid error")
 
         if not self._params["ext_force_density"] == default_params["ext_force_density"]:
-            if python_lbfluid_get_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"]):
-                raise Exception("lb_lbfluid_set_ext_force_density error")
+            self._params["ext_force_density"] = self.ext_force_density
 
         return self._params
 
@@ -260,6 +259,15 @@ cdef class HydrodynamicInteraction(Actor):
 
         def __set__(self, value):
             raise NotImplementedError
+
+    property ext_force_density:
+        def __get__(self):
+            cdef Vector3d res
+            res = python_lbfluid_get_ext_force_density(self._params["agrid"], self._params["tau"])
+            return make_array_locked(res)
+
+        def __set__(self, ext_force_density):
+            python_lbfluid_set_ext_force_density(ext_force_density, self._params["agrid"], self._params["tau"])
 
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
