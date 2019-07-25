@@ -30,10 +30,8 @@
 //#include "random.hpp"
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
-
 #include "global.hpp"
 #include "integrate.hpp"
-
 
 #include <utils/Vector.hpp>
 using Utils::Vector3d;
@@ -150,13 +148,15 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
     return {};
   }
 
+  Vector3d rnoise = Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5};
+  Vector3d pnoise = dpd_noise(p1->p.identity, p2->p.identity);
+
   auto const v21 = p1->m.v - p2->m.v;
-  auto const noise4 = dpd_noise(p1->p.identity, p2->p.identity);
   auto const noise_vec =
       (ia_params->dpd_radial.pref > 0.0 || ia_params->dpd_trans.pref > 0.0)
-          ? Vector3d{noise4[1], noise4[2], noise4[3]}
+          ? pnoise // dpd_noise(p1->p.identity, p2->p.identity)
           : Vector3d{};
-
+  
   auto const f_r = dpd_pair_force(ia_params->dpd_radial, v21, dist, noise_vec);
   auto const f_t = dpd_pair_force(ia_params->dpd_trans, v21, dist, noise_vec);
 

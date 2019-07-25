@@ -774,7 +774,7 @@ class openGLLive(object):
         if self.specs['LB_draw_boundaries']:
             ni = 0
             for c in self.system.lbboundaries:
-                if type(c) == espressomd.ekboundaries.EKBoundary:
+                if type(c) == espressomd.lbboundaries.LBBoundary:
                     t = ni
                     ni += 1
                     s = c.get_parameter('shape')

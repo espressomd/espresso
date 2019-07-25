@@ -127,6 +127,9 @@ void force_and_velocity_display();
 
 void finalize_p_inst_npt();
 
+/** Thermostats increment the RNG counter here. */
+void philox_counter_increment();
+
 /*@}*/
 
 void integrator_sanity_checks() {
@@ -230,15 +233,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts();
 
-    // Langevin philox rng counter
+    // Philox rng counter
     if (n_steps > 0) {
-      if (thermo_switch & THERMO_LANGEVIN) {
-        langevin_rng_counter_increment();
-      } else if (thermo_switch & THERMO_DPD) {
-        dpd_rng_counter_increment();        
-      }
+        philox_counter_increment();
     }
-
+    
     force_calc();
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
@@ -328,8 +327,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts();
 
-    // Propagate langevin philox rng counter
-    langevin_rng_counter_increment();
+    // Propagate philox rng counters
+    philox_counter_increment();
 
     force_calc();
 
@@ -426,6 +425,15 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 /* Private functions */
 /************************************************************/
+
+void philox_counter_increment()
+{
+  if (thermo_switch & THERMO_LANGEVIN) {
+    langevin_rng_counter_increment();
+  } else if (thermo_switch & THERMO_DPD) {
+    dpd_rng_counter_increment();
+  }
+}
 
 void propagate_vel_finalize_p_inst() {
 #ifdef NPT
