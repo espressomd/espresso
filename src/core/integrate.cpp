@@ -229,7 +229,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts();
 
-    auto particles = local_cells.particles();
+    auto particles = cell_structure.local_cells().particles();
 
     // Langevin philox rng counter
     if (n_steps > 0) {
@@ -269,7 +269,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
-    auto particles = local_cells.particles();
+    auto particles = cell_structure.local_cells().particles();
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
@@ -305,7 +305,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (n_rigidbonds) {
       cells_update_ghosts();
 
-      correct_pos_shake(local_cells.particles());
+      correct_pos_shake(cell_structure.local_cells().particles());
     }
 #endif
 
@@ -330,7 +330,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Propagate langevin philox rng counter
     langevin_rng_counter_increment();
 
-    particles = local_cells.particles();
+    particles = cell_structure.local_cells().particles();
 
     force_calc(cell_structure);
 
