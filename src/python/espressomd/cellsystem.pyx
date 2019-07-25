@@ -307,4 +307,5 @@ cdef class CellSystem(object):
 
         """
         c_tune_skin(min_skin, max_skin, tol, int_steps, adjust_max_skin)
+        handle_errors("Error during tune_skin")
         return self.skin

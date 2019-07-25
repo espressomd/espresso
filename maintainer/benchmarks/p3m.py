@@ -152,14 +152,16 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # tuning and equilibration
 system.integrator.run(min(3 * measurement_steps, 1000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
-    min_skin=0.4, max_skin=1.6, tol=0.05, int_steps=100)))
+    min_skin=0.4, max_skin=1.6, tol=0.05, int_steps=100,
+    adjust_max_skin=True)))
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune p3m")
 p3m = electrostatics.P3M(prefactor=args.prefactor, accuracy=1e-4)
 system.actors.add(p3m)
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
-    min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
+    min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100,
+    adjust_max_skin=True)))
 
 
 if not args.visualizer:
