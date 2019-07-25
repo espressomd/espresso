@@ -31,11 +31,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "lb_inertialess_tracers_cuda_interface.hpp"
 #include "particle_data.hpp"
 
+#ifdef LB_WALBERLA
+#include "grid_based_algorithms/LbWalberla.hpp"
+#include "grid_based_algorithms/lb_walberla_instance.hpp"
+#endif
+
 #include <utils/math/sqr.hpp>
 
 // ****** Functions for internal use ********
 
 void CoupleIBMParticleToFluid(Particle *p);
+void CoupleIBMParticleToFluidWalberla(Particle *p);
 void ParticleVelocitiesFromLB_CPU();
 bool IsHalo(int indexCheck);
 void GetIBMInterpolatedVelocity(const Utils::Vector3d &p, double *v,
@@ -81,7 +87,12 @@ void IBM_ForcesIntoFluid_CPU() {
 
     for (int i = 0; i < np; i++)
       if (p[i].p.is_virtual)
-        CoupleIBMParticleToFluid(&p[i]);
+        if(lattice_switch == ActiveLB::CPU)
+          CoupleIBMParticleToFluid(&p[i]);
+#ifdef LB_WALBERLA
+        else if(lattice_switch == ActiveLB::WALBERLA)
+          CoupleIBMParticleToFluidWalberla(&p[i]);
+#endif
   }
 
   // Loop over ghost cells
@@ -95,7 +106,12 @@ void IBM_ForcesIntoFluid_CPU() {
       // in the range of the local lattice nodes
       if (in_local_domain(p[i].r.p)) {
         if (p[i].p.is_virtual)
-          CoupleIBMParticleToFluid(&p[i]);
+          if(lattice_switch == ActiveLB::CPU)
+            CoupleIBMParticleToFluid(&p[i]);
+#ifdef LB_WALBERLA
+          else if(lattice_switch == ActiveLB::WALBERLA)
+            CoupleIBMParticleToFluidWalberla(&p[i]);
+#endif
       }
     }
   }
@@ -187,6 +203,20 @@ void CoupleIBMParticleToFluid(Particle *p) {
     }
   }
 }
+
+/*************
+   CoupleIBMParticleToFluidWalberla
+This function puts the momentum of a given particle into the LB fluid - only for
+Walberla
+**************/
+
+void CoupleIBMParticleToFluidWalberla(Particle *p) {
+  // Convert units from MD to LB
+  Utils::Vector3d delta_j = p->f.f * lb_walberla()->get_tau() * lb_walberla()->get_tau() / lb_walberla()->get_grid_spacing();
+
+  lb_walberla()->add_force_at_pos(p->r.p / lb_lbfluid_get_agrid(), delta_j);
+}
+
 
 /******************
    GetIBMInterpolatedVelocity
