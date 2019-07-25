@@ -306,5 +306,5 @@ cdef class CellSystem(object):
         :attr:`skin`
 
         """
-        c_tune_skin(min_skin, max_skin, tol, int_steps, int(adjust_max_skin))
+        c_tune_skin(min_skin, max_skin, tol, int_steps, adjust_max_skin)
         return self.skin
