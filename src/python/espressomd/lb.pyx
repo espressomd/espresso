@@ -85,7 +85,6 @@ cdef class HydrodynamicInteraction(Actor):
             if abs(round(factor)-factor)/factor > numeric_limits[float].epsilon():
                 raise ValueError("LB_time_step must be integer multiple of Time step. Factor is {}".format(factor))
             
-
     # list of valid keys for parameters
     ####################################################
     def valid_keys(self):

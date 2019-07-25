@@ -266,7 +266,6 @@ cdef class System(object):
                 factor = tau / _time_step
                 if abs(round(factor)-factor)/factor > numeric_limits[float].epsilon():
                     raise ValueError("LB_time_step must be integer multiple of Time step. Factor is {}".format(factor))
-                        
 
             self.globals.time_step = _time_step
 
