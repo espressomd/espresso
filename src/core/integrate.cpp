@@ -229,8 +229,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts();
 
-    auto particles = cell_structure.local_cells().particles();
-
     // Langevin philox rng counter
     if (n_steps > 0) {
       langevin_rng_counter_increment();
@@ -240,7 +238,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
-      convert_initial_torques(particles);
+      convert_initial_torques(cell_structure.local_cells().particles());
 #endif
     }
 
