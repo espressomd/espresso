@@ -283,6 +283,11 @@ void lb_reinit_parameters() {
     for (int i = 0; i < D3Q19::n_vel; i++)
       lbpar.phi[i] = 0.0;
   }
+
+  // Update external forces on the nodes
+  for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
+    lbfields[i].force_density = lbpar.ext_force_density;
+  }
 }
 
 /* Halo communication for push scheme */

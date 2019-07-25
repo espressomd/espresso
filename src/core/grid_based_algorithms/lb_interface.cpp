@@ -459,6 +459,7 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
       lbpar_gpu.external_force_density = 0;
     }
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
+    reset_LB_force_densities_GPU(false);
 
 #endif //  CUDA
   } else {

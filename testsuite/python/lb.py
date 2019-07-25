@@ -321,11 +321,15 @@ class TestLB(object):
         self.system.integrator.run(n_time_steps)
         # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps - 0.5)
         # (force is applied only to the second half of the first integration step)
+        # velocity includes half of the forces applied in the prev.
+        # integration step
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
-            n_time_steps - 0.5) / self.params['dens']
-        for n in self.lbf.nodes():
+            n_time_steps + 0.5) / self.params['dens']
+        for n in list(itertools.combinations(range(int(self.system.box_l[0] / self.params['agrid'])), 3)):
             np.testing.assert_allclose(
-                np.copy(n.velocity), fluid_velocity, atol=1E-6)
+                np.copy(self.lbf[n].velocity), fluid_velocity, atol=1E-6)
+        np.testing.assert_allclose(
+            self.system.analysis.linear_momentum() / self.system.volume() / self.params['dens'], fluid_velocity, atol=1E-6)
 
 
 class TestLBCPU(TestLB, ut.TestCase):
