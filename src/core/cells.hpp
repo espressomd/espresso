@@ -181,11 +181,11 @@ struct CellStructure {
   bool use_verlet_list = true;
 
   /** returns the global local_cells.particles() */
-  ParticleRange get_local_cells() const {
+  ParticleRange get_local_particles() const {
     return local_cells.particles();
   }
   /** returns the global ghost_cells.particles() */
-  ParticleRange get_ghost_cells() const {
+  ParticleRange get_ghost_particles() const {
     return ghost_cells.particles();
   }
 

@@ -350,7 +350,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
-      correct_vel_shake(particles, ghost_cells.particles());
+      correct_vel_shake(cell_structure);
     }
 #endif
 

@@ -286,20 +286,22 @@ void revert_force(const ParticleRange &particles,
     revert(p);
 }
 
-void correct_vel_shake(const ParticleRange &particles,
-                       const ParticleRange &ghost_particles) {
+void correct_vel_shake(CellStructure &cellStructure) {
   int repeat_, repeat = 1, cnt = 0;
   /**transfer the current forces to r.p_old of the particle structure so that
   velocity corrections can be stored temporarily at the f.f[3] of the particle
   structure  */
+  auto particles = cellStructure.get_local_particles();
+  auto ghost_particles = cellStructure.get_ghost_particles();
+
   transfer_force_init_vel(particles, ghost_particles);
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
-    init_correction_vector(local_cells.particles());
+    init_correction_vector(particles);
     repeat_ = 0;
     compute_vel_corr_vec(&repeat_);
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    ghost_communicator(&cellStructure.collect_ghost_force_comm);
     apply_vel_corr(particles);
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(&cellStructure.update_ghost_pos_comm);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else

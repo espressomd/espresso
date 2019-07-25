@@ -103,7 +103,7 @@ void force_calc(CellStructure &cellStructure) {
   prepare_local_collision_queue();
 #endif
 
-  auto particles = cellStructure.get_local_cells();
+  auto particles = cellStructure.get_local_particles();
 #ifdef ELECTROSTATICS
   iccp3m_iteration(particles);
 #endif
@@ -167,7 +167,7 @@ void force_calc(CellStructure &cellStructure) {
 #ifdef VIRTUAL_SITES
   if (virtual_sites()->is_relative()) {
     ghost_communicator(&cellStructure.collect_ghost_force_comm);
-    init_forces_ghosts(cellStructure.get_ghost_cells());
+    init_forces_ghosts(cellStructure.get_ghost_particles());
   }
   virtual_sites()->back_transfer_forces_and_torques();
 #endif
@@ -175,7 +175,7 @@ void force_calc(CellStructure &cellStructure) {
   // Communication Step: ghost forces
   ghost_communicator(&cellStructure.collect_ghost_force_comm);
 
-  particles = cellStructure.get_local_cells();
+  particles = cellStructure.get_local_particles();
   // should be pretty late, since it needs to zero out the total force
   comfixed.apply(comm_cart, particles);
 

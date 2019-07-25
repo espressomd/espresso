@@ -32,7 +32,7 @@
 /** number of rigid bonds */
 extern int n_rigidbonds;
 
-#include "ParticleRange.hpp"
+#include "cells.hpp"
 #include "config.hpp"
 
 #ifdef BOND_CONSTRAINT
@@ -47,8 +47,7 @@ void save_old_pos(const ParticleRange &particles,
 void correct_pos_shake(const ParticleRange &particles);
 
 /** Correction of current velocities using RATTLE algorithm*/
-void correct_vel_shake(const ParticleRange &particles,
-                       const ParticleRange &ghost_particles);
+void correct_vel_shake(CellStructure &cellStructure);
 
 /** set the parameter for a rigid, aka RATTLE bond */
 int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol);
