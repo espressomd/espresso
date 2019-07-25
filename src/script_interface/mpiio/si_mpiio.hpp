@@ -53,7 +53,8 @@ public:
                  field_value(bond, Mpiio::MPIIO_OUT_BND);
 
     if (name == "write")
-      Mpiio::mpi_mpiio_common_write(pref.c_str(), v, cell_structure.local_cells().particles());
+      Mpiio::mpi_mpiio_common_write(pref.c_str(), v,
+                                    cell_structure.local_cells().particles());
     else if (name == "read")
       Mpiio::mpi_mpiio_common_read(pref.c_str(), v);
 

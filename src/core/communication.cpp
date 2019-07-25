@@ -410,7 +410,8 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     break;
   case 4:
     mpi_call(mpi_gather_stats_slave, -1, 4);
-    predict_momentum_particles((double *)result, cell_structure.local_cells().particles());
+    predict_momentum_particles((double *)result,
+                               cell_structure.local_cells().particles());
     break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
@@ -450,7 +451,8 @@ void mpi_gather_stats_slave(int, int job) {
     pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
     break;
   case 4:
-    predict_momentum_particles(nullptr, cell_structure.local_cells().particles());
+    predict_momentum_particles(nullptr,
+                               cell_structure.local_cells().particles());
     break;
   case 6:
     lb_calc_fluid_momentum(nullptr);
@@ -661,7 +663,8 @@ void mpi_bcast_max_mu() {
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
 void mpi_kill_particle_motion_slave(int rotation) {
-  local_kill_particle_motion(rotation, cell_structure.local_cells().particles());
+  local_kill_particle_motion(rotation,
+                             cell_structure.local_cells().particles());
   on_particle_change();
 }
 
