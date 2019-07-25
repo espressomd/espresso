@@ -147,6 +147,11 @@ struct CellStructure {
 
   bool use_verlet_list = true;
 
+  /** returns the global local_cells.particles() */
+  ParticleRange get_local_cells() const;
+  /** returns the global global_cells.particles() */
+  ParticleRange get_ghost_cells() const;
+
   /** Communicator to exchange ghost cell information. */
   GhostCommunicator ghost_cells_comm;
   /** Communicator to exchange ghost particles. */
@@ -197,6 +202,14 @@ extern double max_range;
 extern int rebuild_verletlist;
 
 /*@}*/
+
+ParticleRange CellStructure::get_local_cells() const {
+  return local_cells.particles();
+}
+
+ParticleRange CellStructure::get_ghost_cells() const {
+  return ghost_cells.particles();
+}
 
 /************************************************************/
 /** \name Exported Functions */
