@@ -20,7 +20,6 @@
 */
 #include "bonded_interactions/bonded_tab.hpp"
 
-#ifdef TABULATED
 #include "communication.hpp"
 #include "errorhandling.hpp"
 
@@ -70,5 +69,3 @@ int tabulated_bonded_set_params(int bond_type,
 
   return ES_OK;
 }
-
-#endif

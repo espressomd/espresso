@@ -293,13 +293,8 @@ ELSE:
         double r
         double r_cut
 
-IF TABULATED:
-    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     #* Parameters for n-body tabulated potential (n=2,3,4). */
-        cdef struct Tabulated_bond_parameters:
-            int type
-            TabulatedPotential * pot
-ELSE:
     cdef struct Tabulated_bond_parameters:
         int type
         TabulatedPotential * pot
@@ -542,12 +537,12 @@ IF ROTATION:
     cdef extern from "bonded_interactions/harmonic_dumbbell.hpp":
         int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r, double r_cut)
 
-IF TABULATED:
-    cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
-        cdef enum TabulatedBondedInteraction:
-            TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
-    cdef extern from "bonded_interactions/bonded_tab.hpp":
-        int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, double min, double max, vector[double] energy, vector[double] force)
+cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
+    cdef enum TabulatedBondedInteraction:
+        TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
+
+cdef extern from "bonded_interactions/bonded_tab.hpp":
+    int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, double min, double max, vector[double] energy, vector[double] force)
 
 IF ELECTROSTATICS:
     cdef extern from "bonded_interactions/bonded_coulomb.hpp":

@@ -23,7 +23,6 @@ import espressomd
 import numpy as np
 
 
-@utx.skipIfMissingFeatures("TABULATED")
 class TabulatedTest(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
@@ -60,6 +59,7 @@ class TabulatedTest(ut.TestCase):
             self.assertAlmostEqual(
                 self.s.analysis.energy()['total'], 5. - z * 2.3)
 
+    @utx.skipIfMissingFeatures("TABULATED")
     def test_non_bonded(self):
         self.s.non_bonded_inter[0, 0].tabulated.set_params(
             min=self.min_, max=self.max_, energy=self.energy, force=self.force)
@@ -81,9 +81,8 @@ class TabulatedTest(ut.TestCase):
     def test_bonded(self):
         from espressomd.interactions import Tabulated
 
-        tb = Tabulated(
-            type='distance', min=self.min_, max=self.max_, energy=self.energy,
-                       force=self.force)
+        tb = Tabulated(type='distance', min=self.min_, max=self.max_,
+                       energy=self.energy, force=self.force)
         self.s.bonded_inter.add(tb)
 
         np.testing.assert_allclose(self.force, tb.params['force'])

@@ -345,12 +345,10 @@ void mpi_bcast_ia_params(int i, int j) {
     /* bonded interaction parameters */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
-#ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
-#endif
   }
 
   on_short_range_ia_change();
@@ -367,7 +365,6 @@ void mpi_bcast_ia_params_slave(int i, int j) {
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
-#ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
       auto *tab_pot = new TabulatedPotential();
@@ -375,7 +372,6 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
       bonded_ia_params[i].p.tab.pot = tab_pot;
     }
-#endif
   }
 
   on_short_range_ia_change();

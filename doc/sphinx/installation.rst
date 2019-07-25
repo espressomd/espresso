@@ -491,7 +491,7 @@ Interaction features
 The following switches turn on various short ranged interactions (see
 section :ref:`Isotropic non-bonded interactions`):
 
--  ``TABULATED`` Enable support for user-defined interactions.
+-  ``TABULATED`` Enable support for user-defined non-bonded interaction potentials.
 
 -  ``LENNARD_JONES`` Enable the Lennard-Jones potential.
 
