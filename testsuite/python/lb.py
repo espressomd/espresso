@@ -332,7 +332,7 @@ class TestLB(object):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
         self.system.part.clear()
-        self.system.part.add(pos = [0.1,0.2,0.3], fix = [1,1,1])
+        self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
         ext_force_density = [2.3, 1.2, 0.1]
         lbf = self.lb_class(
             visc=self.params['viscosity'],
@@ -340,12 +340,13 @@ class TestLB(object):
             agrid=self.params['agrid'],
             tau=self.params['time_step'],
             ext_force_density=ext_force_density,
-            kT = 0.)
-        sim_time = 100*self.params['time_step']
+            kT=0.)
+        sim_time = 100 * self.params['time_step']
         self.system.actors.add(lbf)
-        self.system.thermostat.set_lb(LB_fluid = lbf, gamma = 0.1)
-        self.system.integrator.run(int(round(sim_time/self.system.time_step)))
-        probe_pos = np.array(self.system.box_l)/2.
+        self.system.thermostat.set_lb(LB_fluid=lbf, gamma=0.1)
+        self.system.integrator.run(
+            int(round(sim_time / self.system.time_step)))
+        probe_pos = np.array(self.system.box_l) / 2.
         v1 = lbf.get_interpolated_velocity(probe_pos)
         f1 = self.system.part[0].f
         self.system.actors.clear()
@@ -357,24 +358,26 @@ class TestLB(object):
             tau=self.params['time_step'],
             ext_force_density=ext_force_density)
         self.system.actors.add(lbf)
-        self.system.thermostat.set_lb(LB_fluid = lbf, gamma = 0.1)
+        self.system.thermostat.set_lb(LB_fluid=lbf, gamma=0.1)
         #illegal time_step/ tau combinations
         with self.assertRaises(ValueError):
-            lbf.set_params(tau = 0.5*self.system.time_step)
+            lbf.set_params(tau=0.5 * self.system.time_step)
         with self.assertRaises(ValueError):
-            lbf.set_params(tau = 1.1*self.system.time_step)
+            lbf.set_params(tau=1.1 * self.system.time_step)
         with self.assertRaises(ValueError):
-            self.system.time_step = 2.*lbf.get_params()["tau"]
+            self.system.time_step = 2. * lbf.get_params()["tau"]
         with self.assertRaises(ValueError):
-            self.system.time_step = 0.8*lbf.get_params()["tau"]
-        lbf.set_params(tau = self.params['time_step'])
-        self.system.time_step = 0.5*self.params['time_step']
-        self.system.integrator.run(int(round(sim_time/self.system.time_step)))
+            self.system.time_step = 0.8 * lbf.get_params()["tau"]
+        lbf.set_params(tau=self.params['time_step'])
+        self.system.time_step = 0.5 * self.params['time_step']
+        self.system.integrator.run(
+            int(round(sim_time / self.system.time_step)))
         self.system.time_step = self.params['time_step']
         v2 = lbf.get_interpolated_velocity(probe_pos)
         f2 = self.system.part[0].f
-        np.testing.assert_allclose(v1,v2,rtol = 1e-5)
-        np.testing.assert_allclose(f1,f2,rtol = 1e-5)
+        np.testing.assert_allclose(v1, v2, rtol=1e-5)
+        np.testing.assert_allclose(f1, f2, rtol=1e-5)
+
 
 class TestLBCPU(TestLB, ut.TestCase):
 

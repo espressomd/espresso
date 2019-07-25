@@ -78,12 +78,13 @@ cdef class HydrodynamicInteraction(Actor):
         if (tau <= 0.0):
             raise Exception("LB_FLUID tau not set")
         elif global_time_step > 0:
-            if (tau - global_time_step)/(abs(tau) + abs(global_time_step)) < -numeric_limits[float].epsilon():
+            if (tau - global_time_step) / (abs(tau) + abs(global_time_step)) < -numeric_limits[float].epsilon():
                 raise ValueError(
                     "LB_time_step ({}) must be >= Time Step ({})".format(tau, global_time_step))
             factor = tau / global_time_step
-            if abs(round(factor)-factor)/factor > numeric_limits[float].epsilon():
-                raise ValueError("LB_time_step must be integer multiple of Time step. Factor is {}".format(factor))
+            if abs(round(factor) - factor) / factor > numeric_limits[float].epsilon():
+                raise ValueError(
+                    "LB_time_step must be integer multiple of Time step. Factor is {}".format(factor))
             
     # list of valid keys for parameters
     ####################################################
