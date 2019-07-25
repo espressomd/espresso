@@ -19,7 +19,6 @@
 This sample sets up a polymer and tests the available cell systems.
 """
 
-from __future__ import print_function
 import time
 import numpy as np
 import espressomd

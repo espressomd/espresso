@@ -228,7 +228,6 @@ following code snippet demonstrates the visualization of the director property
 and individual settings for two particle types (requires the ``ROTATION``
 feature)::
 
-    from __future__ import print_function
     import numpy
     from espressomd import *
     from espressomd.visualization_opengl import *

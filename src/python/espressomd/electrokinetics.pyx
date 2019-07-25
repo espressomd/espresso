@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 IF CUDA:
     from .lb cimport HydrodynamicInteraction

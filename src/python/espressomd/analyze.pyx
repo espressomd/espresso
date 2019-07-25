@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # For C-extern Analysis
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport analyze
 from . cimport utils
