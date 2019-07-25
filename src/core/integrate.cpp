@@ -236,7 +236,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
       langevin_rng_counter_increment();
     }
 
-    force_calc(particles);
+    force_calc(cell_structure);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
@@ -332,7 +332,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     particles = local_cells.particles();
 
-    force_calc(particles);
+    force_calc(cell_structure);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();

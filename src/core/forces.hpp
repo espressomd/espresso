@@ -31,6 +31,7 @@
  */
 
 #include "ParticleRange.hpp"
+#include "cells.hpp"
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -61,7 +62,7 @@ void init_forces_ghosts(const ParticleRange &particles);
  *  <li> Calculate long range interaction forces
  *  </ol>
  */
-void force_calc(const ParticleRange &particles);
+void force_calc(CellStructure &cellStructure);
 
 /** Check if forces are NAN */
 void check_forces(const ParticleRange &particles,
