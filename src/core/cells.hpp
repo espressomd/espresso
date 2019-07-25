@@ -134,6 +134,39 @@ struct CellPList {
   int max;
 };
 
+/*@}*/
+
+/************************************************************/
+/** \name Exported Variables */
+/************************************************************/
+/*@{*/
+
+/** list of all cells. */
+extern std::vector<Cell> cells;
+
+/** list of all cells containing particles physically on the local
+    node */
+extern CellPList local_cells;
+/** list of all cells containing ghosts */
+extern CellPList ghost_cells;
+
+/** Maximal interaction range - also the minimum cell size. Any
+ *  cellsystem makes sure that the particle pair loop visits all pairs
+ *  of particles that are closer than this.
+ */
+extern double max_range;
+
+/** If non-zero, cell systems should reset the position for checking
+ *  the Verlet criterion. Moreover, the Verlet list has to be
+ *  rebuilt.
+ */
+extern int rebuild_verletlist;
+
+/*@}*/
+
+
+/*@{*/
+
 /** Describes a cell structure / cell system. Contains information
  *  about the communication of cell contents (particles, ghosts, ...)
  *  between different nodes and the relation between particle
@@ -148,9 +181,13 @@ struct CellStructure {
   bool use_verlet_list = true;
 
   /** returns the global local_cells.particles() */
-  ParticleRange get_local_cells() const;
-  /** returns the global global_cells.particles() */
-  ParticleRange get_ghost_cells() const;
+  ParticleRange get_local_cells() const {
+    return local_cells.particles();
+  }
+  /** returns the global ghost_cells.particles() */
+  ParticleRange get_ghost_cells() const {
+    return ghost_cells.particles();
+  }
 
   /** Communicator to exchange ghost cell information. */
   GhostCommunicator ghost_cells_comm;
@@ -172,44 +209,8 @@ struct CellStructure {
 
 /*@}*/
 
-/************************************************************/
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
-/** list of all cells. */
-extern std::vector<Cell> cells;
-
-/** list of all cells containing particles physically on the local
-    node */
-extern CellPList local_cells;
-/** list of all cells containing ghosts */
-extern CellPList ghost_cells;
-
 /** Type of cell structure in use ( \ref Cell Structure ). */
 extern CellStructure cell_structure;
-
-/** Maximal interaction range - also the minimum cell size. Any
- *  cellsystem makes sure that the particle pair loop visits all pairs
- *  of particles that are closer than this.
- */
-extern double max_range;
-
-/** If non-zero, cell systems should reset the position for checking
- *  the Verlet criterion. Moreover, the Verlet list has to be
- *  rebuilt.
- */
-extern int rebuild_verletlist;
-
-/*@}*/
-
-ParticleRange CellStructure::get_local_cells() const {
-  return local_cells.particles();
-}
-
-ParticleRange CellStructure::get_ghost_cells() const {
-  return ghost_cells.particles();
-}
 
 /************************************************************/
 /** \name Exported Functions */
