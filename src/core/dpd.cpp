@@ -29,16 +29,53 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
-//#include "global.hpp"
 #include "integrate.hpp"
-
-#include <utils/Vector.hpp>
-using Utils::Vector3d;
-#include <utils/NoOp.hpp>
-#include <utils/constants.hpp>
-#include <utils/math/tensor_product.hpp>
+#include "random.hpp"
 
 #include <boost/mpi/collectives/reduce.hpp>
+#include <utils/uniform.hpp>
+#include <utils/u32_to_u64.hpp>
+#include <utils/constants.hpp>
+#include <utils/NoOp.hpp>
+#include <utils/math/tensor_product.hpp>
+#include <Random123/philox.h>
+
+using Utils::Vector3d;
+
+/** Return a random 4d vector with the philox thermostat.
+    Random numbers depend on
+    1. dpd_rng_counter (initialized by seed) which is increased on
+   integration
+    2. Salt (decorrelates different counter)
+    3. Two particle IDs (order-independent, decorrelates particles, gets rid of seed-per-node)
+*/
+inline Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
+
+  using rng_type = r123::Philox4x64;
+  using ctr_type = rng_type::ctr_type;
+  using key_type = rng_type::key_type;
+
+  ctr_type c{
+      {dpd_rng_counter->value(), static_cast<uint64_t>(RNGSalt::SALT_DPD)}};
+
+  uint64_t merged_ids;
+  uint32_t id1 = static_cast<uint32_t>(pid1);
+  uint32_t id2 = static_cast<uint32_t>(pid2);
+
+  if (id1 > id2)  {
+    merged_ids = Utils::u32_to_u64(id1, id2);
+  } else {
+    merged_ids = Utils::u32_to_u64(id2, id1);
+  }
+  key_type k{merged_ids};
+  
+  auto const noise = rng_type{}(c, k);
+
+  using Utils::uniform;
+  return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
+         Vector3d::broadcast(0.5);
+}
+
 
 std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
 
@@ -156,7 +193,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   auto const f_r = dpd_pair_force(ia_params->dpd_radial, v21, dist, noise_vec);
   auto const f_t = dpd_pair_force(ia_params->dpd_trans, v21, dist, noise_vec);
 
-  auto const d21 = Utils::Vector3d{d[0], d[1], d[2]};
+  auto const d21 = Vector3d{d[0], d[1], d[2]};
   /* Projection operator to radial direction */
   auto const P = tensor_product(d21 / dist2, d21);
   /* This is equivalent to P * f_r + (1 - P) * f_t, but with
@@ -167,7 +204,7 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
 static auto dpd_viscous_stress_local() {
   on_observable_calc();
 
-  Utils::Vector<Utils::Vector3d, 3> stress{};
+  Utils::Vector<Vector3d, 3> stress{};
   short_range_loop(
       Utils::NoOp{},
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {

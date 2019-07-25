@@ -25,10 +25,8 @@
 */
 
 #include "particle_data.hpp"
-#include <dpd.hpp>
-
+#include "dpd.hpp"
 #include "TabulatedPotential.hpp"
-#include "utils/Counter.hpp"
 
 /** cutoff for deactivated interactions. Below 0, so that even particles on
     top of each other don't interact by chance. */
