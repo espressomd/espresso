@@ -108,11 +108,11 @@ double cutoff(const Utils::Vector3d &box_l) {
   switch (coulomb.method) {
   case COULOMB_MMM1D:
     return std::numeric_limits<double>::infinity();
+  case COULOMB_MMM2D:
+    return std::numeric_limits<double>::min();
 #ifdef P3M
   case COULOMB_ELC_P3M:
     return std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);
-  case COULOMB_MMM2D:
-    return layer_h - skin;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
     /* do not use precalculated r_cut here, might not be set yet */
