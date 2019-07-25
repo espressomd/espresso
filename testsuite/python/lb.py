@@ -326,7 +326,45 @@ class TestLB(object):
         for n in self.lbf.nodes():
             np.testing.assert_allclose(
                 np.copy(n.velocity), fluid_velocity, atol=1E-6)
-
+    
+    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
+    def test_unequal_time_step(self):
+        self.system.thermostat.turn_off()
+        self.system.actors.clear()
+        self.system.part.clear()
+        ext_force_density = [2.3, 1.2, 0.1]
+        lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.params['time_step'],
+            ext_force_density=ext_force_density)
+        sim_time = 100*self.params['time_step']
+        self.system.actors.add(lbf)
+        self.system.integrator.run(int(round(sim_time/self.system.time_step)))
+        probe_pos = np.array(self.system.box_l)/2.
+        v1 = lbf.get_interpolated_velocity(probe_pos)
+        self.system.actors.clear()
+        #get fresh LBfluid and change time steps
+        lbf = self.lb_class(
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.params['time_step'],
+            ext_force_density=ext_force_density)
+        self.system.actors.add(lbf)
+        #illegal time_step/ tau combinations
+        with self.assertRaises(ValueError):
+            lbf.set_params(tau = 0.5*self.system.time_step)
+        with self.assertRaises(ValueError):
+            self.system.time_step = 2.*lbf.get_params()["tau"]
+        lbf.set_params(tau = self.params['time_step'])
+        self.system.time_step = 0.5*self.params['time_step']
+        #no coupling => system.time_step should be irrelevant
+        self.system.integrator.run(int(round(sim_time/self.system.time_step)))
+        self.system.time_step = self.params['time_step']
+        v2 = lbf.get_interpolated_velocity(probe_pos)
+        np.testing.assert_allclose(v1,v2,rtol = 1e-5)
 
 class TestLBCPU(TestLB, ut.TestCase):
 

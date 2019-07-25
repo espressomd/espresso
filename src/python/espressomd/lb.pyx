@@ -30,7 +30,8 @@ from . import cuda_init
 from copy import deepcopy
 from . import utils
 from .utils import array_locked, is_valid_type
-from .utils cimport make_array_locked
+from .utils cimport make_array_locked, numeric_limits
+from globals cimport time_step as global_time_step
 
 # Actor class
 ####################################################
@@ -70,9 +71,15 @@ cdef class HydrodynamicInteraction(Actor):
 
         if self._params["dens"] == default_params["dens"]:
             raise Exception("LB_FLUID density not set")
-        else:
-            if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
-                raise ValueError("Density must be one positive double")
+        elif not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
+            raise ValueError("Density must be one positive double")
+        
+        tau = self._params["tau"]
+        if (tau <= 0.0):
+            raise Exception("LB_FLUID tau not set")
+        elif (tau - global_time_step)/abs(tau + global_time_step) < -numeric_limits[float].epsilon():
+            raise ValueError(
+                "LB_time_step ({}) must be >= Time Step ({})".format(tau, global_time_step))
 
     # list of valid keys for parameters
     ####################################################
@@ -114,7 +121,7 @@ cdef class HydrodynamicInteraction(Actor):
         python_lbfluid_set_density(
     self._params["dens"],
     self._params["agrid"])
-
+        
         lb_lbfluid_set_tau(self._params["tau"])
 
         python_lbfluid_set_viscosity(
