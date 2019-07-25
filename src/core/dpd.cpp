@@ -27,10 +27,9 @@
 #include "communication.hpp"
 #include "event.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-//#include "random.hpp"
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
-#include "global.hpp"
+//#include "global.hpp"
 #include "integrate.hpp"
 
 #include <utils/Vector.hpp>
