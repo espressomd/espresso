@@ -374,7 +374,7 @@ class TestLB(object):
             int(round(sim_time / self.system.time_step)))
         self.system.time_step = self.params['time_step']
         v2 = np.copy(lbf.get_interpolated_velocity(probe_pos))
-        f2 = np.copy( self.system.part[0].f)
+        f2 = np.copy(self.system.part[0].f)
         np.testing.assert_allclose(v1, v2, rtol=1e-5)
         np.testing.assert_allclose(f1, f2, rtol=1e-5)
 
