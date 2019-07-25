@@ -260,10 +260,13 @@ cdef class System(object):
             cdef double tau
             if lb_lbfluid_get_lattice_switch() != NONE:
                 tau = lb_lbfluid_get_tau()
-                if (tau >= 0.0 and
-                        (tau - _time_step)/abs(tau + _time_step)< -numeric_limits[float].epsilon()):
+                if (tau - _time_step)/abs(tau + _time_step)< -numeric_limits[float].epsilon():
                     raise ValueError(
                         "Time Step ({}) must be < LB_time_step ({})".format(_time_step, tau))
+                factor = tau / _time_step
+                if abs(round(factor)-factor)/factor > numeric_limits[float].epsilon():
+                    raise ValueError("LB_time_step must be integer multiple of Time step. Factor is {}".format(factor))
+                        
 
             self.globals.time_step = _time_step
 
