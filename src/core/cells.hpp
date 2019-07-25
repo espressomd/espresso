@@ -148,9 +148,9 @@ struct CellStructure {
   bool use_verlet_list = true;
 
   /** returns the global local_cells.particles() */
-  ParticleRange get_local_particles() const;
+  CellPList local_cells() const;
   /** returns the global ghost_cells.particles() */
-  ParticleRange get_ghost_particles() const;
+  CellPList ghost_cells() const;
 
   /** Communicator to exchange ghost cell information. */
   GhostCommunicator ghost_cells_comm;
