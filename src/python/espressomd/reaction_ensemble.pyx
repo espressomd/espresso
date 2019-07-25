@@ -651,7 +651,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
 cdef class WidomInsertion(ReactionAlgorithm):
     """
-    This class implements the Widom Insertion Method for homogeneous systems, where the excess chemical potential is not depending on the location.
+    This class implements the Widom insertion method in the canonical ensemble for homogeneous systems, where the excess chemical potential is not depending on the location.
 
     """
 

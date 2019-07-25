@@ -181,8 +181,8 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind);
  * @brief Get the LB fluid velocity for a single node.
  */
 const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
-const Utils::Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind);
-const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind);
+const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind);
+const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind);
 
 /** calculates the average stress of all nodes by iterating
  * over all nodes and deviding by the number_of_nodes.
@@ -215,6 +215,11 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
  * @brief Checks whether the given node index is within the LB lattice.
  */
 bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind);
+
+/**
+ * @brief returns the shape of the LB fluid lattice
+ */
+Utils::Vector3i lb_lbfluid_get_shape();
 
 void lb_lbfluid_on_lb_params_change(LBParam field);
 

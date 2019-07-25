@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "immersed_boundary/ibm_triel.hpp"
 
-#ifdef IMMERSED_BOUNDARY
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
@@ -82,11 +81,11 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
   // get_mi_vector is an Espresso function which considers PBC
-  auto const vec2 = get_mi_vector(p3->r.p, p1->r.p);
+  auto const vec2 = get_mi_vector(p3->r.p, p1->r.p, box_geo);
   auto const l = vec2.norm();
 
   // lp = lenght between 1 and 2
-  auto const vec1 = get_mi_vector(p2->r.p, p1->r.p);
+  auto const vec1 = get_mi_vector(p2->r.p, p1->r.p, box_geo);
   auto const lp = vec1.norm();
 
   // angles between these vectors; calculated directly via the products
@@ -322,10 +321,10 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
 
   // Calculate equilibrium lengths and angle; Note the sequence of the points!
   // lo = length between 1 and 3
-  auto const templo = get_mi_vector(part3.r.p, part1.r.p);
+  auto const templo = get_mi_vector(part3.r.p, part1.r.p, box_geo);
   const double l0 = templo.norm();
   // lpo = length between 1 and 2
-  auto const templpo = get_mi_vector(part2.r.p, part1.r.p);
+  auto const templpo = get_mi_vector(part2.r.p, part1.r.p, box_geo);
   const double lp0 = templpo.norm();
 
   // cospo / sinpo angle functions between these vectors; calculated directly
@@ -367,4 +366,3 @@ int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
 
   return ES_OK;
 }
-#endif

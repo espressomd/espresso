@@ -374,8 +374,8 @@ void Correlator::initialize() {
 
 void Correlator::update() {
   if (finalized) {
-    runtimeErrorMsg() << "No data can be added after finalize() was called.";
-    return;
+    throw std::runtime_error(
+        "No data can be added after finalize() was called.");
   }
   // We must now go through the hierarchy and make sure there is space for the
   // new
@@ -477,8 +477,7 @@ void Correlator::update() {
 
 int Correlator::finalize() {
   if (finalized) {
-    runtimeErrorMsg() << "Correlator::finalize() can only be called once.";
-    return 0;
+    throw std::runtime_error("Correlator::finalize() can only be called once.");
   }
   // We must now go through the hierarchy and make sure there is space for the
   // new

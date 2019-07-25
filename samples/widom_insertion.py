@@ -31,7 +31,7 @@ from espressomd import integrate
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
 
-required_features = ["LENNARD_JONES", "ELECTROSTATICS"]
+required_features = ["LENNARD_JONES", "P3M"]
 espressomd.assert_features(required_features)
 
 # System parameters

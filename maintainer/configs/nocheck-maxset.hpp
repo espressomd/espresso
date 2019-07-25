@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /* maximal set of features usable at the same time plus all debug switches */
 /* Do not run the testsuite with this set, only compile it. */
-#define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define DIPOLES
 #define ROTATION
@@ -60,7 +59,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define OVERLAPPED
 #define THOLE
 
 #define VIRTUAL_SITES_RELATIVE

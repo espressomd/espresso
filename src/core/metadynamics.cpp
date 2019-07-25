@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "metadynamics.hpp"
 #include "cells.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
@@ -113,7 +114,7 @@ void meta_perform() {
     if (p.p.identity == meta_pid1) {
       flag1 = 1;
       p1 = &p;
-      ppos1 = unfolded_position(p);
+      ppos1 = unfolded_position(p.r.p, p.l.i, box_geo.length());
 
       if (flag1 && flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
@@ -124,7 +125,7 @@ void meta_perform() {
     if (p.p.identity == meta_pid2) {
       flag2 = 1;
       p2 = &p;
-      ppos2 = unfolded_position(p);
+      ppos2 = unfolded_position(p.r.p, p.l.i, box_geo.length());
 
       if (flag1 && flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */

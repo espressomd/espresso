@@ -44,6 +44,7 @@ C++ Compiler
 
 Boost
     A number of advanced C++ features used by ESPResSo is provided by Boost.
+    We strongly recommend to use at least boost 1.67.
 
 FFTW
     For some algorithms (P\ :math:`^3`\ M), ESPResSo needs the FFTW library
@@ -55,24 +56,31 @@ MPI
     environment that implements the MPI standard version 1.2.
 
 Python
-    ESPResSo's main user interface is via the Python scripting interface. Both, Python 2 and 3 are supported.
+    ESPResSo's main user interface is via the Python scripting interface.
+    We strongly recommend Python 3. Python 2 support is about to be removed.
 
 Cython
-    Cython is used for connecting the C++ core to Python
+    Cython is used for connecting the C++ core to Python.
+    At least version 0.23 is required.
+
 
 .. _Installing Requirements on Ubuntu Linux:
 
 Installing Requirements on Ubuntu Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+These instructions pertain to Python 3. If you need to use the deprecated
+Python 2 support, leave out the `3` in the Python package names.
+I.e., use `python-numpy` rather than `python3-numpy`.
 
-To make ESPResSo run on Ubuntu 16.04 LTS or 18.04 LTS, its dependencies can be
+
+To make ESPResSo run on 18.04 LTS, its dependencies can be
 installed with:
 
 .. code-block:: bash
 
-    sudo apt install build-essential cmake cython python-numpy \
+    sudo apt install build-essential cmake cython3 python3-numpy \
     libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
-    doxygen python-opengl python-sphinx python-pip libgsl-dev
+    doxygen python3-opengl python3-sphinx python3-pip libgsl-dev
 
 
 Optionally the ccmake utility can be installed for easier configuration:
@@ -80,6 +88,13 @@ Optionally the ccmake utility can be installed for easier configuration:
 .. code-block:: bash
 
     sudo apt install cmake-curses-gui
+
+To run the tutorials and generate the documentation, additional Python packages
+are required:
+
+.. code-block:: bash
+
+    pip3 install --upgrade jupyter scipy matplotlib sphinxcontrib-bibtex numpydoc
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
@@ -121,12 +136,12 @@ following commands:
     sudo xcode-select --install
     sudo xcodebuild -license accept
     sudo port selfupdate
-    sudo port install cmake python27 py27-cython py27-numpy \
-      openmpi-default fftw-3 +openmpi boost +openmpi +python27 \
-      doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
-    sudo port select --set cython cython27
-    sudo port select --set python python27
-    sudo port select --set pip pip27
+    sudo port install cmake python37 py37-cython py37-numpy \
+      openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
+      doxygen py37-opengl py37-sphinx py37-pip gsl hdf5 +openmpi
+    sudo port select --set cython cython37
+    sudo port select --set python3 python37
+    sudo port select --set pip pip37
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.
@@ -166,9 +181,9 @@ command in |es| 's source directory:
 
 .. code-block:: bash
 
-    pip install -r requirements.txt --user --upgrade
+    pip3 install -r requirements.txt --user --upgrade
 
-Please note that on some systems, ``pip`` has to be replaced by ``pip2`` to install Python 2 versions of the packages.
+Please note that on some systems, ``pip3`` has to be replaced by ``pip`` or ``pip2`` to install Python 2 versions of the packages.
 
 .. _Quick installation:
 
@@ -178,7 +193,16 @@ Quick installation
 If you have installed the requirements (see section :ref:`Requirements
 <requirements>` ) in standard locations, to compile, it is usually enough to
 create a build directory and call ``cmake`` and ``make`` (optional steps
-which modify the build process are commented out):
+which modify the build process are commented out).
+To chose the correct Python version, run
+
+.. code-block:: bash
+
+    python -V
+    python3 -V
+
+This shows which Python version the binaries are for. Then pass the one you'd like to use in the cmake command line, below.
+
 
 .. code-block:: bash
 
@@ -186,7 +210,7 @@ which modify the build process are commented out):
     cd build
     #cp myconfig-default.hpp myconfig.hpp # use the default configuration as template
     #nano myconfig.hpp                    # edit to add/remove features as desired
-    cmake ..
+    cmake -DPYTHON_EXECUTABLE=`which python3` ..
     #ccmake . // in order to add/remove features like SCAFACOS or CUDA
     make
 
@@ -331,14 +355,6 @@ activate ``FEATURE``, add the following line to the header file:
 General features
 ^^^^^^^^^^^^^^^^
 
--  ``PARTIAL_PERIODIC`` By default, all coordinates in |es| are periodic. With
-   ``PARTIAL_PERIODIC`` turned on, the |es| global variable ``periodic``
-   controls the periodicity of the individual coordinates.
-
-   .. note:: This slows the integrator down by around :math:`10-30\%`.
-
-   .. seealso:: :ref:`Setting global variables in Python`
-
 -  ``ELECTROSTATICS`` This enables the use of the various electrostatics algorithms, such as P3M.
 
    .. seealso:: :ref:`Electrostatics`
@@ -412,16 +428,6 @@ General features
 
 -  ``METADYNAMICS``
 
--  ``SWIMMER_REACTIONS`` Allows the user to define three particle types to be reactant,
-   catalyzer, and product. Reactants get converted into products in the
-   vicinity of a catalyst according to a used-defined reaction rate
-   constant. It is also possible to set up a chemical equilibrium
-   reaction between the reactants and products, with another rate
-   constant. Be careful the model makes usage of the word catalyst. This usage of the word cannot be brought into agreement with the correct usage of the word catalyst.
-
-   .. seealso:: :ref:`Swimmer reactions`
-
--  ``OVERLAPPED``
 
 -  ``COLLISION_DETECTION`` Allows particles to be bound on collision.
 
@@ -471,8 +477,6 @@ Fluid dynamics and fluid structure interaction
 -  ``EK_DEBUG``
 
 -  ``EK_DOUBLE_PREC``
-
--  ``IMMERSED_BOUNDARY`` Immersed-Boundary Bayreuth version.
 
 -  ``OIF_LOCAL_FORCES``
 
@@ -535,18 +539,6 @@ following features.
 -  ``HAT``
 
 -  ``UMBRELLA`` (experimental)
-
-.. _Miscellaneous:
-
-Miscellaneous
-^^^^^^^^^^^^^
-
--  ``FLATNOISE`` Shape of the noise in the (LB) thermostat.
-
--  ``GAUSSRANDOM`` Shape of the noise in the (LB) thermostat.
-
--  ``GAUSSRANDOMCUT`` Shape of the noise in the (LB) thermostat.
-
 
 
 .. _Debug messages:

@@ -104,6 +104,8 @@ void sanity_checks(int &state) {
 
 double cutoff(const Utils::Vector3d &box_l) {
   switch (coulomb.method) {
+  case COULOMB_MMM1D:
+    return std::numeric_limits<double>::infinity();
 #ifdef P3M
   case COULOMB_ELC_P3M:
     return std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);
@@ -123,7 +125,7 @@ double cutoff(const Utils::Vector3d &box_l) {
     return Scafacos::get_r_cut();
 #endif
   default:
-    return 0;
+    return -1.0;
   }
 }
 

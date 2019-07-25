@@ -300,7 +300,7 @@ __global__ void p3m_k_space_error_gpu_kernel_ad_i(const int3 mesh,
 
 double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,
                              int npart, double sum_q2, double alpha_L,
-                             double *box) {
+                             const double *box) {
   static thrust::device_vector<double> he_q;
 
   const size_t mesh_size = mesh[0] * mesh[1] * mesh[2];

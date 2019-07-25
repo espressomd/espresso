@@ -29,6 +29,7 @@
 #include "communication.hpp"
 #include "debug.hpp"
 #include "domain_decomposition.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
@@ -58,8 +59,7 @@ CellPList local_cells = {nullptr, 0, 0};
 CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
-CellStructure cell_structure = {
-    CELL_STRUCTURE_NONEYET, true, {}, {}, {}, {}, nullptr, nullptr};
+CellStructure cell_structure;
 
 double max_range = 0.0;
 
@@ -99,19 +99,19 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                          });
     break;
   case CELL_STRUCTURE_NSQUARE:
-    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
-                         boost::make_indirect_iterator(local_cells.end()),
-                         Utils::NoOp{}, pair_kernel,
-                         [](Particle const &p1, Particle const &p2) {
-                           return get_mi_vector(p1.r.p, p2.r.p).norm2();
-                         });
+    Algorithm::link_cell(
+        boost::make_indirect_iterator(local_cells.begin()),
+        boost::make_indirect_iterator(local_cells.end()), Utils::NoOp{},
+        pair_kernel, [](Particle const &p1, Particle const &p2) {
+          return get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
+        });
     break;
   case CELL_STRUCTURE_LAYERED:
     Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
                          boost::make_indirect_iterator(local_cells.end()),
                          Utils::NoOp{}, pair_kernel,
                          [](Particle const &p1, Particle const &p2) {
-                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p);
+                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p, box_geo);
                            vec21[2] = p1.r.p[2] - p2.r.p[2];
 
                            return vec21.norm2();
@@ -300,7 +300,7 @@ namespace {
  * @brief Fold coordinates to box and reset the old position.
  */
 void fold_and_reset(Particle &p) {
-  fold_position(p.r.p, p.l.i);
+  fold_position(p.r.p, p.l.i, box_geo);
 
   p.l.p_old = p.r.p;
 }
@@ -327,7 +327,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
 
       fold_and_reset(p);
 
-      auto target_cell = cs.position_to_cell(p.r.p);
+      auto target_cell = cs.particle_to_cell(p);
 
       if (target_cell == nullptr) {
         append_unindexed_particle(&displaced_parts,
@@ -366,7 +366,7 @@ void cells_resort_particles(int global_flag) {
     layered_exchange_and_sort_particles(global_flag, &displaced_parts);
   } break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_balance_particles(global_flag);
+    nsq_exchange_particles(global_flag, &displaced_parts);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid);
@@ -382,13 +382,13 @@ void cells_resort_particles(int global_flag) {
       resort_particles = Cells::RESORT_GLOBAL;
       append_indexed_particle(local_cells.cell[0], std::move(part));
     }
-  }
-
+  } else {
 #ifdef ADDITIONAL_CHECKS
-  /* at the end of the day, everything should be consistent again */
-  check_particle_consistency();
-  check_particle_sorting();
+    /* at the end of the day, everything should be consistent again */
+    check_particle_consistency();
+    check_particle_sorting();
 #endif
+  }
 
   ghost_communicator(&cell_structure.ghost_cells_comm);
   ghost_communicator(&cell_structure.exchange_ghosts_comm);
@@ -465,5 +465,5 @@ Cell *find_current_cell(const Particle &p) {
     return nullptr;
   }
 
-  return cell_structure.position_to_cell(p.l.p_old);
+  return cell_structure.particle_to_cell(p);
 }

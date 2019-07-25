@@ -27,6 +27,7 @@
 #include <utils/tuple.hpp>
 #include <utils/type_traits.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/communicator.hpp>
 #include <boost/range/algorithm/remove_if.hpp>
@@ -544,9 +545,9 @@ public:
    *
    * This method can only be called on the head node.
    */
-  template <class R, class... Args>
+  template <class R, class... Args, class... ArgRef>
   auto call(Result::OneRank, boost::optional<R> (*fp)(Args...),
-            Args... args) const -> std::remove_reference_t<R> {
+            ArgRef... args) const -> std::remove_reference_t<R> {
 
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
     call(id, args...);

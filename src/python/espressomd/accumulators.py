@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function, absolute_import
-from .script_interface import ScriptInterfaceHelper, script_interface_register
+from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 import numpy as np
 
 
@@ -242,7 +242,7 @@ class Correlator(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class AutoUpdateAccumulators(ScriptInterfaceHelper):
+class AutoUpdateAccumulators(ScriptObjectRegistry):
 
     """
     Class for handling auto-update of Accumulators used by
