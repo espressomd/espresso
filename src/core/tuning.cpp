@@ -96,7 +96,8 @@ static double time_calc(int rds) {
   return 1000. * (tock - tick) / rds;
 }
 
-void tune_skin(double min_skin, double max_skin, double tol, int int_steps, bool adjust_max_skin) {
+void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
+               bool adjust_max_skin) {
   skin_set = true;
 
   double a = min_skin;
@@ -107,7 +108,7 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps, bool
   double const max_permissible_skin = 0.5 * min_local_box_l - max_cut;
 
   if (adjust_max_skin and max_skin > max_permissible_skin)
-      b = max_permissible_skin;
+    b = max_permissible_skin;
 
   while (fabs(a - b) > tol) {
     skin = a;
