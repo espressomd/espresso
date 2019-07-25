@@ -42,6 +42,7 @@
 
 #include <boost/range/algorithm/transform.hpp>
 
+#include <boost/range/numeric.hpp>
 #include <cmath>
 #include <mpi.h>
 #include <numeric>
@@ -128,7 +129,6 @@ static double layer_h;
 static double max_near, min_far;
 /*@}*/
 
-
 MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
 
 /** return codes for \ref MMM2D_tune_near and \ref MMM2D_tune_far */
@@ -187,7 +187,7 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
 static int n_localpart = 0;
 
 /** temporary buffers for product decomposition */
-static  double *partblk = nullptr;
+static double *partblk = nullptr;
 /** for all local cells including ghosts */
 static double *lclcblk = nullptr;
 /** collected data from the cells above the top neighbor
@@ -254,8 +254,7 @@ static void setup_Q(int q, double omega, double fac);
 static void add_Q_force();
 static double Q_energy(double omega);
 /** p,q <> 0 per frequency code */
-static void setup_PQ(int p, int q, double omega, double fac,
-                     int n_localpart);
+static void setup_PQ(int p, int q, double omega, double fac, int n_localpart);
 static void add_PQ_force(int p, int q, double omega);
 static double PQ_energy(double omega);
 
@@ -320,10 +319,10 @@ static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
     auto const o = sccache.begin() + (freq - 1) * particles.size();
 
     boost::transform(particles, o,
-        [pref = C_2PI * u * freq](const Particle &p) {
-          auto const arg = pref * p.r.p[dir];
-          return sc(arg);
-    });
+                     [pref = C_2PI * u * freq](const Particle &p) {
+                       auto const arg = pref * p.r.p[dir];
+                       return sc(arg);
+                     });
   }
 }
 
@@ -425,7 +424,8 @@ void gather_image_contributions(int e_size) {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf + e_size, e_size);
+    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf + e_size,
+             e_size);
 }
 
 /* the data transfer routine for the lclcblks itself */
@@ -450,7 +450,8 @@ void distribute(int e_size, double fac) {
       if (node + 1 < n_nodes) {
         addscale_vec(sendbuf, fac, blwentry(gblcblk, local_cells.n - 1, e_size),
                      blwentry(lclcblk, local_cells.n - 1, e_size), e_size);
-        copy_vec(sendbuf + e_size, blwentry(lclcblk, local_cells.n, e_size), e_size);
+        copy_vec(sendbuf + e_size, blwentry(lclcblk, local_cells.n, e_size),
+                 e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     } else if (node + 1 == this_node) {
@@ -506,31 +507,29 @@ static void setup_z_force() {
 
   /* calculate local cellblks. partblks don't make sense */
   for (int c = 1; c <= local_cells.n; c++) {
-    auto np = cells[c].n;
-    auto part = cells[c].part;
-    lclcblk[size * c] = 0;
-    for (int i = 0; i < np; i++) {
-      lclcblk[size * c] += part[i].p.q;
-    }
-    lclcblk[size * c] *= pref;
+    auto cell = local_cells[c - 1];
+
+    lclcblk[size * c] = pref * boost::accumulate(cell->particles(), 0.,
+                                                 [](double Q, auto const &p) {
+                                                   return Q + p.p.q;
+                                                 });
+
     lclcblk[size * c + 1] = lclcblk[size * c];
   }
 }
 
 static void add_z_force() {
-  double add;
-  double *othcblk;
-  int size = 2;
+  auto constexpr size = 2;
   double field_tot = 0;
 
   /* Const. potential: subtract global dipole moment */
   if (mmm2d_params.const_pot_on) {
-    double gbl_dm_z = 0;
     double lcl_dm_z = 0;
     for (auto const &p : local_cells.particles()) {
       lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_geo.length()[2]);
     }
 
+    double gbl_dm_z = 0;
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 
     coulomb.field_induced =
@@ -540,22 +539,19 @@ static void add_z_force() {
   }
 
   for (int c = 1; c <= local_cells.n; c++) {
-    othcblk = block(gblcblk, c - 1, size);
-    add = othcblk[QQEQQP] - othcblk[QQEQQM];
-    auto np = cells[c].n;
-    auto part = cells[c].part;
-    for (int i = 0; i < np; i++) {
-      part[i].f.f[2] += part[i].p.q * (add + field_tot);
-      ;
+    auto othcblk = block(gblcblk, c - 1, size);
+    auto const add = othcblk[QQEQQP] - othcblk[QQEQQM];
+    auto cell = local_cells[c - 1];
+
+    for (auto &p : cell->particles()) {
+      p.f.f[2] += p.p.q * (add + field_tot);
     }
   }
 }
 
 static void setup_z_energy() {
-  int np, c, i;
-  double pref = -coulomb.prefactor * C_2PI * ux * uy;
-  Particle *part;
-  int e_size = 2, size = 4;
+  const double pref = -coulomb.prefactor * C_2PI * ux * uy;
+  constexpr int e_size = 2, size = 4;
 
   if (this_node == 0)
     /* the lowest lclcblk does not contain anything, since there are no charges
@@ -567,14 +563,15 @@ static void setup_z_energy() {
     clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
 
   /* calculate local cellblks. partblks don't make sense */
-  for (c = 1; c <= local_cells.n; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto cell = local_cells[c - 1];
+
     clear_vec(blwentry(lclcblk, c, e_size), e_size);
-    for (i = 0; i < np; i++) {
-      lclcblk[size * c + ABEQQP] += part[i].p.q;
-      lclcblk[size * c + ABEQZP] += part[i].p.q * part[i].r.p[2];
+    for (auto const &p : cell->particles()) {
+      lclcblk[size * c + ABEQQP] += p.p.q;
+      lclcblk[size * c + ABEQZP] += p.p.q * p.r.p[2];
     }
+
     scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
     /* just to be able to use the standard distribution. Here below
        and above terms are the same */
@@ -584,18 +581,15 @@ static void setup_z_energy() {
 }
 
 static double z_energy() {
-  int np, c, i;
-  Particle *part;
-  double *othcblk;
-  int size = 4;
+  constexpr int size = 4;
   double eng = 0;
-  for (c = 1; c <= local_cells.n; c++) {
-    othcblk = block(gblcblk, c - 1, size);
-    np = cells[c].n;
-    part = cells[c].part;
-    for (i = 0; i < np; i++) {
-      eng += part[i].p.q * (part[i].r.p[2] * othcblk[ABEQQP] - othcblk[ABEQZP] -
-                            part[i].r.p[2] * othcblk[ABEQQM] + othcblk[ABEQZM]);
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto othcblk = block(gblcblk, c - 1, size);
+    auto cell = local_cells[c - 1];
+
+    for (auto const &p : cell->particles()) {
+      eng += p.p.q * (p.r.p[2] * othcblk[ABEQQP] - othcblk[ABEQZP] -
+                      p.r.p[2] * othcblk[ABEQQM] + othcblk[ABEQZM]);
     }
   }
 
@@ -622,19 +616,15 @@ static double z_energy() {
 
 static void setup(int p, double omega, double fac,
                   Utils::Span<const SCCache> sccache, const int n_localpart) {
-  int np, c, i, ic, o = (p - 1) * n_localpart;
-  Particle *part;
-  double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
-  double h = box_geo.length()[2];
-  double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
-  double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
-  double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
-  double fac_delta = mmm2d_params.delta_mult * fac_imgsum;
-  double layer_top;
-  double e, e_di_l, e_di_h;
-  double *llclcblk;
-  double *lclimgebot = nullptr, *lclimgetop = nullptr;
-  int e_size = 2, size = 4;
+  auto const o = (p - 1) * n_localpart;
+  const double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
+  const double h = box_geo.length()[2];
+  const double fac_imgsum =
+      1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
+  const double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
+  const double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
+  const double fac_delta = mmm2d_params.delta_mult * fac_imgsum;
+  constexpr int e_size = 2, size = 4;
 
   if (mmm2d_params.dielectric_contrast_on)
     clear_vec(lclimge, size);
@@ -643,81 +633,82 @@ static void setup(int p, double omega, double fac,
     /* on the lowest node, clear the lclcblk below, which only contains the
        images of the lowest layer
        if there is dielectric contrast, otherwise it is empty */
-    lclimgebot = block(lclcblk, 0, size);
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
   if (this_node == n_nodes - 1) {
     /* same for the top node */
-    lclimgetop = block(lclcblk, local_cells.n + 1, size);
     clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 
-  layer_top = local_geo.my_left()[2] + layer_h;
-  ic = 0;
-  for (c = 1; c <= local_cells.n; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    llclcblk = block(lclcblk, c, size);
+  auto layer_top = local_geo.my_left()[2] + layer_h;
+  int ic = 0;
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto llclcblk = block(lclcblk, c, size);
 
     clear_vec(llclcblk, size);
 
-    for (i = 0; i < np; i++) {
-      e = exp(omega * (part[i].r.p[2] - layer_top));
+    auto cell = local_cells[c - 1];
+    for (auto const &p : cell->particles()) {
+      auto const e = exp(omega * (p.r.p[2] - layer_top));
 
-      partblk[size * ic + POQESM] = part[i].p.q * sccache[o + ic].s / e;
-      partblk[size * ic + POQESP] = part[i].p.q * sccache[o + ic].s * e;
-      partblk[size * ic + POQECM] = part[i].p.q * sccache[o + ic].c / e;
-      partblk[size * ic + POQECP] = part[i].p.q * sccache[o + ic].c * e;
+      partblk[size * ic + POQESM] = p.p.q * sccache[o + ic].s / e;
+      partblk[size * ic + POQESP] = p.p.q * sccache[o + ic].s * e;
+      partblk[size * ic + POQECM] = p.p.q * sccache[o + ic].c / e;
+      partblk[size * ic + POQECP] = p.p.q * sccache[o + ic].c * e;
 
       /* take images due to different dielectric constants into account */
       if (mmm2d_params.dielectric_contrast_on) {
+        double e_di_l;
         if (c == 1 && this_node == 0) {
           /* There are image charges at -(2h+z) and -(2h-z) etc. layer_h
              included due to the shift in z */
-          e_di_l = (exp(omega * (-part[i].r.p[2] - 2 * h + layer_h)) *
+          e_di_l = (exp(omega * (-p.r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_bot +
-                    exp(omega * (part[i].r.p[2] - 2 * h + layer_h))) *
+                    exp(omega * (p.r.p[2] - 2 * h + layer_h))) *
                    fac_delta;
 
-          e = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
-
-          lclimgebot[POQESP] += part[i].p.q * sccache[o + ic].s * e;
-          lclimgebot[POQECP] += part[i].p.q * sccache[o + ic].c * e;
-        } else
+          auto const e = exp(omega * (-p.r.p[2])) * mmm2d_params.delta_mid_bot;
+          auto lclimgebot = block(lclcblk, 0, size);
+          lclimgebot[POQESP] += p.p.q * sccache[o + ic].s * e;
+          lclimgebot[POQECP] += p.p.q * sccache[o + ic].c * e;
+        } else {
           /* There are image charges at -(z) and -(2h-z) etc. layer_h included
            * due to the shift in z */
-          e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
-                    exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
+          e_di_l = (exp(omega * (-p.r.p[2] + layer_h)) +
+                    exp(omega * (p.r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
+        }
 
+        double e_di_h;
         if (c == local_cells.n && this_node == n_nodes - 1) {
           /* There are image charges at (3h-z) and (h+z) from the top layer etc.
              layer_h included due to the shift in z */
-          e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
+          e_di_h = (exp(omega * (p.r.p[2] - 3 * h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_top +
-                    exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
+                    exp(omega * (-p.r.p[2] - h + 2 * layer_h))) *
                    fac_delta;
 
           /* There are image charges at (h-z) layer_h included due to the shift
            * in z */
-          e = exp(omega * (part[i].r.p[2] - h + layer_h)) *
-              mmm2d_params.delta_mid_top;
+          auto e = exp(omega * (p.r.p[2] - h + layer_h)) *
+                   mmm2d_params.delta_mid_top;
 
-          lclimgetop[POQESM] += part[i].p.q * sccache[o + ic].s * e;
-          lclimgetop[POQECM] += part[i].p.q * sccache[o + ic].c * e;
+          auto lclimgetop = block(lclcblk, local_cells.n + 1, size);
+          lclimgetop[POQESM] += p.p.q * sccache[o + ic].s * e;
+          lclimgetop[POQECM] += p.p.q * sccache[o + ic].c * e;
         } else
           /* There are image charges at (h-z) and (h+z) from the top layer etc.
              layer_h included due to the shift in z */
-          e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
-                    exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
+          e_di_h = (exp(omega * (p.r.p[2] - h + 2 * layer_h)) +
+                    exp(omega * (-p.r.p[2] - h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_bot) *
                    fac_delta_mid_top;
 
-        lclimge[POQESP] += part[i].p.q * sccache[o + ic].s * e_di_l;
-        lclimge[POQECP] += part[i].p.q * sccache[o + ic].c * e_di_l;
-        lclimge[POQESM] += part[i].p.q * sccache[o + ic].s * e_di_h;
-        lclimge[POQECM] += part[i].p.q * sccache[o + ic].c * e_di_h;
+        lclimge[POQESP] += p.p.q * sccache[o + ic].s * e_di_l;
+        lclimge[POQECP] += p.p.q * sccache[o + ic].c * e_di_l;
+        lclimge[POQESM] += p.p.q * sccache[o + ic].s * e_di_h;
+        lclimge[POQECM] += p.p.q * sccache[o + ic].c * e_di_h;
       }
 
       add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
@@ -754,20 +745,19 @@ template <size_t dir> static void add_force() {
   constexpr const auto size = 4;
 
   auto ic = 0;
-  for (int c = 1; c <= local_cells.n; c++) {
-    auto const np = cells[c].n;
-    auto const part = cells[c].part;
-    auto const othcblk = block(gblcblk, c - 1, size);
+  for (int c = 0; c < local_cells.n; c++) {
+    auto const othcblk = block(gblcblk, c, size);
 
-    for (int i = 0; i < np; i++) {
-      part[i].f.f[dir] += partblk[size * ic + POQESM] * othcblk[POQECP] -
-                          partblk[size * ic + POQECM] * othcblk[POQESP] +
-                          partblk[size * ic + POQESP] * othcblk[POQECM] -
-                          partblk[size * ic + POQECP] * othcblk[POQESM];
-      part[i].f.f[2] += partblk[size * ic + POQECM] * othcblk[POQECP] +
-                        partblk[size * ic + POQESM] * othcblk[POQESP] -
-                        partblk[size * ic + POQECP] * othcblk[POQECM] -
-                        partblk[size * ic + POQESP] * othcblk[POQESM];
+    auto cell = local_cells[c];
+    for (auto &p : cell->particles()) {
+      p.f.f[dir] += partblk[size * ic + POQESM] * othcblk[POQECP] -
+                    partblk[size * ic + POQECM] * othcblk[POQESP] +
+                    partblk[size * ic + POQESP] * othcblk[POQECM] -
+                    partblk[size * ic + POQECP] * othcblk[POQESM];
+      p.f.f[2] += partblk[size * ic + POQECM] * othcblk[POQECP] +
+                  partblk[size * ic + POQESM] * othcblk[POQESP] -
+                  partblk[size * ic + POQECP] * othcblk[POQECM] -
+                  partblk[size * ic + POQESP] * othcblk[POQESM];
 
       ;
       ic++;
@@ -779,17 +769,15 @@ static void add_P_force() { add_force<0>(); }
 static void add_Q_force() { add_force<1>(); }
 
 static double P_energy(double omega) {
-  int np, c, i, ic;
-  double *othcblk;
-  int size = 4;
+  const int size = 4;
   double eng = 0;
   double pref = 1 / omega;
 
-  ic = 0;
-  for (c = 1; c <= local_cells.n; c++) {
-    np = cells[c].n;
-    othcblk = block(gblcblk, c - 1, size);
-    for (i = 0; i < np; i++) {
+  auto ic = 0;
+  for (int c = 0; c < local_cells.n; c++) {
+    auto const othcblk = block(gblcblk, c, size);
+    auto cell = local_cells[c];
+    for (int i = 0; i < cell->particles().size(); i++) {
       eng += pref * (partblk[size * ic + POQECM] * othcblk[POQECP] +
                      partblk[size * ic + POQESM] * othcblk[POQESP] +
                      partblk[size * ic + POQECP] * othcblk[POQECM] +
@@ -801,18 +789,16 @@ static double P_energy(double omega) {
 }
 
 static double Q_energy(double omega) {
-  int np, c, i, ic;
-  double *othcblk;
-  int size = 4;
+  constexpr int size = 4;
   double eng = 0;
-  double pref = 1 / omega;
+  const double pref = 1 / omega;
 
-  ic = 0;
-  for (c = 1; c <= local_cells.n; c++) {
-    np = cells[c].n;
-    othcblk = block(gblcblk, c - 1, size);
+  auto ic = 0;
+  for (int c = 0; c < local_cells.n; c++) {
+    auto cell = local_cells[c];
+    auto othcblk = block(gblcblk, c, size);
 
-    for (i = 0; i < np; i++) {
+    for (int i = 0; i < cell->particles().size(); i++) {
       eng += pref * (partblk[size * ic + POQECM] * othcblk[POQECP] +
                      partblk[size * ic + POQESM] * othcblk[POQESP] +
                      partblk[size * ic + POQECP] * othcblk[POQECM] +
