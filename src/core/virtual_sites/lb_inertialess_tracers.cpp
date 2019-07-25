@@ -87,10 +87,10 @@ void IBM_ForcesIntoFluid_CPU() {
 
     for (int i = 0; i < np; i++)
       if (p[i].p.is_virtual)
-        if(lattice_switch == ActiveLB::CPU)
+        if (lattice_switch == ActiveLB::CPU)
           CoupleIBMParticleToFluid(&p[i]);
 #ifdef LB_WALBERLA
-        else if(lattice_switch == ActiveLB::WALBERLA)
+        else if (lattice_switch == ActiveLB::WALBERLA)
           CoupleIBMParticleToFluidWalberla(&p[i]);
 #endif
   }
@@ -106,10 +106,10 @@ void IBM_ForcesIntoFluid_CPU() {
       // in the range of the local lattice nodes
       if (in_local_domain(p[i].r.p)) {
         if (p[i].p.is_virtual)
-          if(lattice_switch == ActiveLB::CPU)
+          if (lattice_switch == ActiveLB::CPU)
             CoupleIBMParticleToFluid(&p[i]);
 #ifdef LB_WALBERLA
-          else if(lattice_switch == ActiveLB::WALBERLA)
+          else if (lattice_switch == ActiveLB::WALBERLA)
             CoupleIBMParticleToFluidWalberla(&p[i]);
 #endif
       }
@@ -212,11 +212,12 @@ Walberla
 
 void CoupleIBMParticleToFluidWalberla(Particle *p) {
   // Convert units from MD to LB
-  Utils::Vector3d delta_j = p->f.f * lb_walberla()->get_tau() * lb_walberla()->get_tau() / lb_walberla()->get_grid_spacing();
+  Utils::Vector3d delta_j = p->f.f * lb_walberla()->get_tau() *
+                            lb_walberla()->get_tau() /
+                            lb_walberla()->get_grid_spacing();
 
   lb_walberla()->add_force_at_pos(p->r.p / lb_lbfluid_get_agrid(), delta_j);
 }
-
 
 /******************
    GetIBMInterpolatedVelocity

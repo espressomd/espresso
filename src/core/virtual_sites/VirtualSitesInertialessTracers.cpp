@@ -28,8 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void VirtualSitesInertialessTracers::after_force_calc() {
   // Now the forces are computed and need to go into the LB fluid
-  if (lattice_switch == ActiveLB::CPU or 
-      lattice_switch == ActiveLB::WALBERLA) {
+  if (lattice_switch == ActiveLB::CPU or lattice_switch == ActiveLB::WALBERLA) {
     IBM_ForcesIntoFluid_CPU();
     return;
   }
