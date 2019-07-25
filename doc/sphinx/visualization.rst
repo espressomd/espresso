@@ -175,10 +175,10 @@ screenshots without blocking the simulation script::
 
     for i in range(100):
         system.integrator.run(1)
-        visualizer.screenshot('screenshot_{}.jpg'.format(i))
+        visualizer.screenshot('screenshot_{:0>5}.png'.format(i))
 
     # You may consider creating a video with ffmpeg:
-    # ffmpeg -f image2 -framerate 30 -i 'screenshot_%d.jpg' output.mp4
+    # ffmpeg -f image2 -framerate 30 -i 'screenshot_%05d.png' output.mp4
 
 It is also possible to create a snapshot during online visualization.
 Simply press the *enter* key to create a snapshot of the current window,
