@@ -21,7 +21,6 @@ This sample simulates charged particles that interact via repulsive WCA
 potential. Electrostatic interactions are included using the P3M solver.
 Relevant properties of the simulation is stored in a pickle file.
 """
-from __future__ import print_function
 import numpy as np
 import espressomd
 

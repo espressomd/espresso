@@ -22,7 +22,6 @@ unit charges). Electrostatic interactions between charges is emulated by the
 Debye-Hueckel potential. The system is maintained at a constant temperature
 using a Langevin thermostat.
 """
-from __future__ import print_function
 import espressomd
 
 required_features = ["ELECTROSTATICS", "LENNARD_JONES"]

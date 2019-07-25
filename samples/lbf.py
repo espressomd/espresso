@@ -20,8 +20,6 @@
 This samples sets up a Lattice-Boltzmann fluid and applies an external force
 density on it.
 """
-from __future__ import print_function
-
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
