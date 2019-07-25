@@ -18,24 +18,42 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function(HTML_EXPORT)
-  cmake_parse_arguments(HTML_EXPORT "" "FILE;TUTORIAL" "" ${ARGN})
-  get_filename_component(BASE_NAME ${HTML_EXPORT_FILE} NAME_WE)
+  cmake_parse_arguments(HTML_EXPORT "RUN" "FILE;TUTORIAL" "VAR_SUBST;ADD_SCRIPTS" ${ARGN})
 
   set(TARGET "${HTML_EXPORT_TUTORIAL}_html")
-  set(NB_FILE_BASE "${CMAKE_CURRENT_BINARY_DIR}/${BASE_NAME}")
-  set(NB_FILE "${NB_FILE_BASE}.html")
+  set(NB_FILE "${CMAKE_CURRENT_BINARY_DIR}/${HTML_EXPORT_FILE}")
+  get_filename_component(NB_FILE_BASE ${NB_FILE} NAME_WE)
+  get_filename_component(NB_FILE_EXT ${NB_FILE} EXT)
+  set(HTML_FILE "${NB_FILE_BASE}.html")
+
+  if(${HTML_EXPORT_RUN})
+    set(HTML_FILE_DEPENDS "${NB_FILE_BASE}.run${NB_FILE_EXT}")
+    add_custom_command(
+      OUTPUT "${HTML_FILE_DEPENDS}"
+      DEPENDS "${NB_FILE}"
+      COMMAND
+      "${CMAKE_BINARY_DIR}/pypresso"
+      "${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py"
+      "--input" "${NB_FILE}"
+      "--output" "${HTML_FILE_DEPENDS}"
+      "--substitutions" ${HTML_EXPORT_VAR_SUBST}
+      "--scripts" ${HTML_EXPORT_ADD_SCRIPTS}
+      )
+  else()
+    set(HTML_FILE_DEPENDS "${NB_FILE}")
+  endif()
 
   add_custom_command(
-    OUTPUT ${NB_FILE}
-    DEPENDS ${HTML_EXPORT_FILE}
+    OUTPUT ${HTML_FILE}
+    DEPENDS ${HTML_FILE_DEPENDS}
     COMMAND
     ${IPYTHON_EXECUTABLE} nbconvert
     --to "html"
-    --output "${NB_FILE}"
-    ${HTML_EXPORT_FILE}
+    --output "${HTML_FILE}"
+    ${HTML_FILE_DEPENDS}
     )
 
-  add_custom_target(${TARGET} DEPENDS ${NB_FILE})
+  add_custom_target(${TARGET} DEPENDS ${HTML_FILE})
 endfunction(HTML_EXPORT)
 
 
@@ -52,8 +70,7 @@ add_subdirectory(11-ferrofluid)
 
 
 ### here: add the appropriate tutorial target after DEPENDS
-add_custom_target(tutorials
-  DEPENDS
+add_custom_target(tutorials DEPENDS
   tutorials_01
   tutorials_02
   tutorials_04
@@ -82,3 +99,4 @@ add_custom_target(tutorials_html DEPENDS
   )
 
 configure_file(Readme.rst ${CMAKE_CURRENT_BINARY_DIR}/Readme.rst COPYONLY)
+configure_file(html_runner.py ${CMAKE_CURRENT_BINARY_DIR}/html_runner.py)

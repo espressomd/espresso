@@ -10,7 +10,7 @@ configure_file(figures/latticeboltzmann-grid.png ${CMAKE_CURRENT_BINARY_DIR}/fig
 
 add_custom_target(tutorials_04)
 
-html_export(TUTORIAL tutorials_04_1 FILE "04-lattice_boltzmann_part1.ipynb")
-html_export(TUTORIAL tutorials_04_2 FILE "04-lattice_boltzmann_part2.ipynb")
-html_export(TUTORIAL tutorials_04_3 FILE "04-lattice_boltzmann_part3.ipynb")
-html_export(TUTORIAL tutorials_04_4 FILE "04-lattice_boltzmann_part4.ipynb")
+html_export(TUTORIAL tutorials_04_1 FILE "04-lattice_boltzmann_part1.ipynb" RUN)
+html_export(TUTORIAL tutorials_04_2 FILE "04-lattice_boltzmann_part2.ipynb" RUN VAR_SUBST "loops=400")
+html_export(TUTORIAL tutorials_04_3 FILE "04-lattice_boltzmann_part3.ipynb" RUN)
+html_export(TUTORIAL tutorials_04_4 FILE "04-lattice_boltzmann_part4.ipynb" RUN ADD_SCRIPTS "scripts/part4_plot.py")
