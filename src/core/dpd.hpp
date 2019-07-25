@@ -56,9 +56,6 @@ Utils::Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
                                double dist, double dist2);
 Utils::Vector9d dpd_stress();
 
-/** philox rng */
-extern std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
-
 /** philox interface */
 bool dpd_is_seed_required();
 void dpd_set_rng_state(uint64_t counter);

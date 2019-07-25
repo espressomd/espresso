@@ -42,7 +42,9 @@
 
 using Utils::Vector3d;
 
-/** Return a random 4d vector with the philox thermostat.
+std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
+
+/** Return a random 3d vector with the philox thermostat.
     Random numbers depend on
     1. dpd_rng_counter (initialized by seed) which is increased on
    integration
@@ -50,7 +52,7 @@ using Utils::Vector3d;
     3. Two particle IDs (order-independent, decorrelates particles, gets rid of
    seed-per-node)
 */
-inline Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
+Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
 
   using rng_type = r123::Philox4x64;
   using ctr_type = rng_type::ctr_type;
@@ -76,8 +78,6 @@ inline Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
   return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
          Vector3d::broadcast(0.5);
 }
-
-std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
 
 void mpi_bcast_dpd_rng_counter_slave(const uint64_t counter) {
   dpd_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
