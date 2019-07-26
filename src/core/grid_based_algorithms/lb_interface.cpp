@@ -485,17 +485,18 @@ void lb_lbfluid_set_tau(double tau) {
     throw std::invalid_argument("LB tau has to be positive.");
   extern double time_step;
   if (time_step > 0.) {
-      auto eps = std::numeric_limits<float>::epsilon();
-    if ((tau - time_step)/(tau + time_step) < -eps)
-      throw std::invalid_argument("LB tau ("+ std::to_string(tau) +
-                                  ") must be >= MD time_step ("
-                                  + std::to_string(time_step) + ")");
+    auto eps = std::numeric_limits<float>::epsilon();
+    if ((tau - time_step) / (tau + time_step) < -eps)
+      throw std::invalid_argument("LB tau (" + std::to_string(tau) +
+                                  ") must be >= MD time_step (" +
+                                  std::to_string(time_step) + ")");
     auto factor = tau / time_step;
-    if (fabs(round(factor)-factor)/factor > eps)
-      throw std::invalid_argument("LB tau ("+ std::to_string(tau) +
+    if (fabs(round(factor) - factor) / factor > eps)
+      throw std::invalid_argument("LB tau (" + std::to_string(tau) +
                                   ") must be integer multiple of "
-                                  "MD time_step ("+ std::to_string(time_step)
-                                  + "). Factor is " + std::to_string(factor));
+                                  "MD time_step (" +
+                                  std::to_string(time_step) + "). Factor is " +
+                                  std::to_string(factor));
   }
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
