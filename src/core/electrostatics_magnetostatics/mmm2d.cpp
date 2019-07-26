@@ -820,44 +820,38 @@ static double Q_energy(double omega) {
 /* compare setup_P */
 static void setup_PQ(int p, int q, double omega, double fac,
                      const int n_localpart) {
-  int np, c, i, ic, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
+  int np, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
   Particle *part;
-  double pref = coulomb.prefactor * 8 * M_PI * ux * uy * fac * fac;
-  double h = box_geo.length()[2];
-  double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
-  double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
-  double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
-  double fac_delta = mmm2d_params.delta_mult * fac_imgsum;
-  double layer_top;
-  double e, e_di_l, e_di_h;
-  double *llclcblk;
-  double *lclimgebot = nullptr, *lclimgetop = nullptr;
-  int e_size = 4, size = 8;
+  const double pref = coulomb.prefactor * 8 * M_PI * ux * uy * fac * fac;
+  const double h = box_geo.length()[2];
+  const double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
+  const double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
+  const double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
+  const double fac_delta = mmm2d_params.delta_mult * fac_imgsum;
+  constexpr int e_size = 4, size = 8;
 
   if (mmm2d_params.dielectric_contrast_on)
     clear_vec(lclimge, size);
 
   if (this_node == 0) {
-    lclimgebot = block(lclcblk, 0, size);
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
 
   if (this_node == n_nodes - 1) {
-    lclimgetop = block(lclcblk, local_cells.n + 1, size);
     clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 
-  layer_top = local_geo.my_left()[2] + layer_h;
-  ic = 0;
-  for (c = 1; c <= local_cells.n; c++) {
+  auto layer_top = local_geo.my_left()[2] + layer_h;
+  int ic = 0;
+  for (int c = 1; c <= local_cells.n; c++) {
     np = cells[c].n;
     part = cells[c].part;
-    llclcblk = block(lclcblk, c, size);
+    auto const llclcblk = block(lclcblk, c, size);
 
     clear_vec(llclcblk, size);
 
-    for (i = 0; i < np; i++) {
-      e = exp(omega * (part[i].r.p[2] - layer_top));
+    for (int i = 0; i < np; i++) {
+      auto const e = exp(omega * (part[i].r.p[2] - layer_top));
 
       partblk[size * ic + PQESSM] =
           scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q / e;
@@ -878,45 +872,49 @@ static void setup_PQ(int p, int q, double omega, double fac,
           scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
 
       if (mmm2d_params.dielectric_contrast_on) {
+        double e_di_l;
         if (c == 1 && this_node == 0) {
           e_di_l = (exp(omega * (-part[i].r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_bot +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h))) *
                    fac_delta;
 
-          e = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
+          auto const e_di = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
 
+          auto const lclimgebot = block(lclcblk, 0, size);
           lclimgebot[PQESSP] +=
-              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di;
           lclimgebot[PQESCP] +=
-              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di;
           lclimgebot[PQECSP] +=
-              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di;
           lclimgebot[PQECCP] +=
-              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di;
         } else
           e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
 
+        double e_di_h;
         if (c == local_cells.n && this_node == n_nodes - 1) {
           e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_top +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
                    fac_delta;
 
-          e = exp(omega * (part[i].r.p[2] - h + layer_h)) *
+          auto const e_di = exp(omega * (part[i].r.p[2] - h + layer_h)) *
               mmm2d_params.delta_mid_top;
 
+          auto const lclimgetop = block(lclcblk, local_cells.n + 1, size);
           lclimgetop[PQESSM] +=
-              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di;
           lclimgetop[PQESCM] +=
-              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di;
           lclimgetop[PQECSM] +=
-              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di;
           lclimgetop[PQECCM] +=
-              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di;
         } else
           e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
                     exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
