@@ -224,7 +224,7 @@ class TestLB(object):
         ext_force_density = [0.1, 0.2, 1.2]
         self.lbf.ext_force_density = ext_force_density
         np.testing.assert_allclose(
-            self.lbf.ext_force_density,
+            np.copy(self.lbf.ext_force_density),
             ext_force_density,
             atol=1e-4)
 
