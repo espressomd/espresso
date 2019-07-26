@@ -19,8 +19,6 @@ Demonstrates the construction of a rigid object by means of the
 VIRTUAL_SITES_RELATIVE feature.
 """
 
-from __future__ import print_function
-
 import espressomd
 espressomd.assert_features(["VIRTUAL_SITES_RELATIVE"])
 from espressomd import thermostat

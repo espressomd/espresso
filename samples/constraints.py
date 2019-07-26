@@ -19,7 +19,6 @@ This sample checks if particles or a polymer added to the system obey(s)
 constraints.
 """
 
-from __future__ import print_function
 import espressomd
 
 # Check if necessary features have been compiled

@@ -18,7 +18,6 @@
 This sample demonstrates how new bonds can be added between particles and how existing bond between particles can be deleted.
 """
 
-from __future__ import print_function
 import espressomd
 from espressomd import assert_features
 

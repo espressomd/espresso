@@ -86,7 +86,7 @@ void iccp3m_alloc_lists() {
   iccp3m_cfg.sigma.resize(n_ic);
 }
 
-int iccp3m_iteration() {
+int iccp3m_iteration(const ParticleRange &particles) {
   if (iccp3m_cfg.n_ic == 0)
     return 0;
 
@@ -111,7 +111,7 @@ int iccp3m_iteration() {
 
     double diff = 0;
 
-    for (auto &p : local_cells.particles()) {
+    for (auto &p : particles) {
       if (p.p.identity < iccp3m_cfg.n_ic + iccp3m_cfg.first_id &&
           p.p.identity >= iccp3m_cfg.first_id) {
         auto const id = p.p.identity - iccp3m_cfg.first_id;

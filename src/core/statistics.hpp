@@ -41,7 +41,7 @@
  */
 /************************************************************/
 /*@{*/
-extern double **configs;
+extern std::vector<std::vector<double>> configs;
 extern int n_configs;
 extern int n_part_conf;
 /*@}*/
@@ -178,10 +178,9 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
  *  @param p_types   list with types of particles to be analyzed
  *  @param n_types   length of @p p_types
  *  @param order     the maximum wave vector length in 2PI/L
- *  @param sf        array containing the result (size: 2*order^2).
  */
-void calc_structurefactor(PartCfg &, int const *p_types, int n_types, int order,
-                          double **sf);
+std::vector<double> calc_structurefactor(PartCfg &, int const *p_types,
+                                         int n_types, int order);
 
 std::vector<std::vector<double>> modify_stucturefactor(int order,
                                                        double const *sf);
@@ -221,7 +220,7 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
 /** Calculate momentum of all particles in the simulation box.
  *  \param result Momentum of particles.
  */
-void predict_momentum_particles(double *result);
+void predict_momentum_particles(double *result, const ParticleRange &particles);
 
 /** Calculate total momentum of the system (particles & LB fluid).
  *  Inputs are bools to include particles and fluid in the linear momentum

@@ -19,7 +19,6 @@
 """
 This sample sets up a diamond-structured polymer network.
 """
-from __future__ import print_function
 import espressomd
 espressomd.assert_features(["LENNARD_JONES"])
 from espressomd import thermostat

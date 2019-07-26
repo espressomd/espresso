@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef METADYNAMICS_H
 #define METADYNAMICS_H
 
+#include "ParticleRange.hpp"
 #include "particle_data.hpp"
 #include <cmath>
 #include <cstring>
@@ -110,7 +111,7 @@ void meta_init();
  * - Update profile and biased force
  * - apply external force
  */
-void meta_perform();
+void meta_perform(const ParticleRange &particles);
 
 /** Calculate Lucy function */
 double calculate_lucy(double xi, double xi_0);

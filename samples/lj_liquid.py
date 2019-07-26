@@ -20,7 +20,6 @@
 This sample simulates a Lennard-Jones fluid maintained at a fixed temperature
 by a Langevin thermostat.
 """
-from __future__ import print_function
 import numpy as np
 import espressomd
 

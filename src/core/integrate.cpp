@@ -107,20 +107,20 @@ volatile std::sig_atomic_t ctrl_C = 0;
 /** Propagate the velocities. Integration step 1 of the Velocity Verlet
    integrator:<br>
     \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] */
-void propagate_vel();
+void propagate_vel(const ParticleRange &particles);
 /** Propagate the positions. Integration step 2 of the Velocity
    Verletintegrator:<br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
-void propagate_pos();
+void propagate_pos(const ParticleRange &particles);
 /** Propagate the velocities and positions. Integration step 1 and 2
     of the Velocity Verlet integrator: <br>
     \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] <br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
-void propagate_vel_pos();
+void propagate_vel_pos(const ParticleRange &particles);
 /** Integration step 4 of the Velocity Verletintegrator and finalize
     instantaneous pressure calculation:<br>
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
-void propagate_vel_finalize_p_inst();
+void propagate_vel_finalize_p_inst(const ParticleRange &particles);
 
 /** Integrator stability check (see compile flag ADDITIONAL_CHECKS). */
 void force_and_velocity_display();
@@ -238,11 +238,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
       philox_counter_increment();
     }
 
-    force_calc();
+    force_calc(cell_structure);
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
-      convert_initial_torques();
+      convert_initial_torques(cell_structure.local_cells().particles());
 #endif
     }
 
@@ -271,9 +271,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
     ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
     INTEG_TRACE(fprintf(stderr, "%d: STEP %d\n", this_node, step));
 
+    auto particles = cell_structure.local_cells().particles();
+
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
-      save_old_pos();
+      save_old_pos(particles, ghost_cells.particles());
 
 #endif
 
@@ -284,16 +286,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
        cannot be combined for the translation.
     */
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      propagate_vel();
-      propagate_pos();
+      propagate_vel(particles);
+      propagate_pos(particles);
 
       /* Propagate time: t = t+dt */
       sim_time += time_step;
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-      if (steepest_descent_step())
+      if (steepest_descent_step(particles))
         break;
     } else {
-      propagate_vel_pos();
+      propagate_vel_pos(particles);
 
       /* Propagate time: t = t+dt */
       sim_time += time_step;
@@ -305,7 +307,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     if (n_rigidbonds) {
       cells_update_ghosts();
 
-      correct_pos_shake();
+      correct_pos_shake(cell_structure.local_cells().particles());
     }
 #endif
 
@@ -330,7 +332,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Propagate philox rng counters
     philox_counter_increment();
 
-    force_calc();
+    particles = cell_structure.local_cells().particles();
+
+    force_calc(cell_structure);
 
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
@@ -339,16 +343,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      propagate_vel_finalize_p_inst();
+      propagate_vel_finalize_p_inst(particles);
 #ifdef ROTATION
-      convert_torques_propagate_omega();
+      convert_torques_propagate_omega(particles);
 #endif
     }
 // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds) {
       ghost_communicator(&cell_structure.update_ghost_pos_comm);
-      correct_vel_shake();
+      correct_vel_shake(cell_structure);
     }
 #endif
 
@@ -434,7 +438,7 @@ void philox_counter_increment() {
   }
 }
 
-void propagate_vel_finalize_p_inst() {
+void propagate_vel_finalize_p_inst(const ParticleRange &particles) {
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -444,7 +448,7 @@ void propagate_vel_finalize_p_inst() {
   INTEG_TRACE(
       fprintf(stderr, "%d: propagate_vel_finalize_p_inst:\n", this_node));
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
         stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
         this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
@@ -507,7 +511,7 @@ void finalize_p_inst_npt() {
 #endif
 }
 
-void propagate_press_box_pos_and_rescale_npt() {
+void propagate_press_box_pos_and_rescale_npt(const ParticleRange &particles) {
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     double scal[3] = {0., 0., 0.}, L_new = 0.0;
@@ -545,7 +549,7 @@ void propagate_press_box_pos_and_rescale_npt() {
     MPI_Bcast(scal, 3, MPI_DOUBLE, 0, comm_cart);
 
     /* propagate positions while rescaling positions and velocities */
-    for (auto &p : local_cells.particles()) {
+    for (auto &p : particles) {
 #ifdef VIRTUAL_SITES
       if (p.p.is_virtual)
         continue;
@@ -597,14 +601,14 @@ void propagate_press_box_pos_and_rescale_npt() {
 #endif
 }
 
-void propagate_vel() {
+void propagate_vel(const ParticleRange &particles) {
 #ifdef NPT
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 #endif
 
   INTEG_TRACE(fprintf(stderr, "%d: propagate_vel:\n", this_node));
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
 #ifdef ROTATION
     propagate_omega_quat_particle(&p);
 #endif
@@ -642,15 +646,15 @@ void propagate_vel() {
 #endif
 }
 
-void propagate_pos() {
+void propagate_pos(const ParticleRange &particles) {
   INTEG_TRACE(fprintf(stderr, "%d: propagate_pos:\n", this_node));
   if (integ_switch == INTEG_METHOD_NPT_ISO)
     /* Special propagator for NPT ISOTROPIC */
     /* Propagate pressure, box_length (2 times) and positions, rescale
        positions and velocities and check Verlet list criterion (only NPT) */
-    propagate_press_box_pos_and_rescale_npt();
+    propagate_press_box_pos_and_rescale_npt(particles);
   else {
-    for (auto &p : local_cells.particles()) {
+    for (auto &p : particles) {
 #ifdef VIRTUAL_SITES
       if (p.p.is_virtual)
         continue;
@@ -672,7 +676,7 @@ void propagate_pos() {
   }
 }
 
-void propagate_vel_pos() {
+void propagate_vel_pos(const ParticleRange &particles) {
   INTEG_TRACE(fprintf(stderr, "%d: propagate_vel_pos:\n", this_node));
 
 #ifdef ADDITIONAL_CHECKS
@@ -680,7 +684,7 @@ void propagate_vel_pos() {
   db_maxf_id = db_maxv_id = -1;
 #endif
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
 #ifdef ROTATION
     propagate_omega_quat_particle(&p);
 #endif

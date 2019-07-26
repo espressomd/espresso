@@ -18,7 +18,6 @@
 #
 # This script generates gen_pxiconfig.cpp, which in turn generates myconfig.pxi.
 #
-from __future__ import print_function
 import inspect
 import sys
 import os

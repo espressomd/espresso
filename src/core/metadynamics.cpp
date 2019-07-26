@@ -101,7 +101,7 @@ void meta_init() {
  * - Update profile and biased force
  * - apply external force
  */
-void meta_perform() {
+void meta_perform(const ParticleRange &particles) {
   Utils::Vector3d ppos1, ppos2;
 
   if (meta_switch == META_OFF)
@@ -110,7 +110,7 @@ void meta_perform() {
   int img1[3], img2[3], flag1 = 0, flag2 = 0;
   Particle *p1 = nullptr, *p2 = nullptr;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     if (p.p.identity == meta_pid1) {
       flag1 = 1;
       p1 = &p;

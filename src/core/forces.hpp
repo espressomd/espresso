@@ -33,6 +33,7 @@
 #include "actor/Actor.hpp"
 #include "actor/ActorList.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "cells.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 extern ActorList forceActors;
@@ -45,10 +46,10 @@ extern ActorList forceActors;
 
 /** initialize real particle forces with thermostat forces and
     ghost particle forces with zero. */
-void init_forces();
+void init_forces(const ParticleRange &particles);
 
 /** Set forces of all ghosts to zero */
-void init_forces_ghosts();
+void init_forces_ghosts(const ParticleRange &particles);
 
 /** Calculate forces.
  *
@@ -60,10 +61,11 @@ void init_forces_ghosts();
  *  <li> Calculate long range interaction forces
  *  </ol>
  */
-void force_calc();
+void force_calc(CellStructure &cell_structure);
 
 /** Check if forces are NAN */
-void check_forces();
+void check_forces(const ParticleRange &particles,
+                  const ParticleRange &ghost_particles);
 
 /** Calculate long range forces (P3M, MMM2d...). */
 void calc_long_range_forces();

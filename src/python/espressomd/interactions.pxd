@@ -18,8 +18,6 @@
 #
 # Handling of interactions
 
-from __future__ import print_function, absolute_import
-
 from libcpp.string cimport string
 from libc cimport stdint
 

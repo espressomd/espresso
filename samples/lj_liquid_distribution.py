@@ -23,7 +23,6 @@ repulsive WCA interaction. Type 1 particles neither interact with themselves
 nor with Type 0 particles. The distribution of minimum distances between
 particles of Type 0 and Type 1 is recorded.
 """
-from __future__ import print_function
 import numpy as np
 import espressomd
 
