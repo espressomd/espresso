@@ -389,12 +389,10 @@ inline int calc_bond_pair_force(Particle *p1, Particle *p2,
     bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
     break;
 #endif
-#ifdef TABULATED
   case BONDED_IA_TABULATED:
     if (iaparams->num == 1)
       bond_broken = calc_tab_bond_force(iaparams, dx, force);
     break;
-#endif
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
     bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
@@ -505,13 +503,11 @@ inline void add_bonded_force(Particle *p1) {
         bond_broken = 0;
         break;
 #endif
-#ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 2)
           bond_broken =
               calc_tab_angle_force(p1, p2, p3, iaparams, force, force2, force3);
         break;
-#endif
       case BONDED_IA_IBM_TRIEL:
         bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
         break;
@@ -546,13 +542,11 @@ inline void add_bonded_force(Particle *p1) {
         bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force,
                                           force2, force3);
         break;
-#ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 3)
           bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force,
                                                 force2, force3);
         break;
-#endif
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                           << p1->p.identity << " unknown " << type << ","
