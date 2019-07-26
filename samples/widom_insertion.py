@@ -20,7 +20,6 @@
 This sample measures the excess chemical potential for Widom insertion of
 charged particles using the reaction ensemble method.
 """
-from __future__ import print_function
 import numpy as np
 import sys
 

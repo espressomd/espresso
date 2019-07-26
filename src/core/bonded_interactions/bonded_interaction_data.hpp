@@ -319,9 +319,7 @@ union Bond_parameters {
   Angle_cosine_bond_parameters angle_cosine;
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
-#ifdef TABULATED
   Tabulated_bond_parameters tab;
-#endif
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
 #endif

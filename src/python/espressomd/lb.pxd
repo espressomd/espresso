@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
-
 include "myconfig.pxi"
 
 from libcpp cimport bool
@@ -195,7 +193,6 @@ cdef inline python_lbfluid_set_gamma_even(gamma_even):
     lb_lbfluid_set_gamma_even(c_gamma_even)
 
 ###############################################
-
 cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density, p_agrid, p_tau):
 
     cdef Vector3d c_ext_force_density
@@ -254,21 +251,14 @@ cdef inline python_lbfluid_get_gamma(p_gamma):
         p_gamma = c_gamma
 
 
-cdef inline python_lbfluid_get_ext_force_density(p_ext_force_density, p_agrid, p_tau):
-
+cdef inline Vector3d python_lbfluid_get_ext_force_density(p_agrid, p_tau):
     cdef Vector3d c_ext_force_density
     # call c-function
     c_ext_force_density = lb_lbfluid_get_ext_force_density()
     # unit conversion LB -> MD
-    p_ext_force_density[
-        0] = c_ext_force_density[
-            0] / p_agrid / p_agrid / p_tau / p_tau
-    p_ext_force_density[
-        1] = c_ext_force_density[
-            1] / p_agrid / p_agrid / p_tau / p_tau
-    p_ext_force_density[
-        2] = c_ext_force_density[
-            2] / p_agrid / p_agrid / p_tau / p_tau
+    for i in range(3):
+        c_ext_force_density[i] /= p_agrid * p_agrid * p_tau * p_tau
+    return c_ext_force_density
 
 cdef inline void python_lbnode_set_velocity(Vector3i node, Vector3d velocity):
     cdef double inv_lattice_speed = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid()

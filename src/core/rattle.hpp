@@ -32,20 +32,22 @@
 /** number of rigid bonds */
 extern int n_rigidbonds;
 
+#include "cells.hpp"
 #include "config.hpp"
 
 #ifdef BOND_CONSTRAINT
 
 /** Transfers the current particle positions from r.p[3] to r.p_pold[3]
     of the \ref Particle structure. Invoked from \ref correct_pos_shake() */
-void save_old_pos();
+void save_old_pos(const ParticleRange &particles,
+                  const ParticleRange &ghost_particles);
 
 /** Propagate velocity and position while using SHAKE algorithm for bond
  * constraint.*/
-void correct_pos_shake();
+void correct_pos_shake(const ParticleRange &particles);
 
 /** Correction of current velocities using RATTLE algorithm*/
-void correct_vel_shake();
+void correct_vel_shake(CellStructure &cell_structure);
 
 /** set the parameter for a rigid, aka RATTLE bond */
 int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol);

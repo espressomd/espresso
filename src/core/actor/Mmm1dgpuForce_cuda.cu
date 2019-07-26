@@ -137,10 +137,7 @@ unsigned int Mmm1dgpuForce::numBlocks(SystemInterface &s) {
   return b;
 }
 
-Mmm1dgpuForce::~Mmm1dgpuForce() {
-  modpsi_destroy();
-  cudaFree(dev_forcePairs);
-}
+Mmm1dgpuForce::~Mmm1dgpuForce() { cudaFree(dev_forcePairs); }
 
 __forceinline__ __device__ mmm1dgpu_real sqpow(mmm1dgpu_real x) {
   return x * x;

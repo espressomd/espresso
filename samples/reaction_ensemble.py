@@ -20,7 +20,6 @@
 This sample simulates the reaction ensemble. It also illustrates how the
 constant pH method can be used.
 """
-from __future__ import print_function
 import numpy as np
 import argparse
 
