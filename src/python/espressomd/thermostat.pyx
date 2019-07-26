@@ -162,11 +162,12 @@ cdef class Thermostat(object):
             # thermo_dict["p_diff"] = nptiso.p_diff
             thermo_list.append(npt_dict)
         if (thermo_switch & THERMO_DPD):
-            dpd_dict = {}
-            dpd_dict["type"] = "DPD"
-            dpd_dict["kT"] = temperature
-            dpd_dict["seed"] = int(dpd_get_rng_state())
-            thermo_list.append(dpd_dict)
+            IF DPD:
+                dpd_dict = {}
+                dpd_dict["type"] = "DPD"
+                dpd_dict["kT"] = temperature
+                dpd_dict["seed"] = int(dpd_get_rng_state())
+                thermo_list.append(dpd_dict)
         return thermo_list
 
     def turn_off(self):
