@@ -485,21 +485,8 @@ REGISTER_CALLBACK(mpi_set_time_step_slave)
 void mpi_set_time_step(double time_s) {
   if (time_s <= 0.)
     throw std::invalid_argument("time_step must be > 0.");
-  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
-    auto eps = std::numeric_limits<float>::epsilon();
-    auto tau = lb_lbfluid_get_tau();
-    if ((tau - time_s) / (tau + time_s) < -eps)
-      throw std::invalid_argument("MD time_step (" + std::to_string(time_s) +
-                                  ") must be =< LB tau (" +
-                                  std::to_string(tau) + ")");
-    auto factor = tau / time_s;
-    if (fabs(round(factor) - factor) / factor > eps)
-      throw std::invalid_argument("LB tau (" + std::to_string(tau) +
-                                  ") must be integer multiple of "
-                                  "MD time_step (" +
-                                  std::to_string(time_s) + "). Factor is " +
-                                  std::to_string(factor));
-  }
+  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
+    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
   mpi_call_all(mpi_set_time_step_slave, time_s);
 }
 
