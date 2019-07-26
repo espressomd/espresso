@@ -18,7 +18,6 @@
 ESPResSo as a game engine.
 """
 
-from __future__ import print_function
 from threading import Thread
 import numpy as np
 import time

@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 from .utils import handle_errors

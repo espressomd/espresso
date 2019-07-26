@@ -19,7 +19,6 @@ Visualization sample for bonds. Simulates a large chain of particles connected
 via harmonic bonds.
 """
 
-from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 from espressomd import integrate
