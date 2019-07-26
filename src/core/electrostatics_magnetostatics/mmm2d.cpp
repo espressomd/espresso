@@ -187,9 +187,9 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
 static int n_localpart = 0;
 
 /** temporary buffers for product decomposition */
-static double *partblk = nullptr;
+static std::vector<double> partblk;
 /** for all local cells including ghosts */
-static double *lclcblk = nullptr;
+static double * lclcblk = nullptr;
 /** collected data from the cells above the top neighbor
     of a cell rsp. below the bottom neighbor
     (P=below, M=above, as the signs in the exp). */
@@ -386,11 +386,15 @@ inline double *block(double *p, int index, int size) {
   return &p[index * size];
 }
 
+const double *block(std::vector<double> const& p, int index, int size) {
+  return assert(index * size < p.size()), &p[index * size];
+}
+
 inline double *blwentry(double *p, int index, int e_size) {
   return &p[2 * index * e_size];
 }
 
-inline double *abventry(double *p, int index, int e_size) {
+double *abventry(double *p, int index, int e_size) {
   return &p[(2 * index + 1) * e_size];
 }
 
@@ -1143,7 +1147,7 @@ double MMM2D_add_far(int f, int e) {
   n_scxcache = (int)(ceil(mmm2d_params.far_cut / ux) + 1);
   n_scycache = (int)(ceil(mmm2d_params.far_cut / uy) + 1);
 
-  partblk = Utils::realloc(partblk, n_localpart * 8 * sizeof(double));
+  partblk.resize(n_localpart * 8);
   lclcblk = Utils::realloc(lclcblk, cells.size() * 8 * sizeof(double));
   gblcblk = Utils::realloc(gblcblk, local_cells.n * 8 * sizeof(double));
 
