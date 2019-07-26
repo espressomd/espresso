@@ -25,6 +25,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "statistics.hpp"
+#include <vector>
 
 /** Particles' initial positions (needed for g1(t), g2(t), g3(t)) */
 /*@{*/
@@ -39,20 +40,18 @@ int chain_n_chains = 0;
 int chain_length = 0;
 /*@}*/
 
-void update_mol_ids_setchains() {
-  for (auto &p : local_cells.particles()) {
+void update_mol_ids_setchains(const ParticleRange &particles) {
+  for (auto &p : particles) {
     p.p.mol_id = floor((p.p.identity - chain_start) / (double)chain_length);
   }
 }
 
-void calc_re(PartCfg &partCfg, double **_re) {
-  int i;
-  double dx, dy, dz;
+std::array<double, 4> calc_re(PartCfg &partCfg) {
+  double dx, dy, dz, tmp;
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
-  double *re = nullptr, tmp;
-  *_re = re = Utils::realloc(re, 4 * sizeof(double));
+  std::array<double, 4> re;
 
-  for (i = 0; i < chain_n_chains; i++) {
+  for (int i = 0; i < chain_n_chains; i++) {
     dx = partCfg[chain_start + i * chain_length + chain_length - 1].r.p[0] -
          partCfg[chain_start + i * chain_length].r.p[0];
     dy = partCfg[chain_start + i * chain_length + chain_length - 1].r.p[1] -
@@ -64,26 +63,27 @@ void calc_re(PartCfg &partCfg, double **_re) {
     dist2 += tmp;
     dist4 += tmp * tmp;
   }
-  tmp = (double)chain_n_chains;
+  tmp = static_cast<double>(chain_n_chains);
   re[0] = dist / tmp;
   re[2] = dist2 / tmp;
   re[1] = sqrt(re[2] - re[0] * re[0]);
   re[3] = sqrt(dist4 / tmp - re[2] * re[2]);
+  return re;
 }
 
-void calc_rg(PartCfg &partCfg, double **_rg) {
-  int i, j, p;
+std::array<double, 4> calc_rg(PartCfg &partCfg) {
+  int p;
   double dx, dy, dz, r_CM_x, r_CM_y, r_CM_z;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
-  double *rg = nullptr, IdoubMPC, tmp;
+  double IdoubMPC, tmp;
   double M;
-  *_rg = rg = Utils::realloc(rg, 4 * sizeof(double));
+  std::array<double, 4> rg;
 
-  for (i = 0; i < chain_n_chains; i++) {
+  for (int i = 0; i < chain_n_chains; i++) {
     M = 0.0;
     r_CM_x = r_CM_y = r_CM_z = 0.0;
     IdoubMPC = 1. / (double)chain_length;
-    for (j = 0; j < chain_length; j++) {
+    for (int j = 0; j < chain_length; j++) {
       p = chain_start + i * chain_length + j;
       r_CM_x += partCfg[p].r.p[0] * (partCfg[p]).p.mass;
       r_CM_y += partCfg[p].r.p[1] * (partCfg[p]).p.mass;
@@ -94,7 +94,7 @@ void calc_rg(PartCfg &partCfg, double **_rg) {
     r_CM_y /= M;
     r_CM_z /= M;
     tmp = 0.0;
-    for (j = 0; j < chain_length; ++j) {
+    for (int j = 0; j < chain_length; ++j) {
       p = chain_start + i * chain_length + j;
       dx = partCfg[p].r.p[0] - r_CM_x;
       dy = partCfg[p].r.p[1] - r_CM_y;
@@ -106,26 +106,25 @@ void calc_rg(PartCfg &partCfg, double **_rg) {
     r_G2 += tmp;
     r_G4 += tmp * tmp;
   }
-  tmp = (double)chain_n_chains;
+  tmp = static_cast<double>(chain_n_chains);
   rg[0] = r_G / tmp;
   rg[2] = r_G2 / tmp;
   rg[1] = sqrt(rg[2] - rg[0] * rg[0]);
   rg[3] = sqrt(r_G4 / tmp - rg[2] * rg[2]);
+  return rg;
 }
 
-void calc_rh(PartCfg &partCfg, double **_rh) {
-  int i, j, p;
-  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, *rh = nullptr, ri = 0.0, prefac,
-                     tmp;
-  *_rh = rh = Utils::realloc(rh, 2 * sizeof(double));
+std::array<double, 2> calc_rh(PartCfg &partCfg) {
+  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, ri = 0.0, prefac, tmp;
+  std::array<double, 2> rh;
 
   prefac = 0.5 * chain_length *
            (chain_length - 1); /* 1/N^2 is not a normalization factor */
-  for (p = 0; p < chain_n_chains; p++) {
+  for (int p = 0; p < chain_n_chains; p++) {
     ri = 0.0;
-    for (i = chain_start + chain_length * p;
+    for (int i = chain_start + chain_length * p;
          i < chain_start + chain_length * (p + 1); i++) {
-      for (j = i + 1; j < chain_start + chain_length * (p + 1); j++) {
+      for (int j = i + 1; j < chain_start + chain_length * (p + 1); j++) {
         dx = partCfg[i].r.p[0] - partCfg[j].r.p[0];
         dx *= dx;
         dy = partCfg[i].r.p[1] - partCfg[j].r.p[1];
@@ -139,7 +138,8 @@ void calc_rh(PartCfg &partCfg, double **_rh) {
     r_H += tmp;
     r_H2 += tmp * tmp;
   }
-  tmp = (double)chain_n_chains;
+  tmp = static_cast<double>(chain_n_chains);
   rh[0] = r_H / tmp;
   rh[1] = sqrt(r_H2 / tmp - rh[0] * rh[0]);
+  return rh;
 }

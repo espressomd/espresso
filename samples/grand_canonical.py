@@ -19,7 +19,6 @@
 """
 This sample performs a grand canonical simulation of a salt solution.
 """
-from __future__ import print_function
 import numpy as np
 import sys
 

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import, division
 include "myconfig.pxi"
 import os
 import cython
@@ -169,8 +168,7 @@ cdef class HydrodynamicInteraction(Actor):
             raise Exception("lb_lbfluid_set_agrid error")
 
         if not self._params["ext_force_density"] == default_params["ext_force_density"]:
-            if python_lbfluid_get_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"]):
-                raise Exception("lb_lbfluid_set_ext_force_density error")
+            self._params["ext_force_density"] = self.ext_force_density
 
         return self._params
 
@@ -261,6 +259,19 @@ cdef class HydrodynamicInteraction(Actor):
         def __set__(self, value):
             raise NotImplementedError
 
+    property ext_force_density:
+        def __get__(self):
+            cdef Vector3d res
+            res = python_lbfluid_get_ext_force_density(
+                self._params["agrid"], self._params["tau"])
+            return make_array_locked(res)
+
+        def __set__(self, ext_force_density):
+            python_lbfluid_set_ext_force_density(
+    ext_force_density,
+     self._params["agrid"],
+     self._params["tau"])
+
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
         
@@ -327,9 +338,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines(object):

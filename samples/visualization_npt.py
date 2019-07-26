@@ -19,7 +19,6 @@ Visualization sample for particle dumbbells in the constant-temperature,
 constant-pressure ensemble.
 """
 
-from __future__ import print_function
 import numpy as np
 from threading import Thread
 

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import espressomd
 import numpy as np
 import unittest as ut
@@ -192,7 +191,6 @@ class InteractionsAngleBondTest(ut.TestCase):
                       phi=phi, bend=acs_bend, phi0=acs_phi0),
                       acs_phi0)
 
-    @utx.skipIfMissingFeatures("TABULATED")
     def test_angle_tabulated(self):
         """Check that we can reproduce the three other potentials."""
         at_bend = 1

@@ -19,7 +19,6 @@
 """
 This example shows how to integrate MDAnalysis in ESPResSo
 """
-from __future__ import print_function
 import espressomd
 from espressomd import MDA_ESP
 import numpy as np

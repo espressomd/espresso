@@ -18,7 +18,6 @@
 #
 
 # @TODO: shouldn't these global definitions be used via global_variables?
-from __future__ import print_function, absolute_import
 
 from libcpp cimport bool
 from libcpp.vector cimport vector
