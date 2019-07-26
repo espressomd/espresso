@@ -22,7 +22,6 @@ Visualization sample for a Lennard-Jones liquid with live plotting via
 matplotlib.
 """
 
-from __future__ import print_function
 import numpy as np
 from matplotlib import pyplot
 from threading import Thread

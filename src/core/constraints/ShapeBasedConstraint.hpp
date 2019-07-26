@@ -46,7 +46,7 @@ public:
   bool fits_in_box(Utils::Vector3d const &) const override { return true; }
 
   /* finds the minimum distance to all particles */
-  double min_dist();
+  double min_dist(const ParticleRange &particles);
 
   /* Calculate distance from the constraint */
   void calc_dist(const Utils::Vector3d &pos, double *dist, double *vec) const {

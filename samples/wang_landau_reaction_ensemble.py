@@ -19,7 +19,6 @@
 """
 This sample simulates the Wang-Landau Reaction Ensemble for a harmonic bond.
 """
-from __future__ import print_function
 import numpy as np
 
 import espressomd

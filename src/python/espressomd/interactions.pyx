@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
-
 from libcpp.string cimport string
 import collections
 
@@ -2585,118 +2583,119 @@ class Dihedral(BondedInteraction):
             self._bond_id, self._params["mult"], self._params["bend"], self._params["phase"])
 
 
+class Tabulated(BondedInteraction):
+
+    """
+    Tabulated bond.
+
+    Parameters
+    ----------
+
+    type : :obj:`str`
+        The type of bond, one of 'distance', 'angle' or
+        'dihedral'.
+    min : :obj:`float`
+        The minimal interaction distance. Has to be 0 if
+        type is 'angle' or 'dihedral'
+    max : :obj:`float`
+        The maximal interaction distance. Has to be pi if
+        type is 'angle' or 2pi if 'dihedral'
+    energy: array_like :obj:`float`
+        The energy table.
+    force: array_like :obj:`float`
+        The force table.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(Tabulated, self).__init__(*args, **kwargs)
+
+    def type_number(self):
+        return BONDED_IA_TABULATED
+
+    def type_name(self):
+        """Name of interaction type.
+
+        """
+        return "TABULATED"
+
+    def valid_keys(self):
+        """All parameters that can be set.
+
+        """
+        return "type", "min", "max", "energy", "force"
+
+    def required_keys(self):
+        """Parameters that have to be set.
+
+        """
+        return "type", "min", "max", "energy", "force"
+
+    def set_default_params(self):
+        """Sets parameters that are not required to their default value.
+
+        """
+        self._params = {'min': -1., 'max': -1., 'energy': [], 'force': []}
+
+    def validate_params(self):
+        """Check that parameters are valid.
+
+        """
+        pi = 3.14159265358979
+        phi = [self._params["min"], self._params["max"]]
+        if self._params["type"] == "angle" and max(phi) > 0 and (
+                abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - pi) > 1e-5):
+            raise ValueError("Tabulated angle expects forces/energies "
+                             "within the range [0, pi], got " + str(phi))
+        if self._params["type"] == "dihedral" and max(phi) > 0 and (
+                abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - 2 * pi) > 1e-5):
+            raise ValueError("Tabulated dihedral expects forces/energies "
+                             "within the range [0, 2*pi], got " + str(phi))
+
+    def _get_params_from_es_core(self):
+        make_bond_type_exist(self._bond_id)
+        res = \
+            {"type": bonded_ia_params[self._bond_id].p.tab.type,
+             "min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
+             "max": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
+             "energy":
+                 bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
+             "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
+             }
+        if res["type"] == 1:
+            res["type"] = "distance"
+        if res["type"] == 2:
+            res["type"] = "angle"
+        if res["type"] == 3:
+            res["type"] = "dihedral"
+        return res
+
+    def _set_params_in_es_core(self):
+        if self._params["type"] == "distance":
+            type_num = 1
+        elif self._params["type"] == "angle":
+            type_num = 2
+        elif self._params["type"] == "dihedral":
+            type_num = 3
+        else:
+            raise ValueError(
+                "Tabulated type needs to be distance, angle, or dihedral")
+
+        res = tabulated_bonded_set_params(
+            self._bond_id, < TabulatedBondedInteraction > type_num,
+            self._params["min"],
+            self._params["max"],
+            self._params["energy"],
+            self._params["force"])
+
+        if res == 1:
+            raise Exception(
+                "Could not setup tabulated bond. Invalid bond type.")
+        # Retrieve some params, Es calculates.
+        self._params = self._get_params_from_es_core()
+
+
 IF TABULATED == 1:
-    class Tabulated(BondedInteraction):
-
-        """
-        Tabulated bond.
-
-        Parameters
-        ----------
-
-        type : :obj:`str`,
-            The type of bond, one of 'distance', 'angle' or
-            'dihedral'.
-        min : :obj:`float`,
-            The minimal interaction distance. Has to be 0 if
-            type is 'angle' or 'dihedral'
-        max : :obj:`float`,
-            The maximal interaction distance. Has to be pi if
-            type is 'angle' or 2pi if 'dihedral'
-        energy: array_like :obj:`float`
-            The energy table.
-        force: array_like :obj:`float`
-            The force table.
-
-        """
-
-        def __init__(self, *args, **kwargs):
-            super(Tabulated, self).__init__(*args, **kwargs)
-
-        def type_number(self):
-            return BONDED_IA_TABULATED
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "TABULATED"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "type", "min", "max", "energy", "force"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "type", "min", "max", "energy", "force"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {'min': -1., 'max': -1., 'energy': [], 'force': []}
-
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            """
-            pi = 3.14159265358979
-            phi = [self._params["min"], self._params["max"]]
-            if self._params["type"] == "angle" and max(phi) > 0 and (
-                    abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - pi) > 1e-5):
-                raise ValueError("Tabulated angle expects forces/energies "
-                                 "within the range [0, pi], got " + str(phi))
-            if self._params["type"] == "dihedral" and max(phi) > 0 and (
-                    abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - 2 * pi) > 1e-5):
-                raise ValueError("Tabulated dihedral expects forces/energies "
-                                 "within the range [0, 2*pi], got " + str(phi))
-
-        def _get_params_from_es_core(self):
-            make_bond_type_exist(self._bond_id)
-            res = \
-                {"type": bonded_ia_params[self._bond_id].p.tab.type,
-                 "min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
-                 "max": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
-                 "energy":
-                     bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
-                 "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
-                 }
-            if res["type"] == 1:
-                res["type"] = "distance"
-            if res["type"] == 2:
-                res["type"] = "angle"
-            if res["type"] == 3:
-                res["type"] = "dihedral"
-            return res
-
-        def _set_params_in_es_core(self):
-            if self._params["type"] == "distance":
-                type_num = 1
-            elif self._params["type"] == "angle":
-                type_num = 2
-            elif self._params["type"] == "dihedral":
-                type_num = 3
-            else:
-                raise ValueError(
-                    "Tabulated type needs to be distance, angle, or dihedral")
-
-            res = tabulated_bonded_set_params(
-                self._bond_id, < TabulatedBondedInteraction > type_num,
-                self._params["min"],
-                self._params["max"],
-                self._params["energy"],
-                self._params["force"])
-
-            if res == 1:
-                raise Exception(
-                    "Could not setup tabulated bond. Invalid bond type.")
-            # Retrieve some params, Es calculates.
-            self._params = self._get_params_from_es_core()
-
     cdef class TabulatedNonBonded(NonBondedInteraction):
         """
         Tabulated non-bonded interaction.
@@ -2704,9 +2703,9 @@ IF TABULATED == 1:
         Parameters
         ----------
 
-        min : :obj:`float`,
+        min : :obj:`float`
             The minimal interaction distance.
-        max : :obj:`float`,
+        max : :obj:`float`
             The maximal interaction distance.
         energy: array_like :obj:`float`
             The energy table.
@@ -2790,49 +2789,6 @@ IF TABULATED == 1:
             """
             if self.state == 0:
                 return True
-
-IF TABULATED != 1:
-    class Tabulated(BondedInteraction):
-
-        """
-        Tabulated non-bonded interaction.
-
-        Requires feature ``TABULATED``.
-
-        """
-
-        def type_number(self):
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def _get_params_from_es_core(self):
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def _set_params_in_es_core(self):
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
 
 
 IF LENNARD_JONES == 1:

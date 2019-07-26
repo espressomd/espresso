@@ -19,7 +19,6 @@ This sample sets up a DPD fluid and calculates pressure as a function of
 varying density. The fluid is thermalized using a DPD thermostat.
 """
 
-from __future__ import print_function
 import espressomd
 
 required_features = ["DPD"]

@@ -345,12 +345,10 @@ void mpi_bcast_ia_params(int i, int j) {
     /* bonded interaction parameters */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
-#ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
-#endif
   }
 
   on_short_range_ia_change();
@@ -367,7 +365,6 @@ void mpi_bcast_ia_params_slave(int i, int j) {
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
-#ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
       auto *tab_pot = new TabulatedPotential();
@@ -375,7 +372,6 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
       bonded_ia_params[i].p.tab.pot = tab_pot;
     }
-#endif
   }
 
   on_short_range_ia_change();
@@ -410,7 +406,8 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     break;
   case 4:
     mpi_call(mpi_gather_stats_slave, -1, 4);
-    predict_momentum_particles((double *)result);
+    predict_momentum_particles((double *)result,
+                               cell_structure.local_cells().particles());
     break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
@@ -450,7 +447,8 @@ void mpi_gather_stats_slave(int, int job) {
     pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
     break;
   case 4:
-    predict_momentum_particles(nullptr);
+    predict_momentum_particles(nullptr,
+                               cell_structure.local_cells().particles());
     break;
   case 6:
     lb_calc_fluid_momentum(nullptr);
@@ -661,7 +659,8 @@ void mpi_bcast_max_mu() {
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
 void mpi_kill_particle_motion_slave(int rotation) {
-  local_kill_particle_motion(rotation);
+  local_kill_particle_motion(rotation,
+                             cell_structure.local_cells().particles());
   on_particle_change();
 }
 
@@ -672,7 +671,7 @@ void mpi_kill_particle_motion(int rotation) {
 }
 
 void mpi_kill_particle_forces_slave(int torque) {
-  local_kill_particle_forces(torque);
+  local_kill_particle_forces(torque, cell_structure.local_cells().particles());
   on_particle_change();
 }
 

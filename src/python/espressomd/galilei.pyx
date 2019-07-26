@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function, absolute_import
 from . cimport galilei
 from .utils cimport make_array_locked
 

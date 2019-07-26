@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Integration test for exclusions
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd

@@ -18,7 +18,6 @@
 #
 # This script generates code_info.pyx
 #
-from __future__ import print_function
 import inspect
 import sys
 import os

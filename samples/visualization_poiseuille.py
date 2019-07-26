@@ -18,7 +18,6 @@
 Visualization sample for Poiseuille flow with Lattice Boltzmann.
 """
 
-from __future__ import print_function
 from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
 from threading import Thread

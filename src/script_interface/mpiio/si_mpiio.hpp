@@ -27,6 +27,7 @@
 #include "config.hpp"
 #include "get_value.hpp"
 #include "io/mpiio/mpiio.hpp"
+#include <core/cells.hpp>
 
 #define field_value(use, v) ((use) ? (v) : 0u)
 
@@ -52,7 +53,8 @@ public:
                  field_value(bond, Mpiio::MPIIO_OUT_BND);
 
     if (name == "write")
-      Mpiio::mpi_mpiio_common_write(pref.c_str(), v);
+      Mpiio::mpi_mpiio_common_write(pref.c_str(), v,
+                                    cell_structure.local_cells().particles());
     else if (name == "read")
       Mpiio::mpi_mpiio_common_read(pref.c_str(), v);
 

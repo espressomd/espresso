@@ -161,7 +161,7 @@ LB_Fluid lbfluid_post;
 std::vector<LB_FluidNode> lbfields;
 
 /** Communicator for halo exchange between processors */
-HaloCommunicator update_halo_comm = {0, nullptr};
+HaloCommunicator update_halo_comm = HaloCommunicator(0);
 
 /** measures the MD time since the last fluid update */
 static double fluidstep = 0.0;
@@ -290,7 +290,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
-  double *buffer = nullptr, *sbuf = nullptr, *rbuf = nullptr;
+  double *buffer;
   MPI_Status status;
 
   auto const yperiod = lblattice.halo_grid[0];
@@ -302,14 +302,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
    * X direction *
    ***************/
   count = 5 * lblattice.halo_grid[1] * lblattice.halo_grid[2];
-  sbuf = (double *)Utils::malloc(count * sizeof(double));
-  rbuf = (double *)Utils::malloc(count * sizeof(double));
+  std::vector<double> sbuf(count);
+  std::vector<double> rbuf(count);
 
   /* send to right, recv from left i = 1, 7, 9, 11, 13 */
   snode = node_neighbors[1];
   rnode = node_neighbors[0];
 
-  buffer = sbuf;
+  buffer = sbuf.data();
   index = get_linear_index(lblattice.grid[0] + 1, 0, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (y = 0; y < lblattice.halo_grid[1]; y++) {
@@ -324,10 +324,11 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
-  buffer = rbuf;
+  buffer = rbuf.data();
   index = get_linear_index(1, 0, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (y = 0; y < lblattice.halo_grid[1]; y++) {
@@ -346,7 +347,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   snode = node_neighbors[0];
   rnode = node_neighbors[1];
 
-  buffer = sbuf;
+  buffer = sbuf.data();
   index = get_linear_index(0, 0, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (y = 0; y < lblattice.halo_grid[1]; y++) {
@@ -361,10 +362,11 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
-  buffer = rbuf;
+  buffer = rbuf.data();
   index = get_linear_index(lblattice.grid[0], 0, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (y = 0; y < lblattice.halo_grid[1]; y++) {
@@ -383,14 +385,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
    * Y direction *
    ***************/
   count = 5 * lblattice.halo_grid[0] * lblattice.halo_grid[2];
-  sbuf = Utils::realloc(sbuf, count * sizeof(double));
-  rbuf = Utils::realloc(rbuf, count * sizeof(double));
+  sbuf.resize(count);
+  rbuf.resize(count);
 
   /* send to right, recv from left i = 3, 7, 10, 15, 17 */
   snode = node_neighbors[3];
   rnode = node_neighbors[2];
 
-  buffer = sbuf;
+  buffer = sbuf.data();
   index = get_linear_index(0, lblattice.grid[1] + 1, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
@@ -406,10 +408,11 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
-  buffer = rbuf;
+  buffer = rbuf.data();
   index = get_linear_index(0, 1, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
@@ -429,7 +432,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   snode = node_neighbors[2];
   rnode = node_neighbors[3];
 
-  buffer = sbuf;
+  buffer = sbuf.data();
   index = get_linear_index(0, 0, 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
@@ -445,10 +448,11 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     index += zperiod - lblattice.halo_grid[0];
   }
 
-  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
-  buffer = rbuf;
+  buffer = rbuf.data();
   index = get_linear_index(0, lblattice.grid[1], 0, lblattice.halo_grid);
   for (z = 0; z < lblattice.halo_grid[2]; z++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
@@ -468,14 +472,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
    * Z direction *
    ***************/
   count = 5 * lblattice.halo_grid[0] * lblattice.halo_grid[1];
-  sbuf = Utils::realloc(sbuf, count * sizeof(double));
-  rbuf = Utils::realloc(rbuf, count * sizeof(double));
+  sbuf.resize(count);
+  rbuf.resize(count);
 
   /* send to right, recv from left i = 5, 11, 14, 15, 18 */
   snode = node_neighbors[5];
   rnode = node_neighbors[4];
 
-  buffer = sbuf;
+  buffer = sbuf.data();
   index = get_linear_index(0, 0, lblattice.grid[2] + 1, lblattice.halo_grid);
   for (y = 0; y < lblattice.halo_grid[1]; y++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
@@ -490,10 +494,11 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
-  buffer = rbuf;
+  buffer = rbuf.data();
   index = get_linear_index(0, 0, 1, lblattice.halo_grid);
   for (y = 0; y < lblattice.halo_grid[1]; y++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
@@ -512,7 +517,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   snode = node_neighbors[4];
   rnode = node_neighbors[5];
 
-  buffer = sbuf;
+  buffer = sbuf.data();
   index = get_linear_index(0, 0, 0, lblattice.halo_grid);
   for (y = 0; y < lblattice.halo_grid[1]; y++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
@@ -527,10 +532,11 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
     }
   }
 
-  MPI_Sendrecv(sbuf, count, MPI_DOUBLE, snode, REQ_HALO_SPREAD, rbuf, count,
-               MPI_DOUBLE, rnode, REQ_HALO_SPREAD, comm_cart, &status);
+  MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
+               rbuf.data(), count, MPI_DOUBLE, rnode, REQ_HALO_SPREAD,
+               comm_cart, &status);
 
-  buffer = rbuf;
+  buffer = rbuf.data();
   index = get_linear_index(0, 0, lblattice.grid[2], lblattice.halo_grid);
   for (y = 0; y < lblattice.halo_grid[1]; y++) {
     for (x = 0; x < lblattice.halo_grid[0]; x++) {
@@ -544,9 +550,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
       ++index;
     }
   }
-
-  free(rbuf);
-  free(sbuf);
 }
 
 /***********************************************************************/
@@ -619,7 +622,7 @@ void lb_realloc_fluid() {
  */
 void lb_prepare_communication() {
   int i;
-  HaloCommunicator comm = {0, nullptr};
+  HaloCommunicator comm = HaloCommunicator(0);
 
   /* since the data layout is a structure of arrays, we have to
    * generate a communication for this structure: first we generate
@@ -633,8 +636,7 @@ void lb_prepare_communication() {
                              node_grid);
 
   update_halo_comm.num = comm.num;
-  update_halo_comm.halo_info =
-      Utils::realloc(update_halo_comm.halo_info, comm.num * sizeof(HaloInfo));
+  update_halo_comm.halo_info.resize(comm.num);
 
   /* replicate the halo structure */
   for (i = 0; i < comm.num; i++) {
