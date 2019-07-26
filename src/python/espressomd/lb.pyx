@@ -263,11 +263,15 @@ cdef class HydrodynamicInteraction(Actor):
     property ext_force_density:
         def __get__(self):
             cdef Vector3d res
-            res = python_lbfluid_get_ext_force_density(self._params["agrid"], self._params["tau"])
+            res = python_lbfluid_get_ext_force_density(
+                self._params["agrid"], self._params["tau"])
             return make_array_locked(res)
 
         def __set__(self, ext_force_density):
-            python_lbfluid_set_ext_force_density(ext_force_density, self._params["agrid"], self._params["tau"])
+            python_lbfluid_set_ext_force_density(
+    ext_force_density,
+     self._params["agrid"],
+     self._params["tau"])
 
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
@@ -335,9 +339,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines(object):
