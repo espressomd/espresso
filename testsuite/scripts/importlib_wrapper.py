@@ -63,7 +63,7 @@ def configure_and_import(filepath,
         whether GPU is necessary or not
     substitutions function
         custom text replacement operation (useful to edit out calls to the
-        OpenGL or Mayavi visualizers' :meth:`run` method)
+        OpenGL or Mayavi visualizers' ``run()`` method)
     cmd_arguments : list
         command line arguments, i.e. sys.argv without the script path
     script_suffix : str
@@ -79,7 +79,7 @@ def configure_and_import(filepath,
         if ``True``, move to the script's directory (useful when the script
         needs to load files hardcoded as relative paths, or when files are
         generated and need cleanup); this is enabled by default
-    :param \*\*parameters
+    \*\*parameters :
         global variables to replace
 
     """
