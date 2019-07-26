@@ -107,7 +107,7 @@ cdef class Thermostat(object):
                 self.set_npt(kT=thmst["kT"], p_diff=thmst[
                              "p_diff"], piston=thmst["piston"])
             if thmst["type"] == "DPD":
-                self.set_dpd(kT=thmst["kT"])
+                self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
 
     def get_ts(self):
         return thermo_switch
@@ -165,10 +165,12 @@ cdef class Thermostat(object):
             # thermo_dict["p_diff"] = nptiso.p_diff
             thermo_list.append(npt_dict)
         if (thermo_switch & THERMO_DPD):
-            dpd_dict = {}
-            dpd_dict["type"] = "DPD"
-            dpd_dict["kT"] = temperature
-            thermo_list.append(dpd_dict)
+            IF DPD:
+                dpd_dict = {}
+                dpd_dict["type"] = "DPD"
+                dpd_dict["kT"] = temperature
+                dpd_dict["seed"] = int(dpd_get_rng_state())
+                thermo_list.append(dpd_dict)
         return thermo_list
 
     def turn_off(self):
@@ -438,9 +440,10 @@ cdef class Thermostat(object):
             mpi_bcast_parameter(FIELD_NPTISO_GV)
 
     IF DPD:
-        def set_dpd(self, kT=None):
+        def set_dpd(self, kT=None, seed=None):
             """
-            Sets the DPD thermostat. This also activates the DPD interactions.
+            Sets the DPD thermostat with required parameters 'kT'.
+            This also activates the DPD interactions.
 
             Parameters
             ----------
@@ -453,6 +456,17 @@ cdef class Thermostat(object):
                 raise ValueError("kT has to be given as keyword args")
             if not isinstance(kT, float):
                 raise ValueError("temperature must be a positive number")
+
+            #Seed is required if the rng is not initialized
+            if not seed and dpd_is_seed_required():
+                raise ValueError(
+                    "A seed has to be given as keyword argument on first activation of the thermostat")
+
+            if seed:
+                utils.check_type_or_throw_except(
+                    seed, 1, int, "seed must be a positive integer")
+                dpd_set_rng_state(seed)
+
             global temperature
             temperature = float(kT)
             global thermo_switch

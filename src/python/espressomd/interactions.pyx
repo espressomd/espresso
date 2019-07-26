@@ -904,6 +904,8 @@ IF DPD:
                 Friction coefficient of the orthogonal part
             trans_r_cut : :obj:`float`
                 Cutoff of the orthogonal part
+            seed : :obj:`int`, required
+                Initial counter value (or seed) of the philox RNG.
 
             """
             super(DPDInteraction, self).set_params(**kwargs)

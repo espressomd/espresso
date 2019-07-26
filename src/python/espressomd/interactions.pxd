@@ -19,6 +19,7 @@
 # Handling of interactions
 
 from libcpp.string cimport string
+from libc cimport stdint
 
 include "myconfig.pxi"
 from espressomd.system cimport *
