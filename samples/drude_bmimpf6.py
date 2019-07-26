@@ -19,7 +19,6 @@ Particle polarization with cold Drude oscillators on a coarse grained
 ionic liquid BMIM PF6.
 """
 
-from __future__ import print_function
 import sys
 import time
 import os

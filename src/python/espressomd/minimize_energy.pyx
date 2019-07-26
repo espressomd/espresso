@@ -18,7 +18,6 @@
 #
 # Minimize Energy
 
-from __future__ import print_function, absolute_import
 from . cimport minimize_energy
 from espressomd.utils import is_valid_type
 

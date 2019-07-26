@@ -21,7 +21,6 @@
 # reference data from direct summation. In 2d, reference data from the mdlc
 # test case is used
 
-from __future__ import print_function
 import espressomd
 import espressomd.magnetostatics as magnetostatics
 import espressomd.magnetostatic_extensions as magnetostatic_extensions

@@ -18,7 +18,6 @@
 Visualization of shape-based constraints with test particles.
 """
 
-from __future__ import print_function
 from threading import Thread
 import numpy as np
 import argparse

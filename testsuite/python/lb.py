@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
-
 import itertools
 import unittest as ut
 import unittest_decorators as utx
@@ -221,6 +219,17 @@ class TestLB(object):
         self.assertAlmostEqual(self.lbf[0, 0, 0].density, density, delta=1e-4)
 
         self.assertEqual(self.lbf[3, 2, 1].index, (3, 2, 1))
+        ext_force_density = [0.1, 0.2, 1.2]
+        self.lbf[1, 2, 3].velocity = v_fluid
+        self.lbf.ext_force_density = ext_force_density
+        np.testing.assert_allclose(
+            np.copy(self.lbf[1, 2, 3].velocity),
+            v_fluid,
+            atol=1e-4)
+        np.testing.assert_allclose(
+            np.copy(self.lbf.ext_force_density),
+            ext_force_density,
+            atol=1e-4)
 
     def test_parameter_change_without_seed(self):
         self.system.actors.clear()

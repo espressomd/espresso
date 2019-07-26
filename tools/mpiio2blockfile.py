@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
-
 # Important: Currently, this script assumes, that all fields are dumped.
 # To support less: Read the "fields" unsigned int from 1.head.
 
