@@ -329,6 +329,12 @@ class TestLB(object):
     
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_unequal_time_step(self):
+        """
+        Checks that LB tau can only be a integer multiple of the MD time_step
+        and that different time steps don't affect the physics of a system
+        where particles don't move
+        """
+        
         self.system.thermostat.turn_off()
         self.system.actors.clear()
         self.system.part.clear()

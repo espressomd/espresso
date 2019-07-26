@@ -48,7 +48,7 @@ cdef extern from "global.hpp":
 
 cdef extern from "communication.hpp":
     extern int n_nodes
-    void mpi_set_time_step(double time_step)
+    void mpi_set_time_step(double time_step) except +
 
 cdef extern from "integrate.hpp":
     double time_step

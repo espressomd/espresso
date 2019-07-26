@@ -31,7 +31,6 @@ from copy import deepcopy
 from . import utils
 from .utils import array_locked, is_valid_type
 from .utils cimport make_array_locked, numeric_limits
-from globals cimport time_step as global_time_step
 
 # Actor class
 ####################################################
@@ -74,17 +73,8 @@ cdef class HydrodynamicInteraction(Actor):
         elif not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
             raise ValueError("Density must be one positive double")
         
-        tau = self._params["tau"]
-        if (tau <= 0.0):
+        if (self._params["tau"] == default_params["tau"]):
             raise Exception("LB_FLUID tau not set")
-        elif global_time_step > 0:
-            if (tau - global_time_step) / (abs(tau) + abs(global_time_step)) < -numeric_limits[float].epsilon():
-                raise ValueError(
-                    "LB_time_step ({}) must be >= Time Step ({})".format(tau, global_time_step))
-            factor = tau / global_time_step
-            if abs(round(factor) - factor) / factor > numeric_limits[float].epsilon():
-                raise ValueError(
-                    "LB_time_step must be integer multiple of Time step. Factor is {}".format(factor))
             
     # list of valid keys for parameters
     ####################################################
