@@ -1795,7 +1795,7 @@ class NonBondedInteractionHandle(object):
 cdef class NonBondedInteractions(object):
     """
     Access to non-bonded interaction parameters via [i,j], where i,j are particle
-    types. Returns NonBondedInteractionHandle.
+    types. Returns a :class:`NonBondedInteractionHandle` object.
     Also: access to force capping.
 
     """

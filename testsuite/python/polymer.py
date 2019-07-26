@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
 import unittest as ut
 import numpy as np
 import espressomd
@@ -181,9 +180,7 @@ class PolymerPositions(ut.TestCase):
             self.assertGreaterEqual(z, 0.5 * self.box_l)
 
         # assert that illegal start position raises error
-        assertRaisesRegex = self.assertRaisesRegexp if sys.version_info < (
-            3, 2) else self.assertRaisesRegex
-        with assertRaisesRegex(Exception, 'Invalid start positions.'):
+        with self.assertRaisesRegex(Exception, 'Invalid start positions.'):
             illegal_start = np.array([[1., 1., 0.2 * self.box_l]])
             positions = polymer.positions(
                 n_polymers=1,
