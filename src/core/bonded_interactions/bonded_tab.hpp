@@ -28,7 +28,6 @@
 
 #include "config.hpp"
 
-#ifdef TABULATED
 #include "angle_common.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/dihedral.hpp"
@@ -283,5 +282,4 @@ inline int tab_dihedral_energy(Particle const *p2, Particle const *p1,
   return 0;
 }
 
-#endif
 #endif

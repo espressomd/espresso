@@ -290,18 +290,18 @@ inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
 
 /** convert the torques to the body-fixed frames and propagate angular
  * velocities */
-void convert_torques_propagate_omega() {
+void convert_torques_propagate_omega(const ParticleRange &particles) {
   INTEG_TRACE(
       fprintf(stderr, "%d: convert_torques_propagate_omega:\n", this_node));
 
 #if defined(CUDA) && defined(ENGINE)
   if ((lb_lbfluid_get_lattice_switch() == ActiveLB::GPU) &&
       swimming_particles_exist) {
-    copy_v_cs_from_GPU(local_cells.particles());
+    copy_v_cs_from_GPU(particles);
   }
 #endif
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     // Skip particle if rotation is turned off entirely for it.
     if (!p.p.rotation)
       continue;
@@ -367,10 +367,10 @@ void convert_torques_propagate_omega() {
 }
 
 /** convert the torques to the body-fixed frames before the integration loop */
-void convert_initial_torques() {
+void convert_initial_torques(const ParticleRange &particles) {
 
   INTEG_TRACE(fprintf(stderr, "%d: convert_initial_torques:\n", this_node));
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     if (!p.p.rotation)
       continue;
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
