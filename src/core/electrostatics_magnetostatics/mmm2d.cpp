@@ -1727,69 +1727,71 @@ void MMM2D_init() {
   }
 }
 
+namespace {
+template <int dir>
+Utils::Vector3d reflect_z(BoxGeometry const &, Utils::Vector3d);
+
+template <>
+Utils::Vector3d reflect_z<-1>(BoxGeometry const &, Utils::Vector3d v) {
+  return {v[0], v[1], -v[2]};
+}
+
+template <>
+Utils::Vector3d reflect_z<1>(BoxGeometry const &box, Utils::Vector3d v) {
+  return {v[0], v[1], 2. * box.length()[2] - v[2]};
+}
+} // namespace
+
 void MMM2D_dielectric_layers_force_contribution() {
-  int c, i, j;
-  Cell *celll;
-  int npl;
-  Particle *pl, *p1;
-  double charge_factor;
-  double a[3];
-  Utils::Vector3d force{};
-  double pref = coulomb.prefactor * C_2PI * ux * uy;
 
   if (!mmm2d_params.dielectric_contrast_on)
     return;
 
+  auto const pref = coulomb.prefactor * C_2PI * ux * uy;
+
   // First and last layer near field force contribution
   if (this_node == 0) {
-    c = 1;
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
+    auto cell = local_cells[0];
+    for (auto &p1 : cell->particles()) {
+      Utils::Vector3d force{};
 
-    for (i = 0; i < npl; i++) {
-      force = {};
-      p1 = &pl[i];
-      for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = -pl[j].r.p[2];
+      for (auto const &p2 : cell->particles()) {
+        auto const a = reflect_z<-1>(box_geo, p2.r.p);
+
         Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        layered_get_mi_vector(d.data(), p1.r.p.data(), a.data());
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
-        charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_bot;
+        auto const charge_factor = p1.p.q * p2.p.q * mmm2d_params.delta_mid_bot;
         add_mmm2d_coulomb_pair_force(charge_factor, d, dist, force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] -= pref * charge_factor;
       }
-      p1->f.f += force;
+
+      p1.f.f += force;
     }
   }
 
   if (this_node == n_nodes - 1) {
+    auto cell = local_cells[local_cells.n - 1];
 
-    c = local_cells.n;
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
-    for (i = 0; i < npl; i++) {
-      force = {};
-      p1 = &pl[i];
-      for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = 2 * box_geo.length()[2] - pl[j].r.p[2];
+    for (auto &p1 : cell->particles()) {
+      Utils::Vector3d force{};
+
+      for (auto const &p2 : cell->particles()) {
+        auto const a = reflect_z<1>(box_geo, p2.r.p);
+
         Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        layered_get_mi_vector(d.data(), p2.r.p.data(), a.data());
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
-        charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_top;
+        auto const charge_factor = p1.p.q * p2.p.q * mmm2d_params.delta_mid_top;
         add_mmm2d_coulomb_pair_force(charge_factor, d, dist, force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] += pref * charge_factor;
       }
-      p1->f.f += force;
+
+      p1.f.f += force;
     }
   }
 }
@@ -1806,10 +1808,10 @@ double MMM2D_dielectric_layers_energy_contribution() {
 
     for (auto const &p1 : cell->particles()) {
       for (auto const &p2 : cell->particles()) {
-        const double a[3] = {p2.r.p[0], p2.r.p[1], -p2.r.p[2]};
+        auto const a = reflect_z<-1>(box_geo, p2.r.p);
 
         Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1.r.p.data(), a);
+        layered_get_mi_vector(d.data(), p1.r.p.data(), a.data());
         auto const dist2 = d.norm2();
         auto const charge_factor = mmm2d_params.delta_mid_bot * p1.p.q * p2.p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
@@ -1825,11 +1827,10 @@ double MMM2D_dielectric_layers_energy_contribution() {
 
     for (auto const &p1 : cell->particles()) {
       for (auto const &p2 : cell->particles()) {
-        const double a[3] = {p2.r.p[0], p2.r.p[1],
-                             2. * box_geo.length()[2] - p2.r.p[2]};
+        auto const a = reflect_z<1>(box_geo, p2.r.p);
 
         Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1.r.p.data(), a);
+        layered_get_mi_vector(d.data(), p1.r.p.data(), a.data());
         auto const dist2 = d.norm2();
         auto const charge_factor = mmm2d_params.delta_mid_top * p1.p.q * p2.p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
