@@ -816,7 +816,8 @@ static void setup_PQ(int p, int q, double omega, double fac,
   Particle *part;
   const double pref = coulomb.prefactor * 8 * M_PI * ux * uy * fac * fac;
   const double h = box_geo.length()[2];
-  const double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
+  const double fac_imgsum =
+      1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
   const double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
   const double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
   const double fac_delta = mmm2d_params.delta_mult * fac_imgsum;
@@ -871,7 +872,8 @@ static void setup_PQ(int p, int q, double omega, double fac,
                     exp(omega * (part[i].r.p[2] - 2 * h + layer_h))) *
                    fac_delta;
 
-          auto const e_di = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
+          auto const e_di =
+              exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
 
           auto const lclimgebot = block(lclcblk, 0, size);
           lclimgebot[PQESSP] +=
@@ -896,7 +898,7 @@ static void setup_PQ(int p, int q, double omega, double fac,
                    fac_delta;
 
           auto const e_di = exp(omega * (part[i].r.p[2] - h + layer_h)) *
-              mmm2d_params.delta_mid_top;
+                            mmm2d_params.delta_mid_top;
 
           auto const lclimgetop = block(lclcblk, local_cells.n + 1, size);
           lclimgetop[PQESSM] +=
@@ -1793,34 +1795,23 @@ void MMM2D_dielectric_layers_force_contribution() {
 }
 
 double MMM2D_dielectric_layers_energy_contribution() {
-  int c, i, j;
-  Cell *celll;
-  int npl;
-  Particle *pl, *p1;
-  double charge_factor;
-  double a[3];
-  double eng = 0.0;
-  double pref = coulomb.prefactor * C_2PI * ux * uy;
-
   if (!mmm2d_params.dielectric_contrast_on)
     return 0.0;
 
-  if (this_node == 0) {
-    c = 1;
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
+  auto const pref = coulomb.prefactor * C_2PI * ux * uy;
+  double eng = 0.0;
 
-    for (i = 0; i < npl; i++) {
-      p1 = &pl[i];
-      for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = -pl[j].r.p[2];
+  if (this_node == 0) {
+    auto cell = local_cells[0];
+
+    for (auto const &p1 : cell->particles()) {
+      for (auto const &p2 : cell->particles()) {
+        const double a[3] = {p2.r.p[0], p2.r.p[1], -p2.r.p[2]};
+
         Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        layered_get_mi_vector(d.data(), p1.r.p.data(), a);
         auto const dist2 = d.norm2();
-        charge_factor = mmm2d_params.delta_mid_bot * p1->p.q * pl[j].p.q;
+        auto const charge_factor = mmm2d_params.delta_mid_bot * p1.p.q * p2.p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
         eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) +
@@ -1830,23 +1821,20 @@ double MMM2D_dielectric_layers_energy_contribution() {
   }
 
   if (this_node == n_nodes - 1) {
-    c = local_cells.n;
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
-    for (i = 0; i < npl; i++) {
-      p1 = &pl[i];
-      for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = 2 * box_geo.length()[2] - pl[j].r.p[2];
+    auto cell = local_cells[local_cells.n - 1];
+
+    for (auto const &p1 : cell->particles()) {
+      for (auto const &p2 : cell->particles()) {
+        const double a[3] = {p2.r.p[0], p2.r.p[1],
+                             2. * box_geo.length()[2] - p2.r.p[2]};
+
         Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        layered_get_mi_vector(d.data(), p1.r.p.data(), a);
         auto const dist2 = d.norm2();
-        charge_factor = mmm2d_params.delta_mid_top * p1->p.q * pl[j].p.q;
+        auto const charge_factor = mmm2d_params.delta_mid_bot * p1.p.q * p2.p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
-        eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) -
+        eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) +
                pref * charge_factor * d[2];
       }
     }
