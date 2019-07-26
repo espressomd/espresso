@@ -971,7 +971,7 @@ static void add_PQ_force(int p, int q, double omega) {
     auto othcblk = block(gblcblk, c - 1, size);
 
     auto cell = local_cells[c - 1];
-    for (auto &p: cell->particles()) {
+    for (auto &p : cell->particles()) {
       p.f.f[0] += pref_x * (partblk[size * ic + PQESCM] * othcblk[PQECCP] +
                             partblk[size * ic + PQESSM] * othcblk[PQECSP] -
                             partblk[size * ic + PQECCM] * othcblk[PQESCP] -
@@ -991,11 +991,11 @@ static void add_PQ_force(int p, int q, double omega) {
       p.f.f[2] += (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
                    partblk[size * ic + PQECSM] * othcblk[PQECSP] +
                    partblk[size * ic + PQESCM] * othcblk[PQESCP] +
-                         partblk[size * ic + PQESSM] * othcblk[PQESSP] -
-                         partblk[size * ic + PQECCP] * othcblk[PQECCM] -
-                         partblk[size * ic + PQECSP] * othcblk[PQECSM] -
-                         partblk[size * ic + PQESCP] * othcblk[PQESCM] -
-                         partblk[size * ic + PQESSP] * othcblk[PQESSM]);
+                   partblk[size * ic + PQESSM] * othcblk[PQESSP] -
+                   partblk[size * ic + PQECCP] * othcblk[PQECCM] -
+                   partblk[size * ic + PQECSP] * othcblk[PQECSM] -
+                   partblk[size * ic + PQESCP] * othcblk[PQESCM] -
+                   partblk[size * ic + PQESSP] * othcblk[PQESSM]);
 
       ;
       ic++;
@@ -1760,19 +1760,19 @@ void MMM2D_init() {
 }
 
 namespace {
-template<int dir>
-Utils::Vector3d reflect_z(BoxGeometry const&, Utils::Vector3d);
+template <int dir>
+Utils::Vector3d reflect_z(BoxGeometry const &, Utils::Vector3d);
 
-template<>
-Utils::Vector3d reflect_z<-1>(BoxGeometry const&, Utils::Vector3d v) {
+template <>
+Utils::Vector3d reflect_z<-1>(BoxGeometry const &, Utils::Vector3d v) {
   return {v[0], v[1], -v[2]};
 }
 
-template<>
-Utils::Vector3d reflect_z<1>(BoxGeometry const& box, Utils::Vector3d v) {
-  return {v[0], v[1], 2.*box.length()[2] - v[2]};
+template <>
+Utils::Vector3d reflect_z<1>(BoxGeometry const &box, Utils::Vector3d v) {
+  return {v[0], v[1], 2. * box.length()[2] - v[2]};
 }
-}
+} // namespace
 
 void MMM2D_dielectric_layers_force_contribution() {
 
@@ -1784,18 +1784,19 @@ void MMM2D_dielectric_layers_force_contribution() {
   // First and last layer near field force contribution
   if (this_node == 0) {
     auto cell = local_cells[0];
-    for (auto &p1: cell->particles()) {
+    for (auto &p1 : cell->particles()) {
       Utils::Vector3d force{};
 
-      for (auto const&p2: cell->particles()) {
-        auto const a = reflect_z<-1>(box_geo,p2.r.p);
+      for (auto const &p2 : cell->particles()) {
+        auto const a = reflect_z<-1>(box_geo, p2.r.p);
 
         Utils::Vector3d d;
         layered_get_mi_vector(d.data(), p1.r.p.data(), a.data());
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
         auto const charge_factor = p1.p.q * p2.p.q * mmm2d_params.delta_mid_bot;
-        add_mmm2d_coulomb_pair_force(charge_factor, d.data(), dist, force.data());
+        add_mmm2d_coulomb_pair_force(charge_factor, d.data(), dist,
+                                     force.data());
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] -= pref * charge_factor;
       }
@@ -1807,18 +1808,19 @@ void MMM2D_dielectric_layers_force_contribution() {
   if (this_node == n_nodes - 1) {
     auto cell = local_cells[local_cells.n - 1];
 
-    for (auto &p1: cell->particles()) {
+    for (auto &p1 : cell->particles()) {
       Utils::Vector3d force{};
 
-      for (auto const&p2: cell->particles()) {
-        auto const a = reflect_z<1>(box_geo,p2.r.p);
+      for (auto const &p2 : cell->particles()) {
+        auto const a = reflect_z<1>(box_geo, p2.r.p);
 
         Utils::Vector3d d;
         layered_get_mi_vector(d.data(), p2.r.p.data(), a.data());
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
         auto const charge_factor = p1.p.q * p2.p.q * mmm2d_params.delta_mid_top;
-        add_mmm2d_coulomb_pair_force(charge_factor, d.data(), dist, force.data());
+        add_mmm2d_coulomb_pair_force(charge_factor, d.data(), dist,
+                                     force.data());
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] += pref * charge_factor;
       }
@@ -1838,9 +1840,9 @@ double MMM2D_dielectric_layers_energy_contribution() {
   if (this_node == 0) {
     auto cell = local_cells[0];
 
-    for (auto const&p1 : cell->particles()) {
-      for (auto const&p2 : cell->particles()) {
-        auto const a = reflect_z<-1>(box_geo,p2.r.p);
+    for (auto const &p1 : cell->particles()) {
+      for (auto const &p2 : cell->particles()) {
+        auto const a = reflect_z<-1>(box_geo, p2.r.p);
 
         Utils::Vector3d d;
         layered_get_mi_vector(d.data(), p1.r.p.data(), a.data());
@@ -1857,9 +1859,9 @@ double MMM2D_dielectric_layers_energy_contribution() {
   if (this_node == n_nodes - 1) {
     auto cell = local_cells[local_cells.n - 1];
 
-    for (auto const&p1 : cell->particles()) {
-      for (auto const&p2 : cell->particles()) {
-        auto const a = reflect_z<1>(box_geo,p2.r.p);
+    for (auto const &p1 : cell->particles()) {
+      for (auto const &p2 : cell->particles()) {
+        auto const a = reflect_z<1>(box_geo, p2.r.p);
 
         Utils::Vector3d d;
         layered_get_mi_vector(d.data(), p1.r.p.data(), a.data());
