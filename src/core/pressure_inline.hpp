@@ -131,7 +131,6 @@ inline void calc_three_body_bonded_forces(
     std::tie(f_mid, f_left, f_right) =
         calc_angle_cossquare_3body_forces(p_mid, p_left, p_right, iaparams);
     break;
-#ifdef TABULATED
   case BONDED_IA_TABULATED:
     switch (iaparams->p.tab.type) {
     case TAB_BOND_ANGLE:
@@ -145,7 +144,6 @@ inline void calc_three_body_bonded_forces(
       return;
     }
     break;
-#endif
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \
             WARNING: Bond type %d, atom %d unhandled, Atom 2: %d\n",

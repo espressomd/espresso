@@ -18,7 +18,6 @@
 #
 # This script generates the files featureconfig.h and featureconfig.c.
 #
-from __future__ import print_function
 import time
 import string
 import inspect

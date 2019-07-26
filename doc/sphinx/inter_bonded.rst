@@ -227,11 +227,6 @@ is named :math:`vtol`.
 Tabulated bond interactions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-
-    Requires ``TABULATED`` feature.
-
-
 A tabulated bond can be instantiated via
 :class:`espressomd.interactions.Tabulated`::
 

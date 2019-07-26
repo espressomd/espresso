@@ -193,13 +193,13 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
 static int n_localpart = 0;
 
 /** temporary buffers for product decomposition */
-static double *partblk = nullptr;
+static std::vector<double> partblk;
 /** for all local cells including ghosts */
-static double *lclcblk = nullptr;
+static std::vector<double> lclcblk;
 /** collected data from the cells above the top neighbor
     of a cell rsp. below the bottom neighbor
     (P=below, M=above, as the signs in the exp). */
-static double *gblcblk = nullptr;
+static std::vector<double> gblcblk;
 
 /** contribution from the image charges */
 static double lclimge[8];
@@ -391,15 +391,15 @@ inline void scale_vec(double scale, double *pdc, int size) {
    e_size is the size of only the top or bottom half, i.e. half of size.
 */
 
-inline double *block(double *p, int index, int size) {
+inline double *block(std::vector<double> &p, int index, int size) {
   return &p[index * size];
 }
 
-inline double *blwentry(double *p, int index, int e_size) {
+inline double *blwentry(std::vector<double> &p, int index, int e_size) {
   return &p[2 * index * e_size];
 }
 
-inline double *abventry(double *p, int index, int e_size) {
+inline double *abventry(std::vector<double> &p, int index, int e_size) {
   return &p[(2 * index + 1) * e_size];
 }
 
@@ -1850,9 +1850,9 @@ void MMM2D_on_resort_particles() {
     scxcache.resize(n_scxcache * n_localpart);
     scycache.resize(n_scycache * n_localpart);
 
-    partblk = Utils::realloc(partblk, n_localpart * 8 * sizeof(double));
-    lclcblk = Utils::realloc(lclcblk, cells.size() * 8 * sizeof(double));
-    gblcblk = Utils::realloc(gblcblk, n_layers * 8 * sizeof(double));
+    partblk.resize(n_localpart * 8);
+    lclcblk.resize(cells.size() * 8);
+    gblcblk.resize(n_layers * 8);
   }
   MMM2D_self_energy();
 }
