@@ -188,6 +188,22 @@ fedora:
 
 ### Builds with CUDA
 
+cuda10-maxset:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:10.1
+  script:
+    - export myconfig=maxset with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - bash maintainer/CI/build_cmake.sh
+  artifacts:
+    paths:
+    - build/
+    expire_in: 1 week
+  tags:
+    - docker
+    - linux
+    - cuda
+
 cuda-maxset:
   <<: *global_job_definition
   stage: build
@@ -416,6 +432,29 @@ check_sphinx:
     - linux
     - cuda
 
+run_tutorials:
+  <<: *global_job_definition
+  stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:10.1
+  dependencies:
+    - cuda10-maxset
+  when: on_success
+  script:
+    - cd ${CI_PROJECT_DIR}/build
+    - make -t
+    - make tutorials
+    - make -j1 tutorials_html
+  artifacts:
+    paths:
+    - build/doc/tutorials
+    expire_in: 1 week
+  only:
+    - python
+  tags:
+    - docker
+    - linux
+    - cuda
+
 check_doxygen:
   <<: *global_job_definition
   stage: additional_checks
@@ -483,6 +522,19 @@ deploy_doxygen_documentation:
   script:
     - cd ${CI_PROJECT_DIR}/build/doc/doxygen/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
+
+deploy_tutorials:
+  extends: .deploy_base
+  dependencies:
+    - run_tutorials
+  script:
+    - cd ${CI_PROJECT_DIR}/build/doc/tutorials
+    - grep -Poe " src=(.)figures/.+?\1" */*.html > deploy_list.txt
+    - sed -ri 's/[^\/]+: src=.(.+?).$/\1/' deploy_list.txt
+    - ls */*.html */*.pdf >> deploy_list.txt
+    - mkdir www
+    - rsync -a --files-from=deploy_list.txt ./ www
+    - rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" www/ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/tutorials_html
 
 status_success:
   <<: *notification_job_definition
