@@ -17,16 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-function(HTML_EXPORT)
-  cmake_parse_arguments(HTML_EXPORT "RUN" "FILE;TUTORIAL" "VAR_SUBST;ADD_SCRIPTS" ${ARGN})
+function(NB_EXPORT)
+  cmake_parse_arguments(NB_EXPORT "HTML_RUN" "FILE;TUTORIAL" "VAR_SUBST;ADD_SCRIPTS" ${ARGN})
 
-  set(TARGET "${HTML_EXPORT_TUTORIAL}_html")
-  set(NB_FILE "${CMAKE_CURRENT_BINARY_DIR}/${HTML_EXPORT_FILE}")
+  set(NB_FILE "${CMAKE_CURRENT_BINARY_DIR}/${NB_EXPORT_FILE}")
   get_filename_component(NB_FILE_BASE ${NB_FILE} NAME_WE)
   get_filename_component(NB_FILE_EXT ${NB_FILE} EXT)
   set(HTML_FILE "${NB_FILE_BASE}.html")
+  set(PY_FILE "${NB_FILE_BASE}.py")
 
-  if(${HTML_EXPORT_RUN})
+  if(${NB_EXPORT_HTML_RUN})
     set(HTML_FILE_DEPENDS "${NB_FILE_BASE}.run${NB_FILE_EXT}")
     add_custom_command(
       OUTPUT "${HTML_FILE_DEPENDS}"
@@ -36,8 +36,8 @@ function(HTML_EXPORT)
       "${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py"
       "--input" "${NB_FILE}"
       "--output" "${HTML_FILE_DEPENDS}"
-      "--substitutions" ${HTML_EXPORT_VAR_SUBST}
-      "--scripts" ${HTML_EXPORT_ADD_SCRIPTS}
+      "--substitutions" ${NB_EXPORT_VAR_SUBST}
+      "--scripts" ${NB_EXPORT_ADD_SCRIPTS}
       )
   else()
     set(HTML_FILE_DEPENDS "${NB_FILE}")
@@ -49,12 +49,23 @@ function(HTML_EXPORT)
     COMMAND
     ${IPYTHON_EXECUTABLE} nbconvert
     --to "html"
-    --output "${HTML_FILE}"
+    --output ${HTML_FILE}
     ${HTML_FILE_DEPENDS}
     )
 
-  add_custom_target(${TARGET} DEPENDS ${HTML_FILE})
-endfunction(HTML_EXPORT)
+  add_custom_command(
+    OUTPUT ${PY_FILE}
+    DEPENDS ${NB_FILE}
+    COMMAND
+    ${IPYTHON_EXECUTABLE} nbconvert
+    --to "python"
+    --output ${PY_FILE}
+    ${NB_FILE}
+    )
+
+  add_custom_target("${NB_EXPORT_TUTORIAL}_html" DEPENDS ${HTML_FILE})
+  add_custom_target("${NB_EXPORT_TUTORIAL}_python" DEPENDS ${PY_FILE})
+endfunction(NB_EXPORT)
 
 
 ### Here: add new directory
@@ -96,6 +107,26 @@ add_custom_target(tutorials_html DEPENDS
   tutorials_11_1_html
   tutorials_11_2_html
   tutorials_11_3_html
+  )
+
+add_custom_target(tutorials_python_only DEPENDS
+  tutorials_01_python
+  tutorials_02_1_python
+  tutorials_02_2_python
+  tutorials_04_1_python
+  tutorials_04_2_python
+  tutorials_04_3_python
+  tutorials_04_4_python
+  tutorials_05_python
+  tutorials_08_python
+  tutorials_11_1_python
+  tutorials_11_2_python
+  tutorials_11_3_python
+  )
+
+add_custom_target(tutorials_python DEPENDS
+  tutorials
+  tutorials_python_only
   )
 
 configure_file(Readme.rst ${CMAKE_CURRENT_BINARY_DIR}/Readme.rst COPYONLY)
