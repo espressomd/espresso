@@ -81,7 +81,7 @@ class ThermalizedBond(ut.TestCase):
        
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
             temp_com=t_com, gamma_com=g_com, temp_distance=t_dist,
-            gamma_distance=g_dist, r_cut=2.0)
+            gamma_distance=g_dist, r_cut=2.0, seed = 55)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
         for i in range(0, N, 2):
@@ -127,7 +127,7 @@ class ThermalizedBond(ut.TestCase):
        
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
             temp_com=t_com, gamma_com=g_com, temp_distance=t_dist,
-            gamma_distance=g_dist, r_cut=9)
+            gamma_distance=g_dist, r_cut=9, seed = 51)
         self.system.bonded_inter.add(thermalized_dist_bond)
 
         for i in range(0, N, 2):

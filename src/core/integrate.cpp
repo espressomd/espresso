@@ -29,6 +29,7 @@
 #include "integrate.hpp"
 #include "accumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -232,6 +233,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // Langevin philox rng counter
     if (n_steps > 0) {
       langevin_rng_counter_increment();
+      if (n_thermalized_bonds)
+        thermalized_bond_rng_counter_increment();
     }
 
     force_calc();
@@ -325,6 +328,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     // Propagate langevin philox rng counter
     langevin_rng_counter_increment();
+    if (n_thermalized_bonds)
+      thermalized_bond_rng_counter_increment();
 
     force_calc();
 

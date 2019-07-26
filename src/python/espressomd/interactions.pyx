@@ -2256,7 +2256,10 @@ class ThermalizedBond(BondedInteraction):
     r_cut: :obj:`float`, optional
         Specifies maximum distance beyond which the bond is considered broken.
     seed : :obj:`int`
-        Initial counter value (or seed) of the philox RNG.
+        Counter value of the philox RNG. Initially, this defines the seed of
+        the RNG. If prompted, it does not return the initially set counter value
+        (the seed) but the current state of the RNG.
+   
     """
 
     def __init__(self, *args, **kwargs):
@@ -2272,11 +2275,11 @@ class ThermalizedBond(BondedInteraction):
         return "temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut", "seed"
 
     def required_keys(self):
-        return "temp_com", "gamma_com", "temp_distance", "gamma_distance", "seed"
+        return "temp_com", "gamma_com", "temp_distance", "gamma_distance"
 
     def set_default_params(self):
         self._params = {"temp_com": 1., "gamma_com": 1.,
-                        "temp_distance": 1., "gamma_distance": 1., "r_cut": 0., "seed": 41}
+                        "temp_distance": 1., "gamma_distance": 1., "r_cut": 0., "seed": None}
 
     def _get_params_from_es_core(self):
         return \
@@ -2290,12 +2293,22 @@ class ThermalizedBond(BondedInteraction):
                  bonded_ia_params[
                      self._bond_id].p.thermalized_bond.gamma_distance,
              "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut,
-             "seed": thermalized_bond_get_rng_state(bonded_ia_params[self._bond_id].p.thermalized_bond)
+             "seed": thermalized_bond_get_rng_state()
              }
 
     def _set_params_in_es_core(self):
+        if not self.params["seed"] and thermalized_bond_is_seed_required():
+            raise ValueError(
+                "A seed has to be given as keyword argument on first activation of the thermalized bond")
+        
+        if self.params["seed"]:
+            utils.check_type_or_throw_except(
+                self.params["seed"], 1, int, "seed must be a positive integer")
+            thermalized_bond_set_rng_state(self.params["seed"])
+            
         thermalized_bond_set_params(
-            self._bond_id, self._params["temp_com"], self._params["gamma_com"], self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"], self._params["seed"])
+            self._bond_id, self._params["temp_com"], self._params["gamma_com"], self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"])
+        
 
 IF THOLE:
     cdef class TholeInteraction(NonBondedInteraction):

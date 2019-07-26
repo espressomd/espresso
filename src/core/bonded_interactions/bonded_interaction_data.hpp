@@ -134,7 +134,6 @@ struct Thermalized_bond_parameters {
   double pref2_com;
   double pref1_dist;
   double pref2_dist;
-  std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
 };
 
 #ifdef ROTATION

@@ -31,29 +31,49 @@
 
 #include <utils/constants.hpp>
 
+/** Common TB RNG Counter */
+std::unique_ptr<Utils::Counter<uint64_t>> thermalized_bond_rng_counter;
 
-void thermalized_bond_rng_counter_increment(Thermalized_bond_parameters &t) {
-   t.rng_counter->increment();
+/** Communication */
+void mpi_bcast_thermalized_bond_rng_counter_slave(const uint64_t counter) {
+   thermalized_bond_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
 }
 
-bool thermalized_bond_is_seed_required(Thermalized_bond_parameters &t) {
+REGISTER_CALLBACK(mpi_bcast_thermalized_bond_rng_counter_slave)
+
+void mpi_bcast_thermalized_bond_rng_counter(const uint64_t counter) {
+   mpi_call(mpi_bcast_thermalized_bond_rng_counter_slave, counter);
+}
+
+void thermalized_bond_rng_counter_increment() {
+   thermalized_bond_rng_counter->increment();
+}
+
+/** Interface */
+bool thermalized_bond_is_seed_required() {
    /* Seed is required if rng is not initialized */
-   return t.rng_counter == nullptr;
+   return thermalized_bond_rng_counter == nullptr;
 }
 
-void thermalized_bond_set_rng_state(Thermalized_bond_parameters &t, const uint64_t counter) {
-   t.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+uint64_t thermalized_bond_get_rng_state() { 
+   return thermalized_bond_rng_counter->value();
 }
 
-uint64_t thermalized_bond_get_rng_state(Thermalized_bond_parameters &t) { 
-   return t.rng_counter->value();
+void thermalized_bond_set_rng_state(const uint64_t counter) {
+  mpi_bcast_thermalized_bond_rng_counter(counter);
+  thermalized_bond_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+}
+
+/** Called each integration step */
+void thermalized_bonds_rng_counter_increment() {
+  thermalized_bond_rng_counter->increment();
 }
 
 int n_thermalized_bonds = 0;
 
 int thermalized_bond_set_params(int bond_type, double temp_com,
                                 double gamma_com, double temp_distance,
-                                double gamma_distance, double r_cut, int seed) {
+                                double gamma_distance, double r_cut) {
   if (bond_type < 0)
     return ES_ERROR;
 
@@ -77,7 +97,7 @@ int thermalized_bond_set_params(int bond_type, double temp_com,
 
   bonded_ia_params[bond_type].num = 1;
 
-  thermalized_bond_set_rng_state(bonded_ia_params[bond_type].p.thermalized_bond, seed);
+//  thermalized_bond_set_rng_state(bonded_ia_params[bond_type].p.thermalized_bond, seed);
 
   n_thermalized_bonds += 1;
   mpi_bcast_ia_params(bond_type, -1);
