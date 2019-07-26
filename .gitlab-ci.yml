@@ -450,7 +450,6 @@ run_tutorials:
     - build/doc/tutorials
     expire_in: 1 week
   only:
-    - python
   tags:
     - docker
     - linux
@@ -528,6 +527,7 @@ deploy_tutorials:
   extends: .deploy_base
   dependencies:
     - run_tutorials
+  only:
   script:
     - cd ${CI_PROJECT_DIR}/build/doc/tutorials
     - 'grep -Poe " src=(.)figures/.+?\1" */*.html > deploy_list.txt'
