@@ -222,7 +222,12 @@ class TestLB(object):
 
         self.assertEqual(self.lbf[3, 2, 1].index, (3, 2, 1))
         ext_force_density = [0.1, 0.2, 1.2]
+        self.lbf[1, 2, 3].velocity = v_fluid
         self.lbf.ext_force_density = ext_force_density
+        np.testing.assert_allclose(
+            np.copy(self.lbf[1, 2, 3].velocity),
+            v_fluid,
+            atol=1e-4)
         np.testing.assert_allclose(
             np.copy(self.lbf.ext_force_density),
             ext_force_density,
