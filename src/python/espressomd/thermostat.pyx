@@ -389,6 +389,8 @@ cdef class Thermostat(object):
                     "seed has to be given as keyword arg")
             elif seed:
                 lb_lbcoupling_set_rng_state(seed)
+        else:
+            lb_lbcoupling_set_rng_state(0)
 
         global thermo_switch
         thermo_switch = (thermo_switch or THERMO_LB)
