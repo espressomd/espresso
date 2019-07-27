@@ -151,8 +151,7 @@ further details.
 /************************************************************/
 /*@{*/
 
-typedef struct {
-
+struct GhostCommunication {
   /** Communication type. */
   int type;
   /** Node to communicate with (to use with all MPI operations). */
@@ -169,8 +168,8 @@ typedef struct {
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
      this is the shift vector. Normally this a integer multiple of the box
      length. The shift is done on the sender side */
-  double shift[3];
-} GhostCommunication;
+  Utils::Vector3d shift;
+};
 
 /** Properties for a ghost communication. A ghost communication is defined */
 typedef struct {
