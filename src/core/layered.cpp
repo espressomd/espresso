@@ -154,7 +154,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           /* if periodic and bottom or top, send shifted */
           if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
               (data_parts & GHOSTTRANS_POSITION)) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
             comm->comm[c].shift =  Utils::Vector3d{0, 0, box_geo.length()[2]};
           }
         }
@@ -202,7 +201,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           /* if periodic and bottom or top, send shifted */
           if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) &&
               (data_parts & GHOSTTRANS_POSITION)) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
             comm->comm[c].shift = Utils::Vector3d{0, 0, -box_geo.length()[2]};;
           }
         }
@@ -256,7 +254,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         comm->comm[c].part_lists[1] = &cells[n_layers + 1];
         /* here it is periodic */
         if (data_parts & GHOSTTRANS_POSITION)
-          comm->data_parts |= GHOSTTRANS_POSSHFTD;
         comm->comm[c].shift = Utils::Vector3d{0, 0, box_geo.length()[2]};
       }
       c++;
@@ -271,7 +268,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         comm->comm[c].part_lists[1] = &cells[0];
         /* here it is periodic */
         if (data_parts & GHOSTTRANS_POSITION)
-          comm->data_parts |= GHOSTTRANS_POSSHFTD;
         comm->comm[c].shift = Utils::Vector3d{0, 0, -box_geo.length()[2]};
       }
     }
