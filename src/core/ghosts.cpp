@@ -177,10 +177,8 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
-          auto *pp = reinterpret_cast<ParticlePosition *>(insert);
-          int i;
-          *pp = pt->r;
-          for (i = 0; i < 3; i++)
+          auto *pp = new(insert) ParticlePosition(pt->r);
+          for (int i = 0; i < 3; i++)
             pp->p[i] += gc->shift[i];
           insert += sizeof(ParticlePosition);
         } else if (data_parts & GHOSTTRANS_POSITION) {
@@ -405,10 +403,8 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
           }
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
-          /* ok, this is not nice, but perhaps fast */
-          int i;
           pt2->r = pt1->r;
-          for (i = 0; i < 3; i++)
+          for (int i = 0; i < 3; i++)
             pt2->r.p[i] += gc->shift[i];
         } else if (data_parts & GHOSTTRANS_POSITION)
           pt2->r = pt1->r;
@@ -425,21 +421,6 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
       }
     }
   }
-}
-
-void reduce_forces_sum(void *add, void *to, int const *const len,
-                       MPI_Datatype *type) {
-  auto *cadd = static_cast<ParticleForce *>(add),
-       *cto = static_cast<ParticleForce *>(to);
-  int i, clen = *len / sizeof(ParticleForce);
-
-  if (*type != MPI_BYTE || (*len % sizeof(ParticleForce)) != 0) {
-    fprintf(stderr, "%d: transfer data type wrong\n", this_node);
-    errexit();
-  }
-
-  for (i = 0; i < clen; i++)
-    cto[i] += cadd[i];
 }
 
 static int is_send_op(int comm_type, int node) {
