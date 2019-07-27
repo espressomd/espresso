@@ -284,8 +284,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
               (Cell **)Utils::malloc(2 * n_comm_cells[dir] * sizeof(Cell *));
           comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
           /* prepare folding of ghost positions */
-          if ((data_parts & GHOSTTRANS_POSSHFTD) &&
-              local_geo.boundary()[2 * dir + lr] != 0) {
+          if (local_geo.boundary()[2 * dir + lr] != 0) {
             comm->comm[cnt].shift[dir] =
                 local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
           }
@@ -316,8 +315,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
                   (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
               comm->comm[cnt].n_part_lists = n_comm_cells[dir];
               /* prepare folding of ghost positions */
-              if ((data_parts & GHOSTTRANS_POSSHFTD) &&
-                  local_geo.boundary()[2 * dir + lr] != 0) {
+              if (local_geo.boundary()[2 * dir + lr] != 0) {
                 comm->comm[cnt].shift[dir] =
                     local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
               }
