@@ -152,15 +152,11 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           comm->comm[c].part_lists[0] = &cells[1];
 
           /* if periodic and bottom or top, send shifted */
-          comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
           if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
               (data_parts & GHOSTTRANS_POSITION)) {
             comm->data_parts |= GHOSTTRANS_POSSHFTD;
-            comm->comm[c].shift[2] = box_geo.length()[2];
-          } else
-            comm->comm[c].shift[2] = 0;
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f btml\n",
-                             this_node, btm, comm->comm[c].shift[2]));
+            comm->comm[c].shift =  Utils::Vector3d{0, 0, box_geo.length()[2]};
+          }
         }
         c++;
       }
@@ -204,15 +200,11 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           comm->comm[c].part_lists[0] = &cells[n_layers];
 
           /* if periodic and bottom or top, send shifted */
-          comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
           if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) &&
               (data_parts & GHOSTTRANS_POSITION)) {
             comm->data_parts |= GHOSTTRANS_POSSHFTD;
-            comm->comm[c].shift[2] = -box_geo.length()[2];
-          } else
-            comm->comm[c].shift[2] = 0;
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec send to %d shift %f topl\n",
-                             this_node, top, comm->comm[c].shift[2]));
+            comm->comm[c].shift = Utils::Vector3d{0, 0, -box_geo.length()[2]};;
+          }
         }
         c++;
       }
@@ -265,8 +257,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         /* here it is periodic */
         if (data_parts & GHOSTTRANS_POSITION)
           comm->data_parts |= GHOSTTRANS_POSSHFTD;
-        comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-        comm->comm[c].shift[2] = box_geo.length()[2];
+        comm->comm[c].shift = Utils::Vector3d{0, 0, box_geo.length()[2]};
       }
       c++;
 
@@ -281,8 +272,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         /* here it is periodic */
         if (data_parts & GHOSTTRANS_POSITION)
           comm->data_parts |= GHOSTTRANS_POSSHFTD;
-        comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-        comm->comm[c].shift[2] = -box_geo.length()[2];
+        comm->comm[c].shift = Utils::Vector3d{0, 0, -box_geo.length()[2]};
       }
     }
   }
