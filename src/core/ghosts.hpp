@@ -156,9 +156,6 @@ struct GhostCommunication {
   int type;
   /** Node to communicate with (to use with all MPI operations). */
   int node;
-  /** MPI communicator handle (to use with GHOST_BCST, GHOST_GATH, GHOST_RDCE).
-   */
-  MPI_Comm mpi_comm;
 
   /** Number of particle lists to communicate. */
   int n_part_lists;
@@ -173,7 +170,6 @@ struct GhostCommunication {
 
 /** Properties for a ghost communication. A ghost communication is defined */
 typedef struct {
-
   /** Particle data parts to transfer */
   int data_parts;
 
