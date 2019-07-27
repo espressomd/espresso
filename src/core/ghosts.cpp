@@ -101,9 +101,6 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
       // sending size of bond/exclusion lists
       if (ghosts_have_bonds) {
         n_buffer_new += sizeof(int);
-#ifdef EXCLUSIONS
-        n_buffer_new += sizeof(int);
-#endif
       }
     }
     if (data_parts & GHOSTTRANS_POSITION)
@@ -162,14 +159,6 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
               s_bondbuffer.insert(s_bondbuffer.end(), pt->bl.e,
                                   pt->bl.e + pt->bl.n);
             }
-#ifdef EXCLUSIONS
-            *(int *)insert = pt->el.n;
-            insert += sizeof(int);
-            if (pt->el.n) {
-              s_bondbuffer.insert(s_bondbuffer.end(), pt->el.e,
-                                  pt->el.e + pt->el.n);
-            }
-#endif
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
@@ -284,16 +273,6 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
               std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
               bond_retrieve += n_bonds;
             }
-#ifdef EXCLUSIONS
-            int n_exclusions;
-            memcpy(&n_exclusions, retrieve, sizeof(int));
-            retrieve += sizeof(int);
-            if (n_exclusions) {
-              pt->el.resize(n_exclusions);
-              std::copy_n(bond_retrieve, n_exclusions, pt->el.begin());
-              bond_retrieve += n_exclusions;
-            }
-#endif
           }
           if (local_particles[pt->p.identity] == nullptr) {
             local_particles[pt->p.identity] = pt;
@@ -394,9 +373,6 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
           pt2->p = pt1->p;
           if (ghosts_have_bonds) {
             pt2->bl = pt1->bl;
-#ifdef EXCLUSIONS
-            pt2->el = pt1->el;
-#endif
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
