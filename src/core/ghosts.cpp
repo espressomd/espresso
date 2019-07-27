@@ -85,7 +85,7 @@ void free_comm(GhostCommunicator *comm) {
     free(comm->comm[n].part_lists);
 }
 
-int calc_transmit_size(GhostCommunication *gc, int data_parts) {
+static int calc_transmit_size(GhostCommunication *gc, unsigned int data_parts) {
   int n_buffer_new;
 
   if (data_parts & GHOSTTRANS_PARTNUM)
@@ -122,7 +122,7 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
   return n_buffer_new;
 }
 
-void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
+static void prepare_send_buffer(GhostCommunication *gc, unsigned int data_parts) {
   GHOST_TRACE(fprintf(stderr, "%d: prepare sending to/bcast from %d\n",
                       this_node, gc->node));
 
@@ -230,7 +230,7 @@ static void prepare_ghost_cell(Cell *cell, int size) {
   }
 }
 
-void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
+static void prepare_recv_buffer(GhostCommunication *gc, unsigned data_parts) {
   GHOST_TRACE(
       fprintf(stderr, "%d: prepare receiving from %d\n", this_node, gc->node));
   /* reallocate recv buffer */
@@ -242,7 +242,7 @@ void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
   GHOST_TRACE(fprintf(stderr, "%d: will get %d\n", this_node, n_r_buffer));
 }
 
-void put_recv_buffer(GhostCommunication *gc, int data_parts) {
+static void put_recv_buffer(GhostCommunication *gc, unsigned data_parts) {
   /* put back data */
   char *retrieve = r_buffer;
 
@@ -322,7 +322,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
   r_bondbuffer.resize(0);
 }
 
-void add_forces_from_recv_buffer(GhostCommunication *gc) {
+static void add_forces_from_recv_buffer(GhostCommunication *gc) {
   int pl, p;
   Particle *part, *pt;
   char *retrieve;
@@ -347,7 +347,7 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
   }
 }
 
-void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
+static void cell_cell_transfer(GhostCommunication *gc, unsigned data_parts) {
   int pl, p, offset;
   Particle *part1, *part2, *pt1, *pt2;
 
@@ -396,12 +396,12 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
   }
 }
 
-static int is_send_op(int comm_type, int node) {
+static int is_send_op(unsigned comm_type, int node) {
   return ((comm_type == GHOST_SEND) || (comm_type == GHOST_RDCE) ||
           (comm_type == GHOST_BCST && node == this_node));
 }
 
-static int is_recv_op(int comm_type, int node) {
+static int is_recv_op(unsigned comm_type, int node) {
   return ((comm_type == GHOST_RECV) ||
           (comm_type == GHOST_BCST && node != this_node) ||
           (comm_type == GHOST_RDCE && node == this_node));
@@ -411,7 +411,7 @@ void ghost_communicator(GhostCommunicator *gc) {
   ghost_communicator(gc, gc->data_parts);
 }
 
-void ghost_communicator(GhostCommunicator *gc, int data_parts) {
+void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts) {
   MPI_Status status;
   int n, n2;
   /* if ghosts should have uptodate velocities, they have to be updated like
@@ -424,9 +424,9 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
 
   for (n = 0; n < gc->num; n++) {
     GhostCommunication *gcn = &gc->comm[n];
-    int comm_type = gcn->type & GHOST_JOBMASK;
-    int prefetch = gcn->type & GHOST_PREFETCH;
-    int poststore = gcn->type & GHOST_PSTSTORE;
+    auto comm_type = gcn->type & GHOST_JOBMASK;
+    auto prefetch = gcn->type & GHOST_PREFETCH;
+    auto poststore = gcn->type & GHOST_PSTSTORE;
     int node = gcn->node;
 
     GHOST_TRACE(fprintf(stderr, "%d: ghost_comm round %d, job %x\n", this_node,
@@ -464,8 +464,8 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
           /* find next action where we send and which has PREFETCH set */
           for (n2 = n + 1; n2 < gc->num; n2++) {
             GhostCommunication *gcn2 = &gc->comm[n2];
-            int comm_type2 = gcn2->type & GHOST_JOBMASK;
-            int prefetch2 = gcn2->type & GHOST_PREFETCH;
+            auto const comm_type2 = gcn2->type & GHOST_JOBMASK;
+            auto const prefetch2 = gcn2->type & GHOST_PREFETCH;
             int node2 = gcn2->node;
             if (is_send_op(comm_type2, node2) && prefetch2) {
               GHOST_TRACE(fprintf(stderr,
@@ -592,8 +592,8 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
           /* find previous action where we recv and which has PSTSTORE set */
           for (n2 = n - 1; n2 >= 0; n2--) {
             GhostCommunication *gcn2 = &gc->comm[n2];
-            int comm_type2 = gcn2->type & GHOST_JOBMASK;
-            int poststore2 = gcn2->type & GHOST_PSTSTORE;
+            auto const comm_type2 = gcn2->type & GHOST_JOBMASK;
+            auto const poststore2 = gcn2->type & GHOST_PSTSTORE;
             int node2 = gcn2->node;
             if (is_recv_op(comm_type2, node2) && poststore2) {
               GHOST_TRACE(fprintf(stderr,

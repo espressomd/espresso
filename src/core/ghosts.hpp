@@ -107,43 +107,43 @@ further details.
 /*@{*/
 
 /// send to a single node
-#define GHOST_SEND 0
+#define GHOST_SEND 0u
 /// recv from a single node
-#define GHOST_RECV 1
+#define GHOST_RECV 1u
 /// broadcast, the node entry gives the sender
-#define GHOST_BCST 2
+#define GHOST_BCST 2u
 /// reduce, the node entry gives the receiver
-#define GHOST_RDCE 3
+#define GHOST_RDCE 3u
 /// transfer data from cell to cell on this node
-#define GHOST_LOCL 4
+#define GHOST_LOCL 4u
 
 /// mask to the job area of the transfer type
-#define GHOST_JOBMASK 15
+#define GHOST_JOBMASK 15u
 /// additional flag for prefetching
-#define GHOST_PREFETCH 16
+#define GHOST_PREFETCH 16u
 /// additional flag for poststoring
-#define GHOST_PSTSTORE 32
+#define GHOST_PSTSTORE 32u
 /*@}*/
 
 /** \name Transfer data classes, for \ref GhostCommunication::type */
 /************************************************************/
 /*@{*/
 /// transfer \ref ParticleProperties
-#define GHOSTTRANS_PROPRTS 1
+#define GHOSTTRANS_PROPRTS 1u
 /// transfer \ref ParticlePosition
-#define GHOSTTRANS_POSITION 2
-#define GHOSTTRANS_POSSHFTD 4
+#define GHOSTTRANS_POSITION 2u
+#define GHOSTTRANS_POSSHFTD 4u
 /// transfer \ref ParticleMomentum
-#define GHOSTTRANS_MOMENTUM 8
+#define GHOSTTRANS_MOMENTUM 8u
 /// transfer \ref ParticleForce
-#define GHOSTTRANS_FORCE 16
+#define GHOSTTRANS_FORCE 16u
 
 /// resize the receiver particle arrays to the size of the senders
-#define GHOSTTRANS_PARTNUM 64
+#define GHOSTTRANS_PARTNUM 64u
 
 #ifdef ENGINE
 /// transfer \ref ParticleParametersSwimming
-#define GHOSTTRANS_SWIMMING 128
+#define GHOSTTRANS_SWIMMING 128u
 #endif
 /*@}*/
 
@@ -153,7 +153,7 @@ further details.
 
 struct GhostCommunication {
   /** Communication type. */
-  int type;
+  unsigned type;
   /** Node to communicate with (to use with all MPI operations). */
   int node;
 
@@ -171,7 +171,7 @@ struct GhostCommunication {
 /** Properties for a ghost communication. A ghost communication is defined */
 typedef struct {
   /** Particle data parts to transfer */
-  int data_parts;
+  unsigned data_parts;
 
   /** number of communication steps. */
   int num;
@@ -202,7 +202,7 @@ void ghost_communicator(GhostCommunicator *gc);
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
-void ghost_communicator(GhostCommunicator *gc, int data_parts);
+void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts);
 
 /** Go through \ref ghost_cells and remove the ghost entries from \ref
     local_particles. Part of \ref dd_exchange_and_sort_particles.*/
