@@ -175,10 +175,11 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
         if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
           auto *pp = new(insert) ParticlePosition(pt->r);
-          if (data_parts & GHOSTTRANS_POSITION) {
-            for (int i = 0; i < 3; i++)
-              pp->p[i] += gc->shift[i];
+
+          if(gc->shift) {
+            pp->p += *(gc->shift);
           }
+
           insert += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
@@ -400,9 +401,9 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           pt2->r = pt1->r;
-          if(data_parts & GHOSTTRANS_POSSHFTD)
-            for (int i = 0; i < 3; i++)
-              pt2->r.p[i] += gc->shift[i];
+          if(gc->shift) {
+            pt2->r.p += *(gc->shift);
+          }
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           pt2->m = pt1->m;
