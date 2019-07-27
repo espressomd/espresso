@@ -394,9 +394,6 @@ void cells_resort_particles(int global_flag) {
 #endif
   }
 
-  ghost_communicator(&cell_structure.ghost_cells_comm);
-  ghost_communicator(&cell_structure.exchange_ghosts_comm);
-
   /* Particles are now sorted, but Verlet lists are invalid
      and p_old has to be reset. */
   resort_particles = Cells::RESORT_NONE;
@@ -454,9 +451,11 @@ void cells_update_ghosts() {
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;
 
-    /* Communication step:  number of ghosts and ghost information */
     cells_resort_particles(global);
 
+    /* Communication step:  number of ghosts and ghost information */
+    ghost_communicator(&cell_structure.ghost_cells_comm);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm);
   } else
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.update_ghost_pos_comm);

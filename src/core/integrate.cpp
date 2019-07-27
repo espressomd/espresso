@@ -45,7 +45,6 @@
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
-#include "immersed_boundaries.hpp"
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
@@ -192,11 +191,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Prepare the Integrator */
   on_integration_start();
 
-  // Here we initialize volume conservation
-  // This function checks if the reference volumes have been set and if
-  // necessary calculates them
-  immersed_boundaries.init_volume_conservation();
-
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
     return;
@@ -204,9 +198,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Verlet list criterion */
   skin2 = Utils::sqr(0.5 * skin);
 
-  INTEG_TRACE(fprintf(
-      stderr, "%d: integrate_vv: integrating %d steps (recalc_forces=%d)\n",
-      this_node, n_steps, recalc_forces));
+  extern bool ghosts_have_bonds;
+  extern bool ghosts_have_v;
+  auto const update_data = GHOSTTRANS_POSITION | (ghosts_have_v ? GHOSTTRANS_MOMENTUM : 0u);
+  auto const exchange_data =
+      GHOSTTRANS_PROPRTS  | (ghosts_have_bonds ? GHOSTTRANS_BONDS : 0u) | update_data;
 
   /* Integration Step: Preparation for first integration step:
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) )
@@ -225,7 +221,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef VIRTUAL_SITES
     if (virtual_sites()->is_relative()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      ghost_communicator(&cell_structure.update_ghost_pos_comm, update_data);
     }
     virtual_sites()->update();
 #endif

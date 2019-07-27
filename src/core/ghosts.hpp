@@ -132,7 +132,7 @@ further details.
 #define GHOSTTRANS_PROPRTS 1u
 /// transfer \ref ParticlePosition
 #define GHOSTTRANS_POSITION 2u
-#define GHOSTTRANS_POSSHFTD 4u
+#define GHOSTTRANS_BONDS 4u
 /// transfer \ref ParticleMomentum
 #define GHOSTTRANS_MOMENTUM 8u
 /// transfer \ref ParticleForce

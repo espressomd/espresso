@@ -46,22 +46,21 @@ static int max_s_buffer = 0;
 /** send buffer. Just grows, which should be ok */
 static char *s_buffer = nullptr;
 
-std::vector<int> s_bondbuffer;
-
 static int n_r_buffer = 0;
 static int max_r_buffer = 0;
 /** recv buffer. Just grows, which should be ok */
 static char *r_buffer = nullptr;
 
-std::vector<int> r_bondbuffer;
+static std::vector<int> s_bondbuffer;
+static std::vector<int> r_bondbuffer;
 
 /** whether the ghosts should also have velocity information, e. g. for DPD or
    RATTLE. You need this whenever you need the relative velocity of two
    particles. NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change
    !!!!
 */
-int ghosts_have_v = 0;
-int ghosts_have_bonds = 0;
+bool ghosts_have_v = false;
+bool ghosts_have_bonds = false;
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
   assert(comm);
@@ -98,8 +97,8 @@ static int calc_transmit_size(GhostCommunication *gc, unsigned int data_parts) {
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
       n_buffer_new += sizeof(ParticleProperties);
-      // sending size of bond/exclusion lists
-      if (ghosts_have_bonds) {
+      // sending size of bond lists
+      if (data_parts & GHOSTTRANS_BONDS) {
         n_buffer_new += sizeof(int);
       }
     }
@@ -152,7 +151,7 @@ static void prepare_send_buffer(GhostCommunication *gc, unsigned int data_parts)
         if (data_parts & GHOSTTRANS_PROPRTS) {
           memcpy(insert, &pt->p, sizeof(ParticleProperties));
           insert += sizeof(ParticleProperties);
-          if (ghosts_have_bonds) {
+          if (data_parts & GHOSTTRANS_BONDS) {
             *(int *)insert = pt->bl.n;
             insert += sizeof(int);
             if (pt->bl.n) {
@@ -206,7 +205,6 @@ static void prepare_send_buffer(GhostCommunication *gc, unsigned int data_parts)
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
-  if (ghosts_have_bonds) {
     // free all allocated information, will be resent
     {
       int np = cell->n;
@@ -215,7 +213,7 @@ static void prepare_ghost_cell(Cell *cell, int size) {
         free_particle(part + p);
       }
     }
-  }
+
   cell->resize(size);
   // invalidate pointers etc
   {
@@ -264,7 +262,7 @@ static void put_recv_buffer(GhostCommunication *gc, unsigned data_parts) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           memcpy(&pt->p, retrieve, sizeof(ParticleProperties));
           retrieve += sizeof(ParticleProperties);
-          if (ghosts_have_bonds) {
+          if (data_parts & GHOSTTRANS_BONDS) {
             int n_bonds;
             memcpy(&n_bonds, retrieve, sizeof(int));
             retrieve += sizeof(int);
@@ -371,7 +369,7 @@ static void cell_cell_transfer(GhostCommunication *gc, unsigned data_parts) {
         pt2 = &part2[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
           pt2->p = pt1->p;
-          if (ghosts_have_bonds) {
+          if (data_parts & GHOSTTRANS_BONDS) {
             pt2->bl = pt1->bl;
           }
         }
@@ -419,14 +417,17 @@ void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts) {
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     data_parts |= GHOSTTRANS_MOMENTUM;
 
+  if(ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS))
+    data_parts |= GHOSTTRANS_BONDS;
+
   GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node,
                       (void *)gc, data_parts));
 
   for (n = 0; n < gc->num; n++) {
     GhostCommunication *gcn = &gc->comm[n];
-    auto comm_type = gcn->type & GHOST_JOBMASK;
-    auto prefetch = gcn->type & GHOST_PREFETCH;
-    auto poststore = gcn->type & GHOST_PSTSTORE;
+    auto const comm_type = gcn->type & GHOST_JOBMASK;
+    auto const prefetch = gcn->type & GHOST_PREFETCH;
+    auto const poststore = gcn->type & GHOST_PSTSTORE;
     int node = gcn->node;
 
     GHOST_TRACE(fprintf(stderr, "%d: ghost_comm round %d, job %x\n", this_node,
