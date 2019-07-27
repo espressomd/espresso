@@ -285,8 +285,10 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
           /* prepare folding of ghost positions */
           if (local_geo.boundary()[2 * dir + lr] != 0) {
-            comm->comm[cnt].shift[dir] =
+            Utils::Vector3d shift {};
+            shift[dir] =
                 local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+            comm->comm[cnt].shift = shift;
           }
 
           /* fill send comm cells */
@@ -316,8 +318,10 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
               comm->comm[cnt].n_part_lists = n_comm_cells[dir];
               /* prepare folding of ghost positions */
               if (local_geo.boundary()[2 * dir + lr] != 0) {
-                comm->comm[cnt].shift[dir] =
+                Utils::Vector3d shift{};
+                shift[dir] =
                     local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+                comm->comm[cnt].shift = shift;
               }
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
@@ -424,10 +428,11 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
             (local_geo.boundary()[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (local_geo.boundary()[2 * dir + lr] != 0) {
-            cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
+            Utils::Vector3d shift{};
+            shift[dir] =
                 local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
-            cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+            cell_structure.exchange_ghosts_comm.comm[cnt].shift = shift;
+            cell_structure.update_ghost_pos_comm.comm[cnt].shift = shift;
           }
           cnt++;
         }
@@ -440,10 +445,11 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
             if ((node_pos[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
               if (local_geo.boundary()[2 * dir + lr] != 0) {
-                cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
+                Utils::Vector3d shift{};
+                shift[dir] =
                     local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
-                cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                    local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+                cell_structure.exchange_ghosts_comm.comm[cnt].shift = shift;
+                cell_structure.update_ghost_pos_comm.comm[cnt].shift = shift;
               }
               cnt++;
             }
