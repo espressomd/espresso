@@ -147,17 +147,31 @@ Utils::Vector3d lb_viscous_coupling(Particle *p,
 }
 
 namespace {
-bool in_local_domain(Utils::Vector3d const &pos) {
-  auto const lblattice = lb_lbfluid_get_lattice();
-  auto const my_left = local_geo.my_left();
-  auto const my_right = local_geo.my_right();
+using Utils::Vector;
+using Utils::Vector3d;
 
-  return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid &&
-          pos[0] < my_right[0] + 0.5 * lblattice.agrid &&
-          pos[1] >= my_left[1] - 0.5 * lblattice.agrid &&
-          pos[1] < my_right[1] + 0.5 * lblattice.agrid &&
-          pos[2] >= my_left[2] - 0.5 * lblattice.agrid &&
-          pos[2] < my_right[2] + 0.5 * lblattice.agrid);
+template<class T, size_t N>
+using Box = std::pair<Vector<T, N>, Vector<T, N>>;
+
+template<class T, size_t N>
+bool in_box(Vector<T, N> const &pos, Box<T, N> const& box) {
+  auto const& my_left = box.first;
+  auto const& my_right = box.second;
+
+  return (pos >= my_left) and (pos < my_right);
+}
+
+template<class T>
+bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const& local_box, T const& halo = {}) {
+  auto const halo_vec = Vector<T, 3>::broadcast(halo);
+
+  return in_box(pos, {local_geo.my_left() - halo_vec,  local_geo.my_right() + halo_vec});
+}
+
+bool in_local_halo(Vector3d const &pos) {
+  auto const halo = 0.5 * lb_lbfluid_get_lattice().agrid;
+
+  return in_local_domain(pos, local_geo, halo);
 }
 
 #ifdef ENGINE
@@ -168,7 +182,7 @@ void add_swimmer_force(Particle &p) {
     auto const director = p.r.calc_director();
     auto const source_position = p.r.p + direction * director;
 
-    if (not in_local_domain(source_position)) {
+    if (not in_local_halo(source_position)) {
       return;
     }
 
@@ -260,7 +274,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         for (auto &p : ghost_cells.particles()) {
           /* for ghost particles we have to check if they lie
            * in the range of the local lattice nodes */
-          if (in_local_domain(p.r.p)) {
+          if (in_local_halo(p.r.p)) {
             if (!p.p.is_virtual || couple_virtual) {
               lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
 #ifdef ENGINE
