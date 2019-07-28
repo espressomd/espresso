@@ -556,7 +556,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
 
 /** Performs basic sanity checks. */
 void lb_sanity_checks() {
-
   if (lbpar.agrid <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann agrid not set";
   }
@@ -571,14 +570,6 @@ void lb_sanity_checks() {
   }
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     runtimeErrorMsg() << "LB requires domain-decomposition cellsystem";
-  }
-  if (skin == 0.0) {
-    runtimeErrorMsg() << "LB requires a positive skin";
-  }
-  if (cell_structure.use_verlet_list && skin >= lbpar.agrid / 2.0) {
-    runtimeErrorMsg() << "LB requires either no Verlet lists or that the skin "
-                         "of the verlet list to be less than half of "
-                         "lattice-Boltzmann grid spacing";
   }
 }
 
