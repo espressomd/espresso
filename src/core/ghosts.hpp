@@ -137,14 +137,10 @@ further details.
 #define GHOSTTRANS_MOMENTUM 8u
 /// transfer \ref ParticleForce
 #define GHOSTTRANS_FORCE 16u
-
 /// resize the receiver particle arrays to the size of the senders
 #define GHOSTTRANS_PARTNUM 64u
-
-#ifdef ENGINE
 /// transfer \ref ParticleParametersSwimming
 #define GHOSTTRANS_SWIMMING 128u
-#endif
 /*@}*/
 
 /** \name Data Types */
@@ -169,17 +165,15 @@ struct GhostCommunication {
 };
 
 /** Properties for a ghost communication. A ghost communication is defined */
-typedef struct {
+struct GhostCommunicator {
   /** Particle data parts to transfer */
   unsigned data_parts;
-
   /** number of communication steps. */
   int num;
-
   /** List of ghost communications. */
   std::vector<GhostCommunication> comm;
 
-} GhostCommunicator;
+};
 
 /*@}*/
 
