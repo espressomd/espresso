@@ -126,9 +126,7 @@ Utils::Vector3d lb_viscous_coupling(Particle *p,
 #ifdef ENGINE
   if (p->swim.swimming) {
     v_drift += p->swim.v_swim * p->r.calc_director();
-    p->swim.v_center[0] = interpolated_u[0];
-    p->swim.v_center[1] = interpolated_u[1];
-    p->swim.v_center[2] = interpolated_u[2];
+    p->swim.v_center = interpolated_u;
   }
 #endif
 
@@ -264,16 +262,20 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
           return {};
         };
 
-        /* local cells */
-        for (auto &p : local_cells.particles()) {
+        auto couple_particle = [&](Particle &p) -> void {
           if (p.p.is_virtual and !couple_virtual)
-            continue;
+            return;
 
+          /* Particle is in our LB volume, so this node
+           * is resposible to adding its force */
           if (in_local_domain(p.r.p, local_geo)) {
             auto const force = lb_viscous_coupling(
                 &p, noise_amplitude * f_random(p.identity()));
             /* add force to the particle */
             p.f.f += force;
+            /* Particle is not in our domain, but adds to the force
+             * density in our domain, only calculate contribution to
+             * the LB force density. */
           } else if (in_local_halo(p.r.p)) {
             lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
           }
@@ -281,25 +283,16 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 #ifdef ENGINE
           add_swimmer_force(p);
 #endif
+        };
+
+        /* local cells */
+        for (auto &p : local_cells.particles()) {
+          couple_particle(p);
         }
 
         /* ghost cells */
         for (auto &p : ghost_cells.particles()) {
-          if (p.p.is_virtual and !couple_virtual)
-            continue;
-
-          if (in_local_domain(p.r.p, local_geo)) {
-            auto const force = lb_viscous_coupling(
-                &p, noise_amplitude * f_random(p.identity()));
-            /* add force to the particle */
-            p.f.f += force;
-          } else if (in_local_halo(p.r.p)) {
-            lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
-          }
-
-#ifdef ENGINE
-          add_swimmer_force(p);
-#endif
+          couple_particle(p);
         }
         break;
       }
