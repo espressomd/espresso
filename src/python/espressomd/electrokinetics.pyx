@@ -337,7 +337,7 @@ IF ELECTROKINETICS:
         def add_boundary(self, shape):
             raise Exception("This method is not implemented yet.")
 
-    cdef class ElectrokineticsRoutines(object):
+    cdef class ElectrokineticsRoutines:
         cdef Vector3i node
 
         def __init__(self, key):
@@ -377,7 +377,7 @@ IF ELECTROKINETICS:
             def __set__(self, value):
                 raise Exception("Not implemented.")
 
-    class Species(object):
+    class Species:
 
         """
         Creates a species object that is passed to the ek instance.
@@ -512,7 +512,7 @@ IF ELECTROKINETICS:
         def print_vtk_flux_link(self, path):
             ek_print_vtk_flux_link(self.id, utils.to_char_pointer(path))
 
-    cdef class SpecieRoutines(object):
+    cdef class SpecieRoutines:
         cdef Vector3i node
         cdef int id
 

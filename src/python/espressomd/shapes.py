@@ -17,7 +17,7 @@
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
-class Shape(object):
+class Shape:
     _so_bind_methods = ("calc_distance",)
 
 

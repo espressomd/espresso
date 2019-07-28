@@ -343,7 +343,7 @@ IF CUDA:
                 linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
-cdef class LBFluidRoutines(object):
+cdef class LBFluidRoutines:
     cdef Vector3i node
 
     def __init__(self, key):

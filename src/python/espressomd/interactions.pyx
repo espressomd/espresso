@@ -27,7 +27,7 @@ from globals cimport immersed_boundaries
 
 # Non-bonded interactions
 
-cdef class NonBondedInteraction(object):
+cdef class NonBondedInteraction:
     """
     Represents an instance of a non-bonded interaction, such as Lennard-Jones.
     Either called with two particle type id, in which case, the interaction
@@ -1710,7 +1710,7 @@ IF GAUSSIAN == 1:
             return "eps", "sig", "cutoff"
 
 
-class NonBondedInteractionHandle(object):
+class NonBondedInteractionHandle:
 
     """
     Provides access to all non-bonded interactions between two particle types.
@@ -1792,7 +1792,7 @@ class NonBondedInteractionHandle(object):
             self.thole = TholeInteraction(_type1, _type2)
 
 
-cdef class NonBondedInteractions(object):
+cdef class NonBondedInteractions:
     """
     Access to non-bonded interaction parameters via [i,j], where i,j are particle
     types. Returns a :class:`NonBondedInteractionHandle` object.
@@ -1825,7 +1825,7 @@ cdef class NonBondedInteractions(object):
 
         reset_ia_params()
 
-cdef class BondedInteraction(object):
+cdef class BondedInteraction:
     """
     Base class for bonded interactions.
 
@@ -1990,7 +1990,7 @@ cdef class BondedInteraction(object):
         return self._params == other._params
 
 
-class BondedInteractionNotDefined(object):
+class BondedInteractionNotDefined:
 
     def __init__(self, *args, **kwargs):
         raise Exception(
@@ -3368,7 +3368,7 @@ IF ELECTROSTATICS:
         int(BONDED_IA_BONDED_COULOMB_SR)] = BondedCoulombSRBond
 
 
-class BondedInteractions(object):
+class BondedInteractions:
 
     """Represents the bonded interactions.
 

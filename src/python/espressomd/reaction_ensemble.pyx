@@ -10,7 +10,7 @@ class WangLandauHasConverged(Exception):
     pass
 
 
-cdef class ReactionAlgorithm(object):
+cdef class ReactionAlgorithm:
     """
 
     This class provides the base class for Reaction Algorithms like the Reaction Ensemble algorithm, the Wang-Landau

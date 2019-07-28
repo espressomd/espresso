@@ -57,7 +57,7 @@ for d in dir(ParticleHandle):
         if not d in ["pos_folded"]:
             particle_attributes.append(d)
 
-cdef class ParticleHandle(object):
+cdef class ParticleHandle:
     def __cinit__(self, int _id):
         self._id = _id
 
@@ -1575,7 +1575,7 @@ cdef class ParticleHandle(object):
 
             rotate_particle(self._id, a, angle)
 
-cdef class _ParticleSliceImpl(object):
+cdef class _ParticleSliceImpl:
     """Handles slice inputs.
 
     This base class should not be used directly. Use
@@ -1702,7 +1702,7 @@ class ParticleSlice(_ParticleSliceImpl):
         super().__setattr__(name, value)
 
 
-cdef class ParticleList(object):
+cdef class ParticleList:
     """
     Provides access to the particles via [i], where i is the particle id.
     Returns a ParticleHandle object.

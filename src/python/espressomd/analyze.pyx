@@ -40,7 +40,7 @@ from .system import System
 from espressomd.utils import is_valid_type
 
 
-class Analysis(object):
+class Analysis:
 
     def __init__(self, system):
         if not isinstance(system, System):

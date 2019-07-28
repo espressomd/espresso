@@ -25,12 +25,12 @@ from ...script_interface import PScriptInterface  # pylint: disable=import
 from ...code_info import features
 
 if not 'H5MD' in features():
-    class H5md(object):
+    class H5md:
 
         def __init__(self, *args, **kwargs):
             raise RuntimeError("H5md not available.")
 else:
-    class H5md(object):
+    class H5md:
 
         """H5md file object.
 

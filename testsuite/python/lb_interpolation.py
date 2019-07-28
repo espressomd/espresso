@@ -43,7 +43,7 @@ def velocity_profile(x):
     return V_BOUNDARY / (BOX_L - 2. * AGRID) * (x - AGRID)
 
 
-class LBInterpolation(object):
+class LBInterpolation:
 
     """
     Couette flow profile along x in z-direction. Check that velocity at shear

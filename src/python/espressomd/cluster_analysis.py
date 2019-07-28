@@ -126,7 +126,7 @@ class ClusterStructure(ScriptInterfaceHelper):
         return self._clusters
 
 
-class Clusters(object):
+class Clusters:
 
     """Access to the clusters in the cluster structure.
 
