@@ -80,7 +80,7 @@ class ClusterStructure(ScriptInterfaceHelper):
     _so_creation_policy = "LOCAL"
 
     def __init__(self, *args, **kwargs):
-        super(type(self), self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._clusters = Clusters(self)
 
     def run_for_all_pairs(self):

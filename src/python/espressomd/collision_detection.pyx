@@ -34,7 +34,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         # If no mode is specified at construction, use off.
         if "mode" not in kwargs:
             kwargs["mode"] = "off"
-        super(type(self), self).__init__()
+        super().__init__()
         self.set_params(**kwargs)
 
     def validate(self):
@@ -113,21 +113,21 @@ class CollisionDetection(ScriptInterfaceHelper):
             if name in kwargs:
                 if isinstance(kwargs[name], BondedInteraction):
                     kwargs[name] = kwargs[name]._bond_id
-        super(type(self), self).set_params(**kwargs)
+        super().set_params(**kwargs)
         self.validate()
         handle_errors("Validation of collision detection failed")
 
     def get_parameter(self, name):
         #"""Gets a single parameter from the collision detection."""
 
-        res = super(type(self), self).get_parameter(name)
+        res = super().get_parameter(name)
         return self._convert_param(name, res)
 
     def get_params(self):
         """Returns the parameters of the collision detection as dict.
 
         """
-        res = super(type(self), self).get_params()
+        res = super().get_params()
         for k in res.keys():
             res[k] = self._convert_param(k, res[k])
 

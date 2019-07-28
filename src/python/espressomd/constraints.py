@@ -234,9 +234,8 @@ class _Interpolated(Constraint):
     def __init__(self, field, **kwargs):
         shape, codim = self._unpack_dims(field)
 
-        super(
-            _Interpolated, self).__init__(_field_shape=shape, _field_codim=codim,
-                                          _field_data=field.flatten(), **kwargs)
+        super().__init__(_field_shape=shape, _field_codim=codim,
+                         _field_data=field.flatten(), **kwargs)
 
     @classmethod
     def required_dims(cls, box_size, grid_spacing):
@@ -338,7 +337,7 @@ class ForceField(_Interpolated):
     """
 
     def __init__(self, field, **kwargs):
-        super(ForceField, self).__init__(field, **kwargs)
+        super().__init__(field, **kwargs)
 
     _codim = 3
     _so_name = "Constraints::ForceField"
@@ -366,7 +365,7 @@ class PotentialField(_Interpolated):
     """
 
     def __init__(self, field, **kwargs):
-        super(PotentialField, self).__init__(field, **kwargs)
+        super().__init__(field, **kwargs)
 
     _codim = 1
     _so_name = "Constraints::PotentialField"
@@ -387,7 +386,7 @@ class Gravity(Constraint):
     """
 
     def __init__(self, g):
-        super(Gravity, self).__init__(value=g)
+        super().__init__(value=g)
 
     @property
     def g(self):
@@ -423,7 +422,7 @@ class LinearElectricPotential(Constraint):
     """
 
     def __init__(self, E, phi0=0):
-        super(LinearElectricPotential, self).__init__(A=-E, b=phi0)
+        super().__init__(A=-E, b=phi0)
 
     @property
     def E(self):
@@ -468,10 +467,8 @@ class ElectricPlaneWave(Constraint):
     _so_name = "Constraints::ElectricPlaneWave"
 
     def __init__(self, E0, k, omega, phi=0):
-        super(ElectricPlaneWave, self).__init__(amplitude=E0,
-                                                wave_vector=k,
-                                                frequency=omega,
-                                                phase=phi)
+        super().__init__(amplitude=E0, wave_vector=k, frequency=omega,
+                         phase=phi)
 
     @property
     def E0(self):
@@ -504,7 +501,7 @@ class FlowField(_Interpolated):
     """
 
     def __init__(self, field, **kwargs):
-        super(FlowField, self).__init__(field, **kwargs)
+        super().__init__(field, **kwargs)
 
     _codim = 3
     _so_name = "Constraints::FlowField"
@@ -531,7 +528,7 @@ class HomogeneousFlowField(Constraint):
     """
 
     def __init__(self, u, gamma):
-        super(HomogeneousFlowField, self).__init__(value=u, gamma=gamma)
+        super().__init__(value=u, gamma=gamma)
 
     @property
     def u(self):
@@ -557,7 +554,7 @@ class ElectricPotential(_Interpolated):
     """
 
     def __init__(self, field, **kwargs):
-        super(ElectricPotential, self).__init__(field, **kwargs)
+        super().__init__(field, **kwargs)
 
     _codim = 1
     _so_name = "Constraints::ElectricPotential"

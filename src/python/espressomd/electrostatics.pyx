@@ -229,7 +229,7 @@ IF P3M == 1:
         """
 
         def __init__(self, *args, **kwargs):
-            super(type(self), self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def validate_params(self):
             default_params = self.default_params()
@@ -372,7 +372,7 @@ IF P3M == 1:
             """
 
             def __init__(self, *args, **kwargs):
-                super(type(self), self).__init__(*args, **kwargs)
+                super().__init__(*args, **kwargs)
 
             def validate_params(self):
                 default_params = self.default_params()
@@ -791,6 +791,6 @@ IF ELECTROSTATICS:
                 return {}
 
             def _deactivate_method(self):
-                super(Scafacos, self)._deactivate_method()
+                super()._deactivate_method()
                 scafacos.free_handle()
                 mpi_bcast_coulomb_params()

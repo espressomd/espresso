@@ -1699,7 +1699,7 @@ class ParticleSlice(_ParticleSliceImpl):
         if name != "_chunk_size" and not hasattr(ParticleHandle, name):
             raise AttributeError(
                 "ParticleHandle does not have the attribute {}.".format(name))
-        super(ParticleSlice, self).__setattr__(name, value)
+        super().__setattr__(name, value)
 
 
 cdef class ParticleList(object):
