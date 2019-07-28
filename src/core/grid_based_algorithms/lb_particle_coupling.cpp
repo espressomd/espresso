@@ -150,22 +150,23 @@ namespace {
 using Utils::Vector;
 using Utils::Vector3d;
 
-template<class T, size_t N>
-using Box = std::pair<Vector<T, N>, Vector<T, N>>;
+template <class T, size_t N> using Box = std::pair<Vector<T, N>, Vector<T, N>>;
 
-template<class T, size_t N>
-bool in_box(Vector<T, N> const &pos, Box<T, N> const& box) {
-  auto const& my_left = box.first;
-  auto const& my_right = box.second;
+template <class T, size_t N>
+bool in_box(Vector<T, N> const &pos, Box<T, N> const &box) {
+  auto const &my_left = box.first;
+  auto const &my_right = box.second;
 
   return (pos >= my_left) and (pos < my_right);
 }
 
-template<class T>
-bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const& local_box, T const& halo = {}) {
+template <class T>
+bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const &local_box,
+                     T const &halo = {}) {
   auto const halo_vec = Vector<T, 3>::broadcast(halo);
 
-  return in_box(pos, {local_geo.my_left() - halo_vec,  local_geo.my_right() + halo_vec});
+  return in_box(
+      pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
 }
 
 bool in_local_halo(Vector3d const &pos) {
@@ -194,6 +195,7 @@ void add_swimmer_force(Particle &p) {
   }
 }
 #endif
+
 } // namespace
 
 void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
@@ -229,7 +231,13 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         using key_type = rng_type::key_type;
 
         ctr_type c;
-        if (lb_lbfluid_get_kT() > 0.0) {
+        auto const kT = lb_lbfluid_get_kT();
+        auto const noise_amplitude =
+            (kT > 0.) ? std::sqrt(12. * 2. * lb_lbcoupling_get_gamma() * kT /
+                                  time_step)
+                      : 0.0;
+
+        if (noise_amplitude > 0.0) {
           c = ctr_type{{lb_particle_coupling.rng_counter_coupling->value(),
                         static_cast<uint64_t>(RNGSalt::PARTICLES)}};
         } else {
@@ -241,47 +249,57 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
          * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
          * time_step comes from the discretization.
          */
-        auto const noise_amplitude = sqrt(12. * 2. * lb_lbcoupling_get_gamma() *
-                                          lb_lbfluid_get_kT() / time_step);
-        auto f_random = [&c](int id) -> Utils::Vector3d {
-          if (lb_lbfluid_get_kT() > 0.0) {
+        auto f_random = [&c, noise_amplitude](int id) -> Utils::Vector3d {
+          if (noise_amplitude > 0.0) {
             key_type k{{static_cast<uint32_t>(id)}};
 
             auto const noise = rng_type{}(c, k);
 
             using Utils::uniform;
-            return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
-                                   uniform(noise[2])} -
-                   Utils::Vector3d::broadcast(0.5);
+            using Utils::Vector3d;
+            return Vector3d{uniform(noise[0]), uniform(noise[1]),
+                            uniform(noise[2])} -
+                   Vector3d::broadcast(0.5);
           }
-          return Utils::Vector3d{};
+          return {};
         };
 
         /* local cells */
         for (auto &p : local_cells.particles()) {
-          if (!p.p.is_virtual or couple_virtual) {
+          if (p.p.is_virtual and !couple_virtual)
+            continue;
+
+          if (in_local_domain(p.r.p, local_geo)) {
             auto const force = lb_viscous_coupling(
                 &p, noise_amplitude * f_random(p.identity()));
             /* add force to the particle */
             p.f.f += force;
-#ifdef ENGINE
-            add_swimmer_force(p);
-#endif
+          } else if (in_local_halo(p.r.p)) {
+            lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
           }
+
+#ifdef ENGINE
+          add_swimmer_force(p);
+#endif
         }
 
         /* ghost cells */
         for (auto &p : ghost_cells.particles()) {
-          /* for ghost particles we have to check if they lie
-           * in the range of the local lattice nodes */
-          if (in_local_halo(p.r.p)) {
-            if (!p.p.is_virtual || couple_virtual) {
-              lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
-#ifdef ENGINE
-              add_swimmer_force(p);
-#endif
-            }
+          if (p.p.is_virtual and !couple_virtual)
+            continue;
+
+          if (in_local_domain(p.r.p, local_geo)) {
+            auto const force = lb_viscous_coupling(
+                &p, noise_amplitude * f_random(p.identity()));
+            /* add force to the particle */
+            p.f.f += force;
+          } else if (in_local_halo(p.r.p)) {
+            lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
           }
+
+#ifdef ENGINE
+          add_swimmer_force(p);
+#endif
         }
         break;
       }
