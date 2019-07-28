@@ -1,3 +1,4 @@
+#include "lb_particle_coupling.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
@@ -7,14 +8,13 @@
 #include "integrate.hpp"
 #include "lb_interface.hpp"
 #include "lb_interpolation.hpp"
-#include "lb_particle_coupling.hpp"
 #include "lbgpu.hpp"
 #include "random.hpp"
 
-#include <utils/u32_to_u64.hpp>
-#include <utils/Counter.hpp>
-#include <utils/uniform.hpp>
 #include <profiler/profiler.hpp>
+#include <utils/Counter.hpp>
+#include <utils/u32_to_u64.hpp>
+#include <utils/uniform.hpp>
 
 #include <Random123/philox.h>
 #include <boost/mpi.hpp>
