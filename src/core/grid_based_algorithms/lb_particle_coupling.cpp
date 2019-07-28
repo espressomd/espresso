@@ -157,7 +157,7 @@ template <class T, size_t N> using Box = std::pair<Vector<T, N>, Vector<T, N>>;
  * right one does not. Periodic boundaries are
  * not considered.
  *
- * @param Position to check
+ * @param pos Position to check
  * @param box Box to check
  *
  * @return True iff the point is inside of the box.
@@ -170,7 +170,7 @@ bool in_box(Vector<T, N> const &pos, Box<T, N> const &box) {
 /**
  * @brief Check if a position is within the local box + halo.
  *
- * @param Position to check
+ * @param pos Position to check
  * @param local_box Geometry to check
  * @param halo Halo
  *
@@ -189,7 +189,7 @@ bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const &local_box,
  * @brief Check if a position is within the local LB domain
  *       plus halo.
  *
- * @param Position to check
+ * @param pos Position to check
  *
  * @return True iff the point is inside of the domain.
  */
