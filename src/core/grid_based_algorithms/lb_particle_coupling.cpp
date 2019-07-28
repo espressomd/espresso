@@ -1,7 +1,3 @@
-#include <Random123/philox.h>
-#include <boost/mpi.hpp>
-#include <profiler/profiler.hpp>
-
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
@@ -15,9 +11,13 @@
 #include "lbgpu.hpp"
 #include "random.hpp"
 
-#include "utils/u32_to_u64.hpp"
+#include <utils/u32_to_u64.hpp>
 #include <utils/Counter.hpp>
 #include <utils/uniform.hpp>
+#include <profiler/profiler.hpp>
+
+#include <Random123/philox.h>
+#include <boost/mpi.hpp>
 
 LB_Particle_Coupling lb_particle_coupling;
 
@@ -150,14 +150,32 @@ using Utils::Vector3d;
 
 template <class T, size_t N> using Box = std::pair<Vector<T, N>, Vector<T, N>>;
 
+/**
+ * @brief Check if a position is in a box.
+ *
+ * The left boundary belong to the box, the
+ * right one does not. Periodic boundaries are
+ * not considered.
+ *
+ * @param Position to check
+ * @param box Box to check
+ *
+ * @return True iff the point is inside of the box.
+ */
 template <class T, size_t N>
 bool in_box(Vector<T, N> const &pos, Box<T, N> const &box) {
-  auto const &my_left = box.first;
-  auto const &my_right = box.second;
-
-  return (pos >= my_left) and (pos < my_right);
+  return (pos >= box.first) and (pos < box.second);
 }
 
+/**
+ * @brief Check if a position is within the local box + halo.
+ *
+ * @param Position to check
+ * @param local_box Geometry to check
+ * @param halo Halo
+ *
+ * @return True iff the point is inside of the box up to halo.
+ */
 template <class T>
 bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const &local_box,
                      T const &halo = {}) {
@@ -167,6 +185,14 @@ bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const &local_box,
       pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
 }
 
+/**
+ * @brief Check if a position is within the local LB domain
+ *       plus halo.
+ *
+ * @param Position to check
+ *
+ * @return True iff the point is inside of the domain.
+ */
 bool in_local_halo(Vector3d const &pos) {
   auto const halo = 0.5 * lb_lbfluid_get_lattice().agrid;
 
@@ -196,7 +222,9 @@ void add_swimmer_force(Particle &p) {
 
 } // namespace
 
-void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
+void lb_lbcoupling_calc_particle_lattice_ia(
+    bool couple_virtual, const ParticleRange &local_particles,
+    const ParticleRange &more_particles) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
@@ -285,13 +313,12 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
 #endif
         };
 
-        /* local cells */
-        for (auto &p : local_cells.particles()) {
+        /* Couple particles ranges */
+        for (auto &p : local_particles) {
           couple_particle(p);
         }
 
-        /* ghost cells */
-        for (auto &p : ghost_cells.particles()) {
+        for (auto &p : more_particles) {
           couple_particle(p);
         }
         break;
