@@ -1829,9 +1829,9 @@ cdef class BondedInteraction:
     """
     Base class for bonded interactions.
 
-    Either called with an interaction id, in which case, the interaction
-    will represent the bonded interaction as it is defined in Espresso core
-    Or called with keyword arguments describing a new interaction.
+    Either called with an interaction id, in which case the interaction
+    will represent the bonded interaction as it is defined in Espresso core,
+    or called with keyword arguments describing a new interaction.
 
     """
 
@@ -3428,7 +3428,7 @@ class BondedInteractions:
                 yield self[i]
 
     def add(self, bonded_ia):
-        """Add a bonded ia to the simulation>"""
+        """Add a bonded ia to the simulation"""
         self[bonded_ia_params.size()] = bonded_ia
 
     def __getstate__(self):

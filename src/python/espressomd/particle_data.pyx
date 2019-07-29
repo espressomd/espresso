@@ -152,7 +152,7 @@ cdef class ParticleHandle:
         def __set__(self, _pos):
             cdef double mypos[3]
             check_type_or_throw_except(
-                _pos, 3, float, "Postion must be 3 floats")
+                _pos, 3, float, "Position must be 3 floats")
             for i in range(3):
                 mypos[i] = _pos[i]
             if place_particle(self._id, mypos) == -1:
@@ -1856,7 +1856,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         # done here. the code is from the pos:property of ParticleHandle
         cdef double mypos[3]
         check_type_or_throw_except(
-            P["pos"], 3, float, "Postion must be 3 floats.")
+            P["pos"], 3, float, "Position must be 3 floats.")
         for i in range(3):
             mypos[i] = P["pos"][i]
         if place_particle(P["id"], mypos) == -1:

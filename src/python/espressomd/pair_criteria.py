@@ -22,7 +22,7 @@ class _PairCriterion(ScriptInterfaceHelper):
 
     def decide(self, p1, p2):
         """Makes a decision based on the two particles specified.
-           p2,p2 : Instances of ParticleHandle or integers containing the particle id.
+           p1,p2 : Instances of ParticleHandle or integers containing the particle id.
         """
         id1 = None
         id2 = None

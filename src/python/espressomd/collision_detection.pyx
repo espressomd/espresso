@@ -48,7 +48,7 @@ class CollisionDetection(ScriptInterfaceHelper):
     # Do not allow setting of individual attributes
     def __setattr__(self, *args, **kwargs):
         raise Exception(
-            "Please et all parameters at once via collision_detection.set_params()")
+            "Please set all parameters at once via collision_detection.set_params()")
 
     # Override to call validate after parameter update
     def set_params(self, **kwargs):
@@ -76,13 +76,13 @@ class CollisionDetection(ScriptInterfaceHelper):
                Particle type of the virtual sites being created on collision (virtual sites based modes)
 
         part_type_to_be_glued : :obj:`int`
-               particle type for "glue_to_surface|" mode. See user guide.
+               particle type for "glue_to_surface" mode. See user guide.
 
         part_type_to_attach_vs_to : :obj:`int`
-               particle type for "glue_to_surface|" mode. See user guide.
+               particle type for "glue_to_surface" mode. See user guide.
 
         part_type_after_glueing : :obj:`int`
-               particle type for "glue_to_surface|" mode. See user guide.
+               particle type for "glue_to_surface" mode. See user guide.
 
         distance_glued_particle_to_vs : :obj:`float`
                Distance for "glue_to_surface" mode. See user guide.
@@ -103,7 +103,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         # Completeness of parameter set
         if not (set(kwargs.keys()) == set(self._params_for_mode(kwargs["mode"]))):
             raise Exception("Parameter set does not match mode. ", kwargs[
-                            "mode"], "requries ", self._params_for_mode(kwargs["mode"]))
+                            "mode"], "requires ", self._params_for_mode(kwargs["mode"]))
 
         # Mode
         kwargs["mode"] = self._int_mode[kwargs["mode"]]
@@ -118,7 +118,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         handle_errors("Validation of collision detection failed")
 
     def get_parameter(self, name):
-        #"""Gets a single parameter from the collision detection."""
+        """Gets a single parameter from the collision detection."""
 
         res = super().get_parameter(name)
         return self._convert_param(name, res)

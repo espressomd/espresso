@@ -258,7 +258,7 @@ class Wall(Shape, ScriptInterfaceHelper):
 class SimplePore(Shape, ScriptInterfaceHelper):
 
     """
-    Two parallel infinite planes, and a cylindrical orfice connecting them.
+    Two parallel infinite planes, and a cylindrical orifice connecting them.
     The cylinder and the planes are connected by torus segments with an
     adjustable radius.
 
