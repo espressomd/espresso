@@ -199,7 +199,7 @@ static std::vector<double> lclcblk;
 static std::vector<double> gblcblk;
 
 /** contribution from the image charges */
-static double lclimge[8];
+static Utils::VectorXd<8> lclimge;
 
 struct SCCache {
   double s, c;
@@ -352,7 +352,7 @@ template <class T> inline void clear_vec(T *p, size_t size) {
 
 template <class OutputRange, class InputRange>
 void copy_vec(OutputRange out, InputRange in) {
-  assert(out.size() == in.size());
+  assert(out.size() >= in.size());
 
   boost::copy(in, out.begin());
 }
@@ -444,22 +444,22 @@ void clear_image_contributions(int e_size) {
 }
 
 void gather_image_contributions(int e_size) {
-  double recvbuf[8];
+  Utils::VectorXd<8> recvbuf;
 
   /* collect the image charge contributions with at least a layer distance */
-  MPI_Allreduce(lclimge, recvbuf, 2 * e_size, MPI_DOUBLE, MPI_SUM, comm_cart);
+  boost::mpi::all_reduce(comm_cart, lclimge.data(), 2 * e_size,
+                         recvbuf.data(), std::plus<>{});
 
   if (this_node == 0)
     /* the gblcblk contains all contributions from layers deeper than one layer
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
-    copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
+    copy_vec(blwentry(gblcblk, 0, e_size), recvbuf.data(), e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf + e_size,
-             e_size);
+    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf.data() + e_size, e_size);
 }
 
 /* the data transfer routine for the lclcblks itself */
@@ -661,7 +661,7 @@ static void setup(int p, double omega, double fac,
   constexpr int e_size = 2, size = 4;
 
   if (mmm2d_params.dielectric_contrast_on)
-    clear_vec(lclimge, size);
+    clear_vec(lclimge.data(), size);
 
   if (this_node == 0) {
     /* on the lowest node, clear the lclcblk below, which only contains the
@@ -755,7 +755,7 @@ static void setup(int p, double omega, double fac,
   }
 
   if (mmm2d_params.dielectric_contrast_on) {
-    scale_vec(pref, lclimge, size);
+    scale_vec(pref, lclimge.data(), size);
     if (this_node == 0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
@@ -860,7 +860,7 @@ static void setup_PQ(int p, int q, double omega, double fac,
   constexpr int e_size = 4, size = 8;
 
   if (mmm2d_params.dielectric_contrast_on)
-    clear_vec(lclimge, size);
+    clear_vec(lclimge.data(), size);
 
   if (this_node == 0) {
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);
@@ -981,7 +981,7 @@ static void setup_PQ(int p, int q, double omega, double fac,
   }
 
   if (mmm2d_params.dielectric_contrast_on) {
-    scale_vec(pref, lclimge, size);
+    scale_vec(pref, lclimge.data(), size);
 
     if (this_node == 0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
