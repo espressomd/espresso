@@ -418,20 +418,31 @@ inline void scale_vec(double scale, double *pdc, int size) {
    e_size is the size of only the top or bottom half, i.e. half of size.
 */
 
+template<class Span>
+auto block(Span in, int index, int size) {
+  using Utils::make_span;
+
+  assert(in.size() >= ((index + 1) * size));
+
+  return in.data() + index * size;
+}
+
 inline double *block(double *p, int index, int size) {
   return &p[index * size];
 }
 
-const double *block(std::vector<double> const &p, int index, int size) {
-  return assert(index * size < p.size()), &p[index * size];
-}
-
+/*
 inline double *blwentry(double *p, int index, int e_size) {
   return &p[2 * index * e_size];
 }
+*/
 
-double *abventry(double *p, int index, int e_size) {
-  return &p[(2 * index + 1) * e_size];
+auto blwentry(double *p, int index, int e_size) {
+  return block(p, 2*index, e_size);
+}
+
+auto abventry(double *p, int index, int e_size) {
+  return block(p, 2* index + 1, e_size);
 }
 
 /* dealing with the image contributions from far outside the simulation box */
@@ -1047,7 +1058,7 @@ static double PQ_energy(double omega) {
   int ic = 0;
   for (int c = 1; c <= local_cells.n; c++) {
     int np = local_cells[c - 1]->particles().size();
-    double *othcblk = block(gblcblk, c - 1, size);
+    auto const *othcblk = block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
       eng += pref * (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
