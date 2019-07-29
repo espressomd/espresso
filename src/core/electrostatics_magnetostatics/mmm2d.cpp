@@ -192,14 +192,14 @@ static int n_localpart = 0;
 /** temporary buffers for product decomposition */
 static std::vector<double> partblk;
 /** for all local cells including ghosts */
-static double *lclcblk = nullptr;
+static std::vector<double> lclcblk;
 /** collected data from the cells above the top neighbor
     of a cell rsp. below the bottom neighbor
     (P=below, M=above, as the signs in the exp). */
-static double *gblcblk = nullptr;
+static std::vector<double> gblcblk;
 
 /** contribution from the image charges */
-static double lclimge[8];
+static Utils::VectorXd<8> lclimge;
 
 struct SCCache {
   double s, c;
@@ -354,7 +354,7 @@ template <class T> inline void clear_vec(T *p, size_t size) {
 
 template <class OutputRange, class InputRange>
 void copy_vec(OutputRange out, InputRange in) {
-  assert(out.size() == in.size());
+  assert(out.size() >= in.size());
 
   boost::copy(in, out.begin());
 }
@@ -424,24 +424,16 @@ auto block(Span in, int index, int size) {
 
   assert(in.size() >= ((index + 1) * size));
 
-  return in.data() + index * size;
+  return make_span(in.data() + index * size, size);
 }
 
-inline double *block(double *p, int index, int size) {
-  return &p[index * size];
-}
-
-/*
-inline double *blwentry(double *p, int index, int e_size) {
-  return &p[2 * index * e_size];
-}
-*/
-
-auto blwentry(double *p, int index, int e_size) {
+template<class Span>
+auto blwentry(Span p, int index, int e_size) {
   return block(p, 2*index, e_size);
 }
 
-auto abventry(double *p, int index, int e_size) {
+template<class Span>
+auto abventry(Span p, int index, int e_size) {
   return block(p, 2* index + 1, e_size);
 }
 
@@ -453,30 +445,29 @@ void clear_image_contributions(int e_size) {
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
-    clear_vec(blwentry(gblcblk, 0, e_size), e_size);
+    clear_vec(blwentry(gblcblk, 0, e_size));
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(gblcblk, local_cells.n - 1, e_size), e_size);
+    clear_vec(abventry(gblcblk, local_cells.n - 1, e_size));
 }
 
 void gather_image_contributions(int e_size) {
-  double recvbuf[8];
+  Utils::VectorXd<8> recvbuf;
 
   /* collect the image charge contributions with at least a layer distance */
-  MPI_Allreduce(lclimge, recvbuf, 2 * e_size, MPI_DOUBLE, MPI_SUM, comm_cart);
+  boost::mpi::all_reduce(comm_cart, lclimge.data(), 2 * e_size, recvbuf.data(), std::plus<>{});
 
   if (this_node == 0)
     /* the gblcblk contains all contributions from layers deeper than one layer
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
-    copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
+    copy_vec(blwentry(gblcblk, 0, e_size), Utils::make_span(recvbuf.data(), e_size));
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf + e_size,
-             e_size);
+    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), Utils::make_span(recvbuf.data() + e_size, e_size));
 }
 
 /* the data transfer routine for the lclcblks itself */
@@ -495,20 +486,19 @@ void distribute(int e_size, double fac) {
       for (c = 1; c < local_cells.n; c++)
         addscale_vec(blwentry(gblcblk, c, e_size), fac,
                      blwentry(gblcblk, c - 1, e_size),
-                     blwentry(lclcblk, c - 1, e_size), e_size);
+                     blwentry(lclcblk, c - 1, e_size));
 
       /* calculate my ghost contribution only if a node above exists */
       if (node + 1 < n_nodes) {
-        addscale_vec(sendbuf, fac, blwentry(gblcblk, local_cells.n - 1, e_size),
-                     blwentry(lclcblk, local_cells.n - 1, e_size), e_size);
-        copy_vec(sendbuf + e_size, blwentry(lclcblk, local_cells.n, e_size),
-                 e_size);
+        addscale_vec(Utils::make_span(sendbuf, e_size), fac, blwentry(gblcblk, local_cells.n - 1, e_size),
+                     blwentry(lclcblk, local_cells.n - 1, e_size));
+        copy_vec(Utils::make_span(sendbuf + e_size, e_size), blwentry(lclcblk, local_cells.n, e_size));
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     } else if (node + 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, node, 0, comm_cart, &status);
-      copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
-      copy_vec(blwentry(lclcblk, 0, e_size), recvbuf + e_size, e_size);
+      copy_vec(blwentry(gblcblk, 0, e_size), Utils::make_span(recvbuf, e_size));
+      copy_vec(blwentry(lclcblk, 0, e_size), Utils::make_span(recvbuf + e_size, e_size));
     }
 
     /* down */
@@ -517,21 +507,20 @@ void distribute(int e_size, double fac) {
       for (c = local_cells.n + 1; c > 2; c--)
         addscale_vec(abventry(gblcblk, c - 3, e_size), fac,
                      abventry(gblcblk, c - 2, e_size),
-                     abventry(lclcblk, c, e_size), e_size);
+                     abventry(lclcblk, c, e_size));
 
       /* calculate my ghost contribution only if a node below exists */
       if (inv_node - 1 >= 0) {
-        addscale_vec(sendbuf, fac, abventry(gblcblk, 0, e_size),
-                     abventry(lclcblk, 2, e_size), e_size);
-        copy_vec(sendbuf + e_size, abventry(lclcblk, 1, e_size), e_size);
+        addscale_vec(Utils::make_span(sendbuf, e_size), fac, abventry(gblcblk, 0, e_size),
+                     abventry(lclcblk, 2, e_size));
+        copy_vec(Utils::make_span(sendbuf + e_size, e_size), abventry(lclcblk, 1, e_size));
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, inv_node - 1, 0, comm_cart);
       }
     } else if (inv_node - 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, inv_node, 0, comm_cart,
                &status);
-      copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf, e_size);
-      copy_vec(abventry(lclcblk, local_cells.n + 1, e_size), recvbuf + e_size,
-               e_size);
+      copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), Utils::make_span(recvbuf, e_size));
+      copy_vec(abventry(lclcblk, local_cells.n + 1, e_size), Utils::make_span(recvbuf + e_size, e_size));
     }
   }
 }
@@ -549,11 +538,11 @@ static void setup_z_force() {
      article of Arnold, Kesselheim, Breitsprecher et al, 2013, for details. */
 
   if (this_node == 0) {
-    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    clear_vec(blwentry(lclcblk, 0, e_size));
   }
 
   if (this_node == n_nodes - 1) {
-    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size));
   }
 
   /* calculate local cellblks. partblks don't make sense */
@@ -607,27 +596,26 @@ static void setup_z_energy() {
   if (this_node == 0)
     /* the lowest lclcblk does not contain anything, since there are no charges
        below the simulation box, at least for this term. */
-    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    clear_vec(blwentry(lclcblk, 0, e_size));
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size));
 
   /* calculate local cellblks. partblks don't make sense */
   for (int c = 1; c <= local_cells.n; c++) {
     auto cell = local_cells[c - 1];
 
-    clear_vec(blwentry(lclcblk, c, e_size), e_size);
+    clear_vec(blwentry(lclcblk, c, e_size));
     for (auto const &p : cell->particles()) {
       lclcblk[size * c + ABEQQP] += p.p.q;
       lclcblk[size * c + ABEQZP] += p.p.q * p.r.p[2];
     }
 
-    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
+    scale_vec(pref, blwentry(lclcblk, c, e_size));
     /* just to be able to use the standard distribution. Here below
        and above terms are the same */
-    copy_vec(abventry(lclcblk, c, e_size), blwentry(lclcblk, c, e_size),
-             e_size);
+    copy_vec(abventry(lclcblk, c, e_size), blwentry(lclcblk, c, e_size));
   }
 }
 
@@ -678,17 +666,17 @@ static void setup(int p, double omega, double fac,
   constexpr int e_size = 2, size = 4;
 
   if (mmm2d_params.dielectric_contrast_on)
-    clear_vec(lclimge, size);
+    clear_vec(Utils::make_span(lclimge.data(), size));
 
   if (this_node == 0) {
     /* on the lowest node, clear the lclcblk below, which only contains the
        images of the lowest layer
        if there is dielectric contrast, otherwise it is empty */
-    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    clear_vec(blwentry(lclcblk, 0, e_size));
   }
   if (this_node == n_nodes - 1) {
     /* same for the top node */
-    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size));
   }
 
   auto layer_top = local_geo.my_left()[2] + layer_h;
@@ -696,7 +684,7 @@ static void setup(int p, double omega, double fac,
   for (int c = 1; c <= local_cells.n; c++) {
     auto llclcblk = block(lclcblk, c, size);
 
-    clear_vec(llclcblk, size);
+    clear_vec(llclcblk);
 
     auto cell = local_cells[c - 1];
     for (auto const &p : cell->particles()) {
@@ -762,21 +750,21 @@ static void setup(int p, double omega, double fac,
         lclimge[POQECM] += p.p.q * sccache[o + ic].c * e_di_h;
       }
 
-      add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
+      add_vec(llclcblk, llclcblk, block(partblk, ic, size));
       ic++;
     }
-    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
-    scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
+    scale_vec(pref, blwentry(lclcblk, c, e_size));
+    scale_vec(pref, abventry(lclcblk, c, e_size));
 
     layer_top += layer_h;
   }
 
   if (mmm2d_params.dielectric_contrast_on) {
-    scale_vec(pref, lclimge, size);
+    scale_vec(pref, Utils::make_span(lclimge.data(), size));
     if (this_node == 0)
-      scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
+      scale_vec(pref, blwentry(lclcblk, 0, e_size));
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+      scale_vec(pref, abventry(lclcblk, local_cells.n + 1, e_size));
   }
 }
 
@@ -878,14 +866,14 @@ static void setup_PQ(int p, int q, double omega, double fac,
   constexpr int e_size = 4, size = 8;
 
   if (mmm2d_params.dielectric_contrast_on)
-    clear_vec(lclimge, size);
+    clear_vec(Utils::make_span(lclimge.data(), size));
 
   if (this_node == 0) {
-    clear_vec(blwentry(lclcblk, 0, e_size), e_size);
+    clear_vec(blwentry(lclcblk, 0, e_size));
   }
 
   if (this_node == n_nodes - 1) {
-    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size));
   }
 
   auto layer_top = local_geo.my_left()[2] + layer_h;
@@ -893,7 +881,7 @@ static void setup_PQ(int p, int q, double omega, double fac,
   for (int c = 1; c <= local_cells.n; c++) {
     auto const llclcblk = block(lclcblk, c, size);
 
-    clear_vec(llclcblk, size);
+    clear_vec(llclcblk);
 
     auto cell = local_cells[c - 1];
     for (auto const &p : cell->particles()) {
@@ -989,22 +977,22 @@ static void setup_PQ(int p, int q, double omega, double fac,
             scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e_di_h;
       }
 
-      add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
+      add_vec(llclcblk, llclcblk, block(partblk, ic, size));
       ic++;
     }
-    scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
-    scale_vec(pref, abventry(lclcblk, c, e_size), e_size);
+    scale_vec(pref, blwentry(lclcblk, c, e_size));
+    scale_vec(pref, abventry(lclcblk, c, e_size));
 
     layer_top += layer_h;
   }
 
   if (mmm2d_params.dielectric_contrast_on) {
-    scale_vec(pref, lclimge, size);
+    scale_vec(pref, lclimge);
 
     if (this_node == 0)
-      scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
+      scale_vec(pref, blwentry(lclcblk, 0, e_size));
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+      scale_vec(pref, abventry(lclcblk, local_cells.n + 1, e_size));
   }
 }
 
@@ -1058,7 +1046,7 @@ static double PQ_energy(double omega) {
   int ic = 0;
   for (int c = 1; c <= local_cells.n; c++) {
     int np = local_cells[c - 1]->particles().size();
-    auto const *othcblk = block(gblcblk, c - 1, size);
+    auto othcblk = block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
       eng += pref * (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
@@ -1189,8 +1177,8 @@ double MMM2D_add_far(int f, int e) {
   n_scycache = (int)(ceil(mmm2d_params.far_cut / uy) + 1);
 
   partblk.resize(n_localpart * 8);
-  lclcblk = Utils::realloc(lclcblk, cells.size() * 8 * sizeof(double));
-  gblcblk = Utils::realloc(gblcblk, local_cells.n * 8 * sizeof(double));
+  lclcblk.resize(cells.size() * 8);
+  gblcblk.resize(local_cells.n * 8);
 
   // It's not really far...
   auto eng = e ? MMM2D_self_energy(local_cells.particles()) : 0;
