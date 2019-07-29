@@ -40,7 +40,10 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <boost/range/algorithm/copy.hpp>
+#include <boost/range/algorithm/fill.hpp>
 #include <boost/range/algorithm/transform.hpp>
+#include <boost/range/value_type.hpp>
 
 #include <boost/range/numeric.hpp>
 #include <cmath>
@@ -339,40 +342,73 @@ static void prepare_scy_cache(const ParticleRange &particles) {
 /* vector operations */
 
 /** pdc = 0 */
-inline void clear_vec(double *pdc, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc[i] = 0;
+template <class OutputRange> inline void clear_vec(OutputRange rng) {
+  boost::fill(rng, typename boost::range_value<OutputRange>::type{});
+}
+
+template <class T> inline void clear_vec(T *p, size_t size) {
+  clear_vec(Utils::make_span(p, size));
+}
+
+template <class OutputRange, class InputRange>
+void copy_vec(OutputRange out, InputRange in) {
+  assert(out.size() == in.size());
+
+  boost::copy(in, out.begin());
 }
 
 /** pdc_d = pdc_s */
 inline void copy_vec(double *pdc_d, double const *pdc_s, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = pdc_s[i];
+  using Utils::make_const_span;
+  using Utils::make_span;
+
+  copy_vec(make_span(pdc_d, size), make_const_span(pdc_s, size));
+}
+
+template <class OutRange, class InRange1, class InRange2>
+void add_vec(OutRange out, InRange1 in1, InRange2 in2) {
+  assert(in2.size() == out.size());
+  boost::transform(in1, in2, out.begin(), std::plus<>{});
 }
 
 /** pdc_d = pdc_s1 + pdc_s2 */
 inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
                     int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = pdc_s1[i] + pdc_s2[i];
+  using Utils::make_const_span;
+  using Utils::make_span;
+
+  add_vec(make_span(pdc_d, size), make_const_span(pdc_s1, size),
+          make_const_span(pdc_s2, size));
+}
+
+template <class OutRange, class T, class InRange1, class InRange2>
+void addscale_vec(OutRange out, T scale, InRange1 in1, InRange2 in2) {
+  assert(in2.size() == out.size());
+  boost::transform(in1, in2, out.begin(), [scale](auto const&a, auto const&b) {
+      return scale * a + b;
+  } );
 }
 
 /** pdc_d = scale*pdc_s1 + pdc_s2 */
 inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
                          double const *pdc_s2, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
+  using Utils::make_const_span;
+  using Utils::make_span;
+
+  addscale_vec(make_span(pdc_d, size), scale, make_const_span(pdc_s1, size),
+          make_const_span(pdc_s2, size));
+}
+
+template<class OutRange, class T>
+void scale_vec(T scale, OutRange out) {
+  boost::transform(out, out.begin(), [scale](auto const&e) {
+    return scale * e;
+  });
 }
 
 /** pdc_d = scale*pdc */
 inline void scale_vec(double scale, double *pdc, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc[i] *= scale;
+  scale_vec(scale, Utils::make_span(pdc, size));
 }
 
 /* block indexing - has to fit to the PQ block definitions above.
