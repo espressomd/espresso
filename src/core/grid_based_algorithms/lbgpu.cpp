@@ -32,6 +32,7 @@
 #include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
@@ -267,6 +268,9 @@ void lb_GPU_sanity_checks() {
     }
     if (lbpar_gpu.tau < 0.0) {
       runtimeErrorMsg() << "Lattice Boltzmann time step not set";
+    }
+    if (time_step > 0.) {
+      check_tau_time_step_consistency(lbpar_gpu.tau, time_step);
     }
     if (lbpar_gpu.rho < 0.0) {
       runtimeErrorMsg() << "Lattice Boltzmann fluid density not set";

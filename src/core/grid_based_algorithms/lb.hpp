@@ -195,6 +195,10 @@ void lattice_boltzmann_update();
 
 void lb_sanity_checks();
 
+/** @brief Check if tau is an integer multiple of time_step, throws if not
+ */
+void check_tau_time_step_consistency(double tau, double time_s);
+
 /** Sets the equilibrium distributions.
     @param index Index of the local site
     @param density local fluid density

@@ -143,6 +143,8 @@ cdef class HydrodynamicInteraction(Actor):
         if "gamma_even" in self._params:
             python_lbfluid_set_gamma_even(self._params["gamma_even"])
 
+        lb_lbfluid_sanity_checks()
+
         utils.handle_errors("LB fluid activation")
 
     # function that calls wrapper functions which get the parameters from C-Level

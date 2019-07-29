@@ -61,10 +61,6 @@ ActiveLB lb_lbfluid_get_lattice_switch();
  */
 void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 
-/** @brief Check if tau is an integer multiple of time_step, throws if not
- */
-void check_tau_time_step_consistency(double tau, double time_s);
-
 /**
  * @brief Set the LB time step.
  */
@@ -109,6 +105,11 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density);
  * @brief Set the LB fluid thermal energy.
  */
 void lb_lbfluid_set_kT(double kT);
+
+/**
+ * @brief Perform LB parameter and boundary velocity checks.
+ */
+void lb_lbfluid_sanity_checks();
 
 /**
  * @brief Invalidate the particle allocation on the GPU.
