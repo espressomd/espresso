@@ -325,9 +325,9 @@ class TestLB(object):
         # integration step
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
             n_time_steps + 0.5) / self.params['dens']
-        for n in list(itertools.combinations(range(int(self.system.box_l[0] / self.params['agrid'])), 3)):
+        for n in self.lbf.nodes():
             np.testing.assert_allclose(
-                np.copy(self.lbf[n].velocity), fluid_velocity, atol=1E-6)
+                np.copy(n.velocity), fluid_velocity, atol=1E-6)
         np.testing.assert_allclose(
             self.system.analysis.linear_momentum() / self.system.volume() / self.params['dens'], fluid_velocity, atol=1E-6)
 
