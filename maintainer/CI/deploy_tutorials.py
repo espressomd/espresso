@@ -37,4 +37,3 @@ for filepath in glob.glob('*/*.html'):
 
 with open('deploy_list.txt', 'w') as f:
     f.write('\n'.join(deploy_list))
-
