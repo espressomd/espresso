@@ -223,7 +223,7 @@ void add_swimmer_force(Particle &p) {
 } // namespace
 
 void lb_lbcoupling_calc_particle_lattice_ia(
-    bool couple_virtual, const ParticleRange &local_particles,
+    bool couple_virtual, const ParticleRange &particles,
     const ParticleRange &more_particles) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::GPU) {
@@ -314,7 +314,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         };
 
         /* Couple particles ranges */
-        for (auto &p : local_particles) {
+        for (auto &p : particles) {
           couple_particle(p);
         }
 
