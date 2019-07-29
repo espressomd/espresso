@@ -19,7 +19,6 @@
 cimport numpy as np
 cimport cython
 import numpy as np
-from cpython.version cimport PY_MAJOR_VERSION
 from libcpp.vector cimport vector
 
 cdef np.ndarray create_nparray_from_int_list(const List[int] & il):
@@ -145,14 +144,12 @@ def to_str(s):
     s : char*
 
     """
-    if type(s) is unicode:
+    if isinstance(s, unicode):
         return < unicode > s
-    elif PY_MAJOR_VERSION >= 3 and isinstance(s, bytes):
+    elif isinstance(s, bytes):
         return (< bytes > s).decode('ascii')
-    elif isinstance(s, unicode):
-        return unicode(s)
     else:
-        return s
+        raise ValueError('Unknown string type {}'.format(type(s)))
 
 
 class array_locked(np.ndarray):
