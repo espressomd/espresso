@@ -73,8 +73,8 @@ cdef class HydrodynamicInteraction(Actor):
         elif not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
             raise ValueError("Density must be one positive double")
         
-        if (self._params["tau"] == default_params["tau"]):
-            raise Exception("LB_FLUID tau not set")
+        if (self._params["tau"] <= 0.):
+            raise Exception("LB_FLUID tau has to be > 0")
             
     # list of valid keys for parameters
     ####################################################

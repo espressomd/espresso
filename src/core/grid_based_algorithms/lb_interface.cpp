@@ -176,8 +176,10 @@ void lb_boundary_mach_check() {
 void lb_lbfluid_sanity_checks() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    lb_GPU_sanity_checks();
-    lb_boundary_mach_check();
+    if (this_node == 0) {
+      lb_GPU_sanity_checks();
+      lb_boundary_mach_check();
+    }
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
     lb_sanity_checks();
@@ -481,7 +483,7 @@ void lb_lbfluid_set_tau(double tau) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     lbpar_gpu.tau = static_cast<float>(tau);
-    lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
+    lb_lbfluid_on_lb_params_change(LBParam::TAU);
 #endif //  CUDA
   } else {
     lbpar.tau = tau;
