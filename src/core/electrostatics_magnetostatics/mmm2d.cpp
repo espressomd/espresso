@@ -873,101 +873,102 @@ static void setup_PQ(int p, int q, double omega, double fac,
   auto layer_top = local_geo.my_left()[2] + layer_h;
   int ic = 0;
   for (int c = 1; c <= local_cells.n; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
     auto const llclcblk = block(lclcblk, c, size);
 
     clear_vec(llclcblk, size);
 
-    for (int i = 0; i < np; i++) {
-      auto const e = exp(omega * (part[i].r.p[2] - layer_top));
+    auto cell = local_cells[c - 1];
+    for (auto const &p : cell->particles()) {
+      auto const e = exp(omega * (p.r.p[2] - layer_top));
 
       partblk[size * ic + PQESSM] =
-          scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q / e;
+          scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q / e;
       partblk[size * ic + PQESCM] =
-          scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q / e;
+          scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q / e;
       partblk[size * ic + PQECSM] =
-          scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q / e;
+          scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q / e;
       partblk[size * ic + PQECCM] =
-          scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q / e;
+          scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q / e;
 
       partblk[size * ic + PQESSP] =
-          scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+          scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e;
       partblk[size * ic + PQESCP] =
-          scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+          scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e;
       partblk[size * ic + PQECSP] =
-          scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+          scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e;
       partblk[size * ic + PQECCP] =
-          scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
+          scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e;
 
       if (mmm2d_params.dielectric_contrast_on) {
         double e_di_l;
         if (c == 1 && this_node == 0) {
-          e_di_l = (exp(omega * (-part[i].r.p[2] - 2 * h + layer_h)) *
+          e_di_l = (exp(omega * (-p.r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_bot +
-                    exp(omega * (part[i].r.p[2] - 2 * h + layer_h))) *
+                    exp(omega * (p.r.p[2] - 2 * h + layer_h))) *
                    fac_delta;
 
           auto const e_di =
-              exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
+              exp(omega * (-p.r.p[2])) * mmm2d_params.delta_mid_bot;
 
           auto const lclimgebot = block(lclcblk, 0, size);
           lclimgebot[PQESSP] +=
-              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di;
+              scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e_di;
           lclimgebot[PQESCP] +=
-              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di;
+              scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e_di;
           lclimgebot[PQECSP] +=
-              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di;
+              scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e_di;
           lclimgebot[PQECCP] +=
-              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di;
-        } else
-          e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
-                    exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
+              scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e_di;
+        } else {
+          e_di_l = (exp(omega * (-p.r.p[2] + layer_h)) +
+                    exp(omega * (p.r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
+        }
 
         double e_di_h;
         if (c == local_cells.n && this_node == n_nodes - 1) {
-          e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
+          e_di_h = (exp(omega * (p.r.p[2] - 3 * h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_top +
-                    exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
+                    exp(omega * (-p.r.p[2] - h + 2 * layer_h))) *
                    fac_delta;
 
-          auto const e_di = exp(omega * (part[i].r.p[2] - h + layer_h)) *
+          auto const e_di = exp(omega * (p.r.p[2] - h + layer_h)) *
                             mmm2d_params.delta_mid_top;
 
           auto const lclimgetop = block(lclcblk, local_cells.n + 1, size);
           lclimgetop[PQESSM] +=
-              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di;
+              scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e_di;
           lclimgetop[PQESCM] +=
-              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di;
+              scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e_di;
           lclimgetop[PQECSM] +=
-              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di;
+              scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e_di;
           lclimgetop[PQECCM] +=
-              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di;
-        } else
-          e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
-                    exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
+              scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e_di;
+        } else {
+          e_di_h = (exp(omega * (p.r.p[2] - h + 2 * layer_h)) +
+                    exp(omega * (-p.r.p[2] - h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_bot) *
                    fac_delta_mid_top;
+        }
 
         lclimge[PQESSP] +=
-            scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_l;
+            scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e_di_l;
         lclimge[PQESCP] +=
-            scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di_l;
+            scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e_di_l;
         lclimge[PQECSP] +=
-            scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di_l;
+            scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e_di_l;
         lclimge[PQECCP] +=
-            scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_l;
+            scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e_di_l;
 
         lclimge[PQESSM] +=
-            scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_h;
+            scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e_di_h;
         lclimge[PQESCM] +=
-            scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di_h;
+            scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e_di_h;
         lclimge[PQECSM] +=
-            scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di_h;
+            scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e_di_h;
         lclimge[PQECCM] +=
-            scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_h;
+            scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e_di_h;
       }
 
       add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
@@ -990,46 +991,40 @@ static void setup_PQ(int p, int q, double omega, double fac,
 }
 
 static void add_PQ_force(int p, int q, double omega) {
-  int np, c, i, ic;
-  Particle *part;
-  double pref_x = C_2PI * ux * p / omega;
-  double pref_y = C_2PI * uy * q / omega;
-  double *othcblk;
-  int size = 8;
+  const double pref_x = C_2PI * ux * p / omega;
+  const double pref_y = C_2PI * uy * q / omega;
+  constexpr int size = 8;
 
-  ic = 0;
-  for (c = 1; c <= local_cells.n; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    othcblk = block(gblcblk, c - 1, size);
+  int ic = 0;
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto othcblk = block(gblcblk, c - 1, size);
 
-    for (i = 0; i < np; i++) {
-      part[i].f.f[0] +=
-          pref_x * (partblk[size * ic + PQESCM] * othcblk[PQECCP] +
-                    partblk[size * ic + PQESSM] * othcblk[PQECSP] -
-                    partblk[size * ic + PQECCM] * othcblk[PQESCP] -
-                    partblk[size * ic + PQECSM] * othcblk[PQESSP] +
-                    partblk[size * ic + PQESCP] * othcblk[PQECCM] +
-                    partblk[size * ic + PQESSP] * othcblk[PQECSM] -
-                    partblk[size * ic + PQECCP] * othcblk[PQESCM] -
-                    partblk[size * ic + PQECSP] * othcblk[PQESSM]);
-      part[i].f.f[1] +=
-          pref_y * (partblk[size * ic + PQECSM] * othcblk[PQECCP] +
-                    partblk[size * ic + PQESSM] * othcblk[PQESCP] -
-                    partblk[size * ic + PQECCM] * othcblk[PQECSP] -
-                    partblk[size * ic + PQESCM] * othcblk[PQESSP] +
-                    partblk[size * ic + PQECSP] * othcblk[PQECCM] +
-                    partblk[size * ic + PQESSP] * othcblk[PQESCM] -
-                    partblk[size * ic + PQECCP] * othcblk[PQECSM] -
-                    partblk[size * ic + PQESCP] * othcblk[PQESSM]);
-      part[i].f.f[2] += (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
-                         partblk[size * ic + PQECSM] * othcblk[PQECSP] +
-                         partblk[size * ic + PQESCM] * othcblk[PQESCP] +
-                         partblk[size * ic + PQESSM] * othcblk[PQESSP] -
-                         partblk[size * ic + PQECCP] * othcblk[PQECCM] -
-                         partblk[size * ic + PQECSP] * othcblk[PQECSM] -
-                         partblk[size * ic + PQESCP] * othcblk[PQESCM] -
-                         partblk[size * ic + PQESSP] * othcblk[PQESSM]);
+    auto cell = local_cells[c - 1];
+    for (auto &p : cell->particles()) {
+      p.f.f[0] += pref_x * (partblk[size * ic + PQESCM] * othcblk[PQECCP] +
+                            partblk[size * ic + PQESSM] * othcblk[PQECSP] -
+                            partblk[size * ic + PQECCM] * othcblk[PQESCP] -
+                            partblk[size * ic + PQECSM] * othcblk[PQESSP] +
+                            partblk[size * ic + PQESCP] * othcblk[PQECCM] +
+                            partblk[size * ic + PQESSP] * othcblk[PQECSM] -
+                            partblk[size * ic + PQECCP] * othcblk[PQESCM] -
+                            partblk[size * ic + PQECSP] * othcblk[PQESSM]);
+      p.f.f[1] += pref_y * (partblk[size * ic + PQECSM] * othcblk[PQECCP] +
+                            partblk[size * ic + PQESSM] * othcblk[PQESCP] -
+                            partblk[size * ic + PQECCM] * othcblk[PQECSP] -
+                            partblk[size * ic + PQESCM] * othcblk[PQESSP] +
+                            partblk[size * ic + PQECSP] * othcblk[PQECCM] +
+                            partblk[size * ic + PQESSP] * othcblk[PQESCM] -
+                            partblk[size * ic + PQECCP] * othcblk[PQECSM] -
+                            partblk[size * ic + PQESCP] * othcblk[PQESSM]);
+      p.f.f[2] += (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
+                   partblk[size * ic + PQECSM] * othcblk[PQECSP] +
+                   partblk[size * ic + PQESCM] * othcblk[PQESCP] +
+                   partblk[size * ic + PQESSM] * othcblk[PQESSP] -
+                   partblk[size * ic + PQECCP] * othcblk[PQECCM] -
+                   partblk[size * ic + PQECSP] * othcblk[PQECSM] -
+                   partblk[size * ic + PQESCP] * othcblk[PQESCM] -
+                   partblk[size * ic + PQESSP] * othcblk[PQESSM]);
       ic++;
     }
   }
@@ -1042,8 +1037,8 @@ static double PQ_energy(double omega) {
 
   int ic = 0;
   for (int c = 1; c <= local_cells.n; c++) {
-    int np = cells[c].n;
-    double *othcblk = block(gblcblk, c - 1, size);
+    int np = local_cells[c - 1]->particles().size();
+    auto const *othcblk = block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
       eng += pref * (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
