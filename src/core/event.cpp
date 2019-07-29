@@ -53,6 +53,7 @@
 #include "statistics.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
+#include "immersed_boundaries.hpp"
 
 #include <utils/mpi/all_compare.hpp>
 
@@ -137,6 +138,11 @@ void on_integration_start() {
 #ifdef METADYNAMICS
   meta_init();
 #endif
+
+  // Here we initialize volume conservation
+  // This function checks if the reference volumes have been set and if
+  // necessary calculates them
+  immersed_boundaries.init_volume_conservation();
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
