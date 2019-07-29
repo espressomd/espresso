@@ -530,9 +530,7 @@ deploy_tutorials:
     - run_tutorials
   script:
     - cd ${CI_PROJECT_DIR}/build/doc/tutorials
-    - 'grep -Poe " src=(.)figures/.+?\1" */*.html > deploy_list.txt'
-    - 'sed -ri "s/[^\/]+: src=.(.+?).$/\1/" deploy_list.txt'
-    - ls */*.html */*.pdf >> deploy_list.txt
+    - ${CI_PROJECT_DIR}/maintainer/CI/deploy_tutorials.py
     - mkdir www &&
       rsync -a --files-from=deploy_list.txt ./ www &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" www/ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/tutorials_html
