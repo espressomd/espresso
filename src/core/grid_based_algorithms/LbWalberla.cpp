@@ -150,6 +150,20 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       field::addFieldInterpolator<VectorFieldAdaptorInterpolator, Flag_field_t>(
           m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
 
+  m_force_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
+      m_blocks, m_force_field_from_md_id, "force adaptor");
+
+  m_force_interpolator_id =
+      field::addFieldInterpolator<ForceFieldAdaptorInterpolator, Flag_field_t>(
+          m_blocks, m_force_adaptor_id, m_flag_field_id, Fluid_flag);
+
+  m_density_adaptor_id = field::addFieldAdaptor<DensityAdaptor>(
+      m_blocks, m_pdf_field_id, "density adaptor");
+
+  m_density_interpolator_id =
+      field::addFieldInterpolator<ScalarFieldAdaptorInterpolator, Flag_field_t>(
+          m_blocks, m_density_adaptor_id, m_flag_field_id, Fluid_flag);
+
   communication();
 }
 
@@ -292,6 +306,19 @@ bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
 }
 
 boost::optional<Utils::Vector3d>
+LbWalberla::get_force_at_pos(const Utils::Vector3d &pos) const {
+  auto block = get_block(pos, true);
+  if (!block)
+    return {boost::none};
+
+  auto *force_interpolator = block->getData<ForceFieldAdaptorInterpolator>(
+      m_force_interpolator_id);
+  Vector3<real_t> f;
+  force_interpolator->get(to_vector3(pos), &f);
+  return {to_vector3d(f)};
+}
+
+boost::optional<Utils::Vector3d>
 LbWalberla::get_node_velocity(const Utils::Vector3i node) const {
   auto bc = get_block_and_cell(node);
   if (!bc)
@@ -328,6 +355,19 @@ bool LbWalberla::set_node_velocity(const Utils::Vector3i &node,
   pdf_field->setDensityAndVelocity((*bc).cell,
                                    Vector3<double>{v[0], v[1], v[2]}, density);
   return true;
+}
+
+boost::optional<double>
+LbWalberla::get_density_at_pos(const Utils::Vector3d &pos){
+  auto block = get_block(pos, true);
+  if (!block)
+    return {boost::none};
+
+  auto *density_interpolator = block->getData<ScalarFieldAdaptorInterpolator>(
+      m_density_interpolator_id);
+  double dens;
+  density_interpolator->get(to_vector3(pos), &dens);
+  return {dens};
 }
 
 bool LbWalberla::set_node_density(const Utils::Vector3i node,

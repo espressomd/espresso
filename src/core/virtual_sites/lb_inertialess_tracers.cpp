@@ -46,6 +46,8 @@ void ParticleVelocitiesFromLB_CPU();
 bool IsHalo(int indexCheck);
 void GetIBMInterpolatedVelocity(const Utils::Vector3d &p, double *v,
                                 double *forceAdded);
+void GetIBMInterpolatedVelocityWalberla(const Utils::Vector3d &p, double *v,
+                                double *forceAdded);
 
 // ***** Internal variables ******
 
@@ -125,7 +127,8 @@ Interpolates LB velocity at the particle positions and propagates the particles
 
 void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
-  if (lattice_switch == ActiveLB::CPU)
+  if (lattice_switch == ActiveLB::CPU ||
+      lattice_switch == ActiveLB::WALBERLA)
     ParticleVelocitiesFromLB_CPU();
 #ifdef CUDA
   if (lattice_switch == ActiveLB::GPU)
@@ -312,6 +315,37 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
   v[2] *= lbpar.agrid / lbpar.tau;
 }
 
+/******************
+   GetIBMInterpolatedVelocityWalberla
+Very similar to the velocity interpolation done in standard Espresso, except
+that we add the f/2 contribution - only for Walberla
+*******************/
+
+void GetIBMInterpolatedVelocityWalberla(const Utils::Vector3d &pos, double *v,
+                                double *forceAdded) {
+
+  Utils::Vector3d force = *(lb_walberla()->get_force_at_pos(pos));
+  forceAdded[0] = force[0] / 2.0;
+  forceAdded[1] = force[1] / 2.0;
+  forceAdded[2] = force[2] / 2.0;
+
+  Utils::Vector3d velocity = *(lb_walberla()->get_velocity_at_pos(pos));
+  double local_density = *(lb_walberla()->get_density_at_pos(pos));
+  v[0] = velocity[0] + forceAdded[0] * local_density;
+  v[1] = velocity[1] + forceAdded[1] * local_density;
+  v[2] = velocity[2] + forceAdded[2] * local_density;
+
+  Utils::Vector3d fExt = lb_walberla()->get_external_force();
+  forceAdded[0] -= fExt[0] / 2.0;
+  forceAdded[1] -= fExt[1] / 2.0;
+  forceAdded[2] -= fExt[2] / 2.0;
+
+  v[0] *= lb_walberla()->get_grid_spacing() / lb_walberla()->get_tau();
+  v[1] *= lb_walberla()->get_grid_spacing() / lb_walberla()->get_tau();
+  v[2] *= lb_walberla()->get_grid_spacing() / lb_walberla()->get_tau();
+}
+
+
 /************
    IsHalo
 Builds a cache structure which contains a flag for each LB node whether that
@@ -362,7 +396,12 @@ void ParticleVelocitiesFromLB_CPU() {
         double dummy[3];
         // Get interpolated velocity and store in the force (!) field
         // for later communication (see below)
-        GetIBMInterpolatedVelocity(p[j].r.p, p[j].f.f.data(), dummy);
+        if (lattice_switch == ActiveLB::CPU)
+          GetIBMInterpolatedVelocity(p[j].r.p, p[j].f.f.data(), dummy);
+#ifdef LB_WALBERLA
+        else if (lattice_switch == ActiveLB::WALBERLA)
+          GetIBMInterpolatedVelocityWalberla(p[j].r.p, p[j].f.f.data(), dummy);
+#endif
       }
   }
 
@@ -380,7 +419,12 @@ void ParticleVelocitiesFromLB_CPU() {
           double dummy[3];
           double force[3] = {0, 0,
                              0}; // The force stemming from the ghost particle
-          GetIBMInterpolatedVelocity(p[j].r.p, dummy, force);
+          if (lattice_switch == ActiveLB::CPU)
+            GetIBMInterpolatedVelocity(p[j].r.p, dummy, force);
+#ifdef LB_WALBERLA
+          else if (lattice_switch == ActiveLB::WALBERLA)
+            GetIBMInterpolatedVelocityWalberla(p[j].r.p, dummy, force);
+#endif
 
           // Rescale and store in the force field of the particle (for
           // communication, see below)
