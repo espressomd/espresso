@@ -19,8 +19,6 @@
 
 import sys
 
-from six import iteritems
-
 from ...script_interface import PScriptInterface  # pylint: disable=import
 from ...code_info import features
 
@@ -74,7 +72,7 @@ else:
                          'write_charge': 1 << 5}
             self.valid_params.append(self.what.keys())
             self.what_bin = 0
-            for i, j in iteritems(kwargs):
+            for i, j in kwargs.items():
                 if i in self.what.keys():
                     if isinstance(j, bool):
                         if j:
