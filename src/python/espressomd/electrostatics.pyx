@@ -55,12 +55,12 @@ IF ELECTROSTATICS == 1:
     cdef class ElectrostaticInteraction(actors.Actor):
         def _tune(self):
             raise Exception(
-                "Subclasses of ElectrostaticInteraction must define the _tune()"
-                "method or chosen method does not support tuning.")
+                "Subclasses of ElectrostaticInteraction must define the "
+                "_tune() method or chosen method does not support tuning.")
 
         def _set_params_in_es_core(self):
             raise Exception(
-                "Subclasses of ElectrostaticInteraction must define the"
+                "Subclasses of ElectrostaticInteraction must define the "
                 "_set_params_in_es_core() method.")
 
         def _deactivate_method(self):
