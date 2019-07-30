@@ -187,7 +187,6 @@ inline Utils::Vector3d v_noise(int particle_id) {
     Collects the langevin parameters kt, gamma (different for
    LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
 */
-
 inline Utils::Vector3d friction_thermo_langevin(const Particle *p) {
   // Early exit for virtual particles without thermostat
   if (p->p.is_virtual && !thermo_virtual) {

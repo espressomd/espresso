@@ -80,20 +80,6 @@ void init_forces_ghosts(const ParticleRange &particles) {
   }
 }
 
-// This function is no longer called from force_calc().
-// The check was moved to rescale_fores() to avoid an additional iteration over
-// all particles
-void check_forces(const ParticleRange &particles,
-                  const ParticleRange &ghost_particles) {
-  for (auto &p : particles) {
-    check_particle_force(&p);
-  }
-
-  for (auto &p : ghost_particles) {
-    check_particle_force(&p);
-  }
-}
-
 void force_calc(CellStructure &cell_structure) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
