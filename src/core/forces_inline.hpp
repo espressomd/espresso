@@ -79,21 +79,15 @@
 
 /** Initialize the forces for a ghost particle */
 inline void init_ghost_force(Particle *part) {
-  part->f.f = Utils::Vector3d{};
-
-#ifdef ROTATION
-  part->f.torque[0] = 0;
-  part->f.torque[1] = 0;
-  part->f.torque[2] = 0;
-#endif
+  part->f = {};
 }
 
 /** Initialize the forces for a real particle */
 inline void init_local_particle_force(Particle *part) {
   if (thermo_switch & THERMO_LANGEVIN)
-    friction_thermo_langevin(part);
+    part->f = friction_thermo_langevin(part);
   else {
-    part->f.f = Utils::Vector3d{};
+    part->f = {};
   }
 
 #ifdef EXTERNAL_FORCES
@@ -108,17 +102,10 @@ inline void init_local_particle_force(Particle *part) {
 
 #ifdef ROTATION
   {
-    double scale;
-    /* set torque to zero */
-    part->f.torque[0] = 0;
-    part->f.torque[1] = 0;
-    part->f.torque[2] = 0;
 
 #ifdef EXTERNAL_FORCES
     if (part->p.ext_flag & PARTICLE_EXT_TORQUE) {
-      part->f.torque[0] += part->p.ext_torque[0];
-      part->f.torque[1] += part->p.ext_torque[1];
-      part->f.torque[2] += part->p.ext_torque[2];
+      part->f.torque += part->p.ext_torque;
     }
 #endif
 
@@ -131,15 +118,11 @@ inline void init_local_particle_force(Particle *part) {
 #endif
 
     /* and rescale quaternion, so it is exactly of unit length */
-    scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
-                 Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
+    auto const scale = part->r.quat.norm();
     if (scale == 0) {
       part->r.quat[0] = 1;
     } else {
-      part->r.quat[0] /= scale;
-      part->r.quat[1] /= scale;
-      part->r.quat[2] /= scale;
-      part->r.quat[3] /= scale;
+      part->r.quat /= scale;
     }
   }
 #endif
