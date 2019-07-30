@@ -63,34 +63,20 @@ void init_forces(const ParticleRange &particles) {
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    init_local_particle_force(&p);
+    p.f = init_local_particle_force(&p);
   }
 
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : ghost_cells.particles()) {
-    init_ghost_force(&p);
+    p.f = init_ghost_force(&p);
   }
 }
 
 void init_forces_ghosts(const ParticleRange &particles) {
   for (auto &p : particles) {
-    init_ghost_force(&p);
-  }
-}
-
-// This function is no longer called from force_calc().
-// The check was moved to rescale_fores() to avoid an additional iteration over
-// all particles
-void check_forces(const ParticleRange &particles,
-                  const ParticleRange &ghost_particles) {
-  for (auto &p : particles) {
-    check_particle_force(&p);
-  }
-
-  for (auto &p : ghost_particles) {
-    check_particle_force(&p);
+    p.f = init_ghost_force(&p);
   }
 }
 
