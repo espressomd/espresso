@@ -559,10 +559,6 @@ void lb_sanity_checks() {
   if (lbpar.tau <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann time step not set";
   }
-  extern double time_step;
-  if (time_step > 0.) {
-    check_tau_time_step_consistency(lbpar.tau, time_step);
-  }
   if (lbpar.density <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann fluid density not set";
   }
@@ -580,21 +576,6 @@ void lb_sanity_checks() {
                          "of the verlet list to be less than half of "
                          "lattice-Boltzmann grid spacing";
   }
-}
-
-void check_tau_time_step_consistency(double tau, double time_s) {
-  auto const eps = std::numeric_limits<float>::epsilon();
-  if ((tau - time_s) / (tau + time_s) < -eps)
-    throw std::invalid_argument("LB tau (" + std::to_string(tau) +
-                                ") must be >= MD time_step (" +
-                                std::to_string(time_s) + ")");
-  auto const factor = tau / time_s;
-  if (fabs(round(factor) - factor) / factor > eps)
-    throw std::invalid_argument("LB tau (" + std::to_string(tau) +
-                                ") must be integer multiple of "
-                                "MD time_step (" +
-                                std::to_string(time_s) + "). Factor is " +
-                                std::to_string(factor));
 }
 
 uint64_t lb_fluid_get_rng_state() {

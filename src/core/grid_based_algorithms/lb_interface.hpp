@@ -67,6 +67,11 @@ void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 void lb_lbfluid_set_tau(double p_tau);
 
 /**
+ * @brief Check if tau is an integer multiple of time_step, throws if not
+ */
+void check_tau_time_step_consistency(double tau, double time_s);
+
+/**
  * @brief Set the global LB density.
  */
 void lb_lbfluid_set_density(double p_dens);
