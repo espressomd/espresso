@@ -40,6 +40,7 @@
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "immersed_boundaries.hpp"
 #include "metadynamics.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
@@ -53,7 +54,6 @@
 #include "statistics.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
-#include "immersed_boundaries.hpp"
 
 #include <utils/mpi/all_compare.hpp>
 

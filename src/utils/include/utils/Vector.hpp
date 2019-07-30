@@ -137,6 +137,8 @@ public:
   }
 };
 
+template <class T> using Vector3 = Vector<T, 3>;
+
 template <size_t N> using VectorXd = Vector<double, N>;
 using Vector2d = VectorXd<2>;
 using Vector3d = VectorXd<3>;
@@ -150,6 +152,8 @@ using Vector3f = VectorXf<3>;
 
 template <size_t N> using VectorXi = Vector<int, N>;
 using Vector3i = VectorXi<3>;
+
+template <class T, size_t N, size_t M> using Matrix = Vector<Vector<T, M>, N>;
 
 namespace detail {
 template <size_t N, typename T, typename U, typename Op>
