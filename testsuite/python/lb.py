@@ -25,7 +25,7 @@ from espressomd.observables import LBFluidStress
 import sys
 
 
-class TestLB(object):
+class TestLB:
 
     """
     Basic tests of the Lattice Boltzmann implementation

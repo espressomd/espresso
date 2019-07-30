@@ -29,7 +29,7 @@ output = vtk.vtkFileOutputWindow()
 output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
-cdef class mayaviLive(object):
+cdef class mayaviLive:
     """
     This class provides live visualization using Enthought Mayavi.  Use the
     update method to push your current simulation state after integrating. If

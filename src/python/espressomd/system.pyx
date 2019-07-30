@@ -74,7 +74,7 @@ if OIF_GLOBAL_FORCES:
 
 cdef bool _system_created = False
 
-cdef class System(object):
+cdef class System:
     """ The base class for espressomd.system.System().
 
     .. note:: every attribute has to be declared at the class level.

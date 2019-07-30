@@ -25,7 +25,7 @@ import espressomd
 from espressomd import electrostatics
 
 
-class pressureViaVolumeScaling(object):
+class pressureViaVolumeScaling:
 
     def __init__(self, system, kbT):
         self.system = system

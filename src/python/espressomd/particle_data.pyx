@@ -57,7 +57,7 @@ for d in dir(ParticleHandle):
         if not d in ["pos_folded"]:
             particle_attributes.append(d)
 
-cdef class ParticleHandle(object):
+cdef class ParticleHandle:
     def __cinit__(self, int _id):
         self._id = _id
 
@@ -152,7 +152,7 @@ cdef class ParticleHandle(object):
         def __set__(self, _pos):
             cdef double mypos[3]
             check_type_or_throw_except(
-                _pos, 3, float, "Postion must be 3 floats")
+                _pos, 3, float, "Position must be 3 floats")
             for i in range(3):
                 mypos[i] = _pos[i]
             if place_particle(self._id, mypos) == -1:
@@ -1575,7 +1575,7 @@ cdef class ParticleHandle(object):
 
             rotate_particle(self._id, a, angle)
 
-cdef class _ParticleSliceImpl(object):
+cdef class _ParticleSliceImpl:
     """Handles slice inputs.
 
     This base class should not be used directly. Use
@@ -1699,10 +1699,10 @@ class ParticleSlice(_ParticleSliceImpl):
         if name != "_chunk_size" and not hasattr(ParticleHandle, name):
             raise AttributeError(
                 "ParticleHandle does not have the attribute {}.".format(name))
-        super(ParticleSlice, self).__setattr__(name, value)
+        super().__setattr__(name, value)
 
 
-cdef class ParticleList(object):
+cdef class ParticleList:
     """
     Provides access to the particles via [i], where i is the particle id.
     Returns a ParticleHandle object.
@@ -1856,7 +1856,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         # done here. the code is from the pos:property of ParticleHandle
         cdef double mypos[3]
         check_type_or_throw_except(
-            P["pos"], 3, float, "Postion must be 3 floats.")
+            P["pos"], 3, float, "Position must be 3 floats.")
         for i in range(3):
             mypos[i] = P["pos"][i]
         if place_particle(P["id"], mypos) == -1:

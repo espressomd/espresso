@@ -27,7 +27,7 @@ except ImportError:
 from espressomd.utils import handle_errors
 
 
-class VirtualSitesTracersCommon(object):
+class VirtualSitesTracersCommon:
     box_height = 10.
     box_lw = 8.
     system = espressomd.System(box_l=(box_lw, box_lw, box_height))

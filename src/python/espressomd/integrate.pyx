@@ -22,7 +22,7 @@ import espressomd.code_info
 from espressomd.utils cimport *
 cimport globals
 
-cdef class Integrator(object):
+cdef class Integrator:
     """
     Integrator class.
 

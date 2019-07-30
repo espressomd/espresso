@@ -52,7 +52,7 @@ def AssertThermostatType(*allowedthermostats):
     return decoratorfunction
 
 
-cdef class Thermostat(object):
+cdef class Thermostat:
 
     # We have to cdef the state variable because it is a cdef class
     cdef _state
