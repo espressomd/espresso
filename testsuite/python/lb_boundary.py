@@ -25,6 +25,7 @@ from itertools import product
 
 class LBBoundariesBase:
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
 
     wall_shape1 = Wall(normal=[1., 0., 0.], dist=2.5)
     wall_shape2 = Wall(normal=[-1., 0., 0.], dist=-7.5)

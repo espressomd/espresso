@@ -253,17 +253,6 @@ cdef class System:
         """
 
         def __set__(self, double _time_step):
-            if _time_step <= 0:
-                raise ValueError("Time Step must be positive")
-
-            cdef double tau
-            if lb_lbfluid_get_lattice_switch() != NONE:
-                tau = lb_lbfluid_get_tau()
-                if (tau >= 0.0 and
-                        tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):
-                    raise ValueError(
-                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(tau) + ")")
-
             self.globals.time_step = _time_step
 
         def __get__(self):
