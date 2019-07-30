@@ -228,8 +228,9 @@ inline Utils::Vector3d friction_thermo_langevin(const Particle *p) {
 
   // Get velocity effective in the thermostatting
 #ifdef ENGINE
-  auto const velocity =
-      (p->swim.v_swim != 0) ? p->m.v - p->swim.v_swim * p->r.calc_director() : p->m.v;
+  auto const velocity = (p->swim.v_swim != 0)
+                            ? p->m.v - p->swim.v_swim * p->r.calc_director()
+                            : p->m.v;
 #else
   auto const &velocity = p->m.v;
 #endif
@@ -248,17 +249,17 @@ inline Utils::Vector3d friction_thermo_langevin(const Particle *p) {
     auto const A = rotation_matrix(p->r.quat);
 
     return transpose(A) *
-             (hadamard_product(langevin_pref_friction_buf, A * velocity) +
-              hadamard_product(langevin_pref_noise_buf, noise));
+           (hadamard_product(langevin_pref_friction_buf, A * velocity) +
+            hadamard_product(langevin_pref_noise_buf, noise));
   } else {
     return hadamard_product(langevin_pref_friction_buf, velocity) +
-             hadamard_product(langevin_pref_noise_buf, noise);
+           hadamard_product(langevin_pref_noise_buf, noise);
   }
 
 #else
   // Do the actual (isotropic) thermostatting
   return langevin_pref_friction_buf * velocity +
-           langevin_pref_noise_buf * v_noise(p->p.identity);
+         langevin_pref_noise_buf * v_noise(p->p.identity);
 #endif // PARTICLE_ANISOTROPY
 }
 

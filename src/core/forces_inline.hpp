@@ -78,14 +78,12 @@
 #endif
 
 /** Initialize the forces for a ghost particle */
-inline ParticleForce init_ghost_force(const Particle *) {
-  return {};
-}
+inline ParticleForce init_ghost_force(const Particle *) { return {}; }
 
 /** Initialize the forces for a real particle */
 inline ParticleForce init_local_particle_force(const Particle *part) {
-  auto f = (thermo_switch & THERMO_LANGEVIN)
-      ? friction_thermo_langevin(part) : ParticleForce{};
+  auto f = (thermo_switch & THERMO_LANGEVIN) ? friction_thermo_langevin(part)
+                                             : ParticleForce{};
 
 #ifdef EXTERNAL_FORCES
   // If individual coordinates are fixed, set force to 0.
