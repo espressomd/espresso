@@ -259,9 +259,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
       /* Propagate time: t = t+dt */
       sim_time += time_step;
-      /* Propagate philox rng counters */
-      philox_counter_increment();
-
     } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
       if (steepest_descent_step(particles))
         break;
@@ -270,9 +267,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
       /* Propagate time: t = t+dt */
       sim_time += time_step;
-      /* Propagate philox rng counters */
-      philox_counter_increment();
     }
+
+    /* Propagate philox rng counters */
+    philox_counter_increment();
 
 #ifdef BOND_CONSTRAINT
     /**Correct those particle positions that participate in a rigid/constrained
