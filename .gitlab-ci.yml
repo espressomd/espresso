@@ -450,7 +450,9 @@ run_tutorials:
     - build/doc/tutorials
     expire_in: 1 week
   only:
-    - python
+    variables:
+      - $CI_COMMIT_REF_NAME == "python"
+      - $CI_DEPLOY_TUTORIALS
   tags:
     - docker
     - linux
@@ -534,6 +536,10 @@ deploy_tutorials:
     - mkdir www &&
       rsync -a --files-from=deploy_list.txt ./ www &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" www/ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/tutorials_html
+  only:
+    variables:
+      - $CI_COMMIT_REF_NAME == "python"
+      - $CI_DEPLOY_TUTORIALS
 
 status_success:
   <<: *notification_job_definition
