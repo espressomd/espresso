@@ -69,6 +69,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
     }
   }
   m_grid_dimensions = grid_dimensions;
+  printf("grid: %d %d %d, node: %d %d %d\n",grid_dimensions[0],grid_dimensions[1],grid_dimensions[2],node_grid[0],node_grid[1],node_grid[2]);
 
   m_blocks = blockforest::createUniformBlockGrid(
       uint_c(node_grid[0]), // blocks in x direction
@@ -83,7 +84,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       real_c(1.0),          // Lattice constant
       uint_c(node_grid[0]), uint_c(node_grid[1]),
       uint_c(node_grid[2]), // cpus per direction
-      true, true, true, true);
+      true, true, true);
 
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
