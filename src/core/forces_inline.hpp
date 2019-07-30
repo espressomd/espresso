@@ -78,26 +78,23 @@
 #endif
 
 /** Initialize the forces for a ghost particle */
-inline void init_ghost_force(Particle *part) {
-  part->f = {};
+inline ParticleForce init_ghost_force(const Particle *) {
+  return {};
 }
 
 /** Initialize the forces for a real particle */
-inline void init_local_particle_force(Particle *part) {
-  if (thermo_switch & THERMO_LANGEVIN)
-    part->f = friction_thermo_langevin(part);
-  else {
-    part->f = {};
-  }
+inline ParticleForce init_local_particle_force(const Particle *part) {
+  auto f = (thermo_switch & THERMO_LANGEVIN)
+      ? friction_thermo_langevin(part) : ParticleForce{};
 
 #ifdef EXTERNAL_FORCES
   // If individual coordinates are fixed, set force to 0.
   for (int j = 0; j < 3; j++)
     if (part->p.ext_flag & COORD_FIXED(j))
-      part->f.f[j] = 0;
+      f.f[j] = 0;
   // Add external force
   if (part->p.ext_flag & PARTICLE_EXT_FORCE)
-    part->f.f += part->p.ext_force;
+    f.f += part->p.ext_force;
 #endif
 
 #ifdef ROTATION
@@ -105,7 +102,7 @@ inline void init_local_particle_force(Particle *part) {
 
 #ifdef EXTERNAL_FORCES
     if (part->p.ext_flag & PARTICLE_EXT_TORQUE) {
-      part->f.torque += part->p.ext_torque;
+      f.torque += part->p.ext_torque;
     }
 #endif
 
@@ -113,19 +110,13 @@ inline void init_local_particle_force(Particle *part) {
     // apply a swimming force in the direction of
     // the particle's orientation axis
     if (part->swim.swimming) {
-      part->f.f += part->swim.f_swim * part->r.calc_director();
+      f.f += part->swim.f_swim * part->r.calc_director();
     }
 #endif
-
-    /* and rescale quaternion, so it is exactly of unit length */
-    auto const scale = part->r.quat.norm();
-    if (scale == 0) {
-      part->r.quat[0] = 1;
-    } else {
-      part->r.quat /= scale;
-    }
   }
 #endif
+
+  return f;
 }
 
 inline void calc_non_bonded_pair_force_parts(

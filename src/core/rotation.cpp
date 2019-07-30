@@ -224,11 +224,14 @@ void propagate_omega_quat_particle(Particle *p) {
       time_step * (Qd[2] + time_step_half * Qdd[2]) - lambda * p->r.quat[2];
   p->r.quat[3] +=
       time_step * (Qd[3] + time_step_half * Qdd[3]) - lambda * p->r.quat[3];
-  // Update the director
 
-  ONEPART_TRACE(if (p->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",
-                            this_node, p->r.p[0], p->r.p[1], p->r.p[2]));
+  /* and rescale quaternion, so it is exactly of unit length */
+  auto const scale = p->r.quat.norm();
+  if (scale == 0) {
+    p->r.quat[0] = 1;
+  } else {
+    p->r.quat /= scale;
+  }
 }
 
 inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
