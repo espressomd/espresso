@@ -40,7 +40,7 @@ class CollisionDetection(ScriptInterfaceHelper):
     def validate(self):
         """Validates the parameters of the collision detection.
 
-           This is called automatically on parameter change
+        This is called automatically on parameter change
 
         """
         return self.call_method("validate")
@@ -60,39 +60,42 @@ class CollisionDetection(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        mode : One of "off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"
-               Collision detection mode
+        mode : str, \{"off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"\}
+            Collision detection mode
 
         distance : :obj:`float`
-               Distance below which a pair of particles is considered in the collision detection
+            Distance below which a pair of particles is considered in the
+            collision detection
 
-        bond_centers : Instance of :class:`espressomd.interactions.BondedInteraction`
-               Bond to add between the colliding particles
+        bond_centers : :obj:`espressomd.interactions.BondedInteraction`
+            Bond to add between the colliding particles
 
-        bond_vs :  Instance of :class:`espressomd.interactions.BondedInteraction`
-               Bond to add between virtual sites (for modes using virtual sites)
+        bond_vs : :obj:`espressomd.interactions.BondedInteraction`
+            Bond to add between virtual sites (for modes using virtual sites)
 
         part_type_vs : :obj:`int`
-               Particle type of the virtual sites being created on collision (virtual sites based modes)
+            Particle type of the virtual sites being created on collision
+            (virtual sites based modes)
 
         part_type_to_be_glued : :obj:`int`
-               particle type for "glue_to_surface" mode. See user guide.
+            particle type for ``"glue_to_surface"`` mode. See user guide.
 
         part_type_to_attach_vs_to : :obj:`int`
-               particle type for "glue_to_surface" mode. See user guide.
+            particle type for ``"glue_to_surface"`` mode. See user guide.
 
         part_type_after_glueing : :obj:`int`
-               particle type for "glue_to_surface" mode. See user guide.
+            particle type for ``"glue_to_surface"`` mode. See user guide.
 
         distance_glued_particle_to_vs : :obj:`float`
-               Distance for "glue_to_surface" mode. See user guide.
+            Distance for ``"glue_to_surface"`` mode. See user guide.
 
-        bond_three_particles : Instance of :class:`espressomd.interactions.BondedInteraction`
-               First angular bond for the "bind_three_particles" mode. See user guide
+        bond_three_particles : :obj:`espressomd.interactions.BondedInteraction`
+            First angular bond for the ``"bind_three_particles"`` mode. See
+            user guide
 
         three_particle_binding_angle_resolution : :obj:`int`
-              Resolution for the angular bonds (mode "bind_three_particles").
-              Resolution+1 bonds are needed to accommodate the case of a 180 degrees
+            Resolution for the angular bonds (mode ``"bind_three_particles"``).
+            Resolution+1 bonds are needed to accommodate the case of a 180 degrees
 
         """
 
@@ -102,8 +105,9 @@ class CollisionDetection(ScriptInterfaceHelper):
 
         # Completeness of parameter set
         if not (set(kwargs.keys()) == set(self._params_for_mode(kwargs["mode"]))):
-            raise Exception("Parameter set does not match mode. ", kwargs[
-                            "mode"], "requires ", self._params_for_mode(kwargs["mode"]))
+            raise Exception("Parameter set does not match mode. ",
+                            kwargs["mode"], "requires ",
+                            self._params_for_mode(kwargs["mode"]))
 
         # Mode
         kwargs["mode"] = self._int_mode[kwargs["mode"]]
@@ -135,12 +139,13 @@ class CollisionDetection(ScriptInterfaceHelper):
         return {k: res[k] for k in self._params_for_mode(res["mode"])}
 
     def _convert_param(self, name, value):
-        """Handles type conversion core -> python
+        """
+        Handles type conversion core -> python
 
-            Bond types: int -> BondedInteraction
-            mode: int -> string
+        Bond types: int -> BondedInteraction
+        mode: int -> string
 
-            """
+        """
         # Py3: Cast from binary to normal string. Don't understand, why a
         # binary string can even occur, here, but it does.
         name = to_str(name)
@@ -189,7 +194,7 @@ class CollisionDetection(ScriptInterfaceHelper):
                 return key
         raise Exception("Unknown integer collision mode %d" % int_mode)
 
-# Pickle support
+    # Pickle support
     def __reduce__(self):
         return _restore_collision_detection, (self.get_params(),)
 

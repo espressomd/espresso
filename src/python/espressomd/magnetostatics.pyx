@@ -34,7 +34,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
         """
 
@@ -69,7 +69,7 @@ IF DP3M == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
         accuracy : :obj:`float`
             P3M tunes its parameters to provide this target accuracy.
         alpha : :obj:`float`
@@ -248,7 +248,7 @@ IF DIPOLES == 1:
         ----------
 
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
         """
 
@@ -283,7 +283,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
         n_replica : :obj:`int`
             Number of replicas to be taken into account at periodic boundaries.
 
@@ -320,7 +320,7 @@ IF DIPOLES == 1:
             Attributes
             ----------
             prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+                Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
             method_name : :obj:`str`
                 Name of the method as defined in Scafacos
             method_params : :obj:`dict`
@@ -361,7 +361,7 @@ IF DIPOLES == 1:
             Attributes
             ----------
             prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+                Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
             """
 

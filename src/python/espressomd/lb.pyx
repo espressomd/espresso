@@ -319,12 +319,12 @@ IF CUDA:
             Parameters
             ----------
             positions : numpy-array of type :obj:`float` of shape (N,3)
-                        The 3-dimensional positions.
+                The 3-dimensional positions.
 
             Returns
             -------
             velocities : numpy-array of type :obj:`float` of shape (N,3)
-                         The 3-dimensional LB fluid velocities.
+                The 3-dimensional LB fluid velocities.
 
             Raises
             ------
@@ -332,8 +332,8 @@ IF CUDA:
                 If shape of ``positions`` not (N,3).
 
             """
-            assert positions.shape[
-                1] == 3, "The input array must have shape (N,3)"
+            assert positions.shape[1] == 3, \
+                "The input array must have shape (N,3)"
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)

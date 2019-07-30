@@ -260,17 +260,17 @@ IF LENNARD_JONES == 1:
             ----------
 
             epsilon : :obj:`float`
-                      The magnitude of the interaction.
+                The magnitude of the interaction.
             sigma : :obj:`float`
-                    Determines the interaction length scale.
+                Determines the interaction length scale.
             cutoff : :obj:`float`
-                     Cutoff distance of the interaction.
+                Cutoff distance of the interaction.
             shift : :obj:`float` or :obj:`str`
-                    Constant shift of the potential. (4*epsilon*shift).
+                Constant shift of the potential. (4*epsilon*shift).
             offset : :obj:`float`, optional
-                     Offset distance of the interaction.
+                Offset distance of the interaction.
             min : :obj:`float`, optional
-                  Restricts the interaction to a minimal distance.
+                Restricts the interaction to a minimal distance.
 
             """
             super().set_params(**kwargs)
@@ -362,9 +362,9 @@ IF WCA == 1:
             ----------
 
             epsilon : :obj:`float`
-                      The magnitude of the interaction.
+                The magnitude of the interaction.
             sigma : :obj:`float`
-                    Determines the interaction length scale.
+                Determines the interaction length scale.
 
             """
             super().set_params(**kwargs)
@@ -514,29 +514,29 @@ IF LENNARD_JONES_GENERIC == 1:
             Parameters
             ----------
             epsilon : :obj:`float`
-                      The magnitude of the interaction.
+                The magnitude of the interaction.
             sigma : :obj:`float`
-                    Determines the interaction length scale.
+                Determines the interaction length scale.
             cutoff : :obj:`float`
-                     Cutoff distance of the interaction.
-            shift : :obj:`float`, string
-                    Constant shift of the potential.
+                Cutoff distance of the interaction.
+            shift : :obj:`float`
+                Constant shift of the potential.
             offset : :obj:`float`
-                     Offset distance of the interaction.
+                Offset distance of the interaction.
             e1 : :obj:`int`
-                 Exponent of the repulsion term.
+                Exponent of the repulsion term.
             e2 : :obj:`int`
-                 Exponent of the attraction term.
+                Exponent of the attraction term.
             b1 : :obj:`float`
-                 Prefactor of the repulsion term.
+                Prefactor of the repulsion term.
             b2 : :obj:`float`
-                 Prefactor of the attraction term.
+                Prefactor of the attraction term.
             delta : :obj:`float`, optional
-                    LJGEN_SOFTCORE parameter. Allows control over how smoothly
-                    the potential drops to zero as lambda approaches zero.
+                ``LJGEN_SOFTCORE`` parameter delta. Allows control over how
+                smoothly the potential drops to zero as lambda approaches zero.
             lam : :obj:`float`, optional
-                     LJGEN_SOFTCORE parameter lambda. Tune the strength of the
-                     interaction.
+                ``LJGEN_SOFTCORE`` parameter lambda. Tune the strength of the
+                interaction.
 
             """
             super().set_params(**kwargs)
@@ -581,19 +581,19 @@ IF LJCOS:
             return(self._params["epsilon"] > 0)
 
         def set_params(self, **kwargs):
-            """ Set parameters for the Lennard-Jones Cosine2 interaction.
+            """Set parameters for the Lennard-Jones Cosine2 interaction.
 
             Parameters
             ----------
 
             epsilon : :obj:`float`
-                      The magnitude of the interaction.
+                The magnitude of the interaction.
             sigma : :obj:`float`
-                    Determines the interaction length scale.
+                Determines the interaction length scale.
             cutoff : :obj:`float`
-                     Cutoff distance of the interaction.
+                Cutoff distance of the interaction.
             offset : :obj:`float`
-                     Offset distance of the interaction.
+                Offset distance of the interaction.
             """
             super().set_params(**kwargs)
 
@@ -667,13 +667,13 @@ IF LJCOS2:
             ----------
 
             epsilon : :obj:`float`
-                      The magnitude of the interaction.
+                The magnitude of the interaction.
             sigma : :obj:`float`
-                    Determines the interaction length scale.
+                Determines the interaction length scale.
             offset : :obj:`float`
-                     Offset distance of the interaction.
+                Offset distance of the interaction.
             width : :obj:`float`
-                     Width of interaction.
+                Width of interaction.
             """
             super().set_params(**kwargs)
 
@@ -739,9 +739,9 @@ IF HAT == 1:
             Parameters
             ----------
             F_max : :obj:`float`
-                      The magnitude of the interaction.
+                The magnitude of the interaction.
             cutoff : :obj:`float`
-                     Cutoff distance of the interaction.
+                Cutoff distance of the interaction.
 
             """
             super().set_params(**kwargs)
@@ -804,20 +804,20 @@ IF GAY_BERNE:
             Parameters
             ----------
             eps : :obj:`float`
-                  Potential well depth.
+                Potential well depth.
             sig : :obj:`float`
-                  Interaction range.
+                Interaction range.
             cut : :obj:`float`
-                  Cutoff distance of the interaction.
+                Cutoff distance of the interaction.
             k1 : :obj:`float` or :obj:`str`
-                  Molecular elongation.
+                Molecular elongation.
             k2 : :obj:`float`, optional
-                  Ratio of the potential well depths for the side-by-side
-                  and end-to-end configurations.
+                Ratio of the potential well depths for the side-by-side
+                and end-to-end configurations.
             mu : :obj:`float`, optional
-                  Adjustable exponent.
-            nu  : :obj:`float`, optional
-                  Adjustable exponent.
+                Adjustable exponent.
+            nu : :obj:`float`, optional
+                Adjustable exponent.
 
             """
             super().set_params(**kwargs)
@@ -1017,11 +1017,11 @@ IF SMOOTH_STEP == 1:
             n : :obj:`int`
                 Exponent of short range repulsion.
             eps : :obj:`float`
-                  The magnitude of the second (soft) repulsion.
+                The magnitude of the second (soft) repulsion.
             k0 : :obj:`float`
-                 Exponential factor in second (soft) repulsion.
+                Exponential factor in second (soft) repulsion.
             sig : :obj:`float`
-                  Length scale of second (soft) repulsion.
+                Length scale of second (soft) repulsion.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
 
@@ -1410,9 +1410,9 @@ IF SOFT_SPHERE == 1:
             n : :obj:`float`
                 Exponent of the power law.
             cutoff : :obj:`float`
-                     Cutoff distance of the interaction.
+                Cutoff distance of the interaction.
             offset : :obj:`float`, optional
-                     Offset distance of the interaction.
+                Offset distance of the interaction.
 
             """
             super().set_params(**kwargs)
@@ -1604,9 +1604,9 @@ IF HERTZIAN == 1:
             Parameters
             ----------
             eps : :obj:`float`
-                  The magnitude of the interaction.
+                The magnitude of the interaction.
             sig : :obj:`float`
-                  Parameter sigma which determines the length over which the potential decays.
+                Parameter sigma which determines the length over which the potential decays.
 
             """
             super().set_params(**kwargs)
@@ -1688,11 +1688,11 @@ IF GAUSSIAN == 1:
             Parameters
             ----------
             eps : :obj:`float`
-                  Overlap energy epsilon.
+                Overlap energy epsilon.
             sig : :obj:`float`
-                  Variance sigma of the Gaussian interaction.
+                Variance sigma of the Gaussian interaction.
             cutoff : :obj:`float`
-                     Cutoff distance of the interaction.
+                Cutoff distance of the interaction.
 
             """
             super().set_params(**kwargs)
@@ -2040,10 +2040,9 @@ class FeneBond(BondedInteraction):
     k : :obj:`float`
         Specifies the magnitude of the bond interaction.
     d_r_max : :obj:`float`
-              Specifies the maximum stretch and compression length of the
-              bond.
+        Specifies the maximum stretch and compression length of the bond.
     r_0 : :obj:`float`, optional
-          Specifies the equilibrium length of the bond.
+        Specifies the equilibrium length of the bond.
 
     """
 
@@ -2102,10 +2101,9 @@ class HarmonicBond(BondedInteraction):
     k : :obj:`float`
         Specifies the magnitude of the bond interaction.
     r_0 : :obj:`float`
-          Specifies the equilibrium length of the bond.
+        Specifies the equilibrium length of the bond.
     r_cut : :obj:`float`, optional
-            Specifies maximum distance beyond which the bond is considered
-            broken.
+        Specifies maximum distance beyond which the bond is considered broken.
 
     """
 
@@ -2159,7 +2157,7 @@ if ELECTROSTATICS:
         ----------
 
         prefactor : :obj:`float`
-                    Sets the Coulomb prefactor of the bonded Coulomb interaction.
+            Sets the Coulomb prefactor of the bonded Coulomb interaction.
         """
 
         def __init__(self, *args, **kwargs):
@@ -2200,9 +2198,9 @@ if ELECTROSTATICS:
         ----------
 
         q1q2 : :obj:`float`
-               Sets the charge factor of the involved particle pair. Note the
-               particle charges are used to allow e.g. only partial subtraction
-               of the involved charges.
+            Sets the charge factor of the involved particle pair. Note the
+            particle charges are used to allow e.g. only partial subtraction
+            of the involved charges.
         """
 
         def __init__(self, *args, **kwargs):
@@ -2317,16 +2315,16 @@ IF THOLE:
             Parameters
             ----------
             scaling_coeff : :obj:`float`
-                            The factor used in the Thole damping function between
-                            polarizable particles i and j. Usually calculated by
-                            the polarizabilities alpha_i, alpha_j and damping
-                            parameters  a_i, a_j via
-                            scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
+                The factor used in the Thole damping function between
+                polarizable particles i and j. Usually calculated by
+                the polarizabilities alpha_i, alpha_j and damping
+                parameters  a_i, a_j via
+                scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
             q1q2: :obj:`float`
-                  charge factor of the involved charges. Has to be set because
-                  it acts only on the portion of the Drude core charge that is
-                  associated to the dipole of the atom. For charged, polarizable
-                  atoms that charge is not equal to the particle charge property.
+                charge factor of the involved charges. Has to be set because
+                it acts only on the portion of the Drude core charge that is
+                associated to the dipole of the atom. For charged, polarizable
+                atoms that charge is not equal to the particle charge property.
 
             """
             super().set_params(**kwargs)
@@ -2576,15 +2574,14 @@ class Tabulated(BondedInteraction):
     Parameters
     ----------
 
-    type : :obj:`str`
-        The type of bond, one of 'distance', 'angle' or
-        'dihedral'.
+    type : :obj:`str`, \{'distance', 'angle' or 'dihedral'\}
+        The type of bond.
     min : :obj:`float`
         The minimal interaction distance. Has to be 0 if
-        type is 'angle' or 'dihedral'
+        ``type`` is ``'angle'`` or ``'dihedral'``
     max : :obj:`float`
         The maximal interaction distance. Has to be pi if
-        type is 'angle' or 2pi if 'dihedral'
+        ``type`` is ``'angle'`` or 2pi if ``'dihedral'``
     energy: array_like :obj:`float`
         The energy table.
     force: array_like :obj:`float`
@@ -2733,13 +2730,13 @@ IF TABULATED == 1:
             ----------
 
             min : :obj:`float`,
-                  The minimal interaction distance.
+                The minimal interaction distance.
             max : :obj:`float`,
-                  The maximal interaction distance.
+                The maximal interaction distance.
             energy: array_like :obj:`float`
-                  The energy table.
+                The energy table.
             force: array_like :obj:`float`
-                  The force table.
+                The force table.
 
             """
             super().set_params(**kwargs)
@@ -3067,8 +3064,8 @@ class IBM_Tribend(BondedInteraction):
         initializing reference state
     kb : :obj:`float`
         Specifies bending modulus
-    refShape : :obj:`str`
-        Flat or Initial
+    refShape : :obj:`str`, \{'Flat', 'Initial'\}
+        Reference shape
 
     """
 
@@ -3100,8 +3097,9 @@ class IBM_Tribend(BondedInteraction):
             flat = True
         if self._params["refShape"] == "Initial":
             flat = False
-        IBM_Tribend_SetParams(self._bond_id, self._params["ind1"], self._params[
-                              "ind2"], self._params["ind3"], self._params["ind4"], self._params["kb"], flat)
+        IBM_Tribend_SetParams(self._bond_id, self._params["ind1"],
+                              self._params["ind2"], self._params["ind3"],
+                              self._params["ind4"], self._params["kb"], flat)
 
 
 # IBM VolCons
@@ -3243,7 +3241,10 @@ class OifLocalForces(BondedInteraction):
 
     def _set_params_in_es_core(self):
         oif_local_forces_set_params(
-            self._bond_id, self._params["r0"], self._params["ks"], self._params["kslin"], self._params["phi0"], self._params["kb"], self._params["A01"], self._params["A02"], self._params["kal"], self._params["kvisc"])
+            self._bond_id, self._params["r0"], self._params["ks"],
+            self._params["kslin"], self._params["phi0"], self._params["kb"],
+            self._params["A01"], self._params["A02"], self._params["kal"],
+            self._params["kvisc"])
 
 IF MEMBRANE_COLLISION == 1:
     class OifOutDirection(BondedInteraction):
@@ -3321,9 +3322,6 @@ class QuarticBond(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        """Sets parameters that are not required to their default value.
-
-        """
         self._params = {"k0": 0.,
                         "k1": 0.,
                         "r": 0.,
@@ -3370,11 +3368,13 @@ IF ELECTROSTATICS:
 
 class BondedInteractions:
 
-    """Represents the bonded interactions.
+    """
+    Represents the bonded interactions.
 
-    Individual interactions can be accessed using
-    BondedInteractions[i], where i is the bond id. Will return a bonded interaction
-    from bonded_interaction_classes"""
+    Individual interactions can be accessed using ``BondedInteractions[i]``,
+    where ``i`` is the bond id. Will return a bonded interaction
+    from ``bonded_interaction_classes``
+    """
 
     def __getitem__(self, key):
         if not is_valid_type(key, int):
