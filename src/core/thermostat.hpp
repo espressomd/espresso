@@ -241,21 +241,18 @@ inline Utils::Vector3d friction_thermo_langevin(const Particle *p) {
       (langevin_pref_friction_buf[1] != langevin_pref_friction_buf[2]) ||
       (langevin_pref_noise_buf[0] != langevin_pref_noise_buf[1]) ||
       (langevin_pref_noise_buf[1] != langevin_pref_noise_buf[2]);
+
   // In case of anisotropic particle: body-fixed reference frame. Otherwise:
   // lab-fixed reference frame.
-  auto const noise = v_noise(p->p.identity);
-
-  if (aniso_flag) {
+  auto const friction = aniso_flag ? [&]() {
     auto const A = rotation_matrix(p->r.quat);
 
     return transpose(A) *
-           (hadamard_product(langevin_pref_friction_buf, A * velocity) +
-            hadamard_product(langevin_pref_noise_buf, noise));
-  } else {
-    return hadamard_product(langevin_pref_friction_buf, velocity) +
-           hadamard_product(langevin_pref_noise_buf, noise);
-  }
+    hadamard_product(langevin_pref_friction_buf, A * velocity);
+  }()  : hadamard_product(langevin_pref_friction_buf, velocity);
 
+  return friction +
+         hadamard_product(langevin_pref_noise_buf, v_noise(p->p.identity));
 #else
   // Do the actual (isotropic) thermostatting
   return langevin_pref_friction_buf * velocity +
