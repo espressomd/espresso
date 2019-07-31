@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import os
 import sys
 import numpy as np
@@ -65,7 +64,7 @@ if args.visualizer:
     from espressomd import visualization
     from threading import Thread
 
-required_features = ["ELECTROSTATICS", "LENNARD_JONES", "MASS"]
+required_features = ["P3M", "LENNARD_JONES", "MASS"]
 espressomd.assert_features(required_features)
 
 print(espressomd.features())
@@ -152,14 +151,16 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # tuning and equilibration
 system.integrator.run(min(3 * measurement_steps, 1000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
-    min_skin=0.4, max_skin=1.6, tol=0.05, int_steps=100)))
+    min_skin=0.4, max_skin=1.6, tol=0.05, int_steps=100,
+    adjust_max_skin=True)))
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune p3m")
 p3m = electrostatics.P3M(prefactor=args.prefactor, accuracy=1e-4)
 system.actors.add(p3m)
 system.integrator.run(min(3 * measurement_steps, 3000))
 print("Tune skin: {}".format(system.cell_system.tune_skin(
-    min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100)))
+    min_skin=1.0, max_skin=1.6, tol=0.05, int_steps=100,
+    adjust_max_skin=True)))
 
 
 if not args.visualizer:
@@ -193,16 +194,13 @@ if not args.visualizer:
     # write report
     cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
     report = ('"{script}","{arguments}",{cores},"{mpi}",{mean:.3e},'
-              '{ci:.3e},{n},{dur:.1f},{E1:.5e},{E2:.5e},{E3:.5e}\n'.format(
+              '{ci:.3e},{n},{dur:.1f}\n'.format(
                   script=os.path.basename(sys.argv[0]), arguments=cmd,
                   cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
-                  mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci,
-                  E1=system.analysis.energy()["total"],
-                  E2=system.analysis.energy()["coulomb"],
-                  E3=system.analysis.energy()["non_bonded"]))
+                  mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci))
     if not os.path.isfile(args.output):
         report = ('"script","arguments","cores","MPI","mean","ci",'
-                  '"steps_per_tick","duration","E1","E2","E3"\n' + report)
+                  '"nsteps","duration"\n' + report)
     with open(args.output, "a") as f:
         f.write(report)
 else:

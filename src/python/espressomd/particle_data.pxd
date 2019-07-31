@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
@@ -221,7 +220,7 @@ cdef extern from "rotation.hpp":
     Vector3d convert_vector_space_to_body(const particle & p, const Vector3d & v)
     void rotate_particle(int id, Vector3d axis, double angle)
 
-cdef class ParticleHandle(object):
+cdef class ParticleHandle:
     cdef public int _id
     cdef const particle * particle_data
     cdef int update_particle_data(self) except -1

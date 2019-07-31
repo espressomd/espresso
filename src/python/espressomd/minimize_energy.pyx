@@ -18,11 +18,10 @@
 #
 # Minimize Energy
 
-from __future__ import print_function, absolute_import
 from . cimport minimize_energy
 from espressomd.utils import is_valid_type
 
-cdef class MinimizeEnergy(object):
+cdef class MinimizeEnergy:
     """
     Initialize steepest descent energy minimization.
 
@@ -39,6 +38,12 @@ cdef class MinimizeEnergy(object):
 
     """
     cdef object _params
+
+    def __getstate__(self):
+        return self._params
+
+    def __setstate__(self, params):
+        self._params = params
 
     def __init__(self, *args, **kwargs):
         if len(args) == 0:

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -75,7 +74,7 @@ class DPDThermostat(ut.TestCase):
         s.part.add(pos=s.box_l * np.random.random((N, 3)))
         kT = 2.3
         gamma = 1.5
-        s.thermostat.set_dpd(kT=kT)
+        s.thermostat.set_dpd(kT=kT, seed=42)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
@@ -100,7 +99,7 @@ class DPDThermostat(ut.TestCase):
         s.part.add(pos=s.box_l * np.random.random((N // 2, 3)), type=N//2*[1])
         kT = 2.3
         gamma = 1.5
-        s.thermostat.set_dpd(kT=kT)
+        s.thermostat.set_dpd(kT=kT, seed=42)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.0,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.0)
@@ -130,7 +129,7 @@ class DPDThermostat(ut.TestCase):
         s.part.add(pos=s.box_l * np.random.random((N, 3)))
         kT = 2.3
         gamma = 1.5
-        s.thermostat.set_dpd(kT=kT)
+        s.thermostat.set_dpd(kT=kT, seed=42)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
@@ -150,7 +149,7 @@ class DPDThermostat(ut.TestCase):
                 self.assertTrue(v[i] == float(i + 1))
 
         # Turn back on
-        s.thermostat.set_dpd(kT=kT)
+        s.thermostat.set_dpd(kT=kT, seed=42)
 
         # Reset velocities for faster convergence
         s.part[:].v = [0., 0., 0.]
@@ -173,7 +172,7 @@ class DPDThermostat(ut.TestCase):
         s = self.s
         kT = 0.
         gamma = 1.42
-        s.thermostat.set_dpd(kT=kT)
+        s.thermostat.set_dpd(kT=kT, seed=42)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.2,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.4)
@@ -221,7 +220,7 @@ class DPDThermostat(ut.TestCase):
         s = self.s
         kT = 0.
         gamma = 1.42
-        s.thermostat.set_dpd(kT=kT)
+        s.thermostat.set_dpd(kT=kT, seed=42)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=1, gamma=gamma, r_cut=1.2,
             trans_weight_function=1, trans_gamma=gamma, trans_r_cut=1.4)
@@ -314,7 +313,7 @@ class DPDThermostat(ut.TestCase):
             s.part.add(pos=pos, v=v)
 
         gamma = 1.0
-        s.thermostat.set_dpd(kT=0.0)
+        s.thermostat.set_dpd(kT=0.0, seed=42)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=r_cut,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=r_cut)
@@ -339,7 +338,7 @@ class DPDThermostat(ut.TestCase):
         s.constraints.add(shape=espressomd.shapes.Wall(
             dist=0, normal=[1, 0, 0]), particle_type=0, particle_velocity=[1, 2, 3])
 
-        s.thermostat.set_dpd(kT=0.0)
+        s.thermostat.set_dpd(kT=0.0, seed=42)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=1., r_cut=1.0,
             trans_weight_function=0, trans_gamma=1., trans_r_cut=1.0)

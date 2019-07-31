@@ -289,12 +289,10 @@ inline void add_bonded_energy(const Particle *p1) {
         ret = 0;
         break;
 #endif
-#ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 1)
           bond_broken = tab_bond_energy(iaparams, dx, &ret);
         break;
-#endif
 #ifdef UMBRELLA
       case BONDED_IA_UMBRELLA:
         bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
@@ -321,12 +319,10 @@ inline void add_bonded_energy(const Particle *p1) {
       case BONDED_IA_ANGLE_COSSQUARE:
         bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
         break;
-#ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 2)
           bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
         break;
-#endif
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
                           << ") of atom " << p1->p.identity << " unknown\n";
@@ -338,12 +334,10 @@ inline void add_bonded_energy(const Particle *p1) {
       case BONDED_IA_DIHEDRAL:
         bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
         break;
-#ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 3)
           bond_broken = tab_dihedral_energy(p1, p2, p3, p4, iaparams, &ret);
         break;
-#endif
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
                           << ") of atom " << p1->p.identity << " unknown\n";

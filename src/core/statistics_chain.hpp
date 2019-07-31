@@ -52,17 +52,17 @@ extern int chain_length;
 /** Calculate the end-to-end-distance.
  *  Chain information \ref chain_start etc. must be set!
  */
-void calc_re(PartCfg &, double **re);
+std::array<double, 4> calc_re(PartCfg &);
 
 /** Calculate the radius of gyration.
  *  Chain information \ref chain_start etc. must be set!
  */
-void calc_rg(PartCfg &, double **rg);
+std::array<double, 4> calc_rg(PartCfg &);
 
 /** Calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory).
  *  Chain information \ref chain_start etc. must be set!
  */
-void calc_rh(PartCfg &, double **rh);
+std::array<double, 2> calc_rh(PartCfg &);
 
 /*@}*/
 

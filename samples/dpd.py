@@ -19,7 +19,6 @@ This sample sets up a DPD fluid and calculates pressure as a function of
 varying density. The fluid is thermalized using a DPD thermostat.
 """
 
-from __future__ import print_function
 import espressomd
 
 required_features = ["DPD"]
@@ -41,7 +40,7 @@ r_cut = 1.
 F_max = 1.
 
 # Activate the thermostat
-system.thermostat.set_dpd(kT=kT)
+system.thermostat.set_dpd(kT=kT, seed=123)
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]

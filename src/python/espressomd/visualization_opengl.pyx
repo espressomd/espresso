@@ -19,7 +19,7 @@ from espressomd.particle_data import ParticleHandle
 from espressomd.interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
 
 
-class openGLLive(object):
+class openGLLive:
 
     """
     This class provides live visualization using pyOpenGL.
@@ -495,7 +495,7 @@ class openGLLive(object):
 
     def screenshot(self, path):
         """Renders the current state into an image file at ``path`` with
-        dimensions of ``specs['window_size']``."""
+        dimensions of ``specs['window_size']`` in PNG format."""
 
         # ON FIRST CALL: INIT AND CREATE BUFFERS
         if not self.screenshot_initialized:
@@ -536,7 +536,7 @@ class openGLLive(object):
         OpenGL.GL.glLoadMatrixf(self.camera.modelview)
         self._draw_system()
 
-        # READ THE PIXES
+        # READ THE PIXELS
         OpenGL.GL.glReadBuffer(OpenGL.GL.GL_COLOR_ATTACHMENT0)
         data = OpenGL.GL.glReadPixels(
             0, 0, self.specs['window_size'][0], self.specs['window_size'][1], OpenGL.GL.GL_RGB, OpenGL.GL.GL_FLOAT)
@@ -774,7 +774,7 @@ class openGLLive(object):
         if self.specs['LB_draw_boundaries']:
             ni = 0
             for c in self.system.lbboundaries:
-                if type(c) == espressomd.ekboundaries.EKBoundary:
+                if type(c) == espressomd.lbboundaries.LBBoundary:
                     t = ni
                     ni += 1
                     s = c.get_parameter('shape')
@@ -2220,7 +2220,7 @@ def draw_arrow(pos, d, radius, color, material, quality):
 
 
 # MOUSE EVENT MANAGER
-class MouseFireEvent(object):
+class MouseFireEvent:
 
     """Event type of mouse button used for mouse callbacks.
 
@@ -2233,7 +2233,7 @@ class MouseFireEvent(object):
     DoubleClick = 4
 
 
-class MouseButtonEvent(object):
+class MouseButtonEvent:
 
     """Mouse event used for mouse callbacks. Stores button and callback.
 
@@ -2246,7 +2246,7 @@ class MouseButtonEvent(object):
         self.positional = positional
 
 
-class MouseManager(object):
+class MouseManager:
 
     """Handles mouse callbacks.
 
@@ -2334,7 +2334,7 @@ class MouseManager(object):
 # KEYBOARD EVENT MANAGER
 
 
-class KeyboardFireEvent(object):
+class KeyboardFireEvent:
 
     """Event type of button used for keyboard callbacks.
 
@@ -2345,7 +2345,7 @@ class KeyboardFireEvent(object):
     Released = 2
 
 
-class KeyboardButtonEvent(object):
+class KeyboardButtonEvent:
 
     """Keyboard event used for keyboard callbacks. Stores button, event type and callback.
 
@@ -2358,7 +2358,7 @@ class KeyboardButtonEvent(object):
         self.internal = internal
 
 
-class KeyboardManager(object):
+class KeyboardManager:
 
     """Handles keyboard callbacks.
 
@@ -2425,7 +2425,7 @@ class KeyboardManager(object):
 # CAMERA
 
 
-class Camera(object):
+class Camera:
 
     def __init__(self):
         pass

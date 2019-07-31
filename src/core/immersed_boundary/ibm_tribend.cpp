@@ -100,37 +100,6 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
       Pre * (vector_product(get_mi_vector(p1->r.p, p3->r.p, box_geo), v2) / Aj);
 }
 
-/****************
-  IBM_Tribend_ResetParams
- *****************/
-
-int IBM_Tribend_ResetParams(const int bond_type, const double kb) {
-
-  // Check if bond exists and is of correct type
-  if (bond_type >= bonded_ia_params.size()) {
-    printf("bond does not exist while reading tribend checkpoint\n");
-    return ES_ERROR;
-  }
-  if (bonded_ia_params[bond_type].type != BONDED_IA_IBM_TRIBEND) {
-    printf(
-        "interaction type does not match while reading tribend checkpoint!\n");
-    return ES_ERROR;
-  }
-
-  // Check if k is correct
-  if (fabs(bonded_ia_params[bond_type].p.ibm_tribend.kb - kb) > 1e-6) {
-    printf("kb does not match while reading tribend checkpoint. It is %.12e "
-           "and read was %.12e\n",
-           bonded_ia_params[bond_type].p.ibm_tribend.kb, kb);
-    return ES_ERROR;
-  }
-
-  // Communicate this to whoever is interested
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
-}
-
 /***********
    IBM_Tribend_SetParams
 ************/

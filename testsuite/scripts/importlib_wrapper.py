@@ -21,10 +21,7 @@ import sys
 import unittest
 import importlib
 import espressomd
-if sys.version_info >= (3, 3):
-    from unittest.mock import MagicMock
-else:
-    from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 def _id(x):
@@ -231,9 +228,9 @@ def mock_es_visualization(code):
 try:
     {0}{1}
 except ImportError:
-    from {2} import MagicMock
+    from unittest.mock import MagicMock
     import espressomd
-    {3} = MagicMock()
+    {2} = MagicMock()
 """.lstrip()
     # cannot handle "from espressomd.visualization import *"
     re_es_vis_import_namespace = re.compile(
@@ -257,7 +254,6 @@ except ImportError:
             return ""
 
     def substitution_es_vis_import(m):
-        mock_module = "unittest.mock" if sys.version_info >= (3, 3) else "mock"
         aliases = [x for x in m.groups() if x is not None][0].split(',')
         guards = []
         for alias in aliases:
@@ -268,7 +264,7 @@ except ImportError:
                 alias = alias.split(' as ')[1]
             alias = alias.strip()
             checks = check_for_deferred_ImportError(line, alias)
-            s = r_es_vis_mock.format(line, checks, mock_module, alias)
+            s = r_es_vis_mock.format(line, checks, alias)
             guards.append(s)
         return '\n'.join(guards)
 

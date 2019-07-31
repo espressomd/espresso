@@ -160,7 +160,7 @@ typedef struct {
 
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
-extern LB_rho_v_pi_gpu *host_values;
+extern std::vector<LB_rho_v_pi_gpu> host_values;
 extern LB_particle_allocation_state lb_reinit_particles_gpu;
 #ifdef ELECTROKINETICS
 extern LB_node_force_density_gpu node_f;
@@ -237,9 +237,6 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_gpu_get_boundary_forces(double *forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd);
 void lb_load_checkpoint_GPU(float const *host_checkpoint_vd);
-
-void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
-                                     int include_lbfluid);
 
 void lb_lbfluid_set_population(const Utils::Vector3i &, float[LBQ]);
 void lb_lbfluid_get_population(const Utils::Vector3i &, float[LBQ]);

@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
-
 from libcpp.string cimport string
 import collections
 
@@ -29,7 +27,7 @@ from globals cimport immersed_boundaries
 
 # Non-bonded interactions
 
-cdef class NonBondedInteraction(object):
+cdef class NonBondedInteraction:
     """
     Represents an instance of a non-bonded interaction, such as Lennard-Jones.
     Either called with two particle type id, in which case, the interaction
@@ -275,7 +273,7 @@ IF LENNARD_JONES == 1:
                   Restricts the interaction to a minimal distance.
 
             """
-            super(LennardJonesInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
             # Handle the case of shift="auto"
@@ -369,7 +367,7 @@ IF WCA == 1:
                     Determines the interaction length scale.
 
             """
-            super(WCAInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
             if wca_set_params(
@@ -541,7 +539,7 @@ IF LENNARD_JONES_GENERIC == 1:
                      interaction.
 
             """
-            super(GenericLennardJonesInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -597,7 +595,7 @@ IF LJCOS:
             offset : :obj:`float`
                      Offset distance of the interaction.
             """
-            super(LennardJonesCosInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
             if ljcos_set_params(self._part_types[0], self._part_types[1],
@@ -677,7 +675,7 @@ IF LJCOS2:
             width : :obj:`float`
                      Width of interaction.
             """
-            super(LennardJonesCos2Interaction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
             if ljcos2_set_params(self._part_types[0],
@@ -746,7 +744,7 @@ IF HAT == 1:
                      Cutoff distance of the interaction.
 
             """
-            super(HatInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
             if hat_set_params(self._part_types[0], self._part_types[1],
@@ -822,7 +820,7 @@ IF GAY_BERNE:
                   Adjustable exponent.
 
             """
-            super(GayBerneInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
             if gay_berne_set_params(self._part_types[0], self._part_types[1],
@@ -906,9 +904,11 @@ IF DPD:
                 Friction coefficient of the orthogonal part
             trans_r_cut : :obj:`float`
                 Cutoff of the orthogonal part
+            seed : :obj:`int`, required
+                Initial counter value (or seed) of the philox RNG.
 
             """
-            super(DPDInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
             if dpd_set_params(self._part_types[0], self._part_types[1],
@@ -1026,7 +1026,7 @@ IF SMOOTH_STEP == 1:
                 Cutoff distance of the interaction.
 
             """
-            super(SmoothStepInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1128,7 +1128,7 @@ IF BMHTF_NACL == 1:
                 Cutoff distance of the interaction.
 
             """
-            super(BMHTFInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1218,7 +1218,7 @@ IF MORSE == 1:
                 Cutoff distance of the interaction.
 
             """
-            super(MorseInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1325,7 +1325,7 @@ IF BUCKINGHAM == 1:
                 Constant potential shift.
 
             """
-            super(BuckinghamInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1415,7 +1415,7 @@ IF SOFT_SPHERE == 1:
                      Offset distance of the interaction.
 
             """
-            super(SoftSphereInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1609,7 +1609,7 @@ IF HERTZIAN == 1:
                   Parameter sigma which determines the length over which the potential decays.
 
             """
-            super(HertzianInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1695,7 +1695,7 @@ IF GAUSSIAN == 1:
                      Cutoff distance of the interaction.
 
             """
-            super(GaussianInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def valid_keys(self):
             """All parameters that can be set.
@@ -1710,7 +1710,7 @@ IF GAUSSIAN == 1:
             return "eps", "sig", "cutoff"
 
 
-class NonBondedInteractionHandle(object):
+class NonBondedInteractionHandle:
 
     """
     Provides access to all non-bonded interactions between two particle types.
@@ -1792,10 +1792,10 @@ class NonBondedInteractionHandle(object):
             self.thole = TholeInteraction(_type1, _type2)
 
 
-cdef class NonBondedInteractions(object):
+cdef class NonBondedInteractions:
     """
     Access to non-bonded interaction parameters via [i,j], where i,j are particle
-    types. Returns NonBondedInteractionHandle.
+    types. Returns a :class:`NonBondedInteractionHandle` object.
     Also: access to force capping.
 
     """
@@ -1825,13 +1825,13 @@ cdef class NonBondedInteractions(object):
 
         reset_ia_params()
 
-cdef class BondedInteraction(object):
+cdef class BondedInteraction:
     """
     Base class for bonded interactions.
 
-    Either called with an interaction id, in which case, the interaction
-    will represent the bonded interaction as it is defined in Espresso core
-    Or called with keyword arguments describing a new interaction.
+    Either called with an interaction id, in which case the interaction
+    will represent the bonded interaction as it is defined in Espresso core,
+    or called with keyword arguments describing a new interaction.
 
     """
 
@@ -1990,7 +1990,7 @@ cdef class BondedInteraction(object):
         return self._params == other._params
 
 
-class BondedInteractionNotDefined(object):
+class BondedInteractionNotDefined:
 
     def __init__(self, *args, **kwargs):
         raise Exception(
@@ -2048,7 +2048,7 @@ class FeneBond(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
-        super(FeneBond, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_FENE
@@ -2110,7 +2110,7 @@ class HarmonicBond(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
-        super(HarmonicBond, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_HARMONIC
@@ -2163,7 +2163,7 @@ if ELECTROSTATICS:
         """
 
         def __init__(self, *args, **kwargs):
-            super(BondedCoulomb, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_BONDED_COULOMB
@@ -2206,7 +2206,7 @@ if ELECTROSTATICS:
         """
 
         def __init__(self, *args, **kwargs):
-            super(BondedCoulombSRBond, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_BONDED_COULOMB_SR
@@ -2258,7 +2258,7 @@ class ThermalizedBond(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
-        super(ThermalizedBond, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_THERMALIZED_DIST
@@ -2329,7 +2329,7 @@ IF THOLE:
                   atoms that charge is not equal to the particle charge property.
 
             """
-            super(TholeInteraction, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
             # Handle the case of shift="auto"
@@ -2371,7 +2371,7 @@ IF ROTATION:
         """
 
         def __init__(self, *args, **kwargs):
-            super(HarmonicDumbbellBond, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_HARMONIC_DUMBBELL
@@ -2485,7 +2485,7 @@ IF BOND_CONSTRAINT == 1:
         """
 
         def __init__(self, *args, **kwargs):
-            super(RigidBond, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_RIGID_BOND
@@ -2568,118 +2568,119 @@ class Dihedral(BondedInteraction):
             self._bond_id, self._params["mult"], self._params["bend"], self._params["phase"])
 
 
+class Tabulated(BondedInteraction):
+
+    """
+    Tabulated bond.
+
+    Parameters
+    ----------
+
+    type : :obj:`str`
+        The type of bond, one of 'distance', 'angle' or
+        'dihedral'.
+    min : :obj:`float`
+        The minimal interaction distance. Has to be 0 if
+        type is 'angle' or 'dihedral'
+    max : :obj:`float`
+        The maximal interaction distance. Has to be pi if
+        type is 'angle' or 2pi if 'dihedral'
+    energy: array_like :obj:`float`
+        The energy table.
+    force: array_like :obj:`float`
+        The force table.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def type_number(self):
+        return BONDED_IA_TABULATED
+
+    def type_name(self):
+        """Name of interaction type.
+
+        """
+        return "TABULATED"
+
+    def valid_keys(self):
+        """All parameters that can be set.
+
+        """
+        return "type", "min", "max", "energy", "force"
+
+    def required_keys(self):
+        """Parameters that have to be set.
+
+        """
+        return "type", "min", "max", "energy", "force"
+
+    def set_default_params(self):
+        """Sets parameters that are not required to their default value.
+
+        """
+        self._params = {'min': -1., 'max': -1., 'energy': [], 'force': []}
+
+    def validate_params(self):
+        """Check that parameters are valid.
+
+        """
+        pi = 3.14159265358979
+        phi = [self._params["min"], self._params["max"]]
+        if self._params["type"] == "angle" and max(phi) > 0 and (
+                abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - pi) > 1e-5):
+            raise ValueError("Tabulated angle expects forces/energies "
+                             "within the range [0, pi], got " + str(phi))
+        if self._params["type"] == "dihedral" and max(phi) > 0 and (
+                abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - 2 * pi) > 1e-5):
+            raise ValueError("Tabulated dihedral expects forces/energies "
+                             "within the range [0, 2*pi], got " + str(phi))
+
+    def _get_params_from_es_core(self):
+        make_bond_type_exist(self._bond_id)
+        res = \
+            {"type": bonded_ia_params[self._bond_id].p.tab.type,
+             "min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
+             "max": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
+             "energy":
+                 bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
+             "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
+             }
+        if res["type"] == 1:
+            res["type"] = "distance"
+        if res["type"] == 2:
+            res["type"] = "angle"
+        if res["type"] == 3:
+            res["type"] = "dihedral"
+        return res
+
+    def _set_params_in_es_core(self):
+        if self._params["type"] == "distance":
+            type_num = 1
+        elif self._params["type"] == "angle":
+            type_num = 2
+        elif self._params["type"] == "dihedral":
+            type_num = 3
+        else:
+            raise ValueError(
+                "Tabulated type needs to be distance, angle, or dihedral")
+
+        res = tabulated_bonded_set_params(
+            self._bond_id, < TabulatedBondedInteraction > type_num,
+            self._params["min"],
+            self._params["max"],
+            self._params["energy"],
+            self._params["force"])
+
+        if res == 1:
+            raise Exception(
+                "Could not setup tabulated bond. Invalid bond type.")
+        # Retrieve some params, Es calculates.
+        self._params = self._get_params_from_es_core()
+
+
 IF TABULATED == 1:
-    class Tabulated(BondedInteraction):
-
-        """
-        Tabulated bond.
-
-        Parameters
-        ----------
-
-        type : :obj:`str`,
-            The type of bond, one of 'distance', 'angle' or
-            'dihedral'.
-        min : :obj:`float`,
-            The minimal interaction distance. Has to be 0 if
-            type is 'angle' or 'dihedral'
-        max : :obj:`float`,
-            The maximal interaction distance. Has to be pi if
-            type is 'angle' or 2pi if 'dihedral'
-        energy: array_like :obj:`float`
-            The energy table.
-        force: array_like :obj:`float`
-            The force table.
-
-        """
-
-        def __init__(self, *args, **kwargs):
-            super(Tabulated, self).__init__(*args, **kwargs)
-
-        def type_number(self):
-            return BONDED_IA_TABULATED
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "TABULATED"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return "type", "min", "max", "energy", "force"
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return "type", "min", "max", "energy", "force"
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {'min': -1., 'max': -1., 'energy': [], 'force': []}
-
-        def validate_params(self):
-            """Check that parameters are valid.
-
-            """
-            pi = 3.14159265358979
-            phi = [self._params["min"], self._params["max"]]
-            if self._params["type"] == "angle" and max(phi) > 0 and (
-                    abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - pi) > 1e-5):
-                raise ValueError("Tabulated angle expects forces/energies "
-                                 "within the range [0, pi], got " + str(phi))
-            if self._params["type"] == "dihedral" and max(phi) > 0 and (
-                    abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - 2 * pi) > 1e-5):
-                raise ValueError("Tabulated dihedral expects forces/energies "
-                                 "within the range [0, 2*pi], got " + str(phi))
-
-        def _get_params_from_es_core(self):
-            make_bond_type_exist(self._bond_id)
-            res = \
-                {"type": bonded_ia_params[self._bond_id].p.tab.type,
-                 "min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
-                 "max": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
-                 "energy":
-                     bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
-                 "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
-                 }
-            if res["type"] == 1:
-                res["type"] = "distance"
-            if res["type"] == 2:
-                res["type"] = "angle"
-            if res["type"] == 3:
-                res["type"] = "dihedral"
-            return res
-
-        def _set_params_in_es_core(self):
-            if self._params["type"] == "distance":
-                type_num = 1
-            elif self._params["type"] == "angle":
-                type_num = 2
-            elif self._params["type"] == "dihedral":
-                type_num = 3
-            else:
-                raise ValueError(
-                    "Tabulated type needs to be distance, angle, or dihedral")
-
-            res = tabulated_bonded_set_params(
-                self._bond_id, < TabulatedBondedInteraction > type_num,
-                self._params["min"],
-                self._params["max"],
-                self._params["energy"],
-                self._params["force"])
-
-            if res == 1:
-                raise Exception(
-                    "Could not setup tabulated bond. Invalid bond type.")
-            # Retrieve some params, Es calculates.
-            self._params = self._get_params_from_es_core()
-
     cdef class TabulatedNonBonded(NonBondedInteraction):
         """
         Tabulated non-bonded interaction.
@@ -2687,9 +2688,9 @@ IF TABULATED == 1:
         Parameters
         ----------
 
-        min : :obj:`float`,
+        min : :obj:`float`
             The minimal interaction distance.
-        max : :obj:`float`,
+        max : :obj:`float`
             The maximal interaction distance.
         energy: array_like :obj:`float`
             The energy table.
@@ -2702,7 +2703,7 @@ IF TABULATED == 1:
 
         def __init__(self, *args, **kwargs):
             self.state = -1
-            super(TabulatedNonBonded, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def type_number(self):
             return "TABULATED_NONBONDED"
@@ -2741,7 +2742,7 @@ IF TABULATED == 1:
                   The force table.
 
             """
-            super(TabulatedNonBonded, self).set_params(**kwargs)
+            super().set_params(**kwargs)
 
         def set_default_params(self):
             """Set parameters that are not required to their default value.
@@ -2774,55 +2775,12 @@ IF TABULATED == 1:
             if self.state == 0:
                 return True
 
-IF TABULATED != 1:
-    class Tabulated(BondedInteraction):
-
-        """
-        Tabulated non-bonded interaction.
-
-        Requires feature ``TABULATED``.
-
-        """
-
-        def type_number(self):
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def _get_params_from_es_core(self):
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
-        def _set_params_in_es_core(self):
-            raise Exception("TABULATED has to be defined in myconfig.hpp.")
-
 
 IF LENNARD_JONES == 1:
     class SubtLJ(BondedInteraction):
 
         def __init__(self, *args, **kwargs):
-            super(SubtLJ, self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def type_number(self):
             return BONDED_IA_SUBT_LJ
@@ -2865,7 +2823,7 @@ class Virtual(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
-        super(Virtual, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_VIRTUAL_BOND
@@ -3062,7 +3020,7 @@ class IBM_Triel(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
-        super(IBM_Triel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_IBM_TRIEL
@@ -3115,7 +3073,7 @@ class IBM_Tribend(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
-        super(IBM_Tribend, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_IBM_TRIBEND
@@ -3163,7 +3121,7 @@ class IBM_VolCons(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
-        super(IBM_VolCons, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_IBM_VOLUME_CONSERVATION
@@ -3336,7 +3294,7 @@ class QuarticBond(BondedInteraction):
     """
 
     def __init__(self, *args, **kwargs):
-        super(QuarticBond, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_QUARTIC
@@ -3410,7 +3368,7 @@ IF ELECTROSTATICS:
         int(BONDED_IA_BONDED_COULOMB_SR)] = BondedCoulombSRBond
 
 
-class BondedInteractions(object):
+class BondedInteractions:
 
     """Represents the bonded interactions.
 
@@ -3470,7 +3428,7 @@ class BondedInteractions(object):
                 yield self[i]
 
     def add(self, bonded_ia):
-        """Add a bonded ia to the simulation>"""
+        """Add a bonded ia to the simulation"""
         self[bonded_ia_params.size()] = bonded_ia
 
     def __getstate__(self):

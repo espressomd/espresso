@@ -1951,7 +1951,6 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
                    ek_lbparameters_gpu->dim_z;
 
     float efield[3] = {0., 0., 0.};
-#pragma unroll 3
     for (unsigned int dim = 0; dim < 3; ++dim) {
       // 0 0 0
       efield[dim] +=

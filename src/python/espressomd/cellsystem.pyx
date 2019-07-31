@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 from grid cimport node_grid
 from . cimport cellsystem
 from . cimport integrate
@@ -25,7 +24,7 @@ import numpy as np
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
 
-cdef class CellSystem(object):
+cdef class CellSystem:
     def set_domain_decomposition(
         self,
         use_verlet_lists=True,
@@ -281,7 +280,7 @@ cdef class CellSystem(object):
             return skin
 
     def tune_skin(self, min_skin=None, max_skin=None, tol=None,
-                  int_steps=None):
+                  int_steps=None, adjust_max_skin=False):
         """
         Tunes the skin by measuring the integration time and bisecting over the
         given range of skins. The best skin is set in the simulation core.
@@ -296,11 +295,16 @@ cdef class CellSystem(object):
                 Accuracy in skin to tune to.
         'int_steps' : :obj:`int`
                       Integration steps to time.
+        'adjust_max_skin' : :obj:`bool`, optional
+                            If ``True``, the value of ``max_skin`` is reduced
+                            to the maximum permissible skin (in case the passed
+                            value is too large). Set to ``False`` by default.
 
         Returns
         -------
         :attr:`skin`
 
         """
-        c_tune_skin(min_skin, max_skin, tol, int_steps)
+        c_tune_skin(min_skin, max_skin, tol, int_steps, adjust_max_skin)
+        handle_errors("Error during tune_skin")
         return self.skin

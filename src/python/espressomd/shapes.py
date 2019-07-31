@@ -17,7 +17,7 @@
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
-class Shape(object):
+class Shape:
     _so_bind_methods = ("calc_distance",)
 
 
@@ -258,7 +258,7 @@ class Wall(Shape, ScriptInterfaceHelper):
 class SimplePore(Shape, ScriptInterfaceHelper):
 
     """
-    Two parallel infinite planes, and a cylindrical orfice connecting them.
+    Two parallel infinite planes, and a cylindrical orifice connecting them.
     The cylinder and the planes are connected by torus segments with an
     adjustable radius.
 

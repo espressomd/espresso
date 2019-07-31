@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport polymer
 import numpy as np
@@ -29,9 +28,9 @@ def validate_params(_params, default):
     if _params["n_polymers"] <= 0:
         raise ValueError(
             "n_polymers has to be a positive integer")
-    if _params["beads_per_chain"] <= 1:
+    if _params["beads_per_chain"] <= 0:
         raise ValueError(
-            "beads_per_chain has to be a positive integer larger than 1")
+            "beads_per_chain has to be a positive integer")
     if _params["bond_length"] < 0:
         raise ValueError(
             "bond_length has to be a positive float")

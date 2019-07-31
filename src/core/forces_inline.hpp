@@ -78,47 +78,29 @@
 #endif
 
 /** Initialize the forces for a ghost particle */
-inline void init_ghost_force(Particle *part) {
-  part->f.f = Utils::Vector3d{};
-
-#ifdef ROTATION
-  part->f.torque[0] = 0;
-  part->f.torque[1] = 0;
-  part->f.torque[2] = 0;
-#endif
-}
+inline ParticleForce init_ghost_force(const Particle *) { return {}; }
 
 /** Initialize the forces for a real particle */
-inline void init_local_particle_force(Particle *part) {
-  if (thermo_switch & THERMO_LANGEVIN)
-    friction_thermo_langevin(part);
-  else {
-    part->f.f = Utils::Vector3d{};
-  }
+inline ParticleForce init_local_particle_force(const Particle *part) {
+  auto f = (thermo_switch & THERMO_LANGEVIN) ? friction_thermo_langevin(part)
+                                             : ParticleForce{};
 
 #ifdef EXTERNAL_FORCES
   // If individual coordinates are fixed, set force to 0.
   for (int j = 0; j < 3; j++)
     if (part->p.ext_flag & COORD_FIXED(j))
-      part->f.f[j] = 0;
+      f.f[j] = 0;
   // Add external force
   if (part->p.ext_flag & PARTICLE_EXT_FORCE)
-    part->f.f += part->p.ext_force;
+    f.f += part->p.ext_force;
 #endif
 
 #ifdef ROTATION
   {
-    double scale;
-    /* set torque to zero */
-    part->f.torque[0] = 0;
-    part->f.torque[1] = 0;
-    part->f.torque[2] = 0;
 
 #ifdef EXTERNAL_FORCES
     if (part->p.ext_flag & PARTICLE_EXT_TORQUE) {
-      part->f.torque[0] += part->p.ext_torque[0];
-      part->f.torque[1] += part->p.ext_torque[1];
-      part->f.torque[2] += part->p.ext_torque[2];
+      f.torque += part->p.ext_torque;
     }
 #endif
 
@@ -126,23 +108,13 @@ inline void init_local_particle_force(Particle *part) {
     // apply a swimming force in the direction of
     // the particle's orientation axis
     if (part->swim.swimming) {
-      part->f.f += part->swim.f_swim * part->r.calc_director();
+      f.f += part->swim.f_swim * part->r.calc_director();
     }
 #endif
-
-    /* and rescale quaternion, so it is exactly of unit length */
-    scale = sqrt(Utils::sqr(part->r.quat[0]) + Utils::sqr(part->r.quat[1]) +
-                 Utils::sqr(part->r.quat[2]) + Utils::sqr(part->r.quat[3]));
-    if (scale == 0) {
-      part->r.quat[0] = 1;
-    } else {
-      part->r.quat[0] /= scale;
-      part->r.quat[1] /= scale;
-      part->r.quat[2] /= scale;
-      part->r.quat[3] /= scale;
-    }
   }
 #endif
+
+  return f;
 }
 
 inline void calc_non_bonded_pair_force_parts(
@@ -389,12 +361,10 @@ inline bool calc_bond_pair_force(Particle *p1, Particle *p2,
     bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
     break;
 #endif
-#ifdef TABULATED
   case BONDED_IA_TABULATED:
     if (iaparams->num == 1)
       bond_broken = calc_tab_bond_force(iaparams, dx, force);
     break;
-#endif
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
     bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
@@ -505,13 +475,11 @@ inline void add_bonded_force(Particle *p1) {
         bond_broken = false;
         break;
 #endif
-#ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 2)
           bond_broken =
               calc_tab_angle_force(p1, p2, p3, iaparams, force, force2, force3);
         break;
-#endif
       case BONDED_IA_IBM_TRIEL:
         bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
         break;
@@ -546,13 +514,11 @@ inline void add_bonded_force(Particle *p1) {
         bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force,
                                           force2, force3);
         break;
-#ifdef TABULATED
       case BONDED_IA_TABULATED:
         if (iaparams->num == 3)
           bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force,
                                                 force2, force3);
         break;
-#endif
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                           << p1->p.identity << " unknown " << type << ","
