@@ -21,6 +21,7 @@ from nbconvert.preprocessors import ExecutePreprocessor
 import re
 import os
 import sys
+import uuid
 import argparse
 sys.path.append('@CMAKE_SOURCE_DIR@/testsuite/scripts')
 from importlib_wrapper import substitute_variable_values, mock_es_visualization
@@ -82,22 +83,22 @@ for filepath in new_cells:
         nb['cells'].append(cell_code)
 
 # substitute global variables and disable OpenGL/Mayavi GUI
-unique_string = '\n##h7OZVDMsDxUPhqoVy2Mh0BTcoaFVbMUqEYCHYCDH\n'
-src = unique_string.join(get_code_cells(nb))
+cell_separator = '\n##{}\n'.format(uuid.uuid4().hex)
+src = cell_separator.join(get_code_cells(nb))
 parameters = dict(x.split('=', 1) for x in new_values)
 src = substitute_variable_values(src, strings_as_is=True, keep_original=False,
                                  **parameters)
 src_no_gui = mock_es_visualization(src)
 
 # update notebook with new code
-set_code_cells(nb, src_no_gui.split(unique_string))
+set_code_cells(nb, src_no_gui.split(cell_separator))
 
 # execute notebook
 ep = ExecutePreprocessor(timeout=20 * 60, kernel_name='python3')
 ep.preprocess(nb, {'metadata': {'path': notebook_dirname}})
 
 # restore notebook with code before the GUI removal step
-set_code_cells(nb, src.split(unique_string))
+set_code_cells(nb, src.split(cell_separator))
 
 # write edited notebook
 with open(notebook_filepath_edited, 'w', encoding='utf-8') as f:
