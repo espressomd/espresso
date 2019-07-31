@@ -78,7 +78,7 @@
 int max_seen_particle_type = 0;
 std::vector<IA_parameters> ia_params;
 
-double min_global_cut = 0.0;
+double min_global_cut = INACTIVE_CUTOFF;
 
 double max_cut;
 double max_cut_nonbonded;
@@ -145,6 +145,114 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
 #endif
 }
 
+static double recalc_maximal_cutoff(const IA_parameters &data) {
+  auto max_cut_current = INACTIVE_CUTOFF;
+  
+#ifdef LENNARD_JONES
+  if (max_cut_current < (data.LJ_cut + data.LJ_offset))
+    max_cut_current = (data.LJ_cut + data.LJ_offset);
+#endif
+
+#ifdef WCA
+  max_cut_current = std::max(max_cut_current, data.WCA_cut);
+#endif
+
+#ifdef DPD
+  max_cut_current =
+      std::max(max_cut_current,
+               std::max(data.dpd_radial.cutoff, data.dpd_trans.cutoff));
+#endif
+
+#ifdef LENNARD_JONES_GENERIC
+  if (max_cut_current < (data.LJGEN_cut + data.LJGEN_offset))
+    max_cut_current = (data.LJGEN_cut + data.LJGEN_offset);
+#endif
+
+#ifdef SMOOTH_STEP
+  if (max_cut_current < data.SmSt_cut)
+    max_cut_current = data.SmSt_cut;
+#endif
+
+#ifdef HERTZIAN
+  if (max_cut_current < data.Hertzian_sig)
+    max_cut_current = data.Hertzian_sig;
+#endif
+
+#ifdef GAUSSIAN
+  if (max_cut_current < data.Gaussian_cut)
+    max_cut_current = data.Gaussian_cut;
+#endif
+
+#ifdef BMHTF_NACL
+  if (max_cut_current < data.BMHTF_cut)
+    max_cut_current = data.BMHTF_cut;
+#endif
+
+#ifdef MORSE
+  if (max_cut_current < data.MORSE_cut)
+    max_cut_current = data.MORSE_cut;
+#endif
+
+#ifdef BUCKINGHAM
+  if (max_cut_current < data.BUCK_cut)
+    max_cut_current = data.BUCK_cut;
+#endif
+
+#ifdef SOFT_SPHERE
+  if (max_cut_current < (data.soft_cut + data.soft_offset))
+    max_cut_current = (data.soft_cut + data.soft_offset);
+#endif
+
+#ifdef AFFINITY
+  if (max_cut_current < data.affinity_cut)
+    max_cut_current = data.affinity_cut;
+#endif
+
+#ifdef MEMBRANE_COLLISION
+  if (max_cut_current < data.membrane_cut)
+    max_cut_current = data.membrane_cut;
+#endif
+
+#ifdef HAT
+  if (max_cut_current < data.HAT_r)
+    max_cut_current = data.HAT_r;
+#endif
+
+#ifdef LJCOS
+  {
+    double max_cut_tmp = data.LJCOS_cut + data.LJCOS_offset;
+    if (max_cut_current < max_cut_tmp)
+      max_cut_current = max_cut_tmp;
+  }
+#endif
+
+#ifdef LJCOS2
+  {
+    double max_cut_tmp = data.LJCOS2_cut + data.LJCOS2_offset;
+    if (max_cut_current < max_cut_tmp)
+      max_cut_current = max_cut_tmp;
+  }
+#endif
+
+#ifdef GAY_BERNE
+  if (max_cut_current < data.GB_cut)
+    max_cut_current = data.GB_cut;
+#endif
+
+#ifdef TABULATED
+  max_cut_current = std::max(max_cut_current, data.TAB.cutoff());
+#endif
+
+#ifdef THOLE
+  // If THOLE is active, use p3m cutoff
+  if (data.THOLE_scaling_coeff != 0)
+    max_cut_current =
+        std::max(max_cut_current, Coulomb::cutoff(box_geo.length()));
+#endif
+
+  return max_cut_current;
+}
+
 static void recalc_maximal_cutoff_nonbonded() {
   int i, j;
 
@@ -154,111 +262,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 
   for (i = 0; i < max_seen_particle_type; i++)
     for (j = i; j < max_seen_particle_type; j++) {
-      double max_cut_current = INACTIVE_CUTOFF;
-
       IA_parameters *data = get_ia_param(i, j);
-
-#ifdef LENNARD_JONES
-      if (max_cut_current < (data->LJ_cut + data->LJ_offset))
-        max_cut_current = (data->LJ_cut + data->LJ_offset);
-#endif
-
-#ifdef WCA
-      max_cut_current = std::max(max_cut_current, data->WCA_cut);
-#endif
-
-#ifdef DPD
-      max_cut_current =
-          std::max(max_cut_current,
-                   std::max(data->dpd_radial.cutoff, data->dpd_trans.cutoff));
-#endif
-
-#ifdef LENNARD_JONES_GENERIC
-      if (max_cut_current < (data->LJGEN_cut + data->LJGEN_offset))
-        max_cut_current = (data->LJGEN_cut + data->LJGEN_offset);
-#endif
-
-#ifdef SMOOTH_STEP
-      if (max_cut_current < data->SmSt_cut)
-        max_cut_current = data->SmSt_cut;
-#endif
-
-#ifdef HERTZIAN
-      if (max_cut_current < data->Hertzian_sig)
-        max_cut_current = data->Hertzian_sig;
-#endif
-
-#ifdef GAUSSIAN
-      if (max_cut_current < data->Gaussian_cut)
-        max_cut_current = data->Gaussian_cut;
-#endif
-
-#ifdef BMHTF_NACL
-      if (max_cut_current < data->BMHTF_cut)
-        max_cut_current = data->BMHTF_cut;
-#endif
-
-#ifdef MORSE
-      if (max_cut_current < data->MORSE_cut)
-        max_cut_current = data->MORSE_cut;
-#endif
-
-#ifdef BUCKINGHAM
-      if (max_cut_current < data->BUCK_cut)
-        max_cut_current = data->BUCK_cut;
-#endif
-
-#ifdef SOFT_SPHERE
-      if (max_cut_current < (data->soft_cut + data->soft_offset))
-        max_cut_current = (data->soft_cut + data->soft_offset);
-#endif
-
-#ifdef AFFINITY
-      if (max_cut_current < data->affinity_cut)
-        max_cut_current = data->affinity_cut;
-#endif
-
-#ifdef MEMBRANE_COLLISION
-      if (max_cut_current < data->membrane_cut)
-        max_cut_current = data->membrane_cut;
-#endif
-
-#ifdef HAT
-      if (max_cut_current < data->HAT_r)
-        max_cut_current = data->HAT_r;
-#endif
-
-#ifdef LJCOS
-      {
-        double max_cut_tmp = data->LJCOS_cut + data->LJCOS_offset;
-        if (max_cut_current < max_cut_tmp)
-          max_cut_current = max_cut_tmp;
-      }
-#endif
-
-#ifdef LJCOS2
-      {
-        double max_cut_tmp = data->LJCOS2_cut + data->LJCOS2_offset;
-        if (max_cut_current < max_cut_tmp)
-          max_cut_current = max_cut_tmp;
-      }
-#endif
-
-#ifdef GAY_BERNE
-      if (max_cut_current < data->GB_cut)
-        max_cut_current = data->GB_cut;
-#endif
-
-#ifdef TABULATED
-      max_cut_current = std::max(max_cut_current, data->TAB.cutoff());
-#endif
-
-#ifdef THOLE
-      // If THOLE is active, use p3m cutoff
-      if (data->THOLE_scaling_coeff != 0)
-        max_cut_current =
-            std::max(max_cut_current, Coulomb::cutoff(box_geo.length()));
-#endif
+      auto const  max_cut_current = recalc_maximal_cutoff(*data);
 
       IA_parameters *data_sym = get_ia_param(j, i);
 
