@@ -82,22 +82,13 @@ double min_global_cut = 0.0;
 
 double max_cut;
 double max_cut_nonbonded;
-double max_cut_bonded;
 /** maximal cutoff of type-independent short range ia, mainly
     electrostatics and DPD*/
 double max_cut_global;
-/** Everything which is in the global cutoff except real space cutoffs
-    of dipolar and Coulomb methods */
-double max_cut_global_without_coulomb_and_dipolar;
 
 /*****************************************
  * function prototypes
  *****************************************/
-
-/** calculates and returns the maximal global nonbonded cutoff that is
-    required.  Currently, this are just the cutoffs from the
-    electrostatics method and some dpd cutoffs. */
-static void recalc_global_maximal_nonbonded_cutoff();
 
 /*****************************************
  * general low-level functions
@@ -137,7 +128,6 @@ static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
 
   // global cutoff without dipolar and Coulomb methods is needed
   // for more selective addition of particle pairs to Verlet lists
-  max_cut_global_without_coulomb_and_dipolar = max_cut_global;
 
   // Electrostatics and magnetostatics
 
@@ -285,7 +275,7 @@ static void recalc_maximal_cutoff_nonbonded() {
 }
 
 void recalc_maximal_cutoff() {
-  recalc_maximal_cutoff_bonded();
+  auto const max_cut_bonded = recalc_maximal_cutoff_bonded();
   recalc_maximal_cutoff_nonbonded();
 
   /* make max_cut the maximal cutoff of both bonded and non-bonded

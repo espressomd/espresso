@@ -82,9 +82,8 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern int max_seen_particle
     extern int max_seen_particle_type
     extern double max_cut_nonbonded
-    extern double max_cut_bonded
     extern double min_global_cut
-
+    double recalc_maximal_cutoff_bonded()
 
 cdef extern from "thermostat.hpp":
     extern double nptiso_gamma0
