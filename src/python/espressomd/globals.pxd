@@ -84,6 +84,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern double max_cut_nonbonded
     extern double min_global_cut
     double recalc_maximal_cutoff_bonded()
+    double recalc_maximal_cutoff_nonbonded()
 
 cdef extern from "thermostat.hpp":
     extern double nptiso_gamma0

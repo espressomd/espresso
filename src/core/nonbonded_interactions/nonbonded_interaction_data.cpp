@@ -81,7 +81,6 @@ std::vector<IA_parameters> ia_params;
 double min_global_cut = INACTIVE_CUTOFF;
 
 double max_cut;
-double max_cut_nonbonded;
 /** maximal cutoff of type-independent short range ia, mainly
     electrostatics and DPD*/
 double max_cut_global;
@@ -253,27 +252,26 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
   return max_cut_current;
 }
 
-static void recalc_maximal_cutoff_nonbonded() {
-  max_cut_nonbonded = max_cut_global;
+double recalc_maximal_cutoff_nonbonded() {
+  auto max_cut_nonbonded = INACTIVE_CUTOFF;
 
   for(auto &data: ia_params) {
     data.max_cut =  recalc_maximal_cutoff(data);
     max_cut_nonbonded = std::max(max_cut_nonbonded, data.max_cut);
   }
+
+  return max_cut_nonbonded;
 }
 
 void recalc_maximal_cutoff() {
   recalc_global_maximal_nonbonded_and_long_range_cutoff();
+  max_cut = max_cut_global;
 
   auto const max_cut_bonded = recalc_maximal_cutoff_bonded();
-  recalc_maximal_cutoff_nonbonded();
+  auto const max_cut_nonbonded = recalc_maximal_cutoff_nonbonded();
 
-  /* make max_cut the maximal cutoff of both bonded and non-bonded
-     interactions */
-  if (max_cut_nonbonded > max_cut_bonded)
-    max_cut = max_cut_nonbonded;
-  else
-    max_cut = max_cut_bonded;
+  max_cut = std::max(max_cut, max_cut_bonded);
+  max_cut = std::max(max_cut, max_cut_nonbonded);
 }
 
 /** This function increases the LOCAL ia_params field for non-bonded
