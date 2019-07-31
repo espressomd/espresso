@@ -209,7 +209,8 @@ inline void add_non_bonded_pair_energy(const Particle *p1, const Particle *p2,
 inline void add_bonded_energy(const Particle *p1) {
   Particle *p3 = nullptr, *p4 = nullptr;
   Bonded_ia_parameters *iaparams;
-  int i, bond_broken = 1;
+  int i;
+  bool bond_broken = true;
   double ret = 0;
 
   i = 0;
@@ -284,7 +285,7 @@ inline void add_bonded_energy(const Particle *p1) {
 #endif
 #ifdef BOND_CONSTRAINT
       case BONDED_IA_RIGID_BOND:
-        bond_broken = 0;
+        bond_broken = false;
         ret = 0;
         break;
 #endif
@@ -298,7 +299,7 @@ inline void add_bonded_energy(const Particle *p1) {
         break;
 #endif
       case BONDED_IA_VIRTUAL_BOND:
-        bond_broken = 0;
+        bond_broken = false;
         ret = 0;
         break;
       default:

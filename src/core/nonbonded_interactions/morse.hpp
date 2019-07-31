@@ -22,9 +22,9 @@
 #define _MORSE_H
 
 /** \file
- *  Routines to calculate the Lennard-Jones energy and/or  force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the Morse potential between particle pairs.
+ *
+ *  Implementation in \ref morse.cpp.
  */
 
 #include "config.hpp"
@@ -43,12 +43,11 @@ inline void add_morse_pair_force(const Particle *const p1,
                                  const Particle *const p2,
                                  IA_parameters *ia_params, double const d[3],
                                  double dist, double force[3]) {
-  if ((dist < ia_params->MORSE_cut)) {
-    double add1 =
-        exp(-2.0 * ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    double add2 = exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
+  if (dist < ia_params->MORSE_cut) {
+    auto const add =
+        exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
     double fac = -ia_params->MORSE_eps * 2.0 * ia_params->MORSE_alpha *
-                 (add2 - add1) / dist;
+                 (add - Utils::sqr(add)) / dist;
 
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
@@ -77,16 +76,15 @@ inline void add_morse_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate Morse energy between particle p1 and p2. */
+/** Calculate Morse energy between particle p1 and p2. */
 inline double morse_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {
-  if ((dist < ia_params->MORSE_cut)) {
-    double add1 =
-        exp(-2.0 * ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    double add2 =
-        2.0 * exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    double fac = ia_params->MORSE_eps * (add1 - add2) - ia_params->MORSE_rest;
+  if (dist < ia_params->MORSE_cut) {
+    auto const add =
+        exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
+    auto const fac = ia_params->MORSE_eps * (Utils::sqr(add) - 2 * add) -
+                     ia_params->MORSE_rest;
     return fac;
   }
   return 0.0;

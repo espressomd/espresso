@@ -22,9 +22,9 @@
 #define soft_H
 
 /** \file
- *  Routines to calculate the soft-sphere energy and/or  force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the soft-sphere potential between particle pairs.
+ *
+ *  Implementation in \ref soft_sphere.cpp
  */
 
 #include "config.hpp"
@@ -35,18 +35,19 @@
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
-///
 int soft_sphere_set_params(int part_type_a, int part_type_b, double a, double n,
                            double cut, double offset);
 
-/** Resultant Force due to a soft-sphere potential between two
-    particles at interatomic separation r */
+/** Resultant force due to a soft-sphere potential between two
+ *  particles at interatomic separation r
+ */
 inline double soft_force_r(double a, double n, double r) {
   return (a * n / pow(r, n + 1));
 }
 
-/** Potential Energy due to a soft-sphere potential between two
-    particles at interatomic separation r */
+/** Potential energy due to a soft-sphere potential between two
+ *  particles at interatomic separation r
+ */
 inline double soft_energy_r(double a, double n, double r) {
   return (a / pow(r, n));
 }
@@ -56,14 +57,13 @@ inline void add_soft_pair_force(const Particle *const p1,
                                 const Particle *const p2,
                                 IA_parameters *ia_params, double const d[3],
                                 double dist, double force[3]) {
-  int j;
-  double r_off, fac = 0.0;
-  if ((dist < ia_params->soft_cut + ia_params->soft_offset)) {
+  double fac = 0.0;
+  if (dist < (ia_params->soft_cut + ia_params->soft_offset)) {
     /* normal case: resulting force/energy smaller than zero. */
-    r_off = dist - ia_params->soft_offset;
+    auto const r_off = dist - ia_params->soft_offset;
     if (r_off > 0.0) {
       fac = soft_force_r(ia_params->soft_a, ia_params->soft_n, r_off) / dist;
-      for (j = 0; j < 3; j++)
+      for (int j = 0; j < 3; j++)
         force[j] += fac * d[j];
 
 #ifdef LJ_WARN_WHEN_CLOSE
@@ -89,14 +89,12 @@ inline void add_soft_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate soft-sphere energy between particle p1 and p2. */
+/** Calculate soft-sphere energy between particle p1 and p2. */
 inline double soft_pair_energy(const Particle *p1, const Particle *p2,
                                const IA_parameters *ia_params,
                                const double d[3], double dist) {
-  double r_off;
-
-  if ((dist < ia_params->soft_cut + ia_params->soft_offset)) {
-    r_off = dist - ia_params->soft_offset;
+  if (dist < (ia_params->soft_cut + ia_params->soft_offset)) {
+    auto const r_off = dist - ia_params->soft_offset;
     /* normal case: resulting force/energy smaller than zero. */
 
     return soft_energy_r(ia_params->soft_a, ia_params->soft_n, r_off);

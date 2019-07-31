@@ -23,8 +23,9 @@
 #ifndef THERMALIZED_DIST_H
 #define THERMALIZED_DIST_H
 /** \file
- *  Routines to thermalize the com and distance of a particle pair.
- *  \ref forces.cpp
+ *  Routines to thermalize the center of mass and distance of a particle pair.
+ *
+ *  Implementation in \ref thermalized_bond.cpp.
  */
 
 /** number of thermalized bonds */
@@ -49,7 +50,7 @@ void thermalized_bond_cool_down();
 void thermalized_bond_update_params(double pref_scale);
 void thermalized_bond_init();
 
-/** Separately thermalizes the com and distance of a particle pair.
+/** Separately thermalize the COM and distance of a particle pair.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
@@ -59,23 +60,23 @@ void thermalized_bond_init();
  *  @retval 1 if the bond is broken
  *  @retval 0 otherwise
  */
-inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
-                                        const Bonded_ia_parameters *iaparams,
-                                        const Utils::Vector3d &dx,
-                                        double *force1, double *force2) {
+inline bool calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
+                                         const Bonded_ia_parameters *iaparams,
+                                         const Utils::Vector3d &dx,
+                                         double *force1, double *force2) {
   // Bond broke?
   if (iaparams->p.thermalized_bond.r_cut > 0.0 &&
       dx.norm() > iaparams->p.thermalized_bond.r_cut) {
-    return 1;
+    return true;
   }
 
-  double force_lv_com, force_lv_dist, com_vel, dist_vel;
-  double mass_tot = p1->p.mass + p2->p.mass;
-  double mass_tot_inv = 1.0 / mass_tot;
-  double sqrt_mass_tot = sqrt(mass_tot);
-  double sqrt_mass_red = sqrt(p1->p.mass * p2->p.mass / mass_tot);
+  auto const mass_tot = p1->p.mass + p2->p.mass;
+  auto const mass_tot_inv = 1.0 / mass_tot;
+  auto const sqrt_mass_tot = sqrt(mass_tot);
+  auto const sqrt_mass_red = sqrt(p1->p.mass * p2->p.mass / mass_tot);
 
   for (int i = 0; i < 3; i++) {
+    double force_lv_com, force_lv_dist, com_vel, dist_vel;
 
     // Langevin thermostat for center of mass
     com_vel =
@@ -108,7 +109,7 @@ inline int calc_thermalized_bond_forces(const Particle *p1, const Particle *p2,
   ONEPART_TRACE(if (p2->p.identity == check_id) fprintf(
       stderr, "%d: OPT: THERMALIZED BOND f = (%.3e,%.3e,%.3e)\n", this_node,
       p2->f.f[0] + force2[0], p2->f.f[1] + force2[1], p2->f.f[2] + force2[2]));
-  return 0;
+  return false;
 }
 
 #endif

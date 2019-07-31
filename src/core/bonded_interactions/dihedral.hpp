@@ -24,7 +24,9 @@
  *  Routines to calculate the dihedral energy or/and
  *  force for a particle quadruple.  Note that usage of dihedrals
  *  increases the interaction range of bonded interactions to 2 times
- *  the maximal bond length!  \ref forces.cpp
+ *  the maximal bond length!
+ *
+ *  Implementation in \ref dihedral.cpp.
  */
 
 #include "bonded_interaction_data.hpp"
@@ -100,15 +102,23 @@ inline void calc_dihedral_angle(Particle const *p1, Particle const *p2,
     *phi = (2.0 * Utils::pi()) - *phi;
 }
 
-/** calculate dihedral force between particles p1, p2 p3 and p4
-    Written by Arijit Maitra, adapted to new force interface by Hanjo,
-    more general new dihedral form by Ana.
-*/
-inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
-                               Particle const *p3, Particle const *p4,
-                               Bonded_ia_parameters const *iaparams,
-                               double force2[3], double force1[3],
-                               double force3[3]) {
+/** Compute the four-body dihedral interaction force.
+ *
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p3        Third particle.
+ *  @param[in]  p4        Fourth particle.
+ *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
+ *  @param[out] force2    Force on particle 2.
+ *  @param[out] force1    Force on particle 1.
+ *  @param[out] force3    Force on particle 3.
+ *  @return false
+ */
+inline bool calc_dihedral_force(Particle const *p2, Particle const *p1,
+                                Particle const *p3, Particle const *p4,
+                                Bonded_ia_parameters const *iaparams,
+                                double force2[3], double force1[3],
+                                double force3[3]) {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -127,7 +137,7 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
       force2[i] = 0.0;
       force3[i] = 0.0;
     }
-    return 0;
+    return false;
   }
 
   auto const f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23;
@@ -164,15 +174,23 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
     force2[i] = fac * (v34Xf4[i] - v12Xf1[i] - v23Xf1[i]);
     force3[i] = fac * (v12Xf1[i] - v23Xf4[i] - v34Xf4[i]);
   }
-  return 0;
+  return false;
 }
 
-/** calculate dihedral energy between particles p1, p2 p3 and p4
-    Written by Arijit Maitra, adapted to new force interface by Hanjo */
-inline int dihedral_energy(Particle const *p1, Particle const *p2,
-                           Particle const *p3, Particle const *p4,
-                           Bonded_ia_parameters const *iaparams,
-                           double *_energy) {
+/** Compute the four-body dihedral interaction energy.
+ *
+ *  @param[in]  p2        Second particle.
+ *  @param[in]  p1        First particle.
+ *  @param[in]  p3        Third particle.
+ *  @param[in]  p4        Fourth particle.
+ *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
+ *  @param[out] _energy   Energy.
+ *  @return false
+ */
+inline bool dihedral_energy(Particle const *p1, Particle const *p2,
+                            Particle const *p3, Particle const *p4,
+                            Bonded_ia_parameters const *iaparams,
+                            double *_energy) {
   /* vectors for dihedral calculations. */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -186,7 +204,7 @@ inline int dihedral_energy(Particle const *p1, Particle const *p2,
       iaparams->p.dihedral.bend *
       (1. - cos(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase));
 
-  return 0;
+  return false;
 }
 
 #endif
