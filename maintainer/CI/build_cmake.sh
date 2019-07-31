@@ -164,8 +164,6 @@ pep8_command () {
         pep8 "$@"
     elif hash pycodestyle 2> /dev/null; then
         pycodestyle "$@"
-    elif hash pycodestyle-2 2> /dev/null; then
-        pycodestyle-2 "$@"
     elif hash pycodestyle-3 2> /dev/null; then
         pycodestyle-3 "$@"
     else
@@ -192,8 +190,6 @@ pylint_command () {
         pylint "$@"
     elif hash pylint3 2> /dev/null; then
         pylint3 "$@"
-    elif hash pylint-2 2> /dev/null; then
-        pylint-2 "$@"
     elif hash pylint-3 2> /dev/null; then
         pylint-3 "$@"
     else
@@ -206,7 +202,6 @@ if [ $(pylint_command --version | grep -o 'pylint.*[0-9]\.[0-9]\.[0-9]' | awk '{
 else
     score_option=''
 fi
-pylint_command ${score_option} --reports=no --disable=all --enable=C1001 $(find . -name '*.py*') || { echo -e "\nOld-style classes found.\nPlease convert to new-style:\nclass C: => class C(object):\n" && exit 1; }
 
 if [ ${insource} = false ]; then
     if [ ! -d "${builddir}" ]; then

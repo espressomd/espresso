@@ -173,20 +173,21 @@ void lb_boundary_mach_check() {
   }
 }
 
-/**
- * @brief Perform LB parameter and boundary velocity checks.
- */
 void lb_lbfluid_sanity_checks() {
-  if (lattice_switch == ActiveLB::GPU) {
+  extern double time_step;
+  if (lattice_switch == ActiveLB::GPU && this_node == 0) {
 #ifdef CUDA
-    if (this_node == 0) {
-      lb_GPU_sanity_checks();
-      lb_boundary_mach_check();
-    }
+    lb_GPU_sanity_checks();
+    lb_boundary_mach_check();
+    if (time_step > 0.)
+      check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
 #endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+  }
+  if (lattice_switch == ActiveLB::CPU) {
     lb_sanity_checks();
     lb_boundary_mach_check();
+    if (time_step > 0.)
+      check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
   }
 }
 
@@ -481,17 +482,32 @@ const Utils::Vector3d lb_lbfluid_get_ext_force_density() {
 }
 
 void lb_lbfluid_set_tau(double tau) {
-  if (tau <= 0)
-    throw std::invalid_argument("tau has to be positive.");
+  if (tau <= 0.)
+    throw std::invalid_argument("LB tau has to be positive.");
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     lbpar_gpu.tau = static_cast<float>(tau);
-    lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
+    lb_lbfluid_on_lb_params_change(LBParam::TAU);
 #endif //  CUDA
   } else {
     lbpar.tau = tau;
     mpi_bcast_lb_params(LBParam::TAU);
   }
+}
+
+void check_tau_time_step_consistency(double tau, double time_s) {
+  auto const eps = std::numeric_limits<float>::epsilon();
+  if ((tau - time_s) / (tau + time_s) < -eps)
+    throw std::invalid_argument("LB tau (" + std::to_string(tau) +
+                                ") must be >= MD time_step (" +
+                                std::to_string(time_s) + ")");
+  auto const factor = tau / time_s;
+  if (fabs(round(factor) - factor) / factor > eps)
+    throw std::invalid_argument("LB tau (" + std::to_string(tau) +
+                                ") must be integer multiple of "
+                                "MD time_step (" +
+                                std::to_string(time_s) + "). Factor is " +
+                                std::to_string(factor));
 }
 
 double lb_lbfluid_get_tau() {

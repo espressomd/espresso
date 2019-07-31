@@ -21,7 +21,7 @@
 from . cimport minimize_energy
 from espressomd.utils import is_valid_type
 
-cdef class MinimizeEnergy(object):
+cdef class MinimizeEnergy:
     """
     Initialize steepest descent energy minimization.
 

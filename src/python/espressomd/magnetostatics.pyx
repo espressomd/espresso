@@ -93,7 +93,7 @@ IF DP3M == 1:
             """Check validity of parameters.
 
             """
-            super(DipolarP3M, self).validate_params()
+            super().validate_params()
             default_params = self.default_params()
 
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
@@ -186,7 +186,7 @@ IF DP3M == 1:
 
         def _deactivate_method(self):
             dp3m_deactivate()
-            super(type(self), self)._deactivate_method()
+            super()._deactivate_method()
 
         def python_dp3m_set_mesh_offset(self, mesh_off):
             cdef double mesh_offset[3]
@@ -381,7 +381,7 @@ IF DIPOLES == 1:
                 self._set_params_in_es_core()
 
             def _deactivate_method(self):
-                super(type(self), self)._deactivate_method()
+                super()._deactivate_method()
                 deactivate_dipolar_direct_sum_gpu()
 
             def _set_params_in_es_core(self):
@@ -412,7 +412,7 @@ IF DIPOLES == 1:
                 self._set_params_in_es_core()
 
             def _deactivate_method(self):
-                super(type(self), self)._deactivate_method()
+                super()._deactivate_method()
                 deactivate_dipolar_barnes_hut()
 
             def _set_params_in_es_core(self):

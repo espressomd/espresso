@@ -11,7 +11,7 @@ from globals cimport forcecap_get
 from espressomd.utils import array_locked, is_valid_type
 from espressomd.utils cimport Vector3d, make_array_locked
 
-cdef class Globals(object):
+cdef class Globals:
     property box_l:
         def __set__(self, _box_l):
             cdef Vector3d temp_box_l
