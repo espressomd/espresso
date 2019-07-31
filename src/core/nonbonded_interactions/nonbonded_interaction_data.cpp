@@ -118,30 +118,17 @@ void ia_params_set_state(std::string const &state) {
   mpi_bcast_all_ia_params();
 }
 
-static void recalc_global_maximal_nonbonded_and_long_range_cutoff() {
-  /* user defined minimal global cut. This makes sure that data of
-   pairs of particles with a distance smaller than this are always
-   available on the same node (through ghosts). Required for example
-   for the relative virtual sites algorithm. */
-  max_cut_global = min_global_cut;
-
-  // global cutoff without dipolar and Coulomb methods is needed
-  // for more selective addition of particle pairs to Verlet lists
-
-  // Electrostatics and magnetostatics
-
-  /* Coulomb::Cutoff:
-     Cutoff for the real space electrostatics.
-     Note that the box length may have changed,
-     but the method not yet reinitialized.
-   */
+static double recalc_long_range_cutoff() {
+  auto max_cut_long_range = INACTIVE_CUTOFF;
 #ifdef ELECTROSTATICS
-  max_cut_global = std::max(max_cut_global, Coulomb::cutoff(box_geo.length()));
+  max_cut_long_range = std::max(max_cut_long_range, Coulomb::cutoff(box_geo.length()));
 #endif
 
 #ifdef DIPOLES
-  max_cut_global = std::max(max_cut_global, Dipole::cutoff(box_geo.length()));
+  max_cut_long_range = std::max(max_cut_long_range, Dipole::cutoff(box_geo.length()));
 #endif
+
+  return max_cut_long_range;
 }
 
 static double recalc_maximal_cutoff(const IA_parameters &data) {
@@ -264,12 +251,12 @@ double recalc_maximal_cutoff_nonbonded() {
 }
 
 void recalc_maximal_cutoff() {
-  recalc_global_maximal_nonbonded_and_long_range_cutoff();
-  max_cut = max_cut_global;
-
+  max_cut = min_global_cut;
+  auto const max_cut_long_range = recalc_long_range_cutoff();
   auto const max_cut_bonded = recalc_maximal_cutoff_bonded();
   auto const max_cut_nonbonded = recalc_maximal_cutoff_nonbonded();
 
+  max_cut = std::max(max_cut, max_cut_long_range);
   max_cut = std::max(max_cut, max_cut_bonded);
   max_cut = std::max(max_cut, max_cut_nonbonded);
 }
