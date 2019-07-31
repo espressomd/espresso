@@ -384,10 +384,10 @@ cdef class System:
         Parameters
         ----------
         d_new : :obj:`float`
-                New box length
+            New box length
         dir : :obj:`str`, optional
-                Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-                Isotropic assumes a cubic box.
+            Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+            Isotropic assumes a cubic box.
 
         """
 
@@ -437,11 +437,11 @@ cdef class System:
         Parameters
         ----------
         phi : :obj:`float`
-                Angle between the z-axis and the rotation axis.
+            Angle between the z-axis and the rotation axis.
         theta : :obj:`float`
-                Rotation of the axis around the y-axis.
+            Rotation of the axis around the y-axis.
         alpha : :obj:`float`
-                How much to rotate
+            How much to rotate
 
         """
         rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
@@ -456,7 +456,7 @@ cdef class System:
             Parameters
             ----------
             distance : :obj:`int`
-                       Bond distance upto which the exclusions should be added.
+                Bond distance upto which the exclusions should be added.
 
             """
             auto_exclusions(distance)
@@ -489,8 +489,8 @@ cdef class System:
         """
         Parameters
         ----------
-        current_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                       Particle type to count the number for.
+        current_type : :obj:`int` (:attr:`~espressomd.particle_data.ParticleHandle.type`)
+            Particle type to count the number for.
 
         Returns
         -------
