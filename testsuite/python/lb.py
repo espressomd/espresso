@@ -329,7 +329,7 @@ class TestLB(object):
             np.testing.assert_allclose(
                 np.copy(n.velocity), fluid_velocity, atol=1E-6)
         np.testing.assert_allclose(
-            self.system.analysis.linear_momentum() / self.system.volume() / self.params['dens'], fluid_velocity, atol=2E-6)
+            self.system.analysis.linear_momentum() / self.system.volume() / self.params['dens'], fluid_velocity, atol=3E-6)
 
 
 class TestLBCPU(TestLB, ut.TestCase):
