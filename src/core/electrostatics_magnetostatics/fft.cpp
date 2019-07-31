@@ -73,8 +73,6 @@ namespace {
  *  \param[in]  grid2       The node grid you want to have.
  *  \param[in]  node_list1  Linear node index list for grid1.
  *  \param[out] node_list2  Linear node index list for grid2.
- *  \param[out] group       Communication group (node identity list) for the
- *                          calling node.
  *  \param[out] pos         Positions of the nodes in grid2
  *  \param[out] my_pos      Position of comm.rank() in grid2.
  *  \return Size of the communication group.
@@ -82,7 +80,7 @@ namespace {
 boost::optional<std::vector<int>>
 find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
                  int const *node_list1, int *node_list2, int *pos, int *my_pos,
-                 const boost::mpi::communicator &comm) {
+                 boost::mpi::communicator const &comm) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];
