@@ -57,12 +57,12 @@ inline void add_soft_pair_force(const Particle *const p1,
                                 const Particle *const p2,
                                 IA_parameters *ia_params, double const d[3],
                                 double dist, double force[3]) {
+  double fac = 0.0;
   if (dist < (ia_params->soft_cut + ia_params->soft_offset)) {
     /* normal case: resulting force/energy smaller than zero. */
     auto const r_off = dist - ia_params->soft_offset;
     if (r_off > 0.0) {
-      auto const fac =
-          soft_force_r(ia_params->soft_a, ia_params->soft_n, r_off) / dist;
+      fac = soft_force_r(ia_params->soft_a, ia_params->soft_n, r_off) / dist;
       for (int j = 0; j < 3; j++)
         force[j] += fac * d[j];
 
