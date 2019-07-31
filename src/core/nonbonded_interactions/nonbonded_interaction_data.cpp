@@ -254,32 +254,17 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 }
 
 static void recalc_maximal_cutoff_nonbonded() {
-  int i, j;
-
-  recalc_global_maximal_nonbonded_and_long_range_cutoff();
-
   max_cut_nonbonded = max_cut_global;
 
-  for (i = 0; i < max_seen_particle_type; i++)
-    for (j = i; j < max_seen_particle_type; j++) {
-      IA_parameters *data = get_ia_param(i, j);
-      auto const  max_cut_current = recalc_maximal_cutoff(*data);
-
-      IA_parameters *data_sym = get_ia_param(j, i);
-
-      /* no interaction ever touched it, at least no real
-         short-ranged one (that writes to the nonbonded energy) */
-      data_sym->particlesInteract = data->particlesInteract =
-          (max_cut_current > 0.0);
-
-      data_sym->max_cut = data->max_cut = max_cut_current;
-
-      if (max_cut_current > max_cut_nonbonded)
-        max_cut_nonbonded = max_cut_current;
-    }
+  for(auto &data: ia_params) {
+    data.max_cut =  recalc_maximal_cutoff(data);
+    max_cut_nonbonded = std::max(max_cut_nonbonded, data.max_cut);
+  }
 }
 
 void recalc_maximal_cutoff() {
+  recalc_global_maximal_nonbonded_and_long_range_cutoff();
+
   auto const max_cut_bonded = recalc_maximal_cutoff_bonded();
   recalc_maximal_cutoff_nonbonded();
 

@@ -67,13 +67,6 @@ struct IA_parameters {
   /*@}*/
 #endif
 
-  /** flag that tells whether there is any short-ranged interaction,
-      i.e. one that contributes to the "nonbonded" section of the
-      energy/pressure. Note that even if there is no short-ranged
-      interaction present, the \ref max_cut can be non-zero due to
-      e.g. electrostatics. */
-  int particlesInteract;
-
 #ifdef LENNARD_JONES_GENERIC
   /** \name Generic Lennard-Jones with shift */
   /*@{*/
@@ -343,13 +336,7 @@ int interactions_sanity_checks();
 
 /**  check if a non bonded interaction is defined */
 inline int checkIfInteraction(IA_parameters *data) {
-  return data->particlesInteract;
-}
-
-/** check if the types of particles i and j have any non bonded
-    interaction defined. */
-inline int checkIfParticlesInteract(int i, int j) {
-  return checkIfInteraction(get_ia_param(i, j));
+  return data->max_cut != INACTIVE_CUTOFF;
 }
 
 #include <utils/math/sqr.hpp>
