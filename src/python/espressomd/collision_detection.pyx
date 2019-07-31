@@ -95,7 +95,8 @@ class CollisionDetection(ScriptInterfaceHelper):
 
         three_particle_binding_angle_resolution : :obj:`int`
             Resolution for the angular bonds (mode ``"bind_three_particles"``).
-            Resolution+1 bonds are needed to accommodate the case of a 180 degrees
+            Resolution+1 bonds are needed to accommodate the case of 180 degrees
+            angles
 
         """
 

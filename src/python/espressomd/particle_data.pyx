@@ -2046,12 +2046,12 @@ Set quat and scalar dipole moment (dipm) instead.")
         Either: a keyword arguments in which the keys are names of particle
         properties and the values are the values to filter for. E.g.,::
 
-            type=0,q=1
+            system.part.select(type=0, q=1)
 
         Or: a function taking a ParticleHandle as argument and returning True if
         the particle is to be filtered for. E.g.,::
 
-            lambda p: p.pos[0]<0.5
+            system.part.select(lambda p: p.pos[0] < 0.5)
 
         Returns
         -------
