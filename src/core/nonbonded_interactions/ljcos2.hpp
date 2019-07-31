@@ -22,10 +22,12 @@
 #define _LJCOS2_H
 
 /** \file
- *  Routines to calculate the Lennard-Jones with cosine tail energy and/or force
- *  for a particle pair.  Cosine tail is different from that in ljcos.hpp
- *  Used for attractive tail/tail interactions in lipid bilayer calculations
- *  \ref forces.cpp
+ *  Routines to calculate the Lennard-Jones with cosine tail potential
+ *  between particle pairs. Cosine tail is different from that in
+ *  \ref ljcos.hpp. Used for attractive tail/tail interactions in lipid
+ *  bilayer calculations.
+ *
+ *  Implementation in \ref ljcos2.cpp.
  */
 
 #include "config.hpp"
@@ -37,21 +39,21 @@
 #include "particle_data.hpp"
 
 #include <cmath>
+#include <utils/math/int_pow.hpp>
 
 int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
                       double offset, double w);
 
-/** Calculate lj-cos2 force between particle p1 and p2 */
+/** Calculate lj-cos2 force between particle p1 and p2. */
 inline void add_ljcos2_pair_force(const Particle *const p1,
                                   const Particle *const p2,
                                   IA_parameters *ia_params, double const d[3],
                                   double dist, double force[3]) {
-  if ((dist < ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
-    double r_off = dist - ia_params->LJCOS2_offset;
-    double fac = 0.0;
+  if (dist < (ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
+    auto const r_off = dist - ia_params->LJCOS2_offset;
+    auto fac = 0.0;
     if (r_off < ia_params->LJCOS2_rchange) {
-      double frac2 = Utils::sqr(ia_params->LJCOS2_sig / r_off);
-      double frac6 = frac2 * frac2 * frac2;
+      auto const frac6 = Utils::int_pow<6>(ia_params->LJCOS2_sig / r_off);
       fac =
           48.0 * ia_params->LJCOS2_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
     } else if (r_off < ia_params->LJCOS2_rchange + ia_params->LJCOS2_w) {
@@ -89,22 +91,22 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
   }
 }
 
-/** calculate lj-cos2 energy between particle p1 and p2. */
+/** Calculate lj-cos2 energy between particle p1 and p2. */
 inline double ljcos2_pair_energy(const Particle *p1, const Particle *p2,
                                  const IA_parameters *ia_params,
                                  const double d[3], double dist) {
-  if ((dist < ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
-    double r_off = dist - ia_params->LJCOS2_offset;
+  if (dist < (ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
+    auto const r_off = dist - ia_params->LJCOS2_offset;
     if (r_off < ia_params->LJCOS2_rchange) {
-      double frac2 = Utils::sqr(ia_params->LJCOS2_sig / r_off);
-      double frac6 = frac2 * frac2 * frac2;
+      auto const frac6 = Utils::int_pow<6>(ia_params->LJCOS2_sig / r_off);
       return 4.0 * ia_params->LJCOS2_eps * (Utils::sqr(frac6) - frac6);
     }
-    if (r_off < ia_params->LJCOS2_rchange + ia_params->LJCOS2_w) {
-      return -ia_params->LJCOS2_eps / 2 *
-             (cos(M_PI * (r_off - ia_params->LJCOS2_rchange) /
-                  ia_params->LJCOS2_w) +
-              1);
+    if (r_off < (ia_params->LJCOS2_rchange + ia_params->LJCOS2_w)) {
+      auto const fac = -ia_params->LJCOS2_eps / 2 *
+                       (cos(M_PI * (r_off - ia_params->LJCOS2_rchange) /
+                            ia_params->LJCOS2_w) +
+                        1);
+      return fac;
     }
   }
   return 0.0;

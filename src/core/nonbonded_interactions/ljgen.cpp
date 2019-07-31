@@ -18,17 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 /** \file
- *  Routines to calculate the generalized Lennard-Jones
- *  energy and/or force for a particle pair. "Generalized" here means
- *  that the LJ energy is of the form
  *
- *  eps * [ b1 * (sigma/(r-r_offset))^a1 - b2 * (sigma/(r-r_offset))^a2 + shift]
- *
- *  \ref forces.cpp
+ *  Implementation of \ref ljgen.hpp
  */
-
 #include "ljgen.hpp"
 
 #ifdef LENNARD_JONES_GENERIC

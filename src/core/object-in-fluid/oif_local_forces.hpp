@@ -53,13 +53,13 @@ inline double KS(double lambda) { // Defined by (19) from Dupin2007
  *  @param force2       Force on @p p2.
  *  @param force3       Force on @p p3.
  *  @param force4       Force on @p p4.
- *  @return 0
+ *  @return false
  */
-inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
-                          Particle *p4, Bonded_ia_parameters *iaparams,
-                          double force[3], double force2[3], double force3[3],
-                          double force4[3]) // first-fold-then-the-same approach
-{
+inline bool
+calc_oif_local(Particle *p2, Particle *p1, Particle *p3, Particle *p4,
+               Bonded_ia_parameters *iaparams, double force[3],
+               double force2[3], double force3[3],
+               double force4[3]) { // first-fold-then-the-same approach
 
   auto const fp2 = unfolded_position(p2->r.p, p2->l.i, box_geo.length());
   auto const fp1 = fp2 + get_mi_vector(p1->r.p, fp2, box_geo);
@@ -211,7 +211,7 @@ inline int calc_oif_local(Particle *p2, Particle *p1, Particle *p3,
                     iaparams->p.oif_local_forces.A02, fp2, fp3, fp4, force2,
                     force3, force4);
   }
-  return 0;
+  return false;
 }
 
 #endif
