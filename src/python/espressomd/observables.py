@@ -435,9 +435,9 @@ class CylindricalDensityProfile(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
-    center : array_like of :obj:`float`
+    center : 3-tuple of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : 3-tuple of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
@@ -471,9 +471,9 @@ class CylindricalFluxDensityProfile(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
-    center : array_like of :obj:`float`
+    center : 3-tuple of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : 3-tuple of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
@@ -507,9 +507,9 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
-    center : array_like of :obj:`float`
+    center : 3-tuple of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : 3-tuple of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
@@ -543,9 +543,9 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
-    center : array_like of :obj:`float`
+    center : 3-tuple of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : 3-tuple of :obj:`float` 
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
@@ -579,9 +579,9 @@ class CylindricalVelocityProfile(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
-    center : array_like of :obj:`float`
+    center : 3-tuple of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : 3-tuple of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
@@ -617,9 +617,9 @@ class CylindricalLBVelocityProfile(Observable):
 
     Parameters
     ----------
-    center : array_like of :obj:`float`
+    center : 3-tuple of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : 3-tuple of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.

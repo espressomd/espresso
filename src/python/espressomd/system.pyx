@@ -184,7 +184,7 @@ cdef class System:
 
     property box_l:
         """
-        array_like of :obj:`float`:
+        3-tuple of :obj:`float`:
             Dimensions of the simulation box
 
         """
@@ -215,7 +215,7 @@ cdef class System:
 
     property periodicity:
         """
-        array_like of :obj:`bool`:
+        3-tuple of :obj:`bool`:
             System periodicity in ``[x, y, z]``, ``False`` for no periodicity
             in this direction, ``True`` for periodicity
 

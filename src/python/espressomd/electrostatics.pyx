@@ -214,7 +214,7 @@ IF P3M == 1:
             A positive number for the dielectric constant of the
             surrounding medium. Use ``'metallic'`` to set the dielectric
             constant of the surrounding medium to infinity (default).
-        mesh : :obj:`int` or array_like of :obj:`int`, optional
+        mesh : :obj:`int` or 3-tuple of :obj:`int`, optional
             The number of mesh points in x, y and z direction. Use a single
             value for cubic boxes.
         r_cut : :obj:`float`, optional
@@ -357,7 +357,7 @@ IF P3M == 1:
                 A positive number for the dielectric constant of the
                 surrounding medium. Use ``'metallic'`` to set the dielectric
                 constant of the surrounding medium to infinity (default).
-            mesh : :obj:`int` or array_like of :obj:`int`, optional
+            mesh : :obj:`int` or 3-tuple of :obj:`int`, optional
                 The number of mesh points in x, y and z direction. Use a single
                 value for cubic boxes.
             r_cut : :obj:`float`, optional

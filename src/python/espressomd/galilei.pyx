@@ -52,8 +52,8 @@ cdef class GalileiTransform:
 
         Returns
         -------
-        cms : :obj:`list`
-              The of the center of mass position vector as a list of floats.
+        cms : 3-tuple of :obj:`float`
+              The of the center of mass position vector.
 
         """
         return make_array_locked(mpi_system_CMS())
@@ -65,8 +65,8 @@ cdef class GalileiTransform:
 
         Returns
         -------
-        cms_vel : :obj:`list` of :obj:`float`
-                  The of the center of mass velocity vector as a list of floats
+        cms_vel : 3-tuple of :obj:`float`
+                  The of the center of mass velocity vector.
 
         """
 
