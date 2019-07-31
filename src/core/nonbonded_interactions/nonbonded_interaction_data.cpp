@@ -121,11 +121,13 @@ void ia_params_set_state(std::string const &state) {
 static double recalc_long_range_cutoff() {
   auto max_cut_long_range = INACTIVE_CUTOFF;
 #ifdef ELECTROSTATICS
-  max_cut_long_range = std::max(max_cut_long_range, Coulomb::cutoff(box_geo.length()));
+  max_cut_long_range =
+      std::max(max_cut_long_range, Coulomb::cutoff(box_geo.length()));
 #endif
 
 #ifdef DIPOLES
-  max_cut_long_range = std::max(max_cut_long_range, Dipole::cutoff(box_geo.length()));
+  max_cut_long_range =
+      std::max(max_cut_long_range, Dipole::cutoff(box_geo.length()));
 #endif
 
   return max_cut_long_range;
@@ -133,10 +135,9 @@ static double recalc_long_range_cutoff() {
 
 static double recalc_maximal_cutoff(const IA_parameters &data) {
   auto max_cut_current = INACTIVE_CUTOFF;
-  
+
 #ifdef LENNARD_JONES
-  if (max_cut_current < (data.LJ_cut + data.LJ_offset))
-    max_cut_current = (data.LJ_cut + data.LJ_offset);
+  max_cut_current = std::max(max_cut_current, (data.LJ_cut + data.LJ_offset));
 #endif
 
 #ifdef WCA
@@ -144,85 +145,68 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef DPD
-  max_cut_current =
-      std::max(max_cut_current,
-               std::max(data.dpd_radial.cutoff, data.dpd_trans.cutoff));
+  max_cut_current = std::max(
+      max_cut_current, std::max(data.dpd_radial.cutoff, data.dpd_trans.cutoff));
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
-  if (max_cut_current < (data.LJGEN_cut + data.LJGEN_offset))
-    max_cut_current = (data.LJGEN_cut + data.LJGEN_offset);
+  max_cut_current =
+      std::max(max_cut_current, (data.LJGEN_cut + data.LJGEN_offset));
 #endif
 
 #ifdef SMOOTH_STEP
-  if (max_cut_current < data.SmSt_cut)
-    max_cut_current = data.SmSt_cut;
+  max_cut_current = std::max(max_cut_current, data.SmSt_cut);
 #endif
 
 #ifdef HERTZIAN
-  if (max_cut_current < data.Hertzian_sig)
-    max_cut_current = data.Hertzian_sig;
+  max_cut_current = std::max(max_cut_current, data.Hertzian_sig);
 #endif
 
 #ifdef GAUSSIAN
-  if (max_cut_current < data.Gaussian_cut)
-    max_cut_current = data.Gaussian_cut;
+  max_cut_current = std::max(max_cut_current, data.Gaussian_cut);
 #endif
 
 #ifdef BMHTF_NACL
-  if (max_cut_current < data.BMHTF_cut)
-    max_cut_current = data.BMHTF_cut;
+  max_cut_current = std::max(max_cut_current, data.BMHTF_cut);
 #endif
 
 #ifdef MORSE
-  if (max_cut_current < data.MORSE_cut)
-    max_cut_current = data.MORSE_cut;
+  max_cut_current = std::max(max_cut_current, data.MORSE_cut);
 #endif
 
 #ifdef BUCKINGHAM
-  if (max_cut_current < data.BUCK_cut)
-    max_cut_current = data.BUCK_cut;
+  max_cut_current = std::max(max_cut_current, data.BUCK_cut);
 #endif
 
 #ifdef SOFT_SPHERE
-  if (max_cut_current < (data.soft_cut + data.soft_offset))
-    max_cut_current = (data.soft_cut + data.soft_offset);
+  max_cut_current =
+      std::max(max_cut_current, (data.soft_cut + data.soft_offset));
 #endif
 
 #ifdef AFFINITY
-  if (max_cut_current < data.affinity_cut)
-    max_cut_current = data.affinity_cut;
+  max_cut_current = std::max(max_cut_current, data.affinity_cut);
 #endif
 
 #ifdef MEMBRANE_COLLISION
-  if (max_cut_current < data.membrane_cut)
-    max_cut_current = data.membrane_cut;
+  max_cut_current = std::max(max_cut_current, data.membrane_cut);
 #endif
 
 #ifdef HAT
-  if (max_cut_current < data.HAT_r)
-    max_cut_current = data.HAT_r;
+  max_cut_current = std::max(max_cut_current, data.HAT_r);
 #endif
 
 #ifdef LJCOS
-  {
-    double max_cut_tmp = data.LJCOS_cut + data.LJCOS_offset;
-    if (max_cut_current < max_cut_tmp)
-      max_cut_current = max_cut_tmp;
-  }
+  max_cut_current =
+      std::max(max_cut_current, (data.LJCOS_cut + data.LJCOS_offset));
 #endif
 
 #ifdef LJCOS2
-  {
-    double max_cut_tmp = data.LJCOS2_cut + data.LJCOS2_offset;
-    if (max_cut_current < max_cut_tmp)
-      max_cut_current = max_cut_tmp;
-  }
+  max_cut_current =
+      std::max(max_cut_current, (data.LJCOS2_cut + data.LJCOS2_offset));
 #endif
 
 #ifdef GAY_BERNE
-  if (max_cut_current < data.GB_cut)
-    max_cut_current = data.GB_cut;
+  max_cut_current = std::max(max_cut_current, data.GB_cut);
 #endif
 
 #ifdef TABULATED
@@ -242,8 +226,8 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 double recalc_maximal_cutoff_nonbonded() {
   auto max_cut_nonbonded = INACTIVE_CUTOFF;
 
-  for(auto &data: ia_params) {
-    data.max_cut =  recalc_maximal_cutoff(data);
+  for (auto &data : ia_params) {
+    data.max_cut = recalc_maximal_cutoff(data);
     max_cut_nonbonded = std::max(max_cut_nonbonded, data.max_cut);
   }
 
