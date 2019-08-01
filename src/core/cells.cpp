@@ -191,7 +191,9 @@ void topology_init(int cs, CellPList *local) {
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
 
   switch (cs) {
+  /* Default to DD */
   case CELL_STRUCTURE_NONEYET:
+    topology_init(CELL_STRUCTURE_DOMDEC, local);
     break;
   case CELL_STRUCTURE_CURRENT:
     topology_init(cell_structure.type, local);

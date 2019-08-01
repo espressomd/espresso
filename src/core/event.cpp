@@ -88,13 +88,7 @@ void on_program_start() {
   init_node_grid();
 
   /* initially go for domain decomposition */
-  topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
-
-#ifdef CUDA
-  if (this_node == 0) {
-    //   lb_pre_init_gpu();
-  }
-#endif
+  cells_re_init(CELL_STRUCTURE_DOMDEC);
 
   /*
     call all initializations to do only on the master node here.
