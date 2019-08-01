@@ -40,12 +40,12 @@
 int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset);
 
-inline void add_ljcos_pair_force(Particle const *const p1,
-                                 Particle const *const p2,
-                                 IA_parameters const *const ia_params,
-                                 Utils::Vector3d const &d, double dist,
-                                 Utils::Vector3d &force) {
-  if ((dist < ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
+inline Utils::Vector3d
+add_ljcos_pair_force(Particle const *const p1, Particle const *const p2,
+                     IA_parameters const *const ia_params,
+                     Utils::Vector3d const &d, double dist) {
+  Utils::Vector3d force{};
+  if (dist < (ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
     auto const r_off = dist - ia_params->LJCOS_offset;
     /* cos part of ljcos potential. */
     if (dist > ia_params->LJCOS_rmin + ia_params->LJCOS_offset) {
@@ -53,14 +53,14 @@ inline void add_ljcos_pair_force(Particle const *const p1,
                        ia_params->LJCOS_eps *
                        (sin(ia_params->LJCOS_alfa * Utils::sqr(r_off) +
                             ia_params->LJCOS_beta));
-      force += fac * d;
+      force = fac * d;
     }
     /* Lennard-Jones part of the potential. */
     else if (dist > 0) {
       auto const frac6 = Utils::int_pow<6>(ia_params->LJCOS_sig / r_off);
       auto const fac =
           48.0 * ia_params->LJCOS_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
-      force += fac * d;
+      force = fac * d;
 
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)
@@ -69,6 +69,7 @@ inline void add_ljcos_pair_force(Particle const *const p1,
 #endif
     }
   }
+  return force;
 }
 
 inline double ljcos_pair_energy(Particle const *const p1,

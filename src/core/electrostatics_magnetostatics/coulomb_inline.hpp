@@ -52,30 +52,34 @@ inline Utils::Vector3d central_force(double const q1q2,
   return coulomb.prefactor * f;
 }
 
-inline void calc_pair_force(Particle *p1, Particle *p2,
-                            Utils::Vector3d const &d, double dist,
-                            Utils::Vector3d &force) {
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+calc_pair_force(Particle const *const p1, Particle const *const p2,
+                Utils::Vector3d const &d, double dist) {
   auto const q1q2 = p1->p.q * p2->p.q;
 
-  if (q1q2 == 0)
-    return;
+  if (q1q2 == 0) {
+    return std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
+                           Utils::Vector3d{});
+  }
 
-  force += central_force(q1q2, d, dist);
+  Utils::Vector3d force = central_force(q1q2, d, dist);
+  Utils::Vector3d f1{};
+  Utils::Vector3d f2{};
 
 #ifdef P3M
   if ((coulomb.method == COULOMB_ELC_P3M) &&
       (elc_params.dielectric_contrast_on)) {
     // forces from the virtual charges
     // they go directly onto the particles, since they are not pairwise forces
-    Utils::Vector3d f1{};
-    Utils::Vector3d f2{};
 
     ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1, f2);
 
-    p1->f.f += coulomb.prefactor * f1;
-    p2->f.f += coulomb.prefactor * f2;
+    f1 *= coulomb.prefactor;
+    f2 *= coulomb.prefactor;
   }
 #endif
+
+  return std::make_tuple(force, f1, f2);
 }
 
 /**

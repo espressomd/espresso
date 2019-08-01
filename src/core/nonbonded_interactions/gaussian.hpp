@@ -36,16 +36,17 @@ int gaussian_set_params(int part_type_a, int part_type_b, double eps,
                         double sig, double cut);
 
 /** Calculate Gaussian force between particle p1 and p2. */
-inline void add_gaussian_pair_force(Particle const *const p1,
-                                    Particle const *const p2,
-                                    IA_parameters const *const ia_params,
-                                    Utils::Vector3d const &d, double dist,
-                                    double dist2, Utils::Vector3d &force) {
+inline Utils::Vector3d
+add_gaussian_pair_force(Particle const *const p1, Particle const *const p2,
+                        IA_parameters const *const ia_params,
+                        Utils::Vector3d const &d, double dist, double dist2) {
   if (dist < ia_params->Gaussian_cut) {
     auto const fac = ia_params->Gaussian_eps / pow(ia_params->Gaussian_sig, 2) *
                      exp(-0.5 * Utils::sqr(dist / ia_params->Gaussian_sig));
-    force += fac * d;
+    auto const force = fac * d;
+    return force;
   }
+  return {};
 }
 
 /** Calculate Gaussian energy between particle p1 and p2. */

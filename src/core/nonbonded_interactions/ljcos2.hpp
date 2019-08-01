@@ -45,11 +45,10 @@ int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
                       double offset, double w);
 
 /** Calculate lj-cos2 force between particle p1 and p2. */
-inline void add_ljcos2_pair_force(Particle const *const p1,
-                                  Particle const *const p2,
-                                  IA_parameters const *const ia_params,
-                                  Utils::Vector3d const &d, double dist,
-                                  Utils::Vector3d &force) {
+inline Utils::Vector3d
+add_ljcos2_pair_force(Particle const *const p1, Particle const *const p2,
+                      IA_parameters const *const ia_params,
+                      Utils::Vector3d const &d, double dist) {
   if (dist < (ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
     auto const r_off = dist - ia_params->LJCOS2_offset;
     auto fac = 0.0;
@@ -62,7 +61,7 @@ inline void add_ljcos2_pair_force(Particle const *const p1,
           -ia_params->LJCOS2_eps * M_PI / 2 / ia_params->LJCOS2_w / dist *
           sin(M_PI * (r_off - ia_params->LJCOS2_rchange) / ia_params->LJCOS2_w);
     }
-    force += fac * d;
+    auto const force = fac * d;
 
 #ifdef LJ_WARN_WHEN_CLOSE
     if (fac * dist > 1000)
@@ -87,7 +86,9 @@ inline void add_ljcos2_pair_force(Particle const *const p1,
         stderr, "%d: LJ: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
         this_node, p1->p.identity, p2->p.identity, dist, force[0], force[1],
         force[2]));
+    return force;
   }
+  return {};
 }
 
 /** Calculate lj-cos2 energy between particle p1 and p2. */

@@ -70,18 +70,16 @@ calc_angle_cosine_3body_forces(Particle const *const p_mid,
  *  @param[in]  p_left    First/left particle.
  *  @param[in]  p_right   Third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @param[out] f_mid     Force on @p p_mid.
- *  @param[out] f_left    Force on @p p_left.
- *  @param[out] f_right   Force on @p p_right.
- *  @retval false
+ *  @return false and the forces on the second, first and third particles.
  */
-inline bool calc_angle_cosine_force(
-    Particle const *const p_mid, Particle const *const p_left,
-    Particle const *const p_right, Bonded_ia_parameters const *const iaparams,
-    Utils::Vector3d &f_mid, Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
-  std::tie(f_mid, f_left, f_right) =
+inline std::tuple<bool, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+calc_angle_cosine_force(Particle const *const p_mid,
+                        Particle const *const p_left,
+                        Particle const *const p_right,
+                        Bonded_ia_parameters const *const iaparams) {
+  auto forces =
       calc_angle_cosine_3body_forces(p_mid, p_left, p_right, iaparams);
-  return false;
+  return std::tuple_cat(std::make_tuple(false), forces);
 }
 
 /** Computes the three-body angle interaction energy.
@@ -89,14 +87,12 @@ inline bool calc_angle_cosine_force(
  *  @param[in]  p_left    First/left particle.
  *  @param[in]  p_right   Third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @param[out] _energy   Energy.
- *  @retval false
+ *  @return whether the bond is broken and the energy
  */
-inline bool angle_cosine_energy(Particle const *const p_mid,
-                                Particle const *const p_left,
-                                Particle const *const p_right,
-                                Bonded_ia_parameters const *const iaparams,
-                                double *_energy) {
+inline std::tuple<bool, double>
+angle_cosine_energy(Particle const *const p_mid, Particle const *const p_left,
+                    Particle const *const p_right,
+                    Bonded_ia_parameters const *const iaparams) {
   auto const vectors =
       calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
   auto const cos_phi = std::get<4>(vectors);
@@ -106,8 +102,8 @@ inline bool angle_cosine_energy(Particle const *const p_mid,
   auto const k = iaparams->p.angle_cosine.bend;
   // potential: U(phi) = k * [1 - cos(phi - phi0)]
   // trig identity: cos(phi - phi0) = cos(phi)cos(phi0) + sin(phi)sin(phi0)
-  *_energy = k * (1 - (cos_phi * cos_phi0 + sin_phi * sin_phi0));
-  return false;
+  auto const energy = k * (1 - (cos_phi * cos_phi0 + sin_phi * sin_phi0));
+  return std::make_tuple(false, energy);
 }
 
 #endif /* ANGLE_COSINE_H */

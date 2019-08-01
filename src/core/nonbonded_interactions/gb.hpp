@@ -38,18 +38,17 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double sig, double cut, double k1, double k2,
                          double mu, double nu);
 
-inline void add_gb_pair_force(Particle const *const p1,
-                              Particle const *const p2,
-                              IA_parameters const *const ia_params,
-                              Utils::Vector3d const &d, double dist,
-                              Utils::Vector3d &force,
-                              Utils::Vector3d *const torque1,
-                              Utils::Vector3d *const torque2) {
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+add_gb_pair_force(Particle const *const p1, Particle const *const p2,
+                  IA_parameters const *const ia_params,
+                  Utils::Vector3d const &d, double dist, bool calc_torque1,
+                  bool calc_torque2) {
   using Utils::int_pow;
   using Utils::sqr;
 
   if (dist >= ia_params->GB_cut) {
-    return;
+    return std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
+                           Utils::Vector3d{});
   }
 
   auto const u1 = p1->r.calc_director();
@@ -76,6 +75,8 @@ inline void add_gb_pair_force(Particle const *const p1,
   auto const X = ia_params->GB_sig / (dist - Sigma + ia_params->GB_sig);
   auto const Xcut =
       ia_params->GB_sig / (ia_params->GB_cut - Sigma + ia_params->GB_sig);
+
+  Utils::Vector3d force, torque1, torque2;
 
   if (X < 1.25) { /* 1.25 corresponds to the interparticle penetration of 0.2
                     units of length.
@@ -112,23 +113,24 @@ inline void add_gb_pair_force(Particle const *const p1,
 
     /*--------------------------------------------------------------------*/
 
-    force -= dU_dr * d + dU_da * u1 + dU_db * u2;
+    force = -dU_dr * d - dU_da * u1 - dU_db * u2;
 
-    if (torque1 != nullptr) {
+    if (calc_torque1) {
       /* calculate torque:  torque = u_1 x G   */
       auto const G2 = -dU_da * d - dU_dc * u2;
-      *torque1 += vector_product(u1, G2);
+      torque1 = vector_product(u1, G2);
 
-      if (torque2 != nullptr) {
+      if (calc_torque2) {
         /* calculate torque:  torque = u_2 x G     */
         auto const G1 = -dU_db * d - dU_dc * u1;
-        *torque2 += vector_product(u2, G1);
+        torque2 = vector_product(u2, G1);
       }
     }
   } else { /* the particles are too close to each other */
     Koef1 = 100;
-    force += Koef1 * d;
+    force = Koef1 * d;
   }
+  return std::make_tuple(force, torque1, torque2);
 }
 
 inline double gb_pair_energy(Particle const *const p1, Particle const *const p2,

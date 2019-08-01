@@ -36,13 +36,13 @@ int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
                            double eps, double k0, double sig, double cut);
 
 /** Calculate smooth step force between particle p1 and p2 */
-inline void add_SmSt_pair_force(Particle const *const p1,
-                                Particle const *const p2,
-                                IA_parameters const *const ia_params,
-                                Utils::Vector3d const &d, double dist,
-                                double dist2, Utils::Vector3d &force) {
+inline Utils::Vector3d add_SmSt_pair_force(Particle const *const p1,
+                                           Particle const *const p2,
+                                           IA_parameters const *const ia_params,
+                                           Utils::Vector3d const &d,
+                                           double dist, double dist2) {
   if (dist >= ia_params->SmSt_cut) {
-    return;
+    return {};
   }
 
   auto const frac = ia_params->SmSt_d / dist;
@@ -52,7 +52,8 @@ inline void add_SmSt_pair_force(Particle const *const p1,
                                                     ia_params->SmSt_k0 * dist *
                                                     er / Utils::sqr(1.0 + er)) /
                    dist2;
-  force += fac * d;
+  auto const force = fac * d;
+  return force;
 }
 
 /** Calculate smooth step energy between particle p1 and p2. */

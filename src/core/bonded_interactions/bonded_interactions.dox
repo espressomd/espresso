@@ -61,14 +61,16 @@
  *
  *  * The recommended signatures of the force and energy functions are:
  *    @code{.cpp}
- *    inline bool calc_fene_pair_force(Particle const *const p1,
- *                                     Particle const *const p2,
- *                                     Bonded_ia_parameters const *const iaparams,
- *                                     Vector3d const &dx, Vector3d &force);
- *    inline bool fene_pair_energy(Particle const *const p1,
- *                                 Particle const *const p2,
- *                                 Bonded_ia_parameters const *const iaparams,
- *                                 Vector3d const &dx, double *energy);
+ *    inline std::tuple<bool, Utils::Vector3d>
+ *    calc_fene_pair_force(Particle const *const p1,
+ *                         Particle const *const p2,
+ *                         Bonded_ia_parameters const *const iaparams,
+ *                         Utils::Vector3d const &dx);
+ *    inline std::tuple<bool, double>
+ *    fene_pair_energy(Particle const *const p1,
+ *                     Particle const *const p2,
+ *                     Bonded_ia_parameters const *const iaparams,
+ *                     Utils::Vector3d const &dx);
  *    @endcode
  *  * The setter function gets a \p bond_type which is a numerical id
  *    identifying the number of the bond type in the simulation.
@@ -102,10 +104,7 @@
  *  * The functions calculating force and energy can make use of a
  *    pre-calculated distance vector (\p dx) pointing from particle 2 to
  *    particle 1, that takes periodic boundary conditions into account.
- *  * The force on particle 1 has to be stored in (NOT added to) the force
- *    vector. The force on particle 2 will be obtained from Newton's law.
- *  * The result of the energy calculation is placed in (NOT added to) the
- *    @p _energy argument.
+ *  * The force and energy functions cannot alter the particle states.
  *
  *  @subsection bondedIA_new_integration Including the bonded interaction in \
  *                                       the force calculation and the energy \
@@ -125,7 +124,8 @@
  *      code looks like this:
  *      @code{.cpp}
  *      case BONDED_IA_FENE:
- *        bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+ *        std::tie(bond_broken, force1) =
+ *          calc_fene_pair_force(p1, p2, iaparams, dx);
  *        break;
  *      @endcode
  *    - in function @ref calc_bond_pair_force(): add the new interaction to the
@@ -133,8 +133,8 @@
  *      the code looks like this:
  *      @code{.cpp}
  *      case BONDED_IA_ANGLE_HARMONIC:
- *        bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force,
- *                                                force2, force3);
+ *        std::tie(bond_broken, force2, force1, force3) =
+ *          calc_angle_harmonic_force(p2, p1, p3, iaparams);
  *        break;
  *      @endcode
  *  * In energy_inline.hpp:
@@ -143,7 +143,7 @@
  *      switch statement. For the FENE bond, e.g., the code looks like this:
  *      @code{.cpp}
  *      case BONDED_IA_FENE:
- *        bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
+ *        std::tie(bond_broken, ret) = fene_pair_energy(p1, p2, iaparams, dx);
  *        break;
  *      @endcode
  *  * Pressure, stress tensor and virial calculation: if your bonded

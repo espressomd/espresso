@@ -47,10 +47,11 @@ inline double sigmoid_force_r(double a, double n, double r) {
 }
 
 /** Calculate membrane-collision force between particle p1 and p2 */
-inline void add_membrane_collision_pair_force(
-    Particle const *const p1, Particle const *const p2,
-    IA_parameters const *const ia_params, Utils::Vector3d const &d, double dist,
-    Utils::Vector3d &force) {
+inline Utils::Vector3d
+add_membrane_collision_pair_force(Particle const *const p1,
+                                  Particle const *const p2,
+                                  IA_parameters const *const ia_params,
+                                  Utils::Vector3d const &d, double dist) {
   /************************
    *
    * Description of implementation:
@@ -67,7 +68,7 @@ inline void add_membrane_collision_pair_force(
    *in the direction out1-out2
    *
    *********************/
-
+  Utils::Vector3d force{};
   if (dist < (ia_params->membrane_cut + ia_params->membrane_offset)) {
 
     auto const r_off = dist - ia_params->membrane_offset;
@@ -99,10 +100,11 @@ inline void add_membrane_collision_pair_force(
         auto const fac = sigmoid_force_r(ia_params->membrane_a,
                                          ia_params->membrane_n, r_off) /
                          dist;
-        force -= (fac / ndir) * dir;
+        force = (-fac / ndir) * dir;
       }
     }
   }
+  return force;
 }
 
 #endif /* ifdef MEMBRANE_COLLISION */

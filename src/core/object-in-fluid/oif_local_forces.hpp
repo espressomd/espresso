@@ -45,33 +45,25 @@ inline double KS(double lambda) { // Defined by (19) from Dupin2007
 
 /** Compute the local forces (Dupin2007) and adds them
  *  to the particle forces.
- *  @param p1           %Particle of triangle 1.
- *  @param p2 , p3      Particles common to triangle 1 and triangle 2.
+ *  @param p2           %Particle of triangle 1.
+ *  @param p1 , p3      Particles common to triangle 1 and triangle 2.
  *  @param p4           %Particle of triangle 2.
  *  @param iaparams     Bonded parameters for the OIF interaction.
- *  @param force1       Force on @p p1.
- *  @param force2       Force on @p p2.
- *  @param force3       Force on @p p3.
- *  @param force4       Force on @p p4.
- *  @return false
+ *  @return false and forces on @p p1, @p p2, @p p3, @p p4
  */
-inline bool
+inline std::tuple<bool, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
+                  Utils::Vector3d>
 calc_oif_local(Particle const *const p2, Particle const *const p1,
                Particle const *const p3, Particle const *const p4,
-               Bonded_ia_parameters const *const iaparams,
-               Utils::Vector3d &force1, Utils::Vector3d &force2,
-               Utils::Vector3d &force3,
-               Utils::Vector3d &force4) { // first-fold-then-the-same approach
+               Bonded_ia_parameters const *const iaparams) {
 
+  // first-fold-then-the-same approach
   auto const fp2 = unfolded_position(p2->r.p, p2->l.i, box_geo.length());
   auto const fp1 = fp2 + get_mi_vector(p1->r.p, fp2, box_geo);
   auto const fp3 = fp2 + get_mi_vector(p3->r.p, fp2, box_geo);
   auto const fp4 = fp2 + get_mi_vector(p4->r.p, fp2, box_geo);
 
-  force1 = {};
-  force2 = {};
-  force3 = {};
-  force4 = {};
+  Utils::Vector3d force1{}, force2{}, force3{}, force4{};
 
   // non-linear stretching
   if (iaparams->p.oif_local_forces.ks > TINY_OIF_ELASTICITY_COEFFICIENT) {
@@ -202,7 +194,7 @@ calc_oif_local(Particle const *const p2, Particle const *const p1,
                     iaparams->p.oif_local_forces.A02, fp2, fp3, fp4, force2,
                     force3, force4);
   }
-  return false;
+  return std::make_tuple(false, force2, force1, force3, force4);
 }
 
 #endif

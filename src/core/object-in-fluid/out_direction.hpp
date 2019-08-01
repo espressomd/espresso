@@ -48,12 +48,12 @@ int oif_out_direction_set_params(int bond_type);
  *  oriented in such a way that its normal already points out of the object.
  *  Normalizes and stores the result as @ref ParticleProperties::out_direction
  *  "out_direction" in @p p1.
- *  @retval 0
+ *  @return false and the outward direction
  */
-inline int calc_out_direction(Particle *const p1, Particle const *const p2,
-                              Particle const *const p3,
-                              Particle const *const p4,
-                              Bonded_ia_parameters const * /* iaparams */) {
+inline std::tuple<bool, Utils::Vector3d>
+calc_out_direction(Particle *const p1, Particle const *const p2,
+                   Particle const *const p3, Particle const *const p4,
+                   Bonded_ia_parameters const * /* iaparams */) {
 
   // first-fold-then-the-same approach
   auto const fp2 = unfolded_position(p2->r.p, p2->l.i, box_geo.length());
@@ -68,9 +68,8 @@ inline int calc_out_direction(Particle *const p1, Particle const *const p2,
            "close to zero!\n");
   }
 
-  p1->p.out_direction = n / dn;
-
-  return 0;
+  auto const outward_direction = n / dn;
+  return std::make_tuple(false, outward_direction);
 }
 
 #endif /* ifdef MEMBRANE_COLLISION */

@@ -49,21 +49,17 @@ int bonded_coulomb_set_params(int bond_type, double prefactor);
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] force     Force.
- *  @retval false
+ *  @return false and the force
  */
-inline bool calc_bonded_coulomb_pair_force(
+inline std::tuple<bool, Utils::Vector3d> calc_bonded_coulomb_pair_force(
     Particle const *const p1, Particle const *const p2,
-    Bonded_ia_parameters const *const iaparams, Utils::Vector3d const &dx,
-    Utils::Vector3d &force) {
+    Bonded_ia_parameters const *const iaparams, Utils::Vector3d const &dx) {
   auto const dist2 = dx.norm2();
   auto const dist = std::sqrt(dist2);
-
   auto const fac =
       iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / (dist * dist2);
-  force = fac * dx;
-
-  return false;
+  auto const force = fac * dx;
+  return std::make_tuple(false, force);
 }
 
 /** Compute the bonded Coulomb pair energy.
@@ -71,17 +67,16 @@ inline bool calc_bonded_coulomb_pair_force(
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] _energy   Energy.
- *  @retval false
+ *  @return whether the bond is broken and the energy
  */
-inline bool
+inline std::tuple<bool, double>
 bonded_coulomb_pair_energy(Particle const *const p1, Particle const *const p2,
                            Bonded_ia_parameters const *const iaparams,
-                           Utils::Vector3d const &dx, double *_energy) {
+                           Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
-
-  *_energy = iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / dist;
-  return false;
+  auto const energy =
+      iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / dist;
+  return std::make_tuple(false, energy);
 }
 
 #endif

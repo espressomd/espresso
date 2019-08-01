@@ -38,42 +38,39 @@
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
  */
-inline void add_non_bonded_pair_virials(Particle *const p1, Particle *const p2,
+inline void add_non_bonded_pair_virials(Particle const *const p1,
+                                        Particle const *const p2,
                                         Utils::Vector3d const &d, double dist,
                                         double dist2) {
-  int p1molid, p2molid, k, l;
-  Utils::Vector3d force{};
-
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
   {
-    calc_non_bonded_pair_force(p1, p2, d, dist, dist2, force);
+    auto const force = calc_non_bonded_pair_force(p1, p2, d, dist, dist2);
     *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d * force;
 
     /* stress tensor part */
-    for (k = 0; k < 3; k++)
-      for (l = 0; l < 3; l++)
+    for (int k = 0; k < 3; k++)
+      for (int l = 0; l < 3; l++)
         obsstat_nonbonded(&p_tensor, p1->p.type, p2->p.type)[k * 3 + l] +=
             force[k] * d[l];
 
-    p1molid = p1->p.mol_id;
-    p2molid = p2->p.mol_id;
+    auto const p1molid = p1->p.mol_id;
+    auto const p2molid = p2->p.mol_id;
     if (p1molid == p2molid) {
       *obsstat_nonbonded_intra(&virials_non_bonded, p1->p.type, p2->p.type) +=
           d * force;
 
-      for (k = 0; k < 3; k++)
-        for (l = 0; l < 3; l++)
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
           obsstat_nonbonded_intra(&p_tensor_non_bonded, p1->p.type,
                                   p2->p.type)[k * 3 + l] += force[k] * d[l];
-    }
-    if (p1molid != p2molid) {
+    } else {
       *obsstat_nonbonded_inter(&virials_non_bonded, p1->p.type, p2->p.type) +=
           d * force;
 
-      for (k = 0; k < 3; k++)
-        for (l = 0; l < 3; l++)
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
           obsstat_nonbonded_inter(&p_tensor_non_bonded, p1->p.type,
                                   p2->p.type)[k * 3 + l] += force[k] * d[l];
     }
@@ -109,57 +106,54 @@ inline void add_non_bonded_pair_virials(Particle *const p1, Particle *const p2,
  *  @param[in]  p_left    First/left particle.
  *  @param[in]  p_right   Third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @param[out] f_mid     Force on @p p_mid.
- *  @param[out] f_left    Force on @p p_left.
- *  @param[out] f_right   Force on @p p_right.
+ *  @return forces on @p p_mid, @p f_left, @p f_right
  */
-inline void calc_three_body_bonded_forces(
-    Particle const *const p_mid, Particle const *const p_left,
-    Particle const *const p_right, Bonded_ia_parameters const *const iaparams,
-    Utils::Vector3d &f_mid, Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+calc_three_body_bonded_forces(Particle const *const p_mid,
+                              Particle const *const p_left,
+                              Particle const *const p_right,
+                              Bonded_ia_parameters const *const iaparams) {
+
+  std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d> result;
   switch (iaparams->type) {
   case BONDED_IA_ANGLE_HARMONIC:
-    std::tie(f_mid, f_left, f_right) =
-        calc_angle_harmonic_3body_forces(p_mid, p_left, p_right, iaparams);
+    result = calc_angle_harmonic_3body_forces(p_mid, p_left, p_right, iaparams);
     break;
   case BONDED_IA_ANGLE_COSINE:
-    std::tie(f_mid, f_left, f_right) =
-        calc_angle_cosine_3body_forces(p_mid, p_left, p_right, iaparams);
+    result = calc_angle_cosine_3body_forces(p_mid, p_left, p_right, iaparams);
     break;
   case BONDED_IA_ANGLE_COSSQUARE:
-    std::tie(f_mid, f_left, f_right) =
+    result =
         calc_angle_cossquare_3body_forces(p_mid, p_left, p_right, iaparams);
     break;
   case BONDED_IA_TABULATED:
     switch (iaparams->p.tab.type) {
     case TAB_BOND_ANGLE:
-      std::tie(f_mid, f_left, f_right) =
+      result =
           calc_angle_3body_tabulated_forces(p_mid, p_left, p_right, iaparams);
       break;
     default:
       runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
                         << p_mid->p.identity << " unknown\n";
-      f_mid = f_left = f_right = Utils::Vector3d{};
-      return;
+      result = std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
+                               Utils::Vector3d{});
     }
     break;
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \
             WARNING: Bond type %d, atom %d unhandled, Atom 2: %d\n",
             iaparams->type, p_mid->p.identity, p_left->p.identity);
-    f_mid = f_left = f_right = Utils::Vector3d{};
+    result = std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
+                             Utils::Vector3d{});
     break;
   }
+  return result;
 }
 
 /** Calculate bonded virials for one particle.
- *  For performance reasons the force routines add their values directly to the
- *  particles. So here we do some tricks to get the value out without changing
- *  the forces.
  *  @param p1 particle for which to calculate virials
  */
-inline void add_bonded_virials(Particle *const p1) {
-  Utils::Vector3d force{};
+inline void add_bonded_virials(Particle const *const p1) {
 
   int i = 0;
   while (i < p1->bl.n) {
@@ -185,7 +179,9 @@ inline void add_bonded_virials(Particle *const p1) {
     }
 
     auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
-    calc_bond_pair_force(p1, p2, iaparams, dx, force);
+    Utils::Vector3d torque{};
+    auto const force =
+        std::get<1>(calc_bond_pair_force(p1, p2, iaparams, dx, torque));
     *obsstat_bonded(&virials, type_num) += dx * force;
 
     /* stress tensor part */
@@ -220,7 +216,8 @@ inline void add_three_body_bonded_stress(Particle const *const p1) {
     auto const dx31 = get_mi_vector(p3->r.p, p1->r.p, box_geo);
 
     Utils::Vector3d force1, force2, force3;
-    calc_three_body_bonded_forces(p1, p2, p3, iaparams, force1, force2, force3);
+    std::tie(force1, force2, force3) =
+        calc_three_body_bonded_forces(p1, p2, p3, iaparams);
     /* three-body bonded interactions contribute to the stress but not the
      * scalar pressure */
     for (int k = 0; k < 3; k++) {
@@ -235,12 +232,12 @@ inline void add_three_body_bonded_stress(Particle const *const p1) {
 
 /** Calculate kinetic pressure (aka energy) for one particle.
  *  @param p1 particle for which to calculate pressure
- *  @param v_comp flag which enables (1) compensation of the velocities required
+ *  @param v_comp flag which enables compensation of the velocities required
  *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
  *                (hence it only works with domain decomposition); naturally it
  *                therefore doesn't make sense to use it without NpT.
  */
-inline void add_kinetic_virials(Particle const *const p1, int v_comp) {
+inline void add_kinetic_virials(Particle const *const p1, bool v_comp) {
   /* kinetic energy */
   if (v_comp) {
     virials.data.e[0] +=

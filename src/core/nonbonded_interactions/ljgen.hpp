@@ -55,11 +55,10 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
 );
 
 /** Calculate Lennard-Jones force between particle p1 and p2 */
-inline void add_ljgen_pair_force(Particle const *const p1,
-                                 Particle const *const p2,
-                                 IA_parameters const *const ia_params,
-                                 Utils::Vector3d const &d, double dist,
-                                 Utils::Vector3d &force) {
+inline Utils::Vector3d
+add_ljgen_pair_force(Particle const *const p1, Particle const *const p2,
+                     IA_parameters const *const ia_params,
+                     Utils::Vector3d const &d, double dist) {
   if (dist < (ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
     auto r_off = dist - ia_params->LJGEN_offset;
 
@@ -82,7 +81,7 @@ inline void add_ljgen_pair_force(Particle const *const p1,
                         ia_params->LJGEN_b2 * ia_params->LJGEN_a2 *
                             pow(frac, ia_params->LJGEN_a2)) /
                      (r_off * dist);
-    force += fac * d;
+    auto const force = fac * d;
 
 #ifdef LJ_WARN_WHEN_CLOSE
     if (fac * dist > 1000)
@@ -107,7 +106,9 @@ inline void add_ljgen_pair_force(Particle const *const p1,
         "%d: LJGEN: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
         this_node, p1->p.identity, p2->p.identity, dist, force[0], force[1],
         force[2]));
+    return force;
   }
+  return {};
 }
 
 /** Calculate Lennard-Jones energy between particle p1 and p2. */

@@ -51,11 +51,11 @@ inline double buck_energy_r(double A, double B, double C, double D,
 
 /** Calculate Buckingham force between particle p1 and p2 and add
     it to their force. */
-inline void add_buck_pair_force(Particle const *const p1,
-                                Particle const *const p2,
-                                IA_parameters const *const ia_params,
-                                Utils::Vector3d const &d, double dist,
-                                Utils::Vector3d &force) {
+inline Utils::Vector3d add_buck_pair_force(Particle const *const p1,
+                                           Particle const *const p2,
+                                           IA_parameters const *const ia_params,
+                                           Utils::Vector3d const &d,
+                                           double dist) {
   if (dist < ia_params->BUCK_cut) {
     /* case: resulting force/energy greater than discontinuity and
              less than cutoff (true Buckingham region) */
@@ -64,7 +64,6 @@ inline void add_buck_pair_force(Particle const *const p1,
       fac = buck_force_r(ia_params->BUCK_A, ia_params->BUCK_B,
                          ia_params->BUCK_C, ia_params->BUCK_D, dist) /
             dist;
-      force += fac * d;
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)
         fprintf(stderr, "%d: BUCK-Warning: Pair (%d-%d) force=%f dist=%f\n",
@@ -73,8 +72,8 @@ inline void add_buck_pair_force(Particle const *const p1,
     } else {
       /* resulting force/energy in the linear region*/
       fac = -ia_params->BUCK_F2 / dist;
-      force += fac * d;
     }
+    auto const force = fac * d;
 
     ONEPART_TRACE(if (p1->p.identity == check_id)
                       fprintf(stderr,
@@ -93,7 +92,9 @@ inline void add_buck_pair_force(Particle const *const p1,
         stderr, "%d: BUCK: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
         this_node, p1->p.identity, p2->p.identity, dist, fac * d[0], fac * d[1],
         fac * d[2]));
+    return force;
   }
+  return {};
 }
 
 /** calculate Buckingham energy between particle p1 and p2. */

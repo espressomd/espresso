@@ -34,10 +34,11 @@ namespace {
  *  system, construct vector perpendicular to r(p1->p2); note that f3 is not
  *  calculated here but is implicitly calculated by f3 = -(f1+f2) which is
  *  consistent with the literature
+ *  @return forces on particles 1, 2, 3
  */
-void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
-                  Utils::Vector3d &f1, Utils::Vector3d &f2,
-                  Utils::Vector3d const &v12, Utils::Vector3d const &v13) {
+std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
+             Utils::Vector3d const &v12, Utils::Vector3d const &v13) {
   // fRot is in the rotated system, i.e. in a system where the side lPrime of
   // the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is
   // perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).
@@ -60,14 +61,17 @@ void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
   auto const yu = (v13 - (v13 * xu) * xu).normalize();
 
   // Calculate forces in 3D
-  f1 = f1_rot[0] * xu + f1_rot[1] * yu;
-  f2 = f2_rot[0] * xu + f2_rot[1] * yu;
+  auto const force1 = f1_rot[0] * xu + f1_rot[1] * yu;
+  auto const force2 = f2_rot[0] * xu + f2_rot[1] * yu;
+  auto const force3 = -(force1 + force2);
+  return std::make_tuple(force1, force2, force3);
 }
 } // namespace
 
-int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
-                        Particle *const p3,
-                        Bonded_ia_parameters const *const iaparams) {
+std::tuple<bool, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
+                    Particle const *const p3,
+                    Bonded_ia_parameters const *const iaparams) {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
@@ -82,7 +86,8 @@ int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
   // Check for sanity
   if ((lp - iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxDist) ||
       (l - iaparams->p.ibm_triel.l0 > iaparams->p.ibm_triel.maxDist)) {
-    return 1;
+    return std::make_tuple(true, Utils::Vector3d{}, Utils::Vector3d{},
+                           Utils::Vector3d{});
   }
 
   // angles between these vectors; calculated directly via the products
@@ -226,16 +231,9 @@ int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
    */
 
   // Rotate forces back into original position of triangle
-  Utils::Vector3d force1{};
-  Utils::Vector3d force2{};
-  RotateForces(f1_rot, f2_rot, force1, force2, vec1, vec2);
+  auto forces = RotateForces(f1_rot, f2_rot, vec1, vec2);
 
-  // Calculate f3 from equilibrium and add
-  p1->f.f += force1;
-  p2->f.f += force2;
-  p3->f.f -= force1 + force2;
-
-  return 0;
+  return std::tuple_cat(std::make_tuple(false), forces);
 }
 
 int IBM_Triel_ResetParams(const int bond_type, const double k1,

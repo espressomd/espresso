@@ -219,11 +219,12 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
 /** Calculate real space contribution of p3m dipolar pair forces and torques.
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
-inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
-                                  Utils::Vector3d const &d, double dist2,
-                                  double dist, Utils::Vector3d &force) {
+inline std::tuple<double, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+dp3m_add_pair_force(Particle const *const p1, Particle const *const p2,
+                    Utils::Vector3d const &d, double dist2, double dist) {
   if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
-    return 0.;
+    return std::make_tuple(0.0, Utils::Vector3d{}, Utils::Vector3d{},
+                           Utils::Vector3d{});
 
   if (dist < dp3m.params.r_cut && dist > 0) {
     auto const dip1 = p1->calc_dip();
@@ -256,8 +257,9 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
     D_r = (5 * C_r + 4 * coeff * alpsq * alpsq * exp_adist2) * dist2i;
 
     // Calculate real-space forces
-    force += dipole.prefactor *
-             ((mimj * d + dip1 * mjr + dip2 * mir) * C_r - mir * mjr * D_r * d);
+    auto const force =
+        dipole.prefactor *
+        ((mimj * d + dip1 * mjr + dip2 * mir) * C_r - mir * mjr * D_r * d);
 
 #ifdef ROTATION
     // Calculate vector multiplications for vectors mi, mj, rij
@@ -266,8 +268,8 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
     auto const mjxr = vector_product(dip2, d);
 
     // Calculate real-space torques
-    p1->f.torque += dipole.prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
-    p2->f.torque += dipole.prefactor * (mixmj * B_r + mjxr * (mir * C_r));
+    auto const torque1 = dipole.prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
+    auto const torque2 = dipole.prefactor * (mixmj * B_r + mjxr * (mir * C_r));
 #endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
@@ -275,10 +277,14 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
 #else
     auto const fac = dipole.prefactor * p1->p.dipm * p2->p.dipm;
 #endif
-    return fac * (mimj * B_r - mir * mjr * C_r);
+    auto const _energy = fac * (mimj * B_r - mir * mjr * C_r);
+#else
+    auto const _energy = 0.0;
 #endif
+    return std::make_tuple(_energy, force, torque1, torque2);
   }
-  return 0.0;
+  return std::make_tuple(0.0, Utils::Vector3d{}, Utils::Vector3d{},
+                         Utils::Vector3d{});
 }
 
 /** Calculate real space contribution of dipolar pair energy. */

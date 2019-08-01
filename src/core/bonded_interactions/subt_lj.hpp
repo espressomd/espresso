@@ -46,38 +46,30 @@ int subt_lj_set_params(int bond_type);
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] force     Force.
- *  @retval false
+ *  @return false and the force
  */
-inline bool calc_subt_lj_pair_force(Particle const *const p1,
-                                    Particle const *const p2,
-                                    Bonded_ia_parameters const *,
-                                    Utils::Vector3d const &dx,
-                                    Utils::Vector3d &force) {
+inline std::tuple<bool, Utils::Vector3d>
+calc_subt_lj_pair_force(Particle const *const p1, Particle const *const p2,
+                        Bonded_ia_parameters const *,
+                        Utils::Vector3d const &dx) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
-
   auto const neg_dir = -dx;
-
-  add_lj_pair_force(ia_params, neg_dir, neg_dir.norm(), force);
-
-  return false;
+  auto const force = add_lj_pair_force(ia_params, neg_dir, neg_dir.norm());
+  return std::make_tuple(false, force);
 }
 
 /** Computes the negative of the Lennard-Jones pair energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] _energy   Energy.
- *  @retval false
+ *  @return whether the bond is broken and the energy
  */
-inline bool subt_lj_pair_energy(Particle const *const p1,
-                                Particle const *const p2,
-                                Bonded_ia_parameters const *,
-                                Utils::Vector3d const &dx, double *_energy) {
+inline std::tuple<bool, double>
+subt_lj_pair_energy(Particle const *const p1, Particle const *const p2,
+                    Bonded_ia_parameters const *, Utils::Vector3d const &dx) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
-
-  *_energy = -lj_pair_energy(ia_params, dx.norm());
-  return false;
+  auto const energy = -lj_pair_energy(ia_params, dx.norm());
+  return std::make_tuple(false, energy);
 }
 
 #endif

@@ -53,18 +53,19 @@ inline double soft_energy_r(double a, double n, double r) {
 }
 
 /** Calculate soft-sphere potential force between particle p1 and p2 */
-inline void add_soft_pair_force(Particle const *const p1,
-                                Particle const *const p2,
-                                IA_parameters const *const ia_params,
-                                Utils::Vector3d const &d, double dist,
-                                Utils::Vector3d &force) {
-  double fac = 0.0;
+inline Utils::Vector3d add_soft_pair_force(Particle const *const p1,
+                                           Particle const *const p2,
+                                           IA_parameters const *const ia_params,
+                                           Utils::Vector3d const &d,
+                                           double dist) {
+  Utils::Vector3d force;
   if (dist < (ia_params->soft_cut + ia_params->soft_offset)) {
     /* normal case: resulting force/energy smaller than zero. */
     auto const r_off = dist - ia_params->soft_offset;
     if (r_off > 0.0) {
-      fac = soft_force_r(ia_params->soft_a, ia_params->soft_n, r_off) / dist;
-      force += fac * d;
+      auto const fac =
+          soft_force_r(ia_params->soft_a, ia_params->soft_n, r_off) / dist;
+      force = fac * d;
 
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)
@@ -86,7 +87,9 @@ inline void add_soft_pair_force(Particle const *const p1,
                               "with part id=%d at dist %f fac %.3e\n",
                               this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                               p1->p.identity, dist, fac));
+    return force;
   }
+  return {};
 }
 
 /** Calculate soft-sphere energy between particle p1 and p2. */

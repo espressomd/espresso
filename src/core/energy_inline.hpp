@@ -199,7 +199,7 @@ inline void add_non_bonded_pair_energy(Particle const *const p1,
 #endif
 
 #ifdef DIPOLES
-  Dipole::add_pair_energy(p1, p2, d, dist, dist2, energy);
+  energy.dipolar[0] += Dipole::add_pair_energy(p1, p2, d, dist, dist2);
 #endif
 }
 
@@ -256,30 +256,33 @@ inline void add_bonded_energy(Particle const *const p1) {
       auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
       switch (type) {
       case BONDED_IA_FENE:
-        bond_broken = fene_pair_energy(iaparams, dx, &ret);
+        std::tie(bond_broken, ret) = fene_pair_energy(iaparams, dx);
         break;
 #ifdef ROTATION
       case BONDED_IA_HARMONIC_DUMBBELL:
-        bond_broken = harmonic_dumbbell_pair_energy(p1, iaparams, dx, &ret);
+        std::tie(bond_broken, ret) =
+            harmonic_dumbbell_pair_energy(p1, iaparams, dx);
         break;
 #endif
       case BONDED_IA_HARMONIC:
-        bond_broken = harmonic_pair_energy(iaparams, dx, &ret);
+        std::tie(bond_broken, ret) = harmonic_pair_energy(iaparams, dx);
         break;
       case BONDED_IA_QUARTIC:
-        bond_broken = quartic_pair_energy(iaparams, dx, &ret);
+        std::tie(bond_broken, ret) = quartic_pair_energy(iaparams, dx);
         break;
 #ifdef ELECTROSTATICS
       case BONDED_IA_BONDED_COULOMB:
-        bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
+        std::tie(bond_broken, ret) =
+            bonded_coulomb_pair_energy(p1, p2, iaparams, dx);
         break;
       case BONDED_IA_BONDED_COULOMB_SR:
-        bond_broken = bonded_coulomb_sr_pair_energy(p1, p2, iaparams, dx, &ret);
+        std::tie(bond_broken, ret) =
+            bonded_coulomb_sr_pair_energy(p1, p2, iaparams, dx);
         break;
 #endif
 #ifdef LENNARD_JONES
       case BONDED_IA_SUBT_LJ:
-        bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
+        std::tie(bond_broken, ret) = subt_lj_pair_energy(p1, p2, iaparams, dx);
         break;
 #endif
 #ifdef BOND_CONSTRAINT
@@ -290,11 +293,11 @@ inline void add_bonded_energy(Particle const *const p1) {
 #endif
       case BONDED_IA_TABULATED:
         if (iaparams->num == 1)
-          bond_broken = tab_bond_energy(iaparams, dx, &ret);
+          std::tie(bond_broken, ret) = tab_bond_energy(iaparams, dx);
         break;
 #ifdef UMBRELLA
       case BONDED_IA_UMBRELLA:
-        bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
+        std::tie(bond_broken, ret) = umbrella_pair_energy(p1, p2, iaparams, dx);
         break;
 #endif
       case BONDED_IA_VIRTUAL_BOND:
@@ -310,17 +313,19 @@ inline void add_bonded_energy(Particle const *const p1) {
     else if (n_partners == 2) {
       switch (type) {
       case BONDED_IA_ANGLE_HARMONIC:
-        bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
+        std::tie(bond_broken, ret) =
+            angle_harmonic_energy(p1, p2, p3, iaparams);
         break;
       case BONDED_IA_ANGLE_COSINE:
-        bond_broken = angle_cosine_energy(p1, p2, p3, iaparams, &ret);
+        std::tie(bond_broken, ret) = angle_cosine_energy(p1, p2, p3, iaparams);
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
-        bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
+        std::tie(bond_broken, ret) =
+            angle_cossquare_energy(p1, p2, p3, iaparams);
         break;
       case BONDED_IA_TABULATED:
         if (iaparams->num == 2)
-          bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
+          std::tie(bond_broken, ret) = tab_angle_energy(p1, p2, p3, iaparams);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
@@ -331,11 +336,12 @@ inline void add_bonded_energy(Particle const *const p1) {
     else if (n_partners == 3) {
       switch (type) {
       case BONDED_IA_DIHEDRAL:
-        bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
+        std::tie(bond_broken, ret) = dihedral_energy(p2, p1, p3, p4, iaparams);
         break;
       case BONDED_IA_TABULATED:
         if (iaparams->num == 3)
-          bond_broken = tab_dihedral_energy(p1, p2, p3, p4, iaparams, &ret);
+          std::tie(bond_broken, ret) =
+              tab_dihedral_energy(p1, p2, p3, p4, iaparams);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type

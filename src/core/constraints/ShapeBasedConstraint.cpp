@@ -61,7 +61,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           double t) {
 
   double dist = 0.;
-  Utils::Vector3d dist_vec, force1{}, torque1{}, torque2{}, outer_normal_vec;
+  Utils::Vector3d dist_vec, force1, torque1{}, torque2{}, outer_normal_vec;
 
   IA_parameters const *const ia_params =
       get_ia_param(p.p.type, part_rep.p.type);
@@ -72,8 +72,8 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
       auto const dist2 = dist * dist;
-      calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec, dist,
-                                 dist2, force1, &torque1, &torque2);
+      force1 = calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec,
+                                          dist, dist2, &torque1, &torque2);
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
         force1 +=
@@ -85,8 +85,8 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
         auto const dist2 = dist * dist;
-        calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec, -dist,
-                                   dist2, force1, &torque1, &torque2);
+        force1 = calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec,
+                                            -dist, dist2, &torque1, &torque2);
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
           force1 +=

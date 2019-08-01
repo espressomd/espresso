@@ -26,9 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <utils/constants.hpp>
 
-void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
-                           Particle *p4,
-                           Bonded_ia_parameters const *const iaparams) {
+std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+IBM_Tribend_CalcForce(Particle const *const p1, Particle const *const p2,
+                      Particle const *const p3, Particle const *const p4,
+                      Bonded_ia_parameters const *const iaparams) {
   assert(p1);
   assert(p2);
   assert(p3);
@@ -76,23 +77,18 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   auto const v1 = (n2 - sc * n1).normalize();
   auto const v2 = (n1 - sc * n2).normalize();
 
-  // Force for particle 1:
-  p1->f.f +=
+  // Force on particles
+  auto const force1 =
       Pre * (vector_product(get_mi_vector(p2->r.p, p3->r.p, box_geo), v1) / Ai +
              vector_product(get_mi_vector(p3->r.p, p4->r.p, box_geo), v2) / Aj);
-
-  // Force for particle 2:
-  p2->f.f +=
+  auto const force2 =
       Pre * (vector_product(get_mi_vector(p3->r.p, p1->r.p, box_geo), v1) / Ai);
-
-  // Force for particle 3:
-  p3->f.f +=
+  auto const force3 =
       Pre * (vector_product(get_mi_vector(p1->r.p, p2->r.p, box_geo), v1) / Ai +
              vector_product(get_mi_vector(p4->r.p, p1->r.p, box_geo), v2) / Aj);
-
-  // Force for particle 4:
-  p4->f.f +=
+  auto const force4 =
       Pre * (vector_product(get_mi_vector(p1->r.p, p3->r.p, box_geo), v2) / Aj);
+  return std::make_tuple(force1, force2, force3, force4);
 }
 
 int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,

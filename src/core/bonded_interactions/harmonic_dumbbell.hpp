@@ -49,47 +49,46 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
  *  @param[in,out]  p1        First particle, torque gets updated.
  *  @param[in]      iaparams  Bonded parameters for the pair interaction.
  *  @param[in]      dx        %Distance between the particles.
- *  @param[out]     force     Force.
- *  @return whether the bond is broken
+ *  @return whether the bond is broken and the force and torque
  */
-inline bool calc_harmonic_dumbbell_pair_force(
-    Particle *const p1, Bonded_ia_parameters const *const iaparams,
-    Utils::Vector3d const &dx, Utils::Vector3d &force) {
+inline std::tuple<bool, Utils::Vector3d, Utils::Vector3d>
+calc_harmonic_dumbbell_pair_force(Particle const *const p1,
+                                  Bonded_ia_parameters const *const iaparams,
+                                  Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic_dumbbell.r_cut)) {
-    return true;
+    return std::make_tuple(true, Utils::Vector3d{}, Utils::Vector3d{});
   }
 
   auto const dr = dist - iaparams->p.harmonic_dumbbell.r;
   auto const normalizer = (dist > ROUND_ERROR_PREC) ? 1. / dist : 0.0;
   auto const fac = -iaparams->p.harmonic_dumbbell.k1 * dr * normalizer;
-  force = fac * dx;
+  auto const force = fac * dx;
 
   auto const dhat = dx * normalizer;
   auto const da = vector_product(dhat, p1->r.calc_director());
-  p1->f.torque += iaparams->p.harmonic_dumbbell.k2 * da;
+  auto const torque = iaparams->p.harmonic_dumbbell.k2 * da;
 
-  return false;
+  return std::make_tuple(false, force, torque);
 }
 
 /** Compute the harmonic dumbbell bond energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] _energy   Energy.
- *  @return whether the bond is broken
+ *  @return whether the bond is broken and the energy
  */
-inline bool
+inline std::tuple<bool, double>
 harmonic_dumbbell_pair_energy(Particle const *const p1,
                               Bonded_ia_parameters const *const iaparams,
-                              Utils::Vector3d const &dx, double *_energy) {
+                              Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic_dumbbell.r_cut)) {
-    return true;
+    return std::make_tuple(true, 0.0);
   }
 
   auto const dhat = dx / dist;
@@ -98,10 +97,10 @@ harmonic_dumbbell_pair_energy(Particle const *const p1,
   auto const torque = iaparams->p.harmonic_dumbbell.k2 * da;
   auto const diff = dhat - director;
 
-  *_energy = 0.5 * iaparams->p.harmonic_dumbbell.k1 *
-                 Utils::sqr(dist - iaparams->p.harmonic.r) +
-             0.5 * iaparams->p.harmonic_dumbbell.k2 * (torque * diff);
-  return false;
+  auto const energy = 0.5 * iaparams->p.harmonic_dumbbell.k1 *
+                          Utils::sqr(dist - iaparams->p.harmonic.r) +
+                      0.5 * iaparams->p.harmonic_dumbbell.k2 * (torque * diff);
+  return std::make_tuple(false, energy);
 }
 
 #endif // ROTATION

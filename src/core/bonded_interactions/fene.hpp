@@ -41,17 +41,16 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
 /** Compute the FENE bond force.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] force     Force.
- *  @return whether the bond is broken
+ *  @return whether the bond is broken and the force
  */
-inline bool calc_fene_pair_force(Bonded_ia_parameters const *const iaparams,
-                                 Utils::Vector3d const &dx,
-                                 Utils::Vector3d &force) {
+inline std::tuple<bool, Utils::Vector3d>
+calc_fene_pair_force(Bonded_ia_parameters const *const iaparams,
+                     Utils::Vector3d const &dx) {
   auto const len = dx.norm();
   auto const dr = len - iaparams->p.fene.r0;
 
   if (dr >= iaparams->p.fene.drmax) {
-    return true;
+    return std::make_tuple(true, Utils::Vector3d{});
   }
 
   auto fac =
@@ -62,31 +61,30 @@ inline bool calc_fene_pair_force(Bonded_ia_parameters const *const iaparams,
     fac = 0.0;
   }
 
-  force = fac * dx;
+  auto const force = fac * dx;
 
-  return false;
+  return std::make_tuple(false, force);
 }
 
 /** Compute the FENE bond energy.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] _energy   Energy.
- *  @return whether the bond is broken
+ *  @return whether the bond is broken and the energy
  */
-inline bool fene_pair_energy(Bonded_ia_parameters const *const iaparams,
-                             Utils::Vector3d const &dx, double *_energy) {
+inline std::tuple<bool, double>
+fene_pair_energy(Bonded_ia_parameters const *const iaparams,
+                 Utils::Vector3d const &dx) {
   /* compute bond stretching (r-r0) */
   double const dr = dx.norm() - iaparams->p.fene.r0;
 
   /* check bond stretching */
   if (dr >= iaparams->p.fene.drmax) {
-    return true;
+    return std::make_tuple(true, 0.0);
   }
 
-  auto energy = -0.5 * iaparams->p.fene.k * iaparams->p.fene.drmax2;
-  energy *= log((1.0 - dr * dr * iaparams->p.fene.drmax2i));
-  *_energy = energy;
-  return false;
+  auto const energy = -0.5 * iaparams->p.fene.k * iaparams->p.fene.drmax2 *
+                      log(1.0 - dr * dr * iaparams->p.fene.drmax2i);
+  return std::make_tuple(false, energy);
 }
 
 #endif

@@ -57,18 +57,16 @@ void thermalized_bond_init();
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force1    Force on particle @p p1
  *  @param[out] force2    Force on particle @p p2
- *  @retval 1 if the bond is broken
- *  @retval 0 otherwise
+ *  @return whether the bond is broken and the forces on @p p1 and @p p2
  */
-inline bool
+inline std::tuple<bool, Utils::Vector3d, Utils::Vector3d>
 calc_thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
                              Bonded_ia_parameters const *const iaparams,
-                             const Utils::Vector3d &dx, Utils::Vector3d &force1,
-                             Utils::Vector3d &force2) {
+                             const Utils::Vector3d &dx) {
   // Bond broke?
   if (iaparams->p.thermalized_bond.r_cut > 0.0 &&
       dx.norm() > iaparams->p.thermalized_bond.r_cut) {
-    return true;
+    return std::make_tuple(true, Utils::Vector3d{}, Utils::Vector3d{});
   }
 
   auto const mass_tot = p1->p.mass + p2->p.mass;
@@ -79,6 +77,8 @@ calc_thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
       mass_tot_inv * (p1->p.mass * p1->m.v + p2->p.mass * p2->m.v);
   auto const dist_vel = p2->m.v - p1->m.v;
 
+  Utils::Vector3d force1{};
+  Utils::Vector3d force2{};
   for (int i = 0; i < 3; i++) {
     double force_lv_com, force_lv_dist;
 
@@ -110,7 +110,7 @@ calc_thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
   ONEPART_TRACE(if (p2->p.identity == check_id) fprintf(
       stderr, "%d: OPT: THERMALIZED BOND f = (%.3e,%.3e,%.3e)\n", this_node,
       p2->f.f[0] + force2[0], p2->f.f[1] + force2[1], p2->f.f[2] + force2[2]));
-  return false;
+  return std::make_tuple(false, force1, force2);
 }
 
 #endif

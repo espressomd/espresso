@@ -46,46 +46,44 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,
 /** Compute the quartic bond force.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] force     Force.
- *  @return whether the bond is broken
+ *  @return whether the bond is broken and the force
  */
-inline bool calc_quartic_pair_force(Bonded_ia_parameters const *const iaparams,
-                                    Utils::Vector3d const &dx,
-                                    Utils::Vector3d &force) {
+inline std::tuple<bool, Utils::Vector3d>
+calc_quartic_pair_force(Bonded_ia_parameters const *const iaparams,
+                        Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
-    return true;
+    return std::make_tuple(true, Utils::Vector3d{});
   }
 
   auto const dr = dist - iaparams->p.quartic.r;
   auto const fac =
       (iaparams->p.quartic.k0 * dr + iaparams->p.quartic.k1 * dr * dr * dr) /
       dist;
-  force = -fac * dx;
-
-  return false;
+  auto const force = -fac * dx;
+  return std::make_tuple(false, force);
 }
 
 /** Compute the quartic bond energy.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] _energy   Energy.
- *  @return whether the bond is broken
+ *  @return whether the bond is broken and the energy
  */
-inline bool quartic_pair_energy(Bonded_ia_parameters const *const iaparams,
-                                Utils::Vector3d const &dx, double *_energy) {
+inline std::tuple<bool, double>
+quartic_pair_energy(Bonded_ia_parameters const *const iaparams,
+                    Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
-    return true;
+    return std::make_tuple(true, 0.0);
   }
 
   double dr2 = Utils::sqr(dist - iaparams->p.quartic.r);
 
-  *_energy = 0.5 * iaparams->p.quartic.k0 * dr2 +
-             0.25 * iaparams->p.quartic.k1 * Utils::sqr(dr2);
-  return false;
+  auto const energy = 0.5 * iaparams->p.quartic.k0 * dr2 +
+                      0.25 * iaparams->p.quartic.k1 * Utils::sqr(dr2);
+  return std::make_tuple(false, energy);
 }
 
 #endif
