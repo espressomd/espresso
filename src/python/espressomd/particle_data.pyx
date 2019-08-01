@@ -970,7 +970,7 @@ cdef class ParticleHandle:
                     """
                     The particle translational frictional coefficient used in the Langevin thermostat.
 
-                    gamma_rot : :obj:`floati` of 3-tuple of :obj:`float`
+                    gamma_rot : :obj:`float` of 3-tuple of :obj:`float`
 
                     .. note::
                         This needs features ``LANGEVIN_PER_PARTICLE``,
