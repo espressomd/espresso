@@ -67,7 +67,6 @@ cdef extern from "domain_decomposition.hpp":
     extern DomainDecomposition dd
     extern int max_num_cells
     extern int min_num_cells
-    extern double max_skin
     int calc_processor_min_num_cells(const Vector3i & grid)
 
 

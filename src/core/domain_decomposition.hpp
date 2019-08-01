@@ -88,12 +88,6 @@ struct DomainDecomposition {
 /** Information about the domain decomposition. */
 extern DomainDecomposition dd;
 
-/** Maximal skin size. This is a global variable which can be read
- *  out by the user via the TCL command setmd in order to optimize the
- *  cell grid
- */
-extern double max_skin;
-
 /** Maximal number of cells per node. In order to avoid memory
  *  problems due to the cell grid one has to specify the maximal
  *  number of \ref cells::cells. If the number of cells is larger

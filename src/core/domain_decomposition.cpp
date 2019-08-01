@@ -163,9 +163,6 @@ void dd_create_cell_grid() {
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
   }
   cell_structure.max_range = dd.cell_size;
-  max_skin =
-      std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]) -
-      max_cut;
 
   /* allocate cell array and cell pointer arrays */
   realloc_cells(new_cells);
@@ -592,7 +589,6 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
 
   double min_cell_size =
       std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
-  max_skin = min_cell_size - max_cut;
 
   if (max_range > min_cell_size) {
     /* if new box length leads to too small cells, redo cell structure
