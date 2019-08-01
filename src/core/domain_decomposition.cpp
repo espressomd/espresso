@@ -52,7 +52,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos);
 
 DomainDecomposition dd;
 
-int max_num_cells = CELLS_MAX_NUM_CELLS;
+int max_num_cells = 32768;
 int min_num_cells = 1;
 double max_skin = 0.0;
 
@@ -162,6 +162,7 @@ void dd_create_cell_grid() {
     dd.cell_size[i] = local_geo.length()[i] / (double)dd.cell_grid[i];
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
   }
+  cell_structure.max_range = dd.cell_size;
   max_skin =
       std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]) -
       max_cut;
@@ -592,11 +593,6 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
   double min_cell_size =
       std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
   max_skin = min_cell_size - max_cut;
-
-  CELL_TRACE(fprintf(stderr,
-                     "%d: dd_on_geometry_change: max_range = %f, "
-                     "min_cell_size = %f, max_skin = %f\n",
-                     this_node, max_range, min_cell_size, max_skin));
 
   if (max_range > min_cell_size) {
     /* if new box length leads to too small cells, redo cell structure

@@ -40,11 +40,6 @@
 #define ONEPART_DEBUG_ID 13
 #endif
 
-/** CELLS: Default value for the maximal number of cells per node. */
-#ifndef CELLS_MAX_NUM_CELLS
-#define CELLS_MAX_NUM_CELLS 32768
-#endif
-
 /** P3M: Default for number of interpolation points of the charge
     assignment function. */
 #ifndef P3M_N_INTERPOL

@@ -347,13 +347,12 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   layer_h = local_geo.length()[2] / (double)(n_layers);
   layer_h_i = 1 / layer_h;
 
-  if (layer_h < max_range) {
-    runtimeErrorMsg() << "layered: maximal interaction range " << max_range
-                      << " larger than layer height " << layer_h;
-  }
-
-  CELL_TRACE(fprintf(stderr, "%d: layered_flags tn %d bn %d \n", this_node,
-                     LAYERED_TOP_NEIGHBOR, LAYERED_BTM_NEIGHBOR));
+  cell_structure.max_range = {
+      box_geo.periodic(0) ? 0.5 * box_geo.length()[0]
+                          : std::numeric_limits<double>::infinity(),
+      box_geo.periodic(1) ? 0.5 * box_geo.length()[1]
+                          : std::numeric_limits<double>::infinity(),
+      layer_h};
 
   /* allocate cells and mark them */
   realloc_cells(n_layers + 2);

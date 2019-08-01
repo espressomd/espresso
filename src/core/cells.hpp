@@ -147,6 +147,11 @@ struct CellStructure {
 
   bool use_verlet_list = true;
 
+  /** Maximal pair range supported by current
+   * cell system.
+   */
+  Utils::Vector3d max_range = {};
+
   /** returns the global local_cells */
   CellPList local_cells() const;
   /** returns the global ghost_cells */

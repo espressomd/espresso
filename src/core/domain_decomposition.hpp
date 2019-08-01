@@ -74,7 +74,7 @@ struct DomainDecomposition {
    *  Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range);
    * \endverbatim
    */
-  double cell_size[3];
+  Utils::Vector3d cell_size;
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   double inv_cell_size[3];
   bool fully_connected[3];
@@ -99,8 +99,6 @@ extern double max_skin;
  *  number of \ref cells::cells. If the number of cells is larger
  *  than max_num_cells the cell grid is reduced.
  *  max_num_cells has to be larger than 27, e.g. one inner cell.
- *  max_num_cells is initialized with the default value
- *  specified in \ref config.hpp as \ref CELLS_MAX_NUM_CELLS.
  */
 extern int max_num_cells;
 
