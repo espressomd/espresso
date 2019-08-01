@@ -199,12 +199,6 @@ extern CellPList ghost_cells;
 /** Type of cell structure in use ( \ref Cell Structure ). */
 extern CellStructure cell_structure;
 
-/** Maximal interaction range - also the minimum cell size. Any
- *  cellsystem makes sure that the particle pair loop visits all pairs
- *  of particles that are closer than this.
- */
-extern double max_range;
-
 /** If non-zero, cell systems should reset the position for checking
  *  the Verlet criterion. Moreover, the Verlet list has to be
  *  rebuilt.

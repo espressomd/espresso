@@ -99,7 +99,6 @@ cdef extern from "dpd.hpp":
 
 
 cdef extern from "cells.hpp":
-    extern double max_range
     ctypedef struct CellStructure:
         int type
         bool use_verlet_list
