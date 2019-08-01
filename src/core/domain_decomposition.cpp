@@ -29,7 +29,6 @@
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include "serialization/ParticleList.hpp"
 #include <utils/index.hpp>
@@ -54,7 +53,6 @@ DomainDecomposition dd;
 
 int max_num_cells = 32768;
 int min_num_cells = 1;
-double max_skin = 0.0;
 
 /*@}*/
 
@@ -73,14 +71,14 @@ double max_skin = 0.0;
  *  DomainDecomposition::cell_size, and \ref
  *  DomainDecomposition::inv_cell_size.
  */
-void dd_create_cell_grid() {
+void dd_create_cell_grid(double range) {
   int i, n_local_cells, new_cells;
   double cell_range[3];
 
   /* initialize */
-  cell_range[0] = cell_range[1] = cell_range[2] = max_range;
+  cell_range[0] = cell_range[1] = cell_range[2] = range;
 
-  if (max_range < ROUND_ERROR_PREC * box_geo.length()[0]) {
+  if (range <= 0.) {
     /* this is the non-interacting case */
     const int cells_per_dir = std::ceil(std::pow(min_num_cells, 1. / 3.));
 
@@ -100,12 +98,12 @@ void dd_create_cell_grid() {
       dd.cell_grid[i] = (int)ceil(local_geo.length()[i] * scale);
       cell_range[i] = local_geo.length()[i] / dd.cell_grid[i];
 
-      if (cell_range[i] < max_range) {
+      if (cell_range[i] < range) {
         /* ok, too many cells for this direction, set to minimum */
-        dd.cell_grid[i] = (int)floor(local_geo.length()[i] / max_range);
+        dd.cell_grid[i] = (int)floor(local_geo.length()[i] / range);
         if (dd.cell_grid[i] < 1) {
           runtimeErrorMsg()
-              << "interaction range " << max_range << " in direction " << i
+              << "interaction range " << range << " in direction " << i
               << " is larger than the local box size " << local_geo.length()[i];
           dd.cell_grid[i] = 1;
         }
@@ -558,10 +556,11 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
 /* Public Functions */
 /************************************************************/
 
-void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
+void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
+                           const double range) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
-    if (local_geo.length()[i] < max_range) {
+    if (local_geo.length()[i] < range) {
       runtimeErrorMsg() << "box_l in direction " << i << " is too small";
     }
 
@@ -575,7 +574,7 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
     /* Reset min num cells to default */
     min_num_cells = calc_processor_min_num_cells(grid);
 
-    cells_re_init(CELL_STRUCTURE_CURRENT);
+    cells_re_init(CELL_STRUCTURE_CURRENT, range);
     return;
   }
 
@@ -590,26 +589,26 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
   double min_cell_size =
       std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
 
-  if (max_range > min_cell_size) {
+  if (range > min_cell_size) {
     /* if new box length leads to too small cells, redo cell structure
        using smaller number of cells. */
-    cells_re_init(CELL_STRUCTURE_DOMDEC);
+    cells_re_init(CELL_STRUCTURE_DOMDEC, range);
     return;
   }
 
   /* If we are not in a hurry, check if we can maybe optimize the cell
      system by using smaller cells. */
-  if (!(flags & CELL_FLAG_FAST) && max_range > 0) {
+  if (!(flags & CELL_FLAG_FAST) && range > 0) {
     int i;
     for (i = 0; i < 3; i++) {
-      auto poss_size = (int)floor(local_geo.length()[i] / max_range);
+      auto poss_size = (int)floor(local_geo.length()[i] / range);
       if (poss_size > dd.cell_grid[i])
         break;
     }
     if (i < 3) {
       /* new range/box length allow smaller cells, redo cell structure,
          possibly using smaller number of cells. */
-      cells_re_init(CELL_STRUCTURE_DOMDEC);
+      cells_re_init(CELL_STRUCTURE_DOMDEC, range);
       return;
     }
   }
@@ -617,7 +616,8 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
 }
 
 /************************************************************/
-void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
+void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
+                      const double range) {
   int c, p;
   int exchange_data, update_data;
 
@@ -631,7 +631,7 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   };
 
   /* set up new domain decomposition cell structure */
-  dd_create_cell_grid();
+  dd_create_cell_grid(range);
   /* mark cells */
   dd_mark_cells();
 

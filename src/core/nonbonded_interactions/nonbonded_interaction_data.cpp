@@ -80,10 +80,7 @@ std::vector<IA_parameters> ia_params;
 
 double min_global_cut = INACTIVE_CUTOFF;
 
-double max_cut;
-/** maximal cutoff of type-independent short range ia, mainly
-    electrostatics and DPD*/
-double max_cut_global;
+double max_cut = INACTIVE_CUTOFF;
 
 /*****************************************
  * function prototypes

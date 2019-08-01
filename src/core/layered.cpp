@@ -290,12 +290,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
   }
 }
 
-void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
+void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
+                           const double range) {
   int c, p;
-
-  CELL_TRACE(fprintf(
-      stderr, "%d: layered_topology_init, %d old particle lists max_range %g\n",
-      this_node, old->n, max_range));
 
   cell_structure.type = CELL_STRUCTURE_LAYERED;
   cell_structure.particle_to_cell = [](const Particle &p) {
@@ -312,10 +309,10 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   }
 
   if (this_node == 0 && determine_n_layers) {
-    if (max_range > 0) {
-      n_layers = (int)floor(local_geo.length()[2] / max_range);
+    if (range > 0) {
+      n_layers = (int)floor(local_geo.length()[2] / range);
       if (n_layers < 1) {
-        runtimeErrorMsg() << "layered: maximal interaction range " << max_range
+        runtimeErrorMsg() << "layered: maximal interaction range " << range
                           << " larger than local box length "
                           << local_geo.length()[2];
         n_layers = 1;

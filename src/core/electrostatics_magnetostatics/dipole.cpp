@@ -76,7 +76,7 @@ double cutoff(const Utils::Vector3d &box_l) {
   }
 #endif /*ifdef DP3M */
   default:
-    return 0;
+    return -1.;
   }
 }
 

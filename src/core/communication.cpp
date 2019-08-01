@@ -73,6 +73,7 @@
 #include <utils/u32_to_u64.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/range/algorithm/min_element.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/utility.hpp>
@@ -545,10 +546,12 @@ void mpi_rescale_particles_slave(int, int dir) {
 
 void mpi_bcast_cell_structure(int cs) {
   mpi_call(mpi_bcast_cell_structure_slave, -1, cs);
-  cells_re_init(cs);
+  cells_re_init(cs, cell_structure.min_range);
 }
 
-void mpi_bcast_cell_structure_slave(int, int cs) { cells_re_init(cs); }
+void mpi_bcast_cell_structure_slave(int, int cs) {
+  cells_re_init(cs, cell_structure.min_range);
+}
 
 /*************** REQ_BCAST_NPTISO_GEOM *****************/
 

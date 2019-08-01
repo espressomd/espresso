@@ -117,7 +117,8 @@ extern int min_num_cells;
  *                cells_on_geometry_change.
  *  @param grid   Number of nodes in each spatial dimension.
  */
-void dd_on_geometry_change(int flags, const Utils::Vector3i &grid);
+void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
+                           const double range);
 
 /** Initialize the topology. The argument is a list of cell pointers,
  *  containing particles that have to be sorted into new cells. The
@@ -125,11 +126,13 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid);
  *  when particle data or cell structure has changed and the cell
  *  structure has to be reinitialized. This also includes setting up
  *  the cell_structure array.
- *  @param cl    List of cell pointers with particles to be stored in the
+ *  @param old    List of cell pointers with particles to be stored in the
  *               new cell system.
  *  @param grid  Number of nodes in each spatial dimension.
+ *  @param range Desired interaction range
  */
-void dd_topology_init(CellPList *cl, const Utils::Vector3i &grid);
+void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
+                      double range);
 
 /** Called when the current cell structure is invalidated because for
  *  example the box length has changed. This procedure may NOT destroy

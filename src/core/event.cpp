@@ -88,7 +88,7 @@ void on_program_start() {
   init_node_grid();
 
   /* initially go for domain decomposition */
-  cells_re_init(CELL_STRUCTURE_DOMDEC);
+  cells_re_init(CELL_STRUCTURE_DOMDEC, INACTIVE_CUTOFF);
 
   /*
     call all initializations to do only on the master node here.
@@ -100,12 +100,6 @@ void on_program_start() {
 }
 
 void on_integration_start() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_integration_start\n", this_node));
-  INTEG_TRACE(fprintf(
-      stderr,
-      "%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
-      this_node, reinit_thermo, get_resort_particles()));
-
   /********************************************/
   /* sanity checks                            */
   /********************************************/
@@ -390,7 +384,7 @@ void on_parameter_change(int field) {
     break;
   case FIELD_MINNUMCELLS:
   case FIELD_MAXNUMCELLS:
-    cells_re_init(CELL_STRUCTURE_CURRENT);
+    cells_re_init(CELL_STRUCTURE_CURRENT, cell_structure.min_range);
     break;
   case FIELD_TEMPERATURE:
     on_temperature_change();
