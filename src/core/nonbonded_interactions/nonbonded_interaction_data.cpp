@@ -253,8 +253,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef GAY_BERNE
-      if (max_cut_current < data->GB_cut)
-        max_cut_current = data->GB_cut;
+      if (max_cut_current < data->GB.cut)
+        max_cut_current = data->GB.cut;
 #endif
 
 #ifdef TABULATED

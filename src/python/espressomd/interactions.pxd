@@ -153,6 +153,14 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double offset
         double w
 
+    cdef struct GayBerne_Parameters:
+        double eps
+        double sig
+        double cut
+        double k1
+        double k2
+        double mu
+        double nu
 
 
     cdef struct IA_parameters:
@@ -174,13 +182,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         TabulatedPotential TAB
 
-        double GB_eps
-        double GB_sig
-        double GB_cut
-        double GB_k1
-        double GB_k2
-        double GB_mu
-        double GB_nu
+        GayBerne_Parameters GB
 
         SmSt_Parameters SmSt
 

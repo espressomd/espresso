@@ -209,6 +209,21 @@ struct LJCOS2_Parameters {
 };
 /*@}*/
 
+/** \name Gay-Berne potential */
+/*@{*/
+struct GayBerne_Parameters {
+    double eps = 0.0;
+    double sig = 0.0;
+    double cut = INACTIVE_CUTOFF;
+    double k1 = 0.0;
+    double k2 = 0.0;
+    double mu = 0.0;
+    double nu = 0.0;
+    double chi1 = 0.0;
+    double chi2 = 0.0;
+};
+/*@}*/
+
 
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -291,18 +306,7 @@ struct IA_parameters {
 #endif
 
 #ifdef GAY_BERNE
-  /** \name Gay-Berne potential */
-  /*@{*/
-  double GB_eps = 0.0;
-  double GB_sig = 0.0;
-  double GB_cut = INACTIVE_CUTOFF;
-  double GB_k1 = 0.0;
-  double GB_k2 = 0.0;
-  double GB_mu = 0.0;
-  double GB_nu = 0.0;
-  double GB_chi1 = 0.0;
-  double GB_chi2 = 0.0;
-  /*@}*/
+  GayBerne_Parameters GB;
 #endif
 
 #ifdef TABULATED

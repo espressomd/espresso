@@ -784,13 +784,13 @@ IF GAY_BERNE:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.GB_eps,
-                "sig": ia_params.GB_sig,
-                "cut": ia_params.GB_cut,
-                "k1": ia_params.GB_k1,
-                "k2": ia_params.GB_k2,
-                "mu": ia_params.GB_mu,
-                "nu": ia_params.GB_nu}
+                "eps": ia_params.GB.eps,
+                "sig": ia_params.GB.sig,
+                "cut": ia_params.GB.cut,
+                "k1": ia_params.GB.k1,
+                "k2": ia_params.GB.k2,
+                "mu": ia_params.GB.mu,
+                "nu": ia_params.GB.nu}
 
         def is_active(self):
             """Check if interaction is active.
