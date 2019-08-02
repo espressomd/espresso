@@ -41,7 +41,7 @@ LB_PARAMS = {'agrid': AGRID,
              'seed': 123}
 
 
-class LBThermostatCommon(object):
+class LBThermostatCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None

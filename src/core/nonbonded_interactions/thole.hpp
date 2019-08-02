@@ -21,9 +21,9 @@
 #ifndef _THOLE_H
 #define _THOLE_H
 /** \file
- *  Routines to calculate the Thole damping energy and/or force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the Thole damping potential between particle pairs.
+ *
+ *  Implementation in \ref thole.cpp.
  */
 
 #include "config.hpp"
@@ -66,14 +66,14 @@ inline double thole_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {
 
-  double thole_s = ia_params->THOLE_scaling_coeff;
-  double thole_q1q2 = ia_params->THOLE_q1q2;
+  auto const thole_s = ia_params->THOLE_scaling_coeff;
+  auto const thole_q1q2 = ia_params->THOLE_q1q2;
 
   if (thole_s != 0 && thole_q1q2 != 0 &&
       dist < Coulomb::cutoff(box_geo.length()) &&
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
-    double sd = thole_s * dist;
-    double S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);
+    auto const sd = thole_s * dist;
+    auto const S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);
     // Subtract p3m shortrange energy and add thole energy
     return Coulomb::pair_energy(p1, p2, thole_q1q2 * (-1.0 + S_r), d, dist,
                                 dist * dist);

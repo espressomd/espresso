@@ -219,7 +219,7 @@ class CheckpointTest(ut.TestCase):
     def test_lb_boundaries(self):
         self.assertEqual(len(system.lbboundaries), 1)
         np.testing.assert_allclose(
-            np.copy(system.lbboundaries[0].velocity), [1, 1, 0])
+            np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
         self.assertEqual(type(system.lbboundaries[0].shape), Wall)
 
     def test_constraints(self):

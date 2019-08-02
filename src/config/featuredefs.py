@@ -24,7 +24,7 @@ import string
 import re
 
 
-class SyntaxError(object):
+class SyntaxError:
 
     def __init__(self, message, instead):
         self.message = message
@@ -45,7 +45,7 @@ def toCPPExpr(expr):
     return expr
 
 
-class defs(object):
+class defs:
 
     def __init__(self, filename):
         # complete set of all defined features

@@ -22,9 +22,10 @@
 #define CORE_TABULATED_HPP
 
 /** \file
- *  Routines to calculate the  energy and/or  force
- *  for a particle pair or bonds via interpolating from lookup tables.
- *  \ref forces.cpp
+ *  Routines to calculate the energy and/or force for particle pairs via
+ *  interpolation of lookup tables.
+ *
+ *  Implementation in \ref nonbonded_tab.cpp.
  *  Needs feature TABULATED compiled in (see \ref config.hpp).
  */
 
@@ -36,7 +37,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
-/** Set the parameters of a non-Bonded tabulated potential.
+/** Set the parameters of a non-bonded tabulated potential.
  *  ia_params and force/energy tables are communicated to each node
  *
  *  @param part_type_a  particle type for which the interaction is defined

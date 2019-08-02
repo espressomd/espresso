@@ -52,7 +52,7 @@ def AssertThermostatType(*allowedthermostats):
     return decoratorfunction
 
 
-cdef class Thermostat(object):
+cdef class Thermostat:
 
     # We have to cdef the state variable because it is a cdef class
     cdef _state
@@ -96,16 +96,18 @@ cdef class Thermostat(object):
             if thmst["type"] == "OFF":
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
-                self.set_langevin(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["seed"])
+                self.set_langevin(kT=thmst["kT"], gamma=thmst["gamma"],
+                                  gamma_rotation=thmst["gamma_rotation"],
+                                  act_on_virtual=thmst["act_on_virtual"],
+                                  seed=thmst["seed"])
             if thmst["type"] == "LB":
                 self.set_lb(
                     LB_fluid=thmst["LB_fluid"],
                     act_on_virtual=thmst["act_on_virtual"],
                     seed=thmst["rng_counter_fluid"])
             if thmst["type"] == "NPT_ISO":
-                self.set_npt(kT=thmst["kT"], p_diff=thmst[
-                             "p_diff"], piston=thmst["piston"])
+                self.set_npt(kT=thmst["kT"], p_diff=thmst["p_diff"],
+                             piston=thmst["piston"])
             if thmst["type"] == "DPD":
                 self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
 
@@ -216,7 +218,7 @@ cdef class Thermostat(object):
         Parameters
         -----------
         kT : :obj:`float`
-             Thermal energy of the simulated heat bath.
+            Thermal energy of the simulated heat bath.
         gamma : :obj:`float`
             Contains the friction coefficient of the bath. If the feature
             ``PARTICLE_ANISOTROPY`` is compiled in then ``gamma`` can be a list
@@ -371,8 +373,7 @@ cdef class Thermostat(object):
         ----------
         LB_fluid : :class:`~espressomd.lb.LBFluid` or :class:`~espressomd.lb.LBFluidGPU`
         seed : :obj:`int`
-             Seed for the random number generator, required
-             if kT > 0.
+             Seed for the random number generator, required if kT > 0.
         act_on_virtual : :obj:`bool`, optional
             If ``True`` the thermostat will act on virtual sites (default).
         gamma : :obj:`float`

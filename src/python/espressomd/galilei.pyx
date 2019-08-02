@@ -20,7 +20,7 @@
 from . cimport galilei
 from .utils cimport make_array_locked
 
-cdef class GalileiTransform(object):
+cdef class GalileiTransform:
 
     def kill_particle_motion(self, rotation=False):
         """

@@ -220,7 +220,7 @@ cdef extern from "rotation.hpp":
     Vector3d convert_vector_space_to_body(const particle & p, const Vector3d & v)
     void rotate_particle(int id, Vector3d axis, double angle)
 
-cdef class ParticleHandle(object):
+cdef class ParticleHandle:
     cdef public int _id
     cdef const particle * particle_data
     cdef int update_particle_data(self) except -1

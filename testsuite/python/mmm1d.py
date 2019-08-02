@@ -28,7 +28,7 @@ if(not espressomd.has_features(("ELECTROSTATICS"))):
     sys.exit()
 
 
-class ElectrostaticInteractionsTests(object):
+class ElectrostaticInteractionsTests:
     # Handle to espresso system
     system = espressomd.System(box_l=[10.0] * 3)
     system.periodicity = [0, 0, 1]

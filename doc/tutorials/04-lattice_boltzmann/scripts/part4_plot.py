@@ -29,8 +29,9 @@ pos = [(i + 0.5) * agrid for i in range(len(sim))]
 ana = np.array([max(0, force_density / 2. / visc
                     * ((box_l - 2 * wall_offset)**2 / 4. - (x - box_l / 2.)**2)) for x in pos])
 # fit the simulated curve to the analytical curve with a least squares fit
-fit = ana / sim
-scaling = np.mean(fit[np.nonzero(np.invert(np.isnan(fit)))])
+nonzero = np.nonzero(sim)
+fit = ana[nonzero] / sim[nonzero]
+scaling = np.mean(fit)
 
 # plot
 plt.figure(figsize=(10, 6), dpi=80)

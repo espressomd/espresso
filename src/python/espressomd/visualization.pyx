@@ -9,7 +9,7 @@ try:
 except BaseException as e:
     if isinstance(e, ImportError) or isinstance(e, RuntimeError) and \
             e.args[0] == 'No pyface.toolkits plugin could be loaded for wx':
-        class mayaviLive(object):
+        class mayaviLive:
             deferred_ImportError = e
 
             def __init__(self, *args, **kwargs):
@@ -20,7 +20,7 @@ except BaseException as e:
 try:
     from .visualization_opengl import openGLLive
 except ImportError as e:
-    class openGLLive(object):
+    class openGLLive:
         deferred_ImportError = e
 
         def __init__(self, *args, **kwargs):
