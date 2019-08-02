@@ -147,11 +147,12 @@ void lb_realloc_fluid(boost::multi_array<double, 2> &lb_fluid_a, boost::multi_ar
                       const Lattice::index_t halo_grid_volume, std::array<Utils::Span<double>, 19> &lb_fluid,
                       std::array<Utils::Span<double>, 19> &lb_fluid_post, std::vector<LB_FluidNode> &lb_fields);
 
-void lb_init();
+void lb_init(const LB_Parameters &lb_parameters);
 
-void lb_reinit_fluid();
+void
+lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields, const Lattice &lb_lattice, const LB_Parameters &lb_parameters);
 
-void lb_reinit_parameters();
+void lb_reinit_parameters(LB_Parameters &lb_parameters);
 /** Pointer to the velocity populations of the fluid.
  *  lbfluid contains pre-collision populations, lbfluid_post
  *  contains post-collision populations
@@ -259,7 +260,7 @@ inline void lb_set_population(Lattice::index_t index,
 
 uint64_t lb_fluid_get_rng_state();
 void lb_fluid_set_rng_state(uint64_t counter);
-void lb_prepare_communication(HaloCommunicator &halo_comm);
+void lb_prepare_communication(HaloCommunicator &halo_comm, const Lattice &lb_lattice);
 
 #ifdef LB_BOUNDARIES
 /** Bounce back boundary conditions.

@@ -173,10 +173,8 @@ static double fluidstep = 0.0;
 #include "grid.hpp"
 
 /********************** The Main LB Part *************************************/
-void lb_init() {
-  LB_TRACE(printf("Begin initializing fluid on CPU\n"));
-
-  if (lbpar.agrid <= 0.0) {
+void lb_init(const LB_Parameters &lb_parameters) {
+  if (lb_parameters.agrid <= 0.0) {
     runtimeErrorMsg()
         << "Lattice Boltzmann agrid not set when initializing fluid";
   }
@@ -186,7 +184,7 @@ void lb_init() {
   /* initialize the local lattice domain */
 
   try {
-    lblattice = Lattice(lbpar.agrid, 0.5 /*offset*/, 1 /*halo size*/,
+    lblattice = Lattice(lb_parameters.agrid, 0.5 /*offset*/, 1 /*halo size*/,
                         local_geo.length(), local_geo.my_right(),
                         box_geo.length(), calc_node_pos(comm_cart), node_grid);
   } catch (const std::runtime_error &e) {
@@ -198,29 +196,30 @@ void lb_init() {
   lb_realloc_fluid(lbfluid_a, lbfluid_b, lblattice.halo_grid_volume, lbfluid, lbfluid_post, lbfields);
 
   /* prepare the halo communication */
-  lb_prepare_communication(update_halo_comm);
+  lb_prepare_communication(update_halo_comm, lblattice);
 
   /* initialize derived parameters */
-  lb_reinit_parameters();
+  lb_reinit_parameters(lbpar);
 
   /* setup the initial populations */
-  lb_reinit_fluid();
+  lb_reinit_fluid(lbfields, lblattice, lbpar);
 }
 
-void lb_reinit_fluid() {
-  std::fill(lbfields.begin(), lbfields.end(), LB_FluidNode());
+void
+lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields, const Lattice &lb_lattice, const LB_Parameters &lb_parameters) {
+  std::fill(lb_fields.begin(), lb_fields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   Utils::Vector3d momentum_density{};
   Utils::Vector6d stress{};
 
-  for (Lattice::index_t index = 0; index < lblattice.halo_grid_volume;
+  for (Lattice::index_t index = 0; index < lb_lattice.halo_grid_volume;
        ++index) {
     // sets equilibrium distribution
     lb_set_population_from_density_momentum_density_stress(
-        index, lbpar.density, momentum_density, stress);
+        index, lb_parameters.density, momentum_density, stress);
 
 #ifdef LB_BOUNDARIES
-    lbfields[index].boundary = 0;
+    lb_fields[index].boundary = 0;
 #endif // LB_BOUNDARIES
   }
 
@@ -229,79 +228,72 @@ void lb_reinit_fluid() {
 #endif // LB_BOUNDARIES
 }
 
-void lb_reinit_parameters() {
-  if (lbpar.viscosity > 0.0) {
+void lb_reinit_parameters(LB_Parameters &lb_parameters) {
+  if (lb_parameters.viscosity > 0.0) {
     /* Eq. (80) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-    lbpar.gamma_shear = 1. - 2. / (6. * lbpar.viscosity + 1.);
+    lb_parameters.gamma_shear = 1. - 2. / (6. * lb_parameters.viscosity + 1.);
   }
 
-  if (lbpar.bulk_viscosity > 0.0) {
+  if (lb_parameters.bulk_viscosity > 0.0) {
     /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-    lbpar.gamma_bulk = 1. - 2. / (9. * lbpar.bulk_viscosity + 1.);
+    lb_parameters.gamma_bulk = 1. - 2. / (9. * lb_parameters.bulk_viscosity + 1.);
   }
 
-  if (lbpar.is_TRT) {
-    lbpar.gamma_bulk = lbpar.gamma_shear;
-    lbpar.gamma_even = lbpar.gamma_shear;
-    lbpar.gamma_odd =
-        -(7.0 * lbpar.gamma_even + 1.0) / (lbpar.gamma_even + 7.0);
-    // gamma_odd = lbpar.gamma_shear; //uncomment for BGK
+  if (lb_parameters.is_TRT) {
+    lb_parameters.gamma_bulk = lb_parameters.gamma_shear;
+    lb_parameters.gamma_even = lb_parameters.gamma_shear;
+    lb_parameters.gamma_odd =
+        -(7.0 * lb_parameters.gamma_even + 1.0) / (lb_parameters.gamma_even + 7.0);
+    // gamma_odd = lb_parameters.gamma_shear; //uncomment for BGK
   }
 
-  // lbpar.gamma_shear = 0.0; //uncomment for special case of BGK
-  // lbpar.gamma_bulk = 0.0;
+  // lb_parameters.gamma_shear = 0.0; //uncomment for special case of BGK
+  // lb_parameters.gamma_bulk = 0.0;
   // gamma_odd = 0.0;
   // gamma_even = 0.0;
 
-  if (lbpar.kT > 0.0) {
+  if (lb_parameters.kT > 0.0) {
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
      * Note that the modes are not normalized as in the paper here! */
-    double mu = lbpar.kT / D3Q19::c_sound_sq<double> * lbpar.tau * lbpar.tau /
-                (lbpar.agrid * lbpar.agrid);
+    double mu = lb_parameters.kT / D3Q19::c_sound_sq<double> * lb_parameters.tau * lb_parameters.tau /
+                (lb_parameters.agrid * lb_parameters.agrid);
 
     for (int i = 0; i < 4; i++)
-      lbpar.phi[i] = 0.0;
-    lbpar.phi[4] =
-        sqrt(mu * D3Q19::w_k[4] * (1. - Utils::sqr(lbpar.gamma_bulk)));
+      lb_parameters.phi[i] = 0.0;
+    lb_parameters.phi[4] =
+        sqrt(mu * D3Q19::w_k[4] * (1. - Utils::sqr(lb_parameters.gamma_bulk)));
     for (int i = 5; i < 10; i++)
-      lbpar.phi[i] =
-          sqrt(mu * D3Q19::w_k[i] * (1. - Utils::sqr(lbpar.gamma_shear)));
+      lb_parameters.phi[i] =
+          sqrt(mu * D3Q19::w_k[i] * (1. - Utils::sqr(lb_parameters.gamma_shear)));
     for (int i = 10; i < 16; i++)
-      lbpar.phi[i] =
-          sqrt(mu * D3Q19::w_k[i] * (1 - Utils::sqr(lbpar.gamma_odd)));
+      lb_parameters.phi[i] =
+          sqrt(mu * D3Q19::w_k[i] * (1 - Utils::sqr(lb_parameters.gamma_odd)));
     for (int i = 16; i < 19; i++)
-      lbpar.phi[i] =
-          sqrt(mu * D3Q19::w_k[i] * (1 - Utils::sqr(lbpar.gamma_even)));
-
-    LB_TRACE(fprintf(
-        stderr,
-        "%d: lbpar.gamma_shear=%lf lbpar.gamma_bulk=%lf shear_fluct=%lf "
-        "bulk_fluct=%lf mu=%lf, bulkvisc=%lf, visc=%lf\n",
-        this_node, lbpar.gamma_shear, lbpar.gamma_bulk, lbpar.phi[9],
-        lbpar.phi[4], mu, lbpar.bulk_viscosity, lbpar.viscosity));
+      lb_parameters.phi[i] =
+          sqrt(mu * D3Q19::w_k[i] * (1 - Utils::sqr(lb_parameters.gamma_even)));
   } else {
     for (int i = 0; i < D3Q19::n_vel; i++)
-      lbpar.phi[i] = 0.0;
+      lb_parameters.phi[i] = 0.0;
   }
 }
 
 /* Halo communication for push scheme */
-static void halo_push_communication(LB_Fluid &lbfluid) {
+static void halo_push_communication(LB_Fluid &lb_fluid, const Lattice &lb_lattice) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
   double *buffer;
   MPI_Status status;
 
-  auto const yperiod = lblattice.halo_grid[0];
-  auto const zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
+  auto const yperiod = lb_lattice.halo_grid[0];
+  auto const zperiod = lb_lattice.halo_grid[0] * lb_lattice.halo_grid[1];
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
 
   /***************
    * X direction *
    ***************/
-  count = 5 * lblattice.halo_grid[1] * lblattice.halo_grid[2];
+  count = 5 * lb_lattice.halo_grid[1] * lb_lattice.halo_grid[2];
   std::vector<double> sbuf(count);
   std::vector<double> rbuf(count);
 
@@ -310,14 +302,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   rnode = node_neighbors[0];
 
   buffer = sbuf.data();
-  index = get_linear_index(lblattice.grid[0] + 1, 0, 0, lblattice.halo_grid);
-  for (z = 0; z < lblattice.halo_grid[2]; z++) {
-    for (y = 0; y < lblattice.halo_grid[1]; y++) {
-      buffer[0] = lbfluid[1][index];
-      buffer[1] = lbfluid[7][index];
-      buffer[2] = lbfluid[9][index];
-      buffer[3] = lbfluid[11][index];
-      buffer[4] = lbfluid[13][index];
+  index = get_linear_index(lb_lattice.grid[0] + 1, 0, 0, lb_lattice.halo_grid);
+  for (z = 0; z < lb_lattice.halo_grid[2]; z++) {
+    for (y = 0; y < lb_lattice.halo_grid[1]; y++) {
+      buffer[0] = lb_fluid[1][index];
+      buffer[1] = lb_fluid[7][index];
+      buffer[2] = lb_fluid[9][index];
+      buffer[3] = lb_fluid[11][index];
+      buffer[4] = lb_fluid[13][index];
       buffer += 5;
 
       index += yperiod;
@@ -329,14 +321,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
                comm_cart, &status);
 
   buffer = rbuf.data();
-  index = get_linear_index(1, 0, 0, lblattice.halo_grid);
-  for (z = 0; z < lblattice.halo_grid[2]; z++) {
-    for (y = 0; y < lblattice.halo_grid[1]; y++) {
-      lbfluid[1][index] = buffer[0];
-      lbfluid[7][index] = buffer[1];
-      lbfluid[9][index] = buffer[2];
-      lbfluid[11][index] = buffer[3];
-      lbfluid[13][index] = buffer[4];
+  index = get_linear_index(1, 0, 0, lb_lattice.halo_grid);
+  for (z = 0; z < lb_lattice.halo_grid[2]; z++) {
+    for (y = 0; y < lb_lattice.halo_grid[1]; y++) {
+      lb_fluid[1][index] = buffer[0];
+      lb_fluid[7][index] = buffer[1];
+      lb_fluid[9][index] = buffer[2];
+      lb_fluid[11][index] = buffer[3];
+      lb_fluid[13][index] = buffer[4];
       buffer += 5;
 
       index += yperiod;
@@ -348,14 +340,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   rnode = node_neighbors[1];
 
   buffer = sbuf.data();
-  index = get_linear_index(0, 0, 0, lblattice.halo_grid);
-  for (z = 0; z < lblattice.halo_grid[2]; z++) {
-    for (y = 0; y < lblattice.halo_grid[1]; y++) {
-      buffer[0] = lbfluid[2][index];
-      buffer[1] = lbfluid[8][index];
-      buffer[2] = lbfluid[10][index];
-      buffer[3] = lbfluid[12][index];
-      buffer[4] = lbfluid[14][index];
+  index = get_linear_index(0, 0, 0, lb_lattice.halo_grid);
+  for (z = 0; z < lb_lattice.halo_grid[2]; z++) {
+    for (y = 0; y < lb_lattice.halo_grid[1]; y++) {
+      buffer[0] = lb_fluid[2][index];
+      buffer[1] = lb_fluid[8][index];
+      buffer[2] = lb_fluid[10][index];
+      buffer[3] = lb_fluid[12][index];
+      buffer[4] = lb_fluid[14][index];
       buffer += 5;
 
       index += yperiod;
@@ -367,14 +359,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
                comm_cart, &status);
 
   buffer = rbuf.data();
-  index = get_linear_index(lblattice.grid[0], 0, 0, lblattice.halo_grid);
-  for (z = 0; z < lblattice.halo_grid[2]; z++) {
-    for (y = 0; y < lblattice.halo_grid[1]; y++) {
-      lbfluid[2][index] = buffer[0];
-      lbfluid[8][index] = buffer[1];
-      lbfluid[10][index] = buffer[2];
-      lbfluid[12][index] = buffer[3];
-      lbfluid[14][index] = buffer[4];
+  index = get_linear_index(lb_lattice.grid[0], 0, 0, lb_lattice.halo_grid);
+  for (z = 0; z < lb_lattice.halo_grid[2]; z++) {
+    for (y = 0; y < lb_lattice.halo_grid[1]; y++) {
+      lb_fluid[2][index] = buffer[0];
+      lb_fluid[8][index] = buffer[1];
+      lb_fluid[10][index] = buffer[2];
+      lb_fluid[12][index] = buffer[3];
+      lb_fluid[14][index] = buffer[4];
       buffer += 5;
 
       index += yperiod;
@@ -384,7 +376,7 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   /***************
    * Y direction *
    ***************/
-  count = 5 * lblattice.halo_grid[0] * lblattice.halo_grid[2];
+  count = 5 * lb_lattice.halo_grid[0] * lb_lattice.halo_grid[2];
   sbuf.resize(count);
   rbuf.resize(count);
 
@@ -393,19 +385,19 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   rnode = node_neighbors[2];
 
   buffer = sbuf.data();
-  index = get_linear_index(0, lblattice.grid[1] + 1, 0, lblattice.halo_grid);
-  for (z = 0; z < lblattice.halo_grid[2]; z++) {
-    for (x = 0; x < lblattice.halo_grid[0]; x++) {
-      buffer[0] = lbfluid[3][index];
-      buffer[1] = lbfluid[7][index];
-      buffer[2] = lbfluid[10][index];
-      buffer[3] = lbfluid[15][index];
-      buffer[4] = lbfluid[17][index];
+  index = get_linear_index(0, lb_lattice.grid[1] + 1, 0, lb_lattice.halo_grid);
+  for (z = 0; z < lb_lattice.halo_grid[2]; z++) {
+    for (x = 0; x < lb_lattice.halo_grid[0]; x++) {
+      buffer[0] = lb_fluid[3][index];
+      buffer[1] = lb_fluid[7][index];
+      buffer[2] = lb_fluid[10][index];
+      buffer[3] = lb_fluid[15][index];
+      buffer[4] = lb_fluid[17][index];
       buffer += 5;
 
       ++index;
     }
-    index += zperiod - lblattice.halo_grid[0];
+    index += zperiod - lb_lattice.halo_grid[0];
   }
 
   MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
@@ -413,19 +405,19 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
                comm_cart, &status);
 
   buffer = rbuf.data();
-  index = get_linear_index(0, 1, 0, lblattice.halo_grid);
-  for (z = 0; z < lblattice.halo_grid[2]; z++) {
-    for (x = 0; x < lblattice.halo_grid[0]; x++) {
-      lbfluid[3][index] = buffer[0];
-      lbfluid[7][index] = buffer[1];
-      lbfluid[10][index] = buffer[2];
-      lbfluid[15][index] = buffer[3];
-      lbfluid[17][index] = buffer[4];
+  index = get_linear_index(0, 1, 0, lb_lattice.halo_grid);
+  for (z = 0; z < lb_lattice.halo_grid[2]; z++) {
+    for (x = 0; x < lb_lattice.halo_grid[0]; x++) {
+      lb_fluid[3][index] = buffer[0];
+      lb_fluid[7][index] = buffer[1];
+      lb_fluid[10][index] = buffer[2];
+      lb_fluid[15][index] = buffer[3];
+      lb_fluid[17][index] = buffer[4];
       buffer += 5;
 
       ++index;
     }
-    index += zperiod - lblattice.halo_grid[0];
+    index += zperiod - lb_lattice.halo_grid[0];
   }
 
   /* send to left, recv from right i = 4, 8, 9, 16, 18 */
@@ -433,19 +425,19 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   rnode = node_neighbors[3];
 
   buffer = sbuf.data();
-  index = get_linear_index(0, 0, 0, lblattice.halo_grid);
-  for (z = 0; z < lblattice.halo_grid[2]; z++) {
-    for (x = 0; x < lblattice.halo_grid[0]; x++) {
-      buffer[0] = lbfluid[4][index];
-      buffer[1] = lbfluid[8][index];
-      buffer[2] = lbfluid[9][index];
-      buffer[3] = lbfluid[16][index];
-      buffer[4] = lbfluid[18][index];
+  index = get_linear_index(0, 0, 0, lb_lattice.halo_grid);
+  for (z = 0; z < lb_lattice.halo_grid[2]; z++) {
+    for (x = 0; x < lb_lattice.halo_grid[0]; x++) {
+      buffer[0] = lb_fluid[4][index];
+      buffer[1] = lb_fluid[8][index];
+      buffer[2] = lb_fluid[9][index];
+      buffer[3] = lb_fluid[16][index];
+      buffer[4] = lb_fluid[18][index];
       buffer += 5;
 
       ++index;
     }
-    index += zperiod - lblattice.halo_grid[0];
+    index += zperiod - lb_lattice.halo_grid[0];
   }
 
   MPI_Sendrecv(sbuf.data(), count, MPI_DOUBLE, snode, REQ_HALO_SPREAD,
@@ -453,25 +445,25 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
                comm_cart, &status);
 
   buffer = rbuf.data();
-  index = get_linear_index(0, lblattice.grid[1], 0, lblattice.halo_grid);
-  for (z = 0; z < lblattice.halo_grid[2]; z++) {
-    for (x = 0; x < lblattice.halo_grid[0]; x++) {
-      lbfluid[4][index] = buffer[0];
-      lbfluid[8][index] = buffer[1];
-      lbfluid[9][index] = buffer[2];
-      lbfluid[16][index] = buffer[3];
-      lbfluid[18][index] = buffer[4];
+  index = get_linear_index(0, lb_lattice.grid[1], 0, lb_lattice.halo_grid);
+  for (z = 0; z < lb_lattice.halo_grid[2]; z++) {
+    for (x = 0; x < lb_lattice.halo_grid[0]; x++) {
+      lb_fluid[4][index] = buffer[0];
+      lb_fluid[8][index] = buffer[1];
+      lb_fluid[9][index] = buffer[2];
+      lb_fluid[16][index] = buffer[3];
+      lb_fluid[18][index] = buffer[4];
       buffer += 5;
 
       ++index;
     }
-    index += zperiod - lblattice.halo_grid[0];
+    index += zperiod - lb_lattice.halo_grid[0];
   }
 
   /***************
    * Z direction *
    ***************/
-  count = 5 * lblattice.halo_grid[0] * lblattice.halo_grid[1];
+  count = 5 * lb_lattice.halo_grid[0] * lb_lattice.halo_grid[1];
   sbuf.resize(count);
   rbuf.resize(count);
 
@@ -480,14 +472,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   rnode = node_neighbors[4];
 
   buffer = sbuf.data();
-  index = get_linear_index(0, 0, lblattice.grid[2] + 1, lblattice.halo_grid);
-  for (y = 0; y < lblattice.halo_grid[1]; y++) {
-    for (x = 0; x < lblattice.halo_grid[0]; x++) {
-      buffer[0] = lbfluid[5][index];
-      buffer[1] = lbfluid[11][index];
-      buffer[2] = lbfluid[14][index];
-      buffer[3] = lbfluid[15][index];
-      buffer[4] = lbfluid[18][index];
+  index = get_linear_index(0, 0, lb_lattice.grid[2] + 1, lb_lattice.halo_grid);
+  for (y = 0; y < lb_lattice.halo_grid[1]; y++) {
+    for (x = 0; x < lb_lattice.halo_grid[0]; x++) {
+      buffer[0] = lb_fluid[5][index];
+      buffer[1] = lb_fluid[11][index];
+      buffer[2] = lb_fluid[14][index];
+      buffer[3] = lb_fluid[15][index];
+      buffer[4] = lb_fluid[18][index];
       buffer += 5;
 
       ++index;
@@ -499,14 +491,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
                comm_cart, &status);
 
   buffer = rbuf.data();
-  index = get_linear_index(0, 0, 1, lblattice.halo_grid);
-  for (y = 0; y < lblattice.halo_grid[1]; y++) {
-    for (x = 0; x < lblattice.halo_grid[0]; x++) {
-      lbfluid[5][index] = buffer[0];
-      lbfluid[11][index] = buffer[1];
-      lbfluid[14][index] = buffer[2];
-      lbfluid[15][index] = buffer[3];
-      lbfluid[18][index] = buffer[4];
+  index = get_linear_index(0, 0, 1, lb_lattice.halo_grid);
+  for (y = 0; y < lb_lattice.halo_grid[1]; y++) {
+    for (x = 0; x < lb_lattice.halo_grid[0]; x++) {
+      lb_fluid[5][index] = buffer[0];
+      lb_fluid[11][index] = buffer[1];
+      lb_fluid[14][index] = buffer[2];
+      lb_fluid[15][index] = buffer[3];
+      lb_fluid[18][index] = buffer[4];
       buffer += 5;
 
       ++index;
@@ -518,14 +510,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
   rnode = node_neighbors[5];
 
   buffer = sbuf.data();
-  index = get_linear_index(0, 0, 0, lblattice.halo_grid);
-  for (y = 0; y < lblattice.halo_grid[1]; y++) {
-    for (x = 0; x < lblattice.halo_grid[0]; x++) {
-      buffer[0] = lbfluid[6][index];
-      buffer[1] = lbfluid[12][index];
-      buffer[2] = lbfluid[13][index];
-      buffer[3] = lbfluid[16][index];
-      buffer[4] = lbfluid[17][index];
+  index = get_linear_index(0, 0, 0, lb_lattice.halo_grid);
+  for (y = 0; y < lb_lattice.halo_grid[1]; y++) {
+    for (x = 0; x < lb_lattice.halo_grid[0]; x++) {
+      buffer[0] = lb_fluid[6][index];
+      buffer[1] = lb_fluid[12][index];
+      buffer[2] = lb_fluid[13][index];
+      buffer[3] = lb_fluid[16][index];
+      buffer[4] = lb_fluid[17][index];
       buffer += 5;
 
       ++index;
@@ -537,14 +529,14 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
                comm_cart, &status);
 
   buffer = rbuf.data();
-  index = get_linear_index(0, 0, lblattice.grid[2], lblattice.halo_grid);
-  for (y = 0; y < lblattice.halo_grid[1]; y++) {
-    for (x = 0; x < lblattice.halo_grid[0]; x++) {
-      lbfluid[6][index] = buffer[0];
-      lbfluid[12][index] = buffer[1];
-      lbfluid[13][index] = buffer[2];
-      lbfluid[16][index] = buffer[3];
-      lbfluid[17][index] = buffer[4];
+  index = get_linear_index(0, 0, lb_lattice.grid[2], lb_lattice.halo_grid);
+  for (y = 0; y < lb_lattice.halo_grid[1]; y++) {
+    for (x = 0; x < lb_lattice.halo_grid[0]; x++) {
+      lb_fluid[6][index] = buffer[0];
+      lb_fluid[12][index] = buffer[1];
+      lb_fluid[13][index] = buffer[2];
+      lb_fluid[16][index] = buffer[3];
+      lb_fluid[17][index] = buffer[4];
       buffer += 5;
 
       ++index;
@@ -619,7 +611,7 @@ void lb_realloc_fluid(LB_FluidData &lb_fluid_a, LB_FluidData &lb_fluid_b, const 
 /** Set up the structures for exchange of the halo regions.
  *  See also \ref halo.cpp
  */
-void lb_prepare_communication(HaloCommunicator &halo_comm) {
+void lb_prepare_communication(HaloCommunicator &halo_comm, const Lattice &lb_lattice) {
   HaloCommunicator comm = HaloCommunicator(0);
 
   /* since the data layout is a structure of arrays, we have to
@@ -630,7 +622,7 @@ void lb_prepare_communication(HaloCommunicator &halo_comm) {
    * datatypes */
 
   /* prepare the communication for a single velocity */
-  prepare_halo_communication(&comm, &lblattice, FIELDTYPE_DOUBLE, MPI_DOUBLE,
+  prepare_halo_communication(&comm, &lb_lattice, FIELDTYPE_DOUBLE, MPI_DOUBLE,
                              node_grid);
 
   halo_comm.num = comm.num;
@@ -655,12 +647,12 @@ void lb_prepare_communication(HaloCommunicator &halo_comm) {
     MPI_Aint extent;
     MPI_Type_get_extent(MPI_DOUBLE, &lower, &extent);
     MPI_Type_create_hvector(D3Q19::n_vel, 1,
-                            lblattice.halo_grid_volume * extent,
+                            lb_lattice.halo_grid_volume * extent,
                             comm.halo_info[i].datatype, &hinfo->datatype);
     MPI_Type_commit(&hinfo->datatype);
 
     halo_create_field_hvector(D3Q19::n_vel, 1,
-                              lblattice.halo_grid_volume * sizeof(double),
+                              lb_lattice.halo_grid_volume * sizeof(double),
                               comm.halo_info[i].fieldtype, &hinfo->fieldtype);
   }
 
@@ -984,7 +976,7 @@ inline void lb_collide_stream() {
   }
 
   /* exchange halo regions */
-  halo_push_communication(lbfluid_post);
+  halo_push_communication(lbfluid_post, lblattice);
 
 #ifdef LB_BOUNDARIES
   /* boundary conditions for links */

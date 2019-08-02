@@ -220,7 +220,7 @@ void lb_lbfluid_reinit_parameters() {
       lb_reinit_parameters_gpu();
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-    lb_reinit_parameters();
+    lb_reinit_parameters(lbpar);
   }
 }
 
@@ -232,7 +232,7 @@ void lb_lbfluid_reinit_fluid() {
     lb_reinit_fluid_gpu();
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-    lb_reinit_fluid();
+    lb_reinit_fluid(lbfields, lblattice, lbpar);
   } else {
     throw std::runtime_error("LB not activated.");
   }
@@ -247,7 +247,7 @@ void lb_lbfluid_init() {
     lb_init_gpu();
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-    lb_init();
+    lb_init(lbpar);
   }
 }
 
@@ -1294,7 +1294,7 @@ void lb_lbfluid_on_lb_params_change(LBParam field) {
   switch (field) {
   case LBParam::AGRID:
     if (lattice_switch == ActiveLB::CPU)
-      lb_init();
+      lb_init(lbpar);
 #ifdef CUDA
     if (lattice_switch == ActiveLB::GPU && this_node == 0)
       lb_init_gpu();
