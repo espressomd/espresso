@@ -408,7 +408,7 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
             if ((int)floor(sim_time / time_step) % period_for_output == 0) {
               FILE *fp;
               double tmpPon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
-              fp = fopen("affinity.check.dat", "a");
+              fp = fopen("affinity_check.dat", "a");
               fprintf(fp, "sim_time %f, period_for_output %d aff type: %d ",
                       sim_time, period_for_output, aff_type_extracted);
               fprintf(fp,
