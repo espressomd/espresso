@@ -53,18 +53,18 @@ inline double soft_energy_r(double a, double n, double r) {
 }
 
 /** Calculate soft-sphere potential force between particle p1 and p2 */
-inline void add_soft_pair_force(const Particle *const p1,
-                                const Particle *const p2,
-                                IA_parameters *ia_params, double const d[3],
-                                double dist, double force[3]) {
+inline void add_soft_pair_force(Particle const *const p1,
+                                Particle const *const p2,
+                                IA_parameters const *const ia_params,
+                                Utils::Vector3d const &d, double dist,
+                                Utils::Vector3d &force) {
   double fac = 0.0;
   if (dist < (ia_params->soft.cut + ia_params->soft.offset)) {
     /* normal case: resulting force/energy smaller than zero. */
     auto const r_off = dist - ia_params->soft.offset;
     if (r_off > 0.0) {
       fac = soft_force_r(ia_params->soft.a, ia_params->soft.n, r_off) / dist;
-      for (int j = 0; j < 3; j++)
-        force[j] += fac * d[j];
+      force += fac * d;
 
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)
@@ -90,13 +90,13 @@ inline void add_soft_pair_force(const Particle *const p1,
 }
 
 /** Calculate soft-sphere energy between particle p1 and p2. */
-inline double soft_pair_energy(const Particle *p1, const Particle *p2,
-                               const IA_parameters *ia_params,
-                               const double d[3], double dist) {
+inline double soft_pair_energy(Particle const *const p1,
+                               Particle const *const p2,
+                               IA_parameters const *const ia_params,
+                               Utils::Vector3d const &d, double dist) {
   if (dist < (ia_params->soft.cut + ia_params->soft.offset)) {
     auto const r_off = dist - ia_params->soft.offset;
     /* normal case: resulting force/energy smaller than zero. */
-
     return soft_energy_r(ia_params->soft.a, ia_params->soft.n, r_off);
   }
   return 0.0;

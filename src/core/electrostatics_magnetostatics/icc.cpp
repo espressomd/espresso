@@ -68,8 +68,8 @@ void force_calc_iccp3m();
 /** Variant of add_non_bonded_pair_force where only Coulomb
  *  contributions are calculated   */
 inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
-                                             double d[3], double dist,
-                                             double dist2) {
+                                             Utils::Vector3d const &d,
+                                             double dist, double dist2) {
   Utils::Vector3d force{};
   Coulomb::calc_pair_force(p1, p2, d, dist, force);
 
@@ -193,8 +193,8 @@ void force_calc_iccp3m() {
 
   short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
     /* calc non bonded interactions */
-    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21.data(),
-                                     sqrt(d.dist2), d.dist2);
+    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21, sqrt(d.dist2),
+                                     d.dist2);
   });
 
   Coulomb::calc_long_range_force();

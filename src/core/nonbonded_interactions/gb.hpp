@@ -38,11 +38,13 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double sig, double cut, double k1, double k2,
                          double mu, double nu);
 
-inline void add_gb_pair_force(const Particle *const p1,
-                              const Particle *const p2,
-                              IA_parameters *ia_params, double const d[3],
-                              double dist, double force[3], double torque1[3],
-                              double torque2[3]) {
+inline void add_gb_pair_force(Particle const *const p1,
+                              Particle const *const p2,
+                              IA_parameters const *const ia_params,
+                              Utils::Vector3d const &d, double dist,
+                              Utils::Vector3d &force,
+                              Utils::Vector3d *const torque1,
+                              Utils::Vector3d *const torque2) {
   using Utils::int_pow;
   using Utils::sqr;
 
@@ -50,16 +52,11 @@ inline void add_gb_pair_force(const Particle *const p1,
     return;
   }
 
-  auto const u1x = p1->r.calc_director()[0];
-  auto const u1y = p1->r.calc_director()[1];
-  auto const u1z = p1->r.calc_director()[2];
-  auto const u2x = p2->r.calc_director()[0];
-  auto const u2y = p2->r.calc_director()[1];
-  auto const u2z = p2->r.calc_director()[2];
-
-  auto const a = d[0] * u1x + d[1] * u1y + d[2] * u1z;
-  auto const b = d[0] * u2x + d[1] * u2y + d[2] * u2z;
-  auto const c = u1x * u2x + u1y * u2y + u1z * u2z;
+  auto const u1 = p1->r.calc_director();
+  auto const u2 = p2->r.calc_director();
+  auto const a = d * u1;
+  auto const b = d * u2;
+  auto const c = u1 * u2;
   auto const E1 = 1 / sqrt(1 - ia_params->GB.chi1 * ia_params->GB.chi1 * c * c);
   auto const Plus1 = (a + b) / (1 + ia_params->GB.chi1 * c);
   auto const Plus2 = (a + b) / (1 + ia_params->GB.chi2 * c);
@@ -115,49 +112,28 @@ inline void add_gb_pair_force(const Particle *const p1,
 
     /*--------------------------------------------------------------------*/
 
-    auto const FikX = -dU_dr * d[0] - dU_da * u1x - dU_db * u2x;
-    auto const FikY = -dU_dr * d[1] - dU_da * u1y - dU_db * u2y;
-    auto const FikZ = -dU_dr * d[2] - dU_da * u1z - dU_db * u2z;
-
-    force[0] += FikX;
-    force[1] += FikY;
-    force[2] += FikZ;
+    force -= dU_dr * d + dU_da * u1 + dU_db * u2;
 
     if (torque1 != nullptr) {
       /* calculate torque:  torque = u_1 x G   */
-
-      auto Gx = -dU_da * d[0] - dU_dc * u2x;
-      auto Gy = -dU_da * d[1] - dU_dc * u2y;
-      auto Gz = -dU_da * d[2] - dU_dc * u2z;
-
-      torque1[0] += u1y * Gz - u1z * Gy;
-      torque1[1] += u1z * Gx - u1x * Gz;
-      torque1[2] += u1x * Gy - u1y * Gx;
+      auto const G2 = -dU_da * d - dU_dc * u2;
+      *torque1 += vector_product(u1, G2);
 
       if (torque2 != nullptr) {
         /* calculate torque:  torque = u_2 x G     */
-
-        Gx = -dU_db * d[0] - dU_dc * u1x;
-        Gy = -dU_db * d[1] - dU_dc * u1y;
-        Gz = -dU_db * d[2] - dU_dc * u1z;
-
-        torque2[0] += u2y * Gz - u2z * Gy;
-        torque2[1] += u2z * Gx - u2x * Gz;
-        torque2[2] += u2x * Gy - u2y * Gx;
+        auto const G1 = -dU_db * d - dU_dc * u1;
+        *torque2 += vector_product(u2, G1);
       }
     }
   } else { /* the particles are too close to each other */
     Koef1 = 100;
-
-    force[0] += Koef1 * d[0];
-    force[1] += Koef1 * d[1];
-    force[2] += Koef1 * d[2];
+    force += Koef1 * d;
   }
 }
 
-inline double gb_pair_energy(const Particle *p1, const Particle *p2,
-                             const IA_parameters *ia_params, const double d[3],
-                             double dist) {
+inline double gb_pair_energy(Particle const *const p1, Particle const *const p2,
+                             IA_parameters const *const ia_params,
+                             Utils::Vector3d const &d, double dist) {
   using Utils::int_pow;
   using Utils::sqr;
 

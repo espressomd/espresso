@@ -52,22 +52,23 @@ inline double hat_energy_r(double Fmax, double r, double dist) {
 }
 
 /** Calculate hat potential force between particle p1 and p2. */
-inline void add_hat_pair_force(const Particle *const p1,
-                               const Particle *const p2,
-                               IA_parameters *ia_params, double const d[3],
-                               double dist, double force[3]) {
+inline void add_hat_pair_force(Particle const *const p1,
+                               Particle const *const p2,
+                               IA_parameters const *const ia_params,
+                               Utils::Vector3d const &d, double dist,
+                               Utils::Vector3d &force) {
   if (dist > 0. && dist < ia_params->hat.r) {
     auto const fac =
         hat_force_r(ia_params->hat.Fmax, ia_params->hat.r, dist) / dist;
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
+    force += fac * d;
   }
 }
 
 /** Calculate hat energy between particle p1 and p2. */
-inline double hat_pair_energy(const Particle *p1, const Particle *p2,
-                              const IA_parameters *ia_params, const double d[3],
-                              double dist) {
+inline double hat_pair_energy(Particle const *const p1,
+                              Particle const *const p2,
+                              IA_parameters const *const ia_params,
+                              Utils::Vector3d const &d, double dist) {
   if (dist < ia_params->hat.r) {
     return hat_energy_r(ia_params->hat.Fmax, ia_params->hat.r, dist);
   }

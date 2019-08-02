@@ -418,7 +418,7 @@ void reset_ia_params();
 int interactions_sanity_checks();
 
 /** Check if a non bonded interaction is defined */
-inline bool checkIfInteraction(IA_parameters *data) {
+inline bool checkIfInteraction(IA_parameters const *const data) {
   return data->particlesInteract;
 }
 

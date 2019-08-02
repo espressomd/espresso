@@ -57,17 +57,14 @@ extern Reaction_field_params rf_params;
 int rf_set_params(double kappa, double epsilon1, double epsilon2, double r_cut);
 
 inline void add_rf_coulomb_pair_force_no_cutoff(double const q1q2,
-                                                double const d[3],
+                                                Utils::Vector3d const &d,
                                                 double const dist,
-                                                double force[3]) {
-  int j;
+                                                Utils::Vector3d &force) {
   double fac;
   fac = 1.0 / (dist * dist * dist) +
         rf_params.B / (rf_params.r_cut * rf_params.r_cut * rf_params.r_cut);
   fac *= q1q2;
-
-  for (j = 0; j < 3; j++)
-    force[j] += fac * d[j];
+  force += fac * d;
 }
 
 /** Computes the Reaction Field pair force and adds this
@@ -77,8 +74,10 @@ inline void add_rf_coulomb_pair_force_no_cutoff(double const q1q2,
  *  @param dist      Distance between p1 and p2.
  *  @param force     returns the force on particle 1.
  */
-inline void add_rf_coulomb_pair_force(double const q1q2, double const d[3],
-                                      double const dist, double force[3]) {
+inline void add_rf_coulomb_pair_force(double const q1q2,
+                                      Utils::Vector3d const &d,
+                                      double const dist,
+                                      Utils::Vector3d &force) {
   if (dist < rf_params.r_cut) {
     add_rf_coulomb_pair_force_no_cutoff(q1q2, d, dist, force);
   }

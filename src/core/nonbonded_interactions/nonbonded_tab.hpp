@@ -53,23 +53,21 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
                          std::vector<double> const &force);
 
 /** Add a non-bonded pair force by linear interpolation from a table. */
-inline void add_tabulated_pair_force(const Particle *const p1,
-                                     const Particle *const p2,
-                                     IA_parameters const *ia_params,
-                                     double const d[3], double dist,
-                                     double force[3]) {
+inline void add_tabulated_pair_force(Particle const *const p1,
+                                     Particle const *const p2,
+                                     IA_parameters const *const ia_params,
+                                     Utils::Vector3d const &d, double dist,
+                                     Utils::Vector3d &force) {
   if (dist < ia_params->TAB.cutoff()) {
     auto const fac = ia_params->TAB.force(dist) / dist;
-
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
+    force += fac * d;
   }
 }
 
 /** Add a non-bonded pair energy by linear interpolation from a table. */
 inline double tabulated_pair_energy(Particle const *, Particle const *,
-                                    IA_parameters const *ia_params,
-                                    const double d[3], double dist) {
+                                    IA_parameters const *const ia_params,
+                                    Utils::Vector3d const &d, double dist) {
   if (dist < ia_params->TAB.cutoff()) {
     return ia_params->TAB.energy(dist);
   }

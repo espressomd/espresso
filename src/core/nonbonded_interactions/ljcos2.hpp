@@ -45,10 +45,11 @@ int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
                       double offset, double w);
 
 /** Calculate lj-cos2 force between particle p1 and p2. */
-inline void add_ljcos2_pair_force(const Particle *const p1,
-                                  const Particle *const p2,
-                                  IA_parameters *ia_params, double const d[3],
-                                  double dist, double force[3]) {
+inline void add_ljcos2_pair_force(Particle const *const p1,
+                                  Particle const *const p2,
+                                  IA_parameters const *const ia_params,
+                                  Utils::Vector3d const &d, double dist,
+                                  Utils::Vector3d &force) {
   if (dist < (ia_params->ljcos2.cut + ia_params->ljcos2.offset)) {
     auto const r_off = dist - ia_params->ljcos2.offset;
     auto fac = 0.0;
@@ -61,9 +62,7 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
           -ia_params->ljcos2.eps * M_PI / 2 / ia_params->ljcos2.w / dist *
           sin(M_PI * (r_off - ia_params->ljcos2.rchange) / ia_params->ljcos2.w);
     }
-
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
+    force += fac * d;
 
 #ifdef LJ_WARN_WHEN_CLOSE
     if (fac * dist > 1000)
@@ -86,15 +85,16 @@ inline void add_ljcos2_pair_force(const Particle *const p1,
 
     LJ_TRACE(fprintf(
         stderr, "%d: LJ: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
-        this_node, p1->p.identity, p2->p.identity, dist, fac * d[0], fac * d[1],
-        fac * d[2]));
+        this_node, p1->p.identity, p2->p.identity, dist, force[0], force[1],
+        force[2]));
   }
 }
 
 /** Calculate lj-cos2 energy between particle p1 and p2. */
-inline double ljcos2_pair_energy(const Particle *p1, const Particle *p2,
-                                 const IA_parameters *ia_params,
-                                 const double d[3], double dist) {
+inline double ljcos2_pair_energy(Particle const *const p1,
+                                 Particle const *const p2,
+                                 IA_parameters const *const ia_params,
+                                 Utils::Vector3d const &d, double dist) {
   if (dist < (ia_params->ljcos2.cut + ia_params->ljcos2.offset)) {
     auto const r_off = dist - ia_params->ljcos2.offset;
     if (r_off < ia_params->ljcos2.rchange) {
