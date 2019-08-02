@@ -540,12 +540,13 @@ inline void add_bonded_force(Particle *const p1) {
     else if (n_partners == 3) {
       switch (type) {
 #ifdef MEMBRANE_COLLISION
-      case BONDED_IA_OIF_OUT_DIRECTION:
+      case BONDED_IA_OIF_OUT_DIRECTION: {
         Utils::Vector3d outward_direction;
         std::tie(bond_broken, outward_direction) =
             calc_out_direction(p1, p2, p3, p4, iaparams);
         p1->p.out_direction = outward_direction;
         break;
+      }
 #endif
 #ifdef OIF_LOCAL_FORCES
       case BONDED_IA_OIF_LOCAL_FORCES:
