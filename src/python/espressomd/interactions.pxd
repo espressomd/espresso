@@ -72,6 +72,14 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double lambda1
         double softrad
 
+    cdef struct SmSt_Parameters:
+        double eps
+        double sig
+        double cut
+        double d
+        int n
+        double k0
+
     cdef struct IA_parameters:
         LJ_Parameters lj
 
@@ -115,12 +123,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double GB_mu
         double GB_nu
 
-        double SmSt_eps
-        double SmSt_sig
-        double SmSt_cut
-        double SmSt_d
-        int SmSt_n
-        double SmSt_k0
+        SmSt_Parameters SmSt
 
         double BMHTF_A
         double BMHTF_B

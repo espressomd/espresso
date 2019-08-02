@@ -40,15 +40,15 @@ inline void add_SmSt_pair_force(const Particle *const p1,
                                 const Particle *const p2,
                                 IA_parameters *ia_params, double const d[3],
                                 double dist, double dist2, double force[3]) {
-  if (dist >= ia_params->SmSt_cut) {
+  if (dist >= ia_params->SmSt.cut) {
     return;
   }
 
-  auto const frac = ia_params->SmSt_d / dist;
-  auto const fracP = pow(frac, ia_params->SmSt_n);
-  auto const er = exp(2. * ia_params->SmSt_k0 * (dist - ia_params->SmSt_sig));
-  auto const fac = (ia_params->SmSt_n * fracP + 2. * ia_params->SmSt_eps *
-                                                    ia_params->SmSt_k0 * dist *
+  auto const frac = ia_params->SmSt.d / dist;
+  auto const fracP = pow(frac, ia_params->SmSt.n);
+  auto const er = exp(2. * ia_params->SmSt.k0 * (dist - ia_params->SmSt.sig));
+  auto const fac = (ia_params->SmSt.n * fracP + 2. * ia_params->SmSt.eps *
+                                                    ia_params->SmSt.k0 * dist *
                                                     er / Utils::sqr(1.0 + er)) /
                    dist2;
 
@@ -60,14 +60,14 @@ inline void add_SmSt_pair_force(const Particle *const p1,
 inline double SmSt_pair_energy(const Particle *p1, const Particle *p2,
                                const IA_parameters *ia_params,
                                const double d[3], double dist, double dist2) {
-  if (dist >= ia_params->SmSt_cut) {
+  if (dist >= ia_params->SmSt.cut) {
     return 0.0;
   }
 
-  auto const frac = ia_params->SmSt_d / dist;
-  auto const fracP = pow(frac, ia_params->SmSt_n);
-  auto const er = exp(2. * ia_params->SmSt_k0 * (dist - ia_params->SmSt_sig));
-  auto const fac = fracP + ia_params->SmSt_eps / (1.0 + er);
+  auto const frac = ia_params->SmSt.d / dist;
+  auto const fracP = pow(frac, ia_params->SmSt.n);
+  auto const er = exp(2. * ia_params->SmSt.k0 * (dist - ia_params->SmSt.sig));
+  auto const fac = fracP + ia_params->SmSt.eps / (1.0 + er);
 
   return fac;
 }

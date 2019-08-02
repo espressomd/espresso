@@ -36,12 +36,12 @@ int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
   if (!data)
     return ES_ERROR;
 
-  data->SmSt_eps = eps;
-  data->SmSt_sig = sig;
-  data->SmSt_cut = cut;
-  data->SmSt_d = d;
-  data->SmSt_n = n;
-  data->SmSt_k0 = k0;
+  data->SmSt.eps = eps;
+  data->SmSt.sig = sig;
+  data->SmSt.cut = cut;
+  data->SmSt.d = d;
+  data->SmSt.n = n;
+  data->SmSt.k0 = k0;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

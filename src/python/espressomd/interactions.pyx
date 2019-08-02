@@ -964,12 +964,12 @@ IF SMOOTH_STEP == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "d": ia_params.SmSt_d,
-                "n": ia_params.SmSt_n,
-                "eps": ia_params.SmSt_eps,
-                "k0": ia_params.SmSt_k0,
-                "sig": ia_params.SmSt_sig,
-                "cutoff": ia_params.SmSt_cut
+                "d": ia_params.SmSt.d,
+                "n": ia_params.SmSt.n,
+                "eps": ia_params.SmSt.eps,
+                "k0": ia_params.SmSt.k0,
+                "sig": ia_params.SmSt.sig,
+                "cutoff": ia_params.SmSt.cut
             }
 
         def is_active(self):

@@ -187,8 +187,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef SMOOTH_STEP
-      if (max_cut_current < data->SmSt_cut)
-        max_cut_current = data->SmSt_cut;
+      if (max_cut_current < data->SmSt.cut)
+        max_cut_current = data->SmSt.cut;
 #endif
 
 #ifdef HERTZIAN

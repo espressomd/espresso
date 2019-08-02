@@ -75,6 +75,17 @@ struct LJGEN_Parameters {
 };
 /*@}*/
 
+/** \name smooth step potential */
+/*@{*/
+struct SmSt_Parameters {
+    double eps = 0.0;
+    double sig = 0.0;
+    double cut = INACTIVE_CUTOFF;
+    double d = 0.0;
+    int n = 0;
+    double k0 = 0.0;
+};
+/*@}*/
 
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -109,15 +120,7 @@ struct IA_parameters {
 #endif
 
 #ifdef SMOOTH_STEP
-  /** \name smooth step potential */
-  /*@{*/
-  double SmSt_eps = 0.0;
-  double SmSt_sig = 0.0;
-  double SmSt_cut = INACTIVE_CUTOFF;
-  double SmSt_d = 0.0;
-  int SmSt_n = 0;
-  double SmSt_k0 = 0.0;
-  /*@}*/
+  SmSt_Parameters SmSt;
 #endif
 
 #ifdef HERTZIAN
