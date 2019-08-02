@@ -54,12 +54,15 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double offset
         double min
 
+    cdef struct WCA_Parameters:
+        double eps
+        double sig
+        double cut
+
     cdef struct IA_parameters:
         LJ_Parameters lj
 
-        double WCA_eps
-        double WCA_sig
-        double WCA_cut
+        WCA_Parameters wca
 
         double LJCOS_eps
         double LJCOS_sig

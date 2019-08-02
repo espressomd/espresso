@@ -49,6 +49,17 @@ struct LJ_Parameters {
 };
 /*@}*/
 
+/** \name WCA potential */
+/*@{*/
+struct WCA_Parameters {
+    double eps = 0.0;
+    double sig = 0.0;
+    double cut = INACTIVE_CUTOFF;
+};
+/*@}*/
+
+
+
 /** Data structure containing the interaction parameters for non-bonded
  *  interactions.
  *  Access via <tt>get_ia_param(i, j)</tt> with
@@ -66,12 +77,7 @@ struct IA_parameters {
 #endif
 
 #ifdef WCA
-  /** \name WCA potential */
-  /*@{*/
-  double WCA_eps = 0.0;
-  double WCA_sig = 0.0;
-  double WCA_cut = INACTIVE_CUTOFF;
-  /*@}*/
+  WCA_Parameters wca;
 #endif
 
   /** flag that tells whether there is any short-ranged interaction,

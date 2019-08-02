@@ -41,10 +41,10 @@ inline void add_wca_pair_force(const Particle *const p1,
                                const Particle *const p2,
                                IA_parameters *ia_params, double const d[3],
                                double dist, double force[3]) {
-  if (dist < ia_params->WCA_cut) {
-    auto const frac6 = Utils::int_pow<6>(ia_params->WCA_sig / dist);
+  if (dist < ia_params->wca.cut) {
+    auto const frac6 = Utils::int_pow<6>(ia_params->wca.sig / dist);
     auto const fac =
-        48.0 * ia_params->WCA_eps * frac6 * (frac6 - 0.5) / (dist * dist);
+        48.0 * ia_params->wca.eps * frac6 * (frac6 - 0.5) / (dist * dist);
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
   }
@@ -54,9 +54,9 @@ inline void add_wca_pair_force(const Particle *const p1,
 inline double wca_pair_energy(const Particle *p1, const Particle *p2,
                               const IA_parameters *ia_params, const double d[3],
                               double dist) {
-  if (dist < ia_params->WCA_cut) {
-    auto const frac6 = Utils::int_pow<6>(ia_params->WCA_sig / dist);
-    return 4.0 * ia_params->WCA_eps * (Utils::sqr(frac6) - frac6 + .25);
+  if (dist < ia_params->wca.cut) {
+    auto const frac6 = Utils::int_pow<6>(ia_params->wca.sig / dist);
+    return 4.0 * ia_params->wca.eps * (Utils::sqr(frac6) - frac6 + .25);
   }
   return 0.0;
 }

@@ -172,7 +172,7 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef WCA
-      max_cut_current = std::max(max_cut_current, data->WCA_cut);
+      max_cut_current = std::max(max_cut_current, data->wca.cut);
 #endif
 
 #ifdef DPD

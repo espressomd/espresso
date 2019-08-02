@@ -345,9 +345,9 @@ IF WCA == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "epsilon": ia_params.WCA_eps,
-                "sigma": ia_params.WCA_sig,
-                "cutoff": ia_params.WCA_cut}
+                "epsilon": ia_params.wca.eps,
+                "sigma": ia_params.wca.sig,
+                "cutoff": ia_params.wca.cut}
 
         def is_active(self):
             """Check if interaction is active.
