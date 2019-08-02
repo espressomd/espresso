@@ -108,7 +108,8 @@ extern constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
 } // namespace
 
 #ifdef ADDITIONAL_CHECKS
-static void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice);
+static void lb_check_halo_regions(const LB_Fluid &lbfluid,
+                                  const Lattice &lb_lattice);
 #endif // ADDITIONAL_CHECKS
 
 /** Counter for the RNG */
@@ -193,7 +194,8 @@ void lb_init(const LB_Parameters &lb_parameters) {
   }
 
   /* allocate memory for data structures */
-  lb_realloc_fluid(lbfluid_a, lbfluid_b, lblattice.halo_grid_volume, lbfluid, lbfluid_post, lbfields);
+  lb_realloc_fluid(lbfluid_a, lbfluid_b, lblattice.halo_grid_volume, lbfluid,
+                   lbfluid_post, lbfields);
 
   /* prepare the halo communication */
   lb_prepare_communication(update_halo_comm, lblattice);
@@ -205,8 +207,9 @@ void lb_init(const LB_Parameters &lb_parameters) {
   lb_reinit_fluid(lbfields, lblattice, lbpar);
 }
 
-void
-lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields, const Lattice &lb_lattice, const LB_Parameters &lb_parameters) {
+void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
+                     const Lattice &lb_lattice,
+                     const LB_Parameters &lb_parameters) {
   std::fill(lb_fields.begin(), lb_fields.end(), LB_FluidNode());
   /* default values for fields in lattice units */
   Utils::Vector3d momentum_density{};
@@ -236,14 +239,15 @@ void lb_reinit_parameters(LB_Parameters &lb_parameters) {
 
   if (lb_parameters.bulk_viscosity > 0.0) {
     /* Eq. (81) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007). */
-    lb_parameters.gamma_bulk = 1. - 2. / (9. * lb_parameters.bulk_viscosity + 1.);
+    lb_parameters.gamma_bulk =
+        1. - 2. / (9. * lb_parameters.bulk_viscosity + 1.);
   }
 
   if (lb_parameters.is_TRT) {
     lb_parameters.gamma_bulk = lb_parameters.gamma_shear;
     lb_parameters.gamma_even = lb_parameters.gamma_shear;
-    lb_parameters.gamma_odd =
-        -(7.0 * lb_parameters.gamma_even + 1.0) / (lb_parameters.gamma_even + 7.0);
+    lb_parameters.gamma_odd = -(7.0 * lb_parameters.gamma_even + 1.0) /
+                              (lb_parameters.gamma_even + 7.0);
     // gamma_odd = lb_parameters.gamma_shear; //uncomment for BGK
   }
 
@@ -255,7 +259,8 @@ void lb_reinit_parameters(LB_Parameters &lb_parameters) {
   if (lb_parameters.kT > 0.0) {
     /* Eq. (51) Duenweg, Schiller, Ladd, PRE 76(3):036704 (2007).
      * Note that the modes are not normalized as in the paper here! */
-    double mu = lb_parameters.kT / D3Q19::c_sound_sq<double> * lb_parameters.tau * lb_parameters.tau /
+    double mu = lb_parameters.kT / D3Q19::c_sound_sq<double> *
+                lb_parameters.tau * lb_parameters.tau /
                 (lb_parameters.agrid * lb_parameters.agrid);
 
     for (int i = 0; i < 4; i++)
@@ -263,8 +268,8 @@ void lb_reinit_parameters(LB_Parameters &lb_parameters) {
     lb_parameters.phi[4] =
         sqrt(mu * D3Q19::w_k[4] * (1. - Utils::sqr(lb_parameters.gamma_bulk)));
     for (int i = 5; i < 10; i++)
-      lb_parameters.phi[i] =
-          sqrt(mu * D3Q19::w_k[i] * (1. - Utils::sqr(lb_parameters.gamma_shear)));
+      lb_parameters.phi[i] = sqrt(mu * D3Q19::w_k[i] *
+                                  (1. - Utils::sqr(lb_parameters.gamma_shear)));
     for (int i = 10; i < 16; i++)
       lb_parameters.phi[i] =
           sqrt(mu * D3Q19::w_k[i] * (1 - Utils::sqr(lb_parameters.gamma_odd)));
@@ -278,7 +283,8 @@ void lb_reinit_parameters(LB_Parameters &lb_parameters) {
 }
 
 /* Halo communication for push scheme */
-static void halo_push_communication(LB_Fluid &lb_fluid, const Lattice &lb_lattice) {
+static void halo_push_communication(LB_Fluid &lb_fluid,
+                                    const Lattice &lb_lattice) {
   Lattice::index_t index;
   int x, y, z, count;
   int rnode, snode;
@@ -592,8 +598,10 @@ void lb_fluid_set_rng_state(uint64_t counter) {
 /***********************************************************************/
 
 /** (Re-)allocate memory for the fluid and initialize pointers. */
-void lb_realloc_fluid(LB_FluidData &lb_fluid_a, LB_FluidData &lb_fluid_b, const Lattice::index_t halo_grid_volume,
-                      LB_Fluid &lb_fluid, LB_Fluid &lb_fluid_post, std::vector<LB_FluidNode> &lb_fields) {
+void lb_realloc_fluid(LB_FluidData &lb_fluid_a, LB_FluidData &lb_fluid_b,
+                      const Lattice::index_t halo_grid_volume,
+                      LB_Fluid &lb_fluid, LB_Fluid &lb_fluid_post,
+                      std::vector<LB_FluidNode> &lb_fields) {
   const std::array<int, 2> size = {{D3Q19::n_vel, halo_grid_volume}};
 
   lb_fluid_a.resize(size);
@@ -611,7 +619,8 @@ void lb_realloc_fluid(LB_FluidData &lb_fluid_a, LB_FluidData &lb_fluid_b, const 
 /** Set up the structures for exchange of the halo regions.
  *  See also \ref halo.cpp
  */
-void lb_prepare_communication(HaloCommunicator &halo_comm, const Lattice &lb_lattice) {
+void lb_prepare_communication(HaloCommunicator &halo_comm,
+                              const Lattice &lb_lattice) {
   HaloCommunicator comm = HaloCommunicator(0);
 
   /* since the data layout is a structure of arrays, we have to
@@ -754,14 +763,16 @@ void lb_set_population_from_density_momentum_density_stress(
 #include <boost/range/numeric.hpp>
 
 /** Calculation of hydrodynamic modes */
-std::array<double, 19> lb_calc_modes(Lattice::index_t index, const LB_Fluid &lb_fluid) {
+std::array<double, 19> lb_calc_modes(Lattice::index_t index,
+                                     const LB_Fluid &lb_fluid) {
   return Utils::matrix_vector_product<double, 19, e_ki>(
       LB_Fluid_Ref(index, lb_fluid));
 }
 
 template <typename T>
-inline std::array<T, 19>
-lb_relax_modes(Lattice::index_t index, const std::array<T, 19> &modes, const LB_Parameters &lb_parameters) {
+inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
+                                        const std::array<T, 19> &modes,
+                                        const LB_Parameters &lb_parameters) {
   T density, momentum_density[3], stress_eq[6];
 
   /* re-construct the real density
@@ -787,27 +798,30 @@ lb_relax_modes(Lattice::index_t index, const std::array<T, 19> &modes, const LB_
   stress_eq[4] = momentum_density[0] * momentum_density[2] / density;
   stress_eq[5] = momentum_density[1] * momentum_density[2] / density;
 
-  return {{modes[0], modes[1], modes[2], modes[3],
-           /* relax the stress modes */
-           stress_eq[0] + lb_parameters.gamma_bulk * (modes[4] - stress_eq[0]),
-           stress_eq[1] + lb_parameters.gamma_shear * (modes[5] - stress_eq[1]),
-           stress_eq[2] + lb_parameters.gamma_shear * (modes[6] - stress_eq[2]),
-           stress_eq[3] + lb_parameters.gamma_shear * (modes[7] - stress_eq[3]),
-           stress_eq[4] + lb_parameters.gamma_shear * (modes[8] - stress_eq[4]),
-           stress_eq[5] + lb_parameters.gamma_shear * (modes[9] - stress_eq[5]),
-           /* relax the ghost modes (project them out) */
-           /* ghost modes have no equilibrium part due to orthogonality */
-           lb_parameters.gamma_odd * modes[10], lb_parameters.gamma_odd * modes[11],
-              lb_parameters.gamma_odd * modes[12], lb_parameters.gamma_odd * modes[13],
-              lb_parameters.gamma_odd * modes[14], lb_parameters.gamma_odd * modes[15],
-              lb_parameters.gamma_even * modes[16], lb_parameters.gamma_even * modes[17],
-              lb_parameters.gamma_even * modes[18]}};
+  return {
+      {modes[0], modes[1], modes[2], modes[3],
+       /* relax the stress modes */
+       stress_eq[0] + lb_parameters.gamma_bulk * (modes[4] - stress_eq[0]),
+       stress_eq[1] + lb_parameters.gamma_shear * (modes[5] - stress_eq[1]),
+       stress_eq[2] + lb_parameters.gamma_shear * (modes[6] - stress_eq[2]),
+       stress_eq[3] + lb_parameters.gamma_shear * (modes[7] - stress_eq[3]),
+       stress_eq[4] + lb_parameters.gamma_shear * (modes[8] - stress_eq[4]),
+       stress_eq[5] + lb_parameters.gamma_shear * (modes[9] - stress_eq[5]),
+       /* relax the ghost modes (project them out) */
+       /* ghost modes have no equilibrium part due to orthogonality */
+       lb_parameters.gamma_odd * modes[10], lb_parameters.gamma_odd * modes[11],
+       lb_parameters.gamma_odd * modes[12], lb_parameters.gamma_odd * modes[13],
+       lb_parameters.gamma_odd * modes[14], lb_parameters.gamma_odd * modes[15],
+       lb_parameters.gamma_even * modes[16],
+       lb_parameters.gamma_even * modes[17],
+       lb_parameters.gamma_even * modes[18]}};
 }
 
 template <typename T>
-inline std::array<T, 19>
-lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes, const LB_Parameters &lb_parameters,
-                    const uint64_t rng_counter_value) {
+inline std::array<T, 19> lb_thermalize_modes(Lattice::index_t index,
+                                             const std::array<T, 19> &modes,
+                                             const LB_Parameters &lb_parameters,
+                                             const uint64_t rng_counter_value) {
   if (lb_parameters.kT > 0.0) {
     using Utils::uniform;
     using rng_type = r123::Philox4x64;
@@ -815,7 +829,8 @@ lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes, cons
 
     const r123::Philox4x64::ctr_type c{
         {rng_counter_value, static_cast<uint64_t>(RNGSalt::FLUID)}};
-    const T rootdensity = std::sqrt(std::fabs(modes[0] + lb_parameters.density));
+    const T rootdensity =
+        std::sqrt(std::fabs(modes[0] + lb_parameters.density));
     auto const pref = std::sqrt(12.) * rootdensity;
 
     const ctr_type noise[4] = {
@@ -851,9 +866,10 @@ lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes, cons
 }
 
 template <typename T>
-std::array<T, 19>
-lb_apply_forces(Lattice::index_t index, const std::array<T, 19> &modes, const LB_Parameters &lb_parameters,
-                const std::vector<LB_FluidNode> &lb_fields) {
+std::array<T, 19> lb_apply_forces(Lattice::index_t index,
+                                  const std::array<T, 19> &modes,
+                                  const LB_Parameters &lb_parameters,
+                                  const std::vector<LB_FluidNode> &lb_fields) {
   const auto &f = lb_fields[index].force_density;
 
   auto const density = modes[0] + lb_parameters.density;
@@ -865,14 +881,20 @@ lb_apply_forces(Lattice::index_t index, const std::array<T, 19> &modes, const LB
 
   double C[6];
   C[0] = (1. + lb_parameters.gamma_bulk) * u[0] * f[0] +
-         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) * (u * f);
+         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+             (u * f);
   C[2] = (1. + lb_parameters.gamma_bulk) * u[1] * f[1] +
-         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) * (u * f);
+         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+             (u * f);
   C[5] = (1. + lb_parameters.gamma_bulk) * u[2] * f[2] +
-         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) * (u * f);
-  C[1] = 1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]);
-  C[3] = 1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]);
-  C[4] = 1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]);
+         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) *
+             (u * f);
+  C[1] =
+      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]);
+  C[3] =
+      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]);
+  C[4] =
+      1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]);
 
   return {{modes[0],
            /* update momentum modes */
@@ -954,8 +976,8 @@ inline void lb_collide_stream() {
           auto const relaxed_modes = lb_relax_modes(index, modes, lbpar);
 
           /* fluctuating hydrodynamics */
-          auto const thermalized_modes =
-              lb_thermalize_modes(index, relaxed_modes, lbpar, rng_counter_fluid->value());
+          auto const thermalized_modes = lb_thermalize_modes(
+              index, relaxed_modes, lbpar, rng_counter_fluid->value());
 
           /* apply forces */
           auto const modes_with_forces =
@@ -1080,8 +1102,8 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
           }
         }
 
-        index =
-            get_linear_index(lb_lattice.grid[0] + 1, y, z, lb_lattice.halo_grid);
+        index = get_linear_index(lb_lattice.grid[0] + 1, y, z,
+                                 lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
           s_buffer[i] = lbfluid[i][index];
 
@@ -1138,8 +1160,8 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
         }
       }
       for (x = 0; x < lb_lattice.halo_grid[0]; ++x) {
-        index =
-            get_linear_index(x, lb_lattice.grid[1] + 1, z, lb_lattice.halo_grid);
+        index = get_linear_index(x, lb_lattice.grid[1] + 1, z,
+                                 lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
           s_buffer[i] = lbfluid[i][index];
 
@@ -1199,8 +1221,8 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
     }
     for (y = 0; y < lb_lattice.halo_grid[1]; ++y) {
       for (x = 0; x < lb_lattice.halo_grid[0]; ++x) {
-        index =
-            get_linear_index(x, y, lb_lattice.grid[2] + 1, lb_lattice.halo_grid);
+        index = get_linear_index(x, y, lb_lattice.grid[2] + 1,
+                                 lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
           s_buffer[i] = lbfluid[i][index];
 
@@ -1231,7 +1253,8 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
   free(s_buffer);
 }
 
-double lb_calc_density(std::array<double, 19> const &modes, const LB_Parameters &lb_parameters) {
+double lb_calc_density(std::array<double, 19> const &modes,
+                       const LB_Parameters &lb_parameters) {
   return modes[0] + lb_parameters.density;
 }
 
@@ -1242,7 +1265,8 @@ Utils::Vector3d lb_calc_momentum_density(std::array<double, 19> const &modes,
                           modes[3] + 0.5 * force_density[2]}};
 }
 
-Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes, Utils::Vector3d const &force_density,
+Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
+                               Utils::Vector3d const &force_density,
                                const LB_Parameters &lb_parameters) {
   auto const momentum_density = lb_calc_momentum_density(modes, force_density);
   auto const density = lb_calc_density(modes, lb_parameters);
@@ -1266,23 +1290,23 @@ Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes, Utils::Vecto
 
   Utils::Vector6d avg_modes;
   avg_modes[0] =
-      modes_from_stress_eq[0] +
-      (0.5 + 0.5 * lb_parameters.gamma_bulk) * (modes[4] - modes_from_stress_eq[0]);
+      modes_from_stress_eq[0] + (0.5 + 0.5 * lb_parameters.gamma_bulk) *
+                                    (modes[4] - modes_from_stress_eq[0]);
   avg_modes[1] =
-      modes_from_stress_eq[1] +
-      (0.5 + 0.5 * lb_parameters.gamma_shear) * (modes[5] - modes_from_stress_eq[1]);
+      modes_from_stress_eq[1] + (0.5 + 0.5 * lb_parameters.gamma_shear) *
+                                    (modes[5] - modes_from_stress_eq[1]);
   avg_modes[2] =
-      modes_from_stress_eq[2] +
-      (0.5 + 0.5 * lb_parameters.gamma_shear) * (modes[6] - modes_from_stress_eq[2]);
+      modes_from_stress_eq[2] + (0.5 + 0.5 * lb_parameters.gamma_shear) *
+                                    (modes[6] - modes_from_stress_eq[2]);
   avg_modes[3] =
-      modes_from_stress_eq[3] +
-      (0.5 + 0.5 * lb_parameters.gamma_shear) * (modes[7] - modes_from_stress_eq[3]);
+      modes_from_stress_eq[3] + (0.5 + 0.5 * lb_parameters.gamma_shear) *
+                                    (modes[7] - modes_from_stress_eq[3]);
   avg_modes[4] =
-      modes_from_stress_eq[4] +
-      (0.5 + 0.5 * lb_parameters.gamma_shear) * (modes[8] - modes_from_stress_eq[4]);
+      modes_from_stress_eq[4] + (0.5 + 0.5 * lb_parameters.gamma_shear) *
+                                    (modes[8] - modes_from_stress_eq[4]);
   avg_modes[5] =
-      modes_from_stress_eq[5] +
-      (0.5 + 0.5 * lb_parameters.gamma_shear) * (modes[9] - modes_from_stress_eq[5]);
+      modes_from_stress_eq[5] + (0.5 + 0.5 * lb_parameters.gamma_shear) *
+                                    (modes[9] - modes_from_stress_eq[5]);
 
   // Transform the stress tensor components according to the modes that
   // correspond to those used by U. Schiller. In terms of populations this
@@ -1312,7 +1336,8 @@ Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes, Utils::Vecto
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
-void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters, const std::vector<LB_FluidNode> &lb_fields) {
+void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
+                    const std::vector<LB_FluidNode> &lb_fields) {
   int k, i, l;
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
@@ -1386,19 +1411,21 @@ void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters, const
  *  @param[in]  index  Local lattice site
  *  @retval The local fluid momentum.
  */
-inline Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index, const LB_Fluid &lb_fluid) {
+inline Utils::Vector3d
+lb_calc_local_momentum_density(Lattice::index_t index,
+                               const LB_Fluid &lb_fluid) {
   return {{lb_fluid[1][index] - lb_fluid[2][index] + lb_fluid[7][index] -
-           lb_fluid[8][index] + lb_fluid[9][index] - lb_fluid[10][index] +
-           lb_fluid[11][index] - lb_fluid[12][index] + lb_fluid[13][index] -
-           lb_fluid[14][index],
-              lb_fluid[3][index] - lb_fluid[4][index] + lb_fluid[7][index] -
-              lb_fluid[8][index] - lb_fluid[9][index] + lb_fluid[10][index] +
-              lb_fluid[15][index] - lb_fluid[16][index] + lb_fluid[17][index] -
-              lb_fluid[18][index],
-              lb_fluid[5][index] - lb_fluid[6][index] + lb_fluid[11][index] -
-              lb_fluid[12][index] - lb_fluid[13][index] + lb_fluid[14][index] +
-              lb_fluid[15][index] - lb_fluid[16][index] - lb_fluid[17][index] +
-              lb_fluid[18][index]}};
+               lb_fluid[8][index] + lb_fluid[9][index] - lb_fluid[10][index] +
+               lb_fluid[11][index] - lb_fluid[12][index] + lb_fluid[13][index] -
+               lb_fluid[14][index],
+           lb_fluid[3][index] - lb_fluid[4][index] + lb_fluid[7][index] -
+               lb_fluid[8][index] - lb_fluid[9][index] + lb_fluid[10][index] +
+               lb_fluid[15][index] - lb_fluid[16][index] + lb_fluid[17][index] -
+               lb_fluid[18][index],
+           lb_fluid[5][index] - lb_fluid[6][index] + lb_fluid[11][index] -
+               lb_fluid[12][index] - lb_fluid[13][index] + lb_fluid[14][index] +
+               lb_fluid[15][index] - lb_fluid[16][index] - lb_fluid[17][index] +
+               lb_fluid[18][index]}};
 }
 
 // Statistics in MD units.
@@ -1406,9 +1433,9 @@ inline Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index, co
 /** Calculate momentum of the LB fluid.
  * \param result Fluid momentum
  */
-void
-lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters, const std::vector<LB_FluidNode> &lb_fields,
-                       const Lattice &lb_lattice) {
+void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
+                            const std::vector<LB_FluidNode> &lb_fields,
+                            const Lattice &lb_lattice) {
   Utils::Vector3d momentum_density{}, momentum{};
 
   for (int x = 1; x <= lb_lattice.grid[0]; x++) {
