@@ -326,8 +326,8 @@ inline Utils::Vector3d friction_thermo_langevin(const Particle *p) {
     hadamard_product(langevin_pref_friction_buf, A * velocity);
   }()  : hadamard_product(langevin_pref_friction_buf, velocity);
 
-  return friction +
-         hadamard_product(langevin_pref_noise_buf, v_noise(p->p.identity, RNGSalt::LANGEVIN));
+  return friction + hadamard_product(langevin_pref_noise_buf,
+                                     v_noise(p->p.identity, RNGSalt::LANGEVIN));
 #else
   // Do the actual (isotropic) thermostatting
   return langevin_pref_friction_buf * velocity +
