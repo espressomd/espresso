@@ -55,10 +55,11 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
 );
 
 /** Calculate Lennard-Jones force between particle p1 and p2 */
-inline void add_ljgen_pair_force(const Particle *const p1,
-                                 const Particle *const p2,
-                                 IA_parameters *ia_params, double const d[3],
-                                 double dist, double force[3]) {
+inline void add_ljgen_pair_force(Particle const *const p1,
+                                 Particle const *const p2,
+                                 IA_parameters const *const ia_params,
+                                 Utils::Vector3d const &d, double dist,
+                                 Utils::Vector3d &force) {
   if (dist < (ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
     auto r_off = dist - ia_params->LJGEN_offset;
 
@@ -81,8 +82,7 @@ inline void add_ljgen_pair_force(const Particle *const p1,
                         ia_params->LJGEN_b2 * ia_params->LJGEN_a2 *
                             pow(frac, ia_params->LJGEN_a2)) /
                      (r_off * dist);
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
+    force += fac * d;
 
 #ifdef LJ_WARN_WHEN_CLOSE
     if (fac * dist > 1000)
@@ -105,15 +105,16 @@ inline void add_ljgen_pair_force(const Particle *const p1,
     LJ_TRACE(fprintf(
         stderr,
         "%d: LJGEN: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
-        this_node, p1->p.identity, p2->p.identity, dist, fac * d[0], fac * d[1],
-        fac * d[2]));
+        this_node, p1->p.identity, p2->p.identity, dist, force[0], force[1],
+        force[2]));
   }
 }
 
 /** Calculate Lennard-Jones energy between particle p1 and p2. */
-inline double ljgen_pair_energy(const Particle *p1, const Particle *p2,
-                                const IA_parameters *ia_params,
-                                const double d[3], double dist) {
+inline double ljgen_pair_energy(Particle const *const p1,
+                                Particle const *const p2,
+                                IA_parameters const *const ia_params,
+                                Utils::Vector3d const &d, double dist) {
   if (dist < (ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
     auto r_off = dist - ia_params->LJGEN_offset;
 #ifdef LJGEN_SOFTCORE

@@ -28,16 +28,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <utils/math/sqr.hpp>
 
 namespace {
-/** Rotate calculated trielastic forces in the 2d plane back to the 3d plane
- *Use knowledge that the x-axis in rotated system is parallel to r(p1->p2) in
- *original system; To find the corresponding unit vector to y in the rotated
- *system, construct vector perpendicular to r(p1->p2); note that f3 is not
- *calculated here but is implicitly calculated by f3 = -(f1+f2) which is
- *consistent with the literature
+/** Rotate calculated trielastic forces in the 2d plane back to the 3d plane.
+ *  Use knowledge that the x-axis in rotated system is parallel to r(p1->p2) in
+ *  original system; To find the corresponding unit vector to y in the rotated
+ *  system, construct vector perpendicular to r(p1->p2); note that f3 is not
+ *  calculated here but is implicitly calculated by f3 = -(f1+f2) which is
+ *  consistent with the literature
  */
-void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
-                  double f2[3], const Utils::Vector3d &v12,
-                  const Utils::Vector3d &v13) {
+void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
+                  Utils::Vector3d &f1, Utils::Vector3d &f2,
+                  Utils::Vector3d const &v12, Utils::Vector3d const &v13) {
   // fRot is in the rotated system, i.e. in a system where the side lPrime of
   // the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is
   // perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).
@@ -55,28 +55,19 @@ void RotateForces(const double f1_rot[2], const double f2_rot[2], double f1[3],
   // Krueger, Fig. 7.1b. Therefore: First get the projection of v13 onto v12:
   // The direction is definied by xu, the length by the scalar product (scalar
   // product can be interpreted as a projection, after all). --> sca * xu Then:
-  // v13 - sca * xu gives the component of v13 orthogonal to v12, i..e.
+  // v13 - sca * xu gives the component of v13 orthogonal to v12, i.e.
   // perpendicular to the x-axis --> yu Last: Normalize yu.
   auto const yu = (v13 - (v13 * xu) * xu).normalize();
 
   // Calculate forces in 3D
-  f1[0] = (f1_rot[0] * xu[0]) + (f1_rot[1] * yu[0]);
-  f1[1] = (f1_rot[0] * xu[1]) + (f1_rot[1] * yu[1]);
-  f1[2] = (f1_rot[0] * xu[2]) + (f1_rot[1] * yu[2]);
-
-  f2[0] = (f2_rot[0] * xu[0]) + (f2_rot[1] * yu[0]);
-  f2[1] = (f2_rot[0] * xu[1]) + (f2_rot[1] * yu[1]);
-  f2[2] = (f2_rot[0] * xu[2]) + (f2_rot[1] * yu[2]);
+  f1 = f1_rot[0] * xu + f1_rot[1] * yu;
+  f2 = f2_rot[0] * xu + f2_rot[1] * yu;
 }
 } // namespace
 
-/*************
-   IBM_Triel_CalcForce
-Calculate the repulsion and add it to the particle
- **************/
-
-int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
-                        Bonded_ia_parameters *iaparams) {
+int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
+                        Particle *const p3,
+                        Bonded_ia_parameters const *const iaparams) {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
@@ -88,16 +79,16 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   auto const vec1 = get_mi_vector(p2->r.p, p1->r.p, box_geo);
   auto const lp = vec1.norm();
 
-  // angles between these vectors; calculated directly via the products
-  const double cosPhi = (vec1 * vec2) / (lp * l);
-  auto const vecpro = vector_product(vec1, vec2);
-  const double sinPhi = vecpro.norm() / (l * lp);
-
   // Check for sanity
   if ((lp - iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxDist) ||
       (l - iaparams->p.ibm_triel.l0 > iaparams->p.ibm_triel.maxDist)) {
     return 1;
   }
+
+  // angles between these vectors; calculated directly via the products
+  auto const cosPhi = (vec1 * vec2) / (lp * l);
+  auto const vecpro = vector_product(vec1, vec2);
+  auto const sinPhi = vecpro.norm() / (l * lp);
 
   // Variables in the reference state
   const double l0 = iaparams->p.ibm_triel.l0;
@@ -183,8 +174,8 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   // 8 terms (done here). Krueger exploits the symmetry of the G-matrix, which
   // results in 6 elements, but with an additional factor 2 for the xy-elements
   // (see also above at the definition of dI2dGxy).
-  double f1_rot[2] = {0., 0.};
-  double f2_rot[2] = {0., 0.};
+  Utils::Vector2d f1_rot{};
+  Utils::Vector2d f2_rot{};
   f1_rot[0] = -(dEdI1 * dI1dGxx * dGxxdV1x) - (dEdI1 * dI1dGxy * dGxydV1x) -
               (dEdI1 * dI1dGyx * dGyxdV1x) - (dEdI1 * dI1dGyy * dGyydV1x) -
               (dEdI2 * dI2dGxx * dGxxdV1x) - (dEdI2 * dI2dGxy * dGxydV1x) -
@@ -203,10 +194,8 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
               (dEdI2 * dI2dGyx * dGyxdV2y) - (dEdI2 * dI2dGyy * dGyydV2y);
 
   // Multiply by undeformed area
-  f1_rot[0] *= A0;
-  f1_rot[1] *= A0;
-  f2_rot[0] *= A0;
-  f2_rot[1] *= A0;
+  f1_rot *= A0;
+  f2_rot *= A0;
 
   // ****************** Wolfgang's version ***********
   /*
@@ -237,23 +226,17 @@ int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
    */
 
   // Rotate forces back into original position of triangle
-  double force1[3] = {0, 0, 0};
-  double force2[3] = {0, 0, 0};
+  Utils::Vector3d force1{};
+  Utils::Vector3d force2{};
   RotateForces(f1_rot, f2_rot, force1, force2, vec1, vec2);
 
   // Calculate f3 from equilibrium and add
-  for (int i = 0; i < 3; i++) {
-    p1->f.f[i] += force1[i];
-    p2->f.f[i] += force2[i];
-    p3->f.f[i] += -force1[i] - force2[i];
-  }
+  p1->f.f += force1;
+  p2->f.f += force2;
+  p3->f.f -= force1 + force2;
 
   return 0;
 }
-
-/****************
-  IBM_Triel_ResetParams
- *****************/
 
 int IBM_Triel_ResetParams(const int bond_type, const double k1,
                           const double l0) {
@@ -302,10 +285,6 @@ int IBM_Triel_ResetParams(const int bond_type, const double k1,
 
   return ES_OK;
 }
-
-/***********
-   IBM_Triel_SetParams
-************/
 
 int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2,
                         const int ind3, const double maxDist,
