@@ -143,6 +143,16 @@ struct Buckingham_Parameters {
 };
 /*@}*/
 
+/** \name soft-sphere potential */
+/*@{*/
+struct SoftSphere_Parameters {
+    double a = 0.0;
+    double n = 0.0;
+    double cut = INACTIVE_CUTOFF;
+    double offset = 0.0;
+};
+/*@}*/
+
 
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -201,13 +211,7 @@ struct IA_parameters {
 #endif
 
 #ifdef SOFT_SPHERE
-  /** \name soft-sphere potential */
-  /*@{*/
-  double soft_a = 0.0;
-  double soft_n = 0.0;
-  double soft_cut = INACTIVE_CUTOFF;
-  double soft_offset = 0.0;
-  /*@}*/
+  SoftSphere_Parameters soft;
 #endif
 
 #ifdef AFFINITY

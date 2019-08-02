@@ -116,6 +116,12 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
              double F1
              double F2
 
+    cdef struct SoftSphere_Parameters:
+             double a
+             double n
+             double cut
+             double offset
+
 
 
     cdef struct IA_parameters:
@@ -146,10 +152,8 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double membrane_n
         double membrane_cut
         double membrane_offset
-        double soft_a
-        double soft_n
-        double soft_cut
-        double soft_offset
+
+        SoftSphere_Parameters soft
 
         TabulatedPotential TAB
 

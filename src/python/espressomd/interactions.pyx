@@ -1363,10 +1363,10 @@ IF SOFT_SPHERE == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "a": ia_params.soft_a,
-                "n": ia_params.soft_n,
-                "cutoff": ia_params.soft_cut,
-                "offset": ia_params.soft_offset
+                "a": ia_params.soft.a,
+                "n": ia_params.soft.n,
+                "cutoff": ia_params.soft.cut,
+                "offset": ia_params.soft.offset
             }
 
         def is_active(self):
@@ -1733,7 +1733,6 @@ class NonBondedInteractionHandle:
     hertzian = None
     gaussian = None
     tabulated = None
-    soft_sphere = None
     membrane_collision = None
     gay_berne = None
     dpd = None
@@ -1774,8 +1773,6 @@ class NonBondedInteractionHandle:
             self.morse = MorseInteraction(_type1, _type2)
         IF BUCKINGHAM:
             self.buckingham = BuckinghamInteraction(_type1, _type2)
-        IF SOFT_SPHERE:
-            self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF HERTZIAN:
             self.hertzian = HertzianInteraction(_type1, _type2)
         IF GAUSSIAN:
