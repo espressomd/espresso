@@ -166,6 +166,16 @@ struct Affinity_Parameters {
 };
 /*@}*/
 
+/** \name membrane collision potential */
+/*@{*/
+struct Membrane_Parameters {
+    double a = 0.0;
+    double n = 0.0;
+    double cut = INACTIVE_CUTOFF;
+    double offset = 0.0;
+};
+/*@}*/
+
 
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -232,13 +242,7 @@ struct IA_parameters {
 #endif
 
 #ifdef MEMBRANE_COLLISION
-  /** \name membrane collision potential */
-  /*@{*/
-  double membrane_a = 0.0;
-  double membrane_n = 0.0;
-  double membrane_cut = INACTIVE_CUTOFF;
-  double membrane_offset = 0.0;
-  /*@}*/
+  Membrane_Parameters membrane;
 #endif
 
 #ifdef HAT

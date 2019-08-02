@@ -1509,10 +1509,10 @@ IF MEMBRANE_COLLISION == 1:
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
-                "a": ia_params.membrane_a,
-                "n": ia_params.membrane_n,
-                "cutoff": ia_params.membrane_cut,
-                "offset": ia_params.membrane_offset}
+                "a": ia_params.membrane.a,
+                "n": ia_params.membrane.n,
+                "cutoff": ia_params.membrane.cut,
+                "offset": ia_params.membrane.offset}
 
         def is_active(self):
             return (self._params["a"] > 0)

@@ -73,9 +73,9 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
   double r_off, fac = 0.0, product, angle, ndir;
   Utils::Vector3d out1, out2, dir;
 
-  if ((dist < ia_params->membrane_cut + ia_params->membrane_offset)) {
+  if ((dist < ia_params->membrane.cut + ia_params->membrane.offset)) {
 
-    r_off = dist - ia_params->membrane_offset;
+    r_off = dist - ia_params->membrane.offset;
     // offset needs to be checked for the unphysical case when r_off should be
     // negative
 
@@ -101,7 +101,7 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
       angle = acos(product);
 
       if (fabs(angle) > SMALL_OIF_MEMBRANE_CUTOFF) {
-        fac = sigmoid_force_r(ia_params->membrane_a, ia_params->membrane_n,
+        fac = sigmoid_force_r(ia_params->membrane.a, ia_params->membrane.n,
                               r_off) /
               dist;
         for (j = 0; j < 3; j++)

@@ -227,8 +227,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef MEMBRANE_COLLISION
-      if (max_cut_current < data->membrane_cut)
-        max_cut_current = data->membrane_cut;
+      if (max_cut_current < data->membrane.cut)
+        max_cut_current = data->membrane.cut;
 #endif
 
 #ifdef HAT

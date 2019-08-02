@@ -131,6 +131,12 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
              double maxBond
              double cut
 
+    cdef struct Membrane_Parameters:
+        double a
+        double n
+        double cut
+        double offset
+
 
 
     cdef struct IA_parameters:
@@ -151,10 +157,8 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         LJGEN_Parameters ljgen
 
         Affinity_Parameters affinity
-        double membrane_a
-        double membrane_n
-        double membrane_cut
-        double membrane_offset
+
+        Membrane_Parameters membrane
 
         SoftSphere_Parameters soft
 
