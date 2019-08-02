@@ -59,6 +59,19 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double sig
         double cut
 
+    cdef struct LJGEN_Parameters:
+        double eps
+        double sig
+        double cut
+        double shift
+        double offset
+        double a1
+        double a2
+        double b1
+        double b2
+        double lambda1
+        double softrad
+
     cdef struct IA_parameters:
         LJ_Parameters lj
 
@@ -74,17 +87,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double LJCOS2_offset
         double LJCOS2_w
 
-        double LJGEN_eps
-        double LJGEN_sig
-        double LJGEN_cut
-        double LJGEN_shift
-        double LJGEN_offset
-        double LJGEN_a1
-        double LJGEN_a2
-        double LJGEN_b1
-        double LJGEN_b2
-        double LJGEN_lambda
-        double LJGEN_softrad
+        LJGEN_Parameters ljgen
 
         int affinity_type
         double affinity_kappa

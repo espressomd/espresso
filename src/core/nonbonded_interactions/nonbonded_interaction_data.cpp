@@ -182,8 +182,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
-      if (max_cut_current < (data->LJGEN_cut + data->LJGEN_offset))
-        max_cut_current = (data->LJGEN_cut + data->LJGEN_offset);
+      if (max_cut_current < (data->ljgen.cut + data->ljgen.offset))
+        max_cut_current = (data->ljgen.cut + data->ljgen.offset);
 #endif
 
 #ifdef SMOOTH_STEP

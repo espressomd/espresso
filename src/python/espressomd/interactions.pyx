@@ -429,17 +429,17 @@ IF LENNARD_JONES_GENERIC == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "epsilon": ia_params.LJGEN_eps,
-                "sigma": ia_params.LJGEN_sig,
-                "cutoff": ia_params.LJGEN_cut,
-                "shift": ia_params.LJGEN_shift,
-                "offset": ia_params.LJGEN_offset,
-                "e1": ia_params.LJGEN_a1,
-                "e2": ia_params.LJGEN_a2,
-                "b1": ia_params.LJGEN_b1,
-                "b2": ia_params.LJGEN_b2,
-                "lam": ia_params.LJGEN_lambda,
-                "delta": ia_params.LJGEN_softrad
+                "epsilon": ia_params.ljgen.eps,
+                "sigma": ia_params.ljgen.sig,
+                "cutoff": ia_params.ljgen.cut,
+                "shift": ia_params.ljgen.shift,
+                "offset": ia_params.ljgen.offset,
+                "e1": ia_params.ljgen.a1,
+                "e2": ia_params.ljgen.a2,
+                "b1": ia_params.ljgen.b1,
+                "b2": ia_params.ljgen.b2,
+                "lam": ia_params.ljgen.lambda1,
+                "delta": ia_params.ljgen.softrad
             }
 
         def is_active(self):

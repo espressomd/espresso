@@ -59,27 +59,27 @@ inline void add_ljgen_pair_force(const Particle *const p1,
                                  const Particle *const p2,
                                  IA_parameters *ia_params, double const d[3],
                                  double dist, double force[3]) {
-  if (dist < (ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
-    auto r_off = dist - ia_params->LJGEN_offset;
+  if (dist < (ia_params->ljgen.cut + ia_params->ljgen.offset)) {
+    auto r_off = dist - ia_params->ljgen.offset;
 
 #ifdef LJGEN_SOFTCORE
     r_off *= r_off;
-    r_off += Utils::sqr(ia_params->LJGEN_sig) *
-             (1.0 - ia_params->LJGEN_lambda) * ia_params->LJGEN_softrad;
+    r_off += Utils::sqr(ia_params->ljgen.sig) *
+             (1.0 - ia_params->ljgen.lambda1) * ia_params->ljgen.softrad;
     r_off = sqrt(r_off);
 #else
     r_off = std::abs(r_off);
 #endif
-    auto const frac = ia_params->LJGEN_sig / r_off;
-    auto const fac = ia_params->LJGEN_eps
-#ifdef LJGEN_SOFTCORE
-                     * ia_params->LJGEN_lambda *
-                     (dist - ia_params->LJGEN_offset) / r_off
-#endif
-                     * (ia_params->LJGEN_b1 * ia_params->LJGEN_a1 *
-                            pow(frac, ia_params->LJGEN_a1) -
-                        ia_params->LJGEN_b2 * ia_params->LJGEN_a2 *
-                            pow(frac, ia_params->LJGEN_a2)) /
+    auto const frac = ia_params->ljgen.sig / r_off;
+    auto const fac = ia_params->ljgen.eps
+                     #ifdef LJGEN_SOFTCORE
+                     * ia_params->ljgen.lambda1 *
+                     (dist - ia_params->ljgen.offset) / r_off
+                     #endif
+                     * (ia_params->ljgen.b1 * ia_params->ljgen.a1 *
+                            pow(frac, ia_params->ljgen.a1) -
+                        ia_params->ljgen.b2 * ia_params->ljgen.a2 *
+                            pow(frac, ia_params->ljgen.a2)) /
                      (r_off * dist);
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
@@ -114,24 +114,24 @@ inline void add_ljgen_pair_force(const Particle *const p1,
 inline double ljgen_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {
-  if (dist < (ia_params->LJGEN_cut + ia_params->LJGEN_offset)) {
-    auto r_off = dist - ia_params->LJGEN_offset;
+  if (dist < (ia_params->ljgen.cut + ia_params->ljgen.offset)) {
+    auto r_off = dist - ia_params->ljgen.offset;
 #ifdef LJGEN_SOFTCORE
     r_off *= r_off;
-    r_off += pow(ia_params->LJGEN_sig, 2) * (1.0 - ia_params->LJGEN_lambda) *
-             ia_params->LJGEN_softrad;
+    r_off += pow(ia_params->ljgen.sig, 2) * (1.0 - ia_params->ljgen.lambda1) *
+             ia_params->ljgen.softrad;
     r_off = sqrt(r_off);
 #else
     r_off = std::abs(r_off);
 #endif
-    auto const frac = ia_params->LJGEN_sig / r_off;
-    auto const fac = ia_params->LJGEN_eps
+    auto const frac = ia_params->ljgen.sig / r_off;
+    auto const fac = ia_params->ljgen.eps
 #ifdef LJGEN_SOFTCORE
-                     * ia_params->LJGEN_lambda
+                     * ia_params->ljgen.lambda1
 #endif
-                     * (ia_params->LJGEN_b1 * pow(frac, ia_params->LJGEN_a1) -
-                        ia_params->LJGEN_b2 * pow(frac, ia_params->LJGEN_a2) +
-                        ia_params->LJGEN_shift);
+                     * (ia_params->ljgen.b1 * pow(frac, ia_params->ljgen.a1) -
+                        ia_params->ljgen.b2 * pow(frac, ia_params->ljgen.a2) +
+                        ia_params->ljgen.shift);
     return fac;
   }
   return 0.0;

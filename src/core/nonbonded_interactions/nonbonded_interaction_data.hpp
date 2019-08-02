@@ -58,6 +58,23 @@ struct WCA_Parameters {
 };
 /*@}*/
 
+/** \name Generic Lennard-Jones with shift */
+/*@{*/
+struct LJGEN_Parameters {
+    double eps = 0.0;
+    double sig = 0.0;
+    double cut = INACTIVE_CUTOFF;
+    double shift = 0.0;
+    double offset = 0.0;
+    double a1 = 0.0;
+    double a2 = 0.0;
+    double b1 = 0.0;
+    double b2 = 0.0;
+    double lambda1 = 1.0;
+    double softrad = 0.0;
+};
+/*@}*/
+
 
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -88,20 +105,7 @@ struct IA_parameters {
   bool particlesInteract;
 
 #ifdef LENNARD_JONES_GENERIC
-  /** \name Generic Lennard-Jones with shift */
-  /*@{*/
-  double LJGEN_eps = 0.0;
-  double LJGEN_sig = 0.0;
-  double LJGEN_cut = INACTIVE_CUTOFF;
-  double LJGEN_shift = 0.0;
-  double LJGEN_offset = 0.0;
-  double LJGEN_a1 = 0.0;
-  double LJGEN_a2 = 0.0;
-  double LJGEN_b1 = 0.0;
-  double LJGEN_b2 = 0.0;
-  double LJGEN_lambda = 1.0;
-  double LJGEN_softrad = 0.0;
-  /*@}*/
+  LJGEN_Parameters ljgen;
 #endif
 
 #ifdef SMOOTH_STEP
