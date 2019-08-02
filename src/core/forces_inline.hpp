@@ -433,9 +433,7 @@ inline void add_bonded_force(Particle *const p1) {
     Utils::Vector3d force1{};
     Utils::Vector3d force2{};
     Utils::Vector3d force3{};
-#if defined(OIF_LOCAL_FORCES)
     Utils::Vector3d force4{};
-#endif
     Utils::Vector3d torque1{};
     Particle *p2 = nullptr;
     Particle *p3 = nullptr;
