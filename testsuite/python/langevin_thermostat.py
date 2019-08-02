@@ -216,7 +216,7 @@ class LangevinThermostat(ut.TestCase):
 
     def test_04__global_langevin(self):
         """Test for global Langevin parameters."""
-        N = 200
+        N = 400
         system = self.system
         system.part.clear()
         system.time_step = 0.06

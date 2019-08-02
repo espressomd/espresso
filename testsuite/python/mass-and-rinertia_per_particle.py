@@ -200,8 +200,7 @@ class ThermoTest(ut.TestCase):
         # large time_step is natural for the BD.
         box = 1.0E4
         self.system.box_l = box, box, box
-        if espressomd.has_features(("PARTIAL_PERIODIC",)):
-            self.system.periodicity = 0, 0, 0
+        self.system.periodicity = 0, 0, 0
 
         # NVT thermostat
         self.kT = 0.0
