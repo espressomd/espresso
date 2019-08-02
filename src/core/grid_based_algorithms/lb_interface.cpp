@@ -48,7 +48,7 @@ auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel kernel) {
 
 auto mpi_lb_get_density(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_density(modes);
+    return lb_calc_density(modes, lbpar);
   });
 }
 
@@ -99,7 +99,7 @@ REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_momentum_density)
 
 auto mpi_lb_get_stress(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_stress(modes, force_density);
+    return lb_calc_stress(modes, force_density, lbpar);
   });
 }
 

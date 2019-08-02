@@ -211,11 +211,11 @@ void lb_set_population_from_density_momentum_density_stress(
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif
 
-double lb_calc_density(std::array<double, 19> const &modes);
+double lb_calc_density(std::array<double, 19> const &modes, const LB_Parameters &lb_parameters);
 Utils::Vector3d lb_calc_momentum_density(std::array<double, 19> const &modes,
                                          Utils::Vector3d const &force_density);
-Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
-                               Utils::Vector3d const &force_density);
+Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes, Utils::Vector3d const &force_density,
+                               const LB_Parameters &lb_parameters);
 
 /** Calculation of hydrodynamic modes.
  *
@@ -269,11 +269,11 @@ void lb_prepare_communication(HaloCommunicator &halo_comm);
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
-void lb_bounce_back(LB_Fluid &lbfluid);
+void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters, const std::vector<LB_FluidNode> &lb_fields);
 
 #endif /* LB_BOUNDARIES */
 
-void lb_calc_fluid_momentum(double *result);
+void lb_calc_fluid_momentum(double * result, const LB_Parameters &lb_parameters);
 void lb_collect_boundary_forces(double *result);
 
 /*@}*/

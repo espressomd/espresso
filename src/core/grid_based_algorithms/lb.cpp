@@ -108,7 +108,7 @@ extern constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
 } // namespace
 
 #ifdef ADDITIONAL_CHECKS
-static void lb_check_halo_regions(const LB_Fluid &lbfluid);
+static void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice);
 #endif // ADDITIONAL_CHECKS
 
 /** Counter for the RNG */
@@ -813,16 +813,17 @@ lb_relax_modes(Lattice::index_t index, const std::array<T, 19> &modes, const LB_
 }
 
 template <typename T>
-inline std::array<T, 19> lb_thermalize_modes(Lattice::index_t index,
-                                             const std::array<T, 19> &modes) {
-  if (lbpar.kT > 0.0) {
+inline std::array<T, 19>
+lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes, const LB_Parameters &lb_parameters,
+                    const uint64_t rng_counter_value) {
+  if (lb_parameters.kT > 0.0) {
     using Utils::uniform;
     using rng_type = r123::Philox4x64;
     using ctr_type = rng_type::ctr_type;
 
     const r123::Philox4x64::ctr_type c{
-        {rng_counter_fluid->value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
-    const T rootdensity = std::sqrt(std::fabs(modes[0] + lbpar.density));
+        {rng_counter_value, static_cast<uint64_t>(RNGSalt::FLUID)}};
+    const T rootdensity = std::sqrt(std::fabs(modes[0] + lb_parameters.density));
     auto const pref = std::sqrt(12.) * rootdensity;
 
     const ctr_type noise[4] = {
@@ -836,33 +837,34 @@ inline std::array<T, 19> lb_thermalize_modes(Lattice::index_t index,
     return {/* conserved modes */
             {modes[0], modes[1], modes[2], modes[3],
              /* stress modes */
-             modes[4] + pref * lbpar.phi[4] * rng(0),
-             modes[5] + pref * lbpar.phi[5] * rng(1),
-             modes[6] + pref * lbpar.phi[6] * rng(2),
-             modes[7] + pref * lbpar.phi[7] * rng(3),
-             modes[8] + pref * lbpar.phi[8] * rng(4),
-             modes[9] + pref * lbpar.phi[9] * rng(5),
+             modes[4] + pref * lb_parameters.phi[4] * rng(0),
+             modes[5] + pref * lb_parameters.phi[5] * rng(1),
+             modes[6] + pref * lb_parameters.phi[6] * rng(2),
+             modes[7] + pref * lb_parameters.phi[7] * rng(3),
+             modes[8] + pref * lb_parameters.phi[8] * rng(4),
+             modes[9] + pref * lb_parameters.phi[9] * rng(5),
 
              /* ghost modes */
-             modes[10] + pref * lbpar.phi[10] * rng(6),
-             modes[11] + pref * lbpar.phi[11] * rng(7),
-             modes[12] + pref * lbpar.phi[12] * rng(8),
-             modes[13] + pref * lbpar.phi[13] * rng(9),
-             modes[14] + pref * lbpar.phi[14] * rng(10),
-             modes[15] + pref * lbpar.phi[15] * rng(11),
-             modes[16] + pref * lbpar.phi[16] * rng(12),
-             modes[17] + pref * lbpar.phi[17] * rng(13),
-             modes[18] + pref * lbpar.phi[18] * rng(14)}};
+             modes[10] + pref * lb_parameters.phi[10] * rng(6),
+             modes[11] + pref * lb_parameters.phi[11] * rng(7),
+             modes[12] + pref * lb_parameters.phi[12] * rng(8),
+             modes[13] + pref * lb_parameters.phi[13] * rng(9),
+             modes[14] + pref * lb_parameters.phi[14] * rng(10),
+             modes[15] + pref * lb_parameters.phi[15] * rng(11),
+             modes[16] + pref * lb_parameters.phi[16] * rng(12),
+             modes[17] + pref * lb_parameters.phi[17] * rng(13),
+             modes[18] + pref * lb_parameters.phi[18] * rng(14)}};
   }
   return modes;
 }
 
 template <typename T>
-std::array<T, 19> lb_apply_forces(Lattice::index_t index,
-                                  const std::array<T, 19> &modes) {
-  const auto &f = lbfields[index].force_density;
+std::array<T, 19>
+lb_apply_forces(Lattice::index_t index, const std::array<T, 19> &modes, const LB_Parameters &lb_parameters,
+                const std::vector<LB_FluidNode> &lb_fields) {
+  const auto &f = lb_fields[index].force_density;
 
-  auto const density = modes[0] + lbpar.density;
+  auto const density = modes[0] + lb_parameters.density;
 
   /* hydrodynamic momentum density is redefined when external forces present */
   auto const u = Utils::Vector3d{modes[1] + 0.5 * f[0], modes[2] + 0.5 * f[1],
@@ -870,15 +872,15 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
                  density;
 
   double C[6];
-  C[0] = (1. + lbpar.gamma_bulk) * u[0] * f[0] +
-         1. / 3. * (lbpar.gamma_bulk - lbpar.gamma_shear) * (u * f);
-  C[2] = (1. + lbpar.gamma_bulk) * u[1] * f[1] +
-         1. / 3. * (lbpar.gamma_bulk - lbpar.gamma_shear) * (u * f);
-  C[5] = (1. + lbpar.gamma_bulk) * u[2] * f[2] +
-         1. / 3. * (lbpar.gamma_bulk - lbpar.gamma_shear) * (u * f);
-  C[1] = 1. / 2. * (1. + lbpar.gamma_shear) * (u[0] * f[1] + u[1] * f[0]);
-  C[3] = 1. / 2. * (1. + lbpar.gamma_shear) * (u[0] * f[2] + u[2] * f[0]);
-  C[4] = 1. / 2. * (1. + lbpar.gamma_shear) * (u[1] * f[2] + u[2] * f[1]);
+  C[0] = (1. + lb_parameters.gamma_bulk) * u[0] * f[0] +
+         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) * (u * f);
+  C[2] = (1. + lb_parameters.gamma_bulk) * u[1] * f[1] +
+         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) * (u * f);
+  C[5] = (1. + lb_parameters.gamma_bulk) * u[2] * f[2] +
+         1. / 3. * (lb_parameters.gamma_bulk - lb_parameters.gamma_shear) * (u * f);
+  C[1] = 1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[1] + u[1] * f[0]);
+  C[3] = 1. / 2. * (1. + lb_parameters.gamma_shear) * (u[0] * f[2] + u[2] * f[0]);
+  C[4] = 1. / 2. * (1. + lb_parameters.gamma_shear) * (u[1] * f[2] + u[2] * f[1]);
 
   return {{modes[0],
            /* update momentum modes */
@@ -961,11 +963,11 @@ inline void lb_collide_stream() {
 
           /* fluctuating hydrodynamics */
           auto const thermalized_modes =
-              lb_thermalize_modes(index, relaxed_modes);
+              lb_thermalize_modes(index, relaxed_modes, lbpar, rng_counter_fluid->value());
 
           /* apply forces */
           auto const modes_with_forces =
-              lb_apply_forces(index, thermalized_modes);
+              lb_apply_forces(index, thermalized_modes, lbpar, lbfields);
 
           /* reset the force density */
           lbfields[index].force_density = lbpar.ext_force_density;
@@ -986,7 +988,7 @@ inline void lb_collide_stream() {
 
 #ifdef LB_BOUNDARIES
   /* boundary conditions for links */
-  lb_bounce_back(lbfluid_post);
+  lb_bounce_back(lbfluid_post, lbpar, lbfields);
 #endif // LB_BOUNDARIES
 
   /* swap the pointers for old and new population fields */
@@ -996,7 +998,7 @@ inline void lb_collide_stream() {
                      reinterpret_cast<char *>(lbfluid[0].data()));
 
 #ifdef ADDITIONAL_CHECKS
-  lb_check_halo_regions(lbfluid);
+  lb_check_halo_regions(lbfluid, lblattice);
 #endif
 }
 
@@ -1012,7 +1014,7 @@ inline void lb_collide_stream() {
  *  monitor the time since the last lattice update.
  */
 void lattice_boltzmann_update() {
-  auto factor = (int)round(lbpar.tau / time_step);
+  auto const factor = static_cast<int>(round(lbpar.tau / time_step));
 
   fluidstep += 1;
   if (fluidstep >= factor) {
@@ -1046,7 +1048,7 @@ static int compare_buffers(double *buf1, double *buf2, int size) {
  *  This function can be used as an additional check. It test whether the
  *  halo regions have been exchanged correctly.
  */
-void lb_check_halo_regions(const LB_Fluid &lbfluid) {
+void lb_check_halo_regions(const LB_Fluid &lbfluid, const Lattice &lb_lattice) {
   Lattice::index_t index;
   int i, x, y, z, s_node, r_node, count = D3Q19::n_vel;
   double *s_buffer, *r_buffer;
@@ -1058,9 +1060,9 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   auto const node_neighbors = calc_node_neighbors(comm_cart);
 
   if (box_geo.periodic(0)) {
-    for (z = 0; z < lblattice.halo_grid[2]; ++z) {
-      for (y = 0; y < lblattice.halo_grid[1]; ++y) {
-        index = get_linear_index(0, y, z, lblattice.halo_grid);
+    for (z = 0; z < lb_lattice.halo_grid[2]; ++z) {
+      for (y = 0; y < lb_lattice.halo_grid[1]; ++y) {
+        index = get_linear_index(0, y, z, lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
           s_buffer[i] = lbfluid[i][index];
 
@@ -1071,13 +1073,13 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
                        r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
                        comm_cart, status);
           index =
-              get_linear_index(lblattice.grid[0], y, z, lblattice.halo_grid);
+              get_linear_index(lb_lattice.grid[0], y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
           index =
-              get_linear_index(lblattice.grid[0], y, z, lblattice.halo_grid);
+              get_linear_index(lb_lattice.grid[0], y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
@@ -1087,7 +1089,7 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
         }
 
         index =
-            get_linear_index(lblattice.grid[0] + 1, y, z, lblattice.halo_grid);
+            get_linear_index(lb_lattice.grid[0] + 1, y, z, lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
           s_buffer[i] = lbfluid[i][index];
 
@@ -1097,12 +1099,12 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
           MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
                        r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
                        comm_cart, status);
-          index = get_linear_index(1, y, z, lblattice.halo_grid);
+          index = get_linear_index(1, y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
-          index = get_linear_index(1, y, z, lblattice.halo_grid);
+          index = get_linear_index(1, y, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
@@ -1115,9 +1117,9 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   }
 
   if (box_geo.periodic(1)) {
-    for (z = 0; z < lblattice.halo_grid[2]; ++z) {
-      for (x = 0; x < lblattice.halo_grid[0]; ++x) {
-        index = get_linear_index(x, 0, z, lblattice.halo_grid);
+    for (z = 0; z < lb_lattice.halo_grid[2]; ++z) {
+      for (x = 0; x < lb_lattice.halo_grid[0]; ++x) {
+        index = get_linear_index(x, 0, z, lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
           s_buffer[i] = lbfluid[i][index];
 
@@ -1128,13 +1130,13 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
                        r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
                        comm_cart, status);
           index =
-              get_linear_index(x, lblattice.grid[1], z, lblattice.halo_grid);
+              get_linear_index(x, lb_lattice.grid[1], z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
           index =
-              get_linear_index(x, lblattice.grid[1], z, lblattice.halo_grid);
+              get_linear_index(x, lb_lattice.grid[1], z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
@@ -1143,9 +1145,9 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
           }
         }
       }
-      for (x = 0; x < lblattice.halo_grid[0]; ++x) {
+      for (x = 0; x < lb_lattice.halo_grid[0]; ++x) {
         index =
-            get_linear_index(x, lblattice.grid[1] + 1, z, lblattice.halo_grid);
+            get_linear_index(x, lb_lattice.grid[1] + 1, z, lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
           s_buffer[i] = lbfluid[i][index];
 
@@ -1155,12 +1157,12 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
           MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
                        r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
                        comm_cart, status);
-          index = get_linear_index(x, 1, z, lblattice.halo_grid);
+          index = get_linear_index(x, 1, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
-          index = get_linear_index(x, 1, z, lblattice.halo_grid);
+          index = get_linear_index(x, 1, z, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
@@ -1173,9 +1175,9 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   }
 
   if (box_geo.periodic(2)) {
-    for (y = 0; y < lblattice.halo_grid[1]; ++y) {
-      for (x = 0; x < lblattice.halo_grid[0]; ++x) {
-        index = get_linear_index(x, y, 0, lblattice.halo_grid);
+    for (y = 0; y < lb_lattice.halo_grid[1]; ++y) {
+      for (x = 0; x < lb_lattice.halo_grid[0]; ++x) {
+        index = get_linear_index(x, y, 0, lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
           s_buffer[i] = lbfluid[i][index];
 
@@ -1186,27 +1188,27 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
                        r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
                        comm_cart, status);
           index =
-              get_linear_index(x, y, lblattice.grid[2], lblattice.halo_grid);
+              get_linear_index(x, y, lb_lattice.grid[2], lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
           index =
-              get_linear_index(x, y, lblattice.grid[2], lblattice.halo_grid);
+              get_linear_index(x, y, lb_lattice.grid[2], lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
             std::cerr << "buffers differ in dir=2 at index=" << index
-                      << " x=" << x << " y=" << y << " z=" << lblattice.grid[2]
+                      << " x=" << x << " y=" << y << " z=" << lb_lattice.grid[2]
                       << "\n";
           }
         }
       }
     }
-    for (y = 0; y < lblattice.halo_grid[1]; ++y) {
-      for (x = 0; x < lblattice.halo_grid[0]; ++x) {
+    for (y = 0; y < lb_lattice.halo_grid[1]; ++y) {
+      for (x = 0; x < lb_lattice.halo_grid[0]; ++x) {
         index =
-            get_linear_index(x, y, lblattice.grid[2] + 1, lblattice.halo_grid);
+            get_linear_index(x, y, lb_lattice.grid[2] + 1, lb_lattice.halo_grid);
         for (i = 0; i < D3Q19::n_vel; i++)
           s_buffer[i] = lbfluid[i][index];
 
@@ -1216,12 +1218,12 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
           MPI_Sendrecv(s_buffer, count, MPI_DOUBLE, r_node, REQ_HALO_CHECK,
                        r_buffer, count, MPI_DOUBLE, s_node, REQ_HALO_CHECK,
                        comm_cart, status);
-          index = get_linear_index(x, y, 1, lblattice.halo_grid);
+          index = get_linear_index(x, y, 1, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             s_buffer[i] = lbfluid[i][index];
           compare_buffers(s_buffer, r_buffer, count * sizeof(double));
         } else {
-          index = get_linear_index(x, y, 1, lblattice.halo_grid);
+          index = get_linear_index(x, y, 1, lb_lattice.halo_grid);
           for (i = 0; i < D3Q19::n_vel; i++)
             r_buffer[i] = lbfluid[i][index];
           if (compare_buffers(s_buffer, r_buffer, count * sizeof(double))) {
@@ -1237,8 +1239,8 @@ void lb_check_halo_regions(const LB_Fluid &lbfluid) {
   free(s_buffer);
 }
 
-double lb_calc_density(std::array<double, 19> const &modes) {
-  return modes[0] + lbpar.density;
+double lb_calc_density(std::array<double, 19> const &modes, const LB_Parameters &lb_parameters) {
+  return modes[0] + lb_parameters.density;
 }
 
 Utils::Vector3d lb_calc_momentum_density(std::array<double, 19> const &modes,
@@ -1248,10 +1250,10 @@ Utils::Vector3d lb_calc_momentum_density(std::array<double, 19> const &modes,
                           modes[3] + 0.5 * force_density[2]}};
 }
 
-Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
-                               Utils::Vector3d const &force_density) {
+Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes, Utils::Vector3d const &force_density,
+                               const LB_Parameters &lb_parameters) {
   auto const momentum_density = lb_calc_momentum_density(modes, force_density);
-  auto const density = lb_calc_density(modes);
+  auto const density = lb_calc_density(modes, lb_parameters);
   using Utils::sqr;
   auto const momentum_density2 = sqr(momentum_density[0]) +
                                  sqr(momentum_density[1]) +
@@ -1273,22 +1275,22 @@ Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
   Utils::Vector6d avg_modes;
   avg_modes[0] =
       modes_from_stress_eq[0] +
-      (0.5 + 0.5 * lbpar.gamma_bulk) * (modes[4] - modes_from_stress_eq[0]);
+      (0.5 + 0.5 * lb_parameters.gamma_bulk) * (modes[4] - modes_from_stress_eq[0]);
   avg_modes[1] =
       modes_from_stress_eq[1] +
-      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[5] - modes_from_stress_eq[1]);
+      (0.5 + 0.5 * lb_parameters.gamma_shear) * (modes[5] - modes_from_stress_eq[1]);
   avg_modes[2] =
       modes_from_stress_eq[2] +
-      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[6] - modes_from_stress_eq[2]);
+      (0.5 + 0.5 * lb_parameters.gamma_shear) * (modes[6] - modes_from_stress_eq[2]);
   avg_modes[3] =
       modes_from_stress_eq[3] +
-      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[7] - modes_from_stress_eq[3]);
+      (0.5 + 0.5 * lb_parameters.gamma_shear) * (modes[7] - modes_from_stress_eq[3]);
   avg_modes[4] =
       modes_from_stress_eq[4] +
-      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[8] - modes_from_stress_eq[4]);
+      (0.5 + 0.5 * lb_parameters.gamma_shear) * (modes[8] - modes_from_stress_eq[4]);
   avg_modes[5] =
       modes_from_stress_eq[5] +
-      (0.5 + 0.5 * lbpar.gamma_shear) * (modes[9] - modes_from_stress_eq[5]);
+      (0.5 + 0.5 * lb_parameters.gamma_shear) * (modes[9] - modes_from_stress_eq[5]);
 
   // Transform the stress tensor components according to the modes that
   // correspond to those used by U. Schiller. In terms of populations this
@@ -1318,7 +1320,7 @@ Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
-void lb_bounce_back(LB_Fluid &lbfluid) {
+void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters, const std::vector<LB_FluidNode> &lb_fields) {
   int k, i, l;
   int yperiod = lblattice.halo_grid[0];
   int zperiod = lblattice.halo_grid[0] * lblattice.halo_grid[1];
@@ -1352,12 +1354,12 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
       for (int x = 0; x < lblattice.grid[0] + 2; x++) {
         k = get_linear_index(x, y, z, lblattice.halo_grid);
 
-        if (lbfields[k].boundary) {
+        if (lb_fields[k].boundary) {
           for (i = 0; i < 19; i++) {
             population_shift = 0;
             for (l = 0; l < 3; l++) {
-              population_shift -= lbpar.density * 2 * D3Q19::c[i][l] *
-                                  D3Q19::w[i] * lbfields[k].slip_velocity[l] /
+              population_shift -= lb_parameters.density * 2 * D3Q19::c[i][l] *
+                                  D3Q19::w[i] * lb_fields[k].slip_velocity[l] /
                                   D3Q19::c_sound_sq<double>;
             }
 
@@ -1367,9 +1369,9 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
                 y - D3Q19::c[i][1] < lblattice.grid[1] + 1 &&
                 z - D3Q19::c[i][2] > 0 &&
                 z - D3Q19::c[i][2] < lblattice.grid[2] + 1) {
-              if (!lbfields[k - next[i]].boundary) {
+              if (!lb_fields[k - next[i]].boundary) {
                 for (l = 0; l < 3; l++) {
-                  (*LBBoundaries::lbboundaries[lbfields[k].boundary - 1])
+                  (*LBBoundaries::lbboundaries[lb_fields[k].boundary - 1])
                       .force()[l] += // TODO
                       (2 * lbfluid[i][k] + population_shift) * D3Q19::c[i][l];
                 }
@@ -1392,19 +1394,19 @@ void lb_bounce_back(LB_Fluid &lbfluid) {
  *  @param[in]  index  Local lattice site
  *  @retval The local fluid momentum.
  */
-inline Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index) {
-  return {{lbfluid[1][index] - lbfluid[2][index] + lbfluid[7][index] -
-               lbfluid[8][index] + lbfluid[9][index] - lbfluid[10][index] +
-               lbfluid[11][index] - lbfluid[12][index] + lbfluid[13][index] -
-               lbfluid[14][index],
-           lbfluid[3][index] - lbfluid[4][index] + lbfluid[7][index] -
-               lbfluid[8][index] - lbfluid[9][index] + lbfluid[10][index] +
-               lbfluid[15][index] - lbfluid[16][index] + lbfluid[17][index] -
-               lbfluid[18][index],
-           lbfluid[5][index] - lbfluid[6][index] + lbfluid[11][index] -
-               lbfluid[12][index] - lbfluid[13][index] + lbfluid[14][index] +
-               lbfluid[15][index] - lbfluid[16][index] - lbfluid[17][index] +
-               lbfluid[18][index]}};
+inline Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index, const LB_Fluid &lb_fluid) {
+  return {{lb_fluid[1][index] - lb_fluid[2][index] + lb_fluid[7][index] -
+           lb_fluid[8][index] + lb_fluid[9][index] - lb_fluid[10][index] +
+           lb_fluid[11][index] - lb_fluid[12][index] + lb_fluid[13][index] -
+           lb_fluid[14][index],
+              lb_fluid[3][index] - lb_fluid[4][index] + lb_fluid[7][index] -
+              lb_fluid[8][index] - lb_fluid[9][index] + lb_fluid[10][index] +
+              lb_fluid[15][index] - lb_fluid[16][index] + lb_fluid[17][index] -
+              lb_fluid[18][index],
+              lb_fluid[5][index] - lb_fluid[6][index] + lb_fluid[11][index] -
+              lb_fluid[12][index] - lb_fluid[13][index] + lb_fluid[14][index] +
+              lb_fluid[15][index] - lb_fluid[16][index] - lb_fluid[17][index] +
+              lb_fluid[18][index]}};
 }
 
 // Statistics in MD units.
@@ -1412,7 +1414,7 @@ inline Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index) {
 /** Calculate momentum of the LB fluid.
  * \param result Fluid momentum
  */
-void lb_calc_fluid_momentum(double *result) {
+void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters) {
 
   int x, y, z, index;
   Utils::Vector3d momentum_density{}, momentum{};
@@ -1422,14 +1424,13 @@ void lb_calc_fluid_momentum(double *result) {
       for (z = 1; z <= lblattice.grid[2]; z++) {
         index = get_linear_index(x, y, z, lblattice.halo_grid);
 
-        momentum_density = lb_calc_local_momentum_density(index);
+        momentum_density = lb_calc_local_momentum_density(index, lbfluid);
         momentum += momentum_density + .5 * lbfields[index].force_density;
       }
     }
   }
 
-  momentum *= lbpar.agrid / lbpar.tau;
-
+  momentum *= lb_parameters.agrid / lb_parameters.tau;
   MPI_Reduce(momentum.data(), result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
