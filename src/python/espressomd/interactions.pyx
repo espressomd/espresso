@@ -1647,9 +1647,9 @@ IF GAUSSIAN == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.Gaussian_eps,
-                "sig": ia_params.Gaussian_sig,
-                "cutoff": ia_params.Gaussian_cut
+                "eps": ia_params.Gaussian.eps,
+                "sig": ia_params.Gaussian.sig,
+                "cutoff": ia_params.Gaussian.cut
             }
 
         def is_active(self):

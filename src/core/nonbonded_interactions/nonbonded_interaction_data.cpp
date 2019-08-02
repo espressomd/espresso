@@ -197,8 +197,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef GAUSSIAN
-      if (max_cut_current < data->Gaussian_cut)
-        max_cut_current = data->Gaussian_cut;
+      if (max_cut_current < data->Gaussian.cut)
+        max_cut_current = data->Gaussian.cut;
 #endif
 
 #ifdef BMHTF_NACL

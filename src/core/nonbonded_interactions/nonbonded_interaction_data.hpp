@@ -95,6 +95,15 @@ struct Hertzian_Parameters {
 };
 /*@}*/
 
+/** \name Gaussian potential */
+/*@{*/
+struct Gaussian_Parameters {
+    double eps = 0.0;
+    double sig = 1.0;
+    double cut = INACTIVE_CUTOFF;
+};
+/*@}*/
+
 
 /** Data structure containing the interaction parameters for non-bonded
  *  interactions.
@@ -132,16 +141,11 @@ struct IA_parameters {
 #endif
 
 #ifdef HERTZIAN
-    Hertzian_Parameters Hertzian;
+  Hertzian_Parameters Hertzian;
 #endif
 
 #ifdef GAUSSIAN
-  /** \name Gaussian potential */
-  /*@{*/
-  double Gaussian_eps = 0.0;
-  double Gaussian_sig = 1.0;
-  double Gaussian_cut = INACTIVE_CUTOFF;
-  /*@}*/
+  Gaussian_Parameters Gaussian;
 #endif
 
 #ifdef BMHTF_NACL

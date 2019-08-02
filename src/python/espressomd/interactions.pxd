@@ -84,6 +84,15 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double eps
         double sig
 
+    cdef struct Gaussian_Parameters:
+             double eps
+             double sig
+             double cut
+
+
+
+
+
     cdef struct IA_parameters:
         LJ_Parameters lj
 
@@ -150,11 +159,9 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double BUCK_discont
         double BUCK_shift
 
-        Hertzian_Parameters Hertzian;
+        Hertzian_Parameters Hertzian
 
-        double Gaussian_eps
-        double Gaussian_sig
-        double Gaussian_cut
+        Gaussian_Parameters Gaussian
 
         DPDParameters dpd_radial
         DPDParameters dpd_trans
