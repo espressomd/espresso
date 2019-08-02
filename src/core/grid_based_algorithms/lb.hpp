@@ -43,6 +43,7 @@
 
 #include <utils/Counter.hpp>
 #include <utils/Span.hpp>
+#include <utils/serialization/multi_array.hpp>
 
 /** Some general remarks:
  *  This file implements the LB D3Q19 method to Espresso. The LB_Model
@@ -142,7 +143,9 @@ extern Lattice lblattice;
 
 extern HaloCommunicator update_halo_comm;
 
-void lb_realloc_fluid();
+void lb_realloc_fluid(boost::multi_array<double, 2> &lb_fluid_a, boost::multi_array<double, 2> &lb_fluid_b,
+                      const Lattice::index_t halo_grid_volume, std::array<Utils::Span<double>, 19> &lb_fluid,
+                      std::array<Utils::Span<double>, 19> &lb_fluid_post, std::vector<LB_FluidNode> &lb_fields);
 
 void lb_init();
 
@@ -193,7 +196,7 @@ extern std::vector<LB_FluidNode> lbfields;
  */
 void lattice_boltzmann_update();
 
-void lb_sanity_checks();
+void lb_sanity_checks(const LB_Parameters &lb_parameters);
 
 /** Sets the equilibrium distributions.
     @param index Index of the local site
@@ -219,7 +222,7 @@ Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
  *  @param index number of the node to calculate the modes for
  *  @retval Array containing the modes.
  */
-std::array<double, 19> lb_calc_modes(Lattice::index_t index);
+std::array<double, 19> lb_calc_modes(Lattice::index_t index, const LB_Fluid &lb_fluid);
 
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
@@ -256,7 +259,7 @@ inline void lb_set_population(Lattice::index_t index,
 
 uint64_t lb_fluid_get_rng_state();
 void lb_fluid_set_rng_state(uint64_t counter);
-void lb_prepare_communication();
+void lb_prepare_communication(HaloCommunicator &halo_comm);
 
 #ifdef LB_BOUNDARIES
 /** Bounce back boundary conditions.

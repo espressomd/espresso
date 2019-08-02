@@ -41,7 +41,7 @@ auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel kernel) {
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
     auto const force_density = lbfields[linear_index].force_density;
-    auto const modes = lb_calc_modes(linear_index);
+    auto const modes = lb_calc_modes(linear_index, lbfluid);
     return kernel(modes, force_density);
   });
 }
@@ -184,7 +184,7 @@ void lb_lbfluid_sanity_checks() {
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
-    lb_sanity_checks();
+    lb_sanity_checks(lbpar);
     lb_boundary_mach_check();
     if (time_step > 0.)
       check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);

@@ -195,10 +195,10 @@ void lb_init() {
   }
 
   /* allocate memory for data structures */
-  lb_realloc_fluid();
+  lb_realloc_fluid(lbfluid_a, lbfluid_b, lblattice.halo_grid_volume, lbfluid, lbfluid_post, lbfields);
 
   /* prepare the halo communication */
-  lb_prepare_communication();
+  lb_prepare_communication(update_halo_comm);
 
   /* initialize derived parameters */
   lb_reinit_parameters();
@@ -555,17 +555,17 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
 /***********************************************************************/
 
 /** Performs basic sanity checks. */
-void lb_sanity_checks() {
-  if (lbpar.agrid <= 0.0) {
+void lb_sanity_checks(const LB_Parameters &lb_parameters) {
+  if (lb_parameters.agrid <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann agrid not set";
   }
-  if (lbpar.tau <= 0.0) {
+  if (lb_parameters.tau <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann time step not set";
   }
-  if (lbpar.density <= 0.0) {
+  if (lb_parameters.density <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann fluid density not set";
   }
-  if (lbpar.viscosity <= 0.0) {
+  if (lb_parameters.viscosity <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann fluid viscosity not set";
   }
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
@@ -574,7 +574,7 @@ void lb_sanity_checks() {
   if (skin == 0.0) {
     runtimeErrorMsg() << "LB requires a positive skin";
   }
-  if (cell_structure.use_verlet_list && skin >= lbpar.agrid / 2.0) {
+  if (cell_structure.use_verlet_list && skin >= lb_parameters.agrid / 2.0) {
     runtimeErrorMsg() << "LB requires either no Verlet lists or that the skin "
                          "of the verlet list to be less than half of "
                          "lattice-Boltzmann grid spacing";
@@ -600,27 +600,26 @@ void lb_fluid_set_rng_state(uint64_t counter) {
 /***********************************************************************/
 
 /** (Re-)allocate memory for the fluid and initialize pointers. */
-void lb_realloc_fluid() {
-  LB_TRACE(printf("reallocating fluid\n"));
-  const std::array<int, 2> size = {{D3Q19::n_vel, lblattice.halo_grid_volume}};
+void lb_realloc_fluid(LB_FluidData &lb_fluid_a, LB_FluidData &lb_fluid_b, const Lattice::index_t halo_grid_volume,
+                      LB_Fluid &lb_fluid, LB_Fluid &lb_fluid_post, std::vector<LB_FluidNode> &lb_fields) {
+  const std::array<int, 2> size = {{D3Q19::n_vel, halo_grid_volume}};
 
-  lbfluid_a.resize(size);
-  lbfluid_b.resize(size);
+  lb_fluid_a.resize(size);
+  lb_fluid_b.resize(size);
 
   using Utils::Span;
   for (int i = 0; i < size[0]; i++) {
-    lbfluid[i] = Span<double>(lbfluid_a[i].origin(), size[1]);
-    lbfluid_post[i] = Span<double>(lbfluid_b[i].origin(), size[1]);
+    lb_fluid[i] = Span<double>(lb_fluid_a[i].origin(), size[1]);
+    lb_fluid_post[i] = Span<double>(lb_fluid_b[i].origin(), size[1]);
   }
 
-  lbfields.resize(lblattice.halo_grid_volume);
+  lb_fields.resize(halo_grid_volume);
 }
 
 /** Set up the structures for exchange of the halo regions.
  *  See also \ref halo.cpp
  */
-void lb_prepare_communication() {
-  int i;
+void lb_prepare_communication(HaloCommunicator &halo_comm) {
   HaloCommunicator comm = HaloCommunicator(0);
 
   /* since the data layout is a structure of arrays, we have to
@@ -634,12 +633,12 @@ void lb_prepare_communication() {
   prepare_halo_communication(&comm, &lblattice, FIELDTYPE_DOUBLE, MPI_DOUBLE,
                              node_grid);
 
-  update_halo_comm.num = comm.num;
-  update_halo_comm.halo_info.resize(comm.num);
+  halo_comm.num = comm.num;
+  halo_comm.halo_info.resize(comm.num);
 
   /* replicate the halo structure */
-  for (i = 0; i < comm.num; i++) {
-    HaloInfo *hinfo = &(update_halo_comm.halo_info[i]);
+  for (int i = 0; i < comm.num; i++) {
+    HaloInfo *hinfo = &(halo_comm.halo_info[i]);
 
     hinfo->source_node = comm.halo_info[i].source_node;
     hinfo->dest_node = comm.halo_info[i].dest_node;
@@ -763,20 +762,20 @@ void lb_set_population_from_density_momentum_density_stress(
 #include <boost/range/numeric.hpp>
 
 /** Calculation of hydrodynamic modes */
-std::array<double, 19> lb_calc_modes(Lattice::index_t index) {
+std::array<double, 19> lb_calc_modes(Lattice::index_t index, const LB_Fluid &lb_fluid) {
   return Utils::matrix_vector_product<double, 19, e_ki>(
-      LB_Fluid_Ref(index, lbfluid));
+      LB_Fluid_Ref(index, lb_fluid));
 }
 
 template <typename T>
-inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
-                                        const std::array<T, 19> &modes) {
+inline std::array<T, 19>
+lb_relax_modes(Lattice::index_t index, const std::array<T, 19> &modes, const LB_Parameters &lb_parameters) {
   T density, momentum_density[3], stress_eq[6];
 
   /* re-construct the real density
    * remember that the populations are stored as differences to their
    * equilibrium value */
-  density = modes[0] + lbpar.density;
+  density = modes[0] + lb_parameters.density;
 
   momentum_density[0] = modes[1] + 0.5 * lbfields[index].force_density[0];
   momentum_density[1] = modes[2] + 0.5 * lbfields[index].force_density[1];
@@ -798,19 +797,19 @@ inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
 
   return {{modes[0], modes[1], modes[2], modes[3],
            /* relax the stress modes */
-           stress_eq[0] + lbpar.gamma_bulk * (modes[4] - stress_eq[0]),
-           stress_eq[1] + lbpar.gamma_shear * (modes[5] - stress_eq[1]),
-           stress_eq[2] + lbpar.gamma_shear * (modes[6] - stress_eq[2]),
-           stress_eq[3] + lbpar.gamma_shear * (modes[7] - stress_eq[3]),
-           stress_eq[4] + lbpar.gamma_shear * (modes[8] - stress_eq[4]),
-           stress_eq[5] + lbpar.gamma_shear * (modes[9] - stress_eq[5]),
+           stress_eq[0] + lb_parameters.gamma_bulk * (modes[4] - stress_eq[0]),
+           stress_eq[1] + lb_parameters.gamma_shear * (modes[5] - stress_eq[1]),
+           stress_eq[2] + lb_parameters.gamma_shear * (modes[6] - stress_eq[2]),
+           stress_eq[3] + lb_parameters.gamma_shear * (modes[7] - stress_eq[3]),
+           stress_eq[4] + lb_parameters.gamma_shear * (modes[8] - stress_eq[4]),
+           stress_eq[5] + lb_parameters.gamma_shear * (modes[9] - stress_eq[5]),
            /* relax the ghost modes (project them out) */
            /* ghost modes have no equilibrium part due to orthogonality */
-           lbpar.gamma_odd * modes[10], lbpar.gamma_odd * modes[11],
-           lbpar.gamma_odd * modes[12], lbpar.gamma_odd * modes[13],
-           lbpar.gamma_odd * modes[14], lbpar.gamma_odd * modes[15],
-           lbpar.gamma_even * modes[16], lbpar.gamma_even * modes[17],
-           lbpar.gamma_even * modes[18]}};
+           lb_parameters.gamma_odd * modes[10], lb_parameters.gamma_odd * modes[11],
+              lb_parameters.gamma_odd * modes[12], lb_parameters.gamma_odd * modes[13],
+              lb_parameters.gamma_odd * modes[14], lb_parameters.gamma_odd * modes[15],
+              lb_parameters.gamma_even * modes[16], lb_parameters.gamma_even * modes[17],
+              lb_parameters.gamma_even * modes[18]}};
 }
 
 template <typename T>
@@ -955,10 +954,10 @@ inline void lb_collide_stream() {
 #endif // LB_BOUNDARIES
         {
           /* calculate modes locally */
-          auto const modes = lb_calc_modes(index);
+          auto const modes = lb_calc_modes(index, lbfluid);
 
           /* deterministic collisions */
-          auto const relaxed_modes = lb_relax_modes(index, modes);
+          auto const relaxed_modes = lb_relax_modes(index, modes, lbpar);
 
           /* fluctuating hydrodynamics */
           auto const thermalized_modes =
