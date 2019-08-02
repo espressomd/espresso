@@ -87,6 +87,14 @@ struct SmSt_Parameters {
 };
 /*@}*/
 
+/** \name Hertzian potential */
+/*@{*/
+struct Hertzian_Parameters {
+    double eps = 0.0;
+    double sig = INACTIVE_CUTOFF;
+};
+/*@}*/
+
 
 /** Data structure containing the interaction parameters for non-bonded
  *  interactions.
@@ -124,11 +132,7 @@ struct IA_parameters {
 #endif
 
 #ifdef HERTZIAN
-  /** \name Hertzian potential */
-  /*@{*/
-  double Hertzian_eps = 0.0;
-  double Hertzian_sig = INACTIVE_CUTOFF;
-  /*@}*/
+    Hertzian_Parameters Hertzian;
 #endif
 
 #ifdef GAUSSIAN

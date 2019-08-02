@@ -192,8 +192,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef HERTZIAN
-      if (max_cut_current < data->Hertzian_sig)
-        max_cut_current = data->Hertzian_sig;
+      if (max_cut_current < data->Hertzian.sig)
+        max_cut_current = data->Hertzian.sig;
 #endif
 
 #ifdef GAUSSIAN

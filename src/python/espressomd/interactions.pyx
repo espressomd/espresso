@@ -1567,8 +1567,8 @@ IF HERTZIAN == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.Hertzian_eps,
-                "sig": ia_params.Hertzian_sig
+                "eps": ia_params.Hertzian.eps,
+                "sig": ia_params.Hertzian.sig
             }
 
         def is_active(self):

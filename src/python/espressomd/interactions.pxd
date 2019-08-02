@@ -80,6 +80,10 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int n
         double k0
 
+    cdef struct Hertzian_Parameters:
+        double eps
+        double sig
+
     cdef struct IA_parameters:
         LJ_Parameters lj
 
@@ -146,8 +150,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double BUCK_discont
         double BUCK_shift
 
-        double Hertzian_eps
-        double Hertzian_sig
+        Hertzian_Parameters Hertzian;
 
         double Gaussian_eps
         double Gaussian_sig

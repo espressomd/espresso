@@ -41,10 +41,10 @@ inline void add_hertzian_pair_force(const Particle *const p1,
                                     IA_parameters *ia_params, double const d[3],
                                     double dist, double dist2,
                                     double force[3]) {
-  if (dist < ia_params->Hertzian_sig) {
-    auto const fac = 5. / 2. * ia_params->Hertzian_eps /
-                     ia_params->Hertzian_sig *
-                     pow(1 - dist / ia_params->Hertzian_sig, 3. / 2.) / dist;
+  if (dist < ia_params->Hertzian.sig) {
+    auto const fac = 5. / 2. * ia_params->Hertzian.eps /
+                     ia_params->Hertzian.sig *
+                     pow(1 - dist / ia_params->Hertzian.sig, 3. / 2.) / dist;
 
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
@@ -56,9 +56,9 @@ inline double hertzian_pair_energy(const Particle *p1, const Particle *p2,
                                    const IA_parameters *ia_params,
                                    const double d[3], double dist,
                                    double dist2) {
-  if (dist < ia_params->Hertzian_sig) {
-    return ia_params->Hertzian_eps *
-           pow(1 - dist / ia_params->Hertzian_sig, 5. / 2.);
+  if (dist < ia_params->Hertzian.sig) {
+    return ia_params->Hertzian.eps *
+           pow(1 - dist / ia_params->Hertzian.sig, 5. / 2.);
   }
   return 0.0;
 }
