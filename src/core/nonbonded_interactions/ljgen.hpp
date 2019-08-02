@@ -73,10 +73,10 @@ inline void add_ljgen_pair_force(Particle const *const p1,
 #endif
     auto const frac = ia_params->ljgen.sig / r_off;
     auto const fac = ia_params->ljgen.eps
-                     #ifdef LJGEN_SOFTCORE
+#ifdef LJGEN_SOFTCORE
                      * ia_params->ljgen.lambda1 *
                      (dist - ia_params->ljgen.offset) / r_off
-                     #endif
+#endif
                      * (ia_params->ljgen.b1 * ia_params->ljgen.a1 *
                             pow(frac, ia_params->ljgen.a1) -
                         ia_params->ljgen.b2 * ia_params->ljgen.a2 *

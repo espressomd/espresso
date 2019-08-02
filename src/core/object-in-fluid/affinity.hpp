@@ -113,11 +113,10 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
           if (len > ia_params->affinity.maxBond) {
             p1->p.bond_site = {-1, -1, -1};
           }
-        } else if (dist <
-                   ia_params
-                       ->affinity.r0) { // Bond does not exist, we are inside
-                                        // of possible bond creation area,
-                                        // let's talk about creating a bond
+        } else if (dist < ia_params->affinity
+                              .r0) { // Bond does not exist, we are inside
+                                     // of possible bond creation area,
+                                     // let's talk about creating a bond
           // This implementation creates bond always
           p1->p.bond_site = unfolded_pos - d;
         }
@@ -222,11 +221,10 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
-        } else if (dist <
-                   ia_params
-                       ->affinity.r0) { // Bond does not exist, we are inside
-                                        // of possible bond creation area,
-                                        // let's talk about creating a bond
+        } else if (dist < ia_params->affinity
+                              .r0) { // Bond does not exist, we are inside
+                                     // of possible bond creation area,
+                                     // let's talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -311,11 +309,10 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
             p1->p.bond_site = {-1, -1, -1};
             // printf("breaking: out of cut");
           }
-        } else if (dist <
-                   ia_params
-                       ->affinity.r0) { // Bond does not exist, we are inside
-                                        // of possible bond creation area,
-                                        // let's talk about creating a bond
+        } else if (dist < ia_params->affinity
+                              .r0) { // Bond does not exist, we are inside
+                                     // of possible bond creation area,
+                                     // let's talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -418,11 +415,10 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
-        } else if (dist <
-                   ia_params
-                       ->affinity.r0) { // Bond does not exist, we are inside
-                                        // of possible bond creation area,
-                                        // let's talk about creating a bond
+        } else if (dist < ia_params->affinity
+                              .r0) { // Bond does not exist, we are inside
+                                     // of possible bond creation area,
+                                     // let's talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -536,11 +532,10 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
-        } else if (dist <
-                   ia_params
-                       ->affinity.r0) { // Bond does not exist, we are inside
-                                        // of possible bond creation area,
-                                        // let's talk about creating a bond
+        } else if (dist < ia_params->affinity
+                              .r0) { // Bond does not exist, we are inside
+                                     // of possible bond creation area,
+                                     // let's talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
@@ -654,11 +649,10 @@ inline void add_affinity_pair_force(Particle *const p1, Particle *const p2,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
-        } else if (dist <
-                   ia_params
-                       ->affinity.r0) { // Bond does not exist, we are inside
-                                        // of possible bond creation area,
-                                        // let's talk about creating a bond
+        } else if (dist < ia_params->affinity
+                              .r0) { // Bond does not exist, we are inside
+                                     // of possible bond creation area,
+                                     // let's talk about creating a bond
           double Pon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.

@@ -36,203 +36,200 @@ constexpr double INACTIVE_CUTOFF = -1.;
 /* Data Types */
 /************************************************************/
 
-
 /** \name Lennard-Jones with shift */
 /*@{*/
 struct LJ_Parameters {
-    double eps = 0.0;
-    double sig = 0.0;
-    double cut = 0.0;
-    double shift = 0.0;
-    double offset = 0.0;
-    double min = 0.0;
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = 0.0;
+  double shift = 0.0;
+  double offset = 0.0;
+  double min = 0.0;
 };
 /*@}*/
 
 /** \name WCA potential */
 /*@{*/
 struct WCA_Parameters {
-    double eps = 0.0;
-    double sig = 0.0;
-    double cut = INACTIVE_CUTOFF;
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
 };
 /*@}*/
 
 /** \name Generic Lennard-Jones with shift */
 /*@{*/
 struct LJGEN_Parameters {
-    double eps = 0.0;
-    double sig = 0.0;
-    double cut = INACTIVE_CUTOFF;
-    double shift = 0.0;
-    double offset = 0.0;
-    double a1 = 0.0;
-    double a2 = 0.0;
-    double b1 = 0.0;
-    double b2 = 0.0;
-    double lambda1 = 1.0;
-    double softrad = 0.0;
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double shift = 0.0;
+  double offset = 0.0;
+  double a1 = 0.0;
+  double a2 = 0.0;
+  double b1 = 0.0;
+  double b2 = 0.0;
+  double lambda1 = 1.0;
+  double softrad = 0.0;
 };
 /*@}*/
 
 /** \name smooth step potential */
 /*@{*/
 struct SmSt_Parameters {
-    double eps = 0.0;
-    double sig = 0.0;
-    double cut = INACTIVE_CUTOFF;
-    double d = 0.0;
-    int n = 0;
-    double k0 = 0.0;
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double d = 0.0;
+  int n = 0;
+  double k0 = 0.0;
 };
 /*@}*/
 
 /** \name Hertzian potential */
 /*@{*/
 struct Hertzian_Parameters {
-    double eps = 0.0;
-    double sig = INACTIVE_CUTOFF;
+  double eps = 0.0;
+  double sig = INACTIVE_CUTOFF;
 };
 /*@}*/
 
 /** \name Gaussian potential */
 /*@{*/
 struct Gaussian_Parameters {
-    double eps = 0.0;
-    double sig = 1.0;
-    double cut = INACTIVE_CUTOFF;
+  double eps = 0.0;
+  double sig = 1.0;
+  double cut = INACTIVE_CUTOFF;
 };
 /*@}*/
 
 /** \name BMHTF NaCl potential */
 /*@{*/
 struct BMHTF_Parameters {
-    double A = 0.0;
-    double B = 0.0;
-    double C = 0.0;
-    double D = 0.0;
-    double sig = 0.0;
-    double cut = INACTIVE_CUTOFF;
-    double computed_shift = 0.0;
+  double A = 0.0;
+  double B = 0.0;
+  double C = 0.0;
+  double D = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double computed_shift = 0.0;
 };
 /*@}*/
 
 /** \name Morse potential */
 /*@{*/
 struct Morse_Parameters {
-    double eps = INACTIVE_CUTOFF;
-    double alpha = INACTIVE_CUTOFF;
-    double rmin = INACTIVE_CUTOFF;
-    double cut = INACTIVE_CUTOFF;
-    double rest = INACTIVE_CUTOFF;
+  double eps = INACTIVE_CUTOFF;
+  double alpha = INACTIVE_CUTOFF;
+  double rmin = INACTIVE_CUTOFF;
+  double cut = INACTIVE_CUTOFF;
+  double rest = INACTIVE_CUTOFF;
 };
 /*@}*/
 
 /** \name Buckingham potential */
 /*@{*/
 struct Buckingham_Parameters {
-    double A = 0.0;
-    double B = 0.0;
-    double C = 0.0;
-    double D = 0.0;
-    double cut = INACTIVE_CUTOFF;
-    double discont = 0.0;
-    double shift = 0.0;
-    double F1 = 0.0;
-    double F2 = 0.0;
+  double A = 0.0;
+  double B = 0.0;
+  double C = 0.0;
+  double D = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double discont = 0.0;
+  double shift = 0.0;
+  double F1 = 0.0;
+  double F2 = 0.0;
 };
 /*@}*/
 
 /** \name soft-sphere potential */
 /*@{*/
 struct SoftSphere_Parameters {
-    double a = 0.0;
-    double n = 0.0;
-    double cut = INACTIVE_CUTOFF;
-    double offset = 0.0;
+  double a = 0.0;
+  double n = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double offset = 0.0;
 };
 /*@}*/
 
 /** \name affinity potential */
 /*@{*/
 struct Affinity_Parameters {
-    int type = -1;
-    double kappa = INACTIVE_CUTOFF;
-    double r0 = INACTIVE_CUTOFF;
-    double Kon = INACTIVE_CUTOFF;
-    double Koff = INACTIVE_CUTOFF;
-    double maxBond = INACTIVE_CUTOFF;
-    double cut = INACTIVE_CUTOFF;
+  int type = -1;
+  double kappa = INACTIVE_CUTOFF;
+  double r0 = INACTIVE_CUTOFF;
+  double Kon = INACTIVE_CUTOFF;
+  double Koff = INACTIVE_CUTOFF;
+  double maxBond = INACTIVE_CUTOFF;
+  double cut = INACTIVE_CUTOFF;
 };
 /*@}*/
 
 /** \name membrane collision potential */
 /*@{*/
 struct Membrane_Parameters {
-    double a = 0.0;
-    double n = 0.0;
-    double cut = INACTIVE_CUTOFF;
-    double offset = 0.0;
+  double a = 0.0;
+  double n = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double offset = 0.0;
 };
 /*@}*/
 
 /** \name hat potential */
 /*@{*/
 struct HAT_Parameters {
-    double Fmax = 0.0;
-    double r = INACTIVE_CUTOFF;
+  double Fmax = 0.0;
+  double r = INACTIVE_CUTOFF;
 };
 /*@}*/
 
 /** \name Lennard-Jones+Cos potential */
 /*@{*/
 struct LJCOS_Parameters {
-    double eps = 0.0;
-    double sig = 0.0;
-    double cut = INACTIVE_CUTOFF;
-    double offset = 0.0;
-    double alfa = 0.0;
-    double beta = 0.0;
-    double rmin = 0.0;
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double offset = 0.0;
+  double alfa = 0.0;
+  double beta = 0.0;
+  double rmin = 0.0;
 };
 /*@}*/
 
 /** \name Lennard-Jones with a different Cos potential */
 /*@{*/
 struct LJCOS2_Parameters {
-    double eps = 0.0;
-    double sig = 0.0;
-    double cut = INACTIVE_CUTOFF;
-    double offset = 0.0;
-    double w = 0.0;
-    double rchange = 0.0;
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double offset = 0.0;
+  double w = 0.0;
+  double rchange = 0.0;
 };
 /*@}*/
 
 /** \name Gay-Berne potential */
 /*@{*/
 struct GayBerne_Parameters {
-    double eps = 0.0;
-    double sig = 0.0;
-    double cut = INACTIVE_CUTOFF;
-    double k1 = 0.0;
-    double k2 = 0.0;
-    double mu = 0.0;
-    double nu = 0.0;
-    double chi1 = 0.0;
-    double chi2 = 0.0;
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double k1 = 0.0;
+  double k2 = 0.0;
+  double mu = 0.0;
+  double nu = 0.0;
+  double chi1 = 0.0;
+  double chi2 = 0.0;
 };
 /*@}*/
 
 /** \name Thole potential */
 /*@{*/
 struct THOLE_Parameters {
-    double scaling_coeff;
-    double q1q2;
+  double scaling_coeff;
+  double q1q2;
 };
 /*@}*/
-
-
 
 /** Data structure containing the interaction parameters for non-bonded
  *  interactions.

@@ -166,7 +166,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double scaling_coeff
         double q1q2
 
-
     cdef struct IA_parameters:
         LJ_Parameters lj
 
@@ -206,7 +205,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         HAT_Parameters hat
 
         THOLE_Parameters thole
-
 
     cdef IA_parameters * get_ia_param(int i, int j)
     cdef IA_parameters * get_ia_param_safe(int i, int j)
