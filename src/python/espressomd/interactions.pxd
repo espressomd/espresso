@@ -147,6 +147,12 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double cut
         double offset
 
+    cdef struct LJCOS2_Parameters:
+        double eps
+        double sig
+        double offset
+        double w
+
 
 
     cdef struct IA_parameters:
@@ -156,10 +162,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         LJCOS_Parameters ljcos
 
-        double LJCOS2_eps
-        double LJCOS2_sig
-        double LJCOS2_offset
-        double LJCOS2_w
+        LJCOS2_Parameters ljcos2
 
         LJGEN_Parameters ljgen
 

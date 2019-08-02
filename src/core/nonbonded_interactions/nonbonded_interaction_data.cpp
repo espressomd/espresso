@@ -246,7 +246,7 @@ static void recalc_maximal_cutoff_nonbonded() {
 
 #ifdef LJCOS2
       {
-        double max_cut_tmp = data->LJCOS2_cut + data->LJCOS2_offset;
+        double max_cut_tmp = data->ljcos2.cut + data->ljcos2.offset;
         if (max_cut_current < max_cut_tmp)
           max_cut_current = max_cut_tmp;
       }

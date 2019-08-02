@@ -197,6 +197,18 @@ struct LJCOS_Parameters {
 };
 /*@}*/
 
+/** \name Lennard-Jones with a different Cos potential */
+/*@{*/
+struct LJCOS2_Parameters {
+    double eps = 0.0;
+    double sig = 0.0;
+    double cut = INACTIVE_CUTOFF;
+    double offset = 0.0;
+    double w = 0.0;
+    double rchange = 0.0;
+};
+/*@}*/
+
 
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -275,15 +287,7 @@ struct IA_parameters {
 #endif
 
 #ifdef LJCOS2
-  /** \name Lennard-Jones with a different Cos potential */
-  /*@{*/
-  double LJCOS2_eps = 0.0;
-  double LJCOS2_sig = 0.0;
-  double LJCOS2_cut = INACTIVE_CUTOFF;
-  double LJCOS2_offset = 0.0;
-  double LJCOS2_w = 0.0;
-  double LJCOS2_rchange = 0.0;
-  /*@}*/
+  LJCOS2_Parameters ljcos2;
 #endif
 
 #ifdef GAY_BERNE
