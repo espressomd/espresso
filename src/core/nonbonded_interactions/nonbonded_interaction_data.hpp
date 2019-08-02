@@ -224,6 +224,14 @@ struct GayBerne_Parameters {
 };
 /*@}*/
 
+/** \name Thole potential */
+/*@{*/
+struct THOLE_Parameters {
+    double scaling_coeff;
+    double q1q2;
+};
+/*@}*/
+
 
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -325,11 +333,7 @@ struct IA_parameters {
 #endif
 
 #ifdef THOLE
-  /** \name Thole potential */
-  /*@{*/
-  double THOLE_scaling_coeff;
-  double THOLE_q1q2;
-  /*@}*/
+  THOLE_Parameters thole;
 #endif
 };
 

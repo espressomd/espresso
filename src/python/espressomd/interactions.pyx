@@ -2299,8 +2299,8 @@ IF THOLE:
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
-                "scaling_coeff": ia_params.THOLE_scaling_coeff,
-                "q1q2": ia_params.THOLE_q1q2
+                "scaling_coeff": ia_params.thole.scaling_coeff,
+                "q1q2": ia_params.thole.q1q2
             }
 
         def is_active(self):

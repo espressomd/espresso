@@ -42,8 +42,8 @@ inline void add_thole_pair_force(const Particle *const p1,
                                  const Particle *const p2,
                                  const IA_parameters *ia_params,
                                  const double *d, double dist, double *force) {
-  auto const thole_q1q2 = ia_params->THOLE_q1q2;
-  auto const thole_s = ia_params->THOLE_scaling_coeff;
+  auto const thole_q1q2 = ia_params->thole.q1q2;
+  auto const thole_s = ia_params->thole.scaling_coeff;
 
   if (thole_s != 0 && thole_q1q2 != 0 &&
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
@@ -66,8 +66,8 @@ inline double thole_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {
 
-  auto const thole_s = ia_params->THOLE_scaling_coeff;
-  auto const thole_q1q2 = ia_params->THOLE_q1q2;
+  auto const thole_s = ia_params->thole.scaling_coeff;
+  auto const thole_q1q2 = ia_params->thole.q1q2;
 
   if (thole_s != 0 && thole_q1q2 != 0 &&
       dist < Coulomb::cutoff(box_geo.length()) &&
