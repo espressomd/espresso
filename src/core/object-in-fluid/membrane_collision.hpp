@@ -68,7 +68,7 @@ inline void add_membrane_collision_pair_force(
    *
    *********************/
 
-  if (dist < (ia_params->membrane_cut + ia_params->membrane_offset)) {
+  if (dist < (ia_params->membrane.cut + ia_params->membrane.offset)) {
 
     auto const r_off = dist - ia_params->membrane.offset;
     // offset needs to be checked for the unphysical case when r_off should be
