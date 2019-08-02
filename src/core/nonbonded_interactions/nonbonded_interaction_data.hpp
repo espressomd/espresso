@@ -184,6 +184,19 @@ struct HAT_Parameters {
 };
 /*@}*/
 
+/** \name Lennard-Jones+Cos potential */
+/*@{*/
+struct LJCOS_Parameters {
+    double eps = 0.0;
+    double sig = 0.0;
+    double cut = INACTIVE_CUTOFF;
+    double offset = 0.0;
+    double alfa = 0.0;
+    double beta = 0.0;
+    double rmin = 0.0;
+};
+/*@}*/
+
 
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -258,16 +271,7 @@ struct IA_parameters {
 #endif
 
 #ifdef LJCOS
-  /** \name Lennard-Jones+Cos potential */
-  /*@{*/
-  double LJCOS_eps = 0.0;
-  double LJCOS_sig = 0.0;
-  double LJCOS_cut = INACTIVE_CUTOFF;
-  double LJCOS_offset = 0.0;
-  double LJCOS_alfa = 0.0;
-  double LJCOS_beta = 0.0;
-  double LJCOS_rmin = 0.0;
-  /*@}*/
+  LJCOS_Parameters ljcos;
 #endif
 
 #ifdef LJCOS2

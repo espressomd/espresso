@@ -141,6 +141,12 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double Fmax
         double r
 
+    cdef struct LJCOS_Parameters:
+        double eps
+        double sig
+        double cut
+        double offset
+
 
 
     cdef struct IA_parameters:
@@ -148,10 +154,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         WCA_Parameters wca
 
-        double LJCOS_eps
-        double LJCOS_sig
-        double LJCOS_cut
-        double LJCOS_offset
+        LJCOS_Parameters ljcos
 
         double LJCOS2_eps
         double LJCOS2_sig

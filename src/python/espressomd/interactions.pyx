@@ -571,10 +571,10 @@ IF LJCOS:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "epsilon": ia_params.LJCOS_eps,
-                "sigma": ia_params.LJCOS_sig,
-                "cutoff": ia_params.LJCOS_cut,
-                "offset": ia_params.LJCOS_offset,
+                "epsilon": ia_params.ljcos.eps,
+                "sigma": ia_params.ljcos.sig,
+                "cutoff": ia_params.ljcos.cut,
+                "offset": ia_params.ljcos.offset,
             }
 
         def is_active(self):
