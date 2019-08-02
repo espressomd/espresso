@@ -43,16 +43,16 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
                                     IA_parameters *ia_params, double const d[3],
                                     double dist, double force[3]) {
 
-  // The affinity potential has the first argument affinity_type. This is to
+  // The affinity potential has the first argument affinity.type. This is to
   // differentiate between different implementations. For example one
   // implementation can take into account the detachment force, another not.
   int aff_type_extracted = 0;
   int period_for_output = -1;
-  if (ia_params->affinity_type > 10) {
-    aff_type_extracted = ia_params->affinity_type % 10;
-    period_for_output = ia_params->affinity_type - aff_type_extracted;
+  if (ia_params->affinity.type > 10) {
+    aff_type_extracted = ia_params->affinity.type % 10;
+    period_for_output = ia_params->affinity.type - aff_type_extracted;
   } else
-    aff_type_extracted = ia_params->affinity_type;
+    aff_type_extracted = ia_params->affinity.type;
 
   auto const unfolded_pos =
       unfolded_position(p1->r.p, p1->l.i, box_geo.length());
@@ -70,13 +70,13 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Algorithm:
      * 1. First check is, whether I am in the cut-off radius: ?dist <
-     *    affinity_cut?.
+     *    affinity.cut?.
      * 2. Then I check whether there exists a bond from the current particle:
      *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
      *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *    in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity.r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
      *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
@@ -90,7 +90,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *********************/
     int j;
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
+    if ((dist < ia_params->affinity.cut)) { // Checking whether I am inside the
                                             // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
@@ -98,9 +98,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
         if ((p1->p.bond_site[0] >= 0) && (p1->p.bond_site[1] >= 0) &&
             (p1->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
-          if (len > ia_params->affinity_r0) {
-            fac = ia_params->affinity_kappa * (len - ia_params->affinity_r0);
-            // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
+          if (len > ia_params->affinity.r0) {
+            fac = ia_params->affinity.kappa * (len - ia_params->affinity.r0);
+            // printf("len %f r0 %f\n",len, ia_params->affinity.r0);
           } else
             fac = 0.0;
           // double ftemp = 0;
@@ -110,13 +110,13 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // printf("%f ",ftemp);
           // Decision whether I should break the bond: if the bond length is
           // greater than maxBond, it breaks.
-          if (len > ia_params->affinity_maxBond) {
+          if (len > ia_params->affinity.maxBond) {
             for (j = 0; j < 3; j++)
               p1->p.bond_site[j] = -1;
           }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside
+                       ->affinity.r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
                                         // let's talk about creating a bond
           // This implementation creates bond always
@@ -137,13 +137,13 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Algorithm:
      * 1. First check is whether I am in the cut-off radius: ?dist <
-     *    affinity_cut?.
+     *    affinity.cut?.
      * 2. Then I check whether there exists a bond from the current particle:
      *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
      *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *    in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity.r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
      *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
@@ -165,7 +165,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *********************/
     int j;
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
+    if ((dist < ia_params->affinity.cut)) { // Checking whether I am inside the
                                             // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
@@ -173,9 +173,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
         if ((p1->p.bond_site[0] >= 0) && (p1->p.bond_site[1] >= 0) &&
             (p1->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
-          if (len > ia_params->affinity_r0) {
-            fac = ia_params->affinity_kappa * (len - ia_params->affinity_r0);
-            // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
+          if (len > ia_params->affinity.r0) {
+            fac = ia_params->affinity.kappa * (len - ia_params->affinity.r0);
+            // printf("len %f r0 %f\n",len, ia_params->affinity.r0);
           } else
             fac = 0.0;
           // double ftemp = 0;
@@ -188,9 +188,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // First, force exerted on bond is stored in fac
           double tmpF = fac;
           // Then, zero force off rate K_0 is stored at ia_params_Koff
-          double tmpK0 = ia_params->affinity_Koff;
-          // Then, detachment force is stored in  ia_params->affinity_maxBond
-          double tmpFd = ia_params->affinity_maxBond;
+          double tmpK0 = ia_params->affinity.Koff;
+          // Then, detachment force is stored in  ia_params->affinity.maxBond
+          double tmpFd = ia_params->affinity.maxBond;
           // Then, compute Koff
           double tmpKoff = tmpK0 * exp(tmpF / tmpFd);
           // Finally, compute Poff
@@ -198,7 +198,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // printf("%f ", Poff);
           if (len <
               0.8 *
-                  ia_params->affinity_cut) { // in other implementation, maxBond
+                  ia_params->affinity.cut) { // in other implementation, maxBond
                                              // is used here. However, in this
                                              // implementation, we need maxBond
                                              // for setting detachment force F_d
@@ -215,25 +215,25 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // Checkpoint output:
           if (period_for_output > 0)
             if (((int)floor(sim_time / time_step) % period_for_output == 0) &&
-                (len > ia_params->affinity_r0)) {
+                (len > ia_params->affinity.r0)) {
               FILE *fp;
-              double tmpPon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
+              double tmpPon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
               fp = fopen("affinity_check.dat", "a");
               fprintf(fp, "sim_time %f, period_for_output %d aff type: %d ",
                       sim_time, period_for_output, aff_type_extracted);
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params->affinity_Kon, p1->p.identity, Poff,
+                      tmpPon, ia_params->affinity.Kon, p1->p.identity, Poff,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside
+                       ->affinity.r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
                                         // let's talk about creating a bond
-          double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
+          double Pon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
           double decide = d_random();
@@ -260,13 +260,13 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Algorithm:
      * 1. First check is whether I am in the cut-off radius: ?dist <
-     *    affinity_cut?.
+     *    affinity.cut?.
      * 2. Then I check whether there exists a bond from the current particle:
      *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
      *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *    in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity.r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
      *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
@@ -285,7 +285,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *********************/
     int j;
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside
+    if ((dist < ia_params->affinity.cut)) { // Checking whether I am inside
                                             // the interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
@@ -293,10 +293,10 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
         if ((p1->p.bond_site[0] >= 0) && (p1->p.bond_site[1] >= 0) &&
             (p1->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
-          if (len > ia_params->affinity_r0) {
-            fac = ia_params->affinity_kappa * (len - ia_params->affinity_r0) /
+          if (len > ia_params->affinity.r0) {
+            fac = ia_params->affinity.kappa * (len - ia_params->affinity.r0) /
                   len;
-            // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
+            // printf("len %f r0 %f\n",len, ia_params->affinity.r0);
           } else
             fac = 0.0;
           // double ftemp = 0;
@@ -310,8 +310,8 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // with Kon, except that the probability of bond breakage increases
           // with prolongation of the bond. If the bond reaches
 
-          double Poff = 1.0 - exp(-ia_params->affinity_Koff * time_step);
-          if (len < ia_params->affinity_maxBond) {
+          double Poff = 1.0 - exp(-ia_params->affinity.Koff * time_step);
+          if (len < ia_params->affinity.maxBond) {
             double decide = d_random();
             if (decide < Poff) {
               for (j = 0; j < 3; j++)
@@ -325,10 +325,10 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside
+                       ->affinity.r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
                                         // let's talk about creating a bond
-          double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
+          double Pon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
           double decide = d_random();
@@ -353,13 +353,13 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Algorithm:
      * 1. First check is whether I am in the cut-off radius: ?dist <
-     *    affinity_cut?.
+     *    affinity.cut?.
      * 2. Then I check whether there exists a bond from the current particle:
      *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
      *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *    in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity.r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
      *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
@@ -380,7 +380,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *********************/
     int j;
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
+    if ((dist < ia_params->affinity.cut)) { // Checking whether I am inside the
                                             // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
@@ -388,7 +388,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
         if ((p1->p.bond_site[0] >= 0) && (p1->p.bond_site[1] >= 0) &&
             (p1->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
-          fac = ia_params->affinity_kappa * len;
+          fac = ia_params->affinity.kappa * len;
           // double ftemp = 0;
           for (j = 0; j < 3; j++) {
             force[j] += fac * vec[j] / len;
@@ -397,9 +397,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // First, force exerted on bond is stored in fac
           double tmpF = fac;
           // Then, zero force off rate K_0 is stored at ia_params_Koff
-          double tmpK0 = ia_params->affinity_Koff;
-          // Then, detachment force is stored in  ia_params->affinity_maxBond
-          double tmpFd = ia_params->affinity_maxBond;
+          double tmpK0 = ia_params->affinity.Koff;
+          // Then, detachment force is stored in  ia_params->affinity.maxBond
+          double tmpFd = ia_params->affinity.maxBond;
           // Then, compute Koff
           double tmpKoff = tmpK0 * exp(tmpF / tmpFd);
           // Finally, compute Poff
@@ -407,7 +407,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // printf("%f ", Poff);
           if (len <
               0.8 *
-                  ia_params->affinity_cut) { // in other implementation, maxBond
+                  ia_params->affinity.cut) { // in other implementation, maxBond
                                              // is used here. However, in this
                                              // implementation, we need maxBond
                                              // for setting detachment force F_d
@@ -426,23 +426,23 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           if (period_for_output > 0)
             if ((int)floor(sim_time / time_step) % period_for_output == 0) {
               FILE *fp;
-              double tmpPon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
-              fp = fopen("affinity_check.dat", "a");
+              double tmpPon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
+              fp = fopen("affinity.check.dat", "a");
               fprintf(fp, "sim_time %f, period_for_output %d aff type: %d ",
                       sim_time, period_for_output, aff_type_extracted);
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params->affinity_Kon, p1->p.identity, Poff,
+                      tmpPon, ia_params->affinity.Kon, p1->p.identity, Poff,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside
+                       ->affinity.r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
                                         // let's talk about creating a bond
-          double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
+          double Pon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
           double decide = d_random();
@@ -469,13 +469,13 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Algorithm:
      * 1. First check is whether I am in the cut-off radius: ?dist <
-     *    affinity_cut?.
+     *    affinity.cut?.
      * 2. Then I check whether there exists a bond from the current particle:
      *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
      *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *    in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity.r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
      *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
@@ -497,7 +497,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *********************/
     int j;
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
+    if ((dist < ia_params->affinity.cut)) { // Checking whether I am inside the
                                             // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
@@ -505,10 +505,10 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
         if ((p1->p.bond_site[0] >= 0) && (p1->p.bond_site[1] >= 0) &&
             (p1->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
-          if (len > 0.75 * (ia_params->affinity_r0)) {
-            fac = ia_params->affinity_kappa *
-                  (len - 0.75 * (ia_params->affinity_r0));
-            // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
+          if (len > 0.75 * (ia_params->affinity.r0)) {
+            fac = ia_params->affinity.kappa *
+                  (len - 0.75 * (ia_params->affinity.r0));
+            // printf("len %f r0 %f\n",len, ia_params->affinity.r0);
           } else
             fac = 0.0;
           // double ftemp = 0;
@@ -520,9 +520,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // First, force exerted on bond is stored in fac
           double tmpF = fac;
           // Then, zero force off rate K_0 is stored at ia_params_Koff
-          double tmpK0 = ia_params->affinity_Koff;
-          // Then, detachment force is stored in  ia_params->affinity_maxBond
-          double tmpFd = ia_params->affinity_maxBond;
+          double tmpK0 = ia_params->affinity.Koff;
+          // Then, detachment force is stored in  ia_params->affinity.maxBond
+          double tmpFd = ia_params->affinity.maxBond;
           // Then, compute Koff
           double tmpKoff = tmpK0 * exp(tmpF / tmpFd);
           // Finally, compute Poff
@@ -530,7 +530,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // printf("%f ", Poff);
           if (len <
               0.8 *
-                  ia_params->affinity_cut) { // in other implementation, maxBond
+                  ia_params->affinity.cut) { // in other implementation, maxBond
                                              // is used here. However, in this
                                              // implementation, we need maxBond
                                              // for setting detachment force F_d
@@ -548,25 +548,25 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // Checkpoint output:
           if (period_for_output > 0)
             if (((int)floor(sim_time / time_step) % period_for_output == 0) &&
-                (len > ia_params->affinity_r0)) {
+                (len > ia_params->affinity.r0)) {
               FILE *fp;
-              double tmpPon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
+              double tmpPon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
               fp = fopen("affinity_check.dat", "a");
               fprintf(fp, "sim_time %f, period_for_output %d aff type: %d ",
                       sim_time, period_for_output, aff_type_extracted);
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params->affinity_Kon, p1->p.identity, Poff,
+                      tmpPon, ia_params->affinity.Kon, p1->p.identity, Poff,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside
+                       ->affinity.r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
                                         // let's talk about creating a bond
-          double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
+          double Pon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
           double decide = d_random();
@@ -593,13 +593,13 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *
      * Algorithm:
      * 1. First check is whether I am in the cut-off radius: ?dist <
-     *    affinity_cut?.
+     *    affinity.cut?.
      * 2. Then I check whether there exists a bond from the current particle:
      *    ?bond_site != -1?
      * 3. If yes, then I maintain the bond. I put the forces and afterwards I
      *    decide whether the bond will break or not.
      * 4. If no, I maintain the creation of a bond. First I check whether I am
-     *    in the area of possible bond creation: ?dist < affinity_r0?
+     *    in the area of possible bond creation: ?dist < affinity.r0?
      * 5. If yes, I run the decision algorithm for bond creation and I either
      *    create or does not create the bond.
      * 6. If I am not in the area of possible bond creation I do nothing
@@ -621,7 +621,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
      *********************/
     int j;
     double fac = 0.0;
-    if ((dist < ia_params->affinity_cut)) { // Checking whether I am inside the
+    if ((dist < ia_params->affinity.cut)) { // Checking whether I am inside the
                                             // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
@@ -629,10 +629,10 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
         if ((p1->p.bond_site[0] >= 0) && (p1->p.bond_site[1] >= 0) &&
             (p1->p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                              // Bond exists
-          if (len > 1.0 * (ia_params->affinity_r0)) {
-            fac = ia_params->affinity_kappa *
-                  (len - 1.0 * (ia_params->affinity_r0));
-            // printf("len %f r0 %f\n",len, ia_params->affinity_r0);
+          if (len > 1.0 * (ia_params->affinity.r0)) {
+            fac = ia_params->affinity.kappa *
+                  (len - 1.0 * (ia_params->affinity.r0));
+            // printf("len %f r0 %f\n",len, ia_params->affinity.r0);
           } else
             fac = 0.0;
           // double ftemp = 0;
@@ -644,9 +644,9 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // First, force exerted on bond is stored in fac
           double tmpF = fac;
           // Then, zero force off rate K_0 is stored at ia_params_Koff
-          double tmpK0 = ia_params->affinity_Koff;
-          // Then, detachment force is stored in  ia_params->affinity_maxBond
-          double tmpFd = ia_params->affinity_maxBond;
+          double tmpK0 = ia_params->affinity.Koff;
+          // Then, detachment force is stored in  ia_params->affinity.maxBond
+          double tmpFd = ia_params->affinity.maxBond;
           // Then, compute Koff
           double tmpKoff = tmpK0 * exp(tmpF / tmpFd);
           // Finally, compute Poff
@@ -654,7 +654,7 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // printf("%f ", Poff);
           if (len <
               0.8 *
-                  ia_params->affinity_cut) { // in other implementation, maxBond
+                  ia_params->affinity.cut) { // in other implementation, maxBond
                                              // is used here. However, in this
                                              // implementation, we need maxBond
                                              // for setting detachment force F_d
@@ -672,25 +672,25 @@ inline void add_affinity_pair_force(Particle *p1, Particle *p2,
           // Checkpoint output:
           if (period_for_output > 0)
             if (((int)floor(sim_time / time_step) % period_for_output == 0) &&
-                (len > ia_params->affinity_r0)) {
+                (len > ia_params->affinity.r0)) {
               FILE *fp;
-              double tmpPon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
+              double tmpPon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
               fp = fopen("affinity_check.dat", "a");
               fprintf(fp, "sim_time %f, period_for_output %d aff type: %d ",
                       sim_time, period_for_output, aff_type_extracted);
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params->affinity_Kon, p1->p.identity, Poff,
+                      tmpPon, ia_params->affinity.Kon, p1->p.identity, Poff,
                       tmpF, tmpKoff, tmpK0, len);
               fclose(fp);
             }
         } else if (dist <
                    ia_params
-                       ->affinity_r0) { // Bond does not exist, we are inside
+                       ->affinity.r0) { // Bond does not exist, we are inside
                                         // of possible bond creation area,
                                         // let's talk about creating a bond
-          double Pon = 1.0 - exp(-ia_params->affinity_Kon * time_step);
+          double Pon = 1.0 - exp(-ia_params->affinity.Kon * time_step);
           // The probability is given by function Pon(x)= 1 - e^(-x) where x is
           // Kon*dt.
           double decide = d_random();

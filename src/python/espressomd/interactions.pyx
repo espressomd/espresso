@@ -1454,13 +1454,13 @@ IF AFFINITY == 1:
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
-                "affinity_type": ia_params.affinity_type,
-                "affinity_kappa": ia_params.affinity_kappa,
-                "affinity_r0": ia_params.affinity_r0,
-                "affinity_Kon": ia_params.affinity_Kon,
-                "affinity_Koff": ia_params.affinity_Koff,
-                "affinity_maxBond": ia_params.affinity_maxBond,
-                "affinity_cut": ia_params.affinity_cut}
+                "affinity_type": ia_params.affinity.type,
+                "affinity_kappa": ia_params.affinity.kappa,
+                "affinity_r0": ia_params.affinity.r0,
+                "affinity_Kon": ia_params.affinity.Kon,
+                "affinity_Koff": ia_params.affinity.Koff,
+                "affinity_maxBond": ia_params.affinity.maxBond,
+                "affinity_cut": ia_params.affinity.cut}
 
         def is_active(self):
             return (self._params["affinity_kappa"] > 0)

@@ -253,7 +253,7 @@ inline void add_non_bonded_pair_force(Particle *p1, Particle *p2, double d[3],
 /*affinity potential*/
 #ifdef AFFINITY
   // Prevent jump to non-inlined function
-  if (dist < ia_params->affinity_cut) {
+  if (dist < ia_params->affinity.cut) {
     add_affinity_pair_force(p1, p2, ia_params, d, dist, force.data());
   }
 #endif

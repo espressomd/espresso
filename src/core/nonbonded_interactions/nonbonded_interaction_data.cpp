@@ -222,8 +222,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef AFFINITY
-      if (max_cut_current < data->affinity_cut)
-        max_cut_current = data->affinity_cut;
+      if (max_cut_current < data->affinity.cut)
+        max_cut_current = data->affinity.cut;
 #endif
 
 #ifdef MEMBRANE_COLLISION

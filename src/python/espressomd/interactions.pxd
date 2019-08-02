@@ -122,6 +122,15 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
              double cut
              double offset
 
+    cdef struct Affinity_Parameters:
+             int type
+             double kappa
+             double r0
+             double Kon
+             double Koff
+             double maxBond
+             double cut
+
 
 
     cdef struct IA_parameters:
@@ -141,13 +150,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         LJGEN_Parameters ljgen
 
-        int affinity_type
-        double affinity_kappa
-        double affinity_r0
-        double affinity_Kon
-        double affinity_Koff
-        double affinity_maxBond
-        double affinity_cut
+        Affinity_Parameters affinity
         double membrane_a
         double membrane_n
         double membrane_cut
