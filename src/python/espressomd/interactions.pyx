@@ -1066,12 +1066,12 @@ IF BMHTF_NACL == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "a": ia_params.BMHTF_A,
-                "b": ia_params.BMHTF_B,
-                "c": ia_params.BMHTF_C,
-                "d": ia_params.BMHTF_D,
-                "sig": ia_params.BMHTF_sig,
-                "cutoff": ia_params.BMHTF_cut,
+                "a": ia_params.BMHTF.A,
+                "b": ia_params.BMHTF.B,
+                "c": ia_params.BMHTF.C,
+                "d": ia_params.BMHTF.D,
+                "sig": ia_params.BMHTF.sig,
+                "cutoff": ia_params.BMHTF.cut,
             }
 
         def is_active(self):

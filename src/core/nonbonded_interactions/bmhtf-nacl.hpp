@@ -40,12 +40,12 @@ inline void add_BMHTF_pair_force(const Particle *const p1,
                                  const Particle *const p2,
                                  IA_parameters *ia_params, double const d[3],
                                  double dist, double dist2, double force[3]) {
-  if (dist < ia_params->BMHTF_cut) {
+  if (dist < ia_params->BMHTF.cut) {
     auto const pw8 = dist2 * dist2 * dist2 * dist2;
     auto const fac =
-        ia_params->BMHTF_A * ia_params->BMHTF_B *
-            exp(ia_params->BMHTF_B * (ia_params->BMHTF_sig - dist)) / dist -
-        6 * ia_params->BMHTF_C / pw8 - 8 * ia_params->BMHTF_D / pw8 / dist2;
+        ia_params->BMHTF.A * ia_params->BMHTF.B *
+            exp(ia_params->BMHTF.B * (ia_params->BMHTF.sig - dist)) / dist -
+        6 * ia_params->BMHTF.C / pw8 - 8 * ia_params->BMHTF.D / pw8 / dist2;
 
     for (int j = 0; j < 3; j++)
       force[j] += fac * d[j];
@@ -56,12 +56,12 @@ inline void add_BMHTF_pair_force(const Particle *const p1,
 inline double BMHTF_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist, double dist2) {
-  if (dist < ia_params->BMHTF_cut) {
+  if (dist < ia_params->BMHTF.cut) {
     auto const pw6 = dist2 * dist2 * dist2;
-    return ia_params->BMHTF_A *
-               exp(ia_params->BMHTF_B * (ia_params->BMHTF_sig - dist)) -
-           ia_params->BMHTF_C / pw6 - ia_params->BMHTF_D / pw6 / dist2 +
-           ia_params->BMHTF_computed_shift;
+    return ia_params->BMHTF.A *
+               exp(ia_params->BMHTF.B * (ia_params->BMHTF.sig - dist)) -
+           ia_params->BMHTF.C / pw6 - ia_params->BMHTF.D / pw6 / dist2 +
+           ia_params->BMHTF.computed_shift;
   }
   return 0.0;
 }

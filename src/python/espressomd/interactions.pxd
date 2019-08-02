@@ -89,6 +89,14 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
              double sig
              double cut
 
+    cdef struct BMHTF_Parameters:
+             double A
+             double B
+             double C
+             double D
+             double sig
+             double cut
+             double computed_shift
 
 
 
@@ -138,12 +146,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         SmSt_Parameters SmSt
 
-        double BMHTF_A
-        double BMHTF_B
-        double BMHTF_C
-        double BMHTF_D
-        double BMHTF_sig
-        double BMHTF_cut
+        BMHTF_Parameters BMHTF
 
         double MORSE_eps
         double MORSE_alpha

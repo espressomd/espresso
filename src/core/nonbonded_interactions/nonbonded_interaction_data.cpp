@@ -202,8 +202,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef BMHTF_NACL
-      if (max_cut_current < data->BMHTF_cut)
-        max_cut_current = data->BMHTF_cut;
+      if (max_cut_current < data->BMHTF.cut)
+        max_cut_current = data->BMHTF.cut;
 #endif
 
 #ifdef MORSE

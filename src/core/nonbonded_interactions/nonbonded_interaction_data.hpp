@@ -104,6 +104,21 @@ struct Gaussian_Parameters {
 };
 /*@}*/
 
+/** \name BMHTF NaCl potential */
+/*@{*/
+struct BMHTF_Parameters {
+    double A = 0.0;
+    double B = 0.0;
+    double C = 0.0;
+    double D = 0.0;
+    double sig = 0.0;
+    double cut = INACTIVE_CUTOFF;
+    double computed_shift = 0.0;
+};
+/*@}*/
+
+
+
 
 /** Data structure containing the interaction parameters for non-bonded
  *  interactions.
@@ -149,16 +164,7 @@ struct IA_parameters {
 #endif
 
 #ifdef BMHTF_NACL
-  /** \name BMHTF NaCl potential */
-  /*@{*/
-  double BMHTF_A = 0.0;
-  double BMHTF_B = 0.0;
-  double BMHTF_C = 0.0;
-  double BMHTF_D = 0.0;
-  double BMHTF_sig = 0.0;
-  double BMHTF_cut = INACTIVE_CUTOFF;
-  double BMHTF_computed_shift = 0.0;
-  /*@}*/
+  BMHTF_Parameters BMHTF;
 #endif
 
 #ifdef MORSE
