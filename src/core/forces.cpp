@@ -177,11 +177,6 @@ void calc_long_range_forces() {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   Coulomb::calc_long_range_force();
-/* If enabled, calculate electrostatics contribution from electrokinetics
- * species. */
-#ifdef ELECTROKINETICS
-  ek_calculate_electrostatic_coupling();
-#endif
 
 #endif /*ifdef ELECTROSTATICS */
 
