@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -132,8 +131,7 @@ class ThermoTest(ut.TestCase):
 
         # Space
         self.system.box_l = 3 * [1.0]
-        if espressomd.has_features("PARTIAL_PERIODIC"):
-            self.system.periodicity = [0, 0, 0]
+        self.system.periodicity = [0, 0, 0]
 
         # NVT thermostat
         self.kT = 0.0
@@ -264,8 +262,7 @@ class ThermoTest(ut.TestCase):
         else:
             box = 10.0
         self.system.box_l = 3 * [box]
-        if espressomd.has_features("PARTIAL_PERIODIC"):
-            self.system.periodicity = [0, 0, 0]
+        self.system.periodicity = [0, 0, 0]
 
         # NVT thermostat
         # Just some temperature range to cover by the test:

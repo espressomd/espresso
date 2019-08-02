@@ -31,9 +31,8 @@ for further calculations, you should explicitly make a copy e.g. via
 
 * :py:attr:`~espressomd.system.System.periodicity`
 
-    (int[3]) Specifies periodicity for the three directions. If the feature
-    ``PARTIAL_PERIODIC`` is set, |es| can be instructed to treat some
-    dimensions as non-periodic. Per default espresso assumes periodicity in
+    (int[3]) Specifies periodicity for the three directions. |es| can be instructed
+    to treat some dimensions as non-periodic. Per default espresso assumes periodicity in
     all directions which equals setting this variable to [1,1,1]. A
     dimension is specified as non-periodic via setting the periodicity
     variable for this dimension to 0. E.g. Periodicity only in z-direction
@@ -141,7 +140,7 @@ Details about the cell system can be obtained by :meth:`espressomd.System().cell
 Domain decomposition
 ~~~~~~~~~~~~~~~~~~~~
 
-Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_domain_decomposition`
+Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_domain_decomposition`
 selects the domain decomposition cell scheme, using Verlet lists
 for the calculation of the interactions. If you specify ``use_verlet_lists=False``, only the
 domain decomposition is used, but not the Verlet lists. ::
@@ -167,7 +166,7 @@ calculate all pair interactions.
 N-squared
 ~~~~~~~~~
 
-Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_n_square`
+Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_n_square`
 selects the very primitive nsquared cellsystem, which calculates
 the interactions for all particle pairs. Therefore it loops over all
 particles, giving an unfavorable computation time scaling of
@@ -206,7 +205,7 @@ odd number of nodes, if with multiple processors at all.
 Layered cell system
 ~~~~~~~~~~~~~~~~~~~
 
-Invoking :py:attr:`~espressomd.cellsystem.CellSystem.set_layered`
+Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_layered`
 selects the layered cell system, which is specifically designed for
 the needs of the MMM2D algorithm. Basically it consists of a nsquared
 algorithm in x and y, but a domain decomposition along z, i.e. the
@@ -252,7 +251,7 @@ Langevin thermostat
 ~~~~~~~~~~~~~~~~~~~
 
 In order to activate the Langevin thermostat the member function
-:py:attr:`~espressomd.thermostat.Thermostat.set_langevin` of the thermostat
+:py:meth:`~espressomd.thermostat.Thermostat.set_langevin` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
 Best explained in an example::
 
@@ -263,18 +262,31 @@ Best explained in an example::
     therm.set_langevin(kT=1.0, gamma=1.0, seed=41)
 
 As explained before the temperature is set as thermal energy :math:`k_\mathrm{B} T`.
-The Langevin thermostat consists of a friction and noise term coupled
-via the fluctuation-dissipation theorem. The friction term is a function
-of the particle velocities. By specifying the diffusion coefficient for
-the particle becomes
 
-.. math:: D = \frac{\text{temperature}}{\text{gamma}}.
+The Langevin thermostat is based on an extension of Newton's equation of motion to
 
-The relaxation time is given by :math:`\text{gamma}/\text{MASS}`, with
-``MASS`` the particle's mass.  For a more detailed explanation, refer to
-:cite:`grest86a`.  An anisotropic diffusion coefficient tensor is available to
-simulate anisotropic colloids (rods, etc.) properly. It can be enabled by the
-feature ``PARTICLE_ANISOTROPY``.
+.. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma v_i(t) + \sqrt{2\gamma k_B T} \eta_i(t).
+
+Here, :math:`f_i` are all deterministic forces from interactions, 
+:math:`\gamma` the bare friction coefficient and :math:`\eta` a random, "thermal" force. 
+The friction term accounts for dissipation in a surrounding fluid whereas
+the random force  mimics collisions of the particle with solvent molecules 
+at temperature :math:`T` and satisfies
+
+.. math:: <\eta(t)> = 0 , <\eta^\alpha_i(t)\eta^\beta_j(t')> = \delta_{\alpha\beta} \delta_{ij}\delta(t-t')
+
+(:math:`<\cdot>` denotes the ensemble average and :math:`\alpha,\beta` are spatial coordinates). 
+
+In the |es| implementation of the Langevin thermostat,
+the additional terms only enter in the force calculation.
+This reduces the accuracy of the Velocity Verlet integrator
+by one order in :math:`dt` because forces are now velocity dependent.
+
+The random process :math:`\eta(t)` is discretized by drawing an uncorrelated random number
+:math:`\overline{\eta}` for each component of all the particle forces. 
+The distribution of :math:`\overline{\eta}` is uniform and satisfies
+ 
+.. math:: <\overline{\eta}> = 0 , <\overline{\eta}\overline{\eta}> = 1/dt
 
 The keyword ``seed`` controls the state of the random number generator (Philox
 Counter-based RNG) and is required on first activation of the thermostat. It
@@ -284,43 +296,94 @@ using a fixed seed) or not (by using a randomized seed).
 
 If the feature ``ROTATION`` is compiled in, the rotational degrees of freedom are
 also coupled to the thermostat. If only the first two arguments are
-specified then the diffusion coefficient for the rotation is set to the
+specified then the friction coefficient for the rotation is set to the
 same value as that for the translation.
-
-A separate rotational diffusion coefficient can be set by inputting
-``gamma_rotate``.  This also allows one to properly match the translational and
-rotational diffusion coefficients of a sphere. Feature ``ROTATIONAL_INERTIA``
-enables an anisotropic rotational diffusion coefficient tensor through
-corresponding friction coefficients.
-
-Finally, the two options allow one to switch the translational and rotational
+A separate rotational friction coefficient can be set by inputting
+``gamma_rotate``. The two options allow one to switch the translational and rotational
 thermalization on or off separately, maintaining the frictional behavior. This
 can be useful, for instance, in high Péclet number active matter systems, where
-one only wants to thermalize the rotational degrees of freedom and
+one only wants to thermalize only the rotational degrees of freedom and
 translational motion is effected by the self-propulsion.
+
+The keywords ``gamma`` and ``gamma_rotate`` can be specified as a scalar, 
+or, with feature ``PARTICLE_ANISOTROPY`` compiled in, as the three eigenvalues 
+of the respective friction coefficient tensor. This is enables the simulation of 
+the anisotropic diffusion of anisotropic colloids (rods, etc.).
 
 Using the Langevin thermostat, it is possible to set a temperature and a
 friction coefficient for every particle individually via the feature
 ``LANGEVIN_PER_PARTICLE``.  Consult the reference of the ``part`` command
 (chapter :ref:`Setting up particles`) for information on how to achieve this.
 
+.. _LB thermostat:
+
+Lattice Boltzmann thermostat
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`Lattice Boltzmann` thermostat acts similar to the :ref:`Langevin thermostat` in that the governing equation for particles is
+
+.. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma (v_i(t)-u(x_i(t),t)) + \sqrt{2\gamma k_B T} \eta_i(t).
+
+where :math:`u(x,t)` is the fluid velocity at position :math:`x` and time :math:`t`. 
+To preserve momentum, an equal and opposite friction force and random force act on the fluid. 
+
+Numerically the fluid velocity is determined from the Lattice Boltzmann node velocities 
+by interpolating as described in :ref:`Interpolating velocities`.
+The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes. 
+Detailes for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
+
+The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
+The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
+Temperature is set via the ``kT`` argument of the LB fluid. 
+
+Furthermore a ``seed`` has to be given for the
+thermalization of the particle coupling. The magnitude of the fricitional coupling can be adjusted by
+the parameter ``gamma``.
+To enable the LB thermostat, use::
+
+    sys.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
+
+
+No other thermostatting mechanism is necessary
+then. Please switch off any other thermostat before starting the LB
+thermostatting mechanism.
+
+The LBM implementation provides a fully thermalized LB fluid, all
+nonconserved modes, including the pressure tensor, fluctuate correctly
+according to the given temperature and the relaxation parameters. All
+fluctuations can be switched off by setting the temperature to 0.
+
+.. note:: Coupling between LB and MD only happens if the LB thermostat is set with a :math:`\gamma \ge 0.0`.
+
+
 .. _Dissipative Particle Dynamics (DPD):
 
 Dissipative Particle Dynamics (DPD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To realize a complete DPD fluid model, three parts are needed:
+The DPD thermostat adds friction and noise to the particle
+dynamics like the :ref:`Langevin thermostat`, but these 
+are not applied to every particle individually but instead 
+encoded in a dissipative interaction between particles :cite:`soddeman03a`.
+
+To realize a complete DPD fluid model in |es|, three parts are needed:
 The DPD thermostat, which controls the temperate, a dissipative
 interaction between the particles that make up the fluid,
 see :ref:`DPD interaction`, and a repulsive conservative force.
 
-The DPD thermostat can be invoked by the function:
-:py:attr:`espressomd.thermostat.Thermostat.set_dpd`
-which takes :math:`k_\mathrm{B} T` as the only argument.
+The temperature is set via
+:py:meth:`espressomd.thermostat.Thermostat.set_dpd`
+which takes ``kT`` as the only argument.
 
 The friction coefficients and cutoff are controlled via the
-:ref:`DPD interaction` on a per type-pair basis. For details see
-there.
+:ref:`DPD interaction` on a per type-pair basis. For details 
+see there.
+
+The friction (dissipative) and noise (random) term are coupled via the
+fluctuation- dissipation theorem. The friction term is a function of the
+relative velocity of particle pairs. The DPD thermostat is better for
+dynamics than the Langevin thermostat, since it mimics hydrodynamics in
+the system.
 
 As a conservative force any interaction potential can be used,
 see :ref:`Isotropic non-bonded interactions`. A common choice is
@@ -328,15 +391,6 @@ a force ramp which is implemented as :ref:`Hat interaction`.
 
 A complete example of setting up a DPD fluid and running it
 to sample the equation of state can be found in samples/dpd.py.
-
-DPD adds a velocity dependent dissipative force and a random force
-to the conservative pair forces.
-
-The friction (dissipative) and noise (random) term are coupled via the
-fluctuation- dissipation theorem. The friction term is a function of the
-relative velocity of particle pairs. The DPD thermostat is better for
-dynamics than the Langevin thermostat, since it mimics hydrodynamics in
-the system.
 
 When using a Lennard-Jones interaction, :math:`{r_\mathrm{cut}} =
 2^{\frac{1}{6}} \sigma` is a good value to choose, so that the
@@ -370,16 +424,15 @@ and the parameters:
     * ``ext_pressure``:  (float) The external pressure as float variable.
     * ``piston``:        (float) The mass of the applied piston as float variable.
 
-This thermostat is based on the Andersen thermostat (see
-:cite:`andersen80a,mann05d`) and will thermalize the box
-geometry. It will only do isotropic changes of the box.
-See this code snippet for the two commands::
+For example::
 
     import espressomd
 
     system = espressomd.System()
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
+
+For an explanation of the algorithm involved, see :ref:`Isotropic NPT thermostat`
 
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
@@ -463,7 +516,7 @@ using a fixed seed) or not (by using a randomized seed).
 CUDA
 ----
 
-:py:attr:`~espressomd.cuda_init.CudaInitHandle()` command can be used to choose the GPU for all subsequent
+:py:meth:`~espressomd.cuda_init.CudaInitHandle()` command can be used to choose the GPU for all subsequent
 GPU-computations. Note that due to driver limitations, the GPU cannot be
 changed anymore after the first GPU-using command has been issued, for
 example ``lbfluid``. If you do not choose the GPU manually before that,

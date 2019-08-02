@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -23,7 +22,7 @@ import espressomd.electrostatics
 from espressomd import electrostatic_extensions
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
+@utx.skipIfMissingFeatures(["P3M", "PARTIAL_PERIODIC"])
 class ELC_vs_MMM2D_neutral(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -47,17 +46,17 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             "const_pot_0": {
                 "gap_size": self.elc_gap,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 0.0},
             "const_pot_1": {
                 "gap_size": self.elc_gap,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 1.0},
             "const_pot_m1": {
                 "gap_size": self.elc_gap,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": -1.0}
         }
 
@@ -74,17 +73,17 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             "const_pot_0": {
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 0.0},
             "const_pot_1": {
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 1.0},
             "const_pot_m1": {
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": -1.0}
         }
 

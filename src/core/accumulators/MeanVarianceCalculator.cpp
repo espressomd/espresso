@@ -28,6 +28,8 @@
 
 #include "MeanVarianceCalculator.hpp"
 
+#include <sstream>
+
 namespace Accumulators {
 void MeanVarianceCalculator::update() { m_acc(m_obs->operator()()); }
 

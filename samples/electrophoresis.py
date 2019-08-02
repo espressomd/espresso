@@ -19,10 +19,9 @@
 """
 This sample simulates electrophoresis using P3M solver.
 """
-from __future__ import print_function
 import espressomd
 
-required_features = ["ELECTROSTATICS", "EXTERNAL_FORCES", "LENNARD_JONES"]
+required_features = ["P3M", "EXTERNAL_FORCES", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat

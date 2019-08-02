@@ -14,7 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
+
+import subprocess
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -22,16 +23,16 @@ import numpy as np
 import espressomd
 import espressomd.checkpointing
 import espressomd.virtual_sites
+from espressomd.shapes import Sphere, Wall
 import tests_common
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
 
-LB = ('LB.CPU' in modes or
-      espressomd.gpu_available() and espressomd.has_features('CUDA') and 'LB.GPU' in modes)
+LB = ('LB.CPU' in modes or 'LB.GPU' in modes and espressomd.gpu_available())
 
-EK = (espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS') and 'EK.GPU'
-      in modes)
+EK = ('EK.GPU' in modes and espressomd.gpu_available()
+      and espressomd.has_features('ELECTROKINETICS'))
 
 
 class CheckpointTest(ut.TestCase):
@@ -44,16 +45,14 @@ class CheckpointTest(ut.TestCase):
             checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
         cls.checkpoint.load(0)
 
-    @ut.skipIf(not LB, "Skipping test due to missing features.")
+    @ut.skipIf(not LB, "Skipping test due to missing mode.")
     def test_LB(self):
         lbf = system.actors[0]
         cpt_mode = int("@TEST_BINARY@")
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
         with self.assertRaises(RuntimeError):
             lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
-        assertRaisesRegex = self.assertRaisesRegexp if sys.version_info < (
-            3, 2) else self.assertRaisesRegex
-        with assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
             lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
@@ -72,13 +71,13 @@ class CheckpointTest(ut.TestCase):
                                 grid_3D[i, j, k] * np.arange(1, 20),
                                 decimal=precision)
         state = lbf.get_params()
-        reference = {'agrid': 0.5, 'visc': 1.3,
-                     'dens': 1.5, 'tau': 0.01}
+        reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
         for key, val in reference.items():
             self.assertTrue(key in state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-9)
 
-    @ut.skipIf(not EK, "Skipping test due to missing features.")
+    @utx.skipIfMissingFeatures('ELECTROKINETICS')
+    @ut.skipIf(not EK, "Skipping test due to missing mode.")
     def test_EK(self):
         ek = system.actors[0]
         ek_species = ek.get_params()['species'][0]
@@ -97,7 +96,8 @@ class CheckpointTest(ut.TestCase):
                 for k in range(nz):
                     np.testing.assert_almost_equal(
                         np.copy(ek_species[i, j, k].density),
-                        grid_3D[i, j, k], decimal=precision)
+                        grid_3D[i, j, k],
+                        decimal=precision)
         state = ek.get_params()
         reference = {'agrid': 0.5, 'lb_density': 26.15,
                      'viscosity': 1.7, 'friction': 0.0,
@@ -110,13 +110,21 @@ class CheckpointTest(ut.TestCase):
         for key, val in reference_species.items():
             self.assertTrue(key in state_species)
             self.assertAlmostEqual(
-                reference_species[key], state_species[key], delta=1E-5)
+                reference_species[key],
+                state_species[key],
+                delta=1E-5)
         self.assertAlmostEqual(
-            state_species['ext_force_density'][0], 0.01, delta=1E-5)
+            state_species['ext_force_density'][0],
+            0.01,
+            delta=1E-5)
         self.assertAlmostEqual(
-            state_species['ext_force_density'][1], -0.08, delta=1E-5)
+            state_species['ext_force_density'][1],
+            -0.08,
+            delta=1E-5)
         self.assertAlmostEqual(
-            state_species['ext_force_density'][2], 0.06, delta=1E-5)
+            state_species['ext_force_density'][2],
+            0.06,
+            delta=1E-5)
 
     def test_variables(self):
         self.assertEqual(system.cell_system.skin, 0.1)
@@ -131,6 +139,13 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(system.part[0].f), particle_force0)
         np.testing.assert_allclose(np.copy(system.part[1].f), particle_force1)
 
+    @ut.skipIf('LBTHERM' not in modes, 'LB thermostat not in modes')
+    def test_thermostat(self):
+        self.assertEqual(system.thermostat.get_state()[0]['type'], 'LB')
+        self.assertEqual(system.thermostat.get_state()[0]['seed'], 23)
+        self.assertEqual(system.thermostat.get_state()[0]['gamma'], 2.0)
+
+    @ut.skipIf('LBTHERM' in modes, 'Langevin incompatible with LB thermostat')
     def test_thermostat(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
         self.assertEqual(system.thermostat.get_state()[0]['kT'], 1.0)
@@ -139,17 +154,16 @@ class CheckpointTest(ut.TestCase):
             0]['gamma'], np.array([2.0, 2.0, 2.0]))
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
-    @ut.skipIf('LJ' not in modes,
-               "Skipping test due to missing combination.")
+    @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
     def test_non_bonded_inter(self):
         state = system.non_bonded_inter[
             0, 0].lennard_jones._get_params_from_es_core()
         state2 = system.non_bonded_inter[
             3, 0].lennard_jones._get_params_from_es_core()
-        reference = {'shift': 0.1, 'sigma': 1.3, 'epsilon':
-                     1.2, 'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
-        reference2 = {'shift': 0.1, 'sigma': 1.7, 'epsilon':
-                      1.2, 'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
+        reference = {'shift': 0.1, 'sigma': 1.3, 'epsilon': 1.2,
+                     'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
+        reference2 = {'shift': 0.1, 'sigma': 1.7, 'epsilon': 1.2,
+                      'cutoff': 2.0, 'offset': 0.0, 'min': 0.0}
         self.assertEqual(
             len(set(state.items()) & set(reference.items())), len(reference))
         self.assertEqual(len(set(state2.items()) & set(
@@ -174,14 +188,17 @@ class CheckpointTest(ut.TestCase):
             acc.get_mean(), np.array([1.0, 1.5, 2.0, 1.0, 1.0, 2.0]))
         np.testing.assert_array_equal(
             acc.get_variance(), np.array([0., 0.5, 2., 0., 0., 0.]))
+        np.testing.assert_array_equal(
+            system.auto_update_accumulators[0].get_variance(),
+            np.array([0., 0.5, 2., 0., 0., 0.]))
 
-    @utx.skipIfMissingFeatures('ELECTROSTATICS')
+    @utx.skipIfMissingFeatures('P3M')
     @ut.skipIf('P3M.CPU' not in modes,
                "Skipping test due to missing combination.")
     def test_p3m(self):
         self.assertTrue(any(isinstance(actor, espressomd.electrostatics.P3M)
                             for actor in system.actors.active_actors))
-    
+
     @utx.skipIfMissingFeatures('COLLISION_DETECTION')
     def test_collision_detection(self):
         coldet = system.collision_detection
@@ -198,6 +215,24 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue(tests_common.lists_contain_same_elements(
             system.part[2].exclusions, [0, 1]))
 
+    @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
+    def test_lb_boundaries(self):
+        self.assertEqual(len(system.lbboundaries), 1)
+        np.testing.assert_allclose(
+            np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
+        self.assertEqual(type(system.lbboundaries[0].shape), Wall)
+
+    def test_constraints(self):
+        self.assertEqual(len(system.constraints), 2)
+        c0 = system.constraints[0]
+        c1 = system.constraints[1]
+        self.assertEqual(type(c0.shape), Sphere)
+        self.assertAlmostEqual(c0.shape.radius, 0.1, delta=1E-10)
+        self.assertEqual(c0.particle_type, 17)
+        
+        self.assertEqual(type(c1.shape), Wall)
+        np.testing.assert_allclose(np.copy(c1.shape.normal),
+                                   [1. / np.sqrt(3)] * 3)
 
 if __name__ == '__main__':
     ut.main()

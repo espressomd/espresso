@@ -20,7 +20,6 @@
 This sample measures the excess chemical potential for Widom insertion of
 charged particles using the reaction ensemble method.
 """
-from __future__ import print_function
 import numpy as np
 import sys
 
@@ -31,7 +30,7 @@ from espressomd import integrate
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
 
-required_features = ["LENNARD_JONES", "ELECTROSTATICS"]
+required_features = ["LENNARD_JONES", "P3M"]
 espressomd.assert_features(required_features)
 
 # System parameters

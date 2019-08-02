@@ -33,6 +33,8 @@
 
 #include "config.hpp"
 
+#include <utils/Vector.hpp>
+
 #ifdef ELECTROSTATICS
 
 /** MMM2D error messages */
@@ -55,9 +57,9 @@ typedef struct {
    */
   int far_calculated;
   /// flag whether there is any dielectric contrast in the system.
-  int dielectric_contrast_on;
+  bool dielectric_contrast_on;
   /// @brief Flag whether a const. potential is applied.
-  int const_pot_on;
+  bool const_pot_on;
   /// @brief Const. potential.
   double pot_diff;
   /// dielectric contrast in the upper part of the simulation cell.
@@ -83,7 +85,7 @@ extern MMM2D_struct mmm2d_params;
  *  @param pot_diff      @copybrief MMM2D_struct::pot_diff
  */
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
-                     double delta_bot, int const_pot_on, double pot_diff);
+                     double delta_bot, bool const_pot_on, double pot_diff);
 
 /** the general long range force/energy calculation */
 double MMM2D_add_far(int f, int e);
@@ -95,12 +97,12 @@ inline void MMM2D_add_far_force() { MMM2D_add_far(1, 0); }
 inline double MMM2D_far_energy() { return MMM2D_add_far(0, 1); }
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
-                                  double force[3]);
+void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,
+                                  double dl, Utils::Vector3d &force);
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-double mmm2d_coulomb_pair_energy(double charge_factor, const double dv[3],
-                                 double d);
+double mmm2d_coulomb_pair_energy(double charge_factor,
+                                 Utils::Vector3d const &dv, double d);
 
 /// check that MMM2D can run with the current parameters
 int MMM2D_sanity_checks();

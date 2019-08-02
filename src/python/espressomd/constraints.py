@@ -14,15 +14,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function, absolute_import
-from .script_interface import ScriptInterfaceHelper, script_interface_register
+from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 from espressomd.utils import is_valid_type
 import numpy as np
 from itertools import product
 
 
 @script_interface_register
-class Constraints(ScriptInterfaceHelper):
+class Constraints(ScriptObjectRegistry):
 
     """
     List of active constraints. Add a :class:`espressomd.constraints.Constraint`
@@ -31,14 +30,6 @@ class Constraints(ScriptInterfaceHelper):
     """
 
     _so_name = "Constraints::Constraints"
-
-    def __getitem__(self, key):
-        return self.call_method("get_elements")[key]
-
-    def __iter__(self):
-        elements = self.call_method("get_elements")
-        for e in elements:
-            yield e
 
     def add(self, *args, **kwargs):
         """
@@ -76,7 +67,7 @@ class Constraints(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        constraint : Instance of :class:`espressomd.constraints.Constraint`
+        constraint : :obj:`espressomd.constraints.Constraint`
 
         """
 
@@ -108,18 +99,17 @@ class ShapeBasedConstraint(Constraint):
 
     Attributes
     ----------
-    only_positive : bool
-      Act only in the direction of positive normal,
-      only useful if penetrable is True.
+    only_positive : :obj:`bool`
+        Act only in the direction of positive normal,
+        only useful if penetrable is ``True``.
     particle_type : int
-      Interaction type of the constraint.
+        Interaction type of the constraint.
     particle_velocity : array of :obj:`float`
-      Interaction velocity of the boundary
-    penetrable : bool
-      Whether particles are allowed to penetrate the
-      constraint.
-    shape : object
-      One of the shapes from :mod:`espressomd.shapes`
+        Interaction velocity of the boundary
+    penetrable : :obj:`bool`
+        Whether particles are allowed to penetrate the constraint.
+    shape : :class:`espressomd.shapes.Shape`
+        One of the shapes from :mod:`espressomd.shapes`
 
     See Also
     ----------
@@ -135,11 +125,10 @@ class ShapeBasedConstraint(Constraint):
     >>> spherical_cavity = shapes.Sphere(center=[5,5,5], radius=5.0, direction=-1.0)
     >>>
     >>> # now create an un-penetrable shape-based constraint of type 0
-    >>> spherical_constraint = system.constraints.add(particle_type=0, penetrable=0, shape=spherical_cavity)
+    >>> spherical_constraint = system.constraints.add(particle_type=0, penetrable=False, shape=spherical_cavity)
     >>>
-    >>> #place a trapped particle inside this sphere
-    >>> system.part.add(id=0, pos=[5,5,5], type=1)
-    >>>
+    >>> # place a trapped particle inside this sphere
+    >>> system.part.add(id=0, pos=[5, 5, 5], type=1)
 
     """
 
@@ -171,19 +160,18 @@ class ShapeBasedConstraint(Constraint):
         >>> system.thermostat.set_langevin(kT=0.0, gamma=1.0)
         >>> system.cell_system.set_n_square(use_verlet_lists=False)
         >>> system.non_bonded_inter[0, 0].lennard_jones.set_params(
-        >>>     epsilon=1, sigma=1,
-        >>>     cutoff=2**(1. / 6), shift="auto")
-        >>>
+        ...     epsilon=1, sigma=1,
+        ...     cutoff=2**(1. / 6), shift="auto")
         >>>
         >>> floor = system.constraints.add(shape=shapes.Wall(normal=[0, 0, 1], dist=0.0),
-        >>>    particle_type=0, penetrable=0, only_positive=0)
-
-        >>> system.part.add(id=0, pos=[0,0,1.5], type=0, ext_force=[0,0,-.1])
+        ...    particle_type=0, penetrable=False, only_positive=False)
+        >>>
+        >>> system.part.add(id=0, pos=[0,0,1.5], type=0, ext_force=[0, 0, -.1])
         >>> # print the particle position as it falls
         >>> # and print the force it applies on the floor
         >>> for t in range(10):
-        >>>     system.integrator.run(100)
-        >>>     print(system.part[0].pos, floor.total_force())
+        ...     system.integrator.run(100)
+        ...     print(system.part[0].pos, floor.total_force())
 
         """
         return self.call_method("total_force", constraint=self)
@@ -231,11 +219,11 @@ class _Interpolated(Constraint):
     Attributes
     ----------
 
-    field_data: array_like :obj:`float`:
+    field_data: array_like :obj:`float`
         The actual field please be aware that depending on the interpolation
         order additional points are used on the boundaries.
 
-    grid_spacing: array_like :obj:`float`:
+    grid_spacing: array_like :obj:`float`
         The spacing of the grid points.
 
     """
@@ -243,14 +231,15 @@ class _Interpolated(Constraint):
     def __init__(self, field, **kwargs):
         shape, codim = self._unpack_dims(field)
 
-        super(
-            _Interpolated, self).__init__(_field_shape=shape, _field_codim=codim,
-                                          _field_data=field.flatten(), **kwargs)
+        super().__init__(_field_shape=shape, _field_codim=codim,
+                         _field_data=field.flatten(), **kwargs)
 
     @classmethod
     def required_dims(cls, box_size, grid_spacing):
-        """Calculate the grid size and origin needed for specified box size and grid spacing.
-           Returns the shape and origin (coordinates of [0][0][0]) needed.
+        """
+        Calculate the grid size and origin needed for specified box size and
+        grid spacing. Returns the shape and origin (coordinates of [0][0][0])
+        needed.
 
         Arguments
         ---------
@@ -300,8 +289,7 @@ class _Interpolated(Constraint):
 
     @classmethod
     def field_coordinates(cls, box_size, grid_spacing):
-        """Returns an array of the coordinates of  the grid
-        points required.
+        """Returns an array of the coordinates of the grid points required.
 
         Arguments
         ---------
@@ -331,14 +319,12 @@ class _Interpolated(Constraint):
 class ForceField(_Interpolated):
 
     """
-    A generic tabulated force field that applies a per particle
-    scaling factor.
+    A generic tabulated force field that applies a per-particle scaling factor.
 
     Attributes
     ----------
     default_scale : :obj:`float`
-        Scaling factor for particles that have no
-        individual scaling factor.
+        Scaling factor for particles that have no individual scaling factor.
     particle_scales: array_like (:obj:`int`, :obj:`float`)
         A list of tuples of ids and scaling factors. For
         particles in the list the interaction is scaled with
@@ -347,7 +333,7 @@ class ForceField(_Interpolated):
     """
 
     def __init__(self, field, **kwargs):
-        super(ForceField, self).__init__(field, **kwargs)
+        super().__init__(field, **kwargs)
 
     _codim = 3
     _so_name = "Constraints::ForceField"
@@ -375,7 +361,7 @@ class PotentialField(_Interpolated):
     """
 
     def __init__(self, field, **kwargs):
-        super(PotentialField, self).__init__(field, **kwargs)
+        super().__init__(field, **kwargs)
 
     _codim = 1
     _so_name = "Constraints::PotentialField"
@@ -386,7 +372,8 @@ class Gravity(Constraint):
 
     """
     Gravity force
-      F = m * g
+
+    :math:`F = m \\cdot g`
 
     Attributes
     ----------
@@ -396,7 +383,7 @@ class Gravity(Constraint):
     """
 
     def __init__(self, g):
-        super(Gravity, self).__init__(value=g)
+        super().__init__(value=g)
 
     @property
     def g(self):
@@ -411,15 +398,15 @@ class LinearElectricPotential(Constraint):
     """
     Electric potential of the form
 
-      phi = -E * x + phi0,
+    :math:`\\phi = -E \\cdot x + \\phi_0`,
 
     resulting in the electric field E
     everywhere. (E.g. in a plate capacitor).
     The resulting force on the particles are then
 
-      F = q * E
+    :math:`F = q \\cdot E`
 
-    where q is the charge of the particle.
+    where :math:`q` is the charge of the particle.
 
     Attributes
     ----------
@@ -427,12 +414,12 @@ class LinearElectricPotential(Constraint):
         The electric field.
 
     phi0 : :obj:`float`
-           The potential at the origin
+        The potential at the origin
 
     """
 
     def __init__(self, E, phi0=0):
-        super(LinearElectricPotential, self).__init__(A=-E, b=phi0)
+        super().__init__(A=-E, b=phi0)
 
     @property
     def E(self):
@@ -451,13 +438,13 @@ class ElectricPlaneWave(Constraint):
     """
     Electric field of the form
 
-      E = E0 * sin(k * x + omega * t + phi)
+    :math:`E = E0 \\cdot \\sin(k \\cdot x + \\omega \\cdot t + \\phi)`
 
     The resulting force on the particles are then
 
-      F = q * E
+    :math:`F = q \\cdot E`
 
-    where q is the charge of the particle.
+    where :math:`q` is the charge of the particle.
     This can be used to generate a homogeneous AC
     field by setting k to zero.
 
@@ -470,17 +457,15 @@ class ElectricPlaneWave(Constraint):
     omega : :obj:`float`
         Frequency of the wave
     phi : :obj:`float`
-           Optional phase shift, defaults to 0.
+        Optional phase shift, defaults to 0.
 
     """
 
     _so_name = "Constraints::ElectricPlaneWave"
 
     def __init__(self, E0, k, omega, phi=0):
-        super(ElectricPlaneWave, self).__init__(amplitude=E0,
-                                                wave_vector=k,
-                                                frequency=omega,
-                                                phase=phi)
+        super().__init__(amplitude=E0, wave_vector=k, frequency=omega,
+                         phase=phi)
 
     @property
     def E0(self):
@@ -506,14 +491,14 @@ class FlowField(_Interpolated):
     Viscous coupling to a flow field that is
     interpolated from tabulated data like
 
-      F = -gamma * (u(r) - v)
+    :math:`F = -\\gamma \\cdot \\left( u(r) - v \\right)`
 
-    where v is the velocity of the particle.
+    where :math:`v` is the velocity of the particle.
 
     """
 
     def __init__(self, field, **kwargs):
-        super(FlowField, self).__init__(field, **kwargs)
+        super().__init__(field, **kwargs)
 
     _codim = 3
     _so_name = "Constraints::FlowField"
@@ -526,9 +511,9 @@ class HomogeneousFlowField(Constraint):
     Viscous coupling to a flow field that is
     constant in space with the force
 
-      F = -gamma * (u - v)
+    :math:`F = -\\gamma \\cdot (u - v)`
 
-    where v is the velocity of the particle.
+    where :math:`v` is the velocity of the particle.
 
     Attributes
     ----------
@@ -540,7 +525,7 @@ class HomogeneousFlowField(Constraint):
     """
 
     def __init__(self, u, gamma):
-        super(HomogeneousFlowField, self).__init__(value=u, gamma=gamma)
+        super().__init__(value=u, gamma=gamma)
 
     @property
     def u(self):
@@ -558,15 +543,15 @@ class ElectricPotential(_Interpolated):
     calculated numerically from the potential,
     and the resulting force on the particles are
 
-      F = q * E
+    :math:`F = q \\cdot E`
 
-    where q is the charge of the particle.
+    where :math:`q` is the charge of the particle.
 
 
     """
 
     def __init__(self, field, **kwargs):
-        super(ElectricPotential, self).__init__(field, **kwargs)
+        super().__init__(field, **kwargs)
 
     _codim = 1
     _so_name = "Constraints::ElectricPotential"

@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
-from grid cimport local_box_l, node_grid
+from grid cimport node_grid
 from . cimport cellsystem
 from . cimport integrate
 from globals cimport *
@@ -25,21 +24,19 @@ import numpy as np
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
 
-cdef class CellSystem(object):
-    def set_domain_decomposition(
-        self,
-        use_verlet_lists=True,
-     fully_connected=[False,
-                      False,
-                      False]):
+cdef class CellSystem:
+    def set_domain_decomposition(self, use_verlet_lists=True,
+                                 fully_connected=[False,
+                                                  False,
+                                                  False]):
         """
         Activates domain decomposition cell system.
 
         Parameters
         ----------
-        'use_verlet_lists' : :obj:`bool`, optional
-                             Activates or deactivates the usage of Verlet lists
-                             in the algorithm.
+        use_verlet_lists : :obj:`bool`, optional
+            Activates or deactivates the usage of Verlet lists
+            in the algorithm.
 
         """
 
@@ -57,9 +54,9 @@ cdef class CellSystem(object):
 
         Parameters
         ----------
-        'use_verlet_lists' : :obj:`bool`, optional
-                             Activates or deactivates the usage of the Verlet
-                             lists for this algorithm.
+        use_verlet_lists : :obj:`bool`, optional
+            Activates or deactivates the usage of the Verlet
+            lists for this algorithm.
 
         """
         cell_structure.use_verlet_list = use_verlet_lists
@@ -76,11 +73,11 @@ cdef class CellSystem(object):
         Parameters
         ----------
 
-        'n_layers': :obj:`int`, optional, positive
-                    Sets the number of layers in the z-direction.
-        'use_verlet_lists' : :obj:`bool`, optional
-                             Activates or deactivates the usage of the Verlet
-                             lists for this algorithm.
+        n_layers: :obj:`int`, optional, positive
+            Sets the number of layers in the z-direction.
+        use_verlet_lists : :obj:`bool`, optional
+            Activates or deactivates the usage of the Verlet
+            lists for this algorithm.
 
         """
         cell_structure.use_verlet_list = use_verlet_lists
@@ -127,8 +124,6 @@ cdef class CellSystem(object):
             s["type"] = "nsquare"
 
         s["skin"] = skin
-        s["local_box_l"] = np.array(
-            [local_box_l[0], local_box_l[1], local_box_l[2]])
         s["max_cut"] = max_cut
         s["max_range"] = max_range
         s["max_skin"] = max_skin
@@ -186,7 +181,7 @@ cdef class CellSystem(object):
     def get_pairs_(self, distance):
         return mpi_get_pairs(distance)
 
-    def resort(self, global_flag=1):
+    def resort(self, global_flag=True):
         """
         Resort the particles in the cellsystem.
         Returns the particle numbers on the nodes
@@ -194,13 +189,13 @@ cdef class CellSystem(object):
 
         Parameters
         ----------
-        global_flag : :obj:`int`
-                      If true, a global resorting is done, otherwise particles
-                      are only exchanged between neighboring nodes.
+        global_flag : :obj:`bool`
+            If true, a global resorting is done, otherwise particles
+            are only exchanged between neighboring nodes.
 
         """
 
-        return mpi_resort_particles(global_flag)
+        return mpi_resort_particles(int(global_flag))
 
     property max_num_cells:
         """
@@ -283,26 +278,32 @@ cdef class CellSystem(object):
             return skin
 
     def tune_skin(self, min_skin=None, max_skin=None, tol=None,
-                  int_steps=None):
+                  int_steps=None, adjust_max_skin=False):
         """
         Tunes the skin by measuring the integration time and bisecting over the
         given range of skins. The best skin is set in the simulation core.
 
         Parameters
         -----------
-        'min_skin' : :obj:`float`
-                     Minimum skin to test.
-        'max_skin' : :obj:`float`
-                     Maximum skin.
-        'tol' : :obj:`float`
-                Accuracy in skin to tune to.
-        'int_steps' : :obj:`int`
-                      Integration steps to time.
+        min_skin : :obj:`float`
+            Minimum skin to test.
+        max_skin : :obj:`float`
+            Maximum skin.
+        tol : :obj:`float`
+            Accuracy in skin to tune to.
+        int_steps : :obj:`int`
+            Integration steps to time.
+        adjust_max_skin : :obj:`bool`, optional
+            If ``True``, the value of ``max_skin`` is reduced
+            to the maximum permissible skin (in case the passed
+            value is too large). Set to ``False`` by default.
 
         Returns
         -------
-        :attr:`skin`
+        :obj:`float` :
+            The :attr:`skin`
 
         """
-        c_tune_skin(min_skin, max_skin, tol, int_steps)
+        c_tune_skin(min_skin, max_skin, tol, int_steps, adjust_max_skin)
+        handle_errors("Error during tune_skin")
         return self.skin

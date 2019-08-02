@@ -17,35 +17,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function, absolute_import
 from . cimport galilei
 from .utils cimport make_array_locked
 
-cdef class GalileiTransform(object):
+cdef class GalileiTransform:
 
-    def kill_particle_motion(self, rotation=0):
+    def kill_particle_motion(self, rotation=False):
         """
         Stop the motion of the particles.
 
         Parameters
         ----------
-        rotation : :obj:`int`, optional
+        rotation : :obj:`bool`, optional
                    Whether or not to kill the rotations too.
 
         """
-        mpi_kill_particle_motion(rotation)
+        mpi_kill_particle_motion(int(rotation))
 
-    def kill_particle_forces(self, torque=0):
+    def kill_particle_forces(self, torque=False):
         """
         Set the forces on the particles to zero.
 
         Parameters
         ----------
-        torque : :obj:`int`, optional
+        torque : :obj:`bool`, optional
                  Whether or not to kill the torques on all particles too.
 
         """
-        mpi_kill_particle_forces(torque)
+        mpi_kill_particle_forces(int(torque))
 
     def system_CMS(self):
         """

@@ -18,19 +18,14 @@
 ESPResSo 8Ball billiard game.
 """
 
-from __future__ import print_function
 import numpy as np
 import math
 from threading import Thread
 
 import espressomd
 from espressomd import thermostat
-from espressomd import analyze
-from espressomd import integrate
-from espressomd import electrostatics
-from espressomd import minimize_energy
 import espressomd.interactions
-import espressomd.visualization_opengl
+from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 import espressomd.shapes
 
 required_features = ["LENNARD_JONES", "MASS", "EXTERNAL_FORCES"]
@@ -48,7 +43,7 @@ system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 table_dim = [2.24, 1.12]
 system.box_l = [table_dim[0], 3, table_dim[1]]
 
-visualizer = espressomd.visualization_opengl.openGLLive(
+visualizer = openGLLive(
     system,
     ext_force_arrows=True,
     ext_force_arrows_type_scale=[0.02],
@@ -115,20 +110,15 @@ def fire():
 
 
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        '4', espressomd.visualization_opengl.KeyboardFireEvent.Hold, decreaseAngle))
+    KeyboardButtonEvent('4', KeyboardFireEvent.Hold, decreaseAngle))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        '6', espressomd.visualization_opengl.KeyboardFireEvent.Hold, increaseAngle))
+    KeyboardButtonEvent('6', KeyboardFireEvent.Hold, increaseAngle))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        '2', espressomd.visualization_opengl.KeyboardFireEvent.Hold, decreaseImpulse))
+    KeyboardButtonEvent('2', KeyboardFireEvent.Hold, decreaseImpulse))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        '8', espressomd.visualization_opengl.KeyboardFireEvent.Hold, increaseImpulse))
+    KeyboardButtonEvent('8', KeyboardFireEvent.Hold, increaseImpulse))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        '5', espressomd.visualization_opengl.KeyboardFireEvent.Pressed, fire))
+    KeyboardButtonEvent('5', KeyboardFireEvent.Pressed, fire))
 
 
 def main():

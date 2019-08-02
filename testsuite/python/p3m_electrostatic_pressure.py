@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -26,7 +25,7 @@ import espressomd
 from espressomd import electrostatics
 
 
-class pressureViaVolumeScaling(object):
+class pressureViaVolumeScaling:
 
     def __init__(self, system, kbT):
         self.system = system
@@ -39,7 +38,7 @@ class pressureViaVolumeScaling(object):
         self.new_box_l = (self.new_volume)**(1. / 3.)
 
         self.list_of_previous_values = []
-    
+
     def measure_pressure_via_volume_scaling(self):
         # taken from "Efficient pressure estimation in molecular simulations
         # without evaluating the virial" only works so far for isotropic volume
@@ -58,7 +57,7 @@ class pressureViaVolumeScaling(object):
         current_value = (self.new_volume / self.old_volume)**particle_number * \
             np.exp(-DeltaEpot / self.kbT)
         self.list_of_previous_values.append(current_value)
-    
+
     def get_result(self):
         average_value = np.mean(self.list_of_previous_values)
 
@@ -66,7 +65,7 @@ class pressureViaVolumeScaling(object):
         return pressure
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "LENNARD_JONES"])
+@utx.skipIfMissingFeatures(["P3M", "LENNARD_JONES"])
 class VirialPressureConsistency(ut.TestCase):
 
     """Test the consistency of the core implementation of the virial pressure
@@ -90,7 +89,7 @@ class VirialPressureConsistency(ut.TestCase):
             epsilon=1.0, sigma=1.0, cutoff=2**(1.0 / 6.0), shift="auto")
         num_part = 40
         mass = 1
-        
+
         for i in range(num_part):
             self.system.part.add(
                 pos=np.random.random(3) * self.system.box_l, q=1,

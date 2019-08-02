@@ -28,7 +28,7 @@ class Sample(ut.TestCase):
     system = sample.system
 
     def test_fcs_acf(self):
-        fcs_acf_weights = sample.fcs.get_params()['args']
+        fcs_acf_weights = np.copy(sample.fcs.get_params()['args'])
         np.testing.assert_allclose(fcs_acf_weights, [100., 100., 100.])
 
 

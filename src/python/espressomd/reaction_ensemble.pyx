@@ -10,7 +10,7 @@ class WangLandauHasConverged(Exception):
     pass
 
 
-cdef class ReactionAlgorithm(object):
+cdef class ReactionAlgorithm:
     """
 
     This class provides the base class for Reaction Algorithms like the Reaction Ensemble algorithm, the Wang-Landau
@@ -390,7 +390,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
         if(kwargs["reactant_coefficients"][0] != 1 or kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1):
             raise ValueError(
                 "All product and reactant coefficients must equal one in the constant pH method as implemented in Espresso.")
-        super(ConstantpHEnsemble, self).add_reaction(*args, **kwargs)
+        super().add_reaction(*args, **kwargs)
 
     property constant_pH:
         """
@@ -651,7 +651,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
 cdef class WidomInsertion(ReactionAlgorithm):
     """
-    This class implements the Widom Insertion Method for homogeneous systems, where the excess chemical potential is not depending on the location.
+    This class implements the Widom insertion method in the canonical ensemble for homogeneous systems, where the excess chemical potential is not depending on the location.
 
     """
 

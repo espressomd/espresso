@@ -33,6 +33,7 @@
 
 #include "cells.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 
@@ -63,9 +64,10 @@ void check_particle_consistency() {
         errexit();
       }
       for (dir = 0; dir < 3; dir++) {
-        if (PERIODIC(dir) &&
-            (part[n].r.p[dir] < -ROUND_ERROR_PREC * box_l[dir] ||
-             part[n].r.p[dir] - box_l[dir] > ROUND_ERROR_PREC * box_l[dir])) {
+        if (box_geo.periodic(dir) &&
+            (part[n].r.p[dir] < -ROUND_ERROR_PREC * box_geo.length()[dir] ||
+             part[n].r.p[dir] - box_geo.length()[dir] >
+                 ROUND_ERROR_PREC * box_geo.length()[dir])) {
           fprintf(stderr,
                   "%d: check_particle_consistency: ERROR: illegal "
                   "pos[%d]=%f of part %d id=%d in cell %d\n",
@@ -181,8 +183,9 @@ void check_particles() {
       }
 
       for (dir = 0; dir < 3; dir++) {
-        if (PERIODIC(dir) && (part[n].r.p[dir] < -skin2 ||
-                              part[n].r.p[dir] > box_l[dir] + skin2)) {
+        if (box_geo.periodic(dir) &&
+            (part[n].r.p[dir] < -skin2 ||
+             part[n].r.p[dir] > box_geo.length()[dir] + skin2)) {
           fprintf(stderr,
                   "%d: check_particles: ERROR: illegal pos[%d]=%f of "
                   "part %d id=%d in cell %d\n",
@@ -244,20 +247,10 @@ void check_particle_sorting() {
     auto cell = local_cells.cell[c];
     for (int n = 0; n < cell->n; n++) {
       auto p = cell->part[n];
-      if (cell_structure.position_to_cell(p.r.p) != cell) {
+      if (cell_structure.particle_to_cell(p) != cell) {
         fprintf(stderr, "%d: misplaced part id %d. %p != %p\n", this_node,
                 p.p.identity, (void *)cell,
-                (void *)cell_structure.position_to_cell(p.r.p));
-        auto folded_pos = folded_position(p);
-        fprintf(stderr, "%d: misplaced folded cell %p\n", this_node,
-                (void *)cell_structure.position_to_cell(folded_pos));
-        fprintf(stderr, "%d: misplaced pos %e %e %e\n", this_node, p.r.p[0],
-                p.r.p[1], p.r.p[2]);
-        fprintf(stderr, "%d: misplaced folded_pos %e %e %e\n", this_node,
-                folded_pos[0], folded_pos[1], folded_pos[2]);
-        fprintf(stderr, "%d: misplaced part node %d\n", this_node,
-                cell_structure.position_to_node(p.r.p));
-
+                (void *)cell_structure.particle_to_cell(p));
         errexit();
       }
     }

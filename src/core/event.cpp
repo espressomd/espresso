@@ -40,6 +40,7 @@
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "immersed_boundaries.hpp"
 #include "metadynamics.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
@@ -137,6 +138,11 @@ void on_integration_start() {
 #ifdef METADYNAMICS
   meta_init();
 #endif
+
+  // Here we initialize volume conservation
+  // This function checks if the reference volumes have been set and if
+  // necessary calculates them
+  immersed_boundaries.init_volume_conservation();
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
@@ -306,7 +312,7 @@ void on_resort_particles() {
 void on_boxl_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_boxl_change\n", this_node));
 
-  grid_changed_box_l();
+  grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
      therefore recalculate them. */
   recalc_maximal_cutoff();

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import numpy as np
 from globals cimport temperature
@@ -35,7 +34,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
         """
 
@@ -70,15 +69,16 @@ IF DP3M == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
         accuracy : :obj:`float`
             P3M tunes its parameters to provide this target accuracy.
         alpha : :obj:`float`
             Ewald parameter.
         cao : :obj:`int`
             Charge-assignment order, an integer between -1 and 7.
-        mesh : :obj:`int` or array_like
-            Number of mesh points.
+        mesh : :obj:`int` or array_like of :obj:`int`
+            The number of mesh points in x, y and z direction. Use a single
+            value for cubic boxes.
         mesh_off : array_like :obj:`float`
             Mesh offset.
         r_cut : :obj:`float`
@@ -93,13 +93,13 @@ IF DP3M == 1:
             """Check validity of parameters.
 
             """
-            super(DipolarP3M, self).validate_params()
+            super().validate_params()
             default_params = self.default_params()
 
             if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"])):
+            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"]) == 3):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
@@ -186,7 +186,7 @@ IF DP3M == 1:
 
         def _deactivate_method(self):
             dp3m_deactivate()
-            super(type(self), self)._deactivate_method()
+            super()._deactivate_method()
 
         def python_dp3m_set_mesh_offset(self, mesh_off):
             cdef double mesh_offset[3]
@@ -248,7 +248,7 @@ IF DIPOLES == 1:
         ----------
 
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
         """
 
@@ -283,7 +283,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
         n_replica : :obj:`int`
             Number of replicas to be taken into account at periodic boundaries.
 
@@ -320,7 +320,7 @@ IF DIPOLES == 1:
             Attributes
             ----------
             prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+                Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
             method_name : :obj:`str`
                 Name of the method as defined in Scafacos
             method_params : :obj:`dict`
@@ -361,7 +361,7 @@ IF DIPOLES == 1:
             Attributes
             ----------
             prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+                Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
             """
 
@@ -381,7 +381,7 @@ IF DIPOLES == 1:
                 self._set_params_in_es_core()
 
             def _deactivate_method(self):
-                super(type(self), self)._deactivate_method()
+                super()._deactivate_method()
                 deactivate_dipolar_direct_sum_gpu()
 
             def _set_params_in_es_core(self):
@@ -412,7 +412,7 @@ IF DIPOLES == 1:
                 self._set_params_in_es_core()
 
             def _deactivate_method(self):
-                super(type(self), self)._deactivate_method()
+                super()._deactivate_method()
                 deactivate_dipolar_barnes_hut()
 
             def _set_params_in_es_core(self):

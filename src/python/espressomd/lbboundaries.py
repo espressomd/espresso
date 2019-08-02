@@ -14,14 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function, absolute_import
-from .script_interface import ScriptInterfaceHelper, script_interface_register
+from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 import espressomd.code_info
 
 
 if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     @script_interface_register
-    class LBBoundaries(ScriptInterfaceHelper):
+    class LBBoundaries(ScriptObjectRegistry):
 
         """
         Creates a set of lattice Boltzmann boundaries.
@@ -29,14 +28,6 @@ if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUND
         """
 
         _so_name = "LBBoundaries::LBBoundaries"
-
-        def __getitem__(self, key):
-            return self.call_method("get_elements")[key]
-
-        def __iter__(self):
-            elements = self.call_method("get_elements")
-            for e in elements:
-                yield e
 
         def add(self, *args, **kwargs):
             """

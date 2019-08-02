@@ -17,7 +17,7 @@
 from ..script_interface import PScriptInterface
 
 
-class Mpiio(object):
+class Mpiio:
 
     """MPI-IO object.
 

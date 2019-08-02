@@ -29,6 +29,7 @@
 
 #ifdef ROTATION
 
+#include "ParticleRange.hpp"
 #include "particle_data.hpp"
 #include <utils/Vector.hpp>
 
@@ -46,11 +47,11 @@ void propagate_omega_quat_particle(Particle *p);
 
 /** Convert torques to the body-fixed frame and propagate
     angular velocities */
-void convert_torques_propagate_omega();
+void convert_torques_propagate_omega(const ParticleRange &particles);
 
 /** Convert torques to the body-fixed frame to start
     the integration loop */
-void convert_initial_torques();
+void convert_initial_torques(const ParticleRange &particles);
 
 Utils::Vector3d convert_vector_body_to_space(const Particle &p,
                                              const Utils::Vector3d &v);

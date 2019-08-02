@@ -35,7 +35,7 @@ LB_PARAMS = {'agrid': AGRID,
              }
 
 
-class CylindricalLBObservableCommon(object):
+class CylindricalLBObservableCommon:
 
     """
     Testcase for the CylindricalLBObservable.

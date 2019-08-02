@@ -26,18 +26,82 @@
 #ifdef DPD
 #include "communication.hpp"
 #include "event.hpp"
+#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
 
-#include <utils/Vector.hpp>
-using Utils::Vector3d;
+#include <Random123/philox.h>
+#include <boost/mpi/collectives/reduce.hpp>
 #include <utils/NoOp.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/tensor_product.hpp>
+#include <utils/u32_to_u64.hpp>
+#include <utils/uniform.hpp>
 
-#include <boost/mpi/collectives/reduce.hpp>
+using Utils::Vector3d;
+
+std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
+
+/** Return a random 3d vector with the philox thermostat.
+    Random numbers depend on
+    1. dpd_rng_counter (initialized by seed) which is increased on
+   integration
+    2. Salt (decorrelates different counter)
+    3. Two particle IDs (order-independent, decorrelates particles, gets rid of
+   seed-per-node)
+*/
+Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
+
+  using rng_type = r123::Philox4x64;
+  using ctr_type = rng_type::ctr_type;
+  using key_type = rng_type::key_type;
+
+  ctr_type c{
+      {dpd_rng_counter->value(), static_cast<uint64_t>(RNGSalt::SALT_DPD)}};
+
+  uint64_t merged_ids;
+  auto const id1 = static_cast<uint32_t>(pid1);
+  auto const id2 = static_cast<uint32_t>(pid2);
+
+  if (id1 > id2) {
+    merged_ids = Utils::u32_to_u64(id1, id2);
+  } else {
+    merged_ids = Utils::u32_to_u64(id2, id1);
+  }
+  key_type k{merged_ids};
+
+  auto const noise = rng_type{}(c, k);
+
+  using Utils::uniform;
+  return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
+         Vector3d::broadcast(0.5);
+}
+
+void mpi_bcast_dpd_rng_counter_slave(const uint64_t counter) {
+  dpd_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+}
+
+REGISTER_CALLBACK(mpi_bcast_dpd_rng_counter_slave)
+
+void mpi_bcast_dpd_rng_counter(const uint64_t counter) {
+  mpi_call(mpi_bcast_dpd_rng_counter_slave, counter);
+}
+
+void dpd_rng_counter_increment() { dpd_rng_counter->increment(); }
+
+bool dpd_is_seed_required() {
+  /* Seed is required if rng is not initialized */
+  return dpd_rng_counter == nullptr;
+}
+
+void dpd_set_rng_state(const uint64_t counter) {
+  mpi_bcast_dpd_rng_counter(counter);
+  dpd_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+}
+
+uint64_t dpd_get_rng_state() { return dpd_rng_counter->value(); }
 
 void dpd_heat_up() {
   double pref_scale = sqrt(3);
@@ -95,8 +159,8 @@ static double weight(int type, double r_cut, double r) {
   return 1. - r / r_cut;
 }
 
-Vector3d dpd_pair_force(DPDParameters const &params, const Vector3d &v,
-                        double dist, const Vector3d &noise) {
+Vector3d dpd_pair_force(DPDParameters const &params, Vector3d const &v,
+                        double dist, Vector3d const &noise) {
   if (dist < params.cutoff) {
     auto const omega = weight(params.wf, params.cutoff, dist);
     auto const omega2 = Utils::sqr(omega);
@@ -110,9 +174,11 @@ Vector3d dpd_pair_force(DPDParameters const &params, const Vector3d &v,
   return {};
 }
 
-Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
-                        const IA_parameters *ia_params, double const *d,
-                        double dist, double dist2) {
+Utils::Vector3d dpd_pair_force(Particle const *const p1,
+                               Particle const *const p2,
+                               IA_parameters const *const ia_params,
+                               Utils::Vector3d const &d, double dist,
+                               double dist2) {
   if (ia_params->dpd_radial.cutoff <= 0.0 &&
       ia_params->dpd_trans.cutoff <= 0.0) {
     return {};
@@ -121,24 +187,24 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   auto const v21 = p1->m.v - p2->m.v;
   auto const noise_vec =
       (ia_params->dpd_radial.pref > 0.0 || ia_params->dpd_trans.pref > 0.0)
-          ? Vector3d{d_random() - 0.5, d_random() - 0.5, d_random() - 0.5}
+          ? dpd_noise(p1->p.identity, p2->p.identity)
           : Vector3d{};
 
   auto const f_r = dpd_pair_force(ia_params->dpd_radial, v21, dist, noise_vec);
   auto const f_t = dpd_pair_force(ia_params->dpd_trans, v21, dist, noise_vec);
 
-  auto const d21 = Utils::Vector3d{d[0], d[1], d[2]};
   /* Projection operator to radial direction */
-  auto const P = tensor_product(d21 / dist2, d21);
+  auto const P = tensor_product(d / dist2, d);
   /* This is equivalent to P * f_r + (1 - P) * f_t, but with
    * doing only one matrix-vector multiplication */
-  return P * (f_r - f_t) + f_t;
+  auto const force = P * (f_r - f_t) + f_t;
+  return force;
 }
 
 static auto dpd_viscous_stress_local() {
   on_observable_calc();
 
-  Utils::Vector<Utils::Vector3d, 3> stress{};
+  Utils::Vector<Vector3d, 3> stress{};
   short_range_loop(
       Utils::NoOp{},
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
@@ -181,6 +247,7 @@ REGISTER_CALLBACK_REDUCTION(dpd_viscous_stress_local, std::plus<>())
 Utils::Vector9d dpd_stress() {
   auto const stress = mpi_call(Communication::Result::reduction, std::plus<>(),
                                dpd_viscous_stress_local);
+  auto const box_l = box_geo.length();
 
   return Utils::Vector9d{stress[0][0], stress[0][1], stress[0][2],
                          stress[1][0], stress[1][1], stress[1][2],

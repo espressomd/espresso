@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import numpy as np
 import espressomd
 
-required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+required_features = ["P3M", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
@@ -106,14 +105,15 @@ print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
-system.cell_system.max_num_cells = 2744
+system.cell_system.max_num_cells = 14**3
 
 
-# Assign charge to particles
+# Assign charges to particles
 for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
-# P3M setup after charge assigned
+
+# P3M setup after charge assignment
 #############################################################
 
 print("\nSCRIPT--->Create p3m\n")

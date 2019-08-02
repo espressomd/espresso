@@ -43,4 +43,7 @@ unit_test(NAME field_coupling_fields SRC field_coupling_fields_test.cpp DEPENDS 
 unit_test(NAME field_coupling_force_field SRC field_coupling_force_field_test.cpp DEPENDS utils)
 unit_test(NAME periodic_fold_test SRC periodic_fold_test.cpp)
 unit_test(NAME None_test SRC None_test.cpp DEPENDS EspressoScriptInterface)
+unit_test(NAME grid_test SRC grid_test.cpp DEPENDS EspressoCore)
+unit_test(NAME BoxGeometry_test SRC BoxGeometry_test.cpp DEPENDS EspressoCore)
+unit_test(NAME LocalBox_test SRC LocalBox_test.cpp DEPENDS EspressoCore)
 

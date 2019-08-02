@@ -16,14 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
 include "myconfig.pxi"
 import espressomd.code_info
 from espressomd.utils cimport *
 cimport globals
 
-cdef class Integrator(object):
+cdef class Integrator:
     """
     Integrator class.
 

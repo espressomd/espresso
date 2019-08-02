@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef MMM1D_GPU
 
 void Mmm1dgpuForce::check_periodicity() {
-  if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2)) {
+  if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     throw std::runtime_error("MMM1D requires periodicity (0,0,1)");
   }
 }

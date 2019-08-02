@@ -19,7 +19,6 @@ Visualization samples with keyboard control and particle repositioning via
 timed callback.
 """
 
-from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 from espressomd import integrate

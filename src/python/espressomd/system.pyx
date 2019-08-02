@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 from libcpp cimport bool
 include "myconfig.pxi"
 
@@ -24,7 +23,7 @@ from globals cimport *
 import numpy as np
 import collections
 
-from grid cimport box_l
+from grid cimport get_mi_vector, box_geo
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -33,7 +32,7 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
-from .utils cimport numeric_limits
+from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
 from .lb cimport lb_lbfluid_get_tau
 from .lb cimport lb_lbfluid_get_lattice_switch
 from .lb cimport NONE
@@ -75,7 +74,7 @@ if OIF_GLOBAL_FORCES:
 
 cdef bool _system_created = False
 
-cdef class System(object):
+cdef class System:
     """ The base class for espressomd.system.System().
 
     .. note:: every attribute has to be declared at the class level.
@@ -185,7 +184,8 @@ cdef class System(object):
 
     property box_l:
         """
-        Array like, list of three floats
+        array_like of :obj:`float`:
+            Dimensions of the simulation box
 
         """
 
@@ -201,10 +201,9 @@ cdef class System(object):
 
     property force_cap:
         """
-        If > 0, the magnitude of the force on the particles
-        are capped to this value.
-
-        type : float
+        :obj:`float`:
+            If > 0, the magnitude of the force on the particles
+            are capped to this value.
 
         """
 
@@ -216,10 +215,9 @@ cdef class System(object):
 
     property periodicity:
         """
-        list of three integers
-        [x, y, z]
-        zero for no periodicity in this direction
-        one for periodicity
+        array_like of :obj:`bool`:
+            System periodicity in ``[x, y, z]``, ``False`` for no periodicity
+            in this direction, ``True`` for periodicity
 
         """
 
@@ -228,13 +226,6 @@ cdef class System(object):
             if len(_periodic) != 3:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
-            for i in range(3):
-                if _periodic[i] != 1:
-                    IF PARTIAL_PERIODIC:
-                        pass
-                    ELSE:
-                        raise ValueError(
-                            "The feature PARTIAL_PERIODIC needs to be activated in myconfig.hpp")
             self.globals.periodicity = _periodic
 
         def __get__(self):
@@ -262,17 +253,6 @@ cdef class System(object):
         """
 
         def __set__(self, double _time_step):
-            if _time_step <= 0:
-                raise ValueError("Time Step must be positive")
-
-            cdef double tau
-            if lb_lbfluid_get_lattice_switch() != NONE:
-                tau = lb_lbfluid_get_tau()
-                if (tau >= 0.0 and
-                        tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):
-                    raise ValueError(
-                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(tau) + ")")
-
             self.globals.time_step = _time_step
 
         def __get__(self):
@@ -302,7 +282,7 @@ cdef class System(object):
 
     def _get_PRNG_state_size(self):
         """
-        Returns the state of the pseudo random number generator.
+        Returns the state size of the pseudo random number generator.
         """
 
         return get_state_size_of_generator()
@@ -325,7 +305,8 @@ cdef class System(object):
 
     property seed:
         """
-        Sets the seed of the pseudo random number with a list of seeds which is as long as the number of used nodes.
+        Sets the seed of the pseudo random number with a list of seeds which is
+        as long as the number of used nodes.
         """
 
         def __set__(self, _seed):
@@ -351,7 +332,8 @@ cdef class System(object):
             return self.__seed
 
     property random_number_generator_state:
-        """Sets the random number generator state in the core. this is of interest for deterministic checkpointing
+        """Sets the random number generator state in the core. This is of
+        interest for deterministic checkpointing.
         """
 
         def __set__(self, rng_state):
@@ -365,7 +347,10 @@ cdef class System(object):
                 mpi_random_set_stat(states)
             else:
                 raise ValueError(
-                    "Wrong # of args: Usage: 'random_number_generator_state \"<state(1)> ... <state(n_nodes*(state_size+1))>, where each <state(i)> is an integer. The state size of the PRNG can be obtained by calling _get_PRNG_state_size().")
+                    "Wrong number of arguments: Usage: 'system.random_number_generator_state = "
+                    "[<state(1)>, ..., <state(n_nodes*(state_size+1))>], where each <state(i)> "
+                    "is an integer. The state size of the PRNG can be obtained by calling "
+                    "system._get_PRNG_state_size().")
 
         def __get__(self):
             rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
@@ -399,10 +384,10 @@ cdef class System(object):
         Parameters
         ----------
         d_new : :obj:`float`
-                New box length
+            New box length
         dir : :obj:`str`, optional
-                Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-                Isotropic assumes a cubic box.
+            Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+            Isotropic assumes a cubic box.
 
         """
 
@@ -438,27 +423,25 @@ cdef class System(object):
         """Return the distance vector between the particles, respecting periodic boundaries.
 
         """
-        cdef double[3] res, a, b
-        a = p1.pos
-        b = p2.pos
 
-        get_mi_vector(res, b, a)
-        return np.array((res[0], res[1], res[2]))
+        cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
+
+        return make_array_locked(mi_vec)
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
 
-           If ROTATION is activated, the internal rotation degrees of
-           freedom are rotated accordingly.
+        If ``ROTATION`` is activated, the internal rotation degrees of
+        freedom are rotated accordingly.
 
         Parameters
         ----------
         phi : :obj:`float`
-                Angle between the z-axis and the rotation axis.
+            Angle between the z-axis and the rotation axis.
         theta : :obj:`float`
-                Rotation of the axis around the y-axis.
+            Rotation of the axis around the y-axis.
         alpha : :obj:`float`
-                How much to rotate
+            How much to rotate
 
         """
         rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
@@ -473,7 +456,7 @@ cdef class System(object):
             Parameters
             ----------
             distance : :obj:`int`
-                       Bond distance upto which the exclusions should be added.
+                Bond distance upto which the exclusions should be added.
 
             """
             auto_exclusions(distance)
@@ -506,8 +489,8 @@ cdef class System(object):
         """
         Parameters
         ----------
-        current_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                       Particle type to count the number for.
+        current_type : :obj:`int` (:attr:`~espressomd.particle_data.ParticleHandle.type`)
+            Particle type to count the number for.
 
         Returns
         -------

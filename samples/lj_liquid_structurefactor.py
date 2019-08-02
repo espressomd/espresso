@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import numpy as np
 import espressomd
 
@@ -24,7 +23,6 @@ required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
-from espressomd import analyze
 
 print("""
 =======================================================

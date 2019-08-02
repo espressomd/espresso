@@ -70,28 +70,24 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
  *  !!! loop over particles from domain_decomposition !!!
  */
 
-void calc_oif_global(double *area_volume,
-                     int molType) { // first-fold-then-the-same approach
+void calc_oif_global(
+    double *area_volume, int molType,
+    const ParticleRange &particles) { // first-fold-then-the-same approach
   double partArea = 0.0;
   double part_area_volume[2]; // added
 
   // z volume
   double VOL_partVol = 0.;
 
-  /* loop over particles */
-  Particle *p1, *p2, *p3;
-  Utils::Vector3d p11, p22, p33;
-  int img[3];
-  double AA[3], BB[3];
   Bonded_ia_parameters *iaparams;
   int type_num, n_partners, id;
   BondedInteraction type;
 
   int test = 0;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     int j = 0;
-    p1 = &p;
+    auto p1 = &p;
     while (j < p1->bl.n) {
       /* bond type */
       type_num = p1->bl.e[j++];
@@ -103,7 +99,7 @@ void calc_oif_global(double *area_volume,
           id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
         test++;
         /* fetch particle 2 */
-        p2 = local_particles[p1->bl.e[j++]];
+        auto p2 = local_particles[p1->bl.e[j++]];
         if (!p2) {
           runtimeErrorMsg() << "oif global calc: bond broken between particles "
                             << p1->p.identity << " and " << p1->bl.e[j - 1]
@@ -112,9 +108,8 @@ void calc_oif_global(double *area_volume,
                             << p1->bl.n << " max " << p1->bl.max;
           return;
         }
-        /* fetch particle 3 */
-        // if(n_partners>2){
-        p3 = local_particles[p1->bl.e[j++]];
+
+        auto p3 = local_particles[p1->bl.e[j++]];
         if (!p3) {
           runtimeErrorMsg() << "oif global calc: bond broken between particles "
                             << p1->p.identity << ", " << p1->bl.e[j - 2]
@@ -125,51 +120,9 @@ void calc_oif_global(double *area_volume,
           return;
         }
         // remaining neighbors fetched
-
-        // getting unfolded positions of all particles
-        // first find out which particle out of p1, p2 (possibly p3, p4) is not
-        // a ghost particle. In almost all cases it is p1, however, it might be
-        // other one. we call this particle reference particle.
-        if (p1->l.ghost != 1) {
-          // unfold non-ghost particle using image, because for physical
-          // particles, the structure p->l.i is correctly set
-          p11 = unfolded_position(p1);
-          // other coordinates are obtained from its relative positions to the
-          // reference particle
-          get_mi_vector(AA, p2->r.p, p11);
-          get_mi_vector(BB, p3->r.p, p11);
-          for (int i = 0; i < 3; i++) {
-            p22[i] = p11[i] + AA[i];
-            p33[i] = p11[i] + BB[i];
-          }
-        } else {
-          // in case the first particle is a ghost particle
-          if (p2->l.ghost != 1) {
-            p22 = unfolded_position(p2);
-            get_mi_vector(AA, p1->r.p, p22);
-            get_mi_vector(BB, p3->r.p, p22);
-            for (int i = 0; i < 3; i++) {
-              p11[i] = p22[i] + AA[i];
-              p33[i] = p22[i] + BB[i];
-            }
-          } else {
-            // in case the first and the second particle are ghost particles
-            if (p3->l.ghost != 1) {
-              p33 = unfolded_position(p3);
-              get_mi_vector(AA, p1->r.p, p33);
-              get_mi_vector(BB, p2->r.p, p33);
-              for (int i = 0; i < 3; i++) {
-                p11[i] = p33[i] + AA[i];
-                p22[i] = p33[i] + BB[i];
-              }
-            } else {
-              printf("Something wrong in oif_global_forces.hpp: All particles "
-                     "in a bond are ghost particles, impossible to unfold the "
-                     "positions...");
-              return;
-            }
-          }
-        }
+        auto const p11 = unfolded_position(p1->r.p, p1->l.i, box_geo.length());
+        auto const p22 = p11 + get_mi_vector(p2->r.p, p11, box_geo);
+        auto const p33 = p11 + get_mi_vector(p3->r.p, p11, box_geo);
 
         // unfolded positions correct
         auto const VOL_A = area_triangle(p11, p22, p33);
@@ -192,14 +145,15 @@ void calc_oif_global(double *area_volume,
                 MPI_COMM_WORLD);
 }
 
-void add_oif_global_forces(double const *area_volume,
-                           int molType) { // first-fold-then-the-same approach
+void add_oif_global_forces(
+    double const *area_volume, int molType,
+    const ParticleRange &particles) { // first-fold-then-the-same approach
   double area = area_volume[0];
   double VOL_volume = area_volume[1];
 
   int test = 0;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     int j = 0;
     auto p1 = &p;
     while (j < p1->bl.n) {
@@ -234,9 +188,9 @@ void add_oif_global_forces(double const *area_volume,
           return;
         }
 
-        auto const p11 = unfolded_position(*p1);
-        auto const p22 = p11 + get_mi_vector(p2->r.p, p11);
-        auto const p33 = p11 + get_mi_vector(p3->r.p, p11);
+        auto const p11 = unfolded_position(p1->r.p, p1->l.i, box_geo.length());
+        auto const p22 = p11 + get_mi_vector(p2->r.p, p11, box_geo);
+        auto const p33 = p11 + get_mi_vector(p3->r.p, p11, box_geo);
 
         // unfolded positions correct
         /// starting code from volume force

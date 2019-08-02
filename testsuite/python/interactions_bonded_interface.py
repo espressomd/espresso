@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import espressomd
 
@@ -114,13 +113,12 @@ class ParticleProperties(ut.TestCase):
         test_subt_lj = generateTestForBondParams(
             0, espressomd.interactions.SubtLJ, {})
 
-    if espressomd.has_features(["TABULATED"]):
-        test_tabulated = generateTestForBondParams(
-            0, espressomd.interactions.Tabulated, {"type": "distance",
-                                                   "min": 1.,
-                                                   "max": 2.,
-                                                   "energy": [1., 2., 3.],
-                                                   "force": [3., 4., 5.]})
+    test_tabulated = generateTestForBondParams(
+        0, espressomd.interactions.Tabulated, {"type": "distance",
+                                               "min": 1.,
+                                               "max": 2.,
+                                               "energy": [1., 2., 3.],
+                                               "force": [3., 4., 5.]})
 
 if __name__ == "__main__":
     ut.main()

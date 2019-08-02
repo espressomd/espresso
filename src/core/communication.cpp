@@ -76,6 +76,7 @@
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/utility.hpp>
+#include <utils/mpi/cart_comm.hpp>
 
 using namespace std;
 
@@ -109,7 +110,6 @@ int n_nodes = -1;
   CB(mpi_bcast_ia_params_slave)                                                \
   CB(mpi_gather_stats_slave)                                                   \
   CB(mpi_bcast_coulomb_params_slave)                                           \
-  CB(mpi_place_new_particle_slave)                                             \
   CB(mpi_remove_particle_slave)                                                \
   CB(mpi_rescale_particles_slave)                                              \
   CB(mpi_bcast_cell_structure_slave)                                           \
@@ -218,11 +218,12 @@ void mpi_init() {
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-  MPI_Dims_create(n_nodes, 3, node_grid.data());
+  node_grid = Utils::Mpi::dims_create<3>(n_nodes);
 
-  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
-                           /* periodicity */ {{1, 1, 1}});
-  MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
+  comm_cart =
+      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
+
+  this_node = comm_cart.rank();
 
   Communication::m_callbacks =
       std::make_unique<Communication::MpiCallbacks>(comm_cart);
@@ -237,66 +238,52 @@ void mpi_init() {
   on_program_start();
 }
 
-void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity) {
-  MPI_Comm temp_comm;
-  MPI_Cart_create(MPI_COMM_WORLD, 3, const_cast<int *>(node_grid.data()),
-                  const_cast<int *>(periodicity.data()), 0, &temp_comm);
-  comm_cart =
-      boost::mpi::communicator(temp_comm, boost::mpi::comm_take_ownership);
-
-  this_node = comm_cart.rank();
-}
-
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/
 
-void mpi_place_particle(int pnode, int part, double p[3]) {
-  mpi_call(mpi_place_particle_slave, pnode, part);
+void mpi_place_particle(int node, int id, const Utils::Vector3d &pos) {
+  mpi_call(mpi_place_particle_slave, node, id);
 
-  if (pnode == this_node)
-    local_place_particle(part, p, 0);
-  else
-    MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  if (node == this_node)
+    local_place_particle(id, pos, 0);
+  else {
+    comm_cart.send(node, SOME_TAG, pos);
+  }
 
   set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
 void mpi_place_particle_slave(int pnode, int part) {
-
   if (pnode == this_node) {
-    double p[3];
-    MPI_Recv(p, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    local_place_particle(part, p, 0);
+    Utils::Vector3d pos;
+    comm_cart.recv(0, SOME_TAG, pos);
+    local_place_particle(part, pos, 0);
   }
 
   set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
-void mpi_place_new_particle(int pnode, int part, double p[3]) {
-  mpi_call(mpi_place_new_particle_slave, pnode, part);
+boost::optional<int> mpi_place_new_particle_slave(int part,
+                                                  Utils::Vector3d const &pos) {
   added_particle(part);
 
-  if (pnode == this_node)
-    local_place_particle(part, p, 1);
-  else
-    MPI_Send(p, 3, MPI_DOUBLE, pnode, SOME_TAG, comm_cart);
+  auto p = local_place_particle(part, pos, 1);
 
   on_particle_change();
-}
 
-void mpi_place_new_particle_slave(int pnode, int part) {
-
-  added_particle(part);
-
-  if (pnode == this_node) {
-    double p[3];
-    MPI_Recv(p, 3, MPI_DOUBLE, 0, SOME_TAG, comm_cart, MPI_STATUS_IGNORE);
-    local_place_particle(part, p, 1);
+  if (p) {
+    return comm_cart.rank();
   }
 
-  on_particle_change();
+  return {};
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_place_new_particle_slave)
+
+int mpi_place_new_particle(int id, const Utils::Vector3d &pos) {
+  return mpi_call(Communication::Result::one_rank, mpi_place_new_particle_slave,
+                  id, pos);
 }
 
 /****************** REQ_REM_PART ************/
@@ -358,12 +345,10 @@ void mpi_bcast_ia_params(int i, int j) {
     /* bonded interaction parameters */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
-#ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
-#endif
   }
 
   on_short_range_ia_change();
@@ -380,7 +365,6 @@ void mpi_bcast_ia_params_slave(int i, int j) {
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
-#ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
     if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
       auto *tab_pot = new TabulatedPotential();
@@ -388,7 +372,6 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
       bonded_ia_params[i].p.tab.pot = tab_pot;
     }
-#endif
   }
 
   on_short_range_ia_change();
@@ -423,7 +406,8 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     break;
   case 4:
     mpi_call(mpi_gather_stats_slave, -1, 4);
-    predict_momentum_particles((double *)result);
+    predict_momentum_particles((double *)result,
+                               cell_structure.local_cells().particles());
     break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
@@ -463,7 +447,8 @@ void mpi_gather_stats_slave(int, int job) {
     pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
     break;
   case 4:
-    predict_momentum_particles(nullptr);
+    predict_momentum_particles(nullptr,
+                               cell_structure.local_cells().particles());
     break;
   case 6:
     lb_calc_fluid_momentum(nullptr);
@@ -496,6 +481,10 @@ void mpi_set_time_step_slave(double dt) {
 REGISTER_CALLBACK(mpi_set_time_step_slave)
 
 void mpi_set_time_step(double time_s) {
+  if (time_s <= 0.)
+    throw std::invalid_argument("time_step must be > 0.");
+  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
+    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
   mpi_call_all(mpi_set_time_step_slave, time_s);
 }
 
@@ -674,7 +663,8 @@ void mpi_bcast_max_mu() {
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
 void mpi_kill_particle_motion_slave(int rotation) {
-  local_kill_particle_motion(rotation);
+  local_kill_particle_motion(rotation,
+                             cell_structure.local_cells().particles());
   on_particle_change();
 }
 
@@ -685,7 +675,7 @@ void mpi_kill_particle_motion(int rotation) {
 }
 
 void mpi_kill_particle_forces_slave(int torque) {
-  local_kill_particle_forces(torque);
+  local_kill_particle_forces(torque, cell_structure.local_cells().particles());
   on_particle_change();
 }
 

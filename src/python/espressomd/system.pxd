@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import particle_data
 from libcpp.vector cimport vector
@@ -36,9 +35,6 @@ cdef extern from "random.hpp" namespace "Random":
     string mpi_random_get_stat()
     void mpi_random_set_stat(const vector[string] & stat)
     int get_state_size_of_generator()
-
-cdef extern from "grid.hpp":
-    void get_mi_vector(double * res, double * a, double * b)
 
 cdef extern from "rotate_system.hpp":
     void rotate_system(double phi, double theta, double alpha)

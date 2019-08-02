@@ -18,27 +18,32 @@
 #
 # Minimize Energy
 
-from __future__ import print_function, absolute_import
 from . cimport minimize_energy
 from espressomd.utils import is_valid_type
 
-cdef class MinimizeEnergy(object):
+cdef class MinimizeEnergy:
     """
     Initialize steepest descent energy minimization.
 
     Parameters
     ----------
     f_max : :obj:`float`
-            Maximal allowed force.
+        Maximal allowed force.
     gamma : :obj:`float`
-            Dampening constant.
+        Dampening constant.
     max_steps : :obj:`int`
-                Maximal number of iterations.
+        Maximal number of iterations.
     max_displacement : :obj:`float`
-                       Maximal allowed displacement per step.
+        Maximal allowed displacement per step.
 
     """
     cdef object _params
+
+    def __getstate__(self):
+        return self._params
+
+    def __setstate__(self, params):
+        self._params = params
 
     def __init__(self, *args, **kwargs):
         if len(args) == 0:
@@ -46,7 +51,7 @@ cdef class MinimizeEnergy(object):
             self._params = self.default_params()
             return
 
-            # Check if all required keys are given
+        # Check if all required keys are given
         for k in self.required_keys():
             if k not in kwargs:
                 raise ValueError(
@@ -94,6 +99,7 @@ cdef class MinimizeEnergy(object):
         Perform energy minimization sweep.
 
         """
-        minimize_energy_init(self._params["f_max"], self._params["gamma"], self._params[
-                             "max_steps"], self._params["max_displacement"])
+        minimize_energy_init(self._params["f_max"], self._params["gamma"],
+                             self._params["max_steps"],
+                             self._params["max_displacement"])
         mpi_minimize_energy()

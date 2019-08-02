@@ -95,7 +95,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   /* The shift has to respect periodic boundaries: if the reference particles
    * is not in the same image box, we potentially avoid to shift to the other
    * side of the box. */
-  auto const shift = get_mi_vector(new_pos, p.r.p);
+  auto const shift = get_mi_vector(new_pos, p.r.p, box_geo);
   p.r.p += shift;
 
   if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
@@ -115,7 +115,7 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
     return;
   }
 
-  auto const d = get_mi_vector(p.r.p, p_real->r.p);
+  auto const d = get_mi_vector(p.r.p, p_real->r.p, box_geo);
 
   // Get omega of real particle in space-fixed frame
   Utils::Vector3d omega_space_frame =
@@ -142,7 +142,8 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
       // Add forces and torques
       p_real->f.torque +=
-          vector_product(get_mi_vector(p.r.p, p_real->r.p), p.f.f) + p.f.torque;
+          vector_product(get_mi_vector(p.r.p, p_real->r.p, box_geo), p.f.f) +
+          p.f.torque;
       p_real->f.f += p.f.f;
     }
   }
@@ -169,8 +170,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     // Get distance vector pointing from real to virtual particle, respecting
     // periodic boundary i
     // conditions
-    double d[3];
-    get_mi_vector(d, p_real->r.p, p.r.p);
+    auto const d = get_mi_vector(p_real->r.p, p.r.p, box_geo);
 
     // Stress tensor contribution
     for (int k = 0; k < 3; k++)
@@ -179,7 +179,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
 
     // Pressure = 1/3 trace of stress tensor
     // but the 1/3 is applied somewhere else.
-    *pressure += (p.f.f[0] * d[0] + p.f.f[1] * d[1] + p.f.f[2] * d[2]);
+    *pressure += p.f.f * d;
   }
 }
 

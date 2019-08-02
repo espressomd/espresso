@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -28,7 +27,7 @@ class ParticleSliceTest(ut.TestCase):
     system = espressomd.System(box_l=[10, 10, 10])
 
     def __init__(self, *args, **kwargs):
-        super(ParticleSliceTest, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.system.part.clear()
         for i in range(4):
             self.system.part.add(pos=[0, 0, i])

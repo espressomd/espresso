@@ -147,7 +147,8 @@ static void dump_info(const std::string &fn, unsigned fields) {
   }
 }
 
-void mpi_mpiio_common_write(const char *filename, unsigned fields) {
+void mpi_mpiio_common_write(const char *filename, unsigned fields,
+                            const ParticleRange &particles) {
   std::string fnam(filename);
   int nlocalpart = cells_get_n_particles(), pref = 0, bpref = 0;
   int rank;
@@ -175,7 +176,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields) {
   // Pack the necessary information
   // Esp. rescale the velocities.
   int i1 = 0, i3 = 0;
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : particles) {
     id[i1] = p.p.identity;
     if (fields & MPIIO_OUT_POS) {
       pos[i3] = p.r.p[0];
@@ -225,7 +226,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields) {
 
     // Pack the bond information
     int i = 0;
-    for (auto const &p : local_cells.particles())
+    for (auto const &p : particles)
       for (int k = 0; k < p.bl.n; ++k)
         bond[i++] = p.bl.e[k];
 
@@ -396,7 +397,9 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
                              3 * pref, MPI_DOUBLE);
 
     for (int i = 0; i < nlocalpart; ++i) {
-      local_place_particle(id[i], &pos[3 * i], 1);
+      local_place_particle(
+          id[i],
+          Utils::Vector3d{pos[3 * i + 0], pos[3 * i + 1], pos[3 * i + 2]}, 1);
     }
   }
 

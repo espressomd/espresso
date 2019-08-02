@@ -27,6 +27,7 @@
 #include <utils/tuple.hpp>
 #include <utils/type_traits.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/mpi/communicator.hpp>
 #include <boost/range/algorithm/remove_if.hpp>
@@ -81,7 +82,7 @@ using are_allowed_arguments =
  * @param f Functor to be called
  * @param ia Buffer to extract the parameters from
  *
- * @return Return value of calling @param f.
+ * @return Return value of calling @p f.
  */
 template <class F, class... Args>
 auto invoke(F f, boost::mpi::packed_iarchive &ia) {
@@ -113,9 +114,6 @@ struct callback_concept_t {
    * @brief Execute the callback.
    *
    * Unpack parameters for this callback, and then call it.
-   *
-   * @param comm communicator used for return value collection.
-   * @param ia MPI buffer containing the arguments.
    */
   virtual void operator()(boost::mpi::communicator const &,
                           boost::mpi::packed_iarchive &) const = 0;
@@ -544,9 +542,9 @@ public:
    *
    * This method can only be called on the head node.
    */
-  template <class R, class... Args>
+  template <class R, class... Args, class... ArgRef>
   auto call(Result::OneRank, boost::optional<R> (*fp)(Args...),
-            Args... args) const -> std::remove_reference_t<R> {
+            ArgRef... args) const -> std::remove_reference_t<R> {
 
     const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
     call(id, args...);
