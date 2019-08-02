@@ -43,10 +43,10 @@ inline void add_morse_pair_force(const Particle *const p1,
                                  const Particle *const p2,
                                  IA_parameters *ia_params, double const d[3],
                                  double dist, double force[3]) {
-  if (dist < ia_params->MORSE_cut) {
+  if (dist < ia_params->morse.cut) {
     auto const add =
-        exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    double fac = -ia_params->MORSE_eps * 2.0 * ia_params->MORSE_alpha *
+        exp(-ia_params->morse.alpha * (dist - ia_params->morse.rmin));
+    double fac = -ia_params->morse.eps * 2.0 * ia_params->morse.alpha *
                  (add - Utils::sqr(add)) / dist;
 
     for (int j = 0; j < 3; j++)
@@ -80,11 +80,11 @@ inline void add_morse_pair_force(const Particle *const p1,
 inline double morse_pair_energy(const Particle *p1, const Particle *p2,
                                 const IA_parameters *ia_params,
                                 const double d[3], double dist) {
-  if (dist < ia_params->MORSE_cut) {
+  if (dist < ia_params->morse.cut) {
     auto const add =
-        exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    auto const fac = ia_params->MORSE_eps * (Utils::sqr(add) - 2 * add) -
-                     ia_params->MORSE_rest;
+        exp(-ia_params->morse.alpha * (dist - ia_params->morse.rmin));
+    auto const fac = ia_params->morse.eps * (Utils::sqr(add) - 2 * add) -
+                     ia_params->morse.rest;
     return fac;
   }
   return 0.0;

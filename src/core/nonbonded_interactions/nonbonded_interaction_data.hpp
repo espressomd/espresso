@@ -117,6 +117,16 @@ struct BMHTF_Parameters {
 };
 /*@}*/
 
+/** \name Morse potential */
+/*@{*/
+struct Morse_Parameters {
+    double eps = INACTIVE_CUTOFF;
+    double alpha = INACTIVE_CUTOFF;
+    double rmin = INACTIVE_CUTOFF;
+    double cut = INACTIVE_CUTOFF;
+    double rest = INACTIVE_CUTOFF;
+};
+/*@}*/
 
 
 
@@ -168,14 +178,7 @@ struct IA_parameters {
 #endif
 
 #ifdef MORSE
-  /** \name Morse potential */
-  /*@{*/
-  double MORSE_eps = INACTIVE_CUTOFF;
-  double MORSE_alpha = INACTIVE_CUTOFF;
-  double MORSE_rmin = INACTIVE_CUTOFF;
-  double MORSE_cut = INACTIVE_CUTOFF;
-  double MORSE_rest = INACTIVE_CUTOFF;
-  /*@}*/
+  Morse_Parameters morse;
 #endif
 
 #ifdef BUCKINGHAM

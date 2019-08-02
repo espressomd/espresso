@@ -1166,10 +1166,10 @@ IF MORSE == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.MORSE_eps,
-                "alpha": ia_params.MORSE_alpha,
-                "rmin": ia_params.MORSE_rmin,
-                "cutoff": ia_params.MORSE_cut
+                "eps": ia_params.morse.eps,
+                "alpha": ia_params.morse.alpha,
+                "rmin": ia_params.morse.rmin,
+                "cutoff": ia_params.morse.cut
             }
 
         def is_active(self):

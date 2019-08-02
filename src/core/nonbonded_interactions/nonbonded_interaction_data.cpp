@@ -207,8 +207,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef MORSE
-      if (max_cut_current < data->MORSE_cut)
-        max_cut_current = data->MORSE_cut;
+      if (max_cut_current < data->morse.cut)
+        max_cut_current = data->morse.cut;
 #endif
 
 #ifdef BUCKINGHAM
