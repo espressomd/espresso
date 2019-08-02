@@ -85,51 +85,51 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double sig
 
     cdef struct Gaussian_Parameters:
-             double eps
-             double sig
-             double cut
+        double eps
+        double sig
+        double cut
 
     cdef struct BMHTF_Parameters:
-             double A
-             double B
-             double C
-             double D
-             double sig
-             double cut
-             double computed_shift
+        double A
+        double B
+        double C
+        double D
+        double sig
+        double cut
+        double computed_shift
 
     cdef struct Morse_Parameters:
-            double eps
-            double alpha
-            double rmin
-            double cut
-            double rest
+        double eps
+        double alpha
+        double rmin
+        double cut
+        double rest
 
     cdef struct Buckingham_Parameters:
-             double A
-             double B
-             double C
-             double D
-             double cut
-             double discont
-             double shift
-             double F1
-             double F2
+        double A
+        double B
+        double C
+        double D
+        double cut
+        double discont
+        double shift
+        double F1
+        double F2
 
     cdef struct SoftSphere_Parameters:
-             double a
-             double n
-             double cut
-             double offset
+        double a
+        double n
+        double cut
+        double offset
 
     cdef struct Affinity_Parameters:
-             int type
-             double kappa
-             double r0
-             double Kon
-             double Koff
-             double maxBond
-             double cut
+        int type
+        double kappa
+        double r0
+        double Kon
+        double Koff
+        double maxBond
+        double cut
 
     cdef struct Membrane_Parameters:
         double a
