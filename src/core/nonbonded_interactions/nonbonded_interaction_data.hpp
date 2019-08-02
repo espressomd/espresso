@@ -36,6 +36,19 @@ constexpr double INACTIVE_CUTOFF = -1.;
 /* Data Types */
 /************************************************************/
 
+
+/** \name Lennard-Jones with shift */
+/*@{*/
+struct LJ_Parameters {
+    double eps = 0.0;
+    double sig = 0.0;
+    double cut = 0.0;
+    double shift = 0.0;
+    double offset = 0.0;
+    double min = 0.0;
+};
+/*@}*/
+
 /** Data structure containing the interaction parameters for non-bonded
  *  interactions.
  *  Access via <tt>get_ia_param(i, j)</tt> with
@@ -49,16 +62,7 @@ struct IA_parameters {
   double max_cut = INACTIVE_CUTOFF;
 
 #ifdef LENNARD_JONES
-  /** \name Lennard-Jones with shift */
-  /*@{*/
-  double LJ_eps = 0.0;
-  double LJ_sig = 0.0;
-  double LJ_cut = 0.0;
-  double LJ_shift = 0.0;
-  double LJ_offset = 0.0;
-  double LJ_min = 0.0;
-  /*@}*/
-
+  LJ_Parameters lj;
 #endif
 
 #ifdef WCA

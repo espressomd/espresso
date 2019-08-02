@@ -240,12 +240,12 @@ IF LENNARD_JONES == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "epsilon": ia_params.LJ_eps,
-                "sigma": ia_params.LJ_sig,
-                "cutoff": ia_params.LJ_cut,
-                "shift": ia_params.LJ_shift,
-                "offset": ia_params.LJ_offset,
-                "min": ia_params.LJ_min}
+                "epsilon": ia_params.lj.eps,
+                "sigma": ia_params.lj.sig,
+                "cutoff": ia_params.lj.cut,
+                "shift": ia_params.lj.shift,
+                "offset": ia_params.lj.offset,
+                "min": ia_params.lj.min}
 
         def is_active(self):
             """Check if interaction is active.

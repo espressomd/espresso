@@ -46,13 +46,16 @@ cdef extern from "dpd.hpp":
         double pref
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
+    cdef struct LJ_Parameters:
+        double eps
+        double sig
+        double cut
+        double shift
+        double offset
+        double min
+
     cdef struct IA_parameters:
-        double LJ_eps
-        double LJ_sig
-        double LJ_cut
-        double LJ_shift
-        double LJ_offset
-        double LJ_min
+        LJ_Parameters lj
 
         double WCA_eps
         double WCA_sig

@@ -167,8 +167,8 @@ static void recalc_maximal_cutoff_nonbonded() {
       IA_parameters *data = get_ia_param(i, j);
 
 #ifdef LENNARD_JONES
-      if (max_cut_current < (data->LJ_cut + data->LJ_offset))
-        max_cut_current = (data->LJ_cut + data->LJ_offset);
+      if (max_cut_current < (data->lj.cut + data->lj.offset))
+        max_cut_current = (data->lj.cut + data->lj.offset);
 #endif
 
 #ifdef WCA
