@@ -128,6 +128,21 @@ struct Morse_Parameters {
 };
 /*@}*/
 
+/** \name Buckingham potential */
+/*@{*/
+struct Buckingham_Parameters {
+    double A = 0.0;
+    double B = 0.0;
+    double C = 0.0;
+    double D = 0.0;
+    double cut = INACTIVE_CUTOFF;
+    double discont = 0.0;
+    double shift = 0.0;
+    double F1 = 0.0;
+    double F2 = 0.0;
+};
+/*@}*/
+
 
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -182,18 +197,7 @@ struct IA_parameters {
 #endif
 
 #ifdef BUCKINGHAM
-  /** \name Buckingham potential */
-  /*@{*/
-  double BUCK_A = 0.0;
-  double BUCK_B = 0.0;
-  double BUCK_C = 0.0;
-  double BUCK_D = 0.0;
-  double BUCK_cut = INACTIVE_CUTOFF;
-  double BUCK_discont = 0.0;
-  double BUCK_shift = 0.0;
-  double BUCK_F1 = 0.0;
-  double BUCK_F2 = 0.0;
-  /*@}*/
+  Buckingham_Parameters BUCK;
 #endif
 
 #ifdef SOFT_SPHERE

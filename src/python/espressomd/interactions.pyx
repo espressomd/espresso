@@ -1258,13 +1258,13 @@ IF BUCKINGHAM == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "a": ia_params.BUCK_A,
-                "b": ia_params.BUCK_B,
-                "c": ia_params.BUCK_C,
-                "d": ia_params.BUCK_D,
-                "cutoff": ia_params.BUCK_cut,
-                "discont": ia_params.BUCK_discont,
-                "shift": ia_params.BUCK_shift
+                "a": ia_params.BUCK.A,
+                "b": ia_params.BUCK.B,
+                "c": ia_params.BUCK.C,
+                "d": ia_params.BUCK.D,
+                "cutoff": ia_params.BUCK.cut,
+                "discont": ia_params.BUCK.discont,
+                "shift": ia_params.BUCK.shift
             }
 
         def is_active(self):

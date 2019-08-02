@@ -212,8 +212,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef BUCKINGHAM
-      if (max_cut_current < data->BUCK_cut)
-        max_cut_current = data->BUCK_cut;
+      if (max_cut_current < data->BUCK.cut)
+        max_cut_current = data->BUCK.cut;
 #endif
 
 #ifdef SOFT_SPHERE

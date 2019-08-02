@@ -105,6 +105,17 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
             double cut
             double rest
 
+    cdef struct Buckingham_Parameters:
+             double A
+             double B
+             double C
+             double D
+             double cut
+             double discont
+             double shift
+             double F1
+             double F2
+
 
 
     cdef struct IA_parameters:
@@ -156,13 +167,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         Morse_Parameters morse
 
-        double BUCK_A
-        double BUCK_B
-        double BUCK_C
-        double BUCK_D
-        double BUCK_cut
-        double BUCK_discont
-        double BUCK_shift
+        Buckingham_Parameters BUCK
 
         Hertzian_Parameters Hertzian
 
