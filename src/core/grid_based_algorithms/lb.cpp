@@ -1414,18 +1414,18 @@ inline Utils::Vector3d lb_calc_local_momentum_density(Lattice::index_t index, co
 /** Calculate momentum of the LB fluid.
  * \param result Fluid momentum
  */
-void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters) {
-
-  int x, y, z, index;
+void
+lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters, const std::vector<LB_FluidNode> &lb_fields,
+                       const Lattice &lb_lattice) {
   Utils::Vector3d momentum_density{}, momentum{};
 
-  for (x = 1; x <= lblattice.grid[0]; x++) {
-    for (y = 1; y <= lblattice.grid[1]; y++) {
-      for (z = 1; z <= lblattice.grid[2]; z++) {
-        index = get_linear_index(x, y, z, lblattice.halo_grid);
+  for (int x = 1; x <= lb_lattice.grid[0]; x++) {
+    for (int y = 1; y <= lb_lattice.grid[1]; y++) {
+      for (int z = 1; z <= lb_lattice.grid[2]; z++) {
+        auto const index = get_linear_index(x, y, z, lb_lattice.halo_grid);
 
         momentum_density = lb_calc_local_momentum_density(index, lbfluid);
-        momentum += momentum_density + .5 * lbfields[index].force_density;
+        momentum += momentum_density + .5 * lb_fields[index].force_density;
       }
     }
   }
