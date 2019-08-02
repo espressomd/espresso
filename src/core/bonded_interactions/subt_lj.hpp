@@ -46,30 +46,29 @@ int subt_lj_set_params(int bond_type);
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  dx        %Distance between the particles.
- *  @return false and the force
  */
-inline std::tuple<bool, Utils::Vector3d>
+inline boost::optional<Utils::Vector3d>
 calc_subt_lj_pair_force(Particle const *const p1, Particle const *const p2,
                         Bonded_ia_parameters const *,
                         Utils::Vector3d const &dx) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
   auto const neg_dir = -dx;
   auto const force = add_lj_pair_force(ia_params, neg_dir, neg_dir.norm());
-  return std::make_tuple(false, force);
+  return force;
 }
 
 /** Computes the negative of the Lennard-Jones pair energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  dx        %Distance between the particles.
- *  @return whether the bond is broken and the energy
  */
-inline std::tuple<bool, double>
-subt_lj_pair_energy(Particle const *const p1, Particle const *const p2,
-                    Bonded_ia_parameters const *, Utils::Vector3d const &dx) {
+inline boost::optional<double> subt_lj_pair_energy(Particle const *const p1,
+                                                   Particle const *const p2,
+                                                   Bonded_ia_parameters const *,
+                                                   Utils::Vector3d const &dx) {
   auto ia_params = get_ia_param(p1->p.type, p2->p.type);
   auto const energy = -lj_pair_energy(ia_params, dx.norm());
-  return std::make_tuple(false, energy);
+  return energy;
 }
 
 #endif

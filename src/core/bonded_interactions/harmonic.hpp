@@ -43,16 +43,15 @@ int harmonic_set_params(int bond_type, double k, double r, double r_cut);
 /** Compute the harmonic bond force.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @return whether the bond is broken and the force
  */
-inline std::tuple<bool, Utils::Vector3d>
+inline boost::optional<Utils::Vector3d>
 calc_harmonic_pair_force(Bonded_ia_parameters const *const iaparams,
                          Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic.r_cut)) {
-    return std::make_tuple(true, Utils::Vector3d{});
+    return {};
   }
 
   auto const dr = dist - iaparams->p.harmonic.r;
@@ -64,27 +63,26 @@ calc_harmonic_pair_force(Bonded_ia_parameters const *const iaparams,
   }
   auto const force = fac * dx;
 
-  return std::make_tuple(false, force);
+  return force;
 }
 
 /** Compute the harmonic bond energy.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @return whether the bond is broken and the energy
  */
-inline std::tuple<bool, double>
+inline boost::optional<double>
 harmonic_pair_energy(Bonded_ia_parameters const *const iaparams,
                      Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic.r_cut > 0.0) &&
       (dist > iaparams->p.harmonic.r_cut)) {
-    return std::make_tuple(true, 0.0);
+    return {};
   }
 
   auto const energy =
       0.5 * iaparams->p.harmonic.k * Utils::sqr(dist - iaparams->p.harmonic.r);
-  return std::make_tuple(false, energy);
+  return energy;
 }
 
 #endif

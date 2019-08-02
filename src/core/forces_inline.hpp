@@ -366,12 +366,12 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
  *  @param[out] torque     Torque on @p p1.
  *  @return whether the bond is broken and the force
  */
-inline std::tuple<bool, Utils::Vector3d>
+inline boost::optional<Utils::Vector3d>
 calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
                      Bonded_ia_parameters const *const iaparams,
                      Utils::Vector3d const &dx, Utils::Vector3d &torque) {
 
-  std::tuple<bool, Utils::Vector3d> result;
+  boost::optional<Utils::Vector3d> result;
 
   switch (iaparams->type) {
   case BONDED_IA_FENE:
@@ -380,8 +380,12 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
 #ifdef ROTATION
   case BONDED_IA_HARMONIC_DUMBBELL: {
     auto values = calc_harmonic_dumbbell_pair_force(p1, iaparams, dx);
-    result = std::make_tuple(std::get<0>(values), std::get<1>(values));
-    torque = std::get<2>(values);
+    if (values) {
+      result = boost::optional<Utils::Vector3d>(std::get<0>(values.get()));
+      torque = std::get<1>(values.get());
+    } else {
+      result = boost::optional<Utils::Vector3d>();
+    }
     break;
   }
 #endif
@@ -408,7 +412,7 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
     if (iaparams->num == 1)
       result = calc_tab_bond_force(iaparams, dx);
     else
-      result = std::make_tuple(false, Utils::Vector3d{});
+      result = boost::optional<Utils::Vector3d>(Utils::Vector3d{});
     break;
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
@@ -416,7 +420,7 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
     break;
 #endif
   default:
-    result = std::make_tuple(false, Utils::Vector3d{});
+    result = boost::optional<Utils::Vector3d>(Utils::Vector3d{});
     break;
 
   } // switch type
@@ -482,8 +486,11 @@ inline void add_bonded_force(Particle *const p1) {
          not needed,
          and the pressure calculation not yet clear. */
       auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
-      std::tie(bond_broken, force1) =
-          calc_bond_pair_force(p1, p2, iaparams, dx, torque1);
+      auto result = calc_bond_pair_force(p1, p2, iaparams, dx, torque1);
+      if (result) {
+        force1 = result.get();
+        bond_broken = false;
+      }
 
 #ifdef NPT
       if (integ_switch == INTEG_METHOD_NPT_ISO) {
@@ -493,11 +500,14 @@ inline void add_bonded_force(Particle *const p1) {
 #endif
 
       switch (type) {
-      case BONDED_IA_THERMALIZED_DIST:
-        std::tie(bond_broken, force1, force2) =
-            calc_thermalized_bond_forces(p1, p2, iaparams, dx);
+      case BONDED_IA_THERMALIZED_DIST: {
+        auto result = calc_thermalized_bond_forces(p1, p2, iaparams, dx);
+        if (result) {
+          std::tie(force1, force2) = result.get();
+          bond_broken = false;
+        }
         break;
-
+      }
       default:
         break;
       }
@@ -505,16 +515,19 @@ inline void add_bonded_force(Particle *const p1) {
     else if (n_partners == 2) {
       switch (type) {
       case BONDED_IA_ANGLE_HARMONIC:
-        std::tie(bond_broken, force1, force2, force3) =
+        std::tie(force1, force2, force3) =
             calc_angle_harmonic_force(p1, p2, p3, iaparams);
+        bond_broken = false;
         break;
       case BONDED_IA_ANGLE_COSINE:
-        std::tie(bond_broken, force1, force2, force3) =
+        std::tie(force1, force2, force3) =
             calc_angle_cosine_force(p1, p2, p3, iaparams);
+        bond_broken = false;
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
-        std::tie(bond_broken, force1, force2, force3) =
+        std::tie(force1, force2, force3) =
             calc_angle_cossquare_force(p1, p2, p3, iaparams);
+        bond_broken = false;
         break;
 #ifdef OIF_GLOBAL_FORCES
       case BONDED_IA_OIF_GLOBAL_FORCES:
@@ -522,14 +535,20 @@ inline void add_bonded_force(Particle *const p1) {
         break;
 #endif
       case BONDED_IA_TABULATED:
-        if (iaparams->num == 2)
-          std::tie(bond_broken, force1, force2, force3) =
+        if (iaparams->num == 2) {
+          std::tie(force1, force2, force3) =
               calc_tab_angle_force(p1, p2, p3, iaparams);
+          bond_broken = false;
+        }
         break;
-      case BONDED_IA_IBM_TRIEL:
-        std::tie(bond_broken, force1, force2, force3) =
-            IBM_Triel_CalcForce(p1, p2, p3, iaparams);
+      case BONDED_IA_IBM_TRIEL: {
+        auto result = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
+        if (result) {
+          std::tie(force1, force2, force3) = result.get();
+          bond_broken = false;
+        }
         break;
+      }
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                           << p1->p.identity << " unknown " << type << ","
@@ -541,18 +560,17 @@ inline void add_bonded_force(Particle *const p1) {
       switch (type) {
 #ifdef MEMBRANE_COLLISION
       case BONDED_IA_OIF_OUT_DIRECTION: {
-        Utils::Vector3d outward_direction;
-        std::tie(bond_broken, outward_direction) =
-            calc_out_direction(p1, p2, p3, p4, iaparams);
-        p1->p.out_direction = outward_direction;
+        p1->p.out_direction = calc_out_direction(p1, p2, p3, p4, iaparams);
+        bond_broken = false;
         break;
       }
 #endif
 #ifdef OIF_LOCAL_FORCES
       case BONDED_IA_OIF_LOCAL_FORCES:
         // in OIF nomenclature, particles p2 and p3 are common to both triangles
-        std::tie(bond_broken, force1, force2, force3, force4) =
+        std::tie(force1, force2, force3, force4) =
             calc_oif_local(p1, p2, p3, p4, iaparams);
+        bond_broken = false;
         break;
 #endif
       // IMMERSED_BOUNDARY
@@ -561,14 +579,24 @@ inline void add_bonded_force(Particle *const p1) {
             IBM_Tribend_CalcForce(p1, p2, p3, p4, iaparams);
         bond_broken = false;
         break;
-      case BONDED_IA_DIHEDRAL:
-        std::tie(bond_broken, force1, force2, force3) =
-            calc_dihedral_force(p1, p2, p3, p4, iaparams);
+      case BONDED_IA_DIHEDRAL: {
+        auto result = calc_dihedral_force(p1, p2, p3, p4, iaparams);
+        if (result) {
+          std::tie(force1, force2, force3) = result.get();
+          force4 = -(force1 + force2 + force3);
+          bond_broken = false;
+        }
         break;
+      }
       case BONDED_IA_TABULATED:
-        if (iaparams->num == 3)
-          std::tie(bond_broken, force1, force2, force3) =
-              calc_tab_dihedral_force(p1, p2, p3, p4, iaparams);
+        if (iaparams->num == 3) {
+          auto result = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams);
+          if (result) {
+            std::tie(force1, force2, force3) = result.get();
+            force4 = -(force1 + force2 + force3);
+            bond_broken = false;
+          }
+        }
         break;
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
@@ -622,34 +650,24 @@ inline void add_bonded_force(Particle *const p1) {
       }
 
       switch (type) {
-      case BONDED_IA_DIHEDRAL:
-        p1->f.f += force1;
-        p2->f.f += force2;
-        p3->f.f += force3;
-        p4->f.f -= force1 + force2 + force3;
-        break;
       case BONDED_IA_TABULATED:
         if (iaparams->num == 3) {
           p1->f.f += force1;
           p2->f.f += force2;
           p3->f.f += force3;
-          p4->f.f -= force1 + force2 + force3;
+          p4->f.f += force4;
         }
         break;
+      case BONDED_IA_DIHEDRAL:
       case BONDED_IA_IBM_TRIBEND:
-        p1->f.f += force1;
-        p2->f.f += force2;
-        p3->f.f += force3;
-        p4->f.f += force4;
-        break;
 #ifdef OIF_LOCAL_FORCES
       case BONDED_IA_OIF_LOCAL_FORCES:
+#endif
         p1->f.f += force1;
         p2->f.f += force2;
         p3->f.f += force3;
         p4->f.f += force4;
         break;
-#endif
       } // Switch type of 4-particle bond
       break;
     } // switch number of partners (add forces to particles)

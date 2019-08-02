@@ -49,9 +49,9 @@ inline double KS(double lambda) { // Defined by (19) from Dupin2007
  *  @param p1 , p3      Particles common to triangle 1 and triangle 2.
  *  @param p4           %Particle of triangle 2.
  *  @param iaparams     Bonded parameters for the OIF interaction.
- *  @return false and forces on @p p1, @p p2, @p p3, @p p4
+ *  @return forces on @p p1, @p p2, @p p3, @p p4
  */
-inline std::tuple<bool, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
                   Utils::Vector3d>
 calc_oif_local(Particle const *const p2, Particle const *const p1,
                Particle const *const p3, Particle const *const p4,
@@ -194,7 +194,7 @@ calc_oif_local(Particle const *const p2, Particle const *const p1,
                     iaparams->p.oif_local_forces.A02, fp2, fp3, fp4, force2,
                     force3, force4);
   }
-  return std::make_tuple(false, force2, force1, force3, force4);
+  return std::make_tuple(force2, force1, force3, force4);
 }
 
 #endif

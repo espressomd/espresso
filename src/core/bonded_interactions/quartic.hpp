@@ -46,15 +46,14 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,
 /** Compute the quartic bond force.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @return whether the bond is broken and the force
  */
-inline std::tuple<bool, Utils::Vector3d>
+inline boost::optional<Utils::Vector3d>
 calc_quartic_pair_force(Bonded_ia_parameters const *const iaparams,
                         Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
-    return std::make_tuple(true, Utils::Vector3d{});
+    return {};
   }
 
   auto const dr = dist - iaparams->p.quartic.r;
@@ -62,28 +61,27 @@ calc_quartic_pair_force(Bonded_ia_parameters const *const iaparams,
       (iaparams->p.quartic.k0 * dr + iaparams->p.quartic.k1 * dr * dr * dr) /
       dist;
   auto const force = -fac * dx;
-  return std::make_tuple(false, force);
+  return force;
 }
 
 /** Compute the quartic bond energy.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @return whether the bond is broken and the energy
  */
-inline std::tuple<bool, double>
+inline boost::optional<double>
 quartic_pair_energy(Bonded_ia_parameters const *const iaparams,
                     Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
-    return std::make_tuple(true, 0.0);
+    return {};
   }
 
   double dr2 = Utils::sqr(dist - iaparams->p.quartic.r);
 
   auto const energy = 0.5 * iaparams->p.quartic.k0 * dr2 +
                       0.25 * iaparams->p.quartic.k1 * Utils::sqr(dr2);
-  return std::make_tuple(false, energy);
+  return energy;
 }
 
 #endif

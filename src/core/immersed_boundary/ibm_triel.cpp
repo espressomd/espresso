@@ -68,7 +68,7 @@ RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 }
 } // namespace
 
-std::tuple<bool, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
                     Particle const *const p3,
                     Bonded_ia_parameters const *const iaparams) {
@@ -86,8 +86,7 @@ IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
   // Check for sanity
   if ((lp - iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxDist) ||
       (l - iaparams->p.ibm_triel.l0 > iaparams->p.ibm_triel.maxDist)) {
-    return std::make_tuple(true, Utils::Vector3d{}, Utils::Vector3d{},
-                           Utils::Vector3d{});
+    return {};
   }
 
   // angles between these vectors; calculated directly via the products
@@ -233,7 +232,7 @@ IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
   // Rotate forces back into original position of triangle
   auto forces = RotateForces(f1_rot, f2_rot, vec1, vec2);
 
-  return std::tuple_cat(std::make_tuple(false), forces);
+  return forces;
 }
 
 int IBM_Triel_ResetParams(const int bond_type, const double k1,

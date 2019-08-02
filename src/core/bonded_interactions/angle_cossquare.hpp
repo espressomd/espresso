@@ -67,16 +67,14 @@ calc_angle_cossquare_3body_forces(Particle const *const p_mid,
  *  @param[in]  p_left    First/left particle.
  *  @param[in]  p_right   Third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @return false and the forces on the second, first and third particles.
+ *  @return the forces on the second, first and third particles.
  */
-inline std::tuple<bool, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 calc_angle_cossquare_force(Particle const *const p_mid,
                            Particle const *const p_left,
                            Particle const *const p_right,
                            Bonded_ia_parameters const *const iaparams) {
-  auto forces =
-      calc_angle_cossquare_3body_forces(p_mid, p_left, p_right, iaparams);
-  return std::tuple_cat(std::make_tuple(false), forces);
+  return calc_angle_cossquare_3body_forces(p_mid, p_left, p_right, iaparams);
 }
 
 /** Computes the three-body angle interaction energy.
@@ -84,9 +82,8 @@ calc_angle_cossquare_force(Particle const *const p_mid,
  *  @param[in]  p_left    First/left particle.
  *  @param[in]  p_right   Third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @return whether the bond is broken and the energy
  */
-inline std::tuple<bool, double> angle_cossquare_energy(
+inline double angle_cossquare_energy(
     Particle const *const p_mid, Particle const *const p_left,
     Particle const *const p_right, Bonded_ia_parameters const *const iaparams) {
   auto const vectors =
@@ -95,7 +92,7 @@ inline std::tuple<bool, double> angle_cossquare_energy(
   auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
   auto const k = iaparams->p.angle_cossquare.bend;
   auto const energy = 0.5 * k * Utils::sqr(cos_phi - cos_phi0);
-  return std::make_tuple(false, energy);
+  return energy;
 }
 
 #endif /* ANGLE_COSSQUARE_H */

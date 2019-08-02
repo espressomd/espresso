@@ -1,6 +1,8 @@
 #ifndef _BONDED_INTERACTION_DATA_HPP
 #define _BONDED_INTERACTION_DATA_HPP
 
+#include <boost/optional.hpp>
+
 #include "TabulatedPotential.hpp"
 #include "particle_data.hpp"
 

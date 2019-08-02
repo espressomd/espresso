@@ -109,9 +109,10 @@ calc_dihedral_angle(Particle const *const p1, Particle const *const p2,
  *  @param[in]  p3        Third particle.
  *  @param[in]  p4        Fourth particle.
  *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
- *  @return false and the forces on @p p2, @p p1, @p p3
+ *  @return the forces on @p p2, @p p1, @p p3
  */
-inline std::tuple<bool, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+inline boost::optional<
+    std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 calc_dihedral_force(Particle const *const p2, Particle const *const p1,
                     Particle const *const p3, Particle const *const p4,
                     Bonded_ia_parameters const *const iaparams) {
@@ -128,8 +129,7 @@ calc_dihedral_force(Particle const *const p2, Particle const *const p1,
                       v23Xv34, &l_v23Xv34, &cosphi, &phi);
   /* dihedral angle not defined - force zero */
   if (phi == -1.0) {
-    return std::make_tuple(false, Utils::Vector3d{}, Utils::Vector3d{},
-                           Utils::Vector3d{});
+    return {};
   }
 
   auto const f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23;
@@ -165,7 +165,7 @@ calc_dihedral_force(Particle const *const p2, Particle const *const p1,
   auto const force2 = fac * (v34Xf4 - v12Xf1 - v23Xf1);
   auto const force3 = fac * (v12Xf1 - v23Xf4 - v34Xf4);
 
-  return std::make_tuple(false, force2, force1, force3);
+  return std::make_tuple(force2, force1, force3);
 }
 
 /** Compute the four-body dihedral interaction energy.
@@ -175,9 +175,8 @@ calc_dihedral_force(Particle const *const p2, Particle const *const p1,
  *  @param[in]  p3        Third particle.
  *  @param[in]  p4        Fourth particle.
  *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
- *  @return whether the bond is broken and the energy
  */
-inline std::tuple<bool, double>
+inline boost::optional<double>
 dihedral_energy(Particle const *const p1, Particle const *const p2,
                 Particle const *const p3, Particle const *const p4,
                 Bonded_ia_parameters const *const iaparams) {
@@ -189,12 +188,16 @@ dihedral_energy(Particle const *const p1, Particle const *const p2,
 
   calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
                       v23Xv34, &l_v23Xv34, &cosphi, &phi);
+  /* dihedral angle not defined - force zero */
+  if (phi == -1.0) {
+    return {};
+  }
 
   auto const energy =
       iaparams->p.dihedral.bend *
       (1. - cos(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase));
 
-  return std::make_tuple(false, energy);
+  return energy;
 }
 
 #endif

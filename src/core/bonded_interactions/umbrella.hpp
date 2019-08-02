@@ -51,9 +51,8 @@ inline double umbrella_force_r(double k, int dir, double r, double distn) {
  *  @param[in]  p2        Second particle.
  *  @param[in]  ia_params Bonded parameters for the pair interaction.
  *  @param[in]  d         %Distance between the particles.
- *  @return false and the force
  */
-inline std::tuple<bool, Utils::Vector3d>
+inline boost::optional<Utils::Vector3d>
 calc_umbrella_pair_force(Particle const *const p1, Particle const *const p2,
                          Bonded_ia_parameters const *const ia_params,
                          Utils::Vector3d const &d) {
@@ -74,7 +73,7 @@ calc_umbrella_pair_force(Particle const *const p1, Particle const *const p2,
                             "id=%d at dist %f fac %.3e\n",
                             this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
                             p1->p.identity, distn, fac));
-  return std::make_tuple(false, force);
+  return force;
 }
 
 /** Compute the umbrella bond length energy.
@@ -84,14 +83,14 @@ calc_umbrella_pair_force(Particle const *const p1, Particle const *const p2,
  *  @param[in]  d         %Distance between the particles.
  *  @return whether the bond is broken and the energy
  */
-inline std::tuple<bool, double>
+inline boost::optional<double>
 umbrella_pair_energy(Particle const *const p1, Particle const *const p2,
                      Bonded_ia_parameters const *const ia_params,
                      Utils::Vector3d const &d, double *_energy) {
   auto const distn = d[ia_params->p.umbrella.dir];
   auto const energy = 0.5 * ia_params->p.umbrella.k *
                       Utils::sqr(distn - ia_params->p.umbrella.r);
-  return std::make_tuple(false, energy);
+  return energy;
 }
 
 #endif /* ifdef UMBRELLA */
