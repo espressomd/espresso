@@ -232,8 +232,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef HAT
-      if (max_cut_current < data->HAT_r)
-        max_cut_current = data->HAT_r;
+      if (max_cut_current < data->hat.r)
+        max_cut_current = data->hat.r;
 #endif
 
 #ifdef LJCOS

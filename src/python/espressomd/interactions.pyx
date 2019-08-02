@@ -726,8 +726,8 @@ IF HAT == 1:
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
-                "F_max": ia_params.HAT_Fmax,
-                "cutoff": ia_params.HAT_r,
+                "F_max": ia_params.hat.Fmax,
+                "cutoff": ia_params.hat.r,
             }
 
         def is_active(self):

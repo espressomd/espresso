@@ -176,6 +176,14 @@ struct Membrane_Parameters {
 };
 /*@}*/
 
+/** \name hat potential */
+/*@{*/
+struct HAT_Parameters {
+    double Fmax = 0.0;
+    double r = INACTIVE_CUTOFF;
+};
+/*@}*/
+
 
 
 /** Data structure containing the interaction parameters for non-bonded
@@ -246,11 +254,7 @@ struct IA_parameters {
 #endif
 
 #ifdef HAT
-  /** \name hat potential */
-  /*@{*/
-  double HAT_Fmax = 0.0;
-  double HAT_r = INACTIVE_CUTOFF;
-  /*@}*/
+  HAT_Parameters hat;
 #endif
 
 #ifdef LJCOS

@@ -137,6 +137,10 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double cut
         double offset
 
+    cdef struct HAT_Parameters:
+        double Fmax
+        double r
+
 
 
     cdef struct IA_parameters:
@@ -187,8 +191,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         DPDParameters dpd_radial
         DPDParameters dpd_trans
 
-        double HAT_Fmax
-        double HAT_r
+        HAT_Parameters hat
 
         double THOLE_scaling_coeff
         double THOLE_q1q2
