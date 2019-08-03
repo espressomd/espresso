@@ -108,7 +108,7 @@ void force_calc(CellStructure &cell_structure) {
   if (max_cut > 0) {
     short_range_loop([](Particle &p) { add_single_particle_force(&p); },
                      [](Particle &p1, Particle &p2, Distance &d) {
-                       add_non_bonded_pair_force(&(p1), &(p2), d.vec21.data(),
+                       add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
                                                  sqrt(d.dist2), d.dist2);
                      });
   } else {
@@ -177,11 +177,6 @@ void calc_long_range_forces() {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
   Coulomb::calc_long_range_force();
-/* If enabled, calculate electrostatics contribution from electrokinetics
- * species. */
-#ifdef EK_ELECTROSTATIC_COUPLING
-  ek_calculate_electrostatic_coupling();
-#endif
 
 #endif /*ifdef ELECTROSTATICS */
 

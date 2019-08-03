@@ -47,23 +47,19 @@ void update_mol_ids_setchains(const ParticleRange &particles) {
 }
 
 std::array<double, 4> calc_re(PartCfg &partCfg) {
-  double dx, dy, dz, tmp;
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
   std::array<double, 4> re;
 
   for (int i = 0; i < chain_n_chains; i++) {
-    dx = partCfg[chain_start + i * chain_length + chain_length - 1].r.p[0] -
-         partCfg[chain_start + i * chain_length].r.p[0];
-    dy = partCfg[chain_start + i * chain_length + chain_length - 1].r.p[1] -
-         partCfg[chain_start + i * chain_length].r.p[1];
-    dz = partCfg[chain_start + i * chain_length + chain_length - 1].r.p[2] -
-         partCfg[chain_start + i * chain_length].r.p[2];
-    tmp = (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
-    dist += sqrt(tmp);
-    dist2 += tmp;
-    dist4 += tmp * tmp;
+    auto const d =
+        partCfg[chain_start + i * chain_length + chain_length - 1].r.p -
+        partCfg[chain_start + i * chain_length].r.p;
+    auto const norm2 = d.norm2();
+    dist += sqrt(norm2);
+    dist2 += norm2;
+    dist4 += norm2 * norm2;
   }
-  tmp = static_cast<double>(chain_n_chains);
+  auto const tmp = static_cast<double>(chain_n_chains);
   re[0] = dist / tmp;
   re[2] = dist2 / tmp;
   re[1] = sqrt(re[2] - re[0] * re[0]);
@@ -73,35 +69,26 @@ std::array<double, 4> calc_re(PartCfg &partCfg) {
 
 std::array<double, 4> calc_rg(PartCfg &partCfg) {
   int p;
-  double dx, dy, dz, r_CM_x, r_CM_y, r_CM_z;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
-  double IdoubMPC, tmp;
-  double M;
+  double tmp;
   std::array<double, 4> rg;
 
   for (int i = 0; i < chain_n_chains; i++) {
-    M = 0.0;
-    r_CM_x = r_CM_y = r_CM_z = 0.0;
-    IdoubMPC = 1. / (double)chain_length;
+    double M = 0.0;
+    Utils::Vector3d r_CM{};
     for (int j = 0; j < chain_length; j++) {
       p = chain_start + i * chain_length + j;
-      r_CM_x += partCfg[p].r.p[0] * (partCfg[p]).p.mass;
-      r_CM_y += partCfg[p].r.p[1] * (partCfg[p]).p.mass;
-      r_CM_z += partCfg[p].r.p[2] * (partCfg[p]).p.mass;
-      M += (partCfg[p]).p.mass;
+      r_CM += partCfg[p].r.p * partCfg[p].p.mass;
+      M += partCfg[p].p.mass;
     }
-    r_CM_x /= M;
-    r_CM_y /= M;
-    r_CM_z /= M;
+    r_CM /= M;
     tmp = 0.0;
     for (int j = 0; j < chain_length; ++j) {
       p = chain_start + i * chain_length + j;
-      dx = partCfg[p].r.p[0] - r_CM_x;
-      dy = partCfg[p].r.p[1] - r_CM_y;
-      dz = partCfg[p].r.p[2] - r_CM_z;
-      tmp += (Utils::sqr(dx) + Utils::sqr(dy) + Utils::sqr(dz));
+      Utils::Vector3d const d = partCfg[p].r.p - r_CM;
+      tmp += d.norm2();
     }
-    tmp *= IdoubMPC;
+    tmp /= (double)chain_length;
     r_G += sqrt(tmp);
     r_G2 += tmp;
     r_G4 += tmp * tmp;
@@ -115,7 +102,7 @@ std::array<double, 4> calc_rg(PartCfg &partCfg) {
 }
 
 std::array<double, 2> calc_rh(PartCfg &partCfg) {
-  double dx, dy, dz, r_H = 0.0, r_H2 = 0.0, ri = 0.0, prefac, tmp;
+  double r_H = 0.0, r_H2 = 0.0, ri = 0.0, prefac, tmp;
   std::array<double, 2> rh;
 
   prefac = 0.5 * chain_length *
@@ -125,13 +112,8 @@ std::array<double, 2> calc_rh(PartCfg &partCfg) {
     for (int i = chain_start + chain_length * p;
          i < chain_start + chain_length * (p + 1); i++) {
       for (int j = i + 1; j < chain_start + chain_length * (p + 1); j++) {
-        dx = partCfg[i].r.p[0] - partCfg[j].r.p[0];
-        dx *= dx;
-        dy = partCfg[i].r.p[1] - partCfg[j].r.p[1];
-        dy *= dy;
-        dz = partCfg[i].r.p[2] - partCfg[j].r.p[2];
-        dz *= dz;
-        ri += 1.0 / sqrt(dx + dy + dz);
+        auto const d = partCfg[i].r.p - partCfg[j].r.p;
+        ri += 1.0 / d.norm();
       }
     }
     tmp = prefac / ri;

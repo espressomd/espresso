@@ -28,6 +28,8 @@
 #include "dpd.hpp"
 #include "particle_data.hpp"
 
+#include <utils/math/sqr.hpp>
+
 /** Cutoff for deactivated interactions. Must be negative, so that even
  *  particles on top of each other don't interact by chance.
  */
@@ -347,8 +349,6 @@ int interactions_sanity_checks();
 inline int checkIfInteraction(const IA_parameters *data) {
   return data->max_cut != INACTIVE_CUTOFF;
 }
-
-#include <utils/math/sqr.hpp>
 
 /** Returns true if the particles are to be considered for short range
  *  interactions.

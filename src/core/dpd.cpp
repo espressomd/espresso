@@ -159,8 +159,8 @@ static double weight(int type, double r_cut, double r) {
   return 1. - r / r_cut;
 }
 
-Vector3d dpd_pair_force(DPDParameters const &params, const Vector3d &v,
-                        double dist, const Vector3d &noise) {
+Vector3d dpd_pair_force(DPDParameters const &params, Vector3d const &v,
+                        double dist, Vector3d const &noise) {
   if (dist < params.cutoff) {
     auto const omega = weight(params.wf, params.cutoff, dist);
     auto const omega2 = Utils::sqr(omega);
@@ -174,9 +174,11 @@ Vector3d dpd_pair_force(DPDParameters const &params, const Vector3d &v,
   return {};
 }
 
-Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
-                        const IA_parameters *ia_params, double const *d,
-                        double dist, double dist2) {
+Utils::Vector3d dpd_pair_force(Particle const *const p1,
+                               Particle const *const p2,
+                               IA_parameters const *const ia_params,
+                               Utils::Vector3d const &d, double dist,
+                               double dist2) {
   if (ia_params->dpd_radial.cutoff <= 0.0 &&
       ia_params->dpd_trans.cutoff <= 0.0) {
     return {};
@@ -191,12 +193,12 @@ Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
   auto const f_r = dpd_pair_force(ia_params->dpd_radial, v21, dist, noise_vec);
   auto const f_t = dpd_pair_force(ia_params->dpd_trans, v21, dist, noise_vec);
 
-  auto const d21 = Vector3d{d[0], d[1], d[2]};
   /* Projection operator to radial direction */
-  auto const P = tensor_product(d21 / dist2, d21);
+  auto const P = tensor_product(d / dist2, d);
   /* This is equivalent to P * f_r + (1 - P) * f_t, but with
    * doing only one matrix-vector multiplication */
-  return P * (f_r - f_t) + f_t;
+  auto const force = P * (f_r - f_t) + f_t;
+  return force;
 }
 
 static auto dpd_viscous_stress_local() {

@@ -29,7 +29,7 @@ for filepath in glob.glob('*/*.html'):
     deploy_list.append(filepath)
     # extract all figures
     dirname = os.path.dirname(filepath)
-    with open(filepath) as f:
+    with open(filepath, encoding='utf-8') as f:
         html = lxml.html.parse(f)
     figures = filter(lambda src: not src.startswith('data:image'),
                      html.xpath('//img/@src'))
