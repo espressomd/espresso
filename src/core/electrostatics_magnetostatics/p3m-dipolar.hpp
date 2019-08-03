@@ -58,9 +58,9 @@ struct dp3m_data_struct {
   /** real space mesh (local) for CA/FFT.*/
   double *rs_mesh;
   /** real space mesh (local) for CA/FFT of the dipolar field.*/
-  double *rs_mesh_dip[3];
+  std::vector<std::vector<double>> rs_mesh_dip{3};
   /** k-space mesh (local) for k-space calculation and FFT.*/
-  double *ks_mesh;
+  std::vector<double> ks_mesh;
 
   /** number of dipolar particles (only on master node). */
   int sum_dip_part;
@@ -68,28 +68,28 @@ struct dp3m_data_struct {
   double sum_mu2;
 
   /** interpolation of the charge assignment function. */
-  double *int_caf[7];
+  std::vector<std::vector<double>> int_caf{7};
 
   /** position shift for calc. of first assignment mesh point. */
   double pos_shift;
   /** help variable for calculation of aliasing sums */
-  double *meshift;
+  std::vector<double> meshift;
 
   /** Spatial differential operator in k-space. We use an i*k differentiation.
    */
-  double *d_op;
+  std::vector<double> d_op;
   /** Force optimised influence function (k-space) */
-  double *g_force;
+  std::vector<double> g_force;
   /** Energy optimised influence function (k-space) */
-  double *g_energy;
+  std::vector<double> g_energy;
 
   /** number of charged particles on the node. */
   int ca_num;
 
   /** Charge fractions for mesh assignment. */
-  double *ca_frac;
+  std::vector<double> ca_frac;
   /** index of first mesh point for charge assignment. */
-  int *ca_fmp;
+  std::vector<int> ca_fmp;
   /** number of permutations in k_space */
   int ks_pnum;
 
@@ -97,9 +97,9 @@ struct dp3m_data_struct {
   p3m_send_mesh sm;
 
   /** Field to store grid points to send. */
-  double *send_grid;
+  std::vector<double> send_grid;
   /** Field to store grid points to recv */
-  double *recv_grid;
+  std::vector<double> recv_grid;
 
   /* Stores the value of the energy correction due to MS effects */
   double energy_correction;
