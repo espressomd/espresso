@@ -191,21 +191,21 @@ class openGLLive:
 
     """
 
-    def __init__(self, system, **kwargs):
-        # MATERIALS
-        self.materials = {
-            'bright': [0.9, 1.0, 0.8, 0.4, 1.0],
-            'medium': [0.6, 0.8, 0.2, 0.4, 1.0],
-            'dark': [0.4, 0.5, 0.1, 0.4, 1.0],
-            'transparent1': [0.6, 0.8, 0.2, 0.5, 0.8],
-            'transparent2': [0.6, 0.8, 0.2, 0.5, 0.4],
-            'transparent3': [0.6, 0.8, 0.2, 0.5, 0.2],
-            'rubber': [0, 0.4, 0.7, 0.078125, 1.0],
-            'chrome': [0.25, 0.4, 0.774597, 0.6, 1.0],
-            'plastic': [0, 0.55, 0.7, 0.25, 1.0],
-            'steel': [0.25, 0.38, 0, 0.32, 1.0]
-        }
+    # MATERIALS
+    materials = {
+        'bright': [0.9, 1.0, 0.8, 0.4, 1.0],
+        'medium': [0.6, 0.8, 0.2, 0.4, 1.0],
+        'dark': [0.4, 0.5, 0.1, 0.4, 1.0],
+        'transparent1': [0.6, 0.8, 0.2, 0.5, 0.8],
+        'transparent2': [0.6, 0.8, 0.2, 0.5, 0.4],
+        'transparent3': [0.6, 0.8, 0.2, 0.5, 0.2],
+        'rubber': [0, 0.4, 0.7, 0.078125, 1.0],
+        'chrome': [0.25, 0.4, 0.774597, 0.6, 1.0],
+        'plastic': [0, 0.55, 0.7, 0.25, 1.0],
+        'steel': [0.25, 0.38, 0, 0.32, 1.0]
+    }
 
+    def __init__(self, system, **kwargs):
         # DEFAULT PROPERTIES
         self.specs = {
             'window_size': [800, 800],
