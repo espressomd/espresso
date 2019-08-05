@@ -104,11 +104,26 @@ void force_calc(CellStructure &cell_structure) {
 
   calc_long_range_forces();
 
+#ifdef ELECTROSTATICS
+  auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
+#else
+  auto const coulomb_cutoff = INACTIVE_CUTOFF;
+#endif
+
+#ifdef DIPOLES
+  auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
+#else
+  auto const dipole_cutoff = INACTIVE_CUTOFF;
+#endif
+
   short_range_loop([](Particle &p) { add_single_particle_force(&p); },
                    [](Particle &p1, Particle &p2, Distance &d) {
                      add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
                                                sqrt(d.dist2), d.dist2);
-                   });
+                   },
+                   VerletCriterion{skin, cell_structure.min_range,
+                                   coulomb_cutoff, dipole_cutoff,
+                                   collision_detection_cutoff()});
 
   Constraints::constraints.add_forces(particles, sim_time);
 

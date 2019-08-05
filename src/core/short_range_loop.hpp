@@ -21,11 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "algorithm/for_each_pair.hpp"
 #include "cells.hpp"
-#include "collision.hpp"
-#include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <profiler/profiler.hpp>
@@ -103,11 +99,21 @@ void decide_distance(CellIterator first, CellIterator last,
     break;
   }
 }
+
+/**
+ * @brief Functor that returns true for
+ *        any arguments.
+ */
+struct True {
+      template<class... T>
+      bool operator()(T...) const { return true; }
+    };
 } // namespace detail
 
-template <typename ParticleKernel, typename PairKernel>
+template <class ParticleKernel, class PairKernel, class VerletCriterion = detail::True>
 void short_range_loop(ParticleKernel &&particle_kernel,
-                      PairKernel &&pair_kernel) {
+                      PairKernel &&pair_kernel,
+                      const VerletCriterion &verlet_criterion = {}) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   assert(get_resort_particles() == Cells::RESORT_NONE);
@@ -116,23 +122,9 @@ void short_range_loop(ParticleKernel &&particle_kernel,
     auto first = boost::make_indirect_iterator(local_cells.begin());
     auto last = boost::make_indirect_iterator(local_cells.end());
 
-#ifdef ELECTROSTATICS
-    auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
-#else
-    auto const coulomb_cutoff = INACTIVE_CUTOFF;
-#endif
-
-#ifdef DIPOLES
-    auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
-#else
-    auto const dipole_cutoff = INACTIVE_CUTOFF;
-#endif
-
     detail::decide_distance(
         first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel),
-        VerletCriterion{skin, max_cut, coulomb_cutoff, dipole_cutoff,
-                        collision_detection_cutoff()});
+        std::forward<PairKernel>(pair_kernel), verlet_criterion);
 
     rebuild_verletlist = 0;
   } else {

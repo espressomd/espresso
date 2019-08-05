@@ -239,18 +239,6 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   torque2 = &_torque2;
 #endif
 
-  // Early exit if there is no interaction to calculate
-  // The exception for MMM2d is there, because the method assumes that
-  // pairs within a cell system layer but outside the cutoff are considered
-
-#ifdef ELECTROSTATICS
-  if (coulomb.method != COULOMB_MMM2D)
-#endif
-  {
-    if (dist > max_cut)
-      return;
-  }
-
   /***********************************************/
   /* bond creation and breaking                  */
   /***********************************************/
