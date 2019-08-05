@@ -191,13 +191,11 @@ int iccp3m_iteration(const ParticleRange &particles) {
 void force_calc_iccp3m() {
   init_forces_iccp3m();
 
-  short_range_loop(
-      Utils::NoOp{},
-      [](Particle &p1, Particle &p2, Distance &d) {
-        /* calc non bonded interactions */
-        add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21, sqrt(d.dist2),
-                                         d.dist2);
-      });
+  short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
+    /* calc non bonded interactions */
+    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21, sqrt(d.dist2),
+                                     d.dist2);
+  });
 
   Coulomb::calc_long_range_force();
 }

@@ -105,12 +105,12 @@ void decide_distance(CellIterator first, CellIterator last,
  *        any arguments.
  */
 struct True {
-      template<class... T>
-      bool operator()(T...) const { return true; }
-    };
+  template <class... T> bool operator()(T...) const { return true; }
+};
 } // namespace detail
 
-template <class ParticleKernel, class PairKernel, class VerletCriterion = detail::True>
+template <class ParticleKernel, class PairKernel,
+          class VerletCriterion = detail::True>
 void short_range_loop(ParticleKernel &&particle_kernel,
                       PairKernel &&pair_kernel,
                       const VerletCriterion &verlet_criterion = {}) {

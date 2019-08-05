@@ -26,19 +26,19 @@
 
 #include "statistics.hpp"
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "short_range_loop.hpp"
-#include "integrate.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/constants.hpp>
