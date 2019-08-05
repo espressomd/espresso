@@ -961,9 +961,9 @@ inline void lb_collide_stream() {
 #endif
 
   Lattice::index_t index = lblattice.halo_offset;
-  for (int z = 0; z < lblattice.grid[2]; z++) {
-    for (int y = 0; y < lblattice.grid[1]; y++) {
-      for (int x = 0; x < lblattice.grid[0]; x++) {
+  for (int z = 1; z <= lblattice.grid[2]; z++) {
+    for (int y = 1; y <= lblattice.grid[1]; y++) {
+      for (int x = 1; x <= lblattice.grid[0]; x++) {
 // as we only want to apply this to non-boundary nodes we can throw out
 // the if-clause if we have a non-bounded domain
 #ifdef LB_BOUNDARIES
@@ -1432,7 +1432,6 @@ lb_calc_local_momentum_density(Lattice::index_t index,
 }
 
 // Statistics in MD units.
-
 /** Calculate momentum of the LB fluid.
  * \param result Fluid momentum
  */

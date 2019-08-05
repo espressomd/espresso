@@ -145,7 +145,7 @@ extern HaloCommunicator update_halo_comm;
 
 void lb_realloc_fluid(boost::multi_array<double, 2> &lb_fluid_a,
                       boost::multi_array<double, 2> &lb_fluid_b,
-                      const Lattice::index_t halo_grid_volume,
+                      Lattice::index_t halo_grid_volume,
                       std::array<Utils::Span<double>, 19> &lb_fluid,
                       std::array<Utils::Span<double>, 19> &lb_fluid_post,
                       std::vector<LB_FluidNode> &lb_fields);
