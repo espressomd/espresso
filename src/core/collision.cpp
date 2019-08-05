@@ -99,7 +99,7 @@ bool validate_collision_parameters() {
     }
 
     // Cache square of cutoff
-    collision_params.distance2= Utils::sqr(collision_params.distance);
+    collision_params.distance2 = Utils::sqr(collision_params.distance);
 
     if (collision_params.distance > min_global_cut) {
       runtimeErrorMsg() << "The minimum global cutoff (System.min_global_cut) "

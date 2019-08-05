@@ -27,7 +27,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
-#include "collision.hpp" 
+#include "collision.hpp"
 #include "comfixed_global.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
@@ -110,8 +110,8 @@ void force_calc(CellStructure &cell_structure) {
     short_range_loop([](Particle &p) { add_single_particle_force(&p); },
                      [](Particle &p1, Particle &p2, Distance &d) {
 #ifdef COLLISION_DETECTION
-  if (collision_params.mode != COLLISION_MODE_OFF)
-    detect_collision(&p1, &p2, d.dist2);
+                       if (collision_params.mode != COLLISION_MODE_OFF)
+                         detect_collision(&p1, &p2, d.dist2);
 #endif
                        add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
                                                  sqrt(d.dist2), d.dist2);

@@ -254,7 +254,6 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   /* bond creation and breaking                  */
   /***********************************************/
 
-
 #ifdef AFFINITY
   /* affinity potential */
   // Prevent jump to non-inlined function
