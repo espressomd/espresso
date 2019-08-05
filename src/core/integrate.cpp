@@ -216,11 +216,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     thermo_cool_down();
 
-#ifdef COLLISION_DETECTION
-    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      handle_collisions();
-    }
-#endif
 
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
