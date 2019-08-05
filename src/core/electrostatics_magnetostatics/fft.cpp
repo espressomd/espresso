@@ -53,6 +53,7 @@ using Utils::get_linear_index;
 #define REQ_FFT_BACK 302
 /*@}*/
 
+namespace {
 /** This ugly function does the bookkeeping: which nodes have to
  *  communicate to each other, when you change the node grid.
  *  Changing the domain decomposition requires communication. This
@@ -68,21 +69,18 @@ using Utils::get_linear_index;
  *  other. see e.g. \ref calc_2d_grid in \ref grid.cpp for how to do
  *  this.).
  *
- * \param[in]  grid1       The node grid you start with.
- * \param[in]  grid2       The node grid you want to have.
- * \param[in]  node_list1  Linear node index list for grid1.
- * \param[out] node_list2  Linear node index list for grid2.
- * \param[out] group       Communication group (node identity list) for the
- *                         calling node.
- * \param[out] pos         Positions of the nodes in grid2
- * \param[out] my_pos      Position of comm.rank() in grid2.
- * \return Size of the communication group.
+ *  \param[in]  grid1       The node grid you start with.
+ *  \param[in]  grid2       The node grid you want to have.
+ *  \param[in]  node_list1  Linear node index list for grid1.
+ *  \param[out] node_list2  Linear node index list for grid2.
+ *  \param[out] pos         Positions of the nodes in grid2
+ *  \param[out] my_pos      Position of comm.rank() in grid2.
+ *  \return Size of the communication group.
  */
-namespace {
 boost::optional<std::vector<int>>
 find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
                  int const *node_list1, int *node_list2, int *pos, int *my_pos,
-                 const boost::mpi::communicator &comm) {
+                 boost::mpi::communicator const &comm) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];

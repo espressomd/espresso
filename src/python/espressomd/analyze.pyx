@@ -40,7 +40,7 @@ from .system import System
 from espressomd.utils import is_valid_type
 
 
-class Analysis(object):
+class Analysis:
 
     def __init__(self, system):
         if not isinstance(system, System):
@@ -125,7 +125,8 @@ class Analysis(object):
         Parameters
         ----------
         id : :obj:`int`, optional
-            Calculate distance to particle with :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
+            Calculate distance to particle with
+            :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
         pos : array of :obj:`float`, optional
             Calculate distance to position `pos`.
 
@@ -1184,8 +1185,8 @@ class Analysis(object):
 
         Parameters
         ----------
-        mode : :obj:`str`
-            One of ```read```, ```set``` or ```reset```.
+        mode : :obj:`str`, \{'read', 'set' or 'reset'\}
+            Mode.
         Vk1 : :obj:`float`
             Volume.
         Vk2 : :obj:`float`

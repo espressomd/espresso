@@ -17,7 +17,7 @@
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
-class Shape(object):
+class Shape:
     _so_bind_methods = ("calc_distance",)
 
 
@@ -30,18 +30,18 @@ class Cylinder(Shape, ScriptInterfaceHelper):
     Attributes
     ----------
     center : array_like :obj:`float`
-             Coordinates of the center of the cylinder.
+        Coordinates of the center of the cylinder.
     axis : array_like :obj:`float`
-           Axis of the cylinder.
+        Axis of the cylinder.
     radius : :obj:`float`
-             Radius of the cylinder.
+        Radius of the cylinder.
     length : :obj:`float`
-             Length of the cylinder.
+        Length of the cylinder.
     direction : :obj:`int`
-                Surface orientation, for +1 the normal points
-                out of the mantel, for -1 it points inward.
+        Surface orientation, for +1 the normal points
+        out of the mantel, for -1 it points inward.
     open : :obj:`bool`
-            cylinder is open or has caps.
+        cylinder is open or has caps.
 
     """
     _so_name = "Shapes::Cylinder"
@@ -59,14 +59,14 @@ class Ellipsoid(Shape, ScriptInterfaceHelper):
     Attributes
     ----------
     center : array_like :obj:`float`
-       Coordinates of the center of the ellipsoid.
+        Coordinates of the center of the ellipsoid.
     a : :obj:`float`
-       Semiaxis along the axis of rotational symmetry.
+        Semiaxis along the axis of rotational symmetry.
     b : :obj:`float`
-       Equatorial semiaxes.
+        Equatorial semiaxes.
     direction : :obj:`int`
-       Surface orientation, for +1 the normal points
-       out of the mantel, for -1 it points inward.
+        Surface orientation, for +1 the normal points
+        out of the mantel, for -1 it points inward.
     """
     _so_name = "Shapes::Ellipsoid"
 
@@ -114,10 +114,10 @@ class Rhomboid(Shape, ScriptInterfaceHelper):
     c : array_like :obj:`float`
         Third base vector.
     corner : array_like :obj:`float`
-             Lower left corner of the rhomboid.
+        Lower left corner of the rhomboid.
     direction : :obj:`int`
-                Surface orientation, for +1 the normal points
-                out of the mantel, for -1 it points inward.
+        Surface orientation, for +1 the normal points
+        out of the mantel, for -1 it points inward.
 
     """
     _so_name = "Shapes::Rhomboid"
@@ -154,12 +154,12 @@ class Sphere(Shape, ScriptInterfaceHelper):
     Attributes
     ----------
     center : array_like :obj:`float`
-             Center of the sphere
+        Center of the sphere
     radius : :obj:`float`
-             Radius of the sphere.
+        Radius of the sphere.
     direction : :obj:`int`
-                Surface orientation, for +1 the normal points
-                out of the mantel, for -1 it points inward.
+        Surface orientation, for +1 the normal points
+        out of the mantel, for -1 it points inward.
 
     """
     _so_name = "Shapes::Sphere"
@@ -174,16 +174,16 @@ class SpheroCylinder(Shape, ScriptInterfaceHelper):
     Attributes
     ----------
     center : array_like :obj:`float`
-             Coordinates of the center of the cylinder.
+        Coordinates of the center of the cylinder.
     axis : array_like :obj:`float`
-           Axis of the cylinder.
+        Axis of the cylinder.
     radius : :obj:`float`
-             Radius of the cylinder.
+        Radius of the cylinder.
     direction : :obj:`int`
-                Surface orientation, for +1 the normal points
-                out of the mantel, for -1 it points inward.
+        Surface orientation, for +1 the normal points
+        out of the mantel, for -1 it points inward.
     length : :obj:`float`
-             Length of the cylinder (not including the caps).
+        Length of the cylinder (not including the caps).
 
     """
     _so_name = "Shapes::SpheroCylinder"
@@ -222,16 +222,16 @@ class Torus(Shape, ScriptInterfaceHelper):
     Attributes
     ----------
     center : array_like :obj:`float`
-             Coordinates of the center of the torus.
+        Coordinates of the center of the torus.
     normal : array_like :obj:`float`
-           Normal axis of the torus.
+        Normal axis of the torus.
     radius : :obj:`float`
-             Radius of the torus.
+        Radius of the torus.
     tube_radius : :obj:`float`
-             Radius of the tube.
+        Radius of the tube.
     direction : :obj:`int`
-                Surface orientation, for +1 the normal points
-                out of the mantel, for -1 it points inward.
+        Surface orientation, for +1 the normal points
+        out of the mantel, for -1 it points inward.
 
     """
     _so_name = "Shapes::Torus"
@@ -246,9 +246,9 @@ class Wall(Shape, ScriptInterfaceHelper):
     Attributes
     ----------
     dist : :obj:`float`
-           Distance from the origin.
+        Distance from the origin.
     normal : array_like :obj:`int`
-             Normal vector of the plan (needs not to be length 1).
+        Normal vector of the plan (needs not to be length 1).
 
     """
     _so_name = "Shapes::Wall"
@@ -258,22 +258,22 @@ class Wall(Shape, ScriptInterfaceHelper):
 class SimplePore(Shape, ScriptInterfaceHelper):
 
     """
-    Two parallel infinite planes, and a cylindrical orfice connecting them.
+    Two parallel infinite planes, and a cylindrical channel connecting them.
     The cylinder and the planes are connected by torus segments with an
     adjustable radius.
 
     Attributes
     ----------
     radius: float
-       The radius of the pore.
+        The radius of the pore.
     length: float
-       The distance between the planes.
+        The distance between the planes.
     smoothing_radius: float
-       Radius of the torus segments
+        Radius of the torus segments
     axis: array_like
-       Axis of the cylinder and normal of the planes
+        Axis of the cylinder and normal of the planes
     center: array_like
-       Position of the center of the cylinder.
+        Position of the center of the cylinder.
 
     """
     _so_name = "Shapes::SimplePore"
