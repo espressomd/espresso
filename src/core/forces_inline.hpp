@@ -35,7 +35,6 @@
 #include "bonded_interactions/subt_lj.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
-#include "collision.hpp"
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
@@ -255,10 +254,6 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   /* bond creation and breaking                  */
   /***********************************************/
 
-#ifdef COLLISION_DETECTION
-  if (collision_params.mode != COLLISION_MODE_OFF)
-    detect_collision(p1, p2, dist);
-#endif
 
 #ifdef AFFINITY
   /* affinity potential */
