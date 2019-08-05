@@ -281,10 +281,7 @@ struct IA_parameters {
 #endif
 
 #ifdef TABULATED
-  /** \name Tabulated potential */
-  /*@{*/
   TabulatedPotential tab;
-  /*@}*/
 #endif
 
 #ifdef DPD
