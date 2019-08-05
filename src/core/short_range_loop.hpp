@@ -112,28 +112,35 @@ void short_range_loop(ParticleKernel &&particle_kernel,
 
   assert(get_resort_particles() == Cells::RESORT_NONE);
 
-  auto first = boost::make_indirect_iterator(local_cells.begin());
-  auto last = boost::make_indirect_iterator(local_cells.end());
+  if(cell_structure.min_range > 0.) {
+
+    auto first = boost::make_indirect_iterator(local_cells.begin());
+    auto last = boost::make_indirect_iterator(local_cells.end());
 
 #ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
+    auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
 #else
-  auto const coulomb_cutoff = INACTIVE_CUTOFF;
+    auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
+    auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
 #else
-  auto const dipole_cutoff = INACTIVE_CUTOFF;
+    auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
 
-  detail::decide_distance(
-      first, last, std::forward<ParticleKernel>(particle_kernel),
-      std::forward<PairKernel>(pair_kernel),
-      VerletCriterion{skin, max_cut, coulomb_cutoff, dipole_cutoff,
-                      collision_detection_cutoff()});
+    detail::decide_distance(
+        first, last, std::forward<ParticleKernel>(particle_kernel),
+        std::forward<PairKernel>(pair_kernel),
+        VerletCriterion{skin, max_cut, coulomb_cutoff, dipole_cutoff,
+                        collision_detection_cutoff()});
 
-  rebuild_verletlist = 0;
+    rebuild_verletlist = 0;
+  } else {
+    for(auto &p: cell_structure.local_cells().particles()) {
+      particle_kernel(p);
+    }
+  }
 }
 
 #endif
