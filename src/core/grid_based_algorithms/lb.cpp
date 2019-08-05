@@ -818,10 +818,10 @@ inline std::array<T, 19> lb_relax_modes(Lattice::index_t index,
 }
 
 template <typename T>
-inline std::array<T, 19> lb_thermalize_modes(Lattice::index_t index,
-                                             const std::array<T, 19> &modes,
-                                             const LB_Parameters &lb_parameters,
-                                             boost::optional<Utils::Counter<uint64_t>> rng_counter) {
+inline std::array<T, 19>
+lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes,
+                    const LB_Parameters &lb_parameters,
+                    boost::optional<Utils::Counter<uint64_t>> rng_counter) {
   if (lb_parameters.kT > 0.0) {
     using Utils::uniform;
     using rng_type = r123::Philox4x64;
@@ -925,11 +925,12 @@ std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
 }
 
 template <typename T>
-inline void
-lb_stream(LB_Fluid &lbfluid, Lattice::index_t index, const std::array<T, 19> &populations, const Lattice &lb_lattice) {
+inline void lb_stream(LB_Fluid &lbfluid, Lattice::index_t index,
+                      const std::array<T, 19> &populations,
+                      const Lattice &lb_lattice) {
   const std::array<int, 3> period = {
       {1, lb_lattice.halo_grid[0],
-          lb_lattice.halo_grid[0] * lb_lattice.halo_grid[1]}};
+       lb_lattice.halo_grid[0] * lb_lattice.halo_grid[1]}};
 
   for (int i = 0; i < populations.size(); i++) {
     auto const next = index + boost::inner_product(period, D3Q19::c[i], 0);
@@ -960,9 +961,9 @@ inline void lb_collide_stream() {
 #endif
 
   Lattice::index_t index = lblattice.halo_offset;
-  for (int z = 1; z <= lblattice.grid[2]; z++) {
-    for (int y = 1; y <= lblattice.grid[1]; y++) {
-      for (int x = 1; x <= lblattice.grid[0]; x++) {
+  for (int z = 0; z < lblattice.grid[2]; z++) {
+    for (int y = 0; y < lblattice.grid[1]; y++) {
+      for (int x = 0; x < lblattice.grid[0]; x++) {
 // as we only want to apply this to non-boundary nodes we can throw out
 // the if-clause if we have a non-bounded domain
 #ifdef LB_BOUNDARIES
