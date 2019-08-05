@@ -1578,12 +1578,15 @@ class openGLLive:
 
         # LOOK FOR LB ACTOR
         if self.specs['LB_draw_velocity_plane'] or self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
+            lb_types = [espressomd.lb.LBFluid]
+            IF CUDA:
+                lb_types.append(espressomd.lb.LBFluidGPU)
             for a in self.system.actors:
-                if isinstance(a, espressomd.lb.HydrodynamicInteraction):
+                if isinstance(a, tuple(lb_types)):
                     # if 'agrid' in pa:
                     self.lb_params = a.get_params()
                     self.lb = a
-                    self.lb_is_cpu = type(a) == espressomd.lb.LBFluid
+                    self.lb_is_cpu = isinstance(a, espressomd.lb.LBFluid)
                     break
 
         if self.specs['LB_draw_velocity_plane']:
