@@ -38,20 +38,20 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
   if (!data)
     return ES_ERROR;
 
-  data->GB.eps = eps;
-  data->GB.sig = sig;
-  data->GB.cut = cut;
-  data->GB.k1 = k1;
-  data->GB.k2 = k2;
-  data->GB.mu = mu;
-  data->GB.nu = nu;
+  data->gb.eps = eps;
+  data->gb.sig = sig;
+  data->gb.cut = cut;
+  data->gb.k1 = k1;
+  data->gb.k2 = k2;
+  data->gb.mu = mu;
+  data->gb.nu = nu;
 
   /* Calculate dependent parameters */
 
-  data->GB.chi1 =
-      ((data->GB.k1 * data->GB.k1) - 1) / ((data->GB.k1 * data->GB.k1) + 1);
-  data->GB.chi2 = (pow(data->GB.k2, (1 / data->GB.mu)) - 1) /
-                  (pow(data->GB.k2, (1 / data->GB.mu)) + 1);
+  data->gb.chi1 =
+          ((data->gb.k1 * data->gb.k1) - 1) / ((data->gb.k1 * data->gb.k1) + 1);
+  data->gb.chi2 = (pow(data->gb.k2, (1 / data->gb.mu)) - 1) /
+                  (pow(data->gb.k2, (1 / data->gb.mu)) + 1);
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

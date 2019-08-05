@@ -36,8 +36,7 @@ constexpr double INACTIVE_CUTOFF = -1.;
 /* Data Types */
 /************************************************************/
 
-/** \name Lennard-Jones with shift */
-/*@{*/
+/** Lennard-Jones with shift */
 struct LJ_Parameters {
   double eps = 0.0;
   double sig = 0.0;
@@ -46,20 +45,16 @@ struct LJ_Parameters {
   double offset = 0.0;
   double min = 0.0;
 };
-/*@}*/
 
-/** \name WCA potential */
-/*@{*/
+/** WCA potential */
 struct WCA_Parameters {
   double eps = 0.0;
   double sig = 0.0;
   double cut = INACTIVE_CUTOFF;
 };
-/*@}*/
 
-/** \name Generic Lennard-Jones with shift */
-/*@{*/
-struct LJGEN_Parameters {
+/** Generic Lennard-Jones with shift */
+struct LJGen_Parameters {
   double eps = 0.0;
   double sig = 0.0;
   double cut = INACTIVE_CUTOFF;
@@ -72,11 +67,9 @@ struct LJGEN_Parameters {
   double lambda1 = 1.0;
   double softrad = 0.0;
 };
-/*@}*/
 
-/** \name smooth step potential */
-/*@{*/
-struct SmSt_Parameters {
+/** smooth step potential */
+struct SmoothStep_Parameters {
   double eps = 0.0;
   double sig = 0.0;
   double cut = INACTIVE_CUTOFF;
@@ -84,27 +77,21 @@ struct SmSt_Parameters {
   int n = 0;
   double k0 = 0.0;
 };
-/*@}*/
 
-/** \name Hertzian potential */
-/*@{*/
+/** Hertzian potential */
 struct Hertzian_Parameters {
   double eps = 0.0;
   double sig = INACTIVE_CUTOFF;
 };
-/*@}*/
 
-/** \name Gaussian potential */
-/*@{*/
+/** Gaussian potential */
 struct Gaussian_Parameters {
   double eps = 0.0;
   double sig = 1.0;
   double cut = INACTIVE_CUTOFF;
 };
-/*@}*/
 
-/** \name BMHTF NaCl potential */
-/*@{*/
+/** BMHTF NaCl potential */
 struct BMHTF_Parameters {
   double A = 0.0;
   double B = 0.0;
@@ -114,10 +101,8 @@ struct BMHTF_Parameters {
   double cut = INACTIVE_CUTOFF;
   double computed_shift = 0.0;
 };
-/*@}*/
 
-/** \name Morse potential */
-/*@{*/
+/** Morse potential */
 struct Morse_Parameters {
   double eps = INACTIVE_CUTOFF;
   double alpha = INACTIVE_CUTOFF;
@@ -125,10 +110,8 @@ struct Morse_Parameters {
   double cut = INACTIVE_CUTOFF;
   double rest = INACTIVE_CUTOFF;
 };
-/*@}*/
 
-/** \name Buckingham potential */
-/*@{*/
+/** Buckingham potential */
 struct Buckingham_Parameters {
   double A = 0.0;
   double B = 0.0;
@@ -140,20 +123,16 @@ struct Buckingham_Parameters {
   double F1 = 0.0;
   double F2 = 0.0;
 };
-/*@}*/
 
-/** \name soft-sphere potential */
-/*@{*/
+/** soft-sphere potential */
 struct SoftSphere_Parameters {
   double a = 0.0;
   double n = 0.0;
   double cut = INACTIVE_CUTOFF;
   double offset = 0.0;
 };
-/*@}*/
 
-/** \name affinity potential */
-/*@{*/
+/** affinity potential */
 struct Affinity_Parameters {
   int type = -1;
   double kappa = INACTIVE_CUTOFF;
@@ -163,29 +142,23 @@ struct Affinity_Parameters {
   double maxBond = INACTIVE_CUTOFF;
   double cut = INACTIVE_CUTOFF;
 };
-/*@}*/
 
-/** \name membrane collision potential */
-/*@{*/
+/** membrane collision potential */
 struct Membrane_Parameters {
   double a = 0.0;
   double n = 0.0;
   double cut = INACTIVE_CUTOFF;
   double offset = 0.0;
 };
-/*@}*/
 
-/** \name hat potential */
-/*@{*/
-struct HAT_Parameters {
+/** hat potential */
+struct Hat_Parameters {
   double Fmax = 0.0;
   double r = INACTIVE_CUTOFF;
 };
-/*@}*/
 
-/** \name Lennard-Jones+Cos potential */
-/*@{*/
-struct LJCOS_Parameters {
+/** Lennard-Jones+Cos potential */
+struct LJcos_Parameters {
   double eps = 0.0;
   double sig = 0.0;
   double cut = INACTIVE_CUTOFF;
@@ -194,11 +167,9 @@ struct LJCOS_Parameters {
   double beta = 0.0;
   double rmin = 0.0;
 };
-/*@}*/
 
-/** \name Lennard-Jones with a different Cos potential */
-/*@{*/
-struct LJCOS2_Parameters {
+/** Lennard-Jones with a different Cos potential */
+struct LJcos2_Parameters {
   double eps = 0.0;
   double sig = 0.0;
   double cut = INACTIVE_CUTOFF;
@@ -206,10 +177,8 @@ struct LJCOS2_Parameters {
   double w = 0.0;
   double rchange = 0.0;
 };
-/*@}*/
 
-/** \name Gay-Berne potential */
-/*@{*/
+/** Gay-Berne potential */
 struct GayBerne_Parameters {
   double eps = 0.0;
   double sig = 0.0;
@@ -221,15 +190,12 @@ struct GayBerne_Parameters {
   double chi1 = 0.0;
   double chi2 = 0.0;
 };
-/*@}*/
 
-/** \name Thole potential */
-/*@{*/
-struct THOLE_Parameters {
+/** Thole potential */
+struct Thole_Parameters {
   double scaling_coeff;
   double q1q2;
 };
-/*@}*/
 
 /** Data structure containing the interaction parameters for non-bonded
  *  interactions.
@@ -259,23 +225,23 @@ struct IA_parameters {
   bool particlesInteract;
 
 #ifdef LENNARD_JONES_GENERIC
-  LJGEN_Parameters ljgen;
+  LJGen_Parameters ljgen;
 #endif
 
 #ifdef SMOOTH_STEP
-  SmSt_Parameters SmSt;
+  SmoothStep_Parameters smooth_step;
 #endif
 
 #ifdef HERTZIAN
-  Hertzian_Parameters Hertzian;
+  Hertzian_Parameters hertzian;
 #endif
 
 #ifdef GAUSSIAN
-  Gaussian_Parameters Gaussian;
+  Gaussian_Parameters gaussian;
 #endif
 
 #ifdef BMHTF_NACL
-  BMHTF_Parameters BMHTF;
+  BMHTF_Parameters bmhtf;
 #endif
 
 #ifdef MORSE
@@ -283,11 +249,11 @@ struct IA_parameters {
 #endif
 
 #ifdef BUCKINGHAM
-  Buckingham_Parameters BUCK;
+  Buckingham_Parameters buckingham;
 #endif
 
 #ifdef SOFT_SPHERE
-  SoftSphere_Parameters soft;
+  SoftSphere_Parameters soft_sphere;
 #endif
 
 #ifdef AFFINITY
@@ -299,25 +265,25 @@ struct IA_parameters {
 #endif
 
 #ifdef HAT
-  HAT_Parameters hat;
+  Hat_Parameters hat;
 #endif
 
 #ifdef LJCOS
-  LJCOS_Parameters ljcos;
+  LJcos_Parameters ljcos;
 #endif
 
 #ifdef LJCOS2
-  LJCOS2_Parameters ljcos2;
+  LJcos2_Parameters ljcos2;
 #endif
 
 #ifdef GAY_BERNE
-  GayBerne_Parameters GB;
+  GayBerne_Parameters gb;
 #endif
 
 #ifdef TABULATED
   /** \name Tabulated potential */
   /*@{*/
-  TabulatedPotential TAB;
+  TabulatedPotential tab;
   /*@}*/
 #endif
 
@@ -330,7 +296,7 @@ struct IA_parameters {
 #endif
 
 #ifdef THOLE
-  THOLE_Parameters thole;
+  Thole_Parameters thole;
 #endif
 };
 

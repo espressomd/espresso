@@ -41,16 +41,16 @@ inline void add_SmSt_pair_force(Particle const *const p1,
                                 IA_parameters const *const ia_params,
                                 Utils::Vector3d const &d, double dist,
                                 double dist2, Utils::Vector3d &force) {
-  if (dist >= ia_params->SmSt.cut) {
+  if (dist >= ia_params->smooth_step.cut) {
     return;
   }
 
-  auto const frac = ia_params->SmSt.d / dist;
-  auto const fracP = pow(frac, ia_params->SmSt.n);
-  auto const er = exp(2. * ia_params->SmSt.k0 * (dist - ia_params->SmSt.sig));
-  auto const fac = (ia_params->SmSt.n * fracP + 2. * ia_params->SmSt.eps *
-                                                    ia_params->SmSt.k0 * dist *
-                                                    er / Utils::sqr(1.0 + er)) /
+  auto const frac = ia_params->smooth_step.d / dist;
+  auto const fracP = pow(frac, ia_params->smooth_step.n);
+  auto const er = exp(2. * ia_params->smooth_step.k0 * (dist - ia_params->smooth_step.sig));
+  auto const fac = (ia_params->smooth_step.n * fracP + 2. * ia_params->smooth_step.eps *
+                                                       ia_params->smooth_step.k0 * dist *
+                                                       er / Utils::sqr(1.0 + er)) /
                    dist2;
   force += fac * d;
 }
@@ -61,14 +61,14 @@ inline double SmSt_pair_energy(Particle const *const p1,
                                IA_parameters const *const ia_params,
                                Utils::Vector3d const &d, double dist,
                                double dist2) {
-  if (dist >= ia_params->SmSt.cut) {
+  if (dist >= ia_params->smooth_step.cut) {
     return 0.0;
   }
 
-  auto const frac = ia_params->SmSt.d / dist;
-  auto const fracP = pow(frac, ia_params->SmSt.n);
-  auto const er = exp(2. * ia_params->SmSt.k0 * (dist - ia_params->SmSt.sig));
-  auto const fac = fracP + ia_params->SmSt.eps / (1.0 + er);
+  auto const frac = ia_params->smooth_step.d / dist;
+  auto const fracP = pow(frac, ia_params->smooth_step.n);
+  auto const er = exp(2. * ia_params->smooth_step.k0 * (dist - ia_params->smooth_step.sig));
+  auto const fac = fracP + ia_params->smooth_step.eps / (1.0 + er);
 
   return fac;
 }

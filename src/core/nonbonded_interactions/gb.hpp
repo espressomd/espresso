@@ -48,7 +48,7 @@ inline void add_gb_pair_force(Particle const *const p1,
   using Utils::int_pow;
   using Utils::sqr;
 
-  if (dist >= ia_params->GB.cut) {
+  if (dist >= ia_params->gb.cut) {
     return;
   }
 
@@ -57,25 +57,25 @@ inline void add_gb_pair_force(Particle const *const p1,
   auto const a = d * u1;
   auto const b = d * u2;
   auto const c = u1 * u2;
-  auto const E1 = 1 / sqrt(1 - ia_params->GB.chi1 * ia_params->GB.chi1 * c * c);
-  auto const Plus1 = (a + b) / (1 + ia_params->GB.chi1 * c);
-  auto const Plus2 = (a + b) / (1 + ia_params->GB.chi2 * c);
-  auto const Minus1 = (a - b) / (1 - ia_params->GB.chi1 * c);
-  auto const Minus2 = (a - b) / (1 - ia_params->GB.chi2 * c);
+  auto const E1 = 1 / sqrt(1 - ia_params->gb.chi1 * ia_params->gb.chi1 * c * c);
+  auto const Plus1 = (a + b) / (1 + ia_params->gb.chi1 * c);
+  auto const Plus2 = (a + b) / (1 + ia_params->gb.chi2 * c);
+  auto const Minus1 = (a - b) / (1 - ia_params->gb.chi1 * c);
+  auto const Minus2 = (a - b) / (1 - ia_params->gb.chi2 * c);
   auto const Brhi2 =
-      (ia_params->GB.chi2 / dist / dist) * (Plus2 * (a + b) + Minus2 * (a - b));
+          (ia_params->gb.chi2 / dist / dist) * (Plus2 * (a + b) + Minus2 * (a - b));
   auto const E2 = 1 - 0.5 * Brhi2;
-  auto const E = 4 * ia_params->GB.eps * pow(E1, ia_params->GB.nu) *
-                 pow(E2, ia_params->GB.mu);
+  auto const E = 4 * ia_params->gb.eps * pow(E1, ia_params->gb.nu) *
+                 pow(E2, ia_params->gb.mu);
   auto const Brhi1 =
-      (ia_params->GB.chi1 / dist / dist) * (Plus1 * (a + b) + Minus1 * (a - b));
-  auto const Sigma = ia_params->GB.sig / sqrt(1 - 0.5 * Brhi1);
-  auto Koef1 = ia_params->GB.mu / E2;
+          (ia_params->gb.chi1 / dist / dist) * (Plus1 * (a + b) + Minus1 * (a - b));
+  auto const Sigma = ia_params->gb.sig / sqrt(1 - 0.5 * Brhi1);
+  auto Koef1 = ia_params->gb.mu / E2;
   auto Koef2 = int_pow<3>(Sigma) * 0.5;
 
-  auto const X = ia_params->GB.sig / (dist - Sigma + ia_params->GB.sig);
+  auto const X = ia_params->gb.sig / (dist - Sigma + ia_params->gb.sig);
   auto const Xcut =
-      ia_params->GB.sig / (ia_params->GB.cut - Sigma + ia_params->GB.sig);
+          ia_params->gb.sig / (ia_params->gb.cut - Sigma + ia_params->gb.sig);
 
   if (X < 1.25) { /* 1.25 corresponds to the interparticle penetration of 0.2
                     units of length.
@@ -96,8 +96,8 @@ inline void add_gb_pair_force(Particle const *const p1,
                        (Koef1 * Brhi2 * (Brack - BrackCut) -
                         Koef2 * Brhi1 * (Bra12 - Bra12Cut) - Bra12 * dist) /
                        sqr(dist);
-    Koef1 *= ia_params->GB.chi2 / sqr(dist);
-    Koef2 *= ia_params->GB.chi1 / sqr(dist);
+    Koef1 *= ia_params->gb.chi2 / sqr(dist);
+    Koef2 *= ia_params->gb.chi1 / sqr(dist);
     auto const dU_da = E * (Koef1 * (Minus2 + Plus2) * (BrackCut - Brack) +
                             Koef2 * (Plus1 + Minus1) * (Bra12 - Bra12Cut));
     auto const dU_db = E * (Koef1 * (Minus2 - Plus2) * (Brack - BrackCut) +
@@ -105,10 +105,10 @@ inline void add_gb_pair_force(Particle const *const p1,
     auto const dU_dc =
         E *
         ((Brack - BrackCut) *
-             (ia_params->GB.nu * sqr(E1 * ia_params->GB.chi1) * c +
-              0.5 * Koef1 * ia_params->GB.chi2 * (sqr(Plus2) - sqr(Minus2))) -
-         (Bra12 - Bra12Cut) * 0.5 * Koef2 * ia_params->GB.chi1 *
-             (sqr(Plus1) - sqr(Minus1)));
+             (ia_params->gb.nu * sqr(E1 * ia_params->gb.chi1) * c +
+              0.5 * Koef1 * ia_params->gb.chi2 * (sqr(Plus2) - sqr(Minus2))) -
+         (Bra12 - Bra12Cut) * 0.5 * Koef2 * ia_params->gb.chi1 *
+         (sqr(Plus1) - sqr(Minus1)));
 
     /*--------------------------------------------------------------------*/
 
@@ -137,16 +137,16 @@ inline double gb_pair_energy(Particle const *const p1, Particle const *const p2,
   using Utils::int_pow;
   using Utils::sqr;
 
-  if (dist >= ia_params->GB.cut) {
+  if (dist >= ia_params->gb.cut) {
     return 0.0;
   }
 
-  auto const e0 = ia_params->GB.eps;
-  auto const s0 = ia_params->GB.sig;
-  auto const chi1 = ia_params->GB.chi1;
-  auto const chi2 = ia_params->GB.chi2;
-  auto const mu = ia_params->GB.mu;
-  auto const nu = ia_params->GB.nu;
+  auto const e0 = ia_params->gb.eps;
+  auto const s0 = ia_params->gb.sig;
+  auto const chi1 = ia_params->gb.chi1;
+  auto const chi2 = ia_params->gb.chi2;
+  auto const mu = ia_params->gb.mu;
+  auto const nu = ia_params->gb.nu;
   auto const r = Utils::Vector3d({d[0], d[1], d[2]}).normalize();
 
   auto const ui = p1->r.calc_director();
@@ -172,7 +172,7 @@ inline double gb_pair_energy(Particle const *const p1, Particle const *const p2,
     return 4. * e * (int_pow<12>(1. / r) - int_pow<6>(1. / r));
   };
 
-  return E(r_eff(dist)) - E(r_eff(ia_params->GB.cut));
+  return E(r_eff(dist)) - E(r_eff(ia_params->gb.cut));
 }
 
 #endif

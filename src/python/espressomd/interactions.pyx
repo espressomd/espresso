@@ -784,13 +784,13 @@ IF GAY_BERNE:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.GB.eps,
-                "sig": ia_params.GB.sig,
-                "cut": ia_params.GB.cut,
-                "k1": ia_params.GB.k1,
-                "k2": ia_params.GB.k2,
-                "mu": ia_params.GB.mu,
-                "nu": ia_params.GB.nu}
+                "eps": ia_params.gb.eps,
+                "sig": ia_params.gb.sig,
+                "cut": ia_params.gb.cut,
+                "k1": ia_params.gb.k1,
+                "k2": ia_params.gb.k2,
+                "mu": ia_params.gb.mu,
+                "nu": ia_params.gb.nu}
 
         def is_active(self):
             """Check if interaction is active.
@@ -964,12 +964,12 @@ IF SMOOTH_STEP == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "d": ia_params.SmSt.d,
-                "n": ia_params.SmSt.n,
-                "eps": ia_params.SmSt.eps,
-                "k0": ia_params.SmSt.k0,
-                "sig": ia_params.SmSt.sig,
-                "cutoff": ia_params.SmSt.cut
+                "d": ia_params.smooth_step.d,
+                "n": ia_params.smooth_step.n,
+                "eps": ia_params.smooth_step.eps,
+                "k0": ia_params.smooth_step.k0,
+                "sig": ia_params.smooth_step.sig,
+                "cutoff": ia_params.smooth_step.cut
             }
 
         def is_active(self):
@@ -1066,12 +1066,12 @@ IF BMHTF_NACL == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "a": ia_params.BMHTF.A,
-                "b": ia_params.BMHTF.B,
-                "c": ia_params.BMHTF.C,
-                "d": ia_params.BMHTF.D,
-                "sig": ia_params.BMHTF.sig,
-                "cutoff": ia_params.BMHTF.cut,
+                "a": ia_params.bmhtf.A,
+                "b": ia_params.bmhtf.B,
+                "c": ia_params.bmhtf.C,
+                "d": ia_params.bmhtf.D,
+                "sig": ia_params.bmhtf.sig,
+                "cutoff": ia_params.bmhtf.cut,
             }
 
         def is_active(self):
@@ -1258,13 +1258,13 @@ IF BUCKINGHAM == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "a": ia_params.BUCK.A,
-                "b": ia_params.BUCK.B,
-                "c": ia_params.BUCK.C,
-                "d": ia_params.BUCK.D,
-                "cutoff": ia_params.BUCK.cut,
-                "discont": ia_params.BUCK.discont,
-                "shift": ia_params.BUCK.shift
+                "a": ia_params.buckingham.A,
+                "b": ia_params.buckingham.B,
+                "c": ia_params.buckingham.C,
+                "d": ia_params.buckingham.D,
+                "cutoff": ia_params.buckingham.cut,
+                "discont": ia_params.buckingham.discont,
+                "shift": ia_params.buckingham.shift
             }
 
         def is_active(self):
@@ -1363,10 +1363,10 @@ IF SOFT_SPHERE == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "a": ia_params.soft.a,
-                "n": ia_params.soft.n,
-                "cutoff": ia_params.soft.cut,
-                "offset": ia_params.soft.offset
+                "a": ia_params.soft_sphere.a,
+                "n": ia_params.soft_sphere.n,
+                "cutoff": ia_params.soft_sphere.cut,
+                "offset": ia_params.soft_sphere.offset
             }
 
         def is_active(self):
@@ -1567,8 +1567,8 @@ IF HERTZIAN == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.Hertzian.eps,
-                "sig": ia_params.Hertzian.sig
+                "eps": ia_params.hertzian.eps,
+                "sig": ia_params.hertzian.sig
             }
 
         def is_active(self):
@@ -1647,9 +1647,9 @@ IF GAUSSIAN == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.Gaussian.eps,
-                "sig": ia_params.Gaussian.sig,
-                "cutoff": ia_params.Gaussian.cut
+                "eps": ia_params.gaussian.eps,
+                "sig": ia_params.gaussian.sig,
+                "cutoff": ia_params.gaussian.cut
             }
 
         def is_active(self):
@@ -1679,7 +1679,7 @@ IF GAUSSIAN == 1:
             """Name of interaction type.
 
             """
-            return "Gaussian"
+            return "gaussian"
 
         def set_params(self, **kwargs):
             """
@@ -2749,10 +2749,10 @@ IF TABULATED == 1:
                 self._part_types[0],
                 self._part_types[1])
 
-            return {'min': ia_params.TAB.minval,
-                    'max': ia_params.TAB.maxval,
-                    'energy': ia_params.TAB.energy_tab,
-                    'force': ia_params.TAB.force_tab}
+            return {'min': ia_params.tab.minval,
+                    'max': ia_params.tab.maxval,
+                    'energy': ia_params.tab.energy_tab,
+                    'force': ia_params.tab.force_tab}
 
         def _set_params_in_es_core(self):
             self.state = tabulated_set_params(self._part_types[0],

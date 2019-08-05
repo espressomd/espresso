@@ -59,7 +59,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double sig
         double cut
 
-    cdef struct LJGEN_Parameters:
+    cdef struct LJGen_Parameters:
         double eps
         double sig
         double cut
@@ -72,7 +72,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double lambda1
         double softrad
 
-    cdef struct SmSt_Parameters:
+    cdef struct SmoothStep_Parameters:
         double eps
         double sig
         double cut
@@ -137,17 +137,17 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double cut
         double offset
 
-    cdef struct HAT_Parameters:
+    cdef struct Hat_Parameters:
         double Fmax
         double r
 
-    cdef struct LJCOS_Parameters:
+    cdef struct LJcos_Parameters:
         double eps
         double sig
         double cut
         double offset
 
-    cdef struct LJCOS2_Parameters:
+    cdef struct LJcos2_Parameters:
         double eps
         double sig
         double offset
@@ -162,7 +162,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double mu
         double nu
 
-    cdef struct THOLE_Parameters:
+    cdef struct Thole_Parameters:
         double scaling_coeff
         double q1q2
 
@@ -171,40 +171,40 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         WCA_Parameters wca
 
-        LJCOS_Parameters ljcos
+        LJcos_Parameters ljcos
 
-        LJCOS2_Parameters ljcos2
+        LJcos2_Parameters ljcos2
 
-        LJGEN_Parameters ljgen
+        LJGen_Parameters ljgen
 
         Affinity_Parameters affinity
 
         Membrane_Parameters membrane
 
-        SoftSphere_Parameters soft
+        SoftSphere_Parameters soft_sphere
 
-        TabulatedPotential TAB
+        TabulatedPotential tab
 
-        GayBerne_Parameters GB
+        GayBerne_Parameters gb
 
-        SmSt_Parameters SmSt
+        SmoothStep_Parameters smooth_step
 
-        BMHTF_Parameters BMHTF
+        BMHTF_Parameters bmhtf
 
         Morse_Parameters morse
 
-        Buckingham_Parameters BUCK
+        Buckingham_Parameters buckingham
 
-        Hertzian_Parameters Hertzian
+        Hertzian_Parameters hertzian
 
-        Gaussian_Parameters Gaussian
+        Gaussian_Parameters gaussian
 
         DPDParameters dpd_radial
         DPDParameters dpd_trans
 
-        HAT_Parameters hat
+        Hat_Parameters hat
 
-        THOLE_Parameters thole
+        Thole_Parameters thole
 
     cdef IA_parameters * get_ia_param(int i, int j)
     cdef IA_parameters * get_ia_param_safe(int i, int j)

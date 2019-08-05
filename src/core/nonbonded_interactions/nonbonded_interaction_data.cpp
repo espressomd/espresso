@@ -187,23 +187,23 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef SMOOTH_STEP
-      if (max_cut_current < data->SmSt.cut)
-        max_cut_current = data->SmSt.cut;
+      if (max_cut_current < data->smooth_step.cut)
+        max_cut_current = data->smooth_step.cut;
 #endif
 
 #ifdef HERTZIAN
-      if (max_cut_current < data->Hertzian.sig)
-        max_cut_current = data->Hertzian.sig;
+      if (max_cut_current < data->hertzian.sig)
+        max_cut_current = data->hertzian.sig;
 #endif
 
 #ifdef GAUSSIAN
-      if (max_cut_current < data->Gaussian.cut)
-        max_cut_current = data->Gaussian.cut;
+      if (max_cut_current < data->gaussian.cut)
+        max_cut_current = data->gaussian.cut;
 #endif
 
 #ifdef BMHTF_NACL
-      if (max_cut_current < data->BMHTF.cut)
-        max_cut_current = data->BMHTF.cut;
+      if (max_cut_current < data->bmhtf.cut)
+        max_cut_current = data->bmhtf.cut;
 #endif
 
 #ifdef MORSE
@@ -212,13 +212,13 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef BUCKINGHAM
-      if (max_cut_current < data->BUCK.cut)
-        max_cut_current = data->BUCK.cut;
+      if (max_cut_current < data->buckingham.cut)
+        max_cut_current = data->buckingham.cut;
 #endif
 
 #ifdef SOFT_SPHERE
-      if (max_cut_current < (data->soft.cut + data->soft.offset))
-        max_cut_current = (data->soft.cut + data->soft.offset);
+      if (max_cut_current < (data->soft_sphere.cut + data->soft_sphere.offset))
+        max_cut_current = (data->soft_sphere.cut + data->soft_sphere.offset);
 #endif
 
 #ifdef AFFINITY
@@ -253,12 +253,12 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef GAY_BERNE
-      if (max_cut_current < data->GB.cut)
-        max_cut_current = data->GB.cut;
+      if (max_cut_current < data->gb.cut)
+        max_cut_current = data->gb.cut;
 #endif
 
 #ifdef TABULATED
-      max_cut_current = std::max(max_cut_current, data->TAB.cutoff());
+      max_cut_current = std::max(max_cut_current, data->tab.cutoff());
 #endif
 
 #ifdef THOLE
