@@ -61,9 +61,10 @@ inline void add_buck_pair_force(Particle const *const p1,
              less than cutoff (true Buckingham region) */
     double fac;
     if (dist > ia_params->buckingham.discont) {
-      fac = buck_force_r(ia_params->buckingham.A, ia_params->buckingham.B,
-                         ia_params->buckingham.C, ia_params->buckingham.D, dist) /
-            dist;
+      fac =
+          buck_force_r(ia_params->buckingham.A, ia_params->buckingham.B,
+                       ia_params->buckingham.C, ia_params->buckingham.D, dist) /
+          dist;
       force += fac * d;
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)

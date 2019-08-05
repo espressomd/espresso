@@ -49,7 +49,7 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
   /* Calculate dependent parameters */
 
   data->gb.chi1 =
-          ((data->gb.k1 * data->gb.k1) - 1) / ((data->gb.k1 * data->gb.k1) + 1);
+      ((data->gb.k1 * data->gb.k1) - 1) / ((data->gb.k1 * data->gb.k1) + 1);
   data->gb.chi2 = (pow(data->gb.k2, (1 / data->gb.mu)) - 1) /
                   (pow(data->gb.k2, (1 / data->gb.mu)) + 1);
 

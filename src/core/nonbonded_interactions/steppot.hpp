@@ -47,11 +47,13 @@ inline void add_SmSt_pair_force(Particle const *const p1,
 
   auto const frac = ia_params->smooth_step.d / dist;
   auto const fracP = pow(frac, ia_params->smooth_step.n);
-  auto const er = exp(2. * ia_params->smooth_step.k0 * (dist - ia_params->smooth_step.sig));
-  auto const fac = (ia_params->smooth_step.n * fracP + 2. * ia_params->smooth_step.eps *
-                                                       ia_params->smooth_step.k0 * dist *
-                                                       er / Utils::sqr(1.0 + er)) /
-                   dist2;
+  auto const er =
+      exp(2. * ia_params->smooth_step.k0 * (dist - ia_params->smooth_step.sig));
+  auto const fac =
+      (ia_params->smooth_step.n * fracP + 2. * ia_params->smooth_step.eps *
+                                              ia_params->smooth_step.k0 * dist *
+                                              er / Utils::sqr(1.0 + er)) /
+      dist2;
   force += fac * d;
 }
 
@@ -67,7 +69,8 @@ inline double SmSt_pair_energy(Particle const *const p1,
 
   auto const frac = ia_params->smooth_step.d / dist;
   auto const fracP = pow(frac, ia_params->smooth_step.n);
-  auto const er = exp(2. * ia_params->smooth_step.k0 * (dist - ia_params->smooth_step.sig));
+  auto const er =
+      exp(2. * ia_params->smooth_step.k0 * (dist - ia_params->smooth_step.sig));
   auto const fac = fracP + ia_params->smooth_step.eps / (1.0 + er);
 
   return fac;

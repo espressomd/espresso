@@ -63,7 +63,9 @@ inline void add_soft_pair_force(Particle const *const p1,
     /* normal case: resulting force/energy smaller than zero. */
     auto const r_off = dist - ia_params->soft_sphere.offset;
     if (r_off > 0.0) {
-      fac = soft_force_r(ia_params->soft_sphere.a, ia_params->soft_sphere.n, r_off) / dist;
+      fac = soft_force_r(ia_params->soft_sphere.a, ia_params->soft_sphere.n,
+                         r_off) /
+            dist;
       force += fac * d;
 
 #ifdef LJ_WARN_WHEN_CLOSE
@@ -97,7 +99,8 @@ inline double soft_pair_energy(Particle const *const p1,
   if (dist < (ia_params->soft_sphere.cut + ia_params->soft_sphere.offset)) {
     auto const r_off = dist - ia_params->soft_sphere.offset;
     /* normal case: resulting force/energy smaller than zero. */
-    return soft_energy_r(ia_params->soft_sphere.a, ia_params->soft_sphere.n, r_off);
+    return soft_energy_r(ia_params->soft_sphere.a, ia_params->soft_sphere.n,
+                         r_off);
   }
   return 0.0;
 }

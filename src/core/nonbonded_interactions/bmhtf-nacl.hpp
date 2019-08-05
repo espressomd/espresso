@@ -44,9 +44,9 @@ inline void add_BMHTF_pair_force(Particle const *const p1,
   if (dist < ia_params->bmhtf.cut) {
     auto const pw8 = dist2 * dist2 * dist2 * dist2;
     auto const fac =
-            ia_params->bmhtf.A * ia_params->bmhtf.B *
+        ia_params->bmhtf.A * ia_params->bmhtf.B *
             exp(ia_params->bmhtf.B * (ia_params->bmhtf.sig - dist)) / dist -
-            6 * ia_params->bmhtf.C / pw8 - 8 * ia_params->bmhtf.D / pw8 / dist2;
+        6 * ia_params->bmhtf.C / pw8 - 8 * ia_params->bmhtf.D / pw8 / dist2;
     force += fac * d;
   }
 }
@@ -60,7 +60,7 @@ inline double BMHTF_pair_energy(Particle const *const p1,
   if (dist < ia_params->bmhtf.cut) {
     auto const pw6 = dist2 * dist2 * dist2;
     return ia_params->bmhtf.A *
-           exp(ia_params->bmhtf.B * (ia_params->bmhtf.sig - dist)) -
+               exp(ia_params->bmhtf.B * (ia_params->bmhtf.sig - dist)) -
            ia_params->bmhtf.C / pw6 - ia_params->bmhtf.D / pw6 / dist2 +
            ia_params->bmhtf.computed_shift;
   }

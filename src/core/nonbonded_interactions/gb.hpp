@@ -63,19 +63,19 @@ inline void add_gb_pair_force(Particle const *const p1,
   auto const Minus1 = (a - b) / (1 - ia_params->gb.chi1 * c);
   auto const Minus2 = (a - b) / (1 - ia_params->gb.chi2 * c);
   auto const Brhi2 =
-          (ia_params->gb.chi2 / dist / dist) * (Plus2 * (a + b) + Minus2 * (a - b));
+      (ia_params->gb.chi2 / dist / dist) * (Plus2 * (a + b) + Minus2 * (a - b));
   auto const E2 = 1 - 0.5 * Brhi2;
   auto const E = 4 * ia_params->gb.eps * pow(E1, ia_params->gb.nu) *
                  pow(E2, ia_params->gb.mu);
   auto const Brhi1 =
-          (ia_params->gb.chi1 / dist / dist) * (Plus1 * (a + b) + Minus1 * (a - b));
+      (ia_params->gb.chi1 / dist / dist) * (Plus1 * (a + b) + Minus1 * (a - b));
   auto const Sigma = ia_params->gb.sig / sqrt(1 - 0.5 * Brhi1);
   auto Koef1 = ia_params->gb.mu / E2;
   auto Koef2 = int_pow<3>(Sigma) * 0.5;
 
   auto const X = ia_params->gb.sig / (dist - Sigma + ia_params->gb.sig);
   auto const Xcut =
-          ia_params->gb.sig / (ia_params->gb.cut - Sigma + ia_params->gb.sig);
+      ia_params->gb.sig / (ia_params->gb.cut - Sigma + ia_params->gb.sig);
 
   if (X < 1.25) { /* 1.25 corresponds to the interparticle penetration of 0.2
                     units of length.
@@ -108,7 +108,7 @@ inline void add_gb_pair_force(Particle const *const p1,
              (ia_params->gb.nu * sqr(E1 * ia_params->gb.chi1) * c +
               0.5 * Koef1 * ia_params->gb.chi2 * (sqr(Plus2) - sqr(Minus2))) -
          (Bra12 - Bra12Cut) * 0.5 * Koef2 * ia_params->gb.chi1 *
-         (sqr(Plus1) - sqr(Minus1)));
+             (sqr(Plus1) - sqr(Minus1)));
 
     /*--------------------------------------------------------------------*/
 
