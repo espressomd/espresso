@@ -461,6 +461,10 @@ void cells_update_ghosts() {
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
 }
 
+void cells_collect_forces() {
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+}
+
 Cell *find_current_cell(const Particle &p) {
   assert(not resort_particles);
 

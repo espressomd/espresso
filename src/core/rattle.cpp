@@ -178,7 +178,7 @@ void correct_pos_shake(const ParticleRange &particles) {
     init_correction_vector(cell_structure.local_cells().particles());
     repeat_ = 0;
     compute_pos_corr_vec(&repeat_, cell_structure.local_cells().particles());
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    cells_collect_forces();
     app_pos_correction(particles);
     /**Ghost Positions Update*/
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
@@ -298,8 +298,8 @@ void correct_vel_shake(CellStructure &cell_structure) {
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(particles);
     repeat_ = 0;
-    compute_vel_corr_vec(&repeat_, cell_structure.local_cells().particles());
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    compute_vel_corr_vec(&repeat_, particles);
+    cells_collect_forces();
     apply_vel_corr(particles);
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     if (this_node == 0)

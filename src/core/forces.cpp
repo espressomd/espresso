@@ -152,16 +152,15 @@ void force_calc(CellStructure &cell_structure) {
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
   if (virtual_sites()->is_relative()) {
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    cells_collect_forces();
     init_forces_ghosts(cell_structure.ghost_cells().particles());
   }
   virtual_sites()->back_transfer_forces_and_torques();
 #endif
 
   // Communication Step: ghost forces
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  cells_collect_forces();
 
-  particles = cell_structure.local_cells().particles();
   // should be pretty late, since it needs to zero out the total force
   comfixed.apply(comm_cart, particles);
 

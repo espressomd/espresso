@@ -266,6 +266,7 @@ void cells_on_geometry_change(int flags);
  *  also a resorting of the particles takes place.
  */
 void cells_update_ghosts();
+void cells_collect_forces();
 
 /** Calculate and return the total number of particles on this node. */
 int cells_get_n_particles();
