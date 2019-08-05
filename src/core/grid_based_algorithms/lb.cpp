@@ -915,9 +915,9 @@ std::array<T, 19> normalize_modes(const std::array<T, 19> &modes) {
   return normalized_modes;
 }
 
-template <typename T, std::size_t N>
-std::array<T, N> lb_calc_n_from_m(const std::array<T, N> &modes) {
-  auto ret = Utils::matrix_vector_product<T, N, e_ki_transposed>(
+template <typename T>
+std::array<T, 19> lb_calc_n_from_m(const std::array<T, 19> &modes) {
+  auto ret = Utils::matrix_vector_product<T, 19, e_ki_transposed>(
       normalize_modes(modes));
   std::transform(ret.begin(), ret.end(), ::D3Q19::w.begin(), ret.begin(),
                  std::multiplies<T>());
@@ -925,11 +925,11 @@ std::array<T, N> lb_calc_n_from_m(const std::array<T, N> &modes) {
 }
 
 template <typename T>
-inline void lb_stream(LB_Fluid &lbfluid, Lattice::index_t index,
-                                      const std::array<T, 19> &populations) {
+inline void
+lb_stream(LB_Fluid &lbfluid, Lattice::index_t index, const std::array<T, 19> &populations, const Lattice &lb_lattice) {
   const std::array<int, 3> period = {
-      {1, lblattice.halo_grid[0],
-       lblattice.halo_grid[0] * lblattice.halo_grid[1]}};
+      {1, lb_lattice.halo_grid[0],
+          lb_lattice.halo_grid[0] * lb_lattice.halo_grid[1]}};
 
   for (int i = 0; i < populations.size(); i++) {
     auto const next = index + boost::inner_product(period, D3Q19::c[i], 0);
@@ -989,7 +989,7 @@ inline void lb_collide_stream() {
           auto const populations = lb_calc_n_from_m(modes_with_forces);
 
           /* transform back to populations and streaming */
-          lb_stream(lbfluid_post, index, populations);
+          lb_stream(lbfluid_post, index, populations, lblattice);
         }
 
         ++index; /* next node */
