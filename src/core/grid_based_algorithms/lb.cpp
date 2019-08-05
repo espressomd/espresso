@@ -821,14 +821,14 @@ template <typename T>
 inline std::array<T, 19> lb_thermalize_modes(Lattice::index_t index,
                                              const std::array<T, 19> &modes,
                                              const LB_Parameters &lb_parameters,
-                                             const uint64_t rng_counter_value) {
+                                             boost::optional<Utils::Counter<uint64_t>> rng_counter) {
   if (lb_parameters.kT > 0.0) {
     using Utils::uniform;
     using rng_type = r123::Philox4x64;
     using ctr_type = rng_type::ctr_type;
 
     const r123::Philox4x64::ctr_type c{
-        {rng_counter_value, static_cast<uint64_t>(RNGSalt::FLUID)}};
+        {rng_counter->value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
     const T rootdensity =
         std::sqrt(std::fabs(modes[0] + lb_parameters.density));
     auto const pref = std::sqrt(12.) * rootdensity;
@@ -977,7 +977,7 @@ inline void lb_collide_stream() {
 
           /* fluctuating hydrodynamics */
           auto const thermalized_modes = lb_thermalize_modes(
-              index, relaxed_modes, lbpar, rng_counter_fluid->value());
+              index, relaxed_modes, lbpar, rng_counter_fluid);
 
           /* apply forces */
           auto const modes_with_forces =
