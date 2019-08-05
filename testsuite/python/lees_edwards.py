@@ -117,9 +117,9 @@ class LeesEdwards(ut.TestCase):
                     system.integrator.run(1)
 
                     np.testing.assert_almost_equal(
-                        system.part[0].pos, expected_pos)
+                        np.copy(system.part[0].pos), expected_pos)
                     np.testing.assert_almost_equal(
-                        system.part[0].v, expected_vel)
+                        np.copy(system.part[0].v), expected_vel)
 
                     system.part.clear()
 
@@ -146,9 +146,9 @@ class LeesEdwards(ut.TestCase):
                     system.integrator.run(1)
 
                     np.testing.assert_almost_equal(
-                        system.part[0].pos, expected_pos)
+                        np.copy(system.part[0].pos), expected_pos)
                     np.testing.assert_almost_equal(
-                        system.part[0].v, expected_vel)
+                        np.copy(system.part[0].v), expected_vel)
 
                     system.part.clear()
 
