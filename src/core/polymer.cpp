@@ -97,9 +97,9 @@ bool is_valid_position(
           std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
       if (cs) {
         double d;
-        double v[3];
+        Utils::Vector3d v;
 
-        cs->calc_dist(folded_pos, &d, v);
+        cs->calc_dist(folded_pos, d, v);
 
         if (d <= 0) {
           return false;

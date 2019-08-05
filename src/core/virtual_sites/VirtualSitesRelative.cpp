@@ -179,7 +179,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
 
     // Pressure = 1/3 trace of stress tensor
     // but the 1/3 is applied somewhere else.
-    *pressure += (p.f.f[0] * d[0] + p.f.f[1] * d[1] + p.f.f[2] * d[2]);
+    *pressure += p.f.f * d;
   }
 }
 

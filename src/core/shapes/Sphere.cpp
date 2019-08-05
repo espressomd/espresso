@@ -28,30 +28,21 @@
 using namespace std;
 
 namespace Shapes {
-void Sphere::calculate_dist(const Utils::Vector3d &pos, double *dist,
-                            double *vec) const {
-  int i;
-  double fac, c_dist;
-
-  c_dist = 0.0;
-  for (i = 0; i < 3; i++) {
-    vec[i] = m_pos[i] - pos[i];
-    c_dist += Utils::sqr(vec[i]);
-  }
-  c_dist = sqrt(c_dist);
+void Sphere::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                            Utils::Vector3d &vec) const {
+  vec = m_pos - pos;
+  auto const c_dist = vec.norm();
 
   if (m_direction == -1) {
     /* apply force towards inside the sphere */
-    *dist = m_rad - c_dist;
-    fac = *dist / c_dist;
-    for (i = 0; i < 3; i++)
-      vec[i] *= fac;
+    dist = m_rad - c_dist;
+    auto const fac = dist / c_dist;
+    vec *= fac;
   } else {
     /* apply force towards outside the sphere */
-    *dist = c_dist - m_rad;
-    fac = *dist / c_dist;
-    for (i = 0; i < 3; i++)
-      vec[i] *= -fac;
+    dist = c_dist - m_rad;
+    auto const fac = dist / c_dist;
+    vec *= -fac;
   }
 }
 } // namespace Shapes
