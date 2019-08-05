@@ -336,12 +336,6 @@ class openGLLive:
         IF not ROTATION:
             self.specs['director_arrows'] = False
 
-        IF not CUDA:
-            self.specs['LB_draw_velocity_plane'] = False
-            self.specs['LB_draw_boundaries'] = False
-            self.specs['LB_draw_nodes'] = False
-            self.specs['LB_draw_node_boundaries'] = False
-
         IF not LB_BOUNDARIES and not LB_BOUNDARIES_GPU:
             self.specs['LB_draw_boundaries'] = False
             self.specs['LB_draw_node_boundaries'] = False
