@@ -925,15 +925,15 @@ std::array<T, N> lb_calc_n_from_m(const std::array<T, N> &modes) {
 }
 
 template <typename T>
-inline void lb_calc_n_from_modes_push(LB_Fluid &lbfluid, Lattice::index_t index,
-                                      const std::array<T, 19> &m) {
+inline void lb_stream(LB_Fluid &lbfluid, Lattice::index_t index,
+                                      const std::array<T, 19> &populations) {
   const std::array<int, 3> period = {
       {1, lblattice.halo_grid[0],
        lblattice.halo_grid[0] * lblattice.halo_grid[1]}};
-  auto const f = lb_calc_n_from_m(m);
-  for (int i = 0; i < 19; i++) {
+
+  for (int i = 0; i < populations.size(); i++) {
     auto const next = index + boost::inner_product(period, D3Q19::c[i], 0);
-    lbfluid[i][next] = f[i];
+    lbfluid[i][next] = populations[i];
   }
 }
 
@@ -986,8 +986,10 @@ inline void lb_collide_stream() {
           /* reset the force density */
           lbfields[index].force_density = lbpar.ext_force_density;
 
+          auto const populations = lb_calc_n_from_m(modes_with_forces);
+
           /* transform back to populations and streaming */
-          lb_calc_n_from_modes_push(lbfluid_post, index, modes_with_forces);
+          lb_stream(lbfluid_post, index, populations);
         }
 
         ++index; /* next node */
