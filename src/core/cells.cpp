@@ -413,8 +413,7 @@ void cells_resort_particles(int global_flag) {
 
 void cells_on_geometry_change(int flags) {
   /* Consider skin only if there are actually interactions */
-  auto const range = (max_cut > 0.) ?
-      max_cut + skin : INACTIVE_CUTOFF;
+  auto const range = (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
   cell_structure.min_range = range;
 
   switch (cell_structure.type) {

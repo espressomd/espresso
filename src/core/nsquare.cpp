@@ -76,9 +76,10 @@ void nsq_topology_init(CellPList *old) {
 
   /* This cell system supports any range that is compatible with
    * the geometry. */
-  for(int i = 0; i < 3; i++) {
-    cell_structure.max_range[i] = box_geo.periodic(i) ? 0.5 * box_geo.length()[i]
-                                : std::numeric_limits<double>::infinity();
+  for (int i = 0; i < 3; i++) {
+    cell_structure.max_range[i] = box_geo.periodic(i)
+                                      ? 0.5 * box_geo.length()[i]
+                                      : std::numeric_limits<double>::infinity();
   }
 
   realloc_cells(n_nodes);

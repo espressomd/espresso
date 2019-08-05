@@ -94,19 +94,12 @@ void energy_calc(double *result) {
 
   on_observable_calc();
 
-  // Execute short range loop if the cutoff is >0
-  if (max_cut > 0) {
-    short_range_loop(
-        [](Particle const &p) { add_single_particle_energy(&p); },
-        [](Particle const &p1, Particle const &p2, Distance const &d) {
-          add_non_bonded_pair_energy(&p1, &p2, d.vec21, sqrt(d.dist2), d.dist2);
-        });
-  } else {
-    // Otherwise, only do the single-particle contribution
-    for (auto &p : local_cells.particles()) {
-      add_single_particle_energy(&p);
-    }
-  }
+  short_range_loop(
+      [](Particle const &p) { add_single_particle_energy(&p); },
+      [](Particle const &p1, Particle const &p2, Distance const &d) {
+        add_non_bonded_pair_energy(&p1, &p2, d.vec21, sqrt(d.dist2), d.dist2);
+      });
+
   calc_long_range_energies();
 
   auto local_parts = local_cells.particles();

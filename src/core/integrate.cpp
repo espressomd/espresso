@@ -685,7 +685,8 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
     }
     /* maximal skin that can be used without resorting is the maximal
      * range of the cell system minus what is needed for interactions. */
-    skin = std::min(0.4 * max_cut, *boost::min_element(cell_structure.max_range) - max_cut);
+    skin = std::min(0.4 * max_cut,
+                    *boost::min_element(cell_structure.max_range) - max_cut);
     mpi_bcast_parameter(FIELD_SKIN);
   }
 

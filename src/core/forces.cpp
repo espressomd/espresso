@@ -104,19 +104,12 @@ void force_calc(CellStructure &cell_structure) {
 
   calc_long_range_forces();
 
-  // Only calculate pair forces if the maximum cutoff is >0
-  if (max_cut > 0) {
-    short_range_loop([](Particle &p) { add_single_particle_force(&p); },
-                     [](Particle &p1, Particle &p2, Distance &d) {
-                       add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
-                                                 sqrt(d.dist2), d.dist2);
-                     });
-  } else {
-    // Otherwise only do single-particle contributions
-    for (auto &p : particles) {
-      add_single_particle_force(&p);
-    }
-  }
+  short_range_loop([](Particle &p) { add_single_particle_force(&p); },
+                   [](Particle &p1, Particle &p2, Distance &d) {
+                     add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
+                                               sqrt(d.dist2), d.dist2);
+                   });
+
   Constraints::constraints.add_forces(particles, sim_time);
 
 #ifdef OIF_GLOBAL_FORCES

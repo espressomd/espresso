@@ -112,7 +112,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
 
   assert(get_resort_particles() == Cells::RESORT_NONE);
 
-  if(cell_structure.min_range > 0.) {
+  if (cell_structure.min_range > 0.) {
 
     auto first = boost::make_indirect_iterator(local_cells.begin());
     auto last = boost::make_indirect_iterator(local_cells.end());
@@ -137,7 +137,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
 
     rebuild_verletlist = 0;
   } else {
-    for(auto &p: cell_structure.local_cells().particles()) {
+    for (auto &p : cell_structure.local_cells().particles()) {
       particle_kernel(p);
     }
   }
