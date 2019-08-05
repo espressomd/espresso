@@ -85,14 +85,5 @@ class LBCPUMomentum(ut.TestCase, Momentum):
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
-
-@ut.skipIf(not espressomd.has_features(
-    ['LB_WALBERLA', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
-class LBWalberlaMomentum(ut.TestCase, Momentum):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
-
-
 if __name__ == "__main__":
     ut.main()
