@@ -168,7 +168,7 @@ int iccp3m_iteration(const ParticleRange &particles) {
       }
     } /* cell particles */
     /* Update charges on ghosts. */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_PROPRTS);
 
     iccp3m_cfg.citeration++;
 

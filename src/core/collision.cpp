@@ -679,8 +679,8 @@ void handle_collisions() {
 
     // If any node had a collision, all nodes need to resort
     if (!gathered_queue.empty()) {
+      on_particle_change();
       set_resort_particles(Cells::RESORT_GLOBAL);
-      cells_update_ghosts();
     }
   }    // are we in one of the vs_based methods
 #endif // defined VIRTUAL_SITES_RELATIVE

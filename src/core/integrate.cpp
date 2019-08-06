@@ -291,7 +291,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
     if (virtual_sites()->is_relative()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      cells_update_ghosts();
     }
     virtual_sites()->update();
 #endif
@@ -364,7 +364,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
   if (virtual_sites()->need_ghost_comm_before_vel_update()) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    cells_update_ghosts();
   }
   virtual_sites()->update(false); // Recalc positions = false
 #endif
