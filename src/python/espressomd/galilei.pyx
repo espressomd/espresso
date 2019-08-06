@@ -52,7 +52,7 @@ cdef class GalileiTransform:
 
         Returns
         -------
-        cms : 3-tuple of :obj:`float`
+        cms : (3,) array_like of :obj:`float`
               The of the center of mass position vector.
 
         """
@@ -65,7 +65,7 @@ cdef class GalileiTransform:
 
         Returns
         -------
-        cms_vel : 3-tuple of :obj:`float`
+        cms_vel : (3,) array_like of :obj:`float`
                   The of the center of mass velocity vector.
 
         """

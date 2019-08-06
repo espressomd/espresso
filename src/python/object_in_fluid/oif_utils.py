@@ -34,11 +34,11 @@ def get_triangle_normal(a, b, c):
 
     Parameters
     ----------
-    a : 3-tuple of :obj:`float`
+    a : (3,) array_like of :obj:`float`
           Point a
-    b : 3-tuple of of :obj:`float`
+    b : (3,) array_like of of :obj:`float`
           Point b
-    c : 3-tuple of :obj:`float`
+    c : (3,) array_like of :obj:`float`
           Point c
     """
     n = [0.0, 0.0, 0.0]
@@ -54,7 +54,7 @@ def norm(vect):
 
     Parameters
     ----------
-    vect : 3-tuple of :obj:`float`
+    vect : (3,) array_like of :obj:`float`
           Input vector
 
     """
@@ -68,9 +68,9 @@ def vec_distance(a, b):
 
     Parameters
     ----------
-    a : 3-tuple of :obj:`float`
+    a : (3,) array_like of :obj:`float`
           Point a
-    b : 3-tuple of :obj:`float`
+    b : (3,) array_like of :obj:`float`
           Point b
 
     """
@@ -84,11 +84,11 @@ def area_triangle(a, b, c):
 
     Parameters
     ----------
-    a : 3-tuple of :obj:`float`
+    a : (3,) array_like of :obj:`float`
           Point a
-    b : 3-tuple of :obj:`float`
+    b : (3,) array_like of :obj:`float`
           Point b
-    c : 3-tuple of :obj:`float`
+    c : (3,) array_like of :obj:`float`
           Point c
 
     """
@@ -103,13 +103,13 @@ def angle_btw_triangles(P1, P2, P3, P4):
 
     Parameters
     ----------
-    P1 : 3-tuple of :obj:`float`
+    P1 : (3,) array_like of :obj:`float`
           Point P1
-    P2 : 3-tuple of :obj:`float`
+    P2 : (3,) array_like of :obj:`float`
           Point P2
-    P3 : 3-tuple of :obj:`float`
+    P3 : (3,) array_like of :obj:`float`
           Point P3
-    P4 : 3-tuple of :obj:`float`
+    P4 : (3,) array_like of :obj:`float`
           Point P4
 
     """
@@ -178,9 +178,9 @@ def oif_calc_stretching_force(ks, pA, pB, dist0, dist):
     ----------
     ks : :obj:`float`
           coefficient of the stretching, spring stiffness
-    pA : 3-tuple of :obj:`float`
+    pA : (3,) array_like of :obj:`float`
           position of the first particle
-    pB : 3-tuple of :obj:`float`
+    pB : (3,) array_like of :obj:`float`
           position of the second particle
     dist0 : :obj:`float`
           relaxed distance btw particles
@@ -210,9 +210,9 @@ def oif_calc_linear_stretching_force(ks, pA, pB, dist0, dist):
     ----------
     ks : :obj:`float`
           coefficient of the stretching, spring stiffness
-    pA : 3-tuple of :obj:`float`
+    pA : (3,) array_like of :obj:`float`
           position of the first particle
-    pB : 3-tuple of :obj:`float`
+    pB : (3,) array_like of :obj:`float`
           position of the second particle
     dist0 : :obj:`float`
           relaxed distance btw particles
@@ -236,13 +236,13 @@ def oif_calc_bending_force(kb, pA, pB, pC, pD, phi0, phi):
     ----------
     kb : :obj:`float`
           coefficient of the stretching, spring stiffness
-    pA : 3-tuple of :obj:`float`
+    pA : (3,) array_like of :obj:`float`
           position of the first particle
-    pB : 3-tuple of :obj:`float`
+    pB : (3,) array_like of :obj:`float`
           position of the second particle
-    pC : 3-tuple of :obj:`float`
+    pC : (3,) array_like of :obj:`float`
           position of the third particle
-    pD : 3-tuple of :obj:`float`
+    pD : (3,) array_like of :obj:`float`
           position of the fourth particle
     phi0 : :obj:`float`
           relaxed angle btw two triangles
@@ -273,11 +273,11 @@ def oif_calc_local_area_force(kal, pA, pB, pC, A0, A):
     ----------
     kal : :obj:`float`
           coefficient of the stretching, spring stiffness
-    pA : 3-tuple of :obj:`float`
+    pA : (3,) array_like of :obj:`float`
           position of the first particle
-    pB : 3-tuple of :obj:`float`
+    pB : (3,) array_like of :obj:`float`
           position of the second particle
-    pC : 3-tuple of :obj:`float`
+    pC : (3,) array_like of :obj:`float`
           position of the third particle
     A0 : :obj:`float`
           relaxed area of the triangle
@@ -323,11 +323,11 @@ def oif_calc_global_area_force(kag, pA, pB, pC, Ag0, Ag):
     ----------
     kag : :obj:`float`
           coefficient of the stretching, spring stiffness
-    pA : 3-tuple of :obj:`float`
+    pA : (3,) array_like of :obj:`float`
           position of the first particle
-    pB : 3-tuple of :obj:`float`
+    pB : (3,) array_like of :obj:`float`
           position of the second particle
-    pC : 3-tuple of :obj:`float`
+    pC : (3,) array_like of :obj:`float`
           position of the third particle
     Ag0 : :obj:`float`
           relaxed surface area of the cell
@@ -371,11 +371,11 @@ def oif_calc_volume_force(kv, pA, pB, pC, V0, V):
     ----------
     kv : :obj:`float`
           coefficient of the stretching, spring stiffness
-    pA : 3-tuple of :obj:`float`
+    pA : (3,) array_like of :obj:`float`
           position of the first particle
-    pB : 3-tuple of :obj:`float`
+    pB : (3,) array_like of :obj:`float`
           position of the second particle
-    pC : 3-tuple of :obj:`float`
+    pC : (3,) array_like of :obj:`float`
           position of the third particle
     V0 : :obj:`float`
           relaxed volume of the cell
@@ -576,7 +576,7 @@ def output_vtk_pore(
 
     Parameters
     ----------
-    axis : 3-tuple of :obj:`float`
+    axis : (3,) array_like of :obj:`float`
           The axis
     length : :obj:`float`
           length of pore
@@ -590,7 +590,7 @@ def output_vtk_pore(
           inner right radius of pore
     smoothing_radius : :obj:`float`
           smoothing radius for surface connecting outer and inner radii of the pore
-    pos : 3-tuple of :obj:`float`
+    pos : (3,) array_like of :obj:`float`
           Position of the center of the pore
     m : :obj:`int`
           number of discretization sections

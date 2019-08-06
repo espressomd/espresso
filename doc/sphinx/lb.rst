@@ -75,8 +75,8 @@ the fluid thermalization::
 
     lbfluid = espressomd.lb.LBFluid(kT=1.0, seed=134, ...)
 
-The parameter ``ext_force_density`` takes a three dimensional vector as a
-3-tuple of :obj:`float`, representing a homogeneous external body force density in MD
+The parameter ``ext_force_density`` takes a three dimensional vector as an
+array_like of :obj:`float`, representing a homogeneous external body force density in MD
 units to be applied to the fluid. The parameter ``bulk_visc`` allows one to
 tune the bulk viscosity of the fluid and is given in MD units. In the limit of
 low Mach number, the flow does not compress the fluid and the resulting flow

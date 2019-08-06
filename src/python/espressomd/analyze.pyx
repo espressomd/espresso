@@ -285,9 +285,9 @@ class Analysis:
 
         Parameters
         ----------
-        center : 3-tuple of :obj:`float`
+        center : (3,) array_like of :obj:`float`
             Coordinates of the centre of the cylinder.
-        axis : 3-tuple of :obj:`float`
+        axis : (3,) array_like of :obj:`float`
             Axis vectory of the cylinder, does not need to be normalized.
         length : :obj:`float`
             Length of the cylinder.
@@ -743,7 +743,7 @@ class Analysis:
 
         Returns
         -------
-        4-tuple of :obj:`float`
+        (4,) array_like of :obj:`float`
             Where [0] is the mean end-to-end distance of chains and [1] its
             standard deviation, [2] the mean square end-to-end distance and
             [3] its standard deviation.
@@ -775,7 +775,7 @@ class Analysis:
 
         Returns
         -------
-        4-tuple of :obj:`float`
+        (4,) array_like of :obj:`float`
             Where [0] is the mean radius of gyration of the chains and [1] its
             standard deviation, [2] the mean square radius of gyration and [3]
             its standard deviation.
@@ -806,7 +806,7 @@ class Analysis:
 
         Returns
         -------
-        2-tuple of :obj:`float`:
+        (2,) array_like of :obj:`float`:
             Where [0] is the mean hydrodynamic radius of the chains
             and [1] its standard deviation.
 

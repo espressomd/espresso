@@ -139,7 +139,7 @@ cdef class Integrator:
             The external pressure.
         piston : :obj:`float`
             The mass of the applied piston.
-        direction : 3-tuple of :obj:`int`, optional
+        direction : (3,) array_like of :obj:`int`, optional
             Set the box geometry for non-cubic boxes.
         cubic_box : :obj:`bool`, optional
             If this optional parameter is true, a cubic box is assumed.

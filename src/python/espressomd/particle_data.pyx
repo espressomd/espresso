@@ -144,7 +144,7 @@ cdef class ParticleHandle:
         """
         The unwrapped (not folded into central box) particle position.
 
-        pos : 3-tuple of :obj:`float`
+        pos : (3,) array_like of :obj:`float`
             The particles's absolute position.
 
         """
@@ -166,7 +166,7 @@ cdef class ParticleHandle:
         """
         The wrapped (folded into central box) position vector of a particle.
 
-        pos : 3-tuple of :obj:`float`
+        pos : (3,) array_like of :obj:`float`
             The particles's position.
 
         .. note::
@@ -224,7 +224,7 @@ cdef class ParticleHandle:
         """
         The particle velocity in the lab frame.
 
-        v : 3-tuple of :obj:`float`
+        v : (3,) array_like of :obj:`float`
             The particles's velocity
 
         .. note::
@@ -249,7 +249,7 @@ cdef class ParticleHandle:
         """
         The instantaneous force acting on this particle.
 
-        f : 3-tuple of :obj:`float`
+        f : (3,) array_like of :obj:`float`
             The current forces on the particle
 
         .. note::
@@ -372,7 +372,7 @@ cdef class ParticleHandle:
             """
             The particle angular velocity the lab frame.
 
-            omega_lab : 3-tuple of :obj:`float`
+            omega_lab : (3,) array_like of :obj:`float`
                 The particle's angular velocity measured from the lab frame.
 
             .. note::
@@ -406,7 +406,7 @@ cdef class ParticleHandle:
             """
             Particle quaternion representation.
 
-            quat : 4-tuple of :obj:`float`
+            quat : (4,) array_like of :obj:`float`
                 Sets the quaternion representation of the
                 rotational position of this particle.
 
@@ -454,7 +454,7 @@ cdef class ParticleHandle:
             """
             The particle angular velocity in body frame.
 
-            omega_body : 3-tuple of :obj:`float`
+            omega_body : (3,) array_like of :obj:`float`
 
             This property sets the angular momentum of this particle in the
             particles co-rotating frame (or body frame).
@@ -482,7 +482,7 @@ cdef class ParticleHandle:
             """
             The particle torque in the lab frame.
 
-            torque_lab : 3-tuple of :obj:`float`
+            torque_lab : (3,) array_like of :obj:`float`
 
             This property defines the torque of this particle
             in the fixed frame (or laboratory frame).
@@ -518,7 +518,7 @@ cdef class ParticleHandle:
             """
             The particle rotational inertia.
 
-            rintertia : 3-tuple of :obj:`float`
+            rintertia : (3,) array_like of :obj:`float`
 
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
@@ -674,7 +674,7 @@ cdef class ParticleHandle:
             This quaternion describes the virtual particles orientation in the
             body fixed frame of the related real particle.
 
-            vs_quat : 4-tuple of :obj:`float`
+            vs_quat : (4,) array_like of :obj:`float`
 
             .. note::
                This needs the feature ``VIRTUAL_SITES_RELATIVE``.
@@ -754,7 +754,7 @@ cdef class ParticleHandle:
             """
             The orientation of the dipole axis.
 
-            dip : 3-tuple of :obj:`float`
+            dip : (3,) array_like of :obj:`float`
 
             .. note::
                This needs the feature ``DIPOLES``.
@@ -802,7 +802,7 @@ cdef class ParticleHandle:
             """
             An additional external force applied to the particle.
 
-            ext_force : 3-tuple of :obj:`float`
+            ext_force : (3,) array_like of :obj:`float`
 
             .. note::
                This needs the feature ``EXTERNAL_FORCES``.
@@ -833,7 +833,7 @@ cdef class ParticleHandle:
             """
             Fixes the particle motion in the specified cartesian directions.
 
-            fix : 3-tuple of :obj:`int`
+            fix : (3,) array_like of :obj:`int`
 
             Fixes the particle in space. By supplying a set of 3 integers as
             arguments it is possible to fix motion in x, y, or z coordinates
@@ -872,7 +872,7 @@ cdef class ParticleHandle:
                 """
                 An additional external torque is applied to the particle.
 
-                ext_torque : 3-tuple of :obj:`float`
+                ext_torque : (3,) array_like of :obj:`float`
 
                 ..  note::
                     * This torque is specified in the laboratory frame!
@@ -906,7 +906,7 @@ cdef class ParticleHandle:
                 """
                 The body-fixed frictional coefficient used in the the Langevin thermostat.
 
-                gamma : `float` or 3-tuple of :obj:`float`
+                gamma : `float` or (3,) array_like of :obj:`float`
 
                 .. note::
                     This needs features ``LANGEVIN_PER_PARTICLE`` and
@@ -970,7 +970,7 @@ cdef class ParticleHandle:
                     """
                     The particle translational frictional coefficient used in the Langevin thermostat.
 
-                    gamma_rot : :obj:`float` of 3-tuple of :obj:`float`
+                    gamma_rot : :obj:`float` of (3,) array_like of :obj:`float`
 
                     .. note::
                         This needs features ``LANGEVIN_PER_PARTICLE``,
@@ -1048,7 +1048,7 @@ cdef class ParticleHandle:
 
             The default is not to integrate any rotational degrees of freedom.
 
-            rotation : 3-tuple of :obj:`int`
+            rotation : (3,) array_like of :obj:`int`
 
             .. note::
                 This needs the feature ``ROTATION``.

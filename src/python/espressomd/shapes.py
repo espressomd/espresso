@@ -29,9 +29,9 @@ class Cylinder(Shape, ScriptInterfaceHelper):
 
     Attributes
     ----------
-    center : 3-tuple of :obj:`float`
+    center : (3,) array_like of :obj:`float`
         Coordinates of the center of the cylinder.
-    axis : 3-tuple of :obj:`float`
+    axis : (3,) array_like of :obj:`float`
         Axis of the cylinder.
     radius : :obj:`float`
         Radius of the cylinder.
@@ -58,7 +58,7 @@ class Ellipsoid(Shape, ScriptInterfaceHelper):
 
     Attributes
     ----------
-    center : 3-tuple of :obj:`float`
+    center : (3,) array_like of :obj:`float`
         Coordinates of the center of the ellipsoid.
     a : :obj:`float`
         Semiaxis along the axis of rotational symmetry.
@@ -85,9 +85,9 @@ class HollowCone(Shape, ScriptInterfaceHelper):
         Outer radius of the cone.
     opening_angle : :obj:`float`
         Opening angle of the cone (in rad).
-    axis : 3-tuple of :obj:`float`
+    axis : (3,) array_like of :obj:`float`
         Axis of symmetry, prescribes orientation of the cone.
-    center : 3-tuple of :obj:`float`
+    center : (3,) array_like of :obj:`float`
         Position of the cone.
     width : :obj:`float`
         Wall thickness of the cone.
@@ -107,13 +107,13 @@ class Rhomboid(Shape, ScriptInterfaceHelper):
 
     Attributes
     ----------
-    a : 3-tuple of :obj:`float`
+    a : (3,) array_like of :obj:`float`
         First base vector.
-    b : 3-tuple of :obj:`float`
+    b : (3,) array_like of :obj:`float`
         Second base vector.
-    c : 3-tuple of :obj:`float`
+    c : (3,) array_like of :obj:`float`
         Third base vector.
-    corner : 3-tuple of :obj:`float`
+    corner : (3,) array_like of :obj:`float`
         Lower left corner of the rhomboid.
     direction : :obj:`int`
         Surface orientation, for +1 the normal points
@@ -153,7 +153,7 @@ class Sphere(Shape, ScriptInterfaceHelper):
 
     Attributes
     ----------
-    center : 3-tuple of :obj:`float`
+    center : (3,) array_like of :obj:`float`
         Center of the sphere
     radius : :obj:`float`
         Radius of the sphere.
@@ -173,9 +173,9 @@ class SpheroCylinder(Shape, ScriptInterfaceHelper):
 
     Attributes
     ----------
-    center : 3-tuple of :obj:`float`
+    center : (3,) array_like of :obj:`float`
         Coordinates of the center of the cylinder.
-    axis : 3-tuple of :obj:`float`
+    axis : (3,) array_like of :obj:`float`
         Axis of the cylinder.
     radius : :obj:`float`
         Radius of the cylinder.
@@ -199,9 +199,9 @@ class Stomatocyte(Shape, ScriptInterfaceHelper):
         Inner radius of the stomatocyte.
     outer_radius : :obj:`float`
         Outer radius of the stomatocyte.
-    axis : 3-tuple of :obj:`float`
+    axis : (3,) array_like of :obj:`float`
         Symmetry axis, prescribing the orientation of the stomatocyte.
-    center : 3-tuple of :obj:`float`
+    center : (3,) array_like of :obj:`float`
         Position of the stomatocyte.
     layer_width : :obj:`float`
         Scaling parameter.
@@ -221,9 +221,9 @@ class Torus(Shape, ScriptInterfaceHelper):
     A torus shape.
     Attributes
     ----------
-    center : 3-tuple of :obj:`float`
+    center : (3,) array_like of :obj:`float`
         Coordinates of the center of the torus.
-    normal : 3-tuple of :obj:`float`
+    normal : (3,) array_like of :obj:`float`
         Normal axis of the torus.
     radius : :obj:`float`
         Radius of the torus.
@@ -247,7 +247,7 @@ class Wall(Shape, ScriptInterfaceHelper):
     ----------
     dist : :obj:`float`
         Distance from the origin.
-    normal : 3-tuple of :obj:`int`
+    normal : (3,) array_like of :obj:`int`
         Normal vector of the plane (needs not to be length 1).
 
     """
@@ -270,9 +270,9 @@ class SimplePore(Shape, ScriptInterfaceHelper):
         The distance between the planes.
     smoothing_radius: float
         Radius of the torus segments
-    axis: 3-tuple of :obj:`float`
+    axis: (3,) array_like of :obj:`float`
         Axis of the cylinder and normal of the planes
-    center: 3-tuple of :obj:`float`
+    center: (3,) array_like of :obj:`float`
         Position of the center of the cylinder.
 
     """
