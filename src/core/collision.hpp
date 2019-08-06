@@ -41,13 +41,15 @@
 class Collision_parameters {
 public:
   Collision_parameters()
-      : mode(COLLISION_MODE_OFF), distance(0.), bond_centers(-1), bond_vs(-1),
-        bond_three_particles(-1){};
+      : mode(COLLISION_MODE_OFF), distance(0.), distance2(0.), bond_centers(-1),
+        bond_vs(-1), bond_three_particles(-1){};
 
   /// collision handling mode, a combination of constants COLLISION_MODE_*
   int mode;
   /// distance at which particles are bound
   double distance;
+  // Square of distance at which particle are bound
+  double distance2;
 
   /// bond type used between centers of colliding particles
   int bond_centers;
@@ -119,8 +121,8 @@ inline bool glue_to_surface_criterion(const Particle *const p1,
 
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(const Particle *const p1, const Particle *const p2,
-                             const double &dist_betw_part) {
-  if (dist_betw_part > collision_params.distance)
+                             const double &dist_betw_part2) {
+  if (dist_betw_part2 > collision_params.distance2)
     return;
 
   // If we are in the glue to surface mode, check that the particles
