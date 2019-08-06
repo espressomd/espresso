@@ -331,9 +331,6 @@ void realloc_ia_params(int nsize);
 /** Calculate the maximal cutoff of all real space interactions.
  *  These are: bonded, non bonded + real space electrostatics.
  *  The result is stored in the global variable \ref max_cut.
- *  The maximal cutoff of the non-bonded + real space electrostatic
- *  interactions is stored in \ref max_cut_nonbonded. This
- *  value is used in the Verlet pair list algorithm.
  */
 void recalc_maximal_cutoff();
 
