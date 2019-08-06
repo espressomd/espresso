@@ -18,13 +18,13 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef STEPPOT_H
-#define STEPPOT_H
+#ifndef SMOOTHSTEP_H
+#define SMOOTHSTEP_H
 
 /** \file
  *  Routines to calculate the smooth step potential between particle pairs.
  *
- *  Implementation in \ref steppot.cpp.
+ *  Implementation in \ref smooth_step.cpp.
  */
 
 #include "nonbonded_interaction_data.hpp"

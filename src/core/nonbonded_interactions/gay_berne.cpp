@@ -20,9 +20,9 @@
 */
 /** \file
  *
- *  Implementation of \ref gb.hpp
+ *  Implementation of \ref gay_berne.hpp
  */
-#include "gb.hpp"
+#include "gay_berne.hpp"
 
 #ifdef GAY_BERNE
 #include "communication.hpp"
@@ -38,20 +38,20 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
   if (!data)
     return ES_ERROR;
 
-  data->gb.eps = eps;
-  data->gb.sig = sig;
-  data->gb.cut = cut;
-  data->gb.k1 = k1;
-  data->gb.k2 = k2;
-  data->gb.mu = mu;
-  data->gb.nu = nu;
+  data->gay_berne.eps = eps;
+  data->gay_berne.sig = sig;
+  data->gay_berne.cut = cut;
+  data->gay_berne.k1 = k1;
+  data->gay_berne.k2 = k2;
+  data->gay_berne.mu = mu;
+  data->gay_berne.nu = nu;
 
   /* Calculate dependent parameters */
 
-  data->gb.chi1 =
-      ((data->gb.k1 * data->gb.k1) - 1) / ((data->gb.k1 * data->gb.k1) + 1);
-  data->gb.chi2 = (pow(data->gb.k2, (1 / data->gb.mu)) - 1) /
-                  (pow(data->gb.k2, (1 / data->gb.mu)) + 1);
+  data->gay_berne.chi1 =
+      ((data->gay_berne.k1 * data->gay_berne.k1) - 1) / ((data->gay_berne.k1 * data->gay_berne.k1) + 1);
+  data->gay_berne.chi2 = (pow(data->gay_berne.k2, (1 / data->gay_berne.mu)) - 1) /
+                  (pow(data->gay_berne.k2, (1 / data->gay_berne.mu)) + 1);
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

@@ -20,9 +20,9 @@
 */
 /** \file
  *
- *  Implementation of \ref steppot.hpp
+ *  Implementation of \ref smooth_step.hpp
  */
-#include "steppot.hpp"
+#include "smooth_step.hpp"
 
 #ifdef SMOOTH_STEP
 #include "communication.hpp"

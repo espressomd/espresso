@@ -35,7 +35,7 @@
 #include "nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
-#include "nonbonded_interactions/gb.hpp"
+#include "nonbonded_interactions/gay_berne.hpp"
 #include "nonbonded_interactions/hat.hpp"
 #include "nonbonded_interactions/hertzian.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -45,7 +45,7 @@
 #include "nonbonded_interactions/morse.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
-#include "nonbonded_interactions/steppot.hpp"
+#include "nonbonded_interactions/smooth_step.hpp"
 #ifdef DIPOLAR_BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
 #endif
@@ -253,8 +253,8 @@ static void recalc_maximal_cutoff_nonbonded() {
 #endif
 
 #ifdef GAY_BERNE
-      if (max_cut_current < data->gb.cut)
-        max_cut_current = data->gb.cut;
+      if (max_cut_current < data->gay_berne.cut)
+        max_cut_current = data->gay_berne.cut;
 #endif
 
 #ifdef TABULATED

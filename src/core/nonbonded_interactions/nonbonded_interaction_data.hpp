@@ -277,7 +277,7 @@ struct IA_parameters {
 #endif
 
 #ifdef GAY_BERNE
-  GayBerne_Parameters gb;
+  GayBerne_Parameters gay_berne;
 #endif
 
 #ifdef TABULATED

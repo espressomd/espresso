@@ -185,7 +185,7 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 
         TabulatedPotential tab
 
-        GayBerne_Parameters gb
+        GayBerne_Parameters gay_berne
 
         SmoothStep_Parameters smooth_step
 
@@ -237,7 +237,7 @@ IF LJCOS2:
                                    double w)
 
 IF GAY_BERNE:
-    cdef extern from "nonbonded_interactions/gb.hpp":
+    cdef extern from "nonbonded_interactions/gay_berne.hpp":
         int gay_berne_set_params(int part_type_a, int part_type_b,
                                  double eps, double sig, double cut,
                                  double k1, double k2,
@@ -261,7 +261,7 @@ cdef extern from "nonbonded_interactions/ljgen.hpp":
                                   double a1, double a2, double b1, double b2)
 
 IF SMOOTH_STEP:
-    cdef extern from "nonbonded_interactions/steppot.hpp":
+    cdef extern from "nonbonded_interactions/smooth_step.hpp":
         int smooth_step_set_params(int part_type_a, int part_type_b,
                                    double d, int n, double eps,
                                    double k0, double sig,
