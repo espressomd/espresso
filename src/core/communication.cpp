@@ -411,7 +411,7 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
-    lb_calc_fluid_momentum((double *)result);
+    lb_calc_fluid_momentum((double *)result, lbpar, lbfields, lblattice);
     break;
   case 7:
     break;
@@ -451,7 +451,7 @@ void mpi_gather_stats_slave(int, int job) {
                                cell_structure.local_cells().particles());
     break;
   case 6:
-    lb_calc_fluid_momentum(nullptr);
+    lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
     break;
   case 7:
     break;
