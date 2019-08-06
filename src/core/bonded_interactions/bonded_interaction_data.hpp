@@ -36,11 +36,11 @@ enum BondedInteraction {
   /** Type of tabulated bonded interaction potential,
       may be of bond length, of bond angle or of dihedral type. */
   BONDED_IA_TABULATED,
-  /** Type of bonded interaction is a (-LJ) potential. */
+  /** Type of bonded interaction is a subtracted-LJ potential. */
   BONDED_IA_SUBT_LJ,
-  /** Type of a Rigid/Constrained bond*/
+  /** Type of bonded interaction is a rigid/constrained bond. */
   BONDED_IA_RIGID_BOND,
-  /** Type of a virtual bond*/
+  /** Type of bonded interaction is a virtual bond. */
   BONDED_IA_VIRTUAL_BOND,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
@@ -221,7 +221,7 @@ struct Umbrella_bond_parameters {
 };
 #endif
 
-/** Dummy parameters for -LJ Potential */
+/** Dummy parameters for subtracted-LJ Potential */
 struct Subt_lj_bond_parameters {};
 
 /** Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM */
