@@ -27,12 +27,9 @@
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-
-#include <cassert>
 
 #include "short_range_loop.hpp"
 
@@ -76,7 +73,7 @@ void master_energy_calc() {
 
 /************************************************************/
 
-void energy_calc(double *result) {
+void energy_calc(double *result, const double time) {
   if (!interactions_sanity_checks())
     return;
 
@@ -103,7 +100,7 @@ void energy_calc(double *result) {
   calc_long_range_energies();
 
   auto local_parts = local_cells.particles();
-  Constraints::constraints.add_energy(local_parts, sim_time, energy);
+  Constraints::constraints.add_energy(local_parts, time, energy);
 
 #ifdef CUDA
   copy_energy_from_GPU();
