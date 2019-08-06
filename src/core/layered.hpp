@@ -42,7 +42,7 @@ void layered_topology_release();
 
 /// initialize the layered cell system and sort in the particles
 void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
-                           const double range);
+                           double range);
 
 /// distribute all particles such that they are in their dedicated cell
 void layered_exchange_and_sort_particles(int global_flag,
