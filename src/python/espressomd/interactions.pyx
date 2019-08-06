@@ -1679,7 +1679,7 @@ IF GAUSSIAN == 1:
             """Name of interaction type.
 
             """
-            return "gaussian"
+            return "Gaussian"
 
         def set_params(self, **kwargs):
             """
