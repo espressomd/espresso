@@ -397,7 +397,6 @@ class TestLB:
         f2 = np.copy(self.system.part[0].f)
         np.testing.assert_allclose(v1, v2, rtol=1e-5)
         np.testing.assert_allclose(f1, f2, rtol=1e-5)
->>>>>>> python
 
 
 class TestLBCPU(TestLB, ut.TestCase):
