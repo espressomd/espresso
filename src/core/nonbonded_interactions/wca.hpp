@@ -42,10 +42,10 @@ inline void add_wca_pair_force(Particle const *const p1,
                                IA_parameters const *const ia_params,
                                Utils::Vector3d const &d, double dist,
                                Utils::Vector3d &force) {
-  if (dist < ia_params->WCA_cut) {
-    auto const frac6 = Utils::int_pow<6>(ia_params->WCA_sig / dist);
+  if (dist < ia_params->wca.cut) {
+    auto const frac6 = Utils::int_pow<6>(ia_params->wca.sig / dist);
     auto const fac =
-        48.0 * ia_params->WCA_eps * frac6 * (frac6 - 0.5) / (dist * dist);
+        48.0 * ia_params->wca.eps * frac6 * (frac6 - 0.5) / (dist * dist);
     force += fac * d;
   }
 }
@@ -55,9 +55,9 @@ inline double wca_pair_energy(Particle const *const p1,
                               Particle const *const p2,
                               IA_parameters const *const ia_params,
                               Utils::Vector3d const &d, double dist) {
-  if (dist < ia_params->WCA_cut) {
-    auto const frac6 = Utils::int_pow<6>(ia_params->WCA_sig / dist);
-    return 4.0 * ia_params->WCA_eps * (Utils::sqr(frac6) - frac6 + .25);
+  if (dist < ia_params->wca.cut) {
+    auto const frac6 = Utils::int_pow<6>(ia_params->wca.sig / dist);
+    return 4.0 * ia_params->wca.eps * (Utils::sqr(frac6) - frac6 + .25);
   }
   return 0.0;
 }

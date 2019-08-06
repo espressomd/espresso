@@ -37,10 +37,10 @@ int soft_sphere_set_params(int part_type_a, int part_type_b, double a, double n,
   if (!data)
     return ES_ERROR;
 
-  data->soft_a = a;
-  data->soft_n = n;
-  data->soft_cut = cut;
-  data->soft_offset = offset;
+  data->soft_sphere.a = a;
+  data->soft_sphere.n = n;
+  data->soft_sphere.cut = cut;
+  data->soft_sphere.offset = offset;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

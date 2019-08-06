@@ -197,12 +197,12 @@ cdef class HydrodynamicInteraction(Actor):
 
         Parameters
         ----------
-        pos : array_like :obj:`float`
+        pos : (3,) array_like of :obj:`float`
               The position at which velocity is requested.
 
         Returns
         -------
-        v : array_like :obj:`float`
+        v : (3,) array_like :obj:`float`
             The LB fluid velocity at ``pos``.
 
         """

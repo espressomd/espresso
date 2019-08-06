@@ -240,12 +240,12 @@ IF LENNARD_JONES == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "epsilon": ia_params.LJ_eps,
-                "sigma": ia_params.LJ_sig,
-                "cutoff": ia_params.LJ_cut,
-                "shift": ia_params.LJ_shift,
-                "offset": ia_params.LJ_offset,
-                "min": ia_params.LJ_min}
+                "epsilon": ia_params.lj.eps,
+                "sigma": ia_params.lj.sig,
+                "cutoff": ia_params.lj.cut,
+                "shift": ia_params.lj.shift,
+                "offset": ia_params.lj.offset,
+                "min": ia_params.lj.min}
 
         def is_active(self):
             """Check if interaction is active.
@@ -345,9 +345,9 @@ IF WCA == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "epsilon": ia_params.WCA_eps,
-                "sigma": ia_params.WCA_sig,
-                "cutoff": ia_params.WCA_cut}
+                "epsilon": ia_params.wca.eps,
+                "sigma": ia_params.wca.sig,
+                "cutoff": ia_params.wca.cut}
 
         def is_active(self):
             """Check if interaction is active.
@@ -429,17 +429,17 @@ IF LENNARD_JONES_GENERIC == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "epsilon": ia_params.LJGEN_eps,
-                "sigma": ia_params.LJGEN_sig,
-                "cutoff": ia_params.LJGEN_cut,
-                "shift": ia_params.LJGEN_shift,
-                "offset": ia_params.LJGEN_offset,
-                "e1": ia_params.LJGEN_a1,
-                "e2": ia_params.LJGEN_a2,
-                "b1": ia_params.LJGEN_b1,
-                "b2": ia_params.LJGEN_b2,
-                "lam": ia_params.LJGEN_lambda,
-                "delta": ia_params.LJGEN_softrad
+                "epsilon": ia_params.ljgen.eps,
+                "sigma": ia_params.ljgen.sig,
+                "cutoff": ia_params.ljgen.cut,
+                "shift": ia_params.ljgen.shift,
+                "offset": ia_params.ljgen.offset,
+                "e1": ia_params.ljgen.a1,
+                "e2": ia_params.ljgen.a2,
+                "b1": ia_params.ljgen.b1,
+                "b2": ia_params.ljgen.b2,
+                "lam": ia_params.ljgen.lambda1,
+                "delta": ia_params.ljgen.softrad
             }
 
         def is_active(self):
@@ -571,10 +571,10 @@ IF LJCOS:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "epsilon": ia_params.LJCOS_eps,
-                "sigma": ia_params.LJCOS_sig,
-                "cutoff": ia_params.LJCOS_cut,
-                "offset": ia_params.LJCOS_offset,
+                "epsilon": ia_params.ljcos.eps,
+                "sigma": ia_params.ljcos.sig,
+                "cutoff": ia_params.ljcos.cut,
+                "offset": ia_params.ljcos.offset,
             }
 
         def is_active(self):
@@ -652,10 +652,10 @@ IF LJCOS2:
                 self._part_types[0],
                 self._part_types[1])
             return{
-                "epsilon": ia_params.LJCOS2_eps,
-                "sigma": ia_params.LJCOS2_sig,
-                "offset": ia_params.LJCOS2_offset,
-                "width": ia_params.LJCOS2_w}
+                "epsilon": ia_params.ljcos2.eps,
+                "sigma": ia_params.ljcos2.sig,
+                "offset": ia_params.ljcos2.offset,
+                "width": ia_params.ljcos2.w}
 
         def is_active(self):
             return(self._params["epsilon"] > 0)
@@ -726,8 +726,8 @@ IF HAT == 1:
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
-                "F_max": ia_params.HAT_Fmax,
-                "cutoff": ia_params.HAT_r,
+                "F_max": ia_params.hat.Fmax,
+                "cutoff": ia_params.hat.r,
             }
 
         def is_active(self):
@@ -784,13 +784,13 @@ IF GAY_BERNE:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.GB_eps,
-                "sig": ia_params.GB_sig,
-                "cut": ia_params.GB_cut,
-                "k1": ia_params.GB_k1,
-                "k2": ia_params.GB_k2,
-                "mu": ia_params.GB_mu,
-                "nu": ia_params.GB_nu}
+                "eps": ia_params.gay_berne.eps,
+                "sig": ia_params.gay_berne.sig,
+                "cut": ia_params.gay_berne.cut,
+                "k1": ia_params.gay_berne.k1,
+                "k2": ia_params.gay_berne.k2,
+                "mu": ia_params.gay_berne.mu,
+                "nu": ia_params.gay_berne.nu}
 
         def is_active(self):
             """Check if interaction is active.
@@ -964,12 +964,12 @@ IF SMOOTH_STEP == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "d": ia_params.SmSt_d,
-                "n": ia_params.SmSt_n,
-                "eps": ia_params.SmSt_eps,
-                "k0": ia_params.SmSt_k0,
-                "sig": ia_params.SmSt_sig,
-                "cutoff": ia_params.SmSt_cut
+                "d": ia_params.smooth_step.d,
+                "n": ia_params.smooth_step.n,
+                "eps": ia_params.smooth_step.eps,
+                "k0": ia_params.smooth_step.k0,
+                "sig": ia_params.smooth_step.sig,
+                "cutoff": ia_params.smooth_step.cut
             }
 
         def is_active(self):
@@ -1066,12 +1066,12 @@ IF BMHTF_NACL == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "a": ia_params.BMHTF_A,
-                "b": ia_params.BMHTF_B,
-                "c": ia_params.BMHTF_C,
-                "d": ia_params.BMHTF_D,
-                "sig": ia_params.BMHTF_sig,
-                "cutoff": ia_params.BMHTF_cut,
+                "a": ia_params.bmhtf.A,
+                "b": ia_params.bmhtf.B,
+                "c": ia_params.bmhtf.C,
+                "d": ia_params.bmhtf.D,
+                "sig": ia_params.bmhtf.sig,
+                "cutoff": ia_params.bmhtf.cut,
             }
 
         def is_active(self):
@@ -1166,10 +1166,10 @@ IF MORSE == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.MORSE_eps,
-                "alpha": ia_params.MORSE_alpha,
-                "rmin": ia_params.MORSE_rmin,
-                "cutoff": ia_params.MORSE_cut
+                "eps": ia_params.morse.eps,
+                "alpha": ia_params.morse.alpha,
+                "rmin": ia_params.morse.rmin,
+                "cutoff": ia_params.morse.cut
             }
 
         def is_active(self):
@@ -1258,13 +1258,13 @@ IF BUCKINGHAM == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "a": ia_params.BUCK_A,
-                "b": ia_params.BUCK_B,
-                "c": ia_params.BUCK_C,
-                "d": ia_params.BUCK_D,
-                "cutoff": ia_params.BUCK_cut,
-                "discont": ia_params.BUCK_discont,
-                "shift": ia_params.BUCK_shift
+                "a": ia_params.buckingham.A,
+                "b": ia_params.buckingham.B,
+                "c": ia_params.buckingham.C,
+                "d": ia_params.buckingham.D,
+                "cutoff": ia_params.buckingham.cut,
+                "discont": ia_params.buckingham.discont,
+                "shift": ia_params.buckingham.shift
             }
 
         def is_active(self):
@@ -1363,10 +1363,10 @@ IF SOFT_SPHERE == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "a": ia_params.soft_a,
-                "n": ia_params.soft_n,
-                "cutoff": ia_params.soft_cut,
-                "offset": ia_params.soft_offset
+                "a": ia_params.soft_sphere.a,
+                "n": ia_params.soft_sphere.n,
+                "cutoff": ia_params.soft_sphere.cut,
+                "offset": ia_params.soft_sphere.offset
             }
 
         def is_active(self):
@@ -1454,13 +1454,13 @@ IF AFFINITY == 1:
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
-                "affinity_type": ia_params.affinity_type,
-                "affinity_kappa": ia_params.affinity_kappa,
-                "affinity_r0": ia_params.affinity_r0,
-                "affinity_Kon": ia_params.affinity_Kon,
-                "affinity_Koff": ia_params.affinity_Koff,
-                "affinity_maxBond": ia_params.affinity_maxBond,
-                "affinity_cut": ia_params.affinity_cut}
+                "affinity_type": ia_params.affinity.type,
+                "affinity_kappa": ia_params.affinity.kappa,
+                "affinity_r0": ia_params.affinity.r0,
+                "affinity_Kon": ia_params.affinity.Kon,
+                "affinity_Koff": ia_params.affinity.Koff,
+                "affinity_maxBond": ia_params.affinity.maxBond,
+                "affinity_cut": ia_params.affinity.cut}
 
         def is_active(self):
             return (self._params["affinity_kappa"] > 0)
@@ -1509,10 +1509,10 @@ IF MEMBRANE_COLLISION == 1:
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
-                "a": ia_params.membrane_a,
-                "n": ia_params.membrane_n,
-                "cutoff": ia_params.membrane_cut,
-                "offset": ia_params.membrane_offset}
+                "a": ia_params.membrane.a,
+                "n": ia_params.membrane.n,
+                "cutoff": ia_params.membrane.cut,
+                "offset": ia_params.membrane.offset}
 
         def is_active(self):
             return (self._params["a"] > 0)
@@ -1567,8 +1567,8 @@ IF HERTZIAN == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.Hertzian_eps,
-                "sig": ia_params.Hertzian_sig
+                "eps": ia_params.hertzian.eps,
+                "sig": ia_params.hertzian.sig
             }
 
         def is_active(self):
@@ -1647,9 +1647,9 @@ IF GAUSSIAN == 1:
                 self._part_types[0],
                 self._part_types[1])
             return {
-                "eps": ia_params.Gaussian_eps,
-                "sig": ia_params.Gaussian_sig,
-                "cutoff": ia_params.Gaussian_cut
+                "eps": ia_params.gaussian.eps,
+                "sig": ia_params.gaussian.sig,
+                "cutoff": ia_params.gaussian.cut
             }
 
         def is_active(self):
@@ -1733,7 +1733,6 @@ class NonBondedInteractionHandle:
     hertzian = None
     gaussian = None
     tabulated = None
-    soft_sphere = None
     membrane_collision = None
     gay_berne = None
     dpd = None
@@ -1774,8 +1773,6 @@ class NonBondedInteractionHandle:
             self.morse = MorseInteraction(_type1, _type2)
         IF BUCKINGHAM:
             self.buckingham = BuckinghamInteraction(_type1, _type2)
-        IF SOFT_SPHERE:
-            self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF HERTZIAN:
             self.hertzian = HertzianInteraction(_type1, _type2)
         IF GAUSSIAN:
@@ -2302,8 +2299,8 @@ IF THOLE:
             ia_params = get_ia_param_safe(
                 self._part_types[0], self._part_types[1])
             return {
-                "scaling_coeff": ia_params.THOLE_scaling_coeff,
-                "q1q2": ia_params.THOLE_q1q2
+                "scaling_coeff": ia_params.thole.scaling_coeff,
+                "q1q2": ia_params.thole.q1q2
             }
 
         def is_active(self):
@@ -2752,10 +2749,10 @@ IF TABULATED == 1:
                 self._part_types[0],
                 self._part_types[1])
 
-            return {'min': ia_params.TAB.minval,
-                    'max': ia_params.TAB.maxval,
-                    'energy': ia_params.TAB.energy_tab,
-                    'force': ia_params.TAB.force_tab}
+            return {'min': ia_params.tab.minval,
+                    'max': ia_params.tab.maxval,
+                    'energy': ia_params.tab.energy_tab,
+                    'force': ia_params.tab.force_tab}
 
         def _set_params_in_es_core(self):
             self.state = tabulated_set_params(self._part_types[0],
