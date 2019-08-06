@@ -340,7 +340,6 @@ class TestLB:
         np.testing.assert_allclose(
             self.system.analysis.linear_momentum() / self.system.volume() / self.params['dens'], fluid_velocity, atol=3E-6)
 
-
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_unequal_time_step(self):
         """
