@@ -101,7 +101,7 @@ set(EspressoCore_SRC
   nonbonded_interactions/bmhtf-nacl.cpp
   nonbonded_interactions/buckingham.cpp
   nonbonded_interactions/gaussian.cpp
-  nonbonded_interactions/gb.cpp
+  nonbonded_interactions/gay_berne.cpp
   nonbonded_interactions/hat.cpp
   nonbonded_interactions/hertzian.cpp
   nonbonded_interactions/ljcos2.cpp
@@ -112,7 +112,7 @@ set(EspressoCore_SRC
   nonbonded_interactions/nonbonded_interaction_data.cpp
   nonbonded_interactions/nonbonded_tab.cpp
   nonbonded_interactions/soft_sphere.cpp
-  nonbonded_interactions/steppot.cpp
+  nonbonded_interactions/smooth_step.cpp
   nonbonded_interactions/thole.cpp
   nonbonded_interactions/wca.cpp
   object-in-fluid/affinity.cpp
