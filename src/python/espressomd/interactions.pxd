@@ -409,13 +409,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef struct Bonded_coulomb_bond_parameters:
         double prefactor
 
-    #* Parameters for three body angular potential (bond-angle potentials).
-    cdef struct Angle_bond_parameters:
-        double bend
-        double phi0
-        double cos_phi0
-        double sin_phi0
-
     #* Parameters for three body angular potential (bond_angle_harmonic).
     cdef struct Angle_harmonic_bond_parameters:
         double bend
@@ -519,7 +512,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr
         Harmonic_bond_parameters harmonic
         Harmonic_dumbbell_bond_parameters harmonic_dumbbell
-        Angle_bond_parameters angle
         Angle_harmonic_bond_parameters angle_harmonic
         Angle_cosine_bond_parameters angle_cosine
         Angle_cossquare_bond_parameters angle_cossquare

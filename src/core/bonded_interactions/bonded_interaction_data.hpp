@@ -168,22 +168,6 @@ struct Bonded_coulomb_sr_bond_parameters {
   double q1q2;
 };
 
-/** Parameters for three-body angular potential.
- *  @note
- *      ATTENTION: there are different implementations of the bond angle
- *      potential which you may choose with a compiler flag in the file
- *      \ref config.hpp !
- */
-struct Angle_bond_parameters {
-  /** bending constant */
-  double bend;
-  /** equilibrium angle (default is 180 degrees) */
-  double phi0;
-  /** cosine of @p phi0 (internal parameter) */
-  double cos_phi0;
-  /** sine of @p phi0 (internal parameter) */
-  double sin_phi0;
-};
 
 /** Parameters for three-body angular potential (harmonic). */
 struct Angle_harmonic_bond_parameters {
@@ -314,7 +298,6 @@ union Bond_parameters {
   Quartic_bond_parameters quartic;
   Bonded_coulomb_bond_parameters bonded_coulomb;
   Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr;
-  Angle_bond_parameters angle;
   Angle_harmonic_bond_parameters angle_harmonic;
   Angle_cosine_bond_parameters angle_cosine;
   Angle_cossquare_bond_parameters angle_cossquare;
