@@ -48,10 +48,11 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
 
   /* Calculate dependent parameters */
 
-  data->gay_berne.chi1 =
-      ((data->gay_berne.k1 * data->gay_berne.k1) - 1) / ((data->gay_berne.k1 * data->gay_berne.k1) + 1);
-  data->gay_berne.chi2 = (pow(data->gay_berne.k2, (1 / data->gay_berne.mu)) - 1) /
-                  (pow(data->gay_berne.k2, (1 / data->gay_berne.mu)) + 1);
+  data->gay_berne.chi1 = ((data->gay_berne.k1 * data->gay_berne.k1) - 1) /
+                         ((data->gay_berne.k1 * data->gay_berne.k1) + 1);
+  data->gay_berne.chi2 =
+      (pow(data->gay_berne.k2, (1 / data->gay_berne.mu)) - 1) /
+      (pow(data->gay_berne.k2, (1 / data->gay_berne.mu)) + 1);
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

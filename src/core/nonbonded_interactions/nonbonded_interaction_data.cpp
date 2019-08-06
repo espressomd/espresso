@@ -44,8 +44,8 @@
 #include "nonbonded_interactions/ljgen.hpp"
 #include "nonbonded_interactions/morse.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
-#include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/smooth_step.hpp"
+#include "nonbonded_interactions/soft_sphere.hpp"
 #ifdef DIPOLAR_BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
 #endif

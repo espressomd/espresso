@@ -52,8 +52,8 @@
 #include "nonbonded_interactions/morse.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
-#include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/smooth_step.hpp"
+#include "nonbonded_interactions/soft_sphere.hpp"
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #ifdef ELECTROSTATICS
