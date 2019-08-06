@@ -19,7 +19,6 @@
 #
 # This script generates the file doxy-features
 #
-from __future__ import print_function
 import inspect
 import sys
 import os

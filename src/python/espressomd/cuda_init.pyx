@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport cuda_init
 
-cdef class CudaInitHandle(object):
+cdef class CudaInitHandle:
     def __init__(self):
         IF CUDA != 1:
             raise Exception("CUDA is not compiled in")

@@ -79,7 +79,7 @@ def shear_flow(x, t, nu, v, h, k_max):
     return v * u
 
 
-class LBShearCommon(object):
+class LBShearCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None

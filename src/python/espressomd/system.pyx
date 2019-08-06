@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 from libcpp cimport bool
 include "myconfig.pxi"
 
@@ -75,7 +74,7 @@ if OIF_GLOBAL_FORCES:
 
 cdef bool _system_created = False
 
-cdef class System(object):
+cdef class System:
     """ The base class for espressomd.system.System().
 
     .. note:: every attribute has to be declared at the class level.
@@ -254,17 +253,6 @@ cdef class System(object):
         """
 
         def __set__(self, double _time_step):
-            if _time_step <= 0:
-                raise ValueError("Time Step must be positive")
-
-            cdef double tau
-            if lb_lbfluid_get_lattice_switch() != NONE:
-                tau = lb_lbfluid_get_tau()
-                if (tau >= 0.0 and
-                        tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):
-                    raise ValueError(
-                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(tau) + ")")
-
             self.globals.time_step = _time_step
 
         def __get__(self):
@@ -396,10 +384,10 @@ cdef class System(object):
         Parameters
         ----------
         d_new : :obj:`float`
-                New box length
+            New box length
         dir : :obj:`str`, optional
-                Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-                Isotropic assumes a cubic box.
+            Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+            Isotropic assumes a cubic box.
 
         """
 
@@ -449,11 +437,11 @@ cdef class System(object):
         Parameters
         ----------
         phi : :obj:`float`
-                Angle between the z-axis and the rotation axis.
+            Angle between the z-axis and the rotation axis.
         theta : :obj:`float`
-                Rotation of the axis around the y-axis.
+            Rotation of the axis around the y-axis.
         alpha : :obj:`float`
-                How much to rotate
+            How much to rotate
 
         """
         rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
@@ -468,7 +456,7 @@ cdef class System(object):
             Parameters
             ----------
             distance : :obj:`int`
-                       Bond distance upto which the exclusions should be added.
+                Bond distance upto which the exclusions should be added.
 
             """
             auto_exclusions(distance)
@@ -501,8 +489,8 @@ cdef class System(object):
         """
         Parameters
         ----------
-        current_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                       Particle type to count the number for.
+        current_type : :obj:`int` (:attr:`~espressomd.particle_data.ParticleHandle.type`)
+            Particle type to count the number for.
 
         Returns
         -------

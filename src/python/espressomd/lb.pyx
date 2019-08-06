@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import, division
 include "myconfig.pxi"
 import os
 import cython
@@ -30,7 +29,7 @@ from . import cuda_init
 from copy import deepcopy
 from . import utils
 from .utils import array_locked, is_valid_type
-from .utils cimport make_array_locked
+from .utils cimport make_array_locked, numeric_limits
 
 # Actor class
 ####################################################
@@ -70,10 +69,12 @@ cdef class HydrodynamicInteraction(Actor):
 
         if self._params["dens"] == default_params["dens"]:
             raise Exception("LB_FLUID density not set")
-        else:
-            if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
-                raise ValueError("Density must be one positive double")
-
+        elif not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
+            raise ValueError("Density must be one positive double")
+        
+        if (self._params["tau"] <= 0.):
+            raise Exception("LB_FLUID tau has to be > 0")
+            
     # list of valid keys for parameters
     ####################################################
     def valid_keys(self):
@@ -114,7 +115,7 @@ cdef class HydrodynamicInteraction(Actor):
         python_lbfluid_set_density(
     self._params["dens"],
     self._params["agrid"])
-
+        
         lb_lbfluid_set_tau(self._params["tau"])
 
         python_lbfluid_set_viscosity(
@@ -140,6 +141,8 @@ cdef class HydrodynamicInteraction(Actor):
 
         if "gamma_even" in self._params:
             python_lbfluid_set_gamma_even(self._params["gamma_even"])
+
+        lb_lbfluid_sanity_checks()
 
         utils.handle_errors("LB fluid activation")
 
@@ -169,8 +172,7 @@ cdef class HydrodynamicInteraction(Actor):
             raise Exception("lb_lbfluid_set_agrid error")
 
         if not self._params["ext_force_density"] == default_params["ext_force_density"]:
-            if python_lbfluid_get_ext_force_density(self._params["ext_force_density"], self._params["agrid"], self._params["tau"]):
-                raise Exception("lb_lbfluid_set_ext_force_density error")
+            self._params["ext_force_density"] = self.ext_force_density
 
         return self._params
 
@@ -261,6 +263,19 @@ cdef class HydrodynamicInteraction(Actor):
         def __set__(self, value):
             raise NotImplementedError
 
+    property ext_force_density:
+        def __get__(self):
+            cdef Vector3d res
+            res = python_lbfluid_get_ext_force_density(
+                self._params["agrid"], self._params["tau"])
+            return make_array_locked(res)
+
+        def __set__(self, ext_force_density):
+            python_lbfluid_set_ext_force_density(
+    ext_force_density,
+     self._params["agrid"],
+     self._params["tau"])
+
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
         
@@ -308,12 +323,12 @@ IF CUDA:
             Parameters
             ----------
             positions : numpy-array of type :obj:`float` of shape (N,3)
-                        The 3-dimensional positions.
+                The 3-dimensional positions.
 
             Returns
             -------
             velocities : numpy-array of type :obj:`float` of shape (N,3)
-                         The 3-dimensional LB fluid velocities.
+                The 3-dimensional LB fluid velocities.
 
             Raises
             ------
@@ -321,18 +336,18 @@ IF CUDA:
                 If shape of ``positions`` not (N,3).
 
             """
-            assert positions.shape[
-                1] == 3, "The input array must have shape (N,3)"
+            assert positions.shape[1] == 3, \
+                "The input array must have shape (N,3)"
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
-cdef class LBFluidRoutines(object):
+cdef class LBFluidRoutines:
     cdef Vector3i node
 
     def __init__(self, key):

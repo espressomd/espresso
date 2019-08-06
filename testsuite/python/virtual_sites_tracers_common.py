@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest_decorators as utx
 import espressomd
 from espressomd import lb, shapes, lbboundaries
@@ -28,7 +27,7 @@ except ImportError:
 from espressomd.utils import handle_errors
 
 
-class VirtualSitesTracersCommon(object):
+class VirtualSitesTracersCommon:
     box_height = 10.
     box_lw = 8.
     system = espressomd.System(box_l=(box_lw, box_lw, box_height))

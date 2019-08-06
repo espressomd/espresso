@@ -61,7 +61,7 @@ def poiseuille_flow(z, H, ext_force_density, dyn_visc):
     return ext_force_density * 1. / (2 * dyn_visc) * (H**2.0 / 4.0 - z**2.0)
 
 
-class LBPoiseuilleCommon(object):
+class LBPoiseuilleCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None

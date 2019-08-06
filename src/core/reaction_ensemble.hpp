@@ -157,7 +157,7 @@ public:
                                                int particle_number_of_type,
                                                bool use_wang_landau);
 
-  bool particle_inserted_too_close_to_another_one;
+  bool particle_inside_exclusion_radius_touched;
 
 protected:
   std::vector<int> m_empty_p_ids_smaller_than_max_seen_particle;

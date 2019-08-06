@@ -64,11 +64,11 @@ int MMM1D_sanity_checks();
 /// initialize the MMM1D constants
 void MMM1D_init();
 
-void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
-                                  double force[3]);
+void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
+                                  double r, Utils::Vector3d &force);
 
-double mmm1d_coulomb_pair_energy(double q1q2, double const d[3], double r2,
-                                 double r);
+double mmm1d_coulomb_pair_energy(double q1q2, Utils::Vector3d const &d,
+                                 double r2, double r);
 
 /** Tuning of the parameters which are not set by the user, e.g. the
  *  switching radius or the bessel_cutoff. Call this only on the master node.

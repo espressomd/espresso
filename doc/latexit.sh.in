@@ -36,9 +36,9 @@ $PDFLATEX $LATEXLINE
 EC=$?
 if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 1 failed."
-    echo "These are the last 20 lines of $BASEFILENAME.log:"
+    echo "These are the last 30 lines of $BASEFILENAME.log:"
     echo "--------------------------------------------"
-    tail -n 20 $BASEFILENAME.log
+    tail -n 30 $BASEFILENAME.log
     echo "--------------------------------------------"
     test -f $BASEFILENAME.pdf && rm $BASEFILENAME.pdf
     exit $EC
@@ -53,9 +53,9 @@ $PDFLATEX $LATEXLINE
 EC=$?
 if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 2 failed."
-    echo "These are the last 20 lines of $BASEFILENAME.log:"
+    echo "These are the last 30 lines of $BASEFILENAME.log:"
     echo "--------------------------------------------"
-    tail -n 20 $BASEFILENAME.log
+    tail -n 30 $BASEFILENAME.log
     echo "--------------------------------------------"
     test -f $BASEFILENAME.pdf && rm $BASEFILENAME.pdf
     exit $EC
@@ -71,9 +71,9 @@ $PDFLATEX $LATEXLINE
 EC=$?
 if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 3 failed."
-    echo "These are the last 20 lines of $BASEFILENAME.log:"
+    echo "These are the last 30 lines of $BASEFILENAME.log:"
     echo "--------------------------------------------"
-    tail -n 20 $BASEFILENAME.log
+    tail -n 30 $BASEFILENAME.log
     echo "--------------------------------------------"
     test -f $BASEFILENAME.pdf && rm $BASEFILENAME.pdf
     exit $EC

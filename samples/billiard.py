@@ -18,7 +18,6 @@
 ESPResSo 8Ball billiard game.
 """
 
-from __future__ import print_function
 import numpy as np
 import math
 from threading import Thread

@@ -229,7 +229,7 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
         } else
 #endif
         {
-          auto const modes = lb_calc_modes(index);
+          auto const modes = lb_calc_modes(index, lbfluid);
           local_density = lbpar.density + modes[0];
 
           // Add the +f/2 contribution!!

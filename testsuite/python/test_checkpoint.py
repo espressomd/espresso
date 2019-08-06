@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 import subprocess
 import unittest as ut
 import unittest_decorators as utx
@@ -53,9 +52,7 @@ class CheckpointTest(ut.TestCase):
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
         with self.assertRaises(RuntimeError):
             lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
-        assertRaisesRegex = self.assertRaisesRegexp if sys.version_info < (
-            3, 2) else self.assertRaisesRegex
-        with assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
             lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
@@ -142,6 +139,13 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(system.part[0].f), particle_force0)
         np.testing.assert_allclose(np.copy(system.part[1].f), particle_force1)
 
+    @ut.skipIf('LBTHERM' not in modes, 'LB thermostat not in modes')
+    def test_thermostat(self):
+        self.assertEqual(system.thermostat.get_state()[0]['type'], 'LB')
+        self.assertEqual(system.thermostat.get_state()[0]['seed'], 23)
+        self.assertEqual(system.thermostat.get_state()[0]['gamma'], 2.0)
+
+    @ut.skipIf('LBTHERM' in modes, 'Langevin incompatible with LB thermostat')
     def test_thermostat(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
         self.assertEqual(system.thermostat.get_state()[0]['kT'], 1.0)
@@ -215,7 +219,7 @@ class CheckpointTest(ut.TestCase):
     def test_lb_boundaries(self):
         self.assertEqual(len(system.lbboundaries), 1)
         np.testing.assert_allclose(
-            np.copy(system.lbboundaries[0].velocity), [1, 1, 0])
+            np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
         self.assertEqual(type(system.lbboundaries[0].shape), Wall)
 
     def test_constraints(self):

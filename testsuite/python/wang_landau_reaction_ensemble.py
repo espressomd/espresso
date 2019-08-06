@@ -18,7 +18,6 @@
 #
 """Testmodule for the Wang-Landau Reaction Ensemble.
 """
-from __future__ import print_function
 import numpy as np
 import unittest as ut
 

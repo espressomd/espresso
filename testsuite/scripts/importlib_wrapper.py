@@ -21,10 +21,7 @@ import sys
 import unittest
 import importlib
 import espressomd
-if sys.version_info >= (3, 3):
-    from unittest.mock import MagicMock
-else:
-    from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 def _id(x):
@@ -55,31 +52,33 @@ def configure_and_import(filepath,
     - use random seeds for the RNG in NumPy and ESPResSo
     - temporarily move to the directory where the script is located
 
-    :param filepath: python script to import
-    :type  filepath: str
-    :param gpu: whether GPU is necessary or not
-    :type  gpu: bool
-    :param substitutions: custom text replacement operation (useful to edit out
-       calls to the OpenGL or Mayavi visualizers' :meth:`run` method)
-    :type  substitutions: function
-    :param cmd_arguments: command line arguments, i.e. sys.argv without the
-       script path
-    :type  cmd_arguments: list
-    :param script_suffix: suffix to append to the configured script (useful
-       when a single module is being tested by multiple tests in parallel)
-    :type  script_suffix: str
-    :param random_seeds: if ``True``, use random seeds in RNGs
-    :type  random_seeds: bool
-    :param mock_visualizers: if ``True``, substitute ES visualizers with
-       `Mock()` classes in case of `ImportError()` (set to ``False`` if an
-       `ImportError()` is relevant to your test)
-    :type  mock_visualizers: bool
-    :param move_to_script_dir: if ``True``, move to the script's directory
-       (useful when the script needs to load files hardcoded as relative paths,
-       or when files are generated and need cleanup); this is enabled by default
-    :type  move_to_script_dir: bool
-    :param \*\*parameters: global variables to replace
-    :type  \*\*parameters: int, float, bool
+    Parameters
+    ----------
+    filepath : str
+        python script to import
+    gpu : bool
+        whether GPU is necessary or not
+    substitutions function
+        custom text replacement operation (useful to edit out calls to the
+        OpenGL or Mayavi visualizers' ``run()`` method)
+    cmd_arguments : list
+        command line arguments, i.e. sys.argv without the script path
+    script_suffix : str
+        suffix to append to the configured script (useful when a single
+        module is being tested by multiple tests in parallel)
+    random_seeds : bool
+        if ``True``, use random seeds in RNGs
+    mock_visualizers : bool
+        if ``True``, substitute ES visualizers with `Mock()` classes in case
+        of `ImportError()` (use ``False`` if an `ImportError()` is relevant
+        to your test)
+    move_to_script_dir : bool
+        if ``True``, move to the script's directory (useful when the script
+        needs to load files hardcoded as relative paths, or when files are
+        generated and need cleanup); this is enabled by default
+    \*\*parameters :
+        global variables to replace
+
     """
     if skip_future_imports:
         module = MagicMock()
@@ -163,14 +162,36 @@ def set_cmd(code, filepath, cmd_arguments):
     return code, old_sys_argv
 
 
-def substitute_variable_values(code, **parameters):
+def substitute_variable_values(code, strings_as_is=False, keep_original=True,
+                               **parameters):
+    """
+    Substitute values of global variables.
+
+    Parameters
+    ----------
+    code : str
+        Source code to edit.
+    strings_as_is : bool
+        If ``True``, consider all values in \*\*parameters are strings and
+        substitute them in-place without formatting by ``repr()``.
+    keep_original : bool
+        Keep the original value (e.g. ``N = 10; _N__original = 1000``), helps
+        with debugging. If ``False``, make sure the original value is not a
+        multiline statement, because removing its first line would lead to
+        a syntax error.
+    \*\*parameters :
+        Variable names and their new value.
+
+    """
     for variable, value in parameters.items():
         assert variable in code, "variable {} not found".format(variable)
         re_var = re.compile("^(\t|\ {,4})(" + variable + ")(?= *=[^=])", re.M)
         assert re_var.search(code) is not None, \
             "variable {} has no assignment".format(variable)
-        code = re_var.sub(
-            r"\g<1>\g<2> = " + repr(value) + r"; _\g<2>__original", code)
+        val = strings_as_is and value or repr(value)
+        code = re_var.sub(r"\g<1>\g<2> = " + val + r"; _\g<2>__original", code)
+        if not keep_original:
+            code = re.sub(r"; _" + variable + "__original.+", "", code)
     return code
 
 
@@ -231,9 +252,9 @@ def mock_es_visualization(code):
 try:
     {0}{1}
 except ImportError:
-    from {2} import MagicMock
+    from unittest.mock import MagicMock
     import espressomd
-    {3} = MagicMock()
+    {2} = MagicMock()
 """.lstrip()
     # cannot handle "from espressomd.visualization import *"
     re_es_vis_import_namespace = re.compile(
@@ -257,7 +278,6 @@ except ImportError:
             return ""
 
     def substitution_es_vis_import(m):
-        mock_module = "unittest.mock" if sys.version_info >= (3, 3) else "mock"
         aliases = [x for x in m.groups() if x is not None][0].split(',')
         guards = []
         for alias in aliases:
@@ -268,7 +288,7 @@ except ImportError:
                 alias = alias.split(' as ')[1]
             alias = alias.strip()
             checks = check_for_deferred_ImportError(line, alias)
-            s = r_es_vis_mock.format(line, checks, mock_module, alias)
+            s = r_es_vis_mock.format(line, checks, alias)
             guards.append(s)
         return '\n'.join(guards)
 

@@ -33,22 +33,19 @@ bool check_distance_function(const Shapes::Shape &s) {
     for (int j = 0; j < 100; j++)
       for (int k = 0; k < 100; k++) {
         Utils::Vector3d pos = {i * 0.1, j * 0.1, k * 0.1};
-        double dist[3];
+        Utils::Vector3d dist{};
         double d;
 
-        s.calculate_dist(pos, &d, dist);
-
+        s.calculate_dist(pos, d, dist);
         /* trivial test */
-        if ((dist[0] * dist[0] + dist[1] * dist[1] + dist[2] * dist[2] -
-             d * d) > 1e-12) {
+        if ((dist.norm2() - d * d) > 1e-12) {
           return false;
         }
 
         /* check if the returned closest point really is on the surface */
-        for (int dim = 0; dim < 3; dim++)
-          pos[dim] -= dist[dim];
+        pos -= dist;
 
-        s.calculate_dist(pos, &d, dist);
+        s.calculate_dist(pos, d, dist);
         if (std::abs(d) > 1e-12) {
           return false;
         }

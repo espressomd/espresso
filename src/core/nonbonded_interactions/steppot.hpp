@@ -22,9 +22,9 @@
 #define STEPPOT_H
 
 /** \file
- *  Routines to calculate the smooth step potential energy and/or force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the smooth step potential between particle pairs.
+ *
+ *  Implementation in \ref steppot.cpp.
  */
 
 #include "nonbonded_interaction_data.hpp"
@@ -32,46 +32,45 @@
 
 #ifdef SMOOTH_STEP
 
-///
 int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
                            double eps, double k0, double sig, double cut);
 
 /** Calculate smooth step force between particle p1 and p2 */
-inline void add_SmSt_pair_force(const Particle *const p1,
-                                const Particle *const p2,
-                                IA_parameters *ia_params, double const d[3],
-                                double dist, double dist2, double force[3]) {
-  if (dist >= ia_params->SmSt_cut)
+inline void add_SmSt_pair_force(Particle const *const p1,
+                                Particle const *const p2,
+                                IA_parameters const *const ia_params,
+                                Utils::Vector3d const &d, double dist,
+                                double dist2, Utils::Vector3d &force) {
+  if (dist >= ia_params->SmSt_cut) {
     return;
+  }
 
-  int j;
-  double frac, fracP, er;
-  frac = ia_params->SmSt_d / dist;
-  fracP = pow(frac, ia_params->SmSt_n);
-  er = exp(2. * ia_params->SmSt_k0 * (dist - ia_params->SmSt_sig));
-  double fac = (ia_params->SmSt_n * fracP + 2. * ia_params->SmSt_eps *
-                                                ia_params->SmSt_k0 * dist * er /
-                                                Utils::sqr(1.0 + er)) /
-               dist2;
-
-  for (j = 0; j < 3; j++)
-    force[j] += fac * d[j];
+  auto const frac = ia_params->SmSt_d / dist;
+  auto const fracP = pow(frac, ia_params->SmSt_n);
+  auto const er = exp(2. * ia_params->SmSt_k0 * (dist - ia_params->SmSt_sig));
+  auto const fac = (ia_params->SmSt_n * fracP + 2. * ia_params->SmSt_eps *
+                                                    ia_params->SmSt_k0 * dist *
+                                                    er / Utils::sqr(1.0 + er)) /
+                   dist2;
+  force += fac * d;
 }
 
-/** calculate smooth step potential energy between particle p1 and p2. */
-inline double SmSt_pair_energy(const Particle *p1, const Particle *p2,
-                               const IA_parameters *ia_params,
-                               const double d[3], double dist, double dist2) {
-  if (dist >= ia_params->SmSt_cut)
+/** Calculate smooth step energy between particle p1 and p2. */
+inline double SmSt_pair_energy(Particle const *const p1,
+                               Particle const *const p2,
+                               IA_parameters const *const ia_params,
+                               Utils::Vector3d const &d, double dist,
+                               double dist2) {
+  if (dist >= ia_params->SmSt_cut) {
     return 0.0;
+  }
 
-  double frac, fracP, er;
+  auto const frac = ia_params->SmSt_d / dist;
+  auto const fracP = pow(frac, ia_params->SmSt_n);
+  auto const er = exp(2. * ia_params->SmSt_k0 * (dist - ia_params->SmSt_sig));
+  auto const fac = fracP + ia_params->SmSt_eps / (1.0 + er);
 
-  frac = ia_params->SmSt_d / dist;
-  fracP = pow(frac, ia_params->SmSt_n);
-  er = exp(2. * ia_params->SmSt_k0 * (dist - ia_params->SmSt_sig));
-
-  return fracP + ia_params->SmSt_eps / (1.0 + er);
+  return fac;
 }
 
 #endif /* ifdef SMOOTH_STEP */

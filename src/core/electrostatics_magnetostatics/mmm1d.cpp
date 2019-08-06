@@ -180,10 +180,10 @@ void MMM1D_init() {
                            mmm1d_params.far_switch_radius_2);
 }
 
-void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
-                                  double force[3]) {
+void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
+                                  double r, Utils::Vector3d &force) {
   int dim;
-  double F[3];
+  Utils::Vector3d F;
   double rxy2, rxy2_d, z_d;
   double pref;
   double Fx, Fy, Fz;
@@ -245,9 +245,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
     Fy += pref * d[1];
     Fz += pref * shift_z;
 
-    F[0] = Fx;
-    F[1] = Fy;
-    F[2] = Fz;
+    F = {Fx, Fy, Fz};
   } else {
     /* far range formula */
     double rxy = sqrt(rxy2);
@@ -272,18 +270,15 @@ void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
     sr *= uz2 * 4 * C_2PI;
     sz *= uz2 * 4 * C_2PI;
 
-    pref = 1. * (sr / rxy + 2 * uz / rxy2);
+    pref = sr / rxy + 2 * uz / rxy2;
 
-    F[0] = pref * d[0];
-    F[1] = pref * d[1];
-    F[2] = 1. * sz;
+    F = {pref * d[0], pref * d[1], sz};
   }
 
-  for (dim = 0; dim < 3; dim++)
-    force[dim] += chpref * F[dim];
+  force += chpref * F;
 }
 
-double mmm1d_coulomb_pair_energy(double const chpref, double const d[3],
+double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
                                  double r2, double r) {
   double rxy2, rxy2_d, z_d;
   double E;

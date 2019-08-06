@@ -17,7 +17,6 @@
 """
 This sample illustrates how various observables of interest can be checkpointed.
 """
-from __future__ import print_function
 import espressomd
 
 required_features = ["P3M", "LENNARD_JONES"]
