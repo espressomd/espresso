@@ -147,9 +147,6 @@ extern p3m_data_struct p3m;
  *  For the real space error the estimate of Kolafa/Perram is used.
  *
  *  Parameter ranges if not given explicit values via p3m_set_tune_params():
- *  - @p r_cut_iL starts from (@ref min_local_box_l - @ref #skin) / (
- *    n * @ref box_l), with n an integer (this implies @p r_cut_iL is the
- *    largest cutoff in the system!)
  *  - @p mesh is set up such that the number of mesh points is equal to the
  *    number of charged particles
  *  - @p cao explores all possible values
@@ -178,7 +175,7 @@ int p3m_adaptive_tune(char **log);
 void p3m_init();
 
 /** Update @ref P3MParameters::alpha "alpha" and
- *  @ref P3MParameters::r_cut "r_cut" if @ref box_l changed
+ *  @ref P3MParameters::r_cut "r_cut" if box length changed
  */
 void p3m_scaleby_box_l();
 
@@ -219,12 +216,9 @@ void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
 /** Shrink wrap the charge grid */
 void p3m_shrink_wrap_charge_grid(int n_charges);
 
-/** Calculate real space contribution of Coulomb pair forces.
- *
- *  If NPT is compiled in, it returns the energy, which is needed for NPT.
- */
-inline void p3m_add_pair_force(double q1q2, double const *d, double dist,
-                               double *force) {
+/** Calculate real space contribution of Coulomb pair forces. */
+inline void p3m_add_pair_force(double q1q2, Utils::Vector3d const &d,
+                               double dist, Utils::Vector3d &force) {
   if (dist < p3m.params.r_cut) {
     if (dist > 0.0) {
       double adist = p3m.params.alpha * dist;
@@ -243,8 +237,7 @@ inline void p3m_add_pair_force(double q1q2, double const *d, double dist,
            2.0 * p3m.params.alpha * Utils::sqrt_pi_i() * exp(-adist * adist)) /
           (dist * dist);
 #endif
-      for (int j = 0; j < 3; j++)
-        force[j] += fac2 * d[j];
+      force += fac2 * d;
     }
   }
 }

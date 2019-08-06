@@ -16,12 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import particle_data
 from libcpp.vector cimport vector
 from libcpp cimport bool
 from utils cimport Vector3d
+
+from .grid cimport BoxGeometry
 
 cdef extern from "grid.hpp":
     cdef void rescale_boxl(int dir, double d_new)
@@ -40,7 +41,7 @@ cdef extern from "random.hpp" namespace "Random":
 
 cdef extern from "grid.hpp":
     void get_mi_vector(double * res, double * a, double * b)
-    Vector3d vel_diff(Vector3d x, Vector3d y, Vector3d u, Vector3d v)
+    Vector3d vel_diff(Vector3d x, Vector3d y, Vector3d u, Vector3d v, BoxGeometry& box)
 
 cdef extern from "rotate_system.hpp":
     void rotate_system(double phi, double theta, double alpha)

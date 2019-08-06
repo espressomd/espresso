@@ -30,6 +30,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "layered.hpp"
@@ -192,13 +193,13 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
 static int n_localpart = 0;
 
 /** temporary buffers for product decomposition */
-static double *partblk = nullptr;
+static std::vector<double> partblk;
 /** for all local cells including ghosts */
-static double *lclcblk = nullptr;
+static std::vector<double> lclcblk;
 /** collected data from the cells above the top neighbor
     of a cell rsp. below the bottom neighbor
     (P=below, M=above, as the signs in the exp). */
-static double *gblcblk = nullptr;
+static std::vector<double> gblcblk;
 
 /** contribution from the image charges */
 static double lclimge[8];
@@ -270,15 +271,15 @@ static int MMM2D_tune_far(double error);
 
 ///
 void MMM2D_setup_constants() {
-  ux = 1 / box_l[0];
+  ux = 1 / box_geo.length()[0];
   ux2 = ux * ux;
-  uy = 1 / box_l[1];
+  uy = 1 / box_geo.length()[1];
   uy2 = uy * uy;
-  uz = 1 / box_l[2];
+  uz = 1 / box_geo.length()[2];
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
-    max_near = box_l[2];
+    max_near = box_geo.length()[2];
     /* not used */
     min_far = 0.0;
     break;
@@ -293,6 +294,17 @@ void MMM2D_setup_constants() {
         this_node);
     errexit();
   }
+}
+
+static void layered_get_mi_vector(double res[3], double const a[3],
+                                  double const b[3]) {
+  for (int i = 0; i < 2; i++) {
+    res[i] = a[i] - b[i];
+    if (box_geo.periodic(i))
+      res[i] -=
+          std::round(res[i] * (1. / box_geo.length()[i])) * box_geo.length()[i];
+  }
+  res[2] = a[2] - b[2];
 }
 
 /****************************************
@@ -377,15 +389,15 @@ inline void scale_vec(double scale, double *pdc, int size) {
    e_size is the size of only the top or bottom half, i.e. half of size.
 */
 
-inline double *block(double *p, int index, int size) {
+inline double *block(std::vector<double> &p, int index, int size) {
   return &p[index * size];
 }
 
-inline double *blwentry(double *p, int index, int e_size) {
+inline double *blwentry(std::vector<double> &p, int index, int e_size) {
   return &p[2 * index * e_size];
 }
 
-inline double *abventry(double *p, int index, int e_size) {
+inline double *abventry(std::vector<double> &p, int index, int e_size) {
   return &p[(2 * index + 1) * e_size];
 }
 
@@ -581,7 +593,7 @@ static void add_z_force() {
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
     for (auto const &p : local_cells.particles()) {
-      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_l[2]);
+      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_geo.length()[2]);
     }
 
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
@@ -660,7 +672,7 @@ static double z_energy() {
     double lcl_dm_z = 0;
 
     for (auto &p : local_cells.particles()) {
-      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_l[2]);
+      lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_geo.length()[2]);
     }
 
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
@@ -680,7 +692,7 @@ static void setup(int p, double omega, double fac, int n_sccache,
   int np, c, i, ic, o = (p - 1) * n_localpart;
   Particle *part;
   double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
-  double h = box_l[2];
+  double h = box_geo.length()[2];
   double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
   double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
   double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
@@ -707,7 +719,7 @@ static void setup(int p, double omega, double fac, int n_sccache,
     clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
-  layer_top = my_left[2] + layer_h;
+  layer_top = local_geo.my_left()[2] + layer_h;
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
@@ -889,7 +901,7 @@ static void setup_PQ(int p, int q, double omega, double fac) {
   int np, c, i, ic, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
   Particle *part;
   double pref = coulomb.prefactor * 8 * M_PI * ux * uy * fac * fac;
-  double h = box_l[2];
+  double h = box_geo.length()[2];
   double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
   double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
   double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
@@ -913,7 +925,7 @@ static void setup_PQ(int p, int q, double omega, double fac) {
     clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
   }
 
-  layer_top = my_left[2] + layer_h;
+  layer_top = local_geo.my_left()[2] + layer_h;
   ic = 0;
   for (c = 1; c <= n_layers; c++) {
     np = cells[c].n;
@@ -1232,7 +1244,7 @@ double MMM2D_add_far(int f, int e) {
     else {
       q2 = mmm2d_params.far_cut2 - Utils::sqr(ux * (p - 1));
       if (q2 > 0)
-        q = 1 + (int)ceil(box_l[1] * sqrt(q2));
+        q = 1 + (int)ceil(box_geo.length()[1] * sqrt(q2));
       else
         q = 1;
       /* just to be on the safe side... */
@@ -1306,11 +1318,11 @@ static int MMM2D_tune_near(double error) {
   double L, sum;
 
   /* yes, it's y only... */
-  if (max_near > box_l[1] / 2)
+  if (max_near > box_geo.length()[1] / 2)
     return ERROR_LARGE;
   if (min_far < 0)
     return ERROR_SMALL;
-  if (ux * box_l[1] >= 3 / M_SQRT2)
+  if (ux * box_geo.length()[1] >= 3 / M_SQRT2)
     return ERROR_BOXL;
 
   /* error is split into three parts:
@@ -1320,7 +1332,7 @@ static int MMM2D_tune_near(double error) {
 
   /* Bessel sum, determine cutoff */
   P = 2;
-  exponent = M_PI * ux * box_l[1];
+  exponent = M_PI * ux * box_geo.length()[1];
   T = exp(exponent) / exponent;
   pref = 8 * ux * std::max(C_2PI * ux, 1.0);
   do {
@@ -1328,8 +1340,8 @@ static int MMM2D_tune_near(double error) {
     sum = 0;
     for (p = 1; p <= P; p++)
       sum += p * exp(-exponent * p);
-    err =
-        pref * K1(box_l[1] * L) * (T * ((L + uy) / M_PI * box_l[0] - 1) + sum);
+    err = pref * K1(box_geo.length()[1] * L) *
+          (T * ((L + uy) / M_PI * box_geo.length()[0] - 1) + sum);
     P++;
   } while (err > part_error && (P - 1) < MAXIMAL_B_CUT);
   P--;
@@ -1343,7 +1355,8 @@ static int MMM2D_tune_near(double error) {
     besselCutoff[p - 1] = (int)floor(((double)P) / (2 * p)) + 1;
 
   /* complex sum, determine cutoffs (dist dependent) */
-  T = log(part_error / (16 * M_SQRT2) * box_l[0] * box_l[1]);
+  T = log(part_error / (16 * M_SQRT2) * box_geo.length()[0] *
+          box_geo.length()[1]);
   // for 0, the sum is exactly zero, so do not calculate anything
   complexCutoff[0] = 0;
   for (i = 1; i <= COMPLEX_STEP; i++)
@@ -1352,7 +1365,7 @@ static int MMM2D_tune_near(double error) {
 
   /* polygamma, determine order */
   n = 1;
-  uxrhomax2 = Utils::sqr(ux * box_l[1]) / 2;
+  uxrhomax2 = Utils::sqr(ux * box_geo.length()[1]) / 2;
   uxrho2m2max = 1.0;
   do {
     create_mod_psi_up_to(n + 1);
@@ -1403,21 +1416,19 @@ static void prepareBernoulliNumbers(int bon_order) {
   }
 }
 
-void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
-                                  double force[3]) {
-  double F[3];
+void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,
+                                  double dl, Utils::Vector3d &force) {
+  Utils::Vector3d F{};
   double z2 = d[2] * d[2];
   double rho2 = d[1] * d[1] + z2;
   int i;
 
 #ifdef ADDITIONAL_CHECKS
-  if (d[2] > box_l[1] / 2) {
+  if (d[2] > box_geo.length()[1] / 2) {
     runtimeErrorMsg() << "near formula called for too distant particle pair";
     return;
   }
 #endif
-
-  F[0] = F[1] = F[2] = 0;
 
   /* Bessel sum */
   {
@@ -1436,7 +1447,7 @@ void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
       freq = C_2PI * ux * p;
 
       for (l = 1; l < besselCutoff.e[p - 1]; l++) {
-        ypl = d[1] + l * box_l[1];
+        ypl = d[1] + l * box_geo.length()[1];
         rho_l = sqrt(ypl * ypl + z2);
 #ifdef BESSEL_MACHINE_PREC
         k0 = K0(freq * rho_l);
@@ -1449,7 +1460,7 @@ void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
         k1Sum += k1;
         k1ySum += k1 * ypl;
 
-        ypl = d[1] - l * box_l[1];
+        ypl = d[1] - l * box_geo.length()[1];
         rho_l = sqrt(ypl * ypl + z2);
 #ifdef BESSEL_MACHINE_PREC
         k0 = K0(freq * rho_l);
@@ -1541,19 +1552,18 @@ void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
     // fprintf(stderr, "    psi force %f %f %f %d\n", F[0], F[1], F[2], n);
   }
 
-  for (i = 0; i < 3; i++)
-    F[i] *= ux;
+  F *= ux;
 
   /* explicitly added potentials r_{-1,0} and r_{1,0} */
   {
-    double cx = d[0] + box_l[0];
+    double cx = d[0] + box_geo.length()[0];
     double rinv2 = 1.0 / (cx * cx + rho2), rinv = sqrt(rinv2);
     double rinv3 = rinv * rinv2;
     F[0] += cx * rinv3;
     F[1] += d[1] * rinv3;
     F[2] += d[2] * rinv3;
 
-    cx = d[0] - box_l[0];
+    cx = d[0] - box_geo.length()[0];
     rinv2 = 1.0 / (cx * cx + rho2);
     rinv = sqrt(rinv2);
     rinv3 = rinv * rinv2;
@@ -1567,17 +1577,16 @@ void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
     F[2] += d[2] * rinv3;
   }
 
-  for (i = 0; i < 3; i++)
-    force[i] += pref * F[i];
+  force += pref * F;
 }
 
-inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
+inline double calc_mmm2d_copy_pair_energy(Utils::Vector3d const &d) {
   double eng;
   double z2 = d[2] * d[2];
   double rho2 = d[1] * d[1] + z2;
 
   /* the ux is multiplied in below */
-  eng = -2 * log(4 * M_PI * uy * box_l[0]);
+  eng = -2 * log(4 * M_PI * uy * box_geo.length()[0]);
 
   /* Bessel sum */
   {
@@ -1593,11 +1602,11 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
       freq = C_2PI * ux * p;
 
       for (l = 1; l < besselCutoff.e[p - 1]; l++) {
-        ypl = d[1] + l * box_l[1];
+        ypl = d[1] + l * box_geo.length()[1];
         rho_l = sqrt(ypl * ypl + z2);
         k0Sum += K0(freq * rho_l);
 
-        ypl = d[1] - l * box_l[1];
+        ypl = d[1] - l * box_geo.length()[1];
         rho_l = sqrt(ypl * ypl + z2);
         k0Sum += K0(freq * rho_l);
       }
@@ -1634,7 +1643,7 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
     }
     end = complexCutoff[end];
     for (n = 1; n <= end; n++) {
-      eng -= box_l[1] / (2 * n) * bon.e[n - 1] * ztn_r;
+      eng -= box_geo.length()[1] / (2 * n) * bon.e[n - 1] * ztn_r;
 
       tmp_r = ztn_r * zet2_r - ztn_i * zet2_i;
       ztn_i = ztn_r * zet2_i + ztn_i * zet2_r;
@@ -1670,11 +1679,11 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
 
   /* explicitly added potentials r_{-1,0} and r_{1,0} */
   {
-    double cx = d[0] + box_l[0];
+    double cx = d[0] + box_geo.length()[0];
     double rinv = sqrt(1.0 / (cx * cx + rho2));
     eng += rinv;
 
-    cx = d[0] - box_l[0];
+    cx = d[0] - box_geo.length()[0];
     rinv = sqrt(1.0 / (cx * cx + rho2));
     eng += rinv;
   }
@@ -1682,8 +1691,8 @@ inline double calc_mmm2d_copy_pair_energy(double const d[3]) {
   return eng;
 }
 
-double mmm2d_coulomb_pair_energy(double charge_factor, const double dv[3],
-                                 double d) {
+double mmm2d_coulomb_pair_energy(double charge_factor,
+                                 Utils::Vector3d const &dv, double d) {
   if (charge_factor) {
     return charge_factor * (calc_mmm2d_copy_pair_energy(dv) + 1. / d);
   }
@@ -1691,7 +1700,7 @@ double mmm2d_coulomb_pair_energy(double charge_factor, const double dv[3],
 }
 
 void MMM2D_self_energy() {
-  double dv[3] = {0, 0, 0};
+  Utils::Vector3d dv{};
   double seng = coulomb.prefactor * calc_mmm2d_copy_pair_energy(dv);
 
   /* this one gives twice the real self energy, as it is used
@@ -1775,7 +1784,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
 
 int MMM2D_sanity_checks() {
 
-  if (!PERIODIC(0) || !PERIODIC(1) || PERIODIC(2)) {
+  if (!box_geo.periodic(0) || !box_geo.periodic(1) || box_geo.periodic(2)) {
     runtimeErrorMsg() << "MMM2D requires periodicity 1 1 0";
     return 1;
   }
@@ -1835,9 +1844,9 @@ void MMM2D_on_resort_particles() {
     scxcache.resize(n_scxcache * n_localpart);
     scycache.resize(n_scycache * n_localpart);
 
-    partblk = Utils::realloc(partblk, n_localpart * 8 * sizeof(double));
-    lclcblk = Utils::realloc(lclcblk, cells.size() * 8 * sizeof(double));
-    gblcblk = Utils::realloc(gblcblk, n_layers * 8 * sizeof(double));
+    partblk.resize(n_localpart * 8);
+    lclcblk.resize(cells.size() * 8);
+    gblcblk.resize(n_layers * 8);
   }
   MMM2D_self_energy();
 }
@@ -1849,7 +1858,7 @@ void MMM2D_dielectric_layers_force_contribution() {
   Particle *pl, *p1;
   double charge_factor;
   double a[3];
-  double force[3] = {0, 0, 0};
+  Utils::Vector3d force{};
   double pref = coulomb.prefactor * C_2PI * ux * uy;
 
   if (!mmm2d_params.dielectric_contrast_on)
@@ -1864,24 +1873,20 @@ void MMM2D_dielectric_layers_force_contribution() {
 
     for (i = 0; i < npl; i++) {
       // printf("enter mmm2d_dielectric %f \n",my_left[2]);
-      force[0] = 0;
-      force[1] = 0;
-      force[2] = 0;
+      force = {};
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
         const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1], -pl[j].r.p[2]};
-        auto const d = get_mi_vector(p1->r.p, a);
+        auto const d = get_mi_vector(p1->r.p, a, box_geo);
 
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
         charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_bot;
-        add_mmm2d_coulomb_pair_force(charge_factor, d.data(), dist, force);
+        add_mmm2d_coulomb_pair_force(charge_factor, d, dist, force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] -= pref * charge_factor;
       }
-      for (j = 0; j < 3; j++) {
-        p1->f.f[j] += force[j];
-      }
+      p1->f.f += force;
     }
   }
 
@@ -1892,25 +1897,21 @@ void MMM2D_dielectric_layers_force_contribution() {
     pl = celll->part;
     npl = celll->n;
     for (i = 0; i < npl; i++) {
-      force[0] = 0;
-      force[1] = 0;
-      force[2] = 0;
+      force = {};
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
         const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1],
-                                2 * box_l[2] - pl[j].r.p[2]};
-        auto const d = get_mi_vector(p1->r.p, a);
+                                2 * box_geo.length()[2] - pl[j].r.p[2]};
+        auto const d = get_mi_vector(p1->r.p, a, box_geo);
 
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
         charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_top;
-        add_mmm2d_coulomb_pair_force(charge_factor, d.data(), dist, force);
+        add_mmm2d_coulomb_pair_force(charge_factor, d, dist, force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] += pref * charge_factor;
       }
-      for (j = 0; j < 3; j++) {
-        p1->f.f[j] += force[j];
-      }
+      p1->f.f += force;
     }
   }
 }
@@ -1937,12 +1938,12 @@ double MMM2D_dielectric_layers_energy_contribution() {
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
         const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1], -pl[j].r.p[2]};
-        auto const d = get_mi_vector(p1->r.p, a);
+        auto const d = get_mi_vector(p1->r.p, a, box_geo);
         auto const dist2 = d.norm2();
         charge_factor = mmm2d_params.delta_mid_bot * p1->p.q * pl[j].p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
-        eng += mmm2d_coulomb_pair_energy(charge_factor, d.data(), sqrt(dist2)) +
+        eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) +
                pref * charge_factor * d[2];
       }
     }
@@ -1957,13 +1958,13 @@ double MMM2D_dielectric_layers_energy_contribution() {
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {
         const Utils::Vector3d a{pl[j].r.p[0], pl[j].r.p[1],
-                                2 * box_l[2] - pl[j].r.p[2]};
-        auto const d = get_mi_vector(p1->r.p, a);
+                                2 * box_geo.length()[2] - pl[j].r.p[2]};
+        auto const d = get_mi_vector(p1->r.p, a, box_geo);
         auto const dist2 = d.norm2();
         charge_factor = mmm2d_params.delta_mid_top * p1->p.q * pl[j].p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
-        eng += mmm2d_coulomb_pair_energy(charge_factor, d.data(), sqrt(dist2)) -
+        eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) -
                pref * charge_factor * d[2];
       }
     }

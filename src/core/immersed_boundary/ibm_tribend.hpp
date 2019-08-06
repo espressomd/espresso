@@ -28,14 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Also calculates and stores the reference state
 int IBM_Tribend_SetParams(int bond_type, int ind1, int ind2, int ind3, int ind4,
                           double kb, bool flat);
-// For reading checkpoints.
-// Idea: * parameters are set in the run-continue script
-//       * also reference shape is recomputed there
-//       * only pass kB value here to check consistency
-int IBM_Tribend_ResetParams(int bond_type, double kb);
 
-// This function calculates and adds the actual force
+/** Calculate the forces */
 void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
-                           Particle *p4, const Bonded_ia_parameters &iaparams);
+                           Particle *p4, Bonded_ia_parameters const *iaparams);
 
 #endif

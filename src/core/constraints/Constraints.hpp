@@ -46,7 +46,7 @@ private:
 
 public:
   void add(std::shared_ptr<Constraint> const &c) {
-    if (not c->fits_in_box(Utils::Vector3d{box_l})) {
+    if (not c->fits_in_box(box_geo.length())) {
       throw std::runtime_error("Constraint not compatible with box size.");
     }
 
@@ -72,7 +72,7 @@ public:
     reset_foces();
 
     for (auto &p : particles) {
-      auto const pos = folded_position(p);
+      auto const pos = folded_position(p.r.p, box_geo);
       ParticleForce force{};
       for (auto const &c : *this) {
         force += c->force(p, pos, t);
@@ -82,10 +82,10 @@ public:
     }
   }
 
-  void add_energy(ParticleRange &particles, double t,
+  void add_energy(const ParticleRange &particles, double t,
                   Observable_stat &energy) const {
     for (auto &p : particles) {
-      auto const pos = folded_position(p);
+      auto const pos = folded_position(p.r.p, box_geo);
 
       for (auto const &c : *this) {
         c->add_energy(p, pos, t, energy);

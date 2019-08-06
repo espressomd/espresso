@@ -30,8 +30,8 @@ class Wall : public Shape {
 public:
   Wall() : m_n({1., 0., 0.}), m_d(0.0) {}
 
-  void calculate_dist(const Utils::Vector3d &pos, double *dist,
-                      double *vec) const override;
+  void calculate_dist(const Utils::Vector3d &pos, double &dist,
+                      Utils::Vector3d &vec) const override;
 
   void set_normal(const Utils::Vector3d &normal) {
     m_n = normal;

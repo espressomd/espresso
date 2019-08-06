@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
-
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -65,10 +63,8 @@ class ThermalizedBond(ut.TestCase):
         N2 = int(N/2)
         self.system.part.clear()
         self.system.time_step = 0.02
-        
-        if espressomd.has_features("PARTIAL_PERIODIC"):
-            self.system.periodicity = [0, 0, 0]
-        
+        self.system.periodicity = [0, 0, 0]
+
         m1 = 1.0
         m2 = 10.0
         # Place particles

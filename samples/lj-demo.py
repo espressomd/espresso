@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, division
 import matplotlib
 matplotlib.use('WXAgg')
 import espressomd
@@ -173,6 +172,7 @@ class Controls(HasTraits):
     default_input = default_input if inputs else None
 
     default_output = -1
+    through_port_output = None
     for i in outputs:
         if not "Through Port" in i[1]:
             default_output = i
@@ -181,6 +181,9 @@ class Controls(HasTraits):
             through_port_output = i
     default_output = default_output if len(
         outputs) > 1 else through_port_output
+
+    if default_input is None or default_output is None:
+        print('Cannot connect to any MIDI device')
 
     input_device = List(value=default_input,
                         editor=CheckListEditor(values=inputs))

@@ -45,6 +45,21 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &p, double *v,
 
 bool *isHaloCache = nullptr;
 
+namespace {
+bool in_local_domain(Utils::Vector3d const &pos) {
+  auto const lblattice = lb_lbfluid_get_lattice();
+  auto const my_left = local_geo.my_left();
+  auto const my_right = local_geo.my_right();
+
+  return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid &&
+          pos[0] < my_right[0] + 0.5 * lblattice.agrid &&
+          pos[1] >= my_left[1] - 0.5 * lblattice.agrid &&
+          pos[1] < my_right[1] + 0.5 * lblattice.agrid &&
+          pos[2] >= my_left[2] - 0.5 * lblattice.agrid &&
+          pos[2] < my_right[2] + 0.5 * lblattice.agrid);
+}
+} // namespace
+
 /****************
   IBM_ForcesIntoFluid_CPU
 
@@ -78,13 +93,7 @@ void IBM_ForcesIntoFluid_CPU() {
     for (int i = 0; i < np; i++) {
       // for ghost particles we have to check if they lie
       // in the range of the local lattice nodes
-      if (p[i].r.p[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-          p[i].r.p[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-          p[i].r.p[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-          p[i].r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-          p[i].r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-          p[i].r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
-
+      if (in_local_domain(p[i].r.p)) {
         if (p[i].p.is_virtual)
           CoupleIBMParticleToFluid(&p[i]);
       }
@@ -155,8 +164,7 @@ void CoupleIBMParticleToFluid(Particle *p) {
   // Get indices and weights of affected nodes using discrete delta function
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
-  lblattice.map_position_to_lattice(p->r.p, node_index, delta, my_left,
-                                    local_box_l);
+  lblattice.map_position_to_lattice(p->r.p, node_index, delta);
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {
@@ -192,8 +200,7 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
    and the relative position of the particle in this cell */
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
-  lblattice.map_position_to_lattice(pos, node_index, delta, my_left,
-                                    local_box_l);
+  lblattice.map_position_to_lattice(pos, node_index, delta);
 
   /* calculate fluid velocity at particle's position
    this is done by linear interpolation
@@ -208,22 +215,22 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
         auto const index = node_index[(z * 2 + y) * 2 + x];
         const auto &f = lbfields[index].force_density_buf;
 
-        double local_rho;
+        double local_density;
         Utils::Vector3d local_j;
 
 // This can be done easier without copying the code twice
 // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
-          local_rho = lbpar.rho;
-          local_j = lbpar.rho *
+          local_density = lbpar.density;
+          local_j = lbpar.density *
                     (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
                         .velocity();
         } else
 #endif
         {
-          auto const modes = lb_calc_modes(index);
-          local_rho = lbpar.rho + modes[0];
+          auto const modes = lb_calc_modes(index, lbfluid);
+          local_density = lbpar.density + modes[0];
 
           // Add the +f/2 contribution!!
           // Guo et al. PRE 2002
@@ -245,22 +252,22 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
 
           forceAdded[0] += delta[3 * x + 0] * delta[3 * y + 1] *
                            delta[3 * z + 2] * (f[0] - fExt[0]) / 2 /
-                           (local_rho);
+                           (local_density);
           forceAdded[1] += delta[3 * x + 0] * delta[3 * y + 1] *
                            delta[3 * z + 2] * (f[1] - fExt[1]) / 2 /
-                           (local_rho);
+                           (local_density);
           forceAdded[2] += delta[3 * x + 0] * delta[3 * y + 1] *
                            delta[3 * z + 2] * (f[2] - fExt[2]) / 2 /
-                           (local_rho);
+                           (local_density);
         }
 
         // Interpolate velocity
         interpolated_u[0] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[0] / (local_rho);
+                             delta[3 * z + 2] * local_j[0] / (local_density);
         interpolated_u[1] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[1] / (local_rho);
+                             delta[3 * z + 2] * local_j[1] / (local_density);
         interpolated_u[2] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[2] / (local_rho);
+                             delta[3 * z + 2] * local_j[2] / (local_density);
       }
     }
   }
@@ -337,12 +344,7 @@ void ParticleVelocitiesFromLB_CPU() {
       // This criterion include the halo on the left, but excludes the halo on
       // the right
       // Try if we have to use *1.5 on the right
-      if (p[j].r.p[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-          p[j].r.p[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-          p[j].r.p[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-          p[j].r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-          p[j].r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-          p[j].r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
+      if (in_local_domain(p[j].r.p)) {
         if (p[j].p.is_virtual) {
           double dummy[3];
           double force[3] = {0, 0,

@@ -78,7 +78,7 @@ installed with:
 
 .. code-block:: bash
 
-    sudo apt install build-essential cmake cython python3-numpy \
+    sudo apt install build-essential cmake cython3 python3-numpy \
     libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
     doxygen python3-opengl python3-sphinx python3-pip libgsl-dev
 
@@ -88,6 +88,13 @@ Optionally the ccmake utility can be installed for easier configuration:
 .. code-block:: bash
 
     sudo apt install cmake-curses-gui
+
+To run the tutorials and generate the documentation, additional Python packages
+are required:
+
+.. code-block:: bash
+
+    pip3 install --upgrade jupyter scipy matplotlib sphinxcontrib-bibtex numpydoc
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
@@ -129,12 +136,12 @@ following commands:
     sudo xcode-select --install
     sudo xcodebuild -license accept
     sudo port selfupdate
-    sudo port install cmake python27 py27-cython py27-numpy \
-      openmpi-default fftw-3 +openmpi boost +openmpi +python27 \
-      doxygen py27-opengl py27-sphinx py27-pip gsl hdf5 +openmpi
-    sudo port select --set cython cython27
-    sudo port select --set python python27
-    sudo port select --set pip pip27
+    sudo port install cmake python37 py37-cython py37-numpy \
+      openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
+      doxygen py37-opengl py37-sphinx py37-pip gsl hdf5 +openmpi
+    sudo port select --set cython cython37
+    sudo port select --set python3 python37
+    sudo port select --set pip pip37
     sudo port select --set mpi openmpi-mp-fortran
 
 Alternatively, you can use Homebrew.
@@ -348,14 +355,6 @@ activate ``FEATURE``, add the following line to the header file:
 General features
 ^^^^^^^^^^^^^^^^
 
--  ``PARTIAL_PERIODIC`` By default, all coordinates in |es| are periodic. With
-   ``PARTIAL_PERIODIC`` turned on, the |es| global variable ``periodic``
-   controls the periodicity of the individual coordinates.
-
-   .. note:: This slows the integrator down by around :math:`10-30\%`.
-
-   .. seealso:: :ref:`Setting global variables in Python`
-
 -  ``ELECTROSTATICS`` This enables the use of the various electrostatics algorithms, such as P3M.
 
    .. seealso:: :ref:`Electrostatics`
@@ -492,7 +491,7 @@ Interaction features
 The following switches turn on various short ranged interactions (see
 section :ref:`Isotropic non-bonded interactions`):
 
--  ``TABULATED`` Enable support for user-defined interactions.
+-  ``TABULATED`` Enable support for user-defined non-bonded interaction potentials.
 
 -  ``LENNARD_JONES`` Enable the Lennard-Jones potential.
 
@@ -522,24 +521,20 @@ section :ref:`Isotropic non-bonded interactions`):
 -  ``BMHTF_NACL`` Enable the Born-Meyer-Huggins-Tosi-Fumi potential, which can be used
    to model salt melts.
 
-Some of the short range interactions have additional features:
-
--  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard-Jones potentials that
-   prints a warning if particles come too close so that the simulation
-   becomes unphysical.
-
-If you want to use bond-angle potentials (see section :ref:`Bond-angle interactions`), you need the
-following features.
-
--  ``BOND_ANGLE``
-
--  ``LJGEN_SOFTCORE``
-
 -  ``GAUSSIAN``
 
 -  ``HAT``
 
 -  ``UMBRELLA`` (experimental)
+
+Some of the short-range interactions have additional features:
+
+-  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard-Jones
+   potentials that prints a warning if particles come so close to each other
+   that the simulation becomes unphysical.
+
+-  ``LJGEN_SOFTCORE`` This modifies the generic Lennard-Jones potential
+   (``LENNARD_JONES_GENERIC``) with tunable parameters.
 
 
 .. _Debug messages:

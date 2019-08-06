@@ -21,7 +21,6 @@ This sample simulates equal number of positively and negatively charged
 particles using the P3M solver. The system is maintained at a constant
 temperature using a Langevin thermostat.
 """
-from __future__ import print_function
 import espressomd
 
 required_features = ["P3M", "LENNARD_JONES"]

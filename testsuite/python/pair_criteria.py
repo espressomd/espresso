@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -52,7 +51,6 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(dc.decide(self.p1, self.p2))
         self.assertTrue(dc.decide(self.p1.id, self.p2.id))
 
-    @utx.skipIfMissingFeatures("PARTIAL_PERIODIC")
     def test_distance_crit_non_periodic(self):
         dc = pair_criteria.DistanceCriterion(cut_off=0.1)
 
@@ -77,7 +75,7 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(ec.decide(self.p1, self.p2))
         self.assertTrue(ec.decide(self.p1.id, self.p2.id))
 
-    @utx.skipIfMissingFeatures(["LENNARD_JONES", "PARTIAL_PERIODIC"])
+    @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_energy_crit_non_periodic(self):
         # Setup purely repulsive lj
         self.es.non_bonded_inter[0, 0].lennard_jones.set_params(

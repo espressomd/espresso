@@ -484,7 +484,7 @@ void mpi_who_has_slave(int, int) {
   MPI_Send(sendbuf.data(), npart, MPI_INT, 0, SOME_TAG, comm_cart);
 }
 
-void mpi_who_has() {
+void mpi_who_has(const ParticleRange &particles) {
   static auto *sizes = new int[n_nodes];
   std::vector<int> pdata;
 
@@ -497,7 +497,7 @@ void mpi_who_has() {
   /* then fetch particle locations */
   for (int pnode = 0; pnode < n_nodes; pnode++) {
     if (pnode == this_node) {
-      for (auto const &p : local_cells.particles())
+      for (auto const &p : particles)
         particle_node[p.p.identity] = this_node;
 
     } else if (sizes[pnode] > 0) {
@@ -515,7 +515,7 @@ void mpi_who_has() {
 /**
  * @brief Rebuild the particle index.
  */
-void build_particle_node() { mpi_who_has(); }
+void build_particle_node() { mpi_who_has(local_cells.particles()); }
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
@@ -1181,7 +1181,7 @@ void local_remove_particle(int part) {
 Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
   auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
   auto i = Utils::Vector3i{};
-  fold_position(pp, i);
+  fold_position(pp, i, box_geo);
 
   if (_new) {
     Particle new_part;

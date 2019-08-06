@@ -1,7 +1,6 @@
 """Code shared by charge and dipole methods based on the SCAFACOS library."""
 
 
-from __future__ import print_function, absolute_import
 from espressomd.actors cimport Actor
 from libcpp.string cimport string  # import std::string
 cimport electrostatics

@@ -28,7 +28,6 @@
 
 // Geometry, equation of motion, thermostat/barostat
 #define MASS
-#define PARTIAL_PERIODIC
 #define EXTERNAL_FORCES
 #define LANGEVIN_PER_PARTICLE
 #define BOND_CONSTRAINT
@@ -51,7 +50,6 @@
 #ifdef CUDA
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
-#define EK_ELECTROSTATIC_COUPLING
 #endif
 
 // Force/energy calculation

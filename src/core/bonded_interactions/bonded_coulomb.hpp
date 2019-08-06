@@ -21,9 +21,10 @@
 #ifndef _BONDED_COULOMB_HPP
 #define _BONDED_COULOMB_HPP
 /** \file
- *  Routines to calculate the BONDED_COULOMB Energy or/and BONDED_COULOMB force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the bonded Coulomb potential between
+ *  particle pairs.
+ *
+ *  Implementation in \ref bonded_coulomb.cpp
  */
 
 /************************************************************/
@@ -36,56 +37,51 @@
 #include "debug.hpp"
 #include "particle_data.hpp"
 
-/** set the parameters for the bonded_coulomb potential
+/** Set the parameters for the bonded Coulomb potential
  *
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
  */
 int bonded_coulomb_set_params(int bond_type, double prefactor);
 
-/** Computes the BONDED_COULOMB pair force.
+/** Compute the bonded Coulomb pair force.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
- *  @retval 0
+ *  @retval false
  */
-inline int calc_bonded_coulomb_pair_force(Particle const *p1,
-                                          Particle const *p2,
-                                          Bonded_ia_parameters const *iaparams,
-                                          Utils::Vector3d const &dx,
-                                          double *force) {
-  int i;
-  double fac;
+inline bool calc_bonded_coulomb_pair_force(
+    Particle const *const p1, Particle const *const p2,
+    Bonded_ia_parameters const *const iaparams, Utils::Vector3d const &dx,
+    Utils::Vector3d &force) {
   auto const dist2 = dx.norm2();
   auto const dist = std::sqrt(dist2);
 
-  fac =
+  auto const fac =
       iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / (dist * dist2);
+  force = fac * dx;
 
-  for (i = 0; i < 3; i++)
-    force[i] = fac * dx[i];
-
-  return 0;
+  return false;
 }
 
-/** Computes the BONDED_COULOMB pair energy.
+/** Compute the bonded Coulomb pair energy.
  *  @param[in]  p1        First particle.
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.
- *  @retval 0
+ *  @retval false
  */
-inline int bonded_coulomb_pair_energy(Particle const *p1, Particle const *p2,
-                                      Bonded_ia_parameters const *iaparams,
-                                      Utils::Vector3d const &dx,
-                                      double *_energy) {
+inline bool
+bonded_coulomb_pair_energy(Particle const *const p1, Particle const *const p2,
+                           Bonded_ia_parameters const *const iaparams,
+                           Utils::Vector3d const &dx, double *_energy) {
   auto const dist = dx.norm();
 
   *_energy = iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / dist;
-  return 0;
+  return false;
 }
 
 #endif

@@ -37,7 +37,7 @@ LB_PARAMS = {'agrid': AGRID,
              'seed': 23}
 
 
-class LBMassCommon(object):
+class LBMassCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None

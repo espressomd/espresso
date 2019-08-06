@@ -3,7 +3,9 @@ import numpy as np
 from espressomd.utils import is_valid_type, array_locked
 from espressomd.utils cimport Vector3d, make_array_locked
 
-cdef class PObjectId(object):
+cdef class PObjectId:
+    """Python interface to a core ObjectId object."""
+
     cdef ObjectId id
 
     def __richcmp__(PObjectId a, PObjectId b, op):
@@ -12,7 +14,38 @@ cdef class PObjectId(object):
         else:
             raise NotImplementedError
 
-cdef class PScriptInterface(object):
+cdef class PScriptInterface:
+
+    """
+    Python interface to a core ScriptInterface object. The core ScriptInterface
+    class is itself an interface for other core classes, such as constraints,
+    shapes, observables, etc.
+
+    This class can be instantiated in two ways: (1) with the object id of an
+    existing core ScriptInterface object, or (2) with parameters to construct
+    a new ScriptInterface object in the core.
+
+    Parameters
+    ----------
+    name : :obj:`str`
+        Name of the core class to instantiate (method 1).
+    \*\*kwargs
+        Parameters for the core class constructor (method 1).
+    oid : :class:`PObjectId`
+        Object id of an existing core object (method 2).
+    policy : :obj:`str`, \{'GLOBAL', 'LOCAL'\}
+        Creation policy.
+
+    Attributes
+    ----------
+
+    sip: shared_ptr
+        Pointer to a ScriptInterface object in the core.
+    policy_: :obj:`str`
+        Creation policy.
+
+    """
+
     def __init__(self, name=None, policy="GLOBAL", oid=None, **kwargs):
         cdef CreationPolicy policy_
 
@@ -45,7 +78,9 @@ cdef class PScriptInterface(object):
         self.sip = sip
 
     def set_sip_via_oid(self, PObjectId id):
-        """Set the shared_ptr to the script object in the core via the object id"""
+        """Set the shared_ptr to an existing core ScriptInterface object via
+        its object id.
+        """
         oid = id.id
         try:
             ptr = get_instance(oid).lock()
@@ -54,11 +89,23 @@ cdef class PScriptInterface(object):
             raise Exception("Could not get sip for given_id")
 
     def id(self):
+        """Return the core class object id (:class:`PObjectId`)."""
         oid = PObjectId()
         oid.id = self.sip.get().id()
         return oid
 
     def call_method(self, method, **kwargs):
+        """
+        Call a method of the core class.
+
+        Parameters
+        ----------
+        method : Creation policy.
+            Name of the core method.
+        \*\*kwargs
+            Arguments for the method.
+
+        """
         cdef VariantMap parameters
 
         for name in kwargs:
@@ -71,6 +118,7 @@ cdef class PScriptInterface(object):
         return res
 
     def name(self):
+        """Return name of the core class."""
         return to_str(self.sip.get().name())
 
     def _serialize(self):
@@ -114,6 +162,7 @@ cdef class PScriptInterface(object):
         return odict
 
 cdef Variant python_object_to_variant(value):
+    """Convert Python objects to C++ Variant objects."""
     cdef Variant v
     cdef vector[Variant] vec
     cdef PObjectId oid
@@ -121,11 +170,10 @@ cdef Variant python_object_to_variant(value):
     if value is None:
         return Variant()
 
-    # The order is important, the object character should
-    # be preserved even if the PScriptInterface derived class
-    # is iterable.
+    # The order is important, the object character should be preserved
+    # even if the PScriptInterface derived class is iterable.
     if isinstance(value, PScriptInterface):
-        # Map python object do id
+        # Map python object to id
         oid = value.id()
         return make_variant[ObjectId](oid.id)
     elif hasattr(value, '__iter__') and not(type(value) == str):
@@ -144,6 +192,7 @@ cdef Variant python_object_to_variant(value):
         raise TypeError("Unknown type for conversion to Variant")
 
 cdef variant_to_python_object(const Variant & value) except +:
+    """Convert C++ Variant objects to Python objects."""
     cdef ObjectId oid
     cdef vector[Variant] vec
     cdef shared_ptr[ScriptInterfaceBase] ptr
@@ -167,8 +216,7 @@ cdef variant_to_python_object(const Variant & value) except +:
         # Get the id and build a corresponding object
         oid = get_value[ObjectId](value)
 
-        # ObjectId is nullable, and the default
-        # id corresponds to "null".
+        # ObjectId is nullable, and the default id corresponds to "null".
         if oid != ObjectId():
             ptr = get_instance(oid).lock()
 
@@ -219,13 +267,19 @@ def _unpickle_so_class(so_name, state):
 
 
 class ScriptInterfaceHelper(PScriptInterface):
+
+    """
+    Base class from which to derive most interfaces to core ScriptInterface
+    classes.
+    """
+
     _so_name = None
     _so_bind_methods = ()
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, **kwargs):
-        super(ScriptInterfaceHelper, self).__init__(
-            self._so_name, policy=self._so_creation_policy, **kwargs)
+        super().__init__(self._so_name, policy=self._so_creation_policy,
+                         **kwargs)
         self.define_bound_methods()
 
     def __reduce__(self):
@@ -265,12 +319,13 @@ class ScriptInterfaceHelper(PScriptInterface):
 class ScriptObjectRegistry(ScriptInterfaceHelper):
 
     """
-    Base class for container-like things such as Constraints and LbBoundaires.
-    Derived classes must implement an an add() method which adds a single item
-    to the container.
-    The core class should be derived from ScriptObjectRegistry or provide
-    "get_elements" and "size" as callable methods
+    Base class for container-like classes such as
+    :class:`~espressomd.constraints.Constraints` and
+    :class:`~espressomd.lbboundaries.LBBoundaries`. Derived classes must
+    implement an ``add()`` method which adds a single item to the container.
 
+    The core class should derive from ScriptObjectRegistry or provide
+    ``"get_elements"`` and ``"size"`` as callable methods.
     """
 
     def __getitem__(self, key):
@@ -299,18 +354,19 @@ def _unpickle_script_object_registry(so_name, params, items):
     return so       
 
 
-# Map from script object names to corresponding python classes
+# Map from script object names to their corresponding python classes
 _python_class_by_so_name = {}
 
 
 def script_interface_register(c):
-    """Decorator used to register script interface classes
-       This will store a name<->class relationship in a registry, so that parameters
-       of type object can be instantiated as the correct python class
+    """
+    Decorator used to register script interface classes.
+    This will store a name-to-class relationship in a registry, so that
+    parameters of type object can be instantiated as the correct python class
     """
     if not hasattr(c, "_so_name"):
-        raise Exception(
-            "Python classes representing a script object must define an _so_name attribute at class level")
+        raise Exception("Python classes representing a script object must "
+                        "define an _so_name attribute at class level")
     _python_class_by_so_name[c._so_name] = c
     return c
 

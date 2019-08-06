@@ -19,7 +19,6 @@ Visualization sample of a simple plate capacitor with applied potential
 difference and charged particles.
 """
 
-from __future__ import print_function
 import numpy as np
 import math
 from threading import Thread
@@ -29,7 +28,7 @@ import espressomd.shapes
 from espressomd import electrostatics
 from espressomd import visualization
 
-required_features = ["PARTIAL_PERIODIC", "ELECTROSTATICS", "LENNARD_JONES"]
+required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 box_l = 20

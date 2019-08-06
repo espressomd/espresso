@@ -19,13 +19,21 @@
 
 # For C-extern Analysis
 
-from __future__ import print_function, absolute_import
 cimport numpy as np
 from espressomd.utils cimport *
 from .utils cimport Vector9d
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp.map cimport map  # import std::map as map
+
+cdef extern from "<array>" namespace "std" nogil:
+    cdef cppclass array4 "std::array<double, 4>":
+        array4() except+
+        double & operator[](size_t)
+
+    cdef cppclass array2 "std::array<double, 2>":
+        array2() except+
+        double & operator[](size_t)
 
 cdef extern from "PartCfg.hpp":
     cppclass PartCfg:
@@ -59,12 +67,12 @@ cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
 
-    cdef void calc_structurefactor(PartCfg &, int * p_types, int n_types, int order, double ** sf)
+    cdef vector[double] calc_structurefactor(PartCfg & , int * p_types, int n_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
     cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
-    cdef double min_distance2(double pos1[3], double pos2[3])
-    cdef List[int] nbhood(PartCfg &, double pos[3], double r_catch, int planedims[3])
-    cdef double distto(PartCfg &, double pos[3], int pid)
+    cdef double min_distance2(Vector3d pos1, Vector3d pos2)
+    cdef List[int] nbhood(PartCfg &, const Vector3d & pos, double r_catch, const Vector3i & planedims)
+    cdef double distto(PartCfg &, const Vector3d & pos, int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
     cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)
@@ -98,9 +106,9 @@ cdef extern from "statistics_chain.hpp":
     int chain_start
     int chain_n_chains
     int chain_length
-    void calc_re(PartCfg & , double ** re)
-    void calc_rg(PartCfg & , double ** rg)
-    void calc_rh(PartCfg & , double ** rh)
+    array4 calc_re(PartCfg & )
+    array4 calc_rg(PartCfg & )
+    array2 calc_rh(PartCfg & )
 
 cdef extern from "pressure.hpp":
     cdef Observable_stat total_pressure

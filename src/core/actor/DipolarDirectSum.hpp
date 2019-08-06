@@ -65,7 +65,7 @@ public:
     int per[3];
     for (int i = 0; i < 3; i++) {
       box[i] = s.box()[i];
-      per[i] = (PERIODIC(i));
+      per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_force(k, s.npart_gpu(), s.rGpuBegin(),
                                           s.dipGpuBegin(), s.fGpuBegin(),
@@ -76,7 +76,7 @@ public:
     int per[3];
     for (int i = 0; i < 3; i++) {
       box[i] = s.box()[i];
-      per[i] = (PERIODIC(i));
+      per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_energy(
         k, s.npart_gpu(), s.rGpuBegin(), s.dipGpuBegin(), box, per,

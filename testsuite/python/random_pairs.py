@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
@@ -92,10 +91,7 @@ class RandomPairTest(ut.TestCase):
         self.check_pairs(n2_pairs)
 
     def test(self):
-        if espressomd.has_features("PARTIAL_PERIODIC"):
-            periods = [0, 1]
-        else:
-            periods = [1]
+        periods = [0, 1]
 
         for periodicity in itertools.product(periods, periods, periods):
             self.system.periodicity = periodicity

@@ -22,9 +22,11 @@
 #ifndef __MINIMIZE_ENERGY_HPP
 #define __MINIMIZE_ENERGY_HPP
 
+#include "ParticleRange.hpp"
+
 void minimize_energy();
 void minimize_energy_init(double f_max, double gamma, int max_steps,
                           double max_displacement);
-bool steepest_descent_step();
+bool steepest_descent_step(const ParticleRange &particles);
 
 #endif /* __MINIMIZE_ENERGY */

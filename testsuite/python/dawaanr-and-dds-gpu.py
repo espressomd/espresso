@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 from numpy.random import random
@@ -27,7 +26,7 @@ import espressomd.analyze
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["DIPOLES", "PARTIAL_PERIODIC", "ROTATION"])
+@utx.skipIfMissingFeatures(["DIPOLES", "ROTATION"])
 class DDSGPUTest(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])

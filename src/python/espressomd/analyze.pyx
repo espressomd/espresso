@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # For C-extern Analysis
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport analyze
 from . cimport utils
@@ -41,7 +40,7 @@ from .system import System
 from espressomd.utils import is_valid_type
 
 
-class Analysis(object):
+class Analysis:
 
     def __init__(self, system):
         if not isinstance(system, System):
@@ -74,8 +73,8 @@ class Analysis(object):
         p1, p2 : arrays of :obj:`float`
 
         """
-        cdef double p1c[3]
-        cdef double p2c[3]
+        cdef Vector3d p1c
+        cdef Vector3d p2c
         for i in range(3):
             p1c[i] = p1[i]
             p2c[i] = p2[i]
@@ -126,7 +125,8 @@ class Analysis(object):
         Parameters
         ----------
         id : :obj:`int`, optional
-            Calculate distance to particle with :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
+            Calculate distance to particle with
+            :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
         pos : array of :obj:`float`, optional
             Calculate distance to position `pos`.
 
@@ -145,7 +145,7 @@ class Analysis(object):
             raise Exception(
                 "Only one of id or pos may be specified\n" + __doc__)
 
-        cdef double cpos[3]
+        cdef Vector3d cpos
         if len(self._system.part) == 0:
             raise Exception("no particles")
 
@@ -246,9 +246,9 @@ class Analysis(object):
 
         """
 
-        cdef int planedims[3]
+        cdef Vector3i planedims
         cdef List[int] ids
-        cdef double c_pos[3]
+        cdef Vector3d c_pos
 
         check_type_or_throw_except(
             pos, 3, float, "_pos=(float,float,float) must be passed to nbhood")
@@ -749,12 +749,9 @@ class Analysis(object):
             [3] its standard deviation.
 
         """
-        cdef double * re = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        analyze.calc_re(analyze.partCfg(), & re)
-        tuple_re = (re[0], re[1], re[2], re[3])
-        free(re)
-        return tuple_re
+        re = analyze.calc_re(analyze.partCfg())
+        return np.array([re[0], re[1], re[2], re[3]])
 
     def calc_rg(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
@@ -784,12 +781,9 @@ class Analysis(object):
             its standard deviation.
 
         """
-        cdef double * rg = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        analyze.calc_rg(analyze.partCfg(), & rg)
-        tuple_rg = (rg[0], rg[1], rg[2], rg[3])
-        free(rg)
-        return tuple_rg
+        rg = analyze.calc_rg(analyze.partCfg())
+        return np.array([rg[0], rg[1], rg[2], rg[3]])
 
     def calc_rh(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
@@ -818,12 +812,9 @@ class Analysis(object):
 
         """
 
-        cdef double * rh = NULL
         self.check_topology(chain_start, number_of_chains, chain_length)
-        analyze.calc_rh(analyze.partCfg(), & rh)
-        tuple_rh = (rh[0], rh[1])
-        free(rh)
-        return tuple_rh
+        rh = analyze.calc_rh(analyze.partCfg())
+        return np.array([rh[0], rh[1]])
 
     def check_topology(self, chain_start=None, number_of_chains=None,
                        chain_length=None):
@@ -876,12 +867,15 @@ class Analysis(object):
         check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
-        cdef double * sf
         p_types = create_int_list_from_python_object(sf_types)
 
-        analyze.calc_structurefactor(analyze.partCfg(), p_types.e, p_types.n, sf_order, & sf)
+        sf = analyze.calc_structurefactor(
+    analyze.partCfg(),
+     p_types.e,
+     p_types.n,
+     sf_order)
 
-        return np.transpose(analyze.modify_stucturefactor(sf_order, sf))
+        return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
 
     #
     # RDF
@@ -1191,8 +1185,8 @@ class Analysis(object):
 
         Parameters
         ----------
-        mode : :obj:`str`
-            One of ```read```, ```set``` or ```reset```.
+        mode : :obj:`str`, \{'read', 'set' or 'reset'\}
+            Mode.
         Vk1 : :obj:`float`
             Volume.
         Vk2 : :obj:`float`

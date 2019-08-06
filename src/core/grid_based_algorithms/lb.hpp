@@ -43,6 +43,7 @@
 
 #include <utils/Counter.hpp>
 #include <utils/Span.hpp>
+#include <utils/serialization/multi_array.hpp>
 
 /** Some general remarks:
  *  This file implements the LB D3Q19 method to Espresso. The LB_Model
@@ -88,7 +89,7 @@ struct LB_FluidNode {
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
 struct LB_Parameters {
   /** number density (LB units) */
-  double rho;
+  double density;
 
   /** kinematic viscosity (LB units) */
   double viscosity;
@@ -129,8 +130,8 @@ struct LB_Parameters {
   double kT;
 
   template <class Archive> void serialize(Archive &ar, long int) {
-    ar &rho &viscosity &bulk_viscosity &agrid &tau &ext_force_density &gamma_odd
-        &gamma_even &gamma_shear &gamma_bulk &is_TRT &phi &kT;
+    ar &density &viscosity &bulk_viscosity &agrid &tau &ext_force_density
+        &gamma_odd &gamma_even &gamma_shear &gamma_bulk &is_TRT &phi &kT;
   }
 };
 
@@ -142,13 +143,20 @@ extern Lattice lblattice;
 
 extern HaloCommunicator update_halo_comm;
 
-void lb_realloc_fluid();
+void lb_realloc_fluid(boost::multi_array<double, 2> &lb_fluid_a,
+                      boost::multi_array<double, 2> &lb_fluid_b,
+                      Lattice::index_t halo_grid_volume,
+                      std::array<Utils::Span<double>, 19> &lb_fluid,
+                      std::array<Utils::Span<double>, 19> &lb_fluid_post,
+                      std::vector<LB_FluidNode> &lb_fields);
 
-void lb_init();
+void lb_init(const LB_Parameters &lb_parameters);
 
-void lb_reinit_fluid();
+void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
+                     const Lattice &lb_lattice,
+                     const LB_Parameters &lb_parameters);
 
-void lb_reinit_parameters();
+void lb_reinit_parameters(LB_Parameters &lb_parameters);
 /** Pointer to the velocity populations of the fluid.
  *  lbfluid contains pre-collision populations, lbfluid_post
  *  contains post-collision populations
@@ -193,30 +201,36 @@ extern std::vector<LB_FluidNode> lbfields;
  */
 void lattice_boltzmann_update();
 
-void lb_sanity_checks();
+void lb_sanity_checks(const LB_Parameters &lb_parameters);
 
-/** Calculates the equilibrium distributions.
+/** Sets the equilibrium distributions.
     @param index Index of the local site
-    @param rho local fluid density
-    @param j local fluid speed
-    @param pi local fluid pressure
+    @param density local fluid density
+    @param momentum_density local fluid flux density
+    @param stress local fluid stress
 */
-void lb_calc_n_from_rho_j_pi(Lattice::index_t index, double rho,
-                             Utils::Vector3d const &j,
-                             Utils::Vector6d const &pi);
+void lb_set_population_from_density_momentum_density_stress(
+    Lattice::index_t index, double density,
+    Utils::Vector3d const &momentum_density, Utils::Vector6d const &stress);
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 #endif
 
-void lb_calc_local_fields(Lattice::index_t index, double *rho, double *j,
-                          double *pi);
+double lb_calc_density(std::array<double, 19> const &modes,
+                       const LB_Parameters &lb_parameters);
+Utils::Vector3d lb_calc_momentum_density(std::array<double, 19> const &modes,
+                                         Utils::Vector3d const &force_density);
+Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
+                               Utils::Vector3d const &force_density,
+                               const LB_Parameters &lb_parameters);
 
 /** Calculation of hydrodynamic modes.
  *
  *  @param index number of the node to calculate the modes for
  *  @retval Array containing the modes.
  */
-std::array<double, 19> lb_calc_modes(Lattice::index_t index);
+std::array<double, 19> lb_calc_modes(Lattice::index_t index,
+                                     const LB_Fluid &lb_fluid);
 
 #ifdef LB_BOUNDARIES
 inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
@@ -225,22 +239,36 @@ inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
 }
 #endif
 
-inline void lb_get_populations(Lattice::index_t index, double *pop) {
+/**
+ * @brief Get the populations as a function of density, flux density and stress.
+ * @param density fluid density
+ * @param momentum_density       fluid flux density
+ * @param stress      fluid stress
+ * @return 19 populations (including equilibrium density contribution).
+ **/
+Utils::Vector19d lb_get_population_from_density_momentum_density_stress(
+    double density, Utils::Vector3d const &momentum_density,
+    Utils::Vector6d const &stress);
+
+inline Utils::Vector19d lb_get_population(Lattice::index_t index) {
+  Utils::Vector19d pop{};
   for (int i = 0; i < D3Q19::n_vel; ++i) {
-    pop[i] = lbfluid[i][index] + D3Q19::coefficients[i][0] * lbpar.rho;
+    pop[i] = lbfluid[i][index] + D3Q19::coefficients[i][0] * lbpar.density;
   }
+  return pop;
 }
 
-inline void lb_set_populations(Lattice::index_t index,
-                               const Utils::Vector19d &pop) {
+inline void lb_set_population(Lattice::index_t index,
+                              const Utils::Vector19d &pop) {
   for (int i = 0; i < D3Q19::n_vel; ++i) {
-    lbfluid[i][index] = pop[i] - D3Q19::coefficients[i][0] * lbpar.rho;
+    lbfluid[i][index] = pop[i] - D3Q19::coefficients[i][0] * lbpar.density;
   }
 }
 
 uint64_t lb_fluid_get_rng_state();
 void lb_fluid_set_rng_state(uint64_t counter);
-void lb_prepare_communication();
+void lb_prepare_communication(HaloCommunicator &halo_comm,
+                              const Lattice &lb_lattice);
 
 #ifdef LB_BOUNDARIES
 /** Bounce back boundary conditions.
@@ -250,11 +278,14 @@ void lb_prepare_communication();
  *
  * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  */
-void lb_bounce_back(LB_Fluid &lbfluid);
+void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
+                    const std::vector<LB_FluidNode> &lb_fields);
 
 #endif /* LB_BOUNDARIES */
 
-void lb_calc_fluid_momentum(double *result);
+void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
+                            const std::vector<LB_FluidNode> &lb_fields,
+                            const Lattice &lb_lattice);
 void lb_collect_boundary_forces(double *result);
 
 /*@}*/

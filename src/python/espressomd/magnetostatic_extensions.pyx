@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function, absolute_import
 from . cimport utils
 include "myconfig.pxi"
 from .actors import Actor
@@ -43,12 +42,12 @@ IF DIPOLES and DP3M:
         Attributes
         ----------
         far_cut : :obj:`float`
-                  Cutoff of the exponential sum.
+            Cutoff of the exponential sum.
         gap_size : :obj:`float`
-                   Size of the empty gap. Note that DLC relies on the user to make sure that
-                   this condition is fulfilled.
+            Size of the empty gap. Note that DLC relies on the user to make sure that
+            this condition is fulfilled.
         maxPWerror : :obj:`float`
-                     Maximal pairwise error of the potential and force.
+            Maximal pairwise error of the potential and force.
 
         """
 

@@ -319,9 +319,7 @@ union Bond_parameters {
   Angle_cosine_bond_parameters angle_cosine;
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
-#ifdef TABULATED
   Tabulated_bond_parameters tab;
-#endif
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
 #endif
@@ -366,8 +364,8 @@ void make_bond_type_exist(int type);
  * @param p          particle on which the bond may be stored
  * @param partner    bond partner
  * @param bond_type  numerical bond type */
-inline bool pair_bond_exists_on(const Particle *const p,
-                                const Particle *const partner, int bond_type) {
+inline bool pair_bond_exists_on(Particle const *const p,
+                                Particle const *const partner, int bond_type) {
   // First check the bonds of p1
   if (p->bl.e) {
     int i = 0;
@@ -391,8 +389,8 @@ inline bool pair_bond_exists_on(const Particle *const p,
  *  @param p_partner   bond partner
  *  @param bond        enum bond type
  */
-inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
-                                     const Particle *const p_partner,
+inline bool pair_bond_enum_exists_on(Particle const *const p_bond,
+                                     Particle const *const p_partner,
                                      BondedInteraction bond) {
 #ifdef ADDITIONAL_CHECKS
   extern int ghosts_have_bonds;
@@ -402,7 +400,7 @@ inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
   int i = 0;
   while (i < p_bond->bl.n) {
     int type_num = p_bond->bl.e[i];
-    Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];
+    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
     if (iaparams->type == (int)bond &&
         p_bond->bl.e[i + 1] == p_partner->p.identity) {
       return true;
@@ -419,8 +417,8 @@ inline bool pair_bond_enum_exists_on(const Particle *const p_bond,
  *  @param p2     particle on which the bond may be stored
  *  @param bond   numerical bond type
  */
-inline bool pair_bond_enum_exists_between(const Particle *const p1,
-                                          const Particle *const p2,
+inline bool pair_bond_enum_exists_between(Particle const *const p1,
+                                          Particle const *const p2,
                                           BondedInteraction bond) {
   if (p1 == p2)
     return false;

@@ -29,6 +29,7 @@
 #include "communication.hpp"
 #include "debug.hpp"
 #include "domain_decomposition.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
@@ -60,6 +61,10 @@ CellPList ghost_cells = {nullptr, 0, 0};
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
+CellPList CellStructure::local_cells() const { return ::local_cells; }
+
+CellPList CellStructure::ghost_cells() const { return ::ghost_cells; }
+
 double max_range = 0.0;
 
 /** On of Cells::Resort, announces the level of resort needed.
@@ -67,7 +72,9 @@ double max_range = 0.0;
 unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
 
-#include "utils/print.hpp"
+//CellPList CellStructure::local_cells() const { return ::local_cells; }
+
+//CellPList CellStructure::ghost_cells() const { return ::ghost_cells; }
 
 /**
  * @brief Get pairs closer than distance from the cells.
@@ -87,7 +94,6 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
     if (dist2 < cutoff2) {
-      Utils::print("Found pair", p1.p.identity, p2.p.identity);
       ret.emplace_back(p1.p.identity, p2.p.identity);
     }
   };
@@ -96,7 +102,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                        boost::make_indirect_iterator(local_cells.end()),
                        Utils::NoOp{}, pair_kernel,
                        [](Particle const &p1, Particle const &p2) {
-                         return get_mi_vector(p1.r.p, p2.r.p).norm2();
+                         return get_mi_vector(p1.r.p, p2.r.p,box_geo).norm2();
                        });
 
   /* Sort pairs */
@@ -281,7 +287,7 @@ namespace {
  * @brief Fold coordinates to box and reset the old position.
  */
 void fold_and_reset(Particle &p) {
-  fold_position(p.r.p, p.l.i);
+  fold_position(p.r.p, p.l.i, box_geo);
 
   p.l.p_old = p.r.p;
 }

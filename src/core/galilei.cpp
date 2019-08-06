@@ -31,8 +31,8 @@
 
 /* Stop the particle motion by setting the
    velocity of each particle to zero */
-void local_kill_particle_motion(int omega) {
-  for (auto &p : local_cells.particles()) {
+void local_kill_particle_motion(int omega, const ParticleRange &particles) {
+  for (auto &p : particles) {
     if (omega) {
       p.m = {};
     } else {
@@ -43,8 +43,8 @@ void local_kill_particle_motion(int omega) {
 
 /* Set all the forces acting on the particles
    to zero */
-void local_kill_particle_forces(int torque) {
-  for (auto &p : local_cells.particles()) {
+void local_kill_particle_forces(int torque, const ParticleRange &particles) {
+  for (auto &p : particles) {
     if (torque) {
       p.f = {};
     } else {
@@ -59,7 +59,9 @@ std::pair<Utils::Vector3d, double> local_system_CMS() {
       local_cells.particles(), std::pair<Utils::Vector3d, double>{},
       [](auto sum, const Particle &p) {
         return std::pair<Utils::Vector3d, double>{
-            sum.first + p.p.mass * unfolded_position(p), sum.second + p.p.mass};
+            sum.first +
+                p.p.mass * unfolded_position(p.r.p, p.l.i, box_geo.length()),
+            sum.second + p.p.mass};
       });
 }
 

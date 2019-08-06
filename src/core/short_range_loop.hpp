@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <profiler/profiler.hpp>
@@ -45,8 +46,10 @@ struct Distance {
 
 namespace detail {
 struct MinimalImageDistance {
+  const BoxGeometry box;
+
   Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(get_mi_vector(p1.r.p, p2.r.p));
+    return Distance(get_mi_vector(p1.r.p, p2.r.p, box));
   }
 };
 
@@ -57,19 +60,19 @@ void short_range_loop(ParticleKernel &&particle_kernel,
                       PairKernel &&pair_kernel) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-  assert(get_resort_particles() == Cells::RESORT_NONE);
+  assert(get_resort_particles() =Cells::RESORT_NONE);
 
   auto first = boost::make_indirect_iterator(local_cells.begin());
   auto last = boost::make_indirect_iterator(local_cells.end());
 
 #ifdef ELECTROSTATICS
-  auto const coulomb_cutoff = Coulomb::cutoff(box_l);
+  auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
 #else
   auto const coulomb_cutoff = INACTIVE_CUTOFF;
 #endif
 
 #ifdef DIPOLES
-  auto const dipole_cutoff = Dipole::cutoff(box_l);
+  auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
 #else
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
@@ -83,7 +86,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
 
   Algorithm::for_each_pair(
       first, last, std::forward<ParticleKernel>(particleKernel),
-      std::forward<PairKernel>(pairKernel), detail::MinimalImageDistance{},
+      std::forward<PairKernel>(pairKernel), detail::MinimalImageDistance{box_geo},
       std::forward<VerletCriterion>(verletCriterion),
       cell_structure.use_verlet_list, rebuild_verletlist);
 

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -34,8 +33,7 @@ class LangevinThermostat(ut.TestCase):
     system.cell_system.set_domain_decomposition(use_verlet_lists=True)
     system.cell_system.skin = 0
     system.seed = range(system.cell_system.get_state()["n_nodes"])
-    if espressomd.has_features("PARTIAL_PERIODIC"):
-        system.periodicity = [0, 0, 0]
+    system.periodicity = [0, 0, 0]
 
     @classmethod
     def setUpClass(cls):

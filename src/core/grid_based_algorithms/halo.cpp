@@ -26,7 +26,9 @@
  */
 
 #include "config.hpp"
+#include <cstring>
 
+#include "communication.hpp"
 #include "debug.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
@@ -35,33 +37,6 @@
 /** Primitive fieldtypes and their initializers */
 struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,
                                       0, 0,       0,       nullptr};
-
-void halo_create_fieldtype(int count, int const *const lengths,
-                           int const *const disps, int extent,
-                           Fieldtype *const newtype) {
-  Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
-
-  ntype->subtype = nullptr;
-  ntype->vflag = 0;
-
-  ntype->vblocks = 1;
-  ntype->vstride = 1;
-  ntype->vskip = 1;
-
-  ntype->count = count;
-  ntype->extent = extent;
-
-  if (count > 0) {
-
-    ntype->lengths = (int *)Utils::malloc(count * 2 * sizeof(int));
-    ntype->disps = (int *)((char *)ntype->lengths + count * sizeof(int));
-
-    for (int i = 0; i < count; i++) {
-      ntype->disps[i] = disps[i];
-      ntype->lengths[i] = lengths[i];
-    }
-  }
-}
 
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
                               Fieldtype oldtype, Fieldtype *const newtype) {
@@ -223,9 +198,11 @@ void prepare_halo_communication(HaloCommunicator *const hc,
   num = 2 * 3; /* two communications in each space direction */
 
   hc->num = num;
-  hc->halo_info = Utils::realloc(hc->halo_info, num * sizeof(HaloInfo));
+  hc->halo_info.resize(num);
 
   int extent = fieldtype->extent;
+
+  auto const node_neighbors = calc_node_neighbors(comm_cart);
 
   cnt = 0;
   for (dir = 0; dir < 3; dir++) {
@@ -265,27 +242,25 @@ void prepare_halo_communication(HaloCommunicator *const hc,
       MPI_Type_vector(nblocks, stride, skip, datatype, &hinfo->datatype);
       MPI_Type_commit(&hinfo->datatype);
 
-#ifdef PARTIAL_PERIODIC
-      if (!PERIODIC(dir) &&
-          (boundary[2 * dir + lr] != 0 || boundary[2 * dir + 1 - lr] != 0)) {
+      if (!box_geo.periodic(dir) &&
+          (local_geo.boundary()[2 * dir + lr] != 0 ||
+           local_geo.boundary()[2 * dir + 1 - lr] != 0)) {
         if (local_node_grid[dir] == 1) {
           hinfo->type = HALO_OPEN;
         } else if (lr == 0) {
-          if (boundary[2 * dir + lr] == 1) {
+          if (local_geo.boundary()[2 * dir + lr] == 1) {
             hinfo->type = HALO_RECV;
           } else {
             hinfo->type = HALO_SEND;
           }
         } else {
-          if (boundary[2 * dir + lr] == -1) {
+          if (local_geo.boundary()[2 * dir + lr] == -1) {
             hinfo->type = HALO_RECV;
           } else {
             hinfo->type = HALO_SEND;
           }
         }
-      } else
-#endif
-      {
+      } else {
         if (local_node_grid[dir] == 1) {
           hc->halo_info[cnt].type = HALO_LOCL;
         } else {
@@ -311,8 +286,6 @@ void release_halo_communication(HaloCommunicator *const hc) {
   for (n = 0; n < hc->num; n++) {
     MPI_Type_free(&(hc->halo_info[n].datatype));
   }
-
-  free(hc->halo_info);
 }
 
 void halo_communication(HaloCommunicator const *const hc, char *const base) {

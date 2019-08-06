@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import os
 import unittest as ut
 import unittest_decorators as utx
@@ -26,7 +25,7 @@ from espressomd import electrostatics, electrostatic_extensions, scafacos
 import tests_common
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "PARTIAL_PERIODIC"])
+@utx.skipIfMissingFeatures("ELECTROSTATICS")
 class CoulombMixedPeriodicity(ut.TestCase):
 
     """Test mixed periodicity electrostatics"""

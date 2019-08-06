@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -64,8 +63,7 @@ class RotDiffAniso(ut.TestCase):
         # Space
         box = 10.0
         self.system.box_l = box, box, box
-        if espressomd.has_features(("PARTIAL_PERIODIC",)):
-            self.system.periodicity = [0, 0, 0]
+        self.system.periodicity = [0, 0, 0]
 
         # NVT thermostat
         # Just some temperature range to cover by the test:

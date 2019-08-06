@@ -16,11 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 cimport numpy as np
 cimport cython
 import numpy as np
-from cpython.version cimport PY_MAJOR_VERSION
 from libcpp.vector cimport vector
 
 cdef np.ndarray create_nparray_from_int_list(const List[int] & il):
@@ -146,14 +144,12 @@ def to_str(s):
     s : char*
 
     """
-    if type(s) is unicode:
+    if isinstance(s, unicode):
         return < unicode > s
-    elif PY_MAJOR_VERSION >= 3 and isinstance(s, bytes):
+    elif isinstance(s, bytes):
         return (< bytes > s).decode('ascii')
-    elif isinstance(s, unicode):
-        return unicode(s)
     else:
-        return s
+        raise ValueError('Unknown string type {}'.format(type(s)))
 
 
 class array_locked(np.ndarray):
@@ -232,7 +228,7 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
         raise ValueError(array_locked.ERR_MSG)
 
 
-cdef make_array_locked(const Vector3d & v):
+cdef make_array_locked(Vector3d v):
     return array_locked([v[0], v[1], v[2]])
 
 
