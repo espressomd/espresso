@@ -422,6 +422,7 @@ check_sphinx:
     - cuda-maxset
   when: on_success
   script:
+    - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
     - cd ${CI_PROJECT_DIR}/build
     - make -t && make sphinx
     - bash ../maintainer/CI/doc_warnings.sh
