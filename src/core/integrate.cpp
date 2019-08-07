@@ -91,7 +91,12 @@ double verlet_reuse = 0.0;
 bool set_py_interrupt = false;
 namespace {
 volatile std::sig_atomic_t ctrl_C = 0;
+
+void notify_sig_int() {
+  ctrl_C = 0;              // reset
+  set_py_interrupt = true; // global to notify Python
 }
+} // namespace
 
 /** \name Private Functions */
 /************************************************************/
@@ -109,11 +114,12 @@ void propagate_pos(const ParticleRange &particles);
     of the Velocity Verlet integrator: <br>
     \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] <br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
+
 void propagate_vel_pos(const ParticleRange &particles);
 /** Integration step 4 of the Velocity Verletintegrator and finalize
     instantaneous pressure calculation:<br>
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
-void propagate_vel_finalize_p_inst(const ParticleRange &particles);
+void velocity_verlet_step_4(const ParticleRange &particles);
 
 void finalize_p_inst_npt();
 
@@ -167,6 +173,20 @@ void integrate_ensemble_init() {
 }
 
 /************************************************************/
+/** @brief Step 1 and 2 of Velocity Verlet scheme
+         v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
+         p(t + dt)   = p(t) + dt * v(t+0.5*dt)
+         NOTE: Depending on the integration method Step 1 and Step 2
+         cannot be combined for the translation.
+*/
+void velocity_verlet_step_1_and_2(ParticleRange &particles) {
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+    propagate_vel(particles);
+    propagate_pos(particles);
+  } else {
+    propagate_vel_pos(particles);
+  }
+}
 
 void integrate_vv(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
@@ -197,9 +217,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
-    if (virtual_sites()->is_relative()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
     virtual_sites()->update();
 #endif
 
@@ -217,6 +234,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     thermo_cool_down();
 
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
+    if (n_part > 0)
+      lb_lbcoupling_activate();
   }
 
   if (check_runtime_errors(comm_cart))
@@ -241,27 +260,21 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #endif
 
-    /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
-       v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
-       p(t + dt)   = p(t) + dt * v(t+0.5*dt)
-       NOTE: Depending on the integration method Step 1 and Step 2
-       cannot be combined for the translation.
-    */
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      propagate_vel(particles);
-      propagate_pos(particles);
-
-      /* Propagate time: t = t+dt */
-      sim_time += time_step;
-    } else if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
+    if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
       if (steepest_descent_step(particles))
         break;
     } else {
-      propagate_vel_pos(particles);
-
-      /* Propagate time: t = t+dt */
-      sim_time += time_step;
+      /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
+         v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
+         p(t + dt)   = p(t) + dt * v(t+0.5*dt)
+         NOTE: Depending on the integration method Step 1 and Step 2
+         cannot be combined for the translation.
+      */
+      velocity_verlet_step_1_and_2(particles);
     }
+
+    /* Propagate time: t = t+dt */
+    sim_time += time_step;
 
     /* Propagate philox rng counters */
     philox_counter_increment();
@@ -270,8 +283,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     /**Correct those particle positions that participate in a rigid/constrained
      * bond */
     if (n_rigidbonds) {
-      cells_update_ghosts();
-
       correct_pos_shake(cell_structure.local_cells().particles());
     }
 #endif
@@ -280,14 +291,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
 
-    if (n_part > 0)
-      lb_lbcoupling_activate();
-
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-    if (virtual_sites()->is_relative()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
     virtual_sites()->update();
 #endif
 
@@ -305,7 +310,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     /* Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      propagate_vel_finalize_p_inst(particles);
+      velocity_verlet_step_4(particles);
 #ifdef ROTATION
       convert_torques_propagate_omega(particles);
 #endif
@@ -313,8 +318,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-      correct_vel_shake(cell_structure);
+      correct_vel_shake();
     }
 #endif
 
@@ -327,45 +331,36 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef VIRTUAL_SITES
       virtual_sites()->after_lb_propagation();
 #endif
-    }
 
-#ifdef NPT
-    if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))
-      nptiso.p_inst_av += nptiso.p_inst;
-#endif
-
-    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef COLLISION_DETECTION
       handle_collisions();
 #endif
     }
+
+// NPT: Update instantaneous average pressure
+#ifdef NPT
+    if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))
+      nptiso.p_inst_av += nptiso.p_inst;
+#endif
 
     if (check_runtime_errors(comm_cart))
       break;
 
     // Check if SIGINT has been caught.
     if (ctrl_C == 1) {
-      // Reset the flag.
-      ctrl_C = 0;
-
-      // Set global to notify Python of signal.
-      set_py_interrupt = true;
-
-      // Break the integration loop
+      notify_sig_int();
       break;
     }
-  }
-  ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
-// VIRTUAL_SITES update vel
-#ifdef VIRTUAL_SITES
-  if (virtual_sites()->need_ghost_comm_before_vel_update()) {
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-  }
-  virtual_sites()->update(false); // Recalc positions = false
-#endif
 
+  } // for(step ...)
+  ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
+#endif
+
+// VIRTUAL_SITES update vel
+#ifdef VIRTUAL_SITES
+  virtual_sites()->update(false); // Recalc positions = false
 #endif
 
   /* verlet list statistics */
@@ -376,13 +371,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    nptiso.invalidate_p_vel = 0;
-    MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
-    MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);
-    if (this_node == 0)
-      nptiso.p_inst_av /= 1.0 * n_steps;
-    MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
+    synchronize_npt_state(n_steps);
   }
 #endif
 }
@@ -402,7 +391,9 @@ void philox_counter_increment() {
   }
 }
 
-void propagate_vel_finalize_p_inst(const ParticleRange &particles) {
+/** @brief Integration Step: Step 4 of Velocity Verlet scheme:
+       v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
+void velocity_verlet_step_4(const ParticleRange &particles) {
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;

@@ -63,13 +63,6 @@ public:
     m_have_quaternion = have_quaternion;
   };
   bool get_have_quaternion() const { return m_have_quaternion; };
-  /** Is a ghost comm needed before a velocity update */
-  virtual bool need_ghost_comm_before_vel_update() const = 0;
-  /**
-   * @brief true if the implementation depends on the position of
-   *        real particles.
-   */
-  virtual bool is_relative() const = 0;
 
   virtual ~VirtualSites() = default;
 

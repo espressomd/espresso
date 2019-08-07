@@ -17,4 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "npt.hpp"
+#include "communication.hpp"
 #include "config.hpp"
+
+void synchronize_npt_state(int n_steps) {
+  nptiso.invalidate_p_vel = 0;
+  MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
+  MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);
+  if (this_node == 0)
+    nptiso.p_inst_av /= 1.0 * n_steps;
+  MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
+}
