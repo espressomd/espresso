@@ -25,14 +25,12 @@
  *  see \ref ghosts.hpp "ghosts.hpp"
  */
 #include "ghosts.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
 #include "particle_data.hpp"
 
 #include <algorithm>
-#include <boost/range/algorithm/fill.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

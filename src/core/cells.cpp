@@ -416,6 +416,8 @@ void cells_resort_particles(int global_flag) {
   resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = 1;
 
+  realloc_particlelist(&displaced_parts, 0);
+
   on_resort_particles();
 
   CELL_TRACE(
