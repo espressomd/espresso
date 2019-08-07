@@ -318,8 +318,8 @@ Pictured is an example constraint with a ``SimplePore`` shape created with ::
 
 The resulting surface is a stomatocyte shaped boundary.
 This command should be used with care.
-The position can be any point in the simulation box and is set via the array_like parameter ``center``.
-The orientation of the (cylindrically symmetric) stomatocyte is given by an array_like ``axis``,
+The position can be any point in the simulation box and is set via the (3,) array_like parameter ``center``.
+The orientation of the (cylindrically symmetric) stomatocyte is given by an ``axis`` (a (3,) array_like of :obj:`float`),
 which points in the direction of the symmetry axis and does not need to be normalized.
 The parameters: ``outer_radius``, ``inner_radius``, and ``layer_width``, specify the shape of the stomatocyte.
 Here inappropriate choices of these parameters can yield undesired results.
@@ -431,10 +431,10 @@ The resulting surface is a section of a hollow cone.
 The parameters ``inner_radius`` and ``outer_radius`` specifies the two radii .
 The parameter ``opening_angle`` specifies the opening angle of the cone (in radians, between 0 and :math:`\pi/2` ), and thus also determines the length.
 
-The orientation of the (cylindrically symmetric) cone is specified with the array_like parameter ``axis``,
+The orientation of the (cylindrically symmetric) cone is specified with the parameter ``axis`` (a (3,) array_like of :obj:`float`),
 which points in the direction of the symmetry axis, and does not need to be normalized.
 
-The position is specified via the array_like parameter ``center`` and can be any point in the simulation box.
+The position is specified via the (3,) array_like ``center`` and can be any point in the simulation box.
 
 The ``width`` specifies the width.
 This shape supports the ``direction`` parameter, ``+1`` for outward and ``-1`` for inward.

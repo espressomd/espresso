@@ -30,9 +30,9 @@
 int wca_set_params(int part_type_a, int part_type_b, double eps, double sig) {
   IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
 
-  data->WCA_eps = eps;
-  data->WCA_sig = sig;
-  data->WCA_cut = sig * std::pow(2., 1. / 6.);
+  data->wca.eps = eps;
+  data->wca.sig = sig;
+  data->wca.cut = sig * std::pow(2., 1. / 6.);
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

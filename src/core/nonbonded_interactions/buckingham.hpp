@@ -56,14 +56,15 @@ inline void add_buck_pair_force(Particle const *const p1,
                                 IA_parameters const *const ia_params,
                                 Utils::Vector3d const &d, double dist,
                                 Utils::Vector3d &force) {
-  if (dist < ia_params->BUCK_cut) {
+  if (dist < ia_params->buckingham.cut) {
     /* case: resulting force/energy greater than discontinuity and
              less than cutoff (true Buckingham region) */
     double fac;
-    if (dist > ia_params->BUCK_discont) {
-      fac = buck_force_r(ia_params->BUCK_A, ia_params->BUCK_B,
-                         ia_params->BUCK_C, ia_params->BUCK_D, dist) /
-            dist;
+    if (dist > ia_params->buckingham.discont) {
+      fac =
+          buck_force_r(ia_params->buckingham.A, ia_params->buckingham.B,
+                       ia_params->buckingham.C, ia_params->buckingham.D, dist) /
+          dist;
       force += fac * d;
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)
@@ -72,7 +73,7 @@ inline void add_buck_pair_force(Particle const *const p1,
 #endif
     } else {
       /* resulting force/energy in the linear region*/
-      fac = -ia_params->BUCK_F2 / dist;
+      fac = -ia_params->buckingham.F2 / dist;
       force += fac * d;
     }
 
@@ -101,17 +102,17 @@ inline double buck_pair_energy(Particle const *const p1,
                                Particle const *const p2,
                                IA_parameters const *const ia_params,
                                Utils::Vector3d const &d, double dist) {
-  if (dist < ia_params->BUCK_cut) {
+  if (dist < ia_params->buckingham.cut) {
     /* case: resulting force/energy greater than discont and
              less than cutoff (true Buckingham region) */
-    if (dist > ia_params->BUCK_discont) {
-      return buck_energy_r(ia_params->BUCK_A, ia_params->BUCK_B,
-                           ia_params->BUCK_C, ia_params->BUCK_D,
-                           ia_params->BUCK_shift, dist);
+    if (dist > ia_params->buckingham.discont) {
+      return buck_energy_r(ia_params->buckingham.A, ia_params->buckingham.B,
+                           ia_params->buckingham.C, ia_params->buckingham.D,
+                           ia_params->buckingham.shift, dist);
     }
 
     /* resulting force/energy in the linear region*/
-    return ia_params->BUCK_F1 + ia_params->BUCK_F2 * dist;
+    return ia_params->buckingham.F1 + ia_params->buckingham.F2 * dist;
   }
   return 0.0;
 }

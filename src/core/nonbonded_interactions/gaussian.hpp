@@ -41,9 +41,9 @@ inline void add_gaussian_pair_force(Particle const *const p1,
                                     IA_parameters const *const ia_params,
                                     Utils::Vector3d const &d, double dist,
                                     double dist2, Utils::Vector3d &force) {
-  if (dist < ia_params->Gaussian_cut) {
-    auto const fac = ia_params->Gaussian_eps / pow(ia_params->Gaussian_sig, 2) *
-                     exp(-0.5 * Utils::sqr(dist / ia_params->Gaussian_sig));
+  if (dist < ia_params->gaussian.cut) {
+    auto const fac = ia_params->gaussian.eps / pow(ia_params->gaussian.sig, 2) *
+                     exp(-0.5 * Utils::sqr(dist / ia_params->gaussian.sig));
     force += fac * d;
   }
 }
@@ -54,9 +54,9 @@ inline double gaussian_pair_energy(Particle const *const p1,
                                    IA_parameters const *const ia_params,
                                    Utils::Vector3d const &d, double dist,
                                    double dist2) {
-  if (dist < ia_params->Gaussian_cut) {
-    return ia_params->Gaussian_eps *
-           exp(-0.5 * Utils::sqr(dist / ia_params->Gaussian_sig));
+  if (dist < ia_params->gaussian.cut) {
+    return ia_params->gaussian.eps *
+           exp(-0.5 * Utils::sqr(dist / ia_params->gaussian.sig));
   }
   return 0.0;
 }

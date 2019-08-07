@@ -42,7 +42,7 @@
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
-#include "nonbonded_interactions/gb.hpp"
+#include "nonbonded_interactions/gay_berne.hpp"
 #include "nonbonded_interactions/hat.hpp"
 #include "nonbonded_interactions/hertzian.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -52,8 +52,8 @@
 #include "nonbonded_interactions/morse.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/smooth_step.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
-#include "nonbonded_interactions/steppot.hpp"
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #ifdef ELECTROSTATICS

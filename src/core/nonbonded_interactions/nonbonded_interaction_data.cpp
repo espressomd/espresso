@@ -35,7 +35,7 @@
 #include "nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
-#include "nonbonded_interactions/gb.hpp"
+#include "nonbonded_interactions/gay_berne.hpp"
 #include "nonbonded_interactions/hat.hpp"
 #include "nonbonded_interactions/hertzian.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -44,8 +44,8 @@
 #include "nonbonded_interactions/ljgen.hpp"
 #include "nonbonded_interactions/morse.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/smooth_step.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
-#include "nonbonded_interactions/steppot.hpp"
 #ifdef DIPOLAR_BARNES_HUT
 #include "actor/DipolarBarnesHut.hpp"
 #endif
@@ -134,11 +134,11 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
   auto max_cut_current = INACTIVE_CUTOFF;
 
 #ifdef LENNARD_JONES
-  max_cut_current = std::max(max_cut_current, (data.LJ_cut + data.LJ_offset));
+  max_cut_current = std::max(max_cut_current, (data.lj.cut + data.lj.offset));
 #endif
 
 #ifdef WCA
-  max_cut_current = std::max(max_cut_current, data.WCA_cut);
+  max_cut_current = std::max(max_cut_current, data.wca.cut);
 #endif
 
 #ifdef DPD
@@ -148,71 +148,71 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 
 #ifdef LENNARD_JONES_GENERIC
   max_cut_current =
-      std::max(max_cut_current, (data.LJGEN_cut + data.LJGEN_offset));
+      std::max(max_cut_current, (data.ljgen.cut + data.ljgen.offset));
 #endif
 
 #ifdef SMOOTH_STEP
-  max_cut_current = std::max(max_cut_current, data.SmSt_cut);
+  max_cut_current = std::max(max_cut_current, data.smooth_step.cut);
 #endif
 
 #ifdef HERTZIAN
-  max_cut_current = std::max(max_cut_current, data.Hertzian_sig);
+  max_cut_current = std::max(max_cut_current, data.hertzian.sig);
 #endif
 
 #ifdef GAUSSIAN
-  max_cut_current = std::max(max_cut_current, data.Gaussian_cut);
+  max_cut_current = std::max(max_cut_current, data.gaussian.cut);
 #endif
 
 #ifdef BMHTF_NACL
-  max_cut_current = std::max(max_cut_current, data.BMHTF_cut);
+  max_cut_current = std::max(max_cut_current, data.bmhtf.cut);
 #endif
 
 #ifdef MORSE
-  max_cut_current = std::max(max_cut_current, data.MORSE_cut);
+  max_cut_current = std::max(max_cut_current, data.morse.cut);
 #endif
 
 #ifdef BUCKINGHAM
-  max_cut_current = std::max(max_cut_current, data.BUCK_cut);
+  max_cut_current = std::max(max_cut_current, data.buckingham.cut);
 #endif
 
 #ifdef SOFT_SPHERE
   max_cut_current =
-      std::max(max_cut_current, (data.soft_cut + data.soft_offset));
+      std::max(max_cut_current, (data.soft_sphere.cut + data.soft_sphere.offset));
 #endif
 
 #ifdef AFFINITY
-  max_cut_current = std::max(max_cut_current, data.affinity_cut);
+  max_cut_current = std::max(max_cut_current, data.affinity.cut);
 #endif
 
 #ifdef MEMBRANE_COLLISION
-  max_cut_current = std::max(max_cut_current, data.membrane_cut);
+  max_cut_current = std::max(max_cut_current, data.membrane.cut);
 #endif
 
 #ifdef HAT
-  max_cut_current = std::max(max_cut_current, data.HAT_r);
+  max_cut_current = std::max(max_cut_current, data.hat.r);
 #endif
 
 #ifdef LJCOS
   max_cut_current =
-      std::max(max_cut_current, (data.LJCOS_cut + data.LJCOS_offset));
+      std::max(max_cut_current, (data.ljcos.cut + data.ljcos.offset));
 #endif
 
 #ifdef LJCOS2
   max_cut_current =
-      std::max(max_cut_current, (data.LJCOS2_cut + data.LJCOS2_offset));
+      std::max(max_cut_current, (data.ljcos2.cut + data.ljcos2.offset));
 #endif
 
 #ifdef GAY_BERNE
-  max_cut_current = std::max(max_cut_current, data.GB_cut);
+  max_cut_current = std::max(max_cut_current, data.gay_berne.cut);
 #endif
 
 #ifdef TABULATED
-  max_cut_current = std::max(max_cut_current, data.TAB.cutoff());
+  max_cut_current = std::max(max_cut_current, data.tab.cutoff());
 #endif
 
 #ifdef THOLE
   // If THOLE is active, use p3m cutoff
-  if (data.THOLE_scaling_coeff != 0)
+  if (data.thole.scaling_coeff != 0)
     max_cut_current =
         std::max(max_cut_current, Coulomb::cutoff(box_geo.length()));
 #endif
