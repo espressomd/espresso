@@ -32,6 +32,7 @@
 #include "particle_data.hpp"
 
 #include <algorithm>
+#include <boost/range/algorithm/fill.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -221,26 +222,41 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
   }
 }
 
-static void prepare_ghost_cell(Cell *cell, int size) {
-  if (ghosts_have_bonds) {
-    // free all allocated information, will be resent
-    {
-      int np = cell->n;
-      Particle *part = cell->part;
-      for (int p = 0; p < np; p++) {
-        free_particle(part + p);
-      }
+static void prepare_ghost_cell(Cell *cell, int size)  {
+  using Utils::make_span;
+  auto const old_cap = cell->max;
+
+  /* reset excess particles */
+  if(size < cell->max) {
+    for(auto &p : make_span<Particle>(cell->part + size, cell->max - size)) {
+      p = Particle{};
     }
   }
+
+  /* Adapt size */
   cell->resize(size);
-  // invalidate pointers etc
-  {
-    int np = cell->n;
-    Particle *part = cell->part;
-    for (int p = 0; p < np; p++) {
-      auto *pt = new (&part[p]) Particle();
-      pt->l = ParticleLocal{/* .ghost */ true};
-    }
+
+  /* initialize new particles */
+  if(old_cap < cell->max) {
+    auto new_parts = make_span(cell->part + old_cap, cell->max - old_cap);
+    std::uninitialized_fill(new_parts.begin(), new_parts.end(), Particle{});
+  }
+
+  for(auto &p : Utils::make_span(cell->part, cell->n)) {
+    /* Keep heap if any, but set the logical size to 0 */
+    p.bl.n = 0;
+#ifdef EXCLUSIONS
+    p.el.n = 0;
+#endif
+    /* Reset all the trivial data members */
+    p.p = ParticleProperties{};
+    p.r = ParticlePosition{};
+    p.m = ParticleMomentum{};
+    p.f = ParticleForce{};
+    p.l = ParticleLocal{/* .ghost */ true};
+#ifdef ENGINE
+    p.swim = ParticleParametersSwimming{};
+#endif
   }
 }
 
@@ -664,25 +680,5 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         }
       }
     }
-  }
-}
-
-/** Go through \ref ghost_cells and remove the ghost entries from \ref
-    local_particles. Part of \ref dd_exchange_and_sort_particles.*/
-void invalidate_ghosts() {
-  int c, p;
-  /* remove ghosts, but keep Real Particles */
-  for (c = 0; c < ghost_cells.n; c++) {
-    Particle *part = ghost_cells.cell[c]->part;
-    int np = ghost_cells.cell[c]->n;
-    for (p = 0; p < np; p++) {
-      /* Particle is stored as ghost in the local_particles array,
-         if the pointer stored there belongs to a ghost cell
-         particle array. */
-      if (&(part[p]) == local_particles[part[p].p.identity])
-        local_particles[part[p].p.identity] = nullptr;
-      free_particle(part + p);
-    }
-    ghost_cells.cell[c]->n = 0;
   }
 }

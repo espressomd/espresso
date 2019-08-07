@@ -226,6 +226,21 @@ bool topology_check_resort(int cs, bool local_resort) {
   }
 }
 
+
+/** Go through \ref ghost_cells and remove the ghost entries from \ref
+    local_particles. */
+static void invalidate_ghosts() {
+  for(auto const&p: ghost_cells.particles()) {
+    if(local_particles[p.identity()] == &p) {
+      local_particles[p.identity()] = {};
+    }
+  }
+
+  for(auto &c: ghost_cells) {
+    c->n = 0;
+  }
+}
+
 /*@}*/
 
 /************************************************************
