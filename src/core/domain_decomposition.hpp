@@ -118,7 +118,7 @@ extern int min_num_cells;
  *  @param grid   Number of nodes in each spatial dimension.
  */
 void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
-                           const double range);
+                           double range);
 
 /** Initialize the topology. The argument is a list of cell pointers,
  *  containing particles that have to be sorted into new cells. The
