@@ -73,16 +73,16 @@ class DPDThermostat(ut.TestCase):
         s = self.s
         s.part.add(pos=s.box_l * np.random.random((N, 3)))
         kT = 2.3
-        gamma = 1.5
+        gamma = 3.5
         s.thermostat.set_dpd(kT=kT, seed=42)
         s.non_bonded_inter[0, 0].dpd.set_params(
             weight_function=0, gamma=gamma, r_cut=1.5,
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.5)
         s.integrator.run(100)
-        loops = 250
+        loops = 500
         v_stored = np.zeros((N*loops, 3))
         for i in range(loops):
-            s.integrator.run(10)
+            s.integrator.run(5)
             v_stored[i*N:(i+1)*N,:] = s.part[:].v
         v_minmax = 5
         bins = 5
