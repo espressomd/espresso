@@ -165,11 +165,9 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
-          auto *pp = reinterpret_cast<ParticlePosition *>(insert);
-          int i;
-          *pp = pt->r;
-          for (i = 0; i < 3; i++)
-            pp->p[i] += gc->shift[i];
+          auto pp = pt->r;
+          pp.p += gc->shift;
+          memcpy(insert, &pp, sizeof(pp));
           insert += sizeof(ParticlePosition);
         } else if (data_parts & GHOSTTRANS_POSITION) {
           memcpy(insert, &pt->r, sizeof(ParticlePosition));
@@ -336,7 +334,9 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
     part = gc->part_lists[pl]->part;
     for (p = 0; p < np; p++) {
       pt = &part[p];
-      pt->f += *(reinterpret_cast<ParticleForce *>(retrieve));
+      ParticleForce pf;
+      memcpy(&pf, retrieve, sizeof(pf));
+      pt->f += pf;
       retrieve += sizeof(ParticleForce);
     }
   }
