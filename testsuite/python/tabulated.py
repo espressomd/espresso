@@ -78,10 +78,10 @@ class TabulatedTest(ut.TestCase):
             min=-1, max=-1, energy=[], force=[])
 
     def test_bonded(self):
-        from espressomd.interactions import Tabulated
+        from espressomd.interactions import TabulatedDistance
 
-        tb = Tabulated(type='distance', min=self.min_, max=self.max_,
-                       energy=self.energy, force=self.force)
+        tb = TabulatedDistance(min=self.min_, max=self.max_,
+                               energy=self.energy, force=self.force)
         self.s.bonded_inter.add(tb)
 
         np.testing.assert_allclose(self.force, tb.params['force'])
