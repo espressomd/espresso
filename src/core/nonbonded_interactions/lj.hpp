@@ -45,24 +45,24 @@ int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
 inline void add_lj_pair_force(IA_parameters const *ia_params,
                               Utils::Vector3d const &d, double dist,
                               Utils::Vector3d &force) {
-  if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
-      (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
-    auto const r_off = dist - ia_params->LJ_offset;
-    auto const frac6 = Utils::int_pow<6>(ia_params->LJ_sig / r_off);
+  if ((dist < ia_params->lj.cut + ia_params->lj.offset) &&
+      (dist > ia_params->lj.min + ia_params->lj.offset)) {
+    auto const r_off = dist - ia_params->lj.offset;
+    auto const frac6 = Utils::int_pow<6>(ia_params->lj.sig / r_off);
     auto const fac =
-        48.0 * ia_params->LJ_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
+        48.0 * ia_params->lj.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
     force += fac * d;
   }
 }
 
 /** Calculate Lennard-Jones energy between particle p1 and p2. */
 inline double lj_pair_energy(IA_parameters const *ia_params, double dist) {
-  if ((dist < ia_params->LJ_cut + ia_params->LJ_offset) &&
-      (dist > ia_params->LJ_min + ia_params->LJ_offset)) {
-    auto const r_off = dist - ia_params->LJ_offset;
-    auto const frac6 = Utils::int_pow<6>(ia_params->LJ_sig / r_off);
-    auto const fac = 4.0 * ia_params->LJ_eps *
-                     (Utils::sqr(frac6) - frac6 + ia_params->LJ_shift);
+  if ((dist < ia_params->lj.cut + ia_params->lj.offset) &&
+      (dist > ia_params->lj.min + ia_params->lj.offset)) {
+    auto const r_off = dist - ia_params->lj.offset;
+    auto const frac6 = Utils::int_pow<6>(ia_params->lj.sig / r_off);
+    auto const fac = 4.0 * ia_params->lj.eps *
+                     (Utils::sqr(frac6) - frac6 + ia_params->lj.shift);
     return fac;
   }
   return 0.0;

@@ -220,7 +220,7 @@ class _Interpolated(Constraint):
     ----------
 
     field_data: array_like :obj:`float`
-        The actual field please be aware that depending on the interpolation
+        The actual field. Please be aware that depending on the interpolation
         order additional points are used on the boundaries.
 
     grid_spacing: array_like :obj:`float`
@@ -243,7 +243,7 @@ class _Interpolated(Constraint):
 
         Arguments
         ---------
-        box_size : array_like obj:`float`
+        box_size : (3,) array_like of obj:`float`
             The box the field should be used.
 
         grid_spacing : array_like obj:`float`
@@ -262,7 +262,7 @@ class _Interpolated(Constraint):
 
         Arguments
         ---------
-        box_size : array_like obj:`float`
+        box_size : (3,) array_like of obj:`float`
             The box the field should be used.
 
         grid_spacing : array_like obj:`float`
@@ -293,7 +293,7 @@ class _Interpolated(Constraint):
 
         Arguments
         ---------
-        box_size : array_like obj:`float`
+        box_size : (3,) array_like of obj:`float`
             The box the field should be used.
 
         grid_spacing : array_like obj:`float`
@@ -519,7 +519,7 @@ class HomogeneousFlowField(Constraint):
     ----------
     gamma : :obj:`float`
         The coupling constant
-    u : array_like :obj:`float`
+    u : (3,) array_like of :obj:`float`
         The velocity of the field.
 
     """

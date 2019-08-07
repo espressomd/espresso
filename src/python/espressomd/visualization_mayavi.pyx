@@ -93,7 +93,7 @@ cdef class mayaviLive:
             radius = 0.
             IF LENNARD_JONES:
                 try:
-                    radius = 0.5 * get_ia_param(t, t).LJ_sig
+                    radius = 0.5 * get_ia_param(t, t).lj.sig
                 except:
                     radius = 0.
 
