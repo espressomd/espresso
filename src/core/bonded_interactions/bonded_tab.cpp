@@ -37,9 +37,7 @@ int tabulated_bonded_set_params(int bond_type,
   make_bond_type_exist(bond_type);
 
   /* set types */
-  bonded_ia_params[bond_type].p.tab.type = tab_type;
-  bonded_ia_params[bond_type].p.tab.pot = new TabulatedPotential;
-  auto tab_pot = bonded_ia_params[bond_type].p.tab.pot;
+  auto tab_pot = bonded_ia_params[bond_type].p.tab.pot = new TabulatedPotential;
 
   /* set number of interaction partners */
   switch (tab_type) {

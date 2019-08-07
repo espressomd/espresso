@@ -2571,8 +2571,6 @@ class Tabulated(BondedInteraction):
     Parameters
     ----------
 
-    type : :obj:`str`, \{'distance', 'angle' or 'dihedral'\}
-        The type of bond.
     min : :obj:`float`
         The minimal interaction distance. Has to be 0 if
         ``type`` is ``'angle'`` or ``'dihedral'``
@@ -2602,13 +2600,13 @@ class Tabulated(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "type", "min", "max", "energy", "force"
+        return "min", "max", "energy", "force"
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "type", "min", "max", "energy", "force"
+        return "min", "max", "energy", "force"
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -2625,34 +2623,27 @@ class Tabulated(BondedInteraction):
     def _get_params_from_es_core(self):
         make_bond_type_exist(self._bond_id)
         res = \
-            {"type": bonded_ia_params[self._bond_id].p.tab.type,
-             "min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
+            {"min": bonded_ia_params[self._bond_id].p.tab.pot.minval,
              "max": bonded_ia_params[self._bond_id].p.tab.pot.maxval,
              "energy":
                  bonded_ia_params[self._bond_id].p.tab.pot.energy_tab,
              "force": bonded_ia_params[self._bond_id].p.tab.pot.force_tab
              }
-        if res["type"] == 1:
-            res["type"] = "distance"
-        if res["type"] == 2:
-            res["type"] = "angle"
-        if res["type"] == 3:
-            res["type"] = "dihedral"
         return res
 
     def _set_params_in_es_core(self):
-        if self._params["type"] == "distance":
-            type_num = 1
-        elif self._params["type"] == "angle":
-            type_num = 2
-        elif self._params["type"] == "dihedral":
-            type_num = 3
+        if self.type_number() == BONDED_IA_TABULATED_DISTANCE:
+            type_num = TAB_BOND_LENGTH
+        elif self.type_number() == BONDED_IA_TABULATED_ANGLE:
+            type_num = TAB_BOND_ANGLE
+        elif self.type_number() == BONDED_IA_TABULATED_DIHEDRAL:
+            type_num = TAB_BOND_DIHEDRAL
         else:
             raise ValueError(
                 "Tabulated type needs to be distance, angle, or dihedral")
 
         res = tabulated_bonded_set_params(
-            self._bond_id, < TabulatedBondedInteraction > type_num,
+            self._bond_id, type_num,
             self._params["min"],
             self._params["max"],
             self._params["energy"],
@@ -2685,7 +2676,7 @@ class TabulatedDistance(Tabulated):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, type='distance', **kwargs)
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_TABULATED_DISTANCE
@@ -2720,7 +2711,7 @@ class TabulatedAngle(Tabulated):
     pi = 3.14159265358979
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, type='angle', min=0., max=self.pi, **kwargs)
+        super().__init__(*args, min=0., max=self.pi, **kwargs)
 
     def type_number(self):
         return BONDED_IA_TABULATED_ANGLE
@@ -2755,8 +2746,7 @@ class TabulatedDihedral(Tabulated):
     pi = 3.14159265358979
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, type='dihedral', min=0., max=2. * self.pi,
-                         **kwargs)
+        super().__init__(*args, min=0., max=2. * self.pi, **kwargs)
 
     def type_number(self):
         return BONDED_IA_TABULATED_DIHEDRAL

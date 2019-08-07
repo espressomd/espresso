@@ -210,7 +210,6 @@ struct Dihedral_bond_parameters {
 
 /** Parameters for n-body tabulated potential (n=2,3,4). */
 struct Tabulated_bond_parameters {
-  TabulatedBondedInteraction type;
   TabulatedPotential *pot;
 };
 
