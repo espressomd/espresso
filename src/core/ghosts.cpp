@@ -217,6 +217,7 @@ static void prepare_ghost_cell(Cell *cell, int size) {
   if (size < cell->max) {
     for (auto &p : make_span<Particle>(cell->part + size, cell->max - size)) {
       p = Particle{};
+      p.l.ghost = true;
     }
   }
 
@@ -227,20 +228,9 @@ static void prepare_ghost_cell(Cell *cell, int size) {
   if (old_cap < cell->max) {
     auto new_parts = make_span(cell->part + old_cap, cell->max - old_cap);
     std::uninitialized_fill(new_parts.begin(), new_parts.end(), Particle{});
-  }
-
-  for (auto &p : Utils::make_span(cell->part, cell->n)) {
-    /* Keep heap if any, but set the logical size to 0 */
-    p.bl.n = 0;
-    /* Reset all the trivial data members */
-    p.p = ParticleProperties{};
-    p.r = ParticlePosition{};
-    p.m = ParticleMomentum{};
-    p.f = ParticleForce{};
-    p.l = ParticleLocal{/* .ghost */ true};
-#ifdef ENGINE
-    p.swim = ParticleParametersSwimming{};
-#endif
+    for (auto &p : new_parts) {
+      p.l.ghost = true;
+    }
   }
 }
 
@@ -282,11 +272,9 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
             int n_bonds;
             memcpy(&n_bonds, retrieve, sizeof(int));
             retrieve += sizeof(int);
-            if (n_bonds) {
-              pt->bl.resize(n_bonds);
-              std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
-              bond_retrieve += n_bonds;
-            }
+            pt->bl.resize(n_bonds);
+            std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
+            bond_retrieve += n_bonds;
           }
           if (local_particles[pt->p.identity] == nullptr) {
             local_particles[pt->p.identity] = pt;
