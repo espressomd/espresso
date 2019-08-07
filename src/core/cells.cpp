@@ -72,9 +72,9 @@ double max_range = 0.0;
 unsigned resort_particles = Cells::RESORT_NONE;
 int rebuild_verletlist = 1;
 
-//CellPList CellStructure::local_cells() const { return ::local_cells; }
+// CellPList CellStructure::local_cells() const { return ::local_cells; }
 
-//CellPList CellStructure::ghost_cells() const { return ::ghost_cells; }
+// CellPList CellStructure::ghost_cells() const { return ::ghost_cells; }
 
 /**
  * @brief Get pairs closer than distance from the cells.
@@ -102,7 +102,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
                        boost::make_indirect_iterator(local_cells.end()),
                        Utils::NoOp{}, pair_kernel,
                        [](Particle const &p1, Particle const &p2) {
-                         return get_mi_vector(p1.r.p, p2.r.p,box_geo).norm2();
+                         return get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
                        });
 
   /* Sort pairs */

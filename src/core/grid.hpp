@@ -113,7 +113,8 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
  */
 
 template <typename T, typename U, typename V>
-inline void get_mi_vector(T &res, U const &a, V const &b, const BoxGeometry& box) {
+inline void get_mi_vector(T &res, U const &a, V const &b,
+                          const BoxGeometry &box) {
   double shift = 0.0;
 #ifdef LEES_EDWARDS
   double offset = lees_edwards_protocol.offset;
@@ -123,11 +124,12 @@ inline void get_mi_vector(T &res, U const &a, V const &b, const BoxGeometry& box
   for (int i = 0; i < 3; i++) {
 #ifdef LEES_EDWARDS
     if (i == lees_edwards_protocol.sheardir &&
-        std::fabs(dist) > .5* box.length()[lees_edwards_protocol.shearplanenormal]) {
-      shift =
-          Utils::sgn(dist) *
-          (offset - round(offset /box.length()[lees_edwards_protocol.sheardir]) *
-                        box.length()[lees_edwards_protocol.sheardir]);
+        std::fabs(dist) >
+            .5 * box.length()[lees_edwards_protocol.shearplanenormal]) {
+      shift = Utils::sgn(dist) *
+              (offset -
+               round(offset / box.length()[lees_edwards_protocol.sheardir]) *
+                   box.length()[lees_edwards_protocol.sheardir]);
     } else {
       shift = 0.0;
     }
@@ -137,7 +139,7 @@ inline void get_mi_vector(T &res, U const &a, V const &b, const BoxGeometry& box
 }
 
 template <typename T, typename U>
-Utils::Vector3d get_mi_vector(T const &a, U const &b, const BoxGeometry& box) {
+Utils::Vector3d get_mi_vector(T const &a, U const &b, const BoxGeometry &box) {
   Utils::Vector3d res;
   get_mi_vector(res, a, b, box);
 
@@ -215,7 +217,7 @@ inline Utils::Vector3d vel_diff(Utils::Vector3d const &x,
                                 Utils::Vector3d const &y,
                                 Utils::Vector3d const &u,
                                 Utils::Vector3d const &v,
-                                const BoxGeometry& box) {
+                                const BoxGeometry &box) {
 
   auto ret = u - v;
 
@@ -230,8 +232,6 @@ inline Utils::Vector3d vel_diff(Utils::Vector3d const &x,
 
   return ret;
 }
-
-
 
 class PositionFolder {
 public:

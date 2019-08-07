@@ -714,18 +714,18 @@ void propagate_vel_pos(const ParticleRange &particles) {
         p.m.v[lees_edwards_protocol.sheardir] -= shear_velocity;
         p.r.p[lees_edwards_protocol.sheardir] -= offset_at_time_step;
         p.p.lees_edwards_offset -= offset_at_time_step;
-        Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir],
-                                 &dummy_i,
-                                 box_geo.length()[lees_edwards_protocol.sheardir]);
+        Algorithm::periodic_fold(
+            p.r.p[lees_edwards_protocol.sheardir], &dummy_i,
+            box_geo.length()[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
                                     // propagate_vel_finalize_p_inst
       } else if (p.r.p[lees_edwards_protocol.shearplanenormal] < 0.) {
         p.m.v[lees_edwards_protocol.sheardir] += shear_velocity;
         p.r.p[lees_edwards_protocol.sheardir] += offset_at_time_step;
         p.p.lees_edwards_offset += offset_at_time_step;
-        Algorithm::periodic_fold(p.r.p[lees_edwards_protocol.sheardir],
-                                 &dummy_i,
-                                 box_geo.length()[lees_edwards_protocol.sheardir]);
+        Algorithm::periodic_fold(
+            p.r.p[lees_edwards_protocol.sheardir], &dummy_i,
+            box_geo.length()[lees_edwards_protocol.sheardir]);
         p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
                                    // propagate_vel_finalize_p_inst
       } else {

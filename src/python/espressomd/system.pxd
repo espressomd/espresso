@@ -41,7 +41,7 @@ cdef extern from "random.hpp" namespace "Random":
 
 cdef extern from "grid.hpp":
     void get_mi_vector(double * res, double * a, double * b)
-    Vector3d vel_diff(Vector3d x, Vector3d y, Vector3d u, Vector3d v, BoxGeometry& box)
+    Vector3d vel_diff(Vector3d x, Vector3d y, Vector3d u, Vector3d v, BoxGeometry & box)
 
 cdef extern from "rotate_system.hpp":
     void rotate_system(double phi, double theta, double alpha)

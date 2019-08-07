@@ -406,7 +406,8 @@ template <class K, class Comparator> auto make_flat_set(Comparator &&comp) {
  * created list of interacting neighbor cells is used by the Verlet
  * algorithm to build the verlet lists.
  */
-void dd_init_cell_interactions(const DomainDecomposition &dd, const Utils::Vector3i& grid) {
+void dd_init_cell_interactions(const DomainDecomposition &dd,
+                               const Utils::Vector3i &grid) {
   for (int i = 0; i < 3; i++) {
     if (dd.fully_connected[i] and grid[i] != 1) {
       runtimeErrorMsg()
@@ -646,7 +647,7 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
-  dd_init_cell_interactions(dd,grid);
+  dd_init_cell_interactions(dd, grid);
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {

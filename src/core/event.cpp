@@ -151,7 +151,7 @@ void on_integration_start() {
         << "It is not possible to use Lees Edwards with Verlet lists.";
   }
 #endif
-  
+
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them

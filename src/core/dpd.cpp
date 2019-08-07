@@ -184,7 +184,7 @@ Utils::Vector3d dpd_pair_force(Particle const *const p1,
     return {};
   }
 
-  auto const v21 = vel_diff(p1->r.p, p2->r.p, p1->m.v, p2->m.v,box_geo);
+  auto const v21 = vel_diff(p1->r.p, p2->r.p, p1->m.v, p2->m.v, box_geo);
   auto const noise_vec =
       (ia_params->dpd_radial.pref > 0.0 || ia_params->dpd_trans.pref > 0.0)
           ? dpd_noise(p1->p.identity, p2->p.identity)
@@ -208,7 +208,7 @@ static auto dpd_viscous_stress_local() {
   short_range_loop(
       Utils::NoOp{},
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
-        auto const v21 = vel_diff(p1.r.p, p2.r.p, p1.m.v, p2.m.v,box_geo);
+        auto const v21 = vel_diff(p1.r.p, p2.r.p, p1.m.v, p2.m.v, box_geo);
 
         auto ia_params = get_ia_param(p1.p.type, p2.p.type);
         auto const dist = std::sqrt(d.dist2);
