@@ -176,8 +176,8 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
 #endif
 
 #ifdef SOFT_SPHERE
-  max_cut_current =
-      std::max(max_cut_current, (data.soft_sphere.cut + data.soft_sphere.offset));
+  max_cut_current = std::max(max_cut_current,
+                             (data.soft_sphere.cut + data.soft_sphere.offset));
 #endif
 
 #ifdef AFFINITY
