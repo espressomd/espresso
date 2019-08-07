@@ -277,8 +277,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     /**Correct those particle positions that participate in a rigid/constrained
      * bond */
     if (n_rigidbonds) {
-      cells_update_ghosts();
-
       correct_pos_shake(cell_structure.local_cells().particles());
     }
 #endif

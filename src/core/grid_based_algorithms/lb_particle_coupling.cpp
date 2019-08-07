@@ -39,7 +39,6 @@ void lb_lbcoupling_deactivate() {
   }
 
   lb_particle_coupling.couple_to_md = false;
-  mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
 void lb_lbcoupling_set_gamma(double gamma) {
