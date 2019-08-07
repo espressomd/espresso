@@ -460,7 +460,7 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
       lbpar_gpu.external_force_density = 0;
     }
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
-//    reset_LB_force_densities_GPU(false);
+    //    reset_LB_force_densities_GPU(false);
 
 #endif //  CUDA
   } else {
@@ -1331,7 +1331,7 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
   return fluid_momentum;
 }
 
-void lb_reset_force_densities(){
+void lb_reset_force_densities() {
   if (lattice_switch == ActiveLB::GPU and this_node == 0) {
 #ifdef CUDA
     lb_GPU_reset_force_densities_during_integration();

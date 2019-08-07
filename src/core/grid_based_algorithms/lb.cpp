@@ -1467,8 +1467,8 @@ void lb_collect_boundary_forces(double *result) {
 #endif
 }
 
-void lb_CPU_reset_force_densities_during_integration(){
-  if(fluidstep == 0){
+void lb_CPU_reset_force_densities_during_integration() {
+  if (fluidstep == 0) {
     for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
       lbfields[i].force_density = lbpar.ext_force_density;
     }
