@@ -2563,7 +2563,7 @@ class Dihedral(BondedInteraction):
             self._bond_id, self._params["mult"], self._params["bend"], self._params["phase"])
 
 
-class Tabulated(BondedInteraction):
+class _TabulatedBase(BondedInteraction):
 
     """
     Parent class for tabulated bonds.
@@ -2655,7 +2655,7 @@ class Tabulated(BondedInteraction):
         self._params = self._get_params_from_es_core()
 
 
-class TabulatedDistance(Tabulated):
+class TabulatedDistance(_TabulatedBase):
 
     """
     Tabulated bond length.
@@ -2693,7 +2693,7 @@ class TabulatedDistance(Tabulated):
         return "min", "max", "energy", "force"
 
 
-class TabulatedAngle(Tabulated):
+class TabulatedAngle(_TabulatedBase):
 
     """
     Tabulated bond angle.
@@ -2728,7 +2728,7 @@ class TabulatedAngle(Tabulated):
         return "energy", "force"
 
 
-class TabulatedDihedral(Tabulated):
+class TabulatedDihedral(_TabulatedBase):
 
     """
     Tabulated bond dihedral.
