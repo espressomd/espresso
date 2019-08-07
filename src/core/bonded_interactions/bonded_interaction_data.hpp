@@ -33,9 +33,12 @@ enum BondedInteraction {
   BONDED_IA_BONDED_COULOMB_SR,
   /** Type of bonded interaction is a dihedral potential. */
   BONDED_IA_DIHEDRAL,
-  /** Type of tabulated bonded interaction potential,
-      may be of bond length, of bond angle or of dihedral type. */
-  BONDED_IA_TABULATED,
+  /** Type of bonded interaction is a tabulated bond potential. */
+  BONDED_IA_TABULATED_DISTANCE,
+  /** Type of bonded interaction is a tabulated angle potential. */
+  BONDED_IA_TABULATED_ANGLE,
+  /** Type of bonded interaction is a tabulated dihedral potential. */
+  BONDED_IA_TABULATED_DIHEDRAL,
   /** Type of bonded interaction is a subtracted-LJ potential. */
   BONDED_IA_SUBT_LJ,
   /** Type of bonded interaction is a rigid/constrained bond. */
