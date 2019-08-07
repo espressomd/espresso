@@ -143,6 +143,8 @@ void force_calc(CellStructure &cell_structure) {
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation();
 
+  lb_reset_force_densities();
+
   lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
 
 #ifdef METADYNAMICS

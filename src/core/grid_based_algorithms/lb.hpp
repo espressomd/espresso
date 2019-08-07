@@ -288,6 +288,12 @@ void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
                             const Lattice &lb_lattice);
 void lb_collect_boundary_forces(double *result);
 
+/**
+ * Resets the force density to the value of the external force density, but only
+ * if the lb update was done before.
+ */
+void lb_CPU_reset_force_densities_during_integration();
+
 /*@}*/
 
 #endif /* _LB_H */

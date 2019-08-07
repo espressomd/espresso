@@ -385,6 +385,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
+  lb_reset_force_densities();
 }
 
 /************************************************************/

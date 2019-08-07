@@ -1058,8 +1058,6 @@ __device__ void apply_forces(unsigned int index, Utils::Array<float, 19> &mode,
   mode[7] += C[1];
   mode[8] += C[3];
   mode[9] += C[4];
-
-  reset_LB_force_densities(index, node_f);
 }
 
 /** Calculate hydrodynamic fields in LB units
