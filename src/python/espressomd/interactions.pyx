@@ -2572,11 +2572,10 @@ class Tabulated(BondedInteraction):
     ----------
 
     min : :obj:`float`
-        The minimal interaction distance. Has to be 0 if
-        ``type`` is ``'angle'`` or ``'dihedral'``
+        The minimal interaction distance. Has to be 0 for angles and dihedrals.
     max : :obj:`float`
-        The maximal interaction distance. Has to be pi if
-        ``type`` is ``'angle'`` or 2pi if ``'dihedral'``
+        The maximal interaction distance. Has to be pi for angles and 2pi for
+        dihedrals.
     energy: array_like :obj:`float`
         The energy table.
     force: array_like :obj:`float`

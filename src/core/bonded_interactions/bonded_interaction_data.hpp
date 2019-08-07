@@ -12,9 +12,6 @@
 /** \name Type codes of bonded interactions
  *  Enumeration of implemented bonded interactions.
  */
-/************************************************************/
-/*@{*/
-
 enum BondedInteraction {
   /** This bonded interaction was not set. */
   BONDED_IA_NONE = -1,
@@ -79,7 +76,6 @@ enum TabulatedBondedInteraction {
   TAB_BOND_DIHEDRAL = 3
 };
 
-/*@}*/
 /** Parameters for FENE bond Potential. */
 struct Fene_bond_parameters {
   /** spring constant */
