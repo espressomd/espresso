@@ -174,6 +174,9 @@ void correct_pos_shake(const ParticleRange &particles) {
   int repeat_, cnt = 0;
   int repeat = 1;
 
+  ghost_communicator(&cell_structure.update_ghost_pos_comm,
+                     GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
+
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(cell_structure.local_cells().particles());
     repeat_ = 0;
@@ -181,7 +184,8 @@ void correct_pos_shake(const ParticleRange &particles) {
     cells_collect_forces();
     app_pos_correction(particles);
     /**Ghost Positions Update*/
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(&cell_structure.update_ghost_pos_comm,
+                       GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else
@@ -294,6 +298,9 @@ void correct_vel_shake(CellStructure &cell_structure) {
   auto particles = cell_structure.local_cells().particles();
   auto ghost_particles = cell_structure.ghost_cells().particles();
 
+  ghost_communicator(&cell_structure.update_ghost_pos_comm,
+                     GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
+
   transfer_force_init_vel(particles, ghost_particles);
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(particles);
@@ -301,7 +308,8 @@ void correct_vel_shake(CellStructure &cell_structure) {
     compute_vel_corr_vec(&repeat_, particles);
     cells_collect_forces();
     apply_vel_corr(particles);
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(&cell_structure.update_ghost_pos_comm,
+                       GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else

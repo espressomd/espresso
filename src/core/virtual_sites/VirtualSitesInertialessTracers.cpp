@@ -50,12 +50,6 @@ void VirtualSitesInertialessTracers::after_force_calc() {
 void VirtualSitesInertialessTracers::after_lb_propagation() {
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   IBM_UpdateParticlePositions(local_cells.particles());
-  // Ghost positions are now out-of-date
-  // We should update.
-  // Actually we seem to get the same results whether we do this here or not,
-  // but it is safer to do it
-  ghost_communicator(&cell_structure.update_ghost_pos_comm);
-
 #endif // VS inertialess tracers
 }
 #endif

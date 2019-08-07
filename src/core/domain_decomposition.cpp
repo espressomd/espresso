@@ -285,7 +285,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
           /* prepare folding of ghost positions */
           if (local_geo.boundary()[2 * dir + lr] != 0) {
-            Utils::Vector3d shift {};
+            Utils::Vector3d shift{};
             shift[dir] =
                 local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
             comm->comm[cnt].shift = shift;
@@ -650,8 +650,7 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   /* create communicators */
   dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM, grid);
 
-  exchange_data =
-      (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
+  exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
   update_data = GHOSTTRANS_POSITION;
 
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data, grid);

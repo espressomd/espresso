@@ -172,7 +172,6 @@ struct GhostCommunicator {
   int num;
   /** List of ghost communications. */
   std::vector<GhostCommunication> comm;
-
 };
 
 /*@}*/

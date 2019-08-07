@@ -182,9 +182,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
   extern bool ghosts_have_bonds;
   extern bool ghosts_have_v;
-  auto const update_data = GHOSTTRANS_POSITION | (ghosts_have_v ? GHOSTTRANS_MOMENTUM : 0u);
-  auto const exchange_data =
-      GHOSTTRANS_PROPRTS  | (ghosts_have_bonds ? GHOSTTRANS_BONDS : 0u) | update_data;
+  auto const update_data =
+      GHOSTTRANS_POSITION | (ghosts_have_v ? GHOSTTRANS_MOMENTUM : 0u);
+  auto const exchange_data = GHOSTTRANS_PROPRTS |
+                             (ghosts_have_bonds ? GHOSTTRANS_BONDS : 0u) |
+                             update_data;
 
   /* Integration Step: Preparation for first integration step:
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) )

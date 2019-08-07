@@ -121,7 +121,8 @@ static int calc_transmit_size(GhostCommunication *gc, unsigned int data_parts) {
   return n_buffer_new;
 }
 
-static void prepare_send_buffer(GhostCommunication *gc, unsigned int data_parts) {
+static void prepare_send_buffer(GhostCommunication *gc,
+                                unsigned int data_parts) {
   GHOST_TRACE(fprintf(stderr, "%d: prepare sending to/bcast from %d\n",
                       this_node, gc->node));
 
@@ -162,9 +163,9 @@ static void prepare_send_buffer(GhostCommunication *gc, unsigned int data_parts)
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
-          auto *pp = new(insert) ParticlePosition(pt->r);
+          auto *pp = new (insert) ParticlePosition(pt->r);
 
-          if(gc->shift) {
+          if (gc->shift) {
             pp->p += *(gc->shift);
           }
 
@@ -205,14 +206,14 @@ static void prepare_send_buffer(GhostCommunication *gc, unsigned int data_parts)
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
-    // free all allocated information, will be resent
-    {
-      int np = cell->n;
-      Particle *part = cell->part;
-      for (int p = 0; p < np; p++) {
-        free_particle(part + p);
-      }
+  // free all allocated information, will be resent
+  {
+    int np = cell->n;
+    Particle *part = cell->part;
+    for (int p = 0; p < np; p++) {
+      free_particle(part + p);
     }
+  }
 
   cell->resize(size);
   // invalidate pointers etc
@@ -375,7 +376,7 @@ static void cell_cell_transfer(GhostCommunication *gc, unsigned data_parts) {
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           pt2->r = pt1->r;
-          if(gc->shift) {
+          if (gc->shift) {
             pt2->r.p += *(gc->shift);
           }
         }
@@ -417,7 +418,7 @@ void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts) {
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     data_parts |= GHOSTTRANS_MOMENTUM;
 
-  if(ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS))
+  if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS))
     data_parts |= GHOSTTRANS_BONDS;
 
   GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node,
