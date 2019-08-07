@@ -287,10 +287,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
        Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
        v(t+0.5*dt) ) */
 
-    if (n_part > 0)
-      lb_lbcoupling_activate();
-
-// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
     if (virtual_sites()->is_relative()) {
       cells_update_ghosts();
@@ -328,6 +324,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     // propagate one-step functionalities
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+      if (n_part > 0)
+        lb_lbcoupling_activate();
+
       lb_lbfluid_propagate();
       lb_lbcoupling_propagate();
 
