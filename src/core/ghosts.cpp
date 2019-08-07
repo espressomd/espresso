@@ -222,13 +222,13 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
   }
 }
 
-static void prepare_ghost_cell(Cell *cell, int size)  {
+static void prepare_ghost_cell(Cell *cell, int size) {
   using Utils::make_span;
   auto const old_cap = cell->max;
 
   /* reset excess particles */
-  if(size < cell->max) {
-    for(auto &p : make_span<Particle>(cell->part + size, cell->max - size)) {
+  if (size < cell->max) {
+    for (auto &p : make_span<Particle>(cell->part + size, cell->max - size)) {
       p = Particle{};
     }
   }
@@ -237,12 +237,12 @@ static void prepare_ghost_cell(Cell *cell, int size)  {
   cell->resize(size);
 
   /* initialize new particles */
-  if(old_cap < cell->max) {
+  if (old_cap < cell->max) {
     auto new_parts = make_span(cell->part + old_cap, cell->max - old_cap);
     std::uninitialized_fill(new_parts.begin(), new_parts.end(), Particle{});
   }
 
-  for(auto &p : Utils::make_span(cell->part, cell->n)) {
+  for (auto &p : Utils::make_span(cell->part, cell->n)) {
     /* Keep heap if any, but set the logical size to 0 */
     p.bl.n = 0;
 #ifdef EXCLUSIONS
