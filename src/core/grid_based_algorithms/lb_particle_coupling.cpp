@@ -27,7 +27,6 @@ void mpi_bcast_lb_particle_coupling_slave(int, int) {
 
 void lb_lbcoupling_activate() {
   lb_particle_coupling.couple_to_md = true;
-  mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
 void lb_lbcoupling_deactivate() {
