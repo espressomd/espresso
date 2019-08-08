@@ -2522,6 +2522,20 @@ ELSE:
 
 class Dihedral(BondedInteraction):
 
+    """
+    Dihedral potential with phase shift.
+
+    Parameters
+    ----------
+    mult : :obj:`int`
+        Multiplicity of the potential (number of minima).
+    bend : :obj:`float`
+        Bending constant.
+    phase : :obj:`float`
+        Angle of the first local minimum in radians.
+
+    """
+
     def type_number(self):
         return BONDED_IA_DIHEDRAL
 
@@ -2547,7 +2561,7 @@ class Dihedral(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {"mult'": 1., "bend": 0., "phase": 0.}
+        self._params = {"mult'": 1, "bend": 0., "phase": 0.}
 
     def _get_params_from_es_core(self):
         return \
@@ -2843,6 +2857,11 @@ IF TABULATED == 1:
 IF LENNARD_JONES == 1:
     class SubtLJ(BondedInteraction):
 
+        """
+        Subtracted LJ potential. Takes no parameter.
+
+        """
+
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 
@@ -2928,7 +2947,12 @@ class AngleHarmonic(BondedInteraction):
     """
     Bond angle dependent harmonic potential.
 
-    See :ref:`Bond-angle interactions`
+    Parameters
+    ----------
+    phi0 : :obj:`float`
+        Equilibrium bond angle in radians.
+    bend : :obj:`float`
+        Magnitude of the bond interaction.
 
     """
 
@@ -2974,7 +2998,12 @@ class AngleCosine(BondedInteraction):
     """
     Bond angle dependent cosine potential.
 
-    See :ref:`Bond-angle interactions`
+    Parameters
+    ----------
+    phi0 : :obj:`float`
+        Equilibrium bond angle in radians.
+    bend : :obj:`float`
+        Magnitude of the bond interaction.
 
     """
 
@@ -3020,7 +3049,12 @@ class AngleCossquare(BondedInteraction):
     """
     Bond angle dependent cosine squared potential.
 
-    See :ref:`Bond-angle interactions`
+    Parameters
+    ----------
+    phi0 : :obj:`float`
+        Equilibrium bond angle in radians.
+    bend : :obj:`float`
+        Magnitude of the bond interaction.
 
     """
 
@@ -3216,7 +3250,21 @@ class IBM_VolCons(BondedInteraction):
 class OifGlobalForces(BondedInteraction):
 
     """
+    Characterize the distribution of the force of the global mesh deformation
+    onto individual vertices of the mesh.
+
     Part of the :ref:`Object-in-fluid` method.
+
+    Parameters
+    ----------
+    A0_g : :obj:`float`
+        Relaxed area of the mesh
+    ka_g : :obj:`float`
+        Area coefficient
+    V0 : :obj:`float`
+        Relaxed volume of the mesh
+    kv : :obj:`float`
+        Volume coefficient
 
     """
 
@@ -3262,7 +3310,30 @@ class OifGlobalForces(BondedInteraction):
 class OifLocalForces(BondedInteraction):
 
     """
+    Characterize the deformation of two triangles sharing an edge.
+
     Part of the :ref:`Object-in-fluid` method.
+
+    Parameters
+    ----------
+    r0 : :obj:`float`
+        Equilibrium bond length of triangle edges
+    ks : :obj:`float`
+        Non-linear stretching coefficient of triangle edges
+    kslin : :obj:`float`
+        Linear stretching coefficient of triangle edges
+    phi0 : :obj:`float`
+        Equilibrium angle between the two triangles
+    kb : :obj:`float`
+        Bending coefficient for the angle between the two triangles
+    A01 : :obj:`float`
+        Equilibrium surface of the first triangle
+    A02 : :obj:`float`
+        Equilibrium surface of the second triangle
+    kal : :obj:`float`
+        Stretching coefficient of a triangle surface
+    kvisc : :obj:`float`
+        Viscous coefficient of the triangle vertices
 
     """
 
@@ -3315,6 +3386,12 @@ class OifLocalForces(BondedInteraction):
 
 IF MEMBRANE_COLLISION == 1:
     class OifOutDirection(BondedInteraction):
+
+        """
+        Determine the surface normals of triangles on a mesh.
+        Takes no parameter.
+
+        """
 
         def type_number(self):
             return BONDED_IA_OIF_OUT_DIRECTION
