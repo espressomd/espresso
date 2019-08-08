@@ -187,6 +187,6 @@ void calc_long_range_forces(const ParticleRange &particles) {
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  Dipole::calc_long_range_force();
+  Dipole::calc_long_range_force(particles);
 #endif /*ifdef DIPOLES */
 }

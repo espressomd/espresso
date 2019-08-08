@@ -46,6 +46,7 @@
 
 #include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
+#include <ParticleRange.hpp>
 
 struct dp3m_data_struct {
   dp3m_data_struct();
@@ -145,7 +146,7 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid);
  *  If Dstore_ca_frac is true, then the charge fractions are buffered in
  *  Dcur_ca_fmp and Dcur_ca_frac.
  */
-void dp3m_dipole_assign();
+void dp3m_dipole_assign(const ParticleRange &particles);
 
 /** Reset @ref dp3m core parameters */
 void dp3m_deactivate();
@@ -193,7 +194,7 @@ int dp3m_adaptive_tune(char **log);
 /** Compute the k-space part of forces and energies for the magnetic
  *  dipole-dipole interaction
  */
-double dp3m_calc_kspace_forces(int force_flag, int energy_flag);
+double dp3m_calc_kspace_forces(int force_flag, int energy_flag, const ParticleRange &particles);
 
 /** Calculate number of magnetic particles, the sum of the squared
  *  charges and the squared sum of the charges.

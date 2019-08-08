@@ -130,7 +130,7 @@ void calc_long_range_energies(const ParticleRange &particles) {
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  Dipole::calc_energy_long_range(energy);
+  Dipole::calc_energy_long_range(energy, particles);
 #endif /* ifdef DIPOLES */
 }
 

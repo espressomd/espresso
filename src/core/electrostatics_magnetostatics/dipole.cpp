@@ -155,21 +155,21 @@ void init() {
   }
 }
 
-void calc_long_range_force() {
+void calc_long_range_force(const ParticleRange &particles) {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     add_mdlc_force_corrections();
     // fall through
   case DIPOLAR_P3M:
-    dp3m_dipole_assign();
+    dp3m_dipole_assign(particles);
 #ifdef NPT
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      nptiso.p_vir[0] += dp3m_calc_kspace_forces(1, 1);
+      nptiso.p_vir[0] += dp3m_calc_kspace_forces(1, 1, particles);
       fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
     } else
 #endif
-      dp3m_calc_kspace_forces(1, 0);
+        dp3m_calc_kspace_forces(1, 0, particles);
 
     break;
 #endif
@@ -205,16 +205,16 @@ void calc_long_range_force() {
   }
 }
 
-void calc_energy_long_range(Observable_stat &energy) {
+void calc_energy_long_range(Observable_stat &energy, const ParticleRange &particles) {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_P3M:
-    dp3m_dipole_assign();
-    energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
+    dp3m_dipole_assign(particles);
+    energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1, particles);
     break;
   case DIPOLAR_MDLC_P3M:
-    dp3m_dipole_assign();
-    energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
+    dp3m_dipole_assign(particles);
+    energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1, particles);
     energy.dipolar[2] = add_mdlc_energy_corrections();
     break;
 #endif
