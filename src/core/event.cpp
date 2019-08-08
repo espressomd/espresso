@@ -48,7 +48,6 @@
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "random.hpp"
-#include "rattle.hpp"
 #include "reaction_ensemble.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
@@ -457,10 +456,6 @@ void on_ghost_flags_change() {
   /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
     ghosts_have_v = true;
-#ifdef BOND_CONSTRAINT
-  if (n_rigidbonds)
-    ghosts_have_v = true;
-#endif
   if (thermo_switch & THERMO_DPD)
     ghosts_have_v = true;
 #ifdef VIRTUAL_SITES
