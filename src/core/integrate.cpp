@@ -57,6 +57,8 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
+#include "integrators/velocity_verlet_inline.hpp"
+
 #include <profiler/profiler.hpp>
 #include <utils/constants.hpp>
 
@@ -116,8 +118,6 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles);
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles);
 
-void velocity_verlet_propagate_vel_pos(const ParticleRange &particles);
-void velocity_verlet_propagate_vel_final(const ParticleRange &particles);
 /** Integration step 4 of the Velocity Verletintegrator and finalize
     instantaneous pressure calculation:<br>
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
@@ -180,8 +180,7 @@ bool integrator_step_1(ParticleRange &particles) {
       return true; // early exit
     break;
   case INTEG_METHOD_NVT:
-    velocity_verlet_propagate_vel_pos(particles);
-    sim_time += time_step;
+    velocity_verlet_step_1(particles);
     break;
   case INTEG_METHOD_NPT_ISO:
     velocity_verlet_npt_propagate_vel(particles);
@@ -200,7 +199,7 @@ void integrator_step_2(ParticleRange &particles) {
     // Nothgin
     break;
   case INTEG_METHOD_NVT:
-    velocity_verlet_propagate_vel_final(particles);
+    velocity_verlet_step_2(particles);
 #ifdef ROTATION
     convert_torques_propagate_omega(particles);
 #endif
@@ -401,28 +400,6 @@ void philox_counter_increment() {
 
 /** @brief Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-void velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
-  assert(integ_switch == INTEG_METHOD_NVT);
-
-  for (auto &p : particles) {
-#ifdef VIRTUAL_SITES
-    // Virtual sites are not propagated during integration
-    if (p.p.is_virtual)
-      continue;
-#endif
-    for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & COORD_FIXED(j))) {
-#endif
-        /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
-        p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
-#ifdef EXTERNAL_FORCES
-      }
-#endif
-    }
-  }
-}
-
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
   assert(integ_switch == INTEG_METHOD_NPT_ISO);
 
@@ -594,40 +571,6 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
   }
 }
 
-void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
-  assert(integ_switch == INTEG_METHOD_NVT);
-  for (auto &p : particles) {
-#ifdef ROTATION
-    propagate_omega_quat_particle(&p);
-#endif
-
-// Don't propagate translational degrees of freedom of vs
-#ifdef VIRTUAL_SITES
-    if (p.p.is_virtual)
-      continue;
-#endif
-    for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
-        /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
-        p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
-
-        /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-         * v(t+0.5*dt) */
-        p.r.p[j] += time_step * p.m.v[j];
-      }
-    }
-
-    /* Verlet criterion check*/
-    if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
-            Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
-            Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
-        skin2)
-      set_resort_particles(Cells::RESORT_LOCAL);
-  }
-}
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   // Override the signal handler so that the integrator obeys Ctrl+C
