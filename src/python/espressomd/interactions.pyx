@@ -260,9 +260,9 @@ IF LENNARD_JONES == 1:
             ----------
 
             epsilon : :obj:`float`
-                The magnitude of the interaction.
+                Magnitude of the interaction.
             sigma : :obj:`float`
-                Determines the interaction length scale.
+                Interaction length scale.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
             shift : :obj:`float` or :obj:`str`
@@ -362,9 +362,9 @@ IF WCA == 1:
             ----------
 
             epsilon : :obj:`float`
-                The magnitude of the interaction.
+                Magnitude of the interaction.
             sigma : :obj:`float`
-                Determines the interaction length scale.
+                Interaction length scale.
 
             """
             super().set_params(**kwargs)
@@ -514,9 +514,9 @@ IF LENNARD_JONES_GENERIC == 1:
             Parameters
             ----------
             epsilon : :obj:`float`
-                The magnitude of the interaction.
+                Magnitude of the interaction.
             sigma : :obj:`float`
-                Determines the interaction length scale.
+                Interaction length scale.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
             shift : :obj:`float`
@@ -587,9 +587,9 @@ IF LJCOS:
             ----------
 
             epsilon : :obj:`float`
-                The magnitude of the interaction.
+                Magnitude of the interaction.
             sigma : :obj:`float`
-                Determines the interaction length scale.
+                Interaction length scale.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
             offset : :obj:`float`
@@ -667,9 +667,9 @@ IF LJCOS2:
             ----------
 
             epsilon : :obj:`float`
-                The magnitude of the interaction.
+                Magnitude of the interaction.
             sigma : :obj:`float`
-                Determines the interaction length scale.
+                Interaction length scale.
             offset : :obj:`float`
                 Offset distance of the interaction.
             width : :obj:`float`
@@ -739,7 +739,7 @@ IF HAT == 1:
             Parameters
             ----------
             F_max : :obj:`float`
-                The magnitude of the interaction.
+                Magnitude of the interaction.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
 
@@ -1017,7 +1017,7 @@ IF SMOOTH_STEP == 1:
             n : :obj:`int`
                 Exponent of short range repulsion.
             eps : :obj:`float`
-                The magnitude of the second (soft) repulsion.
+                Magnitude of the second (soft) repulsion.
             k0 : :obj:`float`
                 Exponential factor in second (soft) repulsion.
             sig : :obj:`float`
@@ -1115,13 +1115,13 @@ IF BMHTF_NACL == 1:
             Parameters
             ----------
             a : :obj:`float`
-                The magnitude of exponential part of the interaction.
+                Magnitude of exponential part of the interaction.
             b : :obj:`float`
                 Exponential factor of the interaction.
             c : :obj:`float`
-                The magnitude of the term decaying with the sixth power of r.
+                Magnitude of the term decaying with the sixth power of r.
             d : :obj:`float`
-                The magnitude of the term decaying with the eighth power of r.
+                Magnitude of the term decaying with the eighth power of r.
             sig : :obj:`float`
                 Shift in the exponent.
             cutoff : :obj:`float`
@@ -1406,7 +1406,7 @@ IF SOFT_SPHERE == 1:
             Parameters
             ----------
             a : :obj:`float`
-                The magnitude of the interaction.
+                Magnitude of the interaction.
             n : :obj:`float`
                 Exponent of the power law.
             cutoff : :obj:`float`
@@ -1604,9 +1604,10 @@ IF HERTZIAN == 1:
             Parameters
             ----------
             eps : :obj:`float`
-                The magnitude of the interaction.
+                Magnitude of the interaction.
             sig : :obj:`float`
-                Parameter sigma which determines the length over which the potential decays.
+                Parameter sigma. Determines the length over which the potential
+                decays.
 
             """
             super().set_params(**kwargs)
@@ -2035,11 +2036,11 @@ class FeneBond(BondedInteraction):
     Parameters
     ----------
     k : :obj:`float`
-        Specifies the magnitude of the bond interaction.
+        Magnitude of the bond interaction.
     d_r_max : :obj:`float`
-        Specifies the maximum stretch and compression length of the bond.
+        Maximum stretch and compression length of the bond.
     r_0 : :obj:`float`, optional
-        Specifies the equilibrium length of the bond.
+        Equilibrium bond length.
 
     """
 
@@ -2096,11 +2097,11 @@ class HarmonicBond(BondedInteraction):
     Parameters
     ----------
     k : :obj:`float`
-        Specifies the magnitude of the bond interaction.
+        Magnitude of the bond interaction.
     r_0 : :obj:`float`
-        Specifies the equilibrium length of the bond.
+        Equilibrium bond length.
     r_cut : :obj:`float`, optional
-        Specifies maximum distance beyond which the bond is considered broken.
+        Maximum distance beyond which the bond is considered broken.
 
     """
 
@@ -2154,7 +2155,7 @@ if ELECTROSTATICS:
         ----------
 
         prefactor : :obj:`float`
-            Sets the Coulomb prefactor of the bonded Coulomb interaction.
+            Coulomb prefactor of the bonded Coulomb interaction.
         """
 
         def __init__(self, *args, **kwargs):
@@ -2195,7 +2196,7 @@ if ELECTROSTATICS:
         ----------
 
         q1q2 : :obj:`float`
-            Sets the charge factor of the involved particle pair. Note the
+            Charge factor of the involved particle pair. Note the
             particle charges are used to allow e.g. only partial subtraction
             of the involved charges.
         """
@@ -2237,19 +2238,19 @@ class ThermalizedBond(BondedInteraction):
     ----------
 
     temp_com : :obj:`float`
-        Sets the temperature of the Langevin thermostat for the com of the
+        Temperature of the Langevin thermostat for the com of the
         particle pair.
     gamma_com: :obj:`float`
-        Sets the friction coefficient of the Langevin thermostat for the com of
+        Friction coefficient of the Langevin thermostat for the com of
         the particle pair.
     temp_distance: :obj:`float`
-        Sets the temperature of the Langevin thermostat for the distance vector
+        Tmperature of the Langevin thermostat for the distance vector
         of the particle pair.
     gamma_distance: :obj:`float`
-        Sets the friction coefficient of the Langevin thermostat for the
+        Friction coefficient of the Langevin thermostat for the
         distance vector of the particle pair.
     r_cut: :obj:`float`, optional
-        Specifies maximum distance beyond which the bond is considered broken.
+        Maximum distance beyond which the bond is considered broken.
     """
 
     def __init__(self, *args, **kwargs):
@@ -2318,7 +2319,7 @@ IF THOLE:
                 parameters  a_i, a_j via
                 scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
             q1q2: :obj:`float`
-                charge factor of the involved charges. Has to be set because
+                Charge factor of the involved charges. Has to be set because
                 it acts only on the portion of the Drude core charge that is
                 associated to the dipole of the atom. For charged, polarizable
                 atoms that charge is not equal to the particle charge property.
@@ -2354,14 +2355,13 @@ IF ROTATION:
         Parameters
         ----------
         k1 : :obj:`float`
-            Specifies the magnitude of the bond interaction.
+            Magnitude of the bond interaction.
         k2 : :obj:`float`
-            Specifies the magnitude of the angular interaction.
+            Magnitude of the angular interaction.
         r_0 : :obj:`float`
-            Specifies the equilibrium length of the bond.
+            Equilibrium bond length.
         r_cut : :obj:`float`, optional
-            Specifies maximum distance beyond which the bond is considered
-            broken.
+            Maximum distance beyond which the bond is considered broken.
 
         """
 
@@ -2471,11 +2471,11 @@ IF BOND_CONSTRAINT == 1:
         Parameters
         ----------
         r : :obj:`float`
-            Specifies the length of the rigid bond.
+            Bond length.
         ptol : :obj:`float`, optional
-            Specifies the tolerance for positional deviations.
+            Tolerance for positional deviations.
         vtop : :obj:`float`, optional
-            Specifies the tolerance for velocity deviations.
+            Tolerance for velocity deviations.
 
         """
 
@@ -3089,12 +3089,12 @@ class IBM_Triel(BondedInteraction):
     Parameters
     ----------
     indX : :obj:`int`
-        Specify first, second and third bonding partner. Used for
+        First, second and third bonding partner. Used for
         initializing reference state
     k1 : :obj:`float`
-        Specifies shear elasticity for Skalak and Neo-Hookean
+        Shear elasticity for Skalak and Neo-Hookean
     k2 : :obj:`float`
-        Specifies area resistance for Skalak
+        Area resistance for Skalak
     maxDist : :obj:`float`
         Gives an error if an edge becomes longer than maxDist
     elasticLaw : :obj:`str`
@@ -3146,10 +3146,10 @@ class IBM_Tribend(BondedInteraction):
     Parameters
     ----------
     indX : :obj:`int`
-        Specify first, second, third and fourth bonding partner. Used for
+        First, second, third and fourth bonding partner. Used for
         initializing reference state
     kb : :obj:`float`
-        Specifies bending modulus
+        Bending modulus
     refShape : :obj:`str`, \{'Flat', 'Initial'\}
         Reference shape
 
@@ -3371,13 +3371,13 @@ class QuarticBond(BondedInteraction):
     Parameters
     ----------
     k0 : :obj:`float`
-        Specifies the magnitude of the square term.
+        Magnitude of the square term.
     k1 : :obj:`float`
-        Specifies the magnitude of the fourth order term.
+        Magnitude of the fourth order term.
     r : :obj:`float`
-        Specifies the equilibrium length of the bond.
+        Equilibrium bond length.
     r_cut : :obj:`float`
-        Specifies the maximum interaction length.
+        Maximum interaction length.
     """
 
     def __init__(self, *args, **kwargs):
@@ -3516,7 +3516,7 @@ class BondedInteractions:
                 yield self[i]
 
     def add(self, bonded_ia):
-        """Add a bonded ia to the simulation"""
+        """Add a bonded IA to the simulation"""
         self[bonded_ia_params.size()] = bonded_ia
 
     def __getstate__(self):
