@@ -139,16 +139,12 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         comm->comm[c].type = GHOST_SEND;
         /* round 1 uses prefetched data and stores delayed data */
         comm->comm[c].node = btm;
-        if (data_parts == GHOSTTRANS_FORCE) {
-          comm->comm[c].part_lists[0] = &cells[0];
-        } else {
-          comm->comm[c].part_lists[0] = &cells[1];
+        comm->comm[c].part_lists[0] = &cells[1];
 
-          /* if periodic and bottom or top, send shifted */
-          if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
-              (data_parts & GHOSTTRANS_POSITION)) {
-            comm->comm[c].shift = Utils::Vector3d{0, 0, box_geo.length()[2]};
-          }
+        /* if periodic and bottom or top, send shifted */
+        if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
+            (data_parts & GHOSTTRANS_POSITION)) {
+          comm->comm[c].shift = Utils::Vector3d{0, 0, box_geo.length()[2]};
         }
         c++;
       }
@@ -157,11 +153,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       if (top % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comm->comm[c].type = GHOST_RECV;
         comm->comm[c].node = top;
-        if (data_parts == GHOSTTRANS_FORCE) {
-          comm->comm[c].part_lists[0] = &cells[n_layers];
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec get force from %d topl\n",
-                             this_node, top));
-        } else {
+        {
           comm->comm[c].part_lists[0] = &cells[n_layers + 1];
           CELL_TRACE(fprintf(stderr, "%d: ghostrec recv from %d topg\n",
                              this_node, top));
@@ -179,11 +171,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         /* round 1 use prefetched data from round 0.
            But this time there may already have been two transfers downwards */
         comm->comm[c].node = top;
-        if (data_parts == GHOSTTRANS_FORCE) {
-          comm->comm[c].part_lists[0] = &cells[n_layers + 1];
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec send force to %d topg\n",
-                             this_node, top));
-        } else {
+        {
           comm->comm[c].part_lists[0] = &cells[n_layers];
 
           /* if periodic and bottom or top, send shifted */
@@ -200,11 +188,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       if (btm % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comm->comm[c].type = GHOST_RECV;
         comm->comm[c].node = btm;
-        if (data_parts == GHOSTTRANS_FORCE) {
-          comm->comm[c].part_lists[0] = &cells[1];
-          CELL_TRACE(fprintf(stderr, "%d: ghostrec get force from %d btml\n",
-                             this_node, btm));
-        } else {
+        {
           comm->comm[c].part_lists[0] = &cells[0];
           CELL_TRACE(fprintf(stderr, "%d: ghostrec recv from %d btmg\n",
                              this_node, btm));
@@ -231,10 +215,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
       /* downwards */
       comm->comm[c].type = GHOST_LOCL;
-      if (data_parts == GHOSTTRANS_FORCE) {
-        comm->comm[c].part_lists[0] = &cells[0];
-        comm->comm[c].part_lists[1] = &cells[n_layers];
-      } else {
+      {
         comm->comm[c].part_lists[0] = &cells[1];
         comm->comm[c].part_lists[1] = &cells[n_layers + 1];
         /* here it is periodic */
@@ -245,10 +226,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
       /* upwards */
       comm->comm[c].type = GHOST_LOCL;
-      if (data_parts == GHOSTTRANS_FORCE) {
-        comm->comm[c].part_lists[0] = &cells[n_layers + 1];
-        comm->comm[c].part_lists[1] = &cells[1];
-      } else {
+      {
         comm->comm[c].part_lists[0] = &cells[n_layers];
         comm->comm[c].part_lists[1] = &cells[0];
         /* here it is periodic */
@@ -344,6 +322,8 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
                        GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
   layered_prepare_comm(&cell_structure.collect_ghost_force_comm,
                        GHOSTTRANS_FORCE);
+
+  ghosts_revert_comm_order(&cell_structure.collect_ghost_force_comm);
 
   ghosts_assign_prefetches(&cell_structure.exchange_ghosts_comm);
   ghosts_assign_prefetches(&cell_structure.collect_ghost_force_comm);
