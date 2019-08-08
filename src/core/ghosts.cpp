@@ -63,12 +63,8 @@ static std::vector<int> r_bondbuffer;
 bool ghosts_have_v = false;
 bool ghosts_have_bonds = false;
 
-void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
+void prepare_comm(GhostCommunicator *comm, int num) {
   assert(comm);
-  comm->data_parts = data_parts;
-
-  GHOST_TRACE(fprintf(stderr, "%d: prepare_comm, data_parts = %d\n", this_node,
-                      comm->data_parts));
 
   comm->num = num;
   comm->comm.resize(num);
@@ -620,7 +616,7 @@ void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts) {
  *  poststore
  */
 void ghosts_assign_prefetches(GhostCommunicator *comm) {
-  if(comm->num < 2) {
+  if (comm->num < 2) {
     return;
   }
 
@@ -650,10 +646,10 @@ void ghosts_revert_comm_order(GhostCommunicator *comm) {
     else if (comm->comm[i].type == GHOST_RECV)
       comm->comm[i].type = GHOST_SEND;
     else if (comm->comm[i].type == GHOST_LOCL) {
-      auto part_lists = Utils::make_span(comm->comm[i].part_lists, comm->comm[i].n_part_lists);
+      auto part_lists = Utils::make_span(comm->comm[i].part_lists,
+                                         comm->comm[i].n_part_lists);
       boost::reverse(part_lists);
-    }
-    else if(comm->comm[i].type == GHOST_BCST) {
+    } else if (comm->comm[i].type == GHOST_BCST) {
       comm->comm[i].type = GHOST_RDCE;
     }
   }

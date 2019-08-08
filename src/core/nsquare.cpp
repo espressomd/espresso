@@ -48,11 +48,11 @@ void nsq_topology_release() {
 static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
   /* no need for comm for only 1 node */
   if (n_nodes == 1) {
-    prepare_comm(comm, data_parts, 0);
+    prepare_comm(comm, 0);
     return;
   }
 
-  prepare_comm(comm, data_parts, n_nodes);
+  prepare_comm(comm, n_nodes);
   /* every node has its dedicated comm step */
   for (int n = 0; n < n_nodes; n++) {
     comm->comm[n].part_lists = (Cell **)Utils::malloc(sizeof(Cell *));

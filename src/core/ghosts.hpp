@@ -166,8 +166,6 @@ struct GhostCommunication {
 
 /** Properties for a ghost communication. A ghost communication is defined */
 struct GhostCommunicator {
-  /** Particle data parts to transfer */
-  unsigned data_parts;
   /** number of communication steps. */
   int num;
   /** List of ghost communications. */
@@ -181,7 +179,7 @@ struct GhostCommunicator {
 /*@{*/
 
 /** Initialize a communicator. */
-void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
+void prepare_comm(GhostCommunicator *comm, int num);
 
 /** Free a communicator. */
 void free_comm(GhostCommunicator *comm);

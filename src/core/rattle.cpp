@@ -174,8 +174,7 @@ void correct_pos_shake(const ParticleRange &particles) {
   int repeat_, cnt = 0;
   int repeat = 1;
 
-  ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                     GHOSTTRANS_POSITION);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION);
 
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(cell_structure.local_cells().particles());

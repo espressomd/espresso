@@ -454,15 +454,19 @@ void cells_update_ghosts() {
     cells_resort_particles(global);
 
     /* Communication step:  number of ghosts and ghost information */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_PARTNUM);
-    ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_PARTNUM);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
   } else
     /* Communication step: ghost information */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_POSITION);
 }
 
 void cells_collect_forces() {
-  ghost_communicator(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+  ghost_communicator(&cell_structure.collect_ghost_force_comm,
+                     GHOSTTRANS_FORCE);
 }
 
 Cell *find_current_cell(const Particle &p) {
