@@ -176,12 +176,6 @@ int calc_processor_min_num_cells(const Utils::Vector3i &grid);
  */
 int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
                             int const hc[3]);
-
-/** Of every two communication rounds, set the first receivers to prefetch and
- *  poststore
- */
-void dd_assign_prefetches(GhostCommunicator *comm);
-
 /*@}*/
 
 #endif

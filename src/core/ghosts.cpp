@@ -427,12 +427,6 @@ void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts) {
     auto const poststore = gcn->type & GHOST_PSTSTORE;
     int node = gcn->node;
 
-    GHOST_TRACE(fprintf(stderr, "%d: ghost_comm round %d, job %x\n", this_node,
-                        n, gc->comm[n].type));
-    GHOST_TRACE(fprintf(stderr, "%d: ghost_comm shift %f %f %f\n", this_node,
-                        gc->comm[n].shift[0], gc->comm[n].shift[1],
-                        gc->comm[n].shift[2]));
-
     if (comm_type == GHOST_LOCL)
       cell_cell_transfer(gcn, data_parts);
     else {
@@ -617,6 +611,23 @@ void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts) {
           }
         }
       }
+    }
+  }
+}
+
+/** Of every two communication rounds, set the first receivers to prefetch and
+ *  poststore
+ */
+void ghosts_assign_prefetches(GhostCommunicator *comm) {
+  if(comm->num < 2) {
+    return;
+  }
+
+  for (int cnt = 0; cnt < comm->num; cnt += 2) {
+    if (comm->comm[cnt].type == GHOST_RECV &&
+        comm->comm[cnt + 1].type == GHOST_SEND) {
+      comm->comm[cnt].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+      comm->comm[cnt + 1].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
     }
   }
 }

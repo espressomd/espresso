@@ -195,6 +195,10 @@ void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts);
     local_particles. Part of \ref dd_exchange_and_sort_particles.*/
 void invalidate_ghosts();
 
+/** Of every two communication rounds, set the first receivers to prefetch and
+ *  poststore
+ */
+void ghosts_assign_prefetches(GhostCommunicator *comm);
 /*@}*/
 
 #endif

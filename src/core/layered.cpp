@@ -138,8 +138,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       if (this_node % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comm->comm[c].type = GHOST_SEND;
         /* round 1 uses prefetched data and stores delayed data */
-        if (c == 1)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = btm;
         if (data_parts == GHOSTTRANS_FORCE) {
           comm->comm[c].part_lists[0] = &cells[0];
@@ -158,9 +156,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
          as for odd n_nodes maybe we send AND receive. */
       if (top % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comm->comm[c].type = GHOST_RECV;
-        /* round 0 prefetch send for round 1 and delay recvd data processing */
-        if (c == 0)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = top;
         if (data_parts == GHOSTTRANS_FORCE) {
           comm->comm[c].part_lists[0] = &cells[n_layers];
@@ -183,8 +178,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         comm->comm[c].type = GHOST_SEND;
         /* round 1 use prefetched data from round 0.
            But this time there may already have been two transfers downwards */
-        if (c % 2 == 1)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = top;
         if (data_parts == GHOSTTRANS_FORCE) {
           comm->comm[c].part_lists[0] = &cells[n_layers + 1];
@@ -206,10 +199,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
          as for odd n_nodes maybe we send AND receive. */
       if (btm % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comm->comm[c].type = GHOST_RECV;
-        /* round 0 prefetch. But this time there may already have been two
-         * transfers downwards */
-        if (c % 2 == 0)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = btm;
         if (data_parts == GHOSTTRANS_FORCE) {
           comm->comm[c].part_lists[0] = &cells[1];
@@ -355,6 +344,9 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
                        GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
   layered_prepare_comm(&cell_structure.collect_ghost_force_comm,
                        GHOSTTRANS_FORCE);
+
+  ghosts_assign_prefetches(&cell_structure.exchange_ghosts_comm);
+  ghosts_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
   /* copy particles */
   for (c = 0; c < old->n; c++) {

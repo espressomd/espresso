@@ -395,21 +395,6 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
   }
 }
 
-/** Of every two communication rounds, set the first receivers to prefetch and
- *  poststore
- */
-void dd_assign_prefetches(GhostCommunicator *comm) {
-  int cnt;
-
-  for (cnt = 0; cnt < comm->num; cnt += 2) {
-    if (comm->comm[cnt].type == GHOST_RECV &&
-        comm->comm[cnt + 1].type == GHOST_SEND) {
-      comm->comm[cnt].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-      comm->comm[cnt + 1].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-    }
-  }
-}
-
 /** update the 'shift' member of those GhostCommunicators, which use
  *  that value to speed up the folding process of its ghost members
  *  (see \ref dd_prepare_comm for the original), i.e. all which have
@@ -653,8 +638,8 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
 
-  dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
-  dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
+  ghosts_assign_prefetches(&cell_structure.exchange_ghosts_comm);
+  ghosts_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
   dd_init_cell_interactions(grid);
 
