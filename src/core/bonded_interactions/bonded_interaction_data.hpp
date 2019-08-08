@@ -18,19 +18,19 @@ enum BondedInteraction {
   /** Type of bonded interaction is a FENE potential
       (to be combined with Lennard-Jones). */
   BONDED_IA_FENE,
-  /** Type of bonded interaction is a HARMONIC potential. */
+  /** Type of bonded interaction is a harmonic potential. */
   BONDED_IA_HARMONIC,
-  /** Type of bonded interaction is a HARMONIC_DUMBBELL potential. */
+  /** Type of bonded interaction is a harmonic dumbbell potential. */
   BONDED_IA_HARMONIC_DUMBBELL,
-  /** Type of bonded interaction is a QUARTIC potential. */
+  /** Type of bonded interaction is a quartic potential. */
   BONDED_IA_QUARTIC,
-  /** Type of bonded interaction is a BONDED_COULOMB */
+  /** Type of bonded interaction is a bonded %Coulomb. */
   BONDED_IA_BONDED_COULOMB,
-  /** Type of bonded interaction is a BONDED_COULOMB_SR */
+  /** Type of bonded interaction is a bonded %Coulomb SR. */
   BONDED_IA_BONDED_COULOMB_SR,
   /** Type of bonded interaction is a dihedral potential. */
   BONDED_IA_DIHEDRAL,
-  /** Type of bonded interaction is a tabulated bond potential. */
+  /** Type of bonded interaction is a tabulated distance potential. */
   BONDED_IA_TABULATED_DISTANCE,
   /** Type of bonded interaction is a tabulated angle potential. */
   BONDED_IA_TABULATED_ANGLE,
@@ -176,13 +176,13 @@ struct Quartic_bond_parameters {
   double r_cut;
 };
 
-/** Parameters for Coulomb bond Potential */
+/** Parameters for %Coulomb bond Potential */
 struct Bonded_coulomb_bond_parameters {
-  /** Coulomb prefactor */
+  /** %Coulomb prefactor */
   double prefactor;
 };
 
-/** Parameters for Coulomb bond short-range Potential */
+/** Parameters for %Coulomb bond short-range Potential */
 struct Bonded_coulomb_sr_bond_parameters {
   /** charge factor */
   double q1q2;

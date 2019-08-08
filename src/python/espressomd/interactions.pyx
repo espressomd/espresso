@@ -25,8 +25,6 @@ from espressomd.utils import is_valid_type
 from globals cimport immersed_boundaries
 
 
-# Non-bonded interactions
-
 cdef class NonBondedInteraction:
     """
     Represents an instance of a non-bonded interaction, such as Lennard-Jones.
@@ -213,8 +211,6 @@ cdef class NonBondedInteraction:
         raise Exception(
             "Subclasses of NonBondedInteraction must define the required_keys() method.")
 
-# Lennard-Jones
-
 IF LENNARD_JONES == 1:
     cdef class LennardJonesInteraction(NonBondedInteraction):
 
@@ -268,7 +264,7 @@ IF LENNARD_JONES == 1:
             shift : :obj:`float` or :obj:`str` \{'auto'\}
                 Constant shift of the potential. If ``'auto'``, a default value
                 is computed from ``sigma`` and ``cutoff``. The LJ potential
-                will be shifted by :math:`4\\epsilon\\text{shift}`.
+                will be shifted by :math:`4\\epsilon\\cdot\\text{shift}`.
             offset : :obj:`float`, optional
                 Offset distance of the interaction.
             min : :obj:`float`, optional
@@ -403,7 +399,6 @@ IF WCA == 1:
             """
             return "epsilon", "sigma"
 
-# Generic Lennard-Jones
 IF LENNARD_JONES_GENERIC == 1:
 
     cdef class GenericLennardJonesInteraction(NonBondedInteraction):
@@ -522,7 +517,7 @@ IF LENNARD_JONES_GENERIC == 1:
             shift : :obj:`float` or :obj:`str` \{'auto'\}
                 Constant shift of the potential. If ``'auto'``, a default value
                 is computed from the other parameters. The LJ potential
-                will be shifted by :math:`\\epsilon\\text{shift}`.
+                will be shifted by :math:`\\epsilon\\cdot\\text{shift}`.
             offset : :obj:`float`
                 Offset distance of the interaction.
             e1 : :obj:`int`
@@ -554,8 +549,6 @@ IF LENNARD_JONES_GENERIC == 1:
 
             """
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
-
-# Lennard-Jones cosine
 
 IF LJCOS:
     cdef class LennardJonesCosInteraction(NonBondedInteraction):
@@ -634,8 +627,6 @@ IF LJCOS:
             """
             return "epsilon", "sigma", "cutoff"
 
-# Lennard-Jones cosine^2
-
 IF LJCOS2:
     cdef class LennardJonesCos2Interaction(NonBondedInteraction):
 
@@ -663,7 +654,7 @@ IF LJCOS2:
             return(self._params["epsilon"] > 0)
 
         def set_params(self, **kwargs):
-            """ Set parameters for the Lennard-Jones cosine2 interaction.
+            """ Set parameters for the Lennard-Jones cosine squared interaction.
 
             Parameters
             ----------
@@ -768,8 +759,6 @@ IF HAT == 1:
 
         def required_keys(self):
             return "F_max", "cutoff"
-
-# Gay-Berne
 
 IF GAY_BERNE:
     cdef class GayBerneInteraction(NonBondedInteraction):
@@ -938,8 +927,6 @@ IF DPD:
         def required_keys(self):
             return []
 
-# Smooth-step
-
 IF SMOOTH_STEP == 1:
 
     cdef class SmoothStepInteraction(NonBondedInteraction):
@@ -1039,8 +1026,6 @@ IF SMOOTH_STEP == 1:
 
             """
             return "d", "eps", "cutoff"
-
-# BMHTF
 
 IF BMHTF_NACL == 1:
 
@@ -1142,8 +1127,6 @@ IF BMHTF_NACL == 1:
             """
             return "a", "b", "c", "d", "sig", "cutoff"
 
-# Morse
-
 IF MORSE == 1:
 
     cdef class MorseInteraction(NonBondedInteraction):
@@ -1231,8 +1214,6 @@ IF MORSE == 1:
 
             """
             return "eps", "alpha", "rmin"
-
-# Buckingham
 
 IF BUCKINGHAM == 1:
 
@@ -1338,8 +1319,6 @@ IF BUCKINGHAM == 1:
 
             """
             return "a", "c", "d", "discont", "cutoff"
-
-# Soft-sphere
 
 IF SOFT_SPHERE == 1:
 
@@ -1542,11 +1521,6 @@ IF MEMBRANE_COLLISION == 1:
         def required_keys(self):
             return "a", "n", "cutoff"
 
-# Gay-Berne
-
-
-# Hertzian
-
 IF HERTZIAN == 1:
 
     cdef class HertzianInteraction(NonBondedInteraction):
@@ -1623,8 +1597,6 @@ IF HERTZIAN == 1:
 
             """
             return "eps", "sig"
-
-# Gaussian
 
 IF GAUSSIAN == 1:
 
@@ -1792,8 +1764,8 @@ class NonBondedInteractionHandle:
 
 cdef class NonBondedInteractions:
     """
-    Access to non-bonded interaction parameters via [i,j], where i,j are particle
-    types. Returns a :class:`NonBondedInteractionHandle` object.
+    Access to non-bonded interaction parameters via ``[i,j]``, where ``i, j``
+    are particle types. Returns a :class:`NonBondedInteractionHandle` object.
     Also: access to force capping.
 
     """
@@ -2235,11 +2207,11 @@ class ThermalizedBond(BondedInteraction):
     ----------
 
     temp_com : :obj:`float`
-        Temperature of the Langevin thermostat for the com of the
+        Temperature of the Langevin thermostat for the center of mass of the
         particle pair.
     gamma_com: :obj:`float`
-        Friction coefficient of the Langevin thermostat for the com of
-        the particle pair.
+        Friction coefficient of the Langevin thermostat for the center of mass
+        of the particle pair.
     temp_distance: :obj:`float`
         Tmperature of the Langevin thermostat for the distance vector
         of the particle pair.
@@ -2945,7 +2917,7 @@ class Virtual(BondedInteraction):
 class AngleHarmonic(BondedInteraction):
 
     """
-    Bond angle dependent harmonic potential.
+    Bond-angle-dependent harmonic potential.
 
     Parameters
     ----------
@@ -2996,7 +2968,7 @@ class AngleHarmonic(BondedInteraction):
 class AngleCosine(BondedInteraction):
 
     """
-    Bond angle dependent cosine potential.
+    Bond-angle-dependent cosine potential.
 
     Parameters
     ----------
@@ -3047,7 +3019,7 @@ class AngleCosine(BondedInteraction):
 class AngleCossquare(BondedInteraction):
 
     """
-    Bond angle dependent cosine squared potential.
+    Bond-angle-dependent cosine squared potential.
 
     Parameters
     ----------
@@ -3095,7 +3067,6 @@ class AngleCossquare(BondedInteraction):
             self._bond_id, self._params["bend"], self._params["phi0"])
 
 
-# IBM triel
 class IBM_Triel(BondedInteraction):
 
     """
@@ -3152,7 +3123,6 @@ class IBM_Triel(BondedInteraction):
                             "ind3"], self._params["maxDist"], el, self._params["k1"], self._params["k2"])
 
 
-# IBM tribend
 class IBM_Tribend(BondedInteraction):
 
     """
@@ -3203,11 +3173,10 @@ class IBM_Tribend(BondedInteraction):
                               self._params["ind4"], self._params["kb"], flat)
 
 
-# IBM VolCons
 class IBM_VolCons(BondedInteraction):
 
     """
-    IBM VolCons bond.
+    IBM volume conservation bond.
 
     Parameters
     ----------

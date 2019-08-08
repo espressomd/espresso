@@ -115,27 +115,21 @@ friction needs to be present for it to relax.
 The roles of the parameters :math:`k_1, r_0, r_\mathrm{cut}` are exactly the same as for the
 harmonic bond.
 
-..
-    .. _Quartic bond:
+.. _Quartic bond:
 
-    Quartic bond
-    ~~~~~~~~~~~~
+Quartic bond
+~~~~~~~~~~~~
 
-    .. todo::
-        Not implemented.
+A quartic bond can be instantiated via
+:class:`espressomd.interactions.QuarticBond`.
 
+The potential is minimal at particle distance :math:`r=R`. It is given by
 
-    inter quartic
+.. math:: V(r) = \frac{1}{2} K_0 \left( r - R \right)^2 + \frac{1}{4} K_1 \left( r - R \right)^4
 
-    This creates a bond type with identificator with a quartic potential.
-    The potential is minimal at particle distance :math:`r=R`. It is given
-    by
-
-    .. math:: V(r) = \frac{1}{2} K_0 \left( r - R \right)^2 + \frac{1}{4} K_1 \left( r - R \right)^4
-
-    The fourth, optional, parameter defines a cutoff radius. Whenever a
-    quartic bond gets longer than , the bond will be reported as broken, and
-    a background error will be raised.
+The fourth, optional, parameter defines a cutoff radius. Whenever a
+quartic bond gets longer than ``r_cut``, the bond will be reported as broken, and
+a background error will be raised.
 
 .. _Bonded Coulomb:
 
@@ -219,8 +213,8 @@ A rigid bond can be instantiated via
 To simulate rigid bonds, |es| uses the Rattle Shake algorithm which satisfies
 internal constraints for molecular models with internal constraints,
 using Lagrange multipliers.\ :cite:`andersen83a` The constrained bond distance
-is named :math:`r`, the positional tolerance is named :math:`ptol` and the velocity tolerance
-is named :math:`vtol`.
+is named ``r``, the positional tolerance is named ``ptol`` and the velocity tolerance
+is named ``vtol``.
 
 .. _Tabulated distance:
 
