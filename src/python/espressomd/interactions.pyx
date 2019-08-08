@@ -82,8 +82,8 @@ cdef class NonBondedInteraction:
         """Get interaction parameters.
 
         """
-        # If this instance refers to an actual interaction defined in the es core, load
-        # current parameters from there
+        # If this instance refers to an actual interaction defined in
+        # the es core, load current parameters from there
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
             self._params = self._get_params_from_es_core()
         return self._params
@@ -183,8 +183,8 @@ cdef class NonBondedInteraction:
         """Virtual method.
 
         """
-        # If this instance refers to an actual interaction defined in the es core, load
-        # current parameters from there
+        # If this instance refers to an actual interaction defined in
+        # the es core, load current parameters from there
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
             self._params = self._get_params_from_es_core()
         raise Exception(
@@ -212,6 +212,7 @@ cdef class NonBondedInteraction:
             "Subclasses of NonBondedInteraction must define the required_keys() method.")
 
 IF LENNARD_JONES == 1:
+
     cdef class LennardJonesInteraction(NonBondedInteraction):
 
         def validate_params(self):
@@ -250,7 +251,7 @@ IF LENNARD_JONES == 1:
             return (self._params["epsilon"] > 0)
 
         def set_params(self, **kwargs):
-            """ Set parameters for the Lennard-Jones interaction.
+            """Set parameters for the Lennard-Jones interaction.
 
             Parameters
             ----------
@@ -276,7 +277,8 @@ IF LENNARD_JONES == 1:
         def _set_params_in_es_core(self):
             # Handle the case of shift="auto"
             if self._params["shift"] == "auto":
-                self._params["shift"] = -((self._params["sigma"] / self._params["cutoff"])**12 - (
+                self._params["shift"] = -((
+                    self._params["sigma"] / self._params["cutoff"])**12 - (
                     self._params["sigma"] / self._params["cutoff"])**6)
 
             if lennard_jones_set_params(
@@ -320,6 +322,7 @@ IF LENNARD_JONES == 1:
             return "epsilon", "sigma", "cutoff", "shift"
 
 IF WCA == 1:
+
     cdef class WCAInteraction(NonBondedInteraction):
 
         def validate_params(self):
@@ -353,7 +356,7 @@ IF WCA == 1:
             return (self._params["epsilon"] > 0)
 
         def set_params(self, **kwargs):
-            """ Set parameters for the WCA interaction.
+            """Set parameters for the WCA interaction.
 
             Parameters
             ----------
@@ -447,8 +450,9 @@ IF LENNARD_JONES_GENERIC == 1:
         def _set_params_in_es_core(self):
             # Handle the case of shift="auto"
             if self._params["shift"] == "auto":
-                self._params["shift"] = -(self._params["b1"] * (self._params["sigma"] / self._params["cutoff"])**self._params[
-                                          "e1"] - self._params["b2"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e2"])
+                self._params["shift"] = -(
+                    self._params["b1"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e1"] -
+                    self._params["b2"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e2"])
             IF LJGEN_SOFTCORE:
                 if ljgen_set_params(self._part_types[0], self._part_types[1],
                                     self._params["epsilon"],
@@ -551,6 +555,7 @@ IF LENNARD_JONES_GENERIC == 1:
             return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
 
 IF LJCOS:
+
     cdef class LennardJonesCosInteraction(NonBondedInteraction):
 
         def validate_params(self):
@@ -593,7 +598,8 @@ IF LJCOS:
             super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
-            if ljcos_set_params(self._part_types[0], self._part_types[1],
+            if ljcos_set_params(self._part_types[0],
+                                self._part_types[1],
                                 self._params["epsilon"],
                                 self._params["sigma"],
                                 self._params["cutoff"],
@@ -628,6 +634,7 @@ IF LJCOS:
             return "epsilon", "sigma", "cutoff"
 
 IF LJCOS2:
+
     cdef class LennardJonesCos2Interaction(NonBondedInteraction):
 
         def validate_params(self):
@@ -654,7 +661,7 @@ IF LJCOS2:
             return(self._params["epsilon"] > 0)
 
         def set_params(self, **kwargs):
-            """ Set parameters for the Lennard-Jones cosine squared interaction.
+            """Set parameters for the Lennard-Jones cosine squared interaction.
 
             Parameters
             ----------
@@ -706,7 +713,9 @@ IF LJCOS2:
             return "epsilon", "sigma", "width"
 
 IF HAT == 1:
+
     cdef class HatInteraction(NonBondedInteraction):
+
         def validate_params(self):
             if self._params["F_max"] < 0:
                 raise ValueError("Hat max force has to be >=0")
@@ -727,7 +736,7 @@ IF HAT == 1:
             return (self._params["F_max"] > 0)
 
         def set_params(self, **kwargs):
-            """ Set parameters for the Hat interaction.
+            """Set parameters for the Hat interaction.
 
             Parameters
             ----------
@@ -761,6 +770,7 @@ IF HAT == 1:
             return "F_max", "cutoff"
 
 IF GAY_BERNE:
+
     cdef class GayBerneInteraction(NonBondedInteraction):
 
         def validate_params(self):
@@ -814,7 +824,8 @@ IF GAY_BERNE:
             super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
-            if gay_berne_set_params(self._part_types[0], self._part_types[1],
+            if gay_berne_set_params(self._part_types[0],
+                                    self._part_types[1],
                                     self._params["eps"],
                                     self._params["sig"],
                                     self._params["cut"],
@@ -856,7 +867,9 @@ IF GAY_BERNE:
             return "eps", "sig", "cut", "k1", "k2", "mu", "nu"
 
 IF DPD:
+
     cdef class DPDInteraction(NonBondedInteraction):
+
         def validate_params(self):
             return True
 
@@ -877,7 +890,7 @@ IF DPD:
             return (self._params["r_cut"] > 0) or (self._params["trans_r_cut"] > 0)
 
         def set_params(self, **kwargs):
-            """ Set parameters for the DPD interaction.
+            """Set parameters for the DPD interaction.
 
             Parameters
             ----------
@@ -900,7 +913,8 @@ IF DPD:
             super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
-            if dpd_set_params(self._part_types[0], self._part_types[1],
+            if dpd_set_params(self._part_types[0],
+                              self._part_types[1],
                               self._params["gamma"],
                               self._params["r_cut"],
                               self._params["weight_function"],
@@ -966,7 +980,8 @@ IF SMOOTH_STEP == 1:
             return ((self._params["eps"] > 0) and (self._params["sig"] > 0))
 
         def _set_params_in_es_core(self):
-            if smooth_step_set_params(self._part_types[0], self._part_types[1],
+            if smooth_step_set_params(self._part_types[0],
+                                      self._part_types[1],
                                       self._params["d"],
                                       self._params["n"],
                                       self._params["eps"],
@@ -1047,9 +1062,8 @@ IF BMHTF_NACL == 1:
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
+            ia_params = get_ia_param_safe(self._part_types[0],
+                                          self._part_types[1])
             return {
                 "a": ia_params.bmhtf.A,
                 "b": ia_params.bmhtf.B,
@@ -1063,10 +1077,11 @@ IF BMHTF_NACL == 1:
             """Check if interaction is active.
 
             """
-            return ((self._params["a"] > 0) and (self._params["c"] > 0) and (self._params["d"] > 0))
+            return (self._params["a"] > 0) and (self._params["c"] > 0) and (self._params["d"] > 0)
 
         def _set_params_in_es_core(self):
-            if BMHTF_set_params(self._part_types[0], self._part_types[1],
+            if BMHTF_set_params(self._part_types[0],
+                                self._part_types[1],
                                 self._params["a"],
                                 self._params["b"],
                                 self._params["c"],
@@ -1162,7 +1177,8 @@ IF MORSE == 1:
             return (self._params["eps"] > 0)
 
         def _set_params_in_es_core(self):
-            if morse_set_params(self._part_types[0], self._part_types[1],
+            if morse_set_params(self._part_types[0],
+                                self._part_types[1],
                                 self._params["eps"],
                                 self._params["alpha"],
                                 self._params["rmin"],
@@ -1252,7 +1268,7 @@ IF BUCKINGHAM == 1:
             """Check if interaction is active.
 
             """
-            return ((self._params["a"] > 0) or (self._params["b"] > 0) or (self._params["d"] > 0) or (self._params["shift"] > 0))
+            return (self._params["a"] > 0) or (self._params["b"] > 0) or (self._params["d"] > 0) or (self._params["shift"] > 0)
 
         def _set_params_in_es_core(self):
             if buckingham_set_params(self._part_types[0], self._part_types[1],
@@ -1338,9 +1354,8 @@ IF SOFT_SPHERE == 1:
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0],
-                self._part_types[1])
+            ia_params = get_ia_param_safe(self._part_types[0],
+                                          self._part_types[1])
             return {
                 "a": ia_params.soft_sphere.a,
                 "n": ia_params.soft_sphere.n,
@@ -1355,7 +1370,8 @@ IF SOFT_SPHERE == 1:
             return (self._params["a"] > 0)
 
         def _set_params_in_es_core(self):
-            if soft_sphere_set_params(self._part_types[0], self._part_types[1],
+            if soft_sphere_set_params(self._part_types[0],
+                                      self._part_types[1],
                                       self._params["a"],
                                       self._params["n"],
                                       self._params["cutoff"],
@@ -1409,6 +1425,7 @@ IF SOFT_SPHERE == 1:
             return "a", "n", "cutoff"
 
 IF AFFINITY == 1:
+
     cdef class AffinityInteraction(NonBondedInteraction):
 
         def validate_params(self):
@@ -1430,8 +1447,8 @@ IF AFFINITY == 1:
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(self._part_types[0],
+                                          self._part_types[1])
             return {
                 "affinity_type": ia_params.affinity.type,
                 "affinity_kappa": ia_params.affinity.kappa,
@@ -1445,7 +1462,8 @@ IF AFFINITY == 1:
             return (self._params["affinity_kappa"] > 0)
 
         def _set_params_in_es_core(self):
-            if affinity_set_params(self._part_types[0], self._part_types[1],
+            if affinity_set_params(self._part_types[0],
+                                   self._part_types[1],
                                    self._params["affinity_type"],
                                    self._params["affinity_kappa"],
                                    self._params["affinity_r0"],
@@ -1476,6 +1494,7 @@ IF AFFINITY == 1:
 
 
 IF MEMBRANE_COLLISION == 1:
+
     cdef class MembraneCollisionInteraction(NonBondedInteraction):
 
         def validate_params(self):
@@ -1497,12 +1516,12 @@ IF MEMBRANE_COLLISION == 1:
             return (self._params["a"] > 0)
 
         def _set_params_in_es_core(self):
-            if membrane_collision_set_params(
-                self._part_types[0], self._part_types[1],
-                                        self._params["a"],
-                                        self._params["n"],
-                                        self._params["cutoff"],
-                                        self._params["offset"]):
+            if membrane_collision_set_params(self._part_types[0],
+                                             self._part_types[1],
+                                             self._params["a"],
+                                             self._params["n"],
+                                             self._params["cutoff"],
+                                             self._params["offset"]):
                 raise Exception("Could not set Membrane Collision parameters")
 
         def default_params(self):
@@ -1552,7 +1571,8 @@ IF HERTZIAN == 1:
             return (self._params["eps"] > 0)
 
         def _set_params_in_es_core(self):
-            if hertzian_set_params(self._part_types[0], self._part_types[1],
+            if hertzian_set_params(self._part_types[0],
+                                   self._part_types[1],
                                    self._params["eps"],
                                    self._params["sig"]):
                 raise Exception("Could not set Hertzian parameters")
@@ -1632,7 +1652,8 @@ IF GAUSSIAN == 1:
             return (self._params["eps"] > 0)
 
         def _set_params_in_es_core(self):
-            if gaussian_set_params(self._part_types[0], self._part_types[1],
+            if gaussian_set_params(self._part_types[0],
+                                   self._part_types[1],
                                    self._params["eps"],
                                    self._params["sig"],
                                    self._params["cutoff"]):
@@ -2115,6 +2136,7 @@ class HarmonicBond(BondedInteraction):
             self._bond_id, self._params["k"], self._params["r_0"], self._params["r_cut"])
 
 if ELECTROSTATICS:
+
     class BondedCoulomb(BondedInteraction):
 
         """
@@ -2155,6 +2177,7 @@ if ELECTROSTATICS:
                 self._bond_id, self._params["prefactor"])
 
 if ELECTROSTATICS:
+
     class BondedCoulombSRBond(BondedInteraction):
 
         """
@@ -2256,9 +2279,11 @@ class ThermalizedBond(BondedInteraction):
 
     def _set_params_in_es_core(self):
         thermalized_bond_set_params(
-            self._bond_id, self._params["temp_com"], self._params["gamma_com"], self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"])
+            self._bond_id, self._params["temp_com"], self._params["gamma_com"],
+            self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"])
 
 IF THOLE:
+
     cdef class TholeInteraction(NonBondedInteraction):
 
         def validate_params(self):
@@ -2266,8 +2291,8 @@ IF THOLE:
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0], self._part_types[1])
+            ia_params = get_ia_param_safe(self._part_types[0],
+                                          self._part_types[1])
             return {
                 "scaling_coeff": ia_params.thole.scaling_coeff,
                 "q1q2": ia_params.thole.q1q2
@@ -2277,7 +2302,7 @@ IF THOLE:
             return (self._params["scaling_coeff"] != 0)
 
         def set_params(self, **kwargs):
-            """ Set parameters for the Thole interaction.
+            """Set parameters for the Thole interaction.
 
             Parameters
             ----------
@@ -2316,6 +2341,7 @@ IF THOLE:
             return "scaling_coeff", "q1q2"
 
 IF ROTATION:
+
     class HarmonicDumbbellBond(BondedInteraction):
 
         """
@@ -2377,6 +2403,7 @@ IF ROTATION:
                 self._params["r_0"], self._params["r_cut"])
 
 IF ROTATION != 1:
+
     class HarmonicDumbbellBond(BondedInteraction):
 
         """
@@ -2432,6 +2459,7 @@ IF ROTATION != 1:
 
 
 IF BOND_CONSTRAINT == 1:
+
     class RigidBond(BondedInteraction):
 
         """
@@ -2482,7 +2510,9 @@ IF BOND_CONSTRAINT == 1:
                             "vtol": 0.001}
 
         def _get_params_from_es_core(self):
-            return {"r": bonded_ia_params[self._bond_id].p.rigid_bond.d2**0.5, "ptol": bonded_ia_params[self._bond_id].p.rigid_bond.p_tol, "vtol": bonded_ia_params[self._bond_id].p.rigid_bond.v_tol}
+            return {"r": bonded_ia_params[self._bond_id].p.rigid_bond.d2**0.5,
+                    "ptol": bonded_ia_params[self._bond_id].p.rigid_bond.p_tol,
+                    "vtol": bonded_ia_params[self._bond_id].p.rigid_bond.v_tol}
 
         def _set_params_in_es_core(self):
             rigid_bond_set_params(
@@ -2747,6 +2777,7 @@ class TabulatedDihedral(_TabulatedBase):
 
 
 IF TABULATED == 1:
+
     cdef class TabulatedNonBonded(NonBondedInteraction):
 
         cdef int state
@@ -2827,6 +2858,7 @@ IF TABULATED == 1:
 
 
 IF LENNARD_JONES == 1:
+
     class SubtLJ(BondedInteraction):
 
         """
@@ -3119,8 +3151,10 @@ class IBM_Triel(BondedInteraction):
             el = NeoHookean
         if self._params["elasticLaw"] == "Skalak":
             el = Skalak
-        IBM_Triel_SetParams(self._bond_id, self._params["ind1"], self._params["ind2"], self._params[
-                            "ind3"], self._params["maxDist"], el, self._params["k1"], self._params["k2"])
+        IBM_Triel_SetParams(
+            self._bond_id, self._params["ind1"], self._params["ind2"],
+            self._params["ind3"], self._params["maxDist"], el,
+            self._params["k1"], self._params["k2"])
 
 
 class IBM_Tribend(BondedInteraction):
@@ -3354,6 +3388,7 @@ class OifLocalForces(BondedInteraction):
             self._params["kvisc"])
 
 IF MEMBRANE_COLLISION == 1:
+
     class OifOutDirection(BondedInteraction):
 
         """
