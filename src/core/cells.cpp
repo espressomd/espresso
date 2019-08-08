@@ -462,7 +462,7 @@ void cells_update_ghosts() {
 }
 
 void cells_collect_forces() {
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  ghost_communicator(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
 }
 
 Cell *find_current_cell(const Particle &p) {
