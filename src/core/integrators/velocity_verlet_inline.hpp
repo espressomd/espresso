@@ -75,6 +75,9 @@ void velocity_verlet_step_1(const ParticleRange& particles) {
 
 void velocity_verlet_step_2(const ParticleRange& particles) {
   velocity_verlet_propagate_vel_final(particles);
+#ifdef ROTATION
+    convert_torques_propagate_omega(particles);
+#endif
 }
 
 #endif

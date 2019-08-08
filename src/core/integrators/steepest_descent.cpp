@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "minimize_energy.hpp"
+#include "integrators/steepest_descent.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"

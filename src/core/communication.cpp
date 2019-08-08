@@ -49,7 +49,7 @@
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
 #include "io/mpiio/mpiio.hpp"
-#include "minimize_energy.hpp"
+#include "integrators/steepest_descent.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"

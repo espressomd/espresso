@@ -23,7 +23,7 @@ set(EspressoCore_SRC
   integrate.cpp
   layered.cpp
   metadynamics.cpp
-  minimize_energy.cpp
+  integrators/steepest_descent.cpp
   npt.cpp
   nsquare.cpp
   partCfg_global.cpp
