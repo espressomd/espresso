@@ -159,8 +159,8 @@ struct GhostCommunication {
   /** Pointer array to particle lists to communicate. */
   Cell **part_lists;
 
-  /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
-     this is the shift vector. Normally this a integer multiple of the box
+  /** Optional shift vector by which the positions of the ghost particles
+      are shifted. Normally this a integer multiple of the box
      length. The shift is done on the sender side */
   boost::optional<Utils::Vector3d> shift;
 };
