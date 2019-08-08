@@ -361,30 +361,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   }
 }
 
-/** Revert the order of a communicator: After calling this the
- *  communicator is working in reverted order with exchanged
- *  communication types GHOST_SEND <-> GHOST_RECV.
- */
-void dd_revert_comm_order(GhostCommunicator *comm) {
-  /* revert order */
-  for (int i = 0; i < (comm->num / 2); i++) {
-    std::swap(comm->comm[i], comm->comm[comm->num - i - 1]);
-  }
-  /* exchange SEND/RECV */
-  for (int i = 0; i < comm->num; i++) {
-    if (comm->comm[i].type == GHOST_SEND)
-      comm->comm[i].type = GHOST_RECV;
-    else if (comm->comm[i].type == GHOST_RECV)
-      comm->comm[i].type = GHOST_SEND;
-    else if (comm->comm[i].type == GHOST_LOCL) {
-      auto const nlist2 = comm->comm[i].n_part_lists / 2;
-      for (int j = 0; j < nlist2; j++) {
-        std::swap(comm->comm[i].part_lists[j], comm->comm[i].part_lists[j + nlist2]);
-      }
-    }
-  }
-}
-
 /** update the 'shift' member of those GhostCommunicators, which use
  *  that value to speed up the folding process of its ghost members
  *  (see \ref dd_prepare_comm for the original), i.e. all which have
@@ -626,7 +602,7 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
                   grid);
 
   /* collect forces has to be done in reverted order! */
-  dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
+  ghosts_revert_comm_order(&cell_structure.collect_ghost_force_comm);
 
   ghosts_assign_prefetches(&cell_structure.exchange_ghosts_comm);
   ghosts_assign_prefetches(&cell_structure.collect_ghost_force_comm);

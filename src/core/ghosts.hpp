@@ -199,6 +199,7 @@ void invalidate_ghosts();
  *  poststore
  */
 void ghosts_assign_prefetches(GhostCommunicator *comm);
+void ghosts_revert_comm_order(GhostCommunicator *comm);
 /*@}*/
 
 #endif

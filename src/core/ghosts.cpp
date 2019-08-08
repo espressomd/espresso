@@ -32,6 +32,7 @@
 #include "particle_data.hpp"
 
 #include <algorithm>
+#include <boost/range/algorithm/reverse.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -628,6 +629,32 @@ void ghosts_assign_prefetches(GhostCommunicator *comm) {
         comm->comm[cnt + 1].type == GHOST_SEND) {
       comm->comm[cnt].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
       comm->comm[cnt + 1].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+    }
+  }
+}
+
+/** Revert the order of a communicator: After calling this the
+ *  communicator is working in reverted order with exchanged
+ *  communication types GHOST_SEND <-> GHOST_RECV,
+ *                      GHOST_BCST <-> GHOST_REDC,
+ *                      GHOST_LOCL <-> GHOST_LOCL
+ */
+void ghosts_revert_comm_order(GhostCommunicator *comm) {
+  /* revert order */
+  boost::reverse(comm->comm);
+
+  /* exchange SEND/RECV */
+  for (int i = 0; i < comm->num; i++) {
+    if (comm->comm[i].type == GHOST_SEND)
+      comm->comm[i].type = GHOST_RECV;
+    else if (comm->comm[i].type == GHOST_RECV)
+      comm->comm[i].type = GHOST_SEND;
+    else if (comm->comm[i].type == GHOST_LOCL) {
+      auto part_lists = Utils::make_span(comm->comm[i].part_lists, comm->comm[i].n_part_lists);
+      boost::reverse(part_lists);
+    }
+    else if(comm->comm[i].type == GHOST_BCST) {
+      comm->comm[i].type = GHOST_RDCE;
     }
   }
 }
