@@ -12,9 +12,6 @@
 /** \name Type codes of bonded interactions
  *  Enumeration of implemented bonded interactions.
  */
-/************************************************************/
-/*@{*/
-
 enum BondedInteraction {
   /** This bonded interaction was not set. */
   BONDED_IA_NONE = -1,
@@ -33,14 +30,17 @@ enum BondedInteraction {
   BONDED_IA_BONDED_COULOMB_SR,
   /** Type of bonded interaction is a dihedral potential. */
   BONDED_IA_DIHEDRAL,
-  /** Type of tabulated bonded interaction potential,
-      may be of bond length, of bond angle or of dihedral type. */
-  BONDED_IA_TABULATED,
-  /** Type of bonded interaction is a (-LJ) potential. */
+  /** Type of bonded interaction is a tabulated bond potential. */
+  BONDED_IA_TABULATED_DISTANCE,
+  /** Type of bonded interaction is a tabulated angle potential. */
+  BONDED_IA_TABULATED_ANGLE,
+  /** Type of bonded interaction is a tabulated dihedral potential. */
+  BONDED_IA_TABULATED_DIHEDRAL,
+  /** Type of bonded interaction is a subtracted-LJ potential. */
   BONDED_IA_SUBT_LJ,
-  /** Type of a Rigid/Constrained bond*/
+  /** Type of bonded interaction is a rigid/constrained bond. */
   BONDED_IA_RIGID_BOND,
-  /** Type of a virtual bond*/
+  /** Type of bonded interaction is a virtual bond. */
   BONDED_IA_VIRTUAL_BOND,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_HARMONIC,
@@ -76,7 +76,6 @@ enum TabulatedBondedInteraction {
   TAB_BOND_DIHEDRAL = 3
 };
 
-/*@}*/
 /** Parameters for FENE bond Potential. */
 struct Fene_bond_parameters {
   /** spring constant */
@@ -168,23 +167,6 @@ struct Bonded_coulomb_sr_bond_parameters {
   double q1q2;
 };
 
-/** Parameters for three-body angular potential.
- *  @note
- *      ATTENTION: there are different implementations of the bond angle
- *      potential which you may choose with a compiler flag in the file
- *      \ref config.hpp !
- */
-struct Angle_bond_parameters {
-  /** bending constant */
-  double bend;
-  /** equilibrium angle (default is 180 degrees) */
-  double phi0;
-  /** cosine of @p phi0 (internal parameter) */
-  double cos_phi0;
-  /** sine of @p phi0 (internal parameter) */
-  double sin_phi0;
-};
-
 /** Parameters for three-body angular potential (harmonic). */
 struct Angle_harmonic_bond_parameters {
   /** bending constant */
@@ -224,7 +206,6 @@ struct Dihedral_bond_parameters {
 
 /** Parameters for n-body tabulated potential (n=2,3,4). */
 struct Tabulated_bond_parameters {
-  TabulatedBondedInteraction type;
   TabulatedPotential *pot;
 };
 
@@ -237,7 +218,7 @@ struct Umbrella_bond_parameters {
 };
 #endif
 
-/** Dummy parameters for -LJ Potential */
+/** Dummy parameters for subtracted-LJ Potential */
 struct Subt_lj_bond_parameters {};
 
 /** Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM */
@@ -314,7 +295,6 @@ union Bond_parameters {
   Quartic_bond_parameters quartic;
   Bonded_coulomb_bond_parameters bonded_coulomb;
   Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr;
-  Angle_bond_parameters angle;
   Angle_harmonic_bond_parameters angle_harmonic;
   Angle_cosine_bond_parameters angle_cosine;
   Angle_cossquare_bond_parameters angle_cossquare;

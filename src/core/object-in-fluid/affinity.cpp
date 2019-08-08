@@ -37,13 +37,13 @@ int affinity_set_params(int part_type_a, int part_type_b, int afftype,
   if (!data)
     return ES_ERROR;
 
-  data->affinity_type = afftype;
-  data->affinity_kappa = kappa;
-  data->affinity_r0 = r0;
-  data->affinity_Kon = Kon;
-  data->affinity_Koff = Koff;
-  data->affinity_maxBond = maxBond;
-  data->affinity_cut = cut;
+  data->affinity.type = afftype;
+  data->affinity.kappa = kappa;
+  data->affinity.r0 = r0;
+  data->affinity.Kon = Kon;
+  data->affinity.Koff = Koff;
+  data->affinity.maxBond = maxBond;
+  data->affinity.cut = cut;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

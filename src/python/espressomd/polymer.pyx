@@ -92,7 +92,7 @@ def positions(**kwargs):
 
     Returns
     -------
-    array_like :obj:`float`
+    :obj:`ndarray`
         Three-dimensional numpy array, namely a list of polymers containing the
         coordinates of the respective monomers.
 

@@ -38,14 +38,14 @@ int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
   if (!data)
     return ES_ERROR;
 
-  data->LJCOS2_eps = eps;
-  data->LJCOS2_sig = sig;
-  data->LJCOS2_offset = offset;
-  data->LJCOS2_w = w;
+  data->ljcos2.eps = eps;
+  data->ljcos2.sig = sig;
+  data->ljcos2.offset = offset;
+  data->ljcos2.w = w;
 
   /* calculate dependent parameters */
-  data->LJCOS2_rchange = pow(2, 1 / 6.) * sig;
-  data->LJCOS2_cut = w + data->LJCOS2_rchange;
+  data->ljcos2.rchange = pow(2, 1 / 6.) * sig;
+  data->ljcos2.cut = w + data->ljcos2.rchange;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

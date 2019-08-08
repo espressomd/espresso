@@ -113,12 +113,17 @@ class ParticleProperties(ut.TestCase):
         test_subt_lj = generateTestForBondParams(
             0, espressomd.interactions.SubtLJ, {})
 
+    test_tabulated_bond = generateTestForBondParams(
+        0, espressomd.interactions.TabulatedDistance, {"min": 1.,
+                                                       "max": 2.,
+                                                       "energy": [1., 2., 3.],
+                                                       "force": [3., 4., 5.]})
     test_tabulated = generateTestForBondParams(
-        0, espressomd.interactions.Tabulated, {"type": "distance",
-                                               "min": 1.,
-                                               "max": 2.,
-                                               "energy": [1., 2., 3.],
-                                               "force": [3., 4., 5.]})
+        0, espressomd.interactions.TabulatedAngle, {"energy": [1., 2., 3.],
+                                                    "force": [3., 4., 5.]})
+    test_tabulated = generateTestForBondParams(
+        0, espressomd.interactions.TabulatedDihedral, {"energy": [1., 2., 3.],
+                                                       "force": [3., 4., 5.]})
 
 if __name__ == "__main__":
     ut.main()

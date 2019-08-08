@@ -16,7 +16,7 @@ include "myconfig.pxi"
 from copy import deepcopy
 import espressomd
 from espressomd.particle_data import ParticleHandle
-from espressomd.interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
+from espressomd.interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
 
 
 class openGLLive:
@@ -32,14 +32,14 @@ class openGLLive:
     ----------
 
     system : :class:`espressomd.system.System`
-    window_size : array_like :obj:`int`, optional
+    window_size : (2,) array_like of :obj:`int`, optional
         Size of the visualizer window in pixels.
     name : :obj:`str`, optional
         The name of the visualizer window.
-    background_color : array_like :obj:`int`, optional
+    background_color : (3,) array_like of :obj:`int`, optional
         RGB of the background.
-    periodic_images : array_like :obj:`int`, optional
-        Periodic repetitions on both sides of the box in xyzdirection.
+    periodic_images : (3,) array_like of :obj:`int`, optional
+        Periodic repetitions on both sides of the box in xyz-direction.
     draw_box : :obj:`bool`, optional
         Draw wireframe boundaries.
     draw_axis : :obj:`bool`, optional
@@ -60,11 +60,11 @@ class openGLLive:
         The distance from the viewer to the near clipping plane.
     far_cut_distance : :obj:`float`, optional
         The distance from the viewer to the far clipping plane.
-    camera_position : :obj:`str` or array_like :obj:`float`, optional
+    camera_position : :obj:`str` or (3,) array_like of :obj:`float`, optional
         Initial camera position. ``auto`` (default) for shiftet position in z-direction.
-    camera_target : :obj:`str` or array_like :obj:`float`, optional
+    camera_target : :obj:`str` or (3,) array_like of :obj:`float`, optional
         Initial camera target. ``auto`` (default) to look towards the system center.
-    camera_right : array_like :obj:`float`, optional
+    camera_right : (3,) array_like of :obj:`float`, optional
         Camera right vector in system coordinates. Default is [1, 0, 0]
     particle_sizes : :obj:`str` or array_like :obj:`float` or callable, optional
         auto (default): The Lennard-Jones sigma value of the
@@ -88,7 +88,7 @@ class openGLLive:
         Colors for particle types.
     particle_type_materials : :obj:`str`, optional
         Materials of the particle types.
-    particle_charge_colors : array_like :obj:`float`, optional
+    particle_charge_colors : (2,) array_like of :obj:`float`, optional
         Two colors for min/max charged particles.
     draw_constraints : :obj:`bool`, optional
         Enables constraint visualization. For simple constraints
@@ -119,7 +119,7 @@ class openGLLive:
     ext_force_arrows_type_colors : array_like :obj:`float`, optional
         Colors of ext_force arrows for different particle types.
     ext_force_arrows_type_materials : array_like :obj:`float`, optional
-        Materils of ext_force arrows for different particle types.
+        Materials of ext_force arrows for different particle types.
     ext_force_arrows_type_radii : array_like :obj:`float`, optional
         List of arrow radii for different particle types.
     force_arrows : :obj:`bool`, optional
@@ -165,7 +165,7 @@ class openGLLive:
         Draws the LB shapes.
     LB_draw_velocity_plane : :obj:`bool`, optional
         Draws LB node velocity arrows specified by LB_plane_axis, LB_plane_dist, LB_plane_ngrid.
-    light_pos : array_like :obj:`float`, optional
+    light_pos : (3,) array_like of :obj:`float`, optional
         If auto (default) is used, the light is placed dynamically in
         the particle barycenter of the system. Otherwise, a fixed
         coordinate can be set.
@@ -876,7 +876,7 @@ class openGLLive:
                     # b[0]: Bond, b[1:] Partners
                     t = b[0].type_number()
                     if len(b) == 4 and t in (BONDED_IA_DIHEDRAL,
-                                             BONDED_IA_TABULATED):
+                                             BONDED_IA_TABULATED_DIHEDRAL):
                         self.bonds.append([i, b[1], t])
                         self.bonds.append([i, b[2], t])
                         self.bonds.append([b[2], b[3], t])
