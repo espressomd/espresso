@@ -180,14 +180,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Verlet list criterion */
   skin2 = Utils::sqr(0.5 * skin);
 
-  extern bool ghosts_have_bonds;
-  extern bool ghosts_have_v;
-  auto const update_data =
-      GHOSTTRANS_POSITION | (ghosts_have_v ? GHOSTTRANS_MOMENTUM : 0u);
-  auto const exchange_data = GHOSTTRANS_PROPRTS |
-                             (ghosts_have_bonds ? GHOSTTRANS_BONDS : 0u) |
-                             update_data;
-
   /* Integration Step: Preparation for first integration step:
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) )
      */
@@ -205,7 +197,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef VIRTUAL_SITES
     if (virtual_sites()->is_relative()) {
-      ghost_communicator(&cell_structure.exchange_ghosts_comm, update_data);
+      ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
     }
     virtual_sites()->update();
 #endif
