@@ -366,30 +366,20 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
  *  communication types GHOST_SEND <-> GHOST_RECV.
  */
 void dd_revert_comm_order(GhostCommunicator *comm) {
-  int i, j, nlist2;
-  GhostCommunication tmp;
-
-  CELL_TRACE(fprintf(stderr, "%d: dd_revert_comm_order: anz comm: %d\n",
-                     this_node, comm->num));
-
   /* revert order */
-  for (i = 0; i < (comm->num / 2); i++) {
-    tmp = comm->comm[i];
-    comm->comm[i] = comm->comm[comm->num - i - 1];
-    comm->comm[comm->num - i - 1] = tmp;
+  for (int i = 0; i < (comm->num / 2); i++) {
+    std::swap(comm->comm[i], comm->comm[comm->num - i - 1]);
   }
   /* exchange SEND/RECV */
-  for (i = 0; i < comm->num; i++) {
+  for (int i = 0; i < comm->num; i++) {
     if (comm->comm[i].type == GHOST_SEND)
       comm->comm[i].type = GHOST_RECV;
     else if (comm->comm[i].type == GHOST_RECV)
       comm->comm[i].type = GHOST_SEND;
     else if (comm->comm[i].type == GHOST_LOCL) {
-      nlist2 = comm->comm[i].n_part_lists / 2;
-      for (j = 0; j < nlist2; j++) {
-        auto tmplist = comm->comm[i].part_lists[j];
-        comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j + nlist2];
-        comm->comm[i].part_lists[j + nlist2] = tmplist;
+      auto const nlist2 = comm->comm[i].n_part_lists / 2;
+      for (int j = 0; j < nlist2; j++) {
+        std::swap(comm->comm[i].part_lists[j], comm->comm[i].part_lists[j + nlist2]);
       }
     }
   }
