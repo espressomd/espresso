@@ -431,7 +431,6 @@ void on_parameter_change(int field) {
 unsigned int required_ghost_data() {
   unsigned data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
 
-  /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU) {
     data_parts |= GHOSTTRANS_MOMENTUM;
 #ifdef ENGINE
@@ -440,7 +439,6 @@ unsigned int required_ghost_data() {
   }
   if (thermo_switch & THERMO_DPD)
     data_parts |= GHOSTTRANS_MOMENTUM;
-  // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
   if (n_thermalized_bonds) {
     data_parts |= GHOSTTRANS_MOMENTUM | GHOSTTRANS_BONDS;
   }
