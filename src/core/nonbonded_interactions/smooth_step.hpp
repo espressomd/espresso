@@ -37,10 +37,9 @@ int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
 
 /** Calculate smooth step force between particle p1 and p2 */
 inline Utils::Vector3d
-add_smooth_step_pair_force(Particle const *const p1, Particle const *const p2,
-                           IA_parameters const *const ia_params,
-                           Utils::Vector3d const &d, double dist,
-                           double dist2) {
+smooth_step_pair_force(Particle const *const p1, Particle const *const p2,
+                       IA_parameters const *const ia_params,
+                       Utils::Vector3d const &d, double dist, double dist2) {
   if (dist >= ia_params->smooth_step.cut) {
     return {};
   }

@@ -127,73 +127,73 @@ inline void calc_non_bonded_pair_force_parts(
 #endif
 /* Lennard-Jones */
 #ifdef LENNARD_JONES
-  force += add_lj_pair_force(ia_params, d, dist);
+  force += lj_pair_force(ia_params, d, dist);
 #endif
 /* WCA */
 #ifdef WCA
-  force += add_wca_pair_force(p1, p2, ia_params, d, dist);
+  force += wca_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /* Lennard-Jones generic */
 #ifdef LENNARD_JONES_GENERIC
-  force += add_ljgen_pair_force(p1, p2, ia_params, d, dist);
+  force += ljgen_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /* smooth step */
 #ifdef SMOOTH_STEP
-  force += add_smooth_step_pair_force(p1, p2, ia_params, d, dist, dist2);
+  force += smooth_step_pair_force(p1, p2, ia_params, d, dist, dist2);
 #endif
 /* Hertzian force */
 #ifdef HERTZIAN
-  force += add_hertzian_pair_force(p1, p2, ia_params, d, dist, dist2);
+  force += hertzian_pair_force(p1, p2, ia_params, d, dist, dist2);
 #endif
 /* Gaussian force */
 #ifdef GAUSSIAN
-  force += add_gaussian_pair_force(p1, p2, ia_params, d, dist, dist2);
+  force += gaussian_pair_force(p1, p2, ia_params, d, dist, dist2);
 #endif
 /* BMHTF NaCl */
 #ifdef BMHTF_NACL
-  force += add_BMHTF_pair_force(p1, p2, ia_params, d, dist, dist2);
+  force += BMHTF_pair_force(p1, p2, ia_params, d, dist, dist2);
 #endif
 /* Buckingham*/
 #ifdef BUCKINGHAM
-  force += add_buck_pair_force(p1, p2, ia_params, d, dist);
+  force += buck_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /* Morse*/
 #ifdef MORSE
-  force += add_morse_pair_force(p1, p2, ia_params, d, dist);
+  force += morse_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /*soft-sphere potential*/
 #ifdef SOFT_SPHERE
-  force += add_soft_pair_force(p1, p2, ia_params, d, dist);
+  force += soft_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /*repulsive membrane potential*/
 #ifdef MEMBRANE_COLLISION
-  force += add_membrane_collision_pair_force(p1, p2, ia_params, d, dist);
+  force += membrane_collision_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /*hat potential*/
 #ifdef HAT
-  force += add_hat_pair_force(p1, p2, ia_params, d, dist);
+  force += hat_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /* Lennard-Jones cosine */
 #ifdef LJCOS
-  force += add_ljcos_pair_force(p1, p2, ia_params, d, dist);
+  force += ljcos_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /* Lennard-Jones cosine */
 #ifdef LJCOS2
-  force += add_ljcos2_pair_force(p1, p2, ia_params, d, dist);
+  force += ljcos2_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /* Thole damping */
 #ifdef THOLE
-  force += add_thole_pair_force(p1, p2, ia_params, d, dist);
+  force += thole_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /* tabulated */
 #ifdef TABULATED
-  force += add_tabulated_pair_force(p1, p2, ia_params, d, dist);
+  force += tabulated_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /* Gay-Berne */
 #ifdef GAY_BERNE
   // The gb force function isn't inlined, probably due to its size
   if (dist < ia_params->gay_berne.cut) {
-    add_gb_pair_force(p1, p2, ia_params, d, dist, force, torque1, torque2);
+    gb_pair_force(p1, p2, ia_params, d, dist, force, torque1, torque2);
   }
 #endif
 }
@@ -261,9 +261,6 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
     add_affinity_pair_force(p1, p2, ia_params, d, dist, force);
   }
 #endif
-
-  FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
-                      p1->p.identity, p2->p.identity, dist));
 
   /***********************************************/
   /* non-bonded pair potentials                  */

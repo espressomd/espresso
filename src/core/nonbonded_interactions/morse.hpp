@@ -39,10 +39,10 @@ int morse_set_params(int part_type_a, int part_type_b, double eps, double alpha,
                      double rmin, double cut);
 
 /** Calculate Morse force between particle p1 and p2 */
-inline Utils::Vector3d
-add_morse_pair_force(Particle const *const p1, Particle const *const p2,
-                     IA_parameters const *const ia_params,
-                     Utils::Vector3d const &d, double dist) {
+inline Utils::Vector3d morse_pair_force(Particle const *const p1,
+                                        Particle const *const p2,
+                                        IA_parameters const *const ia_params,
+                                        Utils::Vector3d const &d, double dist) {
   if (dist < ia_params->morse.cut) {
     auto const add =
         exp(-ia_params->morse.alpha * (dist - ia_params->morse.rmin));

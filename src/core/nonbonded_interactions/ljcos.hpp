@@ -40,10 +40,10 @@
 int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset);
 
-inline Utils::Vector3d
-add_ljcos_pair_force(Particle const *const p1, Particle const *const p2,
-                     IA_parameters const *const ia_params,
-                     Utils::Vector3d const &d, double dist) {
+inline Utils::Vector3d ljcos_pair_force(Particle const *const p1,
+                                        Particle const *const p2,
+                                        IA_parameters const *const ia_params,
+                                        Utils::Vector3d const &d, double dist) {
   if ((dist < ia_params->ljcos.cut + ia_params->ljcos.offset)) {
     auto const r_off = dist - ia_params->ljcos.offset;
     /* cos part of ljcos potential. */

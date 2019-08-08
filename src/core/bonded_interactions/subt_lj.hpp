@@ -58,7 +58,7 @@ inline bool calc_subt_lj_pair_force(Particle const *const p1,
 
   auto const neg_dir = -dx;
 
-  force += add_lj_pair_force(ia_params, neg_dir, neg_dir.norm());
+  force += lj_pair_force(ia_params, neg_dir, neg_dir.norm());
 
   return false;
 }

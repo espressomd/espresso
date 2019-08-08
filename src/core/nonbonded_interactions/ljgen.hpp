@@ -55,10 +55,10 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
 );
 
 /** Calculate Lennard-Jones force between particle p1 and p2 */
-inline Utils::Vector3d
-add_ljgen_pair_force(Particle const *const p1, Particle const *const p2,
-                     IA_parameters const *const ia_params,
-                     Utils::Vector3d const &d, double dist) {
+inline Utils::Vector3d ljgen_pair_force(Particle const *const p1,
+                                        Particle const *const p2,
+                                        IA_parameters const *const ia_params,
+                                        Utils::Vector3d const &d, double dist) {
   if (dist < (ia_params->ljgen.cut + ia_params->ljgen.offset)) {
     auto r_off = dist - ia_params->ljgen.offset;
 
