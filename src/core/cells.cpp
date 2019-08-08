@@ -402,7 +402,7 @@ void cells_resort_particles(int global_flag) {
   resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = 1;
 
-  on_resort_particles();
+  on_resort_particles(local_cells.particles());
 
   CELL_TRACE(
       fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));

@@ -60,7 +60,7 @@ void deactivate();
 void integrate_sanity_check();
 void on_observable_calc();
 void on_coulomb_change();
-void on_resort_particles();
+void on_resort_particles(const ParticleRange &particles);
 void on_boxl_change();
 void init();
 
