@@ -35,7 +35,7 @@ void update_mol_vel_particle(Particle *);
 
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
-void distribute_mol_force();
+void distribute_mol_force(const ParticleRange &particles)
 
 // Gets the (first) virtual particle of the same molecule as the given (real)
 // particle
