@@ -114,14 +114,15 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles);
     of the Velocity Verlet integrator: <br>
     \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] <br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
+void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles);
 
 void velocity_verlet_propagate_vel_pos(const ParticleRange &particles);
+void velocity_verlet_propagate_vel_final(const ParticleRange &particles);
 /** Integration step 4 of the Velocity Verletintegrator and finalize
     instantaneous pressure calculation:<br>
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
-void velocity_verlet_step_4(const ParticleRange &particles);
 
-void finalize_p_inst_npt();
+void velocity_verlet_npt_finalize_p_inst();
 
 /** Thermostats increment the RNG counter here. */
 void philox_counter_increment();
@@ -191,6 +192,29 @@ bool integrator_step_1(ParticleRange &particles) {
     throw std::runtime_error("Unknown value for integ_switch");
   }
   return false;
+}
+
+void integrator_step_2(ParticleRange &particles) {
+  switch (integ_switch) {
+  case INTEG_METHOD_STEEPEST_DESCENT:
+    // Nothgin
+    break;
+  case INTEG_METHOD_NVT:
+    velocity_verlet_propagate_vel_final(particles);
+#ifdef ROTATION
+    convert_torques_propagate_omega(particles);
+#endif
+    break;
+  case INTEG_METHOD_NPT_ISO:
+    velocity_verlet_npt_propagate_vel_final(particles);
+#ifdef ROTATION
+    convert_torques_propagate_omega(particles);
+#endif
+    velocity_verlet_npt_finalize_p_inst();
+    break;
+  default:
+    throw std::runtime_error("Unknown value for INTEG_SWITCH");
+  }
 }
 
 void integrate_vv(int n_steps, int reuse_forces) {
@@ -267,8 +291,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     bool early_exit = integrator_step_1(particles);
     if (early_exit)
       break;
-    /* Propagate time: t = t+dt */
-    sim_time += time_step;
 
     /* Propagate philox rng counters */
     philox_counter_increment();
@@ -300,15 +322,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef VIRTUAL_SITES
     virtual_sites()->after_force_calc();
 #endif
-
-    /* Integration Step: Step 4 of Velocity Verlet scheme:
-       v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      velocity_verlet_step_4(particles);
-#ifdef ROTATION
-      convert_torques_propagate_omega(particles);
-#endif
-    }
+    integrator_step_2(particles);
 // SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds) {
@@ -387,12 +401,8 @@ void philox_counter_increment() {
 
 /** @brief Integration Step: Step 4 of Velocity Verlet scheme:
        v(t+dt) = v(t+0.5*dt) + 0.5*dt * f(t+dt) */
-void velocity_verlet_step_4(const ParticleRange &particles) {
-#ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
-  }
-#endif
+void velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
+  assert(integ_switch == INTEG_METHOD_NVT);
 
   for (auto &p : particles) {
 #ifdef VIRTUAL_SITES
@@ -404,14 +414,35 @@ void velocity_verlet_step_4(const ParticleRange &particles) {
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #endif
-#ifdef NPT
-        if (integ_switch == INTEG_METHOD_NPT_ISO &&
-            (nptiso.geometry & nptiso.nptgeom_dir[j])) {
+        /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
+        p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+#ifdef EXTERNAL_FORCES
+      }
+#endif
+    }
+  }
+}
+
+void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
+  assert(integ_switch == INTEG_METHOD_NPT_ISO);
+
+  nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
+
+  for (auto &p : particles) {
+#ifdef VIRTUAL_SITES
+    // Virtual sites are not propagated during integration
+    if (p.p.is_virtual)
+      continue;
+#endif
+    for (int j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+      if (!(p.p.ext_flag & COORD_FIXED(j))) {
+#endif
+        if ((nptiso.geometry & nptiso.nptgeom_dir[j])) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
           p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] +
                       friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
-#endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 #ifdef EXTERNAL_FORCES
@@ -419,122 +450,112 @@ void velocity_verlet_step_4(const ParticleRange &particles) {
 #endif
     }
   }
-
-#ifdef NPT
-  finalize_p_inst_npt();
-#endif
 }
 
-void finalize_p_inst_npt() {
-#ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    double p_tmp = 0.0;
-    int i;
-    /* finalize derivation of p_inst */
-    nptiso.p_inst = 0.0;
-    for (i = 0; i < 3; i++) {
-      if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
-        nptiso.p_vel[i] /= Utils::sqr(time_step);
-        nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
-      }
-    }
-
-    MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-    if (this_node == 0) {
-      nptiso.p_inst = p_tmp / (nptiso.dimension * nptiso.volume);
-      nptiso.p_diff = nptiso.p_diff +
-                      (nptiso.p_inst - nptiso.p_ext) * 0.5 * time_step +
-                      friction_thermV_nptiso(nptiso.p_diff);
+void velocity_verlet_npt_finalize_p_inst() {
+  assert(integ_switch == INTEG_METHOD_NPT_ISO);
+  double p_tmp = 0.0;
+  int i;
+  /* finalize derivation of p_inst */
+  nptiso.p_inst = 0.0;
+  for (i = 0; i < 3; i++) {
+    if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
+      nptiso.p_vel[i] /= Utils::sqr(time_step);
+      nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
     }
   }
-#endif
+
+  MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  if (this_node == 0) {
+    nptiso.p_inst = p_tmp / (nptiso.dimension * nptiso.volume);
+    nptiso.p_diff = nptiso.p_diff +
+                    (nptiso.p_inst - nptiso.p_ext) * 0.5 * time_step +
+                    friction_thermV_nptiso(nptiso.p_diff);
+  }
 }
 
-void propagate_press_box_pos_and_rescale_npt(const ParticleRange &particles) {
-#ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    double scal[3] = {0., 0., 0.}, L_new = 0.0;
+void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
+  assert(integ_switch == INTEG_METHOD_NPT_ISO);
+  double scal[3] = {0., 0., 0.}, L_new = 0.0;
 
-    /* finalize derivation of p_inst */
-    finalize_p_inst_npt();
+  /* finalize derivation of p_inst */
+  velocity_verlet_npt_finalize_p_inst();
 
-    /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and
-     * vel-rescaling
-     */
-    if (this_node == 0) {
-      nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
-      scal[2] = Utils::sqr(box_geo.length()[nptiso.non_const_dim]) /
-                pow(nptiso.volume, 2.0 / nptiso.dimension);
-      nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
-      if (nptiso.volume < 0.0) {
+  /* adjust \ref nptiso_struct::nptiso.volume; prepare pos- and
+   * vel-rescaling
+   */
+  if (this_node == 0) {
+    nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
+    scal[2] = Utils::sqr(box_geo.length()[nptiso.non_const_dim]) /
+              pow(nptiso.volume, 2.0 / nptiso.dimension);
+    nptiso.volume += nptiso.inv_piston * nptiso.p_diff * 0.5 * time_step;
+    if (nptiso.volume < 0.0) {
 
-        runtimeErrorMsg()
-            << "your choice of piston= " << nptiso.piston
-            << ", dt= " << time_step << ", p_diff= " << nptiso.p_diff
-            << " just caused the volume to become negative, decrease dt";
-        nptiso.volume =
-            box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
-        scal[2] = 1;
-      }
-
-      L_new = pow(nptiso.volume, 1.0 / nptiso.dimension);
-
-      scal[1] = L_new / box_geo.length()[nptiso.non_const_dim];
-      scal[0] = 1 / scal[1];
+      runtimeErrorMsg()
+          << "your choice of piston= " << nptiso.piston << ", dt= " << time_step
+          << ", p_diff= " << nptiso.p_diff
+          << " just caused the volume to become negative, decrease dt";
+      nptiso.volume =
+          box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+      scal[2] = 1;
     }
-    MPI_Bcast(scal, 3, MPI_DOUBLE, 0, comm_cart);
 
-    /* propagate positions while rescaling positions and velocities */
-    for (auto &p : particles) {
+    L_new = pow(nptiso.volume, 1.0 / nptiso.dimension);
+
+    scal[1] = L_new / box_geo.length()[nptiso.non_const_dim];
+    scal[0] = 1 / scal[1];
+  }
+  MPI_Bcast(scal, 3, MPI_DOUBLE, 0, comm_cart);
+
+  /* propagate positions while rescaling positions and velocities */
+  for (auto &p : particles) {
 #ifdef VIRTUAL_SITES
-      if (p.p.is_virtual)
-        continue;
+    if (p.p.is_virtual)
+      continue;
 #endif
-      for (int j = 0; j < 3; j++) {
+    for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
-        if (!(p.p.ext_flag & COORD_FIXED(j))) {
+      if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #endif
-          if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
-            {
-              p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j] * time_step);
-              p.l.p_old[j] *= scal[1];
-              p.m.v[j] *= scal[0];
-            }
-          } else {
-            p.r.p[j] += p.m.v[j] * time_step;
+        if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
+          {
+            p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j] * time_step);
+            p.l.p_old[j] *= scal[1];
+            p.m.v[j] *= scal[0];
           }
+        } else {
+          p.r.p[j] += p.m.v[j] * time_step;
+        }
 #ifdef EXTERNAL_FORCES
-        }
+      }
 #endif
-      }
     }
-
-    set_resort_particles(Cells::RESORT_LOCAL);
-
-    /* Apply new volume to the box-length, communicate it, and account for
-     * necessary adjustments to the cell geometry */
-    if (this_node == 0) {
-      Utils::Vector3d new_box = box_geo.length();
-
-      for (int i = 0; i < 3; i++) {
-        if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
-          new_box[i] = L_new;
-        } else if (nptiso.cubic_box) {
-          new_box[i] = L_new;
-        }
-      }
-
-      box_geo.set_length(new_box);
-    }
-
-    MPI_Bcast(box_geo.m_length.data(), 3, MPI_DOUBLE, 0, comm_cart);
-
-    /* fast box length update */
-    grid_changed_box_l(box_geo);
-    recalc_maximal_cutoff();
-    cells_on_geometry_change(CELL_FLAG_FAST);
   }
-#endif
+
+  set_resort_particles(Cells::RESORT_LOCAL);
+
+  /* Apply new volume to the box-length, communicate it, and account for
+   * necessary adjustments to the cell geometry */
+  if (this_node == 0) {
+    Utils::Vector3d new_box = box_geo.length();
+
+    for (int i = 0; i < 3; i++) {
+      if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
+        new_box[i] = L_new;
+      } else if (nptiso.cubic_box) {
+        new_box[i] = L_new;
+      }
+    }
+
+    box_geo.set_length(new_box);
+  }
+
+  MPI_Bcast(box_geo.m_length.data(), 3, MPI_DOUBLE, 0, comm_cart);
+
+  /* fast box length update */
+  grid_changed_box_l(box_geo);
+  recalc_maximal_cutoff();
+  cells_on_geometry_change(CELL_FLAG_FAST);
 }
 
 void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
@@ -569,36 +590,6 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
           /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
       }
-    }
-  }
-}
-
-void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
-  assert(integ_switch == INTEG_METHOD_NPT_ISO);
-  if (integ_switch == INTEG_METHOD_NPT_ISO)
-    /* Special propagator for NPT ISOTROPIC */
-    /* Propagate pressure, box_length (2 times) and positions, rescale
-       positions and velocities and check Verlet list criterion (only NPT) */
-    propagate_press_box_pos_and_rescale_npt(particles);
-  else {
-    for (auto &p : particles) {
-#ifdef VIRTUAL_SITES
-      if (p.p.is_virtual)
-        continue;
-#endif
-      for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-        if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-        {
-          /* Propagate positions (only NVT): p(t + dt)   = p(t) + dt *
-           * v(t+0.5*dt) */
-          p.r.p[j] += time_step * p.m.v[j];
-        }
-      }
-      /* Verlet criterion check */
-      if ((p.r.p - p.l.p_old).norm2() > skin2)
-        set_resort_particles(Cells::RESORT_LOCAL);
     }
   }
 }
