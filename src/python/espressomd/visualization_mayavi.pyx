@@ -10,6 +10,7 @@ from .system cimport *
 from .interactions import NonBondedInteractions
 from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
 from .grid cimport get_mi_vector, box_geo
+from .utils cimport make_Vector3d
 
 include "myconfig.pxi"
 
@@ -236,7 +237,7 @@ cdef class mayaviLive:
             p2 = get_particle_data_ptr(get_particle_data(j))
             bond_coords[n, :3] = numpy.array([p1.r.p[0], p1.r.p[1], p1.r.p[2]])
             bond_coords[n, 3:6] = make_array_locked(
-                get_mi_vector(Vector3d(p2.r.p), Vector3d(p1.r.p), box_geo))
+                get_mi_vector(p2.r.p, p1.r.p, box_geo))
             bond_coords[n, 6] = t
 
         boxl = self.system.box_l

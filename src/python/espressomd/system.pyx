@@ -430,7 +430,7 @@ cdef class System:
 
         """
 
-        cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
+        cdef Vector3d mi_vec = get_mi_vector(<const Vector3d> make_Vector3d(p2.pos), <const Vector3d> make_Vector3d(p1.pos), box_geo)
 
         return make_array_locked(mi_vec)
 
@@ -442,7 +442,7 @@ cdef class System:
         a = p1.pos_folded
         b = p2.pos_folded
 
-        cdef Vector3d res = get_mi_vector(make_Vector3d(b), make_Vector3d(a), box_geo)
+        cdef Vector3d res = get_mi_vector(<const Vector3d> make_Vector3d(b),<const Vector3d> make_Vector3d(a), box_geo)
         return np.array((res[0], res[1], res[2]))
     
     def velocity_difference(self, p1, p2):
