@@ -2072,9 +2072,6 @@ class FeneBond(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        """Sets parameters that are not required to their default value.
-
-        """
         self._params = {"r_0": 0.}
         # Everything else has to be supplied by the user, anyway
 
@@ -2765,22 +2762,6 @@ class TabulatedDihedral(_TabulatedBase):
 
 IF TABULATED == 1:
     cdef class TabulatedNonBonded(NonBondedInteraction):
-        """
-        Tabulated non-bonded interaction.
-
-        Parameters
-        ----------
-
-        min : :obj:`float`
-            The minimal interaction distance.
-        max : :obj:`float`
-            The maximal interaction distance.
-        energy: array_like :obj:`float`
-            The energy table.
-        force: array_like :obj:`float`
-            The force table.
-
-        """
 
         cdef int state
 
