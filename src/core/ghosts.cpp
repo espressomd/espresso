@@ -406,10 +406,6 @@ static int is_recv_op(unsigned comm_type, int node) {
           (comm_type == GHOST_RDCE && node == this_node));
 }
 
-void ghost_communicator(GhostCommunicator *gc) {
-  ghost_communicator(gc, gc->data_parts);
-}
-
 void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts) {
   MPI_Status status;
   int n, n2;

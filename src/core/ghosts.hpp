@@ -187,12 +187,6 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
 void free_comm(GhostCommunicator *comm);
 
 /**
- * @brief do a ghost communication with the data parts specified
- *        in the communicator.
- */
-void ghost_communicator(GhostCommunicator *gc);
-
-/**
  * @brief Do a ghost communication with caller specified data parts.
  */
 void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts);
