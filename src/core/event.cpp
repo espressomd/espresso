@@ -432,8 +432,12 @@ unsigned int required_ghost_data() {
   unsigned data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
 
   /* DPD and LB need also ghost velocities */
-  if (lattice_switch == ActiveLB::CPU)
+  if (lattice_switch == ActiveLB::CPU) {
     data_parts |= GHOSTTRANS_MOMENTUM;
+#ifdef ENGINE
+    data_parts |= GHOSTTRANS_SWIMMING;
+#endif
+  }
   if (thermo_switch & THERMO_DPD)
     data_parts |= GHOSTTRANS_MOMENTUM;
   // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
