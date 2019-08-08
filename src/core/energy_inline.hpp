@@ -107,7 +107,7 @@ inline double calc_non_bonded_pair_energy(Particle const *const p1,
 
 #ifdef SMOOTH_STEP
   /* smooth step */
-  ret += SmSt_pair_energy(p1, p2, ia_params, d, dist, dist2);
+  ret += smooth_step_pair_energy(p1, p2, ia_params, d, dist, dist2);
 #endif
 
 #ifdef HERTZIAN
