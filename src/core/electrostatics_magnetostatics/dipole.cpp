@@ -159,7 +159,7 @@ void calc_long_range_force(const ParticleRange &particles) {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
-    add_mdlc_force_corrections();
+    add_mdlc_force_corrections(particles);
     // fall through
   case DIPOLAR_P3M:
     dp3m_dipole_assign(particles);
@@ -178,7 +178,7 @@ void calc_long_range_force(const ParticleRange &particles) {
     break;
 #ifdef DP3M
   case DIPOLAR_MDLC_DS:
-    add_mdlc_force_corrections();
+    add_mdlc_force_corrections(particles);
     // fall through
 #endif
   case DIPOLAR_DS:
@@ -215,7 +215,7 @@ void calc_energy_long_range(Observable_stat &energy, const ParticleRange &partic
   case DIPOLAR_MDLC_P3M:
     dp3m_dipole_assign(particles);
     energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1, particles);
-    energy.dipolar[2] = add_mdlc_energy_corrections();
+    energy.dipolar[2] = add_mdlc_energy_corrections(particles;
     break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
@@ -224,7 +224,7 @@ void calc_energy_long_range(Observable_stat &energy, const ParticleRange &partic
 #ifdef DP3M
   case DIPOLAR_MDLC_DS:
     energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1);
-    energy.dipolar[2] = add_mdlc_energy_corrections();
+    energy.dipolar[2] = add_mdlc_energy_corrections(particles);
     break;
 #endif
   case DIPOLAR_DS:

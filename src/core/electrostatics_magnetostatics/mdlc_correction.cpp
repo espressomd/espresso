@@ -52,8 +52,9 @@ static int n_local_particles = 0;
 static double mu_max;
 
 void calc_mu_max() {
+  auto local_particles = local_cells.particles();
   mu_max = std::accumulate(
-      local_cells.particles().begin(), local_cells.particles().end(), 0.0,
+          local_particles.begin(), local_particles.end(), 0.0,
       [](double mu, Particle const &p) { return std::max(mu, p.p.dipm); });
 
   MPI_Allreduce(MPI_IN_PLACE, &mu_max, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
@@ -76,11 +77,11 @@ inline double g2_DLC_dip(double g, double x) {
 }
 
 /* Compute Mx, My, Mz and Mtotal */
-double slab_dip_count_mu(double *mt, double *mx, double *my) {
+double slab_dip_count_mu(double *mt, double *mx, double *my, const ParticleRange &particles) {
   Utils::Vector3d node_sums{};
   Utils::Vector3d tot_sums{};
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : particles) {
     if (p.p.dipm != 0.0) {
       node_sums += p.calc_dip();
     }
@@ -106,8 +107,8 @@ double slab_dip_count_mu(double *mt, double *mx, double *my) {
    Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
    Lett. 400, 62-67, (2004).
  */
-double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
-                       std::vector<Utils::Vector3d> &ts) {
+double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs, std::vector<Utils::Vector3d> &ts,
+                       const ParticleRange &particles) {
 
   int ip;
 
@@ -142,7 +143,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
                                             // {Re(S+), Im(S+), Re(S-), Im(S-)}
         ip = 0;
 
-        for (auto const &p : local_cells.particles()) {
+        for (auto const &p : particles) {
           if (p.p.dipm > 0) {
             Utils::Vector3d const dip = p.calc_dip();
 
@@ -182,7 +183,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
         // ... Now we can compute the contributions to E,Fj,Ej for the current
         // g-value
         ip = 0;
-        for (auto &p : local_cells.particles()) {
+        for (auto &p : particles) {
           if (p.p.dipm > 0) {
             // We compute the contributions to the forces ............
 
@@ -234,7 +235,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
   //-tz[0]*M_PI/(box_l[0]*box_l[1])  );
 
   ip = 0;
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : particles) {
     if (p.p.dipm > 0) {
       ts[ip] = vector_product(p.calc_dip(), ts[ip]);
     }
@@ -266,7 +267,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
    Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
    Lett. 400, 62-67, (2004).
  */
-double get_DLC_energy_dipolar(int kcut) {
+double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
 
   int ix, iy, ip;
   double gx, gy, gr;
@@ -276,7 +277,7 @@ double get_DLC_energy_dipolar(int kcut) {
   double s1;
   double energy, piarea, facux, facuy;
 
-  n_local_particles = local_cells.particles().size();
+  n_local_particles = particles.size();
 
   facux = 2.0 * M_PI / box_geo.length()[0];
   facuy = 2.0 * M_PI / box_geo.length()[1];
@@ -302,7 +303,7 @@ double get_DLC_energy_dipolar(int kcut) {
 
         ip = 0;
 
-        for (auto const &p : local_cells.particles()) {
+        for (auto const &p : particles) {
           if (p.p.dipm > 0) {
             const Utils::Vector3d dip = p.calc_dip();
 
@@ -346,11 +347,11 @@ double get_DLC_energy_dipolar(int kcut) {
 /** Compute and add the terms needed to correct the 3D dipolar
  *  methods when we have an slab geometry
  */
-void add_mdlc_force_corrections() {
+void add_mdlc_force_corrections(const ParticleRange &particles) {
   int dip_DLC_kcut = dlc_params.far_cut;
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
 
-  n_local_particles = local_cells.particles().size();
+  n_local_particles = particles.size();
 
   volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
 
@@ -363,7 +364,7 @@ void add_mdlc_force_corrections() {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
-  get_DLC_dipolar(dip_DLC_kcut, dip_DLC_f, dip_DLC_t);
+  get_DLC_dipolar(dip_DLC_kcut, dip_DLC_f, dip_DLC_t, particles);
 
   // Now we compute the the correction like Yeh and Klapp to take into account
   // the fact that you are using a
@@ -374,13 +375,13 @@ void add_mdlc_force_corrections() {
   // Shape Dependent Correction.
   // See Brodka, Chem. Phys. Lett. 400, 62, (2004).
 
-  mz = slab_dip_count_mu(&mtot, &mx, &my);
+  mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
 
   // --- Transfer the computed corrections to the Forces, Energy and torques
   //     of the particles
 
   int ip = 0;
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     if ((p.p.dipm) != 0.0) {
       // SDC correction term is zero for the forces
       p.f.f += dipole.prefactor * dip_DLC_f[ip];
@@ -409,7 +410,7 @@ void add_mdlc_force_corrections() {
 /** Compute and add the terms needed to correct the energy of
  *  3D dipolar methods when we have an slab geometry
  */
-double add_mdlc_energy_corrections() {
+double add_mdlc_energy_corrections(const ParticleRange &particles) {
   double dip_DLC_energy = 0.0;
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
   int dip_DLC_kcut;
@@ -421,7 +422,7 @@ double add_mdlc_energy_corrections() {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
-  dip_DLC_energy += dipole.prefactor * get_DLC_energy_dipolar(dip_DLC_kcut);
+  dip_DLC_energy += dipole.prefactor * get_DLC_energy_dipolar(dip_DLC_kcut, particles);
 
   //           printf("Energy DLC                                  = %20.15le
   //           \n",dip_DLC_energy);
@@ -435,7 +436,7 @@ double add_mdlc_energy_corrections() {
   // Shape Dependent Correction.
   // See Brodka, Chem. Phys. Lett. 400, 62, (2004).
 
-  mz = slab_dip_count_mu(&mtot, &mx, &my);
+  mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
 
   if (this_node == 0) {
 #ifdef DP3M
