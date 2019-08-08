@@ -227,7 +227,7 @@ IF LENNARD_JONES == 1:
                 If not true.
             """
             if self._params["epsilon"] < 0:
-                raise ValueError("Lennard-Jones eps has to be >=0")
+                raise ValueError("Lennard-Jones epsilon has to be >=0")
             if self._params["sigma"] < 0:
                 raise ValueError("Lennard-Jones sigma has to be >=0")
             if self._params["cutoff"] < 0:
@@ -265,8 +265,10 @@ IF LENNARD_JONES == 1:
                 Interaction length scale.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
-            shift : :obj:`float` or :obj:`str`
-                Constant shift of the potential. (4*epsilon*shift).
+            shift : :obj:`float` or :obj:`str` \{'auto'\}
+                Constant shift of the potential. If ``'auto'``, a default value
+                is computed from ``sigma`` and ``cutoff``. The LJ potential
+                will be shifted by :math:`4\\epsilon\\text{shift}`.
             offset : :obj:`float`, optional
                 Offset distance of the interaction.
             min : :obj:`float`, optional
@@ -278,7 +280,6 @@ IF LENNARD_JONES == 1:
         def _set_params_in_es_core(self):
             # Handle the case of shift="auto"
             if self._params["shift"] == "auto":
-                # Calc shift
                 self._params["shift"] = -((self._params["sigma"] / self._params["cutoff"])**12 - (
                     self._params["sigma"] / self._params["cutoff"])**6)
 
@@ -416,7 +417,7 @@ IF LENNARD_JONES_GENERIC == 1:
                 If not true.
             """
             if self._params["epsilon"] < 0:
-                raise ValueError("Generic Lennard-Jones eps has to be >=0")
+                raise ValueError("Generic Lennard-Jones epsilon has to be >=0")
             if self._params["sigma"] < 0:
                 raise ValueError("Generic Lennard-Jones sigma has to be >=0")
             if self._params["cutoff"] < 0:
@@ -451,7 +452,6 @@ IF LENNARD_JONES_GENERIC == 1:
         def _set_params_in_es_core(self):
             # Handle the case of shift="auto"
             if self._params["shift"] == "auto":
-                # Calc shift
                 self._params["shift"] = -(self._params["b1"] * (self._params["sigma"] / self._params["cutoff"])**self._params[
                                           "e1"] - self._params["b2"] * (self._params["sigma"] / self._params["cutoff"])**self._params["e2"])
             IF LJGEN_SOFTCORE:
@@ -519,8 +519,10 @@ IF LENNARD_JONES_GENERIC == 1:
                 Interaction length scale.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
-            shift : :obj:`float`
-                Constant shift of the potential.
+            shift : :obj:`float` or :obj:`str` \{'auto'\}
+                Constant shift of the potential. If ``'auto'``, a default value
+                is computed from the other parameters. The LJ potential
+                will be shifted by :math:`\\epsilon\\text{shift}`.
             offset : :obj:`float`
                 Offset distance of the interaction.
             e1 : :obj:`int`
@@ -560,7 +562,7 @@ IF LJCOS:
 
         def validate_params(self):
             if self._params["epsilon"] < 0:
-                raise ValueError("Lennard-Jones eps has to be >=0")
+                raise ValueError("Lennard-Jones epsilon has to be >=0")
             if self._params["sigma"] < 0:
                 raise ValueError("Lennard-Jones sigma has to be >=0")
             return True
@@ -581,7 +583,7 @@ IF LJCOS:
             return(self._params["epsilon"] > 0)
 
         def set_params(self, **kwargs):
-            """Set parameters for the Lennard-Jones Cosine2 interaction.
+            """Set parameters for the Lennard-Jones cosine interaction.
 
             Parameters
             ----------
@@ -639,7 +641,7 @@ IF LJCOS2:
 
         def validate_params(self):
             if self._params["epsilon"] < 0:
-                raise ValueError("Lennard-Jones eps has to be >=0")
+                raise ValueError("Lennard-Jones epsilon has to be >=0")
             if self._params["sigma"] < 0:
                 raise ValueError("Lennard-Jones sigma has to be >=0")
             if self._params["width"] < 0:
@@ -661,7 +663,7 @@ IF LJCOS2:
             return(self._params["epsilon"] > 0)
 
         def set_params(self, **kwargs):
-            """ Set parameters for the Lennard-Jones Cosine2 interaction.
+            """ Set parameters for the Lennard-Jones cosine2 interaction.
 
             Parameters
             ----------
@@ -890,22 +892,20 @@ IF DPD:
 
             Parameters
             ----------
-            weight_function : :obj:`float`
+            weight_function : :obj:`int`, \{0, 1\}
                 The distance dependence of the parallel part,
                 either 0 (constant) or 1 (linear)
             gamma : :obj:`float`
                 Friction coefficient of the parallel part
             r_cut : :obj:`float`
                 Cutoff of the parallel part
-            trans_weight_function : :obj:`float`
+            trans_weight_function : :obj:`int`, \{0, 1\}
                 The distance dependence of the orthogonal part,
                 either 0 (constant) or 1 (linear)
             trans_gamma : :obj:`float`
                 Friction coefficient of the orthogonal part
             trans_r_cut : :obj:`float`
                 Cutoff of the orthogonal part
-            seed : :obj:`int`, required
-                Initial counter value (or seed) of the philox RNG.
 
             """
             super().set_params(**kwargs)
@@ -3069,7 +3069,7 @@ class IBM_Triel(BondedInteraction):
 
     Parameters
     ----------
-    indX : :obj:`int`
+    ind1, ind2, ind3 : :obj:`int`
         First, second and third bonding partner. Used for
         initializing reference state
     k1 : :obj:`float`
@@ -3126,13 +3126,13 @@ class IBM_Tribend(BondedInteraction):
 
     Parameters
     ----------
-    indX : :obj:`int`
+    ind1, ind2, ind3, ind4 : :obj:`int`
         First, second, third and fourth bonding partner. Used for
         initializing reference state
     kb : :obj:`float`
         Bending modulus
     refShape : :obj:`str`, \{'Flat', 'Initial'\}
-        Reference shape
+        Reference shape, default is ``'Flat'``
 
     """
 
