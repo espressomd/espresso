@@ -16,7 +16,7 @@ include "myconfig.pxi"
 from copy import deepcopy
 import espressomd
 from espressomd.particle_data import ParticleHandle
-from espressomd.interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
+from espressomd.interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
 
 
 class openGLLive:
@@ -876,7 +876,7 @@ class openGLLive:
                     # b[0]: Bond, b[1:] Partners
                     t = b[0].type_number()
                     if len(b) == 4 and t in (BONDED_IA_DIHEDRAL,
-                                             BONDED_IA_TABULATED):
+                                             BONDED_IA_TABULATED_DIHEDRAL):
                         self.bonds.append([i, b[1], t])
                         self.bonds.append([i, b[2], t])
                         self.bonds.append([b[2], b[3], t])

@@ -12,9 +12,6 @@
 /** \name Type codes of bonded interactions
  *  Enumeration of implemented bonded interactions.
  */
-/************************************************************/
-/*@{*/
-
 enum BondedInteraction {
   /** This bonded interaction was not set. */
   BONDED_IA_NONE = -1,
@@ -33,9 +30,12 @@ enum BondedInteraction {
   BONDED_IA_BONDED_COULOMB_SR,
   /** Type of bonded interaction is a dihedral potential. */
   BONDED_IA_DIHEDRAL,
-  /** Type of tabulated bonded interaction potential,
-      may be of bond length, of bond angle or of dihedral type. */
-  BONDED_IA_TABULATED,
+  /** Type of bonded interaction is a tabulated bond potential. */
+  BONDED_IA_TABULATED_DISTANCE,
+  /** Type of bonded interaction is a tabulated angle potential. */
+  BONDED_IA_TABULATED_ANGLE,
+  /** Type of bonded interaction is a tabulated dihedral potential. */
+  BONDED_IA_TABULATED_DIHEDRAL,
   /** Type of bonded interaction is a subtracted-LJ potential. */
   BONDED_IA_SUBT_LJ,
   /** Type of bonded interaction is a rigid/constrained bond. */
@@ -76,7 +76,6 @@ enum TabulatedBondedInteraction {
   TAB_BOND_DIHEDRAL = 3
 };
 
-/*@}*/
 /** Parameters for FENE bond Potential. */
 struct Fene_bond_parameters {
   /** spring constant */
@@ -207,7 +206,6 @@ struct Dihedral_bond_parameters {
 
 /** Parameters for n-body tabulated potential (n=2,3,4). */
 struct Tabulated_bond_parameters {
-  TabulatedBondedInteraction type;
   TabulatedPotential *pot;
 };
 

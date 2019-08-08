@@ -346,7 +346,9 @@ void mpi_bcast_ia_params(int i, int j) {
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
     /* For tabulated potentials we have to send the tables extra */
-    if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
+    if (bonded_ia_params[i].type == BONDED_IA_TABULATED_DISTANCE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_ANGLE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
   }
@@ -366,7 +368,9 @@ void mpi_bcast_ia_params_slave(int i, int j) {
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
     /* For tabulated potentials we have to send the tables extra */
-    if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
+    if (bonded_ia_params[i].type == BONDED_IA_TABULATED_DISTANCE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_ANGLE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
       auto *tab_pot = new TabulatedPotential();
       boost::mpi::broadcast(comm_cart, *tab_pot, 0);
 

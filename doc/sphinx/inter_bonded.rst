@@ -222,57 +222,26 @@ using Lagrange multipliers.\ :cite:`andersen83a` The constrained bond distance
 is named :math:`r`, the positional tolerance is named :math:`ptol` and the velocity tolerance
 is named :math:`vtol`.
 
-.. _Tabulated bond interactions:
+.. _Tabulated distance:
 
-Tabulated bond interactions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Tabulated distance
+~~~~~~~~~~~~~~~~~~
 
-A tabulated bond can be instantiated via
-:class:`espressomd.interactions.Tabulated`::
+A tabulated bond length can be instantiated via
+:class:`espressomd.interactions.TabulatedDistance`::
 
-    from espressomd.interactions import Tabulated
-    tab = Tabulated(type=<str>, min=<min>, max=<max>,
-                    energy=<energy>, force=<force>)
+    from espressomd.interactions import TabulatedDistance
+    tab_dist = TabulatedDistance(min=<min>, max=<max>,
+                                 energy=<energy>, force=<force>)
+    system.bonded_inter.add(tab_dist)
+    system.part[0].add_bond((tab_dist, 1))
 
-This creates a bond type identifier with a two-body bond length,
-three-body angle or four-body dihedral
-tabulated potential. For details of the interpolation, see :ref:`Tabulated interaction`.
+This creates a bond type identifier with a tabulated potential. The force acts
+in the direction of the connecting vector between the particles. The bond breaks
+above the tabulated range, but for distances smaller than the tabulated range,
+a linear extrapolation based on the first two tabulated force values is used.
+For details of the interpolation, see :ref:`Tabulated interaction`.
 
-The bonded interaction can be based on a distance, a bond angle or a
-dihedral angle. This is determined by the ``type`` argument, which can
-be one of the strings ``distance``, ``angle`` or ``dihedral``.
-
-.. _Calculation of the force and energy:
-
-Calculation of the force and energy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The potential is calculated as follows:
-
--  ``type="distance"``: is a two body interaction
-   depending on the distance of two particles. The force acts in the
-   direction of the connecting vector between the particles. The bond
-   breaks above the tabulated range, but for distances smaller than the
-   tabulated range, a linear extrapolation based on the first two
-   tabulated force values is used.
-
--  ``type="angle"``: is a three-body angle
-   interaction similar to the bond angle potential.
-   It is assumed that the potential is tabulated
-   for all angles between 0 and :math:`\pi`, where 0 corresponds to a
-   stretched polymer, and just as for the tabulated pair potential, the
-   forces are scaled with the inverse length of the connecting vectors.
-   The force on the extremities acts perpendicular
-   to the connecting vector
-   between the corresponding particle and the center particle, in the plane
-   defined by the three particles. The force on the center particle
-   :math:`p_2` balances the other two forces.
-
--  ``type="dihedral"``: tabulates a torsional
-   dihedral angle potential. It is assumed
-   that the potential is tabulated for all angles between 0 and
-   :math:`2\pi`. *This potential is not tested yet! Use at your own risk, and
-   please report your findings and eventually necessary fixes.*
 
 .. _Virtual bonds:
 
@@ -632,21 +601,26 @@ Example::
     >>> system.part[1].add_bond((angle_cossquare, 0, 2))
 
 
-Tabulated bond
-~~~~~~~~~~~~~~
+Tabulated angle potential
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`espressomd.interactions.Tabulated`
+A tabulated bond angle can be instantiated via
+:class:`espressomd.interactions.TabulatedAngle`::
 
-Custom bond angle potential.
+    from espressomd.interactions import TabulatedAngle
+    theta = np.linspace(0, np.pi, num=91, endpoint=True)
+    angle_tab = TabulatedAngle(energy=10 * (theta - 2 * np.pi / 3)**2,
+                               force=10 * (theta - 2 * np.pi / 3) / 2)
+    system.bonded_inter.add(angle_tab)
+    system.part[1].add_bond((angle_tab, 0, 2))
 
-Example::
-
-    >>> theta = np.linspace(0, np.pi, num=91, endpoint=True)
-    >>> angle_tabulated = Tabulated(type='angle', min=0, max=np.pi,
-    ...                             energy=0.5 * 10 * (theta - 2 * np.pi / 3)**2,
-    ...                             force=10 * (theta - 2 * np.pi / 3))
-    >>> system.bonded_inter.add(angle_tabulated)
-    >>> system.part[1].add_bond((angle_tabulated, 0, 2))
+The energy and force tables must be sampled from :math:`0` to :math:`\pi`,
+where :math:`\pi` corresponds to a flat angle. The forces are scaled with the
+inverse length of the connecting vectors. The force on the extremities acts
+perpendicular to the connecting vector between the corresponding particle and
+the center particle, in the plane defined by the three particles. The force on
+the center particle balances the other two forces.
+For details of the interpolation, see :ref:`Tabulated interaction`.
 
 
 .. _Dihedral interactions:
@@ -654,7 +628,15 @@ Example::
 Dihedral interactions
 ---------------------
 
-Dihedral interactions are available through the :class:`espressomd.interactions.Dihedral` class.
+Dihedral potential with phase shift
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dihedral interactions are available through the :class:`espressomd.interactions.Dihedral` class::
+
+    from espressomd.interactions import Dihedral
+    dihedral = Dihedral(bend=<K>, mult=<n>, phase=<phi_0>)
+    system.bonded_inter.add(dihedral)
+    system.part[1].add_bond((dihedral, 0, 2, 3))
 
 This creates a bond type with identifier with a dihedral potential, a
 four-body-potential. In the following, let the particle for which the
@@ -662,10 +644,10 @@ bond is created be particle :math:`p_2`, and the other bond partners
 :math:`p_1`, :math:`p_3`, :math:`p_4`, in this order. Then, the
 dihedral potential is given by
 
-.. math:: V(\phi) = K\left[1 - \cos(n\phi - p)\right],
+.. math:: V(\phi) = K\left[1 - \cos(n\phi - \phi_0)\right],
 
 where :math:`n` is the multiplicity of the potential (number of minima) and can
-take any integer value (typically from 1 to 6), :math:`p` is a phase
+take any integer value (typically from 1 to 6), :math:`\phi_0` is a phase
 parameter and :math:`K` is the bending constant of the potential. :math:`\phi` is
 the dihedral angle between the particles defined by the particle
 quadruple :math:`p_1`, :math:`p_2`, :math:`p_3` and :math:`p_4`, the
@@ -681,6 +663,21 @@ angle between the planes defined by the particle triples :math:`p_1`,
 
 Together with appropriate Lennard-Jones interactions, this potential can
 mimic a large number of atomic torsion potentials.
+
+
+Tabulated dihedral potential
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A tabulated dihedral interaction can be instantiated via
+:class:`espressomd.interactions.TabulatedDihedral`::
+
+    from espressomd.interactions import TabulatedDihedral
+    dihedral_tab = TabulatedDihedral(energy=<energy>, force=<force>)
+    system.bonded_inter.add(dihedral_tab)
+    system.part[1].add_bond((dihedral_tab, 0, 2, 3))
+
+The energy and force tables must be sampled from :math:`0` to :math:`2\pi`.
+For details of the interpolation, see :ref:`Tabulated interaction`.
 
 
 .. _Thermalized distance bond:
