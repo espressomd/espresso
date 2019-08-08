@@ -205,7 +205,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef VIRTUAL_SITES
     if (virtual_sites()->is_relative()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm, update_data);
+      ghost_communicator(&cell_structure.exchange_ghosts_comm, update_data);
     }
     virtual_sites()->update();
 #endif

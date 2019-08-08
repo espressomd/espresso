@@ -432,7 +432,6 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
             shift[dir] =
                 local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
             cell_structure.exchange_ghosts_comm.comm[cnt].shift = shift;
-            cell_structure.update_ghost_pos_comm.comm[cnt].shift = shift;
           }
           cnt++;
         }
@@ -449,7 +448,6 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
                 shift[dir] =
                     local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
                 cell_structure.exchange_ghosts_comm.comm[cnt].shift = shift;
-                cell_structure.update_ghost_pos_comm.comm[cnt].shift = shift;
               }
               cnt++;
             }
@@ -631,7 +629,6 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid) {
 /************************************************************/
 void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   int c, p;
-  int exchange_data, update_data;
 
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
     but may be set to a larger value by the user for performance reasons. */
@@ -647,11 +644,9 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   /* mark cells */
   dd_mark_cells();
 
-  exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-  update_data = GHOSTTRANS_POSITION;
+  auto const exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
 
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data, grid);
-  dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data, grid);
   dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE,
                   grid);
 
@@ -659,7 +654,6 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
 
   dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
-  dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
   dd_init_cell_interactions(grid);
@@ -689,7 +683,6 @@ void dd_topology_release() {
   realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
   /* free ghost communicators */
   free_comm(&cell_structure.exchange_ghosts_comm);
-  free_comm(&cell_structure.update_ghost_pos_comm);
   free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
