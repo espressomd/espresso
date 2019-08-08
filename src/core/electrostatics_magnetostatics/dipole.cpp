@@ -169,7 +169,7 @@ void calc_long_range_force(const ParticleRange &particles) {
       fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
     } else
 #endif
-        dp3m_calc_kspace_forces(1, 0, particles);
+      dp3m_calc_kspace_forces(1, 0, particles);
 
     break;
 #endif
@@ -205,7 +205,8 @@ void calc_long_range_force(const ParticleRange &particles) {
   }
 }
 
-void calc_energy_long_range(Observable_stat &energy, const ParticleRange &particles) {
+void calc_energy_long_range(Observable_stat &energy,
+                            const ParticleRange &particles) {
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_P3M:
@@ -223,12 +224,14 @@ void calc_energy_long_range(Observable_stat &energy, const ParticleRange &partic
     break;
 #ifdef DP3M
   case DIPOLAR_MDLC_DS:
-    energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1, particles);
+    energy.dipolar[1] =
+        magnetic_dipolar_direct_sum_calculations(0, 1, particles);
     energy.dipolar[2] = add_mdlc_energy_corrections(particles);
     break;
 #endif
   case DIPOLAR_DS:
-    energy.dipolar[1] = magnetic_dipolar_direct_sum_calculations(0, 1, particles);
+    energy.dipolar[1] =
+        magnetic_dipolar_direct_sum_calculations(0, 1, particles);
     break;
   case DIPOLAR_DS_GPU:
     break;

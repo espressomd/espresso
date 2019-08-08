@@ -127,7 +127,8 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
    =============================================================================
 */
 
-double dawaanr_calculations(int force_flag, int energy_flag, const ParticleRange &particles) {
+double dawaanr_calculations(int force_flag, int energy_flag,
+                            const ParticleRange &particles) {
 
   if (n_nodes != 1) {
     fprintf(stderr, "error: DAWAANR is just for one cpu...\n");
@@ -184,7 +185,9 @@ int magnetic_dipolar_direct_sum_sanity_checks() {
 
 /************************************************************/
 
-double magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag, const ParticleRange &particles) {
+double
+magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
+                                         const ParticleRange &particles) {
   std::vector<double> x, y, z;
   std::vector<double> mx, my, mz;
   std::vector<double> fx, fy, fz;

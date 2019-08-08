@@ -40,7 +40,9 @@ void pressure_n(int &n_coulomb) {
   }
 }
 
-void calc_pressure_long_range(Observable_stat &virials, Observable_stat &p_tensor, const ParticleRange &particles) {
+void calc_pressure_long_range(Observable_stat &virials,
+                              Observable_stat &p_tensor,
+                              const ParticleRange &particles) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -325,7 +327,7 @@ void calc_long_range_force(const ParticleRange &particles) {
       nptiso.p_vir[0] += p3m_calc_kspace_forces(1, 1, particles);
     else
 #endif
-        p3m_calc_kspace_forces(1, 0, particles);
+      p3m_calc_kspace_forces(1, 0, particles);
     break;
 #endif
   case COULOMB_MMM2D:
@@ -350,7 +352,8 @@ void calc_long_range_force(const ParticleRange &particles) {
 #endif
 }
 
-void calc_energy_long_range(Observable_stat &energy, const ParticleRange &particles) {
+void calc_energy_long_range(Observable_stat &energy,
+                            const ParticleRange &particles) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_P3M_GPU:
@@ -369,7 +372,8 @@ void calc_energy_long_range(Observable_stat &energy, const ParticleRange &partic
       energy.coulomb[1] = p3m_calc_kspace_forces(0, 1, particles);
     else {
       energy.coulomb[1] = 0.5 * p3m_calc_kspace_forces(0, 1, particles);
-      energy.coulomb[1] += 0.5 * ELC_P3M_dielectric_layers_energy_self(particles);
+      energy.coulomb[1] +=
+          0.5 * ELC_P3M_dielectric_layers_energy_self(particles);
 
       //  assign both original and image charges now
       ELC_p3m_charge_assign_both(particles);

@@ -32,8 +32,8 @@
  * sum,
  *
  */
-#include <ParticleRange.hpp>
 #include "config.hpp"
+#include <ParticleRange.hpp>
 
 #ifdef DIPOLES
 #include "particle_data.hpp"
@@ -48,7 +48,8 @@ double calc_dipole_dipole_ia(Particle *p1, Particle *p2, int force_flag);
 
 /** Core of the DAWAANR method: here you compute all the magnetic forces,
  * torques and the magnetic energy for the whole system*/
-double dawaanr_calculations(int force_flag, int energy_flag, const ParticleRange &particles);
+double dawaanr_calculations(int force_flag, int energy_flag,
+                            const ParticleRange &particles);
 
 /** switch on DAWAANR magnetostatics.
     @return ES_ERROR, if not on a single CPU
@@ -65,7 +66,8 @@ int magnetic_dipolar_direct_sum_sanity_checks();
 
 /* Core of the method: here you compute all the magnetic forces,torques and the
  * energy for the whole system using direct sum*/
-double magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag, const ParticleRange &particles);
+double magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
+                                                const ParticleRange &particles);
 
 /** switch on direct sum magnetostatics.
     @param n_cut cut off for the explicit summation

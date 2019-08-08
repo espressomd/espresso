@@ -39,8 +39,8 @@
 #ifndef _DLC_DIPOLAR_H
 #define _DLC_DIPOLAR_H
 
-#include <ParticleRange.hpp>
 #include "config.hpp"
+#include <ParticleRange.hpp>
 
 #if defined(DIPOLES) && defined(DP3M)
 

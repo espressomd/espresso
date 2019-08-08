@@ -1118,7 +1118,8 @@ static double PQ_energy(double omega) {
 /* main loops */
 /*****************************************************************/
 
-static void add_force_contribution(int p, int q, const ParticleRange &particles) {
+static void add_force_contribution(int p, int q,
+                                   const ParticleRange &particles) {
   double omega, fac;
 
   if (q == 0) {
@@ -1170,7 +1171,8 @@ static void add_force_contribution(int p, int q, const ParticleRange &particles)
   }
 }
 
-static double energy_contribution(int p, int q, const ParticleRange &particles) {
+static double energy_contribution(int p, int q,
+                                  const ParticleRange &particles) {
   double eng;
   double omega, fac;
 

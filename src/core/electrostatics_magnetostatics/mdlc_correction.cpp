@@ -54,7 +54,7 @@ static double mu_max;
 void calc_mu_max() {
   auto local_particles = local_cells.particles();
   mu_max = std::accumulate(
-          local_particles.begin(), local_particles.end(), 0.0,
+      local_particles.begin(), local_particles.end(), 0.0,
       [](double mu, Particle const &p) { return std::max(mu, p.p.dipm); });
 
   MPI_Allreduce(MPI_IN_PLACE, &mu_max, 1, MPI_DOUBLE, MPI_MAX, comm_cart);
@@ -77,7 +77,8 @@ inline double g2_DLC_dip(double g, double x) {
 }
 
 /* Compute Mx, My, Mz and Mtotal */
-double slab_dip_count_mu(double *mt, double *mx, double *my, const ParticleRange &particles) {
+double slab_dip_count_mu(double *mt, double *mx, double *my,
+                         const ParticleRange &particles) {
   Utils::Vector3d node_sums{};
   Utils::Vector3d tot_sums{};
 
@@ -107,7 +108,8 @@ double slab_dip_count_mu(double *mt, double *mx, double *my, const ParticleRange
    Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
    Lett. 400, 62-67, (2004).
  */
-double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs, std::vector<Utils::Vector3d> &ts,
+double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
+                       std::vector<Utils::Vector3d> &ts,
                        const ParticleRange &particles) {
 
   int ip;
@@ -422,7 +424,8 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
-  dip_DLC_energy += dipole.prefactor * get_DLC_energy_dipolar(dip_DLC_kcut, particles);
+  dip_DLC_energy +=
+      dipole.prefactor * get_DLC_energy_dipolar(dip_DLC_kcut, particles);
 
   //           printf("Energy DLC                                  = %20.15le
   //           \n",dip_DLC_energy);

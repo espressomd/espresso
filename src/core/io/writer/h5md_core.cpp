@@ -392,7 +392,8 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 }
 
-void File::Write(int write_dat, PartCfg &partCfg, const ParticleRange &particles) {
+void File::Write(int write_dat, PartCfg &partCfg,
+                 const ParticleRange &particles) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif

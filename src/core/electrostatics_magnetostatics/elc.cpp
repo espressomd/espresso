@@ -133,8 +133,10 @@ static double Q_energy(double omega);
 /*@}*/
 /** \name p,q <> 0 per frequency code */
 /*@{*/
-static void setup_PQ(int p, int q, double omega, const ParticleRange &particles);
-static void add_PQ_force(int p, int q, double omega, const ParticleRange &particles);
+static void setup_PQ(int p, int q, double omega,
+                     const ParticleRange &particles);
+static void add_PQ_force(int p, int q, double omega,
+                         const ParticleRange &particles);
 static double PQ_energy(double omega);
 static void add_dipole_force(const ParticleRange &particles);
 static double dipole_energy(const ParticleRange &particles);
@@ -855,7 +857,8 @@ static double Q_energy(double omega) {
 /* PQ particle blocks */
 /*****************************************************************/
 
-static void setup_PQ(int p, int q, double omega, const ParticleRange &particles) {
+static void setup_PQ(int p, int q, double omega,
+                     const ParticleRange &particles) {
   int ic, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
   double pref = -coulomb.prefactor * 8 * M_PI * ux * uy /
                 (expm1(omega * box_geo.length()[2]));
@@ -984,7 +987,8 @@ static void setup_PQ(int p, int q, double omega, const ParticleRange &particles)
   }
 }
 
-static void add_PQ_force(int p, int q, double omega, const ParticleRange &particles) {
+static void add_PQ_force(int p, int q, double omega,
+                         const ParticleRange &particles) {
   int ic;
 
   double pref_x = C_2PI * ux * p / omega;

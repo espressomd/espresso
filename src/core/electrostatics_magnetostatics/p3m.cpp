@@ -132,7 +132,8 @@ static void p3m_init_a_ai_cao_cut();
 static void p3m_calc_lm_ld_pos();
 
 /** Calculates the dipole term */
-static double p3m_calc_dipole_term(int force_flag, int energy_flag, const ParticleRange &particles);
+static double p3m_calc_dipole_term(int force_flag, int energy_flag,
+                                   const ParticleRange &particles);
 
 /** Gather FFT grid.
  *  After the charge assignment Each node needs to gather the
@@ -251,7 +252,8 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
  *  wrapper.
  *  \tparam cao      charge assignment order.
  */
-template <int cao> static void p3m_do_charge_assign(const ParticleRange &particles);
+template <int cao>
+static void p3m_do_charge_assign(const ParticleRange &particles);
 
 template <int cao>
 void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
@@ -520,8 +522,7 @@ void p3m_charge_assign(const ParticleRange &particles) {
 }
 
 /** Assign the charges */
-template <int cao>
-void p3m_do_charge_assign(const ParticleRange &particles) {
+template <int cao> void p3m_do_charge_assign(const ParticleRange &particles) {
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
@@ -674,7 +675,8 @@ void p3m_shrink_wrap_charge_grid(int n_charges) {
 
 /* Assign the forces obtained from k-space */
 template <int cao>
-static void P3M_assign_forces(double force_prefac, int d_rs, const ParticleRange &particles) {
+static void P3M_assign_forces(double force_prefac, int d_rs,
+                              const ParticleRange &particles) {
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
 #ifdef P3M_STORE_CA_FRAC
@@ -768,7 +770,8 @@ static void P3M_assign_forces(double force_prefac, int d_rs, const ParticleRange
   }
 }
 
-double p3m_calc_kspace_forces(int force_flag, int energy_flag, const ParticleRange &particles) {
+double p3m_calc_kspace_forces(int force_flag, int energy_flag,
+                              const ParticleRange &particles) {
   int i, d, d_rs, ind, j[3];
   /**************************************************************/
   /* Prefactor for force */
@@ -914,7 +917,8 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag, const ParticleRan
 
 /************************************************************/
 
-double p3m_calc_dipole_term(int force_flag, int energy_flag, const ParticleRange &particles) {
+double p3m_calc_dipole_term(int force_flag, int energy_flag,
+                            const ParticleRange &particles) {
   double pref = coulomb.prefactor * 4 * M_PI * (1. / box_geo.length()[0]) *
                 (1. / box_geo.length()[1]) * (1. / box_geo.length()[2]) /
                 (2 * p3m.params.epsilon + 1);

@@ -37,9 +37,9 @@ void update_mol_vel_particle(Particle *);
 // associated real particles
 void distribute_mol_force(const ParticleRange &particles)
 
-// Gets the (first) virtual particle of the same molecule as the given (real)
-// particle
-Particle *get_mol_com_particle(Particle *calling_p);
+    // Gets the (first) virtual particle of the same molecule as the given
+    // (real) particle
+    Particle *get_mol_com_particle(Particle *calling_p);
 
 #endif
 

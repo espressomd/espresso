@@ -181,7 +181,8 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
 /*@}*/
 
 /** Compute the dipolar surface terms */
-static double calc_surface_term(int force_flag, int energy_flag, const ParticleRange &particles);
+static double calc_surface_term(int force_flag, int energy_flag,
+                                const ParticleRange &particles);
 
 /** \name P3M Tuning Functions */
 /************************************************************/
@@ -761,7 +762,8 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles) {
 
 #ifdef ROTATION
 /* Assign the torques obtained from k-space */
-static void P3M_assign_torques(double prefac, int d_rs, const ParticleRange &particles) {
+static void P3M_assign_torques(double prefac, int d_rs,
+                               const ParticleRange &particles) {
   /* particle counter, charge fraction counter */
   int cp_cnt = 0, cf_cnt = 0;
   /* index, index jumps for dp3m.rs_mesh array */
@@ -825,7 +827,8 @@ static void P3M_assign_torques(double prefac, int d_rs, const ParticleRange &par
 #endif
 
 /* Assign the dipolar forces obtained from k-space */
-static void dp3m_assign_forces_dip(double prefac, int d_rs, const ParticleRange &particles) {
+static void dp3m_assign_forces_dip(double prefac, int d_rs,
+                                   const ParticleRange &particles) {
   /* particle counter, charge fraction counter */
   int cp_cnt = 0, cf_cnt = 0;
   /* index, index jumps for dp3m.rs_mesh array */
@@ -866,7 +869,8 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs, const ParticleRange 
 
 /*****************************************************************************/
 
-double dp3m_calc_kspace_forces(int force_flag, int energy_flag, const ParticleRange &particles) {
+double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
+                               const ParticleRange &particles) {
   int i, d, d_rs, ind, j[3];
   /**************************************************************/
   /* k-space energy */
@@ -1042,8 +1046,9 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag, const ParticleRa
         /* redistribute force component mesh */
         dp3m_spread_force_grid(dp3m.rs_mesh);
         /* Assign force component from mesh to particle */
-        P3M_assign_torques(
-                dipole_prefac * (2 * Utils::pi() / box_geo.length()[0]), d_rs, particles);
+        P3M_assign_torques(dipole_prefac *
+                               (2 * Utils::pi() / box_geo.length()[0]),
+                           d_rs, particles);
       }
       P3M_TRACE(fprintf(stderr, "%d: done torque calculation.\n", this_node));
 #endif /*if def ROTATION */
@@ -1129,8 +1134,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag, const ParticleRa
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[2]);
         /* Assign force component from mesh to particle */
         dp3m_assign_forces_dip(
-                dipole_prefac * pow(2 * Utils::pi() / box_geo.length()[0], 2),
-                d_rs, particles);
+            dipole_prefac * pow(2 * Utils::pi() / box_geo.length()[0], 2), d_rs,
+            particles);
       }
 
       P3M_TRACE(fprintf(stderr,
@@ -1151,7 +1156,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag, const ParticleRa
 
 /************************************************************/
 
-double calc_surface_term(int force_flag, int energy_flag, const ParticleRange &particles) {
+double calc_surface_term(int force_flag, int energy_flag,
+                         const ParticleRange &particles) {
   const double pref = dipole.prefactor * 4 * M_PI * (1. / box_geo.length()[0]) *
                       (1. / box_geo.length()[1]) * (1. / box_geo.length()[2]) /
                       (2 * dp3m.params.epsilon + 1);
