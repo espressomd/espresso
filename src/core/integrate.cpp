@@ -56,9 +56,9 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
+#include "integrators/steepest_descent.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt_inline.hpp"
-#include "integrators/steepest_descent.hpp"
 
 #include <profiler/profiler.hpp>
 #include <utils/constants.hpp>
@@ -103,7 +103,6 @@ void notify_sig_int() {
 /** \name Private Functions */
 /************************************************************/
 /*@{*/
-
 
 /** Thermostats increment the RNG counter here. */
 void philox_counter_increment();
@@ -432,7 +431,6 @@ void integrate_set_nvt() {
   integ_switch = INTEG_METHOD_NVT;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
 }
-
 
 #ifdef NPT
 /** Parse integrate npt_isotropic command */

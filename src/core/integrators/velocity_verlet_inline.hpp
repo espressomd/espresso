@@ -1,12 +1,11 @@
 #ifndef INTEGRATORS_VELOCITY_VERLET_HPP
 #define INTEGRATORS_VELOCITY_VERLET_HPP
 
+#include "ParticleRange.hpp"
 #include "config.hpp"
 #include "particle_data.hpp"
-#include "ParticleRange.hpp"
 
-inline
-void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
+inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
   assert(integ_switch == INTEG_METHOD_NVT);
 
   auto const skin2 = Utils::sqr(0.5 * skin);
@@ -43,10 +42,8 @@ void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
   }
 }
 
-
-
-inline
-void velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
+inline void
+velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
   assert(integ_switch == INTEG_METHOD_NVT);
 
   for (auto &p : particles) {
@@ -68,15 +65,15 @@ void velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
   }
 }
 
-void velocity_verlet_step_1(const ParticleRange& particles) {
+void velocity_verlet_step_1(const ParticleRange &particles) {
   velocity_verlet_propagate_vel_pos(particles);
   sim_time += time_step;
 }
 
-void velocity_verlet_step_2(const ParticleRange& particles) {
+void velocity_verlet_step_2(const ParticleRange &particles) {
   velocity_verlet_propagate_vel_final(particles);
 #ifdef ROTATION
-    convert_torques_propagate_omega(particles);
+  convert_torques_propagate_omega(particles);
 #endif
 }
 
