@@ -61,6 +61,7 @@
 
 #include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
+#include <ParticleRange.hpp>
 
 /************************************************
  * data types
@@ -200,7 +201,7 @@ void p3m_count_charged_particles();
  *  in @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
  *  "ca_frac".
  */
-void p3m_charge_assign();
+void p3m_charge_assign(const ParticleRange &particles);
 
 /** Assign a single charge into the current charge grid.
  *

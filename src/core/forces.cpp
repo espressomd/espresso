@@ -92,7 +92,7 @@ void force_calc(CellStructure &cell_structure) {
 
   auto particles = cell_structure.local_cells().particles();
 #ifdef ELECTROSTATICS
-  iccp3m_iteration(particles);
+  iccp3m_iteration(particles, cell_structure.ghost_cells().particles());
 #endif
   init_forces(particles);
 
@@ -103,7 +103,7 @@ void force_calc(CellStructure &cell_structure) {
 #endif
   }
 
-  calc_long_range_forces();
+  calc_long_range_forces(particles);
 
   // Only calculate pair forces if the maximum cutoff is >0
   if (max_cut > 0) {
@@ -177,11 +177,11 @@ void force_calc(CellStructure &cell_structure) {
   recalc_forces = 0;
 }
 
-void calc_long_range_forces() {
+void calc_long_range_forces(const ParticleRange &particles) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_long_range_force();
+  Coulomb::calc_long_range_force(particles);
 
 #endif /*ifdef ELECTROSTATICS */
 

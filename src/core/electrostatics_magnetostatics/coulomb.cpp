@@ -40,8 +40,7 @@ void pressure_n(int &n_coulomb) {
   }
 }
 
-void calc_pressure_long_range(Observable_stat &virials,
-                              Observable_stat &p_tensor) {
+void calc_pressure_long_range(Observable_stat &virials, Observable_stat &p_tensor, const ParticleRange &particles) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -54,9 +53,9 @@ void calc_pressure_long_range(Observable_stat &virials,
         "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
     break;
   case COULOMB_P3M: {
-    p3m_charge_assign();
+    p3m_charge_assign(particles);
     virials.coulomb[1] = p3m_calc_kspace_forces(0, 1);
-    p3m_charge_assign();
+    p3m_charge_assign(particles);
     p3m_calc_kspace_stress(p_tensor.coulomb + 9);
     break;
   }
@@ -287,7 +286,7 @@ void init() {
   }
 }
 
-void calc_long_range_force() {
+void calc_long_range_force(const ParticleRange &particles) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
@@ -296,7 +295,7 @@ void calc_long_range_force() {
       ELC_p3m_charge_assign_both();
       ELC_P3M_self_forces();
     } else
-      p3m_charge_assign();
+      p3m_charge_assign(particles);
 
     p3m_calc_kspace_forces(1, 0);
 
@@ -320,7 +319,7 @@ void calc_long_range_force() {
 #endif
 #ifdef P3M
   case COULOMB_P3M:
-    p3m_charge_assign();
+    p3m_charge_assign(particles);
 #ifdef NPT
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += p3m_calc_kspace_forces(1, 1);
@@ -351,7 +350,7 @@ void calc_long_range_force() {
 #endif
 }
 
-void calc_energy_long_range(Observable_stat &energy) {
+void calc_energy_long_range(Observable_stat &energy, const ParticleRange &particles) {
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_P3M_GPU:
@@ -359,13 +358,13 @@ void calc_energy_long_range(Observable_stat &energy) {
         << "long range energy calculation not implemented for GPU P3M";
     break;
   case COULOMB_P3M:
-    p3m_charge_assign();
+    p3m_charge_assign(particles);
     energy.coulomb[1] = p3m_calc_kspace_forces(0, 1);
     break;
   case COULOMB_ELC_P3M:
     // assign the original charges first
     // they may not have been assigned yet
-    p3m_charge_assign();
+    p3m_charge_assign(particles);
     if (!elc_params.dielectric_contrast_on)
       energy.coulomb[1] = p3m_calc_kspace_forces(0, 1);
     else {

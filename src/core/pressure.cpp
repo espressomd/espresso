@@ -72,7 +72,7 @@ nptiso_struct nptiso = {0.0,
 /************************************************************/
 
 /** Calculate long range virials (P3M, MMM2d...). */
-void calc_long_range_virials();
+void calc_long_range_virials(const ParticleRange &particles);
 
 /** Initializes a virials Observable stat. */
 void init_virials(Observable_stat *stat);
@@ -138,7 +138,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
-  calc_long_range_virials();
+  calc_long_range_virials(local_cells.particles());
 
 #ifdef VIRTUAL_SITES
   virtual_sites()->pressure_and_stress_tensor_contribution(
@@ -175,10 +175,10 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 
 /************************************************************/
 
-void calc_long_range_virials() {
+void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_pressure_long_range(virials, p_tensor);
+  Coulomb::calc_pressure_long_range(virials, p_tensor, particles);
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES

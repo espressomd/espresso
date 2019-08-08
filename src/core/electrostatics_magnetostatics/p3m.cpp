@@ -251,7 +251,7 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
  *  wrapper.
  *  \tparam cao      charge assignment order.
  */
-template <int cao> static void p3m_do_charge_assign();
+template <int cao> static void p3m_do_charge_assign(const ParticleRange &particles);
 
 template <int cao>
 void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
@@ -493,41 +493,42 @@ void p3m_interpolate_charge_assignment_function() {
 }
 
 /* Template wrapper for p3m_do_charge_assign() */
-void p3m_charge_assign() {
+void p3m_charge_assign(const ParticleRange &particles) {
   switch (p3m.params.cao) {
   case 1:
-    p3m_do_charge_assign<1>();
+    p3m_do_charge_assign<1>(particles);
     break;
   case 2:
-    p3m_do_charge_assign<2>();
+    p3m_do_charge_assign<2>(particles);
     break;
   case 3:
-    p3m_do_charge_assign<3>();
+    p3m_do_charge_assign<3>(particles);
     break;
   case 4:
-    p3m_do_charge_assign<4>();
+    p3m_do_charge_assign<4>(particles);
     break;
   case 5:
-    p3m_do_charge_assign<5>();
+    p3m_do_charge_assign<5>(particles);
     break;
   case 6:
-    p3m_do_charge_assign<6>();
+    p3m_do_charge_assign<6>(particles);
     break;
   case 7:
-    p3m_do_charge_assign<7>();
+    p3m_do_charge_assign<7>(particles);
     break;
   }
 }
 
 /** Assign the charges */
-template <int cao> void p3m_do_charge_assign() {
+template <int cao>
+void p3m_do_charge_assign(const ParticleRange &particles) {
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     if (p.p.q != 0.0) {
       p3m_do_assign_charge<cao>(p.p.q, p.r.p, cp_cnt);
       cp_cnt++;
