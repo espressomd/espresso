@@ -451,8 +451,9 @@ void cells_update_ghosts() {
   auto const exchange_data =
       GHOSTTRANS_PROPRTS | (ghosts_have_bonds ? GHOSTTRANS_BONDS : 0u) |
       GHOSTTRANS_POSITION | (ghosts_have_v ? GHOSTTRANS_MOMENTUM : 0u);
-  auto const update_data = exchange_data & ~(GHOSTTRANS_BONDS | GHOSTTRANS_PROPRTS);
-  
+  auto const update_data =
+      exchange_data & ~(GHOSTTRANS_BONDS | GHOSTTRANS_PROPRTS);
+
   if (topology_check_resort(cell_structure.type, resort_particles)) {
     int global = (resort_particles & Cells::RESORT_GLOBAL)
                      ? CELL_GLOBAL_EXCHANGE
@@ -463,12 +464,10 @@ void cells_update_ghosts() {
     /* Communication step:  number of ghosts and ghost information */
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
                        GHOSTTRANS_PARTNUM);
-    ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       exchange_data);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm, exchange_data);
   } else
     /* Communication step: ghost information */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       update_data);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm, update_data);
 }
 
 void cells_collect_forces() {

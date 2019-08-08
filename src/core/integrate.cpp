@@ -197,7 +197,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef VIRTUAL_SITES
     if (virtual_sites()->is_relative()) {
-      ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
+      ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                         GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
     }
     virtual_sites()->update();
 #endif
@@ -352,9 +353,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 // VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
-  if (virtual_sites()->need_ghost_comm_before_vel_update()) {
-    cells_update_ghosts();
-  }
+  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_MOMENTUM);
   virtual_sites()->update(false); // Recalc positions = false
 #endif
 

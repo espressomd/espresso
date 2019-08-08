@@ -128,6 +128,7 @@ further details.
 /** \name Transfer data classes, for \ref GhostCommunication::type */
 /************************************************************/
 /*@{*/
+#define GHOSTTRANS_NONE 0u
 /// transfer \ref ParticleProperties
 #define GHOSTTRANS_PROPRTS 1u
 /// transfer \ref ParticlePosition
