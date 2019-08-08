@@ -60,7 +60,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
                       PairKernel &&pair_kernel) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-  assert(get_resort_particles() = Cells::RESORT_NONE);
+  assert(get_resort_particles() == Cells::RESORT_NONE);
 
   auto first = boost::make_indirect_iterator(local_cells.begin());
   auto last = boost::make_indirect_iterator(local_cells.end());
