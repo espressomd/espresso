@@ -20,14 +20,20 @@ from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 
+include "myconfig.pxi"
+
 cdef extern from "config.hpp":
     pass
 
 cdef extern from "integrate.hpp" nogil:
     cdef int python_integrate(int n_steps, int recalc_forces, int reuse_forces)
     cdef void integrate_set_nvt()
-    cdef int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, int cubic_box)
     cdef extern cbool skin_set
+
+IF NPT:
+    cdef extern from "integrate.hpp" nogil:
+        cdef int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, int cubic_box)
+
 cdef inline int _integrate(int nSteps, int recalc_forces, int reuse_forces):
     with nogil:
         return python_integrate(nSteps, recalc_forces, reuse_forces)

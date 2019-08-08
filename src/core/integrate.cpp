@@ -163,9 +163,11 @@ bool integrator_step_1(ParticleRange &particles) {
   case INTEG_METHOD_NVT:
     velocity_verlet_step_1(particles);
     break;
+#ifdef NPT
   case INTEG_METHOD_NPT_ISO:
     velocity_verlet_npt_step_1(particles);
     break;
+#endif
   default:
     throw std::runtime_error("Unknown value for integ_switch");
   }
@@ -180,9 +182,11 @@ void integrator_step_2(ParticleRange &particles) {
   case INTEG_METHOD_NVT:
     velocity_verlet_step_2(particles);
     break;
+#ifdef NPT
   case INTEG_METHOD_NPT_ISO:
     velocity_verlet_npt_step_2(particles);
     break;
+#endif
   default:
     throw std::runtime_error("Unknown value for INTEG_SWITCH");
   }
@@ -429,6 +433,8 @@ void integrate_set_nvt() {
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
 }
 
+
+#ifdef NPT
 /** Parse integrate npt_isotropic command */
 int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
                                 int ydir, int zdir, bool cubic_box) {
@@ -519,3 +525,4 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
   mpi_bcast_nptiso_geom();
   return (ES_OK);
 }
+#endif
