@@ -78,8 +78,7 @@ void nsq_topology_init(CellPList *old) {
   local_cells.cell[0] = local;
 
   realloc_cellplist(&ghost_cells, ghost_cells.n = n_nodes - 1);
-  int c = 0;
-  for (int n = 0; n < n_nodes; n++)
+  for (int n = 0, c = 0; n < n_nodes; n++)
     if (n != this_node)
       ghost_cells.cell[c++] = &cells[n];
 
@@ -112,6 +111,10 @@ void nsq_topology_init(CellPList *old) {
                    GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
   nsq_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
 
+  for (int n = 0; n < n_nodes; n++) {
+    cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
+  }
+
   /* here we just decide what to transfer where */
   if (n_nodes > 1) {
     for (int n = 0; n < n_nodes; n++) {
@@ -123,7 +126,6 @@ void nsq_topology_init(CellPList *old) {
         cell_structure.exchange_ghosts_comm.comm[n].type =
             GHOST_BCST | GHOST_PREFETCH;
       }
-      cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
     }
     /* first round: all nodes except the first one prefetch their send data */
     if (this_node != 0) {
