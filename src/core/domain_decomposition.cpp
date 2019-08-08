@@ -647,9 +647,6 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   /* mark cells */
   dd_mark_cells();
 
-  /* create communicators */
-  dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM, grid);
-
   exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
   update_data = GHOSTTRANS_POSITION;
 
@@ -661,7 +658,6 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
 
-  dd_assign_prefetches(&cell_structure.ghost_cells_comm);
   dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
   dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
@@ -689,13 +685,9 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid) {
 
 /************************************************************/
 void dd_topology_release() {
-  CELL_TRACE(fprintf(stderr, "%d: dd_topology_release:\n", this_node));
-  /* release cell interactions */
-
   /* free ghost cell pointer list */
   realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
   /* free ghost communicators */
-  free_comm(&cell_structure.ghost_cells_comm);
   free_comm(&cell_structure.exchange_ghosts_comm);
   free_comm(&cell_structure.update_ghost_pos_comm);
   free_comm(&cell_structure.collect_ghost_force_comm);

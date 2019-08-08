@@ -102,8 +102,6 @@ Cell *layered_position_to_cell(const Utils::Vector3d &pos) {
 }
 
 void layered_topology_release() {
-  CELL_TRACE(fprintf(stderr, "%d: layered_topology_release:\n", this_node));
-  free_comm(&cell_structure.ghost_cells_comm);
   free_comm(&cell_structure.exchange_ghosts_comm);
   free_comm(&cell_structure.update_ghost_pos_comm);
   free_comm(&cell_structure.collect_ghost_force_comm);
@@ -354,7 +352,6 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   ghost_cells.cell[1] = &cells.back();
 
   /* create communicators */
-  layered_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
   layered_prepare_comm(&cell_structure.exchange_ghosts_comm,
                        GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
   layered_prepare_comm(&cell_structure.update_ghost_pos_comm,
