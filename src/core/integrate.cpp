@@ -306,7 +306,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     particles = cell_structure.local_cells().particles();
 
 #ifdef LEES_EDWARDS
-    lees_edwards_protocol.velocity = lees_edwards_get_velocity(sim_time + 0.5);
+    lees_edwards_protocol.velocity =
+        lees_edwards_get_velocity(sim_time - time_step / 2.0);
 #endif
 
     force_calc(cell_structure);
@@ -424,7 +425,7 @@ void philox_counter_increment() {
 void propagate_vel_finalize_p_inst(const ParticleRange &particles) {
 
 #ifdef LEES_EDWARDS
-  double le_vel = lees_edwards_get_velocity(sim_time + time_step) / 2.0;
+  double le_vel = lees_edwards_get_velocity(sim_time) / 2.0;
 #endif
 
 #ifdef NPT
