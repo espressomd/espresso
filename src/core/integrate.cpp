@@ -105,17 +105,17 @@ void notify_sig_int() {
 /** Propagate the velocities. Integration step 1 of the Velocity Verlet
    integrator:<br>
     \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] */
-void propagate_vel(const ParticleRange &particles);
+void velocity_verlet_npt_propagate_vel(const ParticleRange &particles);
 /** Propagate the positions. Integration step 2 of the Velocity
    Verletintegrator:<br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
-void propagate_pos(const ParticleRange &particles);
+void velocity_verlet_npt_propagate_pos(const ParticleRange &particles);
 /** Propagate the velocities and positions. Integration step 1 and 2
     of the Velocity Verlet integrator: <br>
     \f[ v(t+0.5 \Delta t) = v(t) + 0.5 \Delta t f(t)/m \f] <br>
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 
-void propagate_vel_pos(const ParticleRange &particles);
+void velocity_verlet_propagate_vel_pos(const ParticleRange &particles);
 /** Integration step 4 of the Velocity Verletintegrator and finalize
     instantaneous pressure calculation:<br>
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
@@ -172,20 +172,25 @@ void integrate_ensemble_init() {
 #endif
 }
 
-/************************************************************/
-/** @brief Step 1 and 2 of Velocity Verlet scheme
-         v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
-         p(t + dt)   = p(t) + dt * v(t+0.5*dt)
-         NOTE: Depending on the integration method Step 1 and Step 2
-         cannot be combined for the translation.
-*/
-void velocity_verlet_step_1_and_2(ParticleRange &particles) {
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    propagate_vel(particles);
-    propagate_pos(particles);
-  } else {
-    propagate_vel_pos(particles);
+bool integrator_step_1(ParticleRange &particles) {
+  switch (integ_switch) {
+  case INTEG_METHOD_STEEPEST_DESCENT:
+    if (steepest_descent_step(particles))
+      return true; // early exit
+    break;
+  case INTEG_METHOD_NVT:
+    velocity_verlet_propagate_vel_pos(particles);
+    sim_time += time_step;
+    break;
+  case INTEG_METHOD_NPT_ISO:
+    velocity_verlet_npt_propagate_vel(particles);
+    velocity_verlet_npt_propagate_pos(particles);
+    sim_time += time_step;
+    break;
+  default:
+    throw std::runtime_error("Unknown value for integ_switch");
   }
+  return false;
 }
 
 void integrate_vv(int n_steps, int reuse_forces) {
@@ -259,20 +264,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
       save_old_pos(particles, ghost_cells.particles());
 
 #endif
-
-    if (integ_switch == INTEG_METHOD_STEEPEST_DESCENT) {
-      if (steepest_descent_step(particles))
-        break;
-    } else {
-      /* Integration Steps: Step 1 and 2 of Velocity Verlet scheme:
-         v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
-         p(t + dt)   = p(t) + dt * v(t+0.5*dt)
-         NOTE: Depending on the integration method Step 1 and Step 2
-         cannot be combined for the translation.
-      */
-      velocity_verlet_step_1_and_2(particles);
-    }
-
+    bool early_exit = integrator_step_1(particles);
+    if (early_exit)
+      break;
     /* Propagate time: t = t+dt */
     sim_time += time_step;
 
@@ -543,7 +537,8 @@ void propagate_press_box_pos_and_rescale_npt(const ParticleRange &particles) {
 #endif
 }
 
-void propagate_vel(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
+  assert(integ_switch == INTEG_METHOD_NPT_ISO);
 #ifdef NPT
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 #endif
@@ -578,7 +573,8 @@ void propagate_vel(const ParticleRange &particles) {
   }
 }
 
-void propagate_pos(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
+  assert(integ_switch == INTEG_METHOD_NPT_ISO);
   if (integ_switch == INTEG_METHOD_NPT_ISO)
     /* Special propagator for NPT ISOTROPIC */
     /* Propagate pressure, box_length (2 times) and positions, rescale
@@ -607,7 +603,8 @@ void propagate_pos(const ParticleRange &particles) {
   }
 }
 
-void propagate_vel_pos(const ParticleRange &particles) {
+void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
+  assert(integ_switch == INTEG_METHOD_NVT);
   for (auto &p : particles) {
 #ifdef ROTATION
     propagate_omega_quat_particle(&p);
