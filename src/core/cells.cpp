@@ -446,11 +446,7 @@ void check_resort_particles() {
 
 /*************************************************/
 void cells_update_ghosts() {
-  extern bool ghosts_have_bonds;
-  extern bool ghosts_have_v;
-  auto const exchange_data =
-      GHOSTTRANS_PROPRTS | (ghosts_have_bonds ? GHOSTTRANS_BONDS : 0u) |
-      GHOSTTRANS_POSITION | (ghosts_have_v ? GHOSTTRANS_MOMENTUM : 0u);
+  auto const exchange_data = required_ghost_data();
   auto const update_data =
       exchange_data & ~(GHOSTTRANS_BONDS | GHOSTTRANS_PROPRTS);
 

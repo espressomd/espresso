@@ -55,14 +55,6 @@ static char *r_buffer = nullptr;
 static std::vector<int> s_bondbuffer;
 static std::vector<int> r_bondbuffer;
 
-/** whether the ghosts should also have velocity information, e. g. for DPD or
-   RATTLE. You need this whenever you need the relative velocity of two
-   particles. NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change
-   !!!!
-*/
-bool ghosts_have_v = false;
-bool ghosts_have_bonds = false;
-
 void prepare_comm(GhostCommunicator *comm, int num) {
   assert(comm);
 
@@ -407,17 +399,6 @@ void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts) {
   /* Don't do empty communications */
   if (data_parts == GHOSTTRANS_NONE)
     return;
-
-  /* if ghosts should have uptodate velocities, they have to be updated like
-     positions (except for shifting...) */
-  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
-    data_parts |= GHOSTTRANS_MOMENTUM;
-
-  if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS))
-    data_parts |= GHOSTTRANS_BONDS;
-
-  GHOST_TRACE(fprintf(stderr, "%d: ghost_comm %p, data_parts %d\n", this_node,
-                      (void *)gc, data_parts));
 
   for (int n = 0; n < gc->num; n++) {
     GhostCommunication *gcn = &gc->comm[n];

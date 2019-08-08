@@ -42,7 +42,6 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
   m_virtual_sites = v;
   recalc_forces = 1;
   invalidate_obs();
-  on_ghost_flags_change();
 }
 
 #ifdef VIRTUAL_SITES_RELATIVE

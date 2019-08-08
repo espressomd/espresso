@@ -417,26 +417,10 @@ void on_parameter_change(int field) {
       nptiso.invalidate_p_vel = 1;
     break;
 #endif
-  case FIELD_THERMO_SWITCH:
-    /* DPD needs ghost velocities, other thermostats not */
-    on_ghost_flags_change();
-    break;
-  case FIELD_LATTICE_SWITCH:
-    /* LB needs ghost velocities */
-    on_ghost_flags_change();
-    break;
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
     invalidate_obs();
     recalc_forces = 1;
-    break;
-  case FIELD_RIGIDBONDS:
-    /* Rattle bonds needs ghost velocities */
-    on_ghost_flags_change();
-    break;
-  case FIELD_THERMALIZEDBONDS:
-    /* Thermalized distance bonds needs ghost velocities */
-    on_ghost_flags_change();
     break;
   case FIELD_SIMTIME:
     recalc_forces = 1;
@@ -444,34 +428,23 @@ void on_parameter_change(int field) {
   }
 }
 
-void on_ghost_flags_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
-  /* that's all we change here */
-  extern bool ghosts_have_v;
-  extern bool ghosts_have_bonds;
-
-  ghosts_have_v = false;
-  ghosts_have_bonds = false;
+unsigned int required_ghost_data() {
+  unsigned data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
 
   /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
-    ghosts_have_v = true;
+    data_parts |= GHOSTTRANS_MOMENTUM;
   if (thermo_switch & THERMO_DPD)
-    ghosts_have_v = true;
-#ifdef VIRTUAL_SITES
-  // If they have velocities, VIRUTAL_SITES need v to update v of virtual sites
-  if (virtual_sites()->get_have_velocity()) {
-    ghosts_have_v = true;
-  };
-#endif
+    data_parts |= GHOSTTRANS_MOMENTUM;
   // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
   if (n_thermalized_bonds) {
-    ghosts_have_v = true;
-    ghosts_have_bonds = true;
+    data_parts |= GHOSTTRANS_MOMENTUM | GHOSTTRANS_BONDS;
   }
 #ifdef COLLISION_DETECTION
   if (collision_params.mode) {
-    ghosts_have_bonds = true;
+    data_parts |= GHOSTTRANS_BONDS;
   }
 #endif
+
+  return data_parts;
 }
