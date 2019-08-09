@@ -191,21 +191,21 @@ class openGLLive:
 
     """
 
-    def __init__(self, system, **kwargs):
-        # MATERIALS
-        self.materials = {
-            'bright': [0.9, 1.0, 0.8, 0.4, 1.0],
-            'medium': [0.6, 0.8, 0.2, 0.4, 1.0],
-            'dark': [0.4, 0.5, 0.1, 0.4, 1.0],
-            'transparent1': [0.6, 0.8, 0.2, 0.5, 0.8],
-            'transparent2': [0.6, 0.8, 0.2, 0.5, 0.4],
-            'transparent3': [0.6, 0.8, 0.2, 0.5, 0.2],
-            'rubber': [0, 0.4, 0.7, 0.078125, 1.0],
-            'chrome': [0.25, 0.4, 0.774597, 0.6, 1.0],
-            'plastic': [0, 0.55, 0.7, 0.25, 1.0],
-            'steel': [0.25, 0.38, 0, 0.32, 1.0]
-        }
+    # MATERIALS
+    materials = {
+        'bright': [0.9, 1.0, 0.8, 0.4, 1.0],
+        'medium': [0.6, 0.8, 0.2, 0.4, 1.0],
+        'dark': [0.4, 0.5, 0.1, 0.4, 1.0],
+        'transparent1': [0.6, 0.8, 0.2, 0.5, 0.8],
+        'transparent2': [0.6, 0.8, 0.2, 0.5, 0.4],
+        'transparent3': [0.6, 0.8, 0.2, 0.5, 0.2],
+        'rubber': [0, 0.4, 0.7, 0.078125, 1.0],
+        'chrome': [0.25, 0.4, 0.774597, 0.6, 1.0],
+        'plastic': [0, 0.55, 0.7, 0.25, 1.0],
+        'steel': [0.25, 0.38, 0, 0.32, 1.0]
+    }
 
+    def __init__(self, system, **kwargs):
         # DEFAULT PROPERTIES
         self.specs = {
             'window_size': [800, 800],
@@ -335,12 +335,6 @@ class openGLLive:
 
         IF not ROTATION:
             self.specs['director_arrows'] = False
-
-        IF not CUDA:
-            self.specs['LB_draw_velocity_plane'] = False
-            self.specs['LB_draw_boundaries'] = False
-            self.specs['LB_draw_nodes'] = False
-            self.specs['LB_draw_node_boundaries'] = False
 
         IF not LB_BOUNDARIES and not LB_BOUNDARIES_GPU:
             self.specs['LB_draw_boundaries'] = False
@@ -1578,18 +1572,15 @@ class openGLLive:
 
         # LOOK FOR LB ACTOR
         if self.specs['LB_draw_velocity_plane'] or self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
+            lb_types = [espressomd.lb.LBFluid]
+            IF CUDA:
+                lb_types.append(espressomd.lb.LBFluidGPU)
             for a in self.system.actors:
-                types = [types.append(espressomd.lb.LBFluid)]
-                IF CUDA:
-                    types.append(espressomd.lb.LBFluidGPU)
-
-                # if type(a) == espressomd.lb.LBFluidGPU or type(a) ==
-                # espressomd.lb.LBFluid
-                if type(a) in types:
+                if isinstance(a, tuple(lb_types)):
                     # if 'agrid' in pa:
                     self.lb_params = a.get_params()
                     self.lb = a
-                    self.lb_is_cpu = type(a) == espressomd.lb.LBFluid
+                    self.lb_is_cpu = isinstance(a, espressomd.lb.LBFluid)
                     break
 
         if self.specs['LB_draw_velocity_plane']:
