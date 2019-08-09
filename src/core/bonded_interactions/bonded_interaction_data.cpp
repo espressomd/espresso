@@ -27,10 +27,9 @@ double recalc_maximal_cutoff_bonded() {
       max_cut_bonded =
           std::max(max_cut_bonded, std::sqrt(bonded_ia_param.p.rigid_bond.d2));
       break;
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_param.p.tab.type == TAB_BOND_LENGTH)
-        max_cut_bonded =
-            std::max(max_cut_bonded, bonded_ia_param.p.tab.pot->cutoff());
+    case BONDED_IA_TABULATED_DISTANCE:
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.tab.pot->cutoff());
       break;
     case BONDED_IA_IBM_TRIEL:
       max_cut_bonded =
@@ -46,11 +45,8 @@ double recalc_maximal_cutoff_bonded() {
   for (auto const &bonded_ia_param : bonded_ia_params) {
     switch (bonded_ia_param.type) {
     case BONDED_IA_DIHEDRAL:
+    case BONDED_IA_TABULATED_DIHEDRAL:
       max_cut_bonded *= 2;
-      break;
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_param.p.tab.type == TAB_BOND_DIHEDRAL)
-        max_cut_bonded *= 2;
       break;
     default:
       break;

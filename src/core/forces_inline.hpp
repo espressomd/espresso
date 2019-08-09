@@ -360,9 +360,8 @@ inline bool calc_bond_pair_force(Particle *const p1, Particle const *const p2,
     bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
     break;
 #endif
-  case BONDED_IA_TABULATED:
-    if (iaparams->num == 1)
-      bond_broken = calc_tab_bond_force(iaparams, dx, force);
+  case BONDED_IA_TABULATED_DISTANCE:
+    bond_broken = calc_tab_bond_force(iaparams, dx, force);
     break;
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
@@ -475,10 +474,9 @@ inline void add_bonded_force(Particle *const p1) {
         bond_broken = false;
         break;
 #endif
-      case BONDED_IA_TABULATED:
-        if (iaparams->num == 2)
-          bond_broken = calc_tab_angle_force(p1, p2, p3, iaparams, force1,
-                                             force2, force3);
+      case BONDED_IA_TABULATED_ANGLE:
+        bond_broken =
+            calc_tab_angle_force(p1, p2, p3, iaparams, force1, force2, force3);
         break;
       case BONDED_IA_IBM_TRIEL:
         bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
@@ -514,10 +512,9 @@ inline void add_bonded_force(Particle *const p1) {
         bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force1,
                                           force2, force3);
         break;
-      case BONDED_IA_TABULATED:
-        if (iaparams->num == 3)
-          bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams,
-                                                force1, force2, force3);
+      case BONDED_IA_TABULATED_DIHEDRAL:
+        bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force1,
+                                              force2, force3);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
