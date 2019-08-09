@@ -279,7 +279,7 @@ if args.drude:
     thermalized_dist_bond = ThermalizedBond(
         temp_com=temperature_com, gamma_com=gamma_com,
         temp_distance=temperature_drude, gamma_distance=gamma_drude,
-        r_cut=min(lj_sigmas.values()) * 0.5, seed = 123)
+        r_cut=min(lj_sigmas.values()) * 0.5, seed=123)
     harmonic_bond = HarmonicBond(k=k_drude, r_0=0.0, r_cut=1.0)
     system.bonded_inter.add(thermalized_dist_bond)
     system.bonded_inter.add(harmonic_bond)

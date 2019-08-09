@@ -56,7 +56,7 @@ void thermalized_bond_rng_counter_increment();
 
 /* Interface */
 bool thermalized_bond_is_seed_required();
-uint64_t thermalized_bond_get_rng_state(); 
+uint64_t thermalized_bond_get_rng_state();
 void thermalized_bond_set_rng_state(const uint64_t counter);
 
 /* Setup */
@@ -70,7 +70,7 @@ void thermalized_bond_init();
     1. rng_counter (initialized by seed) which is increased on
    integration
     2. Salt (decorrelates different counter)
-    3. Particle ID, Partner ID 
+    3. Particle ID, Partner ID
 */
 
 inline Utils::Vector3d v_noise(int particle_id, int partner_id) {
@@ -83,9 +83,9 @@ inline Utils::Vector3d v_noise(int particle_id, int partner_id) {
               static_cast<uint64_t>(RNGSalt::THERMALIZED_BOND)}};
 
   /** Bond is stored on particle_id, so concatenation with the
-      partner_id is unique. This will give the same RN for 
-	  multiple thermalized bonds on the same particle pair, which
-	  should not be allowed.
+      partner_id is unique. This will give the same RN for
+          multiple thermalized bonds on the same particle pair, which
+          should not be allowed.
    */
   uint64_t merged_ids;
   auto const id1 = static_cast<uint32_t>(particle_id);
@@ -130,26 +130,25 @@ calc_thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
       mass_tot_inv * (p1->p.mass * p1->m.v + p2->p.mass * p2->m.v);
   auto const dist_vel = p2->m.v - p1->m.v;
 
-  Utils::Vector3d noise = v_noise(p1->p.identity, p2->p.identity); 
-
+  Utils::Vector3d noise = v_noise(p1->p.identity, p2->p.identity);
 
   for (int i = 0; i < 3; i++) {
     double force_lv_com, force_lv_dist;
 
     // Langevin thermostat for center of mass
     if (iaparams->p.thermalized_bond.pref2_com > 0.0) {
-      force_lv_com = -iaparams->p.thermalized_bond.pref1_com * com_vel[i] +
-                     sqrt_mass_tot * iaparams->p.thermalized_bond.pref2_com *
-                         noise[i];
+      force_lv_com =
+          -iaparams->p.thermalized_bond.pref1_com * com_vel[i] +
+          sqrt_mass_tot * iaparams->p.thermalized_bond.pref2_com * noise[i];
     } else {
       force_lv_com = -iaparams->p.thermalized_bond.pref1_com * com_vel[i];
     }
 
     // Langevin thermostat for distance p1->p2
     if (iaparams->p.thermalized_bond.pref2_dist > 0.0) {
-      force_lv_dist = -iaparams->p.thermalized_bond.pref1_dist * dist_vel[i] +
-                      sqrt_mass_red * iaparams->p.thermalized_bond.pref2_dist *
-                          noise[i];
+      force_lv_dist =
+          -iaparams->p.thermalized_bond.pref1_dist * dist_vel[i] +
+          sqrt_mass_red * iaparams->p.thermalized_bond.pref2_dist * noise[i];
     } else {
       force_lv_dist = -iaparams->p.thermalized_bond.pref1_dist * dist_vel[i];
     }
