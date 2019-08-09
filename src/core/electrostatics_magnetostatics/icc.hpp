@@ -95,7 +95,8 @@ extern iccp3m_struct iccp3m_cfg; /* global variable with ICCP3M configuration */
 /** The main iterative scheme, where the surface element charges are calculated
  * self-consistently.
  */
-int iccp3m_iteration(const ParticleRange &particles);
+int iccp3m_iteration(const ParticleRange &particles,
+                     const ParticleRange &ghost_particles);
 
 /** The allocation of ICCP3M lists for python interface
  */
