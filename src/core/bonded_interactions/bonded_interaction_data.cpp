@@ -34,9 +34,8 @@ void recalc_maximal_cutoff_bonded() {
       if (max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
         max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
       break;
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
-          max_cut_bonded < bonded_ia_params[i].p.tab.pot->cutoff())
+    case BONDED_IA_TABULATED_DISTANCE:
+      if (max_cut_bonded < bonded_ia_params[i].p.tab.pot->cutoff())
         max_cut_bonded = bonded_ia_params[i].p.tab.pot->cutoff();
       break;
     case BONDED_IA_IBM_TRIEL:
@@ -56,9 +55,8 @@ void recalc_maximal_cutoff_bonded() {
     case BONDED_IA_DIHEDRAL:
       max_cut_bonded = max_cut_tmp;
       break;
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-        max_cut_bonded = max_cut_tmp;
+    case BONDED_IA_TABULATED_DIHEDRAL:
+      max_cut_bonded = max_cut_tmp;
       break;
     default:
       break;
