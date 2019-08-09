@@ -97,7 +97,7 @@ void energy_calc(double *result, const double time) {
         add_non_bonded_pair_energy(&p1, &p2, d.vec21, sqrt(d.dist2), d.dist2);
       });
 
-  calc_long_range_energies();
+  calc_long_range_energies(local_cells.particles());
 
   auto local_parts = local_cells.particles();
   Constraints::constraints.add_energy(local_parts, time, energy);
@@ -113,14 +113,14 @@ void energy_calc(double *result, const double time) {
 
 /************************************************************/
 
-void calc_long_range_energies() {
+void calc_long_range_energies(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_energy_long_range(energy);
+  Coulomb::calc_energy_long_range(energy, particles);
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  Dipole::calc_energy_long_range(energy);
+  Dipole::calc_energy_long_range(energy, particles);
 #endif /* ifdef DIPOLES */
 }
 

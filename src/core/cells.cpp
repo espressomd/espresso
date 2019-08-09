@@ -417,7 +417,7 @@ void cells_resort_particles(int global_flag) {
 
   realloc_particlelist(&displaced_parts, 0);
 
-  on_resort_particles();
+  on_resort_particles(local_cells.particles());
 
   CELL_TRACE(
       fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));

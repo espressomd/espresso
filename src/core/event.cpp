@@ -286,10 +286,10 @@ void on_lbboundary_change() {
 #endif
 }
 
-void on_resort_particles() {
+void on_resort_particles(const ParticleRange &particles) {
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
-  Coulomb::on_resort_particles();
+  Coulomb::on_resort_particles(particles);
 #endif /* ifdef ELECTROSTATICS */
 
   /* DIPOLAR interactions so far don't need this */
