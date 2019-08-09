@@ -34,6 +34,7 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
@@ -271,8 +272,48 @@ void lb_init_boundaries() {
       }
     }
 #endif
-  }
+  } else if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+#if defined(LB_BOUNDARIES)
+    Utils::Vector3i offset;
+    int the_boundary = -1;
+
+    lb_walberla()->clear_boundaries();
+
+    auto const agrid = lb_lbfluid_get_agrid();
+
+    for (auto index_and_pos : lb_walberla()->global_node_indices_positions()) {
+      // Convert to MD units
+      auto const index = index_and_pos.first;
+      auto const pos = index_and_pos.second * agrid;
+
+      int n = 0;
+      for (auto it = lbboundaries.begin(); it != lbboundaries.end();
+           ++it, ++n) {
+        double dist;
+        Utils::Vector3d tmp;
+        (**it).calc_dist(pos, &dist, tmp.data());
+
+        if (dist <= 0) {
+          
+          // Set boundaries on the ghost layers
+          auto const grid = lb_walberla()->get_grid_dimensions();
+          for (int dx : {-1,0,1}) 
+            for (int dy : {-1,0,1})
+              for (int dz : {-1,0,1}) {
+                Utils::Vector3i shifted_index=index +Utils::Vector3i{dx*grid[0],dy*grid[1],dz*grid[2]};
+                lb_walberla()->set_node_velocity_at_boundary(
+                  shifted_index, (**it).velocity() / lb_lbfluid_get_lattice_speed()); 
+            }
+            break;
+          } // if dist <=0
+        } // loop over boundaries
+      } // Loop over cells
+    } // lattice switch is WALBERLA
+#endif
+#endif
 }
+
 
 Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
   Utils::Vector3d force{};

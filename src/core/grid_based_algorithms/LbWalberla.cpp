@@ -4,6 +4,7 @@
 #include "communication.hpp"
 #include "lb_walberla_instance.hpp"
 #include "utils/Vector.hpp"
+#include "utils/math/make_lin_space.hpp"
 #include "utils/mpi/gatherv.hpp"
 
 #include "blockforest/Initialization.h"
@@ -69,7 +70,9 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
     }
   }
   m_grid_dimensions = grid_dimensions;
-  printf("grid: %d %d %d, node: %d %d %d\n",grid_dimensions[0],grid_dimensions[1],grid_dimensions[2],node_grid[0],node_grid[1],node_grid[2]);
+  printf("grid: %d %d %d, node: %d %d %d\n", grid_dimensions[0],
+         grid_dimensions[1], grid_dimensions[2], node_grid[0], node_grid[1],
+         node_grid[2]);
 
   m_blocks = blockforest::createUniformBlockGrid(
       uint_c(node_grid[0]), // blocks in x direction
@@ -108,7 +111,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       LB_boundary_handling(m_flag_field_id, m_pdf_field_id),
       "boundary handling");
 
-  empty_flags_for_boundary(m_blocks, m_boundary_handling_id);
+  clear_boundaries();
 
   // 1 timestep each time the integrate function is called
   m_time_loop =
@@ -125,20 +128,19 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>(
       m_pdf_field_id, m_force_field_id, m_force_field_from_md_id,
       m_boundary_handling_id);
-  m_time_loop->add()
-      << // timeloop::BeforeFunction(communication, "communication")
-      timeloop::Sweep(
-          Boundary_handling_t::getBlockSweep(m_boundary_handling_id),
-          "boundary handling");
+  m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
+                     << timeloop::Sweep(Boundary_handling_t::getBlockSweep(
+                                            m_boundary_handling_id),
+                                        "boundary handling");
   m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                         "Reset force fields");
-  m_time_loop->add()
-      << timeloop::AfterFunction(communication, "communication")
-      << timeloop::Sweep(
-             domain_decomposition::makeSharedSweep(
-                 lbm::makeCellwiseSweep<Lattice_model_t, Flag_field_t>(
-                     m_pdf_field_id, m_flag_field_id, Fluid_flag)),
-             "LB stream & collide");
+  //  m_time_loop->add()
+  //      << timeloop::AfterFunction(communication, "communication")
+  m_time_loop->add() << timeloop::Sweep(
+      domain_decomposition::makeSharedSweep(
+          lbm::makeCellwiseSweep<Lattice_model_t, Flag_field_t>(
+              m_pdf_field_id, m_flag_field_id, Fluid_flag)),
+      "LB stream & collide");
 
   m_force_distributor_id =
       field::addDistributor<Vector_field_distributor_t, Flag_field_t>(
@@ -181,7 +183,7 @@ LbWalberla::get_block_and_cell(const Utils::Vector3i &node,
     // Try to find a block which has the cell as ghost layer
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       if (b->getAABB()
-              .getExtended(m_skin / m_agrid)
+              .getExtended(1)
               .contains(real_c(node[0]), real_c(node[1]), real_c(node[2]))) {
         block = &(*b);
         break;
@@ -222,7 +224,7 @@ IBlock *LbWalberla::get_block(const Utils::Vector3d &pos,
 
 bool LbWalberla::set_node_velocity_at_boundary(const Utils::Vector3i node,
                                                const Utils::Vector3d v) {
-  auto bc = get_block_and_cell(node);
+  auto bc = get_block_and_cell(node,true);
   // Return if we don't have the cell.
   if (!bc)
     return false;
@@ -421,6 +423,58 @@ bool LbWalberla::pos_in_local_domain(const Utils::Vector3d &pos) const {
   auto block =
       m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
   return (block != nullptr);
+}
+
+std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
+LbWalberla::node_indices_positions() {
+
+  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
+  for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
+    auto left = block->getAABB().min();
+    // Lattice constant is 1, node centers are offset by .5
+    Utils::Vector3d pos_offset =
+        to_vector3d(left) + Utils::Vector3d::broadcast(.5);
+
+    // Lattice constant is 1, so cast left corner position to ints
+    Utils::Vector3i index_offset =
+        Utils::Vector3i{int(left[0]), int(left[1]), int(left[2])};
+
+    // Get field data which knows about the indices
+    // In the loop, x,y,z are in block-local coordinates
+    auto pdf_field = block->getData<Pdf_field_t>(m_pdf_field_id);
+    for (int x : Utils::make_lin_space(int(0), int(pdf_field->xSize()),
+                                       int(pdf_field->xSize()), false)) {
+      for (int y : Utils::make_lin_space(int(0), int(pdf_field->ySize()),
+                                         int(pdf_field->ySize()), false)) {
+        for (int z : Utils::make_lin_space(int(0), int(pdf_field->zSize()),
+                                           int(pdf_field->zSize()), false)) {
+          res.push_back(
+              {index_offset + Utils::Vector3i{x, y, z},
+               pos_offset + Utils::Vector3d{double(x), double(y), double(z)}});
+        }
+      }
+    }
+  }
+  return res;
+}
+
+std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
+LbWalberla::global_node_indices_positions() {
+
+  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
+  for (int x : Utils::make_lin_space(int(0), int(m_grid_dimensions[0]),
+                                     int(m_grid_dimensions[0]), false)) {
+  for (int y : Utils::make_lin_space(int(0), int(m_grid_dimensions[1]),
+                                     int(m_grid_dimensions[1]), false)) {
+  for (int z : Utils::make_lin_space(int(0), int(m_grid_dimensions[2]),
+                                     int(m_grid_dimensions[2]), false)) {
+          res.push_back(
+              {Utils::Vector3i{x, y, z},
+               Utils::Vector3d::broadcast(.5) +Utils::Vector3d{double(x), double(y), double(z)}});
+        }
+      }
+    }
+  return res;
 }
 
 #endif
