@@ -21,12 +21,14 @@ struct CantorPairing {
 };
 
 struct CantorCompare {
-  bool operator()(std::pair<int, int> const &lhs, std::pair<int, int> const &rhs) const {
-    return (lhs.first == rhs.first and lhs.second == rhs.second) or (lhs.first == rhs.second and lhs.second == rhs.first);
+  bool operator()(std::pair<int, int> const &lhs,
+                  std::pair<int, int> const &rhs) const {
+    return (lhs.first == rhs.first and lhs.second == rhs.second) or
+           (lhs.first == rhs.second and lhs.second == rhs.first);
   }
 };
 
-} // namespace
-} // namespace
+} // namespace Hash
+} // namespace Utils
 
 #endif
