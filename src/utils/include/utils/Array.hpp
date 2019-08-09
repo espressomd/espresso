@@ -129,8 +129,8 @@ template <typename T, std::size_t N> struct Array {
   // workaround for https://github.com/RadeonOpenCompute/hcc/issues/860
   __attribute__((annotate("serialize"))) void
   __cxxamp_serialize(Kalmar::Serialize &s) const;
-  __attribute__((annotate("user_deserialize"))) void cxxamp_deserialize()
-      [[cpu]] [[hc]];
+  __attribute__((annotate("user_deserialize"))) void
+  cxxamp_deserialize()[[cpu]][[hc]];
 #endif
 
 private:
