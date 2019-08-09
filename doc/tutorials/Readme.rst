@@ -16,6 +16,7 @@ physical systems. Currently, the following tutorials are available:
 * :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions
 * :file:`08-visualization`: Using the online visualizers of ESPResSo
 * :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble
+* :file:`11-ferrofluid`: Modelling a monolayer ferrofluid system
 
 Using the tutorials
 -------------------

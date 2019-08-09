@@ -34,7 +34,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
         """
 
@@ -69,17 +69,17 @@ IF DP3M == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
         accuracy : :obj:`float`
             P3M tunes its parameters to provide this target accuracy.
         alpha : :obj:`float`
             Ewald parameter.
         cao : :obj:`int`
             Charge-assignment order, an integer between -1 and 7.
-        mesh : :obj:`int` or array_like of :obj:`int`
+        mesh : :obj:`int` or (3,) array_like of :obj:`int`
             The number of mesh points in x, y and z direction. Use a single
             value for cubic boxes.
-        mesh_off : array_like :obj:`float`
+        mesh_off : (3,) array_like of :obj:`float`
             Mesh offset.
         r_cut : :obj:`float`
             Real space cutoff.
@@ -128,7 +128,7 @@ IF DP3M == 1:
 
             if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params["mesh_off"]) == 3):
                 raise ValueError(
-                    "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
+                    "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
 
         def valid_keys(self):
             return ["prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
@@ -248,7 +248,7 @@ IF DIPOLES == 1:
         ----------
 
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
         """
 
@@ -283,7 +283,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
         n_replica : :obj:`int`
             Number of replicas to be taken into account at periodic boundaries.
 
@@ -320,7 +320,7 @@ IF DIPOLES == 1:
             Attributes
             ----------
             prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+                Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
             method_name : :obj:`str`
                 Name of the method as defined in Scafacos
             method_params : :obj:`dict`
@@ -361,7 +361,7 @@ IF DIPOLES == 1:
             Attributes
             ----------
             prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+                Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
             """
 

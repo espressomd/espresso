@@ -184,7 +184,7 @@ cdef class System:
 
     property box_l:
         """
-        array_like of :obj:`float`:
+        (3,) array_like of :obj:`float`:
             Dimensions of the simulation box
 
         """
@@ -215,7 +215,7 @@ cdef class System:
 
     property periodicity:
         """
-        array_like of :obj:`bool`:
+        (3,) array_like of :obj:`bool`:
             System periodicity in ``[x, y, z]``, ``False`` for no periodicity
             in this direction, ``True`` for periodicity
 
@@ -267,11 +267,11 @@ cdef class System:
 
     property max_cut_nonbonded:
         def __get__(self):
-            return max_cut_nonbonded
+            return recalc_maximal_cutoff_nonbonded()
 
     property max_cut_bonded:
         def __get__(self):
-            return max_cut_bonded
+            return recalc_maximal_cutoff_bonded()
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
@@ -384,10 +384,10 @@ cdef class System:
         Parameters
         ----------
         d_new : :obj:`float`
-                New box length
+            New box length
         dir : :obj:`str`, optional
-                Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-                Isotropic assumes a cubic box.
+            Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+            Isotropic assumes a cubic box.
 
         """
 
@@ -437,11 +437,11 @@ cdef class System:
         Parameters
         ----------
         phi : :obj:`float`
-                Angle between the z-axis and the rotation axis.
+            Angle between the z-axis and the rotation axis.
         theta : :obj:`float`
-                Rotation of the axis around the y-axis.
+            Rotation of the axis around the y-axis.
         alpha : :obj:`float`
-                How much to rotate
+            How much to rotate
 
         """
         rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
@@ -456,7 +456,7 @@ cdef class System:
             Parameters
             ----------
             distance : :obj:`int`
-                       Bond distance upto which the exclusions should be added.
+                Bond distance upto which the exclusions should be added.
 
             """
             auto_exclusions(distance)
@@ -489,8 +489,8 @@ cdef class System:
         """
         Parameters
         ----------
-        current_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                       Particle type to count the number for.
+        current_type : :obj:`int` (:attr:`~espressomd.particle_data.ParticleHandle.type`)
+            Particle type to count the number for.
 
         Returns
         -------

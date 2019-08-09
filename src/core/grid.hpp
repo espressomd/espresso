@@ -168,7 +168,7 @@ inline Utils::Vector3d folded_position(const Utils::Vector3d &p,
 
 inline Utils::Vector3d image_shift(const Utils::Vector3i &image_box,
                                    const Utils::Vector3d &box) {
-  return {image_box[0] * box[0], image_box[1] * box[1], image_box[2] * box[2]};
+  return hadamard_product(image_box, box);
 }
 
 inline Utils::Vector3d unfolded_position(const Utils::Vector3d &pos,

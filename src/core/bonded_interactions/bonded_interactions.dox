@@ -61,12 +61,14 @@
  *
  *  * The recommended signatures of the force and energy functions are:
  *    @code{.cpp}
- *    inline int calc_fene_pair_force(Particle *p1, Particle *p2,
- *                                    Bonded_ia_parameters *iaparams,
- *                                    double const dx[3], double force[3]);
- *    inline int fene_pair_energy(Particle *p1, Particle *p2,
- *                                Bonded_ia_parameters *iaparams,
- *                                double const dx[3], double energy[3]);
+ *    inline bool calc_fene_pair_force(Particle const *const p1,
+ *                                     Particle const *const p2,
+ *                                     Bonded_ia_parameters const *const iaparams,
+ *                                     Vector3d const &dx, Vector3d &force);
+ *    inline bool fene_pair_energy(Particle const *const p1,
+ *                                 Particle const *const p2,
+ *                                 Bonded_ia_parameters const *const iaparams,
+ *                                 Vector3d const &dx, double *energy);
  *    @endcode
  *  * The setter function gets a \p bond_type which is a numerical id
  *    identifying the number of the bond type in the simulation.
@@ -94,9 +96,9 @@
  *  * At the end of the parameter setter function, do not forget the call to
  *    @ref mpi_bcast_ia_params(), which will sync the parameters just set to
  *    other compute nodes in a parallel simulation.
- *  * The functions calculating force and energy return an integer, @ref ES_OK
- *    in case of success, @ref ES_ERROR if the bond is broken (particles are
- *    too far apart). This will stop the integration with a runtime error.
+ *  * The functions calculating force and energy return a boolean value, false
+ *    in case of success, true if the bond is broken (particles are too far
+ *    apart). This will stop the integration with a runtime error.
  *  * The functions calculating force and energy can make use of a
  *    pre-calculated distance vector (\p dx) pointing from particle 2 to
  *    particle 1, that takes periodic boundary conditions into account.
@@ -111,7 +113,7 @@
  *
  *  * In bonded_interaction_data.cpp:
  *    - in function @ref recalc_maximal_cutoff_bonded(): add a case for the new
- *      interaction which makes sure that @ref max_cut_bonded is as large as
+ *      interaction which makes sure that @ref max_cut is as large as
  *      the interaction range of the new interaction. This is only relevant to
  *      pairwise bonds and dihedral bonds. The range can be calculated by a
  *      formula, so it is not strictly necessary that the maximal interaction
@@ -152,8 +154,7 @@
  *    pressure is calculated using the virials, for many body interactions
  *    currently no pressure is calculated.
  *
- *  @subsection bondedIA_new_interface Adding the interaction in the Python \
- *                                     interface
+ *  @subsection bondedIA_new_interface Adding the interaction in the Python interface
  *
  *  Please note that the following is Cython code (www.cython.org), rather than
  *  pure Python.

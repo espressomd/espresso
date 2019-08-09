@@ -32,8 +32,8 @@ public:
       : m_center({0.0, 0.0, 0.0}), m_semiaxes({1.0, 1.0, 1.0}),
         m_direction(1.0) {}
 
-  void calculate_dist(const Utils::Vector3d &pos, double *dist,
-                      double *vec) const override;
+  void calculate_dist(const Utils::Vector3d &pos, double &dist,
+                      Utils::Vector3d &vec) const override;
 
   void set_semiaxis_a(const double &value) { m_semiaxes[0] = value; }
   void set_semiaxis_b(const double &value) {

@@ -5,6 +5,7 @@
 
 #include <boost/serialization/optional.hpp>
 
+#include "ParticleRange.hpp"
 #include <utils/Counter.hpp>
 
 /** Calculate particle lattice interactions.

@@ -47,11 +47,10 @@ inline double sigmoid_force_r(double a, double n, double r) {
 }
 
 /** Calculate membrane-collision force between particle p1 and p2 */
-inline void add_membrane_collision_pair_force(const Particle *p1,
-                                              const Particle *p2,
-                                              IA_parameters *ia_params,
-                                              double d[3], double dist,
-                                              double force[3]) {
+inline void add_membrane_collision_pair_force(
+    Particle const *const p1, Particle const *const p2,
+    IA_parameters const *const ia_params, Utils::Vector3d const &d, double dist,
+    Utils::Vector3d &force) {
   /************************
    *
    * Description of implementation:
@@ -69,43 +68,38 @@ inline void add_membrane_collision_pair_force(const Particle *p1,
    *
    *********************/
 
-  int j;
-  double r_off, fac = 0.0, product, angle, ndir;
-  Utils::Vector3d out1, out2, dir;
+  if (dist < (ia_params->membrane.cut + ia_params->membrane.offset)) {
 
-  if ((dist < ia_params->membrane_cut + ia_params->membrane_offset)) {
-
-    r_off = dist - ia_params->membrane_offset;
+    auto const r_off = dist - ia_params->membrane.offset;
     // offset needs to be checked for the unphysical case when r_off should be
     // negative
 
     if (r_off > 0.0) {
 
-      out1 = p1->p.out_direction;
-      out2 = p2->p.out_direction;
+      auto const out1 = p1->p.out_direction;
+      auto const out2 = p2->p.out_direction;
       // check whether out_direction was set
       if (fabs(out1[0]) + fabs(out1[1]) + fabs(out1[2]) + fabs(out2[0]) +
               fabs(out2[1]) + fabs(out2[2]) <
           SMALL_OIF_MEMBRANE_CUTOFF) {
-        throw std::runtime_error("out direction net set");
+        throw std::runtime_error("out direction not set");
       }
 
       // this is the direction in which the repulsive forces will be applied and
       // its norm
-      dir = out1 - out2;
-      ndir = dir.norm();
+      auto const dir = out1 - out2;
+      auto const ndir = dir.norm();
 
       // for very small angles the force should not be applied - these happen at
       // the crossing of the boundary and would result in oscillation
-      product = out1 * out2;
-      angle = acos(product);
+      auto const product = out1 * out2;
+      auto const angle = acos(product);
 
       if (fabs(angle) > SMALL_OIF_MEMBRANE_CUTOFF) {
-        fac = sigmoid_force_r(ia_params->membrane_a, ia_params->membrane_n,
-                              r_off) /
-              dist;
-        for (j = 0; j < 3; j++)
-          force[j] -= fac * dir[j] / ndir;
+        auto const fac = sigmoid_force_r(ia_params->membrane.a,
+                                         ia_params->membrane.n, r_off) /
+                         dist;
+        force -= (fac / ndir) * dir;
       }
     }
   }

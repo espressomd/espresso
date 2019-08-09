@@ -188,12 +188,30 @@ fedora:
 
 ### Builds with CUDA
 
+cuda10-maxset:
+  <<: *global_job_definition
+  stage: build
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:10.1
+  script:
+    - export myconfig=maxset with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - export cmake_params="-DIPYTHON_EXECUTABLE=$(which jupyter)"
+    - bash maintainer/CI/build_cmake.sh
+  artifacts:
+    paths:
+    - build/
+    expire_in: 1 week
+  tags:
+    - docker
+    - linux
+    - cuda
+
 cuda-maxset:
   <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   script:
     - export myconfig=maxset with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - sed -i 's/ or "DISPLAY" in os.environ/ or True/' src/python/espressomd/visualization.pyx
     - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:
@@ -404,6 +422,7 @@ check_sphinx:
     - cuda-maxset
   when: on_success
   script:
+    - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
     - cd ${CI_PROJECT_DIR}/build
     - make -t && make sphinx
     - bash ../maintainer/CI/doc_warnings.sh
@@ -411,6 +430,30 @@ check_sphinx:
     paths:
     - build/doc/sphinx
     expire_in: 1 week
+  tags:
+    - docker
+    - linux
+    - cuda
+
+run_tutorials:
+  <<: *global_job_definition
+  stage: additional_checks
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:10.1
+  dependencies:
+    - cuda10-maxset
+  when: on_success
+  script:
+    - cd ${CI_PROJECT_DIR}/build
+    - make -t
+    - make tutorials
+    - make -j1 tutorials_html
+  artifacts:
+    paths:
+    - build/doc/tutorials
+    expire_in: 1 week
+  only:
+    variables:
+      - $CI_COMMIT_REF_NAME == "python" && $CI_DEPLOY_TUTORIALS
   tags:
     - docker
     - linux
@@ -483,6 +526,20 @@ deploy_doxygen_documentation:
   script:
     - cd ${CI_PROJECT_DIR}/build/doc/doxygen/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
+
+deploy_tutorials:
+  extends: .deploy_base
+  dependencies:
+    - run_tutorials
+  script:
+    - cd ${CI_PROJECT_DIR}/build/doc/tutorials
+    - ${CI_PROJECT_DIR}/maintainer/CI/deploy_tutorials.py
+    - mkdir www &&
+      rsync -a --files-from=deploy_list.txt ./ www &&
+      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" www/ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/tutorials_html
+  only:
+    variables:
+      - $CI_COMMIT_REF_NAME == "python" && $CI_DEPLOY_TUTORIALS
 
 status_success:
   <<: *notification_job_definition

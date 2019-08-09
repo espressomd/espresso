@@ -34,8 +34,8 @@ public:
         m_outer_radius(0.0), m_inner_radius(0.0), m_width(0.0),
         m_opening_angle(0.0), m_direction(0.0) {}
 
-  void calculate_dist(const Utils::Vector3d &pos, double *dist,
-                      double *vec) const override;
+  void calculate_dist(const Utils::Vector3d &pos, double &dist,
+                      Utils::Vector3d &vec) const override;
 
   Utils::Vector3d const &position() const { return m_position; }
   void set_position(Utils::Vector3d const &position) { m_position = position; }

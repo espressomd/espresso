@@ -60,6 +60,7 @@
 #include <profiler/profiler.hpp>
 #include <utils/constants.hpp>
 
+#include <boost/range/algorithm/min_element.hpp>
 #include <cmath>
 #include <cstdio>
 #include <mpi.h>
@@ -215,12 +216,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 
     thermo_cool_down();
-
-#ifdef COLLISION_DETECTION
-    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      handle_collisions();
-    }
-#endif
 
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
@@ -677,12 +672,15 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
-    if (max_cut == 0.0) {
+    if (max_cut <= 0.0) {
       runtimeErrorMsg()
           << "cannot automatically determine skin, please set it manually";
       return ES_ERROR;
     }
-    skin = std::min(0.4 * max_cut, max_skin);
+    /* maximal skin that can be used without resorting is the maximal
+     * range of the cell system minus what is needed for interactions. */
+    skin = std::min(0.4 * max_cut,
+                    *boost::min_element(cell_structure.max_range) - max_cut);
     mpi_bcast_parameter(FIELD_SKIN);
   }
 

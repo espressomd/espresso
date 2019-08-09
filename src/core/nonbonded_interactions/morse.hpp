@@ -22,9 +22,9 @@
 #define _MORSE_H
 
 /** \file
- *  Routines to calculate the Lennard-Jones energy and/or  force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the Morse potential between particle pairs.
+ *
+ *  Implementation in \ref morse.cpp.
  */
 
 #include "config.hpp"
@@ -39,19 +39,18 @@ int morse_set_params(int part_type_a, int part_type_b, double eps, double alpha,
                      double rmin, double cut);
 
 /** Calculate Morse force between particle p1 and p2 */
-inline void add_morse_pair_force(const Particle *const p1,
-                                 const Particle *const p2,
-                                 IA_parameters *ia_params, double const d[3],
-                                 double dist, double force[3]) {
-  if ((dist < ia_params->MORSE_cut)) {
-    double add1 =
-        exp(-2.0 * ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    double add2 = exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    double fac = -ia_params->MORSE_eps * 2.0 * ia_params->MORSE_alpha *
-                 (add2 - add1) / dist;
+inline void add_morse_pair_force(Particle const *const p1,
+                                 Particle const *const p2,
+                                 IA_parameters const *const ia_params,
+                                 Utils::Vector3d const &d, double dist,
+                                 Utils::Vector3d &force) {
+  if (dist < ia_params->morse.cut) {
+    auto const add =
+        exp(-ia_params->morse.alpha * (dist - ia_params->morse.rmin));
+    double fac = -ia_params->morse.eps * 2.0 * ia_params->morse.alpha *
+                 (add - Utils::sqr(add)) / dist;
+    force += fac * d;
 
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
 #ifdef MORSE_WARN_WHEN_CLOSE
     if (fac * dist > 1000)
       fprintf(stderr, "%d: Morse-Warning: Pair (%d-%d) force=%f dist=%f\n",
@@ -72,21 +71,21 @@ inline void add_morse_pair_force(const Particle *const p1,
 
     MORSE_TRACE(fprintf(
         stderr, "%d: LJ: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
-        this_node, p1->p.identity, p2->p.identity, dist, fac * d[0], fac * d[1],
-        fac * d[2]));
+        this_node, p1->p.identity, p2->p.identity, dist, force[0], force[1],
+        force[2]));
   }
 }
 
-/** calculate Morse energy between particle p1 and p2. */
-inline double morse_pair_energy(const Particle *p1, const Particle *p2,
-                                const IA_parameters *ia_params,
-                                const double d[3], double dist) {
-  if ((dist < ia_params->MORSE_cut)) {
-    double add1 =
-        exp(-2.0 * ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    double add2 =
-        2.0 * exp(-ia_params->MORSE_alpha * (dist - ia_params->MORSE_rmin));
-    double fac = ia_params->MORSE_eps * (add1 - add2) - ia_params->MORSE_rest;
+/** Calculate Morse energy between particle p1 and p2. */
+inline double morse_pair_energy(Particle const *const p1,
+                                Particle const *const p2,
+                                IA_parameters const *const ia_params,
+                                Utils::Vector3d const &d, double dist) {
+  if (dist < ia_params->morse.cut) {
+    auto const add =
+        exp(-ia_params->morse.alpha * (dist - ia_params->morse.rmin));
+    auto const fac = ia_params->morse.eps * (Utils::sqr(add) - 2 * add) -
+                     ia_params->morse.rest;
     return fac;
   }
   return 0.0;

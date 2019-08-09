@@ -18,7 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+/** \file
+ *
+ *  Implementation of \ref ljcos.hpp
+ */
 #include "ljcos.hpp"
 
 #ifdef LJCOS
@@ -33,18 +36,18 @@ int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
   if (!data)
     return ES_ERROR;
 
-  data->LJCOS_eps = eps;
-  data->LJCOS_sig = sig;
-  data->LJCOS_cut = cut;
-  data->LJCOS_offset = offset;
+  data->ljcos.eps = eps;
+  data->ljcos.sig = sig;
+  data->ljcos.cut = cut;
+  data->ljcos.offset = offset;
 
   /* Calculate dependent parameters */
   auto const driwu2 = 1.25992104989487316476721060728;
   auto const facsq = driwu2 * Utils::sqr(sig);
-  data->LJCOS_rmin = sqrt(driwu2) * sig;
-  data->LJCOS_alfa = Utils::pi() / (Utils::sqr(data->LJCOS_cut) - facsq);
-  data->LJCOS_beta =
-      Utils::pi() * (1. - (1. / (Utils::sqr(data->LJCOS_cut) / facsq - 1.)));
+  data->ljcos.rmin = sqrt(driwu2) * sig;
+  data->ljcos.alfa = Utils::pi() / (Utils::sqr(data->ljcos.cut) - facsq);
+  data->ljcos.beta =
+      Utils::pi() * (1. - (1. / (Utils::sqr(data->ljcos.cut) / facsq - 1.)));
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
