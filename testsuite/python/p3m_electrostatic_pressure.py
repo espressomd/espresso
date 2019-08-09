@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -26,7 +25,7 @@ import espressomd
 from espressomd import electrostatics
 
 
-class pressureViaVolumeScaling(object):
+class pressureViaVolumeScaling:
 
     def __init__(self, system, kbT):
         self.system = system

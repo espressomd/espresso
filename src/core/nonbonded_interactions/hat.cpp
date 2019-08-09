@@ -22,7 +22,6 @@
  *
  *  Implementation of \ref hat.hpp
  */
-
 #include "hat.hpp"
 
 #ifdef HAT
@@ -36,8 +35,8 @@ int hat_set_params(int part_type_a, int part_type_b, double Fmax, double r) {
   if (!data)
     return ES_ERROR;
 
-  data->HAT_Fmax = Fmax;
-  data->HAT_r = r;
+  data->hat.Fmax = Fmax;
+  data->hat.r = r;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

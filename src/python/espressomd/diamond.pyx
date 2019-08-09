@@ -1,10 +1,9 @@
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from .interactions cimport bonded_ia_params
 from espressomd.utils cimport handle_errors
 from espressomd.utils import is_valid_type
 
-cdef class Diamond(object):
+cdef class Diamond:
     """
     Class to create a diamond-like polymer network.
 

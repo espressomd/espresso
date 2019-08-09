@@ -21,8 +21,6 @@
 Testmodule for the observable recorder.
 
 """
-from __future__ import print_function
-
 import unittest as ut
 import numpy as np
 import espressomd  # pylint: disable=import-error

@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -24,8 +23,9 @@ import espressomd.lbboundaries
 from itertools import product
 
 
-class LBBoundariesBase(object):
+class LBBoundariesBase:
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.cell_system.skin = 0.1
 
     wall_shape1 = Wall(normal=[1., 0., 0.], dist=2.5)
     wall_shape2 = Wall(normal=[-1., 0., 0.], dist=-7.5)

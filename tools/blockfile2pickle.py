@@ -19,7 +19,6 @@
 
 ### This script extracts tcl blockfiles and pickles the appropriate py class.
 
-from __future__ import print_function
 import blockfile as bf
 import espressomd
 import espressomd._system as es

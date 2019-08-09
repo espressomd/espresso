@@ -52,7 +52,7 @@ static MinimizeEnergyParameters *params = nullptr;
 /* Signum of val */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
-bool steepest_descent_step() {
+bool steepest_descent_step(const ParticleRange &particles) {
   // Maximal force encountered on node
   double f_max = -std::numeric_limits<double>::max();
   // and globally
@@ -62,7 +62,7 @@ bool steepest_descent_step() {
 
   // Iteration over all local particles
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     auto f = 0.0;
 
     dp2 = 0.0;

@@ -16,8 +16,8 @@
 #include "electrostatics_magnetostatics/scafacos.hpp"
 
 namespace Coulomb {
-inline Utils::Vector3d central_force(double const q1q2, const double *d,
-                                     double dist) {
+inline Utils::Vector3d central_force(double const q1q2,
+                                     Utils::Vector3d const &d, double dist) {
   Utils::Vector3d f{};
 
   switch (coulomb.method) {
@@ -25,24 +25,24 @@ inline Utils::Vector3d central_force(double const q1q2, const double *d,
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
   case COULOMB_ELC_P3M:
-    p3m_add_pair_force(q1q2, d, dist, f.data());
+    p3m_add_pair_force(q1q2, d, dist, f);
     break;
 #endif
   case COULOMB_MMM1D:
-    add_mmm1d_coulomb_pair_force(q1q2, d, dist, f.data());
+    add_mmm1d_coulomb_pair_force(q1q2, d, dist, f);
     break;
   case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(q1q2, d, dist, f.data());
+    add_mmm2d_coulomb_pair_force(q1q2, d, dist, f);
     break;
   case COULOMB_DH:
-    add_dh_coulomb_pair_force(q1q2, d, dist, f.data());
+    add_dh_coulomb_pair_force(q1q2, d, dist, f);
     break;
   case COULOMB_RF:
-    add_rf_coulomb_pair_force(q1q2, d, dist, f.data());
+    add_rf_coulomb_pair_force(q1q2, d, dist, f);
     break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
-    Scafacos::add_pair_force(q1q2, d, dist, f.data());
+    Scafacos::add_pair_force(q1q2, d.data(), dist, f.data());
     break;
 #endif
   default:
@@ -52,8 +52,9 @@ inline Utils::Vector3d central_force(double const q1q2, const double *d,
   return coulomb.prefactor * f;
 }
 
-inline void calc_pair_force(Particle *p1, Particle *p2, const double *d,
-                            double dist, Utils::Vector3d &force) {
+inline void calc_pair_force(Particle *p1, Particle *p2,
+                            Utils::Vector3d const &d, double dist,
+                            Utils::Vector3d &force) {
   auto const q1q2 = p1->p.q * p2->p.q;
 
   if (q1q2 == 0)
@@ -69,7 +70,7 @@ inline void calc_pair_force(Particle *p1, Particle *p2, const double *d,
     Utils::Vector3d f1{};
     Utils::Vector3d f2{};
 
-    ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1.data(), f2.data());
+    ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1, f2);
 
     p1->f.f += coulomb.prefactor * f1;
     p2->f.f += coulomb.prefactor * f2;
@@ -89,9 +90,9 @@ inline void calc_pair_force(Particle *p1, Particle *p2, const double *d,
  * @param dist |d|
  * @return Contribution to the pressure tensor.
  */
-inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(const Particle *p1,
-                                                       const Particle *p2,
-                                                       const Utils::Vector3d &d,
+inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const *const p1,
+                                                       Particle const *const p2,
+                                                       Utils::Vector3d const &d,
                                                        double dist) {
   switch (coulomb.method) {
   case COULOMB_NONE:
@@ -103,7 +104,7 @@ inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(const Particle *p1,
   case COULOMB_MMM1D:
   case COULOMB_DH:
   case COULOMB_RF: {
-    auto const force = central_force(p1->p.q * p2->p.q, d.data(), dist);
+    auto const force = central_force(p1->p.q * p2->p.q, d, dist);
 
     return Utils::tensor_product(force, d);
   }
@@ -117,9 +118,9 @@ inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(const Particle *p1,
 }
 
 // energy_inline
-inline double pair_energy(const Particle *p1, const Particle *p2,
-                          double const q1q2, const double *d, double dist,
-                          double dist2) {
+inline double pair_energy(Particle const *const p1, Particle const *const p2,
+                          double const q1q2, Utils::Vector3d const &d,
+                          double dist, double dist2) {
   /* real space Coulomb */
   auto E = [&]() {
     switch (coulomb.method) {

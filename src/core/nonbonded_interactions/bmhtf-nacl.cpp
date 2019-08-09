@@ -41,13 +41,13 @@ int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
   pw6 = dist2 * dist2 * dist2;
   shift = -(A * exp(B * (sig - cut)) - C / pw6 - D / pw6 / dist2);
 
-  data->BMHTF_A = A;
-  data->BMHTF_B = B;
-  data->BMHTF_C = C;
-  data->BMHTF_D = D;
-  data->BMHTF_sig = sig;
-  data->BMHTF_cut = cut;
-  data->BMHTF_computed_shift = shift;
+  data->bmhtf.A = A;
+  data->bmhtf.B = B;
+  data->bmhtf.C = C;
+  data->bmhtf.D = D;
+  data->bmhtf.sig = sig;
+  data->bmhtf.cut = cut;
+  data->bmhtf.computed_shift = shift;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

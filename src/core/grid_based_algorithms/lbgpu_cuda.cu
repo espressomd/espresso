@@ -1392,7 +1392,6 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
   Utils::Array<int, 3> center_node_index{};
   Utils::Array<float3, 3> temp_delta{};
 
-#pragma unroll
   for (int i = 0; i < 3; ++i) {
     // position of particle in units of agrid.
     auto const scaled_pos = particle_position[i] / para->agrid - 0.5f;
@@ -1435,7 +1434,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
   for (int i = 0; i < 3; ++i) {
 #pragma unroll 1
     for (int j = 0; j < 3; ++j) {
-#pragma unroll 3
+#pragma unroll 1
       for (int k = 0; k < 3; ++k) {
         auto const x =
             fold_if_necessary(center_node_index[0] - 1 + i, para->dim_x);
@@ -1515,7 +1514,6 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
   node_index[7] = xyz_to_index(xp1, yp1, zp1);
 
   float3 interpolated_u{0.0f, 0.0f, 0.0f};
-#pragma unroll
   for (int i = 0; i < 8; ++i) {
     auto const node_u = node_velocity(para->rho, n_a, node_index[i]);
     interpolated_u.x += delta[i] * node_u.x;
@@ -2543,7 +2541,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, boundaries);
 
-  if (LBBoundaries::lbboundaries.size() == 0) {
+  if (LBBoundaries::lbboundaries.empty()) {
     cudaDeviceSynchronize();
     return;
   }

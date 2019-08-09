@@ -26,850 +26,178 @@
 using namespace std;
 
 namespace Shapes {
-void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double *dist,
-                              double *vec) const {
-  double axb[3], bxc[3], axc[3];
-  double A, B, C;
-  double a_dot_bxc, b_dot_axc, c_dot_axb;
-  double tmp;
-  double d;
+void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                              Utils::Vector3d &vec) const {
 
-  // calculate a couple of vectors and scalars that are going to be used
-  // frequently
+  using le = std::less_equal<double>;
+  using ge = std::greater_equal<double>;
+  using lt = std::less<double>;
+  using gt = std::greater<double>;
 
-  axb[0] = m_a[1] * m_b[2] - m_a[2] * m_b[1];
-  axb[1] = m_a[2] * m_b[0] - m_a[0] * m_b[2];
-  axb[2] = m_a[0] * m_b[1] - m_a[1] * m_b[0];
+  // calculate vectors and scalars that are going to be used frequently
 
-  bxc[0] = m_b[1] * m_c[2] - m_b[2] * m_c[1];
-  bxc[1] = m_b[2] * m_c[0] - m_b[0] * m_c[2];
-  bxc[2] = m_b[0] * m_c[1] - m_b[1] * m_c[0];
+  auto const axb = vector_product(m_a, m_b);
+  auto const bxc = vector_product(m_b, m_c);
+  auto const axc = vector_product(m_a, m_c);
 
-  axc[0] = m_a[1] * m_c[2] - m_a[2] * m_c[1];
-  axc[1] = m_a[2] * m_c[0] - m_a[0] * m_c[2];
-  axc[2] = m_a[0] * m_c[1] - m_a[1] * m_c[0];
+  auto const a_dot_bxc = m_a * bxc;
+  auto const b_dot_axc = m_b * axc;
+  auto const c_dot_axb = m_c * axb;
 
-  a_dot_bxc = m_a[0] * bxc[0] + m_a[1] * bxc[1] + m_a[2] * bxc[2];
-  b_dot_axc = m_b[0] * axc[0] + m_b[1] * axc[1] + m_b[2] * axc[2];
-  c_dot_axb = m_c[0] * axb[0] + m_c[1] * axb[1] + m_c[2] * axb[2];
+  auto const dpos = pos - m_pos;
 
-  // represent the distance from pos to ppos as a linear combination of the edge
-  // vectors.
+  // compute distance from the rhomboid corners, edges and faces using linear
+  // combinations of the rhomboid edge vectors
 
-  A = (pos[0] - m_pos[0]) * bxc[0] + (pos[1] - m_pos[1]) * bxc[1] +
-      (pos[2] - m_pos[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0]) * axc[0] + (pos[1] - m_pos[1]) * axc[1] +
-      (pos[2] - m_pos[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0]) * axb[0] + (pos[1] - m_pos[1]) * axb[1] +
-      (pos[2] - m_pos[2]) * axb[2];
-  C /= c_dot_axb;
-
-  // the coefficients tell whether ppos lies within the cone defined by pos and
-  // the adjacent edges
-
-  if (A <= 0 && B <= 0 && C <= 0) {
-    vec[0] = pos[0] - m_pos[0];
-    vec[1] = pos[1] - m_pos[1];
-    vec[2] = pos[2] - m_pos[2];
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
+#ifndef DOXYGEN
+#define DISTANCE_FROM_CORNER(op1, op2, op3, distance)                          \
+  {                                                                            \
+    auto const d = distance;                                                   \
+    /* coefficients A, B, C tell whether ppos lies within a cone defined */    \
+    /* by pos and the adjacent edges */                                        \
+    auto const A = (d * bxc) / a_dot_bxc;                                      \
+    auto const B = (d * axc) / b_dot_axc;                                      \
+    auto const C = (d * axb) / c_dot_axb;                                      \
+    if (op1{}(A, 0) & op2{}(B, 0) & op3{}(C, 0)) {                             \
+      vec = d;                                                                 \
+      dist = m_direction * vec.norm();                                         \
+      return;                                                                  \
+    }                                                                          \
   }
 
   // check for cone at pos+a
-
-  A = (pos[0] - m_pos[0] - m_a[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_a[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_a[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0] - m_a[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_a[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_a[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0] - m_a[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_a[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_a[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A >= 0 && B <= 0 && C <= 0) {
-    vec[0] = pos[0] - m_pos[0] - m_a[0];
-    vec[1] = pos[1] - m_pos[1] - m_a[1];
-    vec[2] = pos[2] - m_pos[2] - m_a[2];
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_CORNER(le, le, le, dpos);
+  // check for cone at pos+a
+  DISTANCE_FROM_CORNER(ge, le, le, dpos - m_a);
   // check for cone at pos+b
-
-  A = (pos[0] - m_pos[0] - m_b[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_b[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_b[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0] - m_b[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_b[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_b[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0] - m_b[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_b[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_b[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A <= 0 && B >= 0 && C <= 0) {
-    vec[0] = pos[0] - m_pos[0] - m_b[0];
-    vec[1] = pos[1] - m_pos[1] - m_b[1];
-    vec[2] = pos[2] - m_pos[2] - m_b[2];
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_CORNER(le, ge, le, dpos - m_b);
   // check for cone at pos+c
-
-  A = (pos[0] - m_pos[0] - m_c[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_c[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_c[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0] - m_c[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_c[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_c[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0] - m_c[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_c[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_c[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A <= 0 && B <= 0 && C >= 0) {
-    vec[0] = pos[0] - m_pos[0] - m_c[0];
-    vec[1] = pos[1] - m_pos[1] - m_c[1];
-    vec[2] = pos[2] - m_pos[2] - m_c[2];
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_CORNER(le, le, ge, dpos - m_c);
   // check for cone at m_pos+a+b
-
-  A = (pos[0] - m_pos[0] - m_a[0] - m_b[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0] - m_a[0] - m_b[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0] - m_a[0] - m_b[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A >= 0 && B >= 0 && C <= 0) {
-    vec[0] = pos[0] - m_pos[0] - m_a[0] - m_b[0];
-    vec[1] = pos[1] - m_pos[1] - m_a[1] - m_b[1];
-    vec[2] = pos[2] - m_pos[2] - m_a[2] - m_b[2];
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_CORNER(ge, ge, le, dpos - m_a - m_b);
   // check for cone at m_pos+a+c
-
-  A = (pos[0] - m_pos[0] - m_a[0] - m_c[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_c[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_c[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0] - m_a[0] - m_c[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_c[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_c[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0] - m_a[0] - m_c[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_c[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_c[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A >= 0 && B <= 0 && C >= 0) {
-    vec[0] = pos[0] - m_pos[0] - m_a[0] - m_c[0];
-    vec[1] = pos[1] - m_pos[1] - m_a[1] - m_c[1];
-    vec[2] = pos[2] - m_pos[2] - m_a[2] - m_c[2];
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
-  // check for cone at m_pos+a+c
-
-  A = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A <= 0 && B >= 0 && C >= 0) {
-    vec[0] = pos[0] - m_pos[0] - m_b[0] - m_c[0];
-    vec[1] = pos[1] - m_pos[1] - m_b[1] - m_c[1];
-    vec[2] = pos[2] - m_pos[2] - m_b[2] - m_c[2];
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_CORNER(ge, le, ge, dpos - m_a - m_c);
+  // check for cone at m_pos+b+c
+  DISTANCE_FROM_CORNER(le, ge, ge, dpos - m_b - m_c);
   // check for cone at m_pos+a+b+c
+  DISTANCE_FROM_CORNER(ge, ge, ge, dpos - m_a - m_b - m_c);
 
-  A = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A >= 0 && B >= 0 && C >= 0) {
-    vec[0] = pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0];
-    vec[1] = pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1];
-    vec[2] = pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2];
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
+#define DISTANCE_FROM_EDGE(op1, op2, distance, axis1, dir1, axis2, dir2, edge) \
+  {                                                                            \
+    auto const d = distance;                                                   \
+    auto const A = (d * axis1) / dir1##_dot_##axis1;                           \
+    auto const B = (d * axis2) / dir2##_dot_##axis2;                           \
+    if (op1{}(A, 0) & op2{}(B, 0)) {                                           \
+      auto const tmp = (d * edge) / edge.norm2();                              \
+      vec = d - edge * tmp;                                                    \
+      dist = m_direction * vec.norm();                                         \
+      return;                                                                  \
+    }                                                                          \
   }
 
   // check for prism at edge m_pos, a
-
-  B = (pos[0] - m_pos[0]) * axc[0] + (pos[1] - m_pos[1]) * axc[1] +
-      (pos[2] - m_pos[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0]) * axb[0] + (pos[1] - m_pos[1]) * axb[1] +
-      (pos[2] - m_pos[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (B <= 0 && C <= 0) {
-    tmp = (pos[0] - m_pos[0]) * m_a[0] + (pos[1] - m_pos[1]) * m_a[1] +
-          (pos[2] - m_pos[2]) * m_a[2];
-    tmp /= m_a[0] * m_a[0] + m_a[1] * m_a[1] + m_a[2] * m_a[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_a[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_a[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_a[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(le, le, dpos, axc, b, axb, c, m_a);
   // check for prism at edge m_pos, b
-
-  A = (pos[0] - m_pos[0]) * bxc[0] + (pos[1] - m_pos[1]) * bxc[1] +
-      (pos[2] - m_pos[2]) * bxc[2];
-  A /= a_dot_bxc;
-  C = (pos[0] - m_pos[0]) * axb[0] + (pos[1] - m_pos[1]) * axb[1] +
-      (pos[2] - m_pos[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A <= 0 && C <= 0) {
-    tmp = (pos[0] - m_pos[0]) * m_b[0] + (pos[1] - m_pos[1]) * m_b[1] +
-          (pos[2] - m_pos[2]) * m_b[2];
-    tmp /= m_b[0] * m_b[0] + m_b[1] * m_b[1] + m_b[2] * m_b[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_b[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_b[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_b[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(le, le, dpos, bxc, a, axb, c, m_b);
   // check for prism at edge m_pos, c
-
-  A = (pos[0] - m_pos[0]) * bxc[0] + (pos[1] - m_pos[1]) * bxc[1] +
-      (pos[2] - m_pos[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0]) * axc[0] + (pos[1] - m_pos[1]) * axc[1] +
-      (pos[2] - m_pos[2]) * axc[2];
-  B /= b_dot_axc;
-
-  if (A <= 0 && B <= 0) {
-    tmp = (pos[0] - m_pos[0]) * m_c[0] + (pos[1] - m_pos[1]) * m_c[1] +
-          (pos[2] - m_pos[2]) * m_c[2];
-    tmp /= m_c[0] * m_c[0] + m_c[1] * m_c[1] + m_c[2] * m_c[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_c[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_c[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_c[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(le, le, dpos, bxc, a, axc, b, m_c);
   // check for prism at edge m_pos+a, b
-
-  A = (pos[0] - m_pos[0] - m_a[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_a[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_a[2]) * bxc[2];
-  A /= a_dot_bxc;
-  C = (pos[0] - m_pos[0] - m_a[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_a[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_a[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A >= 0 && C <= 0) {
-    tmp = (pos[0] - m_pos[0] - m_a[0]) * m_b[0] +
-          (pos[1] - m_pos[1] - m_a[1]) * m_b[1] +
-          (pos[2] - m_pos[2] - m_a[2]) * m_b[2];
-    tmp /= m_b[0] * m_b[0] + m_b[1] * m_b[1] + m_b[2] * m_b[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_a[0] - m_b[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_a[1] - m_b[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_a[2] - m_b[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(ge, le, dpos - m_a, bxc, a, axb, c, m_b);
   // check for prism at edge m_pos+a, c
-
-  A = (pos[0] - m_pos[0] - m_a[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_a[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_a[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0] - m_a[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_a[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_a[2]) * axc[2];
-  B /= b_dot_axc;
-
-  if (A >= 0 && B <= 0) {
-    tmp = (pos[0] - m_pos[0] - m_a[0]) * m_c[0] +
-          (pos[1] - m_pos[1] - m_a[1]) * m_c[1] +
-          (pos[2] - m_pos[2] - m_a[2]) * m_c[2];
-    tmp /= m_c[0] * m_c[0] + m_c[1] * m_c[1] + m_c[2] * m_c[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_a[0] - m_c[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_a[1] - m_c[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_a[2] - m_c[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(ge, le, dpos - m_a, bxc, a, axc, b, m_c);
   // check for prism at edge m_pos+b+c, c
-
-  A = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * axc[2];
-  B /= b_dot_axc;
-
-  if (A <= 0 && B >= 0) {
-    tmp = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * m_c[0] +
-          (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * m_c[1] +
-          (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * m_c[2];
-    tmp /= m_c[0] * m_c[0] + m_c[1] * m_c[1] + m_c[2] * m_c[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_b[0] - m_c[0] - m_c[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_b[1] - m_c[1] - m_c[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_b[2] - m_c[2] - m_c[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(le, ge, dpos - m_b - m_c, bxc, a, axc, b, m_c);
   // check for prism at edge m_pos+b+c, b
-
-  A = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * bxc[2];
-  A /= a_dot_bxc;
-  C = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A <= 0 && C >= 0) {
-    tmp = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * m_b[0] +
-          (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * m_b[1] +
-          (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * m_b[2];
-    tmp /= m_b[0] * m_b[0] + m_b[1] * m_b[1] + m_b[2] * m_b[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_b[0] - m_c[0] - m_b[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_b[1] - m_c[1] - m_b[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_b[2] - m_c[2] - m_b[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(le, ge, dpos - m_b - m_c, bxc, a, axb, c, m_b);
   // check for prism at edge m_pos+b+c, a
-
-  B = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (B >= 0 && C >= 0) {
-    tmp = (pos[0] - m_pos[0] - m_b[0] - m_c[0]) * m_a[0] +
-          (pos[1] - m_pos[1] - m_b[1] - m_c[1]) * m_a[1] +
-          (pos[2] - m_pos[2] - m_b[2] - m_c[2]) * m_a[2];
-    tmp /= m_a[0] * m_a[0] + m_a[1] * m_a[1] + m_a[2] * m_a[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_b[0] - m_c[0] - m_a[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_b[1] - m_c[1] - m_a[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_b[2] - m_c[2] - m_a[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(ge, ge, dpos - m_b - m_c, axc, b, axb, c, m_a);
   // check for prism at edge m_pos+a+b, a
-
-  B = (pos[0] - m_pos[0] - m_a[0] - m_b[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0] - m_a[0] - m_b[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (B >= 0 && C <= 0) {
-    tmp = (pos[0] - m_pos[0] - m_a[0] - m_b[0]) * m_a[0] +
-          (pos[1] - m_pos[1] - m_a[1] - m_b[1]) * m_a[1] +
-          (pos[2] - m_pos[2] - m_a[2] - m_b[2]) * m_a[2];
-    tmp /= m_a[0] * m_a[0] + m_a[1] * m_a[1] + m_a[2] * m_a[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_a[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_a[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_a[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(ge, le, dpos - m_a - m_b, axc, b, axb, c, m_a);
   // check for prism at edge m_pos+a+b, c
-
-  A = (pos[0] - m_pos[0] - m_a[0] - m_b[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2]) * bxc[2];
-  A /= a_dot_bxc;
-  B = (pos[0] - m_pos[0] - m_a[0] - m_b[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2]) * axc[2];
-  B /= b_dot_axc;
-
-  if (A >= 0 && B >= 0) {
-    tmp = (pos[0] - m_pos[0] - m_a[0] - m_b[0]) * m_c[0] +
-          (pos[1] - m_pos[1] - m_a[1] - m_b[1]) * m_c[1] +
-          (pos[2] - m_pos[2] - m_a[2] - m_b[2]) * m_c[2];
-    tmp /= m_c[0] * m_c[0] + m_c[1] * m_c[1] + m_c[2] * m_c[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(ge, ge, dpos - m_a - m_b, bxc, a, axc, b, m_c);
   // check for prism at edge m_pos+a+c, a
-
-  B = (pos[0] - m_pos[0] - m_a[0] - m_c[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_c[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_c[2]) * axc[2];
-  B /= b_dot_axc;
-  C = (pos[0] - m_pos[0] - m_a[0] - m_c[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_c[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_c[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (B <= 0 && C >= 0) {
-    tmp = (pos[0] - m_pos[0] - m_a[0] - m_c[0]) * m_a[0] +
-          (pos[1] - m_pos[1] - m_a[1] - m_c[1]) * m_a[1] +
-          (pos[2] - m_pos[2] - m_a[2] - m_c[2]) * m_a[2];
-    tmp /= m_a[0] * m_a[0] + m_a[1] * m_a[1] + m_a[2] * m_a[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_a[0] - m_c[0] - m_a[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_a[1] - m_c[1] - m_a[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_a[2] - m_c[2] - m_a[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
-  }
-
+  DISTANCE_FROM_EDGE(le, ge, dpos - m_a - m_c, axc, b, axb, c, m_a);
   // check for prism at edge m_pos+a+c, b
+  DISTANCE_FROM_EDGE(ge, ge, dpos - m_a - m_c, bxc, a, axb, c, m_b);
 
-  A = (pos[0] - m_pos[0] - m_a[0] - m_c[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_c[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_c[2]) * bxc[2];
-  A /= a_dot_bxc;
-  C = (pos[0] - m_pos[0] - m_a[0] - m_c[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_c[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_c[2]) * axb[2];
-  C /= c_dot_axb;
-
-  if (A >= 0 && C >= 0) {
-    tmp = (pos[0] - m_pos[0] - m_a[0] - m_c[0]) * m_b[0] +
-          (pos[1] - m_pos[1] - m_a[1] - m_c[1]) * m_b[1] +
-          (pos[2] - m_pos[2] - m_a[2] - m_c[2]) * m_b[2];
-    tmp /= m_b[0] * m_b[0] + m_b[1] * m_b[1] + m_b[2] * m_b[2];
-
-    vec[0] = pos[0] - m_pos[0] - m_a[0] - m_c[0] - m_b[0] * tmp;
-    vec[1] = pos[1] - m_pos[1] - m_a[1] - m_c[1] - m_b[1] * tmp;
-    vec[2] = pos[2] - m_pos[2] - m_a[2] - m_c[2] - m_b[2] * tmp;
-
-    *dist =
-        m_direction * sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-
-    return;
+#define DISTANCE_FROM_FACE(op1, op2, distance, axis, dir, sign)                \
+  {                                                                            \
+    auto d = (distance)*axis;                                                  \
+    if (op1{}(dir##_dot_##axis, 0)) {                                          \
+      d *= -1;                                                                 \
+    }                                                                          \
+    if (d >= 0) {                                                              \
+      auto const tmp = axis.norm();                                            \
+      d /= tmp;                                                                \
+      dist = d * m_direction;                                                  \
+      if (op2{}(dir##_dot_##axis, 0)) {                                        \
+        d *= -1;                                                               \
+      }                                                                        \
+      vec = (sign * d / tmp) * axis;                                           \
+      return;                                                                  \
+    }                                                                          \
   }
 
   // check for face with normal -axb
-
-  *dist = (pos[0] - m_pos[0]) * axb[0] + (pos[1] - m_pos[1]) * axb[1] +
-          (pos[2] - m_pos[2]) * axb[2];
-  if (c_dot_axb > 0.0)
-    *dist *= -1.;
-
-  if (*dist >= 0) {
-    tmp = sqrt(axb[0] * axb[0] + axb[1] * axb[1] + axb[2] * axb[2]);
-    *dist /= tmp;
-
-    vec[0] = -*dist * axb[0] / tmp;
-    vec[1] = -*dist * axb[1] / tmp;
-    vec[2] = -*dist * axb[2] / tmp;
-    if (c_dot_axb < 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist *= m_direction;
-
-    return;
-  }
-
+  DISTANCE_FROM_FACE(gt, lt, dpos, axb, c, -1);
   // calculate distance to face with normal axc
-
-  *dist = (pos[0] - m_pos[0]) * axc[0] + (pos[1] - m_pos[1]) * axc[1] +
-          (pos[2] - m_pos[2]) * axc[2];
-  if (b_dot_axc > 0.0)
-    *dist *= -1.;
-
-  if (*dist >= 0) {
-    tmp = sqrt(axc[0] * axc[0] + axc[1] * axc[1] + axc[2] * axc[2]);
-    *dist /= tmp;
-
-    vec[0] = *dist * axc[0] / tmp;
-    vec[1] = *dist * axc[1] / tmp;
-    vec[2] = *dist * axc[2] / tmp;
-    if (b_dot_axc > 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist *= m_direction;
-
-    return;
-  }
-
+  DISTANCE_FROM_FACE(gt, gt, dpos, axc, b, +1);
   // calculate distance to face with normal -bxc
-
-  *dist = (pos[0] - m_pos[0]) * bxc[0] + (pos[1] - m_pos[1]) * bxc[1] +
-          (pos[2] - m_pos[2]) * bxc[2];
-  if (a_dot_bxc > 0.0)
-    *dist *= -1.;
-
-  if (*dist >= 0) {
-    tmp = sqrt(bxc[0] * bxc[0] + bxc[1] * bxc[1] + bxc[2] * bxc[2]);
-    *dist /= tmp;
-
-    vec[0] = -*dist * bxc[0] / tmp;
-    vec[1] = -*dist * bxc[1] / tmp;
-    vec[2] = -*dist * bxc[2] / tmp;
-    if (a_dot_bxc < 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist *= m_direction;
-
-    return;
-  }
-
+  DISTANCE_FROM_FACE(gt, lt, dpos, bxc, a, -1);
   // calculate distance to face with normal axb
-
-  *dist = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * axb[0] +
-          (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * axb[1] +
-          (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * axb[2];
-  if (c_dot_axb < 0.0)
-    *dist *= -1.;
-
-  if (*dist >= 0) {
-    tmp = sqrt(axb[0] * axb[0] + axb[1] * axb[1] + axb[2] * axb[2]);
-    *dist /= tmp;
-
-    vec[0] = *dist * axb[0] / tmp;
-    vec[1] = *dist * axb[1] / tmp;
-    vec[2] = *dist * axb[2] / tmp;
-    if (c_dot_axb < 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist *= m_direction;
-
-    return;
-  }
-
+  DISTANCE_FROM_FACE(lt, lt, dpos - m_a - m_b - m_c, axb, c, +1);
   // calculate distance to face with normal -axc
-
-  *dist = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * axc[0] +
-          (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * axc[1] +
-          (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * axc[2];
-  if (b_dot_axc < 0.0)
-    *dist *= -1.;
-
-  if (*dist >= 0) {
-    tmp = sqrt(axc[0] * axc[0] + axc[1] * axc[1] + axc[2] * axc[2]);
-    *dist /= tmp;
-
-    vec[0] = -*dist * axc[0] / tmp;
-    vec[1] = -*dist * axc[1] / tmp;
-    vec[2] = -*dist * axc[2] / tmp;
-    if (b_dot_axc > 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist *= m_direction;
-
-    return;
-  }
-
+  DISTANCE_FROM_FACE(lt, gt, dpos - m_a - m_b - m_c, axc, b, -1);
   // calculate distance to face with normal bxc
+  DISTANCE_FROM_FACE(lt, lt, dpos - m_a - m_b - m_c, bxc, a, +1);
 
-  *dist = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * bxc[0] +
-          (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * bxc[1] +
-          (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * bxc[2];
-  if (a_dot_bxc < 0.0)
-    *dist *= -1.;
-
-  if (*dist >= 0) {
-    tmp = sqrt(bxc[0] * bxc[0] + bxc[1] * bxc[1] + bxc[2] * bxc[2]);
-    *dist /= tmp;
-
-    vec[0] = *dist * bxc[0] / tmp;
-    vec[1] = *dist * bxc[1] / tmp;
-    vec[2] = *dist * bxc[2] / tmp;
-    if (a_dot_bxc < 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist *= m_direction;
-
-    return;
-  }
-
-  // ppos lies within rhomboid. Find nearest wall for interaction.
+  // ppos lies within rhomboid.
+  // Find nearest wall for interaction (test all 6 possibilities).
 
   // check for face with normal -axb
 
-  *dist = (pos[0] - m_pos[0]) * axb[0] + (pos[1] - m_pos[1]) * axb[1] +
-          (pos[2] - m_pos[2]) * axb[2];
-  if (c_dot_axb > 0.0)
-    *dist *= -1.;
-  tmp = sqrt(axb[0] * axb[0] + axb[1] * axb[1] + axb[2] * axb[2]);
-  *dist /= tmp;
-
-  vec[0] = -*dist * axb[0] / tmp;
-  vec[1] = -*dist * axb[1] / tmp;
-  vec[2] = -*dist * axb[2] / tmp;
-
-  if (c_dot_axb < 0.0) {
-    vec[0] *= -1.;
-    vec[1] *= -1.;
-    vec[2] *= -1.;
+  {
+    auto d = dpos * axb;
+    if (c_dot_axb > 0.0) {
+      d *= -1;
+    }
+    auto tmp = axb.norm();
+    d /= tmp;
+    dist = d * m_direction;
+    if (c_dot_axb < 0.0) {
+      d *= -1;
+    }
+    vec = (-d / tmp) * axb;
   }
 
-  *dist *= m_direction;
+#define DISTANCE_FROM_FACE_INSIDE(op1, op2, distance, axis, dir, sign)         \
+  {                                                                            \
+    auto d = (distance)*axis;                                                  \
+    if (op1{}(dir##_dot_##axis, 0)) {                                          \
+      d *= -1;                                                                 \
+    }                                                                          \
+    auto const tmp = axis.norm();                                              \
+    d /= tmp;                                                                  \
+    if (abs(d) < abs(dist)) {                                                  \
+      dist = d * m_direction;                                                  \
+      if (op2{}(dir##_dot_##axis, 0)) {                                        \
+        d *= -1;                                                               \
+      }                                                                        \
+      vec = (sign * d / tmp) * axis;                                           \
+    }                                                                          \
+  }
 
   // calculate distance to face with normal axc
-
-  d = (pos[0] - m_pos[0]) * axc[0] + (pos[1] - m_pos[1]) * axc[1] +
-      (pos[2] - m_pos[2]) * axc[2];
-  if (b_dot_axc > 0.0)
-    d *= -1.;
-  tmp = sqrt(axc[0] * axc[0] + axc[1] * axc[1] + axc[2] * axc[2]);
-  d /= tmp;
-
-  if (abs(d) < abs(*dist)) {
-    vec[0] = d * axc[0] / tmp;
-    vec[1] = d * axc[1] / tmp;
-    vec[2] = d * axc[2] / tmp;
-
-    if (b_dot_axc > 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist = m_direction * d;
-  }
-
+  DISTANCE_FROM_FACE_INSIDE(gt, gt, dpos, axc, b, +1);
   // calculate distance to face with normal -bxc
-
-  d = (pos[0] - m_pos[0]) * bxc[0] + (pos[1] - m_pos[1]) * bxc[1] +
-      (pos[2] - m_pos[2]) * bxc[2];
-  if (a_dot_bxc > 0.0)
-    d *= -1.;
-  tmp = sqrt(bxc[0] * bxc[0] + bxc[1] * bxc[1] + bxc[2] * bxc[2]);
-  d /= tmp;
-
-  if (abs(d) < abs(*dist)) {
-    vec[0] = -d * bxc[0] / tmp;
-    vec[1] = -d * bxc[1] / tmp;
-    vec[2] = -d * bxc[2] / tmp;
-
-    if (a_dot_bxc < 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist = m_direction * d;
-  }
-
+  DISTANCE_FROM_FACE_INSIDE(gt, lt, dpos, bxc, a, -1);
   // calculate distance to face with normal axb
-
-  d = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * axb[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * axb[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * axb[2];
-  if (c_dot_axb < 0.0)
-    d *= -1.;
-  tmp = sqrt(axb[0] * axb[0] + axb[1] * axb[1] + axb[2] * axb[2]);
-  d /= tmp;
-
-  if (abs(d) < abs(*dist)) {
-    vec[0] = d * axb[0] / tmp;
-    vec[1] = d * axb[1] / tmp;
-    vec[2] = d * axb[2] / tmp;
-
-    if (c_dot_axb < 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist = m_direction * d;
-  }
-
+  DISTANCE_FROM_FACE_INSIDE(lt, lt, dpos - m_a - m_b - m_c, axb, c, +1);
   // calculate distance to face with normal -axc
-
-  d = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * axc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * axc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * axc[2];
-  if (b_dot_axc < 0.0)
-    d *= -1.;
-  tmp = sqrt(axc[0] * axc[0] + axc[1] * axc[1] + axc[2] * axc[2]);
-  d /= tmp;
-
-  if (abs(d) < abs(*dist)) {
-    vec[0] = -d * axc[0] / tmp;
-    vec[1] = -d * axc[1] / tmp;
-    vec[2] = -d * axc[2] / tmp;
-
-    if (b_dot_axc > 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist = m_direction * d;
-  }
-
+  DISTANCE_FROM_FACE_INSIDE(lt, gt, dpos - m_a - m_b - m_c, axc, b, -1);
   // calculate distance to face with normal bxc
-
-  d = (pos[0] - m_pos[0] - m_a[0] - m_b[0] - m_c[0]) * bxc[0] +
-      (pos[1] - m_pos[1] - m_a[1] - m_b[1] - m_c[1]) * bxc[1] +
-      (pos[2] - m_pos[2] - m_a[2] - m_b[2] - m_c[2]) * bxc[2];
-  if (a_dot_bxc < 0.0)
-    d *= -1.;
-  tmp = sqrt(bxc[0] * bxc[0] + bxc[1] * bxc[1] + bxc[2] * bxc[2]);
-  d /= tmp;
-
-  if (abs(d) < abs(*dist)) {
-    vec[0] = d * bxc[0] / tmp;
-    vec[1] = d * bxc[1] / tmp;
-    vec[2] = d * bxc[2] / tmp;
-
-    if (a_dot_bxc < 0.0) {
-      vec[0] *= -1.;
-      vec[1] *= -1.;
-      vec[2] *= -1.;
-    }
-
-    *dist = m_direction * d;
-  }
+  DISTANCE_FROM_FACE_INSIDE(lt, lt, dpos - m_a - m_b - m_c, bxc, a, +1);
+#endif // ifndef DOXYGEN
 }
 
 } // namespace Shapes

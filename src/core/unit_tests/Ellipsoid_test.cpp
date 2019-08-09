@@ -37,7 +37,7 @@ bool check_distance_function(const Shapes::Shape &s) {
       double theta = 2. * i / N * M_PI;
       double v = j / (N - 1.);
 
-      double dist[3];
+      Utils::Vector3d dist;
       double d;
 
       /* pos part of surface */
@@ -46,18 +46,17 @@ bool check_distance_function(const Shapes::Shape &s) {
                              semiaxes[2] * v};
 
       /* check that points on ellipsoid yield zero distance */
-      s.calculate_dist(pos, &d, dist);
+      s.calculate_dist(pos, d, dist);
       if (std::abs(d) > 1e-12)
         return false;
 
       /* pos outside of surface */
       for (int dim = 0; dim < 3; dim++)
         pos[dim] += 2.3 - dim;
-      s.calculate_dist(pos, &d, dist);
+      s.calculate_dist(pos, d, dist);
 
       /* trivial test */
-      if ((dist[0] * dist[0] + dist[1] * dist[1] + dist[2] * dist[2] - d * d) >
-          1e-12)
+      if ((dist.norm2() - d * d) > 1e-12)
         return false;
     }
   }

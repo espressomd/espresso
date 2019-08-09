@@ -41,7 +41,7 @@ LB_PARAMS = {'agrid': AGRID,
              'ext_force_density': [0.1, 0.2, 0.3]}
 
 
-class LinearMomentumTest(object):
+class LinearMomentumTest:
 
     """Base class of the test that holds the test logic."""
     lbf = None
