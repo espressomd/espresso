@@ -226,6 +226,20 @@ bool topology_check_resort(int cs, bool local_resort) {
   }
 }
 
+/** Go through \ref ghost_cells and remove the ghost entries from \ref
+    local_particles. */
+static void invalidate_ghosts() {
+  for (auto const &p : ghost_cells.particles()) {
+    if (local_particles[p.identity()] == &p) {
+      local_particles[p.identity()] = {};
+    }
+  }
+
+  for (auto &c : ghost_cells) {
+    c->n = 0;
+  }
+}
+
 /*@}*/
 
 /************************************************************
@@ -401,6 +415,8 @@ void cells_resort_particles(int global_flag) {
      and p_old has to be reset. */
   resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = 1;
+
+  realloc_particlelist(&displaced_parts, 0);
 
   on_resort_particles(local_cells.particles());
 
