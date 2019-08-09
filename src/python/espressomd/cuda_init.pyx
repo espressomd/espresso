@@ -19,7 +19,7 @@
 include "myconfig.pxi"
 from . cimport cuda_init
 
-cdef class CudaInitHandle(object):
+cdef class CudaInitHandle:
     def __init__(self):
         IF CUDA != 1:
             raise Exception("CUDA is not compiled in")

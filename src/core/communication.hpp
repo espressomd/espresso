@@ -166,9 +166,7 @@ void mpi_remove_particle(int node, int id);
  */
 int mpi_integrate(int n_steps, int reuse_forces);
 
-/** Issue REQ_MIN_ENERGY: start energy minimization.
- *  @return nonzero on error
- */
+/** Issue REQ_MIN_ENERGY: start energy minimization. */
 void mpi_minimize_energy();
 
 void mpi_bcast_all_ia_params();

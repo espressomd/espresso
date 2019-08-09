@@ -20,9 +20,9 @@
 */
 /** \file
  *
- *  Implementation of \ref steppot.hpp
+ *  Implementation of \ref smooth_step.hpp
  */
-#include "steppot.hpp"
+#include "smooth_step.hpp"
 
 #ifdef SMOOTH_STEP
 #include "communication.hpp"
@@ -36,12 +36,12 @@ int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
   if (!data)
     return ES_ERROR;
 
-  data->SmSt_eps = eps;
-  data->SmSt_sig = sig;
-  data->SmSt_cut = cut;
-  data->SmSt_d = d;
-  data->SmSt_n = n;
-  data->SmSt_k0 = k0;
+  data->smooth_step.eps = eps;
+  data->smooth_step.sig = sig;
+  data->smooth_step.cut = cut;
+  data->smooth_step.d = d;
+  data->smooth_step.n = n;
+  data->smooth_step.k0 = k0;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

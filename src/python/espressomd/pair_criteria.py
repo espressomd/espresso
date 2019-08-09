@@ -22,7 +22,11 @@ class _PairCriterion(ScriptInterfaceHelper):
 
     def decide(self, p1, p2):
         """Makes a decision based on the two particles specified.
-           p2,p2 : Instances of ParticleHandle or integers containing the particle id.
+
+        Parameters
+        ----------
+        p1, p2 : :obj:`ParticleHandle` or :obj:`int` containing the particle id.
+            Particle pair.
         """
         id1 = None
         id2 = None
@@ -47,7 +51,7 @@ class DistanceCriterion(_PairCriterion):
        The following parameters can be passed to the constructor, changed via set_params()
        and retrieved via get_params()
 
-       cut_off : float
+       cut_off : :obj:`float`
            distance cut off for the criterion
     """
     _so_name = "PairCriteria::DistanceCriterion"
@@ -65,7 +69,7 @@ class EnergyCriterion(_PairCriterion):
        The following parameters can be passed to the constructor, changed via set_params()
        and retrieved via get_params()
 
-       cut_off : float
+       cut_off : :obj:`float`
            energy cut off for the criterion
     """
     _so_name = "PairCriteria::EnergyCriterion"
@@ -80,7 +84,7 @@ class BondCriterion(_PairCriterion):
        The following parameters can be passed to the constructor, changed via set_params()
        and retrieved via get_params()
 
-       bond_type : int
+       bond_type : :obj:`int`
            numeric type of the bond
     """
     _so_name = "PairCriteria::BondCriterion"

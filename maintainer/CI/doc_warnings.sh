@@ -29,7 +29,7 @@
 # not enclosed within <a href="..."></a> tags. Sphinx doesn't use line
 # wrapping, so these broken links can be found via text search. The first
 # negative lookahead filters out common Python types (for performance reasons).
-regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|bool|str|object|list|tuple|dict)<)[^<>]+?</span></code>(?!</a>)'
+regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|bool|str|object|list|tuple|dict|(?:numpy\.|np\.)?(?:nd)?array)<)[^<>]+?</span></code>(?!</a>)'
 
 # list of espresso modules not compiled in CI (visualization, scafacos)
 regex_ignored_es_features_ci='(espressomd\.)?(visualization|([a-z]+\.)?[sS]cafacos)'

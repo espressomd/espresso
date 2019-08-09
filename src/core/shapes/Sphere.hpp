@@ -30,8 +30,8 @@ class Sphere : public Shape {
 public:
   Sphere() : m_pos({0.0, 0.0, 0.0}), m_rad(0.0), m_direction(1.0) {}
 
-  void calculate_dist(const Utils::Vector3d &pos, double *dist,
-                      double *vec) const override;
+  void calculate_dist(const Utils::Vector3d &pos, double &dist,
+                      Utils::Vector3d &vec) const override;
 
   Utils::Vector3d &pos() { return m_pos; }
   double &rad() { return m_rad; }

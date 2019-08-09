@@ -38,18 +38,18 @@
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
  */
-inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
-                                        double dist, double dist2) {
+inline void add_non_bonded_pair_virials(Particle *const p1, Particle *const p2,
+                                        Utils::Vector3d const &d, double dist,
+                                        double dist2) {
   int p1molid, p2molid, k, l;
-  double force[3] = {0, 0, 0};
+  Utils::Vector3d force{};
 
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
   {
     calc_non_bonded_pair_force(p1, p2, d, dist, dist2, force);
-    *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) +=
-        d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
+    *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d * force;
 
     /* stress tensor part */
     for (k = 0; k < 3; k++)
@@ -61,7 +61,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
     p2molid = p2->p.mol_id;
     if (p1molid == p2molid) {
       *obsstat_nonbonded_intra(&virials_non_bonded, p1->p.type, p2->p.type) +=
-          d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
+          d * force;
 
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
@@ -70,7 +70,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
     }
     if (p1molid != p2molid) {
       *obsstat_nonbonded_inter(&virials_non_bonded, p1->p.type, p2->p.type) +=
-          d[0] * force[0] + d[1] * force[1] + d[2] * force[2];
+          d * force;
 
       for (k = 0; k < 3; k++)
         for (l = 0; l < 3; l++)
@@ -81,8 +81,7 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
 
 #ifdef ELECTROSTATICS
   /* real space Coulomb */
-  auto const p_coulomb =
-      Coulomb::pair_pressure(p1, p2, Utils::Vector3d{d, d + 3}, dist);
+  auto const p_coulomb = Coulomb::pair_pressure(p1, p2, d, dist);
 
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 3; j++) {
@@ -115,9 +114,9 @@ inline void add_non_bonded_pair_virials(Particle *p1, Particle *p2, double d[3],
  *  @param[out] f_right   Force on @p p_right.
  */
 inline void calc_three_body_bonded_forces(
-    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
-    Bonded_ia_parameters const *iaparams, Utils::Vector3d &f_mid,
-    Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
+    Particle const *const p_mid, Particle const *const p_left,
+    Particle const *const p_right, Bonded_ia_parameters const *const iaparams,
+    Utils::Vector3d &f_mid, Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
   switch (iaparams->type) {
   case BONDED_IA_ANGLE_HARMONIC:
     std::tie(f_mid, f_left, f_right) =
@@ -131,18 +130,9 @@ inline void calc_three_body_bonded_forces(
     std::tie(f_mid, f_left, f_right) =
         calc_angle_cossquare_3body_forces(p_mid, p_left, p_right, iaparams);
     break;
-  case BONDED_IA_TABULATED:
-    switch (iaparams->p.tab.type) {
-    case TAB_BOND_ANGLE:
-      std::tie(f_mid, f_left, f_right) =
-          calc_angle_3body_tabulated_forces(p_mid, p_left, p_right, iaparams);
-      break;
-    default:
-      runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
-                        << p_mid->p.identity << " unknown\n";
-      f_mid = f_left = f_right = Utils::Vector3d{};
-      return;
-    }
+  case BONDED_IA_TABULATED_ANGLE:
+    std::tie(f_mid, f_left, f_right) =
+        calc_angle_3body_tabulated_forces(p_mid, p_left, p_right, iaparams);
     break;
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \
@@ -159,26 +149,20 @@ inline void calc_three_body_bonded_forces(
  *  the forces.
  *  @param p1 particle for which to calculate virials
  */
-inline void add_bonded_virials(Particle *p1) {
-  double force[3] = {0, 0, 0};
-  // char *errtxt;
-  Particle *p2;
-  Bonded_ia_parameters *iaparams;
+inline void add_bonded_virials(Particle *const p1) {
+  Utils::Vector3d force{};
 
-  int i, k, l;
-  int type_num;
-
-  i = 0;
+  int i = 0;
   while (i < p1->bl.n) {
-    type_num = p1->bl.e[i++];
-    iaparams = &bonded_ia_params[type_num];
+    auto const type_num = p1->bl.e[i++];
+    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
     if (iaparams->num != 1) {
       i += iaparams->num;
       continue;
     }
 
     /* fetch particle 2 */
-    p2 = local_particles[p1->bl.e[i++]];
+    Particle const *const p2 = local_particles[p1->bl.e[i++]];
     if (!p2) {
       // for harmonic spring:
       // if cutoff was defined and p2 is not there it is anyway outside the
@@ -191,14 +175,13 @@ inline void add_bonded_virials(Particle *p1) {
       return;
     }
 
-    auto dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+    auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
     calc_bond_pair_force(p1, p2, iaparams, dx, force);
-    *obsstat_bonded(&virials, type_num) +=
-        dx[0] * force[0] + dx[1] * force[1] + dx[2] * force[2];
+    *obsstat_bonded(&virials, type_num) += dx * force;
 
     /* stress tensor part */
-    for (k = 0; k < 3; k++)
-      for (l = 0; l < 3; l++)
+    for (int k = 0; k < 3; k++)
+      for (int l = 0; l < 3; l++)
         obsstat_bonded(&p_tensor, type_num)[k * 3 + l] += force[k] * dx[l];
   }
 }
@@ -208,12 +191,12 @@ inline void add_bonded_virials(Particle *p1) {
  *  for the contribution of the entire interaction - this is the coding
  *  not the physics.
  */
-inline void add_three_body_bonded_stress(Particle *p1) {
+inline void add_three_body_bonded_stress(Particle const *const p1) {
   int i = 0;
   while (i < p1->bl.n) {
     /* scan bond list for angular interactions */
-    auto type_num = p1->bl.e[i];
-    auto iaparams = &bonded_ia_params[type_num];
+    auto const type_num = p1->bl.e[i];
+    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
 
     // Skip non-three-particle-bonds
     if (iaparams->num != 2) // number of partners
@@ -221,8 +204,8 @@ inline void add_three_body_bonded_stress(Particle *p1) {
       i += 1 + iaparams->num;
       continue;
     }
-    auto p2 = local_particles[p1->bl.e[i + 1]];
-    auto p3 = local_particles[p1->bl.e[i + 2]];
+    Particle const *const p2 = local_particles[p1->bl.e[i + 1]];
+    Particle const *const p3 = local_particles[p1->bl.e[i + 2]];
 
     auto const dx21 = -get_mi_vector(p1->r.p, p2->r.p, box_geo);
     auto const dx31 = get_mi_vector(p3->r.p, p1->r.p, box_geo);
@@ -248,32 +231,24 @@ inline void add_three_body_bonded_stress(Particle *p1) {
  *                (hence it only works with domain decomposition); naturally it
  *                therefore doesn't make sense to use it without NpT.
  */
-inline void add_kinetic_virials(Particle *p1, int v_comp) {
-  int k, l;
+inline void add_kinetic_virials(Particle const *const p1, int v_comp) {
   /* kinetic energy */
-  {
-    if (v_comp)
-      virials.data.e[0] +=
-          (Utils::sqr(p1->m.v[0] * time_step -
-                      p1->f.f[0] * 0.5 * time_step * time_step / p1->p.mass) +
-           Utils::sqr(p1->m.v[1] * time_step -
-                      p1->f.f[1] * 0.5 * time_step * time_step / p1->p.mass) +
-           Utils::sqr(p1->m.v[2] * time_step -
-                      p1->f.f[2] * 0.5 * time_step * time_step / p1->p.mass)) *
-          (*p1).p.mass;
-    else
-      virials.data.e[0] += (Utils::sqr(p1->m.v[0] * time_step) +
-                            Utils::sqr(p1->m.v[1] * time_step) +
-                            Utils::sqr(p1->m.v[2] * time_step)) *
-                           (*p1).p.mass;
+  if (v_comp) {
+    virials.data.e[0] +=
+        ((p1->m.v * time_step) -
+         (p1->f.f * (0.5 * Utils::sqr(time_step) / p1->p.mass)))
+            .norm2() *
+        p1->p.mass;
+  } else {
+    virials.data.e[0] += Utils::sqr(time_step) * p1->m.v.norm2() * p1->p.mass;
   }
 
   /* ideal gas contribution (the rescaling of the velocities by '/=time_step'
    * each will be done later) */
-  for (k = 0; k < 3; k++)
-    for (l = 0; l < 3; l++)
+  for (int k = 0; k < 3; k++)
+    for (int l = 0; l < 3; l++)
       p_tensor.data.e[k * 3 + l] +=
-          (p1->m.v[k] * time_step) * (p1->m.v[l] * time_step) * (*p1).p.mass;
+          (p1->m.v[k] * time_step) * (p1->m.v[l] * time_step) * p1->p.mass;
 }
 
 #endif

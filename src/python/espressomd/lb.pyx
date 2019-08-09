@@ -29,7 +29,7 @@ from . import cuda_init
 from copy import deepcopy
 from . import utils
 from .utils import array_locked, is_valid_type
-from .utils cimport make_array_locked
+from .utils cimport make_array_locked, numeric_limits
 
 # Actor class
 ####################################################
@@ -69,10 +69,12 @@ cdef class HydrodynamicInteraction(Actor):
 
         if self._params["dens"] == default_params["dens"]:
             raise Exception("LB_FLUID density not set")
-        else:
-            if not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
-                raise ValueError("Density must be one positive double")
-
+        elif not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
+            raise ValueError("Density must be one positive double")
+        
+        if (self._params["tau"] <= 0.):
+            raise Exception("LB_FLUID tau has to be > 0")
+            
     # list of valid keys for parameters
     ####################################################
     def valid_keys(self):
@@ -113,7 +115,7 @@ cdef class HydrodynamicInteraction(Actor):
         python_lbfluid_set_density(
     self._params["dens"],
     self._params["agrid"])
-
+        
         lb_lbfluid_set_tau(self._params["tau"])
 
         python_lbfluid_set_viscosity(
@@ -139,6 +141,8 @@ cdef class HydrodynamicInteraction(Actor):
 
         if "gamma_even" in self._params:
             python_lbfluid_set_gamma_even(self._params["gamma_even"])
+
+        lb_lbfluid_sanity_checks()
 
         utils.handle_errors("LB fluid activation")
 
@@ -193,12 +197,12 @@ cdef class HydrodynamicInteraction(Actor):
 
         Parameters
         ----------
-        pos : array_like :obj:`float`
+        pos : (3,) array_like of :obj:`float`
               The position at which velocity is requested.
 
         Returns
         -------
-        v : array_like :obj:`float`
+        v : (3,) array_like :obj:`float`
             The LB fluid velocity at ``pos``.
 
         """
@@ -319,12 +323,12 @@ IF CUDA:
             Parameters
             ----------
             positions : numpy-array of type :obj:`float` of shape (N,3)
-                        The 3-dimensional positions.
+                The 3-dimensional positions.
 
             Returns
             -------
             velocities : numpy-array of type :obj:`float` of shape (N,3)
-                         The 3-dimensional LB fluid velocities.
+                The 3-dimensional LB fluid velocities.
 
             Raises
             ------
@@ -332,8 +336,8 @@ IF CUDA:
                 If shape of ``positions`` not (N,3).
 
             """
-            assert positions.shape[
-                1] == 3, "The input array must have shape (N,3)"
+            assert positions.shape[1] == 3, \
+                "The input array must have shape (N,3)"
             cdef int length
             length = positions.shape[0]
             velocities = np.empty_like(positions)
@@ -343,7 +347,7 @@ IF CUDA:
                 linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
-cdef class LBFluidRoutines(object):
+cdef class LBFluidRoutines:
     cdef Vector3i node
 
     def __init__(self, key):

@@ -18,7 +18,10 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+/** \file
+ *
+ *  Implementation of \ref thole.hpp
+ */
 #include "thole.hpp"
 
 #ifdef THOLE
@@ -33,8 +36,8 @@ int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
   if (!data)
     return ES_ERROR;
 
-  data->THOLE_scaling_coeff = scaling_coeff;
-  data->THOLE_q1q2 = q1q2;
+  data->thole.scaling_coeff = scaling_coeff;
+  data->thole.q1q2 = q1q2;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

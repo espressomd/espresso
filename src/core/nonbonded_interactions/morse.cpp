@@ -37,15 +37,15 @@ int morse_set_params(int part_type_a, int part_type_b, double eps, double alpha,
   if (!data)
     return ES_ERROR;
 
-  data->MORSE_eps = eps;
-  data->MORSE_alpha = alpha;
-  data->MORSE_rmin = rmin;
-  data->MORSE_cut = cut;
+  data->morse.eps = eps;
+  data->morse.alpha = alpha;
+  data->morse.rmin = rmin;
+  data->morse.cut = cut;
 
   /* calculate dependent parameter */
-  add1 = exp(-2.0 * data->MORSE_alpha * (data->MORSE_cut - data->MORSE_rmin));
-  add2 = 2.0 * exp(-data->MORSE_alpha * (data->MORSE_cut - data->MORSE_rmin));
-  data->MORSE_rest = data->MORSE_eps * (add1 - add2);
+  add1 = exp(-2.0 * data->morse.alpha * (data->morse.cut - data->morse.rmin));
+  add2 = 2.0 * exp(-data->morse.alpha * (data->morse.cut - data->morse.rmin));
+  data->morse.rest = data->morse.eps * (add1 - add2);
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

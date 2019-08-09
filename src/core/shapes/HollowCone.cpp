@@ -27,8 +27,8 @@
 using namespace std;
 
 namespace Shapes {
-void HollowCone::calculate_dist(const Utils::Vector3d &pos, double *dist,
-                                double *vec) const {
+void HollowCone::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                                Utils::Vector3d &vec) const {
   int number = -1;
   double r0, r1, w, alpha, xd, yd, zd, mu, x_2D, y_2D, t0, t1, t2, time1, time2,
       time3, time4, mdst0, mdst1, mdst2, mdst3, mindist, normalize, x, y, z, xp,
@@ -363,11 +363,9 @@ void HollowCone::calculate_dist(const Utils::Vector3d &pos, double *dist,
 
   // Pass the values we obtained to ESPResSo
 
-  for (int i = 0; i < 3; i++) {
-    vec[i] = normal_3D[i] * distance;
-  }
+  vec = normal_3D * distance;
 
-  *dist = distance * std::copysign(1.0, m_direction);
+  dist = distance * std::copysign(1.0, m_direction);
 
   // And we are done with the hollow cone
 }

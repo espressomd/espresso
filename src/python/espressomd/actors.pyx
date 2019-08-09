@@ -2,7 +2,7 @@ include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 from .utils import handle_errors
 
-cdef class Actor(object):
+cdef class Actor:
 
     """
     Abstract base class for interactions affecting particles in the system,
@@ -169,7 +169,7 @@ cdef class Actor(object):
             "Subclasses of %s must define the _deactivate_method() method." % self._get_interaction_type())
 
 
-class Actors(object):
+class Actors:
 
     """
     Container for :class:`Actor` objects.

@@ -31,8 +31,7 @@ class ComFixed(ScriptInterfaceHelper):
     Parameters
     ----------
     types : array_like
-        List of types of which the center of mass
-        should be fixed.
+        List of types for which the center of mass should be fixed.
     """
 
     _so_name = "ComFixed"

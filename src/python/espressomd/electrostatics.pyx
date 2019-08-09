@@ -55,13 +55,13 @@ IF ELECTROSTATICS == 1:
     cdef class ElectrostaticInteraction(actors.Actor):
         def _tune(self):
             raise Exception(
-                "Subclasses of ElectrostaticInteraction must define the _tune() \
-                method or chosen method does not support tuning.")
+                "Subclasses of ElectrostaticInteraction must define the "
+                "_tune() method or chosen method does not support tuning.")
 
         def _set_params_in_es_core(self):
             raise Exception(
-                "Subclasses of ElectrostaticInteraction must define the \
-                _set_params_in_es_core() method.")
+                "Subclasses of ElectrostaticInteraction must define the "
+                "_set_params_in_es_core() method.")
 
         def _deactivate_method(self):
             deactivate_method()
@@ -214,7 +214,7 @@ IF P3M == 1:
             A positive number for the dielectric constant of the
             surrounding medium. Use ``'metallic'`` to set the dielectric
             constant of the surrounding medium to infinity (default).
-        mesh : :obj:`int` or array_like of :obj:`int`, optional
+        mesh : :obj:`int` or (3,) array_like of :obj:`int`, optional
             The number of mesh points in x, y and z direction. Use a single
             value for cubic boxes.
         r_cut : :obj:`float`, optional
@@ -229,7 +229,7 @@ IF P3M == 1:
         """
 
         def __init__(self, *args, **kwargs):
-            super(type(self), self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def validate_params(self):
             default_params = self.default_params()
@@ -357,7 +357,7 @@ IF P3M == 1:
                 A positive number for the dielectric constant of the
                 surrounding medium. Use ``'metallic'`` to set the dielectric
                 constant of the surrounding medium to infinity (default).
-            mesh : :obj:`int` or array_like of :obj:`int`, optional
+            mesh : :obj:`int` or (3,) array_like of :obj:`int`, optional
                 The number of mesh points in x, y and z direction. Use a single
                 value for cubic boxes.
             r_cut : :obj:`float`, optional
@@ -372,7 +372,7 @@ IF P3M == 1:
             """
 
             def __init__(self, *args, **kwargs):
-                super(type(self), self).__init__(*args, **kwargs)
+                super().__init__(*args, **kwargs)
 
             def validate_params(self):
                 default_params = self.default_params()
@@ -791,6 +791,6 @@ IF ELECTROSTATICS:
                 return {}
 
             def _deactivate_method(self):
-                super(Scafacos, self)._deactivate_method()
+                super()._deactivate_method()
                 scafacos.free_handle()
                 mpi_bcast_coulomb_params()

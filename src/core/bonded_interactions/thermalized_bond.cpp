@@ -97,8 +97,6 @@ int thermalized_bond_set_params(int bond_type, double temp_com,
 
   bonded_ia_params[bond_type].num = 1;
 
-//  thermalized_bond_set_rng_state(bonded_ia_params[bond_type].p.thermalized_bond, seed);
-
   n_thermalized_bonds += 1;
   mpi_bcast_ia_params(bond_type, -1);
   mpi_bcast_parameter(FIELD_THERMALIZEDBONDS);

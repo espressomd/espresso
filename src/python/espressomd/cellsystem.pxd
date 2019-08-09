@@ -18,6 +18,8 @@
 #
 
 # @TODO: shouldn't these global definitions be used via global_variables?
+
+from libcpp cimport bool
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
@@ -41,4 +43,4 @@ cdef extern from "layered.hpp":
     int n_layers_ "n_layers"
 
 cdef extern from "tuning.hpp":
-    cdef void c_tune_skin "tune_skin" (double min, double max, double tol, int steps)
+    cdef void c_tune_skin "tune_skin" (double min_skin, double max_skin, double tol, int int_steps, bool adjust_max_skin)

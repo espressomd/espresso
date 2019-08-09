@@ -71,7 +71,7 @@ from MDAnalysis.core.topologyattrs import (
 )
 
 
-class Stream(object):
+class Stream:
 
     """
     Create an object that provides a MDAnalysis topology and a coordinate reader

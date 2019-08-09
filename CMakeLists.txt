@@ -235,7 +235,7 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3 REQUIRED)
+find_package(PythonInterp 3.3 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
@@ -253,25 +253,15 @@ if(WITH_PYTHON)
       OUTPUT_VARIABLE PYTHON_INSTDIR
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif(NOT PYTHON_INSTDIR)
-  if(PYTHON_VERSION_MAJOR EQUAL 2)
-    set(
-      CYTHON_FLAGS "-2"
+
+  set(CYTHON_FLAGS "-3"
       CACHE STRING "Flags used by the Cython compiler during all build types.")
-  else()
-    set(
-      CYTHON_FLAGS "-3"
-      CACHE STRING "Flags used by the Cython compiler during all build types.")
-  endif()
 
   if(WARNINGS_ARE_ERRORS)
     set(CYTHON_FLAGS "--warning-errors;${CYTHON_FLAGS}")
   endif()
 
-  if(PYTHON_VERSION_MAJOR EQUAL 2)
-    find_program(IPYTHON_EXECUTABLE NAMES ipython2 ipython jupyter)
-  else()
-    find_program(IPYTHON_EXECUTABLE NAMES ipython3 ipython jupyter)
-  endif()
+  find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif(WITH_PYTHON)
 
 
@@ -280,7 +270,7 @@ if(FFTW3_FOUND)
   set(FFTW 3)
 endif(FFTW3_FOUND)
 
-# If we build either interface turn on script interface
+# If we build Python bindings, turn on script interface
 if(WITH_PYTHON)
   set(WITH_SCRIPT_INTERFACE ON)
 endif()
