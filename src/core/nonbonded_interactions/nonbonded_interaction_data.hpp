@@ -24,10 +24,15 @@
  *  Various procedures concerning interactions between particles.
  */
 
+#include <boost/serialization/unordered_map.hpp>
+#include <unordered_map>
+#include <utility>
+
 #include "TabulatedPotential.hpp"
 #include "dpd.hpp"
 #include "particle_data.hpp"
 
+#include <utils/hash/Cantor.hpp>
 #include <utils/math/sqr.hpp>
 
 /** Cutoff for deactivated interactions. Must be negative, so that even
@@ -292,7 +297,10 @@ struct IA_parameters {
 #endif
 };
 
-extern std::vector<IA_parameters> ia_params;
+using PairInteractions =
+    std::unordered_map<std::pair<int, int>, IA_parameters,
+                       Utils::Hash::CantorPairing, Utils::Hash::CantorCompare>;
+extern PairInteractions ia_params;
 
 /************************************************
  * exported variables
@@ -323,11 +331,7 @@ extern double min_global_cut;
 ************************************************/
 
 /** Get interaction parameters between particle sorts i and j */
-inline IA_parameters *get_ia_param(int i, int j) {
-  extern std::vector<IA_parameters> ia_params;
-  extern int max_seen_particle_type;
-  return &ia_params[i * max_seen_particle_type + j];
-}
+inline IA_parameters *get_ia_param(int i, int j) { return &ia_params[{i, j}]; }
 
 /** Get interaction parameters between particle sorts i and j.
  *  Slower than @ref get_ia_param, but can also be used on not

@@ -76,7 +76,7 @@
  * variables
  *****************************************/
 int max_seen_particle_type = 0;
-std::vector<IA_parameters> ia_params;
+PairInteractions ia_params;
 
 double min_global_cut = INACTIVE_CUTOFF;
 
@@ -224,8 +224,8 @@ double recalc_maximal_cutoff_nonbonded() {
   auto max_cut_nonbonded = INACTIVE_CUTOFF;
 
   for (auto &data : ia_params) {
-    data.max_cut = recalc_maximal_cutoff(data);
-    max_cut_nonbonded = std::max(max_cut_nonbonded, data.max_cut);
+    data.second.max_cut = recalc_maximal_cutoff(data.second);
+    max_cut_nonbonded = std::max(max_cut_nonbonded, data.second.max_cut);
   }
 
   return max_cut_nonbonded;
@@ -251,22 +251,13 @@ void recalc_maximal_cutoff() {
 void realloc_ia_params(int nsize) {
   if (nsize <= max_seen_particle_type)
     return;
-
-  auto new_params = std::vector<IA_parameters>(nsize * nsize);
-
-  /* if there is an old field, move entries */
-  for (int i = 0; i < max_seen_particle_type; i++)
-    for (int j = 0; j < max_seen_particle_type; j++) {
-      new_params[i * nsize + j] =
-          std::move(ia_params[i * max_seen_particle_type + j]);
-    }
-
   max_seen_particle_type = nsize;
-  std::swap(ia_params, new_params);
 }
 
 void reset_ia_params() {
-  boost::fill(ia_params, IA_parameters{});
+  for (auto &ia : ia_params) {
+    ia.second = IA_parameters{};
+  }
   mpi_bcast_all_ia_params();
 }
 
