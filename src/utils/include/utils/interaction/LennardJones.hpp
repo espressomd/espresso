@@ -6,7 +6,7 @@
 #include "utils/math/sqr.hpp"
 
 namespace Utils {
-namespace Interaction{
+namespace Interaction {
 
 struct LennardJones {
   double epsilon = 0.0;
@@ -19,11 +19,12 @@ struct LennardJones {
 
   Utils::Vector3d F(double r, Utils::Vector3d const &r_ij) const {
     auto const sigma6 = Utils::int_pow<6>(sigma);
-    return (48.0 * epsilon * Utils::int_pow<2>(sigma6) / Utils::int_pow<13>(r) - 24.0 * epsilon * sigma6 / Utils::int_pow<7>(r)) * r_ij / r_ij.norm();
+    return (48.0 * epsilon * Utils::int_pow<2>(sigma6) / Utils::int_pow<13>(r) -
+            24.0 * epsilon * sigma6 / Utils::int_pow<7>(r)) *
+           r_ij / r_ij.norm();
   }
 };
 
-
-}
-}
+} // namespace Interaction
+} // namespace Utils
 #endif
