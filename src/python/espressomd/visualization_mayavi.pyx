@@ -8,7 +8,7 @@ from .particle_data cimport *
 from .interactions cimport *
 from .system cimport *
 from .interactions import NonBondedInteractions
-from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
+from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
 from .grid cimport get_mi_vector, box_geo
 
 include "myconfig.pxi"
@@ -202,7 +202,7 @@ cdef class mayaviLive:
                 k += 1
                 # Iterate over bond partners and store each connection
                 if bonded_ia_params[t].num == 3 and bonded_ia_params[t].type \
-                        in (BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL):
+                        in (BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED):
                     for l in range(2):
                         bonds.push_back(i)
                         bonds.push_back(p.bl[k])

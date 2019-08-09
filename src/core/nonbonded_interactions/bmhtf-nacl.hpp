@@ -36,20 +36,19 @@ int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
                      double C, double D, double sig, double cut);
 
 /** Calculate BMHTF force between particle p1 and p2 */
-inline Utils::Vector3d BMHTF_pair_force(Particle const *const p1,
-                                        Particle const *const p2,
-                                        IA_parameters const *const ia_params,
-                                        Utils::Vector3d const &d, double dist,
-                                        double dist2) {
+inline void add_BMHTF_pair_force(Particle const *const p1,
+                                 Particle const *const p2,
+                                 IA_parameters const *const ia_params,
+                                 Utils::Vector3d const &d, double dist,
+                                 double dist2, Utils::Vector3d &force) {
   if (dist < ia_params->bmhtf.cut) {
     auto const pw8 = dist2 * dist2 * dist2 * dist2;
     auto const fac =
         ia_params->bmhtf.A * ia_params->bmhtf.B *
             exp(ia_params->bmhtf.B * (ia_params->bmhtf.sig - dist)) / dist -
         6 * ia_params->bmhtf.C / pw8 - 8 * ia_params->bmhtf.D / pw8 / dist2;
-    return fac * d;
+    force += fac * d;
   }
-  return {};
 }
 
 /** Calculate BMHTF potential energy between particles p1 and p2. */

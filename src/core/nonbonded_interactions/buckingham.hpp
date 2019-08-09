@@ -51,10 +51,11 @@ inline double buck_energy_r(double A, double B, double C, double D,
 
 /** Calculate Buckingham force between particle p1 and p2 and add
     it to their force. */
-inline Utils::Vector3d buck_pair_force(Particle const *const p1,
-                                       Particle const *const p2,
-                                       IA_parameters const *const ia_params,
-                                       Utils::Vector3d const &d, double dist) {
+inline void add_buck_pair_force(Particle const *const p1,
+                                Particle const *const p2,
+                                IA_parameters const *const ia_params,
+                                Utils::Vector3d const &d, double dist,
+                                Utils::Vector3d &force) {
   if (dist < ia_params->buckingham.cut) {
     /* case: resulting force/energy greater than discontinuity and
              less than cutoff (true Buckingham region) */
@@ -64,18 +65,36 @@ inline Utils::Vector3d buck_pair_force(Particle const *const p1,
           buck_force_r(ia_params->buckingham.A, ia_params->buckingham.B,
                        ia_params->buckingham.C, ia_params->buckingham.D, dist) /
           dist;
+      force += fac * d;
 #ifdef LJ_WARN_WHEN_CLOSE
       if (fac * dist > 1000)
         fprintf(stderr, "%d: BUCK-Warning: Pair (%d-%d) force=%f dist=%f\n",
                 this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
 #endif
-      return fac * d;
+    } else {
+      /* resulting force/energy in the linear region*/
+      fac = -ia_params->buckingham.F2 / dist;
+      force += fac * d;
     }
-    /* resulting force/energy in the linear region*/
-    fac = -ia_params->buckingham.F2 / dist;
-    return fac * d;
+
+    ONEPART_TRACE(if (p1->p.identity == check_id)
+                      fprintf(stderr,
+                              "%d: OPT: BUCK   f = (%.3e,%.3e,%.3e) "
+                              "with part id=%d at dist %f fac %.3e\n",
+                              this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
+                              p2->p.identity, dist, fac));
+    ONEPART_TRACE(if (p2->p.identity == check_id)
+                      fprintf(stderr,
+                              "%d: OPT: BUCK   f = (%.3e,%.3e,%.3e) "
+                              "with part id=%d at dist %f fac %.3e\n",
+                              this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
+                              p1->p.identity, dist, fac));
+
+    BUCK_TRACE(fprintf(
+        stderr, "%d: BUCK: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
+        this_node, p1->p.identity, p2->p.identity, dist, fac * d[0], fac * d[1],
+        fac * d[2]));
   }
-  return {};
 }
 
 /** calculate Buckingham energy between particle p1 and p2. */

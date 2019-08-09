@@ -130,9 +130,18 @@ inline void calc_three_body_bonded_forces(
     std::tie(f_mid, f_left, f_right) =
         calc_angle_cossquare_3body_forces(p_mid, p_left, p_right, iaparams);
     break;
-  case BONDED_IA_TABULATED_ANGLE:
-    std::tie(f_mid, f_left, f_right) =
-        calc_angle_3body_tabulated_forces(p_mid, p_left, p_right, iaparams);
+  case BONDED_IA_TABULATED:
+    switch (iaparams->p.tab.type) {
+    case TAB_BOND_ANGLE:
+      std::tie(f_mid, f_left, f_right) =
+          calc_angle_3body_tabulated_forces(p_mid, p_left, p_right, iaparams);
+      break;
+    default:
+      runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
+                        << p_mid->p.identity << " unknown\n";
+      f_mid = f_left = f_right = Utils::Vector3d{};
+      return;
+    }
     break;
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \

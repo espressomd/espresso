@@ -174,8 +174,9 @@ class InteractionsBondedTest(ut.TestCase):
         tab_energy = [np.cos(i * d_phi) for i in range(N + 1)]
         tab_force = [np.cos(i * d_phi) for i in range(N + 1)]
 
-        dihedral_tabulated = espressomd.interactions.TabulatedDihedral(
-            energy=tab_energy, force=tab_force)
+        dihedral_tabulated = espressomd.interactions.Tabulated(
+            type='dihedral', energy=tab_energy, force=tab_force, min=0.,
+            max=2 * np.pi)
         self.system.bonded_inter.add(dihedral_tabulated)
         self.system.part[1].add_bond((dihedral_tabulated, 0, 2, 3))
         self.system.part[2].pos = self.system.part[1].pos + [1, 0, 0]

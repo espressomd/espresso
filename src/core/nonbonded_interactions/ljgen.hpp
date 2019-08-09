@@ -55,10 +55,11 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
 );
 
 /** Calculate Lennard-Jones force between particle p1 and p2 */
-inline Utils::Vector3d ljgen_pair_force(Particle const *const p1,
-                                        Particle const *const p2,
-                                        IA_parameters const *const ia_params,
-                                        Utils::Vector3d const &d, double dist) {
+inline void add_ljgen_pair_force(Particle const *const p1,
+                                 Particle const *const p2,
+                                 IA_parameters const *const ia_params,
+                                 Utils::Vector3d const &d, double dist,
+                                 Utils::Vector3d &force) {
   if (dist < (ia_params->ljgen.cut + ia_params->ljgen.offset)) {
     auto r_off = dist - ia_params->ljgen.offset;
 
@@ -81,15 +82,32 @@ inline Utils::Vector3d ljgen_pair_force(Particle const *const p1,
                         ia_params->ljgen.b2 * ia_params->ljgen.a2 *
                             pow(frac, ia_params->ljgen.a2)) /
                      (r_off * dist);
+    force += fac * d;
 
 #ifdef LJ_WARN_WHEN_CLOSE
     if (fac * dist > 1000)
       fprintf(stderr, "%d: LJ-Gen-Warning: Pair (%d-%d) force=%f dist=%f\n",
               this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
 #endif
-    return fac * d;
+    ONEPART_TRACE(if (p1->p.identity == check_id)
+                      fprintf(stderr,
+                              "%d: OPT: LJGEN   f = (%.3e,%.3e,%.3e) "
+                              "with part id=%d at dist %f fac %.3e\n",
+                              this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
+                              p2->p.identity, dist, fac));
+    ONEPART_TRACE(if (p2->p.identity == check_id)
+                      fprintf(stderr,
+                              "%d: OPT: LJGEN   f = (%.3e,%.3e,%.3e) "
+                              "with part id=%d at dist %f fac %.3e\n",
+                              this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
+                              p1->p.identity, dist, fac));
+
+    LJ_TRACE(fprintf(
+        stderr,
+        "%d: LJGEN: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
+        this_node, p1->p.identity, p2->p.identity, dist, force[0], force[1],
+        force[2]));
   }
-  return {};
 }
 
 /** Calculate Lennard-Jones energy between particle p1 and p2. */
