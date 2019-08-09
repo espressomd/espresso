@@ -121,20 +121,14 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   init_p_tensor_non_bonded(&p_tensor_non_bonded);
 
   on_observable_calc();
-  // Run short-range loop if max cut >0
-  if (max_cut > 0) {
-    short_range_loop(
-        [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
-        [](Particle &p1, Particle &p2, Distance &d) {
-          add_non_bonded_pair_virials(&(p1), &(p2), d.vec21, sqrt(d.dist2),
-                                      d.dist2);
-        });
-  } else {
-    // Only add single particle virials
-    for (auto &p : local_cells.particles()) {
-      add_single_particle_virials(v_comp, p);
-    }
-  }
+
+  short_range_loop(
+      [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
+      [](Particle &p1, Particle &p2, Distance &d) {
+        add_non_bonded_pair_virials(&(p1), &(p2), d.vec21, sqrt(d.dist2),
+                                    d.dist2);
+      });
+
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
