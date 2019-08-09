@@ -217,14 +217,14 @@ void add_swimmer_force(Particle &p) {
       return;
     }
 
-    if(in_local_domain(source_position, local_geo)) {
+    if (in_local_domain(source_position, local_geo)) {
       p.swim.v_source =
           lb_lbinterpolation_get_interpolated_velocity(source_position) *
           lb_lbfluid_get_lattice_speed();
     } else {
       p.swim.v_source = {};
     }
-    
+
     add_md_force(source_position, p.swim.f_swim * director);
   }
 }
