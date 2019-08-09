@@ -116,6 +116,7 @@ extern int min_num_cells;
  *                CELL_FLAG_GRIDCHANGED, see documentation of \ref
  *                cells_on_geometry_change.
  *  @param grid   Number of nodes in each spatial dimension.
+ *  @param range Desired interaction range
  */
 void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
                            double range);

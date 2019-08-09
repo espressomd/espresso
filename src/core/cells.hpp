@@ -215,6 +215,7 @@ extern int rebuild_verletlist;
 /** Reinitialize the cell structures.
  *  @param new_cs gives the new topology to use afterwards. May be set to
  *  \ref CELL_STRUCTURE_CURRENT for not changing it.
+ *  @param range Desired interaction range
  */
 void cells_re_init(int new_cs, double range);
 
