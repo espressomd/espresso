@@ -412,7 +412,7 @@ Dihedral interactions are available through the :class:`espressomd.interactions.
     system.bonded_inter.add(dihedral)
     system.part[1].add_bond((dihedral, 0, 2, 3))
 
-This creates a bond type with identifier with a dihedral potential, a
+This creates a bond type identifier with a dihedral potential, a
 four-body-potential. In the following, let the particle for which the
 bond is created be particle :math:`p_2`, and the other bond partners
 :math:`p_1`, :math:`p_3`, :math:`p_4`, in this order. Then, the
