@@ -66,7 +66,7 @@ private:
     std::copy(rhs.begin(), rhs.end(), begin());
   }
 
-  void move(List &&rhs) {
+  void move(List &&rhs) noexcept {
     using std::swap;
     swap(n, rhs.n);
     swap(max, rhs.max);
@@ -140,8 +140,9 @@ public:
     assert(size <= max_size());
     if (size != capacity()) {
       realloc(size);
-      this->n = size;
     }
+
+    this->n = size;
   }
 
   void push_back(T const &v) {
