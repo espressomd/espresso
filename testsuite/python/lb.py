@@ -329,15 +329,19 @@ class TestLB:
         self.system.integrator.run(n_time_steps)
         # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps - 0.5)
         # (force is applied only to the second half of the first integration step)
+        # velocity includes half of the forces applied in the prev.
+        # integration step
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
-            n_time_steps - 0.5) / self.params['dens']
+            n_time_steps + 0.5) / self.params['dens']
         for n in self.lbf.nodes():
             np.testing.assert_allclose(
                 np.copy(n.velocity), fluid_velocity, atol=1E-6)
             position = (np.array(n.index) + 0.5) * self.params['agrid']
             np.testing.assert_allclose(
                 np.copy(self.lbf.get_interpolated_velocity(position)), fluid_velocity, atol=1E-6)
-    
+        np.testing.assert_allclose(
+            self.system.analysis.linear_momentum() / self.system.volume() / self.params['dens'], fluid_velocity, atol=3E-6)
+
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_unequal_time_step(self):
         """

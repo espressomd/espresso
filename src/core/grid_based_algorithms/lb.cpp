@@ -984,9 +984,6 @@ inline void lb_collide_stream() {
           auto const modes_with_forces =
               lb_apply_forces(index, thermalized_modes, lbpar, lbfields);
 
-          /* reset the force density */
-          lbfields[index].force_density = lbpar.ext_force_density;
-
           auto const populations = lb_calc_n_from_m(modes_with_forces);
 
           /* transform back to populations and streaming */
@@ -1468,6 +1465,14 @@ void lb_collect_boundary_forces(double *result) {
   MPI_Reduce(boundary_forces.data(), result, 3 * n_lb_boundaries, MPI_DOUBLE,
              MPI_SUM, 0, comm_cart);
 #endif
+}
+
+void lb_CPU_reset_force_densities_during_integration() {
+  if (fluidstep == 0) {
+    for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
+      lbfields[i].force_density = lbpar.ext_force_density;
+    }
+  }
 }
 
 /*@}*/
