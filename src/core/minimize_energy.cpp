@@ -40,13 +40,6 @@
 #define MINIMIZE_ENERGY_TRACE(A)
 #endif
 
-struct MinimizeEnergyParameters {
-  double f_max;
-  double gamma;
-  int max_steps;
-  double max_displacement;
-};
-
 static MinimizeEnergyParameters *params = nullptr;
 
 /* Signum of val */

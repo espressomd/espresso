@@ -24,9 +24,16 @@
 
 #include "ParticleRange.hpp"
 
-void minimize_energy();
+struct MinimizeEnergyParameters {
+  double f_max;
+  double gamma;
+  int max_steps;
+  double max_displacement;
+};
+
 void minimize_energy_init(double f_max, double gamma, int max_steps,
                           double max_displacement);
+void minimize_energy();
 bool steepest_descent_step(const ParticleRange &particles);
 
 #endif /* __MINIMIZE_ENERGY */
