@@ -870,11 +870,8 @@ class Analysis:
 
         p_types = create_int_list_from_python_object(sf_types)
 
-        sf = analyze.calc_structurefactor(
-    analyze.partCfg(),
-     p_types.e,
-     p_types.n,
-     sf_order)
+        sf = analyze.calc_structurefactor(analyze.partCfg(), p_types.e,
+                                          p_types.n, sf_order)
 
         return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
 
@@ -1027,9 +1024,8 @@ class Analysis:
         p2_types = create_int_list_from_python_object(type_list_b)
 
         analyze.calc_part_distribution(
-            analyze.partCfg(
-                ), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
-                                         r_min, r_max, r_bins, log_flag, & low, distribution.data())
+            analyze.partCfg(), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
+            r_min, r_max, r_bins, log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(
             distribution.data(), r_bins)
