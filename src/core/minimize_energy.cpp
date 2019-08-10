@@ -54,18 +54,12 @@ template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
 bool steepest_descent_step(const ParticleRange &particles) {
   // Maximal force encountered on node
-  double f_max = -std::numeric_limits<double>::max();
-  // and globally
-
-  // Positional increments
-  double dp, dp2, dp2_max = -std::numeric_limits<double>::max();
+  auto f_max = -std::numeric_limits<double>::max();
 
   // Iteration over all local particles
-
   for (auto &p : particles) {
     auto f = 0.0;
 
-    dp2 = 0.0;
     // For all Cartesian coordinates
     for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -81,11 +75,11 @@ bool steepest_descent_step(const ParticleRange &particles) {
           f += Utils::sqr(p.f.f[j]);
 
           // Positional increment
-          dp = params->gamma * p.f.f[j];
-          if (fabs(dp) > params->max_displacement)
+          auto dp = params->gamma * p.f.f[j];
+          if (fabs(dp) > params->max_displacement) {
             // Crop to maximum allowed by user
             dp = sgn<double>(dp) * params->max_displacement;
-          dp2 += Utils::sqr(dp);
+          }
 
           // Move particle
           p.r.p[j] += dp;
@@ -116,7 +110,6 @@ bool steepest_descent_step(const ParticleRange &particles) {
 #endif
     // Note maximum force/torque encountered
     f_max = std::max(f_max, f);
-    dp2_max = std::max(dp2_max, dp2);
   }
 
   set_resort_particles(Cells::RESORT_LOCAL);
