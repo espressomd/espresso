@@ -40,9 +40,10 @@
 #define MINIMIZE_ENERGY_TRACE(A)
 #endif
 
+/** Currently active steepest descent instance */
 static MinimizeEnergyParameters *params = nullptr;
 
-/* Signum of val */
+/** Sign of the argument */
 template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
 bool steepest_descent_step(const ParticleRange &particles) {
@@ -112,8 +113,6 @@ bool steepest_descent_step(const ParticleRange &particles) {
   auto const f_max_global =
       mpi::all_reduce(comm_cart, f_max, mpi::maximum<double>());
 
-  // Return true, if the maximum force/torque encountered is below the user
-  // limit.
   return (sqrt(f_max_global) < params->f_max);
 }
 
