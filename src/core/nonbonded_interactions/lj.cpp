@@ -37,13 +37,13 @@ int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
   if (!data)
     return ES_ERROR;
 
-  data->LJ_eps = eps;
-  data->LJ_sig = sig;
-  data->LJ_cut = cut;
-  data->LJ_shift = shift;
-  data->LJ_offset = offset;
+  data->lj.eps = eps;
+  data->lj.sig = sig;
+  data->lj.cut = cut;
+  data->lj.shift = shift;
+  data->lj.offset = offset;
   if (min > 0) {
-    data->LJ_min = min;
+    data->lj.min = min;
   }
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

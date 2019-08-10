@@ -7,10 +7,6 @@ configure_file(figures/headtotailconf.png ${CMAKE_CURRENT_BINARY_DIR}/figures/he
 
 add_custom_target(tutorials_11)
 
-html_export(TUTORIAL tutorials_11_1 FILE "11-ferrofluid_part1.ipynb")
-html_export(TUTORIAL tutorials_11_2 FILE "11-ferrofluid_part2.ipynb")
-html_export(TUTORIAL tutorials_11_3 FILE "11-ferrofluid_part3.ipynb")
-
-python_export(TUTORIAL tutorials_11_1 FILE "11-ferrofluid_part1.ipynb")
-python_export(TUTORIAL tutorials_11_2 FILE "11-ferrofluid_part2.ipynb")
-python_export(TUTORIAL tutorials_11_3 FILE "11-ferrofluid_part3.ipynb")
+nb_export(TUTORIAL tutorials_11_1 FILE "11-ferrofluid_part1.ipynb" HTML_RUN VAR_SUBST "equil_steps=100;equil_rounds=10")
+nb_export(TUTORIAL tutorials_11_2 FILE "11-ferrofluid_part2.ipynb" HTML_RUN VAR_SUBST "equil_steps=100;equil_rounds=10;alphas=[0,1,2,3,4.5,8];loops=100")
+nb_export(TUTORIAL tutorials_11_3 FILE "11-ferrofluid_part3.ipynb" HTML_RUN VAR_SUBST "equil_steps=100;equil_rounds=10;alphas=[0.5,1,2,4,8];loops=200;loops_m=100")

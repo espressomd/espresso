@@ -40,12 +40,12 @@ inline Utils::Vector3d
 add_BMHTF_pair_force(Particle const *const p1, Particle const *const p2,
                      IA_parameters const *const ia_params,
                      Utils::Vector3d const &d, double dist, double dist2) {
-  if (dist < ia_params->BMHTF_cut) {
+  if (dist < ia_params->bmhtf.cut) {
     auto const pw8 = dist2 * dist2 * dist2 * dist2;
     auto const fac =
-        ia_params->BMHTF_A * ia_params->BMHTF_B *
-            exp(ia_params->BMHTF_B * (ia_params->BMHTF_sig - dist)) / dist -
-        6 * ia_params->BMHTF_C / pw8 - 8 * ia_params->BMHTF_D / pw8 / dist2;
+        ia_params->bmhtf.A * ia_params->bmhtf.B *
+            exp(ia_params->bmhtf.B * (ia_params->bmhtf.sig - dist)) / dist -
+        6 * ia_params->bmhtf.C / pw8 - 8 * ia_params->bmhtf.D / pw8 / dist2;
     auto const force = fac * d;
     return force;
   }
@@ -58,12 +58,12 @@ inline double BMHTF_pair_energy(Particle const *const p1,
                                 IA_parameters const *const ia_params,
                                 Utils::Vector3d const &d, double dist,
                                 double dist2) {
-  if (dist < ia_params->BMHTF_cut) {
+  if (dist < ia_params->bmhtf.cut) {
     auto const pw6 = dist2 * dist2 * dist2;
-    return ia_params->BMHTF_A *
-               exp(ia_params->BMHTF_B * (ia_params->BMHTF_sig - dist)) -
-           ia_params->BMHTF_C / pw6 - ia_params->BMHTF_D / pw6 / dist2 +
-           ia_params->BMHTF_computed_shift;
+    return ia_params->bmhtf.A *
+               exp(ia_params->bmhtf.B * (ia_params->bmhtf.sig - dist)) -
+           ia_params->bmhtf.C / pw6 - ia_params->bmhtf.D / pw6 / dist2 +
+           ia_params->bmhtf.computed_shift;
   }
   return 0.0;
 }

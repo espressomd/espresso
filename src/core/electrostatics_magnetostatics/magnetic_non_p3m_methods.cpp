@@ -127,7 +127,8 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
    =============================================================================
 */
 
-double dawaanr_calculations(int force_flag, int energy_flag) {
+double dawaanr_calculations(int force_flag, int energy_flag,
+                            const ParticleRange &particles) {
 
   if (n_nodes != 1) {
     fprintf(stderr, "error: DAWAANR is just for one cpu...\n");
@@ -142,7 +143,7 @@ double dawaanr_calculations(int force_flag, int energy_flag) {
   // Variable to sum up the energy
   double u = 0;
 
-  auto parts = local_cells.particles();
+  auto parts = particles;
 
   // Iterate over all cells
   for (auto it = parts.begin(), end = parts.end(); it != end; ++it) {
@@ -184,8 +185,9 @@ int magnetic_dipolar_direct_sum_sanity_checks() {
 
 /************************************************************/
 
-double magnetic_dipolar_direct_sum_calculations(int force_flag,
-                                                int energy_flag) {
+double
+magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
+                                         const ParticleRange &particles) {
   std::vector<double> x, y, z;
   std::vector<double> mx, my, mz;
   std::vector<double> fx, fy, fz;
@@ -225,7 +227,7 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
   }
 
   int dip_particles = 0;
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : particles) {
     if (p.p.dipm != 0.0) {
       const Utils::Vector3d dip = p.calc_dip();
 
@@ -345,7 +347,7 @@ double magnetic_dipolar_direct_sum_calculations(int force_flag,
 
     int dip_particles2 = 0;
 
-    for (auto &p : local_cells.particles()) {
+    for (auto &p : particles) {
       if (p.p.dipm != 0.0) {
 
         p.f.f[0] += dipole.prefactor * fx[dip_particles2];

@@ -59,6 +59,7 @@
 #include "fft.hpp"
 #include "p3m-common.hpp"
 
+#include <ParticleRange.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/AS_erfc_part.hpp>
 
@@ -182,7 +183,8 @@ void p3m_scaleby_box_l();
 /** Compute the k-space part of forces and energies for the charge-charge
  *  interaction
  */
-double p3m_calc_kspace_forces(int force_flag, int energy_flag);
+double p3m_calc_kspace_forces(int force_flag, int energy_flag,
+                              const ParticleRange &particles);
 
 /** Compute the k-space part of the stress tensor **/
 void p3m_calc_kspace_stress(double *stress);
@@ -200,7 +202,7 @@ void p3m_count_charged_particles();
  *  in @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
  *  "ca_frac".
  */
-void p3m_charge_assign();
+void p3m_charge_assign(const ParticleRange &particles);
 
 /** Assign a single charge into the current charge grid.
  *

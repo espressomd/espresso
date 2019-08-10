@@ -40,10 +40,10 @@ inline Utils::Vector3d
 add_hertzian_pair_force(Particle const *const p1, Particle const *const p2,
                         IA_parameters const *const ia_params,
                         Utils::Vector3d const &d, double dist, double dist2) {
-  if (dist < ia_params->Hertzian_sig) {
-    auto const fac = 5. / 2. * ia_params->Hertzian_eps /
-                     ia_params->Hertzian_sig *
-                     pow(1 - dist / ia_params->Hertzian_sig, 3. / 2.) / dist;
+  if (dist < ia_params->hertzian.sig) {
+    auto const fac = 5. / 2. * ia_params->hertzian.eps /
+                     ia_params->hertzian.sig *
+                     pow(1 - dist / ia_params->hertzian.sig, 3. / 2.) / dist;
     auto const force = fac * d;
     return force;
   }
@@ -56,9 +56,9 @@ inline double hertzian_pair_energy(Particle const *const p1,
                                    IA_parameters const *const ia_params,
                                    Utils::Vector3d const &d, double dist,
                                    double dist2) {
-  if (dist < ia_params->Hertzian_sig) {
-    return ia_params->Hertzian_eps *
-           pow(1 - dist / ia_params->Hertzian_sig, 5. / 2.);
+  if (dist < ia_params->hertzian.sig) {
+    return ia_params->hertzian.eps *
+           pow(1 - dist / ia_params->hertzian.sig, 5. / 2.);
   }
   return 0.0;
 }

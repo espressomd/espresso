@@ -57,9 +57,9 @@ inline Utils::Vector3d add_hat_pair_force(Particle const *const p1,
                                           IA_parameters const *const ia_params,
                                           Utils::Vector3d const &d,
                                           double dist) {
-  if (dist > 0. && dist < ia_params->HAT_r) {
+  if (dist > 0. && dist < ia_params->hat.r) {
     auto const fac =
-        hat_force_r(ia_params->HAT_Fmax, ia_params->HAT_r, dist) / dist;
+        hat_force_r(ia_params->hat.Fmax, ia_params->hat.r, dist) / dist;
     auto const force = fac * d;
     return force;
   }
@@ -71,8 +71,8 @@ inline double hat_pair_energy(Particle const *const p1,
                               Particle const *const p2,
                               IA_parameters const *const ia_params,
                               Utils::Vector3d const &d, double dist) {
-  if (dist < ia_params->HAT_r) {
-    return hat_energy_r(ia_params->HAT_Fmax, ia_params->HAT_r, dist);
+  if (dist < ia_params->hat.r) {
+    return hat_energy_r(ia_params->hat.Fmax, ia_params->hat.r, dist);
   }
   return 0.0;
 }

@@ -65,7 +65,7 @@ class ClusterStructure(ScriptInterfaceHelper):
 
     Attributes
     ----------
-    pair_criterion: Instance of PairCriterion or derived classes
+    pair_criterion: classes derived from ``_PairCriterion``
         Criterion to decide whether two particles are neighbors.
 
     clusters: behaves like a read-only dictionary
@@ -107,7 +107,8 @@ class ClusterStructure(ScriptInterfaceHelper):
         return self.call_method("clear")
 
     def cluster_ids(self):
-        """returns a list of all cluster ids of the clusters in the structure
+        """
+        Returns a list of all cluster ids of the clusters in the structure.
 
         """
         return self.call_method("cluster_ids")

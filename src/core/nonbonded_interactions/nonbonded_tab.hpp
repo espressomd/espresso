@@ -57,8 +57,8 @@ inline Utils::Vector3d
 add_tabulated_pair_force(Particle const *const p1, Particle const *const p2,
                          IA_parameters const *const ia_params,
                          Utils::Vector3d const &d, double dist) {
-  if (dist < ia_params->TAB.cutoff()) {
-    auto const fac = ia_params->TAB.force(dist) / dist;
+  if (dist < ia_params->tab.cutoff()) {
+    auto const fac = ia_params->tab.force(dist) / dist;
     auto const force = fac * d;
     return force;
   }
@@ -69,8 +69,8 @@ add_tabulated_pair_force(Particle const *const p1, Particle const *const p2,
 inline double tabulated_pair_energy(Particle const *, Particle const *,
                                     IA_parameters const *const ia_params,
                                     Utils::Vector3d const &d, double dist) {
-  if (dist < ia_params->TAB.cutoff()) {
-    return ia_params->TAB.energy(dist);
+  if (dist < ia_params->tab.cutoff()) {
+    return ia_params->tab.energy(dist);
   }
   return 0.0;
 }

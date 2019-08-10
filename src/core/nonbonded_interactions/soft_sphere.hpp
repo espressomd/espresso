@@ -59,12 +59,13 @@ inline Utils::Vector3d add_soft_pair_force(Particle const *const p1,
                                            Utils::Vector3d const &d,
                                            double dist) {
   Utils::Vector3d force;
-  if (dist < (ia_params->soft_cut + ia_params->soft_offset)) {
+  if (dist < (ia_params->soft_sphere.cut + ia_params->soft_sphere.offset)) {
     /* normal case: resulting force/energy smaller than zero. */
-    auto const r_off = dist - ia_params->soft_offset;
+    auto const r_off = dist - ia_params->soft_sphere.offset;
     if (r_off > 0.0) {
-      auto const fac =
-          soft_force_r(ia_params->soft_a, ia_params->soft_n, r_off) / dist;
+      auto const fac = soft_force_r(ia_params->soft_sphere.a,
+                                    ia_params->soft_sphere.n, r_off) /
+                       dist;
       force = fac * d;
 
 #ifdef LJ_WARN_WHEN_CLOSE
@@ -97,10 +98,11 @@ inline double soft_pair_energy(Particle const *const p1,
                                Particle const *const p2,
                                IA_parameters const *const ia_params,
                                Utils::Vector3d const &d, double dist) {
-  if (dist < (ia_params->soft_cut + ia_params->soft_offset)) {
-    auto const r_off = dist - ia_params->soft_offset;
+  if (dist < (ia_params->soft_sphere.cut + ia_params->soft_sphere.offset)) {
+    auto const r_off = dist - ia_params->soft_sphere.offset;
     /* normal case: resulting force/energy smaller than zero. */
-    return soft_energy_r(ia_params->soft_a, ia_params->soft_n, r_off);
+    return soft_energy_r(ia_params->soft_sphere.a, ia_params->soft_sphere.n,
+                         r_off);
   }
   return 0.0;
 }

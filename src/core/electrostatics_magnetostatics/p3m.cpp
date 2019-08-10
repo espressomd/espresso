@@ -132,7 +132,8 @@ static void p3m_init_a_ai_cao_cut();
 static void p3m_calc_lm_ld_pos();
 
 /** Calculates the dipole term */
-static double p3m_calc_dipole_term(int force_flag, int energy_flag);
+static double p3m_calc_dipole_term(int force_flag, int energy_flag,
+                                   const ParticleRange &particles);
 
 /** Gather FFT grid.
  *  After the charge assignment Each node needs to gather the
@@ -251,7 +252,8 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
  *  wrapper.
  *  \tparam cao      charge assignment order.
  */
-template <int cao> static void p3m_do_charge_assign();
+template <int cao>
+static void p3m_do_charge_assign(const ParticleRange &particles);
 
 template <int cao>
 void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
@@ -493,41 +495,41 @@ void p3m_interpolate_charge_assignment_function() {
 }
 
 /* Template wrapper for p3m_do_charge_assign() */
-void p3m_charge_assign() {
+void p3m_charge_assign(const ParticleRange &particles) {
   switch (p3m.params.cao) {
   case 1:
-    p3m_do_charge_assign<1>();
+    p3m_do_charge_assign<1>(particles);
     break;
   case 2:
-    p3m_do_charge_assign<2>();
+    p3m_do_charge_assign<2>(particles);
     break;
   case 3:
-    p3m_do_charge_assign<3>();
+    p3m_do_charge_assign<3>(particles);
     break;
   case 4:
-    p3m_do_charge_assign<4>();
+    p3m_do_charge_assign<4>(particles);
     break;
   case 5:
-    p3m_do_charge_assign<5>();
+    p3m_do_charge_assign<5>(particles);
     break;
   case 6:
-    p3m_do_charge_assign<6>();
+    p3m_do_charge_assign<6>(particles);
     break;
   case 7:
-    p3m_do_charge_assign<7>();
+    p3m_do_charge_assign<7>(particles);
     break;
   }
 }
 
 /** Assign the charges */
-template <int cao> void p3m_do_charge_assign() {
+template <int cao> void p3m_do_charge_assign(const ParticleRange &particles) {
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     if (p.p.q != 0.0) {
       p3m_do_assign_charge<cao>(p.p.q, p.r.p, cp_cnt);
       cp_cnt++;
@@ -673,7 +675,8 @@ void p3m_shrink_wrap_charge_grid(int n_charges) {
 
 /* Assign the forces obtained from k-space */
 template <int cao>
-static void P3M_assign_forces(double force_prefac, int d_rs) {
+static void P3M_assign_forces(double force_prefac, int d_rs,
+                              const ParticleRange &particles) {
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
 #ifdef P3M_STORE_CA_FRAC
@@ -687,7 +690,7 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
   /* index, index jumps for rs_mesh array */
   int q_ind = 0;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     auto const q = p.p.q;
     if (q != 0.0) {
 #ifdef P3M_STORE_CA_FRAC
@@ -767,7 +770,8 @@ static void P3M_assign_forces(double force_prefac, int d_rs) {
   }
 }
 
-double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
+double p3m_calc_kspace_forces(int force_flag, int energy_flag,
+                              const ParticleRange &particles) {
   int i, d, d_rs, ind, j[3];
   /**************************************************************/
   /* Prefactor for force */
@@ -880,32 +884,32 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
       /* Assign force component from mesh to particle */
       switch (p3m.params.cao) {
       case 1:
-        P3M_assign_forces<1>(force_prefac, d_rs);
+        P3M_assign_forces<1>(force_prefac, d_rs, particles);
         break;
       case 2:
-        P3M_assign_forces<2>(force_prefac, d_rs);
+        P3M_assign_forces<2>(force_prefac, d_rs, particles);
         break;
       case 3:
-        P3M_assign_forces<3>(force_prefac, d_rs);
+        P3M_assign_forces<3>(force_prefac, d_rs, particles);
         break;
       case 4:
-        P3M_assign_forces<4>(force_prefac, d_rs);
+        P3M_assign_forces<4>(force_prefac, d_rs, particles);
         break;
       case 5:
-        P3M_assign_forces<5>(force_prefac, d_rs);
+        P3M_assign_forces<5>(force_prefac, d_rs, particles);
         break;
       case 6:
-        P3M_assign_forces<6>(force_prefac, d_rs);
+        P3M_assign_forces<6>(force_prefac, d_rs, particles);
         break;
       case 7:
-        P3M_assign_forces<7>(force_prefac, d_rs);
+        P3M_assign_forces<7>(force_prefac, d_rs, particles);
         break;
       }
     }
   } /* if(force_flag) */
 
   if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    k_space_energy += p3m_calc_dipole_term(force_flag, energy_flag);
+    k_space_energy += p3m_calc_dipole_term(force_flag, energy_flag, particles);
   }
 
   return k_space_energy;
@@ -913,7 +917,8 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag) {
 
 /************************************************************/
 
-double p3m_calc_dipole_term(int force_flag, int energy_flag) {
+double p3m_calc_dipole_term(int force_flag, int energy_flag,
+                            const ParticleRange &particles) {
   double pref = coulomb.prefactor * 4 * M_PI * (1. / box_geo.length()[0]) *
                 (1. / box_geo.length()[1]) * (1. / box_geo.length()[2]) /
                 (2 * p3m.params.epsilon + 1);
@@ -923,7 +928,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   for (double &j : lcl_dm)
     j = 0;
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : particles) {
     for (int j = 0; j < 3; j++)
       /* dipole moment with unfolded coordinates */
       lcl_dm[j] += p.p.q * (p.r.p[j] + p.l.i[j] * box_geo.length()[j]);
@@ -940,7 +945,7 @@ double p3m_calc_dipole_term(int force_flag, int energy_flag) {
   if (force_flag) {
     for (double &j : gbl_dm)
       j *= pref;
-    for (auto &p : local_cells.particles()) {
+    for (auto &p : particles) {
       for (int j = 0; j < 3; j++)
         p.f.f[j] -= gbl_dm[j] * p.p.q;
     }

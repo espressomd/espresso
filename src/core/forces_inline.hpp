@@ -35,7 +35,6 @@
 #include "bonded_interactions/subt_lj.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
-#include "collision.hpp"
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
@@ -43,7 +42,7 @@
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
-#include "nonbonded_interactions/gb.hpp"
+#include "nonbonded_interactions/gay_berne.hpp"
 #include "nonbonded_interactions/hat.hpp"
 #include "nonbonded_interactions/hertzian.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -52,8 +51,8 @@
 #include "nonbonded_interactions/ljgen.hpp"
 #include "nonbonded_interactions/morse.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/smooth_step.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
-#include "nonbonded_interactions/steppot.hpp"
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #include "npt.hpp"
@@ -194,7 +193,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 /* Gay-Berne */
 #ifdef GAY_BERNE
   // The gb force function isn't inlined, probably due to its size
-  if (dist < ia_params->GB_cut) {
+  if (dist < ia_params->gay_berne.cut) {
     auto const forces =
         add_gb_pair_force(p1, p2, ia_params, d, dist, torque1, torque2);
     force += std::get<0>(forces);
@@ -249,31 +248,14 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   torque2 = &_torque2;
 #endif
 
-  // Early exit if there is no interaction to calculate
-  // The exception for MMM2d is there, because the method assumes that
-  // pairs within a cell system layer but outside the cutoff are considered
-
-#ifdef ELECTROSTATICS
-  if (coulomb.method != COULOMB_MMM2D)
-#endif
-  {
-    if (dist > max_cut)
-      return;
-  }
-
   /***********************************************/
   /* bond creation and breaking                  */
   /***********************************************/
 
-#ifdef COLLISION_DETECTION
-  if (collision_params.mode != COLLISION_MODE_OFF)
-    detect_collision(p1, p2, dist);
-#endif
-
 #ifdef AFFINITY
   /* affinity potential */
   // Prevent jump to non-inlined function
-  if (dist < ia_params->affinity_cut) {
+  if (dist < ia_params->affinity.cut) {
     force += add_affinity_pair_force(p1, p2, ia_params, d, dist);
   }
 #endif
@@ -302,6 +284,7 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
     auto const forces = Coulomb::calc_pair_force(p1, p2, d, dist);
     force += std::get<0>(forces);
 #ifdef P3M
+    // forces from the virtual charges
     p1->f.f += std::get<1>(forces);
     p2->f.f += std::get<2>(forces);
 #endif
@@ -408,11 +391,8 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
     result = calc_subt_lj_pair_force(p1, p2, iaparams, dx);
     break;
 #endif
-  case BONDED_IA_TABULATED:
-    if (iaparams->num == 1)
-      result = calc_tab_bond_force(iaparams, dx);
-    else
-      result = boost::optional<Utils::Vector3d>(Utils::Vector3d{});
+  case BONDED_IA_TABULATED_DISTANCE:
+    result = calc_tab_bond_force(iaparams, dx);
     break;
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
@@ -534,12 +514,10 @@ inline void add_bonded_force(Particle *const p1) {
         bond_broken = false;
         break;
 #endif
-      case BONDED_IA_TABULATED:
-        if (iaparams->num == 2) {
-          std::tie(force1, force2, force3) =
-              calc_tab_angle_force(p1, p2, p3, iaparams);
-          bond_broken = false;
-        }
+      case BONDED_IA_TABULATED_ANGLE:
+        std::tie(force1, force2, force3) =
+            calc_tab_angle_force(p1, p2, p3, iaparams);
+        bond_broken = false;
         break;
       case BONDED_IA_IBM_TRIEL: {
         auto result = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
@@ -588,16 +566,15 @@ inline void add_bonded_force(Particle *const p1) {
         }
         break;
       }
-      case BONDED_IA_TABULATED:
-        if (iaparams->num == 3) {
-          auto result = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams);
-          if (result) {
-            std::tie(force1, force2, force3) = result.get();
-            force4 = -(force1 + force2 + force3);
-            bond_broken = false;
-          }
+      case BONDED_IA_TABULATED_DIHEDRAL: {
+        auto result = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams);
+        if (result) {
+          std::tie(force1, force2, force3) = result.get();
+          force4 = -(force1 + force2 + force3);
+          bond_broken = false;
         }
         break;
+      }
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                           << p1->p.identity << " unknown " << type << ","
@@ -650,14 +627,7 @@ inline void add_bonded_force(Particle *const p1) {
       }
 
       switch (type) {
-      case BONDED_IA_TABULATED:
-        if (iaparams->num == 3) {
-          p1->f.f += force1;
-          p2->f.f += force2;
-          p3->f.f += force3;
-          p4->f.f += force4;
-        }
-        break;
+      case BONDED_IA_TABULATED_DIHEDRAL:
       case BONDED_IA_DIHEDRAL:
       case BONDED_IA_IBM_TRIBEND:
 #ifdef OIF_LOCAL_FORCES

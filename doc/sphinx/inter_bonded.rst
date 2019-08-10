@@ -115,27 +115,21 @@ friction needs to be present for it to relax.
 The roles of the parameters :math:`k_1, r_0, r_\mathrm{cut}` are exactly the same as for the
 harmonic bond.
 
-..
-    .. _Quartic bond:
+.. _Quartic bond:
 
-    Quartic bond
-    ~~~~~~~~~~~~
+Quartic bond
+~~~~~~~~~~~~
 
-    .. todo::
-        Not implemented.
+A quartic bond can be instantiated via
+:class:`espressomd.interactions.QuarticBond`.
 
+The potential is minimal at particle distance :math:`r=R`. It is given by
 
-    inter quartic
+.. math:: V(r) = \frac{1}{2} K_0 \left( r - R \right)^2 + \frac{1}{4} K_1 \left( r - R \right)^4
 
-    This creates a bond type with identificator with a quartic potential.
-    The potential is minimal at particle distance :math:`r=R`. It is given
-    by
-
-    .. math:: V(r) = \frac{1}{2} K_0 \left( r - R \right)^2 + \frac{1}{4} K_1 \left( r - R \right)^4
-
-    The fourth, optional, parameter defines a cutoff radius. Whenever a
-    quartic bond gets longer than , the bond will be reported as broken, and
-    a background error will be raised.
+The fourth, optional, parameter defines a cutoff radius. Whenever a
+quartic bond gets longer than ``r_cut``, the bond will be reported as broken, and
+a background error will be raised.
 
 .. _Bonded Coulomb:
 
@@ -219,60 +213,57 @@ A rigid bond can be instantiated via
 To simulate rigid bonds, |es| uses the Rattle Shake algorithm which satisfies
 internal constraints for molecular models with internal constraints,
 using Lagrange multipliers.\ :cite:`andersen83a` The constrained bond distance
-is named :math:`r`, the positional tolerance is named :math:`ptol` and the velocity tolerance
-is named :math:`vtol`.
+is named ``r``, the positional tolerance is named ``ptol`` and the velocity tolerance
+is named ``vtol``.
 
-.. _Tabulated bond interactions:
+.. _Thermalized distance bond:
 
-Tabulated bond interactions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Thermalized distance bond
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A tabulated bond can be instantiated via
-:class:`espressomd.interactions.Tabulated`::
+This bond can be used to apply Langevin thermalization on the centre of mass
+and the distance of a particle pair.  Each thermostat can have its own
+temperature and friction coefficient.
 
-    from espressomd.interactions import Tabulated
-    tab = Tabulated(type=<str>, min=<min>, max=<max>,
-                    energy=<energy>, force=<force>)
+The bond is configured with::
 
-This creates a bond type identifier with a two-body bond length,
-three-body angle or four-body dihedral
-tabulated potential. For details of the interpolation, see :ref:`Tabulated interaction`.
+    from espressomd.interactions import ThermalizedBond
+    thermalized_bond = ThermalizedBond(temp_com=<float>, gamma_com=<float>,
+                                       temp_distance=<float>, gamma_distance=<float>,
+                                       r_cut=<float>)
+    system.bonded_inter.add(thermalized_bond)
 
-The bonded interaction can be based on a distance, a bond angle or a
-dihedral angle. This is determined by the ``type`` argument, which can
-be one of the strings ``distance``, ``angle`` or ``dihedral``.
+The parameters are:
 
-.. _Calculation of the force and energy:
+    * ``temp_com``: Temperature of the Langevin thermostat for the COM of the particle pair.
+    * ``gamma_com``: Friction coefficient of the Langevin thermostat for the COM of the particle pair.
+    * ``temp_distance``: Temperature of the Langevin thermostat for the distance vector of the particle pair.
+    * ``gamma_distance``: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
+    * ``r_cut``:  Specifies maximum distance beyond which the bond is considered broken.
 
-Calculation of the force and energy
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The bond is closely related to simulating :ref:`Particle polarizability with
+thermalized cold Drude oscillators`.
 
-The potential is calculated as follows:
+.. _Tabulated distance:
 
--  ``type="distance"``: is a two body interaction
-   depending on the distance of two particles. The force acts in the
-   direction of the connecting vector between the particles. The bond
-   breaks above the tabulated range, but for distances smaller than the
-   tabulated range, a linear extrapolation based on the first two
-   tabulated force values is used.
+Tabulated distance
+~~~~~~~~~~~~~~~~~~
 
--  ``type="angle"``: is a three-body angle
-   interaction similar to the bond angle potential.
-   It is assumed that the potential is tabulated
-   for all angles between 0 and :math:`\pi`, where 0 corresponds to a
-   stretched polymer, and just as for the tabulated pair potential, the
-   forces are scaled with the inverse length of the connecting vectors.
-   The force on the extremities acts perpendicular
-   to the connecting vector
-   between the corresponding particle and the center particle, in the plane
-   defined by the three particles. The force on the center particle
-   :math:`p_2` balances the other two forces.
+A tabulated bond length can be instantiated via
+:class:`espressomd.interactions.TabulatedDistance`::
 
--  ``type="dihedral"``: tabulates a torsional
-   dihedral angle potential. It is assumed
-   that the potential is tabulated for all angles between 0 and
-   :math:`2\pi`. *This potential is not tested yet! Use at your own risk, and
-   please report your findings and eventually necessary fixes.*
+    from espressomd.interactions import TabulatedDistance
+    tab_dist = TabulatedDistance(min=<min>, max=<max>,
+                                 energy=<energy>, force=<force>)
+    system.bonded_inter.add(tab_dist)
+    system.part[0].add_bond((tab_dist, 1))
+
+This creates a bond type identifier with a tabulated potential. The force acts
+in the direction of the connecting vector between the particles. The bond breaks
+above the tabulated range, but for distances smaller than the tabulated range,
+a linear extrapolation based on the first two tabulated force values is used.
+For details of the interpolation, see :ref:`Tabulated interaction`.
+
 
 .. _Virtual bonds:
 
@@ -290,6 +281,177 @@ This creates a virtual bond type identifier for a pair bond
 without associated potential or force. It can be used to specify topologies
 and for some analysis that rely on bonds, or for bonds that should be
 displayed in the visualization.
+
+
+
+.. _Bond-angle interactions:
+
+Bond-angle interactions
+-----------------------
+
+Bond-angle interactions involve three particles forming the angle :math:`\phi`, as shown in the schematic below.
+
+.. _inter_angle:
+.. figure:: figures/inter_angle.png
+   :alt: Bond-angle interactions
+   :align: center
+   :height: 12.00cm
+
+This allows for a bond type having an angle-dependent potential. This potential
+is defined between three particles and depends on the angle :math:`\phi`
+between the vectors from the central particle to the two other particles.
+
+Similar to other bonded interactions, these are defined for every particle triplet and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`), in this case the central one.
+For example, for the schematic with particles ``id=0``, ``1`` (central particle) and ``2`` the bond was defined using ::
+
+    >>> system.part[1].add_bond((bond_angle, 0, 2))
+
+The parameter ``bond_angle`` is an instance of one of four possible bond-angle
+classes, described below.
+
+
+Harmonic angle potential
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`espressomd.interactions.AngleHarmonic`
+
+Equation:
+
+.. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
+
+:math:`K` is the bending constant and :math:`\phi_0` is the equilibrium bond
+angle in radians ranging from 0 to :math:`\pi`.
+
+Example::
+
+    >>> angle_harmonic = AngleHarmonic(bend=1.0, phi0=2 * np.pi / 3)
+    >>> system.bonded_inter.add(angle_harmonic)
+    >>> system.part[1].add_bond((angle_harmonic, 0, 2))
+
+
+Cosine angle potential
+~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`espressomd.interactions.AngleCosine`
+
+Equation:
+
+.. math:: V(\phi) = K \left[1 - \cos(\phi - \phi_0)\right]
+
+:math:`K` is the bending constant and :math:`\phi_0` is the equilibrium bond
+angle in radians ranging from 0 to :math:`\pi`.
+
+Around :math:`\phi_0`, this potential is close to a harmonic one
+(both are :math:`1/2(\phi-\phi_0)^2` in leading order), but it is
+periodic and smooth for all angles :math:`\phi`.
+
+Example::
+
+    >>> angle_cosine = AngleCosine(bend=1.0, phi0=2 * np.pi / 3)
+    >>> system.bonded_inter.add(angle_cosine)
+    >>> system.part[1].add_bond((angle_cosine, 0, 2))
+
+
+Harmonic cosine potential
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`espressomd.interactions.AngleCossquare`
+
+Equation:
+
+.. math:: V(\phi) = \frac{K}{2} \left[\cos(\phi) - \cos(\phi_0)\right]^2
+
+:math:`K` is the bending constant and :math:`\phi_0` is the equilibrium bond
+angle in radians ranging from 0 to :math:`\pi`.
+
+This form is used for example in the GROMOS96 force field. The
+potential is :math:`1/8(\phi-\phi_0)^4` around :math:`\phi_0`, and
+therefore much flatter than the two aforementioned potentials.
+
+Example::
+
+    >>> angle_cossquare = AngleCossquare(bend=1.0, phi0=2 * np.pi / 3)
+    >>> system.bonded_inter.add(angle_cossquare)
+    >>> system.part[1].add_bond((angle_cossquare, 0, 2))
+
+
+Tabulated angle potential
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A tabulated bond angle can be instantiated via
+:class:`espressomd.interactions.TabulatedAngle`::
+
+    from espressomd.interactions import TabulatedAngle
+    theta = np.linspace(0, np.pi, num=91, endpoint=True)
+    angle_tab = TabulatedAngle(energy=10 * (theta - 2 * np.pi / 3)**2,
+                               force=10 * (theta - 2 * np.pi / 3) / 2)
+    system.bonded_inter.add(angle_tab)
+    system.part[1].add_bond((angle_tab, 0, 2))
+
+The energy and force tables must be sampled from :math:`0` to :math:`\pi`,
+where :math:`\pi` corresponds to a flat angle. The forces are scaled with the
+inverse length of the connecting vectors. The force on the extremities acts
+perpendicular to the connecting vector between the corresponding particle and
+the center particle, in the plane defined by the three particles. The force on
+the center particle balances the other two forces.
+For details of the interpolation, see :ref:`Tabulated interaction`.
+
+
+.. _Dihedral interactions:
+
+Dihedral interactions
+---------------------
+
+Dihedral potential with phase shift
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dihedral interactions are available through the :class:`espressomd.interactions.Dihedral` class::
+
+    from espressomd.interactions import Dihedral
+    dihedral = Dihedral(bend=<K>, mult=<n>, phase=<phi_0>)
+    system.bonded_inter.add(dihedral)
+    system.part[1].add_bond((dihedral, 0, 2, 3))
+
+This creates a bond type identifier with a dihedral potential, a
+four-body-potential. In the following, let the particle for which the
+bond is created be particle :math:`p_2`, and the other bond partners
+:math:`p_1`, :math:`p_3`, :math:`p_4`, in this order. Then, the
+dihedral potential is given by
+
+.. math:: V(\phi) = K\left[1 - \cos(n\phi - \phi_0)\right],
+
+where :math:`n` is the multiplicity of the potential (number of minima) and can
+take any integer value (typically from 1 to 6), :math:`\phi_0` is a phase
+parameter and :math:`K` is the bending constant of the potential. :math:`\phi` is
+the dihedral angle between the particles defined by the particle
+quadruple :math:`p_1`, :math:`p_2`, :math:`p_3` and :math:`p_4`, the
+angle between the planes defined by the particle triples :math:`p_1`,
+:math:`p_2` and :math:`p_3` and :math:`p_2`, :math:`p_3` and
+:math:`p_4`:
+
+.. _inter_dihedral:
+.. figure:: figures/dihedral-angle.pdf
+   :alt: Dihedral interaction
+   :align: center
+   :height: 12.00cm
+
+Together with appropriate Lennard-Jones interactions, this potential can
+mimic a large number of atomic torsion potentials.
+
+
+Tabulated dihedral potential
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A tabulated dihedral interaction can be instantiated via
+:class:`espressomd.interactions.TabulatedDihedral`::
+
+    from espressomd.interactions import TabulatedDihedral
+    dihedral_tab = TabulatedDihedral(energy=<energy>, force=<force>)
+    system.bonded_inter.add(dihedral_tab)
+    system.part[1].add_bond((dihedral_tab, 0, 2, 3))
+
+The energy and force tables must be sampled from :math:`0` to :math:`2\pi`.
+For details of the interpolation, see :ref:`Tabulated interaction`.
 
 
 
@@ -538,176 +700,4 @@ calculates the outward normal vector of triangle defined by particles 1,
 approximately at its centroid). In order for the direction to be outward
 with respect to the underlying object, the triangle 123 needs to be
 properly oriented (as explained in paragraph `Volume conservation`_).
-
-
-
-.. _Bond-angle interactions:
-
-Bond-angle interactions
------------------------
-
-Bond-angle interactions involve three particles forming the angle :math:`\phi`, as shown in the schematic below.
-
-.. _inter_angle:
-.. figure:: figures/inter_angle.png
-   :alt: Bond-angle interactions
-   :align: center
-   :height: 12.00cm
-
-This allows for a bond type having an angle-dependent potential. This potential
-is defined between three particles and depends on the angle :math:`\phi`
-between the vectors from the central particle to the two other particles.
-
-Similar to other bonded interactions, these are defined for every particle triplet and must be added to a particle (see :attr:`espressomd.particle_data.ParticleHandle.bonds`), in this case the central one.
-For example, for the schematic with particles ``id=0``, ``1`` (central particle) and ``2`` the bond was defined using ::
-
-    >>> system.part[1].add_bond((bond_angle, 0, 2))
-
-The parameter ``bond_angle`` is an instance of one of four possible bond-angle
-classes, described below.
-
-
-Harmonic angle potential
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-:class:`espressomd.interactions.AngleHarmonic`
-
-Equation:
-
-.. math:: V(\phi) = \frac{K}{2} \left(\phi - \phi_0\right)^2.
-
-:math:`K` is the bending constant and :math:`\phi_0` is the equilibrium bond
-angle in radians ranging from 0 to :math:`\pi`.
-
-Example::
-
-    >>> angle_harmonic = AngleHarmonic(bend=1.0, phi0=2 * np.pi / 3)
-    >>> system.bonded_inter.add(angle_harmonic)
-    >>> system.part[1].add_bond((angle_harmonic, 0, 2))
-
-
-Cosine angle potential
-~~~~~~~~~~~~~~~~~~~~~~
-
-:class:`espressomd.interactions.AngleCosine`
-
-Equation:
-
-.. math:: V(\phi) = K \left[1 - \cos(\phi - \phi_0)\right]
-
-:math:`K` is the bending constant and :math:`\phi_0` is the equilibrium bond
-angle in radians ranging from 0 to :math:`\pi`.
-
-Around :math:`\phi_0`, this potential is close to a harmonic one
-(both are :math:`1/2(\phi-\phi_0)^2` in leading order), but it is
-periodic and smooth for all angles :math:`\phi`.
-
-Example::
-
-    >>> angle_cosine = AngleCosine(bend=1.0, phi0=2 * np.pi / 3)
-    >>> system.bonded_inter.add(angle_cosine)
-    >>> system.part[1].add_bond((angle_cosine, 0, 2))
-
-
-Harmonic cosine potential
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-:class:`espressomd.interactions.AngleCossquare`
-
-Equation:
-
-.. math:: V(\phi) = \frac{K}{2} \left[\cos(\phi) - \cos(\phi_0)\right]^2
-
-:math:`K` is the bending constant and :math:`\phi_0` is the equilibrium bond
-angle in radians ranging from 0 to :math:`\pi`.
-
-This form is used for example in the GROMOS96 force field. The
-potential is :math:`1/8(\phi-\phi_0)^4` around :math:`\phi_0`, and
-therefore much flatter than the two aforementioned potentials.
-
-Example::
-
-    >>> angle_cossquare = AngleCossquare(bend=1.0, phi0=2 * np.pi / 3)
-    >>> system.bonded_inter.add(angle_cossquare)
-    >>> system.part[1].add_bond((angle_cossquare, 0, 2))
-
-
-Tabulated bond
-~~~~~~~~~~~~~~
-
-:class:`espressomd.interactions.Tabulated`
-
-Custom bond angle potential.
-
-Example::
-
-    >>> theta = np.linspace(0, np.pi, num=91, endpoint=True)
-    >>> angle_tabulated = Tabulated(type='angle', min=0, max=np.pi,
-    ...                             energy=0.5 * 10 * (theta - 2 * np.pi / 3)**2,
-    ...                             force=10 * (theta - 2 * np.pi / 3))
-    >>> system.bonded_inter.add(angle_tabulated)
-    >>> system.part[1].add_bond((angle_tabulated, 0, 2))
-
-
-.. _Dihedral interactions:
-
-Dihedral interactions
----------------------
-
-Dihedral interactions are available through the :class:`espressomd.interactions.Dihedral` class.
-
-This creates a bond type with identifier with a dihedral potential, a
-four-body-potential. In the following, let the particle for which the
-bond is created be particle :math:`p_2`, and the other bond partners
-:math:`p_1`, :math:`p_3`, :math:`p_4`, in this order. Then, the
-dihedral potential is given by
-
-.. math:: V(\phi) = K\left[1 - \cos(n\phi - p)\right],
-
-where :math:`n` is the multiplicity of the potential (number of minima) and can
-take any integer value (typically from 1 to 6), :math:`p` is a phase
-parameter and :math:`K` is the bending constant of the potential. :math:`\phi` is
-the dihedral angle between the particles defined by the particle
-quadruple :math:`p_1`, :math:`p_2`, :math:`p_3` and :math:`p_4`, the
-angle between the planes defined by the particle triples :math:`p_1`,
-:math:`p_2` and :math:`p_3` and :math:`p_2`, :math:`p_3` and
-:math:`p_4`:
-
-.. _inter_dihedral:
-.. figure:: figures/dihedral-angle.pdf
-   :alt: Dihedral interaction
-   :align: center
-   :height: 12.00cm
-
-Together with appropriate Lennard-Jones interactions, this potential can
-mimic a large number of atomic torsion potentials.
-
-
-.. _Thermalized distance bond:
-
-Thermalized distance bond
--------------------------
-
-This bond can be used to apply Langevin thermalization on the centre of mass
-and the distance of a particle pair.  Each thermostat can have its own
-temperature and friction coefficient.
-
-The bond is configured with::
-
-    from espressomd.interactions import ThermalizedBond
-    thermalized_bond = ThermalizedBond(temp_com=<float>, gamma_com=<float>,
-                                       temp_distance=<float>, gamma_distance=<float>,
-                                       r_cut=<float>)
-    system.bonded_inter.add(thermalized_bond)
-
-The parameters are:
-
-    * ``temp_com``: Temperature of the Langevin thermostat for the COM of the particle pair.
-    * ``gamma_com``: Friction coefficient of the Langevin thermostat for the COM of the particle pair.
-    * ``temp_distance``: Temperature of the Langevin thermostat for the distance vector of the particle pair.
-    * ``gamma_distance``: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
-    * ``r_cut``:  Specifies maximum distance beyond which the bond is considered broken.
-
-The bond is closely related to simulating :ref:`Particle polarizability with
-thermalized cold Drude oscillators`.
 

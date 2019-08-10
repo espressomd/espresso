@@ -42,8 +42,8 @@ inline Utils::Vector3d
 add_thole_pair_force(Particle const *const p1, Particle const *const p2,
                      IA_parameters const *const ia_params,
                      Utils::Vector3d const &d, double dist) {
-  auto const thole_q1q2 = ia_params->THOLE_q1q2;
-  auto const thole_s = ia_params->THOLE_scaling_coeff;
+  auto const thole_q1q2 = ia_params->thole.q1q2;
+  auto const thole_s = ia_params->thole.scaling_coeff;
 
   if (thole_s != 0 && thole_q1q2 != 0 &&
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
@@ -65,8 +65,8 @@ inline double thole_pair_energy(Particle const *const p1,
                                 IA_parameters const *const ia_params,
                                 Utils::Vector3d const &d, double dist) {
 
-  auto const thole_s = ia_params->THOLE_scaling_coeff;
-  auto const thole_q1q2 = ia_params->THOLE_q1q2;
+  auto const thole_s = ia_params->thole.scaling_coeff;
+  auto const thole_q1q2 = ia_params->thole.q1q2;
 
   if (thole_s != 0 && thole_q1q2 != 0 &&
       dist < Coulomb::cutoff(box_geo.length()) &&

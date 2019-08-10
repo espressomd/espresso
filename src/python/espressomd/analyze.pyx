@@ -125,7 +125,8 @@ class Analysis:
         Parameters
         ----------
         id : :obj:`int`, optional
-            Calculate distance to particle with :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
+            Calculate distance to particle with
+            :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
         pos : array of :obj:`float`, optional
             Calculate distance to position `pos`.
 
@@ -284,9 +285,9 @@ class Analysis:
 
         Parameters
         ----------
-        center : array_like :obj:`float`
+        center : (3,) array_like of :obj:`float`
             Coordinates of the centre of the cylinder.
-        axis : array_like :obj:`float`
+        axis : (3,) array_like of :obj:`float`
             Axis vectory of the cylinder, does not need to be normalized.
         length : :obj:`float`
             Length of the cylinder.
@@ -722,8 +723,8 @@ class Analysis:
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
         """
-        Calculates the Mean end-to-end distance of chains and its
-        standard deviation, as well as Mean Square end-to-end distance of
+        Calculates the mean end-to-end distance of chains and its
+        standard deviation, as well as mean square end-to-end distance of
         chains and its standard deviation.
 
         This requires that a set of chains of equal length which start with the
@@ -742,9 +743,9 @@ class Analysis:
 
         Returns
         -------
-        array_like :obj:`float`
-            Where [0] is the Mean end-to-end distance of chains and [1] its
-            standard deviation, [2] the Mean Square end-to-end distance and
+        (4,) array_like of :obj:`float`
+            Where [0] is the mean end-to-end distance of chains and [1] its
+            standard deviation, [2] the mean square end-to-end distance and
             [3] its standard deviation.
 
         """
@@ -774,9 +775,9 @@ class Analysis:
 
         Returns
         -------
-        array_like :obj:`float`
-            Where [0] is the Mean radius of gyration of the chains and [1] its
-            standard deviation, [2] the Mean Square radius of gyration and [3]
+        (4,) array_like of :obj:`float`
+            Where [0] is the mean radius of gyration of the chains and [1] its
+            standard deviation, [2] the mean square radius of gyration and [3]
             its standard deviation.
 
         """
@@ -805,7 +806,7 @@ class Analysis:
 
         Returns
         -------
-        array_like :obj:`float`:
+        (2,) array_like of :obj:`float`:
             Where [0] is the mean hydrodynamic radius of the chains
             and [1] its standard deviation.
 
@@ -855,7 +856,7 @@ class Analysis:
 
         Returns
         -------
-        array_like
+        :obj:`ndarray`
             Where [0] contains q
             and [1] contains the structure factor s(q)
 
@@ -908,7 +909,7 @@ class Analysis:
 
         Returns
         -------
-        array_like
+        :obj:`ndarray`
             Where [0] contains the midpoints of the bins,
             and [1] contains the values of the rdf.
 
@@ -996,7 +997,7 @@ class Analysis:
 
         Returns
         -------
-        array_like
+        :obj:`ndarray`
             Where [0] contains the midpoints of the bins,
             and [1] contains the values of the rdf.
 
@@ -1143,7 +1144,7 @@ class Analysis:
 
         Returns
         -------
-        array_like
+        :obj:`ndarray`
             3x3 moment of inertia matrix.
 
         """
@@ -1184,8 +1185,8 @@ class Analysis:
 
         Parameters
         ----------
-        mode : :obj:`str`
-            One of ```read```, ```set``` or ```reset```.
+        mode : :obj:`str`, \{'read', 'set' or 'reset'\}
+            Mode.
         Vk1 : :obj:`float`
             Volume.
         Vk2 : :obj:`float`
