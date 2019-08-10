@@ -96,7 +96,7 @@ For example, ::
     7.0
     >>> system.analysis.dist_to(pos=[0, 0, 0])
     1.4142135623730951
-    >>> system.analysis.mindist()
+    >>> system.analysis.min_dist()
     1.0
 
 

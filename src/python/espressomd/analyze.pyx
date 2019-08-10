@@ -87,7 +87,8 @@ class Analysis:
         ----------
         p1, p2 : lists of :obj:`int`
             Particle :attr:`~espressomd.particle_data.ParticleHandle.type` in
-            both sets.
+            both sets. If both are set to ``'default'``, the minimum distance
+            of all pairs is returned.
 
         """
 
@@ -968,11 +969,11 @@ class Analysis:
                      r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
         """
         Calculates the distance distribution of particles (probability of
-        finding a particle of type at a certain distance around a particle of
-        type , disregarding the fact that a spherical shell of a larger radius
-        covers a larger volume) The distance is defined as the minimal distance
-        between a particle of group `type_list_a` to any of the group
-        `type_list_b`.  Returns two arrays, the bins and the (normalized)
+        finding a particle of type A at a certain distance around a particle of
+        type B, disregarding the fact that a spherical shell of a larger radius
+        covers a larger volume). The distance is defined as the minimal distance
+        between a particle of group ``type_list_a`` to any of the group
+        ``type_list_b``. Returns two arrays, the bins and the (normalized)
         distribution.
 
         Parameters

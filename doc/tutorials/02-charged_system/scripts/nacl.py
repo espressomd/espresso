@@ -54,7 +54,7 @@ lj_cuts = {"Anion": WCA_cut * lj_sigmas["Anion"],
 box_l = (n_part / density)**(1. / 3.)
 system = espressomd.System(box_l=[box_l] * 3)
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-system.periodicity = [1, 1, 1]
+system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
