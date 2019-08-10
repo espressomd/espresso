@@ -345,9 +345,8 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
  *  @param[in] p1          First particle.
  *  @param[in] p2          Second particle.
  *  @param[in] iaparams    Bonded parameters for the interaction.
- *  @param[in] d           Vector between @p p1 and @p p2.
+ *  @param[in] dx          Vector between @p p1 and @p p2.
  *  @param[out] torque     Torque on @p p1.
- *  @return whether the bond is broken and the force
  */
 inline boost::optional<Utils::Vector3d>
 calc_bond_pair_force(Particle const *const p1, Particle const *const p2,

@@ -61,12 +61,12 @@
  *
  *  * The recommended signatures of the force and energy functions are:
  *    @code{.cpp}
- *    inline std::tuple<bool, Utils::Vector3d>
+ *    inline boost::optional<Utils::Vector3d>
  *    calc_fene_pair_force(Particle const *const p1,
  *                         Particle const *const p2,
  *                         Bonded_ia_parameters const *const iaparams,
  *                         Utils::Vector3d const &dx);
- *    inline std::tuple<bool, double>
+ *    inline boost::optional<double>
  *    fene_pair_energy(Particle const *const p1,
  *                     Particle const *const p2,
  *                     Bonded_ia_parameters const *const iaparams,
@@ -98,9 +98,10 @@
  *  * At the end of the parameter setter function, do not forget the call to
  *    @ref mpi_bcast_ia_params(), which will sync the parameters just set to
  *    other compute nodes in a parallel simulation.
- *  * The functions calculating force and energy return a boolean value, false
- *    in case of success, true if the bond is broken (particles are too far
- *    apart). This will stop the integration with a runtime error.
+ *  * The functions calculating force(s) and energy return their values in a
+ *    \c boost::optional container if the bond is breakable. If the bond is
+ *    broken, the returned object is empty; this will stop the integrator
+ *    with a runtime error.
  *  * The functions calculating force and energy can make use of a
  *    pre-calculated distance vector (\p dx) pointing from particle 2 to
  *    particle 1, that takes periodic boundary conditions into account.
@@ -119,22 +120,23 @@
  *      range be stored explicitly in the struct.
  *  * In forces_inline.hpp:
  *    - include the header file of the new interaction
- *    - in function @ref add_bonded_force(): add the new interaction to the
+ *    - in function @ref calc_bond_pair_force(): add the new interaction to the
  *      switch statement if it is a pairwise bond. For the FENE bond, the
  *      code looks like this:
  *      @code{.cpp}
+ *      boost::optional<Utils::Vector3d> result;
+ *      // ...
  *      case BONDED_IA_FENE:
- *        std::tie(bond_broken, force1) =
- *          calc_fene_pair_force(p1, p2, iaparams, dx);
+ *        result = calc_fene_pair_force(iaparams, dx);
  *        break;
  *      @endcode
- *    - in function @ref calc_bond_pair_force(): add the new interaction to the
+ *    - in function @ref add_bonded_force(): add the new interaction to the
  *      switch statement if it is not a pairwise bond. For the harmonic angle,
  *      the code looks like this:
  *      @code{.cpp}
  *      case BONDED_IA_ANGLE_HARMONIC:
- *        std::tie(bond_broken, force2, force1, force3) =
- *          calc_angle_harmonic_force(p2, p1, p3, iaparams);
+ *        std::tie(force1, force2, force3) =
+ *          calc_angle_harmonic_force(p1, p2, p3, iaparams);
  *        break;
  *      @endcode
  *  * In energy_inline.hpp:
@@ -142,8 +144,10 @@
  *    - in function @ref add_bonded_energy(): add the new interaction to the
  *      switch statement. For the FENE bond, e.g., the code looks like this:
  *      @code{.cpp}
+ *      boost::optional<double> retval;
+ *      // ...
  *      case BONDED_IA_FENE:
- *        std::tie(bond_broken, ret) = fene_pair_energy(p1, p2, iaparams, dx);
+ *        retval = fene_pair_energy(iaparams, dx);
  *        break;
  *      @endcode
  *  * Pressure, stress tensor and virial calculation: if your bonded

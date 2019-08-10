@@ -55,8 +55,6 @@ void thermalized_bond_init();
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] force1    Force on particle @p p1
- *  @param[out] force2    Force on particle @p p2
  *  @return the forces on @p p1 and @p p2
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>

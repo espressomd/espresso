@@ -81,7 +81,6 @@ calc_umbrella_pair_force(Particle const *const p1, Particle const *const p2,
  *  @param[in]  p2        Second particle.
  *  @param[in]  ia_params Bonded parameters for the pair interaction.
  *  @param[in]  d         %Distance between the particles.
- *  @return whether the bond is broken and the energy
  */
 inline boost::optional<double>
 umbrella_pair_energy(Particle const *const p1, Particle const *const p2,
