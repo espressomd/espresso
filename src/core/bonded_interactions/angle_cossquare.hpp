@@ -40,16 +40,16 @@
 int angle_cossquare_set_params(int bond_type, double bend, double phi0);
 
 /** Compute the three-body angle interaction force.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_cossquare_3body_forces(Particle const *const p_mid,
-                                  Particle const *const p_left,
-                                  Particle const *const p_right,
+calc_angle_cossquare_3body_forces(Utils::Vector3d const &r_mid,
+                                  Utils::Vector3d const &r_left,
+                                  Utils::Vector3d const &r_right,
                                   Bonded_ia_parameters const *const iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
@@ -58,8 +58,7 @@ calc_angle_cossquare_3body_forces(Particle const *const p_mid,
     return k * (cos_phi - cos_phi0);
   };
 
-  return calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p,
-                                  forceFactor, false);
+  return calc_angle_generic_force(r_mid, r_left, r_right, forceFactor, false);
 }
 
 /** Compute the three-body angle interaction force.
@@ -74,7 +73,8 @@ calc_angle_cossquare_force(Particle const *const p_mid,
                            Particle const *const p_left,
                            Particle const *const p_right,
                            Bonded_ia_parameters const *const iaparams) {
-  return calc_angle_cossquare_3body_forces(p_mid, p_left, p_right, iaparams);
+  return calc_angle_cossquare_3body_forces(p_mid->r.p, p_left->r.p,
+                                           p_right->r.p, iaparams);
 }
 
 /** Computes the three-body angle interaction energy.

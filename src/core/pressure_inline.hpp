@@ -117,20 +117,22 @@ calc_three_body_bonded_forces(Particle const *const p_mid,
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d> result;
   switch (iaparams->type) {
   case BONDED_IA_ANGLE_HARMONIC:
-    result = calc_angle_harmonic_3body_forces(p_mid, p_left, p_right, iaparams);
+    result = calc_angle_harmonic_3body_forces(p_mid->r.p, p_left->r.p,
+                                              p_right->r.p, iaparams);
     break;
   case BONDED_IA_ANGLE_COSINE:
-    result = calc_angle_cosine_3body_forces(p_mid, p_left, p_right, iaparams);
+    result = calc_angle_cosine_3body_forces(p_mid->r.p, p_left->r.p,
+                                            p_right->r.p, iaparams);
     break;
   case BONDED_IA_ANGLE_COSSQUARE:
-    result =
-        calc_angle_cossquare_3body_forces(p_mid, p_left, p_right, iaparams);
+    result = calc_angle_cossquare_3body_forces(p_mid->r.p, p_left->r.p,
+                                               p_right->r.p, iaparams);
     break;
   case BONDED_IA_TABULATED:
     switch (iaparams->p.tab.type) {
     case TAB_BOND_ANGLE:
-      result =
-          calc_angle_3body_tabulated_forces(p_mid, p_left, p_right, iaparams);
+      result = calc_angle_3body_tabulated_forces(p_mid->r.p, p_left->r.p,
+                                                 p_right->r.p, iaparams);
       break;
     default:
       runtimeErrorMsg() << "calc_bonded_force: tabulated bond type of atom "
