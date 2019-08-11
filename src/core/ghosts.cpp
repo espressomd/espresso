@@ -25,7 +25,6 @@
  *  see \ref ghosts.hpp "ghosts.hpp"
  */
 #include "ghosts.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
@@ -152,12 +151,13 @@ static void prepare_send_buffer(GhostCommunication *gc,
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
-          auto *pp = new (insert) ParticlePosition(pt->r);
+          auto pp = pt->r;
 
           if (gc->shift) {
-            pp->p += *(gc->shift);
+            pp.p += *(gc->shift);
           }
 
+          memcpy(insert, &pp, sizeof(pp));
           insert += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
@@ -195,25 +195,26 @@ static void prepare_send_buffer(GhostCommunication *gc,
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
-  // free all allocated information, will be resent
-  {
-    int np = cell->n;
-    Particle *part = cell->part;
-    for (int p = 0; p < np; p++) {
-      free_particle(part + p);
+  using Utils::make_span;
+  auto const old_cap = cell->max;
+
+  /* reset excess particles */
+  if (size < cell->max) {
+    for (auto &p : make_span<Particle>(cell->part + size, cell->max - size)) {
+      p = Particle{};
+      p.l.ghost = true;
     }
   }
 
+  /* Adapt size */
   cell->resize(size);
-  // invalidate pointers etc
-  {
-    int np = cell->n;
-    Particle *part = cell->part;
-    for (int p = 0; p < np; p++) {
-      auto *pt = new (&part[p]) Particle();
 
-      // init ghost variable
-      pt->l.ghost = 1;
+  /* initialize new particles */
+  if (old_cap < cell->max) {
+    auto new_parts = make_span(cell->part + old_cap, cell->max - old_cap);
+    std::uninitialized_fill(new_parts.begin(), new_parts.end(), Particle{});
+    for (auto &p : new_parts) {
+      p.l.ghost = true;
     }
   }
 }
@@ -256,11 +257,9 @@ static void put_recv_buffer(GhostCommunication *gc, unsigned data_parts) {
             int n_bonds;
             memcpy(&n_bonds, retrieve, sizeof(int));
             retrieve += sizeof(int);
-            if (n_bonds) {
-              pt->bl.resize(n_bonds);
-              std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
-              bond_retrieve += n_bonds;
-            }
+            pt->bl.resize(n_bonds);
+            std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
+            bond_retrieve += n_bonds;
           }
           if (local_particles[pt->p.identity] == nullptr) {
             local_particles[pt->p.identity] = pt;
@@ -322,7 +321,9 @@ static void add_forces_from_recv_buffer(GhostCommunication *gc) {
     part = gc->part_lists[pl]->part;
     for (p = 0; p < np; p++) {
       pt = &part[p];
-      pt->f += *(reinterpret_cast<ParticleForce *>(retrieve));
+      ParticleForce pf;
+      memcpy(&pf, retrieve, sizeof(pf));
+      pt->f += pf;
       retrieve += sizeof(ParticleForce);
     }
   }
@@ -638,22 +639,3 @@ void ghosts_revert_comm_order(GhostCommunicator *comm) {
   }
 }
 
-/** Go through \ref ghost_cells and remove the ghost entries from \ref
-    local_particles. Part of \ref dd_exchange_and_sort_particles.*/
-void invalidate_ghosts() {
-  int c, p;
-  /* remove ghosts, but keep Real Particles */
-  for (c = 0; c < ghost_cells.n; c++) {
-    Particle *part = ghost_cells.cell[c]->part;
-    int np = ghost_cells.cell[c]->n;
-    for (p = 0; p < np; p++) {
-      /* Particle is stored as ghost in the local_particles array,
-         if the pointer stored there belongs to a ghost cell
-         particle array. */
-      if (&(part[p]) == local_particles[part[p].p.identity])
-        local_particles[part[p].p.identity] = nullptr;
-      free_particle(part + p);
-    }
-    ghost_cells.cell[c]->n = 0;
-  }
-}

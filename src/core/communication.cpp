@@ -73,6 +73,7 @@
 #include <utils/u32_to_u64.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/range/algorithm/min_element.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/utility.hpp>
@@ -394,7 +395,7 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
   switch (job) {
   case 1:
     mpi_call(mpi_gather_stats_slave, -1, 1);
-    energy_calc((double *)result);
+    energy_calc((double *)result, sim_time);
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or
@@ -438,7 +439,7 @@ void mpi_gather_stats_slave(int, int job) {
   switch (job) {
   case 1:
     /* calculate and reduce (sum up) energies */
-    energy_calc(nullptr);
+    energy_calc(nullptr, sim_time);
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze
@@ -549,10 +550,12 @@ void mpi_rescale_particles_slave(int, int dir) {
 
 void mpi_bcast_cell_structure(int cs) {
   mpi_call(mpi_bcast_cell_structure_slave, -1, cs);
-  cells_re_init(cs);
+  cells_re_init(cs, cell_structure.min_range);
 }
 
-void mpi_bcast_cell_structure_slave(int, int cs) { cells_re_init(cs); }
+void mpi_bcast_cell_structure_slave(int, int cs) {
+  cells_re_init(cs, cell_structure.min_range);
+}
 
 /*************** REQ_BCAST_NPTISO_GEOM *****************/
 
