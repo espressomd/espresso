@@ -638,4 +638,3 @@ void ghosts_revert_comm_order(GhostCommunicator *comm) {
     }
   }
 }
-

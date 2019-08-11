@@ -111,7 +111,8 @@ int iccp3m_iteration(const ParticleRange &particles,
     force_calc_iccp3m(particles, ghost_particles); /* Calculate electrostatic
                             forces (SR+LR) excluding source source interaction*/
     cells_collect_forces();
-    ghost_communicator(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_PROPRTS);
+    ghost_communicator(&cell_structure.collect_ghost_force_comm,
+                       GHOSTTRANS_PROPRTS);
 
     double diff = 0;
 
