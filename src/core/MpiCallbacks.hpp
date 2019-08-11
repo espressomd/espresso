@@ -24,6 +24,7 @@
 
 #include <utils/NumeratedContainer.hpp>
 #include <utils/as_const.hpp>
+#include <utils/mpi/datatypes.hpp>
 #include <utils/tuple.hpp>
 #include <utils/type_traits.hpp>
 

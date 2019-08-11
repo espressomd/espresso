@@ -357,4 +357,11 @@ template <typename T, size_t N> struct decay_to_scalar<Vector<T, N>> {
 template <typename T> struct decay_to_scalar<Vector<T, 1>> { using type = T; };
 
 } // namespace Utils
+
+namespace boost {
+namespace mpi {
+template <class T, size_t N>
+struct is_mpi_datatype<Utils::Vector<T, N>> : is_mpi_datatype<T> {};
+} // namespace mpi
+} // namespace boost
 #endif

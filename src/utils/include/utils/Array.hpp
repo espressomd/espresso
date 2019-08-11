@@ -141,4 +141,13 @@ private:
   }
 };
 } // namespace Utils
+
+namespace boost {
+namespace mpi {
+template <class T> struct is_mpi_datatype;
+template <class T, size_t N>
+struct is_mpi_datatype<Utils::Array<T, N>> : is_mpi_datatype<T> {};
+} // namespace mpi
+} // namespace boost
+
 #endif

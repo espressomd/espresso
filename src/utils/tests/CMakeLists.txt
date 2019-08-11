@@ -43,3 +43,4 @@ unit_test(NAME all_compare_test SRC all_compare_test.cpp DEPENDS utils Boost::mp
 unit_test(NAME gatherv_test SRC gatherv_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX)
 unit_test(NAME all_gatherv_test SRC all_gatherv_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX)
 unit_test(NAME sendrecv_test SRC sendrecv_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX utils NUM_PROC 3)
+unit_test(NAME datatypes_test SRC datatypes_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX)

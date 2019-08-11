@@ -52,6 +52,12 @@ void serialize(Archive &ar, Utils::List<T> &v,
   split_free(ar, v, file_version);
 }
 } // namespace serialization
+
+namespace mpi {
+template <class T> struct is_mpi_datatype;
+template <class T>
+struct is_mpi_datatype<Utils::List<T>> : is_mpi_datatype<T> {};
+} // namespace mpi
 } // namespace boost
 
 #endif
