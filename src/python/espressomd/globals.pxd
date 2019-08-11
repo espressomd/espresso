@@ -48,7 +48,7 @@ cdef extern from "global.hpp":
 
 cdef extern from "communication.hpp":
     extern int n_nodes
-    void mpi_set_time_step(double time_step)
+    void mpi_set_time_step(double time_step) except +
 
 cdef extern from "integrate.hpp":
     double time_step
@@ -67,7 +67,6 @@ cdef extern from "domain_decomposition.hpp":
     extern DomainDecomposition dd
     extern int max_num_cells
     extern int min_num_cells
-    extern double max_skin
     int calc_processor_min_num_cells(const Vector3i & grid)
 
 
@@ -82,9 +81,9 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern int max_seen_particle
     extern int max_seen_particle_type
     extern double max_cut_nonbonded
-    extern double max_cut_bonded
     extern double min_global_cut
-
+    double recalc_maximal_cutoff_bonded()
+    double recalc_maximal_cutoff_nonbonded()
 
 cdef extern from "thermostat.hpp":
     extern double nptiso_gamma0
@@ -100,7 +99,6 @@ cdef extern from "dpd.hpp":
 
 
 cdef extern from "cells.hpp":
-    extern double max_range
     ctypedef struct CellStructure:
         int type
         bool use_verlet_list

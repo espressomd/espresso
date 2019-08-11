@@ -22,9 +22,10 @@
 #define CORE_TABULATED_HPP
 
 /** \file
- *  Routines to calculate the  energy and/or  force
- *  for a particle pair or bonds via interpolating from lookup tables.
- *  \ref forces.cpp
+ *  Routines to calculate the energy and/or force for particle pairs via
+ *  interpolation of lookup tables.
+ *
+ *  Implementation in \ref nonbonded_tab.cpp.
  *  Needs feature TABULATED compiled in (see \ref config.hpp).
  */
 
@@ -36,7 +37,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
-/** Set the parameters of a non-Bonded tabulated potential.
+/** Set the parameters of a non-bonded tabulated potential.
  *  ia_params and force/energy tables are communicated to each node
  *
  *  @param part_type_a  particle type for which the interaction is defined
@@ -52,25 +53,23 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
                          std::vector<double> const &force);
 
 /** Add a non-bonded pair force by linear interpolation from a table. */
-inline void add_tabulated_pair_force(const Particle *const p1,
-                                     const Particle *const p2,
-                                     IA_parameters const *ia_params,
-                                     double const d[3], double dist,
-                                     double force[3]) {
-  if (dist < ia_params->TAB.cutoff()) {
-    auto const fac = ia_params->TAB.force(dist) / dist;
-
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
+inline void add_tabulated_pair_force(Particle const *const p1,
+                                     Particle const *const p2,
+                                     IA_parameters const *const ia_params,
+                                     Utils::Vector3d const &d, double dist,
+                                     Utils::Vector3d &force) {
+  if (dist < ia_params->tab.cutoff()) {
+    auto const fac = ia_params->tab.force(dist) / dist;
+    force += fac * d;
   }
 }
 
 /** Add a non-bonded pair energy by linear interpolation from a table. */
 inline double tabulated_pair_energy(Particle const *, Particle const *,
-                                    IA_parameters const *ia_params,
-                                    const double d[3], double dist) {
-  if (dist < ia_params->TAB.cutoff()) {
-    return ia_params->TAB.energy(dist);
+                                    IA_parameters const *const ia_params,
+                                    Utils::Vector3d const &d, double dist) {
+  if (dist < ia_params->tab.cutoff()) {
+    return ia_params->tab.energy(dist);
   }
   return 0.0;
 }

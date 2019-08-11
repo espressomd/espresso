@@ -70,8 +70,9 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
  *  !!! loop over particles from domain_decomposition !!!
  */
 
-void calc_oif_global(double *area_volume,
-                     int molType) { // first-fold-then-the-same approach
+void calc_oif_global(
+    double *area_volume, int molType,
+    const ParticleRange &particles) { // first-fold-then-the-same approach
   double partArea = 0.0;
   double part_area_volume[2]; // added
 
@@ -84,7 +85,7 @@ void calc_oif_global(double *area_volume,
 
   int test = 0;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     int j = 0;
     auto p1 = &p;
     while (j < p1->bl.n) {
@@ -144,14 +145,15 @@ void calc_oif_global(double *area_volume,
                 MPI_COMM_WORLD);
 }
 
-void add_oif_global_forces(double const *area_volume,
-                           int molType) { // first-fold-then-the-same approach
+void add_oif_global_forces(
+    double const *area_volume, int molType,
+    const ParticleRange &particles) { // first-fold-then-the-same approach
   double area = area_volume[0];
   double VOL_volume = area_volume[1];
 
   int test = 0;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     int j = 0;
     auto p1 = &p;
     while (j < p1->bl.n) {
@@ -191,7 +193,7 @@ void add_oif_global_forces(double const *area_volume,
         auto const p33 = p11 + get_mi_vector(p3->r.p, p11, box_geo);
 
         // unfolded positions correct
-        /// starting code from volume force
+        // starting code from volume force
         auto const VOL_norm = get_n_triangle(p11, p22, p33).normalize();
         auto const VOL_A = area_triangle(p11, p22, p33);
         auto const VOL_vv = (VOL_volume - iaparams->p.oif_global_forces.V0) /
@@ -202,7 +204,7 @@ void add_oif_global_forces(double const *area_volume,
         p1->f.f += VOL_force;
         p2->f.f += VOL_force;
         p3->f.f += VOL_force;
-        ///  ending code from volume force
+        // ending code from volume force
 
         auto const h = (1. / 3.) * (p11 + p22 + p33);
 

@@ -21,7 +21,6 @@
 Testmodule for MPI-IO.
 """
 
-from __future__ import print_function
 import espressomd
 import espressomd.io
 from espressomd.interactions import AngleHarmonic

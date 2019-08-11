@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 IF CUDA:
     from .lb cimport HydrodynamicInteraction
@@ -144,11 +143,11 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             species : :obj:`int`
-                      species for which the density will apply.
+                species for which the density will apply.
             density : :obj:`float`
-                      The value to which the density will be set to.
+                The value to which the density will be set to.
             node : numpy-array of type :obj:`int` of length (3)
-                   If set the density will be only applied on this specific node.
+                If set the density will be only applied on this specific node.
 
             """
 
@@ -178,16 +177,16 @@ IF ELECTROKINETICS:
             Sets the global density of a species to a specific value
             for which the whole system will have no net charge.
 
+            .. note :: The previous density of the species will be ignored and
+                       it will be homogeneous distributed over the whole system
+                       The species must be charged to begin with. If the
+                       neutralization would lead to a negative species density
+                       an exception will be raised.
+
             Parameters
             ----------
             species : :obj:`int`
-                      The species which will be changed to neutralize the system.
-
-            note : The previous density of the species will be ignored and
-                   it will be homogeneous distributed over the whole system
-                   The species must be charged to begin with.
-                   If the neutralization would lead to a negative species density
-                   an exception will be raised.
+                The species which will be changed to neutralize the system.
 
             """
             err = ek_neutralize_system(species.id)
@@ -226,7 +225,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             species : :obj:`int`
-                      Species to be initialized.
+                Species to be initialized.
 
             """
             self._params["species"].append(species)
@@ -246,7 +245,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the boundary is written to.
+                The path and vtk-file name the boundary is written to.
 
             """
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
@@ -258,7 +257,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the velocity is written to.
+                The path and vtk-file name the velocity is written to.
 
             """
             ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
@@ -270,7 +269,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the LB density is written to.
+                The path and vtk-file name the LB density is written to.
 
             """
             ek_lb_print_vtk_density(utils.to_char_pointer(path))
@@ -282,7 +281,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the electrostatic potential is written to.
+                The path and vtk-file name the electrostatic potential is written to.
 
             """
             ek_print_vtk_potential(utils.to_char_pointer(path))
@@ -294,7 +293,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the LB force is written to.
+                The path and vtk-file name the LB force is written to.
 
             """
             ek_print_vtk_lbforce_density(utils.to_char_pointer(path))
@@ -303,12 +302,12 @@ IF ELECTROKINETICS:
             """
             Writes the electrostatic particle potential into a vtk-file.
 
+            .. note :: This only works if 'es_coupling' is active.
+
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the electrostatic potential is written to.
-
-            note : This only works if 'es_coupling' is active.
+                The path and vtk-file name the electrostatic potential is written to.
 
             """
 
@@ -338,7 +337,7 @@ IF ELECTROKINETICS:
         def add_boundary(self, shape):
             raise Exception("This method is not implemented yet.")
 
-    cdef class ElectrokineticsRoutines(object):
+    cdef class ElectrokineticsRoutines:
         cdef Vector3i node
 
         def __init__(self, key):
@@ -378,7 +377,7 @@ IF ELECTROKINETICS:
             def __set__(self, value):
                 raise Exception("Not implemented.")
 
-    class Species(object):
+    class Species:
 
         """
         Creates a species object that is passed to the ek instance.
@@ -490,7 +489,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the species density is written to.
+                The path and vtk-file name the species density is written to.
 
             """
             ek_print_vtk_density(self.id, utils.to_char_pointer(path))
@@ -502,7 +501,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the species flux is written to.
+                The path and vtk-file name the species flux is written to.
 
             """
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
@@ -513,7 +512,7 @@ IF ELECTROKINETICS:
         def print_vtk_flux_link(self, path):
             ek_print_vtk_flux_link(self.id, utils.to_char_pointer(path))
 
-    cdef class SpecieRoutines(object):
+    cdef class SpecieRoutines:
         cdef Vector3i node
         cdef int id
 

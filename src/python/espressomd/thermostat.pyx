@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 from functools import wraps
 from . cimport thermostat
 include "myconfig.pxi"
@@ -53,10 +52,11 @@ def AssertThermostatType(*allowedthermostats):
     return decoratorfunction
 
 
-cdef class Thermostat(object):
+cdef class Thermostat:
 
     # We have to cdef the state variable because it is a cdef class
     cdef _state
+    cdef _LB_fluid
 
     def __init__(self):
         self._state = None
@@ -96,17 +96,20 @@ cdef class Thermostat(object):
             if thmst["type"] == "OFF":
                 self.turn_off()
             if thmst["type"] == "LANGEVIN":
-                self.set_langevin(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["seed"])
+                self.set_langevin(kT=thmst["kT"], gamma=thmst["gamma"],
+                                  gamma_rotation=thmst["gamma_rotation"],
+                                  act_on_virtual=thmst["act_on_virtual"],
+                                  seed=thmst["seed"])
             if thmst["type"] == "LB":
                 self.set_lb(
+                    LB_fluid=thmst["LB_fluid"],
                     act_on_virtual=thmst["act_on_virtual"],
                     seed=thmst["rng_counter_fluid"])
             if thmst["type"] == "NPT_ISO":
-                self.set_npt(kT=thmst["kT"], p_diff=thmst[
-                             "p_diff"], piston=thmst["piston"])
+                self.set_npt(kT=thmst["kT"], p_diff=thmst["p_diff"],
+                             piston=thmst["piston"])
             if thmst["type"] == "DPD":
-                self.set_dpd(kT=thmst["kT"])
+                self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
 
     def get_ts(self):
         return thermo_switch
@@ -144,6 +147,7 @@ cdef class Thermostat(object):
 
         if thermo_switch & THERMO_LB:
             lb_dict = {}
+            lb_dict["LB_fluid"] = self._LB_fluid
             lb_dict["gamma"] = lb_lbcoupling_get_gamma()
             lb_dict["type"] = "LB"
             lb_dict["act_on_virtual"] = thermo_virtual
@@ -163,10 +167,12 @@ cdef class Thermostat(object):
             # thermo_dict["p_diff"] = nptiso.p_diff
             thermo_list.append(npt_dict)
         if (thermo_switch & THERMO_DPD):
-            dpd_dict = {}
-            dpd_dict["type"] = "DPD"
-            dpd_dict["kT"] = temperature
-            thermo_list.append(dpd_dict)
+            IF DPD:
+                dpd_dict = {}
+                dpd_dict["type"] = "DPD"
+                dpd_dict["kT"] = temperature
+                dpd_dict["seed"] = int(dpd_get_rng_state())
+                thermo_list.append(dpd_dict)
         return thermo_list
 
     def turn_off(self):
@@ -212,7 +218,7 @@ cdef class Thermostat(object):
         Parameters
         -----------
         kT : :obj:`float`
-             Thermal energy of the simulated heat bath.
+            Thermal energy of the simulated heat bath.
         gamma : :obj:`float`
             Contains the friction coefficient of the bath. If the feature
             ``PARTICLE_ANISOTROPY`` is compiled in then ``gamma`` can be a list
@@ -367,8 +373,7 @@ cdef class Thermostat(object):
         ----------
         LB_fluid : :class:`~espressomd.lb.LBFluid` or :class:`~espressomd.lb.LBFluidGPU`
         seed : :obj:`int`
-             Seed for the random number generator, required
-             if kT > 0.
+             Seed for the random number generator, required if kT > 0.
         act_on_virtual : :obj:`bool`, optional
             If ``True`` the thermostat will act on virtual sites (default).
         gamma : :obj:`float`
@@ -379,12 +384,15 @@ cdef class Thermostat(object):
             raise ValueError(
                 "The LB thermostat requires a LB / LBGPU instance as a keyword arg.")
 
+        self._LB_fluid = LB_fluid
         if lb_lbfluid_get_kT() > 0.:
             if not seed and lb_lbcoupling_is_seed_required():
                 raise ValueError(
                     "seed has to be given as keyword arg")
             elif seed:
                 lb_lbcoupling_set_rng_state(seed)
+        else:
+            lb_lbcoupling_set_rng_state(0)
 
         global thermo_switch
         thermo_switch = (thermo_switch or THERMO_LB)
@@ -433,9 +441,10 @@ cdef class Thermostat(object):
             mpi_bcast_parameter(FIELD_NPTISO_GV)
 
     IF DPD:
-        def set_dpd(self, kT=None):
+        def set_dpd(self, kT=None, seed=None):
             """
-            Sets the DPD thermostat. This also activates the DPD interactions.
+            Sets the DPD thermostat with required parameters 'kT'.
+            This also activates the DPD interactions.
 
             Parameters
             ----------
@@ -448,6 +457,17 @@ cdef class Thermostat(object):
                 raise ValueError("kT has to be given as keyword args")
             if not isinstance(kT, float):
                 raise ValueError("temperature must be a positive number")
+
+            #Seed is required if the rng is not initialized
+            if not seed and dpd_is_seed_required():
+                raise ValueError(
+                    "A seed has to be given as keyword argument on first activation of the thermostat")
+
+            if seed:
+                utils.check_type_or_throw_except(
+                    seed, 1, int, "seed must be a positive integer")
+                dpd_set_rng_state(seed)
+
             global temperature
             temperature = float(kT)
             global thermo_switch

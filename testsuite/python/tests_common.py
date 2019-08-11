@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import os
 import numpy as np
 
@@ -600,7 +599,7 @@ def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
 class DynamicDict(dict):
 
     def __getitem__(self, key):
-        value = super(DynamicDict, self).__getitem__(key)
+        value = super().__getitem__(key)
         return eval(value, self) if isinstance(value, str) else value
 
 

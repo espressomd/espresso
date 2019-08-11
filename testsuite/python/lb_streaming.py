@@ -62,7 +62,7 @@ LB_PARAMETERS = {
 }
 
 
-class LBStreamingCommon(object):
+class LBStreamingCommon:
 
     """
     Check the streaming step of the LB fluid implementation by setting all populations

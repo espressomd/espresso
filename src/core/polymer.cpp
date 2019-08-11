@@ -68,7 +68,7 @@ Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn) {
 }
 
 double mindist(PartCfg &partCfg, Utils::Vector3d const &pos) {
-  if (partCfg.size() == 0) {
+  if (partCfg.empty()) {
     return std::min(std::min(box_geo.length()[0], box_geo.length()[1]),
                     box_geo.length()[2]);
   }
@@ -97,9 +97,9 @@ bool is_valid_position(
           std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
       if (cs) {
         double d;
-        double v[3];
+        Utils::Vector3d v;
 
-        cs->calc_dist(folded_pos, &d, v);
+        cs->calc_dist(folded_pos, d, v);
 
         if (d <= 0) {
           return false;

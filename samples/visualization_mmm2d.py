@@ -19,7 +19,6 @@ Visualization sample of a simple plate capacitor with applied potential
 difference and charged particles.
 """
 
-from __future__ import print_function
 import numpy as np
 import math
 from threading import Thread

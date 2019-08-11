@@ -72,7 +72,7 @@ nptiso_struct nptiso = {0.0,
 /************************************************************/
 
 /** Calculate long range virials (P3M, MMM2d...). */
-void calc_long_range_virials();
+void calc_long_range_virials(const ParticleRange &particles);
 
 /** Initializes a virials Observable stat. */
 void init_virials(Observable_stat *stat);
@@ -121,24 +121,18 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   init_p_tensor_non_bonded(&p_tensor_non_bonded);
 
   on_observable_calc();
-  // Run short-range loop if max cut >0
-  if (max_cut > 0) {
-    short_range_loop(
-        [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
-        [](Particle &p1, Particle &p2, Distance &d) {
-          add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(),
-                                      sqrt(d.dist2), d.dist2);
-        });
-  } else {
-    // Only add single particle virials
-    for (auto &p : local_cells.particles()) {
-      add_single_particle_virials(v_comp, p);
-    }
-  }
+
+  short_range_loop(
+      [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
+      [](Particle &p1, Particle &p2, Distance &d) {
+        add_non_bonded_pair_virials(&(p1), &(p2), d.vec21, sqrt(d.dist2),
+                                    d.dist2);
+      });
+
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
-  calc_long_range_virials();
+  calc_long_range_virials(local_cells.particles());
 
 #ifdef VIRTUAL_SITES
   virtual_sites()->pressure_and_stress_tensor_contribution(
@@ -175,10 +169,10 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 
 /************************************************************/
 
-void calc_long_range_virials() {
+void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_pressure_long_range(virials, p_tensor);
+  Coulomb::calc_pressure_long_range(virials, p_tensor, particles);
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES

@@ -37,10 +37,10 @@
 ##    # write tests
 ##    function test_install() {
 ##      assert_file_exists bin/main
-##      assert_file_exists lib/python2.7/site-packages/espressomd/__init__.py
+##      assert_file_exists lib/python3.6/site-packages/espressomd/__init__.py
 ##    }
 ##    function test_run() {
-##      assert_return_code python2 -c "import espressomd"
+##      assert_return_code python3 -c "import espressomd"
 ##    }
 ##
 ##    # run tests

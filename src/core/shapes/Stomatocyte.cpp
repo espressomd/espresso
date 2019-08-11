@@ -28,8 +28,8 @@
 using namespace std;
 
 namespace Shapes {
-void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double *dist,
-                                 double *vec) const {
+void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                                 Utils::Vector3d &vec) const {
 
   using Utils::sqr;
 
@@ -67,7 +67,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double *dist,
   // So the shortest distance to the line is
 
   Utils::Vector2d dist_2D;
-  dist_2D[0] = Utils::Vector3d(closest_pos - pos).norm();
+  dist_2D[0] = (closest_pos - pos).norm();
   dist_2D[1] = mu * m_orientation.norm();
 
   /***** Use the obtained planar coordinates in distance function *****/
@@ -362,11 +362,8 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double *dist,
 
   // Pass the values we obtained to ESPResSo
 
-  for (int i = 0; i < 3; i++) {
-    vec[i] = normal_3D[i] * distance;
-  }
-
-  *dist = std::copysign(distance, m_direction);
+  vec = normal_3D * distance;
+  dist = std::copysign(distance, m_direction);
 
   // And we are done with the stomatocyte
 }

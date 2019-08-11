@@ -33,6 +33,9 @@
 
 #include "config.hpp"
 
+#include <ParticleRange.hpp>
+#include <utils/Vector.hpp>
+
 #ifdef ELECTROSTATICS
 
 /** MMM2D error messages */
@@ -86,21 +89,25 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
                      double delta_bot, bool const_pot_on, double pot_diff);
 
 /** the general long range force/energy calculation */
-double MMM2D_add_far(int f, int e);
+double MMM2D_add_far(int f, int e, const ParticleRange &particles);
 
 /** the actual long range force calculation */
-inline void MMM2D_add_far_force() { MMM2D_add_far(1, 0); }
+inline void MMM2D_add_far_force(const ParticleRange &particles) {
+  MMM2D_add_far(1, 0, particles);
+}
 
 /** the actual long range energy calculation */
-inline double MMM2D_far_energy() { return MMM2D_add_far(0, 1); }
+inline double MMM2D_far_energy(const ParticleRange &particles) {
+  return MMM2D_add_far(0, 1, particles);
+}
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-void add_mmm2d_coulomb_pair_force(double pref, const double d[3], double dl,
-                                  double force[3]);
+void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,
+                                  double dl, Utils::Vector3d &force);
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-double mmm2d_coulomb_pair_energy(double charge_factor, const double dv[3],
-                                 double d);
+double mmm2d_coulomb_pair_energy(double charge_factor,
+                                 Utils::Vector3d const &dv, double d);
 
 /// check that MMM2D can run with the current parameters
 int MMM2D_sanity_checks();
@@ -110,7 +117,7 @@ void MMM2D_init();
 
 /** if the number of particles has changed (even per node),
     the particle buffers for the coefficients have to be resized. */
-void MMM2D_on_resort_particles();
+void MMM2D_on_resort_particles(const ParticleRange &particles);
 
 /** energy contribution from dielectric layers */
 double MMM2D_dielectric_layers_energy_contribution();

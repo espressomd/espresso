@@ -82,7 +82,7 @@ using are_allowed_arguments =
  * @param f Functor to be called
  * @param ia Buffer to extract the parameters from
  *
- * @return Return value of calling @param f.
+ * @return Return value of calling @p f.
  */
 template <class F, class... Args>
 auto invoke(F f, boost::mpi::packed_iarchive &ia) {
@@ -114,9 +114,6 @@ struct callback_concept_t {
    * @brief Execute the callback.
    *
    * Unpack parameters for this callback, and then call it.
-   *
-   * @param comm communicator used for return value collection.
-   * @param ia MPI buffer containing the arguments.
    */
   virtual void operator()(boost::mpi::communicator const &,
                           boost::mpi::packed_iarchive &) const = 0;
@@ -133,6 +130,9 @@ struct callback_concept_t {
 template <class F, class... Args>
 struct callback_void_t final : public callback_concept_t {
   F m_f;
+
+  callback_void_t(callback_void_t const &) = delete;
+  callback_void_t(callback_void_t &&) = delete;
 
   template <class FRef>
   explicit callback_void_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
@@ -152,6 +152,9 @@ struct callback_void_t final : public callback_concept_t {
 template <class F, class... Args>
 struct callback_one_rank_t final : public callback_concept_t {
   F m_f;
+
+  callback_one_rank_t(callback_one_rank_t const &) = delete;
+  callback_one_rank_t(callback_one_rank_t &&) = delete;
 
   template <class FRef>
   explicit callback_one_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}

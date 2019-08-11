@@ -49,6 +49,7 @@ double diffTime();
 /** sets the optimal \ref skin between min and max by bisection to tolerance
  *  tol.
  */
-void tune_skin(double min, double max, double tol, int steps);
+void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
+               bool adjust_max_skin);
 
 #endif

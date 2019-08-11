@@ -20,7 +20,6 @@
 # This script appends the sample list of features to the file
 #   myconfig-sample.h.
 #
-from __future__ import print_function
 import time
 import string
 import fileinput

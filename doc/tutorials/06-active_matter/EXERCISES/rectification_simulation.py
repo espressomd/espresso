@@ -23,8 +23,6 @@
 #                                                                              #
 ##########################################################################
 
-from __future__ import print_function
-
 from math import cos, pi, sin
 import numpy as np
 import os

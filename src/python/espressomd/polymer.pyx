@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport polymer
 import numpy as np
@@ -93,7 +92,7 @@ def positions(**kwargs):
 
     Returns
     -------
-    array_like :obj:`float`
+    :obj:`ndarray`
         Three-dimensional numpy array, namely a list of polymers containing the
         coordinates of the respective monomers.
 
