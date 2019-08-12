@@ -182,48 +182,6 @@ extern int check_id;
 #define THERMO_TRACE(cmd)
 #endif
 
-#ifdef LJ_DEBUG
-#define LJ_TRACE(cmd)                                                          \
-  { cmd; }
-#else
-#define LJ_TRACE(cmd)
-#endif
-
-#ifdef MORSE_DEBUG
-#define MORSE_TRACE(cmd)                                                       \
-  { cmd; }
-#else
-#define MORSE_TRACE(cmd)
-#endif
-
-#ifdef BUCK_DEBUG
-#define BUCK_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-#define BUCK_TRACE(cmd)
-#endif
-
-#ifdef ESR_DEBUG
-#define ESR_TRACE(cmd)                                                         \
-  { cmd; }
-#else
-#define ESR_TRACE(cmd)
-#endif
-
-#ifdef ESK_DEBUG
-#define ESK_TRACE(cmd)                                                         \
-  { cmd; }
-#else
-#define ESK_TRACE(cmd)
-#endif
-
-#ifdef FENE_DEBUG
-#define FENE_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-#define FENE_TRACE(cmd)
-#endif
-
 #ifdef GHOST_FORCE_DEBUG
 #define GHOST_FORCE_TRACE(cmd)                                                 \
   { cmd; }
