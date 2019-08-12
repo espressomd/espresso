@@ -181,8 +181,8 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
 /*@}*/
 
 /** Compute the dipolar surface terms */
-static double calc_surface_term(int force_flag, int energy_flag,
-                                const ParticleRange &particles);
+static double calc_surface_term(bool force_flag, bool energy_flag,
+                                ParticleRange const &particles);
 
 /** \name P3M Tuning Functions */
 /************************************************************/
@@ -869,7 +869,7 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs,
 
 /*****************************************************************************/
 
-double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
+double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                                const ParticleRange &particles) {
   int i, d, d_rs, ind, j[3];
   /* k-space energy */
@@ -1155,7 +1155,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
 
 /************************************************************/
 
-double calc_surface_term(int force_flag, int energy_flag,
+double calc_surface_term(bool force_flag, bool energy_flag,
                          const ParticleRange &particles) {
   const double pref = dipole.prefactor * 4 * M_PI * (1. / box_geo.length()[0]) *
                       (1. / box_geo.length()[1]) * (1. / box_geo.length()[2]) /

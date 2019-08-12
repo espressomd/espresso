@@ -53,9 +53,8 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
   return ES_OK;
 }
 
-void calc_oif_global(
-    double *area_volume, int molType,
-    const ParticleRange &particles) {
+void calc_oif_global(double *area_volume, int molType,
+                     ParticleRange const &particles) {
   // first-fold-then-the-same approach
   double partArea = 0.0;
   double part_area_volume[2]; // added
@@ -69,9 +68,9 @@ void calc_oif_global(
 
   int test = 0;
 
-  for (auto &p : particles) {
+  for (auto const &p : particles) {
     int j = 0;
-    auto p1 = &p;
+    auto const p1 = &p;
     while (j < p1->bl.n) {
       /* bond type */
       type_num = p1->bl.e[j++];
@@ -83,7 +82,7 @@ void calc_oif_global(
           id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
         test++;
         /* fetch particle 2 */
-        auto p2 = local_particles[p1->bl.e[j++]];
+        auto const p2 = local_particles[p1->bl.e[j++]];
         if (!p2) {
           runtimeErrorMsg() << "oif global calc: bond broken between particles "
                             << p1->p.identity << " and " << p1->bl.e[j - 1]
@@ -93,7 +92,7 @@ void calc_oif_global(
           return;
         }
 
-        auto p3 = local_particles[p1->bl.e[j++]];
+        auto const p3 = local_particles[p1->bl.e[j++]];
         if (!p3) {
           runtimeErrorMsg() << "oif global calc: bond broken between particles "
                             << p1->p.identity << ", " << p1->bl.e[j - 2]
@@ -129,9 +128,8 @@ void calc_oif_global(
                 MPI_COMM_WORLD);
 }
 
-void add_oif_global_forces(
-    double const *area_volume, int molType,
-    const ParticleRange &particles) {
+void add_oif_global_forces(double const *area_volume, int molType,
+                           ParticleRange const &particles) {
   // first-fold-then-the-same approach
   double area = area_volume[0];
   double VOL_volume = area_volume[1];

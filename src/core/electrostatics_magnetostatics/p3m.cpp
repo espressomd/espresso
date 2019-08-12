@@ -132,7 +132,7 @@ static void p3m_init_a_ai_cao_cut();
 static void p3m_calc_lm_ld_pos();
 
 /** Calculates the dipole term */
-static double p3m_calc_dipole_term(int force_flag, int energy_flag,
+static double p3m_calc_dipole_term(bool force_flag, bool energy_flag,
                                    const ParticleRange &particles);
 
 /** Gather FFT grid.
@@ -770,7 +770,7 @@ static void P3M_assign_forces(double force_prefac, int d_rs,
   }
 }
 
-double p3m_calc_kspace_forces(int force_flag, int energy_flag,
+double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               const ParticleRange &particles) {
   int i, d, d_rs, ind, j[3];
   /**************************************************************/
@@ -917,7 +917,7 @@ double p3m_calc_kspace_forces(int force_flag, int energy_flag,
 
 /************************************************************/
 
-double p3m_calc_dipole_term(int force_flag, int energy_flag,
+double p3m_calc_dipole_term(bool force_flag, bool energy_flag,
                             const ParticleRange &particles) {
   double pref = coulomb.prefactor * 4 * M_PI * (1. / box_geo.length()[0]) *
                 (1. / box_geo.length()[1]) * (1. / box_geo.length()[2]) /

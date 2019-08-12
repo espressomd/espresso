@@ -19,9 +19,8 @@
 #ifndef _OBJECT_IN_FLUID_OUT_DIRECTION_H
 #define _OBJECT_IN_FLUID_OUT_DIRECTION_H
 /** \file
- * Routines to calculate the outward direction of the
- * membrane using a particle quadruple (one particle and its 3 strategically
- * placed neighbors)
+ *  Routines to calculate the outward direction of the membrane using particle
+ *  triples.
  */
 
 #include "config.hpp"
@@ -38,20 +37,16 @@ using Utils::get_n_triangle;
 /** Set OIF out direction parameters */
 int oif_out_direction_set_params(int bond_type);
 
-/** Computes the OIF outward direction of the membrane from one particle and its
- *  three neighbors
+/** Computes the OIF outward direction of a membrane vertex from its 3 neighbors
  *
- *  @param[in,out] p1         The central particle.
  *  @param[in]  p2 , p3 , p4  The neighboring particles.
  *
  *  Computes the normal of triangle p2p3p4. This triangle was initially
  *  oriented in such a way that its normal already points out of the object.
- *  Normalizes and stores the result as @ref ParticleProperties::out_direction
- *  "out_direction" in @p p1.
  */
 inline Utils::Vector3d
-calc_out_direction(Particle *const p1, Particle const *const p2,
-                   Particle const *const p3, Particle const *const p4,
+calc_out_direction(Particle const *const p2, Particle const *const p3,
+                   Particle const *const p4,
                    Bonded_ia_parameters const * /* iaparams */) {
 
   // first-fold-then-the-same approach

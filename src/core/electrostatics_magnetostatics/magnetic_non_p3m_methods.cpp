@@ -32,8 +32,8 @@
 
 #include <utils/constants.hpp>
 
-double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
-                             Particle *p2, int force_flag) {
+double calc_dipole_dipole_ia(Particle *p1, Utils::Vector3d const &dip1,
+                             Particle *p2, bool force_flag) {
 
   // Cache dipole moment
   auto const dip2 = p2->calc_dip();
@@ -63,42 +63,20 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
     auto const b = -15.0 * pe2 * pe3 / r7;
     auto const ab = a + b;
     auto const cc = pe4 * pe3;
-    auto const d = pe4 * pe2;
+    auto const dd = pe4 * pe2;
 
-    //  Result
-    auto const ffx = ab * dr[0] + cc * dip1[0] + d * dip2[0];
-    auto const ffy = ab * dr[1] + cc * dip1[1] + d * dip2[1];
-    auto const ffz = ab * dr[2] + cc * dip1[2] + d * dip2[2];
-    // Add the force to the particles
-    p1->f.f[0] += dipole.prefactor * ffx;
-    p1->f.f[1] += dipole.prefactor * ffy;
-    p1->f.f[2] += dipole.prefactor * ffz;
-    p2->f.f[0] -= dipole.prefactor * ffx;
-    p2->f.f[1] -= dipole.prefactor * ffy;
-    p2->f.f[2] -= dipole.prefactor * ffz;
+    // Forces
+    auto const ff = ab * dr + cc * dip1 + dd * dip2;
+    p1->f.f += dipole.prefactor * ff;
+    p2->f.f -= dipole.prefactor * ff;
 
 #ifdef ROTATION
     // Torques
-    auto const ax = dip1[1] * dip2[2] - dip2[1] * dip1[2];
-    auto const ay = dip2[0] * dip1[2] - dip1[0] * dip2[2];
-    auto const az = dip1[0] * dip2[1] - dip2[0] * dip1[1];
-
-    auto bx = dip1[1] * dr[2] - dr[1] * dip1[2];
-    auto by = dr[0] * dip1[2] - dip1[0] * dr[2];
-    auto bz = dip1[0] * dr[1] - dr[0] * dip1[1];
-
-    p1->f.torque[0] += dipole.prefactor * (-ax / r3 + bx * cc);
-    p1->f.torque[1] += dipole.prefactor * (-ay / r3 + by * cc);
-    p1->f.torque[2] += dipole.prefactor * (-az / r3 + bz * cc);
-
-    // 2nd particle
-    bx = dip2[1] * dr[2] - dr[1] * dip2[2];
-    by = dr[0] * dip2[2] - dip2[0] * dr[2];
-    bz = dip2[0] * dr[1] - dr[0] * dip2[1];
-
-    p2->f.torque[0] += dipole.prefactor * (ax / r3 + bx * d);
-    p2->f.torque[1] += dipole.prefactor * (ay / r3 + by * d);
-    p2->f.torque[2] += dipole.prefactor * (az / r3 + bz * d);
+    auto const aa = vector_product(dip1, dip2);
+    auto const b1 = vector_product(dip1, dr);
+    auto const b2 = vector_product(dip2, dr);
+    p1->f.torque += dipole.prefactor * (-aa / r3 + b1 * cc);
+    p2->f.torque += dipole.prefactor * (aa / r3 + b2 * dd);
 #endif
   }
 
@@ -111,7 +89,7 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
    =============================================================================
 */
 
-double dawaanr_calculations(int force_flag, int energy_flag,
+double dawaanr_calculations(bool force_flag, bool energy_flag,
                             const ParticleRange &particles) {
 
   if (n_nodes != 1) {
@@ -159,17 +137,15 @@ double dawaanr_calculations(int force_flag, int energy_flag,
 
 int Ncut_off_magnetic_dipolar_direct_sum = 0;
 
-
 int magnetic_dipolar_direct_sum_sanity_checks() {
   /* left for the future, at this moment nothing to do */
 
   return 0;
 }
 
-
 double
-magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
-                                         const ParticleRange &particles) {
+magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
+                                         ParticleRange const &particles) {
   std::vector<double> x, y, z;
   std::vector<double> mx, my, mz;
   std::vector<double> fx, fy, fz;

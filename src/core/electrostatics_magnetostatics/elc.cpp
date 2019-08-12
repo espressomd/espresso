@@ -1413,8 +1413,8 @@ void ELC_p3m_charge_assign_image(const ParticleRange &particles) {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
-                                                  const Particle *p2,
+void ELC_P3M_dielectric_layers_force_contribution(Particle const *const p1,
+                                                  Particle const *const p2,
                                                   Utils::Vector3d &force1,
                                                   Utils::Vector3d &force2) {
   Utils::Vector3d pos;
@@ -1463,8 +1463,8 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
-                                                     const Particle *p2) {
+double ELC_P3M_dielectric_layers_energy_contribution(Particle const *const p1,
+                                                     Particle const *const p2) {
   Utils::Vector3d pos;
   double q;
   double tp2;
@@ -1513,13 +1513,13 @@ double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
 
 //////////////////////////////////////////////////////////////////////////////////
 
-double ELC_P3M_dielectric_layers_energy_self(const ParticleRange &particles) {
+double ELC_P3M_dielectric_layers_energy_self(ParticleRange const &particles) {
   Utils::Vector3d pos;
   double q;
   double eng = 0.0;
 
   // Loop cell neighbors
-  for (auto &p : particles) {
+  for (auto const &p : particles) {
     // Loop neighbor cell particles
 
     if (p.r.p[2] < elc_params.space_layer) {
@@ -1545,7 +1545,7 @@ double ELC_P3M_dielectric_layers_energy_self(const ParticleRange &particles) {
 
 /////////////////////////////////////////////////////////////////////////////////
 
-void ELC_P3M_modify_p3m_sums_both(const ParticleRange &particles) {
+void ELC_P3M_modify_p3m_sums_both(ParticleRange const &particles) {
   double node_sums[3], tot_sums[3];
 
   for (int i = 0; i < 3; i++) {
@@ -1553,7 +1553,7 @@ void ELC_P3M_modify_p3m_sums_both(const ParticleRange &particles) {
     tot_sums[i] = 0.0;
   }
 
-  for (auto &p : particles) {
+  for (auto const &p : particles) {
     if (p.p.q != 0.0) {
 
       node_sums[0] += 1.0;
@@ -1581,7 +1581,7 @@ void ELC_P3M_modify_p3m_sums_both(const ParticleRange &particles) {
   p3m.square_sum_q = Utils::sqr(tot_sums[2]);
 }
 
-void ELC_P3M_modify_p3m_sums_image(const ParticleRange &particles) {
+void ELC_P3M_modify_p3m_sums_image(ParticleRange const &particles) {
   double node_sums[3], tot_sums[3];
 
   for (int i = 0; i < 3; i++) {
@@ -1589,7 +1589,7 @@ void ELC_P3M_modify_p3m_sums_image(const ParticleRange &particles) {
     tot_sums[i] = 0.0;
   }
 
-  for (auto &p : particles) {
+  for (auto const &p : particles) {
     if (p.p.q != 0.0) {
 
       if (p.r.p[2] < elc_params.space_layer) {
@@ -1615,7 +1615,7 @@ void ELC_P3M_modify_p3m_sums_image(const ParticleRange &particles) {
 }
 
 // this function is required in force.cpp for energy evaluation
-void ELC_P3M_restore_p3m_sums(const ParticleRange &particles) {
+void ELC_P3M_restore_p3m_sums(ParticleRange const &particles) {
   double node_sums[3], tot_sums[3];
 
   for (int i = 0; i < 3; i++) {
@@ -1623,7 +1623,7 @@ void ELC_P3M_restore_p3m_sums(const ParticleRange &particles) {
     tot_sums[i] = 0.0;
   }
 
-  for (auto &p : particles) {
+  for (auto const &p : particles) {
     if (p.p.q != 0.0) {
 
       node_sums[0] += 1.0;

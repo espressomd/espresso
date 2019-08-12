@@ -78,7 +78,6 @@ void ImmersedBoundaries::init_volume_conservation() {
   VolumeInitDone = true;
 }
 
-
 /** Set parameters of volume conservation */
 int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
                                                        const int softID,

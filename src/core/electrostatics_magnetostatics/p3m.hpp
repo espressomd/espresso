@@ -183,7 +183,7 @@ void p3m_scaleby_box_l();
 /** Compute the k-space part of forces and energies for the charge-charge
  *  interaction
  */
-double p3m_calc_kspace_forces(int force_flag, int energy_flag,
+double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               const ParticleRange &particles);
 
 /** Compute the k-space part of the stress tensor **/

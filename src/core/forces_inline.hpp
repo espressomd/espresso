@@ -537,7 +537,7 @@ inline void add_bonded_force(Particle *const p1) {
       switch (type) {
 #ifdef MEMBRANE_COLLISION
       case BONDED_IA_OIF_OUT_DIRECTION: {
-        p1->p.out_direction = calc_out_direction(p1, p2, p3, p4, iaparams);
+        p1->p.out_direction = calc_out_direction(p2, p3, p4, iaparams);
         bond_broken = false;
         break;
       }
