@@ -96,7 +96,7 @@ for s in [["Anion", "Cation"], ["Anion", "Anion"], ["Cation", "Cation"]]:
 print("\n--->Lennard-Jones Equilibration")
 max_sigma = max(lj_sigmas.values())
 min_dist = 0.0
-system.minimize_energy.init(f_max=1, gamma=10, max_steps=10,
+system.minimize_energy.init(f_max=0, gamma=10, max_steps=10,
                             max_displacement=max_sigma * 0.01)
 
 while min_dist < max_sigma:

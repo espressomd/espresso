@@ -34,7 +34,9 @@ cdef class MinimizeEnergy:
     ----------
     f_max : :obj:`float`
         Convergence criterion. Minimization stops when the maximal force on
-        particles in the system is lower than this threshold.
+        particles in the system is lower than this threshold. Set this to 0
+        when running minimization in a loop that stops when a custom
+        convergence criterion is met.
     gamma : :obj:`float`
         Dampening constant.
     max_steps : :obj:`int`
