@@ -72,8 +72,8 @@ void short_range_loop(ParticleKernel &&particle_kernel,
     auto last = boost::make_indirect_iterator(local_cells.end());
     Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), detail::MinimalImageDistance{box_geo},
-        verlet_criterion,
+        std::forward<PairKernel>(pair_kernel),
+        detail::MinimalImageDistance{box_geo}, verlet_criterion,
         cell_structure.use_verlet_list, rebuild_verletlist);
 
     rebuild_verletlist = 0;
