@@ -64,7 +64,7 @@ box_z = box_l + 2.0 * (lj_sigmas["Electrode"])
 box_volume = box_l * box_l * box_z
 elc_gap = box_z * 0.15
 system.box_l = [box_l, box_l, box_z + elc_gap]
-system.periodicity = [1, 1, 1]
+system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)

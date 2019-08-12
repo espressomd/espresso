@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-from espressomd import assert_features, electrostatics, electrostatic_extensions
+from espressomd import assert_features, electrostatics
 from espressomd import visualization_opengl
 import numpy
 from threading import Thread
@@ -97,7 +97,7 @@ masses = {"Cl": 35.453, "Na": 22.99}
 # Setup System
 box_l = (n_ionpairs * sum(masses.values()) / density)**(1. / 3.)
 system.box_l = [box_l, box_l, box_l]
-system.periodicity = [1, 1, 1]
+system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
