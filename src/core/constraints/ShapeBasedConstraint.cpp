@@ -61,7 +61,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           double t) {
 
   double dist = 0.;
-  Utils::Vector3d dist_vec, force1, torque1{}, torque2{}, outer_normal_vec;
+  Utils::Vector3d dist_vec, force1{}, torque1{}, torque2{}, outer_normal_vec;
 
   IA_parameters const *const ia_params =
       get_ia_param(p.p.type, part_rep.p.type);
