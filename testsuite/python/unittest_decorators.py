@@ -26,6 +26,10 @@ def _id(x):
 def skipIfMissingFeatures(*args):
     """Unittest skipIf decorator for missing Espresso features."""
 
+    unknown_features = espressomd.unknown_features(*args)
+    if unknown_features:
+        raise ValueError("Unknown features " + ", ".join(unknown_features))
+
     missing_features = espressomd.missing_features(*args)
     if missing_features:
         return unittest.skip("Skipping test: missing feature{} {}".format(
