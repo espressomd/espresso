@@ -18,21 +18,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file
- * All 3d non P3M methods to deal with the
- * magnetic dipoles
- *
- *  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
- *   Handling of a system of dipoles where no replicas
- *   Assumes minimum image convention for those axis in which the
- *   system is periodic as defined by setmd.
- *
- *   MDDS => Calculates dipole-dipole interaction of a periodic system
- *   by explicitly summing the dipole-dipole interaction over several copies of
- * the system
- *   Uses spherical summation order
- *
- */
 
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
 
@@ -47,7 +32,6 @@
 
 #include <utils/constants.hpp>
 
-// Calculates dipolar energy and/or force between two particles
 double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
                              Particle *p2, int force_flag) {
 
@@ -70,10 +54,10 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
   auto const pe3 = dip2 * dr;
   auto const pe4 = 3.0 / r5;
 
-  // Energy, if requested
+  // Energy
   auto const u = dipole.prefactor * (pe1 / r3 - pe4 * pe2 * pe3);
 
-  // Force, if requested
+  // Forces, if requested
   if (force_flag) {
     auto const a = pe4 * pe1;
     auto const b = -15.0 * pe2 * pe3 / r7;
@@ -93,8 +77,8 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
     p2->f.f[1] -= dipole.prefactor * ffy;
     p2->f.f[2] -= dipole.prefactor * ffz;
 
-// Torques
 #ifdef ROTATION
+    // Torques
     auto const ax = dip1[1] * dip2[2] - dip2[1] * dip1[2];
     auto const ay = dip2[0] * dip1[2] - dip1[0] * dip2[2];
     auto const az = dip1[0] * dip2[1] - dip2[0] * dip1[1];
@@ -123,7 +107,7 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
 }
 
 /* =============================================================================
-                  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
+                  DAWAANR => DIPOLAR ALL WITH ALL AND NO REPLICA
    =============================================================================
 */
 
@@ -175,15 +159,13 @@ double dawaanr_calculations(int force_flag, int energy_flag,
 
 int Ncut_off_magnetic_dipolar_direct_sum = 0;
 
-/************************************************************/
 
 int magnetic_dipolar_direct_sum_sanity_checks() {
-  /* left for the future , at this moment nothing to do */
+  /* left for the future, at this moment nothing to do */
 
   return 0;
 }
 
-/************************************************************/
 
 double
 magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,

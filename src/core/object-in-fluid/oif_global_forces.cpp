@@ -17,12 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file
- *  Routines to calculate the OIF_GLOBAL_FORCES energy or/and and force
- *  for a particle triple (triangle from mesh). (Dupin2007)
- *  \ref forces.cpp
- */
-
 #include "oif_global_forces.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
@@ -38,8 +32,6 @@ using Utils::area_triangle;
 using Utils::get_n_triangle;
 #include <utils/constants.hpp>
 
-/** set parameters for the OIF_GLOBAL_FORCES potential.
- */
 int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
                                  double V0, double kv) {
   if (bond_type < 0)
@@ -61,18 +53,10 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
   return ES_OK;
 }
 
-/** called in force_calc() from within forces.cpp
- *  calculates the global area and global volume for a cell before the forces
- * are handled
- *  sums up parts for area with mpi_reduce from local triangles
- *  synchronization with allreduce
- *
- *  !!! loop over particles from domain_decomposition !!!
- */
-
 void calc_oif_global(
     double *area_volume, int molType,
-    const ParticleRange &particles) { // first-fold-then-the-same approach
+    const ParticleRange &particles) {
+  // first-fold-then-the-same approach
   double partArea = 0.0;
   double part_area_volume[2]; // added
 
@@ -147,7 +131,8 @@ void calc_oif_global(
 
 void add_oif_global_forces(
     double const *area_volume, int molType,
-    const ParticleRange &particles) { // first-fold-then-the-same approach
+    const ParticleRange &particles) {
+  // first-fold-then-the-same approach
   double area = area_volume[0];
   double VOL_volume = area_volume[1];
 

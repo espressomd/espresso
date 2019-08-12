@@ -19,12 +19,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-   ELC algorithm for long range
-   Coulomb interactions. Implementation of the ELC method for the calculation of
-   the electrostatic interaction in two dimensional periodic systems. For
-    details on the method see MMM in general. The ELC method works
-    together with any three dimensional method, which in Espresso is
-    for example \ref p3m.hpp "P3M", with metallic boundary conditions.  */
+ *  \brief ELC algorithm for long-range Coulomb interactions.
+ *
+ *  Implementation of the ELC method for the calculation of the electrostatic
+ *  interaction in two dimensional periodic systems. For details on the method
+ *  see MMM in general. The ELC method works together with any three-dimensional
+ *  method, for example \ref p3m.hpp "P3M", with metallic boundary conditions.
+ */
 #ifndef _ELC_H
 #define _ELC_H
 

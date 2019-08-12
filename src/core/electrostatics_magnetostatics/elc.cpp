@@ -18,12 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file
- *
- *  For more information about ELC, see \ref
- * electrostatics_magnetostatics/elc.hpp
- * "electrostatics_magnetostatics/elc.hpp".
- */
+
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"

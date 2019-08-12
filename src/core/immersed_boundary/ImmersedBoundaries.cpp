@@ -28,12 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <utils/constants.hpp>
 
-/************
-  IBM_VolumeConservation
-Calculate (1) volumes, (2) volume force and (3) add it to each virtual particle
-This function is called from integrate_vv
- **************/
-
+/** Volume conservation.
+ *  Calculate volumes, volume force and add it to each virtual particle.
+ *  This function is called from integrate_vv
+ */
 void ImmersedBoundaries::volume_conservation() {
   if (VolumeInitDone && !BoundariesFound) {
     return;
@@ -48,10 +46,7 @@ void ImmersedBoundaries::volume_conservation() {
   //    IBM_CalcCentroids(frameNum, simTime);
 }
 
-/************
-  IBM_InitVolumeConservation
- *************/
-
+/** Initialize volume conservation */
 void ImmersedBoundaries::init_volume_conservation() {
 
   // Check since this function is called at the start of every integrate loop
@@ -83,14 +78,8 @@ void ImmersedBoundaries::init_volume_conservation() {
   VolumeInitDone = true;
 }
 
-/****************
-  IBM_VolumeConservation_ResetParams
- *****************/
 
-/***********
-   IBM_VolumeConservation_SetParams
-************/
-
+/** Set parameters of volume conservation */
 int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
                                                        const int softID,
                                                        const double kappaV) {
@@ -127,12 +116,7 @@ int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
   return ES_OK;
 }
 
-/****************
-   calc_volumes
-Calculate partial volumes on all compute nodes
-and call MPI to sum up
-****************/
-
+/** Calculate partial volumes on all compute nodes and call MPI to sum up */
 void ImmersedBoundaries::calc_volumes() {
 
   // Partial volumes for each soft particle, to be summed up
@@ -243,11 +227,7 @@ void ImmersedBoundaries::calc_volumes() {
                 MPI_DOUBLE, MPI_SUM, comm_cart);
 }
 
-/*****************
-  calc_volume_force
-Calculate and add the volume force to each node
-*******************/
-
+/** Calculate and add the volume force to each node */
 void ImmersedBoundaries::calc_volume_force() {
   // Loop over all particles on local node
   for (int c = 0; c < local_cells.n; c++) {

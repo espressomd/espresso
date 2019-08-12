@@ -35,10 +35,10 @@
 #include <utils/math/triangle_functions.hpp>
 using Utils::get_n_triangle;
 
-// set out_direction parameters
+/** Set OIF out direction parameters */
 int oif_out_direction_set_params(int bond_type);
 
-/** Computes the outward direction of the membrane from one particle and its
+/** Computes the OIF outward direction of the membrane from one particle and its
  *  three neighbors
  *
  *  @param[in,out] p1         The central particle.

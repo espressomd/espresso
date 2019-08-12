@@ -20,7 +20,7 @@
 #define _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_H
 
 /** \file
- *  Routines to calculate the OIF_LOCAL_FORCES
+ *  Routines to calculate the OIF local forces
  *  for a particle quadruple (two neighboring triangles with common edge).
  * (Dupin2007) \ref forces.cpp
  */
@@ -31,7 +31,7 @@
 #include <utils/Vector.hpp>
 #include <utils/math/triangle_functions.hpp>
 
-/** Set parameters for local forces */
+/** Set parameters for OIF local forces */
 int oif_local_forces_set_params(int bond_type, double r0, double ks,
                                 double kslin, double phi0, double kb,
                                 double A01, double A02, double kal,
@@ -43,8 +43,7 @@ inline double KS(double lambda) { // Defined by (19) from Dupin2007
   return res;
 }
 
-/** Compute the local forces (Dupin2007) and adds them
- *  to the particle forces.
+/** Compute the OIF local forces (Dupin2007).
  *  @param p2           %Particle of triangle 1.
  *  @param p1 , p3      Particles common to triangle 1 and triangle 2.
  *  @param p4           %Particle of triangle 2.
