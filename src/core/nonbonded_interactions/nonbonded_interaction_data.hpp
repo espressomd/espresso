@@ -335,13 +335,11 @@ extern double min_global_cut;
  * @return Pointer to interaction parameters for the type pair.
  * */
 inline IA_parameters *get_ia_param(int i, int j) {
-  assert(i > 0 && i < max_seen_particle_type);
-  assert(j > 0 && j < max_seen_particle_type);
-  assert((max_seen_particle_type * (max_seen_particle_type + 1)) / 2 <
-         ia_params.size());
+  assert(i >= 0 && i <= max_seen_particle_type);
+  assert(j >= 0 && j <= max_seen_particle_type);
 
   return &ia_params[Utils::upper_triangular(std::min(i, j), std::max(i, j),
-                                            max_seen_particle_type)];
+                                            max_seen_particle_type + 1)];
 }
 
 /** Get interaction parameters between particle sorts i and j.

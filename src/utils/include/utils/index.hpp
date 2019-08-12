@@ -108,6 +108,8 @@ get_linear_index(const Vector3i &ind, const Vector3i &adim,
  * @return linear index
  */
 template <class T> T upper_triangular(T i, T j, T n) {
+  /* n is a valid size */
+  assert(n >= 0);
   /* i is a valid row index */
   assert((i >= 0) && (i < n));
   /* j is in the upper triangle */
