@@ -28,6 +28,7 @@
 
 #include <utils/math/sqr.hpp>
 
+#include <boost/algorithm/clamp.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
 
@@ -42,9 +43,6 @@
 
 /** Currently active steepest descent instance */
 static MinimizeEnergyParameters *params = nullptr;
-
-/** Sign of the argument */
-template <typename T> int sgn(T val) { return (T(0) < val) - (val < T(0)); }
 
 bool steepest_descent_step(const ParticleRange &particles) {
   // Maximal force encountered on node
@@ -68,12 +66,10 @@ bool steepest_descent_step(const ParticleRange &particles) {
           // Square of force on particle
           f += Utils::sqr(p.f.f[j]);
 
-          // Positional increment
-          auto dp = params->gamma * p.f.f[j];
-          if (fabs(dp) > params->max_displacement) {
-            // Crop to maximum allowed by user
-            dp = sgn<double>(dp) * params->max_displacement;
-          }
+          // Positional increment, crop to maximum allowed by user
+          auto const dp = boost::algorithm::clamp(params->gamma * p.f.f[j],
+                                                  -params->max_displacement,
+                                                  params->max_displacement);
 
           // Move particle
           p.r.p[j] += dp;
@@ -91,9 +87,8 @@ bool steepest_descent_step(const ParticleRange &particles) {
       auto const l = dq.norm();
       if (l > 0.0) {
         auto const axis = dq / l;
-        auto const angle = (std::abs(l) > params->max_displacement)
-                               ? sgn(l) * params->max_displacement
-                               : l;
+        auto const angle = boost::algorithm::clamp(l, -params->max_displacement,
+                                                   params->max_displacement);
 
         // Rotate the particle around axis dq by amount l
         local_rotate_particle(p, axis, angle);
