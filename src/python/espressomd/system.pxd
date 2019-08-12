@@ -20,9 +20,6 @@ include "myconfig.pxi"
 import particle_data
 from libcpp.vector cimport vector
 from libcpp cimport bool
-from utils cimport Vector3d
-
-from .grid cimport BoxGeometry
 
 cdef extern from "grid.hpp":
     cdef void rescale_boxl(int dir, double d_new)
@@ -38,10 +35,6 @@ cdef extern from "random.hpp" namespace "Random":
     string mpi_random_get_stat()
     void mpi_random_set_stat(const vector[string] & stat)
     int get_state_size_of_generator()
-
-cdef extern from "grid.hpp":
-    void get_mi_vector(double * res, double * a, double * b)
-    Vector3d vel_diff(Vector3d x, Vector3d y, Vector3d u, Vector3d v, BoxGeometry & box)
 
 cdef extern from "rotate_system.hpp":
     void rotate_system(double phi, double theta, double alpha)

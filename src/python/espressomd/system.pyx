@@ -57,9 +57,6 @@ IF VIRTUAL_SITES:
 IF COLLISION_DETECTION == 1:
     from .collision_detection import CollisionDetection
 
-IF LEES_EDWARDS == 1:
-    from .lees_edwards import LeesEdwards
-
 import sys
 import random  # for true random numbers from os.urandom()
 cimport tuning
@@ -103,7 +100,6 @@ cdef class System:
         lbboundaries
         ekboundaries
         collision_detection
-        lees_edwards
         __seed
         cuda_init_handle
         comfixed
@@ -143,8 +139,6 @@ cdef class System:
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
-            IF LEES_EDWARDS == 1:
-                self.lees_edwards = LeesEdwards()
             IF VIRTUAL_SITES:
                 self._active_virtual_sites_handle = ActiveVirtualSitesHandle(
                     implementation=VirtualSitesOff())
@@ -430,44 +424,8 @@ cdef class System:
 
         """
 
-        cdef Vector3d mi_vec = get_mi_vector(<const Vector3d> make_Vector3d(p2.pos), <const Vector3d> make_Vector3d(p1.pos), box_geo)
-
+        cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
         return make_array_locked(mi_vec)
-
-    def distance_vec_folded(self, p1, p2):
-        """Return the distance vector between the particles, using folded coordinates.
-
-        """
-        cdef double[3] a, b
-        a = p1.pos_folded
-        b = p2.pos_folded
-
-        cdef Vector3d res = get_mi_vector(<const Vector3d> make_Vector3d(b),<const Vector3d> make_Vector3d(a), box_geo)
-        return np.array((res[0], res[1], res[2]))
-    
-    def velocity_difference(self, p1, p2):
-        """Returns the velocity difference, including if necessary the Lees-Edwards velocity.
-
-        """
-
-        cdef Vector3d res, x1, x2, u1, u2
-
-        x1[0] = p1.pos_folded[0]
-        x1[1] = p1.pos_folded[1]
-        x1[2] = p1.pos_folded[2]
-        x2[0] = p2.pos_folded[0]
-        x2[1] = p2.pos_folded[1]
-        x2[2] = p2.pos_folded[2]
-        u1[0] = p1.v[0]
-        u1[1] = p1.v[1]
-        u1[2] = p1.v[2]
-        u2[0] = p2.v[0]
-        u2[1] = p2.v[1]
-        u2[2] = p2.v[2]
-
-        res = vel_diff(x1, x2, u1, u2, box_geo)
-
-        return np.array([res[0], res[1], res[2]])
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
