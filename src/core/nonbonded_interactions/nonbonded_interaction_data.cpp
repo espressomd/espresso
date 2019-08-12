@@ -220,13 +220,13 @@ void realloc_ia_params(int nsize) {
   if (nsize <= max_seen_particle_type)
     return;
 
-  auto new_params = std::vector<IA_parameters>(nsize * nsize);
+  auto new_params = std::vector<IA_parameters>(nsize * (nsize + 1) / 2);
 
   /* if there is an old field, move entries */
   for (int i = 0; i < max_seen_particle_type; i++)
-    for (int j = 0; j < max_seen_particle_type; j++) {
-      new_params[i * nsize + j] =
-          std::move(ia_params[i * max_seen_particle_type + j]);
+    for (int j = i; j < max_seen_particle_type; j++) {
+      new_params.at(Utils::upper_triangular(i, j, nsize)) =
+          std::move(*get_ia_param(i, j));
     }
 
   max_seen_particle_type = nsize;
