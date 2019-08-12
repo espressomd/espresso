@@ -22,38 +22,11 @@
  *  Implementation of nonbonded_interaction_data.hpp
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "actor/DipolarDirectSum.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
-#include "dpd.hpp"
-#include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "grid.hpp"
-#include "nonbonded_interaction_data.hpp"
-#include "nonbonded_interactions/buckingham.hpp"
-#include "nonbonded_interactions/gaussian.hpp"
-#include "nonbonded_interactions/gay_berne.hpp"
-#include "nonbonded_interactions/hat.hpp"
-#include "nonbonded_interactions/hertzian.hpp"
-#include "nonbonded_interactions/lj.hpp"
-#include "nonbonded_interactions/ljcos.hpp"
-#include "nonbonded_interactions/ljcos2.hpp"
-#include "nonbonded_interactions/ljgen.hpp"
-#include "nonbonded_interactions/morse.hpp"
-#include "nonbonded_interactions/nonbonded_tab.hpp"
-#include "nonbonded_interactions/smooth_step.hpp"
-#include "nonbonded_interactions/soft_sphere.hpp"
-#ifdef DIPOLAR_BARNES_HUT
-#include "actor/DipolarBarnesHut.hpp"
-#endif
-#include "layered.hpp"
-#include "object-in-fluid/affinity.hpp"
-#include "object-in-fluid/membrane_collision.hpp"
-#include "pressure.hpp"
-#include "rattle.hpp"
+
 #include "serialization/IA_parameters.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -64,13 +37,8 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include <cstdlib>
-#include <cstring>
-
 #include "electrostatics_magnetostatics/coulomb.hpp"
-#include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 
 /****************************************
  * variables
