@@ -96,6 +96,27 @@ get_linear_index(const Vector3i &ind, const Vector3i &adim,
   return get_linear_index(ind[0], ind[1], ind[2], adim, memory_order);
 }
 
+/**
+ * @brief Linear index into a upper triangular matrix.
+ *
+ * This is row-major.
+ *
+ * @tparam T Integral
+ * @param i row index
+ * @param j column index
+ * @param n matrix size
+ * @return linear index
+ */
+template <class T> T upper_triangular(T i, T j, T n) {
+  /* n is a valid size */
+  assert(n >= 0);
+  /* i is a valid row index */
+  assert((i >= 0) && (i < n));
+  /* j is in the upper triangle */
+  assert((j >= i) && (j < n));
+  return (n * (n - 1)) / 2 - ((n - i) * (n - i - 1)) / 2 + j;
+}
+
 /*@}*/
 
 } // namespace Utils
