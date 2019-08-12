@@ -28,6 +28,8 @@
 #include "dpd.hpp"
 #include "particle_data.hpp"
 
+#include <utils/math/sqr.hpp>
+
 /** Cutoff for deactivated interactions. Must be negative, so that even
  *  particles on top of each other don't interact by chance.
  */
@@ -217,13 +219,6 @@ struct IA_parameters {
   WCA_Parameters wca;
 #endif
 
-  /** flag that tells whether there is any short-ranged interaction,
-   *  i.e. one that contributes to the "nonbonded" section of the
-   *  energy/pressure. Note that even if there is no short-ranged
-   *  interaction present, the \ref max_cut can be non-zero due to
-   *  e.g. electrostatics. */
-  bool particlesInteract;
-
 #ifdef LENNARD_JONES_GENERIC
   LJGen_Parameters ljgen;
 #endif
@@ -311,7 +306,10 @@ extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded
  *  interactions).
  */
-extern double max_cut_nonbonded;
+double recalc_maximal_cutoff_nonbonded();
+/** Maximal interaction cutoff (bonded interactions).
+ */
+double recalc_maximal_cutoff_bonded();
 
 /** Minimal global interaction cutoff. Particles with a distance
  *  smaller than this are guaranteed to be available on the same node
@@ -363,9 +361,6 @@ void realloc_ia_params(int nsize);
 /** Calculate the maximal cutoff of all real space interactions.
  *  These are: bonded, non bonded + real space electrostatics.
  *  The result is stored in the global variable \ref max_cut.
- *  The maximal cutoff of the non-bonded + real space electrostatic
- *  interactions is stored in \ref max_cut_nonbonded. This
- *  value is used in the Verlet pair list algorithm.
  */
 void recalc_maximal_cutoff();
 
@@ -377,19 +372,10 @@ void reset_ia_params();
 /** Check whether all force calculation routines are properly initialized. */
 int interactions_sanity_checks();
 
-/** Check if a non bonded interaction is defined */
-inline bool checkIfInteraction(IA_parameters const *const data) {
-  return data->particlesInteract;
+/**  check if a non bonded interaction is defined */
+inline int checkIfInteraction(const IA_parameters *data) {
+  return data->max_cut != INACTIVE_CUTOFF;
 }
-
-/** Check if the types of particles i and j have any non bonded
- *  interaction defined.
- */
-inline bool checkIfParticlesInteract(int i, int j) {
-  return checkIfInteraction(get_ia_param(i, j));
-}
-
-#include <utils/math/sqr.hpp>
 
 /** Returns true if the particles are to be considered for short range
  *  interactions.

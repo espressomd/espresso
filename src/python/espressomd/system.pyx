@@ -267,11 +267,11 @@ cdef class System:
 
     property max_cut_nonbonded:
         def __get__(self):
-            return max_cut_nonbonded
+            return recalc_maximal_cutoff_nonbonded()
 
     property max_cut_bonded:
         def __get__(self):
-            return max_cut_bonded
+            return recalc_maximal_cutoff_bonded()
 
     property min_global_cut:
         def __set__(self, _min_global_cut):

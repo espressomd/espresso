@@ -290,12 +290,9 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
   }
 }
 
-void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
+void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
+                           const double range) {
   int c, p;
-
-  CELL_TRACE(fprintf(
-      stderr, "%d: layered_topology_init, %d old particle lists max_range %g\n",
-      this_node, old->n, max_range));
 
   cell_structure.type = CELL_STRUCTURE_LAYERED;
   cell_structure.particle_to_cell = [](const Particle &p) {
@@ -312,10 +309,10 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   }
 
   if (this_node == 0 && determine_n_layers) {
-    if (max_range > 0) {
-      n_layers = (int)floor(local_geo.length()[2] / max_range);
+    if (range > 0) {
+      n_layers = (int)floor(local_geo.length()[2] / range);
       if (n_layers < 1) {
-        runtimeErrorMsg() << "layered: maximal interaction range " << max_range
+        runtimeErrorMsg() << "layered: maximal interaction range " << range
                           << " larger than local box length "
                           << local_geo.length()[2];
         n_layers = 1;
@@ -347,13 +344,12 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid) {
   layer_h = local_geo.length()[2] / (double)(n_layers);
   layer_h_i = 1 / layer_h;
 
-  if (layer_h < max_range) {
-    runtimeErrorMsg() << "layered: maximal interaction range " << max_range
-                      << " larger than layer height " << layer_h;
-  }
-
-  CELL_TRACE(fprintf(stderr, "%d: layered_flags tn %d bn %d \n", this_node,
-                     LAYERED_TOP_NEIGHBOR, LAYERED_BTM_NEIGHBOR));
+  cell_structure.max_range = {
+      box_geo.periodic(0) ? 0.5 * box_geo.length()[0]
+                          : std::numeric_limits<double>::infinity(),
+      box_geo.periodic(1) ? 0.5 * box_geo.length()[1]
+                          : std::numeric_limits<double>::infinity(),
+      layer_h};
 
   /* allocate cells and mark them */
   realloc_cells(n_layers + 2);

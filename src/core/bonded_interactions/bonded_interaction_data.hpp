@@ -345,13 +345,6 @@ struct Bonded_ia_parameters {
 /** Field containing the parameters of the bonded ia types */
 extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 
-/** @brief Maximal interaction cutoff for bonded interactions (real space).
- *  This value must be as large as the maximal interaction range in the list
- *  of bonded interactions. This is necessary to ensure that in a parallel
- *  simulation, a compute node has access to both bond partners.
- */
-extern double max_cut_bonded;
-
 /** Makes sure that \ref bonded_ia_params is large enough to cover the
  *  parameters for the bonded interaction type.
  *  Attention: 1: There is no initialization done here.
@@ -442,10 +435,8 @@ inline bool pair_bond_enum_exists_between(Particle const *const p1,
  *  is set to twice the maximal cutoff because the particle in which the bond
  *  is stored is only bonded to the first two partners, one of which has an
  *  additional bond to the third partner.
- *
- *  The result is stored in global variable @ref max_cut_bonded.
  */
-void recalc_maximal_cutoff_bonded();
+double recalc_maximal_cutoff_bonded();
 
 int virtual_set_params(int bond_type);
 #endif
