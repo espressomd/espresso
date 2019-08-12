@@ -581,10 +581,6 @@ looking directly at the code.
 
 -  ``P3M_DEBUG``
 
--  ``ESR_DEBUG`` debugging of P\ :math:`^3`\ Ms real space part.
-
--  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
-
 -  ``RANDOM_DEBUG``
 
 -  ``FORCE_DEBUG`` Output from the force calculation loops.
@@ -592,12 +588,6 @@ looking directly at the code.
 -  ``PTENSOR_DEBUG`` Output from the pressure tensor calculation loops.
 
 -  ``THERMO_DEBUG`` Output from the thermostats.
-
--  ``LJ_DEBUG`` Output from the Lennard-Jones code.
-
--  ``MORSE_DEBUG`` Output from the Morse code.
-
--  ``FENE_DEBUG``
 
 -  ``ONEPART_DEBUG`` Define to a number of a particle to obtain output on the forces
    calculated for this particle.

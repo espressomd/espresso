@@ -50,28 +50,11 @@ add_morse_pair_force(Particle const *const p1, Particle const *const p2,
                  (add - Utils::sqr(add)) / dist;
     auto const force = fac * d;
 
-#ifdef MORSE_WARN_WHEN_CLOSE
+#ifdef LJ_WARN_WHEN_CLOSE
     if (fac * dist > 1000)
       fprintf(stderr, "%d: Morse-Warning: Pair (%d-%d) force=%f dist=%f\n",
               this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
 #endif
-    ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: MORSE   f = (%.3e,%.3e,%.3e) "
-                              "with part id=%d at dist %f fac %.3e\n",
-                              this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                              p2->p.identity, dist, fac));
-    ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: MORSE   f = (%.3e,%.3e,%.3e) "
-                              "with part id=%d at dist %f fac %.3e\n",
-                              this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                              p1->p.identity, dist, fac));
-
-    MORSE_TRACE(fprintf(
-        stderr, "%d: LJ: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
-        this_node, p1->p.identity, p2->p.identity, dist, force[0], force[1],
-        force[2]));
     return force;
   }
   return {};

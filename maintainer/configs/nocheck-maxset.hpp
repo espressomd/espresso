@@ -81,11 +81,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RANDOM_DEBUG
 #define FORCE_DEBUG
 #define THERMO_DEBUG
-#define LJ_DEBUG
-#define MORSE_DEBUG
-#define ESR_DEBUG
-#define ESK_DEBUG
-#define FENE_DEBUG
 #define GHOST_FORCE_DEBUG
 #define STAT_DEBUG
 #define POLY_DEBUG
