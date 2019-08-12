@@ -131,6 +131,9 @@ template <class F, class... Args>
 struct callback_void_t final : public callback_concept_t {
   F m_f;
 
+  callback_void_t(callback_void_t const &) = delete;
+  callback_void_t(callback_void_t &&) = delete;
+
   template <class FRef>
   explicit callback_void_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
   void operator()(boost::mpi::communicator const &,
@@ -149,6 +152,9 @@ struct callback_void_t final : public callback_concept_t {
 template <class F, class... Args>
 struct callback_one_rank_t final : public callback_concept_t {
   F m_f;
+
+  callback_one_rank_t(callback_one_rank_t const &) = delete;
+  callback_one_rank_t(callback_one_rank_t &&) = delete;
 
   template <class FRef>
   explicit callback_one_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}

@@ -37,27 +37,31 @@ int tabulated_bonded_set_params(int bond_type,
   make_bond_type_exist(bond_type);
 
   /* set types */
-  bonded_ia_params[bond_type].type = BONDED_IA_TABULATED;
-  bonded_ia_params[bond_type].p.tab.type = tab_type;
-  bonded_ia_params[bond_type].p.tab.pot = new TabulatedPotential;
-  auto tab_pot = bonded_ia_params[bond_type].p.tab.pot;
+  auto tab_pot = bonded_ia_params[bond_type].p.tab.pot = new TabulatedPotential;
 
   /* set number of interaction partners */
-  if (tab_type == TAB_BOND_LENGTH) {
+  switch (tab_type) {
+  case TAB_BOND_LENGTH:
     tab_pot->minval = min;
     tab_pot->maxval = max;
     bonded_ia_params[bond_type].num = 1;
-  } else if (tab_type == TAB_BOND_ANGLE) {
+    bonded_ia_params[bond_type].type = BONDED_IA_TABULATED_DISTANCE;
+    break;
+  case TAB_BOND_ANGLE:
     tab_pot->minval = 0.0;
     tab_pot->maxval = Utils::pi() + ROUND_ERROR_PREC;
     bonded_ia_params[bond_type].num = 2;
-  } else if (tab_type == TAB_BOND_DIHEDRAL) {
+    bonded_ia_params[bond_type].type = BONDED_IA_TABULATED_ANGLE;
+    break;
+  case TAB_BOND_DIHEDRAL:
     tab_pot->minval = 0.0;
     tab_pot->maxval = 2.0 * Utils::pi() + ROUND_ERROR_PREC;
     bonded_ia_params[bond_type].num = 3;
-  } else {
+    bonded_ia_params[bond_type].type = BONDED_IA_TABULATED_DIHEDRAL;
+    break;
+  default:
     runtimeErrorMsg() << "Unsupported tabulated bond type.";
-    return 1;
+    return ES_ERROR;
   }
 
   tab_pot->invstepsize = static_cast<double>(force.size() - 1) / (max - min);

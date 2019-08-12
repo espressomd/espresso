@@ -288,9 +288,8 @@ inline void add_bonded_energy(Particle const *const p1) {
         ret = 0;
         break;
 #endif
-      case BONDED_IA_TABULATED:
-        if (iaparams->num == 1)
-          bond_broken = tab_bond_energy(iaparams, dx, &ret);
+      case BONDED_IA_TABULATED_DISTANCE:
+        bond_broken = tab_bond_energy(iaparams, dx, &ret);
         break;
 #ifdef UMBRELLA
       case BONDED_IA_UMBRELLA:
@@ -318,9 +317,8 @@ inline void add_bonded_energy(Particle const *const p1) {
       case BONDED_IA_ANGLE_COSSQUARE:
         bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
         break;
-      case BONDED_IA_TABULATED:
-        if (iaparams->num == 2)
-          bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
+      case BONDED_IA_TABULATED_ANGLE:
+        bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
@@ -333,9 +331,8 @@ inline void add_bonded_energy(Particle const *const p1) {
       case BONDED_IA_DIHEDRAL:
         bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
         break;
-      case BONDED_IA_TABULATED:
-        if (iaparams->num == 3)
-          bond_broken = tab_dihedral_energy(p1, p2, p3, p4, iaparams, &ret);
+      case BONDED_IA_TABULATED_DIHEDRAL:
+        bond_broken = tab_dihedral_energy(p1, p2, p3, p4, iaparams, &ret);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
