@@ -938,6 +938,12 @@ inline void lb_stream(LB_Fluid &lbfluid, Lattice::index_t index,
   }
 }
 
+void lb_reset_force_densities() {
+  for (auto &lbfield : lbfields) {
+    lbfield.force_density = lbpar.ext_force_density;
+  }
+}
+
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
@@ -1457,13 +1463,3 @@ void lb_collect_boundary_forces(double *result) {
              MPI_SUM, 0, comm_cart);
 #endif
 }
-
-void lb_CPU_reset_force_densities_during_integration() {
-  if (fluidstep == 0) {
-    for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-      lbfields[i].force_density = lbpar.ext_force_density;
-    }
-  }
-}
-
-/*@}*/

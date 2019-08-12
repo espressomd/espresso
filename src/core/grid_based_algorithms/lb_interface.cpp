@@ -1331,12 +1331,12 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
   return fluid_momentum;
 }
 
-void lb_reset_force_densities() {
+void lb_lbfluid_reset_force_densities() {
   if (lattice_switch == ActiveLB::GPU and this_node == 0) {
 #ifdef CUDA
-    lb_GPU_reset_force_densities_during_integration();
+    reset_LB_force_densities_GPU(false);
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-    lb_CPU_reset_force_densities_during_integration();
+    lb_reset_force_densities();
   }
 }

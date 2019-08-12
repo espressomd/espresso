@@ -241,12 +241,6 @@ void lb_load_checkpoint_GPU(float const *host_checkpoint_vd);
 void lb_lbfluid_set_population(const Utils::Vector3i &, float[LBQ]);
 void lb_lbfluid_get_population(const Utils::Vector3i &, float[LBQ]);
 
-/**
- * Resets the force density to the value of the external force density, but only
- * if the lb update was done before.
- */
-void lb_GPU_reset_force_densities_during_integration();
-
 template <std::size_t no_of_neighbours>
 void lb_get_interpolated_velocity_gpu(double const *positions,
                                       double *velocities, int length);
