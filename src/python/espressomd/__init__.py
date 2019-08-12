@@ -58,15 +58,6 @@ def missing_features(*args):
     return set(args) - set(features())
 
 
-def unknown_features(*args):
-    """Returns a list of the unknown features in the argument"""
-
-    if len(args) == 1 and not isinstance(args[0], str) and hasattr(args[0], "__iter__"):
-        return set(args[0]) - set(all_features())
-
-    return set(args) - set(all_features())
-
-
 def assert_features(*args):
     """Raises an exception when a list of features is not a subset of the compiled-in features"""
 
