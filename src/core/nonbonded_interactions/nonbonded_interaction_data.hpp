@@ -28,6 +28,7 @@
 #include "dpd.hpp"
 #include "particle_data.hpp"
 
+#include <utils/index.hpp>
 #include <utils/math/sqr.hpp>
 
 /** Cutoff for deactivated interactions. Must be negative, so that even
@@ -326,7 +327,12 @@ extern double min_global_cut;
 inline IA_parameters *get_ia_param(int i, int j) {
   extern std::vector<IA_parameters> ia_params;
   extern int max_seen_particle_type;
-  return &ia_params[i * max_seen_particle_type + j];
+  assert(i > 0 && i < max_seen_particle_type);
+  assert(j > 0 && j < max_seen_particle_type);
+  assert((max_seen_particle_type * (max_seen_particle_type + 1)) / 2 <
+         ia_params.size());
+
+  return &ia_params[std::max(i, j) * max_seen_particle_type + std::min(i, j)];
 }
 
 /** Get interaction parameters between particle sorts i and j.

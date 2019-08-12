@@ -111,7 +111,7 @@ template <class T> T upper_triangular(T i, T j, T n) {
   /* i is a valid row index */
   assert((i >= 0) && (i < n));
   /* j is in the upper triangle */
-  assert((j >= 0) && (j >= i));
+  assert((j >= i) && (j < n));
   return (n * (n - 1)) / 2 - ((n - i) * (n - i - 1)) / 2 + j;
 }
 
