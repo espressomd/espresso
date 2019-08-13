@@ -295,13 +295,7 @@ IF LENNARD_JONES == 1:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "epsilon": 0.,
-                "sigma": 0.,
-                "cutoff": 0.,
-                "shift": 0.,
-                "offset": 0.,
-                "min": 0.}
+            return {"offset": 0., "min": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -380,9 +374,7 @@ IF WCA == 1:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "epsilon": 0.,
-                "sigma": 0.}
+            return {}
 
         def type_name(self):
             """Name of interaction type.
@@ -487,18 +479,7 @@ IF LENNARD_JONES_GENERIC == 1:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "epsilon": 0.,
-                "sigma": 0.,
-                "cutoff": 0.,
-                "shift": 0.,
-                "offset": 0.,
-                "e1": 0,
-                "e2": 0,
-                "b1": 0.,
-                "b2": 0.,
-                "delta": 0.,
-                "lam": 0.}
+            return {"delta": 0., "lam": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -592,7 +573,7 @@ IF LJCOS:
                 Interaction length scale.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
-            offset : :obj:`float`
+            offset : :obj:`float`, optional
                 Offset distance of the interaction.
             """
             super().set_params(**kwargs)
@@ -608,12 +589,7 @@ IF LJCOS:
                     "Could not set Lennard-Jones Cosine parameters")
 
         def default_params(self):
-            return {
-                "epsilon": 0.,
-                "sigma": 0.,
-                "cutoff": 0.,
-                "offset": 0.,
-            }
+            return {"offset": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -670,7 +646,7 @@ IF LJCOS2:
                 Magnitude of the interaction.
             sigma : :obj:`float`
                 Interaction length scale.
-            offset : :obj:`float`
+            offset : :obj:`float`, optional
                 Offset distance of the interaction.
             width : :obj:`float`
                 Width of interaction.
@@ -688,11 +664,7 @@ IF LJCOS2:
                     "Could not set Lennard-Jones Cosine2 parameters")
 
         def default_params(self):
-            return {
-                "epsilon": 0.,
-                "sigma": 0.,
-                "offset": 0.,
-                "width": 0.}
+            return {"offset": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -755,10 +727,7 @@ IF HAT == 1:
                 raise Exception("Could not set Hat parameters")
 
         def default_params(self):
-            return {
-                "F_max": 0.,
-                "cutoff": 0.,
-            }
+            return {}
 
         def type_name(self):
             return "Hat"
@@ -839,14 +808,7 @@ IF GAY_BERNE:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "eps": 0.0,
-                "sig": 0.0,
-                "cut": 0.0,
-                "k1": 0.0,
-                "k2": 0.0,
-                "mu": 0.0,
-                "nu": 0.0}
+            return {}
 
         def type_name(self):
             """Name of interaction type.
@@ -994,13 +956,7 @@ IF SMOOTH_STEP == 1:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "d": 0.,
-                "n": 10,
-                "eps": 0.,
-                "k0": 0.,
-                "sig": 0.,
-                "cutoff": 0.}
+            return {"n": 10, "k0": 0., "sig": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -1016,13 +972,13 @@ IF SMOOTH_STEP == 1:
             ----------
             d : :obj:`float`
                 Short range repulsion parameter.
-            n : :obj:`int`
+            n : :obj:`int`, optional
                 Exponent of short range repulsion.
             eps : :obj:`float`
                 Magnitude of the second (soft) repulsion.
-            k0 : :obj:`float`
+            k0 : :obj:`float`, optional
                 Exponential factor in second (soft) repulsion.
-            sig : :obj:`float`
+            sig : :obj:`float`, optional
                 Length scale of second (soft) repulsion.
             cutoff : :obj:`float`
                 Cutoff distance of the interaction.
@@ -1094,13 +1050,7 @@ IF BMHTF_NACL == 1:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "a": 0.,
-                "b": 0.,
-                "c": 0.,
-                "d": 0.,
-                "sig": 0.,
-                "cutoff": 0.}
+            return {}
 
         def type_name(self):
             """Name of interaction type.
@@ -1189,11 +1139,7 @@ IF MORSE == 1:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "eps": 0.,
-                "alpha": 0.,
-                "rmin": 0.,
-                "cutoff": 0.}
+            return {"cutoff": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -1213,7 +1159,7 @@ IF MORSE == 1:
                 Stiffness of the Morse interaction.
             rmin : :obj:`float`
                 Distance of potential minimum
-            cutoff : :obj:`float`
+            cutoff : :obj:`float`, optional
                 Cutoff distance of the interaction.
 
             """
@@ -1285,14 +1231,7 @@ IF BUCKINGHAM == 1:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "a": 0.,
-                "b": 0.,
-                "c": 0.,
-                "d": 0.,
-                "cutoff": 0.,
-                "discont": 0.,
-                "shift": 0.}
+            return {"b": 0., "shift": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -1308,7 +1247,7 @@ IF BUCKINGHAM == 1:
             ----------
             a : :obj:`float`
                 Magnitude of the exponential part of the interaction.
-            b : :obj:`float`
+            b : :obj:`float`, optional
                 Exponent of the exponential part of the interaction.
             c : :obj:`float`
                 Prefactor of term decaying with the sixth power of distance.
@@ -1382,11 +1321,7 @@ IF SOFT_SPHERE == 1:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "a": 0.,
-                "n": 0.,
-                "cutoff": 0.,
-                "offset": 0.}
+            return {"offset": 0.}
 
         def type_name(self):
             """Name of interaction type.
@@ -1474,14 +1409,7 @@ IF AFFINITY == 1:
                 raise Exception("Could not set Affinity parameters")
 
         def default_params(self):
-            return {
-                "affinity_type": 0,
-                "affinity_kappa": 0.,
-                "affinity_r0": 0.,
-                "affinity_Kon": 0.,
-                "affinity_Koff": 0.,
-                "affinity_maxBond": 0.,
-                "affinity_cut": 0.}
+            return {}
 
         def type_name(self):
             return "Affinity"
@@ -1525,11 +1453,7 @@ IF MEMBRANE_COLLISION == 1:
                 raise Exception("Could not set Membrane Collision parameters")
 
         def default_params(self):
-            return {
-                "a": 0.,
-                "n": 1.,
-                "cutoff": 0.,
-                "offset": 0.}
+            return {"offset": 0.}
 
         def type_name(self):
             return "MembraneCollision"
@@ -1581,9 +1505,7 @@ IF HERTZIAN == 1:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "eps": 0.,
-                "sig": 1.}
+            return {}
 
         def type_name(self):
             """Name of interaction type.
@@ -1664,10 +1586,7 @@ IF GAUSSIAN == 1:
             """Python dictionary of default parameters.
 
             """
-            return {
-                "eps": 0.,
-                "sig": 1.,
-                "cutoff": 0.}
+            return {}
 
         def type_name(self):
             """Name of interaction type.
@@ -1833,8 +1752,7 @@ cdef class BondedInteraction:
         # Interaction id as argument
         if len(args) == 1 and is_valid_type(args[0], int):
             bond_id = args[0]
-            # Check, if the bond in Espresso core is really defined as a FENE
-            # bond
+            # Check if the bond type in Espresso core matches this class
             if bonded_ia_params[bond_id].type != self.type_number():
                 raise Exception(
                     "The bond with this id is not defined as a " + self.type_name() + " bond in the Espresso core.")
@@ -1860,7 +1778,7 @@ cdef class BondedInteraction:
 
         else:
             raise Exception(
-                "The constructor has to be called either with a bond id (as interger), or with a set of keyword arguments describing a new interaction")
+                "The constructor has to be called either with a bond id (as integer), or with a set of keyword arguments describing a new interaction")
 
     def __reduce__(self):
         return (self.__class__, (self._bond_id,))
@@ -2066,7 +1984,6 @@ class FeneBond(BondedInteraction):
 
         """
         self._params = {"r_0": 0.}
-        # Everything else has to be supplied by the user, anyway
 
     def _get_params_from_es_core(self):
         return \
@@ -2123,7 +2040,7 @@ class HarmonicBond(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {"k": 0., "r_0": 0., "r_cut": 0.}
+        self._params = {"r_cut": 0.}
 
     def _get_params_from_es_core(self):
         return \
@@ -2165,7 +2082,7 @@ if ELECTROSTATICS:
             return {"prefactor"}
 
         def set_default_params(self):
-            self._params = {"prefactor": 1.}
+            self._params = {}
 
         def _get_params_from_es_core(self):
             return \
@@ -2209,7 +2126,7 @@ if ELECTROSTATICS:
             return {"q1q2"}
 
         def set_default_params(self):
-            self._params = {"q1q2": 1.}
+            self._params = {}
 
         def _get_params_from_es_core(self):
             return \
@@ -2261,8 +2178,7 @@ class ThermalizedBond(BondedInteraction):
         return {"temp_com", "gamma_com", "temp_distance", "gamma_distance"}
 
     def set_default_params(self):
-        self._params = {"temp_com": 1., "gamma_com": 1.,
-                        "temp_distance": 1., "gamma_distance": 1., "r_cut": 0.}
+        self._params = {"r_cut": 0.}
 
     def _get_params_from_es_core(self):
         return \
@@ -2322,14 +2238,13 @@ IF THOLE:
             super().set_params(**kwargs)
 
         def _set_params_in_es_core(self):
-            # Handle the case of shift="auto"
             if thole_set_params(self._part_types[0], self._part_types[1],
                                 self._params["scaling_coeff"],
                                 self._params["q1q2"]):
                 raise Exception("Could not set Thole parameters")
 
         def default_params(self):
-            return {"scaling_coeff": 0., "q1q2": 0.}
+            return {}
 
         def type_name(self):
             return "Thole"
@@ -2505,8 +2420,7 @@ IF BOND_CONSTRAINT == 1:
 
             """
             # TODO rationality of Default Parameters has to be checked
-            self._params = {"r": 0.,
-                            "ptol": 0.001,
+            self._params = {"ptol": 0.001,
                             "vtol": 0.001}
 
         def _get_params_from_es_core(self):
@@ -2563,7 +2477,7 @@ class Dihedral(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {"mult'": 1, "bend": 0., "phase": 0.}
+        self._params = {}
 
     def _get_params_from_es_core(self):
         return \
@@ -2624,7 +2538,7 @@ class _TabulatedBase(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {'min': -1., 'max': -1., 'energy': [], 'force': []}
+        self._params = {}
 
     def _get_params_from_es_core(self):
         make_bond_type_exist(self._bond_id)
@@ -2833,7 +2747,7 @@ IF TABULATED == 1:
             """Set parameters that are not required to their default value.
 
             """
-            self._params = {'min': -1., 'max': -1, 'energy': [], 'force': []}
+            self._params = {}
 
         def _get_params_from_es_core(self):
             cdef IA_parameters * ia_params = get_ia_param_safe(
@@ -2989,7 +2903,7 @@ class AngleHarmonic(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {"bend": 0, "phi0": 0}
+        self._params = {}
 
     def _get_params_from_es_core(self):
         return \
@@ -3040,7 +2954,7 @@ class AngleCosine(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {"bend": 0, "phi0": 0}
+        self._params = {}
 
     def _get_params_from_es_core(self):
         return \
@@ -3091,7 +3005,7 @@ class AngleCossquare(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {"bend": 0, "phi0": 0}
+        self._params = {}
 
     def _get_params_from_es_core(self):
         return \
@@ -3173,7 +3087,7 @@ class IBM_Tribend(BondedInteraction):
         initializing reference state
     kb : :obj:`float`
         Bending modulus
-    refShape : :obj:`str`, \{'Flat', 'Initial'\}
+    refShape : :obj:`str`, optional, \{'Flat', 'Initial'\}
         Reference shape, default is ``'Flat'``
 
     """
@@ -3194,7 +3108,7 @@ class IBM_Tribend(BondedInteraction):
         return {"ind1", "ind2", "ind3", "ind4", "kb"}
 
     def set_default_params(self):
-        self._params = {"flat": False}
+        self._params = {"refShape": "Flat"}
 
     def _get_params_from_es_core(self):
         return \
@@ -3300,7 +3214,7 @@ class OifGlobalForces(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {"A0_g": 1., "ka_g": 0., "V0": 1., "kv": 0.}
+        self._params = {}
 
     def _get_params_from_es_core(self):
         return \
@@ -3369,8 +3283,7 @@ class OifLocalForces(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {"r0": 1., "ks": 0., "kslin": 0.,
-                        "phi0": 0., "kb": 0., "A01": 0., "A02": 0., "kal": 0., "kvisc": 0.}
+        self._params = {}
 
     def _get_params_from_es_core(self):
         return \
@@ -3474,10 +3387,7 @@ class QuarticBond(BondedInteraction):
         """Sets parameters that are not required to their default value.
 
         """
-        self._params = {"k0": 0.,
-                        "k1": 0.,
-                        "r": 0.,
-                        "r_cut": 0.}
+        self._params = {}
 
     def _get_params_from_es_core(self):
         return \
