@@ -3,7 +3,9 @@ import numpy as np
 import unittest as ut
 import espressomd.utils
 
+
 class UtilsTest(ut.TestCase):
+
     def test_is_valid_type(self):
         self.assertFalse(espressomd.utils.is_valid_type(np.inf, float))
         self.assertFalse(espressomd.utils.is_valid_type(np.nan, float))

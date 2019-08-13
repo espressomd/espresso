@@ -132,7 +132,7 @@ def to_char_pointer(s):
 
     """
     if isinstance(s, unicode):
-        s = (< unicode > s).encode('utf8')
+        s = ( < unicode > s).encode('utf8')
     return s
 
 
@@ -148,7 +148,7 @@ def to_str(s):
     if isinstance(s, unicode):
         return < unicode > s
     elif isinstance(s, bytes):
-        return (< bytes > s).decode('ascii')
+        return ( < bytes > s).decode('ascii')
     else:
         raise ValueError('Unknown string type {}'.format(type(s)))
 
@@ -285,7 +285,7 @@ def is_valid_type(value, t):
     Extended checks for numpy int and float types.
 
     """
-    if value == None:
+    if value is None:
         return False
     if math.isnan(value) or math.isinf(value):
         return False
