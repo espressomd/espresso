@@ -279,15 +279,12 @@ def nesting_level(obj):
 
     return max_level + 1
 
-
 def is_valid_type(value, t):
     """
     Extended checks for numpy int and float types.
 
     """
     if value is None:
-        return False
-    if np.isnan(value).any() or np.isinf(value).any():
         return False
     if t == int:
         return isinstance(value, (int, np.integer, np.long))
