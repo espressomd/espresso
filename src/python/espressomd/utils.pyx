@@ -287,7 +287,7 @@ def is_valid_type(value, t):
     """
     if value is None:
         return False
-    if math.isnan(value) or math.isinf(value):
+    if np.isnan(value).any() or np.isinf(value).any():
         return False
     if t == int:
         return isinstance(value, (int, np.integer, np.long))
