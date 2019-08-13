@@ -2626,12 +2626,6 @@ class _TabulatedBase(BondedInteraction):
         """
         self._params = {'min': -1., 'max': -1., 'energy': [], 'force': []}
 
-    def validate_params(self):
-        """Check that parameters are valid.
-
-        """
-        pass
-
     def _get_params_from_es_core(self):
         make_bond_type_exist(self._bond_id)
         res = \
@@ -2699,11 +2693,11 @@ class TabulatedDistance(_TabulatedBase):
         """
         return "TABULATED_DISTANCE"
 
-    def required_keys(self):
-        """Parameters that have to be set.
+    def validate_params(self):
+        """Check that parameters are valid.
 
         """
-        return {"min", "max", "energy", "force"}
+        pass
 
 
 class TabulatedAngle(_TabulatedBase):
@@ -2723,7 +2717,9 @@ class TabulatedAngle(_TabulatedBase):
     pi = 3.14159265358979
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, min=0., max=self.pi, **kwargs)
+        if len(args) == 0:
+            kwargs.update({"min": 0., "max": self.pi})
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_TABULATED_ANGLE
@@ -2734,11 +2730,14 @@ class TabulatedAngle(_TabulatedBase):
         """
         return "TABULATED_ANGLE"
 
-    def required_keys(self):
-        """Parameters that have to be set.
+    def validate_params(self):
+        """Check that parameters are valid.
 
         """
-        return {"energy", "force"}
+        phi = [self._params["min"], self._params["max"]]
+        if abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - self.pi) > 1e-5:
+            raise ValueError("Tabulated angle expects forces/energies "
+                             "within the range [0, pi], got " + str(phi))
 
 
 class TabulatedDihedral(_TabulatedBase):
@@ -2758,7 +2757,9 @@ class TabulatedDihedral(_TabulatedBase):
     pi = 3.14159265358979
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, min=0., max=2. * self.pi, **kwargs)
+        if len(args) == 0:
+            kwargs.update({"min": 0., "max": 2. * self.pi})
+        super().__init__(*args, **kwargs)
 
     def type_number(self):
         return BONDED_IA_TABULATED_DIHEDRAL
@@ -2769,11 +2770,14 @@ class TabulatedDihedral(_TabulatedBase):
         """
         return "TABULATED_DIHEDRAL"
 
-    def required_keys(self):
-        """Parameters that have to be set.
+    def validate_params(self):
+        """Check that parameters are valid.
 
         """
-        return {"energy", "force"}
+        phi = [self._params["min"], self._params["max"]]
+        if abs(phi[0] - 0.) > 1e-5 or abs(phi[1] - 2 * self.pi) > 1e-5:
+            raise ValueError("Tabulated dihedral expects forces/energies "
+                             "within the range [0, 2*pi], got " + str(phi))
 
 
 IF TABULATED == 1:
