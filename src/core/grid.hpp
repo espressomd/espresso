@@ -115,24 +115,28 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
 template <typename T, typename U, typename V>
 inline void get_mi_vector(T &res, U const &a, V const &b,
                           const BoxGeometry &box) {
-  double shift = 0.0;
 #ifdef LEES_EDWARDS
-  double offset = lees_edwards_protocol.offset;
-  double dist = a[lees_edwards_protocol.shearplanenormal] -
-                b[lees_edwards_protocol.shearplanenormal];
+  const double &offset = box.lees_edwards_state.pos_offset;
+  const unsigned int shear_plane_normal =
+      LeesEdwards::get_shear_plane_normal_coord(box.lees_edwards_protocol);
+  const unsigned int shear_dir =
+      LeesEdwards::get_shear_dir_coord(box.lees_edwards_protocol);
+
+  const double dist = a[shear_plane_normal] - b[shear_plane_normal];
 #endif
   for (int i = 0; i < 3; i++) {
 #ifdef LEES_EDWARDS
-    if (i == lees_edwards_protocol.sheardir &&
-        std::fabs(dist) >
-            .5 * box.length()[lees_edwards_protocol.shearplanenormal]) {
-      shift = Utils::sgn(dist) *
-              (offset -
-               round(offset / box.length()[lees_edwards_protocol.sheardir]) *
-                   box.length()[lees_edwards_protocol.sheardir]);
+    double shift;
+    if (i == shear_dir &&
+        std::fabs(dist) > .5 * box.length()[shear_plane_normal]) {
+      shift =
+          Utils::sgn(dist) * (offset - round(offset / box.length()[shear_dir]) *
+                                           box.length()[shear_dir]);
     } else {
       shift = 0.0;
     }
+#else
+    constexpr const double shift = 0.;
 #endif
     res[i] = get_mi_coord(a[i] - shift, b[i], box.length()[i], box.periodic(i));
   }
@@ -222,11 +226,14 @@ inline Utils::Vector3d vel_diff(Utils::Vector3d const &x,
   auto ret = u - v;
 
 #ifdef LEES_EDWARDS
-  auto shear_velocity = lees_edwards_protocol.velocity;
-  auto const dy = std::abs(x[lees_edwards_protocol.shearplanenormal] -
-                           y[lees_edwards_protocol.shearplanenormal]);
-  if (dy > 0.5 * box.length()[lees_edwards_protocol.shearplanenormal]) {
-    ret[lees_edwards_protocol.sheardir] += Utils::sgn(dy) * shear_velocity;
+  auto const shear_velocity = box.lees_edwards_state.shear_velocity;
+  auto const shear_plane_normal =
+      LeesEdwards::get_shear_plane_normal_coord(box.lees_edwards_protocol);
+  auto const shear_dir =
+      LeesEdwards::get_shear_dir_coord(box.lees_edwards_protocol);
+  auto const dy = std::abs(x[shear_plane_normal] - y[shear_plane_normal]);
+  if (dy > 0.5 * box.length()[shear_plane_normal]) {
+    ret[shear_dir] += Utils::sgn(dy) * shear_velocity;
   }
 #endif
 

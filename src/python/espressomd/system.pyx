@@ -23,7 +23,7 @@ from globals cimport *
 import numpy as np
 import collections
 
-from grid cimport get_mi_vector, box_geo
+from grid cimport get_mi_vector, box_geo, vel_diff
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -56,6 +56,10 @@ IF VIRTUAL_SITES:
 
 IF COLLISION_DETECTION == 1:
     from .collision_detection import CollisionDetection
+
+IF LEES_EDWARDS:
+    from .lees_edwards import LeesEdwards
+
 
 import sys
 import random  # for true random numbers from os.urandom()
@@ -99,6 +103,7 @@ cdef class System:
         constraints
         lbboundaries
         ekboundaries
+        lees_edwards
         collision_detection
         __seed
         cuda_init_handle
@@ -135,6 +140,8 @@ cdef class System:
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
+            IF LEES_EDWARDS:
+                self.lees_edwards = LeesEdwards()
             self.minimize_energy = MinimizeEnergy()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
@@ -426,6 +433,14 @@ cdef class System:
 
         cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
         return make_array_locked(mi_vec)
+
+    def velocity_difference(self, p1, p2):
+        """Return the difference between the particles' velocities, respecting boundary conditions
+
+        """
+
+        cdef Vector3d res = vel_diff(make_Vector3d(p2.pos), make_Vector3d(p1.pos), make_Vector3d(p2.v), make_Vector3d(p1.v), box_geo)
+        return make_array_locked(res)
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.

@@ -5,6 +5,12 @@
 
 #include <bitset>
 #include <cassert>
+#include <memory>
+
+#include "config.hpp"
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
 
 class BoxGeometry {
 public:
@@ -43,6 +49,11 @@ public:
    * @param box_l Length that should be set.
    */
   void set_length(Utils::Vector3d const &box_l) { m_length = box_l; }
+
+#ifdef LEES_EDWARDS
+  LeesEdwards::Cache lees_edwards_state;
+  std::shared_ptr<LeesEdwards::ActiveProtocol> lees_edwards_protocol;
+#endif
 };
 
 #endif // CORE_BOX_GEOMETRY_HPP

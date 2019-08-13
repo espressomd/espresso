@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import espressomd
 from espressomd.interactions import HarmonicBond
+import espressomd.lees_edwards as lees_edwards
 
 import unittest as ut
 import numpy as np
@@ -26,28 +27,20 @@ class LeesEdwards(ut.TestCase):
         system = self.system
 
         # Protocol should be off by default
-        self.assertEqual(self.system.lees_edwards.type, "off")
+        self.assertTrue(self.system.lees_edwards.protocol is None)
 
-        # One shouldn't be able to set a random protocol
-        with self.assertRaises(Exception):
-            system.lees_edwards.set_params(
-                type="oscillatory_shear", velocity=50)
-
-        # Check if the setted protocol is stored correctly
-        system.lees_edwards.set_params(
-            type="steady_shear", velocity=1.2, sheardir=2, shearplanenormal=0)
-        self.assertEqual(system.lees_edwards.type, "steady_shear")
-        self.assertAlmostEqual(system.lees_edwards.velocity, 1.2)
-        self.assertEqual(system.lees_edwards.sheardir, 2)
-        self.assertEqual(system.lees_edwards.shearplanenormal, 0)
-
-        system.lees_edwards.set_params(
-            type="oscillatory_shear", frequency=1.2, amplitude=5.5, sheardir=0, shearplanenormal=1)
-        self.assertEqual(system.lees_edwards.type, "oscillatory_shear")
-        self.assertAlmostEqual(system.lees_edwards.frequency, 1.2)
-        self.assertAlmostEqual(system.lees_edwards.amplitude, 5.5)
-        self.assertEqual(system.lees_edwards.sheardir, 0)
-        self.assertEqual(system.lees_edwards.shearplanenormal, 1)
+        # Check if the set protocol is stored correctly
+        params = {
+            'shear_velocity': 1.2,
+            'shear_direction': 2,
+            'shear_plane_normal': 0,
+            'initial_pos_offset': 0.1}
+        new_protocol = lees_edwards.LinearShear(**params)
+        system.lees_edwards.protocol = new_protocol 
+        self.assertEqual(self.system.lees_edwards.protocol, new_protocol)
+        self.assertEqual(
+            self.system.lees_edwards.protocol.get_params(),
+            params)
 
         # Check if the offset is determined correctly
 
@@ -57,22 +50,22 @@ class LeesEdwards(ut.TestCase):
         omega = 2 * np.pi * frequency
         amplitude = 1.3
         sheardir = 0
-        shearplanenormal = 1
-        system.lees_edwards.set_params(
-            type="oscillatory_shear", frequency=omega,
-                                       amplitude=amplitude, sheardir=sheardir, shearplanenormal=shearplanenormal)
+        shear_plane_normal = 1
+        system.lees_edwards.protocol = lees_edwards.OscillatoryShear(
+            frequency=omega,
+            amplitude=amplitude, 
+            shear_direction=sheardir, 
+            shear_plane_normal=shear_plane_normal)
 
         for time in np.arange(0.0, 100.0, system.time_step * 10):
 
-            system.integrator.run(0)
-
+            system.time = time
             offset = amplitude * np.sin(omega * time)
             velocity = omega * amplitude * np.cos(omega * time)
-
-            self.assertAlmostEqual(system.lees_edwards.velocity, velocity)
-            self.assertAlmostEqual(system.lees_edwards.offset, offset)
-
-            system.integrator.run(10)
+            self.assertAlmostEqual(
+                system.lees_edwards.shear_velocity,
+                velocity)
+            self.assertAlmostEqual(system.lees_edwards.pos_offset, offset)
 
     def test_b_BoundaryCrossing(self):
         """A particle crosses the upper and lower boundary to test if position
@@ -89,25 +82,28 @@ class LeesEdwards(ut.TestCase):
         dir = [0, 1, 2]
 
         for sheardir in dir:
-            for shearplanenormal in dir:
-                if sheardir != shearplanenormal:
+            for shear_plane_normal in dir:
+                if sheardir != shear_plane_normal:
 
                     system.time = 0.0
-                    system.lees_edwards.set_params(
-                        type="steady_shear", velocity=velocity, sheardir=sheardir, shearplanenormal=shearplanenormal)
+                    system.lees_edwards.protocol = \
+                        lees_edwards.LinearShear(
+                            shear_velocity=velocity, 
+                          shear_direction=sheardir, 
+                          shear_plane_normal=shear_plane_normal)
 
                     pos = np.full([3], 2.5)
-                    pos[shearplanenormal] = system.box_l[
-                        shearplanenormal] - 0.05
+                    pos[shear_plane_normal] = system.box_l[
+                        shear_plane_normal] - 0.05
                     vel = np.zeros([3])
-                    vel[shearplanenormal] = 0.2
+                    vel[shear_plane_normal] = 0.2
                     system.part.add(pos=pos, v=vel, id=0, type=0)
 
                     pos_change = np.zeros([3])
                     pos_change[sheardir] = -system.time_step * 0.5 * velocity
                     pos_change[
-                        shearplanenormal] = vel[
-                            shearplanenormal] * system.time_step
+                        shear_plane_normal] = vel[
+                            shear_plane_normal] * system.time_step
                     vel_change = np.zeros([3])
                     vel_change[sheardir] = -velocity
 
@@ -127,16 +123,16 @@ class LeesEdwards(ut.TestCase):
 
                     system.time = 0.0
                     pos = np.full([3], 2.5)
-                    pos[shearplanenormal] = 0.05
+                    pos[shear_plane_normal] = 0.05
                     vel = np.zeros([3])
-                    vel[shearplanenormal] = -0.2
+                    vel[shear_plane_normal] = -0.2
                     system.part.add(pos=pos, v=vel, id=0, type=0)
 
                     pos_change = np.zeros([3])
                     pos_change[sheardir] = system.time_step * 0.5 * velocity
                     pos_change[
-                        shearplanenormal] = vel[
-                            shearplanenormal] * system.time_step
+                        shear_plane_normal] = vel[
+                            shear_plane_normal] * system.time_step
                     vel_change = np.zeros([3])
                     vel_change[sheardir] = velocity
 
@@ -163,24 +159,28 @@ class LeesEdwards(ut.TestCase):
         dir = [0, 1, 2]
 
         for sheardir in dir:
-            for shearplanenormal in dir:
-                if sheardir != shearplanenormal:
+            for shear_plane_normal in dir:
+                if sheardir != shear_plane_normal:
 
                     offset = 1.0
-                    system.lees_edwards.set_params(
-                        type='step', offset=offset, sheardir=sheardir, shearplanenormal=shearplanenormal)
+                    system.lees_edwards.protocol = \
+                        lees_edwards.LinearShear(
+                            initial_pos_offset=offset,
+                            shear_velocity=0,
+                            shear_direction=sheardir,
+                            shear_plane_normal=shear_plane_normal)
 
                     pos1 = np.full([3], 2.5)
-                    pos1[shearplanenormal] = 4.75
+                    pos1[shear_plane_normal] = 4.75
                     pos2 = np.full([3], 2.5)
-                    pos2[shearplanenormal] = 0.25
+                    pos2[shear_plane_normal] = 0.25
 
                     system.part.add(id=0, pos=pos1, fix=[1, 1, 1])
                     system.part.add(id=1, pos=pos2, fix=[1, 1, 1])
 
                     r = system.part[1].pos - system.part[0].pos
                     r[sheardir] += offset
-                    r[shearplanenormal] += system.box_l[0]
+                    r[shear_plane_normal] += system.box_l[0]
 
                     k = 1000
                     r_cut = 1.5
@@ -222,23 +222,29 @@ class LeesEdwards(ut.TestCase):
         system = self.system
         system.part.clear()
 
-        system.lees_edwards.set_params(
-            type="steady_shear", velocity=1.5, sheardir=0, shearplanenormal=2)
-        system.part.add(id=0, pos=[1, 1, 0.9 * system.box_l[2]])
-        system.part.add(id=1, pos=[1, 1, 0.1 * system.box_l[2]])
+        system.lees_edwards.protocol = \
+            lees_edwards.LinearShear(
+                shear_velocity=1.5,
+                shear_direction=0,
+                shear_plane_normal=2)
+        p1 = system.part.add(
+            id=0, pos=[1, 1, 0.9 * system.box_l[2]], v=[2, -3.2, 3])
+        p2 = system.part.add(
+            id=1, pos=[1, 1, 0.1 * system.box_l[2]], v=[7, 6.1, -1])
 
-        vel_diff = system.velocity_difference(system.part[0], system.part[1])
-        np.testing.assert_array_equal(vel_diff, [1.5, 0, 0])
+        vel_diff = system.velocity_difference(p1, p2)
+        np.testing.assert_array_equal(
+            vel_diff, p2.v - p1.v + np.array([system.lees_edwards.shear_velocity, 0, 0]))
 
         system.part.clear()
-        system.lees_edwards.set_params(type='off')
+        system.lees_edwards.protocol = lees_edwards.Off()
 
-        system.part.add(id=0, pos=[1, 1, 0.5], v=[0.4, 0.4, 0.4])
-        system.part.add(id=1, pos=[1, 1, 1.0], v=[0.1, 0.1, 0.1])
-        vel_diff = system.velocity_difference(system.part[0], system.part[1])
+        p1 = system.part.add(id=0, pos=[1, 1, 0.5], v=[0.4, 0.4, 0.4])
+        p2 = system.part.add(id=1, pos=[1, 1, 1.0], v=[0.1, 0.1, 0.1])
+        vel_diff = system.velocity_difference(p1, p2)
         np.testing.assert_array_equal(
             vel_diff,
-            system.part[0].v - system.part[1].v)
+           p2.v - p1.v)
 
         system.part.clear()
 
@@ -248,8 +254,11 @@ class LeesEdwards(ut.TestCase):
 
         system = self.system
         system.cell_system.set_domain_decomposition(use_verlet_lists=True)
-        system.lees_edwards.set_params(
-            type="steady_shear", velocity=1.2, sheardir=2, shearplanenormal=0)
+        system.lees_edwards.protocol = \
+            lees_edwards.LinearShear(
+                shear_velocity=1.2,
+                shear_direction=2,
+                shear_plane_normal=0)
 
         with self.assertRaises(Exception):
             system.integrator.run(steps=10)

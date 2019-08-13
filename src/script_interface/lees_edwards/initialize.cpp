@@ -20,6 +20,9 @@
 #include "ScriptInterface.hpp"
 
 #include "LeesEdwards.hpp"
+#include "LinearShear.hpp"
+#include "Off.hpp"
+#include "OscillatoryShear.hpp"
 
 namespace ScriptInterface {
 namespace LeesEdwards {
@@ -28,6 +31,12 @@ void initialize() {
 #ifdef LEES_EDWARDS
   ScriptInterface::register_new<ScriptInterface::LeesEdwards::LeesEdwards>(
       "LeesEdwards::LeesEdwards");
+  ScriptInterface::register_new<ScriptInterface::LeesEdwards::Off>(
+      "LeesEdwards::Off");
+  ScriptInterface::register_new<ScriptInterface::LeesEdwards::LinearShear>(
+      "LeesEdwards::LinearShear");
+  ScriptInterface::register_new<ScriptInterface::LeesEdwards::OscillatoryShear>(
+      "LeesEdwards::OscillatoryShear");
 #endif
 }
 } /* namespace LeesEdwards */

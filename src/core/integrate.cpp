@@ -180,8 +180,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Prepare the Integrator */
   on_integration_start();
 #ifdef LEES_EDWARDS
-  lees_edwards_protocol.offset = lees_edwards_get_offset(sim_time);
-  lees_edwards_protocol.velocity = lees_edwards_get_velocity(sim_time);
+  box_geo.lees_edwards_state.update(box_geo.lees_edwards_protocol, sim_time,
+                                    sim_time);
 #endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
@@ -307,8 +307,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
     particles = cell_structure.local_cells().particles();
 
 #ifdef LEES_EDWARDS
-    lees_edwards_protocol.velocity =
-        lees_edwards_get_velocity(sim_time - time_step / 2.0);
+    // Note that sim_time has already been propagated, here
+    box_geo.lees_edwards_state.update(box_geo.lees_edwards_protocol,
+                                      sim_time - time_step,
+                                      sim_time - time_step / 2);
 #endif
 
     force_calc(cell_structure);
@@ -402,9 +404,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef LEES_EDWARDS
-  // Necessary so that the Python interface is up-to-date
-  lees_edwards_protocol.offset = lees_edwards_get_offset(sim_time);
-  lees_edwards_protocol.velocity = lees_edwards_get_velocity(sim_time);
+  box_geo.lees_edwards_state.update(box_geo.lees_edwards_protocol, sim_time,
+                                    sim_time);
 #endif
 }
 
@@ -426,7 +427,13 @@ void philox_counter_increment() {
 void propagate_vel_finalize_p_inst(const ParticleRange &particles) {
 
 #ifdef LEES_EDWARDS
-  double le_vel = lees_edwards_get_velocity(sim_time) / 2.0;
+  double le_vel =
+      LeesEdwards::get_shear_velocity(sim_time, box_geo.lees_edwards_protocol) /
+      2.0;
+  auto const shear_dir =
+      LeesEdwards::get_shear_dir_coord(box_geo.lees_edwards_protocol);
+  auto const shear_plane_normal =
+      LeesEdwards::get_shear_plane_normal_coord(box_geo.lees_edwards_protocol);
 #endif
 
 #ifdef NPT
@@ -456,9 +463,8 @@ void propagate_vel_finalize_p_inst(const ParticleRange &particles) {
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 #ifdef LEES_EDWARDS
-        if (j == lees_edwards_protocol.sheardir && p.p.lees_edwards_flag != 0) {
-          p.m.v[lees_edwards_protocol.sheardir] +=
-              p.p.lees_edwards_flag * le_vel;
+        if (j == shear_dir && p.p.lees_edwards_flag != 0) {
+          p.m.v[shear_dir] += p.p.lees_edwards_flag * le_vel;
         }
 #endif
 
@@ -468,8 +474,7 @@ void propagate_vel_finalize_p_inst(const ParticleRange &particles) {
     }
 #ifdef LEES_EDWARDS
     p.p.lees_edwards_offset -=
-        (0.5 * time_step * p.l.i[lees_edwards_protocol.shearplanenormal] *
-         le_vel);
+        (0.5 * time_step * p.l.i[shear_plane_normal] * le_vel);
 #endif
 
     ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
@@ -661,14 +666,16 @@ void propagate_pos(const ParticleRange &particles) {
 void propagate_vel_pos(const ParticleRange &particles) {
   INTEG_TRACE(fprintf(stderr, "%d: propagate_vel_pos:\n", this_node));
 #ifdef LEES_EDWARDS
-  double shear_velocity = lees_edwards_get_velocity(sim_time) / 2.0;
+  double shear_velocity =
+      LeesEdwards::get_shear_velocity(sim_time, box_geo.lees_edwards_protocol) /
+      2.0;
   /* For the offset, we set the value at half the time step as a "midpoint
      rule". The particles that will cross a Lees-Edwards boundary are not known
      beforehand, so we had to make this choice, the alternative being to compute
      the crossing time for all particles.
   */
-  double offset_at_time_step =
-      lees_edwards_get_offset(sim_time + time_step / 2.0);
+  double pos_offset = LeesEdwards::get_pos_offset(
+      sim_time + time_step / 2.0, box_geo.lees_edwards_protocol);
 #endif
 
   for (auto &p : particles) {
@@ -703,40 +710,7 @@ void propagate_vel_pos(const ParticleRange &particles) {
                               this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
 
 #ifdef LEES_EDWARDS
-    /* LE Push */
-    {
-      int dummy_i;
-      // Lees-Edwards acts at the zero step for the velocity half update and at
-      // the midstep for the position.
-      //
-      // The update of the velocity at the end of the time step is triggered by
-      // the flag and occurs in propagate_vel_finalize_p_inst
-      if (p.r.p[lees_edwards_protocol.shearplanenormal] >=
-          box_geo.length()[lees_edwards_protocol.shearplanenormal]) {
-        p.m.v[lees_edwards_protocol.sheardir] -= shear_velocity;
-        p.r.p[lees_edwards_protocol.sheardir] -= offset_at_time_step;
-        p.p.lees_edwards_offset -= offset_at_time_step;
-        Algorithm::periodic_fold(
-            p.r.p[lees_edwards_protocol.sheardir], &dummy_i,
-            box_geo.length()[lees_edwards_protocol.sheardir]);
-        p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
-                                    // propagate_vel_finalize_p_inst
-      } else if (p.r.p[lees_edwards_protocol.shearplanenormal] < 0.) {
-        p.m.v[lees_edwards_protocol.sheardir] += shear_velocity;
-        p.r.p[lees_edwards_protocol.sheardir] += offset_at_time_step;
-        p.p.lees_edwards_offset += offset_at_time_step;
-        Algorithm::periodic_fold(
-            p.r.p[lees_edwards_protocol.sheardir], &dummy_i,
-            box_geo.length()[lees_edwards_protocol.sheardir]);
-        p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
-                                   // propagate_vel_finalize_p_inst
-      } else {
-        p.p.lees_edwards_flag = 0;
-      }
-      p.p.lees_edwards_offset -=
-          (0.5 * time_step * p.l.i[lees_edwards_protocol.shearplanenormal] *
-           shear_velocity);
-    }
+    LeesEdwards::push(p, pos_offset, shear_velocity, box_geo);
 #endif
 
     /* Verlet criterion check*/

@@ -132,9 +132,8 @@ void on_integration_start() {
 #endif
 
 #ifdef LEES_EDWARDS
-  if (lees_edwards_protocol.type != LEES_EDWARDS_PROTOCOL_OFF &&
-      less_edwards_supports_verlet_list() == false &&
-      cell_structure.use_verlet_list) {
+  if (cell_structure.use_verlet_list &&
+      !LeesEdwards::get_verlet_list_support(box_geo.lees_edwards_protocol)) {
     runtimeErrorMsg()
         << "It is not possible to use Lees Edwards with Verlet lists.";
   }
@@ -441,6 +440,10 @@ void on_parameter_change(int field) {
     break;
   case FIELD_SIMTIME:
     recalc_forces = 1;
+#ifdef LEES_EDWARDS
+    box_geo.lees_edwards_state.update(box_geo.lees_edwards_protocol, sim_time,
+                                      sim_time);
+#endif
     break;
   }
 }

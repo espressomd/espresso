@@ -149,7 +149,15 @@ cdef class PScriptInterface:
                                          python_object_to_variant(value))
 
     def get_parameter(self, name):
-        cdef Variant value = self.sip.get().get_parameter(to_char_pointer(name))
+        cdef Variant value 
+        try: 
+            value = self.sip.get().get_parameter(to_char_pointer(name))
+        except:
+            raise Exception(
+                "Could not retrieve parameter " +
+                name +
+                " from an instnace of " +
+                self.__class__.__name__)
         return variant_to_python_object(value)
 
     def get_params(self):
@@ -286,7 +294,7 @@ class ScriptInterfaceHelper(PScriptInterface):
         return (_unpickle_so_class, (self._so_name, self._serialize()))
 
     def __dir__(self):
-        return self.__dict__.keys() + self._valid_parameters()
+        return list(self.__dict__.keys()) + self._valid_parameters()
 
     def __getattr__(self, attr):
         if attr in self._valid_parameters():

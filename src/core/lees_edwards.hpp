@@ -1,87 +1,212 @@
 #ifndef LEES_EDWARDS_H
 #define LEES_EDWARDS_H
 
-#include "cells.hpp"
+#include "ParticleRange.hpp"
+#include "algorithm/periodic_fold.hpp"
+#include "boost/variant.hpp"
 #include "config.hpp"
+#include "integrate.hpp"
+#include "particle_data.hpp"
 
+#include "utils/Vector.hpp"
 /** \file lees_edwards.hpp
  *
  */
 
-class LeesEdwardsProtocol {
-public:
-  virtual double velocity(double time) const = 0;
-  virtual double offset(double time) const = 0;
+namespace LeesEdwards {
+
+// Protocols determining shear rate and positional offset as a function of time
+/** Lees Edwards protocol for un-altered periodic boundary conditions */
+struct Off {
+  Off() : m_shear_plane_normal_coord{0}, m_shear_dir_coord{0} {};
+  double shear_velocity(double time) const { return 0.; };
+  double pos_offset(double time) const { return 0.; };
+  int m_shear_plane_normal_coord;
+  int m_shear_dir_coord;
+  static constexpr const bool verlet_list_support = true;
 };
 
-class LeesEdwardsProtocolConstShearVelocity : LeesEdwardsProtocol {
-public:
-  double velocity(double time) const override { return shear_velocity; };
-  double offset(double time) const override {
-    return (time - time0) * shear_velocity;
+/** Lees-Edwards protocol for linear shearing */
+struct LinearShear {
+  LinearShear()
+      : m_initial_pos_offset{0.}, m_shear_velocity{0.},
+        m_shear_plane_normal_coord{0}, m_shear_dir_coord{0} {};
+  double shear_velocity(double time) const { return m_shear_velocity; };
+  double pos_offset(double time) const {
+    return m_initial_pos_offset + time * m_shear_velocity;
   }
-  double shear_velocity;
-  double time0;
+  double m_initial_pos_offset;
+  double m_shear_velocity;
+  int m_shear_plane_normal_coord;
+  int m_shear_dir_coord;
+  static constexpr const bool verlet_list_support = false;
 };
 
-class LeesEdwardsProtocolConstOffset : LeesEdwardsProtocol {
-public:
-  double velocity(double time) const override { return 0.; };
-  double offset(double time) const override { return step; };
-  double step;
-  double time0;
-};
-
-class LeesEdwardsProtocolOscillatoryShear : LeesEdwardsProtocol {
-public:
-  double velocity(double time) const override {
-    return amplitude * std::sin(frequency * (time - time0));
+/** Lees-Edwards protocol for osciallatory shearing */
+struct OscillatoryShear {
+  OscillatoryShear()
+      : m_amplitude{0.}, m_frequency{0.}, m_time_0{0.},
+        m_shear_plane_normal_coord{0}, m_shear_dir_coord{0} {};
+  double pos_offset(double time) const {
+    return m_amplitude * std::sin(m_frequency * (time - m_time_0));
   }
-  double offset(double time) const override {
-    return frequency * amplitude * std::cos(frequency * (time - time0));
+  double shear_velocity(double time) const {
+    return m_frequency * m_amplitude *
+           std::cos(m_frequency * (time - m_time_0));
   }
-  double amplitude;
-  double frequency;
-  double time0;
+  double m_amplitude;
+  double m_frequency;
+  double m_time_0;
+  int m_shear_plane_normal_coord;
+  int m_shear_dir_coord;
+  static constexpr const bool verlet_list_support = false;
 };
 
-/** Enum for the different Lees Edwards Protocols: Off, Step. Steady Shear and
- * Oscillatory shear  */
-enum LeesEdwardsProtocolType {
-  LEES_EDWARDS_PROTOCOL_OFF,
-  LEES_EDWARDS_PROTOCOL_STEP,
-  LEES_EDWARDS_PROTOCOL_STEADY_SHEAR,
-  LEES_EDWARDS_PROTOCOL_OSC_SHEAR,
+/** Type which holds the currently active protocol */
+using ActiveProtocol = boost::variant<Off, LinearShear, OscillatoryShear>;
+
+/** Whether Lees-Edwards support the use of Verlet-Lists */
+bool supports_verlet_list();
+
+/** Visitor to get positional offset from the Lees-Edwards protocol */
+class PosOffsetGetter : public boost::static_visitor<double> {
+public:
+  PosOffsetGetter(double time) : m_time{time} {}
+  template <typename T> double operator()(const T &protocol) const {
+    return protocol.pos_offset(m_time);
+  }
+
+private:
+  double m_time;
 };
 
-/** Struct holding all information concerning Lees Edwards  */
-typedef struct {
-  /** Protocol type*/
-  int type;
-  /** Time when Lees Edwards was started*/
-  double time0;
-  /** Current offset*/
-  double offset;
-  /** Current velocity*/
-  double velocity;
-  /** Amplitude set via interface*/
-  double amplitude;
-  /** Frequency set via interface*/
-  double frequency;
-  /** Direction in which the velocity and position jump is applied*/
-  int sheardir;
-  /** Direction in which get_mi_vector needs to be modified*/
-  int shearplanenormal;
-} lees_edwards_protocol_struct;
+inline double get_pos_offset(double time,
+                             std::shared_ptr<ActiveProtocol> protocol) {
+  if (!protocol)
+    return 0.;
+  return boost::apply_visitor(PosOffsetGetter(time), *protocol);
+}
 
-bool less_edwards_supports_verlet_list();
-/** Checks if Lees Edwards supports Verlet lists*/
-extern lees_edwards_protocol_struct lees_edwards_protocol;
-/** Calculation of current offset*/
-double lees_edwards_get_offset(double time);
+/** Visitor to get shear plane normal coord from the Lees-Edwards protocol */
+class ShearPlaneNormalGetter : public boost::static_visitor<unsigned int> {
+public:
+  template <typename T> unsigned int operator()(const T &protocol) const {
+    return protocol.m_shear_plane_normal_coord;
+  }
+};
+
+inline unsigned int
+get_shear_plane_normal_coord(std::shared_ptr<ActiveProtocol> protocol) {
+  if (!protocol)
+    return 0;
+  return boost::apply_visitor(ShearPlaneNormalGetter(), *protocol);
+}
+
+/** Visitor to get shear direction coord from the Lees-Edwards protocol */
+class ShearDirectionGetter : public boost::static_visitor<unsigned int> {
+public:
+  template <typename T> unsigned int operator()(const T &protocol) const {
+    return protocol.m_shear_dir_coord;
+  }
+};
+
+inline int get_shear_dir_coord(std::shared_ptr<ActiveProtocol> protocol) {
+  if (!protocol)
+    return 0;
+  return boost::apply_visitor(ShearDirectionGetter(), *protocol);
+}
+
+/** Visitor to get shear velocity from the Lees-Edwards protocol */
+class ShearVelocityGetter : public boost::static_visitor<double> {
+public:
+  ShearVelocityGetter(double time) : m_time{time} {};
+  template <typename T> double operator()(const T &protocol) const {
+    return protocol.shear_velocity(m_time);
+  }
+
+private:
+  double m_time;
+};
+
 /** Calculation of current velocity*/
-double lees_edwards_get_velocity(double time);
-/** At the beginning of Lees_Edwards we have to reset reset all particle images
+inline double get_shear_velocity(double time,
+                                 std::shared_ptr<ActiveProtocol> protocol) {
+  if (!protocol)
+    return 0;
+  return boost::apply_visitor(ShearVelocityGetter(time), *protocol);
+}
+
+/** Visitor to get Verlet list support from Lees-Edwards protocol */
+class VerletListSupportGetter : public boost::static_visitor<bool> {
+public:
+  template <typename T> bool operator()(const T &protocol) const {
+    return protocol.verlet_list_support;
+  }
+
+private:
+  double m_time;
+};
+
+/** Calculation of current velocity*/
+inline bool get_verlet_list_support(std::shared_ptr<ActiveProtocol> protocol) {
+  if (!protocol)
+    return true;
+  return boost::apply_visitor(VerletListSupportGetter(), *protocol);
+}
+
+/** At the beginning of Lees_Edwards we have to reset all particle images
  * to zero*/
-void local_lees_edwards_image_reset();
+void local_image_reset(const ParticleRange &particles);
+
+// Forward declaration
+template <class BoxGeometry>
+void push(Particle &p, double pos_offset, double shear_velocity,
+          BoxGeometry &box) {
+  if (!box.lees_edwards_protocol)
+    return;
+  auto const protocol = box.lees_edwards_protocol;
+  auto const shear_dir = get_shear_dir_coord(protocol);
+  auto const shear_plane_normal = get_shear_plane_normal_coord(protocol);
+  int dummy_i;
+  // Lees-Edwards acts at the zero step for the velocity half update and at
+  // the midstep for the position.
+  //
+  // The update of the velocity at the end of the time step is triggered by
+  // the flag and occurs in propagate_vel_finalize_p_inst
+  if (p.r.p[shear_plane_normal] >= box.length()[shear_plane_normal]) {
+    p.m.v[shear_dir] -= shear_velocity;
+    p.r.p[shear_dir] -= pos_offset;
+    p.p.lees_edwards_offset -= pos_offset;
+    Algorithm::periodic_fold(p.r.p[shear_dir], &dummy_i,
+                             box.length()[shear_dir]);
+    p.p.lees_edwards_flag = -1; // perform a negative half velocity shift in
+                                // propagate_vel_finalize_p_inst
+  } else if (p.r.p[shear_plane_normal] < 0.) {
+    p.m.v[shear_dir] += shear_velocity;
+    p.r.p[shear_dir] += pos_offset;
+    p.p.lees_edwards_offset += pos_offset;
+    Algorithm::periodic_fold(p.r.p[shear_dir], &dummy_i,
+                             box.length()[shear_dir]);
+    p.p.lees_edwards_flag = 1; // perform a positive half velocity shift in
+                               // propagate_vel_finalize_p_inst
+  } else {
+    p.p.lees_edwards_flag = 0;
+  }
+  p.p.lees_edwards_offset -=
+      (0.5 * time_step * p.l.i[shear_plane_normal] * shear_velocity);
+}
+
+/** Type for cacheing the current Lees-Edwards position offset and shear
+ * velocity */
+struct Cache {
+  Cache() : pos_offset{0.}, shear_velocity{0.} {};
+  double pos_offset;
+  double shear_velocity;
+  void update(std::shared_ptr<ActiveProtocol> protocol, double pos_time,
+              double vel_time) {
+    pos_offset = LeesEdwards::get_pos_offset(pos_time, protocol);
+    shear_velocity = LeesEdwards::get_shear_velocity(vel_time, protocol);
+  }
+};
+} // namespace LeesEdwards
 #endif

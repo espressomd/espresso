@@ -708,14 +708,14 @@ struct pair_sum {
 void mpi_lees_edwards_image_reset() {
 #ifdef LEES_EDWARDS
   mpi_call(mpi_lees_edwards_image_reset_slave, -1, 0);
-  local_lees_edwards_image_reset();
+  LeesEdwards::local_image_reset(cell_structure.local_cells().particles());
   on_particle_change();
 #endif
 }
 
 void mpi_lees_edwards_image_reset_slave(int, int) {
 #ifdef LEES_EDWARDS
-  local_lees_edwards_image_reset();
+  LeesEdwards::local_image_reset(cell_structure.local_cells().particles());
   on_particle_change();
 #endif
 }
