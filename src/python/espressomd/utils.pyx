@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import math
 cimport numpy as np
 cimport cython
 import numpy as np
@@ -284,7 +285,10 @@ def is_valid_type(value, t):
     Extended checks for numpy int and float types.
 
     """
-
+    if value == None:
+        return False
+    if math.isnan(value) or math.isinf(value):
+        return False
     if t == int:
         return isinstance(value, (int, np.integer, np.long))
     elif t == float:
