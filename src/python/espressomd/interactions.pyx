@@ -313,13 +313,13 @@ IF LENNARD_JONES == 1:
             """All parameters that can be set.
 
             """
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "min"
+            return {"epsilon", "sigma", "cutoff", "shift", "offset", "min"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "epsilon", "sigma", "cutoff", "shift"
+            return {"epsilon", "sigma", "cutoff", "shift"}
 
 IF WCA == 1:
 
@@ -394,13 +394,13 @@ IF WCA == 1:
             """All parameters that can be set.
 
             """
-            return "epsilon", "sigma"
+            return {"epsilon", "sigma"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "epsilon", "sigma"
+            return {"epsilon", "sigma"}
 
 IF LENNARD_JONES_GENERIC == 1:
 
@@ -546,13 +546,13 @@ IF LENNARD_JONES_GENERIC == 1:
             """All parameters that can be set.
 
             """
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2", "delta", "lam"
+            return {"epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2", "delta", "lam"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"
+            return {"epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"}
 
 IF LJCOS:
 
@@ -625,13 +625,13 @@ IF LJCOS:
             """All parameters that can be set.
 
             """
-            return "epsilon", "sigma", "cutoff", "offset"
+            return {"epsilon", "sigma", "cutoff", "offset"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "epsilon", "sigma", "cutoff"
+            return {"epsilon", "sigma", "cutoff"}
 
 IF LJCOS2:
 
@@ -704,13 +704,13 @@ IF LJCOS2:
             """All parameters that can be set.
 
             """
-            return "epsilon", "sigma", "offset", "width"
+            return {"epsilon", "sigma", "offset", "width"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "epsilon", "sigma", "width"
+            return {"epsilon", "sigma", "width"}
 
 IF HAT == 1:
 
@@ -764,10 +764,10 @@ IF HAT == 1:
             return "Hat"
 
         def valid_keys(self):
-            return "F_max", "cutoff"
+            return {"F_max", "cutoff"}
 
         def required_keys(self):
-            return "F_max", "cutoff"
+            return {"F_max", "cutoff"}
 
 IF GAY_BERNE:
 
@@ -858,13 +858,13 @@ IF GAY_BERNE:
             """All parameters that can be set.
 
             """
-            return "eps", "sig", "cut", "k1", "k2", "mu", "nu"
+            return {"eps", "sig", "cut", "k1", "k2", "mu", "nu"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "eps", "sig", "cut", "k1", "k2", "mu", "nu"
+            return {"eps", "sig", "cut", "k1", "k2", "mu", "nu"}
 
 IF DPD:
 
@@ -936,10 +936,10 @@ IF DPD:
             return "DPD"
 
         def valid_keys(self):
-            return self.default_params().keys()
+            return {"weight_function", "gamma", "r_cut", "trans_weight_function", "trans_gamma", "trans_r_cut"}
 
         def required_keys(self):
-            return []
+            return set()
 
 IF SMOOTH_STEP == 1:
 
@@ -1034,13 +1034,13 @@ IF SMOOTH_STEP == 1:
             """All parameters that can be set.
 
             """
-            return "d", "n", "eps", "k0", "sig", "cutoff"
+            return {"d", "n", "eps", "k0", "sig", "cutoff"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "d", "eps", "cutoff"
+            return {"d", "eps", "cutoff"}
 
 IF BMHTF_NACL == 1:
 
@@ -1134,13 +1134,13 @@ IF BMHTF_NACL == 1:
             """All parameters that can be set.
 
             """
-            return "a", "b", "c", "d", "sig", "cutoff"
+            return {"a", "b", "c", "d", "sig", "cutoff"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "a", "b", "c", "d", "sig", "cutoff"
+            return {"a", "b", "c", "d", "sig", "cutoff"}
 
 IF MORSE == 1:
 
@@ -1223,13 +1223,13 @@ IF MORSE == 1:
             """All parameters that can be set.
 
             """
-            return "eps", "alpha", "rmin", "cutoff"
+            return {"eps", "alpha", "rmin", "cutoff"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "eps", "alpha", "rmin"
+            return {"eps", "alpha", "rmin"}
 
 IF BUCKINGHAM == 1:
 
@@ -1328,13 +1328,13 @@ IF BUCKINGHAM == 1:
             """All parameters that can be set.
 
             """
-            return "a", "b", "c", "d", "discont", "cutoff", "shift"
+            return {"a", "b", "c", "d", "discont", "cutoff", "shift"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "a", "c", "d", "discont", "cutoff"
+            return {"a", "c", "d", "discont", "cutoff"}
 
 IF SOFT_SPHERE == 1:
 
@@ -1416,13 +1416,13 @@ IF SOFT_SPHERE == 1:
             """All parameters that can be set.
 
             """
-            return "a", "n", "cutoff", "offset"
+            return {"a", "n", "cutoff", "offset"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "a", "n", "cutoff"
+            return {"a", "n", "cutoff"}
 
 IF AFFINITY == 1:
 
@@ -1487,10 +1487,10 @@ IF AFFINITY == 1:
             return "Affinity"
 
         def valid_keys(self):
-            return "affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"
+            return {"affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"}
 
         def required_keys(self):
-            return "affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"
+            return {"affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"}
 
 
 IF MEMBRANE_COLLISION == 1:
@@ -1535,10 +1535,10 @@ IF MEMBRANE_COLLISION == 1:
             return "MembraneCollision"
 
         def valid_keys(self):
-            return "a", "n", "cutoff", "offset"
+            return {"a", "n", "cutoff", "offset"}
 
         def required_keys(self):
-            return "a", "n", "cutoff"
+            return {"a", "n", "cutoff"}
 
 IF HERTZIAN == 1:
 
@@ -1610,13 +1610,13 @@ IF HERTZIAN == 1:
             """All parameters that can be set.
 
             """
-            return "eps", "sig"
+            return {"eps", "sig"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "eps", "sig"
+            return {"eps", "sig"}
 
 IF GAUSSIAN == 1:
 
@@ -1695,13 +1695,13 @@ IF GAUSSIAN == 1:
             """All parameters that can be set.
 
             """
-            return "eps", "sig", "cutoff"
+            return {"eps", "sig", "cutoff"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "eps", "sig", "cutoff"
+            return {"eps", "sig", "cutoff"}
 
 
 class NonBondedInteractionHandle:
@@ -2053,13 +2053,13 @@ class FeneBond(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "k", "d_r_max", "r_0"
+        return {"k", "d_r_max", "r_0"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "k", "d_r_max"
+        return {"k", "d_r_max"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -2111,13 +2111,13 @@ class HarmonicBond(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "k", "r_0", "r_cut"
+        return {"k", "r_0", "r_cut"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "k", "r_0"
+        return {"k", "r_0"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -2255,10 +2255,10 @@ class ThermalizedBond(BondedInteraction):
         return "THERMALIZED_DIST"
 
     def valid_keys(self):
-        return "temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut"
+        return {"temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut"}
 
     def required_keys(self):
-        return "temp_com", "gamma_com", "temp_distance", "gamma_distance"
+        return {"temp_com", "gamma_com", "temp_distance", "gamma_distance"}
 
     def set_default_params(self):
         self._params = {"temp_com": 1., "gamma_com": 1.,
@@ -2335,10 +2335,10 @@ IF THOLE:
             return "Thole"
 
         def valid_keys(self):
-            return "scaling_coeff", "q1q2"
+            return {"scaling_coeff", "q1q2"}
 
         def required_keys(self):
-            return "scaling_coeff", "q1q2"
+            return {"scaling_coeff", "q1q2"}
 
 IF ROTATION:
 
@@ -2376,13 +2376,13 @@ IF ROTATION:
             """All parameters that can be set.
 
             """
-            return "k1", "k2", "r_0", "r_cut"
+            return {"k1", "k2", "r_0", "r_cut"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "k1", "k2", "r_0"
+            return {"k1", "k2", "r_0"}
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
@@ -2492,13 +2492,13 @@ IF BOND_CONSTRAINT == 1:
             """All parameters that can be set.
 
             """
-            return "r", "ptol", "vtol"
+            return {"r", "ptol", "vtol"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return "r"
+            return {"r"}
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
@@ -2551,13 +2551,13 @@ class Dihedral(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "mult", "bend", "phase"
+        return {"mult", "bend", "phase"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "mult", "bend", "phase"
+        return {"mult", "bend", "phase"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -2612,13 +2612,13 @@ class _TabulatedBase(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "min", "max", "energy", "force"
+        return {"min", "max", "energy", "force"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "min", "max", "energy", "force"
+        return {"min", "max", "energy", "force"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -2703,7 +2703,7 @@ class TabulatedDistance(_TabulatedBase):
         """Parameters that have to be set.
 
         """
-        return "min", "max", "energy", "force"
+        return {"min", "max", "energy", "force"}
 
 
 class TabulatedAngle(_TabulatedBase):
@@ -2738,7 +2738,7 @@ class TabulatedAngle(_TabulatedBase):
         """Parameters that have to be set.
 
         """
-        return "energy", "force"
+        return {"energy", "force"}
 
 
 class TabulatedDihedral(_TabulatedBase):
@@ -2773,7 +2773,7 @@ class TabulatedDihedral(_TabulatedBase):
         """Parameters that have to be set.
 
         """
-        return "energy", "force"
+        return {"energy", "force"}
 
 
 IF TABULATED == 1:
@@ -2799,13 +2799,13 @@ IF TABULATED == 1:
             """All parameters that can be set.
 
             """
-            return "min", "max", "energy", "force"
+            return {"min", "max", "energy", "force"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return ["min", "max", "energy", "force"]
+            return {"min", "max", "energy", "force"}
 
         def set_params(self, **kwargs):
             """Set parameters for the TabulatedNonBonded interaction.
@@ -2882,13 +2882,13 @@ IF LENNARD_JONES == 1:
             """All parameters that can be set.
 
             """
-            return {}
+            return set()
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return {}
+            return set()
 
         def set_default_params(self):
             """Sets parameters that are not required to their default value.
@@ -2925,13 +2925,13 @@ class Virtual(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return {}
+        return set()
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return []
+        return set()
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -2973,13 +2973,13 @@ class AngleHarmonic(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "bend", "phi0"
+        return {"bend", "phi0"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "bend", "phi0"
+        return {"bend", "phi0"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -3024,13 +3024,13 @@ class AngleCosine(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "bend", "phi0"
+        return {"bend", "phi0"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "bend", "phi0"
+        return {"bend", "phi0"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -3075,13 +3075,13 @@ class AngleCossquare(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "bend", "phi0"
+        return {"bend", "phi0"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "bend", "phi0"
+        return {"bend", "phi0"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -3130,10 +3130,10 @@ class IBM_Triel(BondedInteraction):
         return "IBM_Triel"
 
     def valid_keys(self):
-        return "ind1", "ind2", "ind3", "k1", "k2", "maxDist", "elasticLaw"
+        return {"ind1", "ind2", "ind3", "k1", "k2", "maxDist", "elasticLaw"}
 
     def required_keys(self):
-        return "ind1", "ind2", "ind3", "k1", "maxDist", "elasticLaw"
+        return {"ind1", "ind2", "ind3", "k1", "maxDist", "elasticLaw"}
 
     def set_default_params(self):
         self._params = {"k2": 0}
@@ -3184,10 +3184,10 @@ class IBM_Tribend(BondedInteraction):
         return "IBM_Tribend"
 
     def valid_keys(self):
-        return "ind1", "ind2", "ind3", "ind4", "kb", "refShape"
+        return {"ind1", "ind2", "ind3", "ind4", "kb", "refShape"}
 
     def required_keys(self):
-        return "ind1", "ind2", "ind3", "ind4", "kb"
+        return {"ind1", "ind2", "ind3", "ind4", "kb"}
 
     def set_default_params(self):
         self._params = {"flat": False}
@@ -3232,10 +3232,10 @@ class IBM_VolCons(BondedInteraction):
         return "IBM_VolCons"
 
     def valid_keys(self):
-        return "softID", "kappaV"
+        return {"softID", "kappaV"}
 
     def required_keys(self):
-        return "softID", "kappaV"
+        return {"softID", "kappaV"}
 
     def set_default_params(self):
         self._params = {}
@@ -3284,13 +3284,13 @@ class OifGlobalForces(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "A0_g", "ka_g", "V0", "kv"
+        return {"A0_g", "ka_g", "V0", "kv"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "A0_g", "ka_g", "V0", "kv"
+        return {"A0_g", "ka_g", "V0", "kv"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -3353,13 +3353,13 @@ class OifLocalForces(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"
+        return {"r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"
+        return {"r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -3404,10 +3404,10 @@ IF MEMBRANE_COLLISION == 1:
             return "OIF_OUT_DIRECTION"
 
         def valid_keys(self):
-            return ""
+            return set()
 
         def required_keys(self):
-            return ""
+            return set()
 
         def set_default_params(self):
             self._params = {}
@@ -3458,13 +3458,13 @@ class QuarticBond(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return "k0", "k1", "r", "r_cut"
+        return {"k0", "k1", "r", "r_cut"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return "k0", "k1", "r", "r_cut"
+        return {"k0", "k1", "r", "r_cut"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
