@@ -412,6 +412,11 @@ IF LENNARD_JONES_GENERIC == 1:
                 raise ValueError("Generic Lennard-Jones sigma has to be >=0")
             if self._params["cutoff"] < 0:
                 raise ValueError("Generic Lennard-Jones cutoff has to be >=0")
+            IF LJGEN_SOFTCORE:
+                if self._params["delta"] < 0:
+                    raise ValueError("Generic Lennard-Jones delta has to be >=0")
+                if self._params["lam"] < 0 or self._params["lam"] > 1:
+                    raise ValueError("Generic Lennard-Jones lam has to be in the range [0,1]")
             return True
 
         def _get_params_from_es_core(self):
@@ -479,7 +484,10 @@ IF LENNARD_JONES_GENERIC == 1:
             """Python dictionary of default parameters.
 
             """
-            return {"delta": 0., "lam": 0.}
+            IF LJGEN_SOFTCORE:
+                return {"delta": 0., "lam": 1.}
+            ELSE:
+                return {}
 
         def type_name(self):
             """Name of interaction type.
@@ -527,7 +535,10 @@ IF LENNARD_JONES_GENERIC == 1:
             """All parameters that can be set.
 
             """
-            return {"epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2", "delta", "lam"}
+            IF LJGEN_SOFTCORE:
+                return {"epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2", "delta", "lam"}
+            ELSE:
+                return {"epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"}
 
         def required_keys(self):
             """Parameters that have to be set.
