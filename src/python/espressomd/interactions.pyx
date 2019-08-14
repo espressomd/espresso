@@ -414,9 +414,11 @@ IF LENNARD_JONES_GENERIC == 1:
                 raise ValueError("Generic Lennard-Jones cutoff has to be >=0")
             IF LJGEN_SOFTCORE:
                 if self._params["delta"] < 0:
-                    raise ValueError("Generic Lennard-Jones delta has to be >=0")
+                    raise ValueError(
+                        "Generic Lennard-Jones delta has to be >=0")
                 if self._params["lam"] < 0 or self._params["lam"] > 1:
-                    raise ValueError("Generic Lennard-Jones lam has to be in the range [0,1]")
+                    raise ValueError(
+                        "Generic Lennard-Jones lam has to be in the range [0,1]")
             return True
 
         def _get_params_from_es_core(self):
