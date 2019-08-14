@@ -35,8 +35,7 @@ LB_PARAMS = {'agrid': AGRID,
              'tau': TIME_STEP,
              'ext_force_density': [0, F, 0]}
 
-
-class Momentum(object):
+class Momentum:
     lbf = None
     system = espressomd.System(box_l=[BOX_SIZE] * 3)
     system.time_step = TIME_STEP

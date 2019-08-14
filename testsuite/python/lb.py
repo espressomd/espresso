@@ -101,8 +101,6 @@ class TestLB:
 
         self.system.integrator.run(100)
 
-        self.max_dmass = 0.0
-        self.max_dm = [0, 0, 0]
         all_temp_particle = []
         all_temp_fluid = []
 
