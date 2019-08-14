@@ -2296,7 +2296,7 @@ class ThermalizedBond(BondedInteraction):
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermalized bond")
         
-        if self.params["seed"]:
+        if self.params["seed"] is not None:
             utils.check_type_or_throw_except(
                 self.params["seed"], 1, int, "seed must be a positive integer")
             thermalized_bond_set_rng_state(self.params["seed"])
