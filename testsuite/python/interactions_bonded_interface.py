@@ -45,7 +45,7 @@ class ParticleProperties(ut.TestCase):
 
         return True
 
-    def paramaterKeys(self, bondObject):
+    def parameterKeys(self, bondObject):
         """
         Check :meth:`~espressomd.interactions.NonBondedInteraction.valid_keys`
         and :meth:`~espressomd.interactions.NonBondedInteraction.required_keys`
@@ -127,7 +127,7 @@ class ParticleProperties(ut.TestCase):
                 params.__str__() +
                 " vs. " +
                 outParams.__str__())
-            self.paramaterKeys(outBond)
+            self.parameterKeys(outBond)
 
         return func
 

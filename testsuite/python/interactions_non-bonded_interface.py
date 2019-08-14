@@ -44,7 +44,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
 
         return True
 
-    def paramaterKeys(self, interObject):
+    def parameterKeys(self, interObject):
         """
         Check :meth:`~espressomd.interactions.NonBondedInteraction.valid_keys`
         and :meth:`~espressomd.interactions.NonBondedInteraction.required_keys`
@@ -131,7 +131,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
                 params.__str__() +
                 " vs. " +
                 outParams.__str__())
-            self.paramaterKeys(outInter)
+            self.parameterKeys(outInter)
 
         return func
 
