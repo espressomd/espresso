@@ -78,12 +78,6 @@ struct LB_FluidNode {
 
   /** local force density */
   Utils::Vector3d force_density;
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  // For particle update, we need the force on the nodes in LBM
-  // Yet, Espresso resets the force immediately after the LBM update
-  // Therefore we save it here
-  Utils::Vector3d force_density_buf;
-#endif
 };
 
 /** Data structure holding the parameters for the Lattice Boltzmann system. */
@@ -212,9 +206,6 @@ void lb_sanity_checks(const LB_Parameters &lb_parameters);
 void lb_set_population_from_density_momentum_density_stress(
     Lattice::index_t index, double density,
     Utils::Vector3d const &momentum_density, Utils::Vector6d const &stress);
-
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-#endif
 
 double lb_calc_density(std::array<double, 19> const &modes,
                        const LB_Parameters &lb_parameters);

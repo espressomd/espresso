@@ -213,7 +213,7 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
     for (int y = 0; y < 2; y++) {
       for (int x = 0; x < 2; x++) {
         auto const index = node_index[(z * 2 + y) * 2 + x];
-        const auto &f = lbfields[index].force_density_buf;
+        const auto &f = lbfields[index].force_density;
 
         double local_density;
         Utils::Vector3d local_j;

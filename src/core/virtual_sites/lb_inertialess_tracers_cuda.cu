@@ -55,26 +55,6 @@ extern LB_nodes_gpu *current_nodes;
 LB_parameters_gpu *para_gpu = nullptr;
 float *lb_boundary_velocity_IBM = nullptr;
 
-/****************
-   IBM_ResetLBForces_GPU
-Calls a kernel to reset the forces on the LB nodes to the external force
-*****************/
-
-void IBM_ResetLBForces_GPU() {
-  if (this_node == 0) {
-    // Setup for kernel call
-    int threads_per_block = 64;
-    int blocks_per_grid_y = 4;
-    int blocks_per_grid_x = (lbpar_gpu.number_of_nodes +
-                             threads_per_block * blocks_per_grid_y - 1) /
-                            (threads_per_block * blocks_per_grid_y);
-    dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
-
-    KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block, node_f,
-               para_gpu);
-  }
-}
-
 /******************
    IBM_ForcesIntoFluid_GPU
 Called from integrate_vv to put the forces into the fluid
@@ -489,15 +469,15 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
         // Add the +f/2 contribution!!
         local_j[0] =
             mode[1] +
-            node_f.force_density_buf[0 * para.number_of_nodes + node_index[i]] /
+            node_f.force_density[0 * para.number_of_nodes + node_index[i]] /
                 2.f;
         local_j[1] =
             mode[2] +
-            node_f.force_density_buf[1 * para.number_of_nodes + node_index[i]] /
+            node_f.force_density[1 * para.number_of_nodes + node_index[i]] /
                 2.f;
         local_j[2] =
             mode[3] +
-            node_f.force_density_buf[2 * para.number_of_nodes + node_index[i]] /
+            node_f.force_density[2 * para.number_of_nodes + node_index[i]] /
                 2.f;
       }
 

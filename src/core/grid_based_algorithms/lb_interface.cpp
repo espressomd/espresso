@@ -40,7 +40,7 @@ auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel kernel) {
   return lb_calc(index, [&](auto index) {
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
-    auto const force_density = lbfields[linear_index].force_density_buf;
+    auto const force_density = lbfields[linear_index].force_density;
     auto const modes = lb_calc_modes(linear_index, lbfluid);
     return kernel(modes, force_density);
   });
@@ -460,8 +460,6 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
       lbpar_gpu.external_force_density = 0;
     }
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
-    //    reset_LB_force_densities_GPU(false);
-
 #endif //  CUDA
   } else {
     lbpar.ext_force_density = force_density;
@@ -1334,7 +1332,7 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
 void lb_lbfluid_reset_force_densities() {
   if (lattice_switch == ActiveLB::GPU and this_node == 0) {
 #ifdef CUDA
-    reset_LB_force_densities_GPU(false);
+    reset_LB_force_densities_GPU();
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
     lb_reset_force_densities();

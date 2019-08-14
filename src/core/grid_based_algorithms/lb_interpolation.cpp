@@ -62,7 +62,7 @@ Utils::Vector3d node_u(Lattice::index_t index) {
   auto const modes = lb_calc_modes(index, lbfluid);
   auto const local_density = lbpar.density + modes[0];
   return (Utils::Vector3d{modes[1], modes[2], modes[3]} +
-          0.5 * lbfields[index].force_density_buf) /
+          0.5 * lbpar.ext_force_density) /
          local_density;
 }
 

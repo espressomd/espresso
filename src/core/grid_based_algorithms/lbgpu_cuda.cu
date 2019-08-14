@@ -90,10 +90,6 @@ static LB_boundaries_gpu boundaries;
 LB_node_force_density_gpu node_f = {
     // force_density
     nullptr,
-#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
-    // force_density_buf
-    nullptr
-#endif
 };
 
 static LB_extern_nodeforcedensity_gpu *extern_node_force_densities = nullptr;
@@ -386,20 +382,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
 }
 
 __device__ void reset_LB_force_densities(unsigned int index,
-                                         LB_node_force_density_gpu node_f,
-                                         bool buffer = true) {
-#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
-  // Store backup of the node forces
-  if (buffer) {
-    node_f.force_density_buf[0 * para->number_of_nodes + index] =
-        node_f.force_density[0 * para->number_of_nodes + index];
-    node_f.force_density_buf[1 * para->number_of_nodes + index] =
-        node_f.force_density[1 * para->number_of_nodes + index];
-    node_f.force_density_buf[2 * para->number_of_nodes + index] =
-        node_f.force_density[2 * para->number_of_nodes + index];
-  }
-#endif
-
+                                         LB_node_force_density_gpu node_f) {
   if (para->external_force_density) {
     node_f.force_density[0 * para->number_of_nodes + index] =
         para->ext_force_density[0];
@@ -415,16 +398,15 @@ __device__ void reset_LB_force_densities(unsigned int index,
 }
 
 __global__ void
-reset_LB_force_densities_kernel(LB_node_force_density_gpu node_f,
-                                bool buffer = true) {
+reset_LB_force_densities_kernel(LB_node_force_density_gpu node_f) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index < para->number_of_nodes)
-    reset_LB_force_densities(index, node_f, buffer);
+    reset_LB_force_densities(index, node_f);
 }
 
-void reset_LB_force_densities_GPU(bool buffer) {
+void reset_LB_force_densities_GPU() {
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
   int blocks_per_grid_x =
@@ -433,7 +415,7 @@ void reset_LB_force_densities_GPU(bool buffer) {
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(reset_LB_force_densities_kernel, dim_grid, threads_per_block,
-             node_f, buffer);
+             node_f);
 }
 
 /**
@@ -2410,10 +2392,6 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
                          lbpar_gpu->number_of_nodes * 19 * sizeof(float));
   free_realloc_and_clear(node_f.force_density,
                          lbpar_gpu->number_of_nodes * 3 * sizeof(lbForceFloat));
-#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
-  free_realloc_and_clear(node_f.force_density_buf,
-                         lbpar_gpu->number_of_nodes * 3 * sizeof(lbForceFloat));
-#endif
   free_realloc_and_clear(boundaries.index,
                          lbpar_gpu->number_of_nodes * sizeof(unsigned int));
   free_realloc_and_clear(boundaries.velocity,

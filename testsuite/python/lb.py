@@ -327,7 +327,7 @@ class TestLB:
         self.system.actors.add(self.lbf)
         n_time_steps = 5
         self.system.integrator.run(n_time_steps)
-        # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps - 0.5)
+        # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps + 0.5)
         # (force is applied only to the second half of the first integration step)
         # velocity includes half of the forces applied in the prev.
         # integration step

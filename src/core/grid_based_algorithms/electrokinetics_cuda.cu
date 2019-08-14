@@ -2746,7 +2746,7 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
                ek_parameters.species_index[species], *current_nodes, node_f,
                ek_lbparameters_gpu, ek_lb_device_values,
                philox_counter.value());
-    reset_LB_force_densities_GPU(false);
+    reset_LB_force_densities_GPU();
 
 #ifdef EK_BOUNDARIES
     KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
@@ -2974,7 +2974,7 @@ int ek_print_vtk_flux(int species, char *filename) {
                ek_parameters.species_index[species], *current_nodes, node_f,
                ek_lbparameters_gpu, ek_lb_device_values,
                philox_counter.value());
-    reset_LB_force_densities_GPU(false);
+    reset_LB_force_densities_GPU();
 
 #ifdef EK_BOUNDARIES
     KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
@@ -3209,7 +3209,7 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
                ek_parameters.species_index[species], *current_nodes, node_f,
                ek_lbparameters_gpu, ek_lb_device_values,
                philox_counter.value());
-    reset_LB_force_densities_GPU(false);
+    reset_LB_force_densities_GPU();
 
 #ifdef EK_BOUNDARIES
     KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
@@ -3445,7 +3445,7 @@ int ek_print_vtk_flux_link(int species, char *filename) {
                ek_parameters.species_index[species], *current_nodes, node_f,
                ek_lbparameters_gpu, ek_lb_device_values,
                philox_counter.value());
-    reset_LB_force_densities_GPU(false);
+    reset_LB_force_densities_GPU();
 
 #ifdef EK_BOUNDARIES
     KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
@@ -3622,7 +3622,7 @@ int ek_print_vtk_lbforce_density(char *filename) {
       ek_parameters.number_of_nodes * 3 * sizeof(lbForceFloat));
 
   cuda_safe_mem(
-      cudaMemcpy(lbforce_density, node_f.force_density_buf,
+      cudaMemcpy(lbforce_density, node_f.force_density,
                  ek_parameters.number_of_nodes * 3 * sizeof(lbForceFloat),
                  cudaMemcpyDeviceToHost));
 

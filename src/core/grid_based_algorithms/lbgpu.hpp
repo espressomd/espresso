@@ -135,14 +135,6 @@ typedef struct {
 typedef struct {
 
   lbForceFloat *force_density;
-#if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) || defined(EK_DEBUG)
-
-  // We need the node forces for the velocity interpolation at the virtual
-  // particles' position However, LBM wants to reset them immediately after the
-  // LBM update This variable keeps a backup
-  lbForceFloat *force_density_buf;
-#endif
-
 } LB_node_force_density_gpu;
 
 typedef struct {
@@ -195,7 +187,7 @@ void lb_reinit_parameters_gpu();
 void lb_reinit_fluid_gpu();
 
 /** Reset the forces on the fluid nodes */
-void reset_LB_force_densities_GPU(bool buffer = true);
+void reset_LB_force_densities_GPU();
 
 /** (Re-)initialize the particle array */
 void lb_realloc_particles_gpu();

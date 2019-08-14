@@ -184,8 +184,8 @@ void add_swimmer_force(Particle &p) {
 
 void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
                                             const ParticleRange &particles) {
-  lb_lbfluid_reset_force_densities();
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+  lb_lbfluid_reset_force_densities();
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     if (lb_particle_coupling.couple_to_md && this_node == 0) {

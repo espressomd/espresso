@@ -953,9 +953,6 @@ inline void lb_collide_stream() {
     (*lbboundarie).reset_force();
   }
 #endif // LB_BOUNDARIES
-  for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-    lbfields[i].force_density_buf = lbfields[i].force_density;
-  }
 
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
