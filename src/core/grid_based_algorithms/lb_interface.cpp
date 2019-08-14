@@ -64,6 +64,16 @@ auto mpi_lb_get_populations(Utils::Vector3i const &index) {
 
 REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_populations)
 
+auto mpi_lb_get_force_density(Utils::Vector3i const &index) {
+  return lb_calc(index, [&](auto index) {
+    auto const linear_index =
+        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
+    return lbfields[linear_index].force_density;
+  });
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_force_density)
+
 auto mpi_lb_get_boundary_flag(Utils::Vector3i const &index) {
   return lb_calc(index, [&](auto index) {
 #ifdef LB_BOUNDARIES
@@ -1202,12 +1212,26 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
   throw std::runtime_error("LB not activated.");
 }
 
+Utils::Vector3d lb_lbnode_get_force_density(Utils::Vector3i const &ind) {
+  if (lattice_switch == ActiveLB::GPU) {
+#ifdef CUDA
+    int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
+                           ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
+    return lb_get_force_density_gpu(single_nodeindex);
+#endif
+  }
+  if (lattice_switch == ActiveLB::CPU) {
+    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_force_density, ind);
+  }
+  throw std::runtime_error("LB not activated.");
+}
+
 const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     float population[19];
 
-    lb_lbfluid_get_population(ind, population);
+    lb_get_population_gpu(ind, population);
     Utils::Vector19d p_pop;
     for (int i = 0; i < LBQ; ++i)
       p_pop[i] = population[i];
@@ -1276,7 +1300,7 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
     for (int i = 0; i < LBQ; ++i)
       population[i] = p_pop[i];
 
-    lb_lbfluid_set_population(ind, population);
+    lb_set_population_gpu(ind, population);
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     mpi_call_all(mpi_lb_set_population, ind, p_pop);

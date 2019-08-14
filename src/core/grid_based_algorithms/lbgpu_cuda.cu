@@ -2933,7 +2933,7 @@ struct lb_lbfluid_mass_of_particle {
  *  @param[in]  y           y-coordinate of node
  *  @param[in]  z           z-coordinate of node
  */
-__global__ void lb_lbfluid_set_population_kernel(LB_nodes_gpu n_a,
+__global__ void lb_set_population_gpu_kernel(LB_nodes_gpu n_a,
                                                  float population[LBQ], int x,
                                                  int y, int z) {
   auto const index = xyz_to_index(x, y, z);
@@ -2947,7 +2947,7 @@ __global__ void lb_lbfluid_set_population_kernel(LB_nodes_gpu n_a,
  *  @param[in] xyz              Node coordinates
  *  @param[in] population_host  Population
  */
-void lb_lbfluid_set_population(const Utils::Vector3i &xyz,
+void lb_set_population_gpu(const Utils::Vector3i &xyz,
                                float population_host[LBQ]) {
   float *population_device;
   cuda_safe_mem(cudaMalloc((void **)&population_device, LBQ * sizeof(float)));
@@ -2955,7 +2955,7 @@ void lb_lbfluid_set_population(const Utils::Vector3i &xyz,
                            LBQ * sizeof(float), cudaMemcpyHostToDevice));
 
   dim3 dim_grid = make_uint3(1, 1, 1);
-  KERNELCALL(lb_lbfluid_set_population_kernel, dim_grid, 1, *current_nodes,
+  KERNELCALL(lb_set_population_gpu_kernel, dim_grid, 1, *current_nodes,
              population_device, xyz[0], xyz[1], xyz[2]);
 
   cuda_safe_mem(cudaFree(population_device));
@@ -2968,7 +2968,7 @@ void lb_lbfluid_set_population(const Utils::Vector3i &xyz,
  *  @param[in]  y           y-coordinate of node
  *  @param[in]  z           z-coordinate of node
  */
-__global__ void lb_lbfluid_get_population_kernel(LB_nodes_gpu n_a,
+__global__ void lb_get_population_gpu_kernel(LB_nodes_gpu n_a,
                                                  float population[LBQ], int x,
                                                  int y, int z) {
   auto const index = xyz_to_index(x, y, z);
@@ -2982,13 +2982,13 @@ __global__ void lb_lbfluid_get_population_kernel(LB_nodes_gpu n_a,
  *  @param[in]  xyz              Node coordinates
  *  @param[out] population_host  Population
  */
-void lb_lbfluid_get_population(const Utils::Vector3i &xyz,
+void lb_get_population_gpu(const Utils::Vector3i &xyz,
                                float population_host[LBQ]) {
   float *population_device;
   cuda_safe_mem(cudaMalloc((void **)&population_device, LBQ * sizeof(float)));
 
   dim3 dim_grid = make_uint3(1, 1, 1);
-  KERNELCALL(lb_lbfluid_get_population_kernel, dim_grid, 1, *current_nodes,
+  KERNELCALL(lb_get_population_gpu_kernel, dim_grid, 1, *current_nodes,
              population_device, xyz[0], xyz[1], xyz[2]);
 
   cuda_safe_mem(cudaMemcpy(population_host, population_device,
@@ -3073,6 +3073,13 @@ uint64_t lb_coupling_get_rng_state_gpu() {
 uint64_t lb_fluid_get_rng_state_gpu() {
   assert(rng_counter_fluid_gpu);
   return rng_counter_fluid_gpu->value();
+}
+
+Utils::Vector3d lb_get_force_density_gpu(int index) {
+  auto const force_density_x = node_f.force_density[0 * lbpar_gpu.number_of_nodes + index];
+  auto const force_density_y = node_f.force_density[1 * lbpar_gpu.number_of_nodes + index];
+  auto const force_density_z = node_f.force_density[2 * lbpar_gpu.number_of_nodes + index];
+  return {force_density_x, force_density_y, force_density_z};
 }
 
 #endif /* CUDA */

@@ -230,8 +230,8 @@ void lb_gpu_get_boundary_forces(double *forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd);
 void lb_load_checkpoint_GPU(float const *host_checkpoint_vd);
 
-void lb_lbfluid_set_population(const Utils::Vector3i &, float[LBQ]);
-void lb_lbfluid_get_population(const Utils::Vector3i &, float[LBQ]);
+void lb_set_population_gpu(const Utils::Vector3i &, float[LBQ]);
+void lb_get_population_gpu(const Utils::Vector3i &, float[LBQ]);
 
 template <std::size_t no_of_neighbours>
 void lb_get_interpolated_velocity_gpu(double const *positions,
@@ -248,6 +248,7 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter);
 /*@}*/
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid_gpu;
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling_gpu;
+Utils::Vector3d lb_get_force_density_gpu(int index);
 #endif /*  CUDA */
 
 #endif /*  CUDA_H */
