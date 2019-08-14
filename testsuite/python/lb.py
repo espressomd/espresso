@@ -118,7 +118,8 @@ class TestLB:
                 dens = lb_node.density
                 fluid_density += dens
                 fluid_temp += np.sum(lb_node.velocity**2) * dens
-                fluid_momentum += dens * self.params['agrid']**3 * lb_node.velocity
+                fluid_momentum += dens * \
+                    self.params['agrid']**3 * lb_node.velocity
 
             part_momentum = np.zeros(3)
             for p in self.system.part:
@@ -134,7 +135,10 @@ class TestLB:
                                    delta=self.params["mass_prec_per_node"])
 
             # check momentum conservation
-            np.testing.assert_allclose(fluid_momentum + part_momentum, self.tot_mom)
+            np.testing.assert_allclose(
+                fluid_momentum +
+                part_momentum,
+                self.tot_mom)
             np.testing.assert_allclose(
                 self.system.analysis.linear_momentum(), self.tot_mom,
                 atol=self.params['mom_prec'])

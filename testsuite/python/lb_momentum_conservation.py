@@ -35,6 +35,7 @@ LB_PARAMS = {'agrid': AGRID,
              'tau': TIME_STEP,
              'ext_force_density': [0, F, 0]}
 
+
 class Momentum:
     lbf = None
     system = espressomd.System(box_l=[BOX_SIZE] * 3)
