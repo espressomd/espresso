@@ -1221,7 +1221,8 @@ Utils::Vector3d lb_lbnode_get_force_density(Utils::Vector3i const &ind) {
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
-    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_force_density, ind);
+    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_force_density,
+                    ind);
   }
   throw std::runtime_error("LB not activated.");
 }

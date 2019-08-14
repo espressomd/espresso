@@ -2934,8 +2934,8 @@ struct lb_lbfluid_mass_of_particle {
  *  @param[in]  z           z-coordinate of node
  */
 __global__ void lb_set_population_gpu_kernel(LB_nodes_gpu n_a,
-                                                 float population[LBQ], int x,
-                                                 int y, int z) {
+                                             float population[LBQ], int x,
+                                             int y, int z) {
   auto const index = xyz_to_index(x, y, z);
 
   for (int i = 0; i < LBQ; ++i) {
@@ -2948,7 +2948,7 @@ __global__ void lb_set_population_gpu_kernel(LB_nodes_gpu n_a,
  *  @param[in] population_host  Population
  */
 void lb_set_population_gpu(const Utils::Vector3i &xyz,
-                               float population_host[LBQ]) {
+                           float population_host[LBQ]) {
   float *population_device;
   cuda_safe_mem(cudaMalloc((void **)&population_device, LBQ * sizeof(float)));
   cuda_safe_mem(cudaMemcpy(population_device, population_host,
@@ -2969,8 +2969,8 @@ void lb_set_population_gpu(const Utils::Vector3i &xyz,
  *  @param[in]  z           z-coordinate of node
  */
 __global__ void lb_get_population_gpu_kernel(LB_nodes_gpu n_a,
-                                                 float population[LBQ], int x,
-                                                 int y, int z) {
+                                             float population[LBQ], int x,
+                                             int y, int z) {
   auto const index = xyz_to_index(x, y, z);
 
   for (int i = 0; i < LBQ; ++i) {
@@ -2983,7 +2983,7 @@ __global__ void lb_get_population_gpu_kernel(LB_nodes_gpu n_a,
  *  @param[out] population_host  Population
  */
 void lb_get_population_gpu(const Utils::Vector3i &xyz,
-                               float population_host[LBQ]) {
+                           float population_host[LBQ]) {
   float *population_device;
   cuda_safe_mem(cudaMalloc((void **)&population_device, LBQ * sizeof(float)));
 
@@ -3076,9 +3076,12 @@ uint64_t lb_fluid_get_rng_state_gpu() {
 }
 
 Utils::Vector3d lb_get_force_density_gpu(int index) {
-  auto const force_density_x = node_f.force_density[0 * lbpar_gpu.number_of_nodes + index];
-  auto const force_density_y = node_f.force_density[1 * lbpar_gpu.number_of_nodes + index];
-  auto const force_density_z = node_f.force_density[2 * lbpar_gpu.number_of_nodes + index];
+  auto const force_density_x =
+      node_f.force_density[0 * lbpar_gpu.number_of_nodes + index];
+  auto const force_density_y =
+      node_f.force_density[1 * lbpar_gpu.number_of_nodes + index];
+  auto const force_density_z =
+      node_f.force_density[2 * lbpar_gpu.number_of_nodes + index];
   return {force_density_x, force_density_y, force_density_z};
 }
 
