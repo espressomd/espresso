@@ -21,9 +21,6 @@
 // To avoid include of communication.hpp in cuda file
 extern int this_node;
 
-// ****** Kernel functions for internal use ********
-__global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
-                                     const LB_parameters_gpu *const paraP);
 __global__ void ParticleVelocitiesFromLB_Kernel(
     LB_nodes_gpu n_curr,
     const IBM_CUDA_ParticleDataInput *const particles_input,
@@ -493,33 +490,4 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
     particles_output[particleIndex].v[2] = v[2] * para.agrid / para.tau;
   }
 }
-
-/****************
-   ResetLBForces_Kernel
-*****************/
-
-__global__ void ResetLBForces_Kernel(LB_node_force_density_gpu node_f,
-                                     const LB_parameters_gpu *const paraP) {
-
-  const size_t index = blockIdx.y * gridDim.x * blockDim.x +
-                       blockDim.x * blockIdx.x + threadIdx.x;
-  const LB_parameters_gpu &para = *paraP;
-
-  if (index < para.number_of_nodes) {
-    const float force_factor = powf(para.agrid, 2) * para.tau * para.tau;
-    if (para.external_force_density) {
-      node_f.force_density[0 * para.number_of_nodes + index] =
-          para.ext_force_density[0] * force_factor;
-      node_f.force_density[1 * para.number_of_nodes + index] =
-          para.ext_force_density[1] * force_factor;
-      node_f.force_density[2 * para.number_of_nodes + index] =
-          para.ext_force_density[2] * force_factor;
-    } else {
-      node_f.force_density[0 * para.number_of_nodes + index] = 0.0f;
-      node_f.force_density[1 * para.number_of_nodes + index] = 0.0f;
-      node_f.force_density[2 * para.number_of_nodes + index] = 0.0f;
-    }
-  }
-}
-
 #endif
