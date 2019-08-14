@@ -340,8 +340,6 @@ void mpi_bcast_ia_params(int i, int j) {
   if (j >= 0) {
     /* non-bonded interaction parameters */
     boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-
-    *get_ia_param(j, i) = *get_ia_param(i, j);
   } else {
     /* bonded interaction parameters */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
@@ -361,9 +359,6 @@ void mpi_bcast_ia_params_slave(int i, int j) {
   if (j >= 0) { /* non-bonded interaction parameters */
 
     boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-
-    *get_ia_param(j, i) = *get_ia_param(i, j);
-
   } else {                   /* bonded interaction parameters */
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
