@@ -202,7 +202,7 @@ class ObservableTests(ut.TestCase):
         self.system.part.clear()
         self.system.part.add(pos= np.array([np.linspace(0, self.system.box_l[0], 20)] * 3).T + np.random.random((20, 3)))
         obs = espressomd.observables.PersistenceAngles(ids=range(len(self.system.part)))
-        np.testing.assert_allclose(obs.calculate(), chain_angles(self.system.part[:].pos))
+        np.testing.assert_allclose(obs.calculate(), persistence_angles(self.system.part[:].pos))
 
 if __name__ == "__main__":
     ut.main()
