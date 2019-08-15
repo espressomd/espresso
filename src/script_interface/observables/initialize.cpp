@@ -50,6 +50,7 @@
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
+#include "core/observables/ChainAngles.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -139,6 +140,7 @@ void initialize() {
   REGISTER_PID_OBS(ParticleDistances);
   REGISTER_PID_OBS(ParticleAngles);
   REGISTER_PID_OBS(ParticleDihedrals);
+  REGISTER_PID_OBS(ChainAngles);
   REGISTER_PID_PROFILE_OBS(DensityProfile);
   REGISTER_PID_PROFILE_OBS(ForceDensityProfile);
   REGISTER_PID_PROFILE_OBS(FluxDensityProfile);

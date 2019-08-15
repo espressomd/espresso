@@ -20,8 +20,23 @@ import espressomd
 import numpy as np
 import espressomd.observables
 
+def chain_angles(positions):
+    """ Python implementation for ChainAngles observable.
 
-class Observables(ut.TestCase):
+    """
+    no_of_bonds = positions.shape[0] - 1
+    no_of_angles = no_of_bonds - 1
+    bond_vecs = positions[1:] - positions[:-1]
+    bond_vecs = np.divide(bond_vecs, np.linalg.norm(bond_vecs, axis=1)[:, np.newaxis])
+    angles = np.zeros(no_of_angles)
+    for i in range(no_of_angles):
+        average = 0.0
+        for j in range(no_of_angles-i):
+            average += np.arccos(np.dot(bond_vecs[j], bond_vecs[j+i+1]))
+        angles[i] = average / (no_of_angles - i)
+    return angles
+
+class ObservableTests(ut.TestCase):
     n_tries = 50
     n_parts = 5
     box_l = 5.
@@ -180,6 +195,12 @@ class Observables(ut.TestCase):
                     np.testing.assert_array_almost_equal(
                         res_obs_chain, [dih1, dih2], decimal=9,
                         err_msg="Data did not agree for observable ParticleDihedrals")
+
+    def test_chain_angles(self):
+        self.system.part.clear()
+        self.system.part.add(pos= np.array([np.linspace(0, self.system.box_l[0], 20)] * 3).T + np.random.random((20,3)))
+        obs = espressomd.observables.ChainAngles(ids=range(len(self.system.part)))
+        np.testing.assert_allclose(obs.calculate(), chain_angles(self.system.part[:].pos))
 
 if __name__ == "__main__":
     ut.main()

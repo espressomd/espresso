@@ -389,6 +389,20 @@ class ParticleAngles(Observable):
 
 
 @script_interface_register
+class ChainAngles(Observable):
+
+    """Calculates mutual bond angles for chained particles with given ids.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
+    _so_name = "Observables::ChainAngles"
+
+
+@script_interface_register
 class ParticleDihedrals(Observable):
 
     """Calculates the dihedrals between particles with given ids along a
