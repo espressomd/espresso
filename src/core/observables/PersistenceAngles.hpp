@@ -16,8 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OBSERVABLES_CHAINANGLES_HPP
-#define OBSERVABLES_CHAINANGLES_HPP
+#ifndef OBSERVABLES_PERSISTENCEANGLES_HPP
+#define OBSERVABLES_PERSISTENCEANGLES_HPP
 
 #include "PidObservable.hpp"
 #include <utils/Vector.hpp>
@@ -27,11 +27,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Observables {
 
-/** Calculate bond angles between particles in a polymer.
+/** Calculate bond angles between in a polymer.
  *  For @f$ n @f$ bonded particles, return the @f$ n-2 @f$ angles along the
- *  chain, in radians.
+ *  chain that are seperated by 1 bond, 2 bonds, ..., in radians.
  */
-class ChainAngles : public PidObservable {
+class PersistenceAngles : public PidObservable {
 public:
   using PidObservable::PidObservable;
   std::vector<double> evaluate(PartCfg &partCfg) const override {
@@ -47,7 +47,7 @@ public:
       auto const tmp = get_bond_vector(i);
       bond_vectors[i] = tmp / tmp.norm();
     }
-    // calculate angles between neighbouring bonds, next beighbours, etc...
+    // calculate angles between neighbouring bonds, next neighbours, etc...
     for (int i = 0; i < no_of_angles; ++i) {
       auto average = 0.0;
       for (int j = 0; j < no_of_angles - i; ++j) {
