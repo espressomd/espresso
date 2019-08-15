@@ -87,13 +87,13 @@ class ObservableTests(ut.TestCase):
                 res_obs_chain, distances, decimal=9,
                 err_msg="Data did not agree for observable ParticleDistances")
 
-    def test_ParticleAngles(self):
+    def test_BondAngles(self):
         """
-        Check ParticleAngles, for a particle triple and for a chain.
+        Check BondAngles, for a particle triple and for a chain.
         """
         pids = list(range(self.n_parts))
-        obs_single = espressomd.observables.ParticleAngles(ids=[0, 1, 2])
-        obs_chain = espressomd.observables.ParticleAngles(ids=pids)
+        obs_single = espressomd.observables.BondAngles(ids=[0, 1, 2])
+        obs_chain = espressomd.observables.BondAngles(ids=pids)
         # take periodic boundaries into account: bond length cannot exceed
         # half the box size along the smallest axis
         min_dim = np.min(self.system.box_l)
@@ -123,7 +123,7 @@ class ObservableTests(ut.TestCase):
             self.assertAlmostEqual(res_obs_single[0], angles[0], places=9)
             np.testing.assert_array_almost_equal(
                 res_obs_chain, angles, decimal=9,
-                err_msg="Data did not agree for observable ParticleAngles")
+                err_msg="Data did not agree for observable BondAngles")
 
     def test_ParticleDihedrals(self):
         """

@@ -374,9 +374,9 @@ class ParticleDistances(Observable):
 
 
 @script_interface_register
-class ParticleAngles(Observable):
+class BondAngles(Observable):
 
-    """Calculates the angles between particles with given ids along a
+    """Calculates the angles between bonds of particles with given ids along a
     polymer chain.
 
     Parameters
@@ -385,7 +385,7 @@ class ParticleAngles(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name = "Observables::ParticleAngles"
+    _so_name = "Observables::BondAngles"
 
 
 @script_interface_register
