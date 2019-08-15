@@ -28,7 +28,7 @@
 #include "ScriptInterface.hpp"
 #include "config.hpp"
 
-#include "core/observables/ChainAngles.hpp"
+#include "core/observables/PersistenceAngles.hpp"
 #include "core/observables/ComForce.hpp"
 #include "core/observables/ComPosition.hpp"
 #include "core/observables/ComVelocity.hpp"
@@ -140,7 +140,7 @@ void initialize() {
   REGISTER_PID_OBS(ParticleDistances);
   REGISTER_PID_OBS(ParticleAngles);
   REGISTER_PID_OBS(ParticleDihedrals);
-  REGISTER_PID_OBS(ChainAngles);
+  REGISTER_PID_OBS(PersistenceAngles);
   REGISTER_PID_PROFILE_OBS(DensityProfile);
   REGISTER_PID_PROFILE_OBS(ForceDensityProfile);
   REGISTER_PID_PROFILE_OBS(FluxDensityProfile);

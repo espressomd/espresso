@@ -46,10 +46,12 @@ class ObservableTests(ut.TestCase):
     system.time_step = 0.01
     system.cell_system.skin = 0.2 * box_l
 
-    @classmethod
-    def setUpClass(cls):
-        for i in range(cls.n_parts):
-            cls.system.part.add(pos=[1 + i, 1 + i, 1 + i], id=i)
+    def setUp(self):
+        for i in range(self.n_parts):
+            self.system.part.add(pos=[1 + i, 1 + i, 1 + i], id=i)
+    
+    def tearDown(self):
+        self.system.part.clear()
 
     def test_ParticleDistances(self):
         """
@@ -196,10 +198,10 @@ class ObservableTests(ut.TestCase):
                         res_obs_chain, [dih1, dih2], decimal=9,
                         err_msg="Data did not agree for observable ParticleDihedrals")
 
-    def test_chain_angles(self):
+    def test_PersistenceAngles(self):
         self.system.part.clear()
         self.system.part.add(pos= np.array([np.linspace(0, self.system.box_l[0], 20)] * 3).T + np.random.random((20, 3)))
-        obs = espressomd.observables.ChainAngles(ids=range(len(self.system.part)))
+        obs = espressomd.observables.PersistenceAngles(ids=range(len(self.system.part)))
         np.testing.assert_allclose(obs.calculate(), chain_angles(self.system.part[:].pos))
 
 if __name__ == "__main__":

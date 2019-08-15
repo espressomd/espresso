@@ -389,12 +389,12 @@ class ParticleAngles(Observable):
 
 
 @script_interface_register
-class ChainAngles(Observable):
+class PersistenceAngles(Observable):
 
     """Calculates mutual bond angles for chained particles with given ids.
 
     The *i*-th  value of the result contains the angle between bonds that
-    are separated by *i* bonds. The angles are average over the chain.
+    are separated by *i* bonds. The angles are averaged over the chain.
 
     Parameters
     ----------
@@ -402,7 +402,7 @@ class ChainAngles(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name = "Observables::ChainAngles"
+    _so_name = "Observables::PersistenceAngles"
 
 
 @script_interface_register
