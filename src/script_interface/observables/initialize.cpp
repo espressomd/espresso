@@ -28,6 +28,7 @@
 #include "ScriptInterface.hpp"
 #include "config.hpp"
 
+#include "core/observables/ChainAngles.hpp"
 #include "core/observables/ComForce.hpp"
 #include "core/observables/ComPosition.hpp"
 #include "core/observables/ComVelocity.hpp"
@@ -50,7 +51,6 @@
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
-#include "core/observables/ChainAngles.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
