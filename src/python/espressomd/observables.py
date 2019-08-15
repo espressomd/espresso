@@ -393,6 +393,9 @@ class ChainAngles(Observable):
 
     """Calculates mutual bond angles for chained particles with given ids.
 
+    The *i*-th  value of the result contains the angle between bonds that
+    are separated by *i* bonds. The angles are average over the chain.
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
