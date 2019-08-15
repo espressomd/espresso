@@ -28,6 +28,7 @@
 #include "ScriptInterface.hpp"
 #include "config.hpp"
 
+#include "core/observables/BondAngles.hpp"
 #include "core/observables/ComForce.hpp"
 #include "core/observables/ComPosition.hpp"
 #include "core/observables/ComVelocity.hpp"
@@ -41,7 +42,6 @@
 #include "core/observables/DipoleMoment.hpp"
 #include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/MagneticDipoleMoment.hpp"
-#include "core/observables/BondAngles.hpp"
 #include "core/observables/ParticleAngularVelocities.hpp"
 #include "core/observables/ParticleBodyAngularVelocities.hpp"
 #include "core/observables/ParticleBodyVelocities.hpp"
