@@ -710,7 +710,7 @@ The following observables are available:
      :math:`\frac{1}{\sum_i m_i} \left( \sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i\right)`
    - ComForce: Sum of the forces on the particles
      :math:`\sum_i f^x_i, \sum_i f^y_i, \sum_i f^z_i`
-   - ChainAngles: Angles between bonds. The `i`-th value in the result vector corresponds to the angle between
+   - PersistenceAngles: Angles between bonds. The `i`-th value in the result vector corresponds to the angle between
      bonds that are separated by `i` bonds.
 
 - Profile observables sampling the spatial profile of various quantities

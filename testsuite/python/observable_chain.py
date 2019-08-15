@@ -20,8 +20,8 @@ import espressomd
 import numpy as np
 import espressomd.observables
 
-def chain_angles(positions):
-    """ Python implementation for ChainAngles observable.
+def persistence_angles(positions):
+    """ Python implementation for PersistenceAngles observable.
 
     """
     no_of_bonds = positions.shape[0] - 1
