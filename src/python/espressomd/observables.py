@@ -406,7 +406,7 @@ class PersistenceAngles(Observable):
 
 
 @script_interface_register
-class ParticleDihedrals(Observable):
+class BondDihedrals(Observable):
 
     """Calculates the dihedrals between particles with given ids along a
     polymer chain.
@@ -417,7 +417,7 @@ class ParticleDihedrals(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name = "Observables::ParticleDihedrals"
+    _so_name = "Observables::BondDihedrals"
 
 
 @script_interface_register

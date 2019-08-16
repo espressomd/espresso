@@ -125,9 +125,9 @@ class ObservableTests(ut.TestCase):
                 res_obs_chain, angles, decimal=9,
                 err_msg="Data did not agree for observable BondAngles")
 
-    def test_ParticleDihedrals(self):
+    def test_BondDihedrals(self):
         """
-        Check ParticleDihedrals, for a particle quadruple and for a chain.
+        Check BondDihedrals, for a particle quadruple and for a chain.
         """
         def rotate_vector(v, k, phi):
             """Rotates vector v around unit vector k by angle phi.
@@ -168,8 +168,8 @@ class ObservableTests(ut.TestCase):
             return pos
 
         pids = list(range(self.n_parts))
-        obs_single = espressomd.observables.ParticleDihedrals(ids=pids[:4])
-        obs_chain = espressomd.observables.ParticleDihedrals(ids=pids)
+        obs_single = espressomd.observables.BondDihedrals(ids=pids[:4])
+        obs_chain = espressomd.observables.BondDihedrals(ids=pids)
 
         # test multiple angles, take periodic boundaries into account
         p = self.system.part
@@ -196,7 +196,7 @@ class ObservableTests(ut.TestCase):
                     self.assertAlmostEqual(res_obs_single[0], dih1, places=9)
                     np.testing.assert_array_almost_equal(
                         res_obs_chain, [dih1, dih2], decimal=9,
-                        err_msg="Data did not agree for observable ParticleDihedrals")
+                        err_msg="Data did not agree for observable BondDihedrals")
 
     def test_PersistenceAngles(self):
         # First test: compare with python implementation
