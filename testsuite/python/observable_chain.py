@@ -20,7 +20,7 @@ import espressomd
 import numpy as np
 import espressomd.observables
 
-def persistence_angles(positions):
+def cos_persistence_angles(positions):
     """ Python implementation for PersistenceAngles observable.
 
     """
@@ -32,7 +32,7 @@ def persistence_angles(positions):
     for i in range(no_of_angles):
         average = 0.0
         for j in range(no_of_angles-i):
-            average += np.arccos(np.dot(bond_vecs[j], bond_vecs[j+i+1]))
+            average += np.dot(bond_vecs[j], bond_vecs[j+i+1])
         angles[i] = average / (no_of_angles - i)
     return angles
 
@@ -198,21 +198,21 @@ class ObservableTests(ut.TestCase):
                         res_obs_chain, [dih1, dih2], decimal=9,
                         err_msg="Data did not agree for observable BondDihedrals")
 
-    def test_PersistenceAngles(self):
+    def test_CosPersistenceAngles(self):
         # First test: compare with python implementation
         self.system.part.clear()
         self.system.part.add(pos= np.array([np.linspace(0, self.system.box_l[0], 20)] * 3).T + np.random.random((20, 3)))
-        obs = espressomd.observables.PersistenceAngles(ids=range(len(self.system.part)))
-        np.testing.assert_allclose(obs.calculate(), persistence_angles(self.system.part[:].pos))
+        obs = espressomd.observables.CosPersistenceAngles(ids=range(len(self.system.part)))
+        np.testing.assert_allclose(obs.calculate(), cos_persistence_angles(self.system.part[:].pos))
         self.system.part.clear()
         # Second test: place particles with fixed angles and check that the result of PersistenceAngle.calculate()[i] is i*phi
         delta_phi = np.radians(4)
         for i in range(10):
             pos = [np.cos(i*delta_phi), np.sin(i*delta_phi), 0.0]
             self.system.part.add(pos=pos)
-        obs = espressomd.observables.PersistenceAngles(ids=range(len(self.system.part)))
+        obs = espressomd.observables.CosPersistenceAngles(ids=range(len(self.system.part)))
         expected = np.arange(1, 9) * delta_phi
-        np.testing.assert_allclose(obs.calculate(), expected)
+        np.testing.assert_allclose(obs.calculate(), np.cos(expected))
 
 if __name__ == "__main__":
     ut.main()

@@ -29,9 +29,9 @@ namespace Observables {
 
 /** Calculate bond angles in a polymer.
  *  The \a ith entry in the result vector corresponds to the
- *  averaged angle between bonds that are \a i bonds apart.
+ *  averaged cosine of the angle between bonds that are \a i bonds apart.
  */
-class PersistenceAngles : public PidObservable {
+class CosPersistenceAngles : public PidObservable {
 public:
   using PidObservable::PidObservable;
   std::vector<double> evaluate(PartCfg &partCfg) const override {
@@ -51,7 +51,7 @@ public:
     for (int i = 0; i < no_of_angles; ++i) {
       auto average = 0.0;
       for (int j = 0; j < no_of_angles - i; ++j) {
-        average += acos(bond_vectors[j] * bond_vectors[j + i + 1]);
+        average += bond_vectors[j] * bond_vectors[j + i + 1];
       }
       angles[i] = average / (no_of_angles - i);
     }
