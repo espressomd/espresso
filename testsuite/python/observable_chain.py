@@ -199,10 +199,20 @@ class ObservableTests(ut.TestCase):
                         err_msg="Data did not agree for observable ParticleDihedrals")
 
     def test_PersistenceAngles(self):
+        # First test: compare with python implementation
         self.system.part.clear()
         self.system.part.add(pos= np.array([np.linspace(0, self.system.box_l[0], 20)] * 3).T + np.random.random((20, 3)))
         obs = espressomd.observables.PersistenceAngles(ids=range(len(self.system.part)))
         np.testing.assert_allclose(obs.calculate(), persistence_angles(self.system.part[:].pos))
+        self.system.part.clear()
+        # Second test: place particles with fixed angles and check that the result of PersistenceAngle.calculate()[i] is i*phi
+        delta_phi = np.radians(4)
+        for i in range(10):
+            pos = [np.cos(i*delta_phi), np.sin(i*delta_phi), 0.0]
+            self.system.part.add(pos=pos)
+        obs = espressomd.observables.PersistenceAngles(ids=range(len(self.system.part)))
+        expected = np.arange(1, 9) * delta_phi
+        np.testing.assert_allclose(obs.calculate(), expected)
 
 if __name__ == "__main__":
     ut.main()
