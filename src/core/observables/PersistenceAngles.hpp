@@ -27,9 +27,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Observables {
 
-/** Calculate bond angles between in a polymer.
- *  For @f$ n @f$ bonded particles, return the @f$ n-2 @f$ angles along the
- *  chain that are seperated by 1 bond, 2 bonds, ..., in radians.
+/** Calculate bond angles in a polymer.
+ *  The \a ith entry in the result vector corresponds to the
+ *  averaged angle between bonds that are \a i bonds apart.
  */
 class PersistenceAngles : public PidObservable {
 public:
