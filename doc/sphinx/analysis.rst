@@ -679,35 +679,40 @@ Available observables
 The following list contains some of the available observables. You can find documentation for
 all available observables in :mod:`espressomd.observables`.
 
-- Observables working on a given set of particles specified as follows
+- Observables working on a given set of particles:
 
-   - :class:`~espressomd.observables.ParticlePositions`: Positions of the particles, in the format
-     :math:`x_1,\ y_1,\ z_1,\ x_2,\ y_2,\ z_2,\ \dots\ x_n,\ y_n,\ z_n`.
-     The particles are ordered according to the list of ids passed to the observable.
-   - :class:`~espressomd.observables.ParticleVelocities`: Velocities of the particles in the form
-     :math:`v_{x1},\ v_{y1},\ v_{z1},\ v_{x2},\ v_{y2},\ v_{z2},\ \dots\ v_{xn},\ v_{yn},\ v_{zn}`.
-     The particles are ordered according to the list of ids passed to the observable.
-   - :class:`~espressomd.observables.ParticleForces`: Forces on the particles in the form
-     :math:`f_{x1},\ f_{y1},\ f_{z1},\ f_{x2},\ f_{y2},\ f_{z2},\ \dots\ f_{xn},\ f_{yn},\ f_{zn}`.
-   - :class:`~espressomd.observables.ParticleBodyVelocities`: the particles' velocities in their respective body-fixed frames (as per their orientation in space stored in their quaternions).
-     :math:`v_{x1},\ v_{y1},\ v_{z1},\ v_{x2},\ v_{y2},\ v_{z2},\ \dots\ v_{xn},\ v_{yn},\ v_{zn}`.
-     The particles are ordered according to the list of ids passed to the observable.
+   - :class:`~espressomd.observables.ParticlePositions`: Positions of the particles
+
+   - :class:`~espressomd.observables.ParticleVelocities`: Velocities of the particles
+
+   - :class:`~espressomd.observables.ParticleForces`: Forces on the particles
+
+   - :class:`~espressomd.observables.ParticleBodyVelocities`: The particles' velocities in their respective body-fixed frames (as per their orientation in space stored in their quaternions).
+
    - :class:`~espressomd.observables.ParticleAngularVelocities`: The particles' angular velocities in the space-fixed frame
-     :math:`\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2, \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n`.
-     The particles are ordered according to the list of ids passed to the observable.
+
    - :class:`~espressomd.observables.ParticleBodyAngularVelocities`: As above, but in the particles' body-fixed frame.
+
+- Observables working on a given set of particles and returning reduced quantities:
+
    - :class:`~espressomd.observables.Current`: Total current of the system
-     :math:`\sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i, \ldots`
+
    - :class:`~espressomd.observables.DipoleMoment`: Total electric dipole moment of the system obtained based on unfolded positions
-     :math:`\sum_i q_i r^x_i, \sum_i q_i r^y_i, \sum_i q_i r^z_i`
+
    - :class:`~espressomd.observables.MagneticDipoleMoment`: Total magnetic dipole moment of the system based on the :attr:`espressomd.particle_data.ParticleHandle.dip` property.
-     :math:`\sum_i \mu^x_i, \sum_i \mu^y_i, \sum_i \mu^z_i`
+
    - :class:`~espressomd.observables.ComPosition`: The system's center of mass based on unfolded coordinates
-     :math:`\frac{1}{\sum_i m_i} \left( \sum_i m_i r^x_i, \sum_i m_i r^y_i, \sum_i m_i r^z_i\right)`
+
    - :class:`~espressomd.observables.ComVelocity`: Velocity of the center of mass
-     :math:`\frac{1}{\sum_i m_i} \left( \sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i\right)`
+
    - :class:`~espressomd.observables.ComForce`: Sum of the forces on the particles
-     :math:`\sum_i f^x_i, \sum_i f^y_i, \sum_i f^z_i`
+
+   - :class:`~espressomd.observables.ParticleDistances`: Distances between particles on a polymer chain.
+
+   - :class:`~espressomd.observables.BondAngles`: Angles between bonds on a polymer chain.
+
+   - :class:`~espressomd.observables.BondDihedrals`: Dihedral angles between bond triples on a polymer chain.
+
    - :class:`~espressomd.observables.PersistenceAngles`: Angles between bonds. The `i`-th value in the result vector corresponds to the angle between
      bonds that are separated by `i` bonds. This observable might be useful for measuring the persistence length of a polymer.
 

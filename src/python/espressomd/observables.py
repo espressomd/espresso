@@ -29,6 +29,8 @@ class ComForce(Observable):
 
     """Calculates the total force on particles with given ids.
 
+    Output format: :math:`\\left(\\sum_i f^x_i, \\sum_i f^y_i, \\sum_i f^z_i\\right)`
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -42,6 +44,8 @@ class ComForce(Observable):
 class ComPosition(Observable):
 
     """Calculates the center of mass for particles with given ids.
+
+    Output format: :math:`\\frac{1}{\\sum_i m_i} \\left( \\sum_i m_i r^x_i, \\sum_i m_i r^y_i, \\sum_i m_i r^z_i\\right)`
 
     Parameters
     ----------
@@ -57,6 +61,8 @@ class ComVelocity(Observable):
 
     """Calculates the center of mass velocity for particles with given ids.
 
+    Output format: :math:`\\frac{1}{\\sum_i m_i} \\left( \\sum_i m_i v^x_i, \\sum_i m_i v^y_i, \\sum_i m_i v^z_i\\right)`
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -70,6 +76,8 @@ class ComVelocity(Observable):
 class Current(Observable):
 
     """Calculates the electric current for particles with given ids.
+
+    Output format: :math:`\\left(\\sum_i q_i v^x_i, \\sum_i q_i v^y_i, \\sum_i q_i v^z_i, \\right)`
 
     Parameters
     ----------
@@ -116,6 +124,8 @@ class DensityProfile(Observable):
 class DipoleMoment(Observable):
 
     """Calculates the dipole moment for particles with given ids.
+
+    Output format: :math:`\\left(\\sum_i q_i r^x_i, \\sum_i q_i r^y_i, \\sum_i q_i r^z_i\\right)`
 
     Parameters
     ----------
@@ -260,6 +270,8 @@ class MagneticDipoleMoment(Observable):
 
     """Calculates the magnetic dipole moment for particles with given ids.
 
+    Output format: :math:`\\left(\\sum_i \\mu^x_i, \\sum_i \\mu^y_i, \\sum_i \\mu^z_i\\right)`
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -274,6 +286,10 @@ class ParticleAngularVelocities(Observable):
     _so_name = "Observables::ParticleAngularVelocities"
 
     """Calculates the angular velocity (omega) in the spaced-fixed frame of reference
+
+    Output format: :math:`\\omega^x_1,\\ \\omega^y_1,\\ \\omega^z_1,\\ \\omega^x_2,\\ \\omega^y_2,\\ \\omega^z_2, \\dots\\ \\omega^x_n,\\ \\omega^y_n,\\ \\omega^z_n`.
+
+    The particles are ordered according to the list of ids passed to the observable.
 
     Parameters
     ----------
@@ -307,6 +323,10 @@ class ParticleBodyVelocities(Observable):
     For each particle, the body-fixed frame of reference is obtained from the particle's
     orientation stored in the quaternions.
 
+    Output format: :math:`v_{x1},\\ v_{y1},\\ v_{z1},\\ v_{x2},\\ v_{y2},\\ v_{z2},\\ \\dots\\ v_{xn},\\ v_{yn},\\ v_{zn}`.
+
+    The particles are ordered according to the list of ids passed to the observable.
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -320,6 +340,10 @@ class ParticleBodyVelocities(Observable):
 class ParticleForces(Observable):
 
     """Calculates the particle forces for particles with given ids.
+
+    Output format: :math:`f_{x1},\\ f_{y1},\\ f_{z1},\\ f_{x2},\\ f_{y2},\ f_{z2},\\ \\dots\\ f_{xn},\\ f_{yn},\\ f_{zn}`.
+
+    The particles are ordered according to the list of ids passed to the observable.
 
     Parameters
     ----------
@@ -335,6 +359,10 @@ class ParticlePositions(Observable):
 
     """Calculates the particle positions for particles with given ids.
 
+    Output format: :math:`x_1,\\ y_1,\\ z_1,\\ x_2,\\ y_2,\\ z_2,\\ \\dots\\ x_n,\\ y_n,\\ z_n`.
+
+    The particles are ordered according to the list of ids passed to the observable.
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -348,6 +376,10 @@ class ParticlePositions(Observable):
 class ParticleVelocities(Observable):
 
     """Calculates the particle velocities for particles with given ids.
+
+    Output format: :math:`v_{x1},\\ v_{y1},\\ v_{z1},\\ v_{x2},\\ v_{y2},\\ v_{z2},\\ \\dots\\ v_{xn},\\ v_{yn},\\ v_{zn}`.
+
+    The particles are ordered according to the list of ids passed to the observable.
 
     Parameters
     ----------
