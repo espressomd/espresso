@@ -696,9 +696,6 @@ all available observables in :mod:`espressomd.observables`.
      :math:`\omega^x_1,\ \omega^y_1,\ \omega^z_1,\ \omega^x_2,\ \omega^y_2,\ \omega^z_2, \dots\ \omega^x_n,\ \omega^y_n,\ \omega^z_n`.
      The particles are ordered according to the list of ids passed to the observable.
    - :class:`espressomd.observables.ParticleBodyAngularVelocities`: As above, but in the particles' body-fixed frame.
-   - ParticleCurrent: Product of the particles' velocity and charge
-     :math:`m_1 v^x_1, m_1 v^y_1, m_1 v^z_1, \ldots`
-     The particles are ordered according to the list of ids passed to the observable.
    - :class:`espressomd.observables.Current`: Total current of the system
      :math:`\sum_i m_i v^x_i, \sum_i m_i v^y_i, \sum_i m_i v^z_i, \ldots`
    - :class:`espressomd.observables.DipoleMoment`: Total electric dipole moment of the system obtained based on unfolded positions
