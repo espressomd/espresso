@@ -421,12 +421,12 @@ class BondAngles(Observable):
 
 
 @script_interface_register
-class PersistenceAngles(Observable):
+class CosPersistenceAngles(Observable):
 
-    """Calculates mutual bond angles for chained particles with given ids.
+    """Calculates the cosine of mutual bond angles for chained particles with given ids.
 
-    The *i*-th  value of the result contains the angle between bonds that
-    are separated by *i* bonds. The angles are averaged over the chain.
+    The *i*-th  value of the result contains the cosine of the angle between bonds that
+    are separated by *i* bonds. The values are averaged over the chain.
 
     Parameters
     ----------
@@ -434,7 +434,7 @@ class PersistenceAngles(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name = "Observables::PersistenceAngles"
+    _so_name = "Observables::CosPersistenceAngles"
 
 
 @script_interface_register

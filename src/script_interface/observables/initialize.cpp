@@ -33,6 +33,7 @@
 #include "core/observables/ComForce.hpp"
 #include "core/observables/ComPosition.hpp"
 #include "core/observables/ComVelocity.hpp"
+#include "core/observables/CosPersistenceAngles.hpp"
 #include "core/observables/Current.hpp"
 #include "core/observables/CylindricalDensityProfile.hpp"
 #include "core/observables/CylindricalFluxDensityProfile.hpp"
@@ -50,7 +51,6 @@
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
-#include "core/observables/PersistenceAngles.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -140,7 +140,7 @@ void initialize() {
   REGISTER_PID_OBS(ParticleDistances);
   REGISTER_PID_OBS(BondAngles);
   REGISTER_PID_OBS(BondDihedrals);
-  REGISTER_PID_OBS(PersistenceAngles);
+  REGISTER_PID_OBS(CosPersistenceAngles);
   REGISTER_PID_PROFILE_OBS(DensityProfile);
   REGISTER_PID_PROFILE_OBS(ForceDensityProfile);
   REGISTER_PID_PROFILE_OBS(FluxDensityProfile);
