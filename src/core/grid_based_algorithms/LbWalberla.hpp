@@ -112,7 +112,8 @@ class LbWalberla {
   using Flag_field_t = walberla::FlagField<walberla::uint8_t>;
   using Pdf_field_t = walberla::lbm::PdfField<Lattice_model_t>;
 
-  using UBB_t = walberla::lbm::UBB<Lattice_model_t, walberla::uint8_t>;
+  using UBB_t =
+      walberla::lbm::UBB<Lattice_model_t, walberla::uint8_t, true, true>;
   using Boundary_handling_t =
       walberla::BoundaryHandling<Flag_field_t, Lattice_model_t::Stencil, UBB_t>;
 
@@ -172,6 +173,8 @@ public:
 
   bool add_force_at_pos(const Utils::Vector3d &position,
                         const Utils::Vector3d &force);
+  boost::optional<Utils::Vector3d>
+  get_node_boundary_force(const Utils::Vector3i node) const;
   boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &position) const;
   boost::optional<double> get_density_at_pos(const Utils::Vector3d &position);

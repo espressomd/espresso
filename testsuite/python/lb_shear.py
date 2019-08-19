@@ -29,10 +29,10 @@ by comparing to the analytical solution.
 """
 
 
-AGRID = 1 
+AGRID = .5
 VISC = 5.2
-DENS = 2.3
-TIME_STEP = 0.02
+DENS = 2.3 
+TIME_STEP = 0.03
 # Box size will be H +2 AGRID to make room for walls.
 # The number of grid cells should be devisible by four and 3 in all directions
 # for testing on multiple mpi nodes.
@@ -139,6 +139,24 @@ class LBShearCommon:
                     np.copy(v_measured),
                     np.copy(v_expected[j]) * shear_direction, atol=3E-3)
 
+        print(wall1.get_force())
+        print(wall2.get_force())
+        p_eq = DENS * AGRID**2 / TIME_STEP**2 / 3
+        print(
+            shear_direction *
+            SHEAR_VELOCITY /
+            H *
+            W**2 *
+            VISC +
+            p_eq *
+            W**2 *
+            shear_plane_normal)
+        np.testing.assert_allclose(
+            np.copy(wall1.get_force()),
+            -np.copy(wall2.get_force()),
+            atol=1E-4)
+        np.testing.assert_allclose(np.copy(wall1.get_force()), 
+                                   shear_direction * SHEAR_VELOCITY / H * W**2 * VISC, atol=2E-4)
         # Test steady state stress tensor on a node
         p_eq = DENS * AGRID**2 / TIME_STEP**2 / 3
         p_expected = np.diag((p_eq, p_eq, p_eq))
@@ -149,13 +167,6 @@ class LBShearCommon:
             node_stress = np.copy(self.lbf[n[0], n[1], n[2]].stress)
             np.testing.assert_allclose(node_stress,
                                        p_expected, atol=1E-5, rtol=5E-3)
-
-        np.testing.assert_allclose(
-            np.copy(wall1.get_force()),
-            -np.copy(wall2.get_force()),
-            atol=1E-4)
-        np.testing.assert_allclose(np.copy(wall1.get_force()), 
-                                   shear_direction * SHEAR_VELOCITY / H * W**2 * VISC, atol=2E-4)
 
     def test(self):
         x = np.array((1, 0, 0), dtype=float)

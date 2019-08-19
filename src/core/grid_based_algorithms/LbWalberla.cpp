@@ -55,8 +55,8 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   Utils::Vector3i grid_dimensions;
   for (int i = 0; i < 3; i++) {
-    if (fabs(floor(box_dimensions[i] / agrid) * agrid - box_dimensions[i]) >
-        std::numeric_limits<double>::epsilon()) {
+    if (fabs((box_dimensions[i] / agrid) * agrid - box_dimensions[i]) >
+        2 * std::numeric_limits<double>::epsilon()) {
       throw std::runtime_error(
           "Box length not commensurate with agrid in direction " +
           std::to_string(i));
@@ -291,6 +291,24 @@ bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
   auto f = to_vector3(force);
   force_distributor->distribute(to_vector3(pos), &f);
   return true;
+}
+
+boost::optional<Utils::Vector3d>
+LbWalberla::get_node_boundary_force(const Utils::Vector3i node) const {
+  auto bc = get_block_and_cell(node, true); // including ghosts
+  if (!bc)
+    return {boost::none};
+  // Get boundary hanlindg
+  auto const &bh =
+      (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
+  auto const &ff = (*bc).block->getData<Flag_field_t>(m_flag_field_id);
+  if (!ff->isFlagSet((*bc).cell, ff->getFlag(UBB_flag)))
+    return {boost::none};
+
+  auto const uid = bh->getBoundaryUID(UBB_flag);
+  auto const &ubb = bh->getBoundaryCondition<UBB_t>(uid);
+  return {to_vector3d(
+      ubb.getForce((*bc).cell.x(), (*bc).cell.y(), (*bc).cell.z()))};
 }
 
 boost::optional<Utils::Vector3d>
