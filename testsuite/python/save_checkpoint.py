@@ -56,6 +56,8 @@ elif 'LB.GPU' in modes and espressomd.gpu_available():
 if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
     system.actors.add(lbf)
+    if 'LBTHERM' in modes:
+        system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
     if espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
         if not 'EK.GPU' in modes:
             system.lbboundaries.add(
@@ -112,7 +114,8 @@ system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
                        particle_type=17)
 system.constraints.add(shape=Wall(normal=[1. / np.sqrt(3)] * 3, dist=0.5))
 
-system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
+if not 'LBTHERM' in modes:
+    system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(

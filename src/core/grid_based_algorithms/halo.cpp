@@ -198,7 +198,7 @@ void prepare_halo_communication(HaloCommunicator *const hc,
   num = 2 * 3; /* two communications in each space direction */
 
   hc->num = num;
-  hc->halo_info = Utils::realloc(hc->halo_info, num * sizeof(HaloInfo));
+  hc->halo_info.resize(num);
 
   int extent = fieldtype->extent;
 
@@ -286,8 +286,6 @@ void release_halo_communication(HaloCommunicator *const hc) {
   for (n = 0; n < hc->num; n++) {
     MPI_Type_free(&(hc->halo_info[n].datatype));
   }
-
-  free(hc->halo_info);
 }
 
 void halo_communication(HaloCommunicator const *const hc, char *const base) {

@@ -495,7 +495,7 @@ class openGLLive(object):
 
     def screenshot(self, path):
         """Renders the current state into an image file at ``path`` with
-        dimensions of ``specs['window_size']``."""
+        dimensions of ``specs['window_size']`` in PNG format."""
 
         # ON FIRST CALL: INIT AND CREATE BUFFERS
         if not self.screenshot_initialized:
@@ -536,7 +536,7 @@ class openGLLive(object):
         OpenGL.GL.glLoadMatrixf(self.camera.modelview)
         self._draw_system()
 
-        # READ THE PIXES
+        # READ THE PIXELS
         OpenGL.GL.glReadBuffer(OpenGL.GL.GL_COLOR_ATTACHMENT0)
         data = OpenGL.GL.glReadPixels(
             0, 0, self.specs['window_size'][0], self.specs['window_size'][1], OpenGL.GL.GL_RGB, OpenGL.GL.GL_FLOAT)

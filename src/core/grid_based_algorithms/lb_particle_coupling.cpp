@@ -152,12 +152,12 @@ bool in_local_domain(Utils::Vector3d const &pos) {
   auto const my_left = local_geo.my_left();
   auto const my_right = local_geo.my_right();
 
-  return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid &&
-          pos[0] < my_right[0] + 0.5 * lblattice.agrid &&
-          pos[1] >= my_left[1] - 0.5 * lblattice.agrid &&
-          pos[1] < my_right[1] + 0.5 * lblattice.agrid &&
-          pos[2] >= my_left[2] - 0.5 * lblattice.agrid &&
-          pos[2] < my_right[2] + 0.5 * lblattice.agrid);
+  return (pos[0] >= my_left[0] - 0.5 * lb_lbfluid_get_agrid() &&
+          pos[0] < my_right[0] + 0.5 * lb_lbfluid_get_agrid() &&
+          pos[1] >= my_left[1] - 0.5 * lb_lbfluid_get_agrid() &&
+          pos[1] < my_right[1] + 0.5 * lb_lbfluid_get_agrid() &&
+          pos[2] >= my_left[2] - 0.5 * lb_lbfluid_get_agrid() &&
+          pos[2] < my_right[2] + 0.5 * lb_lbfluid_get_agrid());
 }
 
 #ifdef ENGINE

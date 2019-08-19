@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import, division
 include "myconfig.pxi"
 import os
 import cython
@@ -325,7 +324,7 @@ IF LB_WALBERLA:
         def _activate_method(self):
             self.validate_params()
             mpi_init_lb_walberla(
-                self._params["visc"], self._params["dens"], self._params["agrid"], self._params["tau"])
+                self._params["visc"] * self._params['tau'] / self._params['agrid']**2, self._params["dens"], self._params["agrid"], self._params["tau"])
             utils.handle_errors("LB fluid activation")
             python_lbfluid_set_ext_force_density(
 

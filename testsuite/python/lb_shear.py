@@ -29,8 +29,8 @@ by comparing to the analytical solution.
 """
 
 
-AGRID = 0.6
-VISC = 3.2
+AGRID = 1 
+VISC = 5.2
 DENS = 2.3
 TIME_STEP = 0.02
 # Box size will be H +2 AGRID to make room for walls.
@@ -79,7 +79,7 @@ def shear_flow(x, t, nu, v, h, k_max):
     return v * u
 
 
-class LBShearCommon(object):
+class LBShearCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None
@@ -115,21 +115,25 @@ class LBShearCommon(object):
         self.system.lbboundaries.add(wall2)
 
         t0 = self.system.time
-        sample_points = int(H / AGRID - 1)
+        sample_points = np.arange(H / AGRID + 2)
 
         for i in range(9):
             self.system.integrator.run(50)
 
             v_expected = shear_flow(
-                x=(np.arange(0, sample_points) + .5) * AGRID,
+                x=(sample_points - .5) * AGRID,
                                 t=self.system.time - t0,
                                 nu=VISC,
                                 v=SHEAR_VELOCITY,
                                 h=H,
                                 k_max=100)
-            for j in range(1, sample_points):
-                ind = np.max(((1, 1, 1), shear_plane_normal * j + 1), 0)
+            
+            # We omit the boundary nodes themselves, which have undefined
+            # velocities
+            for j in np.array(sample_points, dtype=int)[1:-1]:
+                ind = (1, 1, 1)
                 ind = np.array(ind, dtype=int)
+                ind[np.argmax(shear_plane_normal)] = j
                 v_measured = self.lbf[ind[0], ind[1], ind[2]].velocity
                 np.testing.assert_allclose(
                     np.copy(v_measured),
@@ -182,6 +186,15 @@ class LBGPUShear(ut.TestCase, LBShearCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+
+
+@utx.skipIfMissingFeatures(['LB_WALBERLA', 'LB_BOUNDARIES'])
+class LBWalberlaShear(ut.TestCase, LBShearCommon):
+
+    """Test for the Walberla implementation of the LB."""
+
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 
 
 if __name__ == '__main__':

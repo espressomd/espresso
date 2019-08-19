@@ -34,6 +34,7 @@
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "lbboundaries/LBBoundary.hpp"
 
@@ -74,14 +75,14 @@ void lb_init_boundaries() {
     }
 
     int number_of_boundnodes = 0;
-    auto *host_boundary_node_list = (int *)Utils::malloc(sizeof(int));
-    auto *host_boundary_index_list = (int *)Utils::malloc(sizeof(int));
+    std::vector<int> host_boundary_node_list;
+    std::vector<int> host_boundary_index_list;
     size_t size_of_index;
     int boundary_number =
         -1; // the number the boundary will actually belong to.
 
 #ifdef EK_BOUNDARIES
-    ekfloat *host_wallcharge_species_density = nullptr;
+    std::vector<ekfloat> host_wallcharge_species_density;
     float node_wallcharge = 0.0f;
     int wallcharge_species = -1, charged_boundaries = 0;
     int node_charged = 0;
@@ -91,8 +92,7 @@ void lb_init_boundaries() {
     }
 
     if (ek_initialized) {
-      host_wallcharge_species_density = (ekfloat *)Utils::malloc(
-          ek_parameters.number_of_nodes * sizeof(ekfloat));
+      host_wallcharge_species_density.resize(ek_parameters.number_of_nodes);
       for (auto &lbboundarie : lbboundaries) {
         if ((*lbboundarie).charge_density() != 0.0) {
           charged_boundaries = 1;
@@ -106,8 +106,8 @@ void lb_init_boundaries() {
           break;
         }
 
-      ek_gather_wallcharge_species_density(host_wallcharge_species_density,
-                                           wallcharge_species);
+      ek_gather_wallcharge_species_density(
+          host_wallcharge_species_density.data(), wallcharge_species);
 
       if (wallcharge_species == -1 && charged_boundaries) {
         runtimeErrorMsg()
@@ -159,10 +159,8 @@ void lb_init_boundaries() {
           }
           if (dist <= 0 && boundary_number >= 0 && (!lbboundaries.empty())) {
             size_of_index = (number_of_boundnodes + 1) * sizeof(int);
-            host_boundary_node_list =
-                Utils::realloc(host_boundary_node_list, size_of_index);
-            host_boundary_index_list =
-                Utils::realloc(host_boundary_index_list, size_of_index);
+            host_boundary_node_list.resize(size_of_index);
+            host_boundary_index_list.resize(size_of_index);
             host_boundary_node_list[number_of_boundnodes] =
                 x + lbpar_gpu.dim_x * y + lbpar_gpu.dim_x * lbpar_gpu.dim_y * z;
             host_boundary_index_list[number_of_boundnodes] =
@@ -190,8 +188,7 @@ void lb_init_boundaries() {
     }
 
     /**call of cuda fkt*/
-    auto *boundary_velocity =
-        (float *)Utils::malloc(3 * (lbboundaries.size() + 1) * sizeof(float));
+    std::vector<float> boundary_velocity(3 * (lbboundaries.size() + 1));
     int n = 0;
     for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end();
          ++lbb, n++) {
@@ -205,18 +202,14 @@ void lb_init_boundaries() {
     boundary_velocity[3 * lbboundaries.size() + 2] = 0.0f;
 
     lb_init_boundaries_GPU(lbboundaries.size(), number_of_boundnodes,
-                           host_boundary_node_list, host_boundary_index_list,
-                           boundary_velocity);
-
-    free(boundary_velocity);
-    free(host_boundary_node_list);
-    free(host_boundary_index_list);
+                           host_boundary_node_list.data(),
+                           host_boundary_index_list.data(),
+                           boundary_velocity.data());
 
 #ifdef EK_BOUNDARIES
     if (ek_initialized) {
-      ek_init_species_density_wallcharge(host_wallcharge_species_density,
+      ek_init_species_density_wallcharge(host_wallcharge_species_density.data(),
                                          wallcharge_species);
-      free(host_wallcharge_species_density);
     }
 #endif
 
@@ -279,7 +272,49 @@ void lb_init_boundaries() {
       }
     }
 #endif
-  }
+  } else if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
+#if defined(LB_BOUNDARIES)
+    Utils::Vector3i offset;
+    int the_boundary = -1;
+
+    lb_walberla()->clear_boundaries();
+
+    auto const agrid = lb_lbfluid_get_agrid();
+
+    for (auto index_and_pos : lb_walberla()->global_node_indices_positions()) {
+      // Convert to MD units
+      auto const index = index_and_pos.first;
+      auto const pos = index_and_pos.second * agrid;
+
+      int n = 0;
+      for (auto it = lbboundaries.begin(); it != lbboundaries.end();
+           ++it, ++n) {
+        double dist;
+        Utils::Vector3d tmp;
+        (**it).calc_dist(pos, &dist, tmp.data());
+
+        if (dist <= 0) {
+
+          // Set boundaries on the ghost layers
+          auto const grid = lb_walberla()->get_grid_dimensions();
+          for (int dx : {-1, 0, 1})
+            for (int dy : {-1, 0, 1})
+              for (int dz : {-1, 0, 1}) {
+                Utils::Vector3i shifted_index =
+                    index +
+                    Utils::Vector3i{dx * grid[0], dy * grid[1], dz * grid[2]};
+                lb_walberla()->set_node_velocity_at_boundary(
+                    shifted_index,
+                    (**it).velocity() / lb_lbfluid_get_lattice_speed());
+              }
+          break;
+        } // if dist <=0
+      }   // loop over boundaries
+    }     // Loop over cells
+  }       // lattice switch is WALBERLA
+#endif
+#endif
 }
 
 Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {

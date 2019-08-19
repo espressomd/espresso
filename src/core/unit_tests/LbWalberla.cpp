@@ -75,6 +75,58 @@ BOOST_AUTO_TEST_CASE(boundary) {
   }
 }
 
+// BOOST_AUTO_TEST_CASE(boundary_flow_single_node) {
+//  Vector3d vel = {0.2, 3.8, 0};
+//  LbWalberla lb = LbWalberla(viscosity, density, agrid, tau, box_dimensions,
+//                             node_grid, skin);
+//    Vector3i node{5,5,5};
+//    if (lb.node_in_local_domain(node)) {
+//      BOOST_CHECK(lb.set_node_velocity_at_boundary(node, vel));
+//    }
+//    for( int i=0;i<10;i++) {
+//      lb.integrate();
+//    }
+//    for (int j=0;j<9;j++) {
+//        auto v = lb.get_node_velocity(Vector3i{j,node[1],node[2]});
+//        if (v) {
+//          if (j!=node[0]) {
+//            BOOST_CHECK((*v)[0]>1E-4);
+//            BOOST_CHECK((*v)[1]>1E-4);
+//            BOOST_CHECK(fabs((*v)[2])<1E-12);
+//            printf("%d,%g %g %g\n",j,(*v)[0],(*v)[1],(*v)[2]);
+//          }
+//        }
+//  }
+//}
+
+BOOST_AUTO_TEST_CASE(boundary_flow_shear) {
+  Vector3d vel = {0.2, -0.3, 0};
+  LbWalberla lb = LbWalberla(viscosity, density, agrid, tau, box_dimensions,
+                             node_grid, skin);
+  for (int x = 1; x < grid_dimensions[0] - 1; x++) {
+    for (int y = 1; y < grid_dimensions[1] - 1; y++) {
+      Vector3i node{x, y, 1};
+      if (lb.node_in_local_domain(node)) {
+        BOOST_CHECK(lb.set_node_velocity_at_boundary(node, vel));
+      }
+      node[2] = grid_dimensions[2] - 4;
+      if (lb.node_in_local_domain(node)) {
+        BOOST_CHECK(lb.set_node_velocity_at_boundary(node, -vel));
+      }
+    }
+  }
+
+  for (int i = 0; i < 150; i++) {
+    lb.integrate();
+  }
+  for (int j = 0; j < grid_dimensions[2]; j++) {
+    auto v = lb.get_node_velocity(Vector3i{0, 0, j});
+    if (v) {
+      printf("%d,%g %g %g\n", j, (*v)[0], (*v)[1], (*v)[2]);
+    }
+  }
+}
+
 BOOST_AUTO_TEST_CASE(velocity) {
   LbWalberla lb = LbWalberla(viscosity, density, agrid, tau, box_dimensions,
                              node_grid, skin);

@@ -131,7 +131,10 @@ class LbWalberla {
       Flag_field_t *flag_field = block->getData<Flag_field_t>(m_flag_field_id);
       Pdf_field_t *pdf_field = block->getData<Pdf_field_t>(m_pdf_field_id);
 
-      const uint8_t fluid = flag_field->registerFlag(Fluid_flag);
+      // const uint8_t fluid = flag_field->registerFlag(Fluid_flag);
+      const auto fluid = flag_field->flagExists(Fluid_flag)
+                             ? flag_field->getFlag(Fluid_flag)
+                             : flag_field->registerFlag(Fluid_flag);
 
       return new Boundary_handling_t(
           "boundary handling", flag_field, fluid,
@@ -154,6 +157,13 @@ public:
              const Utils::Vector3i &node_grid, double skin);
 
   void integrate();
+  std::pair<Utils::Vector3d, Utils::Vector3d> get_local_domain() {
+    // We only have one block per mpi rank
+    assert(++(m_blocks->begin()) == m_blocks->end());
+
+    auto const ab = m_blocks->begin()->getAABB();
+    return {to_vector3d(ab.min()), to_vector3d(ab.max())};
+  }
   boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i node) const;
   bool set_node_velocity(const Utils::Vector3i &node, const Utils::Vector3d v);
@@ -294,19 +304,22 @@ private:
       walberla::field::TrilinearFieldInterpolator<DensityAdaptor,
                                                   Flag_field_t>;
 
-  void empty_flags_for_boundary(
-      std::shared_ptr<walberla::StructuredBlockForest> &blocks,
-      const walberla::BlockDataID &boundary_handling_id) {
+public:
+  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
+  node_indices_positions();
+  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
+  global_node_indices_positions();
+  void clear_boundaries() {
     using namespace walberla;
     const CellInterval &domain_bb_in_global_cell_coordinates =
-        blocks->getDomainCellBB();
-    for (auto block = blocks->begin(); block != blocks->end(); ++block) {
+        m_blocks->getDomainCellBB();
+    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
 
       Boundary_handling_t *boundary_handling =
-          block->getData<Boundary_handling_t>(boundary_handling_id);
+          block->getData<Boundary_handling_t>(m_boundary_handling_id);
 
       CellInterval domain_bb(domain_bb_in_global_cell_coordinates);
-      blocks->transformGlobalToBlockLocalCellInterval(domain_bb, *block);
+      m_blocks->transformGlobalToBlockLocalCellInterval(domain_bb, *block);
 
       boundary_handling->fillWithDomain(domain_bb);
     }

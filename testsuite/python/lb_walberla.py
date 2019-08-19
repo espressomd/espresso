@@ -49,6 +49,7 @@ class LbWalberlaTest(ut.TestCase):
                     lbf[i, j, k].velocity = v
                     np.testing.assert_allclose(
                         lbf[i, j, k].velocity, v, atol=1E-10)
+
                     self.assertAlmostEqual( 
                         lbf[i, j, k].density, dens_init, delta=1E-10)
                     rho = i * j * k * 0.5 + 0.8

@@ -83,11 +83,16 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
     return interpolated_u;
   } else if (lattice_switch == ActiveLB::WALBERLA) {
-    auto folded_pos = folded_position(pos, box_geo);
+
     auto res = lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid());
     if (!res) {
-      printf("%d: positoin: %g %g %g\n", this_node, folded_pos[0],
-             folded_pos[1], folded_pos[2]);
+      auto folded_pos = folded_position(pos, box_geo);
+      res = lb_walberla()->get_velocity_at_pos(folded_pos /
+                                               lb_lbfluid_get_agrid());
+    }
+
+    if (!res) {
+      printf("%d: positoin: %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
       throw std::runtime_error(
           "Interpolated velocity could not be obtained from Walberla");
     }
