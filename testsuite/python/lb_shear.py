@@ -115,24 +115,25 @@ class LBShearCommon:
         self.system.lbboundaries.add(wall2)
 
         t0 = self.system.time
-        sample_points = np.arange(H/AGRID+2)
+        sample_points = np.arange(H / AGRID + 2)
 
         for i in range(9):
             self.system.integrator.run(50)
 
             v_expected = shear_flow(
-                x=(sample_points -.5) * AGRID,
+                x=(sample_points - .5) * AGRID,
                                 t=self.system.time - t0,
                                 nu=VISC,
                                 v=SHEAR_VELOCITY,
                                 h=H,
                                 k_max=100)
             
-            # We omit the boundary nodes themselves, which have undefined velocities
-            for j in np.array(sample_points,dtype=int)[1:-1]:
+            # We omit the boundary nodes themselves, which have undefined
+            # velocities
+            for j in np.array(sample_points, dtype=int)[1:-1]:
                 ind = (1, 1, 1)
                 ind = np.array(ind, dtype=int)
-                ind[np.argmax(shear_plane_normal)]=j
+                ind[np.argmax(shear_plane_normal)] = j
                 v_measured = self.lbf[ind[0], ind[1], ind[2]].velocity
                 np.testing.assert_allclose(
                     np.copy(v_measured),
@@ -186,6 +187,7 @@ class LBGPUShear(ut.TestCase, LBShearCommon):
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
+
 @utx.skipIfMissingFeatures(['LB_WALBERLA', 'LB_BOUNDARIES'])
 class LBWalberlaShear(ut.TestCase, LBShearCommon):
 
@@ -193,7 +195,6 @@ class LBWalberlaShear(ut.TestCase, LBShearCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
-
 
 
 if __name__ == '__main__':

@@ -295,25 +295,27 @@ void lb_init_boundaries() {
         (**it).calc_dist(pos, &dist, tmp.data());
 
         if (dist <= 0) {
-          
+
           // Set boundaries on the ghost layers
           auto const grid = lb_walberla()->get_grid_dimensions();
-          for (int dx : {-1,0,1}) 
-            for (int dy : {-1,0,1})
-              for (int dz : {-1,0,1}) {
-                Utils::Vector3i shifted_index=index +Utils::Vector3i{dx*grid[0],dy*grid[1],dz*grid[2]};
+          for (int dx : {-1, 0, 1})
+            for (int dy : {-1, 0, 1})
+              for (int dz : {-1, 0, 1}) {
+                Utils::Vector3i shifted_index =
+                    index +
+                    Utils::Vector3i{dx * grid[0], dy * grid[1], dz * grid[2]};
                 lb_walberla()->set_node_velocity_at_boundary(
-                  shifted_index, (**it).velocity() / lb_lbfluid_get_lattice_speed()); 
-            }
-            break;
-          } // if dist <=0
-        } // loop over boundaries
-      } // Loop over cells
-    } // lattice switch is WALBERLA
+                    shifted_index,
+                    (**it).velocity() / lb_lbfluid_get_lattice_speed());
+              }
+          break;
+        } // if dist <=0
+      }   // loop over boundaries
+    }     // Loop over cells
+  }       // lattice switch is WALBERLA
 #endif
 #endif
 }
-
 
 Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
   Utils::Vector3d force{};

@@ -309,7 +309,7 @@ IF LB_WALBERLA:
         def _activate_method(self):
             self.validate_params()
             mpi_init_lb_walberla(
-                self._params["visc"] *self._params['tau']/self._params['agrid']**2, self._params["dens"], self._params["agrid"], self._params["tau"])
+                self._params["visc"] * self._params['tau'] / self._params['agrid']**2, self._params["dens"], self._params["agrid"], self._params["tau"])
             utils.handle_errors("LB fluid activation")
             python_lbfluid_set_ext_force_density(
     
@@ -363,9 +363,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines(object):

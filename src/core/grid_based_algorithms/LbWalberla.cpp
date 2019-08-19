@@ -182,9 +182,8 @@ LbWalberla::get_block_and_cell(const Utils::Vector3i &node,
   if (consider_ghost_layers and !block) {
     // Try to find a block which has the cell as ghost layer
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
-      if (b->getAABB()
-              .getExtended(1)
-              .contains(real_c(node[0]), real_c(node[1]), real_c(node[2]))) {
+      if (b->getAABB().getExtended(1).contains(real_c(node[0]), real_c(node[1]),
+                                               real_c(node[2]))) {
         block = &(*b);
         break;
       }
@@ -224,7 +223,7 @@ IBlock *LbWalberla::get_block(const Utils::Vector3d &pos,
 
 bool LbWalberla::set_node_velocity_at_boundary(const Utils::Vector3i node,
                                                const Utils::Vector3d v) {
-  auto bc = get_block_and_cell(node,true);
+  auto bc = get_block_and_cell(node, true);
   // Return if we don't have the cell.
   if (!bc)
     return false;
@@ -464,16 +463,16 @@ LbWalberla::global_node_indices_positions() {
   std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
   for (int x : Utils::make_lin_space(int(0), int(m_grid_dimensions[0]),
                                      int(m_grid_dimensions[0]), false)) {
-  for (int y : Utils::make_lin_space(int(0), int(m_grid_dimensions[1]),
-                                     int(m_grid_dimensions[1]), false)) {
-  for (int z : Utils::make_lin_space(int(0), int(m_grid_dimensions[2]),
-                                     int(m_grid_dimensions[2]), false)) {
-          res.push_back(
-              {Utils::Vector3i{x, y, z},
-               Utils::Vector3d::broadcast(.5) +Utils::Vector3d{double(x), double(y), double(z)}});
-        }
+    for (int y : Utils::make_lin_space(int(0), int(m_grid_dimensions[1]),
+                                       int(m_grid_dimensions[1]), false)) {
+      for (int z : Utils::make_lin_space(int(0), int(m_grid_dimensions[2]),
+                                         int(m_grid_dimensions[2]), false)) {
+        res.push_back({Utils::Vector3i{x, y, z},
+                       Utils::Vector3d::broadcast(.5) +
+                           Utils::Vector3d{double(x), double(y), double(z)}});
       }
     }
+  }
   return res;
 }
 
