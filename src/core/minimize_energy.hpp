@@ -24,9 +24,45 @@
 
 #include "ParticleRange.hpp"
 
-void minimize_energy();
+/** Parameters for the steepest descent algorithm */
+struct MinimizeEnergyParameters {
+  /** Maximal particle force
+   *
+   *  If the maximal force experienced by particles in the system (in any
+   *  direction) is inferior to this threshold, minimization stops.
+   */
+  double f_max;
+  /** Dampening constant */
+  double gamma;
+  /** Maximal number of integration steps */
+  int max_steps;
+  /** Maximal particle displacement
+   *
+   *  Maximal distance that a particle can travel during one integration step,
+   *  in one direction.
+   */
+  double max_displacement;
+};
+
+/** Steepest descent initializer
+ *
+ *  Sets the parameters in @ref MinimizeEnergyParameters
+ */
 void minimize_energy_init(double f_max, double gamma, int max_steps,
                           double max_displacement);
+
+/** Steepest descent main integration loop
+ *
+ *  Integration stops when the maximal force is lower than the user limit
+ *  @ref MinimizeEnergyParameters::f_max "f_max" or when the maximal number
+ *  of steps @ref MinimizeEnergyParameters::max_steps "max_steps" is reached.
+ */
+void minimize_energy();
+
+/** Steepest descent integrator
+ *  @return whether the maximum force/torque encountered is below the user
+ *          limit @ref MinimizeEnergyParameters::f_max "f_max".
+ */
 bool steepest_descent_step(const ParticleRange &particles);
 
 #endif /* __MINIMIZE_ENERGY */

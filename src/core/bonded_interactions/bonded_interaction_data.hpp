@@ -19,19 +19,19 @@ enum BondedInteraction {
   /** Type of bonded interaction is a FENE potential
       (to be combined with Lennard-Jones). */
   BONDED_IA_FENE,
-  /** Type of bonded interaction is a HARMONIC potential. */
+  /** Type of bonded interaction is a harmonic potential. */
   BONDED_IA_HARMONIC,
-  /** Type of bonded interaction is a HARMONIC_DUMBBELL potential. */
+  /** Type of bonded interaction is a harmonic dumbbell potential. */
   BONDED_IA_HARMONIC_DUMBBELL,
-  /** Type of bonded interaction is a QUARTIC potential. */
+  /** Type of bonded interaction is a quartic potential. */
   BONDED_IA_QUARTIC,
-  /** Type of bonded interaction is a BONDED_COULOMB */
+  /** Type of bonded interaction is a bonded %Coulomb. */
   BONDED_IA_BONDED_COULOMB,
-  /** Type of bonded interaction is a BONDED_COULOMB_SR */
+  /** Type of bonded interaction is a bonded %Coulomb SR. */
   BONDED_IA_BONDED_COULOMB_SR,
   /** Type of bonded interaction is a dihedral potential. */
   BONDED_IA_DIHEDRAL,
-  /** Type of bonded interaction is a tabulated bond potential. */
+  /** Type of bonded interaction is a tabulated distance potential. */
   BONDED_IA_TABULATED_DISTANCE,
   /** Type of bonded interaction is a tabulated angle potential. */
   BONDED_IA_TABULATED_ANGLE,
@@ -49,11 +49,12 @@ enum BondedInteraction {
   BONDED_IA_ANGLE_COSINE,
   /** Type of bonded interaction is a bond angle cosine potential. */
   BONDED_IA_ANGLE_COSSQUARE,
-  /** Type of bonded interaction: oif local forces. */
+  /** Type of bonded interaction: OIF local forces. */
   BONDED_IA_OIF_LOCAL_FORCES,
-  /** Type of bonded interaction: oif global forces. */
+  /** Type of bonded interaction: OIF global forces. */
   BONDED_IA_OIF_GLOBAL_FORCES,
-  /** Type of bonded interaction: determining outward direction of oif membrane.
+  /** Type of bonded interaction: determining outward direction of OIF membrane
+   *  (not associated to a parameter struct).
    */
   BONDED_IA_OIF_OUT_DIRECTION,
   /** Type of bonded interaction is a wall repulsion (immersed boundary). */
@@ -72,9 +73,9 @@ enum BondedInteraction {
 /** Specify tabulated bonded interactions  */
 enum TabulatedBondedInteraction {
   TAB_UNKNOWN = 0,
-  TAB_BOND_LENGTH = 1,
-  TAB_BOND_ANGLE = 2,
-  TAB_BOND_DIHEDRAL = 3
+  TAB_BOND_LENGTH = 1,  /**< Flag for @ref BONDED_IA_TABULATED_DISTANCE */
+  TAB_BOND_ANGLE = 2,   /**< Flag for @ref BONDED_IA_TABULATED_ANGLE */
+  TAB_BOND_DIHEDRAL = 3 /**< Flag for @ref BONDED_IA_TABULATED_DIHEDRAL */
 };
 
 /** Parameters for FENE bond Potential. */
@@ -91,24 +92,44 @@ struct Fene_bond_parameters {
   double drmax2i;
 };
 
-/** Parameters for oif_global_forces */
+/** Parameters for OIF global forces
+ *
+ *  Characterize the distribution of the force of the global mesh deformation
+ *  onto individual vertices of the mesh.
+ */
 struct Oif_global_forces_bond_parameters {
+  /** Relaxed area of the mesh */
   double A0_g;
+  /** Area coefficient */
   double ka_g;
+  /** Relaxed volume of the mesh */
   double V0;
+  /** Volume coefficient */
   double kv;
 };
 
-/** Parameters for oif_local_forces */
+/** Parameters for OIF local forces
+ *
+ *  Characterize the deformation of two triangles sharing an edge.
+ */
 struct Oif_local_forces_bond_parameters {
+  /** Equilibrium bond length of triangle edges */
   double r0;
+  /** Non-linear stretching coefficient of triangle edges */
   double ks;
+  /** Linear stretching coefficient of triangle edges */
   double kslin;
+  /** Equilibrium angle between the two triangles */
   double phi0;
+  /** Bending coefficient for the angle between the two triangles */
   double kb;
+  /** Equilibrium surface of the first triangle */
   double A01;
+  /** Equilibrium surface of the second triangle */
   double A02;
+  /** Stretching coefficient of a triangle surface */
   double kal;
+  /** Viscous coefficient of the triangle vertices */
   double kvisc;
 };
 
@@ -156,13 +177,13 @@ struct Quartic_bond_parameters {
   double r_cut;
 };
 
-/** Parameters for Coulomb bond Potential */
+/** Parameters for %Coulomb bond Potential */
 struct Bonded_coulomb_bond_parameters {
-  /** Coulomb prefactor */
+  /** %Coulomb prefactor */
   double prefactor;
 };
 
-/** Parameters for Coulomb bond short-range Potential */
+/** Parameters for %Coulomb bond short-range Potential */
 struct Bonded_coulomb_sr_bond_parameters {
   /** charge factor */
   double q1q2;
@@ -325,13 +346,6 @@ struct Bonded_ia_parameters {
 /** Field containing the parameters of the bonded ia types */
 extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 
-/** @brief Maximal interaction cutoff for bonded interactions (real space).
- *  This value must be as large as the maximal interaction range in the list
- *  of bonded interactions. This is necessary to ensure that in a parallel
- *  simulation, a compute node has access to both bond partners.
- */
-extern double max_cut_bonded;
-
 /** Makes sure that \ref bonded_ia_params is large enough to cover the
  *  parameters for the bonded interaction type.
  *  Attention: 1: There is no initialization done here.
@@ -422,10 +436,8 @@ inline bool pair_bond_enum_exists_between(Particle const *const p1,
  *  is set to twice the maximal cutoff because the particle in which the bond
  *  is stored is only bonded to the first two partners, one of which has an
  *  additional bond to the third partner.
- *
- *  The result is stored in global variable @ref max_cut_bonded.
  */
-void recalc_maximal_cutoff_bonded();
+double recalc_maximal_cutoff_bonded();
 
 int virtual_set_params(int bond_type);
 #endif

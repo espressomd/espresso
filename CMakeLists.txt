@@ -56,8 +56,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
-set(WITH_PYTHON yes)
-
+option(WITH_PYTHON "Build with Python bindings"  ON)
 option(WITH_GSL    "Build with GSL support"  ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
@@ -528,7 +527,9 @@ if(WITH_TESTS)
     set(WITH_UNIT_TESTS ON)
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
-  add_subdirectory(testsuite)
+  if(WITH_PYTHON)
+    add_subdirectory(testsuite)
+  endif(WITH_PYTHON)
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)
