@@ -129,6 +129,12 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 system.part[1].add_bond((harmonic_bond, 0))
+if 'LBTHERM' not in modes:
+    thermalized_bond = espressomd.interactions.ThermalizedBond(
+        temp_com=0.0, gamma_com=0.0, temp_distance=0.5, gamma_distance=1.0,
+        r_cut=5, seed=51)
+    system.bonded_inter.add(thermalized_bond)
+    system.part[1].add_bond((thermalized_bond, 0))
 checkpoint.register("system")
 checkpoint.register("acc")
 # calculate forces

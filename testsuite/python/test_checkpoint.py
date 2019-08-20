@@ -174,6 +174,12 @@ class CheckpointTest(ut.TestCase):
         reference = {'r_0': 0.0, 'k': 1.0}
         for key in reference.keys():
             self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
+        if 'LBTHERM' not in modes:
+            state = system.part[1].bonds[1][0].params
+            reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.5,
+                         'gamma_distance': 1.0, 'r_cut': 5.0, 'seed': 51}
+            for key in reference.keys():
+                self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
