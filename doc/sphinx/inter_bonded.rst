@@ -219,7 +219,7 @@ is named ``vtol``.
 .. _Thermalized distance bond:
 
 Thermalized distance bond
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A thermalized bond can be instantiated via
 :class:`espressomd.interactions.ThermalizedBond`::
