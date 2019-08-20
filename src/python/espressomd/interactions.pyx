@@ -2251,8 +2251,9 @@ class ThermalizedBond(BondedInteraction):
     r_cut: :obj:`float`, optional
         Specifies maximum distance beyond which the bond is considered broken.
     seed : :obj:`int`
-        Counter value of the philox RNG. Initially, this defines the seed of
-        the RNG. If prompted, it does not return the initially set counter value
+        Initial counter value (or seed) of the philox RNG.
+        Required on the first thermalized bond in the system. Must be positive.
+        If prompted, it does not return the initially set counter value
         (the seed) but the current state of the RNG.
    
     """
@@ -2295,15 +2296,16 @@ class ThermalizedBond(BondedInteraction):
         if self.params["seed"] is None and thermalized_bond_is_seed_required():
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermalized bond")
-        
         if self.params["seed"] is not None:
             utils.check_type_or_throw_except(
                 self.params["seed"], 1, int, "seed must be a positive integer")
+            if self.params["seed"] < 0:
+                raise ValueError("seed must be a positive integer")
             thermalized_bond_set_rng_state(self.params["seed"])
-            
+
         thermalized_bond_set_params(
-            self._bond_id, self._params["temp_com"], self._params["gamma_com"], self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"])
-        
+            self._bond_id, self._params["temp_com"], self._params["gamma_com"],
+            self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"])
 
 IF THOLE:
     cdef class TholeInteraction(NonBondedInteraction):
