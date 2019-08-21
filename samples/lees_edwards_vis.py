@@ -11,6 +11,7 @@ import numpy as np
 import argparse
 
 import espressomd
+from espressomd.lees_edwards import LinearShear
 from espressomd.visualization import openGLLive
 from espressomd.interactions import HarmonicBond
 
@@ -34,7 +35,7 @@ args = parser.parse_args()
 
 system = espressomd.System(box_l=[10, 10, 10], time_step=1e-2)
 system.cell_system.skin = 0.0
-system.cell_system.set_n_square()
+system.cell_system.set_n_square(use_verlet_lists=False)
 
 # DPD parameters
 n_part = 300
@@ -44,7 +45,7 @@ r_cut = 0.5
 F_max = 2.0
 
 # Activate the thermostat
-system.thermostat.set_dpd(kT=kT)
+system.thermostat.set_dpd(kT=kT, seed=7000216145369104669)
 system.set_random_state_PRNG()
 
 # Set up the DPD friction interaction
@@ -59,12 +60,16 @@ system.non_bonded_inter[0, 0].hat.set_params(F_max=F_max,
 pos = system.box_l * np.random.random((n_part, 3))
 system.part.add(pos=pos)
 
+
 if args.protocol == 'steady_shear':
-    system.lees_edwards.set_params(
-        type=args.protocol,
-        velocity=args.parameters[0])
+
+    system.lees_edwards.protocol = LinearShear(initial_pos_offset=0,
+                                               shear_velocity=args.parameters[0],
+                                               shear_direction=1,
+                                               shear_plane_normal=2)
+    print(system.lees_edwards.shear_velocity)
 else:
-    raise Exception('not impl')
+    raise Exception('not implemented')
 
 # for i in range(1000):
 #  system.integrator.run(steps=100)
