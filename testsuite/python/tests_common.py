@@ -596,23 +596,20 @@ def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
     return 4. * epsilon * (rr**-12 - rr**-6)
 
     
-    
-def calc_derivative(func, x, eps=1.0e-7, axis = None):
-    if(axis == None):   
-        x_plus  = np.copy(x) + eps
+def calc_derivative(func, x, eps=1.0e-7, axis=None):
+    if(axis is None):   
+        x_plus = np.copy(x) + eps
         x_minus = np.copy(x) - eps
         
     elif(axis >= 0):
-        x_plus  = np.copy(x)
+        x_plus = np.copy(x)
         x_minus = np.copy(x)        
-        x_plus[axis]    += eps
-        x_minus[axis]   -= eps   
+        x_plus[axis] += eps
+        x_minus[axis] -= eps   
     
-    return (func(x_plus) - func(x_minus)) / (2.0*eps)    
+    return (func(x_plus) - func(x_minus)) / (2.0 * eps)    
     
         
-
-
 class DynamicDict(dict):
 
     def __getitem__(self, key):
