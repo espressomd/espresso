@@ -596,6 +596,11 @@ def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
     return 4. * epsilon * (rr**-12 - rr**-6)
 
 
+def advance_particle(particle, step):
+    particle.pos = particle.pos +  step  
+        
+
+
 class DynamicDict(dict):
 
     def __getitem__(self, key):
