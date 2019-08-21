@@ -124,7 +124,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         E_ref = tests_common.lj_generic_potential(
             r=numpy.arange(1, 232) * self.step_width, eps=wca_eps, sig=wca_sig,
                 cutoff=wca_cutoff, shift=4. * wca_shift)
-        
+
         for i in range(231):
             self.system.part[1].pos = self.system.part[1].pos + self.step
             self.system.integrator.run(recalc_forces=True, steps=0)
@@ -587,153 +587,132 @@ class InteractionsNonBondedTest(ut.TestCase):
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
         self.system.non_bonded_inter[0, 0].gaussian.set_params(eps=0.)
-        
-    # Test the gay berne potential and the resulting force and torque
+
+    # Test the Gay-Berne potential and the resulting force and torque
     @utx.skipIfMissingFeatures("GAY_BERNE")
-    def test_gb(self):    
-        
-        # helper function definitions # 
-        def setup_system(gb_params):        
+    def test_gb(self):
+
+        # helper function definitions
+        def setup_system(gb_params):
             k_1, k_2, mu, nu, sigma_0, epsilon_0, cut = gb_params
-            
-            self.system.part.clear()            
+
+            self.system.part.clear()
             self.system.part.add(
                 id=0, pos=(1, 2, 3), rotation=(1, 1, 1), type=0)
             self.system.part.add(
                 id=1, pos=(2.2, 2.1, 2.9), rotation=(1, 1, 1), type=0)
-            
+
             self.system.non_bonded_inter[0, 0].gay_berne.set_params(
-                sig=sigma_0, 
-                                                                    cut=cut, 
-                                                                    eps=epsilon_0,
-     
-                                                                    k1=k_1, 
-                                                                    k2=k_2, 
-                                                                    mu=mu, 
-                                                                    nu=nu)
-            
+                sig=sigma_0, cut=cut, eps=epsilon_0, k1=k_1, k2=k_2, mu=mu,
+                nu=nu)
+
         def advance_and_rotate_part(particle):
             particle.pos = particle.pos + self.step
             particle.rotate(axis=(1, 2, 3), angle=0.3)
-            particle.rotate(axis=(1, -2, -4), angle=1.2)  
+            particle.rotate(axis=(1, -2, -4), angle=1.2)
 
         def get_simulation_energy():
             return self.system.analysis.energy()["non_bonded"]
-        
+
         def get_reference_energy(gb_params, r, director1, director2):
             k_1, k_2, mu, nu, sigma_0, epsilon_0, cut = gb_params
-            r_cut = r * cut / numpy.linalg.norm(r)           
-            
-            E_ref = tests_common.gay_berne_potential(r, 
-                                                     director1, 
-                                                     director2, 
-                                                     epsilon_0, 
-                                                     sigma_0, 
-                                                     mu, 
-                                                     nu, 
-                                                     k_1, 
-                                                     k_2)
-            
-            E_ref -= tests_common.gay_berne_potential(r_cut, 
-                                                      director1, 
-                                                      director2, 
-                                                      epsilon_0, 
-                                                      sigma_0, 
-                                                      mu, 
-                                                      nu, 
-                                                      k_1, 
-                                                      k_2)
+            r_cut = r * cut / numpy.linalg.norm(r)
+
+            E_ref = tests_common.gay_berne_potential(
+                r, director1, director2, epsilon_0, sigma_0, mu, nu, k_1, k_2)
+
+            E_ref -= tests_common.gay_berne_potential(
+                r_cut, director1, director2, epsilon_0, sigma_0, mu, nu,
+                k_1, k_2)
             return E_ref
-        
+
         def get_reference_force(gb_params, r, dir1, dir2):
-            force_ref = numpy.zeros(3)        
+            force_ref = numpy.zeros(3)
             for i in range(3):
                 force_ref[i] = tests_common.calc_derivative(
                     lambda x: get_reference_energy(gb_params, x, dir1, dir2),
-                                                             x=r,
-                                                             index=i)
-            
+                    x=r, index=i)
+
             return -force_ref
-        
+
         def get_reference_torque(gb_params, r, dir1, dir2):
-            force_in_dir1 = numpy.zeros(3)      
+            force_in_dir1 = numpy.zeros(3)
             for i in range(3):
                 force_in_dir1[i] = tests_common.calc_derivative(
                     lambda x: get_reference_energy(gb_params, r, x, dir2),
-                                                                 x=dir1,
-                                                                 index=i)
-                
-            torque_ref = numpy.cross(-dir1, force_in_dir1)          
-            return torque_ref           
-         
-        # actual tests of the gb potential # 
-        
+                    x=dir1, index=i)
+
+            torque_ref = numpy.cross(-dir1, force_in_dir1)
+            return torque_ref
+
+        # actual tests of the gb potential
+
         k_1 = 1.2
         k_2 = 2.4
         mu = 2.
         nu = 5.
         sigma_0 = 1.2
         epsilon_0 = 0.8
-        cut = 3.3 
-        
+        cut = 3.3
+
         gb_params = (k_1, k_2, mu, nu, sigma_0, epsilon_0, cut)
-        
-        setup_system(gb_params)        
-        
+
+        setup_system(gb_params)
+
         p1 = self.system.part[0]
-        p2 = self.system.part[1]   
-        
+        p2 = self.system.part[1]
+
         delta = 1.0e-7
-        
+
         for _ in range(100):
-            
-            advance_and_rotate_part(p2)            
-            self.system.integrator.run(recalc_forces=True, steps=0)            
-            
+
+            advance_and_rotate_part(p2)
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
             r = self.system.distance_vec(p1, p2)
             director1 = p1.director
-            director2 = p2.director           
-            
+            director2 = p2.director
+
             # Calc energies
             E_sim = get_simulation_energy()
-            E_ref = get_reference_energy(gb_params, r, director1, director2)              
+            E_ref = get_reference_energy(gb_params, r, director1, director2)
             # Test energies
-            self.assertAlmostEqual(E_sim, E_ref, delta=delta)   
-            
+            self.assertAlmostEqual(E_sim, E_ref, delta=delta)
+
             # Calc forces
             f1_sim = p1.f
-            f2_sim = p2.f            
-            f2_ref = get_reference_force(gb_params, r, director1, director2)            
+            f2_sim = p2.f
+            f2_ref = get_reference_force(gb_params, r, director1, director2)
             # Test forces
-            # force equals minus the counter-force 
-            self.assertTrue((f1_sim == -f2_sim).all())            
+            # force equals minus the counter-force
+            self.assertTrue((f1_sim == -f2_sim).all())
             # compare force to reference force
             for i in range(3):
-                self.assertAlmostEqual(f2_sim[i], f2_ref[i], delta=delta)            
-            
+                self.assertAlmostEqual(f2_sim[i], f2_ref[i], delta=delta)
+
             # Calc torques
             torque1_sim = p1.torque_lab
-            torque2_sim = p2.torque_lab            
+            torque2_sim = p2.torque_lab
             torque1_ref = get_reference_torque(
                 gb_params, r, director1, director2)
             torque2_ref = get_reference_torque(
-                gb_params, r, director2, director1)        
+                gb_params, r, director2, director1)
             # Test torques
             for i in range(3):
                 self.assertAlmostEqual(
                     torque1_sim[i],
                     torque1_ref[i],
-                    delta=delta)            
+                    delta=delta)
                 self.assertAlmostEqual(
                     torque2_sim[i],
                     torque2_ref[i],
-                    delta=delta)   
-                   
+                    delta=delta)
+
         # Test zero energy
         self.system.non_bonded_inter[0, 0].gay_berne.set_params(
             sig=sigma_0, cut=0, eps=0, k1=k_1, k2=k_2, mu=mu, nu=nu)
         self.system.integrator.run(0)
-        self.assertEqual(self.system.analysis.energy()["non_bonded"], 0.0)     
+        self.assertEqual(self.system.analysis.energy()["non_bonded"], 0.0)
 
 
 if __name__ == '__main__':
