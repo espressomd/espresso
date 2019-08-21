@@ -57,73 +57,78 @@ inline void add_gb_pair_force(Particle const *const p1,
   auto const a = d * u1;
   auto const b = d * u2;
   auto const c = u1 * u2;
-  auto const E1 = 1 / sqrt(1 - ia_params->gay_berne.chi1 *
-                                   ia_params->gay_berne.chi1 * c * c);
+  auto const E1 = 1 / sqrt(1 - ia_params->gay_berne.chi1 * 
+							ia_params->gay_berne.chi1 * c * c);
   auto const Plus1 = (a + b) / (1 + ia_params->gay_berne.chi1 * c);
   auto const Plus2 = (a + b) / (1 + ia_params->gay_berne.chi2 * c);
   auto const Minus1 = (a - b) / (1 - ia_params->gay_berne.chi1 * c);
   auto const Minus2 = (a - b) / (1 - ia_params->gay_berne.chi2 * c);
   auto const Brhi2 = (ia_params->gay_berne.chi2 / dist / dist) *
                      (Plus2 * (a + b) + Minus2 * (a - b));
+                     
   auto const E2 = 1 - 0.5 * Brhi2;
   auto const E = 4 * ia_params->gay_berne.eps *
                  pow(E1, ia_params->gay_berne.nu) *
                  pow(E2, ia_params->gay_berne.mu);
   auto const Brhi1 = (ia_params->gay_berne.chi1 / dist / dist) *
                      (Plus1 * (a + b) + Minus1 * (a - b));
+                     
   auto const Sigma = ia_params->gay_berne.sig / sqrt(1 - 0.5 * Brhi1);
   auto Koef1 = ia_params->gay_berne.mu / E2;
   auto Koef2 = int_pow<3>(Sigma) * 0.5 / int_pow<3>(ia_params->gay_berne.sig);
 
   auto const X =
-      ia_params->gay_berne.sig / (dist - Sigma + ia_params->gay_berne.sig);
+      ia_params->gay_berne.sig / 
+      (dist - Sigma + ia_params->gay_berne.sig);
   auto const Xcut =
       ia_params->gay_berne.sig /
       (ia_params->gay_berne.cut - Sigma + ia_params->gay_berne.sig);
 
-    auto const X6 = int_pow<6>(X);
-    auto const Xcut6 = int_pow<6>(Xcut);
+  auto const X6 = int_pow<6>(X);
+  auto const Xcut6 = int_pow<6>(Xcut);
 
-    auto const Bra12 = 6 * X6 * X * (2 * X6 - 1);
-    auto const Bra12Cut = 6 * Xcut6 * Xcut * (2 * Xcut6 - 1);
-    auto const Brack = X6 * (X6 - 1);
-    auto const BrackCut = Xcut6 * (Xcut6 - 1);
+  auto const Bra12 = 6 * X6 * X * (2 * X6 - 1);
+  auto const Bra12Cut = 6 * Xcut6 * Xcut * (2 * Xcut6 - 1);
+  auto const Brack = X6 * (X6 - 1);
+  auto const BrackCut = Xcut6 * (Xcut6 - 1);
 
-    /*-------- Here we calculate derivatives -----------------------------*/
+  /*-------- Here we calculate derivatives -----------------------------*/
 
-    auto const dU_dr = E *
-                       (Koef1 * Brhi2 * (Brack - BrackCut) -
-                        Koef2 * Brhi1 * (Bra12 - Bra12Cut) - Bra12 * dist / ia_params->gay_berne.sig) /
-                       sqr(dist);
-    Koef1 *= ia_params->gay_berne.chi2 / sqr(dist);
-    Koef2 *= ia_params->gay_berne.chi1 / sqr(dist);
-    auto const dU_da = E * (Koef1 * (Minus2 + Plus2) * (BrackCut - Brack) +
-                            Koef2 * (Plus1 + Minus1) * (Bra12 - Bra12Cut));
-    auto const dU_db = E * (Koef1 * (Minus2 - Plus2) * (Brack - BrackCut) +
-                            Koef2 * (Plus1 - Minus1) * (Bra12 - Bra12Cut));
-    auto const dU_dc =
-        E * ((Brack - BrackCut) * (ia_params->gay_berne.nu *
-                                       sqr(E1 * ia_params->gay_berne.chi1) * c +
-                                   0.5 * Koef1 * ia_params->gay_berne.chi2 *
-                                       (sqr(Plus2) - sqr(Minus2))) -
-             (Bra12 - Bra12Cut) * 0.5 * Koef2 * ia_params->gay_berne.chi1 *
-                 (sqr(Plus1) - sqr(Minus1)));
+  auto const dU_dr = E *
+                     (Koef1 * Brhi2 * (Brack - BrackCut) -
+                      Koef2 * Brhi1 * (Bra12 - Bra12Cut) - 
+                      Bra12 * dist / ia_params->gay_berne.sig) / sqr(dist);
+                      
+  Koef1 *= ia_params->gay_berne.chi2 / sqr(dist);
+  Koef2 *= ia_params->gay_berne.chi1 / sqr(dist);
+  
+  auto const dU_da = E * (Koef1 * (Minus2 + Plus2) * (BrackCut - Brack) +
+                          Koef2 * (Plus1 + Minus1) * (Bra12 - Bra12Cut));
+  auto const dU_db = E * (Koef1 * (Minus2 - Plus2) * (Brack - BrackCut) +
+                          Koef2 * (Plus1 - Minus1) * (Bra12 - Bra12Cut));
+  auto const dU_dc =
+      E * ((Brack - BrackCut) * (ia_params->gay_berne.nu *
+      sqr(E1 * ia_params->gay_berne.chi1) * c +
+      0.5 * Koef1 * ia_params->gay_berne.chi2 *
+      (sqr(Plus2) - sqr(Minus2))) -
+      (Bra12 - Bra12Cut) * 0.5 * Koef2 * ia_params->gay_berne.chi1 *
+      (sqr(Plus1) - sqr(Minus1)));
 
-    /*--------------------------------------------------------------------*/
+  /*--------------------------------------------------------------------*/
 
-    force -= dU_dr * d + dU_da * u1 + dU_db * u2;
+  force -= dU_dr * d + dU_da * u1 + dU_db * u2;
 
-    if (torque1 != nullptr) {
-      /* calculate torque:  torque = u_1 x G   */
-      auto const G2 = -dU_da * d - dU_dc * u2;
-      *torque1 += vector_product(u1, G2);
+  if (torque1 != nullptr) {
+    /* calculate torque:  torque = u_1 x G   */
+    auto const G2 = -dU_da * d - dU_dc * u2;
+    *torque1 += vector_product(u1, G2);
 
-      if (torque2 != nullptr) {
-        /* calculate torque:  torque = u_2 x G     */
-        auto const G1 = -dU_db * d - dU_dc * u1;
-        *torque2 += vector_product(u2, G1);
-      }
+    if (torque2 != nullptr) {
+      /* calculate torque:  torque = u_2 x G     */
+      auto const G1 = -dU_db * d - dU_dc * u1;
+      *torque2 += vector_product(u2, G1);
     }
+  }
 }
 
 inline double gb_pair_energy(Particle const *const p1, Particle const *const p2,

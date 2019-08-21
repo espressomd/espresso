@@ -593,7 +593,10 @@ class InteractionsNonBondedTest(ut.TestCase):
         
     # Test the gay berne potential and the resulting force and torque
     @utx.skipIfMissingFeatures("GAY_BERNE")
-    def test_gb(self):       
+    def test_gb(self):    
+        
+        
+        # helper function definitions # 
         def setup_system(gb_params):        
             k_1, k_2, mu, nu, sigma_0, epsilon_0, cut = gb_params;
             
@@ -659,10 +662,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                                                                  axis=i)
                 
             torque_ref = numpy.cross( -dir1, force_in_dir1 )          
-            return torque_ref
-            
-        
-        
+            return torque_ref           
+         
+        # actual tests of the gb potential # 
         
         k_1 = 1.2
         k_2 = 2.4
@@ -681,7 +683,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         
         delta = 1.0e-7
         
-        for i in range(100):
+        for _ in range(100):
             
             advance_and_rotate_part(p2)            
             self.system.integrator.run(recalc_forces=True, steps=0)            
