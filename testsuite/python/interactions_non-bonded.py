@@ -651,7 +651,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                 force_ref[i] = tests_common.calc_derivative(
                     lambda x: get_reference_energy(gb_params, x, dir1, dir2),
                                                              x=r,
-                                                             axis=i)
+                                                             index=i)
             
             return -force_ref
         
@@ -661,7 +661,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                 force_in_dir1[i] = tests_common.calc_derivative(
                     lambda x: get_reference_energy(gb_params, r, x, dir2),
                                                                  x=dir1,
-                                                                 axis=i)
+                                                                 index=i)
                 
             torque_ref = numpy.cross(-dir1, force_in_dir1)          
             return torque_ref           
