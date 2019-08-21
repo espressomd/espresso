@@ -176,8 +176,8 @@ class CheckpointTest(ut.TestCase):
             self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
         if 'LBTHERM' not in modes:
             state = system.part[1].bonds[1][0].params
-            reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.5,
-                         'gamma_distance': 1.0, 'r_cut': 5.0, 'seed': 51}
+            reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
+                         'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
             for key in reference.keys():
                 self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
 
