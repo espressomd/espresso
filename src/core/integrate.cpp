@@ -309,7 +309,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef LEES_EDWARDS
     // Note that sim_time has already been propagated, here
     box_geo.lees_edwards_state.update(box_geo.lees_edwards_protocol,
-                                      sim_time - time_step,
+                                      sim_time,
                                       sim_time - time_step / 2);
 #endif
 
