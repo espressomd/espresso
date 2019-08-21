@@ -73,18 +73,13 @@ inline void add_gb_pair_force(Particle const *const p1,
                      (Plus1 * (a + b) + Minus1 * (a - b));
   auto const Sigma = ia_params->gay_berne.sig / sqrt(1 - 0.5 * Brhi1);
   auto Koef1 = ia_params->gay_berne.mu / E2;
-  auto Koef2 = int_pow<3>(Sigma) * 0.5;
+  auto Koef2 = int_pow<3>(Sigma) * 0.5 / int_pow<3>(ia_params->gay_berne.sig);
 
   auto const X =
       ia_params->gay_berne.sig / (dist - Sigma + ia_params->gay_berne.sig);
   auto const Xcut =
       ia_params->gay_berne.sig /
       (ia_params->gay_berne.cut - Sigma + ia_params->gay_berne.sig);
-
-  if (X < 1.25) { /* 1.25 corresponds to the interparticle penetration of 0.2
-                    units of length.
-                    If they are not that close, the GB forces and torques are
-                    calculated */
 
     auto const X6 = int_pow<6>(X);
     auto const Xcut6 = int_pow<6>(Xcut);
@@ -98,7 +93,7 @@ inline void add_gb_pair_force(Particle const *const p1,
 
     auto const dU_dr = E *
                        (Koef1 * Brhi2 * (Brack - BrackCut) -
-                        Koef2 * Brhi1 * (Bra12 - Bra12Cut) - Bra12 * dist) /
+                        Koef2 * Brhi1 * (Bra12 - Bra12Cut) - Bra12 * dist / ia_params->gay_berne.sig) /
                        sqr(dist);
     Koef1 *= ia_params->gay_berne.chi2 / sqr(dist);
     Koef2 *= ia_params->gay_berne.chi1 / sqr(dist);
@@ -129,10 +124,6 @@ inline void add_gb_pair_force(Particle const *const p1,
         *torque2 += vector_product(u2, G1);
       }
     }
-  } else { /* the particles are too close to each other */
-    Koef1 = 100;
-    force += Koef1 * d;
-  }
 }
 
 inline double gb_pair_energy(Particle const *const p1, Particle const *const p2,

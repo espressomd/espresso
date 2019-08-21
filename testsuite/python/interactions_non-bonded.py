@@ -614,10 +614,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             
         def rotate_part(particle):
             particle.rotate(axis=(1, 2, 3), angle=0.3)
-            particle.rotate(axis=(1, -2, -4), angle=1.2)
-                
-        def get_simulation_energy():
-            return self.system.analysis.energy()["non_bonded"]
+            particle.rotate(axis=(1, -2, -4), angle=1.2)                
         
         def get_reference_energy(gb_params, r, director1, director2):
             k_1, k_2, mu, nu, sigma_0, epsilon_0, cut = gb_params;            
@@ -647,6 +644,18 @@ class InteractionsNonBondedTest(ut.TestCase):
             
             return E_ref
         
+        def get_reference_force(gb_params, r, dir1, dir2):
+                
+            force_ref = numpy.zeros(3)        
+            
+            for i in range(3):
+                force_ref[i] = tests_common.calc_derivative(lambda x : get_reference_energy(gb_params, x, dir1, dir2),
+                                                             x=r,
+                                                             axis=i)
+            
+            
+            return force_ref
+            
         
         
         
@@ -663,7 +672,9 @@ class InteractionsNonBondedTest(ut.TestCase):
         setup_system(gb_params)        
         
         p1 = self.system.part[0]
-        p2 = self.system.part[1]     
+        p2 = self.system.part[1]   
+        
+        delta = 1.0e-7
         
         for i in range(111):
             
@@ -678,11 +689,25 @@ class InteractionsNonBondedTest(ut.TestCase):
             
             
             # Calc energies
-            E_sim = get_simulation_energy()
+            E_sim = self.system.analysis.energy()["non_bonded"]
             E_ref = get_reference_energy(gb_params, r, director1, director2)  
             
             # Test energies
-            self.assertAlmostEqual(E_sim, E_ref)   
+            self.assertAlmostEqual(E_sim, E_ref, delta=delta)   
+            
+            # Calc forces
+            f1_sim = p1.f
+            f2_sim = p2.f
+            
+            f1_ref = get_reference_force(gb_params, r, director1, director2)
+            
+            # Test forces
+            # force equals minus the counter-force 
+            self.assertTrue((f1_sim == -f2_sim).all())            
+            # compare force to reference force
+            self.assertAlmostEqual(f1_sim[0], f1_ref[0], delta=delta)
+            self.assertAlmostEqual(f1_sim[1], f1_ref[1], delta=delta)
+            self.assertAlmostEqual(f1_sim[2], f1_ref[2], delta=delta)
             
 
         
