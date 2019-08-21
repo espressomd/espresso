@@ -76,6 +76,8 @@
 #include "dpd.hpp"
 #endif
 
+#include "debug.hpp"
+
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(const Particle *) { return {}; }
 
