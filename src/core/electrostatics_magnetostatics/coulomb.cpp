@@ -108,7 +108,7 @@ double cutoff(const Utils::Vector3d &box_l) {
   case COULOMB_MMM1D:
     return std::numeric_limits<double>::infinity();
   case COULOMB_MMM2D:
-    return 1e-40;
+    return std::numeric_limits<double>::min();
 #ifdef P3M
   case COULOMB_ELC_P3M:
     return std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);
