@@ -151,7 +151,7 @@ cdef class ParticleHandle:
 
         def __set__(self, _pos):
             cdef double mypos[3]
-            if np.isnan(pos).any() or np.isinf(pos).any():
+            if np.isnan(_pos).any() or np.isinf(_pos).any():
                 raise ValueError("invalid particle position")
             check_type_or_throw_except(
                 _pos, 3, float, "Position must be 3 floats")
