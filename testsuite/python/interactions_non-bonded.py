@@ -662,7 +662,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         p1 = self.system.part[0]
         p2 = self.system.part[1]
 
-        delta = 1.0e-7
+        delta = 1.0e-6
 
         for _ in range(100):
 
