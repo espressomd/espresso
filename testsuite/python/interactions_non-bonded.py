@@ -593,6 +593,46 @@ class InteractionsNonBondedTest(ut.TestCase):
     def test_gb(self):
 
         # helper function definitions
+        def calc_partial_derivatives(func, x0, dx=1.0e-7):    
+            """
+            Approximate all the partial derivatives of a function at a point x0 
+            using the two-point central difference formula with spacing 2dx.
+        
+            Parameters
+            ----------
+            func: :obj:`function`
+                function from which the derivative is calculated
+            x0: (N,) array_like of :obj:`float`
+                Point in N-dimensional space where the derivatives are calculated
+            dx: :obj:`float`, optional
+                Spacing
+            Returns
+            -------
+            array_like of obj:`float` or :obj:`float` (if x0 is unidimensional)
+                the partial derivatives    
+            """       
+            
+            unidimensional = not numpy.array(x0).shape
+            if unidimensional:
+                x0 = [x0]        
+                
+            derivs = []
+            
+            for i, _ in enumerate(x0):
+                x_plus = numpy.array(x0, dtype=float)
+                x_minus = numpy.array(x0, dtype=float)        
+                x_plus[i] += dx
+                x_minus[i] -= dx
+                
+                derivs.append((func(x_plus) - func(x_minus)) / (2.0 * dx))    
+                
+            if unidimensional:
+                derivs = derivs[0]
+            else:
+                derivs = numpy.array(derivs)
+
+            return derivs
+        
         def setup_system(gb_params):
             k_1, k_2, mu, nu, sigma_0, epsilon_0, cut = gb_params
 
@@ -626,24 +666,19 @@ class InteractionsNonBondedTest(ut.TestCase):
                 k_1, k_2)
             return E_ref
 
-        def get_reference_force(gb_params, r, dir1, dir2):
-            force_ref = numpy.zeros(3)
-            for i in range(3):
-                force_ref[i] = tests_common.calc_derivative(
+        def get_reference_force(gb_params, r, dir1, dir2):          
+            force_ref = calc_partial_derivatives(
                     lambda x: get_reference_energy(gb_params, x, dir1, dir2),
-                    x=r, index=i)
+                    x0=r, dx=1.0e-7)
 
             return -force_ref
 
         def get_reference_torque(gb_params, r, dir1, dir2):
-            force_in_dir1 = numpy.zeros(3)
-            for i in range(3):
-                force_in_dir1[i] = tests_common.calc_derivative(
+            force_in_dir1 = calc_partial_derivatives(
                     lambda x: get_reference_energy(gb_params, r, x, dir2),
-                    x=dir1, index=i)
+                    x0=dir1, dx=1.0e-7)
 
-            torque_ref = numpy.cross(-dir1, force_in_dir1)
-            return torque_ref
+            return numpy.cross(-dir1, force_in_dir1)
 
         # actual tests of the gb potential
 
