@@ -6,6 +6,7 @@ double coulomb_cutoff;
 
 #ifdef ELECTROSTATICS
 #include "communication.hpp"
+#include "debug.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
