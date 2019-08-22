@@ -2166,13 +2166,19 @@ class ThermalizedBond(BondedInteraction):
         Friction coefficient of the Langevin thermostat for the center of mass
         of the particle pair.
     temp_distance: :obj:`float`
-        Tmperature of the Langevin thermostat for the distance vector
+        Temperature of the Langevin thermostat for the distance vector
         of the particle pair.
     gamma_distance: :obj:`float`
         Friction coefficient of the Langevin thermostat for the
         distance vector of the particle pair.
     r_cut: :obj:`float`, optional
         Maximum distance beyond which the bond is considered broken.
+    seed : :obj:`int`
+        Initial counter value (or seed) of the philox RNG.
+        Required on the first thermalized bond in the system. Must be positive.
+        If prompted, it does not return the initially set counter value
+        (the seed) but the current state of the RNG.
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -2185,13 +2191,13 @@ class ThermalizedBond(BondedInteraction):
         return "THERMALIZED_DIST"
 
     def valid_keys(self):
-        return {"temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut"}
+        return {"temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut", "seed"}
 
     def required_keys(self):
         return {"temp_com", "gamma_com", "temp_distance", "gamma_distance"}
 
     def set_default_params(self):
-        self._params = {"r_cut": 0.}
+        self._params = {"r_cut": 0., "seed": None}
 
     def _get_params_from_es_core(self):
         return \
@@ -2204,9 +2210,21 @@ class ThermalizedBond(BondedInteraction):
              "gamma_distance":
                  bonded_ia_params[
                      self._bond_id].p.thermalized_bond.gamma_distance,
-             "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut}
+             "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut,
+             "seed": thermalized_bond_get_rng_state()
+             }
 
     def _set_params_in_es_core(self):
+        if self.params["seed"] is None and thermalized_bond_is_seed_required():
+            raise ValueError(
+                "A seed has to be given as keyword argument on first activation of the thermalized bond")
+        if self.params["seed"] is not None:
+            utils.check_type_or_throw_except(
+                self.params["seed"], 1, int, "seed must be a positive integer")
+            if self.params["seed"] < 0:
+                raise ValueError("seed must be a positive integer")
+            thermalized_bond_set_rng_state(self.params["seed"])
+
         thermalized_bond_set_params(
             self._bond_id, self._params["temp_com"], self._params["gamma_com"],
             self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"])

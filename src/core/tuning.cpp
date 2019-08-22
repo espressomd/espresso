@@ -22,6 +22,7 @@
     Implementation of tuning.hpp .
 */
 #include "communication.hpp"
+#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
@@ -103,9 +104,9 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
   double a = min_skin;
   double b = max_skin;
   double time_a, time_b;
-
-  auto const min_local_box_l = *boost::min_element(local_geo.length());
-  double const max_permissible_skin = 0.5 * min_local_box_l - max_cut;
+  double min_cell_size =
+      std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
+  double const max_permissible_skin = min_cell_size - max_cut;
 
   if (adjust_max_skin and max_skin > max_permissible_skin)
     b = max_permissible_skin;

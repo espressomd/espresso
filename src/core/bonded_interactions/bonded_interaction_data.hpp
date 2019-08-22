@@ -3,6 +3,7 @@
 
 #include "TabulatedPotential.hpp"
 #include "particle_data.hpp"
+#include <utils/Counter.hpp>
 
 /** @file
  *  Data structures for bonded interactions.
