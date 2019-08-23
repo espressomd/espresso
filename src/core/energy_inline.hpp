@@ -97,57 +97,57 @@ inline double calc_non_bonded_pair_energy(Particle const *const p1,
 #endif
 #ifdef WCA
   /* WCA */
-  ret += wca_pair_energy(p1, p2, ia_params, d, dist);
+  ret += wca_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
   /* Generic Lennard-Jones */
-  ret += ljgen_pair_energy(p1, p2, ia_params, d, dist);
+  ret += ljgen_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef SMOOTH_STEP
   /* smooth step */
-  ret += SmSt_pair_energy(p1, p2, ia_params, d, dist, dist2);
+  ret += SmSt_pair_energy(ia_params, d, dist, dist2);
 #endif
 
 #ifdef HERTZIAN
   /* Hertzian potential */
-  ret += hertzian_pair_energy(p1, p2, ia_params, d, dist, dist2);
+  ret += hertzian_pair_energy(ia_params, d, dist, dist2);
 #endif
 
 #ifdef GAUSSIAN
   /* Gaussian potential */
-  ret += gaussian_pair_energy(p1, p2, ia_params, d, dist, dist2);
+  ret += gaussian_pair_energy(ia_params, d, dist, dist2);
 #endif
 
 #ifdef BMHTF_NACL
   /* BMHTF NaCl */
-  ret += BMHTF_pair_energy(p1, p2, ia_params, d, dist, dist2);
+  ret += BMHTF_pair_energy(ia_params, d, dist, dist2);
 #endif
 
 #ifdef MORSE
   /* Morse */
-  ret += morse_pair_energy(p1, p2, ia_params, d, dist);
+  ret += morse_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef BUCKINGHAM
   /* Buckingham */
-  ret += buck_pair_energy(p1, p2, ia_params, d, dist);
+  ret += buck_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef SOFT_SPHERE
   /* soft-sphere */
-  ret += soft_pair_energy(p1, p2, ia_params, d, dist);
+  ret += soft_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef HAT
   /* hat */
-  ret += hat_pair_energy(p1, p2, ia_params, d, dist);
+  ret += hat_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef LJCOS2
   /* Lennard-Jones */
-  ret += ljcos2_pair_energy(p1, p2, ia_params, d, dist);
+  ret += ljcos2_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef THOLE
@@ -157,17 +157,18 @@ inline double calc_non_bonded_pair_energy(Particle const *const p1,
 
 #ifdef TABULATED
   /* tabulated */
-  ret += tabulated_pair_energy(p1, p2, ia_params, d, dist);
+  ret += tabulated_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef LJCOS
   /* Lennard-Jones cosine */
-  ret += ljcos_pair_energy(p1, p2, ia_params, d, dist);
+  ret += ljcos_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef GAY_BERNE
   /* Gay-Berne */
-  ret += gb_pair_energy(p1, p2, ia_params, d, dist);
+  ret += gb_pair_energy(p1->r.calc_director(), p2->r.calc_director(), ia_params,
+                        d, dist);
 #endif
 
   return ret;

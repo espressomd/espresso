@@ -51,10 +51,8 @@ inline double soft_energy_r(double a, double n, double r) {
   return (a / pow(r, n));
 }
 
-/** Calculate soft-sphere potential force between particle p1 and p2 */
-inline void add_soft_pair_force(Particle const *const p1,
-                                Particle const *const p2,
-                                IA_parameters const *const ia_params,
+/** Calculate soft-sphere force */
+inline void add_soft_pair_force(IA_parameters const *const ia_params,
                                 Utils::Vector3d const &d, double dist,
                                 Utils::Vector3d &force) {
   double fac = 0.0;
@@ -70,10 +68,8 @@ inline void add_soft_pair_force(Particle const *const p1,
   }
 }
 
-/** Calculate soft-sphere energy between particle p1 and p2. */
-inline double soft_pair_energy(Particle const *const p1,
-                               Particle const *const p2,
-                               IA_parameters const *const ia_params,
+/** Calculate soft-sphere energy */
+inline double soft_pair_energy(IA_parameters const *const ia_params,
                                Utils::Vector3d const &d, double dist) {
   if (dist < (ia_params->soft_sphere.cut + ia_params->soft_sphere.offset)) {
     auto const r_off = dist - ia_params->soft_sphere.offset;

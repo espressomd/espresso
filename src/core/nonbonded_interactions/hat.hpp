@@ -51,10 +51,8 @@ inline double hat_energy_r(double Fmax, double r, double dist) {
   return dist < r ? Fmax * (dist - r) * ((dist + r) / (2.0 * r) - 1.0) : 0.0;
 }
 
-/** Calculate hat potential force between particle p1 and p2. */
-inline void add_hat_pair_force(Particle const *const p1,
-                               Particle const *const p2,
-                               IA_parameters const *const ia_params,
+/** Calculate hat force */
+inline void add_hat_pair_force(IA_parameters const *const ia_params,
                                Utils::Vector3d const &d, double dist,
                                Utils::Vector3d &force) {
   if (dist > 0. && dist < ia_params->hat.r) {
@@ -64,10 +62,8 @@ inline void add_hat_pair_force(Particle const *const p1,
   }
 }
 
-/** Calculate hat energy between particle p1 and p2. */
-inline double hat_pair_energy(Particle const *const p1,
-                              Particle const *const p2,
-                              IA_parameters const *const ia_params,
+/** Calculate hat energy */
+inline double hat_pair_energy(IA_parameters const *const ia_params,
                               Utils::Vector3d const &d, double dist) {
   if (dist < ia_params->hat.r) {
     return hat_energy_r(ia_params->hat.Fmax, ia_params->hat.r, dist);

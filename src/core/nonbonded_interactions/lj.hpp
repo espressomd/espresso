@@ -41,7 +41,7 @@ int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
                              double sig, double cut, double shift,
                              double offset, double min);
 
-/** Calculate Lennard-Jones force between particle p1 and p2 */
+/** Calculate Lennard-Jones force */
 inline void add_lj_pair_force(IA_parameters const *ia_params,
                               Utils::Vector3d const &d, double dist,
                               Utils::Vector3d &force) {
@@ -55,7 +55,7 @@ inline void add_lj_pair_force(IA_parameters const *ia_params,
   }
 }
 
-/** Calculate Lennard-Jones energy between particle p1 and p2. */
+/** Calculate Lennard-Jones energy */
 inline double lj_pair_energy(IA_parameters const *ia_params, double dist) {
   if ((dist < ia_params->lj.cut + ia_params->lj.offset) &&
       (dist > ia_params->lj.min + ia_params->lj.offset)) {

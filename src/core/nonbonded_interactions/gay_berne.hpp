@@ -38,8 +38,9 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double sig, double cut, double k1, double k2,
                          double mu, double nu);
 
-inline void add_gb_pair_force(Particle const *const p1,
-                              Particle const *const p2,
+/** Calculate Gay-Berne force and torques */
+inline void add_gb_pair_force(Utils::Vector3d const &ui,
+                              Utils::Vector3d const &uj,
                               IA_parameters const *const ia_params,
                               Utils::Vector3d const &d, double dist,
                               Utils::Vector3d &force,
@@ -58,8 +59,6 @@ inline void add_gb_pair_force(Particle const *const p1,
   auto const chi2 = ia_params->gay_berne.chi2;
   auto const mu = ia_params->gay_berne.mu;
   auto const nu = ia_params->gay_berne.nu;
-  auto const ui = p1->r.calc_director();
-  auto const uj = p2->r.calc_director();
   auto const r = Utils::Vector3d(d).normalize();
   auto const dui = d * ui;
   auto const duj = d * uj;
@@ -133,7 +132,9 @@ inline void add_gb_pair_force(Particle const *const p1,
   }
 }
 
-inline double gb_pair_energy(Particle const *const p1, Particle const *const p2,
+/** Calculate Gay-Berne energy */
+inline double gb_pair_energy(Utils::Vector3d const &ui,
+                             Utils::Vector3d const &uj,
                              IA_parameters const *const ia_params,
                              Utils::Vector3d const &d, double dist) {
   using Utils::int_pow;
@@ -151,8 +152,6 @@ inline double gb_pair_energy(Particle const *const p1, Particle const *const p2,
   auto const nu = ia_params->gay_berne.nu;
   auto const r = Utils::Vector3d(d).normalize();
 
-  auto const ui = p1->r.calc_director();
-  auto const uj = p2->r.calc_director();
   auto const uij = ui * uj;
   auto const rui = r * ui;
   auto const ruj = r * uj;

@@ -39,9 +39,8 @@
 int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset);
 
-inline void add_ljcos_pair_force(Particle const *const p1,
-                                 Particle const *const p2,
-                                 IA_parameters const *const ia_params,
+/** Calculate Lennard-Jones cosine force */
+inline void add_ljcos_pair_force(IA_parameters const *const ia_params,
                                  Utils::Vector3d const &d, double dist,
                                  Utils::Vector3d &force) {
   if ((dist < ia_params->ljcos.cut + ia_params->ljcos.offset)) {
@@ -64,9 +63,8 @@ inline void add_ljcos_pair_force(Particle const *const p1,
   }
 }
 
-inline double ljcos_pair_energy(Particle const *const p1,
-                                Particle const *const p2,
-                                IA_parameters const *const ia_params,
+/** Calculate Lennard-Jones cosine energy */
+inline double ljcos_pair_energy(IA_parameters const *const ia_params,
                                 Utils::Vector3d const &d, double dist) {
   if (dist < (ia_params->ljcos.cut + ia_params->ljcos.offset)) {
     auto const r_off = dist - ia_params->ljcos.offset;
