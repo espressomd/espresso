@@ -1397,9 +1397,25 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
   }
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(
+    Utils::Vector6d stress = ::Communication::mpiCallbacks().call(
         ::Communication::Result::one_rank, Walberla::get_node_pressure_tensor,
         ind);
+
+    //subtract offset of the diagonals to get the neq tensor
+    auto const p0 = (lb_lbfluid_get_density()-1.0) * D3Q19::c_sound_sq<double>;
+    //reverts the correction done by walberla
+    auto const revert_factor = lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() + 1.0/6.0);
+    //uses a factor which gets us the correct results
+    auto const factor = lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() - 1.0/6.0) * lb_lbfluid_get_density();
+
+    stress[1] /= revert_factor / factor;
+    stress[3] /= revert_factor / factor;
+    stress[4] /= revert_factor / factor;
+
+    stress[0] -= p0;
+    stress[2] -= p0;
+    stress[5] -= p0;
+    return stress;
   }
 #endif
   throw std::runtime_error("No LB active");
