@@ -137,14 +137,6 @@ extern int check_id;
 #define LATTICE_TRACE(cmd)
 #endif
 
-#ifdef FORCE_DEBUG
-#define FORCE_TRACE(cmd)                                                       \
-  { cmd; }
-#else
-/** Equals { cmd } iff FORCE_DEBUG is set. */
-#define FORCE_TRACE(cmd)
-#endif
-
 #ifdef VERLET_DEBUG
 #define VERLET_TRACE(cmd)                                                      \
   { cmd; }
@@ -180,13 +172,6 @@ extern int check_id;
   { cmd; }
 #else
 #define THERMO_TRACE(cmd)
-#endif
-
-#ifdef GHOST_FORCE_DEBUG
-#define GHOST_FORCE_TRACE(cmd)                                                 \
-  { cmd; }
-#else
-#define GHOST_FORCE_TRACE(cmd)
 #endif
 
 #ifdef ONEPART_DEBUG

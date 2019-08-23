@@ -252,9 +252,6 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   }
 #endif
 
-  FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
-                      p1->p.identity, p2->p.identity, dist));
-
   /***********************************************/
   /* non-bonded pair potentials                  */
   /***********************************************/

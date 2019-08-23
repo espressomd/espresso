@@ -566,8 +566,6 @@ looking directly at the code.
 -  ``GHOST_DEBUG`` Cellsystem output specific to the handling of ghost cells and the
    ghost cell communication.
 
--  ``GHOST_FORCE_DEBUG``
-
 -  ``VERLET_DEBUG`` Debugging of the Verlet list code of the domain decomposition cell
    system.
 
@@ -582,8 +580,6 @@ looking directly at the code.
 -  ``P3M_DEBUG``
 
 -  ``RANDOM_DEBUG``
-
--  ``FORCE_DEBUG`` Output from the force calculation loops.
 
 -  ``PTENSOR_DEBUG`` Output from the pressure tensor calculation loops.
 
