@@ -35,9 +35,7 @@
 static void cuda_mpi_send_v_cs_slave(ParticleRange particles);
 #endif
 
-void cuda_bcast_global_part_params() {
-  mpi_bcast_cuda_global_part_vars();
-}
+void cuda_bcast_global_part_params() { mpi_bcast_cuda_global_part_vars(); }
 
 /* TODO: We should only transfer data for enabled methods,
          not for those that are barely compiled in. (fw)
