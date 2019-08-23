@@ -36,11 +36,9 @@
  *  @param p2        pointer to particle 2.
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
- *  @param dist2     distance squared between p1 and p2.
  */
 inline void add_non_bonded_pair_virials(Particle *const p1, Particle *const p2,
-                                        Utils::Vector3d const &d, double dist,
-                                        double dist2) {
+                                        Utils::Vector3d const &d, double dist) {
   int p1molid, p2molid, k, l;
   Utils::Vector3d force{};
 
@@ -48,7 +46,7 @@ inline void add_non_bonded_pair_virials(Particle *const p1, Particle *const p2,
   if (do_nonbonded(p1, p2))
 #endif
   {
-    calc_non_bonded_pair_force(p1, p2, d, dist, dist2, force);
+    calc_non_bonded_pair_force(p1, p2, d, dist, force);
     *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d * force;
 
     /* stress tensor part */

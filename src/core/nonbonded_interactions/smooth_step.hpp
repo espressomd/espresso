@@ -38,7 +38,7 @@ int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
 /** Calculate smooth step force */
 inline void add_SmSt_pair_force(IA_parameters const *const ia_params,
                                 Utils::Vector3d const &d, double dist,
-                                double dist2, Utils::Vector3d &force) {
+                                Utils::Vector3d &force) {
   if (dist >= ia_params->smooth_step.cut) {
     return;
   }
@@ -51,14 +51,13 @@ inline void add_SmSt_pair_force(IA_parameters const *const ia_params,
       (ia_params->smooth_step.n * fracP + 2. * ia_params->smooth_step.eps *
                                               ia_params->smooth_step.k0 * dist *
                                               er / Utils::sqr(1.0 + er)) /
-      dist2;
+      Utils::sqr(dist);
   force += fac * d;
 }
 
 /** Calculate smooth step energy */
 inline double SmSt_pair_energy(IA_parameters const *const ia_params,
-                               Utils::Vector3d const &d, double dist,
-                               double dist2) {
+                               Utils::Vector3d const &d, double dist) {
   if (dist >= ia_params->smooth_step.cut) {
     return 0.0;
   }

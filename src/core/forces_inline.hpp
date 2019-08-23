@@ -119,7 +119,7 @@ inline ParticleForce init_local_particle_force(const Particle *part) {
 inline void calc_non_bonded_pair_force_parts(
     Particle const *const p1, Particle const *const p2,
     IA_parameters const *const ia_params, Utils::Vector3d const &d,
-    double const dist, double const dist2, Utils::Vector3d &force,
+    double const dist, Utils::Vector3d &force,
     Utils::Vector3d *torque1 = nullptr, Utils::Vector3d *torque2 = nullptr) {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id == p2->p.mol_id)
@@ -139,19 +139,19 @@ inline void calc_non_bonded_pair_force_parts(
 #endif
 /* smooth step */
 #ifdef SMOOTH_STEP
-  add_SmSt_pair_force(ia_params, d, dist, dist2, force);
+  add_SmSt_pair_force(ia_params, d, dist, force);
 #endif
 /* Hertzian force */
 #ifdef HERTZIAN
-  add_hertzian_pair_force(ia_params, d, dist, dist2, force);
+  add_hertzian_pair_force(ia_params, d, dist, force);
 #endif
 /* Gaussian force */
 #ifdef GAUSSIAN
-  add_gaussian_pair_force(ia_params, d, dist, dist2, force);
+  add_gaussian_pair_force(ia_params, d, dist, force);
 #endif
 /* BMHTF NaCl */
 #ifdef BMHTF_NACL
-  add_BMHTF_pair_force(ia_params, d, dist, dist2, force);
+  add_BMHTF_pair_force(ia_params, d, dist, force);
 #endif
 /* Buckingham*/
 #ifdef BUCKINGHAM
@@ -203,18 +203,19 @@ inline void calc_non_bonded_pair_force(Particle const *const p1,
                                        Particle const *const p2,
                                        IA_parameters const *const ia_params,
                                        Utils::Vector3d const &d, double dist,
-                                       double dist2, Utils::Vector3d &force,
+                                       Utils::Vector3d &force,
                                        Utils::Vector3d *torque1 = nullptr,
                                        Utils::Vector3d *torque2 = nullptr) {
-  calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2, force,
-                                   torque1, torque2);
+  calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, force, torque1,
+                                   torque2);
 }
 
-inline void calc_non_bonded_pair_force(Particle *const p1, Particle *const p2,
+inline void calc_non_bonded_pair_force(Particle const *const p1,
+                                       Particle const *const p2,
                                        Utils::Vector3d const &d, double dist,
-                                       double dist2, Utils::Vector3d &force) {
+                                       Utils::Vector3d &force) {
   IA_parameters const *const ia_params = get_ia_param(p1->p.type, p2->p.type);
-  calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force);
+  calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, force);
 }
 
 /** Calculate non-bonded forces between a pair of particles and update their
@@ -259,8 +260,8 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
 #ifdef EXCLUSIONS
     if (do_nonbonded(p1, p2))
 #endif
-      calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2, force,
-                                 torque1, torque2);
+      calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, force, torque1,
+                                 torque2);
   }
 
   /***********************************************/

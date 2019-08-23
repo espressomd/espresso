@@ -75,15 +75,13 @@
  *  @param ia_params  the interaction parameters between the two particles
  *  @param d          vector between p1 and p2.
  *  @param dist       distance between p1 and p2.
- *  @param dist2      distance squared between p1 and p2.
  *  @return the short-range interaction energy between the two particles
  */
 inline double calc_non_bonded_pair_energy(Particle const *const p1,
                                           Particle const *const p2,
                                           IA_parameters const *const ia_params,
                                           Utils::Vector3d const &d,
-                                          double const dist,
-                                          double const dist2) {
+                                          double const dist) {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id == p2->p.mol_id)
     return 0;
@@ -107,22 +105,22 @@ inline double calc_non_bonded_pair_energy(Particle const *const p1,
 
 #ifdef SMOOTH_STEP
   /* smooth step */
-  ret += SmSt_pair_energy(ia_params, d, dist, dist2);
+  ret += SmSt_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef HERTZIAN
   /* Hertzian potential */
-  ret += hertzian_pair_energy(ia_params, d, dist, dist2);
+  ret += hertzian_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef GAUSSIAN
   /* Gaussian potential */
-  ret += gaussian_pair_energy(ia_params, d, dist, dist2);
+  ret += gaussian_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef BMHTF_NACL
   /* BMHTF NaCl */
-  ret += BMHTF_pair_energy(ia_params, d, dist, dist2);
+  ret += BMHTF_pair_energy(ia_params, d, dist);
 #endif
 
 #ifdef MORSE
@@ -192,7 +190,7 @@ inline void add_non_bonded_pair_energy(Particle const *const p1,
   if (do_nonbonded(p1, p2))
 #endif
     *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
-        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
+        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist);
 
 #ifdef ELECTROSTATICS
   energy.coulomb[0] +=
