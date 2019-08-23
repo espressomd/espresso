@@ -566,14 +566,7 @@ looking directly at the code.
 -  ``GHOST_DEBUG`` Cellsystem output specific to the handling of ghost cells and the
    ghost cell communication.
 
--  ``VERLET_DEBUG`` Debugging of the Verlet list code of the domain decomposition cell
-   system.
-
--  ``LATTICE_DEBUG`` Universal lattice structure debugging.
-
 -  ``HALO_DEBUG``
-
--  ``GRID_DEBUG``
 
 -  ``PARTICLE_DEBUG`` Output from the particle handling code.
 
@@ -581,14 +574,10 @@ looking directly at the code.
 
 -  ``RANDOM_DEBUG``
 
--  ``PTENSOR_DEBUG`` Output from the pressure tensor calculation loops.
-
 -  ``THERMO_DEBUG`` Output from the thermostats.
 
 -  ``ONEPART_DEBUG`` Define to a number of a particle to obtain output on the forces
    calculated for this particle.
-
--  ``STAT_DEBUG``
 
 -  ``POLY_DEBUG``
 
@@ -606,8 +595,6 @@ looking directly at the code.
 -  ``MPI_CORE`` Causes |es| to try this even with MPI errors.
 
 -  ``ESIF_DEBUG``
-
--  ``LE_DEBUG``
 
 -  ``SD_DEBUG``
 

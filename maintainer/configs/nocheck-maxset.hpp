@@ -72,20 +72,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define INTEG_DEBUG
 #define CELL_DEBUG
 #define GHOST_DEBUG
-#define LATTICE_DEBUG
 #define HALO_DEBUG
-#define GRID_DEBUG
-#define VERLET_DEBUG
 #define PARTICLE_DEBUG
 #define P3M_DEBUG
 #define RANDOM_DEBUG
 #define THERMO_DEBUG
-#define STAT_DEBUG
 #define POLY_DEBUG
-#define PTENSOR_DEBUG
 #define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
-#define LE_DEBUG
 #ifdef CUDA
 #define CUDA_DEBUG
 #endif

@@ -121,30 +121,6 @@ extern int check_id;
 #define HALO_TRACE(cmd)
 #endif
 
-#ifdef GRID_DEBUG
-#define GRID_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-/** Equals { cmd } iff GRID_DEBUG is set. */
-#define GRID_TRACE(cmd)
-#endif
-
-#ifdef LATTICE_DEBUG
-#define LATTICE_TRACE(cmd)                                                     \
-  { cmd; }
-#else
-/** Equals { cmd } iff LATTICE_DEBUG is set. */
-#define LATTICE_TRACE(cmd)
-#endif
-
-#ifdef VERLET_DEBUG
-#define VERLET_TRACE(cmd)                                                      \
-  { cmd; }
-#else
-/** Equals { cmd } iff VERLET_DEBUG is set. */
-#define VERLET_TRACE(cmd)
-#endif
-
 #ifdef P3M_DEBUG
 #define P3M_TRACE(cmd)                                                         \
   { cmd; }
@@ -181,27 +157,12 @@ extern int check_id;
 #define ONEPART_TRACE(cmd)
 #endif
 
-#ifdef STAT_DEBUG
-#define STAT_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-/** Equals { cmd } iff STAT_DEBUG is set. */
-#define STAT_TRACE(cmd)
-#endif
-
 #ifdef POLY_DEBUG
 #define POLY_TRACE(cmd)                                                        \
   { cmd; }
 #else
 /** Equals { cmd } iff POLY_DEBUG is set. */
 #define POLY_TRACE(cmd)
-#endif
-
-#ifdef PTENSOR_DEBUG
-#define PTENSOR_TRACE(cmd)                                                     \
-  { cmd; }
-#else
-#define PTENSOR_TRACE(cmd)
 #endif
 
 #ifdef LB_DEBUG
